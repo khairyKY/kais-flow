@@ -191,3 +191,18 @@ describe('a weekly series', () => {
     expect(written).toEqual([])
   })
 })
+
+describe('resizing a task block (p7e A15)', () => {
+  const task = { id: 't1', title: 'Offsite prep', status: 'todo', duration_min: 60, due_at: null, scheduled_start: null, scheduled_end: null, updated_at: '2026-10-01T00:00:00.000Z' }
+  const block = (over: Partial<CalendarEvent>): CalendarEvent => ({ ...ROW, id: 'b1', task_id: 't1', type: 'task', recurrence_rule: null, ...over })
+  const taskRow = () => (cache.get('tasks') as (typeof task)[])[0]
+
+  it('a timed block writes its new length to the estimate; an all-day one keeps the estimate', () => {
+    cache.set('tasks', [{ ...task }])
+    api.resizeEvent(block({}), '2026-10-12T06:00:00.000Z', '2026-10-12T07:30:00.000Z')
+    expect(taskRow().duration_min).toBe(90)
+    cache.set('tasks', [{ ...task }])
+    api.resizeEvent(block({ all_day: true, starts_at: '2026-10-12T00:00:00.000Z', ends_at: '2026-10-13T00:00:00.000Z' }), '2026-10-12T00:00:00.000Z', '2026-10-15T00:00:00.000Z')
+    expect(taskRow()).toMatchObject({ duration_min: 60, scheduled_end: '2026-10-15T00:00:00.000Z' })
+  })
+})

@@ -6,13 +6,13 @@ import { RRule, Weekday, type ByWeekday, type Options } from 'rrule'
 import { zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
 
-export type RepeatUnit = 'day' | 'week' | 'month'
+export type RepeatUnit = 'day' | 'week' | 'month' | 'year'
 export const WEEKDAYS = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU'] as const
 export type WeekdayCode = (typeof WEEKDAYS)[number]
 
 export interface RepeatSpec {
   unit: RepeatUnit
-  /** Every N units, 1–99. */
+  /** Every N units, 1–99. Yearly repeats on the start's own date (p7e A13). */
   every: number
   /** Weekly: on these days. */
   days: WeekdayCode[]
@@ -39,8 +39,8 @@ export function repeatStart(at: Date, zone: string = appZone()): RepeatStart {
   return { date, weekday, nth: d + 7 > monthDays ? -1 : Math.ceil(d / 7) }
 }
 
-const FREQ: Record<RepeatUnit, number> = { day: RRule.DAILY, week: RRule.WEEKLY, month: RRule.MONTHLY }
-const UNIT: Partial<Record<number, RepeatUnit>> = { [RRule.DAILY]: 'day', [RRule.WEEKLY]: 'week', [RRule.MONTHLY]: 'month' }
+const FREQ: Record<RepeatUnit, number> = { day: RRule.DAILY, week: RRule.WEEKLY, month: RRule.MONTHLY, year: RRule.YEARLY }
+const UNIT: Partial<Record<number, RepeatUnit>> = { [RRule.DAILY]: 'day', [RRule.WEEKLY]: 'week', [RRule.MONTHLY]: 'month', [RRule.YEARLY]: 'year' }
 const dayOfMonth = (start: RepeatStart) => Number(start.date.slice(8))
 
 /** The spec a rule opens with in the editor; no rule (or one the editor can't show) → weekly on the start's day. */

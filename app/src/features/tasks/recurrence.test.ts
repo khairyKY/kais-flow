@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { nextDue, nextOccurrence, nextReminderAt } from './recurrence'
+import { nextDue, nextOccurrence, nextReminderAt, ruleAfterThis } from './recurrence'
 
 describe('nextOccurrence', () => {
   it('advances FREQ=DAILY by one calendar day', () => {
@@ -114,5 +114,20 @@ describe('nextReminderAt (Polish F2a: a repeat keeps reminding)', () => {
   })
   it('no reminder on the original → none on the next occurrence', () => {
     expect(nextReminderAt(null, due, nextDue)).toBeNull()
+  })
+})
+
+describe('"Ends after N times" on a task (p7e A13)', () => {
+  it('the count rides on the copies: one fewer each time, none after the last', () => {
+    expect(ruleAfterThis('FREQ=DAILY;COUNT=3')).toBe('FREQ=DAILY;COUNT=2')
+    expect(ruleAfterThis('COUNT=2;FREQ=WEEKLY')).toBe('COUNT=1;FREQ=WEEKLY')
+    expect(ruleAfterThis('FREQ=DAILY;COUNT=1')).toBeNull()
+    expect(ruleAfterThis('FREQ=MONTHLY')).toBe('FREQ=MONTHLY')
+  })
+  it('a counted daily task finished days late still comes back tomorrow; its last one has no next', () => {
+    const due = '2026-10-05T06:00:00.000Z' // Mon 09:00 Cairo
+    const now = new Date('2026-10-12T10:00:00Z') // a week later
+    expect(nextDue('FREQ=DAILY;COUNT=3', due, now, 'Africa/Cairo')!.toISOString()).toBe('2026-10-13T06:00:00.000Z')
+    expect(nextDue('FREQ=DAILY;COUNT=1', due, now, 'Africa/Cairo')).toBeNull()
   })
 })

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent, Task } from '../../lib/types'
-import { blockedOn, dueWord, footerLine, freeGaps, groupPlan, minutesLabel, planningTasks, sortPlan, totalLine } from './planningMode'
+import { blockedOn, dueWord, footerLine, freeGaps, freeLeft, groupPlan, minutesLabel, planningTasks, sortPlan, totalLine } from './planningMode'
 
 // Calendar §4 planning mode. The user's zone is the default Africa/Cairo (UTC+3 until the last
 // Thursday of October 2026): every instant below is a Cairo wall time, so it holds under the 4 device
@@ -140,6 +140,13 @@ describe('the strip: free gaps and the footer line', () => {
     expect(footerLine(EVENTS, [DAY], NOW)).toBe('3 blocked today · 7h 30m free')
     expect(footerLine([...EVENTS, block('table', null, '2026-07-11', '18:00', '19:00')], [DAY, '2026-07-11'], NOW)).toBe('3 blocked today · 1 blocked tomorrow')
     expect(footerLine([], ['2026-07-12', '2026-07-13'], NOW)).toBe('0 blocked Sun · 0 blocked Mon')
+  })
+  it('the rail footer (p7e A15): a Free event neither blocks nor takes free time; past and off-hours time is not free', () => {
+    const free = block('lunch', null, DAY, '13:00', '14:00', { busy: false })
+    expect(blockedOn([...EVENTS, free], DAY)).toBe(3)
+    expect(freeLeft([...EVENTS, free], DAY, NOW)).toBe(freeLeft(EVENTS, DAY, NOW))
+    // 21:00 is past the day's 20:00 end: nothing left
+    expect(freeLeft([], DAY, new Date(cairo(DAY, '21:00')))).toBe(0)
   })
 })
 

@@ -27,11 +27,12 @@ export const RAIL_TAB_W = 34
 
 export type CalViewKind = 'day' | 'ndays' | 'week' | 'month'
 
-/** Day columns a time-grid view draws. Month isn't a time grid (0). */
-export function visibleDayCount(view: CalViewKind, dayCount: number, showWeekends: boolean): number {
+/** Day columns a time-grid view draws: the (rolling) week loses the `hiddenDays` weekdays the grid
+ * hides — "Show weekends" off hides the user's weekend (p7e A15). Month isn't a time grid (0). */
+export function visibleDayCount(view: CalViewKind, dayCount: number, hiddenDays = 0): number {
   if (view === 'month') return 0
   if (view === 'day') return 1
-  if (view === 'week') return showWeekends ? 7 : 5
+  if (view === 'week') return 7 - hiddenDays
   return Math.max(1, dayCount)
 }
 

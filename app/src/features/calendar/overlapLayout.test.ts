@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { layoutOverlaps, type OverlapInput } from './overlapLayout'
+import { conflictsOf, layoutOverlaps, type OverlapInput } from './overlapLayout'
 
 const H = 3_600_000
 const at = (h: number) => Date.UTC(2026, 8, 26) + h * H
@@ -126,5 +126,22 @@ describe('layoutOverlaps keepVisible (a just-dropped block)', () => {
     // Equal times tie-break by id: w, x, y are the three sheets and z hides under y.
     expect(out.get('y')).toEqual({ kind: 'stack', lane: 2, hidden: ['z'] })
     expect(out.get('z')).toEqual({ kind: 'hidden', under: 'y' })
+  })
+})
+
+describe('conflictsOf — the ⚠ badge (p7e A15)', () => {
+  const ev = (id: string, starts_at: string, ends_at: string, type = 'event') => ({ id, title: id, type, starts_at, ends_at, all_day: false })
+
+  it('back-to-back events written two ways are not a conflict; a real overlap is', () => {
+    const a = ev('a', '2026-10-13T09:00:00+00:00', '2026-10-13T10:00:00+00:00') // as Postgres returns it
+    const b = ev('b', '2026-10-13T10:00:00.000Z', '2026-10-13T11:00:00.000Z') // as the client writes it
+    expect(conflictsOf([a, b], 'Africa/Cairo').size).toBe(0)
+    const c = ev('c', '2026-10-13T09:30:00.000Z', '2026-10-13T09:45:00.000Z')
+    expect([...conflictsOf([a, b, c], 'Africa/Cairo').entries()]).toEqual([['a', ['c']], ['c', ['a']]])
+  })
+
+  it('only plain events count — time blocks, task blocks and all-day ones never clash', () => {
+    const a = ev('a', '2026-10-13T09:00:00Z', '2026-10-13T10:00:00Z')
+    expect(conflictsOf([a, ev('blk', '2026-10-13T09:00:00Z', '2026-10-13T10:00:00Z', 'time_block'), { ...ev('day', '2026-10-13T00:00:00Z', '2026-10-14T00:00:00Z'), all_day: true }], 'UTC').size).toBe(0)
   })
 })

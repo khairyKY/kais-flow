@@ -40,11 +40,24 @@ export function nextOccurrence(recurrenceRule: string, fromDate: Date, zone: str
  * Completing early still rolls from the due date.
  */
 export function nextDue(recurrenceRule: string, dueIso: string, now: Date, zone: string = appZone()): Date | null {
+  // "Ends after N times" (p7e A13): the count rides on the copies (ruleAfterThis), so the step itself
+  // ignores it — read from each copy's own due date, COUNT=3 restarted at every copy and never ended.
+  if (ruleAfterThis(recurrenceRule) === null) return null
+  const step = recurrenceRule.split(';').filter((p) => !/^COUNT=/i.test(p)).join(';')
   const due = new Date(dueIso)
   const [y, m, d] = zoneDateKey(now, zone).split('-').map(Number)
   const wall = toWall(due, zone)
   const todayAt = new Date(Date.parse(zoneWallTimeToIso(zone, y, m, d, wall.getUTCHours(), wall.getUTCMinutes(), wall.getUTCSeconds())) + wall.getUTCMilliseconds())
-  return nextOccurrence(recurrenceRule, due, zone, todayAt > due ? todayAt : due)
+  return nextOccurrence(step, due, zone, todayAt > due ? todayAt : due)
+}
+
+/** A task's "Ends after N times": its COUNT is how many are left, this one included — so the next
+ * copy carries one fewer, and COUNT=1 is the last (null: the series ends here). Any other rule
+ * carries over as it is. */
+export function ruleAfterThis(recurrenceRule: string): string | null {
+  const n = Number(/(?:^|;)COUNT=(\d+)/i.exec(recurrenceRule)?.[1] ?? 0)
+  if (!n) return recurrenceRule
+  return n > 1 ? recurrenceRule.replace(/COUNT=\d+/i, `COUNT=${n - 1}`) : null
 }
 
 /**

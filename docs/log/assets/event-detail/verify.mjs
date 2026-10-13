@@ -289,10 +289,10 @@ if (want('b1')) {
   await settle(state)
   check('b1 Repeat ▸ Weekly writes FREQ=WEEKLY on the one row', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.recurrence_rule === 'FREQ=WEEKLY') && state.rows.calendar_events.length === EVENTS.length)
   check('b1 today\'s block is now an occurrence with the ↻ badge', (await fc(page, occId(LUNCH, '10:30', 12)).locator('.kf-ev-repeat').count()) === 1)
-  await page.locator('.cal-head span', { hasText: '›' }).click()
+  await page.locator('.cal-head').getByRole('button', { name: 'Next' }).click() // p7e A4: a real button now
   await sleep(800)
   check('b1 next week: Mon 19 Oct 10:30 is there', (await fc(page, occId(LUNCH, '10:30', 19)).count()) === 1)
-  await page.locator('.cal-head span', { hasText: '›' }).click()
+  await page.locator('.cal-head').getByRole('button', { name: 'Next' }).click() // p7e A4: a real button now
   await sleep(800)
   check('b1 …and Mon 26 Oct', (await fc(page, occId(LUNCH, '10:30', 26)).count()) === 1)
   await shot(page, 'b1-repeat-next-weeks')

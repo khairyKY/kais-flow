@@ -2,8 +2,9 @@ import type { ShortcutEntry } from './pageShortcutsStore'
 
 // F3 (punch 12): the cheatsheet lists ONLY keys that work. Removed as fiction:
 // `g` Go-to (D-5: folded into ⌘K), the Navigate section (t/i/u — never bound),
-// the Calendar section (no keydown listener exists), Inbox's f/x rows (code binds
-// e/d), and the command bar's `//` note syntax (never parsed — real since P7e A6, 2026-10-13).
+// ~~the Calendar section (no keydown listener exists)~~ (back 2026-10-13, p7e A4: the keys are
+// bound now — CALENDAR_SHORTCUTS), Inbox's f/x rows (code binds e/d), and the command bar's `//`
+// note syntax (never parsed — real since P7e A6, 2026-10-13).
 // P7e A7 (2026-10-13): i and u are bound now, in the shell (AppLayout); t stays Top 3.
 /** Always-on bindings, regardless of page — rendered by the `?` cheatsheet's first section. */
 export const GLOBAL_SHORTCUTS: ShortcutEntry[] = [
@@ -54,6 +55,19 @@ export const LIST_EXTRAS: ShortcutEntry[] = [
 
 /** Said under the task keys: T, E, 1/2/3 and # act on the whole selection when there is one. */
 export const SELECTION_NOTE = 'With a selection, keys act on all selected.'
+
+/** The Calendar page's keys (p7e A4) — static so the cheatsheet's Calendar section always renders.
+ * MUST mirror CalendarPage's key handler, BlockMenu's ⌫ and CalendarGrid's ⌘/Ctrl-click. Overlays.dc.html
+ * and Tour 14k-3 draw the first rows (D W M · ← → · T); Akiflow's 1–7, - =, 0 and the rest join them. */
+export const CALENDAR_SHORTCUTS: ShortcutEntry[] = [
+  { keys: ['d', 'w', 'm'], label: 'Day · Week · Month' },
+  { keys: ['1', '2–6', '7'], label: '1 day · 2–6 days · Week' },
+  { keys: ['←/→', '-/='], label: 'Previous · next' },
+  { keys: ['t'], label: 'Jump to today' },
+  { keys: ['0'], label: 'Fold the planning rail' },
+  { keys: ['⌘/Ctrl', 'click'], label: 'New task in that slot' },
+  { keys: ['⌫'], label: 'Delete the open event' },
+]
 
 /** Command bar's own inline capture syntax — static so the cheatsheet's Command bar section always renders. */
 export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [

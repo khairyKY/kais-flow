@@ -91,6 +91,16 @@ describe('planCompletion', () => {
     expect(next).toMatchObject({ reminder_at: null, reminder_sent: false })
   })
 
+  it('"Ends after 3 times" ends (p7e A13): each copy carries one fewer, the last spawns nothing', () => {
+    const first = planCompletion(task({ recurrence_rule: 'FREQ=WEEKLY;BYDAY=SA,TU;COUNT=3' }), [], NOW, newId).next!
+    expect(first).toMatchObject({ due_at: NEXT_DUE, recurrence_rule: 'FREQ=WEEKLY;BYDAY=SA,TU;COUNT=2' })
+    const second = planCompletion(first, [], NEXT_DUE, newId).next!
+    expect(second.recurrence_rule).toBe('FREQ=WEEKLY;BYDAY=SA,TU;COUNT=1')
+    expect(planCompletion(second, [], second.due_at!, newId).next).toBeNull()
+    // a copy already open under the counted-down rule isn't spawned twice
+    expect(planCompletion(task({ recurrence_rule: 'FREQ=WEEKLY;BYDAY=SA,TU;COUNT=3' }), [first], NOW, newId).next).toBeNull()
+  })
+
   it('a done or trashed copy of that occurrence does not block the spawn', () => {
     const doneCopy = task({ id: 'd', due_at: NEXT_DUE, status: 'done' })
     const trashed = task({ id: 't', due_at: NEXT_DUE, deleted_at: NOW })

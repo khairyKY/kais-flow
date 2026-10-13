@@ -34,8 +34,9 @@ import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { cairoTimeKey, slotFields, zoneHour } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
-import { isMultiDaySpan } from './daySpans'
-import { cardDragData, freeGaps } from './planningMode'
+import { blockedOn, cardDragData, freeGaps, freeLeft, minutesLabel } from './planningMode'
+import { conflictsOf } from './overlapLayout'
+import { parseWeekend } from '../../lib/weekend'
 import { addDays } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
 import { BLOCK_MENU_WIDTH, besideBlock } from './blockMenuSpec'
@@ -55,6 +56,8 @@ import { Icon } from '../../components/Icon'
 import { Select } from '../../components/Select'
 import { Skeleton } from '../../components/States'
 import type { ContextMenuItem } from '../../components/ContextMenu'
+import { isTypingTarget } from '../../components/useListKeys'
+import { overlayCount } from '../../lib/overlayStack'
 import type { Area, CalendarEvent, Domain, InboxItem, Project } from '../../lib/types'
 
 const RAIL_W_KEY = 'kf.calRailWidth'
@@ -100,34 +103,6 @@ function rangeLabel(start: Date, end: Date, viewKind: ViewKind): string {
   return `${fmt(first, { month: 'short', day: 'numeric' })} — ${endStr}`
 }
 
-/** Rough "how full is today" read for the rail footer — a 12h daytime window (9–21) minus
- * busy-block minutes. Not a real free/busy engine, just the botanical footer's one line. */
-function todaysLoad(events: CalendarEvent[]): { blocked: number; freeHours: number } {
-  const key = cairoDateKey(new Date())
-  const todays = events.filter((e) => !e.all_day && cairoDateKey(new Date(e.starts_at)) === key)
-  const busyMin = todays.filter((e) => e.busy).reduce((sum, e) => sum + (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 60000, 0)
-  return { blocked: todays.length, freeHours: Math.max(0, Math.round(12 - busyMin / 60)) }
-}
-
-/** Client-side conflict detection: only standalone Events get flagged. Time blocks and task-linked blocks are excluded. */
-function computeConflicts(events: CalendarEvent[]): Map<string, string[]> {
-  // A span of a day or more lives in the all-day band (Calendar 3e) — it overlaps nothing on the grid.
-  const eventType = events.filter((e) => e.type === 'event' && !e.all_day && !isMultiDaySpan(e, appZone()))
-  const map = new Map<string, string[]>()
-  for (let i = 0; i < eventType.length; i++) {
-    for (let j = i + 1; j < eventType.length; j++) {
-      const a = eventType[i], b = eventType[j]
-      if (a.starts_at < b.ends_at && a.ends_at > b.starts_at) {
-        if (!map.has(a.id)) map.set(a.id, [])
-        if (!map.has(b.id)) map.set(b.id, [])
-        map.get(a.id)!.push(b.title)
-        map.get(b.id)!.push(a.title)
-      }
-    }
-  }
-  return map
-}
-
 interface QuickCreateState {
   kind: QuickCreateKind
   slot: { date: string; start: string; end: string; allDay: boolean } | null
@@ -152,10 +127,6 @@ function anchorOf(id: string): { x: number; y: number } {
 const DAY_MS = 86_400_000
 
 const RAIL_TILTS = [0, -0.4, 0, 0.4]
-// J-15 (view-options interplay): one array for the whole module. A fresh `[0, 6]` every render
-// read to FullCalendar as a changed option → new date profile → datesSet → setRangeInfo →
-// re-render → another fresh array… "Show weekends" off crashed the page (max update depth).
-const WEEKEND_DAYS = [0, 6]
 
 // ── The planning rail's sections and cards (Kai 2026-10-07). ──
 
@@ -405,8 +376,14 @@ function DesktopCalendar() {
   // Kai 2026-10-13 (phone parity audit): the daisy's stage reads the user's clock, not the device's.
   const daisy = daisyAsset(zoneHour())
   const motionOn = useMotionEnabled()
-  const conflicts = useMemo(() => computeConflicts(gridEvents), [gridEvents])
-  const load = useMemo(() => todaysLoad(events), [events, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  const conflicts = useMemo(() => conflictsOf(gridEvents, appZone()), [gridEvents])
+  // p7e A15: "Show weekends" off hides the user's own weekend (lib/weekend), not Sat + Sun. J-15: the
+  // grid gets the SAME array while it's unchanged — a fresh one each render read to FullCalendar as a
+  // changed option → datesSet → setRangeInfo → re-render… (max update depth). No weekend, or all
+  // seven days (FullCalendar can't hide every day), hides nothing.
+  const weekendKey = parseWeekend(settings?.weekend_days).join()
+  const weekend = useMemo(() => (weekendKey ? weekendKey.split(',').map(Number) : []), [weekendKey])
+  const hiddenWeekend = viewOpts.showWeekends || weekend.length >= 7 ? [] : weekend
   // Kai 2026-10-03: Settings → Calendar → "Opens on" (synced; unset = Week here). Applied once, when
   // the settings row arrives — a view picked after that is the person's own. '3 days' is the N-day
   // view held at 3 for this visit, without touching the popover's remembered N.
@@ -585,13 +562,14 @@ function DesktopCalendar() {
   // Empty-slot click/drag → Editor 2a's quick-create popover, kind defaults to Event.
   // T-4 (Polish F2b): QuickCreate's fields are Cairo wall-clock; slotFields converts the slot so
   // the form shows the clicked time on Cairo's clock and saves that exact instant back.
-  function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number }) {
+  // p7e A4: with ⌘/Ctrl held it's a Task there (Akiflow's ⌘-click), its block on that slot.
+  function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean }) {
     // The grid snaps to 15 min (Kai 2026-10-03), so a plain click selects one quarter; it still
     // makes the half-hour it always did. A drag keeps exactly what was dragged.
     const startMs = new Date(info.start).getTime()
     const end = !info.allDay && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
     setQuickCreate({
-      kind: 'event',
+      kind: info.task ? 'task' : 'event',
       slot: slotFields(info.start, end, info.allDay),
       anchor: { x: info.x, y: info.y },
     })
@@ -677,7 +655,7 @@ function DesktopCalendar() {
   })
   // Kai 2026-10-07: an overdue pile opens the rail by itself (that's what the calendar is for then);
   // the person's own fold still wins, and the folded tab shows the pile's count in terra.
-  const railFolded = railPref ? railPref === 'folded' : buckets.overdue.length === 0 && railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends))
+  const railFolded = railPref ? railPref === 'folded' : buckets.overdue.length === 0 && railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, hiddenWeekend.length))
   function setRailFolded(folded: boolean) {
     setRailPref(folded ? 'folded' : 'open')
     try {
@@ -707,12 +685,45 @@ function DesktopCalendar() {
       /* private mode — it lasts this visit */
     }
   }
+
+  // p7e A4 — Akiflow's calendar keys, listed in the ? sheet (lib/shortcuts CALENDAR_SHORTCUTS): d / 1 day,
+  // 2–6 that many days, w / 7 week, m month, - = and ← → page, t today, 0 folds the rail. Never while
+  // typing, nor while a menu, popover or dialog is open (lib/overlayStack). Letters also read by key
+  // code, so an Arabic layout works (AppLayout's own Ctrl+K rule). Re-bound each render, as BlockMenu's ⌫.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target) || overlayCount() > 0) return
+      const key = /^[\x20-\x7e]$/.test(e.key) ? e.key.toLowerCase() : (/^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase() ?? /^Digit(\d)$/.exec(e.code)?.[1] ?? e.key)
+      const grid = gridRef.current
+      const run: Record<string, (() => void) | undefined> = {
+        d: () => pickView('1'), 1: () => pickView('1'),
+        2: () => pickView('2'), 3: () => pickView('3'), 4: () => pickView('4'), 5: () => pickView('5'), 6: () => pickView('6'),
+        w: () => pickView('W'), 7: () => pickView('W'), m: () => pickView('M'),
+        '-': () => grid?.prev(), ArrowLeft: () => grid?.prev(), '=': () => grid?.next(), ArrowRight: () => grid?.next(),
+        t: () => grid?.today(),
+        0: planning ? undefined : () => setRailFolded(!railFolded),
+      }
+      const act = run[key]
+      if (!act) return
+      e.preventDefault()
+      act()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   const stripDays = viewKind === 'day' ? 1 : 2
   const planRef = useRef<HTMLDivElement>(null)
   const minuteNow = useMinuteNow()
   const stripStart = rangeInfo ? cairoDateKey(rangeInfo.start) : cairoDateKey(minuteNow)
   const stripKeys = stripDays === 1 ? [stripStart] : [stripStart, addDays(stripStart, 1)]
   const gaps = planning ? stripKeys.flatMap((d) => freeGaps(events, d, minuteNow)) : undefined
+  // The rail footer (p7e A15): busy blocks today, and the free time left inside 08:00–20:00 from now —
+  // Free events, past time and off-hours aren't free time (the planning strip's own footer rule).
+  const load = useMemo(() => {
+    const day = cairoDateKey(minuteNow)
+    return { blocked: blockedOn(events, day), free: minutesLabel(freeLeft(events, day, minuteNow)) }
+  }, [events, minuteNow])
   /** The strip's handle dragged back left (or clicked): the grid returns. */
   function startStripHandle(e: React.PointerEvent<HTMLButtonElement>) {
     if (e.button !== 0) return
@@ -785,7 +796,7 @@ function DesktopCalendar() {
     </div>
   )
 
-  const pillCircle = { width: 32, height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-muted)', cursor: 'pointer', flex: 'none' as const }
+  const pillCircle = { width: 32, height: 32, padding: 0, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', font: 'inherit', color: 'var(--ink-muted)', cursor: 'pointer', flex: 'none' as const }
 
   return (
     <>
@@ -919,7 +930,7 @@ function DesktopCalendar() {
           <div className="cal-rail-extra" style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 16, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
             <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>
-              {load.blocked} blocked<br />{load.freeHours}h free today
+              {load.blocked} blocked<br />{load.free} free today
             </div>
           </div>
         </aside>
@@ -1045,9 +1056,10 @@ function DesktopCalendar() {
                 {/* Kai 2026-10-03: the ⚟ glyph read as "≤" — the kit's dropdown chevron, as the phone's title uses. */}
                 <Icon name="chevdown" size={14} style={{ color: 'var(--ink-muted)' }} />
               </span>
-              <span onClick={() => gridRef.current?.prev()} style={pillCircle}>‹</span>
-              <span onClick={() => gridRef.current?.today()} style={{ padding: '0 14px', height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--ink-body)', cursor: 'pointer' }}>Today</span>
-              <span onClick={() => gridRef.current?.next()} style={pillCircle}>›</span>
+              {/* p7e A4: real buttons (Tab reaches them; the kit's press + focus ring), keys - t = beside them. */}
+              <button type="button" className="kf-press" aria-label="Previous" title="Previous (- or ←)" onClick={() => gridRef.current?.prev()} style={pillCircle}>‹</button>
+              <button type="button" className="kf-press" title="Today (t)" onClick={() => gridRef.current?.today()} style={{ padding: '0 14px', height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', background: 'none', font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', cursor: 'pointer' }}>Today</button>
+              <button type="button" className="kf-press" aria-label="Next" title="Next (= or →)" onClick={() => gridRef.current?.next()} style={pillCircle}>›</button>
             </div>
           </div>
           )}
@@ -1093,7 +1105,7 @@ function DesktopCalendar() {
               onDragToRail={handleDragToRail}
               hour24={viewOpts.hour24}
               firstDay={viewOpts.weekStartsMon ? 1 : 0}
-              hiddenDays={viewOpts.showWeekends || planning ? undefined : WEEKEND_DAYS}
+              hiddenDays={planning || !hiddenWeekend.length ? undefined : hiddenWeekend}
               density={viewOpts.density}
               justDroppedId={justDroppedId}
               dayCount={planning ? 2 : dayCount}

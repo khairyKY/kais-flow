@@ -244,7 +244,9 @@ export function resizeEvent(event: CalendarEvent, startsAt: string, endsAt: stri
   if (!task) return undo
   const durationMin = Math.round((new Date(endsAt).getTime() - new Date(startsAt).getTime()) / 60000)
   const patch: Partial<Task> = { scheduled_start: startsAt, scheduled_end: endsAt }
-  if (durationMin !== task.duration_min) patch.duration_min = durationMin
+  // p7e A15: an all-day block's length is days on the calendar, not the task's estimate — stretching it
+  // to three days wrote 4320 minutes into duration_min.
+  if (!event.all_day && durationMin !== task.duration_min) patch.duration_min = durationMin
   writeRow('tasks', { ...task, ...patch })
   return undo
 }
