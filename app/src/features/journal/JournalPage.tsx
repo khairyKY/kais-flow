@@ -42,7 +42,7 @@ function EntryPhotos({ paths, onRemove }: { paths: string[]; onRemove: (path: st
           <button
             type="button"
             aria-label="Remove photo"
-            className="kf-hit"
+            className="kf-hit kf-hit-corner"
             onClick={() => onRemove(p)}
             style={{ position: 'absolute', top: 2, right: 2, width: 24, height: 24, border: 'none', borderRadius: 999, background: 'var(--paper-parchment)', color: 'var(--ink-muted)', boxShadow: 'var(--shadow-crisp)', font: 'inherit', fontSize: 14, lineHeight: '24px', padding: 0, cursor: 'pointer' }}
           >

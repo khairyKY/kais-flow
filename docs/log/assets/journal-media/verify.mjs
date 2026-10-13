@@ -2,6 +2,8 @@
 // signed in against a MOCKED backend — the resurface/plan-replan recipe: the dev server runs with
 // VITE_SUPABASE_URL=http://127.0.0.1:9, a made-up session sits in localStorage, and Playwright answers
 // REST, Storage and the `transcribe` function. Chrome's fake mic feeds the voice sheet.
+// v1.1.1 (journal hygiene) adds: a photo-only day counts as written (Day N, This week's "kept", Kept),
+// and the photo's × is a ≥44px target at 360/390/430 that stays inside its own photo.
 //   node verify.mjs <outDir> [baseUrl] [playwright-core path]
 import fs from 'node:fs'
 import path from 'node:path'
@@ -81,7 +83,7 @@ const browser = await chromium.launch({
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
 const DESKTOP = { viewport: { width: 1280, height: 800 } }
 
-async function open(theme, view, { uploadFails = false } = {}) {
+async function open(theme, view, { uploadFails = false, entries = null } = {}) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', permissions: ['microphone'] })
   await ctx.addInitScript(([t, sess, uid]) => {
     localStorage.setItem('kf_theme', t)
@@ -92,7 +94,7 @@ async function open(theme, view, { uploadFails = false } = {}) {
   const state = {
     rows: {
       app_settings: [{ ...SETTINGS }],
-      journal_entries: [{ id: ENTRY, user_id: UID, body: 'Slow morning.', entry_date: '2026-10-12', mood: null, transcript: null, media_paths: [], gratitude: [], deleted_at: null, created_at: '2026-10-12T05:30:00.000Z', updated_at: '2026-10-12T05:30:00.000Z' }],
+      journal_entries: entries ?? [{ id: ENTRY, user_id: UID, body: 'Slow morning.', entry_date: '2026-10-12', mood: null, transcript: null, media_paths: [], gratitude: [], deleted_at: null, created_at: '2026-10-12T05:30:00.000Z', updated_at: '2026-10-12T05:30:00.000Z' }],
     },
     writes: [],
     uploads: [],
@@ -239,6 +241,69 @@ for (const [label, view, width, talk] of [['phone', PHONE, 390, '🎤 Talk'], ['
     check(`${name} offline → "needs a connection" toast`, offline, JSON.stringify(await toasts(page)))
     await ctx.close()
   }
+}
+
+// ── v1.1.1: today's entry with two photos, yesterday a photo and no words ──
+const PHOTO_ONLY = '20000000-0000-4000-8000-000000000002'
+const photoAt = (entry, n) => `${UID}/${entry}/30000000-0000-4000-8000-00000000000${n}.jpg`
+const hygieneRows = () => [
+  { id: ENTRY, user_id: UID, body: 'Slow morning.', entry_date: '2026-10-12', mood: null, transcript: null, media_paths: [photoAt(ENTRY, 1), photoAt(ENTRY, 2)], gratitude: [], deleted_at: null, created_at: '2026-10-12T05:30:00.000Z', updated_at: '2026-10-12T05:30:00.000Z' },
+  { id: PHOTO_ONLY, user_id: UID, body: '', entry_date: '2026-10-11', mood: null, transcript: null, media_paths: [photoAt(PHOTO_ONLY, 3)], gratitude: [], deleted_at: null, created_at: '2026-10-11T18:00:00.000Z', updated_at: '2026-10-11T18:00:00.000Z' },
+]
+
+// The first photo's ×: drawn size, and every point a finger can hit it from (elementFromPoint over the
+// photo and 20px around it), against its own photo, the next photo and the words above.
+const measureX = () => {
+  const x = document.querySelector('button[aria-label="Remove photo"]')
+  const box = x.parentElement.getBoundingClientRect()
+  const next = x.parentElement.nextElementSibling.getBoundingClientRect()
+  const xr = x.getBoundingClientRect()
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, outside = 0
+  for (let px = Math.floor(box.left) - 20; px <= box.right + 20; px++)
+    for (let py = Math.floor(box.top) - 20; py <= box.bottom + 20; py++) {
+      if (document.elementFromPoint(px + 0.5, py + 0.5) !== x) continue
+      x0 = Math.min(x0, px); y0 = Math.min(y0, py); x1 = Math.max(x1, px); y1 = Math.max(y1, py)
+      if (px < box.left || px + 1 > box.right || py < box.top || py + 1 > box.bottom) outside++
+    }
+  const at = (px, py) => document.elementFromPoint(px, py)
+  return {
+    drawn: `${Math.round(xr.width)}x${Math.round(xr.height)}`,
+    hit: `${x1 - x0 + 1}x${y1 - y0 + 1}`, w: x1 - x0 + 1, h: y1 - y0 + 1, outside,
+    gap: Math.round(next.left - box.right),
+    nextOwn: !!at(next.left + 2, next.top + 2)?.closest('a[aria-label="Open photo"]') && at(next.left + 2, next.top + 2) !== x,
+    aboveOwn: at(xr.left + xr.width / 2, box.top - 2) !== x,
+    imageOwn: !!at(box.left + 6, box.bottom - 6)?.closest('a[aria-label="Open photo"]'),
+  }
+}
+
+for (const width of [360, 390, 430]) {
+  const name = `phone-${width}`
+  const { ctx, page, errors } = await open('day', { ...PHONE, viewport: { width, height: 844 } }, { entries: hygieneRows() })
+  check(`${name} photo-only yesterday is a day written: "Journal · Day 2"`, await until(async () => (await page.getByText('Journal · Day 2', { exact: true }).count()) === 1), await page.getByText(/^Journal · Day/).allInnerTexts().catch(() => ''))
+  const thumbs = page.locator('a[aria-label="Open photo"] img')
+  await until(async () => (await thumbs.count()) === 2 && (await thumbs.evaluateAll((l) => l.every((i) => i.complete && i.naturalWidth > 0))))
+  await page.getByRole('button', { name: 'Remove photo' }).first().scrollIntoViewIfNeeded()
+  await sleep(300)
+  const m = await page.evaluate(measureX)
+  check(`${name} photo × still drawn 24px`, m.drawn === '24x24', m.drawn)
+  check(`${name} photo × hit area ≥44px`, m.w >= 44 && m.h >= 44, m.hit)
+  check(`${name} photo × hit area stays inside its own photo`, m.outside === 0, `${m.outside} px outside`)
+  check(`${name} next photo (${m.gap}px away), the words above and the photo itself keep their taps`, m.nextOwn && m.aboveOwn && m.imageOwn, JSON.stringify({ nextOwn: m.nextOwn, aboveOwn: m.aboveOwn, imageOwn: m.imageOwn }))
+  await shot(page, `${name}-3-photo-x`)
+  check(`${name} no page or console errors`, errors.length === 0, errors.slice(0, 3).join(' | '))
+  await ctx.close()
+}
+
+{
+  const name = 'desk-written'
+  const { ctx, page, errors } = await open('day', DESKTOP, { entries: hygieneRows() })
+  const sunday = page.getByText('Sunday, Oct 11', { exact: true })
+  await sunday.waitFor({ timeout: 8000 }).catch(() => {})
+  const marker = await sunday.locator('xpath=following-sibling::div[1]').innerText().catch(() => '')
+  check(`${name} a photo-only day is "kept" in This week`, marker.trim().toLowerCase() === 'kept', marker)
+  check(`${name} Kept counts it: "2 days"`, await until(async () => (await page.getByText('2 days', { exact: true }).count()) === 1))
+  check(`${name} no page or console errors`, errors.length === 0, errors.slice(0, 3).join(' | '))
+  await ctx.close()
 }
 
 await browser.close()
