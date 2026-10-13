@@ -59,6 +59,8 @@ interface FocusableRow {
   status: string
   top3: boolean
   deleted_at?: string | null
+  /** A paused series (Perennials ‖) rests: no reminder anywhere (the server and MCP skip it too). */
+  paused?: boolean | null
 }
 
 /** What "Start focus" focuses on from the tray: the task already in the timer, else the day's goal
@@ -78,13 +80,15 @@ export interface RemindableRow {
   status: string
   reminder_at: string | null
   deleted_at?: string | null
+  /** A paused series (Perennials ‖) rests: no reminder anywhere (the server and MCP skip it too). */
+  paused?: boolean | null
 }
 
 /** The reminders that came due in (from, now] — the Windows app's own sweep while it runs (no Web
  * Push in WebView2). The server sweep uses the same 10-minute window, so `from` starts there. */
 export function dueReminders<T extends RemindableRow>(tasks: readonly T[], from: Date, now: Date): T[] {
   return tasks.filter((t) => {
-    if (t.status !== 'todo' || t.deleted_at || !t.reminder_at) return false
+    if (t.status !== 'todo' || t.deleted_at || t.paused || !t.reminder_at) return false
     const at = new Date(t.reminder_at).getTime()
     return at > from.getTime() && at <= now.getTime()
   })
