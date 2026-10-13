@@ -9,6 +9,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { dragGuard } from './dragGuard'
+import { markSeen } from '../tour/help'
 import { layoutOverlaps } from './overlapLayout'
 import { cairoDateKey, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
 import { addDays } from '../../components/pickerMath'
@@ -778,6 +779,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder
       // is FC's own mirror. eventDragStop fires before eventDrop, so cleanup is safe here.
       eventDragStart={(info) => {
+        // Whoever drags a block knows it: the one-time "Drag a block to move it" hint never shows after
+        // (it used to land 1.5 s after the first drag, over the block the next one reached for).
+        markSeen('hint:calendar')
         stopGhostRef.current = startGhost(info.el, info.jsEvent as MouseEvent | null)
         stopHoverRef.current = trackRailHover(railRef?.current)
       }}

@@ -134,8 +134,15 @@ const undo = (page, msg) => page.locator('.kf-toast', { hasText: msg }).getByRol
  * the pointer still over the section. */
 async function dragToSection(page, n, s, mid) {
   await fcBlock(page, n).scrollIntoViewIfNeeded()
-  await sleep(200)
-  const from = center(await fcBlock(page, n).boundingBox())
+  // Wait for the block to stop moving (the grid's scroll can still be settling on a loaded machine).
+  let box = await fcBlock(page, n).boundingBox()
+  for (let i = 0; i < 20; i++) {
+    await sleep(150)
+    const next = await fcBlock(page, n).boundingBox()
+    if (next && box && next.x === box.x && next.y === box.y) break
+    box = next
+  }
+  const from = center(box)
   const to = center(await sec(page, s).locator('.cal-rail-sec-head').boundingBox())
   await page.mouse.move(from.x, from.y)
   await sleep(150)
@@ -226,8 +233,14 @@ if (want('r4')) {
   let lit = null
   let w0 = state.writes.length
   await page.mouse.move(0, 0)
-  // 10s, not 3: the wait starts before the drag, and on a loaded machine the drag alone took >3s.
-  const softno = page.waitForSelector('.kf-cal-softno', { timeout: 10000 }).then(() => true, () => false)
+  // The shake lives 340ms; a polled wait can miss it on a loaded machine, so the page itself records
+  // the moment the class lands (a MutationObserver armed before the drag).
+  await page.evaluate(() => {
+    window.__softno = false
+    new MutationObserver(() => { if (document.querySelector('.kf-cal-softno')) window.__softno = true })
+      .observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['class'] })
+  })
+  const softno = { then: (f) => sleep(400).then(() => page.evaluate(() => window.__softno)).then(f) }
   await dragToSection(page, LUNCH, 'overdue', async () => {
     lit = await page.locator('.cal-rail-sec[data-drop-over]').evaluateAll((els) => els.map((e) => e.dataset.section))
   })
@@ -235,7 +248,9 @@ if (want('r4')) {
   check('r4 Overdue: never lit (it has the attribute but no look)', JSON.stringify(lit) === '["overdue"]' && (await sec(page, 'overdue').evaluate((e) => getComputedStyle(e).outlineStyle)) !== 'dashed')
   await sleep(500)
   await settle(state)
-  check('r4 Overdue: nothing written', state.writes.length === w0, state.writes.slice(w0).map((w) => w.table).join())
+  // app_settings aside: the first drag marks the calendar hint learned (help_seen), not a drop's write.
+  const dropWrites = state.writes.slice(w0).filter((w) => w.table !== 'app_settings')
+  check('r4 Overdue: nothing written', dropWrites.length === 0, dropWrites.map((w) => w.table).join())
   // Task block onto Today: unscheduled AND due today; the task stays a task.
   w0 = state.writes.length
   await dragToSection(page, TYREB, 'today')
