@@ -98,9 +98,10 @@ function store(tx: Tx): Store {
     async events(from, to) {
       // A repeating event (0061) is one row anchored at its first occurrence: it comes along whenever it
       // started before `to`, and tools.ts expands it.
+      // source = 'native': Google-synced events (0074) are never sent to an AI (privacy promise, site info §3).
       const rows = await tx`
         select id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates from calendar_events
-        where deleted_at is null and starts_at < ${to}::timestamptz and (ends_at > ${from}::timestamptz or recurrence_rule is not null)
+        where deleted_at is null and source = 'native' and starts_at < ${to}::timestamptz and (ends_at > ${from}::timestamptz or recurrence_rule is not null)
         order by starts_at, id
         limit 300`
       return rows.map(eventRow)
@@ -109,7 +110,11 @@ function store(tx: Tx): Store {
       // _shared/retrieval.ts's embedding (the runtime's gte-small) + the same search_hybrid the app's
       // search and chat use; security invoker, so RLS scopes it to this user.
       const embedding = JSON.stringify(await embedText(query))
-      const rows = await tx`select entity_type, entity_id, title, snippet, score from search_hybrid(${query}, ${embedding}, ${limit})`
+      // …minus Google-synced events (0074): never sent to an AI (privacy promise, site info §3).
+      const rows = await tx`
+        select s.entity_type, s.entity_id, s.title, s.snippet, s.score from search_hybrid(${query}, ${embedding}, ${limit}) s
+        where not (s.entity_type = 'calendar_event'
+          and exists (select 1 from calendar_events e where e.id::text = s.entity_id::text and e.source = 'gcal'))`
       return rows as unknown as SearchHit[]
     },
     async top3Count(end) {
@@ -166,7 +171,7 @@ function store(tx: Tx): Store {
     async getEvent(id) {
       const [e] = await tx`
         select id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, series_id from calendar_events
-        where id = ${id}::uuid and deleted_at is null`
+        where id = ${id}::uuid and deleted_at is null and source = 'native'` // a Google event (0074) is read-only
       return e ? eventRow(e) : null
     },
     async insertEvent(e) {
@@ -182,13 +187,13 @@ function store(tx: Tx): Store {
         update calendar_events set title = ${e.title}::text, starts_at = ${e.starts_at}::timestamptz, ends_at = ${e.ends_at}::timestamptz,
           all_day = ${e.all_day}::boolean, type = ${e.type ?? 'event'}::text, recurrence_rule = ${e.recurrence_rule ?? null}::text,
           recurrence_exdates = array(select jsonb_array_elements_text(${textArray(e.recurrence_exdates)}::text::jsonb))
-        where id = ${e.id}::uuid and deleted_at is null`
+        where id = ${e.id}::uuid and deleted_at is null and source = 'native'`
     },
     async deleteEvents(ids) {
       // Soft: Trash brings them back. A series takes the one-offs moved out of it (series_id) along.
       const rows = await tx`
         update calendar_events set deleted_at = now()
-        where deleted_at is null
+        where deleted_at is null and source = 'native'
           and (id in (select jsonb_array_elements_text(${textArray(ids)}::text::jsonb)::uuid)
             or series_id in (select jsonb_array_elements_text(${textArray(ids)}::text::jsonb)::uuid))
         returning id`

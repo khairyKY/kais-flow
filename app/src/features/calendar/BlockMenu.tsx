@@ -16,7 +16,7 @@ import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, setEventRepeat, updateEvent } from './api'
-import { BLOCK_MENU_WIDTH, blockMenuSpec, isRepeatingBlock, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
+import { BLOCK_MENU_WIDTH, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { ColorDots } from './formFields'
 import { eventSpan } from './phoneGridMath'
@@ -30,7 +30,7 @@ import { eventSpan } from './phoneGridMath'
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete',
+  link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
 
 /** §5c's Duration submenu. */
@@ -52,7 +52,7 @@ function blockDot(e: CalendarEvent): string {
 /** The open, unplaced tasks Link a task… offers. */
 const linkable = (tasks: readonly Task[]) => tasks.filter((t) => t.status === 'todo' && !t.scheduled_start && !t.deleted_at)
 
-function TitleRow({ event, untitled, gone }: { event: CalendarEvent; untitled: boolean; gone: React.RefObject<boolean> }) {
+function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; untitled: boolean; gone: React.RefObject<boolean>; readOnly?: boolean }) {
   const [draft, setDraft] = useState(untitled ? '' : event.title)
   const [colourAt, setColourAt] = useState<{ x: number; y: number } | null>(null)
   const latest = useRef({ draft, event })
@@ -70,19 +70,21 @@ function TitleRow({ event, untitled, gone }: { event: CalendarEvent; untitled: b
         type="button"
         className="kf-bm-dot"
         aria-label="Colour"
+        disabled={readOnly}
         aria-haspopup="menu"
         aria-expanded={!!colourAt}
         onClick={(e) => {
           const r = e.currentTarget.getBoundingClientRect()
           setColourAt((at) => (at ? null : { x: r.left, y: r.bottom + 4 * uiZoom() }))
         }}
-        style={{ flex: 'none', width: 15, height: 15, margin: '1px -4px 0', padding: 0, border: 'none', borderRadius: '50%', background: 'none', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+        style={{ flex: 'none', width: 15, height: 15, margin: '1px -4px 0', padding: 0, border: 'none', borderRadius: '50%', background: 'none', cursor: readOnly ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
       >
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: blockDot(event) }} />
       </button>
       <textarea
         className="kf-bm-title"
         aria-label="Title"
+        readOnly={readOnly}
         rows={1}
         autoFocus={untitled}
         value={draft}
@@ -168,6 +170,8 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
   const project = event.project_id ? projects.find((p) => p.id === event.project_id) : undefined
   const missed = !!task && task.status === 'todo' && Date.parse(event.ends_at) < Date.now()
   const spec = blockMenuSpec(event, { task, projectName: project?.name, missed })
+  // A Google event (B1): its rows say when and where from; nothing opens, nothing changes.
+  const synced = isSynced(event)
   const span = eventSpan(event)
   const len = span.end - span.start
 
@@ -189,7 +193,7 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
   // one-off's Delete (p7e A4, Akiflow's Backspace) — each with Undo. A repeat asks This / All on its
   // Delete row instead, so the key leaves it alone.
   useEffect(() => {
-    const act = event.task_id ? unschedule : isRepeatingBlock(event) ? null : del
+    const act = synced ? null : event.task_id ? unschedule : isRepeatingBlock(event) ? null : del
     if (!act) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Backspace' && e.key !== 'Delete') return
@@ -323,8 +327,8 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
         <div style={{ padding: '0 9px 7px', fontSize: 'var(--fs-caption)', lineHeight: 1.45, color: 'var(--ink-muted)' }}><EmojiText text={e.caption.text} /></div>
       </>
     ),
-    onClick: run[e.key],
-    submenu: submenu(e.key),
+    onClick: synced ? undefined : run[e.key],
+    submenu: synced ? undefined : submenu(e.key),
   })
 
   if (customAt) return <RepeatEditor {...repeat} position={customAt} onClose={onClose} onChange={setRepeat} />
@@ -334,7 +338,7 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
       onClose={onClose}
       width={BLOCK_MENU_WIDTH}
       label="Block details"
-      header={<TitleRow event={event} untitled={untitled} gone={gone} />}
+      header={<TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />}
       items={spec.map(item)}
     />
   )

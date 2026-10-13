@@ -38,6 +38,8 @@ export interface CalendarGridEvent {
   taskDone?: boolean
   /** One occurrence of a repeating event (CALENDAR-BLOCK-STATES C10): the ↻ badge. */
   repeat?: boolean
+  /** A Google event (google-sync, B1): drawn like any event, never dragged or resized. */
+  readOnly?: boolean
 }
 
 export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'rollingWeek' | 'dayGridMonth'
@@ -591,6 +593,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         if (pendingIds?.includes(e.id)) classes.push('kf-pending')
         if (failedIds?.includes(e.id)) classes.push('kf-failed')
         if (e.id === justDroppedId) classes.push('kf-settle-in')
+        if (e.readOnly) classes.push('kf-synced')
         // Layout (§6) geometry: pair = side by side, stack = 56% shingle, hidden = under the
         // topmost's "+N more". CalendarGrid.css positions FC's harness from these.
         const slot = overlap.get(e.id)
@@ -599,7 +602,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           classes.push(slot.kind === 'pair' ? `kf-ov-p${slot.lane}` : slot.kind === 'stack' ? `kf-ov-s${slot.lane}` : 'kf-ov-hide')
         }
 
-        const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes }
+        const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes, ...(e.readOnly ? { editable: false } : null) }
         // A coloured event keeps 4c's exact geometry and only swaps the hue. The colour rides
         // extendedProps rather than FC's backgroundColor/borderColor, because those land as
         // inline styles that would beat the stylesheet and undo the 4c fill/edge.

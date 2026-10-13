@@ -155,7 +155,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       return
     }
     const ev = blockEl && events.find((x) => x.id === blockEl.dataset.id)
-    if (!ev) return
+    if (!ev || ev.source === 'gcal') return // a Google event (B1) never lifts — a tap still opens it
     s.kind = 'press'
     s.timer = window.setTimeout(() => {
       // Held 400ms (--dur-longpress): the block lifts under the finger and follows it.
