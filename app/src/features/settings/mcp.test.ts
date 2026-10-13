@@ -69,10 +69,10 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], b
     filters: [],
     blocks: blocks.map((b) => ({ ...b })),
     timezone: async () => zone,
-    // index.ts's SQL: open, not in Trash, not someday — dated before `end`, scheduled today, or an undated pick.
+    // index.ts's SQL: open, not in Trash, not someday or paused — dated before `end`, scheduled today, or an undated pick.
     dayTasks: async (start, end) =>
       s.tasks.filter((t) => {
-        if (t.status !== 'todo' || t.someday) return false
+        if (t.status !== 'todo' || t.someday || t.paused) return false
         const dated = t.due_at ?? t.scheduled_start
         const sched = t.scheduled_start ? Date.parse(t.scheduled_start) : NaN
         return (!!dated && Date.parse(dated) < Date.parse(end)) || (sched >= Date.parse(start) && sched < Date.parse(end)) || (t.top3 && !dated)
@@ -88,7 +88,7 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], b
     top3Count: async (end) =>
       s.tasks.filter((t) => {
         const dated = t.due_at ?? t.scheduled_start
-        return t.top3 && t.status === 'todo' && !t.someday && (!dated || Date.parse(dated) < Date.parse(end))
+        return t.top3 && t.status === 'todo' && !t.someday && !t.paused && (!dated || Date.parse(dated) < Date.parse(end))
       }).length,
     openOccurrence: async (title, rule, due, except) =>
       s.tasks.some((t) => t.id !== except && t.status === 'todo' && t.title === title && t.recurrence_rule === rule && t.due_at === due),
@@ -486,6 +486,30 @@ describe('MCP: the tools', () => {
     const store = fakeStore('Asia/Tokyo', [task(10, 'Review', { due_at: '2026-09-27T23:00:00Z', recurrence_rule: 'FREQ=WEEKLY;BYDAY=MO' })])
     const r = await call(deps(store), 'complete_task', { id: tid(10) })
     expect(r.data!.next).toMatchObject({ due: '2026-10-05 08:00' })
+  })
+
+  it('complete_task: a paused series is ticked off without a next copy (A14)', async () => {
+    const store = fakeStore('Africa/Cairo', [task(14, 'Water the ferns', { due_at: '2026-10-03T06:00:00Z', recurrence_rule: 'FREQ=DAILY', paused: true })])
+    const r = await call(deps(store), 'complete_task', { id: tid(14) })
+    expect(r.data!.done).toMatchObject({ title: 'Water the ferns', status: 'done', paused: true })
+    expect(r.data!.next).toBeUndefined()
+    expect(store.tasks).toHaveLength(1)
+    expect(store.logs.map((l) => l.eventType)).toEqual(['task.completed'])
+  })
+
+  it('today: a paused series is in no list and holds no Top 3 place (A14)', async () => {
+    const store = fakeStore('Africa/Cairo', [
+      task(15, 'Paused pick', { top3: true, paused: true, recurrence_rule: 'FREQ=DAILY', due_at: '2026-10-04T06:00:00Z' }),
+      task(16, 'Paused, overdue', { paused: true, recurrence_rule: 'FREQ=WEEKLY', due_at: '2026-10-01T06:00:00Z' }),
+      task(17, 'Live', { due_at: '2026-10-04T06:00:00Z' }),
+    ])
+    const r = await call(deps(store), 'today')
+    expect([r.data!.top3, r.data!.today.map((t: { title: string }) => t.title), r.data!.overdue]).toEqual([[], ['Live'], []])
+    // splitToday alone (a store that hands it a paused row anyway) says the same.
+    expect(splitToday(store.tasks, NOW, 'Africa/Cairo')).toMatchObject({ top3: [], overdue: [] })
+    // …and three paused picks leave the Top 3 open.
+    const three = fakeStore('Africa/Cairo', [1, 2, 3].map((n) => task(n, `paused ${n}`, { top3: true, paused: true })))
+    expect((await call(deps(three), 'add_task', { title: 'one more', top3: true })).isError).toBe(false)
   })
 
   it('complete_task: a repeat rule rrule chokes on writes nothing', async () => {

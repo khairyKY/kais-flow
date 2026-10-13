@@ -56,7 +56,7 @@ function store(tx: Tx): Store {
       return tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
         from tasks t left join projects p on p.id = t.project_id
-        where t.status = 'todo' and t.deleted_at is null and not t.someday
+        where t.status = 'todo' and t.deleted_at is null and not t.someday and not t.paused
           and (coalesce(t.due_at, t.scheduled_start) < ${end}::timestamptz
             or (t.scheduled_start >= ${start}::timestamptz and t.scheduled_start < ${end}::timestamptz)
             or (t.top3 and t.due_at is null and t.scheduled_start is null))
@@ -109,7 +109,7 @@ function store(tx: Tx): Store {
       // The Top 3 rule (_shared/today.ts): a pick dated after today isn't one of today's.
       const [row] = await tx`
         select count(*)::int as n from tasks
-        where top3 and status = 'todo' and deleted_at is null and not someday
+        where top3 and status = 'todo' and deleted_at is null and not someday and not paused
           and (coalesce(due_at, scheduled_start) is null or coalesce(due_at, scheduled_start) < ${end}::timestamptz)`
       return row.n as number
     },

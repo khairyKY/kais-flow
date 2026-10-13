@@ -10,7 +10,8 @@
 //                today or earlier, never someday; goal (top3_rank 1) first
 //   "Tomorrow"  tomorrow 09:00 (lib/dateShortcuts scheduleTomorrow)
 //   a bare date  09:00 that day (scheduleToday)
-//   completing   a repeat spawns its next occurrence (features/tasks/completion.ts planCompletion)
+//   completing   a repeat spawns its next occurrence — never a paused one (features/tasks/completion.ts planCompletion)
+//   paused       a paused series (Perennials ‖) rests until it's resumed: no list, no pick (grouping.ts)
 //   every write  logs the same activity_log event the app's helper logs, so Slipping, streaks and the
 //                digests see it (+ `source: 'mcp'` in the payload)
 
@@ -146,7 +147,7 @@ export interface TaskFilter {
 /** One method per statement; every one runs inside the call's transaction, as the user. */
 export interface Store {
   timezone(): Promise<string | null>
-  /** Open, not in Trash, not someday: dated before `end`, scheduled in [start, end), or an undated pick. */
+  /** Open, not in Trash, not someday, not paused: dated before `end`, scheduled in [start, end), or an undated pick. */
   dayTasks(startIso: string, endIso: string): Promise<TaskRow[]>
   listTasks(f: TaskFilter): Promise<TaskRow[]>
   getTask(id: string): Promise<TaskRow | null>
@@ -156,7 +157,7 @@ export interface Store {
    * expand those — a series' row is its first occurrence). By start. */
   events(fromIso: string, toIso: string): Promise<EventRow[]>
   search(query: string, limit: number): Promise<SearchHit[]>
-  /** Today's open picks (top3Rule): starred, open, not in Trash, not someday, undated or dated before `todayEndIso`. */
+  /** Today's open picks (top3Rule): starred, open, not in Trash, not someday or paused, undated or dated before `todayEndIso`. */
   top3Count(todayEndIso: string): Promise<number>
   /** An open copy of a repeat already sits at `dueIso` (completion.ts openOccurrence). */
   openOccurrence(title: string, rule: string, dueIso: string, exceptId: string): Promise<boolean>
@@ -255,6 +256,7 @@ function taskOut(t: TaskRow, zone: string, full = false): Record<string, unknown
   if (t.priority !== null) o.priority = t.priority
   if (t.someday) o.someday = true
   if (t.recurrence_rule) o.repeats = t.recurrence_rule
+  if (t.paused) o.paused = true
   if (t.completed_at) o.completed = wallTime(t.completed_at, zone)
   if (full) {
     if (t.notes) o.notes = t.notes
@@ -262,7 +264,6 @@ function taskOut(t: TaskRow, zone: string, full = false): Record<string, unknown
     if (t.reminder_at) o.reminder = wallTime(t.reminder_at, zone)
     if (t.project_id) o.project_id = t.project_id
     if (t.parent_task_id) o.parent_task_id = t.parent_task_id
-    if (t.paused) o.paused = true
     o.created = wallTime(t.created_at, zone)
   }
   return o
@@ -278,12 +279,12 @@ function eventOut(e: EventRow, zone: string): Record<string, unknown> {
 }
 
 /** Today's open tasks, as the app sorts them (grouping.ts): Top 3 picks (top3Rule, goal first); due or
- * scheduled today; dated before today. Never someday — a starred someday task isn't a pick. */
+ * scheduled today; dated before today. Never someday or paused — a starred someday task isn't a pick. */
 export function splitToday(rows: readonly TaskRow[], now: Date, zone: string): { top3: TaskRow[]; today: TaskRow[]; overdue: TaskRow[] } {
   const day = dateKey(now, zone)
   const out = { top3: todaysTop3(rows, now, zone), today: [] as TaskRow[], overdue: [] as TaskRow[] }
   for (const t of rows) {
-    if (t.status !== 'todo' || t.someday || isTop3Today(t, now, zone)) continue
+    if (t.status !== 'todo' || t.someday || t.paused || isTop3Today(t, now, zone)) continue
     const scheduledToday = !!t.scheduled_start && dateKey(new Date(t.scheduled_start), zone) === day
     const dated = t.due_at ?? t.scheduled_start
     const on = dated ? dateKey(new Date(dated), zone) : null
@@ -536,7 +537,7 @@ export const TOOLS: readonly ToolDef[] = [
   {
     name: 'complete_task',
     title: 'Complete task',
-    description: "Mark an open task done (only when the user says it's done). A repeating task's next occurrence is created, as in the app.",
+    description: "Mark an open task done (only when the user says it's done). A repeating task's next occurrence is created, as in the app — unless the series is paused.",
     inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' } }, required: ['id'], additionalProperties: false },
     write: true,
     async run(a, ctx) {
@@ -545,7 +546,8 @@ export const TOOLS: readonly ToolDef[] = [
       // Plan the next occurrence before writing anything: a rule rrule can't read must not leave
       // the task done with its series silently ended.
       let next: TaskRow | null = null
-      if (t.recurrence_rule && t.due_at) {
+      // A paused series (Perennials ‖) doesn't come back until it's resumed (completion.ts).
+      if (t.recurrence_rule && t.due_at && !t.paused) {
         // Rolls from max(due, today) like the app (_shared/repeat.ts), not from the old due date.
         const at = ctx.nextOccurrence(t.recurrence_rule, new Date(t.due_at), ctx.zone, rollAfter(t.due_at, ctx.now, ctx.zone))
         if (at && !(await ctx.store.openOccurrence(t.title, t.recurrence_rule, at.toISOString(), t.id))) {
