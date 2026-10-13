@@ -127,8 +127,8 @@ export function readRules(raw: unknown): GithubRules {
 }
 
 /** A task's external_ref when the sync itself made the task ("Straight to Tasks"). `synced` marks
- * the ones it may tick off when the issue closes; a task filed by hand from the Inbox has none, so it
- * is never touched. repo/number are what the recheck reads; checked_at rotates it like payload's. */
+ * the sync's own: those also tick off when the issue is gone. repo/number are what the recheck reads;
+ * checked_at rotates it like payload's. */
 export interface SyncedTaskRef {
   source: 'github'
   id: string
@@ -137,6 +137,46 @@ export interface SyncedTaskRef {
   number: number
   synced: true
   checked_at?: string
+}
+
+/** Any task linked to an issue: the sync's own (SyncedTaskRef), or one filed by hand from a GitHub
+ * letter in the Inbox (inbox/api fileToTask: `{source, id, url}` — no repo/number; its url names them). */
+export interface GithubTaskRef {
+  source: 'github'
+  id: string
+  url?: string | null
+  repo?: string
+  number?: number
+  synced?: boolean
+  checked_at?: string
+}
+
+// https://github.com/owner/name/issues/12 (toPayload keeps only github.com links).
+const ISSUE_URL = /^https:\/\/github\.com\/([A-Za-z0-9][A-Za-z0-9-]{0,38}\/[A-Za-z0-9._-]{1,100})\/issues\/([1-9]\d*)(?:[/?#]|$)/
+
+/** The open GitHub tasks whose issue left the search results — closed, deleted, unassigned or no
+ * longer watched — as rows for the recheck (one GET each, least recently checked first, capped):
+ * repo/number from the ref, else from its url. A20: the hand-filed ones too, not only the sync's. */
+export function taskRechecks(
+  tasks: readonly { id: string; title: string; external_ref: GithubTaskRef }[],
+  fetchedIds: ReadonlySet<string>,
+): (PendingRow & { external_ref: GithubTaskRef })[] {
+  const rows: (PendingRow & { external_ref: GithubTaskRef })[] = []
+  for (const { id, title, external_ref: ref } of tasks) {
+    if (fetchedIds.has(ref.id)) continue
+    const m = ISSUE_URL.exec(ref.url ?? '')
+    const repo = ref.repo ?? m?.[1]
+    const number = ref.number ?? (m ? Number(m[2]) : undefined)
+    if (!repo || !number) continue // names no issue: nothing to ask GitHub
+    rows.push({ id, raw_text: title, payload: { ...ref, repo, number }, external_ref: ref })
+  }
+  return staleFirst(rows)
+}
+
+/** Does the recheck's verdict tick the task off? A closed issue always does. A gone one (deleted, or
+ * out of the token's reach) only for a task the sync made itself: one filed by hand waits for a close. */
+export function ticksOff(ref: Pick<GithubTaskRef, 'synced'>, verdict: string): boolean {
+  return verdict === 'closed on GitHub' || (verdict === 'gone from GitHub' && ref.synced === true)
 }
 
 /** The issue → landing decision: which table a NEW issue goes to under `rules`, and the row (minus
