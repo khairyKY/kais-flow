@@ -135,6 +135,8 @@ export interface CalendarEvent {
   project_id?: string | null
   /** A detached occurrence: the series it was dragged out of. */
   series_id?: string | null
+  /** A Google event (source 'gcal', google-sync — migration 0074): which calendar it mirrors. Read-only. */
+  external_ref?: { source: string; id: string; calendar?: string; calendar_id?: string } | null
   /** Client-only, never stored: set on an occurrence features/calendar/series.ts expanded from a
    * series row (its id is `${seriesId}::${start}`). calendar/api writes resolve it to that row. */
   seriesId?: string

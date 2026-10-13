@@ -2,6 +2,8 @@
 // recipe): the dev server runs with VITE_SUPABASE_URL=http://127.0.0.1:9 (nothing listens there), a
 // made-up session sits in localStorage, Playwright answers every REST call and records every write.
 // Checks: Settings shows no fake Google Calendar sync and no Pushover; the GitHub row's real states;
+// (2026-10-13, B1: Google Calendar sync is built — the "Coming soon" checks now assert its real row:
+// "Not connected" + Connect; docs/log/assets/google-sync owns the rest.)
 // the ritual reminder controls write app_settings; GitHub Inbox rows show glyph/repo/labels/age; filing
 // one writes the task's external_ref; the task editor (desktop) and task sheet (phone) link the issue.
 //   node verify.mjs <outDir> [baseUrl] [playwright-core path]
@@ -102,8 +104,8 @@ for (const state of [null]) {
   const { ctx, page, errors } = await open('desktop', '/settings', { integrations: [] })
   const txt = await bodyText(page)
   if (!state) {
-    check('desktop settings: no "Sync now" button (Google Calendar has no sync yet)', (await page.getByRole('button', { name: 'Sync now' }).count()) === 0)
-    check('desktop settings: Google Calendar is an honest "Coming soon" row', txt.includes('Google Calendar') && txt.includes('Coming soon') && !txt.includes('scopes: calendar.events'))
+    check('desktop settings: no "Sync now" button (nothing is connected)', (await page.getByRole('button', { name: 'Sync now' }).count()) === 0)
+    check('desktop settings: Google Calendar is a real row — "Not connected", no "Coming soon"', txt.includes('Google Calendar') && /Google Calendar.*Not connected/.test(txt) && !txt.includes('Coming soon') && !txt.includes('scopes: calendar.events'))
     check('desktop settings: no Pushover', !txt.includes('Pushover'))
     check('desktop settings: the old "configured" read-out is gone', !/configured/i.test(txt))
     await page.locator('#settings-Notifications').scrollIntoViewIfNeeded()
@@ -142,7 +144,7 @@ for (const state of [null]) {
   await page.locator('.st-nav-item', { hasText: /^Integrations$/ }).first().click() // UI pass: the section list is buttons
   await sleep(600)
   const txt = await bodyText(page)
-  check('integrations page: Google Calendar says "Coming soon" and nothing syncs', txt.includes('Google Calendar') && txt.includes('Coming soon') && txt.includes('Not built yet'))
+  check('integrations page: Google Calendar is a real row with Connect (no "Coming soon", no "Not built yet")', txt.includes('Google Calendar') && !txt.includes('Coming soon') && !txt.includes('Not built yet') && (await page.locator('.st-card', { has: page.getByText('Google Calendar', { exact: true }) }).last().getByRole('button', { name: 'Connect' }).count()) === 1)
   check('integrations page: no Pushover row', !txt.includes('Pushover'))
   await shot(page, 'desktop-integrations')
   check('desktop reminders + integrations: no page errors', errors.length === 0, errors.join(' | '))
@@ -156,7 +158,7 @@ for (const state of [null]) {
   const row = async (label) => page.locator('a, div', { has: page.locator(`span:text-is("${label}")`) }).last().textContent()
   // UI pass (v1.0.27): the phone's summary rows are gone; the Integrations card says it directly.
   void row
-  check('phone settings: Google Calendar, if shown, only says "Coming soon"', !txt.includes('Google Calendar') || txt.includes('Coming soon'))
+  check('phone settings: Google Calendar is a real row (Connect), never "Coming soon"', txt.includes('Google Calendar') && !txt.includes('Coming soon'))
   check('phone settings: no Pushover, no fake sync', !txt.includes('Pushover') && !txt.includes('Sync now'))
   const swRow = (label) => page.locator('div', { has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last().locator('[role="switch"]')
   const sw = { count: async () => (await swRow('Morning digest').count()) + (await swRow('Evening nudge').count()), nth: (i) => swRow(i === 0 ? 'Morning digest' : 'Evening nudge') }

@@ -90,7 +90,7 @@ export default defineConfig({
         globIgnores: ['**/emoji/**'],
         // The privacy policy is a real page (public/privacy.html — Google's OAuth consent screen links it),
         // never the app shell.
-        navigateFallbackDenylist: [/^\/privacy\.html$/],
+        navigateFallbackDenylist: [/^\/privacy(\.html)?\/?$/], // Cloudflare serves privacy.html at /privacy
         runtimeCaching: [
           {
             urlPattern: /\/emoji\/.*\.svg$/,

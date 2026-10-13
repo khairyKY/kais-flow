@@ -1,0 +1,397 @@
+[
+  {
+    "name": "s1 settings: no \"Coming soon\" anywhere",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 summary card: Google Calendar reads \"Not connected\"",
+    "ok": true,
+    "detail": "Google CalendarYour calendars on ours, read-onlyNot connected"
+  },
+  {
+    "name": "s1 integrations: a real Google Calendar row with Connect",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 integrations: no \"Not built yet\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 Connect posts {action:\"start\", origin} to google-connect",
+    "ok": true,
+    "detail": "[{\"name\":\"google-connect\",\"body\":{\"action\":\"start\",\"origin\":\"http://localhost:5277\"}}]"
+  },
+  {
+    "name": "s2 it says what is missing: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, and where the steps are",
+    "ok": true,
+    "detail": "Not set up yet: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET aren’t set on the server. docs/GOOGLE-SETUP.md has the steps (free, about 10 minutes)."
+  },
+  {
+    "name": "s2 still on Settings, the Connect button still there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2b not deployed: \"isn’t on the server yet … needs deploying\"",
+    "ok": true,
+    "detail": "Google Calendar isn’t on the server yet — google-connect and google-sync need deploying (docs/GOOGLE-SETUP.md)."
+  },
+  {
+    "name": "s2b no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s3 the browser goes to Google’s consent page, read-only scope",
+    "ok": true,
+    "detail": "https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&redirect_uri=https%3A%2F%2Feqbbkitofgyxxrfggpbu.supabase.co%2Ffunctions%2Fv1%2Fgoogle-connect&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly&access_type=offline&prompt=consent&state=s"
+  },
+  {
+    "name": "s3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 day: the landing opens Integrations",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 day: the first sync runs (google-sync {action:'sync'}) and says so",
+    "ok": true,
+    "detail": "Connected · Synced · 2 calendars · 335 events · 335 new · 0 gone"
+  },
+  {
+    "name": "s4 day: ?google= is gone from the address",
+    "ok": true,
+    "detail": "http://localhost:5277/settings"
+  },
+  {
+    "name": "s4 day: the account and \"Connected · synced 12 Oct, 09:48\"",
+    "ok": true,
+    "detail": "Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Nothing is written back.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars"
+  },
+  {
+    "name": "s4 day: one switch per calendar, the chosen ones on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 day: \"Last synced 12 Oct, 09:48\", Sync now, Disconnect",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 night: the landing opens Integrations",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 night: the first sync runs (google-sync {action:'sync'}) and says so",
+    "ok": true,
+    "detail": "Connected · Synced · 2 calendars · 335 events · 335 new · 0 gone"
+  },
+  {
+    "name": "s4 night: ?google= is gone from the address",
+    "ok": true,
+    "detail": "http://localhost:5277/settings"
+  },
+  {
+    "name": "s4 night: the account and \"Connected · synced 12 Oct, 09:48\"",
+    "ok": true,
+    "detail": "Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Nothing is written back.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars"
+  },
+  {
+    "name": "s4 night: one switch per calendar, the chosen ones on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 night: \"Last synced 12 Oct, 09:48\", Sync now, Disconnect",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 turning Holidays on posts choose with all three ids",
+    "ok": true,
+    "detail": "{\"action\":\"choose\",\"ids\":[\"kai@gmail.com\",\"prayer@group.calendar.google.com\",\"en.eg#holiday@group.v.calendar.google.com\"]}"
+  },
+  {
+    "name": "s5 …and syncs at once (a newly shown calendar)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 turning one off posts choose without it, and no sync",
+    "ok": true,
+    "detail": "{\"action\":\"choose\",\"ids\":[\"kai@gmail.com\"]}"
+  },
+  {
+    "name": "s5 Disconnect posts {action:\"disconnect\"} and says your own events stay",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 nothing written to calendar_events or integrations by the client",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "s5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s6 ?google=error&reason=denied says the consent page was cancelled",
+    "ok": true,
+    "detail": "Google wasn’t connected — the consent page was cancelled."
+  },
+  {
+    "name": "s6 …and the address is clean again",
+    "ok": true,
+    "detail": "http://localhost:5277/settings"
+  },
+  {
+    "name": "s6 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s6 failing: the summary row says \"Access expired — reconnect\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s6 failing: Reconnect instead of Sync now, no calendar switches",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s6 failing: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s7 day: phone Settings → Connections has Google Calendar with its switches",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s7 day: no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "s7 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s7 night: phone Settings → Connections has Google Calendar with its switches",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s7 night: no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "s7 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 day: Dhuhr is on the grid, marked synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 day: in the calendar's colour (#9fe1e7)",
+    "ok": true,
+    "detail": "#9fe1e7"
+  },
+  {
+    "name": "g1 day: the all-day Mawlid sits in the all-day band (Tue)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 day: no resize handle on a synced event",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 day: overlap logic counts it (Lunch and Dhuhr both conflicted)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 day: busy — the rail footer counts the synced blocks (\"3 blocked\")",
+    "ok": true,
+    "detail": "3 blocked9h free today"
+  },
+  {
+    "name": "g1 drag: a synced event doesn’t move, nothing written",
+    "ok": true,
+    "detail": "{\"before\":655.25,\"after\":655.25,\"writes\":0}"
+  },
+  {
+    "name": "g1 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 night: Dhuhr is on the grid, marked synced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 night: in the calendar's colour (#9fe1e7)",
+    "ok": true,
+    "detail": "#9fe1e7"
+  },
+  {
+    "name": "g1 night: the all-day Mawlid sits in the all-day band (Tue)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 night: no resize handle on a synced event",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 night: overlap logic counts it (Lunch and Dhuhr both conflicted)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 night: busy — the rail footer counts the synced blocks (\"3 blocked\")",
+    "ok": true,
+    "detail": "3 blocked9h free today"
+  },
+  {
+    "name": "g1 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2 day: rows — date · time · \"From Google · Prayer times\", nothing else",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"12:00 – 12:20\\n20m\",\"From Google · Prayer times\"]"
+  },
+  {
+    "name": "g2 day: the title is read-only, the colour dot disabled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2 the date row opens no picker",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2 ⌫ with its menu open deletes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2 right-click: only \"Details\" — no Delete",
+    "ok": true,
+    "detail": "[\"Details\"]"
+  },
+  {
+    "name": "g2 a native event still has its rows and Delete",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\\n▸\",\"12:10 – 12:40\\n30m\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\\n⌫\"]"
+  },
+  {
+    "name": "g2 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2 night: rows — date · time · \"From Google · Prayer times\", nothing else",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"12:00 – 12:20\\n20m\",\"From Google · Prayer times\"]"
+  },
+  {
+    "name": "g2 night: the title is read-only, the colour dot disabled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 day: the phone grid draws Dhuhr",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 a long press doesn’t lift a synced block, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 day: the sheet — date · time · \"From Google · Prayer times\"",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"12:00 – 12:20\\n20M\",\"From Google · Prayer times\"]"
+  },
+  {
+    "name": "p1 day: no swatches, no Delete footer, the title read-only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 night: the phone grid draws Dhuhr",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 night: the sheet — date · time · \"From Google · Prayer times\"",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"12:00 – 12:20\\n20M\",\"From Google · Prayer times\"]"
+  },
+  {
+    "name": "p1 night: no swatches, no Delete footer, the title read-only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 night: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

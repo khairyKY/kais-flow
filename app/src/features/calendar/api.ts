@@ -14,7 +14,7 @@ import { eventSpan, movedText, rangeText, spanIso, type DragMode, type Span } fr
 import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
 import { alignToRule, detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
 import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
-import { repeatLabel } from './blockMenuSpec'
+import { isSynced, repeatLabel } from './blockMenuSpec'
 import { zoneToIso } from './eventTime'
 import { intoSlot, OUT_OF_SLOT, slotTasks } from './slots'
 
@@ -39,6 +39,13 @@ export function useCalendarEvents(range?: { start: Date; end: Date }) {
   const to = w.to.getTime()
   const select = useCallback((events: CalendarEvent[]) => expandEvents(live(events), new Date(from), new Date(to), zone), [from, to, zone])
   return useQuery({ queryKey: ['calendar_events'], queryFn: fetchEvents, select })
+}
+
+/** Every calendar_events write in the app. A Google event (source 'gcal') is read-only: google-sync
+ * owns it, so nothing here can move, edit or trash one (the grid and the menus don't offer it either). */
+function writeEvent(row: CalendarEvent, op?: 'upsert' | 'delete'): void {
+  if (isSynced(row)) return
+  writeRow('calendar_events', row, op)
 }
 
 function nowIso() {
@@ -140,13 +147,13 @@ function detach(occ: CalendarEvent, startsAt: string, endsAt: string, allDay: bo
   const row = seriesOf(occ)
   if (!row) return () => {}
   const copy = detachedCopy(row, startsAt, endsAt, allDay, crypto.randomUUID(), nowIso())
-  writeRow('calendar_events', withExdate(row, occ.starts_at))
-  writeRow('calendar_events', copy)
+  writeEvent(withExdate(row, occ.starts_at))
+  writeEvent(copy)
   logActivity('calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, series_id: row.id })
   const undoTasks = followSlot(occ, copy)
   return () => {
-    writeRow('calendar_events', withoutExdate(seriesOf(occ) ?? row, occ.starts_at))
-    writeRow('calendar_events', copy, 'delete')
+    writeEvent(withoutExdate(seriesOf(occ) ?? row, occ.starts_at))
+    writeEvent(copy, 'delete')
     undoTasks()
   }
 }
@@ -169,7 +176,7 @@ export function createEvent(title: string, startsAt: string, endsAt: string, typ
     created_at: nowIso(),
     updated_at: nowIso(),
   }
-  writeRow('calendar_events', event)
+  writeEvent(event)
   logActivity('calendar_event.created', 'calendar_event', event.id, { title, type: event.type })
   return event
 }
@@ -207,7 +214,7 @@ function applyMoves(task: Task, moves: BlockMoves, allDay = false): { event: Cal
         created_at: nowIso(),
         updated_at: nowIso(),
       }
-      writeRow('calendar_events', created)
+      writeEvent(created)
       touchTaskSchedule(task.id, starts_at, ends_at)
       event = created
       steps.push(() => deleteEvent(created))
@@ -257,10 +264,10 @@ export function updateEvent(event: CalendarEvent, patch: Partial<CalendarEvent>)
   if (event.seriesId) {
     const row = seriesOf(event)
     const { starts_at: _s, ends_at: _e, ...rest } = patch
-    if (row) writeRow('calendar_events', { ...row, ...rest })
+    if (row) writeEvent({ ...row, ...rest })
     return
   }
-  writeRow('calendar_events', { ...event, ...patch })
+  writeEvent({ ...event, ...patch })
   if (event.task_id) {
     const newStart = patch.starts_at ?? event.starts_at
     const newEnd = patch.ends_at ?? event.ends_at
@@ -276,7 +283,7 @@ export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt
   if (event.seriesId) return detach(event, startsAt, endsAt, allDay ?? event.all_day)
   const prior = { ...event }
   const next = { ...event, starts_at: startsAt, ends_at: endsAt, all_day: allDay ?? event.all_day }
-  writeRow('calendar_events', next)
+  writeEvent(next)
   if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt)
   const undoTasks = followSlot(event, next)
   return () => {
@@ -291,11 +298,11 @@ export function restoreEvent(event: CalendarEvent): void {
   if (event.seriesId) {
     const row = seriesOf(event)
     if (!row) return
-    writeRow('calendar_events', withoutExdate(row, event.starts_at))
+    writeEvent(withoutExdate(row, event.starts_at))
     logActivity('calendar_event.restored', 'calendar_event', row.id, { occurrence: event.starts_at })
     return
   }
-  writeRow('calendar_events', { ...event, deleted_at: null })
+  writeEvent({ ...event, deleted_at: null })
   if (event.task_id) touchTaskSchedule(event.task_id, event.starts_at, event.ends_at)
   logActivity('calendar_event.restored', 'calendar_event', event.id, {})
 }
@@ -306,7 +313,7 @@ export function resizeEvent(event: CalendarEvent, startsAt: string, endsAt: stri
   if (event.seriesId) return detach(event, startsAt, endsAt, event.all_day)
   const prior = { ...event }
   const next = { ...event, starts_at: startsAt, ends_at: endsAt }
-  writeRow('calendar_events', next)
+  writeEvent(next)
   const undoTasks = followSlot(event, next)
   const undo = () => {
     resizeEvent(prior, prior.starts_at, prior.ends_at)
@@ -359,14 +366,14 @@ function splitAt(row: CalendarEvent, occ: CalendarEvent, tailOf: (tail: Calendar
   const split = splitSeries(row, occ, crypto.randomUUID(), nowIso())
   if (!split) return undefined
   const tail = tailOf(split.tail)
-  writeRow('calendar_events', split.head)
-  writeRow('calendar_events', tail)
+  writeEvent(split.head)
+  writeEvent(tail)
   logActivity('calendar_event.created', 'calendar_event', tail.id, { title: tail.title, type: tail.type, split_from: row.id })
   return {
     tail,
     undo: () => {
-      writeRow('calendar_events', row)
-      writeRow('calendar_events', tail, 'delete')
+      writeEvent(row)
+      writeEvent(tail, 'delete')
     },
   }
 }
@@ -400,10 +407,10 @@ export function retimeEventWithUndo(event: CalendarEvent, from: Span, to: Span):
     })
     return { id: occurrenceId(split.tail.id, new Date(split.tail.starts_at).toISOString()), start: split.tail.starts_at }
   }
-  writeRow('calendar_events', retime(row))
+  writeEvent(retime(row))
   const undoTasks = tasksTo(row.id, '')
   toastUndo(message, () => {
-    writeRow('calendar_events', row)
+    writeEvent(row)
     undoTasks()
   })
   return null
@@ -422,8 +429,8 @@ export function setEventRepeat(event: CalendarEvent, rule: string | null): Block
   const align = (series: CalendarEvent) => {
     const a = alignToRule(series, crypto.randomUUID(), nowIso())
     if (!a) return null
-    writeRow('calendar_events', a.series)
-    writeRow('calendar_events', a.keep)
+    writeEvent(a.series)
+    writeEvent(a.keep)
     logActivity('calendar_event.created', 'calendar_event', a.keep.id, { title: a.keep.title, type: a.keep.type, series_id: a.series.id })
     return a
   }
@@ -432,16 +439,16 @@ export function setEventRepeat(event: CalendarEvent, rule: string | null): Block
     const a = align(split.tail)
     toastUndo(`${repeatLabel(rule)}${from(a?.series.starts_at ?? event.starts_at)}`, () => {
       split.undo()
-      if (a) writeRow('calendar_events', a.keep, 'delete')
+      if (a) writeEvent(a.keep, 'delete')
     })
     return a ? { id: a.keep.id, start: a.keep.starts_at } : ref(split.tail)
   }
   const next = rerule(row, event, rule)
-  writeRow('calendar_events', next)
+  writeEvent(next)
   const a = align(next)
   toastUndo(`${repeatLabel(rule)}${a ? from(a.series.starts_at) : ''}`, () => {
-    writeRow('calendar_events', row)
-    if (a) writeRow('calendar_events', a.keep, 'delete')
+    writeEvent(row)
+    if (a) writeEvent(a.keep, 'delete')
   })
   return a ? { id: a.keep.id, start: a.keep.starts_at } : ref(next)
 }
@@ -452,11 +459,11 @@ export function linkTaskWithUndo(event: CalendarEvent, task: Task): void {
   if (event.seriesId || event.recurrence_rule) return
   const prior = { ...event }
   const priorTask = cachedTask(task.id) ?? task
-  writeRow('calendar_events', { ...event, task_id: task.id, type: 'task' })
+  writeEvent({ ...event, task_id: task.id, type: 'task' })
   touchTaskSchedule(task.id, event.starts_at, event.ends_at)
   logActivity('task.scheduled', 'task', task.id, { calendar_event_id: event.id })
   toastUndo(`Linked · ${task.title}`, () => {
-    writeRow('calendar_events', prior)
+    writeEvent(prior)
     writeRow('tasks', priorTask)
   })
 }
@@ -469,11 +476,11 @@ export function deleteEvent(event: CalendarEvent): () => void {
   if (event.seriesId) {
     const row = seriesOf(event)
     if (!row) return undoTasks
-    writeRow('calendar_events', withExdate(row, event.starts_at))
+    writeEvent(withExdate(row, event.starts_at))
     logActivity('calendar_event.deleted', 'calendar_event', row.id, { occurrence: event.starts_at })
     return undoTasks
   }
-  writeRow('calendar_events', { ...event, deleted_at: new Date().toISOString() })
+  writeEvent({ ...event, deleted_at: new Date().toISOString() })
   if (event.task_id) touchTaskSchedule(event.task_id, null, null)
   logActivity('calendar_event.deleted', 'calendar_event', event.id, {})
   return undoTasks
@@ -507,13 +514,13 @@ export function deleteSeriesWithUndo(event: CalendarEvent): void {
 export function deleteEventsForTask(taskId: string): void {
   const events = cachedRows()
   for (const event of events.filter((e) => e.task_id === taskId)) {
-    writeRow('calendar_events', { ...event, deleted_at: new Date().toISOString() })
+    writeEvent({ ...event, deleted_at: new Date().toISOString() })
   }
 }
 
 export function restoreEventsForTask(taskId: string): void {
   const events = cachedRows()
   for (const event of events.filter((e) => e.task_id === taskId && e.deleted_at)) {
-    writeRow('calendar_events', { ...event, deleted_at: null })
+    writeEvent({ ...event, deleted_at: null })
   }
 }

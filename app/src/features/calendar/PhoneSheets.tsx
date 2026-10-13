@@ -26,7 +26,7 @@ import { completeTaskWithUndo, createTask, setRecurrence, toggleTop3, uncomplete
 import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRepeat, updateEvent, type BlockRef } from './api'
-import { blockMenuSpec, isUntitled, type BlockMenuKey } from './blockMenuSpec'
+import { blockMenuSpec, isSynced, isUntitled, type BlockMenuKey } from './blockMenuSpec'
 import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { ColorDots } from './formFields'
@@ -86,7 +86,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete',
+  link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
 
 /** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
@@ -365,7 +365,9 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const project = event.project_id ? projects.find((p) => p.id === event.project_id) : undefined
   const spec = blockMenuSpec(event, { task, projectName: project?.name })
   const del = spec.at(-1)!
-  const kind = event.task_id ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
+  // A Google event (B1): read-only — its rows only say when and from which calendar; no footer.
+  const synced = isSynced(event)
+  const kind = synced ? 'Google event' : event.task_id ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
   const meta = `${kind} · ${event.all_day ? 'All day' : durationLabel(len)}`
   const run: Partial<Record<BlockMenuKey, (el: HTMLElement) => void>> = {
     date: () => setPicker('date'),
@@ -396,7 +398,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           after.current?.()
         }}
         handleGap={8}
-        footer={(close) => {
+        footer={synced ? undefined : (close) => {
           closeRef.current = close
           return (
             <Button variant="ghost" className="pc-bs-delete" icon={<Icon name="delete" size={20} />} onClick={remove}>
@@ -414,6 +416,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                   <input
                     className="pc-qc-title pc-bs-title-in"
                     aria-label="Title"
+                    readOnly={synced}
                     enterKeyHint="done"
                     placeholder="Add title"
                     value={title}
@@ -428,7 +431,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
               </div>
               {/* Kai 2026-10-12: the colour changes after creation — the desktop title dot's swatches,
                   saved on tap, for every block (the grid draws a block's own colour first). */}
-              <div className="pc-bs-colors">
+              {!synced && <div className="pc-bs-colors">
                 <ColorDots
                   value={event.color ?? null}
                   size={28}
@@ -438,10 +441,10 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                     saved()
                   }}
                 />
-              </div>
+              </div>}
               <div className="pc-bs-rows">
                 <style>{ACTION_ROW_CSS}</style>
-                {spec.slice(0, -1).map((e) => (
+                {(synced ? spec : spec.slice(0, -1)).map((e) => (
                   <Fragment key={e.key}>
                     {e.caption && (
                       <div className="pc-bs-caption">
@@ -449,7 +452,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                         <EmojiText text={e.caption.text} />
                       </div>
                     )}
-                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => run[e.key]?.(el)} />
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => !synced && run[e.key]?.(el)} />
                   </Fragment>
                 ))}
               </div>
