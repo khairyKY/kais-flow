@@ -90,6 +90,7 @@ function destinationOf(task: Task): string {
  * went and when when it has either (punch 7: name the real destination). */
 function filedLine(task: Task): string {
   const where = [placeOf(task), task.due_at ? dayWord(task.due_at) : null].filter(Boolean)
+  if (task.someday) return `Filed "${task.title}" to Someday${where.length ? ` · ${where.join(' · ')}` : ''}`
   return `Filed "${task.title}" as a task${where.length ? ` · ${where.join(' · ')}` : ''}`
 }
 
@@ -118,7 +119,7 @@ export function snoozeInboxItem(item: InboxItem, until: string, silent = false):
 // Returns the created task so callers can offer a real Undo (WA-4 punch 21 — convertResurfaced).
 export function fileToTask(
   item: InboxItem,
-  opts: { domainId?: string | null; projectId?: string | null; areaId?: string | null; dueAt?: string | null; title?: string; silent?: boolean } = {},
+  opts: { domainId?: string | null; projectId?: string | null; areaId?: string | null; dueAt?: string | null; title?: string; silent?: boolean; someday?: boolean } = {},
 ): Task {
   const prior = { ...item }
   const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null } | null
@@ -126,7 +127,8 @@ export function fileToTask(
   // passing it through, so every manual filing silently dropped it — and the punch-7 toast
   // could never truthfully say "· Today". Default to the parse; an explicit opt still wins —
   // null included (the card's date field cleared).
-  const parsedDue = opts.dueAt !== undefined ? opts.dueAt : ((item.ai_parse as { due_at?: string | null } | null)?.due_at ?? null)
+  // A someday task is undated (Tasks › Someday), whatever the parse said.
+  const parsedDue = opts.someday ? null : opts.dueAt !== undefined ? opts.dueAt : ((item.ai_parse as { due_at?: string | null } | null)?.due_at ?? null)
   // P6 step 4: a filed GitHub issue keeps its link (the task's "View issue").
   const issue = item.kind === 'github_issue' ? (item.payload as { node_id?: string; url?: string } | null) : null
   const issueUrl = githubUrl(issue?.url)
@@ -138,6 +140,7 @@ export function fileToTask(
     dueAt: parsedDue,
     priority: overrides?.priority_override ?? null,
     durationMin: overrides?.duration_override ?? null,
+    someday: opts.someday,
     externalRef: issue?.node_id && issueUrl ? { source: 'github', id: issue.node_id, url: issueUrl } : null,
   })
   writeRow('inbox_items', { ...item, status: 'filed', filed_task_id: task.id })
@@ -157,7 +160,8 @@ export function aiFiling(item: InboxItem): { title?: string; domainId: string | 
 // today's journal, or a person's page ("Where does this go? Task · Journal note · Salma"). ──
 
 export type FileTo =
-  | { to: 'task'; title: string; dueAt: string | null; place: MoveTarget }
+  /** `someday`: the Snooze menu's Someday — a someday task (no date), not a year-long snooze. */
+  | { to: 'task'; title: string; dueAt: string | null; place: MoveTarget; someday?: boolean }
   | { to: 'journal'; body: string }
   | { to: 'person'; person: Pick<Person, 'id' | 'name'>; summary: string }
 
@@ -182,7 +186,7 @@ function fileQuietly(item: InboxItem, to: FileTo, now = new Date()): { message: 
     return { message: `Added to ${to.person.name}`, undo: () => { deleteInteraction(note.id); writeRow('inbox_items', prior) } }
   }
   const at = placeIn(NOWHERE, to.place)
-  const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, silent: true })
+  const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, someday: to.someday, silent: true })
   return { message: filedLine(task), undo: () => unfile(prior, task) }
 }
 
@@ -199,7 +203,8 @@ const captures = (n: number) => `${n} capture${n === 1 ? '' : 's'}`
 export function fileMany(pairs: readonly (readonly [InboxItem, FileTo])[]): void {
   if (!pairs.length) return
   const done = pairs.map(([item, to]) => fileQuietly(item, to))
-  toastUndo(done.length === 1 ? done[0].message : `${captures(done.length)} filed`, () => done.forEach((d) => d.undo()))
+  const someday = pairs.every(([, to]) => to.to === 'task' && to.someday)
+  toastUndo(done.length === 1 ? done[0].message : `${captures(done.length)} filed${someday ? ' to Someday' : ''}`, () => done.forEach((d) => d.undo()))
 }
 
 /** Every row written back as it was — the Undo of the bulk actions below. `deleted_at` is sent

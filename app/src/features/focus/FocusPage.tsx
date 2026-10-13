@@ -666,6 +666,10 @@ export function FocusPage() {
           .fp-task { padding: 0 16px; }
           .fp-garden-note { left: 16px !important; }
           .fp-garden-link { right: 16px !important; bottom: auto !important; top: 10px; }
+          /* width:100% + the negative margins left the page 32px short of the right edge, so the
+             settings card sat off-centre; and the two break columns don't fit side by side. */
+          .focus-bleed { width: auto !important; }
+          .fp-breaks { grid-template-columns: 1fr !important; }
         }
       `}</style>
       <div className="grain" style={{ pointerEvents: 'none' }}></div>
@@ -1112,13 +1116,13 @@ export function FocusPage() {
               <CustomMin value={settings.focusRoundMin} presets={[15, 25, 45, 50]} onChange={(v) => saveSettings({ ...settings, focusRoundMin: v })} />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div className="fp-breaks" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Short break */}
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>
                   Short break
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {[3, 5, 10].map((t) => (
                     <span
                       key={t}
@@ -1148,7 +1152,7 @@ export function FocusPage() {
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>
                   Long break
                 </div>
-                <div style={{ display: 'flex', gap: 6 }}>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {[15, 20, 30].map((t) => (
                     <span
                       key={t}

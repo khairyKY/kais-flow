@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { EmojiText } from '../../components/EmojiText'
 import {
@@ -41,7 +41,8 @@ import { DragRow, type DragLoad } from '../../components/drag'
 import { inboxVerdict, type FileSpot } from '../tasks/fileDrop'
 import { InboxBulkBar } from './InboxBulkBar'
 import { GithubRow, SelectBox, TriageCard } from './InboxCards'
-import { dayWord, defaultDraft, dismissedAgo, draftText, githubHeading, inboxSummary, isToday, KIND_LABEL, mentionedPerson, type Draft } from './inboxDisplay'
+import { backLabel, dayWord, defaultDraft, dismissedAgo, draftText, githubHeading, inboxSummary, isToday, KIND_LABEL, mentionedPerson, snoozedOf, type Draft } from './inboxDisplay'
+import { Icon } from '../../components/Icon'
 import type { InboxItem, InboxKind } from '../../lib/types'
 import './Inbox.css'
 
@@ -52,7 +53,6 @@ import './Inbox.css'
 // 11g/11m). Effects/motion: Motion 1c floret drift on file, 3e breathe-out on every removal. ──
 
 const A = '/ds/assets'
-const SOMEDAY = () => new Date(Date.now() + 365 * 86_400_000).toISOString()
 
 // Motion 3e (WB-1) — every inbox removal exits through the F4 primitive: slide 200ms,
 // collapse 180ms, *then* the mutation, so the gap heals instead of snapping shut.
@@ -60,7 +60,8 @@ function breatheOut(itemId: string, mutate: () => void) {
   animateRowRemoval(document.getElementById(`inbox-${itemId}`), mutate)
 }
 
-type Tab = 'waiting' | 'dismissed'
+// Snoozed has no frame: the header's "· N snoozed" opens it, and the same toggle leads back.
+type Tab = 'waiting' | 'dismissed' | 'snoozed'
 
 export function InboxPage() {
   const pendingQ = usePendingInboxItems()
@@ -91,6 +92,7 @@ export function InboxPage() {
     () => allItems.filter((i) => i.status === 'dismissed').sort((a, b) => b.updated_at.localeCompare(a.updated_at)),
     [allItems],
   )
+  const snoozedItems = snoozedOf(allItems, now)
   // P6: github-sync doesn't rank (yet) — most recently updated on GitHub first.
   const ghUpdated = (i: InboxItem) => String((i.payload as { updated_at?: string } | null)?.updated_at ?? i.created_at)
   const githubItems = items.filter((i) => i.kind === 'github_issue').sort((a, b) => ghUpdated(b).localeCompare(ghUpdated(a)))
@@ -147,7 +149,7 @@ export function InboxPage() {
 
   // Selection follows the visible list — items that file/dismiss/restore away (or a tab
   // switch) drop out instead of ghost-counting in the bar.
-  const visibleItems = tab === 'waiting' ? orderedItems : dismissedItems
+  const visibleItems = tab === 'waiting' ? orderedItems : tab === 'dismissed' ? dismissedItems : snoozedItems
   useEffect(() => {
     setSelected((prev) => {
       const live = [...prev].filter((id) => visibleItems.some((i) => i.id === id))
@@ -171,6 +173,14 @@ export function InboxPage() {
   }
   function bulkSnooze(until: string) {
     snoozeMany(selectedItems, until)
+    clearSelection()
+  }
+  // Someday = a someday task (Tasks › Someday, no date) with the card's title and place — it used to
+  // be a 365-day snooze, so the capture vanished for a year (product audit, Inbox row).
+  const asSomeday = (i: InboxItem) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: null, place: draftOf(i).place, someday: true }] as const
+  const somedayOne = (item: InboxItem) => breatheOut(item.id, () => fileMany([asSomeday(item)]))
+  function bulkSomeday() {
+    fileMany(selectedItems.map(asSomeday))
     clearSelection()
   }
   function bulkDismiss(sel: InboxItem[] = selectedItems) {
@@ -245,6 +255,7 @@ export function InboxPage() {
     },
   ]
   const dismissedBindings: ListBinding<InboxItem>[] = [{ keys: ['r'], label: 'Restore', run: (i) => restoreInboxItem(i), runAll: bulkRestore }]
+  // Snoozed shares Dismissed's R: it brings the capture back to Waiting now.
   const { focusedId, setFocusedId } = useListKeys(visibleItems, tab === 'waiting' ? waitingBindings : dismissedBindings, {
     idPrefix: 'inbox-',
     // Pause list keys while a menu from this page is up, or D would dismiss the row behind it.
@@ -276,7 +287,21 @@ export function InboxPage() {
         <ScanPaperButton />
         {!isMobile && <CaptureCta />}
       </div>
-      <div className="ib-sum">{!online ? <OfflineChip /> : summary}</div>
+      <div className="ib-sum">
+        {!online ? (
+          <OfflineChip />
+        ) : (
+          <>
+            {summary}
+            {snoozedItems.length > 0 && (
+              <>
+                {summary && ' · '}
+                <button type="button" className="ib-sum-link kf-hit" onClick={() => switchTab('snoozed')}>{snoozedItems.length} snoozed</button>
+              </>
+            )}
+          </>
+        )}
+      </div>
       <div className="ib-head-view">
         {isMobile ? (
           <button type="button" className="ib-head-link" onClick={() => switchTab(tab === 'waiting' ? 'dismissed' : 'waiting')}>
@@ -291,6 +316,7 @@ export function InboxPage() {
             options={[
               { value: 'waiting', label: `Waiting ${items.length}` },
               { value: 'dismissed', label: `Dismissed ${dismissedItems.length}` },
+              ...(tab === 'snoozed' ? [{ value: 'snoozed' as const, label: `Snoozed ${snoozedItems.length}` }] : []),
             ]}
           />
         )}
@@ -318,6 +344,7 @@ export function InboxPage() {
       onEditing={(on) => setEditId(on ? item.id : null)}
       onFile={(d) => fileOne(item, d)}
       onSnooze={(until) => snoozeInboxItem(item, until)}
+      onSomeday={() => somedayOne(item)}
       onDismiss={() => dismissOne(item)}
       onToggleSelect={() => toggleSelected(item.id)}
     />
@@ -397,9 +424,11 @@ export function InboxPage() {
       ) : state === 'loading' ? (
         <Skeleton />
       ) : state === 'resting' ? (
-        <ErrorCard message="Your dismissed captures didn't load." onRetry={() => void pendingQ.refetch()} />
+        <ErrorCard message={`Your ${tab} captures didn't load.`} onRetry={() => void pendingQ.refetch()} />
       ) : state === 'away' ? (
-        <p className="ib-quiet">Your dismissed captures will be here when you're back online.</p>
+        <p className="ib-quiet">Your {tab} captures will be here when you're back online.</p>
+      ) : tab === 'snoozed' ? (
+        <SnoozedPanel items={snoozedItems} phone={isMobile} now={now} selected={selected} focusedId={focusedId} onToggleSelect={toggleSelected} />
       ) : (
         <DismissedPanel
           items={dismissedItems}
@@ -416,7 +445,7 @@ export function InboxPage() {
           title={kbSnoozeItem.raw_text}
           onClose={() => setKbSnoozeId(null)}
           onSnooze={(until) => { snoozeInboxItem(kbSnoozeItem, until); advance(kbSnoozeItem); setKbSnoozeId(null) }}
-          onSomeday={() => { snoozeInboxItem(kbSnoozeItem, SOMEDAY()); advance(kbSnoozeItem); setKbSnoozeId(null) }}
+          onSomeday={() => { somedayOne(kbSnoozeItem); advance(kbSnoozeItem); setKbSnoozeId(null) }}
         />
       )}
 
@@ -426,7 +455,7 @@ export function InboxPage() {
           onFileTo={tab === 'waiting' ? (e) => setBulkMovePos({ x: e.clientX, y: e.clientY }) : undefined}
           onSnooze={tab === 'waiting' ? (e) => setBulkSnoozePos({ x: e.clientX, y: e.clientY }) : undefined}
           onDismiss={tab === 'waiting' ? () => bulkDismiss() : undefined}
-          onRestore={tab === 'dismissed' ? () => bulkRestore() : undefined}
+          onRestore={tab !== 'waiting' ? () => bulkRestore() : undefined}
           onClear={clearSelection}
         />
       )}
@@ -436,7 +465,7 @@ export function InboxPage() {
           position={bulkSnoozePos}
           onClose={() => setBulkSnoozePos(null)}
           onSnooze={(until) => { bulkSnooze(until); setBulkSnoozePos(null) }}
-          onSomeday={() => { bulkSnooze(SOMEDAY()); setBulkSnoozePos(null) }}
+          onSomeday={() => { bulkSomeday(); setBulkSnoozePos(null) }}
         />
       )}
     </div>
@@ -510,6 +539,7 @@ function DismissedPanel({ items, phone, selected, focusedId, onToggleSelect }: {
         <DismissedRow
           key={item.id}
           item={item}
+          meta={phone ? dismissedAgo(item.updated_at) : `dismissed ${dismissedAgo(item.updated_at)}`}
           phone={phone}
           selected={selected.has(item.id)}
           selecting={selected.size > 0}
@@ -555,17 +585,45 @@ const KIND_CHIP_STYLE: Record<InboxKind, { background?: string; color?: string; 
   github_issue: { background: 'var(--block-sage)', color: 'var(--acc-sage-text)' },
 }
 
-function DismissedRow({ item, phone, selected, selecting, highlighted, onToggleSelect }: { item: InboxItem; phone: boolean; selected: boolean; selecting: boolean; highlighted: boolean; onToggleSelect: () => void }) {
+// ── Snoozed (no frame — the Dismissed view's rows): when each comes back; Unsnooze (R, swipe →) with Undo. ──
+function SnoozedPanel({ items, phone, now, selected, focusedId, onToggleSelect }: { items: InboxItem[]; phone: boolean; now: Date; selected: Set<string>; focusedId: string | null; onToggleSelect: (id: string) => void }) {
+  if (items.length === 0) return <div className="ib-hand" style={{ marginTop: 18, padding: '8px 2px' }}>nothing snoozed right now</div>
+  return (
+    <div style={{ marginTop: phone ? 4 : 0 }}>
+      <div className="ib-hand" style={{ marginBottom: 12 }}>{phone ? 'swipe → any card to bring it back now' : 'snoozed captures come back to Waiting on their own ✿'}</div>
+      <div className="ib-group-head">
+        <span>Snoozed · {items.length}</span>
+        <span className="ib-rule" />
+      </div>
+      {items.map((item) => (
+        <DismissedRow
+          key={item.id}
+          item={item}
+          meta={backLabel(item.snoozed_until!, now)}
+          mark={<Icon name="clock" size={13} />}
+          act="Unsnooze"
+          phone={phone}
+          selected={selected.has(item.id)}
+          selecting={selected.size > 0}
+          highlighted={item.id === focusedId}
+          onToggleSelect={() => onToggleSelect(item.id)}
+        />
+      ))}
+    </div>
+  )
+}
+
+function DismissedRow({ item, meta, mark = '✕', act = 'Restore', phone, selected, selecting, highlighted, onToggleSelect }: { item: InboxItem; meta: string; mark?: ReactNode; act?: string; phone: boolean; selected: boolean; selecting: boolean; highlighted: boolean; onToggleSelect: () => void }) {
   const cls = `ib-drow${selected ? ' is-selected' : ''}${highlighted ? ' is-ringed' : ''}`
   if (phone) {
     // 2b: swipe → to restore — the task rows' SwipeRow, its right action renamed; hold selects.
     return (
-      <SwipeRow actions={{ tomorrow: () => restoreInboxItem(item), tomorrowLabel: 'Restore', tomorrowIcon: 'undo' }} tomorrowHint="" onLongPress={onToggleSelect} selecting={selecting} onSelectTap={onToggleSelect}>
+      <SwipeRow actions={{ tomorrow: () => restoreInboxItem(item), tomorrowLabel: act, tomorrowIcon: 'undo' }} tomorrowHint="" onLongPress={onToggleSelect} selecting={selecting} onSelectTap={onToggleSelect}>
         <div id={`inbox-${item.id}`} tabIndex={highlighted ? 0 : -1} className={cls}>
-          {selecting ? <SelectCircle on={selected} title={item.raw_text} /> : <span className="ib-drow-x">✕</span>}
+          {selecting ? <SelectCircle on={selected} title={item.raw_text} /> : <span className="ib-drow-x">{mark}</span>}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div className="ib-drow-text"><EmojiText text={item.raw_text} /></div>
-            <div className="ib-meta ib-mono">{KIND_LABEL[item.kind]} · {dismissedAgo(item.updated_at)}</div>
+            <div className="ib-meta ib-mono">{KIND_LABEL[item.kind]} · {meta}</div>
           </div>
         </div>
       </SwipeRow>
@@ -582,16 +640,16 @@ function DismissedRow({ item, phone, selected, selecting, highlighted, onToggleS
       }}
     >
       <SelectBox selected={selected} active={selecting} onToggle={onToggleSelect} />
-      <span className="ib-drow-x">✕</span>
+      <span className="ib-drow-x">{mark}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="ib-drow-text"><EmojiText text={item.raw_text} /></div>
         <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 11 }}>
           <Chip tone="bordered" style={{ border: 'none', ...KIND_CHIP_STYLE[item.kind] }}>{KIND_LABEL[item.kind]}</Chip>
-          <span className="ib-meta ib-mono">dismissed {dismissedAgo(item.updated_at)}</span>
+          <span className="ib-meta ib-mono">{meta}</span>
         </div>
       </div>
       <Button type="button" variant="secondary" className="ib-btn ib-btn--sm" style={{ color: 'var(--acc-terra-ink)' }} onClick={() => restoreInboxItem(item)}>
-        <RestoreIcon /> Restore
+        <RestoreIcon /> {act}
       </Button>
     </div>
   )

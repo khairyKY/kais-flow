@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ageLabel, capturedLabel, cardShape, confidenceWord, dayWord, defaultDraft, dismissedAgo, draftText, dueLabel, dueShort, githubHeading, githubUrl, inboxSummary, isToday, mentionedPerson, suggestedPlace, suggestedTitle } from './inboxDisplay'
+import { ageLabel, backLabel, capturedLabel, cardShape, confidenceWord, dayWord, defaultDraft, dismissedAgo, draftText, dueLabel, dueShort, githubHeading, githubUrl, inboxSummary, isToday, mentionedPerson, snoozedOf, suggestedPlace, suggestedTitle } from './inboxDisplay'
 import type { Domain, Project } from '../../lib/types'
 
 describe('isToday', () => {
@@ -190,5 +190,26 @@ describe('githubHeading', () => {
     expect(githubHeading([{ payload: { repo: 'Shaheen/website' } }, { payload: { repo: 'Shaheen/website' } }])).toBe('From GitHub · Shaheen/website')
     expect(githubHeading([{ payload: { repo: 'a/b' } }, { payload: { repo: 'c/d' } }])).toBe('From GitHub')
     expect(githubHeading([{ payload: null }])).toBe('From GitHub')
+  })
+})
+
+// Snoozed captures were in neither Waiting nor Dismissed (product audit, Inbox row): the Snoozed view.
+describe('snoozedOf / backLabel', () => {
+  const now = new Date('2026-10-12T07:00:00Z') // 10:00 Cairo
+  const row = (id: string, over: object) => ({ id, status: 'pending' as const, snoozed_until: null as string | null, deleted_at: null as string | null, ...over })
+  it('keeps pending captures snoozed past now, soonest back first', () => {
+    const items = [
+      row('later', { snoozed_until: '2026-10-19T06:00:00Z' }),
+      row('soon', { snoozed_until: '2026-10-13T06:00:00Z' }),
+      row('waking', { snoozed_until: '2026-10-12T06:00:00Z' }), // already back in Waiting
+      row('waiting', {}),
+      row('dismissed', { status: 'dismissed', snoozed_until: '2026-10-20T06:00:00Z' }),
+      row('trashed', { snoozed_until: '2026-10-20T06:00:00Z', deleted_at: '2026-10-11T06:00:00Z' }),
+    ]
+    expect(snoozedOf(items, now).map((i) => i.id)).toEqual(['soon', 'later'])
+  })
+  it("says when it comes back, on the user's clock", () => {
+    expect(backLabel('2026-10-13T06:00:00Z', now)).toBe('back Tomorrow · 09:00')
+    expect(backLabel('2026-10-19T06:00:00Z', now)).toBe('back Mon 19 Oct · 09:00')
   })
 })

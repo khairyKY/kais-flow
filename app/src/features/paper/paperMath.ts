@@ -22,6 +22,13 @@ export interface PageLine {
   priority?: number | null
 }
 
+/** A drawing the read skipped (11e "1 drawing skipped (…) · Add as image"; capture-image/read.ts). */
+export interface PageDrawing {
+  what: string | null
+  box: [number, number, number, number] | null
+  page: number
+}
+
 export interface CaptureRow {
   id: string
   user_id?: string
@@ -32,6 +39,8 @@ export interface CaptureRow {
   error: 'daily_limit' | 'rate_limited' | 'unreadable' | 'upstream' | null
   title: string | null
   items: PageLine[]
+  /** Absent until migration 0070 and on reads made before it. */
+  drawings?: PageDrawing[]
   reviewed_at: string | null
   expires_at: string
   photos_deleted_at: string | null

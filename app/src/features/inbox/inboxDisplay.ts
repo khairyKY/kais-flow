@@ -162,6 +162,16 @@ export function githubHeading(items: readonly Pick<InboxItem, 'payload'>[]): str
   return repos.size === 1 ? `From GitHub · ${[...repos][0]}` : 'From GitHub'
 }
 
+/** Snoozed captures — still pending, hidden from Waiting until their time — soonest back first.
+ * They show in neither Waiting nor Dismissed; the header's "· N snoozed" opens them. */
+export function snoozedOf<T extends Pick<InboxItem, 'status' | 'snoozed_until' | 'deleted_at'>>(items: readonly T[], now: Date = new Date()): T[] {
+  const until = (i: T) => i.snoozed_until ?? ''
+  return items.filter((i) => !i.deleted_at && i.status === 'pending' && until(i) && new Date(until(i)) > now).sort((a, b) => until(a).localeCompare(until(b)))
+}
+
+/** When a snoozed capture comes back: "back Tomorrow · 09:00", "back Mon 19 Oct · 09:00" (user's clock). */
+export const backLabel = (iso: string, now: Date = new Date()): string => `back ${dueLabel(iso, true, now)}`
+
 export function isToday(iso: string): boolean {
   return cairoDateKey(new Date(iso)) === cairoDateKey(new Date())
 }

@@ -149,3 +149,29 @@ describe('bulk actions — one toast, one Undo', () => {
     expect(toasts).toHaveLength(0)
   })
 })
+
+// Inbox "Someday" used to be a 365-day snooze (the capture vanished for a year). Now it files a
+// someday task — undated, in Tasks › Someday — and the toast says so; Undo un-files it.
+describe('Someday files a someday task', () => {
+  beforeEach(() => { writes.length = 0; toasts.length = 0 })
+
+  it('one capture: someday, no date even when the AI read one, its place kept; Undo deletes it', () => {
+    const c = item({ raw_text: 'learn the cello', ai_parse: { due_at: '2026-10-14T06:00:00Z', confidence: 0.9 } })
+    fileMany([[c, { to: 'task', title: 'Learn the cello', dueAt: null, place: { kind: 'area', id: 'a1', domainId: null, name: 'Health' }, someday: true }]])
+    expect(taskWrite()).toMatchObject({ title: 'Learn the cello', someday: true, due_at: null, area_id: 'a1' })
+    expect(inboxWrites().at(-1)).toMatchObject({ id: c.id, status: 'filed', snoozed_until: null })
+    expect(toasts.map((t) => t.message)).toEqual(['Filed "Learn the cello" to Someday · Health'])
+    const task = taskWrite()
+    writes.length = 0
+    undoLast()
+    expect(writes.find((w) => w.table === 'tasks')).toMatchObject({ op: 'delete', row: { id: task.id } })
+    expect(inboxWrites().at(-1)).toMatchObject({ id: c.id, status: 'pending' })
+  })
+
+  it('a selection: one toast that names Someday', () => {
+    const pairs = [item({}), item({})].map((c) => [c, { to: 'task' as const, title: c.raw_text, dueAt: null, place: { kind: 'none' as const, name: 'None' }, someday: true }] as const)
+    fileMany(pairs)
+    expect(writes.filter((w) => w.table === 'tasks').every((w) => w.row.someday === true)).toBe(true)
+    expect(toasts.map((t) => t.message)).toEqual(['2 captures filed to Someday'])
+  })
+})

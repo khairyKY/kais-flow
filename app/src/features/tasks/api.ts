@@ -60,6 +60,8 @@ export interface CreateTaskInput {
   parentTaskId?: string | null
   /** Where the task came from (0027) — a filed GitHub issue keeps its url here. */
   externalRef?: Task['external_ref']
+  /** Parked from the start (Inbox "Someday" files a capture this way, undated). */
+  someday?: boolean
 }
 
 export function createTask(input: CreateTaskInput): Task {
@@ -83,7 +85,7 @@ export function createTask(input: CreateTaskInput): Task {
     labels: input.labels ?? [],
     priority: input.priority ?? null,
     duration_min: input.durationMin ?? null,
-    someday: false,
+    someday: input.someday ?? false,
     area_id: input.areaId ?? null,
     reminder_at: reminderAt,
     reminder_sent: false,

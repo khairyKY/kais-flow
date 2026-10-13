@@ -26,14 +26,25 @@ export interface PageLine {
   priority?: 1 | 2 | 3 | null
 }
 
+/** A diagram, sketch or chart the read skipped (11e "1 drawing skipped (CPU → ready → run) · Add as
+ * image"): what it shows, in a few words, and where it sits. Stored in `captures.drawings` (0070). */
+export interface PageDrawing {
+  what: string | null
+  box: [number, number, number, number] | null
+  page: number
+}
+
 export interface PageRead {
   readable: boolean
   title: string | null
   lines: PageLine[]
+  /** Absent on reads made before drawings were asked for. */
+  drawings?: PageDrawing[]
 }
 
 export const MAX_PAGES = 5
 const MAX_LINES = 40
+const MAX_DRAWINGS = 6
 
 /** The system prompt for one page. `projects` are the user's project names, so a guess can match one. */
 export function buildPrompt(projects: readonly string[]): string {
@@ -53,10 +64,11 @@ Rules:
 - box: where the item's handwriting is, as [x1, y1, x2, y2] on a 0–1000 grid of the image (top-left to bottom-right).
 - checked: if the line starts with a checkbox, true when it is ticked, crossed or filled in (☑ ✓ ✗ ■), false when it is empty (☐ □), null when the line has no box. Leave the box itself out of text.
 - priority: 1 if the page marks the item as urgent ("!!!", "urgent", "asap", a star, a box drawn round it), 2 if marked important ("!!", "important"), 3 for a single "!", else null. Most lines are null. Leave the marks out of text.
+- drawings: every diagram, sketch, chart or labelled drawing you skipped (not margin doodles or arrows on their own), as {"what": a few words naming what it shows, in the page's language — e.g. "CPU → ready → run" for a state diagram — "box": [x1, y1, x2, y2] on the same 0–1000 grid}. [] when there are none.
 - title: the page's heading if it has one (e.g. "OS lecture 3 — 4 Oct"), else null.
 - readable: false if the photo is blank, too blurry, or not handwriting at all.
 
-Answer with ONLY a JSON object: {"readable": true, "title": string|null, "lines": [{"text": string, "type": string, "when": string|null, "project": string|null, "confidence": number, "box": [number, number, number, number], "checked": boolean|null, "priority": 1|2|3|null}]}`
+Answer with ONLY a JSON object: {"readable": true, "title": string|null, "lines": [{"text": string, "type": string, "when": string|null, "project": string|null, "confidence": number, "box": [number, number, number, number], "checked": boolean|null, "priority": 1|2|3|null}], "drawings": [{"what": string, "box": [number, number, number, number]}]}`
 }
 
 const clamp01 = (n: number) => Math.min(1, Math.max(0, n))
@@ -94,7 +106,13 @@ export function normaliseRead(raw: unknown, page: number): PageRead {
     const priority = it.priority === 1 || it.priority === 2 || it.priority === 3 ? it.priority : null
     lines.push({ text, type, when: str(it.when, 80), project: str(it.project, 80), confidence, box: normaliseBox(it.box), page, checked, priority })
   }
-  return { readable: o.readable !== false && lines.length > 0, title: str(o.title, 120), lines }
+  const drawings: PageDrawing[] = []
+  for (const d of (Array.isArray(o.drawings) ? o.drawings : []).slice(0, MAX_DRAWINGS)) {
+    if (!d || typeof d !== 'object') continue
+    const it = d as Record<string, unknown>
+    drawings.push({ what: str(it.what, 80), box: normaliseBox(it.box), page })
+  }
+  return { readable: o.readable !== false && lines.length > 0, title: str(o.title, 120), lines, drawings }
 }
 
 /** How long to wait before retry `attempt` (1-based) after a 429: Groq's retry-after when it gives
@@ -110,14 +128,15 @@ export type CaptureStatus = 'queued' | 'reading' | 'done' | 'failed'
 /** The row after page `page` was read: its items replace that page's old ones (a re-read is
  * idempotent), and once every page is in, an empty batch is "couldn't read". */
 export function afterPage(
-  row: { pages: number; pages_read: number; items: PageLine[] },
+  row: { pages: number; pages_read: number; items: PageLine[]; drawings?: PageDrawing[] | null },
   page: number,
   read: PageRead,
-): { items: PageLine[]; pages_read: number; status: CaptureStatus; error: 'unreadable' | null } {
+): { items: PageLine[]; drawings: PageDrawing[]; pages_read: number; status: CaptureStatus; error: 'unreadable' | null } {
   const items = [...row.items.filter((i) => i.page !== page), ...read.lines].sort((a, b) => a.page - b.page)
+  const drawings = [...(row.drawings ?? []).filter((d) => d.page !== page), ...(read.drawings ?? [])].sort((a, b) => a.page - b.page)
   const pages_read = Math.max(row.pages_read, page + 1)
-  if (pages_read < row.pages) return { items, pages_read, status: 'reading', error: null }
-  return items.length ? { items, pages_read, status: 'done', error: null } : { items, pages_read, status: 'failed', error: 'unreadable' }
+  if (pages_read < row.pages) return { items, drawings, pages_read, status: 'reading', error: null }
+  return items.length ? { items, drawings, pages_read, status: 'done', error: null } : { items, drawings, pages_read, status: 'failed', error: 'unreadable' }
 }
 
 /** A storage path the caller may hand us: its own folder, this capture, page n, an image. */
