@@ -281,16 +281,18 @@ const lastSpoke = (d: number | null) => (d === null ? '' : d === 0 ? 'Last spoke
 
 /** Birthday (12k): "Omar’s birthday is today" / "Last spoke 12 days ago." · Open Omar. Silent
  * (People). Several on one day are one notice ("2 birthdays today"). Private: "A birthday" — and the
- * button says Open, never the name. */
-export function birthdayNotice(people: readonly BirthdayPerson[], p: NoticePrefs | null | undefined): Notice {
+ * button says Open, never the name. `inDays` 7 = the week-ahead heads-up (P7 7b): "… is in a week". */
+export function birthdayNotice(people: readonly BirthdayPerson[], p: NoticePrefs | null | undefined, inDays = 0): Notice {
   const names = showNames(p)
+  const when = inDays ? 'in a week' : 'today'
+  const soon = inDays ? '-soon' : ''
   if (people.length === 1) {
     const [b] = people
     return {
       kind: 'birthday',
-      title: names ? `${b.name}’s birthday is today` : 'A birthday',
+      title: names ? `${b.name}’s birthday is ${when}` : inDays ? `A birthday ${when}` : 'A birthday',
       body: names ? lastSpoke(b.lastSpokeDays) : 'Unlock to see it',
-      tag: `birthday-${b.id}`,
+      tag: `birthday${soon}-${b.id}`,
       actions: [{ action: 'open', title: names ? `Open ${b.name}` : 'Open' }],
       url: `/people/${b.id}`,
       silent: true,
@@ -300,9 +302,9 @@ export function birthdayNotice(people: readonly BirthdayPerson[], p: NoticePrefs
   const shown = people.slice(0, 3).map((b) => b.name).join(' · ') + (people.length > 3 ? ` · +${people.length - 3} more` : '')
   return {
     kind: 'birthday',
-    title: `${people.length} birthdays today`,
+    title: `${people.length} birthdays ${when}`,
     body: names ? shown : 'Unlock to see them',
-    tag: 'birthdays',
+    tag: `birthdays${soon}`,
     actions: [{ action: 'open', title: 'Open' }],
     url: '/people',
     silent: true,

@@ -1,0 +1,8 @@
+PASS before 0072 (0053): the archived project is slipping ["Garden club 20d","Old site 20d"]
+PASS after 0072: the archived project is not slipping ["Garden club 20d"]
+PASS after 0072: the active one still is, the trashed one still is not ["Garden club 20d"]
+PASS restored from the archive: slipping again ["Garden club 20d","Old site 20d"]
+PASS same columns as 0053 entity_type,entity_id,entity_name,last_touch,days_since
+PASS routines.description text, nullable, no default {"data_type":"text","is_nullable":"YES","column_default":null}
+PASS a routine from before 0072 reads description null 
+PASS an old build’s upsert leaves the description as it was 

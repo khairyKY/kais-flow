@@ -9,7 +9,8 @@ import { useCalendarEvents } from '../calendar/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { computeStreak, completionRate, computeTrellisDays, routineStartKey } from '../routines/streaks'
 import { cairoDateKey } from '../../lib/dateShortcuts'
-import { addDays, startOfWeek } from './reviewWeek'
+import { addDays, startOfWeek, weekClosedAt } from './reviewWeek'
+import { loopNow } from './loopDay'
 import { appZone } from '../../lib/appZone'
 import { fernByFraction } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
@@ -71,7 +72,8 @@ export function WeeklyReviewPage() {
   const { data: slipping = [] } = useSlipping()
   const [showSeason, setShowSeason] = useState(false)
 
-  const weekStart = startOfWeek(new Date())
+  // The loop day's week (A29): at 00:30 after the week's last day you are still closing that week.
+  const weekStart = startOfWeek(loopNow(new Date()))
   const weekEnd = addDays(weekStart, 7)
   const lastWeekStart = addDays(weekStart, -7)
   const weekKey = cairoDateKey(weekStart)
@@ -126,16 +128,8 @@ export function WeeklyReviewPage() {
 
   // Nothing to sweep (no domains yet) never blocks closing the week.
   const allSwept = domains.every((d) => sweptAt.has(d.id))
-  // Closed this week: the latest close/reopen row for this week wins (rows come oldest first).
-  const closedAt = useMemo(() => {
-    let at: string | null = null
-    for (const e of reviewEvents) {
-      if ((e.payload as { week?: string } | null)?.week !== weekKey) continue
-      if (e.event_type === 'review.week_closed') at = e.created_at
-      if (e.event_type === 'review.week_reopened') at = null
-    }
-    return at
-  }, [reviewEvents, weekKey])
+  // Closed this week: the latest close/reopen row for this week wins — Today's prompt reads the same rule.
+  const closedAt = useMemo(() => weekClosedAt(reviewEvents, weekKey), [reviewEvents, weekKey])
 
   function closeWeek() {
     logReviewEvent(weekStart.toISOString(), 'review.week_closed', 'review', weekKey, { week: weekKey })

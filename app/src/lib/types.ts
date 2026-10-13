@@ -143,6 +143,8 @@ export interface Cadence {
 export interface Routine {
   id: string
   name: string
+  /** What it's for, in the user's words (migration 0072, the New Routine form's Description); null/absent = none. */
+  description?: string | null
   /** One of the 3 named presets, a custom label (e.g. "dusk"), or null (no time at all) — migration 0019. */
   time_of_day: string | null
   /** Explicit clock time, `HH:MM` 24h — migration 0019. Independent of `time_of_day`. */

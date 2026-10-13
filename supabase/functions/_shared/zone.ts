@@ -81,3 +81,17 @@ export function dayWindow(now: Date, zone: string): { date: string; start: Date;
   const date = dateKey(now, zone)
   return { date, start: wallToInstant(date, 0, 0, zone), end: wallToInstant(addDays(date, 1), 0, 0, zone) }
 }
+
+/** The hour the loop's day turns over on the user's clock (docs/DAILY-CYCLE.md): a shutdown at 00:30
+ * still closes the day you were living, so the loop day runs 04:00 → 04:00. */
+export const LOOP_DAY_ROLLOVER_HOUR = 4
+
+/** The loop day `now` belongs to on `zone`'s clock, as "YYYY-MM-DD": its date, except before 04:00 it is
+ * still the day before. Read from the wall clock (not `now - 4h`), so the spring-forward night, which
+ * has no 00:00–01:00, still turns over at 04:00. The one rule: the app's rituals (rituals/loopDay.ts)
+ * and notify's evening nudge both read it. */
+export function loopDay(now: Date, zone: string): string {
+  const w = wall(now.getTime(), zone)
+  const key = `${w.y}-${pad(w.m)}-${pad(w.d)}`
+  return w.h < LOOP_DAY_ROLLOVER_HOUR ? addDays(key, -1) : key
+}

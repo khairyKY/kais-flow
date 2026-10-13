@@ -7,6 +7,8 @@ import { cairoDateKey, cairoWallTimeToIso } from '../../lib/dateShortcuts'
 import { daysToWeekend } from '../../lib/weekend'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { DAY_FROM, DAY_TO } from '../rituals/ritualLogic'
+import { loopNow } from '../rituals/loopDay'
+import { startOfWeek, weekClosedAt, type ReviewEvent } from '../rituals/reviewWeek'
 import { filterByList, taskDayDiff } from '../tasks/grouping'
 import { formatDuration } from '../tasks/taskDisplay'
 import { isTop3Today } from '../tasks/top3Rule'
@@ -167,16 +169,15 @@ export function dayCounts(tasks: Task[], now: Date): { done: number; total: numb
 }
 
 /** The weekly review's day is the first day of the user's weekend (lib/weekend: Fri + Sat → Friday;
- * Sat + Sun by default). Today prompts it that day until the week is closed — a `review.week_closed`
- * in the last seven days (closing it earlier in the week counts). No weekend, no review day. */
-export function reviewDue(now: Date, weekend: readonly number[], closedAt: readonly string[]): boolean {
-  const key = cairoDateKey(now)
+ * Sat + Sun by default). Today prompts it that day until this review week is closed — the Weekly
+ * review's own rule (rituals/reviewWeek weekClosedAt): closing it earlier in the week counts, its Undo
+ * brings the prompt back, and a close that belongs to last week never hides this one. The day is the
+ * loop day (04:00 rollover): at 00:30 after the review day it is still that day. No weekend, no review day. */
+export function reviewDue(now: Date, weekend: readonly number[], events: readonly ReviewEvent[]): boolean {
+  const at = loopNow(now)
+  const key = cairoDateKey(at)
   if (daysToWeekend(new Date(`${key}T12:00:00Z`).getUTCDay(), weekend) !== 0) return false
-  const day = (k: string) => Date.parse(`${k}T00:00:00Z`) / 86_400_000
-  return !closedAt.some((c) => {
-    const ago = day(key) - day(cairoDateKey(new Date(c)))
-    return ago >= 0 && ago < 7
-  })
+  return weekClosedAt(events, cairoDateKey(startOfWeek(at, weekend)), weekend) === null
 }
 
 /** "Today's three · 1h 30m planned": each pick's block today (its whole length), else its duration. */

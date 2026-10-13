@@ -10,7 +10,7 @@ import { createTask } from '../tasks/api'
 import { ParseResultSchema, type ParseResult } from './parseSchema'
 import { DailyLimitError, INBOX_WITHOUT_AI, isDailyLimitError, isDailyLimitResponse } from './aiAllowance'
 import { SAVED_UNTRANSCRIBED, UNTRANSCRIBED_VOICE_NOTE } from './voiceCopy'
-import { CONFIDENCE_THRESHOLD, aiFill, taskFromParse, type AiFields, type KnownPlaces } from './aiFill'
+import { aiFill, confidenceThreshold, taskFromParse, type AiFields, type KnownPlaces } from './aiFill'
 import { placeTask } from '../calendar/api'
 import type { CalendarEvent, Domain, Project, InboxItem, Task } from '../../lib/types'
 
@@ -155,7 +155,7 @@ export async function captureWithAI(
 
   // Only 'task' has an auto-file target so far (P1 scope); everything else always goes to Inbox,
   // regardless of confidence — there's nowhere else to file a note/event/routine_idea yet.
-  if (parse && parse.kind === 'task' && parse.confidence >= CONFIDENCE_THRESHOLD) {
+  if (parse && parse.kind === 'task' && parse.confidence >= confidenceThreshold()) {
     // Everything it read — priority from the wording, the description as notes — with a typed
     // `!` / `30m` still beating its own reading.
     const task = createTask(taskFromParse(parse, knownPlaces(), overrides))
@@ -229,7 +229,7 @@ export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Pr
   const current = queryClient.getQueryData<InboxItem[]>(['inbox_items'])?.find((i) => i.id === item.id) ?? item
   if (current.status !== 'pending') return // triaged meanwhile — the person's call stands
   const read = { ...current, ai_parse: ai as unknown as Record<string, unknown>, confidence: ai.confidence, updated_at: nowIso() }
-  if (ai.kind !== 'task' || ai.confidence < CONFIDENCE_THRESHOLD) {
+  if (ai.kind !== 'task' || ai.confidence < confidenceThreshold()) {
     writeRow('inbox_items', read)
     return
   }
@@ -295,7 +295,7 @@ async function parseQueued(): Promise<void> {
         if (error || !claimed?.length) continue
       }
       const parse = await callParseCapture(item.raw_text, item.created_at)
-      if (parse.kind === 'task' && parse.confidence >= CONFIDENCE_THRESHOLD) {
+      if (parse.kind === 'task' && parse.confidence >= confidenceThreshold()) {
         const over = rest as { priority_override?: number | null; duration_override?: number | null }
         const task = createTask(taskFromParse(parse, knownPlaces(), { priority: over.priority_override, durationMin: over.duration_override }))
         blockIfTimed(task, parse.has_time === true)

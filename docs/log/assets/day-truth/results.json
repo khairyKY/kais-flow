@@ -1,0 +1,247 @@
+[
+  {
+    "name": "s-desktop 00:30: the Day card offers Shut down the day (not Plan, not Now)",
+    "ok": true,
+    "detail": "EVENING · ~3 MIN Shut down the day close the loops · seed tomorrow Begin 8 10 12 14 16 18 20 Nothing else on the calendar today Calendar →"
+  },
+  {
+    "name": "s-desktop 00:30: the rail's Evening is open (4 steps), not \"from 17:00\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop the Sweep holds Monday's leftover, not Tuesday's task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop Tomorrow's 3: Tuesday's task reads \"Due tomorrow\"",
+    "ok": true,
+    "detail": "Order printer ink ✶ GOAL DUE TOMORROW"
+  },
+  {
+    "name": "s-desktop Tomorrow → Tuesday 09:00, the morning it seeds (was Wednesday)",
+    "ok": true,
+    "detail": "2026-10-13T06:00:00.000Z"
+  },
+  {
+    "name": "s-desktop …and its meta says \"→ Tue 09:00\"",
+    "ok": true,
+    "detail": "Renew the domain → TUE 09:00 Tomorrow"
+  },
+  {
+    "name": "s-desktop Close the day logs Monday's Shut down, seeding Tuesday",
+    "ok": true,
+    "detail": "{\"date\":\"2026-10-12\",\"for\":[\"2026-10-13\",\"2026-10-13\"]}"
+  },
+  {
+    "name": "s-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone 00:30: the ritual card reads Shut down the day",
+    "ok": true,
+    "detail": "EVENING · 00:30 Shut down the day ~2 MIN 2 TO SWEEP Shut down"
+  },
+  {
+    "name": "s-phone the Sweep holds Monday's leftover, not Tuesday's task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone Tomorrow's 3: Tuesday's task reads \"Due tomorrow\"",
+    "ok": true,
+    "detail": "Order printer ink ✶ GOAL DUE TOMORROW"
+  },
+  {
+    "name": "s-phone Tomorrow → Tuesday 09:00, the morning it seeds (was Wednesday)",
+    "ok": true,
+    "detail": "2026-10-13T06:00:00.000Z"
+  },
+  {
+    "name": "s-phone …and its meta says \"→ Tue 09:00\"",
+    "ok": true,
+    "detail": "Renew the domain → TUE 09:00 Tomorrow"
+  },
+  {
+    "name": "s-phone Close the day logs Monday's Shut down, seeding Tuesday",
+    "ok": true,
+    "detail": "{\"date\":\"2026-10-12\",\"for\":[\"2026-10-13\",\"2026-10-13\"]}"
+  },
+  {
+    "name": "s-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1-closed-then-undone: the rail's Weekly review shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1-closed-then-undone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2-late-close-for-last-week: the rail's Weekly review shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2-late-close-for-last-week no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3-closed-this-week: the rail's Weekly review is hidden",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3-closed-this-week no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 Close the week, then Undo → Today prompts the review again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 Close the week (kept) → the prompt is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 rows: closed · reopened · closed, all for the week of Wed 7 Oct",
+    "ok": true,
+    "detail": "[\"review.week_closed:2026-10-07\",\"review.week_reopened:2026-10-07\",\"review.week_closed:2026-10-07\"]"
+  },
+  {
+    "name": "r4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r5 00:30 Tue (Monday’s loop day): the review is still asked for",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r5 …and closing it then closes the week of Wed 7 Oct, not the next one",
+    "ok": true,
+    "detail": "2026-10-07"
+  },
+  {
+    "name": "r5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop the form has an optional Description under Name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop Plant writes it, trimmed",
+    "ok": true,
+    "detail": "Ten minutes before bed, phone in the other room"
+  },
+  {
+    "name": "d-desktop Edit routine reads it back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop Save writes the edit",
+    "ok": true,
+    "detail": "Before bed"
+  },
+  {
+    "name": "d-desktop an untouched routine's save leaves the column out (a server before 0072 never sees it)",
+    "ok": true,
+    "detail": "[\"id\",\"user_id\",\"name\",\"time_of_day\",\"clock_time\",\"cadence\",\"challenge_start\",\"challenge_end\",\"active\",\"steps\",\"step_minutes\",\"domain_id\",\"goal_days\",\"plant\",\"created_at\",\"updated_at\"]"
+  },
+  {
+    "name": "d-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone the form has an optional Description under Name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone Plant writes it, trimmed",
+    "ok": true,
+    "detail": "Ten minutes before bed, phone in the other room"
+  },
+  {
+    "name": "d-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-desktop two challenges running today → two cards (the ended one has none)",
+    "ok": true,
+    "detail": "[\"No sugar\",\"Read 20 pages\"]"
+  },
+  {
+    "name": "c-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-phone two challenges running today → two cards (the ended one has none)",
+    "ok": true,
+    "detail": "[\"No sugar\",\"Read 20 pages\"]"
+  },
+  {
+    "name": "c-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k-default: an 0.8 read is a suggestion (threshold 0.75)",
+    "ok": true,
+    "detail": "asks: 0"
+  },
+  {
+    "name": "k-default no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k-raised: an 0.8 read asks \"Where does this go?\" (threshold 0.9)",
+    "ok": true,
+    "detail": "asks: 1"
+  },
+  {
+    "name": "k-raised no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f the running round is kept as it ticks",
+    "ok": true,
+    "detail": "{\"isRunning\":true,\"secondsLeft\":1497}"
+  },
+  {
+    "name": "f after a reload it is still running (Pause shows)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f …and caught up on the time away (no restart at 25:00)",
+    "ok": true,
+    "detail": "1497 → 1492"
+  },
+  {
+    "name": "f no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { ritualDue, ritualOn, wallMinutes } from '../../../../supabase/functions/notify/ritual.ts'
+import { ritualDue, ritualOn, shutDownOn, wallMinutes } from '../../../../supabase/functions/notify/ritual.ts'
+import { finishedPayload } from '../rituals/loopDay'
 
 // Cairo is UTC+3 on these dates (Egyptian summer time runs late April → late October).
 const tick = (utc: string) => new Date(`2026-10-01T${utc}Z`)
@@ -39,5 +40,26 @@ describe('ritual reminders: who gets the digest on this cron tick', () => {
 
   it('the zone is one argument, ready for per-user timezones', () => {
     expect(ritualDue('morning_digest', {}, new Date('2026-10-01T15:00:00Z'), 'America/Los_Angeles')).toBe(true) // 08:00 PDT
+  })
+})
+
+describe('shutDownOn — the evening nudge stays quiet once Shut down is done (A29)', () => {
+  // The rows exactly as the app writes them (rituals/loopDay.ts finishedPayload, Cairo here).
+  const shut = (iso: string) => ({ payload: finishedPayload('evening', ['sweep', 'goodnight'], new Date(iso)) })
+  const nudge = new Date('2026-10-01T18:00:00Z') // Thu 21:00 Cairo
+
+  it('a Shut down earlier that evening, or at 00:30 that night, closes the day the 21:00 nudge is for', () => {
+    expect(shutDownOn([shut('2026-10-01T17:00:00Z')], nudge, 'Africa/Cairo')).toBe(true) // Thu 20:00
+    expect(shutDownOn([shut('2026-10-01T21:30:00Z')], new Date('2026-10-01T21:45:00Z'), 'Africa/Cairo')).toBe(true) // a 00:45 nudge, after a 00:30 Shut down
+  })
+  it("yesterday's Shut down, or the morning ritual, never does", () => {
+    expect(shutDownOn([shut('2026-09-30T19:00:00Z')], nudge, 'Africa/Cairo')).toBe(false)
+    expect(shutDownOn([{ payload: finishedPayload('morning', [], new Date('2026-10-01T05:00:00Z')) }], nudge, 'Africa/Cairo')).toBe(false)
+    expect(shutDownOn([{ payload: null }, { payload: { ritual: 'evening' } }], nudge, 'Africa/Cairo')).toBe(false)
+  })
+  it("the day is the user's loop day: in Tokyo, 02:00 Friday still belongs to Thursday", () => {
+    const thuTokyo = { payload: { ritual: 'evening', date: '2026-10-01' } }
+    expect(shutDownOn([thuTokyo], new Date('2026-10-01T17:00:00Z'), 'Asia/Tokyo')).toBe(true) // Fri 02:00 JST
+    expect(shutDownOn([thuTokyo], new Date('2026-10-01T19:00:00Z'), 'Asia/Tokyo')).toBe(false) // Fri 04:00 JST: a new day
   })
 })

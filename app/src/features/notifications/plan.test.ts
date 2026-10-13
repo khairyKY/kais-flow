@@ -102,6 +102,20 @@ describe('localPlan — rituals', () => {
     expect(kinds(base({ ...day, tasks: [] }))).toEqual([`morning_digest@${cairo('08:00').toISOString()}`])
   })
 
+  it('no nudge once Shut down is done on that loop day; the next evening still has one (A29)', () => {
+    // the rows the evening ritual writes (rituals/loopDay.ts finishedPayload); a morning one never counts
+    const plan = (days: string[], over: Partial<PlanInput> = {}) =>
+      localPlan(base({ ...day, to: cairo('00:00', 5), tasks: top3, finished: [{ payload: { ritual: 'morning', date: '2026-10-04' } }, ...days.map((date) => ({ payload: { ritual: 'evening', date, steps: [] } }))], ...over })).filter((p) => p.notice.kind === 'evening_nudge').map((p) => p.at.toISOString())
+    expect(plan([])).toEqual([cairo('21:00').toISOString(), cairo('21:00', 4).toISOString()])
+    expect(plan(['2026-10-03'])).toEqual([cairo('21:00', 4).toISOString()])
+    expect(plan(['2026-10-02'])).toHaveLength(2) // yesterday's Shut down is yesterday's
+    // A nudge set for 00:30 belongs to the loop day before it (04:00 rollover): Saturday's Shut down quiets it.
+    const late = { prefs: { lock_screen_names: true, morning_digest_on: false, evening_nudge_at: '00:30' } }
+    expect(plan([], late)).toEqual([cairo('00:30').toISOString(), cairo('00:30', 4).toISOString()])
+    expect(plan(['2026-10-03'], late)).toEqual([cairo('00:30').toISOString()]) // Sat 00:30 is Friday's loop day: still nudged
+    expect(plan(['2026-10-02', '2026-10-03'], late)).toEqual([])
+  })
+
   it('own times, own zone, off switches; several days ahead', () => {
     const prefs = { morning_digest_at: '07:30:00', evening_nudge_on: false, timezone: 'Asia/Kolkata' }
     const plan = localPlan(base({ ...day, to: cairo('00:00', 6), prefs, zone: 'Asia/Kolkata' }))
@@ -175,6 +189,16 @@ describe('localPlan — birthdays (12k/12j)', () => {
     expect(p.at.toISOString()).toBe(tokyo8.toISOString())
     const la = birthdays({ people: [omar], zone: 'America/Los_Angeles', from: new Date(Date.UTC(2026, 9, 2, 12)), to: new Date(Date.UTC(2026, 9, 3, 12)), now: new Date(Date.UTC(2026, 9, 2, 12)) })
     expect(la).toEqual([]) // LA's 08:00 on the 3rd is 15:00 UTC — after this window
+  })
+
+  it('a week ahead too (P7 7b), at the same 08:00, with its own key — notify’s groups', () => {
+    const nour = { id: 'nour', name: 'Nour', facts: [{ label: 'Birthday', value: 'October 10' }] }
+    const ps = birthdays({ people: [omar, nour], interactions: [{ person_id: 'nour', occurred_at: cairo('12:00', 1).toISOString() }] })
+    expect(ps.map((p) => [p.key, p.notice.title, p.notice.body])).toEqual([
+      [`birthday:omar@${cairo('08:00').toISOString()}`, 'Omar’s birthday is today', ''],
+      [`birthday-soon:nour@${cairo('08:00').toISOString()}`, 'Nour’s birthday is in a week', 'Last spoke 2 days ago.'],
+    ])
+    expect(birthdays({ people: [nour], prefs: { lock_screen_names: true } })).toEqual([]) // the same Birthday switch
   })
 
   it('private: "A birthday", no name anywhere', () => {

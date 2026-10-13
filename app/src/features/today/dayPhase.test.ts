@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { cairoMinutes, dayPhase, eveningState, isPlanned, morningState, ritualFinished, type DayPhaseInput } from './dayPhase'
+import { cairoMinutes, dayPhase, eveningState, isEvening, isPlanned, morningState, ritualFinished, type DayPhaseInput } from './dayPhase'
 
 // Instants are written in UTC; Cairo is UTC+3 on 2026-09-26 (EEST).
 const at = (cairoHHMM: string) => {
@@ -92,6 +92,13 @@ describe('dayPhase — Shut down', () => {
   it('nothing picked is not "all done"', () => {
     expect(dayPhase(input({ now: at('15:00'), top3: { picked: 0, done: 0 } })).phase).toBe('plan')
   })
+  it('past midnight, until 04:00, it is still the loop day: Shut down, never Plan (A29)', () => {
+    expect(dayPhase(input({ now: at('00:30') })).phase).toBe('shutdown')
+    expect(dayPhase(input({ now: at('03:59'), morning: { done: 4, total: 4 } })).phase).toBe('shutdown')
+    expect(dayPhase(input({ now: at('04:00') })).phase).toBe('plan')
+    expect(dayPhase(input({ now: at('00:30'), evening: { done: 5, total: 5 } })).phase).toBe('closed')
+    expect(dayPhase(input({ now: at('01:00'), prompts: { morning: true, evening: false } })).phase).toBe('now') // unpinned: no prompt, and no Plan at 01:00
+  })
   it('a part-walked evening ritual still reads Shut down', () => {
     expect(dayPhase(input({ now: at('21:00'), evening: { done: 3, total: 5 } })).phase).toBe('shutdown')
   })
@@ -159,5 +166,11 @@ describe('eveningState', () => {
   })
   it('all five beats is finished', () => {
     expect(ritualFinished(eveningState(new Set(['sweep', 'garden', 'line', 'seeds', 'goodnight']), 5))).toBe(true)
+  })
+})
+
+describe('isEvening — the rail and the card agree on the loop day’s evening (A29)', () => {
+  it('17:00 → 03:59 is evening; 04:00 → 16:59 is not', () => {
+    expect([at('16:59'), at('17:00'), at('23:59'), at('00:00'), at('03:59'), at('04:00')].map(isEvening)).toEqual([false, true, true, true, true, false])
   })
 })

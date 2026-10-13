@@ -4,10 +4,17 @@
 // only what is still empty. Pure, so the merge rule is unit-tested (aiFill.test.ts).
 import type { ParseResult } from './parseSchema'
 import type { CreateTaskInput } from '../tasks/api'
-import type { Task } from '../../lib/types'
+import { queryClient } from '../../lib/queryClient'
+import type { AppSettings, Task } from '../../lib/types'
 
-/** At or above this, the AI may place a capture (project/domain) or file it as a task by itself. */
-export const CONFIDENCE_THRESHOLD = 0.75 // TODO(P4): app_settings.confidence_threshold
+/** At or above this, the AI may place a capture (project/domain) or file it as a task by itself, and
+ * the Inbox card stops asking "Where does this go?": the user's `app_settings.confidence_threshold`
+ * (P2; 0003), read from the settings row the app already holds — 0.75, the column default, until it
+ * loads, and for anything outside (0, 1]. */
+export function confidenceThreshold(): number {
+  const t = queryClient.getQueryData<AppSettings>(['app_settings'])?.confidence_threshold
+  return typeof t === 'number' && t > 0 && t <= 1 ? t : 0.75
+}
 
 /** The places that exist here — a model can make up an id, and a write naming one would park. */
 export interface KnownPlaces {
@@ -24,7 +31,7 @@ const textOf = (s: string | null | undefined) => s?.trim() || null
 
 /** The AI's project (with its own domain) or domain — only ids that exist, only when it's confident. */
 export function aiPlace(ai: ParseResult, known: KnownPlaces): { project_id: string | null; domain_id: string | null } {
-  if (ai.confidence < CONFIDENCE_THRESHOLD) return { project_id: null, domain_id: null }
+  if (ai.confidence < confidenceThreshold()) return { project_id: null, domain_id: null }
   const project = ai.project_id ? known.projects.find((p) => p.id === ai.project_id) : undefined
   if (project) return { project_id: project.id, domain_id: project.domain_id }
   return { project_id: null, domain_id: ai.domain_id && known.domainIds.includes(ai.domain_id) ? ai.domain_id : null }

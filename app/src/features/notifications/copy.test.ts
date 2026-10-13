@@ -176,6 +176,16 @@ describe('the three 12k drew last (2026-10-12): paper ready, birthday, sync prob
     expect(JSON.stringify(birthdayNotice(people, {}))).not.toContain('Omar')
   })
 
+  it('a week ahead (P7 7b): "… is in a week", its own tag so it never replaces the day’s', () => {
+    const omar = [{ id: 'p1', name: 'Omar', lastSpokeDays: 5 }]
+    expect(birthdayNotice(omar, NAMES, 7)).toMatchObject({ kind: 'birthday', title: 'Omar’s birthday is in a week', body: 'Last spoke 5 days ago.', tag: 'birthday-soon-p1', url: '/people/p1', silent: true })
+    expect(birthdayNotice(omar, NAMES, 7).actions).toEqual([{ action: 'open', title: 'Open Omar' }])
+    const two = [...omar, { id: 'p2', name: 'Salma', lastSpokeDays: null }]
+    expect(birthdayNotice(two, NAMES, 7)).toMatchObject({ title: '2 birthdays in a week', body: 'Omar · Salma', tag: 'birthdays-soon', url: '/people' })
+    expect([birthdayNotice(omar, {}, 7).title, birthdayNotice(omar, {}, 7).body]).toEqual(['A birthday in a week', 'Unlock to see it'])
+    expect(JSON.stringify(birthdayNotice(two, {}, 7))).not.toMatch(/Omar|Salma/)
+  })
+
   it('sync problem: the drawn copy, one and many; set-aside writes never promise a retry', () => {
     expect(syncNotice(2)).toMatchObject({ kind: 'sync_problem', title: '2 changes are waiting to sync', body: 'They’re safe on this device. We’ll keep trying.', silent: true, tag: 'sync-problem' })
     expect(syncNotice(2).actions).toEqual([{ action: 'open', title: 'Open' }])
