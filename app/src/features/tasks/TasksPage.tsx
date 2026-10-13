@@ -11,13 +11,15 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { useCalendarRows } from '../calendar/api'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, planWithUndo, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
+import { useListVerbs } from './useListVerbs'
+import { moveInListWithUndo } from './api'
 import { labelOptions } from './taskDisplay'
 import { parseCommand } from '../command-bar/parseCommand'
 import { addTypedTask } from '../command-bar/quickAdd'
@@ -695,19 +697,32 @@ export function TasksPage() {
       ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
       : undefined
 
+  // P7e A18: D Plan…, ! Priority, = Duration, S Someday, H goal, F focus; the bulk bar's Priority / Labels.
+  const verbs = useListVerbs(bulkActions)
+  // ponytail: ⇧F / ⇧S press the tab bar's own Label / Sort trigger — the popover a click opens, keys and all.
+  const pressTool = (name: string) => () => {
+    const el = document.querySelector<HTMLElement>(`[aria-label="${name}"]`)
+    el?.focus()
+    el?.click()
+  }
   const bindings = buildListBindings({
+    ...verbs.actions,
     // Pressing the complete key again on a just-checked row reopens it, like a second click.
     complete: (t) => (checkAction(t.status === 'done', completing.has(t.id)) === 'reopen' ? handleRowReopen(t) : handleRowComplete(t)),
     open: (t) => openTask(t.id), // F3 punch 29: Enter opens detail
-    today: (t) => rescheduleDue(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
+    today: (t) => planWithUndo(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
-    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    nextWeek: (t) => planWithUndo(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
     labels: (t) => setKbLabelIds([t.id]),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
+    filter: pressTool('Label filter'),
+    sort: pressTool('Sort order'),
   }, {
+    ...verbs.bulk,
+    someday: () => bulkSomeday(),
     // Kai 2026-10-12: with rows selected, a key acts on the selection (T was dead after a mouse select).
     complete: () => bulkComplete(),
     today: () => bulkSchedule(scheduleToday()),
@@ -735,10 +750,12 @@ export function TasksPage() {
     [openTask],
   )
   const { focusedId: kbFocusedId } = useListKeys(isDone ? doneRows : flatTasks, isDone ? doneBindings : bindings, {
-    active: !kbProjectId && !kbLabelIds,
+    active: !kbProjectId && !kbLabelIds && !verbs.picking,
     sectionLabel: isDone ? 'Done' : 'Lists',
     onSelectAll: isDone ? undefined : () => setSelected(new Set(flatTasks.map((t) => t.id))),
     selected: isDone ? undefined : selectedTasks,
+    // ⌘/Ctrl+↑/↓ (p7e A22): within its group, while the list shows its own order (Sort · Smart).
+    reorder: isDone || sort !== 'smart' ? undefined : (rows, dir) => void moveInListWithUndo(groups.map((g) => g.tasks), rows, dir),
   })
 
   const isSomeday = activeTab === 'someday'
@@ -998,6 +1015,7 @@ export function TasksPage() {
       )}
 
       {kbLabelIds && <LabelPicker taskIds={kbLabelIds} position={rowAnchor('task-', kbLabelIds[0])} onClose={() => setKbLabelIds(null)} />}
+      {verbs.node}
       {manageLabelsAt && <LabelManagerOverlay at={manageLabelsAt} onClose={() => setManageLabelsAt(null)} />}
 
       {!isDone && selected.size > 0 && (
@@ -1008,6 +1026,8 @@ export function TasksPage() {
           onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onTop3={bulkTop3}
+          onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
+          onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(flatTasks.map((t) => t.id)))}

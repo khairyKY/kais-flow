@@ -215,7 +215,8 @@ export async function enrichTypedTask(created: Task, rawText: string): Promise<v
   writeRow('tasks', next)
   // The calendar follows what it read: a time puts the task on the calendar; a length stretches
   // the 30-minute block the typed time just made. Undo takes that back too.
-  const unblock = patch.due_at ? blockIfTimed(next, ai.has_time === true) : patch.duration_min ? stretchCaptureBlock(next, patch.duration_min) : null
+  // A task in a Time slot (the bar's `>`) stays in it: no block of its own from the AI's time.
+  const unblock = patch.due_at && !next.slot_id ? blockIfTimed(next, ai.has_time === true) : patch.duration_min ? stretchCaptureBlock(next, patch.duration_min) : null
   logActivity('capture.ai_filled', 'task', current.id, { fields: filled })
   toastUndo(`✦ Filled by AI: ${filled.join(', ')}`, () => {
     unblock?.()
@@ -234,7 +235,7 @@ export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Pr
   const ai = await readQuietly(rawText)
   if (!ai) return
   const current = queryClient.getQueryData<InboxItem[]>(['inbox_items'])?.find((i) => i.id === item.id) ?? item
-  if (current.status !== 'pending') return // triaged meanwhile — the person's call stands
+  if (current.status !== 'pending' || current.deleted_at) return // triaged (or undone) meanwhile — the person's call stands
   const read = { ...current, ai_parse: ai as unknown as Record<string, unknown>, confidence: ai.confidence, updated_at: nowIso() }
   if (ai.kind !== 'task' || ai.confidence < confidenceThreshold()) {
     writeRow('inbox_items', read)

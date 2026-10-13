@@ -1,0 +1,1466 @@
+{
+  "passed": 292,
+  "failed": 0,
+  "results": [
+    {
+      "name": "phone-day journal: the card shows it (data-resurface=journal_entry)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal: quotes its words",
+      "ok": true,
+      "detail": "\"Walked by the river after work. The light was gold and I finally felt the week let go.\""
+    },
+    {
+      "name": "phone-day journal: meta \"Journal · 14 Jul 2026 · 2 months ago\"",
+      "ok": true,
+      "detail": "Journal · 14 Jul 2026 · 2 months ago"
+    },
+    {
+      "name": "phone-day journal: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-day journal: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "phone-day journal no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal keep → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "phone-day journal keep → logged resurfaced.kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal keep → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal keep → toast \"Kept\" with Undo",
+      "ok": true,
+      "detail": "[\"Kept\"]"
+    },
+    {
+      "name": "phone-day journal keep → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal keep Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "phone-day journal letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal letgo → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal letgo → toast \"Let go\" with Undo",
+      "ok": true,
+      "detail": "[\"Let go\"]"
+    },
+    {
+      "name": "phone-day journal letgo → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal letgo Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "phone-day journal notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal notnow → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "phone-day journal notnow → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal notnow Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal: its text never left the page (no request carries it)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal: no AI function called",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "phone-day journal: tap → that day in the Journal",
+      "ok": true,
+      "detail": "/journal?focus=j0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-day journal: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day quote: the card shows it (data-resurface=quote)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day quote: quotes its words",
+      "ok": true,
+      "detail": "\"The best arguments in the world won’t change a person’s mind. The only thing that can do that is a good story.\""
+    },
+    {
+      "name": "phone-day quote: meta \"Quote · The Overstory · Richard Powers · saved 5 weeks ago\"",
+      "ok": true,
+      "detail": "Quote · The Overstory · Richard Powers · saved 5 weeks ago"
+    },
+    {
+      "name": "phone-day quote: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-day quote: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "phone-day quote no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day quote no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day quote: tap → the quote in the Library",
+      "ok": true,
+      "detail": "/library?tab=quotes&quoteId=q0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-day quote: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day quote open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note: the card shows it (data-resurface=note)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note: quotes its words",
+      "ok": true,
+      "detail": "\"Ideas for the garden: a bench under the fig, mint by the tap.\""
+    },
+    {
+      "name": "phone-day note: meta \"Library note · saved 3 weeks ago\"",
+      "ok": true,
+      "detail": "Library note · saved 3 weeks ago"
+    },
+    {
+      "name": "phone-day note: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-day note: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "phone-day note no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note: tap → the note in the Library",
+      "ok": true,
+      "detail": "/library?tab=notes&noteId=n0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-day note: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day note open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day quote put off twice: Keep · Let it go only",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\"]"
+    },
+    {
+      "name": "phone-day chat: opens empty, no Clear yet",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day chat: the answer streams in",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day chat: Clear shows once there's a conversation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day chat: close + reopen keeps the conversation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day chat: a reload keeps it too (this device)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day chat: kept under this account's key",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day mic tap: the voice sheet opens, listening",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day mic tap: Stop & send ready once the mic is on",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day mic tap: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": "[{\"name\":\"transcribe\",\"size\":13485}]"
+    },
+    {
+      "name": "phone-day mic tap: the words became the message",
+      "ok": true,
+      "detail": "what should I drop"
+    },
+    {
+      "name": "phone-day mic tap: and it was answered",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day mic tap: the sheet is gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day mic hold: records while held",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day mic hold: letting go sends the words",
+      "ok": true,
+      "detail": "move the dentist to Friday"
+    },
+    {
+      "name": "phone-day mic hold: answered, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day chat: the request carried the conversation so far",
+      "ok": true,
+      "detail": "5"
+    },
+    {
+      "name": "phone-day Clear: the chat is empty again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day Clear: toast \"Chat cleared\" with Undo",
+      "ok": true,
+      "detail": "[\"Chat cleared\"]"
+    },
+    {
+      "name": "phone-day Clear Undo: the conversation is back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day Clear: stays cleared after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day chat no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day chat no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal: the card shows it (data-resurface=journal_entry)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal: quotes its words",
+      "ok": true,
+      "detail": "\"Walked by the river after work. The light was gold and I finally felt the week let go.\""
+    },
+    {
+      "name": "phone-night journal: meta \"Journal · 14 Jul 2026 · 2 months ago\"",
+      "ok": true,
+      "detail": "Journal · 14 Jul 2026 · 2 months ago"
+    },
+    {
+      "name": "phone-night journal: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-night journal: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "phone-night journal no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal keep → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "phone-night journal keep → logged resurfaced.kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal keep → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal keep → toast \"Kept\" with Undo",
+      "ok": true,
+      "detail": "[\"Kept\"]"
+    },
+    {
+      "name": "phone-night journal keep → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal keep Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "phone-night journal letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal letgo → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal letgo → toast \"Let go\" with Undo",
+      "ok": true,
+      "detail": "[\"Let go\"]"
+    },
+    {
+      "name": "phone-night journal letgo → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal letgo Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "phone-night journal notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal notnow → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "phone-night journal notnow → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal notnow Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal: its text never left the page (no request carries it)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal: no AI function called",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "phone-night journal: tap → that day in the Journal",
+      "ok": true,
+      "detail": "/journal?focus=j0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-night journal: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night quote: the card shows it (data-resurface=quote)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night quote: quotes its words",
+      "ok": true,
+      "detail": "\"The best arguments in the world won’t change a person’s mind. The only thing that can do that is a good story.\""
+    },
+    {
+      "name": "phone-night quote: meta \"Quote · The Overstory · Richard Powers · saved 5 weeks ago\"",
+      "ok": true,
+      "detail": "Quote · The Overstory · Richard Powers · saved 5 weeks ago"
+    },
+    {
+      "name": "phone-night quote: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-night quote: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "phone-night quote no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night quote no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night quote: tap → the quote in the Library",
+      "ok": true,
+      "detail": "/library?tab=quotes&quoteId=q0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-night quote: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night quote open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note: the card shows it (data-resurface=note)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note: quotes its words",
+      "ok": true,
+      "detail": "\"Ideas for the garden: a bench under the fig, mint by the tap.\""
+    },
+    {
+      "name": "phone-night note: meta \"Library note · saved 3 weeks ago\"",
+      "ok": true,
+      "detail": "Library note · saved 3 weeks ago"
+    },
+    {
+      "name": "phone-night note: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "phone-night note: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "phone-night note no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note: tap → the note in the Library",
+      "ok": true,
+      "detail": "/library?tab=notes&noteId=n0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "phone-night note: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night note open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night quote put off twice: Keep · Let it go only",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\"]"
+    },
+    {
+      "name": "phone-night chat: opens empty, no Clear yet",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night chat: the answer streams in",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night chat: Clear shows once there's a conversation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night chat: close + reopen keeps the conversation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night chat: a reload keeps it too (this device)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night chat: kept under this account's key",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night mic tap: the voice sheet opens, listening",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night mic tap: Stop & send ready once the mic is on",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night mic tap: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": "[{\"name\":\"transcribe\",\"size\":15749}]"
+    },
+    {
+      "name": "phone-night mic tap: the words became the message",
+      "ok": true,
+      "detail": "what should I drop"
+    },
+    {
+      "name": "phone-night mic tap: and it was answered",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night mic tap: the sheet is gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night mic hold: records while held",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night mic hold: letting go sends the words",
+      "ok": true,
+      "detail": "move the dentist to Friday"
+    },
+    {
+      "name": "phone-night mic hold: answered, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night chat: the request carried the conversation so far",
+      "ok": true,
+      "detail": "5"
+    },
+    {
+      "name": "phone-night Clear: the chat is empty again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night Clear: toast \"Chat cleared\" with Undo",
+      "ok": true,
+      "detail": "[\"Chat cleared\"]"
+    },
+    {
+      "name": "phone-night Clear Undo: the conversation is back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night Clear: stays cleared after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night chat no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night chat no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal: the card shows it (data-resurface=journal_entry)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal: quotes its words",
+      "ok": true,
+      "detail": "\"Walked by the river after work. The light was gold and I finally felt the week let go.\""
+    },
+    {
+      "name": "desk-day journal: meta \"Journal · 14 Jul 2026 · 2 months ago\"",
+      "ok": true,
+      "detail": "Journal · 14 Jul 2026 · 2 months ago"
+    },
+    {
+      "name": "desk-day journal: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-day journal: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "desk-day journal no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal keep → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "desk-day journal keep → logged resurfaced.kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal keep → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal keep → toast \"Kept\" with Undo",
+      "ok": true,
+      "detail": "[\"Kept\"]"
+    },
+    {
+      "name": "desk-day journal keep → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal keep Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "desk-day journal letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal letgo → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal letgo → toast \"Let go\" with Undo",
+      "ok": true,
+      "detail": "[\"Let go\"]"
+    },
+    {
+      "name": "desk-day journal letgo → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal letgo Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "desk-day journal notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal notnow → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "desk-day journal notnow → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal notnow Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal: its text never left the page (no request carries it)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal: no AI function called",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "desk-day journal: tap → that day in the Journal",
+      "ok": true,
+      "detail": "/journal?focus=j0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-day journal: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day quote: the card shows it (data-resurface=quote)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day quote: quotes its words",
+      "ok": true,
+      "detail": "\"The best arguments in the world won’t change a person’s mind. The only thing that can do that is a good story.\""
+    },
+    {
+      "name": "desk-day quote: meta \"Quote · The Overstory · Richard Powers · saved 5 weeks ago\"",
+      "ok": true,
+      "detail": "Quote · The Overstory · Richard Powers · saved 5 weeks ago"
+    },
+    {
+      "name": "desk-day quote: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-day quote: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "desk-day quote no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day quote no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day quote: tap → the quote in the Library",
+      "ok": true,
+      "detail": "/library?tab=quotes&quoteId=q0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-day quote: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day quote open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note: the card shows it (data-resurface=note)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note: quotes its words",
+      "ok": true,
+      "detail": "\"Ideas for the garden: a bench under the fig, mint by the tap.\""
+    },
+    {
+      "name": "desk-day note: meta \"Library note · saved 3 weeks ago\"",
+      "ok": true,
+      "detail": "Library note · saved 3 weeks ago"
+    },
+    {
+      "name": "desk-day note: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-day note: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "desk-day note no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note: tap → the note in the Library",
+      "ok": true,
+      "detail": "/library?tab=notes&noteId=n0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-day note: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day note open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day quote put off twice: Keep · Let it go only",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\"]"
+    },
+    {
+      "name": "desk-day chat: opens empty, no Clear yet",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day chat: the answer streams in",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day chat: Clear shows once there's a conversation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day chat: close + reopen keeps the conversation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day chat: a reload keeps it too (this device)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day chat: kept under this account's key",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day mic tap: the voice sheet opens, listening",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day mic tap: Stop & send ready once the mic is on",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day mic tap: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": "[{\"name\":\"transcribe\",\"size\":7689}]"
+    },
+    {
+      "name": "desk-day mic tap: the words became the message",
+      "ok": true,
+      "detail": "what should I drop"
+    },
+    {
+      "name": "desk-day mic tap: and it was answered",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day mic tap: the sheet is gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day mic hold: records while held",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day mic hold: letting go sends the words",
+      "ok": true,
+      "detail": "move the dentist to Friday"
+    },
+    {
+      "name": "desk-day mic hold: answered, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day chat: the request carried the conversation so far",
+      "ok": true,
+      "detail": "5"
+    },
+    {
+      "name": "desk-day Clear: the chat is empty again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day Clear: toast \"Chat cleared\" with Undo",
+      "ok": true,
+      "detail": "[\"Chat cleared\"]"
+    },
+    {
+      "name": "desk-day Clear Undo: the conversation is back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day Clear: stays cleared after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day chat no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day chat no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal: the card shows it (data-resurface=journal_entry)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal: quotes its words",
+      "ok": true,
+      "detail": "\"Walked by the river after work. The light was gold and I finally felt the week let go.\""
+    },
+    {
+      "name": "desk-night journal: meta \"Journal · 14 Jul 2026 · 2 months ago\"",
+      "ok": true,
+      "detail": "Journal · 14 Jul 2026 · 2 months ago"
+    },
+    {
+      "name": "desk-night journal: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-night journal: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "desk-night journal no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal keep → pick marked converted",
+      "ok": true,
+      "detail": "\"converted\""
+    },
+    {
+      "name": "desk-night journal keep → logged resurfaced.kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal keep → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal keep → toast \"Kept\" with Undo",
+      "ok": true,
+      "detail": "[\"Kept\"]"
+    },
+    {
+      "name": "desk-night journal keep → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal keep Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal letgo → pick marked dismissed",
+      "ok": true,
+      "detail": "\"dismissed\""
+    },
+    {
+      "name": "desk-night journal letgo → logged resurfaced.dismissed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal letgo → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal letgo → toast \"Let go\" with Undo",
+      "ok": true,
+      "detail": "[\"Let go\"]"
+    },
+    {
+      "name": "desk-night journal letgo → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal letgo Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal notnow → pick marked review_later",
+      "ok": true,
+      "detail": "\"review_later\""
+    },
+    {
+      "name": "desk-night journal notnow → logged resurfaced.review_later",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal notnow → card gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal notnow → toast \"Back in 5 days\" with Undo",
+      "ok": true,
+      "detail": "[\"Back in 5 days\"]"
+    },
+    {
+      "name": "desk-night journal notnow → the memory itself untouched (no write, no delete)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal notnow Undo → pick pending, card back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal: its text never left the page (no request carries it)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal: no AI function called",
+      "ok": true,
+      "detail": "[]"
+    },
+    {
+      "name": "desk-night journal: tap → that day in the Journal",
+      "ok": true,
+      "detail": "/journal?focus=j0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-night journal: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night quote: the card shows it (data-resurface=quote)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night quote: quotes its words",
+      "ok": true,
+      "detail": "\"The best arguments in the world won’t change a person’s mind. The only thing that can do that is a good story.\""
+    },
+    {
+      "name": "desk-night quote: meta \"Quote · The Overstory · Richard Powers · saved 5 weeks ago\"",
+      "ok": true,
+      "detail": "Quote · The Overstory · Richard Powers · saved 5 weeks ago"
+    },
+    {
+      "name": "desk-night quote: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-night quote: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "desk-night quote no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night quote no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night quote: tap → the quote in the Library",
+      "ok": true,
+      "detail": "/library?tab=quotes&quoteId=q0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-night quote: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night quote open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note: the card shows it (data-resurface=note)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note: quotes its words",
+      "ok": true,
+      "detail": "\"Ideas for the garden: a bench under the fig, mint by the tap.\""
+    },
+    {
+      "name": "desk-night note: meta \"Library note · saved 3 weeks ago\"",
+      "ok": true,
+      "detail": "Library note · saved 3 weeks ago"
+    },
+    {
+      "name": "desk-night note: Keep · Let it go · Not now · back in 5 days",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\",\"Not now · back in 5 days\"]"
+    },
+    {
+      "name": "desk-night note: ? says letting go deletes nothing",
+      "ok": true,
+      "detail": "Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted."
+    },
+    {
+      "name": "desk-night note no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night note no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note: tap → the note in the Library",
+      "ok": true,
+      "detail": "/library?tab=notes&noteId=n0000000-0000-4000-8000-000000000001"
+    },
+    {
+      "name": "desk-night note: …and it's there on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night note open: no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night quote put off twice: Keep · Let it go only",
+      "ok": true,
+      "detail": "[\"Keep\",\"Let it go\"]"
+    },
+    {
+      "name": "desk-night chat: opens empty, no Clear yet",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night chat: the answer streams in",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night chat: Clear shows once there's a conversation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night chat: close + reopen keeps the conversation",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night chat: a reload keeps it too (this device)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night chat: kept under this account's key",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night mic tap: the voice sheet opens, listening",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night mic tap: Stop & send ready once the mic is on",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night mic tap: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": "[{\"name\":\"transcribe\",\"size\":9939}]"
+    },
+    {
+      "name": "desk-night mic tap: the words became the message",
+      "ok": true,
+      "detail": "what should I drop"
+    },
+    {
+      "name": "desk-night mic tap: and it was answered",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night mic tap: the sheet is gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night mic hold: records while held",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night mic hold: letting go sends the words",
+      "ok": true,
+      "detail": "move the dentist to Friday"
+    },
+    {
+      "name": "desk-night mic hold: answered, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night chat: the request carried the conversation so far",
+      "ok": true,
+      "detail": "5"
+    },
+    {
+      "name": "desk-night Clear: the chat is empty again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night Clear: toast \"Chat cleared\" with Undo",
+      "ok": true,
+      "detail": "[\"Chat cleared\"]"
+    },
+    {
+      "name": "desk-night Clear Undo: the conversation is back",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night Clear: stays cleared after a reload",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night chat no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night chat no page or console errors",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

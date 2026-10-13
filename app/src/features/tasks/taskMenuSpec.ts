@@ -5,7 +5,7 @@
 import { cairoTimeKey } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
 
-export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
+export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'intoSlot' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
 
 export interface TaskMenuEntry {
   key: TaskMenuKey
@@ -29,6 +29,8 @@ export interface TaskMenuContext {
   canUnschedule?: boolean
   /** Strictly past its date (planMath isOverdue): Plan… reads Replan… (Kai 2026-10-07). */
   overdue?: boolean
+  /** There are Time blocks ahead to go into (calendar/slots upcomingSlots): Into a slot…. */
+  slots?: boolean
   /** The goal of the day already — no Make goal. */
   goal?: boolean
   /** A Top 3 row on Today: its place (0 = the goal) and the last open place — Move up / Move down. */
@@ -56,6 +58,8 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     { key: 'plan', label: `${ctx.overdue && !n ? 'Replan' : 'Plan'}…${n}`, sub: true },
     // Time Slots (0073): a task held by a Time block comes out of it — back to the rail, unscheduled.
     ...(task.slot_id && !n ? [{ key: 'unschedule', label: 'Out of the slot' } as const] : ctx.canUnschedule ? [{ key: 'unschedule', label: 'Unschedule' } as const] : []),
+    // The phone's way into a slot (a hold selects there, it doesn't drag) — and the desktop's without a drag.
+    ...(ctx.slots && !n ? [{ key: 'intoSlot', label: 'Into a slot…', sub: true } as const] : []),
     { key: 'project', label: `Move to…${n}`, hint: ctx.projectName ?? 'None', sub: true },
     { key: 'priority', label: 'Priority', hint: (task.priority && PRIORITY_LABELS[task.priority]) || 'None', sub: true },
     // The Label picker (Overlays.dc.html, keyboard L) — the desktop menu's; the phone edits labels in

@@ -25,8 +25,8 @@ import { Segmented } from '../rituals/RitualChrome'
 import { completeTaskWithUndo, createTask, setRecurrence, toggleTop3, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
-import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRepeat, updateEvent, type BlockRef } from './api'
-import { blockMenuSpec, isSynced, isUntitled, type BlockMenuKey } from './blockMenuSpec'
+import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRemindWithUndo, setEventRepeat, updateEvent, type BlockRef } from './api'
+import { EVENT_REMIND, blockMenuSpec, isSynced, isUntitled, type BlockMenuKey } from './blockMenuSpec'
 import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { ColorDots } from './formFields'
@@ -85,7 +85,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
-  date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', complete: 'check', open: 'tasks', replan: 'pickdate',
+  date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
   link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
 
@@ -334,7 +334,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const openTask = useOpenTask()
-  const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'more' | 'delete'>(null)
+  const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'delete'>(null)
   const [linkAt, setLinkAt] = useState<{ x: number; y: number } | null>(null)
   const [untitled] = useState(() => isUntitled(event))
   const [title, setTitle] = useState(untitled ? '' : event.title)
@@ -374,6 +374,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     time: () => setPicker('time'),
     project: () => setPicker('project'),
     repeat: () => setPicker('repeat'),
+    remind: () => setPicker('remind'),
     more: () => setPicker('more'),
     complete: () => {
       if (!task) return
@@ -532,6 +533,14 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
             if (ref) onRebind?.(ref)
             saved()
           }}
+        />
+      )}
+      {picker === 'remind' && (
+        <ActionSheet
+          title="Remind"
+          meta={event.title}
+          onClose={() => setPicker(null)}
+          items={EVENT_REMIND.map((o) => choice(o.label, (event.remind_min ?? null) === o.min, () => setEventRemindWithUndo(event, o.min)))}
         />
       )}
       {picker === 'more' && (

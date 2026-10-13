@@ -1,14 +1,17 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, rescheduleDue, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, planWithUndo, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { isOverdue, todayFor } from '../tasks/planMath'
 import { DragRow, useDropSpot, type DragLoad, type Spot } from '../../components/drag'
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
+import { useListVerbs } from '../tasks/useListVerbs'
 import { formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
+import { sortByOrder } from '../tasks/manualOrder'
+import { moveInListWithUndo } from '../tasks/api'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotTitleOf, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
@@ -244,7 +247,8 @@ export function TodayPage() {
   // stay rows in Also open — every task shows as a row somewhere (DAILY-CYCLE).
   const upNextShown = isMobile ? upNext : upNext.slice(0, 2)
   const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
-  const allOpen = foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown).sort(doneAfterOpen)
+  // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
+  const allOpen = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen)
   // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue ones get their own fold with
   // Replan all ▾; More for today keeps the rest. Oldest first (Today's list order).
   const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now))
@@ -343,18 +347,23 @@ export function TodayPage() {
   const [kbLabelIds, setKbLabelIds] = useState<string[] | null>(null)
   const openTask = useOpenTask()
   const navigate = useNavigate()
+  // P7e A18: D Plan…, ! Priority, = Duration, S Someday, H goal, F focus; the bulk bar's Priority / Labels.
+  const verbs = useListVerbs(bulk)
   const listBindings = [...buildListBindings({
+    ...verbs.actions,
     complete: (t) => completeTaskWithUndo(t),
     open: (t) => openTask(t.id),
-    today: (t) => rescheduleDue(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
+    today: (t) => planWithUndo(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
-    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    nextWeek: (t) => planWithUndo(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
     labels: (t) => setKbLabelIds([t.id]),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
   }, {
+    ...verbs.bulk,
+    someday: () => bulkSomeday(),
     // Kai 2026-10-12: with rows selected, a key acts on the selection (T was dead after a mouse select).
     complete: () => bulkComplete(),
     today: () => bulkSchedule(scheduleToday()),
@@ -365,10 +374,17 @@ export function TodayPage() {
     delete: () => bulkDelete(),
   }), { keys: NOTEBOOK_KEY, label: 'Notebook page', run: () => navigate(NOTEBOOK_PATH) }]
   const { focusedId } = useListKeys(selectable, listBindings, {
-    active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !kbLabelIds && !replanAt,
+    active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !kbLabelIds && !replanAt && !verbs.picking,
     sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
     selected: selectedTasks,
+    // ⌘/Ctrl+↑/↓ (p7e A22): a Top 3 row moves in the Top 3 (as Alt+↑/↓); the rest within the overdue
+    // fold or More for today. Up next follows the calendar, so it has no order to change.
+    reorder: (rows, dir) => {
+      const pick = rows.length === 1 ? top3InOrder.find((t) => t.id === rows[0].id && !t.completed_at) : undefined
+      if (pick) moveInTop3Order(pick, top3InOrder.indexOf(pick) + dir)
+      else moveInListWithUndo([overdueOpen, restOpen.filter((t) => !t.completed_at)], rows, dir)
+    },
   })
 
   // Kai 2026-10-07: order the Top 3. Alt+↑/↓ moves the focused Top 3 row (up into first place = the
@@ -575,6 +591,8 @@ export function TodayPage() {
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onTop3={bulkTop3}
+          onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
+          onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(selectable.map((t) => t.id)))}
         />
@@ -603,6 +621,7 @@ export function TodayPage() {
         <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
       )}
       {kbLabelIds && <LabelPicker taskIds={kbLabelIds} position={rowAnchor('task-', kbLabelIds[0])} onClose={() => setKbLabelIds(null)} />}
+      {verbs.node}
 
       {morningOpen && <MorningRitual onClose={() => closeRitual('morning')} />}
       {eveningOpen && <EveningRitual onClose={() => closeRitual('evening')} />}

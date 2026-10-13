@@ -8,6 +8,7 @@ import { OUTBOX_KEY, DEAD_KEY, flushOutbox, rescueEmptyUserIdWrites, unsyncedCha
 import { dropThisDevicePush } from '../notifications/api'
 // Imported here (eagerly) so recovery.ts reads a password-reset link at boot — see that file.
 import { forgetRecovery, rememberRecovery } from './recovery'
+import { forgetChats } from '../chat/history'
 
 interface AuthContextValue {
   session: Session | null
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void del('kais-flow-query-cache')
         forgetRecovery()
         widgetsSignedOut() // the home-screen widgets forget the day (S4)
+        forgetChats() // and the chat its conversations (A28)
       }
       // J-11: /reset only offers the new-password form to a session that arrived this way.
       if (event === 'PASSWORD_RECOVERY') rememberRecovery()

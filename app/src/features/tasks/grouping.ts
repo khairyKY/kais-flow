@@ -1,6 +1,7 @@
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 import { isTop3Today } from './top3Rule'
+import { orderKey } from './manualOrder'
 
 export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue' | 'all'
 
@@ -154,7 +155,8 @@ function bucketOf(task: Task, now: Date): GroupKey {
 }
 
 /** Buckets tasks into ordered, non-empty display groups. Overdue sorts oldest-first (the
- * age-sorted confrontation the phase wants); other groups keep due-ascending order. */
+ * age-sorted confrontation the phase wants); other groups keep due-ascending order. A task moved
+ * with ⌘↑/↓ sorts by its manual order instead (./manualOrder, 0076), on the same scale. */
 export function groupTasks(tasks: Task[], now: Date = new Date()): TaskGroup[] {
   const open = tasks.filter((t) => t.status === 'todo')
   const byKey = new Map<GroupKey, Task[]>()
@@ -165,12 +167,10 @@ export function groupTasks(tasks: Task[], now: Date = new Date()): TaskGroup[] {
     byKey.set(key, arr)
   }
 
-  const dateValue = (t: Task) => new Date(t.due_at ?? t.scheduled_start ?? 8.64e15).getTime()
-
   return GROUP_ORDER.flatMap(({ key, label }) => {
     const groupTasksArr = byKey.get(key)
     if (!groupTasksArr || groupTasksArr.length === 0) return []
-    groupTasksArr.sort((a, b) => dateValue(a) - dateValue(b)) // oldest-first everywhere; overdue = most negative first
+    groupTasksArr.sort((a, b) => orderKey(a) - orderKey(b)) // oldest-first everywhere; overdue = most negative first
     const totalMinutes = groupTasksArr.reduce((sum, t) => sum + (t.duration_min ?? 0), 0)
     return [{ key, label, tasks: groupTasksArr, totalMinutes }]
   })

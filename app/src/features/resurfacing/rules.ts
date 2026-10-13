@@ -1,18 +1,19 @@
-import type { ResurfaceAction, ResurfacedLogRow } from '../../lib/types'
+import type { Book, JournalEntry, Note, Quote, ResurfaceAction, ResurfacedLogRow } from '../../lib/types'
 
 // ── "From a while ago" — the card's rules (Kai 2026-10-07: "I don't really understand what I can do
 // with it; if I press Later… it's just a loop of snoozing something"). Every press settles the pick;
 // "Not now" says how long; something put off twice asks once to keep it or let it go. Pure, so the
 // card, Today and the tests share one copy. ──
 
-/** What the card can offer. `keep` = a filed note's Keep (it is a task already: nothing to make). */
+/** What the card can offer. `keep` = Keep for something with nothing to make: a filed note (a task
+ * already) or a memory (0078: a journal page, a quote, a library note — read again, never acted on). */
 export type CardAction = 'plan' | 'done' | 'convert' | 'keep' | 'letgo' | 'notnow'
 
 /** After this many "Not now"s the card stops offering a snooze and asks instead. */
 export const PUT_OFF_LIMIT = 2
 
 export interface CardSubject {
-  kind: 'task' | 'note'
+  kind: 'task' | 'note' | 'memory'
   /** A note already filed as a task (the Inbox's `filed`). */
   filed?: boolean
   putOffs: number
@@ -23,9 +24,11 @@ export const asksToSettle = (s: Pick<CardSubject, 'putOffs'>): boolean => s.putO
 
 /** The buttons, in order. */
 export function cardActions(s: CardSubject): CardAction[] {
-  const keep: CardAction = s.kind === 'task' ? 'plan' : s.filed ? 'keep' : 'convert'
+  const keep: CardAction = s.kind === 'task' ? 'plan' : s.kind === 'note' && !s.filed ? 'convert' : 'keep'
   if (asksToSettle(s)) return [keep, 'letgo']
   if (s.kind === 'task') return ['plan', 'done', 'letgo', 'notnow']
+  // A memory: Keep (it may come round again after its rest) · Let it go (never again; nothing is deleted).
+  if (s.kind === 'memory') return ['keep', 'letgo', 'notnow']
   return s.filed ? ['letgo', 'notnow'] : ['convert', 'letgo', 'notnow']
 }
 
@@ -97,3 +100,69 @@ export function isSnoozed(rows: readonly ResurfacedLogRow[], entityId: string, l
 /** Today's pick: the newest row whose entity isn't snoozed. */
 export const latestPick = (rows: readonly ResurfacedLogRow[], ledger: Record<string, string>, now: number): ResurfacedLogRow | null =>
   rows.find((r) => !isSnoozed(rows, r.entity_id, ledger, now)) ?? null
+
+// ── Memories (0078, P7e A24): old journal pages, quotes and library notes come round too. The card
+// quotes their words and says where they're from; journal text never leaves our DB and UI. ──
+
+export type MemoryKind = 'journal_entry' | 'quote' | 'note'
+
+export interface Memory {
+  kind: MemoryKind
+  /** The words the card quotes — a long page is cut to an excerpt. */
+  text: string
+  /** A journal page's day (YYYY-MM-DD); a quote's or note's save time (ISO). */
+  at: string
+  /** A quote's book (else its source); a note's book. */
+  from: string | null
+  /** Who said a quote (else its book's author). */
+  by: string | null
+}
+
+/** One line, at most `max` characters, cut at a word with an ellipsis. */
+export function excerpt(text: string, max = 180): string {
+  const flat = text.replace(/\s+/g, ' ').trim()
+  if (flat.length <= max) return flat
+  const cut = flat.slice(0, max - 1)
+  const space = cut.lastIndexOf(' ')
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).trimEnd()}…`
+}
+
+/** The memory a pick points at, or null — gone (deleted, trashed), wordless, or not loaded yet. */
+export function memoryOf(
+  row: Pick<ResurfacedLogRow, 'entity_type' | 'entity_id'>,
+  data: { journal: readonly JournalEntry[]; quotes: readonly Quote[]; notes: readonly Note[]; books: readonly Book[] },
+): Memory | null {
+  const id = row.entity_id
+  const book = (bookId: string | null) => (bookId ? data.books.find((b) => b.id === bookId) : undefined)
+  switch (row.entity_type) {
+    case 'journal_entry': {
+      const e = data.journal.find((x) => x.id === id && !x.deleted_at)
+      return e?.body.trim() ? { kind: 'journal_entry', text: excerpt(e.body), at: e.entry_date, from: null, by: null } : null
+    }
+    case 'quote': {
+      const q = data.quotes.find((x) => x.id === id)
+      if (!q?.text.trim()) return null
+      const b = book(q.book_id)
+      return { kind: 'quote', text: excerpt(q.text, 280), at: q.created_at, from: b?.title ?? q.source ?? null, by: q.author ?? b?.author ?? null }
+    }
+    case 'note': {
+      const n = data.notes.find((x) => x.id === id)
+      const words = n?.title?.trim() || n?.body.trim()
+      return n && words ? { kind: 'note', text: excerpt(words), at: n.created_at, from: book(n.book_id)?.title ?? null, by: null } : null
+    }
+    default:
+      return null
+  }
+}
+
+/** "14 Jul 2026" for a YYYY-MM-DD day — read as the calendar day it names, whatever the zone. */
+const dayWords = (day: string): string =>
+  new Date(`${day}T00:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
+
+/** The meta line under a memory: "Journal · 14 Jul 2026 · 3 months ago" / "Quote · The Overstory ·
+ * Richard Powers · saved 5 weeks ago" / "Library note · saved 3 weeks ago". */
+export function memoryMeta(m: Memory, now: Date): string {
+  if (m.kind === 'journal_entry') return ['Journal', dayWords(m.at), agoWords(m.at, now)].join(' · ')
+  const label = m.kind === 'quote' ? 'Quote' : 'Library note'
+  return [label, m.from, m.by, `saved ${agoWords(m.at, now)}`].filter(Boolean).join(' · ')
+}

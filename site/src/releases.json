@@ -1,5 +1,31 @@
 [
   {
+    "v": "v1.1.6",
+    "date": "2026-10-14",
+    "title": "Your plan in Google, reminders for events, and Undo for everything",
+    "highlights": [
+      "Your time blocks, scheduled tasks and events can show in your main Google calendar as private busy time. Reconnect Google once in Settings to allow it",
+      "Remind me before an event: at start, 5, 10, 15, 30 minutes or an hour before, for one event or the whole series",
+      "Time Slots on the phone, “Into a slot…” in every task’s menu, and >Code block in the bar",
+      "Undo for every change that used to happen silently, and keys for priority, focus, goal, someday, duration and Plan",
+      "⌘/Ctrl+↑/↓ moves a task up or down in any list",
+      "Old journal entries, quotes and notes come back to you, like old tasks do",
+      "Chat keeps your conversation until you clear it, and you can talk to it",
+      "Save a project’s checklist as a template and use it on another project"
+    ],
+    "icons": [
+      "sync",
+      "clock",
+      "calendar",
+      "check",
+      "menu",
+      "journal",
+      "chat",
+      "notebook"
+    ],
+    "art": "hydrangea-light"
+  },
+  {
     "v": "v1.1.5",
     "date": "2026-10-14",
     "title": "Repairs, and updates that install in place",

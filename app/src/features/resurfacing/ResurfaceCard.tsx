@@ -7,6 +7,7 @@ import { useDomains } from '../domains/api'
 import { placeName } from '../tasks/move'
 import { useOpenTask } from '../tasks/openTask'
 import { PlanMenu } from '../tasks/PlanMenu'
+import { searchDestination } from '../search/api'
 import {
   convertResurfaced,
   cooldownDays,
@@ -19,7 +20,7 @@ import {
   useResurfacePick,
   type ResurfacePick,
 } from './api'
-import { actionLabel, asksToSettle, cardActions, metaLine, type CardAction } from './rules'
+import { actionLabel, asksToSettle, cardActions, memoryMeta, metaLine, type CardAction, type MemoryKind } from './rules'
 
 // Pixel contract: Today.dc.html 1a "From a while ago" card (lines 212-217). TodayPage
 // already renders the SectionLabel above this — own only the card body. `#fff` in the
@@ -28,6 +29,9 @@ import { actionLabel, asksToSettle, cardActions, metaLine, type CardAction } fro
 // button settles it (./rules has which buttons and their words).
 
 const EXPLAIN = 'Something you saved a while ago. Keep it, plan it, or let it go.'
+// 0078: a journal page, quote or library note — read again. Letting one go only stops it coming back.
+const EXPLAIN_MEMORY = 'Something you wrote or saved a while ago, back for a reread. Keep it, or let it go — that only stops it coming back; nothing is deleted.'
+const OPEN_MEMORY: Record<MemoryKind, string> = { journal_entry: 'Open that day in the Journal', quote: 'Open it in the Library', note: 'Open it in the Library' }
 
 export function ResurfaceCard() {
   const pick = useResurfacePick()
@@ -51,13 +55,15 @@ function Card({ pick }: { pick: ResurfacePick }) {
   const { data: domains = [] } = useDomains()
   const openTask = useOpenTask()
   const navigate = useNavigate()
-  const { row, task, item, putOffs } = pick
+  const { row, task, item, memory, putOffs } = pick
 
-  const subject = { kind: task ? ('task' as const) : ('note' as const), filed: item?.status === 'filed', putOffs }
+  const subject = { kind: task ? ('task' as const) : memory ? ('memory' as const) : ('note' as const), filed: item?.status === 'filed', putOffs }
   const snoozeDays = cooldownDays(cooldownTier(task))
   const asking = asksToSettle(subject)
   const exit = (write: () => void) => animateRowRemoval(cardRef.current, write)
-  const meta = task
+  const meta = memory
+    ? memoryMeta(memory, new Date())
+    : task
     ? metaLine({ kind: 'task', place: placeName(task, projects, areas, domains), createdAt: task.created_at, updatedAt: task.updated_at }, new Date())
     : metaLine({ kind: 'note', filed: subject.filed, createdAt: item!.created_at }, new Date())
 
@@ -108,11 +114,15 @@ function Card({ pick }: { pick: ResurfacePick }) {
       <button
         type="button"
         className="kf-resurface-open"
-        onClick={(e) => (task ? openTask(task.id, undefined, e.currentTarget) : navigate(`/inbox?focus=${row.entity_id}`))}
-        title={task ? 'Open the task' : 'Open it in the Inbox'}
+        onClick={(e) => {
+          if (task) return openTask(task.id, undefined, e.currentTarget)
+          const to = searchDestination(row) // the Inbox / Journal / Library page holding this one thing
+          if ('href' in to) navigate(to.href)
+        }}
+        title={task ? 'Open the task' : memory ? OPEN_MEMORY[memory.kind] : 'Open it in the Inbox'}
         style={{ all: 'unset', cursor: 'pointer', display: 'block', fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.4, overflowWrap: 'anywhere' }}
       >
-        "{task ? task.title : item!.raw_text}"
+        "{task ? task.title : memory ? memory.text : item!.raw_text}"
       </button>
       <div className="kf-resurface-meta" style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginTop: 4, fontSize: 'var(--fs-meta-l)', color: 'var(--ink-muted)' }}>
         <span style={{ minWidth: 0 }}>{meta}</span>
@@ -126,7 +136,7 @@ function Card({ pick }: { pick: ResurfacePick }) {
           ?
         </button>
       </div>
-      {why && <div className="kf-resurface-why" style={{ marginTop: 4, fontSize: 'var(--fs-meta-l)', color: 'var(--ink-muted)' }}>{EXPLAIN}</div>}
+      {why && <div className="kf-resurface-why" style={{ marginTop: 4, fontSize: 'var(--fs-meta-l)', color: 'var(--ink-muted)' }}>{memory ? EXPLAIN_MEMORY : EXPLAIN}</div>}
       {asking && (
         <div className="kf-resurface-ask" style={{ marginTop: 8, fontSize: 'var(--fs-meta-l)', color: 'var(--ink-body)' }}>
           You've put this off twice — keep it or let it go?

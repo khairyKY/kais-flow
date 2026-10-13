@@ -17,7 +17,7 @@ import { useAreas } from '../areas/api'
 import { useDomains } from '../domains/api'
 import { usePaperStore } from '../paper/paperStore'
 import { useProjects } from '../projects/api'
-import { currentTop3, deleteTasksWithUndo, duplicateTaskWithUndo, makeGoalWithUndo, renameTask, setDuration, setLabels, toggleTaskWithUndo } from './api'
+import { currentTop3, deleteTasksWithUndo, duplicateTaskWithUndo, makeGoalWithUndo, renameTask, toggleTaskWithUndo } from './api'
 import { placeName } from './move'
 import { useOpenTask } from './openTask'
 import { RowMenuButton } from './SwipeRow'
@@ -66,8 +66,9 @@ export function useTaskControls(task: Task, onSaved?: (field: string) => void) {
     priority: on('priority', a.priority),
     repeat: on('repeat', a.repeat),
     remind: on('remind', a.remind),
-    duration: on('duration', (m: number | null) => setDuration(task, m)),
-    labels: on('labels', (l: string[]) => setLabels(task, l)),
+    duration: a.duration && on('duration', a.duration),
+    // The Label picker writes through labels.ts toggleLabel (its Undo); this is the sheet's "Saved".
+    labels: () => onSaved?.('labels'),
     top3: on('top3', a.top3),
     goal: on('top3', a.goal),
   }

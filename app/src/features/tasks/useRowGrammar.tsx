@@ -3,10 +3,11 @@ import { useIsMobile } from '../../components/BottomSheet'
 import { tomorrowHint as defaultTomorrowHint } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
 import type { Area, Domain, Project, Task } from '../../lib/types'
-import { deleteTasksWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, reopenTaskWithUndo, rescheduleDue, rescheduleTasksWithUndo, setPriority, setRecurrence, setReminder, somedayTasksWithUndo, toggleTop3 } from './api'
+import { deleteTasksWithUndo, editWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, planWithUndo, prioritizeWithUndo, reopenTaskWithUndo, rescheduleDue, setDuration, setRecurrence, setReminder, somedayTasksWithUndo, toggleTop3 } from './api'
+import { durationLabel } from '../../components/pickerMath'
 import { placeName } from './move'
 import type { SwipeActions } from './SwipeRow'
-import { dueChip } from './taskSheetMath'
+import { dueChip, remindChip, repeatLabel } from './taskSheetMath'
 import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } from './TaskMenu'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { outOfSlotWithUndo } from '../calendar/api'
@@ -16,18 +17,20 @@ import { outOfSlotWithUndo } from '../calendar/api'
 // menu to render beside it from here. ──
 
 /** The real writes for one task (the task sheet's chips open the same pickers with these). A Plan
- * pick says where the task went, with Undo — blocks it took off the calendar come back too. */
+ * pick says where the task went, with Undo — blocks it took off the calendar come back too. Every
+ * field edit here says what it set, with Undo (P7e A17: priority, repeat, remind and duration were silent). */
 export function taskActions(task: Task): TaskMenuActions {
   return {
     tomorrow: () => moveToTomorrowWithUndo([task]),
     // `timed`: Pick date & time… set a time, which puts the task on the calendar (calendar/replan).
-    schedule: (iso, timed) => rescheduleTasksWithUndo([task], iso, { timed, message: `Planned · ${dueChip(iso, new Date())}` }),
-    clearDate: () => toastUndo('Date taken off', rescheduleDue(task, null)),
+    schedule: (iso, timed) => planWithUndo(task, iso, timed),
+    clearDate: () => planWithUndo(task, null),
     someday: () => somedayTasksWithUndo([task]), // Undo like every other plan move
     move: (to) => moveTasksWithUndo([task], to),
-    priority: (p) => setPriority(task, p),
-    repeat: (rule) => setRecurrence(task, rule),
-    remind: (iso) => setReminder(task, iso),
+    priority: (p) => prioritizeWithUndo([task], p),
+    repeat: (rule) => editWithUndo([task], rule ? `Repeats · ${repeatLabel(rule)}` : 'Repeat off', (t) => setRecurrence(t, rule)),
+    remind: (iso) => editWithUndo([task], iso ? `Reminder · ${remindChip(iso, task.due_at)}` : 'Reminder off', (t) => setReminder(t, iso)),
+    duration: (m) => editWithUndo([task], m ? `Duration · ${durationLabel(m)}` : 'Duration off', (t) => setDuration(t, m)),
     top3: () => toggleTop3(task),
     goal: () => makeGoalWithUndo(task),
     reopen: () => reopenTaskWithUndo(task),

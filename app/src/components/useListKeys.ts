@@ -7,15 +7,21 @@ export interface ListBinding<T> {
   run: (item: T) => void
   /** With rows selected, the key acts on all of them (one Undo) instead of the focused row. */
   runAll?: (items: T[]) => void
+  /** A page key (Tasks' ⇧F / ⇧S): runs with no row focused, even on an empty list. */
+  page?: boolean
 }
 
-/** The binding a key press means. Letters match whatever the layout or Shift/Caps Lock make of
- * them (Kai 2026-10-12: T did nothing) — on an Arabic layout T arrives as key 'ف', code 'KeyT'. */
-export function bindingFor<T>(bindings: readonly ListBinding<T>[], e: Pick<KeyboardEvent, 'key' | 'code'>): ListBinding<T> | undefined {
-  const exact = bindings.find((b) => b.keys.includes(e.key))
+/** The binding a key press means. Letters match whatever the layout or Caps Lock make of them (Kai
+ * 2026-10-12: T did nothing) — on an Arabic layout T arrives as key 'ف', code 'KeyT'. Shift + a letter
+ * is its capital's binding when there is one (Tasks' ⇧F filter, ⇧S sort — P7e A18), else the letter's. */
+export function bindingFor<T>(bindings: readonly ListBinding<T>[], e: Pick<KeyboardEvent, 'key' | 'code'> & { shiftKey?: boolean }): ListBinding<T> | undefined {
+  const find = (k: string) => bindings.find((b) => b.keys.includes(k))
+  const latin = /^[a-z]$/i.test(e.key)
+  const exact = latin ? undefined : find(e.key)
   if (exact) return exact
-  const letter = /^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase()
-  return letter ? bindings.find((b) => b.keys.includes(letter)) : undefined
+  const letter = latin ? e.key.toLowerCase() : /^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase()
+  if (!letter) return undefined
+  return (e.shiftKey ? find(letter.toUpperCase()) : undefined) ?? find(letter)
 }
 
 export function isTypingTarget(target: EventTarget | null): boolean {
@@ -69,6 +75,8 @@ interface UseListKeysOptions<T> {
   onSelectAll?: () => void
   /** The rows selected right now: a key with a `runAll` acts on these. */
   selected?: T[]
+  /** ⌘/Ctrl+↑/↓ (p7e A22): move the selection, else the focused row, one place up (-1) or down (+1). */
+  reorder?: (rows: T[], dir: -1 | 1) => void
 }
 
 /** Roving-focus keyboard nav shared by Tasks smart lists, Today, and Inbox: ↑/↓ or j/k move
@@ -76,7 +84,7 @@ interface UseListKeysOptions<T> {
 export function useListKeys<T extends { id: string }>(
   items: T[],
   bindings: ListBinding<T>[],
-  { idPrefix = 'task-', active = true, sectionLabel, onSelectAll, selected = NONE as T[] }: UseListKeysOptions<T> = {},
+  { idPrefix = 'task-', active = true, sectionLabel, onSelectAll, selected = NONE as T[], reorder }: UseListKeysOptions<T> = {},
 ) {
   const [focusedId, setFocusedId] = useState<string | null>(null)
 
@@ -101,8 +109,18 @@ export function useListKeys<T extends { id: string }>(
     if (!active) return
     function onKeydown(e: KeyboardEvent) {
       if (isTypingTarget(e.target)) return
+      const dir = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
+      if (reorder && dir && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+        const rows = selected.length > 0 ? selected : items.filter((i) => i.id === focusedId)
+        if (rows.length === 0) return
+        e.preventDefault()
+        reorder(rows, dir)
+        // The row's node moved in the list: keep the keyboard on it.
+        if (focusedId) requestAnimationFrame(() => document.getElementById(`${idPrefix}${focusedId}`)?.focus())
+        return
+      }
       if (e.ctrlKey || e.metaKey || e.altKey) return
-      if (items.length === 0) return
+      if (items.length === 0 && !bindingFor(bindings, e)?.page) return
       const idx = items.findIndex((i) => i.id === focusedId)
 
       if (e.key === 'ArrowDown' || e.key === 'j') {
@@ -125,13 +143,13 @@ export function useListKeys<T extends { id: string }>(
         return
       }
       const focused = items[idx]
-      if (!focused) return
+      if (!focused && !binding.page) return
       e.preventDefault()
-      binding.run(focused)
+      binding.run(focused) // a page key ignores the row
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [items, focusedId, bindings, active, selected])
+  }, [items, focusedId, bindings, active, selected, reorder, idPrefix])
 
   return { focusedId, setFocusedId }
 }

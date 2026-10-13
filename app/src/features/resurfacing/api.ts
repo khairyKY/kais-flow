@@ -5,11 +5,13 @@ import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
 import { scheduleTomorrow } from '../../lib/dateShortcuts'
 import { dismissInboxItem, fileToTask, useAllInboxItems } from '../inbox/api'
+import { useJournalEntries } from '../journal/api'
+import { useBooks, useNotes, useQuotes } from '../library/api'
 import { completeTask, deleteTask, rescheduleDue, restoreTask, setSomeday, undoCompletion, useTasks } from '../tasks/api'
 import type { PlanActions } from '../tasks/PlanMenu'
 import { dueChip } from '../tasks/taskSheetMath'
 import { cairoTimeKey } from '../calendar/eventTime'
-import { doneAction, latestPick, putOffCount, serverSettles } from './rules'
+import { doneAction, latestPick, memoryOf, putOffCount, serverSettles, type Memory } from './rules'
 import type { InboxItem, ResurfaceAction, ResurfacedLogRow, Task } from '../../lib/types'
 
 // ── Punch 21: priority-based "Not now" cooldowns ──────────────────────────────────────────
@@ -76,6 +78,8 @@ export interface ResurfacePick {
   row: ResurfacedLogRow
   task?: Task
   item?: InboxItem
+  /** A journal page, quote or library note (0078). */
+  memory?: Memory
   putOffs: number
 }
 
@@ -86,14 +90,24 @@ export function useResurfacePick(): ResurfacePick | null {
   const { data: tasks = [] } = useTasks()
   const { data: items = [] } = useAllInboxItems()
   const row = latestPick(rows, readSnoozes(), Date.now())
+  // The Library and Journal lists are read only when the pick is one of theirs (or already cached).
+  const type = row?.entity_type
+  const { data: journal = [] } = useJournalEntries(type === 'journal_entry')
+  const { data: quotes = [] } = useQuotes(type === 'quote')
+  const { data: notes = [] } = useNotes(type === 'note')
+  const { data: books = [] } = useBooks(type === 'quote' || type === 'note')
   if (!row || row.action !== 'pending') return null
   const putOffs = putOffCount(rows, row.entity_id)
   if (row.entity_type === 'task') {
     const task = tasks.find((t) => t.id === row.entity_id)
     return task && task.status !== 'done' ? { row, task, putOffs } : null
   }
-  const item = items.find((i) => i.id === row.entity_id)
-  return item && item.status !== 'dismissed' ? { row, item, putOffs } : null
+  if (row.entity_type === 'inbox_item') {
+    const item = items.find((i) => i.id === row.entity_id)
+    return item && item.status !== 'dismissed' ? { row, item, putOffs } : null
+  }
+  const memory = memoryOf(row, { journal, quotes, notes, books })
+  return memory ? { row, memory, putOffs } : null
 }
 
 /** The one way a pick gets settled: mark the row, log it, one toast whose Undo takes back

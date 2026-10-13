@@ -345,3 +345,30 @@ describe('a link in the line (P7e A19)', () => {
     expect(parseCommand('read https://example.com/a', domains, projects, { now, zone: 'cairo', ignore: ['https://example.com/a'] })).toMatchObject({ url: null, title: 'read https://example.com/a' })
   })
 })
+
+describe('parseCommand — `>` names a Time slot (Time Slots, 0073)', () => {
+  const now = new Date('2026-10-12T05:00:00Z')
+  const slots = ['Code block💻', 'Morning focus', 'Shaheen🛞']
+  const p = (input: string, ignore: string[] = []) => parseCommand(input, domains, projects, { now, zone: 'cairo', slots, ignore })
+
+  it('takes the most words that still name a slot, out of the title, as a chip', () => {
+    expect(p('fix the login bug >code block')).toMatchObject({ slotMatch: 'Code block💻', title: 'fix the login bug', tokens: ['>code block'] })
+    expect(p('>Code block wire the sheet !!')).toMatchObject({ slotMatch: 'Code block💻', title: 'wire the sheet', priority: 2 })
+    expect(p('call them >shah')).toMatchObject({ slotMatch: 'Shaheen🛞', title: 'call them' })
+  })
+
+  it('before chrono: a "Morning focus" slot is not a time', () => {
+    expect(p('stretch >morning focus')).toMatchObject({ slotMatch: 'Morning focus', title: 'stretch', dueAt: null })
+  })
+
+  it('a `>` that names no slot stays a word; no slots, no match; Esc hands it back', () => {
+    expect(p('a > b')).toMatchObject({ slotMatch: null, title: 'a > b' })
+    expect(p('ship >nothing')).toMatchObject({ slotMatch: null, title: 'ship >nothing' })
+    expect(parseCommand('fix >code', domains, projects, { now, zone: 'cairo' }).slotMatch).toBeNull()
+    expect(p('fix >code', ['>code'])).toMatchObject({ slotMatch: null, title: 'fix >code' })
+  })
+
+  it('is structure: the line becomes a task, not an Inbox capture', () => {
+    expect(hasStructure(p('fix it >code'))).toBe(true)
+  })
+})

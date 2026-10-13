@@ -24,3 +24,37 @@
 .kf-chat-starter:hover { background: var(--paper-bone); }
 .kf-chat-starter:active { background: var(--pressed-overlay); }
 .kf-chat-starter:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* P7e A28 — Clear (the conversation stays on this device until then) and the mic beside the field. */
+.kf-chat-clear {
+  margin-left: auto;
+  border: none;
+  background: none;
+  padding: 4px 8px;
+  min-height: 30px;
+  border-radius: 999px;
+  font: inherit;
+  font-size: var(--fs-meta-l);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+/* Clear takes the header's free space, so the close button (inline margin-left: auto) sits beside it. */
+.kf-chat-clear + .kf-hit { margin-left: 0 !important; }
+.kf-chat-clear:hover { color: var(--ink-body); background: var(--paper-bone); }
+.kf-chat-mic {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line-control);
+  border-radius: 999px;
+  background: none;
+  color: var(--acc-terra-ink);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.kf-chat-mic:disabled { opacity: 0.5; cursor: default; }
+.kf-chat-clear:focus-visible, .kf-chat-mic:focus-visible { outline: none; box-shadow: var(--focus-ring); }

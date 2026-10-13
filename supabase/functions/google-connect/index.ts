@@ -1,5 +1,7 @@
-// Connect Google Calendar (parity audit B1, Kai 2026-10-13): the OAuth 2.0 web-server flow, scope
-// calendar.readonly. Google's consent page is the only Google screen anyone sees; the calendar is ours.
+// Connect Google Calendar (parity audit B1, Kai 2026-10-13): the OAuth 2.0 web-server flow, scopes
+// calendar.readonly + calendar.events.owned (Kai 2026-10-14: our plan out to Google as busy — least
+// privilege, only calendars the user owns). Google's consent page is the only Google screen anyone
+// sees; the calendar is ours.
 //
 // Signed-in user (POST, bearer token):
 //   { action: 'start', origin }        → { url }       Google's consent page; `origin` = where to land after
@@ -7,7 +9,8 @@
 //                                                       (docs/GOOGLE-SETUP.md) — said plainly, never an error
 //   { action: 'calendars' }            → { calendars, chosen }   re-read the account's calendar list
 //   { action: 'choose', ids }          → { chosen }    which calendars show; an unticked one's events go
-//   { action: 'disconnect' }           → { ok }        revoke at Google, drop every synced event and the row
+//   { action: 'mirror', on }           → { mirror }    "Show my plan in Google as busy"; off deletes ours there
+//   { action: 'disconnect' }           → { ok }        delete ours in Google, revoke, drop every synced event and the row
 //
 // Google (GET, no session — the reason this function runs with verify_jwt = false, config.toml):
 //   ?code=…&state=…  /  ?error=…&state=…   the redirect back. `state` is HMAC-signed with the client
@@ -24,7 +27,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, isAllowedOrigin, jsonResponse } from '../_shared/cors.ts'
-import { authUrl, gGet, googleToken, GoogleError, GOOGLE_SCOPE, readCalendars, readChosen, readState, returnTo, signState, type GCalendarListEntry, type GoogleData } from '../_shared/google.ts'
+import { authUrl, gGet, googleToken, GoogleError, GOOGLE_SCOPE, GOOGLE_WRITE_SCOPE, hasScope, listMirrored, planMirror, readCalendars, readChosen, readState, returnTo, signState, writeMirror, type GCalendarListEntry, type GoogleData } from '../_shared/google.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -50,6 +53,12 @@ async function listCalendars(accessToken: string) {
 }
 
 const refresh = (token: string) => googleToken({ client_id: CLIENT_ID, client_secret: CLIENT_SECRET, refresh_token: token, grant_type: 'refresh_token' })
+
+/** Deletes every event we wrote to the primary calendar (a plan that wants none) — and only those. */
+async function clearMirror(refreshToken: string) {
+  const { access_token } = await refresh(refreshToken)
+  return writeMirror(planMirror(new Map(), await listMirrored(access_token)), access_token)
+}
 
 /** Read, merge, write only if the row hasn't changed since the read (a sync stamping synced_at
  * mid-save would otherwise be clobbered); one retry on a lost race. */
@@ -78,8 +87,9 @@ async function callback(req: Request, db: SupabaseClient): Promise<Response> {
   if (!code) return back('bad_state')
   try {
     const tok = await googleToken({ code, client_id: CLIENT_ID, client_secret: CLIENT_SECRET, redirect_uri: REDIRECT_URI, grant_type: 'authorization_code' })
-    // Google's consent page lets a person untick the calendar box (granular consent).
-    if (!(tok.scope ?? '').split(' ').includes(GOOGLE_SCOPE)) return back('scope_missing')
+    // Google's consent page lets a person untick a box (granular consent): reading is required; writing
+    // isn't — without it the row offers Reconnect for it, and reading carries on.
+    if (!hasScope(tok.scope, GOOGLE_SCOPE)) return back('scope_missing')
     const prior = (await readRow(db, state.u))?.data ?? {}
     // prompt=consent should always bring one; a reconnect without one keeps the stored token.
     const refreshToken = tok.refresh_token ?? prior.refresh_token
@@ -89,7 +99,7 @@ async function callback(req: Request, db: SupabaseClient): Promise<Response> {
     const ids = new Set(calendars.map((c) => c.id))
     const chosen = prior.chosen ? prior.chosen.filter((id) => ids.has(id)) : selected
     // No synced_at: the app runs the first sync as it lands back on Settings.
-    const data: GoogleData = { refresh_token: refreshToken, login: login ?? undefined, calendars, chosen, status: 'ok', synced_at: prior.synced_at ?? null }
+    const data: GoogleData = { refresh_token: refreshToken, login: login ?? undefined, calendars, chosen, status: 'ok', synced_at: prior.synced_at ?? null, can_write: hasScope(tok.scope, GOOGLE_WRITE_SCOPE), mirror: prior.mirror }
     const { error } = await db.from('integrations').upsert({ user_id: state.u, provider: 'google', data }, { onConflict: 'user_id,provider' })
     if (error) throw new Error(`db ${error.code ?? 'error'}`)
     return back('connected')
@@ -107,7 +117,7 @@ Deno.serve(async (req) => {
   const auth = await requireUser(req)
   if (auth instanceof Response) return auth
   const userId = auth.user.id
-  const body = (await req.json().catch(() => null)) as { action?: unknown; origin?: unknown; ids?: unknown } | null
+  const body = (await req.json().catch(() => null)) as { action?: unknown; origin?: unknown; ids?: unknown; on?: unknown } | null
 
   if (!CLIENT_ID || !CLIENT_SECRET) {
     const missing = [!CLIENT_ID && 'GOOGLE_CLIENT_ID', !CLIENT_SECRET && 'GOOGLE_CLIENT_SECRET'].filter(Boolean)
@@ -148,9 +158,24 @@ Deno.serve(async (req) => {
       return jsonResponse(req, { chosen })
     }
 
+    if (body?.action === 'mirror') {
+      if (typeof body.on !== 'boolean') return jsonResponse(req, { error: 'bad_request' }, 400)
+      const on = body.on
+      const saved = await patchRow(db, userId, (d) => ({ ...d, mirror: on }))
+      if (typeof saved === 'string') return jsonResponse(req, { error: saved }, saved === 'busy' ? 409 : 404)
+      // Off: ours leave Google now; whatever this misses, the next sync (which wants none) deletes.
+      // On: the app runs a sync next, which writes them.
+      if (!on && saved.can_write && saved.refresh_token) await clearMirror(saved.refresh_token)
+      return jsonResponse(req, { mirror: on })
+    }
+
     if (body?.action === 'disconnect') {
       const row = await readRow(db, userId)
       const token = row?.data.refresh_token
+      // Best effort, before the revoke (after it, nothing could delete them): ours leave Google.
+      if (token && row?.data.can_write && CLIENT_ID && CLIENT_SECRET) {
+        await clearMirror(token).catch((e) => console.error('google-connect: clearing ours in Google failed', e instanceof Error ? e.message : 'error'))
+      }
       if (token) {
         // Best effort: the grant goes at Google too, so nothing keeps a token Kai's Flow has forgotten.
         await fetch('https://oauth2.googleapis.com/revoke', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ token }) })

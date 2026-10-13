@@ -95,3 +95,32 @@ describe('setters write the current row (QuickCreate regression)', () => {
     expect(events.at(-1)).toMatchObject({ type: 'task.moved', payload: { domain_id: 'd1' } })
   })
 })
+
+// P7e A17: the menus' Priority / Repeat / Remind / Duration, keys 1 and 3, the editor's dates — one Undo each.
+describe('editWithUndo / prioritizeWithUndo', () => {
+  it('Undo puts back every field the setter changed (a repeat on an undated task dated it too), and only those', async () => {
+    const { toastUndo } = await import('../../lib/undo')
+    const toast = vi.mocked(toastUndo)
+    toast.mockClear()
+    const task = api.createTask({ title: 'Stretch', priority: 3 })
+    api.editWithUndo([task], 'Repeats · Daily', (t) => api.setRecurrence(t, 'FREQ=DAILY'))
+    api.setLabels(task, ['body']) // a later, unrelated edit survives the Undo
+    expect(toast.mock.calls[0][0]).toBe('Repeats · Daily')
+    void toast.mock.calls[0][1]()
+    expect(outbox.get(task.id)).toMatchObject({ recurrence_rule: null, due_at: null, someday: false, priority: 3, labels: ['body'] })
+  })
+
+  it('a selection: one toast, one Undo for all; the same pick again changes nothing and says nothing', async () => {
+    const { toastUndo } = await import('../../lib/undo')
+    const toast = vi.mocked(toastUndo)
+    toast.mockClear()
+    const a = api.createTask({ title: 'a' })
+    const b = api.createTask({ title: 'b', priority: 1 })
+    api.prioritizeWithUndo([a, b], 2)
+    expect(toast.mock.calls.map((c) => c[0])).toEqual(['2 tasks · priority high'])
+    void toast.mock.calls[0][1]()
+    expect([outbox.get(a.id)?.priority, outbox.get(b.id)?.priority]).toEqual([null, 1])
+    api.prioritizeWithUndo([b], 1)
+    expect(toast).toHaveBeenCalledTimes(1)
+  })
+})

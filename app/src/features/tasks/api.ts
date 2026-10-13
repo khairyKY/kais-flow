@@ -22,7 +22,9 @@ import { fromMin } from '../../components/pickerMath'
 import { todayFor, type SpreadPick } from './planMath'
 import { isTop3Today, openTop3Count } from './top3Rule'
 import { placeTask, planReparent, type MoveTarget } from './move'
-import { addedLine } from './taskSheetMath'
+import { addedLine, dueChip } from './taskSheetMath'
+import { PRIORITY_LABELS } from './taskMenuSpec'
+import { planListMove } from './manualOrder'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -379,6 +381,39 @@ export function somedayTasksWithUndo(tasks: Task[]): void {
 /** A field edit the slipping view should see (it reads entity_type='task' activity). */
 const logUpdate = (task: Task, field: string) => logActivity('task.updated', 'task', task.id, { field })
 
+/** P7e A17: a field edit with "<message> · Undo" — Priority, Repeat, Remind and Duration from a menu,
+ * the task sheet, the editor or a key. `write` runs on each task (through its own setter); Undo writes
+ * back every field it changed, as it was. Nothing changed (the same pick again), no toast. */
+export function editWithUndo(tasks: readonly Task[], message: string, write: (task: Task) => void): void {
+  const changes = tasks.flatMap((t) => {
+    const before = cached(t)
+    write(before)
+    const after = cached(t)
+    const keys = (Object.keys(after) as (keyof Task)[]).filter((k) => k !== 'updated_at' && after[k] !== before[k])
+    return keys.length ? [{ before, back: Object.fromEntries(keys.map((k) => [k, before[k] ?? null])) as Partial<Task> }] : []
+  })
+  if (changes.length === 0) return
+  toastUndo(message, () =>
+    changes.forEach(({ before, back }) => {
+      patchTask(before, back)
+      logUpdate(before, Object.keys(back).join(','))
+    }),
+  )
+}
+
+/** Priority for one task or a selection (the menus, `!`, the bulk bar), with one Undo. */
+export function prioritizeWithUndo(tasks: readonly Task[], priority: number | null): void {
+  const name = priority ? (PRIORITY_LABELS[priority] ?? `P${priority}`) : null
+  const message = tasks.length > 1 ? `${tasksLabel(tasks.length)} · priority ${name?.toLowerCase() ?? 'off'}` : name ? `Priority · ${name}` : 'Priority off'
+  editWithUndo(tasks, message, (t) => setPriority(t, priority))
+}
+
+/** One task to a day, or off its date, with "Planned · Mon 09:00" / "Date taken off" · Undo — the Plan
+ * list, keys 1 and 3, Someday's → Today and the editor's date fields all land here (P7e A17). */
+export function planWithUndo(task: Task, dueAt: string | null, timed = false): void {
+  toastUndo(dueAt ? `Planned · ${dueChip(dueAt, new Date())}` : 'Date taken off', rescheduleDue(task, dueAt, timed))
+}
+
 export function setLabels(task: Task, labels: string[]): void {
   patchTask(task, { labels })
   logUpdate(task, 'labels')
@@ -508,6 +543,36 @@ function makeGoal(order: Task[], task: Task): boolean {
   writeTop3Order(order)
   logActivity('task.goal_set', 'task', task.id, {})
   toastUndo('Goal of the day', () => restoreTop3(before))
+  return true
+}
+
+// A burst of ⌘↑/↓ on the same rows is one Undo, back to where they were before the first press —
+// each press replaces the last one's toast instead of queueing six seconds of toasts per press.
+let lastMove: { key: string; toastId: string; before: Map<string, number | null> } | null = null
+
+/** ⌘/Ctrl+↑/↓ (p7e A22): `rows` — the focused task, or the selection — one place up (-1) or down
+ * (+1) within each of `groups` (a page's rows as drawn, ./manualOrder). Writes tasks.sort_order
+ * (0076) through the outbox; one Undo. False when nothing could move. */
+export function moveInListWithUndo(groups: readonly (readonly Task[])[], rows: readonly Task[], dir: -1 | 1): boolean {
+  const ids = new Set(rows.map((t) => t.id))
+  const writes = groups.flatMap((g) => planListMove(g, ids, dir) ?? [])
+  if (!writes.length) return false
+  const key = [...ids].sort().join()
+  const { toasts, dismiss } = useToastStore.getState()
+  const burst = lastMove?.key === key && toasts.some((t) => t.id === lastMove!.toastId) ? lastMove : null
+  const before = new Map(burst?.before)
+  for (const { row, sort_order } of writes) {
+    if (!before.has(row.id)) before.set(row.id, cached(row).sort_order ?? null)
+    patchTask(row, { sort_order })
+  }
+  if (burst) dismiss(burst.toastId)
+  toastUndo(rows.length > 1 ? `${rows.length} tasks moved` : `Moved ${dir < 0 ? 'up' : 'down'}`, () => {
+    for (const [id, sort_order] of before) {
+      const t = cachedTask(id)
+      if (t) patchTask(t, { sort_order })
+    }
+  })
+  lastMove = { key, toastId: useToastStore.getState().toasts.at(-1)?.id ?? '', before }
   return true
 }
 

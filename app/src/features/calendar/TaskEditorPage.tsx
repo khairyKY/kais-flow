@@ -1,6 +1,6 @@
 import { useEffect, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
-import { useTasks, rescheduleDue, setSomeday, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo } from '../tasks/api'
+import { useTasks, planWithUndo, editWithUndo, setSomeday, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo } from '../tasks/api'
 import { useTaskDraft } from '../tasks/useTaskDraft'
 import { PhotoSource, SubtaskList, TaskMoreMenu, anchorUnder, useTaskControls } from '../tasks/TaskFields'
 import { remindChip, repeatLabel, dayWord } from '../tasks/taskSheetMath'
@@ -116,7 +116,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
   // Kai 2026-10-07 (a task given a time is on the calendar): setting the time places it there; a new
   // date keeps a task that's on the calendar on it (at its due time); otherwise a date is just a date.
   function handleDueChange(date: string, time: string, timed = !!linkedEvent) {
-    rescheduleDue(task, date ? zoneToIso(date, time || '09:00', zone) : null, timed)
+    planWithUndo(task, date ? zoneToIso(date, time || '09:00', zone) : null, timed) // with its Undo (P7e A17)
   }
 
   function handleDelete() {
@@ -324,7 +324,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
                 <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Someday</div>
                 <FHelp style={{ marginTop: 2 }}>rests in the fern · leaves every list</FHelp>
               </div>
-              <Toggle on={task.someday} label="Someday" onToggle={() => setSomeday(task, !task.someday)} />
+              <Toggle on={task.someday} label="Someday" onToggle={() => editWithUndo([task], task.someday ? 'Out of someday' : 'Parked for someday', (t) => setSomeday(t, !task.someday))} />
             </div>
           </div>
 

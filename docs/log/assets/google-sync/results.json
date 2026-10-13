@@ -7,7 +7,7 @@
   {
     "name": "s1 summary card: Google Calendar reads \"Not connected\"",
     "ok": true,
-    "detail": "Google CalendarYour calendars on ours, read-onlyNot connected"
+    "detail": "Google CalendarYour calendars on ours, read-only; your plan there as busyNot connected"
   },
   {
     "name": "s1 integrations: a real Google Calendar row with Connect",
@@ -27,7 +27,7 @@
   {
     "name": "s2 Connect posts {action:\"start\", origin} to google-connect",
     "ok": true,
-    "detail": "[{\"name\":\"google-connect\",\"body\":{\"action\":\"start\",\"origin\":\"http://localhost:5277\"}}]"
+    "detail": "[{\"name\":\"google-connect\",\"body\":{\"action\":\"start\",\"origin\":\"http://localhost:5284\"}}]"
   },
   {
     "name": "s2 it says what is missing: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, and where the steps are",
@@ -55,9 +55,9 @@
     "detail": ""
   },
   {
-    "name": "s3 the browser goes to Google’s consent page, read-only scope",
+    "name": "s3 the browser goes to Google’s consent page: read + owned-calendar events scopes",
     "ok": true,
-    "detail": "https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&redirect_uri=https%3A%2F%2Feqbbkitofgyxxrfggpbu.supabase.co%2Ffunctions%2Fv1%2Fgoogle-connect&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly&access_type=offline&prompt=consent&state=s"
+    "detail": "https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&redirect_uri=https%3A%2F%2Feqbbkitofgyxxrfggpbu.supabase.co%2Ffunctions%2Fv1%2Fgoogle-connect&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.owned&access_type=offline&prompt=consent&state=s"
   },
   {
     "name": "s3 no page errors",
@@ -77,12 +77,12 @@
   {
     "name": "s4 day: ?google= is gone from the address",
     "ok": true,
-    "detail": "http://localhost:5277/settings"
+    "detail": "http://localhost:5284/settings"
   },
   {
     "name": "s4 day: the account and \"Connected · synced 12 Oct, 09:48\"",
     "ok": true,
-    "detail": "Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Nothing is written back.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars"
+    "detail": "Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Your own blocks show in your main Google calendar as busy.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptShow my plan in Google as busyYour blocks and events, as private busy time in your main Google calendarLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars"
   },
   {
     "name": "s4 day: one switch per calendar, the chosen ones on",
@@ -112,12 +112,12 @@
   {
     "name": "s4 night: ?google= is gone from the address",
     "ok": true,
-    "detail": "http://localhost:5277/settings"
+    "detail": "http://localhost:5284/settings"
   },
   {
     "name": "s4 night: the account and \"Connected · synced 12 Oct, 09:48\"",
     "ok": true,
-    "detail": "Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Nothing is written back.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars"
+    "detail": "Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Your own blocks show in your main Google calendar as busy.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptShow my plan in Google as busyYour blocks and events, as private busy time in your main Google calendarLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars"
   },
   {
     "name": "s4 night: one switch per calendar, the chosen ones on",
@@ -172,7 +172,7 @@
   {
     "name": "s6 …and the address is clean again",
     "ok": true,
-    "detail": "http://localhost:5277/settings"
+    "detail": "http://localhost:5284/settings"
   },
   {
     "name": "s6 no page errors",
@@ -200,6 +200,11 @@
     "detail": ""
   },
   {
+    "name": "s7 day: …and \"Show my plan in Google as busy\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
     "name": "s7 day: no horizontal scroll at 390",
     "ok": true,
     "detail": "390"
@@ -215,12 +220,117 @@
     "detail": ""
   },
   {
+    "name": "s7 night: …and \"Show my plan in Google as busy\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
     "name": "s7 night: no horizontal scroll at 390",
     "ok": true,
     "detail": "390"
   },
   {
     "name": "s7 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8 the summary row says the plan goes out as busy",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8 the switch is there and on (absent setting = on)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8 no \"Allow … Reconnect\" once the grant can write",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8 off posts {action:\"mirror\", on:false} — the server deletes ours in Google — and runs no sync",
+    "ok": true,
+    "detail": "[{\"name\":\"google-connect\",\"body\":{\"action\":\"mirror\",\"on\":false}}]"
+  },
+  {
+    "name": "s8 …and the switch stays off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8 on posts {action:\"mirror\", on:true}, then syncs to write them now",
+    "ok": true,
+    "detail": "[{\"name\":\"google-connect\",\"body\":{\"action\":\"mirror\",\"on\":false}},{\"name\":\"google-connect\",\"body\":{\"action\":\"mirror\",\"on\":true}},{\"name\":\"google-sync\",\"body\":{\"action\":\"sync\"}}]"
+  },
+  {
+    "name": "s8 …and the switch is on again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8 Sync now says how many blocks are busy in Google",
+    "ok": true,
+    "detail": "Synced · 2 calendars · 335 events · 335 new · 0 gone · 12 blocks busy in Google"
+  },
+  {
+    "name": "s8 nothing written to calendar_events or integrations by the client",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "s8 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 day: \"Allow Kai’s Flow to show your blocks in Google\" with Reconnect",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 day: no busy switch yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 day: reading carries on — status ok, Sync now, the calendar switches",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 Sync now still syncs (no out line without the scope)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 Reconnect posts start and goes to Google asking for calendar.events.owned",
+    "ok": true,
+    "detail": "https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.owned&access_type=offline&prompt=consent&state=s"
+  },
+  {
+    "name": "s9 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 night: \"Allow Kai’s Flow to show your blocks in Google\" with Reconnect",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 night: no busy switch yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 night: reading carries on — status ok, Sync now, the calendar switches",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 night: no page errors",
     "ok": true,
     "detail": ""
   },

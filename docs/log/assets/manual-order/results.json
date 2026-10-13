@@ -1,0 +1,127 @@
+[
+  {
+    "name": "t1 a seeded sort_order leads its group; the rest by date",
+    "ok": true,
+    "detail": "P,A,B,C,D"
+  },
+  {
+    "name": "t2 ⌘/Ctrl+↑ moves the focused row up one place",
+    "ok": true,
+    "detail": "P,A,C,B,D"
+  },
+  {
+    "name": "t2 one write: C at the midpoint of A and B",
+    "ok": true,
+    "detail": "[[\"Charlie\",1791981000000]]"
+  },
+  {
+    "name": "t2 focus stays on the moved row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t3 again: up past A",
+    "ok": true,
+    "detail": "P,C,A,B,D"
+  },
+  {
+    "name": "t3 a burst is one toast",
+    "ok": true,
+    "detail": "[\"Moved up\"]"
+  },
+  {
+    "name": "t4 ⌘/Ctrl+Z puts the burst back in one step",
+    "ok": true,
+    "detail": "P,A,B,C,D"
+  },
+  {
+    "name": "t4 the Undo writes C back to null",
+    "ok": true,
+    "detail": "[[\"Charlie\",null]]"
+  },
+  {
+    "name": "t5 a selection moves down as a block",
+    "ok": true,
+    "detail": "P,C,A,B,D"
+  },
+  {
+    "name": "t5 \"2 tasks moved\", with Undo",
+    "ok": true,
+    "detail": "[\"2 tasks moved\"]"
+  },
+  {
+    "name": "t5 only the moved rows are written",
+    "ok": true,
+    "detail": "[\"Alpha\",\"Bravo\"]"
+  },
+  {
+    "name": "t6 No date group: U3 moves up past U2",
+    "ok": true,
+    "detail": "U1,U3,U2"
+  },
+  {
+    "name": "t6 the tied run is written once, the short side only (≤ 2 rows)",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "t7 the Today group did not move",
+    "ok": true,
+    "detail": "P,C,A,B,D"
+  },
+  {
+    "name": "t8 the cheatsheet lists ⌘/Ctrl ↑/↓ Move task up / down",
+    "ok": true,
+    "detail": "Shortcuts\nthe quick paths through the garden\nANYWHERE\n⌘/Ctrl\nK\nCommand bar\n/\nSearch\n⌘/Ctrl\n/\nSearch, even mid-typing\n⌘/Ctrl\nJ\nChat\n⌘/Ctrl\nZ\nUndo the last action\n⌘/Ctrl\n,\nSettings\ni\nGo to Inbox\nu\nGo to"
+  },
+  {
+    "name": "t no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "y1 Also open draws the manual order first, then by date",
+    "ok": true,
+    "detail": "P,A,B"
+  },
+  {
+    "name": "y2 ⌘/Ctrl+↑ on Today: A above P",
+    "ok": true,
+    "detail": "A,P,B"
+  },
+  {
+    "name": "y2 one write, A a minute before P",
+    "ok": true,
+    "detail": "[[\"Alpha\",1791979080000]]"
+  },
+  {
+    "name": "y3 on a Top 3 row it reorders the Top 3 (the second pick becomes the goal)",
+    "ok": true,
+    "detail": "{\"G2\":1,\"G1\":2}"
+  },
+  {
+    "name": "y no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x1 the project lists its tasks by date",
+    "ok": true,
+    "detail": "X1,X2,X3"
+  },
+  {
+    "name": "x2 ⌘/Ctrl+↓ on a project page: X1 below X2",
+    "ok": true,
+    "detail": "X2,X1,X3"
+  },
+  {
+    "name": "x2 one write, X1 between X2 and X3",
+    "ok": true,
+    "detail": "[[\"Project one\",1792605600000]]"
+  },
+  {
+    "name": "x no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

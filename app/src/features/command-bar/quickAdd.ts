@@ -1,12 +1,12 @@
 import { blockIfTimed, enrichTypedInboxItem, enrichTypedTask } from '../capture/api'
-import { createEvent, deleteEvent } from '../calendar/api'
-import { captureText } from '../inbox/api'
+import { cachedSlots, createEvent, deleteEvent, putInSlot } from '../calendar/api'
+import { slotDay } from '../calendar/slots'
+import { captureText, uncapture } from '../inbox/api'
 import { createTask, toastAdded } from '../tasks/api'
 import { addDays } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { writeRow } from '../../lib/outbox'
 import { playSound } from '../../lib/sounds'
-import { useToastStore } from '../../lib/toastStore'
 import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDueChip } from './dueChip'
@@ -22,8 +22,9 @@ export function captureTyped(parsed: ParsedCommand, typed: string, kind: 'task' 
   if (kind === 'event') addTypedEvent(parsed, typed)
   else if (hasStructure(parsed)) addTypedTask(parsed, typed, parsed.projectMatch ?? parsed.domainMatch)
   else {
-    void enrichTypedInboxItem(captureText(typed), typed)
-    useToastStore.getState().push({ message: 'Added to Inbox' })
+    const item = captureText(typed)
+    void enrichTypedInboxItem(item, typed)
+    toastUndo('Added to Inbox', () => uncapture(item)) // P7e A17: it had no Undo
   }
 }
 
@@ -31,12 +32,16 @@ export function captureTyped(parsed: ParsedCommand, typed: string, kind: 'task' 
  * bar's Enter and the Tasks page's quick add): the instant local parse lands it now — on the calendar
  * too when a time was typed — a toast names where it went, and the AI's read fills what the tokens
  * left empty, after (capture/api enrichTypedTask). `place` names its project / area / domain for the
- * toast; `fallbackDue` dates a line that named no day (Tasks' Today tab). */
+ * toast; `fallbackDue` dates a line that named no day (Tasks' Today tab). A `>slot` puts it in that
+ * Time block's next occurrence (on or after a typed day) instead of a block of its own. */
 export function addTypedTask(parsed: ParsedCommand, typed: string, place: string | null, fallbackDue: string | null = null): Task {
   const input = quickAddTask(parsed, typed)
+  const day = input.dueAt && cairoDateKey(new Date(input.dueAt))
+  const slot = parsed.slotMatch ? cachedSlots().find((s) => s.title === parsed.slotMatch && (!day || slotDay(s) >= day)) : undefined
   const task = createTask({ ...input, dueAt: input.dueAt ?? fallbackDue })
-  blockIfTimed(task, parsed.dueTimed)
-  toastAdded(task, place)
+  if (slot) putInSlot(task, slot)
+  else blockIfTimed(task, parsed.dueTimed)
+  toastAdded(task, [slot?.title, place].filter(Boolean).join(' · ') || null)
   void enrichTypedTask(task, typed)
   return task
 }

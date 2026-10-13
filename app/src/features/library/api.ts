@@ -7,8 +7,10 @@ import { toastUndo } from '../../lib/undo'
 import type { Book, Note, Quote, Commentary } from '../../lib/types'
 
 // --- Books API ---
-export function useBooks() {
+/** `enabled` false = read only what another screen already fetched (the resurfacing card asks only when its pick needs it). */
+export function useBooks(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['books'],
     queryFn: async () => {
       const { data, error } = await supabase.from('books').select('*').order('title')
@@ -61,8 +63,9 @@ export function deleteBook(id: string): void {
 }
 
 // --- Notes API ---
-export function useNotes() {
+export function useNotes(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['notes'],
     queryFn: async () => {
       const { data, error } = await supabase.from('notes').select('*').order('created_at', { ascending: false })
@@ -106,8 +109,9 @@ export function deleteNote(id: string): void {
 }
 
 // --- Quotes API ---
-export function useQuotes() {
+export function useQuotes(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['quotes'],
     queryFn: async () => {
       const { data, error } = await supabase.from('quotes').select('*').order('created_at', { ascending: false })

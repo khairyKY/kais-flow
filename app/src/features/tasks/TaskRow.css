@@ -11,6 +11,11 @@
 /* ── Someday row — hover reveals the promote pills + a lifted background (2b) ── */
 .tr-someday-hover { opacity: 0; transition: opacity var(--dur-quick); }
 .tr-someday:hover .tr-someday-hover, .tr-someday:focus-within .tr-someday-hover { opacity: 1; }
+/* P7e A17: no hover on touch — the pills stay out, each with a touch-size hit area. */
+@media (hover: none), (pointer: coarse) {
+  .tr-someday-hover { opacity: 1; position: relative; }
+  .tr-someday-hover::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: var(--touch-min); transform: translateY(-50%); }
+}
 .tr-someday:hover, .tr-someday:focus-within {
   background: var(--paper-bone);
   border-radius: 7px;

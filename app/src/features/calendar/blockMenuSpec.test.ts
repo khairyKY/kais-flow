@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setAppZone } from '../../lib/appZone'
 import type { CalendarEvent } from '../../lib/types'
-import { besideBlock, blockMenuSpec, isSynced, isUntitled, repeatLabel } from './blockMenuSpec'
+import { besideBlock, blockMenuSpec, isSynced, isUntitled, remindLabel, repeatLabel } from './blockMenuSpec'
 
 const block = (over: Partial<CalendarEvent> = {}): CalendarEvent => ({
   id: 'b1', title: 'Deep work — Forecasting', starts_at: '2026-07-29T06:00:00.000Z', ends_at: '2026-07-29T08:00:00.000Z', all_day: false,
@@ -33,7 +33,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('5c a plain block: Repeat, Link a task…, More (kind + busy, the deviation), Delete', () => {
     const spec = blockMenuSpec(block(), { now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'link', 'more', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'link', 'more', 'delete'])
     expect(spec.find((r) => r.key === 'project')).toMatchObject({ label: 'No project', unset: true })
     expect(spec.find((r) => r.key === 'repeat')).toMatchObject({ label: 'Does not repeat', unset: true, sub: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', hint: '⌫' }) // p7e A4: Backspace deletes it
@@ -41,7 +41,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('a repeating block: no Link a task, and Delete asks This event / All events', () => {
     const spec = blockMenuSpec(block({ recurrence_rule: 'FREQ=WEEKLY' }))
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'more', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'more', 'delete'])
     expect(spec.find((r) => r.key === 'repeat')?.label).toBe('Repeats weekly')
     expect(spec.at(-1)).toMatchObject({ key: 'delete', sub: true })
     expect(spec.at(-1)?.hint).toBeUndefined() // ⌫ never deletes a whole series
@@ -52,6 +52,15 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
     const spec = blockMenuSpec(block({ all_day: true, starts_at: '2026-07-29T00:00:00.000Z', ends_at: '2026-07-30T00:00:00.000Z' }))
     expect(spec[0].label).toBe('Wed, Jul 29')
     expect(spec[1]).toEqual({ key: 'time', label: 'All day' })
+    expect(spec.map((r) => r.key)).not.toContain('remind') // no start time to count back from
+  })
+
+  it('A12 Remind: quiet "No reminder" until set, then the offset in words', () => {
+    expect(blockMenuSpec(block()).find((r) => r.key === 'remind')).toMatchObject({ label: 'No reminder', unset: true, sub: true })
+    expect(blockMenuSpec(block({ remind_min: 15 })).find((r) => r.key === 'remind')).toMatchObject({ label: 'Remind 15 min before', unset: false })
+    expect(remindLabel(0)).toBe('Remind at start')
+    expect(remindLabel(60)).toBe('Remind 1 hr before')
+    expect(remindLabel(45)).toBe('Remind 45 min before')
   })
 
   it('5c a block made a moment ago with no title: Discard instead of Delete', () => {
