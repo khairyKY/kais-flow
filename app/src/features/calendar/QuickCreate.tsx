@@ -605,10 +605,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
       </div>
       {showsAs}
       {colorField()}
-      <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 12%, transparent)', borderRadius: 'var(--radius-input)', padding: '9px 12px' }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc-hydrangea)', flex: 'none' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>mirrors quietly to Google Calendar · never shown as its own UI</span>
-      </div>
+      {/* deviation(2026-10-13 p7e A16): 1c's "mirrors quietly to Google Calendar" line is gone —
+          nothing syncs (Settings: Google Calendar "Coming soon"). Back when the sync is built. */}
     </>,
   )
   const pageBlock = (
