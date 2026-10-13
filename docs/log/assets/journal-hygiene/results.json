@@ -1,0 +1,482 @@
+[
+  {
+    "name": "phone-day Talk + Photo are buttons",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day affordances not hairline grey (terra)",
+    "ok": true,
+    "detail": "rgb(181, 101, 74)"
+  },
+  {
+    "name": "phone-day Talk it out → transcript saved",
+    "ok": true,
+    "detail": "\"Walked by the river and the heron was back.\""
+  },
+  {
+    "name": "phone-day Talk it out → body gains a paragraph",
+    "ok": true,
+    "detail": "\"Slow morning.\\n\\nWalked by the river and the heron was back.\""
+  },
+  {
+    "name": "phone-day Talk it out → shows in the textarea",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day Talk it out → no Inbox filing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day photo uploaded to the journal bucket under the owner",
+    "ok": true,
+    "detail": "00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/5b5e8ca7-fd53-423d-be87-2c7b7b8cd341.jpg"
+  },
+  {
+    "name": "phone-day photo re-encoded as JPEG ≤500KB (sent a PNG)",
+    "ok": true,
+    "detail": "jpeg=true 1750B"
+  },
+  {
+    "name": "phone-day media_paths carries the path",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/5b5e8ca7-fd53-423d-be87-2c7b7b8cd341.jpg\"]"
+  },
+  {
+    "name": "phone-day body kept through the photo write",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day thumbnail shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day remove drops the path",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day thumbnail gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day remove deletes the object once the Undo toast is gone",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/5b5e8ca7-fd53-423d-be87-2c7b7b8cd341.jpg\"]"
+  },
+  {
+    "name": "phone-day no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "phone-day no page or console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night Talk + Photo are buttons",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night affordances not hairline grey (terra)",
+    "ok": true,
+    "detail": "rgb(226, 148, 115)"
+  },
+  {
+    "name": "phone-night Talk it out → transcript saved",
+    "ok": true,
+    "detail": "\"Walked by the river and the heron was back.\""
+  },
+  {
+    "name": "phone-night Talk it out → body gains a paragraph",
+    "ok": true,
+    "detail": "\"Slow morning.\\n\\nWalked by the river and the heron was back.\""
+  },
+  {
+    "name": "phone-night Talk it out → shows in the textarea",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night Talk it out → no Inbox filing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night photo uploaded to the journal bucket under the owner",
+    "ok": true,
+    "detail": "00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/26a6f18f-ff9e-4cd8-9858-817a610979ef.jpg"
+  },
+  {
+    "name": "phone-night photo re-encoded as JPEG ≤500KB (sent a PNG)",
+    "ok": true,
+    "detail": "jpeg=true 1750B"
+  },
+  {
+    "name": "phone-night media_paths carries the path",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/26a6f18f-ff9e-4cd8-9858-817a610979ef.jpg\"]"
+  },
+  {
+    "name": "phone-night body kept through the photo write",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night thumbnail shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night remove drops the path",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night thumbnail gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night remove deletes the object once the Undo toast is gone",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/26a6f18f-ff9e-4cd8-9858-817a610979ef.jpg\"]"
+  },
+  {
+    "name": "phone-night no horizontal scroll at 390",
+    "ok": true,
+    "detail": "390"
+  },
+  {
+    "name": "phone-night no page or console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-offline failed upload → clear toast",
+    "ok": true,
+    "detail": "[\"The photo didn't upload — your words are saved. Try it again in a bit.\"]"
+  },
+  {
+    "name": "phone-offline typing kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-offline body saved anyway",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-offline no media path written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-offline offline → \"needs a connection\" toast",
+    "ok": true,
+    "detail": "[\"The photo didn't upload — your words are saved. Try it again in a bit.\",\"Photos need a connection — your words are saved. Add it again once you're online.\"]"
+  },
+  {
+    "name": "desk-day Talk + Photo are buttons",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-day affordances not hairline grey (terra)",
+    "ok": true,
+    "detail": "rgb(181, 101, 74)"
+  },
+  {
+    "name": "desk-day Talk it out → transcript saved",
+    "ok": true,
+    "detail": "\"Walked by the river and the heron was back.\""
+  },
+  {
+    "name": "desk-day Talk it out → body gains a paragraph",
+    "ok": true,
+    "detail": "\"Slow morning.\\n\\nWalked by the river and the heron was back.\""
+  },
+  {
+    "name": "desk-day Talk it out → shows in the textarea",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-day Talk it out → no Inbox filing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-day photo uploaded to the journal bucket under the owner",
+    "ok": true,
+    "detail": "00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/48771b72-b62d-4a37-9cf3-ceb9e89373f3.jpg"
+  },
+  {
+    "name": "desk-day photo re-encoded as JPEG ≤500KB (sent a PNG)",
+    "ok": true,
+    "detail": "jpeg=true 1750B"
+  },
+  {
+    "name": "desk-day media_paths carries the path",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/48771b72-b62d-4a37-9cf3-ceb9e89373f3.jpg\"]"
+  },
+  {
+    "name": "desk-day body kept through the photo write",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-day thumbnail shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-day remove drops the path",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-day thumbnail gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-day remove deletes the object once the Undo toast is gone",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/48771b72-b62d-4a37-9cf3-ceb9e89373f3.jpg\"]"
+  },
+  {
+    "name": "desk-day a 27.1 MB 12 MP photo uploads ≤500KB",
+    "ok": true,
+    "detail": "62627B"
+  },
+  {
+    "name": "desk-day no horizontal scroll at 1280",
+    "ok": true,
+    "detail": "1280"
+  },
+  {
+    "name": "desk-day no page or console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-night Talk + Photo are buttons",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-night affordances not hairline grey (terra)",
+    "ok": true,
+    "detail": "rgb(226, 148, 115)"
+  },
+  {
+    "name": "desk-night Talk it out → transcript saved",
+    "ok": true,
+    "detail": "\"Walked by the river and the heron was back.\""
+  },
+  {
+    "name": "desk-night Talk it out → body gains a paragraph",
+    "ok": true,
+    "detail": "\"Slow morning.\\n\\nWalked by the river and the heron was back.\""
+  },
+  {
+    "name": "desk-night Talk it out → shows in the textarea",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-night Talk it out → no Inbox filing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-night photo uploaded to the journal bucket under the owner",
+    "ok": true,
+    "detail": "00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/e4a248a7-7f4a-4c39-a675-5beb9b688bb9.jpg"
+  },
+  {
+    "name": "desk-night photo re-encoded as JPEG ≤500KB (sent a PNG)",
+    "ok": true,
+    "detail": "jpeg=true 1750B"
+  },
+  {
+    "name": "desk-night media_paths carries the path",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/e4a248a7-7f4a-4c39-a675-5beb9b688bb9.jpg\"]"
+  },
+  {
+    "name": "desk-night body kept through the photo write",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-night thumbnail shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-night remove drops the path",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-night thumbnail gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-night remove deletes the object once the Undo toast is gone",
+    "ok": true,
+    "detail": "[\"00000000-0000-4000-8000-00000000d3e0/20000000-0000-4000-8000-000000000001/e4a248a7-7f4a-4c39-a675-5beb9b688bb9.jpg\"]"
+  },
+  {
+    "name": "desk-night no horizontal scroll at 1280",
+    "ok": true,
+    "detail": "1280"
+  },
+  {
+    "name": "desk-night no page or console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-offline failed upload → clear toast",
+    "ok": true,
+    "detail": "[\"The photo didn't upload — your words are saved. Try it again in a bit.\"]"
+  },
+  {
+    "name": "desk-offline typing kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-offline body saved anyway",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-offline no media path written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-offline offline → \"needs a connection\" toast",
+    "ok": true,
+    "detail": "[\"The photo didn't upload — your words are saved. Try it again in a bit.\",\"Photos need a connection — your words are saved. Add it again once you're online.\"]"
+  },
+  {
+    "name": "phone-360 photo-only yesterday is a day written: \"Journal · Day 2\"",
+    "ok": true,
+    "detail": "JOURNAL · DAY 2"
+  },
+  {
+    "name": "phone-360 photo × still drawn 24px",
+    "ok": true,
+    "detail": "24x24"
+  },
+  {
+    "name": "phone-360 photo × hit area ≥44px",
+    "ok": true,
+    "detail": "49x49"
+  },
+  {
+    "name": "phone-360 photo × hit area stays inside its own photo",
+    "ok": true,
+    "detail": "0 px outside"
+  },
+  {
+    "name": "phone-360 next photo (8px away), the words above and the photo itself keep their taps",
+    "ok": true,
+    "detail": "{\"nextOwn\":true,\"aboveOwn\":true,\"imageOwn\":true}"
+  },
+  {
+    "name": "phone-360 no page or console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-390 photo-only yesterday is a day written: \"Journal · Day 2\"",
+    "ok": true,
+    "detail": "JOURNAL · DAY 2"
+  },
+  {
+    "name": "phone-390 photo × still drawn 24px",
+    "ok": true,
+    "detail": "24x24"
+  },
+  {
+    "name": "phone-390 photo × hit area ≥44px",
+    "ok": true,
+    "detail": "49x49"
+  },
+  {
+    "name": "phone-390 photo × hit area stays inside its own photo",
+    "ok": true,
+    "detail": "0 px outside"
+  },
+  {
+    "name": "phone-390 next photo (8px away), the words above and the photo itself keep their taps",
+    "ok": true,
+    "detail": "{\"nextOwn\":true,\"aboveOwn\":true,\"imageOwn\":true}"
+  },
+  {
+    "name": "phone-390 no page or console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-430 photo-only yesterday is a day written: \"Journal · Day 2\"",
+    "ok": true,
+    "detail": "JOURNAL · DAY 2"
+  },
+  {
+    "name": "phone-430 photo × still drawn 24px",
+    "ok": true,
+    "detail": "24x24"
+  },
+  {
+    "name": "phone-430 photo × hit area ≥44px",
+    "ok": true,
+    "detail": "49x49"
+  },
+  {
+    "name": "phone-430 photo × hit area stays inside its own photo",
+    "ok": true,
+    "detail": "0 px outside"
+  },
+  {
+    "name": "phone-430 next photo (8px away), the words above and the photo itself keep their taps",
+    "ok": true,
+    "detail": "{\"nextOwn\":true,\"aboveOwn\":true,\"imageOwn\":true}"
+  },
+  {
+    "name": "phone-430 no page or console errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-written a photo-only day is \"kept\" in This week",
+    "ok": true,
+    "detail": "KEPT"
+  },
+  {
+    "name": "desk-written Kept counts it: \"2 days\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desk-written no page or console errors",
+    "ok": true,
+    "detail": ""
+  }
+]
