@@ -158,7 +158,10 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
       if (top3) toggleTop3(task)
       scheduleTask(task, starts_at, ends_at)
     } else if (kind === 'block' && holds) scheduleTask(holds, starts_at, ends_at)
-    else createEvent(name || 'Time block', starts_at, ends_at, kind === 'block' ? 'time_block' : 'event')
+    else {
+      const event = createEvent(name || 'Time block', starts_at, ends_at, kind === 'block' ? 'time_block' : 'event')
+      if (repeat) setEventRepeat(event, repeat) // p7e A13: repeat while creating, the block menu's own way
+    }
     close()
   }
   const placeLabel = placeName(draft, projects, areas, domains)
@@ -173,6 +176,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
       {text}
     </Chip>
   )
+  const repeatChip = repeat ? chip('repeat', repeatLabel(repeat), 'date', 'repeat') : unset('repeat', 'Repeat', 'repeat')
   const addLabel = () => {
     const l = label.trim().replace(/^\*/, '')
     setLabel('')
@@ -217,7 +221,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
                   {pri ? chip('priority', `P${pri}`, 'priority') : unset('priority', 'Priority', 'priority')}
                   {placeLabel ? chip('project', <EmojiText text={placeLabel} />, 'project') : unset('project', 'Project', 'projects')}
                   {draft.reminder_at ? chip('remind', remindChip(draft.reminder_at, starts_at), 'date', 'remind') : unset('remind', 'Remind', 'remind')}
-                  {repeat ? chip('repeat', repeatLabel(repeat), 'date', 'repeat') : unset('repeat', 'Repeat', 'repeat')}
+                  {repeatChip}
                   {allLabels.map((l) => (
                     <Chip key={`label-${l}`} tone="bordered" icon={<Icon name="label" size={16} />} style={{ borderRadius: 'var(--radius-pill)' }} onClick={() => setLabels((x) => x.filter((y) => y !== l))}>
                       {l} ✕
@@ -245,6 +249,8 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
                 <textarea className="ts-notes" value={notes} placeholder="Add notes…" aria-label="Notes" onChange={(e) => setNotes(e.target.value)} />
               </>
             )}
+            {/* p7e A13: an event or a plain block can repeat from the start; a held task repeats through its task. */}
+            {kind === 'event' && <div className="pc-qc-chips">{repeatChip}</div>}
             {kind === 'block' && (
               <div className="pc-qc-chips">
                 {holds ? (
@@ -252,9 +258,12 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
                     <EmojiText text={holds.title} /> ✕
                   </Chip>
                 ) : (
-                  <Chip tone="bordered" icon={<Icon name="plus" size={16} />} style={DASHED} onClick={() => setHoldsAt({ x: 16, y: Math.round(window.innerHeight / 3) })}>
-                    Holds a task…
-                  </Chip>
+                  <>
+                    <Chip tone="bordered" icon={<Icon name="plus" size={16} />} style={DASHED} onClick={() => setHoldsAt({ x: 16, y: Math.round(window.innerHeight / 3) })}>
+                      Holds a task…
+                    </Chip>
+                    {repeatChip}
+                  </>
                 )}
               </div>
             )}

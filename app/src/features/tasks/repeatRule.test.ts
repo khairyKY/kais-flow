@@ -27,7 +27,7 @@ describe('buildRule / parseRule', () => {
     expect(buildRule(parseRule(null, start, CAIRO), start, CAIRO)).toBe('FREQ=WEEKLY')
   })
   it('the presets round-trip unchanged (Custom… then Done changes nothing)', () => {
-    for (const rule of ['FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=MONTHLY']) expect(buildRule(parseRule(rule, start, CAIRO), start, CAIRO)).toBe(rule)
+    for (const rule of ['FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=MONTHLY', 'FREQ=YEARLY']) expect(buildRule(parseRule(rule, start, CAIRO), start, CAIRO)).toBe(rule)
   })
   it('every 2 weeks on Monday and Wednesday', () => {
     const rule = buildRule(spec({ unit: 'week', every: 2, days: ['WE', 'MO'] }), start, CAIRO)
@@ -67,8 +67,14 @@ describe('buildRule / parseRule', () => {
     expect(nextOccurrence(weekly, wed)!.toISOString()).toBe('2026-10-19T06:00:00.000Z')
   })
   it('a rule the editor cannot show opens as the default', () => {
-    expect(parseRule('FREQ=YEARLY', start, CAIRO).unit).toBe('week')
+    expect(parseRule('FREQ=HOURLY', start, CAIRO).unit).toBe('week')
     expect(parseRule('not a rule', start, CAIRO).unit).toBe('week')
+  })
+  it('yearly (p7e A13): an imported FREQ=YEARLY opens as yearly, every 2 years round-trips, and it lands a year on', () => {
+    expect(parseRule('FREQ=YEARLY', start, CAIRO)).toMatchObject({ unit: 'year', every: 1 })
+    expect(buildRule(spec({ unit: 'year', every: 2 }), start, CAIRO)).toBe('FREQ=YEARLY;INTERVAL=2')
+    expect(nextOccurrence('FREQ=YEARLY', MON, CAIRO)!.toISOString()).toBe('2027-10-12T06:00:00.000Z')
+    expect(repeatLabel('FREQ=YEARLY')).toBe('Yearly')
   })
 })
 
