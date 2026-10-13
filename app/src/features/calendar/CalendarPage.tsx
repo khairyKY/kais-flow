@@ -4,7 +4,11 @@ import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
-import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo } from './api'
+import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, putInSlotWithUndo } from './api'
+import { slotAt, slotFill, slotTasks } from './slots'
+import { TaskMenu } from '../tasks/TaskMenu'
+import { taskActions } from '../tasks/useRowGrammar'
+import { placeName } from '../tasks/move'
 // Polish F2b (conductor decision 2026-09-26, punch 6): every calendar completion — the block's
 // checkbox, its right-click Complete, the rail card's checkbox — toasts "Done" with Undo, the same
 // completeTaskWithUndo the Tasks and Today lists use (a repeat's spawned next copy is taken back too).
@@ -39,7 +43,7 @@ import { conflictsOf } from './overlapLayout'
 import { parseWeekend } from '../../lib/weekend'
 import { addDays } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
-import { BLOCK_MENU_WIDTH, besideBlock } from './blockMenuSpec'
+import { BLOCK_MENU_WIDTH, besideBlock, isSynced } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
@@ -328,6 +332,9 @@ function DesktopCalendar() {
     return () => cancelAnimationFrame(raf)
   }, [linkOpen])
   const [contextMenu, setContextMenu] = useState<{ items: ContextMenuItem[]; x: number; y: number } | null>(null)
+  // Time Slots (0073): ⋯ on a task row inside a slot — that task's own menu (Out of the slot…).
+  const [slotMenu, setSlotMenu] = useState<{ taskId: string; x: number; y: number } | null>(null)
+  const slotMenuTask = slotMenu ? tasks.find((t) => t.id === slotMenu.taskId) : undefined
   const [quickCreate, setQuickCreate] = useState<QuickCreateState | null>(null)
   // The Lists section (folded by default): any smart list / project / area / domain, minus what
   // Overdue and Today already hold. This Week by default — Today has its own section now.
@@ -538,6 +545,9 @@ function DesktopCalendar() {
       items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTaskWithUndo(t) } })
       items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); unscheduleWithUndo(event) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
+    } else if (isSynced(event)) {
+      // A Google event (B1) is read-only: its details, nothing to delete.
+      items.push({ label: 'Details', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
     } else {
       items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
       items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
@@ -611,6 +621,9 @@ function DesktopCalendar() {
   function handleExternalDrop(from: { taskId?: string; inboxId?: string }, start: string, allDay: boolean) {
     const task = from.taskId ? tasks.find((t) => t.id === from.taskId) : undefined
     const item = from.inboxId ? inbox.find((i) => i.id === from.inboxId) : undefined
+    // Time Slots (0073): a task dropped on a Time block goes IN it — no block of its own.
+    const slot = task && !allDay ? slotAt(gridEvents, start) : undefined
+    if (task && slot) return putInSlotWithUndo(task, slot)
     const min = allDay ? 24 * 60 : task ? railMinutes(buckets.overdue.find((r) => r.task.id === task.id) ?? { task, block: null }) : item ? inboxMinutes(item) : 30
     const end = new Date(new Date(start).getTime() + min * 60000).toISOString()
     const ev = task ? scheduleTaskWithUndo(task, start, end, allDay) : item ? fileToCalendar(item, start, end, allDay) : null
@@ -1077,7 +1090,15 @@ function DesktopCalendar() {
               initialView={planning ? (stripDays === 1 ? 'timeGridDay' : 'customDayCount') : VIEW_MAP[viewKind]}
               hideToolbar
               onRangeChange={setRangeInfo}
-              events={visibleEvents.map((e) => ({ id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule }))}
+              events={visibleEvents.map((e) => {
+                // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
+                const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
+                return {
+                  id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e),
+                  ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done' })), fill: slotFill(e, held) } : null),
+                }
+              })}
+              onSlotTaskMenu={(taskId, x, y) => setSlotMenu({ taskId, x, y })}
               onCompleteTask={(taskId, done) => {
                 const t = tasks.find((x) => x.id === taskId)
                 if (!t) return
@@ -1088,7 +1109,12 @@ function DesktopCalendar() {
               // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.
               onMove={(id, start, end, allDay) => {
                 const event = gridEvents.find((e) => e.id === id)
-                if (event) toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
+                if (!event) return
+                // A task's block dropped on a Time block: the task goes into the slot, its block comes off.
+                const task = event.task_id && !allDay ? tasks.find((t) => t.id === event.task_id) : undefined
+                const slot = task ? slotAt(gridEvents, start, id) : undefined
+                if (task && slot) return putInSlotWithUndo(task, slot)
+                toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
               }}
               onResize={(id, start, end) => {
                 const event = gridEvents.find((e) => e.id === id)
@@ -1158,6 +1184,15 @@ function DesktopCalendar() {
             gridRef.current?.unselect()
             void navigate('/new', { state: { draft } })
           }}
+        />
+      )}
+      {slotMenu && slotMenuTask && (
+        <TaskMenu
+          task={slotMenuTask}
+          anchor={{ at: { x: slotMenu.x, y: slotMenu.y } }}
+          onClose={() => setSlotMenu(null)}
+          actions={taskActions(slotMenuTask)}
+          ctx={{ tomorrowHint: tomorrowHint(), projectName: placeName(slotMenuTask, projects, areas, domains) }}
         />
       )}
       {contextMenu && (

@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { setAppZone } from '../../lib/appZone'
 import type { CalendarEvent } from '../../lib/types'
-import { besideBlock, blockMenuSpec, isUntitled, repeatLabel } from './blockMenuSpec'
+import { besideBlock, blockMenuSpec, isSynced, isUntitled, repeatLabel } from './blockMenuSpec'
 
 const block = (over: Partial<CalendarEvent> = {}): CalendarEvent => ({
   id: 'b1', title: 'Deep work — Forecasting', starts_at: '2026-07-29T06:00:00.000Z', ends_at: '2026-07-29T08:00:00.000Z', all_day: false,
@@ -74,5 +74,21 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
     // a custom rule (the shared Repeat editor) reads in words
     expect(repeatLabel('FREQ=WEEKLY;BYDAY=MO,WE')).toBe('Every week on Monday, Wednesday')
     expect(repeatLabel('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR')).toBe('Every weekday')
+  })
+})
+
+describe('a Google event (B1): read-only', () => {
+  beforeEach(() => setAppZone('Africa/Cairo'))
+
+  it('says when and from which calendar — nothing opens, nothing to delete', () => {
+    const e = block({ source: 'gcal', type: 'event', title: 'Fajr', external_ref: { source: 'gcal', id: 'p/e1', calendar: 'Prayer times', calendar_id: 'p' } })
+    const spec = blockMenuSpec(e, { now: NOW })
+    expect(isSynced(e)).toBe(true)
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google'])
+    expect(spec.every((r) => !r.sub && !r.destructive)).toBe(true)
+    expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h' })
+    expect(spec[2]).toMatchObject({ label: 'From Google · Prayer times', divider: true })
+    expect(blockMenuSpec(block({ source: 'gcal', all_day: true }))[1]).toMatchObject({ label: 'All day' })
+    expect(isSynced(block())).toBe(false)
   })
 })

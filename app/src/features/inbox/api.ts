@@ -283,7 +283,7 @@ export function eventToRail(event: CalendarEvent, action: RailDropAction, place:
     return true
   }
   const prior = { ...event }
-  deleteEvent(event)
+  const undoSlot = deleteEvent(event) // a Time slot's tasks come back with it
   if (action === 'unschedule-today') {
     // Read after the delete: it just cleared the task's schedule, and rescheduleDue writes this row.
     const task = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === event.task_id)
@@ -291,6 +291,7 @@ export function eventToRail(event: CalendarEvent, action: RailDropAction, place:
     toastUndo(`Unscheduled · ${event.title} · Today`, () => {
       undoDue()
       restoreEvent(prior)
+      undoSlot()
     })
     return true
   }
@@ -299,6 +300,7 @@ export function eventToRail(event: CalendarEvent, action: RailDropAction, place:
     toastUndo(`Moved to Inbox · ${event.title}`, () => {
       writeRow('inbox_items', item, 'delete')
       restoreEvent(prior)
+      undoSlot()
     })
     return true
   }
@@ -315,6 +317,7 @@ export function eventToRail(event: CalendarEvent, action: RailDropAction, place:
     writeRow('tasks', task, 'delete')
     logActivity('task.deleted', 'task', task.id, { reason: 'calendar rail drop undo' })
     restoreEvent(prior)
+    undoSlot()
   })
   return true
 }

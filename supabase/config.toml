@@ -440,6 +440,15 @@ verify_jwt = true
 [functions.github-sync]
 verify_jwt = true
 
+[functions.google-connect]
+# Google Calendar (B1): Google's OAuth redirect back is a plain browser GET with no JWT, so the gateway
+# can't check one. The function checks every POST itself (requireUser) and the callback's HMAC-signed
+# `state` — see the function.
+verify_jwt = false
+
+[functions.google-sync]
+verify_jwt = true
+
 [functions.capture-image]
 verify_jwt = true
 

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { Link } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import {
   isPushSupported,
   useMyPushSubscriptions,
@@ -20,6 +20,8 @@ import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, uiZoom, type UiS
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
+import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
+import { isNativeShell } from '../../lib/platform'
 import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
@@ -139,15 +141,6 @@ function Slider({ value, min = 0, max = 100, onChange, width, ariaLabel }: { val
       <span className="st-slider-fill" style={{ width: `${pct}%` }} />
       <span className="st-slider-thumb" style={{ left: `${pct}%` }} />
       <input type="range" min={min} max={max} value={value} aria-label={ariaLabel} onChange={(e) => onChange(Number(e.target.value))} />
-    </span>
-  )
-}
-
-// Disabled action chip — Onboarding's "Soon" pattern (nothing clickable that does nothing).
-function SoonChip({ label = 'Soon' }: { label?: string }) {
-  return (
-    <span className="st-chip" aria-disabled="true" title="Coming with integrations — not wired up yet" style={{ opacity: 0.6, cursor: 'not-allowed' }}>
-      {label}
     </span>
   )
 }
@@ -484,6 +477,7 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
   const { data: integrations = [] } = useIntegrations()
   const github = integrations.find((i) => i.provider === 'github')
   const gh = githubState(github)
+  const gg = googleState(integrations.find((i) => i.provider === 'google'))
   const dot = (tone: keyof typeof TONE_DOT) => <span className="st-dot" style={{ background: TONE_DOT[tone] }} />
   return (
     <SCard
@@ -494,9 +488,9 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
       <Row lead={dot(gh.tone)} label="GitHub" help={githubRulesOf(github).rules.land === 'tasks' ? 'Issues land straight in Tasks' : 'Issues land in the Inbox'}>
         <span className="st-chip" style={gh.tone === 'bad' ? { color: 'var(--acc-terra-ink)', borderColor: 'currentColor' } : undefined}>{gh.text}</span>
       </Row>
-      {/* Google Calendar sync is a later integrations wave — nothing syncs yet, so no button. */}
-      <Row lead={dot('off')} label="Google Calendar" help="A quiet sync under our own calendar">
-        <SoonChip label="Coming soon" />
+      {/* B1 (2026-10-13): built — read-only, under our own calendar. */}
+      <Row lead={dot(gg.tone)} label="Google Calendar" help="Your calendars on ours, read-only">
+        <span className="st-chip" style={gg.tone === 'bad' ? { color: 'var(--acc-terra-ink)', borderColor: 'currentColor' } : undefined}>{gg.text}</span>
       </Row>
       <Row lead={dot('off')} label="Groq" help="Chat and capture parsing" />
     </SCard>
@@ -1131,6 +1125,149 @@ function GithubRulesPanel({ github }: { github: IntegrationStatus }) {
 const repoChip: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 'var(--radius-pill)', borderColor: 'var(--line-solid)', color: 'var(--ink-body)' }
 const addChip: CSSProperties = { fontFamily: 'var(--font-mono)', background: 'none', border: '1px dashed var(--line-solid)', borderRadius: 'var(--radius-pill)', color: 'var(--ink-faint)' }
 
+// B1 (Kai 2026-10-13): Google Calendar, read-only — the chosen calendars' events on our grid
+// (google-sync, every 15 min), never anything written back. Connect goes through Google's consent page
+// (google-connect); the client only ever sees the account, its calendar list, the chosen ids, status
+// and synced_at — never the refresh token. Until Kai sets the two secrets, Connect says which are missing.
+function GoogleGlyph({ dim }: { dim?: boolean }) {
+  return (
+    <span style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)', opacity: dim ? 0.75 : 1 }}>
+      <Icon name="calendar" size={18} />
+    </span>
+  )
+}
+
+const syncLine = (r: GoogleSyncResult) => `Synced · ${r.calendars} ${r.calendars === 1 ? 'calendar' : 'calendars'} · ${r.fetched} events · ${r.new} new · ${r.removed} gone`
+
+function GoogleProvider({ google }: { google?: IntegrationStatus }) {
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const failing = google?.status === 'failing'
+  const state = googleState(google)
+
+  async function run(action: () => Promise<string | null>) {
+    setBusy(true)
+    setMessage(null)
+    try {
+      const m = await action()
+      if (m) setMessage(m)
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Something went wrong — try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Back from Google's consent page: google-connect sent the browser to /settings?google=<code>.
+  const [params, setParams] = useSearchParams()
+  const landed = useRef(false)
+  useEffect(() => {
+    const code = params.get('google')
+    if (!code || landed.current) return
+    landed.current = true
+    const said = GOOGLE_RETURN[code === 'connected' ? code : (params.get('reason') ?? '')] ?? GOOGLE_RETURN.google_unavailable
+    setParams((p) => {
+      p.delete('google')
+      p.delete('reason')
+      return p
+    }, { replace: true })
+    if (code !== 'connected') return setMessage(said)
+    void run(async () => `Connected · ${syncLine(await syncGoogle())}`)
+  }, [params, setParams]) // eslint-disable-line react-hooks/exhaustive-deps -- once per landing
+  // The landing's word, in view (on a phone the row sits far down Settings).
+  const said = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (landed.current && message) said.current?.scrollIntoView({ block: 'center' })
+  }, [message])
+
+  const connect = () =>
+    run(async () => {
+      const r = await startGoogle()
+      if ('missing' in r) return `Not set up yet: ${r.missing.join(' and ')} ${r.missing.length > 1 ? 'aren’t' : 'isn’t'} set on the server. docs/GOOGLE-SETUP.md has the steps (free, about 10 minutes).`
+      if (isNativeShell()) {
+        // Google refuses its consent page inside an app's web view: the browser does it, the grid follows.
+        window.open(r.url, '_blank', 'noopener,noreferrer')
+        return 'Finish on Google’s page in your browser. Back here, Sync now brings your calendars in.'
+      }
+      window.location.assign(r.url)
+      return null
+    })
+  const sync = () => run(async () => syncLine(await syncGoogle()))
+  const disconnect = () =>
+    run(async () => {
+      await disconnectGoogle()
+      return 'Disconnected. Google’s events are off your calendar; your own are untouched.'
+    })
+
+  return (
+    <ProviderRow
+      icon={<GoogleGlyph dim={!google} />}
+      name="Google Calendar"
+      desc="Your Google calendars on ours, read-only — prayer times, work, holidays. Nothing is written back."
+      status={
+        google ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
+            <span className="st-dot" style={{ background: TONE_DOT[state.tone] }} />
+            <span style={{ fontSize: 'var(--fs-caption)', color: failing ? 'var(--acc-terra-ink)' : 'var(--ink-muted)', textAlign: 'right', overflowWrap: 'anywhere' }}>
+              {failing || !google.login ? '' : `${google.login} · `}{state.text}
+            </span>
+          </div>
+        ) : (
+          <Button type="button" variant="secondary" onClick={() => void connect()} disabled={busy}>{busy ? 'Opening…' : 'Connect'}</Button>
+        )
+      }
+    >
+      {google && (
+        <div className="st-btns" style={{ marginTop: 12 }}>
+          {failing ? (
+            <Button type="button" variant="secondary" onClick={() => void connect()} disabled={busy}>Reconnect</Button>
+          ) : (
+            <Button type="button" variant="secondary" onClick={() => void sync()} disabled={busy}>{busy ? 'Syncing…' : 'Sync now'}</Button>
+          )}
+          <Button type="button" variant="ghost" onClick={() => void disconnect()} disabled={busy}>Disconnect</Button>
+        </div>
+      )}
+      {message && <div ref={said} role="status" className="st-help" style={{ marginTop: 10 }}>{message}</div>}
+      {google && !failing && <GoogleCalendars google={google} />}
+    </ProviderRow>
+  )
+}
+
+// Which calendars show, one switch each (saved at once, google-connect `choose`): a newly shown one
+// syncs now, a hidden one's events leave the grid. ponytail: the GitHub rules panel's bone sheet.
+function GoogleCalendars({ google }: { google: IntegrationStatus }) {
+  const chosen = google.chosen ?? []
+  const [err, setErr] = useState<string | null>(null)
+  const [looking, setLooking] = useState(false)
+  const toggle = (id: string) => {
+    setErr(null)
+    chooseGoogleCalendars(chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id], chosen).catch((e: Error) => setErr(e.message))
+  }
+  const lookAgain = () => {
+    setErr(null)
+    setLooking(true)
+    refreshGoogleCalendars().catch((e: Error) => setErr(e.message)).finally(() => setLooking(false))
+  }
+  return (
+    <div className="st-gh-rules">
+      <div className="st-gh-rules-label" style={flabel}>Calendars · shown on yours, read-only</div>
+      {(google.calendars ?? []).map((c) => (
+        <Row key={c.id} lead={<span className="st-dot" style={{ background: c.color ?? 'var(--acc-blossom)' }} />} label={c.name} help={c.id === google.login ? 'Your main calendar' : undefined}>
+          <Toggle on={chosen.includes(c.id)} label={`Show ${c.name}`} onToggle={() => toggle(c.id)} />
+        </Row>
+      ))}
+      {!google.calendars?.length && <Row label="No calendars yet" help="Look again once the account has one" />}
+      <Row label="Last synced" help="Every 15 minutes, and on Sync now">
+        <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>{syncedLabel(google.synced_at)}</span>
+      </Row>
+      <div style={{ padding: '4px 0 14px' }}>
+        <button type="button" className="st-link" onClick={lookAgain} disabled={looking}>{looking ? 'Looking…' : 'Look for new calendars'}</button>
+      </div>
+      {err && <div role="alert" className="st-help" style={{ color: 'var(--acc-terra-ink)', paddingBottom: 12 }}>{err}</div>}
+    </div>
+  )
+}
+
 function GroupLabel({ children }: { children: ReactNode }) {
   return (
     <div className="st-group-label">
@@ -1156,6 +1293,7 @@ function AdvancedSection() {
 function IntegrationsPage() {
   const { data: integrations = [] } = useIntegrations()
   const github = integrations.find((i) => i.provider === 'github')
+  const google = integrations.find((i) => i.provider === 'google')
 
   return (
     <div className="st-integrations">
@@ -1166,16 +1304,7 @@ function IntegrationsPage() {
 
       <GithubProvider github={github} />
 
-      <ProviderRow
-        icon={
-          <span style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>
-            <Icon name="calendar" size={18} />
-          </span>
-        }
-        name="Google Calendar"
-        desc="Planned: a quiet sync underneath our own calendar. Not built yet — nothing syncs."
-        status={<SoonChip label="Coming soon" />}
-      />
+      <GoogleProvider google={google} />
 
       <GroupLabel>Capture from anywhere</GroupLabel>
       {/* The capture key moved to Settings → Advanced (Kai 2026-10-12). */}
@@ -1307,9 +1436,12 @@ const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacin
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 const SUBNAV_LABEL: Partial<Record<SubnavItem, string>> = { Timezone: 'Time zone', Data: 'Your data' }
 
+// Back from Google's consent page (?google=…): straight to Integrations, where the row says how it went.
+const fromGoogle = () => new URLSearchParams(window.location.search).has('google')
+
 function DesktopSettings() {
-  const [active, setActive] = useState<SubnavItem>('Appearance')
-  const [page, setPage] = useState<'all' | 'integrations'>('all')
+  const [active, setActive] = useState<SubnavItem>(() => (fromGoogle() ? 'Integrations' : 'Appearance'))
+  const [page, setPage] = useState<'all' | 'integrations'>(() => (fromGoogle() ? 'integrations' : 'all'))
 
   function go(item: SubnavItem) {
     setActive(item)
@@ -1375,6 +1507,7 @@ function DesktopSettings() {
 function MobileSettings() {
   const { data: integrations = [] } = useIntegrations()
   const github = integrations.find((i) => i.provider === 'github')
+  const google = integrations.find((i) => i.provider === 'google')
 
   return (
     // Kai's phone review: the shell's 16px gutter is the page's (Today's), not 16 + 4 of its own.
@@ -1395,9 +1528,10 @@ function MobileSettings() {
       <NotificationsCard />
       {/* The phone has no Organize rail — its domains live here. */}
       <OrganizeCard />
-      {/* P6: the phone has no Integrations page, so GitHub, photos and AI sit here (the capture key: Advanced). */}
+      {/* P6: the phone has no Integrations page, so GitHub, Google, photos and AI sit here (the capture key: Advanced). */}
       <GroupLabel>Connections</GroupLabel>
       <GithubProvider github={github} />
+      <GoogleProvider google={google} />
       <PaperSettingsCard />
       <McpCard />
       {/* Punch 50: the phone's way into Trash — and, like the computer, the importer and Profile. */}

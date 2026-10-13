@@ -74,7 +74,7 @@ Anything that speaks remote MCP over Streamable HTTP with a custom header (Curso
 | `search` | Tasks, inbox notes, projects and events by meaning and keywords (the app's hybrid search) | |
 | `list_tasks` | Tasks filtered by status (open/done/all), project, label, due range | |
 | `get_task` | One task in full: notes, dates, project, labels, repeat, reminder | |
-| `calendar` | Events between two days (default: today + 6 days, at most 31): events, Time blocks (`kind: time_block`) and tasks' blocks (`kind: task` + `task_id`); a repeating event once per occurrence, with its series' id; an all-day event as its days | |
+| `calendar` | Events between two days (default: today + 6 days, at most 31): events, Time blocks (`kind: time_block`, with the `tasks` that occurrence holds — Time Slots, 0073; `today` too) and tasks' blocks (`kind: task` + `task_id`); a repeating event once per occurrence, with its series' id; an all-day event as its days | |
 | `projects` | Your projects (ids for `list_tasks` / `add_task` / `edit_task`) | |
 | `add_task` | A new task: title, optional due, duration, project, Top 3, notes, repeat. A due **time** also blocks the calendar (duration, else 30 min), as typing a time in the app does | ✓ |
 | `edit_task` | Title, notes, duration, project, repeat — only what's given; `null` clears | ✓ |

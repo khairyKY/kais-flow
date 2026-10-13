@@ -251,6 +251,16 @@
   color: var(--ink-faint);
 }
 
+/* Time Slots (0073): the tasks a Time block holds, as rows under its title — the block's own title
+   type, check and accent; the fill line ("2 tasks · 45m of 2h") is the time row's mono. The checks
+   stay visible here: they are the tasks, not the block's own state. */
+.fc .fc-timegrid-event .kf-ev-slot { margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+.fc .fc-timegrid-event .kf-ev-slot-row { display: flex; align-items: center; gap: 5px; min-width: 0; }
+.fc .fc-timegrid-event .kf-ev-slot-row .kf-ev-check { opacity: 1; margin-top: 0; }
+.fc .fc-timegrid-event .fc-event-title.kf-ev-slot-title { display: block; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc .fc-timegrid-event .kf-ev-slot-row.kf-done .kf-ev-slot-title { text-decoration: line-through; color: var(--ink-faint); }
+.fc .fc-timegrid-event .kf-ev-slot-more { flex: none; padding: 0 2px; cursor: pointer; color: var(--kf-ev-accent, var(--acc-lavender-text)); }
+
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
    seat it without colliding with the text. */
 .fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-end::after {

@@ -61,6 +61,6 @@ export function addTypedEvent(parsed: ParsedCommand, typed: string, now: Date = 
     }
     writeRow('calendar_events', event)
   }
-  toastUndo(`Added to Calendar · ${formatDueChip(at, now, timed)}`, () => deleteEvent(event))
+  toastUndo(`Added to Calendar · ${formatDueChip(at, now, timed)}`, () => void deleteEvent(event))
   return event
 }

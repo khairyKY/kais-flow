@@ -5,6 +5,7 @@ import { requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { hybridSearch } from '../_shared/retrieval.ts'
+import { dropSynced } from '../_shared/google.ts'
 import { userZone } from '../_shared/zone.ts'
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
 import { expandSeries, type RuleBetween } from '../_shared/series.ts'
@@ -61,7 +62,14 @@ Deno.serve(async (req) => {
       })
     }
 
-    const hits = await hybridSearch(supabase, lastUser.content, 20)
+    // Privacy (site info §3, B1): Google-synced events never reach the model — not as hits (here),
+    // not in the snapshot (source = 'native' below). If the look-up fails, every event hit goes.
+    const found = await hybridSearch(supabase, lastUser.content, 20)
+    const eventIds = found.filter((h) => h.entity_type === 'calendar_event').map((h) => h.entity_id)
+    const { data: synced, error: syncedError } = eventIds.length
+      ? await supabase.from('calendar_events').select('id').eq('source', 'gcal').in('id', eventIds)
+      : { data: [], error: null }
+    const hits = dropSynced(found, new Set(syncedError ? eventIds : ((synced ?? []) as { id: string }[]).map((r) => r.id)))
     const { data: slipping } = await supabase.from('slipping').select('entity_name, days_since')
     // A live snapshot of today + tomorrow, so "what's on today?" works without a lucky search hit —
     // the user's today, on their own clock (app_settings.timezone; RLS returns only their row).
@@ -82,7 +90,7 @@ Deno.serve(async (req) => {
       // A repeating event is one row anchored at its first occurrence: it comes along whenever it
       // started before `until`, and is expanded below.
       supabase.from('calendar_events').select('id, title, starts_at, ends_at, all_day, recurrence_rule, recurrence_exdates')
-        .is('deleted_at', null).lt('starts_at', until).or(`starts_at.gte.${from},recurrence_rule.not.is.null`).order('starts_at').limit(40),
+        .is('deleted_at', null).eq('source', 'native').lt('starts_at', until).or(`starts_at.gte.${from},recurrence_rule.not.is.null`).order('starts_at').limit(40),
       supabase.from('inbox_items').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     ])
 

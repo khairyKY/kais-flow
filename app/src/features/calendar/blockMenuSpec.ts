@@ -9,7 +9,7 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'unschedule' | 'delete'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'unschedule' | 'delete' | 'google'
 
 export interface BlockMenuEntry {
   key: BlockMenuKey
@@ -57,6 +57,9 @@ export function isUntitled(e: Pick<CalendarEvent, 'title' | 'created_at'>, now: 
   return fresh && (!e.title.trim() || DEFAULT_TITLES.includes(e.title))
 }
 
+/** A Google event (google-sync, B1): shown, never edited here — Google is its truth. */
+export const isSynced = (e: Pick<CalendarEvent, 'source'>): boolean => e.source === 'gcal'
+
 export const isRepeatingBlock = (e: Pick<CalendarEvent, 'recurrence_rule' | 'seriesId'>): boolean => !!(e.seriesId || e.recurrence_rule)
 
 /** "Wed, Jul 29" — an all-day block's date is in no zone. */
@@ -73,6 +76,14 @@ export function repeatLabel(rule: string | null | undefined): string {
 
 export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): BlockMenuEntry[] {
   const span = eventSpan(e)
+  // A Google event: when it is, and where it comes from — nothing to change, nothing to delete.
+  if (isSynced(e)) {
+    return [
+      { key: 'date', label: blockDate(e) },
+      e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: `${fromMin(span.start)} – ${span.end >= 1440 ? '24:00' : fromMin(span.end)}`, hint: durationLabel(span.end - span.start) },
+      { key: 'google', label: `From Google · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
+    ]
+  }
   const repeating = isRepeatingBlock(e)
   const out: BlockMenuEntry[] = [
     { key: 'date', label: blockDate(e), sub: true },

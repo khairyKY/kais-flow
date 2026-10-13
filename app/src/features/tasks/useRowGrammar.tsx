@@ -9,6 +9,7 @@ import type { SwipeActions } from './SwipeRow'
 import { dueChip } from './taskSheetMath'
 import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } from './TaskMenu'
 import { cairoTimeKey } from '../calendar/eventTime'
+import { outOfSlotWithUndo } from '../calendar/api'
 
 // ── The one task-row grammar (Flow Audit §4), as a hook: every row that shows a task (Tasks, Today's
 // Top 3 + goal card, task-backed Up next) gets its SwipeRow props, its ⋯ / right-click opener and the
@@ -34,6 +35,8 @@ export function taskActions(task: Task): TaskMenuActions {
     // Next free slot's Confirm = a timed replan into the slot: the task's block moves there (or one
     // is placed) and it is due then (calendar/replan's rule, through rescheduleDue).
     slot: (startsAt, endsAt) => toastUndo(`Planned · ${dueChip(startsAt, new Date())}–${cairoTimeKey(new Date(endsAt))}`, rescheduleDue(task, startsAt, true)),
+    // In a Time slot (0073): ⋯ → Out of the slot (taskMenuSpec).
+    ...(task.slot_id ? { unschedule: () => outOfSlotWithUndo(task) } : null),
   }
 }
 
