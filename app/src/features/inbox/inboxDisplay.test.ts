@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { ageLabel, backLabel, capturedLabel, cardShape, confidenceWord, dayWord, defaultDraft, dismissedAgo, draftText, dueLabel, dueShort, githubHeading, githubUrl, inboxSummary, isToday, mentionedPerson, snoozedOf, suggestedPlace, suggestedTitle } from './inboxDisplay'
 import type { Domain, Project } from '../../lib/types'
+import { queryClient } from '../../lib/queryClient'
 
 describe('isToday', () => {
   it('matches the current calendar day', () => {
@@ -74,6 +75,15 @@ describe('inboxSummary', () => {
   })
   it('is empty at Inbox zero (the zero card says it)', () => {
     expect(inboxSummary([], 0, NOW)).toBe('')
+  })
+})
+
+describe("the Inbox card's line follows the user's confidence_threshold (A30)", () => {
+  afterEach(() => queryClient.removeQueries({ queryKey: ['app_settings'] }))
+  it('raised to 0.9: an 0.8 read asks "Where does this go?" and reads as low', () => {
+    queryClient.setQueryData(['app_settings'], { confidence_threshold: 0.9 })
+    expect(cardShape(cap('renew hosting', { kind: 'task', title: 'Renew hosting', confidence: 0.8, project_id: 'p1' }))).toBe('unsure')
+    expect(confidenceWord(0.8)).toBe('low confidence')
   })
 })
 

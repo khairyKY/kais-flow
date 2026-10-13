@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest'
-import { aiFill, aiPlace, taskFromParse, type AiFields } from './aiFill'
+import { afterEach, describe, expect, it } from 'vitest'
+import { aiFill, aiPlace, confidenceThreshold, taskFromParse, type AiFields } from './aiFill'
+import { queryClient } from '../../lib/queryClient'
 import { parseCommand } from '../command-bar/parseCommand'
 import type { ParseResult } from './parseSchema'
 
@@ -75,6 +76,26 @@ describe('aiPlace', () => {
     expect(aiPlace(ai({ project_id: 'p-site', domain_id: 'd-home' }), known)).toEqual({ project_id: 'p-site', domain_id: WORK })
     expect(aiPlace(ai({ domain_id: 'd-home' }), known)).toEqual({ project_id: null, domain_id: 'd-home' })
     expect(aiPlace(ai({ project_id: 'p-site', confidence: 0.5 }), known)).toEqual({ project_id: null, domain_id: null })
+  })
+})
+
+describe('confidenceThreshold — app_settings.confidence_threshold, read (A30)', () => {
+  afterEach(() => queryClient.removeQueries({ queryKey: ['app_settings'] }))
+  const settings = (confidence_threshold: unknown) => queryClient.setQueryData(['app_settings'], { confidence_threshold })
+
+  it('0.75 (the column default) until the settings row is here, and for a value outside (0, 1]', () => {
+    expect(confidenceThreshold()).toBe(0.75)
+    for (const bad of [0, -1, 1.5, null, 'x', Number.NaN]) {
+      settings(bad)
+      expect(confidenceThreshold()).toBe(0.75)
+    }
+  })
+  it("the user's own value decides what the AI may place by itself", () => {
+    settings(0.9)
+    expect(confidenceThreshold()).toBe(0.9)
+    expect(aiPlace(ai({ project_id: 'p-site', confidence: 0.85 }), known)).toEqual({ project_id: null, domain_id: null })
+    settings(0.5)
+    expect(aiPlace(ai({ project_id: 'p-site', confidence: 0.6 }), known)).toEqual({ project_id: 'p-site', domain_id: WORK })
   })
 })
 

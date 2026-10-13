@@ -5,7 +5,7 @@ import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
 import { addDays, dayHint, dayShort } from '../../components/pickerMath'
 import { cairoTimeKey } from '../calendar/eventTime'
-import { CONFIDENCE_THRESHOLD } from '../capture/aiFill'
+import { confidenceThreshold } from '../capture/aiFill'
 import { NO_PLACE, type MoveTarget } from '../tasks/move'
 import type { Domain, InboxItem, InboxKind, Person, Project } from '../../lib/types'
 
@@ -43,7 +43,7 @@ export function inboxSummary(captures: readonly Pick<InboxItem, 'created_at'>[],
 export function confidenceWord(confidence: number | null | undefined): string | null {
   if (typeof confidence !== 'number') return null
   if (confidence >= 0.85) return 'high confidence'
-  return confidence >= CONFIDENCE_THRESHOLD ? 'medium confidence' : 'low confidence'
+  return confidence >= confidenceThreshold() ? 'medium confidence' : 'low confidence'
 }
 
 /** The title a capture files under: the AI's short title (dates and urgency already pulled into
@@ -60,7 +60,7 @@ export type CardShape = 'suggested' | 'unsure' | 'plain'
 export function cardShape(item: Pick<InboxItem, 'ai_parse' | 'raw_text'>): CardShape {
   const p = parseOf(item)
   if (!p) return 'plain'
-  if ((p.confidence ?? 0) < CONFIDENCE_THRESHOLD) return 'unsure'
+  if ((p.confidence ?? 0) < confidenceThreshold()) return 'unsure'
   return suggestedTitle(item) === item.raw_text.trim() && !p.project_id && !p.domain_id ? 'plain' : 'suggested'
 }
 
