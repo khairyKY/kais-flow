@@ -63,14 +63,18 @@ const tables = (extra = {}) => structuredClone({ tasks: TASKS, calendar_events: 
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 
+const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
 async function open(route = '/calendar', o = {}) {
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([sess]) => {
+  const ctx = await browser.newContext({ ...(o.view ?? { viewport: { width: 1440, height: 900 } }), deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
+  await ctx.addInitScript(([sess, quiet, uid]) => {
     localStorage.setItem('kf_theme', 'day')
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', '0')
     localStorage.setItem('kf.calRailSections', JSON.stringify({ lists: true }))
-  }, [JSON.stringify(session)])
+    // The phone runs (slots-phone): no tour bubble over the grid.
+    if (quiet) localStorage.setItem('kf_tour_done', '1')
+    if (quiet) localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: Date.now() }))
+  }, [JSON.stringify(session), !!o.view, UID])
   const state = { rows: tables(o.tables), writes: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -100,6 +104,7 @@ async function open(route = '/calendar', o = {}) {
     return r.fulfill({ json: rows, headers: { 'content-range': `0-${Math.max(0, rows.length - 1)}/${rows.length}` } }).catch(() => {})
   })
   const page = await ctx.newPage()
+  state.page = page
   await page.clock.install({ time: cairo('08:00') })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -112,7 +117,25 @@ const shot = (page, name) => page.screenshot({ path: path.join(OUT, `${name}.png
 const toastSoon = (page, msg) => page.locator('.kf-toast-msg', { hasText: msg }).first().waitFor({ timeout: 8000 }).then(() => true, () => false)
 const posts = (state, table, from = 0) => state.writes.slice(from).filter((w) => w.table === table && w.method === 'POST').flatMap((w) => (Array.isArray(w.body) ? w.body : [w.body]))
 const lastOf = (state, table, rowId, from = 0) => posts(state, table, from).filter((x) => x.id === rowId).at(-1)
+/** The page's outbox (lib/outbox, idb-keyval 'kf-outbox'): how many writes still wait to go out. */
+const queued = (page) =>
+  page.evaluate(() => new Promise((res) => {
+    const r = indexedDB.open('keyval-store')
+    r.onerror = () => res(0)
+    r.onsuccess = () => {
+      try {
+        const g = r.result.transaction('keyval').objectStore('keyval').get('kf-outbox')
+        g.onsuccess = () => res((g.result ?? []).length)
+        g.onerror = () => res(0)
+      } catch {
+        res(0)
+      }
+    }
+  })).catch(() => 0)
 async function settle(state) {
+  // slots-phone: first the outbox drains (up to 8s). The drain can lag well past 400ms (a slow
+  // getSession), and a quiet 400ms alone then read as "nothing written" — the s5 / Undo misses.
+  for (let i = 0; i < 40 && state.page && (await queued(state.page)) > 0; i++) await sleep(200)
   let n = -1
   while (n !== state.writes.length) {
     n = state.writes.length
@@ -294,6 +317,126 @@ if (want('s6')) {
   check('s6 Tasks shows "in Code block💻 · 10:00"', /in Code block💻 · 10:00/i.test(txt), (await row.innerText().catch(() => '')).slice(0, 120))
   await shot(page, 's6-tasks')
   check('s6 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── slots-phone (2026-10-14): the phone grid draws a slot's tasks; "Into a slot…" in the task ⋯
+// menu (phone sheet + desktop submenu); the command bar's `>slot` ──
+const pcBlock = (page, n) => page.locator(`.pc-block[data-id^="${eid(n)}"]`).first()
+const pcRow = (page, n, taskN) => pcBlock(page, n).locator(`[data-slot-task="${id(taskN)}"]`)
+const sheetRow = (page, label) => page.locator('.kf-as-row', { hasText: label })
+
+// P1: the phone grid — the slot draws its task and fill; the box completes it (Undo); a tap opens the task.
+if (want('p1')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode, view: phone })
+  await pcBlock(page, CODE).evaluate((el) => el.scrollIntoView({ block: 'center' }))
+  await sleep(300)
+  check('p1 phone: the slot draws its task row and "1 task · 45m of 2h"', (await pcRow(page, CODE, HELD).count()) === 1 && /1 task · 45m of 2h/i.test(await pcBlock(page, CODE).innerText().catch(() => '')), await pcBlock(page, CODE).innerText().catch(() => ''))
+  await shot(page, 'p1-phone-slot')
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'night'))
+  await sleep(300)
+  await shot(page, 'p1-phone-slot-night')
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'day'))
+  let w0 = state.writes.length
+  await pcRow(page, CODE, HELD).getByRole('checkbox').click()
+  await settle(state)
+  check('p1 phone: its box completes it ("Done" toast)', lastOf(state, 'tasks', id(HELD), w0)?.status === 'done' && (await toastSoon(page, 'Done')))
+  await sleep(300)
+  check('p1 phone: …drawn done, and nothing else opened', (await pcRow(page, CODE, HELD).getAttribute('class'))?.includes('is-done') && !/[?&]task=/.test(page.url()) && (await page.locator('[role="dialog"]').count()) === 0)
+  await shot(page, 'p1-phone-done')
+  w0 = state.writes.length
+  await page.locator('.kf-toast', { hasText: 'Done' }).getByRole('button', { name: 'Undo' }).click()
+  await settle(state)
+  check('p1 phone: Undo reopens it', lastOf(state, 'tasks', id(HELD), w0)?.status === 'todo')
+  await sleep(300)
+  await pcRow(page, CODE, HELD).locator('.pc-name').click()
+  await sleep(800)
+  const titled = await page.evaluate(() => [...document.querySelectorAll('textarea, input')].some((el) => el.value === 'Write the slot spec'))
+  check('p1 phone: a tap on the row opens the task (its sheet, ?task=)', page.url().includes(`task=${id(HELD)}`) && titled, page.url())
+  await shot(page, 'p1-phone-task-sheet')
+  check('p1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// P2: phone — ⋯ → Into a slot… lists today's and the next days' Time blocks; picking one puts the task
+// in it (Undo); a repeating slot's later occurrence is its own row.
+if (want('p2')) {
+  const { ctx, page, errors, state } = await open('/tasks?list=all', { view: phone })
+  const row = page.locator(`#task-${id(REVIEW)}`)
+  await row.getByRole('button', { name: /More actions for/ }).click()
+  await sleep(500)
+  check('p2 phone: the ⋯ sheet has "Into a slot…"', (await sheetRow(page, 'Into a slot…').count()) === 1)
+  await sheetRow(page, 'Into a slot…').click()
+  await sleep(600)
+  const rows = await page.locator('.kf-as-row').allInnerTexts()
+  check('p2 phone: it lists Code block💻 (Today), then Shaheen🛞 for each of 8 days', rows.length === 9 && /Code block💻/.test(rows[0]) && /Today/i.test(rows[0]) && rows.slice(1).every((r) => /Shaheen🛞/.test(r)) && /Tomorrow/i.test(rows[2]), rows.map((r) => r.replace(/\n/g, ' ')).join(' | '))
+  await shot(page, 'p2-phone-into-a-slot')
+  let w0 = state.writes.length
+  await sheetRow(page, 'Code block💻').click()
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(REVIEW), w0)
+  check('p2 phone: picked → in Code block💻 (slot, day, times)', t?.slot_id === eid(CODE) && t?.slot_date === '2026-10-12' && t?.scheduled_start === iso('10:00') && t?.scheduled_end === iso('12:00'), JSON.stringify(t && [t.slot_id, t.slot_date, t.scheduled_start]))
+  check('p2 phone: toast "In Code block💻 · Review Kai"', await toastSoon(page, 'In Code block💻 · Review Kai'))
+  await sleep(300)
+  check('p2 phone: the row reads "in Code block💻 · 10:00"', /in Code block💻 · 10:00/i.test(await row.innerText().catch(() => '')), await row.innerText().catch(() => ''))
+  w0 = state.writes.length
+  await undo(page, 'In Code block')
+  await settle(state)
+  check('p2 phone: Undo takes it back out', NOSLOT(lastOf(state, 'tasks', id(REVIEW), w0)))
+  await sleep(300)
+  await row.getByRole('button', { name: /More actions for/ }).click()
+  await sleep(500)
+  await sheetRow(page, 'Into a slot…').click()
+  await sleep(600)
+  w0 = state.writes.length
+  await page.locator('.kf-as-row').nth(2).click() // Shaheen🛞, tomorrow
+  await settle(state)
+  const u = lastOf(state, 'tasks', id(REVIEW), w0)
+  check('p2 phone: tomorrow’s Shaheen🛞 → that occurrence (series row, Tue 13)', u?.slot_id === eid(SHAHEEN) && u?.slot_date === '2026-10-13' && u?.scheduled_start === iso('13:00', 13), JSON.stringify(u && [u.slot_id, u.slot_date, u.scheduled_start]))
+  check('p2 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// P3: desktop — right-click a task row → Into a slot… ▸ Code block💻.
+if (want('p3')) {
+  const { ctx, page, errors, state } = await open('/tasks?list=all')
+  const row = page.locator(`#task-${id(REVIEW)}`)
+  await row.click({ button: 'right' })
+  await sleep(400)
+  const item = page.locator('[role="menuitem"]', { hasText: 'Into a slot…' }).first()
+  check('p3 desktop: the task menu has "Into a slot…"', (await item.count()) === 1)
+  await item.hover()
+  await sleep(700)
+  const pick = page.locator('[role="menuitem"]', { hasText: 'Code block💻' }).first()
+  check('p3 desktop: its submenu lists Code block💻 with its time', (await pick.count()) === 1 && /Today · 10:00–12:00/.test(await pick.innerText().catch(() => '')), await pick.innerText().catch(() => ''))
+  await shot(page, 'p3-desktop-into-a-slot')
+  const w0 = state.writes.length
+  await pick.click()
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(REVIEW), w0)
+  check('p3 desktop: picked → in the slot, with the toast', t?.slot_id === eid(CODE) && t?.slot_date === '2026-10-12' && (await toastSoon(page, 'In Code block💻 · Review Kai')))
+  check('p3 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// P4: the command bar — `>code` names the slot: a chip, then Enter puts the new task in it.
+if (want('p4')) {
+  const { ctx, page, errors, state } = await open('/tasks?list=all')
+  await page.keyboard.press('Control+k')
+  const input = page.locator('#kf-capture-input')
+  await input.waitFor({ timeout: 5000 })
+  await input.fill('Fix the login bug >code')
+  await sleep(400)
+  const chip = page.locator('[data-chip="slot"]')
+  check('p4 bar: `>code` shows the "In Code block💻" chip', /In Code block/i.test(await chip.innerText().catch(() => '')), await chip.innerText().catch(() => ''))
+  await shot(page, 'p4-bar-chip')
+  const w0 = state.writes.length
+  await input.press('Enter')
+  await settle(state)
+  const t = posts(state, 'tasks', w0).filter((x) => x.title === 'Fix the login bug').at(-1)
+  check('p4 bar: Enter → the task, in Code block💻 (no block of its own)', t?.slot_id === eid(CODE) && t?.slot_date === '2026-10-12' && t?.scheduled_start === iso('10:00') && posts(state, 'calendar_events', w0).every((e) => e.task_id !== t?.id), JSON.stringify(t && [t.title, t.slot_id, t.slot_date]))
+  check('p4 bar: toast "Added to Code block💻"', await toastSoon(page, 'Added to Code block💻'))
+  check('p4 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
 
