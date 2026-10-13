@@ -47,3 +47,16 @@ P5 done (chat/resurfacing extend to each new content type as it lands). Run sub-
 _(filled during execution — including the 7e audit results)_
 
 - **2026-10-12 — 7a journal media (branch `claude/journal-media`, Kai: "+ Photo" and "Talk it out" did nothing).** Talk it out opens the shared voice sheet (Groq via `transcribe`) and appends the words to the day's latest entry as a paragraph, also accumulating `transcript`. **Deviation:** the audio itself is not kept (7a's accept line says "transcript + audio") — storing audio would eat the 1 GB budget; a take that fails to transcribe stays in the sheet (Try again / Save to Inbox / Discard) as everywhere else. + Photo: Paper's `preparePage` (≤1600px, ~250 KB JPEG) → private `journal` bucket (migration 0060) → `media_paths`; thumbnails + tap to view + remove. Handoff: `docs/log/2026-10-12-1749-journal-media-handoff.md`.
+- **2026-10-13 — 7e audit (2026-10-13).** The audit has been walked; the parity checkpoint has not passed. Every PLAN.md §3 row and every AKIFLOW-WIKI §2–§3 feature and key was checked against the code at v1.1.1 (`94eb2743`): 160 rows, 71 built, 53 partial (22 of them a key for an action that only works by mouse), 18 missing, 18 cut on purpose. The core verbs were run in a browser against the mock backend (`docs/log/assets/p7e-audit/verify.mjs`, 18/18):
+  - capture: 2 keys, and a typed time time-blocks it;
+  - triage: 1 key per item;
+  - Tomorrow: 2 keys, or 1 swipe;
+  - time-block: 1 drag;
+  - Plan my day: 2–6 taps.
+
+  **What still stands between Kai and cancelling Akiflow** is three things his own Akiflow week uses:
+  - his read-only prayer-times calendar (Kai's Flow can't show an outside calendar);
+  - Time Slots that hold tasks;
+  - an MCP server that can't build a week (no events or blocks, no reschedule to a time, no task edit).
+
+  Also open: 32 buildable gaps (list A, mostly S: Ctrl+Z, calendar keys, recurrence typed in the bar, a timed inbox card filed without its block, per-event reminders, …) and 12 questions for Kai (list B: outside calendars, Time Slots, key letters, deadline, weekly planning, smart lists, …). Content pipeline (row 26) is dormant by `docs/PLAN_ADDENDUM.md` §13, not a gap. The last step is one real week on Kai's Flow after a fresh Akiflow re-import. Full audit: `docs/log/2026-10-13-0808-p7e-parity-audit.md`.
