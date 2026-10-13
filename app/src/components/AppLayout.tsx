@@ -867,6 +867,10 @@ export function AppLayout() {
         .kf-checkbox { position: relative; }
         @media (pointer: coarse) {
           .kf-hit::after { content: ''; position: absolute; inset: -12px; }
+          /* A glyph pinned in the top-right corner of a clipped box (a journal photo's ×): the square
+             grows down and in from the glyph's corner, so the clip can't cut it under 44 and it never
+             reaches past the box onto the next photo or the words above. */
+          .kf-hit.kf-hit-corner::after { inset: 0 0 auto auto; width: var(--touch-min); height: var(--touch-min); }
           .kf-checkbox::after { content: ''; position: absolute; inset: -13px; }
         }
 
