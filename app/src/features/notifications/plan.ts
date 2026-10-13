@@ -1,7 +1,7 @@
 import { birthdayNotice, clock, deliver, digestNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { DEFAULT_AT, dayBounds, minutesOf, ritualOn, type RitualSettings } from '../../../../supabase/functions/notify/ritual.ts'
 import { routineDueOn, type ReminderRoutine, type RoutineDone } from '../../../../supabase/functions/notify/routine.ts'
-import { BIRTHDAY_AT, birthdaysOn, type PersonFacts, type Spoke } from '../../../../supabase/functions/notify/birthday.ts'
+import { BIRTHDAY_AT, birthdayGroups, type PersonFacts, type Spoke } from '../../../../supabase/functions/notify/birthday.ts'
 import { isOverdue, todaysTop3 } from '../../../../supabase/functions/_shared/today.ts'
 import { addDays, dateKey, wallToInstant } from '../../../../supabase/functions/_shared/zone.ts'
 import { dueReminders } from '../tray/trayState'
@@ -106,10 +106,12 @@ export function localPlan({ tasks, projects = [], routines = [], completions = [
     add(`routine:${group.map((r) => r.id).join(',')}@${new Date(at).toISOString()}`, new Date(at), () => routineNotice(group as (ReminderRoutine & { clock_time: string })[], prefs))
   }
 
-  // Birthdays at 08:00 on the user's clock (12j), as this device last synced its people.
+  // Birthdays at 08:00 on the user's clock (12j): the day's, and a week ahead (P7 7b) — notify's groups,
+  // as this device last synced its people.
   for (const at of wallTimes(BIRTHDAY_AT, from, to, zone)) {
-    const today = birthdaysOn(people, interactions, dateKey(at, zone), zone)
-    if (today.length) add(`birthday:${today.map((b) => b.id).join(',')}@${at.toISOString()}`, at, () => birthdayNotice(today, prefs))
+    for (const g of birthdayGroups(people, interactions, dateKey(at, zone), zone)) {
+      add(`birthday${g.inDays ? '-soon' : ''}:${g.people.map((b) => b.id).join(',')}@${at.toISOString()}`, at, () => birthdayNotice(g.people, prefs, g.inDays))
+    }
   }
 
   // The morning digest and the evening nudge, at the user's own times (Settings → Notifications).

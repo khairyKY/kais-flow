@@ -177,6 +177,16 @@ describe('localPlan — birthdays (12k/12j)', () => {
     expect(la).toEqual([]) // LA's 08:00 on the 3rd is 15:00 UTC — after this window
   })
 
+  it('a week ahead too (P7 7b), at the same 08:00, with its own key — notify’s groups', () => {
+    const nour = { id: 'nour', name: 'Nour', facts: [{ label: 'Birthday', value: 'October 10' }] }
+    const ps = birthdays({ people: [omar, nour], interactions: [{ person_id: 'nour', occurred_at: cairo('12:00', 1).toISOString() }] })
+    expect(ps.map((p) => [p.key, p.notice.title, p.notice.body])).toEqual([
+      [`birthday:omar@${cairo('08:00').toISOString()}`, 'Omar’s birthday is today', ''],
+      [`birthday-soon:nour@${cairo('08:00').toISOString()}`, 'Nour’s birthday is in a week', 'Last spoke 2 days ago.'],
+    ])
+    expect(birthdays({ people: [nour], prefs: { lock_screen_names: true } })).toEqual([]) // the same Birthday switch
+  })
+
   it('private: "A birthday", no name anywhere', () => {
     const [p] = birthdays({ people: [omar], prefs: { birthday_on: true } })
     expect(p.notice).toMatchObject({ title: 'A birthday', body: 'Unlock to see it' })

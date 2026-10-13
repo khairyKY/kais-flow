@@ -1,13 +1,16 @@
 // Birthday notices (Tray and Notifications.dc.html 12k/12j): "Omar’s birthday is today" at 08:00 on
-// the user's clock. notify sends it on a 15-minute cron (migration 0065) and the Windows/Android apps
+// the user's clock, and a week before, "Omar’s birthday is in a week" (P7 7b: "7-day + day-of"). notify sends it on a 15-minute cron (migration 0065) and the Windows/Android apps
 // plan it themselves (app/src/features/notifications/plan.ts). Pure — no Deno APIs — so the app's
 // vitest runs it (app/src/features/notifications/birthday.test.ts), the ritual.ts pattern.
-import { dateKey } from '../_shared/zone.ts'
+import { addDays, dateKey } from '../_shared/zone.ts'
 import type { BirthdayPerson } from './copy.ts'
 import { TICK_MIN, wallMinutes } from './ritual.ts'
 
 /** 12j draws it at 08:00. */
 export const BIRTHDAY_AT = 8 * 60
+
+/** P7 7b: the heads-up comes this many days before the day itself. */
+export const BIRTHDAY_AHEAD_DAYS = 7
 
 export interface PersonFacts {
   id: string
@@ -50,19 +53,27 @@ export function birthdayOn(b: { month: number; day: number }, key: string): bool
 const dayNumber = (key: string) => Date.parse(`${key}T00:00:00Z`) / 86_400_000
 
 /** The people whose birthday is day `key` on `zone`'s clock, each with the days since their newest
- * interaction on or before that day. In the order given. */
-export function birthdaysOn(people: readonly PersonFacts[], spoke: readonly Spoke[], key: string, zone: string): BirthdayPerson[] {
+ * interaction on or before `asOf` (that day, unless said otherwise). In the order given. */
+export function birthdaysOn(people: readonly PersonFacts[], spoke: readonly Spoke[], key: string, zone: string, asOf = key): BirthdayPerson[] {
   return people.flatMap((p) => {
     const b = birthdayOf(p)
     if (!b || !birthdayOn(b, key)) return []
     const last = spoke
       .filter((s) => s.person_id === p.id)
       .map((s) => dateKey(new Date(s.occurred_at), zone))
-      .filter((k) => k <= key)
+      .filter((k) => k <= asOf)
       .sort()
       .pop()
-    return [{ id: p.id, name: p.name, lastSpokeDays: last ? dayNumber(key) - dayNumber(last) : null }]
+    return [{ id: p.id, name: p.name, lastSpokeDays: last ? dayNumber(asOf) - dayNumber(last) : null }]
   })
+}
+
+/** What 08:00 on day `today` says, for notify and the apps alike: today's birthdays (`inDays` 0), then
+ * the ones a week out (`inDays` 7, "last spoke" counted to today). Empty groups are left out. */
+export function birthdayGroups(people: readonly PersonFacts[], spoke: readonly Spoke[], today: string, zone: string): { inDays: number; people: BirthdayPerson[] }[] {
+  return [0, BIRTHDAY_AHEAD_DAYS]
+    .map((inDays) => ({ inDays, people: birthdaysOn(people, spoke, addDays(today, inDays), zone, today) }))
+    .filter((g) => g.people.length > 0)
 }
 
 /** Is 08:00 on this 15-minute cron tick, on `zone`'s clock? (ritual.ts ritualDue's rule.) */
