@@ -20,6 +20,9 @@ interface VoiceCaptureSheetProps {
   /** Where a transcript goes instead of being AI-filed: the command bar's dictation, whose take
    * failed to transcribe, gets its words back in the field once Try again works. */
   onText?: (text: string) => void
+  /** Hold-to-talk from outside (the chat's mic): true once the finger lifts — a take already
+   * recording stops and goes on its way. Lifted before the mic was ready = the tap path (Stop). */
+  release?: boolean
 }
 
 /**
@@ -33,7 +36,7 @@ interface VoiceCaptureSheetProps {
  */
 type Phase = 'resting' | 'recording' | 'transcribing' | 'kept'
 
-export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText }: VoiceCaptureSheetProps) {
+export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText, release }: VoiceCaptureSheetProps) {
   const [phase, setPhase] = useState<Phase>(handedOver ? 'transcribing' : 'recording')
   const [keptReason, setKeptReason] = useState<KeptReason>('other')
   const [recording, setRecording] = useState(false)
@@ -88,6 +91,11 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
     }
     // Runs on open/close transitions only — re-running on a re-render would restart the mic.
   }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (release && recording) stopAndFile()
+    // Only the lift itself ends a take — not the mic coming on after it.
+  }, [release]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Track recording duration
   useEffect(() => {
@@ -200,7 +208,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
 
   function typeInstead() {
     onClose()
-    openCapture()
+    if (!onText) openCapture() // words wanted elsewhere (the chat): its own field is right there
   }
 
   /** Cancel button, Esc and a tap outside. A kept recording only leaves through its own buttons. */
@@ -425,7 +433,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
               Cancel
             </button>
             <button type="button" onClick={stopAndFile} disabled={busy || !recording} style={filledButton(busy || !recording)}>
-              Stop & file
+              {onText ? 'Stop & send' : 'Stop & file'}
             </button>
           </div>
         )}

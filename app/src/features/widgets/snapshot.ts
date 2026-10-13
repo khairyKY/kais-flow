@@ -13,6 +13,9 @@ import type { CalendarEvent, Domain, Project, Routine, RoutineCompletion, Slippi
 // the user's clock (`zone`), and work out Now / Up next / the now line from `blocks` themselves, so
 // those stay right between pushes. "Hide titles on the home screen" is applied here (mask).
 
+/** The Memory widget's source word for what resurfaced (0078 added journal pages, quotes and notes). */
+const RESURFACE_SOURCE = { task: 'Task', inbox: 'Inbox', journal_entry: 'Journal', quote: 'Quote', note: 'Note' } as const
+
 export interface WidgetItem {
   id: string
   title: string
@@ -104,7 +107,7 @@ export interface SnapshotInput {
   inbox: number
   slipping: readonly SlippingRow[]
   journalLine: string | null
-  resurface: { title: string; createdAt: string; source: 'task' | 'inbox'; route: string } | null
+  resurface: { title: string; createdAt: string; source: keyof typeof RESURFACE_SOURCE; route: string } | null
   /** The newest herbarium specimen (an archived project). */
   specimen: { title: string; at: string } | null
   weather: { tempC: number; condition: string } | null
@@ -255,7 +258,7 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
     ritual: { phase: i.phase },
     journal: { line: i.journalLine },
     memory: i.resurface
-      ? { text: i.resurface.title, when: shortDate(i.resurface.createdAt, i.zone), source: `${i.resurface.source === 'task' ? 'Task' : 'Inbox'} · ${ago(i.resurface.createdAt, now)}`, route: i.resurface.route }
+      ? { text: i.resurface.title, when: shortDate(i.resurface.createdAt, i.zone), source: `${RESURFACE_SOURCE[i.resurface.source]} · ${ago(i.resurface.createdAt, now)}`, route: i.resurface.route }
       : null,
     specimen: i.specimen ? { title: i.specimen.title, date: shortDate(i.specimen.at, i.zone, true), art: 'wisteria_p80' } : null,
     season: {

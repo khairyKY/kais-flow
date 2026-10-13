@@ -19,6 +19,7 @@ import { dayTop3 } from '../today/top3Order'
 import { dayOfJourney } from '../today/todayLayout'
 import { useDay } from '../today/useDay'
 import { runNotificationAction, actionFromSearch } from '../notifications/actions'
+import { searchDestination } from '../search/api'
 import { useOnline } from '../../lib/useOnline'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone, useAppZone } from '../../lib/appZone'
@@ -100,7 +101,15 @@ export function WidgetBridge(): React.ReactNode {
     resurface: resurface
       ? resurface.task
         ? { title: resurface.task.title, createdAt: resurface.task.created_at, source: 'task', route: `/today?task=${resurface.task.id}` }
-        : { title: resurface.item?.raw_text ?? '', createdAt: resurface.item?.created_at ?? resurface.row.created_at, source: 'inbox', route: '/inbox' }
+        : resurface.memory
+          ? {
+              title: resurface.memory.text,
+              // A journal page's day, read at noon so no zone tips it into the day before.
+              createdAt: resurface.memory.kind === 'journal_entry' ? `${resurface.memory.at}T12:00:00Z` : resurface.memory.at,
+              source: resurface.memory.kind,
+              route: (searchDestination(resurface.row) as { href: string }).href,
+            }
+          : { title: resurface.item?.raw_text ?? '', createdAt: resurface.item?.created_at ?? resurface.row.created_at, source: 'inbox', route: '/inbox' }
       : null,
     specimen: archived ? { title: archived.name, at: archived.updated_at } : null,
     weather: null, // cut 2026-10-12 (lib/seasons): the Season widget shows the season alone

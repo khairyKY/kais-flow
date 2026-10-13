@@ -4,8 +4,10 @@ import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import type { JournalEntry } from '../../lib/types'
 
-export function useJournalEntries() {
+/** `enabled` false = read only what another screen already fetched (the resurfacing card asks only when its pick needs it). */
+export function useJournalEntries(enabled = true) {
   return useQuery({
+    enabled,
     queryKey: ['journal_entries'],
     queryFn: async () => {
       const { data, error } = await supabase
