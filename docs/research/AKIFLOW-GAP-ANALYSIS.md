@@ -16,16 +16,16 @@ The 5-step loop (Capture → Prioritize → Plan → Execute → Review) is alre
 |---|---|---|
 | Single triage view | ✅ | P2 |
 | Auto-import from external tools | 📋 | P6 (GitHub) → P9 (Telegram/Notion/Obsidian/gcal) |
-| One-key inbox-zero triage (E/P/Someday) | ✅ | UX step 6 (`f`/`d`/`x`/`s`) |
+| One-key inbox-zero triage (E/P/Someday) | ✅ | UX step 6 (~~`f`/`d`/`x`/`s`~~ — *2026-10-13 p7e audit:* the keys are `e`/`d`/`s`/`↵`) |
 | Two-way sync back to source | 📋 | P6 read-only first; write-back opt-in later (P6 Out) |
-| Bulk triage in inbox | ➕ | P8 odds (flagged in #40's closing comment) |
+| Bulk triage in inbox | ~~➕~~ ✅ | ~~P8 odds (flagged in #40's closing comment)~~ *2026-10-13 p7e audit:* built (Inbox t3: select + bulk bar, one Undo — 2026-10-12 fix-inbox) |
 
 ## §2.2 Command Bar
 
 | Feature | Verdict | Where |
 |---|---|---|
 | OS-global summon | ⛔ | No Electron (hard rule); optional AHK snippet PLAN.md App. B |
-| NL parsing (dates, recurrence) | ✅ | P1/P2 (chrono + AI) |
+| NL parsing (dates, recurrence) | ~~✅~~ 🟡 | P1/P2 (chrono + AI) — *2026-10-13 p7e audit:* dates yes; repeat phrases ("every week") are not parsed in the bar (audit A5) |
 | `#` project · `!` priority · duration | ✅ | steps 6.5/9/11e (`30m`/`1h` is our duration grammar — keep it, don't add `=`) |
 | `<` deadline vs scheduled split | ✅ | Schema already separates `due_at` vs `scheduled_start`; dates parse to due |
 | `*` tags/labels | ➕ | **P6 step 5** — `labels` column exists, dead in UI; syntax + chips + filters land together |
@@ -45,9 +45,9 @@ The 5-step loop (Capture → Prioritize → Plan → Execute → Review) is alre
 | Plan (`P`) / Goal (`H`) | ✅ | Equivalents: ScheduleMenu + `1/2/3`; `t` top-3 |
 | Undo (⌘Z) | ➕ | **UX step 13** (rides the undo-toast layer) |
 | Calendar keys (`d`/`w`/`m`, `-`/`=` period, today) | ➕ | **UX step 14** |
-| Focus (`F`) | 📋 | P8 |
+| Focus (`F`) | ~~📋~~ ✅ | ~~P8~~ *2026-10-13 p7e audit:* built (Focus page + timer) |
 | Customizable shortcuts | ⛔ | YAGNI single-user; keymap is already data-driven |
-| Duplicate / copy-titles / 2nd time zone | ⛔ | Revisit only if Kai misses them |
+| Duplicate / copy-titles / 2nd time zone | ⛔ (2nd zone) | Revisit only if Kai misses them — *2026-10-13 p7e audit:* Duplicate and Copy link are built; only the second time zone stays out |
 
 ## §2.4 Calendar & time-blocking
 
@@ -59,7 +59,7 @@ The 5-step loop (Capture → Prioritize → Plan → Execute → Review) is alre
 | Custom event colors | ✅ | #47 |
 | Per-task reminders | ✅ | Areas retrofit |
 | Per-event reminders | ➕ | P8 odds (small) |
-| Conflict detection | ⛔ | Personal scale; overlap is visible on the grid |
+| Conflict detection | ~~⛔~~ ✅ | ~~Personal scale; overlap is visible on the grid~~ *2026-10-13 p7e audit:* built (the ⚠ overlap badge on blocks) |
 | Secondary time zones | ⛔ | Cairo-only life |
 | Schedule Optimizer | 📋 | P9 (#46) |
 | Opens at now / business-hours window | ➕ | **UX step 14** (#63) |
@@ -101,7 +101,7 @@ The 5-step loop (Capture → Prioritize → Plan → Execute → Review) is alre
 | Labels/tags UI + color-coding | ➕ | **P6 step 5** (also adds the board's Filter-by-Tags row, deferred from UX 17d) |
 | Smart Tags (AI auto-bucket) | ✅ | AI capture already assigns domain/project |
 | Projects + sections | 🟡 | Projects ✅; sections ⛔ (areas+projects suffice) |
-| Tray/menu-bar app | ⛔ | No Electron; PWA push covers the nudge job |
+| Tray/menu-bar app | ~~⛔~~ ✅ | ~~No Electron; PWA push covers the nudge job~~ *2026-10-13 p7e audit:* built in v1.0.20 (Tauri tray + flyout, no Electron) |
 | Meeting alerts + Join button | ⛔ | Not meeting-driven; per-task reminders cover; revisit on request |
 | Universal search | ✅ | P5 (+ fidelity gaps → **UX step 14**) |
 | Aki chat | ✅ | P5 (citation leak #59 → **UX step 12**) |

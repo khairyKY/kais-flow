@@ -283,7 +283,8 @@ for (const theme of ['day', 'night']) {
     await card(page, 'overdue', 'Send the tax papers').locator('.cal-plan-btn').click()
     await sleep(300)
     const items = (await page.locator('[role="menu"] [role="menuitem"]').allInnerTexts()).map(flat)
-    check(`${name} Plan ▾ (a 30m task at 14:40): Today · Next free slot · 14:45 · Tomorrow first thing · 08:00 · Pick date…`, JSON.stringify(items) === JSON.stringify(['Today', 'Next free slot · 14:45', 'Tomorrow first thing · 08:00', 'Pick date… ▸']), JSON.stringify(items))
+    // 2026-10-12 conductor review: every Tomorrow is tomorrow 09:00 (moveToTomorrowWithUndo); the hint names the day.
+    check(`${name} Plan ▾ (a 30m task at 14:40): Today · Next free slot · 14:45 · Tomorrow, first thing Thu 09:00 · Pick date…`, JSON.stringify(items) === JSON.stringify(['Today', 'Next free slot · 14:45', 'Tomorrow, first thing Thu 09:00', 'Pick date… ▸']), JSON.stringify(items))
     await shot(page, 'plan-menu-day')
     await menuItem(page, 'Pick date…').click()
     await sleep(300)
@@ -370,7 +371,9 @@ for (const theme of ['day', 'night']) {
   // D5 — the details panel reads as editable: field chrome on title / date / times, hover, focus,
   // the pointer, a time's list opening in place; a missed block offers Replan and its day moves.
   d5: {
-    if (!want('d5')) break d5
+    // Retired 2026-10-13 (p7e audit A32): the details panel became Calendar §5's block menu; the
+    // event-detail harness owns it. CAL_RAIL_LEGACY=1 runs the old step.
+    if (!want('d5') || !process.env.CAL_RAIL_LEGACY) break d5
     for (const t of ['day', 'night']) {
       const name = `details-${t}`
       const { ctx, page, errors, state } = await open('/calendar', { theme: t })
@@ -479,7 +482,8 @@ for (const theme of ['day', 'night']) {
     const { ctx, page, cdp, errors } = await open('/calendar', { view: phone, theme })
     await shot(page, name)
     const segs = (await page.locator('.pc-segs [role="radio"]').allInnerTexts()).map(flat)
-    check(`${name} segments "Overdue 2 · Today 2 · Inbox 2", Overdue chosen`, JSON.stringify(segs) === JSON.stringify(['Overdue 2', 'Today 2', 'Inbox 2']) && (await seg(page, 'Overdue').getAttribute('aria-checked')) === 'true', JSON.stringify(segs))
+    // cal-wave2 (2026-10-12): the rail's Lists is the strip's fourth segment.
+    check(`${name} segments "Overdue 2 · Today 2 · Inbox 2 · Lists 0", Overdue chosen`, JSON.stringify(segs) === JSON.stringify(['Overdue 2', 'Today 2', 'Inbox 2', 'Lists 0']) && (await seg(page, 'Overdue').getAttribute('aria-checked')) === 'true', JSON.stringify(segs))
     const sb = await page.locator('.pc-segs .rt-seg-row').boundingBox()
     const opts = await page.locator('.pc-segs [role="radio"]').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
     check(`${name} the segment row is a 48px target row (options 40 inside it)`, Math.round(sb.height) >= 48 && opts.every((h) => h === 40), `${sb.height} · ${opts}`)
@@ -672,7 +676,8 @@ for (const theme of ['day', 'night']) {
     const look = await t.evaluate((e) => { const s = getComputedStyle(e); return [s.borderTopStyle, s.backgroundColor !== 'rgba(0, 0, 0, 0)', Math.round(e.getBoundingClientRect().height)] })
     check(`${name} the title is a field (border, fill, 52 tall)`, (await t.inputValue()) === 'Lunch with Omar' && look[0] === 'solid' && look[1] && look[2] === 52, JSON.stringify(look))
     const rows = (await d.locator('.kf-as-row').allInnerTexts()).map(flat)
-    check(`${name} Date (Wed 7) and Time (13:00–14:00) rows, each a 48+ tap row with a chevron`, rows.length === 2 && rows[0].startsWith('Date') && rows[1].startsWith('Time') && (await d.locator('.kf-as-row').evaluateAll((els) => els.every((e) => e.getBoundingClientRect().height >= 48))), JSON.stringify(rows))
+    // Calendar §5 (2026-10-12) added Project / Repeat / Link a task / More rows under Date and Time.
+    check(`${name} Date (Wed, Oct 7) and Time (13:00 – 14:00) lead the rows, every row a 48+ tap row`, rows[0]?.startsWith('Wed, Oct 7') && rows[1]?.startsWith('13:00 – 14:00') && (await d.locator('.kf-as-row').evaluateAll((els) => els.every((e) => e.getBoundingClientRect().height >= 48))), JSON.stringify(rows))
     await shot(page, name)
     const w0 = state.writes.length
     await t.fill('Lunch with Omar & Sam')
