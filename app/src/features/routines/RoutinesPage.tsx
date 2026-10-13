@@ -267,7 +267,7 @@ export function RoutinesPage() {
   const challenge = (
     <div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
       </div>
       {activeChallenge && <ChallengeCard routine={activeChallenge} completions={completions} />}
@@ -292,7 +292,7 @@ export function RoutinesPage() {
     <div>
       <div>
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The garden</div>
-        {!isMobile && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>each habit grows with its streak</div>}
+        {!isMobile && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>each habit grows with its streak</div>}
       </div>
       {isMobile ? (
         <div style={{ display: 'flex', gap: 12, overflowX: 'auto', marginTop: 10, paddingBottom: 4 }}>
@@ -318,8 +318,8 @@ export function RoutinesPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
             <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--rim-moss-sm, var(--shadow-drop-sm))' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
-              <h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 26 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Daily rituals</h1>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
+              <h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 26 : 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>Daily rituals</h1>
             </div>
           </div>
           {!isMobile && (
@@ -345,7 +345,7 @@ export function RoutinesPage() {
                 style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: isMobile ? '8px 0' : 0, font: 'inherit', fontSize: 13.5, color: 'var(--ink-body)', cursor: 'pointer' }}
               >
                 <span data-ritual-title style={{ display: 'block', ...(isMobile ? oneLine : null) }}>{kind === 'morning' ? 'Morning ritual' : 'Evening ritual'}</span>
-                <span data-ritual-sub style={{ display: 'block', ...(isMobile ? oneLine : null), fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>
+                <span data-ritual-sub style={{ display: 'block', ...(isMobile ? oneLine : null), fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>
                   {kind === 'morning' ? 'plan the day' : 'close its loops'}
                 </span>
               </button>
@@ -356,7 +356,7 @@ export function RoutinesPage() {
                 aria-label={ritualPins[kind] ? 'Unpin this ritual from Today' : 'Pin this ritual to Today'}
                 aria-pressed={ritualPins[kind]}
                 className="kf-hit"
-                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: 'none', padding: isMobile ? 0 : '4px 2px', width: isMobile ? 48 : undefined, height: isMobile ? 48 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', cursor: 'pointer', color: ritualPins[kind] ? 'var(--acc-terra)' : 'var(--ink-hairline)' }}
+                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: 'none', padding: isMobile ? 0 : '4px 2px', width: isMobile ? 48 : undefined, height: isMobile ? 48 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', cursor: 'pointer', color: ritualPins[kind] ? 'var(--acc-terra)' : 'var(--ink-hairline)' }}
               >
                 <PinIcon size={isMobile ? 16 : 10} filled={ritualPins[kind]} />
                 {!isMobile && (ritualPins[kind] ? 'pinned' : 'pin')}
@@ -381,7 +381,7 @@ export function RoutinesPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, paddingLeft: isMobile ? 12 : 18, borderLeft: '1px dashed var(--line-dashed)' }}>
             <FlameIcon size={isMobile ? 12 : 13} />
             {isMobile ? (
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--ink-body)' }}>{bestStreak}</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-lead)', color: 'var(--ink-body)' }}>{bestStreak}</span>
             ) : (
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}>{bestStreak}</div>
@@ -485,7 +485,7 @@ function ChallengeCard({ routine, completions }: { routine: Routine; completions
       <div style={{ marginTop: 9, height: 6, borderRadius: 4, background: 'color-mix(in srgb, var(--acc-gold) 20%, transparent)', overflow: 'hidden' }}>
         <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: 'var(--acc-gold)' }} />
       </div>
-      <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>
+      <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
           <FlameIcon size={10} />
           <span style={{ color: 'var(--sig-streak)' }}>{current}</span>

@@ -53,7 +53,7 @@ const mchip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: '
 const mchipLast: React.CSSProperties = { ...mchip, width: 96, textAlign: 'right' }
 const chip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
 // Section count on the right of the rule (`<span style="color:var(--ink-hairline)">2</span>`).
-const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', color: 'var(--ink-faint)' }}>{n}</span>
+const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', color: 'var(--ink-faint)' }}>{n}</span>
 
 // F2 freeze: thresholds live in lib/growthStages — this is just the asset path.
 export function getWisteriaImage(pct: number): string {
@@ -412,8 +412,8 @@ export function ProjectsPage() {
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-moss)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}>{nameOf(p.id, p.name)}</div>
-                      {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink-body)' }}>{nameOf(p.id, p.name)}</div>
+                      {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 'var(--fs-meta)' }}>★</span>}
                     </div>
                     {/* J-19: on the meta line, not beside the name — the title row has no room at 390px. */}
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
@@ -450,8 +450,8 @@ export function ProjectsPage() {
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, color: 'var(--ink-body)' }}>{nameOf(p.id, p.name)}</div>
-                      {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 12 }}>★</span>}
+                      <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink-body)' }}>{nameOf(p.id, p.name)}</div>
+                      {stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 'var(--fs-meta)' }}>★</span>}
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>
                       {stat.monthHours}h this month
@@ -484,7 +484,7 @@ export function ProjectsPage() {
                 style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
               >
                 <span style={{ width: 11, height: 11, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
-                <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-body)' }}>{nameOf(a.id, a.name)}</span>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)' }}>{nameOf(a.id, a.name)}</span>
                 {isSlipping ? (
                   mobileSlippingChip
                 ) : (
@@ -533,7 +533,7 @@ export function ProjectsPage() {
           background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
           color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
           fontFamily: 'inherit',
-          fontSize: '12.5px',
+          fontSize: 'var(--fs-caption)',
           padding: '9px 13px',
           borderRadius: '999px',
           cursor: 'pointer',
@@ -588,10 +588,10 @@ export function ProjectsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} title={`p${forestPct}`} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 Projects &amp; areas · the forest
               </div>
-              <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
+              <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>
                 {view === 'list' ? "What's growing" : "The forest, by domain"}
               </h1>
             </div>
@@ -603,13 +603,13 @@ export function ProjectsPage() {
             </span>
             <button
               onClick={() => openNew('area')}
-              style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer' }}
+              style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer' }}
             >
               + New area
             </button>
             <button
               onClick={() => openNew('standard')}
-              style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
+              style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', padding: '9px 15px', borderRadius: '999px', boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
             >
               + New project
             </button>
@@ -726,7 +726,7 @@ export function ProjectsPage() {
               )
             })}
 
-            <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-hand)', transform: 'rotate(-0.8deg)' }}>
+            <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand)', transform: 'rotate(-0.8deg)' }}>
               projects finish; areas just keep going — both grow leaves as you tend them ✿
             </div>
           </div>
@@ -829,7 +829,7 @@ export function ProjectsPage() {
                         style={{ display: 'block', background: 'var(--paper-parchment)', border: '1px dashed var(--line-solid)', borderRadius: 8, padding: '13px 14px', cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-                          <span style={{ width: 34, height: 34, borderRadius: 8, border: '1px dashed var(--ink-hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 16, flex: 'none' }}>＋</span>
+                          <span style={{ width: 34, height: 34, borderRadius: 8, border: '1px dashed var(--ink-hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 'var(--fs-body-l)', flex: 'none' }}>＋</span>
                           <div style={{ flex: 1, fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Plant a project here…</div>
                         </div>
                       </div>
@@ -852,11 +852,11 @@ export function ProjectsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
               <img src="/ds/assets/wisteria/p100.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 46, filter: 'var(--shadow-drop-sm)' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects · archive</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects · archive</div>
                 <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>Grown &amp; done</h1>
               </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', marginTop: 10 }}>
+            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)', marginTop: 10 }}>
               finished projects reach the full wisteria cascade — kept, not cleared ✿
             </div>
 
@@ -872,7 +872,7 @@ export function ProjectsPage() {
               .sort(([yearA], [yearB]) => parseInt(yearB) - parseInt(yearA))
               .map(([year, yearProjs]) => (
                 <div key={year}>
-                  <div className="slabel" style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '24px 0 4px' }}>
+                  <div className="slabel" style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '24px 0 4px' }}>
                     <span>{year}</span>
                     <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                     <span style={{ color: 'var(--ink-faint)' }}>{yearProjs.length}</span>
@@ -883,7 +883,7 @@ export function ProjectsPage() {
                       <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                         <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 30, flex: 'none' }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                          <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body-l)', fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                           <div className="fhelp" style={{ marginTop: 2 }}>{p.engagement_model || 'Project'} · {stat.doneMilestones} / {stat.totalMilestones} milestones</div>
                         </div>
                         <span className="mchip">{stat.hours}h</span>

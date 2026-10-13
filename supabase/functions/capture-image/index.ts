@@ -4,7 +4,8 @@
 //     200 { status, pages_read, title, items, drawings } the row after this page
 //     429 { error: 'daily_limit' }                       15 pages today (AI_DAILY_LIMIT_VISION); photo kept
 //     503 { error: 'rate_limited' }                      Groq busy after retries; the app reads it later
-//   POST { action: 'sweep' } (service role, pg_cron hourly — migration 0049): delete expired photos.
+//   POST { action: 'sweep' } (service role, pg_cron hourly — migration 0049): delete expired photos,
+//     and journal photos whose entry row is gone (./journal.ts).
 //
 // The app uploads the resized pages to the private `captures` bucket first, then asks for each page in
 // turn (its reading screen ticks them off). The image goes to Groq as a short-lived signed URL, so this
@@ -15,6 +16,7 @@ import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { afterPage, buildPrompt, MAX_PAGES, normaliseRead, ownsPath, retryDelayMs, type PageDrawing, type PageLine } from './read.ts'
+import { goneEntries, idFolders, photosToSweep, type Listed } from './journal.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
 // Groq's image-input model (console.groq.com/docs/vision, checked 2026-10-04): reads English and
@@ -183,7 +185,50 @@ async function sweep(req: Request): Promise<Response> {
     }
     await service.from('captures').update({ photos_deleted_at: new Date().toISOString(), storage_paths: [] }).eq('id', row.id)
   }
-  return jsonResponse(req, { captures: data?.length ?? 0, photos })
+  let journal = 0
+  try {
+    journal = await sweepJournal()
+  } catch (e) {
+    console.error('capture-image sweep: journal', e)
+  }
+  return jsonResponse(req, { captures: data?.length ?? 0, photos, journal_photos: journal })
+}
+
+/** Everything listed under `prefix` in the journal bucket, a page at a time. */
+async function listJournal(prefix: string): Promise<Listed[]> {
+  const out: Listed[] = []
+  for (;;) {
+    const { data, error } = await service.storage.from('journal').list(prefix, { limit: 1000, offset: out.length })
+    if (error) throw error
+    out.push(...data)
+    if (data.length < 1000) return out
+  }
+}
+
+/** Journal photos whose entry row is gone (the rules are in ./journal.ts). Any error stops it, so
+ * nothing is deleted on a partial answer. */
+async function sweepJournal(): Promise<number> {
+  const now = Date.now()
+  let removed = 0
+  for (const uid of idFolders(await listJournal(''))) {
+    const entries = idFolders(await listJournal(uid))
+    const rows: { id: string; user_id: string }[] = []
+    // 100 ids a query, trashed rows included: far under PostgREST's row cap, so a short answer can
+    // never pass for a deleted entry.
+    for (let i = 0; i < entries.length; i += 100) {
+      const { data, error } = await service.from('journal_entries').select('id, user_id').eq('user_id', uid).in('id', entries.slice(i, i + 100))
+      if (error) throw error
+      rows.push(...data)
+    }
+    for (const entry of goneEntries(uid, entries, rows)) {
+      const paths = photosToSweep(uid, entry, await listJournal(`${uid}/${entry}`), now)
+      if (!paths.length) continue
+      const { error } = await service.storage.from('journal').remove(paths)
+      if (error) throw error
+      removed += paths.length
+    }
+  }
+  return removed
 }
 
 Deno.serve(async (req) => {

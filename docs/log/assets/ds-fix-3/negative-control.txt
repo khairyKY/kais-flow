@@ -1,0 +1,13 @@
+# negative control: Herbarium eyebrow 0.22em -> 0.18em on purpose, then restored; desktop catches it, phone cannot (0.07em !important on inline uppercase)
+FAIL day-desktop-herbarium  1280×800  1406 px differ · 222 elements, 1 styles differ
+     #165
+       div 1 specimens|10px|1.8px|15px|"Courier Prime", ui-monospace, "Courier New", monospace|400|rgb(106, 99, 84)|rgba(0, 0, 0, 0)|rgb(106, 99, 84)|0px|0px|none|316.325px|15px
+       div 1 specimens|10px|2.2px|15px|"Courier Prime", ui-monospace, "Courier New", monospace|400|rgb(106, 99, 84)|rgba(0, 0, 0, 0)|rgb(106, 99, 84)|0px|0px|none|316.325px|15px
+PASS day-phone-herbarium  390×844  0 px differ · 219 elements, 0 styles differ
+FAIL night-desktop-herbarium  1280×800  1390 px differ · 222 elements, 1 styles differ
+     #165
+       div 1 specimens|10px|1.8px|15px|"Courier Prime", ui-monospace, "Courier New", monospace|400|rgb(154, 148, 172)|rgba(0, 0, 0, 0)|rgb(154, 148, 172)|0px|0px|none|316.325px|15px
+       div 1 specimens|10px|2.2px|15px|"Courier Prime", ui-monospace, "Courier New", monospace|400|rgb(154, 148, 172)|rgba(0, 0, 0, 0)|rgb(154, 148, 172)|0px|0px|none|316.325px|15px
+PASS night-phone-herbarium  390×844  0 px differ · 219 elements, 0 styles differ
+
+(4 views compared)

@@ -188,7 +188,7 @@ export function HerbariumPage() {
         <div className="kf-overlay-card" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
           <span className="washi" style={{ top: -9, left: 44, transform: 'rotate(-4deg)' }}></span>
           <span className="washi" style={{ top: -9, right: 44, transform: 'rotate(3deg)', background: 'color-mix(in oklch, var(--acc-gold-warm) 40%, transparent)' }}></span>
-          <span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 16, color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}>✕</span>
+          <span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 'var(--fs-body-l)', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}>✕</span>
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 18 : 30 }}>
             <div style={{ flex: 'none', width: isMobile ? '100%' : 230, height: isMobile ? 220 : 280, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', borderRight: isMobile ? 'none' : '1px solid var(--line-card)', paddingRight: isMobile ? 0 : 26 }}>
               <img src={imgSource} alt="" className="pressed" style={{ height: isMobile ? 200 : 265, transform: 'scaleY(0.94) rotate(-1.2deg)' }} />
@@ -217,7 +217,7 @@ export function HerbariumPage() {
               )}
               <div style={{ flex: 1 }}></div>
               <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 12, marginTop: 12 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>A life in numbers</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>A life in numbers</div>
                 <div style={{ display: 'flex', gap: 26 }}>
                   <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>tasks bloomed</div></div>
                   <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>longest focus day</div></div>
@@ -341,10 +341,10 @@ export function HerbariumPage() {
         <div style={{ width: 880, maxWidth: '100%', padding: isMobile ? 0 : '0 34px' }}>
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 14 : 24, marginBottom: 12 }}>
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 {projectsQ.data ? `${archivedProjects.length} specimens` : ' '}{hasItems && ` · since ${formatMonthYear(archivedProjects.reduce((min, p) => (new Date(p.created_at) < new Date(min) ? p.created_at : min), archivedProjects[0].created_at))}`}
               </div>
-              <h1 style={{ margin: '6px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 44, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The Herbarium</h1>
+              <h1 style={{ margin: '6px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 'var(--fs-page-title)', lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The Herbarium</h1>
               <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever ✿</div>
             </div>
             {/* deviation(2026-07-18 audit): export only has the subtle link; Kai couldn't find the way out */}

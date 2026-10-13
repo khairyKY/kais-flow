@@ -1123,7 +1123,7 @@ export function ProjectDetailPage() {
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: isMobile ? 'wrap' : undefined, gap: '8px 14px', marginTop: 20 }}>
             <span style={{ width: 15, height: 15, borderRadius: '50%', background: area.color || 'var(--acc-buttercream)', flex: 'none' }} />
             <div style={{ flex: isMobile ? '1 1 calc(100% - 29px)' : 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>{titleNode(area.name, (next) => renameArea(area, next))}</h1>
             </div>
             <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 3, marginLeft: isMobile ? 29 : undefined }}>

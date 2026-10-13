@@ -306,7 +306,9 @@ export function FocusPage() {
     const wordCount = today.reduce((n, e) => n + e.body.trim().split(/\s+/).filter(Boolean).length, 0)
     // F2: the same fern the Journal page draws for this day (fernByLength over the day's text).
     const stage = fernByLength(today.reduce((n, e) => n + e.body.length, 0))
-    return { stage, note: wordCount > 0 ? `${wordCount} words tonight` : 'unwritten journal' }
+    // A photo-only day is kept (journalDay's isWritten), so it isn't "unwritten" here either.
+    const photos = today.reduce((n, e) => n + (e.media_paths?.length ?? 0), 0)
+    return { stage, note: wordCount > 0 ? `${wordCount} words tonight` : photos > 0 ? `${photos} ${photos === 1 ? 'photo' : 'photos'} tonight` : 'unwritten journal' }
   }, [journalEntries, todayStr])
 
   // Projects (Wisteria)
@@ -588,10 +590,10 @@ export function FocusPage() {
         {/* Header */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '30px 40px', zIndex: 20 }}>
           <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: '#b8b0c8' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: '#b8b0c8' }}>
               Your garden{activityQ.data ? ` · day ${stats.daysCount}` : ''}
             </div>
-            <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, letterSpacing: '-0.015em', color: '#f0ebdd' }}>
+            <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, letterSpacing: 'var(--ls-display)', color: '#f0ebdd' }}>
               {weekdayName}, closing
             </h1>
           </div>
@@ -616,7 +618,7 @@ export function FocusPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <span
               onClick={() => setMode('pomodoro')}
-              style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#a89fc0', cursor: 'pointer' }}
+              style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: '#a89fc0', cursor: 'pointer' }}
             >
               stay a while
             </span>
@@ -787,7 +789,7 @@ export function FocusPage() {
         {/* 1c: BREAK VIEW */}
         {mode === 'break' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', position: 'relative', zIndex: 5 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--acc-sage-text)', position: 'relative', zIndex: 5 }}>
               {breakType === 'short' ? `Short break · round ${currentRound} done` : 'Long break · cycle complete'}
             </div>
             <div style={{ position: 'relative', width: 190, height: 190, marginTop: 18 }}>
@@ -849,13 +851,13 @@ export function FocusPage() {
                   Kai: "there is a weird flower at the top of the timer". At a full timer it
                   parks dead-centre above the clock and reads as a stray graphic. */}
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                   remaining
                 </div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 74, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--ink-body)', marginTop: 6 }}>
                   {formatTime(secondsLeft)}
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
                   {/* Punch 52: the export reads `of 25 min · 5-min break at 10:20` — the length
                       qualifier had been dropped. It's the *next* break, so it's the long one on
                       the last round of the cycle. */}
@@ -1061,7 +1063,7 @@ export function FocusPage() {
         <span
           onClick={() => setMode('garden')}
           className="fp-garden-link"
-          style={{ position: 'absolute', right: 36, bottom: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
+          style={{ position: 'absolute', right: 36, bottom: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
         >
           open the garden →
         </span>
@@ -1077,7 +1079,7 @@ export function FocusPage() {
             <span className="washi-tape-settings"></span>
 
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                 Pomodoro settings
               </span>
               <span
