@@ -66,7 +66,8 @@ interface CalendarGridProps {
   hideToolbar?: boolean
   /** Fires on mount and after every nav/view change — drives CalendarPage's header title. */
   onRangeChange?: (info: { title: string; start: Date; end: Date }) => void
-  onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number }) => void
+  /** An empty slot clicked or dragged. `task`: with ⌘/Ctrl held — Akiflow's ⌘-click makes a task there (p7e A4). */
+  onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean }) => void
   /** allDay flips when a drag crosses the all-day band ↔ time grid boundary (CALENDAR.md §6). */
   onMove: (id: string, start: string, end: string, allDay: boolean) => void
   onResize: (id: string, start: string, end: string) => void
@@ -380,6 +381,17 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     },
   }))
 
+  // p7e A4: Ctrl-click an empty slot = a task there. FullCalendar starts no selection with Ctrl held (its
+  // isPrimaryMouseButton), so the slot under the pointer is resolved here; ⌘ (a Mac) does select, and
+  // `select` below reads the key. The slot's half hour, 30 minutes long (a whole day in the all-day band).
+  function handleCtrlClick(e: React.MouseEvent) {
+    if (!e.ctrlKey || e.metaKey || e.button !== 0 || (e.target as HTMLElement).closest('.fc-event, .fc-more-link, button, [role="button"]')) return
+    const at = resolveGridDateTime(e.clientX, e.clientY)
+    if (!at) return
+    const end = new Date(Date.parse(at.iso) + (at.allDay ? 1440 : 30) * 60_000).toISOString()
+    onCreate({ start: at.iso, end, allDay: at.allDay, x: e.clientX, y: e.clientY, task: true })
+  }
+
   function handleGridContextMenu(e: React.MouseEvent) {
     if (!onGridContextMenu) return
     const target = e.target as HTMLElement
@@ -403,6 +415,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       data-tour="calendar"
       className={narrow ? 'kf-cal-narrow' : undefined}
       onContextMenu={handleGridContextMenu}
+      onClick={handleCtrlClick}
       style={{ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
     >
     <FullCalendar
@@ -773,7 +786,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       }}
       select={(info) => {
         const jsEvent = info.jsEvent as MouseEvent | null
-        onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2 })
+        onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2, task: !!jsEvent?.metaKey })
       }}
       eventClick={(info: EventClickArg) => info.event.display !== 'background' && onEventClick(blockIdOf(info.event))}
       // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder

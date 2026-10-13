@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router'
 import { useEscapeStack, useBodyScrollLock } from '../lib/overlayStack'
-import { GLOBAL_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, COMMAND_BAR_SHORTCUTS, LIST_EXTRAS, LIST_NAV, SELECTION_NOTE, keyCap } from '../lib/shortcuts'
+import { GLOBAL_SHORTCUTS, TASK_LIST_SHORTCUTS, INBOX_SHORTCUTS, CALENDAR_SHORTCUTS, COMMAND_BAR_SHORTCUTS, LIST_EXTRAS, LIST_NAV, SELECTION_NOTE, keyCap } from '../lib/shortcuts'
 import { usePageShortcutsStore, type ShortcutEntry } from '../lib/pageShortcutsStore'
 import { restartTour } from '../features/tour/help'
 // J-17: the keycap lives in the shared kit now — this overlay was its only user before.
@@ -33,7 +33,7 @@ function Category({ title, entries, note }: { title: string; entries: ShortcutEn
 
 const link = { background: 'none', border: 'none', padding: '6px 0', font: 'inherit', fontSize: 14, fontWeight: 600, color: 'var(--acc-lavender-deep)', cursor: 'pointer' } as const
 
-/** The whole keymap — a 3-column reference (Anywhere, On a task, Inbox triage + Command bar). "On a
+/** The whole keymap — a 3-column reference (Anywhere + Calendar, On a task, Inbox triage + Command bar). "On a
  * task" is what the list page underneath registered (useListKeys → pageShortcutsStore: the keys it
  * really dispatches on, so the sheet can't drift from them), plus the keys every task list has; with
  * no list page mounted it falls back to the static Tasks list (lib/shortcuts.ts). Tour & help 14k-3
@@ -91,6 +91,11 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', columnGap: 32, marginTop: 22 }}>
           <div>
             <Category title="Anywhere" entries={GLOBAL_SHORTCUTS} />
+            {/* p7e A4: back, now that the keys are bound. deviation(2026-10-13): Tour 14k-3 draws it last in
+                the third column, under "Go to" (cut, D-5); that column holds Inbox triage + Command bar
+                here, so it sits under Anywhere and the sheet still fits a laptop screen unscrolled. */}
+            <div style={{ marginTop: 20 }} />
+            <Category title="Calendar" entries={CALENDAR_SHORTCUTS} />
           </div>
           <div>
             <Category title={taskTitle} entries={taskKeys} note={!page.section || lists ? SELECTION_NOTE : undefined} />

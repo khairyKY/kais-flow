@@ -56,6 +56,8 @@ import { Icon } from '../../components/Icon'
 import { Select } from '../../components/Select'
 import { Skeleton } from '../../components/States'
 import type { ContextMenuItem } from '../../components/ContextMenu'
+import { isTypingTarget } from '../../components/useListKeys'
+import { overlayCount } from '../../lib/overlayStack'
 import type { Area, CalendarEvent, Domain, InboxItem, Project } from '../../lib/types'
 
 const RAIL_W_KEY = 'kf.calRailWidth'
@@ -560,13 +562,14 @@ function DesktopCalendar() {
   // Empty-slot click/drag → Editor 2a's quick-create popover, kind defaults to Event.
   // T-4 (Polish F2b): QuickCreate's fields are Cairo wall-clock; slotFields converts the slot so
   // the form shows the clicked time on Cairo's clock and saves that exact instant back.
-  function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number }) {
+  // p7e A4: with ⌘/Ctrl held it's a Task there (Akiflow's ⌘-click), its block on that slot.
+  function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean }) {
     // The grid snaps to 15 min (Kai 2026-10-03), so a plain click selects one quarter; it still
     // makes the half-hour it always did. A drag keeps exactly what was dragged.
     const startMs = new Date(info.start).getTime()
     const end = !info.allDay && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
     setQuickCreate({
-      kind: 'event',
+      kind: info.task ? 'task' : 'event',
       slot: slotFields(info.start, end, info.allDay),
       anchor: { x: info.x, y: info.y },
     })
@@ -682,6 +685,33 @@ function DesktopCalendar() {
       /* private mode — it lasts this visit */
     }
   }
+
+  // p7e A4 — Akiflow's calendar keys, listed in the ? sheet (lib/shortcuts CALENDAR_SHORTCUTS): d / 1 day,
+  // 2–6 that many days, w / 7 week, m month, - = and ← → page, t today, 0 folds the rail. Never while
+  // typing, nor while a menu, popover or dialog is open (lib/overlayStack). Letters also read by key
+  // code, so an Arabic layout works (AppLayout's own Ctrl+K rule). Re-bound each render, as BlockMenu's ⌫.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target) || overlayCount() > 0) return
+      const key = /^[\x20-\x7e]$/.test(e.key) ? e.key.toLowerCase() : (/^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase() ?? /^Digit(\d)$/.exec(e.code)?.[1] ?? e.key)
+      const grid = gridRef.current
+      const run: Record<string, (() => void) | undefined> = {
+        d: () => pickView('1'), 1: () => pickView('1'),
+        2: () => pickView('2'), 3: () => pickView('3'), 4: () => pickView('4'), 5: () => pickView('5'), 6: () => pickView('6'),
+        w: () => pickView('W'), 7: () => pickView('W'), m: () => pickView('M'),
+        '-': () => grid?.prev(), ArrowLeft: () => grid?.prev(), '=': () => grid?.next(), ArrowRight: () => grid?.next(),
+        t: () => grid?.today(),
+        0: planning ? undefined : () => setRailFolded(!railFolded),
+      }
+      const act = run[key]
+      if (!act) return
+      e.preventDefault()
+      act()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   const stripDays = viewKind === 'day' ? 1 : 2
   const planRef = useRef<HTMLDivElement>(null)
   const minuteNow = useMinuteNow()
@@ -766,7 +796,7 @@ function DesktopCalendar() {
     </div>
   )
 
-  const pillCircle = { width: 32, height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-muted)', cursor: 'pointer', flex: 'none' as const }
+  const pillCircle = { width: 32, height: 32, padding: 0, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', font: 'inherit', color: 'var(--ink-muted)', cursor: 'pointer', flex: 'none' as const }
 
   return (
     <>
@@ -1026,9 +1056,10 @@ function DesktopCalendar() {
                 {/* Kai 2026-10-03: the ⚟ glyph read as "≤" — the kit's dropdown chevron, as the phone's title uses. */}
                 <Icon name="chevdown" size={14} style={{ color: 'var(--ink-muted)' }} />
               </span>
-              <span onClick={() => gridRef.current?.prev()} style={pillCircle}>‹</span>
-              <span onClick={() => gridRef.current?.today()} style={{ padding: '0 14px', height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize: 12.5, color: 'var(--ink-body)', cursor: 'pointer' }}>Today</span>
-              <span onClick={() => gridRef.current?.next()} style={pillCircle}>›</span>
+              {/* p7e A4: real buttons (Tab reaches them; the kit's press + focus ring), keys - t = beside them. */}
+              <button type="button" className="kf-press" aria-label="Previous" title="Previous (- or ←)" onClick={() => gridRef.current?.prev()} style={pillCircle}>‹</button>
+              <button type="button" className="kf-press" title="Today (t)" onClick={() => gridRef.current?.today()} style={{ padding: '0 14px', height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', background: 'none', font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', cursor: 'pointer' }}>Today</button>
+              <button type="button" className="kf-press" aria-label="Next" title="Next (= or →)" onClick={() => gridRef.current?.next()} style={pillCircle}>›</button>
             </div>
           </div>
           )}

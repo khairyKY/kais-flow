@@ -445,7 +445,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                         <EmojiText text={e.caption.text} />
                       </div>
                     )}
-                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => run[e.key]?.(el)} />
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => run[e.key]?.(el)} />
                   </Fragment>
                 ))}
               </div>

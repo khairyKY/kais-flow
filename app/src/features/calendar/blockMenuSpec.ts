@@ -14,7 +14,7 @@ export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'complete' |
 export interface BlockMenuEntry {
   key: BlockMenuKey
   label: string
-  /** The value on the right: the length ("2h"), the Unschedule key. */
+  /** The value on the right: the length ("2h"), the Unschedule / Delete key (⌫). */
   hint?: string
   /** Opens a submenu / picker. */
   sub?: boolean
@@ -97,6 +97,7 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
     if (!repeating) out.push({ key: 'link', label: 'Link a task…', divider: true })
     out.push({ key: 'more', label: 'More', sub: true, divider: repeating })
   }
-  out.push({ key: 'delete', label: isUntitled(e, ctx.now) ? 'Discard' : 'Delete', destructive: true, sub: repeating })
+  // p7e A4: ⌫ deletes a plain one-off (Akiflow's Backspace); a repeat asks This / All on the row instead.
+  out.push({ key: 'delete', label: isUntitled(e, ctx.now) ? 'Discard' : 'Delete', destructive: true, sub: repeating, ...(!e.task_id && !repeating ? { hint: '⌫' } : null) })
   return out
 }
