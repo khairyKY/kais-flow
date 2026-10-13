@@ -226,7 +226,8 @@ if (want('r4')) {
   let lit = null
   let w0 = state.writes.length
   await page.mouse.move(0, 0)
-  const softno = page.waitForSelector('.kf-cal-softno', { timeout: 3000 }).then(() => true, () => false)
+  // 10s, not 3: the wait starts before the drag, and on a loaded machine the drag alone took >3s.
+  const softno = page.waitForSelector('.kf-cal-softno', { timeout: 10000 }).then(() => true, () => false)
   await dragToSection(page, LUNCH, 'overdue', async () => {
     lit = await page.locator('.cal-rail-sec[data-drop-over]').evaluateAll((els) => els.map((e) => e.dataset.section))
   })
@@ -260,7 +261,9 @@ if (want('r4')) {
 }
 
 // ── C1: colour edits repaint at once (desktop details panel), None clears, swatches show the pick ──
-if (want('c1')) {
+// c1 drove EventDetailsPanel (deleted 2026-10-12 with Calendar §5's block menu); colour on the new
+// menu — None included, the repaint without a reload — is event-detail/verify.mjs a2. Run it with ONLY=c1.
+if (process.env.ONLY?.split(',').includes('c1')) {
   const { ctx, page, errors, state } = await open()
   const accent = () => fcBlock(page, LUNCH).evaluate((e) => e.style.getPropertyValue('--kf-ev-accent'))
   check('c1 an uncoloured event has no inline hue', (await accent()) === '')
