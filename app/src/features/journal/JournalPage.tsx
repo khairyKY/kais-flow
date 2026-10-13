@@ -658,7 +658,7 @@ export function JournalPage() {
             <img src={fernSrc(dayLength)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{known ? `Journal · Day ${dayCount}` : 'Journal'}</div>
-              <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 26, lineHeight: 1, color: 'var(--ink-body)' }}>{shortDateLabel(selectedDate)}</h1>
+              <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>{shortDateLabel(selectedDate)}</h1>
             </div>
           </div>
 

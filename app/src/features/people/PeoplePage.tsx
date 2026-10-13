@@ -213,7 +213,7 @@ export function PeoplePage() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
             <img src="/ds/assets/clover/four_leaf.png" alt="" style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
-            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>People</h1>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--ink-body)' }}>People</h1>
           </div>
           <button
             type="button"
