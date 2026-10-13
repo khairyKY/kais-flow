@@ -224,7 +224,7 @@ function SectionHeader({ group }: { group: TaskGroup }) {
   const m = group.totalMinutes % 60
   const time = group.totalMinutes > 0 ? [h ? `${h}H` : '', m ? `${m}M` : ''].filter(Boolean).join(' ') : null
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: terra ? 'var(--acc-terra)' : 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: terra ? 'var(--acc-terra)' : 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
       <span>{group.label} · {group.tasks.length}{time ? ` · ${time}` : ''}</span>
       <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
     </div>
@@ -400,7 +400,7 @@ function DoneView({ tasks, motion, justCompletedId, expanded, setExpanded, focus
         {doneToday.length > 0 && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '6px 0 4px' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Today · {doneToday.length}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Today · {doneToday.length}</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
             </div>
             {doneToday.map((t, i) => (
@@ -416,7 +416,7 @@ function DoneView({ tasks, motion, justCompletedId, expanded, setExpanded, focus
           <>
             <div onClick={() => setExpanded((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 22, padding: '9px 2px', cursor: 'pointer' }}>
               <span style={{ color: 'var(--ink-faint)', fontSize: 11 }}>{expanded ? '▾' : '▸'}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Earlier this week · {doneEarlier.length}</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Earlier this week · {doneEarlier.length}</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
               <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 22, opacity: 0.7, filter: 'var(--shadow-drop-sm)' }} />
             </div>
@@ -771,8 +771,8 @@ export function TasksPage() {
             {/* Night 1b: the header plant is a silhouette lit at the rim in its own accent. */}
             <img src={headerIcon} alt="" style={{ height: 56, filter: isSomeday ? 'var(--rim-clover, var(--shadow-drop-sm))' : 'var(--rim-blossom, var(--shadow-drop-sm))' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
-              <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{h1}</h1>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
+              <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>{h1}</h1>
             </div>
           </div>
           {isDone ? (
@@ -837,7 +837,7 @@ export function TasksPage() {
           <div style={{ display: 'flex', gap: 8, marginTop: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
             <span
               onClick={() => setDomainChip(null)}
-              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--acc-blossom-text)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
             >
               All
             </span>
@@ -849,7 +849,7 @@ export function TasksPage() {
                   e.preventDefault()
                   chipMenu.open(d.id, { x: e.clientX, y: e.clientY })
                 }}
-                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--acc-blossom-text)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
               >
                 {renamingChip === d.id ? (
                   <RenameField value={d.name} ariaLabel="Domain name" style={{ width: 120, margin: '-2px -4px', textTransform: 'none' }} onDone={(next) => { setRenamingChip(null); if (next && next !== d.name) renameDomain(d, next) }} />
@@ -954,7 +954,7 @@ export function TasksPage() {
           {activeTab === 'today' && doneTodayTasks.length > 0 && (
             <>
               <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Done today · {doneTodayTasks.length}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Done today · {doneTodayTasks.length}</span>
                 <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
                 <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 26, opacity: 0.8, filter: 'var(--shadow-drop-sm)' }} />
               </div>

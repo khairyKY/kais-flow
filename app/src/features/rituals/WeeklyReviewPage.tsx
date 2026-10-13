@@ -227,7 +227,7 @@ export function WeeklyReviewPage() {
             <img src={`${A}/fern/full.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>The season so far</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>the numbers behind the week</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>the numbers behind the week</div>
             </div>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)' }}>{showSeason ? 'close ↑' : 'open →'}</span>
           </button>
@@ -277,7 +277,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile }:
         <img src={`${A}/fern/${fern}.png`} alt="" style={{ height: isMobile ? 38 : 54, filter: 'var(--shadow-drop-sm)' }} />
         <div>
           <FieldLabel>Weekly Review · week {weekNumber}</FieldLabel>
-          <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>The sweep</h1>
+          <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 24 : 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The sweep</h1>
         </div>
       </div>
       {!isMobile && motion && allSwept && (
@@ -620,7 +620,7 @@ function RightRail({
 
 function RailLabel({ label, color, count }: { label: string; color?: string; count?: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase' }}>
       <span style={{ color: color ?? 'var(--ink-faint)' }}>{label}</span>
       <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
       {count != null && <span style={{ color: 'var(--ink-faint)' }}>{count}</span>}
