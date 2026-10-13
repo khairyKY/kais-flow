@@ -14,7 +14,7 @@ import { eventSpan, movedText, rangeText, spanIso, type DragMode, type Span } fr
 import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
 import { alignToRule, detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
 import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
-import { isSynced, repeatLabel } from './blockMenuSpec'
+import { isSynced, remindLabel, repeatLabel } from './blockMenuSpec'
 import { zoneToIso } from './eventTime'
 import { intoSlot, OUT_OF_SLOT, slotTasks } from './slots'
 
@@ -451,6 +451,18 @@ export function setEventRepeat(event: CalendarEvent, rule: string | null): Block
     if (a) writeEvent(a.keep, 'delete')
   })
   return a ? { id: a.keep.id, start: a.keep.starts_at } : ref(next)
+}
+
+/** Remind from a block (A12, 0077): `min` minutes before each start, null = none. On an occurrence it's
+ * the whole series' — an offset holds for every repeat. One Undo. */
+export function setEventRemindWithUndo(event: CalendarEvent, min: number | null): void {
+  const row = event.seriesId ? seriesOf(event) : event
+  if (!row || row.task_id || (row.remind_min ?? null) === min) return
+  writeEvent({ ...row, remind_min: min })
+  toastUndo(`${remindLabel(min)} · ${row.title}`, () => {
+    const now = cachedRows().find((r) => r.id === row.id) ?? row
+    writeEvent({ ...now, remind_min: row.remind_min ?? null })
+  })
 }
 
 /** "Link a task…": a plain one-off block takes the task (its block now — the task is scheduled

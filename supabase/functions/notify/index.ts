@@ -1,4 +1,4 @@
-// P4: Web Push sender — digests, evening nudges, task and routine reminders, birthdays. Invoked by
+// P4: Web Push sender — digests, evening nudges, task, event (0077) and routine reminders, birthdays. Invoked by
 // pg_cron (via pg_net) on a schedule, by capture-image when a page is read to the end (paper ready),
 // and by a manual "send test" button in Settings.
 //
@@ -27,7 +27,15 @@ import { routinesDueAt, type ReminderRoutine } from './routine.ts'
 import { birthdayDue, birthdayGroups, type PersonFacts } from './birthday.ts'
 import { dateKey, dayWindow, userZone } from '../_shared/zone.ts'
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
-import { birthdayNotice, deliver, digestNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+import { eventRemindersDue, reminderKey, type RemindRow } from '../_shared/eventReminder.ts'
+import type { RuleBetween } from '../_shared/series.ts'
+import { birthdayNotice, deliver, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+// rrule is CommonJS: Deno takes its default export only (see mcp/index.ts).
+import rrulePkg from 'npm:rrule@2'
+const { RRule } = rrulePkg
+
+/** A repeating event's occurrences (0061) — app/src/features/calendar/series.ts's rrule half. */
+const ruleBetween: RuleBetween = (rule, dtstart, after, before) => new RRule({ ...RRule.parseString(rule), dtstart }).between(after, before, true)
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -37,8 +45,8 @@ const CONTACT_EMAIL = Deno.env.get('VAPID_CONTACT_EMAIL') ?? 'mailto:example@exa
 
 // 'overdue' is gone (2026-10-12): an hourly push nobody could turn off. Migration 0062 unschedules its
 // cron job; the morning digest says "N overdue" instead.
-type NotifyKind = 'morning_digest' | 'evening_nudge' | 'task_reminder' | 'routine' | 'birthday' | 'test'
-const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'task_reminder', 'routine', 'birthday', 'test']
+type NotifyKind = 'morning_digest' | 'evening_nudge' | 'task_reminder' | 'event_reminder' | 'routine' | 'birthday' | 'test'
+const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'task_reminder', 'event_reminder', 'routine', 'birthday', 'test']
 
 /** One user's app_settings row as notify reads it (select('*'), so a function deployed before
  * migration 0048 still runs: the missing columns read as their defaults). */
@@ -185,6 +193,41 @@ async function buildPayload(
       })
     }
     return reminderNotice(tasks, prefs, clock.now, zone)
+  }
+
+  if (kind === 'event_reminder') {
+    // A12 / 0077: every occurrence whose start minus remind_min fell in the last 10 minutes
+    // (_shared/eventReminder.ts — the device planner's rule too). Never a Google event.
+    const { data: rows, error } = await supabase
+      .from('calendar_events')
+      .select('id, title, starts_at, ends_at, all_day, source, remind_min, recurrence_rule, recurrence_exdates, deleted_at')
+      .eq('user_id', userId)
+      .not('remind_min', 'is', null)
+      .eq('source', 'native')
+      .is('deleted_at', null)
+    if (error) throw error
+    const due = eventRemindersDue((rows ?? []) as (RemindRow & { title: string })[], new Date(clock.reminderWindowStart), clock.now, zone, ruleBetween)
+    // Off or paused: nothing goes out and nothing is claimed.
+    if (due.length === 0 || !deliver(eventReminderNotice(due.map((d) => d.event), prefs, clock.now, zone), prefs, clock.now, zone)) return null
+    // Claim each occurrence with its history row BEFORE the push: 0077's unique index turns a second
+    // sweep over the same window (or an overlapping run) into a 23505 here, and that one is skipped.
+    const fresh: (RemindRow & { title: string })[] = []
+    for (const { event } of due) {
+      const said = eventReminderNotice([event], NAMES, clock.now, zone)
+      const { eventId, startsAt } = reminderKey(event)
+      const { error: claimError } = await supabase.from('activity_log').insert({
+        id: crypto.randomUUID(),
+        user_id: userId,
+        event_type: 'notify.event_reminder',
+        entity_type: 'notification',
+        entity_id: eventId,
+        payload: { title: said.title, body: said.body, event_id: eventId, starts_at: startsAt },
+      })
+      if (claimError?.code === '23505') continue // already sent
+      if (claimError) throw claimError
+      fresh.push(event)
+    }
+    return fresh.length ? eventReminderNotice(fresh, prefs, clock.now, zone) : null
   }
 
   if (kind === 'birthday') {
@@ -336,6 +379,14 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
     // ponytail: one read of every reminding routine's owner (PostgREST caps it at 1000 rows); a
     // per-tick window query needs each user's zone in SQL — add it past a few hundred such users.
     const { data: owners, error } = await supabase.from('routines').select('user_id').eq('active', true).not('clock_time', 'is', null)
+    if (error) throw error
+    const reminding = new Set((owners ?? []).map((r) => r.user_id as string))
+    for (const id of userIds) if (!reminding.has(id)) userIds.delete(id)
+  }
+  // event_reminder: only the push users with an event that reminds (0077). ponytail: the same one
+  // read as routine's above, capped at 1000 rows by PostgREST — a window query past that.
+  if (kind === 'event_reminder') {
+    const { data: owners, error } = await supabase.from('calendar_events').select('user_id').not('remind_min', 'is', null).eq('source', 'native').is('deleted_at', null)
     if (error) throw error
     const reminding = new Set((owners ?? []).map((r) => r.user_id as string))
     for (const id of userIds) if (!reminding.has(id)) userIds.delete(id)

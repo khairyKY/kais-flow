@@ -1,6 +1,7 @@
 import type { ActivityLogEntry } from '../../lib/types'
 import { birthdayNotice, digestNotice, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, syncNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
 import { appZone } from '../../lib/appZone'
+import { zoneDateKey } from '../../lib/dateShortcuts'
 import type { KindId } from '../notifications/kinds'
 
 // What each activity_log row says on the Activity page (Activity.dc.html 1a/1b voice: a verb, the
@@ -605,6 +606,12 @@ export function describeActivity(e: ActivityLogEntry, names: ActivityNames = NO_
         const name = id ? names.person(id) : undefined
         const open = !id ? birthdayNotice([], {}) : name ? birthdayNotice([{ id, name, lastSpokeDays: null }], { lock_screen_names: true }) : null
         return { ...said, text: said.text || 'A birthday', href: open?.url ?? null, notice: { kind: 'birthday', actions: open?.actions ?? [], taskIds: [] } }
+      }
+      if (type === 'notify.event_reminder') {
+        // Event reminder (0077): Open lands on the calendar, on the occurrence's day.
+        const at = str(e.payload, 'starts_at')
+        const href = at ? `/calendar?date=${zoneDateKey(new Date(at))}` : '/calendar'
+        return { ...said, text: said.text || 'An event', href, notice: { kind: 'event_reminder', actions: [{ action: 'open', title: 'Open' }], taskIds: [] } }
       }
       if (type === 'notify.sync_problem') {
         return { ...said, text: said.text || syncNotice(1).title, href: '/today', notice: { kind: 'sync_problem', actions: syncNotice(1).actions, taskIds: [] } }

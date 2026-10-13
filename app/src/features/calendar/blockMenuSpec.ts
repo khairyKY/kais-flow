@@ -9,7 +9,7 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'unschedule' | 'delete' | 'google'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'unschedule' | 'delete' | 'google'
 
 export interface BlockMenuEntry {
   key: BlockMenuKey
@@ -74,6 +74,23 @@ export function repeatLabel(rule: string | null | undefined): string {
   return REPEAT_LABELS[rule] ? `Repeats ${REPEAT_LABELS[rule].toLowerCase()}` : ruleWords(rule)
 }
 
+/** The Remind row's choices (A12, 0077) — minutes before each start; tasks' Remind submenu's words. */
+export const EVENT_REMIND: readonly { min: number | null; label: string }[] = [
+  { min: null, label: 'No reminder' },
+  { min: 0, label: 'At start' },
+  { min: 5, label: '5 min before' },
+  { min: 10, label: '10 min before' },
+  { min: 15, label: '15 min before' },
+  { min: 30, label: '30 min before' },
+  { min: 60, label: '1 hr before' },
+]
+
+/** The Remind row: "No reminder", "Remind at start", "Remind 15 min before". */
+export function remindLabel(min: number | null | undefined): string {
+  if (min == null) return 'No reminder'
+  return min === 0 ? 'Remind at start' : `Remind ${EVENT_REMIND.find((o) => o.min === min)?.label ?? `${min} min before`}`
+}
+
 export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): BlockMenuEntry[] {
   const span = eventSpan(e)
   // A Google event: when it is, and where it comes from — nothing to change, nothing to delete.
@@ -94,6 +111,9 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
   ]
   // A task block repeats through its task's own rule, never on the calendar.
   if (!e.task_id) out.push({ key: 'repeat', label: repeatLabel(e.recurrence_rule), unset: !e.recurrence_rule, sub: true })
+  // A12: an event reminds N minutes before each start. A task block reminds through its task; an
+  // all-day block has no start time to count back from.
+  if (!e.task_id && !e.all_day) out.push({ key: 'remind', label: remindLabel(e.remind_min), unset: e.remind_min == null, sub: true })
   if (e.task_id && ctx.task) {
     out.push(
       { key: 'complete', label: ctx.task.status === 'done' ? 'Reopen' : 'Complete', divider: true, caption: { label: 'From task', text: ctx.task.title } },

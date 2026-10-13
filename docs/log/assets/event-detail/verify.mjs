@@ -165,7 +165,8 @@ if (want('a1')) {
     check(`a1 ${theme}: the popover sits beside the block (top-aligned, or clamped into the window)`, beside, JSON.stringify({ block: [b.x, b.y, b.width], menu: [m.x, m.y, m.width, m.height] }))
     check(`a1 ${theme}: ~238px wide at 125% (297px on screen)`, Math.abs(m.width - 238 * 1.25) < 3, m.width)
     const labels = await menu(page).getByRole('menuitem').allInnerTexts()
-    check(`a1 ${theme}: the rows — date · time · project · repeat · Link a task… · More · Delete`, /Mon, Oct 12/.test(labels[0]) && /10:30 – 11:30/.test(labels[1]) && /No project/.test(labels[2]) && /Does not repeat/.test(labels[3]) && /Link a task/.test(labels[4]) && /More/.test(labels[5]) && /Delete/.test(labels[6]), JSON.stringify(labels))
+    // event-reminders (A12, 2026-10-14): a Remind row after Repeat.
+    check(`a1 ${theme}: the rows — date · time · project · repeat · remind · Link a task… · More · Delete`, /Mon, Oct 12/.test(labels[0]) && /10:30 – 11:30/.test(labels[1]) && /No project/.test(labels[2]) && /Does not repeat/.test(labels[3]) && /No reminder/.test(labels[4]) && /Link a task/.test(labels[5]) && /More/.test(labels[6]) && /Delete/.test(labels[7]), JSON.stringify(labels))
     check(`a1 ${theme}: no Save button, no "Sure?"`, (await page.getByRole('button', { name: 'Save' }).count()) === 0 && (await page.getByText('Sure?').count()) === 0)
     await shot(page, `a1-popover-${theme}`)
     check(`a1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
@@ -388,7 +389,7 @@ if (want('p1')) {
     check(`p1 ${theme}: the phone grid draws the occurrence with ↻`, (await block.count()) === 1 && (await block.getByRole('img', { name: 'Repeats' }).count()) === 1)
     await tap(block)
     const rows = await page.locator('.pc-bs-rows .kf-as-row').allInnerTexts()
-    check(`p1 ${theme}: the sheet's rows — date · time · project · repeat · More`, rows.length === 5 && /Mon, Oct 12/.test(rows[0]) && /08:00 – 08:30/.test(rows[1]) && /No project/.test(rows[2]) && /Repeats daily/.test(rows[3]) && /More/.test(rows[4]), JSON.stringify(rows))
+    check(`p1 ${theme}: the sheet's rows — date · time · project · repeat · remind · More`, rows.length === 6 && /Mon, Oct 12/.test(rows[0]) && /08:00 – 08:30/.test(rows[1]) && /No project/.test(rows[2]) && /Repeats daily/.test(rows[3]) && /No reminder/.test(rows[4]) && /More/.test(rows[5]), JSON.stringify(rows))
     check(`p1 ${theme}: swatches for colour; Delete in the footer`, (await page.locator('.pc-bs-colors button').count()) === 10 && (await page.locator('.pc-bs-delete').count()) === 1)
     await shot(page, `p1-phone-sheet-${theme}`)
     if (theme === 'day') {
