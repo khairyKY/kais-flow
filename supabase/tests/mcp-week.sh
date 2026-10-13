@@ -343,7 +343,7 @@ expect "logged" "inbox.captured/mcp" "$(logs)"
 expect "row" "pending https://example.com/x mcp" "$(sql -c "select concat_ws(' ', status, payload->>'url', payload->>'source') from inbox_items where user_id = '$A_ID'")"
 call "today" "$KA" today '{}'
 call "list_tasks (all)" "$KA" list_tasks '{status: "all"}'
-expect "list_tasks: A's 7 tasks (6 added + 1 spawned)" "7""$(j .count)"
+expect "list_tasks: A's 7 tasks (6 added + 1 spawned)" "7" "$(j .count)"
 call "get_task" "$KA" get_task '{id: env.T2}'
 expect "get_task: the edited one" "MCP edited" "$(j .task.title)"
 call "projects" "$KA" projects '{}'
