@@ -5,7 +5,8 @@ import { parseCommand } from './parseCommand'
 const writes: { table: string; row: Record<string, unknown>; op?: string }[] = []
 const toasts: { message: string; undo: () => void }[] = []
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
-vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: () => [], cancelQueries: () => undefined } }))
+const calRows: Record<string, unknown>[] = []
+vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: (key: string[]) => (key[0] === 'calendar_events' ? calRows : []), cancelQueries: () => undefined } }))
 vi.mock('../../lib/outbox', () => ({ writeRow: (table: string, row: Record<string, unknown>, op?: string) => writes.push({ table, row, op }) }))
 vi.mock('../../lib/activity', () => ({ logActivity: () => undefined }))
 vi.mock('../../lib/undo', () => ({ toastUndo: (message: string, undo: () => void) => toasts.push({ message, undo }) }))
@@ -97,5 +98,28 @@ describe('captureTyped (the one capture rule)', () => {
   it('kind event: an event, not a task', () => {
     captureTyped(parse('Dinner 8pm'), 'Dinner 8pm', 'event')
     expect(writes.map((w) => w.table)).toEqual(['calendar_events'])
+  })
+})
+
+describe('`>slot` (Time Slots, 0073): the task goes into the Time block’s next occurrence', () => {
+  beforeEach(() => {
+    writes.length = 0
+    toasts.length = 0
+    blocked.length = 0
+    vi.useFakeTimers({ now, toFake: ['Date'] })
+  })
+
+  it('in the slot (no block of its own), one "Added to" toast (toastAdded: its Undo deletes it); a typed day picks that day’s occurrence', () => {
+    // "Code block" every day 11:00–13:00 Cairo (08:00–10:00 UTC).
+    calRows.splice(0, calRows.length, { id: 'code', title: 'Code block', type: 'time_block', all_day: false, deleted_at: null, starts_at: '2026-10-10T08:00:00.000Z', ends_at: '2026-10-10T10:00:00.000Z', recurrence_rule: 'FREQ=DAILY', recurrence_exdates: [] })
+    const line = (typed: string) => parseCommand(typed, [], [project], { now, zone: 'cairo', slots: ['Code block'] })
+    captureTyped(line('fix the login bug >code'), 'fix the login bug >code')
+    const t = writes.filter((w) => w.table === 'tasks').at(-1)!.row
+    expect(t).toMatchObject({ title: 'fix the login bug', slot_id: 'code', slot_date: '2026-10-12', scheduled_start: '2026-10-12T08:00:00.000Z', scheduled_end: '2026-10-12T10:00:00.000Z' })
+    expect(blocked).toEqual([])
+    expect(toasts.map((x) => x.message)).toEqual(['Added to Code block'])
+    captureTyped(line('review it thursday >code'), 'review it thursday >code')
+    expect(writes.filter((w) => w.table === 'tasks').at(-1)!.row).toMatchObject({ slot_date: '2026-10-15', scheduled_start: '2026-10-15T08:00:00.000Z' })
+    vi.useRealTimers()
   })
 })

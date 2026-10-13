@@ -28,6 +28,9 @@ export interface BlockLook {
   check?: { done: boolean; toggle: () => void }
   /** Replaces the time line — an overdue block's "Overdue · Replan" (Kai 2026-10-07). */
   note?: string
+  /** A Time block's tasks (Time Slots, 0073) as rows under its title, and its "2 tasks · 45m of 2h" —
+   * the desktop block's checklist: the box completes (with Undo), a tap opens the task. */
+  slot?: { fill: string; held: { id: string; title: string; done: boolean; toggle: () => void; open: () => void }[] }
 }
 
 export interface PhoneGridHandle {
@@ -319,7 +322,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         className={`pc-block${lifted ? ' is-lifted' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}${cutFrom ? ' is-cut-from' : ''}${cutInto ? ' is-cut-into' : ''}${cutRoom && cutFrom ? ' has-cut-label' : ''}`}
         data-id={ev.id}
         data-tour="calendar-block"
-        style={{ ...style, '--pc-lines': titleLines(h) } as CSSProperties}
+        style={{ ...style, '--pc-lines': lk.slot ? 1 : titleLines(h) } as CSSProperties}
         onClick={() => onTapBlock(ev)}
       >
         <div className={`pc-block-body${stacked ? ' is-stacked' : ''}`} style={{ height: stacked ? undefined : Math.min(32, h) }}>
@@ -337,6 +340,29 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             </span>
           )}
           {pending.has(ev.id) && <span className="pc-pending" role="img" aria-label="Pending sync" />}
+          {/* Time Slots (0073): the rows clip with the body. A hold on a row still lifts the slot (the
+              press reaches the grid); the box stops its own press, as the block's does. */}
+          {lk.slot && stacked && !lifted && (
+            <div className="pc-slot">
+              <span className="pc-time pc-slot-fill">{lk.slot.fill}</span>
+              {lk.slot.held.map((t) => (
+                <div
+                  key={t.id}
+                  className={`pc-slot-row${t.done ? ' is-done' : ''}`}
+                  data-slot-task={t.id}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    t.open()
+                  }}
+                >
+                  <span className="pc-check" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
+                    <Checkbox subtask checked={t.done} onChange={t.toggle} label={t.title} />
+                  </span>
+                  <span className="pc-name"><EmojiText text={t.title} /></span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
         {cutRoom && cutFrom && <span className="pc-cut is-from" aria-hidden>⌃ from {clock(evStart)}</span>}
         {cutRoom && cutInto && <span className="pc-cut is-into" aria-hidden>⌄ {clock(evEnd)}</span>}

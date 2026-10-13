@@ -122,6 +122,13 @@
 /* An overdue block's "Overdue · Replan" (Kai 2026-10-07) reads in terra under the past-muting. */
 .pc-block.is-noted .pc-time { color: var(--acc-terra-ink); }
 .pc-block.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+/* Time Slots (0073): a Time block's tasks under its title — the block's own check, name and mono
+   time type; the fill line ("2 tasks · 45m of 2h") sits where a time line does. */
+.pc-slot { flex-basis: 100%; display: flex; flex-direction: column; gap: 2px; min-width: 0; margin-top: 2px; }
+.pc-slot-row { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; min-height: 24px; }
+.pc-block-body .pc-slot .pc-time { flex-basis: auto; }
+.pc-block-body .pc-slot-row .pc-check { align-self: center; }
+.pc-slot-row.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 .pc-pending { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sig-offline); }
 
 /* 4+ blocks at once: three drawn, the rest behind a "+N" chip (kit Chip, 24 tall, a 48 hit) at the stack's top-right. */

@@ -12,6 +12,8 @@ import { VOICE_ALLOWANCE_USED_UP, isDailyLimitError, rememberVoiceLimitReached, 
 import { appendDictation, micAction, pickMimeType } from '../capture/holdToTalk'
 import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
 import { useAuth } from '../auth/AuthProvider'
+import { useCalendarRows } from '../calendar/api'
+import { upcomingSlots } from '../calendar/slots'
 import { hasStructure, parseCommand } from './parseCommand'
 import { captureTyped } from './quickAdd'
 import { formatDueChip } from './dueChip'
@@ -119,7 +121,10 @@ export function CommandBar() {
   useEffect(() => () => stopDictation(false), []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // T-4: "10am" means 10:00 in Cairo on any device — the zone every date in the app renders in.
-  const parsed = useMemo(() => parseCommand(text, domains, projects, { zone: 'cairo', ignore: ignored }), [text, domains, projects, ignored])
+  // `>Code block` (Time Slots, 0073): the Time blocks ahead the line can name, soonest first.
+  const { data: rows } = useCalendarRows()
+  const slots = useMemo(() => (open && rows ? [...new Set(upcomingSlots(rows).map((s) => s.title))] : []), [open, rows])
+  const parsed = useMemo(() => parseCommand(text, domains, projects, { zone: 'cairo', ignore: ignored, slots }), [text, domains, projects, ignored, slots])
   // P7e A10 (Akiflow's Esc): the first Esc hands the last recognised token back to the title — its chip
   // goes, its words stay — and with none left, Esc closes the bar.
   useEscapeStack(open && !mobile, () => {
@@ -363,6 +368,7 @@ export function CommandBar() {
                     {parsed.dueAt && <Chip tone="date">{formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}</Chip>}
                     {parsed.recurrence && <Chip tone="date" icon={<Icon name="repeat" size={16} />}>{repeatLabel(parsed.recurrence)}</Chip>}
                     {matchChip && <Chip tone="project">{matchChip}</Chip>}
+                    {asTask && parsed.slotMatch && <Chip tone="date" icon={<Icon name="clock" size={16} />}><EmojiText text={parsed.slotMatch} /></Chip>}
                     {parsed.durationMin != null && <Chip tone="duration">{formatDuration(parsed.durationMin)}</Chip>}
                     {asTask && parsed.priority != null && <Chip tone="priority">{PRIORITY_NAME[parsed.priority]}</Chip>}
                     {asTask && parsed.labels.map((l) => (
@@ -499,6 +505,11 @@ export function CommandBar() {
                 {matchChip && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)' }}>
                     → {matchChip}
+                  </span>
+                )}
+                {asTask && parsed.slotMatch && (
+                  <span data-chip="slot" style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>
+                    In <EmojiText text={parsed.slotMatch} />
                   </span>
                 )}
                 {asTask && parsed.labels.map((l) => (

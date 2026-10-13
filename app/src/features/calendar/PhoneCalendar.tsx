@@ -16,6 +16,7 @@ import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { moveEventWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
 import { findBlock } from './series'
+import { slotFill, slotTasks } from './slots'
 import { cairoToIso } from './eventTime'
 import { blockLastDay, railBuckets, railMinutes } from './replan'
 import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
@@ -151,7 +152,18 @@ export function PhoneCalendar() {
         ? { fill: 'var(--block-blossom)', ink: 'var(--acc-blossom-text)' }
         : { fill: 'var(--block-lavender)', ink: 'var(--acc-lavender-text)' }
     const done = task?.status === 'done'
-    return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined }
+    // Time Slots (0073): a Time block draws the tasks this occurrence holds, as the desktop's does.
+    const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
+    const slot = held.length
+      ? {
+          fill: slotFill(e, held),
+          held: held.map((t) => {
+            const isDone = t.status === 'done'
+            return { id: t.id, title: t.title, done: isDone, toggle: () => (isDone ? uncompleteTask(t) : completeTaskWithUndo(t)), open: () => openTask(t.id) }
+          }),
+        }
+      : undefined
+    return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot }
   }
 
   /** A task block that ended before today, not done — it reads "Overdue · Replan" and a tap replans it. */

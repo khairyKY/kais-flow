@@ -61,6 +61,13 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
     expect(labels(task(), { tomorrowHint: 'Mon 18:00', canUnschedule: true }).slice(0, 2)).toEqual(['Plan…', 'Unschedule'])
   })
 
+  it('Into a slot… (Time Slots) after Plan when there are Time blocks ahead — one task, never in bulk', () => {
+    expect(labels(task(), { tomorrowHint: 'x', slots: true }).slice(0, 2)).toEqual(['Plan…', 'Into a slot…'])
+    expect(labels(task({ slot_id: 'e1' }), { tomorrowHint: 'x', slots: true }).slice(0, 3)).toEqual(['Plan…', 'Out of the slot', 'Into a slot…'])
+    expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Into a slot…')
+    expect(labels(task(), { tomorrowHint: 'x', slots: true, bulkCount: 2, selected: true })).not.toContain('Into a slot…')
+  })
+
   it('the goal of the day has no Make goal', () => {
     expect(labels(task({ top3: true }), { tomorrowHint: 'x', goal: true })).not.toContain('Make goal of the day')
   })
