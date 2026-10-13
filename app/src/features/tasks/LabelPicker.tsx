@@ -22,8 +22,8 @@ export interface LabelPickerProps {
   onClose: () => void
   /** The phone sheet's mono line — the task's title. */
   meta?: string
-  /** One task, through its surface's own setter (the sheet's "Saved"); else labels.ts toggleLabel. */
-  onSet?: (labels: string[]) => void
+  /** After each tap's write (labels.ts toggleLabel) — the sheet's "Saved". */
+  onSet?: () => void
 }
 
 type Mark = 'on' | 'some' | 'off'
@@ -40,9 +40,8 @@ function usePicker({ taskIds, onSet }: LabelPickerProps) {
     return n === 0 ? 'off' : n === picked.length ? 'on' : 'some'
   }
   const toggle = (name: string) => {
-    const one = picked.length === 1 ? picked[0] : null
-    if (one && onSet) onSet(one.labels.includes(name) ? one.labels.filter((l) => l !== name) : [...one.labels, name])
-    else toggleLabel(taskIds, name)
+    toggleLabel(taskIds, name)
+    onSet?.()
   }
   /** Create (and Enter): the name goes onto the task(s); the search clears for the next one. */
   const make = (name: string) => {

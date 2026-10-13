@@ -49,9 +49,9 @@ export interface TaskMenuActions {
   clearDate?: () => void
   /** The task sheet's Duration chip. */
   duration?: (min: number | null) => void
-  /** The Label picker's tap, through the surface's own setter (the task sheet's "Saved"); without
-   * it the picker writes itself (labels.ts toggleLabel). */
-  labels?: (labels: string[]) => void
+  /** After a Label picker tap (the task sheet's "Saved"); the picker writes itself (labels.ts
+   * toggleLabel, with its Undo — P7e A17). */
+  labels?: () => void
   /** Plan's Next free slot → Confirm (single task). */
   slot?: (startsAt: string, endsAt: string) => void
   /** A Top 3 row's Move up / Move down. */
@@ -86,6 +86,8 @@ const ICONS: Record<TaskMenuKey, IconName> = {
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
 const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
   tomorrow: shortcutHint('tomorrow'), project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
+  // P7e A18
+  plan: shortcutHint('plan'), priority: shortcutHint('priority'), labels: shortcutHint('labels'), goal: shortcutHint('goal'), focus: shortcutHint('focus'),
 }
 const REMIND_OFFSETS: { min: number | null; label: string }[] = [
   { min: null, label: 'No reminder' },

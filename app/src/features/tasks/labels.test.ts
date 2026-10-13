@@ -104,10 +104,12 @@ describe('L on a selection (toggleLabel)', () => {
     expect([labelsOf('a'), labelsOf('b')]).toEqual([['Urgent', 'calls'], ['Urgent']])
   })
 
-  it('one task: a quiet edit, no toast; a new name is simply the first task to carry it', () => {
+  it('one task: its own Undo (P7e A17); a new name is simply the first task to carry it', () => {
     L.toggleLabel(['c'], 'gym')
     expect(labelsOf('c')).toEqual(['errand', 'gym'])
-    expect(undos).toHaveLength(0)
+    expect(undos[0].message).toBe('Added “gym”')
+    undos[0].undo()
+    expect(labelsOf('c')).toEqual(['errand'])
   })
 })
 

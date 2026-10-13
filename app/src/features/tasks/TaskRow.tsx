@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useOpenTask } from './openTask'
 import { EmojiText } from '../../components/EmojiText'
 import './TaskRow.css'
-import { cachedTask, completeTaskWithUndo, reopenTaskWithUndo, toggleTop3, rescheduleDue } from './api'
+import { cachedTask, completeTaskWithUndo, reopenTaskWithUndo, toggleTop3, planWithUndo } from './api'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
@@ -249,7 +249,7 @@ export function TaskRow({
         </div>
         <span
           className="tr-someday-hover"
-          onClick={() => rescheduleDue(task, scheduleToday())}
+          onClick={() => planWithUndo(task, scheduleToday())}
           style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
         >
           → Today

@@ -79,11 +79,14 @@ describe('captureTyped (the one capture rule)', () => {
     expect(enriched).toEqual([`task:${typed}`])
   })
 
-  it('a plain line: the Inbox at once, said so, and the AI reads it there', () => {
+  it('a plain line: the Inbox at once, said so with Undo (P7e A17), and the AI reads it there', () => {
     captureTyped(parse('that idea about the hero image'), 'that idea about the hero image')
     expect(writes.map((w) => w.table)).toEqual(['inbox_items'])
-    expect(pushed).toEqual(['Added to Inbox'])
+    expect(toasts.map((t) => t.message)).toEqual(['Added to Inbox'])
     expect(enriched).toEqual(['inbox:that idea about the hero image'])
+    toasts[0].undo() // to Trash: the same row, now with deleted_at
+    expect(writes[1]).toMatchObject({ table: 'inbox_items', row: { id: writes[0].row.id, status: 'pending' } })
+    expect(writes[1].row.deleted_at).toBeTruthy()
   })
 
   it('a repeat, notes and a link all reach the task', () => {

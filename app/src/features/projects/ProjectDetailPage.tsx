@@ -53,7 +53,7 @@ import {
   createTask,
   moveTasksWithUndo,
   rescheduleTasksWithUndo,
-  rescheduleDue,
+  planWithUndo,
   somedayTasksWithUndo,
   deleteTasksWithUndo,
   moveToTomorrowWithUndo,
@@ -65,6 +65,7 @@ import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { todayFor } from '../tasks/planMath'
 import { buildListBindings } from '../tasks/listShortcuts'
+import { useListVerbs } from '../tasks/useListVerbs'
 import { sortByOrder } from '../tasks/manualOrder'
 import { moveInListWithUndo } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
@@ -305,17 +306,22 @@ export function ProjectDetailPage() {
   const openTask = useOpenTask()
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
   const kbProjectTask = kbProjectId ? pageOpen.find((t) => t.id === kbProjectId) : null
+  // P7e A18: D Plan…, ! Priority, = Duration, L Labels, S Someday, H goal, F focus; the bulk bar's Priority / Labels.
+  const verbs = useListVerbs(bulkActions)
   const bindings = buildListBindings({
+    ...verbs.actions,
     complete: (t) => void completeTaskWithUndo(t),
     open: (t) => openTask(t.id),
-    today: (t) => rescheduleDue(t, todayFor(t)),
+    today: (t) => planWithUndo(t, todayFor(t)),
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
-    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    nextWeek: (t) => planWithUndo(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
   }, {
+    ...verbs.bulk,
+    someday: () => bulkSomeday(),
     complete: () => bulkComplete(),
     today: () => bulkSchedule(scheduleToday()),
     tomorrow: () => bulkTomorrow(),
@@ -324,7 +330,7 @@ export function ProjectDetailPage() {
     delete: () => bulkDelete(),
   })
   const { focusedId: kbFocusedId } = useListKeys(pageOpen, bindings, {
-    active: !bulkSchedulePos && !bulkProjectPos && !kbProjectId,
+    active: !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !verbs.picking,
     sectionLabel: 'Lists',
     onSelectAll: selectAllOpen,
     selected: selectedTasks,
@@ -370,6 +376,9 @@ export function ProjectDetailPage() {
           onTomorrow={bulkTomorrow}
           onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
+          onTop3={bulkTop3}
+          onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
+          onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
           onSelectAll={selectAllOpen}
@@ -382,6 +391,7 @@ export function ProjectDetailPage() {
       {kbProjectTask && (
         <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
       )}
+      {verbs.node}
     </>
   )
 

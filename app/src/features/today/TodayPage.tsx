@@ -1,12 +1,13 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, rescheduleDue, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, planWithUndo, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { isOverdue, todayFor } from '../tasks/planMath'
 import { DragRow, useDropSpot, type DragLoad, type Spot } from '../../components/drag'
 import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
+import { useListVerbs } from '../tasks/useListVerbs'
 import { formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
 import { sortByOrder } from '../tasks/manualOrder'
@@ -346,18 +347,23 @@ export function TodayPage() {
   const [kbLabelIds, setKbLabelIds] = useState<string[] | null>(null)
   const openTask = useOpenTask()
   const navigate = useNavigate()
+  // P7e A18: D Plan…, ! Priority, = Duration, S Someday, H goal, F focus; the bulk bar's Priority / Labels.
+  const verbs = useListVerbs(bulk)
   const listBindings = [...buildListBindings({
+    ...verbs.actions,
     complete: (t) => completeTaskWithUndo(t),
     open: (t) => openTask(t.id),
-    today: (t) => rescheduleDue(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
+    today: (t) => planWithUndo(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
-    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    nextWeek: (t) => planWithUndo(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
     labels: (t) => setKbLabelIds([t.id]),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
   }, {
+    ...verbs.bulk,
+    someday: () => bulkSomeday(),
     // Kai 2026-10-12: with rows selected, a key acts on the selection (T was dead after a mouse select).
     complete: () => bulkComplete(),
     today: () => bulkSchedule(scheduleToday()),
@@ -368,7 +374,7 @@ export function TodayPage() {
     delete: () => bulkDelete(),
   }), { keys: NOTEBOOK_KEY, label: 'Notebook page', run: () => navigate(NOTEBOOK_PATH) }]
   const { focusedId } = useListKeys(selectable, listBindings, {
-    active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !kbLabelIds && !replanAt,
+    active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !kbLabelIds && !replanAt && !verbs.picking,
     sectionLabel: 'Lists',
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
     selected: selectedTasks,
@@ -585,6 +591,8 @@ export function TodayPage() {
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onTop3={bulkTop3}
+          onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
+          onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(selectable.map((t) => t.id)))}
         />
@@ -613,6 +621,7 @@ export function TodayPage() {
         <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
       )}
       {kbLabelIds && <LabelPicker taskIds={kbLabelIds} position={rowAnchor('task-', kbLabelIds[0])} onClose={() => setKbLabelIds(null)} />}
+      {verbs.node}
 
       {morningOpen && <MorningRitual onClose={() => closeRitual('morning')} />}
       {eveningOpen && <EveningRitual onClose={() => closeRitual('evening')} />}

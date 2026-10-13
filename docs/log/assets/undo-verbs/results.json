@@ -1,0 +1,442 @@
+[
+  {
+    "name": "a0 All lists the tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1a key 1: \"Planned · Today …\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1b …written to today",
+    "ok": true,
+    "detail": "2026-10-12T06:00:00.000Z"
+  },
+  {
+    "name": "a1c Ctrl+Z puts Wed 14 back",
+    "ok": true,
+    "detail": "2026-10-14T06:00:00.000Z"
+  },
+  {
+    "name": "a2a key 3: \"Planned · …\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2b …written to next week",
+    "ok": true,
+    "detail": "2026-10-19T06:00:00.000Z"
+  },
+  {
+    "name": "a2c Ctrl+Z puts today back",
+    "ok": true,
+    "detail": "2026-10-12T06:00:00.000Z"
+  },
+  {
+    "name": "a3a menu Priority → High: \"Priority · High\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a3b …written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a3c Undo takes it off",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "a4a menu Repeat → Weekly: \"Repeats · Weekly\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a4b …written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a4c Undo: no repeat again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a5a menu Remind → 15 min before: \"Reminder · 15m before\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a5b …written",
+    "ok": true,
+    "detail": "2026-10-12T05:45:00.000Z"
+  },
+  {
+    "name": "a5c Undo: no reminder again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a6a sheet Duration → 30m: \"Duration · 30m\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a6b …written, the popover stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a6c Undo: no duration again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a7a sheet Labels → garden: \"Added “garden”\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a7b …written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a7c Undo: no label again",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "a8a a plain line: \"Added to Inbox\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a8b …the capture was written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a8c Undo sends it to Trash",
+    "ok": true,
+    "detail": "\"2026-10-12T07:00:29.005Z\""
+  },
+  {
+    "name": "a9 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a10a editor Due date → Thu 15: \"Planned · Thu …\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a10b …written",
+    "ok": true,
+    "detail": "2026-10-15T06:00:00.000Z"
+  },
+  {
+    "name": "a10c Undo puts today back",
+    "ok": true,
+    "detail": "2026-10-12T06:00:00.000Z"
+  },
+  {
+    "name": "a10d no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a11a Someday → Today: \"Planned · Today …\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a11b …written: dated today, off Someday",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a11c Undo: back on Someday, undated",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a11d no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [day] on touch the → Today / Plan pills show (no hover needed)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "p1 [day] …with a touch-size hit area",
+    "ok": true,
+    "detail": "48px"
+  },
+  {
+    "name": "p2 [day] the phone bar: Done · Tomorrow · Plan · Move · Top 3 · More · Delete",
+    "ok": true,
+    "detail": "Done|Tomorrow|Plan|Move|Top 3|More|Delete"
+  },
+  {
+    "name": "p2 [day] …every tab ≥ 44px wide, no label spilling",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 [day] More opens a sheet with Priority… and Labels…",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4a phone: a label for the whole selection, with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4b …written on every selected task",
+    "ok": true,
+    "detail": "garden / garden / garden / garden"
+  },
+  {
+    "name": "p5 [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [night] on touch the → Today / Plan pills show (no hover needed)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "p1 [night] …with a touch-size hit area",
+    "ok": true,
+    "detail": "48px"
+  },
+  {
+    "name": "p2 [night] the phone bar: Done · Tomorrow · Plan · Move · Top 3 · More · Delete",
+    "ok": true,
+    "detail": "Done|Tomorrow|Plan|Move|Top 3|More|Delete"
+  },
+  {
+    "name": "p2 [night] …every tab ≥ 44px wide, no label spilling",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 [night] More opens a sheet with Priority… and Labels…",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v1a ! opens Priority under the row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v1b …its first choice has the keyboard",
+    "ok": true,
+    "detail": "menuitem"
+  },
+  {
+    "name": "v1c pick → \"Priority · Critical\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v1d …written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2a = opens Duration",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2b pick → \"Duration · 45m\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2c …written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3a d opens the whole Plan list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3b …with the keyboard inside it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3c Next week → \"Planned · …\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3d …written",
+    "ok": true,
+    "detail": "2026-10-19T06:00:00.000Z"
+  },
+  {
+    "name": "v4a s → \"Parked for someday\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v4b …written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v4c Ctrl+Z takes it back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v5a h → \"Goal of the day\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v5b …it leads the Top 3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v6a ⇧F opens the Label filter",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v6b ↓ ↵ picks a label (the filter is on)",
+    "ok": true,
+    "detail": "LABEL · GARDEN\n▾"
+  },
+  {
+    "name": "v7a ⇧S opens the Sort",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v7b ↓ ↵ changes the sort",
+    "ok": true,
+    "detail": "SORT · DUE\n▾"
+  },
+  {
+    "name": "v8a ! with a selection → \"N tasks · priority high\" with Undo",
+    "ok": true,
+    "detail": "5 SELECTED"
+  },
+  {
+    "name": "v8b …written on every selected task",
+    "ok": true,
+    "detail": "2,2,2,2"
+  },
+  {
+    "name": "v8c one Undo puts every priority back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v9 desktop bulk bar: … Top 3 · More · Delete",
+    "ok": true,
+    "detail": "Done|Tomorrow|Plan|Move|Top 3|More|Delete"
+  },
+  {
+    "name": "v9a …and the pill fits the 1280px window (its × included)",
+    "ok": true,
+    "detail": "{\"x\":325.9375,\"y\":722.0625,\"width\":930.625,\"height\":57.9375}"
+  },
+  {
+    "name": "v9b More is a menu: Priority… · Labels…",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v9c the bar's Labels… opens the picker for the selection",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v10 f starts focus on the row",
+    "ok": true,
+    "detail": "/focus"
+  },
+  {
+    "name": "v11 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v12 l on the project page opens the Label picker",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v13 [day] the project page's bulk bar has Top 3 and More (Priority, Labels)",
+    "ok": true,
+    "detail": "Done|Tomorrow|Plan|Move|Top 3|More|Delete"
+  },
+  {
+    "name": "v14 [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v13 [night] the project page's bulk bar has Top 3 and More (Priority, Labels)",
+    "ok": true,
+    "detail": "Done|Tomorrow|Plan|Move|Top 3|More|Delete"
+  },
+  {
+    "name": "v14 [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [day] Tasks: the cheatsheet lists the new keys, and the old ones as they were",
+    "ok": true,
+    "detail": "all present"
+  },
+  {
+    "name": "c2 [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [night] Tasks: the cheatsheet lists the new keys, and the old ones as they were",
+    "ok": true,
+    "detail": "all present"
+  },
+  {
+    "name": "c2 [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 Today: the row verbs, but no filter / sort (Tasks only)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c4 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
