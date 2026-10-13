@@ -127,8 +127,3 @@ export function scheduleThisEvening(now: Date = new Date()): string {
   return Date.parse(today) > now.getTime() ? today : dayAt(now, 1, 18)
 }
 
-/** Planning board's "This week" column drop target — a fixed 2-day-out placeholder date
- * (not today/tomorrow, which have their own columns) that the task can be dragged off of later. */
-export function scheduleThisWeek(now: Date = new Date()): string {
-  return dayAt(now, 2, 9)
-}

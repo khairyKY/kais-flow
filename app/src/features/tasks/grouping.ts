@@ -1,4 +1,4 @@
-import { cairoDateKey, daysUntilNextMonday } from '../../lib/dateShortcuts'
+import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
 import { isTop3Today } from './top3Rule'
 
@@ -173,52 +173,5 @@ export function groupTasks(tasks: Task[], now: Date = new Date()): TaskGroup[] {
     groupTasksArr.sort((a, b) => dateValue(a) - dateValue(b)) // oldest-first everywhere; overdue = most negative first
     const totalMinutes = groupTasksArr.reduce((sum, t) => sum + (t.duration_min ?? 0), 0)
     return [{ key, label, tasks: groupTasksArr, totalMinutes }]
-  })
-}
-
-export type PlanningColumnKey = 'today' | 'tomorrow' | 'week' | 'nextWeek' | 'someday'
-
-export interface PlanningColumn {
-  key: PlanningColumnKey
-  label: string
-  tasks: Task[]
-}
-
-const PLANNING_COLUMN_ORDER: { key: PlanningColumnKey; label: string }[] = [
-  { key: 'today', label: 'Today' },
-  { key: 'tomorrow', label: 'Tomorrow' },
-  { key: 'week', label: 'This week' },
-  { key: 'nextWeek', label: 'Next week' },
-  { key: 'someday', label: 'Someday' },
-]
-
-function planningBucketOf(task: Task, now: Date): PlanningColumnKey {
-  if (task.someday) return 'someday'
-  const diff = taskDayDiff(task, now)
-  if (diff === null) return 'nextWeek' // undated backlog folds into the catch-all column
-  if (diff <= 0) return 'today' // overdue lands in Today — the board is about placement, not confrontation
-  if (diff === 1) return 'tomorrow'
-  // "This week" boundary is the same coming-Monday `scheduleNextWeek` targets, not a fixed
-  // diff<=6 — otherwise a task just dropped on Next week re-buckets into This week on most
-  // weekdays (next Monday is often <6 days out), which is the bug this line fixes.
-  if (diff < daysUntilNextMonday(now)) return 'week'
-  return 'nextWeek'
-}
-
-/** The Upcoming planning board's 5 fixed columns — unlike `groupTasks`, empty columns are kept
- * (every column is a drop target, not just a display of what already has tasks). */
-export function planningColumns(tasks: Task[], now: Date = new Date()): PlanningColumn[] {
-  const open = tasks.filter((t) => t.status === 'todo')
-  const byKey = new Map<PlanningColumnKey, Task[]>()
-  for (const task of open) {
-    const key = planningBucketOf(task, now)
-    const arr = byKey.get(key) ?? []
-    arr.push(task)
-    byKey.set(key, arr)
-  }
-  const dateValue = (t: Task) => new Date(t.due_at ?? t.scheduled_start ?? 8.64e15).getTime()
-  return PLANNING_COLUMN_ORDER.map(({ key, label }) => {
-    const colTasks = (byKey.get(key) ?? []).sort((a, b) => dateValue(a) - dateValue(b))
-    return { key, label, tasks: colTasks }
   })
 }
