@@ -282,7 +282,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
       </form>
       {voice && (
         <Suspense fallback={null}>
-          <VoiceCaptureSheet open release={voice.release} onText={askHeard} onClose={() => setVoice(null)} />
+          <VoiceCaptureSheet open release={voice.release} onText={askHeard} stopLabel="Stop & send" onClose={() => setVoice(null)} />
         </Suspense>
       )}
     </div>
