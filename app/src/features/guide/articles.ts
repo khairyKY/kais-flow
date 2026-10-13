@@ -190,7 +190,7 @@ export const ARTICLES: Article[] = [
     intro: 'The garden gate is never far: share to it, send to it, or photograph a page.',
     steps: [
       { name: 'Share', text: '**Share** any text or link to Kai’s Flow; it lands in your Inbox.' },
-      { name: 'A capture key', text: 'Settings → **Capture from anywhere**: make a key for iPhone Shortcuts, Tasker or a bookmarklet.' },
+      { name: 'A capture key', text: 'Settings → Advanced → **External capture endpoint**: make a key for iPhone Shortcuts, Tasker or a bookmarklet.' },
       { name: 'Recipes', text: '**How to send things here** has the recipes, ready to copy.' },
       { name: 'Windows', text: 'On Windows, click the **K** by the clock and write it down.' },
       { name: 'Paper', text: '**Scan paper**: photograph a list, and each line becomes a task, event or note.' },

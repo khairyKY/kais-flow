@@ -4,9 +4,8 @@ import { supabase } from '../../lib/supabase'
 import { activityRow, logActivity } from '../../lib/activity'
 import { writeRow } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
-import { localDateKey } from '../routines/streaks'
 import { useTasks } from '../tasks/api'
-import { FINISHED_EVENT, SEED_EVENT, UNSEED_EVENT, finishedPayload, liveSeeds, ritualsFinishedToday, seedPayload, seededTaskIds, type RitualKind } from './loopDay'
+import { FINISHED_EVENT, SEED_EVENT, UNSEED_EVENT, finishedPayload, liveSeeds, loopDayKey, loopDayStartIso, ritualsFinishedToday, seedPayload, seededTaskIds, type RitualKind } from './loopDay'
 import type { ActivityLogEntry, Task } from '../../lib/types'
 
 export type { RitualKind } from './loopDay'
@@ -30,12 +29,14 @@ export function useRitualStepsToday() {
         .from('activity_log')
         .select('*')
         .eq('event_type', 'ritual.step_completed')
-        .gte('created_at', new Date(new Date().setHours(0, 0, 0, 0)).toISOString())
+        // The loop day (04:00 on the user's clock), like `ritual.finished` — not the device's
+        // midnight, which split a shutdown walked past 00:00 across two days.
+        .gte('created_at', loopDayStartIso(new Date()))
       if (error) throw error
       return data as ActivityLogEntry[]
     },
     select: (rows) => {
-      const today = localDateKey(new Date())
+      const today = loopDayKey(new Date())
       const done: Record<RitualKind, Set<string>> = { morning: new Set(), evening: new Set() }
       for (const r of rows) {
         const p = r.payload as { ritual?: RitualKind; step?: string; date?: string } | null
@@ -59,7 +60,7 @@ export function useReviewEventsThisWeek(weekStartIso: string) {
       const { data, error } = await supabase
         .from('activity_log')
         .select('*')
-        .in('event_type', ['domain.swept', 'review.verdict'])
+        .in('event_type', ['domain.swept', 'review.verdict', 'review.week_closed', 'review.week_reopened'])
         .gte('created_at', weekStartIso)
         // J-27: a re-opened sweep can revise a verdict, and the page folds these rows into a
         // Map in order — oldest first so the LATEST verdict is the one that survives a reload.
@@ -77,7 +78,7 @@ export function useReviewEventsThisWeek(weekStartIso: string) {
  * only covers a table's own `[table]` key, not this `['activity_log', 'review_week', …]` one. */
 export function logReviewEvent(
   weekStartIso: string,
-  eventType: 'domain.swept' | 'review.verdict',
+  eventType: 'domain.swept' | 'review.verdict' | 'review.week_closed' | 'review.week_reopened',
   entityType: string,
   entityId: string,
   payload: Record<string, unknown>,
@@ -93,7 +94,7 @@ export function logReviewEvent(
 /** Loop B: also folds the step into Today's `ritual_steps` cache, so the ritual card's n/4 moves
  * when the ritual closes — it used to sit stale (e.g. 1/4 after all four) until a refetch. */
 export function logRitualStep(ritual: RitualKind, step: string): void {
-  const date = localDateKey(new Date())
+  const date = loopDayKey(new Date())
   logRitualEvent(['activity_log', 'ritual_steps'], 'ritual.step_completed', 'ritual', `${ritual}-${date}`, { ritual, step, date })
 }
 

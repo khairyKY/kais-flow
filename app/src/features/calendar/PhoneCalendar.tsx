@@ -14,11 +14,19 @@ import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
-import { moveEventWithUndo, scheduleTaskWithUndo, useCalendarEvents } from './api'
+import { moveEventWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { findBlock } from './series'
+import { cairoToIso } from './eventTime'
 import { blockLastDay, railBuckets, railMinutes } from './replan'
 import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { Segmented } from '../rituals/RitualChrome'
-import { allDayOn, dayBlocks, eventSpan, rangeText, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
+import { addMonths, allDayOn, dayBlocks, eventSpan, monthTitle, rangeText, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
+import { PhoneMonth } from './PhoneMonth'
+import { readViewOptions } from './ViewOptionsPopover'
+import { SMART_LISTS } from './railDrop'
+import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
+import { useAreas } from '../areas/api'
+import { placeName } from '../tasks/move'
 import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
 import './phoneCalendar.css'
@@ -34,14 +42,16 @@ const MorningRitual = lazy(() => import('../rituals/MorningRitual').then((m) => 
 type Sheet =
   | { k: 'view' }
   | { k: 'create'; day: string; start: number }
-  | { k: 'block'; id: string }
+  | { k: 'block'; id: string; start: string }
   | { k: 'more'; ids: string[] }
   /** 7g: a task from the rail strip — or, `replan`, an overdue block tapped on the grid. */
   | { k: 'schedule'; id: string; replan?: boolean }
   | { k: 'file'; id: string }
   | { k: 'plan' }
+  /** The Lists segment's list picker: the smart lists and the project / area / domain kinds, then one of those. */
+  | { k: 'scope'; kind?: Exclude<RailScopeKind, 'smart'> }
 
-type Seg = 'overdue' | 'today' | 'inbox'
+type Seg = 'overdue' | 'today' | 'inbox' | 'lists'
 
 // How far under the grid's top a block or slot lands when its sheet opens (7c, 7d). The planning
 // strip's segment row (Kai 2026-10-07) moved the grid down 48px, so it's 32, not 80: the block sits
@@ -52,13 +62,19 @@ const VIEWS: { v: PhoneView; label: string }[] = [
   { v: 'day', label: 'Day' },
   { v: '3day', label: '3 days' },
   { v: 'week', label: 'Week' },
+  // Phone parity: the desktop's Month.
+  { v: 'month', label: 'Month' },
 ]
 
 export function PhoneCalendar() {
+  // Repeating events (migration 0061): `events` = the year around today (the strip's planning, the
+  // Schedule sheet's free slots); `gridEvents` = what the week strip and the grid show (below).
   const { data: events = [], isPending: eventsPending } = useCalendarEvents()
+  const { data: rows = [] } = useCalendarRows()
   const { data: tasks = [], isPending: tasksPending } = useTasks()
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
+  const { data: areas = [] } = useAreas()
   const online = useOnline()
   const marks = useOutboxMarks('calendar_events')
   const now = useMinuteNow()
@@ -77,10 +93,10 @@ export function PhoneCalendar() {
   const [sheet, setSheet] = useState<Sheet | null>(null)
   const gridRef = useRef<PhoneGridHandle>(null)
   // /calendar?event=<id> (a search hit, Kai 2026-10-06): its day, its sheet, the block in view.
-  const linked = useLinkedEvent(events)
+  const linked = useLinkedEvent(rows)
   if (linked.open) {
     setAnchor(cairoDateKey(new Date(linked.open.starts_at)))
-    setSheet({ k: 'block', id: linked.open.id })
+    setSheet({ k: 'block', id: linked.open.id, start: linked.open.starts_at })
   }
   const linkedMin = linked.event && !linked.event.all_day ? eventSpan(linked.event).start : null
   useEffect(() => {
@@ -95,16 +111,33 @@ export function PhoneCalendar() {
     if (anchor === seenToday) setAnchor(today)
   }
 
-  const days = visibleDays(view, anchor, today)
+  const mondayFirst = readViewOptions().weekStartsMon
+  const days = visibleDays(view, anchor, today, mondayFirst)
+  const strip = weekPage(anchor, today)
+  // The days on screen and the strip's week, a day either side (a block over midnight).
+  const shown = [...strip, ...days].sort()
+  const gridFrom = cairoToIso(addDays(shown[0], -1), '00:00')
+  const gridTo = cairoToIso(addDays(shown[shown.length - 1], 2), '00:00')
+  const gridRange = useMemo(() => ({ start: new Date(gridFrom), end: new Date(gridTo) }), [gridFrom, gridTo])
+  const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   const taskById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
   // Kai 2026-10-07: the strip is the desktop rail's Overdue · Today · Inbox, one segment at a time
   // (the first with anything in it, until one is picked); a chip opens the 7g sheet.
   const { data: inbox = [], isPending: inboxPending } = usePendingInboxItems()
   const buckets = useMemo(() => railBuckets(tasks, events, now), [tasks, events, today]) // eslint-disable-line react-hooks/exhaustive-deps
-  const counts: Record<Seg, number> = { overdue: buckets.overdue.length, today: buckets.today.length, inbox: inbox.length }
+  // Phone parity: the rail's Lists (any smart list, project, area or domain), minus what Overdue and
+  // Today already hold — the desktop rail's section, as a fourth segment.
+  const [scope, setScope] = useState<RailScope>({ kind: 'smart', id: 'week' })
+  const inRail = new Set([...buckets.overdue, ...buckets.today].map((r) => r.task.id))
+  const listTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start && !inRail.has(t.id))
+  const scopeName =
+    scope.kind === 'smart'
+      ? SMART_LISTS.find((l) => l.value === scope.id)?.label
+      : placeName({ project_id: scope.kind === 'project' ? scope.id : null, area_id: scope.kind === 'area' ? scope.id : null, domain_id: scope.kind === 'domain' ? scope.id : null }, projects, areas, domains)
+  const counts: Record<Seg, number> = { overdue: buckets.overdue.length, today: buckets.today.length, inbox: inbox.length, lists: listTasks.length }
   const [segPick, setSegPick] = useState<Seg | null>(null)
   const seg: Seg = segPick ?? (['overdue', 'today', 'inbox'] as const).find((s) => counts[s] > 0) ?? 'today'
-  const marked = useMemo(() => daysWithItems(tasks, events), [tasks, events])
+  const marked = useMemo(() => daysWithItems(tasks, gridEvents), [tasks, gridEvents])
 
   // CALENDAR.md §3, first match wins: a colour set on the block · a task's project hue (its own, else
   // its domain's) · a meeting (a plain event) blossom · any other task or block lavender.
@@ -147,7 +180,7 @@ export function PhoneCalendar() {
     if (!e.all_day) gridRef.current?.scrollToMinute(eventSpan(e).start, SHEET_LEAD)
     if (e.task_id && overdueBlock(e)) setSheet({ k: 'schedule', id: e.task_id, replan: true })
     else if (e.task_id && taskById.has(e.task_id)) openTask(e.task_id)
-    else setSheet({ k: 'block', id: e.id })
+    else setSheet({ k: 'block', id: e.id, start: e.starts_at })
   }
 
   const slotRect = (day: string, start: number, end: number) => gridRef.current?.rectOf(day, start, end) ?? null
@@ -157,19 +190,19 @@ export function PhoneCalendar() {
     gridRef.current?.centerNow()
   }
 
-  const block = sheet?.k === 'block' ? events.find((e) => e.id === sheet.id) : undefined
+  // findBlock: an edit from the sheet can re-anchor a repeat under it (series.ts).
+  const block = sheet?.k === 'block' ? findBlock(gridEvents, sheet.id, sheet.start) : undefined
   if (sheet?.k === 'block' && !block) setSheet(null) // its block went (another device): don't reopen if it comes back
   const scheduling = sheet?.k === 'schedule' ? taskById.get(sheet.id) : undefined
   const filing = sheet?.k === 'file' ? inbox.find((i) => i.id === sheet.id) : undefined
-  const emptyDay = view === 'day' && !eventsPending && dayBlocks(events, anchor).length === 0 && allDayOn(events, days).length === 0
-  const strip = weekPage(anchor, today)
+  const emptyDay = view === 'day' && !eventsPending && dayBlocks(gridEvents, anchor).length === 0 && allDayOn(gridEvents, days).length === 0
 
   return (
     <div className="pc cal-shell">
       <header className="pc-head">
         <h1 className="pc-h1">
           <button type="button" className="pc-title" aria-haspopup="dialog" aria-expanded={sheet?.k === 'view'} onClick={() => setSheet({ k: 'view' })}>
-            {viewTitle(days)}
+            {view === 'month' ? monthTitle(anchor) : viewTitle(days)}
             <Icon name="chevdown" size={20} className="pc-chev" />
           </button>
         </h1>
@@ -181,7 +214,8 @@ export function PhoneCalendar() {
         </div>
       )}
 
-      {/* MK Week Strip: the rolling week holding the shown day; 3 days washes its range. */}
+      {/* MK Week Strip: the rolling week holding the shown day; 3 days washes its range. (Month is its own grid.) */}
+      {view !== 'month' && (
       <div className="pc-week" role="group" aria-label="Week">
         {strip.map((d) => {
           const i = days.indexOf(d)
@@ -204,8 +238,9 @@ export function PhoneCalendar() {
           )
         })}
       </div>
+      )}
 
-      {(tasksPending || inboxPending || counts.overdue + counts.today + counts.inbox > 0) && (
+      {(tasksPending || inboxPending || counts.overdue + counts.today + counts.inbox + counts.lists > 0) && (
         <>
           <div className="pc-segs">
             <Segmented
@@ -214,6 +249,7 @@ export function PhoneCalendar() {
                 { value: 'overdue', label: `Overdue ${counts.overdue}` },
                 { value: 'today', label: `Today ${counts.today}` },
                 { value: 'inbox', label: `Inbox ${counts.inbox}` },
+                { value: 'lists', label: `Lists ${counts.lists}` },
               ]}
               value={tasksPending ? null : seg}
               onChange={setSegPick}
@@ -222,6 +258,19 @@ export function PhoneCalendar() {
           <div className="pc-uns" data-seg={seg}>
             {tasksPending
               ? [0, 1].map((i) => <span key={i} className="pc-chip is-skel" />)
+              : seg === 'lists'
+                ? [
+                    <button key="scope" type="button" className="pc-chip" aria-haspopup="dialog" onClick={() => setSheet({ k: 'scope' })}>
+                      <span className="pc-chip-t">{scopeName ?? 'Lists'}</span>
+                      <Icon name="chevdown" size={16} />
+                    </button>,
+                    ...listTasks.map((t) => (
+                      <button key={t.id} type="button" className="pc-chip" aria-expanded={scheduling?.id === t.id} onClick={() => setSheet({ k: 'schedule', id: t.id })}>
+                        <span className="pc-chip-t">{t.title}</span>
+                        {t.duration_min != null && <span className="pc-chip-d">{formatDuration(t.duration_min)}</span>}
+                      </button>
+                    )),
+                  ]
               : seg === 'inbox'
                 ? inbox.map((item) => (
                     <button key={item.id} type="button" className="pc-chip" aria-expanded={filing?.id === item.id} onClick={() => setSheet({ k: 'file', id: item.id })}>
@@ -234,18 +283,33 @@ export function PhoneCalendar() {
                       {r.late > 0 ? <span className="pc-chip-d is-late">{r.late}d</span> : r.task.duration_min != null && <span className="pc-chip-d">{formatDuration(r.task.duration_min)}</span>}
                     </button>
                   ))}
-            {!tasksPending && counts[seg] === 0 && <span className="pc-uns-label">{seg === 'overdue' ? 'Nothing overdue' : seg === 'today' ? 'Nothing left without a time' : 'Inbox zero'}</span>}
+            {!tasksPending && counts[seg] === 0 && <span className="pc-uns-label">{seg === 'overdue' ? 'Nothing overdue' : seg === 'today' ? 'Nothing left without a time' : seg === 'lists' ? 'Nothing else to block' : 'Inbox zero'}</span>}
           </div>
         </>
       )}
 
+      {view === 'month' ? (
+        <PhoneMonth
+          days={days}
+          month={anchor}
+          today={today}
+          events={gridEvents}
+          dotOf={(e) => look(e).ink}
+          mondayFirst={mondayFirst}
+          onPick={(d) => {
+            setAnchor(d)
+            setView('day')
+          }}
+          onPage={(dir) => setAnchor((a) => addMonths(a, dir))}
+        />
+      ) : (
       <PhoneGrid
         ref={gridRef}
         days={days}
         step={viewStep(view)}
         today={today}
         now={now}
-        events={events}
+        events={gridEvents}
         look={look}
         pending={marks.pending}
         loading={eventsPending}
@@ -267,6 +331,7 @@ export function PhoneCalendar() {
           )
         }
       />
+      )}
 
       {sheet?.k === 'view' && (
         <ActionSheet
@@ -276,7 +341,7 @@ export function PhoneCalendar() {
           items={VIEWS.map(({ v, label }) => ({
             label,
             icon: <Icon name="calendar" />,
-            hint: v === view ? undefined : v === '3day' ? weekdayRange(visibleDays('3day', anchor, today)) : v === 'week' ? viewTitle(weekPage(anchor, today)) : undefined,
+            hint: v === view ? undefined : v === '3day' ? weekdayRange(visibleDays('3day', anchor, today)) : v === 'week' ? viewTitle(weekPage(anchor, today)) : v === 'month' ? monthTitle(anchor) : undefined,
             selected: v === view,
             onSelect: () => setView(v),
           }))}
@@ -286,14 +351,14 @@ export function PhoneCalendar() {
         <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={slotRect} onClose={() => setSheet(null)} />
       )}
       {block && (
-        <BlockSheet event={block} look={look(block)} slotRect={slotRect} pending={marks.pending.has(block.id)} onMove={commit} onClose={() => setSheet(null)} />
+        <BlockSheet event={block} look={look(block)} slotRect={slotRect} pending={marks.pending.has(block.id)} onMove={commit} onRebind={(ref) => setSheet({ k: 'block', id: ref.id, start: ref.start })} onClose={() => setSheet(null)} />
       )}
       {sheet?.k === 'more' && (
         <ActionSheet
           title={`${sheet.ids.length} more`}
           meta="At the same time"
           onClose={() => setSheet(null)}
-          items={events
+          items={gridEvents
             .filter((e) => sheet.ids.includes(e.id))
             .map((e) => {
               const s = eventSpan(e)
@@ -311,7 +376,9 @@ export function PhoneCalendar() {
             scheduleTaskWithUndo(scheduling, startsAt, endsAt)
             placed(startsAt)
           }}
-          onOpen={sheet.replan ? () => openTask(scheduling.id) : undefined}
+          // Phone parity: a chip is completed or opened from here too, not only scheduled.
+          onOpen={() => openTask(scheduling.id)}
+          onComplete={() => completeTaskWithUndo(scheduling)}
           onClose={() => setSheet(null)}
         />
       )}
@@ -325,6 +392,35 @@ export function PhoneCalendar() {
             placed(startsAt)
           }}
           onClose={() => setSheet(null)}
+        />
+      )}
+      {sheet?.k === 'scope' && !sheet.kind && (
+        <ActionSheet
+          title="Lists"
+          meta="What the strip lists"
+          onClose={() => setSheet(null)}
+          items={[
+            ...SMART_LISTS.map((l) => ({ label: l.label, icon: <Icon name="tasks" />, selected: scope.kind === 'smart' && scope.id === l.value, onSelect: () => setScope({ kind: 'smart', id: l.value }) })),
+            ...(['project', 'area', 'domain'] as const).map((kind) => ({
+              label: kind === 'project' ? 'Project…' : kind === 'area' ? 'Area…' : 'Domain…',
+              icon: <Icon name={kind === 'project' ? 'project' : 'projects'} />,
+              chevron: true,
+              // On the next frame: this sheet clears the sheet state as it closes.
+              onSelect: () => window.setTimeout(() => setSheet({ k: 'scope', kind }), 0),
+            })),
+          ]}
+        />
+      )}
+      {sheet?.k === 'scope' && sheet.kind && (
+        <ActionSheet
+          title={sheet.kind === 'project' ? 'Project' : sheet.kind === 'area' ? 'Area' : 'Domain'}
+          meta="List its tasks"
+          onClose={() => setSheet(null)}
+          items={(sheet.kind === 'project' ? projects : sheet.kind === 'area' ? areas : domains).map((x) => ({
+            label: x.name,
+            selected: scope.kind === sheet.kind && scope.id === x.id,
+            onSelect: () => setScope({ kind: sheet.kind!, id: x.id }),
+          }))}
         />
       )}
       {sheet?.k === 'plan' && (

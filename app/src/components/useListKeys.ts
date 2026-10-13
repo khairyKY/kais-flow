@@ -5,6 +5,17 @@ export interface ListBinding<T> {
   keys: string[]
   label: string
   run: (item: T) => void
+  /** With rows selected, the key acts on all of them (one Undo) instead of the focused row. */
+  runAll?: (items: T[]) => void
+}
+
+/** The binding a key press means. Letters match whatever the layout or Shift/Caps Lock make of
+ * them (Kai 2026-10-12: T did nothing) — on an Arabic layout T arrives as key 'ف', code 'KeyT'. */
+export function bindingFor<T>(bindings: readonly ListBinding<T>[], e: Pick<KeyboardEvent, 'key' | 'code'>): ListBinding<T> | undefined {
+  const exact = bindings.find((b) => b.keys.includes(e.key))
+  if (exact) return exact
+  const letter = /^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase()
+  return letter ? bindings.find((b) => b.keys.includes(letter)) : undefined
 }
 
 export function isTypingTarget(target: EventTarget | null): boolean {
@@ -12,7 +23,9 @@ export function isTypingTarget(target: EventTarget | null): boolean {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
 }
 
-type KeyLike = Pick<KeyboardEvent, 'key' | 'code' | 'ctrlKey' | 'metaKey' | 'altKey' | 'shiftKey' | 'target'>
+const NONE: never[] = []
+
+type KeyLike =Pick<KeyboardEvent, 'key' | 'code' | 'ctrlKey' | 'metaKey' | 'altKey' | 'shiftKey' | 'target'>
 
 /** Ctrl/Cmd+A meant for a task list (Kai 2026-10-07: "Ctrl+A isn't working for tasks"):
  * - a field with text in it keeps the browser's own select-all;
@@ -45,7 +58,7 @@ export function useSelectAllKey(onSelectAll: (() => void) | undefined, active = 
   }, [onSelectAll, active])
 }
 
-interface UseListKeysOptions {
+interface UseListKeysOptions<T> {
   /** DOM id prefix for rows (`id="{idPrefix}{item.id}"`) — used to move real focus, not just a CSS ring. */
   idPrefix?: string
   /** Pause all key handling (e.g. while a snooze/project popover opened from this list is open). */
@@ -54,6 +67,8 @@ interface UseListKeysOptions {
   sectionLabel?: string
   /** Ctrl/Cmd+A selects all `items` (bulk-selection pages only). Omit to leave the browser's native select-all alone. */
   onSelectAll?: () => void
+  /** The rows selected right now: a key with a `runAll` acts on these. */
+  selected?: T[]
 }
 
 /** Roving-focus keyboard nav shared by Tasks smart lists, Today, and Inbox: ↑/↓ or j/k move
@@ -61,7 +76,7 @@ interface UseListKeysOptions {
 export function useListKeys<T extends { id: string }>(
   items: T[],
   bindings: ListBinding<T>[],
-  { idPrefix = 'task-', active = true, sectionLabel, onSelectAll }: UseListKeysOptions = {},
+  { idPrefix = 'task-', active = true, sectionLabel, onSelectAll, selected = NONE as T[] }: UseListKeysOptions<T> = {},
 ) {
   const [focusedId, setFocusedId] = useState<string | null>(null)
 
@@ -101,17 +116,22 @@ export function useListKeys<T extends { id: string }>(
         return
       }
 
+      const binding = bindingFor(bindings, e)
+      if (!binding) return
+      // A selection made with the mouse leaves nothing focused — it's what the key is about.
+      if (selected.length > 0 && binding.runAll) {
+        e.preventDefault()
+        binding.runAll(selected)
+        return
+      }
       const focused = items[idx]
       if (!focused) return
-      const binding = bindings.find((b) => b.keys.includes(e.key))
-      if (binding) {
-        e.preventDefault()
-        binding.run(focused)
-      }
+      e.preventDefault()
+      binding.run(focused)
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [items, focusedId, bindings, active])
+  }, [items, focusedId, bindings, active, selected])
 
   return { focusedId, setFocusedId }
 }

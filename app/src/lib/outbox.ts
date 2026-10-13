@@ -4,6 +4,7 @@ import { supabase } from './supabase'
 import { queryClient } from './queryClient'
 import { useToastStore } from './toastStore'
 import { carryReminder } from './carryReminder'
+import { releaseTop3 } from '../features/tasks/top3Rule'
 import type { Task } from './types'
 
 export const OUTBOX_KEY = 'kf-outbox'
@@ -298,10 +299,11 @@ export function writeRow<T extends { id: string }>(
   op: 'upsert' | 'delete' = 'upsert',
 ): void {
   // Every task write lands here (swipe, picker, drag, bulk…), so this is where a moved task's
-  // reminder keeps its lead time — once, for all of them (./carryReminder).
+  // reminder keeps its lead time — once, for all of them (./carryReminder) — and a Top 3 pick taken
+  // off today gives its place up (features/tasks/top3Rule).
   if (table === 'tasks' && op === 'upsert') {
     const prev = queryClient.getQueryData<Task[]>(['tasks'])?.find((r) => r.id === row.id)
-    row = carryReminder(prev, row as unknown as Task) as unknown as T
+    row = releaseTop3(carryReminder(prev, row as unknown as Task)) as unknown as T
   }
   // Without this, a fetch already in flight resolves after the optimistic write and clobbers
   // it — the same revert, just a narrower window than the refetch case above.

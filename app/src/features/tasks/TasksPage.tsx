@@ -10,7 +10,7 @@ import { RenameField } from '../../components/RenameField'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
-import { useTasks, createTask, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
@@ -18,15 +18,24 @@ import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
 import { labelOptions } from './taskDisplay'
-import { stripLabels } from '../command-bar/parseCommand'
+import { parseCommand } from '../command-bar/parseCommand'
+import { addTypedTask } from '../command-bar/quickAdd'
 import { useListKeys } from '../../components/useListKeys'
 import { MovePicker } from './MovePicker'
+import { LabelPicker } from './LabelPicker'
+import { LabelManagerOverlay } from './LabelManager'
 import { placeKey, type MoveTarget } from './move'
 import { BulkBar } from '../../components/BulkBar'
-import { Skeleton } from '../../components/States'
+import { DragRow, DropZone, type DragLoad } from '../../components/drag'
+import { dropTasks, taskVerdict, type FileSpot } from './fileDrop'
+import { ErrorCard, OfflineChip, Skeleton } from '../../components/States'
+import { cherryStage } from '../../lib/growthStages'
+import { claimDayComplete, DAY_DONE_DWELL_MS } from '../today/dayComplete'
+import { listState } from '../journal/journalDay'
+import { useOnline } from '../../lib/useOnline'
 import { TapeCard } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { cairoDateKey, scheduleNextWeek } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
@@ -54,13 +63,6 @@ function isToday(iso: string | null): boolean {
 
 function daysSince(iso: string): number {
   return (Date.now() - new Date(iso).getTime()) / 86400000
-}
-
-function cherryStage(open: number, doneToday: number): string {
-  if (open + doneToday === 0) return 'bud'
-  if (doneToday === 0) return 'opening'
-  if (open === 0) return 'fallen'
-  return 'bloom'
 }
 
 function effectiveDomainId(task: Task, projects: Project[], areas: Area[]): string | null {
@@ -98,27 +100,25 @@ function parseList(raw: string | null): SmartList | null {
   return SMART_LISTS.includes(raw as SmartList) ? (raw as SmartList) : null
 }
 
-type Tab = 'today' | 'overdue' | 'upcoming' | 'someday' | 'done' | 'all'
+type Tab = 'today' | 'week' | 'month' | 'overdue' | 'upcoming' | 'someday' | 'done' | 'all'
 
 // Punch 27: `/tasks?list=all` is the stable deep-link contract for "every open task" —
 // Today's "View all →" (WA-4), Inbox filing feedback, and search deep links all target it
 // (optionally with `&focus=<taskId>` to scroll + highlight the row).
 function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
   if (rawList === 'done') return 'done'
-  if (list === 'overdue') return 'overdue'
-  if (rawList === null || list === 'today') return 'today'
-  if (list === 'upcoming') return 'upcoming'
-  if (list === 'someday') return 'someday'
-  if (list === 'all') return 'all'
-  return null
+  if (rawList === null) return 'today'
+  return list
 }
 
 // The tools' triggers (Sort, Label): mono meta, no box — the click-cycler look J-12 kept.
 const TOOL_TRIGGER: React.CSSProperties = { gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }
+const MANAGE_LABELS = ' manage' // a label is trimmed, so none starts with a space
 const CARET = <span aria-hidden="true" style={{ color: 'var(--ink-faint)', lineHeight: 1 }}>▾</span>
 
-function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel }: { active: Tab | null; todayCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void }) {
+function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel, onManageLabels }: { active: Tab | null; todayCount: number; weekCount: number; monthCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void; onManageLabels: (at: { x: number; y: number }) => void }) {
   const stripRef = useRef<HTMLDivElement>(null)
+  const labelRef = useRef<HTMLButtonElement>(null)
   // Polish D: on a narrow screen the strip scrolls sideways — keep the active tab in view
   // (a deep link to Done/All would otherwise land on a tab scrolled out of sight).
   useEffect(() => {
@@ -128,11 +128,12 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
     const left = el.offsetLeft - strip.offsetLeft
     if (left < strip.scrollLeft || left + el.offsetWidth > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = Math.max(0, left - 16)
   }, [active])
-  const tab = (key: Tab, label: string, count: number, underline: string) => (
+  const tab = (key: Tab, label: string, count: number, underline: string, className?: string) => (
     <Link
       key={key}
       to={key === 'done' ? '/tasks?list=done' : `/tasks?list=${key}`}
       aria-current={active === key ? 'page' : undefined}
+      className={className}
       style={{
         position: 'relative',
         flex: 'none',
@@ -161,6 +162,10 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
           scroller's clip box and still lands on the bar's border, exactly as before. */}
       <div ref={stripRef} style={{ display: 'flex', alignItems: 'flex-end', gap: 22, flex: '1 1 auto', minWidth: 0, overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none', paddingBottom: 1, marginBottom: -1 }}>
         {tab('today', 'Today', todayCount, 'var(--acc-blossom)')}
+        {/* Kai 2026-10-12: This Week / This Month lived only in the desktop sidebar's Plan drawer — a
+            phone had no way in. They join the phone's strip (it scrolls sideways); desktop keeps the drawer. */}
+        {tab('week', 'This Week', weekCount, 'var(--acc-blossom)', 'tr-mobile-only')}
+        {tab('month', 'This Month', monthCount, 'var(--acc-blossom)', 'tr-mobile-only')}
         {/* R4-12 (2026-07-20 audit): overdue-only view, terra like every other overdue affordance */}
         {tab('overdue', 'Overdue', overdueCount, 'var(--acc-terra)')}
         {tab('upcoming', 'Upcoming', upcomingCount, 'var(--acc-blossom)')}
@@ -176,8 +181,14 @@ function TabBar({ active, todayCount, overdueCount, upcomingCount, somedayCount,
         {(labels.length > 0 || label) && (
           <Select
             value={label ?? ''}
-            onChange={(v) => onLabel(v || null)}
-            options={[{ value: '', label: 'All labels' }, ...labels.map((l) => ({ value: l, label: l }))]}
+            triggerRef={labelRef}
+            onChange={(v) => {
+              if (v !== MANAGE_LABELS) return onLabel(v || null)
+              const r = labelRef.current?.getBoundingClientRect()
+              onManageLabels({ x: r?.left ?? 0, y: (r?.bottom ?? 0) + 4 })
+            }}
+            // The Labels manager (Overlays.dc.html) from where the labels are — also Settings → Organize.
+            options={[{ value: '', label: 'All labels' }, ...labels.map((l) => ({ value: l, label: l })), { value: MANAGE_LABELS, label: 'Manage labels…' }]}
             title="Filter by label"
             ariaLabel="Label filter"
             className="kf-hit"
@@ -295,8 +306,9 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
         <OffsetTape top={-9} right={26} width={52} tint="color-mix(in srgb, var(--acc-lavender) 42%, transparent)" rotate={2} />
         <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
         <div style={{ marginTop: 11, display: 'flex', flexWrap: 'wrap', gap: 7 }}>
+          {/* Motion 2d: an area takes a dragged task (Move to… by drag). */}
           {areas.map((a) => (
-            <span key={a.id} style={{ fontSize: 12.5, color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}><EmojiText text={a.name} /></span>
+            <DropZone key={a.id} id={`rail:${a.id}`} spot={{ kind: 'place', label: a.name, to: { kind: 'area', id: a.id, domainId: a.domain_id, name: a.name } }} style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}><EmojiText text={a.name} /></DropZone>
           ))}
         </div>
         <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
@@ -316,13 +328,14 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
             const pct = inProject.length === 0 ? 0 : Math.round((done / inProject.length) * 5) * 20
             const domainName = domains.find((d) => d.id === p.domain_id)?.name ?? 'no domain'
             return (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              // Motion 2d: a project takes a dragged task (Move to… by drag).
+              <DropZone key={p.id} id={`rail:${p.id}`} spot={{ kind: 'place', label: p.name, to: { kind: 'project', id: p.id, domainId: p.domain_id, name: p.name } }} style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 8 }}>
                 <img src={`${A}/wisteria/p${pct}.png`} alt="" style={{ height: 30 }} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pct}%`}</div>
                 </div>
-              </div>
+              </DropZone>
             )
           })}
         </div>
@@ -346,11 +359,15 @@ const DONE_PETALS = [
   { right: 66, top: 18, w: 8, h: 6, opacity: 0.45, dur: 8, delay: 4.8, rest: 8 },
 ]
 
-function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: boolean; justCompletedId: string | null }) {
-  const [expanded, setExpanded] = useState(false)
+/** The Done view's two lists — today's, newest first, and the rest of the last 30 days. */
+function doneLists(tasks: Task[]): { doneToday: Task[]; doneEarlier: Task[] } {
   const doneRecent = tasks.filter((t) => t.status === 'done' && t.completed_at && daysSince(t.completed_at) <= 30)
-  const doneToday = doneRecent.filter((t) => isToday(t.completed_at)).sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
-  const doneEarlier = doneRecent.filter((t) => !isToday(t.completed_at)).sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? ''))
+  const newest = (a: Task, b: Task) => (b.completed_at ?? '').localeCompare(a.completed_at ?? '')
+  return { doneToday: doneRecent.filter((t) => isToday(t.completed_at)).sort(newest), doneEarlier: doneRecent.filter((t) => !isToday(t.completed_at)).sort(newest) }
+}
+
+function DoneView({ tasks, motion, justCompletedId, expanded, setExpanded, focusedId }: { tasks: Task[]; motion: boolean; justCompletedId: string | null; expanded: boolean; setExpanded: (v: boolean | ((v: boolean) => boolean)) => void; focusedId: string | null }) {
+  const { doneToday, doneEarlier } = doneLists(tasks)
   const mostRecentId = justCompletedId && doneToday.some((t) => t.id === justCompletedId) ? justCompletedId : null
 
   return (
@@ -387,7 +404,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
             </div>
             {doneToday.map((t, i) => (
-              <TaskRow key={t.id} task={t} border={i < doneToday.length - 1} justCompletedId={mostRecentId} />
+              <TaskRow key={t.id} task={t} border={i < doneToday.length - 1} justCompletedId={mostRecentId} highlighted={t.id === focusedId} />
             ))}
           </>
         )}
@@ -405,7 +422,7 @@ function DoneView({ tasks, motion, justCompletedId }: { tasks: Task[]; motion: b
             </div>
             {expanded && doneEarlier.map((t, i) => (
               <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                <TaskRow task={t} border={i < doneEarlier.length - 1} />
+                <TaskRow task={t} border={i < doneEarlier.length - 1} highlighted={t.id === focusedId} />
               </div>
             ))}
           </>
@@ -424,7 +441,10 @@ export function TasksPage() {
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
-  const { data: tasks = [], isPending: tasksPending } = useTasks()
+  const tasksQuery = useTasks()
+  const { data: tasks = [] } = tasksQuery
+  // MK States: rows while they come; offline and never loaded, say so; a failed load, Retry.
+  const tasksState = listState(tasksQuery, useOnline())
   // J-18: an import that exploded a repeating task into copies buried Kai's real tasks for weeks;
   // the tidy tool existed but lived three clicks deep in Settings. Point at it when it's needed.
   const dupeClusters = useMemo(() => findDuplicateClusters(tasks), [tasks])
@@ -500,15 +520,10 @@ export function TasksPage() {
     setJustCompletedId(task.id)
     if (!motion) return undo
     const todayOpen = filterByList(tasks, 'today', now).filter((t) => t.status === 'todo')
-    if (todayOpen.some((t) => t.id === task.id) && todayOpen.every((t) => t.id === task.id)) {
-      const dayKey = new Date().toDateString()
-      try {
-        if (localStorage.getItem('kf_day_complete') !== dayKey) {
-          localStorage.setItem('kf_day_complete', dayKey)
-          setDayComplete(true)
-          window.setTimeout(() => setDayComplete(false), 3400)
-        }
-      } catch { /* private mode — skip the ceremony */ }
+    // The one once-a-day gate, shared with Today (today/dayComplete) — not a second key of our own.
+    if (todayOpen.some((t) => t.id === task.id) && todayOpen.every((t) => t.id === task.id) && claimDayComplete()) {
+      setDayComplete(true)
+      window.setTimeout(() => setDayComplete(false), 400 + DAY_DONE_DWELL_MS) // rises 400ms, dwells
     }
     setCompleting((prev) => new Map(prev).set(task.id, task.top3))
     const timer = window.setTimeout(() => {
@@ -563,6 +578,8 @@ export function TasksPage() {
   const doneTodayTasks = displayTasks.filter((t) => t.status === 'done' && isToday(t.completed_at))
 
   const todayCount = filterByList(displayTasks, 'today', now).length
+  const weekCount = filterByList(displayTasks, 'week', now).length
+  const monthCount = filterByList(displayTasks, 'month', now).length
   const overdueCount = filterByList(displayTasks, 'overdue', now).length
   const upcomingCount = filterByList(displayTasks, 'upcoming', now).length
   const somedayCount = filterByList(displayTasks, 'someday', now).length
@@ -570,6 +587,9 @@ export function TasksPage() {
   const allCount = filterByList(displayTasks, 'all', now).length
 
   const [kbProjectId, setKbProjectId] = useState<string | null>(null)
+  // L (Overlays.dc.html "Label picker · keyboard L"): the focused row, or every selected one.
+  const [kbLabelIds, setKbLabelIds] = useState<string[] | null>(null)
+  const [manageLabelsAt, setManageLabelsAt] = useState<{ x: number; y: number } | null>(null)
   const kbProjectTask = kbProjectId ? flatTasks.find((t) => t.id === kbProjectId) : null
 
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -585,6 +605,20 @@ export function TasksPage() {
     setSelected(new Set())
   }
   useEscapeStack(selected.size > 0, clearSelection)
+
+  // Punch 19 (as on Today): a click on empty page space clears the selection; a click on a row, the
+  // bulk bar, a menu / popover, or an overlay keeps it. Document-level, so the shell counts as empty.
+  const hasSelection = selected.size > 0
+  useEffect(() => {
+    if (!hasSelection) return
+    function onDocClick(e: MouseEvent) {
+      const t = e.target as Element | null
+      if (t?.closest('[id^="task-"], [role="toolbar"], [role="menu"], [role="dialog"], .kf-overlay-card, .kf-overlay-scrim')) return
+      setSelected(new Set())
+    }
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
+  }, [hasSelection])
 
   const [bulkSchedulePos, setBulkSchedulePos] = useState<{ x: number; y: number } | null>(null)
   const [bulkProjectPos, setBulkProjectPos] = useState<{ x: number; y: number } | null>(null)
@@ -621,10 +655,31 @@ export function TasksPage() {
     deleteTasksWithUndo(selectedTasks)
     clearSelection()
   }
+  function bulkTop3() {
+    toggleTop3ManyWithUndo(selectedTasks)
+    clearSelection()
+  }
+
+  // Motion 2c/2d: a row picks up — with the rest of the selection when it's part of one — and files
+  // onto the sidebar's Today / Someday or the rail's areas and projects (./fileDrop; the ⋯ menu's
+  // Plan and Move to… are the same actions by tap and key).
+  function dragLoad(t: Task): DragLoad<FileSpot> {
+    const ids = selected.has(t.id) && selected.size > 1 ? [t.id, ...selectedTasks.filter((x) => x.id !== t.id).map((x) => x.id)] : [t.id]
+    const lifted = () => ids.flatMap((id) => tasks.filter((x) => x.id === id))
+    return {
+      ids,
+      label: t.title,
+      verdict: (spot) => taskVerdict(lifted(), spot),
+      drop: (spot) => {
+        dropTasks(lifted(), spot)
+        if (ids.length > 1) clearSelection()
+      },
+    }
+  }
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
       : undefined
 
   const bindings = buildListBindings({
@@ -636,18 +691,43 @@ export function TasksPage() {
     nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
     top3: (t) => toggleTop3(t),
     project: (t) => setKbProjectId(t.id),
+    labels: (t) => setKbLabelIds([t.id]),
     toggleSelect: (t) => toggleSelected(t.id),
     delete: (t) => deleteTasksWithUndo([t]),
+  }, {
+    // Kai 2026-10-12: with rows selected, a key acts on the selection (T was dead after a mouse select).
+    complete: () => bulkComplete(),
+    today: () => bulkSchedule(scheduleToday()),
+    tomorrow: () => bulkTomorrow(),
+    nextWeek: () => bulkSchedule(scheduleNextWeek()),
+    top3: () => bulkTop3(),
+    labels: (ts) => setKbLabelIds(ts.map((t) => t.id)),
+    delete: () => bulkDelete(),
   })
   useDeepLinkScroll(focusId, flatTasks)
 
-  const { focusedId: kbFocusedId } = useListKeys(flatTasks, bindings, {
-    active: !kbProjectId && activeTab !== 'done',
-    sectionLabel: activeTab === 'done' ? undefined : 'Lists',
-    onSelectAll: () => setSelected(new Set(flatTasks.map((t) => t.id))),
+  // Done has its own keys: the rows it shows, and only what a done task can take (e/Space reopens,
+  // Enter opens, # deletes) — there's no selection or bulk bar there.
+  const isDone = activeTab === 'done'
+  const [doneExpanded, setDoneExpanded] = useState(false)
+  const doneRows = useMemo(() => {
+    const { doneToday, doneEarlier } = doneLists(displayTasks)
+    return doneExpanded ? [...doneToday, ...doneEarlier] : doneToday
+  }, [displayTasks, doneExpanded])
+  const doneBindings = useMemo(
+    () =>
+      buildListBindings({ complete: (t) => handleRowReopen(t), open: (t) => openTask(t.id), delete: (t) => deleteTasksWithUndo([t]) })
+        .map((b) => (b.label === 'Complete' ? { ...b, label: 'Reopen' } : b)), // the cheatsheet says what it does here
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [openTask],
+  )
+  const { focusedId: kbFocusedId } = useListKeys(isDone ? doneRows : flatTasks, isDone ? doneBindings : bindings, {
+    active: !kbProjectId && !kbLabelIds,
+    sectionLabel: isDone ? 'Done' : 'Lists',
+    onSelectAll: isDone ? undefined : () => setSelected(new Set(flatTasks.map((t) => t.id))),
+    selected: isDone ? undefined : selectedTasks,
   })
 
-  const isDone = activeTab === 'done'
   const isSomeday = activeTab === 'someday'
   // Someday and Done are single-column (Tasks.dc.html 2a/2b — no Organize rail).
   const singleCol = isSomeday || isDone
@@ -688,7 +768,8 @@ export function TasksPage() {
         <div className="kf-bulk-anchor" style={{ minWidth: 0, maxWidth: 780 }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src={headerIcon} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
+            {/* Night 1b: the header plant is a silhouette lit at the rim in its own accent. */}
+            <img src={headerIcon} alt="" style={{ height: 56, filter: isSomeday ? 'var(--rim-clover, var(--shadow-drop-sm))' : 'var(--rim-blossom, var(--shadow-drop-sm))' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
               <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{h1}</h1>
@@ -705,7 +786,7 @@ export function TasksPage() {
           )}
         </div>
 
-        <TabBar active={activeTab} todayCount={todayCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} />
+        <TabBar active={activeTab} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
         {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}
         {dupeClusters.length > 0 && (
           <Link to="/settings/import" className="kf-link-terra" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>
@@ -751,8 +832,9 @@ export function TasksPage() {
           </div>
         )}
 
+        {/* Tasks.dc.html 1b's domain filter chips — on desktop too (Kai 2026-10-12: phone-only hid the filter). */}
         {!singleCol && domains.length > 0 && (
-          <div className="tr-mobile-only" style={{ gap: 8, marginTop: 14, overflowX: 'auto' }}>
+          <div style={{ display: 'flex', gap: 8, marginTop: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
             <span
               onClick={() => setDomainChip(null)}
               style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--kf-chip-tasks, #8A4A58)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
@@ -783,8 +865,13 @@ export function TasksPage() {
             onSubmit={(e) => {
               e.preventDefault()
               if (title.trim()) {
-                const { text, labels } = stripLabels(title) // `*label` words, as in the command bar
-                createTask({ title: text || title.trim(), labels, dueAt: activeTab === 'today' ? now.toISOString() : undefined })
+                // The command bar's one capture rule (command-bar/quickAdd): the instant local parse — a
+                // date and time on the user's clock, #project, !priority, 30m, *labels — lands it now (a
+                // typed time on the calendar too), a toast says where it went, the AI fills gaps after.
+                // Here it is always a task (it's the Tasks page); a line naming no day on Today is today's.
+                const parsed = parseCommand(title, domains, projects, { zone: 'cairo' })
+                const place = parsed.projectMatch ?? parsed.domainMatch
+                addTypedTask(parsed, title.trim(), place, activeTab === 'today' ? now.toISOString() : null)
                 seedPlant(e.currentTarget, motion) // Motion 5f — the seed drops out of the quick-add
               }
               setTitle('')
@@ -812,10 +899,14 @@ export function TasksPage() {
             </div>
           </div>
         )}
-        {tasksPending ? (
+        {tasksState === 'loading' ? (
           <Skeleton />
+        ) : tasksState === 'away' ? (
+          <div style={{ marginTop: 22 }}><OfflineChip>Offline — your tasks will be here when you’re back online</OfflineChip></div>
+        ) : tasksState === 'resting' ? (
+          <div style={{ marginTop: 22 }}><ErrorCard message="Couldn’t load your tasks." onRetry={() => void tasksQuery.refetch()} /></div>
         ) : isDone ? (
-          <DoneView tasks={displayTasks} motion={motion} justCompletedId={justCompletedId} />
+          <DoneView tasks={displayTasks} motion={motion} justCompletedId={justCompletedId} expanded={doneExpanded} setExpanded={setDoneExpanded} focusedId={kbFocusedId} />
         ) : (
         <div style={{ paddingTop: isSomeday ? 16 : 0 }}>
           {groups.length === 0 ? (
@@ -831,7 +922,7 @@ export function TasksPage() {
               <div key={group.key}>
                 {!isSomeday && <SectionHeader group={group} />}
                 {shownTasks(group).map((t, i) => (
-                  <div key={t.id} className={motion && !focusId ? 'kf-stagger-item' : undefined} style={motion && !focusId ? staggerDelay(i) : undefined}>
+                  <DragRow key={t.id} id={t.id} load={dragLoad(t)} className={motion && !focusId ? 'kf-stagger-item' : undefined} style={motion && !focusId ? staggerDelay(i) : undefined}>
                     <TaskRow
                       task={t}
                       highlighted={t.id === kbFocusedId || t.id === focusId}
@@ -844,7 +935,7 @@ export function TasksPage() {
                       onComplete={handleRowComplete}
                       onReopen={handleRowReopen}
                     />
-                  </div>
+                  </DragRow>
                 ))}
                 {shownTasks(group).length < group.tasks.length && (
                   <button
@@ -893,6 +984,9 @@ export function TasksPage() {
         <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
       )}
 
+      {kbLabelIds && <LabelPicker taskIds={kbLabelIds} position={rowAnchor('task-', kbLabelIds[0])} onClose={() => setKbLabelIds(null)} />}
+      {manageLabelsAt && <LabelManagerOverlay at={manageLabelsAt} onClose={() => setManageLabelsAt(null)} />}
+
       {!isDone && selected.size > 0 && (
         <BulkBar
           count={selected.size}
@@ -900,6 +994,7 @@ export function TasksPage() {
           onTomorrow={bulkTomorrow}
           onSchedule={(e) => setBulkSchedulePos({ x: e.clientX, y: e.clientY })}
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
+          onTop3={bulkTop3}
           onDelete={bulkDelete}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(flatTasks.map((t) => t.id)))}

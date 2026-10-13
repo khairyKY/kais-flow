@@ -1,6 +1,6 @@
-import { addDays, busyOnDay, freeSlots } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
+import { isTop3Today } from '../tasks/top3Rule'
 import { scheduleSlots, spanIso } from './phoneGridMath'
 
 // ── Kai 2026-10-07: the calendar's planning rail (Overdue · Today · Inbox, Akiflow's sidebar) and
@@ -51,7 +51,7 @@ export function railBuckets(tasks: readonly Task[], events: readonly CalendarEve
     const due = task.due_at ? cairoDateKey(new Date(task.due_at)) : null
     const missed = [due, block && blockLastDay(block)].filter((d): d is string => !!d && d < today).sort().at(-1)
     if (missed) overdue.push({ task, block, late: dayDiff(missed, today) })
-    else if (due === today || task.top3) todays.push({ task, block: null, late: 0 })
+    else if (due === today || isTop3Today(task, now)) todays.push({ task, block: null, late: 0 })
   }
   const dueMs = (r: RailTask) => (r.task.due_at ? Date.parse(r.task.due_at) : Infinity)
   overdue.sort((a, b) => b.late - a.late || dueMs(a) - dueMs(b))
@@ -113,11 +113,4 @@ export function dueFollows(dueAt: string | null, startsAt: string, now: Date): b
 export function nextFreeSlot(events: readonly CalendarEvent[], now: Date, dur: number): { starts_at: string; ends_at: string } | null {
   const s = scheduleSlots(events, now, dur).slots[0]
   return s ? spanIso({ day: s.day, start: s.start, end: s.start + dur }) : null
-}
-
-/** Plan ▸ Tomorrow first thing: tomorrow's first `dur`-minute gap from 08:00, else 09:00. */
-export function tomorrowFirst(events: readonly CalendarEvent[], now: Date, dur: number): { starts_at: string; ends_at: string } {
-  const day = addDays(cairoDateKey(now), 1)
-  const start = freeSlots(busyOnDay(events, day), day, now, dur, 1)[0]?.start ?? 9 * 60
-  return spanIso({ day, start, end: start + dur })
 }

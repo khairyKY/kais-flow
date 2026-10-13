@@ -339,8 +339,15 @@ function Hints({ seen, mobile }: { seen: ReadonlySet<string>; mobile: boolean })
     if (shown) return
     let cand: Hint | null = null
     let since = 0
+    // Never mid-press: a hint that popped while a block was held stayed over the grid the drag crossed.
+    let pressed = false
+    const down = () => { pressed = true }
+    const up = () => { pressed = false }
+    document.addEventListener('pointerdown', down, true)
+    document.addEventListener('pointerup', up, true)
+    document.addEventListener('pointercancel', up, true)
     const t = window.setInterval(() => {
-      const h = busy(false) ? null : pickHint(HINTS, { seen, touch, tourRunning: false, path: pathname, has: (name) => !!findAnchor(name, true) })
+      const h = busy(false) || pressed ? null : pickHint(HINTS, { seen, touch, tourRunning: false, path: pathname, has: (name) => !!findAnchor(name, true) })
       if (h !== cand) {
         cand = h
         since = Date.now()
@@ -352,7 +359,12 @@ function Hints({ seen, mobile }: { seen: ReadonlySet<string>; mobile: boolean })
         setShown({ hint: h, el })
       }
     }, 500)
-    return () => window.clearInterval(t)
+    return () => {
+      window.clearInterval(t)
+      document.removeEventListener('pointerdown', down, true)
+      document.removeEventListener('pointerup', up, true)
+      document.removeEventListener('pointercancel', up, true)
+    }
   }, [shown, seen, touch, pathname])
 
   useEffect(() => {

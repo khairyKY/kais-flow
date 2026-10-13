@@ -11,6 +11,8 @@
 /* Night overrides load LAST so every [data-theme="night"] token (colors AND the
    shadow set) wins over the light :root defaults, which share its specificity. */
 @import "./styles/tokens/colors.dark.css";
+/* Night surfaces (Night.dc.html 1a–1f) — night-scoped rules only, on the tokens above. */
+@import "./styles/night.css";
 /* Fonts load via <link> in index.html, not tokens/fonts.css. */
 html,
 body,

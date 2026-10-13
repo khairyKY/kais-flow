@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterByList, filterByScope, groupTasks, planningColumns, todayListTasks, todayOpenCount } from './grouping'
-import { scheduleNextWeek } from '../../lib/dateShortcuts'
+import { filterByList, filterByScope, groupTasks, todayListTasks, todayOpenCount } from './grouping'
 import type { Task } from '../../lib/types'
 
 // Fixed "now": Wed 2026-07-08, mid-afternoon in Cairo. B2/T-2: the app's day boundary is
@@ -241,51 +240,17 @@ describe('filterByScope', () => {
   })
 })
 
-describe('planningColumns', () => {
-  it('keeps all 5 columns, even empty ones, as drop targets', () => {
-    const cols = planningColumns([], NOW)
-    expect(cols.map((c) => c.key)).toEqual(['today', 'tomorrow', 'week', 'nextWeek', 'someday'])
-  })
-
-  it('overdue tasks land in Today, not a separate bucket', () => {
-    const cols = planningColumns([task({ due_at: at(-3) })], NOW)
-    expect(cols.find((c) => c.key === 'today')!.tasks).toHaveLength(1)
-  })
-
-  it('undated tasks fold into Next week', () => {
-    const cols = planningColumns([task({})], NOW)
-    expect(cols.find((c) => c.key === 'nextWeek')!.tasks).toHaveLength(1)
-  })
-
-  it('day 2-6 out is This week, day 7+ is Next week', () => {
-    const cols = planningColumns([task({ id: 'mid', due_at: at(4) }), task({ id: 'far', due_at: at(9) })], NOW)
-    expect(cols.find((c) => c.key === 'week')!.tasks.map((t) => t.id)).toEqual(['mid'])
-    expect(cols.find((c) => c.key === 'nextWeek')!.tasks.map((t) => t.id)).toEqual(['far'])
-  })
-
-  it('someday tasks land in Someday regardless of date', () => {
-    const cols = planningColumns([task({ someday: true, due_at: at(0) })], NOW)
-    expect(cols.find((c) => c.key === 'someday')!.tasks).toHaveLength(1)
-    expect(cols.find((c) => c.key === 'today')!.tasks).toHaveLength(0)
-  })
-
-  it('a task just dropped on Next week stays in Next week, on every weekday — regression for the bug where next Monday landed in This week on Tue–Sat', () => {
-    for (let i = 0; i < 7; i++) {
-      // T-2: `now` is pinned in Cairo time (2026-07-06 is a Monday there). 01:00 and 23:30
-      // Cairo fall on another calendar day on most devices (01:00 Cairo is 15:00 the day
-      // before in Los Angeles; 23:30 Cairo is the next morning in Tokyo) — exactly where a
-      // device-local shortcut and the Cairo-day board used to disagree.
-      for (const time of ['01:00', '15:00', '23:30']) {
-        const now = new Date(`2026-07-${String(6 + i).padStart(2, '0')}T${time}:00+03:00`)
-        const due = scheduleNextWeek(now)
-        const cols = planningColumns([task({ due_at: due })], now)
-        // Sunday too, since 2026-10-03: Next week skips tomorrow's Monday (daysUntilNextWeek), so the
-        // drop no longer falls into the board's Tomorrow column.
-        const expectedKey = 'nextWeek'
-        const label = `weekday offset ${i} at ${time} Cairo`
-        expect(cols.find((c) => c.key === expectedKey)!.tasks, label).toHaveLength(1)
-        expect(cols.find((c) => c.key === 'week')!.tasks, label).toHaveLength(0)
-      }
+describe('a paused series (Perennials ‖) rests off every list (Kai 2026-10-12 audit)', () => {
+  const paused = task({ id: 'p', recurrence_rule: 'FREQ=DAILY', due_at: NOW.toISOString(), paused: true })
+  const live = task({ id: 'l', recurrence_rule: 'FREQ=DAILY', due_at: NOW.toISOString() })
+  it('no smart list shows it, All included', () => {
+    for (const list of ['today', 'week', 'month', 'all', null] as const) {
+      expect(filterByList([paused, live], list, NOW).map((t) => t.id), String(list)).toEqual(['l'])
     }
+  })
+  it('Today and its badge leave it out; the rail scopes too', () => {
+    expect(todayListTasks([paused, live], NOW).map((t) => t.id)).toEqual(['l'])
+    expect(todayOpenCount([paused, live], NOW)).toBe(1)
+    expect(filterByScope([paused, live], { kind: 'smart', id: 'today' }, NOW).map((t) => t.id)).toEqual(['l'])
   })
 })

@@ -2,7 +2,8 @@
 // generated service worker (vite.config.ts workbox.importScripts).
 //
 // `push`: notify sends a Notice (supabase/functions/notify/copy.ts) — title, body, up to two actions,
-// silent or not. Shown as is, with the app icon and the monochrome K badge.
+// silent or not. Shown as is, with the app icon and the monochrome K badge — except "Your page is
+// read" while a window of the app is focused: the read finished in front of you (12k: useful, never noise).
 //
 // `notificationclick`: no keys and no session here — every write goes through the app itself, so it
 // is the signed-in app's own outbox write (RLS, offline-safe, logged):
@@ -19,19 +20,25 @@ self.addEventListener('push', (event) => {
   } catch {
     n = { body: event.data ? event.data.text() : '' }
   }
-  event.waitUntil(
-    self.registration.showNotification(n.title || 'Kai’s Flow', {
-      body: n.body || '',
-      icon: '/icon-192.png',
-      badge: '/badge-96.png',
-      tag: n.tag || undefined,
-      renotify: !!n.tag && !n.silent,
-      silent: !!n.silent,
-      actions: (n.actions || []).slice(0, 2),
-      data: { kind: n.kind || null, url: n.url || '/today', taskIds: n.taskIds || [] },
-    }),
-  )
+  event.waitUntil(kfShow(n))
 })
+
+async function kfShow(n) {
+  if (n.kind === 'paper_ready') {
+    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+    if (windows.some((w) => w.focused)) return
+  }
+  return self.registration.showNotification(n.title || 'Kai’s Flow', {
+    body: n.body || '',
+    icon: '/icon-192.png',
+    badge: '/badge-96.png',
+    tag: n.tag || undefined,
+    renotify: !!n.tag && !n.silent,
+    silent: !!n.silent,
+    actions: (n.actions || []).slice(0, 2),
+    data: { kind: n.kind || null, url: n.url || '/today', taskIds: n.taskIds || [] },
+  })
+}
 
 /** The page that runs `action` when no window is open: the notice's own page, plus the action. */
 function kfActionUrl(msg) {

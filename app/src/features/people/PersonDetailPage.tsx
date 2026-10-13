@@ -1,11 +1,33 @@
 import { useState, useMemo, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router'
-import { usePeople, useInteractions, upsertPerson, deletePerson, createInteraction, deleteInteraction, getDaysUntilBirthday } from './api'
+import { usePeople, useInteractions, upsertPerson, deletePersonWithUndo, createInteraction, updateInteraction, deleteInteractionWithUndo, getDaysUntilBirthday, removeFactWithUndo, withFactSaved, logTouchWithUndo } from './api'
+import { RenameField } from '../../components/RenameField'
+import { DateField } from '../../components/DatePicker'
+import { Select } from '../../components/Select'
+import { Skeleton, ErrorCard } from '../../components/States'
+import { zoneDateKey } from '../../lib/dateShortcuts'
+import { zoneTimeKey, zoneToIso } from '../calendar/eventTime'
 import { useDomains } from '../domains/api'
 import type { Fact } from '../../lib/types'
 import { BackLink, Button } from '../../components/kit'
 import { openCapture } from '../command-bar/commandBarStore'
-import { ConfirmCard } from '../projects/ConfirmCard'
+
+const FACT_TYPES = ['Interest', 'Birthday', 'Note', 'Family']
+const LOG_CHANNELS = [{ value: 'in person', label: 'In person' }, { value: 'call', label: 'Call' }, { value: 'text', label: 'Text' }, { value: 'email', label: 'Email' }]
+const LOG_DAYS = ['today', 'yesterday', '1w ago'].map((d) => ({ value: d, label: d }))
+// The fsel look (paper-bone field, 12.5px) on the themed Select's trigger.
+const fsel: React.CSSProperties = { background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)' }
+// The .chip pills as real buttons.
+const chipBtn: React.CSSProperties = { border: 'none', background: 'none', cursor: 'pointer' }
+// A ✕ that removes a row: a real button, 44px to a finger (.kf-hit).
+const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer', borderRadius: 999 }
+
+/** A stored fact date for the date picker: legacy "MM-DD" gains this year. */
+function factDateForField(date: string | null | undefined): string {
+  if (!date) return ''
+  const md = /^(\d{1,2})-(\d{1,2})$/.exec(date)
+  return md ? `${zoneDateKey(new Date()).slice(0, 4)}-${md[1].padStart(2, '0')}-${md[2].padStart(2, '0')}` : date
+}
 
 function getAvatarBgColor(name: string): string {
   const colors = [
@@ -59,7 +81,8 @@ const MomentIcon = ({ filled }: { filled: boolean }) => (
 export function PersonDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
-  const { data: people = [], refetch: refetchPeople } = usePeople()
+  const peopleQuery = usePeople()
+  const { data: people = [], refetch: refetchPeople } = peopleQuery
   const { data: interactions = [], refetch: refetchInteractions } = useInteractions()
   const { data: domains = [] } = useDomains()
 
@@ -79,42 +102,51 @@ export function PersonDetailPage() {
   const [newFactValue, setNewFactValue] = useState('')
   const [newFactDate, setNewFactDate] = useState('')
   const [newFactRecurs, setNewFactRecurs] = useState(false)
+  // A fact being edited sits in the add-fact form and replaces the stored one only on save.
+  const [editingFact, setEditingFact] = useState<string | null>(null)
   const factValueRef = useRef<HTMLInputElement>(null)
 
   // Interactions form
   const [logChannel, setLogChannel] = useState('in person')
   const [logSummary, setLogSummary] = useState('')
   const [logDate, setLogDate] = useState('today')
+  // Kai 2026-10-12: an interaction's summary is edited in place (its day through the date picker).
+  const [editingInteraction, setEditingInteraction] = useState<string | null>(null)
 
   // Edit person
   const [editing, setEditing] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(false)
-  const [editName, setEditName] = useState(person?.name ?? '')
-  const [editDomain, setEditDomain] = useState(person?.domain_id ?? '')
-  useMemo(() => { if (person) { setEditName(person.name); setEditDomain(person.domain_id ?? '') } }, [person])
+  const [editName, setEditName] = useState('')
+  const [editDomain, setEditDomain] = useState('')
 
-  if (!person) return <div style={{ padding: 40, color: 'var(--ink-body)' }}>Person not found. <Link to="/people">Back to directory</Link></div>
+  if (!person) {
+    // Designed states: nothing cached yet → skeleton; the load failed → retry; only a loaded
+    // directory without this id is "not found".
+    if (peopleQuery.isPending) return <div style={{ maxWidth: 760 }}><Skeleton rows={4} /></div>
+    if (peopleQuery.isError) return <div style={{ maxWidth: 760 }}><ErrorCard message="Couldn't load this person." onRetry={() => void refetchPeople()} /></div>
+    return <div style={{ padding: 40, color: 'var(--ink-body)' }}>Person not found. <Link to="/people">Back to directory</Link></div>
+  }
+
+  const resetFactForm = () => {
+    setEditingFact(null); setNewFactValue(''); setNewFactDate(''); setNewFactRecurs(false)
+  }
 
   const handleAddFact = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newFactValue.trim()) return
-    const fact: Fact = { id: crypto.randomUUID(), label: newFactType, value: newFactValue.trim(), date: newFactDate || null, recurs: newFactRecurs }
-    upsertPerson({ ...person, facts: [...(person.facts || []), fact] }, false)
-    setNewFactValue(''); setNewFactDate(''); setNewFactRecurs(false)
+    const fact: Fact = { id: editingFact ?? crypto.randomUUID(), label: newFactType, value: newFactValue.trim(), date: newFactDate || null, recurs: newFactRecurs }
+    upsertPerson({ ...person, facts: withFactSaved(person.facts || [], fact) }, false)
+    resetFactForm()
     void refetchPeople()
   }
 
-  const removeFact = (fid: string) => {
-    upsertPerson({ ...person, facts: (person.facts || []).filter((f) => f.id !== fid) }, false)
-    void refetchPeople()
-  }
-
+  // Kai's flow audit: "edit" used to delete the fact and refill the form — leave the page and it was
+  // gone. Now it only loads the form; the stored fact changes on Save.
   const editFact = (f: Fact) => {
+    setEditingFact(f.id)
     setNewFactType(f.label)
     setNewFactValue(f.value)
-    setNewFactDate(f.date || '')
+    setNewFactDate(factDateForField(f.date))
     setNewFactRecurs(!!f.recurs)
-    removeFact(f.id)
     factValueRef.current?.focus()
   }
 
@@ -129,11 +161,6 @@ export function PersonDetailPage() {
     void refetchInteractions()
   }
 
-  const quickTouch = (ch: string) => {
-    createInteraction({ person_id: person.id, summary: ch === 'call' ? 'Phone call catch up' : ch === 'text' ? 'Text message catch up' : 'Met in person', occurred_at: new Date().toISOString() })
-    void refetchInteractions()
-  }
-
   const savePerson = (e: React.FormEvent) => {
     e.preventDefault()
     if (!editName.trim()) return
@@ -142,8 +169,15 @@ export function PersonDetailPage() {
     void refetchPeople()
   }
 
-  // Kai audit E2 grammar: in-app ConfirmCard, never a native popup
-  const removePerson = () => setConfirmDelete(true)
+  // The editor starts from the person as they are when it opens (it used to be re-seeded during
+  // render, on every refetch).
+  const toggleEditor = () => {
+    if (!editing) { setEditName(person.name); setEditDomain(person.domain_id ?? '') }
+    setEditing(!editing)
+  }
+
+  // Flow Audit §4: delete = Undo toast, no confirm. Undo brings back the person and their log.
+  const removePerson = () => { deletePersonWithUndo(person); navigate('/people') }
 
   const lastTouchLabel =
     lastTouchDays === null ? 'no history yet' : lastTouchDays === 0 ? 'today' : lastTouchDays === 1 ? 'yesterday' : lastTouchDays < 7 ? `${lastTouchDays}d ago` : `${Math.floor(lastTouchDays / 7)}w ago`
@@ -154,7 +188,6 @@ export function PersonDetailPage() {
         .chip{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
         .flabel{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
         .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
-        .fsel{background:var(--paper-bone);border:1px solid var(--line-card);border-radius:6px;padding:8px 11px;font-size:12.5px;color:var(--ink-body);display:inline-flex;align-items:center;gap:8px}
         .slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
         .slabel .r{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
         .av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:none}
@@ -190,26 +223,29 @@ export function PersonDetailPage() {
 
       {/* Quick actions */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-        <span onClick={() => quickTouch('call')} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)', cursor: 'pointer' }}>log a call</span>
-        <span onClick={() => quickTouch('meet')} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)', cursor: 'pointer' }}>met in person</span>
-        <span onClick={() => quickTouch('text')} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>text</span>
+        <button type="button" onClick={() => logTouchWithUndo(person, 'call')} className="chip kf-hit" style={{ ...chipBtn, background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)' }}>log a call</button>
+        <button type="button" onClick={() => logTouchWithUndo(person, 'meet')} className="chip kf-hit" style={{ ...chipBtn, background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)' }}>met in person</button>
+        <button type="button" onClick={() => logTouchWithUndo(person, 'text')} className="chip kf-hit" style={{ ...chipBtn, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>text</button>
         <span style={{ flex: 1 }} />
-        <span onClick={() => setEditing(!editing)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>{editing ? 'close editor' : 'edit person ▸'}</span>
+        <button type="button" onClick={toggleEditor} className="chip kf-hit" style={{ ...chipBtn, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' }}>{editing ? 'close editor' : 'edit person ▸'}</button>
       </div>
 
       {/* Inline editor */}
       {editing && (
-        <form onSubmit={savePerson} style={{ marginTop: 14, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', padding: 14, borderRadius: 3, display: 'flex', gap: 12, alignItems: 'flex-end' }}>
-          <div style={{ flex: 1 }}>
+        <form onSubmit={savePerson} style={{ marginTop: 14, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', padding: 14, borderRadius: 3, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
+          <div style={{ flex: '1 1 160px' }}>
             <div className="flabel" style={{ marginBottom: 4 }}>Name</div>
-            <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 13 }} />
+            <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 'var(--fs-body-s)' }} />
           </div>
           <div style={{ width: 180 }}>
             <div className="flabel" style={{ marginBottom: 4 }}>Circle</div>
-            <select value={editDomain} onChange={(e) => setEditDomain(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 13 }}>
-              <option value="">No Circle</option>
-              {domains.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
-            </select>
+            <Select
+              value={editDomain}
+              onChange={setEditDomain}
+              ariaLabel="Circle"
+              options={[{ value: '', label: 'No Circle' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+              style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 'var(--fs-body-s)' }}
+            />
           </div>
           <Button type="submit" variant="cta" style={{ padding: '8px 16px', fontSize: 12 }}>Save</Button>
         </form>
@@ -227,7 +263,7 @@ export function PersonDetailPage() {
             {f.recurs
               ? <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>yearly ✓</span>
               : <span className="chip" style={{ border: '1px dashed var(--line-solid)', color: 'var(--ink-faint)' }}>once</span>}
-            <span onClick={() => editFact(f)} style={{ fontSize: '11.5px', color: 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>edit</span>
+            <button type="button" className="kf-hit" onClick={() => editFact(f)} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: editingFact === f.id ? 'var(--acc-clover-text)' : 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>{editingFact === f.id ? 'editing…' : 'edit'}</button>
           </div>
         ))}
         <div
@@ -249,62 +285,80 @@ export function PersonDetailPage() {
             <span style={{ fontSize: '13.5px', color: 'var(--ink-body)', flex: '1 1 96px', minWidth: 0 }}>{f.value}</span>
             {f.recurs && <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>↻ recurs</span>}
             {f.label === 'Birthday' && f.date && <span className="fhelp" style={{ marginLeft: 'auto' }}>nudges 2 weeks out</span>}
-            <span onClick={() => removeFact(f.id)} style={{ fontSize: 11.5, color: 'var(--ink-faint)', cursor: 'pointer', marginLeft: 10 }}>✕</span>
+            <button type="button" className="kf-hit" aria-label={`Remove ${f.label}`} onClick={() => removeFactWithUndo(person, f.id)} style={{ ...removeBtn, marginLeft: 4 }}>✕</button>
           </div>
         ))}
-        {/* Add fact row */}
+        {/* Add fact row (also the editor for an existing fact — `edit` above) */}
         <form onSubmit={handleAddFact} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '10px 2px', flexWrap: 'wrap' }}>
-          <span className="fsel" style={{ cursor: 'pointer', position: 'relative' }}>
-            <select value={newFactType} onChange={(e) => setNewFactType(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
-              <option value="Interest">Interest</option><option value="Birthday">Birthday</option><option value="Note">Note</option><option value="Family">Family</option>
-            </select>
-            {newFactType} <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>
-          </span>
+          <Select
+            value={newFactType}
+            onChange={setNewFactType}
+            ariaLabel="Fact type"
+            options={(FACT_TYPES.includes(newFactType) ? FACT_TYPES : [...FACT_TYPES, newFactType]).map((t) => ({ value: t, label: t }))}
+            style={fsel}
+          />
           <span style={{ flex: 1, minWidth: 160 }}>
             <input ref={factValueRef} type="text" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: newFactValue ? 'normal' : 'italic', outline: 'none' }} />
           </span>
-          <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer', position: 'relative' }}>
-            <input type="text" placeholder="MM-DD" value={newFactDate} onChange={(e) => setNewFactDate(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, width: '100%' }} />
-            date?
-          </span>
-          <span onClick={() => setNewFactRecurs(!newFactRecurs)} className="chip" style={{ border: '1px solid var(--line-solid)', color: newFactRecurs ? 'var(--acc-clover-text)' : 'var(--ink-muted)', cursor: 'pointer' }}>↻</span>
-          <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Add fact</button>
+          <DateField
+            value={newFactDate}
+            onChange={setNewFactDate}
+            title="Date"
+            placeholder="date?"
+            ariaLabel="Fact date"
+            style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)' }}
+          />
+          <button type="button" aria-pressed={newFactRecurs} aria-label="Repeats yearly" onClick={() => setNewFactRecurs(!newFactRecurs)} className="chip kf-hit" style={{ ...chipBtn, border: '1px solid var(--line-solid)', color: newFactRecurs ? 'var(--acc-clover-text)' : 'var(--ink-muted)' }}>↻</button>
+          {editingFact && <button type="button" onClick={resetFactForm} className="chip kf-hit" style={{ ...chipBtn, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' }}>cancel</button>}
+          <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>{editingFact ? 'Save fact' : 'Add fact'}</button>
         </form>
       </div>
 
       {/* Interactions */}
       <div className="slabel" style={{ margin: '24px 0 6px' }}><span>Interactions · {personInteractions.length}</span><span className="r" /></div>
       <form onSubmit={handleLog} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 0 12px', flexWrap: 'wrap' }}>
-        <span className="fsel" style={{ cursor: 'pointer', position: 'relative' }}>
-          <select value={logChannel} onChange={(e) => setLogChannel(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
-            <option value="in person">In person</option><option value="call">Call</option><option value="text">Text</option><option value="email">Email</option>
-          </select>
-          {logChannel === 'in person' ? 'In person' : logChannel.charAt(0).toUpperCase() + logChannel.slice(1)} <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>
-        </span>
+        <Select value={logChannel} onChange={setLogChannel} ariaLabel="Channel" options={LOG_CHANNELS} style={fsel} />
         <span style={{ flex: 1, minWidth: 160 }}>
           <input type="text" placeholder="what did you talk about?" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: logSummary ? 'normal' : 'italic', outline: 'none' }} />
         </span>
-        <span className="fsel" style={{ cursor: 'pointer', position: 'relative' }}>
-          <select value={logDate} onChange={(e) => setLogDate(e.target.value)} style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}>
-            <option value="today">today</option><option value="yesterday">yesterday</option><option value="1w ago">1w ago</option>
-          </select>
-          {logDate} <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>
-        </span>
+        <Select value={logDate} onChange={setLogDate} ariaLabel="When" options={LOG_DAYS} style={fsel} />
         <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Log</button>
       </form>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {personInteractions.map((i, idx) => {
-          const dateStr = new Date(i.occurred_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
           const s = i.summary.toLowerCase()
           const channel = s.includes('call') || s.includes('phone') ? 'call' : s.includes('dinner') || s.includes('met ') || s.includes('in person') ? 'in person' : 'text'
           const chipStyle = channel === 'in person' ? { background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' } : { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }
           return (
             <div key={i.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 2px', borderBottom: idx < personInteractions.length - 1 ? '1px dashed var(--line-dashed)' : 'none' }}>
-              <span className="fhelp" style={{ width: 74, flex: 'none', paddingTop: 3 }}>{dateStr}</span>
+              {/* The day opens the app's date picker (not the future); the time of day stays. */}
+              <DateField
+                value={zoneDateKey(new Date(i.occurred_at))}
+                max={zoneDateKey(new Date())}
+                clearable={false}
+                onChange={(v) => { if (v && v <= zoneDateKey(new Date())) updateInteraction(i, { occurred_at: zoneToIso(v, zoneTimeKey(new Date(i.occurred_at))) }) }}
+                title="When"
+                ariaLabel="Date of this interaction"
+                style={{ width: 74, flex: 'none', padding: '3px 0 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', whiteSpace: 'normal' }}
+              />
               <span className="chip" style={{ ...chipStyle, flex: 'none' }}>{channel}</span>
-              <span style={{ fontSize: '13.5px', color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>{i.summary}</span>
-              <span onClick={() => { deleteInteraction(i.id); void refetchInteractions() }} style={{ fontSize: 11, color: 'var(--ink-faint)', cursor: 'pointer', paddingLeft: 6 }}>✕</span>
+              {editingInteraction === i.id ? (
+                <span style={{ fontSize: '13.5px', lineHeight: 1.5, flex: 1, minWidth: 0 }}>
+                  <RenameField
+                    value={i.summary}
+                    ariaLabel="Edit interaction"
+                    style={{ margin: '-3px 0' }}
+                    onDone={(next) => {
+                      setEditingInteraction(null)
+                      if (next && next !== i.summary) updateInteraction(i, { summary: next })
+                    }}
+                  />
+                </span>
+              ) : (
+                <span role="button" tabIndex={0} title="Edit" onClick={() => setEditingInteraction(i.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingInteraction(i.id) } }} style={{ fontSize: '13.5px', color: 'var(--ink-body)', lineHeight: 1.5, flex: 1, cursor: 'text' }}>{i.summary}</span>
+              )}
+              <button type="button" className="kf-hit" aria-label="Remove interaction" onClick={() => deleteInteractionWithUndo(i)} style={removeBtn}>✕</button>
             </div>
           )
         })}
@@ -312,19 +366,9 @@ export function PersonDetailPage() {
 
       {/* Footer */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-        <span onClick={removePerson} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person…</span>
+        <button type="button" className="kf-hit" onClick={removePerson} style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person</button>
         <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>the log is the memory ✿</span>
       </div>
-
-      {confirmDelete && (
-        <ConfirmCard
-          title={`Delete ${person.name}?`}
-          body="Their facts and the interaction log go with them."
-          confirmLabel="Delete"
-          onConfirm={() => { setConfirmDelete(false); deletePerson(person.id); navigate('/people') }}
-          onCancel={() => setConfirmDelete(false)}
-        />
-      )}
     </div>
   )
 }

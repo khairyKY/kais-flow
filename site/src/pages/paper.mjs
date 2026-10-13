@@ -1,4 +1,4 @@
-import { img, head2, icon, btn, soon } from '../lib.mjs'
+import { img, head2, icon, btn, soon, live } from '../lib.mjs'
 import { papers, notebookPage, linedPage } from '../parts.mjs'
 
 const lecture = `<div class="lined sm" role="img" aria-label="Handwritten lecture notes from OS lecture 3 on 4 October"><div class="lined-in">
@@ -16,15 +16,15 @@ const ticked = `<div class="card review" role="img" aria-label="Five boxes ticke
   ${['GCI homework 1 — NumPy', 'Do GCI lecture 2’s survey', 'Shower + breakfast', 'Reply to Omar', 'Buy milk'].map((t) => `<div class="review-r"><span class="box">${icon('check', 15)}</span>${t}</div>`).join('')}
   <span class="btn primary" aria-hidden="true">Mark 5 done</span></div>`
 
-const step = (n, eyebrow, title, text, art) => `<section class="sec"><div class="wrap paperstep">
-  <div><div class="numrow"><span class="num" aria-hidden="true">${n}</span>${soon()}</div>${head2({ eyebrow, title, lead: text })}</div>
+const step = (n, eyebrow, title, text, art, isLive = false) => `<section class="sec"><div class="wrap paperstep">
+  <div><div class="numrow"><span class="num" aria-hidden="true">${n}</span>${isLive ? live() : soon()}</div>${head2({ eyebrow, title, lead: text })}</div>
   <div class="pair">${art}</div>
 </div></section>`
 
 export const paper = {
   path: '/paper/',
   title: 'Paper people',
-  description: 'For people who think on paper: the Notebook page lays out your day to copy by hand, Paper capture turns a photo of your notes into tasks, and the ticks loop marks them done. Coming soon.',
+  description: 'For people who think on paper: the Notebook page lays out your day to copy by hand, Paper capture turns a photo of your notes into tasks, and the ticks loop marks them done. All three are here.',
   og: 'paper',
   body: `<section class="sec first paper-hero"><div class="wrap split">
   <div>
@@ -33,11 +33,11 @@ export const paper = {
   </div>
   <div style="position:relative">${img('tools-pen', 'A fountain pen', { w: 220, cls: 'pen', eager: true })}${papers()}</div>
 </div></section>
-${step(1, 'Notebook page', 'Your day, the way you write it', 'Habits and data on top, the plan in the middle, boxes below — or any order you like. Copy it by hand, or print it on A5. Big type, aligned times, real boxes.', notebookPage())}
-${step(2, 'Paper capture', 'A photo of your notes becomes tasks', 'Write in a lecture or a meeting. Later, take a photo. Kai’s Flow reads your handwriting and suggests tasks, events and notes — showing the line it read beside anything it isn’t sure of.', lecture + review)}
-${step(3, 'The ticks loop', 'Tick it on paper, it’s done in the app', 'At night, photograph the page you ticked. The app finds each box by its line and asks once: mark these done?', linedPage('sm') + ticked)}
+${step(1, 'Notebook page', 'Your day, the way you write it', 'Habits and data on top, the plan in the middle, boxes below — or any order you like. Copy it by hand, or print it on A5. Big type, aligned times, real boxes.', notebookPage(), true)}
+${step(2, 'Paper capture', 'A photo of your notes becomes tasks', 'Write in a lecture or a meeting. Later, photograph the page with the camera in the capture bar, or Scan paper in the Inbox. Kai’s Flow reads your handwriting — Arabic too — and suggests tasks, events and notes, showing the line it read beside anything it isn’t sure of. Up to 15 pages a day.', lecture + review, true)}
+${step(3, 'The ticks loop', 'Tick it on paper, it’s done in the app', 'At night, photograph the page you ticked. The app finds each box by its line and asks once: mark these done?', linedPage('sm') + ticked, true)}
 <section class="sec"><div class="wrap narrow" style="text-align:center">
-  <p class="lead" style="margin-inline:auto">Paper capture is here (v1.0.20); the Notebook page and the ticks loop come next. Field notes will say the day each one lands.</p>
+  <p class="lead" style="margin-inline:auto">Paper capture came in v1.0.20; the Notebook page and the ticks loop came in v1.1.0.</p>
   <div class="btns" style="justify-content:center;margin-top:22px">${btn('Follow Field notes', '/field-notes/feed.xml', { kind: 'secondary', ic: 'rss' })}${btn('What’s growing', '/growing/', { kind: 'secondary' })}</div>
 </div></section>`,
 }

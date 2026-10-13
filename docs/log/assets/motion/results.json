@@ -1,0 +1,242 @@
+[
+  {
+    "name": "s1 a project row pushes its page: the list stays underneath as a receding copy while the detail rides up",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"push\"}"
+  },
+  {
+    "name": "s1 at rest the copy is gone and the page is live",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 its back link pops: the detail drops away over the list",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"pop\"}"
+  },
+  {
+    "name": "s3 the browser's Back pops too",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"pop\"}"
+  },
+  {
+    "name": "s3 …and Forward pushes again",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"push\"}"
+  },
+  {
+    "name": "s4 Esc pops a detail page",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"pop\"} /projects"
+  },
+  {
+    "name": "s5 a sidebar jump away from a detail is the route cut, no stack",
+    "ok": true,
+    "detail": "{\"layer\":false,\"stack\":null}"
+  },
+  {
+    "name": "s6 People → a person pushes",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"push\"}"
+  },
+  {
+    "name": "s7 Tasks → the task editor page pushes",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"push\"}"
+  },
+  {
+    "name": "s no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [day] a phone pushes the detail in from the right",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"push\"}"
+  },
+  {
+    "name": "p2 Back slides it away to the right",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"pop\"}"
+  },
+  {
+    "name": "p [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [night] a phone pushes the detail in from the right",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"push\"}"
+  },
+  {
+    "name": "p [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 mid-drag: a lifted ghost follows the pointer, the row keeps its place as a dashed slot, Someday opens as the placeholder",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 the drop parks it for someday, with a toast and Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 Undo puts it back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 onto Today: due today at its own time, toast \"Moved to today\"",
+    "ok": true,
+    "detail": "2026-10-12T06:00:00.000Z"
+  },
+  {
+    "name": "d no page errors (1280)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 the soft no: the project it already lives in warms terra under the pointer, shakes once on the drop, nothing is written",
+    "ok": true,
+    "detail": "over=1 shake=1 writes=0"
+  },
+  {
+    "name": "d4 three selected lift as ONE ghost with two fanned behind and the count 3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4 the drop moves all three to Garage, one toast, and clears the selection",
+    "ok": true,
+    "detail": "b0000000-0000-4000-8000-000000000002,b0000000-0000-4000-8000-000000000002,b0000000-0000-4000-8000-000000000002"
+  },
+  {
+    "name": "d5 no popover opened by the drag",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 a refused star shakes (and \"Top 3 is full\" says why)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d no page errors (rail)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 [night] the push plays under the night palette",
+    "ok": true,
+    "detail": "{\"layer\":true,\"stack\":\"push\"}"
+  },
+  {
+    "name": "n2 [night] the drag files the same way",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t1 Today's Top 3 drag (its own DndContext, inside the shell's) still reorders: Review moves up",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "t no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1 a capture dropped on Today is filed as a task due today (toast + Undo), and its card heals out of the list",
+    "ok": true,
+    "detail": "filed 2026-10-12T06:00:00.000Z"
+  },
+  {
+    "name": "i no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 its own column is the soft no — nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 another column moves the project there, with \"Moved to Freelance\" + Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 [reduced motion] the drill-in is a cut: no still copy, no slide, the page is there",
+    "ok": true,
+    "detail": "{\"layer\":false,\"stack\":null}"
+  },
+  {
+    "name": "r2 [reduced motion] the ghost is still there to show what's in hand, but it doesn't float",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 [reduced motion] the drop still files it; the ghost leaves at once",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r [reduced motion] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 [animations off] the drill-in is a cut: no still copy, no slide, the page is there",
+    "ok": true,
+    "detail": "{\"layer\":false,\"stack\":null}"
+  },
+  {
+    "name": "o2 [animations off] the ghost is still there to show what's in hand, but it doesn't float",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o2 [animations off] the drop still files it; the ghost leaves at once",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o [animations off] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l1 a hold blooms under the finger while it counts, then selects the row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k1 dragged 120px past the end, the list follows at a third, capped at 40px, and eases back to rest",
+    "ok": true,
+    "detail": "translateY(-39.6px) → none"
+  },
+  {
+    "name": "k no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

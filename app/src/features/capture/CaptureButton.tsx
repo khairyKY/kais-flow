@@ -4,6 +4,7 @@ import { Icon } from '../../components/Icon'
 import { useAuth } from '../auth/AuthProvider'
 import { openCapture } from '../command-bar/commandBarStore'
 import { useToastStore } from '../../lib/toastStore'
+import { toastUndo } from '../../lib/undo'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { voiceLimitReachedToday } from './aiAllowance'
 import { LOCK_DISTANCE, clickIsTap, formatTake, holdStep, pickMimeType, type HoldEvent, type HoldState } from './holdToTalk'
@@ -168,7 +169,7 @@ export function CaptureButton() {
       }
       const recording = { blob, seconds }
       if (kind === 'send') setSheet({ recording })
-      else useToastStore.getState().push({ message: 'Recording discarded', onUndo: () => setSheet({ recording }) })
+      else toastUndo('Recording discarded', () => setSheet({ recording }))
     }
     t.recorder.stop()
   }

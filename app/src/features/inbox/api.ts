@@ -4,12 +4,17 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
-import { createTask } from '../tasks/api'
-import { placeTask } from '../calendar/api'
-import { dayWord, formatDue, githubUrl } from './inboxDisplay'
+import { createTask, rescheduleDue } from '../tasks/api'
+import { deleteEvent, deleteEventWithUndo, placeTask, restoreEvent } from '../calendar/api'
+import { eventMinutes, type RailDropAction } from '../calendar/railDrop'
+import { NO_PLACE, placeTask as placeIn, type MoveTarget } from '../tasks/move'
+import { upsertJournalEntry } from '../journal/api'
+import { createInteraction, deleteInteraction } from '../people/api'
+import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
+import { dayWord, formatDue, githubUrl, suggestedTitle } from './inboxDisplay'
 import { INBOX_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
-import type { CalendarEvent, InboxItem, Task } from '../../lib/types'
+import type { CalendarEvent, InboxItem, Person, Task } from '../../lib/types'
 
 async function fetchInboxItems(): Promise<InboxItem[]> {
   return fetchAll<InboxItem>((from, to) =>
@@ -65,17 +70,28 @@ export function captureText(rawText: string): InboxItem {
 // gets it from one place. `silent` is for callers that compose these into a bigger action and
 // push their own single toast — bulk loops, resurfacing's "Kept", Trash's restore. ──
 
-function lookupName(table: 'projects' | 'domains', id: string | null | undefined): string | null {
+function lookupName(table: 'projects' | 'areas' | 'domains', id: string | null | undefined): string | null {
   if (!id) return null
   const rows = queryClient.getQueryData<{ id: string; name: string }[]>([table]) ?? []
   return rows.find((r) => r.id === id)?.name ?? null
 }
 
+/** Where the written task lives: its project, area or domain, by name. */
+const placeOf = (task: Task) => lookupName('projects', task.project_id) ?? lookupName('areas', task.area_id) ?? lookupName('domains', task.domain_id)
+
 /** "Shaheen website · Today" / "Tasks · Tomorrow" / "Tasks" — read off the task that was
  * actually written, so the toast can't claim a destination the row doesn't have. */
 function destinationOf(task: Task): string {
-  const where = lookupName('projects', task.project_id) ?? lookupName('domains', task.domain_id) ?? 'Tasks'
+  const where = placeOf(task) ?? 'Tasks'
   return task.due_at ? `${where} · ${dayWord(task.due_at)}` : where
+}
+
+/** The filing toast (Inbox.dc.html 3a: `Filed "Send invoice to Shaheen" as a task`), plus where it
+ * went and when when it has either (punch 7: name the real destination). */
+function filedLine(task: Task): string {
+  const where = [placeOf(task), task.due_at ? dayWord(task.due_at) : null].filter(Boolean)
+  if (task.someday) return `Filed "${task.title}" to Someday${where.length ? ` · ${where.join(' · ')}` : ''}`
+  return `Filed "${task.title}" as a task${where.length ? ` · ${where.join(' · ')}` : ''}`
 }
 
 /** Undoing a *just-created* task hard-deletes it rather than routing it to Trash — same as
@@ -103,14 +119,16 @@ export function snoozeInboxItem(item: InboxItem, until: string, silent = false):
 // Returns the created task so callers can offer a real Undo (WA-4 punch 21 — convertResurfaced).
 export function fileToTask(
   item: InboxItem,
-  opts: { domainId?: string | null; projectId?: string | null; dueAt?: string | null; title?: string; silent?: boolean } = {},
+  opts: { domainId?: string | null; projectId?: string | null; areaId?: string | null; dueAt?: string | null; title?: string; silent?: boolean; someday?: boolean } = {},
 ): Task {
   const prior = { ...item }
   const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null } | null
   // The triage card shows the AI's parsed date as a promise ("→ Sat, 18:00"); no caller was
   // passing it through, so every manual filing silently dropped it — and the punch-7 toast
-  // could never truthfully say "· Today". Default to the parse; an explicit opt still wins.
-  const parsedDue = (item.ai_parse as { due_at?: string | null } | null)?.due_at ?? null
+  // could never truthfully say "· Today". Default to the parse; an explicit opt still wins —
+  // null included (the card's date field cleared).
+  // A someday task is undated (Tasks › Someday), whatever the parse said.
+  const parsedDue = opts.someday ? null : opts.dueAt !== undefined ? opts.dueAt : ((item.ai_parse as { due_at?: string | null } | null)?.due_at ?? null)
   // P6 step 4: a filed GitHub issue keeps its link (the task's "View issue").
   const issue = item.kind === 'github_issue' ? (item.payload as { node_id?: string; url?: string } | null) : null
   const issueUrl = githubUrl(issue?.url)
@@ -118,22 +136,96 @@ export function fileToTask(
     title: opts.title?.trim() || item.raw_text,
     domainId: opts.domainId ?? null,
     projectId: opts.projectId ?? null,
-    dueAt: opts.dueAt ?? parsedDue,
+    areaId: opts.areaId ?? null,
+    dueAt: parsedDue,
     priority: overrides?.priority_override ?? null,
     durationMin: overrides?.duration_override ?? null,
+    someday: opts.someday,
     externalRef: issue?.node_id && issueUrl ? { source: 'github', id: issue.node_id, url: issueUrl } : null,
   })
   writeRow('inbox_items', { ...item, status: 'filed', filed_task_id: task.id })
   logActivity('inbox.filed', 'inbox_item', item.id, { task_id: task.id })
-  if (!opts.silent) toastUndo(`Filed to ${destinationOf(task)}`, () => unfile(prior, task))
+  if (!opts.silent) toastUndo(filedLine(task), () => unfile(prior, task))
   return task
 }
 
-/** The AI's suggestion for an item (the Inbox page's `E`): its cleaned title, domain and project. */
+/** The AI's suggestion for an item (the Inbox page's `E`, the calendar rail): its short title
+ * (dates already pulled out — inboxDisplay.suggestedTitle), domain and project. */
 export function aiFiling(item: InboxItem): { title?: string; domainId: string | null; projectId: string | null } {
-  const parse = item.ai_parse as { cleaned_text?: string; domain_id?: string | null; project_id?: string | null } | null
-  return { title: parse?.cleaned_text ?? undefined, domainId: parse?.domain_id ?? null, projectId: parse?.project_id ?? null }
+  const parse = item.ai_parse as { domain_id?: string | null; project_id?: string | null } | null
+  return { title: parse ? suggestedTitle(item) : undefined, domainId: parse?.domain_id ?? null, projectId: parse?.project_id ?? null }
 }
+
+// ── Inbox t3 (Inbox.dc.html 3a/3b): a capture goes to a task (in a project, an AREA or a domain),
+// today's journal, or a person's page ("Where does this go? Task · Journal note · Salma"). ──
+
+export type FileTo =
+  /** `someday`: the Snooze menu's Someday — a someday task (no date), not a year-long snooze. */
+  | { to: 'task'; title: string; dueAt: string | null; place: MoveTarget; someday?: boolean }
+  | { to: 'journal'; body: string }
+  | { to: 'person'; person: Pick<Person, 'id' | 'name'>; summary: string }
+
+const NOWHERE = { project_id: null, area_id: null, domain_id: null, milestone_id: null }
+
+function markFiled(item: InboxItem, filedTo: 'journal' | 'person', meta: Record<string, unknown>): void {
+  writeRow('inbox_items', { ...item, status: 'filed', payload: { ...(item.payload ?? {}), filed_to: filedTo } })
+  logActivity('inbox.filed', 'inbox_item', item.id, meta)
+}
+
+/** Files one capture where `to` says, without a toast: the line to say and the way back. */
+function fileQuietly(item: InboxItem, to: FileTo, now = new Date()): { message: string; undo: () => void } {
+  const prior = { ...item }
+  if (to.to === 'journal') {
+    const entry = upsertJournalEntry({ entry_date: cairoDateKey(now), body: to.body.trim() || item.raw_text }, true)
+    markFiled(item, 'journal', { journal_entry_id: entry.id })
+    return { message: "Added to today's journal", undo: () => { writeRow('journal_entries', entry, 'delete'); writeRow('inbox_items', prior) } }
+  }
+  if (to.to === 'person') {
+    const note = createInteraction({ person_id: to.person.id, summary: to.summary.trim() || item.raw_text, occurred_at: now.toISOString() })
+    markFiled(item, 'person', { person_id: to.person.id })
+    return { message: `Added to ${to.person.name}`, undo: () => { deleteInteraction(note.id); writeRow('inbox_items', prior) } }
+  }
+  const at = placeIn(NOWHERE, to.place)
+  const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, someday: to.someday, silent: true })
+  return { message: filedLine(task), undo: () => unfile(prior, task) }
+}
+
+/** One capture, one toast with Undo. */
+export function fileCapture(item: InboxItem, to: FileTo): void {
+  const { message, undo } = fileQuietly(item, to)
+  toastUndo(message, undo)
+}
+
+const captures = (n: number) => `${n} capture${n === 1 ? '' : 's'}`
+
+/** A selection filed in one go: ONE toast, ONE Undo that takes every filing back (tasks deleted
+ * through `unfile`, journal lines and person notes removed, the captures pending again). */
+export function fileMany(pairs: readonly (readonly [InboxItem, FileTo])[]): void {
+  if (!pairs.length) return
+  const done = pairs.map(([item, to]) => fileQuietly(item, to))
+  const someday = pairs.every(([, to]) => to.to === 'task' && to.someday)
+  toastUndo(done.length === 1 ? done[0].message : `${captures(done.length)} filed${someday ? ' to Someday' : ''}`, () => done.forEach((d) => d.undo()))
+}
+
+/** Every row written back as it was — the Undo of the bulk actions below. `deleted_at` is sent
+ * explicitly: an upsert leaves out what it isn't given, and Clear now's Undo must un-Trash. */
+function writeBack(priors: readonly InboxItem[]): () => void {
+  return () => priors.forEach((p) => writeRow('inbox_items', { ...p, deleted_at: p.deleted_at ?? null }))
+}
+
+function many(items: readonly InboxItem[], write: (item: InboxItem) => void, message: string): void {
+  if (!items.length) return
+  const priors = items.map((i) => ({ ...i }))
+  items.forEach(write)
+  toastUndo(message, writeBack(priors))
+}
+
+export const dismissMany = (items: readonly InboxItem[]) => many(items, (i) => dismissInboxItem(i, true), items.length === 1 ? 'Dismissed' : `${captures(items.length)} dismissed`)
+export const snoozeMany = (items: readonly InboxItem[], until: string) =>
+  many(items, (i) => snoozeInboxItem(i, until, true), `${items.length === 1 ? 'Snoozed' : `${captures(items.length)} snoozed`} until ${formatDue(until)}`)
+export const restoreMany = (items: readonly InboxItem[]) => many(items, (i) => restoreInboxItem(i, true), items.length === 1 ? 'Restored to Inbox' : `${captures(items.length)} restored`)
+/** The Dismissed tab's "Clear now": to Trash (30 days, then compost), with Undo — never a confirm. */
+export const purgeMany = (items: readonly InboxItem[]) => many(items, purgeInboxItem, `Moved ${captures(items.length)} to Trash`)
 
 /** How the calendar rail names an item, and how long it blocks one (its typed `30m`, else 30). */
 export const inboxTitle = (item: InboxItem): string => aiFiling(item).title ?? item.raw_text
@@ -152,6 +244,54 @@ export function fileToCalendar(item: InboxItem, startsAt: string, endsAt: string
   return event
 }
 
+/** The calendar rail the other way (Kai 2026-10-12): a block dragged onto the rail does what the
+ * section means (calendar/railDrop decides which). A task's block comes off the calendar — onto
+ * Today it is also due today, no time. A plain event or empty block turns into an inbox capture or
+ * a task (due today, or in the Lists scope's `place`) and goes to Trash. One toast, one Undo that
+ * puts everything back. Returns false for the soft-no. */
+export function eventToRail(event: CalendarEvent, action: RailDropAction, place: MoveTarget = NO_PLACE, now = new Date()): boolean {
+  if (action === 'soft-no') return false
+  if (action === 'unschedule') {
+    deleteEventWithUndo(event, 'Unscheduled')
+    return true
+  }
+  const prior = { ...event }
+  deleteEvent(event)
+  if (action === 'unschedule-today') {
+    // Read after the delete: it just cleared the task's schedule, and rescheduleDue writes this row.
+    const task = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === event.task_id)
+    const undoDue = task ? rescheduleDue(task, scheduleToday(now)) : () => {}
+    toastUndo(`Unscheduled · ${event.title} · Today`, () => {
+      undoDue()
+      restoreEvent(prior)
+    })
+    return true
+  }
+  if (action === 'to-inbox') {
+    const item = captureText(event.title)
+    toastUndo(`Moved to Inbox · ${event.title}`, () => {
+      writeRow('inbox_items', item, 'delete')
+      restoreEvent(prior)
+    })
+    return true
+  }
+  const at = placeIn({ project_id: null, area_id: null, domain_id: null, milestone_id: null }, action === 'to-list' ? place : NO_PLACE)
+  const task = createTask({
+    title: event.title,
+    durationMin: eventMinutes(event),
+    dueAt: action === 'to-today' ? scheduleToday(now) : null,
+    projectId: at.project_id,
+    areaId: at.area_id,
+    domainId: at.domain_id,
+  })
+  toastUndo(`Now a task · ${destinationOf(task)}`, () => {
+    writeRow('tasks', task, 'delete')
+    logActivity('task.deleted', 'task', task.id, { reason: 'calendar rail drop undo' })
+    restoreEvent(prior)
+  })
+  return true
+}
+
 export function dismissInboxItem(item: InboxItem, silent = false): void {
   const prior = { ...item }
   writeRow('inbox_items', { ...item, status: 'dismissed' })
@@ -167,9 +307,8 @@ export function restoreInboxItem(item: InboxItem, silent = false): void {
   if (!silent) toastUndo('Restored to Inbox', () => writeRow('inbox_items', prior))
 }
 
-/** Permanent delete — the Dismissed tab's "Clear now" (2a). Soft-deletes into Trash; the
- * 30-day auto-compost the copy promises is now real, done server-side by the `compost-expired`
- * pg_cron job (migration 0032) rather than anything the client has to remember to run. */
+/** The Dismissed tab's "Clear now" (2a): into Trash, not gone — Trash keeps it 30 days, then the
+ * server's `compost-expired` pg_cron job (migration 0032) deletes it for good. */
 export function purgeInboxItem(item: InboxItem): void {
   writeRow('inbox_items', { ...item, deleted_at: new Date().toISOString() })
   logActivity('inbox.purged', 'inbox_item', item.id, {})

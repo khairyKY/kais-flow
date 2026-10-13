@@ -1,7 +1,7 @@
 import type { Task } from '../../lib/types'
 import type { ListBinding } from '../../components/useListKeys'
 
-export type ListActionKey = 'complete' | 'open' | 'today' | 'tomorrow' | 'nextWeek' | 'top3' | 'project' | 'delete' | 'toggleSelect'
+export type ListActionKey = 'complete' | 'open' | 'today' | 'tomorrow' | 'nextWeek' | 'top3' | 'project' | 'labels' | 'delete' | 'toggleSelect'
 
 interface ListShortcutMeta {
   keys: string[]
@@ -20,12 +20,17 @@ export const LIST_SHORTCUTS: ListShortcutMeta[] = [
   { keys: ['3'], action: 'nextWeek', label: 'Schedule next week' },
   { keys: ['t'], action: 'top3', label: 'Toggle Top 3' },
   { keys: ['p'], action: 'project', label: 'Move to…' },
+  { keys: ['l'], action: 'labels', label: 'Labels…' }, // Overlays.dc.html "Label picker · keyboard L"
   { keys: ['#'], action: 'delete', label: 'Delete' },
 ]
 
-/** Pages supply only the actions they actually wire up; missing ones are silently skipped. */
-export function buildListBindings(actions: Partial<Record<ListActionKey, (task: Task) => void>>): ListBinding<Task>[] {
-  return LIST_SHORTCUTS.filter((s) => actions[s.action]).map((s) => ({ keys: s.keys, label: s.label, run: actions[s.action]! }))
+/** Pages supply only the actions they actually wire up; missing ones are silently skipped. `bulk`:
+ * what a key does to the selected rows, when there's a selection. */
+export function buildListBindings(
+  actions: Partial<Record<ListActionKey, (task: Task) => void>>,
+  bulk: Partial<Record<ListActionKey, (tasks: Task[]) => void>> = {},
+): ListBinding<Task>[] {
+  return LIST_SHORTCUTS.filter((s) => actions[s.action]).map((s) => ({ keys: s.keys, label: s.label, run: actions[s.action]!, runAll: bulk[s.action] }))
 }
 
 /** The matching key for an action's own context-menu row (right-aligned hint) — one source, no drift. */

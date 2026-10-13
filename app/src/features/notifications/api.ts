@@ -65,8 +65,11 @@ export async function subscribeThisDevice(): Promise<void> {
   const existing = queryClient.getQueryData<PushSubscriptionRow[]>(['push_subscriptions']) ?? []
   if (existing.some((s) => s.endpoint === json.endpoint)) return
 
+  // `endpoint` is unique (0005): a row this device already stored that the cache hasn't loaded keeps
+  // its id — an upsert under a new id would be refused by the database and parked as "couldn't save".
+  const { data: stored } = await supabase.from('push_subscriptions').select('id').eq('endpoint', json.endpoint).maybeSingle()
   writeRow('push_subscriptions', {
-    id: crypto.randomUUID(),
+    id: (stored as { id: string } | null)?.id ?? crypto.randomUUID(),
     endpoint: json.endpoint,
     keys: json.keys as Record<string, string>,
     device_label: navigator.userAgent.slice(0, 60),

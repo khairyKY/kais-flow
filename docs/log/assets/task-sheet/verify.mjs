@@ -394,13 +394,24 @@ for (const theme of ['day', 'night']) {
     check(`${name} a repeating task: next dates + "Done for today"`, (await text(sheetOf(page).locator('.ts-next'))).startsWith('NEXT · MON 5 OCT 09:00') && (await page.getByRole('button', { name: 'Done for today' }).count()) === 1, await text(sheetOf(page).locator('.ts-next')))
     r = await pick('before', '30 min before', 'Remind')
     check(`${name} remind chip → 30 min before the (new) due`, r.titled && r.w.length === 1 && r.w[0].reminder_at === iso('08:30', 28) && (await chipTexts(page)).includes('30M BEFORE'), JSON.stringify(r.w.map((x) => x.reminder_at)))
+    // labels (2026-10-13): the "+ Label" field is gone — a label chip opens the Label picker (a sheet on
+    // a phone): Create adds one, a tap on a checked label takes it off, and the picker stays open.
     const w0 = state.writes.length
-    await sheetOf(page).locator('.ts-label-add').fill('garage')
-    await sheetOf(page).locator('.ts-label-add').press('Enter')
+    await tap(cdp, sheetOf(page).locator('.ts-chips .kf-chip', { hasText: 'calls' }))
     await sleep(300)
-    check(`${name} + Label adds one`, taskWrites(state, w0).some((x) => JSON.stringify(x.labels) === '["calls","garage"]'))
-    r = await pick('garage', 'Remove label', 'garage')
-    check(`${name} a label chip → Remove label`, r.w.length === 1 && JSON.stringify(r.w[0].labels) === '["calls"]')
+    const lp = page.locator('[role="dialog"]').last()
+    await lp.getByPlaceholder('Find or create…').fill('garage')
+    await sleep(200)
+    await tap(cdp, lp.locator('.kf-as-row', { hasText: 'Create “garage”' }))
+    await sleep(300)
+    check(`${name} a label chip → the Label picker; Create “garage” adds one`, taskWrites(state, w0).some((x) => JSON.stringify(x.labels) === '["calls","garage"]'), JSON.stringify(taskWrites(state, w0).map((x) => x.labels)))
+    const w1 = state.writes.length
+    await tap(cdp, lp.locator('.kf-as-row', { hasText: 'garage' }).first())
+    await sleep(300)
+    const off = taskWrites(state, w1)
+    check(`${name} …a tap on the checked label takes it off`, off.length === 1 && JSON.stringify(off[0].labels) === '["calls"]', JSON.stringify(off.map((x) => x.labels)))
+    await page.keyboard.press('Escape')
+    await sleep(300)
     await shot(page, name)
     await sheetBasics(page, name, errors)
     await ctx.close()
@@ -600,14 +611,19 @@ for (const theme of ['day', 'night']) {
   }
 }
 
-// ── Desktop 1280: a task still opens the full editor page, unchanged. ──
+// ── Desktop 1280: a row opens the task popover (fix-tasks, Overlays "Task detail"), never the phone
+// sheet; Open full ↗ expands it to the editor page. ──
 for (const theme of ['day', 'night']) {
   const name = `desktop-${theme}`
   const { ctx, page, errors, state } = await open('/tasks', {}, { view: desktop, theme })
   await page.locator(`[id="task-${id(TYRE)}"]`).getByText('Call the tyre supplier about the invoice').click()
   await sleep(700)
+  const pop = page.getByRole('dialog', { name: 'Task: Call the tyre supplier about the invoice' })
+  check(`${name} row click → the task popover, not the phone sheet`, (await pop.count()) === 1 && (await sheetOf(page).count()) === 0, page.url())
+  await pop.getByRole('button', { name: 'Open full ↗' }).click()
+  await sleep(700)
   await shot(page, name)
-  check(`${name} row click → /tasks/:id editor page, no sheet`, new URL(page.url()).pathname === `/tasks/${id(TYRE)}` && (await page.locator('[role="dialog"]').count()) === 0 && (await page.getByText('Delete task').count()) === 1, page.url())
+  check(`${name} Open full ↗ → /tasks/:id editor page`, new URL(page.url()).pathname === `/tasks/${id(TYRE)}` && (await page.locator('[role="dialog"]').count()) === 0 && (await page.getByText('Delete task').count()) === 1, page.url())
   if (theme === 'day') {
     await page.evaluate(() => [...document.querySelectorAll('input')].find((i) => i.value === 'Call the tyre supplier about the invoice')?.setAttribute('data-title', ''))
     const title = page.locator('[data-title]')

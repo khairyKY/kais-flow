@@ -9,8 +9,6 @@
   color: var(--acc-terra);
 }
 
-/* The Day card renders nothing during the day (ritual moments only) — no empty gap. */
-.kf-daycard-slot:empty { display: none; }
 
 /* ── Today on a phone — design-export/Today Phone.dc.html 2a–2n (390 × 844) + SCREENS-2026-09-28
    §Today rulings. Sizes are the Mobile Kit's (DS-CHANGELOG §3); the page is only rendered < 768px. ── */
@@ -301,3 +299,126 @@
 .tp-fold:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus); }
 .tp-fold > svg { transition: transform var(--dur-collapse) var(--ease-standard); }
 .tp-fold[aria-expanded='true'] > svg { transform: rotate(180deg); }
+
+/* MK Workload: over capacity — amber line, alert glyph, mono "2H OVER"; the progress hairline. */
+.tp-sum.is-over, .tp-sum.is-over > svg { color: var(--sig-amber); }
+.tp-over { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; white-space: nowrap; }
+.tp-progress { margin: 2px var(--gutter-phone) 8px; }
+
+/* MK Now Card states on the slip's ring and caption (./nowCard). */
+.tp-ring[data-tone='quiet'] > span { color: var(--ink-faint); }
+.tp-ring[data-tone='over'] > span { color: var(--sig-amber); }
+.tp-caption.is-over { color: var(--sig-amber); }
+.tp-slip-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+
+/* ── Today on a desktop — design-export/Today.dc.html 2a ("Desktop — reviewed pass"). Rule 4:
+   the smallest text 10.5px, metadata --ink-muted; rule 3: only the goal card is taped/tilted. ── */
+.td { display: flex; flex-direction: column; gap: 26px; }
+/* One line for the date; the summary wraps under it and the capture pill gives way (340 → 180). A long
+   date ("Wednesday, September 30") never runs under the actions: they drop to their own line instead. */
+.td-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: var(--sp-4) 28px; }
+.td-head > :first-child { flex: none; max-width: 62%; min-width: min-content; }
+.td-date { margin: 0; font-family: var(--font-display); font-weight: var(--fw-medium); font-size: var(--fs-page-title); line-height: 1.05; letter-spacing: var(--ls-display); color: var(--ink-body); white-space: nowrap; }
+.td-sum { margin-top: var(--sp-2); font-size: var(--fs-body); color: var(--ink-muted); text-wrap: pretty; }
+.td-ink { color: var(--ink-body); }
+.td-terra { color: var(--acc-terra-ink); }
+.td-struck { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.td-head-actions { flex: 1 1 0; min-width: 230px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+
+/* Rule 6: the typed quick-add pill, the mic inside it. */
+.td-pill { flex: 0 1 340px; width: 340px; min-width: 180px; height: 44px; display: flex; align-items: center; gap: var(--sp-1); padding: 0 5px 0 0; box-sizing: border-box; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-pill); box-shadow: var(--shadow-crisp); }
+.td-pill-field { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 10px; padding: 0 var(--sp-2) 0 var(--sp-4); border: none; border-radius: var(--radius-pill); background: none; font: inherit; color: var(--ink-faint); cursor: text; }
+.td-pill-text { flex: 1; min-width: 0; text-align: left; font-size: var(--fs-body); }
+.td-pill-mic { width: 34px; height: 34px; flex: none; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 50%; background: var(--acc-terra); color: var(--on-terra); box-shadow: var(--shadow-cta); cursor: pointer; }
+.td-icon-btn { width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-card); border-radius: 50%; background: var(--paper-parchment); box-shadow: var(--shadow-crisp); color: var(--ink-muted); }
+.td-icon-btn:hover, .td-pill-field:hover { color: var(--ink-body); }
+.td-pill-field:focus-visible, .td-pill-mic:focus-visible, .td-icon-btn:focus-visible, .td-more:focus-visible, .td-rit-head:focus-visible, .td-rit-step:focus-visible, .td-rb:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* The Now card (2a #3–4): the moment, the 8–20 ribbon, the next two + Calendar →. */
+.td-now { background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-sharp); box-shadow: var(--shadow-card); padding: 18px 22px var(--sp-4); }
+.td-now-head { display: flex; align-items: center; gap: 18px; }
+.td-now-glyph { flex: none; display: inline-flex; }
+.td-now-text { flex: 1; min-width: 0; border-radius: var(--radius-sharp); }
+.td-cap { display: flex; align-items: center; gap: var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-mono-l); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-muted); }
+.td-cap-dot { display: none; width: 7px; height: 7px; flex: none; border-radius: 50%; background: currentColor; }
+.td-cap[data-tone='now'] { color: var(--acc-terra-ink); }
+.td-cap[data-tone='over'] { color: var(--sig-amber); }
+.td-cap[data-tone='done'] { color: var(--acc-sage-text); }
+.td-cap[data-tone='now'] .td-cap-dot, .td-cap[data-tone='over'] .td-cap-dot { display: inline-block; }
+.td-now-title { margin-top: 6px; font-family: var(--font-display); font-size: var(--fs-display-m); font-weight: var(--fw-medium); line-height: 1.25; color: var(--ink-body); text-wrap: pretty; }
+.td-now-sub { margin-top: 3px; font-size: var(--fs-body-s); color: var(--ink-muted); }
+.td-now-sub .tp-hand { font-size: var(--fs-hand); }
+/* 2a: Start focus is the dark ink pill. */
+.td-focus-btn.kf-button--secondary { height: 40px; padding: 0 18px; border-color: var(--ink-body); background-color: var(--ink-body); color: var(--paper-parchment); font-size: var(--fs-body-s); box-shadow: none; }
+
+.td-ribbon { margin-top: 18px; }
+/* Nothing runs (no head — Kai's "no card during the day"): the ribbon leads the card. */
+.td-now > .td-ribbon:first-child { margin-top: 0; }
+.td-ribbon-track { position: relative; height: 30px; }
+.td-ribbon-rail { position: absolute; left: 0; right: 0; top: 12px; height: 6px; border-radius: 3px; background: var(--line-card); }
+.td-rb { position: absolute; top: 6px; height: 18px; min-width: 4px; padding: 0; border: none; border-radius: 3px; background: var(--rb); cursor: pointer; overflow: hidden; }
+.td-rb[data-past] { opacity: 0.55; }
+.td-rb[data-done] { background: var(--paper-bone); box-shadow: inset 0 0 0 1px var(--line-solid); }
+.td-rb[data-head] { opacity: 1; background: color-mix(in srgb, var(--acc-terra) 22%, transparent); box-shadow: inset 0 0 0 1px var(--acc-terra); }
+.td-rb-spent { position: absolute; inset: 0 auto 0 0; background: color-mix(in srgb, var(--acc-terra) 45%, transparent); }
+.td-ribbon-now { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--acc-terra); pointer-events: none; }
+.td-ribbon-axis { display: flex; justify-content: space-between; margin-top: var(--sp-1); font-family: var(--font-mono); font-size: var(--fs-mono); color: var(--ink-muted); }
+.td-next { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) 22px; margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px dashed var(--line-dashed); font-size: var(--fs-caption); color: var(--ink-muted); }
+.td-next-item { display: inline-flex; align-items: center; gap: var(--sp-2); padding: 2px var(--sp-1); margin: -2px calc(-1 * var(--sp-1)); border-radius: var(--radius-sharp); cursor: pointer; }
+.td-next-item[data-selected] { background: var(--select-bg); }
+.td-next-item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.td-next-sq { width: 8px; height: 8px; flex: none; border-radius: 2px; }
+.td-next-time { font-family: var(--font-mono); font-size: var(--fs-mono-l); }
+.td-cal-link { margin-left: auto; color: var(--ink-muted); text-decoration: none; }
+.td-cal-link:hover { color: var(--acc-terra-ink); }
+
+/* The columns: main | the rail (264–340, Kai 2026-10-03). */
+.td-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(264px, 28%, 340px); gap: var(--sp-10); align-items: start; }
+.td-main { display: flex; flex-direction: column; gap: 30px; }
+.td-rail { display: flex; flex-direction: column; gap: var(--sp-7); }
+.td-label-note { font-family: var(--font-ui); font-size: var(--fs-caption); letter-spacing: 0; text-transform: none; color: var(--ink-muted); white-space: nowrap; }
+.td-label-link { padding: 0; border: none; background: none; text-decoration: none; cursor: pointer; }
+.td-label-link:hover { color: var(--acc-terra-ink); }
+.td-rail-sub { margin: 2px 0 5px; font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-muted); }
+
+/* Rows (2a): 20px boxes, sans meta in --ink-muted, a dashed rule between rows. */
+.td-row-title { flex: 1; min-width: 0; font-size: var(--fs-body); color: var(--ink-body); cursor: pointer; }
+.td-row-fact { flex: none; margin: 0; }
+.td-meta { margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--sp-3); font-size: var(--fs-caption); color: var(--ink-muted); }
+.td-meta > span { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+.td-dot { width: 6px; height: 6px; flex: none; border-radius: 50%; }
+/* #12: no star on Top 3 rows; elsewhere ☆ is a hover action. */
+.td-star { padding: 0; border: none; background: none; font-size: var(--fs-body-l); line-height: 1; cursor: pointer; opacity: 0; transition: opacity var(--dur-quick) var(--ease-out); }
+.td-row:hover .td-star, .td-row:focus-within .td-star, .td-star:focus-visible { opacity: 1; }
+@media (hover: none) { .td-star { opacity: 1; } }
+.td-more { display: inline-block; padding: var(--sp-3) 18px; border: none; background: none; font: inherit; font-size: var(--fs-body-s); color: var(--ink-muted); text-decoration: none; cursor: pointer; }
+.td-more:hover { color: var(--acc-terra-ink); }
+
+/* The goal card (2a): serif 20/600 title, one meta line led by the mono tag. */
+.td-goal-title { font-family: var(--font-display); font-size: var(--fs-lead); font-weight: var(--fw-semibold); line-height: 1.3; color: var(--ink-body); text-wrap: pretty; }
+.td-goal-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.td-goal-meta { margin-top: 7px; color: var(--acc-gold); }
+.td-goal-tag { font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; }
+
+/* Rituals in the rail (2a #5): Morning open with its steps, Evening folded until the evening. */
+.td-rit.is-split { margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px dashed var(--line-dashed); }
+.td-rit-head { display: flex; align-items: center; gap: 10px; width: 100%; padding: 2px 0 6px; border: none; background: none; font: inherit; text-align: left; cursor: pointer; }
+.td-rit-dot { width: 8px; height: 8px; flex: none; border-radius: 50%; background: var(--acc-gold-warm); }
+.td-rit-dot[data-kind='evening'] { background: var(--acc-lavender); }
+.td-rit-dot[data-kind='review'] { background: var(--acc-buttercream); }
+.td-rit-name { flex: 1; min-width: 0; font-size: var(--fs-body); color: var(--ink-muted); }
+.td-rit-name[data-open] { font-weight: var(--fw-medium); color: var(--ink-body); }
+.td-rit-count { font-family: var(--font-mono); font-size: var(--fs-mono-l); color: var(--ink-muted); }
+.td-rit-step { display: flex; align-items: center; gap: 10px; width: 100%; padding: 6px 0 6px 18px; border: none; background: none; font: inherit; font-size: var(--fs-body-s); text-align: left; color: var(--ink-body); cursor: pointer; }
+.td-rit-step[data-done] { color: var(--ink-muted); text-decoration: line-through; }
+.td-rit-box { width: 18px; height: 18px; flex: none; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid var(--check-border); border-radius: var(--radius-input); color: var(--paper-parchment); }
+.td-rit-step[data-done] .td-rit-box { border: none; background: var(--sig-done); }
+
+/* Worth a look (2a #7): one nudge, two verbs. */
+.td-nudge { position: relative; padding: 14px var(--sp-4); border: 1px solid var(--line-goal); border-radius: var(--radius-sharp); background: var(--paper-goal); box-shadow: var(--shadow-card); cursor: pointer; }
+.td-nudge-art { position: absolute; top: 10px; right: var(--sp-3); height: 48px; opacity: 0.75; }
+.td-nudge-name { padding-right: var(--sp-10); font-size: var(--fs-body); font-weight: var(--fw-medium); color: var(--ink-body); }
+.td-nudge-why { margin-top: 3px; font-size: var(--fs-caption); color: var(--acc-gold); }
+.td-nudge-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+.td-btn-sm.kf-button { height: 30px; padding: 0 var(--sp-3); font-size: var(--fs-caption); }
+.td-btn-sm.kf-button--secondary { box-shadow: none; background: none; color: var(--ink-muted); }

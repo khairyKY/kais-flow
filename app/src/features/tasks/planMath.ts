@@ -79,7 +79,7 @@ export function planGlossary(weekend: readonly number[]): { label: string; means
     { label: 'Tomorrow, first thing', means: 'tomorrow at 09:00, the start of your day. Swipe right and the 2 key do the same.' },
     {
       label: 'This weekend',
-      means: first == null ? 'not offered — you have no weekend set.' : `the first day of your weekend (${weekendLabel(weekend)}) at 09:00 — once it has started, the next one.`,
+      means: first == null ? 'not offered — you have no weekend set.' : `the first day of your weekend (${weekendLabel(weekend)}) at 09:00 — later in the weekend, the next one. Not offered when that is today or tomorrow (Today and Tomorrow cover it).`,
     },
     { label: 'Next week', means: 'Monday of next week at 09:00 (on a Sunday, the Monday after tomorrow).' },
     { label: 'Pick date & time…', means: 'any day, and a time if you want one.' },

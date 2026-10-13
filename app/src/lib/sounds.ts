@@ -22,6 +22,7 @@ import { queryClient } from './queryClient'
 import { appZone } from './appZone'
 import { legacyGoalId } from '../features/today/goalStore'
 import { goalIdOf } from '../features/today/top3Order'
+import { loopDayKey } from '../features/rituals/loopDay'
 import { inQuietHours, isPaused, type NoticePrefs } from '../../../supabase/functions/notify/copy.ts'
 import type { Task } from './types'
 
@@ -58,7 +59,7 @@ const LEGACY_KEY = 'kf_sounds' // v1's per-voice map — read once into EVENTS_K
 const PACK_KEY = 'kf_sound_pack'
 const VOLUME_KEY = 'kf_sound_volume' // 0..1, 0 = master off
 const QUIET_KEY = 'kf_sound_quiet' // '1' when "silent after you close the garden" is on
-const CLOSED_KEY = 'kf.gardenClosed' // localDateKey written when the evening ritual finishes
+const CLOSED_KEY = 'kf.gardenClosed' // the loop day (rituals/loopDay) the evening ritual finished in
 
 function read<T>(key: string, fallback: T, parse: (raw: string) => T): T {
   try {
@@ -130,11 +131,11 @@ export function closeTheGarden(dateKey: string) {
   write(CLOSED_KEY, dateKey)
 }
 
-/** True while the garden is closed: the evening ritual ran today and the day hasn't turned over. */
+/** True while the garden is closed: the evening ritual ran in this loop day, which turns over at
+ * 04:00 on the user's clock (not the device's midnight — closing at 00:30 muted the whole next day). */
 export function isQuiet(now = new Date()): boolean {
   if (!readQuietHours()) return false
-  const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-  return read(CLOSED_KEY, '', (raw) => raw) === today
+  return read(CLOSED_KEY, '', (raw) => raw) === loopDayKey(now)
 }
 
 /** Every reason to stay silent besides the toggles: the garden closed, or Notifications' quiet hours

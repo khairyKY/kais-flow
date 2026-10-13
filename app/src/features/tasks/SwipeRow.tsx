@@ -5,6 +5,7 @@ import { uiZoom } from '../../lib/uiScale'
 import { LONG_PRESS_MS, lockAxis, pastCommit, REST_X, settleSwipe, SETTLE_MS, type Axis } from './swipe'
 import './TaskRow.css'
 import { longPress, tick } from '../../lib/haptics'
+import { useMotionEnabled } from '../../lib/motion'
 
 // ── The task-row gesture layer (DS-CHANGELOG §3 "Swipe row" + "Selection mode", Flow Audit §4):
 // swipe right reveals Tomorrow · Plan · Project and, past --swipe-commit, commits Tomorrow;
@@ -23,6 +24,12 @@ export interface SwipeActions {
   delete?: () => void
   /** The left action's word — "Delete" unless the row says otherwise ("Drop"). */
   deleteLabel?: string
+  /** The left action's glyph — the bin unless the row says otherwise (the Inbox's Dismiss). */
+  deleteIcon?: IconName
+  /** The right action's word and glyph — Tomorrow unless the row says otherwise (the Inbox's
+   * Dismissed rows: swipe right = Restore, Inbox.dc.html 2b). */
+  tomorrowLabel?: string
+  tomorrowIcon?: IconName
 }
 
 // One row open at a time: opening (or starting to drag) a row closes the last one.
@@ -51,6 +58,16 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
   const rowRef = useRef<HTMLDivElement>(null)
   const g = useRef({ id: -1, sx: 0, sy: 0, x0: 0, cur: 0, axis: null as Axis | null, lastX: 0, lastT: 0, v: 0, width: 360, past: false, timer: 0, swallow: false, touch: false })
   const close = useCallback(() => setX(0), [])
+  // Effects 2l — the long-press bloom: while a hold counts, a sage bloom fills under the finger and
+  // the row gives a little; the hold selects as it completes, and letting go early drains it away.
+  const motionOn = useMotionEnabled()
+  const [bloom, setBloom] = useState<{ x: number; y: number; n: number; out: boolean } | null>(null)
+  const drain = () => setBloom((b) => (b && !b.out ? { ...b, out: true } : b))
+  useEffect(() => {
+    if (!bloom?.out) return
+    const t = window.setTimeout(() => setBloom(null), 200)
+    return () => window.clearTimeout(t)
+  }, [bloom])
 
   const open = x !== 0
   useEffect(() => {
@@ -74,11 +91,16 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
     s.width = (rowRef.current?.getBoundingClientRect().width ?? 360 * uiZoom()) / uiZoom()
     window.clearTimeout(s.timer)
     if (onLongPress) {
+      if (motionOn) {
+        const r = e.currentTarget.getBoundingClientRect()
+        setBloom({ x: (e.clientX - r.left) / uiZoom(), y: (e.clientY - r.top) / uiZoom(), n: e.timeStamp, out: false })
+      }
       s.timer = window.setTimeout(() => {
         s.id = -1
         s.swallow = true // the hold was the action; its release is not a tap
         longPress()
         onLongPress()
+        drain()
       }, LONG_PRESS_MS)
     }
   }
@@ -93,6 +115,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       s.axis = lockAxis(dx, (e.clientY - s.sy) / z)
       if (!s.axis) return
       window.clearTimeout(s.timer) // moving is not holding
+      drain()
       if (s.axis === 'y' || !swipes) {
         s.id = -1 // a scroll: the page keeps it
         return
@@ -114,6 +137,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
   function onPointerEnd(e: ReactPointerEvent<HTMLDivElement>) {
     const s = g.current
     window.clearTimeout(s.timer)
+    drain()
     if (e.pointerId !== s.id) return
     s.id = -1
     if (s.axis !== 'x') return
@@ -178,13 +202,13 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
         <div className="kf-swipe-bg is-right">
           {past ? (
             <div className="kf-swipe-commit">
-              <Icon name="tomorrow" size={24} />
-              <span className="kf-swipe-commit-label">Tomorrow</span>
+              <Icon name={actions.tomorrowIcon ?? 'tomorrow'} size={24} />
+              <span className="kf-swipe-commit-label">{actions.tomorrowLabel ?? 'Tomorrow'}</span>
               <span className="kf-swipe-hint">{tomorrowHint}</span>
             </div>
           ) : (
             <>
-              {act('tomorrow', 'Tomorrow', () => actions.tomorrow?.())}
+              {act(actions.tomorrowIcon ?? 'tomorrow', actions.tomorrowLabel ?? 'Tomorrow', () => actions.tomorrow?.())}
               {/* Kai 2026-10-07: the Plan list (every date option), not just the calendar. */}
               {actions.pickDate && act('pickdate', 'Plan', (el) => actions.pickDate?.(at(el)))}
               {/* Opens "Move to…" (a project, an area or a domain), so it reads Move like the bulk bar. */}
@@ -196,7 +220,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       {x < 0 && actions && (
         <div className="kf-swipe-bg is-left">
           <button type="button" className="kf-swipe-act is-delete" onClick={(e) => { e.stopPropagation(); actions.delete?.() }}>
-            <Icon name="delete" size={24} />
+            <Icon name={actions.deleteIcon ?? 'delete'} size={24} />
             <span>{actions.deleteLabel ?? 'Delete'}</span>
           </button>
         </div>
@@ -204,6 +228,7 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       <div
         className={`kf-swipe-fg${contentClassName ? ` ${contentClassName}` : ''}`}
         data-moved={open || undefined}
+        data-pressing={(bloom && !bloom.out) || undefined}
         style={{
           ...contentStyle,
           transform: open ? `translateX(${x}px) ${contentStyle?.transform ?? ''}` : contentStyle?.transform,
@@ -227,6 +252,11 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
         }}
       >
         {children}
+        {bloom && (
+          <span className="kf-press-bloom-clip" data-out={bloom.out || undefined} aria-hidden="true">
+            <span key={bloom.n} className="kf-press-bloom" style={{ left: bloom.x, top: bloom.y }} />
+          </span>
+        )}
       </div>
     </div>
     {overlay}

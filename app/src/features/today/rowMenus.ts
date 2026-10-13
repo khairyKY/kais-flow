@@ -37,12 +37,11 @@ export function deleteEventWithUndo(event: CalendarEvent): void {
 }
 
 /** Moves the block to the same time tomorrow — the calendar's own move path (a drag), which also
- * re-stamps a linked task's schedule — with the drag's Undo. */
+ * re-stamps a linked task's schedule (one occurrence of a repeat moves on its own) — with the
+ * drag's Undo. */
 export function moveBlockToTomorrow(event: CalendarEvent): void {
-  const prior = { ...event }
   const next = sameTimeTomorrow(event.starts_at, event.ends_at)
-  moveOrResizeEvent(event, next.starts_at, next.ends_at)
-  toastUndo(`Moved to tomorrow · ${event.title}`, () => moveOrResizeEvent(prior, prior.starts_at, prior.ends_at, prior.all_day))
+  toastUndo(`Moved to tomorrow · ${event.title}`, moveOrResizeEvent(event, next.starts_at, next.ends_at))
 }
 
 /** The hint beside an Up next block's Tomorrow: its own time, a Cairo day on ("Mon 18:00"). A block

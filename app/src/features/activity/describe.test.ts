@@ -147,12 +147,12 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['capture.autofiled', 'task', { confidence: 0.9 }], ['capture.autofiled', 'task', { confidence: 0.9, source: 'reconnect' }],
   ['inbox.captured', 'inbox_item', { kind: 'text' }], ['inbox.captured', 'inbox_item', { kind: 'voice', offline: true }], ['inbox.captured', 'inbox_item', { kind: 'text', undoneFrom: TASK }],
   ['inbox.filed', 'inbox_item', { task_id: TASK }], ['inbox.dismissed', 'inbox_item', {}], ['inbox.snoozed', 'inbox_item', { until: 'x' }], ['inbox.restored', 'inbox_item', {}], ['inbox.purged', 'inbox_item', {}],
-  ['routine.created', 'routine', { name: 'x', time_of_day: 'morning' }], ['routine.created', 'routine', { name: 'x', challenge: true }], ['routine.archived', 'routine', {}], ['routine.restored', 'routine', { name: 'x' }],
+  ['routine.created', 'routine', { name: 'x', time_of_day: 'morning' }], ['routine.created', 'routine', { name: 'x', challenge: true }], ['routine.archived', 'routine', {}], ['routine.restored', 'routine', { name: 'x' }], ['routine.updated', 'routine', { name: 'x' }],
   ['routine.checked', 'routine', { date: '2026-09-26' }], ['routine.unchecked', 'routine', { date: '2026-09-26' }],
   ['ritual.step_completed', 'ritual', { ritual: 'morning', step: 'overdue', date: '2026-09-26' }],
   ['calendar_event.created', 'calendar_event', { title: 'x', type: 'event' }], ['calendar_event.deleted', 'calendar_event', {}], ['calendar_event.restored', 'calendar_event', {}],
   ['people.created', 'people', { name: 'x' }], ['people.updated', 'people', { name: 'x' }], ['people.deleted', 'people', {}],
-  ['people.interaction_logged', 'people', { summary: 'x' }], ['people.interaction_deleted', 'people', {}],
+  ['people.interaction_logged', 'people', { summary: 'x' }], ['people.interaction_edited', 'people', { summary: 'x' }], ['people.interaction_deleted', 'people', {}],
   ['journal.created', 'journal_entry', { entry_date: '2026-09-26' }], ['journal.updated', 'journal_entry', { entry_date: '2026-09-26' }],
   ['journal.deleted', 'journal_entry', {}], ['journal.restored', 'journal_entry', {}], ['journal.line_added', 'ritual', { date: '2026-09-26' }],
   ['project.created', 'project', { name: 'x', domain_id: null, type: 'standard' }], ['project.renamed', 'project', { name: 'x' }], ['project.reparented', 'project', { domain_id: RANDOM }],
@@ -160,6 +160,7 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['project.engagement_changed', 'project', { engagement_model: 'Freelance' }], ['project.target_date_changed', 'project', { target_date: null }],
   ['project.milestone_added', 'project', { title: 'x', weight: 1 }], ['project.milestone_completed', 'project', { milestone_id: 'm', title: 'x' }],
   ['project.milestone_uncompleted', 'project', { milestone_id: 'm', title: 'x' }], ['project.milestone_renamed', 'project', { milestone_id: 'm', title: 'x' }],
+  ['project.milestone_reweighted', 'project', { milestone_id: 'm', weight: 2 }], ['project.checklist_item_renamed', 'project', { item_id: 'i', title: 'x' }],
   ['project.milestone_removed', 'project', { milestone_id: 'm' }], ['project.checklist_item_added', 'project', { title: 'x', type: 'one-shot' }],
   ['project.checklist_item_completed', 'project', { item_id: 'i', title: 'x' }], ['project.checklist_item_uncompleted', 'project', { item_id: 'i', title: 'x' }],
   ['project.checklist_item_removed', 'project', { item_id: 'i' }], ['project.update_logged', 'project', { note: 'x' }], ['project.work_logged', 'project', { note: '', duration_min: 30 }],
@@ -168,7 +169,7 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['domain.swept', 'domain', { week: '2026-W39' }], ['review.verdict', 'project', { verdict: 'park it', week: '2026-W39' }], ['review.week_closed', 'review', { entity_key: 'x' }],
   ['entity.reviewed', 'project', {}], ['resurfaced.converted', 'inbox_item', {}], ['resurfaced.review_later', 'task', { snoozed_days: 3 }], ['resurfaced.dismissed', 'journal_entry', {}],
   ['resurfaced.planned', 'task', {}], ['resurfaced.done', 'task', {}], ['resurfaced.kept', 'inbox_item', {}],
-  ['book.created', 'book', { title: 'x' }], ['book.progress_updated', 'book', { current_page: 12, status: 'reading' }], ['book.deleted', 'book', {}],
+  ['book.created', 'book', { title: 'x' }], ['book.progress_updated', 'book', { current_page: 12, status: 'reading' }], ['book.updated', 'book', { title: 'x' }], ['book.deleted', 'book', {}],
   ['note.created', 'note', { title: 'x' }], ['note.updated', 'note', { title: 'x' }], ['note.deleted', 'note', {}],
   ['quote.created', 'quote', { author: 'x', source: 'y' }], ['quote.updated', 'quote', {}], ['quote.deleted', 'quote', {}], ['commentary.created', 'commentary', { parent_type: 'book' }],
   ['onboarding.completed', 'app_settings', { name: 'Mira', workspaceName: 'Nile Studio', seedAvatar: 'cherry/bud' }],
@@ -218,6 +219,30 @@ describe('describeActivity — the notification history (Tray and Notifications.
     const nudge = describeActivity(entry('notify.evening_nudge', 'notification', RANDOM, { title: 'The garden’s ready to close', body: '4 done · 2 left' }))
     expect(nudge).toMatchObject({ details: '4 done · 2 left', notice: { kind: 'evening_nudge' } })
     expect(nudge.notice?.actions.map((a) => a.title)).toEqual(['Shut down'])
+  })
+})
+
+describe('describeActivity — the three 12k drew last (12j): page read, birthday, sync', () => {
+  it('a page read: as sent, Review → that capture', () => {
+    const line = describeActivity(entry('notify.paper_ready', 'notification', RANDOM, { title: 'Your page is read — 7 things', body: 'From “OS lecture 3”. 2 need a quick look.', capture_id: INBOX }))
+    expect(line).toMatchObject({ text: 'Your page is read — 7 things', details: 'From “OS lecture 3”. 2 need a quick look.', category: 'notifications', icon: 'notice', href: '/inbox' })
+    expect(line.notice).toEqual({ kind: 'paper_ready', actions: [{ action: 'review', title: 'Review' }], taskIds: [INBOX] })
+  })
+
+  it('a birthday: "Open Salma" while she’s in People; gone → no button; several → Open People', () => {
+    const one = describeActivity(entry('notify.birthday', 'notification', RANDOM, { title: 'Salma’s birthday is today', body: 'Last spoke 12 days ago.', person_id: PERSON }), NAMES)
+    expect(one).toMatchObject({ text: 'Salma’s birthday is today', details: 'Last spoke 12 days ago.', category: 'notifications', href: '/people/' + PERSON })
+    expect(one.notice).toEqual({ kind: 'birthday', actions: [{ action: 'open', title: 'Open Salma' }], taskIds: [] })
+    const gone = describeActivity(entry('notify.birthday', 'notification', RANDOM, { title: 'Omar’s birthday is today', body: '', person_id: RANDOM }), NAMES)
+    expect(gone).toMatchObject({ href: null, notice: { kind: 'birthday', actions: [] } })
+    const several = describeActivity(entry('notify.birthday', 'notification', RANDOM, { title: '2 birthdays today', body: 'Omar · Salma' }), NAMES)
+    expect(several).toMatchObject({ href: '/people', notice: { actions: [{ action: 'open', title: 'Open' }] } })
+  })
+
+  it('a sync problem: as it was said, Open', () => {
+    const line = describeActivity(entry('notify.sync_problem', 'notification', RANDOM, { title: '2 changes are waiting to sync', body: 'They’re safe on this device. We’ll keep trying.' }))
+    expect(line).toMatchObject({ text: '2 changes are waiting to sync', details: 'They’re safe on this device. We’ll keep trying.', category: 'notifications', href: '/today' })
+    expect(line.notice).toEqual({ kind: 'sync_problem', actions: [{ action: 'open', title: 'Open' }], taskIds: [] })
   })
 })
 

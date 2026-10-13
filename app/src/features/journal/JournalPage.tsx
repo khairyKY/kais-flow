@@ -2,28 +2,56 @@ import { useEffect, useState, useMemo, useRef } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { useOnline } from '../../lib/useOnline'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
-import { entriesForDay, dayField, dayOrdinal, writtenStreak, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, type HeldRows, type ListState } from './journalDay'
+import { entriesForDay, dayField, dayOrdinal, daysWrittenThisMonth, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, addMedia, removeMedia, appendTranscript, type HeldRows, type ListState } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
-import { cairoDateKey } from '../../lib/dateShortcuts'
+import { zoneDateKey } from '../../lib/dateShortcuts'
 import { Button } from '../../components/kit'
-import { ConfirmCard } from '../projects/ConfirmCard'
+import { ActionSheet } from '../../components/ActionSheet'
+import { useIsMobile } from '../../components/BottomSheet'
+import { DateField } from '../../components/DatePicker'
+import { addDays } from '../../components/pickerMath'
+import { useDayRollover } from '../calendar/useDayRollover'
+import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
+import { useToastStore } from '../../lib/toastStore'
+import { isCapacitorShell } from '../../lib/platform'
+import { deleteJournalPhoto, pickImages, uploadJournalPhoto, useJournalPhotoUrls } from './media'
 import type { JournalEntry } from '../../lib/types'
 import '../projects/xfx.css'
 
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return isMobile
+const toast = (message: string) => useToastStore.getState().push({ message })
+
+/** The card footer's quiet links (＋ New entry's look): mono caps, terra, no chrome. */
+const footLink = { border: 'none', background: 'none', padding: 0, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: 'var(--acc-terra)', cursor: 'pointer' } as const
+
+/** An entry's photos: thumbnails (tap to view full size) with a remove. */
+function EntryPhotos({ paths, onRemove }: { paths: string[]; onRemove: (path: string) => void }) {
+  const urls = useJournalPhotoUrls(paths)
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+      {paths.map((p, i) => (
+        <div key={p} style={{ position: 'relative', width: 72, height: 72, border: '1px solid var(--line-card)', borderRadius: 3, background: 'var(--paper-bone)', overflow: 'hidden' }}>
+          {urls[i] && (
+            <a href={urls[i]} target="_blank" rel="noreferrer" aria-label="Open photo">
+              <img src={urls[i]} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+            </a>
+          )}
+          <button
+            type="button"
+            aria-label="Remove photo"
+            className="kf-hit"
+            onClick={() => onRemove(p)}
+            style={{ position: 'absolute', top: 2, right: 2, width: 24, height: 24, border: 'none', borderRadius: 999, background: 'var(--paper-parchment)', color: 'var(--ink-muted)', boxShadow: 'var(--shadow-crisp)', font: 'inherit', fontSize: 14, lineHeight: '24px', padding: 0, cursor: 'pointer' }}
+          >
+            ×
+          </button>
+        </div>
+      ))}
+    </div>
+  )
 }
 
 const PROMPTS = [
@@ -74,8 +102,9 @@ function PastNote({ state, retrying, onRetry, size }: { state: Extract<ListState
 
 /** The phone Notes / Quotes shelf (1b tabs) when it has nothing to list: empty, offline before it
  * ever loaded, or failed. Journal's fern, still coiled, and one hand line — plus a retry when
- * there's something to retry. No "go add one" button: the Library is parked (K-26), so there's
- * nowhere to send anyone. Loading shows nothing; it's brief, and an unloaded shelf isn't empty. */
+ * there's something to retry. No "go add one" button: it was written while the Library was parked
+ * (K-26; Kai un-parked it 2026-10-12, so a link to /library could come back). Loading shows nothing;
+ * it's brief, and an unloaded shelf isn't empty. */
 type ShelfQuery = { data: unknown[] | undefined; isError: boolean; fetchStatus: 'fetching' | 'paused' | 'idle'; isFetching: boolean; refetch: () => unknown }
 function ShelfState({ q, what }: { q: ShelfQuery; what: 'notes' | 'quotes' }) {
   const online = useOnline()
@@ -135,9 +164,11 @@ export function JournalPage() {
 
   // Selected date state (defaults to today, yyyy-mm-dd, on the user's clock — Paper's journal lines
   // and every other day key use the same; it read the device's)
-  const todayStr = useMemo(() => cairoDateKey(new Date()), [])
-
-  const [selectedDate, setSelectedDate] = useState(todayStr)
+  const [selectedDate, setSelectedDate] = useState(() => zoneDateKey(new Date()))
+  // A page left open past midnight turns to the new day — only if it was on the day that just
+  // ended; a past day you were reading stays put.
+  const dayNow = useDayRollover((previous) => setSelectedDate((d) => (d === zoneDateKey(previous) ? zoneDateKey(new Date()) : d)))
+  const todayStr = useMemo(() => zoneDateKey(new Date()), [dayNow]) // eslint-disable-line react-hooks/exhaustive-deps
   // Kai 2026-10-06: a search hit for an entry opened today's page, not the entry. /journal?focus=<id>
   // now turns to its day (once, when the entry is known) and brings it into view.
   const focusId = useSearchParams()[0].get('focus')
@@ -172,7 +203,8 @@ export function JournalPage() {
   const [gratitude2, setGratitude2] = useState('')
   const [gratitude3, setGratitude3] = useState('')
   const [saveStatus, setSaveStatus] = useState('Saved')
-  const [confirmDelete, setConfirmDelete] = useState<JournalEntry | null>(null)
+  const [talking, setTalking] = useState(false)
+  const [photoSheet, setPhotoSheet] = useState(false)
 
   const dayMood = dayField(dayEntries, 'mood')
   const dayGratitude = dayField(dayEntries, 'gratitude')
@@ -200,10 +232,15 @@ export function JournalPage() {
   // overwrite the other's field with whatever was on screen when its timer was set. Both
   // compose from here instead of from their captured render, so the loser of the race only
   // rewrites what the winner already wrote.
-  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [] })
-  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [] }
+  const latest = useRef({ dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [], entries })
+  latest.current = { dayEntries, drafts, mood: activeMood, grats: [gratitude1, gratitude2, gratitude3], listed: listed ?? [], entries }
   const rowNow = (id: string): JournalEntry | undefined => {
     const e = latest.current.dayEntries.find((x) => x.id === id)
+    return e && { ...e, body: latest.current.drafts[id] ?? e.body }
+  }
+  /** Any day's row as it stands now — a photo upload can finish after you've turned the page. */
+  const anyRowNow = (id: string): JournalEntry | undefined => {
+    const e = latest.current.entries.find((x) => x.id === id)
     return e && { ...e, body: latest.current.drafts[id] ?? e.body }
   }
 
@@ -231,7 +268,9 @@ export function JournalPage() {
     setSaveStatus('Saving...')
     window.clearTimeout(timers.current[entry.id])
     timers.current[entry.id] = window.setTimeout(() => {
-      const cur = rowNow(entry.id)
+      // Any day's row: the page may have turned (a day picked, or midnight) inside the debounce,
+      // and the last words typed on the old page must still land.
+      const cur = anyRowNow(entry.id)
       if (!cur) return // deleted while the save was pending — don't resurrect it
       save({ ...cur, body: val }, false)
       // The write is in the cache now, so the draft has served its purpose — drop it, or it
@@ -278,6 +317,82 @@ export function JournalPage() {
     })
   }
 
+  // "Talk it out" and "＋ Photo" land on the day's latest entry, or start the day's first one.
+
+  /** Talk it out: the voice sheet (Groq transcription through the `transcribe` function) hands back
+   * the words; they join the entry as a new paragraph and are kept in `transcript` too. */
+  const talkedOut = (heard: string) => {
+    const last = latest.current.dayEntries.at(-1)
+    const cur = last && rowNow(last.id)
+    if (!cur) {
+      save({ entry_date: selectedDate, body: heard.trim(), transcript: heard.trim() }, true)
+    } else {
+      // A pending body save would write the pre-transcript text back over this one.
+      window.clearTimeout(timers.current[cur.id])
+      save({ ...cur, body: appendTranscript(cur.body, heard), transcript: appendTranscript(cur.transcript, heard) }, false)
+      setDrafts(({ [cur.id]: _saved, ...rest }) => rest)
+    }
+    setSaveStatus('Saved · just now')
+  }
+
+  /** ＋ Photo: compress, upload to the private `journal` bucket, add the path to the entry. A failed
+   * upload never touches the words — they're already saved through the outbox. */
+  const addPhotos = async (camera: boolean) => {
+    const files = await pickImages(camera)
+    if (!files.length) return
+    const last = latest.current.dayEntries.at(-1)
+    const entryId = last ? last.id : save({ entry_date: selectedDate, body: '' }, true).id
+    setSaveStatus('Adding photo…')
+    let unreadable = 0
+    let failed = 0
+    for (const file of files) {
+      try {
+        const path = await uploadJournalPhoto(entryId, file)
+        const cur = anyRowNow(entryId)
+        if (!cur) {
+          void deleteJournalPhoto(path).catch(() => {}) // the entry went while it uploaded
+          continue
+        }
+        save({ ...cur, media_paths: addMedia(cur.media_paths, path) }, false)
+      } catch (err) {
+        if (err instanceof Error && err.message === 'decode') unreadable++
+        else failed++
+      }
+    }
+    setSaveStatus('Saved · just now')
+    if (unreadable) toast("Couldn't open that photo — try a JPG or PNG.")
+    if (failed) toast(navigator.onLine ? "The photo didn't upload — your words are saved. Try it again in a bit." : "Photos need a connection — your words are saved. Add it again once you're online.")
+  }
+
+  /** Phone shell: its WebView offers the camera only when asked, so ask which. Browsers put the
+   * camera in their own picker. */
+  const onPhoto = () => (isCapacitorShell() ? setPhotoSheet(true) : void addPhotos(false))
+
+  /** Remove = Undo toast, no confirm. The path leaves the entry now; the stored photo is deleted
+   * only once that toast has gone without an Undo. Keyed to the toast itself, not a timer: its 6s
+   * pause while hovered or touched, and a third toast waits its turn, so a timer could delete the
+   * file while Undo was still on screen. */
+  const removePhoto = (entryId: string, path: string) => {
+    const cur = anyRowNow(entryId)
+    const at = cur ? (cur.media_paths ?? []).indexOf(path) : -1
+    if (!cur || at < 0) return
+    save({ ...cur, media_paths: removeMedia(cur.media_paths, path) }, false)
+    let undone = false
+    toastUndo('Removed · photo', () => {
+      undone = true
+      const now = anyRowNow(entryId)
+      if (now) save({ ...now, media_paths: addMedia(now.media_paths, path, at) }, false)
+    })
+    const toastId = useToastStore.getState().toasts.at(-1)?.id
+    const stop = useToastStore.subscribe(({ toasts }) => {
+      if (toasts.some((t) => t.id === toastId)) return
+      stop()
+      // ponytail: offline (or the app closed first) leaves the file orphaned in the private bucket —
+      // nothing points at it any more. A sweep of unreferenced paths would collect it, if it matters.
+      if (!undone) void deleteJournalPhoto(path).catch(() => {})
+    })
+  }
+
   /** Mood + the three small things are day-level; they ride on the day's first entry. */
   const saveDayFields = () => {
     setSaveStatus('Saving...')
@@ -310,27 +425,14 @@ export function JournalPage() {
 
   // Consecutive days with something actually written (an untouched "+ New entry" is not a
   // day journaled — punch item 10, growth stages never lie).
-  const streakDays = useMemo(() => writtenStreak(entries, todayStr), [entries, todayStr])
+  // Kept = days written this month, never a streak that a missed night resets (product audit 2026-10-12).
+  const keptDays = useMemo(() => daysWrittenThisMonth(entries, todayStr), [entries, todayStr])
 
   // "On this day" logic (returns entry from a year ago if exists, or older ones)
   const onThisDayEntry = useMemo(() => {
-    if (entries.length === 0) return null
-    const selectedD = new Date(selectedDate)
-    const targetMonth = selectedD.getMonth()
-    const targetDay = selectedD.getDate()
-    const targetYear = selectedD.getFullYear()
-
-    // Find entries on the same month and day but from different years
-    const match = entries.find((e) => {
-      const d = new Date(e.entry_date)
-      return (
-        isWritten(e) &&
-        d.getMonth() === targetMonth &&
-        d.getDate() === targetDay &&
-        d.getFullYear() < targetYear
-      )
-    })
-    return match || null
+    // Same month-day from an earlier year — straight off the 'YYYY-MM-DD' keys, so the device's
+    // zone can't shift either day.
+    return entries.find((e) => isWritten(e) && e.entry_date.slice(5) === selectedDate.slice(5) && e.entry_date.slice(0, 4) < selectedDate.slice(0, 4)) || null
   }, [entries, selectedDate])
 
   const handleAddCommentary = () => {
@@ -350,7 +452,8 @@ export function JournalPage() {
     return d.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     })
   }, [selectedDate])
 
@@ -360,7 +463,8 @@ export function JournalPage() {
     return d.toLocaleDateString('en-US', {
       weekday: 'long',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'UTC'
     })
   }
 
@@ -414,26 +518,75 @@ export function JournalPage() {
             {entryTime(entry.created_at)}
           </span>
           <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-          <span
-            onClick={() => setConfirmDelete(entry)}
-            style={{ fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', userSelect: 'none' }}
+          <button
+            type="button"
+            className="kf-hit"
+            aria-label={`Delete ${entryTime(entry.created_at)} entry`}
+            onClick={() => removeEntry(entry)}
+            style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', userSelect: 'none' }}
           >
             Delete
-          </span>
+          </button>
         </div>
         {ta(entry, bodyOf(entry), (v) => handleBodyChange(entry, v), i === 0 ? t.minHeight : t.lineHeight * 3)}
+        {entry.media_paths?.length > 0 && <EntryPhotos paths={entry.media_paths} onRemove={(path) => removePhoto(entry.id, path)} />}
       </div>
     ))
   }
 
-  const confirmCard = confirmDelete && (
-    <ConfirmCard
-      title="Delete this entry?"
-      body="It moves to Trash — you can restore it from there."
-      confirmLabel="Delete"
-      onConfirm={() => { removeEntry(confirmDelete); setConfirmDelete(null) }}
-      onCancel={() => setConfirmDelete(null)}
-    />
+  // The overlays both layouts share: the voice sheet, the shell's photo choice.
+  const overlays = (
+    <>
+      {talking && <VoiceCaptureSheet open onText={talkedOut} onClose={() => setTalking(false)} />}
+      {photoSheet && (
+        <ActionSheet
+          title="Add a photo"
+          items={[
+            { label: 'Take a photo', onSelect: () => void addPhotos(true) },
+            { label: 'Choose from your photos', onSelect: () => void addPhotos(false) },
+          ]}
+          onClose={() => setPhotoSheet(false)}
+        />
+      )}
+    </>
+  )
+
+  const nextPrompt = () => setPromptIndex((prev) => (prev + 1) % PROMPTS.length)
+  // Phone: 44px targets for the small text buttons below.
+  const hit = isMobile ? { minHeight: 44 } : undefined
+
+  /** The quote of the day's thoughts and "＋ add a thought" — the rail's on desktop, the card's on a phone. */
+  const quoteThoughts = (
+    <div style={{ marginTop: 12, paddingTop: 11, borderTop: '1px dashed var(--line-dashed)' }}>
+      {commonplaceCommentaries.map((c) => (
+        <div key={c.id} style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.35, marginBottom: 6 }}>
+          {c.body}
+        </div>
+      ))}
+
+      {showAddCommentary ? (
+        <div style={{ marginTop: 8 }}>
+          <textarea
+            value={newCommentaryText}
+            onChange={(e) => setNewCommentaryText(e.target.value)}
+            placeholder="Add a thought..."
+            style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', outline: 'none', resize: 'none', padding: 6, borderRadius: 3 }}
+          />
+          <div style={{ display: 'flex', gap: 6, marginTop: 4, justifyContent: 'flex-end' }}>
+            <button onClick={() => setShowAddCommentary(false)} style={{ ...hit, border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={handleAddCommentary} style={{ ...hit, border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: 'var(--fs-meta-l)', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>Save</button>
+          </div>
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowAddCommentary(true)}
+          style={{ ...footLink, ...hit, display: 'block', marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', userSelect: 'none' }}
+        >
+          ＋ add a thought
+        </button>
+      )}
+    </div>
   )
 
   // Renders the mobile sub-panels
@@ -506,6 +659,21 @@ export function JournalPage() {
             </div>
           </div>
 
+          {/* The desktop's "This week" days, the phone's way: ‹ a day back · jump to any day · a day on › */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 10 }}>
+            <button type="button" aria-label="Previous day" onClick={() => setSelectedDate(addDays(selectedDate, -1))} style={{ ...footLink, minWidth: 44, minHeight: 44, fontSize: 'var(--fs-display-l)', color: 'var(--ink-muted)' }}>‹</button>
+            <DateField
+              value={selectedDate}
+              onChange={(v) => v && setSelectedDate(v)}
+              title="Go to day"
+              max={todayStr}
+              clearable={false}
+              style={{ minHeight: 44, padding: '0 12px', font: 'inherit', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 8 }}
+            />
+            {/* ds-ok: the disabled › is an icon glyph on a disabled control (non-text, 3:1 is enough); --ink-faint would read as enabled */}
+            <button type="button" aria-label="Next day" disabled={selectedDate >= todayStr} onClick={() => setSelectedDate(addDays(selectedDate, 1))} style={{ ...footLink, minWidth: 44, minHeight: 44, fontSize: 'var(--fs-display-l)', color: selectedDate >= todayStr ? 'var(--ink-hairline)' : 'var(--ink-muted)', cursor: selectedDate >= todayStr ? 'default' : 'pointer' }}>›</button>
+          </div>
+
           {/* Segmented Tab */}
           <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 999, overflow: 'hidden', marginTop: 16 }}>
             <span
@@ -536,9 +704,12 @@ export function JournalPage() {
               {/* Polish G: offline before the journal ever loaded here, or it failed to load. */}
               {pastUnread && <div style={{ marginTop: 16 }}>{pastNote(16)}</div>}
 
-              {/* Prompt */}
-              <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink-body)', marginTop: 20, lineHeight: 1.4 }}>
-                {firstPage ? 'The first page is the hardest — one sentence counts.' : PROMPTS[promptIndex]}
+              {/* Prompt — "↻" is the desktop's "↻ another" */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 20 }}>
+                <div className={motion ? 'kf-ink' : undefined} style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'var(--fs-lead)', color: 'var(--ink-body)', lineHeight: 1.4 }}>
+                  {firstPage ? 'The first page is the hardest — one sentence counts.' : PROMPTS[promptIndex]}
+                </div>
+                {!firstPage && <button type="button" aria-label="Another prompt" onClick={nextPrompt} style={{ ...footLink, flex: 'none', minWidth: 44, minHeight: 44, marginTop: -10, fontSize: 'var(--fs-lead)', color: 'var(--ink-faint)' }}>↻</button>}
               </div>
 
               {/* Writing Card */}
@@ -554,8 +725,8 @@ export function JournalPage() {
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
                   {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
                   <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
-                  <span>🎤 Talk</span>
-                  <span>＋ Photo</span>
+                  <button type="button" onClick={() => setTalking(true)} style={footLink}>🎤 Talk</button>
+                  <button type="button" onClick={onPhoto} style={footLink}>＋ Photo</button>
                   <span style={{ marginLeft: 'auto', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
                 </div>
               </div>
@@ -600,7 +771,7 @@ export function JournalPage() {
                       value={val}
                       onChange={(e) => handleGratitudeChange(idx + 1, e.target.value)}
                       placeholder={idx === 2 ? "Add a third..." : `Something you are grateful for...`}
-                      style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: '14.5px', color: val ? 'var(--ink-body)' : 'var(--ink-hairline)', outline: 'none', padding: 0 }}
+                      style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-body)', color: val ? 'var(--ink-body)' : 'var(--ink-faint)', outline: 'none', padding: 0 }}
                     />
                   </div>
                 ))}
@@ -617,12 +788,13 @@ export function JournalPage() {
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
                     — {commonplaceQuote.author}
                   </div>
+                  {quoteThoughts}
                 </div>
               )}
             </>
           )}
         </div>
-        {confirmCard}
+        {overlays}
       </div>
     )
   }
@@ -718,8 +890,8 @@ export function JournalPage() {
             const hasEntry = entries.some((e) => e.entry_date === dateStr && isWritten(e))
             const isSelected = selectedDate === dateStr
             const dateObj = new Date(dateStr)
-            const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' })
-            const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+            const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long', timeZone: 'UTC' })
+            const monthDay = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })
             const entryForDate = entries.find((e) => e.entry_date === dateStr && e.mood) ?? entries.find((e) => e.entry_date === dateStr)
 
             if (isSelected) {
@@ -756,7 +928,7 @@ export function JournalPage() {
 
         {/* Notes / Quotes shelf link lists. Polish G: a group shows only when it has something to
             list — a brand-new account used to get two bare headings with nothing under them, and
-            with the Library parked (K-26) there's no way to fill them from here. */}
+            they fill from the Library (un-parked 2026-10-12, in the nav again), not from here. */}
         {notes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>Notes</div>}
         {notes.slice(0, 4).map((n) => (
           <div
@@ -818,7 +990,7 @@ export function JournalPage() {
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Today's prompt</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
               <span
-                onClick={() => setPromptIndex((prev) => (prev + 1) % PROMPTS.length)}
+                onClick={nextPrompt}
                 style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}
               >
                 ↻ another
@@ -839,8 +1011,8 @@ export function JournalPage() {
                 {/* One column (<560px): the tree — and its "＋ New entry" — sits below the page,
                     so the card carries the day's "＋ New entry", as 1b's footer does. */}
                 <span className="jn-card-new" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>🎤 Talk it out</span>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>＋ Photo</span>
+                <button type="button" onClick={() => setTalking(true)} style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>🎤 Talk it out</button>
+                <button type="button" onClick={onPhoto} style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>＋ Photo</button>
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
               </div>
             </div>
@@ -891,7 +1063,7 @@ export function JournalPage() {
                       value={val}
                       onChange={(e) => handleGratitudeChange(idx + 1, e.target.value)}
                       placeholder={idx === 2 ? "Add a third..." : `Something you are grateful for...`}
-                      style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: '15px', color: val ? 'var(--ink-body)' : 'var(--ink-hairline)', outline: 'none', padding: 0 }}
+                      style={{ flex: 1, border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-body)', color: val ? 'var(--ink-body)' : 'var(--ink-faint)', outline: 'none', padding: 0 }}
                     />
                   </div>
                 ))}
@@ -925,35 +1097,7 @@ export function JournalPage() {
                 — {commonplaceQuote.author || 'Unknown'}
               </div>
 
-              <div style={{ marginTop: 12, paddingTop: 11, borderTop: '1px dashed var(--line-dashed)' }}>
-                {commonplaceCommentaries.map((c) => (
-                  <div key={c.id} style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.35, marginBottom: 6 }}>
-                    {c.body}
-                  </div>
-                ))}
-
-                {showAddCommentary ? (
-                  <div style={{ marginTop: 8 }}>
-                    <textarea
-                      value={newCommentaryText}
-                      onChange={(e) => setNewCommentaryText(e.target.value)}
-                      placeholder="Add a thought..."
-                      style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', outline: 'none', resize: 'none', padding: 6, borderRadius: 3 }}
-                    />
-                    <div style={{ display: 'flex', gap: 6, marginTop: 4, justifyContent: 'flex-end' }}>
-                      <button onClick={() => setShowAddCommentary(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '10.5px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-                      <button onClick={handleAddCommentary} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '10.5px', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>Save</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    onClick={() => setShowAddCommentary(true)}
-                    style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', userSelect: 'none' }}
-                  >
-                    ＋ add a thought
-                  </div>
-                )}
-              </div>
+              {quoteThoughts}
             </div>
           </section>
         )}
@@ -988,19 +1132,19 @@ export function JournalPage() {
           )}
         </section>
 
-        {/* Streak */}
+        {/* Kept */}
         <section>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Kept</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            {/* The export's full fern — but a streak of 0 is a fern that hasn't unfurled yet
+            {/* The export's full fern — but 0 days is a fern that hasn't unfurled yet
                 (growth stages never lie, punch 10). */}
-            <img src={`/ds/assets/fern/${streakDays > 0 ? 'full' : 'coil'}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
+            <img src={`/ds/assets/fern/${keptDays > 0 ? 'full' : 'coil'}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(streakDays)}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', color: 'var(--ink-body)', lineHeight: 1 }}>{daysLabel(keptDays)}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>of showing up this month</div>
             </div>
           </div>
         </section>
@@ -1010,7 +1154,7 @@ export function JournalPage() {
       </aside>
       )}
       </div>
-      {confirmCard}
+      {overlays}
     </div>
   )
 }

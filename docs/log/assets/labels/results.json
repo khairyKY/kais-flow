@@ -1,0 +1,367 @@
+[
+  {
+    "name": "k0 [day] j reaches the forecasting row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k1 [day] L opens the Label picker: find or create, every label with its count, checks on this task's",
+    "ok": true,
+    "detail": "⌕ | Deep work | 1 | Errand | 2 | Quick win | 2 | Someday | 1 | Urgent | 3 | Waiting on | 1 | ＋ | Create new label…"
+  },
+  {
+    "name": "k1 [day] colours from label_meta; an uncoloured label wears the hairline square",
+    "ok": true,
+    "detail": "rgb(181, 101, 74) / rgb(136, 129, 110)"
+  },
+  {
+    "name": "k2 typing filters (any case) and offers Create “err”",
+    "ok": true,
+    "detail": "Errand\n2"
+  },
+  {
+    "name": "k2 Enter toggles the highlighted label onto the task; the search clears",
+    "ok": true,
+    "detail": "[\"Deep work\",\"Urgent\",\"Errand\"]"
+  },
+  {
+    "name": "k3 a new name + Enter creates it on the task",
+    "ok": true,
+    "detail": "[\"Deep work\",\"Urgent\",\"Errand\",\"Gym\"]"
+  },
+  {
+    "name": "k4 a click takes a label off; the picker stays open for the next",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k4 each edit is task activity (task.updated · labels), as any field edit",
+    "ok": true,
+    "detail": "[\"task.updated\",\"task.updated\",\"task.updated\"]"
+  },
+  {
+    "name": "k5 Esc closes it, and the list keys come back (j moves)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k0 [night] j reaches the forecasting row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k1 [night] L opens the Label picker: find or create, every label with its count, checks on this task's",
+    "ok": true,
+    "detail": "⌕ | Deep work | 1 | Errand | 2 | Quick win | 2 | Someday | 1 | Urgent | 3 | Waiting on | 1 | ＋ | Create new label…"
+  },
+  {
+    "name": "k1 [night] colours from label_meta; an uncoloured label wears the hairline square",
+    "ok": true,
+    "detail": "rgb(226, 148, 115) / rgb(122, 116, 138)"
+  },
+  {
+    "name": "k [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 L with 2 selected opens one picker",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 the label goes onto every selected task",
+    "ok": true,
+    "detail": "[[\"Errand\",\"Quick win\"],[\"Quick win\"]]"
+  },
+  {
+    "name": "b2 one toast with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 a label some of the selection has shows –, a tap puts it on all",
+    "ok": true,
+    "detail": "Errand 2 –"
+  },
+  {
+    "name": "b4 Undo takes it back off both",
+    "ok": true,
+    "detail": "[[\"Errand\"],[]]"
+  },
+  {
+    "name": "b no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 desktop menu: Labels ▸ right after Priority",
+    "ok": true,
+    "detail": "Tomorrow / 2 / Plan… / ▸ / Move to… / ▸ / Priority / ▸ / Labels / ▸ / Repeat / ▸ / Remind / ▸ / Add to Top 3 / T / Make goal of the day / Start focus / Select / ⌃ / click / Delete / #"
+  },
+  {
+    "name": "m2 it opens the Label picker beside the menu",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m3 a tap there writes the task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [day] a label chip opens the picker inside the popover (both open)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 a tap writes; the popover stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 Esc closes the picker first, then the popover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 the chip row shows the new label",
+    "ok": true,
+    "detail": "TODAY · 15:00 30M FORECASTING P2 REPEAT REMIND DEEP WORK URGENT ERRAND"
+  },
+  {
+    "name": "c4 a task with no labels has the dashed Label chip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [night] a label chip opens the picker inside the popover (both open)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 [day] a label chip on the phone sheet opens the Labels sheet with every label",
+    "ok": true,
+    "detail": "Deep work | 1 | Errand | 2 | Quick win | 2 | Someday | 1 | Urgent | 3 | Waiting on | 1"
+  },
+  {
+    "name": "s1 [day] rows are touch-sized (≥48px)",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":510,\"width\":390,\"height\":52}"
+  },
+  {
+    "name": "s2 a tap writes the task (through the sheet's own setter)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 [night] a label chip on the phone sheet opens the Labels sheet with every label",
+    "ok": true,
+    "detail": "Deep work | 1 | Errand | 2 | Quick win | 2 | Someday | 1 | Urgent | 3 | Waiting on | 1"
+  },
+  {
+    "name": "s1 [night] rows are touch-sized (≥48px)",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":510,\"width\":390,\"height\":52}"
+  },
+  {
+    "name": "s [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 [desktop day] Settings has the Labels panel: count, ＋ New, rows with \"N tasks\"",
+    "ok": true,
+    "detail": "Labels6 TOTAL | ＋ New | Deep work | 1 task | Errand | 2 tasks | Quick win | 2 tasks | Someday | 1 task | Urgent | 3 tasks | Waiting on | 1 task | labels cut across every domain ✿"
+  },
+  {
+    "name": "g2 [desktop day] a name opens the drawn edit row: the field, six swatches, Save",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g3 rename rewrites the label on its task and moves the colour (the new pick) to the new name",
+    "ok": true,
+    "detail": "{\"Urgent\":\"var(--acc-terra)\",\"Quick win\":\"var(--acc-sage)\",\"Deep work\":\"var(--acc-hydrangea)\",\"Errand\":\"var(--acc-buttercream)\",\"Waiting\":\"var(--acc-sage)\"}"
+  },
+  {
+    "name": "g3 one toast with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g4 Undo puts the name and the colour back",
+    "ok": true,
+    "detail": "{\"Urgent\":\"var(--acc-terra)\",\"Waiting on\":\"var(--acc-lavender)\",\"Quick win\":\"var(--acc-sage)\",\"Deep work\":\"var(--acc-hydrangea)\",\"Errand\":\"var(--acc-buttercream)\"}"
+  },
+  {
+    "name": "g5 Delete takes it off every task (trashed included), in one pass",
+    "ok": true,
+    "detail": "10000000-0000-4000-8000-000000000001,10000000-0000-4000-8000-000000000004,10000000-0000-4000-8000-000000000006,10000000-0000-4000-8000-000000000009"
+  },
+  {
+    "name": "g5 …and no task activity for a reorganise (slipping stays honest)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g5 one toast with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g6 Undo puts it back on all four, with its colour",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g7 renaming onto an existing label merges into it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g8 ＋ New keeps a label with its colour before any task has it",
+    "ok": true,
+    "detail": "{\"Urgent\":\"var(--acc-terra)\",\"Waiting on\":\"var(--acc-lavender)\",\"Quick win\":\"var(--acc-sage)\",\"Deep work\":\"var(--acc-hydrangea)\",\"Errand\":\"var(--acc-buttercream)\",\"Gym\":\"var(--acc-clover)\"}"
+  },
+  {
+    "name": "g9 Esc leaves the edit row as it was (Settings stays)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g [desktop day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 [desktop night] Settings has the Labels panel: count, ＋ New, rows with \"N tasks\"",
+    "ok": true,
+    "detail": "Labels6 TOTAL | ＋ New | Deep work | 1 task | Errand | 2 tasks | Quick win | 2 tasks | Someday | 1 task | Urgent | 3 tasks | Waiting on | 1 task | labels cut across every domain ✿"
+  },
+  {
+    "name": "g2 [desktop night] a name opens the drawn edit row: the field, six swatches, Save",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g [desktop night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 [phone day] Settings has the Labels panel: count, ＋ New, rows with \"N tasks\"",
+    "ok": true,
+    "detail": "Labels6 TOTAL | ＋ New | Deep work | 1 task | Errand | 2 tasks | Quick win | 2 tasks | Someday | 1 task | Urgent | 3 tasks | Waiting on | 1 task | labels cut across every domain ✿"
+  },
+  {
+    "name": "g2 [phone day] a name opens the drawn edit row: the field, six swatches, Save",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g10 phone ⋯ is an action sheet (Edit · Delete)",
+    "ok": true,
+    "detail": "Edit"
+  },
+  {
+    "name": "g [phone day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1 [phone night] Settings has the Labels panel: count, ＋ New, rows with \"N tasks\"",
+    "ok": true,
+    "detail": "Labels6 TOTAL | ＋ New | Deep work | 1 task | Errand | 2 tasks | Quick win | 2 tasks | Someday | 1 task | Urgent | 3 tasks | Waiting on | 1 task | labels cut across every domain ✿"
+  },
+  {
+    "name": "g2 [phone night] a name opens the drawn edit row: the field, six swatches, Save",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g [phone night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f1 [desktop] the Label filter's \"Manage labels…\" opens the manager over Tasks",
+    "ok": true,
+    "detail": "Labels6 TOTAL | ＋ New | Deep work | 1 task | Errand | 2 tasks | Quick win | 2 tasks | Someday | 1 task | Urgent | 3 tasks | Waiting on | 1 task | labels cut across every domain ✿"
+  },
+  {
+    "name": "f2 [desktop] Esc closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f [desktop] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f1 [phone] the Label filter's \"Manage labels…\" opens the manager over Tasks",
+    "ok": true,
+    "detail": "＋ New label | Deep work | 1 task | Errand | 2 tasks | Quick win | 2 tasks | Someday | 1 task | Urgent | 3 tasks | Waiting on | 1 task"
+  },
+  {
+    "name": "f2 [phone] Esc closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f [phone] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 pre-push: no ＋ New, every square the hairline one",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 pre-push: the edit row has no swatches",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 pre-push: rename still rewrites the tasks, and sends no app_settings write",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o side-by-side crops written",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -9,6 +9,7 @@ import { AppLayout } from './components/AppLayout'
 import { KitReference } from './components/KitReference'
 import { NotFoundPage, RouteErrorPage } from './components/RouteErrorPage'
 import { isCapacitorShell } from './lib/platform'
+import { captureStack, stackMove } from './lib/motion'
 
 // Route-level code splitting — each page is its own chunk, loaded on demand.
 // Keeps the heavy pages (FullCalendar, rrule, chrono) out of the initial bundle.
@@ -20,19 +21,36 @@ function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, n
   pageLoaders.push(load)
   return lazy(() => load().then((m) => ({ default: m[name] })))
 }
-const TodayPage = page(() => import('./features/today/TodayPage'), 'TodayPage')
-const InboxPage = page(() => import('./features/inbox/InboxPage'), 'InboxPage')
-const TasksPage = page(() => import('./features/tasks/TasksPage'), 'TasksPage')
+// Motion 2c/2d: a page that drags holds the drag world (components/drag + @dnd-kit), loaded with it —
+// not with the shell; the sidebar's filing spots join it through components/dragSpots.
+function dragPage<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) {
+  const loadBoth = () => Promise.all([load(), import('./components/drag')])
+  pageLoaders.push(loadBoth)
+  return lazy(() =>
+    loadBoth().then(([m, { DragShell }]) => {
+      const Page: ComponentType = m[name]
+      const Dragging = () => (
+        <DragShell>
+          <Page />
+        </DragShell>
+      )
+      return { default: Dragging }
+    }),
+  )
+}
+const TodayPage = dragPage(() => import('./features/today/TodayPage'), 'TodayPage')
+const InboxPage = dragPage(() => import('./features/inbox/InboxPage'), 'InboxPage')
+const TasksPage = dragPage(() => import('./features/tasks/TasksPage'), 'TasksPage')
 const CalendarPage = page(() => import('./features/calendar/CalendarPage'), 'CalendarPage')
-const PlanningBoard = page(() => import('./features/calendar/PlanningBoard'), 'PlanningBoard')
 const TaskEditorPage = page(() => import('./features/calendar/TaskEditorPage'), 'TaskEditorPage')
+const CreatePage = page(() => import('./features/calendar/CreatePage'), 'CreatePage')
 const RoutinesPage = page(() => import('./features/routines/RoutinesPage'), 'RoutinesPage')
 const WeeklyReviewPage = page(() => import('./features/rituals/WeeklyReviewPage'), 'WeeklyReviewPage')
 const SettingsPage = page(() => import('./features/settings/SettingsPage'), 'SettingsPage')
 // [K-26] punch 65: the Notifications feed is cut from v1 — Activity is the ledger. Route removed.
 const SearchPage = page(() => import('./features/search/SearchPage'), 'SearchPage')
 const SharePage = page(() => import('./features/capture/SharePage'), 'SharePage')
-const ProjectsPage = page(() => import('./features/projects/ProjectsPage'), 'ProjectsPage')
+const ProjectsPage = dragPage(() => import('./features/projects/ProjectsPage'), 'ProjectsPage')
 const ProjectDetailPage = page(() => import('./features/projects/ProjectDetailPage'), 'ProjectDetailPage')
 const PerennialsPage = page(() => import('./features/projects/PerennialsPage'), 'PerennialsPage')
 const JournalPage = page(() => import('./features/journal/JournalPage'), 'JournalPage')
@@ -48,6 +66,8 @@ const OnboardingGate = page(() => import('./features/onboarding/OnboardingGate')
 const ImportPage = page(() => import('./features/import/ImportPage'), 'ImportPage')
 // Tour & help: the Guide (index and articles; More on a phone, the sidebar foot on a computer).
 const GuidePage = page(() => import('./features/guide/GuidePage'), 'GuidePage')
+// The Notebook page: the day laid out to copy into a paper journal (/notebook?day=today|tomorrow).
+const NotebookPage = page(() => import('./features/notebook/NotebookPage'), 'NotebookPage')
 // J-11: public, outside RequireAuth/OnboardingGate so a recovery session isn't bounced to /today.
 const ResetPage = page(() => import('./features/auth/ResetPage'), 'ResetPage')
 // Not a page: the phone task sheet AppLayout lazy-loads. Warmed with the pages so the first tap opens it at once.
@@ -55,20 +75,15 @@ pageLoaders.push(() => import('./features/tasks/TaskSheet'))
 // The Windows tray's flyout window (src-tauri tray.rs) — its own route, outside the shell, never warmed.
 const TrayFlyout = lazy(() => import('./features/tray/TrayFlyout').then((m) => ({ default: m.TrayFlyout })))
 
-// Punch 65: design galleries are for building, not for using — the W8 quick-capture phone mock
-// (/capture: a fake lock screen and keyboard), the season-state sheet (/seasons: "Good morning,
-// Kai" on sample dates) and the §04 kit reference (/design-system, no auth). Only the dev server
-// registers them. A production build never calls this, so the routes and their code are dropped
-// and those addresses reach the not-found page. (/share, the real share target, is not a gallery.)
+// Punch 65: design galleries are for building, not for using — the §04 kit reference
+// (/design-system, no auth). Only the dev server registers it; a production build drops the route
+// and its code. Kai 2026-10-12 ("fix or cut"): the W8 quick-capture phone mock (/capture) and the
+// season-state sheet (/seasons) were cut — git keeps them. (/share, the real share target, is not
+// a gallery.)
 function designGalleryRoutes(): { public: RouteObject[]; shell: RouteObject[] } {
-  const QuickCapturePage = lazy(() => import('./features/capture/QuickCapturePage').then((m) => ({ default: m.QuickCapturePage })))
-  const SeasonsPage = lazy(() => import('./features/seasons/SeasonsPage').then((m) => ({ default: m.SeasonsPage })))
   return {
     public: [{ path: '/design-system', element: <KitReference />, errorElement: <RouteErrorPage bare /> }],
-    shell: [
-      { path: 'capture', element: <QuickCapturePage /> },
-      { path: 'seasons', element: <SeasonsPage /> },
-    ],
+    shell: [],
   }
 }
 const galleries = import.meta.env.DEV ? designGalleryRoutes() : { public: [], shell: [] }
@@ -122,7 +137,7 @@ const router = createBrowserRouter([
           { path: 'tasks', element: <TasksPage /> },
           { path: 'tasks/:id', element: <TaskEditorPage /> },
           { path: 'calendar', element: <CalendarPage /> },
-          { path: 'planning', element: <PlanningBoard /> },
+          { path: 'new', element: <CreatePage /> },
           { path: 'routines', element: <RoutinesPage /> },
           { path: 'weekly-review', element: <WeeklyReviewPage /> },
           { path: 'settings', element: <SettingsPage /> },
@@ -144,6 +159,7 @@ const router = createBrowserRouter([
           { path: 'perennials', element: <PerennialsPage /> },
           { path: 'guide', element: <GuidePage /> },
           { path: 'guide/:slug', element: <GuidePage /> },
+          { path: 'notebook', element: <NotebookPage /> },
           ...galleries.shell,
           { id: NOT_FOUND, path: '*', element: <NotFoundPage /> },
         ],
@@ -160,6 +176,22 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage bare />,
   },
 ])
+
+// Motion 2b/3a — the stack (lib/motion.ts). Subscribed before RouterProvider mounts, so this runs
+// while the outgoing page is still on screen: it reads which way the step goes (the paths, and the
+// history index React Router keeps in history.state) and captures what the transition needs.
+let lastLocation = router.state.location
+let lastIdx = historyIdx()
+function historyIdx(): number {
+  return typeof window === 'undefined' ? 0 : ((window.history.state as { idx?: number } | null)?.idx ?? 0)
+}
+router.subscribe((state) => {
+  if (state.location.key === lastLocation.key) return // a loading flag, not a new page
+  const idx = historyIdx()
+  captureStack(stackMove(lastLocation.pathname, state.location.pathname, state.historyAction, state.historyAction === 'POP' && idx < lastIdx), lastLocation.key)
+  lastLocation = state.location
+  lastIdx = idx
+})
 
 if (typeof window !== 'undefined') {
   const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1000))

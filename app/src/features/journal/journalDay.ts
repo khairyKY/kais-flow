@@ -37,22 +37,12 @@ export function dayOrdinal(entries: JournalEntry[], date: string): number {
   return days.size
 }
 
-/** Consecutive days with something actually written, ending today or yesterday. */
-export function writtenStreak(entries: JournalEntry[], today: string): number {
-  const days = new Set(entries.filter(isWritten).map((e) => e.entry_date))
-  if (days.size === 0) return 0
-  const cursor = new Date(`${today}T00:00:00Z`)
-  if (!days.has(today)) {
-    cursor.setUTCDate(cursor.getUTCDate() - 1)
-    if (!days.has(cursor.toISOString().slice(0, 10))) return 0
-  }
-  let streak = 0
-  for (;;) {
-    const key = cursor.toISOString().slice(0, 10)
-    if (!days.has(key)) return streak
-    streak++
-    cursor.setUTCDate(cursor.getUTCDate() - 1)
-  }
+/** "Kept · N days of showing up": the days this month with something written, up to `today`.
+ * Not a streak — Kai's Notebook rule: "A missed night is just a blank line. No catching up, no
+ * reset." (Product audit 2026-10-12: the old consecutive-days streak went to 0 after one miss.) */
+export function daysWrittenThisMonth(entries: JournalEntry[], today: string): number {
+  const month = today.slice(0, 7)
+  return new Set(entries.filter((e) => isWritten(e) && e.entry_date.startsWith(month) && e.entry_date <= today).map((e) => e.entry_date)).size
 }
 
 /** Rows the Journal page wrote that the cached list doesn't hold yet, keyed by id. */
@@ -111,4 +101,33 @@ export function daysLabel(n: number): string {
 /** Timestamp shown above each entry inside the notebook card. */
 export function entryTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: appZone() })
+}
+
+// ── Talk it out + photos (the IO half is ./media.ts) ──
+
+/** `<uid>/<entry>/<photo>.jpg` in the `journal` bucket — the first folder is the owner, which is what
+ * the bucket's RLS checks (migration 0060). */
+export function journalPhotoPath(uid: string, entryId: string, photoId: string): string {
+  return `${uid}/${entryId}/${photoId}.jpg`
+}
+
+/** `path` added at the end — or back at index `at` (≥ 0), where a removal's Undo found it. */
+export function addMedia(paths: string[] | null | undefined, path: string, at?: number): string[] {
+  const list = paths ?? []
+  if (list.includes(path)) return list
+  const next = [...list]
+  next.splice(at ?? list.length, 0, path)
+  return next
+}
+
+export function removeMedia(paths: string[] | null | undefined, path: string): string[] {
+  return (paths ?? []).filter((p) => p !== path)
+}
+
+/** Spoken words join the entry as their own paragraph (the command bar's dictation joins with a space;
+ * a journal take is a thought of its own). Also accumulates `transcript` across takes. */
+export function appendTranscript(body: string | null | undefined, heard: string): string {
+  const a = (body ?? '').trimEnd()
+  const b = heard.trim()
+  return a && b ? `${a}\n\n${b}` : a || b
 }

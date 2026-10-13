@@ -1,0 +1,12 @@
+PASS bucket journal exists, private 
+PASS bucket limit 1 MB 1048576
+PASS bucket images only ["image/jpeg","image/webp","image/png"]
+PASS four journal policies [{"policyname":"journal_objects_delete","cmd":"DELETE"},{"policyname":"journal_objects_insert","cmd":"INSERT"},{"policyname":"journal_objects_select","cmd":"SELECT"},{"policyname":"journal_objects_update","cmd":"UPDATE"}]
+PASS A uploads into A/ 
+PASS A cannot upload into B/ 
+PASS A cannot upload at the bucket root 
+PASS journal policies do not open captures 
+PASS A sees only A/ ["00000000-0000-4000-8000-00000000000a/e1/p1.jpg"]
+PASS A cannot delete B's photo 
+PASS A deletes own photo 
+PASS signed out sees nothing {"rows":[]}

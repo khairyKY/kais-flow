@@ -4,6 +4,7 @@
 // migration 0055) so the phone and the computer agree; before that, the goal was each device's own
 // localStorage pick (./goalStore), which stays only as the fallback for rows nobody has ranked yet.
 import { todayListTasks } from '../tasks/grouping'
+import { isTop3Today } from '../tasks/top3Rule'
 import { starredIds, top3OfToday, type StarEvent } from './top3Today'
 import type { Task } from '../../lib/types'
 
@@ -56,7 +57,9 @@ export function top3Display<R extends RankRow>(ordered: readonly R[]): R[] {
  * picks' star events (today/api useStarEvents; the writes read the cached ones). */
 export function dayTop3(tasks: readonly Task[], legacyGoal: string | null, stars: readonly StarEvent[], now = new Date()): Task[] {
   const doneWhileStarred = new Set([...starredIds(stars), ...tasks.filter((t) => t.completed_at && t.top3_rank != null).map((t) => t.id)])
-  return top3Display(orderTop3(top3OfToday(todayListTasks([...tasks], now), doneWhileStarred), legacyGoal, starTimes(stars)))
+  // A star that's no longer today's (moved to another day before this rule existed) isn't drawn.
+  const listed = todayListTasks([...tasks], now).filter((t) => !t.top3 || isTop3Today(t, now))
+  return top3Display(orderTop3(top3OfToday(listed, doneWhileStarred), legacyGoal, starTimes(stars)))
 }
 
 /** The goal of the day's id (Tasks' ✶ Goal chip, the tray), or null with nothing picked. */

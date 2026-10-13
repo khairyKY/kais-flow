@@ -132,4 +132,31 @@
   --pressed-overlay: rgba(240, 235, 221, 0.10);
   --focus-ring: 0 0 0 2px #211D30, 0 0 0 4px #A9C5D3;
 
+  /* Night surfaces — Night.dc.html 1a–1f, drawn values. Night-only (no day twin): day surfaces
+     opt in with the fallback pattern `var(--frost-bg, var(--paper-parchment))`, so day renders
+     exactly as before. Used by styles/night.css, Today's moonflower + fireflies, Routines' garden. */
+  --frost-bg:           rgba(244, 241, 234, 0.065);  /* .nfrost — moonlit glass over the ground */
+  --frost-line:         rgba(240, 235, 221, 0.13);
+  --shadow-frost:       0 0 0 0.5px rgba(240, 235, 221, 0.04), 0 8px 24px rgba(0, 0, 0, 0.25);
+  --glow-hairline:      0 0 5px rgba(240, 235, 221, 0.06);  /* 1c: hairlines glow instead of darkening */
+  --glow-now:           0 0 8px rgba(192, 183, 224, 0.5);   /* desktop now line — its own lavender */
+  --glow-now-terra:     0 0 8px rgba(226, 148, 115, 0.5);   /* phone now line — terra-ink */
+  /* Plants as silhouettes, their accent carried in the rim light (filter values). */
+  --silhouette:         brightness(0.6) saturate(0.75);
+  --rim-moss:           brightness(0.62) saturate(0.8) drop-shadow(0 0 10px rgba(138, 154, 126, 0.4));
+  --rim-moss-sm:        brightness(0.6) saturate(0.75) drop-shadow(0 0 7px rgba(138, 154, 126, 0.45));
+  --rim-blossom:        brightness(0.6) saturate(0.75) drop-shadow(0 0 6px rgba(212, 168, 176, 0.35));
+  --rim-lavender:       brightness(0.6) saturate(0.75) drop-shadow(0 0 6px rgba(168, 160, 190, 0.4));
+  --rim-clover:         brightness(0.6) saturate(0.75) drop-shadow(0 0 6px rgba(201, 160, 160, 0.35));
+  /* 1a sidebar: nav dots glow in their own colour (the dot sets `color`); the active row stands
+     upright under its frost (day keeps its -0.5deg tilt through the fallback). */
+  --glow-dot:           0 0 7px color-mix(in srgb, currentColor 55%, transparent);
+  --nav-tilt:           none;
+  /* 1b: the command bar raised over a dimmed page — a dark scrim, the page beneath at 75%. */
+  --scrim-command:      rgba(10, 8, 16, 0.45);
+  --dim-behind:         brightness(0.75);
+  /* The moonflower — the one plant that only opens at night (1a / 1f). */
+  --moonflower-petal:   #EFE8F6;
+  --moonflower-petal-2: #E2D9EE;
+  --moonflower-stem:    #5A6B4E;
 }

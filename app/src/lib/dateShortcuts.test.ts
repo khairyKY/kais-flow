@@ -5,7 +5,7 @@ import {
   cairoWallTimeToIso,
   daysUntilNextMonday,
   scheduleNextWeek,
-  scheduleThisWeek,
+  scheduleThisEvening,
   scheduleToday,
   scheduleTomorrow,
   tomorrowHint,
@@ -25,9 +25,6 @@ describe('schedule shortcuts on a normal summer day (UTC+3)', () => {
   it('tomorrow lands at 09:00 Cairo the next Cairo day', () => {
     expect(scheduleTomorrow(wednesday)).toBe('2026-07-09T06:00:00.000Z')
   })
-  it('this week lands 2 Cairo days out at 09:00', () => {
-    expect(scheduleThisWeek(wednesday)).toBe('2026-07-10T06:00:00.000Z')
-  })
   it('next week lands on the coming Monday 09:00 Cairo', () => {
     expect(scheduleNextWeek(wednesday)).toBe('2026-07-13T06:00:00.000Z')
   })
@@ -42,7 +39,6 @@ describe('schedule shortcuts on a winter day (UTC+2)', () => {
   it('every shortcut lands at 09:00 Cairo = 07:00Z', () => {
     expect(scheduleToday(wednesday)).toBe('2026-01-14T07:00:00.000Z')
     expect(scheduleTomorrow(wednesday)).toBe('2026-01-15T07:00:00.000Z')
-    expect(scheduleThisWeek(wednesday)).toBe('2026-01-16T07:00:00.000Z')
     expect(scheduleNextWeek(wednesday)).toBe('2026-01-19T07:00:00.000Z')
   })
   it('rolls over month and year on Cairo days', () => {
@@ -59,7 +55,6 @@ describe('schedule shortcuts when the Cairo day differs from the UTC day', () =>
   it('uses the Cairo calendar day, not the UTC one', () => {
     expect(scheduleToday(lateUtc)).toBe('2026-09-25T06:00:00.000Z')
     expect(scheduleTomorrow(lateUtc)).toBe('2026-09-26T06:00:00.000Z')
-    expect(scheduleThisWeek(lateUtc)).toBe('2026-09-27T06:00:00.000Z')
   })
   it('uses the Cairo weekday (Friday → 3 days to Monday, not Thursday → 4)', () => {
     expect(daysUntilNextMonday(lateUtc)).toBe(3)
@@ -75,14 +70,12 @@ describe('schedule shortcuts across the spring DST switch (Fri 2026-04-24)', () 
   it('from the Monday before, next week lands at 09:00 summer time', () => {
     const monday = new Date('2026-04-20T10:00:00+02:00')
     expect(scheduleToday(monday)).toBe('2026-04-20T07:00:00.000Z')
-    expect(scheduleThisWeek(monday)).toBe('2026-04-22T07:00:00.000Z')
     expect(scheduleNextWeek(monday)).toBe('2026-04-27T06:00:00.000Z')
   })
   it('in the last winter half-hour, today is still UTC+2 and tomorrow already UTC+3', () => {
     const lastWinterHalfHour = new Date('2026-04-23T23:30:00+02:00')
     expect(scheduleToday(lastWinterHalfHour)).toBe('2026-04-23T07:00:00.000Z')
     expect(scheduleTomorrow(lastWinterHalfHour)).toBe('2026-04-24T06:00:00.000Z')
-    expect(scheduleThisWeek(lastWinterHalfHour)).toBe('2026-04-25T06:00:00.000Z')
     expect(scheduleNextWeek(lastWinterHalfHour)).toBe('2026-04-27T06:00:00.000Z')
   })
   it('just after the jump it is Friday in Cairo while still Thursday in UTC', () => {
@@ -102,7 +95,6 @@ describe('schedule shortcuts across the autumn DST switch (Thu 2026-10-29 24:00)
     for (const repeated of [new Date('2026-10-29T23:30:00+03:00'), new Date('2026-10-29T23:30:00+02:00')]) {
       expect(scheduleToday(repeated)).toBe('2026-10-29T06:00:00.000Z')
       expect(scheduleTomorrow(repeated)).toBe('2026-10-30T07:00:00.000Z')
-      expect(scheduleThisWeek(repeated)).toBe('2026-10-31T07:00:00.000Z')
       expect(daysUntilNextMonday(repeated)).toBe(4)
       expect(scheduleNextWeek(repeated)).toBe('2026-11-02T07:00:00.000Z')
     }
@@ -171,5 +163,13 @@ describe('Cairo wall-clock helpers', () => {
     expect(cairoWallTimeToIso(2026, 9, 26, 10, 0)).toBe('2026-09-26T07:00:00.000Z')
     expect(cairoWallTimeToIso(2026, 11, 5, 10, 0)).toBe('2026-11-05T08:00:00.000Z')
     expect(cairoWallTimeToIso(2026, 9, 27, 0, 30)).toBe('2026-09-26T21:30:00.000Z')
+  })
+})
+
+// Snooze's This evening used the device clock (2026-10-12 review).
+describe('this evening', () => {
+  it('18:00 on the user’s clock today, or tomorrow’s once it has passed', () => {
+    expect(scheduleThisEvening(new Date('2026-07-08T14:00:00+03:00'))).toBe('2026-07-08T15:00:00.000Z')
+    expect(scheduleThisEvening(new Date('2026-07-08T19:00:00+03:00'))).toBe('2026-07-09T15:00:00.000Z')
   })
 })

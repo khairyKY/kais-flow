@@ -1,0 +1,55 @@
+PASS desktop: the rules panel sits in the GitHub card
+PASS desktop: four rows as drawn — GitHubOpen issues come into your Inbox, ready to become tasks.@kai · Connected · synced 13 Oct, 09:56See issues in your Inbox →Sync nowDisconnectRules · how GitHub landsWatchingEvery open issue in the
+PASS desktop: the watched repos are chips (name only), each with its own ✕
+PASS desktop: saved rules → the help names the scope
+PASS desktop: Inbox · Normal selected, Pause off
+PASS desktop: the client reads repos/rules as JSON paths, never `data` — provider,updated_at,login:data->>login,status:data->>status,synced_at:data->>synced_at,repos:data->repos,rules:data->rules
+PASS add repo: the list came from github-connect (action repos), watched ones left out — ["khairyKY/portfolio","acme/website"]
+PASS add repo: saves the whole state with the new repo — {"action":"rules","repos":"khairyKY/kais-flow,khairyKY/shaheen_website,khairyKY/portfolio","rules":{"land":"inbox","priority":"normal","paused":false}}
+PASS add repo: the chip shows at once
+PASS add repo: a sync starts so its issues arrive now
+PASS ✕: saves without that repo — khairyKY/kais-flow,khairyKY/shaheen_website
+PASS ✕: the chip is gone
+PASS tasks: saves land: tasks (repos unchanged) — {"action":"rules","repos":"khairyKY/kais-flow,khairyKY/shaheen_website","rules":{"land":"tasks","priority":"normal","paused":false}}
+PASS tasks: the help line says how they land, the card and its link follow
+PASS priority: saves priority high — {"land":"inbox","priority":"high","paused":false}
+PASS pause: saves paused: true
+PASS pause: the status reads Paused and the row says nothing syncs — GitHubOpen issues come into your Inbox, ready to become tasks.@kai · PausedSee issues in your Inbox →Sync nowDisconnectRules · how GitHub landsWatchingEvery ope
+PASS pause: Sync now says it is paused
+PASS every save went through github-connect (no direct write to integrations)
+PASS desktop: no page errors
+PASS legacy row (rules never saved): defaults shown, help says assigned issues still come
+PASS legacy: no page errors
+PASS failing token: no rules panel (Reconnect first)
+PASS failed save: says so
+PASS failed save: the switch goes back to what the server has
+PASS summary row: says where issues land and that it is paused — IntegrationsOpen integrationsGitHubIssues land straight in TasksPausedGoogle CalendarA quiet sync under our own calendarComing soonGroqChat and capture parsing
+PASS desktop day: no page errors
+PASS desktop night: no page errors
+PASS phone day: the panel is in Settings → Connections
+PASS phone day: no sideways scroll at 390 — 390
+PASS phone day: segments and the switch are touch-sized (≥44) — segment 48, switch 32 (48 hit)
+PASS phone day: the chip ✕ has the kit hit area — -12px
+PASS phone: Pause saves through github-connect
+PASS phone day: no page errors
+PASS phone night: the panel is in Settings → Connections
+PASS phone night: no sideways scroll at 390 — 390
+PASS phone night: segments and the switch are touch-sized (≥44) — segment 48, switch 32 (48 hit)
+PASS phone night: the chip ✕ has the kit hit area — -12px
+PASS phone night: no page errors
+PASS desktop inbox normal: GitHub letters below your captures (as before) — ["captures","github"]
+PASS desktop inbox normal: no page errors
+PASS desktop inbox high: GitHub letters above your captures — ["github","captures"]
+PASS desktop inbox high: no page errors
+PASS desktop inbox low: below, folded to the heading — ["captures","github"] rows 0
+PASS desktop inbox low: "Show 2" unfolds them
+PASS desktop inbox low: no page errors
+PASS phone inbox normal: GitHub letters below your captures (as before) — ["captures","github"]
+PASS phone inbox normal: no page errors
+PASS phone inbox high: GitHub letters above your captures — ["github","captures"]
+PASS phone inbox high: no page errors
+PASS phone inbox low: below, folded to the heading — ["captures","github"] rows 0
+PASS phone inbox low: "Show 2" unfolds them
+PASS phone inbox low: no page errors
+
+53/53 passed

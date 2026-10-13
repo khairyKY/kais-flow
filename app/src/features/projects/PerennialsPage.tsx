@@ -1,152 +1,43 @@
 import { useState, useMemo } from 'react'
-import { EmojiText } from '../../components/EmojiText'
-import { Link, useNavigate } from 'react-router'
+import { Link } from 'react-router'
 import { ContextMenu } from '../../components/ContextMenu'
+import { ActionSheet } from '../../components/ActionSheet'
+import { useIsMobile } from '../../components/BottomSheet'
+import { Icon } from '../../components/Icon'
+import type { IconName } from '../../components/icons/kf'
 import { toastUndo } from '../../lib/undo'
-import { useDomains } from '../domains/api'
+import { writeRow } from '../../lib/outbox'
 import {
   useTasks,
   setRecurrence,
   pauseTask,
   resumeTask,
   skipNextOccurrence,
-  deleteTask,
+  deleteTasksWithUndo,
 } from '../tasks/api'
+import { TaskRow } from '../tasks/TaskRow'
+import { useOpenTask } from '../tasks/openTask'
+import { useDayRollover } from '../calendar/useDayRollover'
 import { Chip, SectionLabel } from '../../components/kit'
-import { useToastStore } from '../../lib/toastStore'
-import { useEffect } from 'react'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { daysFromToday, formatLastCompleted, formatNextDue, formatRecurrenceRule, getCadenceType } from './perennials'
+import type { Task } from '../../lib/types'
 import './xfx.css'
 
-export function getCadenceType(rule: string): 'daily' | 'weekly' | 'monthly' | 'custom' {
-  if (!rule) return 'custom'
-  const upper = rule.toUpperCase()
-  if (upper.includes('INTERVAL=') && !upper.includes('INTERVAL=1;')) return 'custom'
-  if (upper.includes('FREQ=DAILY')) return 'daily'
-  if (upper.includes('FREQ=WEEKLY')) return 'weekly'
-  if (upper.includes('FREQ=MONTHLY')) return 'monthly'
-  return 'custom'
-}
-
-export function formatRecurrenceRule(rule: string): string {
-  if (!rule) return ''
-  const upper = rule.toUpperCase()
-
-  const intervalMatch = upper.match(/INTERVAL=(\d+)/)
-  const interval = intervalMatch ? parseInt(intervalMatch[1]) : 1
-
-  if (upper.includes('FREQ=DAILY')) {
-    return interval > 1 ? `Every ${interval} days` : 'Every day'
-  }
-
-  if (upper.includes('FREQ=WEEKLY')) {
-    const bydayMatch = upper.match(/BYDAY=([A-Z,]+)/)
-    if (bydayMatch) {
-      const days = bydayMatch[1].split(',')
-      const dayMap: Record<string, string> = {
-        SU: 'Sun',
-        MO: 'Mon',
-        TU: 'Tue',
-        WE: 'Wed',
-        TH: 'Thu',
-        FR: 'Fri',
-        SA: 'Sat',
-      }
-      const formattedDays = days.map((d) => dayMap[d] || d).join(', ')
-      return interval > 1 ? `Every ${interval} weeks on ${formattedDays}` : `Every ${formattedDays}`
-    }
-    return interval > 1 ? `Every ${interval} weeks` : 'Every week'
-  }
-
-  if (upper.includes('FREQ=MONTHLY')) {
-    const bymonthdayMatch = upper.match(/BYMONTHDAY=(\d+)/)
-    if (bymonthdayMatch) {
-      const day = parseInt(bymonthdayMatch[1])
-      const suffix =
-        day === 1 || day === 21 || day === 31 ? 'st' :
-        day === 2 || day === 22 ? 'nd' :
-        day === 3 || day === 23 ? 'rd' : 'th'
-      return interval > 1 ? `Every ${interval} months on the ${day}${suffix}` : `Monthly on the ${day}${suffix}`
-    }
-    return interval > 1 ? `Every ${interval} months` : 'Monthly'
-  }
-
-  return 'Custom repeat'
-}
-
-export function formatLastCompleted(completedAt: string | null): string {
-  if (!completedAt) return 'never done'
-  const date = new Date(completedAt)
-  const now = new Date()
-
-  const isToday = date.toDateString() === now.toDateString()
-
-  const yesterday = new Date(now)
-  yesterday.setDate(now.getDate() - 1)
-  const isYesterday = date.toDateString() === yesterday.toDateString()
-
-  if (isToday) {
-    const hours = String(date.getHours()).padStart(2, '0')
-    const minutes = String(date.getMinutes()).padStart(2, '0')
-    return `last done today ${hours}:${minutes}`
-  }
-
-  if (isYesterday) {
-    return 'last done yesterday'
-  }
-
-  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' })
-  const day = date.getDate()
-  const month = date.toLocaleDateString('en-US', { month: 'short' })
-  return `last done ${weekday} ${String(day).padStart(2, '0')} ${month}`
-}
-
-export function formatNextDue(dueAt: string | null): { text: string; urgent: boolean } {
-  if (!dueAt) return { text: 'no date', urgent: false }
-  const date = new Date(dueAt)
-  const now = new Date()
-
-  const isToday = date.toDateString() === now.toDateString()
-
-  const tomorrow = new Date(now)
-  tomorrow.setDate(now.getDate() + 1)
-  const isTomorrow = date.toDateString() === tomorrow.toDateString()
-
-  if (isToday) {
-    return { text: 'Next: today', urgent: true }
-  }
-  if (isTomorrow) {
-    return { text: 'Next: tomorrow', urgent: false }
-  }
-
-  const weekday = date.toLocaleDateString('en-US', { weekday: 'short' })
-  const day = date.getDate()
-  const month = date.toLocaleDateString('en-US', { month: 'short' })
-  return { text: `Next: ${weekday} ${String(day).padStart(2, '0')} ${month}`, urgent: false }
-}
-
 export function PerennialsPage() {
-  const { data: domains = [] } = useDomains()
   const { data: allTasks = [] } = useTasks()
   const motion = useMotionEnabled()
+  const isMobile = useIsMobile()
+  const openTask = useOpenTask()
+  // "today" / "tomorrow" on the rows roll over at the user's midnight.
+  useDayRollover()
 
-  // X4: hover-revealed row actions get a touch counterpart — a per-row expand toggle
-  // (spec: "row actions collapse into an ellipsis" on mobile)
-  const [isCoarse, setIsCoarse] = useState(() => typeof matchMedia !== 'undefined' && matchMedia('(hover: none)').matches)
-  useEffect(() => {
-    const mq = matchMedia('(hover: none)')
-    const on = () => setIsCoarse(mq.matches)
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-
-  // Hover states
-  const navigate = useNavigate()
-  const [hoveredRow, setHoveredRow] = useState<string | null>(null)
-  // Punch 31: "Edit rule" opens the real themed Repeat menu (TaskRow's ContextMenu pattern),
-  // anchored where the link was clicked — not a native <select>.
+  // The series menu (⋯ / right-click, an ActionSheet on a phone — ProjectsPage's pattern) beside each
+  // row; the row itself is the task grammar's TaskRow (tap opens, its own ⋯ is the task menu).
+  const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null)
+  // Punch 31: "Edit rule" opens the real themed Repeat menu, anchored where the menu was opened —
+  // not a native <select>.
   const [ruleMenu, setRuleMenu] = useState<{ id: string; x: number; y: number } | null>(null)
-  const [confirmEndSeries, setConfirmEndSeries] = useState<string | null>(null)
 
   // Filter tasks to find repeating series
   // We represent each active repeating series by its currently active (status = todo) task with a recurrence_rule.
@@ -189,18 +80,13 @@ export function PerennialsPage() {
     return latest.completed_at || null
   }
 
-  // Count repeating tasks due this week
-  const dueThisWeekCount = useMemo(() => {
-    const now = new Date()
-    const endOfWeek = new Date(now)
-    endOfWeek.setDate(now.getDate() + 7)
-
-    return activeSeries.filter((t) => {
-      if (!t.due_at) return false
-      const due = new Date(t.due_at)
-      return due >= now && due <= endOfWeek
-    }).length
-  }, [activeSeries])
+  // Repeating tasks due today or in the next six days, on the user's calendar.
+  const dueThisWeekCount = activeSeries.filter((t) => {
+    // A paused series makes no new copies (tasks/ skips paused rows), so it is not "due".
+    if (!t.due_at || t.paused) return false
+    const days = daysFromToday(t.due_at)
+    return days >= 0 && days < 7
+  }).length
 
   // Render Perennials Empty state (1b)
   if (activeSeries.length === 0) {
@@ -240,136 +126,115 @@ export function PerennialsPage() {
 
   // Editing a rule is reversible — undo puts the previous rule back (incl. "No repeat",
   // which removes the row from this page entirely until undone).
-  const applyRule = (task: any, rule: string | null, label: string) => {
+  const applyRule = (task: Task, rule: string | null, label: string) => {
     const prev = task.recurrence_rule ?? null
     setRecurrence(task, rule)
     toastUndo(rule ? `Repeat set — ${label.toLowerCase()}.` : 'Repeat removed.', () => setRecurrence(task, prev))
   }
 
-  const handleSkip = (task: any) => {
+  // Every series action is an Undo toast that writes the row back as it was (Flow Audit §4).
+  const handleSkip = (task: Task) => {
     skipNextOccurrence(task)
-    useToastStore.getState().push({ message: `Skipped next occurrence of "${task.title}".` })
+    toastUndo(`Skipped next occurrence of "${task.title}"`, () => writeRow('tasks', task))
   }
 
-  const handlePauseToggle = (task: any) => {
+  const handlePauseToggle = (task: Task) => {
+    // `task` is the row before the change: pausing it again / resuming it again IS writing it back.
     if (task.paused) {
       resumeTask(task)
-      useToastStore.getState().push({ message: `Resumed repeating "${task.title}".` })
+      toastUndo(`Resumed repeating "${task.title}"`, () => pauseTask(task))
     } else {
       pauseTask(task)
-      useToastStore.getState().push({ message: `Paused repeating "${task.title}".` })
+      toastUndo(`Paused repeating "${task.title}"`, () => resumeTask(task))
     }
   }
 
-  const handleEndSeries = (task: any) => {
-    deleteTask(task)
-    useToastStore.getState().push({ message: `Ended repeating series "${task.title}".` })
-    setConfirmEndSeries(null)
-  }
+  const seriesActions = (t: Task): { label: string; icon: IconName; danger?: boolean; run: () => void }[] => [
+    { label: 'Edit rule…', icon: 'repeat', run: () => setRuleMenu(menu && { ...menu, id: t.id }) },
+    // Nothing to skip without a next date.
+    ...(t.due_at ? [{ label: 'Skip next', icon: 'tomorrow' as IconName, run: () => handleSkip(t) }] : []),
+    { label: t.paused ? 'Resume' : 'Pause', icon: t.paused ? 'rotate' : 'stop', run: () => handlePauseToggle(t) },
+    // No confirm: Trash + Undo, like every task delete.
+    { label: 'End series', icon: 'delete', danger: true, run: () => deleteTasksWithUndo([t]) },
+  ]
+  const ruleChoices = (t: Task) => [
+    { label: 'No repeat', run: () => applyRule(t, null, 'No repeat') },
+    { label: 'Daily', run: () => applyRule(t, 'FREQ=DAILY', 'Daily') },
+    { label: 'Weekly', run: () => applyRule(t, 'FREQ=WEEKLY', 'Weekly') },
+    { label: 'Monthly', run: () => applyRule(t, 'FREQ=MONTHLY', 'Monthly') },
+    // Custom… opens the task, where the full rule lives.
+    { label: 'Custom…', run: () => openTask(t.id) },
+  ]
+  const menuTask = menu && activeSeries.find((t) => t.id === menu.id)
+  const ruleTask = ruleMenu && activeSeries.find((t) => t.id === ruleMenu.id)
+  const menuLayers = (
+    <>
+      {menu && menuTask && (isMobile ? (
+        <ActionSheet
+          title={menuTask.title}
+          meta="Repeating"
+          onClose={() => setMenu(null)}
+          items={seriesActions(menuTask).map((a) => ({ label: a.label, icon: <Icon name={a.icon} />, destructive: a.danger, onSelect: a.run }))}
+        />
+      ) : (
+        <ContextMenu
+          position={{ x: menu.x, y: menu.y }}
+          onClose={() => setMenu(null)}
+          items={seriesActions(menuTask).map((a) => ({ label: a.label, icon: <Icon name={a.icon} size={16} />, danger: a.danger, onClick: a.run }))}
+        />
+      ))}
+      {ruleMenu && ruleTask && (isMobile ? (
+        <ActionSheet title="Repeat" meta={ruleTask.title} onClose={() => setRuleMenu(null)} items={ruleChoices(ruleTask).map((c) => ({ label: c.label, onSelect: c.run }))} />
+      ) : (
+        <ContextMenu position={{ x: ruleMenu.x, y: ruleMenu.y }} onClose={() => setRuleMenu(null)} items={ruleChoices(ruleTask).map((c) => ({ label: c.label, onClick: c.run }))} />
+      ))}
+    </>
+  )
 
-  const renderRow = (t: any, rowIndex: number) => {
+  const renderRow = (t: Task, rowIndex: number) => {
     const lastDone = getLastCompletedDate(t.title)
     const nextInfo = formatNextDue(t.due_at)
-    const domain = domains.find((d) => d.id === t.domain_id)
-
-    const isHovered = hoveredRow === t.id
-    const isEditing = ruleMenu?.id === t.id
-    const isConfirming = confirmEndSeries === t.id
 
     return (
-      // Motion 3e (WB-1): "End series" calls the shared deleteTask(), which plays the row exit
-      // by looking the row up as `task-<id>` — the same scheme every other task list uses.
-      <div key={t.id} id={`task-${t.id}`} className={motion ? 'kf-stagger-item' : undefined} style={{ display: 'flex', flexDirection: 'column', ...(motion ? staggerDelay(rowIndex) : {}) }}>
-        <div
-          onMouseEnter={() => setHoveredRow(t.id)}
-          onMouseLeave={() => {
-            setHoveredRow(null)
-            if (!isEditing) setHoveredRow(null)
-          }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 14,
-            padding: '13px 12px',
-            margin: '0 -10px',
-            borderRadius: 6,
-            background: isHovered ? 'var(--paper-bone)' : 'transparent',
-            opacity: t.paused ? 0.62 : 1,
-            transition: 'background var(--dur-quick) var(--ease-natural)',
-          }}
-        >
-          {/* Accent dot or paused icon */}
-          {t.paused ? (
-            <svg width="15" height="15" viewBox="0 0 24 24" style={{ flex: 'none' }}><path d="M12 20c0-5 0-8 3-11" fill="none" stroke="var(--ink-faint)" strokeWidth="1.5" strokeLinecap="round" /><path d="M15 9c2.6-.4 4-2 4.4-4.6C17 4 15 5 14.3 7.2" fill="var(--ink-hairline)" opacity="0.7" transform="rotate(24 15 6)" /><path d="M12 13c-2-2-4.5-2.2-6.5-1 1.4 2.4 3.4 3.2 5.8 2.6" fill="var(--ink-hairline)" opacity="0.7" /></svg>
-          ) : (
-            <span style={{ width: 8, height: 8, borderRadius: '50%', background: domain?.color ?? 'var(--acc-sage)', flex: 'none' }} />
-          )}
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '14.5px', color: t.paused ? 'var(--ink-muted)' : 'var(--ink-body)', fontWeight: t.paused ? 400 : 500 }}><EmojiText text={t.title} /></div>
-            <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 4 }}>
-              {formatRecurrenceRule(t.recurrence_rule || '')} · {formatLastCompleted(lastDone)}
-            </div>
+      <div
+        key={t.id}
+        className={motion ? 'kf-stagger-item' : undefined}
+        // Right-click beside the task (its chip, its rule line) opens the series menu; on the task
+        // itself the TaskRow's own menu has already taken it.
+        onContextMenu={(e) => {
+          if (e.isDefaultPrevented()) return
+          e.preventDefault()
+          setMenu({ id: t.id, x: e.clientX, y: e.clientY })
+        }}
+        // Phone: the next-date chip and the series button wrap under the task, or the title gets ~150px.
+        style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : undefined, alignItems: 'center', gap: isMobile ? '0 10px' : 10, paddingBottom: isMobile ? 6 : 0, borderBottom: '1px dashed var(--line-dashed)', opacity: t.paused ? 0.62 : 1, ...(motion ? staggerDelay(rowIndex) : {}) }}
+      >
+        <div style={{ flex: isMobile ? '1 1 100%' : 1, minWidth: 0 }}>
+          <TaskRow task={t} border={false} />
+          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '-6px 0 0 34px', paddingBottom: 11 }}>
+            {formatRecurrenceRule(t.recurrence_rule || '')} · {t.paused ? 'paused · ' : ''}{formatLastCompleted(lastDone)}
           </div>
-
-          {/* Action controls or Next due date chip */}
-          {(isHovered || (isCoarse && hoveredRow === t.id)) && !isConfirming && !isEditing ? (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 'none' }}>
-              <span onClick={(e) => setRuleMenu({ id: t.id, x: e.clientX, y: e.clientY })} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Edit rule</span>
-              <span onClick={() => handleSkip(t)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>Skip next</span>
-              <span onClick={() => handlePauseToggle(t)} style={{ fontSize: 12, color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer' }}>
-                {t.paused ? 'Resume' : 'Pause'}
-              </span>
-              <span onClick={() => setConfirmEndSeries(t.id)} style={{ fontSize: 12, color: 'var(--acc-terra)', textDecoration: 'underline', cursor: 'pointer' }}>End series</span>
-            </div>
-          ) : (
-            <>
-              {t.paused ? (
-                <Chip tone="bordered">Paused</Chip>
-              ) : (
-                <Chip tone={nextInfo.urgent ? 'terra' : 'lavender'}>{nextInfo.text}</Chip>
-              )}
-              {isCoarse && (
-                <span
-                  onClick={() => setHoveredRow(hoveredRow === t.id ? null : t.id)}
-                  style={{ fontSize: 18, color: 'var(--ink-faint)', padding: '10px 12px', margin: '-10px -8px', cursor: 'pointer', userSelect: 'none' }}
-                >⋯</span>
-              )}
-            </>
-          )}
         </div>
-
-        {/* Punch 31: the real Repeat menu — same options as TaskRow's Repeat submenu
-            (TaskRow.tsx Repeat item), anchored to the clicked link, uiZoom-corrected by
-            ContextMenu itself. Custom… opens the task editor, where the full rule lives. */}
-        {isEditing && (
-          <ContextMenu
-            position={{ x: ruleMenu!.x, y: ruleMenu!.y }}
-            onClose={() => setRuleMenu(null)}
-            items={[
-              { label: 'No repeat', onClick: () => applyRule(t, null, 'No repeat') },
-              { label: 'Daily', onClick: () => applyRule(t, 'FREQ=DAILY', 'Daily') },
-              { label: 'Weekly', onClick: () => applyRule(t, 'FREQ=WEEKLY', 'Weekly') },
-              { label: 'Monthly', onClick: () => applyRule(t, 'FREQ=MONTHLY', 'Monthly') },
-              { label: 'Custom…', onClick: () => navigate(`/tasks/${t.id}`) },
-            ]}
-          />
+        {isMobile && <span style={{ flex: 1 }} />}
+        {t.paused ? (
+          <Chip tone="bordered">Paused</Chip>
+        ) : (
+          <Chip tone={nextInfo.urgent ? 'terra' : 'lavender'}>{nextInfo.text}</Chip>
         )}
-
-        {/* Inline end-series confirm */}
-        {isConfirming && (
-          <div style={{ margin: '8px 0 8px 32px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-panel)', padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 14, maxWidth: 520 }}>
-            <span style={{ fontSize: 13, color: 'var(--ink-body)' }}>End this repeat? Past completions stay in the log.</span>
-            <span style={{ flex: 1 }}></span>
-            <span onClick={() => setConfirmEndSeries(null)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
-            <button
-              onClick={() => handleEndSeries(t)}
-              style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-            >
-              End series
-            </button>
-          </div>
-        )}
+        <button
+          type="button"
+          className="kf-hit"
+          aria-label={`Series options for ${t.title}`}
+          aria-haspopup="menu"
+          title="Series options"
+          onClick={(e) => {
+            const r = e.currentTarget.getBoundingClientRect()
+            setMenu({ id: t.id, x: r.left, y: r.bottom })
+          }}
+          style={{ flex: 'none', width: isMobile ? 44 : 28, height: isMobile ? 44 : 28, padding: 0, border: 'none', borderRadius: 6, background: 'none', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
+        >
+          <Icon name="repeat" size={18} />
+        </button>
       </div>
     )
   }
@@ -442,6 +307,7 @@ export function PerennialsPage() {
           </>
         )}
       </div>
+      {menuLayers}
     </div>
   )
 }

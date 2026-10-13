@@ -1,26 +1,42 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { Button } from '../../components/kit'
+import { DndContext, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core'
+import { Button, Checkbox } from '../../components/kit'
 import { Icon } from '../../components/Icon'
+import type { IconName } from '../../components/icons/kf'
+import { EmojiText } from '../../components/EmojiText'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
-import { SwipeRow } from '../tasks/SwipeRow'
+import { ActionSheet } from '../../components/ActionSheet'
+import { ScheduleMenu } from '../../components/ScheduleMenu'
+import { SelectCircle, SwipeRow } from '../tasks/SwipeRow'
+import { MovePicker } from '../tasks/MovePicker'
+import { placeKey } from '../tasks/move'
+import { LONG_PRESS_MS } from '../tasks/swipe'
+import { PRIORITY_LABELS } from '../tasks/taskMenuSpec'
+import { priorityColor } from '../tasks/taskDisplay'
 import { useEscapeStack } from '../../lib/overlayStack'
+import { useListKeys, type ListBinding } from '../../components/useListKeys'
 import { toastUndo } from '../../lib/undo'
+import { useToastStore } from '../../lib/toastStore'
+import { longPress } from '../../lib/haptics'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { perZone } from '../../lib/appZone'
 import { useProjects } from '../projects/api'
+import { useTasks } from '../tasks/api'
 import { openCapture } from '../command-bar/commandBarStore'
-import { applyResults, markReviewed, retryCapture, startReading, useCapture, usePageUrls } from './api'
-import { cropFrame, DAILY_PAGES, MAX_PAGES, needsCheck, toEditLine, type CaptureRow, type EditLine, type LineType } from './paperMath'
-import { pickPhotos, usePaperStore, type Stage } from './paperStore'
+import { matchTicks } from '../notebook/ticks'
+import { addDrawingNote, applyResults, markReviewed, markTicksDone, retryCapture, startReading, useCapture, usePageUrls } from './api'
+import { cropFrame, DAILY_PAGES, editLines, isHeic, MAX_PAGES, movePage, needsCheck, placeEdit, toEditLine, toggleKey, type CaptureRow, type EditLine, type LineEdit, type LineType, type PageDrawing } from './paperMath'
+import { pickPhotos, usePaperStore, type PageDraft, type Stage, type TicksTarget } from './paperStore'
 
 // Paper capture's screens (Paper Capture.dc.html): a quick look 11b/11c, reading 11d, the results sheet
 // 11e–11h (a centred panel on desktop, 11m), couldn't read 11i, the daily limit 11j, camera off 11k,
-// and the photo itself. 11l (the Notebook page's ticks) waits for the Notebook page.
+// and the photo itself. 11l: a photo of a Notebook page (its footer's "Bring back your ticks") opens the
+// ticks review instead — ticked lines matched to that page's tasks (notebook/ticks.ts), "Mark N done".
 
 const TYPE_LABEL: Record<LineType, string> = { task: 'Task', event: 'Event', note: 'Note', journal: 'Journal' }
-const TYPE_HINT: Record<LineType, string> = { task: 'to do', event: 'on the calendar', note: 'to the Inbox', journal: "today's journal" }
+const TYPE_HINT: Record<LineType, string> = { task: 'to do', event: 'on the calendar', note: 'to Inbox', journal: 'to today’s entry' } // 11f
 
 const store = () => usePaperStore.getState()
 
@@ -52,6 +68,7 @@ function TopBar({ title, onClose, right }: { title?: ReactNode; onClose: () => v
 
 export function PaperFlow() {
   const stage = usePaperStore((s) => s.stage)
+  const ticksFor = usePaperStore((s) => s.ticksFor)
   const isMobile = useIsMobile()
   if (!stage) return null
   switch (stage.kind) {
@@ -60,7 +77,8 @@ export function PaperFlow() {
     case 'reading':
       return <Reading stage={stage} />
     case 'results':
-      return isMobile ? <PhoneResults id={stage.captureId} /> : <DesktopResults id={stage.captureId} />
+      if (ticksFor[stage.captureId] && !stage.only) return <TicksReview id={stage.captureId} target={ticksFor[stage.captureId]} />
+      return isMobile ? <PhoneResults id={stage.captureId} only={stage.only} /> : <DesktopResults id={stage.captureId} only={stage.only} />
     case 'photo':
       return <PhotoView stage={stage} />
     default:
@@ -84,6 +102,18 @@ function QuickLook() {
     if (!rest.length) store().close()
     void pickPhotos('camera')
   }
+  // The browser couldn't draw this page (a HEIC outside Safari, a broken file): it leaves the look —
+  // alone, as 11i with the way out; one of several, with a toast and the rest kept.
+  const unopenable = (id: string) => {
+    const s = store()
+    const bad = s.pages.find((p) => p.id === id)
+    if (!bad) return // the photo and its thumbnail both fail; the first one handles it
+    const rest = s.pages.filter((p) => p.id !== id)
+    const heic = isHeic({ type: bad.file.type, name: (bad.file as File).name })
+    usePaperStore.setState({ pages: rest, active: Math.max(0, Math.min(s.active, rest.length - 1)) })
+    if (!rest.length) s.show({ kind: 'unreadable', heic, ticks: s.stage?.kind === 'look' ? s.stage.ticks : undefined })
+    else useToastStore.getState().push({ message: heic ? 'An iPhone photo (HEIC) this browser can’t open was left out — convert it to JPEG first.' : 'A photo this browser can’t open was left out.' })
+  }
 
   return (
     <Frame label="A quick look" onClose={() => store().close()}>
@@ -97,31 +127,9 @@ function QuickLook() {
         }
       />
       <div className="pp-mat">
-        <img className={`pp-photo${quarter ? ' is-quarter' : ''}`} src={page.url} alt={`Page ${active + 1}`} style={{ transform: `rotate(${page.rotation}deg)` }} />
+        <img className={`pp-photo${quarter ? ' is-quarter' : ''}`} src={page.url} alt={`Page ${active + 1}`} style={{ transform: `rotate(${page.rotation}deg)` }} onError={() => unopenable(page.id)} />
       </div>
-      {several && (
-        <div className="pp-strip">
-          <div className="pp-strip-head">
-            <span>
-              {pages.length} pages · page {active + 1}
-            </span>
-          </div>
-          <div className="pp-strip-row">
-            {pages.map((p, i) => (
-              <button key={p.id} type="button" className="pp-strip-thumb" aria-label={`Page ${i + 1}`} aria-current={i === active || undefined} onClick={() => usePaperStore.setState({ active: i })}>
-                <img src={p.url} alt="" style={{ transform: `rotate(${p.rotation}deg)` }} />
-                <span>{i + 1}</span>
-              </button>
-            ))}
-            {pages.length < MAX_PAGES && (
-              <button type="button" className="pp-strip-add" onClick={() => void pickPhotos('gallery')}>
-                <Icon name="plus" size={20} />
-                Add
-              </button>
-            )}
-          </div>
-        </div>
-      )}
+      {several && <PageStrip onBroken={unopenable} />}
       <div data-sheet-footer className="pp-foot is-row">
         {several ? (
           <Button variant="secondary" onClick={retake}>
@@ -137,6 +145,75 @@ function QuickLook() {
         </Button>
       </div>
     </Frame>
+  )
+}
+
+/** 11c's page strip: tap a page to see it; hold one (touch) or drag it (mouse) onto another's place to
+ * reorder — the order they're read in. ⌥← / ⌥→ move the focused page too. */
+function PageStrip({ onBroken }: { onBroken: (id: string) => void }) {
+  const pages = usePaperStore((s) => s.pages)
+  const active = usePaperStore((s) => s.active)
+  const isMobile = useIsMobile()
+  const sensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }), useSensor(TouchSensor, { activationConstraint: { delay: LONG_PRESS_MS, tolerance: 8 } }))
+  const move = (from: number, to: number) => usePaperStore.setState((s) => movePage(s.pages, s.active, from, to))
+  const at = (id: unknown) => pages.findIndex((p) => p.id === id)
+  const onDragEnd = ({ active: a, over }: DragEndEvent) => {
+    if (over) move(at(a.id), at(over.id))
+  }
+  return (
+    <div className="pp-strip">
+      <div className="pp-strip-head">
+        <span>
+          {pages.length} pages · page {active + 1}
+        </span>
+        <span>{isMobile ? 'hold to reorder' : 'drag to reorder'}</span>
+      </div>
+      <DndContext sensors={sensors} onDragStart={() => longPress()} onDragEnd={onDragEnd}>
+        <div className="pp-strip-row">
+          {pages.map((p, i) => (
+            <StripThumb key={p.id} page={p} i={i} current={i === active} onBroken={onBroken} onMove={(d) => move(i, i + d)} />
+          ))}
+          {pages.length < MAX_PAGES && (
+            <button type="button" className="pp-strip-add" onClick={() => void pickPhotos('gallery')}>
+              <Icon name="plus" size={20} />
+              Add
+            </button>
+          )}
+        </div>
+      </DndContext>
+    </div>
+  )
+}
+
+function StripThumb({ page, i, current, onBroken, onMove }: { page: PageDraft; i: number; current: boolean; onBroken: (id: string) => void; onMove: (delta: -1 | 1) => void }) {
+  const drag = useDraggable({ id: page.id })
+  const drop = useDroppable({ id: page.id })
+  const t = drag.transform
+  return (
+    <button
+      ref={(el) => {
+        drag.setNodeRef(el)
+        drop.setNodeRef(el)
+      }}
+      type="button"
+      className={`pp-strip-thumb${drag.isDragging ? ' is-lifted' : ''}${drop.isOver && !drag.isDragging ? ' is-over' : ''}`}
+      aria-label={`Page ${i + 1}`}
+      aria-current={current || undefined}
+      aria-keyshortcuts="Alt+ArrowLeft Alt+ArrowRight"
+      style={t ? { transform: `translate3d(${t.x}px, ${t.y}px, 0)` } : undefined}
+      {...drag.listeners}
+      onClick={() => usePaperStore.setState({ active: i })}
+      onKeyDown={(e) => {
+        if (!e.altKey || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return
+        e.preventDefault()
+        onMove(e.key === 'ArrowLeft' ? -1 : 1)
+      }}
+    >
+      {/* draggable=false: a native image drag would carry 'Files' and light the drop overlay */}
+      <img src={page.url} alt="" draggable={false} style={{ transform: `rotate(${page.rotation}deg)` }} onError={() => onBroken(page.id)} />
+      {/* The photo keeps its own colours at night (11n), so its number keeps the day ink. */}
+      <span data-theme="day">{i + 1}</span>
+    </button>
   )
 }
 
@@ -194,22 +271,21 @@ function dateChip(iso: string, timed: boolean): string {
   return timed ? `${day} · ${cairoTime().format(d)}` : day
 }
 
-type Edit = { text?: string; type?: LineType; dropped?: boolean }
-
-/** The capture's lines as the user has them: read against their projects, with their edits and drops. */
-function useLines(capture: CaptureRow | null) {
+/** The capture's lines as the user has them: read against their projects, with their edits and drops.
+ * `only`: just these keys (what's left after a Notebook page's ticks review). */
+function useLines(capture: CaptureRow | null, only?: string[]) {
   const { data: projects = [] } = useProjects()
-  const [edits, setEdits] = useState<Record<string, Edit>>({})
+  const [edits, setEdits] = useState<Record<string, LineEdit>>({})
   const read = useMemo(() => {
     if (!capture) return []
     const live = projects.filter((p) => !p.deleted_at)
-    return capture.items.map((it, i) => toEditLine(it, i, live, new Date(capture.created_at)))
-  }, [capture, projects])
+    return capture.items.map((it, i) => toEditLine(it, i, live, new Date(capture.created_at))).filter((l) => !only || only.includes(l.key))
+  }, [capture, projects, only])
   const lines = read.map((l) => ({ ...l, ...edits[l.key] })).filter((l) => !edits[l.key]?.dropped)
-  const edit = (key: string, patch: Edit) => setEdits((e) => ({ ...e, [key]: { ...e[key], ...patch } }))
-  const drop = (key: string) => {
-    edit(key, { dropped: true })
-    toastUndo('Line dropped', () => edit(key, { dropped: false }))
+  const edit = (keys: Iterable<string>, patch: LineEdit) => setEdits((e) => editLines(e, keys, patch))
+  const drop = (keys: string[]) => {
+    edit(keys, { dropped: true })
+    toastUndo(keys.length === 1 ? 'Line dropped' : `${keys.length} lines dropped`, () => edit(keys, { dropped: false }))
   }
   return { lines, edit, drop }
 }
@@ -236,33 +312,125 @@ function Crop({ url, box, height = 40, maxWidth = 290 }: { url?: string; box: Ed
   )
 }
 
-function ResultRow({ line, url, onEdit, onDrop, onHover }: { line: EditLine; url?: string; onEdit: (patch: Edit) => void; onDrop: () => void; onHover?: (on: boolean) => void }) {
-  const [editing, setEditing] = useState(false)
-  const [menu, setMenu] = useState<{ x: number; y: number; items: ContextMenuItem[] } | null>(null)
-  const check = needsCheck(line)
-  const at = (el: HTMLElement) => {
-    const r = el.getBoundingClientRect()
-    return { x: r.left, y: r.bottom + 4 }
+type At = { x: number; y: number }
+type PickerKind = 'type' | 'date' | 'place' | 'priority'
+const below = (el: HTMLElement): At => {
+  const r = el.getBoundingClientRect()
+  return { x: r.left, y: r.bottom + 4 }
+}
+
+/** The pickers a line's chips open (11f) — the Inbox triage card's set: the type popover, ScheduleMenu,
+ * MovePicker, and the task menu's priority list. `line` absent: a selection (nothing preselected). */
+function LinePicker({ kind, at, line, meta, onEdit, onClose }: { kind: PickerKind; at: At; line?: EditLine; meta: string; onEdit: (patch: LineEdit) => void; onClose: () => void }) {
+  const isMobile = useIsMobile()
+  if (kind === 'type') {
+    return (
+      <ContextMenu
+        position={at}
+        onClose={onClose}
+        label="Type"
+        items={(Object.keys(TYPE_LABEL) as LineType[]).map((t) => ({ label: TYPE_LABEL[t], hint: TYPE_HINT[t], icon: <span className={`pp-type-dot is-${t}`} />, onClick: () => onEdit({ type: t }) }))}
+      />
+    )
   }
-  const typeMenu = (el: HTMLElement) =>
-    setMenu({
-      ...at(el),
-      items: (Object.keys(TYPE_LABEL) as LineType[]).map((t) => ({
-        label: `${TYPE_LABEL[t]} — ${TYPE_HINT[t]}`,
-        icon: <span className={`pp-type-dot is-${t}`} />,
-        onClick: () => onEdit({ type: t }),
-      })),
-    })
+  if (kind === 'date') {
+    const pick = (patch: LineEdit) => {
+      onEdit(patch)
+      onClose()
+    }
+    return <ScheduleMenu position={at} title={meta} value={line?.dueAt} onClose={onClose} onSchedule={(iso, _min, timed) => pick({ dueAt: iso, timed: !!timed })} onClear={line?.dueAt ? () => pick({ dueAt: null, timed: false }) : undefined} />
+  }
+  if (kind === 'place') {
+    const current = line ? placeKey({ project_id: line.projectId, area_id: line.areaId, domain_id: line.domainId }) : null
+    return <MovePicker position={at} current={current} meta={meta} onPick={(to) => onEdit(placeEdit(to))} onClose={onClose} />
+  }
+  // The task menu's levels and colours (P1 = Critical); the chip reads P1–P3.
+  const levels = [null, 3, 2, 1]
+  const name = (p: number | null) => (p ? `P${p} · ${PRIORITY_LABELS[p]}` : 'None')
+  return isMobile ? (
+    <ActionSheet title="Priority" meta={meta} onClose={onClose} items={levels.map((p) => ({ label: name(p), selected: !!line && line.priority === p, onSelect: () => onEdit({ priority: p }) }))} />
+  ) : (
+    <ContextMenu position={at} onClose={onClose} label="Priority" items={levels.map((p) => ({ label: name(p), labelColor: priorityColor(p) ?? undefined, onClick: () => onEdit({ priority: p }) }))} />
+  )
+}
+
+interface RowProps {
+  line: EditLine
+  url?: string
+  /** The capture's title — its line gets the "page title" chip (11e). */
+  pageTitle: string | null
+  editing: boolean
+  onEditing: (on: boolean) => void
+  selected: boolean
+  selecting: boolean
+  onToggleSelect: () => void
+  onEdit: (patch: LineEdit) => void
+  onDrop: () => void
+  onHover?: (on: boolean) => void
+  /** Desktop keys (11m): the row's DOM id for the list's focus, and whether it has the focus ring. */
+  rowId?: string
+  ringed?: boolean
+}
+
+function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecting, onToggleSelect, onEdit, onDrop, onHover, rowId, ringed }: RowProps) {
+  const [menu, setMenu] = useState<{ kind: PickerKind | 'more'; at: At } | null>(null)
+  // A ⋯ item that opens a picker: ContextMenu runs the item, then its own onClose — which opens this.
+  const then = useRef<{ kind: PickerKind; at: At } | null>(null)
+  const check = needsCheck(line)
+  const dated = line.type === 'task' || line.type === 'event'
+  const open = (kind: PickerKind | 'more') => (e: ReactMouseEvent<HTMLElement>) => setMenu({ kind, at: below(e.currentTarget) })
+  const chain = (kind: PickerKind) => () => {
+    then.current = menu && { kind, at: menu.at }
+  }
+  const more: ContextMenuItem[] = [
+    { label: 'Edit the text', onClick: () => onEditing(true) },
+    ...(dated ? [{ label: line.dueAt ? 'Change the date…' : 'Add a date…', onClick: chain('date') }] : []),
+    { label: line.projectLabel ? 'Move to…' : 'Add a project…', onClick: chain('place') },
+    ...(line.type === 'task' ? [{ label: line.priority ? 'Change the priority…' : 'Add a priority…', onClick: chain('priority') }] : []),
+    { label: 'Select', onClick: onToggleSelect },
+    { label: 'Drop this line', danger: true, onClick: onDrop },
+  ]
+  const overlay =
+    menu &&
+    (menu.kind === 'more' ? (
+      <ContextMenu
+        items={more}
+        position={menu.at}
+        onClose={() => {
+          setMenu(then.current)
+          then.current = null
+        }}
+      />
+    ) : (
+      <LinePicker kind={menu.kind} at={menu.at} line={line} meta={line.text} onEdit={onEdit} onClose={() => setMenu(null)} />
+    ))
   return (
     <SwipeRow
       actions={{ delete: onDrop, deleteLabel: 'Drop' }}
       tomorrowHint=""
-      className="pp-row"
-      contentClassName={`pp-row-fg${check ? ' is-check' : ''}`}
+      id={rowId}
+      tabIndex={rowId ? -1 : undefined}
+      className={`pp-row${ringed ? ' is-ringed' : ''}`}
+      contentClassName={`pp-row-fg${check ? ' is-check' : ''}${selected ? ' is-selected' : ''}`}
+      onLongPress={onToggleSelect}
+      selecting={selecting}
+      onSelectTap={onToggleSelect}
+      // ⌃ / ⌘-click selects on desktop, as on task rows.
+      onClickCapture={(e) => {
+        if (!(e.ctrlKey || e.metaKey)) return
+        e.preventDefault()
+        e.stopPropagation()
+        onToggleSelect()
+      }}
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
-      overlay={menu && <ContextMenu items={menu.items} position={menu} onClose={() => setMenu(null)} />}
+      overlay={overlay}
     >
+      {selecting && (
+        <span className="pp-select">
+          <SelectCircle on={selected} title={line.text} />
+        </span>
+      )}
       <div className="pp-row-main">
         {editing ? (
           <input
@@ -274,7 +442,7 @@ function ResultRow({ line, url, onEdit, onDrop, onHover }: { line: EditLine; url
             onBlur={(e) => {
               const text = e.currentTarget.value.trim()
               if (text && text !== line.text) onEdit({ text })
-              setEditing(false)
+              onEditing(false)
             }}
             onKeyDown={(e) => {
               if (e.key === 'Enter') e.currentTarget.blur()
@@ -286,27 +454,34 @@ function ResultRow({ line, url, onEdit, onDrop, onHover }: { line: EditLine; url
             }}
           />
         ) : (
-          <button type="button" className="pp-row-text" dir="auto" onClick={() => setEditing(true)}>
+          <button type="button" className="pp-row-text" dir="auto" onClick={() => onEditing(true)}>
             {line.text}
           </button>
         )}
         <div className="pp-chips">
-          <button type="button" className={`pp-type is-${line.type}`} aria-haspopup="menu" aria-label={`Type: ${TYPE_LABEL[line.type]}`} onClick={(e) => typeMenu(e.currentTarget)}>
+          <button type="button" className={`pp-type is-${line.type}`} aria-haspopup="menu" aria-label={`Type: ${TYPE_LABEL[line.type]}`} onClick={open('type')}>
             {TYPE_LABEL[line.type]}
             <Icon name="chevdown" size={14} />
           </button>
-          {line.dueAt && (line.type === 'task' || line.type === 'event') && (
-            <span className="pp-chip">
+          {line.dueAt && dated && (
+            <button type="button" className="pp-chip" aria-haspopup="dialog" aria-label={`Date: ${dateChip(line.dueAt, line.timed)}`} onClick={open('date')}>
               <Icon name={line.timed ? 'clock' : 'calendar'} size={14} />
               {dateChip(line.dueAt, line.timed)}
-            </span>
+            </button>
           )}
           {line.projectLabel && (
-            <span className="pp-chip">
+            <button type="button" className="pp-chip" aria-haspopup="dialog" aria-label={`Project: ${line.projectLabel}`} onClick={open('place')}>
               <span className="pp-dot" aria-hidden="true" />
-              {line.projectLabel}
-            </span>
+              <EmojiText text={line.projectLabel} />
+            </button>
           )}
+          {line.priority != null && line.type === 'task' && (
+            <button type="button" className="pp-chip" aria-haspopup="menu" aria-label={`Priority: P${line.priority}`} onClick={open('priority')}>
+              P{line.priority}
+            </button>
+          )}
+          {/* The heading the read took the page's title from ("OS lecture 3 — 4 Oct" → "OS lecture 3"). */}
+          {pageTitle && line.type === 'note' && line.page === 0 && line.text.startsWith(pageTitle) && <span className="pp-chip">page title</span>}
         </div>
         {check && (
           <div className="pp-check">
@@ -315,33 +490,75 @@ function ResultRow({ line, url, onEdit, onDrop, onHover }: { line: EditLine; url
           </div>
         )}
       </div>
-      <button
-        type="button"
-        className="pp-icon pp-row-more"
-        aria-label={`More for “${line.text}”`}
-        aria-haspopup="menu"
-        onClick={(e) => setMenu({ ...at(e.currentTarget), items: [{ label: 'Edit the text', onClick: () => setEditing(true) }, { label: 'Drop this line', danger: true, onClick: onDrop }] })}
-      >
-        <Icon name="more" size={24} />
-      </button>
+      {!selecting && (
+        <button type="button" className="pp-icon pp-row-more" aria-label={`More for “${line.text}”`} aria-haspopup="menu" onClick={open('more')}>
+          <Icon name="more" size={24} />
+        </button>
+      )}
     </SwipeRow>
   )
 }
 
-function useResults(id: string) {
+function useResults(id: string, only?: string[]) {
   const capture = useCapture(id)
   const urls = usePageUrls(capture)
-  const { lines, edit, drop } = useLines(capture)
+  const { lines, edit, drop } = useLines(capture, only)
+  const [editing, setEditing] = useState<string | null>(null)
+  // Long-press selection (MK Selection): only lines still on the sheet count.
+  const [picked, setPicked] = useState<Set<string>>(new Set())
+  const selected = lines.filter((l) => picked.has(l.key)).map((l) => l.key)
+  const clear = () => setPicked(new Set())
+  useEscapeStack(selected.length > 0, clear)
   const close = () => store().close()
+  // 11e: the drawings the read skipped; the ones sent to the Inbox as images (their note shows the photo,
+  // so Add all keeps it even under "Delete after reading").
+  const drawings = capture?.drawings ?? []
+  const [drawn, setDrawn] = useState<Set<number>>(new Set())
+  const addDrawing = (i: number) => {
+    if (!capture) return
+    setDrawn((s) => new Set(s).add(i))
+    addDrawingNote(capture, drawings[i], () =>
+      setDrawn((s) => {
+        const next = new Set(s)
+        next.delete(i)
+        return next
+      }),
+    )
+  }
   const apply = (mode: 'all' | 'inbox') => {
     if (!capture) return
-    applyResults(capture, lines, mode)
+    applyResults(capture, lines, mode, drawn.size > 0)
     close()
   }
   const unsure = lines.filter(needsCheck).length
   const viewPhoto = (page = 0) => store().show({ kind: 'photo', captureId: id, page, back: { kind: 'results', captureId: id } })
-  return { capture, urls, lines, edit, drop, close, apply, unsure, viewPhoto }
+  const row = (l: EditLine) => ({
+    line: l,
+    pageTitle: capture?.title ?? null,
+    editing: editing === l.key,
+    onEditing: (on: boolean) => setEditing(on ? l.key : null),
+    selected: picked.has(l.key),
+    selecting: selected.length > 0,
+    onToggleSelect: () => setPicked((s) => toggleKey(s, l.key)),
+    onEdit: (p: LineEdit) => edit([l.key], p),
+    onDrop: () => drop([l.key]),
+  })
+  const bulk = {
+    count: selected.length,
+    clear,
+    all: () => setPicked(new Set(lines.map((l) => l.key))),
+    edit: (p: LineEdit) => {
+      edit(selected, p)
+      clear()
+    },
+    drop: () => {
+      drop(selected)
+      clear()
+    },
+  }
+  return { capture, urls, lines, close, apply, unsure, editing: !!editing, viewPhoto, row, bulk, drawings, drawn, addDrawing, drop, edit, selectedKeys: selected }
 }
+type Bulk = ReturnType<typeof useResults>['bulk']
 
 function ResultsHead({ capture, urls, count, onPhoto }: { capture: CaptureRow; urls: string[]; count: number; onPhoto: () => void }) {
   return (
@@ -361,7 +578,23 @@ function ResultsHead({ capture, urls, count, onPhoto }: { capture: CaptureRow; u
   )
 }
 
-function Banner({ unsure, touch }: { unsure: number; touch: boolean }) {
+/** The line under the head (11e), "Editing 1 line" while one is open (11f) — or, selecting, the
+ * selection's own bar: ✕ · N selected · Select all (MK Selection's app bar). */
+function Banner({ unsure, touch, editing, bulk }: { unsure: number; touch: boolean; editing: boolean; bulk: Bulk }) {
+  if (bulk.count) {
+    return (
+      <div className="pp-banner pp-selhead" role="toolbar" aria-label="Selection">
+        <button type="button" className="pp-icon" aria-label="Clear selection" onClick={bulk.clear}>
+          <Icon name="close" size={24} />
+        </button>
+        <span className="pp-selcount">{bulk.count} selected</span>
+        <button type="button" className="pp-link" onClick={bulk.all}>
+          Select all
+        </button>
+      </div>
+    )
+  }
+  if (editing) return <div className="pp-banner">Editing 1 line</div>
   const drop = touch ? 'Swipe left to drop a line.' : 'Use ⊞ to drop a line.'
   return (
     <div className="pp-banner">
@@ -370,42 +603,122 @@ function Banner({ unsure, touch }: { unsure: number; touch: boolean }) {
   )
 }
 
-function ResultsFoot({ count, apply }: { count: number; apply: (mode: 'all' | 'inbox') => void }) {
+/** Add all / Inbox only — or, selecting, what the selection can do: Type · Date · Project · Drop (the
+ * bulk bar's grammar, inside the sheet: the tab bar isn't under a sheet to be replaced). */
+function ResultsFoot({ count, apply, bulk, focusAddAll }: { count: number; apply: (mode: 'all' | 'inbox') => void; bulk: Bulk; focusAddAll?: boolean }) {
+  const [menu, setMenu] = useState<{ kind: PickerKind; at: At; meta: string } | null>(null)
+  const act = (kind: PickerKind, icon: IconName, label: string) => (
+    <button type="button" className="pp-selbtn" aria-haspopup="dialog" onClick={(e) => setMenu({ kind, at: below(e.currentTarget), meta: `${bulk.count} selected` })}>
+      <Icon name={icon} size={24} />
+      {label}
+    </button>
+  )
   return (
     <>
-      <Button variant="secondary" icon={<Icon name="inbox" size={18} />} disabled={!count} onClick={() => apply('inbox')}>
-        Inbox only
-      </Button>
-      <Button variant="cta" disabled={!count} onClick={() => apply('all')}>
-        Add all {count}
-      </Button>
+      {bulk.count ? (
+        <div className="pp-selfoot" role="toolbar" aria-label="Selected lines">
+          {act('type', 'tasks', 'Type')}
+          {act('date', 'pickdate', 'Date')}
+          {act('place', 'project', 'Project')}
+          <button type="button" className="pp-selbtn is-destructive" onClick={bulk.drop}>
+            <Icon name="delete" size={24} />
+            Drop
+          </button>
+        </div>
+      ) : (
+        <>
+          <Button variant="secondary" icon={<Icon name="inbox" size={18} />} disabled={!count} onClick={() => apply('inbox')}>
+            Inbox only
+          </Button>
+          {/* 11m: ⏎ adds all — the dialog's default action has the focus when it opens */}
+          <Button variant="cta" disabled={!count} autoFocus={focusAddAll} onClick={() => apply('all')}>
+            Add all {count}
+          </Button>
+        </>
+      )}
+      {/* Outside the branch: a pick clears the selection, and the picker must outlive that to close. */}
+      {menu && <LinePicker kind={menu.kind} at={menu.at} meta={menu.meta} onEdit={bulk.edit} onClose={() => setMenu(null)} />}
     </>
   )
 }
 
-function PhoneResults({ id }: { id: string }) {
-  const r = useResults(id)
+/** 11e: "1 drawing skipped (CPU → ready → run) · Add as image" — under the lines, one row per drawing. */
+function DrawingRows({ drawings, drawn, onAdd }: { drawings: PageDrawing[]; drawn: Set<number>; onAdd: (i: number) => void }) {
+  return drawings.map((d, i) => (
+    <div key={i} className="pp-drawing">
+      <Icon name="image" size={18} />
+      <span className="pp-drawing-what" dir="auto">
+        {drawings.length === 1 ? '1 drawing skipped' : 'Drawing skipped'}
+        {d.what && ` (${d.what})`}
+      </span>
+      {drawn.has(i) ? (
+        <span className="pp-drawing-done">In the Inbox</span>
+      ) : (
+        <button type="button" className="pp-drawing-add" onClick={() => onAdd(i)}>
+          Add as image
+        </button>
+      )}
+    </div>
+  ))
+}
+
+function PhoneResults({ id, only }: { id: string; only?: string[] }) {
+  const r = useResults(id, only)
   if (!r.capture) return null
   const capture = r.capture
   return (
-    <BottomSheet detent="full" onClose={r.close} footer={(_, keyboardUp) => (keyboardUp ? null : <div className="pp-sheet-foot"><ResultsFoot count={r.lines.length} apply={r.apply} /></div>)}>
+    <BottomSheet detent="full" onClose={r.close} footer={(_, keyboardUp) => (keyboardUp ? null : <div className="pp-sheet-foot"><ResultsFoot count={r.lines.length} apply={r.apply} bulk={r.bulk} /></div>)}>
       {() => (
         <div className="pp-sheet-body">
           <ResultsHead capture={capture} urls={r.urls} count={r.lines.length} onPhoto={() => r.viewPhoto()} />
-          <Banner unsure={r.unsure} touch />
+          <Banner unsure={r.unsure} touch editing={r.editing} bulk={r.bulk} />
           {r.lines.map((l) => (
-            <ResultRow key={l.key} line={l} url={r.urls[l.page]} onEdit={(p) => r.edit(l.key, p)} onDrop={() => r.drop(l.key)} />
+            <ResultRow key={l.key} url={r.urls[l.page]} {...r.row(l)} />
           ))}
+          <DrawingRows drawings={r.drawings} drawn={r.drawn} onAdd={r.addDrawing} />
         </div>
       )}
     </BottomSheet>
   )
 }
 
-function DesktopResults({ id }: { id: string }) {
-  const r = useResults(id)
+// A row's own menu or picker is up: the keys are its, not the list's.
+const menuUp = () => !!document.querySelector('[role="menu"]') || document.querySelectorAll('[role="dialog"]').length > 1
+
+function DesktopResults({ id, only }: { id: string; only?: string[] }) {
+  const r = useResults(id, only)
   const [page, setPage] = useState(0)
   const [hover, setHover] = useState<EditLine | null>(null)
+  // 11m "⏎ Add all · ⌫ drop line · T change type": the shared list keys over the lines (↑/↓ move the
+  // ring). Add all also has the focus when the results open, so ⏎ works before any line is picked.
+  const [typeMenu, setTypeMenu] = useState<{ at: At; keys: string[] } | null>(null)
+  const keyed = r.lines.map((l) => ({ ...l, id: l.key }))
+  const anchor = (key: string): At => {
+    const el = document.getElementById(`pp-line-${key}`)?.querySelector('.pp-type')
+    return el ? below(el as HTMLElement) : { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+  }
+  const unlessMenu = <A,>(fn: (a: A) => void) => (a: A) => {
+    if (!menuUp()) fn(a)
+  }
+  const bindings: ListBinding<(typeof keyed)[number]>[] = [
+    { keys: ['Enter'], label: 'Add all', run: unlessMenu(() => r.lines.length && !r.bulk.count && r.apply('all')) },
+    {
+      keys: ['Backspace', 'Delete'],
+      label: 'Drop line',
+      run: unlessMenu((l) => {
+        const at = keyed.findIndex((k) => k.id === l.id)
+        r.drop([l.key])
+        setFocusedId(keyed[at + 1]?.id ?? keyed[at - 1]?.id ?? null)
+      }),
+      runAll: unlessMenu(() => r.bulk.drop()),
+    },
+    { keys: ['t'], label: 'Change type', run: unlessMenu((l) => setTypeMenu({ at: anchor(l.key), keys: [l.key] })), runAll: unlessMenu((sel) => setTypeMenu({ at: anchor(sel[0].key), keys: sel.map((l) => l.key) })) },
+  ]
+  const { focusedId, setFocusedId } = useListKeys(keyed, bindings, {
+    idPrefix: 'pp-line-',
+    active: !typeMenu && !r.editing,
+    selected: keyed.filter((l) => r.selectedKeys.includes(l.key)),
+  })
   if (!r.capture) return null
   const box = hover?.page === page ? hover.box : null
   return (
@@ -437,26 +750,132 @@ function DesktopResults({ id }: { id: string }) {
               <Icon name="close" size={24} />
             </button>
           </div>
-          <Banner unsure={r.unsure} touch={false} />
+          <Banner unsure={r.unsure} touch={false} editing={r.editing} bulk={r.bulk} />
           <div className="pp-rows">
             {r.lines.map((l) => (
               <ResultRow
                 key={l.key}
-                line={l}
                 url={r.urls[l.page]}
-                onEdit={(p) => r.edit(l.key, p)}
-                onDrop={() => r.drop(l.key)}
+                {...r.row(l)}
+                rowId={`pp-line-${l.key}`}
+                ringed={focusedId === l.key}
                 onHover={(on) => {
                   setHover(on ? l : null)
                   if (on) setPage(l.page)
                 }}
               />
             ))}
+            <DrawingRows drawings={r.drawings} drawn={r.drawn} onAdd={r.addDrawing} />
           </div>
           <div data-sheet-footer className="pp-foot is-row is-end">
-            <ResultsFoot count={r.lines.length} apply={r.apply} />
+            {!r.bulk.count && <span className="pp-keys">⏎ Add all · ⌫ drop line · T change type</span>}
+            <ResultsFoot count={r.lines.length} apply={r.apply} bulk={r.bulk} focusAddAll />
           </div>
         </div>
+      </div>
+      {typeMenu && (
+        <LinePicker
+          kind="type"
+          at={typeMenu.at}
+          line={typeMenu.keys.length === 1 ? r.lines.find((l) => l.key === typeMenu.keys[0]) : undefined}
+          meta={typeMenu.keys.length === 1 ? (r.lines.find((l) => l.key === typeMenu.keys[0])?.text ?? '') : `${typeMenu.keys.length} selected`}
+          onEdit={(p) => {
+            r.edit(typeMenu.keys, p)
+            if (typeMenu.keys.length > 1) r.bulk.clear()
+          }}
+          onClose={() => setTypeMenu(null)}
+        />
+      )}
+    </Frame>
+  )
+}
+
+// ── 11l · a Notebook page's ticks: "5 ticked on paper → mark done?" ──
+function TicksReview({ id, target }: { id: string; target: TicksTarget }) {
+  const capture = useCapture(id)
+  const urls = usePageUrls(capture)
+  const { data: tasks = [] } = useTasks()
+  // The page's tasks as they are now: one finished since the page was written isn't offered again.
+  const open = useMemo(() => new Set(tasks.filter((t) => t.status === 'todo').map((t) => t.id)), [tasks])
+  const result = useMemo(() => {
+    const lines = (capture?.items ?? []).map((it, i) => ({ key: `${it.page}:${i}`, text: it.text, checked: it.checked ?? null, item: it }))
+    return matchTicks(lines, target.tasks.filter((t) => open.has(t.id)), target.printed)
+  }, [capture, target, open])
+  const [skipped, setSkipped] = useState<Set<string>>(new Set())
+  const close = () => store().close()
+  if (!capture) return null
+  const chosen = result.ticked.filter((m) => !skipped.has(m.task.id))
+  const fresh = result.fresh.map((l) => l.key)
+  const itemOf = (key: string) => capture.items[Number(key.split(':')[1])]
+  const toggle = (taskId: string) =>
+    setSkipped((s) => {
+      const next = new Set(s)
+      if (next.has(taskId)) next.delete(taskId)
+      else next.add(taskId)
+      return next
+    })
+  // New scribbles go on to the usual results (only them); otherwise the photo is done with.
+  const next = () => (fresh.length ? store().show({ kind: 'results', captureId: id, only: fresh }) : close())
+  const markDone = () => {
+    markTicksDone(capture, chosen.map((m) => m.task.id), !fresh.length)
+    next()
+  }
+  const n = chosen.length
+  return (
+    <Frame label="Bring back your ticks" onClose={close}>
+      <TopBar title="Bring back your ticks" onClose={close} />
+      <div className="pp-rows">
+        <div className="pp-rhead">
+          {urls[0] && (
+            <button type="button" className="pp-thumb" aria-label="See the photo" onClick={() => store().show({ kind: 'photo', captureId: id, page: 0, back: { kind: 'results', captureId: id } })}>
+              <img src={urls[0]} alt="" />
+            </button>
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className="pp-rtitle">{result.ticked.length ? `${result.ticked.length} ticked on paper → mark done?` : 'No ticks found on this page'}</div>
+            <div className="pp-meta">Matched to {target.label}</div>
+          </div>
+        </div>
+        {!result.ticked.length && <div className="pp-banner">None of the ticked boxes matched a task still open on {target.label}. Hold the camera square over the page and try again — or keep the lines as notes.</div>}
+        {result.ticked.map((m) => {
+          const item = itemOf(m.line.key)
+          return (
+            <div key={m.task.id} className="pp-row">
+              <div className="pp-row-fg pp-tickrow">
+                <span className="pp-tickhit">
+                  <Checkbox checked={!skipped.has(m.task.id)} label={m.task.title} onChange={() => toggle(m.task.id)} />
+                </span>
+                <div className="pp-row-main">
+                  <div className="pp-row-text">
+                    <EmojiText text={m.task.title} />
+                  </div>
+                  <div className="pp-check">
+                    <Crop url={urls[item?.page ?? 0]} box={item?.box ?? null} height={32} maxWidth={220} />
+                    <span className="pp-meta" dir="auto">☑ {m.line.text}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        })}
+        {result.open.length > 0 && <div className="pp-banner">{result.open.length} still open on paper · left as they are</div>}
+        {fresh.length > 0 && <div className="pp-banner">New on the page · {fresh.length} — you’ll see {fresh.length === 1 ? 'it' : 'them'} next, like any page.</div>}
+      </div>
+      <div data-sheet-footer className="pp-foot is-row">
+        <Button variant="secondary" onClick={close}>
+          Not now
+        </Button>
+        {n > 0 ? (
+          <Button variant="cta" onClick={markDone}>
+            Mark {n} done
+          </Button>
+        ) : (
+          fresh.length > 0 && (
+            <Button variant="cta" onClick={next}>
+              Review the lines
+            </Button>
+          )
+        )}
       </div>
     </Frame>
   )
@@ -493,8 +912,10 @@ function PhotoView({ stage }: { stage: Extract<Stage, { kind: 'photo' }> }) {
 
 // ── 11i couldn't read · failed · 11j the daily limit · 11k camera off ──
 function StateScreen({ stage }: { stage: Extract<Stage, { kind: 'unreadable' | 'failed' | 'limit' | 'denied' }> }) {
-  const capture = useCapture('captureId' in stage ? stage.captureId : null)
+  const capture = useCapture(('captureId' in stage && stage.captureId) || null)
   const urls = usePageUrls(capture)
+  // A retake of a Notebook page is still a Notebook page (11l).
+  const ticks = usePaperStore((s) => (stage.kind === 'unreadable' && stage.ticks) || ('captureId' in stage && stage.captureId ? s.ticksFor[stage.captureId] : undefined))
   const close = () => store().close()
   // Couldn't read: the photo goes (it's of nothing useful), and the flow starts over.
   const settle = () => capture && !capture.reviewed_at && markReviewed(capture, true)
@@ -508,22 +929,33 @@ function StateScreen({ stage }: { stage: Extract<Stage, { kind: 'unreadable' | '
       settle()
       close()
     }
-    art = (
+    const badge = (
+      <span className="pp-blur-badge">
+        <Icon name="alert" size={22} />
+      </span>
+    )
+    // A HEIC this browser can't open has no picture to blur: the photo glyph stands in.
+    art = stage.heic ? (
+      <span className="pp-roundel">
+        <Icon name="image" size={40} />
+        {badge}
+      </span>
+    ) : (
       <div className="pp-blur">
         {urls[0] && <img src={urls[0]} alt="" />}
-        <span className="pp-blur-badge">
-          <Icon name="alert" size={22} />
-        </span>
+        {badge}
       </div>
     )
     title = 'Couldn’t read this one — retake?'
-    body = 'It came out a little blurry, or there’s no handwriting on it. Hold steady over the page, and let it fill the frame.'
+    body = stage.heic
+      ? 'It’s an iPhone photo (HEIC), and this browser can’t open those. Convert it to JPEG first, then pick it again.'
+      : 'It came out a little blurry, or there’s no handwriting on it. Hold steady over the page, and let it fill the frame.'
     actions = (
       <>
-        <Button variant="cta" icon={<Icon name="camera" size={18} />} onClick={() => { settle(); close(); void pickPhotos('camera') }}>
+        <Button variant="cta" icon={<Icon name="camera" size={18} />} onClick={() => { settle(); close(); void pickPhotos('camera', ticks) }}>
           Retake
         </Button>
-        <Button variant="secondary" icon={<Icon name="image" size={18} />} onClick={() => { settle(); close(); void pickPhotos('gallery') }}>
+        <Button variant="secondary" icon={<Icon name="image" size={18} />} onClick={() => { settle(); close(); void pickPhotos('gallery', ticks) }}>
           Pick another photo
         </Button>
       </>

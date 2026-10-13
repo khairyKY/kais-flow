@@ -24,8 +24,10 @@ import rrulePkg from 'npm:rrule@2'
 const { RRule } = rrulePkg
 import { isAllowedOrigin } from '../_shared/cors.ts'
 import { embedText } from '../_shared/retrieval.ts'
+import { fromWall, toWall } from '../_shared/repeat.ts'
 import { handleMcp, type KeyScope, type Session, type SessionResult } from './server.ts'
-import type { EventRow, ProjectRow, SearchHit, Store, TaskFilter, TaskRow } from './tools.ts'
+import type { BlockRow, EventRow, ProjectRow, SearchHit, Store, TaskFilter, TaskRow } from './tools.ts'
+import type { RuleBetween } from '../_shared/series.ts'
 
 // Tool calls per key per UTC day. A runaway agent loop stops here; reads of the tool list don't count.
 const DAILY_LIMIT = 500
@@ -54,11 +56,12 @@ function store(tx: Tx): Store {
       return tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
         from tasks t left join projects p on p.id = t.project_id
-        where t.status = 'todo' and t.deleted_at is null
-          and (t.top3 or (not t.someday and (
-            coalesce(t.due_at, t.scheduled_start) < ${end}::timestamptz
-            or (t.scheduled_start >= ${start}::timestamptz and t.scheduled_start < ${end}::timestamptz))))
-        order by coalesce(t.due_at, t.scheduled_start) nulls last, t.id
+        where t.status = 'todo' and t.deleted_at is null and not t.someday
+          and (coalesce(t.due_at, t.scheduled_start) < ${end}::timestamptz
+            or (t.scheduled_start >= ${start}::timestamptz and t.scheduled_start < ${end}::timestamptz)
+            or (t.top3 and t.due_at is null and t.scheduled_start is null))
+        -- Picks first, so a long overdue pile can't push them past the limit.
+        order by t.top3 desc, coalesce(t.due_at, t.scheduled_start) nulls last, t.id
         limit 500`)
     },
     async listTasks(f: TaskFilter) {
@@ -86,9 +89,11 @@ function store(tx: Tx): Store {
       return rows.map((p) => ({ ...p, target_date: iso(p.target_date) }) as ProjectRow)
     },
     async events(from, to) {
+      // A repeating event (0061) is one row anchored at its first occurrence: it comes along whenever it
+      // started before `to`, and tools.ts expands it.
       const rows = await tx`
-        select id, title, starts_at, ends_at, all_day, task_id from calendar_events
-        where deleted_at is null and starts_at < ${to}::timestamptz and ends_at > ${from}::timestamptz
+        select id, title, starts_at, ends_at, all_day, task_id, recurrence_rule, recurrence_exdates from calendar_events
+        where deleted_at is null and starts_at < ${to}::timestamptz and (ends_at > ${from}::timestamptz or recurrence_rule is not null)
         order by starts_at, id
         limit 300`
       return rows.map((e) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as EventRow)
@@ -100,8 +105,12 @@ function store(tx: Tx): Store {
       const rows = await tx`select entity_type, entity_id, title, snippet, score from search_hybrid(${query}, ${embedding}, ${limit})`
       return rows as unknown as SearchHit[]
     },
-    async top3Count() {
-      const [row] = await tx`select count(*)::int as n from tasks where top3 and status = 'todo' and deleted_at is null`
+    async top3Count(end) {
+      // The Top 3 rule (_shared/today.ts): a pick dated after today isn't one of today's.
+      const [row] = await tx`
+        select count(*)::int as n from tasks
+        where top3 and status = 'todo' and deleted_at is null and not someday
+          and (coalesce(due_at, scheduled_start) is null or coalesce(due_at, scheduled_start) < ${end}::timestamptz)`
       return row.n as number
     },
     async openOccurrence(title, rule, due, exceptId) {
@@ -130,8 +139,24 @@ function store(tx: Tx): Store {
         returning id`
       return rows.length > 0
     },
-    async setDue(id, due) {
-      await tx`update tasks set due_at = ${due}::timestamptz, someday = false where id = ${id}::uuid`
+    async taskBlocks(taskId) {
+      const rows = await tx`select id, starts_at, ends_at, all_day from calendar_events where task_id = ${taskId}::uuid and deleted_at is null`
+      return rows.map((e) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as BlockRow)
+    },
+    async reschedule(id, r) {
+      // Only move_to_tomorrow reschedules here, and tomorrow is never today: a Top 3 pick gives its
+      // place up, as it does in the app (app/src/features/tasks/top3Rule.ts).
+      await tx`
+        update tasks set due_at = ${r.due_at}::timestamptz, reminder_at = ${r.reminder_at}::timestamptz,
+          reminder_sent = ${r.reminder_sent}::boolean, scheduled_start = ${r.scheduled_start}::timestamptz,
+          scheduled_end = ${r.scheduled_end}::timestamptz, someday = false, top3 = false, top3_rank = null
+        where id = ${id}::uuid`
+    },
+    async clearBlocks(taskId, ids) {
+      await tx`
+        update calendar_events set deleted_at = now()
+        where task_id = ${taskId}::uuid and deleted_at is null
+          and id in (select jsonb_array_elements_text(${JSON.stringify(ids)}::jsonb)::uuid)`
     },
     async insertInbox(row) {
       await tx`
@@ -169,11 +194,18 @@ async function withSession<T>(key: string, count: boolean, fn: (s: Session) => P
   })) as SessionResult<T>
 }
 
-/** features/tasks/recurrence.ts nextOccurrence, on the same rrule. */
-function nextOccurrence(rule: string, from: Date): Date | null {
-  return new RRule({ ...RRule.parseString(rule), dtstart: from }).after(from, false)
+/** features/tasks/recurrence.ts nextOccurrence, on the same rrule: the rule runs on the user's wall
+ * clock (a daily 09:00 stays 09:00 across DST; BYDAY reads the user's weekday). */
+function nextOccurrence(rule: string, from: Date, zone: string, after: Date): Date | null {
+  const { until, ...options } = RRule.parseString(rule.replace(/^RRULE:/, ''))
+  const r = new RRule({ ...options, ...(until ? { until: toWall(until, zone) } : null), dtstart: toWall(from, zone) })
+  const next = r.after(toWall(after, zone), false)
+  return next ? fromWall(next, zone) : null
 }
 
+/** features/calendar/series.ts's rrule half, on the same rrule. */
+const ruleBetween: RuleBetween = (rule, dtstart, after, before) => new RRule({ ...RRule.parseString(rule), dtstart }).between(after, before, true)
+
 Deno.serve((req) =>
-  handleMcp(req, { withSession, originAllowed: isAllowedOrigin, nextOccurrence, now: () => new Date(), dailyLimit: DAILY_LIMIT }),
+  handleMcp(req, { withSession, originAllowed: isAllowedOrigin, nextOccurrence, ruleBetween, now: () => new Date(), dailyLimit: DAILY_LIMIT }),
 )

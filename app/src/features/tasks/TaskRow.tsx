@@ -2,15 +2,17 @@ import { useEffect, useRef, useState } from 'react'
 import { useOpenTask } from './openTask'
 import { EmojiText } from '../../components/EmojiText'
 import './TaskRow.css'
-import { completeTaskWithUndo, reopenTaskWithUndo, toggleTop3, rescheduleDue } from './api'
+import { cachedTask, completeTaskWithUndo, reopenTaskWithUndo, toggleTop3, rescheduleDue } from './api'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag, rowLabels } from './taskDisplay'
 import { checkAction } from './completion'
-import { scheduleToday } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
+import { dayShort } from '../../components/pickerMath'
+import { cairoTimeKey } from '../calendar/eventTime'
 import { Checkbox, Chip } from '../../components/kit'
-import { useMotionEnabled } from '../../lib/motion'
+import { softNo, useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
 import type { BulkActions } from './TaskMenu'
 import { useRowGrammar } from './useRowGrammar'
@@ -127,6 +129,8 @@ export function TaskRow({
   }, [done])
   const someday = task.someday && !done
   const tag = resolveTag(task, domains, projects, areas)
+  // ponytail: read from the cache, not a subscription per row — the list re-renders rows on any task change.
+  const parentTitle = task.parent_task_id ? cachedTask(task.parent_task_id)?.title ?? null : null
   const overdueDays = !done && !task.someday && task.due_at ? daysOverdue(task.due_at) : 0
   const overdue = overdueDays > 0
   const inProgress = !done && !!task.scheduled_start
@@ -205,7 +209,7 @@ export function TaskRow({
             )}
             {task.completed_at && (
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                {new Date(task.completed_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+                {cairoTimeKey(new Date(task.completed_at))}
               </span>
             )}
           </>
@@ -307,6 +311,12 @@ export function TaskRow({
           {inProgress && <img src={`${A}/cherry/opening.png`} alt="in progress" style={{ height: 19, filter: 'var(--shadow-drop-sm)' }} />}
         </div>
         <div style={metaStyle}>
+          {/* Kai 2026-10-12 audit: a subtask in a list said nothing of its parent — a quiet "↳ parent". */}
+          {parentTitle && (
+            <span title={`Subtask of “${parentTitle}”`} style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'none', letterSpacing: 0 }}>
+              ↳ <EmojiText text={parentTitle} />
+            </span>
+          )}
           {tag && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
@@ -317,8 +327,8 @@ export function TaskRow({
           {inProgress && <span style={{ color: 'var(--kf-chip-tasks, #8A4A58)' }}>In progress</span>}
           {inProgress && task.scheduled_start && (
             <span>
-              {new Date(task.scheduled_start).toLocaleDateString([], { weekday: 'short' })}{' '}
-              {new Date(task.scheduled_start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })}
+              {/* The user's day and clock (app_settings.timezone), not the device's. */}
+              {dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} {cairoTimeKey(new Date(task.scheduled_start))}
             </span>
           )}
           {task.duration_min != null && <span>{formatDuration(task.duration_min)}</span>}
@@ -336,7 +346,8 @@ export function TaskRow({
 
       {!grammar.selecting && (
         <span
-          onClick={() => toggleTop3(task)}
+          // Effects 2j: a full Top 3 refuses the star — it shakes once and the toast says why.
+          onClick={(e) => toggleTop3(task) || softNo(e.currentTarget)}
           title={task.top3 ? 'Remove from Top 3' : 'Add to Top 3'}
           className="kf-hit"
           style={{ color: task.top3 ? 'var(--acc-terra)' : 'var(--line-solid)', fontSize: 16, lineHeight: 1, cursor: 'pointer', flex: 'none', marginTop: 1 }}

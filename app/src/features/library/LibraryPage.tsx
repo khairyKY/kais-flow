@@ -1,30 +1,38 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { BackLink } from '../../components/kit'
+import { Skeleton, ErrorCard } from '../../components/States'
 import {
   useBooks,
   createBook,
   updateBookProgress,
-  deleteBook,
+  updateBook,
+  removeBookWithUndo,
   useNotes,
   createNote,
-  deleteNote,
+  updateNote,
+  removeNoteWithUndo,
   useQuotes,
   createQuote,
-  deleteQuote,
+  updateQuote,
+  removeQuoteWithUndo,
   useCommentaries,
   createCommentary
 } from './api'
 import { useJournalEntries } from '../journal/api'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
+import { LibraryEditForm } from './LibraryEditForm'
+import { bookFromForm, parseTags } from './edits'
+import type { Book, Note, Quote } from '../../lib/types'
 
 /** The three desktop panes (shelf 230 + list 220 + a readable reader) need this much of the page.
  * At 150% interface size a 1280px window leaves the page ~611 CSS px (the root zoom shrinks it,
  * but media queries still see 1280), so the reader pushed the page sideways. */
 const THREE_PANES_MIN = 880
 
-/** A phone, or a page too narrow for three panes: both get the single-column layout. */
+/** A phone, or a page too narrow for three panes: both get the single-column layout.
+ * ds-ok: not a copy of the kit's useIsMobile, which only reads the viewport; this one also watches the page width. */
 function useIsMobile(): boolean {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
   useEffect(() => {
@@ -55,9 +63,12 @@ export function LibraryPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   // Queries
-  const { data: books = [] } = useBooks()
-  const { data: notes = [] } = useNotes()
-  const { data: quotes = [] } = useQuotes()
+  const booksQ = useBooks()
+  const notesQ = useNotes()
+  const quotesQ = useQuotes()
+  const { data: books = [] } = booksQ
+  const { data: notes = [] } = notesQ
+  const { data: quotes = [] } = quotesQ
   const { data: journalEntries = [] } = useJournalEntries()
   const dailyPagesCount = journalEntries.filter((e) => !e.deleted_at).length
 
@@ -116,6 +127,69 @@ export function LibraryPage() {
   )
 
   const [newThoughtText, setNewThoughtText] = useState('')
+
+  // Edit-after-create (Kai 2026-10-12): the id of the book / note / quote whose inline edit card
+  // is open. Keyed by id, so moving to another item closes it.
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const closeEdit = () => setEditingId(null)
+  const editChip = (id: string) => (
+    <span onClick={() => setEditingId((cur) => (cur === id ? null : id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>edit</span>
+  )
+  const bookEditForm = (b: Book) => (
+    <LibraryEditForm
+      key={b.id}
+      title="Edit book"
+      fields={[
+        { key: 'title', label: 'Title', value: b.title },
+        { key: 'author', label: 'Author', value: b.author ?? '' },
+        { key: 'pages', label: 'Total pages', value: String(b.total_pages) },
+        { key: 'year', label: 'Year', value: b.published_year ? String(b.published_year) : '' },
+      ]}
+      onCancel={closeEdit}
+      onSave={(v) => {
+        const next = bookFromForm(b, { title: v.title, author: v.author, pages: v.pages, year: v.year })
+        if (!next) return
+        updateBook(next)
+        closeEdit()
+      }}
+    />
+  )
+  const noteEditForm = (n: Note) => (
+    <LibraryEditForm
+      key={n.id}
+      title="Edit note"
+      fields={[
+        { key: 'title', label: 'Title (optional)', value: n.title ?? '' },
+        { key: 'body', label: 'Note', value: n.body, multiline: true },
+        { key: 'tags', label: 'Tags (comma separated)', value: n.tags.join(', ') },
+      ]}
+      onCancel={closeEdit}
+      onSave={(v) => {
+        if (!v.body.trim()) return
+        updateNote(n, { title: v.title.trim() || null, body: v.body.trim(), tags: parseTags(v.tags) })
+        closeEdit()
+      }}
+    />
+  )
+  const quoteEditForm = (q: Quote) => (
+    <LibraryEditForm
+      key={q.id}
+      title="Edit quote"
+      fields={[
+        { key: 'text', label: 'Quote', value: q.text, multiline: true },
+        { key: 'author', label: 'Author', value: q.author ?? '' },
+        { key: 'source', label: 'Source', value: q.source ?? '' },
+        { key: 'page', label: 'Page', value: q.page ?? '' },
+        { key: 'tags', label: 'Tags (comma separated)', value: q.tags.join(', ') },
+      ]}
+      onCancel={closeEdit}
+      onSave={(v) => {
+        if (!v.text.trim()) return
+        updateQuote(q, { text: v.text.trim(), author: v.author.trim() || null, source: v.source.trim() || null, page: v.page.trim() || null, tags: parseTags(v.tags) })
+        closeEdit()
+      }}
+    />
+  )
 
   // Filter shelf items by search
   const filteredQuotes = useMemo(() => {
@@ -230,13 +304,35 @@ export function LibraryPage() {
 
   // Book progress math
   const progressPercent = useMemo(() => {
-    if (!activeBook) return 0
+    if (!activeBook || !(activeBook.total_pages > 0)) return 0 // no page count: 0%, never NaN%
     return Math.round((activeBook.current_page / activeBook.total_pages) * 100)
   }, [activeBook])
 
   const isMobile = useIsMobile()
   const motion = useMotionEnabled()
   const hasSelection = !!(selectedNoteId || selectedQuoteId || selectedBookId)
+
+  // Never "No books found" / "The shelf is bare" while the shelf is still loading or didn't load:
+  // a skeleton until all three lists are in, a Retry card when one failed with nothing cached.
+  const shelfQs = [booksQ, notesQ, quotesQ]
+  const shelfFailed = shelfQs.some((q) => q.isError && q.data === undefined)
+  if (shelfFailed || shelfQs.some((q) => q.isPending)) {
+    return (
+      <div style={{ padding: isMobile ? 0 : '26px 16px' }}>
+        {shelfFailed ? <ErrorCard message="Couldn't load the library." onRetry={() => shelfQs.forEach((q) => void q.refetch())} /> : <Skeleton rows={4} />}
+      </div>
+    )
+  }
+
+  /** "Remove …" = Undo toast, no confirm (Flow Audit §4). A real button, 44px tall on a phone. */
+  const removeButton = (label: string, onClick: () => void) => (
+    <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', padding: 0, minHeight: isMobile ? 44 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+      {label}
+    </button>
+  )
+  const removeBook = (b: Book) => { removeBookWithUndo(b); setSearchParams({ tab: 'books' }) }
+  const removeNote = (n: Note) => { removeNoteWithUndo(n); setSearchParams({ tab: 'notes' }) }
+  const removeQuote = (q: Quote) => { removeQuoteWithUndo(q); setSearchParams({ tab: 'quotes' }) }
 
   if (isMobile) {
     return (
@@ -402,7 +498,8 @@ export function LibraryPage() {
                   <div style={{ display: 'flex', gap: 16 }}>
                     <div style={{ width: 80, height: 116, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                       <img src={getFernImage(progressPercent)} alt="" style={{ height: 36, opacity: 0.6 }} />
-                      <span className="fhelp" style={{ fontSize: 'var(--fs-meta)' }}>cover</span>
+                      {/* No covers are stored: the slot shows the book's fern and how far in you are (true data). */}
+                      <span className="fhelp" style={{ fontSize: 'var(--fs-meta)' }}>{progressPercent}% read</span>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Book · {activeBook.status}</div>
@@ -422,7 +519,9 @@ export function LibraryPage() {
                   <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
                     <span onClick={() => setShowLogSession((v) => !v)} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', cursor: 'pointer' }}>log session</span>
                     <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>finish</span>
+                    {editChip(activeBook.id)}
                   </div>
+                  {editingId === activeBook.id && bookEditForm(activeBook)}
 
                   {showLogSession && (
                     <div style={{ marginTop: 12, padding: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>
@@ -451,6 +550,7 @@ export function LibraryPage() {
                       <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 2 }}>{n.body}</div>
                     </div>
                   ))}
+                  <div style={{ marginTop: 16 }}>{removeButton('Remove book', () => removeBook(activeBook))}</div>
                 </div>
               )}
 
@@ -460,8 +560,15 @@ export function LibraryPage() {
                     <span className="fhelp">Note</span>
                     <span className="fhelp">{new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                   </div>
-                  <h2 style={{ fontFamily: 'var(--font-display)', margin: '10px 0 6px', fontSize: '18px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
-                  <div style={{ fontSize: '14px', lineHeight: 1.5, color: 'var(--ink-body)' }}>{activeNote.body}</div>
+                  {editingId === activeNote.id ? (
+                    noteEditForm(activeNote)
+                  ) : (
+                    <>
+                      <h2 style={{ fontFamily: 'var(--font-display)', margin: '10px 0 6px', fontSize: '18px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
+                      <div style={{ fontSize: '14px', lineHeight: 1.5, color: 'var(--ink-body)' }}>{activeNote.body}</div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>{editChip(activeNote.id)}</div>
+                    </>
+                  )}
 
                   {/* Commentary */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
@@ -476,6 +583,7 @@ export function LibraryPage() {
                     <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
                     <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>
                   </div>
+                  <div style={{ marginTop: 16 }}>{removeButton('Remove note', () => removeNote(activeNote))}</div>
                 </div>
               )}
 
@@ -485,8 +593,15 @@ export function LibraryPage() {
                     <span className="fhelp">Quote</span>
                     <span className="fhelp">{new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                   </div>
-                  <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, lineHeight: 1.45, color: 'var(--ink-body)', marginTop: 12, borderLeft: '2px solid var(--acc-buttercream)', paddingLeft: 12 }}>"{activeQuote.text}"</div>
-                  <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 6, textAlign: 'right' }}>— {activeQuote.author || 'Unknown'} {activeQuote.source && `(${activeQuote.source})`}</div>
+                  {editingId === activeQuote.id ? (
+                    quoteEditForm(activeQuote)
+                  ) : (
+                    <>
+                      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, lineHeight: 1.45, color: 'var(--ink-body)', marginTop: 12, borderLeft: '2px solid var(--acc-buttercream)', paddingLeft: 12 }}>"{activeQuote.text}"</div>
+                      <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 6, textAlign: 'right' }}>— {activeQuote.author || 'Unknown'} {activeQuote.source && `(${activeQuote.source})`}</div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>{editChip(activeQuote.id)}</div>
+                    </>
+                  )}
 
                   {/* Commentary */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
@@ -501,6 +616,7 @@ export function LibraryPage() {
                     <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
                     <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>
                   </div>
+                  <div style={{ marginTop: 16 }}>{removeButton('Remove quote', () => removeQuote(activeQuote))}</div>
                 </div>
               )}
             </div>
@@ -858,14 +974,14 @@ export function LibraryPage() {
               <div style={{ width: '100%', maxWidth: 760, padding: '30px 40px 36px', background: 'var(--paper-linen)', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <BackLink onClick={() => setSearchParams({ tab: 'books' })}>Library / Books</BackLink>
-                  <span className="fhelp">added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} · via capture</span>
+                  <span className="fhelp">added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
                 </div>
 
                 <div style={{ display: 'flex', gap: 22, marginTop: 24 }}>
-                  {/* cover slot */}
+                  {/* cover slot — no covers are stored, so it holds the book's fern + how far in (never a placeholder label) */}
                   <div style={{ width: 118, height: 172, flex: 'none', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, transform: 'rotate(-1deg)' }}>
                     <img src={getFernImage(progressPercent)} alt="" style={{ height: 52, opacity: 0.6 }} />
-                    <span className="fhelp" style={{ textAlign: 'center', padding: '0 10px' }}>cover<br />placeholder</span>
+                    <span className="fhelp" style={{ textAlign: 'center', padding: '0 10px' }}>{progressPercent}% read</span>
                   </div>
                   
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -892,9 +1008,12 @@ export function LibraryPage() {
                       <span onClick={() => setShowAddQuote(true)} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>+ quote</span>
                       <span onClick={() => setShowAddNote(true)} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>+ note</span>
                       <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>mark finished</span>
+                      {editChip(activeBook.id)}
                     </div>
                   </div>
                 </div>
+
+                {editingId === activeBook.id && bookEditForm(activeBook)}
 
                 {/* Inline Log page session form */}
                 {showLogSession && (
@@ -1010,7 +1129,7 @@ export function LibraryPage() {
                 ))}
 
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-                  <span onClick={() => { deleteBook(activeBook.id); setSearchParams({ tab: 'books' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Remove book…</span>
+                  {removeButton('Remove book', () => removeBook(activeBook))}
                   <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>finish it and the frond unfurls flat ✿</span>
                 </div>
               </div>
@@ -1038,17 +1157,24 @@ export function LibraryPage() {
                     <div style={{ position: 'relative', marginTop: 26, padding: '6px 0 6px 26px', borderLeft: '2px solid var(--acc-buttercream)' }}>
                       <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', left: -30, top: -16, height: 44, opacity: 0.35, transform: 'rotate(-14deg)' }} />
                       
-                      <h2 style={{ fontFamily: 'var(--font-display)', margin: '0 0 10px', fontSize: '22px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
-                      <div style={{ fontSize: '15px', lineHeight: 1.6, color: 'var(--ink-body)' }}>{activeNote.body}</div>
+                      {editingId === activeNote.id ? (
+                        noteEditForm(activeNote)
+                      ) : (
+                        <>
+                          <h2 style={{ fontFamily: 'var(--font-display)', margin: '0 0 10px', fontSize: '22px', fontWeight: 500 }}>{activeNote.title || 'Untitled Note'}</h2>
+                          <div style={{ fontSize: '15px', lineHeight: 1.6, color: 'var(--ink-body)' }}>{activeNote.body}</div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
-                        {activeNote.book_id && (
-                          <span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>Related Book</span>
-                        )}
-                        {activeNote.tags.map((tag) => (
-                          <span key={tag} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>*{tag}</span>
-                        ))}
-                      </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14 }}>
+                            {activeNote.book_id && (
+                              <span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>Related Book</span>
+                            )}
+                            {activeNote.tags.map((tag) => (
+                              <span key={tag} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>*{tag}</span>
+                            ))}
+                            {editChip(activeNote.id)}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* Commentary */}
@@ -1079,7 +1205,7 @@ export function LibraryPage() {
                     </div>
                     
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
-                      <span onClick={() => { deleteNote(activeNote.id); setSearchParams({ tab: 'notes' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Remove note…</span>
+                      {removeButton('Remove note', () => removeNote(activeNote))}
                       <span className="fhelp">append-only — old thoughts stay as they were written</span>
                     </div>
                   </div>
@@ -1087,7 +1213,8 @@ export function LibraryPage() {
                   /* Quote Reader Mode */
                   <div style={{ flex: 1, minWidth: 0, maxWidth: 720, padding: '30px 40px 40px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span className="fhelp">Quotes Shelf / from {activeQuote.source || 'commonplace'}</span>
+                      {/* Only a source that's stored — no invented "commonplace" (Kai 2026-10-12: Library shows true data). */}
+                      <span className="fhelp">Quotes Shelf{activeQuote.source ? ` / from ${activeQuote.source}` : ''}</span>
                       {/* WB-4 punch 9: "· resurfaced twice" was a design literal — no resurface
                           count is stored for a quote. The kept-date beside it is real. */}
                       <span className="fhelp">kept {new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
@@ -1096,18 +1223,26 @@ export function LibraryPage() {
                     <div style={{ position: 'relative', marginTop: 26, padding: '6px 0 6px 26px', borderLeft: '2px solid var(--acc-buttercream)' }}>
                       <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', left: -30, top: -16, height: 44, opacity: 0.35, transform: 'rotate(-14deg)' }} />
                       
-                      <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 27, lineHeight: 1.45, color: 'var(--ink-body)' }}>
-                        "{activeQuote.text}"
-                      </div>
                       
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>
-                          {activeQuote.source} {activeQuote.author && `— ${activeQuote.author}`} {activeQuote.page && `· p. ${activeQuote.page}`}
-                        </span>
-                        {activeQuote.tags.map((tag) => (
-                          <span key={tag} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>*{tag}</span>
-                        ))}
-                      </div>
+                      {editingId === activeQuote.id ? (
+                        quoteEditForm(activeQuote)
+                      ) : (
+                        <>
+                          <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 27, lineHeight: 1.45, color: 'var(--ink-body)' }}>
+                            "{activeQuote.text}"
+                          </div>
+
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 14, flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>
+                              {activeQuote.source} {activeQuote.author && `— ${activeQuote.author}`} {activeQuote.page && `· p. ${activeQuote.page}`}
+                            </span>
+                            {activeQuote.tags.map((tag) => (
+                              <span key={tag} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>*{tag}</span>
+                            ))}
+                            {editChip(activeQuote.id)}
+                          </div>
+                        </>
+                      )}
                     </div>
 
                     {/* WB-4 punch 8 + 9: the export's "Chat flagged this…" banner was deleted, not
@@ -1143,7 +1278,7 @@ export function LibraryPage() {
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
-                      <span onClick={() => { deleteQuote(activeQuote.id); setSearchParams({ tab: 'quotes' }) }} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Remove quote…</span>
+                      {removeButton('Remove quote', () => removeQuote(activeQuote))}
                       <span className="fhelp">append-only — old thoughts stay as they were written</span>
                     </div>
                   </div>

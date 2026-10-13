@@ -1,0 +1,212 @@
+[
+  {
+    "name": "r1 while dragging, only the Inbox section is lit",
+    "ok": true,
+    "detail": "[\"inbox\"]"
+  },
+  {
+    "name": "r1 nothing stays lit after the drop",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 an inbox_items row \"Lunch with Omar\", pending",
+    "ok": true,
+    "detail": "{\"id\":\"33a20b35-63b0-43cb-8c11-de7496b2e4b8\",\"kind\":\"text\",\"raw_text\":\"Lunch with Omar\",\"transcript\":null,\"ai_parse\":null,\"confidence\":null,\"status\":\"pending\",\"filed_task_id\":null,\"payload\":null,\"snoozed_until\":null,\"created_at\":\"2026-10-12T07:00:06.652Z\",\"updated_at\":\"2026-10-12T07:00:06.652Z\"}"
+  },
+  {
+    "name": "r1 the event is trashed (deleted_at set)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 toast \"Moved to Inbox · Lunch with Omar\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 the capture shows in the rail's Inbox; the block left the grid",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 no soft-no shake",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 Undo: the capture deleted, the event back (deleted_at null), on the grid again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 a task \"Gym\", 60 min, due today 09:00 (the app's date-only Today), no schedule",
+    "ok": true,
+    "detail": "[60,\"2026-10-12T06:00:00.000Z\",null]"
+  },
+  {
+    "name": "r2 the block is trashed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 toast \"Now a task · Tasks · Today\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 it waits in the rail's Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 Undo: the task deleted, the block back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3 a task in the scoped project \"Site\" (no date)",
+    "ok": true,
+    "detail": "[\"b0000000-0000-4000-8000-000000000001\",null]"
+  },
+  {
+    "name": "r3 toast \"Now a task · Site\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3 it shows in the Lists section",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 Overdue: the soft-no shake",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 Overdue: never lit (it has the attribute but no look)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 Overdue: nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 task block → Today: the block trashed, the task due today 09:00, unscheduled",
+    "ok": true,
+    "detail": "[\"2026-10-12T06:00:00.000Z\",null]"
+  },
+  {
+    "name": "r4 …no new task, no inbox row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 …toast \"Unscheduled · Call the tyre supplier · Today\", the card in Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 Undo: the block back at 12:00 and the due date back (Wed)",
+    "ok": true,
+    "detail": "[\"2026-10-14T06:00:00.000Z\",\"2026-10-12T09:00:00.000Z\"]"
+  },
+  {
+    "name": "r4 task block → Inbox: unscheduled, no inbox row, due date untouched",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 an uncoloured event has no inline hue",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 the panel marks None as picked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 Terra → the block repaints without a reload (--kf-ev-accent #B5654A)",
+    "ok": true,
+    "detail": "#B5654A"
+  },
+  {
+    "name": "c1 reopened, Terra reads as picked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 Sage → repaints again",
+    "ok": true,
+    "detail": "#8A9A7E"
+  },
+  {
+    "name": "c1 None → the inline hue is cleared (back to the kind's colour)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 the writes carried the colours",
+    "ok": true,
+    "detail": "#B5654A,#8A9A7E,"
+  },
+  {
+    "name": "c1 New Time Block: None reads as picked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 the event sheet shows ten swatches, None picked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 a tap on Sage saves it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 …Sage reads as picked, \"✓ Saved\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 the grid block takes the new hue",
+    "ok": true,
+    "detail": "var(--block-blossom) → color-mix(in srgb, #8A9A7E 24%, transparent)"
+  },
+  {
+    "name": "p1 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

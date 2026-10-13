@@ -1,0 +1,347 @@
+[
+  {
+    "name": "d1 H1 is \"Inbox\" (not \"N waiting\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 summary \"3 to sort · 2 from GitHub · oldest is 5 days old\"",
+    "ok": true,
+    "detail": "3 to sort · 2 from GitHub · oldest is 5 days old"
+  },
+  {
+    "name": "d1 Waiting | Dismissed is a toggle in the header, counts = the sidebar badge and the dismissed list",
+    "ok": true,
+    "detail": "[\"Waiting 5\",\"Dismissed 6\"]"
+  },
+  {
+    "name": "d1 no percentages, no \"AI unsure\", no \"✎ edit parse\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 no keyboard footer, no handwritten header line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 card 1: one \"Suggested\" row — Task · \"title\" · Sat 17 Oct · 15:00 · Forecasting App · high confidence",
+    "ok": true,
+    "detail": "Suggested | Task | ▾ | “Call Omar about pricing” | Sat 17 Oct · 15:00 | ▾ | Forecasting App | ▾ | high confidence"
+  },
+  {
+    "name": "d1 card 1 meta \"Voice · Thu 21:14\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 keys on the buttons: File as task E · Snooze S · Dismiss D",
+    "ok": true,
+    "detail": "File as task E Snooze S Dismiss D"
+  },
+  {
+    "name": "d1 card 2 asks \"Where does this go?\" — Task · Journal note · Salma Hassan (People), no dropdowns",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 card 3 is the compact row: \"Email · Wed\" · \"Task · due Wed 14\" · File",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 cards sit flat (no rotation)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "d1 GitHub: \"From GitHub · Shaheen/website\", #482 · 3 days, File + Dismiss",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 no page errors (day)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 no page errors (night)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 two cards selected by mouse; the bar says 2",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 D dismissed both selected (not the focused row, not nothing)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 one toast: \"2 captures dismissed\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 Undo puts both back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 Ctrl+A selects the waiting list (5)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 …then 2 left",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 File to… lists areas (Health) beside projects and domains",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 two tasks in the Health AREA (no project)",
+    "ok": true,
+    "detail": "[[\"Call Omar about pricing\",\"c0000000-0000-4000-8000-000000000001\"],[\"renew hosting before the 15th\",\"c0000000-0000-4000-8000-000000000001\"]]"
+  },
+  {
+    "name": "d3 card 1 files under the AI's short title and its date",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 one toast \"2 captures filed\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 Undo deletes both tasks and the captures wait again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4 Esc on the title edit throws the typing away (RenameField)",
+    "ok": true,
+    "detail": "“Call Omar about pricing”"
+  },
+  {
+    "name": "d4 the place field now reads Health",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4 toast: Filed \"…\" as a task · Health · Sat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4 File as task: the edited title, in the Health area, due Sat 15:00",
+    "ok": true,
+    "detail": "[\"Call Omar about Q4 pricing\",\"c0000000-0000-4000-8000-000000000001\",\"2026-10-17T12:00:00.000Z\"]"
+  },
+  {
+    "name": "d4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 toast \"Added to today's journal\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 Journal note → today's journal entry with the capture's words",
+    "ok": true,
+    "detail": "{\"id\":\"8398c554-1c7d-4bc4-acc4-15fa14c8acf4\",\"body\":\"that thing salma said about the balcony plants\",\"entry_date\":\"2026-10-12\",\"mood\":null,\"transcript\":null,\"media_paths\":[],\"gratitude\":[],\"deleted_at\":null,\"created_at\":\"2026-10-12T07:00:04.581Z\",\"updated_at\":\"2026-10-12T07:00:04.581Z\"}"
+  },
+  {
+    "name": "d5 the capture is filed (filed_to journal)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 Undo deletes the entry and the capture waits again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 toast \"Added to Salma Hassan\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 Salma (People) → a note on Salma's page",
+    "ok": true,
+    "detail": "{\"id\":\"4c1b6095-83be-42e3-bb2f-b2086bca7baf\",\"person_id\":\"e1000000-0000-4000-8000-000000000001\",\"summary\":\"that thing salma said about the balcony plants\",\"occurred_at\":\"2026-10-12T07:00:08.136Z\",\"created_at\":\"2026-10-12T07:00:08.136Z\",\"updated_at\":\"2026-10-12T07:00:08.136Z\"}"
+  },
+  {
+    "name": "d5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 the toggle switches without moving the header",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 j moves focus on the Dismissed tab, r restores the focused row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 toast \"Restored to Inbox\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 Clear now: no confirm card, no \"can't be undone\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 Clear now moves every dismissed capture to Trash (deleted_at set), one toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 Undo takes them back out of Trash",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 banner: \"From Search: your match is highlighted below.\" with a close",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 the match is ringed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 offline: the header says so (OfflineChip) and the cached list stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d8 a failed load shows the error card with Retry (not an endless skeleton)",
+    "ok": true,
+    "detail": "Inbox\nScan paper\nCapture\nWaiting 0\nDismissed 0\nYour Inbox didn't load.\nRetry"
+  },
+  {
+    "name": "p1 header: \"Inbox\" · \"3 to sort · 2 from GitHub\" · \"Dismissed 6\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 File as task / Snooze / Dismiss at 2 : 1 : 1",
+    "ok": true,
+    "detail": "[156,78,78]"
+  },
+  {
+    "name": "p1 three field chips: Task · Sat 15:00 · Forecasting App",
+    "ok": true,
+    "detail": "[\"Task\\n▾\",\"Sat 15:00\\n▾\",\"Forecasting App\\n▾\"]"
+  },
+  {
+    "name": "p1 unsure card: dashed Task / Journal / Salma, ≥44px",
+    "ok": true,
+    "detail": "[[\"Task\",\"dashed\",44],[\"Journal\",\"dashed\",44],[\"Salma\",\"dashed\",44]]"
+  },
+  {
+    "name": "p1 a tap on a card does not select it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 a tap opens the compact row into the full card (fields + File as task)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 the place chip opens the Move to sheet on the phone, areas included",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 …and the pick lands on the card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 hold selects (bulk bar \"1 selected\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 a GitHub row taps open to File / Dismiss on the phone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 swipe left dismisses a GitHub row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 swipe left dismisses a waiting card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 no page errors (day)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 no page errors (night)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 \"Dismissed 6\" opens the Dismissed list; the link now reads \"Waiting 5\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 swipe right restores",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 …with an Undo toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

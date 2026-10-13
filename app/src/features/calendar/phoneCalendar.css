@@ -183,10 +183,42 @@
 .pc-bs-title-in { width: 100%; font-family: var(--font-display); font-size: 20px; }
 .pc-bs-meta::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: var(--sp-2); border-radius: 50%; background: var(--pc-ink); vertical-align: 1px; }
 .pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-bs-colors { margin: var(--sp-3) 0 var(--sp-3); }
 .pc-bs-rows { margin: 0 -20px; border-top: 1px dashed var(--line-dashed); padding-top: var(--sp-1); }
+/* §5a "From task" + the task's title, quiet, above Complete / Open task. */
+.pc-bs-caption { padding: var(--sp-3) 20px var(--sp-1); font-size: var(--fs-body-s); line-height: calc(20 / 14); color: var(--ink-muted); border-top: 1px dashed var(--line-dashed); }
 .pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }
 .pc-bs-save.is-pending { color: var(--sig-offline); }
 .pc-bs-delete.kf-button--ghost { margin-right: auto; color: var(--acc-terra-ink); }
 
 .pc-slots { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-3) 0 var(--sp-4); }
 .pc-hint { display: flex; align-items: center; gap: var(--sp-2); margin: calc(-1 * var(--sp-1)) 0 var(--sp-3); font-size: 14px; color: var(--ink-muted); }
+
+/* ── Calendar.dc.html 3e on the phone ──
+   Spans midnight: the cut edge is square and dashed; "⌄ 01:30" / "⌃ from 23:00" sits on it. */
+.pc-block.is-cut-into { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 1px dashed var(--pc-ink); }
+.pc-block.is-cut-from { border-top-left-radius: 0; border-top-right-radius: 0; border-top: 1px dashed var(--pc-ink); }
+.pc-block.has-cut-label .pc-block-body { top: var(--sp-4); margin-top: var(--sp-4); }
+.pc-cut { position: absolute; left: 0; right: 0; text-align: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--pc-ink); white-space: nowrap; pointer-events: none; }
+.pc-cut.is-into { bottom: var(--sp-1); }
+.pc-cut.is-from { top: var(--sp-1); }
+/* A multi-day span's chip: square on the side where it runs past the days shown. */
+.pc-allday-chip.is-from { border-top-left-radius: 0; border-bottom-left-radius: 0; }
+.pc-allday-chip.is-into { border-top-right-radius: 0; border-bottom-right-radius: 0; }
+/* Editor 1e: the Top-3 star with its word, in the chip row. */
+.pc-qc-star { display: inline-flex; align-items: center; gap: var(--sp-1); font-size: var(--fs-body-s); color: var(--ink-muted); }
+
+/* ── Month (phone parity): the date in the week strip's circle, a dot row under it. ── */
+.pc-month { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; padding: 0 var(--sp-2) var(--sp-2); background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
+.pc-month-nav { flex: none; display: flex; align-items: center; justify-content: space-between; }
+.pc-month-title { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.pc-month-wd { flex: none; display: grid; grid-template-columns: repeat(7, 1fr); padding-bottom: var(--sp-1); }
+.pc-month-wd > span { text-align: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.pc-month-grid { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(64px, 1fr); }
+.pc-mcell { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--sp-1) 0 0; border: none; border-top: 1px dashed var(--line-dashed); background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pc-mcell.is-out { opacity: 0.45; }
+.pc-mcell[data-today] .pc-day-n { box-shadow: inset 0 0 0 1.5px var(--acc-terra-ink); color: var(--acc-terra-ink); font-weight: var(--fw-semibold); }
+.pc-mcell:active .pc-day-n { background: var(--pressed-overlay); }
+.pc-mdots { display: flex; align-items: center; gap: 3px; min-height: 12px; }
+.pc-mdots > i { width: 6px; height: 6px; border-radius: 50%; background: var(--pc-dot); }
+.pc-mdots > span { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }

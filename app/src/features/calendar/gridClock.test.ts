@@ -1,47 +1,66 @@
 import { describe, it, expect } from 'vitest'
 import { dayStamp, headerDay, msUntilNextDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 
-// Run under TZ=UTC and TZ=Africa/Cairo. The pre-fix header read local-midnight Dates through
-// getUTC*, which only breaks east of Greenwich — the Cairo run is the one that caught it.
+// The grid runs on the user's zone (CalendarGrid `timeZone`, ./zonePlugin), not the device's: every
+// instant below is UTC ISO and the zone is explicit, so these hold under UTC, Cairo, Los Angeles and
+// Tokyo alike — the device zone must never move a label.
+const CAIRO = 'Africa/Cairo'
+const LA = 'America/Los_Angeles'
+
 describe('headerDay (J-15)', () => {
-  const now = new Date(2026, 8, 26, 8, 13) // Sat 26 Sep 2026, 08:13 local
+  const now = new Date('2026-09-26T05:13:00Z') // Sat 26 Sep 2026, 08:13 Cairo (+3)
+  /** What FullCalendar passes dayHeaderContent: the column's midnight on the grid's clock. */
+  const cairoMidnight = (day: number, month = 9) => new Date(Date.UTC(2026, month - 1, day, -3))
 
   it("labels today's column with today's weekday and date", () => {
-    // what FullCalendar passes dayHeaderContent: the column's local midnight
-    expect(headerDay(new Date(2026, 8, 26), now)).toEqual({ delta: 0, weekday: 'Sat', day: '26' })
+    expect(headerDay(cairoMidnight(26), now, CAIRO)).toEqual({ delta: 0, weekday: 'Sat', day: '26' })
   })
 
-  it('counts neighbouring columns in whole local days', () => {
-    expect(headerDay(new Date(2026, 8, 25), now)).toEqual({ delta: -1, weekday: 'Fri', day: '25' })
-    expect(headerDay(new Date(2026, 8, 27), now)).toEqual({ delta: 1, weekday: 'Sun', day: '27' })
-    expect(headerDay(new Date(2026, 9, 2), now).delta).toBe(6)
+  it('counts neighbouring columns in whole days', () => {
+    expect(headerDay(cairoMidnight(25), now, CAIRO)).toEqual({ delta: -1, weekday: 'Fri', day: '25' })
+    expect(headerDay(cairoMidnight(27), now, CAIRO)).toEqual({ delta: 1, weekday: 'Sun', day: '27' })
+    expect(headerDay(cairoMidnight(2, 10), now, CAIRO).delta).toBe(6)
   })
 
   it('stays whole-day across a DST change (Cairo leaves summer time on 29 Oct 2026)', () => {
-    expect(headerDay(new Date(2026, 9, 31), new Date(2026, 9, 28, 23, 30)).delta).toBe(3)
+    // 31 Oct midnight is +2 by then; "now" is 28 Oct 23:30 (+3).
+    expect(headerDay(new Date('2026-10-30T22:00:00Z'), new Date('2026-10-28T20:30:00Z'), CAIRO).delta).toBe(3)
   })
 
-  it('is right just after local midnight, when the UTC date is still yesterday in Cairo', () => {
-    const justAfter = new Date(2026, 8, 26, 0, 5)
-    expect(headerDay(new Date(2026, 8, 26), justAfter)).toEqual({ delta: 0, weekday: 'Sat', day: '26' })
+  it('is right just after midnight, when the UTC date is still yesterday in Cairo', () => {
+    expect(headerDay(cairoMidnight(26), new Date('2026-09-25T21:05:00Z'), CAIRO)).toEqual({ delta: 0, weekday: 'Sat', day: '26' })
+  })
+
+  it("reads the user's zone, not the device's: the same instants in Los Angeles are the day before", () => {
+    // 26 Sep 00:00 Cairo = 25 Sep 14:00 in LA; "now" (05:13Z) is 25 Sep 22:13 there.
+    expect(headerDay(cairoMidnight(26), now, LA)).toEqual({ delta: 0, weekday: 'Fri', day: '25' })
   })
 })
 
 describe('scrollTimeNear (J-15)', () => {
+  const cairo = (hhmm: string) => {
+    const [h, m] = hhmm.split(':').map(Number)
+    return new Date(Date.UTC(2026, 8, 26, h - 3, m))
+  }
+
   it('opens two hours above now, floored to the 30-min slot', () => {
-    expect(scrollTimeNear(new Date(2026, 8, 26, 8, 19))).toBe('06:00:00')
-    expect(scrollTimeNear(new Date(2026, 8, 26, 14, 45))).toBe('12:30:00')
-    expect(scrollTimeNear(new Date(2026, 8, 26, 21, 0))).toBe('19:00:00')
+    expect(scrollTimeNear(cairo('08:19'), undefined, CAIRO)).toBe('06:00:00')
+    expect(scrollTimeNear(cairo('14:45'), undefined, CAIRO)).toBe('12:30:00')
+    expect(scrollTimeNear(cairo('21:00'), undefined, CAIRO)).toBe('19:00:00')
   })
 
   it('never scrolls before midnight', () => {
-    expect(scrollTimeNear(new Date(2026, 8, 26, 1, 10))).toBe('00:00:00')
+    expect(scrollTimeNear(cairo('01:10'), undefined, CAIRO)).toBe('00:00:00')
   })
 
   it('a shorter lead floors the same way; the default is the 2h lead', () => {
-    expect(scrollTimeNear(new Date(2026, 8, 26, 8, 19), 60)).toBe('07:00:00')
-    expect(scrollTimeNear(new Date(2026, 8, 26, 0, 40), 60)).toBe('00:00:00')
-    expect(scrollTimeNear(new Date(2026, 8, 26, 14, 45), SCROLL_LEAD_DESKTOP_MIN)).toBe(scrollTimeNear(new Date(2026, 8, 26, 14, 45)))
+    expect(scrollTimeNear(cairo('08:19'), 60, CAIRO)).toBe('07:00:00')
+    expect(scrollTimeNear(cairo('00:40'), 60, CAIRO)).toBe('00:00:00')
+    expect(scrollTimeNear(cairo('14:45'), SCROLL_LEAD_DESKTOP_MIN, CAIRO)).toBe(scrollTimeNear(cairo('14:45'), undefined, CAIRO))
+  })
+
+  it("is the user's clock: 14:45 Cairo is 04:45 in Los Angeles", () => {
+    expect(scrollTimeNear(cairo('14:45'), undefined, LA)).toBe('02:30:00')
   })
 })
 

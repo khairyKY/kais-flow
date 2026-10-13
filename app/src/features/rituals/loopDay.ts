@@ -1,5 +1,5 @@
-import { cairoDateKey } from '../../lib/dateShortcuts'
-import { perZone } from '../../lib/appZone'
+import { cairoDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
+import { appZone, perZone } from '../../lib/appZone'
 import type { ActivityLogEntry, Task } from '../../lib/types'
 
 // ── Loop B (docs/DAILY-CYCLE.md): the pure half of "shutdown feeds the next Plan" and of
@@ -35,6 +35,12 @@ export function addDaysToKey(key: string, days: number): string {
 export function loopDayKey(now: Date): string {
   const day = cairoDateKey(now)
   return Number(cairoHour().format(now)) % 24 < LOOP_DAY_ROLLOVER_HOUR ? addDaysToKey(day, -1) : day
+}
+
+/** The instant the loop day `now` belongs to began: 04:00 on that date, on the user's clock. */
+export function loopDayStartIso(now: Date): string {
+  const [y, m, d] = loopDayKey(now).split('-').map(Number)
+  return zoneWallTimeToIso(appZone(), y, m, d, LOOP_DAY_ROLLOVER_HOUR)
 }
 
 /** The morning an evening shutdown at `now` seeds: the loop day after this one.

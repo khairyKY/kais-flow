@@ -6,78 +6,24 @@
 // The app's rules, restated on the user's own clock (app_settings.timezone; Cairo when unset or not
 // a zone Intl knows):
 //   Today        features/tasks/grouping.ts filterByList('today'), split into Top 3 / today / overdue
-//   "Tomorrow"   tomorrow 09:00 (lib/dateShortcuts scheduleTomorrow)
+//   Top 3        features/tasks/top3Rule.ts (_shared/today.ts): a pick counts while undated or dated
+//                today or earlier, never someday; goal (top3_rank 1) first
+//   "Tomorrow"  tomorrow 09:00 (lib/dateShortcuts scheduleTomorrow)
 //   a bare date  09:00 that day (scheduleToday)
 //   completing   a repeat spawns its next occurrence (features/tasks/completion.ts planCompletion)
 //   every write  logs the same activity_log event the app's helper logs, so Slipping, streaks and the
 //                digests see it (+ `source: 'mcp'` in the payload)
 
-export const DEFAULT_ZONE = 'Africa/Cairo'
+import { addDays, dateKey, dayWindow, wallTime, wallToInstant } from '../_shared/zone.ts'
+import { isTop3Today, todaysTop3 } from '../_shared/today.ts'
+
+// The user's clock is _shared/zone.ts (notify and chat read the same one); re-exported for the tests.
+export { DEFAULT_ZONE, userZone } from '../_shared/zone.ts'
+export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
+import { expandSeries, type RuleBetween } from '../_shared/series.ts'
+import { rollAfter } from '../_shared/repeat.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
-
-/** `zone` if Intl knows it, else Cairo (the app's default). */
-export function userZone(zone: string | null | undefined): string {
-  if (!zone) return DEFAULT_ZONE
-  try {
-    new Intl.DateTimeFormat('en-US', { timeZone: zone })
-    return zone
-  } catch {
-    return DEFAULT_ZONE
-  }
-}
-
-const clocks = new Map<string, Intl.DateTimeFormat>()
-function wall(t: number, zone: string): { y: number; m: number; d: number; h: number; mi: number; s: number } {
-  let f = clocks.get(zone)
-  if (!f) {
-    f = new Intl.DateTimeFormat('en-US', { timeZone: zone, hourCycle: 'h23', year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' })
-    clocks.set(zone, f)
-  }
-  const p: Record<string, number> = {}
-  for (const { type, value } of f.formatToParts(t)) p[type] = Number(value)
-  return { y: p.year, m: p.month, d: p.day, h: p.hour % 24, mi: p.minute, s: p.second }
-}
-
-/** `zone`'s UTC offset in ms at instant `t`. */
-function offsetMs(t: number, zone: string): number {
-  const w = wall(t, zone)
-  return Date.UTC(w.y, w.m - 1, w.d, w.h, w.mi, w.s) - Math.floor(t / 1000) * 1000
-}
-
-const pad = (n: number) => String(n).padStart(2, '0')
-
-/** YYYY-MM-DD of the day `t` falls on, on `zone`'s calendar. */
-export function dateKey(t: Date, zone: string): string {
-  const w = wall(t.getTime(), zone)
-  return `${w.y}-${pad(w.m)}-${pad(w.d)}`
-}
-
-/** "YYYY-MM-DD HH:mm" on `zone`'s wall clock. */
-export function wallTime(iso: string, zone: string): string {
-  const w = wall(new Date(iso).getTime(), zone)
-  return `${w.y}-${pad(w.m)}-${pad(w.d)} ${pad(w.h)}:${pad(w.mi)}`
-}
-
-/** The instant `hour:minute` on day `key` names on `zone`'s wall clock. Two passes, because the offset
- * at the first guess can differ across a DST switch; midnight that DST skips (Cairo, spring) resolves
- * to the day's first real instant, 01:00. */
-export function wallToInstant(key: string, hour: number, minute: number, zone: string): Date {
-  const [y, m, d] = key.split('-').map(Number)
-  const guess = Date.UTC(y, m - 1, d, hour, minute)
-  return new Date(guess - offsetMs(guess - offsetMs(guess, zone), zone))
-}
-
-export function addDays(key: string, n: number): string {
-  const [y, m, d] = key.split('-').map(Number)
-  return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10)
-}
-
-/** Today on the user's clock: its date and the [start, end) instants. */
-export function dayWindow(now: Date, zone: string): { date: string; start: Date; end: Date } {
-  const date = dateKey(now, zone)
-  return { date, start: wallToInstant(date, 0, 0, zone), end: wallToInstant(addDays(date, 1), 0, 0, zone) }
-}
 
 /** The app's one "Tomorrow": tomorrow 09:00 on the user's clock (ISO). */
 export function tomorrowAt9(now: Date, zone: string): string {
@@ -126,6 +72,8 @@ export interface TaskRow {
   scheduled_start: string | null
   scheduled_end: string | null
   top3: boolean
+  /** Place in today's Top 3, 1 = the goal (0055). Read back on reads; a new task has none. */
+  top3_rank?: number | null
   someday: boolean
   paused: boolean
   labels: string[]
@@ -163,6 +111,19 @@ export interface EventRow {
   ends_at: string
   all_day: boolean
   task_id: string | null
+  /** A repeating event (migration 0061): one row, expanded by the tools (_shared/series.ts). */
+  recurrence_rule?: string | null
+  recurrence_exdates?: string[] | null
+  /** Set on an occurrence expandSeries made: the row's id. */
+  seriesId?: string
+}
+
+/** One of a task's live calendar blocks (move_to_tomorrow). */
+export interface BlockRow {
+  id: string
+  starts_at: string
+  ends_at: string
+  all_day: boolean
 }
 
 export interface SearchHit {
@@ -185,23 +146,29 @@ export interface TaskFilter {
 /** One method per statement; every one runs inside the call's transaction, as the user. */
 export interface Store {
   timezone(): Promise<string | null>
-  /** Open, not in Trash: starred, or not someday and (dated before `end`, or scheduled in [start, end)). */
+  /** Open, not in Trash, not someday: dated before `end`, scheduled in [start, end), or an undated pick. */
   dayTasks(startIso: string, endIso: string): Promise<TaskRow[]>
   listTasks(f: TaskFilter): Promise<TaskRow[]>
   getTask(id: string): Promise<TaskRow | null>
   /** Not in Trash, by name. */
   projects(): Promise<ProjectRow[]>
-  /** Not in Trash, overlapping [from, to), by start. */
+  /** Not in Trash: overlapping [from, to), plus every repeating row starting before `to` (the tools
+   * expand those — a series' row is its first occurrence). By start. */
   events(fromIso: string, toIso: string): Promise<EventRow[]>
   search(query: string, limit: number): Promise<SearchHit[]>
-  /** Open, not in Trash, starred. */
-  top3Count(): Promise<number>
+  /** Today's open picks (top3Rule): starred, open, not in Trash, not someday, undated or dated before `todayEndIso`. */
+  top3Count(todayEndIso: string): Promise<number>
   /** An open copy of a repeat already sits at `dueIso` (completion.ts openOccurrence). */
   openOccurrence(title: string, rule: string, dueIso: string, exceptId: string): Promise<boolean>
   insertTask(t: TaskRow): Promise<void>
   /** status todo → done; false when the task wasn't open any more. */
   markDone(id: string, atIso: string): Promise<boolean>
-  setDue(id: string, dueIso: string): Promise<void>
+  /** The task's live calendar blocks. */
+  taskBlocks(taskId: string): Promise<BlockRow[]>
+  /** A new due date and what follows it (tomorrowMoves); clears someday and the Top 3 place. */
+  reschedule(id: string, r: Reschedule): Promise<void>
+  /** Soft-deletes these blocks of the task (deleted_at, so Trash can bring them back). */
+  clearBlocks(taskId: string, ids: readonly string[]): Promise<void>
   insertInbox(row: { id: string; raw_text: string; payload: Record<string, unknown> }): Promise<void>
   log(eventType: string, entityType: string, entityId: string, payload: Record<string, unknown>): Promise<void>
 }
@@ -211,7 +178,17 @@ export interface ToolContext {
   zone: string
   now: Date
   /** rrule's next occurrence strictly after `from` (index.ts: npm:rrule; the test: the app's recurrence.ts). */
-  nextOccurrence: (rule: string, from: Date) => Date | null
+  /** The rule's next occurrence strictly after `after`, for a series starting at `from`, on `zone`'s wall
+   * clock — the app's features/tasks/recurrence.ts nextOccurrence. */
+  nextOccurrence: (rule: string, from: Date, zone: string, after: Date) => Date | null
+  /** rrule's between() for a repeating event (index.ts: npm:rrule; the test: the app's series.ts). */
+  ruleBetween: RuleBetween
+}
+
+/** The events in [start, end): one-off rows as the store found them, each repeating row as its
+ * occurrences there — the app's own expansion (features/calendar/series.ts). */
+async function eventsIn(ctx: ToolContext, start: Date, end: Date): Promise<EventRow[]> {
+  return expandSeries(await ctx.store.events(start.toISOString(), end.toISOString()), start, end, ctx.zone, ctx.ruleBetween)
 }
 
 // ── input checks: a bad argument is a tool error the model can read and fix ─────────────────────
@@ -292,24 +269,21 @@ function taskOut(t: TaskRow, zone: string, full = false): Record<string, unknown
 }
 
 function eventOut(e: EventRow, zone: string): Record<string, unknown> {
-  const o: Record<string, unknown> = { id: e.id, title: e.title, start: wallTime(e.starts_at, zone), end: wallTime(e.ends_at, zone) }
+  // An occurrence answers with its series' id — the one stored, the one search returns.
+  const o: Record<string, unknown> = { id: e.seriesId ?? e.id, title: e.title, start: wallTime(e.starts_at, zone), end: wallTime(e.ends_at, zone) }
   if (e.all_day) o.all_day = true
   if (e.task_id) o.task_id = e.task_id
+  if (e.recurrence_rule) o.repeats = e.recurrence_rule
   return o
 }
 
-/** Today's open tasks, as the app sorts them (grouping.ts): Top 3 picks; due or scheduled today;
- * dated before today. Someday tasks only count when starred. */
+/** Today's open tasks, as the app sorts them (grouping.ts): Top 3 picks (top3Rule, goal first); due or
+ * scheduled today; dated before today. Never someday — a starred someday task isn't a pick. */
 export function splitToday(rows: readonly TaskRow[], now: Date, zone: string): { top3: TaskRow[]; today: TaskRow[]; overdue: TaskRow[] } {
   const day = dateKey(now, zone)
-  const out = { top3: [] as TaskRow[], today: [] as TaskRow[], overdue: [] as TaskRow[] }
+  const out = { top3: todaysTop3(rows, now, zone), today: [] as TaskRow[], overdue: [] as TaskRow[] }
   for (const t of rows) {
-    if (t.status !== 'todo') continue
-    if (t.top3) {
-      out.top3.push(t)
-      continue
-    }
-    if (t.someday) continue
+    if (t.status !== 'todo' || t.someday || isTop3Today(t, now, zone)) continue
     const scheduledToday = !!t.scheduled_start && dateKey(new Date(t.scheduled_start), zone) === day
     const dated = t.due_at ?? t.scheduled_start
     const on = dated ? dateKey(new Date(dated), zone) : null
@@ -317,6 +291,39 @@ export function splitToday(rows: readonly TaskRow[], now: Date, zone: string): {
     else if (on !== null && on < day) out.overdue.push(t)
   }
   return out
+}
+
+/** What a move to a new due date writes (move_to_tomorrow). */
+export interface Reschedule {
+  due_at: string
+  reminder_at: string | null
+  reminder_sent: boolean
+  scheduled_start: string | null
+  scheduled_end: string | null
+}
+
+/** The rest of a move to `due`, as the app's writes do it:
+ * - the reminder keeps its lead (lib/carryReminder.ts): it moves by however far the due date (else the
+ *   block) moved, and is armed again when it lands in the future;
+ * - the blocks follow a date-only replan (features/calendar/replan.ts replanMoves): the latest block
+ *   already on the new day stays, every other comes off; the task's schedule follows the one kept
+ *   (calendar/api touchTaskSchedule) and is cleared with none kept — unless it had no blocks at all. */
+export function tomorrowMoves(t: TaskRow, blocks: readonly BlockRow[], due: string, now: Date, zone: string): Reschedule & { clear: string[] } {
+  let reminder_at = t.reminder_at
+  let reminder_sent = t.reminder_sent
+  const from = t.due_at ?? t.scheduled_start
+  if (t.reminder_at && from && Date.parse(from) !== Date.parse(due)) {
+    const at = Date.parse(t.reminder_at) + (Date.parse(due) - Date.parse(from))
+    reminder_at = new Date(at).toISOString()
+    if (at > now.getTime()) reminder_sent = false
+  }
+  // An all-day block's day is read at its noon (replan.ts blockDay).
+  const day = (b: BlockRow) => dateKey(new Date(Date.parse(b.starts_at) + (b.all_day ? 12 * 3_600_000 : 0)), zone)
+  const latestFirst = [...blocks].sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))
+  const keep = latestFirst.find((b) => day(b) === dateKey(new Date(due), zone))
+  const clear = latestFirst.filter((b) => b !== keep).map((b) => b.id)
+  const [scheduled_start, scheduled_end] = keep ? [keep.starts_at, keep.ends_at] : clear.length ? [null, null] : [t.scheduled_start, t.scheduled_end]
+  return { due_at: due, reminder_at, reminder_sent, scheduled_start, scheduled_end, clear }
 }
 
 /** Polish F2a: a repeat's next copy reminds as far before its new due time as the original did. */
@@ -364,7 +371,7 @@ export const TOOLS: readonly ToolDef[] = [
     async run(_a, ctx) {
       const { date, start, end } = dayWindow(ctx.now, ctx.zone)
       const rows = await ctx.store.dayTasks(start.toISOString(), end.toISOString())
-      const events = await ctx.store.events(start.toISOString(), end.toISOString())
+      const events = await eventsIn(ctx, start, end)
       const { top3, today, overdue } = splitToday(rows, ctx.now, ctx.zone)
       return {
         date,
@@ -454,7 +461,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'add_task',
     title: 'Add task',
     description:
-      "Add a task to the user's task list. Only when the user asks for it. `due`: a date (YYYY-MM-DD, which means 09:00 that day) or a local date-time (YYYY-MM-DDTHH:mm) on the user's clock. `top3: true` makes it one of today's Top 3 (at most 3 open picks). Unsure where something belongs? Use add_to_inbox instead.",
+      "Add a task to the user's task list. Only when the user asks for it. `due`: a date (YYYY-MM-DD, which means 09:00 that day) or a local date-time (YYYY-MM-DDTHH:mm) on the user's clock. `top3: true` makes it one of today's Top 3 (at most 3 open picks); the Top 3 is today's, so a later due date comes to today, keeping its time. Unsure where something belongs? Use add_to_inbox instead.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -479,8 +486,16 @@ export const TOOLS: readonly ToolDef[] = [
         project = (await ctx.store.projects()).find((p) => p.id === projectId) ?? null
         if (!project) return bad(`No project with id ${projectId}. Call the projects tool for the ids.`)
       }
-      if (top3 && (await ctx.store.top3Count()) >= MAX_TOP3) {
+      const today = dayWindow(ctx.now, ctx.zone)
+      if (top3 && (await ctx.store.top3Count(today.end.toISOString())) >= MAX_TOP3) {
         return bad('Top 3 is full (3 open picks). Add it without top3, or ask the user which pick to swap out.')
+      }
+      let dueAt = due ? ('at' in due ? due.at : wallToInstant(due.day, 9, 0, ctx.zone)) : null
+      // The Top 3 is today's (top3Rule): a pick dated a later day comes to today at its own time, as
+      // starring does in the app (tasks/api flipTop3 → planMath todayFor).
+      if (top3 && dueAt && dueAt >= today.end) {
+        const [h, mi] = wallTime(dueAt.toISOString(), ctx.zone).slice(11).split(':').map(Number)
+        dueAt = wallToInstant(today.date, h, mi, ctx.zone)
       }
       const now = ctx.now.toISOString()
       const task: TaskRow = {
@@ -488,7 +503,7 @@ export const TOOLS: readonly ToolDef[] = [
         title,
         notes,
         status: 'todo',
-        due_at: due ? ('at' in due ? due.at : wallToInstant(due.day, 9, 0, ctx.zone)).toISOString() : null,
+        due_at: dueAt ? dueAt.toISOString() : null,
         scheduled_start: null,
         scheduled_end: null,
         top3,
@@ -531,7 +546,8 @@ export const TOOLS: readonly ToolDef[] = [
       // the task done with its series silently ended.
       let next: TaskRow | null = null
       if (t.recurrence_rule && t.due_at) {
-        const at = ctx.nextOccurrence(t.recurrence_rule, new Date(t.due_at))
+        // Rolls from max(due, today) like the app (_shared/repeat.ts), not from the old due date.
+        const at = ctx.nextOccurrence(t.recurrence_rule, new Date(t.due_at), ctx.zone, rollAfter(t.due_at, ctx.now, ctx.zone))
         if (at && !(await ctx.store.openOccurrence(t.title, t.recurrence_rule, at.toISOString(), t.id))) {
           next = {
             ...t,
@@ -565,15 +581,25 @@ export const TOOLS: readonly ToolDef[] = [
   {
     name: 'move_to_tomorrow',
     title: 'Move to tomorrow',
-    description: "Move an open task's due date to tomorrow 09:00 on the user's clock — the app's \"Tomorrow\".",
+    description:
+      "Move an open task's due date to tomorrow 09:00 on the user's clock — the app's \"Tomorrow\". As in the app, its reminder keeps its lead time, a calendar block on another day comes off the calendar, and a Top 3 pick gives its place up.",
     inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' } }, required: ['id'], additionalProperties: false },
     write: true,
     async run(a, ctx) {
       const t = await openTask(ctx, uuid(a, 'id', true)!)
       const due = tomorrowAt9(ctx.now, ctx.zone)
-      await ctx.store.setDue(t.id, due)
+      const { clear, ...moved } = tomorrowMoves(t, await ctx.store.taskBlocks(t.id), due, ctx.now, ctx.zone)
+      await ctx.store.reschedule(t.id, moved)
       await ctx.store.log('task.rescheduled', 'task', t.id, { due_at: due, source: 'mcp' })
-      return { moved: taskOut({ ...t, due_at: due, someday: false }, ctx.zone), timezone: ctx.zone }
+      if (clear.length) {
+        await ctx.store.clearBlocks(t.id, clear)
+        for (const blockId of clear) await ctx.store.log('calendar_event.deleted', 'calendar_event', blockId, { source: 'mcp' })
+      }
+      return {
+        moved: taskOut({ ...t, ...moved, someday: false, top3: false }, ctx.zone),
+        ...(clear.length ? { calendar_blocks_removed: clear.length } : {}),
+        timezone: ctx.zone,
+      }
     },
   },
   {
@@ -621,7 +647,7 @@ export const TOOLS: readonly ToolDef[] = [
       const end = bound(to, 'to', ctx.zone)
       if (end <= start) return bad('"to" must be on or after "from".')
       if (end.getTime() - start.getTime() > 32 * 86400_000) return bad('At most 31 days at once — ask for a shorter range.')
-      const events = await ctx.store.events(start.toISOString(), end.toISOString())
+      const events = await eventsIn(ctx, start, end)
       // `until` is exclusive: a `to` day ends at the next midnight.
       return { from: wallTime(start.toISOString(), ctx.zone), until: wallTime(end.toISOString(), ctx.zone), timezone: ctx.zone, events: events.map((e) => eventOut(e, ctx.zone)) }
     },

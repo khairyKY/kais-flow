@@ -57,9 +57,19 @@ describe('capture-image: the answer → lines', () => {
     expect(read.lines[1].when).toBe('today 17:00')
   })
   it('a blank or unreadable page has no lines', () => {
-    expect(normaliseRead({ readable: false, lines: [] }, 0)).toEqual({ readable: false, title: null, lines: [] })
+    expect(normaliseRead({ readable: false, lines: [] }, 0)).toEqual({ readable: false, title: null, lines: [], drawings: [] })
     expect(normaliseRead('not json', 0).readable).toBe(false)
     expect(normaliseRead({ lines: [{ text: 'x', type: 'task' }] }, 0).readable).toBe(true) // readable defaults to yes
+  })
+  it('a Notebook page’s boxes (11l): ticked, empty, or none — anything else is "none"', () => {
+    expect(buildPrompt([])).toMatch(/checked: .*ticked.*false when it is empty.*null when the line has no box/)
+    const read = normaliseRead({ lines: [{ text: 'Buy milk', checked: true }, { text: 'Water the plants', checked: false }, { text: 'call Omar' }, { text: 'x', checked: 'yes' }] }, 0)
+    expect(read.lines.map((x) => x.checked)).toEqual([true, false, null, null])
+  })
+  it('priority: asked for only when the page marks it, kept as 1–3, anything else null (11e P1)', () => {
+    expect(buildPrompt([])).toMatch(/priority: 1 if the page marks the item as urgent.*2 if marked important.*3 for a single "!", else null/)
+    const read = normaliseRead({ lines: [{ text: 'Assignment 2', priority: 1 }, { text: 'Quiz', priority: 3 }, { text: 'pens', priority: 0 }, { text: 'x', priority: '1' }, { text: 'y' }] }, 0)
+    expect(read.lines.map((x) => x.priority)).toEqual([1, 3, null, null, null])
   })
   it('caps a runaway answer at 40 lines', () => {
     expect(normaliseRead({ lines: Array.from({ length: 90 }, (_, i) => ({ text: `l${i}` })) }, 0).lines).toHaveLength(40)
@@ -78,7 +88,7 @@ describe('capture-image: Groq 429 backoff', () => {
 })
 
 describe('capture-image: the row after a page', () => {
-  const l = (text: string, page: number): PageLine => ({ text, type: 'task', when: null, project: null, confidence: 0.9, box: null, page })
+  const l = (text: string, page: number): PageLine => ({ text, type: 'task', when: null, project: null, confidence: 0.9, box: null, page, checked: null })
   it('reading until the last page, then done', () => {
     const one = afterPage({ pages: 2, pages_read: 0, items: [] }, 0, { readable: true, title: null, lines: [l('a', 0)] })
     expect(one).toMatchObject({ pages_read: 1, status: 'reading', error: null })
@@ -105,5 +115,28 @@ describe('capture-image: storage paths', () => {
     expect(ownsPath(`${uid}/${cid}/../x/0.jpg`, uid, cid)).toBe(false)
     expect(ownsPath(`${uid}/${cid}/0.jpg.exe`, uid, cid)).toBe(false)
     expect(ownsPath(`${uid}/other/0.jpg`, uid, cid)).toBe(false)
+  })
+})
+
+// 11e "1 drawing skipped (CPU → ready → run) · Add as image": the read reports what it skipped.
+describe('capture-image: drawings it skipped', () => {
+  it('asks for them, and keeps what each shows and where (page-tagged, malformed ones without a box)', () => {
+    expect(buildPrompt([])).toMatch(/drawings: every diagram, sketch, chart/)
+    const read = normaliseRead({ lines: [{ text: 'Scheduling', type: 'note' }], drawings: [{ what: ' CPU → ready → run ', box: [100, 400, 600, 700] }, { what: 7, box: 'x' }, null] }, 1)
+    expect(read.drawings).toEqual([
+      { what: 'CPU → ready → run', box: [0.1, 0.4, 0.5, 0.3], page: 1 },
+      { what: null, box: null, page: 1 },
+    ])
+    expect(normaliseRead({ lines: [{ text: 'a' }] }, 0).drawings).toEqual([])
+  })
+  it('a re-read replaces that page’s drawings; a row from before drawings starts empty', () => {
+    const l = (text: string, page: number): PageLine => ({ text, type: 'task', when: null, project: null, confidence: 0.9, box: null, page, checked: null })
+    const d = (what: string, page: number) => ({ what, box: null, page })
+    const one = afterPage({ pages: 2, pages_read: 0, items: [] }, 0, { readable: true, title: null, lines: [l('a', 0)], drawings: [d('old', 0)] })
+    expect(one.drawings).toEqual([d('old', 0)])
+    const two = afterPage({ pages: 2, ...one }, 1, { readable: true, title: null, lines: [l('b', 1)], drawings: [d('chart', 1)] })
+    expect(two.drawings).toEqual([d('old', 0), d('chart', 1)])
+    const again = afterPage({ pages: 2, ...two }, 0, { readable: true, title: null, lines: [l('a', 0)], drawings: [d('new', 0)] })
+    expect(again.drawings).toEqual([d('new', 0), d('chart', 1)])
   })
 })

@@ -5,10 +5,10 @@
 // runs it under the app's vitest (the ritual.ts pattern).
 import { minutesOf, RITUAL_ZONE, wallMinutes } from './ritual.ts'
 
-export type NoticeKind = 'task_reminder' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'overdue' | 'test'
+export type NoticeKind = 'task_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'test'
 
 export interface NoticeAction {
-  action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep'
+  action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep' | 'review'
   title: string
 }
 
@@ -25,16 +25,22 @@ export interface Notice {
   url: string
   /** Silent by default: the digest (12k). Quiet hours make everything silent. */
   silent: boolean
-  /** The tasks Done / Tomorrow act on. */
+  /** The tasks Done / Tomorrow act on; for Review (paper ready), the capture. */
   taskIds: string[]
 }
 
 /** The app_settings columns notify reads (0045 + 0048). Absent/null = the column default. */
 export interface NoticePrefs {
   task_reminder_on?: boolean | null
+  /** Routine reminders (0062). */
+  routine_on?: boolean | null
   morning_digest_on?: boolean | null
   evening_nudge_on?: boolean | null
   focus_done_on?: boolean | null
+  /** Paper capture ready, Birthday, Sync problem (0065). Birthday is off until turned on (12i). */
+  paper_ready_on?: boolean | null
+  birthday_on?: boolean | null
+  sync_problem_on?: boolean | null
   quiet_hours_on?: boolean | null
   quiet_from?: string | null
   quiet_to?: string | null
@@ -49,15 +55,25 @@ export const QUIET_TO = '07:00'
 
 const TOGGLE: Partial<Record<NoticeKind, keyof NoticePrefs>> = {
   task_reminder: 'task_reminder_on',
+  routine: 'routine_on',
   morning_digest: 'morning_digest_on',
   evening_nudge: 'evening_nudge_on',
   focus_done: 'focus_done_on',
+  paper_ready: 'paper_ready_on',
+  birthday: 'birthday_on',
+  sync_problem: 'sync_problem_on',
 }
 
-/** The kind's own switch (Settings → Notifications → Kinds). Kinds without one are always on. */
+/** 12i draws Birthday's switch off; every other kind starts on (the 0065 column defaults). */
+const OFF_UNTIL_ASKED: readonly NoticeKind[] = ['birthday']
+
+/** The kind's own switch (Settings → Notifications → Kinds). Kinds without one are always on; an
+ * unset switch (no settings row yet) is the kind's default. */
 export function kindOn(kind: NoticeKind, p: NoticePrefs | null | undefined): boolean {
   const key = TOGGLE[kind]
-  return !key || p?.[key] !== false
+  if (!key) return true
+  const v = p?.[key]
+  return v == null ? !OFF_UNTIL_ASKED.includes(kind) : v !== false
 }
 
 export function isPaused(p: NoticePrefs | null | undefined, now: Date): boolean {
@@ -140,14 +156,17 @@ export function reminderNotice(tasks: readonly ReminderTask[], p: NoticePrefs | 
 }
 
 /** Morning digest: "Good morning — 3 to tend today" / "✶ GCI homework 1 — NumPy, then the lecture 2
- * survey and Skim OS lectures 1 + 2." · Plan my day · Open. Silent by default. */
-export function digestNotice(top3: readonly string[], p: NoticePrefs | null | undefined): Notice {
+ * survey and Skim OS lectures 1 + 2." · Plan my day · Open. Silent by default. `top3` = today's picks,
+ * goal first (_shared/today.ts); `overdue` (2026-10-12, in place of the old hourly "Overdue" push) adds
+ * "4 overdue." — a count, never a name. */
+export function digestNotice(top3: readonly string[], p: NoticePrefs | null | undefined, overdue = 0): Notice {
   const [goal, ...rest] = top3
-  const body = !goal
+  const said = !goal
     ? 'Nothing picked yet — plan the day.'
     : showNames(p)
       ? `✶ ${goal}${rest.length ? `, then ${rest.join(' and ')}` : ''}.`
       : 'Unlock to see them'
+  const body = overdue > 0 ? `${said.endsWith('.') ? said : `${said}.`} ${overdue} overdue.` : said
   return {
     kind: 'morning_digest',
     title: goal ? `Good morning — ${top3.length} to tend today` : 'Good morning',
@@ -194,14 +213,116 @@ export function focusDoneNotice(minutes: number, task: string | null, breakMin: 
   }
 }
 
-export function overdueNotice(count: number): Notice {
+export interface ReminderRoutineCopy {
+  id: string
+  name: string
+  /** 'HH:MM' or Postgres's 'HH:MM:SS'. */
+  clock_time: string
+}
+
+/** Routine reminder (0062): "Stretch — 07:30" · Open. Several at once are one notice ("2 routines —
+ * 07:30" / "Stretch · Journal"). Private (lock-screen names off): "A routine — 07:30". */
+export function routineNotice(routines: readonly ReminderRoutineCopy[], p: NoticePrefs | null | undefined): Notice {
+  const names = showNames(p)
+  const at = routines[0].clock_time.slice(0, 5)
+  const one = routines.length === 1
+  const shown = routines.slice(0, 3).map((r) => r.name).join(' · ') + (routines.length > 3 ? ` · +${routines.length - 3} more` : '')
   return {
-    kind: 'overdue',
-    title: 'Overdue',
-    body: `${count} ${count === 1 ? 'task is' : 'tasks are'} past due`,
-    tag: 'overdue',
+    kind: 'routine',
+    title: `${one ? (names ? routines[0].name : 'A routine') : `${routines.length} routines`} — ${at}`,
+    body: one ? (names ? '' : 'Unlock to see it') : names ? shown : 'Unlock to see them',
+    tag: one ? `routine-${routines[0].id}` : 'routines',
     actions: [{ action: 'open', title: 'Open' }],
-    url: '/tasks',
+    url: '/routines',
+    silent: false,
+    taskIds: [],
+  }
+}
+
+/** A read line below this confidence wants a look — the app's paper/paperMath.ts CHECK_BELOW
+ * (copy.test.ts keeps the two equal). */
+export const CHECK_BELOW = 0.7
+
+export interface ReadCapture {
+  id: string
+  /** The page's own title as read ("OS lecture 3"), when it has one. */
+  title: string | null
+  items: readonly { confidence: number }[]
+}
+
+const things = (n: number) => `${n} ${n === 1 ? 'thing' : 'things'}`
+
+/** Paper capture ready (12h/12k): "Your page is read — 7 things" / "From “OS lecture 3”. 2 need a
+ * quick look." · Review. Silent (Captures). Private: "A page is ready". */
+export function paperReadyNotice(c: ReadCapture, p: NoticePrefs | null | undefined): Notice {
+  const unsure = c.items.filter((i) => i.confidence < CHECK_BELOW).length
+  const body = [c.title ? `From “${c.title}”.` : '', unsure ? `${unsure} ${unsure === 1 ? 'needs' : 'need'} a quick look.` : ''].filter(Boolean).join(' ')
+  const names = showNames(p)
+  return {
+    kind: 'paper_ready',
+    title: names ? `Your page is read — ${things(c.items.length)}` : 'A page is ready',
+    body: names ? body : 'Unlock to see it',
+    tag: `paper-${c.id}`,
+    actions: [{ action: 'review', title: 'Review' }],
+    url: '/inbox',
+    silent: true,
+    taskIds: [c.id],
+  }
+}
+
+export interface BirthdayPerson {
+  id: string
+  name: string
+  /** Days since the last interaction logged with them; null = none. */
+  lastSpokeDays: number | null
+}
+
+const lastSpoke = (d: number | null) => (d === null ? '' : d === 0 ? 'Last spoke today.' : d === 1 ? 'Last spoke yesterday.' : `Last spoke ${d} days ago.`)
+
+/** Birthday (12k): "Omar’s birthday is today" / "Last spoke 12 days ago." · Open Omar. Silent
+ * (People). Several on one day are one notice ("2 birthdays today"). Private: "A birthday" — and the
+ * button says Open, never the name. */
+export function birthdayNotice(people: readonly BirthdayPerson[], p: NoticePrefs | null | undefined): Notice {
+  const names = showNames(p)
+  if (people.length === 1) {
+    const [b] = people
+    return {
+      kind: 'birthday',
+      title: names ? `${b.name}’s birthday is today` : 'A birthday',
+      body: names ? lastSpoke(b.lastSpokeDays) : 'Unlock to see it',
+      tag: `birthday-${b.id}`,
+      actions: [{ action: 'open', title: names ? `Open ${b.name}` : 'Open' }],
+      url: `/people/${b.id}`,
+      silent: true,
+      taskIds: [],
+    }
+  }
+  const shown = people.slice(0, 3).map((b) => b.name).join(' · ') + (people.length > 3 ? ` · +${people.length - 3} more` : '')
+  return {
+    kind: 'birthday',
+    title: `${people.length} birthdays today`,
+    body: names ? shown : 'Unlock to see them',
+    tag: 'birthdays',
+    actions: [{ action: 'open', title: 'Open' }],
+    url: '/people',
+    silent: true,
+    taskIds: [],
+  }
+}
+
+/** Sync problem (12k, this device only): "2 changes are waiting to sync" / "They’re safe on this
+ * device. We’ll keep trying." · Open. Silent (Sync). No names in it, so nothing to hide. `parked` =
+ * the server set them aside (outbox dead letters): nothing retries those, so it says what the app's
+ * own toast says (lib/outbox.ts) rather than "we’ll keep trying". */
+export function syncNotice(n: number, parked = false): Notice {
+  const one = n === 1
+  return {
+    kind: 'sync_problem',
+    title: parked ? `${n} ${one ? 'change' : 'changes'} couldn’t be saved` : `${n} ${one ? 'change is' : 'changes are'} waiting to sync`,
+    body: parked ? 'Set aside so the rest sync on.' : `${one ? 'It’s' : 'They’re'} safe on this device. We’ll keep trying.`,
+    tag: 'sync-problem',
+    actions: [{ action: 'open', title: 'Open' }],
+    url: '/today',
     silent: true,
     taskIds: [],
   }

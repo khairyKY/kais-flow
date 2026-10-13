@@ -6,6 +6,8 @@ import { useFocusStore } from '../focus/focusStore'
 import { BUNDLED_VERSION, openWhatsNew } from '../../lib/whatsNew'
 import { native } from '../tray/native'
 import { isCapacitorShell } from '../../lib/platform'
+import { toastAction } from '../../lib/undo'
+import { usePaperStore } from '../paper/paperStore'
 import type { Task } from '../../lib/types'
 
 // What a notification's buttons do (Tray and Notifications.dc.html 12k), wherever they were pressed:
@@ -43,25 +45,44 @@ export function withoutAction(path: string, search: string): string {
   return rest ? `${path}?${rest}` : path
 }
 
-/** Rows from the cache, the rest from the server (a cold window may not have loaded tasks yet). */
+/** Rows from the cache, the rest from the server (a cold window may not have loaded tasks yet).
+ * Throws when the server can't be read — the caller must not quietly drop the press. */
 async function tasksById(ids: readonly string[] = []): Promise<Task[]> {
   const cached = queryClient.getQueryData<Task[]>(['tasks']) ?? []
   const found = cached.filter((t) => ids.includes(t.id))
   const missing = ids.filter((id) => !found.some((t) => t.id === id))
   if (missing.length === 0) return found
-  const { data } = await supabase.from('tasks').select(TASK_COLUMNS).in('id', missing)
+  const { data, error } = await supabase.from('tasks').select(TASK_COLUMNS).in('id', missing)
+  if (error) throw error
   return [...found, ...((data ?? []) as unknown as Task[])]
+}
+
+/** The open tasks a Done / Tomorrow press is about, or null after saying it couldn't reach them — with
+ * Try again, so the press isn't lost (a cold window offline, a blip). */
+async function openTasksFor(a: NotificationAction, navigate: (to: string) => void): Promise<Task[] | null> {
+  try {
+    return (await tasksById(a.taskIds)).filter((t) => t.status !== 'done')
+  } catch {
+    toastAction('Couldn’t reach that task just now', 'Try again', () => void runNotificationAction(a, navigate))
+    return null
+  }
+}
+
+async function openPaperResults(captureId: string | undefined): Promise<void> {
+  if (!captureId) return
+  const { data } = await supabase.from('captures').select('id').eq('id', captureId).is('reviewed_at', null).maybeSingle()
+  if (data) usePaperStore.getState().show({ kind: 'results', captureId })
 }
 
 export async function runNotificationAction(a: NotificationAction, navigate: (to: string) => void): Promise<void> {
   const focus = useFocusStore.getState()
   switch (a.action) {
     case 'done':
-      for (const t of await tasksById(a.taskIds)) if (t.status !== 'done') completeTaskWithUndo(t)
+      for (const t of (await openTasksFor(a, navigate)) ?? []) completeTaskWithUndo(t)
       return
     case 'tomorrow': {
-      const open = (await tasksById(a.taskIds)).filter((t) => t.status !== 'done')
-      if (open.length) moveToTomorrowWithUndo(open)
+      const open = await openTasksFor(a, navigate)
+      if (open?.length) moveToTomorrowWithUndo(open)
       return
     }
     case 'break':
@@ -78,6 +99,12 @@ export async function runNotificationAction(a: NotificationAction, navigate: (to
       return
     case 'shutdown':
       navigate('/today?ritual=evening')
+      return
+    case 'review':
+      // Paper capture ready: the Inbox, with the page's results open while it still waits for review
+      // (one reviewed since only lands on the Inbox — Review never adds its lines twice).
+      navigate('/inbox')
+      await openPaperResults(a.taskIds?.[0])
       return
     case 'whats-new':
       // The Windows "vX is out" toast's button (features/whats-new): bring the window forward, open the sheet.

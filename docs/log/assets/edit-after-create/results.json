@@ -1,0 +1,127 @@
+[
+  {
+    "name": "routine ⋯ menu lists Edit first",
+    "ok": true,
+    "detail": "[\"Edit\",\"Streak trellis\",\"Archive\"]"
+  },
+  {
+    "name": "form is titled \"Edit routine\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "name prefilled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "steps shown + prefilled",
+    "ok": true,
+    "detail": "[\"Neck rolls\",\"Hamstrings\"]"
+  },
+  {
+    "name": "save upserts the same routine",
+    "ok": true,
+    "detail": "{\"id\":\"70000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"name\":\"Long stretch\",\"time_of_day\":\"evening\",\"clock_time\":\"21:30\",\"cadence\":{\"weekdays\":[1,3,5]},\"challenge_start\":null,\"challenge_end\":null,\"active\":true,\"steps\":[\"Neck rolls\",\"Hamstrings\"],\"domain_id\":\"40000000-0000-4000-8000-000000000001\",\"goal_days\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-12T17:57:20.497Z\"}"
+  },
+  {
+    "name": "routine page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: name tap opens \"Edit routine\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone routines: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "book edit saves pages + year, keeps progress",
+    "ok": true,
+    "detail": "{\"id\":\"80000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"title\":\"Dune\",\"author\":\"Frank Herbert\",\"published_year\":1966,\"current_page\":120,\"total_pages\":300,\"status\":\"reading\",\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-12T17:57:28.671Z\"}"
+  },
+  {
+    "name": "note edit saves the body (updateNote)",
+    "ok": true,
+    "detail": "{\"id\":\"80000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"title\":\"On patience\",\"body\":\"Slow is smooth, smooth is fast.\",\"tags\":[\"pace\"],\"domain_id\":null,\"book_id\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-12T17:57:31.711Z\"}"
+  },
+  {
+    "name": "quote edit saves the author (updateQuote)",
+    "ok": true,
+    "detail": "{\"id\":\"80000000-0000-4000-8000-000000000003\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"text\":\"Fear is the mind-killer.\",\"author\":\"Frank Herbert\",\"source\":\"Dune\",\"tags\":[],\"book_id\":null,\"page\":\"8\",\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-12T17:57:34.595Z\"}"
+  },
+  {
+    "name": "library: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "target date set through the date picker",
+    "ok": true,
+    "detail": "2026-10-15"
+  },
+  {
+    "name": "milestone weight steps up and saves",
+    "ok": true,
+    "detail": "[{\"id\":\"90000000-0000-4000-8000-000000000001\",\"title\":\"Launch\",\"weight\":3,\"completed\":false}]"
+  },
+  {
+    "name": "checklist item renamed",
+    "ok": true,
+    "detail": "[{\"id\":\"90000000-0000-4000-8000-000000000002\",\"title\":\"Buy the .com domain\",\"type\":\"one-shot\",\"completed\":false,\"task_id\":null}]"
+  },
+  {
+    "name": "work entry duration edited",
+    "ok": true,
+    "detail": "{\"id\":\"60000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":\"20000000-0000-4000-8000-000000000001\",\"task_id\":null,\"note\":\"Wireframes\",\"duration_min\":120,\"started_at\":\"2026-10-04T10:00:00Z\",\"ended_at\":null,\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}"
+  },
+  {
+    "name": "work entry day edited, time of day kept",
+    "ok": true,
+    "detail": "2026-10-01T10:00:00.000Z"
+  },
+  {
+    "name": "engagement edited",
+    "ok": true,
+    "detail": "Retainer client"
+  },
+  {
+    "name": "project page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "area page shows the colour swatches",
+    "ok": true,
+    "detail": "8"
+  },
+  {
+    "name": "area recoloured",
+    "ok": true,
+    "detail": "var(--acc-moss)"
+  },
+  {
+    "name": "area page: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "interaction summary edited",
+    "ok": true,
+    "detail": "{\"id\":\"50000000-0000-4000-8000-000000000002\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"person_id\":\"50000000-0000-4000-8000-000000000001\",\"summary\":\"Coffee + the Q3 plan\",\"occurred_at\":\"2026-10-05T10:00:00Z\",\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-10-12T17:58:00.435Z\"}"
+  },
+  {
+    "name": "interaction day edited",
+    "ok": true,
+    "detail": "2026-10-02T10:00:00.000Z"
+  },
+  {
+    "name": "person page: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

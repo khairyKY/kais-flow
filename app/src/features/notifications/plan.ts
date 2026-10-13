@@ -1,5 +1,9 @@
-import { clock, deliver, digestNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { birthdayNotice, clock, deliver, digestNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { DEFAULT_AT, dayBounds, minutesOf, ritualOn, type RitualSettings } from '../../../../supabase/functions/notify/ritual.ts'
+import { routineDueOn, type ReminderRoutine, type RoutineDone } from '../../../../supabase/functions/notify/routine.ts'
+import { BIRTHDAY_AT, birthdaysOn, type PersonFacts, type Spoke } from '../../../../supabase/functions/notify/birthday.ts'
+import { isOverdue, todaysTop3 } from '../../../../supabase/functions/_shared/today.ts'
+import { addDays, dateKey, wallToInstant } from '../../../../supabase/functions/_shared/zone.ts'
 import { dueReminders } from '../tray/trayState'
 import { KIND_IDS, KIND_LOOK } from './kinds'
 
@@ -10,6 +14,8 @@ import { KIND_IDS, KIND_LOOK } from './kinds'
 //  - Windows (TrayBridge): every 30s, what came due since the last sweep → a toast (tray.rs).
 //  - Android (android.ts): the next few days, handed to the OS as scheduled notifications, so they
 //    arrive with the app closed. Re-planned whenever the data changes while the app runs.
+// The same rules as notify: the digest's Top 3 and overdue count are _shared/today.ts's, routine
+// reminders notify/routine.ts's, birthdays notify/birthday.ts's (2026-10-12).
 // Pure, so the same rules (kind switches, pause, quiet hours, lock-screen names) are tested here.
 
 export interface PlanTask {
@@ -21,6 +27,9 @@ export interface PlanTask {
   deleted_at?: string | null
   project_id?: string | null
   top3?: boolean
+  top3_rank?: number | null
+  someday?: boolean
+  scheduled_start?: string | null
   completed_at?: string | null
   created_at?: string
 }
@@ -37,6 +46,12 @@ export interface Planned {
 export interface PlanInput {
   tasks: readonly PlanTask[]
   projects?: readonly { id: string; name: string }[]
+  /** Routines with a reminder time (routines.clock_time) and their check-offs. */
+  routines?: readonly ReminderRoutine[]
+  completions?: readonly RoutineDone[]
+  /** People (their Birthday fact) and the interactions logged with them ("Last spoke 12 days ago"). */
+  people?: readonly PersonFacts[]
+  interactions?: readonly Spoke[]
   prefs: PlanPrefs | null | undefined
   /** The window: notices whose moment falls in (from, to]. */
   from: Date
@@ -46,17 +61,17 @@ export interface PlanInput {
   zone: string
 }
 
-/** The instants in (from, to] at `min` minutes past midnight on `zone`'s wall clock (dayBounds' DST caveat). */
+/** The instants in (from, to] at `min` minutes past midnight on `zone`'s wall clock. */
 function wallTimes(min: number, from: Date, to: Date, zone: string): Date[] {
   const out: Date[] = []
-  for (let day = Date.parse(dayBounds(from, zone).start); day <= to.getTime(); day = Date.parse(dayBounds(new Date(day + 36 * 3_600_000), zone).start)) {
-    const at = day + min * 60_000
-    if (at > from.getTime() && at <= to.getTime()) out.push(new Date(at))
+  for (let day = dateKey(from, zone); day <= dateKey(to, zone); day = addDays(day, 1)) {
+    const at = wallToInstant(day, Math.floor(min / 60), min % 60, zone)
+    if (at > from && at <= to) out.push(at)
   }
   return out
 }
 
-export function localPlan({ tasks, projects = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
+export function localPlan({ tasks, projects = [], routines = [], completions = [], people = [], interactions = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
   const out: Planned[] = []
   const add = (key: string, at: Date, build: (said: Date) => Notice | null) => {
     const said = new Date(Math.max(at.getTime(), now.getTime()))
@@ -77,21 +92,38 @@ export function localPlan({ tasks, projects = [], prefs, from, to, now, zone }: 
     add(group.map((t) => `${t.id}@${t.reminder_at}`).join(','), new Date(at), (said) => reminderNotice(rows, prefs, said, zone))
   }
 
+  // Routine reminders: at each routine's time, on its days, unless it's checked off by then (as this
+  // device last saw it). Routines at the same moment are one notice.
+  const routineGroups = new Map<number, ReminderRoutine[]>()
+  for (const r of routines) {
+    const min = minutesOf(r.clock_time)
+    if (min === null) continue
+    for (const at of wallTimes(min, from, to, zone)) {
+      if (routineDueOn(r, dateKey(at, zone), completions)) routineGroups.set(at.getTime(), [...(routineGroups.get(at.getTime()) ?? []), r])
+    }
+  }
+  for (const [at, group] of routineGroups) {
+    add(`routine:${group.map((r) => r.id).join(',')}@${new Date(at).toISOString()}`, new Date(at), () => routineNotice(group as (ReminderRoutine & { clock_time: string })[], prefs))
+  }
+
+  // Birthdays at 08:00 on the user's clock (12j), as this device last synced its people.
+  for (const at of wallTimes(BIRTHDAY_AT, from, to, zone)) {
+    const today = birthdaysOn(people, interactions, dateKey(at, zone), zone)
+    if (today.length) add(`birthday:${today.map((b) => b.id).join(',')}@${at.toISOString()}`, at, () => birthdayNotice(today, prefs))
+  }
+
   // The morning digest and the evening nudge, at the user's own times (Settings → Notifications).
-  const top3 = live
-    .filter((t) => t.top3 && t.status === 'todo')
-    .sort((a, b) => (a.created_at ?? '').localeCompare(b.created_at ?? ''))
-    .map((t) => t.title)
   for (const kind of ['morning_digest', 'evening_nudge'] as const) {
     if (!ritualOn(kind, prefs)) continue
     const min = minutesOf(prefs?.[`${kind}_at`]) ?? DEFAULT_AT[kind]
     for (const at of wallTimes(min, from, to, zone)) {
       add(`${kind}@${at.toISOString()}`, at, () => {
-        if (kind === 'morning_digest') return digestNotice(top3, prefs)
+        // That morning's Top 3 (goal first) and overdue count, notify's rules (_shared/today.ts).
+        if (kind === 'morning_digest') return digestNotice(todaysTop3(live, at, zone).map((t) => t.title), prefs, live.filter((t) => isOverdue(t, at, zone)).length)
         // "4 done · 2 left" for that day, as this device last saw it (notify's evening_nudge rule).
         const day = dayBounds(at, zone)
         const done = live.filter((t) => t.status === 'done' && !!t.completed_at && t.completed_at >= day.start && t.completed_at < day.end).length
-        const left = live.filter((t) => t.status === 'todo' && !!t.due_at && Date.parse(t.due_at) < Date.parse(day.end)).length
+        const left = live.filter((t) => t.status === 'todo' && !t.someday && !!t.due_at && Date.parse(t.due_at) < Date.parse(day.end)).length
         return done + left === 0 ? null : nudgeNotice(done, left)
       })
     }
@@ -126,7 +158,8 @@ export function blockers(d: DeviceState, p: NoticePrefs | null | undefined, now:
   if (d.channel === 'web' && d.permission !== 'unsupported' && !d.subscribed) out.push('This device isn’t subscribed — tap “Subscribe this device” first.')
   if (isPaused(p, now)) out.push(`Notifications are paused until ${clock(p!.notify_paused_until!, zone)}.`)
   if (inQuietHours(p, now, zone)) out.push('Quiet hours are on — notifications come without a sound.')
-  const off = KIND_IDS.filter((k) => !kindOn(k, p)).map((k) => KIND_LOOK[k].label)
+  // Kinds turned off that start on — Birthday starting off (12i) isn't something in the way.
+  const off = KIND_IDS.filter((k) => !kindOn(k, p) && kindOn(k, null)).map((k) => KIND_LOOK[k].label)
   if (off.length) out.push(`Turned off: ${off.join(', ')}.`)
   return out
 }

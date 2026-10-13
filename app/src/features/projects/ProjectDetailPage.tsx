@@ -6,9 +6,11 @@ import { writeRow } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
 import { useDomains } from '../domains/api'
 import { EmojiText } from '../../components/EmojiText'
-import { localDateKey } from '../routines/streaks'
-import { localTimeKey, localToIso } from '../calendar/eventTime'
+import { zoneDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
+import { appZone } from '../../lib/appZone'
+import { zoneTimeKey, zoneToIso } from '../calendar/eventTime'
 import { Select } from '../../components/Select'
+import { ErrorCard, Skeleton } from '../../components/States'
 import {
   useProjects,
   updateProjectColor,
@@ -17,16 +19,24 @@ import {
   toggleProjectMilestone,
   removeProjectMilestone,
   renameProjectMilestone,
+  reweighProjectMilestone,
   setProjectMilestones,
   addProjectChecklistItem,
   toggleProjectChecklistItem,
+  renameProjectChecklistItem,
   removeProjectChecklistItem,
+  setProjectChecklist,
+  finishProjectWithUndo,
   logTimeEntry,
   useTimeEntries,
   isThisMonth,
   renameProject,
+  updateProjectTargetDate,
+  updateProjectEngagement,
 } from './api'
-import { useAreas, renameArea, reparentArea } from '../areas/api'
+import { useAreas, renameArea, reparentArea, recolorArea } from '../areas/api'
+import { formatDuration, parseDuration } from './duration'
+import type { TimeEntry } from '../../lib/types'
 import { RenameField } from '../../components/RenameField'
 import { NumberField } from '../../components/NumberField'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -38,28 +48,40 @@ import {
   completeTask,
   completeTaskWithUndo,
   undoCompletion,
+  reopenTask,
+  undoReopen,
   createTask,
   moveTasksWithUndo,
   rescheduleTasksWithUndo,
+  rescheduleDue,
   somedayTasksWithUndo,
   deleteTasksWithUndo,
   moveToTomorrowWithUndo,
+  toggleTop3,
+  toggleTop3ManyWithUndo,
+  toggleTaskWithUndo,
 } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { PlanMenu } from '../tasks/PlanMenu'
+import { todayFor } from '../tasks/planMath'
+import { buildListBindings } from '../tasks/listShortcuts'
+import { useOpenTask } from '../tasks/openTask'
 import { BulkBar } from '../../components/BulkBar'
 import { MovePicker } from '../tasks/MovePicker'
-import type { MoveTarget } from '../tasks/move'
-import { useSelectAllKey } from '../../components/useListKeys'
+import { placeKey, type MoveTarget } from '../tasks/move'
+import { useListKeys } from '../../components/useListKeys'
+import { rowAnchor } from '../../lib/rowAnchor'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
 import { BackLink, SectionLabel, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
-import { ConfirmCard } from './ConfirmCard'
 import { useMotionEnabled } from '../../lib/motion'
 import { DateField } from '../../components/DatePicker'
 import './xfx.css'
+
+// A ✕ that removes a row: a real button, 44px to a finger (.kf-hit), PersonDetailPage's look.
+const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--acc-terra)', cursor: 'pointer', borderRadius: 999, marginLeft: 4 }
 
 // Local query hook to retrieve activity log for a specific project/area
 function useActivityLog(entityId: string) {
@@ -92,8 +114,10 @@ export function ProjectDetailPage() {
 
   // Queries
   const { data: domains = [] } = useDomains()
-  const { data: projects = [] } = useProjects()
-  const { data: areas = [] } = useAreas()
+  const projectsQuery = useProjects()
+  const areasQuery = useAreas()
+  const { data: projects = [] } = projectsQuery
+  const { data: areas = [] } = areasQuery
   const { data: tasks = [] } = useTasks()
   const { data: timeEntries = [] } = useTimeEntries()
   const { data: activityLogs = [] } = useActivityLog(id || '')
@@ -106,12 +130,18 @@ export function ProjectDetailPage() {
   const [newMilestoneTitle, setNewMilestoneTitle] = useState('')
   const [newMilestoneWeight, setNewMilestoneWeight] = useState(1)
   // punch 40: the `edit` chip used to call removeProjectMilestone — it deleted. It now opens
-  // this inline rename; deletion moved to its own ✕, guarded by ConfirmCard + undo.
+  // this inline rename; deletion moved to its own ✕ (Undo, no confirm — Flow Audit §4).
   const [editingMilestone, setEditingMilestone] = useState<{ id: string; title: string } | null>(null)
   // Kai 2026-10-06: "we can't edit the name of an area, project or a retainer from inside the item".
   const [renamingTitle, setRenamingTitle] = useState(false)
   // The status-update / work log row whose note is being edited in place.
   const [editingLog, setEditingLog] = useState<string | null>(null)
+  // Kai 2026-10-12 (edit after create): a work entry's duration, a milestone's weight, a checklist
+  // line's title and the engagement line, each edited in place like the title and the log notes.
+  const [editingDuration, setEditingDuration] = useState<string | null>(null)
+  const [weighingMilestone, setWeighingMilestone] = useState<string | null>(null)
+  const [renamingChecklist, setRenamingChecklist] = useState<string | null>(null)
+  const [editingEngagement, setEditingEngagement] = useState(false)
   // Kai 2026-10-06: change its type from inside the page — the new thing's page opens; Undo comes back.
   const [typeMenuAt, setTypeMenuAt] = useState<{ x: number; y: number } | null>(null)
   const changeType = useChangeType({
@@ -130,10 +160,7 @@ export function ProjectDetailPage() {
   const [logMode, setLogMode] = useState<'work' | 'update'>('work')
   const [workNote, setWorkNote] = useState('')
   const [workDuration, setWorkDuration] = useState('1h30m')
-  const [workDate, setWorkDate] = useState(() => localDateKey(new Date()))
-
-  // E2 (2026-07-18 audit): in-app confirm replaces window.confirm
-  const [confirm, setConfirm] = useState<{ title: string; body: string; confirmLabel: string; onConfirm: () => void } | null>(null)
+  const [workDate, setWorkDate] = useState(() => zoneDateKey(new Date()))
 
   // E7 (2026-07-18 audit): ALL hooks must run before any early return — these useMemos
   // previously lived inside the project/area branches after the `!project && !area`
@@ -239,19 +266,88 @@ export function ProjectDetailPage() {
     moveTasksWithUndo(selectedTasks, to)
     clearSelection()
   }
-  // Kai 2026-10-07: Ctrl/Cmd+A selects this page's open tasks too (it only worked on Tasks/Today/Inbox).
-  // `id` is a project or an area, never both, so one filter serves both pages.
-  useSelectAllKey(() => setSelected(new Set(tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id)).map((t) => t.id))), !bulkSchedulePos && !bulkProjectPos)
+  // This page's open tasks, in list order. `id` is a project or an area, never both, so one filter
+  // serves both pages.
+  const pageOpen = useMemo(() => {
+    const open = tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id))
+    // An area lists its repeats apart, under "Keeps coming back" after its other open tasks — the
+    // keys walk the rows in that same order, and no row is drawn twice.
+    return areas.some((a) => a.id === id) ? [...open.filter((t) => !t.recurrence_rule), ...open.filter((t) => t.recurrence_rule)] : open
+  }, [tasks, id, areas])
+  // Kai 2026-10-07: Ctrl/Cmd+A (and the phone bar's Select all) selects this page's open tasks too.
+  const selectAllOpen = () => setSelected(new Set(pageOpen.map((t) => t.id)))
   // Flow Audit §4: delete = Trash + Undo, no confirm (their calendar blocks go and come back too).
   const bulkDelete = () => {
     deleteTasksWithUndo(selectedTasks)
     clearSelection()
   }
+  const bulkTop3 = () => {
+    toggleTop3ManyWithUndo(selectedTasks)
+    clearSelection()
+  }
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
       : undefined
+
+  // The ? cheatsheet's list keys, as on Tasks (features/tasks/TasksPage.tsx): one row, or with rows
+  // selected the whole selection.
+  const openTask = useOpenTask()
+  const [kbProjectId, setKbProjectId] = useState<string | null>(null)
+  const kbProjectTask = kbProjectId ? pageOpen.find((t) => t.id === kbProjectId) : null
+  const bindings = buildListBindings({
+    complete: (t) => void completeTaskWithUndo(t),
+    open: (t) => openTask(t.id),
+    today: (t) => rescheduleDue(t, todayFor(t)),
+    tomorrow: (t) => moveToTomorrowWithUndo([t]),
+    nextWeek: (t) => rescheduleDue(t, scheduleNextWeek()),
+    top3: (t) => toggleTop3(t),
+    project: (t) => setKbProjectId(t.id),
+    toggleSelect: (t) => toggleSelected(t.id),
+    delete: (t) => deleteTasksWithUndo([t]),
+  }, {
+    complete: () => bulkComplete(),
+    today: () => bulkSchedule(scheduleToday()),
+    tomorrow: () => bulkTomorrow(),
+    nextWeek: () => bulkSchedule(scheduleNextWeek()),
+    top3: () => bulkTop3(),
+    delete: () => bulkDelete(),
+  })
+  const { focusedId: kbFocusedId } = useListKeys(pageOpen, bindings, {
+    active: !bulkSchedulePos && !bulkProjectPos && !kbProjectId,
+    sectionLabel: 'Lists',
+    onSelectAll: selectAllOpen,
+    selected: selectedTasks,
+  })
+
+  // Click-away deselects (TodayPage's rule): a click on empty page space clears the selection; one
+  // on a task row, the bulk bar, a menu, popover or overlay keeps it.
+  const hasSelection = selected.size > 0
+  useEffect(() => {
+    if (!hasSelection) return
+    function onDocClick(e: MouseEvent) {
+      const t = e.target as Element | null
+      if (t?.closest('[id^="task-"], [role="toolbar"], [role="menu"], [role="dialog"], .kf-overlay-card, .kf-overlay-scrim')) return
+      setSelected(new Set())
+    }
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
+  }, [hasSelection])
+
+  /** An open task row on this page — the project's and the area's lists, and the area's repeats. */
+  const taskRow = (t: (typeof tasks)[number], border: boolean) => (
+    <TaskRow
+      key={t.id}
+      task={t}
+      highlighted={focusTaskId === t.id || kbFocusedId === t.id}
+      selected={selected.has(t.id)}
+      onToggleSelect={() => toggleSelected(t.id)}
+      selecting={hasSelection}
+      bulk={bulkActions}
+      border={border}
+    />
+  )
 
   // Rendered by both the project and the area branch.
   const taskOverlays = (
@@ -265,12 +361,16 @@ export function ProjectDetailPage() {
           onMoveToProject={(e) => setBulkProjectPos({ x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
+          onSelectAll={selectAllOpen}
         />
       )}
       {bulkSchedulePos && selectedTasks.length > 0 && (
         <PlanMenu task={selectedTasks[0]} bulkCount={selectedTasks.length} position={bulkSchedulePos} onClose={() => setBulkSchedulePos(null)} actions={{ schedule: bulkSchedule, tomorrow: bulkTomorrow, someday: bulkSomeday }} />
       )}
       {bulkProjectPos && <MovePicker position={bulkProjectPos} current={null} onPick={bulkMove} onClose={() => setBulkProjectPos(null)} />}
+      {kbProjectTask && (
+        <MovePicker position={rowAnchor('task-', kbProjectTask.id)} current={placeKey(kbProjectTask)} onPick={(to) => moveTasksWithUndo([kbProjectTask], to)} onClose={() => setKbProjectId(null)} />
+      )}
     </>
   )
 
@@ -326,6 +426,10 @@ export function ProjectDetailPage() {
   )
 
   if (!project && !area) {
+    // Never "not found" while the lists are still loading or failed to load.
+    if (projectsQuery.isPending || areasQuery.isPending) return <Skeleton rows={4} />
+    const failed = [projectsQuery, areasQuery].find((q) => q.isError && !q.data)
+    if (failed) return <ErrorCard message="Couldn't load this page." onRetry={() => void failed.refetch()} />
     return (
       <div style={{ padding: 40, color: 'var(--ink-muted)' }}>
         <div>Entity not found.</div>
@@ -334,43 +438,26 @@ export function ProjectDetailPage() {
     )
   }
 
-  // Parse duration string like "1h30m" into minutes
-  function parseDuration(d: string): number {
-    const hoursMatch = d.match(/(\d+)h/)
-    const minsMatch = d.match(/(\d+)m/)
-    let total = 0
-    if (hoursMatch) total += parseInt(hoursMatch[1]) * 60
-    if (minsMatch) total += parseInt(minsMatch[1])
-    if (!hoursMatch && !minsMatch) {
-      const plainNum = parseInt(d)
-      if (!isNaN(plainNum)) total = plainNum
-    }
-    return total || 60 // Default to 60m if parsing fails
-  }
-
   const handleToggleMilestone = (milestoneId: string) => {
     if (!project || !project.milestones) return
     const m = project.milestones.find((x) => x.id === milestoneId)
     if (!m) return
 
     const linkedTasks = tasks.filter((t) => t.milestone_id === milestoneId)
-    const nextCompleted = !m.completed
+    // The box shows the resolved state (every linked task done, else the flag), so the click flips that.
+    const nextCompleted = !(linkedTasks.length > 0 ? linkedTasks.every((t) => t.status === 'done') : m.completed)
 
-    if (linkedTasks.length > 0) {
-      for (const t of linkedTasks) {
-        if (t.status !== (nextCompleted ? 'done' : 'todo')) {
-          writeRow('tasks', {
-            ...t,
-            status: nextCompleted ? 'done' : 'todo',
-            completed_at: nextCompleted ? new Date().toISOString() : null,
-            top3: false,
-          })
-          logActivity(nextCompleted ? 'task.completed' : 'task.reopened', 'task', t.id, {})
-        }
-      }
-    }
-
-    toggleProjectMilestone(project, milestoneId)
+    // Its linked tasks complete / reopen through the tasks feature (a repeat spawns its next one,
+    // the check sounds); one Undo takes back the tasks and the milestone together.
+    const prior = project.milestones
+    const completions = nextCompleted ? linkedTasks.filter((t) => t.status !== 'done').map(completeTask) : []
+    const reopens = nextCompleted ? [] : linkedTasks.filter((t) => t.status === 'done').map(reopenTask)
+    if (m.completed !== nextCompleted) toggleProjectMilestone(project, milestoneId)
+    toastUndo(nextCompleted ? 'Milestone done' : 'Milestone reopened', () => {
+      completions.forEach(undoCompletion)
+      reopens.forEach(undoReopen)
+      setProjectMilestones(project, prior)
+    })
     // Effects 2e (WB-1) — completing a milestone grows the wisteria a stage (milestonePct
     // already drives the image); this is the short bloom that marks the moment. Counter, not
     // boolean: it doubles as the React key that replays the one-shot on every completion.
@@ -385,19 +472,19 @@ export function ProjectDetailPage() {
     setEditingMilestone(null)
   }
 
-  const askRemoveMilestone = (m: { id: string; title: string }) => {
+  // Flow Audit §4: no confirm — the milestone goes (its linked tasks stay), Undo brings it back.
+  const removeMilestone = (m: { id: string }) => {
     if (!project) return
     const prior = project.milestones ?? []
-    setConfirm({
-      title: `Delete "${m.title}"?`,
-      body: 'The milestone goes. Tasks linked to it stay where they are.',
-      confirmLabel: 'Delete',
-      onConfirm: () => {
-        setConfirm(null)
-        removeProjectMilestone(project, m.id)
-        toastUndo('Milestone deleted', () => setProjectMilestones(project, prior))
-      },
-    })
+    removeProjectMilestone(project, m.id)
+    toastUndo('Milestone deleted', () => setProjectMilestones(project, prior))
+  }
+
+  const removeChecklistItem = (itemId: string) => {
+    if (!project) return
+    const prior = project.checklist ?? []
+    removeProjectChecklistItem(project, itemId)
+    toastUndo('Checklist item removed', () => setProjectChecklist(project, prior))
   }
 
   const handleAddMilestoneClick = () => {
@@ -450,11 +537,10 @@ export function ProjectDetailPage() {
     if (!workNote.trim()) return
     // Logged work lands on the chosen day at the current wall-clock time; a future date is
     // blocked by the input’s max, so this can only ever be now or backdated.
-    const now = new Date()
-    const startedAt = localToIso(workDate, localTimeKey(now))
+    const startedAt = zoneToIso(workDate, zoneTimeKey(new Date()))
 
     if (logMode === 'work') {
-      const dur = parseDuration(workDuration)
+      const dur = parseDuration(workDuration) ?? 60 // unreadable → an hour, as before
       const entry = logTimeEntry(project?.id || null, null, workNote.trim(), dur, startedAt)
       queryClient.setQueryData<any[]>(['activity_log', id || ''], (old) => {
         const newLog = {
@@ -491,6 +577,13 @@ export function ProjectDetailPage() {
     writeRow('time_entries', { ...entry, note })
     logActivity('project.work_edited', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id, note })
   }
+  /** A work entry's duration or day (Kai 2026-10-12). A new day keeps the entry's time of day. */
+  const editWork = (entryId: string, fields: Partial<Pick<TimeEntry, 'duration_min' | 'started_at'>>) => {
+    const entry = pTimeEntries.find((e) => e.id === entryId)
+    if (!entry) return
+    writeRow('time_entries', { ...entry, ...fields })
+    logActivity('project.work_edited', 'project', entry.project_id ?? id ?? '', { time_entry_id: entry.id, ...fields })
+  }
   const deleteLog = (log: { id: string; type: 'work' | 'update' }) => {
     if (log.type === 'update') {
       logUpdateEvent(UPDATE_EVENTS.deleted, { update_id: log.id })
@@ -517,14 +610,36 @@ export function ProjectDetailPage() {
     '#7a4a52',
     '#8b8471',
   ]
+  // The project page's colour swatches — the area page uses the same row (Kai 2026-10-12).
+  const colorRow = (current: string | null | undefined, pick: (c: string) => void) => (
+    <>
+      <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
+      <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
+        {colorPalette.map((c) => (
+          <span
+            key={c}
+            onClick={() => pick(c)}
+            style={{
+              width: 20,
+              height: 20,
+              borderRadius: '50%',
+              background: c,
+              cursor: 'pointer',
+              outline: current === c ? '1.5px solid var(--paper-linen)' : 'none',
+              boxShadow: current === c ? `0 0 0 3px ${c}` : 'none',
+            }}
+          />
+        ))}
+      </div>
+    </>
+  )
 
   // ============================================
   // PROJECT DETAIL RENDER
   // ============================================
   if (project) {
     // Project tasks
-    const projectTasks = tasks.filter((t) => t.project_id === project.id)
-    const openTasks = projectTasks.filter((t) => t.status === 'todo')
+    const openTasks = pageOpen
 
     // Sum project hours (pTimeEntries hoisted above the early return — E7)
     const totalMinutes = pTimeEntries.reduce((acc, curr) => acc + curr.duration_min, 0)
@@ -577,7 +692,23 @@ export function ProjectDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
               <BackLink to="/projects">All projects</BackLink>
               <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
-                {project.engagement_model || 'Standard'} · started {new Date(project.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
+                {/* The engagement / client line: click to edit, like the title. */}
+                {editingEngagement ? (
+                  <RenameField
+                    value={project.engagement_model ?? ''}
+                    ariaLabel="Engagement model or client"
+                    style={{ width: 160, margin: '-3px 4px -3px 0' }}
+                    onDone={(next) => {
+                      setEditingEngagement(false)
+                      if (next && next !== project.engagement_model) updateProjectEngagement(project, next)
+                    }}
+                  />
+                ) : (
+                  <span role="button" tabIndex={0} title="Edit engagement" onClick={() => setEditingEngagement(true)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingEngagement(true) } }} style={{ cursor: 'text' }}>
+                    {project.engagement_model || 'Standard'}
+                  </span>
+                )}{' '}
+                · started {new Date(project.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
               </span>
             </div>
 
@@ -585,32 +716,20 @@ export function ProjectDetailPage() {
               <span style={{ width: 15, height: 15, borderRadius: '50%', background: project.color || 'var(--acc-terra)', flex: 'none' }} />
               <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: isMobile ? '1 1 calc(100% - 28px)' : 1, minWidth: 0 }}>{titleNode(project.name, (next) => renameProject(project, next))}</h1>
               <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: isMobile ? 'left' : 'right', marginLeft: isMobile ? 28 : undefined }}>
-                target<br />
-                <span style={{ fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none' }}>
-                  {project.target_date ? new Date(project.target_date).toLocaleDateString('en-US', { weekday: 'short', day: '2-digit', month: 'short' }) : 'no date'}
-                </span>
+                {project.type === 'retainer' ? 'renews' : 'target'}<br />
+                {/* Kai 2026-10-12: set or change it here — the app's date picker, Clear in its footer. */}
+                <DateField
+                  value={project.target_date?.slice(0, 10) ?? ''}
+                  onChange={(v) => updateProjectTargetDate(project, v || null)}
+                  title={project.type === 'retainer' ? 'Renews' : 'Target date'}
+                  placeholder="no date"
+                  style={{ font: 'inherit', fontSize: 12, color: 'var(--ink-body)', letterSpacing: 0, textTransform: 'none', background: 'none', border: 'none', padding: 0, minHeight: isMobile ? 44 : undefined }}
+                />
               </span>
             </div>
 
             {/* Color picker */}
-            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
-            <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-              {colorPalette.map((c) => (
-                <span
-                  key={c}
-                  onClick={() => updateProjectColor(project, c)}
-                  style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: c,
-                    cursor: 'pointer',
-                    outline: project.color === c ? '1.5px solid var(--paper-linen)' : 'none',
-                    boxShadow: project.color === c ? `0 0 0 3px ${c}` : 'none',
-                  }}
-                />
-              ))}
-            </div>
+            {colorRow(project.color, (c) => updateProjectColor(project, c))}
 
             {/* Domain — R4-17: reparent an existing project (the API had this all along) */}
             <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
@@ -655,14 +774,26 @@ export function ProjectDetailPage() {
                             if (e.key === 'Enter') { e.preventDefault(); commitMilestoneEdit() }
                             if (e.key === 'Escape') { e.preventDefault(); setEditingMilestone(null) }
                           }}
-                          style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
+                          style={{ flex: 1, font: 'inherit', fontSize: 'var(--fs-body-s)', background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
                         />
                       ) : (
-                        <span style={{ fontSize: 13, color: m.resolvedCompleted ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</span>
+                        <span style={{ fontSize: 'var(--fs-body-s)', color: m.resolvedCompleted ? 'var(--ink-faint)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</span>
                       )}
-                      <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>weight {m.weight}</span>
+                      {/* Kai 2026-10-12: the weight changes after it's added — tap it for the −/+ field; each step saves. */}
+                      {weighingMilestone === m.id ? (
+                        <span
+                          ref={(el) => { if (el && !el.contains(document.activeElement)) el.querySelector('input')?.focus() }}
+                          onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setWeighingMilestone(null) }}
+                          onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); setWeighingMilestone(null) } }}
+                          style={{ display: 'inline-flex' }}
+                        >
+                          <NumberField value={m.weight} onChange={(n) => reweighProjectMilestone(project, m.id, n)} min={1} max={100} ariaLabel={`Weight of ${m.title}`} style={{ fontSize: 12.5 }} />
+                        </span>
+                      ) : (
+                        <span role="button" tabIndex={0} title="Change weight" onClick={() => setWeighingMilestone(m.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setWeighingMilestone(m.id) } }} className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', cursor: 'pointer' }}>weight {m.weight}</span>
+                      )}
                       <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
-                      <span onClick={() => askRemoveMilestone(m)} title="Delete milestone" style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>
+                      <button type="button" className="kf-hit" onClick={() => removeMilestone(m)} title="Delete milestone" aria-label={`Delete milestone ${m.title}`} style={removeBtn}>✕</button>
                     </div>
                   ))}
                 </div>
@@ -706,17 +837,7 @@ export function ProjectDetailPage() {
             )}
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {openTasks.map((t, i) => (
-                <TaskRow
-                  key={t.id}
-                  task={t}
-                  highlighted={focusTaskId === t.id}
-                  selected={selected.has(t.id)}
-                  onToggleSelect={() => toggleSelected(t.id)}
-                  bulk={bulkActions}
-                  border={i < openTasks.length - 1}
-                />
-              ))}
+              {openTasks.map((t, i) => taskRow(t, i < openTasks.length - 1))}
             </div>
 
             {/* Checklist */}
@@ -725,16 +846,38 @@ export function ProjectDetailPage() {
             </SectionLabel>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {(project.checklist ?? []).map((item) => (
+              {(project.checklist ?? []).map((item) => {
+                // A task-linked line IS its task (product audit 2026-10-12): it reads done when the task is
+                // done anywhere, and ticking it completes / reopens the task (with Undo). A line whose task
+                // is gone falls back to its own tick.
+                const linked = item.task_id ? tasks.find((t) => t.id === item.task_id) : undefined
+                const done = linked ? linked.status === 'done' : item.completed
+                return (
                 <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                  <Checkbox checked={item.completed} onChange={() => toggleProjectChecklistItem(project, item.id)} size={15} />
-                  <span style={{ fontSize: 13, color: item.completed ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: item.completed ? 'line-through' : 'none', flex: 1 }}>{item.title}</span>
+                  <Checkbox checked={done} label={item.title} onChange={() => (linked ? toggleTaskWithUndo(linked) : toggleProjectChecklistItem(project, item.id))} size={15} />
+                  {/* Kai 2026-10-12: rename in place, like a milestone or a log note. */}
+                  {renamingChecklist === item.id ? (
+                    <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-body-s)' }}>
+                      <RenameField
+                        value={item.title}
+                        ariaLabel="Checklist item"
+                        style={{ margin: '-3px 0' }}
+                        onDone={(next) => {
+                          setRenamingChecklist(null)
+                          if (next && next !== item.title) renameProjectChecklistItem(project, item.id, next)
+                        }}
+                      />
+                    </span>
+                  ) : (
+                    <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(item.id) } }} style={{ fontSize: 'var(--fs-body-s)', color: done ? 'var(--ink-faint)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', flex: 1, cursor: 'text' }}>{item.title}</span>
+                  )}
                   <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 3 }}>
                     {item.type}
                   </span>
-                  <span onClick={() => removeProjectChecklistItem(project, item.id)} style={{ cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8 }}>✕</span>
+                  <button type="button" className="kf-hit" onClick={() => removeChecklistItem(item.id)} title="Remove" aria-label={`Remove checklist item ${item.title}`} style={removeBtn}>✕</button>
                 </div>
-              ))}
+                )
+              })}
 
               {/* Add checklist item */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '9px 2px' }}>
@@ -827,9 +970,9 @@ export function ProjectDetailPage() {
                   />
                   <DateField
                     value={workDate}
-                    max={localDateKey(new Date())}
+                    max={zoneDateKey(new Date())}
                     clearable={false}
-                    onChange={(v) => { if (v && v <= localDateKey(new Date())) setWorkDate(v) }}
+                    onChange={(v) => { if (v && v <= zoneDateKey(new Date())) setWorkDate(v) }}
                     title="Worked on"
                     ariaLabel="Date this work happened"
                     style={{ font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', outline: 'none' }}
@@ -847,10 +990,23 @@ export function ProjectDetailPage() {
             {/* Logs List */}
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {mergedLogs.map((log) => {
-                const dateLabel = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
+                const dateLabel = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })
                 return (
                   <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                    <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
+                    {log.type === 'work' ? (
+                      // Kai 2026-10-12: a work entry's day changes here (its time of day stays); not the future.
+                      <DateField
+                        value={zoneDateKey(new Date(log.date))}
+                        max={zoneDateKey(new Date())}
+                        clearable={false}
+                        onChange={(v) => { if (v && v <= zoneDateKey(new Date())) editWork(log.id, { started_at: zoneToIso(v, zoneTimeKey(new Date(log.date))) }) }}
+                        title="Worked on"
+                        ariaLabel="Day of this work entry"
+                        style={{ width: 76, flex: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', padding: '3px 0 0', whiteSpace: 'normal' }}
+                      />
+                    ) : (
+                      <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
+                    )}
                     <span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>
                       {log.type === 'update' && (
                         <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', fontSize: 'var(--fs-meta)', padding: '2px 6px', marginRight: 6, borderRadius: 3 }}>
@@ -874,12 +1030,26 @@ export function ProjectDetailPage() {
                         </span>
                       )}
                     </span>
-                    {log.type === 'work' && log.duration && (
-                      <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
+                    {/* Kai 2026-10-12: tap the duration to change it ("1h30m", "45m", "90"). */}
+                    {log.type === 'work' && log.duration && (editingDuration === log.id ? (
+                      <span style={{ width: 70, flex: 'none', fontSize: 12 }}>
+                        <RenameField
+                          value={formatDuration(log.duration)}
+                          ariaLabel="Duration"
+                          style={{ margin: '-3px 0' }}
+                          onDone={(next) => {
+                            setEditingDuration(null)
+                            const min = next ? parseDuration(next) : null
+                            if (min && min !== log.duration) editWork(log.id, { duration_min: min })
+                          }}
+                        />
+                      </span>
+                    ) : (
+                      <span role="button" tabIndex={0} title="Change duration" onClick={() => setEditingDuration(log.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingDuration(log.id) } }} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>
                         {Math.floor(log.duration / 60) > 0 ? `${Math.floor(log.duration / 60)}h ` : ''}
                         {log.duration % 60 > 0 ? `${log.duration % 60}m` : ''}
                       </span>
-                    )}
+                    ))}
                     {log.type === 'work' && <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginLeft: 8 }}>manual</span>}
                     <button type="button" className="kf-hit" onClick={() => deleteLog(log)} title="Delete" aria-label={`Delete ${log.type}: ${log.note}`} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8, flex: 'none' }}>✕</button>
                   </div>
@@ -889,25 +1059,19 @@ export function ProjectDetailPage() {
 
             {/* Archive / Change type action footer */}
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 18px', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-              <span
-                onClick={() =>
-                  // E2: in-app ConfirmCard instead of window.confirm
-                  setConfirm({
-                    title: `Archive "${project.name}"?`,
-                    body: 'It moves to the Herbarium as a pressed specimen — you can restore it any time.',
-                    confirmLabel: 'Archive',
-                    onConfirm: () => {
-                      setConfirm(null)
-                      // Punch 51: do NOT archive here — the pressing ceremony performs the
-                      // archive when it finishes, so the specimen is pressed *then* filed.
-                      navigate(`/herbarium?press=${project.id}`)
-                    },
-                  })
-                }
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+              {/* One tap + Undo (product audit 2026-10-12): archived now, back to the list; the toast offers
+                  "Press it ✿" — the pressing ceremony is optional, never a step in the way. */}
+              <button
+                type="button"
+                className="kf-hit"
+                onClick={() => {
+                  finishProjectWithUndo(project, () => navigate(`/herbarium?press=${project.id}`))
+                  navigate('/projects')
+                }}
+                style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
               >
-                Archive project…
-              </span>
+                Archive project
+              </button>
               {typeLink}
               <span style={{ flex: 1 }} />
               <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
@@ -917,7 +1081,6 @@ export function ProjectDetailPage() {
           </div>
         </div>
         {taskOverlays}
-        {confirm && <ConfirmCard {...confirm} onCancel={() => setConfirm(null)} />}
       </div>
     )
   }
@@ -927,13 +1090,14 @@ export function ProjectDetailPage() {
   // ============================================
   if (area) {
     const areaTasks = tasks.filter((t) => t.area_id === area.id)
-    const openTasks = areaTasks.filter((t) => t.status === 'todo')
+    const openTasks = pageOpen
     // punch 42: "This month" counted every task ever closed in this area. Window it to the
     // current calendar month, so the number actually resets when the month rolls over.
     const closedThisMonth = areaTasks.filter((t) => t.status === 'done' && isThisMonth(t.completed_at))
 
-    // Find repeating tasks
-    const repeatingTasks = areaTasks.filter((t) => t.recurrence_rule && t.status === 'todo')
+    // Find repeating tasks — they list under "Keeps coming back", the rest under Open.
+    const repeatingTasks = openTasks.filter((t) => t.recurrence_rule)
+    const oneOffTasks = openTasks.filter((t) => !t.recurrence_rule)
 
     const domain = domains.find((d) => d.id === area.domain_id)
 
@@ -966,6 +1130,9 @@ export function ProjectDetailPage() {
               area, not a project
             </span>
           </div>
+
+          {/* Kai 2026-10-12: an area's colour, changed here — the project page's swatches. */}
+          {colorRow(area.color, (c) => recolorArea(area, c))}
 
           {/* Kai 2026-10-07: an area's domain, set or changed here (its tasks follow; Undo in the toast) — the project page's own field. */}
           <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
@@ -1031,7 +1198,7 @@ export function ProjectDetailPage() {
 
           {/* Open tasks */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 6px' }}>
-            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Open · {openTasks.length}</span>
+            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Open · {oneOffTasks.length}</span>
             <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
             <span onClick={() => setShowAddTask(!showAddTask)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
               + add task
@@ -1052,17 +1219,7 @@ export function ProjectDetailPage() {
           )}
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {openTasks.map((t, i) => (
-              <TaskRow
-                key={t.id}
-                task={t}
-                highlighted={focusTaskId === t.id}
-                selected={selected.has(t.id)}
-                onToggleSelect={() => toggleSelected(t.id)}
-                bulk={bulkActions}
-                border={i < openTasks.length - 1}
-              />
-            ))}
+            {oneOffTasks.map((t, i) => taskRow(t, i < oneOffTasks.length - 1))}
           </div>
 
           {/* Keeps coming back routines */}
@@ -1072,15 +1229,7 @@ export function ProjectDetailPage() {
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
-            {repeatingTasks.map((t) => (
-              <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
-                <Checkbox checked={false} onChange={() => completeTaskWithUndo(t)} size={15} />
-                <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1 }}><EmojiText text={t.title} /></span>
-                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 3 }}>
-                  ↻ repeats
-                </span>
-              </div>
-            ))}
+            {repeatingTasks.map((t, i) => taskRow(t, i < repeatingTasks.length - 1))}
             {repeatingTasks.length === 0 && (
               <div style={{ color: 'var(--ink-faint)', fontSize: 12.5, fontStyle: 'italic', padding: '6px 2px' }}>
                 No repeating tasks in this area yet.
@@ -1096,7 +1245,7 @@ export function ProjectDetailPage() {
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {areaRecentLogs.slice(0, 5).map((log) => {
-              const dateLabel = new Date(log.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' })
+              const dateLabel = new Date(log.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })
               return (
                 <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
                   <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
@@ -1122,7 +1271,6 @@ export function ProjectDetailPage() {
           </div>
         </div>
         {taskOverlays}
-        {confirm && <ConfirmCard {...confirm} onCancel={() => setConfirm(null)} />}
       </div>
     )
   }

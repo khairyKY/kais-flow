@@ -1,5 +1,5 @@
 import type { ActivityLogEntry } from '../../lib/types'
-import { digestNotice, nudgeNotice, reminderNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
+import { birthdayNotice, digestNotice, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, syncNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
 import { appZone } from '../../lib/appZone'
 import type { KindId } from '../notifications/kinds'
 
@@ -24,7 +24,7 @@ export type ActivityCategory =
   | 'projects'
   | 'review'
   | 'library'
-  /** What was sent: reminders, the digest, the nudge (Tray and Notifications.dc.html 12j). */
+  /** What was sent: reminders, the digest, the nudge, pages read, birthdays, sync (Tray and Notifications.dc.html 12j). */
   | 'notifications'
   /** Onboarding, and any event newer than this map. */
   | 'garden'
@@ -293,6 +293,8 @@ function describePeople(e: ActivityLogEntry, names: ActivityNames): ActivityLine
     case 'people.interaction_logged':
       // entity_id is the person; the summary is what happened between you.
       return line(named(names.person(id) ?? '', (q) => `Logged an interaction with ${q}`, 'Logged an interaction'), str(payload, 'summary'))
+    case 'people.interaction_edited':
+      return line(named(names.person(id) ?? '', (q) => `Edited an interaction with ${q}`, 'Edited an interaction'), str(payload, 'summary'))
     case 'people.interaction_deleted':
       // entity_id is the interaction itself, which no longer exists — nowhere to go.
       return line('Removed an interaction', '', null)
@@ -362,8 +364,12 @@ function describeProject(e: ActivityLogEntry, names: ActivityNames): ActivityLin
       return line(named(item, (q) => `Reopened the milestone ${q}`, 'Reopened a milestone'), onProject)
     case 'project.milestone_renamed':
       return line(named(item, (q) => `Renamed a milestone to ${q}`, 'Renamed a milestone'), onProject)
+    case 'project.milestone_reweighted':
+      return line('Changed a milestone’s weight', onProject)
     case 'project.milestone_removed':
       return line('Removed a milestone', onProject)
+    case 'project.checklist_item_renamed':
+      return line(named(item, (q) => `Renamed a checklist item to ${q}`, 'Renamed a checklist item'), onProject)
     case 'project.checklist_item_added':
       return line(named(item, (q) => `Added ${q} to the checklist`, 'Added a checklist item'), onProject)
     case 'project.checklist_item_completed':
@@ -501,6 +507,8 @@ function describeLibrary(e: ActivityLogEntry): ActivityLine {
       return str(payload, 'status') === 'finished'
         ? line('Finished a book')
         : line('Read on in a book', typeof payload?.current_page === 'number' ? `page ${payload.current_page}` : '')
+    case 'book.updated':
+      return line(named(title, (q) => `Updated the book ${q}`, 'Updated a book'))
     case 'book.deleted':
       return line('Took a book off the shelf')
     case 'note.created':
@@ -579,10 +587,26 @@ export function describeActivity(e: ActivityLogEntry, names: ActivityNames = NO_
     case 'onboarding':
       return { text: 'Planted your garden', details: 'the welcome, done', category: 'garden', icon: 'seedling', href: null }
     case 'notify': {
-      // notify.morning_digest / notify.evening_nudge: the notice as it was sent, with its buttons.
-      const kind = type === 'notify.evening_nudge' ? 'evening_nudge' : 'morning_digest'
-      const sent = kind === 'morning_digest' ? digestNotice([], {}) : nudgeNotice(0, 0)
-      return { text: str(e.payload, 'title') || sent.title, details: str(e.payload, 'body'), category: 'notifications', icon: 'notice', href: '/today', notice: { kind, actions: sent.actions, taskIds: [] } }
+      const said = { text: str(e.payload, 'title'), details: str(e.payload, 'body'), category: 'notifications' as const, icon: 'notice' as const }
+      if (type === 'notify.paper_ready') {
+        // Review opens the page's results while it still waits (notifications/actions.ts).
+        const id = str(e.payload, 'capture_id')
+        return { ...said, text: said.text || 'Your page is read', href: '/inbox', notice: { kind: 'paper_ready', actions: id ? paperReadyNotice({ id, title: null, items: [] }, {}).actions : [], taskIds: id ? [id] : [] } }
+      }
+      if (type === 'notify.birthday') {
+        // One person: "Open Omar" while they're still in People; several: Open → People.
+        const id = str(e.payload, 'person_id')
+        const name = id ? names.person(id) : undefined
+        const open = !id ? birthdayNotice([], {}) : name ? birthdayNotice([{ id, name, lastSpokeDays: null }], { lock_screen_names: true }) : null
+        return { ...said, text: said.text || 'A birthday', href: open?.url ?? null, notice: { kind: 'birthday', actions: open?.actions ?? [], taskIds: [] } }
+      }
+      if (type === 'notify.sync_problem') {
+        return { ...said, text: said.text || syncNotice(1).title, href: '/today', notice: { kind: 'sync_problem', actions: syncNotice(1).actions, taskIds: [] } }
+      }
+      // notify.morning_digest / notify.evening_nudge / notify.routine: the notice as it was sent, with its buttons.
+      const kind = type === 'notify.evening_nudge' ? 'evening_nudge' : type === 'notify.routine' ? 'routine' : 'morning_digest'
+      const sent = kind === 'morning_digest' ? digestNotice([], {}) : kind === 'routine' ? routineNotice([{ id: '', name: '', clock_time: '' }], {}) : nudgeNotice(0, 0)
+      return { text: str(e.payload, 'title') || sent.title, details: str(e.payload, 'body'), category: 'notifications', icon: 'notice', href: kind === 'routine' ? '/routines' : '/today', notice: { kind, actions: sent.actions, taskIds: [] } }
     }
     default: {
       // Anything newer than this map: say it plainly rather than print the raw event name.

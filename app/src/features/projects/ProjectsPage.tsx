@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
-import { useProjects, useTimeEntries, restoreProject, isThisMonth, renameProject, deleteProjectWithUndo, reparentProject } from './api'
+import { useProjects, useTimeEntries, restoreProjectWithUndo, finishProjectWithUndo, isThisMonth, renameProject, deleteProjectWithUndo, reparentProject } from './api'
 import { useAreas, renameArea, deleteAreaWithUndo, reparentArea } from '../areas/api'
 import { ContextMenu } from '../../components/ContextMenu'
 import { ActionSheet } from '../../components/ActionSheet'
@@ -11,19 +11,21 @@ import { NewProjectModal } from './NewProjectModal'
 import { TypeMenu, useChangeType, type Convertible } from './ChangeType'
 import { useTasks } from '../tasks/api'
 import { useSlipping } from '../slipping/api'
-import { queryClient } from '../../lib/queryClient'
-import { BackLink, SectionLabel } from '../../components/kit'
+import { BackLink, SectionLabel, Segmented } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { RenameField } from '../../components/RenameField'
 import { Select } from '../../components/Select'
 import { useMotionEnabled, staggerDelay, idPhase } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { useIsMobile } from '../../components/BottomSheet'
+import { DragRow, DropZone } from '../../components/drag'
+import { projectVerdict, type FileSpot } from '../tasks/fileDrop'
 import './xfx.css'
 
-// Contract: `target {d MMM}` / `renews {d MMM}` — day without a leading zero, short month.
+// Contract: `target {d MMM}` / `renews {d MMM}` — day without a leading zero, short month. target_date is
+// a date stored as UTC midnight: read in UTC, or it shows the day before west of UTC.
 function dayMonth(iso: string) {
-  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
 }
 
 // Effects 1t amber drift: three leaves per slipping board card, staggered 0 / 3.4 / 6.2s inside
@@ -68,6 +70,13 @@ export function ProjectsPage() {
   const [selectedDomainId, setSelectedDomainId] = useState<string | null>(null)
   const [showNewModal, setShowNewModal] = useState(false)
   const [newType, setNewType] = useState<'standard' | 'area' | 'retainer'>('standard')
+  // The board's "Plant a project here…" opens the modal on that column's domain.
+  const [newDomainId, setNewDomainId] = useState<string | undefined>(undefined)
+  const openNew = (type: 'standard' | 'area' | 'retainer', domainId?: string) => {
+    setNewType(type)
+    setNewDomainId(domainId)
+    setShowNewModal(true)
+  }
 
   // Queries
   const { data: domains = [] } = useDomains()
@@ -239,8 +248,8 @@ export function ProjectsPage() {
       { label: 'Domain…', icon: 'projects', run: () => setDomainMenu(m) },
       // Kai 2026-10-06: project ↔ retainer, project / retainer ↔ area (./ChangeType.tsx).
       ...(project || area ? [{ label: 'Change type…', icon: 'rotate' as IconName, run: () => setTypeMenu({ thing: project ? { table: 'projects' as const, row: project } : { table: 'areas' as const, row: area! }, at: { x: m.x, y: m.y } }) }] : []),
-      // The press ceremony archives it when it closes (punch 51), with its own Undo.
-      ...(project ? [{ label: 'Finish & press', icon: 'check' as IconName, run: () => navigate(`/herbarium?press=${project.id}`) }] : []),
+      // One tap + Undo (product audit 2026-10-12): the toast offers "Press it ✿" — the ceremony is optional.
+      ...(project ? [{ label: 'Finish', icon: 'check' as IconName, run: () => finishProjectWithUndo(project, () => navigate(`/herbarium?press=${project.id}`)) }] : []),
       { label: 'Delete', icon: 'delete', danger: true, run: () => (project ? deleteProjectWithUndo(project) : area && deleteAreaWithUndo(area)) },
     ]
   }
@@ -305,7 +314,7 @@ export function ProjectsPage() {
       </svg>
       <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No projects growing yet.</div>
       <button
-        onClick={() => { setNewType('standard'); setShowNewModal(true) }}
+        onClick={() => openNew('standard')}
         className="kf-lift"
         style={{ marginTop: 20, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13.5, padding: '10px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
       >
@@ -328,10 +337,7 @@ export function ProjectsPage() {
             </div>
             {/* 48px touch target (the kit's --touch-min) */}
             <button
-              onClick={() => {
-                setNewType('standard')
-                setShowNewModal(true)
-              }}
+              onClick={() => openNew('standard')}
               aria-label="New project"
               className="kf-lift"
               style={{ width: 48, height: 48, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
@@ -340,9 +346,51 @@ export function ProjectsPage() {
             </button>
           </div>
 
+          {/* The desktop's Finished view on a phone: active / finished, Restore with Undo, the Herbarium. */}
+          {!isEmpty && (
+            <div style={{ marginTop: 14 }}>
+              <Segmented
+                label="Show"
+                value={view === 'archive' ? 'archive' : 'list'}
+                onChange={setView}
+                options={[{ value: 'list', label: 'Active' }, { value: 'archive', label: `Finished · ${archivedProjects.length}` }]}
+              />
+            </div>
+          )}
+
           {isEmpty && renderEmptyState()}
 
-          {!isEmpty && <>
+          {!isEmpty && view === 'archive' && <>
+          {archivedProjects.length === 0 && (
+            <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)' }}>Nothing finished yet — pressed projects rest here ✿</div>
+          )}
+          {archivedProjects.map((p) => {
+            const stat = projectStats[p.id] ?? EMPTY_STAT
+            return (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 26, flex: 'none' }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
+                  <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>{stat.hours}h · {stat.doneMilestones}/{stat.totalMilestones} milestones</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => restoreProjectWithUndo(p)}
+                  aria-label={`Restore ${p.name}`}
+                  className="kf-hit"
+                  style={{ flex: 'none', border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999 }}
+                >
+                  restore
+                </button>
+              </div>
+            )
+          })}
+          <Link to="/herbarium" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+            Open the Herbarium →
+          </Link>
+          </>}
+
+          {!isEmpty && view !== 'archive' && <>
           {/* Active section */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '16px 0 4px' }}>
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Active</span>
@@ -374,7 +422,7 @@ export function ProjectsPage() {
                     </div>
                   </div>
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
-                    {p.target_date ? new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' }) : 'no date'}
+                    {p.target_date ? new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', timeZone: 'UTC' }) : 'no date'}
                   </span>
                   {moreButton('project', p.id, p.name)}
                 </div>
@@ -450,7 +498,7 @@ export function ProjectsPage() {
           })}
           </>}
         </div>
-        {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} domains={domains} />}
+        {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} defaultDomainId={newDomainId} domains={domains} />}
         {menuLayer}
         {typeLayer}
       </div>
@@ -554,19 +602,13 @@ export function ProjectsPage() {
               {activeCount} active · {totalCount} total
             </span>
             <button
-              onClick={() => {
-                setNewType('area')
-                setShowNewModal(true)
-              }}
+              onClick={() => openNew('area')}
               style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer' }}
             >
               + New area
             </button>
             <button
-              onClick={() => {
-                setNewType('standard')
-                setShowNewModal(true)
-              }}
+              onClick={() => openNew('standard')}
               style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 15px', borderRadius: '999px', boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
             >
               + New project
@@ -703,8 +745,11 @@ export function ProjectsPage() {
                   return stat && stat.pct >= 80 && stat.pct < 100 && (stat.totalMilestones - stat.doneMilestones === 1)
                 })
 
+                // Motion 2c/2d: a project card drags to another domain's column (the row menu's Domain…).
+                const column: FileSpot = { kind: 'domain', label: d.name, id: d.id }
                 return (
-                  <div key={d.id} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 10, padding: '13px 13px 16px' }}>
+                  // ds-ok: Projects.dc.html 2a draws the board column at a 10px radius
+                  <DropZone key={d.id} id={`board:${d.id}`} spot={column} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 10, padding: '13px 13px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 4px 12px' }}>
                       <span style={{ width: 9, height: 9, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>
@@ -719,8 +764,8 @@ export function ProjectsPage() {
 
                         const slipping = isSlippingProject(p.id)
                         return (
+                          <DragRow key={p.id} id={p.id} disabled={isMobile} load={{ ids: [p.id], label: p.name, verdict: (spot: FileSpot) => projectVerdict(p, spot), drop: (spot: FileSpot) => spot.kind === 'domain' && reparentProject(p, spot.id, spot.label) }}>
                           <div
-                            key={p.id}
                             onClick={() => navigate(`/projects/${p.id}`)}
                             {...rowMenu('project', p.id, p.name)}
                             className="kf-lift-tilt"
@@ -750,7 +795,7 @@ export function ProjectsPage() {
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}><EmojiText text={p.name} /></div>
                                 <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
-                                  {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}` : 'no date'}
+                                  {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', timeZone: 'UTC' })}` : 'no date'}
                                 </div>
                               </div>
                               <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color ?? d.color ?? (p.type === 'retainer' ? 'var(--acc-lavender-deep)' : 'var(--acc-terra)'), flex: 'none', marginTop: 3 }} />
@@ -768,6 +813,7 @@ export function ProjectsPage() {
                               {stat.hasTop3Task && <span style={{ marginLeft: 'auto', color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                             </div>
                           </div>
+                          </DragRow>
                         )
                       })}
 
@@ -779,10 +825,7 @@ export function ProjectsPage() {
 
                       {/* Plant a project here stub slot */}
                       <div
-                        onClick={() => {
-                          setNewType('standard')
-                          setShowNewModal(true)
-                        }}
+                        onClick={() => openNew('standard', d.id)}
                         style={{ display: 'block', background: 'var(--paper-parchment)', border: '1px dashed var(--line-solid)', borderRadius: 8, padding: '13px 14px', cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
@@ -791,7 +834,7 @@ export function ProjectsPage() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </DropZone>
                 )
               })}
           </div>
@@ -849,10 +892,7 @@ export function ProjectsPage() {
                         </span>
                         <span
                           className="chip"
-                          onClick={() => {
-                            restoreProject(p)
-                            queryClient.invalidateQueries({ queryKey: ['projects'] })
-                          }}
+                          onClick={() => restoreProjectWithUndo(p)}
                           style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}
                         >
                           restore
@@ -864,7 +904,7 @@ export function ProjectsPage() {
               ))}
 
             <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
                 Open the Herbarium — {archivedProjects.length} pressed specimens →
               </Link>
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
@@ -879,7 +919,7 @@ export function ProjectsPage() {
       </main>
 
       {/* NEW PROJECT MODAL */}
-      {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} domains={domains} />}
+      {showNewModal && <NewProjectModal onClose={() => setShowNewModal(false)} defaultType={newType} defaultDomainId={newDomainId} domains={domains} />}
       {menuLayer}
         {typeLayer}
     </div>

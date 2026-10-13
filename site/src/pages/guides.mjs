@@ -1,7 +1,32 @@
-import { head2, icon, btn, kmark } from '../lib.mjs'
+import { head2, icon, btn, kmark, esc } from '../lib.mjs'
 import { APP_URL, REPO, RELEASES_URL, LATEST, apkUrl, exeUrl } from '../data.mjs'
 
-const UPDATED = '4 Oct 2026'
+const UPDATED = '12 Oct 2026'
+const pre = (t) => `<pre tabindex="0"><code>${esc(t)}</code></pre>`
+
+// AI assistants over MCP — the same three setups the app's Settings card fills in with your key
+// (app/src/features/settings/mcpKey.ts, docs/MCP.md), with placeholders here.
+const MCP_URL = 'https://<project>.supabase.co/functions/v1/mcp'
+const BEARER = 'Bearer <your key>'
+const MCP = {
+  code: `claude mcp add --transport http kais-flow ${MCP_URL} --header "Authorization: ${BEARER}"`,
+  desktop: JSON.stringify({ mcpServers: { 'kais-flow': { command: 'npx', args: ['-y', 'mcp-remote', MCP_URL, '--header', 'Authorization:${KF_AUTH}'], env: { KF_AUTH: BEARER } } } }, null, 2),
+  other: JSON.stringify({ mcpServers: { 'kais-flow': { type: 'http', url: MCP_URL, headers: { Authorization: BEARER } } } }, null, 2),
+}
+// The Akiflow dump the importer reads (app/src/features/import/adapters/akiflow.ts).
+const AKIFLOW_PROMPT = `Using my Akiflow connection, write my Akiflow data to a file called akiflow-dump.json for the Kai's Flow importer, in exactly this shape:
+
+{"source": "akiflow",
+ "projects": [{"id", "name"}],
+ "tasks": [{"id", "title", "description", "date", "datetime", "deadline",
+            "duration", "priority", "project_id", "tags", "status",
+            "done", "done_at"}],
+ "events": [{"id", "title", "start", "end", "all_day"}]}
+
+Include all my projects and all my open and someday tasks. Dates as YYYY-MM-DD, times as
+YYYY-MM-DDTHH:MM:SS on my own clock, duration in minutes, priority as Akiflow names it
+(GOAL, HIGH, MEDIUM or LOW), tags as their names, status "someday" for someday tasks.
+Leave out anything you don't have. Events are optional.`
 // small step pictures (tiny phone/desktop dialogs)
 const pic = {
   apk: `<div class="mini" role="img" aria-label="A download notification: the APK finished downloading, with Open"><div class="mini-d"><b>kais-flow-<span data-release-tag>${LATEST.tag}</span>.apk</b>${LATEST.apkMB} MB · Download complete<div class="row" style="margin-top:6px"><span class="lnk">Open</span></div></div></div>`,
@@ -21,14 +46,16 @@ const GUIDES = [
       ['sign-up', 'Make an account', `<p>Open <a href="${APP_URL}">the app</a> and sign up with your email and a password. If an email asks you to confirm, tap the link in it. The same account works on the web, on Android and on Windows.</p>`],
       ['first-three', 'Your first three things', '<p>The first run asks for three things you want to do. They become your Top 3 for today, and you land on Today with them waiting.</p>'],
       ['plan', 'Plan my day, each morning', '<p>Plan my day takes about three minutes: pick your Top 3 from everything you have, star one as the goal, and keep or move the suggested times. <a href="/features/plan-and-today/">More about Plan & Today</a>.</p>'],
-      ['capture', 'Catch things as they come', '<p>Tap the round button to type a thought, or hold it to talk. Dates like “Friday 5pm” are picked out for you, and everything waits in the Inbox until you sort it. <a href="/guides/capture-from-anywhere/">Capture from anywhere</a>.</p>'],
+      ['capture', 'Catch things as they come', '<p>On a phone, tap the round button to type a thought, or hold it to talk. On a computer, press <b>Capture</b> or <kbd>⌘/Ctrl</kbd> <kbd>K</kbd>. Dates like “Friday 5pm” are picked out for you, and anything that isn’t a task yet waits in the Inbox until you sort it. <a href="/guides/capture-from-anywhere/">Capture from anywhere</a>.</p>'],
       ['shut-down', 'Shut down in the evening', '<p>From five in the evening, Shut down offers to close the day: tick what’s done, move what isn’t, and choose tomorrow’s three.</p>'],
-      ['next', 'Where to go next', '<ul><li><a href="/guides/install-android/">Install on Android</a> or <a href="/guides/install-windows/">on Windows</a>.</li><li><a href="/guides/import/">Bring your old app’s tasks with you</a>.</li><li><a href="/guides/gestures/">Gestures</a> and <a href="/guides/keyboard-shortcuts/">keyboard shortcuts</a>.</li></ul>'],
+      ['tour', 'A short tour, and the Guide', '<p>On your first day, a few garden notes point out the main things: capture, the Top 3, your tasks and Plan my day. Skip them any time. After that, the <b>Guide</b> inside the app has the how-to for everything, with search: <b>More → Guide</b> on a phone, <b>Guide</b> at the foot of the sidebar on a computer.</p>'],
+      ['clock', 'Your own clock', '<p>Today, reminders and the morning digest follow your time zone. The app offers your device’s zone once; change it any time in <b>Settings → Time zone</b>.</p>'],
+      ['next', 'Where to go next', '<ul><li><a href="/guides/install-android/">Install on Android</a> or <a href="/guides/install-windows/">on Windows</a>.</li><li><a href="/guides/import/">Bring your old app’s tasks with you</a>.</li><li><a href="/guides/gestures/">Gestures</a> and <a href="/guides/keyboard-shortcuts/">keyboard shortcuts</a>.</li><li><a href="/guides/connect-an-ai-assistant/">Connect an AI assistant</a>.</li></ul>'],
     ] },
   { slug: 'import', group: 'Start here', ic: 'download', title: 'Import your old app', blurb: 'Akiflow, Todoist, TickTick, Notion, Obsidian, Kindle, Goodreads.', min: 4,
     intro: 'Bring your tasks, projects and books with you. The file is read on your own device, and importing the same file twice doesn’t make doubles.',
     sections: [
-      ['open', 'Open the importer', '<p>In the app, go to <b>Settings → Import data → Open importer</b>. Pick where you’re coming from, choose the file, check the preview, and import. There’s an Undo if it isn’t what you wanted.</p>'],
+      ['open', 'Open the importer', '<p>On a computer, go to <b>Settings → Your data → Open importer</b>. Pick where you’re coming from, choose the file, check the preview, and import. There’s an Undo if it isn’t what you wanted.</p>'],
       ['files', 'Which file each app needs', table(['From', 'The file', 'Where to get it'], [
         ['Todoist', '<code>.csv</code>, one per project', 'Open a project → ⋯ → Export as a template → Download CSV. Several at once is fine.'],
         ['TickTick', 'backup <code>.csv</code>', 'TickTick on the web: Settings → Account → Backup & Restore → Generate backup.'],
@@ -36,9 +63,15 @@ const GUIDES = [
         ['Obsidian / Markdown', '<code>.md</code> files or a vault folder', 'No export needed. Every “- [ ]” line becomes a task.'],
         ['Kindle highlights', '<code>My Clippings.txt</code>', 'Plug the Kindle in by USB, open its drive → documents → My Clippings.txt.'],
         ['Goodreads', 'library <code>.csv</code>', 'My Books → Import and export → Export Library, then download the .csv.'],
-        ['Akiflow', '<code>akiflow-dump.json</code>', 'Akiflow has no export button, so the importer reads a JSON dump of your account. <span class="todo">[Kai writes this: how to make the dump]</span>'],
+        ['Akiflow', '<code>akiflow-dump.json</code>', 'Akiflow has no export button, so an AI assistant writes this file for you. <a href="#akiflow">How to make it ↓</a>'],
         ['Anything else', '<code>.csv</code> with a header row', 'Choose Generic CSV and match the columns yourself.'],
       ])],
+      ['akiflow', 'Making the Akiflow file', `<p>Akiflow doesn’t export your tasks, but an AI assistant that can see your Akiflow account can write them down for you. Kai made his with Claude and an Akiflow connector.</p>
+        <ol><li>Open the assistant that’s connected to your Akiflow account, and paste this:</li></ol>
+        ${pre(AKIFLOW_PROMPT)}
+        <ol start="2"><li>Save what it writes as <code>akiflow-dump.json</code>. It’s your whole task list, so keep it to yourself.</li>
+        <li>In Kai’s Flow: <b>Settings → Your data → Open importer → Akiflow JSON</b>, choose the file, and check the preview. Done tasks and calendar events come in only if you turn them on.</li></ol>
+        <p>Times without a zone are read on your own clock (Settings → Time zone). Anything else the assistant puts in the file is kept with each task, so nothing is lost.</p>`],
       ['what-comes', 'What comes with it', '<p>Titles, notes, due dates, projects, labels and, where the app exports them, durations, priorities, subtasks and repeats. Books bring their highlights and reviews. Anything the importer can’t place is kept with the task, so nothing is thrown away.</p>'],
     ] },
   { slug: 'gestures', group: 'Using it', ic: 'menu', title: 'Gestures', blurb: 'Swipe, hold and ⋯ — every gesture has a tap.', min: 3,
@@ -64,17 +97,41 @@ const GUIDES = [
       ['everywhere', 'Everywhere', table(['Keys', 'Does'], [[kbd('⌘/Ctrl K'), 'Command bar'], [kbd('⌘/Ctrl /'), 'Search'], [kbd('⌘/Ctrl J'), 'Chat'], [kbd('n'), 'New task'], [kbd('?'), 'The shortcut list'], [kbd('Esc'), 'Close what’s open']])],
       ['tasks', 'In a task list', table(['Keys', 'Does'], [[kbd('j k'), 'Move up and down'], [kbd('e'), 'Complete'], [kbd('↵'), 'Open the task'], [kbd('t'), 'Add to or take off the Top 3'], [kbd('1 2 3'), 'Today · Tomorrow · Next week'], [kbd('p'), 'Move to a project'], [kbd('x'), 'Select several'], [kbd('Ctrl A'), 'Select all'], [kbd('#'), 'Delete']])],
       ['inbox', 'In the Inbox', table(['Keys', 'Does'], [[`${kbd('↑ ↓')} or ${kbd('j k')}`, 'Move up and down'], [kbd('e'), 'File it, with the AI’s suggestion'], [kbd('d'), 'Dismiss'], [kbd('s'), 'Snooze'], [kbd('↵'), 'Edit the title']])],
-      ['command-bar', 'In the command bar', table(['Type', 'Does'], [[kbd('↵'), 'Quick add'], [kbd('⌘/Ctrl ↵'), 'Capture with the AI'], ['<code>!</code> <code>!!</code> <code>!!!</code>', 'Priority'], ['<code>#project</code>', 'Put it in a project'], ['<code>*label</code>', 'Add a label']])],
+      ['command-bar', 'In the command bar', table(['Type', 'Does'], [[kbd('↵'), 'Add it — the AI fills in what you didn’t type'], ['<code>!</code> <code>!!</code> <code>!!!</code>', 'Priority'], ['<code>#project</code>', 'Put it in a project'], ['<code>*label</code>', 'Add a label']])],
     ] },
-  { slug: 'capture-from-anywhere', group: 'Using it', ic: 'mic', title: 'Capture from anywhere', blurb: 'The link, the share sheet, Shortcuts, Tasker.', min: 6,
+  { slug: 'capture-from-anywhere', group: 'Using it', ic: 'mic', title: 'Capture from anywhere', blurb: 'The share sheet, widgets, the tray, the link, Shortcuts, Tasker.', min: 6,
     intro: 'Everything here lands in your Inbox, the same as a capture in the app. None of it costs anything or needs another account.',
     sections: [
-      ['share', 'Android: the share sheet', '<p>Nothing to set up. In any app, tap <b>Share → Kai’s Flow</b> (the Android app or the web app installed from Chrome). You need to be signed in. Text and links work; photos come with Paper capture.</p>'],
-      ['key', 'Your capture key and address', `<p>Everything else sends to one address with your own <b>capture key</b>.</p><ol><li>In the app: <b>Settings → External capture endpoint → Create key</b> (on a computer it’s under Settings → Integrations).</li><li>The key starts with <code>kf_</code> and is shown <b>once</b>. Copy it then; only a fingerprint of it is stored.</li><li>Under <b>How to send things here</b>, press <b>Copy address</b>.</li></ol><p>Keep the key in the <code>Authorization</code> header, never in the address. <b>New key</b> replaces it and <b>Turn off</b> deletes it. A leaked key can only add notes to your own Inbox, at most 200 a day.</p>`],
+      ['share', 'Android: the share sheet', '<p>Nothing to set up. In any app, tap <b>Share → Kai’s Flow</b> (the Android app or the web app installed from Chrome). You need to be signed in. Text and links work; photos don’t yet — for a photo of your notes, use the camera in the capture bar (<a href="/paper/">Paper capture</a>).</p>'],
+      ['widget', 'Android: a capture widget', '<p>A capture widget on your home screen opens Kai’s Flow straight to the capture sheet, keyboard up. To add one, on most phones: hold an empty spot → <b>Widgets</b> → <b>Kai’s Flow</b>.</p>'],
+      ['tray', 'Windows: the tray', '<p>Click the K by the clock. The little flyout has quick capture, so you don’t have to bring the window back.</p>'],
+      ['assistant', 'An AI assistant', '<p>Connected over MCP with a read & write key, Claude or another assistant can add a note to your Inbox when you ask it to. <a href="/guides/connect-an-ai-assistant/">Connect an AI assistant</a>.</p>'],
+      ['key', 'Your capture key and address', `<p>Everything else sends to one address with your own <b>capture key</b>.</p><ol><li>In <b>Settings → Advanced → External capture endpoint</b> (the last section, on a computer and a phone), press <b>Create key</b>.</li><li>The key starts with <code>kf_</code> and is shown <b>once</b>. Copy it then; only a fingerprint of it is stored.</li><li>Under <b>How to send things here</b>, press <b>Copy address</b>.</li></ol><p>Keep the key in the <code>Authorization</code> header, never in the address. <b>New key</b> replaces it and <b>Turn off</b> deletes it. A leaked key can only add notes to your own Inbox, at most 200 a day.</p>`],
       ['iphone', 'iPhone and iPad: Shortcuts', '<ol><li>Shortcuts → <b>+</b> → name it “Add to Kai’s Flow”. In Details, turn on <b>Show in Share Sheet</b>.</li><li>Add <b>Get Contents of URL</b>: your address, Method <code>POST</code>, a header <code>Authorization</code> = <code>Bearer kf_…</code>, and a JSON body with a <code>text</code> field set to Shortcut Input.</li><li>Run it from the share sheet, the home screen, or Siri.</li></ol>'],
       ['android-auto', 'Android: HTTP Shortcuts or Tasker', '<p>For a home-screen button or a voice command, send a <code>POST</code> to your address with the header <code>Authorization: Bearer kf_…</code> and the body <code>{"text": "…"}</code>. HTTP Shortcuts (free, open source) and Tasker’s HTTP Request both do this.</p>'],
       ['bookmarklet', 'A desktop browser: the bookmarklet', '<p>Right after making a key, Settings offers <b>Copy bookmarklet</b>. Paste it as a new bookmark’s address. Clicking it sends the selected text (or the page title) and the page’s address.</p>'],
       ['curl', 'Scripts: curl or PowerShell', '<pre><code>curl -X POST https://&lt;project&gt;.supabase.co/functions/v1/capture \\\n  -H "Authorization: Bearer kf_…" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"text": "call the tyre supplier"}\'</code></pre><p>Add <code>?file=1</code> to the address to let the AI file it the next time the app is open. Without it, nothing you send touches the AI.</p>'],
+    ] },
+  { slug: 'connect-an-ai-assistant', group: 'Using it', ic: 'chat', title: 'Connect an AI assistant', blurb: 'Claude Desktop, Claude Code or any MCP client.', min: 5,
+    intro: 'Kai’s Flow runs a small MCP server — MCP is how Claude and other AI assistants talk to apps. Connect one with a key of your own, and it can tell you what’s on today and, if you let it, add to your lists.',
+    sections: [
+      ['what', 'What it can do', '<p>Ask it “what’s on today?”, “find the tyre invoice task”, “add <i>call the bank</i> for Thursday” or “move the domain renewal to tomorrow”, and it works on your real lists. Kai’s Flow tells it to read freely and to change things only when you ask.</p>' + table(['It can', 'With'], [
+        ['See today: your Top 3, what’s due or overdue, and today’s events', 'Any key'],
+        ['Search your tasks, Inbox notes, projects and events', 'Any key'],
+        ['List your tasks, or open one in full', 'Any key'],
+        ['Read your calendar — the next week, or up to 31 days', 'Any key'],
+        ['List your projects', 'Any key'],
+        ['Add a task', 'Read & write'],
+        ['Tick a task off (a repeating one gets its next date)', 'Read & write'],
+        ['Move a task to 09:00 tomorrow', 'Read & write'],
+        ['Add a note to your Inbox', 'Read & write'],
+      ])],
+      ['key', 'Make a key', '<ol><li>On a computer: <b>Settings → Integrations</b>, then the <b>AI assistants (MCP)</b> card. On a phone: <b>Settings → Connections → AI assistants (MCP)</b>.</li><li>Choose <b>Read & write</b> (it can also add and tick off tasks) or <b>Read only</b> (it can look, never change anything), then <b>Create key</b>.</li><li>The key starts with <code>kf_ai_</code> and is shown <b>once</b>. Copy it then; only a fingerprint of it is stored.</li></ol><p class="tip">Right after you make the key, the card’s <b>Connect an assistant</b> section shows each setup below with your address and key already filled in, each with its own copy button. <b>Copy server address</b> gives you the address on its own.</p>'],
+      ['claude-code', 'Claude Code', '<p>Run this once in a terminal, with your address and key in place:</p>' + pre(MCP.code) + '<p>Then <code>claude mcp list</code> (or <code>/mcp</code> inside Claude Code) should show <b>kais-flow</b> as connected.</p>'],
+      ['claude-desktop', 'Claude Desktop', '<ol><li>In Claude Desktop: <b>Settings → Developer → Edit Config</b>.</li><li>Add this to <code>claude_desktop_config.json</code> — on Windows it’s in <code>%APPDATA%\\Claude\\</code>, on a Mac in <code>~/Library/Application Support/Claude/</code>. If the file already has <code>mcpServers</code>, put <code>kais-flow</code> inside it.</li></ol>' + pre(MCP.desktop) + '<ol start="3"><li>Restart Claude Desktop.</li></ol><p>It needs <a href="https://nodejs.org/">Node.js</a>: Claude Desktop’s own <b>Add custom connector</b> only signs in with OAuth, so the key goes through a small bridge, <code>mcp-remote</code>. Leave <code>Authorization:${KF_AUTH}</code> exactly as it is; your key goes in <code>KF_AUTH</code>.</p>'],
+      ['other', 'Any other MCP client', '<p>Anything that speaks remote MCP over HTTP with a header — Cursor, VS Code and others — takes the address and the header in the usual shape:</p>' + pre(MCP.other) + '<p>On claude.ai: only if your account shows <b>Request headers</b> under <b>Customize → Connectors → Add custom connector</b> (a beta, not on every account). Use the address as the server URL, choose <b>No sign-in</b>, and add the request header <code>authorization</code> = <code>Bearer</code> and your key. Without it, use Claude Desktop or Claude Code.</p>'],
+      ['try', 'Try it', '<p>Ask “what’s on today?” first. Times are on your own clock, the one in <b>Settings → Time zone</b>, and a day without a time means 09:00. What the assistant changes shows up in the open app straight away, and counts like anything you do in the app.</p>'],
+      ['privacy', 'What it sees, and turning it off', '<ul><li><b>It can see</b> your tasks (titles, notes, dates, labels, projects), your projects, calendar events, and Inbox notes that come up in a search.</li><li><b>Never</b> your journal or the people you keep. No tool reaches them.</li><li>What a tool returns is read by the assistant you connected, so its maker’s data policy covers it. Connect only an assistant you trust with your task list, and pick <b>Read only</b> if it should never change anything.</li><li><b>Turn off</b> (or <b>New key</b>) in the card stops it at once: its very next call is refused.</li><li>A key gets 500 tool calls a day, and every call runs as you, under the same rules that keep each account to its own rows.</li></ul>'],
     ] },
   { slug: 'install-android', group: 'Installing', ic: 'android', title: 'Install on Android', blurb: 'The APK, and the one “allow” step.', min: 4,
     intro: 'Kai’s Flow isn’t on the Play Store yet, so you install it yourself. It takes about a minute, and you only do the “allow” step once.',
@@ -83,8 +140,10 @@ const GUIDES = [
       ['download', 'Download the APK', `<p>On your phone, open <a href="/download/">the download page</a> and tap <b>Download APK</b>, or get <a href="${apkUrl(LATEST.tag)}" data-asset="apk">kais-flow-<span data-release-tag>${LATEST.tag}</span>.apk</a> straight from GitHub.</p>`, pic.apk],
       ['allow', 'Allow this one source', '<p>Android asks once whether your browser (or Files) may install apps. Turn on <b>Allow from this source</b>, then go back.</p>', pic.allow],
       ['install', 'Install and sign in', '<p>Tap <b>Install</b>, then <b>Open</b>. Sign in with the same account you use on the web; your days are already there. The first time you use voice capture, allow the microphone.</p>', pic.install],
+      ['notifications', 'Notifications', '<p>The first time you open the app, Android asks whether Kai’s Flow may send notifications — say <b>Allow</b>. Reminders, the morning digest and the evening nudge are then lined up with Android for the next three days, each time you open the app. A reminder has <b>Done</b> and <b>Tomorrow</b> right on it.</p>'],
+      ['widgets', 'Widgets', '<p>On most phones: hold an empty spot on the home screen → <b>Widgets</b> → <b>Kai’s Flow</b>, and drag one out. There are 34 — Today, the Top 3, capture, the calendar, focus, routines, the Inbox and more. To keep task names off the home screen, turn on <b>Settings → Notifications → Hide titles on the home screen</b>.</p>'],
       ['updating', 'Updating', '<p class="tip"><b>Updating:</b> Settings → App → Check for updates tells you when there’s a new version and downloads it. Install it over the old one, the same three steps.</p>'],
-      ['trouble', 'If something goes wrong', '<p>If Android says the app <b>conflicts with an existing package</b>, that build was signed with a different key. Open the old app and check it says <b>Synced</b>, uninstall it, then install the new one. Nothing is lost — your data lives in your account. Reminders don’t come through the Android app yet; the web app installed from Chrome can send them.</p>'],
+      ['trouble', 'If something goes wrong', '<p>If Android says the app <b>conflicts with an existing package</b>, that build was signed with a different key. Open the old app and check it says <b>Synced</b>, uninstall it, then install the new one. Nothing is lost — your data lives in your account.</p><p>If reminders don’t arrive, open <b>Settings → Notifications → Send a test notification</b>: it says what’s in the way. If notifications were turned down, switch them back on in Android Settings → Apps → Kai’s Flow → Notifications.</p>'],
     ] },
   { slug: 'install-windows', group: 'Installing', ic: 'windows', title: 'Install on Windows', blurb: 'The installer, and the SmartScreen step.', min: 3,
     intro: 'The Windows app is the same Kai’s Flow in its own window. It installs just for you, so it never asks for an admin password.',
@@ -92,13 +151,15 @@ const GUIDES = [
       ['download', 'Download the installer', `<p>Get it from <a href="/download/">the download page</a>, or <a href="${exeUrl(LATEST.tag)}" data-asset="exe">kais-flow-<span data-release-tag>${LATEST.tag}</span>-windows-setup.exe</a> from GitHub. It’s about ${LATEST.exeMB} MB and runs on Windows 10 and 11.</p>`, pic.exe],
       ['smartscreen', 'Say yes to SmartScreen', '<p>The installer isn’t code-signed (that costs money), so Windows may say <b>“Windows protected your PC”</b>. Click <b>More info → Run anyway</b>.</p>', pic.smart],
       ['run', 'Run it', '<p>It installs for you only — no admin needed. Then open <b>Kai’s Flow</b> from the Start menu and sign in.</p>', pic.running],
+      ['tray', 'The K by the clock', '<p>Kai’s Flow keeps a K in the tray by the clock. Click it for a little flyout: what’s on now and next, your Top 3, quick capture and focus. Right-click it for a menu. Close the window and it waits there. Reminders arrive as Windows notifications with <b>Done</b> and <b>Tomorrow</b>.</p><p>All of it is in <b>Settings → Notifications</b>: <b>Show in the system tray</b>, <b>Start with Windows</b> (it opens quietly to the tray), quiet hours, and <b>Send a test notification</b>.</p>'],
       ['updating', 'Updating and removing', '<p class="tip"><b>Updating:</b> Settings → App → Check for updates tells you when there’s a new version. Install it the same way.</p><p>To remove it: Windows Settings → Apps → Kai’s Flow → Uninstall. Your data stays in your account.</p>'],
     ] },
   { slug: 'your-data', group: 'Your data', ic: 'lock', title: 'Your data & privacy', blurb: 'Export, delete, and what the AI sees.', min: 3,
     intro: 'The short version of the privacy policy, with the practical bits: where your days live, what the AI sees, and how to take it all back.',
     sections: [
       ['where', 'Where it lives', '<p>Your account and everything you write are stored in a Supabase database in the EU (Frankfurt). Each account can only read its own rows. The app keeps a copy of your tasks and plans on your device so it works offline; your journal and notes about people are not kept in that copy.</p>'],
-      ['ai', 'What the AI sees', '<p>Only what you send it on purpose: an AI capture, a voice note, a message in chat (with the items it looks up to answer you). It goes to Groq, which doesn’t train on it and, with zero data retention, keeps nothing after replying. A plain capture never touches the AI.</p>'],
+      ['ai', 'What the AI sees', '<p>What you capture in the app — typed, spoken or photographed — so it can pick out the date, the time and the rest; and a message in chat, with the items from your account it looks up to answer you. It goes to Groq, which doesn’t train on it and, with zero data retention, keeps nothing after replying. Things sent to your capture link stay away from the AI unless you add <code>?file=1</code>. Nothing else in your account goes to Groq.</p>'],
+      ['assistant', 'An AI assistant you connect', '<p>If you <a href="/guides/connect-an-ai-assistant/">connect Claude or another assistant</a>, it sees what its tools return: your tasks, projects, calendar and Inbox notes that come up in a search — never your journal or people. Its maker’s policy covers what it sees. <b>Turn off</b> the key in Settings and it stops at once.</p>'],
       ['take', 'Getting a copy, or leaving', `<p>There’s no one-tap export yet. Write to the address on the <a href="/privacy/#contact">privacy page</a> and you’ll get everything you’ve written, or your account and all of it deleted.</p>`],
       ['more', 'The whole policy', '<p><a href="/privacy/">Read the privacy policy</a> — it’s short.</p>'],
     ] },
@@ -108,7 +169,7 @@ const GROUPS = ['Start here', 'Using it', 'Installing', 'Your data']
 const index = {
   path: '/guides/',
   title: 'Guides',
-  description: 'Help for Kai’s Flow: getting started, installing on Android and Windows, capture from anywhere, importing your old app, gestures, keyboard shortcuts and your data.',
+  description: 'Help for Kai’s Flow: getting started, installing on Android and Windows, capture from anywhere, connecting an AI assistant, importing your old app, gestures, keyboard shortcuts and your data.',
   og: 'guides',
   body: `<section class="sec first"><div class="wrap">
   <div class="head" style="margin-inline:auto;text-align:center;align-items:center"><span class="eyebrow">Guides</span><h1>How can we help?</h1></div>

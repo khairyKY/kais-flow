@@ -77,4 +77,19 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
   it('a done row only reopens or goes to Trash', () => {
     expect(labels(task({ status: 'done', completed_at: '2026-09-27T08:00:00Z' }), { tomorrowHint: 'x', canSelect: true })).toEqual(['Reopen', 'Delete'])
   })
+
+  it('desktop: Tomorrow is back on top, before Plan… (Kai 2026-10-12 audit); the phone swipes for it', () => {
+    const desk = taskMenuSpec(task(), { tomorrowHint: 'Mon 09:00', desktop: true })
+    expect(desk.slice(0, 2).map((e) => e.label)).toEqual(['Tomorrow', 'Plan…'])
+    expect(desk[0]).toMatchObject({ key: 'tomorrow', hint: 'Mon 09:00' })
+    expect(labels(task(), { tomorrowHint: 'x', desktop: true, bulkCount: 3, selected: true })[0]).toBe('Tomorrow (3)')
+    expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Tomorrow')
+  })
+
+  it('desktop: Labels (the Label picker, key L) after Priority; the phone sheet stays as MK Action Sheet draws it', () => {
+    const desk = labels(task(), { tomorrowHint: 'x', desktop: true })
+    expect(desk.slice(desk.indexOf('Priority'), desk.indexOf('Priority') + 2)).toEqual(['Priority', 'Labels'])
+    expect(taskMenuSpec(task(), { tomorrowHint: 'x', desktop: true }).find((e) => e.key === 'labels')).toMatchObject({ sub: true })
+    expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Labels')
+  })
 })

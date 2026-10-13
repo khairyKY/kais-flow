@@ -38,9 +38,9 @@ const little = () => `<section class="sec"><div class="wrap">
     <figure><div class="card lt" role="img" aria-label="A clover growing over twelve days of a streak: a seedling, then a small clover, then a full four-leaf clover">
       <div class="lt-grow"><div>${img('clover-seedling', '', { w: 56, style: 'height:56px' })}<span class="eyebrow faint">Day 1</span></div><div>${img('clover-awake', '', { w: 76, style: 'height:76px' })}<span class="eyebrow faint">Day 5</span></div><div>${img('clover-four_leaf', '', { w: 100, style: 'height:100px' })}<span class="eyebrow faint">Day 12</span></div></div>${dots}</div>
       <figcaption><h3>A streak that grows</h3><p>Keep a routine and its sprout grows. Miss one day and it waits for you.</p></figcaption></figure>
-    <figure><div class="card lt lt-done" role="img" aria-label="A task ticked off with a soft paper sound: shhff">
-      <div class="lt-row"><span class="box">${icon('check', 15)}<span class="lt-arcs"><i style="left:-14px;transform:rotate(-30deg)"></i><i style="left:2px"></i><i style="left:18px;transform:rotate(30deg)"></i></span></span><s>Buy milk</s></div><span class="lt-shh">shhff…</span>${dots}</div>
-      <figcaption><h3>The sound of done</h3><p>Ticking a task makes a soft paper rustle. Off in Settings if you’d rather.</p></figcaption></figure>
+    <figure><div class="card lt lt-done" role="img" aria-label="A task ticked off with one soft note: tock">
+      <div class="lt-row"><span class="box">${icon('check', 15)}<span class="lt-arcs"><i style="left:-14px;transform:rotate(-30deg)"></i><i style="left:2px"></i><i style="left:18px;transform:rotate(30deg)"></i></span></span><s>Buy milk</s></div><span class="lt-shh">tock…</span>${dots}</div>
+      <figcaption><h3>The sound of done</h3><p>Ticking a task plays one soft note — felt piano, kalimba or glass. Off in Settings if you’d rather.</p></figcaption></figure>
   </div>
   <p class="proof"><span class="hand">built by one student, for himself first</span><a class="eyebrow faint" href="/field-notes/">${RELEASES.length} releases since 27 September</a></p>
 </div></section>`
@@ -52,6 +52,8 @@ const FAQ = [
   ['Where is my data?', 'In a Supabase database in the EU (Frankfurt). Each account can only read its own rows. The <a href="/privacy/">privacy policy</a> has the details.'],
   ['Can I import from Akiflow or Todoist?', 'Yes — and from TickTick, Notion, Obsidian, Kindle and Goodreads. Projects, due dates and notes come with it. <a href="/guides/import/">Here’s how.</a>'],
   ['Does it read my Google Calendar?', 'Not yet. Google Calendar sync is coming; it will stay off until you connect it, and you’ll be able to disconnect it any time.'],
+  ['Can I use it with Claude or another AI assistant?', 'Yes. Make a key in Settings and connect Claude Desktop, Claude Code or any MCP client. It can read your tasks and calendar, and change things only if you allow it. Your journal and people are never shared. <a href="/guides/connect-an-ai-assistant/">Here’s how.</a>'],
+  ['Is there a widget for my phone?', 'On Android, 34 of them: Today, the Top 3, capture, the calendar, focus, routines and more. Tick things off without opening the app. <a href="/features/apps/">The apps</a>.'],
 ]
 export const faq = () => `<div class="faq">${FAQ.map(([q, a]) => `<details><summary>${q}${icon('chevron', 20)}</summary><p>${a}</p></details>`).join('')}</div>`
 
@@ -86,7 +88,7 @@ ${little()}
 <section class="sec" id="paper"><div class="wrap split">
   <div>
     ${head2({ eyebrow: 'Made for paper people', title: 'Some days want a pen', lead: 'If you think better on paper, Kai’s Flow hands you the page. Your habits, your plan and your boxes, laid out the way you write them. In the evening, photograph the page, and the ticks come back as done.' })}
-    <div class="soonline"><span class="chip soon">Coming soon</span>Notebook page · the ticks loop</div>
+    <div class="soonline"><span class="chip live"><i aria-hidden="true"></i>Live</span>Notebook page · Paper capture · the ticks loop</div>
     <p style="margin-top:22px"><a class="more" href="/paper/">For people who think on paper →</a></p>
   </div>
   ${papers()}

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- W34 Season (2×1): the season and the weather where you are -->
+<!-- W34 Season (2×1): the season (weather cut 2026-10-12) -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
     <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
     <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim">

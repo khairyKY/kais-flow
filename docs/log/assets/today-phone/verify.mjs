@@ -219,7 +219,8 @@ for (const theme of ['day', 'night']) {
     check(`${name} goal card carries its block time`, (await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)).includes('13:30–15:00'), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
     check(`${name} first event says how far off it is`, /IN 1H20M/i.test(await text(page, `[id="upnext-${E(1)}"] .tp-meta`)), await text(page, `[id="upnext-${E(1)}"] .tp-meta`))
     const evRow = page.locator(`[id="upnext-${E(3)}"]`)
-    check(`${name} event row: time · lavender rule · no checkbox, no ⋯`, (await evRow.locator('.tp-ev-time').innerText()) === '15:00' && (await evRow.locator('.tp-ev-rule').count()) === 1 && (await evRow.locator('.kf-checkbox, .kf-row-more').count()) === 0 && (await evRow.evaluate((e) => e.getBoundingClientRect().height)) >= 56)
+    // fix-today (2026-10-12): the event row gained the row grammar's ⋯ (Open in calendar · Delete).
+    check(`${name} event row: time · lavender rule · no checkbox, a ⋯`, (await evRow.locator('.tp-ev-time').innerText()) === '15:00' && (await evRow.locator('.tp-ev-rule').count()) === 1 && (await evRow.locator('.kf-checkbox').count()) === 0 && (await evRow.locator('.kf-row-more').count()) === 1 && (await evRow.evaluate((e) => e.getBoundingClientRect().height)) >= 56)
     check(`${name} task rows are ≥ 56 tall with 48 targets`, await page.locator(`[id="task-${id(REVIEW)}"]`).evaluate((e) => e.getBoundingClientRect().height >= 56 && [...e.querySelectorAll('.kf-star, .kf-row-more')].every((b) => b.getBoundingClientRect().width >= 48)))
     check(`${name} each item once: deep work's task is its Up next row, not also a task row`, (await count(page, `[id="task-${id(DEEP)}"]`)) === 0 && (await count(page, `[id="upnext-${E(1)}"] .kf-checkbox`)) === 1)
     check(`${name} fold closed, no fold rows`, (await count(page, '.tp-fold[aria-expanded="false"]')) === 1 && (await count(page, `[id="task-${id(MILK)}"]`)) === 0)
@@ -246,6 +247,10 @@ for (const theme of ['day', 'night']) {
     await tap(cdp, doneBtn)
     check(`${name} ✓ → Done + Undo toast`, (await toasts(page)).includes('Done'), JSON.stringify(await toasts(page)))
     await sleep(300)
+    // fix-today (MK Now Card "Just done"): struck through with Undo while the toast is up, then it leaves.
+    check(`${name} slip reads Just done (struck, Undo) while the toast is up`, /DONE · /i.test(await slip.innerText().catch(() => '')) && (await slip.locator('.tp-slip-title.is-done').count()) === 1)
+    await page.clock.runFor(5000)
+    await sleep(500)
     check(`${name} slip leaves once its task is done`, (await slip.count()) === 0)
     await shot(page, `${name}-slip-done`)
     await phoneBasics(page, name, errors)
@@ -418,11 +423,13 @@ for (const theme of ['day', 'night']) {
     const name = `desktop-${key}-${theme}`
     const { ctx, page, errors } = await open(key, theme, desktop)
     await shot(page, name)
-    check(`${name} desktop layout (no phone page, shell strip shown)`, (await count(page, '.tp')) === 0 && (await page.locator('.app-topbar').isVisible()) && (await page.getByRole('heading', { name: 'Sunday, September 27' }).count()) === 1)
+    // today-shell (Today 2a: "Date said three times … Now it's only the H1"): no shell top bar on a computer's Today.
+    check(`${name} desktop layout (no phone page, no shell top bar)`, (await count(page, '.tp')) === 0 && (await page.locator('.app-topbar').count()) === 0 && (await page.getByRole('heading', { name: 'Sunday, September 27' }).count()) === 1)
     const up = await page.locator('[id^="upnext-"]').evaluateAll((els) => els.map((e) => e.id.replace('upnext-', '')))
-    check(`${name} Up next skips the Top 3 block, keeps the rest`, JSON.stringify(up) === JSON.stringify([E(1), E(3), E(4)]), JSON.stringify(up))
+    // fix-today (Today 2a): desktop lists the next two under the Now card's ribbon (the running one is the card).
+    check(`${name} Up next skips the Top 3 block, keeps the rest`, JSON.stringify(up) === JSON.stringify(key === '2a' ? [E(1), E(3)] : [E(3), E(4)]), JSON.stringify(up))
     if (key === '2a') check(`${name} Day card: Plan your day`, (await text(page, '[data-day-card]')).includes('Plan your day'))
-    if (key === '2b') check(`${name} running block reads "Now" in Up next (no slip on desktop)`, (await text(page, `[id="upnext-${E(1)}"]`)).startsWith('Now') && (await count(page, '[id^="slip-"]')) === 0)
+    if (key === '2b') check(`${name} the running block is the Now card (no phone slip on desktop)`, /Now · 09:00–10:30/i.test(await text(page, '.td-now .td-cap')) && (await count(page, '[id^="slip-"]')) === 0)
     check(`${name} goal card shows its block time`, (await text(page, `[id="task-${id(GOAL)}"]`)).includes('13:30–15:00'))
     check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()

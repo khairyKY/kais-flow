@@ -5,7 +5,7 @@
 import { cairoTimeKey } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
 
-export type TaskMenuKey = 'plan' | 'unschedule' | 'project' | 'priority' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
+export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
 
 export interface TaskMenuEntry {
   key: TaskMenuKey
@@ -33,10 +33,14 @@ export interface TaskMenuContext {
   goal?: boolean
   /** A Top 3 row on Today: its place (0 = the goal) and the last open place — Move up / Move down. */
   place?: { index: number; last: number }
+  /** The desktop right-click / ⋯ menu: Tomorrow gets its own top row (the phone swipes for it). */
+  desktop?: boolean
 }
 
 export const PRIORITY_LABELS: Record<number, string> = { 1: 'Critical', 2: 'High', 3: 'Medium' }
 export const REPEAT_LABELS: Record<string, string> = { 'FREQ=DAILY': 'Daily', 'FREQ=WEEKLY': 'Weekly', 'FREQ=MONTHLY': 'Monthly' }
+/** The Repeat submenu's choices, in order (null = Never) — tasks and calendar blocks alike. */
+export const REPEAT_RULES: readonly (string | null)[] = [null, 'FREQ=DAILY', 'FREQ=WEEKLY', 'FREQ=MONTHLY']
 
 export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] {
   const n = ctx.bulkCount && ctx.bulkCount > 1 ? ` (${ctx.bulkCount})` : ''
@@ -44,12 +48,18 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
   if (task.status === 'done' || task.completed_at) return [{ key: 'reopen', label: 'Reopen' }, del]
   const place = !n && ctx.place
   return [
+    // Kai 2026-10-12 audit: under Plan… the most common move took three clicks on desktop — Tomorrow is
+    // back on top there (with its `2` key); the phone keeps its one-swipe Tomorrow and the Plan list.
+    ...(ctx.desktop ? [{ key: 'tomorrow', label: `Tomorrow${n}`, hint: ctx.tomorrowHint } as const] : []),
     // Kai 2026-10-07: Tomorrow + Pick date… became one Plan list (./PlanMenu) — every date option,
     // each saying what it does. Swipe right and the `2` key are still Tomorrow in one move.
     { key: 'plan', label: `${ctx.overdue && !n ? 'Replan' : 'Plan'}…${n}`, sub: true },
     ...(ctx.canUnschedule ? [{ key: 'unschedule', label: 'Unschedule' } as const] : []),
     { key: 'project', label: `Move to…${n}`, hint: ctx.projectName ?? 'None', sub: true },
     { key: 'priority', label: 'Priority', hint: (task.priority && PRIORITY_LABELS[task.priority]) || 'None', sub: true },
+    // The Label picker (Overlays.dc.html, keyboard L) — the desktop menu's; the phone edits labels in
+    // the task sheet's chips, and its action sheet stays as MK Action Sheet draws it.
+    ...(ctx.desktop ? [{ key: 'labels', label: 'Labels', sub: true } as const] : []),
     { key: 'repeat', label: 'Repeat', hint: task.recurrence_rule ? (REPEAT_LABELS[task.recurrence_rule] ?? 'Custom') : 'Never', sub: true },
     { key: 'remind', label: 'Remind', hint: task.reminder_at ? cairoTimeKey(new Date(task.reminder_at)) : 'Off', sub: true },
     { key: 'top3', label: task.top3 ? 'Remove from Top 3' : 'Add to Top 3' },

@@ -14,7 +14,6 @@ import { playSound, closeTheGarden } from '../../lib/sounds'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastAction, toastUndo } from '../../lib/undo'
-import { localDateKey } from '../routines/streaks'
 import { logRitualFinished, logRitualStep, setSeed, useDraft, useRitualStepsToday, useSeedsFor } from './api'
 import { loopDayKey, seedTargetDate } from './loopDay'
 import { SHUT_STEPS, closeDay, daysBetween, headerDate, rolledMeta, seedDayName, span, swapIn, sweepRows, tomorrowSuggestions, withPick } from './ritualLogic'
@@ -173,7 +172,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     logRitualFinished('evening', steps)
     playSound('ritual_done') // before the garden closes: closing it is what silences it
     // Settings 3a: "The garden is silent after you close it." Quiet hours lift at the date turn.
-    closeTheGarden(localDateKey(new Date()))
+    closeTheGarden(loopDayKey(new Date()))
     setSummary([...stats, `${stars.length} seeded`])
     clearDraft()
   }
@@ -195,6 +194,12 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
             <div className="rt-summary-title">The garden's closed.</div>
             <span className="rt-hand is-mine">See you in the morning ✿</span>
             <div className="rt-meta">{summary.map((s) => <span key={s}>{s}</span>)}</div>
+            {/* The Notebook page, for people who set up their paper journal at night. Past midnight the
+                morning these seeds are for is already "today" on the calendar. */}
+            <button type="button" className="rt-link" onClick={() => navigate(`/notebook?day=${seedTargetDate(new Date()) === cairoDateKey(new Date()) ? 'today' : 'tomorrow'}`)}>
+              Write tomorrow’s page
+              <Icon name="chevright" size={16} />
+            </button>
           </div>
         }
         right={null}

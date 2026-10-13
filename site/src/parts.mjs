@@ -26,7 +26,7 @@ export const FEATURES = [
   ['journal', 't-butter', 'Journal and herbarium', 'Write the day down. Finished projects are pressed like flowers.', '/features/journal/'],
   ['people', 't-blossom', 'People', 'Birthdays, the last time you spoke, and notes on each person.', '/features/people/'],
   ['download', 't-hyd', 'Bring your lists', 'Import from Todoist, TickTick, Notion, Obsidian or Akiflow.', '/integrations/'],
-  ['notebook', 't-butter', 'Notebook page and paper capture', 'Copy your day into a notebook, then photograph it back into tasks.', '/paper/', true],
+  ['notebook', 't-butter', 'Paper capture', 'Photograph your handwritten notes and they come back as tasks — Arabic too. The Notebook page is next.', '/paper/'],
 ]
 export const fcell = ([ic, tone, title, line, href, isSoon], { link = false, more = '' } = {}) => `<div class="fcell"><span class="dot ${tone}">${icon(ic)}</span>
   <div class="fcell-t"><h3>${title}</h3>${isSoon ? soon() : ''}</div><p>${line}</p>${link ? `<a class="go" href="${href}">${more || title} →</a>` : ''}</div>`

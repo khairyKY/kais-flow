@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isSelectAllKey } from './useListKeys'
+import { bindingFor, isSelectAllKey } from './useListKeys'
 
 // The Ctrl+A guard every task list goes through (Kai 2026-10-07: "Ctrl+A isn't working for tasks").
 const body = { tagName: 'BODY', closest: () => null }
@@ -32,5 +32,21 @@ describe('isSelectAllKey', () => {
   })
   it('an empty field in an overlay (command bar, picker search) never selects the list behind it', () => {
     expect(isSelectAllKey(key({ target: field('', true) }))).toBe(false)
+  })
+})
+
+// Kai 2026-10-12: "select 3 tasks and press T — it doesn't work".
+describe('bindingFor — a letter key means the same on any layout', () => {
+  const top3 = { keys: ['t'], label: 'Toggle Top 3', run: () => {} }
+  const one = { keys: ['1'], label: 'Today', run: () => {} }
+  const bindings = [top3, one]
+  it('t, Shift+T / Caps Lock, and T on an Arabic layout', () => {
+    expect(bindingFor(bindings, { key: 't', code: 'KeyT' })).toBe(top3)
+    expect(bindingFor(bindings, { key: 'T', code: 'KeyT' })).toBe(top3)
+    expect(bindingFor(bindings, { key: 'ف', code: 'KeyT' })).toBe(top3)
+  })
+  it('non-letter keys still match by key only', () => {
+    expect(bindingFor(bindings, { key: '1', code: 'Digit1' })).toBe(one)
+    expect(bindingFor(bindings, { key: 'q', code: 'KeyQ' })).toBeUndefined()
   })
 })

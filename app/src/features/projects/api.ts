@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
+import { useToastStore } from '../../lib/toastStore'
 import { queryClient } from '../../lib/queryClient'
 import { carryTasksToDomain } from '../tasks/api'
 import type { Project, TimeEntry } from '../../lib/types'
@@ -107,6 +108,24 @@ export function restoreProject(project: Project): void {
   logActivity('project.restored', 'project', project.id, {})
 }
 
+/** Finish / Archive = one tap + Undo (product audit 2026-10-12, Flow Audit §4). The pressing
+ * ceremony is offered afterwards — `press` rides the same toast as "Press it ✿" (and the Herbarium
+ * shelf offers it too) — never a step in the way of filing the project. */
+export function finishProjectWithUndo(project: Project, press?: () => void): void {
+  archiveProject(project)
+  toastUndo(`Finished · ${project.name}`, () => restoreProject(project))
+  if (!press) return
+  // ToastHost draws an action beside Undo; toastUndo itself takes none, so it's set on that toast.
+  const t = useToastStore.getState().toasts.at(-1)
+  if (t) useToastStore.setState((s) => ({ toasts: s.toasts.map((x) => (x.id === t.id ? { ...x, action: { label: 'Press it ✿', run: press } } : x)) }))
+}
+
+/** The Finished list's restore (desktop and phone): back to active, "Restored · Undo" files it away again. */
+export function restoreProjectWithUndo(project: Project): void {
+  restoreProject(project)
+  toastUndo('Restored', () => archiveProject(project))
+}
+
 /** Kai 2026-10-03 (Projects ⋯ / right-click → Delete): to Trash, no confirm, "Moved to Trash ·
  * Undo". Its tasks keep their project_id while it rests there, so Undo or Trash → Restore puts
  * everything back; only composting it (30 days) lets them go, to no project (migration 0044). */
@@ -186,6 +205,15 @@ export function renameProjectMilestone(project: Project, milestoneId: string, ti
   logActivity('project.milestone_renamed', 'project', project.id, { milestone_id: milestoneId, title })
 }
 
+export function reweighProjectMilestone(project: Project, milestoneId: string, weight: number): void {
+  if (!project.milestones) return
+  setProjectMilestones(
+    project,
+    project.milestones.map((m) => (m.id === milestoneId ? { ...m, weight } : m))
+  )
+  logActivity('project.milestone_reweighted', 'project', project.id, { milestone_id: milestoneId, weight })
+}
+
 export function removeProjectMilestone(project: Project, milestoneId: string): void {
   if (!project.milestones) return
   setProjectMilestones(
@@ -231,6 +259,19 @@ export function toggleProjectChecklistItem(project: Project, itemId: string): vo
       { item_id: itemId, title: toggled.title }
     )
   }
+}
+
+/** Renames the checklist line only — a task-linked item's task keeps its own title. */
+export function renameProjectChecklistItem(project: Project, itemId: string, title: string): void {
+  if (!project.checklist) return
+  const checklist = project.checklist.map((item) => (item.id === itemId ? { ...item, title } : item))
+  writeRow('projects', { ...project, checklist, updated_at: nowIso() })
+  logActivity('project.checklist_item_renamed', 'project', project.id, { item_id: itemId, title })
+}
+
+/** The checklist's Undo writer, like setProjectMilestones: the exact prior array, same outbox path. */
+export function setProjectChecklist(project: Project, checklist: NonNullable<Project['checklist']>): void {
+  writeRow('projects', { ...project, checklist, updated_at: nowIso() })
 }
 
 export function removeProjectChecklistItem(project: Project, itemId: string): void {

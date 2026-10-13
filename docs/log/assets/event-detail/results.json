@@ -1,0 +1,342 @@
+[
+  {
+    "name": "a1 day: the popover sits beside the block (top-aligned, or clamped into the window)",
+    "ok": true,
+    "detail": "{\"block\":[504.25,488.25,86.921875],\"menu\":[601.171875,421.34375,297.5,363.65625]}"
+  },
+  {
+    "name": "a1 day: ~238px wide at 125% (297px on screen)",
+    "ok": true,
+    "detail": "297.5"
+  },
+  {
+    "name": "a1 day: the rows — date · time · project · repeat · Link a task… · More · Delete",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\\n▸\",\"10:30 – 11:30\\n1h\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\"]"
+  },
+  {
+    "name": "a1 day: no Save button, no \"Sure?\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1 night: the popover sits beside the block (top-aligned, or clamped into the window)",
+    "ok": true,
+    "detail": "{\"block\":[504.25,488.25,86.921875],\"menu\":[601.171875,421.34375,297.5,363.65625]}"
+  },
+  {
+    "name": "a1 night: ~238px wide at 125% (297px on screen)",
+    "ok": true,
+    "detail": "297.5"
+  },
+  {
+    "name": "a1 night: the rows — date · time · project · repeat · Link a task… · More · Delete",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\\n▸\",\"10:30 – 11:30\\n1h\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\"]"
+  },
+  {
+    "name": "a1 night: no Save button, no \"Sure?\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 title: edited in place, saved on Enter",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 colour: Sage saved and the block repaints (no reload)",
+    "ok": true,
+    "detail": "#8A9A7E"
+  },
+  {
+    "name": "a2 colour: the swatches show Sage picked; None clears the hue",
+    "ok": true,
+    "detail": "true "
+  },
+  {
+    "name": "a2 duration: 30m Short ends it at 11:00",
+    "ok": true,
+    "detail": "[\"2026-10-12T08:00:00.000Z\"]"
+  },
+  {
+    "name": "a2 duration: toast with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 project: Site saved on the block",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 the project row now reads Site",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 More ▸ Free: busy false (the deviation row keeps Busy/Free reachable)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 date: Tomorrow moves it to Tue 10:30",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 Esc closes the popover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a3 task block: no Repeat; Complete · Open task · Unschedule · Delete",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\\n▸\",\"12:00 – 12:30\\n30m\\n▸\",\"No project\\n▸\",\"Complete\",\"Open task\",\"Unschedule\\n⌫\",\"Delete\"]"
+  },
+  {
+    "name": "a3 the quiet \"From task\" group names the task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a3 ⌫ unschedules it (the block to Trash, the task stays)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a3 Link a task: the block holds Review Kai, the task scheduled there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a3 Link a task: toast with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a3 Complete: the task done",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 Repeat ▸ Weekly writes FREQ=WEEKLY on the one row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 today's block is now an occurrence with the ↻ badge",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 next week: Mon 19 Oct 10:30 is there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 …and Mon 26 Oct",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 the daily Standup shows every day of the week (one stored row)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 the series skips Tuesday 08:00",
+    "ok": true,
+    "detail": "[\"2026-10-13T05:00:00.000Z\"]"
+  },
+  {
+    "name": "b2 a one-off copy at Tuesday 10:00, pointing at its series",
+    "ok": true,
+    "detail": "[\"2026-10-13T07:00:00.000Z\",null]"
+  },
+  {
+    "name": "b2 the other days stay at 08:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 nothing written with an occurrence id",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 one Undo: the copy gone, Tuesday back at 08:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 Delete opens This event / All events (a submenu, no modal)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 This event: Wednesday skipped, the series still there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 Undo: Wednesday back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 All events: the series to Trash, no Standup left on the grid",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 Undo: the whole week back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 Duration on one occurrence: the series is 1h, every day (Saturday’s block doubles too)",
+    "ok": true,
+    "detail": "33 → 67"
+  },
+  {
+    "name": "b3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 day: the phone grid draws the occurrence with ↻",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 day: the sheet's rows — date · time · project · repeat · More",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats daily\",\"More\"]"
+  },
+  {
+    "name": "p1 day: swatches for colour; Delete in the footer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 Repeat ▸ Weekly from the phone sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 Delete on a repeat asks This event / All events",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats weekly\",\"More\",\"This event\",\"All events\"]"
+  },
+  {
+    "name": "p1 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 night: the phone grid draws the occurrence with ↻",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 night: the sheet's rows — date · time · project · repeat · More",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats daily\",\"More\"]"
+  },
+  {
+    "name": "p1 night: swatches for colour; Delete in the footer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 device in Los Angeles: Lunch (10:30 Cairo) sits on the 10:30 row, not 00:30",
+    "ok": true,
+    "detail": "554.25 vs 554"
+  },
+  {
+    "name": "c1 …and \"Today\" heads Monday 12 (Cairo’s day; LA is still Sunday 00:00)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 the 14:00 slot opens QuickCreate at 2:00 PM / 14:00",
+    "ok": true,
+    "detail": "[\"\",\"2:00 PM\",\"2:30 PM\"]"
+  },
+  {
+    "name": "c1 QuickCreate: Top-3 today / Someday are the kit switches, no OS checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 …and switches",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 QuickCreate: All day is a kit switch",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 rail card ⋯ opens the task menu",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 Plan ▾ reads \"Tomorrow, first thing · Tue 09:00\"",
+    "ok": true,
+    "detail": "Tomorrow, first thing\nTue 09:00"
+  },
+  {
+    "name": "c1 …moves it to tomorrow 09:00 with no calendar block",
+    "ok": true,
+    "detail": "\"2026-10-13T06:00:00.000Z\""
+  },
+  {
+    "name": "c1 …toast \"Moved to tomorrow\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

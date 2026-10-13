@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import {
-  addedSummary, cropFrame, fitWithin, hasClock, matchProject, needsCheck, planWrites, rotatedSize, scansLeft, shouldResume, toEditLine,
+  addedSummary, cropFrame, editLines, fitWithin, hasClock, isHeic, matchProject, movePage, needsCheck, placeEdit, planWrites, rotatedSize, scansLeft, shouldResume, toEditLine, toggleKey,
   type CaptureRow, type PageLine,
 } from './paperMath'
+import { imageFiles } from './image'
 import type { Project } from '../../lib/types'
 
 const project = (id: string, name: string, domain_id: string | null = 'd1') => ({ id, name, domain_id }) as Project
@@ -138,5 +139,66 @@ describe('results → writes', () => {
   it('nothing kept, nothing written', () => {
     expect(planWrites([], 'c', 'all')).toEqual([])
     expect(addedSummary([])).toBe('Added nothing')
+  })
+})
+
+describe('chip edits, selection, page order, HEIC (the 11c–11f gaps)', () => {
+  it('an edit merges over the read; the same edit lands on every selected line', () => {
+    const e1 = editLines({}, ['0:1'], { type: 'event' })
+    const e2 = editLines(e1, ['0:1', '0:4'], { priority: 1 })
+    expect(e2).toEqual({ '0:1': { type: 'event', priority: 1 }, '0:4': { priority: 1 } })
+    expect(e1).toEqual({ '0:1': { type: 'event' } }) // never mutated
+    expect(editLines(e2, [], { dropped: true })).toEqual(e2)
+  })
+  it('long-press selection toggles one line in and out', () => {
+    const one = toggleKey(new Set(), '0:3')
+    expect([...one]).toEqual(['0:3'])
+    expect([...toggleKey(one, '0:5')]).toEqual(['0:3', '0:5'])
+    expect(toggleKey(one, '0:3').size).toBe(0)
+    expect([...one]).toEqual(['0:3']) // a new set each time
+  })
+  it('Move to… → the line’s place: a project, an area, a domain, or nothing', () => {
+    expect(placeEdit({ kind: 'project', id: 'p1', domainId: 'd1', name: 'OS' })).toEqual({ projectId: 'p1', areaId: null, domainId: 'd1', projectLabel: 'OS' })
+    expect(placeEdit({ kind: 'area', id: 'a1', domainId: 'd1', name: 'Health' })).toEqual({ projectId: null, areaId: 'a1', domainId: 'd1', projectLabel: 'Health' })
+    expect(placeEdit({ kind: 'domain', id: 'd2', name: 'Work' })).toEqual({ projectId: null, areaId: null, domainId: 'd2', projectLabel: 'Work' })
+    expect(placeEdit({ kind: 'none', name: 'None' })).toEqual({ projectId: null, areaId: null, domainId: null, projectLabel: null })
+  })
+  it('edited chips reach the writes: priority, area, a picked date (all-day event on that user day)', () => {
+    const read = toEditLine(line('Assignment 2', { when: 'Thu 11:59pm', priority: 1 }), 1, PROJECTS, TAKEN)
+    expect(read.priority).toBe(1)
+    expect(toEditLine(line('pens'), 2, PROJECTS, TAKEN).priority).toBeNull() // older reads have none
+    const task = { ...read, ...placeEdit({ kind: 'area', id: 'a1', domainId: 'd1', name: 'Health' }), priority: 2 }
+    expect(planWrites([task], 'c', 'all')[0]).toMatchObject({ to: 'task', projectId: null, areaId: 'a1', domainId: 'd1', priority: 2 })
+    // The date picker's "Sat 10 Oct", untimed (09:00 Cairo = 06:00Z): an Event becomes all-day on the 10th.
+    const quiz = { ...toEditLine(line('Quiz', { when: 'next Sunday' }), 4, PROJECTS, TAKEN), type: 'event' as const, dueAt: '2026-10-10T06:00:00.000Z', timed: false }
+    expect(planWrites([quiz], 'c', 'all')[0]).toMatchObject({ to: 'event', allDay: true, startsAt: '2026-10-10T00:00:00.000Z', endsAt: '2026-10-11T00:00:00.000Z' })
+    const timed = { ...quiz, dueAt: '2026-10-10T15:30:00.000Z', timed: true }
+    expect(planWrites([timed], 'c', 'all')[0]).toMatchObject({ to: 'event', allDay: false, startsAt: '2026-10-10T15:30:00.000Z', endsAt: '2026-10-10T16:30:00.000Z' })
+  })
+  it('a page dropped on another’s place; the page on screen stays on screen', () => {
+    const P = ['a', 'b', 'c', 'd']
+    expect(movePage(P, 0, 0, 2)).toEqual({ pages: ['b', 'c', 'a', 'd'], active: 2 }) // the shown page moved with it
+    expect(movePage(P, 1, 0, 2)).toEqual({ pages: ['b', 'c', 'a', 'd'], active: 0 }) // b slid left
+    expect(movePage(P, 3, 0, 2).active).toBe(3) // d didn't move
+    expect(movePage(P, 0, 3, 0)).toEqual({ pages: ['d', 'a', 'b', 'c'], active: 1 })
+    expect(movePage(P, 2, 2, 1)).toEqual({ pages: ['a', 'c', 'b', 'd'], active: 1 })
+    expect(movePage(P, 1, 1, 1)).toEqual({ pages: P, active: 1 })
+    expect(movePage(P, 1, 0, 9)).toEqual({ pages: P, active: 1 }) // off the strip: nothing moves
+    expect(movePage(P, 1, -1, 2).pages).toEqual(P) // ⌥← on the first page
+  })
+  it('HEIC: by type, or by name when the browser gives no type', () => {
+    expect(isHeic({ type: 'image/heic', name: 'IMG_0001.HEIC' })).toBe(true)
+    expect(isHeic({ type: 'image/heif' })).toBe(true)
+    expect(isHeic({ type: 'image/heic-sequence' })).toBe(true)
+    expect(isHeic({ type: '', name: 'IMG_0001.heic' })).toBe(true) // Chromium on Windows
+    expect(isHeic({ type: 'application/octet-stream', name: 'page.HEIF' })).toBe(true)
+    expect(isHeic({ type: 'image/jpeg', name: 'IMG_0001.jpg' })).toBe(false)
+    expect(isHeic({ type: '', name: 'notes.heic.txt' })).toBe(false)
+    expect(isHeic({ type: 'image/png' })).toBe(false)
+  })
+  it('a HEIC with no type still reaches the quick look; other non-images stay out', () => {
+    const f = (name: string, type: string) => new File(['x'], name, { type })
+    const kept = imageFiles([f('a.jpg', 'image/jpeg'), f('b.heic', ''), f('c.pdf', 'application/pdf'), f('d.HEIC', 'image/heic'), f('e.txt', '')])
+    expect(kept.map((x) => x.name)).toEqual(['a.jpg', 'b.heic', 'd.HEIC'])
   })
 })

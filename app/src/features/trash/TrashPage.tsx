@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDeletedItems, restoreItem, deleteItemForever, TRASH_TABLE, type DeletedItem } from './api'
@@ -6,28 +6,25 @@ import { flushOutbox } from '../../lib/outbox'
 import { useToastStore } from '../../lib/toastStore'
 import { toastAction } from '../../lib/undo'
 import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { useAppZone } from '../../lib/appZone'
+import { useIsMobile } from '../../components/BottomSheet'
+import { ActionSheet } from '../../components/ActionSheet'
+import { ContextMenu } from '../../components/ContextMenu'
+import { Icon } from '../../components/Icon'
+import { Skeleton, ErrorCard } from '../../components/States'
 import '../projects/xfx.css'
-
-function useIsMobile(): boolean {
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 767)
-  useEffect(() => {
-    const mq = matchMedia('(max-width: 767px)')
-    const on = () => setIsMobile(mq.matches)
-    on()
-    mq.addEventListener('change', on)
-    return () => mq.removeEventListener('change', on)
-  }, [])
-  return isMobile
-}
 
 export function TrashPage() {
   const isMobile = useIsMobile()
   const motion = useMotionEnabled()
+  const zone = useAppZone()
   const queryClient = useQueryClient()
-  const { data: deletedItems = [], isLoading } = useDeletedItems()
+  const deletedQ = useDeletedItems()
+  const { data: deletedItems = [] } = deletedQ
   const [showGlobalConfirm, setShowGlobalConfirm] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  // A row's menu (ProjectsPage pattern): ⋯ on a phone → ActionSheet, right-click on a computer → ContextMenu.
+  const [menu, setMenu] = useState<{ item: DeletedItem; x: number; y: number } | null>(null)
   const pushToast = useToastStore((s) => s.push)
 
   const navigate = useNavigate()
@@ -108,8 +105,9 @@ export function TrashPage() {
       if (diffHours === 0) return `deleted ${Math.max(1, Math.floor(diffMs / (1000 * 60)))}m ago`
       return `deleted ${diffHours}h ago`
     }
-    if (diffDays < 7) return `deleted ${['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][deletedAt.getDay()]}`
-    const dayLabel = deletedAt.toLocaleDateString('en-US', { day: 'numeric', month: 'short' })
+    // The user's zone, not the device's — the weekday / date it was deleted on their clock.
+    if (diffDays < 7) return `deleted ${deletedAt.toLocaleDateString('en-US', { weekday: 'short', timeZone: zone })}`
+    const dayLabel = deletedAt.toLocaleDateString('en-US', { day: 'numeric', month: 'short', timeZone: zone })
     const daysLeft = 30 - diffDays // ponytail: the 0032 compost cron removes it at 03:30 UTC once this hits 0
     return `deleted ${dayLabel} \u00b7 ${daysLeft > 0 ? `composts in ${daysLeft}d` : 'composts tonight'}`
   }
@@ -128,6 +126,26 @@ export function TrashPage() {
 
   const hasItems = deletedItems.length > 0
 
+  // Delete forever opens the row's confirm (the one confirm the app keeps) — the menu never deletes directly.
+  const menuActions = (item: DeletedItem): { label: string; icon: 'undo' | 'delete'; danger?: boolean; run: () => void }[] => [
+    { label: 'Restore', icon: 'undo', run: () => handleRestore(item) },
+    { label: 'Delete forever', icon: 'delete', danger: true, run: () => setConfirmDeleteId(item.id) },
+  ]
+  const menuLayer = menu && (isMobile ? (
+    <ActionSheet
+      title={menu.item.title}
+      meta={menu.item.type}
+      onClose={() => setMenu(null)}
+      items={menuActions(menu.item).map((a) => ({ label: a.label, icon: <Icon name={a.icon} />, destructive: a.danger, onSelect: a.run }))}
+    />
+  ) : (
+    <ContextMenu
+      position={{ x: menu.x, y: menu.y }}
+      onClose={() => setMenu(null)}
+      items={menuActions(menu.item).map((a) => ({ label: a.label, icon: <Icon name={a.icon} size={16} />, danger: a.danger, onClick: a.run }))}
+    />
+  ))
+
   const styles = `
     .tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
     .trow { display:flex; align-items:center; gap:13px; padding:12px 2px; border-bottom:1px dashed var(--line-dashed); }
@@ -141,20 +159,30 @@ export function TrashPage() {
     const isConfirming = confirmDeleteId === item.id
     return (
       <div key={item.id} id={`trash-${item.id}`} className={motion ? 'kf-stagger-item' : undefined} style={{ display: 'flex', flexDirection: 'column', ...(motion ? staggerDelay(i) : {}) }}>
-        <div className="trow">
+        <div
+          className="trow"
+          onContextMenu={(e) => {
+            e.preventDefault()
+            setMenu({ item, x: e.clientX, y: e.clientY })
+          }}
+        >
           <span className="tbadge">{item.type}</span>
           <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{getDeletionMeta(item.deleted_at)}</span>
           {isMobile ? (
-            <div style={{ position: 'relative' }}>
-              <span onClick={() => setOpenMenuId(openMenuId === item.id ? null : item.id)} style={{ fontSize: 18, padding: '12px 14px', margin: '-12px -6px', cursor: 'pointer', color: 'var(--ink-faint)', userSelect: 'none' }}>⋯</span>
-              {openMenuId === item.id && (
-                <div style={{ position: 'absolute', right: 0, top: 22, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, boxShadow: 'var(--shadow-panel)', padding: '6px 0', zIndex: 30, display: 'flex', flexDirection: 'column', minWidth: 120 }}>
-                  <span onClick={() => { handleRestore(item); setOpenMenuId(null) }} style={{ padding: '6px 14px', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer' }}>Restore</span>
-                  <span onClick={() => { setConfirmDeleteId(item.id); setOpenMenuId(null) }} style={{ padding: '6px 14px', fontSize: 13, color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete forever</span>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              className="pj-more kf-hit"
+              aria-label={`More for ${item.title}`}
+              aria-haspopup="menu"
+              style={{ opacity: 1 }}
+              onClick={(e) => {
+                const r = e.currentTarget.getBoundingClientRect()
+                setMenu({ item, x: r.left, y: r.bottom })
+              }}
+            >
+              <Icon name="dots" size={20} />
+            </button>
           ) : (
             <>
               <span onClick={() => handleRestore(item)} style={{ fontSize: 12.5, color: 'var(--ink-body)', textDecoration: 'underline', cursor: 'pointer' }}>Restore</span>
@@ -230,7 +258,7 @@ export function TrashPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <svg width="42" height="40" viewBox="0 0 48 46"><path d="M8 30c0-4 4-9 10-10-2-4 1-9 6-9s8 5 6 9c6 1 10 6 10 10Z" fill="var(--ink-hairline)" opacity="0.5"/><path d="M4 30h40l-3 12H7L4 30Z" fill="none" stroke="var(--ink-faint)" strokeWidth="2" strokeLinejoin="round"/><path d="M24 20v-6" stroke="var(--acc-moss)" strokeWidth="2" strokeLinecap="round"/><path d="M24 15c-3-.5-4.5-2-5-5 3 0 4.7 1.3 5 5Z" fill="var(--acc-moss)"/></svg>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{deletedItems.length} items resting</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{deletedQ.data ? `${deletedItems.length} items resting` : ' '}</div>
                 <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>
               </div>
             </div>
@@ -244,7 +272,8 @@ export function TrashPage() {
               <button onClick={handleEmptyEverything} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Empty</button>
             </div>
           )}
-          {isLoading ? <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-muted)' }}>Loading...</div>
+          {deletedQ.isPending ? <Skeleton />
+          : deletedQ.isError && !deletedQ.data ? <ErrorCard message="Couldn't load the Trash." onRetry={() => void deletedQ.refetch()} />
           : !hasItems ? renderEmptyState()
           : (
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -256,6 +285,7 @@ export function TrashPage() {
           )}
         </div>
       </div>
+      {menuLayer}
     </div>
   )
 }

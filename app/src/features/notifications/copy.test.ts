@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
+  birthdayNotice,
+  CHECK_BELOW,
   deliver,
   digestNotice,
   focusDoneNotice,
@@ -7,9 +9,13 @@ import {
   isPaused,
   kindOn,
   nudgeNotice,
+  paperReadyNotice,
   reminderNotice,
+  routineNotice,
+  syncNotice,
   testNotice,
 } from '../../../../supabase/functions/notify/copy.ts'
+import { CHECK_BELOW as APP_CHECK_BELOW } from '../paper/paperMath'
 
 // Tray and Notifications.dc.html 12k, Saturday 3 Oct 2026 — Cairo is UTC+3 that day.
 const cairo = (hhmm: string, day = 3) => {
@@ -59,6 +65,25 @@ describe('the other kinds', () => {
     expect(digestNotice([], {})).toMatchObject({ title: 'Good morning', body: 'Nothing picked yet — plan the day.' })
   })
 
+  it('morning digest: "N overdue" in place of the old hourly push — a count, never a name', () => {
+    expect(digestNotice(['GCI homework', 'Survey'], NAMES, 4).body).toBe('✶ GCI homework, then Survey. 4 overdue.')
+    expect(digestNotice(['GCI homework'], {}, 1).body).toBe('Unlock to see them. 1 overdue.')
+    expect(digestNotice([], {}, 2)).toMatchObject({ title: 'Good morning', body: 'Nothing picked yet — plan the day. 2 overdue.' })
+    expect(digestNotice(['a'], NAMES, 0).body).toBe('✶ a.')
+  })
+
+  it('routine reminder: "Stretch — 07:30" · Open; several at once are one; private without names', () => {
+    const stretch = { id: 'r1', name: 'Stretch', clock_time: '07:30:00' }
+    const n = routineNotice([stretch], NAMES)
+    expect(n).toMatchObject({ kind: 'routine', title: 'Stretch — 07:30', body: '', tag: 'routine-r1', url: '/routines', silent: false })
+    expect(n.actions).toEqual([{ action: 'open', title: 'Open' }])
+    expect(routineNotice([stretch], {})).toMatchObject({ title: 'A routine — 07:30', body: 'Unlock to see it' })
+    const two = [stretch, { id: 'r2', name: 'Journal', clock_time: '07:30' }]
+    expect(routineNotice(two, NAMES)).toMatchObject({ title: '2 routines — 07:30', body: 'Stretch · Journal', tag: 'routines' })
+    expect(routineNotice(two, {}).body).toBe('Unlock to see them')
+    expect(JSON.stringify(routineNotice(two, {}))).not.toContain('Stretch')
+  })
+
   it('evening nudge and focus done', () => {
     expect(nudgeNotice(4, 2)).toMatchObject({ title: 'The garden’s ready to close', body: '4 done · 2 left', url: '/today?ritual=evening' })
     const f = focusDoneNotice(25, 'GCI homework 1 — NumPy', 5, NAMES)
@@ -73,7 +98,8 @@ describe('who gets one', () => {
     expect(kindOn('task_reminder', null)).toBe(true)
     expect(kindOn('task_reminder', { task_reminder_on: false })).toBe(false)
     expect(kindOn('morning_digest', { morning_digest_on: false })).toBe(false)
-    expect(kindOn('overdue', { task_reminder_on: false })).toBe(true)
+    expect(kindOn('routine', { routine_on: false })).toBe(false)
+    expect(kindOn('test', { task_reminder_on: false })).toBe(true) // no switch: always on
   })
 
   it('quiet hours: 22:30–07:00 Cairo by default, across midnight, any server zone', () => {
@@ -95,5 +121,80 @@ describe('who gets one', () => {
     expect(deliver(r, {}, now)).toMatchObject({ silent: true })
     expect(deliver(r, {}, cairo('12:00'))).toMatchObject({ silent: false })
     expect(deliver(testNotice(), { notify_paused_until: cairo('23:45').toISOString() }, now)).not.toBeNull()
+  })
+})
+
+describe('the three 12k drew last (2026-10-12): paper ready, birthday, sync problem', () => {
+  const lecture = { id: 'c1', title: 'OS lecture 3', items: [0.95, 0.9, 0.9, 0.85, 0.8, 0.6, 0.4].map((confidence) => ({ confidence })) }
+
+  it('paper ready: the drawn copy, silent, Review → the capture', () => {
+    const n = paperReadyNotice(lecture, NAMES)
+    expect(n).toMatchObject({ kind: 'paper_ready', title: 'Your page is read — 7 things', body: 'From “OS lecture 3”. 2 need a quick look.', tag: 'paper-c1', url: '/inbox', silent: true, taskIds: ['c1'] })
+    expect(n.actions).toEqual([{ action: 'review', title: 'Review' }])
+  })
+
+  it('paper ready: one thing, one to check, no title, nothing unsure', () => {
+    expect(paperReadyNotice({ id: 'c', title: null, items: [{ confidence: 0.5 }] }, NAMES)).toMatchObject({ title: 'Your page is read — 1 thing', body: '1 needs a quick look.' })
+    expect(paperReadyNotice({ ...lecture, items: [{ confidence: 0.9 }, { confidence: CHECK_BELOW }] }, NAMES).body).toBe('From “OS lecture 3”.')
+    expect(paperReadyNotice({ id: 'c', title: null, items: [{ confidence: 0.9 }] }, NAMES).body).toBe('')
+  })
+
+  it('paper ready: "a quick look" is the results sheet’s own line count (paperMath CHECK_BELOW)', () => {
+    expect(CHECK_BELOW).toBe(APP_CHECK_BELOW)
+  })
+
+  it('paper ready, private: "A page is ready", nothing of the page in it', () => {
+    const n = paperReadyNotice(lecture, {})
+    expect([n.title, n.body]).toEqual(['A page is ready', 'Unlock to see it'])
+    expect(JSON.stringify(n)).not.toContain('OS lecture')
+    expect(n.actions).toEqual([{ action: 'review', title: 'Review' }])
+  })
+
+  it('birthday: "Omar’s birthday is today" / "Last spoke 12 days ago." · Open Omar, silent', () => {
+    const n = birthdayNotice([{ id: 'p1', name: 'Omar', lastSpokeDays: 12 }], NAMES)
+    expect(n).toMatchObject({ kind: 'birthday', title: 'Omar’s birthday is today', body: 'Last spoke 12 days ago.', tag: 'birthday-p1', url: '/people/p1', silent: true })
+    expect(n.actions).toEqual([{ action: 'open', title: 'Open Omar' }])
+    expect(birthdayNotice([{ id: 'p1', name: 'Omar', lastSpokeDays: 1 }], NAMES).body).toBe('Last spoke yesterday.')
+    expect(birthdayNotice([{ id: 'p1', name: 'Omar', lastSpokeDays: 0 }], NAMES).body).toBe('Last spoke today.')
+    expect(birthdayNotice([{ id: 'p1', name: 'Omar', lastSpokeDays: null }], NAMES).body).toBe('')
+  })
+
+  it('birthday, private: "A birthday" — and the button never says the name', () => {
+    const n = birthdayNotice([{ id: 'p1', name: 'Omar', lastSpokeDays: 12 }], {})
+    expect([n.title, n.body]).toEqual(['A birthday', 'Unlock to see it'])
+    expect(n.actions).toEqual([{ action: 'open', title: 'Open' }])
+    expect(JSON.stringify(n)).not.toContain('Omar')
+  })
+
+  it('birthdays: several on one day are one notice → People', () => {
+    const people = ['Omar', 'Salma', 'Nour', 'Hana'].map((name, i) => ({ id: `p${i}`, name, lastSpokeDays: null }))
+    const n = birthdayNotice(people.slice(0, 2), NAMES)
+    expect(n).toMatchObject({ title: '2 birthdays today', body: 'Omar · Salma', tag: 'birthdays', url: '/people' })
+    expect(n.actions).toEqual([{ action: 'open', title: 'Open' }])
+    expect(birthdayNotice(people, NAMES).body).toBe('Omar · Salma · Nour · +1 more')
+    expect(birthdayNotice(people, {}).body).toBe('Unlock to see them')
+    expect(JSON.stringify(birthdayNotice(people, {}))).not.toContain('Omar')
+  })
+
+  it('sync problem: the drawn copy, one and many; set-aside writes never promise a retry', () => {
+    expect(syncNotice(2)).toMatchObject({ kind: 'sync_problem', title: '2 changes are waiting to sync', body: 'They’re safe on this device. We’ll keep trying.', silent: true, tag: 'sync-problem' })
+    expect(syncNotice(2).actions).toEqual([{ action: 'open', title: 'Open' }])
+    expect(syncNotice(1)).toMatchObject({ title: '1 change is waiting to sync', body: 'It’s safe on this device. We’ll keep trying.' })
+    expect(syncNotice(2, true)).toMatchObject({ title: '2 changes couldn’t be saved', body: 'Set aside so the rest sync on.' })
+    expect(syncNotice(1, true).title).toBe('1 change couldn’t be saved')
+  })
+
+  it('switches: paper ready and sync on by default, birthday off until turned on (12i)', () => {
+    expect(kindOn('paper_ready', null)).toBe(true)
+    expect(kindOn('sync_problem', {})).toBe(true)
+    expect(kindOn('birthday', null)).toBe(false)
+    expect(kindOn('birthday', { birthday_on: null })).toBe(false)
+    expect(kindOn('birthday', { birthday_on: true })).toBe(true)
+    expect(kindOn('paper_ready', { paper_ready_on: false })).toBe(false)
+    expect(kindOn('sync_problem', { sync_problem_on: false })).toBe(false)
+    const bday = birthdayNotice([{ id: 'p1', name: 'Omar', lastSpokeDays: 3 }], {})
+    expect(deliver(bday, {}, cairo('08:00'))).toBeNull()
+    expect(deliver(bday, { birthday_on: true }, cairo('08:00'))).toMatchObject({ silent: true })
+    expect(deliver(paperReadyNotice(lecture, {}), { notify_paused_until: cairo('10:00').toISOString() }, cairo('09:00'))).toBeNull()
   })
 })

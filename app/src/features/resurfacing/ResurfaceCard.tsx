@@ -108,7 +108,7 @@ function Card({ pick }: { pick: ResurfacePick }) {
       <button
         type="button"
         className="kf-resurface-open"
-        onClick={() => (task ? openTask(task.id) : navigate(`/inbox?focus=${row.entity_id}`))}
+        onClick={(e) => (task ? openTask(task.id, undefined, e.currentTarget) : navigate(`/inbox?focus=${row.entity_id}`))}
         title={task ? 'Open the task' : 'Open it in the Inbox'}
         style={{ all: 'unset', cursor: 'pointer', display: 'block', fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.4, overflowWrap: 'anywhere' }}
       >

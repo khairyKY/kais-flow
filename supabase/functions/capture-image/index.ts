@@ -1,7 +1,7 @@
 // Paper capture v1: one photographed page → proposed lines (Groq vision, structured JSON).
 //
 //   POST { capture_id, paths: ['<uid>/<capture_id>/0.jpg', …], page: 0, projects?: ['OS', …] }
-//     200 { status, pages_read, title, items }          the row after this page
+//     200 { status, pages_read, title, items, drawings } the row after this page
 //     429 { error: 'daily_limit' }                       15 pages today (AI_DAILY_LIMIT_VISION); photo kept
 //     503 { error: 'rate_limited' }                      Groq busy after retries; the app reads it later
 //   POST { action: 'sweep' } (service role, pg_cron hourly — migration 0049): delete expired photos.
@@ -14,7 +14,7 @@ import { z } from 'npm:zod@^4'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
-import { afterPage, buildPrompt, MAX_PAGES, normaliseRead, ownsPath, retryDelayMs, type PageLine } from './read.ts'
+import { afterPage, buildPrompt, MAX_PAGES, normaliseRead, ownsPath, retryDelayMs, type PageDrawing, type PageLine } from './read.ts'
 
 const GROQ_API_KEY = Deno.env.get('GROQ_API_KEY')!
 // Groq's image-input model (console.groq.com/docs/vision, checked 2026-10-04): reads English and
@@ -91,6 +91,7 @@ interface CaptureRow {
   status: string
   title: string | null
   items: PageLine[]
+  drawings: PageDrawing[]
 }
 
 async function read(req: Request, userId: string): Promise<Response> {
@@ -109,10 +110,10 @@ async function read(req: Request, userId: string): Promise<Response> {
       { onConflict: 'id', ignoreDuplicates: true },
     )
   if (insertError) throw insertError
-  const { data: row, error } = await service.from('captures').select('id, user_id, pages, pages_read, status, title, items').eq('id', capture_id).single<CaptureRow>()
+  const { data: row, error } = await service.from('captures').select('id, user_id, pages, pages_read, status, title, items, drawings').eq('id', capture_id).single<CaptureRow>()
   if (error) throw error
   if (row.user_id !== userId) return jsonResponse(req, { error: 'not_found' }, 404)
-  const answer = (r: CaptureRow) => jsonResponse(req, { status: r.status, pages_read: r.pages_read, title: r.title, items: r.items })
+  const answer = (r: CaptureRow) => jsonResponse(req, { status: r.status, pages_read: r.pages_read, title: r.title, items: r.items, drawings: r.drawings })
   if (page < row.pages_read) return answer(row) // read already — the same answer again, no Groq call
 
   const update = (patch: Record<string, unknown>) => service.from('captures').update(patch).eq('id', capture_id)
@@ -145,6 +146,18 @@ async function read(req: Request, userId: string): Promise<Response> {
   const patch = { ...next, ...(page === 0 && pageRead.title ? { title: pageRead.title } : {}) }
   const { error: saveError } = await update(patch)
   if (saveError) throw saveError
+  // Read to the end: "Your page is read — N things" (Tray and Notifications 12k) through notify, which
+  // pushes to this user's devices and keeps it in the history — so a phone that left mid-read hears it.
+  if (patch.status === 'done' && row.status !== 'done') {
+    const told = fetch(`${Deno.env.get('SUPABASE_URL')}/functions/v1/notify`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: 'paper_ready', capture_id }),
+    })
+      .then((r) => r.body?.cancel())
+      .catch((e) => console.error('capture-image: paper_ready notice', e))
+    ;(globalThis as { EdgeRuntime?: { waitUntil(p: Promise<unknown>): void } }).EdgeRuntime?.waitUntil(told)
+  }
   return answer({ ...row, ...patch })
 }
 

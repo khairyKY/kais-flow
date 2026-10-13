@@ -6,6 +6,14 @@ import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { hybridSearch } from '../_shared/retrieval.ts'
 import { userZone } from '../_shared/zone.ts'
+import { todaysTop3, type Top3Row } from '../_shared/today.ts'
+import { expandSeries, type RuleBetween } from '../_shared/series.ts'
+// rrule is CommonJS: Deno takes its default export only (see mcp/index.ts).
+import rrulePkg from 'npm:rrule@2'
+const { RRule } = rrulePkg
+
+/** A repeating event's occurrences (migration 0061) — app/src/features/calendar/series.ts's rrule half. */
+const ruleBetween: RuleBetween = (rule, dtstart, after, before) => new RRule({ ...RRule.parseString(rule), dtstart }).between(after, before, true)
 import { dayStart, snapshotText, systemPrompt } from './prompt.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
@@ -54,29 +62,37 @@ Deno.serve(async (req) => {
     }
 
     const hits = await hybridSearch(supabase, lastUser.content, 20)
-    const { data: top3 } = await supabase.from('tasks').select('title').eq('top3', true).eq('status', 'todo')
     const { data: slipping } = await supabase.from('slipping').select('entity_name, days_since')
     // A live snapshot of today + tomorrow, so "what's on today?" works without a lucky search hit —
     // the user's today, on their own clock (app_settings.timezone; RLS returns only their row).
     const { data: settings } = await supabase.from('app_settings').select('timezone').maybeSingle()
     const tz = userZone((settings as { timezone?: string | null } | null)?.timezone)
     const now = new Date()
+    // Today's Top 3 as Today draws it (_shared/today.ts): a pick moved to a later day isn't one; goal first.
+    const { data: picks } = await supabase.from('tasks').select('id, title, status, someday, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
+      .eq('top3', true).eq('status', 'todo').eq('someday', false).is('deleted_at', null)
+    const top3 = todaysTop3((picks ?? []) as (Top3Row & { id: string; title: string })[], now, tz)
+    const top3Ids = new Set(top3.map((t) => t.id))
     const until = dayStart(now, tz, 2).toISOString()
-    const [{ data: openTasks }, { data: events }, { count: inboxPending }] = await Promise.all([
-      supabase.from('tasks').select('title, due_at, scheduled_start, top3')
+    const from = dayStart(now, tz).toISOString()
+    const [{ data: openTasks }, { data: rows }, { count: inboxPending }] = await Promise.all([
+      supabase.from('tasks').select('id, title, due_at, scheduled_start')
         .eq('status', 'todo').is('deleted_at', null)
         .or(`due_at.lt.${until},scheduled_start.lt.${until}`).limit(60),
-      supabase.from('calendar_events').select('title, starts_at, ends_at, all_day')
-        .is('deleted_at', null).gte('starts_at', dayStart(now, tz).toISOString()).lt('starts_at', until).order('starts_at').limit(40),
+      // A repeating event is one row anchored at its first occurrence: it comes along whenever it
+      // started before `until`, and is expanded below.
+      supabase.from('calendar_events').select('id, title, starts_at, ends_at, all_day, recurrence_rule, recurrence_exdates')
+        .is('deleted_at', null).lt('starts_at', until).or(`starts_at.gte.${from},recurrence_rule.not.is.null`).order('starts_at').limit(40),
       supabase.from('inbox_items').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
     ])
 
+    const events = expandSeries(rows ?? [], new Date(from), new Date(until), tz, ruleBetween)
     const prompt = systemPrompt({
       now,
       hits,
-      top3: top3 ?? [],
+      top3,
       slipping: slipping ?? [],
-      snapshot: snapshotText(now, openTasks ?? [], events ?? [], inboxPending ?? 0, tz),
+      snapshot: snapshotText(now, (openTasks ?? []).map((t) => ({ ...t, top3: top3Ids.has(t.id) })), events, inboxPending ?? 0, tz),
     })
 
     const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {

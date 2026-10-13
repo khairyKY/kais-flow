@@ -20,7 +20,6 @@ import { dayTop3 } from '../today/top3Order'
 import { dayOfJourney } from '../today/todayLayout'
 import { useDay } from '../today/useDay'
 import { runNotificationAction, actionFromSearch } from '../notifications/actions'
-import { useCairoWeather } from '../../lib/seasons'
 import { useOnline } from '../../lib/useOnline'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone, useAppZone } from '../../lib/appZone'
@@ -54,7 +53,6 @@ export function WidgetBridge(): React.ReactNode {
   const { data: inbox = [] } = usePendingInboxItems()
   const { data: slipping = [] } = useSlipping()
   const { data: journal = [] } = useJournalEntries()
-  const { data: weather } = useCairoWeather()
   const { data: ritualSteps = { morning: new Set<string>(), evening: new Set<string>() } } = useRitualStepsToday()
   const ritualPins = useRitualPins()
   const resurface = useResurfacePick()
@@ -105,7 +103,7 @@ export function WidgetBridge(): React.ReactNode {
         : { title: resurface.item?.raw_text ?? '', createdAt: resurface.item?.created_at ?? resurface.row.created_at, source: 'inbox', route: '/inbox' }
       : null,
     specimen: archived ? { title: archived.name, at: archived.updated_at } : null,
-    weather: weather ?? null,
+    weather: null, // cut 2026-10-12 (lib/seasons): the Season widget shows the season alone
   })
   void inRound // re-render when a paused round starts or ends
 

@@ -7,8 +7,9 @@ import { restoreJournalEntry } from '../journal/api'
 import { restoreTrashedProject } from '../projects/api'
 import { restoreTrashedArea } from '../areas/api'
 import { restoreTrashedDomain } from '../domains/api'
+import { restoreEvent } from '../calendar/api'
 import { INBOX_COLUMNS, TASK_COLUMNS } from '../../lib/columns'
-import type { Task, InboxItem, JournalEntry, Project, Area, Domain } from '../../lib/types'
+import type { Task, InboxItem, CalendarEvent, JournalEntry, Project, Area, Domain } from '../../lib/types'
 
 export interface DeletedItem {
   id: string
@@ -80,7 +81,7 @@ export function restoreItem(item: DeletedItem): void {
   const row = item.rawRow
   if (item.type === 'Task') restoreTask(row as Task)
   else if (item.type === 'Inbox') restoreInboxItem(row as InboxItem, true) // TrashPage pushes its own "Restored to Inbox"
-  else if (item.type === 'Event') writeRow('calendar_events', { ...row, deleted_at: null })
+  else if (item.type === 'Event') restoreEvent(row as CalendarEvent)
   else if (item.type === 'Journal') restoreJournalEntry(row as JournalEntry)
   else if (item.type === 'Project') restoreTrashedProject(row as Project)
   else if (item.type === 'Domain') restoreTrashedDomain(row as Domain)

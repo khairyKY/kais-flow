@@ -4,6 +4,7 @@ import { appZone } from '../../lib/appZone'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { useToastStore } from '../../lib/toastStore'
+import { toastUndo } from '../../lib/undo'
 import { playSound } from '../../lib/sounds'
 import { createTask } from '../tasks/api'
 import { ParseResultSchema, type ParseResult } from './parseSchema'
@@ -160,16 +161,13 @@ export async function captureWithAI(
     const task = createTask(taskFromParse(parse, knownPlaces(), overrides))
     const unblock = blockIfTimed(task, parse.has_time === true)
     logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence })
-    useToastStore.getState().push({
-      message: `Added "${task.title}"`,
-      onUndo: () => {
-        unblock?.()
-        writeRow('tasks', task, 'delete')
-        logActivity('task.deleted', 'task', task.id, { reason: 'capture undo' })
-        const item = newInboxItem(rawText, kind, transcript, parse)
-        writeRow('inbox_items', item)
-        logActivity('inbox.captured', 'inbox_item', item.id, { kind, undoneFrom: task.id })
-      },
+    toastUndo(`Added "${task.title}"`, () => {
+      unblock?.()
+      writeRow('tasks', task, 'delete')
+      logActivity('task.deleted', 'task', task.id, { reason: 'capture undo' })
+      const item = newInboxItem(rawText, kind, transcript, parse)
+      writeRow('inbox_items', item)
+      logActivity('inbox.captured', 'inbox_item', item.id, { kind, undoneFrom: task.id })
     })
     return
   }
@@ -212,14 +210,11 @@ export async function enrichTypedTask(created: Task, rawText: string): Promise<v
   // the 30-minute block the typed time just made. Undo takes that back too.
   const unblock = patch.due_at ? blockIfTimed(next, ai.has_time === true) : patch.duration_min ? stretchCaptureBlock(next, patch.duration_min) : null
   logActivity('capture.ai_filled', 'task', current.id, { fields: filled })
-  useToastStore.getState().push({
-    message: `✦ Filled by AI: ${filled.join(', ')}`,
-    onUndo: () => {
-      unblock?.()
-      const latest = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === current.id) ?? { ...current, ...patch }
-      const back = Object.fromEntries(keys.filter((k) => latest[k] === patch[k]).map((k) => [k, before[k]]))
-      writeRow('tasks', { ...latest, ...back, updated_at: nowIso() })
-    },
+  toastUndo(`✦ Filled by AI: ${filled.join(', ')}`, () => {
+    unblock?.()
+    const latest = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === current.id) ?? { ...current, ...patch }
+    const back = Object.fromEntries(keys.filter((k) => latest[k] === patch[k]).map((k) => [k, before[k]]))
+    writeRow('tasks', { ...latest, ...back, updated_at: nowIso() })
   })
 }
 
@@ -242,14 +237,11 @@ export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Pr
   const unblock = blockIfTimed(task, ai.has_time === true)
   writeRow('inbox_items', { ...read, status: 'filed', filed_task_id: task.id })
   logActivity('capture.autofiled', 'task', task.id, { confidence: ai.confidence, source: 'typed' })
-  useToastStore.getState().push({
-    message: `✦ Filed by AI: “${task.title}”`,
-    onUndo: () => {
-      unblock?.()
-      writeRow('tasks', task, 'delete')
-      logActivity('task.deleted', 'task', task.id, { reason: 'capture undo' })
-      writeRow('inbox_items', { ...read, status: 'pending', filed_task_id: null, updated_at: nowIso() })
-    },
+  toastUndo(`✦ Filed by AI: “${task.title}”`, () => {
+    unblock?.()
+    writeRow('tasks', task, 'delete')
+    logActivity('task.deleted', 'task', task.id, { reason: 'capture undo' })
+    writeRow('inbox_items', { ...read, status: 'pending', filed_task_id: null, updated_at: nowIso() })
   })
 }
 

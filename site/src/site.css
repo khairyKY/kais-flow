@@ -199,6 +199,7 @@ main:focus { outline: none; }
 .lt-grow img { object-fit: contain; }
 .lt-grow > div:nth-child(1) { opacity: .5; }
 .lt-grow > div:nth-child(2) { opacity: .75; }
+.lt-grow.even > div { opacity: 1; }
 .lt-done .lt-row { box-shadow: none; border-block: 1px solid var(--line-card); }
 .lt-done .box { background: var(--check-fill); border-color: var(--check-fill); }
 .lt-done s { color: var(--ink-faint); }

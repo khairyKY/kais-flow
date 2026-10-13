@@ -64,5 +64,5 @@
     <string name="kfw_label_33">Pressed</string>
     <string name="kfw_desc_33">The latest herbarium specimen.</string>
     <string name="kfw_label_34">Season</string>
-    <string name="kfw_desc_34">The season and the weather where you are.</string>
+    <string name="kfw_desc_34">The season, read from your clock.</string>
 </resources>

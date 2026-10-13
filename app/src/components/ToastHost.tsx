@@ -71,11 +71,23 @@ export function ToastHost() {
   useLayoutEffect(() => {
     if (!count) return
     const update = () => setDock(sheetFooterDock())
-    update()
+    // …and again once a sheet that is opening has slid up (--dur-sheet-enter): measured mid-slide its
+    // footer is still below the screen, and the toast docked off it, out of sight (a toast handed from
+    // one screen to the next sheet — Paper's ticks review → its results).
+    let settled = 0
+    const measure = () => {
+      update()
+      window.clearTimeout(settled)
+      settled = window.setTimeout(update, 320)
+    }
+    measure()
     // Sheets portal into <body>: re-measure when one opens or closes under a live toast.
-    const mo = new MutationObserver(update)
+    const mo = new MutationObserver(measure)
     mo.observe(document.body, { childList: true })
-    return () => mo.disconnect()
+    return () => {
+      mo.disconnect()
+      window.clearTimeout(settled)
+    }
   }, [count])
   return (
     <div className="kf-toast-host" role="status" aria-live="polite" style={dock != null ? { top: 'auto', bottom: dock } : undefined}>

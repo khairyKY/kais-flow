@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { createElement, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { create } from 'zustand'
 import { deliver, focusDoneNotice, inQuietHours, isPaused, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
@@ -13,14 +13,16 @@ import { cachedStarEvents } from '../today/api'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { useProjects } from '../projects/api'
+import { useInteractions, usePeople } from '../people/api'
 import { installNotificationActions } from '../notifications/actions'
-import { lookingHere, showLocal } from '../notifications/local'
+import { lookingHere, showLocal, tellSyncProblem } from '../notifications/local'
+import { NO_INCIDENT, syncIncidentStep } from '../notifications/syncIncident'
 import { localPlan, type Planned } from '../notifications/plan'
 import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
 import { focusMenuLabel, focusTarget, pauseMenuLabel, trayIconState } from './trayState'
-import type { AppSettings, Project, Task } from '../../lib/types'
+import type { AppSettings, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // The app's half of the tray and of local notifications, mounted once in the main window's shell
 // (AppLayout). Everywhere: notification buttons land here (actions.ts), a finished focus round
@@ -49,7 +51,19 @@ function planFor(from: Date, to: Date, now: Date): Planned[] | null {
   // Projects still loading: wait one sweep, so "09:50 · Car" doesn't go out as "09:50".
   if (!tasks || queryClient.getQueryState(['projects'])?.status === 'pending') return null
   const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
-  return localPlan({ tasks, projects, prefs: prefs(), from, to, now, zone: appZone() })
+  return localPlan({
+    tasks,
+    projects,
+    routines: queryClient.getQueryData<Routine[]>(['routines']),
+    completions: queryClient.getQueryData<RoutineCompletion[]>(['routine_completions']),
+    people: queryClient.getQueryData<Person[]>(['people']),
+    interactions: queryClient.getQueryData<Interaction[]>(['interactions']),
+    prefs: prefs(),
+    from,
+    to,
+    now,
+    zone: appZone(),
+  })
 }
 
 /** The Windows app's own sweep (WebView2 has no Web Push): every 30s, the reminders and rituals
@@ -125,9 +139,17 @@ function useSystemDark(): boolean {
   return dark
 }
 
+/** The Windows/Android planner's birthdays read people and their interactions ("Last spoke 12 days
+ * ago") from the cache; with Birthday on, they're loaded whatever page is open. */
+function PeopleForBirthdays(): null {
+  usePeople()
+  useInteractions()
+  return null
+}
+
 /** Rendered once in the main window's shell. A component of its own, so the timer's every-second
  * tick re-renders only this, never the shell. */
-export function TrayBridge(): null {
+export function TrayBridge() {
   const navigate = useNavigate()
   useProjects() // a notice names its task's project ("09:50 · Car"), whatever page is open
   useEffect(() => installNotificationActions(navigate), [navigate])
@@ -174,7 +196,7 @@ export function TrayBridge(): null {
       window.clearTimeout(timer)
       timer = window.setTimeout(scheduleOnAndroid, 1500)
     }
-    const watched = new Set(['tasks', 'projects', 'app_settings'])
+    const watched = new Set(['tasks', 'projects', 'app_settings', 'routines', 'routine_completions', 'people', 'interactions'])
     const offCache = queryClient.getQueryCache().subscribe((e) => {
       if (e.type === 'updated' && watched.has(String(e.query.queryKey[0]))) soon()
     })
@@ -202,6 +224,13 @@ export function TrayBridge(): null {
   // Kai 2026-10-07: the K flipped to its offline look for every write's second or two in flight. It
   // follows the topbar's calm status now — only a slow, offline or not-saved write changes it.
   const sync = useSyncStatus().view
+  // Sync problem (12k): stuck changes, said once per incident when nobody's looking (syncIncident.ts).
+  const incident = useRef(NO_INCIDENT)
+  useEffect(() => {
+    const step = syncIncidentStep(incident.current, sync, now.getTime(), lookingHere())
+    incident.current = step.memory
+    if (step.notice) tellSyncProblem(step.notice)
+  }, [sync, now])
   const state = trayIconState({
     focus,
     needsYou: useNeedsYou((s) => s.on),
@@ -215,5 +244,5 @@ export function TrayBridge(): null {
   useEffect(() => {
     if (tauri) void native('tray_set', { state, dark, focusLabel, pauseLabel })
   }, [tauri, state, dark, focusLabel, pauseLabel])
-  return null
+  return (tauri || android) && settings?.birthday_on ? createElement(PeopleForBirthdays) : null
 }

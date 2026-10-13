@@ -1,0 +1,42 @@
+PASS legacy: sync answers 200 with counts — {"fetched":2,"new":2,"updated":0,"dismissed":0,"completed":0}
+PASS legacy: both the assignee query and the repo query ran — /search/issues?q=is:open is:issue assignee:kai&sort=updated&order=desc&per_page=100 | /search/issues?q=is:open is:issue repo:acme/app&sort=updated&order=desc&per_page=100
+PASS legacy: the issues landed as pending inbox letters
+PASS legacy: no tasks were made
+PASS legacy: synced_at stamped, status ok
+PASS repos: the list comes back without the token, malformed names dropped — {"repos":["acme/app","acme/web"]}
+PASS rules: saved and echoed (unknown keys dropped) — {"repos":["acme/app","acme/web"],"rules":{"land":"tasks","priority":"high","paused":false}}
+PASS rules: the token, login and status survive the merge
+PASS rules: a newly watched repo clears the watermark (next sync is a full one)
+PASS rules: the response never carries the token
+PASS rules: a malformed repo list is refused — {"error":"bad_request"}
+PASS rules: not connected answers not_connected — {"error":"not_connected"}
+PASS rules: a row changed mid-save is not clobbered — retried and saved — updates tried 2
+PASS rules: losing the race twice answers busy, nothing written — {"error":"busy"}
+PASS only-repos: no assignee query any more, one query for the two repos — /search/issues?q=is:open is:issue repo:acme/app repo:acme/web&sort=updated&order=desc&per_page=100
+PASS tasks: acme/web#3 and #4 (old, full sync after the add) landed as tasks — acme/web#3,acme/web#4
+PASS tasks: the task row is unfiled todo with the issue link
+PASS tasks: acme/app#1 (already a letter + hand-filed task) was not landed again
+PASS tasks: no new inbox letters while landing in Tasks
+PASS tasks: task.created logged for each, source github
+PASS tasks: other/lib#2 (assigned, unwatched repo) stays a pending letter — not dismissed
+PASS tasks: a second sync adds nothing — {"fetched":3,"new":0,"updated":0,"dismissed":0,"completed":0}
+PASS closed: the synced task for a closed issue is done, with completed_at, off Top 3
+PASS closed: a deleted issue ticks its synced task off too
+PASS closed: counted as completed — {"fetched":0,"new":0,"updated":0,"dismissed":0,"completed":2}
+PASS closed: task.completed logged with the reason
+PASS closed: the hand-filed task is never touched
+PASS out of scope: an open issue in an unwatched repo keeps its task open, stamped checked_at
+PASS pause: "Sync now" answers paused (409) — {"error":"paused"}
+PASS pause: the cron syncs only the unpaused user — {"users":1,"failed":0,"fetched":0,"new":0,"updated":0,"dismissed":0,"completed":0}
+PASS pause: nothing landed for the paused user
+PASS pause: the paused row keeps its old synced_at (no stamp)
+PASS unpause: syncs again (assigned issue lands in the Inbox) — {"fetched":2,"new":2,"updated":0,"dismissed":0,"completed":0}
+PASS reconnect: answers only the login — {"login":"kai"}
+PASS reconnect: watched repos and rules kept
+PASS reconnect: watermark cleared (first sync after a reconnect is full)
+PASS old client: repos sent with the token replace the list, rules still kept
+PASS connect: a malformed token is refused
+PASS auth: no signed-in user → 401
+PASS token: never written into inbox/tasks/activity rows
+
+40 passed, 0 failed

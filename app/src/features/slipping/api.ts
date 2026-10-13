@@ -42,8 +42,9 @@ const UNDO_WINDOW_MS = 4200
  * committing it immediately would make Undo cosmetic (the view re-hides the restored card on the
  * next refetch). The event is therefore written only after the toast's undo window closes.
  * ponytail: closing the tab inside the 4.2s window loses the review; a true server-side undo
- * needs a deletable review marker (migration) — not worth it for a 4-second window. */
-export function markReviewed(row: SlippingRow): void {
+ * needs a deletable review marker (migration) — not worth it for a 4-second window.
+ * `message`: the toast — Today's "Snooze a week" says so (the same review mark keeps the card away a week). */
+export function markReviewed(row: SlippingRow, message = 'Marked reviewed'): void {
   // Motion 3e (WB-1) — the card slides out and the stack heals before the cache filter drops
   // it. Both surfaces that render a slipping row (Today's stack, the Weekly Review sweep) tag
   // it `id="slipping-<rowKey>"`, so wiring the shared mutation covers both.
@@ -53,7 +54,7 @@ export function markReviewed(row: SlippingRow): void {
       (old ?? []).filter((r) => rowKey(r) !== rowKey(row)),
     )
     const timer = setTimeout(() => logActivity('entity.reviewed', row.entity_type, row.entity_id, {}), UNDO_WINDOW_MS)
-    toastUndo('Marked reviewed', () => {
+    toastUndo(message, () => {
       clearTimeout(timer)
       locallyReviewed.delete(rowKey(row))
       queryClient.setQueryData<SlippingRow[]>(['slipping'], (old) => {

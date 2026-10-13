@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { Button, Chip, SectionLabel } from '../../components/kit'
+import { Select } from '../../components/Select'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import { useTasks, setRecurrence, deleteTask, restoreTask } from '../tasks/api'
 import { toastUndo } from '../../lib/undo'
@@ -310,18 +311,19 @@ export function ImportPage() {
             </div>
             {source === 'markdown' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 14, fontSize: 13, color: 'var(--ink-body)' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, flexWrap: 'wrap' }}>
                   Projects from
-                  <select
+                  <Select
+                    ariaLabel="Projects from"
                     value={md.projectFrom}
-                    onChange={(e) => setMd({ ...md, projectFrom: e.target.value as MarkdownOptions['projectFrom'] })}
-                    style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '6px 10px', fontSize: 12.5, color: 'var(--ink-body)', font: 'inherit' }}
-                  >
-                    <option value="none">nowhere — tasks land loose</option>
-                    <option value="heading">the heading above each task</option>
-                    <option value="file">each file's name</option>
-                  </select>
-                </label>
+                    onChange={(v) => setMd({ ...md, projectFrom: v as MarkdownOptions['projectFrom'] })}
+                    options={[
+                      { value: 'none', label: 'nowhere — tasks land loose' },
+                      { value: 'heading', label: 'the heading above each task' },
+                      { value: 'file', label: "each file's name" },
+                    ]}
+                  />
+                </div>
                 <label style={{ display: 'flex', alignItems: 'center', gap: 9, cursor: 'pointer' }}>
                   <input type="checkbox" checked={md.paragraphsToInbox} onChange={(e) => setMd({ ...md, paragraphsToInbox: e.target.checked })} />
                   Also bring plain paragraphs in, as Inbox notes
@@ -365,19 +367,17 @@ export function ImportPage() {
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
                 <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{header || `column ${i + 1}`}</span>
                 <span style={{ ...help, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'none' }}>{step.rows[1]?.[i] ?? ''}</span>
-                <select
+                <Select
+                  ariaLabel={`Column ${header || i + 1} means`}
                   value={step.mapping[i] ?? ''}
-                  onChange={(e) => {
+                  onChange={(v) => {
                     const mapping = { ...step.mapping }
-                    if (e.target.value) mapping[i] = e.target.value as CsvMapping[number]
+                    if (v) mapping[i] = v as CsvMapping[number]
                     else delete mapping[i]
                     setStep({ ...step, mapping })
                   }}
-                  style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '6px 10px', fontSize: 12.5, color: 'var(--ink-body)', font: 'inherit' }}
-                >
-                  <option value="">— skip —</option>
-                  {CSV_TARGETS.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
+                  options={[{ value: '', label: '— skip —' }, ...CSV_TARGETS.map((t) => ({ value: t, label: t }))]}
+                />
               </div>
             ))}
             <div style={{ display: 'flex', gap: 10, marginTop: 16 }}>

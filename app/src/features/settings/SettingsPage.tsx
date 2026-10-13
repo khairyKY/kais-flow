@@ -19,12 +19,14 @@ import { useTheme } from '../../lib/theme'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, uiZoom, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
-import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, type IntegrationStatus } from './api'
+import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
+import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
+import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { useMcpKey, createMcpKey, deleteMcpKey, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
 import { PaperSettingsCard } from '../paper/PaperSettings'
 import { useToastStore } from '../../lib/toastStore'
-import { Button, Segmented, Toggle } from '../../components/kit'
+import { Button, Chip, Segmented, Toggle } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Popover } from '../../components/DatePicker'
@@ -40,6 +42,8 @@ import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/ap
 import { parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
 import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
+import { LabelManager } from '../tasks/LabelManager'
+import { ConfirmCard } from '../projects/ConfirmCard'
 import './settings.css'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed onto real data. UI pass (Kai 2026-10-08,
@@ -478,7 +482,8 @@ const TONE_DOT = { ok: 'var(--check-fill)', bad: 'var(--acc-terra-ink)', off: 'v
 
 function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: () => void }) {
   const { data: integrations = [] } = useIntegrations()
-  const gh = githubState(integrations.find((i) => i.provider === 'github'))
+  const github = integrations.find((i) => i.provider === 'github')
+  const gh = githubState(github)
   const dot = (tone: keyof typeof TONE_DOT) => <span className="st-dot" style={{ background: TONE_DOT[tone] }} />
   return (
     <SCard
@@ -486,7 +491,7 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
       title="Integrations"
       aside={<button type="button" className="st-link" onClick={onOpenIntegrations}>Open integrations</button>}
     >
-      <Row lead={dot(gh.tone)} label="GitHub" help="Issues assigned to you land in the Inbox">
+      <Row lead={dot(gh.tone)} label="GitHub" help={githubRulesOf(github).rules.land === 'tasks' ? 'Issues land straight in Tasks' : 'Issues land in the Inbox'}>
         <span className="st-chip" style={gh.tone === 'bad' ? { color: 'var(--acc-terra-ink)', borderColor: 'currentColor' } : undefined}>{gh.text}</span>
       </Row>
       {/* Google Calendar sync is a later integrations wave — nothing syncs yet, so no button. */}
@@ -718,15 +723,13 @@ function ResurfacingCard() {
 
 // P-IMPORT entry (Settings.dc.html 2a) + punch 50's Trash entry point — one "your data" card.
 const linkBtn = 'kf-btn kf-press kf-button kf-button--secondary'
-function DataCard({ importer = true }: { importer?: boolean }) {
+function DataCard() {
   const { data: deletedItems = [] } = useDeletedItems()
   return (
     <SCard id="settings-Data" title="Your data">
-      {importer && (
-        <Row label="Import" help="From Akiflow or a CSV file · re-importing never duplicates">
-          <Link to="/settings/import" className={linkBtn} style={{ textDecoration: 'none' }}>Open importer</Link>
-        </Row>
-      )}
+      <Row label="Import" help="From Akiflow or a CSV file · re-importing never duplicates">
+        <Link to="/settings/import" className={linkBtn} style={{ textDecoration: 'none' }}>Open importer</Link>
+      </Row>
       <Row label="Trash" help={`${deletedItems.length === 0 ? 'Nothing resting' : `${deletedItems.length} item${deletedItems.length === 1 ? '' : 's'} resting`} · composts after 30 days`}>
         <Link to="/trash" className={linkBtn} style={{ textDecoration: 'none' }}>Open trash</Link>
       </Row>
@@ -786,6 +789,7 @@ function CaptureKeyCard() {
   const [shown, setShown] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [confirmOff, setConfirmOff] = useState(false)
   const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
   async function run(fn: () => Promise<void>) {
     setBusy(true)
@@ -821,11 +825,26 @@ function CaptureKeyCard() {
           {row || shown ? 'New key' : 'Create key'}
         </Button>
         {row && (
-          <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await deleteCaptureKey(row.id); setShown(null) })}>
+          <Button variant="ghost" disabled={busy} onClick={() => setConfirmOff(true)}>
             Turn off
           </Button>
         )}
       </div>
+      {/* No Undo here: only the key's hash is stored, and the client never sees it, so a deleted key
+          can't be put back — a short confirm instead. */}
+      {confirmOff && row && (
+        // ds-ok: turning a key off can't be undone (only its hash is stored), so it asks first
+        <ConfirmCard
+          title="Turn off the capture key?"
+          body="Shortcuts and bookmarklets using it stop sending to your Inbox. A new key can be made any time, but this one can't come back."
+          confirmLabel="Turn off"
+          onCancel={() => setConfirmOff(false)}
+          onConfirm={() => {
+            setConfirmOff(false)
+            void run(async () => { await deleteCaptureKey(row.id); setShown(null) })
+          }}
+        />
+      )}
       {err && <div className="st-help" style={{ color: 'var(--acc-terra-ink)', marginTop: 8 }}>{err}</div>}
       {/* The short version of docs/CAPTURE.md. The key only ever goes in the header. */}
       <details style={{ marginTop: 12 }}>
@@ -855,12 +874,13 @@ function CaptureKeyCard() {
 // ready-to-paste config per client.
 function McpCard() {
   const { data: row } = useMcpKey()
-  const { data: settings } = useAppSettings()
   const [scope, setScope] = useState<McpScope>('read_write')
   const [shown, setShown] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: settings?.timezone ?? 'Africa/Cairo' })
+  const [confirmOff, setConfirmOff] = useState(false)
+  // appZone() is validated — a bad stored timezone would make toLocaleDateString throw.
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
   async function run(fn: () => Promise<void>) {
     setBusy(true)
     setErr(null)
@@ -903,11 +923,26 @@ function McpCard() {
           {row || shown ? 'New key' : 'Create key'}
         </Button>
         {row && (
-          <Button variant="ghost" disabled={busy} onClick={() => void run(async () => { await deleteMcpKey(row.id); setShown(null) })}>
+          <Button variant="ghost" disabled={busy} onClick={() => setConfirmOff(true)}>
             Turn off
           </Button>
         )}
       </div>
+      {/* No Undo here: only the key's hash is stored, and the client never sees it, so a deleted key
+          can't be put back — a short confirm instead (the one other place, besides Delete forever). */}
+      {confirmOff && row && (
+        // ds-ok: turning a key off can't be undone (only its hash is stored), so it asks first
+        <ConfirmCard
+          title="Turn off the AI key?"
+          body="Any assistant using it stops reaching your garden. A new key can be made any time, but this one can't come back."
+          confirmLabel="Turn off"
+          onCancel={() => setConfirmOff(false)}
+          onConfirm={() => {
+            setConfirmOff(false)
+            void run(async () => { await deleteMcpKey(row.id); setShown(null) })
+          }}
+        />
+      )}
       {err && <div className="st-help" style={{ color: 'var(--acc-terra-ink)', marginTop: 8 }}>{err}</div>}
       <div className="st-help" style={{ marginTop: 10 }}>A new key stops the old one · your journal and people are never shared · 500 tool calls a day</div>
       <div className="st-mono-box">{MCP_URL}</div>
@@ -935,14 +970,15 @@ function McpCard() {
 const flabel: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }
 
 // P6 step 1: GitHub issues → inbox. The PAT lives only in this input until it is posted to the
-// github-connect edge function; afterwards the client only ever sees login/status/synced_at.
+// github-connect edge function; afterwards the client only ever sees login/status/synced_at, plus
+// the watched repos and rules (Settings 2a), which hold no secret.
 function GithubProvider({ github }: { github?: IntegrationStatus }) {
   const [formOpen, setFormOpen] = useState(false)
   const [token, setToken] = useState('')
-  const [repos, setRepos] = useState('')
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const failing = github?.status === 'failing'
+  const { rules } = githubRulesOf(github)
 
   async function run(action: () => Promise<string>) {
     setBusy(true)
@@ -958,7 +994,7 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
 
   const connect = () =>
     run(async () => {
-      const { login } = await connectGithub(token.trim(), repos)
+      const { login } = await connectGithub(token.trim())
       setToken('')
       setFormOpen(false)
       return `Connected as @${login}.`
@@ -966,7 +1002,7 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
   const sync = () =>
     run(async () => {
       const r = await syncGithub()
-      return `Synced · ${r.fetched} open · ${r.new} new · ${r.dismissed} closed`
+      return `Synced · ${r.fetched} open · ${r.new} new · ${r.dismissed + (r.completed ?? 0)} closed`
     })
   const disconnect = () =>
     run(async () => {
@@ -978,11 +1014,11 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
     <ProviderRow
       icon={<GithubGlyph dim={!github} />}
       name="GitHub"
-      desc="Open issues assigned to you (and repos you watch) come into your Inbox, ready to become tasks."
+      desc={rules.land === 'tasks' ? 'Open issues come straight into Tasks, each linked back to GitHub.' : 'Open issues come into your Inbox, ready to become tasks.'}
       status={
         github ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
-            <span className="st-dot" style={{ background: failing ? 'var(--acc-terra-ink)' : 'var(--check-fill)' }} />
+            <span className="st-dot" style={{ background: TONE_DOT[githubState(github).tone] }} />
             <span style={{ fontSize: 13, color: failing ? 'var(--acc-terra-ink)' : 'var(--ink-muted)', textAlign: 'right' }}>
               {failing ? '' : `@${github.login ?? '?'} · `}{githubState(github).text}
             </span>
@@ -999,7 +1035,9 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
           ) : (
             <>
               {/* A friend's feedback 2026-10-04: once connected, "GitHub" should lead to the issues. */}
-              <Link to="/inbox" className="kf-btn kf-press kf-button kf-button--cta" style={{ textDecoration: 'none' }}>See issues in your Inbox →</Link>
+              <Link to={rules.land === 'tasks' ? '/tasks' : '/inbox'} className="kf-btn kf-press kf-button kf-button--cta" style={{ textDecoration: 'none' }}>
+                {rules.land === 'tasks' ? 'See your tasks →' : 'See issues in your Inbox →'}
+              </Link>
               <Button type="button" variant="secondary" onClick={() => void sync()} disabled={busy}>{busy ? 'Syncing…' : 'Sync now'}</Button>
             </>
           )}
@@ -1018,13 +1056,8 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
             <div style={{ ...flabel, marginBottom: 6 }}>Fine-grained access token</div>
             <input type="password" autoComplete="off" spellCheck={false} value={token} onChange={(e) => setToken(e.target.value)} placeholder="github_pat_…" className="st-field" />
             <div className="st-help" style={{ marginTop: 6 }}>
-              <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>Create one on GitHub</a> — pick the repos it can see, set Issues to read-only (Metadata comes with it), and paste it here.
+              <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener noreferrer" style={{ color: 'inherit' }}>Create one on GitHub</a> — pick the repos it can see, set Issues to read-only (Metadata comes with it), and paste it here. Which repos to watch comes after.
             </div>
-          </label>
-          <label>
-            <div style={{ ...flabel, marginBottom: 6 }}>Watched repos · optional</div>
-            <input value={repos} onChange={(e) => setRepos(e.target.value)} placeholder="owner/repo, owner/other" className="st-field" />
-            <div className="st-help" style={{ marginTop: 6 }}>All their open issues come in too · issues assigned to you always do</div>
           </label>
           <div style={{ display: 'flex', gap: 10 }}>
             <Button type="submit" variant="cta" disabled={busy || !token.trim()}>{busy ? 'Connecting…' : 'Connect'}</Button>
@@ -1033,15 +1066,89 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
         </form>
       )}
       {message && <div role="status" className="st-help" style={{ marginTop: 10 }}>{message}</div>}
+      {github && !failing && <GithubRulesPanel github={github} />}
     </ProviderRow>
   )
 }
+
+// Settings.dc.html 2a "Rules · how GitHub lands": watched repos as chips (the list comes from GitHub
+// through github-connect — the token never leaves the server), where new issues land, where GitHub
+// letters sit in the Inbox, and Pause. Each change saves at once (github-connect `rules`).
+function GithubRulesPanel({ github }: { github: IntegrationStatus }) {
+  const { repos, rules, legacy } = githubRulesOf(github)
+  const list = useGithubRepos(true)
+  const [err, setErr] = useState<string | null>(null)
+  const save = (nextRepos: string[], patch: Partial<GithubRules>) => {
+    setErr(null)
+    saveGithubRules(nextRepos, { ...rules, ...patch }, repos).catch((e: Error) => setErr(e.message))
+  }
+  const unwatched = (list.data ?? []).filter((r) => !repos.includes(r))
+  const addOptions = list.isPending
+    ? [{ value: '', label: 'Loading your repos…', disabled: true }]
+    : list.isError
+      ? [{ value: '', label: list.error.message, disabled: true }]
+      : unwatched.length === 0
+        ? [{ value: '', label: 'No other repos this token can see', disabled: true }]
+        : unwatched.map((r) => ({ value: r, label: r }))
+
+  return (
+    <div className="st-gh-rules">
+      <div className="st-gh-rules-label" style={flabel}>Rules · how GitHub lands</div>
+      <Row label="Watching" help={watchingHelp({ repos, legacy })}>
+        {repos.map((r) => (
+          <Chip key={r} tone="bordered" style={repoChip}>
+            <span title={r}>{r.split('/')[1]}</span>
+            <button type="button" className="kf-hit st-chip-x" aria-label={`Stop watching ${r}`} onClick={() => save(repos.filter((x) => x !== r), {})}>✕</button>
+          </Chip>
+        ))}
+        {repos.length < MAX_REPOS && (
+          <Select
+            value=""
+            options={addOptions}
+            onChange={(r) => r && save([...repos, r], {})}
+            display="+ add repo"
+            ariaLabel="Add a repo to watch"
+            className="kf-chip kf-chip--bordered"
+            style={addChip}
+          />
+        )}
+      </Row>
+      <Row label="New issues land in" help={rules.land === 'tasks' ? 'As tasks with no project, linked to the issue · closing it ticks the task off' : undefined}>
+        <Segmented<GithubRules['land']> label="New issues land in" value={rules.land} onChange={(land) => save(repos, { land })} options={[{ value: 'inbox', label: 'Inbox' }, { value: 'tasks', label: 'Straight to Tasks' }]} />
+      </Row>
+      <Row label="Priority in inbox ordering" help="Where GitHub letters sort against voice notes & shares">
+        <Segmented<GithubRules['priority']> label="Priority in inbox ordering" value={rules.priority} onChange={(priority) => save(repos, { priority })} options={[{ value: 'high', label: 'High' }, { value: 'normal', label: 'Normal' }, { value: 'low', label: 'Low' }]} />
+      </Row>
+      <Row label="Pause this source" help={rules.paused ? 'Nothing syncs until you turn this off' : undefined}>
+        <Toggle on={rules.paused} label="Pause GitHub" onToggle={() => save(repos, { paused: !rules.paused })} />
+      </Row>
+      {err && <div role="alert" className="st-help" style={{ color: 'var(--acc-terra-ink)', paddingBottom: 12 }}>{err}</div>}
+    </div>
+  )
+}
+
+// 2a's chips: a pill, the repo in body ink; "+ add repo" dashed and faint.
+const repoChip: CSSProperties = { display: 'inline-flex', alignItems: 'center', gap: 6, borderRadius: 'var(--radius-pill)', borderColor: 'var(--line-solid)', color: 'var(--ink-body)' }
+const addChip: CSSProperties = { fontFamily: 'var(--font-mono)', background: 'none', border: '1px dashed var(--line-solid)', borderRadius: 'var(--radius-pill)', color: 'var(--ink-faint)' }
 
 function GroupLabel({ children }: { children: ReactNode }) {
   return (
     <div className="st-group-label">
       <span>{children}</span>
       <span />
+    </div>
+  )
+}
+
+// Kai 2026-10-12 ("fix or cut" → fix, by moving it): the capture key is a power tool, so it leaves the
+// Integrations list for a quiet Advanced section at the bottom of Settings, desktop and phone, still
+// fully working. Its card keeps the title "External capture endpoint" — docs/CAPTURE.md and the
+// guides find it by that name.
+function AdvancedSection() {
+  return (
+    <div id="settings-Advanced" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
+      <GroupLabel>Advanced</GroupLabel>
+      <CaptureKeyCard />
     </div>
   )
 }
@@ -1071,12 +1178,10 @@ function IntegrationsPage() {
       />
 
       <GroupLabel>Capture from anywhere</GroupLabel>
-      <div className="st-pair">
-        <CaptureKeyCard />
-        <SCard plain padded title="Share target" sub="Share to Kai’s Flow from any app on your phone — links, notes, half-thoughts.">
-          <div className="st-help">It’s in the share sheet once the app (or the installed web app) is on the phone · text and links, not images yet</div>
-        </SCard>
-      </div>
+      {/* The capture key moved to Settings → Advanced (Kai 2026-10-12). */}
+      <SCard plain padded title="Share target" sub="Share to Kai’s Flow from any app on your phone — links, notes, half-thoughts.">
+        <div className="st-help">It’s in the share sheet once the app (or the installed web app) is on the phone · text and links, not images yet</div>
+      </SCard>
       {/* Capture → photos (Paper capture): photo retention, today's scans, the offline queue. */}
       <PaperSettingsCard />
 
@@ -1184,16 +1289,21 @@ export function SoundCatalogCard() {
  * page's Organize card) — no longer only from Tasks, create-only. */
 function OrganizeCard() {
   return (
-    <SCard id="settings-Organize" title="Organize" sub="Domains — the big buckets your projects, areas and tasks sit in" padded>
-      <DomainsSettings />
-    </SCard>
+    <>
+      <SCard id="settings-Organize" title="Organize" sub="Domains — the big buckets your projects, areas and tasks sit in" padded>
+        <DomainsSettings />
+      </SCard>
+      {/* Overlays.dc.html "Labels · manage · settings": labels cut across every domain — rename,
+          recolour, delete (tasks/LabelManager), drawn as its own panel; Settings' card look. */}
+      <LabelManager id="settings-Labels" style={{ borderRadius: 'var(--radius-sharp)', boxShadow: 'var(--shadow-card)' }} />
+    </>
   )
 }
 
-// The capture endpoint's key card lives on the Integrations page, so it has no row of its own.
+// The capture endpoint's key card lives in Advanced, at the bottom of the page (Kai 2026-10-12).
 // 'Sound' returned when Kai un-cut it (2026-07-26); 'Resurfacing' is the cooldown card (punch 21);
 // 'Data' holds the importer and punch 50's Trash entry point. UI pass: in the order the page reads.
-const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Integrations', 'Organize', 'Data', 'Profile', 'App'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Integrations', 'Organize', 'Data', 'Profile', 'App', 'Advanced'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
 const SUBNAV_LABEL: Partial<Record<SubnavItem, string>> = { Timezone: 'Time zone', Data: 'Your data' }
 
@@ -1214,7 +1324,8 @@ function DesktopSettings() {
       <nav className="st-nav" aria-label="Settings sections">
         <div className="st-nav-in">
           <div className="st-nav-title">
-            <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 26, filter: 'var(--shadow-drop-sm)' }} />
+            {/* Night 1e: the clover is a silhouette lit at the rim. */}
+            <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 26, filter: 'var(--rim-clover, var(--shadow-drop-sm))' }} />
             <h1>Settings</h1>
           </div>
           {SUBNAV_ITEMS.map((item) => (
@@ -1255,6 +1366,7 @@ function DesktopSettings() {
             </div>
           </div>
         )}
+        {page === 'all' && <AdvancedSection />}
       </div>
     </div>
   )
@@ -1269,7 +1381,7 @@ function MobileSettings() {
     // UI pass: the same cards and rows as the computer, one column.
     <div className="st-phone">
       <div className="st-phone-title">
-        <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, filter: 'var(--shadow-drop-sm)' }} />
+        <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, filter: 'var(--rim-clover, var(--shadow-drop-sm))' }} />
         <h1>Settings</h1>
       </div>
       <AppearanceCard />
@@ -1277,19 +1389,22 @@ function MobileSettings() {
       <SoundCatalogCard />
       <CalendarCard phone />
       <TimezoneCard />
+      {/* Parity with the computer: the same cooldown card (its sliders are 44 tall on a phone). */}
+      <ResurfacingCard />
       {/* The phone is where the pushes land, so the whole Notifications card lives here too (12i). */}
       <NotificationsCard />
       {/* The phone has no Organize rail — its domains live here. */}
       <OrganizeCard />
-      {/* P6: the phone has no Integrations page, so GitHub, the capture key, photos and AI sit here. */}
+      {/* P6: the phone has no Integrations page, so GitHub, photos and AI sit here (the capture key: Advanced). */}
       <GroupLabel>Connections</GroupLabel>
       <GithubProvider github={github} />
-      <CaptureKeyCard />
       <PaperSettingsCard />
       <McpCard />
-      {/* Punch 50: the phone's way into Trash. */}
-      <DataCard importer={false} />
+      {/* Punch 50: the phone's way into Trash — and, like the computer, the importer and Profile. */}
+      <DataCard />
+      <ProfileCard />
       <AppUpdateCard />
+      <AdvancedSection />
       <div className="st-phone-foot">everything saves as you touch it ✿</div>
     </div>
   )

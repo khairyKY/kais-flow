@@ -1,7 +1,8 @@
 import { uiZoom } from '../lib/uiScale'
 import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
-import { scheduleTomorrow } from '../lib/dateShortcuts'
+import { scheduleNextWeek, scheduleThisEvening, scheduleTomorrow } from '../lib/dateShortcuts'
+import { appZone } from '../lib/appZone'
 import { BottomSheet, SheetRow, useIsMobile } from './BottomSheet'
 import { DatePicker } from './DatePicker'
 import { Float } from './Float'
@@ -13,25 +14,6 @@ export interface SnoozeMenuProps {
   onClose: () => void
   onSnooze: (until: string) => void
   onSomeday: () => void
-}
-
-function atTime(base: Date, hour: number): Date {
-  const d = new Date(base)
-  d.setHours(hour, 0, 0, 0)
-  return d
-}
-function addDays(base: Date, n: number): Date {
-  const d = new Date(base)
-  d.setDate(d.getDate() + n)
-  return d
-}
-function thisEvening(now: Date): Date {
-  const evening = atTime(now, 18)
-  return evening > now ? evening : atTime(addDays(now, 1), 18)
-}
-function nextMonday(now: Date): Date {
-  const diff = ((1 - now.getDay() + 7) % 7) || 7
-  return atTime(addDays(now, diff), 9)
 }
 
 const itemStyle = {
@@ -82,9 +64,9 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
   // "This evening" (sheetLabel null = desktop-only row).
   const presets: { label: string; dot: string; at: Date; sheetLabel: string | null; sheetMeta: string }[] = [
     { label: 'Later today', dot: 'var(--acc-hydrangea)', at: new Date(now.getTime() + 3 * 60 * 60 * 1000), sheetLabel: 'Later today', sheetMeta: '+3h' },
-    { label: 'This evening', dot: 'var(--acc-lavender)', at: thisEvening(now), sheetLabel: null, sheetMeta: '' },
+    { label: 'This evening', dot: 'var(--acc-lavender)', at: new Date(scheduleThisEvening(now)), sheetLabel: null, sheetMeta: '' },
     { label: 'Tomorrow', dot: 'var(--acc-blossom)', at: new Date(scheduleTomorrow(now)), sheetLabel: 'Tomorrow morning', sheetMeta: '09:00' },
-    { label: 'Next week', dot: 'var(--acc-moss)', at: nextMonday(now), sheetLabel: 'Next week', sheetMeta: 'Mon' },
+    { label: 'Next week', dot: 'var(--acc-moss)', at: new Date(scheduleNextWeek(now)), sheetLabel: 'Next week', sheetMeta: 'Mon' },
   ]
 
   const rows = presets.length + 3 // header + Someday row + Pick-date row
@@ -174,7 +156,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.dot, flex: 'none' }} />
           <span style={{ flex: 1 }}>{p.label}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-            {p.at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit' })}
+            {p.at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: appZone() })}
           </span>
         </button>
       ))}

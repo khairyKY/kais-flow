@@ -1,0 +1,103 @@
+/* The Notebook page — NO DESIGN YET (Claude Design prompt 10 not run): kit parts + tokens only, plain
+   and calm, waiting for that pass. The page is light paper in both themes (`data-theme="day"` on it,
+   tokens/colors.css); the chrome around it follows the theme. Reading size for copying by hand. */
+
+/* ── the page ── */
+.nb-paper {
+  position: relative;
+  box-sizing: border-box;
+  background: var(--paper-parchment);
+  color: var(--ink-body);
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-sharp);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-8) var(--sp-8) var(--sp-6);
+  font-family: var(--font-display);
+  font-size: var(--fs-lead);
+  line-height: var(--lh-relaxed);
+}
+.nb-head { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-2) var(--sp-4); padding-bottom: var(--sp-3); border-bottom: 1px solid var(--line-solid); }
+.nb-date { margin: 0; font-family: var(--font-display); font-size: var(--fs-display-l); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); line-height: var(--lh-snug); }
+.nb-aside { font-family: var(--font-mono); font-size: var(--fs-body-s); color: var(--ink-muted); white-space: nowrap; }
+.nb-block { margin-top: var(--sp-5); }
+.nb-label { margin: 0 0 var(--sp-1); font-family: var(--font-mono); font-size: var(--fs-mono-l); font-weight: var(--fw-regular); letter-spacing: var(--ls-mono); text-transform: uppercase; color: var(--ink-faint); }
+.nb-line { display: flex; align-items: baseline; gap: var(--sp-3); min-height: var(--sp-8); padding: var(--sp-1) 0; }
+.nb-box { flex: none; align-self: center; width: 0.8em; height: 0.8em; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border: 1.5px solid currentColor; border-radius: 2px; font-family: var(--font-ui); font-size: inherit; line-height: 1; }
+.nb-box.is-done { font-size: 0.7em; width: 1.15em; height: 1.15em; }
+.nb-mark { flex: none; min-width: 0.8em; text-align: center; }
+.nb-goal { flex: none; color: var(--acc-gold); }
+.nb-time { flex: none; min-width: 12ch; font-family: var(--font-mono); font-size: var(--fs-body); color: var(--ink-muted); white-space: nowrap; }
+.nb-text { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.nb-line.is-blank .nb-text { align-self: stretch; border-bottom: 1px dashed var(--line-dashed); }
+/* done = faint ink (--ink-hairline is non-text: 3:1, under AA) */
+.nb-line.is-done .nb-text, .nb-row-item.is-done { color: var(--ink-faint); }
+.nb-row { flex-wrap: wrap; column-gap: var(--sp-6); row-gap: var(--sp-1); }
+.nb-row-item { display: inline-flex; align-items: baseline; gap: var(--sp-2); white-space: nowrap; }
+.nb-sub { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: var(--ls-mono); color: var(--ink-faint); }
+.nb-more { padding-top: var(--sp-1); font-family: var(--font-hand); font-size: var(--fs-hand-l); color: var(--ink-hand); }
+.nb-rule { height: var(--sp-8); display: flex; align-items: flex-end; border-bottom: 1px solid var(--line-card); }
+.nb-block.is-night { margin-top: var(--sp-4); }
+.nb-prompt .nb-mark { font-family: var(--font-display); }
+.nb-prompt .nb-text { color: var(--ink-muted); border-bottom: 1px solid var(--line-card); }
+.nb-foot-line { display: flex; align-items: baseline; gap: var(--sp-4); margin-top: var(--sp-6); padding-right: var(--sp-12); }
+.nb-hand { font-family: var(--font-hand); font-size: var(--fs-hand-l); color: var(--ink-hand); }
+.nb-stamp { font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: var(--ls-mono); text-transform: uppercase; color: var(--acc-sage-text); border: 1px solid currentColor; border-radius: var(--radius-sharp); padding: 0 var(--sp-2); transform: rotate(var(--tilt-neg)); }
+.nb-flourish { position: absolute; right: var(--sp-4); bottom: var(--sp-4); width: var(--sp-12); height: auto; opacity: 0.9; pointer-events: none; }
+
+/* ── around it ── */
+.nb-planfirst { margin-bottom: var(--sp-3); font-size: var(--fs-body); color: var(--ink-muted); }
+.nb-link { border: none; background: none; padding: var(--sp-2) var(--sp-1); font: inherit; font-weight: var(--fw-medium); color: var(--acc-lavender-deep); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
+.nb-ticks { display: inline-flex; align-items: center; gap: var(--sp-3); min-height: var(--touch-min); padding: 0 var(--sp-2); border: none; background: none; font: inherit; font-size: var(--fs-body); color: var(--ink-body); text-align: left; cursor: pointer; border-radius: var(--radius-input); }
+.nb-ticks small { display: block; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.nb-ticks:hover { background: var(--pressed-overlay); }
+.nb-link:focus-visible, .nb-ticks:focus-visible, .nb-ed-move:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* desktop: the A5 page, actions beside it (or the editor before it) */
+.nb-desk { flex: 1; min-height: 100%; box-sizing: border-box; padding: var(--sp-6) var(--sp-6) var(--sp-12); background: var(--paper-linen); }
+.nb-desk-head { display: flex; flex-direction: column; align-items: flex-start; gap: var(--sp-2); max-width: 960px; margin: 0 auto var(--sp-6); }
+.nb-desk-title { margin: 0; font-family: var(--font-display); font-size: var(--fs-display-l); font-weight: var(--fw-regular); color: var(--ink-body); }
+.nb-desk-grid { display: grid; grid-template-columns: minmax(0, 440px) 220px; justify-content: center; align-items: start; gap: var(--sp-8); }
+.nb-desk-grid.is-editing { grid-template-columns: 280px minmax(0, 440px); gap: var(--sp-6); }
+.nb-desk-page .nb-paper { aspect-ratio: 148 / 210; } /* A5; a long day grows past it */
+.nb-side { position: sticky; top: var(--sp-6); display: flex; flex-direction: column; align-items: stretch; gap: var(--sp-3); }
+.nb-side .kf-seg { align-self: flex-start; }
+.nb-side-rule { border-top: 1px dashed var(--line-dashed); margin: var(--sp-1) 0; }
+.nb-side.is-editor { position: static; }
+
+/* phone: the sheet's body and its sticky footer (11o) */
+.nb-phone { display: flex; flex-direction: column; gap: var(--sp-3); padding-bottom: var(--sp-4); }
+.nb-bar { display: flex; align-items: center; flex-wrap: wrap; gap: var(--sp-1); }
+.nb-phone .nb-paper { padding: var(--sp-6) var(--sp-5) var(--sp-5); }
+.nb-phone-foot { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); width: 100%; }
+.nb-phone-foot .kf-button { flex: none; }
+
+/* ── the layout editor ── */
+.nb-editor { background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-md); box-shadow: var(--shadow-crisp); padding: var(--sp-2) var(--sp-4) var(--sp-3); color: var(--ink-body); }
+.nb-ed-head { display: flex; align-items: center; justify-content: space-between; }
+.nb-ed-title { font-family: var(--font-display); font-size: var(--fs-body-l); font-weight: var(--fw-medium); }
+.nb-ed-label { margin: var(--sp-3) 0 var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-meta-l); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.nb-ed-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
+.nb-ed-block { border-bottom: 1px dashed var(--line-dashed); }
+.nb-ed-block:last-child { border-bottom: none; }
+.nb-ed-row { display: flex; align-items: center; gap: var(--sp-3); min-height: var(--touch-min); }
+.nb-ed-name { flex: 1; min-width: 0; font-size: var(--fs-body); }
+.nb-ed-name.is-off { color: var(--ink-faint); }
+.nb-ed-move { width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 50%; background: none; color: var(--ink-muted); cursor: pointer; }
+.nb-ed-move:disabled { opacity: 0.35; cursor: default; }
+.nb-ed-move:not(:disabled):hover { background: var(--pressed-overlay); }
+.nb-ed-opts { display: flex; flex-direction: column; gap: var(--sp-1); padding: 0 0 var(--sp-2) var(--sp-12); }
+.nb-ed-opt { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: var(--sp-2); min-height: var(--sp-10); font-size: var(--fs-body-s); color: var(--ink-muted); }
+.nb-ed-help { font-size: var(--fs-body-s); color: var(--ink-faint); padding-bottom: var(--sp-1); }
+@media (pointer: coarse) { .nb-ed-move { width: var(--touch-min); height: var(--touch-min); } }
+
+/* ── print: only the page, ink on white, no flourish or stamp (Print / Save PDF; A5 · A6 · Letter) ── */
+.nb-print-root { display: none; }
+@media print {
+  html:has(.nb-print-root), html:has(.nb-print-root) body { height: auto !important; overflow: visible !important; background: none !important; }
+  html:has(.nb-print-root) body > :not(.nb-print-root) { display: none !important; }
+  .nb-print-root { display: block; }
+  .nb-print-root .nb-paper { border: none; border-radius: 0; box-shadow: none; background: none; padding: 0; }
+  .nb-print-root .nb-flourish, .nb-print-root .nb-stamp { display: none; }
+  .nb-print-root.is-A6 .nb-paper { font-size: var(--fs-body); }
+  .nb-print-root.is-A6 .nb-date { font-size: var(--fs-display-m); }
+}

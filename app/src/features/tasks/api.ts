@@ -6,19 +6,22 @@ import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
 import { toastAction, toastUndo } from '../../lib/undo'
+import { useToastStore } from '../../lib/toastStore'
 import { playCompletion } from '../../lib/sounds'
-import { nextOccurrence, nextReminderAt } from './recurrence'
+import { nextDue, nextReminderAt } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
 import { TASK_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
-import { scheduleTomorrow } from '../../lib/dateShortcuts'
+import { scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import { legacyGoalId } from '../today/goalStore'
 import { dayTop3, moveInTop3, planMakeGoal, rankWrites } from '../today/top3Order'
 import { cachedStarEvents } from '../today/api'
 import { cairoToIso } from '../calendar/eventTime'
 import { fromMin } from '../../components/pickerMath'
-import type { SpreadPick } from './planMath'
+import { todayFor, type SpreadPick } from './planMath'
+import { isTop3Today, openTop3Count } from './top3Rule'
 import { placeTask, planReparent, type MoveTarget } from './move'
+import { addedLine } from './taskSheetMath'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -43,6 +46,8 @@ export interface CreateTaskInput {
   title: string
   domainId?: string | null
   projectId?: string | null
+  /** Since 0052 a task is in a project OR an area — pass one (tasks/move.ts has the rules). */
+  areaId?: string | null
   dueAt?: string | null
   reminderOffsetMin?: number | null
   durationMin?: number | null
@@ -55,6 +60,8 @@ export interface CreateTaskInput {
   parentTaskId?: string | null
   /** Where the task came from (0027) — a filed GitHub issue keeps its url here. */
   externalRef?: Task['external_ref']
+  /** Parked from the start (Inbox "Someday" files a capture this way, undated). */
+  someday?: boolean
 }
 
 export function createTask(input: CreateTaskInput): Task {
@@ -78,8 +85,8 @@ export function createTask(input: CreateTaskInput): Task {
     labels: input.labels ?? [],
     priority: input.priority ?? null,
     duration_min: input.durationMin ?? null,
-    someday: false,
-    area_id: null,
+    someday: input.someday ?? false,
+    area_id: input.areaId ?? null,
     reminder_at: reminderAt,
     reminder_sent: false,
     completed_at: null,
@@ -94,6 +101,29 @@ export function createTask(input: CreateTaskInput): Task {
   return task
 }
 
+// Every setter below writes the row as the cache has it NOW, with its one field changed — never the
+// object it was handed. A caller holding a task from a render ago (QuickCreate: create, then area,
+// repeat, labels, Top 3, someday — each with the same `task`) used to spread that stale copy, and
+// since the outbox keeps only the newest write per row, only the last field survived.
+const cachedTasks = () => queryClient.getQueryData<Task[]>(['tasks']) ?? []
+const cached = (t: Task) => cachedTasks().find((x) => x.id === t.id) ?? t
+/** A task as the cache has it now (a subtask row's parent title), without subscribing. */
+export const cachedTask = (id: string): Task | undefined => cachedTasks().find((x) => x.id === id && !x.deleted_at)
+
+/** Writes `task`'s current row with `patch` applied — the one way a single-field edit lands. */
+function patchTask(task: Task, patch: Partial<Task>): Task {
+  const row = { ...cached(task), ...patch }
+  writeRow('tasks', row)
+  return row
+}
+
+/** A typed capture's toast (Tasks' quick add, the command bar): where it landed — "Added to Tomorrow ·
+ * Forecasting" (taskSheetMath addedLine) — never a silent landing. Undo sends it to Trash, its block
+ * with it. */
+export function toastAdded(task: Task, place: string | null): void {
+  toastUndo(addedLine(task, place, new Date()), () => deleteTask(cached(task)))
+}
+
 /** Everything needed to take a completion back: the row as it was, and the occurrence it spawned. */
 export interface CompletionUndo {
   before: Task
@@ -106,7 +136,8 @@ export interface CompletionUndo {
 const recentCompletions = new Map<string, CompletionUndo>()
 
 /** Completing a recurring task materializes its next occurrence as a fresh task (completion.ts). */
-export function completeTask(task: Task): CompletionUndo {
+export function completeTask(passed: Task): CompletionUndo {
+  const task = cached(passed)
   playCompletion(task) // Sounds v2: every way of checking a task off (box, swipe, menu, key) sounds once, here
   const plan = planCompletion(task, queryClient.getQueryData<Task[]>(['tasks']) ?? [], nowIso(), () => crypto.randomUUID())
   writeRow('tasks', plan.done)
@@ -228,7 +259,7 @@ export function deleteTask(task: Task, after?: () => void): void {
   // screen (bulk from a different view, tests) or under reduced motion.
   animateRowRemoval(document.getElementById(`task-${task.id}`), () => {
     deleteEventsForTask(task.id)
-    writeRow('tasks', { ...task, deleted_at: new Date().toISOString() })
+    patchTask(task, { deleted_at: new Date().toISOString() })
     logActivity('task.deleted', 'task', task.id, {})
     after?.()
   })
@@ -259,7 +290,7 @@ export function moveToTomorrowWithUndo(tasks: Task[]): void {
 export function duplicateTaskWithUndo(task: Task): Task {
   const now = nowIso()
   // Like a spawned repeat (completion.ts): an imported row's idempotency key stays with the original.
-  const { external_ref: _importKey, ...rest } = task as Task & { external_ref?: unknown }
+  const { external_ref: _importKey, ...rest } = cached(task) as Task & { external_ref?: unknown }
   const copy: Task = { ...rest, id: crypto.randomUUID(), status: 'todo', completed_at: null, top3: false, top3_rank: null, scheduled_start: null, scheduled_end: null, reminder_sent: false, created_at: now, updated_at: now }
   writeRow('tasks', copy)
   logActivity('task.created', 'task', copy.id, { duplicate_of: task.id })
@@ -269,12 +300,12 @@ export function duplicateTaskWithUndo(task: Task): Task {
 
 export function restoreTask(task: Task): void {
   restoreEventsForTask(task.id)
-  writeRow('tasks', { ...task, deleted_at: null })
+  patchTask(task, { deleted_at: null })
   logActivity('task.restored', 'task', task.id, {})
 }
 
 export function setSomeday(task: Task, someday: boolean): void {
-  writeRow('tasks', { ...task, someday })
+  patchTask(task, { someday })
   logActivity('task.someday_set', 'task', task.id, { someday })
 }
 
@@ -286,7 +317,7 @@ const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
 export function moveTasksWithUndo(tasks: Task[], to: MoveTarget): void {
   const place = (t: Task) => ({ project_id: t.project_id, area_id: t.area_id ?? null, domain_id: t.domain_id })
   for (const t of tasks) {
-    const moved = placeTask(t, to)
+    const moved = placeTask(cached(t), to)
     writeRow('tasks', moved)
     logActivity('task.moved', 'task', t.id, place(moved))
   }
@@ -305,10 +336,19 @@ export function moveTasksWithUndo(tasks: Task[], to: MoveTarget): void {
  * container). Returns the Undo for the tasks part. */
 export function carryTasksToDomain(field: 'project_id' | 'area_id', containerId: string, domainId: string | null): () => void {
   const moved = planReparent(queryClient.getQueryData<Task[]>(['tasks']) ?? [], field, containerId, domainId)
-  moved.forEach((m) => writeRow('tasks', m.after))
+  // The slipping view reads entity_type='task' activity: a domain carried along is a move too.
+  const log = (t: Task) => logActivity('task.moved', 'task', t.id, { project_id: t.project_id, area_id: t.area_id ?? null, domain_id: t.domain_id })
+  moved.forEach((m) => {
+    writeRow('tasks', m.after)
+    log(m.after)
+  })
   return () => {
     const now = queryClient.getQueryData<Task[]>(['tasks']) ?? []
-    for (const m of moved) writeRow('tasks', { ...(now.find((c) => c.id === m.before.id) ?? m.after), domain_id: m.before.domain_id })
+    for (const m of moved) {
+      const back = { ...(now.find((c) => c.id === m.before.id) ?? m.after), domain_id: m.before.domain_id }
+      writeRow('tasks', back)
+      log(back)
+    }
   }
 }
 
@@ -320,37 +360,90 @@ export function rescheduleTasksWithUndo(tasks: Task[], dueAt: string, { timed = 
   toastUndo(message, () => undos.forEach((undo) => undo()))
 }
 
+/** Someday for one task or many — the row ⋯, the task sheet, the bulk bar — with one Undo, which
+ * gives back each row's someday flag and the Top 3 place parking it took (top3Rule). */
 export function somedayTasksWithUndo(tasks: Task[]): void {
-  tasks.forEach((t) => setSomeday(t, true))
-  toastUndo(`${tasksLabel(tasks.length)} parked for someday`, () => tasks.forEach((t) => setSomeday(t, t.someday)))
+  const before = tasks.map(cached)
+  before.forEach((t) => setSomeday(t, true))
+  toastUndo(tasks.length === 1 ? 'Parked for someday' : `${tasksLabel(tasks.length)} parked for someday`, () =>
+    before.forEach((b) => {
+      patchTask(b, { someday: b.someday, top3: b.top3, top3_rank: b.top3_rank ?? null })
+      logActivity('task.someday_set', 'task', b.id, { someday: b.someday })
+    }),
+  )
 }
 
+/** A field edit the slipping view should see (it reads entity_type='task' activity). */
+const logUpdate = (task: Task, field: string) => logActivity('task.updated', 'task', task.id, { field })
+
 export function setLabels(task: Task, labels: string[]): void {
-  writeRow('tasks', { ...task, labels })
+  patchTask(task, { labels })
+  logUpdate(task, 'labels')
 }
 
 export function setPriority(task: Task, priority: number | null): void {
-  writeRow('tasks', { ...task, priority })
+  patchTask(task, { priority })
+  logUpdate(task, 'priority')
 }
 
 export function setDuration(task: Task, durationMin: number | null): void {
-  writeRow('tasks', { ...task, duration_min: durationMin })
+  patchTask(task, { duration_min: durationMin })
+  logUpdate(task, 'duration')
+}
+
+/** The notes field (task sheet, popover, editor) — written once, when it's left. */
+export function setNotes(task: Task, notes: string | null): void {
+  patchTask(task, { notes })
+  logUpdate(task, 'notes')
 }
 
 /** Client-enforced cap of 3 — no DB constraint, since that would fight the offline outbox. A star
- * joins the Top 3 last (no place yet); an unstar gives its place up. */
-export function toggleTop3(task: Task): void {
-  if (!task.top3) {
-    const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
-    const currentTop3Count = tasks.filter((t) => t.top3 && t.id !== task.id).length
-    if (currentTop3Count >= MAX_TOP3) return
-  }
-  writeRow('tasks', { ...task, top3: !task.top3, top3_rank: null, someday: task.top3 ? task.someday : false })
-  logActivity(task.top3 ? 'task.unstarred' : 'task.starred', 'task', task.id, {})
+ * joins the Top 3 last (no place yet); an unstar gives its place up. The cap counts the open picks
+ * that are still today's (top3Rule), not every stale flag — a pick moved to Thursday frees its slot.
+ * Returns false when the Top 3 was already full. */
+export function toggleTop3(task: Task): boolean {
+  const done = flipTop3(cached(task))
+  // It used to fail silently, which read as "the star is broken".
+  if (!done) useToastStore.getState().push({ message: 'Top 3 is full — take one out first' })
+  return done
 }
 
-const cachedTasks = () => queryClient.getQueryData<Task[]>(['tasks']) ?? []
-const cached = (t: Task) => cachedTasks().find((x) => x.id === t.id) ?? t
+function flipTop3(task: Task): boolean {
+  if (task.top3) {
+    writeRow('tasks', { ...task, top3: false, top3_rank: null })
+    logActivity('task.unstarred', 'task', task.id, {})
+    return true
+  }
+  if (openTop3Count(cachedTasks(), new Date(), task.id) >= MAX_TOP3) return false
+  const starred: Task = { ...task, top3: true, top3_rank: null, someday: false }
+  // The Top 3 is today's: a pick dated another day comes to today (at its own time), or the star
+  // would be given straight back by releaseTop3.
+  const pick = isTop3Today(starred, new Date()) ? starred : { ...starred, due_at: todayFor(task) }
+  writeRow('tasks', pick)
+  logActivity('task.starred', 'task', task.id, {})
+  return true
+}
+
+/** `T` with tasks selected, and the bulk bar's ☆ (Kai 2026-10-12: "select 3 tasks and press T —
+ * it doesn't work"): stars the selection in order up to the free places, one Undo. When every
+ * selected task is already a pick, it unstars them instead (T toggles, like on one row). */
+export function toggleTop3ManyWithUndo(tasks: Task[]): void {
+  const before = tasks.map(cached)
+  if (before.length > 0 && before.every((t) => t.top3)) {
+    before.forEach((t) => flipTop3(t))
+    toastUndo(before.length === 1 ? 'Removed from Top 3' : `${tasksLabel(before.length)} removed from Top 3`, () => restoreTop3(before))
+    return
+  }
+  const fresh = before.filter((t) => !t.top3 && !t.completed_at)
+  const added = fresh.filter((t) => flipTop3(cached(t)))
+  const left = fresh.length - added.length
+  const full = left > 0 ? ` · Top 3 is full, ${left} left out` : ''
+  if (added.length === 0) {
+    useToastStore.getState().push({ message: 'Top 3 is full — take one out first' })
+    return
+  }
+  toastUndo(`${added.length === 1 ? 'Added' : `${added.length} added`} to Top 3${full}`, () => restoreTop3(added.map((t) => before.find((b) => b.id === t.id)!)))
+}
 
 /** Today's Top 3 as drawn, goal first (today/top3Order) — what Make goal and Move up/down act on. */
 export function currentTop3(): Task[] {
@@ -366,7 +459,7 @@ export function writeTop3Order(order: readonly Task[]): void {
 function restoreTop3(before: readonly Task[]): void {
   for (const b of before) {
     const now = cached(b)
-    writeRow('tasks', { ...now, top3: b.top3, top3_rank: b.top3_rank ?? null, someday: b.someday })
+    writeRow('tasks', { ...now, top3: b.top3, top3_rank: b.top3_rank ?? null, someday: b.someday, due_at: b.due_at })
     if (now.top3 !== b.top3) logActivity(b.top3 ? 'task.starred' : 'task.unstarred', 'task', b.id, {})
   }
 }
@@ -416,7 +509,8 @@ function makeGoal(order: Task[], task: Task): boolean {
 }
 
 export function renameTask(task: Task, title: string): void {
-  writeRow('tasks', { ...task, title })
+  patchTask(task, { title })
+  logUpdate(task, 'title')
 }
 
 /** Replan all → Spread into free slots, once the preview is confirmed (planMath spreadPlan): a
@@ -436,41 +530,52 @@ export function spreadWithUndo(picks: readonly SpreadPick[]): void {
  * date alone takes a block from another day off (calendar/replan.ts has the rule). Returns the
  * Undo: the row and its blocks exactly as they were. */
 export function rescheduleDue(task: Task, dueAt: string | null, timed = false): () => void {
-  const before = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? task
-  writeRow('tasks', { ...task, due_at: dueAt, someday: dueAt ? false : task.someday })
+  const before = cached(task)
+  patchTask(before, { due_at: dueAt, someday: dueAt ? false : before.someday })
   logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
-  const undoBlocks = replanTaskBlocks(task, dueAt, timed)
+  const undoBlocks = replanTaskBlocks(before, dueAt, timed)
   return () => {
     undoBlocks()
     const now = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? before
-    writeRow('tasks', { ...now, due_at: before.due_at, someday: before.someday })
+    // A pick moved off today gave its Top 3 place up (top3Rule); Undo gives it back.
+    writeRow('tasks', { ...now, due_at: before.due_at, someday: before.someday, top3: before.top3, top3_rank: before.top3_rank })
     logActivity('task.rescheduled', 'task', task.id, { due_at: before.due_at })
   }
 }
 
+/** A repeat needs a date to roll from (completion spawns the next copy from due_at): one set on an
+ * undated task dates it today, first thing, and says so — it used to never repeat, silently. */
 export function setRecurrence(task: Task, rule: string | null): void {
-  writeRow('tasks', { ...task, recurrence_rule: rule })
+  const undated = !!rule && !cached(task).due_at
+  const dueAt = undated ? scheduleToday() : undefined
+  patchTask(task, { recurrence_rule: rule, ...(dueAt ? { due_at: dueAt, someday: false } : null) })
   logActivity('task.recurrence_set', 'task', task.id, { rule })
+  if (dueAt) {
+    logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
+    useToastStore.getState().push({ message: 'Repeats from today' })
+  }
 }
 
 export function setReminder(task: Task, reminderAt: string | null): void {
-  writeRow('tasks', { ...task, reminder_at: reminderAt, reminder_sent: false })
+  patchTask(task, { reminder_at: reminderAt, reminder_sent: false })
   logActivity('task.reminder_set', 'task', task.id, { reminder_at: reminderAt })
 }
 
 export function pauseTask(task: Task): void {
-  writeRow('tasks', { ...task, paused: true })
+  patchTask(task, { paused: true })
   logActivity('task.paused', 'task', task.id, {})
 }
 
 export function resumeTask(task: Task): void {
-  writeRow('tasks', { ...task, paused: false })
+  patchTask(task, { paused: false })
   logActivity('task.resumed', 'task', task.id, {})
 }
 
-export function skipNextOccurrence(task: Task): void {
+export function skipNextOccurrence(passed: Task): void {
+  const task = cached(passed)
   if (task.recurrence_rule && task.due_at) {
-    const next = nextOccurrence(task.recurrence_rule, new Date(task.due_at))
+    // The round after this one — and never one that's already past (./recurrence nextDue).
+    const next = nextDue(task.recurrence_rule, task.due_at, new Date())
     if (next) {
       // Polish F2a: the reminder moves with the occurrence (same lead, not yet sent) — left
       // behind, it pointed at the skipped time and never fired for the new one.

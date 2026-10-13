@@ -1,0 +1,109 @@
+/* Night surfaces — design-export/Night.dc.html 1a–1f: "a moonlit garden, not an inverted
+   stylesheet". Every rule is scoped to the night theme and reads tokens from colors.dark.css, so the
+   day theme is untouched. Loaded after the tokens (index.css). `:root[data-theme]` out-ranks the
+   surfaces' own one- and two-class rules, which load later in their feature chunks.
+   Ambient budget (Design System 07): ≤2 continuous animations per screen. At night that is Today's
+   fireflies and nothing else — every other screen holds still (1e: "fireflies live on Today only"). */
+
+/* Frosted glass (1a band, 1d vine panel, 1e cards, 1f card) → the surfaces that carry them now:
+   Settings cards, Today's Now card (2a's successor to the terrarium band) and the phone ritual card.
+   ponytail: the design's flat fill, no backdrop-filter. The ground behind these cards is flat paper
+   and the grain sits above everything, so the drawn blur(6px) draws nothing: on Settings at 1280×800
+   it moved 1.3% of pixels by ≤6/255 (docs/log/assets/night/). Add the blur back only if something
+   ever moves behind a card — it is a GPU cost on every scroll frame of the big Settings cards. */
+:root[data-theme='night'] :is(.st-card, .td-now, .tp-ritual) {
+  background: var(--frost-bg);
+  border-color: var(--frost-line);
+  box-shadow: var(--shadow-frost);
+}
+
+/* 1a: the sidebar vine is a still silhouette at night (its daytime sway is the one loop that would
+   push Today past the ambient budget). */
+:root[data-theme='night'] .app-vine img {
+  animation: none;
+  filter: var(--silhouette);
+}
+
+/* 1a: the active nav row is frosted glass with no washi tape (the frost and the glowing dots are
+   night tokens read inline in components/AppLayout.tsx). */
+:root[data-theme='night'] .kf-nav-tape {
+  display: none;
+}
+
+/* 1b: the ⌘K bar raised over a dimmed page — a dark scrim, and the page beneath at 75%. The dim
+   snaps with the scrim (filter isn't a transform/opacity animation); the panel is already frosted. */
+:root[data-theme='night'] .kf-scrim.kf-cmd-scrim {
+  background: var(--scrim-command);
+}
+:root[data-theme='night'] body:has(.kf-cmd-scrim) .app-main-content {
+  filter: var(--dim-behind);
+}
+
+/* 1c: calendar hairlines glow faintly instead of darkening; the now line glows in its own colour. */
+:root[data-theme='night'] .fc .fc-timegrid-slot-lane:not(.fc-timegrid-slot-minor) {
+  position: relative;
+  border-color: var(--line-solid);
+}
+/* The glow hugs the hour line itself — on the whole cell it also lit the half-hour edge. */
+:root[data-theme='night'] .fc .fc-timegrid-slot-lane:not(.fc-timegrid-slot-minor)::after {
+  content: '';
+  position: absolute;
+  inset: -1px 0 auto;
+  height: 1px;
+  box-shadow: var(--glow-hairline);
+  pointer-events: none;
+}
+:root[data-theme='night'] .fc .fc-timegrid-now-indicator-line,
+:root[data-theme='night'] .fc .fc-timegrid-now-indicator-line::before {
+  box-shadow: var(--glow-now);
+}
+:root[data-theme='night'] .pc-hour > i {
+  border-top-color: var(--line-solid);
+  box-shadow: var(--glow-hairline);
+}
+:root[data-theme='night'] :is(.pc-nowline, .pc-nowdot) {
+  box-shadow: var(--glow-now-terra);
+}
+
+/* 1a / 1f: one or two fireflies on Today, nowhere else (features/today/NightGarden.tsx). They drift
+   only under .motion-on (the Botanical animations setting AND no reduced-motion); otherwise they
+   hold still — a still night. Paused while the tab is hidden. Transform + opacity only. */
+:root[data-theme='night'] :is(.td, .tp) {
+  position: relative;
+}
+.kf-flies {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+.kf-fly {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--firefly);
+  box-shadow: var(--glow-firefly);
+  opacity: 0.4;
+}
+.kf-fly.is-small {
+  width: 4px;
+  height: 4px;
+}
+.motion-on .kf-fly {
+  animation: kfFlyPulse 4.5s ease-in-out infinite, kfFlyDrift 13s ease-in-out infinite alternate;
+}
+.kf-flies[data-paused] .kf-fly {
+  animation-play-state: paused;
+}
+@keyframes kfFlyPulse {
+  0%, 100% { opacity: 0.06; }
+  45%      { opacity: 0.9; }
+  60%      { opacity: 0.3; }
+  78%      { opacity: 0.75; }
+}
+@keyframes kfFlyDrift {
+  0%   { transform: translate(0, 0); }
+  100% { transform: translate(40px, -26px); }
+}

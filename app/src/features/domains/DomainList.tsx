@@ -7,6 +7,7 @@ import { Icon } from '../../components/Icon'
 import { Button } from '../../components/kit'
 import type { IconName } from '../../components/icons/kf'
 import { RenameField } from '../../components/RenameField'
+import { DropZone } from '../../components/drag'
 import type { Domain } from '../../lib/types'
 import { createDomain, deleteDomainWithUndo, mergeDomain, recolorDomain, renameDomain, reorderDomains, useDomains } from './api'
 import { useChangeType } from '../projects/ChangeType'
@@ -120,9 +121,13 @@ export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; met
     <>
       {/* The ⋯ shows on hover (always on touch) — the Projects rows' .pj-more (xfx.css). */}
       <style>{'.kf-domain-row:hover .pj-more { opacity: 1; }'}</style>
+      {/* Motion 2d: a domain row is also a filing spot — tasks dropped on it move there (the menu's
+          Move to… → domain, one Undo; already there = the soft no). Inert where nothing drags. */}
       {domains.map((d) => (
-        <div
+        <DropZone
           key={d.id}
+          id={`domain:${d.id}`}
+          spot={{ kind: 'place', label: d.name, to: { kind: 'domain', id: d.id, name: d.name } }}
           className="kf-domain-row"
           onContextMenu={(e) => {
             e.preventDefault()
@@ -161,7 +166,7 @@ export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; met
           >
             <Icon name="dots" size={18} />
           </button>
-        </div>
+        </DropZone>
       ))}
       {menu.node}
     </>

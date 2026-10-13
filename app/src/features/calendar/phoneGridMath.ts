@@ -8,6 +8,8 @@ import { addDays, busyOnDay, dayHint, durationLabel, freeSlots, fromMin, toMin }
 import { suggestTimes } from '../tasks/taskSheetMath'
 import { FLICK_VELOCITY, SWIPE_COMMIT } from '../tasks/swipe'
 import { cairoTimeKey, cairoToIso } from './eventTime'
+import { isMultiDaySpan, spanDays } from './daySpans'
+import { appZone } from '../../lib/appZone'
 
 export const HOUR_PX = 64
 export const SNAP_MIN = 15
@@ -16,8 +18,8 @@ export const minToPx = (m: number): number => (m * HOUR_PX) / 60
 export const pxToMin = (px: number): number => (px * 60) / HOUR_PX
 export const snap = (m: number): number => Math.round(m / SNAP_MIN) * SNAP_MIN
 
-export type PhoneView = 'day' | '3day' | 'week'
-const VIEW_DAYS: Record<PhoneView, number> = { day: 1, '3day': 3, week: 7 }
+export type PhoneView = 'day' | '3day' | 'week' | 'month'
+const VIEW_DAYS: Record<Exclude<PhoneView, 'month'>, number> = { day: 1, '3day': 3, week: 7 }
 
 const dayNum = (key: string) => Date.parse(`${key}T00:00:00Z`) / 86_400_000
 const fmt = (key: string, o: Intl.DateTimeFormatOptions) => new Date(`${key}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', ...o })
@@ -29,14 +31,36 @@ export function weekPage(day: string, today: string): string[] {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i))
 }
 
-/** The days on screen: the anchor day, three from it, or the week page it sits in. */
-export function visibleDays(view: PhoneView, anchor: string, today: string): string[] {
+/** The days on screen: the anchor day, three from it, the week page it sits in, or its month's weeks. */
+export function visibleDays(view: PhoneView, anchor: string, today: string, mondayFirst = false): string[] {
+  if (view === 'month') return monthGrid(anchor, mondayFirst)
   if (view === 'week') return weekPage(anchor, today)
   return Array.from({ length: VIEW_DAYS[view] }, (_, i) => addDays(anchor, i))
 }
 
-/** How far one swipe (or a view's page) moves the anchor. */
-export const viewStep = (view: PhoneView): number => VIEW_DAYS[view]
+/** How far one swipe (or a view's page) moves the anchor (a month pages by months — monthGrid). */
+export const viewStep = (view: PhoneView): number => (view === 'month' ? 0 : VIEW_DAYS[view])
+
+// ── Month (phone parity with the desktop's M view; 3e's "month-view form" at phone size) ──
+
+/** The weeks holding `anchor`'s month, Sunday (or Monday) first: 5 or 6 rows of 7 date keys. */
+export function monthGrid(anchor: string, mondayFirst = false): string[] {
+  const first = `${anchor.slice(0, 7)}-01`
+  const dow = new Date(`${first}T12:00:00Z`).getUTCDay()
+  const back = mondayFirst ? (dow + 6) % 7 : dow
+  const [y, m] = first.split('-').map(Number)
+  const length = new Date(Date.UTC(y, m, 0)).getUTCDate()
+  return Array.from({ length: Math.ceil((back + length) / 7) * 7 }, (_, i) => addDays(first, i - back))
+}
+
+/** The first of the month `n` months from `key`'s. */
+export function addMonths(key: string, n: number): string {
+  const [y, m] = key.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1 + n, 1)).toISOString().slice(0, 10)
+}
+
+/** "October 2026" */
+export const monthTitle = (key: string): string => fmt(key, { month: 'long', year: 'numeric' })
 
 /** The header title: "Sunday, Sep 27" · "Sep 27 – 29" · "Sep 27 – Oct 3". */
 export function viewTitle(days: readonly string[]): string {
@@ -75,25 +99,40 @@ export function spanIso(s: Span): { starts_at: string; ends_at: string } {
   return { starts_at: at(s.start), ends_at: at(s.end) }
 }
 
-/** The timed, live events drawn on Cairo day `day`, clipped to it (over midnight: from 00:00 / to 24:00). */
-export function dayBlocks<E extends CalendarEvent>(events: readonly E[], day: string): { event: E; start: number; end: number }[] {
-  const out: { event: E; start: number; end: number }[] = []
+/** One day's piece of a timed block on the grid. Calendar 3e "spans midnight": `from` — it began the
+ * day before (its top is cut at 00:00); `into` — it runs on past this day's midnight. */
+export interface DayBlock<E> {
+  event: E
+  start: number
+  end: number
+  from: boolean
+  into: boolean
+}
+
+/** The timed, live events drawn on day `day` (the user's zone), clipped to it (over midnight: from
+ * 00:00 / to 24:00). A block a day or longer is a multi-day span — the all-day row's (allDayOn). */
+export function dayBlocks<E extends CalendarEvent>(events: readonly E[], day: string, zone: string = appZone()): DayBlock<E>[] {
+  const out: DayBlock<E>[] = []
   for (const e of events) {
-    if (e.deleted_at || e.all_day) continue
-    const sd = cairoDateKey(new Date(e.starts_at))
-    const ed = cairoDateKey(new Date(e.ends_at))
-    if (sd > day || ed < day) continue
-    const start = sd < day ? 0 : toMin(cairoTimeKey(new Date(e.starts_at)))
-    const end = ed > day ? DAY_MIN : toMin(cairoTimeKey(new Date(e.ends_at)))
-    if (end > start) out.push({ event: e, start, end })
+    if (e.deleted_at || e.all_day || isMultiDaySpan(e, zone)) continue
+    const { first, last } = spanDays(e, zone)
+    if (first > day || last < day) continue
+    const start = first < day ? 0 : toMin(cairoTimeKey(new Date(e.starts_at)))
+    const end = cairoDateKey(new Date(e.ends_at)) > day ? DAY_MIN : toMin(cairoTimeKey(new Date(e.ends_at)))
+    if (end > start) out.push({ event: e, start, end, from: first < day, into: last > day })
   }
   return out
 }
 
-/** All-day events on any of `days`. Their dates are calendar dates in no zone (QuickCreate and a synced
- * all-day event store T00:00Z, the end exclusive), so they are read as dates, not instants. */
-export function allDayOn<E extends CalendarEvent>(events: readonly E[], days: readonly string[]): E[] {
-  return events.filter((e) => e.all_day && !e.deleted_at && days.some((d) => e.starts_at.slice(0, 10) <= d && d < e.ends_at.slice(0, 10)))
+/** The all-day row's blocks on any of `days`: all-day events — dates in no zone (QuickCreate and a
+ * synced all-day event store T00:00Z, the end exclusive), read as dates, not instants — and timed
+ * multi-day spans (Calendar 3e), read on the user's zone. */
+export function allDayOn<E extends CalendarEvent>(events: readonly E[], days: readonly string[], zone: string = appZone()): E[] {
+  return events.filter((e) => {
+    if (e.deleted_at || !(e.all_day || isMultiDaySpan(e, zone))) return false
+    const { first, last } = spanDays(e, zone)
+    return days.some((d) => first <= d && d <= last)
+  })
 }
 
 export type DragMode = 'move' | 'top' | 'bottom'

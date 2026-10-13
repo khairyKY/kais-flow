@@ -60,6 +60,17 @@ export function dueChip(dueIso: string, now: Date): string {
   return `${dayWord(cairoDateKey(d), now)} · ${cairoTimeKey(d)}`
 }
 
+/** Where a typed capture landed, for its toast — no silent landings (Kai 2026-10-12 audit): "Added to
+ * Today", "Added to Tomorrow · Forecasting", "Added to Sat 17 Oct", "Added to Someday", an undated
+ * filing "Added to Forecasting", and plain "Added to Tasks · no date". */
+export function addedLine(task: Pick<Task, 'due_at' | 'someday'>, place: string | null, now: Date): string {
+  const today = cairoDateKey(now)
+  const day = task.due_at ? cairoDateKey(new Date(task.due_at)) : null
+  const when = task.someday ? 'Someday' : !day ? null : day < today ? 'Overdue' : day === today ? 'Today' : day === addDays(today, 1) ? 'Tomorrow' : dayShort(day)
+  if (when) return `Added to ${when}${place ? ` · ${place}` : ''}`
+  return place ? `Added to ${place}` : 'Added to Tasks · no date'
+}
+
 /** The block card's line: "Sun 27 · 15:00–15:30 · 30m". */
 export function blockLine(ev: Pick<CalendarEvent, 'starts_at' | 'ends_at'>, now: Date): string {
   const s = new Date(ev.starts_at)
@@ -80,7 +91,9 @@ export function remindChip(reminderIso: string, dueIso: string | null): string {
 export function repeatLabel(rule: string): string {
   if (REPEAT_LABELS[rule]) return REPEAT_LABELS[rule]
   try {
-    const text = RRule.fromString(rule).toText()
+    const { until, ...o } = RRule.parseString(rule.replace(/^RRULE:/, ''))
+    // rrule words an end date in UTC; the user's own calendar day reads right in every zone.
+    const text = new RRule(o).toText() + (until ? ` until ${dayShort(cairoDateKey(until))}` : '')
     return text.charAt(0).toUpperCase() + text.slice(1)
   } catch {
     return 'Repeats'

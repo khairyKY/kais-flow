@@ -75,7 +75,7 @@ export function aiFill(current: AiFields, ai: ParseResult, known: KnownPlaces, t
   return { patch, filled }
 }
 
-/** A capture the AI filed by itself (voice, ⌘↵, a queued or typed Inbox line): everything it read,
+/** A capture the AI filed by itself (voice, a queued or typed Inbox line): everything it read,
  * with the locally typed `!` / `30m` (overrides) beating its own reading. */
 export function taskFromParse(ai: ParseResult, known: KnownPlaces, overrides: { priority?: number | null; durationMin?: number | null } = {}): CreateTaskInput {
   const place = aiPlace(ai, known)

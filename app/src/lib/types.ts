@@ -122,6 +122,18 @@ export interface CalendarEvent {
   deleted_at?: string | null
   created_at: string
   updated_at: string
+  // Migration 0061 (repeating events). Optional: a row cached before it, or written by a client
+  // that never set them, simply has none (the column defaults apply on the server).
+  /** RRULE body on the user's wall clock, anchored at starts_at; null/absent = a one-off. */
+  recurrence_rule?: string | null
+  /** Occurrence starts (ISO, UTC) the series skips. */
+  recurrence_exdates?: string[] | null
+  project_id?: string | null
+  /** A detached occurrence: the series it was dragged out of. */
+  series_id?: string | null
+  /** Client-only, never stored: set on an occurrence features/calendar/series.ts expanded from a
+   * series row (its id is `${seriesId}::${start}`). calendar/api writes resolve it to that row. */
+  seriesId?: string
 }
 
 export interface Cadence {
@@ -139,15 +151,25 @@ export interface Routine {
   challenge_start: string | null
   challenge_end: string | null
   active: boolean
-  /** Steps checklist (migration 0028): ordered labels, Routines.dc.html "what it's made of". */
+  /** Steps checklist (migration 0028): ordered labels, Routines.dc.html "what it's made of". Always
+   * plain strings — builds already installed read them as strings. Read through
+   * features/routines/newRoutine.ts `readSteps`, which pairs each with its minutes. */
   steps?: string[]
+  /** 2a's per-step minutes (migration 0067), aligned with `steps`: `step_minutes[i]` is step i's
+   * minutes or null. Absent, short or misaligned = no minutes (a build from before 0067 never writes it). */
+  step_minutes?: (number | null)[] | null
   /** Domain this routine tends (migration 0028), per the New Routine form's Domain picker. */
   domain_id?: string | null
   /** The streak goal in days (migration 0046), null = none: the streak reads "12 / 30". */
   goal_days?: number | null
+  /** Its plant (migration 0067, Routines.dc.html 2a "Its plant"); absent on a row cached before it = 'vine'. */
+  plant?: RoutinePlant
   created_at: string
   updated_at: string
 }
+
+/** The species 2a's picker lists — `routines.plant`'s check (0067). */
+export type RoutinePlant = 'vine' | 'cherry' | 'fern' | 'clover' | 'daisy'
 
 export interface RoutineCompletion {
   id: string
@@ -193,7 +215,12 @@ export interface AppSettings {
   evening_nudge_at?: string
   /** Settings → Notifications (migration 0048) — read by notify through notify/copy.ts `deliver`. */
   task_reminder_on?: boolean
+  routine_on?: boolean
   focus_done_on?: boolean
+  /** Paper capture ready · Birthday (off until turned on) · Sync problem (migration 0065). */
+  paper_ready_on?: boolean
+  birthday_on?: boolean
+  sync_problem_on?: boolean
   quiet_hours_on?: boolean
   quiet_from?: string
   quiet_to?: string
@@ -205,6 +232,12 @@ export interface AppSettings {
   weekend_days?: number[]
   /** Tour & help (migration 0058): the tour and hints this person has been shown — absent until it's pushed. */
   help_seen?: string[] | null
+  /** The Notebook page's layout (migration 0063), read through features/notebook/page.ts parseLayout —
+   * absent before the push, null until first edited. */
+  notebook_layout?: unknown
+  /** Label colours, { name: colour token } (migration 0069), read through features/tasks/labels.ts
+   * parseLabelMeta — absent before the push, null until a label is first coloured. */
+  label_meta?: unknown
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string
@@ -223,9 +256,9 @@ export interface SlippingRow {
   days_since: number
 }
 
-// Widened by migration 0031 (punch 49). Additive: the first two are what search_hybrid returned
-// before, and still all it returns until `supabase db push` runs.
-export type SearchEntityType = 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'area' | 'journal_entry'
+// Widened by migration 0031 (punch 49), 0054 (area) and 0064 (the Library: book, note, quote).
+// Additive: a type the live search_hybrid doesn't return yet simply never arrives.
+export type SearchEntityType = 'task' | 'inbox_item' | 'person' | 'calendar_event' | 'project' | 'area' | 'journal_entry' | 'book' | 'note' | 'quote'
 
 export interface SearchHit {
   entity_type: SearchEntityType

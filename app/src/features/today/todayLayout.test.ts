@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest'
-import { blockMeta, blockOf, dayOfJourney, eventMetas, focusedToday, foldOpen, remainingWork, runningBlock, topCard, upNextItems, workloadLine, type Block, type WorkloadInput } from './todayLayout'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { blockMeta, blockOf, dayCounts, dayOfJourney, eventMetas, focusedToday, foldOpen, overCapacity, projectTag, remainingWork, reviewDue, ribbonPct, ribbonSpan, runningBlock, top3Planned, topCard, upNextItems, workloadLine, type Block, type WorkloadInput } from './todayLayout'
+import { firstCreatedAt } from './journey'
+import { claimDayComplete, DAY_DONE_KEY } from './dayComplete'
+import { setAppZone } from '../../lib/appZone'
+import type { Task } from '../../lib/types'
 
 // Instants are written in UTC; Cairo is UTC+3 on 2026-09-27 (EEST) — the design's sample day.
 const at = (cairoHHMM: string) => {
@@ -39,11 +43,13 @@ describe('runningBlock — the NOW slip only while a block runs', () => {
 })
 
 describe('topCard — slip and ritual card never together', () => {
-  it('a running block wins over any ritual', () => {
-    expect(topCard('plan', DEEP, false)).toBe('slip')
-    expect(topCard('shutdown', DEEP, false)).toBe('slip')
+  it('something under way wins over any ritual: running, over, paused, just done', () => {
+    for (const k of ['running', 'over', 'paused', 'done'] as const) {
+      expect(topCard('plan', k, false)).toBe('slip')
+      expect(topCard('shutdown', k, false)).toBe('slip')
+    }
   })
-  it('the ritual card comes back when the block ends; none during the day', () => {
+  it('the ritual card comes back when nothing runs; nothing during an idle day', () => {
     expect(topCard('plan', null, false)).toBe('plan')
     expect(topCard('shutdown', null, false)).toBe('shutdown')
     expect(topCard('closed', null, false)).toBe('closed')
@@ -124,6 +130,89 @@ describe('remainingWork', () => {
   })
 })
 
+describe('overCapacity — MK Workload amber', () => {
+  it('fits: 0', () => {
+    expect(overCapacity([{ id: 'goal', duration_min: 120 }], DAY, at('09:40'), none)).toBe(0)
+  })
+  it("more work than what's left of 09:00–18:00 → the minutes over", () => {
+    // 16:00: 2h left in the working day; 4h of picks + the call (gone) → 2h over
+    expect(overCapacity([{ id: 'a', duration_min: 120 }, { id: 'b', duration_min: 120 }], DAY, at('16:00'), none)).toBe(120)
+  })
+  it('an evening block (the 18:00 gym) is not workload', () => {
+    expect(overCapacity([], DAY, at('17:30'), none)).toBe(0)
+  })
+  it('before 09:00 the day is measured from 09:00', () => {
+    // 9h of capacity; the goal's block 90 (not its 60m estimate) + x 420 + deep 90 + call 30 = 630 → 90 over
+    expect(overCapacity([{ id: 'goal', duration_min: 60 }, { id: 'x', duration_min: 420 }], DAY, at('07:00'), none)).toBe(90)
+  })
+})
+
+describe('dayCounts — "2 of 6 done"', () => {
+  const now = at('12:00')
+  const t = (id: string, over: Partial<Task> = {}) => ({ id, title: id, status: 'todo', top3: false, someday: false, deleted_at: null, due_at: null, scheduled_start: null, completed_at: null, ...over }) as Task
+  it("today's plate + what was finished today; the overdue pile and undated backlog aren't counted", () => {
+    const tasks = [
+      t('pick', { top3: true }), // undated pick: today's
+      t('due', { due_at: iso('09:00') }),
+      t('block', { scheduled_start: iso('15:00') }),
+      t('done', { status: 'done', completed_at: iso('10:00') }),
+      t('old', { due_at: new Date(Date.UTC(2026, 8, 20, 6)).toISOString() }), // overdue → its own fold
+      t('carried', { top3: true, due_at: new Date(Date.UTC(2026, 8, 26, 6)).toISOString() }), // yesterday's pick, still today's
+      t('backlog'),
+      t('later', { due_at: new Date(Date.UTC(2026, 8, 30, 6)).toISOString() }),
+    ]
+    expect(dayCounts(tasks, now)).toEqual({ done: 1, total: 5 })
+  })
+})
+
+describe('ribbon — 8 AM–8 PM on the user clock', () => {
+  it('places and clips blocks; off-ribbon ones are null', () => {
+    const deep = ribbonSpan(DEEP, at('09:40'))!
+    expect(deep.left).toBeCloseTo((60 / 720) * 100)
+    expect(deep.width).toBeCloseTo((90 / 720) * 100)
+    const early = ribbonSpan(block('early', '07:00', '08:30'), at('09:40'))!
+    expect(early.left).toBe(0)
+    expect(early.width).toBeCloseTo((30 / 720) * 100)
+    expect(ribbonSpan(block('late', '20:00', '21:00'), at('09:40'))).toBeNull()
+    expect(ribbonSpan({ ...DEEP, all_day: true }, at('09:40'))).toBeNull()
+  })
+  it('the now line', () => {
+    expect(ribbonPct(at('14:00').getTime(), at('14:00'))).toBe(50)
+    expect(ribbonPct(at('06:00').getTime(), at('06:00'))).toBe(0)
+  })
+})
+
+describe('reviewDue — the weekly review on the first day of the weekend', () => {
+  // 2026-09-25 is a Friday, the 26th a Saturday, the 27th a Sunday (Cairo).
+  const fri = new Date(Date.UTC(2026, 8, 25, 7))
+  const sat = new Date(Date.UTC(2026, 8, 26, 7))
+  it("Kai's Fri + Sat → Friday; the default Sat + Sun → Saturday; Sun only → Sunday", () => {
+    expect(reviewDue(fri, [5, 6], [])).toBe(true)
+    expect(reviewDue(sat, [5, 6], [])).toBe(false)
+    expect(reviewDue(sat, [0, 6], [])).toBe(true)
+    expect(reviewDue(at('09:00'), [0], [])).toBe(true)
+    expect(reviewDue(fri, [0, 6], [])).toBe(false)
+  })
+  it("hidden once this week's review is closed (that day or earlier in the week), back next week", () => {
+    expect(reviewDue(fri, [5, 6], [new Date(Date.UTC(2026, 8, 25, 6)).toISOString()])).toBe(false)
+    expect(reviewDue(fri, [5, 6], [new Date(Date.UTC(2026, 8, 23, 18)).toISOString()])).toBe(false)
+    expect(reviewDue(fri, [5, 6], [new Date(Date.UTC(2026, 8, 18, 18)).toISOString()])).toBe(true)
+  })
+  it('no weekend (or all seven days) → no review day', () => {
+    expect(reviewDue(fri, [], [])).toBe(false)
+    expect(reviewDue(fri, [0, 1, 2, 3, 4, 5, 6], [])).toBe(false)
+  })
+  it("the day is the user's: 23:30 UTC Thursday is Friday in Cairo", () => {
+    expect(reviewDue(new Date(Date.UTC(2026, 8, 24, 21, 30)), [5, 6], [])).toBe(true)
+  })
+})
+
+describe('top3Planned — "1h 30m planned"', () => {
+  it("each pick's block length today, else its duration", () => {
+    expect(top3Planned([{ id: 'goal', duration_min: 30 }, { id: 'b', duration_min: 30 }, { id: 'c', duration_min: null }], DAY, at('09:40'))).toBe(90 + 30)
+  })
+})
+
 describe('dayOfJourney — "Day N" holds all day', () => {
   const first = new Date(Date.UTC(2026, 6, 6, 6)).toISOString() // 09:00 Cairo, 6 Jul
   it('the first day is Day 1; 83 days on is Day 84, morning and night alike', () => {
@@ -161,4 +250,39 @@ describe('workloadLine — header by state (Today Phone 2a–2i)', () => {
   it('2d shut down', () => expect(line({ phase: 'shutdown', top3: { picked: 3, done: 2 }, focusedMin: 130 })).toBe('Day 84 · 2 of 3 done · 2h 10m focused'))
   it('2e day closed', () => expect(line({ phase: 'closed', doneToday: 4, focusedMin: 130 })).toBe('Day 84 · 4 done · 2h 10m focused'))
   it('nothing timed and nothing left to measure', () => expect(line({ top3: { picked: 0, done: 0 }, doneToday: 2 })).toBe('Day 84 · 2 done'))
+})
+
+describe('projectTag — Plan a step files into that project', () => {
+  const projects = [{ id: 'p1', name: 'Shaheen website' }, { id: 'p2', name: 'Forecasting App' }, { id: 'p3', name: 'App store listing' }]
+  it("the name's first word when it lands on the project", () => expect(projectTag(projects[1], projects)).toBe('#Forecasting'))
+  it("skips a word an earlier project's name also holds", () => {
+    // "app" is in "Forecasting App" (listed first), so #App would file into the wrong project.
+    expect(projectTag(projects[2], projects)).toBe('#store')
+  })
+})
+
+describe('journey — Day 1 is the first record', () => {
+  it('firstCreatedAt: the earliest across every list; none → null', () => {
+    expect(firstCreatedAt([{ created_at: '2026-07-09T10:00:00Z' }], [], [{ created_at: '2026-07-06T06:00:00Z' }])).toBe('2026-07-06T06:00:00Z')
+    expect(firstCreatedAt([], [])).toBeNull()
+  })
+})
+
+describe("claimDayComplete — once per the user's day", () => {
+  const store = new Map<string, string>()
+  beforeEach(() => {
+    store.clear()
+    vi.stubGlobal('localStorage', { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => void store.set(k, v) })
+  })
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    setAppZone('Africa/Cairo')
+  })
+  it("keys on the user's zone, whatever the device's", () => {
+    setAppZone('Pacific/Kiritimati') // UTC+14: 12:00Z on the 13th is already the 14th there
+    const noon = new Date(Date.UTC(2026, 9, 13, 12))
+    expect(claimDayComplete(noon)).toBe(true)
+    expect(store.get(DAY_DONE_KEY)).toBe('2026-10-14')
+    expect(claimDayComplete(new Date(Date.UTC(2026, 9, 13, 13)))).toBe(false) // same user day
+  })
 })

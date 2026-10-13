@@ -11,7 +11,7 @@ import path from 'node:path'
 import zlib from 'node:zlib'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { GUIDES } from '../src/pages/guides.mjs'
-import { RELEASES, shortDate, LATEST } from '../src/data.mjs'
+import { RELEASES, shortDate, LATEST, ARABIC } from '../src/data.mjs'
 
 const ROOT = path.dirname(path.dirname(fileURLToPath(import.meta.url)))
 const DIST = path.join(ROOT, 'dist'), PUB = path.join(ROOT, 'public')
@@ -46,7 +46,7 @@ const card = ({ eb, t, s, a, rtl = false }) => doc(`<div style="position:relativ
 const r0 = RELEASES[0]
 const CARDS = {
   home: { eb: 'Home', t: 'Your days, planned in one quiet place.', s: 'Free · Web, Android, Windows', a: art.wisteria },
-  ar: { eb: 'الرئيسية', t: 'أيامك، مُخطَّطة في مكان واحد هادئ.', s: 'مجاني · الويب، أندرويد، ويندوز', a: art.wisteria.replace('right:120px', 'left:120px').replace('right:40px', 'left:40px'), rtl: true },
+  ...(ARABIC && { ar: { eb: 'الرئيسية', t: 'أيامك، مُخطَّطة في مكان واحد هادئ.', s: 'مجاني · الويب، أندرويد، ويندوز', a: art.wisteria.replace('right:120px', 'left:120px').replace('right:40px', 'left:40px'), rtl: true } }),
   features: { eb: 'Features', t: 'Everything that’s in the journal', s: 'Seven parts, each small. Start anywhere.', a: art.img('daisy-midday') },
   'feature-plan-and-today': { eb: 'Features · Plan & Today', t: 'A plan you can finish', s: 'Plan my day, the Top 3, the NOW slip.', a: art.phone('plan') },
   'feature-calendar': { eb: 'Features · Calendar', t: 'A calendar that’s yours', s: 'Time blocks, 15-minute steps, made for thumbs.', a: art.desk },
@@ -55,11 +55,11 @@ const CARDS = {
   'feature-journal': { eb: 'Features · Journal', t: 'Write the day down', s: 'A journal, a library, and a herbarium.', a: art.img('hydrangea-medium') },
   'feature-people': { eb: 'Features · People', t: 'The people you care about', s: 'Birthdays, the last time you spoke, and notes.', a: art.img('cherry-bloom', 300) },
   'feature-apps': { eb: 'Features · Apps', t: 'One garden, three doors', s: 'Web, Android and Windows, synced.', a: art.phone('today') },
-  paper: { eb: 'Paper people', t: 'For people who think on paper', s: 'The Notebook page and Paper capture · coming soon', a: art.img('tools-pen', 420) },
+  paper: { eb: 'Paper people', t: 'For people who think on paper', s: 'Paper capture is here · the Notebook page is next', a: art.img('tools-pen', 420) },
   integrations: { eb: 'Integrations & imports', t: 'Bring what you have', s: 'Akiflow, Todoist, TickTick, Notion, Obsidian and more.', a: art.img('vine-leaf-right', 220) },
   compare: { eb: 'Compare', t: 'Kai’s Flow, next to the others', s: 'Honest about what it doesn’t do yet.', a: art.img('clover-four_leaf', 300) },
-  'field-notes': { eb: `Field notes · ${shortDate(r0.date)}`, t: `${r0.v}: ${r0.title.charAt(0).toLowerCase() + r0.title.slice(1)}`, s: `${r0.highlights.length} small changes`, a: art.img('hydrangea-light') },
-  'whats-new': { eb: `What’s new · ${r0.v} · ${shortDate(r0.date)}`, t: r0.title ?? `What’s new in ${r0.v}`, s: `${r0.highlights.length} changes, on the web, Android and Windows`, a: art.img(r0.art, 300) },
+  'field-notes': { eb: `Field notes · ${shortDate(r0.date)}`, t: `${r0.v}: ${r0.title.charAt(0).toLowerCase() + r0.title.slice(1)}`, s: `${r0.highlights.length} small change${r0.highlights.length === 1 ? '' : 's'}`, a: art.img('hydrangea-light') },
+  'whats-new': { eb: `What’s new · ${r0.v} · ${shortDate(r0.date)}`, t: r0.title ?? `What’s new in ${r0.v}`, s: `${r0.highlights.length} change${r0.highlights.length === 1 ? '' : 's'}, on the web, Android and Windows`, a: art.img(r0.art, 300) },
   growing: { eb: 'What’s growing', t: 'The roadmap, as a garden', s: 'Now · Next · Later', a: art.img('cherry-bud', 160) },
   guides: { eb: 'Guides', t: 'How can we help?', s: 'Install, import, capture, gestures and more.', a: art.img('fern-unfurl1', 200) },
   download: { eb: 'Download', t: 'Get Kai’s Flow', s: `Web, Android and Windows · ${LATEST.tag}`, a: art.wisteria },
@@ -67,7 +67,7 @@ const CARDS = {
   terms: { eb: 'Terms', t: 'The short terms', s: 'Five things, on one page.', a: art.img('vine-leaf-right', 220) },
   about: { eb: 'About', t: 'Why I built this', s: 'Built by one student, for himself first.', a: art.img('clover-seedling', 200) },
   press: { eb: 'Press kit', t: 'Everything you need to write about it', s: 'The mark, colours, type and screenshots.', a: art.img('cherry-bloom', 300) },
-  ...Object.fromEntries(GUIDES.map((g) => [`guide-${g.slug}`, { eb: 'Guides', t: g.title, s: `${g.min} minutes · ${g.blurb}`, a: g.slug === 'install-android' ? art.phone('today') : art.img(g.slug === 'install-windows' ? 'fern-coil' : 'fern-unfurl2', 180) }])),
+  ...Object.fromEntries(GUIDES.map((g) => [`guide-${g.slug}`, { eb: 'Guides', t: g.title, s: `${g.min} minutes · ${g.blurb}`, a: g.slug === 'install-android' ? art.phone('today') : art.img({ 'install-windows': 'fern-coil', 'connect-an-ai-assistant': 'clover-awake' }[g.slug] ?? 'fern-unfurl2', 180) }])),
 }
 
 const browser = await chromium.launch({ executablePath: CHROME })

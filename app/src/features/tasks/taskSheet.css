@@ -24,11 +24,6 @@
 .ts-offline { margin: 0 0 12px; }
 
 .ts-chips { display: flex; flex-wrap: wrap; gap: 16px 8px; padding-bottom: 12px; }
-.ts-label-add {
-  min-width: 96px; field-sizing: content; border: 1px dashed var(--line-control); border-radius: var(--radius-pill);
-  background: none; outline: none; color: var(--ink-body);
-}
-.ts-label-add:focus { box-shadow: var(--focus-ring); }
 .ts-next { display: flex; align-items: center; gap: 6px; margin: -2px 0 12px; color: var(--ink-muted); }
 
 .ts-notes {
@@ -37,7 +32,7 @@
   field-sizing: content; font: inherit; font-size: var(--fs-body); line-height: 1.45; color: var(--ink-body);
 }
 .ts-notes:focus { box-shadow: var(--focus-ring); }
-.ts-notes::placeholder, .ts-sub-add::placeholder, .ts-label-add::placeholder { color: var(--ink-faint); }
+.ts-notes::placeholder, .ts-sub-add::placeholder { color: var(--ink-faint); }
 
 .ts-sec { display: flex; align-items: center; gap: 12px; min-height: var(--touch-min); font-size: var(--fs-meta-l); letter-spacing: 0.07em; color: var(--ink-faint); white-space: nowrap; }
 .ts-sec::after { content: ''; flex: 1; border-bottom: 1px dashed var(--line-dashed); }
@@ -46,6 +41,16 @@
 .ts-sub-title { min-width: 0; font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); }
 .ts-sub-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 .ts-sub-add { flex: 1; min-width: 0; height: var(--touch-min); padding: 0; border: none; background: none; outline: none; font: inherit; font-size: var(--fs-body); color: var(--ink-body); }
+/* A subtask's title opens it; its ⋯ (or right-click) renames / deletes it. */
+.ts-sub-open { flex: 1; text-align: left; padding: 0; border: none; background: none; font: inherit; font-size: var(--fs-body); cursor: pointer; }
+.ts-sub-open:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 3px; }
+.ts-sub-meta { flex: none; margin-left: auto; padding: 0 8px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+/* Desktop density (the editor page, Editor.dc.html 1a: 16px box, 13.5px title, dashed rules). */
+.ts-sub.is-dense { min-height: 0; margin: 0; padding: 4px 2px; gap: 4px; border-bottom: 1px dashed var(--line-dashed); }
+.ts-sub.is-dense:last-child { border-bottom: none; }
+.ts-sub.is-dense .ts-box { width: 28px; height: 28px; }
+.ts-sub.is-dense .ts-sub-open, .ts-sub.is-dense .ts-sub-title, .ts-sub.is-dense .ts-sub-add { font-size: var(--fs-body-s); }
+.ts-sub.is-dense .ts-sub-add { height: 28px; }
 
 /* The block card (4b): buttercream; the block's own actions under its time (Change time · Unschedule). */
 .ts-block { padding: 8px 12px 0; border-radius: 3px; background: var(--block-buttercream); color: var(--ink-muted); }
@@ -67,3 +72,30 @@
 .ts-skel span { display: block; border-radius: 2px; background: var(--skeleton); }
 .ts-skel div { display: flex; gap: 8px; }
 .ts-skel .is-pill { height: 32px; border-radius: var(--radius-pill); }
+
+/* The desktop task detail popover (Overlays.dc.html "Task detail"): the overlay .pop at 300 wide,
+   18/20 padding — box + title 17 + star; italic notes; the sheet's chips; Delete · Open full ↗. */
+.tp-pop {
+  position: fixed; z-index: 1000; box-sizing: border-box; max-height: calc(var(--kf-vh, 100vh) - 16px); overflow-y: auto;
+  padding: 18px 20px 12px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-input);
+  box-shadow: var(--shadow-popover); outline: none;
+}
+.tp-title {
+  flex: 1; min-width: 0; margin: -2px 0 0 -6px; padding: 2px 6px; border: none; border-radius: var(--radius-input); background: none; outline: none;
+  resize: none; overflow: hidden; field-sizing: content; overflow-wrap: anywhere;
+  font-family: var(--font-display); font-size: var(--fs-lead); font-weight: 600; line-height: 1.3; color: var(--ink-body);
+}
+.tp-notes {
+  display: block; width: 100%; min-height: 26px; box-sizing: border-box; margin: 10px 0 0 -6px; padding: 4px 6px; border: none; border-radius: var(--radius-input);
+  background: none; outline: none; resize: none; field-sizing: content;
+  font: inherit; font-size: var(--fs-body-s); font-style: italic; line-height: 1.5; color: var(--ink-muted);
+}
+.tp-title:focus, .tp-notes:focus { background: var(--paper-bone); box-shadow: var(--focus-ring); }
+.tp-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+.tp-notes::placeholder { color: var(--ink-faint); }
+.tp-pop .ts-chips { gap: 8px; padding: 12px 0 0; }
+/* The overlay's chips are text only, as drawn; the parse glyphs stay on the phone sheet's 48 targets. */
+.tp-pop .kf-chip--glyph > svg { display: none !important; } /* over Icon's inline display: block */
+.tp-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 8px; border-top: 1px dashed var(--line-dashed); }
+.tp-foot button:hover { color: var(--ink-body); }
+.tp-foot button:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 3px; }
