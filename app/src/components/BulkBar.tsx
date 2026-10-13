@@ -1,4 +1,5 @@
-import type { MouseEvent as ReactMouseEvent } from 'react'
+import { useState, type MouseEvent as ReactMouseEvent } from 'react'
+import { ActionSheet } from './ActionSheet'
 import { useIsMobile } from './BottomSheet'
 import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
@@ -12,6 +13,10 @@ export interface BulkBarProps {
   onDelete: () => void
   /** ☆ Top 3 for the selection (tasks/api toggleTop3ManyWithUndo) — pages with task rows pass it. */
   onTop3?: () => void
+  /** Priority… and Labels… for the selection (P7e A18) — a phone's only way to label many. A phone
+   * has no room for two more tabs: they sit behind More. */
+  onPriority?: (e: ReactMouseEvent) => void
+  onLabels?: (e: ReactMouseEvent) => void
   onClear: () => void
   /** Phone app bar's "Select all" — every row the page shows. */
   onSelectAll?: () => void
@@ -46,11 +51,16 @@ const CSS = `
 
 /** Selection mode's bars (DS-CHANGELOG §3 "Selection mode", MK Selection). On a phone: an app bar
  * (✕ · "N selected" · Select all) over the top bar, and a bulk bar that replaces the tab bar —
- * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Move · Top 3 · Delete. On desktop:
- * the floating pill, same actions.
+ * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Move · Top 3 · More (Priority, Labels) ·
+ * Delete. On desktop: the floating pill, same actions, Priority and Labels in line.
  * Every button loops the existing per-task writes over the selection ("zero new API surface"). */
-export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onTop3, onClear, onSelectAll }: BulkBarProps) {
+export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onTop3, onPriority, onLabels, onClear, onSelectAll }: BulkBarProps) {
   const isMobile = useIsMobile()
+  const [more, setMore] = useState<ReactMouseEvent | null>(null)
+  const extras: { label: string; icon: IconName; run: (e: ReactMouseEvent) => void }[] = [
+    ...(onPriority ? [{ label: 'Priority', icon: 'priority' as const, run: onPriority }] : []),
+    ...(onLabels ? [{ label: 'Labels', icon: 'label' as const, run: onLabels }] : []),
+  ]
   const actions: { label: string; icon: IconName; run: (e: ReactMouseEvent) => void; menu?: boolean; destructive?: boolean }[] = [
     { label: 'Done', icon: 'check', run: onComplete },
     { label: 'Tomorrow', icon: 'tomorrow', run: onTomorrow },
@@ -60,6 +70,7 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
     // Kai 2026-10-12: the phone had no way to star a selection (desktop had T). Stars them in order up
     // to the free places, or unstars them when all are already picks — one Undo.
     ...(onTop3 ? [{ label: 'Top 3', icon: 'star' as const, run: onTop3 }] : []),
+    ...(isMobile ? (extras.length ? [{ label: 'More', icon: 'more' as const, run: (e: ReactMouseEvent) => setMore(e) }] : []) : extras.map((x) => ({ ...x, menu: true }))),
     { label: 'Delete', icon: 'delete', run: onDelete, destructive: true },
   ]
 
@@ -84,6 +95,7 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
             </button>
           ))}
         </div>
+        {more && <ActionSheet title={`${count} selected`} onClose={() => setMore(null)} items={extras.map((x) => ({ label: `${x.label}…`, icon: <Icon name={x.icon} size={24} />, onSelect: () => x.run(more) }))} />}
       </>
     )
   }

@@ -3,11 +3,14 @@ import { openTaskLink } from '../../lib/links'
 import type { ListBinding } from '../../components/useListKeys'
 
 export type ListActionKey = 'complete' | 'open' | 'today' | 'tomorrow' | 'nextWeek' | 'top3' | 'project' | 'labels' | 'delete' | 'toggleSelect' | 'link'
+  | 'plan' | 'someday' | 'priority' | 'duration' | 'goal' | 'focus' | 'filter' | 'sort'
 
 interface ListShortcutMeta {
   keys: string[]
   action: ListActionKey
   label: string
+  /** A page key (⇧F, ⇧S): runs with no row focused. */
+  page?: true
 }
 
 /** The single source for Tasks/Today list-nav keys: drives real dispatch (via
@@ -24,6 +27,17 @@ export const LIST_SHORTCUTS: ListShortcutMeta[] = [
   { keys: ['l'], action: 'labels', label: 'Labels…' }, // Overlays.dc.html "Label picker · keyboard L"
   { keys: ['#'], action: 'delete', label: 'Delete' },
   { keys: ['o'], action: 'link', label: 'Open link' }, // P7e A19 (Akiflow's O: back to the source)
+  // P7e A18: the rest of the row's verbs, on free keys only (B3 — Kai's open call on the letters — keeps
+  // p, t, # and 1/2/3 as they are). Akiflow's where it was free: S someday (its ⌘S), ! priority, H goal,
+  // F focus, = duration (its ⌘= is the browser's zoom), ⇧F / ⇧S filter / sort; D for the whole Plan list.
+  { keys: ['d'], action: 'plan', label: 'Plan…' },
+  { keys: ['s'], action: 'someday', label: 'Someday' },
+  { keys: ['!'], action: 'priority', label: 'Priority…' },
+  { keys: ['='], action: 'duration', label: 'Duration…' },
+  { keys: ['h'], action: 'goal', label: 'Make goal of the day' },
+  { keys: ['f'], action: 'focus', label: 'Start focus' },
+  { keys: ['⇧', 'F'], action: 'filter', label: 'Filter by label', page: true },
+  { keys: ['⇧', 'S'], action: 'sort', label: 'Sort', page: true },
 ]
 
 /** Pages supply only the actions they actually wire up; missing ones are silently skipped — except
@@ -34,7 +48,7 @@ export function buildListBindings(
   bulk: Partial<Record<ListActionKey, (tasks: Task[]) => void>> = {},
 ): ListBinding<Task>[] {
   const all: typeof actions = { link: openTaskLink, ...actions }
-  return LIST_SHORTCUTS.filter((s) => all[s.action]).map((s) => ({ keys: s.keys, label: s.label, run: all[s.action]!, runAll: bulk[s.action] }))
+  return LIST_SHORTCUTS.filter((s) => all[s.action]).map((s) => ({ keys: s.keys, label: s.label, run: all[s.action]!, runAll: bulk[s.action], page: s.page }))
 }
 
 /** The matching key for an action's own context-menu row (right-aligned hint) — one source, no drift. */

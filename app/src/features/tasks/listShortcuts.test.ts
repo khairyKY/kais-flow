@@ -33,3 +33,36 @@ describe('L — the Label picker key', () => {
     expect(LIST_SHORTCUTS.filter((s) => s.keys.includes('l'))).toHaveLength(1)
   })
 })
+
+// P7e A18: the rest of the verbs on free keys — B3's letters (p, t, #, 1/2/3) stay as they are.
+describe('the A18 keys', () => {
+  const run = vi.fn()
+  const bindings = buildListBindings({ someday: run, sort: run, filter: run, priority: run, duration: run, plan: run, goal: run, focus: run })
+  const label = (e: { key: string; code: string; shiftKey?: boolean }) => bindingFor(bindings, e)?.label
+
+  it('s is Someday, ⇧S Sort, on any layout; Caps Lock alone stays the letter', () => {
+    expect(label({ key: 's', code: 'KeyS' })).toBe('Someday')
+    expect(label({ key: 'S', code: 'KeyS', shiftKey: true })).toBe('Sort')
+    expect(label({ key: 'س', code: 'KeyS', shiftKey: true })).toBe('Sort') // Arabic layout
+    expect(label({ key: 'S', code: 'KeyS' })).toBe('Someday') // Caps Lock
+    expect(label({ key: 'F', code: 'KeyF', shiftKey: true })).toBe('Filter by label')
+    expect(label({ key: 'f', code: 'KeyF' })).toBe('Start focus')
+  })
+
+  it('! priority, = duration, d plan, h goal; ⇧F/⇧S need no focused row', () => {
+    expect(label({ key: '!', code: 'Digit1', shiftKey: true })).toBe('Priority…')
+    expect(label({ key: '=', code: 'Equal' })).toBe('Duration…')
+    expect(label({ key: 'd', code: 'KeyD' })).toBe('Plan…')
+    expect(label({ key: 'h', code: 'KeyH' })).toBe('Make goal of the day')
+    expect(bindings.filter((b) => b.page).map((b) => b.label)).toEqual(['Filter by label', 'Sort'])
+  })
+
+  it('without an uppercase binding, Shift + a letter is still the letter (T, as before)', () => {
+    expect(bindingFor(buildListBindings({ top3: run }), { key: 'T', code: 'KeyT', shiftKey: true })?.label).toBe('Toggle Top 3')
+  })
+
+  it('every key is bound once', () => {
+    const keys = LIST_SHORTCUTS.flatMap((s) => s.keys).filter((k) => k !== '⇧')
+    expect(new Set(keys).size).toBe(keys.length)
+  })
+})

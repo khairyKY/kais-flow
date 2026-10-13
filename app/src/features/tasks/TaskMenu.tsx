@@ -82,6 +82,8 @@ const ICONS: Record<TaskMenuKey, IconName> = {
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
 const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
   tomorrow: shortcutHint('tomorrow'), project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
+  // P7e A18
+  plan: shortcutHint('plan'), priority: shortcutHint('priority'), labels: shortcutHint('labels'), goal: shortcutHint('goal'), focus: shortcutHint('focus'),
 }
 const REMIND_OFFSETS: { min: number | null; label: string }[] = [
   { min: null, label: 'No reminder' },
