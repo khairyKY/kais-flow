@@ -62,6 +62,8 @@ export function planCompletion(task: Task, existing: readonly Task[], now: strin
     reminder_sent: false,
     scheduled_start: null,
     scheduled_end: null,
+    slot_id: null,
+    slot_date: null,
     top3: false,
     top3_rank: null,
     created_at: now,

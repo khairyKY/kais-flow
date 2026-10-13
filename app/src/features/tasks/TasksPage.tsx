@@ -10,6 +10,7 @@ import { RenameField } from '../../components/RenameField'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
+import { useCalendarRows } from '../calendar/api'
 import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
@@ -442,6 +443,7 @@ export function TasksPage() {
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const tasksQuery = useTasks()
+  useCalendarRows() // Time Slots (0073): rows read a slot's name from this cache ("in Code block · 10:00")
   const { data: tasks = [] } = tasksQuery
   // MK States: rows while they come; offline and never loaded, say so; a failed load, Retry.
   const tasksState = listState(tasksQuery, useOnline())

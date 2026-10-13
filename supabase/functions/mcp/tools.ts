@@ -106,6 +106,9 @@ export interface TaskRow {
   updated_at: string
   /** Joined from projects (reads only). */
   project_name?: string | null
+  /** Time Slots (0073): the Time block holding it (a repeating one's row) and that occurrence's day. */
+  slot_id?: string | null
+  slot_date?: string | null
 }
 
 export interface ProjectRow {
@@ -169,6 +172,8 @@ export interface Store {
   /** Not in Trash: overlapping [from, to), plus every repeating row starting before `to` (the tools
    * expand those — a series' row is its first occurrence). By start. */
   events(fromIso: string, toIso: string): Promise<EventRow[]>
+  /** Not in Trash: the tasks these Time blocks' rows hold (0073 slot_id), any day. */
+  slotTasks(slotIds: readonly string[]): Promise<TaskRow[]>
   search(query: string, limit: number): Promise<SearchHit[]>
   /** Today's open picks (top3Rule): starred, open, not in Trash, not someday or paused, undated or dated before `todayEndIso`. */
   top3Count(todayEndIso: string): Promise<number>
@@ -340,6 +345,21 @@ function eventOut(e: EventRow, zone: string): Record<string, unknown> {
   if (e.task_id) o.task_id = e.task_id
   if (e.recurrence_rule) o.repeats = e.recurrence_rule
   return o
+}
+
+/** The events as the tools answer them; a Time block lists the tasks this occurrence holds (Time
+ * Slots, 0073: its row and its day — the app's features/calendar/slots.ts). */
+async function eventsOut(ctx: ToolContext, events: readonly EventRow[]): Promise<Record<string, unknown>[]> {
+  const row = (e: EventRow) => e.seriesId ?? e.id
+  const ids = [...new Set(events.filter((e) => e.type === 'time_block').map(row))]
+  const held = ids.length ? await ctx.store.slotTasks(ids) : []
+  return events.map((e) => {
+    const o = eventOut(e, ctx.zone)
+    if (e.type !== 'time_block') return o
+    const day = dateKey(new Date(e.starts_at), ctx.zone)
+    const mine = held.filter((t) => t.slot_id === row(e) && t.slot_date === day)
+    return mine.length ? { ...o, tasks: mine.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done' })) } : o
+  })
 }
 
 /** Today's open tasks, as the app sorts them (grouping.ts): Top 3 picks (top3Rule, goal first); due or
@@ -583,7 +603,7 @@ export const TOOLS: readonly ToolDef[] = [
         today: today.map((t) => taskOut(t, ctx.zone)),
         overdue: overdue.slice(0, OVERDUE_SHOWN).map((t) => taskOut(t, ctx.zone)),
         ...(overdue.length > OVERDUE_SHOWN ? { overdue_not_shown: overdue.length - OVERDUE_SHOWN } : {}),
-        events: events.map((e) => eventOut(e, ctx.zone)),
+        events: await eventsOut(ctx, events),
       }
     },
   },
@@ -945,7 +965,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'calendar',
     title: 'Calendar',
     description:
-      "Calendar events between two dates (both included), on the user's clock: events, Time blocks (`kind: time_block`) and tasks' blocks (`kind: task`, with its task_id). A repeating event appears once per occurrence, each with the series' id. Defaults to today and the next 6 days; at most 31 days at once.",
+      "Calendar events between two dates (both included), on the user's clock: events, Time blocks (`kind: time_block`, with the `tasks` that slot holds) and tasks' blocks (`kind: task`, with its task_id). A repeating event appears once per occurrence, each with the series' id. Defaults to today and the next 6 days; at most 31 days at once.",
     inputSchema: {
       type: 'object',
       properties: { from: dateArg('First day (default today)'), to: dateArg('Last day, included (default from + 6 days)') },
@@ -962,7 +982,7 @@ export const TOOLS: readonly ToolDef[] = [
       if (end.getTime() - start.getTime() > 32 * 86400_000) return bad('At most 31 days at once — ask for a shorter range.')
       const events = await eventsIn(ctx, start, end)
       // `until` is exclusive: a `to` day ends at the next midnight.
-      return { from: wallTime(start.toISOString(), ctx.zone), until: wallTime(end.toISOString(), ctx.zone), timezone: ctx.zone, events: events.map((e) => eventOut(e, ctx.zone)) }
+      return { from: wallTime(start.toISOString(), ctx.zone), until: wallTime(end.toISOString(), ctx.zone), timezone: ctx.zone, events: await eventsOut(ctx, events) }
     },
   },
   {

@@ -5,6 +5,7 @@ import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
 import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
+import { OUT_OF_SLOT } from '../calendar/slots'
 import { toastAction, toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
 import { playCompletion } from '../../lib/sounds'
@@ -293,7 +294,7 @@ export function duplicateTaskWithUndo(task: Task): Task {
   const now = nowIso()
   // Like a spawned repeat (completion.ts): an imported row's idempotency key stays with the original.
   const { external_ref: _importKey, ...rest } = cached(task) as Task & { external_ref?: unknown }
-  const copy: Task = { ...rest, id: crypto.randomUUID(), status: 'todo', completed_at: null, top3: false, top3_rank: null, scheduled_start: null, scheduled_end: null, reminder_sent: false, created_at: now, updated_at: now }
+  const copy: Task = { ...rest, id: crypto.randomUUID(), status: 'todo', completed_at: null, top3: false, top3_rank: null, scheduled_start: null, scheduled_end: null, slot_id: null, slot_date: null, reminder_sent: false, created_at: now, updated_at: now }
   writeRow('tasks', copy)
   logActivity('task.created', 'task', copy.id, { duplicate_of: task.id })
   toastUndo('Duplicated', () => writeRow('tasks', { id: copy.id }, 'delete'))
@@ -533,14 +534,16 @@ export function spreadWithUndo(picks: readonly SpreadPick[]): void {
  * Undo: the row and its blocks exactly as they were. */
 export function rescheduleDue(task: Task, dueAt: string | null, timed = false): () => void {
   const before = cached(task)
-  patchTask(before, { due_at: dueAt, someday: dueAt ? false : before.someday })
+  // Replanned, a task leaves its Time slot (0073): a date alone is off the calendar, a time gets a block.
+  const slot = before.slot_id ? { slot_id: before.slot_id, slot_date: before.slot_date ?? null, scheduled_start: before.scheduled_start, scheduled_end: before.scheduled_end } : null
+  patchTask(before, { due_at: dueAt, someday: dueAt ? false : before.someday, ...(slot ? OUT_OF_SLOT : null) })
   logActivity('task.rescheduled', 'task', task.id, { due_at: dueAt })
   const undoBlocks = replanTaskBlocks(before, dueAt, timed)
   return () => {
     undoBlocks()
     const now = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? before
     // A pick moved off today gave its Top 3 place up (top3Rule); Undo gives it back.
-    writeRow('tasks', { ...now, due_at: before.due_at, someday: before.someday, top3: before.top3, top3_rank: before.top3_rank })
+    writeRow('tasks', { ...now, due_at: before.due_at, someday: before.someday, top3: before.top3, top3_rank: before.top3_rank, ...slot })
     logActivity('task.rescheduled', 'task', task.id, { due_at: before.due_at })
   }
 }

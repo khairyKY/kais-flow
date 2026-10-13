@@ -54,7 +54,8 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     // Kai 2026-10-07: Tomorrow + Pick date… became one Plan list (./PlanMenu) — every date option,
     // each saying what it does. Swipe right and the `2` key are still Tomorrow in one move.
     { key: 'plan', label: `${ctx.overdue && !n ? 'Replan' : 'Plan'}…${n}`, sub: true },
-    ...(ctx.canUnschedule ? [{ key: 'unschedule', label: 'Unschedule' } as const] : []),
+    // Time Slots (0073): a task held by a Time block comes out of it — back to the rail, unscheduled.
+    ...(task.slot_id && !n ? [{ key: 'unschedule', label: 'Out of the slot' } as const] : ctx.canUnschedule ? [{ key: 'unschedule', label: 'Unschedule' } as const] : []),
     { key: 'project', label: `Move to…${n}`, hint: ctx.projectName ?? 'None', sub: true },
     { key: 'priority', label: 'Priority', hint: (task.priority && PRIORITY_LABELS[task.priority]) || 'None', sub: true },
     // The Label picker (Overlays.dc.html, keyboard L) — the desktop menu's; the phone edits labels in
