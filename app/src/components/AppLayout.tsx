@@ -50,6 +50,8 @@ import { KeyCombo } from './kit'
 import { Float } from './Float'
 import { uiZoom } from '../lib/uiScale'
 import { splitKeyCombo } from '../lib/shortcuts'
+import { overlayCount } from '../lib/overlayStack'
+import { undoLatest } from '../lib/undo'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
@@ -563,6 +565,13 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
 }
 
+/** P7e A3/A7: the shell's newer keys rest while you type (a field keeps its own ⌘Z), while a menu or
+ * dialog is open, and while any overlay holds the Esc stack — the command bar, search, chat, a
+ * picker, a selection. */
+function keysResting(e: KeyboardEvent): boolean {
+  return isTypingTarget(e.target) || overlayCount() > 0 || !!document.querySelector('[role="dialog"], [role="menu"]')
+}
+
 /** Dispatched on `window` to open search from a page's own top bar (the shell owns the overlay). */
 const OPEN_SEARCH_EVENT = 'kf-open-search'
 
@@ -652,6 +661,8 @@ export function AppLayout() {
         e.preventDefault()
         toggleCommandBar()
       }
+      // ⌘Z / Ctrl+Z (P7e A3): the newest toast's Undo. Inside a field the browser's own undo runs.
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && pressed(e, 'z', 'KeyZ') && !keysResting(e) && undoLatest()) e.preventDefault()
       if (isTypingTarget(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
       if (e.key === 'n') {
         e.preventDefault()

@@ -9,6 +9,7 @@ export const GLOBAL_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['⌘/Ctrl', 'K'], label: 'Command bar' },
   { keys: ['⌘/Ctrl', '/'], label: 'Search' },
   { keys: ['⌘/Ctrl', 'J'], label: 'Chat' },
+  { keys: ['⌘/Ctrl', 'Z'], label: 'Undo the last action' },
   { keys: ['n'], label: 'New task' },
   { keys: ['?'], label: 'This cheatsheet' },
   { keys: ['Esc'], label: 'Close overlay' },

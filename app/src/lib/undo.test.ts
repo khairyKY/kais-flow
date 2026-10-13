@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { toastAction, toastUndo } from './undo'
+import { toastAction, toastUndo, undoLatest } from './undo'
 import { useToastStore } from './toastStore'
 
 describe('undo helpers', () => {
@@ -20,6 +20,22 @@ describe('undo helpers', () => {
     useToastStore.getState().toasts.at(-1)!.onUndo!()
     await new Promise((r) => setTimeout(r, 0))
     expect(useToastStore.getState().toasts.at(-1)!.message).toContain('undo slipped away')
+  })
+
+  it('undoLatest runs the newest Undo once, skipping toasts without one', async () => {
+    useToastStore.setState({ toasts: [] })
+    const ran: string[] = []
+    toastUndo('first', () => void ran.push('first'))
+    toastUndo('second', () => void ran.push('second'))
+    toastAction('Restored', 'Jump there →', () => {})
+    expect(undoLatest()).toBe(true)
+    await Promise.resolve()
+    expect(ran).toEqual(['second'])
+    expect(useToastStore.getState().toasts.map((t) => t.message)).toEqual(['first', 'Restored'])
+    expect(undoLatest()).toBe(true)
+    expect(undoLatest()).toBe(false)
+    await Promise.resolve()
+    expect(ran).toEqual(['second', 'first'])
   })
 
   it('toastAction carries a labeled action', () => {
