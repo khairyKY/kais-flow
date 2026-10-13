@@ -1,5 +1,31 @@
 [
   {
+    "v": "v1.1.0",
+    "date": "2026-10-13",
+    "title": "A redesigned day, events that repeat, and your notebook",
+    "highlights": [
+      "Today follows your reviewed design: one date, a Now card while something runs, and today's three",
+      "Events open the menu you drew and repeat as a real series; planning mode folds the calendar while you place tasks",
+      "The Notebook page: your plan as a page to copy into your journal, print, and bring back by photo",
+      "A calmer Inbox, a Search that finds your Library, and labels you can pick, rename and colour",
+      "Edit everything after you make it, routines included, with minutes per step and a plant of their own",
+      "Undo instead of “are you sure” everywhere, and the night look: frosted cards, the moonflower, two fireflies",
+      "Routine reminders really send, the hourly Overdue push is gone, and a pick moved to another day leaves your Top 3 (older ones were cleared once)",
+      "Typed captures are filled in by the AI (Groq), and the privacy page now says so"
+    ],
+    "icons": [
+      "sun",
+      "calendar",
+      "notebook",
+      "search",
+      "routine",
+      "moon",
+      "clock",
+      "lock"
+    ],
+    "art": "cherry-bloom"
+  },
+  {
     "v": "v1.0.28",
     "date": "2026-10-09",
     "title": "AI assistants load their tools",
@@ -10,7 +36,8 @@
       "chat"
     ],
     "art": "clover-awake"
-  },  {
+  },
+  {
     "v": "v1.0.27",
     "date": "2026-10-08",
     "title": "Notifications that arrive, and a calmer look",
@@ -27,7 +54,8 @@
       "moon"
     ],
     "art": "clover-awake"
-  },  {
+  },
+  {
     "v": "v1.0.26",
     "date": "2026-10-08",
     "title": "The garden on your home screen",
@@ -42,7 +70,8 @@
       "lock"
     ],
     "art": "wisteria-p40"
-  },  {
+  },
+  {
     "v": "v1.0.25",
     "date": "2026-10-07",
     "title": "From a while ago, settled",
@@ -57,7 +86,8 @@
       "tomorrow"
     ],
     "art": "fern-unfurl1"
-  },  {
+  },
+  {
     "v": "v1.0.24",
     "date": "2026-10-07",
     "title": "AI assistants can connect",
@@ -68,7 +98,8 @@
       "chat"
     ],
     "art": "clover-awake"
-  },  {
+  },
+  {
     "v": "v1.0.23",
     "date": "2026-10-07",
     "title": "Plan, replan, and a calmer day",
@@ -89,7 +120,8 @@
       "sprout"
     ],
     "art": "hydrangea-medium"
-  },  {
+  },
+  {
     "v": "v1.0.22",
     "date": "2026-10-07",
     "title": "Capture that types, and fills itself in",

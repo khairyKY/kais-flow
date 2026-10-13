@@ -38,7 +38,7 @@ export const exeUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag
 // What's growing — Now / Next / Later. Now = what builders are working on this month (October 2026);
 // Next / Later = the open items in docs/ROADMAP.md. Shipped things leave for Field notes.
 export const ROADMAP = {
-  now: ['Events that repeat, and a new menu for calendar events', 'The Notebook page and the ticks loop', 'Today and the Inbox, redrawn from Kai’s reviewed designs', 'Talk it out and photos in the journal'],
+  now: ['Fixes from living with v1.1'],
   next: ['Google Calendar sync', 'Smart lists'],
   later: ['Email → Inbox', 'More themes', 'An iPhone app <i>(if it ever stops costing money)</i>'],
 }

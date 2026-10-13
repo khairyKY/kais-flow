@@ -24,7 +24,7 @@ const step = (n, eyebrow, title, text, art, isLive = false) => `<section class="
 export const paper = {
   path: '/paper/',
   title: 'Paper people',
-  description: 'For people who think on paper: the Notebook page lays out your day to copy by hand, Paper capture turns a photo of your notes into tasks, and the ticks loop marks them done. Paper capture is here; the other two are being built.',
+  description: 'For people who think on paper: the Notebook page lays out your day to copy by hand, Paper capture turns a photo of your notes into tasks, and the ticks loop marks them done. All three are here.',
   og: 'paper',
   body: `<section class="sec first paper-hero"><div class="wrap split">
   <div>
@@ -33,11 +33,11 @@ export const paper = {
   </div>
   <div style="position:relative">${img('tools-pen', 'A fountain pen', { w: 220, cls: 'pen', eager: true })}${papers()}</div>
 </div></section>
-${step(1, 'Notebook page', 'Your day, the way you write it', 'Habits and data on top, the plan in the middle, boxes below — or any order you like. Copy it by hand, or print it on A5. Big type, aligned times, real boxes.', notebookPage())}
+${step(1, 'Notebook page', 'Your day, the way you write it', 'Habits and data on top, the plan in the middle, boxes below — or any order you like. Copy it by hand, or print it on A5. Big type, aligned times, real boxes.', notebookPage(), true)}
 ${step(2, 'Paper capture', 'A photo of your notes becomes tasks', 'Write in a lecture or a meeting. Later, photograph the page with the camera in the capture bar, or Scan paper in the Inbox. Kai’s Flow reads your handwriting — Arabic too — and suggests tasks, events and notes, showing the line it read beside anything it isn’t sure of. Up to 15 pages a day.', lecture + review, true)}
-${step(3, 'The ticks loop', 'Tick it on paper, it’s done in the app', 'At night, photograph the page you ticked. The app finds each box by its line and asks once: mark these done?', linedPage('sm') + ticked)}
+${step(3, 'The ticks loop', 'Tick it on paper, it’s done in the app', 'At night, photograph the page you ticked. The app finds each box by its line and asks once: mark these done?', linedPage('sm') + ticked, true)}
 <section class="sec"><div class="wrap narrow" style="text-align:center">
-  <p class="lead" style="margin-inline:auto">Paper capture is here (v1.0.20); the Notebook page and the ticks loop come next. Field notes will say the day each one lands.</p>
+  <p class="lead" style="margin-inline:auto">Paper capture came in v1.0.20; the Notebook page and the ticks loop came in v1.1.0.</p>
   <div class="btns" style="justify-content:center;margin-top:22px">${btn('Follow Field notes', '/field-notes/feed.xml', { kind: 'secondary', ic: 'rss' })}${btn('What’s growing', '/growing/', { kind: 'secondary' })}</div>
 </div></section>`,
 }

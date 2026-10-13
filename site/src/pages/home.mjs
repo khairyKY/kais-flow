@@ -88,8 +88,7 @@ ${little()}
 <section class="sec" id="paper"><div class="wrap split">
   <div>
     ${head2({ eyebrow: 'Made for paper people', title: 'Some days want a pen', lead: 'If you think better on paper, Kai’s Flow hands you the page. Your habits, your plan and your boxes, laid out the way you write them. In the evening, photograph the page, and the ticks come back as done.' })}
-    <div class="soonline"><span class="chip live"><i aria-hidden="true"></i>Live</span>Paper capture</div>
-    <div class="soonline" style="margin-top:10px"><span class="chip soon">Coming soon</span>Notebook page · the ticks loop</div>
+    <div class="soonline"><span class="chip live"><i aria-hidden="true"></i>Live</span>Notebook page · Paper capture · the ticks loop</div>
     <p style="margin-top:22px"><a class="more" href="/paper/">For people who think on paper →</a></p>
   </div>
   ${papers()}

@@ -61,7 +61,7 @@ const compare = {
   <div>${head2({ eyebrow: 'Where it’s different', title: 'What you get here' })}<ul class="ticks">
     <li>${icon('check', 20)}Free, with no plan waiting behind it.</li>
     <li>${icon('check', 20)}Calm on purpose: paper, plants, one terra button.</li>
-    <li>${icon('check', 20)}Paper capture: photograph your notes and they come back as tasks (the Notebook page and its ticks loop are next).</li>
+    <li>${icon('check', 20)}Paper capture: photograph your notes and they come back as tasks; the Notebook page lays your day out to copy by hand, and ticks on paper come back as done.</li>
     <li>${icon('check', 20)}Your own calendar, not a view of someone else’s.</li>
     <li>${icon('check', 20)}Bring your own AI assistant: Claude or any MCP client, with a key you can turn off.</li></ul></div>
   <div>${head2({ eyebrow: 'Not yet', title: 'What it doesn’t do' })}<ul class="ticks no">
