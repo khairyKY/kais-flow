@@ -1,0 +1,5 @@
+PASS east (UTC+14): due after its month began → not rolled 2026-10-01T00:00
+PASS no settings row (Cairo): due after its month began → not rolled 2026-10-01T00:00
+PASS west (UTC-11): due before ITS month began → rolled to the 1st at the same wall time, on its owner's clock 2026-10-02T00:00
+PASS each retainer reloaded once (its retainer.reloaded row) [{"user_id":"00000000-0000-4000-8000-00000000000a"},{"user_id":"00000000-0000-4000-8000-00000000000b"},{"user_id":"00000000-0000-4000-8000-00000000000c"}]
+PASS a second run in the same month changes nothing 
