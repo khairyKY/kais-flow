@@ -18,7 +18,9 @@ export interface Listed {
   created_at: string | null
 }
 
-const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+// Lowercase only: Postgres hands ids back lowercase, so an uppercase folder could never match its row
+// and would look gone. Such a folder is skipped instead (the app never writes one).
+const ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export const PHOTO_GRACE_MS = 30 * 86_400_000
 
 /** The folders in a listing named by an id: users at the bucket root, entries under a user. */

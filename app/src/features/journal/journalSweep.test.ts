@@ -66,6 +66,10 @@ describe('journal photo sweep', () => {
     expect(idFolders([folder(A), folder('avatars'), folder('..'), { name: B, id: 'obj', created_at: ago(90) }])).toEqual([A])
     expect(goneEntries('not-a-user', [LIVE], [])).toEqual([])
     expect(goneEntries(A, ['notes', LIVE], [])).toEqual([LIVE])
+    // An uppercase id could never match the lowercase row Postgres returns — skipped, not "gone".
+    expect(idFolders([folder(A.toUpperCase())])).toEqual([])
+    expect(goneEntries(A, ['ABCDEF00-0000-4000-8000-00000000000C'], [])).toEqual([])
+    expect(goneEntries(A.toUpperCase(), [LIVE], [])).toEqual([])
     // A sub-folder and an object with no timestamp inside a gone entry are left alone.
     expect(photosToSweep(A, COMPOSTED, [folder('sub'), { name: 'odd.jpg', id: 'o', created_at: null }, { name: 'bad.jpg', id: 'o', created_at: 'not a date' }], NOW)).toEqual([])
   })
