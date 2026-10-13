@@ -1,4 +1,6 @@
 import { parseCommand } from '../command-bar/parseCommand'
+import { linkRef } from '../../lib/links'
+import type { CreateTaskInput } from '../tasks/api'
 import { dayWord } from '../inbox/inboxDisplay'
 import { cairoTimeKey } from '../calendar/eventTime'
 
@@ -13,6 +15,10 @@ export interface FirstThing {
   priority: number | null
   /** `*label` words, when the line has any. */
   labels?: string[]
+  /** "every day", `// notes`, a link — when the line has them (the bar's parse, P7e A5/A6/A19). */
+  recurrenceRule?: CreateTaskInput['recurrenceRule']
+  notes?: CreateTaskInput['notes']
+  externalRef?: CreateTaskInput['externalRef']
 }
 
 /** One onboarding line → the task it becomes, or null for an empty line. */
@@ -20,7 +26,16 @@ export function readFirstThing(line: string, now: Date = new Date()): FirstThing
   const text = line.trim()
   if (!text) return null
   const p = parseCommand(text, [], [], { now, zone: 'cairo' })
-  return { title: p.title || text, dueAt: p.dueAt, durationMin: p.durationMin, priority: p.priority, ...(p.labels.length ? { labels: p.labels } : null) }
+  return {
+    title: p.title || text,
+    dueAt: p.dueAt,
+    durationMin: p.durationMin,
+    priority: p.priority,
+    ...(p.labels.length ? { labels: p.labels } : null),
+    ...(p.recurrence ? { recurrenceRule: p.recurrence } : null),
+    ...(p.notes ? { notes: p.notes } : null),
+    ...(p.url ? { externalRef: linkRef(p.url) } : null),
+  }
 }
 
 /** The date parse chip under a line (9h): "Tomorrow · 15:00", Cairo's day and 24h clock. */

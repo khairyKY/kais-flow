@@ -1,5 +1,9 @@
 import * as chrono from 'chrono-node'
-import { cairoOffsetMinutes, cairoWallTimeToIso } from '../../lib/dateShortcuts'
+import { appZone } from '../../lib/appZone'
+import { linkRef, urlIn } from '../../lib/links'
+import { cairoOffsetMinutes, cairoWallTimeToIso, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
+import { parseRecurrence } from '../import/adapters/shared'
+import { nextOccurrence } from '../tasks/recurrence'
 import type { Domain, Project } from '../../lib/types'
 
 export interface ParsedCommand {
@@ -16,21 +20,19 @@ export interface ParsedCommand {
   projectMatch: string | null
   /** `*label` words, in order, once each — the `*` the app shows labels with (task editor, Library tags). */
   labels: string[]
+  /** "every week", "every mon, fri" → the RRULE it repeats by (P7e A5); `dueAt` is then its first day. */
+  recurrence: string | null
+  /** `// the rest` — the notes, as written (P7e A6). */
+  notes: string | null
+  /** The first link in the line: out of the title, onto the task as its link (P7e A19). */
+  url: string | null
+  /** The words each recognised token took — the bar's chips — in the order they sit in the line.
+   * The bar's Esc hands the last one back as `ignore` (P7e A10). */
+  tokens: string[]
 }
 
 /** `*calls`, `*q3-review`: a `*` at a word start, then letters, digits, `_` or `-`. */
 const LABEL_RE = /(^|\s)\*([\p{L}\p{N}_-]+)/gu
-
-/** Pulls every `*label` out of the text (Kai 2026-10-03: labels in quick add). Run before the date
- * parse so a `*today` label is never read as a date. */
-export function stripLabels(input: string): { text: string; labels: string[] } {
-  const labels: string[] = []
-  const text = input.replace(LABEL_RE, (_, lead: string, label: string) => {
-    if (!labels.includes(label)) labels.push(label)
-    return lead
-  })
-  return { text: text.replace(/\s{2,}/g, ' ').trim(), labels }
-}
 
 /** Matches `30m`, `1h`, or `1h30m` anywhere in the text. */
 const DURATION_RE = /\b(\d+)h(?:(\d+)m)?\b|\b(\d+)m\b/i
@@ -39,47 +41,18 @@ const DURATION_RE = /\b(\d+)h(?:(\d+)m)?\b|\b(\d+)m\b/i
  * `priorityFlag`, which renders priority 1 back out as `!!!`: what you type is what you see. */
 const PRIORITY_RE = /!{1,3}/
 
-export interface PriorityDurationTokens {
-  text: string
-  priority: number | null
-  durationMin: number | null
-}
-
-/** Extracts and strips just the local `!`/`!!`/`!!!` priority flag and `30m`/`1h`/`1h30m`
- * duration syntax — the two tokens with no AI-side equivalent worth waiting on. Shared by the
- * full `parseCommand` pipeline below and the AI capture paths (voice, Quick Capture), which strip
- * these locally but leave date/tag parsing to the AI parse itself. */
-export function stripPriorityAndDuration(input: string): PriorityDurationTokens {
-  let text = input
-
-  // Priority is stripped first: it's the one token that could otherwise get swallowed into an
-  // adjacent #tag match (`\S+` doesn't stop at `!`).
-  let priority: number | null = null
-  const priorityMatch = text.match(PRIORITY_RE)
-  if (priorityMatch) {
-    priority = 4 - priorityMatch[0].length
-    text = (text.slice(0, priorityMatch.index) + text.slice(priorityMatch.index! + priorityMatch[0].length)).trim()
-  }
-
-  // Duration is stripped before chrono runs: chrono-node treats bare "30m"/"1h30m" as a
-  // relative-time date expression ("in 30 minutes") and would otherwise swallow it as dueAt.
-  let durationMin: number | null = null
-  const durationMatch = text.match(DURATION_RE)
-  if (durationMatch) {
-    durationMin = durationMatch[1]
-      ? parseInt(durationMatch[1], 10) * 60 + (durationMatch[2] ? parseInt(durationMatch[2], 10) : 0)
-      : parseInt(durationMatch[3], 10)
-    text = (text.slice(0, durationMatch.index) + text.slice(durationMatch.index! + durationMatch[0].length)).trim()
-  }
-
-  return { text, priority, durationMin }
-}
+// P7e A5: "every day", "every 2 weeks", "every other month", "every monday", "every mon, fri",
+// "every weekday", "every week on tue and thu". Only "every …": a bare "weekly review" stays a title.
+// The words become the RRULE through the importer's own reader (import/adapters/shared parseRecurrence).
+const DAY = '(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*'
+const DAYS = `${DAY}(?:\\s*(?:,|and)\\s*${DAY})*`
+const REPEAT_RE = new RegExp(`(?<![\\p{L}\\p{N}])every\\s+(?:(?:(?:other|\\d+)\\s+)?(?:day|week|month|year)s?(?:\\s+on\\s+${DAYS})?|(?:weekday|workday)s?|${DAYS})(?![\\p{L}\\p{N}])`, 'iu')
 
 /** Does this parse carry enough structure to create a task directly, instead of falling through
  * to a bare Inbox capture? Priority/duration count as structure too — matching a `!`/`30m`-only
  * command (e.g. "buy milk !!") that has no date/project still means "create a task now". */
-export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 'projectId' | 'priority' | 'durationMin'> & { labels?: readonly string[] }): boolean {
-  return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null || parsed.labels?.length)
+export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 'projectId' | 'priority' | 'durationMin'> & { labels?: readonly string[]; notes?: string | null }): boolean {
+  return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null || parsed.labels?.length || parsed.notes)
 }
 
 export interface ParseCommandOptions {
@@ -89,7 +62,12 @@ export interface ParseCommandOptions {
    * app_settings.timezone (T-4: the app's one day boundary and render zone) — what the command bar
    * reads. `device` keeps the old reading for callers whose own form is device-local. */
   zone?: 'cairo' | 'device'
+  /** Token words to read as plain words (the bar's Esc, P7e A10): they stay in the title. */
+  ignore?: readonly string[]
 }
+
+/** Stands in for an ignored token's characters while the line is read; no reader matches it. */
+const MASK = '\uE000'
 
 /** T-4: chrono read the text against the user's clock (see the reference in `parseCommand`), so its
  * components are that wall-clock: turn them into the instant with the tz database, which gets
@@ -108,31 +86,89 @@ function cairoInstant(start: chrono.ParsedComponents): string {
 }
 
 /**
- * Pure text -> structured-command parser (no AI). Extracts the first date/time mention via
- * chrono-node, a `30m`/`1h`/`1h30m` duration, a `!`/`!!`/`!!!` priority flag, and the first `#tag`
- * fuzzy-matched against project names, falling back to domain names. Whatever's left after
- * stripping all of those becomes the title.
+ * Pure text -> structured-command parser (no AI). Extracts `// notes`, the first link, `*labels`, a `!`/`!!`/`!!!` priority flag,
+ * a `30m`/`1h`/`1h30m` duration, an "every …" repeat, the first date/time mention via chrono-node,
+ * and the first `#tag` fuzzy-matched against project names, falling back to domain names. Whatever's
+ * left after taking all of those out becomes the title.
  */
 export function parseCommand(
   input: string,
   domains: Domain[],
   projects: Project[],
-  { now = new Date(), zone = 'device' }: ParseCommandOptions = {},
+  { now = new Date(), zone = 'device', ignore = [] }: ParseCommandOptions = {},
 ): ParsedCommand {
-  const { text: unlabelled, labels } = stripLabels(input)
-  const stripped = stripPriorityAndDuration(unlabelled)
-  let text = stripped.text
-  const { priority, durationMin } = stripped
+  // Each token found is blanked out of `work` with spaces of its own length, so every index in `work`
+  // is still an index into `input`; the title is what's left. Ignored words are masked the same way.
+  // ponytail: ignored by their words, so the same words typed again elsewhere in the line stay words too.
+  let work = input
+  for (const words of ignore) if (words) work = work.split(words).join(MASK.repeat(words.length))
+  const spans: [number, number][] = []
+  const take = (start: number, end: number, chip = true) => {
+    work = work.slice(0, start) + ' '.repeat(end - start) + work.slice(end)
+    if (chip) spans.push([start, end])
+  }
+
+  // `//` and everything after it are the notes, read as written (P7e A6, Akiflow's description mark).
+  // Only at a word start: a link's "https://" keeps its slashes.
+  let notes: string | null = null
+  const slashes = /(^|\s)\/\//.exec(work)
+  if (slashes) {
+    const at = slashes.index + slashes[1].length
+    notes = input.slice(at + 2).trim() || null
+    take(at, input.length)
+  }
+
+  // A link next (P7e A19): its `#fragment`, `*`, `!` and digits are no tokens — and it's the task's link.
+  const link = urlIn(work)
+  if (link) take(link.index, link.index + link.url.length)
+
+  // Labels next (Kai 2026-10-03), so a `*today` label is never read as a date.
+  const labels: string[] = []
+  for (const m of work.matchAll(LABEL_RE)) {
+    const at = m.index + m[1].length
+    if (!labels.includes(m[2])) labels.push(m[2])
+    take(at, at + 1 + m[2].length)
+  }
+
+  // Priority before the #tag: `\S+` doesn't stop at `!`.
+  let priority: number | null = null
+  const bang = PRIORITY_RE.exec(work)
+  if (bang) {
+    priority = 4 - bang[0].length
+    take(bang.index, bang.index + bang[0].length)
+  }
+
+  // Duration before chrono: it reads a bare "30m"/"1h30m" as "in 30 minutes" and would take it as the date.
+  let durationMin: number | null = null
+  const len = DURATION_RE.exec(work)
+  if (len) {
+    durationMin = len[1] ? parseInt(len[1], 10) * 60 + (len[2] ? parseInt(len[2], 10) : 0) : parseInt(len[3], 10)
+    take(len.index, len.index + len[0].length)
+  }
+
+  // The repeat before chrono too, or "every monday" would be read as just next Monday.
+  const repeat = REPEAT_RE.exec(work)
+  const recurrence = repeat && parseRecurrence(repeat[0])
+  if (repeat && recurrence) take(repeat.index, repeat.index + repeat[0].length)
 
   let dueAt: string | null = null
   let dueTimed = false
   const reference = zone === 'cairo' ? { instant: now, timezone: cairoOffsetMinutes(now) } : now
-  const results = chrono.parse(text, reference, { forwardDate: true })
-  if (results.length > 0) {
-    const first = results[0]
+  const first = chrono.parse(work, reference, { forwardDate: true })[0]
+  if (first) {
     dueAt = zone === 'cairo' ? cairoInstant(first.start) : first.start.date().toISOString()
     dueTimed = first.start.isCertain('hour')
-    text = (text.slice(0, first.index) + text.slice(first.index + first.text.length)).trim()
+    // `<friday` (Akiflow's deadline mark) is just the date here — one date (P7e A6, B4 a); its `<` goes too.
+    take(work[first.index - 1] === '<' ? first.index - 1 : first.index, first.index + first.text.length)
+  }
+
+  if (recurrence) {
+    // A series starts on its own first day, at the typed time: "every monday 6pm" is next Monday 18:00.
+    // Undated, it starts today first thing, like a repeat set from the menu (tasks/api setRecurrence).
+    const z = zone === 'cairo' ? appZone() : Intl.DateTimeFormat().resolvedOptions().timeZone
+    const [y, m, d] = zoneDateKey(now, z).split('-').map(Number)
+    const from = new Date(dueAt ?? zoneWallTimeToIso(z, y, m, d, 9))
+    dueAt = (nextOccurrence(recurrence, from, z, new Date(from.getTime() - 1)) ?? from).toISOString()
   }
 
   let domainId: string | null = null
@@ -140,7 +176,7 @@ export function parseCommand(
   let domainMatch: string | null = null
   let projectMatch: string | null = null
 
-  const tagMatch = text.match(/#(\S+)/)
+  const tagMatch = /#(\S+)/.exec(work)
   if (tagMatch) {
     const tag = tagMatch[1].toLowerCase()
     const project = projects.find((p) => p.name.toLowerCase().includes(tag))
@@ -155,25 +191,31 @@ export function parseCommand(
         domainMatch = domain.name
       }
     }
-    text = text.replace(tagMatch[0], '').trim()
+    // A #tag that names nothing still leaves the title, as always — but there's no chip to take back.
+    take(tagMatch.index, tagMatch.index + tagMatch[0].length, !!(projectId || domainId))
   }
 
-  const title = text.replace(/\s{2,}/g, ' ').trim()
+  const title = work.replace(new RegExp(`${MASK}+`, 'g'), (run, at: number) => input.slice(at, at + run.length)).replace(/\s{2,}/g, ' ').trim()
+  const tokens = spans.sort((a, b) => a[0] - b[0]).map(([start, end]) => input.slice(start, end))
 
-  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels }
+  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence, notes, url: link?.url ?? null, tokens }
 }
 
 /** A parse as a new task — tasks/api createTask's input: the command bar's quick add, and the Tasks
  * page's quick add (Kai 2026-10-12: its placeholder promised "tomorrow 3pm #forecasting" but only
- * `*labels` were read). `typed` stands in when the tokens used the whole line up ("tomorrow 3pm"). */
+ * `*labels` were read). `typed` stands in when the tokens used the whole line up ("tomorrow 3pm") — or
+ * the link, when that's all it was. */
 export function quickAddTask(parsed: ParsedCommand, typed: string) {
   return {
-    title: parsed.title || typed,
+    title: parsed.title || parsed.url || typed,
     domainId: parsed.domainId,
     projectId: parsed.projectId,
     dueAt: parsed.dueAt,
     durationMin: parsed.durationMin,
     priority: parsed.priority,
     labels: parsed.labels,
+    recurrenceRule: parsed.recurrence,
+    notes: parsed.notes,
+    ...(parsed.url ? { externalRef: linkRef(parsed.url) } : null),
   }
 }

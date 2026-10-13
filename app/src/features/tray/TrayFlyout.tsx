@@ -6,7 +6,9 @@ import { cairoTimeKey } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useRoutines } from '../routines/api'
 import { usePendingInboxItems } from '../inbox/api'
-import { captureWithAI } from '../capture/api'
+import { useDomains } from '../domains/api'
+import { parseCommand } from '../command-bar/parseCommand'
+import { captureTyped } from '../command-bar/quickAdd'
 import { useStarEvents } from '../today/api'
 import { legacyGoalId } from '../today/goalStore'
 import { useMinuteNow } from '../today/useMinuteNow'
@@ -40,6 +42,7 @@ export function TrayFlyout() {
   const { data: tasks = [] } = useTasks()
   const { data: events = [] } = useCalendarEvents()
   const { data: projects = [] } = useProjects()
+  const { data: domains = [] } = useDomains()
   const { data: routines = [] } = useRoutines()
   const { data: inbox = [] } = usePendingInboxItems()
   const [focus, sendFocus] = useFocusMirror()
@@ -90,7 +93,10 @@ export function TrayFlyout() {
     const t = text.trim()
     if (!t) return
     setText('')
-    void captureWithAI(t)
+    // P7e A21: the bar's own rule — read here at once (dates on the user's clock, #project, *labels,
+    // !, 30m, every …, //, a link), a typed time makes a block, a plain line goes to the Inbox, and
+    // the AI fills the rest after. It used to wait on the AI and skip the local read.
+    captureTyped(parseCommand(t, domains, projects, { zone: 'cairo' }), t)
   }
 
   const open = (route?: string) => void native('tray_open', { route: route ?? null })

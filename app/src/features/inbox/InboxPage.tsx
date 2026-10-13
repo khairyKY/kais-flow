@@ -130,7 +130,7 @@ export function InboxPage() {
     const person = d.to === 'person' ? people.find((p) => p.id === d.personId) : undefined
     if (person) return { to: 'person', person, summary: text }
     if (d.to === 'journal') return { to: 'journal', body: text }
-    return { to: 'task', title: text, dueAt: d.dueAt, place: d.place }
+    return { to: 'task', title: text, dueAt: d.dueAt, timed: d.timed, place: d.place }
   }
 
   // ── D2/D3 (2026-07-18 audit): real multi-select; selected styling follows Tasks' sage language.
@@ -166,7 +166,7 @@ export function InboxPage() {
 
   // Bulk = ONE toast with ONE Undo for the whole selection (api fileMany / dismissMany / …).
   function bulkFileTo(place: MoveTarget) {
-    fileMany(selectedItems.map((i) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: draftOf(i).dueAt, place }] as const))
+    fileMany(selectedItems.map((i) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: draftOf(i).dueAt, timed: draftOf(i).timed, place }] as const))
     clearSelection()
   }
   function bulkFileAsDrafted(sel: InboxItem[]) {

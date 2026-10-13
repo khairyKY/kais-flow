@@ -31,6 +31,7 @@ import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { ColorDots } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
+import { linkRef } from '../../lib/links'
 
 // ── The phone calendar's sheets (Calendar Phone.dc.html): 7c quick create, 7d the event sheet,
 // 7g / 7g2 Schedule. All on the kit BottomSheet; every write goes through calendar/api and
@@ -108,7 +109,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   const [priority, setPriority] = useState<number | null | undefined>(undefined)
   const [placeTo, setPlaceTo] = useState<MoveTarget | null>(null)
   const [remindMin, setRemindMin] = useState<number | null>(null)
-  const [repeat, setRepeat] = useState<string | null>(null)
+  const [repeatPick, setRepeat] = useState<string | null | undefined>(undefined)
   const [labels, setLabels] = useState<string[]>([])
   const [label, setLabel] = useState('')
   const [top3, setTop3] = useState(false)
@@ -120,6 +121,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   const name = ((kind === 'task' ? parsed?.title : null) ?? title).trim()
   const { starts_at, ends_at } = spanIso({ day, start, end: start + dur })
   const pri = priority === undefined ? (parsed?.priority ?? null) : priority
+  const repeat = repeatPick === undefined ? (parsed?.recurrence ?? null) : repeatPick // "every week" in the title (P7e A5)
   const parsedProject = parsed?.projectId ? projects.find((p) => p.id === parsed.projectId) : undefined
   const to: MoveTarget = placeTo ?? (parsedProject ? { kind: 'project', id: parsedProject.id, domainId: parsedProject.domain_id ?? null, name: parsedProject.name } : NO_PLACE)
   const allLabels = [...new Set([...labels, ...(parsed?.labels ?? [])])]
@@ -144,7 +146,9 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
     if (kind === 'task') {
       const task = createTask({
         title: name,
-        notes: notes.trim() || null,
+        // The title's `// notes` and link leave it (the shared parse, P7e A6/A19): they land here, not nowhere.
+        notes: notes.trim() || parsed?.notes || null,
+        ...(parsed?.url ? { externalRef: linkRef(parsed.url) } : null),
         dueAt: starts_at,
         durationMin: dur,
         priority: pri,

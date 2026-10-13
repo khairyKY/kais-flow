@@ -12,6 +12,7 @@ import { DailyLimitError, INBOX_WITHOUT_AI, isDailyLimitError, isDailyLimitRespo
 import { SAVED_UNTRANSCRIBED, UNTRANSCRIBED_VOICE_NOTE } from './voiceCopy'
 import { aiFill, confidenceThreshold, taskFromParse, type AiFields, type KnownPlaces } from './aiFill'
 import { placeTask } from '../calendar/api'
+import { linkRef, urlIn } from '../../lib/links'
 import type { CalendarEvent, Domain, Project, InboxItem, Task } from '../../lib/types'
 
 function nowIso(): string {
@@ -39,6 +40,12 @@ function stretchCaptureBlock(task: Task, minutes: number): (() => void) | null {
   const b = own.length === 1 ? own[0] : null
   if (!b || b.all_day || b.starts_at !== task.due_at || Date.parse(b.ends_at) - Date.parse(b.starts_at) !== 30 * 60_000) return null
   return placeTask(task, b.starts_at, plusMinutes(b.starts_at, minutes)).undo
+}
+
+/** A task the AI filed by itself (voice, a typed or queued Inbox line), keeping the capture's link (P7e A19). */
+function taskFromCapture(parse: ParseResult, rawText: string, overrides: CaptureOverrides = {}): Task {
+  const url = urlIn(rawText)?.url
+  return createTask({ ...taskFromParse(parse, knownPlaces(), overrides), ...(url ? { externalRef: linkRef(url) } : null) })
 }
 
 /** The live (not trashed) projects and domains this device knows — what the AI may place a capture in. */
@@ -158,7 +165,7 @@ export async function captureWithAI(
   if (parse && parse.kind === 'task' && parse.confidence >= confidenceThreshold()) {
     // Everything it read — priority from the wording, the description as notes — with a typed
     // `!` / `30m` still beating its own reading.
-    const task = createTask(taskFromParse(parse, knownPlaces(), overrides))
+    const task = taskFromCapture(parse, rawText, overrides)
     const unblock = blockIfTimed(task, parse.has_time === true)
     logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence })
     toastUndo(`Added "${task.title}"`, () => {
@@ -233,7 +240,7 @@ export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Pr
     writeRow('inbox_items', read)
     return
   }
-  const task = createTask(taskFromParse(ai, knownPlaces()))
+  const task = taskFromCapture(ai, rawText)
   const unblock = blockIfTimed(task, ai.has_time === true)
   writeRow('inbox_items', { ...read, status: 'filed', filed_task_id: task.id })
   logActivity('capture.autofiled', 'task', task.id, { confidence: ai.confidence, source: 'typed' })
@@ -297,7 +304,7 @@ async function parseQueued(): Promise<void> {
       const parse = await callParseCapture(item.raw_text, item.created_at)
       if (parse.kind === 'task' && parse.confidence >= confidenceThreshold()) {
         const over = rest as { priority_override?: number | null; duration_override?: number | null }
-        const task = createTask(taskFromParse(parse, knownPlaces(), { priority: over.priority_override, durationMin: over.duration_override }))
+        const task = taskFromCapture(parse, item.raw_text, { priority: over.priority_override, durationMin: over.duration_override })
         blockIfTimed(task, parse.has_time === true)
         writeRow('inbox_items', {
           ...item,

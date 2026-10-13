@@ -62,6 +62,8 @@ export interface CreateTaskInput {
   externalRef?: Task['external_ref']
   /** Parked from the start (Inbox "Someday" files a capture this way, undated). */
   someday?: boolean
+  /** A repeat typed with the capture ("every week", P7e A5) — its due date is the series' first day. */
+  recurrenceRule?: string | null
 }
 
 export function createTask(input: CreateTaskInput): Task {
@@ -81,7 +83,7 @@ export function createTask(input: CreateTaskInput): Task {
     scheduled_end: null,
     top3: false,
     snoozed_until: null,
-    recurrence_rule: null,
+    recurrence_rule: input.recurrenceRule ?? null,
     labels: input.labels ?? [],
     priority: input.priority ?? null,
     duration_min: input.durationMin ?? null,

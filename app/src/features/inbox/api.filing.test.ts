@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { InboxItem } from '../../lib/types'
+import { NO_PLACE } from '../tasks/move'
 
 // P6 step 4: filing a GitHub issue keeps its link on the task (external_ref), so the task can show
 // "View issue" after the inbox row composts.
@@ -40,6 +41,39 @@ describe('fileToTask', () => {
     writes.length = 0
     fileToTask(item({ kind: 'github_issue', payload: { node_id: 'I_8', url: 'javascript:alert(1)' } }), { silent: true })
     expect(taskWrite()).not.toHaveProperty('external_ref')
+  })
+
+  // P7e A19: a shared page or an endpoint capture keeps its link on the task it's filed as.
+  it('a captured link rides onto the task (share text, the endpoint url); a javascript: one never does', () => {
+    fileToTask(item({ raw_text: 'Calm interfaces essay\nhttps://example.com/calm.' }), { silent: true })
+    expect(taskWrite().external_ref).toMatchObject({ source: 'link', url: 'https://example.com/calm' })
+    writes.length = 0
+    fileToTask(item({ raw_text: 'read later', payload: { source: 'capture', url: 'https://example.org/x' } }), { silent: true })
+    expect(taskWrite().external_ref).toMatchObject({ source: 'link', url: 'https://example.org/x' })
+    writes.length = 0
+    fileToTask(item({ raw_text: 'read later', payload: { url: 'javascript:alert(1)' } }), { silent: true })
+    expect(taskWrite()).not.toHaveProperty('external_ref')
+  })
+
+  // P7e A2: it used to land as a task due at 15:00 with nothing on the calendar.
+  it('a timed card files with its calendar block, as long as the AI read (the one capture rule)', () => {
+    const due = '2026-10-17T12:00:00.000Z'
+    fileCapture(item({ ai_parse: { due_at: due, has_time: true, duration_min: 45, confidence: 0.9 } }), { to: 'task', title: 'Call Omar', dueAt: due, timed: true, place: NO_PLACE })
+    expect(taskWrite()).toMatchObject({ due_at: due, duration_min: 45 })
+    const block = writes.find((w) => w.table === 'calendar_events')!.row
+    expect(block).toMatchObject({ task_id: taskWrite().id, starts_at: due, ends_at: '2026-10-17T12:45:00.000Z', type: 'task' })
+  })
+
+  it('a day-only card, or the date cleared, puts nothing on the calendar; a typed 30m still wins', () => {
+    fileCapture(item({ payload: { duration_override: 30 }, ai_parse: { due_at: '2026-10-17T06:00:00Z', has_time: false, duration_min: 90, confidence: 0.9 } }), { to: 'task', title: 'Renew', dueAt: '2026-10-17T06:00:00Z', timed: false, place: NO_PLACE })
+    expect(taskWrite().duration_min).toBe(30)
+    fileToTask(item({ ai_parse: { due_at: '2026-10-17T12:00:00Z', has_time: true, confidence: 0.9 } }), { dueAt: null, silent: true })
+    expect(writes.some((w) => w.table === 'calendar_events')).toBe(false)
+  })
+
+  it('no date passed: the AI read stands — its time blocks the calendar (morning ritual, resurfacing)', () => {
+    fileToTask(item({ ai_parse: { due_at: '2026-10-17T12:00:00Z', has_time: true, confidence: 0.9 } }), { silent: true })
+    expect(writes.find((w) => w.table === 'calendar_events')!.row).toMatchObject({ starts_at: '2026-10-17T12:00:00Z', ends_at: '2026-10-17T12:30:00.000Z' })
   })
 
   it('a cleared date files with no date — null is a choice, not "use the AI\'s"', () => {

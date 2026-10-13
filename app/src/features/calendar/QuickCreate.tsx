@@ -19,6 +19,7 @@ import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { appZone } from '../../lib/appZone'
+import { linkRef } from '../../lib/links'
 
 // ── Editor.dc.html 2a/2b — the compact popover a click on the grid opens — and 1b/1c/1d, the full
 // create page its "More options ↗" lands on (CreatePage, route /new: the sidebar folds to the rail,
@@ -213,7 +214,13 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     if (diffMinutes(newStart, endTime) <= 0) setEndTime(plus(newStart, 30))
   }
 
+  // "every week" in the title fills Repeat (P7e A5) when the typed rule changes; a pick stands till then.
+  const typedRule = useRef<string | null>(null)
   useEffect(() => {
+    if ((parsed?.recurrence ?? null) !== typedRule.current) {
+      typedRule.current = parsed?.recurrence ?? null
+      if (typedRule.current) setRepeat(typedRule.current)
+    }
     if (parsed?.dueAt && !dateTouched) applyParsedTime(new Date(parsed.dueAt))
     if (parsed?.priority != null && !priorityTouched) setPriority(parsed.priority)
     if (parsed?.projectId && !projectTouched) { setProjectId(parsed.projectId); setAreaId(null) }
@@ -245,7 +252,9 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
       const task = createTask({
         // "the title types it, the fields catch it": what the parse caught leaves the title.
         title: parsed?.title.trim() || title.trim() || 'Untitled task',
-        notes: notes.trim() || null,
+        // The title's `// notes` and link leave it (the shared parse, P7e A6/A19): they land here, not nowhere.
+        notes: notes.trim() || parsed?.notes || null,
+        ...(parsed?.url ? { externalRef: linkRef(parsed.url) } : null),
         dueAt,
         // A task is in a project OR an area (0052); both go in with the row, not as later writes.
         projectId: areaId ? null : projectId,

@@ -3,6 +3,7 @@
 
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
+import { urlIn, webUrl } from '../../lib/links'
 import { addDays, dayHint, dayShort } from '../../components/pickerMath'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { confidenceThreshold } from '../capture/aiFill'
@@ -201,4 +202,11 @@ export function dismissedAgo(iso: string): string {
  * rows, but they end up as hrefs). */
 export function githubUrl(url: unknown): string | null {
   return typeof url === 'string' && url.startsWith('https://github.com/') ? url : null
+}
+
+/** A capture's link back to where it came from (P7e A19): the capture endpoint's `url`, else the first
+ * link in its words (a share puts it there). A GitHub issue's own link is its number. */
+export function captureLink(item: Pick<InboxItem, 'kind' | 'payload' | 'raw_text'>): string | null {
+  if (item.kind === 'github_issue') return null
+  return webUrl((item.payload as { url?: unknown } | null)?.url) ?? urlIn(item.raw_text)?.url ?? null
 }

@@ -26,7 +26,7 @@ export type AiFields = Pick<Task, 'title' | 'notes' | 'due_at' | 'priority' | 'd
 
 const validIso = (s: string | null | undefined): s is string => !!s && !Number.isNaN(Date.parse(s))
 const priorityOf = (p: number | null | undefined) => (p === 1 || p === 2 || p === 3 ? p : null)
-const durationOf = (m: number | null | undefined) => (m != null && Number.isFinite(m) && m > 0 && m <= 24 * 60 ? Math.round(m) : null)
+export const durationOf = (m: number | null | undefined) => (m != null && Number.isFinite(m) && m > 0 && m <= 24 * 60 ? Math.round(m) : null)
 const textOf = (s: string | null | undefined) => s?.trim() || null
 
 /** The AI's project (with its own domain) or domain — only ids that exist, only when it's confident. */

@@ -1,0 +1,212 @@
+[
+  {
+    "name": "i1 A19 a shared page shows its link on the card",
+    "ok": true,
+    "detail": "Calm interfaces essay https://example.com/calm\nTyped · example.com ↗ · today\nTask\nFile\nDismiss"
+  },
+  {
+    "name": "i1 A19 …and an endpoint capture its url",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i2 A2 E files the timed card: due Sat 15:00, the 45 minutes it said",
+    "ok": true,
+    "detail": "[\"2026-10-17T12:00:00.000Z\",45]"
+  },
+  {
+    "name": "i2 A2 …and it is on the calendar, 15:00–15:45",
+    "ok": true,
+    "detail": "[\"2026-10-17T12:00:00.000Z\",\"2026-10-17T12:45:00.000Z\"]"
+  },
+  {
+    "name": "i2 the filing toast says where",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i3 Undo deletes the filed task (its block cascades), the capture waits again",
+    "ok": true,
+    "detail": "[\"DELETE tasks\",\"POST activity_log\",\"POST inbox_items\"]"
+  },
+  {
+    "name": "i4 A19 filing the shared page keeps its link on the task",
+    "ok": true,
+    "detail": "{\"source\":\"link\",\"id\":\"ea299e26-779d-4c18-adc0-27f31678030d\",\"url\":\"https://example.com/calm\"}"
+  },
+  {
+    "name": "i no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 A5 the bar shows the repeat",
+    "ok": true,
+    "detail": "TOMORROW · 7:00 AM | ↻ DAILY | Task | Event | ↵ | QUICK ADD | ⌘2 | EVENT"
+  },
+  {
+    "name": "b1 A5 \"every day\" sets the repeat and leaves the title; starts tomorrow 07:00 (7am has passed)",
+    "ok": true,
+    "detail": "[\"Stretch\",\"FREQ=DAILY\",\"2026-10-13T04:00:00.000Z\"]"
+  },
+  {
+    "name": "b1 A5 …its typed time blocks the calendar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 A5 \"every monday 6pm\" is weekly on Monday, from today 18:00",
+    "ok": true,
+    "detail": "[\"FREQ=WEEKLY;BYDAY=MO\",\"2026-10-12T15:00:00.000Z\"]"
+  },
+  {
+    "name": "b2 A6 a // Notes chip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 A6 // makes the rest the notes",
+    "ok": true,
+    "detail": "[\"Send the quote\",\"include the VAT line\",\"2026-10-16T09:00:00.000Z\"]"
+  },
+  {
+    "name": "b2 A6 <friday is the date and no < is left in the title",
+    "ok": true,
+    "detail": "[\"file taxes\"]"
+  },
+  {
+    "name": "b3 A10 the first Esc takes the last chip (→ Forecasting) and keeps the bar and the words",
+    "ok": true,
+    "detail": "TOMORROW · 3:00 PM | Task | Event | ↵ | QUICK ADD | ⌘2 | EVENT"
+  },
+  {
+    "name": "b3 A10 the next Esc takes the date chip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 A10 with no chip left, Esc closes the bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 A10 …and Enter then files the words as words",
+    "ok": true,
+    "detail": "[\"call Omar #forecasting\",null]"
+  },
+  {
+    "name": "b4 A11 ⌘/Ctrl+2 switches the bar to Event",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 A11 Enter makes an event there, that long — not a task",
+    "ok": true,
+    "detail": "[\"event\",\"2026-10-13T17:00:00.000Z\",\"2026-10-13T18:00:00.000Z\"]"
+  },
+  {
+    "name": "b4 A11 the toast says when",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 A11 the next bar is a Task again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 A11 the switch by click: a date with no time is all day",
+    "ok": true,
+    "detail": "[true,\"2026-10-16T00:00:00.000Z\"]"
+  },
+  {
+    "name": "b5 A19 a typed link is a chip (its site)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b5 A19 …and the task keeps it as its link",
+    "ok": true,
+    "detail": "{\"source\":\"link\",\"id\":\"994ad3ce-4016-4b8a-ba6d-2365018d9f77\",\"url\":\"https://example.com/essay\"}"
+  },
+  {
+    "name": "b6 the cheatsheet lists every …, //, <, Esc, ⌘2 and o",
+    "ok": true,
+    "detail": "Shortcuts | the quick paths through the garden | ANYWHERE | ⌘/Ctrl | K | Command bar | ⌘/Ctrl | / | Search | ⌘/Ctrl | J | Chat | n | New task | ? | This cheatsheet | Esc | Close overlay | ON A TASK | j | k | Move focus | x | Toggle select | e | Space | Complete | ↵ | Open detail | 1 | Schedule today | 2 | Schedule tomorrow | 3 | Schedule next week | t | Toggle Top 3 | p | Move to… | l | Labels… | # | Delete | o | Open link | ⇧ | N | Notebook page | ⌘/Ctrl | A | Select all | ⌥/Alt | ↑/↓ | Reorder Top 3 (Today) | With a selection, keys act on all selected. | INBOX TRIAGE | ↑/↓ | j/k | Move focus"
+  },
+  {
+    "name": "b no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 A19 o on the focused task opens its link",
+    "ok": true,
+    "detail": "[\"https://example.com/calm\"]"
+  },
+  {
+    "name": "o2 A19 the task editor shows the link (\"example.com ↗\")",
+    "ok": true,
+    "detail": "EXAMPLE.COM ↗"
+  },
+  {
+    "name": "o no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 phone day: repeat, notes chips and the Task | Event switch",
+    "ok": true,
+    "detail": "Task | Event | TODAY · 6:00 PM | EVERY WEEK ON MONDAY | // NOTES"
+  },
+  {
+    "name": "p2 phone: Event by tap makes a weekly event",
+    "ok": true,
+    "detail": "[\"FREQ=WEEKLY;BYDAY=MO\",\"2026-10-12T15:00:00.000Z\"]"
+  },
+  {
+    "name": "p day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 phone night: repeat, notes chips and the Task | Event switch",
+    "ok": true,
+    "detail": "Task | Event | TODAY · 6:00 PM | EVERY WEEK ON MONDAY | // NOTES"
+  },
+  {
+    "name": "p night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t1 A21 read at once on the tray: date on the user clock, #project, *label",
+    "ok": true,
+    "detail": "[\"2026-10-13T12:00:00.000Z\",\"b0000000-0000-4000-8000-000000000001\",[\"calls\"]]"
+  },
+  {
+    "name": "t1 A21 a typed time makes its block",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t1 A21 the toast says where",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t2 A21 a plain line goes to the Inbox and says so",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t2 A21 the AI is asked after the landing (parse-capture called, its failure loses nothing)",
+    "ok": true,
+    "detail": "[\"parse-capture\",\"parse-capture\"]"
+  },
+  {
+    "name": "t no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

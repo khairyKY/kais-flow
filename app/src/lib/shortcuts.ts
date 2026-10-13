@@ -3,7 +3,7 @@ import type { ShortcutEntry } from './pageShortcutsStore'
 // F3 (punch 12): the cheatsheet lists ONLY keys that work. Removed as fiction:
 // `g` Go-to (D-5: folded into ⌘K), the Navigate section (t/i/u — never bound),
 // the Calendar section (no keydown listener exists), Inbox's f/x rows (code binds
-// e/d), and the command bar's `//` note syntax (never parsed).
+// e/d), and the command bar's `//` note syntax (never parsed — real since P7e A6, 2026-10-13).
 // P7e A7 (2026-10-13): i and u are bound now, in the shell (AppLayout); t stays Top 3.
 /** Always-on bindings, regardless of page — rendered by the `?` cheatsheet's first section. */
 export const GLOBAL_SHORTCUTS: ShortcutEntry[] = [
@@ -59,10 +59,15 @@ export const SELECTION_NOTE = 'With a selection, keys act on all selected.'
 export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
   // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture" — the AI fills every capture after it lands).
   { keys: ['↵'], label: 'Quick add' },
+  { keys: ['⌘/Ctrl', '2'], label: 'Make it an event (⌘/Ctrl 1: a task)' },
   { keys: ['!'], label: 'Priority (! !! !!!)' },
   { keys: ['#'], label: 'Project' },
   { keys: ['*'], label: 'Label (*calls)' },
   { keys: ['30m', '1h'], label: 'Duration' },
+  { keys: ['every …'], label: 'Repeat (every week, every mon, fri)' },
+  { keys: ['//'], label: 'Notes — the rest of the line' },
+  { keys: ['<'], label: 'Date (<friday)' },
+  { keys: ['Esc'], label: 'Last token back to words (no token left: close)' },
   { keys: ['↓', '↵'], label: 'Jump to a view, project, area or label' },
 ]
 

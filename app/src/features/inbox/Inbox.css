@@ -28,6 +28,9 @@
 .ib-quiet { margin: 0; padding: var(--sp-6) 0; font-size: var(--fs-body-s); color: var(--ink-muted); }
 .ib-faint { color: var(--ink-faint); }
 .ib-meta { font-size: var(--fs-caption); color: var(--ink-muted); white-space: nowrap; }
+/* P7e A19: a capture's link back to its source, in the meta line. */
+.ib-link { color: inherit; text-decoration: underline; text-decoration-color: var(--line-control); }
+.ib-link:hover { color: var(--ink-body); }
 .ib-mono { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; }
 .ib-rule { flex: 1; height: 1px; border-bottom: 1px dashed var(--line-dashed); }
 .ib-hand { font-family: var(--font-hand); font-size: var(--fs-hand); color: var(--ink-hand, #7a745f); }

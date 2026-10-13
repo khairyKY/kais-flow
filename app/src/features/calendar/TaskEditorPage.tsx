@@ -10,7 +10,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import { MiniFocus } from '../focus/MiniFocus'
 import { useAllInboxItems } from '../inbox/api'
-import { githubUrl } from '../inbox/inboxDisplay'
+import { linkLabel, taskLink } from '../../lib/links'
 import { zoneTimeKey, zoneToIso } from './eventTime'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import { useAppZone } from '../../lib/appZone'
@@ -104,7 +104,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
   const dueTime = due ? zoneTimeKey(due, zone) : ''
   const linkedEvent = events.find((e) => e.task_id === task.id && !e.deleted_at)
   const linkedInbox = inboxItems.find((i) => i.filed_task_id === task.id)
-  const issueUrl = githubUrl(task.external_ref?.url) // a filed GitHub issue (P6 step 4)
+  const link = taskLink(task) // a filed GitHub issue (P6 step 4) or a captured page (P7e A19)
   const stage = taskCherryStage(task)
   const statusLabel = task.status === 'done' ? 'Done' : task.status === 'cancelled' ? 'Cancelled' : 'Open'
   // Children come straight from the tasks cache — no extra query needed.
@@ -153,8 +153,8 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
             <span style={{ ...PILL, background: task.status === 'done' ? 'color-mix(in srgb, var(--check-border) 30%, transparent)' : 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: task.status === 'done' ? 'var(--ink-faint)' : 'var(--acc-sage-text)' }}>{statusLabel}</span>
             {linkedInbox?.kind === 'voice' && <span style={{ ...PILL, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>via voice</span>}
-            {issueUrl && (
-              <a href={issueUrl} target="_blank" rel="noopener noreferrer" style={{ ...PILL, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', textDecoration: 'none' }}>View issue ↗</a>
+            {link && (
+              <a href={link} target="_blank" rel="noopener noreferrer" style={{ ...PILL, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', textDecoration: 'none' }}>{linkLabel(link)} ↗</a>
             )}
             <PhotoSource task={task} style={{ ...PILL, display: 'inline-flex', alignItems: 'center', gap: 6, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', background: 'none', cursor: 'pointer' }} />
             {task.priority != null && (
