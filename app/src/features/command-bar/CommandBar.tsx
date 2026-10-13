@@ -388,7 +388,7 @@ export function CommandBar() {
     <>
       {open && (
         <div
-          className="kf-scrim"
+          className="kf-scrim kf-cmd-scrim"
           style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 96 }}
           onClick={closeBar}
         >

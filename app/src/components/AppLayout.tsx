@@ -158,8 +158,8 @@ function PlanDrawer() {
         padding: '6px 11px',
         borderRadius: 6,
         textDecoration: 'none',
-        background: active ? 'var(--paper-parchment)' : 'none',
-        border: active ? '1px solid var(--line-card)' : '1px solid transparent',
+        background: active ? 'var(--frost-bg, var(--paper-parchment))' : 'none',
+        border: active ? '1px solid var(--frost-line, var(--line-card))' : '1px solid transparent',
       }}
     >
       <span style={{ width: 16, flex: 'none', display: 'flex', justifyContent: 'center' }}>{icon}</span>
@@ -238,7 +238,8 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
       // Explicit color: line glyphs stroke currentColor, and the Link sets no color of its own.
       return <span style={{ display: 'flex', opacity: active ? 1 : 0.7, color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{item.activeIcon}</span>
     if (showSpecies && item.activeImg) return <img src={item.activeImg} alt="" style={{ height: 16, opacity: active ? 1 : 0.7 }} />
-    return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})` }} />
+    // Night 1a: the dots glow in their own colour (--glow-dot is night-only; by day, no shadow).
+    return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})`, color: `var(${item.dot})`, boxShadow: 'var(--glow-dot, none)' }} />
   }
   const [fly, setFly] = useState<{ x: number; y: number } | null>(null)
   const showFly = (e: React.SyntheticEvent<HTMLElement>) => {
@@ -267,10 +268,11 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
         padding: '8px 12px',
         borderRadius: 6,
         textDecoration: 'none',
-        background: isActive ? 'var(--paper-parchment)' : 'none',
-        border: isActive ? '1px solid var(--line-card)' : '1px solid transparent',
-        boxShadow: isActive ? 'var(--shadow-crisp)' : 'none',
-        transform: isActive ? 'rotate(-0.5deg)' : 'none',
+        // Night 1a: the active row is frosted glass, untilted (the night tokens; day keeps its own).
+        background: isActive ? 'var(--frost-bg, var(--paper-parchment))' : 'none',
+        border: isActive ? '1px solid var(--frost-line, var(--line-card))' : '1px solid transparent',
+        boxShadow: isActive ? 'var(--shadow-frost, var(--shadow-crisp))' : 'none',
+        transform: isActive ? 'var(--nav-tilt, rotate(-0.5deg))' : 'none',
       }}
     >
       {isActive && (
@@ -779,7 +781,7 @@ export function AppLayout() {
         }
         .kf-side-row:hover { background: var(--paper-bone) !important; transform: translateX(3px); }
         .kf-side-row:active { transform: translateX(1px); }
-        .kf-side-row.kf-active:hover { background: var(--paper-parchment) !important; }
+        .kf-side-row.kf-active:hover { background: var(--frost-bg, var(--paper-parchment)) !important; }
         .motion-on .kf-side-row:hover .kf-nav-icon { animation: cloverSway 1.6s var(--ease-natural) infinite; transform-origin: 50% 100%; }
 
         .kf-collapse-btn {

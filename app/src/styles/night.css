@@ -24,6 +24,21 @@
   filter: var(--silhouette);
 }
 
+/* 1a: the active nav row is frosted glass with no washi tape (the frost and the glowing dots are
+   night tokens read inline in components/AppLayout.tsx). */
+:root[data-theme='night'] .kf-nav-tape {
+  display: none;
+}
+
+/* 1b: the ⌘K bar raised over a dimmed page — a dark scrim, and the page beneath at 75%. The dim
+   snaps with the scrim (filter isn't a transform/opacity animation); the panel is already frosted. */
+:root[data-theme='night'] .kf-scrim.kf-cmd-scrim {
+  background: var(--scrim-command);
+}
+:root[data-theme='night'] body:has(.kf-cmd-scrim) .app-main-content {
+  filter: var(--dim-behind);
+}
+
 /* 1c: calendar hairlines glow faintly instead of darkening; the now line glows in its own colour. */
 :root[data-theme='night'] .fc .fc-timegrid-slot-lane:not(.fc-timegrid-slot-minor) {
   position: relative;

@@ -760,7 +760,7 @@ function DesktopCalendar() {
       {stripDays === 1 ? (
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-            <img src={`/ds/assets/daisy/${daisyColumnStage(stripDelta, zoneHour(minuteNow))}.png`} alt="" style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
+            <img src={`/ds/assets/daisy/${daisyColumnStage(stripDelta, zoneHour(minuteNow))}.png`} alt="" style={{ height: 36, filter: 'var(--rim-lavender, var(--shadow-drop-sm))' }} />
             <div>
               <div className="cal-strip-kicker">{stripDelta === 0 ? `Today · ${dayName(stripStart, { weekday: 'short' })}` : dayName(stripStart, { weekday: 'long' })}</div>
               <div className="cal-strip-date">{dayName(stripStart, { month: 'short', day: 'numeric' })}</div>
@@ -998,7 +998,8 @@ function DesktopCalendar() {
           {planning ? stripHead : (
           <div className="cal-head" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
+              {/* Night 1c: the header daisy is a silhouette lit at the rim in lavender. */}
+              <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 52, filter: 'var(--rim-lavender, var(--shadow-drop-sm))' }} />
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                   {`Week ${weekNumber(rangeInfo?.start ?? new Date())} · ${daisy.note}`}

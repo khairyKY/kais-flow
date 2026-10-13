@@ -768,7 +768,8 @@ export function TasksPage() {
         <div className="kf-bulk-anchor" style={{ minWidth: 0, maxWidth: 780 }}>
         <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-            <img src={headerIcon} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
+            {/* Night 1b: the header plant is a silhouette lit at the rim in its own accent. */}
+            <img src={headerIcon} alt="" style={{ height: 56, filter: isSomeday ? 'var(--rim-clover, var(--shadow-drop-sm))' : 'var(--rim-blossom, var(--shadow-drop-sm))' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
               <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{h1}</h1>

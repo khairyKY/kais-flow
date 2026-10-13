@@ -1324,7 +1324,8 @@ function DesktopSettings() {
       <nav className="st-nav" aria-label="Settings sections">
         <div className="st-nav-in">
           <div className="st-nav-title">
-            <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 26, filter: 'var(--shadow-drop-sm)' }} />
+            {/* Night 1e: the clover is a silhouette lit at the rim. */}
+            <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 26, filter: 'var(--rim-clover, var(--shadow-drop-sm))' }} />
             <h1>Settings</h1>
           </div>
           {SUBNAV_ITEMS.map((item) => (
@@ -1380,7 +1381,7 @@ function MobileSettings() {
     // UI pass: the same cards and rows as the computer, one column.
     <div className="st-phone">
       <div className="st-phone-title">
-        <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, filter: 'var(--shadow-drop-sm)' }} />
+        <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, filter: 'var(--rim-clover, var(--shadow-drop-sm))' }} />
         <h1>Settings</h1>
       </div>
       <AppearanceCard />
