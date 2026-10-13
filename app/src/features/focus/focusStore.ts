@@ -75,6 +75,26 @@ interface FocusState {
   tick: () => void
 }
 
+// A30: a round survives a reload — the service worker's auto-update reload, a closed tab, the Windows
+// app restarting. The session is kept in localStorage on every change, with the moment it was written;
+// on load it is restored, and the shell's ticker catches a running timer up on the time it was away
+// (resumeAway). Settings keep their own key above.
+const SESSION_KEY = 'kf_focus_session'
+const MODES: readonly FocusMode[] = ['pomodoro', 'break', 'stopwatch', 'garden']
+type Session = Pick<FocusState, 'mode' | 'isRunning' | 'secondsLeft' | 'stopwatchSeconds' | 'stopwatchStartIso' | 'stopwatchStartStr' | 'currentRound' | 'breakType' | 'activeTask' | 'pomodoroStartIso'>
+
+function loadSession(): { session: Partial<Session>; savedAt: number | null } {
+  try {
+    const raw = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null') as (Session & { savedAt?: unknown }) | null
+    if (!raw || !MODES.includes(raw.mode) || typeof raw.secondsLeft !== 'number') return { session: {}, savedAt: null }
+    const { savedAt, ...session } = raw
+    return { session, savedAt: typeof savedAt === 'number' ? savedAt : null }
+  } catch {
+    return { session: {}, savedAt: null } // no storage (private mode, tests) or bad JSON: start fresh
+  }
+}
+const restored = loadSession()
+
 export const useFocusStore = create<FocusState>((set, get) => ({
   settings: loadSettings(),
   mode: 'pomodoro',
@@ -89,6 +109,7 @@ export const useFocusStore = create<FocusState>((set, get) => ({
   breakType: 'short',
   activeTask: null,
   pomodoroStartIso: null,
+  ...restored.session,
 
   saveSettings: (next) => {
     try {
@@ -195,9 +216,41 @@ export const useFocusStore = create<FocusState>((set, get) => ({
   },
 }))
 
+useFocusStore.subscribe((s) => {
+  const { mode, isRunning, secondsLeft, stopwatchSeconds, stopwatchStartIso, stopwatchStartStr, currentRound, breakType, activeTask, pomodoroStartIso } = s
+  const session: Session & { savedAt: number } = { mode, isRunning, secondsLeft, stopwatchSeconds, stopwatchStartIso, stopwatchStartStr, currentRound, breakType, activeTask, pomodoroStartIso, savedAt: Date.now() }
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  } catch {
+    /* private mode: a reload starts fresh, as before */
+  }
+})
+
+/** A running timer restored after a reload catches up on the time it was away, up to the end of its
+ * phase: a phase that ran out meanwhile ends there (a pomodoro logs its round, as tick() does), and
+ * what follows waits, paused — nobody was there to start it. A stopwatch just adds the time. */
+export function resumeAway(awayMs: number): void {
+  const s = useFocusStore.getState()
+  const n = Math.floor(awayMs / 1000)
+  if (!s.isRunning || n <= 0) return
+  if (s.mode === 'stopwatch') return useFocusStore.setState({ stopwatchSeconds: s.stopwatchSeconds + n })
+  if (n < s.secondsLeft) return useFocusStore.setState({ secondsLeft: s.secondsLeft - n })
+  useFocusStore.setState({ secondsLeft: 1 })
+  s.tick()
+  useFocusStore.setState({ isRunning: false })
+}
+
+// The restored session's age, caught up once by the first ticker mount (StrictMode mounts twice).
+let away = restored.savedAt
+
 /** Mounted once in the shell so a running session keeps ticking across route changes. */
 export function useFocusTicker(): void {
   const isRunning = useFocusStore((s) => s.isRunning)
+  useEffect(() => {
+    if (away === null) return
+    resumeAway(Date.now() - away)
+    away = null
+  }, [])
   useEffect(() => {
     if (!isRunning) return
     // A hidden window's timers are throttled (a minimized tab, the Windows app closed to its tray:
