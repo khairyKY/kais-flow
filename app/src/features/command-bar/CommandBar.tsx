@@ -424,7 +424,7 @@ export function CommandBar() {
                 }}
               >
                 <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>Jump</span>
-                <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>
+                <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)' }}>
                   <EmojiText text={jumpView.label} />
                   {jumpView.kind && <span style={{ color: 'var(--ink-faint)' }}> · {jumpView.kind}</span>}
                 </span>
