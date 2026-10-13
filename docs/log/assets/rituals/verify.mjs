@@ -361,7 +361,11 @@ if (want('6c')) {
   const blocks = (state.rows.calendar_events ?? []).filter((e) => e.task_id && !e.id.startsWith('e0'))
   check('Start the day: the timed picks go on the calendar as suggested (2 blocks, Cairo 10:30 / 12:30), untouched', blocks.length === 2 && blocks.some((b) => b.task_id === id(AUDIT) && b.starts_at === iso('10:30') && b.ends_at === iso('12:30')) && blocks.some((b) => b.task_id === id(TYRE) && b.starts_at === iso('12:30')), JSON.stringify(blocks.map((b) => b.starts_at)))
   check('Start the day: the "No time" pick stays unscheduled', !blocks.some((b) => b.task_id === id(PLANTS)), JSON.stringify(blocks.map((b) => b.task_id)))
-  check('Start the day: ritual.finished (morning) logged; the sheet is gone', state.writes.some((w) => w.row.event_type === 'ritual.finished' && w.row.payload?.ritual === 'morning') && (await page.locator('.rt').count()) === 0)
+  // Notebook page (2026-10-12): Start the day ends on the success moment — Done, or the Notebook page.
+  check('Start the day: ritual.finished (morning) logged; the success moment says "The day has a shape."', state.writes.some((w) => w.row.event_type === 'ritual.finished' && w.row.payload?.ritual === 'morning') && (await page.getByText('The day has a shape.').count()) === 1 && (await page.getByRole('button', { name: 'Write it in your notebook' }).count()) === 1)
+  await tap(cdp, page.getByRole('button', { name: 'Done', exact: true }))
+  for (let i = 0; i < 20 && (await page.locator('.rt').count()) > 0; i++) await sleep(150)
+  check('Start the day: Done closes the sheet', (await page.locator('.rt').count()) === 0)
   check('Start the day: Today no longer offers Plan', (await page.locator('.tp-ritual').count()) === 0 || !(await text(page.locator('.tp-ritual'))).includes('Plan my day'), await text(page.locator('.tp-ritual')))
   // plan-replan (0055): the goal is synced on the rows (top3_rank, 1 = goal), no longer this device's localStorage.
   const ranks = Object.fromEntries((state.rows.tasks ?? []).filter((t) => t.top3).map((t) => [t.id, t.top3_rank]))
@@ -558,7 +562,9 @@ for (const theme of ['day', 'night']) {
   await page.keyboard.press('Escape')
   await sleep(400)
   check(`${name} a second Esc closes the panel`, (await page.locator('.rt-desk').count()) === 0)
-  await page.locator('[data-day-card]').getByRole('button', { name: 'Begin' }).click()
+  // The plan's draft is kept, so the Day card offers Resume (DayCard: resume ? 'Resume' : 'Begin').
+  check(`${name} the Day card now says Resume`, (await page.locator('[data-day-card]').getByRole('button', { name: 'Resume' }).count()) === 1)
+  await page.locator('[data-day-card]').getByRole('button', { name: 'Resume' }).click()
   await sleep(500)
   check(`${name} …and the searched pick is kept`, (await row(page, LICENCE).locator('.kf-star[aria-pressed="true"]').count()) === 1)
   check(`${name} no page errors`, errors.length === 0, errors.join(' | '))

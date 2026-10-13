@@ -96,11 +96,11 @@ const bodyText = (page) => page.evaluate(() => document.body.textContent ?? '')
 const written = (state, table) => state.writes.filter((w) => w.table === table && w.method === 'POST').flatMap((w) => [w.body].flat())
 
 // ── 1. Desktop Settings: no fake Google sync, no Pushover, GitHub truthful, reminders write ──
-for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expired — reconnect'], ['ok', 'Connected · synced 3 Oct, 11:37'], ['fresh', 'Connected · not synced yet']]) {
-  const { ctx, page, errors } = await open('desktop', '/settings', { integrations: state ? [GH[state]] : [] })
-  const summary = page.locator('div', { hasText: 'Issues assigned to you land in the Inbox' }).last() // UI pass: the GitHub row's help line
+// Retired 2026-10-13 (p7e audit A32): the GitHub row's states — Settings 2a's GitHub rules panel replaced
+// that row; docs/log/assets/github-rules owns them. The no-fake-sync / no-Pushover truth stays here.
+for (const state of [null]) {
+  const { ctx, page, errors } = await open('desktop', '/settings', { integrations: [] })
   const txt = await bodyText(page)
-  check(`desktop settings [github ${state ?? 'none'}]: the summary row says "${expect}"`, txt.includes(expect), (await summary.textContent())?.slice(0, 80))
   if (!state) {
     check('desktop settings: no "Sync now" button (Google Calendar has no sync yet)', (await page.getByRole('button', { name: 'Sync now' }).count()) === 0)
     check('desktop settings: Google Calendar is an honest "Coming soon" row', txt.includes('Google Calendar') && txt.includes('Coming soon') && !txt.includes('scopes: calendar.events'))
@@ -110,8 +110,6 @@ for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expir
     await shot(page, 'desktop-settings')
     await page.locator('#settings-Notifications').screenshot({ path: path.join(OUT, 'desktop-ritual-reminders.png') })
   }
-  // The summary card: the GitHub row's label span → its row → the card.
-  if (state) await page.getByText('GitHub · issues → inbox').locator('xpath=../..').screenshot({ path: path.join(OUT, `desktop-summary-github-${state}.png`) }).catch(() => {})
   check(`desktop settings [github ${state ?? 'none'}]: no page errors`, errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
@@ -159,7 +157,6 @@ for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expir
   // UI pass (v1.0.27): the phone's summary rows are gone; the Integrations card says it directly.
   void row
   check('phone settings: Google Calendar, if shown, only says "Coming soon"', !txt.includes('Google Calendar') || txt.includes('Coming soon'))
-  check('phone settings: GitHub says the token expired', txt.includes('Token expired — reconnect'))
   check('phone settings: no Pushover, no fake sync', !txt.includes('Pushover') && !txt.includes('Sync now'))
   const swRow = (label) => page.locator('div', { has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last().locator('[role="switch"]')
   const sw = { count: async () => (await swRow('Morning digest').count()) + (await swRow('Evening nudge').count()), nth: (i) => swRow(i === 0 ? 'Morning digest' : 'Evening nudge') }
@@ -176,6 +173,9 @@ for (const [state, expect] of [[null, 'Not connected'], ['failing', 'Token expir
 }
 
 // ── 3. Inbox: GitHub rows, and filing one ──
+// Retired 2026-10-13 (p7e audit A32): Inbox t3 redrew the rows (no glyph, no File button); fix-inbox and
+// github-rules own GitHub rows, filing and external_ref now. CLEANUP_LEGACY=1 runs the old steps.
+if (process.env.CLEANUP_LEGACY)
 for (const view of ['desktop', 'phone']) {
   const { ctx, page, state, errors } = await open(view, '/inbox', { inbox_items: ISSUES })
   const row = page.locator(`[id="inbox-${ISSUES[0].id}"]`)
@@ -203,6 +203,8 @@ for (const view of ['desktop', 'phone']) {
 }
 
 // ── 4. The filed task links back to the issue ──
+// Retired 2026-10-13 with section 3 (it files through the old row). CLEANUP_LEGACY=1 runs it.
+if (process.env.CLEANUP_LEGACY)
 {
   const { ctx, page, errors } = await open('desktop', `/tasks/${TASK_ID}`, { tasks: [TASK] })
   const link = page.getByRole('link', { name: 'View issue ↗' })
@@ -211,6 +213,7 @@ for (const view of ['desktop', 'phone']) {
   check('desktop task editor: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
+if (process.env.CLEANUP_LEGACY)
 {
   const { ctx, page, errors } = await open('phone', `/tasks?task=${TASK_ID}`, { tasks: [TASK] })
   const link = page.locator('a.ts-next', { hasText: 'View issue' })
@@ -219,6 +222,7 @@ for (const view of ['desktop', 'phone']) {
   check('phone task sheet: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
+if (process.env.CLEANUP_LEGACY)
 {
   // A task without a GitHub ref shows no link.
   const { ctx, page } = await open('desktop', `/tasks/${TASK_ID}`, { tasks: [{ ...TASK, external_ref: null }] })

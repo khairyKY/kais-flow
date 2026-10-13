@@ -36,6 +36,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
     expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'link', 'more', 'delete'])
     expect(spec.find((r) => r.key === 'project')).toMatchObject({ label: 'No project', unset: true })
     expect(spec.find((r) => r.key === 'repeat')).toMatchObject({ label: 'Does not repeat', unset: true, sub: true })
+    expect(spec.at(-1)).toMatchObject({ key: 'delete', hint: '⌫' }) // p7e A4: Backspace deletes it
   })
 
   it('a repeating block: no Link a task, and Delete asks This event / All events', () => {
@@ -43,6 +44,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
     expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'more', 'delete'])
     expect(spec.find((r) => r.key === 'repeat')?.label).toBe('Repeats weekly')
     expect(spec.at(-1)).toMatchObject({ key: 'delete', sub: true })
+    expect(spec.at(-1)?.hint).toBeUndefined() // ⌫ never deletes a whole series
     expect(blockMenuSpec(block({ id: 'b1::x', seriesId: 'b1', recurrence_rule: 'FREQ=DAILY' })).at(-1)?.sub).toBe(true)
   })
 

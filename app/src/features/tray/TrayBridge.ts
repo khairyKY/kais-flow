@@ -1,4 +1,4 @@
-import { createElement, useEffect, useRef, useState } from 'react'
+import { Fragment, createElement, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { create } from 'zustand'
 import { deliver, focusDoneNotice, inQuietHours, isPaused, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
@@ -14,6 +14,7 @@ import { useMinuteNow } from '../today/useMinuteNow'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { useProjects } from '../projects/api'
 import { useInteractions, usePeople } from '../people/api'
+import { useRitualFinishedRows } from '../rituals/api'
 import { installNotificationActions } from '../notifications/actions'
 import { lookingHere, showLocal, tellSyncProblem } from '../notifications/local'
 import { NO_INCIDENT, syncIncidentStep } from '../notifications/syncIncident'
@@ -22,7 +23,7 @@ import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
 import { focusMenuLabel, focusTarget, pauseMenuLabel, trayIconState } from './trayState'
-import type { AppSettings, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
+import type { ActivityLogEntry, AppSettings, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // The app's half of the tray and of local notifications, mounted once in the main window's shell
 // (AppLayout). Everywhere: notification buttons land here (actions.ts), a finished focus round
@@ -58,6 +59,7 @@ function planFor(from: Date, to: Date, now: Date): Planned[] | null {
     completions: queryClient.getQueryData<RoutineCompletion[]>(['routine_completions']),
     people: queryClient.getQueryData<Person[]>(['people']),
     interactions: queryClient.getQueryData<Interaction[]>(['interactions']),
+    finished: queryClient.getQueryData<ActivityLogEntry[]>(['activity_log', 'ritual_finished']), // Shut down quiets that evening's nudge
     prefs: prefs(),
     from,
     to,
@@ -147,6 +149,13 @@ function PeopleForBirthdays(): null {
   return null
 }
 
+/** The planner's evening nudge stays quiet once Shut down is done (A29): it reads the `ritual.finished`
+ * rows from the cache, so they're loaded whatever page is open. */
+function ShutDownForNudge(): null {
+  useRitualFinishedRows()
+  return null
+}
+
 /** Rendered once in the main window's shell. A component of its own, so the timer's every-second
  * tick re-renders only this, never the shell. */
 export function TrayBridge() {
@@ -198,7 +207,8 @@ export function TrayBridge() {
     }
     const watched = new Set(['tasks', 'projects', 'app_settings', 'routines', 'routine_completions', 'people', 'interactions'])
     const offCache = queryClient.getQueryCache().subscribe((e) => {
-      if (e.type === 'updated' && watched.has(String(e.query.queryKey[0]))) soon()
+      const [table, sub] = e.query.queryKey
+      if (e.type === 'updated' && (watched.has(String(table)) || (table === 'activity_log' && sub === 'ritual_finished'))) soon()
     })
     const offFocus = useFocusStore.subscribe((s, prev) => {
       if (s.isRunning !== prev.isRunning || s.mode !== prev.mode) soon()
@@ -244,5 +254,6 @@ export function TrayBridge() {
   useEffect(() => {
     if (tauri) void native('tray_set', { state, dark, focusLabel, pauseLabel })
   }, [tauri, state, dark, focusLabel, pauseLabel])
-  return (tauri || android) && settings?.birthday_on ? createElement(PeopleForBirthdays) : null
+  if (!tauri && !android) return null
+  return createElement(Fragment, null, createElement(ShutDownForNudge), settings?.birthday_on ? createElement(PeopleForBirthdays) : null)
 }

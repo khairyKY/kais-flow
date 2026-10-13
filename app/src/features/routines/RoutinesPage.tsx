@@ -259,7 +259,8 @@ export function RoutinesPage() {
     .filter((g) => g.items.length > 0)
     .map((g) => ({ ...g, tally: todayTally(g.items, completions) }))
 
-  const activeChallenge = active.find((r) => r.challenge_start && r.challenge_end && todayKey >= r.challenge_start && todayKey <= r.challenge_end)
+  // Every challenge running today gets its card (A30) — only the first one used to.
+  const activeChallenges = active.filter((r) => r.challenge_start && r.challenge_end && todayKey >= r.challenge_start && todayKey <= r.challenge_end)
 
   const heroCaption = remaining === 0 ? (active.length > 0 ? 'all tended for today ✿' : 'plant your first routine ✿') : remaining === 1 ? 'one left before the day\'s done' : `${remaining} left before the day's done`
 
@@ -270,11 +271,16 @@ export function RoutinesPage() {
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>
         <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
       </div>
-      {activeChallenge && <ChallengeCard routine={activeChallenge} completions={completions} />}
+      {activeChallenges.length > 0 && (
+        // the gap clears each card's tape strip (it rides 9px above the card)
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+          {activeChallenges.map((r) => <ChallengeCard key={r.id} routine={r} completions={completions} />)}
+        </div>
+      )}
       <button
         type="button"
         onClick={() => setFormOpen({ challenge: true })}
-        style={{ marginTop: activeChallenge ? 12 : 0, minHeight: isMobile ? 44 : undefined, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+        style={{ marginTop: activeChallenges.length ? 12 : 0, minHeight: isMobile ? 44 : undefined, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
       >
         ＋ Start a challenge
       </button>
@@ -319,7 +325,7 @@ export function RoutinesPage() {
             <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--rim-moss-sm, var(--shadow-drop-sm))' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
-              <h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 26 : 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>Daily rituals</h1>
+              <h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>Daily rituals</h1>
             </div>
           </div>
           {!isMobile && (

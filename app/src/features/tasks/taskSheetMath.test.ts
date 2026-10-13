@@ -69,13 +69,18 @@ describe('chips', () => {
 
 describe('nextDates — what "Done for today" spawns, and the one after', () => {
   it('every weekday from Fri 25 Sep 15:00 skips the weekend', () => {
-    expect(nextDates('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', iso('15:00', 25))).toBe('Next · Mon 28 Sep 15:00 · then Tue 29')
+    expect(nextDates('FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR', iso('15:00', 25), at('10:00', 25))).toBe('Next · Mon 28 Sep 15:00 · then Tue 29')
   })
   it('crossing a month shows the month on the second date', () => {
-    expect(nextDates('FREQ=DAILY', iso('09:00', 29))).toBe('Next · Wed 30 Sep 09:00 · then Thu 1 Oct')
+    expect(nextDates('FREQ=DAILY', iso('09:00', 29), at('08:00', 29))).toBe('Next · Wed 30 Sep 09:00 · then Thu 1 Oct')
   })
   it('a finished series has nothing next', () => {
-    expect(nextDates('FREQ=DAILY;COUNT=1', iso('09:00'))).toBeNull()
+    expect(nextDates('FREQ=DAILY;COUNT=1', iso('09:00'), at('08:00'))).toBeNull()
+    expect(nextDates('FREQ=DAILY;COUNT=2', iso('09:00'), at('08:00'))).toBe('Next · Mon 28 Sep 09:00')
+  })
+  it('an overdue repeat previews from today, never a past date (p7e A13)', () => {
+    // due Mon 21 Sep, still open on Sun 27: done today, the copy is tomorrow
+    expect(nextDates('FREQ=DAILY', iso('09:00', 21), at('12:00'))).toBe('Next · Mon 28 Sep 09:00 · then Tue 29')
   })
 })
 

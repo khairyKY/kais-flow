@@ -65,10 +65,11 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
 
   const draftKey = routine?.id ?? (initialChallenge ? 'new-challenge' : 'new')
   const [initial] = useState<RoutineFormState>(() =>
-    routine ? routineToForm(routine) : { ...NEW_ROUTINE_DEFAULTS, name: '', steps: [], domainId: '', isChallenge: initialChallenge, challengeDays: 30, plant: 'vine' },
+    routine ? routineToForm(routine) : { ...NEW_ROUTINE_DEFAULTS, name: '', description: '', steps: [], domainId: '', isChallenge: initialChallenge, challengeDays: 30, plant: 'vine' },
   )
   const [start] = useState<RoutineFormState>(() => (parked?.key === draftKey ? parked.form : initial))
   const [name, setName] = useState(start.name)
+  const [description, setDescription] = useState(start.description)
   const [steps, setSteps] = useState<StepDraft[]>(start.steps)
   const [plant, setPlant] = useState<RoutinePlant>(start.plant)
   const [domainId, setDomainId] = useState(start.domainId)
@@ -80,7 +81,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
   const [reminderTime, setReminderTime] = useState(start.reminderTime)
   const [isChallenge, setIsChallenge] = useState(start.isChallenge)
   const [challengeDays, setChallengeDays] = useState(start.challengeDays)
-  const form: RoutineFormState = { name, timeMode, repeatMode, customWeekdays, reminderOn, reminderTime, steps, domainId, isChallenge, challengeDays, plant }
+  const form: RoutineFormState = { name, description, timeMode, repeatMode, customWeekdays, reminderOn, reminderTime, steps, domainId, isChallenge, challengeDays, plant }
   const dirty = formChanged(form, initial)
 
   // Park the draft when the phone sheet is dismissed (not saved or cancelled) with changes in it.
@@ -119,13 +120,14 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
     const days = challengeDays
     const { steps: stepList, step_minutes: stepMinutes } = writeSteps(steps)
     const domain = domainId || null
+    const about = description.trim() || null
 
     if (isChallenge && days > 0) {
       const start = localDateKey(new Date())
-      createChallenge(trimmed, timeOfDay, cadence, start, addDays(start, days - 1), clockTime, stepList, domain, plant, stepMinutes)
+      createChallenge(trimmed, timeOfDay, cadence, start, addDays(start, days - 1), clockTime, stepList, domain, plant, stepMinutes, about)
       useToastStore.getState().push({ message: 'New challenge registered in the soil.' })
     } else {
-      createRoutine(trimmed, timeOfDay, cadence, clockTime, stepList, domain, plant, stepMinutes)
+      createRoutine(trimmed, timeOfDay, cadence, clockTime, stepList, domain, plant, stepMinutes, about)
       useToastStore.getState().push({ message: 'New routine planted ✿' })
     }
     finish()
@@ -192,6 +194,20 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
             style={{ flex: 1, font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
           />
         </div>
+      </div>
+
+      {/* P7 7d (issue #80): the full form's Description — design/New Routine.dc.html's field and words;
+          the current export doesn't draw it, so it takes the Name field's look. Optional. */}
+      <div style={{ marginTop: 16 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Description</div>
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          aria-label="Description"
+          rows={2}
+          placeholder="Optional — context, what counts, why you're tracking it…"
+          style={{ display: 'block', width: '100%', boxSizing: 'border-box', resize: 'vertical', font: 'inherit', fontSize: 'var(--fs-body-s)', lineHeight: 1.5, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '10px 13px', outline: 'none' }}
+        />
       </div>
 
       <div style={{ marginTop: 16 }}>

@@ -8,7 +8,7 @@ import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../
 import { toastAction, toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
 import { playCompletion } from '../../lib/sounds'
-import { nextDue, nextReminderAt } from './recurrence'
+import { nextDue, nextReminderAt, ruleAfterThis } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
 import { TASK_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
@@ -62,6 +62,8 @@ export interface CreateTaskInput {
   externalRef?: Task['external_ref']
   /** Parked from the start (Inbox "Someday" files a capture this way, undated). */
   someday?: boolean
+  /** A repeat typed with the capture ("every week", P7e A5) — its due date is the series' first day. */
+  recurrenceRule?: string | null
 }
 
 export function createTask(input: CreateTaskInput): Task {
@@ -81,7 +83,7 @@ export function createTask(input: CreateTaskInput): Task {
     scheduled_end: null,
     top3: false,
     snoozed_until: null,
-    recurrence_rule: null,
+    recurrence_rule: input.recurrenceRule ?? null,
     labels: input.labels ?? [],
     priority: input.priority ?? null,
     duration_min: input.durationMin ?? null,
@@ -579,7 +581,8 @@ export function skipNextOccurrence(passed: Task): void {
     if (next) {
       // Polish F2a: the reminder moves with the occurrence (same lead, not yet sent) — left
       // behind, it pointed at the skipped time and never fired for the new one.
-      writeRow('tasks', { ...task, due_at: next.toISOString(), reminder_at: nextReminderAt(task.reminder_at, task.due_at, next), reminder_sent: false })
+      // A skip uses up one of "N times" too (p7e A13); nextDue is null on the last one.
+      writeRow('tasks', { ...task, due_at: next.toISOString(), recurrence_rule: ruleAfterThis(task.recurrence_rule), reminder_at: nextReminderAt(task.reminder_at, task.due_at, next), reminder_sent: false })
       logActivity('task.skipped', 'task', task.id, { next_due_at: next.toISOString() })
     }
   }

@@ -4,7 +4,7 @@
 //
 // pg_cron calls notify every TICK_MIN minutes with `scheduled: true` (migration 0045); a user's
 // reminder is due on the first tick at or after their time, i.e. when it falls in (tick - 15, tick].
-import { DEFAULT_ZONE, dayWindow } from '../_shared/zone.ts'
+import { DEFAULT_ZONE, dayWindow, loopDay } from '../_shared/zone.ts'
 
 export type RitualKind = 'morning_digest' | 'evening_nudge'
 
@@ -58,4 +58,16 @@ export function ritualDue(kind: RitualKind, s: RitualSettings | null | undefined
   const at = minutesOf(s?.[`${kind}_at` as const]) ?? DEFAULT_AT[kind]
   const since = (wallMinutes(now, zone) - at + 1440) % 1440 // minutes past the time, across midnight
   return since < TICK_MIN
+}
+
+/** A29: was Shut down walked on the loop day `at` belongs to? `finished` = the user's `ritual.finished`
+ * activity rows, which the app writes as { ritual, date: the loop day } (app rituals/loopDay.ts
+ * finishedPayload; the day turns over at 04:00 — _shared/zone.ts loopDay). The evening nudge stays
+ * quiet once it was: notify and the Windows/Android planner (app notifications/plan.ts) both ask this. */
+export function shutDownOn(finished: readonly { payload: unknown }[], at: Date, zone: string = RITUAL_ZONE): boolean {
+  const day = loopDay(at, zone)
+  return finished.some((r) => {
+    const p = r.payload as { ritual?: unknown; date?: unknown } | null
+    return p?.ritual === 'evening' && p.date === day
+  })
 }

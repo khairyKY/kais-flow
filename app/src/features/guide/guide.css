@@ -176,8 +176,8 @@
   /* The page draws its own top bar, as Today does — the shell's sync strip steps aside. */
   .app-shell:has(.gd) .app-topbar { display: none !important; }
   .gd-head { display: block; }
-  .gd-h1 { margin: 0; font-size: 26px; }
-  .gd-h1.is-article { margin-top: 2px; font-size: 32px; }
+  .gd-h1 { margin: 0; }
+  .gd-h1.is-article { margin-top: 2px; }
   .gd-hand { font-size: 20px; }
   .gd-search { width: 100%; height: 48px; margin-top: 16px; padding-inline: 16px; }
   .gd-top { display: block; margin-top: 22px; }

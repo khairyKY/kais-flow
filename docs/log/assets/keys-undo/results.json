@@ -1,0 +1,302 @@
+[
+  {
+    "name": "u0 Today tab lists the tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u1a e completes the focused task (Done toast)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u1b the completion was written",
+    "ok": true,
+    "detail": "\"done\""
+  },
+  {
+    "name": "u1c Ctrl+Z ran the toast's Undo (task todo again)",
+    "ok": true,
+    "detail": "\"todo\""
+  },
+  {
+    "name": "u1d the undone toast left the stack",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u2a Ctrl+Z inside a field undoes the typing",
+    "ok": true,
+    "detail": "\"ab\""
+  },
+  {
+    "name": "u2b …and leaves the toast's action alone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u3 with the command bar open, Ctrl+Z does nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u4 bar closed: Ctrl+Z undoes the second completion",
+    "ok": true,
+    "detail": "\"todo\" · toast alive 1 · active BODY#"
+  },
+  {
+    "name": "u5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k1 i → Inbox",
+    "ok": true,
+    "detail": "/inbox"
+  },
+  {
+    "name": "k2a u → Upcoming",
+    "ok": true,
+    "detail": "/tasks?list=upcoming"
+  },
+  {
+    "name": "k2b the Upcoming tab is the active one",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k3a bare / opens Search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k3b …focused and empty (the / is not typed)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k4 Ctrl+, → Settings",
+    "ok": true,
+    "detail": "/settings"
+  },
+  {
+    "name": "k5a Arabic layout: the I key (ه) → Inbox",
+    "ok": true,
+    "detail": "/inbox"
+  },
+  {
+    "name": "k5b Arabic layout: the U key (ع) → Upcoming",
+    "ok": true,
+    "detail": "/tasks?list=upcoming"
+  },
+  {
+    "name": "k5c Arabic layout: the / key (ظ) → Search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k5d Arabic layout: Ctrl + the , key (و) → Settings",
+    "ok": true,
+    "detail": "/settings"
+  },
+  {
+    "name": "k6 typing i u / in a field stays in the field",
+    "ok": true,
+    "detail": "/tasks?list=today iu/"
+  },
+  {
+    "name": "k7 the command bar open: i u type into it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k7b …even with its field blurred, i does not leave",
+    "ok": true,
+    "detail": "/tasks?list=today"
+  },
+  {
+    "name": "k8 a menu open: i does not navigate",
+    "ok": true,
+    "detail": "true /tasks?list=today"
+  },
+  {
+    "name": "k9 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d0 the inbox lists the captures",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1a Space files it as done (toast)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1b a task was written, done, in its card's project",
+    "ok": true,
+    "detail": "{\"status\":\"done\",\"project\":\"b0000000-0000-4000-8000-000000000001\"}"
+  },
+  {
+    "name": "d1c the capture is filed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1d the card left the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1e Ctrl+Z: the task is deleted and the capture is back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1f …and its card returns",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2a p opens the card's date picker",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2b the compact card opened full (its Due date field shows)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2c d inside the picker does not dismiss the card behind it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2d picking Tomorrow closes it and the card says so",
+    "ok": true,
+    "detail": "Tomorrow\n▾"
+  },
+  {
+    "name": "d2e focus is back on the card",
+    "ok": true,
+    "detail": "inbox-a1000000-0000-4000-8000-000000000003"
+  },
+  {
+    "name": "d2f e then files it on the planned day (Tue 13 Oct)",
+    "ok": true,
+    "detail": "2026-10-13T06:00:00.000Z"
+  },
+  {
+    "name": "d3a p on a note card opens the date picker",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3b …and the card now files as a Task",
+    "ok": true,
+    "detail": "Task\n▾"
+  },
+  {
+    "name": "d4a Space on a selection files every one as done",
+    "ok": true,
+    "detail": "selected 3"
+  },
+  {
+    "name": "d4b …all written done",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "d4c one Ctrl+Z brings them all back",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "d5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "j1a \"fore\" offers Forecasting App · Project",
+    "ok": true,
+    "detail": "JUMP Forecasting App · Project ↓ then ↵"
+  },
+  {
+    "name": "j1b ↓ ↵ opens the project",
+    "ok": true,
+    "detail": "/projects/b0000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "j2a \"heal\" offers Health · Area",
+    "ok": true,
+    "detail": "JUMP Health · Area ↓ then ↵"
+  },
+  {
+    "name": "j2b ↓ ↵ opens the area",
+    "ok": true,
+    "detail": "/projects/c0000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "j3a \"gard\" offers garden · Label",
+    "ok": true,
+    "detail": "JUMP garden · Label ↓ then ↵"
+  },
+  {
+    "name": "j3b ↓ ↵ lands on All tasks with the label filter on (from Tasks itself)",
+    "ok": true,
+    "detail": "/tasks?list=all"
+  },
+  {
+    "name": "j3c the Label filter reads garden",
+    "ok": true,
+    "detail": "LABEL · GARDEN\n▾"
+  },
+  {
+    "name": "j3d only the garden tasks show",
+    "ok": true,
+    "detail": "Water the ferns | Plant the basil"
+  },
+  {
+    "name": "j4 views still jump (\"inbox\")",
+    "ok": true,
+    "detail": "/inbox"
+  },
+  {
+    "name": "j5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 the cheatsheet lists the real keys",
+    "ok": true,
+    "detail": "all present"
+  },
+  {
+    "name": "c2 nothing fictional came back (no Calendar section yet, no g Go-to)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c4 ↵ on a desktop GitHub row opens the issue",
+    "ok": true,
+    "detail": "focused true · https://github.com/Shaheen/website/issues/482"
+  },
+  {
+    "name": "c5 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

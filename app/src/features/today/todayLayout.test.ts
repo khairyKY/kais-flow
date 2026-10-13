@@ -193,17 +193,37 @@ describe('reviewDue — the weekly review on the first day of the weekend', () =
     expect(reviewDue(at('09:00'), [0], [])).toBe(true)
     expect(reviewDue(fri, [0, 6], [])).toBe(false)
   })
+  // Fri + Sat: the review week runs Sun 20 – Sat 26 Sep (rituals/reviewWeek); the Weekly review keys
+  // each close/reopen row with its week. A row from before that key counts for the week it was written in.
+  const ev = (event_type: string, iso: string, week?: string) => ({ event_type, created_at: iso, payload: week ? { week } : {} })
+  const closed = (iso: string, week?: string) => ev('review.week_closed', iso, week)
   it("hidden once this week's review is closed (that day or earlier in the week), back next week", () => {
-    expect(reviewDue(fri, [5, 6], [new Date(Date.UTC(2026, 8, 25, 6)).toISOString()])).toBe(false)
-    expect(reviewDue(fri, [5, 6], [new Date(Date.UTC(2026, 8, 23, 18)).toISOString()])).toBe(false)
-    expect(reviewDue(fri, [5, 6], [new Date(Date.UTC(2026, 8, 18, 18)).toISOString()])).toBe(true)
+    expect(reviewDue(fri, [5, 6], [closed('2026-09-25T06:00:00Z', '2026-09-20')])).toBe(false)
+    expect(reviewDue(fri, [5, 6], [closed('2026-09-23T18:00:00Z', '2026-09-20')])).toBe(false)
+    expect(reviewDue(fri, [5, 6], [closed('2026-09-23T18:00:00Z')])).toBe(false) // no week on the row: the one it was written in
+    expect(reviewDue(fri, [5, 6], [closed('2026-09-18T18:00:00Z', '2026-09-13')])).toBe(true)
+  })
+  it('Undo on "Close the week" brings the prompt back; the latest of close / reopen wins (A29)', () => {
+    const c = closed('2026-09-25T06:00:00Z', '2026-09-20')
+    const undo = ev('review.week_reopened', '2026-09-25T06:00:04Z', '2026-09-20')
+    expect(reviewDue(fri, [5, 6], [c, undo])).toBe(true)
+    expect(reviewDue(fri, [5, 6], [c, undo, closed('2026-09-25T06:30:00Z', '2026-09-20')])).toBe(false)
+  })
+  it("a late close — last week's, made on Saturday or at 00:30 Sunday — never hides this Friday's (A29)", () => {
+    // Before: any close in the last seven days hid it, and Saturday 19th is six days before Friday 25th.
+    expect(reviewDue(fri, [5, 6], [closed('2026-09-19T10:00:00Z', '2026-09-13')])).toBe(true)
+    expect(reviewDue(fri, [5, 6], [closed('2026-09-19T10:00:00Z')])).toBe(true) // Sat 13:00, no week on the row
+    expect(reviewDue(fri, [5, 6], [closed('2026-09-19T21:30:00Z')])).toBe(true) // Sun 00:30 = still Saturday's loop day
   })
   it('no weekend (or all seven days) → no review day', () => {
     expect(reviewDue(fri, [], [])).toBe(false)
     expect(reviewDue(fri, [0, 1, 2, 3, 4, 5, 6], [])).toBe(false)
   })
-  it("the day is the user's: 23:30 UTC Thursday is Friday in Cairo", () => {
-    expect(reviewDue(new Date(Date.UTC(2026, 8, 24, 21, 30)), [5, 6], [])).toBe(true)
+  it("the day is the user's loop day (04:00 rollover, Cairo here): Friday from 04:00 to 04:00 Saturday", () => {
+    expect(reviewDue(new Date('2026-09-25T01:00:00Z'), [5, 6], [])).toBe(true) // Fri 04:00 Cairo
+    expect(reviewDue(new Date('2026-09-24T21:30:00Z'), [5, 6], [])).toBe(false) // Fri 00:30 — still Thursday's loop day
+    expect(reviewDue(new Date('2026-09-25T21:30:00Z'), [5, 6], [])).toBe(true) // Sat 00:30 — still Friday's
+    expect(reviewDue(new Date('2026-09-26T01:00:00Z'), [5, 6], [])).toBe(false) // Sat 04:00
   })
 })
 

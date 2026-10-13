@@ -55,8 +55,8 @@ describe('what the tray starts focus on', () => {
 describe('the Windows app reminder sweep', () => {
   const now = new Date('2026-10-03T06:40:00Z')
   const r = (id: string, at: string | null, o = {}) => ({ id, status: 'todo', reminder_at: at, deleted_at: null, ...o })
-  it('takes what came due since the last look, open and not trashed', () => {
-    const tasks = [r('due', '2026-10-03T06:39:30Z'), r('old', '2026-10-03T06:29:00Z'), r('later', '2026-10-03T06:41:00Z'), r('done', '2026-10-03T06:39:00Z', { status: 'done' }), r('trash', '2026-10-03T06:39:00Z', { deleted_at: 'x' }), r('none', null)]
+  it('takes what came due since the last look, open, not trashed and not paused', () => {
+    const tasks = [r('due', '2026-10-03T06:39:30Z'), r('paused', '2026-10-03T06:39:20Z', { paused: true }), r('old', '2026-10-03T06:29:00Z'), r('later', '2026-10-03T06:41:00Z'), r('done', '2026-10-03T06:39:00Z', { status: 'done' }), r('trash', '2026-10-03T06:39:00Z', { deleted_at: 'x' }), r('none', null)]
     expect(dueReminders(tasks, new Date(now.getTime() - 10 * 60_000), now).map((t) => t.id)).toEqual(['due'])
     expect(dueReminders(tasks, new Date(now.getTime() - 15 * 60_000), now).map((t) => t.id)).toEqual(['due', 'old'])
   })

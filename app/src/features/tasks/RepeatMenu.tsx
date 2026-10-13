@@ -9,8 +9,8 @@ import { buildRule, nthLabel, parseRule, repeatStart, WEEKDAY_NAMES, WEEKDAYS, t
 import { repeatLabel } from './taskSheetMath'
 
 // ── The Repeat picker, for anything that repeats (a task's ⋯ menu, the task sheet and popover chips,
-// the editor's field; calendar events can take it as is): the four presets and Custom…, which opens
-// a small rule editor — every N days / weeks / months, weekdays, day of the month or the Nth weekday,
+// the editor's field; calendar events can take it as is): the five presets and Custom…, which opens
+// a small rule editor — every N days / weeks / months / years, weekdays, day of the month or the Nth weekday,
 // ends never / on a date / after N times. Value in, RRULE string (or null = never) out. Phone =
 // action sheet + bottom sheet; desktop = context menu + popover. No design exists for the custom
 // editor yet: built from the kit (Segmented, NumberField, Chip, DateField) — flagged for Phase C. ──
@@ -20,6 +20,7 @@ export const REPEAT_PRESETS: { label: string; rule: string | null }[] = [
   { label: 'Daily', rule: 'FREQ=DAILY' },
   { label: 'Weekly', rule: 'FREQ=WEEKLY' },
   { label: 'Monthly', rule: 'FREQ=MONTHLY' },
+  { label: 'Yearly', rule: 'FREQ=YEARLY' },
 ]
 
 interface RepeatProps {
@@ -78,6 +79,7 @@ const UNITS: { value: RepeatUnit; label: string }[] = [
   { value: 'day', label: 'Days' },
   { value: 'week', label: 'Weeks' },
   { value: 'month', label: 'Months' },
+  { value: 'year', label: 'Years' },
 ]
 const LABEL = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' } as const
 const ROW = { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 } as const
@@ -100,7 +102,7 @@ export function RepeatEditor({ value, onChange, position, onClose, start, meta }
   const rule = buildRule(spec, from)
   const toggleDay = (d: WeekdayCode) => set({ days: spec.days.includes(d) ? spec.days.filter((x) => x !== d) : [...spec.days, d] })
   const m = spec.monthly
-  const unitWord = { day: 'day', week: 'week', month: 'month' }[spec.unit] + (spec.every === 1 ? '' : 's')
+  const unitWord = { day: 'day', week: 'week', month: 'month', year: 'year' }[spec.unit] + (spec.every === 1 ? '' : 's')
 
   const body = (
     <div style={{ paddingBottom: 4 }}>

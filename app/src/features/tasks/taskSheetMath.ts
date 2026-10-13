@@ -6,7 +6,7 @@ import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { addDays, busyOnDay, dayHint, dayShort, durationLabel, freeSlots, fromMin, toMin } from '../../components/pickerMath'
-import { nextOccurrence } from './recurrence'
+import { nextDue, ruleAfterThis } from './recurrence'
 import { REPEAT_LABELS } from './taskMenuSpec'
 
 /** How long "✓ Saved" shows after an edit before the line settles on "Edited HH:MM". */
@@ -100,12 +100,13 @@ export function repeatLabel(rule: string): string {
   }
 }
 
-/** "Next · Mon 28 Sep 15:00 · then Tue 29" — the next two dates, by the same rrule step that
- * completing the task uses (completion.ts), so the line says what "Done for today" will spawn. */
-export function nextDates(rule: string, dueIso: string): string | null {
-  const a = nextOccurrence(rule, new Date(dueIso))
+/** "Next · Mon 28 Sep 15:00 · then Tue 29" — the next two dates, by the step completing the task uses
+ * (completion.ts → recurrence.nextDue: from the later of the due date and today, the count used up),
+ * so the line says what "Done for today" will spawn — never a date already past (p7e A13). */
+export function nextDates(rule: string, dueIso: string, now: Date = new Date()): string | null {
+  const a = nextDue(rule, dueIso, now)
   if (!a) return null
-  const b = nextOccurrence(rule, a)
+  const b = nextDue(ruleAfterThis(rule)!, a.toISOString(), now)
   const ka = cairoDateKey(a)
   return `Next · ${dayShort(ka)} ${cairoTimeKey(a)}${b ? ` · then ${dayHint(cairoDateKey(b), ka)}` : ''}`
 }

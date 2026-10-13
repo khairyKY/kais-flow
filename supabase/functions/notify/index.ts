@@ -22,9 +22,9 @@ import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { endpointHost, isKnownPushEndpoint } from './push-endpoint.ts'
-import { dayBounds, ritualDue, ritualOn, type RitualSettings } from './ritual.ts'
+import { dayBounds, ritualDue, ritualOn, shutDownOn, type RitualSettings } from './ritual.ts'
 import { routinesDueAt, type ReminderRoutine } from './routine.ts'
-import { birthdayDue, birthdaysOn, type PersonFacts } from './birthday.ts'
+import { birthdayDue, birthdayGroups, type PersonFacts } from './birthday.ts'
 import { dateKey, dayWindow, userZone } from '../_shared/zone.ts'
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
 import { birthdayNotice, deliver, digestNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
@@ -92,25 +92,25 @@ async function logNotice(supabase: SupabaseClient, userId: string, n: Notice, re
 
 const NAMES: NoticePrefs = { lock_screen_names: true }
 
-/** One user's notice, built only from that user's rows; `prefs` = their own settings. */
+/** One user's notice (birthday: one per group), built only from that user's rows; `prefs` = their own settings. */
 async function buildPayload(
   supabase: SupabaseClient,
   kind: NotifyKind,
   userId: string,
   clock: RunClock,
   prefs: UserPrefs | undefined,
-): Promise<Notice | null> {
+): Promise<Notice | Notice[] | null> {
   if (kind === 'test') return testNotice()
   const zone = userZone(prefs?.timezone)
 
   if (kind === 'morning_digest') {
     // Today's Top 3 as Today draws it (_shared/today.ts): a pick moved to a later day isn't one, the
-    // goal (top3_rank 1) first. Overdue: open, not someday, dated before the user's today.
+    // goal (top3_rank 1) first. Overdue: open, not someday or paused, dated before the user's today.
     const todayStart = dayWindow(clock.now, zone).start.toISOString()
     const [picks, late] = await Promise.all([
       supabase
         .from('tasks')
-        .select('title, status, someday, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
+        .select('title, status, someday, paused, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
         .eq('user_id', userId)
         .eq('top3', true)
         .eq('status', 'todo')
@@ -122,6 +122,7 @@ async function buildPayload(
         .eq('user_id', userId)
         .eq('status', 'todo')
         .eq('someday', false)
+        .eq('paused', false)
         .is('deleted_at', null)
         .or(`due_at.lt.${todayStart},and(due_at.is.null,scheduled_start.lt.${todayStart})`),
     ])
@@ -135,11 +136,20 @@ async function buildPayload(
   if (kind === 'evening_nudge') {
     // "4 done · 2 left": finished today, and still open for today (due today or before) — the user's today.
     const day = dayBounds(clock.now, zone)
-    const [done, left] = await Promise.all([
+    const [done, left, shut] = await Promise.all([
       supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'done').is('deleted_at', null).gte('completed_at', day.start).lt('completed_at', day.end),
-      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').eq('someday', false).is('deleted_at', null).lt('due_at', day.end),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').eq('someday', false).eq('paused', false).is('deleted_at', null).lt('due_at', day.end),
+      // A29: the app's `ritual.finished` rows (notify/ritual.ts shutDownOn). A loop day began at most 28
+      // hours ago, so two days of rows cover it, on the (user_id, created_at) index.
+      supabase
+        .from('activity_log')
+        .select('payload')
+        .eq('user_id', userId)
+        .eq('event_type', 'ritual.finished')
+        .gte('created_at', new Date(clock.now.getTime() - 2 * 86_400_000).toISOString()),
     ])
-    if (done.error || left.error) throw done.error ?? left.error
+    if (done.error || left.error || shut.error) throw done.error ?? left.error ?? shut.error
+    if (shutDownOn(shut.data ?? [], clock.now, zone)) return null // Shut down is done: the day is closed
     if ((done.count ?? 0) + (left.count ?? 0) === 0) return null // an empty day has nothing to close
     const n = nudgeNotice(done.count ?? 0, left.count ?? 0)
     if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, n)
@@ -153,6 +163,7 @@ async function buildPayload(
       .eq('user_id', userId)
       .eq('status', 'todo')
       .is('deleted_at', null) // a task in Trash never reminds
+      .eq('paused', false) // nor a paused series (Perennials ‖) until it's resumed
       .eq('reminder_sent', false)
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)
@@ -177,12 +188,14 @@ async function buildPayload(
   }
 
   if (kind === 'birthday') {
-    // 08:00 on the user's clock (runForAllUsers picks the tick): whose birthday is today, and how long
-    // since you last spoke (their newest interaction) — notify/birthday.ts.
+    // 08:00 on the user's clock (runForAllUsers picks the tick): whose birthday is today, and whose is a
+    // week out (P7 7b), each with how long since you last spoke (their newest interaction up to today) —
+    // notify/birthday.ts birthdayGroups, which the Windows/Android apps plan with too.
     const { data: people, error } = await supabase.from('people').select('id, name, facts').eq('user_id', userId)
     if (error) throw error
     const today = dateKey(clock.now, zone)
-    const ids = birthdaysOn((people ?? []) as PersonFacts[], [], today, zone).map((b) => b.id)
+    const all = (people ?? []) as PersonFacts[]
+    const ids = birthdayGroups(all, [], today, zone).flatMap((g) => g.people.map((b) => b.id))
     if (ids.length === 0) return null
     const { data: spoke, error: spokeError } = await supabase
       .from('interactions')
@@ -191,10 +204,13 @@ async function buildPayload(
       .in('person_id', ids)
       .lt('occurred_at', dayWindow(clock.now, zone).end.toISOString())
     if (spokeError) throw spokeError
-    const due = birthdaysOn((people ?? []) as PersonFacts[], spoke ?? [], today, zone)
-    const n = birthdayNotice(due, prefs)
-    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, birthdayNotice(due, NAMES), due.length === 1 ? { person_id: due[0].id } : {})
-    return n
+    const notices: Notice[] = []
+    for (const g of birthdayGroups(all, spoke ?? [], today, zone)) {
+      const n = birthdayNotice(g.people, prefs, g.inDays)
+      if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, birthdayNotice(g.people, NAMES, g.inDays), g.people.length === 1 ? { person_id: g.people[0].id } : {})
+      notices.push(n)
+    }
+    return notices
   }
 
   // routine: the reminders whose time is on this tick, on the days their cadence has, not yet checked
@@ -309,6 +325,7 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
       .select('user_id')
       .eq('status', 'todo')
       .is('deleted_at', null) // a task in Trash never reminds
+      .eq('paused', false) // nor a paused series (Perennials ‖) until it's resumed
       .eq('reminder_sent', false)
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)
@@ -359,13 +376,20 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
     try {
       const prefs = prefsByUser.get(userId)
       const built = await buildPayload(supabase, kind, userId, clock, prefs)
-      const payload = built && deliver(built, prefs, clock.now, userZone(prefs?.timezone))
+      const payloads = [built ?? []].flat().flatMap((n) => deliver(n, prefs, clock.now, userZone(prefs?.timezone)) ?? [])
       const subs = subsByUser.get(userId) ?? []
-      if (!payload || subs.length === 0) {
+      if (payloads.length === 0 || subs.length === 0) {
         users.push({ user_id: userId, skipped: true, attempted: 0, sent: 0, pruned: 0, skipped_endpoints: 0 })
         continue
       }
-      const result = await sendToSubscriptions(supabase, userId, subs, payload)
+      const result: SendResult = { attempted: 0, sent: 0, pruned: 0, skipped_endpoints: 0 }
+      for (const payload of payloads) {
+        const r = await sendToSubscriptions(supabase, userId, subs, payload)
+        result.attempted += r.attempted
+        result.sent += r.sent
+        result.pruned += r.pruned
+        result.skipped_endpoints = r.skipped_endpoints // the same devices each time
+      }
       sent += result.sent
       pruned += result.pruned
       skippedEndpoints += result.skipped_endpoints
@@ -422,7 +446,7 @@ async function runTestForUser(req: Request, userId: string, token: string): Prom
     .select('id, user_id, endpoint, keys')
     .eq('user_id', userId)
   if (error) throw error
-  const payload = (await buildPayload(supabase, 'test', userId, runClock(), undefined))!
+  const payload = testNotice()
   const result = await sendToSubscriptions(supabase, userId, (subs ?? []) as Subscription[], payload)
   // `sent`/`pruned` at the top level are what Settings' "send test" reads (notifications/api.ts).
   return jsonResponse(req, { ...result, users: [{ user_id: userId, skipped: false, ...result }] })

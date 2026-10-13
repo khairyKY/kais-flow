@@ -4,14 +4,17 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
-import { createTask, rescheduleDue } from '../tasks/api'
-import { deleteEvent, deleteEventWithUndo, placeTask, restoreEvent } from '../calendar/api'
+import { completeTask, createTask, rescheduleDue } from '../tasks/api'
+import { deleteEvent, deleteEventsForTask, deleteEventWithUndo, placeTask, restoreEvent } from '../calendar/api'
+import { blockIfTimed } from '../capture/api'
+import { durationOf } from '../capture/aiFill'
 import { eventMinutes, type RailDropAction } from '../calendar/railDrop'
 import { NO_PLACE, placeTask as placeIn, type MoveTarget } from '../tasks/move'
 import { upsertJournalEntry } from '../journal/api'
 import { createInteraction, deleteInteraction } from '../people/api'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
-import { dayWord, formatDue, githubUrl, suggestedTitle } from './inboxDisplay'
+import { captureLink, dayWord, formatDue, githubUrl, suggestedTitle } from './inboxDisplay'
+import { linkRef } from '../../lib/links'
 import { INBOX_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
 import type { CalendarEvent, InboxItem, Person, Task } from '../../lib/types'
@@ -95,8 +98,10 @@ function filedLine(task: Task): string {
 }
 
 /** Undoing a *just-created* task hard-deletes it rather than routing it to Trash — same as
- * the auto-file undo in `capture/api.ts`; a task the user un-made shouldn't need composting. */
+ * the auto-file undo in `capture/api.ts`; a task the user un-made shouldn't need composting.
+ * Its block (a timed filing's, fileToTask) goes first, while the task it points at still exists. */
 function unfile(item: InboxItem, task: Task): void {
+  deleteEventsForTask(task.id)
   writeRow('tasks', task, 'delete')
   logActivity('task.deleted', 'task', task.id, { reason: 'inbox file undo' })
   writeRow('inbox_items', item)
@@ -119,16 +124,20 @@ export function snoozeInboxItem(item: InboxItem, until: string, silent = false):
 // Returns the created task so callers can offer a real Undo (WA-4 punch 21 — convertResurfaced).
 export function fileToTask(
   item: InboxItem,
-  opts: { domainId?: string | null; projectId?: string | null; areaId?: string | null; dueAt?: string | null; title?: string; silent?: boolean; someday?: boolean } = {},
+  opts: { domainId?: string | null; projectId?: string | null; areaId?: string | null; dueAt?: string | null; timed?: boolean; title?: string; silent?: boolean; someday?: boolean } = {},
 ): Task {
   const prior = { ...item }
   const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null } | null
+  const parse = item.ai_parse as { due_at?: string | null; has_time?: boolean | null; duration_min?: number | null } | null
   // The triage card shows the AI's parsed date as a promise ("→ Sat, 18:00"); no caller was
   // passing it through, so every manual filing silently dropped it — and the punch-7 toast
   // could never truthfully say "· Today". Default to the parse; an explicit opt still wins —
   // null included (the card's date field cleared).
   // A someday task is undated (Tasks › Someday), whatever the parse said.
-  const parsedDue = opts.someday ? null : opts.dueAt !== undefined ? opts.dueAt : ((item.ai_parse as { due_at?: string | null } | null)?.due_at ?? null)
+  const parsedDue = opts.someday ? null : opts.dueAt !== undefined ? opts.dueAt : (parse?.due_at ?? null)
+  // P7e A2, the one capture rule (capture/api blockIfTimed): a TIME puts the filed task on the calendar
+  // — the card's own pick when the caller passes one (`timed`), else the AI's read of the words.
+  const timed = opts.timed ?? (opts.dueAt === undefined && parse?.has_time === true)
   // P6 step 4: a filed GitHub issue keeps its link (the task's "View issue").
   const issue = item.kind === 'github_issue' ? (item.payload as { node_id?: string; url?: string } | null) : null
   const issueUrl = githubUrl(issue?.url)
@@ -139,10 +148,13 @@ export function fileToTask(
     areaId: opts.areaId ?? null,
     dueAt: parsedDue,
     priority: overrides?.priority_override ?? null,
-    durationMin: overrides?.duration_override ?? null,
+    // A typed `30m`, else the length the AI read ("for an hour") — the block's length too.
+    durationMin: overrides?.duration_override ?? durationOf(parse?.duration_min),
     someday: opts.someday,
-    externalRef: issue?.node_id && issueUrl ? { source: 'github', id: issue.node_id, url: issueUrl } : null,
+    // A capture's link rides along too (P7e A19): the task's "↗ site" and `o`.
+    externalRef: issue?.node_id && issueUrl ? { source: 'github', id: issue.node_id, url: issueUrl } : linkRef(captureLink(item)),
   })
+  blockIfTimed(task, timed)
   writeRow('inbox_items', { ...item, status: 'filed', filed_task_id: task.id })
   logActivity('inbox.filed', 'inbox_item', item.id, { task_id: task.id })
   if (!opts.silent) toastUndo(filedLine(task), () => unfile(prior, task))
@@ -161,7 +173,8 @@ export function aiFiling(item: InboxItem): { title?: string; domainId: string | 
 
 export type FileTo =
   /** `someday`: the Snooze menu's Someday — a someday task (no date), not a year-long snooze. */
-  | { to: 'task'; title: string; dueAt: string | null; place: MoveTarget; someday?: boolean }
+  /** `timed`: the card's date has a clock time — the task gets its calendar block (A2). */
+  | { to: 'task'; title: string; dueAt: string | null; timed?: boolean; place: MoveTarget; someday?: boolean }
   | { to: 'journal'; body: string }
   | { to: 'person'; person: Pick<Person, 'id' | 'name'>; summary: string }
 
@@ -186,7 +199,7 @@ function fileQuietly(item: InboxItem, to: FileTo, now = new Date()): { message: 
     return { message: `Added to ${to.person.name}`, undo: () => { deleteInteraction(note.id); writeRow('inbox_items', prior) } }
   }
   const at = placeIn(NOWHERE, to.place)
-  const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, someday: to.someday, silent: true })
+  const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, timed: !!to.timed, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, someday: to.someday, silent: true })
   return { message: filedLine(task), undo: () => unfile(prior, task) }
 }
 
@@ -205,6 +218,20 @@ export function fileMany(pairs: readonly (readonly [InboxItem, FileTo])[]): void
   const done = pairs.map(([item, to]) => fileQuietly(item, to))
   const someday = pairs.every(([, to]) => to.to === 'task' && to.someday)
   toastUndo(done.length === 1 ? done[0].message : `${captures(done.length)} filed${someday ? ' to Someday' : ''}`, () => done.forEach((d) => d.undo()))
+}
+
+/** "Done now" (P7e A8, Akiflow's inbox-zero E): a two-minute capture filed as a task that is already
+ * done — its card's title, date and place. One toast, one Undo: the task goes, the capture comes back. */
+export function fileDone(pairs: readonly (readonly [InboxItem, Extract<FileTo, { to: 'task' }>])[]): void {
+  if (!pairs.length) return
+  const done = pairs.map(([item, to]) => {
+    const prior = { ...item }
+    const at = placeIn(NOWHERE, to.place)
+    const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, silent: true })
+    completeTask(task)
+    return { title: task.title, undo: () => unfile(prior, task) }
+  })
+  toastUndo(done.length === 1 ? `Filed "${done[0].title}" as done` : `${captures(done.length)} filed as done`, () => done.forEach((d) => d.undo()))
 }
 
 /** Every row written back as it was — the Undo of the bulk actions below. `deleted_at` is sent

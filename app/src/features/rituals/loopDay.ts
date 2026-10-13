@@ -1,5 +1,6 @@
 import { cairoDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
-import { appZone, perZone } from '../../lib/appZone'
+import { appZone } from '../../lib/appZone'
+import { LOOP_DAY_ROLLOVER_HOUR, loopDay } from '../../../../supabase/functions/_shared/zone.ts'
 import type { ActivityLogEntry, Task } from '../../lib/types'
 
 // ── Loop B (docs/DAILY-CYCLE.md): the pure half of "shutdown feeds the next Plan" and of
@@ -9,9 +10,9 @@ import type { ActivityLogEntry, Task } from '../../lib/types'
 
 export type RitualKind = 'morning' | 'evening'
 
-/** Cairo wall-clock hour the loop's day turns over. A shutdown at 00:30 still closes the day
- * you were living, so the loop day runs 04:00 → 04:00 Cairo rather than midnight → midnight. */
-export const LOOP_DAY_ROLLOVER_HOUR = 4
+/** The hour the loop's day turns over on the user's clock (04:00). A shutdown at 00:30 still closes
+ * the day you were living. One rule with notify's evening nudge: supabase/functions/_shared/zone.ts. */
+export { LOOP_DAY_ROLLOVER_HOUR }
 
 /** Most seeds a night can plant — the morning keeps a Top 3. */
 export const MAX_SEEDS = 3
@@ -20,21 +21,27 @@ export const SEED_EVENT = 'ritual.seeded'
 export const UNSEED_EVENT = 'ritual.unseeded'
 export const FINISHED_EVENT = 'ritual.finished'
 
-// The user's zone (lib/appZone.ts; the `cairo*` names are historical).
-const cairoHour = perZone((timeZone) => new Intl.DateTimeFormat('en-US', { timeZone, hourCycle: 'h23', hour: 'numeric' }))
-
 /** "YYYY-MM-DD" moved by `days` calendar days. Pure date math, read in UTC so no zone can shift it. */
 export function addDaysToKey(key: string, days: number): string {
   const [y, m, d] = key.split('-').map(Number)
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10)
 }
 
-/** The loop day `now` belongs to, as a Cairo "YYYY-MM-DD": the Cairo calendar date, except that
- * before 04:00 Cairo it is still the previous one. Read from the wall clock (not `now - 4h`), so
- * the spring-forward night, which has no 00:00–01:00, still turns over at 04:00. */
+/** The loop day `now` belongs to, as "YYYY-MM-DD" on the user's clock (lib/appZone.ts): the calendar
+ * date, except that before 04:00 it is still the previous one — _shared/zone.ts `loopDay`, the rule
+ * notify reads too. */
 export function loopDayKey(now: Date): string {
-  const day = cairoDateKey(now)
-  return Number(cairoHour().format(now)) % 24 < LOOP_DAY_ROLLOVER_HOUR ? addDaysToKey(day, -1) : day
+  return loopDay(now, appZone())
+}
+
+/** `now` for the loop day's date math — Today's list, "Tomorrow", the review week: `now` itself from
+ * 04:00; before 04:00, the day you are still living, as 23:59:59 on its date (user's clock). So a
+ * Shut down at 00:30 sweeps that day's plate and rolls to the morning it seeds, not the one after. */
+export function loopNow(now: Date): Date {
+  const key = loopDayKey(now)
+  if (key === cairoDateKey(now)) return now
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(zoneWallTimeToIso(appZone(), y, m, d, 23, 59, 59))
 }
 
 /** The instant the loop day `now` belongs to began: 04:00 on that date, on the user's clock. */

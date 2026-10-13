@@ -320,7 +320,7 @@ export function ActivityPage() {
             <span style={{ width: 34, height: 34, borderRadius: '50%', background: 'color-mix(in oklch, var(--acc-hydrangea) 22%, transparent)', display: 'flex', alignItems: 'center', justifyContent: 'center', filter: 'var(--shadow-drop-sm)' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5 6 5-12 2.5 6h4"/></svg>
             </span>
-            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Activity</h1>
+            <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--ink-body)' }}>Activity</h1>
           </div>
           <div style={{ display: 'flex', gap: 6, overflowX: 'auto', margin: '14px 0 4px', scrollbarWidth: 'none' }} className="no-scrollbar">
             {CATEGORIES.filter((cat) => MOBILE_CATEGORIES.includes(cat.id)).map((cat) => (

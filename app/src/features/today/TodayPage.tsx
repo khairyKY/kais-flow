@@ -21,7 +21,9 @@ import { groupRoutinesByTime, splitByTimeOfDay } from '../routines/routineGroupi
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
-import { useRitualStepsToday, type RitualKind } from '../rituals/api'
+import { useReviewEventsThisWeek, useRitualStepsToday, type RitualKind } from '../rituals/api'
+import { loopNow } from '../rituals/loopDay'
+import { startOfWeek } from '../rituals/reviewWeek'
 import { useRitualPins } from '../rituals/ritualPins'
 import { PLAN_STEPS, SHUT_STEPS } from '../rituals/ritualLogic'
 import { MorningRitual } from '../rituals/MorningRitual'
@@ -52,7 +54,7 @@ import { useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { Fireflies } from './NightGarden'
-import { cairoMinutes, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
+import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
 import { isInProgress, upNextEvents } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
@@ -64,7 +66,7 @@ import { DeskRitualHead, RitualCard, ReviewCard, type CardHead } from './DayCard
 import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
 import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
-import { useStarEvents, useWeekClosedAt } from './api'
+import { useStarEvents } from './api'
 import { useStartFocus } from './startFocus'
 import { useFocusNow } from './focusNow'
 import { JUST_DONE_MS, nowBlock, nowState, type NowState } from './nowCard'
@@ -437,9 +439,11 @@ export function TodayPage() {
   }
   const overdueCount = filterByList(tasks, 'overdue').length
   // DAILY-CYCLE step 5, the weekly review: prompted on its day (the first day of the user's
-  // weekend) until this week's review is closed (./todayLayout reviewDue).
-  const { data: weekClosed = [] } = useWeekClosedAt(now)
-  const reviewToday = reviewDue(now, weekendDays(), weekClosed)
+  // weekend) until this week's review is closed (./todayLayout reviewDue). The Weekly review's own
+  // read of the week, so its Close and Undo reach this prompt without a refetch.
+  const weekend = weekendDays()
+  const { data: reviewEvents = [] } = useReviewEventsThisWeek(startOfWeek(loopNow(now), weekend).toISOString())
+  const reviewToday = reviewDue(now, weekend, reviewEvents)
 
   // Ported from the retired Terrarium.tsx — day count since the earliest record, for the phone
   // header's "Day N" (Today Phone ruling 1). On a desktop it's the sidebar foot's "day N" (2a, AppLayout).
@@ -1228,7 +1232,7 @@ const STEP_LABEL: Record<string, string> = { overdue: 'Carry-over', inbox: 'Inbo
  * today (R4-D1: a ritual's progress is its steps, never routines). Morning is open until the evening
  * (Shut down's 17:00, Kai 2026-09-28 — 2a drew 7 PM); then Evening. Any row opens its ritual. */
 function RitualsRail({ day, now, onOpen, review }: { day: ReturnType<typeof useDay>; now: Date; onOpen: (kind: RitualKind) => void; review: boolean }) {
-  const evening = cairoMinutes(now) >= SHUTDOWN_FROM
+  const evening = isEvening(now) // on until 04:00, the loop day's turn (A29)
   const from = `${String(Math.floor(SHUTDOWN_FROM / 60)).padStart(2, '0')}:${String(SHUTDOWN_FROM % 60).padStart(2, '0')}`
   return (
     <section aria-label="Rituals" data-tour="plan">

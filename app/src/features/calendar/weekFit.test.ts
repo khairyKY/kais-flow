@@ -9,11 +9,12 @@ const gridBesideRail = (shell: number, rail = RAIL) => shell - GRID_CHROME_W - R
 
 describe('visibleDayCount', () => {
   it('counts the columns each view draws', () => {
-    expect(visibleDayCount('day', 4, true)).toBe(1)
-    expect(visibleDayCount('ndays', 4, true)).toBe(4)
-    expect(visibleDayCount('week', 4, true)).toBe(7)
-    expect(visibleDayCount('week', 4, false)).toBe(5)
-    expect(visibleDayCount('month', 4, true)).toBe(0)
+    expect(visibleDayCount('day', 4)).toBe(1)
+    expect(visibleDayCount('ndays', 4)).toBe(4)
+    expect(visibleDayCount('week', 4)).toBe(7)
+    expect(visibleDayCount('week', 4, 2)).toBe(5) // Sat + Sun, or Fri + Sat
+    expect(visibleDayCount('week', 4, 1)).toBe(6) // a Sunday-only weekend
+    expect(visibleDayCount('month', 4)).toBe(0)
   })
 })
 

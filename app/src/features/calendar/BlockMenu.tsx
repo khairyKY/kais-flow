@@ -16,7 +16,7 @@ import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, setEventRepeat, updateEvent } from './api'
-import { BLOCK_MENU_WIDTH, blockMenuSpec, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
+import { BLOCK_MENU_WIDTH, blockMenuSpec, isRepeatingBlock, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { ColorDots } from './formFields'
 import { eventSpan } from './phoneGridMath'
@@ -183,15 +183,19 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
     run()
   }
   const unschedule = () => remove(() => deleteEventWithUndo(event, 'Unscheduled'))
+  const del = () => remove(() => deleteEventWithUndo(event, untitled ? 'Discarded' : 'Deleted'))
 
-  // ⌫ (the Unschedule row's key) while the popover is open and nothing is being typed.
+  // ⌫ while the popover is open and nothing is being typed: a task block's Unschedule, a plain
+  // one-off's Delete (p7e A4, Akiflow's Backspace) — each with Undo. A repeat asks This / All on its
+  // Delete row instead, so the key leaves it alone.
   useEffect(() => {
-    if (!event.task_id) return
+    const act = event.task_id ? unschedule : isRepeatingBlock(event) ? null : del
+    if (!act) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Backspace' && e.key !== 'Delete') return
       if ((e.target as HTMLElement | null)?.closest?.('input, textarea, [contenteditable="true"]')) return
       e.preventDefault()
-      unschedule()
+      act()
       onClose()
     }
     window.addEventListener('keydown', onKey)
@@ -299,7 +303,7 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
     open: () => event.task_id && openTask(event.task_id),
     replan: () => onReplan?.(position.x, position.y),
     unschedule,
-    delete: () => remove(() => deleteEventWithUndo(event, untitled ? 'Discarded' : 'Deleted')),
+    delete: del,
   }
 
   const item = (e: BlockMenuEntry): ContextMenuItem => ({
@@ -308,11 +312,11 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
     danger: e.destructive,
     labelColor: e.unset ? 'var(--ink-muted)' : undefined,
     divider: e.divider ?? false,
-    shortcut: e.key === 'unschedule' ? e.hint : undefined,
+    shortcut: e.key === 'unschedule' || e.key === 'delete' ? e.hint : undefined,
     hint:
       e.key === 'project' && project ? (
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: project.color || domains.find((d) => d.id === project.domain_id)?.color || 'var(--ink-hairline)' }} />
-      ) : e.key !== 'unschedule' ? e.hint : undefined,
+      ) : e.key !== 'unschedule' && e.key !== 'delete' ? e.hint : undefined,
     before: e.caption && (
       <>
         <div style={{ ...CAPTION, padding: '4px 9px 5px' }}>{e.caption.label}</div>

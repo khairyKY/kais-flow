@@ -12,7 +12,8 @@ import { MovePicker } from '../tasks/MovePicker'
 import { SelectCircle, SwipeRow } from '../tasks/SwipeRow'
 import { targetKey, type MoveTarget } from '../tasks/move'
 import type { InboxItem, Person } from '../../lib/types'
-import { ageLabel, capturedLabel, cardShape, confidenceWord, draftText, dueLabel, dueShort, FILE_WORD, githubUrl, KIND_LABEL, parseOf, type Draft, type FileKind } from './inboxDisplay'
+import { ageLabel, captureLink, capturedLabel, cardShape, confidenceWord, draftText, dueLabel, dueShort, FILE_WORD, githubUrl, KIND_LABEL, parseOf, type Draft, type FileKind } from './inboxDisplay'
+import { linkLabel } from '../../lib/links'
 
 // ── Inbox t3 (Inbox.dc.html 3a desktop / 3b iPhone, the reviewed pass): one decision per card.
 // A confident read is ONE row of editable fields (type · title · date · place) — "Suggested", its
@@ -111,7 +112,23 @@ export function TriageCard(p: TriageCardProps) {
   const text = draftText(item, draft)
   const task = draft.to === 'task'
   const set = (patch: Partial<Draft>) => p.onDraft({ ...draft, ...patch })
-  const source = <SourceLabel item={item} label={KIND_LABEL[item.kind]} />
+  const link = captureLink(item)
+  // P7e A19: the link back to where it came from, on the card's meta line ("Typed · example.com ↗ · 09:12").
+  // Not inside the phone's compact row, which is one button: it shows once the card is open.
+  const label = <SourceLabel item={item} label={KIND_LABEL[item.kind]} />
+  const source = (
+    <>
+      {label}
+      {link && (
+        <>
+          {' · '}
+          <a className="ib-link" href={link} target="_blank" rel="noopener noreferrer" data-no-select onClick={(e) => e.stopPropagation()}>
+            {linkLabel(link)} ↗
+          </a>
+        </>
+      )}
+    </>
+  )
   const choices = choicesFor(person)
   const typeLabel = draft.to === 'person' && person ? person.name : FILE_WORD[draft.to]
   const file = () => p.onFile(draft)
@@ -237,7 +254,7 @@ export function TriageCard(p: TriageCardProps) {
         {lead}
         <button type="button" className="ib-row-main" data-no-select onClick={p.onOpen} aria-label={`Open “${item.raw_text}”`}>
           <span className="ib-row-text"><EmojiText text={item.raw_text} /></span>
-          <span className="ib-meta">{source} · {suggest}</span>
+          <span className="ib-meta">{label} · {suggest}</span>
         </button>
         <Button type="button" variant="secondary" className="ib-btn ib-btn--sm" onClick={file}>File</Button>
       </div>

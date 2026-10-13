@@ -50,6 +50,8 @@ import { KeyCombo } from './kit'
 import { Float } from './Float'
 import { uiZoom } from '../lib/uiScale'
 import { splitKeyCombo } from '../lib/shortcuts'
+import { overlayCount } from '../lib/overlayStack'
+import { undoLatest } from '../lib/undo'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
@@ -563,6 +565,13 @@ function isTypingTarget(target: EventTarget | null): boolean {
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
 }
 
+/** P7e A3/A7: the shell's newer keys rest while you type (a field keeps its own ⌘Z), while a menu or
+ * dialog is open, and while any overlay holds the Esc stack — the command bar, search, chat, a
+ * picker, a selection. */
+function keysResting(e: KeyboardEvent): boolean {
+  return isTypingTarget(e.target) || overlayCount() > 0 || !!document.querySelector('[role="dialog"], [role="menu"]')
+}
+
 /** Dispatched on `window` to open search from a page's own top bar (the shell owns the overlay). */
 const OPEN_SEARCH_EVENT = 'kf-open-search'
 
@@ -652,6 +661,13 @@ export function AppLayout() {
         e.preventDefault()
         toggleCommandBar()
       }
+      // ⌘Z / Ctrl+Z (P7e A3): the newest toast's Undo. Inside a field the browser's own undo runs.
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && pressed(e, 'z', 'KeyZ') && !keysResting(e) && undoLatest()) e.preventDefault()
+      // ⌘, / Ctrl+, (P7e A7): Settings.
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && pressed(e, ',', 'Comma') && !keysResting(e)) {
+        e.preventDefault()
+        navigate('/settings')
+      }
       if (isTypingTarget(e.target) || e.ctrlKey || e.metaKey || e.altKey) return
       if (e.key === 'n') {
         e.preventDefault()
@@ -661,10 +677,22 @@ export function AppLayout() {
         e.preventDefault()
         setShortcutsOpen((v) => !v)
       }
+      // P7e A7, Akiflow's single keys: i Inbox, u Upcoming, bare / Search. (t stays Top 3, g stays in ⌘K: D-5.)
+      if (keysResting(e)) return
+      const go = !e.shiftKey && pressed(e, 'i', 'KeyI') ? '/inbox' : !e.shiftKey && pressed(e, 'u', 'KeyU') ? '/tasks?list=upcoming' : null
+      if (go) {
+        e.preventDefault()
+        navigate(go)
+      }
+      // '/' wherever the layout puts it (Shift+7 on German); on a non-Latin layout, the unshifted Slash key.
+      if (e.key === '/' || (e.code === 'Slash' && !e.shiftKey && !/^[\x20-\x7e]$/.test(e.key))) {
+        e.preventDefault()
+        setSearchOpen(true)
+      }
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [setCommandBarOpen, toggleCommandBar])
+  }, [setCommandBarOpen, toggleCommandBar, navigate])
 
   // Motion 2b/4e: Esc pops a detail page off the stack — after any open overlay has had its turn
   // (lib/overlayStack closes the topmost and marks the key handled).
@@ -871,6 +899,12 @@ export function AppLayout() {
              grows down and in from the glyph's corner, so the clip can't cut it under 44 and it never
              reaches past the box onto the next photo or the words above. */
           .kf-hit.kf-hit-corner::after { inset: 0 0 auto auto; width: var(--touch-min); height: var(--touch-min); }
+          /* A small text control with neighbours close by (the phone journal footer's links, 12px apart): the area
+             grows to 44px, centred, and no further, so it never reaches the next one; a side already 44 stays put. */
+          .kf-hit.kf-hit-min::after { inset: min(0px, calc(50% - 22px)); }
+          /* A destructive control sitting just above a text field (a journal entry's Delete, 4px over its
+             words): the area grows up and sideways only, so a tap meant for the field never deletes. */
+          .kf-hit.kf-hit-above::after { bottom: 0; }
           .kf-checkbox::after { content: ''; position: absolute; inset: -13px; }
         }
 

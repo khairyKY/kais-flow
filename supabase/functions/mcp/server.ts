@@ -22,12 +22,14 @@ export const MODERN_VERSIONS = ['2026-07-28'] as const
 export const LEGACY_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'] as const
 export const SUPPORTED_VERSIONS: readonly string[] = [...MODERN_VERSIONS, ...LEGACY_VERSIONS]
 
-export const SERVER_INFO = { name: 'kais-flow', title: "Kai's Flow", version: '1.0.0' }
+export const SERVER_INFO = { name: 'kais-flow', title: "Kai's Flow", version: '1.1.0' }
 
 export const INSTRUCTIONS =
   "Kai's Flow is the user's personal planner: tasks, a daily Top 3, an Inbox, projects and a calendar. " +
   "Dates and times are on the user's own clock — the `timezone` every result names. " +
-  'Read freely. Write only when the user asks: add_task, complete_task, move_to_tomorrow and add_to_inbox change their real lists. ' +
+  'Read freely. Write only when the user asks: add_task, edit_task, reschedule_task, complete_task, move_to_tomorrow, add_to_inbox, ' +
+  'add_event, edit_event and delete_event change their real lists and calendar, and each says what it changed. ' +
+  'A task given a time is on the calendar; a date alone is not. ' +
   'When it is unclear whether something is a task, use add_to_inbox. Journal entries and people are not available here.'
 
 /** `kf_ai_` + 32 random bytes as base64url (43 characters) — features/settings/mcpKey.ts makes them. */

@@ -333,7 +333,7 @@ export function ProjectsPage() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
               <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 36, filter: 'var(--shadow-drop-sm)' }} />
-              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Projects</h1>
+              <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--ink-body)' }}>Projects</h1>
             </div>
             {/* 48px touch target (the kit's --touch-min) */}
             <button

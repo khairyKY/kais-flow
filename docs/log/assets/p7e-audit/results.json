@@ -1,0 +1,222 @@
+[
+  {
+    "name": "c1 desktop capture = 2 keys (n, Enter): the bar opens focused",
+    "ok": true,
+    "detail": "Capture"
+  },
+  {
+    "name": "c1 \"Call John tomorrow 3pm 1h #forecast !!\" → task \"Call John\", Wed 14 Oct 15:00 Cairo, 60 min, project Forecasting, priority !!",
+    "ok": true,
+    "detail": "{\"title\":\"Call John\",\"due\":\"2026-10-14T12:00:00.000Z\",\"dur\":60,\"p\":\"b0000000-0000-4000-8000-000000000001\",\"pr\":2}"
+  },
+  {
+    "name": "c1 the typed time also puts it on the calendar as a block (time-blocked in the same 2 keys)",
+    "ok": true,
+    "detail": "{\"s\":\"2026-10-14T12:00:00.000Z\",\"e\":\"2026-10-14T13:00:00.000Z\"}"
+  },
+  {
+    "name": "c1 toast after capture",
+    "ok": null,
+    "detail": "Added to Tomorrow · Forecasting"
+  },
+  {
+    "name": "c2 \"Stretch every day 7am\" (Akiflow sets a daily repeat)",
+    "ok": null,
+    "detail": "task title=\"Stretch every day\" recurrence_rule=null due=2026-10-14T04:00:00.000Z"
+  },
+  {
+    "name": "c2 recurrence typed in the bar is NOT parsed (gap)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "c3 \"Ship the quote <friday // include the VAT line\" (Akiflow: deadline + description)",
+    "ok": null,
+    "detail": "{\"title\":\"Ship the quote < // include the VAT line\",\"due\":\"2026-10-16T09:00:00.000Z\",\"notes\":null}"
+  },
+  {
+    "name": "c no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k1 Akiflow key \"i\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"u\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"g\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"/\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"Control+,\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"Control+1\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"Control+2\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"Control+3\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"a\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k1 Akiflow key \"Control+f\" on Today",
+    "ok": null,
+    "detail": "path=/today dialogs=0"
+  },
+  {
+    "name": "k2 Ctrl+/ (our Search)",
+    "ok": null,
+    "detail": "dialogs=0 search input=1"
+  },
+  {
+    "name": "k3 Akiflow calendar key \"m\"",
+    "ok": null,
+    "detail": "fc-rollingWeek-view | Oct 13 — 19 → fc-rollingWeek-view | Oct 13 — 19"
+  },
+  {
+    "name": "k3 Akiflow calendar key \"w\"",
+    "ok": null,
+    "detail": "fc-rollingWeek-view | Oct 13 — 19 → fc-rollingWeek-view | Oct 13 — 19"
+  },
+  {
+    "name": "k3 Akiflow calendar key \"d\"",
+    "ok": null,
+    "detail": "fc-rollingWeek-view | Oct 13 — 19 → fc-rollingWeek-view | Oct 13 — 19"
+  },
+  {
+    "name": "k3 Akiflow calendar key \"3\"",
+    "ok": null,
+    "detail": "fc-rollingWeek-view | Oct 13 — 19 → fc-rollingWeek-view | Oct 13 — 19"
+  },
+  {
+    "name": "k3 Akiflow calendar key \"=\"",
+    "ok": null,
+    "detail": "fc-rollingWeek-view | Oct 13 — 19 → fc-rollingWeek-view | Oct 13 — 19"
+  },
+  {
+    "name": "k3 Akiflow calendar key \"-\"",
+    "ok": null,
+    "detail": "fc-rollingWeek-view | Oct 13 — 19 → fc-rollingWeek-view | Oct 13 — 19"
+  },
+  {
+    "name": "k no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u1 j, e completes the focused task (2 keys)",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000001\",\"status\":\"done\"}"
+  },
+  {
+    "name": "u2 Ctrl+Z right after (Akiflow Cmd+Z undo)",
+    "ok": null,
+    "detail": "no reopen write; toast: Done"
+  },
+  {
+    "name": "u no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t1 three captures triaged in 4 keys (j to focus, e file, e file, d dismiss)",
+    "ok": true,
+    "detail": "keys=j e e d focus=inbox-20000000-0000-4000-8000-000000000001 inbox=[[\"01\",\"filed\"],[\"02\",\"filed\"],[\"03\",\"dismissed\"]]"
+  },
+  {
+    "name": "t1 e files with the AI's suggestion: Omar → Sat 17 Oct 15:00, Forecasting; hosting → Thu 15 Oct",
+    "ok": true,
+    "detail": "[[\"Call Omar about pricing\",\"2026-10-17T12:00:00.000Z\",\"P1\"],[\"Renew hosting\",\"2026-10-15T06:00:00.000Z\",null]]"
+  },
+  {
+    "name": "t1 the timed suggestion (Sat 15:00) filed by e — calendar block?",
+    "ok": null,
+    "detail": "no block: filed as a task due 15:00 with nothing on the calendar (the bar makes a block for the same line)"
+  },
+  {
+    "name": "t2 inbox keys besides e/d/s/↵",
+    "ok": null,
+    "detail": "no key marks a capture done on the spot (Akiflow E) or opens a date picker (Akiflow P); the date comes from the AI suggestion or the card's Suggested field"
+  },
+  {
+    "name": "t no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 j, 2 = Tomorrow in 2 keys",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000001\",\"due\":\"2026-10-14T06:00:00.000Z\",\"focusedId\":\"task-10000000-0000-4000-8000-000000000001\"}"
+  },
+  {
+    "name": "s2 a day + time by mouse took 7 clicks (right-click, Plan…, Pick date & time…, 16, Set time, 15:00, Done)",
+    "ok": true,
+    "detail": "{\"due\":\"2026-10-16T12:00:00.000Z\"}"
+  },
+  {
+    "name": "s no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b0 the rail was folded on arrival (one click to open; the fold is remembered)",
+    "ok": null,
+    "detail": "true"
+  },
+  {
+    "name": "b1 one drag from the calendar rail onto 14:00 makes a block linked to the task",
+    "ok": true,
+    "detail": "rail cards=6 {\"s\":\"2026-10-13T11:00:00.000Z\",\"e\":\"2026-10-13T11:30:00.000Z\"}"
+  },
+  {
+    "name": "b2 Plan ▾ → Next free slot → confirm",
+    "ok": null,
+    "detail": "2 clicks; block={\"s\":\"2026-10-13T07:00:00.000Z\",\"e\":\"2026-10-13T07:30:00.000Z\"}"
+  },
+  {
+    "name": "b no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 phone capture = 2 taps (+, Add): \"Buy printer ink friday\" → task due Fri 16 Oct",
+    "ok": true,
+    "detail": "{\"title\":\"Buy printer ink\",\"due\":\"2026-10-16T09:00:00.000Z\"}"
+  },
+  {
+    "name": "p1 toast",
+    "ok": null,
+    "detail": "Added to Fri 16 Oct"
+  },
+  {
+    "name": "p no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

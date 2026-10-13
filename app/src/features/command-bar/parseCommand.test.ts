@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { hasStructure, parseCommand, quickAddTask, stripLabels, stripPriorityAndDuration } from './parseCommand'
+import { hasStructure, parseCommand, quickAddTask } from './parseCommand'
 import type { Domain, Project } from '../../lib/types'
 
 const domains: Domain[] = [
@@ -91,37 +91,6 @@ describe('parseCommand', () => {
   })
 })
 
-describe('stripPriorityAndDuration', () => {
-  it('strips a priority-only token, leaving the date untouched', () => {
-    const result = stripPriorityAndDuration('buy milk !!')
-    expect(result.text).toBe('buy milk')
-    expect(result.priority).toBe(2)
-    expect(result.durationMin).toBeNull()
-  })
-
-  it('strips a duration-only token', () => {
-    const result = stripPriorityAndDuration('deep work 1h30m')
-    expect(result.text).toBe('deep work')
-    expect(result.durationMin).toBe(90)
-    expect(result.priority).toBeNull()
-  })
-
-  it('leaves dates and tags alone — that is the AI parse’s job', () => {
-    // Only the flag itself is removed; unlike the full `parseCommand` pipeline, this helper
-    // doesn't re-collapse whitespace, since the AI parse doesn't care about a double space.
-    const result = stripPriorityAndDuration('call Omar tomorrow 3pm !!! #shaheen')
-    expect(result.text).toBe('call Omar tomorrow 3pm  #shaheen')
-    expect(result.priority).toBe(1)
-  })
-
-  it('returns the input unchanged when neither token is present', () => {
-    const result = stripPriorityAndDuration('water the plants')
-    expect(result.text).toBe('water the plants')
-    expect(result.priority).toBeNull()
-    expect(result.durationMin).toBeNull()
-  })
-})
-
 describe('hasStructure', () => {
   it('is true when only priority is set (no date/project) — "buy milk !!" still creates a task', () => {
     expect(hasStructure({ dueAt: null, domainId: null, projectId: null, priority: 2, durationMin: null })).toBe(true)
@@ -165,7 +134,7 @@ describe('*labels (Kai 2026-10-03)', () => {
   it('a * inside a word or on its own is text, and none means []', () => {
     expect(parseCommand('5*3 is 15', domains, projects)).toMatchObject({ labels: [], title: '5*3 is 15' })
     expect(parseCommand('rate it * stars', domains, projects).labels).toEqual([])
-    expect(stripLabels('*calls')).toEqual({ text: '', labels: ['calls'] })
+    expect(parseCommand('*calls', domains, projects)).toMatchObject({ title: '', labels: ['calls'] })
   })
 })
 
@@ -249,6 +218,8 @@ describe('quickAddTask (the Tasks page and command bar quick add)', () => {
       durationMin: null,
       priority: null,
       labels: [],
+      recurrenceRule: null,
+      notes: null,
     })
     expect(parsed.dueTimed).toBe(true)
   })
@@ -260,5 +231,117 @@ describe('quickAddTask (the Tasks page and command bar quick add)', () => {
   })
   it('a line that is all tokens keeps what was typed as its title', () => {
     expect(quickAddTask(parseCommand('tomorrow 9am', domains, projects, { now, zone: 'cairo' }), 'tomorrow 9am').title).toBe('tomorrow 9am')
+  })
+})
+
+// P7e A5: "Stretch every day 7am" used to land as a one-off titled "Stretch every day".
+describe('repeats typed in the bar (P7e A5)', () => {
+  const monday = new Date('2026-10-12T07:00:00Z') // Mon 12 Oct, 10:00 Cairo (UTC+3)
+  const tuesday = new Date('2026-10-13T07:00:00Z')
+  const p = (input: string, now = monday) => parseCommand(input, domains, projects, { now, zone: 'cairo' })
+
+  it('sets the rule and leaves the title; a passed time starts tomorrow', () => {
+    expect(p('Stretch every day 7am')).toMatchObject({ title: 'Stretch', recurrence: 'FREQ=DAILY', dueAt: '2026-10-13T04:00:00.000Z', dueTimed: true })
+  })
+
+  it('a weekday rule starts on its own day, at the typed time', () => {
+    expect(p('Gym every monday 6pm')).toMatchObject({ title: 'Gym', recurrence: 'FREQ=WEEKLY;BYDAY=MO', dueAt: '2026-10-12T15:00:00.000Z' })
+    expect(p('Gym every monday 6pm', tuesday).dueAt).toBe('2026-10-19T15:00:00.000Z')
+    expect(p('Review every mon, fri', tuesday)).toMatchObject({ title: 'Review', recurrence: 'FREQ=WEEKLY;BYDAY=MO,FR', dueAt: '2026-10-16T06:00:00.000Z', dueTimed: false })
+  })
+
+  it('no date: from today, first thing (not timed — no block)', () => {
+    expect(p('Water plants every 2 weeks')).toMatchObject({ title: 'Water plants', recurrence: 'FREQ=WEEKLY;INTERVAL=2', dueAt: '2026-10-12T06:00:00.000Z', dueTimed: false })
+    expect(p('Pay rent every month #home')).toMatchObject({ title: 'Pay rent', recurrence: 'FREQ=MONTHLY', domainId: 'd2' })
+    expect(p('every weekday standup 9am').title).toBe('standup')
+    expect(p('every other week call grandma').recurrence).toBe('FREQ=WEEKLY;INTERVAL=2')
+  })
+
+  it('only "every …" — a bare "weekly" and other "every"s stay words', () => {
+    expect(p('Weekly review')).toMatchObject({ title: 'Weekly review', recurrence: null, dueAt: null })
+    expect(p('every time it rains')).toMatchObject({ title: 'every time it rains', recurrence: null })
+    expect(p('read everything')).toMatchObject({ title: 'read everything', recurrence: null })
+  })
+
+  it('rides into the task', () => {
+    const typed = 'Stretch every day 7am'
+    expect(quickAddTask(p(typed), typed)).toMatchObject({ title: 'Stretch', recurrenceRule: 'FREQ=DAILY' })
+  })
+})
+
+// P7e A6 (audit p7e c3): "// include the VAT line" stayed in the title, and "<friday" left its "<".
+describe('// notes and <date (P7e A6)', () => {
+  const now = new Date('2026-10-12T07:00:00Z') // Mon 12 Oct, 10:00 Cairo
+  const p = (input: string) => parseCommand(input, domains, projects, { now, zone: 'cairo' })
+
+  it('// makes the rest the notes, read as written — its words are not tokens', () => {
+    expect(p('Send the quote tomorrow 3pm // include the VAT line')).toMatchObject({ title: 'Send the quote', notes: 'include the VAT line', dueTimed: true })
+    expect(p('call Omar // maybe tomorrow #shaheen !!')).toMatchObject({ title: 'call Omar', notes: 'maybe tomorrow #shaheen !!', dueAt: null, projectId: null, priority: null })
+    expect(p('plain line').notes).toBeNull()
+    expect(p('empty notes //').notes).toBeNull()
+  })
+
+  it('a link keeps its slashes', () => {
+    expect(p('read https://example.com/a//b').notes).toBeNull()
+  })
+
+  it('notes alone are structure: the line becomes a task with them', () => {
+    expect(hasStructure(p('idea for the site // a calmer hero'))).toBe(true)
+    const typed = 'Send the quote friday // include the VAT line'
+    expect(quickAddTask(p(typed), typed)).toMatchObject({ title: 'Send the quote', notes: 'include the VAT line' })
+  })
+
+  it('<date is the date, and the < leaves the title', () => {
+    expect(p('file taxes <friday')).toMatchObject({ title: 'file taxes', dueAt: '2026-10-16T09:00:00.000Z' })
+    expect(p('<friday file taxes').title).toBe('file taxes')
+    expect(p('a < b').title).toBe('a < b')
+  })
+})
+
+// P7e A10: the bar's first Esc hands the last recognised token back to the title.
+describe('tokens and ignore (P7e A10)', () => {
+  const now = new Date('2026-10-12T07:00:00Z')
+  const p = (input: string, ignore: string[] = []) => parseCommand(input, domains, projects, { now, zone: 'cairo', ignore })
+
+  it('lists the words each chip took, in line order (an unmatched #tag has no chip)', () => {
+    expect(p('call Omar tomorrow 3pm #shaheen').tokens).toEqual(['tomorrow 3pm', '#shaheen'])
+    expect(p('Sync every week !! *calls 30m #nowhere // agenda').tokens).toEqual(['every week', '!!', '*calls', '30m', '// agenda'])
+    expect(p('file taxes <friday').tokens).toEqual(['<friday'])
+    expect(p('buy milk').tokens).toEqual([])
+  })
+
+  it('ignored words stay in the title and set nothing', () => {
+    expect(p('call Omar tomorrow 3pm #shaheen', ['#shaheen'])).toMatchObject({ title: 'call Omar #shaheen', projectId: null, tokens: ['tomorrow 3pm'] })
+    const plain = p('Read Monday notes', ['Monday'])
+    expect(plain).toMatchObject({ title: 'Read Monday notes', dueAt: null, tokens: [] })
+    expect(hasStructure(plain)).toBe(false)
+    expect(p('Gym every monday 6pm', ['every monday'])).toMatchObject({ title: 'Gym every monday', recurrence: null, dueTimed: true })
+    expect(p('wow !! nice // later', ['// later', '!!'])).toMatchObject({ title: 'wow !! nice // later', priority: null, notes: null })
+  })
+})
+
+// P7e A19: a captured link stays the task's link (and out of the title and the token readers).
+describe('a link in the line (P7e A19)', () => {
+  const now = new Date('2026-10-12T07:00:00Z')
+  const p = (input: string) => parseCommand(input, domains, projects, { now, zone: 'cairo' })
+
+  it('leaves the title for the task link, its #fragment and digits read as nothing', () => {
+    expect(p('read https://example.com/2026/10/05/post#shaheen tomorrow')).toMatchObject({
+      title: 'read', url: 'https://example.com/2026/10/05/post#shaheen', projectId: null, dueAt: '2026-10-13T07:00:00.000Z',
+    })
+    expect(p('see https://example.com/a.').url).toBe('https://example.com/a')
+    expect(p('no link here').url).toBeNull()
+  })
+
+  it('a link alone is no structure (the Inbox reads it); with a date it lands as a task with its link', () => {
+    expect(hasStructure(p('https://example.com/article'))).toBe(false)
+    const typed = 'read https://example.com/a friday'
+    expect(quickAddTask(p(typed), typed)).toMatchObject({ title: 'read', externalRef: { source: 'link', url: 'https://example.com/a', id: expect.any(String) } })
+    expect(quickAddTask(p('https://example.com/a friday'), 'https://example.com/a friday').title).toBe('https://example.com/a')
+  })
+
+  it('is a chip Esc can hand back', () => {
+    expect(p('read https://example.com/a').tokens).toEqual(['https://example.com/a'])
+    expect(parseCommand('read https://example.com/a', domains, projects, { now, zone: 'cairo', ignore: ['https://example.com/a'] })).toMatchObject({ url: null, title: 'read https://example.com/a' })
   })
 })

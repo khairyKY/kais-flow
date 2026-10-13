@@ -2,22 +2,26 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
+import { useAreas } from '../areas/api'
+import { useLabels } from '../tasks/labels'
+import { EmojiText } from '../../components/EmojiText'
 import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
-import { captureText } from '../inbox/api'
-import { enrichTypedInboxItem, transcribeAudio } from '../capture/api'
+import { repeatLabel } from '../tasks/taskSheetMath'
+import { transcribeAudio } from '../capture/api'
 import { VOICE_ALLOWANCE_USED_UP, isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from '../capture/aiAllowance'
 import { appendDictation, micAction, pickMimeType } from '../capture/holdToTalk'
 import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
 import { useAuth } from '../auth/AuthProvider'
 import { hasStructure, parseCommand } from './parseCommand'
-import { addTypedTask } from './quickAdd'
+import { captureTyped } from './quickAdd'
 import { formatDueChip } from './dueChip'
+import { jumpTargets, matchJump, type JumpTarget } from './jump'
 import { CAPTURE_INPUT_ID, useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
-import { playSound } from '../../lib/sounds'
+import { linkLabel } from '../../lib/links'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
-import { Chip, KeyChip } from '../../components/kit'
+import { Chip, KeyChip, Segmented } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { pickPhotos, usePaperStore } from '../paper/paperStore'
 import { imageFiles } from '../paper/image'
@@ -33,37 +37,6 @@ const CHIP_BASE: React.CSSProperties = {
 }
 
 const PRIORITY_NAME: Record<number, string> = { 1: 'Critical', 2: 'High', 3: 'Medium' }
-
-// F3b (D-5 ruling, punch 59): Go-to lives inside ⌘K — type a view name, a jump row
-// appears; ↓ selects it, ↵ navigates. Plain ↵ still quick-adds. Parked surfaces
-// (Library) and dev routes are deliberately absent until they return. Journal is back in the sidebar (U-14).
-const JUMP_VIEWS: { name: string; label: string; to: string }[] = [
-  { name: 'today', label: 'Today', to: '/today' },
-  { name: 'inbox', label: 'Inbox', to: '/inbox' },
-  { name: 'tasks', label: 'Tasks', to: '/tasks' },
-  { name: 'calendar', label: 'Calendar', to: '/calendar' },
-  { name: 'projects', label: 'Projects', to: '/projects' },
-  { name: 'routines', label: 'Routines', to: '/routines' },
-  { name: 'review', label: 'Review', to: '/weekly-review' },
-  { name: 'focus', label: 'Focus', to: '/focus' },
-  { name: 'people', label: 'People', to: '/people' },
-  { name: 'journal', label: 'Journal', to: '/journal' },
-  { name: 'notebook', label: 'Notebook page', to: '/notebook' },
-  { name: 'activity', label: 'Activity', to: '/activity' },
-  { name: 'settings', label: 'Settings', to: '/settings' },
-  { name: 'search', label: 'Search', to: '/search' },
-  { name: 'herbarium', label: 'Herbarium', to: '/herbarium' },
-  { name: 'perennials', label: 'Perennials', to: '/perennials' },
-  { name: 'trash', label: 'Trash', to: '/trash' },
-]
-
-/** Unique-prefix match, ≥2 chars — "in" → Inbox, but "t" (today/tasks/trash) offers nothing. */
-function matchJumpView(input: string): (typeof JUMP_VIEWS)[number] | null {
-  const q = input.trim().toLowerCase()
-  if (q.length < 2) return null
-  const hits = JUMP_VIEWS.filter((v) => v.name.startsWith(q))
-  return hits.length === 1 ? hits[0] : null
-}
 
 /** The centre button is a plus that also records while held, so the phone sheet's first three opens
  * say what it does: tap to type · hold to talk. Counted per device. */
@@ -91,6 +64,10 @@ export function CommandBar() {
   const mobile = useIsMobile()
   const [text, setText] = useState('')
   const [jumpSelected, setJumpSelected] = useState(false)
+  /** Token words Esc handed back to the title (P7e A10) — read as plain words until the line is gone. */
+  const [ignored, setIgnored] = useState<string[]>([])
+  /** P7e A11 (Akiflow's ⌘2 "New Event"): what Enter makes of the line — a task (and the Inbox), or an event. */
+  const [kind, setKind] = useState<'task' | 'event'>('task')
   const [hint, setHint] = useState(false)
   const [dictation, setDictation] = useState<'off' | 'listening' | 'transcribing'>('off')
   const take = useRef<{ recorder: MediaRecorder; stream: MediaStream } | null>(null)
@@ -102,6 +79,8 @@ export function CommandBar() {
   const inputRef = useRef<HTMLInputElement>(null)
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
+  const { data: areas = [] } = useAreas()
+  const { labels } = useLabels()
   const uid = useAuth().session?.user.id
   // Paper capture 11a: pages saved offline wait on this device until they can be read.
   const waiting = usePaperStore((s) => s.waiting)
@@ -116,7 +95,6 @@ export function CommandBar() {
   }, [])
 
   // The phone sheet brings its own Esc/Back and scroll lock (kit BottomSheet).
-  useEscapeStack(open && !mobile, () => setOpen(false))
   useBodyScrollLock(open && !mobile)
 
   // ⌘K lives in AppLayout's hotkey effect (punch 5): keeping a copy here would double-fire —
@@ -132,6 +110,8 @@ export function CommandBar() {
     // A dismissed phone sheet keeps its half-typed draft (kit Bottom sheet: dismissing never
     // discards); the desktop bar starts fresh each time, as before.
     if (!mobile) setText('')
+    if (!mobile) setIgnored([])
+    setKind('task')
     setJumpSelected(false)
     // stopDictation only touches refs and setters.
   }, [open, mobile]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -139,11 +119,19 @@ export function CommandBar() {
   useEffect(() => () => stopDictation(false), []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // T-4: "10am" means 10:00 in Cairo on any device — the zone every date in the app renders in.
-  const parsed = useMemo(() => parseCommand(text, domains, projects, { zone: 'cairo' }), [text, domains, projects])
-  const jumpView = useMemo(() => matchJumpView(text), [text])
+  const parsed = useMemo(() => parseCommand(text, domains, projects, { zone: 'cairo', ignore: ignored }), [text, domains, projects, ignored])
+  // P7e A10 (Akiflow's Esc): the first Esc hands the last recognised token back to the title — its chip
+  // goes, its words stay — and with none left, Esc closes the bar.
+  useEscapeStack(open && !mobile, () => {
+    const last = parsed.tokens.at(-1)
+    if (last) setIgnored((words) => [...words, last])
+    else setOpen(false)
+  })
+  // P7e A9: the jump reaches every project, area and label too, not only the views.
+  const jumpView = matchJump(text, jumpTargets(projects, areas, labels.map((l) => l.name)))
   const closeBar = () => setOpen(false)
 
-  function jumpTo(view: NonNullable<ReturnType<typeof matchJumpView>>) {
+  function jumpTo(view: JumpTarget) {
     setOpen(false)
     navigate(view.to)
   }
@@ -151,21 +139,15 @@ export function CommandBar() {
   function submit(close: () => void) {
     const trimmed = text.trim()
     if (!trimmed) return
-    playSound('capture')
     // Written at once from the local parse (never waits on the network); then the AI's read fills in
     // whatever the typed tokens left empty, or decides where a plain line belongs (Kai 2026-10-07:
     // "every property is extracted… let the AI understand the intent and decide").
     // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture": the AI fills every typed
-    // capture after it lands anyway). Each landing says where it went — no silent landings.
-    if (hasStructure(parsed)) {
-      // The same rule as Tasks' quick add (./quickAdd): a typed time puts it on the calendar as a
-      // block, a date alone doesn't; "Added to Tomorrow · Shaheen" with Undo; the AI fills the rest.
-      addTypedTask(parsed, trimmed, parsed.projectMatch ?? parsed.domainMatch)
-    } else {
-      void enrichTypedInboxItem(captureText(trimmed), trimmed)
-      useToastStore.getState().push({ message: 'Added to Inbox' })
-    }
+    // capture after it lands anyway) — ./quickAdd captureTyped, shared with the tray (P7e A21).
+    captureTyped(parsed, trimmed, kind)
     setText('')
+    setIgnored([])
+    setKind('task')
     close()
   }
 
@@ -250,7 +232,22 @@ export function CommandBar() {
   // Same condition `submit()`'s gate uses — this chip promises what Enter will actually do,
   // so a priority/duration-only command (which now creates a task directly) can't still say
   // "→ Inbox (unfiled)" underneath it.
-  const unmatched = !hasStructure(parsed)
+  const unmatched = kind === 'task' && !hasStructure(parsed)
+  const asTask = kind === 'task' // priority, labels and notes are a task's: an event leaves them out
+  const kindSwitch = (
+    <Segmented
+      label="Add as"
+      value={kind}
+      onChange={(k) => {
+        setKind(k)
+        inputRef.current?.focus()
+      }}
+      options={[
+        { value: 'task', label: 'Task' },
+        { value: 'event', label: 'Event' },
+      ]}
+    />
+  )
 
   const field = (close: () => void, style?: React.CSSProperties) => (
     <input
@@ -260,6 +257,7 @@ export function CommandBar() {
       value={text}
       onChange={(e) => {
         setText(e.target.value)
+        if (!e.target.value.trim()) setIgnored([])
         setJumpSelected(false)
       }}
       // Paper capture: a pasted photo of notes opens the quick look instead of landing as text.
@@ -277,6 +275,9 @@ export function CommandBar() {
         } else if (e.key === 'ArrowUp' && jumpSelected) {
           e.preventDefault()
           setJumpSelected(false)
+        } else if ((e.metaKey || e.ctrlKey) && (e.key === '1' || e.key === '2')) {
+          e.preventDefault() // ⌘1 task · ⌘2 event (P7e A11)
+          setKind(e.key === '2' ? 'event' : 'task')
         } else if (e.key === 'Enter' && jumpSelected && jumpView) {
           e.preventDefault()
           jumpTo(jumpView)
@@ -358,13 +359,17 @@ export function CommandBar() {
                 {field(close, { width: '100%', minHeight: 'var(--touch-min)' })}
                 {text.trim() && (
                   <div className="kf-capture-chips">
+                    {kindSwitch}
                     {parsed.dueAt && <Chip tone="date">{formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}</Chip>}
+                    {parsed.recurrence && <Chip tone="date" icon={<Icon name="repeat" size={16} />}>{repeatLabel(parsed.recurrence)}</Chip>}
                     {matchChip && <Chip tone="project">{matchChip}</Chip>}
                     {parsed.durationMin != null && <Chip tone="duration">{formatDuration(parsed.durationMin)}</Chip>}
-                    {parsed.priority != null && <Chip tone="priority">{PRIORITY_NAME[parsed.priority]}</Chip>}
-                    {parsed.labels.map((l) => (
+                    {asTask && parsed.priority != null && <Chip tone="priority">{PRIORITY_NAME[parsed.priority]}</Chip>}
+                    {asTask && parsed.labels.map((l) => (
                       <Chip key={l}>*{l}</Chip>
                     ))}
+                    {asTask && parsed.notes && <Chip>{'// Notes'}</Chip>}
+                    {asTask && parsed.url && <Chip icon={<Icon name="link" size={16} />}>{linkLabel(parsed.url)}</Chip>}
                     {unmatched && <Chip tone="inbox">→ Inbox</Chip>}
                   </div>
                 )}
@@ -448,7 +453,10 @@ export function CommandBar() {
                 }}
               >
                 <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>Jump</span>
-                <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{jumpView.label}</span>
+                <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)' }}>
+                  <EmojiText text={jumpView.label} />
+                  {jumpView.kind && <span style={{ color: 'var(--ink-faint)' }}> · {jumpView.kind}</span>}
+                </span>
                 {/* Polish F2b (conductor decision 2026-09-26, J-17): shortcut hints are keycaps. */}
                 <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                   {jumpSelected ? (
@@ -468,12 +476,17 @@ export function CommandBar() {
                     {formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}
                   </span>
                 )}
+                {parsed.recurrence && (
+                  <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>
+                    ↻ {repeatLabel(parsed.recurrence)}
+                  </span>
+                )}
                 {parsed.durationMin != null && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)' }}>
                     {formatDuration(parsed.durationMin)}
                   </span>
                 )}
-                {parsed.priority != null && (() => {
+                {asTask && parsed.priority != null && (() => {
                   const color = priorityColor(parsed.priority) ?? 'var(--acc-terra)'
                   // High's tint is the contract's literal rgba(201,165,90,0.22); other priorities fall back to a computed tint.
                   const background = parsed.priority === 2 ? 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)' : `color-mix(in oklch, ${color} 20%, var(--paper-parchment))`
@@ -488,11 +501,13 @@ export function CommandBar() {
                     → {matchChip}
                   </span>
                 )}
-                {parsed.labels.map((l) => (
+                {asTask && parsed.labels.map((l) => (
                   <span key={l} style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>
                     *{l}
                   </span>
                 ))}
+                {asTask && parsed.notes && <span style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>{'// Notes'}</span>}
+                {asTask && parsed.url && <span style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>↗ {linkLabel(parsed.url)}</span>}
                 {unmatched && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-gold)', background: 'color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment))' }}>
                     → Inbox (unfiled)
@@ -513,7 +528,9 @@ export function CommandBar() {
                 'Transcribing…'
               ) : (
                 <>
-                  <KeyChip text="↵" size="sm" /> quick add
+                  {kindSwitch}
+                  <KeyChip text="↵" size="sm" /> {kind === 'event' ? 'add event' : 'quick add'}
+                  <KeyChip text="⌘2" size="sm" /> event
                 </>
               )}
             </div>

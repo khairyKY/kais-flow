@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { birthdayDue, birthdayOf, birthdayOn, birthdaysOn, type PersonFacts } from '../../../../supabase/functions/notify/birthday.ts'
+import { birthdayDue, birthdayGroups, birthdayOf, birthdayOn, birthdaysOn, type PersonFacts } from '../../../../supabase/functions/notify/birthday.ts'
 
 // Birthday notices (Tray and Notifications.dc.html 12k/12j): whose birthday is "today" on the user's
 // clock, read from the People page's Birthday fact, with "Last spoke N days ago".
@@ -71,6 +71,36 @@ describe('birthdaysOn — who, and when you last spoke, on the user’s clock', 
     expect(birthdaysOn([omar], late, '2026-07-17', 'Africa/Cairo')[0].lastSpokeDays).toBe(0)
     expect(birthdaysOn([omar], late, '2026-07-17', 'America/Los_Angeles')[0].lastSpokeDays).toBe(1)
     expect(birthdaysOn([omar], late, '2026-07-17', 'Asia/Tokyo')[0].lastSpokeDays).toBe(0)
+  })
+})
+
+describe('birthdayGroups — what 08:00 says: the day’s birthdays, then the ones a week out (P7 7b)', () => {
+  const omar = person('omar', { value: 'July 17' }, 'Omar')
+  const salma = person('salma', { date: '07-24' }, 'Salma')
+  const spoke = [
+    { person_id: 'salma', occurred_at: '2026-07-10T10:00:00Z' },
+    { person_id: 'salma', occurred_at: '2026-07-20T10:00:00Z' }, // after today: not "last spoke" yet
+  ]
+
+  it('today’s first, then the week-ahead one — "last spoke" counted to today, not to the birthday', () => {
+    expect(birthdayGroups([omar, salma], spoke, '2026-07-17', 'Africa/Cairo')).toEqual([
+      { inDays: 0, people: [{ id: 'omar', name: 'Omar', lastSpokeDays: null }] },
+      { inDays: 7, people: [{ id: 'salma', name: 'Salma', lastSpokeDays: 7 }] },
+    ])
+  })
+
+  it('only the day and exactly seven days before it; nothing else, no empty groups', () => {
+    expect(birthdayGroups([salma], spoke, '2026-07-17', 'Africa/Cairo').map((g) => g.inDays)).toEqual([7])
+    expect(birthdayGroups([salma], spoke, '2026-07-18', 'Africa/Cairo')).toEqual([])
+    expect(birthdayGroups([salma], spoke, '2026-07-16', 'Africa/Cairo')).toEqual([])
+    expect(birthdayGroups([omar, salma], spoke, '2026-07-01', 'Africa/Cairo')).toEqual([])
+  })
+
+  it('a 29 February birthday: a week before 1 March in other years, a week before the 29th in a leap year', () => {
+    const leapling = person('l', { value: 'February 29' }, 'Leila')
+    expect(birthdayGroups([leapling], [], '2027-02-22', 'Africa/Cairo').map((g) => g.inDays)).toEqual([7])
+    expect(birthdayGroups([leapling], [], '2028-02-22', 'Africa/Cairo').map((g) => g.inDays)).toEqual([7])
+    expect(birthdayGroups([leapling], [], '2028-02-23', 'Africa/Cairo')).toEqual([])
   })
 })
 

@@ -21,6 +21,17 @@ export function toastUndo(message: string, undo: () => void | Promise<void>) {
   })
 }
 
+/** ⌘Z / Ctrl+Z outside a field (P7e A3): the newest toast's Undo, as if its button were pressed.
+ * False when no toast is offering one. */
+export function undoLatest(): boolean {
+  const { toasts, dismiss } = useToastStore.getState()
+  const toast = toasts.findLast((t) => t.onUndo)
+  if (!toast) return false
+  dismiss(toast.id)
+  toast.onUndo!()
+  return true
+}
+
 // Non-undo action toasts, e.g. toastAction('Restored to Tasks', 'Jump there →', () => navigate('/tasks'))
 export function toastAction(message: string, label: string, run: () => void) {
   useToastStore.getState().push({ message, action: { label, run } })

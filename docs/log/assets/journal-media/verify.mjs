@@ -4,6 +4,8 @@
 // REST, Storage and the `transcribe` function. Chrome's fake mic feeds the voice sheet.
 // v1.1.1 (journal hygiene) adds: a photo-only day counts as written (Day N, This week's "kept", Kept),
 // and the photo's × is a ≥44px target at 360/390/430 that stays inside its own photo.
+// v1.1.2 (phone taps) adds: the card footer's links and the thought editor's Cancel/Save are ≥44px targets that
+// meet nothing (measureTaps).
 //   node verify.mjs <outDir> [baseUrl] [playwright-core path]
 import fs from 'node:fs'
 import path from 'node:path'
@@ -83,7 +85,7 @@ const browser = await chromium.launch({
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
 const DESKTOP = { viewport: { width: 1280, height: 800 } }
 
-async function open(theme, view, { uploadFails = false, entries = null } = {}) {
+async function open(theme, view, { uploadFails = false, entries = null, quotes = [] } = {}) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', permissions: ['microphone'] })
   await ctx.addInitScript(([t, sess, uid]) => {
     localStorage.setItem('kf_theme', t)
@@ -95,6 +97,7 @@ async function open(theme, view, { uploadFails = false, entries = null } = {}) {
     rows: {
       app_settings: [{ ...SETTINGS }],
       journal_entries: entries ?? [{ id: ENTRY, user_id: UID, body: 'Slow morning.', entry_date: '2026-10-12', mood: null, transcript: null, media_paths: [], gratitude: [], deleted_at: null, created_at: '2026-10-12T05:30:00.000Z', updated_at: '2026-10-12T05:30:00.000Z' }],
+      quotes,
     },
     writes: [],
     uploads: [],
@@ -276,9 +279,55 @@ const measureX = () => {
   }
 }
 
+// v1.1.2 (phone taps): small text controls whose tap area grows to 44 (kf-hit-min). Every px around them goes through
+// elementFromPoint: each control's area must be one solid ≥44×44 rectangle (a notch or an overlap would break it), no
+// two may meet, and no px of a nearby control's drawn box (a photo, its ×, the textarea, a mood chip) may answer to one.
+const measureTaps = (labels) => {
+  const main = document.querySelector('.app-main-content')
+  const els = [...main.querySelectorAll('button, a, input, textarea, span')]
+  const targets = labels.map((l) => els.find((e) => e.textContent.trim() === l && (e.tagName === 'BUTTON' || getComputedStyle(e).cursor === 'pointer')))
+  targets[0].scrollIntoView({ block: 'center' })
+  // The quote card is turned −0.4°, and a turned rectangle sampled on a px grid comes out stair-stepped. A turn moves
+  // nothing on the card relative to anything else on it, so measure it unturned (put back at the end).
+  const turned = []
+  for (let p = targets[0].parentElement; p && p !== main; p = p.parentElement) if (p.style.transform) turned.push([p, p.style.transform])
+  for (const [p] of turned) p.style.transform = 'none'
+  const drawn = targets.map((t) => t.getBoundingClientRect())
+  const near = els.filter((e) => !targets.some((t) => t === e || t.contains(e) || e.contains(t)) && (e.tagName !== 'SPAN' || getComputedStyle(e).cursor === 'pointer'))
+    .map((e) => [e, e.getBoundingClientRect()]).filter(([, r]) => r.width && r.height)
+  const box = targets.map(() => ({ x0: Infinity, y0: Infinity, x1: -Infinity, y1: -Infinity, n: 0 }))
+  const stolen = new Set()
+  for (let x = Math.floor(Math.min(...drawn.map((r) => r.left))) - 40; x <= Math.max(...drawn.map((r) => r.right)) + 40; x++)
+    for (let y = Math.floor(Math.min(...drawn.map((r) => r.top))) - 40; y <= Math.max(...drawn.map((r) => r.bottom)) + 40; y++) {
+      const h = document.elementFromPoint(x + 0.5, y + 0.5)
+      const i = targets.findIndex((t) => h && (t === h || t.contains(h)))
+      if (i < 0) continue
+      const b = box[i]
+      b.x0 = Math.min(b.x0, x); b.y0 = Math.min(b.y0, y); b.x1 = Math.max(b.x1, x); b.y1 = Math.max(b.y1, y); b.n++
+      for (const [e, r] of near) if (x + 0.5 > r.left && x + 0.5 < r.right && y + 0.5 > r.top && y + 0.5 < r.bottom) stolen.add(`${e.tagName.toLowerCase()} "${(e.getAttribute('aria-label') ?? e.textContent).trim().slice(0, 20)}"`)
+    }
+  for (const [p, t] of turned) p.style.transform = t
+  const meet = box.some((a, i) => box.some((b, j) => i < j && a.x0 <= b.x1 && b.x0 <= a.x1 && a.y0 <= b.y1 && b.y0 <= a.y1))
+  return {
+    taps: targets.map((t, i) => {
+      const b = box[i], w = b.x1 - b.x0 + 1, h = b.y1 - b.y0 + 1
+      return { label: labels[i], drawnW: Math.round(drawn[i].width * 10) / 10, drawnH: Math.round(drawn[i].height * 10) / 10, w, h, solid: b.n === w * h }
+    }),
+    meet, stolen: [...stolen], near: near.length,
+  }
+}
+const QUOTE = { id: '80000000-0000-4000-8000-000000000003', user_id: UID, text: 'Fear is the mind-killer.', author: 'Herbert', source: 'Dune', tags: [], book_id: null, page: '8', created_at: '2026-09-01T09:00:00Z', updated_at: '2026-09-01T09:00:00Z' }
+const tapChecks = (name, what, m, drawnOk) => {
+  const show = m.taps.map((t) => `${t.label} drawn ${t.drawnW}×${t.drawnH} hit ${t.w}×${t.h}${t.solid ? '' : ' (notched)'}`).join(' · ')
+  check(`${name} ${what}: still drawn as before`, m.taps.every(drawnOk), show)
+  check(`${name} ${what}: each a solid ≥44×44 tap area`, m.taps.every((t) => t.w >= 44 && t.h >= 44 && t.solid), show)
+  check(`${name} ${what}: no two tap areas meet`, !m.meet)
+  check(`${name} ${what}: nearby controls keep every px of their own (${m.near} checked)`, m.stolen.length === 0, m.stolen.join(', '))
+}
+
 for (const width of [360, 390, 430]) {
   const name = `phone-${width}`
-  const { ctx, page, errors } = await open('day', { ...PHONE, viewport: { width, height: 844 } }, { entries: hygieneRows() })
+  const { ctx, page, errors } = await open('day', { ...PHONE, viewport: { width, height: 844 } }, { entries: hygieneRows(), quotes: [QUOTE] })
   check(`${name} photo-only yesterday is a day written: "Journal · Day 2"`, await until(async () => (await page.getByText('Journal · Day 2', { exact: true }).count()) === 1), await page.getByText(/^Journal · Day/).allInnerTexts().catch(() => ''))
   const thumbs = page.locator('a[aria-label="Open photo"] img')
   await until(async () => (await thumbs.count()) === 2 && (await thumbs.evaluateAll((l) => l.every((i) => i.complete && i.naturalWidth > 0))))
@@ -289,7 +338,25 @@ for (const width of [360, 390, 430]) {
   check(`${name} photo × hit area ≥44px`, m.w >= 44 && m.h >= 44, m.hit)
   check(`${name} photo × hit area stays inside its own photo`, m.outside === 0, `${m.outside} px outside`)
   check(`${name} next photo (${m.gap}px away), the words above and the photo itself keep their taps`, m.nextOwn && m.aboveOwn && m.imageOwn, JSON.stringify({ nextOwn: m.nextOwn, aboveOwn: m.aboveOwn, imageOwn: m.imageOwn }))
+  // The entry's Delete sits 4px above its words: no tap on the words may land on Delete (kf-hit-above).
+  const del = await page.evaluate(() => {
+    const b = document.querySelector('button[aria-label^="Delete "][aria-label$=" entry"]')
+    const ta = b?.closest('[id^="journal-"]')?.querySelector('textarea')
+    if (!b || !ta) return { found: false }
+    ta.scrollIntoView({ block: 'center' })
+    const r = ta.getBoundingClientRect()
+    let stolen = 0
+    for (let y = Math.ceil(r.top); y < r.top + 16; y++) for (let x = Math.ceil(r.left); x < r.right; x += 4) if (document.elementFromPoint(x + 0.5, y + 0.5) === b) stolen++
+    return { found: true, stolen }
+  })
+  check(`${name} a tap on an entry's words never lands on its Delete`, del.found && del.stolen === 0, JSON.stringify(del))
   await shot(page, `${name}-3-photo-x`)
+  // The footer sits 23px under the photos; its links are drawn 18px tall and 12px apart.
+  tapChecks(name, 'card footer', await page.evaluate(measureTaps, ['＋ New entry', '🎤 Talk', '＋ Photo']), (t) => t.drawnH === 18)
+  // Cancel and Save, 6px apart, under the thought's textarea: already 44 tall, narrower than 44.
+  await page.getByRole('button', { name: '＋ add a thought' }).click()
+  await page.getByRole('button', { name: 'Cancel', exact: true }).waitFor({ timeout: 5000 }).catch(() => {})
+  tapChecks(name, 'thought editor (Cancel, Save)', await page.evaluate(measureTaps, ['Cancel', 'Save']), (t) => t.drawnW < 44 && t.drawnH >= 44)
   check(`${name} no page or console errors`, errors.length === 0, errors.slice(0, 3).join(' | '))
   await ctx.close()
 }

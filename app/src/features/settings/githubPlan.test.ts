@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 // The edge functions' pure GitHub logic — Deno-free on purpose so it can be tested here.
-import { DEFAULT_RULES, landing, parseRepos, planSync, readRules, searchQueries, staleFirst, toPayload, type GhIssue, type PendingRow } from '../../../../supabase/functions/_shared/github.ts'
+import { DEFAULT_RULES, landing, parseRepos, planSync, readRules, searchQueries, staleFirst, taskRechecks, ticksOff, toPayload, type GhIssue, type GithubTaskRef, type PendingRow } from '../../../../supabase/functions/_shared/github.ts'
 
 const issue = (n: number, over: Partial<GhIssue> = {}): GhIssue => ({
   node_id: `I_${n}`,
@@ -146,5 +146,35 @@ describe('planSync', () => {
     expect(plan.recheck).toHaveLength(20)
     expect(plan.recheck[0].id).toBe('row-2') // never checked
     expect(plan.recheck.some((r) => r.id === 'row-1')).toBe(false) // checked most recently → waits
+  })
+})
+
+describe('GitHub tasks whose issue left the results (A20)', () => {
+  const synced = (n: number, over: Partial<GithubTaskRef> = {}) => ({
+    id: `task-${n}`, title: `Issue ${n}`,
+    external_ref: { source: 'github' as const, id: `I_${n}`, url: `https://github.com/acme/app/issues/${n}`, repo: 'acme/app', number: n, synced: true, ...over },
+  })
+  // inbox/api fileToTask: a letter filed by hand keeps only the node id and the link.
+  const byHand = (n: number, url = `https://github.com/acme/web/issues/${n}`) => ({ id: `task-${n}`, title: `Issue ${n}`, external_ref: { source: 'github' as const, id: `I_${n}`, url } })
+
+  it('rechecks the hand-filed ones too, reading repo and number from the link', () => {
+    const rows = taskRechecks([synced(1), byHand(2), byHand(3)], new Set(['I_3'])) // #3 is still in the results
+    expect(rows.map((r) => [r.id, r.payload?.repo, r.payload?.number])).toEqual([['task-1', 'acme/app', 1], ['task-2', 'acme/web', 2]])
+    expect(rows[1].external_ref).toEqual(byHand(2).external_ref) // the stored ref is written back as it was
+  })
+
+  it('skips a task whose ref names no issue, and keeps the least-recently-checked order', () => {
+    const odd = [byHand(4, 'https://example.com/acme/web/issues/4'), byHand(5, 'https://github.com/acme/web/pull/5'), { ...byHand(6), external_ref: { source: 'github' as const, id: 'I_6' } }]
+    expect(taskRechecks(odd, new Set())).toEqual([])
+    const rows = taskRechecks([synced(7, { checked_at: '2026-10-12T00:00:00Z' }), byHand(8)], new Set())
+    expect(rows.map((r) => r.id)).toEqual(['task-8', 'task-7']) // never checked first
+  })
+
+  it("a close ticks any of them off; a gone issue only the sync's own", () => {
+    expect(ticksOff({ synced: true }, 'closed on GitHub')).toBe(true)
+    expect(ticksOff({}, 'closed on GitHub')).toBe(true)
+    expect(ticksOff({ synced: true }, 'gone from GitHub')).toBe(true)
+    expect(ticksOff({}, 'gone from GitHub')).toBe(false) // a 404 can be lost access; a hand-filed task waits
+    expect(ticksOff({ synced: true }, 'open')).toBe(false)
   })
 })

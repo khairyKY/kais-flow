@@ -5,7 +5,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
 import { BackLink, TapeCard, Toggle } from '../../components/kit'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
-import { createEvent, scheduleTask, updateEvent } from './api'
+import { createEvent, scheduleTask, setEventRepeat, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { createTask, setRecurrence, toggleTop3, setSomeday, useTasks } from '../tasks/api'
@@ -19,6 +19,8 @@ import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { appZone } from '../../lib/appZone'
+import { linkRef } from '../../lib/links'
+import type { CalendarEvent } from '../../lib/types'
 
 // ── Editor.dc.html 2a/2b — the compact popover a click on the grid opens — and 1b/1c/1d, the full
 // create page its "More options ↗" lands on (CreatePage, route /new: the sidebar folds to the rail,
@@ -213,7 +215,13 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     if (diffMinutes(newStart, endTime) <= 0) setEndTime(plus(newStart, 30))
   }
 
+  // "every week" in the title fills Repeat (P7e A5) when the typed rule changes; a pick stands till then.
+  const typedRule = useRef<string | null>(null)
   useEffect(() => {
+    if ((parsed?.recurrence ?? null) !== typedRule.current) {
+      typedRule.current = parsed?.recurrence ?? null
+      if (typedRule.current) setRepeat(typedRule.current)
+    }
     if (parsed?.dueAt && !dateTouched) applyParsedTime(new Date(parsed.dueAt))
     if (parsed?.priority != null && !priorityTouched) setPriority(parsed.priority)
     if (parsed?.projectId && !projectTouched) { setProjectId(parsed.projectId); setAreaId(null) }
@@ -238,6 +246,14 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     kind, title, notes, date, startTime, endTime, allDay, busy, color, priority, projectId, areaId, holdsTaskId, reminderOffset, repeat, labels: allLabels, top3, someday, slot: fromSlot, dateTouched,
   })
 
+  /** An event or plain block just created: Free, and its repeat (p7e A13: set while creating, not only
+   * afterwards in the block menu — the block menu's own setEventRepeat, Undo and all). */
+  function makeEvent(event: CalendarEvent) {
+    const made = busy ? event : { ...event, busy: false }
+    if (!busy) updateEvent(event, { busy: false })
+    if (repeat) setEventRepeat(made, repeat)
+  }
+
   function submit(from?: HTMLElement) {
     seedPlant(from, motion) // Motion 5f — every calendar create lands with the drop+puff
     if (kind === 'task') {
@@ -245,7 +261,9 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
       const task = createTask({
         // "the title types it, the fields catch it": what the parse caught leaves the title.
         title: parsed?.title.trim() || title.trim() || 'Untitled task',
-        notes: notes.trim() || null,
+        // The title's `// notes` and link leave it (the shared parse, P7e A6/A19): they land here, not nowhere.
+        notes: notes.trim() || parsed?.notes || null,
+        ...(parsed?.url ? { externalRef: linkRef(parsed.url) } : null),
         dueAt,
         // A task is in a project OR an area (0052); both go in with the row, not as later writes.
         projectId: areaId ? null : projectId,
@@ -264,16 +282,14 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     } else if (kind === 'event') {
       const startsAt = allDay ? `${date}T00:00:00.000Z` : cairoToIso(date, startTime)
       const endsAt = allDay ? nextDayIso(date) : cairoToIso(date, endTime)
-      const event = createEvent(title.trim() || 'New event', startsAt, endsAt, 'event', color, allDay)
-      if (!busy) updateEvent(event, { busy: false })
+      makeEvent(createEvent(title.trim() || 'New event', startsAt, endsAt, 'event', color, allDay))
     } else {
       const startsAt = cairoToIso(date, startTime)
       const endsAt = cairoToIso(date, endTime)
       if (holdsTask) {
         scheduleTask(holdsTask, startsAt, endsAt)
       } else {
-        const event = createEvent(title.trim() || 'Time block', startsAt, endsAt, 'time_block', color)
-        if (!busy) updateEvent(event, { busy: false })
+        makeEvent(createEvent(title.trim() || 'Time block', startsAt, endsAt, 'time_block', color))
       }
     }
     onClose()
@@ -505,6 +521,15 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
       {extra}
     </div>
   )
+  const repeatField = (
+    <div>
+      <FLabel>Repeat</FLabel>
+      <PickField label="Repeat" onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setRepeatAt({ x: r.left, y: r.bottom + 4 }) }}>
+        {repeat ? repeatLabel(repeat) : "Doesn't repeat"}
+      </PickField>
+      <FHelp>daily · weekly · monthly · custom rule</FHelp>
+    </div>
+  )
   const showsAs = (
     <div>
       <FLabel>Shows you as</FLabel>
@@ -549,13 +574,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
             <Select value={reminderOffset} onChange={setReminderOffset} options={REMINDER_OPTIONS} ariaLabel="Reminder" style={FIELD} />
             <FHelp>{reminderOffset ? 'sends a push · needs a due time ✓' : 'no push'}</FHelp>
           </div>
-          <div>
-            <FLabel>Repeat</FLabel>
-            <PickField label="Repeat" onClick={(e) => { const r = e.currentTarget.getBoundingClientRect(); setRepeatAt({ x: r.left, y: r.bottom + 4 }) }}>
-              {repeat ? repeatLabel(repeat) : "Doesn't repeat"}
-            </PickField>
-            <FHelp>daily · weekly · monthly · custom rule</FHelp>
-          </div>
+          {repeatField}
           <div>
             <FLabel>Labels</FLabel>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
@@ -604,11 +623,12 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         </label>
       </div>
       {showsAs}
+      {/* p7e A13: Repeat while creating — Editor 1b's field, no 1c drawing for it (flagged for Phase C). */}
+      {repeatField}
+      <div />
       {colorField()}
-      <div style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 12%, transparent)', borderRadius: 'var(--radius-input)', padding: '9px 12px' }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--acc-hydrangea)', flex: 'none' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>mirrors quietly to Google Calendar · never shown as its own UI</span>
-      </div>
+      {/* deviation(2026-10-13 p7e A16): 1c's "mirrors quietly to Google Calendar" line is gone —
+          nothing syncs (Settings: Google Calendar "Coming soon"). Back when the sync is built. */}
     </>,
   )
   const pageBlock = (
@@ -624,7 +644,9 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
             <FHelp>{holdsTask?.duration_min ? "pre-filled from the task's duration" : 'or set the times above'}</FHelp>
           </div>
           {showsAs}
-          <div />
+          {/* p7e A13: Repeat while creating (Editor 1b's field; none drawn on 1d). A held task's block
+              repeats through its task, never on the calendar. */}
+          {holdsTask ? <div /> : repeatField}
           {colorField('lavender by default — a blush edge marks its task')}
         </>,
       )}

@@ -8,6 +8,7 @@ import {
   finishedPayload,
   liveSeeds,
   loopDayKey,
+  loopNow,
   morningPreselection,
   ritualFinishedToday,
   ritualsFinishedToday,
@@ -16,6 +17,8 @@ import {
   seededTaskIds,
   top3Diff,
 } from './loopDay'
+import { loopDay } from '../../../../supabase/functions/_shared/zone.ts'
+import { scheduleTomorrow } from '../../lib/dateShortcuts'
 import type { ActivityLogEntry, Task } from '../../lib/types'
 
 // Every instant is written in UTC with its Cairo wall clock beside it, so these pass under any
@@ -58,6 +61,37 @@ describe('loopDayKey — the Cairo day, turning over at 04:00', () => {
     expect(loopDayKey(at('2026-10-29T21:30:00Z'))).toBe('2026-10-29') // Thu 23:30 EET (again)
     expect(loopDayKey(at('2026-10-30T01:30:00Z'))).toBe('2026-10-29') // Fri 03:30 EET
     expect(loopDayKey(at('2026-10-30T02:30:00Z'))).toBe('2026-10-30') // Fri 04:30 EET
+  })
+})
+
+describe('loopNow — the day you are still living, for date math (A29)', () => {
+  it('from 04:00 it is now itself', () => {
+    const n = at('2026-09-27T05:00:00Z') // Sun 08:00
+    expect(loopNow(n)).toBe(n)
+  })
+  it('before 04:00 it is 23:59:59 of the day before, on the user’s clock', () => {
+    expect(loopNow(at('2026-09-26T21:30:00Z')).toISOString()).toBe('2026-09-26T20:59:59.000Z') // Sun 00:30 → Sat 23:59:59 EEST
+    expect(loopNow(at('2026-12-31T22:30:00Z')).toISOString()).toBe('2026-12-31T21:59:59.000Z') // Fri 1 Jan 00:30 EET → Thu 31 Dec
+  })
+  it('a Shut down at 00:30 rolls Tomorrow to the morning it seeds, not the one after', () => {
+    const n = at('2026-09-26T21:30:00Z') // Sun 00:30 Cairo, still Saturday's loop day
+    expect(scheduleTomorrow(n)).toBe('2026-09-28T06:00:00.000Z') // the calendar's tomorrow: Monday 09:00
+    expect(scheduleTomorrow(loopNow(n))).toBe('2026-09-27T06:00:00.000Z') // Sunday 09:00 = seedTargetDate's morning
+    expect(seedTargetDate(n)).toBe('2026-09-27')
+  })
+})
+
+describe('loopDay — the same rule notify reads (_shared/zone.ts), in any zone', () => {
+  it('matches loopDayKey on the user’s clock', () => {
+    for (const iso of ['2026-09-26T18:00:00Z', '2026-09-26T21:30:00Z', '2026-09-27T00:59:00Z', '2026-09-27T01:00:00Z', '2026-04-24T00:30:00Z', '2026-10-29T21:30:00Z']) {
+      expect(loopDay(at(iso), 'Africa/Cairo')).toBe(loopDayKey(at(iso)))
+    }
+  })
+  it('Tokyo and Los Angeles turn over at their own 04:00', () => {
+    expect(loopDay(at('2026-10-12T16:30:00Z'), 'Asia/Tokyo')).toBe('2026-10-12') // Tue 01:30 JST → Mon
+    expect(loopDay(at('2026-10-12T19:00:00Z'), 'Asia/Tokyo')).toBe('2026-10-13') // Tue 04:00 JST
+    expect(loopDay(at('2026-10-13T10:30:00Z'), 'America/Los_Angeles')).toBe('2026-10-12') // Tue 03:30 PDT → Mon
+    expect(loopDay(at('2026-10-13T11:00:00Z'), 'America/Los_Angeles')).toBe('2026-10-13') // Tue 04:00 PDT
   })
 })
 
