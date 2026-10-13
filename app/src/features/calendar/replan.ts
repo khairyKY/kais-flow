@@ -47,9 +47,12 @@ export function railBuckets(tasks: readonly Task[], events: readonly CalendarEve
     if (task.status !== 'todo' || task.someday || task.deleted_at) continue
     const own = latestFirst(byTask.get(task.id) ?? [])
     if (own.some((e) => blockLastDay(e) >= today)) continue
+    // In a Time slot (0073): planned like a block — unless the slot's day went by unfinished.
+    const slotted = task.slot_id && task.scheduled_start ? cairoDateKey(new Date(task.scheduled_start)) : null
+    if (slotted && slotted >= today) continue
     const block = own[0] ?? null
     const due = task.due_at ? cairoDateKey(new Date(task.due_at)) : null
-    const missed = [due, block && blockLastDay(block)].filter((d): d is string => !!d && d < today).sort().at(-1)
+    const missed = [due, block && blockLastDay(block), slotted].filter((d): d is string => !!d && d < today).sort().at(-1)
     if (missed) overdue.push({ task, block, late: dayDiff(missed, today) })
     else if (due === today || isTop3Today(task, now)) todays.push({ task, block: null, late: 0 })
   }

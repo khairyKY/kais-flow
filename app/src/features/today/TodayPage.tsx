@@ -10,7 +10,7 @@ import { buildListBindings } from '../tasks/listShortcuts'
 import { formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
-import { useCalendarEvents } from '../calendar/api'
+import { slotTitleOf, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
@@ -922,7 +922,10 @@ const NOTEBOOK_KEY = ['⇧', 'N']
 /** A Top 3 task's block today, as its row's meta ("13:30–15:00 · 1H30M") — Up next skips it. */
 function blockMetaFor(t: Task, events: CalendarEvent[], now: Date): string[] | undefined {
   const b = blockOf(t.id, events, now)
-  return b ? blockMeta(b, now) : undefined
+  if (b) return blockMeta(b, now)
+  // In a Time slot (0073) the task has no block of its own: "in Code block · 10:00".
+  const slot = t.slot_id && t.scheduled_start ? slotTitleOf(t) : null
+  return slot ? [`in ${slot} · ${cairoTimeKey(new Date(t.scheduled_start!))}`] : undefined
 }
 
 /** Days past its due date on the user's calendar (lib/appZone) — 0 = due today, null = no date. */

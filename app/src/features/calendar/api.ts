@@ -15,6 +15,8 @@ import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
 import { alignToRule, detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
 import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
 import { repeatLabel } from './blockMenuSpec'
+import { zoneToIso } from './eventTime'
+import { intoSlot, OUT_OF_SLOT, slotTasks } from './slots'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -53,8 +55,68 @@ function touchTaskSchedule(taskId: string, start: string | null, end: string | n
   const task = cachedTask(taskId)
   if (!task) return
   const follows = !!start && dueFollows(task.due_at, start, new Date())
-  writeRow('tasks', { ...task, scheduled_start: start, scheduled_end: end, ...(follows ? { due_at: start } : null) })
+  // A block of its own takes a task out of any Time slot (0073): it's here now, not there.
+  writeRow('tasks', { ...task, scheduled_start: start, scheduled_end: end, ...(task.slot_id ? { slot_id: null, slot_date: null } : null), ...(follows ? { due_at: start } : null) })
   if (follows) logActivity('task.rescheduled', 'task', taskId, { due_at: start })
+}
+
+// ── Time Slots (migration 0073, features/calendar/slots.ts): a Time block holds tasks. ──
+
+const cachedTasks = (): Task[] => queryClient.getQueryData<Task[]>(['tasks']) ?? []
+
+/** Writes `patch` onto these tasks; the Undo gives each its slot and times back. */
+function restamp(tasks: readonly Task[], patch: (t: Task) => Partial<Task>): () => void {
+  const prior = tasks.map((t) => ({ ...t }))
+  for (const t of tasks) writeRow('tasks', { ...t, ...patch(t) })
+  return () => {
+    for (const p of prior) {
+      const now = cachedTask(p.id) ?? p
+      writeRow('tasks', { ...now, slot_id: p.slot_id ?? null, slot_date: p.slot_date ?? null, scheduled_start: p.scheduled_start, scheduled_end: p.scheduled_end })
+    }
+  }
+}
+
+/** A slot occurrence moved or resized to `next` (for one dragged out of a series, its detached copy):
+ * the tasks it held go with it. Returns their Undo. */
+function followSlot(prev: CalendarEvent, next: CalendarEvent): () => void {
+  if (prev.type !== 'time_block') return () => {}
+  return restamp(slotTasks(prev, cachedTasks()), () => intoSlot(next))
+}
+
+/** A slot occurrence going away lets go of its tasks: unscheduled, back in the rail. Their Undo. */
+function releaseSlot(slot: CalendarEvent): () => void {
+  if (slot.type !== 'time_block') return () => {}
+  return restamp(slotTasks(slot, cachedTasks()), () => OUT_OF_SLOT)
+}
+
+/** A task dropped on a Time block goes IN it (Akiflow's slots): the slot's day and times, and no
+ * block of its own — one it had (a missed one) comes off. A missed due date follows, as for a
+ * block. One toast, one Undo. */
+export function putInSlotWithUndo(task: Task, slot: CalendarEvent): void {
+  const before = cachedTask(task.id) ?? task
+  const blocks = liveBlocks(task.id)
+  for (const b of blocks) deleteEvent(b)
+  const fields = intoSlot(slot)
+  const follows = dueFollows(before.due_at, slot.starts_at, new Date())
+  writeRow('tasks', { ...(cachedTask(task.id) ?? before), ...fields, ...(follows ? { due_at: slot.starts_at } : null) })
+  logActivity('task.scheduled', 'task', task.id, { slot_id: fields.slot_id, slot_date: fields.slot_date })
+  toastUndo(`In ${slot.title} · ${task.title}`, () => {
+    blocks.forEach(restoreEvent)
+    const now = cachedTask(task.id) ?? before
+    writeRow('tasks', { ...now, slot_id: before.slot_id ?? null, slot_date: before.slot_date ?? null, due_at: before.due_at, scheduled_start: before.scheduled_start, scheduled_end: before.scheduled_end })
+  })
+}
+
+/** ⋯ → Out of the slot: back to the rail, unscheduled, with Undo. */
+export function outOfSlotWithUndo(task: Task): void {
+  const t = cachedTask(task.id) ?? task
+  toastUndo(`Out of the slot · ${t.title}`, restamp([t], () => OUT_OF_SLOT))
+  logActivity('task.unscheduled', 'task', t.id, { slot_id: t.slot_id ?? null })
+}
+
+/** The name of the slot holding a task ("in Code block · 10:00"), read from the cache. */
+export function slotTitleOf(task: Pick<Task, 'slot_id'>): string | null {
+  return task.slot_id ? (cachedRows().find((e) => e.id === task.slot_id)?.title ?? null) : null
 }
 
 /** The task's blocks on the calendar now. */
@@ -81,9 +143,11 @@ function detach(occ: CalendarEvent, startsAt: string, endsAt: string, allDay: bo
   writeRow('calendar_events', withExdate(row, occ.starts_at))
   writeRow('calendar_events', copy)
   logActivity('calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, series_id: row.id })
+  const undoTasks = followSlot(occ, copy)
   return () => {
     writeRow('calendar_events', withoutExdate(seriesOf(occ) ?? row, occ.starts_at))
     writeRow('calendar_events', copy, 'delete')
+    undoTasks()
   }
 }
 
@@ -157,7 +221,7 @@ function applyMoves(task: Task, moves: BlockMoves, allDay = false): { event: Cal
     undo: () => {
       steps.reverse().forEach((step) => step())
       const now = cachedTask(task.id)
-      if (now) writeRow('tasks', { ...now, due_at: before.due_at, scheduled_start: before.scheduled_start, scheduled_end: before.scheduled_end, top3: before.top3, top3_rank: before.top3_rank })
+      if (now) writeRow('tasks', { ...now, due_at: before.due_at, scheduled_start: before.scheduled_start, scheduled_end: before.scheduled_end, top3: before.top3, top3_rank: before.top3_rank, ...(before.slot_id ? { slot_id: before.slot_id, slot_date: before.slot_date ?? null } : null) })
     },
   }
 }
@@ -211,9 +275,14 @@ export function updateEvent(event: CalendarEvent, patch: Partial<CalendarEvent>)
 export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt: string, allDay?: boolean): () => void {
   if (event.seriesId) return detach(event, startsAt, endsAt, allDay ?? event.all_day)
   const prior = { ...event }
-  writeRow('calendar_events', { ...event, starts_at: startsAt, ends_at: endsAt, all_day: allDay ?? event.all_day })
+  const next = { ...event, starts_at: startsAt, ends_at: endsAt, all_day: allDay ?? event.all_day }
+  writeRow('calendar_events', next)
   if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt)
-  return () => void moveOrResizeEvent(prior, prior.starts_at, prior.ends_at, prior.all_day)
+  const undoTasks = followSlot(event, next)
+  return () => {
+    moveOrResizeEvent(prior, prior.starts_at, prior.ends_at, prior.all_day)
+    undoTasks()
+  }
 }
 
 /** Undo half of deleteEvent: the block comes back and re-links its task's schedule. An occurrence:
@@ -236,8 +305,13 @@ export function restoreEvent(event: CalendarEvent): void {
 export function resizeEvent(event: CalendarEvent, startsAt: string, endsAt: string): () => void {
   if (event.seriesId) return detach(event, startsAt, endsAt, event.all_day)
   const prior = { ...event }
-  const undo = () => void resizeEvent(prior, prior.starts_at, prior.ends_at)
-  writeRow('calendar_events', { ...event, starts_at: startsAt, ends_at: endsAt })
+  const next = { ...event, starts_at: startsAt, ends_at: endsAt }
+  writeRow('calendar_events', next)
+  const undoTasks = followSlot(event, next)
+  const undo = () => {
+    resizeEvent(prior, prior.starts_at, prior.ends_at)
+    undoTasks()
+  }
   if (!event.task_id) return undo
   const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
   const task = tasks.find((t) => t.id === event.task_id)
@@ -309,13 +383,29 @@ export function retimeEventWithUndo(event: CalendarEvent, from: Span, to: Span):
   const today = cairoDateKey(new Date())
   const message = to.start === from.start ? `Resized to ${rangeText(to.start, to.end)}` : movedText(from, { ...to, day: from.day }, today)
   const retime = (r: CalendarEvent) => retimeSeries(r, fromMin(to.start), to.end - to.start)
+  // A repeating slot's tasks keep their day and take the new time (from this occurrence on, for a split).
+  const tasksTo = (rowId: string, fromDay: string) =>
+    row.type !== 'time_block'
+      ? () => {}
+      : restamp(cachedTasks().filter((t) => t.slot_id === row.id && !!t.slot_date && t.slot_date >= fromDay), (t) => {
+          const s = zoneToIso(t.slot_date!, fromMin(to.start))
+          return { slot_id: rowId, scheduled_start: s, scheduled_end: new Date(Date.parse(s) + (to.end - to.start) * 60_000).toISOString() }
+        })
   const split = splitAt(row, event, retime)
   if (split) {
-    toastUndo(`${message} · from ${dayHint(from.day, today)}`, split.undo)
+    const undoTasks = tasksTo(split.tail.id, from.day)
+    toastUndo(`${message} · from ${dayHint(from.day, today)}`, () => {
+      split.undo()
+      undoTasks()
+    })
     return { id: occurrenceId(split.tail.id, new Date(split.tail.starts_at).toISOString()), start: split.tail.starts_at }
   }
   writeRow('calendar_events', retime(row))
-  toastUndo(message, () => writeRow('calendar_events', row))
+  const undoTasks = tasksTo(row.id, '')
+  toastUndo(message, () => {
+    writeRow('calendar_events', row)
+    undoTasks()
+  })
   return null
 }
 
@@ -372,34 +462,45 @@ export function linkTaskWithUndo(event: CalendarEvent, task: Task): void {
 }
 
 /** Deleting a block un-schedules its task but the task itself survives. An occurrence: its series
- * skips it ("This event"). */
-export function deleteEvent(event: CalendarEvent): void {
+ * skips it ("This event"). A Time slot lets go of its tasks (unscheduled); the returned Undo takes
+ * them back (restoreEvent brings only the block). */
+export function deleteEvent(event: CalendarEvent): () => void {
+  const undoTasks = releaseSlot(event)
   if (event.seriesId) {
     const row = seriesOf(event)
-    if (!row) return
+    if (!row) return undoTasks
     writeRow('calendar_events', withExdate(row, event.starts_at))
     logActivity('calendar_event.deleted', 'calendar_event', row.id, { occurrence: event.starts_at })
-    return
+    return undoTasks
   }
   writeRow('calendar_events', { ...event, deleted_at: new Date().toISOString() })
   if (event.task_id) touchTaskSchedule(event.task_id, null, null)
   logActivity('calendar_event.deleted', 'calendar_event', event.id, {})
+  return undoTasks
 }
 
 /** Takes a block off the calendar with Undo — "Unscheduled · <title>" / "Deleted · <title>". The task
  * stays either way (Punch 6: capture the prior row, undo through the same api). */
 export function deleteEventWithUndo(event: CalendarEvent, verb: 'Unscheduled' | 'Deleted' | 'Discarded'): void {
   const prior = { ...event }
-  deleteEvent(event)
-  toastUndo(`${verb} · ${event.title}`, () => restoreEvent(prior))
+  const undoTasks = deleteEvent(event)
+  toastUndo(`${verb} · ${event.title}`, () => {
+    restoreEvent(prior)
+    undoTasks()
+  })
 }
 
-/** "All events": the series row and every occurrence dragged out of it go to Trash, one Undo. */
+/** "All events": the series row and every occurrence dragged out of it go to Trash, one Undo. Every
+ * task in any of its slots goes back to the rail. */
 export function deleteSeriesWithUndo(event: CalendarEvent): void {
   const row = seriesOf(event) ?? event
   const all = [row, ...cachedRows().filter((r) => r.series_id === row.id && !r.deleted_at)]
+  const undoTasks = restamp(cachedTasks().filter((t) => all.some((r) => r.id === t.slot_id)), () => OUT_OF_SLOT)
   for (const r of all) deleteEvent(r)
-  toastUndo(`Deleted all · ${row.title}`, () => all.forEach(restoreEvent))
+  toastUndo(`Deleted all · ${row.title}`, () => {
+    all.forEach(restoreEvent)
+    undoTasks()
+  })
 }
 
 /** Deleting a task deletes its block too (called from the tasks feature after user confirms). */

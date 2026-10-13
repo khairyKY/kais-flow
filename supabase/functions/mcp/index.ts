@@ -105,6 +105,14 @@ function store(tx: Tx): Store {
         limit 300`
       return rows.map(eventRow)
     },
+    async slotTasks(ids) {
+      return tasks(await tx`
+        select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
+        from tasks t left join projects p on p.id = t.project_id
+        where t.deleted_at is null and t.slot_id in (select jsonb_array_elements_text(${textArray(ids)}::text::jsonb)::uuid)
+        order by t.scheduled_start nulls last, t.id
+        limit 500`)
+    },
     async search(query, limit) {
       // _shared/retrieval.ts's embedding (the runtime's gte-small) + the same search_hybrid the app's
       // search and chat use; security invoker, so RLS scopes it to this user.

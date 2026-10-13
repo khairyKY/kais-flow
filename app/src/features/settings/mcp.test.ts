@@ -111,6 +111,7 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], b
       Object.assign(t, { status: 'done', completed_at: at, top3: false })
       return true
     },
+    slotTasks: async (ids) => s.tasks.filter((t) => !!t.slot_id && ids.includes(t.slot_id)),
     taskBlocks: async (taskId) => s.cal.filter((e) => e.task_id === taskId && !e.deleted_at).map((e) => ({ ...e })),
     getEvent: async (id) => {
       const e = s.cal.find((x) => x.id === id && !x.deleted_at)
@@ -652,6 +653,14 @@ describe('MCP: the tools', () => {
     expect(choir[0]).toMatchObject({ id: tid(902), end: '2026-10-08 19:30', repeats: 'FREQ=WEEKLY' })
     // …and it's in today's list only on its own day.
     expect((await call(d, 'today')).data!.events.map((e: { title: string }) => e.title)).toEqual(['Standup'])
+  })
+
+  it('calendar: a Time slot lists the tasks its occurrence holds (0073), and only that occurrence', async () => {
+    const store = fakeStore('Africa/Cairo', [task(30, 'Ship the slot', { slot_id: tid(902), slot_date: '2026-10-22', scheduled_start: '2026-10-22T15:00:00Z' })])
+    store.cal.find((e) => e.id === tid(902))!.type = 'time_block'
+    const month = await call(deps(store), 'calendar', { from: '2026-10-05', to: '2026-10-31' })
+    const choir = month.data!.events.filter((e: { title: string }) => e.title === 'Choir')
+    expect(choir.map((e: { tasks?: unknown }) => e.tasks)).toEqual([undefined, [{ id: tid(30), title: 'Ship the slot', done: false }], undefined])
   })
 })
 

@@ -38,6 +38,9 @@ export interface CalendarGridEvent {
   taskDone?: boolean
   /** One occurrence of a repeating event (CALENDAR-BLOCK-STATES C10): the ↻ badge. */
   repeat?: boolean
+  /** A Time block's tasks (Time Slots, 0073), drawn as rows inside it, and its "2 tasks · 45m of 2h". */
+  held?: { id: string; title: string; done: boolean }[]
+  fill?: string
 }
 
 export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'rollingWeek' | 'dayGridMonth'
@@ -93,6 +96,8 @@ interface CalendarGridProps {
   onGridContextMenu?: (iso: string, allDay: boolean, x: number, y: number) => void
   /** Toggles the task behind a block from its checkbox. `done` is the state it was just in. */
   onCompleteTask?: (taskId: string, done: boolean) => void
+  /** ⋯ on a task row inside a Time slot: its task menu (Out of the slot…). */
+  onSlotTaskMenu?: (taskId: string, x: number, y: number) => void
   conflictedIds?: string[]
   /* CALENDAR.md §7: outbox visibility — queued writes render pending, rejected ones failed. */
   pendingIds?: string[]
@@ -263,6 +268,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   onEventContextMenu,
   onGridContextMenu,
   onCompleteTask,
+  onSlotTaskMenu,
   conflictedIds,
   pendingIds,
   failedIds,
@@ -619,6 +625,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfMore: slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
           kfPinned: e.id === pinnedId,
           kfRepeat: !!e.repeat,
+          kfHeld: e.held?.length ? e.held : null,
+          kfFill: e.fill ?? null,
         }
         return ev
       }).concat(
@@ -642,6 +650,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
           kfRanOver: boolean; kfOverdue: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
           kfOv: boolean; kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
+          kfHeld: { id: string; title: string; done: boolean }[] | null; kfFill: string | null
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
@@ -760,6 +769,41 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
                 <div className="fc-event-time">{timeText ? <>{timeText} · </> : ''}{moreLink}</div>
               ) : (
                 timeText && <div className="fc-event-time">{timeText}</div>
+              )}
+              {/* Time Slots (0073): the tasks the slot holds, each with its checkbox and ⋯ — both
+                  dragGuard'd, so ticking or opening one never moves the slot. */}
+              {p.kfHeld && !arg.isMirror && (
+                <div className="kf-ev-slot">
+                  <div className="fc-event-time kf-ev-fill">{p.kfFill}</div>
+                  {p.kfHeld.map((h) => (
+                    <div key={h.id} className={`kf-ev-slot-row${h.done ? ' kf-done' : ''}`} data-slot-task={h.id}>
+                      <span
+                        className={`kf-ev-check${h.done ? ' kf-on' : ''}`}
+                        role="checkbox"
+                        aria-checked={h.done}
+                        aria-label={`${h.done ? 'Reopen' : 'Complete'} ${h.title}`}
+                        ref={dragGuard(() => onCompleteTask?.(h.id, h.done))}
+                      >
+                        {h.done ? '✓' : ''}
+                      </span>
+                      <span className="fc-event-title kf-ev-slot-title"><EmojiText text={h.title} /></span>
+                      <span
+                        className="kf-ev-slot-more"
+                        role="button"
+                        aria-label={`More for ${h.title}`}
+                        ref={(el) => {
+                          dragGuard(() => {
+                            if (!el) return
+                            const r = el.getBoundingClientRect()
+                            onSlotTaskMenu?.(h.id, r.left, r.bottom)
+                          })(el)
+                        }}
+                      >
+                        ⋯
+                      </span>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </div>
