@@ -1,5 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link, NavLink, Outlet, useLocation, useSearchParams } from 'react-router'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams, type LinkProps } from 'react-router'
+import { DragShell, useDropSpot } from './drag'
+import type { FileSpot } from '../features/tasks/fileDrop'
 import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
@@ -15,7 +17,7 @@ import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/
 import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
-import { useMotionEnabled } from '../lib/motion'
+import { useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
@@ -107,6 +109,18 @@ const CULTIVATE: NavItem[] = [
   { to: '/trash', label: 'Trash', dot: '--ink-hairline', tape: 'rgba(122,110,94,0.35)' },
 ]
 
+// Motion 2d — the sidebar's filing spots: a task or capture dragged onto Today / Due Today, or a task
+// onto Someday, goes there (features/tasks/fileDrop says what each load does; the row's ⋯ menu is
+// the same action by tap or key).
+const TODAY_SPOT: FileSpot = { kind: 'today', label: 'Today' }
+const SOMEDAY_SPOT: FileSpot = { kind: 'someday', label: 'Someday' }
+
+/** A sidebar link that is also a drop spot (components/drag). */
+function SpotLink({ spot, className, ...link }: LinkProps & { spot: FileSpot | null }) {
+  const drop = useDropSpot(`side:${String(link.to)}`, spot)
+  return <Link ref={drop.ref} className={`${className ?? ''} ${drop.className}`} {...link} />
+}
+
 const smartLists: { list: SmartList; label: string }[] = [
   { list: 'today', label: 'Due Today' },
   { list: 'week', label: 'This Week' },
@@ -130,10 +144,11 @@ function PlanDrawer() {
   // The open drawer's "Due Today" row below still counts the Due Today list it links to.
   const todayCount = todayOpenCount(tasks)
 
-  const row = (to: string, label: string, active: boolean, count?: number, icon?: React.ReactNode) => (
-    <Link
+  const row = (to: string, label: string, active: boolean, count?: number, icon?: React.ReactNode, spot: FileSpot | null = null) => (
+    <SpotLink
       key={to}
       to={to}
+      spot={spot}
       className={`kf-side-row${active ? ' kf-active' : ''}`}
       style={{
         display: 'flex',
@@ -151,7 +166,7 @@ function PlanDrawer() {
       {count != null && (
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{count}</span>
       )}
-    </Link>
+    </SpotLink>
   )
 
   return (
@@ -192,11 +207,11 @@ function PlanDrawer() {
       </button>
       {open && (
         <>
-          {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length))}
+          {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length, undefined, list === 'today' ? TODAY_SPOT : null))}
           <div style={{ height: 1, borderTop: '1px dashed var(--line-sidebar)', margin: '4px 11px' }} />
           {row('/tasks?list=someday', 'Someday', activeList === 'someday', filterByList(tasks, 'someday').length, (
             <img src={`${A}/fern/coil.png`} alt="" style={{ height: 14, opacity: 0.8 }} />
-          ))}
+          ), SOMEDAY_SPOT)}
           {/* R4-27 (Kai's 2026-07-20 ruling): "planning board looks like shit, park it until I
               redesign it." Nav entry removed so it can't be reached by accident; the route and
               component stay in the codebase for when he redesigns it. */}
@@ -232,10 +247,12 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
     setFly({ x: r.right / z + 8, y: (r.top + r.height / 2) / z })
   }
   const hideFly = () => setFly(null)
+  const drop = useDropSpot(`side:${item.to}`, item.to === '/today' ? TODAY_SPOT : null)
   return (
     <Link
+      ref={drop.ref}
       to={item.to}
-      className={`kf-side-row${isActive ? ' kf-active' : ''}`}
+      className={`kf-side-row${isActive ? ' kf-active' : ''} ${drop.className}`}
       onMouseEnter={showFly}
       onMouseLeave={hideFly}
       onFocus={showFly}
@@ -554,8 +571,15 @@ export function AppLayout() {
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()
-  const { pathname } = useLocation()
+  const location = useLocation()
+  const { pathname } = location
   const isMobile = useIsMobile()
+  // Motion 2b/3a: the page scroller is the stack's sheet (lib/motion useStackTransition); Effects 2k
+  // gives its edges their resistance on touch.
+  const scrollerRef = useRef<HTMLDivElement>(null)
+  useStackTransition(scrollerRef, location.key)
+  useBoundaryResistance(scrollerRef)
+  const navigate = useNavigate()
   const openTaskId = useSearchParams()[0].get(TASK_PARAM)
   const [chatOpen, setChatOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -637,7 +661,23 @@ export function AppLayout() {
     return () => window.removeEventListener('keydown', onKeydown)
   }, [setCommandBarOpen, toggleCommandBar])
 
+  // Motion 2b/4e: Esc pops a detail page off the stack — after any open overlay has had its turn
+  // (lib/overlayStack closes the topmost and marks the key handled).
+  useEffect(() => {
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented || isTypingTarget(e.target)) return
+      const [section, detail] = pathname.split('/').filter(Boolean)
+      if (!detail) return
+      e.preventDefault()
+      if (((window.history.state as { idx?: number } | null)?.idx ?? 0) > 0) void navigate(-1)
+      else void navigate(`/${section}`)
+    }
+    window.addEventListener('keydown', onEsc)
+    return () => window.removeEventListener('keydown', onEsc)
+  }, [pathname, navigate])
+
   return (
+    <DragShell>
     <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: 'var(--kf-vh)', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
@@ -780,6 +820,35 @@ export function AppLayout() {
         .kf-sheet--out { animation: kfSheetOut 140ms var(--ease-in) both; }
         .kf-drawer--out { animation: kfDrawerOut 140ms var(--ease-in) both; }
 
+        /* Motion 2b (computer, vertical) / 3a (phone, horizontal) / 4e — the stack (lib/motion
+           useStackTransition). The page beneath is a still copy in .kf-stack-layer; the live page
+           scroller is the sheet that rides in, or the page that eases forward under a pop. */
+        .kf-stack-layer { position: absolute; overflow: hidden; pointer-events: none; }
+        .kf-stack-page { position: absolute; inset: 0; overflow: hidden; background: var(--paper-linen); transform-origin: 50% 20%; }
+        /* The copy is a still: its own entry animations (route cut, stagger) must not replay in it. */
+        .kf-stack-page > *, .kf-stack-page > * * { animation: none !important; }
+        .kf-stack-dim { position: absolute; inset: 0; background: var(--scrim); opacity: 0; }
+        .kf-stack-top { background: var(--paper-linen); box-shadow: var(--shadow-stack-y); }
+        .app-main-content.kf-stack-over-in, .app-main-content.kf-stack-under-in { position: relative; z-index: 1; transform-origin: 50% 20%; }
+        /* The sheet travels outside its column for a moment: clipped, so a phone's layout viewport
+           never widens to hold it (which pushed the fixed tab bar off the bottom mid-push). */
+        main:has(> .app-main-content[data-stack]) { overflow: clip; }
+        .kf-stack-over-in { animation: stackOverIn var(--dur-stack) var(--ease-stack) backwards; }
+        .kf-stack-over-out { animation: stackOverOut var(--dur-stack) var(--ease-stack) forwards; }
+        .kf-stack-under-in { animation: stackUnderIn var(--dur-stack) var(--ease-stack) backwards; }
+        .kf-stack-under-out { animation: stackUnderOut var(--dur-stack) var(--ease-stack) forwards; }
+        .kf-stack-dim-in { animation: stackDimIn var(--dur-stack) var(--ease-stack) forwards; }
+        .kf-stack-dim-out { animation: stackDimOut var(--dur-stack) var(--ease-stack) forwards; }
+        /* The stack replaces the route cut (2a) and the entry stagger (4b) for its own moves. */
+        .app-main-content[data-stack] .kf-route, .app-main-content[data-stack] .kf-stagger-item { animation: none; }
+        @media (max-width: 767px) {
+          .kf-stack-top { box-shadow: var(--shadow-stack-x); }
+          .kf-stack-over-in { animation-name: stackOverInX; }
+          .kf-stack-over-out { animation-name: stackOverOutX; }
+          .kf-stack-under-in { animation-name: stackUnderInX; }
+          .kf-stack-under-out { animation-name: stackUnderOutX; }
+        }
+
         /* X2 Motion 1f — the sidebar streak plant is the app's sole persistent loop. */
         @keyframes kfLeafSway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
         .motion-on .app-vine img { animation: kfLeafSway 5.8s var(--ease-natural) infinite; transform-origin: 50% 100%; }
@@ -901,7 +970,7 @@ export function AppLayout() {
 
       <main style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         {(isMobile || !NO_TOPBAR.includes(pathname)) && <TopBar sync={isMobile} />}
-        <div className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '30px 40px 64px' }}>
+        <div ref={scrollerRef} className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
             <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined}>
               <Outlet />
@@ -942,5 +1011,6 @@ export function AppLayout() {
       <ToastHost />
       {signOutFlow.prompt}
     </div>
+    </DragShell>
   )
 }

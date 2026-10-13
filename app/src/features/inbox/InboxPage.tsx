@@ -36,6 +36,9 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { useOnline } from '../../lib/useOnline'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
+import { scheduleToday } from '../../lib/dateShortcuts'
+import { DragRow, type DragLoad } from '../../components/drag'
+import { inboxVerdict, type FileSpot } from '../tasks/fileDrop'
 import { InboxBulkBar } from './InboxBulkBar'
 import { GithubRow, SelectBox, TriageCard } from './InboxCards'
 import { dayWord, defaultDraft, dismissedAgo, draftText, githubHeading, inboxSummary, isToday, KIND_LABEL, mentionedPerson, type Draft } from './inboxDisplay'
@@ -200,6 +203,26 @@ export function InboxPage() {
   }
   const dismissOne = (item: InboxItem) => breatheOut(item.id, () => dismissInboxItem(item))
 
+  // Motion 2c/2d: a computer drags a capture (with the rest of the selection when it's part of one)
+  // onto the sidebar's Today — filed as a task due today, with its card's title and place; the source
+  // heals (3e). E and the card's File do the same by key and tap.
+  function dragLoad(item: InboxItem): DragLoad<FileSpot> {
+    const ids = selected.has(item.id) && selected.size > 1 ? [item.id, ...selectedItems.filter((i) => i.id !== item.id).map((i) => i.id)] : [item.id]
+    const asTask = (i: InboxItem) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: scheduleToday(), place: draftOf(i).place }] as const
+    return {
+      ids,
+      label: draftText(item, { ...draftOf(item), to: 'task' }),
+      verdict: inboxVerdict,
+      drop: () => {
+        const pairs = ids.flatMap((id) => orderedItems.filter((i) => i.id === id)).map(asTask)
+        if (pairs.length !== 1) {
+          fileMany(pairs)
+          clearSelection()
+        } else breatheOut(item.id, () => fileMany(pairs))
+      },
+    }
+  }
+
   // Punch 26: park focus on the neighbour after a key action, so a triage run is E E E E, not ↓E↓E.
   // (hoisted; `setFocusedId` below is only read when a key actually fires, after render)
   function advance(item: InboxItem) {
@@ -276,8 +299,8 @@ export function InboxPage() {
   )
 
   const card = (item: InboxItem) => (
+    <DragRow key={item.id} id={item.id} load={dragLoad(item)} disabled={isMobile}>
     <TriageCard
-      key={item.id}
       item={item}
       draft={draftOf(item)}
       person={personOf(item)}
@@ -298,6 +321,7 @@ export function InboxPage() {
       onDismiss={() => dismissOne(item)}
       onToggleSelect={() => toggleSelected(item.id)}
     />
+    </DragRow>
   )
 
   let list
@@ -322,8 +346,8 @@ export function InboxPage() {
           )}
         </div>
         {!ghFolded && githubItems.map((item) => (
+          <DragRow key={item.id} id={item.id} load={dragLoad(item)} disabled={isMobile}>
           <GithubRow
-            key={item.id}
             item={item}
             phone={isMobile}
             open={openIds.has(item.id)}
@@ -337,6 +361,7 @@ export function InboxPage() {
             onDismiss={() => dismissOne(item)}
             onToggleSelect={() => toggleSelected(item.id)}
           />
+          </DragRow>
         ))}
       </section>
     )

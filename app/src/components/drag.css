@@ -1,0 +1,125 @@
+/* The drag grammar outside the calendar (components/drag.tsx) — Motion 2c / 2d / 4d, Effects 2j.
+   Motion is transform/opacity only; the outlines and tints are state, not motion. */
+
+.kf-dragging,
+.kf-dragging * {
+  cursor: grabbing !important;
+}
+
+/* 2c's placeholder: the row in hand (and every row lifted with it) keeps its place as a dashed
+   slot with a breath of sage, so the list doesn't jump and a refused drop has a home to ride to. */
+[data-drag-slot] {
+  border-radius: 8px;
+  outline: 1.5px dashed color-mix(in srgb, var(--ink-muted) 55%, transparent);
+  outline-offset: -1.5px;
+  background: color-mix(in srgb, var(--acc-sage) 8%, transparent);
+}
+[data-drag-slot] > * {
+  opacity: 0;
+}
+
+/* 2d: a place that takes what's in hand opens as that same placeholder under the pointer… */
+.kf-drop-over {
+  outline: 1.5px dashed color-mix(in srgb, var(--ink-muted) 55%, transparent);
+  outline-offset: -1.5px;
+  background-color: color-mix(in srgb, var(--acc-sage) 12%, transparent) !important;
+}
+/* …one that won't (2j) warms its border to terra 40%. No red, no fill, no flash. */
+.kf-drop-no,
+[data-play='drop-softno'] {
+  outline: 1.5px dashed color-mix(in srgb, var(--acc-terra) 40%, transparent);
+  outline-offset: -1.5px;
+}
+/* Let go over it anyway: one soft shake, and the ghost rides home. */
+.motion-on [data-play='drop-softno'] {
+  animation: softNo 320ms var(--ease-out);
+}
+/* 4d: where it landed gives a 2px dip — a catch, not a bounce. */
+.motion-on [data-play='drop-catch'] {
+  animation: dropCatch 120ms var(--ease-out);
+}
+
+/* The ghost (2c / 5b): lifted to 1.04 under the lift shadow; it floats while held (motion on). */
+.kf-ghost {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1200;
+  width: 300px;
+  pointer-events: none;
+}
+.kf-ghost-card,
+.kf-ghost-under {
+  height: 44px;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  border-radius: 8px;
+}
+.kf-ghost-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 0 14px;
+  box-shadow: var(--shadow-lift);
+  transform: scale(1.04);
+  font-size: var(--fs-body-s);
+  color: var(--ink-body);
+}
+.kf-ghost[data-motion] .kf-ghost-card {
+  animation: dragFloat 2.1s ease-in-out infinite;
+}
+.kf-ghost-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kf-ghost-grip {
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--ink-faint);
+  letter-spacing: var(--ls-mono);
+}
+/* 4d's stacked ghost: up to two of the others fanned behind (±4°), then the count. */
+.kf-ghost-under {
+  position: absolute;
+  inset: 0 0 auto;
+  transform: rotate(-3deg) translate(-5px, 5px);
+  opacity: 0.82;
+}
+.kf-ghost-under.is-far {
+  transform: rotate(4deg) translate(6px, 8px);
+  opacity: 0.65;
+}
+.kf-ghost-count {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ink-body);
+  color: var(--paper-parchment);
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta-l);
+  font-weight: var(--fw-semibold);
+}
+/* Taken: it settles flat and fades where it was let go. */
+.kf-ghost[data-leaving='settle'] {
+  animation: toastOut 160ms var(--ease-out) forwards;
+}
+.kf-ghost[data-leaving] .kf-ghost-card {
+  animation: none;
+  transform: none;
+  transition: transform 160ms var(--ease-out);
+}
+
+/* Effects 2j beyond drops (lib/motion softNo): a control that refused a tap shakes once. */
+.motion-on [data-play='softno'] {
+  animation: softNo 320ms var(--ease-out);
+}

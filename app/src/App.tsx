@@ -9,6 +9,7 @@ import { AppLayout } from './components/AppLayout'
 import { KitReference } from './components/KitReference'
 import { NotFoundPage, RouteErrorPage } from './components/RouteErrorPage'
 import { isCapacitorShell } from './lib/platform'
+import { captureStack, stackMove } from './lib/motion'
 
 // Route-level code splitting — each page is its own chunk, loaded on demand.
 // Keeps the heavy pages (FullCalendar, rrule, chrono) out of the initial bundle.
@@ -158,6 +159,22 @@ const router = createBrowserRouter([
     errorElement: <RouteErrorPage bare />,
   },
 ])
+
+// Motion 2b/3a — the stack (lib/motion.ts). Subscribed before RouterProvider mounts, so this runs
+// while the outgoing page is still on screen: it reads which way the step goes (the paths, and the
+// history index React Router keeps in history.state) and captures what the transition needs.
+let lastLocation = router.state.location
+let lastIdx = historyIdx()
+function historyIdx(): number {
+  return typeof window === 'undefined' ? 0 : ((window.history.state as { idx?: number } | null)?.idx ?? 0)
+}
+router.subscribe((state) => {
+  if (state.location.key === lastLocation.key) return // a loading flag, not a new page
+  const idx = historyIdx()
+  captureStack(stackMove(lastLocation.pathname, state.location.pathname, state.historyAction, state.historyAction === 'POP' && idx < lastIdx), lastLocation.key)
+  lastLocation = state.location
+  lastIdx = idx
+})
 
 if (typeof window !== 'undefined') {
   const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1000))
