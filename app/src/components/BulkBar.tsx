@@ -1,6 +1,7 @@
 import { useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { ActionSheet } from './ActionSheet'
 import { useIsMobile } from './BottomSheet'
+import { ContextMenu } from './ContextMenu'
 import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
 
@@ -13,8 +14,8 @@ export interface BulkBarProps {
   onDelete: () => void
   /** ☆ Top 3 for the selection (tasks/api toggleTop3ManyWithUndo) — pages with task rows pass it. */
   onTop3?: () => void
-  /** Priority… and Labels… for the selection (P7e A18) — a phone's only way to label many. A phone
-   * has no room for two more tabs: they sit behind More. */
+  /** Priority… and Labels… for the selection (P7e A18) — a phone's only way to label many. They sit
+   * behind More: the phone bar has no room for two more tabs, the desktop pill none at 1280px. */
   onPriority?: (e: ReactMouseEvent) => void
   onLabels?: (e: ReactMouseEvent) => void
   onClear: () => void
@@ -52,7 +53,7 @@ const CSS = `
 /** Selection mode's bars (DS-CHANGELOG §3 "Selection mode", MK Selection). On a phone: an app bar
  * (✕ · "N selected" · Select all) over the top bar, and a bulk bar that replaces the tab bar —
  * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Move · Top 3 · More (Priority, Labels) ·
- * Delete. On desktop: the floating pill, same actions, Priority and Labels in line.
+ * Delete. On desktop: the floating pill, same actions (More is a menu there).
  * Every button loops the existing per-task writes over the selection ("zero new API surface"). */
 export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onTop3, onPriority, onLabels, onClear, onSelectAll }: BulkBarProps) {
   const isMobile = useIsMobile()
@@ -70,7 +71,7 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
     // Kai 2026-10-12: the phone had no way to star a selection (desktop had T). Stars them in order up
     // to the free places, or unstars them when all are already picks — one Undo.
     ...(onTop3 ? [{ label: 'Top 3', icon: 'star' as const, run: onTop3 }] : []),
-    ...(isMobile ? (extras.length ? [{ label: 'More', icon: 'more' as const, run: (e: ReactMouseEvent) => setMore(e) }] : []) : extras.map((x) => ({ ...x, menu: true }))),
+    ...(extras.length ? [{ label: 'More', icon: 'more' as const, run: (e: ReactMouseEvent) => setMore(e), menu: true }] : []),
     { label: 'Delete', icon: 'delete', run: onDelete, destructive: true },
   ]
 
@@ -134,6 +135,7 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
           {a.menu && <span aria-hidden="true" style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>}
         </button>
       ))}
+      {more && <ContextMenu position={{ x: more.clientX, y: more.clientY }} onClose={() => setMore(null)} items={extras.map((x) => ({ label: `${x.label}…`, icon: <Icon name={x.icon} size={16} />, onClick: () => x.run(more) }))} />}
       <button type="button" className="kf-bulk-act" title="Clear selection (Esc)" aria-label="Clear selection" onClick={onClear} style={{ width: 28, height: 28, padding: 0, marginLeft: 4, justifyContent: 'center', background: 'var(--paper-bone)' }}>
         <Icon name="close" size={14} />
       </button>
