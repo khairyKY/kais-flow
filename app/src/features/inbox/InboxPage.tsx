@@ -8,6 +8,7 @@ import {
   snoozeInboxItem,
   restoreInboxItem,
   fileCapture,
+  fileDone,
   fileMany,
   dismissMany,
   snoozeMany,
@@ -179,6 +180,23 @@ export function InboxPage() {
   // be a 365-day snooze, so the capture vanished for a year (product audit, Inbox row).
   const asSomeday = (i: InboxItem) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: null, place: draftOf(i).place, someday: true }] as const
   const somedayOne = (item: InboxItem) => breatheOut(item.id, () => fileMany([asSomeday(item)]))
+  // P7e A8: Space files the capture as a task already done (Akiflow's "done now"), with its card's title, date and place.
+  const asDone = (i: InboxItem) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: draftOf(i).dueAt, place: draftOf(i).place }] as const
+  const doneOne = (item: InboxItem) => breatheOut(item.id, () => fileDone([asDone(item)]))
+  function bulkDone(sel: InboxItem[]) {
+    fileDone(sel.map(asDone))
+    clearSelection()
+  }
+  // P7e A8: P opens the card's own date picker. A compact or unsure card opens full first, and a note
+  // or person draft turns into a task (only a task has a date). GitHub rows have no date to plan.
+  function planOne(item: InboxItem) {
+    if (item.kind === 'github_issue') return
+    const d = draftOf(item)
+    if (d.to !== 'task') setDraft(item.id, { ...d, to: 'task', personId: null })
+    openCard(item.id)
+    // ponytail: presses the card's own Due date field once it has rendered — the same picker a click opens.
+    requestAnimationFrame(() => document.querySelector<HTMLElement>(`#inbox-${item.id} [aria-label="Due date"]`)?.click())
+  }
   function bulkSomeday() {
     fileMany(selectedItems.map(asSomeday))
     clearSelection()
@@ -240,9 +258,12 @@ export function InboxPage() {
     setFocusedId(orderedItems[idx + 1]?.id ?? orderedItems[idx - 1]?.id ?? null)
   }
   // Keys act on a mouse selection when there is one (useListKeys `selected` + `runAll`), else on
-  // the focused row. Waiting: E file (as the card says) · D dismiss · S snooze · ⏎ open. Dismissed: R restore.
+  // the focused row. Waiting: E file (as the card says) · Space done now · P plan · D dismiss · S snooze · ⏎ open.
+  // Dismissed: R restore. (Space and P are P7e A8; their letters may move with Kai's B3 ruling.)
   const waitingBindings: ListBinding<InboxItem>[] = [
     { keys: ['e'], label: 'File', run: (i) => { fileOne(i, draftOf(i)); advance(i) }, runAll: bulkFileAsDrafted },
+    { keys: [' '], label: 'Done now', run: (i) => { doneOne(i); advance(i) }, runAll: bulkDone },
+    { keys: ['p'], label: 'Plan', run: planOne },
     { keys: ['d'], label: 'Dismiss', run: (i) => { dismissOne(i); advance(i) }, runAll: bulkDismiss },
     { keys: ['s'], label: 'Snooze', run: (i) => setKbSnoozeId(i.id), runAll: (sel) => setBulkSnoozePos(rowAnchor('inbox-', sel[0].id)) },
     {

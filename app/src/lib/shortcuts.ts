@@ -25,6 +25,8 @@ export const GLOBAL_SHORTCUTS: ShortcutEntry[] = [
 export const INBOX_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['↑/↓', 'j/k'], label: 'Move focus' },
   { keys: ['e'], label: 'File with AI suggestion' },
+  { keys: ['Space'], label: 'Done now' },
+  { keys: ['p'], label: 'Plan: pick a date' },
   { keys: ['d'], label: 'Dismiss' },
   { keys: ['s'], label: 'Snooze' },
   { keys: ['↵'], label: 'Edit title' },
