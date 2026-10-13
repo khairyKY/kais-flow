@@ -21,6 +21,8 @@ export interface ParsedCommand {
   labels: string[]
   /** "every week", "every mon, fri" → the RRULE it repeats by (P7e A5); `dueAt` is then its first day. */
   recurrence: string | null
+  /** `// the rest` — the notes, as written (P7e A6). */
+  notes: string | null
 }
 
 /** `*calls`, `*q3-review`: a `*` at a word start, then letters, digits, `_` or `-`. */
@@ -43,8 +45,8 @@ const REPEAT_RE = new RegExp(`(?<![\\p{L}\\p{N}])every\\s+(?:(?:(?:other|\\d+)\\
 /** Does this parse carry enough structure to create a task directly, instead of falling through
  * to a bare Inbox capture? Priority/duration count as structure too — matching a `!`/`30m`-only
  * command (e.g. "buy milk !!") that has no date/project still means "create a task now". */
-export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 'projectId' | 'priority' | 'durationMin'> & { labels?: readonly string[] }): boolean {
-  return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null || parsed.labels?.length)
+export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 'projectId' | 'priority' | 'durationMin'> & { labels?: readonly string[]; notes?: string | null }): boolean {
+  return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null || parsed.labels?.length || parsed.notes)
 }
 
 export interface ParseCommandOptions {
@@ -73,7 +75,7 @@ function cairoInstant(start: chrono.ParsedComponents): string {
 }
 
 /**
- * Pure text -> structured-command parser (no AI). Extracts `*labels`, a `!`/`!!`/`!!!` priority flag,
+ * Pure text -> structured-command parser (no AI). Extracts `// notes`, `*labels`, a `!`/`!!`/`!!!` priority flag,
  * a `30m`/`1h`/`1h30m` duration, an "every …" repeat, the first date/time mention via chrono-node,
  * and the first `#tag` fuzzy-matched against project names, falling back to domain names. Whatever's
  * left after taking all of those out becomes the title.
@@ -91,9 +93,19 @@ export function parseCommand(
     work = work.slice(0, start) + ' '.repeat(end - start) + work.slice(end)
   }
 
-  // Labels first (Kai 2026-10-03), so a `*today` label is never read as a date.
+  // `//` and everything after it are the notes, read as written (P7e A6, Akiflow's description mark).
+  // Only at a word start: a link's "https://" keeps its slashes.
+  let notes: string | null = null
+  const slashes = /(^|\s)\/\//.exec(work)
+  if (slashes) {
+    const at = slashes.index + slashes[1].length
+    notes = input.slice(at + 2).trim() || null
+    take(at, input.length)
+  }
+
+  // Labels next (Kai 2026-10-03), so a `*today` label is never read as a date.
   const labels: string[] = []
-  for (const m of input.matchAll(LABEL_RE)) {
+  for (const m of work.matchAll(LABEL_RE)) {
     const at = m.index + m[1].length
     if (!labels.includes(m[2])) labels.push(m[2])
     take(at, at + 1 + m[2].length)
@@ -127,7 +139,8 @@ export function parseCommand(
   if (first) {
     dueAt = zone === 'cairo' ? cairoInstant(first.start) : first.start.date().toISOString()
     dueTimed = first.start.isCertain('hour')
-    take(first.index, first.index + first.text.length)
+    // `<friday` (Akiflow's deadline mark) is just the date here — one date (P7e A6, B4 a); its `<` goes too.
+    take(work[first.index - 1] === '<' ? first.index - 1 : first.index, first.index + first.text.length)
   }
 
   if (recurrence) {
@@ -164,7 +177,7 @@ export function parseCommand(
 
   const title = work.replace(/\s{2,}/g, ' ').trim()
 
-  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence }
+  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence, notes }
 }
 
 /** A parse as a new task — tasks/api createTask's input: the command bar's quick add, and the Tasks
@@ -180,5 +193,6 @@ export function quickAddTask(parsed: ParsedCommand, typed: string) {
     priority: parsed.priority,
     labels: parsed.labels,
     recurrenceRule: parsed.recurrence,
+    notes: parsed.notes,
   }
 }

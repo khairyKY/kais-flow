@@ -3,7 +3,7 @@ import type { ShortcutEntry } from './pageShortcutsStore'
 // F3 (punch 12): the cheatsheet lists ONLY keys that work. Removed as fiction:
 // `g` Go-to (D-5: folded into ⌘K), the Navigate section (t/i/u — never bound),
 // the Calendar section (no keydown listener exists), Inbox's f/x rows (code binds
-// e/d), and the command bar's `//` note syntax (never parsed).
+// e/d), and the command bar's `//` note syntax (never parsed — real since P7e A6, 2026-10-13).
 /** Always-on bindings, regardless of page — rendered by the `?` cheatsheet's first section. */
 export const GLOBAL_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['⌘/Ctrl', 'K'], label: 'Command bar' },
@@ -62,6 +62,8 @@ export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['!'], label: 'Priority (! !! !!!)' },
   { keys: ['#'], label: 'Project' },
   { keys: ['every …'], label: 'Repeat (every week, every mon, fri)' },
+  { keys: ['//'], label: 'Notes — the rest of the line' },
+  { keys: ['<'], label: 'Date (<friday)' },
   { keys: ['↓', '↵'], label: 'Jump to typed view' },
 ]
 

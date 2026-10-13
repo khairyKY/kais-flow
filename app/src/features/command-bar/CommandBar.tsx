@@ -367,6 +367,7 @@ export function CommandBar() {
                     {parsed.labels.map((l) => (
                       <Chip key={l}>*{l}</Chip>
                     ))}
+                    {parsed.notes && <Chip>{'// Notes'}</Chip>}
                     {unmatched && <Chip tone="inbox">→ Inbox</Chip>}
                   </div>
                 )}
@@ -500,6 +501,7 @@ export function CommandBar() {
                     *{l}
                   </span>
                 ))}
+                {parsed.notes && <span style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>{'// Notes'}</span>}
                 {unmatched && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-gold)', background: 'color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment))' }}>
                     → Inbox (unfiled)

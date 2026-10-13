@@ -219,6 +219,7 @@ describe('quickAddTask (the Tasks page and command bar quick add)', () => {
       priority: null,
       labels: [],
       recurrenceRule: null,
+      notes: null,
     })
     expect(parsed.dueTimed).toBe(true)
   })
@@ -265,5 +266,34 @@ describe('repeats typed in the bar (P7e A5)', () => {
   it('rides into the task', () => {
     const typed = 'Stretch every day 7am'
     expect(quickAddTask(p(typed), typed)).toMatchObject({ title: 'Stretch', recurrenceRule: 'FREQ=DAILY' })
+  })
+})
+
+// P7e A6 (audit p7e c3): "// include the VAT line" stayed in the title, and "<friday" left its "<".
+describe('// notes and <date (P7e A6)', () => {
+  const now = new Date('2026-10-12T07:00:00Z') // Mon 12 Oct, 10:00 Cairo
+  const p = (input: string) => parseCommand(input, domains, projects, { now, zone: 'cairo' })
+
+  it('// makes the rest the notes, read as written — its words are not tokens', () => {
+    expect(p('Send the quote tomorrow 3pm // include the VAT line')).toMatchObject({ title: 'Send the quote', notes: 'include the VAT line', dueTimed: true })
+    expect(p('call Omar // maybe tomorrow #shaheen !!')).toMatchObject({ title: 'call Omar', notes: 'maybe tomorrow #shaheen !!', dueAt: null, projectId: null, priority: null })
+    expect(p('plain line').notes).toBeNull()
+    expect(p('empty notes //').notes).toBeNull()
+  })
+
+  it('a link keeps its slashes', () => {
+    expect(p('read https://example.com/a//b').notes).toBeNull()
+  })
+
+  it('notes alone are structure: the line becomes a task with them', () => {
+    expect(hasStructure(p('idea for the site // a calmer hero'))).toBe(true)
+    const typed = 'Send the quote friday // include the VAT line'
+    expect(quickAddTask(p(typed), typed)).toMatchObject({ title: 'Send the quote', notes: 'include the VAT line' })
+  })
+
+  it('<date is the date, and the < leaves the title', () => {
+    expect(p('file taxes <friday')).toMatchObject({ title: 'file taxes', dueAt: '2026-10-16T09:00:00.000Z' })
+    expect(p('<friday file taxes').title).toBe('file taxes')
+    expect(p('a < b').title).toBe('a < b')
   })
 })
