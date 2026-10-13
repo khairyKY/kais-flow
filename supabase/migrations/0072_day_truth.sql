@@ -56,3 +56,8 @@ union all
 select 'area'::text, id, name, last_touch,
   extract(epoch from (now() - last_touch)) / 86400
 from area_touch;
+
+-- A27. New Routine has its Description (P7 7d accept line: "a routine created with the full form
+--      carries description/reminder/goal"). Free text, optional; null = none. Builds from before this
+--      never send it, and the app writes it only once there is one, so their upserts leave it be.
+alter table routines add column if not exists description text;

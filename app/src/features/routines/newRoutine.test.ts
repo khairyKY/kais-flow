@@ -62,6 +62,7 @@ describe('Edit routine form', () => {
   it('prefills every field from the routine', () => {
     expect(routineToForm(base)).toEqual({
       name: 'Stretch',
+      description: '',
       timeMode: 'evening',
       repeatMode: 'custom',
       customWeekdays: [1, 3, 5],
@@ -119,6 +120,14 @@ describe('Edit routine form', () => {
     expect(applyRoutineForm(ch, { ...routineToForm(ch), isChallenge: false }, '2026-10-12', 'NOW')).toMatchObject({ challenge_start: null, challenge_end: null, goal_days: null })
   })
 
+  it('Description (P7 7d, 0072): read into the form, saved trimmed, cleared to null — never written onto a row that has none', () => {
+    const about = { ...base, description: 'Before bed, every night' }
+    expect(routineToForm(about).description).toBe('Before bed, every night')
+    expect(applyRoutineForm(base, { ...routineToForm(base), description: '  After the gym  ' }, '2026-10-12', 'NOW')?.description).toBe('After the gym')
+    expect(applyRoutineForm(about, { ...routineToForm(about), description: ' ' }, '2026-10-12', 'NOW')?.description).toBeNull()
+    expect('description' in applyRoutineForm(base, routineToForm(base), '2026-10-12', 'NOW')!).toBe(false) // a build before 0072's row
+  })
+
   it("won't save with an empty name", () => {
     expect(applyRoutineForm(base, { ...routineToForm(base), name: ' ' }, '2026-10-12', 'NOW')).toBeNull()
   })
@@ -126,7 +135,7 @@ describe('Edit routine form', () => {
 
 // The outside-click rule (Flow Audit): a form with unsaved changes ignores a click outside it.
 describe('formChanged', () => {
-  const start: RoutineFormState = { ...NEW_ROUTINE_DEFAULTS, name: '', steps: [], domainId: '', isChallenge: false, challengeDays: 30, plant: 'vine' }
+  const start: RoutineFormState = { ...NEW_ROUTINE_DEFAULTS, name: '', description: '', steps: [], domainId: '', isChallenge: false, challengeDays: 30, plant: 'vine' }
   it('a form as it opened is clean, whatever order its fields were built in', () => {
     const { name, steps, ...rest } = start
     expect(formChanged({ steps, ...rest, name }, start)).toBe(false)
@@ -135,6 +144,7 @@ describe('formChanged', () => {
     expect(formChanged({ ...start, name: 'S' }, start)).toBe(true)
     expect(formChanged({ ...start, steps: [{ text: '' }] }, start)).toBe(true)
     expect(formChanged({ ...start, plant: 'fern' }, start)).toBe(true)
+    expect(formChanged({ ...start, description: 'Why' }, start)).toBe(true)
     expect(formChanged({ ...start, customWeekdays: [1] }, start)).toBe(true)
     expect(formChanged({ ...start, reminderOn: true }, start)).toBe(true)
   })

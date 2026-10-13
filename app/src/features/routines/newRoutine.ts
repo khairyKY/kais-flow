@@ -66,6 +66,8 @@ export function draftToRoutineFields(draft: NewRoutineDraft): NewRoutineFields |
 
 /** Everything the form holds, not just what draftToRoutineFields reads. */
 export interface RoutineFormState extends NewRoutineDraft {
+  /** P7 7d: what the routine is for, in your words (routines.description, 0072); '' = none. */
+  description: string
   steps: StepDraft[]
   domainId: string
   isChallenge: boolean
@@ -152,6 +154,7 @@ export function routineToForm(r: Routine): RoutineFormState {
   const span = r.challenge_start && r.challenge_end ? challengeDays(r.challenge_start, r.challenge_end) : null
   return {
     name: r.name,
+    description: r.description ?? '',
     timeMode: isNamedTime(r.time_of_day) ? (r.time_of_day as TimeMode) : 'anytime',
     ...repeatOf(r.cadence?.weekdays ?? []),
     reminderOn: !!r.clock_time,
@@ -173,9 +176,12 @@ export function applyRoutineForm(r: Routine, form: RoutineFormState, todayKey: s
   const keepCustomTime = fields.timeOfDay === null && !isNamedTime(r.time_of_day)
   const challenge = form.isChallenge && form.challengeDays > 0
   const start = challenge ? (r.challenge_start ?? todayKey) : null
+  const description = form.description.trim() || null
   return {
     ...r,
     name: fields.name,
+    // Written only once there is one (or was): an untouched routine's save leaves the column alone.
+    ...(description !== null || r.description != null ? { description } : {}),
     time_of_day: keepCustomTime ? r.time_of_day : fields.timeOfDay,
     cadence: fields.cadence,
     clock_time: fields.clockTime,

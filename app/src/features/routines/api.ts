@@ -46,10 +46,12 @@ export function createRoutine(
   domainId: string | null = null,
   plant: RoutinePlant = 'vine',
   stepMinutes: (number | null)[] = [],
+  description: string | null = null,
 ): Routine {
   const routine: Routine = {
     id: crypto.randomUUID(),
     name,
+    ...(description ? { description } : {}), // 0072; left out when empty, like a build from before it
     time_of_day: timeOfDay,
     clock_time: clockTime,
     cadence,
@@ -79,10 +81,12 @@ export function createChallenge(
   domainId: string | null = null,
   plant: RoutinePlant = 'vine',
   stepMinutes: (number | null)[] = [],
+  description: string | null = null,
 ): Routine {
   const routine: Routine = {
     id: crypto.randomUUID(),
     name,
+    ...(description ? { description } : {}),
     time_of_day: timeOfDay,
     clock_time: clockTime,
     cadence,

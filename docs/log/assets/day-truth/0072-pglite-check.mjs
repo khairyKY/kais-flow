@@ -49,3 +49,13 @@ const back = await names()
 ok('restored from the archive: slipping again', back.includes('Old site 20d'), JSON.stringify(back))
 const cols = await rows(`select column_name from information_schema.columns where table_name = 'slipping' order by ordinal_position`)
 ok('same columns as 0053', cols.map((c) => c.column_name).join() === 'entity_type,entity_id,entity_name,last_touch,days_since', cols.map((c) => c.column_name).join())
+
+// ── A27: routines.description ──
+const d = await rows(`select data_type, is_nullable, column_default from information_schema.columns where table_name = 'routines' and column_name = 'description'`)
+ok('routines.description text, nullable, no default', d[0]?.data_type === 'text' && d[0]?.is_nullable === 'YES' && d[0]?.column_default === null, JSON.stringify(d[0]))
+ok('a routine from before 0072 reads description null', (await rows(`select description from routines where name = 'Stretch'`))[0]?.description === null)
+await db.exec(`update routines set description = 'Before bed' where name = 'Stretch'`)
+// an old build's upsert (only the columns it knows) keeps it
+await db.exec(`insert into routines (id, name, steps) values ('00000000-0000-4000-8000-0000000000c1', 'Long stretch', '["Neck rolls"]')
+  on conflict (id) do update set name = excluded.name, steps = excluded.steps`)
+ok('an old build’s upsert leaves the description as it was', (await rows(`select description from routines where name = 'Long stretch'`))[0]?.description === 'Before bed')
