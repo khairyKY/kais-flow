@@ -11,14 +11,14 @@ import { appendDictation, micAction, pickMimeType } from '../capture/holdToTalk'
 import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
 import { useAuth } from '../auth/AuthProvider'
 import { hasStructure, parseCommand } from './parseCommand'
-import { addTypedTask } from './quickAdd'
+import { addTypedEvent, addTypedTask } from './quickAdd'
 import { formatDueChip } from './dueChip'
 import { CAPTURE_INPUT_ID, useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { playSound } from '../../lib/sounds'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
-import { Chip, KeyChip } from '../../components/kit'
+import { Chip, KeyChip, Segmented } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { pickPhotos, usePaperStore } from '../paper/paperStore'
 import { imageFiles } from '../paper/image'
@@ -94,6 +94,8 @@ export function CommandBar() {
   const [jumpSelected, setJumpSelected] = useState(false)
   /** Token words Esc handed back to the title (P7e A10) — read as plain words until the line is gone. */
   const [ignored, setIgnored] = useState<string[]>([])
+  /** P7e A11 (Akiflow's ⌘2 "New Event"): what Enter makes of the line — a task (and the Inbox), or an event. */
+  const [kind, setKind] = useState<'task' | 'event'>('task')
   const [hint, setHint] = useState(false)
   const [dictation, setDictation] = useState<'off' | 'listening' | 'transcribing'>('off')
   const take = useRef<{ recorder: MediaRecorder; stream: MediaStream } | null>(null)
@@ -135,6 +137,7 @@ export function CommandBar() {
     // discards); the desktop bar starts fresh each time, as before.
     if (!mobile) setText('')
     if (!mobile) setIgnored([])
+    setKind('task')
     setJumpSelected(false)
     // stopDictation only touches refs and setters.
   }, [open, mobile]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -167,7 +170,9 @@ export function CommandBar() {
     // "every property is extracted… let the AI understand the intent and decide").
     // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture": the AI fills every typed
     // capture after it lands anyway). Each landing says where it went — no silent landings.
-    if (hasStructure(parsed)) {
+    if (kind === 'event') {
+      addTypedEvent(parsed, trimmed)
+    } else if (hasStructure(parsed)) {
       // The same rule as Tasks' quick add (./quickAdd): a typed time puts it on the calendar as a
       // block, a date alone doesn't; "Added to Tomorrow · Shaheen" with Undo; the AI fills the rest.
       addTypedTask(parsed, trimmed, parsed.projectMatch ?? parsed.domainMatch)
@@ -177,6 +182,7 @@ export function CommandBar() {
     }
     setText('')
     setIgnored([])
+    setKind('task')
     close()
   }
 
@@ -261,7 +267,22 @@ export function CommandBar() {
   // Same condition `submit()`'s gate uses — this chip promises what Enter will actually do,
   // so a priority/duration-only command (which now creates a task directly) can't still say
   // "→ Inbox (unfiled)" underneath it.
-  const unmatched = !hasStructure(parsed)
+  const unmatched = kind === 'task' && !hasStructure(parsed)
+  const asTask = kind === 'task' // priority, labels and notes are a task's: an event leaves them out
+  const kindSwitch = (
+    <Segmented
+      label="Add as"
+      value={kind}
+      onChange={(k) => {
+        setKind(k)
+        inputRef.current?.focus()
+      }}
+      options={[
+        { value: 'task', label: 'Task' },
+        { value: 'event', label: 'Event' },
+      ]}
+    />
+  )
 
   const field = (close: () => void, style?: React.CSSProperties) => (
     <input
@@ -289,6 +310,9 @@ export function CommandBar() {
         } else if (e.key === 'ArrowUp' && jumpSelected) {
           e.preventDefault()
           setJumpSelected(false)
+        } else if ((e.metaKey || e.ctrlKey) && (e.key === '1' || e.key === '2')) {
+          e.preventDefault() // ⌘1 task · ⌘2 event (P7e A11)
+          setKind(e.key === '2' ? 'event' : 'task')
         } else if (e.key === 'Enter' && jumpSelected && jumpView) {
           e.preventDefault()
           jumpTo(jumpView)
@@ -370,15 +394,16 @@ export function CommandBar() {
                 {field(close, { width: '100%', minHeight: 'var(--touch-min)' })}
                 {text.trim() && (
                   <div className="kf-capture-chips">
+                    {kindSwitch}
                     {parsed.dueAt && <Chip tone="date">{formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}</Chip>}
                     {parsed.recurrence && <Chip tone="date" icon={<Icon name="repeat" size={16} />}>{repeatLabel(parsed.recurrence)}</Chip>}
                     {matchChip && <Chip tone="project">{matchChip}</Chip>}
                     {parsed.durationMin != null && <Chip tone="duration">{formatDuration(parsed.durationMin)}</Chip>}
-                    {parsed.priority != null && <Chip tone="priority">{PRIORITY_NAME[parsed.priority]}</Chip>}
-                    {parsed.labels.map((l) => (
+                    {asTask && parsed.priority != null && <Chip tone="priority">{PRIORITY_NAME[parsed.priority]}</Chip>}
+                    {asTask && parsed.labels.map((l) => (
                       <Chip key={l}>*{l}</Chip>
                     ))}
-                    {parsed.notes && <Chip>{'// Notes'}</Chip>}
+                    {asTask && parsed.notes && <Chip>{'// Notes'}</Chip>}
                     {unmatched && <Chip tone="inbox">→ Inbox</Chip>}
                   </div>
                 )}
@@ -492,7 +517,7 @@ export function CommandBar() {
                     {formatDuration(parsed.durationMin)}
                   </span>
                 )}
-                {parsed.priority != null && (() => {
+                {asTask && parsed.priority != null && (() => {
                   const color = priorityColor(parsed.priority) ?? 'var(--acc-terra)'
                   // High's tint is the contract's literal rgba(201,165,90,0.22); other priorities fall back to a computed tint.
                   const background = parsed.priority === 2 ? 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)' : `color-mix(in oklch, ${color} 20%, var(--paper-parchment))`
@@ -507,12 +532,12 @@ export function CommandBar() {
                     → {matchChip}
                   </span>
                 )}
-                {parsed.labels.map((l) => (
+                {asTask && parsed.labels.map((l) => (
                   <span key={l} style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>
                     *{l}
                   </span>
                 ))}
-                {parsed.notes && <span style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>{'// Notes'}</span>}
+                {asTask && parsed.notes && <span style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>{'// Notes'}</span>}
                 {unmatched && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-gold)', background: 'color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment))' }}>
                     → Inbox (unfiled)
@@ -533,7 +558,9 @@ export function CommandBar() {
                 'Transcribing…'
               ) : (
                 <>
-                  <KeyChip text="↵" size="sm" /> quick add
+                  {kindSwitch}
+                  <KeyChip text="↵" size="sm" /> {kind === 'event' ? 'add event' : 'quick add'}
+                  <KeyChip text="⌘2" size="sm" /> event
                 </>
               )}
             </div>

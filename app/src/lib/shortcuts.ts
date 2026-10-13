@@ -59,6 +59,7 @@ export const keyCap = (key: string): string => (key === ' ' ? 'Space' : key === 
 export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
   // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture" — the AI fills every capture after it lands).
   { keys: ['↵'], label: 'Quick add' },
+  { keys: ['⌘/Ctrl', '2'], label: 'Make it an event (⌘/Ctrl 1: a task)' },
   { keys: ['!'], label: 'Priority (! !! !!!)' },
   { keys: ['#'], label: 'Project' },
   { keys: ['every …'], label: 'Repeat (every week, every mon, fri)' },
