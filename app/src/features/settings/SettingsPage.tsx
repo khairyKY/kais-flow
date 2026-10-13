@@ -20,7 +20,7 @@ import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, uiZoom, type UiS
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
-import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
+import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
 import { isNativeShell } from '../../lib/platform'
 import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
 import { Select } from '../../components/Select'
@@ -488,8 +488,8 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
       <Row lead={dot(gh.tone)} label="GitHub" help={githubRulesOf(github).rules.land === 'tasks' ? 'Issues land straight in Tasks' : 'Issues land in the Inbox'}>
         <span className="st-chip" style={gh.tone === 'bad' ? { color: 'var(--acc-terra-ink)', borderColor: 'currentColor' } : undefined}>{gh.text}</span>
       </Row>
-      {/* B1 (2026-10-13): built — read-only, under our own calendar. */}
-      <Row lead={dot(gg.tone)} label="Google Calendar" help="Your calendars on ours, read-only">
+      {/* B1 (2026-10-13): built — read-only, under our own calendar; our plan out as busy (2026-10-14). */}
+      <Row lead={dot(gg.tone)} label="Google Calendar" help="Your calendars on ours, read-only; your plan there as busy">
         <span className="st-chip" style={gg.tone === 'bad' ? { color: 'var(--acc-terra-ink)', borderColor: 'currentColor' } : undefined}>{gg.text}</span>
       </Row>
       <Row lead={dot('off')} label="Groq" help="Chat and capture parsing" />
@@ -1126,7 +1126,8 @@ const repoChip: CSSProperties = { display: 'inline-flex', alignItems: 'center', 
 const addChip: CSSProperties = { fontFamily: 'var(--font-mono)', background: 'none', border: '1px dashed var(--line-solid)', borderRadius: 'var(--radius-pill)', color: 'var(--ink-faint)' }
 
 // B1 (Kai 2026-10-13): Google Calendar, read-only — the chosen calendars' events on our grid
-// (google-sync, every 15 min), never anything written back. Connect goes through Google's consent page
+// (google-sync, every 15 min); since 2026-10-14 our own blocks go out to the primary calendar as private
+// busy events ("Show my plan in Google as busy"), and nothing else there is touched. Connect goes through Google's consent page
 // (google-connect); the client only ever sees the account, its calendar list, the chosen ids, status
 // and synced_at — never the refresh token. Until Kai sets the two secrets, Connect says which are missing.
 function GoogleGlyph({ dim }: { dim?: boolean }) {
@@ -1137,7 +1138,8 @@ function GoogleGlyph({ dim }: { dim?: boolean }) {
   )
 }
 
-const syncLine = (r: GoogleSyncResult) => `Synced · ${r.calendars} ${r.calendars === 1 ? 'calendar' : 'calendars'} · ${r.fetched} events · ${r.new} new · ${r.removed} gone`
+const syncLine = (r: GoogleSyncResult) =>
+  `Synced · ${r.calendars} ${r.calendars === 1 ? 'calendar' : 'calendars'} · ${r.fetched} events · ${r.new} new · ${r.removed} gone${r.out ? ` · ${r.out.blocks} ${r.out.blocks === 1 ? 'block' : 'blocks'} busy in Google` : ''}`
 
 function GoogleProvider({ google }: { google?: IntegrationStatus }) {
   const [busy, setBusy] = useState(false)
@@ -1196,14 +1198,14 @@ function GoogleProvider({ google }: { google?: IntegrationStatus }) {
   const disconnect = () =>
     run(async () => {
       await disconnectGoogle()
-      return 'Disconnected. Google’s events are off your calendar; your own are untouched.'
+      return 'Disconnected. Google’s events are off your calendar and your blocks are off Google; your own are untouched.'
     })
 
   return (
     <ProviderRow
       icon={<GoogleGlyph dim={!google} />}
       name="Google Calendar"
-      desc="Your Google calendars on ours, read-only — prayer times, work, holidays. Nothing is written back."
+      desc="Your Google calendars on ours, read-only — prayer times, work, holidays. Your own blocks show in your main Google calendar as busy."
       status={
         google ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
@@ -1228,14 +1230,15 @@ function GoogleProvider({ google }: { google?: IntegrationStatus }) {
         </div>
       )}
       {message && <div ref={said} role="status" className="st-help" style={{ marginTop: 10 }}>{message}</div>}
-      {google && !failing && <GoogleCalendars google={google} />}
+      {google && !failing && <GoogleCalendars google={google} onReconnect={() => void connect()} />}
     </ProviderRow>
   )
 }
 
 // Which calendars show, one switch each (saved at once, google-connect `choose`): a newly shown one
 // syncs now, a hidden one's events leave the grid. ponytail: the GitHub rules panel's bone sheet.
-function GoogleCalendars({ google }: { google: IntegrationStatus }) {
+// Under them, our plan out to Google: the switch once the grant can write, else Reconnect to allow it.
+function GoogleCalendars({ google, onReconnect }: { google: IntegrationStatus; onReconnect: () => void }) {
   const chosen = google.chosen ?? []
   const [err, setErr] = useState<string | null>(null)
   const [looking, setLooking] = useState(false)
@@ -1257,6 +1260,15 @@ function GoogleCalendars({ google }: { google: IntegrationStatus }) {
         </Row>
       ))}
       {!google.calendars?.length && <Row label="No calendars yet" help="Look again once the account has one" />}
+      {google.can_write ? (
+        <Row label="Show my plan in Google as busy" help="Your blocks and events, as private busy time in your main Google calendar">
+          <Toggle on={google.mirror !== false} label="Show my plan in Google as busy" onToggle={() => { setErr(null); setGoogleMirror(google.mirror === false).catch((e: Error) => setErr(e.message)) }} />
+        </Row>
+      ) : (
+        <Row label="Allow Kai’s Flow to show your blocks in Google" help="Reconnect once and allow it. Your calendars keep syncing until then">
+          <Button type="button" variant="secondary" onClick={onReconnect}>Reconnect</Button>
+        </Row>
+      )}
       <Row label="Last synced" help="Every 15 minutes, and on Sync now">
         <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>{syncedLabel(google.synced_at)}</span>
       </Row>

@@ -1,27 +1,27 @@
 PASS s1 settings: no "Coming soon" anywhere
-PASS s1 summary card: Google Calendar reads "Not connected" — Google CalendarYour calendars on ours, read-onlyNot connected
+PASS s1 summary card: Google Calendar reads "Not connected" — Google CalendarYour calendars on ours, read-only; your plan there as busyNot connected
 PASS s1 integrations: a real Google Calendar row with Connect
 PASS s1 integrations: no "Not built yet"
 PASS s1 no page errors
-PASS s2 Connect posts {action:"start", origin} to google-connect — [{"name":"google-connect","body":{"action":"start","origin":"http://localhost:5277"}}]
+PASS s2 Connect posts {action:"start", origin} to google-connect — [{"name":"google-connect","body":{"action":"start","origin":"http://localhost:5284"}}]
 PASS s2 it says what is missing: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET, and where the steps are — Not set up yet: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET aren’t set on the server. docs/GOOGLE-SETUP.md has the steps (free, about 10 minutes).
 PASS s2 still on Settings, the Connect button still there
 PASS s2 no page errors
 PASS s2b not deployed: "isn’t on the server yet … needs deploying" — Google Calendar isn’t on the server yet — google-connect and google-sync need deploying (docs/GOOGLE-SETUP.md).
 PASS s2b no page errors
-PASS s3 the browser goes to Google’s consent page, read-only scope — https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&redirect_uri=https%3A%2F%2Feqbbkitofgyxxrfggpbu.supabase.co%2Ffunctions%2Fv1%2Fgoogle-connect&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly&access_type=offline&prompt=consent&state=s
+PASS s3 the browser goes to Google’s consent page: read + owned-calendar events scopes — https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&redirect_uri=https%3A%2F%2Feqbbkitofgyxxrfggpbu.supabase.co%2Ffunctions%2Fv1%2Fgoogle-connect&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.owned&access_type=offline&prompt=consent&state=s
 PASS s3 no page errors
 PASS s4 day: the landing opens Integrations
 PASS s4 day: the first sync runs (google-sync {action:'sync'}) and says so — Connected · Synced · 2 calendars · 335 events · 335 new · 0 gone
-PASS s4 day: ?google= is gone from the address — http://localhost:5277/settings
-PASS s4 day: the account and "Connected · synced 12 Oct, 09:48" — Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Nothing is written back.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars
+PASS s4 day: ?google= is gone from the address — http://localhost:5284/settings
+PASS s4 day: the account and "Connected · synced 12 Oct, 09:48" — Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Your own blocks show in your main Google calendar as busy.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptShow my plan in Google as busyYour blocks and events, as private busy time in your main Google calendarLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars
 PASS s4 day: one switch per calendar, the chosen ones on
 PASS s4 day: "Last synced 12 Oct, 09:48", Sync now, Disconnect
 PASS s4 day: no page errors
 PASS s4 night: the landing opens Integrations
 PASS s4 night: the first sync runs (google-sync {action:'sync'}) and says so — Connected · Synced · 2 calendars · 335 events · 335 new · 0 gone
-PASS s4 night: ?google= is gone from the address — http://localhost:5277/settings
-PASS s4 night: the account and "Connected · synced 12 Oct, 09:48" — Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Nothing is written back.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars
+PASS s4 night: ?google= is gone from the address — http://localhost:5284/settings
+PASS s4 night: the account and "Connected · synced 12 Oct, 09:48" — Google CalendarYour Google calendars on ours, read-only — prayer times, work, holidays. Your own blocks show in your main Google calendar as busy.kai@gmail.com · Connected · synced 12 Oct, 09:48Sync nowDisconnectConnected · Synced · 2 calendars · 335 events · 335 new · 0 goneCalendars · shown on yours, read-onlyKaiYour main calendarPrayer timesHolidays in EgyptShow my plan in Google as busyYour blocks and events, as private busy time in your main Google calendarLast syncedEvery 15 minutes, and on Sync now12 Oct, 09:48Look for new calendars
 PASS s4 night: one switch per calendar, the chosen ones on
 PASS s4 night: "Last synced 12 Oct, 09:48", Sync now, Disconnect
 PASS s4 night: no page errors
@@ -32,17 +32,39 @@ PASS s5 Disconnect posts {action:"disconnect"} and says your own events stay
 PASS s5 nothing written to calendar_events or integrations by the client — []
 PASS s5 no page errors
 PASS s6 ?google=error&reason=denied says the consent page was cancelled — Google wasn’t connected — the consent page was cancelled.
-PASS s6 …and the address is clean again — http://localhost:5277/settings
+PASS s6 …and the address is clean again — http://localhost:5284/settings
 PASS s6 no page errors
 PASS s6 failing: the summary row says "Access expired — reconnect"
 PASS s6 failing: Reconnect instead of Sync now, no calendar switches
 PASS s6 failing: no page errors
 PASS s7 day: phone Settings → Connections has Google Calendar with its switches
+PASS s7 day: …and "Show my plan in Google as busy"
 PASS s7 day: no horizontal scroll at 390 — 390
 PASS s7 day: no page errors
 PASS s7 night: phone Settings → Connections has Google Calendar with its switches
+PASS s7 night: …and "Show my plan in Google as busy"
 PASS s7 night: no horizontal scroll at 390 — 390
 PASS s7 night: no page errors
+PASS s8 the summary row says the plan goes out as busy
+PASS s8 the switch is there and on (absent setting = on)
+PASS s8 no "Allow … Reconnect" once the grant can write
+PASS s8 off posts {action:"mirror", on:false} — the server deletes ours in Google — and runs no sync — [{"name":"google-connect","body":{"action":"mirror","on":false}}]
+PASS s8 …and the switch stays off
+PASS s8 on posts {action:"mirror", on:true}, then syncs to write them now — [{"name":"google-connect","body":{"action":"mirror","on":false}},{"name":"google-connect","body":{"action":"mirror","on":true}},{"name":"google-sync","body":{"action":"sync"}}]
+PASS s8 …and the switch is on again
+PASS s8 Sync now says how many blocks are busy in Google — Synced · 2 calendars · 335 events · 335 new · 0 gone · 12 blocks busy in Google
+PASS s8 nothing written to calendar_events or integrations by the client — []
+PASS s8 no page errors
+PASS s9 day: "Allow Kai’s Flow to show your blocks in Google" with Reconnect
+PASS s9 day: no busy switch yet
+PASS s9 day: reading carries on — status ok, Sync now, the calendar switches
+PASS s9 Sync now still syncs (no out line without the scope)
+PASS s9 Reconnect posts start and goes to Google asking for calendar.events.owned — https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.owned&access_type=offline&prompt=consent&state=s
+PASS s9 day: no page errors
+PASS s9 night: "Allow Kai’s Flow to show your blocks in Google" with Reconnect
+PASS s9 night: no busy switch yet
+PASS s9 night: reading carries on — status ok, Sync now, the calendar switches
+PASS s9 night: no page errors
 PASS g1 day: Dhuhr is on the grid, marked synced
 PASS g1 day: in the calendar's colour (#9fe1e7) — #9fe1e7
 PASS g1 day: the all-day Mawlid sits in the all-day band (Tue)
@@ -78,4 +100,4 @@ PASS p1 night: the sheet — date · time · "From Google · Prayer times" — [
 PASS p1 night: no swatches, no Delete footer, the title read-only
 PASS p1 night: no page errors
 
-79/79 passed
+101/101 passed

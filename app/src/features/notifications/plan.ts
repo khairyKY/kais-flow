@@ -1,9 +1,11 @@
-import { birthdayNotice, clock, deliver, digestNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { birthdayNotice, clock, deliver, digestNotice, eventReminderNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { DEFAULT_AT, dayBounds, minutesOf, ritualOn, shutDownOn, type RitualSettings } from '../../../../supabase/functions/notify/ritual.ts'
 import { routineDueOn, type ReminderRoutine, type RoutineDone } from '../../../../supabase/functions/notify/routine.ts'
 import { BIRTHDAY_AT, birthdayGroups, type PersonFacts, type Spoke } from '../../../../supabase/functions/notify/birthday.ts'
 import { isOverdue, todaysTop3 } from '../../../../supabase/functions/_shared/today.ts'
 import { addDays, dateKey, wallToInstant } from '../../../../supabase/functions/_shared/zone.ts'
+import { eventRemindersDue, type RemindRow } from '../../../../supabase/functions/_shared/eventReminder.ts'
+import { ruleBetween } from '../calendar/series'
 import { dueReminders } from '../tray/trayState'
 import { KIND_IDS, KIND_LOOK } from './kinds'
 
@@ -15,7 +17,8 @@ import { KIND_IDS, KIND_LOOK } from './kinds'
 //  - Android (android.ts): the next few days, handed to the OS as scheduled notifications, so they
 //    arrive with the app closed. Re-planned whenever the data changes while the app runs.
 // The same rules as notify: the digest's Top 3 and overdue count are _shared/today.ts's, routine
-// reminders notify/routine.ts's, birthdays notify/birthday.ts's (2026-10-12).
+// reminders notify/routine.ts's, birthdays notify/birthday.ts's (2026-10-12), event reminders
+// _shared/eventReminder.ts's (0077).
 // Pure, so the same rules (kind switches, pause, quiet hours, lock-screen names) are tested here.
 
 export interface PlanTask {
@@ -43,8 +46,13 @@ export interface Planned {
   notice: Notice
 }
 
+/** A calendar_events row as the cache holds it — a repeating one is its series row (0061). */
+export type PlanEvent = RemindRow & { title: string }
+
 export interface PlanInput {
   tasks: readonly PlanTask[]
+  /** Calendar rows; the ones with `remind_min` remind before each start (0077). */
+  events?: readonly PlanEvent[]
   projects?: readonly { id: string; name: string }[]
   /** Routines with a reminder time (routines.clock_time) and their check-offs. */
   routines?: readonly ReminderRoutine[]
@@ -74,7 +82,7 @@ function wallTimes(min: number, from: Date, to: Date, zone: string): Date[] {
   return out
 }
 
-export function localPlan({ tasks, projects = [], routines = [], completions = [], people = [], interactions = [], finished = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
+export function localPlan({ tasks, events = [], projects = [], routines = [], completions = [], people = [], interactions = [], finished = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
   const out: Planned[] = []
   const add = (key: string, at: Date, build: (said: Date) => Notice | null) => {
     const said = new Date(Math.max(at.getTime(), now.getTime()))
@@ -93,6 +101,14 @@ export function localPlan({ tasks, projects = [], routines = [], completions = [
   for (const [at, group] of groups) {
     const rows = group.map((t) => ({ id: t.id, title: t.title, due_at: t.due_at, project: projects.find((p) => p.id === t.project_id)?.name ?? null }))
     add(group.map((t) => `${t.id}@${t.reminder_at}`).join(','), new Date(at), (said) => reminderNotice(rows, prefs, said, zone))
+  }
+
+  // Event reminders (0077): every occurrence, at its start minus remind_min — notify's rule. Several at
+  // one moment are one notice.
+  const eventGroups = new Map<number, PlanEvent[]>()
+  for (const d of eventRemindersDue(events, from, to, zone, ruleBetween)) eventGroups.set(d.at.getTime(), [...(eventGroups.get(d.at.getTime()) ?? []), d.event])
+  for (const [at, group] of eventGroups) {
+    add(`event:${group.map((e) => e.id).join(',')}@${new Date(at).toISOString()}`, new Date(at), (said) => eventReminderNotice(group, prefs, said, zone))
   }
 
   // Routine reminders: at each routine's time, on its days, unless it's checked off by then (as this

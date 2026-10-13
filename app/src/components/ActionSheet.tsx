@@ -53,9 +53,10 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
       }
     >
       {(close) => {
-        const row = (item: ActionSheetItem) => (
+        // Keyed by place too: a list can name the same thing twice (a repeating Time block's days).
+        const row = (item: ActionSheetItem, i: number) => (
           <button
-            key={item.label}
+            key={`${i}:${item.label}`}
             type="button"
             className={`kf-as-row${item.destructive ? ' is-destructive' : ''}`}
             aria-current={item.selected || undefined}

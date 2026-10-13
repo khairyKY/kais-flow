@@ -17,12 +17,12 @@
   {
     "name": "12j desktop-day Review → the Inbox with that page's results open",
     "ok": true,
-    "detail": "http://localhost:5254/inbox"
+    "detail": "http://localhost:5281/inbox"
   },
   {
     "name": "12j desktop-day Open Omar → his page",
     "ok": true,
-    "detail": "http://localhost:5254/people/c0000000-0000-4000-8000-000000000001"
+    "detail": "http://localhost:5281/people/c0000000-0000-4000-8000-000000000001"
   },
   {
     "name": "12j desktop-day no writes from looking",
@@ -52,12 +52,12 @@
   {
     "name": "12j phone-night Review → the Inbox with that page's results open",
     "ok": true,
-    "detail": "http://localhost:5254/inbox"
+    "detail": "http://localhost:5281/inbox"
   },
   {
     "name": "12j phone-night Open Omar → his page",
     "ok": true,
-    "detail": "http://localhost:5254/people/c0000000-0000-4000-8000-000000000001"
+    "detail": "http://localhost:5281/people/c0000000-0000-4000-8000-000000000001"
   },
   {
     "name": "12j phone-night no writes from looking",
@@ -162,7 +162,7 @@
   {
     "name": "birthday: people + interactions are read when Birthday is on (whatever page is open)",
     "ok": true,
-    "detail": "[\"app_settings\",\"tasks\",\"routines\",\"routine_completions\",\"inbox_items\",\"captures\",\"projects\",\"domains\",\"areas\",\"calendar_events\",\"activity_log\",\"slipping\",\"people\",\"resurfaced_log\",\"interactions\"]"
+    "detail": "[\"app_settings\",\"tasks\",\"routines\",\"routine_completions\",\"inbox_items\",\"projects\",\"captures\",\"domains\",\"areas\",\"activity_log\",\"calendar_events\",\"people\",\"interactions\",\"slipping\",\"resurfaced_log\"]"
   },
   {
     "name": "birthday: nothing before 08:00",
@@ -182,7 +182,7 @@
   {
     "name": "birthday: the toast’s Open Omar lands on his page",
     "ok": true,
-    "detail": "http://localhost:5254/people/c0000000-0000-4000-8000-000000000001"
+    "detail": "http://localhost:5281/people/c0000000-0000-4000-8000-000000000001"
   },
   {
     "name": "birthday: no page errors",
@@ -202,7 +202,7 @@
   {
     "name": "birthday off (the default): no toast, interactions not fetched for it",
     "ok": true,
-    "detail": "[\"app_settings\",\"tasks\",\"routines\",\"routine_completions\",\"inbox_items\",\"captures\",\"projects\",\"domains\",\"areas\",\"calendar_events\",\"activity_log\",\"slipping\",\"people\",\"resurfaced_log\"]"
+    "detail": "[\"app_settings\",\"tasks\",\"routines\",\"routine_completions\",\"inbox_items\",\"projects\",\"captures\",\"activity_log\",\"calendar_events\",\"domains\",\"areas\",\"slipping\",\"people\",\"resurfaced_log\"]"
   },
   {
     "name": "paper: the read resumed here finishes → capture-image was asked",
@@ -222,7 +222,7 @@
   {
     "name": "paper: Review (from the toast) → the Inbox with the results open",
     "ok": true,
-    "detail": "http://localhost:5254/inbox"
+    "detail": "http://localhost:5281/inbox"
   },
   {
     "name": "paper: no page errors",
@@ -262,7 +262,7 @@
   {
     "name": "sync: back online, the change goes up and the notice reaches the history (12j), stamped when it was said",
     "ok": true,
-    "detail": "{\"id\":\"cea11158-a68f-46b2-ae22-f7f53456a613\",\"event_type\":\"notify.sync_problem\",\"entity_type\":\"notification\",\"entity_id\":\"d6fee81e-4b5c-47a7-8b4d-8db37bf424ed\",\"payload\":{\"title\":\"1 change is waiting to sync\",\"body\":\"It’s safe on this device. We’ll keep trying.\"},\"created_at\":\"2026-10-03T07:00:01.197Z\"}"
+    "detail": "{\"id\":\"e9c15071-c5bf-4a01-8dc4-5c0ae624c1e9\",\"event_type\":\"notify.sync_problem\",\"entity_type\":\"notification\",\"entity_id\":\"c971cb9e-2403-4694-874b-90efb229b5b2\",\"payload\":{\"title\":\"1 change is waiting to sync\",\"body\":\"It’s safe on this device. We’ll keep trying.\"},\"created_at\":\"2026-10-03T07:00:02.823Z\"}"
   },
   {
     "name": "sync: no page errors",

@@ -1,0 +1,167 @@
+[
+  {
+    "name": "a1 the checklist offers \"save as template\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1 no templates yet → no Templates section",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2 saving opens the name in place, the project name to start",
+    "ok": true,
+    "detail": "Shaheen Website"
+  },
+  {
+    "name": "a3 one template stored on app_settings.checklist_templates, titles + types (no ticks, no tasks)",
+    "ok": true,
+    "detail": "[{\"id\":\"4fe0f50a-1c88-45cb-896a-ea87dcfaee8a\",\"name\":\"Launch kit\",\"items\":[{\"title\":\"Buy domain\",\"type\":\"one-shot\"},{\"title\":\"Write the brief\",\"type\":\"task-linked\"},{\"title\":\"Pick fonts\",\"type\":\"one-shot\"}]}]"
+  },
+  {
+    "name": "a3 toast: Saved as a template · 3 items (with Undo)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a4 Templates · 1 lists it with its count",
+    "ok": true,
+    "detail": "Templates · 1"
+  },
+  {
+    "name": "b0 the empty checklist has no \"save as template\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 exactly the task-linked item became a task: under Bakery Shop, its domain, no area",
+    "ok": true,
+    "detail": "[[\"Write the brief\",\"20000000-0000-4000-8000-000000000002\",\"40000000-0000-4000-8000-000000000001\",null]]"
+  },
+  {
+    "name": "b2 every item is a new unticked checklist line; the task-linked one links its new task",
+    "ok": true,
+    "detail": "[{\"id\":\"97fae629-9cee-42bc-8192-d18aea3aa1a8\",\"title\":\"Buy domain\",\"type\":\"one-shot\",\"completed\":false,\"task_id\":null},{\"id\":\"5daeb385-d696-4509-8974-cb09c891b3ab\",\"title\":\"Write the brief\",\"type\":\"task-linked\",\"completed\":false,\"task_id\":\"0ca33394-4286-4c0b-afdb-3b30251ed7eb\"},{\"id\":\"7528ec7b-9e65-4727-a031-824a49225bea\",\"title\":\"Pick fonts\",\"type\":\"one-shot\",\"completed\":false,\"task_id\":null}]"
+  },
+  {
+    "name": "b3 one projects write for the whole batch",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "b4 logged: task.created + project.template_used",
+    "ok": true,
+    "detail": "task.created,project.template_used"
+  },
+  {
+    "name": "b5 toast: Added “Launch kit” · 3 items, 1 as tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b6 the new task shows under Open tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b7 one Undo: the new task removed outright, the lines taken back",
+    "ok": true,
+    "detail": "1 deletes · 0 lines"
+  },
+  {
+    "name": "b7 Undo logged",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 renamed",
+    "ok": true,
+    "detail": "Website launch"
+  },
+  {
+    "name": "c1 toast: Renamed to “Website launch”",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 Undo puts the old name back",
+    "ok": true,
+    "detail": "Launch kit"
+  },
+  {
+    "name": "d1 deleted: the list is empty, the section goes",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "d1 toast: Deleted “Launch kit”",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 Undo brings it back whole",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a–d no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e1 pre-push: no \"save as template\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e1 pre-push: no app_settings write",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f [phone day] the rows fit the width",
+    "ok": true,
+    "detail": "{\"x\":278.484375,\"y\":512.578125,\"width\":36.515625,\"height\":24}"
+  },
+  {
+    "name": "f [phone day] row ≥ 44px tall",
+    "ok": true,
+    "detail": "{\"x\":67,\"y\":503.078125,\"width\":290,\"height\":44}"
+  },
+  {
+    "name": "f [phone day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f [phone night] the rows fit the width",
+    "ok": true,
+    "detail": "{\"x\":278.484375,\"y\":512.578125,\"width\":36.515625,\"height\":24}"
+  },
+  {
+    "name": "f [phone night] row ≥ 44px tall",
+    "ok": true,
+    "detail": "{\"x\":67,\"y\":503.078125,\"width\":290,\"height\":44}"
+  },
+  {
+    "name": "f [phone night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f [desktop night] the rows fit the width",
+    "ok": true,
+    "detail": "{\"x\":1090.203125,\"y\":503.4375,\"width\":41.296875,\"height\":25.75}"
+  },
+  {
+    "name": "f [desktop night] no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

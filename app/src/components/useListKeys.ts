@@ -75,6 +75,8 @@ interface UseListKeysOptions<T> {
   onSelectAll?: () => void
   /** The rows selected right now: a key with a `runAll` acts on these. */
   selected?: T[]
+  /** ⌘/Ctrl+↑/↓ (p7e A22): move the selection, else the focused row, one place up (-1) or down (+1). */
+  reorder?: (rows: T[], dir: -1 | 1) => void
 }
 
 /** Roving-focus keyboard nav shared by Tasks smart lists, Today, and Inbox: ↑/↓ or j/k move
@@ -82,7 +84,7 @@ interface UseListKeysOptions<T> {
 export function useListKeys<T extends { id: string }>(
   items: T[],
   bindings: ListBinding<T>[],
-  { idPrefix = 'task-', active = true, sectionLabel, onSelectAll, selected = NONE as T[] }: UseListKeysOptions<T> = {},
+  { idPrefix = 'task-', active = true, sectionLabel, onSelectAll, selected = NONE as T[], reorder }: UseListKeysOptions<T> = {},
 ) {
   const [focusedId, setFocusedId] = useState<string | null>(null)
 
@@ -107,6 +109,16 @@ export function useListKeys<T extends { id: string }>(
     if (!active) return
     function onKeydown(e: KeyboardEvent) {
       if (isTypingTarget(e.target)) return
+      const dir = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0
+      if (reorder && dir && (e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey) {
+        const rows = selected.length > 0 ? selected : items.filter((i) => i.id === focusedId)
+        if (rows.length === 0) return
+        e.preventDefault()
+        reorder(rows, dir)
+        // The row's node moved in the list: keep the keyboard on it.
+        if (focusedId) requestAnimationFrame(() => document.getElementById(`${idPrefix}${focusedId}`)?.focus())
+        return
+      }
       if (e.ctrlKey || e.metaKey || e.altKey) return
       if (items.length === 0 && !bindingFor(bindings, e)?.page) return
       const idx = items.findIndex((i) => i.id === focusedId)
@@ -137,7 +149,7 @@ export function useListKeys<T extends { id: string }>(
     }
     window.addEventListener('keydown', onKeydown)
     return () => window.removeEventListener('keydown', onKeydown)
-  }, [items, focusedId, bindings, active, selected])
+  }, [items, focusedId, bindings, active, selected, reorder, idPrefix])
 
   return { focusedId, setFocusedId }
 }

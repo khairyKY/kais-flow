@@ -1,0 +1,187 @@
+[
+  {
+    "name": "m1 day: Remind sits after Repeat, quiet \"No reminder\"",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\\n▸\",\"10:30 – 11:30\\n1h\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"No reminder\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\\n⌫\"]"
+  },
+  {
+    "name": "m1 day: None · at start · 5 · 10 · 15 · 30 min · 1 hr",
+    "ok": true,
+    "detail": "[\"No reminder\",\"At start\",\"5 min before\",\"10 min before\",\"15 min before\",\"30 min before\",\"1 hr before\"]"
+  },
+  {
+    "name": "m1 15 min before → remind_min 15 on the event row",
+    "ok": true,
+    "detail": "15"
+  },
+  {
+    "name": "m1 toast \"Remind 15 min before · Lunch with Omar\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 the row now reads \"Remind 15 min before\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 Undo → remind_min back to null",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 night: Remind sits after Repeat, quiet \"No reminder\"",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\\n▸\",\"10:30 – 11:30\\n1h\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"No reminder\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\\n⌫\"]"
+  },
+  {
+    "name": "m1 night: None · at start · 5 · 10 · 15 · 30 min · 1 hr",
+    "ok": true,
+    "detail": "[\"No reminder\",\"At start\",\"5 min before\",\"10 min before\",\"15 min before\",\"30 min before\",\"1 hr before\"]"
+  },
+  {
+    "name": "m1 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m2 10 min before on Wednesday → the series row carries remind_min 10, no occurrence id written",
+    "ok": true,
+    "detail": "[[\"e0000000-0000-4000-8000-000000000002\",10]]"
+  },
+  {
+    "name": "m2 …and Friday’s occurrence reads \"Remind 10 min before\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m2 a Google event offers no Remind",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"12:45 – 13:00\\n15m\",\"From Google · Prayer times\"]"
+  },
+  {
+    "name": "m2 a task block offers no Remind",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\\n▸\",\"12:00 – 12:30\\n30m\\n▸\",\"No project\\n▸\",\"Complete\",\"Open task\",\"Unschedule\\n⌫\",\"Delete\"]"
+  },
+  {
+    "name": "m2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 day: the sheet has \"No reminder\" after the repeat row",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"10:30 – 11:30\\n1H\",\"No project\",\"Does not repeat\",\"No reminder\",\"Link a task…\",\"More\"]"
+  },
+  {
+    "name": "p1 day: the Remind sheet lists the seven choices",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"10:30 – 11:30\\n1H\",\"No project\",\"Does not repeat\",\"No reminder\",\"Link a task…\",\"More\",\"No reminder\",\"At start\",\"5 min before\",\"10 min before\",\"15 min before\",\"30 min before\",\"1 hr before\"]"
+  },
+  {
+    "name": "p1 At start → remind_min 0",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 toast \"Remind at start · Lunch with Omar\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 night: the sheet has \"No reminder\" after the repeat row",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"10:30 – 11:30\\n1H\",\"No project\",\"Does not repeat\",\"No reminder\",\"Link a task…\",\"More\"]"
+  },
+  {
+    "name": "p1 night: the Remind sheet lists the seven choices",
+    "ok": true,
+    "detail": "[\"Mon, Oct 12\",\"10:30 – 11:30\\n1H\",\"No project\",\"Does not repeat\",\"No reminder\",\"Link a task…\",\"More\",\"No reminder\",\"At start\",\"5 min before\",\"10 min before\",\"15 min before\",\"30 min before\",\"1 hr before\"]"
+  },
+  {
+    "name": "p1 night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w1 the calendar rows are read on Today (whatever page is open)",
+    "ok": true,
+    "detail": "[\"app_settings\",\"tasks\",\"routines\",\"routine_completions\",\"inbox_items\",\"projects\",\"captures\",\"domains\",\"areas\",\"calendar_events\",\"activity_log\",\"slipping\",\"people\",\"resurfaced_log\"]"
+  },
+  {
+    "name": "w1 nothing before 10:45",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "w1 10:45 → \"Gym · in 15 min\" / \"11:00–12:00\" · Open, with sound — alone (the Google event at 11:00 stays quiet)",
+    "ok": true,
+    "detail": "[{\"title\":\"Gym · in 15 min\",\"body\":\"11:00–12:00\",\"actions\":[[\"open\",\"Open\"]],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"event_reminder\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/calendar?date=2026-10-12\\\"}\"}]"
+  },
+  {
+    "name": "w1 11:00 → today’s occurrence of the daily walk: \"Lunch walk · in 30 min\" / \"11:30–11:45\"",
+    "ok": true,
+    "detail": "[{\"title\":\"Lunch walk · in 30 min\",\"body\":\"11:30–11:45\",\"actions\":[[\"open\",\"Open\"]],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"event_reminder\\\",\\\"taskIds\\\":[],\\\"url\\\":\\\"/calendar?date=2026-10-12\\\"}\"}]"
+  },
+  {
+    "name": "w1 each once, not every 30-second sweep; nothing from Google",
+    "ok": true,
+    "detail": "[\"Gym · in 15 min\",\"Lunch walk · in 30 min\"]"
+  },
+  {
+    "name": "w1 the toast carries kind event_reminder and the calendar on that day",
+    "ok": true,
+    "detail": "{\"kind\":\"event_reminder\",\"taskIds\":[],\"url\":\"/calendar?date=2026-10-12\"}"
+  },
+  {
+    "name": "w1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w1 Event reminder off → no toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 an \"Event reminder\" switch, on (no column in the row yet = its default)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 the switch writes event_reminder_on false",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h1 the history row says what was sent: \"Gym · in 15 min\" / \"11:00–12:00\"",
+    "ok": true,
+    "detail": "[\"Gym · in 15 min 10:45 NOTIFICATIONS 11:00–12:00 Open\"]"
+  },
+  {
+    "name": "h1 Open → the calendar on Monday 12 Oct",
+    "ok": true,
+    "detail": "http://localhost:5281/calendar?date=2026-10-12"
+  },
+  {
+    "name": "h1 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

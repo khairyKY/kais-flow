@@ -15,8 +15,8 @@ import { TaskPicker } from '../focus/TaskPicker'
 import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
-import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, setEventRepeat, updateEvent } from './api'
-import { BLOCK_MENU_WIDTH, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
+import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, setEventRemindWithUndo, setEventRepeat, updateEvent } from './api'
+import { BLOCK_MENU_WIDTH, EVENT_REMIND, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { ColorDots } from './formFields'
 import { eventSpan } from './phoneGridMath'
@@ -29,7 +29,7 @@ import { eventSpan } from './phoneGridMath'
 // form). ──
 
 const ICONS: Record<BlockMenuKey, IconName> = {
-  date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', complete: 'check', open: 'tasks', replan: 'pickdate',
+  date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
   link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
 
@@ -246,6 +246,18 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
         // takes this popover's place (a submenu can't hold it).
         return ({ position: at, onClose: back, closeAll }) => (
           <RepeatMenu {...repeat} position={at} onClose={back} onChange={(r) => { setRepeat(r); closeAll() }} onCustom={() => setCustomAt(at)} />
+        )
+      case 'remind':
+        // A12: tasks' Remind submenu, counted back from the event's start; one Undo.
+        return ({ position: at, onClose: back, closeAll }) => (
+          <ContextMenu
+            position={at}
+            onClose={back}
+            width={170}
+            label="Remind"
+            header={<div style={{ ...CAPTION, padding: '4px 9px 2px' }}>Remind</div>}
+            items={choices(EVENT_REMIND.map((o) => ({ label: o.label, on: (event.remind_min ?? null) === o.min, run: () => setEventRemindWithUndo(event, o.min) })), closeAll)}
+          />
         )
       case 'link':
         return ({ position: at, onClose: back, closeAll }) => (

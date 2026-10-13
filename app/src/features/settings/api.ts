@@ -26,6 +26,10 @@ export interface IntegrationStatus {
   /** Google: every calendar the account lists, and the ids shown on the grid. Non-secret. */
   calendars?: GCalendar[] | null
   chosen?: string[] | null
+  /** Google: the grant lets us write our plan out (calendar.events.owned); null = a grant from before. */
+  can_write?: boolean | null
+  /** Google: "Show my plan in Google as busy"; null = on. */
+  mirror?: boolean | null
 }
 
 /** The GitHub row's watched repos and rules, defaults filled in. `legacy`: the rules were never
@@ -57,7 +61,7 @@ export function useIntegrations() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('integrations')
-        .select('provider, updated_at, login:data->>login, status:data->>status, synced_at:data->>synced_at, repos:data->repos, rules:data->rules, calendars:data->calendars, chosen:data->chosen')
+        .select('provider, updated_at, login:data->>login, status:data->>status, synced_at:data->>synced_at, repos:data->repos, rules:data->rules, calendars:data->calendars, chosen:data->chosen, can_write:data->can_write, mirror:data->mirror')
       if (error) throw error
       return data as IntegrationStatus[]
     },
@@ -157,9 +161,10 @@ export async function saveGithubRules(repos: string[], rules: GithubRules, prior
   if (!rules.paused && repos.some((r) => !prior.includes(r))) void syncGithub().catch(() => undefined)
 }
 
-// ── Google Calendar (B1): read-only sync under our own calendar ──
+// ── Google Calendar (B1): read-only sync under our own calendar, our plan out as busy ──
 // The OAuth dance runs in google-connect (the refresh token never reaches the client); google-sync
-// mirrors the chosen calendars every 15 minutes. Here: the row's state, and the four actions.
+// mirrors the chosen calendars every 15 minutes, and writes our blocks to the primary calendar.
+// Here: the row's state, and the actions.
 
 /** "13 Oct, 19:03" on the user's clock; "Not yet". */
 export function syncedLabel(iso: string | null | undefined): string {
@@ -223,6 +228,8 @@ export interface GoogleSyncResult {
   new: number
   updated: number
   removed: number
+  /** Our plan out to Google; null when the grant can't write. */
+  out?: { blocks: number; written: number; failed: number; pending: number } | null
 }
 
 export async function syncGoogle(): Promise<GoogleSyncResult> {
@@ -249,7 +256,16 @@ export async function chooseGoogleCalendars(chosen: string[], prior: readonly st
   if (chosen.some((id) => !prior.includes(id))) await syncGoogle().catch(() => undefined)
 }
 
-/** Revokes the grant at Google and removes the row and every synced event (server-side). */
+/** "Show my plan in Google as busy". Off deletes ours in Google (server-side); on writes them now. */
+export async function setGoogleMirror(on: boolean): Promise<void> {
+  queryClient.setQueryData<IntegrationStatus[]>(['integrations'], (rows) => rows?.map((r) => (r.provider === 'google' ? { ...r, mirror: on } : r)))
+  const { error } = await supabase.functions.invoke('google-connect', { body: { action: 'mirror', on } })
+  refreshGoogle()
+  if (error) throw new Error(await googleErrorMessage(error))
+  if (on) await syncGoogle().catch(() => undefined)
+}
+
+/** Deletes our events in Google, revokes the grant, removes the row and every synced event (server-side). */
 export async function disconnectGoogle(): Promise<void> {
   const { error } = await supabase.functions.invoke('google-connect', { body: { action: 'disconnect' } })
   refreshGoogle()

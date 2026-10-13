@@ -1,6 +1,7 @@
 import type { ActivityLogEntry } from '../../lib/types'
 import { birthdayNotice, digestNotice, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, syncNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
 import { appZone } from '../../lib/appZone'
+import { zoneDateKey } from '../../lib/dateShortcuts'
 import type { KindId } from '../notifications/kinds'
 
 // What each activity_log row says on the Activity page (Activity.dc.html 1a/1b voice: a verb, the
@@ -378,6 +379,12 @@ function describeProject(e: ActivityLogEntry, names: ActivityNames): ActivityLin
       return line(named(item, (q) => `Unchecked ${q}`, 'Unchecked a checklist item'), onProject)
     case 'project.checklist_item_removed':
       return line('Removed a checklist item', onProject)
+    case 'project.template_saved':
+      return line(named(str(payload, 'template'), (q) => `Saved the checklist as the template ${q}`, 'Saved the checklist as a template'), onProject)
+    case 'project.template_used':
+      return line(named(str(payload, 'template'), (q) => `Added the template ${q} to the checklist`, 'Added a template to the checklist'), onProject)
+    case 'project.template_unused':
+      return line(named(str(payload, 'template'), (q) => `Took the template ${q} back off the checklist`, 'Took a template back off the checklist'), onProject)
     case 'project.update_logged':
       return line(named(name, (q) => `Posted an update on ${q}`, 'Posted a project update'), str(payload, 'note'))
     case 'project.work_logged': {
@@ -599,6 +606,12 @@ export function describeActivity(e: ActivityLogEntry, names: ActivityNames = NO_
         const name = id ? names.person(id) : undefined
         const open = !id ? birthdayNotice([], {}) : name ? birthdayNotice([{ id, name, lastSpokeDays: null }], { lock_screen_names: true }) : null
         return { ...said, text: said.text || 'A birthday', href: open?.url ?? null, notice: { kind: 'birthday', actions: open?.actions ?? [], taskIds: [] } }
+      }
+      if (type === 'notify.event_reminder') {
+        // Event reminder (0077): Open lands on the calendar, on the occurrence's day.
+        const at = str(e.payload, 'starts_at')
+        const href = at ? `/calendar?date=${zoneDateKey(new Date(at))}` : '/calendar'
+        return { ...said, text: said.text || 'An event', href, notice: { kind: 'event_reminder', actions: [{ action: 'open', title: 'Open' }], taskIds: [] } }
       }
       if (type === 'notify.sync_problem') {
         return { ...said, text: said.text || syncNotice(1).title, href: '/today', notice: { kind: 'sync_problem', actions: syncNotice(1).actions, taskIds: [] } }

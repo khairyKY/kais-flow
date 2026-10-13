@@ -1,0 +1,12 @@
+-- Migration: 0076_task_sort_order.sql
+-- P7e parity audit A22 (Akiflow's "Move task up/down"): ⌘/Ctrl+↑/↓ moves a task within its group on
+-- Tasks, Today and a project or area page, not only in the Top 3 (0055's top3_rank).
+--
+-- tasks.sort_order: the task's place in a list, on the same scale as its date — epoch milliseconds of
+-- due_at, else scheduled_start (features/tasks/manualOrder.ts orderKey). Null = never moved: the row
+-- sorts by its date, the order every list had before. A move writes only the moved row, the midpoint
+-- between its new neighbours' keys; neighbours tied on the same date get their own keys the first
+-- time one of them moves. One column for every list, so a task ordered on a project page sits near
+-- the same neighbours on Tasks. Double precision, no default, no index (lists sort client-side), no
+-- constraint. Additive and idempotent; old builds never select or write it (their upserts leave it).
+alter table tasks add column if not exists sort_order double precision;

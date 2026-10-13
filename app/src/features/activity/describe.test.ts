@@ -163,7 +163,7 @@ const WRITTEN: [string, string, Record<string, unknown>][] = [
   ['project.milestone_reweighted', 'project', { milestone_id: 'm', weight: 2 }], ['project.checklist_item_renamed', 'project', { item_id: 'i', title: 'x' }],
   ['project.milestone_removed', 'project', { milestone_id: 'm' }], ['project.checklist_item_added', 'project', { title: 'x', type: 'one-shot' }],
   ['project.checklist_item_completed', 'project', { item_id: 'i', title: 'x' }], ['project.checklist_item_uncompleted', 'project', { item_id: 'i', title: 'x' }],
-  ['project.checklist_item_removed', 'project', { item_id: 'i' }], ['project.update_logged', 'project', { note: 'x' }], ['project.work_logged', 'project', { note: '', duration_min: 30 }],
+  ['project.checklist_item_removed', 'project', { item_id: 'i' }], ['project.template_saved', 'project', { template_id: 't', template: 'x', items: 2 }], ['project.template_used', 'project', { template_id: 't', template: 'x', items: 2, tasks: 1 }], ['project.template_unused', 'project', { template_id: 't', template: 'x' }], ['project.update_logged', 'project', { note: 'x' }], ['project.work_logged', 'project', { note: '', duration_min: 30 }],
   ['area.created', 'area', { name: 'x' }], ['area.renamed', 'area', { name: 'x' }], ['area.merged', 'area', { into: RANDOM, name: 'x' }], ['area.converted', 'area', { new_project_id: PROJECT, name: 'x' }],
   ['domain.created', 'domain', { name: 'x' }], ['domain.renamed', 'domain', { name: 'x' }], ['domain.merged', 'domain', { into: RANDOM }],
   ['domain.swept', 'domain', { week: '2026-W39' }], ['review.verdict', 'project', { verdict: 'park it', week: '2026-W39' }], ['review.week_closed', 'review', { entity_key: 'x' }],

@@ -2,7 +2,7 @@
   {
     "name": "a1 day: the popover sits beside the block (top-aligned, or clamped into the window)",
     "ok": true,
-    "detail": "{\"block\":[504.25,488.25,86.921875],\"menu\":[601.171875,421.34375,297.5,363.65625]}"
+    "detail": "{\"block\":[504.25,488.25,86.921875],\"menu\":[601.171875,379.46875,297.5,405.53125]}"
   },
   {
     "name": "a1 day: ~238px wide at 125% (297px on screen)",
@@ -10,9 +10,9 @@
     "detail": "297.5"
   },
   {
-    "name": "a1 day: the rows — date · time · project · repeat · Link a task… · More · Delete",
+    "name": "a1 day: the rows — date · time · project · repeat · remind · Link a task… · More · Delete",
     "ok": true,
-    "detail": "[\"Mon, Oct 12\\n▸\",\"10:30 – 11:30\\n1h\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\"]"
+    "detail": "[\"Mon, Oct 12\\n▸\",\"10:30 – 11:30\\n1h\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"No reminder\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\\n⌫\"]"
   },
   {
     "name": "a1 day: no Save button, no \"Sure?\"",
@@ -27,7 +27,7 @@
   {
     "name": "a1 night: the popover sits beside the block (top-aligned, or clamped into the window)",
     "ok": true,
-    "detail": "{\"block\":[504.25,488.25,86.921875],\"menu\":[601.171875,421.34375,297.5,363.65625]}"
+    "detail": "{\"block\":[504.25,488.25,86.921875],\"menu\":[601.171875,379.46875,297.5,405.53125]}"
   },
   {
     "name": "a1 night: ~238px wide at 125% (297px on screen)",
@@ -35,9 +35,9 @@
     "detail": "297.5"
   },
   {
-    "name": "a1 night: the rows — date · time · project · repeat · Link a task… · More · Delete",
+    "name": "a1 night: the rows — date · time · project · repeat · remind · Link a task… · More · Delete",
     "ok": true,
-    "detail": "[\"Mon, Oct 12\\n▸\",\"10:30 – 11:30\\n1h\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\"]"
+    "detail": "[\"Mon, Oct 12\\n▸\",\"10:30 – 11:30\\n1h\\n▸\",\"No project\\n▸\",\"Does not repeat\\n▸\",\"No reminder\\n▸\",\"Link a task…\\n▸\",\"More\\n▸\",\"Delete\\n⌫\"]"
   },
   {
     "name": "a1 night: no Save button, no \"Sure?\"",
@@ -225,9 +225,9 @@
     "detail": ""
   },
   {
-    "name": "b3 Duration on one occurrence: the series is 1h, every day (Saturday’s block doubles too)",
+    "name": "b3 Duration on a later occurrence: from it on the series is 1h (Saturday doubles), the earlier days keep 30 minutes (the split)",
     "ok": true,
-    "detail": "33 → 67"
+    "detail": "sat 33 → 67, thu 33 → 33"
   },
   {
     "name": "b3 no page errors",
@@ -240,9 +240,9 @@
     "detail": ""
   },
   {
-    "name": "p1 day: the sheet's rows — date · time · project · repeat · More",
+    "name": "p1 day: the sheet's rows — date · time · project · repeat · remind · More",
     "ok": true,
-    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats daily\",\"More\"]"
+    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats daily\",\"No reminder\",\"More\"]"
   },
   {
     "name": "p1 day: swatches for colour; Delete in the footer",
@@ -257,7 +257,7 @@
   {
     "name": "p1 Delete on a repeat asks This event / All events",
     "ok": true,
-    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats weekly\",\"More\",\"This event\",\"All events\"]"
+    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats weekly\",\"No reminder\",\"More\",\"This event\",\"All events\"]"
   },
   {
     "name": "p1 day: no page errors",
@@ -270,9 +270,9 @@
     "detail": ""
   },
   {
-    "name": "p1 night: the sheet's rows — date · time · project · repeat · More",
+    "name": "p1 night: the sheet's rows — date · time · project · repeat · remind · More",
     "ok": true,
-    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats daily\",\"More\"]"
+    "detail": "[\"Mon, Oct 12\",\"08:00 – 08:30\\n30M\",\"No project\",\"Repeats daily\",\"No reminder\",\"More\"]"
   },
   {
     "name": "p1 night: swatches for colour; Delete in the footer",

@@ -26,6 +26,8 @@ export interface ParsedCommand {
   notes: string | null
   /** The first link in the line: out of the title, onto the task as its link (P7e A19). */
   url: string | null
+  /** `>Code block`: the Time block (one of `slots`) the task goes into — its next occurrence (Time Slots, 0073). */
+  slotMatch: string | null
   /** The words each recognised token took — the bar's chips — in the order they sit in the line.
    * The bar's Esc hands the last one back as `ignore` (P7e A10). */
   tokens: string[]
@@ -51,8 +53,8 @@ const REPEAT_RE = new RegExp(`(?<![\\p{L}\\p{N}])every\\s+(?:(?:(?:other|\\d+)\\
 /** Does this parse carry enough structure to create a task directly, instead of falling through
  * to a bare Inbox capture? Priority/duration count as structure too — matching a `!`/`30m`-only
  * command (e.g. "buy milk !!") that has no date/project still means "create a task now". */
-export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 'projectId' | 'priority' | 'durationMin'> & { labels?: readonly string[]; notes?: string | null }): boolean {
-  return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null || parsed.labels?.length || parsed.notes)
+export function hasStructure(parsed: Pick<ParsedCommand, 'dueAt' | 'domainId' | 'projectId' | 'priority' | 'durationMin'> & { labels?: readonly string[]; notes?: string | null; slotMatch?: string | null }): boolean {
+  return !!(parsed.dueAt || parsed.domainId || parsed.projectId || parsed.priority != null || parsed.durationMin != null || parsed.labels?.length || parsed.notes || parsed.slotMatch)
 }
 
 export interface ParseCommandOptions {
@@ -64,6 +66,8 @@ export interface ParseCommandOptions {
   zone?: 'cairo' | 'device'
   /** Token words to read as plain words (the bar's Esc, P7e A10): they stay in the title. */
   ignore?: readonly string[]
+  /** The Time blocks ahead (calendar/slots upcomingSlots), soonest first: what `>name` can name. */
+  slots?: readonly string[]
 }
 
 /** Stands in for an ignored token's characters while the line is read; no reader matches it. */
@@ -95,7 +99,7 @@ export function parseCommand(
   input: string,
   domains: Domain[],
   projects: Project[],
-  { now = new Date(), zone = 'device', ignore = [] }: ParseCommandOptions = {},
+  { now = new Date(), zone = 'device', ignore = [], slots = [] }: ParseCommandOptions = {},
 ): ParsedCommand {
   // Each token found is blanked out of `work` with spaces of its own length, so every index in `work`
   // is still an index into `input`; the title is what's left. Ignored words are masked the same way.
@@ -136,6 +140,25 @@ export function parseCommand(
   if (bang) {
     priority = 4 - bang[0].length
     take(bang.index, bang.index + bang[0].length)
+  }
+
+  // `>Code block` (Akiflow's slot mark, Time Slots 0073): after a `>` at a word start, the most words
+  // that still name a Time block ahead (in its name, like a #tag) — the soonest one. Before chrono,
+  // which would read a "Morning focus" slot as a time. A `>` that names none stays a word.
+  let slotMatch: string | null = null
+  const gt = slots.length ? /(^|\s)>(?=\S)/.exec(work) : null
+  if (gt) {
+    const at = gt.index + gt[1].length
+    let end = at
+    for (const w of work.slice(at + 1).matchAll(/\S+/g)) {
+      const stop = at + 1 + w.index + w[0].length
+      const phrase = work.slice(at + 1, stop).replace(/\s+/g, ' ').toLowerCase()
+      const hit = slots.find((n) => n.toLowerCase().includes(phrase))
+      if (!hit) break
+      slotMatch = hit
+      end = stop
+    }
+    if (slotMatch) take(at, end)
   }
 
   // Duration before chrono: it reads a bare "30m"/"1h30m" as "in 30 minutes" and would take it as the date.
@@ -198,7 +221,7 @@ export function parseCommand(
   const title = work.replace(new RegExp(`${MASK}+`, 'g'), (run, at: number) => input.slice(at, at + run.length)).replace(/\s{2,}/g, ' ').trim()
   const tokens = spans.sort((a, b) => a[0] - b[0]).map(([start, end]) => input.slice(start, end))
 
-  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence, notes, url: link?.url ?? null, tokens }
+  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence, notes, url: link?.url ?? null, slotMatch, tokens }
 }
 
 /** A parse as a new task — tasks/api createTask's input: the command bar's quick add, and the Tasks
