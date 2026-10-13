@@ -61,6 +61,7 @@ export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['↵'], label: 'Quick add' },
   { keys: ['!'], label: 'Priority (! !! !!!)' },
   { keys: ['#'], label: 'Project' },
+  { keys: ['every …'], label: 'Repeat (every week, every mon, fri)' },
   { keys: ['↓', '↵'], label: 'Jump to typed view' },
 ]
 

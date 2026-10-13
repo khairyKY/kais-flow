@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
+import { repeatLabel } from '../tasks/taskSheetMath'
 import { captureText } from '../inbox/api'
 import { enrichTypedInboxItem, transcribeAudio } from '../capture/api'
 import { VOICE_ALLOWANCE_USED_UP, isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from '../capture/aiAllowance'
@@ -359,6 +360,7 @@ export function CommandBar() {
                 {text.trim() && (
                   <div className="kf-capture-chips">
                     {parsed.dueAt && <Chip tone="date">{formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}</Chip>}
+                    {parsed.recurrence && <Chip tone="date" icon={<Icon name="repeat" size={16} />}>{repeatLabel(parsed.recurrence)}</Chip>}
                     {matchChip && <Chip tone="project">{matchChip}</Chip>}
                     {parsed.durationMin != null && <Chip tone="duration">{formatDuration(parsed.durationMin)}</Chip>}
                     {parsed.priority != null && <Chip tone="priority">{PRIORITY_NAME[parsed.priority]}</Chip>}
@@ -466,6 +468,11 @@ export function CommandBar() {
                 {parsed.dueAt && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>
                     {formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}
+                  </span>
+                )}
+                {parsed.recurrence && (
+                  <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>
+                    ↻ {repeatLabel(parsed.recurrence)}
                   </span>
                 )}
                 {parsed.durationMin != null && (

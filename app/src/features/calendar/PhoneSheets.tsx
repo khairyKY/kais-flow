@@ -108,7 +108,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   const [priority, setPriority] = useState<number | null | undefined>(undefined)
   const [placeTo, setPlaceTo] = useState<MoveTarget | null>(null)
   const [remindMin, setRemindMin] = useState<number | null>(null)
-  const [repeat, setRepeat] = useState<string | null>(null)
+  const [repeatPick, setRepeat] = useState<string | null | undefined>(undefined)
   const [labels, setLabels] = useState<string[]>([])
   const [label, setLabel] = useState('')
   const [top3, setTop3] = useState(false)
@@ -120,6 +120,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   const name = ((kind === 'task' ? parsed?.title : null) ?? title).trim()
   const { starts_at, ends_at } = spanIso({ day, start, end: start + dur })
   const pri = priority === undefined ? (parsed?.priority ?? null) : priority
+  const repeat = repeatPick === undefined ? (parsed?.recurrence ?? null) : repeatPick // "every week" in the title (P7e A5)
   const parsedProject = parsed?.projectId ? projects.find((p) => p.id === parsed.projectId) : undefined
   const to: MoveTarget = placeTo ?? (parsedProject ? { kind: 'project', id: parsedProject.id, domainId: parsedProject.domain_id ?? null, name: parsedProject.name } : NO_PLACE)
   const allLabels = [...new Set([...labels, ...(parsed?.labels ?? [])])]

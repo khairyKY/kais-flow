@@ -213,7 +213,13 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     if (diffMinutes(newStart, endTime) <= 0) setEndTime(plus(newStart, 30))
   }
 
+  // "every week" in the title fills Repeat (P7e A5) when the typed rule changes; a pick stands till then.
+  const typedRule = useRef<string | null>(null)
   useEffect(() => {
+    if ((parsed?.recurrence ?? null) !== typedRule.current) {
+      typedRule.current = parsed?.recurrence ?? null
+      if (typedRule.current) setRepeat(typedRule.current)
+    }
     if (parsed?.dueAt && !dateTouched) applyParsedTime(new Date(parsed.dueAt))
     if (parsed?.priority != null && !priorityTouched) setPriority(parsed.priority)
     if (parsed?.projectId && !projectTouched) { setProjectId(parsed.projectId); setAreaId(null) }
