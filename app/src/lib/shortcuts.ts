@@ -69,7 +69,7 @@ export const COMMAND_BAR_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['↵'], label: 'Quick add' },
   { keys: ['!'], label: 'Priority (! !! !!!)' },
   { keys: ['#'], label: 'Project' },
-  { keys: ['↓', '↵'], label: 'Jump to typed view' },
+  { keys: ['↓', '↵'], label: 'Jump to a view, project, area or label' },
 ]
 
 const MODIFIER_GLYPHS = '⌘⌃⌥⇧'
