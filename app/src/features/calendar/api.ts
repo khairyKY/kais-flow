@@ -16,7 +16,7 @@ import { alignToRule, detachedCopy, eventWindow, expandEvents, rerule, retimeSer
 import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
 import { isSynced, repeatLabel } from './blockMenuSpec'
 import { zoneToIso } from './eventTime'
-import { intoSlot, OUT_OF_SLOT, slotTasks } from './slots'
+import { intoSlot, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -100,6 +100,11 @@ function releaseSlot(slot: CalendarEvent): () => void {
  * block of its own — one it had (a missed one) comes off. A missed due date follows, as for a
  * block. One toast, one Undo. */
 export function putInSlotWithUndo(task: Task, slot: CalendarEvent): void {
+  toastUndo(`In ${slot.title} · ${task.title}`, putInSlot(task, slot))
+}
+
+/** putInSlotWithUndo's write, no toast (the command bar's `>` toasts "Added to …" itself). Its Undo. */
+export function putInSlot(task: Task, slot: CalendarEvent): () => void {
   const before = cachedTask(task.id) ?? task
   const blocks = liveBlocks(task.id)
   for (const b of blocks) deleteEvent(b)
@@ -107,12 +112,15 @@ export function putInSlotWithUndo(task: Task, slot: CalendarEvent): void {
   const follows = dueFollows(before.due_at, slot.starts_at, new Date())
   writeRow('tasks', { ...(cachedTask(task.id) ?? before), ...fields, ...(follows ? { due_at: slot.starts_at } : null) })
   logActivity('task.scheduled', 'task', task.id, { slot_id: fields.slot_id, slot_date: fields.slot_date })
-  toastUndo(`In ${slot.title} · ${task.title}`, () => {
+  return () => {
     blocks.forEach(restoreEvent)
     const now = cachedTask(task.id) ?? before
     writeRow('tasks', { ...now, slot_id: before.slot_id ?? null, slot_date: before.slot_date ?? null, due_at: before.due_at, scheduled_start: before.scheduled_start, scheduled_end: before.scheduled_end })
-  })
+  }
 }
+
+/** The Time blocks of today and the next 7 days, from the cache (slots.upcomingSlots). */
+export const cachedSlots = (now: Date = new Date()): CalendarEvent[] => upcomingSlots(cachedRows(), now)
 
 /** ⋯ → Out of the slot: back to the rail, unscheduled, with Undo. */
 export function outOfSlotWithUndo(task: Task): void {

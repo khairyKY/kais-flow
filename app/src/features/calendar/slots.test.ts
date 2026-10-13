@@ -19,7 +19,7 @@ vi.mock('../../lib/motion', () => ({ animateRowRemoval: (_el: unknown, run: () =
 const toasts: { message: string; undo: () => void }[] = []
 vi.mock('../../lib/undo', () => ({ toastUndo: (message: string, undo: () => void) => toasts.push({ message, undo }) }))
 
-const { inSlot, intoSlot, slotAt, slotFill, slotTasks } = await import('./slots')
+const { inSlot, intoSlot, slotAt, slotFill, slotTasks, upcomingSlots } = await import('./slots')
 const { deleteEventWithUndo, moveOrResizeEvent, outOfSlotWithUndo, putInSlotWithUndo, resizeEvent } = await import('./api')
 const { rescheduleDue } = await import('../tasks/api')
 const { railBuckets } = await import('./replan')
@@ -86,6 +86,19 @@ describe('slots: the pure rules', () => {
   it('fill: "N tasks · Xm of Ym", 30 minutes for a task with no estimate', () => {
     expect(slotFill(CODE, [{ duration_min: 15 }, { duration_min: null }])).toBe('2 tasks · 45m of 2h')
     expect(slotFill(CODE, [{ duration_min: 90 }])).toBe('1 task · 1h30m of 2h')
+  })
+
+  it('upcomingSlots ("Into a slot…", `>`): today and the next 7 days, each occurrence, not over yet, soonest first; Time blocks only', () => {
+    const at = new Date(cairo(MON, '11:00'))
+    const early = ev('early', MON, '06:00', '07:00', { title: 'Early' })
+    const later = ev('later', '2026-10-20', '09:00', '10:00', { title: 'Too far' })
+    const rows = [SHAHEEN, early, later, CODE, ev('meet', MON, '12:00', '13:00', { type: 'event' }), ev('allday', TUE, '00:00', '23:59', { all_day: true }), ev('gone', MON, '15:00', '16:00', { deleted_at: cairo(MON, '07:00') })]
+    const got = upcomingSlots(rows, at, ZONE)
+    // CODE runs till 12:00 (still on); Early is over; Shaheen every day Mon…Mon 19 (8 days); the 20th is past the window.
+    expect(got[0].id).toBe('code')
+    expect(got.slice(1).map((e) => e.title)).toEqual(Array(8).fill('Shaheen'))
+    expect(got[1].seriesId).toBe('shaheen')
+    expect(got.map((e) => e.starts_at)).toEqual([...got.map((e) => e.starts_at)].sort())
   })
 })
 

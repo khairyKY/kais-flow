@@ -2,6 +2,9 @@ import { appZone } from '../../lib/appZone'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDuration } from '../tasks/taskDisplay'
+import { addDays } from '../../components/pickerMath'
+import { zoneToIso } from './eventTime'
+import { expandEvents } from './series'
 
 // ── Time Slots (Kai 2026-10-13, parity audit B2 → a; migration 0073): a Time block HOLDS tasks, as
 // Akiflow's slots do. A task in one has slot_id (the block's stored row — a repeating slot's series
@@ -52,4 +55,16 @@ export function slotFill(slot: Pick<CalendarEvent, 'starts_at' | 'ends_at'>, hel
   const used = held.reduce((n, t) => n + (t.duration_min || 30), 0)
   const total = Math.round((Date.parse(slot.ends_at) - Date.parse(slot.starts_at)) / 60_000)
   return `${held.length} task${held.length === 1 ? '' : 's'} · ${mins(used)} of ${mins(total)}`
+}
+
+/** The Time blocks a task can go into without a drag (the task menu's "Into a slot…", the command
+ * bar's `>`): today's and the next 7 days', each occurrence of a repeating one, not over yet,
+ * soonest first. `rows`: the stored calendar rows. */
+export function upcomingSlots(rows: readonly CalendarEvent[], now: Date = new Date(), zone: string = appZone()): CalendarEvent[] {
+  const today = zoneDateKey(now, zone)
+  const to = Date.parse(zoneToIso(addDays(today, 8), '00:00', zone))
+  const slots = rows.filter((e) => e.type === 'time_block' && !e.all_day && !e.deleted_at)
+  return expandEvents(slots, new Date(zoneToIso(today, '00:00', zone)), new Date(to), zone)
+    .filter((e) => Date.parse(e.starts_at) < to && Date.parse(e.ends_at) > now.getTime())
+    .sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))
 }

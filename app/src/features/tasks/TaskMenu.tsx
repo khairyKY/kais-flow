@@ -18,6 +18,10 @@ import { LabelPicker } from './LabelPicker'
 import { formatDuration, priorityColor } from './taskDisplay'
 import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey } from './taskMenuSpec'
 import { useStartFocus } from '../today/startFocus'
+import { putInSlotWithUndo, useCalendarRows } from '../calendar/api'
+import { inSlot, upcomingSlots } from '../calendar/slots'
+import { cairoTimeKey } from '../calendar/eventTime'
+import { dueChip } from './taskSheetMath'
 
 // ── The ⋯ menu of every task row (MK Action Sheet): phone = ActionSheet (+ a second sheet for the
 // pickers), desktop = the ContextMenu with submenus. One list (./taskMenuSpec); the writes come in
@@ -68,7 +72,7 @@ export interface BulkActions {
 }
 
 /** 'date' = the Plan list (./PlanMenu), whose Pick date & time… is the date picker. */
-export type MenuSub = 'date' | 'project' | 'priority' | 'repeat' | 'remind' | 'duration' | 'labels'
+export type MenuSub = 'date' | 'project' | 'priority' | 'repeat' | 'remind' | 'duration' | 'labels' | 'slot'
 export interface MenuAnchor {
   at: { x: number; y: number }
   /** Open straight on a picker (the swipe's Plan / Project, the task sheet's chips). */
@@ -76,7 +80,7 @@ export interface MenuAnchor {
 }
 
 const ICONS: Record<TaskMenuKey, IconName> = {
-  tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
+  tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', intoSlot: 'clock', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
   labels: 'label', top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
@@ -96,6 +100,8 @@ interface Option {
   label: string
   run: () => void
   color?: string
+  hint?: string
+  selected?: boolean
 }
 
 export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
@@ -110,8 +116,14 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   const [sub, setSub] = useState<MenuSub | 'repeat-custom' | undefined>(anchor.sub)
   const { at } = anchor
   const base = task.due_at || task.scheduled_start
+  // Time Slots (0073): the Time blocks of today and the next 7 days — "Into a slot…" puts the task in
+  // one through the drop's own write (calendar/api putInSlotWithUndo), with Undo.
+  const { data: rows = [] } = useCalendarRows()
+  const slots = upcomingSlots(rows)
+  const slotOptions: Option[] = slots.map((s) => ({ label: s.title, hint: `${dueChip(s.starts_at, new Date())}–${cairoTimeKey(new Date(s.ends_at))}`, selected: inSlot(task, s), run: () => putInSlotWithUndo(task, s) }))
 
-  const options: Record<'priority' | 'remind' | 'duration', Option[]> = {
+  const options: Record<'priority' | 'remind' | 'duration' | 'slot', Option[]> = {
+    slot: slotOptions,
     duration: [null, ...DURATIONS].map((m) => ({ label: m ? durationLabel(m) : 'None', run: () => actions.duration?.(m) })),
     priority: [null, 3, 2, 1].map((p) => ({ label: p ? PRIORITY_LABELS[p] : 'None', color: priorityColor(p) ?? undefined, run: () => actions.priority(p) })),
     remind: base
@@ -122,6 +134,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     tomorrow: actions.tomorrow,
     plan: () => setSub('date'),
     unschedule: () => actions.unschedule?.(),
+    intoSlot: () => setSub('slot'),
     project: () => setSub('project'),
     priority: () => setSub('priority'),
     labels: () => setSub('labels'),
@@ -137,7 +150,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     delete: actions.delete,
   }
   // Read when the menu opens: overdue → "Replan…"; the goal of the day gets no Make goal.
-  const spec = taskMenuSpec(task, { ...ctx, desktop: !isMobile, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
+  const spec = taskMenuSpec(task, { ...ctx, slots: slots.length > 0, desktop: !isMobile, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
 
   // One task: the Plan list offers No date when it has one, and Next free slot.
   const bulk = !!ctx.bulkCount && ctx.bulkCount > 1
@@ -179,10 +192,10 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   if (sub === 'labels') return <LabelPicker taskIds={[task.id]} position={at} onClose={onClose} meta={task.title} onSet={actions.labels} />
   if (sub) {
     const list = options[sub]
-    const title = { priority: 'Priority', remind: 'Remind', duration: 'Duration' }[sub]
+    const title = { priority: 'Priority', remind: 'Remind', duration: 'Duration', slot: 'Into a slot' }[sub]
     return isMobile
-      ? <ActionSheet key={sub} title={title} meta={task.title} items={list.map((o) => ({ label: o.label, onSelect: o.run }))} onClose={onClose} />
-      : <ContextMenu position={at} onClose={onClose} items={list.map((o) => ({ label: o.label, labelColor: o.color, onClick: o.run }))} />
+      ? <ActionSheet key={sub} title={title} meta={task.title} items={list.map((o) => ({ label: o.label, hint: o.hint, selected: o.selected, onSelect: o.run }))} onClose={onClose} />
+      : <ContextMenu position={at} onClose={onClose} items={list.map((o) => ({ label: o.label, labelColor: o.color, hint: o.hint, onClick: o.run }))} />
   }
 
   if (isMobile) {
@@ -204,9 +217,9 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     if (key === 'project') return ({ position, onClose: back, closeAll }) => <MovePicker position={position} current={here} onPick={(to) => { actions.move(to); closeAll() }} onClose={back} />
     if (key === 'labels') return ({ position, onClose: back }) => <LabelPicker taskIds={[task.id]} position={position} onClose={back} onSet={actions.labels} />
     if (key === 'repeat') return ({ position, onClose: back, closeAll }) => <RepeatMenu {...repeat} position={position} onClose={back} onChange={(r) => { actions.repeat(r); closeAll() }} onCustom={() => setSub('repeat-custom')} />
-    if (key === 'priority' || key === 'remind') {
-      const list = options[key]
-      return ({ position, onClose: back, closeAll }) => <ContextMenu position={position} onClose={back} items={list.map((o) => ({ label: o.label, labelColor: o.color, onClick: () => { o.run(); closeAll() } }))} />
+    if (key === 'priority' || key === 'remind' || key === 'intoSlot') {
+      const list = options[key === 'intoSlot' ? 'slot' : key]
+      return ({ position, onClose: back, closeAll }) => <ContextMenu position={position} onClose={back} items={list.map((o) => ({ label: o.label, labelColor: o.color, hint: o.hint && (o.selected ? `✓ ${o.hint}` : o.hint), onClick: () => { o.run(); closeAll() } }))} />
     }
     return undefined
   }
