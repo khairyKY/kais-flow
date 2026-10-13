@@ -15,6 +15,7 @@ import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { useProjects } from '../projects/api'
 import { useInteractions, usePeople } from '../people/api'
 import { useRitualFinishedRows } from '../rituals/api'
+import { useCalendarRows } from '../calendar/api'
 import { installNotificationActions } from '../notifications/actions'
 import { lookingHere, showLocal, tellSyncProblem } from '../notifications/local'
 import { NO_INCIDENT, syncIncidentStep } from '../notifications/syncIncident'
@@ -23,7 +24,7 @@ import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
 import { focusMenuLabel, focusTarget, pauseMenuLabel, trayIconState } from './trayState'
-import type { ActivityLogEntry, AppSettings, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
+import type { ActivityLogEntry, AppSettings, CalendarEvent, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // The app's half of the tray and of local notifications, mounted once in the main window's shell
 // (AppLayout). Everywhere: notification buttons land here (actions.ts), a finished focus round
@@ -54,6 +55,7 @@ function planFor(from: Date, to: Date, now: Date): Planned[] | null {
   const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
   return localPlan({
     tasks,
+    events: queryClient.getQueryData<CalendarEvent[]>(['calendar_events']), // event reminders (0077)
     projects,
     routines: queryClient.getQueryData<Routine[]>(['routines']),
     completions: queryClient.getQueryData<RoutineCompletion[]>(['routine_completions']),
@@ -156,6 +158,12 @@ function ShutDownForNudge(): null {
   return null
 }
 
+/** Event reminders (0077) read the calendar rows from the cache, so they're loaded whatever page is open. */
+function EventsForReminders(): null {
+  useCalendarRows()
+  return null
+}
+
 /** Rendered once in the main window's shell. A component of its own, so the timer's every-second
  * tick re-renders only this, never the shell. */
 export function TrayBridge() {
@@ -205,7 +213,7 @@ export function TrayBridge() {
       window.clearTimeout(timer)
       timer = window.setTimeout(scheduleOnAndroid, 1500)
     }
-    const watched = new Set(['tasks', 'projects', 'app_settings', 'routines', 'routine_completions', 'people', 'interactions'])
+    const watched = new Set(['tasks', 'calendar_events', 'projects', 'app_settings', 'routines', 'routine_completions', 'people', 'interactions'])
     const offCache = queryClient.getQueryCache().subscribe((e) => {
       const [table, sub] = e.query.queryKey
       if (e.type === 'updated' && (watched.has(String(table)) || (table === 'activity_log' && sub === 'ritual_finished'))) soon()
@@ -255,5 +263,5 @@ export function TrayBridge() {
     if (tauri) void native('tray_set', { state, dark, focusLabel, pauseLabel })
   }, [tauri, state, dark, focusLabel, pauseLabel])
   if (!tauri && !android) return null
-  return createElement(Fragment, null, createElement(ShutDownForNudge), settings?.birthday_on ? createElement(PeopleForBirthdays) : null)
+  return createElement(Fragment, null, createElement(ShutDownForNudge), createElement(EventsForReminders), settings?.birthday_on ? createElement(PeopleForBirthdays) : null)
 }

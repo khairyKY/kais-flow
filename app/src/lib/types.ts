@@ -137,6 +137,9 @@ export interface CalendarEvent {
   series_id?: string | null
   /** A Google event (source 'gcal', google-sync — migration 0074): which calendar it mirrors. Read-only. */
   external_ref?: { source: string; id: string; calendar?: string; calendar_id?: string } | null
+  /** Migration 0077: remind this many minutes before each start (null/absent = none) — an offset, so it
+   * follows a move and every occurrence of a series. Never on a Google event. */
+  remind_min?: number | null
   /** Client-only, never stored: set on an occurrence features/calendar/series.ts expanded from a
    * series row (its id is `${seriesId}::${start}`). calendar/api writes resolve it to that row. */
   seriesId?: string
@@ -223,6 +226,8 @@ export interface AppSettings {
   evening_nudge_at?: string
   /** Settings → Notifications (migration 0048) — read by notify through notify/copy.ts `deliver`. */
   task_reminder_on?: boolean
+  /** Event reminders (migration 0077). */
+  event_reminder_on?: boolean
   routine_on?: boolean
   focus_done_on?: boolean
   /** Paper capture ready · Birthday (off until turned on) · Sync problem (migration 0065). */
