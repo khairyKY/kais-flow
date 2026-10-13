@@ -1,5 +1,17 @@
 [
   {
+    "v": "v1.1.1",
+    "date": "2026-10-13",
+    "title": "Journal photos that go when you say so",
+    "highlights": [
+      "Photos leave with their journal entry: once an entry is deleted for good, its photos are removed from storage too",
+      "A day with only a photo counts as written, for Day N, the week's kept days and your Kept count",
+      "On a phone, a photo's × is easier to hit without catching the photo beside it"
+    ],
+    "icons": ["lock", "journal", "camera"],
+    "art": "clover-awake"
+  },
+  {
     "v": "v1.1.0",
     "date": "2026-10-13",
     "title": "A redesigned day, events that repeat, and your notebook",
