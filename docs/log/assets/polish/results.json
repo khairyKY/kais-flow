@@ -1,0 +1,316 @@
+{
+  "passed": 62,
+  "failed": 0,
+  "results": [
+    {
+      "name": "f1 focus settings 360 day: card inside the screen and centred, nothing past its edge",
+      "ok": true,
+      "detail": "card 16.0–344.0 of 360, worst overflow 0.0px, scrollWidth 360, errors 0"
+    },
+    {
+      "name": "f1 focus settings 360 day: top not clipped, \"reset to classic\" reachable",
+      "ok": true,
+      "detail": "top 155, foot bottom 619 of 844, tappable true"
+    },
+    {
+      "name": "f1 focus settings 390 day: card inside the screen and centred, nothing past its edge",
+      "ok": true,
+      "detail": "card 16.0–374.0 of 390, worst overflow 0.0px, scrollWidth 390, errors 0"
+    },
+    {
+      "name": "f1 focus settings 390 day: top not clipped, \"reset to classic\" reachable",
+      "ok": true,
+      "detail": "top 175, foot bottom 599 of 844, tappable true"
+    },
+    {
+      "name": "f1 focus settings 430 day: card inside the screen and centred, nothing past its edge",
+      "ok": true,
+      "detail": "card 16.0–414.0 of 430, worst overflow 0.0px, scrollWidth 430, errors 0"
+    },
+    {
+      "name": "f1 focus settings 430 day: top not clipped, \"reset to classic\" reachable",
+      "ok": true,
+      "detail": "top 175, foot bottom 599 of 844, tappable true"
+    },
+    {
+      "name": "f1 focus settings desktop day: card inside the screen, nothing past its edge",
+      "ok": true,
+      "detail": "card 478.8–1003.8 of 1280, worst overflow 0.0px, scrollWidth 1280, errors 0"
+    },
+    {
+      "name": "f1 focus settings desktop day: top not clipped, \"reset to classic\" reachable",
+      "ok": true,
+      "detail": "top 36, foot bottom 422 of 800, tappable true"
+    },
+    {
+      "name": "f1 focus settings 360 night: card inside the screen and centred, nothing past its edge",
+      "ok": true,
+      "detail": "card 16.0–344.0 of 360, worst overflow 0.0px, scrollWidth 360, errors 0"
+    },
+    {
+      "name": "f1 focus settings 360 night: top not clipped, \"reset to classic\" reachable",
+      "ok": true,
+      "detail": "top 155, foot bottom 619 of 844, tappable true"
+    },
+    {
+      "name": "f1 focus settings 390 night: card inside the screen and centred, nothing past its edge",
+      "ok": true,
+      "detail": "card 16.0–374.0 of 390, worst overflow 0.0px, scrollWidth 390, errors 0"
+    },
+    {
+      "name": "f1 focus settings 390 night: top not clipped, \"reset to classic\" reachable",
+      "ok": true,
+      "detail": "top 175, foot bottom 599 of 844, tappable true"
+    },
+    {
+      "name": "f1 focus settings 430 night: card inside the screen and centred, nothing past its edge",
+      "ok": true,
+      "detail": "card 16.0–414.0 of 430, worst overflow 0.0px, scrollWidth 430, errors 0"
+    },
+    {
+      "name": "f1 focus settings 430 night: top not clipped, \"reset to classic\" reachable",
+      "ok": true,
+      "detail": "top 175, foot bottom 599 of 844, tappable true"
+    },
+    {
+      "name": "f1 focus settings desktop night: card inside the screen, nothing past its edge",
+      "ok": true,
+      "detail": "card 478.8–1003.8 of 1280, worst overflow 0.0px, scrollWidth 1280, errors 0"
+    },
+    {
+      "name": "f1 focus settings desktop night: top not clipped, \"reset to classic\" reachable",
+      "ok": true,
+      "detail": "top 36, foot bottom 422 of 800, tappable true"
+    },
+    {
+      "name": "i1 desktop day: the count line says \"· 2 snoozed\" (the one already back is waiting, not counted)",
+      "ok": true,
+      "detail": "3 to sort · oldest is 4 days old · 2 snoozed"
+    },
+    {
+      "name": "i1 desktop day: Snoozed view — toggle on \"Snoozed 2\", rows soonest first with when they come back",
+      "ok": true,
+      "detail": "Snoozed 2 · BACK TOMORROW · 09:00 | BACK MON 19 OCT · 09:00"
+    },
+    {
+      "name": "i1 Unsnooze: the capture is waiting again now, the view and count drop to 1, toast with Undo",
+      "ok": true,
+      "detail": "{\"t\":true,\"snoozed_until\":null}"
+    },
+    {
+      "name": "i1 Undo: snoozed again until tomorrow 09:00",
+      "ok": true,
+      "detail": "2026-10-13T06:00:00.000Z"
+    },
+    {
+      "name": "i1 R on the focused snoozed row brings it back too",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i1 the toggle leads back to Waiting (and the Snoozed segment goes away)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i1 desktop day: no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i1 desktop night: the count line says \"· 2 snoozed\" (the one already back is waiting, not counted)",
+      "ok": true,
+      "detail": "3 to sort · oldest is 4 days old · 2 snoozed"
+    },
+    {
+      "name": "i1 desktop night: Snoozed view — toggle on \"Snoozed 2\", rows soonest first with when they come back",
+      "ok": true,
+      "detail": "Snoozed 2 · BACK TOMORROW · 09:00 | BACK MON 19 OCT · 09:00"
+    },
+    {
+      "name": "i1 desktop night: no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i2 desktop: Someday files a someday task (no date, the card's project), the capture is filed, not snoozed a year",
+      "ok": true,
+      "detail": "Filed \"Learn the cello\" to Someday · Forecasting App · {\"someday\":true,\"due_at\":null,\"project\":true,\"item\":\"filed\"}"
+    },
+    {
+      "name": "i2 desktop: the toast says where it went",
+      "ok": true,
+      "detail": "Filed \"Learn the cello\" to Someday · Forecasting App"
+    },
+    {
+      "name": "i2 desktop: Undo deletes the task and the capture waits again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i2 desktop: no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i2 phone: Someday files a someday task (no date, the card's project), the capture is filed, not snoozed a year",
+      "ok": true,
+      "detail": "Filed \"Learn the cello\" to Someday · Forecasting App · {\"someday\":true,\"due_at\":null,\"project\":true,\"item\":\"filed\"}"
+    },
+    {
+      "name": "i2 phone: the toast says where it went",
+      "ok": true,
+      "detail": "Filed \"Learn the cello\" to Someday · Forecasting App"
+    },
+    {
+      "name": "i2 phone: Undo deletes the task and the capture waits again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i2 phone: no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i3 phone day: \"· 2 snoozed\" → the Snoozed view, the link reads \"Waiting 3\", rows say when they come back, nothing off the edge",
+      "ok": true,
+      "detail": "3 to sort · 2 snoozed · Waiting 3 · TYPED · BACK TOMORROW · 09:00 | VOICE · BACK MON 19 OCT · 09:00"
+    },
+    {
+      "name": "i3 phone day: the link leads back to Waiting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "i3 phone night: \"· 2 snoozed\" → the Snoozed view, the link reads \"Waiting 3\", rows say when they come back, nothing off the edge",
+      "ok": true,
+      "detail": "3 to sort · 2 snoozed · Waiting 3 · TYPED · BACK TOMORROW · 09:00 | VOICE · BACK MON 19 OCT · 09:00"
+    },
+    {
+      "name": "i3 phone night: the link leads back to Waiting",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p1 desktop: the Inbox badge counts the ready page (1 capture + 1 page = 2)",
+      "ok": true,
+      "detail": "\"2\""
+    },
+    {
+      "name": "p1 phone: the Inbox badge counts the ready page (1 capture + 1 page = 2)",
+      "ok": true,
+      "detail": "\"2\\nInbox\""
+    },
+    {
+      "name": "p2 phone day: the drawing row reads as 11e draws it",
+      "ok": true,
+      "detail": "\"1 drawing skipped (CPU → ready → run)\\nAdd as image\""
+    },
+    {
+      "name": "p2 phone: Add as image → an Inbox photo note (the page, the drawing's box), toast with Undo, row says \"In the Inbox\"",
+      "ok": true,
+      "detail": "{\"source\":\"photo\",\"source_ref\":\"c0000000-0000-4000-8000-0000000000aa\",\"page\":0,\"box\":[0.12,0.5,0.6,0.18],\"title\":\"OS lecture 3\",\"drawing\":true}"
+    },
+    {
+      "name": "p2 phone: Undo removes the note, the row offers Add as image again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p2 phone day: no page errors, nothing off the edge",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p2 phone night: the drawing row reads as 11e draws it",
+      "ok": true,
+      "detail": "\"1 drawing skipped (CPU → ready → run)\\nAdd as image\""
+    },
+    {
+      "name": "p2 phone night: no page errors, nothing off the edge",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p2 desktop day: the drawing row reads as 11e draws it",
+      "ok": true,
+      "detail": "\"1 drawing skipped (CPU → ready → run)\\nAdd as image\""
+    },
+    {
+      "name": "p2 desktop: Add as image → an Inbox photo note (the page, the drawing's box), toast with Undo, row says \"In the Inbox\"",
+      "ok": true,
+      "detail": "{\"source\":\"photo\",\"source_ref\":\"c0000000-0000-4000-8000-0000000000aa\",\"page\":0,\"box\":[0.12,0.5,0.6,0.18],\"title\":\"OS lecture 3\",\"drawing\":true}"
+    },
+    {
+      "name": "p2 desktop: Undo removes the note, the row offers Add as image again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p2 desktop day: no page errors, nothing off the edge",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p2 desktop night: the drawing row reads as 11e draws it",
+      "ok": true,
+      "detail": "\"1 drawing skipped (CPU → ready → run)\\nAdd as image\""
+    },
+    {
+      "name": "p2 desktop night: no page errors, nothing off the edge",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p3 Delete after reading, no drawing: the photo goes",
+      "ok": true,
+      "detail": "expires_at 2026-10-12T07:00:04.941Z"
+    },
+    {
+      "name": "p3 Delete after reading, a drawing added: the photo is kept",
+      "ok": true,
+      "detail": "expires_at 2026-10-19T06:00:00.000Z"
+    },
+    {
+      "name": "p4 day: the keys line as 11m draws it; Add all has the focus",
+      "ok": true,
+      "detail": "⏎ Add all · ⌫ drop line · T change type · focus \"Add all 4\""
+    },
+    {
+      "name": "p4 ↓↓ then ⌫ drops that line (\"Line dropped\" + Undo), the ring moves on",
+      "ok": true,
+      "detail": "Assignment 2 → Read ch. 4 — scheduling · OS lecture 3 — 4 Oct | Read ch. 4 — scheduling | Buy blue pens"
+    },
+    {
+      "name": "p4 T opens the type menu for the ringed line",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p4 the pick lands on that line (Read ch. 4 → Event), ⌫ under the menu dropped nothing",
+      "ok": true,
+      "detail": "Event"
+    },
+    {
+      "name": "p4 ⏎ adds all what is left: Buy blue pens a task, the undated event + the heading to the Inbox, Assignment 2 nowhere; the results close",
+      "ok": true,
+      "detail": "{\"tasks\":[\"Buy blue pens\"],\"inbox\":[\"Renew the library card\",\"OS lecture 3 — 4 Oct\",\"Read ch. 4 — scheduling\"]}"
+    },
+    {
+      "name": "p4 day: no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "p4 night: the keys line as 11m draws it; Add all has the focus",
+      "ok": true,
+      "detail": "⏎ Add all · ⌫ drop line · T change type · focus \"Add all 4\""
+    },
+    {
+      "name": "p4 night: no page errors",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
