@@ -329,7 +329,7 @@ for (const theme of ['day', 'night']) {
     if (!want('d4')) break d4
     const name = 'overdue-block-day'
     const { ctx, page, errors, state } = await open()
-    await page.locator('.cal-main span', { hasText: '‹' }).first().click() // the week before
+    await page.locator('.cal-main').getByRole('button', { name: 'Previous', exact: true }).first().click() // the week before (p7e A4: a real button now)
     await sleep(600)
     await page.evaluate(() => {
       const slot = document.querySelector('td.fc-timegrid-slot-lane[data-time="19:00:00"]')
@@ -359,7 +359,7 @@ for (const theme of ['day', 'night']) {
     await ctx.close()
     // Right-click on a missed block also offers Replan… (a fresh page: the data as it was).
     const o2 = await open()
-    await o2.page.locator('.cal-main span', { hasText: '‹' }).first().click()
+    await o2.page.locator('.cal-main').getByRole('button', { name: 'Previous', exact: true }).first().click()
     await sleep(500)
     await fcBlock(o2.page, 1).scrollIntoViewIfNeeded()
     await fcBlock(o2.page, 1).click({ button: 'right', position: { x: 10, y: 4 } })
@@ -415,7 +415,7 @@ for (const theme of ['day', 'night']) {
       check(`${name} pick 1:30 PM → Save → one write 13:30–14:00 on the user's clock`, e.length === 1 && e[0].starts_at === iso('13:30') && e[0].ends_at === iso('14:00'), JSON.stringify(e.map((x) => [x.starts_at, x.ends_at])))
       if (t === 'day') {
         // A missed task block: "Overdue" + Replan ▾, and its date field moves it to today.
-        await page.locator('.cal-main span', { hasText: '‹' }).first().click()
+        await page.locator('.cal-main').getByRole('button', { name: 'Previous', exact: true }).first().click()
         await sleep(500)
         await fcBlock(page, 1).scrollIntoViewIfNeeded()
         await fcBlock(page, 1).click({ position: { x: 30, y: 6 } })
