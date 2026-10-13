@@ -43,6 +43,7 @@ const TourHost = lazy(() => import('../features/tour/TourHost').then((m) => ({ d
 import { ToastHost } from './ToastHost'
 import { MobileTabBar } from './MobileTabBar'
 import { PaperHost } from '../features/paper/PaperHost'
+import { useReadyPages } from '../features/paper/captures'
 import { WhatsNewHost } from '../features/whats-new/WhatsNew'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
@@ -617,6 +618,8 @@ export function AppLayout() {
     else setTimeout(warm, 500) // older iOS Safari has no idle callback
   }, [])
   const { data: pendingInbox = [] } = usePendingInboxItems()
+  // Paper Capture 11d: a page read and waiting for review is one more thing in the Inbox (12 → 13).
+  const inboxBadge = pendingInbox.length + useReadyPages()
   // Captures queued for the AI (needs_parse: the capture endpoint's ?file=1, or made offline) are
   // filed once they're here — not only on a reconnect, which a fresh start never sees.
   const queuedForAi = pendingInbox.some((i) => (i.payload as { needs_parse?: boolean } | null)?.needs_parse)
@@ -930,11 +933,11 @@ export function AppLayout() {
         <nav data-tour="sidebar" style={{ padding: '0 14px', display: 'flex', flexDirection: 'column', gap: 2 }}>
           <GroupLabel>Tend</GroupLabel>
           {TEND.map((item) => (
-            <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} collapsed={collapsed} />
+            <NavRow key={item.to} item={item} pendingInbox={inboxBadge} collapsed={collapsed} />
           ))}
           <GroupLabel>Cultivate</GroupLabel>
           {CULTIVATE.map((item) => (
-            <NavRow key={item.to} item={item} pendingInbox={pendingInbox.length} collapsed={collapsed} />
+            <NavRow key={item.to} item={item} pendingInbox={inboxBadge} collapsed={collapsed} />
           ))}
         </nav>
 
@@ -985,7 +988,7 @@ export function AppLayout() {
       </main>
 
       <MobileTabBar
-        pendingInbox={pendingInbox.length}
+        pendingInbox={inboxBadge}
         onSearch={() => setSearchOpen(true)}
         onChat={() => setChatOpen(true)}
         onSignOut={signOutFlow.request}

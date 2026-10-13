@@ -189,3 +189,15 @@ button.pp-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus)
 .pp-seg-btn { flex: 1; min-height: 44px; border: none; border-radius: 999px; background: none; font: inherit; font-size: 13.5px; color: var(--ink-muted); cursor: pointer; }
 .pp-seg-btn[aria-pressed='true'] { background: var(--ink-body); color: var(--paper-parchment); font-weight: 600; }
 .pp-seg-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+
+/* 11e: a drawing the read skipped — a quiet row under the lines; "Add as image" sends it to the Inbox. */
+.pp-drawing { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; font-size: var(--fs-body-s); color: var(--ink-faint); }
+.pp-drawing > svg { flex: none; }
+.pp-drawing-what { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.pp-drawing-add { flex: none; min-height: 48px; padding: 0; border: none; background: none; font: inherit; font-weight: var(--fw-semibold); color: var(--acc-lavender-deep); cursor: pointer; }
+.pp-drawing-add:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
+.pp-drawing-done { flex: none; color: var(--acc-sage-text); }
+
+/* 11m: the desktop keys, beside Add all; the line the keys act on. */
+.pp-keys { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: var(--fs-mono-l); color: var(--ink-faint); }
+.pp-row.is-ringed { outline: 2px solid var(--focus); outline-offset: -2px; }

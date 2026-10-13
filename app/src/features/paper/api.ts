@@ -18,7 +18,8 @@ import { upsertJournalEntry } from '../journal/api'
 import { tellPaperRead } from '../notifications/local'
 import { preparePage } from './image'
 import { usePaperStore } from './paperStore'
-import { addedSummary, planWrites, shouldResume, type CaptureRow, type EditLine } from './paperMath'
+import { addedSummary, planWrites, shouldResume, type CaptureRow, type EditLine, type PageDrawing } from './paperMath'
+import { fetchCaptures } from './captures'
 import type { AppSettings, InboxItem, Project, Task } from '../../lib/types'
 
 const BUCKET = 'captures'
@@ -27,16 +28,7 @@ const toast = (message: string) => useToastStore.getState().push({ message })
 
 // ── reads ──
 
-async function fetchCaptures(): Promise<CaptureRow[]> {
-  const { data, error } = await supabase.from('captures').select('*').is('reviewed_at', null).order('created_at', { ascending: false }).limit(30)
-  if (error) throw error
-  return data as CaptureRow[]
-}
-
-/** Captures not yet reviewed — the Inbox's "ready to review" rows and the results sheet. */
-export function useCaptures() {
-  return useQuery({ queryKey: ['captures'], queryFn: fetchCaptures, select: (rows) => rows.filter((r) => !r.reviewed_at) })
-}
+export { useCaptures } from './captures'
 
 /** One capture by id, reviewed or not — a task's "From a photo of your page" link. The list cache
  * still holds one reviewed this session; anything older is fetched on its own. */
@@ -86,7 +78,7 @@ export function useScansToday(): number {
 
 // ── reading ──
 
-type ReadAnswer = Pick<CaptureRow, 'status' | 'pages_read' | 'title' | 'items'>
+type ReadAnswer = Pick<CaptureRow, 'status' | 'pages_read' | 'title' | 'items' | 'drawings'>
 type ReadStop = 'daily_limit' | 'rate_limited' | 'offline' | 'failed'
 
 async function callRead(captureId: string, paths: string[], page: number, takenAt: string): Promise<ReadAnswer | ReadStop> {
@@ -325,10 +317,11 @@ function photoNote(capture: CaptureRow, line: EditLine): InboxItem {
 }
 
 /** Reviewed: off the Inbox's "ready" list. "Delete after reading" (or `dropPhoto`: a page we couldn't
- * read) brings the photo's expiry to now, so the hourly sweep takes it. */
-export function markReviewed(capture: CaptureRow, dropPhoto = false): void {
+ * read) brings the photo's expiry to now, so the hourly sweep takes it — unless `keepPhoto`: a drawing
+ * went to the Inbox as an image, and that note shows this photo (its usual 7 days). */
+export function markReviewed(capture: CaptureRow, dropPhoto = false, keepPhoto = false): void {
   const now = new Date().toISOString()
-  const keep = !dropPhoto && queryClient.getQueryData<AppSettings>(['app_settings'])?.capture_keep_photos !== false
+  const keep = !dropPhoto && (keepPhoto || queryClient.getQueryData<AppSettings>(['app_settings'])?.capture_keep_photos !== false)
   writeRow('captures', { ...capture, reviewed_at: now, ...(keep ? {} : { expires_at: now }) })
 }
 
@@ -350,8 +343,34 @@ export function markTicksDone(capture: CaptureRow, taskIds: readonly string[], r
   return open.length
 }
 
+/** 11e "Add as image": a drawing the read skipped goes to the Inbox as a photo note — its 📷 link opens
+ * the page, its box marks the drawing. Its own toast and Undo (it isn't one of the lines). */
+export function addDrawingNote(capture: CaptureRow, drawing: PageDrawing, onUndo: () => void): void {
+  const now = new Date().toISOString()
+  const item: InboxItem = {
+    id: crypto.randomUUID(),
+    kind: 'text',
+    raw_text: drawing.what ? `Drawing: ${drawing.what}` : 'A drawing from your page',
+    transcript: null,
+    ai_parse: null,
+    confidence: null,
+    status: 'pending',
+    filed_task_id: null,
+    payload: { source: 'photo', source_ref: capture.id, page: drawing.page, box: drawing.box, title: capture.title, drawing: true },
+    snoozed_until: null,
+    created_at: now,
+    updated_at: now,
+  }
+  writeRow('inbox_items', item)
+  logActivity('inbox.captured', 'inbox_item', item.id, { kind: 'photo', drawing: true })
+  toastUndo('Drawing added to the Inbox as an image', () => {
+    writeRow('inbox_items', item, 'delete')
+    onUndo()
+  })
+}
+
 /** "Add all" / "Inbox only": every kept line through the usual helpers, one toast, one Undo. */
-export function applyResults(capture: CaptureRow, lines: readonly EditLine[], mode: 'all' | 'inbox'): void {
+export function applyResults(capture: CaptureRow, lines: readonly EditLine[], mode: 'all' | 'inbox', keepPhoto = false): void {
   const plan = planWrites(lines, capture.id, mode)
   const undo: (() => void)[] = []
   for (const p of plan) {
@@ -372,7 +391,7 @@ export function applyResults(capture: CaptureRow, lines: readonly EditLine[], mo
     }
   }
   const prior = { ...capture }
-  markReviewed(capture)
+  markReviewed(capture, false, keepPhoto)
   logActivity('capture.reviewed', 'capture', capture.id, { mode, written: plan.length })
   toastUndo(addedSummary(plan), () => {
     for (const fn of undo) fn()

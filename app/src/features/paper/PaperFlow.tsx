@@ -16,6 +16,7 @@ import { LONG_PRESS_MS } from '../tasks/swipe'
 import { PRIORITY_LABELS } from '../tasks/taskMenuSpec'
 import { priorityColor } from '../tasks/taskDisplay'
 import { useEscapeStack } from '../../lib/overlayStack'
+import { useListKeys, type ListBinding } from '../../components/useListKeys'
 import { toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
 import { longPress } from '../../lib/haptics'
@@ -25,8 +26,8 @@ import { useProjects } from '../projects/api'
 import { useTasks } from '../tasks/api'
 import { openCapture } from '../command-bar/commandBarStore'
 import { matchTicks } from '../notebook/ticks'
-import { applyResults, markReviewed, markTicksDone, retryCapture, startReading, useCapture, usePageUrls } from './api'
-import { cropFrame, DAILY_PAGES, editLines, isHeic, MAX_PAGES, movePage, needsCheck, placeEdit, toEditLine, toggleKey, type CaptureRow, type EditLine, type LineEdit, type LineType } from './paperMath'
+import { addDrawingNote, applyResults, markReviewed, markTicksDone, retryCapture, startReading, useCapture, usePageUrls } from './api'
+import { cropFrame, DAILY_PAGES, editLines, isHeic, MAX_PAGES, movePage, needsCheck, placeEdit, toEditLine, toggleKey, type CaptureRow, type EditLine, type LineEdit, type LineType, type PageDrawing } from './paperMath'
 import { pickPhotos, usePaperStore, type PageDraft, type Stage, type TicksTarget } from './paperStore'
 
 // Paper capture's screens (Paper Capture.dc.html): a quick look 11b/11c, reading 11d, the results sheet
@@ -366,9 +367,12 @@ interface RowProps {
   onEdit: (patch: LineEdit) => void
   onDrop: () => void
   onHover?: (on: boolean) => void
+  /** Desktop keys (11m): the row's DOM id for the list's focus, and whether it has the focus ring. */
+  rowId?: string
+  ringed?: boolean
 }
 
-function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecting, onToggleSelect, onEdit, onDrop, onHover }: RowProps) {
+function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecting, onToggleSelect, onEdit, onDrop, onHover, rowId, ringed }: RowProps) {
   const [menu, setMenu] = useState<{ kind: PickerKind | 'more'; at: At } | null>(null)
   // A ⋯ item that opens a picker: ContextMenu runs the item, then its own onClose — which opens this.
   const then = useRef<{ kind: PickerKind; at: At } | null>(null)
@@ -404,7 +408,9 @@ function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecti
     <SwipeRow
       actions={{ delete: onDrop, deleteLabel: 'Drop' }}
       tomorrowHint=""
-      className="pp-row"
+      id={rowId}
+      tabIndex={rowId ? -1 : undefined}
+      className={`pp-row${ringed ? ' is-ringed' : ''}`}
       contentClassName={`pp-row-fg${check ? ' is-check' : ''}${selected ? ' is-selected' : ''}`}
       onLongPress={onToggleSelect}
       selecting={selecting}
@@ -504,9 +510,24 @@ function useResults(id: string, only?: string[]) {
   const clear = () => setPicked(new Set())
   useEscapeStack(selected.length > 0, clear)
   const close = () => store().close()
+  // 11e: the drawings the read skipped; the ones sent to the Inbox as images (their note shows the photo,
+  // so Add all keeps it even under "Delete after reading").
+  const drawings = capture?.drawings ?? []
+  const [drawn, setDrawn] = useState<Set<number>>(new Set())
+  const addDrawing = (i: number) => {
+    if (!capture) return
+    setDrawn((s) => new Set(s).add(i))
+    addDrawingNote(capture, drawings[i], () =>
+      setDrawn((s) => {
+        const next = new Set(s)
+        next.delete(i)
+        return next
+      }),
+    )
+  }
   const apply = (mode: 'all' | 'inbox') => {
     if (!capture) return
-    applyResults(capture, lines, mode)
+    applyResults(capture, lines, mode, drawn.size > 0)
     close()
   }
   const unsure = lines.filter(needsCheck).length
@@ -535,7 +556,7 @@ function useResults(id: string, only?: string[]) {
       clear()
     },
   }
-  return { capture, urls, lines, close, apply, unsure, editing: !!editing, viewPhoto, row, bulk }
+  return { capture, urls, lines, close, apply, unsure, editing: !!editing, viewPhoto, row, bulk, drawings, drawn, addDrawing, drop, edit, selectedKeys: selected }
 }
 type Bulk = ReturnType<typeof useResults>['bulk']
 
@@ -584,7 +605,7 @@ function Banner({ unsure, touch, editing, bulk }: { unsure: number; touch: boole
 
 /** Add all / Inbox only — or, selecting, what the selection can do: Type · Date · Project · Drop (the
  * bulk bar's grammar, inside the sheet: the tab bar isn't under a sheet to be replaced). */
-function ResultsFoot({ count, apply, bulk }: { count: number; apply: (mode: 'all' | 'inbox') => void; bulk: Bulk }) {
+function ResultsFoot({ count, apply, bulk, focusAddAll }: { count: number; apply: (mode: 'all' | 'inbox') => void; bulk: Bulk; focusAddAll?: boolean }) {
   const [menu, setMenu] = useState<{ kind: PickerKind; at: At; meta: string } | null>(null)
   const act = (kind: PickerKind, icon: IconName, label: string) => (
     <button type="button" className="pp-selbtn" aria-haspopup="dialog" onClick={(e) => setMenu({ kind, at: below(e.currentTarget), meta: `${bulk.count} selected` })}>
@@ -609,7 +630,8 @@ function ResultsFoot({ count, apply, bulk }: { count: number; apply: (mode: 'all
           <Button variant="secondary" icon={<Icon name="inbox" size={18} />} disabled={!count} onClick={() => apply('inbox')}>
             Inbox only
           </Button>
-          <Button variant="cta" disabled={!count} onClick={() => apply('all')}>
+          {/* 11m: ⏎ adds all — the dialog's default action has the focus when it opens */}
+          <Button variant="cta" disabled={!count} autoFocus={focusAddAll} onClick={() => apply('all')}>
             Add all {count}
           </Button>
         </>
@@ -618,6 +640,26 @@ function ResultsFoot({ count, apply, bulk }: { count: number; apply: (mode: 'all
       {menu && <LinePicker kind={menu.kind} at={menu.at} meta={menu.meta} onEdit={bulk.edit} onClose={() => setMenu(null)} />}
     </>
   )
+}
+
+/** 11e: "1 drawing skipped (CPU → ready → run) · Add as image" — under the lines, one row per drawing. */
+function DrawingRows({ drawings, drawn, onAdd }: { drawings: PageDrawing[]; drawn: Set<number>; onAdd: (i: number) => void }) {
+  return drawings.map((d, i) => (
+    <div key={i} className="pp-drawing">
+      <Icon name="image" size={18} />
+      <span className="pp-drawing-what" dir="auto">
+        {drawings.length === 1 ? '1 drawing skipped' : 'Drawing skipped'}
+        {d.what && ` (${d.what})`}
+      </span>
+      {drawn.has(i) ? (
+        <span className="pp-drawing-done">In the Inbox</span>
+      ) : (
+        <button type="button" className="pp-drawing-add" onClick={() => onAdd(i)}>
+          Add as image
+        </button>
+      )}
+    </div>
+  ))
 }
 
 function PhoneResults({ id, only }: { id: string; only?: string[] }) {
@@ -633,16 +675,50 @@ function PhoneResults({ id, only }: { id: string; only?: string[] }) {
           {r.lines.map((l) => (
             <ResultRow key={l.key} url={r.urls[l.page]} {...r.row(l)} />
           ))}
+          <DrawingRows drawings={r.drawings} drawn={r.drawn} onAdd={r.addDrawing} />
         </div>
       )}
     </BottomSheet>
   )
 }
 
+// A row's own menu or picker is up: the keys are its, not the list's.
+const menuUp = () => !!document.querySelector('[role="menu"]') || document.querySelectorAll('[role="dialog"]').length > 1
+
 function DesktopResults({ id, only }: { id: string; only?: string[] }) {
   const r = useResults(id, only)
   const [page, setPage] = useState(0)
   const [hover, setHover] = useState<EditLine | null>(null)
+  // 11m "⏎ Add all · ⌫ drop line · T change type": the shared list keys over the lines (↑/↓ move the
+  // ring). Add all also has the focus when the results open, so ⏎ works before any line is picked.
+  const [typeMenu, setTypeMenu] = useState<{ at: At; keys: string[] } | null>(null)
+  const keyed = r.lines.map((l) => ({ ...l, id: l.key }))
+  const anchor = (key: string): At => {
+    const el = document.getElementById(`pp-line-${key}`)?.querySelector('.pp-type')
+    return el ? below(el as HTMLElement) : { x: window.innerWidth / 2, y: window.innerHeight / 2 }
+  }
+  const unlessMenu = <A,>(fn: (a: A) => void) => (a: A) => {
+    if (!menuUp()) fn(a)
+  }
+  const bindings: ListBinding<(typeof keyed)[number]>[] = [
+    { keys: ['Enter'], label: 'Add all', run: unlessMenu(() => r.lines.length && !r.bulk.count && r.apply('all')) },
+    {
+      keys: ['Backspace', 'Delete'],
+      label: 'Drop line',
+      run: unlessMenu((l) => {
+        const at = keyed.findIndex((k) => k.id === l.id)
+        r.drop([l.key])
+        setFocusedId(keyed[at + 1]?.id ?? keyed[at - 1]?.id ?? null)
+      }),
+      runAll: unlessMenu(() => r.bulk.drop()),
+    },
+    { keys: ['t'], label: 'Change type', run: unlessMenu((l) => setTypeMenu({ at: anchor(l.key), keys: [l.key] })), runAll: unlessMenu((sel) => setTypeMenu({ at: anchor(sel[0].key), keys: sel.map((l) => l.key) })) },
+  ]
+  const { focusedId, setFocusedId } = useListKeys(keyed, bindings, {
+    idPrefix: 'pp-line-',
+    active: !typeMenu && !r.editing,
+    selected: keyed.filter((l) => r.selectedKeys.includes(l.key)),
+  })
   if (!r.capture) return null
   const box = hover?.page === page ? hover.box : null
   return (
@@ -681,18 +757,35 @@ function DesktopResults({ id, only }: { id: string; only?: string[] }) {
                 key={l.key}
                 url={r.urls[l.page]}
                 {...r.row(l)}
+                rowId={`pp-line-${l.key}`}
+                ringed={focusedId === l.key}
                 onHover={(on) => {
                   setHover(on ? l : null)
                   if (on) setPage(l.page)
                 }}
               />
             ))}
+            <DrawingRows drawings={r.drawings} drawn={r.drawn} onAdd={r.addDrawing} />
           </div>
           <div data-sheet-footer className="pp-foot is-row is-end">
-            <ResultsFoot count={r.lines.length} apply={r.apply} bulk={r.bulk} />
+            {!r.bulk.count && <span className="pp-keys">⏎ Add all · ⌫ drop line · T change type</span>}
+            <ResultsFoot count={r.lines.length} apply={r.apply} bulk={r.bulk} focusAddAll />
           </div>
         </div>
       </div>
+      {typeMenu && (
+        <LinePicker
+          kind="type"
+          at={typeMenu.at}
+          line={typeMenu.keys.length === 1 ? r.lines.find((l) => l.key === typeMenu.keys[0]) : undefined}
+          meta={typeMenu.keys.length === 1 ? (r.lines.find((l) => l.key === typeMenu.keys[0])?.text ?? '') : `${typeMenu.keys.length} selected`}
+          onEdit={(p) => {
+            r.edit(typeMenu.keys, p)
+            if (typeMenu.keys.length > 1) r.bulk.clear()
+          }}
+          onClose={() => setTypeMenu(null)}
+        />
+      )}
     </Frame>
   )
 }
