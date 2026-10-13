@@ -553,8 +553,10 @@ export function JournalPage() {
   )
 
   const nextPrompt = () => setPromptIndex((prev) => (prev + 1) % PROMPTS.length)
-  // Phone: 44px targets for the small text buttons below.
+  // Phone: 44px targets for the small text buttons below (Cancel and Save are narrower than 44, so they also
+  // get the tap area that grows to 44 without reaching each other, 6px apart).
   const hit = isMobile ? { minHeight: 44 } : undefined
+  const hitMin = isMobile ? 'kf-hit kf-hit-min' : undefined
 
   /** The quote of the day's thoughts and "＋ add a thought" — the rail's on desktop, the card's on a phone. */
   const quoteThoughts = (
@@ -574,8 +576,8 @@ export function JournalPage() {
             style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', outline: 'none', resize: 'none', padding: 6, borderRadius: 3 }}
           />
           <div style={{ display: 'flex', gap: 6, marginTop: 4, justifyContent: 'flex-end' }}>
-            <button onClick={() => setShowAddCommentary(false)} style={{ ...hit, border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-            <button onClick={handleAddCommentary} style={{ ...hit, border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: 'var(--fs-meta-l)', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>Save</button>
+            <button onClick={() => setShowAddCommentary(false)} className={hitMin} style={{ ...hit, border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+            <button onClick={handleAddCommentary} className={hitMin} style={{ ...hit, border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: 'var(--fs-meta-l)', padding: '3px 8px', borderRadius: 999, cursor: 'pointer' }}>Save</button>
           </div>
         </div>
       ) : (
@@ -724,10 +726,11 @@ export function JournalPage() {
                     ~258 CSS px wide, and each label broke onto two lines ("＋ NEW / ENTRY"). Labels
                     stay whole; the save state takes its own line only when it doesn't fit. */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
-                  {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. */}
-                  <span onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
-                  <button type="button" onClick={() => setTalking(true)} style={footLink}>🎤 Talk</button>
-                  <button type="button" onClick={onPhoto} style={footLink}>＋ Photo</button>
+                  {/* 1b has no left rail, so the day's "+ New entry" lives in the card footer. Each link is drawn 18px
+                      tall; kf-hit-min gives a finger 44 (13px above and below, inside the card's own padding). */}
+                  <span className="kf-hit kf-hit-min" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ color: 'var(--acc-terra)', cursor: 'pointer' }}>＋ New entry</span>
+                  <button type="button" className="kf-hit kf-hit-min" onClick={() => setTalking(true)} style={footLink}>🎤 Talk</button>
+                  <button type="button" className="kf-hit kf-hit-min" onClick={onPhoto} style={footLink}>＋ Photo</button>
                   <span style={{ marginLeft: 'auto', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>
                 </div>
               </div>
