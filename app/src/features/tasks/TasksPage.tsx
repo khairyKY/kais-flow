@@ -18,6 +18,7 @@ import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
+import { moveInListWithUndo } from './api'
 import { labelOptions } from './taskDisplay'
 import { parseCommand } from '../command-bar/parseCommand'
 import { addTypedTask } from '../command-bar/quickAdd'
@@ -739,6 +740,8 @@ export function TasksPage() {
     sectionLabel: isDone ? 'Done' : 'Lists',
     onSelectAll: isDone ? undefined : () => setSelected(new Set(flatTasks.map((t) => t.id))),
     selected: isDone ? undefined : selectedTasks,
+    // ⌘/Ctrl+↑/↓ (p7e A22): within its group, while the list shows its own order (Sort · Smart).
+    reorder: isDone || sort !== 'smart' ? undefined : (rows, dir) => void moveInListWithUndo(groups.map((g) => g.tasks), rows, dir),
   })
 
   const isSomeday = activeTab === 'someday'

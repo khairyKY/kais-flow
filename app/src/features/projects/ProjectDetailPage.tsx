@@ -65,6 +65,8 @@ import { TaskRow, type BulkActions } from '../tasks/TaskRow'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { todayFor } from '../tasks/planMath'
 import { buildListBindings } from '../tasks/listShortcuts'
+import { sortByOrder } from '../tasks/manualOrder'
+import { moveInListWithUndo } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { BulkBar } from '../../components/BulkBar'
 import { MovePicker } from '../tasks/MovePicker'
@@ -275,7 +277,8 @@ export function ProjectDetailPage() {
   // This page's open tasks, in list order. `id` is a project or an area, never both, so one filter
   // serves both pages.
   const pageOpen = useMemo(() => {
-    const open = tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id))
+    // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
+    const open = sortByOrder(tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id)))
     // An area lists its repeats apart, under "Keeps coming back" after its other open tasks — the
     // keys walk the rows in that same order, and no row is drawn twice.
     return areas.some((a) => a.id === id) ? [...open.filter((t) => !t.recurrence_rule), ...open.filter((t) => t.recurrence_rule)] : open
@@ -325,6 +328,8 @@ export function ProjectDetailPage() {
     sectionLabel: 'Lists',
     onSelectAll: selectAllOpen,
     selected: selectedTasks,
+    // ⌘/Ctrl+↑/↓ (p7e A22): within the page's list — an area's repeats are their own group, under it.
+    reorder: (rows, dir) => void moveInListWithUndo(area ? [pageOpen.filter((t) => !t.recurrence_rule), pageOpen.filter((t) => t.recurrence_rule)] : [pageOpen], rows, dir),
   })
 
   // Click-away deselects (TodayPage's rule): a click on empty page space clears the selection; one

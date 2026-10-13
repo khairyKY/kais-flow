@@ -54,6 +54,8 @@ export interface Task {
   top3: boolean
   /** Place in Today's Top 3, 1 = the goal of the day (migration 0055); null/absent = not chosen. */
   top3_rank?: number | null
+  /** Manual place in a list (migration 0076, ⌘↑/↓), on the date's scale; null/absent = by date. */
+  sort_order?: number | null
   snoozed_until: string | null
   recurrence_rule: string | null
   labels: string[]
