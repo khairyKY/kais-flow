@@ -88,9 +88,17 @@ export function totalLine(rows: readonly RailTask[]): string {
   return `${n} ${n === 1 ? 'task' : 'tasks'} · ${minutesLabel(rows.reduce((s, r) => s + railMinutes(r), 0))} total`
 }
 
-/** Timed, live blocks on `day` (the footer's "4 blocked today"). */
+/** Timed, live, busy blocks on `day` (the footers' "4 blocked today"). A Free event blocks nothing (p7e A15). */
 export function blockedOn(events: readonly CalendarEvent[], day: string): number {
-  return events.filter((e) => !e.deleted_at && !e.all_day && cairoDateKey(new Date(e.starts_at)) === day).length
+  return events.filter((e) => !e.deleted_at && !e.all_day && e.busy !== false && cairoDateKey(new Date(e.starts_at)) === day).length
+}
+
+/** The free minutes left on `day`: every gap between busy blocks inside 08:00–20:00, from now on
+ * (pickerMath.freeSlots — past and off-hours time and Free events don't count), to the half hour
+ * past the first hour. The footers' "6h free". */
+export function freeLeft(events: readonly CalendarEvent[], day: string, now: Date): number {
+  const free = freeSlots(busyOnDay(events, day), day, now, 15, 48).reduce((s, g) => s + g.end - g.start, 0)
+  return free >= 60 ? Math.round(free / 30) * 30 : free
 }
 
 /** The strip's free stretches on `day` worth planting into: the gaps between busy blocks inside
@@ -113,8 +121,7 @@ export function footerLine(events: readonly CalendarEvent[], days: readonly stri
   const word = (d: string) => (d === today ? 'today' : d === addDays(today, 1) ? 'tomorrow' : new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }))
   const first = `${blockedOn(events, days[0])} blocked ${word(days[0])}`
   if (days.length > 1) return `${first} · ${blockedOn(events, days[1])} blocked ${word(days[1])}`
-  const free = freeSlots(busyOnDay(events, days[0]), days[0], now, 15, 48).reduce((s, g) => s + g.end - g.start, 0)
-  return `${first} · ${minutesLabel(free >= 60 ? Math.round(free / 30) * 30 : free)} free`
+  return `${first} · ${minutesLabel(freeLeft(events, days[0], now))} free`
 }
 
 /** A card's due word (4a): "Due today" · "Due tomorrow" · "Due Mon" (this coming week) · "Due Jul 18";

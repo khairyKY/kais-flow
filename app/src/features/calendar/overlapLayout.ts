@@ -9,6 +9,8 @@
 //
 // Pure: no DOM, no FullCalendar — so it is unit-tested directly.
 
+import { isMultiDaySpan } from './daySpans'
+
 export interface OverlapInput {
   id: string
   /** epoch ms */
@@ -98,4 +100,26 @@ export function layoutOverlaps(blocks: OverlapInput[], keepVisible?: string | nu
   }
   flush()
   return out
+}
+
+/** The ⚠ "Overlaps another block" badge: standalone Events that share time, each with the titles it
+ * clashes with (time blocks and task blocks are left out). Instants, not ISO text — the stored
+ * "…+00:00" and the client's "….000Z" for one moment compared unequal, so back-to-back events read
+ * as overlapping (p7e A15). A span of a day or more lives in the all-day band (Calendar 3e) and
+ * overlaps nothing on the grid. */
+export function conflictsOf(events: readonly { id: string; title: string; type?: string | null; starts_at: string; ends_at: string; all_day: boolean }[], zone: string): Map<string, string[]> {
+  const timed = events
+    .filter((e) => e.type === 'event' && !e.all_day && !isMultiDaySpan(e, zone))
+    .map((e) => ({ e, start: Date.parse(e.starts_at), end: Date.parse(e.ends_at) }))
+  const map = new Map<string, string[]>()
+  for (let i = 0; i < timed.length; i++) {
+    for (let j = i + 1; j < timed.length; j++) {
+      const a = timed[i], b = timed[j]
+      if (a.start < b.end && b.start < a.end) {
+        map.set(a.e.id, [...(map.get(a.e.id) ?? []), b.e.title])
+        map.set(b.e.id, [...(map.get(b.e.id) ?? []), a.e.title])
+      }
+    }
+  }
+  return map
 }

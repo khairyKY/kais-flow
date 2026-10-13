@@ -34,8 +34,9 @@ import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { cairoTimeKey, slotFields, zoneHour } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
-import { isMultiDaySpan } from './daySpans'
-import { cardDragData, freeGaps } from './planningMode'
+import { blockedOn, cardDragData, freeGaps, freeLeft, minutesLabel } from './planningMode'
+import { conflictsOf } from './overlapLayout'
+import { parseWeekend } from '../../lib/weekend'
 import { addDays } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
 import { BLOCK_MENU_WIDTH, besideBlock } from './blockMenuSpec'
@@ -100,34 +101,6 @@ function rangeLabel(start: Date, end: Date, viewKind: ViewKind): string {
   return `${fmt(first, { month: 'short', day: 'numeric' })} — ${endStr}`
 }
 
-/** Rough "how full is today" read for the rail footer — a 12h daytime window (9–21) minus
- * busy-block minutes. Not a real free/busy engine, just the botanical footer's one line. */
-function todaysLoad(events: CalendarEvent[]): { blocked: number; freeHours: number } {
-  const key = cairoDateKey(new Date())
-  const todays = events.filter((e) => !e.all_day && cairoDateKey(new Date(e.starts_at)) === key)
-  const busyMin = todays.filter((e) => e.busy).reduce((sum, e) => sum + (new Date(e.ends_at).getTime() - new Date(e.starts_at).getTime()) / 60000, 0)
-  return { blocked: todays.length, freeHours: Math.max(0, Math.round(12 - busyMin / 60)) }
-}
-
-/** Client-side conflict detection: only standalone Events get flagged. Time blocks and task-linked blocks are excluded. */
-function computeConflicts(events: CalendarEvent[]): Map<string, string[]> {
-  // A span of a day or more lives in the all-day band (Calendar 3e) — it overlaps nothing on the grid.
-  const eventType = events.filter((e) => e.type === 'event' && !e.all_day && !isMultiDaySpan(e, appZone()))
-  const map = new Map<string, string[]>()
-  for (let i = 0; i < eventType.length; i++) {
-    for (let j = i + 1; j < eventType.length; j++) {
-      const a = eventType[i], b = eventType[j]
-      if (a.starts_at < b.ends_at && a.ends_at > b.starts_at) {
-        if (!map.has(a.id)) map.set(a.id, [])
-        if (!map.has(b.id)) map.set(b.id, [])
-        map.get(a.id)!.push(b.title)
-        map.get(b.id)!.push(a.title)
-      }
-    }
-  }
-  return map
-}
-
 interface QuickCreateState {
   kind: QuickCreateKind
   slot: { date: string; start: string; end: string; allDay: boolean } | null
@@ -152,10 +125,6 @@ function anchorOf(id: string): { x: number; y: number } {
 const DAY_MS = 86_400_000
 
 const RAIL_TILTS = [0, -0.4, 0, 0.4]
-// J-15 (view-options interplay): one array for the whole module. A fresh `[0, 6]` every render
-// read to FullCalendar as a changed option → new date profile → datesSet → setRangeInfo →
-// re-render → another fresh array… "Show weekends" off crashed the page (max update depth).
-const WEEKEND_DAYS = [0, 6]
 
 // ── The planning rail's sections and cards (Kai 2026-10-07). ──
 
@@ -405,8 +374,14 @@ function DesktopCalendar() {
   // Kai 2026-10-13 (phone parity audit): the daisy's stage reads the user's clock, not the device's.
   const daisy = daisyAsset(zoneHour())
   const motionOn = useMotionEnabled()
-  const conflicts = useMemo(() => computeConflicts(gridEvents), [gridEvents])
-  const load = useMemo(() => todaysLoad(events), [events, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  const conflicts = useMemo(() => conflictsOf(gridEvents, appZone()), [gridEvents])
+  // p7e A15: "Show weekends" off hides the user's own weekend (lib/weekend), not Sat + Sun. J-15: the
+  // grid gets the SAME array while it's unchanged — a fresh one each render read to FullCalendar as a
+  // changed option → datesSet → setRangeInfo → re-render… (max update depth). No weekend, or all
+  // seven days (FullCalendar can't hide every day), hides nothing.
+  const weekendKey = parseWeekend(settings?.weekend_days).join()
+  const weekend = useMemo(() => (weekendKey ? weekendKey.split(',').map(Number) : []), [weekendKey])
+  const hiddenWeekend = viewOpts.showWeekends || weekend.length >= 7 ? [] : weekend
   // Kai 2026-10-03: Settings → Calendar → "Opens on" (synced; unset = Week here). Applied once, when
   // the settings row arrives — a view picked after that is the person's own. '3 days' is the N-day
   // view held at 3 for this visit, without touching the popover's remembered N.
@@ -677,7 +652,7 @@ function DesktopCalendar() {
   })
   // Kai 2026-10-07: an overdue pile opens the rail by itself (that's what the calendar is for then);
   // the person's own fold still wins, and the folded tab shows the pile's count in terra.
-  const railFolded = railPref ? railPref === 'folded' : buckets.overdue.length === 0 && railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, viewOpts.showWeekends))
+  const railFolded = railPref ? railPref === 'folded' : buckets.overdue.length === 0 && railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, hiddenWeekend.length))
   function setRailFolded(folded: boolean) {
     setRailPref(folded ? 'folded' : 'open')
     try {
@@ -713,6 +688,12 @@ function DesktopCalendar() {
   const stripStart = rangeInfo ? cairoDateKey(rangeInfo.start) : cairoDateKey(minuteNow)
   const stripKeys = stripDays === 1 ? [stripStart] : [stripStart, addDays(stripStart, 1)]
   const gaps = planning ? stripKeys.flatMap((d) => freeGaps(events, d, minuteNow)) : undefined
+  // The rail footer (p7e A15): busy blocks today, and the free time left inside 08:00–20:00 from now —
+  // Free events, past time and off-hours aren't free time (the planning strip's own footer rule).
+  const load = useMemo(() => {
+    const day = cairoDateKey(minuteNow)
+    return { blocked: blockedOn(events, day), free: minutesLabel(freeLeft(events, day, minuteNow)) }
+  }, [events, minuteNow])
   /** The strip's handle dragged back left (or clicked): the grid returns. */
   function startStripHandle(e: React.PointerEvent<HTMLButtonElement>) {
     if (e.button !== 0) return
@@ -919,7 +900,7 @@ function DesktopCalendar() {
           <div className="cal-rail-extra" style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 16, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
             <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>
-              {load.blocked} blocked<br />{load.freeHours}h free today
+              {load.blocked} blocked<br />{load.free} free today
             </div>
           </div>
         </aside>
@@ -1093,7 +1074,7 @@ function DesktopCalendar() {
               onDragToRail={handleDragToRail}
               hour24={viewOpts.hour24}
               firstDay={viewOpts.weekStartsMon ? 1 : 0}
-              hiddenDays={viewOpts.showWeekends || planning ? undefined : WEEKEND_DAYS}
+              hiddenDays={planning || !hiddenWeekend.length ? undefined : hiddenWeekend}
               density={viewOpts.density}
               justDroppedId={justDroppedId}
               dayCount={planning ? 2 : dayCount}
