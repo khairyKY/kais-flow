@@ -16,7 +16,7 @@ Pushed. **Not merged, no PR.** No migration.
 | `37614025` | `supabase/tests/mcp-week.sh` + rehearsal.yml step (fresh chain, after notify-prune; tee'd log, Summary line) |
 | `d6ad193d` | **fix(mcp)**: JSON parameters reach Postgres as JSON, not as a JSON string |
 | `82c4b2e6` | suite: a glued argument (`"7""$(…)"`) |
-| (last)     | suite: positive controls beside the isolation checks |
+| `142d592b` | suite: positive controls beside the isolation checks |
 
 ## CI evidence (Rehearsal, `gh workflow run rehearsal.yml --ref claude/mcp-suite`)
 
