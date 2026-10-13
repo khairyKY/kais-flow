@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import type { ResurfacedLogRow } from '../../lib/types'
-import { actionLabel, agoWords, asksToSettle, cardActions, doneAction, isSnoozed, latestPick, metaLine, notNowLabel, putOffCount } from './rules'
+import type { Book, JournalEntry, Note, Quote, ResurfacedLogRow } from '../../lib/types'
+import { actionLabel, agoWords, asksToSettle, cardActions, doneAction, excerpt, isSnoozed, latestPick, memoryMeta, memoryOf, metaLine, notNowLabel, putOffCount } from './rules'
 
 const NOW = new Date('2026-10-07T10:00:00Z')
 const daysAgo = (n: number) => new Date(NOW.getTime() - n * 86_400_000).toISOString()
@@ -87,5 +87,50 @@ describe('put-offs and snoozes come from the synced log', () => {
   it('Done marks "done" only once 0059 is on the server (the row carries snoozed_until)', () => {
     expect(doneAction(row('d', 'a'))).toBe('converted')
     expect(doneAction(row('d', 'a', { snoozed_until: null }))).toBe('done')
+  })
+})
+
+describe('memories (0078): journal pages, quotes, library notes', () => {
+  const page = { id: 'j1', body: 'Walked by the river.\n\nThe light was gold.', entry_date: '2026-07-14', deleted_at: null, created_at: '2026-07-14T18:00:00Z' } as JournalEntry
+  const book = { id: 'b1', title: 'The Overstory', author: 'Richard Powers' } as Book
+  const quote = { id: 'q1', text: 'The best arguments in the world won’t change a person’s mind.', author: null, source: null, book_id: 'b1', created_at: daysAgo(35) } as Quote
+  const note = { id: 'n1', title: null, body: 'Ideas for the garden', book_id: null, created_at: daysAgo(21) } as Note
+  const data = { journal: [page], quotes: [quote], notes: [note], books: [book] }
+  const pick = (entity_type: ResurfacedLogRow['entity_type'], entity_id: string) => ({ entity_type, entity_id })
+
+  it('a memory: Keep · Let it go · Not now; put off twice asks Keep or Let it go', () => {
+    expect(cardActions({ kind: 'memory', putOffs: 0 })).toEqual(['keep', 'letgo', 'notnow'])
+    expect(cardActions({ kind: 'memory', putOffs: 2 })).toEqual(['keep', 'letgo'])
+    expect(actionLabel('keep', { kind: 'memory', putOffs: 0 }, 5)).toBe('Keep')
+  })
+  it('a journal page: its words as one line, the day and how long ago', () => {
+    const m = memoryOf(pick('journal_entry', 'j1'), data)!
+    expect(m.text).toBe('Walked by the river. The light was gold.')
+    expect(memoryMeta(m, NOW)).toBe('Journal · 14 Jul 2026 · 2 months ago')
+  })
+  it('a quote shows its book and who said it', () => {
+    const m = memoryOf(pick('quote', 'q1'), data)!
+    expect(m.text).toBe(quote.text)
+    expect(memoryMeta(m, NOW)).toBe('Quote · The Overstory · Richard Powers · saved 5 weeks ago')
+    const loose = memoryOf(pick('quote', 'q2'), { ...data, quotes: [{ ...quote, id: 'q2', book_id: null, source: 'a podcast', author: 'Someone' }] })!
+    expect(memoryMeta(loose, NOW)).toBe('Quote · a podcast · Someone · saved 5 weeks ago')
+  })
+  it('a library note: its title, else its words', () => {
+    expect(memoryMeta(memoryOf(pick('note', 'n1'), data)!, NOW)).toBe('Library note · saved 3 weeks ago')
+    expect(memoryOf(pick('note', 'n1'), { ...data, notes: [{ ...note, title: 'Garden' }] })!.text).toBe('Garden')
+  })
+  it('gone, trashed or wordless → null (Today hides the section)', () => {
+    expect(memoryOf(pick('journal_entry', 'nope'), data)).toBeNull()
+    expect(memoryOf(pick('journal_entry', 'j1'), { ...data, journal: [{ ...page, deleted_at: NOW.toISOString() }] })).toBeNull()
+    expect(memoryOf(pick('journal_entry', 'j1'), { ...data, journal: [{ ...page, body: '  ' }] })).toBeNull()
+    expect(memoryOf(pick('note', 'n1'), { ...data, notes: [{ ...note, body: '' }] })).toBeNull()
+    expect(memoryOf(pick('task', 'j1'), data)).toBeNull()
+  })
+  it('excerpt cuts a long page at a word', () => {
+    const long = 'word '.repeat(80)
+    const e = excerpt(long, 50)
+    expect(e.length).toBeLessThanOrEqual(50)
+    expect(e.endsWith('word…')).toBe(true)
+    expect(excerpt('  short  ')).toBe('short')
   })
 })
