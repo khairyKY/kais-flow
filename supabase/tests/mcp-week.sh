@@ -342,6 +342,7 @@ call "add_to_inbox" "$KA" add_to_inbox '{text: "MCP inbox note", url: "https://e
 expect "logged" "inbox.captured/mcp" "$(logs)"
 expect "row" "pending https://example.com/x mcp" "$(sql -c "select concat_ws(' ', status, payload->>'url', payload->>'source') from inbox_items where user_id = '$A_ID'")"
 call "today" "$KA" today '{}'
+expect "today: the task due today 09:00 is in today's list" "1" "$(j '[.today[] | select(.id == env.T2)] | length')"
 call "list_tasks (all)" "$KA" list_tasks '{status: "all"}'
 expect "list_tasks: A's 7 tasks (6 added + 1 spawned)" "7" "$(j .count)"
 call "get_task" "$KA" get_task '{id: env.T2}'
@@ -349,6 +350,7 @@ expect "get_task: the edited one" "MCP edited" "$(j .task.title)"
 call "projects" "$KA" projects '{}'
 expect "projects: A's only" "MCP Project A" "$(j '[.projects[].name] | join(",")')"
 call "search" "$KA" search '{query: "MCP edited"}'
+expect "search: finds A's own task" "1" "$(j '[.results[] | select(.id == env.T2)] | length')"
 
 # ---------------------------------------------------------------------------------------------
 section "ownership: A's key never reaches B's rows (RLS as the key's owner)"
@@ -370,6 +372,7 @@ refused "A: delete_event B's task block" "$KA" delete_event '{id: env.BB}' "No e
 refused "A: edit_task into B's project" "$KA" edit_task '{id: env.T2, project_id: env.PB}' "No project with id"
 refused "A: add_task into B's project" "$KA" add_task '{title: "MCP into B", project_id: env.PB}' "No project with id"
 call "A: calendar 2028-01-17" "$KA" calendar '{from: "2028-01-17", to: "2028-01-17"}'
+expect "A's calendar shows A's own event that day" "MCP meeting" "$(j '[.events[] | select(.id == env.E1) | .title] | join(",")')"
 expect "A's calendar shows none of B's" "0" "$(j '[.events[] | select(.title | startswith("MCP B"))] | length')"
 call "A: list_tasks (all)" "$KA" list_tasks '{status: "all"}'
 expect "A's list shows none of B's" "0" "$(j '[.tasks[] | select(.id == env.TB)] | length')"
