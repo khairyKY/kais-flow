@@ -31,8 +31,8 @@ describe('the Top 3 rule on the server', () => {
     expect(isTop3Today(row({ due_at: '2026-10-08T06:00:00Z', scheduled_start: '2026-10-04T08:00:00Z' }), NOW, CAIRO)).toBe(false)
   })
 
-  it('never someday, Trash, done, cancelled or unstarred', () => {
-    for (const over of [{ someday: true }, { deleted_at: '2026-10-03T00:00:00Z' }, { status: 'done' }, { status: 'cancelled' }, { top3: false }]) {
+  it('never someday, paused, Trash, done, cancelled or unstarred', () => {
+    for (const over of [{ someday: true }, { paused: true }, { deleted_at: '2026-10-03T00:00:00Z' }, { status: 'done' }, { status: 'cancelled' }, { top3: false }]) {
       expect(isTop3Today(row(over), NOW, CAIRO)).toBe(false)
     }
   })
@@ -44,7 +44,7 @@ describe('the Top 3 rule on the server', () => {
   })
 
   it('says what the app says, row for row', () => {
-    const rows = [row(), row({ someday: true }), row({ due_at: '2026-10-08T06:00:00Z' }), row({ due_at: '2026-10-03T06:00:00Z' }), row({ status: 'cancelled' })]
+    const rows = [row(), row({ someday: true }), row({ paused: true }), row({ due_at: '2026-10-08T06:00:00Z' }), row({ due_at: '2026-10-03T06:00:00Z' }), row({ status: 'cancelled' })]
     // The app reads the zone from appZone() (Cairo by default) — the server is handed it.
     for (const r of rows) expect(isTop3Today(r, NOW, CAIRO)).toBe(appIsTop3Today(r as unknown as Task, NOW))
   })
@@ -67,6 +67,7 @@ describe('overdue on the server (the digest\'s "N overdue")', () => {
     expect(isOverdue(row({ top3: false, due_at: '2026-10-03T20:59:00Z' }), NOW, CAIRO)).toBe(true) // 23:59 yesterday
     expect(isOverdue(row({ top3: false, scheduled_start: '2026-10-02T06:00:00Z' }), NOW, CAIRO)).toBe(true) // a missed block, no due date
     expect(isOverdue(row({ due_at: '2026-10-01T06:00:00Z', someday: true }), NOW, CAIRO)).toBe(false)
+    expect(isOverdue(row({ due_at: '2026-10-01T06:00:00Z', paused: true }), NOW, CAIRO)).toBe(false) // a paused series rests
     expect(isOverdue(row({ due_at: '2026-10-01T06:00:00Z', deleted_at: '2026-10-02T00:00:00Z' }), NOW, CAIRO)).toBe(false)
     expect(isOverdue(row({ due_at: '2026-10-01T06:00:00Z', status: 'done' }), NOW, CAIRO)).toBe(false)
     expect(isOverdue(row(), NOW, CAIRO)).toBe(false) // undated

@@ -7,9 +7,10 @@ import { handleMcp, KEY_PATTERN, type Deps, type KeyScope, type Session } from '
 import {
   dayWindow,
   readWhen,
+  replanMoves,
+  settle,
   splitToday,
   tomorrowAt9,
-  tomorrowMoves,
   userZone,
   wallTime,
   type BlockRow,
@@ -40,15 +41,17 @@ function task(n: number, title: string, over: Partial<TaskRow> = {}): TaskRow {
   }
 }
 
+type CalRow = EventRow & { deleted_at?: string | null }
 interface Fake extends Store {
   tasks: TaskRow[]
   inbox: { id: string; raw_text: string; payload: Record<string, unknown> }[]
   logs: { eventType: string; entityType: string; entityId: string; payload: Record<string, unknown> }[]
   filters: TaskFilter[]
-  blocks: (BlockRow & { task_id: string; deleted_at: string | null })[]
+  /** calendar_events: the events below, then the tasks' blocks. */
+  cal: CalRow[]
 }
 
-function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], blocks: Fake['blocks'] = []): Fake {
+function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], blocks: (BlockRow & { task_id: string; deleted_at?: string | null })[] = []): Fake {
   const projects: ProjectRow[] = [{ id: P1, name: 'Shaheen Website', status: 'active', type: 'standard', domain_id: D1, target_date: '2026-12-01T00:00:00Z' }]
   const events: EventRow[] = [
     { id: tid(900), title: 'Standup', starts_at: '2026-10-04T07:00:00Z', ends_at: '2026-10-04T07:15:00Z', all_day: false, task_id: null },
@@ -67,12 +70,12 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], b
     inbox: [],
     logs: [],
     filters: [],
-    blocks: blocks.map((b) => ({ ...b })),
+    cal: [...events, ...blocks.map((b): CalRow => ({ title: 'block', type: 'task', ...b }))],
     timezone: async () => zone,
-    // index.ts's SQL: open, not in Trash, not someday — dated before `end`, scheduled today, or an undated pick.
+    // index.ts's SQL: open, not in Trash, not someday or paused — dated before `end`, scheduled today, or an undated pick.
     dayTasks: async (start, end) =>
       s.tasks.filter((t) => {
-        if (t.status !== 'todo' || t.someday) return false
+        if (t.status !== 'todo' || t.someday || t.paused) return false
         const dated = t.due_at ?? t.scheduled_start
         const sched = t.scheduled_start ? Date.parse(t.scheduled_start) : NaN
         return (!!dated && Date.parse(dated) < Date.parse(end)) || (sched >= Date.parse(start) && sched < Date.parse(end)) || (t.top3 && !dated)
@@ -81,28 +84,47 @@ function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], b
       s.filters.push(f)
       return s.tasks.filter((t) => f.status === 'all' || (f.status === 'open' ? t.status === 'todo' : t.status === 'done')).slice(0, f.limit)
     },
-    getTask: async (id) => s.tasks.find((t) => t.id === id) ?? null,
+    // A fresh row per read, as the database gives one.
+    getTask: async (id) => {
+      const t = s.tasks.find((x) => x.id === id)
+      return t ? { ...t } : null
+    },
     projects: async () => projects,
-    events: async (from, to) => events.filter((e) => e.starts_at < to && (e.ends_at > from || !!e.recurrence_rule)),
+    events: async (from, to) => s.cal.filter((e) => !e.deleted_at && Date.parse(e.starts_at) < Date.parse(to) && (Date.parse(e.ends_at) > Date.parse(from) || !!e.recurrence_rule)),
     search: async (_q, limit) => hits.slice(0, limit),
     top3Count: async (end) =>
       s.tasks.filter((t) => {
         const dated = t.due_at ?? t.scheduled_start
-        return t.top3 && t.status === 'todo' && !t.someday && (!dated || Date.parse(dated) < Date.parse(end))
+        return t.top3 && t.status === 'todo' && !t.someday && !t.paused && (!dated || Date.parse(dated) < Date.parse(end))
       }).length,
     openOccurrence: async (title, rule, due, except) =>
       s.tasks.some((t) => t.id !== except && t.status === 'todo' && t.title === title && t.recurrence_rule === rule && t.due_at === due),
     insertTask: async (t) => void s.tasks.push(t),
+    // index.ts's UPDATE: the editable columns only.
+    updateTask: async (t) => {
+      const { title, notes, due_at, scheduled_start, scheduled_end, someday, top3, duration_min, project_id, area_id, domain_id, milestone_id, recurrence_rule, reminder_at, reminder_sent } = t
+      Object.assign(s.tasks.find((x) => x.id === t.id)!, { title, notes, due_at, scheduled_start, scheduled_end, someday, top3, top3_rank: t.top3_rank ?? null, duration_min, project_id, area_id, domain_id, milestone_id, recurrence_rule, reminder_at, reminder_sent })
+    },
     markDone: async (id, at) => {
       const t = s.tasks.find((x) => x.id === id && x.status === 'todo')
       if (!t) return false
       Object.assign(t, { status: 'done', completed_at: at, top3: false })
       return true
     },
-    taskBlocks: async (taskId) => s.blocks.filter((b) => b.task_id === taskId && !b.deleted_at).map(({ id, starts_at, ends_at, all_day }) => ({ id, starts_at, ends_at, all_day })),
-    reschedule: async (id, r) => void Object.assign(s.tasks.find((t) => t.id === id)!, { ...r, someday: false, top3: false, top3_rank: null }),
-    clearBlocks: async (taskId, ids) => {
-      for (const b of s.blocks) if (b.task_id === taskId && ids.includes(b.id)) b.deleted_at = NOW.toISOString()
+    taskBlocks: async (taskId) => s.cal.filter((e) => e.task_id === taskId && !e.deleted_at).map((e) => ({ ...e })),
+    getEvent: async (id) => {
+      const e = s.cal.find((x) => x.id === id && !x.deleted_at)
+      return e ? { ...e } : null
+    },
+    insertEvent: async (e) => void s.cal.push({ ...e, deleted_at: null }),
+    updateEvent: async (e) => {
+      const { title, starts_at, ends_at, all_day } = e
+      Object.assign(s.cal.find((x) => x.id === e.id && !x.deleted_at)!, { title, starts_at, ends_at, all_day, type: e.type ?? 'event', recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [] })
+    },
+    deleteEvents: async (ids) => {
+      const gone = s.cal.filter((e) => !e.deleted_at && (ids.includes(e.id) || (!!e.series_id && ids.includes(e.series_id))))
+      for (const e of gone) e.deleted_at = NOW.toISOString()
+      return gone.map((e) => e.id)
     },
     insertInbox: async (row) => void s.inbox.push(row),
     log: async (eventType, entityType, entityId, payload) => void s.logs.push({ eventType, entityType, entityId, payload }),
@@ -253,12 +275,19 @@ describe('MCP: transport and auth', () => {
     expect(newMcpKey()).not.toBe(KEY)
   })
 
-  it('lists all ten tools for a read & write key, only the readers for a read-only key', async () => {
+  it('lists all fifteen tools for a read & write key, only the readers for a read-only key', async () => {
     const d = deps(fakeStore())
     const all = (await legacy(d, 'tools/list')).body.result!.tools as { name: string; inputSchema: { type: string }; annotations: { readOnlyHint: boolean } }[]
-    expect(all.map((t) => t.name)).toEqual(['today', 'search', 'list_tasks', 'get_task', 'add_task', 'complete_task', 'move_to_tomorrow', 'add_to_inbox', 'calendar', 'projects'])
+    expect(all.map((t) => t.name)).toEqual([
+      'today', 'search', 'list_tasks', 'get_task', 'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'move_to_tomorrow', 'add_to_inbox',
+      'calendar', 'add_event', 'edit_event', 'delete_event', 'projects',
+    ])
     expect(all.every((t) => t.inputSchema.type === 'object')).toBe(true)
-    expect(all.filter((t) => !t.annotations.readOnlyHint).map((t) => t.name)).toEqual(['add_task', 'complete_task', 'move_to_tomorrow', 'add_to_inbox'])
+    const writers = ['add_task', 'edit_task', 'reschedule_task', 'complete_task', 'move_to_tomorrow', 'add_to_inbox', 'add_event', 'edit_event', 'delete_event']
+    expect(all.filter((t) => !t.annotations.readOnlyHint).map((t) => t.name)).toEqual(writers)
+    // The instructions name every writer, so the model knows which calls change real data.
+    const init = await (await handleMcp(post(rpc('initialize', { protocolVersion: '2025-11-25', capabilities: {} })), d)).json()
+    for (const w of writers) expect(init.result.instructions).toContain(w)
     const read = (await legacy(d, 'tools/list', undefined, READ_KEY)).body.result!.tools as { name: string }[]
     expect(read.map((t) => t.name)).toEqual(['today', 'search', 'list_tasks', 'get_task', 'calendar', 'projects'])
   })
@@ -488,6 +517,30 @@ describe('MCP: the tools', () => {
     expect(r.data!.next).toMatchObject({ due: '2026-10-05 08:00' })
   })
 
+  it('complete_task: a paused series is ticked off without a next copy (A14)', async () => {
+    const store = fakeStore('Africa/Cairo', [task(14, 'Water the ferns', { due_at: '2026-10-03T06:00:00Z', recurrence_rule: 'FREQ=DAILY', paused: true })])
+    const r = await call(deps(store), 'complete_task', { id: tid(14) })
+    expect(r.data!.done).toMatchObject({ title: 'Water the ferns', status: 'done', paused: true })
+    expect(r.data!.next).toBeUndefined()
+    expect(store.tasks).toHaveLength(1)
+    expect(store.logs.map((l) => l.eventType)).toEqual(['task.completed'])
+  })
+
+  it('today: a paused series is in no list and holds no Top 3 place (A14)', async () => {
+    const store = fakeStore('Africa/Cairo', [
+      task(15, 'Paused pick', { top3: true, paused: true, recurrence_rule: 'FREQ=DAILY', due_at: '2026-10-04T06:00:00Z' }),
+      task(16, 'Paused, overdue', { paused: true, recurrence_rule: 'FREQ=WEEKLY', due_at: '2026-10-01T06:00:00Z' }),
+      task(17, 'Live', { due_at: '2026-10-04T06:00:00Z' }),
+    ])
+    const r = await call(deps(store), 'today')
+    expect([r.data!.top3, r.data!.today.map((t: { title: string }) => t.title), r.data!.overdue]).toEqual([[], ['Live'], []])
+    // splitToday alone (a store that hands it a paused row anyway) says the same.
+    expect(splitToday(store.tasks, NOW, 'Africa/Cairo')).toMatchObject({ top3: [], overdue: [] })
+    // …and three paused picks leave the Top 3 open.
+    const three = fakeStore('Africa/Cairo', [1, 2, 3].map((n) => task(n, `paused ${n}`, { top3: true, paused: true })))
+    expect((await call(deps(three), 'add_task', { title: 'one more', top3: true })).isError).toBe(false)
+  })
+
   it('complete_task: a repeat rule rrule chokes on writes nothing', async () => {
     const store = fakeStore('Africa/Cairo', [task(8, 'Weird repeat', { due_at: '2026-10-03T06:00:00Z', recurrence_rule: 'FREQ=SOMETIMES' })])
     const err = vi.spyOn(console, 'error').mockImplementation(() => {})
@@ -526,23 +579,41 @@ describe('MCP: the tools', () => {
       due_at: '2026-10-05T06:00:00.000Z', reminder_at: '2026-10-05T05:50:00.000Z', reminder_sent: false, top3: false, top3_rank: null,
       scheduled_start: '2026-10-05T07:00:00Z', scheduled_end: '2026-10-05T08:00:00Z', // the block already on tomorrow stays
     })
-    expect(store.blocks.map((b) => [b.id, !!b.deleted_at])).toEqual([[tid(500), true], [tid(501), false], [tid(502), false]])
+    expect(store.cal.filter((e) => e.task_id).map((b) => [b.id, !!b.deleted_at])).toEqual([[tid(500), true], [tid(501), false], [tid(502), false]])
     expect(r.data).toMatchObject({ calendar_blocks_removed: 1, moved: { due: '2026-10-05 09:00' } })
     expect(r.data!.moved.top3).toBeUndefined()
     expect(store.logs.map((l) => [l.eventType, l.entityId])).toEqual([['task.rescheduled', tid(11)], ['calendar_event.deleted', tid(500)]])
   })
 
-  it('tomorrowMoves: a reminder that stays in the past stays sent; only other-day blocks clear the schedule', () => {
-    const t = task(13, 'x', { due_at: '2026-10-01T06:00:00Z', reminder_at: '2026-09-20T06:00:00Z', reminder_sent: true, scheduled_start: '2026-10-01T06:00:00Z', scheduled_end: '2026-10-01T07:00:00Z' })
+  it('settle + replanMoves: a reminder that stays in the past stays sent; a date keeps only its own day\'s block', () => {
+    const t = task(13, 'x', { due_at: '2026-10-01T06:00:00Z', reminder_at: '2026-09-20T06:00:00Z', reminder_sent: true })
     const due = '2026-10-05T06:00:00.000Z'
     // Moved 4 days: 20 Sep → 24 Sep, still before now (4 Oct) → not re-armed.
-    expect(tomorrowMoves(t, [], due, NOW, 'Africa/Cairo')).toMatchObject({ reminder_at: '2026-09-24T06:00:00.000Z', reminder_sent: true, scheduled_start: t.scheduled_start, clear: [] })
-    // Its only block is on another day → off the calendar, schedule cleared.
-    const old = { id: tid(600), starts_at: '2026-10-01T06:00:00Z', ends_at: '2026-10-01T07:00:00Z', all_day: false }
-    expect(tomorrowMoves(t, [old], due, NOW, 'Africa/Cairo')).toMatchObject({ scheduled_start: null, scheduled_end: null, clear: [tid(600)] })
+    expect(settle(t, { ...t, due_at: due }, NOW, 'Africa/Cairo')).toMatchObject({ reminder_at: '2026-09-24T06:00:00.000Z', reminder_sent: true })
+    // A reminder this write sets itself is left alone (carryReminder).
+    expect(settle(t, { ...t, due_at: due, reminder_at: '2026-10-05T05:00:00Z' }, NOW, 'Africa/Cairo').reminder_at).toBe('2026-10-05T05:00:00Z')
+    // Its only block is on another day → off the calendar.
+    const old: BlockRow = { id: tid(600), starts_at: '2026-10-01T06:00:00Z', ends_at: '2026-10-01T07:00:00Z', all_day: false }
+    expect(replanMoves([old], due, false, null, 'Africa/Cairo')).toEqual({ place: null, keep: null, clear: [old] })
     // An all-day block is read at its noon: stored as tomorrow's UTC midnight, it's tomorrow's.
-    const allDay = { id: tid(601), starts_at: '2026-10-05T00:00:00Z', ends_at: '2026-10-06T00:00:00Z', all_day: true }
-    expect(tomorrowMoves(t, [old, allDay], due, NOW, 'Africa/Cairo').clear).toEqual([tid(600)])
+    const allDay: BlockRow = { id: tid(601), starts_at: '2026-10-05T00:00:00Z', ends_at: '2026-10-06T00:00:00Z', all_day: true }
+    expect(replanMoves([old, allDay], due, false, null, 'Africa/Cairo')).toEqual({ place: null, keep: allDay, clear: [old] })
+    // A time: the latest block goes there (an all-day one takes the estimate's length), the rest come off.
+    expect(replanMoves([old, allDay], '2026-10-05T12:00:00.000Z', true, 45, 'Africa/Cairo')).toEqual({
+      place: { block: allDay, starts_at: '2026-10-05T12:00:00.000Z', ends_at: '2026-10-05T12:45:00.000Z' }, keep: null, clear: [old],
+    })
+    // …a timed one keeps its own length; none at all → the estimate, else 30 minutes.
+    expect(replanMoves([old], '2026-10-05T12:00:00.000Z', true, 45, 'Africa/Cairo').place!.ends_at).toBe('2026-10-05T13:00:00.000Z')
+    expect(replanMoves([], '2026-10-05T12:00:00.000Z', true, null, 'Africa/Cairo').place).toEqual({ block: null, starts_at: '2026-10-05T12:00:00.000Z', ends_at: '2026-10-05T12:30:00.000Z' })
+  })
+
+  it('settle: a Top 3 pick keeps its place while it stays today\'s, and gives it up when moved to a later day', () => {
+    const pick = task(18, 'pick', { top3: true, top3_rank: 1, due_at: '2026-10-04T06:00:00Z' })
+    expect(settle(pick, { ...pick, due_at: '2026-10-04T15:00:00Z' }, NOW, 'Africa/Cairo')).toMatchObject({ top3: true, top3_rank: 1 })
+    expect(settle(pick, { ...pick, due_at: '2026-10-05T06:00:00Z' }, NOW, 'Africa/Cairo')).toMatchObject({ top3: false, top3_rank: null })
+    // 00:30 Monday in Cairo is still Sunday evening in Los Angeles: the user's day decides.
+    expect(settle(pick, { ...pick, due_at: '2026-10-04T21:30:00Z' }, NOW, 'America/Los_Angeles').top3).toBe(true)
+    expect(settle(pick, { ...pick, due_at: '2026-10-04T21:30:00Z' }, NOW, 'Africa/Cairo').top3).toBe(false)
   })
 
   it('add_to_inbox: a pending text capture with the link underneath, logged like ⌘K', async () => {
@@ -572,6 +643,316 @@ describe('MCP: the tools', () => {
     expect(choir[0]).toMatchObject({ id: tid(902), end: '2026-10-08 19:30', repeats: 'FREQ=WEEKLY' })
     // …and it's in today's list only on its own day.
     expect((await call(d, 'today')).data!.events.map((e: { title: string }) => e.title)).toEqual(['Standup'])
+  })
+})
+
+// A1 (P7e parity audit): an assistant plans the week — tasks to a day or a time, task edits, and the
+// calendar's own events and Time blocks, repeats included — with the app's rules on the user's clock.
+describe('MCP: planning the week', () => {
+  type Ev = { id: string; title: string; start: string; end?: string }
+
+  it("reschedule_task: a date-time puts it on the calendar at that time, on the user's clock", async () => {
+    const store = fakeStore('America/Los_Angeles', [task(20, 'Call the bank', { due_at: '2026-10-05T16:00:00Z', someday: true })])
+    const r = await call(deps(store), 'reschedule_task', { id: tid(20), when: '2026-10-07T15:30' })
+    expect(r.data!.rescheduled).toMatchObject({ due: '2026-10-07 15:30', scheduled: '2026-10-07 15:30–16:00' })
+    expect(r.data!.changed).toEqual(['due 2026-10-07 15:30', 'on the calendar 2026-10-07 15:30–16:00', 'out of Someday'])
+    const block = store.cal.find((e) => e.task_id === tid(20))!
+    expect(block).toMatchObject({ title: 'Call the bank', type: 'task', all_day: false, starts_at: '2026-10-07T22:30:00.000Z', ends_at: '2026-10-07T23:00:00.000Z' })
+    expect(store.tasks[0]).toMatchObject({ due_at: '2026-10-07T22:30:00.000Z', someday: false, scheduled_start: block.starts_at, scheduled_end: block.ends_at })
+    expect(store.logs.map((l) => [l.eventType, l.payload])).toEqual([
+      ['task.rescheduled', { due_at: '2026-10-07T22:30:00.000Z', source: 'mcp' }],
+      ['task.scheduled', { calendar_event_id: block.id, source: 'mcp' }],
+    ])
+  })
+
+  it('reschedule_task: its block moves there keeping its length, the others come off, the reminder keeps its lead, the pick lets go', async () => {
+    const blocks = [
+      { id: tid(510), task_id: tid(21), starts_at: '2026-10-04T12:00:00Z', ends_at: '2026-10-04T13:30:00Z', all_day: false }, // today 15:00–16:30
+      { id: tid(511), task_id: tid(21), starts_at: '2026-10-02T12:00:00Z', ends_at: '2026-10-02T12:30:00Z', all_day: false }, // a missed one
+    ]
+    const store = fakeStore('Africa/Cairo', [
+      task(21, 'Write the brief', { due_at: '2026-10-04T12:00:00Z', reminder_at: '2026-10-04T11:45:00Z', reminder_sent: true, top3: true, top3_rank: 2, duration_min: 45, scheduled_start: '2026-10-04T12:00:00Z', scheduled_end: '2026-10-04T13:30:00Z' }),
+    ], blocks)
+    const r = await call(deps(store), 'reschedule_task', { id: tid(21), when: '2026-10-06T10:00' })
+    // Tue 10:00 Cairo = 07:00Z: the latest block (today's, 90 minutes) goes there; the missed one comes off.
+    expect(store.cal.filter((e) => e.task_id).map((e) => [e.id, e.starts_at, e.ends_at, !!e.deleted_at])).toEqual([
+      [tid(510), '2026-10-06T07:00:00.000Z', '2026-10-06T08:30:00.000Z', false],
+      [tid(511), '2026-10-02T12:00:00Z', '2026-10-02T12:30:00Z', true],
+    ])
+    expect(store.tasks[0]).toMatchObject({
+      due_at: '2026-10-06T07:00:00.000Z', reminder_at: '2026-10-06T06:45:00.000Z', reminder_sent: false, top3: false, top3_rank: null,
+      scheduled_start: '2026-10-06T07:00:00.000Z', scheduled_end: '2026-10-06T08:30:00.000Z',
+    })
+    expect(r.data!.changed).toEqual(['due 2026-10-06 10:00', 'on the calendar 2026-10-06 10:00–11:30', '1 calendar block taken off the calendar (in Trash)', "left today's Top 3", 'reminder → 2026-10-06 09:45'])
+    expect(store.logs.map((l) => [l.eventType, l.entityId])).toEqual([['task.rescheduled', tid(21)], ['calendar_event.deleted', tid(511)], ['task.scheduled', tid(21)]])
+  })
+
+  it("reschedule_task: a date alone is 09:00 that day and keeps only that day's block — the user's day, not UTC's (Tokyo)", async () => {
+    // Wed 7 Oct 08:00 in Tokyo is Tue 6 Oct 23:00 UTC.
+    const blocks = [
+      { id: tid(520), task_id: tid(22), starts_at: '2026-10-06T23:00:00Z', ends_at: '2026-10-07T00:00:00Z', all_day: false },
+      { id: tid(521), task_id: tid(22), starts_at: '2026-10-05T23:00:00Z', ends_at: '2026-10-06T00:00:00Z', all_day: false },
+    ]
+    const store = fakeStore('Asia/Tokyo', [task(22, 'Review', { due_at: '2026-10-05T23:00:00Z' })], blocks)
+    const r = await call(deps(store), 'reschedule_task', { id: tid(22), when: '2026-10-07' })
+    expect(store.tasks[0]).toMatchObject({ due_at: '2026-10-07T00:00:00.000Z', scheduled_start: '2026-10-06T23:00:00Z', scheduled_end: '2026-10-07T00:00:00Z' })
+    expect(store.cal.filter((e) => e.task_id).map((e) => !!e.deleted_at)).toEqual([false, true])
+    expect(r.data!.changed).toEqual(['due 2026-10-07 09:00', '1 calendar block taken off the calendar (in Trash)'])
+    // Across Cairo's autumn change (summer time ends on the night of 29–30 Oct): 09:00 is 09:00 on both sides.
+    const cairo = fakeStore('Africa/Cairo', [task(23, 'Rent')])
+    await call(deps(cairo), 'reschedule_task', { id: tid(23), when: '2026-10-29' })
+    expect(cairo.tasks[0].due_at).toBe('2026-10-29T06:00:00.000Z')
+    await call(deps(cairo), 'reschedule_task', { id: tid(23), when: '2026-10-30' })
+    expect(cairo.tasks[0].due_at).toBe('2026-10-30T07:00:00.000Z')
+  })
+
+  it('reschedule_task: checks "when" and the task before writing anything', async () => {
+    const store = fakeStore('Africa/Cairo', [task(24, 'Done one', { status: 'done' }), task(25, 'Open one')])
+    for (const [args, msg] of [
+      [{ id: tid(25) }, '"when" is required'],
+      [{ id: tid(25), when: 'next tuesday' }, 'YYYY-MM-DD'],
+      [{ id: tid(25), when: '2026-02-30' }, 'YYYY-MM-DD'],
+      [{ id: tid(24), when: '2026-10-07' }, 'already done'],
+      [{ id: tid(99), when: '2026-10-07' }, 'No task with id'],
+    ] as const) {
+      const r = await call(deps(store), 'reschedule_task', args)
+      expect([r.isError, r.text]).toEqual([true, expect.stringContaining(msg)])
+    }
+    expect([store.logs, store.cal.filter((e) => e.task_id)]).toEqual([[], []])
+  })
+
+  it('edit_task: title, notes, duration and project — each logged as the app logs it, and said', async () => {
+    const store = fakeStore('Africa/Cairo', [task(30, 'Draft', { notes: 'old', area_id: tid(701), domain_id: tid(702), milestone_id: tid(700) })])
+    const r = await call(deps(store), 'edit_task', { id: tid(30), title: ' Draft the brief ', notes: 'two pages', duration_min: 90, project_id: P1 })
+    expect(r.data!.changed).toEqual(['title → "Draft the brief"', 'notes', 'duration → 90 min', 'project → Shaheen Website'])
+    // tasks/move.ts: in the project, its domain with it, out of the area; the milestone stays behind.
+    expect(store.tasks[0]).toMatchObject({ title: 'Draft the brief', notes: 'two pages', duration_min: 90, project_id: P1, domain_id: D1, area_id: null, milestone_id: null })
+    expect(r.data!.edited).toMatchObject({ title: 'Draft the brief', notes: 'two pages', duration_min: 90, project: 'Shaheen Website', project_id: P1 })
+    expect(store.logs.map((l) => [l.eventType, l.payload])).toEqual([
+      ['task.updated', { field: 'title', source: 'mcp' }],
+      ['task.updated', { field: 'notes', source: 'mcp' }],
+      ['task.updated', { field: 'duration', source: 'mcp' }],
+      ['task.moved', { project_id: P1, area_id: null, domain_id: D1, source: 'mcp' }],
+    ])
+    // null clears; no project = out of all three.
+    const cleared = await call(deps(store), 'edit_task', { id: tid(30), notes: null, duration_min: null, project_id: null })
+    expect(cleared.data!.changed).toEqual(['notes cleared', 'duration cleared', 'out of its project'])
+    expect(store.tasks[0]).toMatchObject({ notes: null, duration_min: null, project_id: null, domain_id: null })
+    // The same values again change nothing and write nothing.
+    const n = store.logs.length
+    expect((await call(deps(store), 'edit_task', { id: tid(30), title: 'Draft the brief' })).data!.changed).toEqual([])
+    expect(store.logs).toHaveLength(n)
+  })
+
+  it('edit_task: a repeat on an undated task dates it today 09:00; null stops it; a bad argument writes nothing', async () => {
+    const store = fakeStore('America/Los_Angeles', [task(31, 'Stretch', { someday: true })])
+    const r = await call(deps(store), 'edit_task', { id: tid(31), repeat: 'rrule:freq=weekly;byday=mo,we,fr' })
+    expect(store.tasks[0]).toMatchObject({ recurrence_rule: 'FREQ=WEEKLY;BYDAY=MO,WE,FR', due_at: '2026-10-04T16:00:00.000Z', someday: false })
+    expect(r.data!.changed).toEqual(['repeats FREQ=WEEKLY;BYDAY=MO,WE,FR', 'due 2026-10-04 09:00 (a repeat starts today)'])
+    expect(store.logs.map((l) => [l.eventType, l.payload])).toEqual([
+      ['task.recurrence_set', { rule: 'FREQ=WEEKLY;BYDAY=MO,WE,FR', source: 'mcp' }],
+      ['task.rescheduled', { due_at: '2026-10-04T16:00:00.000Z', source: 'mcp' }],
+    ])
+    expect((await call(deps(store), 'edit_task', { id: tid(31), repeat: null })).data!.changed).toEqual(['no longer repeats'])
+    expect(store.tasks[0].recurrence_rule).toBeNull()
+    const n = store.logs.length
+    for (const [args, msg] of [
+      [{ id: tid(31), repeat: 'FREQ=HOURLY' }, 'RRULE'],
+      [{ id: tid(31), repeat: 'FREQ=DAILY;BYDAY=XX' }, 'RRULE'],
+      [{ id: tid(31), repeat: 'FREQ=DAILY;COUNT=3;UNTIL=20261231T235959Z' }, 'RRULE'],
+      [{ id: tid(31), repeat: 'BYDAY=MO' }, 'RRULE'],
+      [{ id: tid(31), repeat: 'FREQ=DAILY;FREQ=WEEKLY' }, 'RRULE'],
+      [{ id: tid(31) }, 'Nothing to change'],
+      [{ id: tid(31), title: '  ' }, `"title" can't be empty`],
+      [{ id: tid(31), duration_min: 0 }, 'from 1 to 1440'],
+      [{ id: tid(31), title: 'Renamed', project_id: tid(404) }, 'No project with id'],
+      [{ id: tid(31), due: '2026-10-07' }, 'Unknown argument "due"'],
+    ] as const) {
+      const bad = await call(deps(store), 'edit_task', args)
+      expect([bad.isError, bad.text]).toEqual([true, expect.stringContaining(msg)])
+    }
+    expect(store.logs).toHaveLength(n)
+    expect(store.tasks[0].title).toBe('Stretch')
+  })
+
+  it("add_task: a time blocks the calendar as a typed time does in the app; a date alone doesn't", async () => {
+    const store = fakeStore('America/Los_Angeles')
+    const r = await call(deps(store), 'add_task', { title: 'Deep work', due: '2026-10-07T15:30', duration_min: 45 })
+    const [t] = store.tasks
+    const block = store.cal.find((e) => e.task_id === t.id)!
+    expect(block).toMatchObject({ title: 'Deep work', type: 'task', all_day: false, starts_at: '2026-10-07T22:30:00.000Z', ends_at: '2026-10-07T23:15:00.000Z' })
+    expect(t).toMatchObject({ due_at: '2026-10-07T22:30:00.000Z', duration_min: 45, scheduled_start: block.starts_at, scheduled_end: block.ends_at })
+    expect(r.data).toMatchObject({ added: { due: '2026-10-07 15:30', scheduled: '2026-10-07 15:30–16:15', duration_min: 45 }, calendar_block: '2026-10-07 15:30–16:15' })
+    expect(store.logs.map((l) => [l.eventType, l.payload])).toEqual([
+      ['task.created', { title: 'Deep work', source: 'mcp' }],
+      ['task.scheduled', { calendar_event_id: block.id, source: 'mcp' }],
+    ])
+    // No estimate → 30 minutes; a bare date → no block.
+    await call(deps(store), 'add_task', { title: 'Quick call', due: '2026-10-08T09:00' })
+    expect(store.cal.filter((e) => e.title === 'Quick call').map((e) => [e.starts_at, e.ends_at])).toEqual([['2026-10-08T16:00:00.000Z', '2026-10-08T16:30:00.000Z']])
+    const dated = await call(deps(store), 'add_task', { title: 'Taxes', due: '2026-10-09' })
+    expect(dated.data!.calendar_block).toBeUndefined()
+    expect(store.cal.filter((e) => e.title === 'Taxes')).toEqual([])
+  })
+
+  it('add_task: a timed pick for a later day is blocked at its own time today; a repeat starts today when undated', async () => {
+    const store = fakeStore('Africa/Cairo')
+    expect((await call(deps(store), 'add_task', { title: 'Gym', due: '2026-10-08T18:00', top3: true })).data!.calendar_block).toBe('2026-10-04 18:00–18:30')
+    const rep = await call(deps(store), 'add_task', { title: 'Journal', repeat: 'FREQ=DAILY' })
+    expect(rep.data!.added).toMatchObject({ due: '2026-10-04 09:00', repeats: 'FREQ=DAILY' })
+    expect(store.logs.filter((l) => l.entityId === rep.data!.added.id).map((l) => l.eventType)).toEqual(['task.created', 'task.recurrence_set'])
+    expect((await call(deps(store), 'add_task', { title: 'x', repeat: 'every day' })).text).toContain('RRULE')
+  })
+
+  it('add_event: an event or Time block on the user’s clock, 30 minutes unless told, logged like the app', async () => {
+    const store = fakeStore('America/Los_Angeles')
+    const r = await call(deps(store), 'add_event', { title: 'Focus', start: '2026-10-07T09:00', end: '2026-10-07T11:00', kind: 'time_block' })
+    expect(r.data!.added).toMatchObject({ title: 'Focus', start: '2026-10-07 09:00', end: '2026-10-07 11:00', kind: 'time_block' })
+    const e = store.cal.find((x) => x.title === 'Focus')!
+    expect(e).toMatchObject({ starts_at: '2026-10-07T16:00:00.000Z', ends_at: '2026-10-07T18:00:00.000Z', all_day: false, task_id: null, type: 'time_block', recurrence_rule: null })
+    expect(store.logs).toEqual([{ eventType: 'calendar_event.created', entityType: 'calendar_event', entityId: e.id, payload: { title: 'Focus', type: 'time_block', source: 'mcp' } }])
+    expect((await call(deps(store), 'add_event', { title: 'Dentist', start: '2026-10-08T14:00' })).data!.added).toMatchObject({ start: '2026-10-08 14:00', end: '2026-10-08 14:30' })
+    expect((await call(deps(store), 'add_event', { title: 'Lunch', start: '2026-10-08T12:00', duration_min: 75 })).data!.added.end).toBe('2026-10-08 13:15')
+  })
+
+  it('add_event: a date makes it all-day — its days, the last one included, the same on any clock', async () => {
+    const store = fakeStore('Asia/Tokyo')
+    const r = await call(deps(store), 'add_event', { title: 'Trip', start: '2026-10-10', end: '2026-10-12' })
+    const trip = { id: r.data!.added.id, title: 'Trip', start: '2026-10-10', end: '2026-10-12', all_day: true }
+    expect(r.data!.added).toEqual(trip)
+    expect(store.cal.find((x) => x.title === 'Trip')).toMatchObject({ starts_at: '2026-10-10T00:00:00.000Z', ends_at: '2026-10-13T00:00:00.000Z', all_day: true })
+    for (const zone of ['Asia/Tokyo', 'America/Los_Angeles', 'Africa/Cairo']) {
+      const cal = await call(deps({ ...store, timezone: async () => zone }), 'calendar', { from: '2026-10-11', to: '2026-10-11' })
+      expect(cal.data!.events.filter((e: Ev) => e.title === 'Trip')).toEqual([trip])
+    }
+  })
+
+  it('add_event: a repeat must fall on its start; bad times and rules write nothing', async () => {
+    const store = fakeStore('Africa/Cairo')
+    // Mon 5 Oct 07:00 Cairo, Mon/Wed/Fri — and the calendar expands it.
+    const ok = await call(deps(store), 'add_event', { title: 'Gym', start: '2026-10-05T07:00', duration_min: 60, repeat: 'FREQ=WEEKLY;BYDAY=MO,WE,FR' })
+    expect(ok.data!.added).toMatchObject({ start: '2026-10-05 07:00', end: '2026-10-05 08:00', repeats: 'FREQ=WEEKLY;BYDAY=MO,WE,FR' })
+    const week = await call(deps(store), 'calendar', { from: '2026-10-05', to: '2026-10-11' })
+    expect(week.data!.events.filter((e: Ev) => e.title === 'Gym').map((e: Ev) => e.start)).toEqual(['2026-10-05 07:00', '2026-10-07 07:00', '2026-10-09 07:00'])
+    const before = store.cal.length
+    for (const [args, msg] of [
+      [{ title: 'Gym', start: '2026-10-04T07:00', repeat: 'FREQ=WEEKLY;BYDAY=MO,WE,FR' }, 'its first one would be 2026-10-05 07:00'], // a Sunday
+      [{ title: 'x', start: '2026-10-05T07:00', repeat: 'FREQ=DAILY;UNTIL=20261001T000000Z' }, 'never happens'],
+      [{ title: 'x', start: '2026-10-05T07:00', repeat: 'FREQ=MINUTELY' }, 'RRULE'],
+      [{ title: 'x' }, '"start" is required'],
+      [{ title: 'x', start: '2026-10-05T07:00', end: '2026-10-05T06:00' }, 'after "start"'],
+      [{ title: 'x', start: '2026-10-05T07:00', end: '2026-10-05T08:00', duration_min: 60 }, 'not both'],
+      [{ title: 'x', start: '2026-10-05', duration_min: 60 }, 'all-day'],
+      [{ title: 'x', start: '2026-10-05', end: '2026-10-05T10:00' }, 'last day'],
+      [{ title: 'x', start: '2026-10-05T07:00', end: '2026-10-06' }, 'ends at a time'],
+      [{ title: 'x', start: '2026-10-05', end: '2026-12-05' }, 'at most 31 days'],
+      [{ title: 'x', start: '2026-10-05T07:00', kind: 'task' }, 'one of: event, time_block'],
+      [{ title: '', start: '2026-10-05T07:00' }, `"title" can't be empty`],
+    ] as const) {
+      const r = await call(deps(store), 'add_event', args)
+      expect([r.isError, r.text]).toEqual([true, expect.stringContaining(msg)])
+    }
+    expect(store.cal).toHaveLength(before)
+  })
+
+  it('edit_event: a one-off moves keeping its length; it says what changed and is logged', async () => {
+    const store = fakeStore('Africa/Cairo')
+    const r = await call(deps(store), 'edit_event', { id: tid(900), title: 'Team standup', start: '2026-10-05T09:30' })
+    expect(r.data!.edited).toMatchObject({ id: tid(900), title: 'Team standup', start: '2026-10-05 09:30', end: '2026-10-05 09:45' })
+    expect(r.data!.changed).toEqual(['title → "Team standup"', 'time → 2026-10-05 09:30–09:45'])
+    expect(store.logs).toEqual([{ eventType: 'calendar_event.updated', entityType: 'calendar_event', entityId: tid(900), payload: { title: 'Team standup', changed: r.data!.changed, source: 'mcp' } }])
+    // A Time block, then a weekly series from its own day (a Monday).
+    expect((await call(deps(store), 'edit_event', { id: tid(900), kind: 'time_block', repeat: 'FREQ=WEEKLY' })).data!.changed).toEqual(['kind → time_block', 'repeats FREQ=WEEKLY'])
+    // The same values change nothing and write nothing.
+    const n = store.logs.length
+    expect((await call(deps(store), 'edit_event', { id: tid(900), title: 'Team standup' })).data!.changed).toEqual([])
+    expect(store.logs).toHaveLength(n)
+  })
+
+  it('edit_event: a whole series takes a new time of day on all its days, its skipped week still skipped', async () => {
+    const store = fakeStore('Africa/Cairo')
+    // Choir: Thursdays 18:00–19:30 from 1 Oct, the 15th skipped. 19:00 (any date's) → every Thursday at 19:00, still 90 minutes.
+    const r = await call(deps(store), 'edit_event', { id: tid(902), start: '2026-10-22T19:00' })
+    expect(r.data!.changed).toEqual(['time → 19:00–20:30, every occurrence'])
+    expect(store.cal.find((e) => e.id === tid(902))).toMatchObject({ starts_at: '2026-10-01T16:00:00.000Z', ends_at: '2026-10-01T17:30:00.000Z', recurrence_exdates: ['2026-10-15T16:00:00.000Z'] })
+    const month = await call(deps(store), 'calendar', { from: '2026-10-05', to: '2026-10-31' })
+    expect(month.data!.events.filter((e: Ev) => e.title === 'Choir').map((e: Ev) => [e.start, e.end])).toEqual([
+      ['2026-10-08 19:00', '2026-10-08 20:30'], ['2026-10-22 19:00', '2026-10-22 20:30'], ['2026-10-29 19:00', '2026-10-29 20:30'],
+    ])
+    expect((await call(deps(store), 'edit_event', { id: tid(902), duration_min: 60 })).data!.changed).toEqual(['time → 19:00–20:00, every occurrence'])
+    expect((await call(deps(store), 'edit_event', { id: tid(902), end: '2026-10-08T21:00' })).data!.changed).toEqual(['time → 19:00–21:00, every occurrence'])
+    for (const [args, msg] of [
+      [{ id: tid(902), start: '2026-10-22' }, 'keeps its days'],
+      [{ id: tid(902), repeat: 'FREQ=WEEKLY;BYDAY=TU' }, "doesn't fall on the start"],
+    ] as const) {
+      const bad = await call(deps(store), 'edit_event', args)
+      expect([bad.isError, bad.text]).toEqual([true, expect.stringContaining(msg)])
+    }
+    // Ending it from a day on keeps what came before.
+    expect((await call(deps(store), 'edit_event', { id: tid(902), repeat: 'FREQ=WEEKLY;UNTIL=20261023T000000Z' })).data!.changed).toEqual(['repeats FREQ=WEEKLY;UNTIL=20261023T000000Z'])
+    const after = await call(deps(store), 'calendar', { from: '2026-10-05', to: '2026-10-31' })
+    expect(after.data!.events.filter((e: Ev) => e.title === 'Choir').map((e: Ev) => e.start)).toEqual(['2026-10-08 19:00', '2026-10-22 19:00'])
+  })
+
+  it('edit_event: one occurrence on its own leaves the series as an event of its own', async () => {
+    const store = fakeStore('Africa/Cairo')
+    const r = await call(deps(store), 'edit_event', { id: tid(902), occurrence: '2026-10-08 18:00', start: '2026-10-09T20:00', title: 'Choir (moved)' })
+    const copy = store.cal.find((e) => e.series_id === tid(902))!
+    expect(copy).toMatchObject({ title: 'Choir (moved)', starts_at: '2026-10-09T17:00:00.000Z', ends_at: '2026-10-09T18:30:00.000Z', recurrence_rule: null, recurrence_exdates: [] })
+    expect(store.cal.find((e) => e.id === tid(902))!.recurrence_exdates).toEqual(['2026-10-15T15:00:00.000Z', '2026-10-08T15:00:00.000Z'])
+    expect(r.data!.edited).toMatchObject({ id: copy.id, title: 'Choir (moved)', start: '2026-10-09 20:00', end: '2026-10-09 21:30' })
+    expect(r.data!.changed).toEqual(['title → "Choir (moved)"', 'time → 2026-10-09 20:00–21:30', 'only the 2026-10-08 18:00–19:30 occurrence: it is an event of its own now'])
+    const days = await call(deps(store), 'calendar', { from: '2026-10-08', to: '2026-10-09' })
+    expect(days.data!.events.map((e: Ev) => [e.title, e.start])).toEqual([['Choir (moved)', '2026-10-09 20:00']])
+    expect(store.logs).toEqual([{ eventType: 'calendar_event.created', entityType: 'calendar_event', entityId: copy.id, payload: { title: 'Choir (moved)', type: 'event', series_id: tid(902), source: 'mcp' } }])
+    for (const [args, msg] of [
+      [{ id: tid(902), occurrence: '2026-10-15 18:00', title: 'x' }, 'no occurrence at 2026-10-15 18:00'], // skipped
+      [{ id: tid(902), occurrence: '2026-10-22 18:00', repeat: 'FREQ=DAILY' }, 'whole series'],
+      [{ id: tid(900), occurrence: '2026-10-04 10:00', title: 'x' }, "doesn't repeat"],
+    ] as const) {
+      const bad = await call(deps(store), 'edit_event', args)
+      expect([bad.isError, bad.text]).toEqual([true, expect.stringContaining(msg)])
+    }
+  })
+
+  it("edit_event and delete_event leave a task's block to its task", async () => {
+    const store = fakeStore('Africa/Cairo', [task(40, 'Write')], [{ id: tid(540), task_id: tid(40), starts_at: '2026-10-05T07:00:00Z', ends_at: '2026-10-05T08:00:00Z', all_day: false }])
+    for (const [name, args] of [['edit_event', { id: tid(540), title: 'x' }], ['delete_event', { id: tid(540) }]] as const) {
+      const r = await call(deps(store), name, args)
+      expect([r.isError, r.text]).toEqual([true, expect.stringContaining('reschedule_task')])
+    }
+    expect((await call(deps(store), 'delete_event', { id: tid(404) })).text).toContain('No event with id')
+    expect([store.logs, store.cal.find((e) => e.id === tid(540))!.deleted_at]).toEqual([[], undefined])
+  })
+
+  it('delete_event: a one-off to Trash; one occurrence skipped; a whole series with what was moved out of it', async () => {
+    const store = fakeStore('Africa/Cairo')
+    const one = await call(deps(store), 'delete_event', { id: tid(900) })
+    expect(one.data).toMatchObject({ deleted: { id: tid(900), title: 'Standup' }, changed: ['the event moved to Trash'] })
+    expect(store.cal.find((e) => e.id === tid(900))!.deleted_at).toBeTruthy()
+    // Choir on the 22nd only — its day names it too.
+    const occ = await call(deps(store), 'delete_event', { id: tid(902), occurrence: '2026-10-22' })
+    expect(occ.data!.changed).toEqual(['skipped the 2026-10-22 18:00–19:30 occurrence; the rest of the series stays'])
+    expect(store.cal.find((e) => e.id === tid(902))!.recurrence_exdates).toEqual(['2026-10-15T15:00:00.000Z', '2026-10-22T15:00:00.000Z'])
+    // The 29th moved out on its own, then the whole series deleted: the moved one goes too.
+    await call(deps(store), 'edit_event', { id: tid(902), occurrence: '2026-10-29 18:00', start: '2026-10-30T18:00' })
+    const all = await call(deps(store), 'delete_event', { id: tid(902) })
+    expect(all.data!.changed).toEqual(['the whole series moved to Trash, with 1 occurrence moved out of it'])
+    expect(store.cal.filter((e) => e.id === tid(902) || e.series_id === tid(902)).every((e) => !!e.deleted_at)).toBe(true)
+    expect(store.logs.filter((l) => l.eventType === 'calendar_event.deleted').map((l) => l.payload)).toEqual([
+      { source: 'mcp' }, { occurrence: '2026-10-22T15:00:00.000Z', source: 'mcp' }, { source: 'mcp' }, { source: 'mcp' },
+    ])
+    expect((await call(deps(store), 'delete_event', { id: tid(902) })).text).toContain('No event with id')
+  })
+
+  it('today and calendar: Time blocks and task blocks say their kind; a task block carries its task', async () => {
+    const store = fakeStore('Africa/Cairo', [task(41, 'Write')], [{ id: tid(541), task_id: tid(41), starts_at: '2026-10-04T12:00:00Z', ends_at: '2026-10-04T13:00:00Z', all_day: false }])
+    const focus = await call(deps(store), 'add_event', { title: 'Focus', start: '2026-10-04T16:00', kind: 'time_block' })
+    expect((await call(deps(store), 'today')).data!.events).toEqual([
+      { id: tid(900), title: 'Standup', start: '2026-10-04 10:00', end: '2026-10-04 10:15' },
+      { id: tid(541), title: 'block', start: '2026-10-04 15:00', end: '2026-10-04 16:00', kind: 'task', task_id: tid(41) },
+      { id: focus.data!.added.id, title: 'Focus', start: '2026-10-04 16:00', end: '2026-10-04 16:30', kind: 'time_block' },
+    ])
   })
 })
 

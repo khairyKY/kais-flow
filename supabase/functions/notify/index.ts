@@ -105,12 +105,12 @@ async function buildPayload(
 
   if (kind === 'morning_digest') {
     // Today's Top 3 as Today draws it (_shared/today.ts): a pick moved to a later day isn't one, the
-    // goal (top3_rank 1) first. Overdue: open, not someday, dated before the user's today.
+    // goal (top3_rank 1) first. Overdue: open, not someday or paused, dated before the user's today.
     const todayStart = dayWindow(clock.now, zone).start.toISOString()
     const [picks, late] = await Promise.all([
       supabase
         .from('tasks')
-        .select('title, status, someday, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
+        .select('title, status, someday, paused, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
         .eq('user_id', userId)
         .eq('top3', true)
         .eq('status', 'todo')
@@ -122,6 +122,7 @@ async function buildPayload(
         .eq('user_id', userId)
         .eq('status', 'todo')
         .eq('someday', false)
+        .eq('paused', false)
         .is('deleted_at', null)
         .or(`due_at.lt.${todayStart},and(due_at.is.null,scheduled_start.lt.${todayStart})`),
     ])
@@ -137,7 +138,7 @@ async function buildPayload(
     const day = dayBounds(clock.now, zone)
     const [done, left] = await Promise.all([
       supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'done').is('deleted_at', null).gte('completed_at', day.start).lt('completed_at', day.end),
-      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').eq('someday', false).is('deleted_at', null).lt('due_at', day.end),
+      supabase.from('tasks').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'todo').eq('someday', false).eq('paused', false).is('deleted_at', null).lt('due_at', day.end),
     ])
     if (done.error || left.error) throw done.error ?? left.error
     if ((done.count ?? 0) + (left.count ?? 0) === 0) return null // an empty day has nothing to close
@@ -153,6 +154,7 @@ async function buildPayload(
       .eq('user_id', userId)
       .eq('status', 'todo')
       .is('deleted_at', null) // a task in Trash never reminds
+      .eq('paused', false) // nor a paused series (Perennials ‖) until it's resumed
       .eq('reminder_sent', false)
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)
@@ -309,6 +311,7 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
       .select('user_id')
       .eq('status', 'todo')
       .is('deleted_at', null) // a task in Trash never reminds
+      .eq('paused', false) // nor a paused series (Perennials ‖) until it's resumed
       .eq('reminder_sent', false)
       .lte('reminder_at', clock.nowIso)
       .gte('reminder_at', clock.reminderWindowStart)

@@ -23,14 +23,15 @@
 // Settings 2a's rules (integrations.data.rules, _shared/github.ts readRules): paused users are
 // skipped by the cron and "Sync now" answers `paused`; with the rules saved, picked repos are the
 // whole scope (searchQueries' onlyRepos); "Straight to Tasks" lands new issues as unfiled tasks
-// (external_ref.synced), which the recheck ticks off when their issue closes or disappears —
-// a task filed by hand from the Inbox is never touched. No rules saved = the behaviour from before.
+// (external_ref.synced), which the recheck ticks off when their issue closes or disappears. A task
+// filed by hand from a GitHub letter is ticked off when its issue closes (A20, _shared/github.ts
+// ticksOff). No rules saved = the behaviour from before.
 //
 // Errors are stable codes (SEC-3). The PAT is never logged or returned.
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
-import { ghGet, landing, parseRepos, planSync, readRules, searchQueries, staleFirst, type GhIssue, type PendingRow, type SyncedTaskRef } from '../_shared/github.ts'
+import { ghGet, landing, parseRepos, planSync, readRules, searchQueries, taskRechecks, ticksOff, type GhIssue, type GithubTaskRef, type PendingRow } from '../_shared/github.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -162,20 +163,18 @@ async function syncUser(db: SupabaseClient, { user_id: userId, data, updated_at 
       }
     }
 
-    // "Straight to Tasks": open tasks this sync made whose issue left the results — closed or gone
-    // ticks them off; still open (unassigned, repo unwatched) only stamps checked_at.
-    const fetchedIds = new Set(ids)
+    // Open tasks linked to an issue that left the results — the sync's own ("Straight to Tasks") and
+    // the ones filed by hand from a GitHub letter (A20): a close ticks them off (ticksOff); anything
+    // else (still open but unassigned or unwatched; gone, for a hand-filed one) only stamps checked_at.
     const openTasks = must(
       await db.from('tasks').select('id, title, external_ref')
         .eq('user_id', userId).eq('status', 'todo').is('deleted_at', null)
-        .eq('external_ref->>source', 'github').eq('external_ref->>synced', 'true'),
-    ) as { id: string; title: string; external_ref: SyncedTaskRef }[]
-    const missing = openTasks.filter((t) => !fetchedIds.has(t.external_ref.id))
-      .map((t) => ({ id: t.id, raw_text: t.title, payload: { ...t.external_ref }, external_ref: t.external_ref }))
-    for (const row of staleFirst(missing)) {
+        .eq('external_ref->>source', 'github'),
+    ) as { id: string; title: string; external_ref: GithubTaskRef }[]
+    for (const row of taskRechecks(openTasks, new Set(ids))) {
       const verdict = await recheck(token, row)
       if (verdict === 'stop') break
-      if (verdict === 'open') {
+      if (!ticksOff(row.external_ref, verdict)) {
         must(await db.from('tasks').update({ external_ref: { ...row.external_ref, checked_at: startedAt } })
           .eq('id', row.id).eq('user_id', userId).eq('status', 'todo'))
         continue

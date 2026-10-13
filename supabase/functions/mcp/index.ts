@@ -26,7 +26,7 @@ import { isAllowedOrigin } from '../_shared/cors.ts'
 import { embedText } from '../_shared/retrieval.ts'
 import { fromWall, toWall } from '../_shared/repeat.ts'
 import { handleMcp, type KeyScope, type Session, type SessionResult } from './server.ts'
-import type { BlockRow, EventRow, ProjectRow, SearchHit, Store, TaskFilter, TaskRow } from './tools.ts'
+import type { EventRow, ProjectRow, SearchHit, Store, TaskFilter, TaskRow } from './tools.ts'
 import type { RuleBetween } from '../_shared/series.ts'
 
 // Tool calls per key per UTC day. A runaway agent loop stops here; reads of the tool list don't count.
@@ -42,6 +42,9 @@ async function sha256Hex(s: string): Promise<string> {
 }
 
 const iso = (v: unknown): string | null => (v instanceof Date ? v.toISOString() : (v as string | null))
+const eventRow = (e: Record<string, unknown>) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as EventRow
+// A text[] column written from a JS array (the labels pattern): one jsonb parameter, no array literal.
+const textArray = (xs: readonly string[] | null | undefined) => JSON.stringify(xs ?? [])
 
 // A task row as JSON (timestamps come back as ISO strings), minus the search columns and the import
 // key, plus its project's name.
@@ -56,7 +59,7 @@ function store(tx: Tx): Store {
       return tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
         from tasks t left join projects p on p.id = t.project_id
-        where t.status = 'todo' and t.deleted_at is null and not t.someday
+        where t.status = 'todo' and t.deleted_at is null and not t.someday and not t.paused
           and (coalesce(t.due_at, t.scheduled_start) < ${end}::timestamptz
             or (t.scheduled_start >= ${start}::timestamptz and t.scheduled_start < ${end}::timestamptz)
             or (t.top3 and t.due_at is null and t.scheduled_start is null))
@@ -92,11 +95,11 @@ function store(tx: Tx): Store {
       // A repeating event (0061) is one row anchored at its first occurrence: it comes along whenever it
       // started before `to`, and tools.ts expands it.
       const rows = await tx`
-        select id, title, starts_at, ends_at, all_day, task_id, recurrence_rule, recurrence_exdates from calendar_events
+        select id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates from calendar_events
         where deleted_at is null and starts_at < ${to}::timestamptz and (ends_at > ${from}::timestamptz or recurrence_rule is not null)
         order by starts_at, id
         limit 300`
-      return rows.map((e) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as EventRow)
+      return rows.map(eventRow)
     },
     async search(query, limit) {
       // _shared/retrieval.ts's embedding (the runtime's gte-small) + the same search_hybrid the app's
@@ -109,7 +112,7 @@ function store(tx: Tx): Store {
       // The Top 3 rule (_shared/today.ts): a pick dated after today isn't one of today's.
       const [row] = await tx`
         select count(*)::int as n from tasks
-        where top3 and status = 'todo' and deleted_at is null and not someday
+        where top3 and status = 'todo' and deleted_at is null and not someday and not paused
           and (coalesce(due_at, scheduled_start) is null or coalesce(due_at, scheduled_start) < ${end}::timestamptz)`
       return row.n as number
     },
@@ -126,11 +129,22 @@ function store(tx: Tx): Store {
           reminder_at, reminder_sent, snoozed_until, completed_at, created_at, updated_at)
         values (${t.id}::uuid, ${t.title}::text, ${t.notes}::text, ${t.status}::text, ${t.due_at}::timestamptz,
           ${t.scheduled_start}::timestamptz, ${t.scheduled_end}::timestamptz, ${t.top3}::boolean, ${t.someday}::boolean,
-          ${t.paused}::boolean, array(select jsonb_array_elements_text(${JSON.stringify(t.labels ?? [])}::jsonb)),
+          ${t.paused}::boolean, array(select jsonb_array_elements_text(${textArray(t.labels)}::jsonb)),
           ${t.priority}::int, ${t.duration_min}::int, ${t.project_id}::uuid, ${t.domain_id}::uuid, ${t.area_id}::uuid,
           ${t.milestone_id}::uuid, ${t.parent_task_id}::uuid, ${t.recurrence_rule}::text, ${t.reminder_at}::timestamptz,
           ${t.reminder_sent}::boolean, ${t.snoozed_until}::timestamptz, ${t.completed_at}::timestamptz,
           ${t.created_at}::timestamptz, ${t.updated_at}::timestamptz)`
+    },
+    async updateTask(t) {
+      // Every editable field as the tool settled it (tools.ts settle: the reminder's lead, the Top 3).
+      await tx`
+        update tasks set title = ${t.title}::text, notes = ${t.notes}::text, due_at = ${t.due_at}::timestamptz,
+          scheduled_start = ${t.scheduled_start}::timestamptz, scheduled_end = ${t.scheduled_end}::timestamptz,
+          someday = ${t.someday}::boolean, top3 = ${t.top3}::boolean, top3_rank = ${t.top3_rank ?? null}::int,
+          duration_min = ${t.duration_min}::int, project_id = ${t.project_id}::uuid, area_id = ${t.area_id}::uuid,
+          domain_id = ${t.domain_id}::uuid, milestone_id = ${t.milestone_id}::uuid, recurrence_rule = ${t.recurrence_rule}::text,
+          reminder_at = ${t.reminder_at}::timestamptz, reminder_sent = ${t.reminder_sent}::boolean
+        where id = ${t.id}::uuid and deleted_at is null`
     },
     async markDone(id, at) {
       const rows = await tx`
@@ -140,23 +154,41 @@ function store(tx: Tx): Store {
       return rows.length > 0
     },
     async taskBlocks(taskId) {
-      const rows = await tx`select id, starts_at, ends_at, all_day from calendar_events where task_id = ${taskId}::uuid and deleted_at is null`
-      return rows.map((e) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as BlockRow)
+      const rows = await tx`
+        select id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, series_id from calendar_events
+        where task_id = ${taskId}::uuid and deleted_at is null`
+      return rows.map(eventRow)
     },
-    async reschedule(id, r) {
-      // Only move_to_tomorrow reschedules here, and tomorrow is never today: a Top 3 pick gives its
-      // place up, as it does in the app (app/src/features/tasks/top3Rule.ts).
-      await tx`
-        update tasks set due_at = ${r.due_at}::timestamptz, reminder_at = ${r.reminder_at}::timestamptz,
-          reminder_sent = ${r.reminder_sent}::boolean, scheduled_start = ${r.scheduled_start}::timestamptz,
-          scheduled_end = ${r.scheduled_end}::timestamptz, someday = false, top3 = false, top3_rank = null
-        where id = ${id}::uuid`
+    async getEvent(id) {
+      const [e] = await tx`
+        select id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, series_id from calendar_events
+        where id = ${id}::uuid and deleted_at is null`
+      return e ? eventRow(e) : null
     },
-    async clearBlocks(taskId, ids) {
+    async insertEvent(e) {
+      // source 'native', busy true, colour and project none: the column defaults, as calendar/api createEvent writes them.
       await tx`
+        insert into calendar_events (id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, series_id)
+        values (${e.id}::uuid, ${e.title}::text, ${e.starts_at}::timestamptz, ${e.ends_at}::timestamptz, ${e.all_day}::boolean,
+          ${e.task_id}::uuid, ${e.type ?? 'event'}::text, ${e.recurrence_rule ?? null}::text,
+          array(select jsonb_array_elements_text(${textArray(e.recurrence_exdates)}::jsonb)), ${e.series_id ?? null}::uuid)`
+    },
+    async updateEvent(e) {
+      await tx`
+        update calendar_events set title = ${e.title}::text, starts_at = ${e.starts_at}::timestamptz, ends_at = ${e.ends_at}::timestamptz,
+          all_day = ${e.all_day}::boolean, type = ${e.type ?? 'event'}::text, recurrence_rule = ${e.recurrence_rule ?? null}::text,
+          recurrence_exdates = array(select jsonb_array_elements_text(${textArray(e.recurrence_exdates)}::jsonb))
+        where id = ${e.id}::uuid and deleted_at is null`
+    },
+    async deleteEvents(ids) {
+      // Soft: Trash brings them back. A series takes the one-offs moved out of it (series_id) along.
+      const rows = await tx`
         update calendar_events set deleted_at = now()
-        where task_id = ${taskId}::uuid and deleted_at is null
-          and id in (select jsonb_array_elements_text(${JSON.stringify(ids)}::jsonb)::uuid)`
+        where deleted_at is null
+          and (id in (select jsonb_array_elements_text(${textArray(ids)}::jsonb)::uuid)
+            or series_id in (select jsonb_array_elements_text(${textArray(ids)}::jsonb)::uuid))
+        returning id`
+      return rows.map((r) => r.id as string)
     },
     async insertInbox(row) {
       await tx`

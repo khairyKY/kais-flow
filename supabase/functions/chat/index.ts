@@ -69,7 +69,7 @@ Deno.serve(async (req) => {
     const tz = userZone((settings as { timezone?: string | null } | null)?.timezone)
     const now = new Date()
     // Today's Top 3 as Today draws it (_shared/today.ts): a pick moved to a later day isn't one; goal first.
-    const { data: picks } = await supabase.from('tasks').select('id, title, status, someday, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
+    const { data: picks } = await supabase.from('tasks').select('id, title, status, someday, paused, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
       .eq('top3', true).eq('status', 'todo').eq('someday', false).is('deleted_at', null)
     const top3 = todaysTop3((picks ?? []) as (Top3Row & { id: string; title: string })[], now, tz)
     const top3Ids = new Set(top3.map((t) => t.id))
@@ -77,7 +77,7 @@ Deno.serve(async (req) => {
     const from = dayStart(now, tz).toISOString()
     const [{ data: openTasks }, { data: rows }, { count: inboxPending }] = await Promise.all([
       supabase.from('tasks').select('id, title, due_at, scheduled_start')
-        .eq('status', 'todo').is('deleted_at', null)
+        .eq('status', 'todo').eq('paused', false).is('deleted_at', null)
         .or(`due_at.lt.${until},scheduled_start.lt.${until}`).limit(60),
       // A repeating event is one row anchored at its first occurrence: it comes along whenever it
       // started before `until`, and is expanded below.
