@@ -13,7 +13,7 @@ import { deleteEventWithUndo, moveEventWithUndo, scheduleTask, useCalendarEvents
 import { cairoToIso } from '../calendar/eventTime'
 import { eventSpan } from '../calendar/phoneGridMath'
 import { useFocusStore } from '../focus/focusStore'
-import { githubUrl } from '../inbox/inboxDisplay'
+import { linkLabel, taskLink } from '../../lib/links'
 import { useStartFocus } from '../today/startFocus'
 import { completeTaskWithUndo, deleteTasksWithUndo, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, useTasks } from './api'
 import { TASK_PARAM, taskAnchor } from './openTask'
@@ -140,7 +140,7 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
   const line = saveLine(t, saved?.at ?? null, now, pendingOffline)
   const recurring = !!t.recurrence_rule && !!t.due_at
   const next = recurring && !done ? nextDates(t.recurrence_rule!, t.due_at!) : null
-  const issueUrl = githubUrl(t.external_ref?.url) // a filed GitHub issue (P6 step 4)
+  const link = taskLink(t) // a filed GitHub issue (P6 step 4) or a captured page (P7e A19)
   const dur = t.duration_min || 30
   const suggestion = block || done ? null : suggestTimes(events, t.due_at, now, dur)
   const meta = [place, t.duration_min ? durationLabel(t.duration_min) : null, t.due_at ? dueChip(t.due_at, now) : null].filter(Boolean).join(' · ')
@@ -217,10 +217,10 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
               {next}
             </div>
           )}
-          {issueUrl && (
-            <a className="ts-next" href={issueUrl} target="_blank" rel="noopener noreferrer">
+          {link && (
+            <a className="ts-next" href={link} target="_blank" rel="noopener noreferrer">
               <Icon name="link" size={16} />
-              View issue ↗
+              {linkLabel(link)} ↗
             </a>
           )}
           <PhotoSource task={t} className="ts-next ts-photo" />

@@ -319,3 +319,29 @@ describe('tokens and ignore (P7e A10)', () => {
     expect(p('wow !! nice // later', ['// later', '!!'])).toMatchObject({ title: 'wow !! nice // later', priority: null, notes: null })
   })
 })
+
+// P7e A19: a captured link stays the task's link (and out of the title and the token readers).
+describe('a link in the line (P7e A19)', () => {
+  const now = new Date('2026-10-12T07:00:00Z')
+  const p = (input: string) => parseCommand(input, domains, projects, { now, zone: 'cairo' })
+
+  it('leaves the title for the task link, its #fragment and digits read as nothing', () => {
+    expect(p('read https://example.com/2026/10/05/post#shaheen tomorrow')).toMatchObject({
+      title: 'read', url: 'https://example.com/2026/10/05/post#shaheen', projectId: null, dueAt: '2026-10-13T07:00:00.000Z',
+    })
+    expect(p('see https://example.com/a.').url).toBe('https://example.com/a')
+    expect(p('no link here').url).toBeNull()
+  })
+
+  it('a link alone is no structure (the Inbox reads it); with a date it lands as a task with its link', () => {
+    expect(hasStructure(p('https://example.com/article'))).toBe(false)
+    const typed = 'read https://example.com/a friday'
+    expect(quickAddTask(p(typed), typed)).toMatchObject({ title: 'read', externalRef: { source: 'link', url: 'https://example.com/a', id: expect.any(String) } })
+    expect(quickAddTask(p('https://example.com/a friday'), 'https://example.com/a friday').title).toBe('https://example.com/a')
+  })
+
+  it('is a chip Esc can hand back', () => {
+    expect(p('read https://example.com/a').tokens).toEqual(['https://example.com/a'])
+    expect(parseCommand('read https://example.com/a', domains, projects, { now, zone: 'cairo', ignore: ['https://example.com/a'] })).toMatchObject({ url: null, title: 'read https://example.com/a' })
+  })
+})

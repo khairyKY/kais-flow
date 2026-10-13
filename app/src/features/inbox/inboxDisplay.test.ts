@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { ageLabel, backLabel, capturedLabel, cardShape, confidenceWord, dayWord, defaultDraft, dismissedAgo, draftText, dueLabel, dueShort, githubHeading, githubUrl, inboxSummary, isToday, mentionedPerson, snoozedOf, suggestedPlace, suggestedTitle } from './inboxDisplay'
+import { ageLabel, backLabel, captureLink, capturedLabel, cardShape, confidenceWord, dayWord, defaultDraft, dismissedAgo, draftText, dueLabel, dueShort, githubHeading, githubUrl, inboxSummary, isToday, mentionedPerson, snoozedOf, suggestedPlace, suggestedTitle } from './inboxDisplay'
 import type { Domain, Project } from '../../lib/types'
+import { linkLabel, taskLink } from '../../lib/links'
 
 describe('isToday', () => {
   it('matches the current calendar day', () => {
@@ -211,5 +212,21 @@ describe('snoozedOf / backLabel', () => {
   it("says when it comes back, on the user's clock", () => {
     expect(backLabel('2026-10-13T06:00:00Z', now)).toBe('back Tomorrow · 09:00')
     expect(backLabel('2026-10-19T06:00:00Z', now)).toBe('back Mon 19 Oct · 09:00')
+  })
+})
+
+describe('captureLink (P7e A19)', () => {
+  it('the endpoint url, else the first link in the words; a GitHub issue keeps its own', () => {
+    expect(captureLink({ kind: 'text', raw_text: 'look https://example.com/a, later', payload: null })).toBe('https://example.com/a')
+    expect(captureLink({ kind: 'text', raw_text: 'x', payload: { url: 'https://example.org/b' } })).toBe('https://example.org/b')
+    expect(captureLink({ kind: 'github_issue', raw_text: 'https://github.com/a/b/issues/1', payload: null })).toBeNull()
+    expect(captureLink({ kind: 'text', raw_text: 'no link', payload: { url: 'javascript:void(0)' } })).toBeNull()
+  })
+  it('reads as its site, a GitHub issue as "View issue"; a task link is http(s) only', () => {
+    expect(linkLabel('https://www.example.com/a')).toBe('example.com')
+    expect(linkLabel('https://github.com/acme/app/issues/7')).toBe('View issue')
+    expect(taskLink({ external_ref: { source: 'link', id: '1', url: 'https://example.com' } })).toBe('https://example.com')
+    expect(taskLink({ external_ref: { source: 'link', id: '1', url: 'javascript:x' } })).toBeNull()
+    expect(taskLink({ external_ref: null })).toBeNull()
   })
 })

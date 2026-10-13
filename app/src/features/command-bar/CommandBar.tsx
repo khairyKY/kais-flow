@@ -16,6 +16,7 @@ import { formatDueChip } from './dueChip'
 import { CAPTURE_INPUT_ID, useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
+import { linkLabel } from '../../lib/links'
 import { playSound } from '../../lib/sounds'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Chip, KeyChip, Segmented } from '../../components/kit'
@@ -404,6 +405,7 @@ export function CommandBar() {
                       <Chip key={l}>*{l}</Chip>
                     ))}
                     {asTask && parsed.notes && <Chip>{'// Notes'}</Chip>}
+                    {asTask && parsed.url && <Chip icon={<Icon name="link" size={16} />}>{linkLabel(parsed.url)}</Chip>}
                     {unmatched && <Chip tone="inbox">→ Inbox</Chip>}
                   </div>
                 )}
@@ -538,6 +540,7 @@ export function CommandBar() {
                   </span>
                 ))}
                 {asTask && parsed.notes && <span style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>{'// Notes'}</span>}
+                {asTask && parsed.url && <span style={{ ...CHIP_BASE, color: 'var(--ink-muted)', border: '1px solid var(--line-control)' }}>↗ {linkLabel(parsed.url)}</span>}
                 {unmatched && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-gold)', background: 'color-mix(in oklch, var(--acc-gold-warm) 18%, var(--paper-parchment))' }}>
                     → Inbox (unfiled)

@@ -37,6 +37,7 @@ export const TASK_LIST_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['p'], label: 'Move to…' },
   { keys: ['x'], label: 'Select (multi)' },
   { keys: ['#'], label: 'Delete' },
+  { keys: ['o'], label: 'Open link' },
 ]
 
 /** Focus moves on every list (useListKeys), whatever its page binds. */

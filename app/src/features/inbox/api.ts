@@ -13,7 +13,8 @@ import { NO_PLACE, placeTask as placeIn, type MoveTarget } from '../tasks/move'
 import { upsertJournalEntry } from '../journal/api'
 import { createInteraction, deleteInteraction } from '../people/api'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
-import { dayWord, formatDue, githubUrl, suggestedTitle } from './inboxDisplay'
+import { captureLink, dayWord, formatDue, githubUrl, suggestedTitle } from './inboxDisplay'
+import { linkRef } from '../../lib/links'
 import { INBOX_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
 import type { CalendarEvent, InboxItem, Person, Task } from '../../lib/types'
@@ -150,7 +151,8 @@ export function fileToTask(
     // A typed `30m`, else the length the AI read ("for an hour") — the block's length too.
     durationMin: overrides?.duration_override ?? durationOf(parse?.duration_min),
     someday: opts.someday,
-    externalRef: issue?.node_id && issueUrl ? { source: 'github', id: issue.node_id, url: issueUrl } : null,
+    // A capture's link rides along too (P7e A19): the task's "↗ site" and `o`.
+    externalRef: issue?.node_id && issueUrl ? { source: 'github', id: issue.node_id, url: issueUrl } : linkRef(captureLink(item)),
   })
   blockIfTimed(task, timed)
   writeRow('inbox_items', { ...item, status: 'filed', filed_task_id: task.id })

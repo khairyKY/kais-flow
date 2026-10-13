@@ -43,6 +43,18 @@ describe('fileToTask', () => {
     expect(taskWrite()).not.toHaveProperty('external_ref')
   })
 
+  // P7e A19: a shared page or an endpoint capture keeps its link on the task it's filed as.
+  it('a captured link rides onto the task (share text, the endpoint url); a javascript: one never does', () => {
+    fileToTask(item({ raw_text: 'Calm interfaces essay\nhttps://example.com/calm.' }), { silent: true })
+    expect(taskWrite().external_ref).toMatchObject({ source: 'link', url: 'https://example.com/calm' })
+    writes.length = 0
+    fileToTask(item({ raw_text: 'read later', payload: { source: 'capture', url: 'https://example.org/x' } }), { silent: true })
+    expect(taskWrite().external_ref).toMatchObject({ source: 'link', url: 'https://example.org/x' })
+    writes.length = 0
+    fileToTask(item({ raw_text: 'read later', payload: { url: 'javascript:alert(1)' } }), { silent: true })
+    expect(taskWrite()).not.toHaveProperty('external_ref')
+  })
+
   // P7e A2: it used to land as a task due at 15:00 with nothing on the calendar.
   it('a timed card files with its calendar block, as long as the AI read (the one capture rule)', () => {
     const due = '2026-10-17T12:00:00.000Z'

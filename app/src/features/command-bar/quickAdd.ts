@@ -33,7 +33,8 @@ export function addTypedEvent(parsed: ParsedCommand, typed: string, now: Date = 
   const timed = parsed.dueTimed
   const startsAt = timed ? at : `${day}T00:00:00.000Z` // all-day rows sit on UTC midnight (QuickCreate's)
   const endsAt = timed ? new Date(Date.parse(at) + (parsed.durationMin || 30) * 60_000).toISOString() : `${addDays(day, 1)}T00:00:00.000Z`
-  let event = createEvent(parsed.title || typed, startsAt, endsAt, 'event', null, !timed)
+  // An event has no link field: a link stays in its title (a meeting's URL).
+  let event = createEvent([parsed.title, parsed.url].filter(Boolean).join(' ') || typed, startsAt, endsAt, 'event', null, !timed)
   if (parsed.recurrence || parsed.projectId) {
     event = {
       ...event,

@@ -1,5 +1,6 @@
 import * as chrono from 'chrono-node'
 import { appZone } from '../../lib/appZone'
+import { linkRef, urlIn } from '../../lib/links'
 import { cairoOffsetMinutes, cairoWallTimeToIso, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
 import { parseRecurrence } from '../import/adapters/shared'
 import { nextOccurrence } from '../tasks/recurrence'
@@ -23,6 +24,8 @@ export interface ParsedCommand {
   recurrence: string | null
   /** `// the rest` — the notes, as written (P7e A6). */
   notes: string | null
+  /** The first link in the line: out of the title, onto the task as its link (P7e A19). */
+  url: string | null
   /** The words each recognised token took — the bar's chips — in the order they sit in the line.
    * The bar's Esc hands the last one back as `ignore` (P7e A10). */
   tokens: string[]
@@ -83,7 +86,7 @@ function cairoInstant(start: chrono.ParsedComponents): string {
 }
 
 /**
- * Pure text -> structured-command parser (no AI). Extracts `// notes`, `*labels`, a `!`/`!!`/`!!!` priority flag,
+ * Pure text -> structured-command parser (no AI). Extracts `// notes`, the first link, `*labels`, a `!`/`!!`/`!!!` priority flag,
  * a `30m`/`1h`/`1h30m` duration, an "every …" repeat, the first date/time mention via chrono-node,
  * and the first `#tag` fuzzy-matched against project names, falling back to domain names. Whatever's
  * left after taking all of those out becomes the title.
@@ -114,6 +117,10 @@ export function parseCommand(
     notes = input.slice(at + 2).trim() || null
     take(at, input.length)
   }
+
+  // A link next (P7e A19): its `#fragment`, `*`, `!` and digits are no tokens — and it's the task's link.
+  const link = urlIn(work)
+  if (link) take(link.index, link.index + link.url.length)
 
   // Labels next (Kai 2026-10-03), so a `*today` label is never read as a date.
   const labels: string[] = []
@@ -191,15 +198,16 @@ export function parseCommand(
   const title = work.replace(new RegExp(`${MASK}+`, 'g'), (run, at: number) => input.slice(at, at + run.length)).replace(/\s{2,}/g, ' ').trim()
   const tokens = spans.sort((a, b) => a[0] - b[0]).map(([start, end]) => input.slice(start, end))
 
-  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence, notes, tokens }
+  return { title, dueAt, dueTimed, durationMin, priority, domainId, projectId, domainMatch, projectMatch, labels, recurrence, notes, url: link?.url ?? null, tokens }
 }
 
 /** A parse as a new task — tasks/api createTask's input: the command bar's quick add, and the Tasks
  * page's quick add (Kai 2026-10-12: its placeholder promised "tomorrow 3pm #forecasting" but only
- * `*labels` were read). `typed` stands in when the tokens used the whole line up ("tomorrow 3pm"). */
+ * `*labels` were read). `typed` stands in when the tokens used the whole line up ("tomorrow 3pm") — or
+ * the link, when that's all it was. */
 export function quickAddTask(parsed: ParsedCommand, typed: string) {
   return {
-    title: parsed.title || typed,
+    title: parsed.title || parsed.url || typed,
     domainId: parsed.domainId,
     projectId: parsed.projectId,
     dueAt: parsed.dueAt,
@@ -208,5 +216,6 @@ export function quickAddTask(parsed: ParsedCommand, typed: string) {
     labels: parsed.labels,
     recurrenceRule: parsed.recurrence,
     notes: parsed.notes,
+    ...(parsed.url ? { externalRef: linkRef(parsed.url) } : null),
   }
 }
