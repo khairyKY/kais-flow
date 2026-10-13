@@ -44,6 +44,10 @@ async function sha256Hex(s: string): Promise<string> {
 const iso = (v: unknown): string | null => (v instanceof Date ? v.toISOString() : (v as string | null))
 const eventRow = (e: Record<string, unknown>) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as EventRow
 // A text[] column written from a JS array (the labels pattern): one jsonb parameter, no array literal.
+// Every JSON parameter is cast `::text::jsonb`, never `::jsonb` alone: postgres.js asks the server for
+// each parameter's type and JSON.stringify's a jsonb one AGAIN, so a pre-stringified value landed as
+// a jsonb string — labels/exdates then failed ("cannot extract elements from a scalar", every
+// add_task → 500) and activity payloads lost their keys (found by supabase/tests/mcp-week.sh).
 const textArray = (xs: readonly string[] | null | undefined) => JSON.stringify(xs ?? [])
 
 // A task row as JSON (timestamps come back as ISO strings), minus the search columns and the import
@@ -129,7 +133,7 @@ function store(tx: Tx): Store {
           reminder_at, reminder_sent, snoozed_until, completed_at, created_at, updated_at)
         values (${t.id}::uuid, ${t.title}::text, ${t.notes}::text, ${t.status}::text, ${t.due_at}::timestamptz,
           ${t.scheduled_start}::timestamptz, ${t.scheduled_end}::timestamptz, ${t.top3}::boolean, ${t.someday}::boolean,
-          ${t.paused}::boolean, array(select jsonb_array_elements_text(${textArray(t.labels)}::jsonb)),
+          ${t.paused}::boolean, array(select jsonb_array_elements_text(${textArray(t.labels)}::text::jsonb)),
           ${t.priority}::int, ${t.duration_min}::int, ${t.project_id}::uuid, ${t.domain_id}::uuid, ${t.area_id}::uuid,
           ${t.milestone_id}::uuid, ${t.parent_task_id}::uuid, ${t.recurrence_rule}::text, ${t.reminder_at}::timestamptz,
           ${t.reminder_sent}::boolean, ${t.snoozed_until}::timestamptz, ${t.completed_at}::timestamptz,
@@ -171,13 +175,13 @@ function store(tx: Tx): Store {
         insert into calendar_events (id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, series_id)
         values (${e.id}::uuid, ${e.title}::text, ${e.starts_at}::timestamptz, ${e.ends_at}::timestamptz, ${e.all_day}::boolean,
           ${e.task_id}::uuid, ${e.type ?? 'event'}::text, ${e.recurrence_rule ?? null}::text,
-          array(select jsonb_array_elements_text(${textArray(e.recurrence_exdates)}::jsonb)), ${e.series_id ?? null}::uuid)`
+          array(select jsonb_array_elements_text(${textArray(e.recurrence_exdates)}::text::jsonb)), ${e.series_id ?? null}::uuid)`
     },
     async updateEvent(e) {
       await tx`
         update calendar_events set title = ${e.title}::text, starts_at = ${e.starts_at}::timestamptz, ends_at = ${e.ends_at}::timestamptz,
           all_day = ${e.all_day}::boolean, type = ${e.type ?? 'event'}::text, recurrence_rule = ${e.recurrence_rule ?? null}::text,
-          recurrence_exdates = array(select jsonb_array_elements_text(${textArray(e.recurrence_exdates)}::jsonb))
+          recurrence_exdates = array(select jsonb_array_elements_text(${textArray(e.recurrence_exdates)}::text::jsonb))
         where id = ${e.id}::uuid and deleted_at is null`
     },
     async deleteEvents(ids) {
@@ -185,20 +189,20 @@ function store(tx: Tx): Store {
       const rows = await tx`
         update calendar_events set deleted_at = now()
         where deleted_at is null
-          and (id in (select jsonb_array_elements_text(${textArray(ids)}::jsonb)::uuid)
-            or series_id in (select jsonb_array_elements_text(${textArray(ids)}::jsonb)::uuid))
+          and (id in (select jsonb_array_elements_text(${textArray(ids)}::text::jsonb)::uuid)
+            or series_id in (select jsonb_array_elements_text(${textArray(ids)}::text::jsonb)::uuid))
         returning id`
       return rows.map((r) => r.id as string)
     },
     async insertInbox(row) {
       await tx`
         insert into inbox_items (id, kind, raw_text, status, payload)
-        values (${row.id}::uuid, 'text', ${row.raw_text}::text, 'pending', ${JSON.stringify(row.payload)}::jsonb)`
+        values (${row.id}::uuid, 'text', ${row.raw_text}::text, 'pending', ${JSON.stringify(row.payload)}::text::jsonb)`
     },
     async log(eventType, entityType, entityId, payload) {
       await tx`
         insert into activity_log (event_type, entity_type, entity_id, payload)
-        values (${eventType}::text, ${entityType}::text, ${entityId}::uuid, ${JSON.stringify(payload)}::jsonb)`
+        values (${eventType}::text, ${entityType}::text, ${entityId}::uuid, ${JSON.stringify(payload)}::text::jsonb)`
     },
   }
 }
