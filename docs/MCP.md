@@ -2,14 +2,15 @@
 
 Kai's Flow runs a small **MCP server** — the Model Context Protocol that Claude and other AI assistants
 use to talk to apps. Connect one and you can ask it "what's on today?", "find the tyre invoice task",
-"add *call the bank* for Thursday" or "move the domain renewal to tomorrow", and it works on your real
-lists. It's $0: one Supabase edge function (`supabase/functions/mcp`), nothing else.
+"add *call the bank* for Thursday" or "move the domain renewal to tomorrow" — or hand it your week: "put
+deep work on Monday 9–11, the gym Mon/Wed/Fri at 7 and the tax return Thursday at 3". It works on your
+real lists and calendar. It's $0: one Supabase edge function (`supabase/functions/mcp`), nothing else.
 
 ## Set it up
 
 1. **Make a key.** Settings → **Integrations** → **AI assistants (MCP)** (on the phone it's a card on the
-   Settings page). Pick **Read & write** (the assistant can also add and tick off tasks) or **Read
-   only** (it can look, never change anything), then **Create key**.
+   Settings page). Pick **Read & write** (the assistant can also add, edit, move and tick off tasks, and
+   add, edit and delete events) or **Read only** (it can look, never change anything), then **Create key**.
    The key looks like `kf_ai_` + 43 characters and is shown **once** — copy it then. Only its SHA-256
    is stored. **New key** replaces it (the old one stops working at once; that's also how you change
    read/write); **Turn off** deletes it.
@@ -73,12 +74,17 @@ Anything that speaks remote MCP over Streamable HTTP with a custom header (Curso
 | `search` | Tasks, inbox notes, projects and events by meaning and keywords (the app's hybrid search) | |
 | `list_tasks` | Tasks filtered by status (open/done/all), project, label, due range | |
 | `get_task` | One task in full: notes, dates, project, labels, repeat, reminder | |
-| `calendar` | Events between two days (default: today + 6 days, at most 31) | |
-| `projects` | Your projects (ids for `list_tasks` / `add_task`) | |
-| `add_task` | A new task: title, optional due, project, Top 3, notes | ✓ |
-| `complete_task` | Ticks an open task off; a repeating task gets its next occurrence | ✓ |
+| `calendar` | Events between two days (default: today + 6 days, at most 31): events, Time blocks (`kind: time_block`) and tasks' blocks (`kind: task` + `task_id`); a repeating event once per occurrence, with its series' id; an all-day event as its days | |
+| `projects` | Your projects (ids for `list_tasks` / `add_task` / `edit_task`) | |
+| `add_task` | A new task: title, optional due, duration, project, Top 3, notes, repeat. A due **time** also blocks the calendar (duration, else 30 min), as typing a time in the app does | ✓ |
+| `edit_task` | Title, notes, duration, project, repeat — only what's given; `null` clears | ✓ |
+| `reschedule_task` | To a day (09:00, off the calendar) or a day and time (on the calendar there) — the app's replan | ✓ |
+| `complete_task` | Ticks an open task off; a repeating task gets its next occurrence, unless it's paused | ✓ |
 | `move_to_tomorrow` | Due tomorrow 09:00 — the app's "Tomorrow"; the reminder keeps its lead, a block on another day comes off the calendar | ✓ |
 | `add_to_inbox` | A note (and link) into your Inbox to sort later, like a quick capture | ✓ |
+| `add_event` | An event or Time block: timed or all-day, optionally repeating | ✓ |
+| `edit_event` | Title, kind, time, repeat — of an event, a whole series, or one occurrence on its own | ✓ |
+| `delete_event` | An event, one occurrence of a series, or a whole series — to Trash | ✓ |
 
 Same rules as the app:
 
@@ -87,20 +93,46 @@ Same rules as the app:
   (`2026-10-08`) means 09:00 that day; `2026-10-08T15:30` means 15:30 on your clock.
 - **Today** is the Today list's rules: Top 3 picks (the goal of the day first — `top3_rank`), then anything
   due or scheduled today, then anything dated before today. Someday tasks never (since 2026-10-12; they
-  used to show when starred).
+  used to show when starred), nor a paused series.
 - **Top 3** is today's (the app's `features/tasks/top3Rule.ts`, restated in
   `supabase/functions/_shared/today.ts`): a pick counts while it is undated or dated today or earlier, and
-  never when it's someday, in Trash, done or cancelled. It holds 3 such picks — a fourth is refused with a
+  never when it's someday, paused, in Trash, done or cancelled. It holds 3 such picks — a fourth is refused with a
   message the assistant can pass on. `add_task` with `top3: true` and a later due date brings the task to
   today at its own time (as starring does in the app); `move_to_tomorrow` gives a pick's place up.
-- **Tomorrow** moves the rest the way the app does: a reminder keeps its lead time (re-armed when it lands
-  in the future — `lib/carryReminder.ts`), a calendar block already on tomorrow stays and any block on
-  another day comes off the calendar (soft-deleted, so Trash can bring it back —
-  `features/calendar/replan.ts`), logged as `calendar_event.deleted`.
-- **Every change is logged** like one made in the app (`task.created`, `task.completed`,
-  `task.rescheduled`, `inbox.captured`, `task.starred`), with `source: "mcp"`, so Slipping, streaks and
-  the digests count it. Changes show up in the open app through realtime.
-- **Read-only keys** don't even list the four writing tools, and calling one by name is refused.
+- **A time puts a task on the calendar; a date alone doesn't** (Kai 2026-10-07, as in Akiflow —
+  `features/calendar/replan.ts`). `reschedule_task` to a day and time moves the task's block there,
+  keeping its length (else a new one as long as its duration, 30 minutes by default) and takes any other
+  block off; to a day alone it's 09:00 that day in that day's list, a block already on that day stays and
+  any other comes off. A timed `add_task` gets its block the same way. The task's schedule follows the
+  block it ends on.
+- **Tomorrow** is that same replan to tomorrow 09:00.
+- **Every task write settles like the app's** (`lib/outbox` writeRow): a reminder keeps its lead time when
+  the task moves (re-armed when it lands in the future — `lib/carryReminder.ts`), a Top 3 pick moved to a
+  later day gives its place up, and a date clears Someday. Blocks taken off the calendar are soft-deleted
+  (Trash can bring them back).
+- **Repeats** are RRULE bodies on your clock — `FREQ=DAILY`, `FREQ=WEEKLY;BYDAY=MO,WE,FR`,
+  `FREQ=MONTHLY;BYMONTHDAY=1`, `FREQ=WEEKLY;INTERVAL=2;UNTIL=20261231T235959Z` (DAILY to YEARLY,
+  INTERVAL, COUNT or UNTIL, BYDAY, BYMONTHDAY, BYMONTH, BYSETPOS, WKST; anything else is refused). A task
+  repeat on an undated task dates it today 09:00 (the app's `setRecurrence`). An event series must start
+  on its rule — its first occurrence is its start; a start the rule skips is refused with the first day
+  it would fall on, rather than silently vanish.
+- **Events and series** (migration 0061: a series is one row): `edit_event` on a series changes every
+  occurrence — its title, kind, repeat, and its time of day and length (the dates of `start`/`end` aren't
+  used: the series keeps its days). With `occurrence` (one occurrence's start, as `calendar` lists it)
+  only that one changes, to any day and time: the series skips it and it becomes an event of its own
+  (linked back by `series_id`, as a drag in the app does). `delete_event` with `occurrence` skips that one
+  ("This event"); without it the whole series goes, with any occurrence moved out of it ("All events").
+  To change a series from a day on, end it (`UNTIL` in its rule) and add a new one. A task's block is
+  the task's: these tools refuse it and point to `reschedule_task`.
+- **A paused series** (Perennials ‖) rests until it's resumed: it's in no Today list or Top 3, and
+  `complete_task` doesn't make its next copy (nor does notify remind about it).
+- **Every write says what it changed** (`changed`: the new due date, the block it placed, the blocks it
+  took off, a Top 3 place given up, a moved reminder…) and **is logged** like one made in the app
+  (`task.created`, `task.completed`, `task.rescheduled`, `task.scheduled`, `task.updated`, `task.moved`,
+  `task.recurrence_set`, `task.starred`, `inbox.captured`, `calendar_event.created` / `.updated` /
+  `.deleted`), with `source: "mcp"`, so Slipping, streaks and the digests count it. Changes show up in
+  the open app through realtime.
+- **Read-only keys** don't even list the nine writing tools, and calling one by name is refused.
 - **500 tool calls a day per key** (UTC day). Past that, each call answers "used up for today"; the
   assistant's list of tools still loads.
 
@@ -162,9 +194,11 @@ curl -s -X POST https://<project>.supabase.co/functions/v1/mcp \
 
 ## For the developer
 
-- Code: `supabase/functions/mcp/server.ts` (protocol), `tools.ts` (tools, zone math), `index.ts` (SQL
-  as the user). The first two are pure and tested from `app/src/features/settings/mcp.test.ts`;
-  `index.ts` needs Deno and a database.
+- Code: `supabase/functions/mcp/server.ts` (protocol), `tools.ts` (tools, zone math, the replan and
+  series rules), `index.ts` (SQL as the user). The first two are pure and tested from
+  `app/src/features/settings/mcp.test.ts` against an in-memory Store; `index.ts` needs Deno and a
+  database (CI's `deno check` covers its types). Shared: `_shared/zone.ts` (the user's clock),
+  `_shared/today.ts` (Top 3), `_shared/repeat.ts` (task repeats), `_shared/series.ts` (event series).
 - Schema: `mcp_keys` (migration 0051, docs/DATA_MODEL.md). Config: `[functions.mcp] verify_jwt = false`.
   The release pipeline deploys `mcp`; it needs no secret of its own (`SUPABASE_DB_URL` is built in).
 - App: `features/settings/mcpKey.ts` (key + snippets) and the `McpCard` in `SettingsPage.tsx`.
