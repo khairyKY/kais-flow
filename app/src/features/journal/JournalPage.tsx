@@ -521,7 +521,7 @@ export function JournalPage() {
           <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
           <button
             type="button"
-            className="kf-hit"
+            className="kf-hit kf-hit-above"
             aria-label={`Delete ${entryTime(entry.created_at)} entry`}
             onClick={() => removeEntry(entry)}
             style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', userSelect: 'none' }}

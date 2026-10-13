@@ -874,6 +874,9 @@ export function AppLayout() {
           /* A small text control with neighbours close by (the phone journal footer's links, 12px apart): the area
              grows to 44px, centred, and no further, so it never reaches the next one; a side already 44 stays put. */
           .kf-hit.kf-hit-min::after { inset: min(0px, calc(50% - 22px)); }
+          /* A destructive control sitting just above a text field (a journal entry's Delete, 4px over its
+             words): the area grows up and sideways only, so a tap meant for the field never deletes. */
+          .kf-hit.kf-hit-above::after { bottom: 0; }
           .kf-checkbox::after { content: ''; position: absolute; inset: -13px; }
         }
 

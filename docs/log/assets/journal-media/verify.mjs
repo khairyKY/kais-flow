@@ -338,6 +338,18 @@ for (const width of [360, 390, 430]) {
   check(`${name} photo × hit area ≥44px`, m.w >= 44 && m.h >= 44, m.hit)
   check(`${name} photo × hit area stays inside its own photo`, m.outside === 0, `${m.outside} px outside`)
   check(`${name} next photo (${m.gap}px away), the words above and the photo itself keep their taps`, m.nextOwn && m.aboveOwn && m.imageOwn, JSON.stringify({ nextOwn: m.nextOwn, aboveOwn: m.aboveOwn, imageOwn: m.imageOwn }))
+  // The entry's Delete sits 4px above its words: no tap on the words may land on Delete (kf-hit-above).
+  const del = await page.evaluate(() => {
+    const b = document.querySelector('button[aria-label^="Delete "][aria-label$=" entry"]')
+    const ta = b?.closest('[id^="journal-"]')?.querySelector('textarea')
+    if (!b || !ta) return { found: false }
+    ta.scrollIntoView({ block: 'center' })
+    const r = ta.getBoundingClientRect()
+    let stolen = 0
+    for (let y = Math.ceil(r.top); y < r.top + 16; y++) for (let x = Math.ceil(r.left); x < r.right; x += 4) if (document.elementFromPoint(x + 0.5, y + 0.5) === b) stolen++
+    return { found: true, stolen }
+  })
+  check(`${name} a tap on an entry's words never lands on its Delete`, del.found && del.stolen === 0, JSON.stringify(del))
   await shot(page, `${name}-3-photo-x`)
   // The footer sits 23px under the photos; its links are drawn 18px tall and 12px apart.
   tapChecks(name, 'card footer', await page.evaluate(measureTaps, ['＋ New entry', '🎤 Talk', '＋ Photo']), (t) => t.drawnH === 18)
