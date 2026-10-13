@@ -31,6 +31,7 @@ import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { ColorDots } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
+import { linkRef } from '../../lib/links'
 
 // ── The phone calendar's sheets (Calendar Phone.dc.html): 7c quick create, 7d the event sheet,
 // 7g / 7g2 Schedule. All on the kit BottomSheet; every write goes through calendar/api and
@@ -145,7 +146,9 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
     if (kind === 'task') {
       const task = createTask({
         title: name,
-        notes: notes.trim() || null,
+        // The title's `// notes` and link leave it (the shared parse, P7e A6/A19): they land here, not nowhere.
+        notes: notes.trim() || parsed?.notes || null,
+        ...(parsed?.url ? { externalRef: linkRef(parsed.url) } : null),
         dueAt: starts_at,
         durationMin: dur,
         priority: pri,

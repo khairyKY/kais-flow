@@ -65,3 +65,11 @@ describe('withPicked', () => {
     expect(withPicked(null, picked)).toBeNull()
   })
 })
+
+// The bar's parse now also takes repeats, `//` notes and a link out of the title — a first thing keeps them.
+describe('readFirstThing keeps what leaves the title (P7e A5/A6/A19)', () => {
+  it('a repeat, notes and a link ride along', () => {
+    expect(readFirstThing('Stretch every day 7am // ten minutes', NOW)).toMatchObject({ title: 'Stretch', recurrenceRule: 'FREQ=DAILY', notes: 'ten minutes', dueAt: '2026-09-28T04:00:00.000Z' }) // 7am has passed: from tomorrow
+    expect(readFirstThing('read https://example.com/a', NOW)).toMatchObject({ title: 'read', externalRef: { source: 'link', url: 'https://example.com/a' } })
+  })
+})
