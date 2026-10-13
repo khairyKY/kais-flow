@@ -207,7 +207,8 @@ for (const [label, view, width] of [['phone', PHONE, 390], ['desk', DESKTOP, 128
         check(`${name} tap the quote → the task sheet over Today`, url.pathname === '/today' && url.searchParams.get('task') === id(OLD), url.pathname + url.search)
         await shot(page, `${name}-task-open`)
       } else {
-        check(`${name} click the quote → the task editor`, url.pathname === `/tasks/${id(OLD)}`, url.pathname)
+        // Since 2026-10-12 (fix-tasks): desktop opens the task detail popover over Today, hung off the quote.
+        check(`${name} click the quote → the task popover over Today`, url.pathname === '/today' && url.searchParams.get('task') === id(OLD) && (await page.locator('[role="dialog"]').count()) > 0, url.pathname + url.search)
       }
       await s.ctx.close()
     }
