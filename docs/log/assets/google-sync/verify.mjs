@@ -6,6 +6,8 @@
 // switches save; Disconnect; an expired grant says reconnect); synced events on the grid are read-only
 // (drawn in their calendar's colour, no drag / resize / delete, the menu says "From Google · <name>"),
 // count as busy (rail footer) and in overlaps; the phone grid and sheet the same.
+// 2026-10-14 (our plan out to Google as busy): "Show my plan in Google as busy" saves at once (off, then on
+// + a sync), and a grant from before the write scope offers Reconnect, reading carrying on (s8, s9).
 //   node verify.mjs <outDir> [baseUrl] [playwright-core path]      (ONLY=s1,g1 runs some)
 // The day: Monday 12 Oct 2026, Cairo (UTC+3), the clock at 10:00.
 import fs from 'node:fs'
@@ -59,13 +61,16 @@ const EVENTS = [
   }),
 ]
 const GOOGLE = {
-  ok: { provider: 'google', updated_at: iso('09:30'), login: 'kai@gmail.com', status: 'ok', synced_at: iso('09:48'), repos: null, rules: null, calendars: [{ id: 'kai@gmail.com', name: 'Kai', color: '#4986e7' }, PRAYER, HOLIDAYS], chosen: ['kai@gmail.com', PRAYER.id] },
+  ok: { provider: 'google', updated_at: iso('09:30'), login: 'kai@gmail.com', status: 'ok', synced_at: iso('09:48'), repos: null, rules: null, calendars: [{ id: 'kai@gmail.com', name: 'Kai', color: '#4986e7' }, PRAYER, HOLIDAYS], chosen: ['kai@gmail.com', PRAYER.id], can_write: true, mirror: null },
 }
+// A grant from before 2026-10-14: calendar.readonly only.
+GOOGLE.readonly = { ...GOOGLE.ok, can_write: null }
 GOOGLE.fresh = { ...GOOGLE.ok, synced_at: null }
 GOOGLE.failing = { ...GOOGLE.ok, status: 'failing' }
 const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, timezone: 'Africa/Cairo', onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
 const tables = (over = {}) => structuredClone({ tasks: [], calendar_events: EVENTS, inbox_items: [], projects: [], domains: [], areas: [], integrations: [], app_settings: [SETTINGS], ...over })
-const SYNCED = { calendars: 2, fetched: 335, new: 335, updated: 0, removed: 0 }
+const SYNCED = { calendars: 2, fetched: 335, new: 335, updated: 0, removed: 0, out: null }
+const OUT_BLOCKS = { blocks: 12, written: 12, failed: 0, pending: 0 }
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 const desktop = { viewport: { width: 1280, height: 800 } }
@@ -176,12 +181,12 @@ if (want('s2')) {
 
 // ── S3: with the secrets set, Connect goes to Google's consent page (the URL google-connect built) ──
 if (want('s3')) {
-  const consent = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&redirect_uri=https%3A%2F%2Feqbbkitofgyxxrfggpbu.supabase.co%2Ffunctions%2Fv1%2Fgoogle-connect&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly&access_type=offline&prompt=consent&state=s'
+  const consent = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&redirect_uri=https%3A%2F%2Feqbbkitofgyxxrfggpbu.supabase.co%2Ffunctions%2Fv1%2Fgoogle-connect&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.owned&access_type=offline&prompt=consent&state=s'
   const { ctx, page, errors } = await open('/settings', { fn: { 'google-connect': () => ({ url: consent }) } })
   await openIntegrations(page)
   await googleCard(page).getByRole('button', { name: 'Connect' }).click()
   await page.waitForURL(/accounts\.google\.com/, { timeout: 8000 }).catch(() => {})
-  check('s3 the browser goes to Google’s consent page, read-only scope', page.url().startsWith('https://accounts.google.com/o/oauth2/v2/auth') && page.url().includes('calendar.readonly'), page.url())
+  check('s3 the browser goes to Google’s consent page: read + owned-calendar events scopes', page.url().startsWith('https://accounts.google.com/o/oauth2/v2/auth') && page.url().includes('calendar.readonly') && page.url().includes('calendar.events.owned'), page.url())
   check('s3 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
@@ -260,10 +265,78 @@ if (want('s7')) {
     const card = googleCard(page)
     await card.scrollIntoViewIfNeeded()
     check(`s7 ${theme}: phone Settings → Connections has Google Calendar with its switches`, (await card.getByRole('switch', { name: 'Show Prayer times' }).count()) === 1 && (await card.getByRole('button', { name: 'Sync now' }).count()) === 1)
+    check(`s7 ${theme}: …and "Show my plan in Google as busy"`, (await card.getByRole('switch', { name: 'Show my plan in Google as busy' }).count()) === 1)
     const wide = await page.evaluate(() => document.documentElement.scrollWidth)
     check(`s7 ${theme}: no horizontal scroll at 390`, wide <= 390, wide)
     await card.screenshot({ path: path.join(OUT, `s7-phone-google-${theme}.png`) })
     check(`s7 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── S8: "Show my plan in Google as busy" — on by default once the grant can write; off, then on + a sync ──
+if (want('s8')) {
+  let st = null
+  const { ctx, page, errors, state } = await open('/settings', {
+    rows: { integrations: [GOOGLE.ok] },
+    fn: {
+      'google-connect': (b) => {
+        if (b?.action !== 'mirror') return { ok: true }
+        st.rows.integrations[0].mirror = b.on // the server saved it: the refetch reads it back
+        return { mirror: b.on }
+      },
+      'google-sync': () => ({ ...SYNCED, out: OUT_BLOCKS }),
+    },
+  })
+  st = state
+  check('s8 the summary row says the plan goes out as busy', /your plan there as busy/.test(await page.locator('#settings-Integrations .st-row', { hasText: 'Google Calendar' }).textContent()))
+  await openIntegrations(page)
+  const card = googleCard(page)
+  const sw = card.getByRole('switch', { name: 'Show my plan in Google as busy' })
+  check('s8 the switch is there and on (absent setting = on)', (await sw.count()) === 1 && (await sw.getAttribute('aria-checked')) === 'true')
+  check('s8 no "Allow … Reconnect" once the grant can write', (await card.getByText('Allow Kai’s Flow to show your blocks in Google').count()) === 0 && (await card.getByRole('button', { name: 'Reconnect' }).count()) === 0)
+  await card.screenshot({ path: path.join(OUT, 's8-plan-busy-on.png') })
+  await sw.click()
+  await sleep(1500)
+  const off = state.calls.filter((c) => c.name === 'google-connect' && c.body?.action === 'mirror')
+  check('s8 off posts {action:"mirror", on:false} — the server deletes ours in Google — and runs no sync', off.length === 1 && off[0].body.on === false && state.calls.every((c) => c.name !== 'google-sync'), JSON.stringify(state.calls))
+  check('s8 …and the switch stays off', (await sw.getAttribute('aria-checked')) === 'false')
+  await sw.click()
+  await sleep(1800)
+  const on = state.calls.filter((c) => c.name === 'google-connect' && c.body?.action === 'mirror')
+  check('s8 on posts {action:"mirror", on:true}, then syncs to write them now', on.length === 2 && on[1].body.on === true && state.calls.some((c) => c.name === 'google-sync' && c.body?.action === 'sync'), JSON.stringify(state.calls))
+  check('s8 …and the switch is on again', (await sw.getAttribute('aria-checked')) === 'true')
+  await card.getByRole('button', { name: 'Sync now' }).click()
+  await sleep(1500)
+  const said = (await status(page).textContent().catch(() => '')) ?? ''
+  check('s8 Sync now says how many blocks are busy in Google', /12 blocks busy in Google/.test(said), said)
+  check('s8 nothing written to calendar_events or integrations by the client', state.writes.every((w) => w.table !== 'calendar_events' && w.table !== 'integrations'), JSON.stringify(state.writes.map((w) => w.table)))
+  check('s8 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── S9: a grant from before the write scope — "Allow … → Reconnect"; reading carries on meanwhile ──
+if (want('s9')) {
+  const consent = 'https://accounts.google.com/o/oauth2/v2/auth?client_id=cid&response_type=code&scope=https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.readonly+https%3A%2F%2Fwww.googleapis.com%2Fauth%2Fcalendar.events.owned&access_type=offline&prompt=consent&state=s'
+  for (const theme of ['day', 'night']) {
+    const { ctx, page, errors, state } = await open('/settings', { theme, rows: { integrations: [GOOGLE.readonly] }, fn: { 'google-connect': () => ({ url: consent }), 'google-sync': () => SYNCED } })
+    await openIntegrations(page)
+    const card = googleCard(page)
+    const row = card.locator('.st-row', { hasText: 'Allow Kai’s Flow to show your blocks in Google' })
+    check(`s9 ${theme}: "Allow Kai’s Flow to show your blocks in Google" with Reconnect`, (await row.count()) === 1 && (await row.getByRole('button', { name: 'Reconnect' }).count()) === 1)
+    check(`s9 ${theme}: no busy switch yet`, (await card.getByRole('switch', { name: 'Show my plan in Google as busy' }).count()) === 0)
+    check(`s9 ${theme}: reading carries on — status ok, Sync now, the calendar switches`, /Connected · synced/.test(await card.textContent()) && (await card.getByRole('button', { name: 'Sync now' }).count()) === 1 && (await card.getByRole('switch', { name: 'Show Prayer times' }).count()) === 1)
+    await row.scrollIntoViewIfNeeded()
+    await card.screenshot({ path: path.join(OUT, `s9-allow-reconnect-${theme}.png`) })
+    if (theme === 'day') {
+      await card.getByRole('button', { name: 'Sync now' }).click()
+      await sleep(1200)
+      check('s9 Sync now still syncs (no out line without the scope)', state.calls.some((c) => c.name === 'google-sync') && !/busy in Google/.test((await status(page).textContent().catch(() => '')) ?? ''))
+      await row.getByRole('button', { name: 'Reconnect' }).click()
+      await page.waitForURL(/accounts\.google\.com/, { timeout: 8000 }).catch(() => {})
+      check('s9 Reconnect posts start and goes to Google asking for calendar.events.owned', state.calls.some((c) => c.name === 'google-connect' && c.body?.action === 'start') && page.url().includes('calendar.events.owned'), page.url())
+    }
+    check(`s9 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
 }
