@@ -4,8 +4,8 @@
 //   state                                                       card
 //   ──────────────────────────────────────────────────────────  ─────────────────────────────
 //   evening ritual finished today                               Day closed ✿ (tomorrow's seeds)
-//   17:00 or later — not shut down                              Shut down the day · ~3 min
-//   not planned, before 17:00                                   Plan your day · ~5 min
+//   17:00 or later (or before 04:00) — not shut down            Shut down the day · ~3 min
+//   not planned, 04:00–17:00                                    Plan your day · ~5 min
 //   otherwise (planned)                                         Now — the next move (below)
 //
 //   planned = the morning ritual finished today, or ≥1 Top 3 picked and it's 12:00 or later, or
@@ -25,6 +25,7 @@
 // to Today): an unpinned ritual is never *prompted* by the card — its Plan / Shut down state falls
 // through to Now. It stays one tap away in the card's ritual links and on Routines.
 import { perZone } from '../../lib/appZone'
+import { LOOP_DAY_ROLLOVER_HOUR } from '../rituals/loopDay'
 
 export type DayPhase = 'plan' | 'now' | 'shutdown' | 'closed'
 
@@ -98,9 +99,11 @@ export function isPlanned(input: Pick<DayPhaseInput<unknown, unknown>, 'now' | '
 export function dayPhase<E, T>(input: DayPhaseInput<E, T>): DayCardState<E, T> {
   const prompts = input.prompts ?? { morning: true, evening: true }
   const minutes = cairoMinutes(input.now)
+  // A29: until 04:00 it is still the loop day's evening (rituals/loopDay.ts) — Shut down, never Plan.
+  const night = minutes < LOOP_DAY_ROLLOVER_HOUR * 60
   if (ritualFinished(input.evening)) return { phase: 'closed' }
-  if (prompts.evening && minutes >= SHUTDOWN_FROM) return { phase: 'shutdown' }
-  if (prompts.morning && !isPlanned(input) && minutes < PLAN_UNTIL) return { phase: 'plan' }
+  if (prompts.evening && (minutes >= SHUTDOWN_FROM || night)) return { phase: 'shutdown' }
+  if (prompts.morning && !isPlanned(input) && minutes < PLAN_UNTIL && !night) return { phase: 'plan' }
   const soon = input.nextUp && (input.nextUpSoon ?? true)
   const item: NowItem<E, T> | null = soon && input.nextUp
     ? { kind: 'event', event: input.nextUp }

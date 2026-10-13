@@ -92,6 +92,13 @@ describe('dayPhase — Shut down', () => {
   it('nothing picked is not "all done"', () => {
     expect(dayPhase(input({ now: at('15:00'), top3: { picked: 0, done: 0 } })).phase).toBe('plan')
   })
+  it('past midnight, until 04:00, it is still the loop day: Shut down, never Plan (A29)', () => {
+    expect(dayPhase(input({ now: at('00:30') })).phase).toBe('shutdown')
+    expect(dayPhase(input({ now: at('03:59'), morning: { done: 4, total: 4 } })).phase).toBe('shutdown')
+    expect(dayPhase(input({ now: at('04:00') })).phase).toBe('plan')
+    expect(dayPhase(input({ now: at('00:30'), evening: { done: 5, total: 5 } })).phase).toBe('closed')
+    expect(dayPhase(input({ now: at('01:00'), prompts: { morning: true, evening: false } })).phase).toBe('now') // unpinned: no prompt, and no Plan at 01:00
+  })
   it('a part-walked evening ritual still reads Shut down', () => {
     expect(dayPhase(input({ now: at('21:00'), evening: { done: 3, total: 5 } })).phase).toBe('shutdown')
   })
