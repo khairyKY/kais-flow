@@ -78,10 +78,13 @@ import { BackLink, SectionLabel, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { useMotionEnabled } from '../../lib/motion'
 import { DateField } from '../../components/DatePicker'
+import { useChecklistTemplates, saveTemplateWithUndo, renameTemplateWithUndo, deleteTemplateWithUndo, applyTemplateWithUndo } from './templates'
 import './xfx.css'
 
 // A ✕ that removes a row: a real button, 44px to a finger (.kf-hit), PersonDetailPage's look.
 const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--acc-terra)', cursor: 'pointer', borderRadius: 999, marginLeft: 4 }
+/** The dashed "+ add task" chip, as a button (save as template, use). */
+const chipBtn: React.CSSProperties = { flex: 'none', border: '1px dashed var(--ink-hairline)', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer', padding: '2px 8px', borderRadius: 999, font: 'inherit', fontSize: 'var(--fs-meta)' }
 
 // Local query hook to retrieve activity log for a specific project/area
 function useActivityLog(entityId: string) {
@@ -153,6 +156,9 @@ export function ProjectDetailPage() {
   })
   const [newChecklistTitle, setNewChecklistTitle] = useState('')
   const [newChecklistType, setNewChecklistType] = useState<'one-shot' | 'task-linked'>('one-shot')
+  // Checklist templates (A25): saved from this page's checklist, used on any project, renamed / deleted here.
+  const { templates, ready: templatesReady } = useChecklistTemplates()
+  const [renamingTemplate, setRenamingTemplate] = useState<string | null>(null)
   const [newAddTaskTitle, setNewAddTaskTitle] = useState('')
   const [showAddTask, setShowAddTask] = useState(false)
 
@@ -840,8 +846,13 @@ export function ProjectDetailPage() {
               {openTasks.map((t, i) => taskRow(t, i < openTasks.length - 1))}
             </div>
 
-            {/* Checklist */}
-            <SectionLabel style={{ margin: '24px 0 6px' }}>
+            {/* Checklist — "save as template" names it in place (the project's name to start). */}
+            <SectionLabel
+              style={{ margin: '24px 0 6px' }}
+              action={templatesReady && (project.checklist ?? []).length > 0 ? (
+                <button type="button" className="kf-hit" onClick={() => { const t = saveTemplateWithUndo(project, project.name); if (t) setRenamingTemplate(t.id) }} style={chipBtn}>save as template</button>
+              ) : undefined}
+            >
               <span>Checklist</span>
             </SectionLabel>
 
@@ -903,6 +914,40 @@ export function ProjectDetailPage() {
                 </button>
               </div>
             </div>
+
+            {/* Checklist templates (A25): "use" adds its items here — task-linked ones as real tasks
+                under this project — with one Undo; the name renames in place; ✕ deletes with Undo. */}
+            {templatesReady && templates.length > 0 && (
+              <>
+                <SectionLabel style={{ margin: '18px 0 6px' }}>
+                  <span>Templates · {templates.length}</span>
+                </SectionLabel>
+                {templates.map((t) => (
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)', minHeight: isMobile ? 44 : undefined }}>
+                    {renamingTemplate === t.id ? (
+                      <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-body-s)' }}>
+                        <RenameField
+                          value={t.name}
+                          ariaLabel="Template name"
+                          style={{ margin: '-3px 0' }}
+                          onDone={(next) => {
+                            setRenamingTemplate(null)
+                            if (next) renameTemplateWithUndo(t.id, next)
+                          }}
+                        />
+                      </span>
+                    ) : (
+                      <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingTemplate(t.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingTemplate(t.id) } }} style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', flex: 1, minWidth: 0, cursor: 'text' }}>{t.name}</span>
+                    )}
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+                      {t.items.length} {t.items.length === 1 ? 'item' : 'items'}
+                    </span>
+                    <button type="button" className="kf-hit" onClick={() => applyTemplateWithUndo(project, t)} disabled={t.items.length === 0} aria-label={`Use template ${t.name}`} style={chipBtn}>use</button>
+                    <button type="button" className="kf-hit" onClick={() => deleteTemplateWithUndo(t.id)} title="Delete template" aria-label={`Delete template ${t.name}`} style={removeBtn}>✕</button>
+                  </div>
+                ))}
+              </>
+            )}
 
             {/* Activity log — E6: seg toggle passed via `action` so it sits far right after the dashed rule (Projects.dc.html:583) */}
             <SectionLabel

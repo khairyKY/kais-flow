@@ -378,6 +378,12 @@ function describeProject(e: ActivityLogEntry, names: ActivityNames): ActivityLin
       return line(named(item, (q) => `Unchecked ${q}`, 'Unchecked a checklist item'), onProject)
     case 'project.checklist_item_removed':
       return line('Removed a checklist item', onProject)
+    case 'project.template_saved':
+      return line(named(str(payload, 'template'), (q) => `Saved the checklist as the template ${q}`, 'Saved the checklist as a template'), onProject)
+    case 'project.template_used':
+      return line(named(str(payload, 'template'), (q) => `Added the template ${q} to the checklist`, 'Added a template to the checklist'), onProject)
+    case 'project.template_unused':
+      return line(named(str(payload, 'template'), (q) => `Took the template ${q} back off the checklist`, 'Took a template back off the checklist'), onProject)
     case 'project.update_logged':
       return line(named(name, (q) => `Posted an update on ${q}`, 'Posted a project update'), str(payload, 'note'))
     case 'project.work_logged': {
