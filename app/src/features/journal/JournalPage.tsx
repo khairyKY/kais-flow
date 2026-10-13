@@ -431,8 +431,9 @@ export function JournalPage() {
   // "On this day" logic (returns entry from a year ago if exists, or older ones)
   const onThisDayEntry = useMemo(() => {
     // Same month-day from an earlier year — straight off the 'YYYY-MM-DD' keys, so the device's
-    // zone can't shift either day.
-    return entries.find((e) => isWritten(e) && e.entry_date.slice(5) === selectedDate.slice(5) && e.entry_date.slice(0, 4) < selectedDate.slice(0, 4)) || null
+    // zone can't shift either day. It quotes the words, so it wants words (a photo-only entry is
+    // written, but has no line to show).
+    return entries.find((e) => e.body.trim() && e.entry_date.slice(5) === selectedDate.slice(5) && e.entry_date.slice(0, 4) < selectedDate.slice(0, 4)) || null
   }, [entries, selectedDate])
 
   const handleAddCommentary = () => {

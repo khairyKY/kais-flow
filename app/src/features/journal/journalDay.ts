@@ -5,9 +5,11 @@ import type { JournalEntry } from '../../lib/types'
 import { appZone } from '../../lib/appZone'
 
 /** An empty row is a "+ New entry" the user never typed into. It must not count as a day
- * written, or the streak / Day-N / "kept" markers would lie (punch item 10). */
+ * written, or the streak / Day-N / "kept" markers would lie (punch item 10). A photo is something
+ * kept too: an entry with one counts even with no words. (What shows a line of TEXT — On this day,
+ * the home-screen widget — reads `body` itself.) */
 export function isWritten(e: JournalEntry): boolean {
-  return e.body.trim().length > 0
+  return e.body.trim().length > 0 || (e.media_paths?.length ?? 0) > 0
 }
 
 /** The day's entries in the order they were written. `created_at` is the entry's timestamp. */

@@ -10,7 +10,6 @@ import { usePendingInboxItems } from '../inbox/api'
 import { useSlipping } from '../slipping/api'
 import { useResurfacePick } from '../resurfacing/api'
 import { useJournalEntries } from '../journal/api'
-import { isWritten } from '../journal/journalDay'
 import { useRitualStepsToday } from '../rituals/api'
 import { useRitualPins } from '../rituals/ritualPins'
 import { useFocusStore } from '../focus/focusStore'
@@ -73,7 +72,8 @@ export function WidgetBridge(): React.ReactNode {
   const now = day.now
 
   const today = cairoDateKey(now)
-  const line = journal.filter((e) => e.entry_date === today && !e.deleted_at && isWritten(e)).at(-1)?.body.split('\n')[0] ?? null
+  // The widget shows a line of words, so the latest entry with words (isWritten also counts a photo).
+  const line = journal.filter((e) => e.entry_date === today && !e.deleted_at && e.body.trim()).at(-1)?.body.split('\n')[0] ?? null
   const archived = projects.filter((p) => p.status === 'archived').sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0]
   const firstRecord = [...tasks.map((t) => t.created_at), ...inbox.map((i) => i.created_at), ...projects.map((p) => p.created_at), ...routines.map((r) => r.created_at)].sort()[0] ?? null
 

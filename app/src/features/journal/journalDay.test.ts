@@ -87,6 +87,15 @@ describe('isWritten', () => {
     expect(isWritten(entry({ id: 'a', entry_date: '2026-07-27', body: '\n  ' }))).toBe(false)
     expect(isWritten(entry({ id: 'b', entry_date: '2026-07-27', body: 'x' }))).toBe(true)
   })
+  it('counts an entry with a photo and no words (and a row from before media_paths)', () => {
+    expect(isWritten(entry({ id: 'p', entry_date: '2026-07-27', body: '', media_paths: ['u/p/1.jpg'] }))).toBe(true)
+    expect(isWritten({ ...entry({ id: 'q', entry_date: '2026-07-27', body: '' }), media_paths: undefined as unknown as string[] })).toBe(false)
+  })
+  it('a photo-only day is a day kept, for Kept and Day N alike', () => {
+    const rows = [entry({ id: 'a', entry_date: '2026-07-27' }), entry({ id: 'p', entry_date: '2026-07-26', body: ' ', media_paths: ['u/p/1.jpg'] })]
+    expect(daysWrittenThisMonth(rows, '2026-07-27')).toBe(2)
+    expect(dayOrdinal(rows, '2026-07-27')).toBe(2)
+  })
 })
 
 // P0-B (audit 2026-09-26): offline, with the journal list never loaded, typing into a blank day

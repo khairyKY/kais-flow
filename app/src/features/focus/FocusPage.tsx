@@ -306,7 +306,9 @@ export function FocusPage() {
     const wordCount = today.reduce((n, e) => n + e.body.trim().split(/\s+/).filter(Boolean).length, 0)
     // F2: the same fern the Journal page draws for this day (fernByLength over the day's text).
     const stage = fernByLength(today.reduce((n, e) => n + e.body.length, 0))
-    return { stage, note: wordCount > 0 ? `${wordCount} words tonight` : 'unwritten journal' }
+    // A photo-only day is kept (journalDay's isWritten), so it isn't "unwritten" here either.
+    const photos = today.reduce((n, e) => n + (e.media_paths?.length ?? 0), 0)
+    return { stage, note: wordCount > 0 ? `${wordCount} words tonight` : photos > 0 ? `${photos} ${photos === 1 ? 'photo' : 'photos'} tonight` : 'unwritten journal' }
   }, [journalEntries, todayStr])
 
   // Projects (Wisteria)
