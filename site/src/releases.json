@@ -1,5 +1,23 @@
 [
   {
+    "v": "v1.1.4",
+    "date": "2026-10-13",
+    "title": "Time Slots and your Google calendars",
+    "highlights": [
+      "Time Slots: drop tasks into a Time block like “Code block” and it holds them, with a checklist and how full it is; move the slot and its tasks move too",
+      "Repeating slots hold tasks for each day, and a task comes out of its slot with Undo",
+      "Google Calendar, read-only: connect in Settings, pick calendars like your prayer times, and they show on your calendar as busy. Kai’s Flow never changes them and never sends them to the AI",
+      "The privacy policy now also lives on the app’s own address"
+    ],
+    "icons": [
+      "calendar",
+      "routine",
+      "sync",
+      "lock"
+    ],
+    "art": "daisy-morning"
+  },
+  {
     "v": "v1.1.3",
     "date": "2026-10-13",
     "title": "A privacy page on the app, ready for Google Calendar",
