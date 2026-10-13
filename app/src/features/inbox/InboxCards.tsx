@@ -93,6 +93,8 @@ export interface TriageCardProps {
   onEditing: (on: boolean) => void
   onFile: (d: Draft) => void
   onSnooze: (until: string) => void
+  /** The Snooze menu's Someday: filed as a someday task (not a year-long snooze). */
+  onSomeday: () => void
   onDismiss: () => void
   onToggleSelect: () => void
 }
@@ -204,7 +206,7 @@ export function TriageCard(p: TriageCardProps) {
           }}
           onSomeday={() => {
             setMenu(null)
-            p.onSnooze(new Date(Date.now() + 365 * 86_400_000).toISOString())
+            p.onSomeday()
           }}
         />
       )}

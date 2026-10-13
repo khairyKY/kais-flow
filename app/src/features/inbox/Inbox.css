@@ -12,6 +12,9 @@
 .ib-toggle { background: var(--paper-bone); border: 1px solid var(--line-card); }
 .ib-toggle .kf-seg-btn { min-height: 34px; padding: 0 var(--sp-4); font-size: var(--fs-body-s); }
 .ib-head-link { min-height: 44px; padding: 0; border: none; background: none; font: inherit; font-size: var(--fs-body-s); color: var(--ink-muted); cursor: pointer; }
+/* "· N snoozed" on the count line opens the Snoozed view (snoozed captures were in neither tab). */
+.ib-sum-link { padding: 0; border: none; background: none; font: inherit; color: inherit; text-decoration: underline dotted; text-underline-offset: 3px; cursor: pointer; }
+.ib-sum-link:hover { color: var(--ink-body); }
 
 /* ── Search deep-link banner (3a): a sentence, not mono caps; a 28px close. ── */
 .ib-banner { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--radius-input);
