@@ -5,7 +5,7 @@ export const APP_URL = 'https://kais-flow.kaidagoat.workers.dev'
 export const REPO = 'https://github.com/khairyKY/kais-flow'
 export const RELEASES_URL = `${REPO}/releases`
 // Kai: put the address people should write to here; until then the pages show "[contact email]".
-export const CONTACT_EMAIL = ''
+export const CONTACT_EMAIL = 'khairyshhn1@gmail.com'
 
 // Kai 2026-10-12: turned off. `true` brings back /ar/, the EN | ع switch, the hreflang links, its
 // sitemap entry and its share card (src/pages/ar.mjs and public/og/ar.png are kept for that).

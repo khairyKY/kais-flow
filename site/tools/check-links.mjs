@@ -16,7 +16,8 @@ assert.equal(siteUrl({}), 'https://kais-flow-site.pages.dev')
 
 const DIST = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 // Kai's own words, still to come (site/README.md "Placeholders for Kai"): page → how many
-const ALLOWED = { 'about/index.html': 5, 'privacy/index.html': 1, 'terms/index.html': 1 }
+// 2026-10-13: the contact email is set (data.mjs CONTACT_EMAIL), so privacy and terms have none left.
+const ALLOWED = { 'about/index.html': 5 }
 
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(d, e.name)) : [path.join(d, e.name)]))
 const html = walk(DIST).filter((f) => f.endsWith('.html'))

@@ -1,5 +1,21 @@
 [
   {
+    "v": "v1.1.5",
+    "date": "2026-10-14",
+    "title": "Repairs, and updates that install in place",
+    "highlights": [
+      "Activity your AI assistant logged while its bug was live is repaired, so it counts like everything else",
+      "The Android app is now signed with its permanent key: after one last reinstall, updates install over the top",
+      "The privacy policy has a real address to write to"
+    ],
+    "icons": [
+      "check",
+      "android",
+      "mail"
+    ],
+    "art": "clover-awake"
+  },
+  {
     "v": "v1.1.4",
     "date": "2026-10-13",
     "title": "Time Slots and your Google calendars",
