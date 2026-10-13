@@ -200,12 +200,12 @@ for (const [label, view, width, talk] of [['phone', PHONE, 390, '🎤 Talk'], ['
     await thumb.scrollIntoViewIfNeeded().catch(() => {})
     await shot(page, `${name}-2-photo`)
 
-    // ── remove → confirm → object deleted + path dropped ──
+    // ── remove → gone at once with Undo (no confirm, 2026-10-12 grammar pass); the stored file is
+    //    deleted only after the 6s Undo toast leaves ──
     await page.getByRole('button', { name: 'Remove photo' }).click()
-    await page.getByRole('button', { name: 'Remove', exact: true }).click()
-    check(`${name} remove deletes the object`, await until(() => state.removed.includes(up?.key)), JSON.stringify(state.removed))
     check(`${name} remove drops the path`, await until(() => (lastEntry(state)?.media_paths ?? ['x']).length === 0))
     check(`${name} thumbnail gone`, await until(async () => (await thumb.count()) === 0))
+    check(`${name} remove deletes the object once the Undo toast is gone`, await until(() => state.removed.includes(up?.key), 15000), JSON.stringify(state.removed))
 
     if (name === 'desk-day') {
       await pickPhoto(page, '＋ Photo', BIG)

@@ -666,6 +666,11 @@ export function AppLayout() {
   useEffect(() => {
     const onEsc = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || e.defaultPrevented || isTypingTarget(e.target)) return
+      // Only from the page itself. With focus on a control (a stepper's +, a chip, a row's ⋯), Esc
+      // means "leave this control" — it used to pop the whole page too (2026-10-13: Esc after the
+      // milestone weight stepper threw you back to Projects).
+      const focused = document.activeElement
+      if (focused && focused !== document.body && !focused.classList.contains('app-main-content')) return
       const [section, detail] = pathname.split('/').filter(Boolean)
       if (!detail) return
       e.preventDefault()

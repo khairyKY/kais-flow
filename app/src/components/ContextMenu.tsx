@@ -53,6 +53,8 @@ export function ContextMenu({ items, position, onClose, header, width, label }: 
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
   const openTimer = useRef<number | null>(null)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
+  // When the menu opened — once, on mount (callers often pass a new onClose every render).
+  const openedAt = useRef(performance.now())
 
   useEscapeStack(true, onClose)
 
@@ -63,8 +65,11 @@ export function ContextMenu({ items, position, onClose, header, width, label }: 
       }
     }
     // A fixed menu over a scrolled list detaches from the row it was opened on — close it. A
-    // scroll inside the menu (a submenu's own list: the date picker's times) is not that.
+    // scroll inside the menu (a submenu's own list: the date picker's times) is not that. Scroll
+    // events arrive a frame late, so one from BEFORE the menu opened (a wheel flick, or the row
+    // scrolled into view by the click itself) can land just after it — not a reason to close.
     function handleScroll(e: Event) {
+      if (performance.now() - openedAt.current < 120) return
       if (!ref.current?.contains(e.target as Node)) onClose()
     }
     document.addEventListener('mousedown', handleClick)

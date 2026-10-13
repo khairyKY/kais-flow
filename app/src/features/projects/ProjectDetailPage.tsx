@@ -784,7 +784,7 @@ export function ProjectDetailPage() {
                         <span
                           ref={(el) => { if (el && !el.contains(document.activeElement)) el.querySelector('input')?.focus() }}
                           onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setWeighingMilestone(null) }}
-                          onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') setWeighingMilestone(null) }}
+                          onKeyDown={(e) => { if (e.key === 'Escape' || e.key === 'Enter') { e.preventDefault(); setWeighingMilestone(null) } }}
                           style={{ display: 'inline-flex' }}
                         >
                           <NumberField value={m.weight} onChange={(n) => reweighProjectMilestone(project, m.id, n)} min={1} max={100} ariaLabel={`Weight of ${m.title}`} style={{ fontSize: 12.5 }} />

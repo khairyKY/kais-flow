@@ -175,7 +175,7 @@ async function pickDay(page, dd) {
   check('milestone weight steps up and saves', p?.milestones?.[0]?.weight === 3, JSON.stringify(p?.milestones))
   await page.keyboard.press('Escape')
 
-  await page.getByRole('button', { name: 'Buy domain' }).click()
+  await page.getByRole('button', { name: 'Buy domain', exact: true }).click() // the ✕ is "Remove checklist item Buy domain" since the grammar pass
   await page.getByRole('textbox', { name: 'Checklist item', exact: true }).fill('Buy the .com domain')
   await page.keyboard.press('Enter')
   p = last(await sent(state, 'projects'))
