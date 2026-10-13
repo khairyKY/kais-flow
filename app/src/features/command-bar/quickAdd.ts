@@ -1,13 +1,31 @@
-import { blockIfTimed, enrichTypedTask } from '../capture/api'
+import { blockIfTimed, enrichTypedInboxItem, enrichTypedTask } from '../capture/api'
 import { createEvent, deleteEvent } from '../calendar/api'
+import { captureText } from '../inbox/api'
 import { createTask, toastAdded } from '../tasks/api'
 import { addDays } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { writeRow } from '../../lib/outbox'
+import { playSound } from '../../lib/sounds'
+import { useToastStore } from '../../lib/toastStore'
 import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDueChip } from './dueChip'
-import { quickAddTask, type ParsedCommand } from './parseCommand'
+import { hasStructure, quickAddTask, type ParsedCommand } from './parseCommand'
+
+/** THE capture rule for a typed line (Kai 2026-10-12: "Enter = the one capture path") — the command
+ * bar's Enter and the tray's quick capture (P7e A21) both land through here. Written at once from the
+ * local parse, never waiting on the network: an event when one was asked for; a line with tokens as a
+ * task (addTypedTask); a plain line in the Inbox, where the AI then reads it and may file it
+ * (capture/api enrichTypedInboxItem). Every landing says where it went. */
+export function captureTyped(parsed: ParsedCommand, typed: string, kind: 'task' | 'event' = 'task'): void {
+  playSound('capture')
+  if (kind === 'event') addTypedEvent(parsed, typed)
+  else if (hasStructure(parsed)) addTypedTask(parsed, typed, parsed.projectMatch ?? parsed.domainMatch)
+  else {
+    void enrichTypedInboxItem(captureText(typed), typed)
+    useToastStore.getState().push({ message: 'Added to Inbox' })
+  }
+}
 
 /** The one capture rule for a typed task (Kai 2026-10-12: "Enter = the one capture path"; the command
  * bar's Enter and the Tasks page's quick add): the instant local parse lands it now — on the calendar

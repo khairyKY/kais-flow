@@ -9,9 +9,18 @@ vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: () => [],
 vi.mock('../../lib/outbox', () => ({ writeRow: (table: string, row: Record<string, unknown>, op?: string) => writes.push({ table, row, op }) }))
 vi.mock('../../lib/activity', () => ({ logActivity: () => undefined }))
 vi.mock('../../lib/undo', () => ({ toastUndo: (message: string, undo: () => void) => toasts.push({ message, undo }) }))
-vi.mock('../capture/api', () => ({ blockIfTimed: () => null, enrichTypedTask: async () => undefined, enrichTypedInboxItem: async () => undefined }))
+const pushed: string[] = []
+const blocked: boolean[] = []
+const enriched: string[] = []
+vi.mock('../../lib/toastStore', () => ({ useToastStore: { getState: () => ({ push: ({ message }: { message: string }) => pushed.push(message) }) } }))
+vi.mock('../../lib/sounds', () => ({ playSound: () => undefined }))
+vi.mock('../capture/api', () => ({
+  blockIfTimed: (_task: unknown, timed: boolean) => (blocked.push(timed), null),
+  enrichTypedTask: async (_task: unknown, typed: string) => void enriched.push(`task:${typed}`),
+  enrichTypedInboxItem: async (_item: unknown, typed: string) => void enriched.push(`inbox:${typed}`),
+}))
 
-const { addTypedEvent } = await import('./quickAdd')
+const { addTypedEvent, captureTyped } = await import('./quickAdd')
 
 const now = new Date('2026-10-12T07:00:00Z') // Mon 12 Oct, 10:00 Cairo (UTC+3)
 const project = { id: 'p1', domain_id: 'd1', name: 'Shaheen', type: 'standard', status: 'active', created_at: '', updated_at: '' } as const
@@ -46,5 +55,47 @@ describe('addTypedEvent (P7e A11: the bar can make an event)', () => {
     const typed = 'Gym every monday 6pm #shaheen'
     addTypedEvent(parse(typed), typed, now)
     expect(events().at(-1)).toMatchObject({ title: 'Gym', starts_at: '2026-10-12T15:00:00.000Z', recurrence_rule: 'FREQ=WEEKLY;BYDAY=MO', recurrence_exdates: [], project_id: 'p1' })
+  })
+})
+
+// P7e A21: the bar's Enter and the tray's quick capture land through this one rule.
+describe('captureTyped (the one capture rule)', () => {
+  beforeEach(() => {
+    writes.length = 0
+    toasts.length = 0
+    pushed.length = 0
+    blocked.length = 0
+    enriched.length = 0
+  })
+  const tasks = () => writes.filter((w) => w.table === 'tasks').map((w) => w.row)
+
+  it('tokens: a task now, a typed time blocks the calendar, the toast names where, the AI fills after', () => {
+    const typed = 'Call Omar tomorrow 3pm #shaheen !! *calls'
+    captureTyped(parse(typed), typed)
+    expect(tasks()[0]).toMatchObject({ title: 'Call Omar', due_at: '2026-10-13T12:00:00.000Z', project_id: 'p1', priority: 2, labels: ['calls'] })
+    expect(blocked).toEqual([true])
+    expect(toasts[0].message).toMatch(/^Added to .+ · Shaheen$/) // the day word reads the real clock
+    expect(enriched).toEqual([`task:${typed}`])
+  })
+
+  it('a plain line: the Inbox at once, said so, and the AI reads it there', () => {
+    captureTyped(parse('that idea about the hero image'), 'that idea about the hero image')
+    expect(writes.map((w) => w.table)).toEqual(['inbox_items'])
+    expect(pushed).toEqual(['Added to Inbox'])
+    expect(enriched).toEqual(['inbox:that idea about the hero image'])
+  })
+
+  it('a repeat, notes and a link all reach the task', () => {
+    const typed = 'Stretch every day 7am // ten minutes https://example.com/routine'
+    captureTyped(parse(typed), typed)
+    expect(tasks()[0]).toMatchObject({ title: 'Stretch', recurrence_rule: 'FREQ=DAILY', notes: 'ten minutes https://example.com/routine' })
+    const linked = 'read https://example.com/essay friday'
+    captureTyped(parse(linked), linked)
+    expect(tasks().at(-1)).toMatchObject({ title: 'read', external_ref: { source: 'link', url: 'https://example.com/essay' } })
+  })
+
+  it('kind event: an event, not a task', () => {
+    captureTyped(parse('Dinner 8pm'), 'Dinner 8pm', 'event')
+    expect(writes.map((w) => w.table)).toEqual(['calendar_events'])
   })
 })

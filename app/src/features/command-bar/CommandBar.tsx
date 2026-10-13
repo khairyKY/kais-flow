@@ -4,20 +4,18 @@ import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { formatDuration, priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { repeatLabel } from '../tasks/taskSheetMath'
-import { captureText } from '../inbox/api'
-import { enrichTypedInboxItem, transcribeAudio } from '../capture/api'
+import { transcribeAudio } from '../capture/api'
 import { VOICE_ALLOWANCE_USED_UP, isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from '../capture/aiAllowance'
 import { appendDictation, micAction, pickMimeType } from '../capture/holdToTalk'
 import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
 import { useAuth } from '../auth/AuthProvider'
 import { hasStructure, parseCommand } from './parseCommand'
-import { addTypedEvent, addTypedTask } from './quickAdd'
+import { captureTyped } from './quickAdd'
 import { formatDueChip } from './dueChip'
 import { CAPTURE_INPUT_ID, useCommandBarStore } from './commandBarStore'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { linkLabel } from '../../lib/links'
-import { playSound } from '../../lib/sounds'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Chip, KeyChip, Segmented } from '../../components/kit'
 import { Icon } from '../../components/Icon'
@@ -165,22 +163,12 @@ export function CommandBar() {
   function submit(close: () => void) {
     const trimmed = text.trim()
     if (!trimmed) return
-    playSound('capture')
     // Written at once from the local parse (never waits on the network); then the AI's read fills in
     // whatever the typed tokens left empty, or decides where a plain line belongs (Kai 2026-10-07:
     // "every property is extracted… let the AI understand the intent and decide").
     // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture": the AI fills every typed
-    // capture after it lands anyway). Each landing says where it went — no silent landings.
-    if (kind === 'event') {
-      addTypedEvent(parsed, trimmed)
-    } else if (hasStructure(parsed)) {
-      // The same rule as Tasks' quick add (./quickAdd): a typed time puts it on the calendar as a
-      // block, a date alone doesn't; "Added to Tomorrow · Shaheen" with Undo; the AI fills the rest.
-      addTypedTask(parsed, trimmed, parsed.projectMatch ?? parsed.domainMatch)
-    } else {
-      void enrichTypedInboxItem(captureText(trimmed), trimmed)
-      useToastStore.getState().push({ message: 'Added to Inbox' })
-    }
+    // capture after it lands anyway) — ./quickAdd captureTyped, shared with the tray (P7e A21).
+    captureTyped(parsed, trimmed, kind)
     setText('')
     setIgnored([])
     setKind('task')
