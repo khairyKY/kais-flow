@@ -32,8 +32,11 @@ export const RELEASES = JSON.parse(fs.readFileSync(new URL('./releases.json', im
 // The newest release at build time. The pages ask GitHub for the current one when they load
 // (site.js) and fall back to this if GitHub doesn't answer.
 export const LATEST = { tag: RELEASES[0].v, date: RELEASES[0].date, apkMB: 34, exeMB: 32 }
+// The newest release's installers under fixed names (android.yml / desktop.yml upload a version-less copy
+// beside the versioned file): the download buttons. A release's own file (apkUrl) is for its notes.
+export const APK_LATEST = `${REPO}/releases/latest/download/kais-flow.apk`
+export const EXE_LATEST = `${REPO}/releases/latest/download/kais-flow-windows-setup.exe`
 export const apkUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag}.apk`
-export const exeUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag}-windows-setup.exe`
 
 // What's growing — Now / Next / Later. Now = what builders are working on this month (October 2026);
 // Next / Later = the open items in docs/ROADMAP.md. Shipped things leave for Field notes.

@@ -59,9 +59,21 @@ export function shouldNudge(latest: string, current: string, lastNotified: strin
   return compareVersions(latest, current) > 0 && (!lastNotified || compareVersions(latest, lastNotified) > 0)
 }
 
-/** The quiet check on start runs at most once a day (a clock set back counts as due). */
+/** How often the quiet check runs (Kai 2026-10-14: once a day missed most releases on a day with several).
+ * ponytail: 3 h keeps GitHub's unauthenticated 60 requests an hour far away; a push channel if it ever must be instant. */
+export const CHECK_EVERY_MS = 3 * 3_600_000
+/** A newer release whose installer for this device is still building: look again this soon, not in 3 h
+ * (the deploy lands before the APK / Windows installer, so a check in that window used to spend the day). */
+export const PENDING_RETRY_MS = 15 * 60_000
+
+/** The quiet check on start and on return: due every CHECK_EVERY_MS (a clock set back counts as due). */
 export function dueForCheck(lastChecked: number | null | undefined, now: number): boolean {
-  return lastChecked == null || now - lastChecked >= 86_400_000 || now < lastChecked
+  return lastChecked == null || now - lastChecked >= CHECK_EVERY_MS || now < lastChecked
+}
+
+/** What to remember as "last checked": a pending release is checked again in PENDING_RETRY_MS. */
+export function checkedStamp(pending: boolean, now: number): number {
+  return pending ? now - CHECK_EVERY_MS + PENDING_RETRY_MS : now
 }
 
 /** The Windows toast as well? Not while someone is looking at the app (the in-app toast is the news

@@ -2,7 +2,7 @@ import { appPlatform, checkForUpdate, compareVersions, installedVersion, RELEASE
 import { appZone } from '../../lib/appZone'
 import { queryClient } from '../../lib/queryClient'
 import { useToastStore } from '../../lib/toastStore'
-import { BUNDLED_VERSION, highlightsFromBody, nativeNudgeAllowed, noteFor, openWhatsNew, readMemory, remember, shouldNudge, useWhatsNew, type ReleaseNote } from '../../lib/whatsNew'
+import { BUNDLED_VERSION, checkedStamp, highlightsFromBody, nativeNudgeAllowed, noteFor, openWhatsNew, readMemory, remember, shouldNudge, useWhatsNew, type ReleaseNote } from '../../lib/whatsNew'
 import { lookingHere } from '../notifications/local'
 import { native } from '../tray/native'
 import type { NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
@@ -58,7 +58,7 @@ async function runCheck(uid: string | undefined): Promise<void> {
   if (!uid || !mem || result.kind === 'offline') return // offline: try again next time
   // Only a version you can update to now: a release whose installer is still building waits.
   const nudge = !!available && result.kind !== 'pending' && shouldNudge(available.v, current, mem.notified ?? null)
-  remember(uid, { checkedAt: Date.now(), ...(nudge && available ? { notified: available.v } : null) })
+  remember(uid, { checkedAt: checkedStamp(!!available && result.kind === 'pending', Date.now()), ...(nudge && available ? { notified: available.v } : null) })
   if (!nudge || !available) return
   const v = available.v
   useToastStore.getState().push({ message: `${v} is out`, action: { label: 'See what’s new', run: () => openWhatsNew(v) } })
