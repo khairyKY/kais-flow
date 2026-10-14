@@ -340,7 +340,7 @@ export function SearchPage() {
             aria-label="Search"
             style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
           />
-          {!isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>esc clears</span>}
+          {!isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Esc clears</span>}
         </div>
       </div>
 

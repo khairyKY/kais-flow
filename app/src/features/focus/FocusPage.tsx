@@ -999,7 +999,7 @@ export function FocusPage() {
                   }}
                   style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', marginLeft: 6 }}
                 >
-                  end early…
+                  End early…
                 </span>
               </>
             ) : (
@@ -1065,7 +1065,7 @@ export function FocusPage() {
           className="fp-garden-link"
           style={{ position: 'absolute', right: 36, bottom: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
         >
-          open the garden →
+          Open the garden →
         </span>
       </div>
 

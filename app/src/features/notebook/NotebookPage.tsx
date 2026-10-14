@@ -258,7 +258,7 @@ export function NotebookPage() {
       <Icon name="camera" size={22} />
       <span>
         Bring back your ticks
-        <small>photo of a done page</small>
+        <small>Photo of a done page</small>
       </span>
     </button>
   )

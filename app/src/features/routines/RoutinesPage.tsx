@@ -352,7 +352,7 @@ export function RoutinesPage() {
               >
                 <span data-ritual-title style={{ display: 'block', ...(isMobile ? oneLine : null) }}>{kind === 'morning' ? 'Morning ritual' : 'Evening ritual'}</span>
                 <span data-ritual-sub style={{ display: 'block', ...(isMobile ? oneLine : null), fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>
-                  {kind === 'morning' ? 'plan the day' : 'close its loops'}
+                  {kind === 'morning' ? 'Plan the day' : 'Close its loops'}
                 </span>
               </button>
               <button
@@ -365,7 +365,7 @@ export function RoutinesPage() {
                 style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: 'none', padding: isMobile ? 0 : '4px 2px', width: isMobile ? 48 : undefined, height: isMobile ? 48 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', cursor: 'pointer', color: ritualPins[kind] ? 'var(--acc-terra)' : 'var(--ink-hairline)' }}
               >
                 <PinIcon size={isMobile ? 16 : 10} filled={ritualPins[kind]} />
-                {!isMobile && (ritualPins[kind] ? 'pinned' : 'pin')}
+                {!isMobile && (ritualPins[kind] ? 'Pinned' : 'Pin')}
               </button>
             </div>
           ))}

@@ -422,7 +422,7 @@ export function ProjectsPage() {
                     </div>
                   </div>
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
-                    {p.target_date ? new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', timeZone: 'UTC' }) : 'no date'}
+                    {p.target_date ? new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', timeZone: 'UTC' }) : 'No date'}
                   </span>
                   {moreButton('project', p.id, p.name)}
                 </div>
@@ -650,7 +650,7 @@ export function ProjectsPage() {
                   <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)' }}>
                     {stat.doneMilestones} / {stat.totalMilestones} milestones
                   </span>
-                  <span style={mchipLast}>{p.target_date ? `target ${dayMonth(p.target_date)}` : 'no date'}</span>
+                  <span style={mchipLast}>{p.target_date ? `target ${dayMonth(p.target_date)}` : 'No date'}</span>
                   {moreButton('project', p.id, p.name)}
                 </div>
               )
@@ -795,7 +795,7 @@ export function ProjectsPage() {
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}><EmojiText text={p.name} /></div>
                                 <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
-                                  {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', timeZone: 'UTC' })}` : 'no date'}
+                                  {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', timeZone: 'UTC' })}` : 'No date'}
                                 </div>
                               </div>
                               <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color ?? d.color ?? (p.type === 'retainer' ? 'var(--acc-lavender-deep)' : 'var(--acc-terra)'), flex: 'none', marginTop: 3 }} />

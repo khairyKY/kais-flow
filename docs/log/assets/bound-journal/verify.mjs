@@ -152,7 +152,8 @@ async function open(route, o = {}) {
   page.on('pageerror', (e) => errors.push(String(e)))
   await page.clock.install({ time: NOW })
   await page.goto(BASE + route, { waitUntil: 'domcontentloaded' })
-  if (!o.hold) await page.waitForSelector('.app-main-content', { timeout: 20000 }).catch(() => {})
+  // wait past the lazy route's loading dot: the page column has real text
+  if (!o.hold) await page.waitForFunction(() => (document.querySelector('.app-main-content')?.innerText.trim().length ?? 0) > 60, null, { timeout: 25000 }).catch(() => {})
   await sleep(o.hold ? 900 : 1600)
   return { page, ctx, errors }
 }
@@ -171,6 +172,35 @@ if (process.env.EXPLORE) {
   const names = await page.$$eval('button, [role=button], a, [role=tab], [role=menuitemradio]', (els) => els.map((e) => `${e.tagName.toLowerCase()} "${(e.getAttribute('aria-label') || e.textContent || '').trim().slice(0, 50)}"`))
   console.log([...new Set(names)].join('\n'))
   await ctx.close(); await browser.close(); process.exit(0)
+}
+
+// ── SCAN=1 lists short labels that start lower-case: copy written for CSS caps, which B no longer
+// applies. Handwriting (Caveat) and inputs are skipped; the rest is for a human to judge. ──
+if (process.env.SCAN) {
+  const routes = ['/today', '/calendar', '/journal', '/herbarium', '/tasks', '/inbox', '/library', '/notebook', '/settings', '/projects', '/routines', '/people', '/focus', '/weekly-review', '/activity', '/trash', '/search']
+  const found = new Map()
+  for (const v of [desktop, phone]) {
+    for (const r of routes) {
+      const { page, ctx } = await open(r, { view: v })
+      if (process.env.SCAN === 'caps') await page.evaluate(() => (window.__capsOnly = true))
+      const hits = await page.evaluate(() => {
+        const out = []
+        for (const el of document.querySelectorAll('body *')) {
+          const own = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim()
+          if (!own || own.length > 40 || !/^[a-z]/.test(own)) continue
+          const cs = getComputedStyle(el)
+          if (window.__capsOnly && cs.textTransform !== 'uppercase') continue
+          if (/Caveat/.test(cs.fontFamily) || cs.display === 'none' || cs.visibility === 'hidden' || el.closest('input,textarea,[contenteditable],script,style')) continue
+          out.push(own)
+        }
+        return out
+      })
+      for (const h of hits) found.set(h, (found.get(h) ?? new Set()).add(r))
+      await ctx.close()
+    }
+  }
+  for (const [t, rs] of [...found].sort()) console.log(`${JSON.stringify(t).padEnd(44)} ${[...rs].join(' ')}`)
+  await browser.close(); process.exit(0)
 }
 
 const SCENES = []
@@ -233,11 +263,10 @@ scene('cal-create-desktop', async (theme) => {
 scene('cal-drag-desktop', async (theme) => {
   const s = await open('/calendar', { theme, view: desktop, calView: 'day' })
   const b = await s.page.locator('.fc-timegrid-event', { hasText: 'Call with Omar' }).first().boundingBox()
-  await s.page.mouse.move(b.x + b.width / 2, b.y + 10)
+  await s.page.mouse.move(b.x + b.width / 2, b.y + 12)
   await s.page.mouse.down()
-  await s.page.mouse.move(b.x + b.width / 2, b.y + 30, { steps: 6 })
-  await s.page.mouse.move(b.x + b.width / 2 - 20, b.y + 120, { steps: 12 })
-  await sleep(300)
+  for (let i = 1; i <= 24; i++) { await s.page.mouse.move(b.x + b.width / 2 - i, b.y + 12 + i * 6); await sleep(25) }
+  await sleep(600)
   return s // screenshot mid-drag (button still held)
 })
 scene('cal-more-desktop', async (theme) => {

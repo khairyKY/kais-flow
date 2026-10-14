@@ -906,7 +906,7 @@ export function JournalPage() {
                 >
                   <div style={{ fontSize: 13, color: 'var(--ink-body)', fontWeight: 500 }}>{dayName}, {monthDay}</div>
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)', marginTop: 3 }}>
-                    {entryForDate?.mood ? `${entryForDate.mood} · writing…` : 'writing…'}
+                    {entryForDate?.mood ? `${entryForDate.mood.charAt(0).toUpperCase() + entryForDate.mood.slice(1)} · writing…` : 'Writing…'}
                   </div>
                 </div>
               )
@@ -922,7 +922,7 @@ export function JournalPage() {
                   {/* Until the list arrives a day isn't "empty", only unknown: the line keeps its
                       height and says nothing (Polish G). */}
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>
-                    {known ? entryForDate?.mood || (hasEntry ? 'kept' : 'empty') : ' '}
+                    {known ? (entryForDate?.mood ? entryForDate.mood.charAt(0).toUpperCase() + entryForDate.mood.slice(1) : hasEntry ? 'Kept' : 'Empty') : ' '}
                   </div>
                 </div>
               )

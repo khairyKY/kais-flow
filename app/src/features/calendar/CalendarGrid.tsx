@@ -486,6 +486,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       // ramp to a gentle 300px/s. Stated explicitly so nobody "cleans it up" to false.
       dragScroll
       dayMaxEvents
+      allDayText="All day"
       // §4 strip: one day needs no day row; two read "FRI · TODAY" in mono. No empty all-day band.
       dayHeaders={!strip || visibleDays > 1}
       allDaySlot={!strip || events.some((e) => e.allDay || isSpan(e))}

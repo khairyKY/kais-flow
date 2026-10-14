@@ -404,7 +404,7 @@ export function LibraryPage() {
                       cursor: 'pointer'
                     }}
                   >
-                    {tab}
+                    {tab.charAt(0).toUpperCase() + tab.slice(1)}
                   </span>
                 ))}
               </div>
@@ -553,7 +553,7 @@ export function LibraryPage() {
               )}
 
               {activeNote && selectedNoteId && (
-                <div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>
+                <div className="kf-page" style={{ background: 'var(--bg-page)', borderRadius: 4, border: '1px solid var(--border-page)', padding: '16px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span className="fhelp">Note</span>
                     <span className="fhelp">{new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
@@ -586,7 +586,7 @@ export function LibraryPage() {
               )}
 
               {activeQuote && selectedQuoteId && (
-                <div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>
+                <div className="kf-page" style={{ background: 'var(--bg-page)', borderRadius: 4, border: '1px solid var(--border-page)', padding: '16px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span className="fhelp">Quote</span>
                     <span className="fhelp">{new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>

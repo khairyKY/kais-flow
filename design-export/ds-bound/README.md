@@ -84,7 +84,9 @@ A copy of `../ds/` with **direction B, Bound Journal**, applied (chosen by Kai, 
 
 ## What components still have to do
 
-Tokens can't carry these. Whoever builds B applies them:
+Tokens can't carry these. **In the app (branch `claude/bound-journal`) they are done**: the values are in `app/src/styles/tokens/`, and `app/src/styles/bound.css` applies the rules below globally (its header explains each one). Pages carry the class `kf-page`: the goal card (Today, phone and desktop), the journal writing and quote cards, the notebook paper, the Library's open note and open quote, and the Herbarium's specimens and sheets. Copy written for CSS caps was capitalised in the source. The phone page title stays 26px because Today's title shares its row with three buttons.
+
+The rules:
 
 1. **Pages** switch to `--radius-page`, `--bg-page` / `--paper-goal`, `--border-page` / `--line-goal` and `--shadow-page` / `--shadow-goal`, and draw grain at `opacity: var(--grain-page)`. Tape and `--tilt-*` go on pages only.
 2. **The app root** draws its grain layer at `opacity: var(--grain-app)` (0), so the canvas is clean.

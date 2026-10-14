@@ -221,9 +221,9 @@ export function WeeklyReviewPage() {
             <img src={`${A}/fern/full.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>The season so far</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>the numbers behind the week</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>The numbers behind the week</div>
             </div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)' }}>{showSeason ? 'close ↑' : 'open →'}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)' }}>{showSeason ? 'Close ↑' : 'Open →'}</span>
           </button>
 
           {showSeason && (
@@ -361,7 +361,7 @@ function SweepRow({
             onClick={() => onVerdict(v)}
             style={{ ...CHIP_BASE, ...VERDICT_STYLE[v], opacity: verdict && verdict !== v ? 0.45 : 1 }}
           >
-            {v}
+            {v.charAt(0).toUpperCase() + v.slice(1)}
           </button>
         ))}
       </span>
@@ -421,7 +421,7 @@ function SweepList({
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px' }}>
           <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>{looseCount} loose task{looseCount === 1 ? '' : 's'} with no home</span>
           <span style={{ marginLeft: 'auto' }}>
-            <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', textDecoration: 'none' }}>sort them →</Link>
+            <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', textDecoration: 'none' }}>Sort them →</Link>
           </span>
         </div>
       )}
@@ -511,7 +511,7 @@ function DomainCard({
         <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>up next</span>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Up next</span>
       </div>
     )
   }
@@ -524,7 +524,7 @@ function DomainCard({
         <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>sweeping…</span>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Sweeping…</span>
       </div>
       {sweepList({ marginTop: 12 })}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
