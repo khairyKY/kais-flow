@@ -147,10 +147,10 @@ export function TrashPage() {
   ))
 
   const styles = `
-    .tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
+    .tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
     .trow { display:flex; align-items:center; gap:13px; padding:12px 2px; border-bottom:1px dashed var(--line-dashed); }
     .aghd { position:relative; display:flex; align-items:center; gap:12px; margin:26px 0 4px; padding:6px 10px; border-radius:5px; overflow:hidden; }
-    .aghd span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; position:relative; }
+    .aghd span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing: var(--ls-meta); color:var(--ink-faint); white-space:nowrap; position:relative; }
     .aghd .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); position:relative; }
     .leafbg { position:absolute; width:16px; height:10px; border-radius:80% 20% 70% 30%; opacity:0.16; }
   `

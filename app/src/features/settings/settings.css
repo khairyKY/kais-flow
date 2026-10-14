@@ -57,7 +57,7 @@
   align-items: center;
   gap: 10px 24px;
   padding: 12px 0;
-  border-top: 1px dashed var(--line-dashed);
+  border-top: 1px solid var(--line-dashed);
 }
 .st-head + .st-row,
 .st-card > .st-row:first-child {
@@ -153,7 +153,6 @@
   font-family: var(--font-mono);
   font-size: var(--fs-meta-l);
   letter-spacing: var(--ls-meta);
-  text-transform: uppercase;
   color: var(--ink-faint);
 }
 .st-sub-label + .st-row {
@@ -233,7 +232,7 @@
   grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 8px;
   padding: 12px 0;
-  border-top: 1px dashed var(--line-dashed);
+  border-top: 1px solid var(--line-dashed);
 }
 .st-pack {
   position: relative;
@@ -349,7 +348,7 @@
 .st-nav {
   width: 184px;
   flex: none;
-  border-right: 1px dashed var(--line-solid);
+  border-right: 1px solid var(--line-solid);
 }
 .st-nav-in {
   position: sticky;
@@ -445,7 +444,7 @@
   margin: 16px -24px -20px;
   padding: 16px 24px 4px;
   background: var(--paper-bone);
-  border-top: 1px dashed var(--line-dashed);
+  border-top: 1px solid var(--line-dashed);
   border-radius: 0 0 var(--radius-sharp) var(--radius-sharp);
 }
 .st-gh-rules-label + .st-row {
@@ -472,13 +471,12 @@
   font-family: var(--font-mono);
   font-size: var(--fs-meta-l);
   letter-spacing: var(--ls-meta);
-  text-transform: uppercase;
   color: var(--ink-faint);
 }
 .st-group-label > span:last-child {
   flex: 1;
   height: 1px;
-  border-bottom: 1px dashed var(--line-dashed);
+  border-bottom: 1px solid var(--line-dashed);
 }
 .st-pair {
   display: grid;

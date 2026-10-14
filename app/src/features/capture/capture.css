@@ -223,7 +223,7 @@ button.kf-capture.kf-press {
 .kf-rec-time {
   font-family: var(--font-mono);
   font-size: var(--fs-mono-s);
-  letter-spacing: 0.04em;
+  letter-spacing: var(--ls-meta);
   color: var(--ink-body);
   font-variant-numeric: tabular-nums;
 }
@@ -330,7 +330,6 @@ button.kf-capture.kf-press {
   margin-top: var(--sp-3);
   font-family: var(--font-mono);
   font-size: var(--fs-meta);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
 }

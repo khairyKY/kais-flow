@@ -22,6 +22,8 @@ import './index.css'
 // surfaces that import no CSS at all (kit chips, task rows, calendar), so it loads once here
 // instead of another six per-file imports. index.css is frozen, hence main.tsx.
 import './features/projects/xfx.css'
+// Bound Journal (B): the global look rules tokens can't carry (sentence-case metadata, page paper).
+import './styles/bound.css'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
 import { installExternalLinks, isNativeShell, syncShellChrome } from './lib/platform'

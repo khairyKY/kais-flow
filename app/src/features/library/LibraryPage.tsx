@@ -341,8 +341,7 @@ export function LibraryPage() {
           .chip {
             font-family: var(--font-mono);
             font-size: var(--fs-meta);
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            letter-spacing: var(--ls-meta);
             padding: 4px 9px;
             border-radius: 999px;
             display: inline-flex;
@@ -352,8 +351,7 @@ export function LibraryPage() {
           .flabel {
             font-family: var(--font-mono);
             font-size: var(--fs-meta);
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
+            letter-spacing: var(--ls-meta);
             color: var(--ink-faint);
           }
           .fhelp {
@@ -632,8 +630,7 @@ export function LibraryPage() {
         .chip {
           font-family: var(--font-mono);
           font-size: var(--fs-meta);
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
+          letter-spacing: var(--ls-meta);
           padding: 4px 9px;
           border-radius: 999px;
           display: inline-flex;
@@ -643,8 +640,7 @@ export function LibraryPage() {
         .flabel {
           font-family: var(--font-mono);
           font-size: var(--fs-meta);
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
+          letter-spacing: var(--ls-meta);
           color: var(--ink-faint);
         }
         .fhelp {

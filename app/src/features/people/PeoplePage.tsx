@@ -319,10 +319,10 @@ export function PeoplePage() {
         /* punch 57: multiply is a no-op over the night paper — Night.dc.html uses overlay @ 0.25. */
         .grain { position: absolute; inset: 0; pointer-events: none; z-index: 10; background-image: var(--noise-url); mix-blend-mode: multiply; opacity: 0.5; }
         [data-theme='night'] .grain { mix-blend-mode: overlay; opacity: 0.25; }
-        .chip { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
-        .flabel { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }
+        .chip { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }
+        .flabel { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
         .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
-        .slabel { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono); text-transform: uppercase; color: var(--ink-faint); }
+        .slabel { display: flex; align-items: center; gap: 12px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono); color: var(--ink-faint); }
         .slabel .r { flex: 1; height: 1px; border-bottom: 1px dashed var(--line-dashed); }
         .av { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var(--ink-body); flex: none; }
       `}</style>

@@ -249,8 +249,7 @@
   margin-top: 8px;
   font-family: var(--font-mono);
   font-size: 12px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
 }
 /* The kit Button, full width at the drawn 48 on both widths (desktop keeps its type scale). */

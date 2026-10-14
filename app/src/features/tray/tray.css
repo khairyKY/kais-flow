@@ -46,8 +46,7 @@ html:has(.kf-tray) body {
 .kf-tray-meta {
   font-family: var(--font-mono);
   font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
 }
 
@@ -119,7 +118,7 @@ html:has(.kf-tray) body {
   gap: 10px;
   height: 40px;
   padding: 0 10px 0 16px;
-  border-bottom: 1px dashed var(--line-dashed);
+  border-bottom: 1px solid var(--line-dashed);
 }
 .kf-tray-row-title {
   flex: 1;

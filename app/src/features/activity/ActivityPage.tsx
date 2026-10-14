@@ -246,7 +246,7 @@ export function ActivityPage() {
     'var(--ink-muted)'
 
   const styles = `
-    .afilter { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.08em; text-transform:uppercase; padding:6px 12px; border-radius:999px; cursor:pointer; border:1px solid var(--line-solid); color:var(--ink-muted); background:transparent; white-space:nowrap; user-select:none; display:inline-flex; align-items:center; transition:all 0.2s; }
+    .afilter { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); padding:6px 12px; border-radius:999px; cursor:pointer; border:1px solid var(--line-solid); color:var(--ink-muted); background:transparent; white-space:nowrap; user-select:none; display:inline-flex; align-items:center; transition:all 0.2s; }
     .afilter.on { background:var(--ink-body); color:var(--paper-parchment); border-color:var(--ink-body); }
     .aitem { display:flex; gap:15px; padding:0 2px; position:relative; }
     .arail { width:30px; flex:none; display:flex; flex-direction:column; align-items:center; }
@@ -255,12 +255,12 @@ export function ActivityPage() {
     .abody { flex:1; min-width:0; padding-bottom:20px; }
     button.abody { background:none; border:none; padding:0; color:inherit; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:5px; }
     button.abody:hover, button.abody:focus-visible { background:color-mix(in oklch, var(--ink-body) 4%, transparent); }
-    .chip { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.06em; text-transform:uppercase; padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; }
+    .chip { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; }
     .anotice { display:flex; gap:6px; flex-wrap:wrap; margin-top:-8px; }
     .anotice button { font:inherit; font-size:12.5px; font-weight:600; color:var(--ink-body); background:var(--paper-parchment); border:1px solid var(--line-control); border-radius:3px; padding:5px 10px; cursor:pointer; }
     .anotice button:hover { background:var(--paper-bone); }
     .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
-    .slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); }
+    .slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color:var(--ink-faint); }
     .slabel .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); }
   `
 

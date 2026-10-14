@@ -32,13 +32,13 @@ function task(patch: Partial<Task>): Task {
 
 describe('formatDuration', () => {
   it('renders minutes-only', () => {
-    expect(formatDuration(30)).toBe('30M')
+    expect(formatDuration(30)).toBe('30m')
   })
   it('renders hours-only', () => {
-    expect(formatDuration(60)).toBe('1H')
+    expect(formatDuration(60)).toBe('1h')
   })
   it('renders combined hours and minutes', () => {
-    expect(formatDuration(90)).toBe('1H30M')
+    expect(formatDuration(90)).toBe('1h\u00a030m')
   })
 })
 

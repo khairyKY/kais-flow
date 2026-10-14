@@ -7,7 +7,7 @@
   flex-wrap: wrap;
   gap: var(--sp-2);
   padding: 6px 40px;
-  border-bottom: 1px dashed var(--line-solid);
+  border-bottom: 1px solid var(--line-solid);
   background: var(--paper-linen);
   font-size: var(--fs-body-s);
   color: var(--ink-body);

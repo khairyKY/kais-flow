@@ -16,7 +16,7 @@ A copy of `../ds/` with **direction B, Bound Journal**, applied (chosen by Kai, 
 | Corners | `--radius-card` 16px, inner rows 12px, pills and circles | `--radius-page` 6px (paper isn't rounded) |
 | Depth | Tone + 1px hairline, **no shadow** | `--shadow-page` |
 | Tilt and tape | Never | Allowed: `--tilt-*`, washi tape |
-| Type | Inter Tight, sentence case. Metadata is `--font-meta`, untracked | Serif body; Caveat (`--font-hand`); Courier Prime only as a date stamp (`--font-stamp`) |
+| Type | Inter Tight, sentence case. Metadata reads `--font-mono`, which is now the interface face, untracked | Serif body; Caveat (`--font-hand`); Courier Prime only as a date stamp (`--font-stamp`, tracked `--ls-stamp`) |
 | Colour | Terra is the one action colour; selection is ink-filled (`--sel-bg` / `--sel-ink`) | Gold, botanical accents |
 
 ## What changed (old → new)
@@ -69,13 +69,16 @@ A copy of `../ds/` with **direction B, Bound Journal**, applied (chosen by Kai, 
 
 | Token | Old | New |
 |---|---|---|
+| `--font-mono` | `'Courier Prime', …` | `var(--font-ui)`: it is the metadata role, so every metadata style turns Inter Tight at once |
+| `--font-stamp` (new) | | `'Courier Prime', …`: the only typewriter, for date stamps on pages |
+| `--ls-mono-tight` / `--ls-mono` / `--ls-mono-wide` | `0.12` / `0.18` / `0.22em` (phone `0.05` / `0.07` / `0.07em`) | `0` |
+| `--ls-meta` | `0.12em` (phone `0.06em`) | `0` |
+| `--ls-stamp` / `--ls-eyebrow` (new) | | `0.12em` / `0.08em` |
 | `--fs-meta` / `--fs-meta-l` (desktop) | `10px` / `10.5px` | `12px` / `12.5px` |
 | `--fs-meta` / `--fs-meta-l` (phone) | `12px` / `12.5px` | `12.5px` / `13px` |
-| `--ls-meta` | `0.12em` (phone `0.06em`) | `0` |
-| `--fs-display-xl`, `--fs-page-title` (phone) | `26px` | `30px` |
-| Unchanged | | the four typefaces, desktop sizes, mono sizes (now for stamps), Caveat sizes |
+| Unchanged | | Source Serif 4, Inter Tight and Caveat; desktop sizes; mono sizes; Caveat sizes |
 
-**New tokens (19):** `--page-paper`, `--page-line`, `--page-rule`, `--bg-page`, `--border-page`, `--sel-bg`, `--sel-ink`, `--tab-active-bg`, `--radius-card`, `--radius-page`, `--radius-block` (12px, calendar blocks and time slots), `--radius-check` (7px), `--shadow-page`, `--grain-app` (0), `--grain-page` (1 by day, 0 at night), `--font-meta`, `--font-stamp`, `--fs-section` (14px), `--ls-eyebrow` (0.08em).
+**New tokens (19):** `--page-paper`, `--page-line`, `--page-rule`, `--bg-page`, `--border-page`, `--sel-bg`, `--sel-ink`, `--tab-active-bg`, `--radius-card`, `--radius-page`, `--radius-block` (12px, calendar blocks and time slots), `--radius-check` (7px), `--shadow-page`, `--grain-app` (0), `--grain-page` (1 by day, 0 at night), `--font-stamp`, `--ls-stamp`, `--fs-section` (14px), `--ls-eyebrow` (0.08em).
 
 **Not changed:** `fonts.css`, `motion.css`, `motion-interactions.css`, `icons/`.
 
@@ -85,7 +88,7 @@ Tokens can't carry these. Whoever builds B applies them:
 
 1. **Pages** switch to `--radius-page`, `--bg-page` / `--paper-goal`, `--border-page` / `--line-goal` and `--shadow-page` / `--shadow-goal`, and draw grain at `opacity: var(--grain-page)`. Tape and `--tilt-*` go on pages only.
 2. **The app root** draws its grain layer at `opacity: var(--grain-app)` (0), so the canvas is clean.
-3. **Metadata** uses `--font-meta` in sentence case: drop `text-transform: uppercase`. One uppercase eyebrow per screen at most (`--ls-eyebrow`).
+3. **Metadata** keeps reading `--font-mono` (now Inter Tight) and drops `text-transform: uppercase`; the `--ls-mono*` tracking tokens are 0. One uppercase eyebrow per screen at most (`--ls-eyebrow`).
 4. **Section labels** use `--fs-section` semibold, sentence case, with an optional quiet count or link on the right.
 5. **Checkboxes** move from `--radius-input` to `--radius-check`.
 6. **Selection** (chips, segments, the chosen date) uses `--sel-bg` / `--sel-ink`, not a second accent.

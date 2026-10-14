@@ -824,13 +824,13 @@ function DesktopCalendar() {
         .cal-rail.is-folded { display: none; }
         .cal-rail-tab { flex: none; width: 34px; border: none; border-right: 1px dashed var(--line-solid); background: none; padding: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; font: inherit; color: var(--ink-faint); }
         .cal-rail-knob { flex: none; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 1px solid var(--line-card); background: var(--paper-parchment); box-shadow: var(--shadow-crisp); color: var(--ink-faint); font-size: 12px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
-        .cal-rail-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+        .cal-rail-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
         .cal-rail-tab:hover .cal-rail-tab-label { color: var(--ink-muted); }
         .cal-railsplit .cal-rail-knob { position: absolute; top: 18px; left: -9px; z-index: 2; }
         .cal-rail-cards { display: flex; flex-direction: column; gap: 10px; }
         /* Kai 2026-10-07: Overdue · Today · Inbox · Lists, each folding on its own header. */
         .cal-rail-secs { display: flex; flex-direction: column; gap: 14px; }
-        .cal-rail-sec-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 0; margin-bottom: 8px; border: none; background: none; cursor: pointer; font: inherit; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-muted); text-align: left; }
+        .cal-rail-sec-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 0; margin-bottom: 8px; border: none; background: none; cursor: pointer; font: inherit; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-muted); text-align: left; }
         .cal-rail-sec-head:hover { color: var(--ink-body); }
         .cal-rail-sec-head:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
         .cal-rail-sec-count { margin-left: auto; color: var(--ink-faint); }
@@ -1079,7 +1079,7 @@ function DesktopCalendar() {
 
           <div
             className={[planning ? 'cal-strip-grid' : 'cal-grid-card', motionOn && 'cal-motion-on'].filter(Boolean).join(' ')}
-            style={planning ? undefined : { flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-sharp)', boxShadow: 'var(--shadow-panel)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+            style={planning ? undefined : { flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-sharp)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
           >
             {/* Kai 2026-07-21: "why cant I scroll horizontally in the week view" — the grid
                 keeps ≥170px per day column (CalendarGrid sets its own min-width) and scrolls

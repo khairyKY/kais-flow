@@ -166,13 +166,13 @@ export function HerbariumPage() {
   const styles = `
     .pressed { filter: saturate(0.35) sepia(0.28) contrast(0.88) brightness(1.04); }
     .washi { position:absolute; width:52px; height:15px; background:color-mix(in oklch, var(--acc-sage) 42%, transparent); background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px); border-radius:1px; box-shadow:var(--shadow-crisp); z-index:6; }
-    .spec { position:relative; background:var(--paper-parchment); border:1px solid var(--line-card); border-radius:3px; box-shadow:var(--shadow-card); padding:22px 24px 20px; cursor:pointer; transition:transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); }
+    .spec { position:relative; background:var(--bg-page); border:1px solid var(--border-page); border-radius:var(--radius-page); box-shadow:var(--shadow-page); padding:22px 24px 20px; cursor:pointer; transition:transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); }
     .spec:hover { transform:translateY(-1px); box-shadow:var(--shadow-panel); }
     .spec:active { transform:scale(0.97); transition-duration:80ms; }
     .spec.kf-stagger-item { animation-fill-mode: backwards; }
-    .ledger { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); line-height:2; }
+    .ledger { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color:var(--ink-faint); line-height:2; }
     .seas { display:flex; align-items:center; gap:14px; margin:30px 0 18px; }
-    .seas span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing:0.22em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; }
+    .seas span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing: var(--ls-meta); color:var(--ink-faint); white-space:nowrap; }
     .seas .r { flex:1; height:1px; background:var(--line-solid); }
   `
 
@@ -185,7 +185,7 @@ export function HerbariumPage() {
     const dirty = isEditingLine && editedLineText !== (p.completion_summary || '')
     return (
       <div className="kf-overlay-scrim" onClick={() => { if (!dirty) { setSelectedSpecimen(null); setIsEditingLine(false) } }} style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
-        <div className="kf-overlay-card" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
+        <div className="kf-overlay-card kf-page" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
           <span className="washi" style={{ top: -9, left: 44, transform: 'rotate(-4deg)' }}></span>
           <span className="washi" style={{ top: -9, right: 44, transform: 'rotate(3deg)', background: 'color-mix(in oklch, var(--acc-gold-warm) 40%, transparent)' }}></span>
           <span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 'var(--fs-body-l)', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}>✕</span>
@@ -254,7 +254,7 @@ export function HerbariumPage() {
     return (
       <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
         <style>{PRESS_CSS}</style>
-        <div className="kf-overlay-card" style={isMobile
+        <div className="kf-overlay-card kf-page" style={isMobile
           ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
           : { width: 360, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
           {ceremonyBeat === 1 && (<>
@@ -369,7 +369,7 @@ export function HerbariumPage() {
                       const ms = p.milestones || []; const doneM = ms.filter(m => m.completed).length
                       const variant = SPEC_VARIANTS[((specimenIndex.get(p.id) || 1) - 1) % SPEC_VARIANTS.length]
                       return (
-                        <div className={motion ? 'spec kf-stagger-item' : 'spec'} style={motion ? staggerDelay(gi) : undefined} key={p.id} onClick={() => setSelectedSpecimen(p)}>
+                        <div className={motion ? 'spec kf-page kf-stagger-item' : 'spec kf-page'} style={motion ? staggerDelay(gi) : undefined} key={p.id} onClick={() => setSelectedSpecimen(p)}>
                           <span className="washi" style={{ top: -8, left: variant.tapeL.left, transform: `rotate(${variant.tapeL.rotate})`, ...(variant.tapeL.tint ? { background: variant.tapeL.tint } : {}) }}></span>
                           <span className="washi" style={{ top: -8, right: variant.tapeR.right, transform: `rotate(${variant.tapeR.rotate})`, ...(variant.tapeR.tint ? { background: variant.tapeR.tint } : {}) }}></span>
                           <div style={{ height: variant.cardH, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', borderBottom: '1px solid var(--line-card)', paddingBottom: 14 }}>

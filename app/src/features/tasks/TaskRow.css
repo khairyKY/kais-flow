@@ -6,7 +6,7 @@
 
 /* R4-5 (2026-07-20 audit): Kai asked for a divider between tasks — a dashed hairline in the
    same family as every other rule on the page, on all but the last row of a run. */
-.task-row + .task-row { border-top: 1px dashed var(--line-dashed); }
+.task-row + .task-row { border-top: 1px solid var(--line-dashed); }
 
 /* ── Someday row — hover reveals the promote pills + a lifted background (2b) ── */
 .tr-someday-hover { opacity: 0; transition: opacity var(--dur-quick); }
@@ -93,7 +93,7 @@
 .kf-swipe-act:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus); }
 .kf-swipe-commit { display: flex; align-items: center; gap: 10px; padding-left: var(--sp-4); }
 .kf-swipe-commit-label { font-size: var(--fs-body); font-weight: 600; }
-.kf-swipe-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }
+.kf-swipe-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); white-space: nowrap; }
 
 /* ⋯ — 48 hit on a phone; a quiet 32 on desktop so rows keep their Jul 2026 height (§4). */
 .kf-row-more {

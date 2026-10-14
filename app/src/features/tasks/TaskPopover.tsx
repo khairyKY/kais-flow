@@ -111,7 +111,7 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
           <Body task={task} commit={commit} onDelete={() => { close(); deleteTasksWithUndo([task]) }} onExpand={expand} />
         ) : tasksQuery.isPending ? (
           <div className="ts-skel" role="status" aria-label="Loading" aria-busy="true" style={{ paddingTop: 0 }}>
-            <div><span style={{ width: 19, height: 19, borderRadius: 'var(--radius-input)', flex: 'none' }} /><span style={{ flex: 1, height: 17 }} /></div>
+            <div><span style={{ width: 19, height: 19, borderRadius: 'var(--radius-check)', flex: 'none' }} /><span style={{ flex: 1, height: 17 }} /></div>
             <span style={{ width: '70%', height: 12 }} />
             <div><span className="is-pill" style={{ width: 80, height: 24 }} /><span className="is-pill" style={{ width: 64, height: 24 }} /></div>
           </div>

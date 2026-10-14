@@ -9,10 +9,9 @@
 :root {
   --font-display:  'Source Serif 4', 'Source Serif Pro', Georgia, serif;
   --font-ui:       'Inter Tight', system-ui, -apple-system, sans-serif;
-  --font-mono:     'Courier Prime', ui-monospace, 'Courier New', monospace;
+  --font-stamp:   'Courier Prime', ui-monospace, 'Courier New', monospace;   /* B · the only typewriter: date stamps on pages */
+  --font-mono:    var(--font-ui);   /* B · the metadata role (482 inline uses read it) — was Courier Prime */
   --font-hand:     'Caveat', 'Segoe Script', cursive;
-  --font-meta:     var(--font-ui);     /* NEW · row metadata, captions (was mono) */
-  --font-stamp:    var(--font-mono);   /* NEW · date stamp on a page — the only mono */
 
   /* Sizes — desktop */
   --fs-display-xl: 44px;   /* page title — "Sunday, July 5" */
@@ -50,10 +49,12 @@
   --lh-relaxed:    1.5;
 
   /* Letter spacing — mono labels are tracked */
-  --ls-mono-tight: 0.12em;
-  --ls-mono:       0.18em;
-  --ls-mono-wide:  0.22em;
+  --ls-mono-tight: 0;
+  --ls-mono:       0;
+  --ls-mono-wide:  0;
   --ls-display:    -0.015em;
+  --ls-stamp:     0.12em;  /* B · date stamps on pages */
+  --ls-eyebrow:   0.08em;  /* B · the one uppercase eyebrow a screen may keep */
   --ls-meta:       0;       /* row metadata — sentence case needs no tracking (was 0.12em) */
   --ls-eyebrow:    0.08em;  /* NEW · the one uppercase eyebrow per screen */
 }
@@ -61,8 +62,8 @@
 /* Phone — true pixel size, no desktop zoom to hide behind. Floor is 12px. */
 @media (max-width: 767px) {
   :root {
-    --fs-display-xl: 30px;   /* page title on a 390px screen — the one hero (was 26px) */
-    --fs-page-title: 30px;
+    --fs-display-xl: 26px;   /* page title on a 390px screen — the one hero (was 26px) */
+    --fs-page-title: 26px;
     --fs-display-l:  22px;
     --fs-display-m:  20px;
     --fs-lead:       17px;
@@ -80,9 +81,9 @@
     --fs-hand:       18px;
     --fs-hand-l:     20px;
 
-    --ls-mono-tight: 0.05em;
-    --ls-mono:       0.07em;
-    --ls-mono-wide:  0.07em;
+    --ls-mono-tight: 0;
+    --ls-mono:       0;
+    --ls-mono-wide:  0;
     --ls-meta:       0;
   }
 }

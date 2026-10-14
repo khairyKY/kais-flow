@@ -2,12 +2,12 @@
    phone has its own strip). Tokens only; the cards' pick-up lift is .unscheduled-task's (CalendarPage). */
 
 /* ── The swollen rail (~60%) ── */
-.cal-plan { flex: 3; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 22px 28px 24px; border-right: 1px dashed var(--line-solid); overflow-y: auto; }
+.cal-plan { flex: 3; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 22px 28px 24px; border-right: 1px solid var(--line-solid); overflow-y: auto; }
 .cal-plan-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .cal-plan-hand { margin-top: 3px; font-family: var(--font-hand); font-size: var(--fs-hand-l); color: var(--ink-muted); }
 /* The kit Segmented, in the strip's mono — "All · Today · Overdue". */
-.cal-plan-tabs .kf-seg-btn { min-height: 26px; padding: 0 11px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; }
-.cal-plan-sort { padding: 6px 0; border: none; background: none; cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.cal-plan-tabs .kf-seg-btn { min-height: 26px; padding: 0 11px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta);}
+.cal-plan-sort { padding: 6px 0; border: none; background: none; cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .cal-plan-sort:hover, .cal-plan-sort[aria-expanded='true'] { color: var(--ink-body); }
 .cal-plan-sort:focus-visible, .cal-plan-add:focus-visible, .cal-plan-more:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .cal-plan-add {
@@ -15,7 +15,7 @@
   background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: var(--radius-md);
   font: inherit; font-size: var(--fs-body-s); color: var(--ink-faint);
 }
-.cal-plan-add-box { flex: none; width: 16px; height: 16px; border: 1.5px solid var(--ink-hairline); border-radius: var(--radius-sharp); }
+.cal-plan-add-box { flex: none; width: 16px; height: 16px; border: 1.5px solid var(--ink-hairline); border-radius: var(--radius-check); }
 .cal-plan-list { flex: none; }
 .cal-plan-empty { margin: 0; font-size: var(--fs-caption); color: var(--ink-faint); }
 
@@ -24,7 +24,7 @@
 .cal-plan-dot { flex: none; display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
 .cal-plan-cards { display: flex; flex-direction: column; gap: 8px; }
 .cal-plan-cards.is-compact { gap: 6px; }
-.cal-plan-more { margin-top: 8px; padding: 4px 0; border: none; background: none; cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-muted); }
+.cal-plan-more { margin-top: 8px; padding: 4px 0; border: none; background: none; cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-muted); }
 
 /* A card: 4a two rows (title, meta) and the ⠿ grip; 4b one line. */
 .cal-plan-card { display: flex; gap: 12px; padding: 12px 14px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-input); }
@@ -32,16 +32,16 @@
 .cal-plan-title { font-size: var(--fs-body-s); line-height: 1.35; color: var(--ink-body); }
 .cal-plan-line { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; }
 .cal-plan-line .cal-plan-title { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cal-plan-meta { flex: none; display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.cal-plan-meta { flex: none; display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .cal-plan-line .cal-plan-meta { gap: 5px; }
 .cal-plan-grip { flex: none; margin-top: 2px; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
 
-.cal-plan-foot { margin-top: auto; padding-top: 14px; border-top: 1px dashed var(--line-dashed); display: flex; align-items: center; gap: 16px; }
+.cal-plan-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line-dashed); display: flex; align-items: center; gap: 16px; }
 
 /* ── The collapsed calendar: a thin agenda strip (~40%) ── */
 .cal-main.cal-strip { flex: 2; min-width: 0; min-height: 0; position: relative; display: flex; flex-direction: column; padding: 22px 26px 24px; background: var(--paper-parchment); }
 .cal-strip-head { flex: none; display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
-.cal-strip-kicker { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono-wide); text-transform: uppercase; color: var(--acc-lavender-text); }
+.cal-strip-kicker { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono-wide); color: var(--acc-lavender-text); }
 .cal-strip-date { font-family: var(--font-display); font-weight: var(--fw-medium); font-size: var(--fs-display-m); line-height: 1; color: var(--ink-body); }
 /* deviation(2026-10-13): 4b draws the range at 18px; at 1280 × the 125% default the strip is ~300px, so it
    reads at 16px on one line. */
@@ -68,8 +68,8 @@
 .cal-railsplit > .cal-plan-handle { left: 0; }
 
 /* A free stretch on the strip: dashed sage, "2H FREE" (FullCalendar background events). */
-.fc .fc-bg-event.kf-free { background: none; opacity: 1; border: 1px dashed var(--acc-sage); border-radius: var(--radius-sharp); margin: 0 8px 0 6px; display: flex; align-items: center; justify-content: center; }
-.fc .fc-bg-event.kf-free .kf-free-label { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--acc-sage-text); }
+.fc .fc-bg-event.kf-free { background: none; opacity: 1; border: 1px dashed var(--acc-sage); border-radius: var(--radius-block); margin: 0 8px 0 6px; display: flex; align-items: center; justify-content: center; }
+.fc .fc-bg-event.kf-free .kf-free-label { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono-tight); color: var(--acc-sage-text); }
 /* The strip's day row (4b): "FRI · TODAY" in mono, no daisy. */
-.fc .cal-strip-dayhead { padding: 6px 0; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-faint); text-align: center; }
+.fc .cal-strip-dayhead { padding: 6px 0; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono-tight); color: var(--ink-faint); text-align: center; }
 .fc .cal-strip-dayhead.is-today { color: var(--acc-lavender-text); }

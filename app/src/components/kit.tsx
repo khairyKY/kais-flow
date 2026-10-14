@@ -118,8 +118,9 @@ export function Chip({ tone = 'bordered', children, style, icon, selected, loadi
 export function SectionLabel({ children, action, style }: { children: ReactNode; action?: ReactNode; style?: CSSProperties }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, ...style }}>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{children}</span>
-      <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+      {/* Bound Journal: a section label is sentence case, 14px semibold ink, no dashed rule after it. */}
+      <span style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)', whiteSpace: 'nowrap' }}>{children}</span>
+      <span style={{ flex: 1 }} />
       {action}
     </div>
   )

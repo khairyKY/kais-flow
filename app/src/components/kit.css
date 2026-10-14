@@ -114,15 +114,14 @@ button.kf-press {
 .kf-chip {
   font-family: var(--font-mono);
   font-size: var(--fs-meta);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: var(--ls-meta);
   padding: 5px 10px;
   border-radius: var(--radius-pill);
   white-space: nowrap;
 }
 .kf-chip--bordered {
   font-size: 9px;
-  letter-spacing: 0.08em;
+  letter-spacing: var(--ls-meta);
   padding: 5px 9px;
   border-radius: var(--radius-sharp);
 }
@@ -286,7 +285,7 @@ button.kf-chip {
   }
   .kf-chip--bordered {
     font-size: var(--fs-meta);
-    letter-spacing: 0.06em;
+    letter-spacing: var(--ls-meta);
     padding: 0 10px;
   }
 

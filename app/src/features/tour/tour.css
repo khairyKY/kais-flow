@@ -63,7 +63,7 @@
   filter: var(--shadow-drop-sm);
 }
 .kf-tour-bloom { position: fixed; width: 120px; height: 120px; object-fit: contain; filter: var(--shadow-drop-sm); z-index: 1; }
-.kf-tour-cap { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--acc-sage-text); }
+.kf-tour-cap { font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--acc-sage-text); }
 .kf-tour-line {
   margin-top: 6px;
   padding-inline-end: 40px;

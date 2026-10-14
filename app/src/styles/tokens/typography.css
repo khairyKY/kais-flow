@@ -57,21 +57,19 @@
 }
 
 @media (max-width: 767px) {
-  :root { --fs-meta: 12px; --fs-meta-l: 12.5px; }
-  /* One page-title size on a phone (the export's iPhone mocks use 26px); desktop titles keep
-     their per-page sizes (30–44px), which ranged 22–40px on a 390px screen before. So a page's
-     h1 carries its desktop size only: this draws every phone title in the page column (a sheet
-     portals to <body>, outside .app-main-content, and keeps its own). */
-  .app-main-content h1 { font-size: 26px !important; line-height: 1.08 !important; }
-  /* "Metadata is tiny but tracked wide" — at phone size the 0.14–0.2em tracking made captions
-     wrap ("TASKS · 325 / OPEN") and split task details over three lines. Tighter on a phone. */
-  .app-shell [style*="uppercase"] { letter-spacing: 0.07em !important; }
+  :root { --fs-meta: 12.5px; --fs-meta-l: 13px; }   /* B (was 12 / 12.5) */
+  /* One page-title size on a phone; desktop titles keep their per-page sizes (30–44px), which
+     ranged 22–40px on a 390px screen before. So a page's h1 carries its desktop size only: this
+     draws every phone title in the page column (a sheet portals to <body>, outside
+     .app-main-content, and keeps its own). */
+  .app-main-content h1 { font-size: var(--fs-page-title) !important; line-height: 1.08 !important; text-wrap: balance; }
+  /* (The phone-only uppercase tracking rule moved to styles/bound.css: B drops uppercase metadata.) */
 }
 
 /* Phone tokens from the 2026-09-28 design-system refresh (DS-CHANGELOG.md §1-2). */
 @media (max-width: 767px) {
   :root {
-    --fs-display-xl: 26px;
+    --fs-display-xl: 26px;   /* B keeps 26px: Today's phone title shares its row with three buttons */
     --fs-page-title: 26px;
     --fs-display-l: 22px;
     --fs-display-m: 20px;

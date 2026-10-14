@@ -31,15 +31,15 @@
 
 /* ── manager ── */
 .lm { min-width: 0; overflow: hidden; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-md); box-shadow: var(--shadow-panel); }
-.lm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; border-bottom: 1px dashed var(--line-dashed); }
+.lm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; border-bottom: 1px solid var(--line-dashed); }
 .lm-title { display: inline; margin: 0; font-family: var(--font-display); font-size: var(--fs-lead); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); color: var(--ink-body); }
-.lm-total { margin-left: 9px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
-.lm-row { display: flex; align-items: center; gap: 11px; padding: 11px 18px; box-sizing: border-box; border-bottom: 1px dashed var(--line-dashed); }
+.lm-total { margin-left: 9px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.lm-row { display: flex; align-items: center; gap: 11px; padding: 11px 18px; box-sizing: border-box; border-bottom: 1px solid var(--line-dashed); }
 .lm-row .lp-sq { width: 12px; height: 12px; }
 .lm-name { flex: 1; align-self: stretch; min-width: 0; padding: 0; border: none; background: none; font: inherit; font-size: var(--fs-body); text-align: left; color: var(--ink-body);
   cursor: text; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lm-count { flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
-.lm-edit { padding: 12px 18px; border-bottom: 1px dashed var(--line-dashed); background: var(--paper-bone); }
+.lm-edit { padding: 12px 18px; border-bottom: 1px solid var(--line-dashed); background: var(--paper-bone); }
 .lm-input { width: 100%; box-sizing: border-box; padding: 6px 10px; border: 1px solid var(--acc-lavender); border-radius: var(--radius-input); outline: none;
   background: var(--paper-parchment); font: inherit; font-size: var(--fs-body); color: var(--ink-body); caret-color: var(--acc-terra); }
 .lm-swatches { display: flex; align-items: center; gap: 8px; margin-top: 11px; }
@@ -47,12 +47,12 @@
 .lm-swatch[aria-pressed='true'] { outline: 2px solid var(--paper-parchment); box-shadow: 0 0 0 3.5px currentColor; }
 .lm-swatch:focus-visible { outline: 2px solid var(--paper-parchment); box-shadow: var(--focus-ring); }
 .lm-save { margin-left: auto; padding: 6px 0; border: none; background: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta);
-  text-transform: uppercase; color: var(--acc-terra-ink); cursor: pointer; }
+color: var(--acc-terra-ink); cursor: pointer; }
 .lm-bare { margin: 0 -20px; }
-.lm-new { display: flex; align-items: center; width: 100%; min-height: var(--row-min); padding: 0 18px; border: none; border-bottom: 1px dashed var(--line-dashed);
+.lm-new { display: flex; align-items: center; width: 100%; min-height: var(--row-min); padding: 0 18px; border: none; border-bottom: 1px solid var(--line-dashed);
   background: none; font: inherit; font-size: var(--fs-body); text-align: left; color: var(--acc-terra-ink); cursor: pointer; }
 .lm-foot { padding: 12px 18px; font-family: var(--font-hand); font-size: var(--fs-hand); color: var(--ink-hand); }
-.lm-empty { padding: 14px 18px; font-size: var(--fs-caption); font-style: italic; color: var(--ink-faint); border-bottom: 1px dashed var(--line-dashed); }
+.lm-empty { padding: 14px 18px; font-size: var(--fs-caption); font-style: italic; color: var(--ink-faint); border-bottom: 1px solid var(--line-dashed); }
 
 @media (max-width: 767px) {
   .lm-row { min-height: var(--row-min); padding-top: 0; padding-bottom: 0; }

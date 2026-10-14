@@ -225,7 +225,7 @@ function SectionHeader({ group }: { group: TaskGroup }) {
   const terra = group.key === 'overdue'
   const h = Math.floor(group.totalMinutes / 60)
   const m = group.totalMinutes % 60
-  const time = group.totalMinutes > 0 ? [h ? `${h}H` : '', m ? `${m}M` : ''].filter(Boolean).join(' ') : null
+  const time = group.totalMinutes > 0 ? [h ? `${h}h` : '', m ? `${m}m` : ''].filter(Boolean).join(' ') : null
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: terra ? 'var(--acc-terra)' : 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
       <span>{group.label} · {group.tasks.length}{time ? ` · ${time}` : ''}</span>

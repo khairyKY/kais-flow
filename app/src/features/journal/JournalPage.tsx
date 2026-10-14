@@ -716,7 +716,7 @@ export function JournalPage() {
               </div>
 
               {/* Writing Card */}
-              <div style={{ marginTop: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', position: 'relative' }}>
+              <div className="kf-page" style={{ marginTop: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', position: 'relative' }}>
                 <span style={{ position: 'absolute', top: -8, left: 30, width: 56, height: 15, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }}></span>
                 {firstPage && <RestingPencil />}
 
@@ -783,7 +783,7 @@ export function JournalPage() {
 
               {/* Quote Card */}
               {commonplaceQuote && (
-                <div style={{ marginTop: 22, position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '15px 15px 13px', transform: 'rotate(-0.4deg)' }}>
+                <div className="kf-page" style={{ marginTop: 22, position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '15px 15px 13px', transform: 'rotate(-0.4deg)' }}>
                   <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', top: -13, right: 10, height: 30, filter: 'var(--shadow-drop-sm)' }} />
                   <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Quote of the day</div>
                   <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, lineHeight: 1.5, color: 'var(--ink-body)', marginTop: 7 }}>
@@ -1005,7 +1005,7 @@ export function JournalPage() {
             </div>
 
             {/* Ruled Notebook Card */}
-            <div style={{ marginTop: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '22px 26px 26px', position: 'relative' }}>
+            <div className="kf-page" style={{ marginTop: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '22px 26px 26px', position: 'relative' }}>
               <span style={{ position: 'absolute', top: -9, left: 40, width: 66, height: 17, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }}></span>
               {firstPage && <RestingPencil />}
 
@@ -1091,7 +1091,7 @@ export function JournalPage() {
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Quote of the day</span>
               <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
             </div>
-            <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', transform: 'rotate(-0.4deg)' }}>
+            <div className="kf-page" style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 16px 14px', transform: 'rotate(-0.4deg)' }}>
               <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', top: -14, right: 10, height: 34, filter: 'var(--shadow-drop-sm)' }} />
               
               <div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 15.5, lineHeight: 1.5, color: 'var(--ink-body)', animationDelay: '180ms' }}>

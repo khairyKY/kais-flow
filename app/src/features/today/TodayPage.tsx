@@ -1547,7 +1547,7 @@ function PhoneEventRow({ event, meta }: { event: CalendarEvent; meta: string[] }
 /** MK Goal card, loading (2g): skeleton title lines under the tag. */
 function GoalCardLoading() {
   return (
-    <div role="status" aria-label="Loading" aria-busy="true" className="tp-goal" style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '14px 12px 14px 4px', transform: 'rotate(-0.4deg)' }}>
+    <div role="status" aria-label="Loading" aria-busy="true" className="tp-goal kf-page" style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '14px 12px 14px 4px', transform: 'rotate(-0.4deg)' }}>
       <div style={{ paddingLeft: 12 }}><span className="tp-goal-tag">✶ Goal of the day</span></div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 6 }}>
         <span className="tp-hit"><span style={{ width: 22, height: 22, borderRadius: 6, border: '1.5px solid var(--acc-gold)', boxSizing: 'border-box' }} /></span>
@@ -1740,7 +1740,7 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
     // clover (four-leaf once done). ⋯ stays, so every swipe has its tap path (DS-CHANGELOG §3).
     const lines = done ? [`${doneAt(task)} · a four-leaf day`] : meta ?? ([projectName, task.duration_min != null ? formatDuration(task.duration_min) : null].filter(Boolean) as string[])
     return (
-      <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="tp-goal" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} contentStyle={{ ...card, display: 'block', padding: '14px 4px 14px 4px' }} {...g.swipeProps} overlay={g.menuNode}>
+      <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="tp-goal" contentClassName="kf-page" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} contentStyle={{ ...card, display: 'block', padding: '14px 4px 14px 4px' }} {...g.swipeProps} overlay={g.menuNode}>
         <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', marginLeft: -36, width: 72, height: 17, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
         <div style={{ paddingLeft: 12 }}><span className="tp-goal-tag">✶ Goal of the day</span></div>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 6 }}>
@@ -1764,7 +1764,7 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
   const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={20} /> : <Checkbox label={task.title} checked={bloom.checking} size={20} bloom onChange={bloom.toggle} style={box} />
   const due = overdueDays(task)
   return (
-    <SwipeRow id={`task-${task.id}`} tabIndex={-1} onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} style={{ marginBottom: 6, outline: 'none' }} contentStyle={{ ...card, padding: '18px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
+    <SwipeRow id={`task-${task.id}`} tabIndex={-1} onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} style={{ marginBottom: 6, outline: 'none' }} contentClassName="kf-page" contentStyle={{ ...card, padding: '18px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
       <span style={{ marginTop: 3 }}>{check}</span>
       <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>

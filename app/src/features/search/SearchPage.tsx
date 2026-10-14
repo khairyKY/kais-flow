@@ -66,11 +66,11 @@ function Glyph({ hit, view, dot }: { hit: SearchHit; view: RowView; dot: string 
     case 'task':
       // The checkbox's own radius and check mark (kit Checkbox), drawn still — the row is the button.
       return view.done ? (
-        <span style={{ width: 17, height: 17, borderRadius: 'var(--radius-input)', background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', flex: 'none', marginTop: 2 }} aria-hidden>
+        <span style={{ width: 17, height: 17, borderRadius: 'var(--radius-check)', background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', flex: 'none', marginTop: 2 }} aria-hidden>
           <Icon name="check" strokeWidth={2.2} style={{ width: '72%', height: '72%' }} />
         </span>
       ) : (
-        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 'var(--radius-input)', flex: 'none', marginTop: 2, boxSizing: 'border-box' }} aria-hidden />
+        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 'var(--radius-check)', flex: 'none', marginTop: 2, boxSizing: 'border-box' }} aria-hidden />
       )
     case 'calendar_event':
       return <span style={{ width: 4, height: 30, borderRadius: 2, background: 'var(--acc-lavender)', flex: 'none', marginTop: 1 }} aria-hidden />

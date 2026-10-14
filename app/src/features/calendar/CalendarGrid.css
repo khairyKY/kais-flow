@@ -75,8 +75,7 @@
 .cal-day-header-name {
   font-family: var(--font-mono);
   font-size: calc(9px * var(--s-text));
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
 }
 .cal-day-header-num {
@@ -149,7 +148,7 @@
    Kai's ruling (2026-07-20, with the 4c screenshot): the real calendar block IS the 4c example.
    That supersedes Calendar.dc.html's 2px-radius / left-accent-bar treatment, which is what the
    two earlier attempts kept chasing. Straight from the 4c markup:
-       border-radius: 6px
+       border-radius: var(--radius-block) (B; was 6px)
        background:    rgba(168,160,190,0.24)
        border:        1px solid rgba(124,106,154,0.35)   ← a full border, not a left bar
        padding:       7px 10px
@@ -159,7 +158,7 @@
    --kf-ev-accent (published per event in eventDidMount) lets a coloured event swap the lavender
    for its own hue while keeping this exact geometry. */
 .fc .fc-timegrid-event {
-  border-radius: 6px;
+  border-radius: var(--radius-block);   /* Bound Journal (was 6px) */
   border: 1px solid var(--kf-ev-edge, rgba(124, 106, 154, 0.35));
   background: var(--kf-ev-fill, color-mix(in srgb, var(--acc-lavender) 24%, transparent));
   padding: 7px 10px;
@@ -280,7 +279,7 @@
    task"). No drop shadow — a 4c block sits flat on the grid. */
 
 /* All-day row */
-.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s-text)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-faint); }
+.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s-text)); letter-spacing: var(--ls-mono-tight); color: var(--ink-faint); }
 .fc .fc-daygrid-day-frame { min-height: 26px; }
 /* §6 all-day chip: 20px pill in the band above the grid — no grip, no time row */
 .fc .fc-daygrid-event {
@@ -295,7 +294,7 @@
 }
 
 /* Month view (dayGridMonth) */
-.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: calc(10px * var(--s-text)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--text-tertiary); text-align: center; }
+.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: calc(10px * var(--s-text)); letter-spacing: var(--ls-mono-tight); color: var(--text-tertiary); text-align: center; }
 .fc .fc-daygrid-day-number {
   font-family: var(--font-mono);
   font-size: calc(10.5px * var(--s-text));
@@ -383,7 +382,7 @@
    It states the outcome, so it never wobbles and never carries the block's text weight. */
 .fc .fc-event-mirror {
   opacity: 1;
-  border-radius: 6px;
+  border-radius: var(--radius-block);
   border: 1.5px dashed var(--acc-lavender-deep);
   background: color-mix(in srgb, var(--acc-lavender) 10%, transparent);
   box-shadow: none;
@@ -515,7 +514,7 @@
 .fc .fc-timegrid-event.kf-failed { outline: 1.5px solid var(--sig-overdue); outline-offset: 2px; }
 
 /* §6 micro tier (<27px drawn): one mono strip — no padding rows, radius eases to 3. */
-.fc .fc-timegrid-event.kf-tier-micro { padding: 0 6px; border-radius: 3px; }
+.fc .fc-timegrid-event.kf-tier-micro { padding: 0 6px; border-radius: var(--radius-block); }
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s-text)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-time,
 .fc .fc-timegrid-event.kf-tier-micro .kf-ev-check,
@@ -554,7 +553,7 @@
    the bare column — same hue, same alpha, now opaque (the #3e drawing's sheets are opaque too). */
 .fc .fc-timegrid-event-harness:has(> .kf-ov-s0:not(.fc-event-mirror)),
 .fc .fc-timegrid-event-harness:has(> .kf-ov-s1:not(.fc-event-mirror)),
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { background: var(--paper-parchment); border-radius: 6px; }
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { background: var(--paper-parchment); border-radius: var(--radius-block); }
 /* past the third index: fully hidden — listed by the topmost's "+N more" */
 .fc .fc-timegrid-event-harness:has(> .kf-ov-hide:not(.fc-event-mirror)) { display: none !important; }
 /* hover z-bumps only — no geometry change */
@@ -592,8 +591,8 @@
 .fc .fc-daygrid-event.kf-seg:not(.kf-seg-titled) .fc-event-title { font-family: var(--font-mono); font-size: 0.8em; color: var(--ink-faint); }
 /* Spans midnight: a cut edge is square, dashed, and carries "⌄ <end>" / "⌃ from <start>" (the time
    row's mono) where the block runs on. FullCalendar marks the real ends .fc-event-start / -end. */
-.fc .fc-timegrid-event:not(.fc-event-end):not(.fc-event-mirror) { border-bottom: 1px dashed var(--line-dashed); border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding-bottom: calc(14px * var(--s)); }
-.fc .fc-timegrid-event:not(.fc-event-start):not(.fc-event-mirror) { border-top: 1px dashed var(--line-dashed); border-top-left-radius: 0; border-top-right-radius: 0; padding-top: calc(14px * var(--s)); }
+.fc .fc-timegrid-event:not(.fc-event-end):not(.fc-event-mirror) { border-bottom: 1px solid var(--line-dashed); border-bottom-left-radius: 0; border-bottom-right-radius: 0; padding-bottom: calc(14px * var(--s)); }
+.fc .fc-timegrid-event:not(.fc-event-start):not(.fc-event-mirror) { border-top: 1px solid var(--line-dashed); border-top-left-radius: 0; border-top-right-radius: 0; padding-top: calc(14px * var(--s)); }
 .fc .fc-timegrid-event .kf-ev-cut { position: absolute; left: 0; right: 0; margin: 0; text-align: center; color: var(--ink-faint); white-space: nowrap; pointer-events: none; }
 .fc .fc-timegrid-event .kf-ev-cut-into { bottom: 1px; }
 .fc .fc-timegrid-event .kf-ev-cut-from { top: 1px; }

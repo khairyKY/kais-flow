@@ -32,7 +32,7 @@ export const ACTION_ROW_CSS = `
   .kf-as-row[aria-current='true'] { background: var(--block-sage); color: var(--acc-sage-text); font-weight: 600; }
   .kf-as-icon { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); }
   .kf-as-row.is-destructive .kf-as-icon { color: var(--acc-terra-ink); }
-  .kf-as-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+  .kf-as-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
   .kf-as-row.is-destructive .kf-as-hint { color: var(--acc-terra-ink); }
 `
 
