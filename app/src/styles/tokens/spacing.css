@@ -39,7 +39,7 @@
   --topbar-h: 56px;
   --tabbar-h: 64px;
   --tabbar-inset: env(safe-area-inset-bottom, 16px);
-  --capture-size: 48px;
+  --capture-size: 56px; /* Kai 2026-10-15: stays 56, keeps its shadow */
   --sheet-radius: 20px;
   --sheet-handle-w: 32px;
   --sheet-handle-h: 4px;

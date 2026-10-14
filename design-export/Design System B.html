@@ -129,6 +129,7 @@ code,.tok{font-family:var(--font-stamp);font-size:12px;color:var(--ink-body)}
 .o-b .btn{border-radius:12px;height:44px;padding:0 18px}
 .o-b .btn-s{border-color:transparent}
 .o-b .btn-g{color:var(--acc-terra-ink)}
+.o-b .btn-t{background:color-mix(in srgb,var(--acc-terra) 12%,transparent);color:var(--acc-terra-ink);border-color:transparent}
 .o-c .btn{border-radius:12px;height:40px;padding:0 16px;font-weight:600}
 .o-c .btn-p{background:color-mix(in srgb,var(--acc-terra) 12%,transparent);color:var(--acc-terra-ink)}
 .o-c .btn-s{background:transparent}
@@ -144,7 +145,7 @@ code,.tok{font-family:var(--font-stamp);font-size:12px;color:var(--ink-body)}
 .tabbar i img{width:20px;height:20px;opacity:.75}
 .tabbar .on i img{opacity:1}
 [data-theme="night"] .tabbar i img{filter:invert(.92)}
-.tabbar .cap{width:var(--capture-size);height:var(--capture-size);border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:grid;place-items:center;font-size:26px;box-shadow:var(--shadow-cta)}
+.tabbar .cap{width:var(--capture-size);height:var(--capture-size);border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:grid;place-items:center;font-size:26px;box-shadow:var(--shadow-capture)}
 .rad{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end}
 .rad div{text-align:center;font-size:12px;color:var(--ink-faint)}
 .rad b{display:block;width:64px;height:48px;margin-bottom:7px;background:var(--paper-bone);border:1.5px solid var(--acc-sage)}
@@ -173,7 +174,7 @@ ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:9px;f
 <section class="sec" aria-labelledby="h-dec">
   <h2 class="sec-h" id="h-dec">The decisions <small>00 · approve, deny or add a note</small></h2>
   <p class="lede">Everything B changes, in one list. Nothing outside this list moves.</p>
-  <p class="news"><strong>15 Oct.</strong> Your answers are filled in. New: before / after under D4, D5, D6 and D9 (real screenshots; flip the theme for night); <strong>D11</strong> pick a button style; <strong>D12</strong> the chip contrast fix. Every calendar block kind is in <a href="#h-cal">04b</a>.</p>
+  <p class="news"><strong>15 Oct, round 3.</strong> Your answers are in and built into the app: everything approved, D9 denied (the capture button stays 56px with its shadow), D11 = B. <strong>One new question: D13</strong>, where C's soft terra fits.</p>
   <div class="tool" id="decisions" style="padding:4px 22px">
     <div class="dec" data-id="D1"><span class="n">D1</span><div><h3>Two kinds of surface: tools and pages</h3><p>Pages: the goal of the day; journal entries, notes and quotes; the herbarium. Everything else (lists, calendar, sheets, rituals, settings) is a tool.</p><span class="was">Was: every card was a placed paper card.</span></div><div class="vote"></div><textarea aria-label="Note on D1"></textarea></div>
     <div class="dec" data-id="D2"><span class="n">D2</span><div><h3>Colour stays exactly as it was</h3><p>Every paper, ink, line and accent keeps its old value, day and Night Garden. Added only: a page paper (<code>#FBF5E6</code> · night <code>#2C2740</code>), and selection filled with ink instead of a second accent.</p><span class="was">Was: no separate page paper; selection used accent washes.</span></div><div class="vote"></div><textarea aria-label="Note on D2"></textarea></div>
@@ -183,10 +184,11 @@ ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:9px;f
     <div class="dec" data-id="D6"><span class="n">D6</span><div><h3>Section labels: 14px semibold, sentence case</h3><p>“Top 3”, “Up next”, “To plan”, with no dashed rule running after them.</p><span class="was">Was: “TOP 3 - - - - - -” in tracked mono caps with a dashed rule.</span></div><div class="vote"></div><textarea aria-label="Note on D6"></textarea><div class="cmp wide"><figure><figcaption>Before</figcaption><img data-cmp="d6-desk-before" alt="Before: section labels on a computer"></figure><figure><figcaption>After</figcaption><img data-cmp="d6-desk-after" alt="After: section labels on a computer"></figure></div><div class="cmp phone"><figure><figcaption>Before</figcaption><img data-cmp="d6-phone-before" alt="Before: a section label on a phone"></figure><figure><figcaption>After</figcaption><img data-cmp="d6-phone-after" alt="After: a section label on a phone"></figure></div></div>
     <div class="dec" data-id="D7"><span class="n">D7</span><div><h3>Tape, tilt, grain and handwriting live on pages only</h3><p>The washi recipe is unchanged; it just never lands on a tool. The active sidebar item loses its tape marker; rail cards stop tilting; the app canvas has no grain (Settings' texture slider now sets the page grain).</p><span class="was">Was: tape on the active nav item and placed cards, grain over the whole app.</span></div><div class="vote"></div><textarea aria-label="Note on D7"></textarea></div>
     <div class="dec" data-id="D8"><span class="n">D8</span><div><h3>Solid hairlines in tools</h3><p>Dividers between rows and sections are solid. Dashed stays for open time slots on the calendar and for ruling on pages.</p><span class="was">Was: dashed rules everywhere, “like a ruled notebook”.</span></div><div class="vote"></div><textarea aria-label="Note on D8"></textarea></div>
-    <div class="dec" data-id="D9"><span class="n">D9</span><div><h3>Capture button 48px, flat in the tab bar</h3><p>Same terra, same place; no drop shadow. Tab icons are Kai's Flow's own; the active tab sits on a soft pill.</p><span class="was">Was: 56px with a terra drop shadow.</span></div><div class="vote"></div><textarea aria-label="Note on D9"></textarea><div class="cmp phone"><figure><figcaption>Before</figcaption><img data-cmp="d9-phone-before" alt="Before: the tab bar and capture button"></figure><figure><figcaption>After</figcaption><img data-cmp="d9-phone-after" alt="After: the tab bar and capture button"></figure></div></div>
+    <div class="dec" data-id="D9"><span class="n">D9</span><div><h3>Capture button 48px, flat in the tab bar <span class="meta">— denied: it stays 56px with its shadow</span></h3><p>Same terra, same place; no drop shadow. Tab icons are Kai's Flow's own; the active tab sits on a soft pill.</p><span class="was">Was: 56px with a terra drop shadow.</span></div><div class="vote"></div><textarea aria-label="Note on D9"></textarea><div class="cmp phone"><figure><figcaption>Before</figcaption><img data-cmp="d9-phone-before" alt="Before: the tab bar and capture button"></figure><figure><figcaption>After</figcaption><img data-cmp="d9-phone-after" alt="After: the tab bar and capture button"></figure></div></div>
     <div class="dec" data-id="D10"><span class="n">D10</span><div><h3>Calendar on a computer: the Akiflow layout</h3><p>Full window, no page margins; one header row (view · ‹ Today › on the left, date and daisy at the far right); a compact To plan list (one line per task, Plan on hover); half-hour rows 36px; under the grid, each day's tasks with no time yet; three blocks at the same time sit in equal thirds.</p><span class="was">Was: a framed grid inside page margins, a tall header, card-sized rail tasks, a shingle that buried the third block.</span></div><div class="vote"></div><textarea aria-label="Note on D10"></textarea></div>
-    <div class="dec" data-id="D11" data-choices="A,B,C,D"><span class="n">D11</span><div><h3>Buttons — pick one</h3><p>Four styles, drawn in <a href="#h-btn">04 Kit</a>. Every one keeps a 48 × 48 tap area on the phone, even when the drawn button is shorter.</p><span class="was">Now: A, the 48px pill.</span></div><div class="vote"></div><textarea aria-label="Note on D11"></textarea></div>
+    <div class="dec" data-id="D11" data-choices="A,B,C,D"><span class="n">D11</span><div><h3>Buttons — pick one <span class="meta">— B</span></h3><p>Four styles, drawn in <a href="#h-btn">04 Kit</a>. Every one keeps a 48 × 48 tap area on the phone.</p><span class="was">Now: A, the 48px pill.</span></div><div class="vote"></div><textarea aria-label="Note on D11"></textarea></div>
     <div class="dec" data-id="D12"><span class="n">D12</span><div><h3>Unselected chips get a visible edge</h3><p>Transparent with a 3:1 hairline and body ink; the selected chip stays ink-filled. Same for segmented controls (the theme switch at the top uses it).</p><span class="was">Was: bone on parchment with muted ink — the edge was about 1.1:1, so the chips disappeared.</span></div><div class="vote"></div><textarea aria-label="Note on D12"></textarea></div>
+    <div class="dec" data-id="D13"><span class="n">D13</span><div><h3>C's soft terra as the second-tier button</h3><p>B stays the button. The soft terra wash (C) becomes a <em>tonal</em> button for an action that matters but isn't the view's one terra action: <strong>Replan all</strong> on Today, <strong>Plan ▾</strong> on a task row, the suggestion in an empty state. It is also the hover and pressed fill of the terra text button. Drawn in <a href="#h-btn">04 Kit</a>.</p><span class="was">Now: those are outlined secondary buttons, and the text button has no fill when pressed.</span></div><div class="vote"></div><textarea aria-label="Note on D13"></textarea></div>
   </div>
 </section>
 
@@ -250,7 +252,8 @@ ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:9px;f
       <div><b style="border-radius:var(--sheet-radius) var(--sheet-radius) 0 0"></b>20 · sheet top</div>
       <div><b style="width:28px;height:28px;border-radius:var(--radius-check)"></b>7 · checkbox</div>
       <div><b style="border-radius:var(--radius-page);background:var(--page-paper);border-color:var(--page-line)"></b>6 · page</div>
-      <div><b style="border-radius:var(--radius-pill);height:36px"></b>pill · button, chip</div>
+      <div><b style="border-radius:var(--radius-pill);height:36px"></b>pill · chip, segment</div>
+      <div><b style="border-radius:var(--radius-input);height:40px"></b>12 · button (D11)</div>
     </div>
   </div>
 </section>
@@ -267,17 +270,22 @@ ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:9px;f
       <div class="seg" style="margin-top:10px" aria-hidden="true"><button type="button" aria-pressed="true" tabindex="-1">Day</button><button type="button" aria-pressed="false" tabindex="-1">3 days</button><button type="button" aria-pressed="false" tabindex="-1">Week</button></div>
       <div class="meta" style="margin:14px 0 6px">Was</div>
       <div style="display:flex;flex-wrap:wrap;gap:8px"><span class="chip was on">All</span><span class="chip was">Today</span><span class="chip was">Overdue</span></div>
-      <div class="label" style="margin-top:22px">Tab bar — own icons, flat capture</div>
+      <div class="label" style="margin-top:22px">Tab bar — own icons, the capture button keeps 56px and its shadow (D9)</div>
       <div class="tabbar"><span class="on"><i><img src="ds-bound/icons/kf-today.svg" alt=""></i>Today</span><span><i><img src="ds-bound/icons/kf-inbox.svg" alt=""></i>Inbox</span><span class="cap" aria-hidden="true">+</span><span><i><img src="ds-bound/icons/kf-calendar.svg" alt=""></i>Calendar</span><span><i><img src="ds-bound/icons/kf-more.svg" alt=""></i>More</span></div>
     </div>
   </div>
-  <div class="label" id="h-btn" style="margin-top:28px">Buttons — D11, pick one</div>
-  <div class="opts">
-    <div class="tool opt"><h4>A · Pill (now)</h4><p>48px pill. Terra fill, a bone button with an outline, plain text.</p><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button><button type="button" class="btn btn-g">Skip</button></div></div>
-    <div class="tool opt o-b"><h4>B · Rounded, flat</h4><p>12px corners like the rest of the tools, 44px. Secondary is a tone with no outline; the text button is terra.</p><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button><button type="button" class="btn btn-g">Skip</button></div></div>
-    <div class="tool opt o-c"><h4>C · Soft terra</h4><p>40px, 12px corners. The action is a terra wash with terra text, so it whispers. Secondary is an outline.</p><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button><button type="button" class="btn btn-g">Skip</button></div></div>
-    <div class="tool opt o-d"><h4>D · Ink</h4><p>40px, 10px corners. The action is ink-filled like a selection; terra stays for the capture button and alerts.</p><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button><button type="button" class="btn btn-g">Skip</button></div></div>
+  <div class="label" id="h-btn" style="margin-top:28px">Buttons — B, with C as the tonal tier (D13)</div>
+  <div class="two">
+    <div class="tool opt o-b"><h4>B · the button</h4><p>12px corners, 44px (48 tap area on the phone), flat. Primary terra; secondary a bone tone with no outline; the text button in terra.</p><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button><button type="button" class="btn btn-g">Skip</button></div></div>
+    <div class="tool opt o-b"><h4>C inside B · tonal (D13)</h4><p>The same shape with a terra wash: a second action that matters. Below it, the terra text button as you press it.</p><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-t">Replan all ▾</button><button type="button" class="btn btn-g" style="background:color-mix(in srgb,var(--acc-terra) 12%,transparent)">Skip · pressed</button></div></div>
   </div>
+  <details style="margin-top:14px"><summary class="meta" style="cursor:pointer">The four options you chose from</summary>
+  <div class="opts" style="margin-top:12px">
+    <div class="tool opt"><h4>A · Pill (was)</h4><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button></div></div>
+    <div class="tool opt o-b" style="border-color:var(--acc-sage-text)"><h4>B · Rounded, flat — chosen</h4><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button></div></div>
+    <div class="tool opt o-c"><h4>C · Soft terra</h4><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button></div></div>
+    <div class="tool opt o-d"><h4>D · Ink</h4><div class="set"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button></div></div>
+  </div></details>
 </section>
 
 <!-- 04b CALENDAR BLOCKS -->
@@ -416,7 +424,7 @@ paintShots()
 // votes: Approve / Deny per decision, a note opens on Deny or Note; kept in this browser only
 const KEY = 'kf-ds-b-votes'
 // Kai's answers of 15 Oct; anything voted in this browser wins
-const KAI_15OCT = { D1: { v: 'yes' }, D2: { v: 'yes' }, D3: { v: 'yes' }, D4: { v: 'yes' }, D5: { v: 'yes' }, D7: { v: 'yes' }, D8: { v: 'yes' }, D10: { v: 'yes' } }
+const KAI_15OCT = { D1: { v: 'yes' }, D2: { v: 'yes' }, D3: { v: 'yes' }, D4: { v: 'yes' }, D5: { v: 'yes' }, D6: { v: 'yes' }, D7: { v: 'yes' }, D8: { v: 'yes' }, D9: { v: 'no' }, D10: { v: 'yes' }, D11: { v: 'B', note: 'I like C too, maybe we can include it in some states' }, D12: { v: 'yes' } }
 let votes = { ...KAI_15OCT }
 try { votes = { ...KAI_15OCT, ...JSON.parse(localStorage.getItem(KEY) || '{}') } } catch { /* private window: this visit only */ }
 const save = () => { try { localStorage.setItem(KEY, JSON.stringify(votes)) } catch { /* no storage */ } }

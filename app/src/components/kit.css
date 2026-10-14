@@ -79,7 +79,7 @@ button.kf-press {
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  border-radius: var(--radius-pill);
+  border-radius: var(--radius-input); /* Kai 2026-10-15, D11 = B: 12px, not a pill */
 }
 .kf-button--cta {
   border: none;
@@ -89,7 +89,7 @@ button.kf-press {
   box-shadow: var(--shadow-cta);
 }
 .kf-button--secondary {
-  border: 1px solid var(--line-control);
+  border: 1px solid transparent; /* D11 = B: a tone, no outline */
   background-color: var(--paper-bone);
   color: var(--ink-body);
   padding: 9px 16px;
@@ -103,7 +103,7 @@ button.kf-press {
 .kf-button--ghost {
   border: none;
   background: none;
-  color: var(--ink-muted);
+  color: var(--acc-terra-ink); /* D11 = B */
   padding: 9px 6px;
 }
 .kf-button:disabled {
@@ -120,6 +120,7 @@ button.kf-press {
   white-space: nowrap;
 }
 .kf-chip--bordered {
+  color: var(--ink-body) !important; /* D12: body ink, not muted */
   font-size: 9px;
   letter-spacing: var(--ls-meta);
   padding: 5px 9px;
@@ -265,12 +266,14 @@ button.kf-chip {
 
 @media (max-width: 767px) {
   .kf-button {
-    min-height: var(--touch-min);
+    position: relative;
+    min-height: 44px; /* D11 = B: drawn 44, the ::after keeps a 48 hit */
     justify-content: center;
     gap: var(--sp-2);
     font-size: var(--fs-body);
     font-weight: var(--fw-medium);
   }
+  .kf-button::after { content: ''; position: absolute; inset: -2px 0; }
   .kf-button--cta { padding: 0 22px; }
   .kf-button--secondary { padding: 0 18px; box-shadow: none; }
   .kf-button--ghost { padding: 0 14px; }
@@ -364,7 +367,7 @@ button.kf-chip {
   padding: 2px;
   border: 1px solid var(--line-control);
   border-radius: 18px;
-  background: var(--paper-bone);
+  background: none; /* D12: the edge carries it, not a bone track */
 }
 .kf-seg-btn {
   flex: 1 0 auto;
@@ -376,14 +379,14 @@ button.kf-chip {
   font: inherit;
   font-size: 13px;
   line-height: 1.2;
-  color: var(--ink-muted);
+  color: var(--ink-body); /* D12 */
   white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 .kf-seg-btn[aria-pressed='true'] {
-  background: var(--block-sage);
-  color: var(--acc-sage-text);
+  background: var(--sel-bg); /* D2: selection is ink-filled */
+  color: var(--sel-ink);
   font-weight: 600;
 }
 .kf-seg-btn:not([aria-pressed='true']):active {

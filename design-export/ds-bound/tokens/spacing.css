@@ -40,7 +40,7 @@
   --topbar-h:         56px;   /* phone app bar */
   --tabbar-h:         64px;   /* tab bar, excluding the system gesture inset */
   --tabbar-inset:     env(safe-area-inset-bottom, 16px);
-  --capture-size:     48px;   /* centre capture button, flat in the tab bar (was 56px) */
+  --capture-size:     56px;   /* centre capture button (Kai 2026-10-15: stays 56, keeps its shadow) */
   --sheet-radius:     20px;   /* top corners of a bottom sheet — a tool (was 8px) */
   --sheet-handle-w:   32px;
   --sheet-handle-h:   4px;

@@ -38,13 +38,13 @@
 /* Mic Button Pulse */
 @keyframes micPulse {
   0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc-terra) 40%, transparent), var(--shadow-cta);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc-terra) 40%, transparent), var(--shadow-capture);
   }
   70% {
-    box-shadow: 0 0 0 12px transparent, var(--shadow-cta);
+    box-shadow: 0 0 0 12px transparent, var(--shadow-capture);
   }
   100% {
-    box-shadow: 0 0 0 0 transparent, var(--shadow-cta);
+    box-shadow: 0 0 0 0 transparent, var(--shadow-capture);
   }
 }
 
@@ -124,7 +124,7 @@
   border-radius: 50%;
   background-color: var(--acc-terra-ink);
   color: var(--on-terra);
-  box-shadow: var(--shadow-cta);
+  box-shadow: var(--shadow-capture);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -142,7 +142,7 @@ button.kf-capture.kf-press {
   transform: scale(0.94);
 }
 .kf-capture[data-phase='recording'] {
-  box-shadow: 0 0 0 11px var(--block-terra), var(--shadow-cta);
+  box-shadow: 0 0 0 11px var(--block-terra), var(--shadow-capture);
 }
 .kf-capture[data-phase='recording']::before {
   opacity: 0 !important;
@@ -256,7 +256,7 @@ button.kf-capture.kf-press {
   border-radius: 50%;
   background-color: var(--acc-terra-ink);
   color: var(--on-terra);
-  box-shadow: var(--shadow-cta);
+  box-shadow: var(--shadow-capture);
 }
 .kf-rec-cancel,
 .kf-rec-send {
@@ -313,7 +313,7 @@ button.kf-capture.kf-press {
   border-radius: 50%;
   background-color: var(--acc-terra-ink);
   color: var(--on-terra);
-  box-shadow: var(--shadow-cta);
+  box-shadow: var(--shadow-capture);
   cursor: pointer;
 }
 .kf-capture-send:disabled { opacity: 0.42; cursor: default; }

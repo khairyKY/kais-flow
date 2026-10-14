@@ -29,6 +29,11 @@
   letter-spacing: var(--ls-stamp) !important;
 }
 
+/* D11 = B (Kai 2026-10-15): a hand-built terra button is a 12px rounded rectangle, not a pill. */
+:is(button, a)[style*="background: var(--acc-terra"]:is([style*="border-radius: 999px"], [style*="border-radius: var(--radius-pill)"]) {
+  border-radius: var(--radius-input) !important;
+  box-shadow: none !important;
+}
 /* 3 · Tool cards and inputs that hard-code the old 3px corner round like the rest. */
 [style*="border-radius: 3px"] {
   border-radius: var(--radius-card) !important;

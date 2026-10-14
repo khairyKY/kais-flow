@@ -48,14 +48,15 @@ The paper stays `ds/`'s warm cream: canvas `#EFE9DB`, surfaces `#FBF6E9`, bone `
 | `--radius-input` | `6px` | `12px` |
 | `--radius-md` | `8px` | `12px` |
 | `--sheet-radius` | `8px` | `20px` |
-| `--capture-size` | `56px` | `48px` (flat in the tab bar) |
+| `--capture-size` | `56px` | `56px` — unchanged (Kai 2026-10-15 denied the flat 48) |
 
 **Depth and texture** (`tokens/effects.css`)
 
 | Token | Old | New |
 |---|---|---|
 | `--shadow-card`, `--shadow-crisp` | two-part warm shadow | `none` |
-| `--shadow-cta` | terra drop | `none` |
+| `--shadow-cta` | terra drop | `none` (CTA buttons are flat) |
+| `--shadow-capture` | — | NEW · the old terra drop, for the capture button only |
 | Unchanged | | `--shadow-goal`, popover, panel, sheet, toast, tab bar, scrim, noise, tilts |
 
 **Type** (`tokens/typography.css`)
@@ -87,9 +88,17 @@ The rules:
 4. **Section labels** use `--fs-section` semibold, sentence case, with an optional quiet count or link on the right.
 5. **Checkboxes** move from `--radius-input` to `--radius-check`.
 6. **Selection** (chips, segments, the chosen date) uses `--sel-bg` / `--sel-ink`, not a second accent.
-7. **The tab bar** keeps Kai's Flow's own icons (`kf-today`, `kf-inbox`, `kf-calendar`, `kf-more`), drawn flat, with `--tab-active-bg` behind the active one and the terra capture button inline (`--capture-size`, no shadow).
+7. **The tab bar** keeps Kai's Flow's own icons (`kf-today`, `kf-inbox`, `kf-calendar`, `kf-more`), drawn flat, with `--tab-active-bg` behind the active one and the terra capture button inline (`--capture-size` 56, `--shadow-capture`).
 8. **Calendar blocks and time slots** use `--radius-block`. Open slots keep the dashed `--line-dashed` outline.
 
 ## Assets
 
 The flower art (`../ds/assets/`, 11 MB) is unchanged by B, so it isn't duplicated here. Point asset paths at `../ds/assets/`. If this copy ever replaces `ds/`, move `assets/` across with it.
+
+## Kai's answers (15 Oct 2026, `Design System B.html`)
+
+Approved: D1 tools and pages · D2 colour unchanged · D3 rounded tools, near-square pages · D4 flat tools · D5 metadata in Inter Tight, sentence case · D6 section labels · D7 tape, tilt, grain, hand on pages only · D8 solid hairlines · D10 the Akiflow calendar · D12 chips with a visible edge (selection ink-filled).
+
+Denied: D9 — the capture button stays 56px with its terra shadow (`--shadow-capture`).
+
+D11 buttons: **B** — 12px corners, 44px drawn (48 hit on the phone), flat; secondary is a bone tone with no outline; the text button is terra. Kai liked C too: D13 proposes it as the tonal tier (open).
