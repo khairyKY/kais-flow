@@ -156,7 +156,8 @@ for (const theme of ['day', 'night']) {
   }
 
   // ── 2 + 1 · the calendar opens on the synced default; the toolbar chevron ──
-  for (const [view, label, cols] of [[undefined, 'WEEK', 7], ['day', 'DAY', 1], ['3day', '3 DAYS', 3], ['week', 'WEEK', 7]]) {
+  // Bound Journal (2026-10-14): the view label reads in sentence case.
+  for (const [view, label, cols] of [[undefined, 'Week', 7], ['day', 'Day', 1], ['3day', '3 days', 3], ['week', 'Week', 7]]) {
     if (theme === 'night' && view !== '3day') continue
     const { ctx, page, errors } = await open('/calendar', { view }, { theme })
     const btn = page.locator('.cal-head span[role="button"][aria-haspopup="dialog"]')
@@ -371,10 +372,11 @@ for (const theme of ['day', 'night']) {
       const t = act.querySelector('.kf-nav-tape').getBoundingClientRect()
       const f = document.querySelector('.app-sidebar-footer .kf-side-row').getBoundingClientRect()
       const hit = document.elementFromPoint(f.left + f.width / 2, f.top + f.height / 2)?.closest('.app-sidebar-footer')
-      return { maxOff: Math.max(...rows.map((r) => r.off)), maxIconOff: Math.max(...rows.map((r) => r.iconOff)), tapeInside: t.left >= a.left - 1 && t.right <= a.right + 1, footerHit: !!hit }
+      return { maxOff: Math.max(...rows.map((r) => r.off)), maxIconOff: Math.max(...rows.map((r) => r.iconOff)), tapeGone: t.width === 0 && t.height === 0, footerHit: !!hit }
     })
     check(`${N('rail')} @${scale * 100}% every box centred in the rail, its icon centred in the box`, m.maxOff <= 1.5 && m.maxIconOff <= 1.5, JSON.stringify(m))
-    check(`${N('rail')} @${scale * 100}% the active tape sits on its box`, m.tapeInside)
+    // Bound Journal (2026-10-14): tape is for pages; the nav is a tool, so its active row carries none.
+    check(`${N('rail')} @${scale * 100}% the active row carries no tape (Bound Journal)`, m.tapeGone)
     check(`${N('rail')} @${scale * 100}% the footer stays reachable (the column scrolls, it never runs under)`, m.footerHit)
     await page.locator('.app-sidebar nav .kf-side-row').nth(2).hover()
     await sleep(250)

@@ -335,6 +335,8 @@ if (want('b')) {
   let clicks = 0
   if (await inv.count()) {
     clicks++
+    // Bound Journal (2026-10-14): a rail row shows Plan ▾ on hover, so hover it first.
+    await inv.hover()
     await inv.locator('.cal-plan-btn').click()
     await sleep(500)
     const slot = page.getByRole('menuitem', { name: /Next free slot/ }).first()

@@ -280,6 +280,8 @@ for (const theme of ['day', 'night']) {
     if (!want('d3')) break d3
     const name = 'plan-4am-day'
     const { ctx, page, errors, state } = await open()
+    // Bound Journal (2026-10-14): a rail row shows Plan ▾ on hover, so hover it first.
+    await card(page, 'overdue', 'Send the tax papers').hover()
     await card(page, 'overdue', 'Send the tax papers').locator('.cal-plan-btn').click()
     await sleep(300)
     const items = (await page.locator('[role="menu"] [role="menuitem"]').allInnerTexts()).map(flat)
@@ -314,6 +316,7 @@ for (const theme of ['day', 'night']) {
     check(`${name} …and its due time is 04:00`, posts(state, 'tasks', w1).some((x) => x.id === id(REVIEW) && x.due_at === iso('04:00')))
     // A date alone stays a date: Plan ▾ → Today on the crypto session — its stuck block comes off.
     const w2 = state.writes.length
+    await card(page, 'overdue', 'Crypto').hover()
     await card(page, 'overdue', 'Crypto').locator('.cal-plan-btn').click()
     await menuItem(page, 'Today').click()
     await sleep(500)
@@ -488,7 +491,7 @@ for (const theme of ['day', 'night']) {
     const opts = await page.locator('.pc-segs [role="radio"]').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
     check(`${name} the segment row is a 48px target row (options 40 inside it)`, Math.round(sb.height) >= 48 && opts.every((h) => h === 40), `${sb.height} · ${opts}`)
     const chips = (await page.locator('.pc-chip').allInnerTexts()).map(flat)
-    check(`${name} Overdue chips: the tax papers 2D, the crypto session 1D`, JSON.stringify(chips) === JSON.stringify(['Send the tax papers 2D', 'Crypto — heavy session 1D']), JSON.stringify(chips))
+    check(`${name} Overdue chips: the tax papers 2d, the crypto session 1d`, JSON.stringify(chips) === JSON.stringify(['Send the tax papers 2d', 'Crypto — heavy session 1d']), JSON.stringify(chips)) // Bound Journal: sentence case
     const hits = await page.locator('.pc-chip').evaluateAll((els) => els.map((e) => { const r = e.getBoundingClientRect(); const a = getComputedStyle(e, '::after'); return r.height + parseFloat(a.top === 'auto' ? 0 : -parseFloat(a.top)) * 2 }))
     check(`${name} chips keep a 48px hit (40 + the ::after)`, hits.every((h) => h >= 48), JSON.stringify(hits))
     if (!night) {
@@ -684,7 +687,7 @@ for (const theme of ['day', 'night']) {
     await t.press('Enter')
     await sleep(400)
     await settle(state)
-    check(`${name} rename → Done → one write with the new title, "✓ Saved"`, posts(state, 'calendar_events', w0).some((x) => x.id === eid(2) && x.title === 'Lunch with Omar & Sam') && flat(await text(d.locator('.pc-bs-save'))).includes('SAVED'))
+    check(`${name} rename → Done → one write with the new title, "✓ Saved"`, posts(state, 'calendar_events', w0).some((x) => x.id === eid(2) && x.title === 'Lunch with Omar & Sam') && /saved/i.test(flat(await text(d.locator('.pc-bs-save')))))
     await phoneBasics(page, name, errors)
     await ctx.close()
   }

@@ -72,12 +72,14 @@ async function open(route = '/calendar', o = {}) {
   // o.device: the DEVICE zone — the user's stays Cairo (app_settings), so a different device zone
   // proves the grid reads the user's clock.
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: o.device ?? 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([t, sess, rail]) => {
+  await ctx.addInitScript(([t, sess, rail, uid]) => {
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', rail ? '0' : '1')
     localStorage.setItem('kf.calRailSections', JSON.stringify({ lists: true }))
-  }, [o.theme ?? 'day', JSON.stringify(session), !!o.rail])
+    // The "What's new" toast has its own harness; at the bottom of the screen it can sit under a slot click.
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: Date.now() + 864e5 }))
+  }, [o.theme ?? 'day', JSON.stringify(session), !!o.rail, UID])
   const state = { rows: tables(), writes: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -439,12 +441,15 @@ if (want('c1')) {
   await sleep(400)
   // The rail: Review Kai waits in Today. Its ⋯ opens the one task menu.
   const card = page.locator('.unscheduled-task', { hasText: 'Review Kai' }).first()
+  await card.hover() // Bound Journal: the row's ⋯ shows on hover
   await card.getByRole('button', { name: 'More actions for "Review Kai"' }).click()
   await sleep(300)
   check('c1 rail card ⋯ opens the task menu', (await page.getByRole('menuitem', { name: /Move to/ }).count()) >= 1)
   await page.keyboard.press('Escape')
   await sleep(300)
   // Plan ▾ → Tomorrow, first thing = tomorrow 09:00, no block (moveToTomorrowWithUndo).
+  // Bound Journal (2026-10-14): a rail row shows Plan ▾ on hover, so hover it first.
+  await card.hover()
   await card.getByRole('button', { name: 'Plan Review Kai' }).click()
   await sleep(300)
   const tomorrowRow = page.getByRole('menuitem', { name: /Tomorrow, first thing/ })
