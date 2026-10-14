@@ -64,7 +64,7 @@ async function open(route, o = {}) {
     ([sess, uid, theme, local]) => {
       if (sessionStorage.getItem('seeded')) return // reloads keep what the page wrote
       sessionStorage.setItem('seeded', '1')
-      localStorage.setItem('kf_theme', theme)
+      localStorage.setItem('kf_theme', theme); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
       localStorage.setItem('sb-127-auth-token', sess)
       localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))
       for (const [k, v] of Object.entries(local)) localStorage.setItem(k, v)

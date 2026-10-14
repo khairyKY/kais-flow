@@ -77,7 +77,7 @@ const desktop = { viewport: { width: 1280, height: 800 } }
 async function open(route, o = {}) {
   const ctx = await browser.newContext({ ...desktop, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, uid]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['hint:inbox', 'hint:swipe', 'hint:calendar', 'hint:today', 'hint:tasks']))
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v99.0.0' }))

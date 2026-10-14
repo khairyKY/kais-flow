@@ -111,7 +111,7 @@ const VIEWS = { desktop: { viewport: { width: 1280, height: 800 } }, phone: { vi
 async function open(route, theme, view, o = {}) {
   const ctx = await browser.newContext({ ...VIEWS[view], deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', reducedMotion: o.reduced ? 'reduce' : 'no-preference' })
   await ctx.addInitScript(([t, sess, uidKey, effects]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem(uidKey, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: 4102444800000 }))
     localStorage.setItem(uidKey.replace('kf-whats-new', 'kf-help'), JSON.stringify(['tour', 'hint:swipe', 'hint:calendar', 'hint:inbox', 'hint:top3', 'hint:capture'])) // no first-run notes popping in mid-shot

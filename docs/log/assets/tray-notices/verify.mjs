@@ -100,7 +100,7 @@ const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
 async function app(s = {}, o = {}) {
   const ctx = await browser.newContext({ ...(o.view ?? DESKTOP), deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, tauri, away]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf-whats-new:00000000-0000-4000-8000-00000000d3e0', JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: 4102444800000 })) // no "Updated to …" toast over the screenshots
     if (away) document.hasFocus = () => false // the window is in the tray / behind another app

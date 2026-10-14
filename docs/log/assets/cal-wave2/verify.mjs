@@ -98,7 +98,7 @@ async function open(route = '/calendar', o = {}) {
   await ctx.addInitScript(([t, sess, planning, view, hints, uid]) => {
     localStorage.setItem(`kf-help:${uid}`, hints)
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', checkedAt: 4102444800000 }))
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calPlanning', planning ? '1' : '0')
     localStorage.removeItem('kf.calPlanTab')

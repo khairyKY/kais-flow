@@ -130,7 +130,7 @@ const DESKTOP = { viewport: { width: 1280, height: 800 } }
 async function open(s, theme, view = PHONE) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, uid]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     // UI pass (2026-10-08): the one-time "Updated to vX" toast stays out of the way (it sat over 6d's
     // third time pill whenever the run was slow enough) — the task-sheet harness's recipe.
