@@ -12,6 +12,7 @@ import { useAppSettings, updateAppSetting, useCalendarDefaultView, type Calendar
 import { appPlatform, buildStamp, installedVersion, openDownload, reloadToUpdate } from '../../lib/appUpdate'
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
 import { checkForUpdates } from '../whats-new/check'
+import { DownloadLinks } from '../download/DownloadBar'
 import { UpdateNotes } from '../whats-new/WhatsNew'
 import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
@@ -408,6 +409,12 @@ function AppUpdateCard() {
         <Button variant="secondary" disabled={checking} onClick={() => void checkForUpdates(uid)}>
           {checking ? 'Checking…' : 'Check for updates'}
         </Button>
+      </Row>
+      {/* Kai 2026-10-14: the download bar's links for good, so dismissing it is never a dead end. */}
+      <Row label="Download the apps" help="Android and Windows · always the newest release">
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <DownloadLinks />
+        </div>
       </Row>
       {/* Tour & help (Tour and Help Guide.dc.html, "Also in Settings → App"): the notes again. */}
       <Row label="The tour" help="Replays the notes on Today and clears seen hints">

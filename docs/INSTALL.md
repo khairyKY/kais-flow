@@ -1,11 +1,12 @@
 # Installing Kai's Flow
 
-The web app is at https://kais-flow.kaidagoat.workers.dev and needs no install. The apps below are the same app in a native window, with no browser bar and their own icon.
+The web app is at https://kais-flow.kaidagoat.workers.dev and needs no install. The apps below are the same app in a native window, with no browser bar and their own icon. In a browser, the web app's bar at the top and **Settings → App → Download the apps** link to both.
 
 ## Android (APK)
 
 **Where to get it:**
-- **A release:** https://github.com/khairyKY/kais-flow/releases → the newest release → **Assets** → `kais-flow-…apk`.
+- **The newest release:** https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk (this link always serves the newest one).
+- **A particular release:** https://github.com/khairyKY/kais-flow/releases → that release → **Assets** → `kais-flow-v….apk`.
 - **A test build:** https://github.com/khairyKY/kais-flow/actions/workflows/android.yml → the newest green run → **Artifacts** → the `kais-flow-….apk` file. Sign in to GitHub first. It downloads as a `.zip`; open it and tap the `.apk` inside.
 
 **Installing:**
@@ -26,7 +27,9 @@ The web app is at https://kais-flow.kaidagoat.workers.dev and needs no install. 
 
 ## Windows (installer)
 
-**Where to get it:** the same two places, but `kais-flow-…-windows-setup.exe`, from https://github.com/khairyKY/kais-flow/actions/workflows/desktop.yml for test builds.
+**Where to get it:**
+- **The newest release:** https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe (always the newest).
+- **A particular release** or **a test build:** as for Android, but `kais-flow-v…-windows-setup.exe`, with test builds from https://github.com/khairyKY/kais-flow/actions/workflows/desktop.yml.
 
 **Installing:**
 1. Run the `.exe`.
