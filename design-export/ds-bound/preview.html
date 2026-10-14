@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bound Journal · design system preview</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+/* Preview of ds-bound: every value below comes from the tokens; no colour literals. */
+* { box-sizing: border-box; }
+body { margin: 0; background: #8f8a80; font-family: var(--font-ui); }
+.boards { display: flex; flex-wrap: wrap; gap: 24px; justify-content: center; padding: 24px 16px; }
+.theme { width: 392px; max-width: 100%; background: var(--bg-app); color: var(--text-primary); border-radius: 28px; padding: 18px 16px 0; display: flex; flex-direction: column; gap: 14px; overflow: hidden; position: relative; }
+.theme::before { content: ""; position: absolute; inset: 0; background-image: var(--noise-url); opacity: var(--grain-app); pointer-events: none; }
+.cap { font: var(--fw-semibold) var(--fs-meta)/1 var(--font-meta); color: var(--text-tertiary); letter-spacing: var(--ls-eyebrow); text-transform: uppercase; }
+.swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.sw { border: 1px solid var(--line-card); border-radius: var(--radius-input); padding: 22px 8px 6px; font: var(--fs-meta)/1.2 var(--font-meta); color: var(--text-secondary); }
+.i { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+.bar { display: flex; align-items: center; gap: 8px; }
+.bar .sp { flex: 1; }
+.ib { width: 38px; height: 38px; border-radius: var(--radius-pill); background: var(--bg-input); display: grid; place-items: center; }
+/* ponytail: the boards are phone-width at any window size, so they use the phone title size */
+.theme { --fs-page-title: 30px; }
+.title { font: var(--fw-medium) var(--fs-page-title)/1.1 var(--font-display); letter-spacing: var(--ls-display); margin: 0; text-wrap: balance; }
+.sub { font: var(--fs-body-s)/1.3 var(--font-meta); color: var(--text-secondary); margin-top: -8px; }
+.card { background: var(--bg-surface); border: 1px solid var(--line-card); border-radius: var(--radius-card); box-shadow: var(--shadow-card); }
+.tool { display: flex; align-items: center; gap: 12px; padding: 12px; }
+.t { font: var(--fw-medium) var(--fs-body)/1.3 var(--font-ui); }
+.m { font: var(--fs-meta)/1.35 var(--font-meta); letter-spacing: var(--ls-meta); color: var(--text-secondary); margin-top: 2px; }
+.late { color: var(--sig-overdue); font-weight: var(--fw-medium); }
+.btn { height: 34px; padding: 0 16px; border-radius: var(--radius-pill); background: var(--sel-bg); color: var(--sel-ink); font: var(--fw-medium) var(--fs-body-s)/34px var(--font-ui); border: 0; }
+.sec { font: var(--fw-semibold) var(--fs-section)/1 var(--font-ui); display: flex; justify-content: space-between; margin-bottom: -4px; }
+.sec span { font-weight: var(--fw-medium); color: var(--text-secondary); }
+.page { position: relative; background: var(--bg-page); border: 1px solid var(--border-page); border-radius: var(--radius-page); box-shadow: var(--shadow-page); isolation: isolate; }
+.page::before { content: ""; position: absolute; inset: 0; border-radius: inherit; background-image: var(--noise-url); opacity: var(--grain-page); mix-blend-mode: multiply; z-index: -1; }
+.goal { background: var(--paper-goal); border-color: var(--line-goal); box-shadow: var(--shadow-goal); padding: 18px 16px 14px; transform: rotate(var(--tilt-neg-lg)); margin: 4px 2px; }
+.tape { position: absolute; top: -9px; left: 50%; width: 72px; height: 18px; margin-left: -36px; background: var(--acc-gold-warm); opacity: .55; transform: rotate(-2.5deg); }
+.stamp { font: var(--fs-mono-s)/1 var(--font-stamp); letter-spacing: var(--ls-mono-tight); color: var(--acc-gold); text-transform: uppercase; }
+.gt { font: var(--fw-semibold) var(--fs-lead)/1.25 var(--font-display); margin: 8px 0 12px; max-width: 230px; }
+.chk { width: 22px; height: 22px; border-radius: var(--radius-check); border: 1.6px solid var(--check-border); background: var(--check-bg); flex: none; }
+.chk.on { background: var(--check-fill); border-color: var(--check-fill); color: var(--check-mark); display: grid; place-items: center; }
+.chk.on .i { width: 14px; height: 14px; stroke-width: 2.4; }
+.pf { display: flex; align-items: center; gap: 10px; }
+.goal figure { position: absolute; right: 14px; top: 14px; margin: 0; text-align: center; }
+.goal img { height: 54px; display: block; filter: var(--shadow-drop-sm); }
+.hand { font: var(--fw-medium) var(--fs-hand-l)/1.1 var(--font-hand); color: var(--ink-hand); }
+.goal figcaption { color: var(--acc-gold); }
+.row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--line-card); }
+.row:last-child { border-bottom: 0; }
+.star { color: var(--star-on); width: 15px; height: 15px; fill: currentColor; stroke: none; }
+.seg { display: flex; background: var(--bg-input); border-radius: var(--radius-pill); padding: 3px; }
+.seg span { flex: 1; text-align: center; padding: 8px 0; border-radius: var(--radius-pill); font: var(--fw-medium) var(--fs-body-s)/1 var(--font-ui); color: var(--text-secondary); }
+.seg .on { background: var(--bg-surface); color: var(--text-primary); }
+.blocks { display: grid; gap: 6px; }
+.blk { border-radius: var(--radius-block); padding: 8px 10px; font: var(--fw-semibold) var(--fs-body-s)/1.25 var(--font-ui); }
+.blk small { display: block; font: var(--fs-meta)/1.3 var(--font-meta); opacity: .85; margin-top: 1px; }
+.blk.lav { background: var(--block-lavender); color: var(--acc-lavender-text); }
+.blk.hyd { background: var(--block-hydrangea); color: var(--acc-hydrangea-deep); }
+.blk.slot { border: 1.5px dashed var(--line-dashed); color: var(--text-secondary); }
+.journal { padding: 16px; }
+.ruled { font: var(--fs-body)/27px var(--font-display); margin: 0; background-image: repeating-linear-gradient(to bottom, transparent 0 26px, var(--page-rule) 26px 27px); }
+.chips { display: flex; gap: 6px; flex-wrap: wrap; }
+.chips span { padding: 8px 14px; border-radius: var(--radius-pill); background: var(--bg-input); font: var(--fw-medium) var(--fs-body-s)/1 var(--font-ui); }
+.chips .on { background: var(--sel-bg); color: var(--sel-ink); }
+.tabbar { margin: 4px -16px 0; height: var(--tabbar-h); display: grid; grid-template-columns: repeat(5, 1fr); align-items: center; background: var(--bg-surface); box-shadow: var(--shadow-tabbar); }
+.tab { display: flex; flex-direction: column; align-items: center; gap: 4px; font: var(--fw-medium) var(--fs-tab-label)/1 var(--font-ui); color: var(--text-secondary); }
+.tab .i { width: 22px; height: 22px; padding: 4px 14px; box-sizing: content-box; border-radius: var(--radius-pill); }
+.tab.on { color: var(--text-primary); font-weight: var(--fw-semibold); }
+.tab.on .i { background: var(--tab-active-bg); }
+.mic { width: var(--capture-size); height: var(--capture-size); margin: auto; border-radius: var(--radius-pill); background: var(--acc-terra-ink); color: var(--on-terra); display: grid; place-items: center; box-shadow: var(--shadow-cta); }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<symbol id="kf-today" viewBox="0 0 24 24"><path d="M12 20.5v-8"></path><path d="M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z"></path><path d="M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z"></path><path d="M7.5 20.5h9"></path></symbol>
+<symbol id="kf-inbox" viewBox="0 0 24 24"><path d="M4 13.5 6.2 6.3A1.8 1.8 0 0 1 7.9 5h8.2a1.8 1.8 0 0 1 1.7 1.3L20 13.5v4.7a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2z"></path><path d="M4 13.5h4.4l1.3 2.3h4.6l1.3-2.3H20"></path></symbol>
+<symbol id="kf-calendar" viewBox="0 0 24 24"><rect x="4" y="5.5" width="16" height="14.5" rx="2"></rect><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"></path></symbol>
+<symbol id="kf-more" viewBox="0 0 24 24"><rect x="4.5" y="4.5" width="6" height="6" rx="1.5"></rect><rect x="13.5" y="4.5" width="6" height="6" rx="1.5"></rect><rect x="4.5" y="13.5" width="6" height="6" rx="1.5"></rect><rect x="13.5" y="13.5" width="6" height="6" rx="1.5"></rect></symbol>
+<symbol id="kf-mic" viewBox="0 0 24 24"><rect x="9" y="3.5" width="6" height="11" rx="3"></rect><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"></path></symbol>
+<symbol id="kf-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></symbol>
+<symbol id="kf-star" viewBox="0 0 24 24"><path d="M12 3.8l2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"></path></symbol>
+<symbol id="kf-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"></path></symbol>
+</defs></svg>
+
+<main class="boards">
+  <template id="board">
+    <section class="theme">
+      <div class="cap" data-name></div>
+      <div class="swatches">
+        <div class="sw" style="background:var(--paper-linen)">canvas</div>
+        <div class="sw" style="background:var(--paper-parchment)">tool surface</div>
+        <div class="sw" style="background:var(--paper-bone)">pressed wash</div>
+        <div class="sw" style="background:var(--paper-sidebar)">sidebar</div>
+        <div class="sw" style="background:var(--page-paper)">page</div>
+        <div class="sw" style="background:var(--paper-goal)">goal page</div>
+      </div>
+      <div class="bar"><span class="t">Today</span><span class="sp"></span><span class="ib"><svg class="i"><use href="#kf-search"/></svg></span></div>
+      <h1 class="title">Wednesday, Oct 14</h1>
+      <div class="sub">2 of 5 done · 3 in inbox</div>
+      <div class="card tool"><div style="flex:1"><div class="t">Plan your day</div><div class="m">About 5 minutes</div></div><button class="btn" type="button">Begin</button></div>
+      <div class="sec">Top 3<span>1 of 3</span></div>
+      <div class="page goal">
+        <span class="tape"></span>
+        <div class="stamp">Goal of the day</div>
+        <div class="gt">Call the tyre supplier about the invoice</div>
+        <div class="pf"><span class="chk"></span><span class="m" style="margin:0">Shaheen · 30 min · due today</span></div>
+        <figure><img src="../ds/assets/clover/four_leaf.png" alt=""><figcaption class="hand">for luck</figcaption></figure>
+      </div>
+      <div class="card">
+        <div class="row"><span class="chk"></span><div style="flex:1"><div class="t">Finish the Data Structures sheet</div><div class="m">1h 30m · due today</div></div><svg class="i star"><use href="#kf-star"/></svg></div>
+        <div class="row"><span class="chk on"><svg class="i"><use href="#kf-check"/></svg></span><div style="flex:1"><div class="t">Reply to Omar about Thursday</div><div class="m"><span class="late">Overdue 1 day</span> · 15 min</div></div></div>
+      </div>
+      <div class="seg"><span class="on">Day</span><span>3 days</span><span>Week</span></div>
+      <div class="blocks">
+        <div class="blk lav">Deep work: forecasting<small>9:00 – 11:00</small></div>
+        <div class="blk slot">Study slot<small>Open · 12:30 – 1:30</small></div>
+        <div class="blk hyd">Data Structures lecture<small>2:00 – 3:30 · Google</small></div>
+      </div>
+      <div class="page journal">
+        <div class="stamp">Wed 14 Oct · 12:04</div>
+        <div class="hand" style="font-size:var(--fs-hand-l);margin:8px 0 4px">What felt alive in you today?</div>
+        <p class="ruled">The forecasting build finally clicked this morning. Two hours of real deep work before the dorm woke up.</p>
+      </div>
+      <div class="chips"><span>Calm</span><span class="on">Focused</span><span>Grateful</span></div>
+      <nav class="tabbar">
+        <span class="tab on"><svg class="i"><use href="#kf-today"/></svg>Today</span>
+        <span class="tab"><svg class="i"><use href="#kf-inbox"/></svg>Inbox</span>
+        <span class="mic"><svg class="i"><use href="#kf-mic"/></svg></span>
+        <span class="tab"><svg class="i"><use href="#kf-calendar"/></svg>Calendar</span>
+        <span class="tab"><svg class="i"><use href="#kf-more"/></svg>More</span>
+      </nav>
+    </section>
+  </template>
+</main>
+<script>
+  // One board markup, rendered twice: day, then night (data-theme="night" on the subtree).
+  const tpl = document.getElementById('board'), host = document.querySelector('.boards');
+  [['Bound Journal · day', null], ['Bound Journal · Night Garden', 'night']].forEach(([name, theme]) => {
+    const b = tpl.content.firstElementChild.cloneNode(true);
+    if (theme) b.dataset.theme = theme;
+    b.querySelector('[data-name]').textContent = name;
+    host.appendChild(b);
+  });
+</script>
+</body>
+</html>

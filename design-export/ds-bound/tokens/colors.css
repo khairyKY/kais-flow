@@ -1,0 +1,121 @@
+/* Light mode — "Bound Journal" (direction B, chosen by Kai 2026-10-14).
+   A copy of ds/tokens/colors.css. The app now has two kinds of surface:
+   · TOOLS — everything you operate: bars, lists, the calendar grid, sheets, buttons,
+     Plan your day and Shut down. A clean warm canvas, no grain, depth from tone + hairline.
+   · PAGES — what you write and keep: the goal of the day; journal entries, notes, quotes;
+     the herbarium. Paper: grain, tape, ruled lines, a slight tilt, handwriting.
+   Every variable from ds/ is still here with the same name; values changed only where B
+   changed what the surface is. Contrast is checked by ../check_contrast.py (text ≥4.5, non-text ≥3). */
+:root {
+  /* Ground — tools (B: cleaner, less yellow; was linen paper) */
+  --paper-linen:        #F2EFE8;   /* app canvas            (was #EFE9DB) */
+  --paper-parchment:    #FBFAF6;   /* tool cards, panels, popovers, sheets (was #FBF6E9) */
+  --paper-bone:         #ECE8DF;   /* inputs, pressed, segmented track, icon-button wash (was #F6F0E1) */
+  --paper-sidebar:      #E9E5DC;   /* left rail             (was #EAE3D2) */
+  --paper-goal:         #F8EFD3;   /* goal of the day — a page (unchanged) */
+  --paper-event:        #ECE8DF;   /* neutral calendar block — external / read-only (was #F4EFE0) */
+
+  /* NEW · Pages — paper surfaces (goal, journal, notes, quotes, herbarium) */
+  --page-paper:         #FBF5E6;   /* journal / notes / quotes / herbarium sheet */
+  --page-line:          #E5DBC1;   /* page edge */
+  --page-rule:          rgba(196, 186, 158, 0.5);   /* ruled lines on a page */
+
+  /* Calendar block tints — accent washed over the canvas. Never the raw accent as a fill. (unchanged) */
+  --block-lavender:     rgba(168, 160, 190, 0.20);
+  --block-moss:         rgba(122, 148, 110, 0.18);
+  --block-blossom:      rgba(212, 168, 176, 0.22);
+  --block-sage:         rgba(138, 154, 126, 0.20);
+  --block-hydrangea:    rgba(154, 180, 190, 0.22);
+  --block-buttercream:  rgba(212, 199, 138, 0.24);
+  --block-terra:        rgba(181, 101, 74, 0.14);
+
+  /* Ink — TEXT (≥4.5:1 on every ground above) — unchanged values */
+  --ink-body:           #2a2420;
+  --ink-muted:          #5f5849;
+  --ink-faint:          #6A6354;
+  --ink-hand:           #6c6557;   /* Caveat — pages only */
+  /* Ink — NON-TEXT ONLY (≥3:1) */
+  --ink-hairline:       #88816E;
+
+  /* Borders — tools use solid hairlines; dashed is kept for open time slots only */
+  --line-solid:         #d6d0c4;   /* (was #cfc7b0) */
+  --line-dashed:        #cfc9bc;   /* open time slot outline (was #d5cdb5) */
+  --line-sidebar:       #dcd6ca;   /* (was #c9c1aa) */
+  --line-card:          #e3ded3;   /* tool card hairline (was #e0d8c2) */
+  --line-goal:          #dcc48e;   /* goal page edge (unchanged) */
+  --line-control:       #88816E;
+
+  /* Botanical accents — unchanged. Fills, dots, tape, illustration; raw accents are not text. */
+  --acc-sage:           #8A9A7E;
+  --acc-moss:           #7A946E;
+  --acc-terra:          #B5654A;
+  --acc-blossom:        #D4A8B0;
+  --acc-lavender:       #A8A0BE;
+  --acc-hydrangea:      #9AB4BE;
+  --acc-buttercream:    #D4C78A;
+  --acc-clover:         #C9A0A0;
+  --acc-gold:           #7f6428;   /* goal text — never on the sidebar */
+  --acc-gold-warm:      #C9A55A;   /* washi-tape gold */
+  --acc-lavender-deep:  #6a5988;
+  --acc-lavender-text:  #5a5170;
+  --acc-sage-text:      #4d6650;
+  --acc-hydrangea-deep: #4d6a75;
+  --acc-clover-text:    #8a5a5a;   /* never on the sidebar */
+  --acc-buttercream-text: #716431;
+  --acc-blossom-text:   #8A4A58;
+  --acc-terra-ink:      #9C5139;   /* terra as TEXT + the one action fill */
+
+  /* Signal colors (unchanged) */
+  --sig-overdue:        #9C5139;
+  --sig-streak:         #B5654A;
+  --sig-done:           #2a2420;
+  --sig-amber:          #7f6428;
+  --sig-offline:        #4d6a75;
+
+  /* Task checkboxes */
+  --check-border:       #88816E;
+  --check-bg:           var(--paper-parchment);   /* (was --paper-bone; bone is now the darker pressed wash) */
+  --check-fill:         var(--acc-sage-text);
+  --check-mark:         #FBFAF6;
+  --check-glow:         none;
+
+  /* Star (Top 3) */
+  --star-on:            #B5654A;
+  --star-empty:         #88816E;
+
+  /* NEW · Selection — ink-filled, never a second accent colour */
+  --sel-bg:             var(--ink-body);     /* selected chip, segment, date */
+  --sel-ink:            var(--paper-linen);
+  --tab-active-bg:      var(--paper-bone);   /* soft pill behind the active tab icon */
+
+  /* Interaction colour roles */
+  --on-terra:           #FBFAF6;
+  --focus:              #4d6a75;
+  --badge-bg:           #9C5139;
+  --badge-ink:          #FBFAF6;
+  --toast-bg:           #2a2420;
+  --toast-ink:          #FBFAF6;
+  --toast-action:       #C9A55A;
+  --swipe-right-bg:     #8A9A7E;
+  --swipe-right-ink:    #2a2420;
+  --swipe-left-bg:      #9C5139;
+  --swipe-left-ink:     #FBFAF6;
+  --select-bg:          rgba(77, 106, 117, 0.10);
+  --skeleton:           rgba(42, 36, 32, 0.07);
+  --skeleton-hi:        rgba(42, 36, 32, 0.035);
+
+  /* Semantic aliases (what components should reach for) */
+  --bg-app:             var(--paper-linen);
+  --bg-surface:         var(--paper-parchment);
+  --bg-input:           var(--paper-bone);
+  --bg-sidebar:         var(--paper-sidebar);
+  --bg-page:            var(--page-paper);   /* NEW */
+  --border-page:        var(--page-line);    /* NEW */
+  --text-primary:       var(--ink-body);
+  --text-secondary:     var(--ink-muted);
+  --text-tertiary:      var(--ink-faint);
+  --border-default:     var(--line-solid);
+  --border-dashed:      var(--line-dashed);
+  --accent-primary:     var(--acc-terra);
+  --accent-plant:       var(--acc-sage);
+}

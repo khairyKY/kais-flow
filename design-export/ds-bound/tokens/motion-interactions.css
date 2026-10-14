@@ -1,0 +1,171 @@
+/* Motion — gentle. Nothing snappy. All animations respect prefers-reduced-motion. */
+:root {
+  --dur-instant:  120ms;
+  --dur-quick:    150ms;   /* hover reveal */
+  --dur-normal:   200ms;   /* tab switch, toggle */
+  --dur-slow:     300ms;   /* panel transitions */
+  --dur-bloom:    600ms;   /* petal fall */
+  --dur-grow:     800ms;   /* vine growth */
+
+  --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);       /* easeOutExpo for reveals */
+  --ease-in:      cubic-bezier(0.55, 0, 0.68, 0.53);
+  --ease-spring:  cubic-bezier(0.34, 1.56, 0.64, 1);    /* springy bounce for actions */
+  --ease-natural: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Universal micro-interactions for buttons, inputs, and interactive tags */
+.btn-secondary,
+.btn-terracotta,
+.checkbox-custom,
+.swatch-circle,
+.toggle-card,
+aside nav a,
+.inline-input,
+.search-input {
+  transition: transform var(--dur-quick) var(--ease-spring),
+              background-color var(--dur-normal) var(--ease-natural),
+              border-color var(--dur-normal) var(--ease-natural),
+              box-shadow var(--dur-normal) var(--ease-natural),
+              opacity var(--dur-normal) var(--ease-natural) !important;
+}
+
+/* Springy active press state */
+.btn-secondary:active,
+.btn-terracotta:active,
+.swatch-circle:active,
+.toggle-card:active {
+  transform: scale(0.97) !important;
+}
+
+/* Hover lifts for primary actions */
+.btn-secondary:hover,
+.btn-terracotta:hover {
+  transform: translateY(-1px) scale(1.01) !important;
+}
+
+/* Swatches pop on hover */
+.swatch-circle:hover {
+  transform: scale(1.15) !important;
+}
+
+/* Sidebar navigation slide-reveal */
+aside nav a:hover {
+  transform: translateX(3px) !important;
+}
+aside nav a:active {
+  transform: translateX(1px) !important;
+}
+
+/* Toggle card active styling micro-scale */
+.toggle-card.active {
+  transform: scale(1.01);
+}
+
+/* Checkbox dynamic check popping */
+@keyframes checkPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+.checkbox-custom.checked {
+  animation: checkPop 0.25s var(--ease-spring) forwards !important;
+}
+
+/* Clover sway animation on hover */
+@keyframes cloverSway {
+  0%, 100% { transform: rotate(-1.4deg); }
+  50%      { transform: rotate(1.4deg); }
+}
+
+@keyframes fireflyDrift {
+  0%   { transform: translate(0, 0) scale(1); opacity: 0.4; }
+  25%  { transform: translate(18px, -12px) scale(1.15); opacity: 1; }
+  50%  { transform: translate(6px, -28px) scale(0.9); opacity: 0.55; }
+  75%  { transform: translate(-14px, -16px) scale(1.1); opacity: 1; }
+  100% { transform: translate(0, 0) scale(1); opacity: 0.4; }
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.35; }
+  50%      { opacity: 1; }
+}
+
+@keyframes petalFall {
+  0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(90px) rotate(140deg); opacity: 0; }
+}
+
+/* Page Entry Animations - smooth fade-in slide-up */
+.group-section,
+.detail-card,
+.sparkline-container,
+.inline-form,
+main > div > div:first-of-type {
+  animation: entryFadeUp 0.5s var(--ease-out) both;
+}
+
+@keyframes entryFadeUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Stagger reveals for lists and grid rows */
+.row-item,
+.routine-row {
+  animation: itemFadeIn 0.35s var(--ease-out) both;
+}
+
+.row-item:nth-child(1), .routine-row:nth-child(1) { animation-delay: 30ms; }
+.row-item:nth-child(2), .routine-row:nth-child(2) { animation-delay: 60ms; }
+.row-item:nth-child(3), .routine-row:nth-child(3) { animation-delay: 90ms; }
+.row-item:nth-child(4), .routine-row:nth-child(4) { animation-delay: 120ms; }
+.row-item:nth-child(5), .routine-row:nth-child(5) { animation-delay: 150ms; }
+
+@keyframes itemFadeIn {
+  0% { opacity: 0; transform: translateY(6px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Toast popup slide-in */
+.toast {
+  animation: toastSlideIn 0.4s var(--ease-spring) forwards !important;
+}
+
+@keyframes toastSlideIn {
+  0% { transform: translate(-50%, -20px) scale(0.95); opacity: 0; }
+  100% { transform: translate(-50%, 0) scale(1) rotate(-0.5deg); opacity: 1; }
+}
+
+/* Settings Overlay Reveal */
+.settings-overlay {
+  animation: settingsFadeScale 0.25s var(--ease-out) forwards !important;
+  transform-origin: top left;
+}
+
+@keyframes settingsFadeScale {
+  0% { transform: scale(0.96) translateY(4px) rotate(0.4deg); opacity: 0; }
+  100% { transform: scale(1) translateY(0) rotate(0.4deg); opacity: 1; }
+}
+
+/* Accessible reduced motion fallbacks */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .group-section,
+  .detail-card,
+  .sparkline-container,
+  .inline-form,
+  main > div > div:first-of-type,
+  .row-item,
+  .routine-row,
+  .toast,
+  .settings-overlay {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
