@@ -1924,6 +1924,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
  "tauri-winrt-notification",
+ "windows",
 ]
 
 [[package]]

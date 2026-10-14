@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Kai's Flow as an MSIX for the Microsoft Store (docs/MICROSOFT-STORE.md). desktop.yml's msix job
+     fills the {{...}} slots from the STORE_* repo variables and the release tag, lays this out with the
+     release build's kais-flow.exe and the icons `tauri icon` made, and packs it unsigned: the Store
+     signs what it ships. DisplayName must equal the name reserved in Partner Center, character for
+     character (a straight apostrophe). -->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+  xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap uap10 desktop rescap">
+
+  <Identity Name="{{NAME}}" Publisher="{{PUBLISHER}}" Version="{{VERSION}}" ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Kai's Flow</DisplayName>
+    <PublisherDisplayName>{{PUBLISHER_DISPLAY_NAME}}</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <!-- 19041 = Windows 10 2004, the first with uap10:Parameters below. WebView2 ships with Windows 11
+       and came to Windows 10 through Windows Update. -->
+  <Dependencies>
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.19041.0" MaxVersionTested="10.0.26100.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="App" Executable="kais-flow.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements DisplayName="Kai's Flow" Description="The whole day in one calm place" BackgroundColor="transparent"
+        Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Square71x71Logo="Assets\Square71x71Logo.png" />
+      </uap:VisualElements>
+      <Extensions>
+        <!-- Settings → Start with Windows (src/tray.rs store_autostart). Off until the person turns it
+             on; it opens quietly to the tray, like the .exe install's Run entry. -->
+        <desktop:Extension Category="windows.startupTask" Executable="kais-flow.exe" EntryPoint="Windows.FullTrustApplication" uap10:Parameters="--minimized">
+          <desktop:StartupTask TaskId="KaisFlowStartup" Enabled="false" DisplayName="Kai's Flow" />
+        </desktop:Extension>
+      </Extensions>
+    </Application>
+  </Applications>
+
+  <!-- A desktop (Win32) app: the tray, toasts and the WebView all need full trust. -->
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>
