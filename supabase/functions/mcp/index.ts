@@ -328,7 +328,7 @@ async function withSession<T>(key: string, count: boolean, fn: (s: Session) => P
           update mcp_keys set calls = case when calls_day = current_date then calls + 1 else 1 end,
             calls_day = current_date, last_used_at = now()
           where key_hash = ${hash}::text
-          returning user_id, scope, calls, coalesce(to_jsonb(mcp_keys.*)->'scopes', '[]'::jsonb) as scopes`
+          returning user_id, scope, calls, coalesce(to_jsonb(mcp_keys)->'scopes', '[]'::jsonb) as scopes`
       : await tx`select user_id, scope, 0 as calls, coalesce(to_jsonb(k)->'scopes', '[]'::jsonb) as scopes from mcp_keys k where key_hash = ${hash}::text`
     if (!k) return { ok: false, reason: 'invalid' }
     if ((k.calls as number) > DAILY_LIMIT) return { ok: false, reason: 'limit' } // the count still commits
