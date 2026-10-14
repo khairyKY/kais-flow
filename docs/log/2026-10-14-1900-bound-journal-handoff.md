@@ -36,11 +36,19 @@ Look direction **B, Bound Journal** (brainstorm: `D:\Coding\_claude-cloud\kais-f
 - `docs/log/assets/bound-journal/verify.mjs`: one realistic Wednesday (14 Oct, 12:10 Cairo) + its week and month, 35 scenes × day/night = 70 shots, every calendar format (Day, 3 days, Week, Month × desktop/phone) and state (block menu, quick create, drag, +N more, planning mode, loading, block sheet, tap-to-create, tray, empty day) plus 8 screens on both devices. 70/70 on the branch. The same harness on the integration build gives the before shots. `SCAN=caps` lists copy that only read right in caps.
 - The old harnesses, run on both builds: SWEEP_RESULTS
 
+## Calendar layout (Kai's follow-up, same day)
+
+Kai: "We need to redo the spacing of the calendar ... it is taking a lot less space than I imagine ... compress the to plan section and move that date with the Daisy thing to the far top right ... I don't want any wasted spaces ... reference [Akiflow]".
+- `components/AppLayout.tsx`: `/calendar` joins `NO_TOPBAR`; a desktop `FULL_BLEED` list drops the page padding and page scroll there (`.kf-route` takes the full height).
+- `features/calendar/CalendarPage.tsx`: one header row (view · ‹ Today › left; week line, date and daisy at the far right); the grid has no card frame and fills the column; the To plan rail is compact (one line per task: box · title · project dot · length; Plan ▾ and ⋯ on hover or focus; "To plan" + "N blocks · Xh free" on one line, class `cal-rail-load`; no hand line, no footer).
+- `features/calendar/CalendarGrid.css`: hour rows 36px a half hour (were 27); day headers on one line, today's number in a lavender pill; day-grid pills (all-day band, month) one line: start time, then the title; no time row in the all-day band. `CalendarGrid.tsx`: no "Now · Xm left" on an all-day event.
+- `features/calendar/weekFit.ts`: `GRID_CHROME_W` 46 → 0.
+- Harnesses updated: calendar-rail (99/99), event-detail (68/68), desktop-polish (one pre-existing failure, the project right-click menu, fails on the integration build too), cal-keys, p7e-audit; rail rows need a hover before Plan ▾ / ⋯.
+- The gallery's computer shots are now 1920×1080 (Kai's screen): https://claude.ai/artifact/JWbBwMJBPZrT1ia7zBrgYU
+
 ## Seen, not caused by B (identical on the integration build)
 
-- Month pills overlap their neighbours' titles on busy weeks.
 - Three blocks stacked at 2:45 PM squeeze to unreadable widths on the phone and in Week.
-- The Week grid is narrow beside the task rail at 1280px.
 
 ## For the conductor
 
