@@ -1,5 +1,5 @@
 import { head2, icon, btn, kmark, esc } from '../lib.mjs'
-import { APP_URL, REPO, RELEASES_URL, LATEST, apkUrl, exeUrl } from '../data.mjs'
+import { APP_URL, REPO, RELEASES_URL, LATEST, APK_LATEST, EXE_LATEST } from '../data.mjs'
 
 const UPDATED = '12 Oct 2026'
 const pre = (t) => `<pre tabindex="0"><code>${esc(t)}</code></pre>`
@@ -29,7 +29,7 @@ YYYY-MM-DDTHH:MM:SS on my own clock, duration in minutes, priority as Akiflow na
 Leave out anything you don't have. Events are optional.`
 // small step pictures (tiny phone/desktop dialogs)
 const pic = {
-  apk: `<div class="mini" role="img" aria-label="A download notification: the APK finished downloading, with Open"><div class="mini-d"><b>kais-flow-<span data-release-tag>${LATEST.tag}</span>.apk</b>${LATEST.apkMB} MB · Download complete<div class="row" style="margin-top:6px"><span class="lnk">Open</span></div></div></div>`,
+  apk: `<div class="mini" role="img" aria-label="A download notification: the APK finished downloading, with Open"><div class="mini-d"><b>kais-flow.apk</b>${LATEST.apkMB} MB · Download complete<div class="row" style="margin-top:6px"><span class="lnk">Open</span></div></div></div>`,
   allow: `<div class="mini" role="img" aria-label="Android’s Install unknown apps screen with Allow from this source turned on"><div class="mini-d"><div class="row">Install unknown apps</div><div class="row">Allow from this source<span class="tg"></span></div></div></div>`,
   install: `<div class="mini" role="img" aria-label="Android asking whether to install Kai’s Flow, with Cancel and Install"><div class="mini-d"><div class="row" style="justify-content:flex-start"><span class="k">K</span><b>Kai’s Flow</b></div><div class="row" style="justify-content:flex-end;gap:14px"><span class="lnk">Cancel</span><span class="lnk">Install</span></div></div></div>`,
   exe: `<div class="mini" role="img" aria-label="The installer file in Downloads"><div class="mini-d dark"><b>kais-flow-<span data-release-tag>${LATEST.tag}</span>-windows-setup.exe</b>Downloads · ${LATEST.exeMB} MB</div></div>`,
@@ -137,7 +137,7 @@ const GUIDES = [
     intro: 'Kai’s Flow isn’t on the Play Store yet, so you install it yourself. It takes about a minute, and you only do the “allow” step once.',
     sections: [
       ['before', 'Before you start', `<p>You need an Android phone with a little room: the app is about ${LATEST.apkMB} MB.</p>`],
-      ['download', 'Download the APK', `<p>On your phone, open <a href="/download/">the download page</a> and tap <b>Download APK</b>, or get <a href="${apkUrl(LATEST.tag)}" data-asset="apk">kais-flow-<span data-release-tag>${LATEST.tag}</span>.apk</a> straight from GitHub.</p>`, pic.apk],
+      ['download', 'Download the APK', `<p>On your phone, open <a href="/download/">the download page</a> and tap <b>Download APK</b>, or get <a href="${APK_LATEST}">kais-flow.apk</a> straight from GitHub (always the newest).</p>`, pic.apk],
       ['allow', 'Allow this one source', '<p>Android asks once whether your browser (or Files) may install apps. Turn on <b>Allow from this source</b>, then go back.</p>', pic.allow],
       ['install', 'Install and sign in', '<p>Tap <b>Install</b>, then <b>Open</b>. Sign in with the same account you use on the web; your days are already there. The first time you use voice capture, allow the microphone.</p>', pic.install],
       ['notifications', 'Notifications', '<p>The first time you open the app, Android asks whether Kai’s Flow may send notifications — say <b>Allow</b>. Reminders, the morning digest and the evening nudge are then lined up with Android for the next three days, each time you open the app. A reminder has <b>Done</b> and <b>Tomorrow</b> right on it.</p>'],
@@ -148,7 +148,7 @@ const GUIDES = [
   { slug: 'install-windows', group: 'Installing', ic: 'windows', title: 'Install on Windows', blurb: 'The installer, and the SmartScreen step.', min: 3,
     intro: 'The Windows app is the same Kai’s Flow in its own window. It installs just for you, so it never asks for an admin password.',
     sections: [
-      ['download', 'Download the installer', `<p>Get it from <a href="/download/">the download page</a>, or <a href="${exeUrl(LATEST.tag)}" data-asset="exe">kais-flow-<span data-release-tag>${LATEST.tag}</span>-windows-setup.exe</a> from GitHub. It’s about ${LATEST.exeMB} MB and runs on Windows 10 and 11.</p>`, pic.exe],
+      ['download', 'Download the installer', `<p>Get it from <a href="/download/">the download page</a>, or <a href="${EXE_LATEST}">kais-flow-windows-setup.exe</a> from GitHub (always the newest). It’s about ${LATEST.exeMB} MB and runs on Windows 10 and 11.</p>`, pic.exe],
       ['smartscreen', 'Say yes to SmartScreen', '<p>The installer isn’t code-signed (that costs money), so Windows may say <b>“Windows protected your PC”</b>. Click <b>More info → Run anyway</b>.</p>', pic.smart],
       ['run', 'Run it', '<p>It installs for you only — no admin needed. Then open <b>Kai’s Flow</b> from the Start menu and sign in.</p>', pic.running],
       ['tray', 'The K by the clock', '<p>Kai’s Flow keeps a K in the tray by the clock. Click it for a little flyout: what’s on now and next, your Top 3, quick capture and focus. Right-click it for a menu. Close the window and it waits there. Reminders arrive as Windows notifications with <b>Done</b> and <b>Tomorrow</b>.</p><p>All of it is in <b>Settings → Notifications</b>: <b>Show in the system tray</b>, <b>Start with Windows</b> (it opens quietly to the tray), quiet hours, and <b>Send a test notification</b>.</p>'],
