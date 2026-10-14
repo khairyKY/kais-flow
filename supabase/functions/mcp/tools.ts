@@ -18,8 +18,17 @@
 //                for events — one row per series, never materialised)
 //   every write  logs the same activity_log event the app's helper logs, so Slipping, streaks and the
 //                digests see it (+ `source: 'mcp'` in the payload)
+//   deletes      soft (Trash) wherever the app has a Trash; the few tables without one (Library,
+//                people) delete outright, as the app does, and answer with the row so it can be put back
+//   personal     journal and people tools exist only for a key granted that scope (mcp_keys.scopes,
+//                0080) — server.ts toolsFor; index.ts refuses those tables to any other key too
+//
+// This file: the user's clock, the Store, the argument checks and the task / calendar / inbox tools.
+// ./organize.ts (projects, areas, domains, labels, Trash, settings, the Inbox's triage), ./life.ts
+// (routines, focus, rituals, Library, insights) and ./personal.ts (journal, people) add the rest;
+// server.ts lists them all.
 
-import { addDays, dateKey, dayWindow, wallTime, wallToInstant } from '../_shared/zone.ts'
+import { addDays, dateKey, dayWindow, loopDay, wallTime, wallToInstant } from '../_shared/zone.ts'
 import { isTop3Today, todaysTop3 } from '../_shared/today.ts'
 
 // The user's clock is _shared/zone.ts (notify and chat read the same one); re-exported for the tests.
@@ -109,7 +118,25 @@ export interface TaskRow {
   /** Time Slots (0073): the Time block holding it (a repeating one's row) and that occurrence's day. */
   slot_id?: string | null
   slot_date?: string | null
+  /** Manual order (0076): its place in a list, on its date's scale (epoch ms); null = by its date. */
+  sort_order?: number | null
+  /** Where it came from (0027): a captured link rides here as {source:'link', id, url} — writes only. */
+  external_ref?: Record<string, unknown> | null
+  /** Its captured link (external_ref.url) — reads only. */
+  link?: string | null
 }
+
+/** The task columns a write sends (reads add project_name and link). */
+const TASK_COLUMNS = [
+  'id', 'title', 'notes', 'status', 'due_at', 'scheduled_start', 'scheduled_end', 'top3', 'top3_rank', 'someday', 'paused', 'labels', 'priority',
+  'duration_min', 'project_id', 'domain_id', 'area_id', 'milestone_id', 'parent_task_id', 'recurrence_rule', 'reminder_at', 'reminder_sent',
+  'snoozed_until', 'completed_at', 'created_at', 'updated_at', 'slot_id', 'slot_date', 'sort_order', 'external_ref',
+] as const
+/** What updateTask writes: every column a tool may change, as the row has it (the app's whole-row write). */
+export const TASK_EDITABLE = TASK_COLUMNS.filter((c) => !['id', 'status', 'completed_at', 'created_at', 'updated_at', 'external_ref'].includes(c))
+/** A task row as a write sends it: its columns only, an absent one as null. */
+export const taskRecord = (t: TaskRow, cols: readonly string[] = TASK_COLUMNS): Row =>
+  Object.fromEntries(cols.map((c) => [c, (t as unknown as Row)[c] ?? (c === 'labels' ? [] : c === 'top3' || c === 'someday' || c === 'paused' || c === 'reminder_sent' ? false : null)]))
 
 export interface ProjectRow {
   id: string
@@ -136,6 +163,8 @@ export interface EventRow {
   recurrence_exdates?: string[] | null
   /** A one-off moved out of a series: that series' row. */
   series_id?: string | null
+  /** Event reminders (0077): minutes before each start; null = none. */
+  remind_min?: number | null
   /** Set on an occurrence expandSeries made: the row's id. */
   seriesId?: string
 }
@@ -158,10 +187,75 @@ export interface TaskFilter {
   dueFrom: string | null
   dueTo: string | null
   limit: number
+  /** Only tasks in this area. */
+  areaId?: string | null
+  /** Only Someday tasks (true), or none of them (false). */
+  someday?: boolean | null
+}
+
+/** A personal area a key reaches only when its owner switched it on (mcp_keys.scopes, 0080). */
+export type Scope = 'journal' | 'people'
+export const SCOPES: readonly Scope[] = ['journal', 'people']
+
+/** The tables the generic Store methods reach (index.ts refuses any other, and the personal ones to
+ * a key without their scope). */
+export type Table =
+  | 'tasks' | 'inbox_items' | 'calendar_events' | 'projects' | 'areas' | 'domains' | 'routines' | 'routine_completions' | 'time_entries'
+  | 'books' | 'notes' | 'quotes' | 'app_settings' | 'slipping' | 'journal_entries' | 'people' | 'interactions'
+export type Row = Record<string, unknown>
+
+export interface FindOptions {
+  order?: string
+  desc?: boolean
+  limit?: number
+}
+
+/** A row in Trash, as the trash tool lists it. */
+export interface TrashedRow {
+  type: string
+  id: string
+  title: string | null
+  deleted_at: string
+}
+
+/** One activity_log row, as the reads see it. */
+export interface ActivityRow {
+  event_type: string
+  entity_type: string
+  entity_id: string
+  payload: Row | null
+  created_at: string
+}
+
+export interface WeekStats {
+  done: number
+  done_titles: string[]
+  added: number
+  focus_min: number
+  routine_checks: number
+  captured: number
 }
 
 /** One method per statement; every one runs inside the call's transaction, as the user. */
 export interface Store {
+  /** Generic reads and writes for the smaller tables. `match` is JSON containment on the row
+   * (`{deleted_at: null}` = live, `{labels: ["x"]}` = carries x); `{}` = every row of the user's. */
+  find(table: Table, match?: Row, opts?: FindOptions): Promise<Row[]>
+  /** Inserts one row; columns it leaves out take their defaults (user_id = the key's owner). */
+  insert(table: Table, row: Row): Promise<void>
+  /** Writes `values` onto the rows matching `match` (never an empty match, except app_settings' one
+   * row); returns them as written. */
+  patch(table: Table, match: Row, values: Row): Promise<Row[]>
+  /** Deletes outright (tables without a Trash); returns the rows as they were. */
+  remove(table: Table, match: Row): Promise<Row[]>
+  /** Inbox items, newest first: `pending` = the triage queue (not snoozed), or by status. */
+  inboxItems(show: 'pending' | 'snoozed' | 'dismissed' | 'filed' | 'all', limit: number): Promise<Row[]>
+  /** In Trash, newest first: tasks, inbox items, own events, projects, areas, domains (+ journal entries for a journal key). */
+  trashed(limit: number): Promise<TrashedRow[]>
+  /** activity_log rows, newest first (or oldest first with `asc`). */
+  activity(f: { types?: readonly string[]; prefix?: string; since?: string; limit: number; asc?: boolean }): Promise<ActivityRow[]>
+  /** What a span of days held: tasks done (and their titles), added, focus minutes, routine check-ins, captures. */
+  weekStats(fromIso: string, toIso: string, fromDay: string, toDay: string): Promise<WeekStats>
   timezone(): Promise<string | null>
   /** Open, not in Trash, not someday, not paused: dated before `end`, scheduled in [start, end), or an undated pick. */
   dayTasks(startIso: string, endIso: string): Promise<TaskRow[]>
@@ -180,8 +274,7 @@ export interface Store {
   /** An open copy of a repeat already sits at `dueIso` (completion.ts openOccurrence). */
   openOccurrence(title: string, rule: string, dueIso: string, exceptId: string): Promise<boolean>
   insertTask(t: TaskRow): Promise<void>
-  /** Writes the task's editable fields as `t` has them: title, notes, due, schedule, Top 3 (+ rank),
-   * someday, duration, project / area / domain / milestone, repeat, reminder. */
+  /** Writes the task's editable fields (TASK_EDITABLE) as `t` has them — not in Trash. */
   updateTask(t: TaskRow): Promise<void>
   /** status todo → done; false when the task wasn't open any more. */
   markDone(id: string, atIso: string): Promise<boolean>
@@ -208,25 +301,27 @@ export interface ToolContext {
   nextOccurrence: (rule: string, from: Date, zone: string, after: Date) => Date | null
   /** rrule's between() for a repeating event (index.ts: npm:rrule; the test: the app's series.ts). */
   ruleBetween: RuleBetween
+  /** The personal areas this key may reach (mcp_keys.scopes). */
+  scopes: ReadonlySet<Scope>
 }
 
 /** The events in [start, end): one-off rows as the store found them, each repeating row as its
  * occurrences there — the app's own expansion (features/calendar/series.ts). */
-async function eventsIn(ctx: ToolContext, start: Date, end: Date): Promise<EventRow[]> {
+export async function eventsIn(ctx: ToolContext, start: Date, end: Date): Promise<EventRow[]> {
   return expandSeries(await ctx.store.events(start.toISOString(), end.toISOString()), start, end, ctx.zone, ctx.ruleBetween)
 }
 
 // ── input checks: a bad argument is a tool error the model can read and fix ─────────────────────
 
 export class ToolInputError extends Error {}
-const bad = (msg: string): never => {
+export const bad = (msg: string): never => {
   throw new ToolInputError(msg)
 }
 
-type Args = Record<string, unknown>
+export type Args = Record<string, unknown>
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 
-function text(a: Args, k: string, max: number, required = false): string | undefined {
+export function text(a: Args, k: string, max: number, required = false): string | undefined {
   const v = a[k]
   if (v === undefined || v === null) return required ? bad(`"${k}" is required.`) : undefined
   if (typeof v !== 'string') return bad(`"${k}" must be a string.`)
@@ -236,39 +331,130 @@ function text(a: Args, k: string, max: number, required = false): string | undef
   return t
 }
 
-function uuid(a: Args, k: string, required = false): string | undefined {
+/** An id, lower-cased (JSON containment compares it as text). */
+export function uuid(a: Args, k: string, required = false): string | undefined {
   const v = text(a, k, 36, required)
   if (v !== undefined && !UUID.test(v)) return bad(`"${k}" must be an id (a UUID) as returned by another tool.`)
-  return v
+  return v?.toLowerCase()
 }
 
-function flag(a: Args, k: string): boolean | undefined {
+export const isUuid = (s: string): boolean => UUID.test(s)
+
+/** A list of ids: 1 to `max`, each a UUID, no repeats. */
+export function idList(a: Args, k: string, max: number): string[] {
+  const v = a[k]
+  if (!Array.isArray(v) || v.length === 0 || v.length > max) return bad(`"${k}" must be a list of 1 to ${max} ids.`)
+  const ids = v.map((x) => (typeof x === 'string' && UUID.test(x.trim()) ? x.trim().toLowerCase() : bad(`"${k}" must hold ids (UUIDs) as returned by another tool.`)))
+  return new Set(ids).size === ids.length ? ids : bad(`"${k}" names an id twice.`)
+}
+
+export function flag(a: Args, k: string): boolean | undefined {
   const v = a[k]
   if (v === undefined || v === null) return undefined
   return typeof v === 'boolean' ? v : bad(`"${k}" must be true or false.`)
 }
 
-function whole(a: Args, k: string, min: number, max: number, fallback: number): number {
+export function whole(a: Args, k: string, min: number, max: number, fallback: number): number {
   const v = a[k]
   if (v === undefined || v === null) return fallback
   if (typeof v !== 'number' || !Number.isInteger(v) || v < min || v > max) return bad(`"${k}" must be a whole number from ${min} to ${max}.`)
   return v
 }
 
-function choice<T extends string>(a: Args, k: string, values: readonly T[], fallback: T): T {
+export function choice<T extends string>(a: Args, k: string, values: readonly T[], fallback: T): T {
   const v = a[k]
   if (v === undefined || v === null) return fallback
   return values.includes(v as T) ? (v as T) : bad(`"${k}" must be one of: ${values.join(', ')}.`)
 }
 
-function when(a: Args, k: string, zone: string): When | undefined {
+export function when(a: Args, k: string, zone: string): When | undefined {
   const v = text(a, k, 40)
   if (v === undefined) return undefined
   return readWhen(v, zone) ?? bad(`"${k}" must be a date (YYYY-MM-DD), a local date-time (YYYY-MM-DDTHH:mm, on the user's clock) or an ISO time with a zone.`)
 }
 
+/** A date argument as an instant: a date alone is 09:00 that day (scheduleToday). */
+export const instantOf = (w: When, zone: string): Date => ('at' in w ? w.at : wallToInstant(w.day, 9, 0, zone))
+
 /** A task's length, in minutes: 1 minute to a day. */
-const minutes = (a: Args, k: string): number | null => (a[k] === undefined || a[k] === null ? null : whole(a, k, 1, 1440, 0))
+export const minutes = (a: Args, k: string): number | null => (a[k] === undefined || a[k] === null ? null : whole(a, k, 1, 1440, 0))
+
+/** A list of short strings (labels, tags): trimmed, empty ones dropped, no repeats, at most `max`. */
+export function words(a: Args, k: string, max = 20, len = 60): string[] | undefined {
+  const v = a[k]
+  if (v === undefined) return undefined
+  if (v === null) return []
+  if (!Array.isArray(v) || v.length > max) return bad(`"${k}" must be a list of at most ${max} words.`)
+  const out = v.map((x) => (typeof x === 'string' ? x.trim() : bad(`"${k}" must hold text.`))).filter(Boolean)
+  if (out.some((x) => x.length > len)) return bad(`Each of "${k}" is at most ${len} characters.`)
+  return [...new Set(out)]
+}
+
+/** A day on the user's calendar: YYYY-MM-DD only. */
+export function dayArg(a: Args, k: string, zone: string): string | undefined {
+  const w = when(a, k, zone)
+  if (w === undefined) return undefined
+  return 'day' in w ? w.day : bad(`"${k}" is a day: YYYY-MM-DD.`)
+}
+
+/** A clock time on the user's clock: HH:MM (24h). */
+export function clockArg(a: Args, k: string): string | null | undefined {
+  if (!(k in a)) return undefined
+  const v = text(a, k, 5)
+  if (v === undefined) return null
+  const m = /^(\d{1,2}):(\d{2})$/.exec(v)
+  return m && Number(m[1]) < 24 && Number(m[2]) < 60 ? `${m[1].padStart(2, '0')}:${m[2]}` : bad(`"${k}" must be a time, HH:MM (24h).`)
+}
+
+/** The app's swatches by name (Settings → Organize, a project's page: features/domains/organize.ts DOMAIN_COLORS). */
+export const PLACE_COLORS: Record<string, string> = {
+  terracotta: 'var(--acc-terra)', moss: 'var(--acc-moss)', lavender: 'var(--acc-lavender-deep)', gold: 'var(--acc-gold)',
+  hydrangea: 'var(--acc-hydrangea)', sage: 'var(--acc-sage)', plum: '#7a4a52', stone: '#8b8471',
+}
+/** A colour argument: one of `palette`'s names (any case), null = none. Undefined when not given. */
+export function colorArg(a: Args, k: string, palette: Record<string, string>): string | null | undefined {
+  if (!(k in a)) return undefined
+  const v = text(a, k, 20)
+  if (v === undefined) return null
+  return palette[v.toLowerCase()] ?? bad(`"${k}" must be one of: ${Object.keys(palette).join(', ')} (or null).`)
+}
+/** A stored colour by its name, else as stored. */
+export const colorName = (v: unknown, palette: Record<string, string>): string | null =>
+  typeof v === 'string' ? (Object.entries(palette).find(([, c]) => c === v)?.[0] ?? v) : null
+
+/** `when` as a nullable argument: undefined when not given, null when null. */
+export function whenOrNull(a: Args, k: string, zone: string): When | null | undefined {
+  if (!(k in a)) return undefined
+  return a[k] === null ? null : when(a, k, zone)
+}
+
+/** One activity row, with `source: 'mcp'` (lib/activity.ts logActivity). A key that isn't a uuid (a
+ * ritual's day, a label's name) gets a fresh id and rides along as payload.entity_key, as activityRow does. */
+export async function logIt(ctx: ToolContext, eventType: string, entityType: string, key: string, payload: Row = {}): Promise<void> {
+  const keyed = UUID.test(key)
+  await ctx.store.log(eventType, entityType, keyed ? key : crypto.randomUUID(), { ...payload, ...(keyed ? {} : { entity_key: key }), source: 'mcp' })
+}
+
+/** The most rows one bulk call takes (the app's bulk bar has no cap; this keeps a call short). */
+export const MAX_BULK = 50
+
+/** `id` or `ids`: `one` for each — the app's bulk bar. A refusal for one id is reported and the
+ * rest go on; anything else (the database) fails the whole call, which then writes nothing. */
+export async function eachId(a: Args, one: (id: string) => Promise<Row>): Promise<Row> {
+  if (a.ids === undefined || a.ids === null) return one(uuid(a, 'id', true)!)
+  if (a.id !== undefined && a.id !== null) return bad('Give "id" or "ids", not both.')
+  const results: Row[] = []
+  const failed: { id: string; error: string }[] = []
+  for (const id of idList(a, 'ids', MAX_BULK)) {
+    try {
+      results.push(await one(id))
+    } catch (e) {
+      if (!(e instanceof ToolInputError)) throw e
+      failed.push({ id, error: e.message })
+    }
+  }
+  return { results, ...(failed.length ? { failed } : {}) }
+}
 
 // An RRULE body as the app stores it ("FREQ=WEEKLY;BYDAY=MO,WE"): the parts the Repeat editor and an
 // import write, nothing finer than a day (no HOURLY / MINUTELY).
@@ -282,7 +468,7 @@ const RULE_HELP = 'an RRULE body such as FREQ=DAILY, FREQ=WEEKLY;BYDAY=MO,WE,FR,
 
 /** `repeat`: undefined when not given; null to stop repeating (null or ""); else the rule, checked part
  * by part (one FREQ, no part twice, not both COUNT and UNTIL) and upper-cased, "RRULE:" dropped. */
-function repeatArg(a: Args, k: string): string | null | undefined {
+export function repeatArg(a: Args, k: string): string | null | undefined {
   if (!(k in a)) return undefined
   const v = text(a, k, 200)
   if (v === undefined) return null
@@ -303,25 +489,30 @@ function checkTaskRule(ctx: ToolContext, rule: string, dueIso: string): void {
 
 // ── what the model sees: compact, wall-clock times, nulls left out ───────────────────────────
 
-function taskOut(t: TaskRow, zone: string, full = false): Record<string, unknown> {
+export function taskOut(t: TaskRow, zone: string, full = false): Record<string, unknown> {
   const o: Record<string, unknown> = { id: t.id, title: t.title }
   if (t.status !== 'todo') o.status = t.status
   if (t.due_at) o.due = wallTime(t.due_at, zone)
   if (t.scheduled_start) o.scheduled = wallTime(t.scheduled_start, zone) + (t.scheduled_end ? `–${wallTime(t.scheduled_end, zone).slice(11)}` : '')
-  if (t.duration_min !== null) o.duration_min = t.duration_min
+  if (t.duration_min !== null && t.duration_min !== undefined) o.duration_min = t.duration_min
   if (t.project_name) o.project = t.project_name
   if (t.labels?.length) o.labels = t.labels
   if (t.top3) o.top3 = true
-  if (t.priority !== null) o.priority = t.priority
+  if (t.top3 && t.top3_rank === 1) o.goal = true
+  if (t.priority !== null && t.priority !== undefined) o.priority = t.priority
   if (t.someday) o.someday = true
   if (t.recurrence_rule) o.repeats = t.recurrence_rule
   if (t.paused) o.paused = true
+  if (t.slot_id) o.in_slot = t.slot_id
   if (t.completed_at) o.completed = wallTime(t.completed_at, zone)
   if (full) {
     if (t.notes) o.notes = t.notes
     if (t.reminder_at) o.reminder = wallTime(t.reminder_at, zone)
     if (t.project_id) o.project_id = t.project_id
+    if (t.area_id) o.area_id = t.area_id
+    if (t.domain_id) o.domain_id = t.domain_id
     if (t.parent_task_id) o.parent_task_id = t.parent_task_id
+    if (t.link) o.link = t.link
     o.created = wallTime(t.created_at, zone)
   }
   return o
@@ -329,13 +520,13 @@ function taskOut(t: TaskRow, zone: string, full = false): Record<string, unknown
 
 /** "2026-10-08 18:00–19:30" (a timed span; the end's date only when it differs) or "2026-10-08" /
  * "2026-10-08 – 2026-10-10" (all-day, last day included). */
-function spanText(e: Pick<EventRow, 'starts_at' | 'ends_at' | 'all_day'>, zone: string): string {
+export function spanText(e: Pick<EventRow, 'starts_at' | 'ends_at' | 'all_day'>, zone: string): string {
   if (e.all_day) return firstDay(e) === lastDay(e) ? firstDay(e) : `${firstDay(e)} – ${lastDay(e)}`
   const [s, en] = [wallTime(e.starts_at, zone), wallTime(e.ends_at, zone)]
   return `${s}–${en.slice(0, 10) === s.slice(0, 10) ? en.slice(11) : en}`
 }
 
-function eventOut(e: EventRow, zone: string): Record<string, unknown> {
+export function eventOut(e: EventRow, zone: string): Record<string, unknown> {
   // An occurrence answers with its series' id — the one stored, the one search returns. An all-day
   // event is its days (the last one included), not a time on anyone's clock.
   const o: Record<string, unknown> = e.all_day
@@ -344,12 +535,13 @@ function eventOut(e: EventRow, zone: string): Record<string, unknown> {
   if (e.type && e.type !== 'event') o.kind = e.type
   if (e.task_id) o.task_id = e.task_id
   if (e.recurrence_rule) o.repeats = e.recurrence_rule
+  if (e.remind_min !== null && e.remind_min !== undefined) o.remind_min = e.remind_min
   return o
 }
 
 /** The events as the tools answer them; a Time block lists the tasks this occurrence holds (Time
  * Slots, 0073: its row and its day — the app's features/calendar/slots.ts). */
-async function eventsOut(ctx: ToolContext, events: readonly EventRow[]): Promise<Record<string, unknown>[]> {
+export async function eventsOut(ctx: ToolContext, events: readonly EventRow[]): Promise<Record<string, unknown>[]> {
   const row = (e: EventRow) => e.seriesId ?? e.id
   const ids = [...new Set(events.filter((e) => e.type === 'time_block').map(row))]
   const held = ids.length ? await ctx.store.slotTasks(ids) : []
@@ -406,12 +598,14 @@ const BLOCK_MIN = 30
  * An all-day block's day is read at its noon (replan.ts blockDay). */
 export function replanMoves<B extends BlockRow>(
   blocks: readonly B[],
-  due: string,
+  due: string | null,
   timed: boolean,
   durationMin: number | null,
   zone: string,
 ): { place: { block: B | null; starts_at: string; ends_at: string } | null; keep: B | null; clear: B[] } {
   const latestFirst = [...blocks].sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))
+  // No date: off the calendar altogether (replan.ts: "no date takes them all off").
+  if (!due) return { place: null, keep: null, clear: latestFirst }
   if (timed) {
     const [block = null, ...rest] = latestFirst
     const len = block && !block.all_day ? Date.parse(block.ends_at) - Date.parse(block.starts_at) : (durationMin || BLOCK_MIN) * 60_000
@@ -425,11 +619,13 @@ export function replanMoves<B extends BlockRow>(
 /** A task to a new due date, as every replan in the app goes (tasks/api rescheduleDue → calendar/api
  * applyMoves): the date, Someday off, the blocks by replanMoves, the schedule following the block it
  * ends on (touchTaskSchedule) — cleared when every block came off — settled, and logged the same way. */
-async function replanTask(ctx: ToolContext, t: TaskRow, due: string, timed: boolean): Promise<{ task: TaskRow; placed: EventRow | null; removed: number }> {
+export async function replanTask(ctx: ToolContext, t: TaskRow, due: string | null, timed: boolean): Promise<{ task: TaskRow; placed: EventRow | null; removed: number }> {
   const m = replanMoves(await ctx.store.taskBlocks(t.id), due, timed, t.duration_min, ctx.zone)
   const on = m.place ?? m.keep
+  // Replanned, a task leaves its Time slot (tasks/api rescheduleDue → OUT_OF_SLOT).
+  const outOfSlot = t.slot_id ? OUT_OF_SLOT : {}
   const schedule = on ? { scheduled_start: on.starts_at, scheduled_end: on.ends_at } : m.clear.length ? { scheduled_start: null, scheduled_end: null } : {}
-  const task = settle(t, { ...t, due_at: due, someday: false, ...schedule }, ctx.now, ctx.zone)
+  const task = settle(t, { ...t, ...outOfSlot, due_at: due, someday: due ? false : t.someday, ...schedule }, ctx.now, ctx.zone)
   await ctx.store.updateTask(task)
   await ctx.store.log('task.rescheduled', 'task', t.id, { due_at: due, source: 'mcp' })
   const removed = m.clear.length ? await ctx.store.deleteEvents(m.clear.map((b) => b.id)) : []
@@ -450,10 +646,48 @@ function nextReminderAt(reminderAt: string | null, fromDue: string, toDue: Date)
   return new Date(toDue.getTime() - (new Date(fromDue).getTime() - new Date(reminderAt).getTime())).toISOString()
 }
 
+// ── Time Slots (0073, features/calendar/slots.ts): a Time block HOLDS tasks ─────────────────────────
+
+/** Out of a slot: back to the rail, unscheduled. */
+export const OUT_OF_SLOT = { slot_id: null, slot_date: null, scheduled_start: null, scheduled_end: null } as const
+
+/** A missed due date follows a block or slot placed today or later (calendar/replan.ts dueFollows). */
+export function dueFollows(dueAt: string | null, startsAt: string, now: Date, zone: string): boolean {
+  const today = dateKey(now, zone)
+  return !!dueAt && dateKey(new Date(dueAt), zone) < today && dateKey(new Date(startsAt), zone) >= today
+}
+
+/** What a task takes on going into a slot occurrence (slots.ts intoSlot): the slot's row, its day, its times. */
+export const intoSlot = (rowId: string, occ: Span, zone: string) => ({
+  slot_id: rowId,
+  slot_date: dateKey(new Date(occ.starts_at), zone),
+  scheduled_start: new Date(occ.starts_at).toISOString(),
+  scheduled_end: new Date(occ.ends_at).toISOString(),
+})
+
+/** The tasks slot `rowId` holds: in occurrence `occ` (slots.ts inSlot — its day, and a time inside it),
+ * or on any day when `occ` is null. */
+async function heldBy(ctx: ToolContext, rowId: string, occ: Span | null): Promise<TaskRow[]> {
+  const held = await ctx.store.slotTasks([rowId])
+  if (!occ) return held.filter((t) => t.slot_id === rowId)
+  const day = dateKey(new Date(occ.starts_at), ctx.zone)
+  return held.filter((t) => {
+    if (t.slot_id !== rowId || t.slot_date !== day || !t.scheduled_start) return false
+    const at = Date.parse(t.scheduled_start)
+    return at >= Date.parse(occ.starts_at) && at < Date.parse(occ.ends_at)
+  })
+}
+
+/** Writes `patch(t)` onto each task, settled like every task write (calendar/api restamp → writeRow). */
+async function restamp(ctx: ToolContext, tasks: readonly TaskRow[], patch: (t: TaskRow) => Partial<TaskRow>): Promise<number> {
+  for (const t of tasks) await ctx.store.updateTask(settle(t, { ...t, ...patch(t) }, ctx.now, ctx.zone))
+  return tasks.length
+}
+
 // ── writing an event the way the app does ────────────────────────────────────────────────────────
 
-const KINDS = ['event', 'time_block'] as const
-type Span = Pick<EventRow, 'starts_at' | 'ends_at' | 'all_day'>
+export const KINDS = ['event', 'time_block'] as const
+export type Span = Pick<EventRow, 'starts_at' | 'ends_at' | 'all_day'>
 /** A new event's length when nothing says (QuickCreate's 09:00–09:30). */
 const EVENT_MIN = 30
 const MAX_EVENT_DAYS = 31
@@ -462,7 +696,7 @@ const MAX_EVENT_DAYS = 31
  * event being edited: what isn't given keeps its value (a moved event keeps its length). A date
  * `start` makes it all-day (`end` = its last day); a date-time makes it timed. Undefined when none
  * of the three is given. */
-function spanArgs(a: Args, zone: string, base?: Span): Span | undefined {
+export function spanArgs(a: Args, zone: string, base?: Span): Span | undefined {
   const start = when(a, 'start', zone)
   const end = when(a, 'end', zone)
   const dur = a.duration_min === undefined || a.duration_min === null ? undefined : whole(a, 'duration_min', 1, 1440, EVENT_MIN)
@@ -531,7 +765,7 @@ function checkSeries(e: EventRow, ctx: ToolContext): void {
 
 /** The occurrence of series `row` that `w` names: its start as the calendar tool lists it (for an
  * all-day series, its day; a day alone also finds a timed series' one that day). */
-function occurrenceOf(row: EventRow, w: When, ctx: ToolContext): EventRow {
+export function occurrenceOf(row: EventRow, w: When, ctx: ToolContext): EventRow {
   const at = 'at' in w ? w.at.getTime() : wallToInstant(w.day, 0, 0, ctx.zone).getTime()
   const near = expandSeries([row], new Date(at - 2 * DAY_MS), new Date(at + 2 * DAY_MS), ctx.zone, ctx.ruleBetween)
   const dayOf = (o: EventRow) => (o.all_day ? firstDay(o) : dateKey(new Date(o.starts_at), ctx.zone))
@@ -540,7 +774,7 @@ function occurrenceOf(row: EventRow, w: When, ctx: ToolContext): EventRow {
 }
 
 /** An event an assistant may change: live, and the calendar's own — a task's block follows its task. */
-async function liveEvent(ctx: ToolContext, eventId: string): Promise<EventRow> {
+export async function liveEvent(ctx: ToolContext, eventId: string): Promise<EventRow> {
   const e = await ctx.store.getEvent(eventId)
   if (!e) return bad(`No event with id ${eventId} (it may have been deleted). Use calendar or search to find it.`)
   if (e.task_id || e.type === 'task') return bad(`"${e.title}" is a task's calendar block: reschedule_task moves the task and its block together.`)
@@ -549,9 +783,13 @@ async function liveEvent(ctx: ToolContext, eventId: string): Promise<EventRow> {
 
 const MAX_TOP3 = 3
 const OVERDUE_SHOWN = 30
-// ponytail: the assistant sees work items only. Journal entries and people are personal (CLAUDE.md:
-// journal content goes to Groq only), so search drops them even though search_hybrid returns them.
-const SEARCHABLE = new Set(['task', 'inbox_item', 'project', 'calendar_event'])
+// The assistant's search sees work items and the Library. Journal entries and people are personal
+// (CLAUDE.md: journal content goes to Groq only): search_hybrid returns them, and they come through
+// only for a key granted that scope (0080).
+const SEARCHABLE = new Set(['task', 'inbox_item', 'project', 'calendar_event', 'area', 'book', 'note', 'quote'])
+const PERSONAL_HITS: Record<string, Scope> = { journal_entry: 'journal', person: 'people' }
+/** May this key see a search hit / Trash row / activity row of this type? */
+export const reachable = (type: string, scopes: ReadonlySet<Scope>): boolean => SEARCHABLE.has(type) || (type in PERSONAL_HITS && scopes.has(PERSONAL_HITS[type]))
 
 // ── the tools ─────────────────────────────────────────────────────────────────────────────────
 
@@ -562,24 +800,430 @@ export interface ToolDef {
   inputSchema: { type: 'object'; properties: Record<string, unknown>; required?: string[]; additionalProperties: false }
   /** Changes the user's data: hidden from a read-only key. */
   write: boolean
+  /** Deletes for good (a table with no Trash): MCP's destructiveHint. */
+  destructive?: boolean
+  /** A personal area: listed and callable only for a key granted it (mcp_keys.scopes, 0080). */
+  scope?: Scope
   run(a: Args, ctx: ToolContext): Promise<Record<string, unknown>>
 }
 
-const id = { type: 'string', format: 'uuid' }
-const dateArg = (what: string) => ({ type: 'string', description: `${what}: YYYY-MM-DD, or YYYY-MM-DDTHH:mm on the user's clock.` })
+export const id = { type: 'string', format: 'uuid' }
+export const ids = (what: string) => ({ type: 'array', items: { type: 'string', format: 'uuid' }, minItems: 1, maxItems: MAX_BULK, description: `${what} — several at once, instead of "id" (at most ${MAX_BULK}).` })
+export const dateArg = (what: string) => ({ type: 'string', description: `${what}: YYYY-MM-DD, or YYYY-MM-DDTHH:mm on the user's clock.` })
 const repeatSchema = (what: string) => ({ type: ['string', 'null'], description: `${what}: ${RULE_HELP}, on the user's clock. null stops it repeating.` })
 const eventTimes = {
   start: dateArg('When it starts — a date alone makes it all-day'),
   end: dateArg('When it ends (all-day: its last day). Or give duration_min'),
   duration_min: { type: 'integer', minimum: 1, maximum: 1440, description: 'How long, in minutes (instead of end; timed events only).' },
-  kind: { type: 'string', enum: KINDS, description: 'event (a meeting, an appointment) or time_block (time set aside for work).' },
+  kind: { type: 'string', enum: KINDS, description: 'event (a meeting, an appointment) or time_block (time set aside for work — tasks can go into one).' },
+  remind_min: { type: ['integer', 'null'], minimum: 0, maximum: 1440, description: 'Remind this many minutes before each start (0 = at the start; timed events only). null = no reminder.' },
 }
 
-async function openTask(ctx: ToolContext, taskId: string): Promise<TaskRow> {
+export async function openTask(ctx: ToolContext, taskId: string): Promise<TaskRow> {
   const t = await ctx.store.getTask(taskId)
   if (!t) return bad(`No task with id ${taskId} (it may have been deleted). Use list_tasks or search to find it.`)
   if (t.status !== 'todo') return bad(`"${t.title}" is already ${t.status}.`)
   return t
+}
+
+/** `remind_min` on an event: 0–1440 minutes before each start, never on an all-day one (the event
+ * menu's Remind row, 0077). Undefined when not given. */
+function remindArg(a: Args, allDay: boolean): number | null | undefined {
+  if (!('remind_min' in a)) return undefined
+  if (a.remind_min === null) return null
+  const m = whole(a, 'remind_min', 0, 1440, 0)
+  return allDay ? bad('"remind_min" is for a timed event: an all-day one has no start time to remind before.') : m
+}
+
+const PRIORITY_NAMES: Record<number, string> = { 1: 'critical', 2: 'high', 3: 'medium' }
+/** `priority`: 1 critical · 2 high · 3 medium, null = none (tasks/taskMenuSpec PRIORITY_LABELS). */
+function priorityArg(a: Args): number | null | undefined {
+  if (!('priority' in a)) return undefined
+  return a.priority === null ? null : whole(a, 'priority', 1, 3, 0)
+}
+
+/** `remind_at`: a date-time on the user's clock (a reminder needs a time), or null. */
+function remindAtArg(a: Args, zone: string): string | null | undefined {
+  const w = whenOrNull(a, 'remind_at', zone)
+  if (w === undefined || w === null) return w
+  return 'at' in w ? w.at.toISOString() : bad('"remind_at" needs a time: YYYY-MM-DDTHH:mm on the user\'s clock.')
+}
+
+/** A live area / project by id, or a readable refusal. */
+export async function liveRow(ctx: ToolContext, table: 'areas' | 'projects' | 'domains', rowId: string, what: string): Promise<Row> {
+  const [r] = await ctx.store.find(table, { id: rowId, deleted_at: null }, { limit: 1 })
+  return r ?? bad(`No ${what} with id ${rowId}. The projects tool lists the ids.`)
+}
+
+/** Today's open picks, goal first (_shared/today.ts todaysTop3) — the order Make goal renumbers. */
+async function picksToday(ctx: ToolContext): Promise<TaskRow[]> {
+  const { start, end } = dayWindow(ctx.now, ctx.zone)
+  return todaysTop3(await ctx.store.dayTasks(start.toISOString(), end.toISOString()), ctx.now, ctx.zone)
+}
+
+/** A star: the Top 3 is today's, so a pick dated a later day comes to today at its own time (tasks/api
+ * flipTop3 → planMath todayFor); starring takes it out of Someday. */
+function starred(t: TaskRow, ctx: ToolContext): TaskRow {
+  const day = dayWindow(ctx.now, ctx.zone)
+  const dated = t.due_at ?? t.scheduled_start
+  if (!dated || Date.parse(dated) < day.end.getTime()) return { ...t, top3: true, top3_rank: t.top3 ? (t.top3_rank ?? null) : null, someday: false }
+  const [h, mi] = wallTime(dated, ctx.zone).slice(11).split(':').map(Number)
+  return { ...t, top3: true, top3_rank: null, someday: false, due_at: wallToInstant(day.date, h, mi, ctx.zone).toISOString() }
+}
+
+export interface NewTask {
+  title: string
+  notes?: string | null
+  due?: When | null
+  durationMin?: number | null
+  project?: { id: string; name?: string | null; domain_id?: string | null } | null
+  area?: { id: string; domain_id?: string | null } | null
+  domainId?: string | null
+  top3?: boolean
+  rule?: string | null
+  labels?: string[]
+  priority?: number | null
+  remindAt?: string | null
+  someday?: boolean
+  parentId?: string | null
+  externalRef?: Row | null
+  /** Put it on the calendar at its due time (default: when `due` has a time). */
+  timed?: boolean
+}
+
+/** A new task the way the app makes one (tasks/api createTask, + capture/api blockIfTimed): a due
+ * time also blocks the calendar; a Top 3 pick dated later comes to today; a repeat on an undated
+ * task starts today 09:00. Logs task.created (+ starred, recurrence_set, scheduled). */
+export async function createTask(ctx: ToolContext, n: NewTask): Promise<{ task: TaskRow; block: EventRow | null }> {
+  const today = dayWindow(ctx.now, ctx.zone)
+  if (n.top3 && (await ctx.store.top3Count(today.end.toISOString())) >= MAX_TOP3) {
+    return bad('Top 3 is full (3 open picks). Add it without top3, or ask the user which pick to swap out.')
+  }
+  let dueAt = n.due ? instantOf(n.due, ctx.zone) : null
+  // The Top 3 is today's (top3Rule): a pick dated a later day comes to today at its own time, as
+  // starring does in the app (tasks/api flipTop3 → planMath todayFor).
+  if (n.top3 && dueAt && dueAt >= today.end) {
+    const [h, mi] = wallTime(dueAt.toISOString(), ctx.zone).slice(11).split(':').map(Number)
+    dueAt = wallToInstant(today.date, h, mi, ctx.zone)
+  }
+  // A repeat rolls from the due date: an undated one starts today, first thing (tasks/api setRecurrence).
+  if (n.rule && !dueAt) dueAt = wallToInstant(today.date, 9, 0, ctx.zone)
+  if (n.rule) checkTaskRule(ctx, n.rule, dueAt!.toISOString())
+  const now = ctx.now.toISOString()
+  const taskId = crypto.randomUUID()
+  // A typed time puts the capture on the calendar (command-bar quickAdd → capture/api blockIfTimed).
+  const block: EventRow | null =
+    n.due && (n.timed ?? 'at' in n.due) && dueAt
+      ? { id: crypto.randomUUID(), title: n.title, starts_at: dueAt.toISOString(), ends_at: new Date(dueAt.getTime() + (n.durationMin || BLOCK_MIN) * 60_000).toISOString(), all_day: false, task_id: taskId, type: 'task' }
+      : null
+  const task: TaskRow = {
+    id: taskId,
+    title: n.title,
+    notes: n.notes ?? null,
+    status: 'todo',
+    due_at: dueAt ? dueAt.toISOString() : null,
+    scheduled_start: block?.starts_at ?? null,
+    scheduled_end: block?.ends_at ?? null,
+    top3: !!n.top3,
+    someday: !!n.someday && !n.top3,
+    paused: false,
+    labels: n.labels ?? [],
+    priority: n.priority ?? null,
+    duration_min: n.durationMin ?? null,
+    project_id: (n.project?.id as string | undefined) ?? null,
+    area_id: (n.area?.id as string | undefined) ?? null,
+    // A task filed in a project or an area carries its domain (tasks/move.ts placeTask).
+    domain_id: (n.project?.domain_id as string | null | undefined) ?? (n.area?.domain_id as string | null | undefined) ?? n.domainId ?? null,
+    milestone_id: null,
+    parent_task_id: n.parentId ?? null,
+    recurrence_rule: n.rule ?? null,
+    reminder_at: n.remindAt ?? null,
+    reminder_sent: false,
+    snoozed_until: null,
+    completed_at: null,
+    created_at: now,
+    updated_at: now,
+    external_ref: n.externalRef ?? null,
+  }
+  await ctx.store.insertTask(task)
+  await logIt(ctx, 'task.created', 'task', task.id, { title: n.title })
+  // Today's Top 3 history (today/top3Today.ts) is read from these events.
+  if (task.top3) await logIt(ctx, 'task.starred', 'task', task.id)
+  if (n.rule) await logIt(ctx, 'task.recurrence_set', 'task', task.id, { rule: n.rule })
+  if (task.reminder_at) await logIt(ctx, 'task.reminder_set', 'task', task.id, { reminder_at: task.reminder_at })
+  if (block) {
+    await ctx.store.insertEvent(block)
+    await logIt(ctx, 'task.scheduled', 'task', task.id, { calendar_event_id: block.id })
+  }
+  return { task: { ...task, project_name: (n.project?.name as string | undefined) ?? null }, block }
+}
+
+/** Ticks an open task off (tasks/api completeTask → completion.ts planCompletion): a repeat's next
+ * occurrence comes along — never a paused series', never a second open copy. */
+export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done: TaskRow; next: TaskRow | null }> {
+  const now = ctx.now.toISOString()
+  // Plan the next occurrence before writing anything: a rule rrule can't read must not leave
+  // the task done with its series silently ended.
+  let next: TaskRow | null = null
+  // A paused series (Perennials ‖) doesn't come back until it's resumed (completion.ts).
+  // "Ends after N times": the copy carries one fewer, and the last one (COUNT=1) spawns nothing.
+  const nextRule = t.recurrence_rule ? ruleAfterThis(t.recurrence_rule) : null
+  if (t.recurrence_rule && nextRule && t.due_at && !t.paused) {
+    // Rolls from max(due, today) like the app (_shared/repeat.ts), not from the old due date.
+    const at = ctx.nextOccurrence(stepOf(t.recurrence_rule), new Date(t.due_at), ctx.zone, rollAfter(t.due_at, ctx.now, ctx.zone))
+    if (at && !(await ctx.store.openOccurrence(t.title, nextRule, at.toISOString(), t.id))) {
+      next = {
+        ...t,
+        id: crypto.randomUUID(),
+        recurrence_rule: nextRule,
+        status: 'todo',
+        completed_at: null,
+        due_at: at.toISOString(),
+        reminder_at: nextReminderAt(t.reminder_at, t.due_at, at),
+        reminder_sent: false,
+        scheduled_start: null,
+        scheduled_end: null,
+        top3: false,
+        top3_rank: null,
+        slot_id: null,
+        slot_date: null,
+        sort_order: null,
+        external_ref: null,
+        created_at: now,
+        updated_at: now,
+      }
+    }
+  }
+  if (!(await ctx.store.markDone(t.id, now))) return bad(`"${t.title}" isn't open any more.`)
+  await logIt(ctx, 'task.completed', 'task', t.id)
+  if (next) {
+    await ctx.store.insertTask(next)
+    await logIt(ctx, 'task.created', 'task', next.id, { recurrence_parent: t.id })
+  }
+  return { done: { ...t, status: 'done', completed_at: now, top3: false }, next }
+}
+
+/** A done task back to open (tasks/api reopenTask, after the session that completed it). */
+export async function reopenTask(ctx: ToolContext, taskId: string): Promise<TaskRow> {
+  const t = await ctx.store.getTask(taskId)
+  if (!t) return bad(`No task with id ${taskId} (it may be in Trash). Use list_tasks with status done to find it.`)
+  if (t.status === 'todo') return bad(`"${t.title}" is already open.`)
+  const [row] = await ctx.store.patch('tasks', { id: t.id, deleted_at: null }, { status: 'todo', completed_at: null })
+  if (!row) return bad(`"${t.title}" couldn't be reopened.`)
+  await logIt(ctx, 'task.reopened', 'task', t.id)
+  return { ...t, status: 'todo', completed_at: null }
+}
+
+/** Loop B's traces (rituals/loopDay.ts): was each ritual walked to its end on this loop day (04:00
+ * rollover), and which tasks last night seeded for this morning. */
+export async function ritualTrace(ctx: ToolContext): Promise<{ day: string; plan: boolean; shutdown: boolean; rows: ActivityRow[] }> {
+  const day = loopDay(ctx.now, ctx.zone)
+  const rows = await ctx.store.activity({ types: ['ritual.finished', 'ritual.seeded', 'ritual.unseeded'], since: new Date(ctx.now.getTime() - 3 * DAY_MS).toISOString(), limit: 500, asc: true })
+  const finished = (ritual: string) => rows.some((r) => r.event_type === 'ritual.finished' && r.payload?.ritual === ritual && r.payload?.date === day)
+  return { day, plan: finished('morning'), shutdown: finished('evening'), rows }
+}
+
+/** Task ids seeded for `forDate`, in the order they were last seeded; the last seed/unseed wins
+ * (rituals/loopDay.ts seededTaskIds). `rows` oldest first. */
+export function seededTaskIds(rows: readonly ActivityRow[], forDate: string): string[] {
+  const seeded = new Set<string>()
+  for (const r of rows) {
+    if ((r.event_type !== 'ritual.seeded' && r.event_type !== 'ritual.unseeded') || r.payload?.for_date !== forDate) continue
+    seeded.delete(r.entity_id) // a re-seed moves to the back
+    if (r.event_type === 'ritual.seeded') seeded.add(r.entity_id)
+  }
+  return [...seeded]
+}
+
+/** A row's place in a list (tasks/manualOrder.ts orderKey): its manual order, else its date, else last. */
+const UNDATED = 8.64e15
+const ORDER_STEP = 60_000
+export function orderKey(t: Pick<TaskRow, 'sort_order' | 'due_at' | 'scheduled_start'>): number {
+  if (t.sort_order != null && Number.isFinite(t.sort_order)) return t.sort_order
+  const iso = t.due_at ?? t.scheduled_start
+  const ms = iso ? Date.parse(iso) : NaN
+  return Number.isFinite(ms) ? ms : UNDATED
+}
+
+/** A key just before (or after) `anchor` among `others` — between it and its nearest neighbour on that
+ * side, on the dates' scale (manualOrder.ts planListMove's midpoint, without the list: a key between
+ * two rows is between them in every list that holds both). */
+export function keyBeside(anchor: number, others: readonly number[], side: 'before' | 'after'): number {
+  const near = side === 'before' ? Math.max(-Infinity, ...others.filter((k) => k < anchor)) : Math.min(Infinity, ...others.filter((k) => k > anchor))
+  return Number.isFinite(near) ? (anchor + near) / 2 : anchor + (side === 'before' ? -ORDER_STEP : ORDER_STEP)
+}
+
+const sameInstant = (x: string | null | undefined, y: string | null | undefined) => (x ? Date.parse(x) : null) === (y ? Date.parse(y) : null)
+
+const EDIT_FIELDS = [
+  'title', 'notes', 'duration_min', 'project_id', 'area_id', 'domain_id', 'repeat', 'labels', 'priority', 'remind_at', 'someday', 'paused',
+  'top3', 'goal', 'slot_id', 'place_before', 'place_after',
+] as const
+/** Edits that make sense on one task only. */
+const ONE_TASK_FIELDS = ['goal', 'slot_id', 'slot_occurrence', 'place_before', 'place_after']
+
+type Place = { id: string; name?: string | null; domain_id?: string | null }
+
+/** edit_task for one task: every argument read, then the row settled and written once. */
+async function editOne(a: Args, ctx: ToolContext, taskId: string): Promise<Row> {
+  const t = await openTask(ctx, taskId)
+  const z = ctx.zone
+  // Every argument is read before anything is written.
+  const title = 'title' in a ? text(a, 'title', 500, true)! : t.title
+  const notes = 'notes' in a ? (text(a, 'notes', 10000) ?? null) : t.notes
+  const durationMin = 'duration_min' in a ? minutes(a, 'duration_min') : t.duration_min
+  const labels = words(a, 'labels')
+  const priority = priorityArg(a)
+  const rule = repeatArg(a, 'repeat')
+  const remindAt = remindAtArg(a, z)
+  const someday = flag(a, 'someday')
+  const paused = flag(a, 'paused')
+  const top3 = flag(a, 'top3')
+  const goal = a.goal === true
+  if (someday && (top3 || goal)) return bad('A Someday task isn\'t a Top 3 pick: give "someday" or "top3"/"goal", not both.')
+  // "Move to…" (tasks/move.ts placeTask): a project, its domain with it, out of any area; an area, its
+  // domain, out of any project; a domain alone. A milestone stays only in its own project. null = out of all.
+  let place: { project_id: string | null; area_id: string | null; domain_id: string | null; milestone_id: string | null; said: string; name: string | null } | undefined
+  const none = (what: string) => ({ project_id: null, area_id: null, domain_id: null, milestone_id: null, said: `out of its ${what}`, name: null })
+  if ('project_id' in a) {
+    const pid = uuid(a, 'project_id') ?? null
+    const p = pid ? ((await ctx.store.projects()).find((x) => x.id === pid) ?? bad(`No project with id ${pid}. Call the projects tool for the ids.`)) : null
+    place = p ? { project_id: p.id, area_id: null, domain_id: p.domain_id, milestone_id: p.id === t.project_id ? t.milestone_id : null, said: `project → ${p.name}`, name: p.name } : none('project')
+  } else if ('area_id' in a) {
+    const aid = uuid(a, 'area_id') ?? null
+    const ar = aid ? ((await liveRow(ctx, 'areas', aid, 'area')) as unknown as Place) : null
+    place = ar ? { project_id: null, area_id: ar.id, domain_id: ar.domain_id ?? null, milestone_id: null, said: `area → ${ar.name}`, name: null } : none('area')
+  } else if ('domain_id' in a) {
+    const did = uuid(a, 'domain_id') ?? null
+    const d = did ? ((await liveRow(ctx, 'domains', did, 'domain')) as unknown as Place) : null
+    place = d ? { project_id: null, area_id: null, domain_id: d.id, milestone_id: null, said: `domain → ${d.name}`, name: null } : none('domain')
+  }
+  // Into a Time slot (calendar/api putInSlot), or out of it.
+  let slot: { rowId: string; occ: EventRow; title: string } | null | undefined
+  if ('slot_id' in a) {
+    const sid = uuid(a, 'slot_id') ?? null
+    if (sid) {
+      const row = await ctx.store.getEvent(sid)
+      if (!row || row.type !== 'time_block' || row.all_day) return bad(`No Time block with id ${sid}: a task goes into a timed Time block (kind time_block) the calendar tool lists.`)
+      const w = when(a, 'slot_occurrence', z)
+      if (row.recurrence_rule && !w) return bad(`"${row.title}" repeats: give "slot_occurrence", the start of the one you mean as the calendar tool lists it.`)
+      slot = { rowId: row.id, occ: row.recurrence_rule ? occurrenceOf(row, w!, ctx) : row, title: row.title }
+    } else slot = null
+  } else if ('slot_occurrence' in a) return bad('"slot_occurrence" goes with "slot_id".')
+  // Manual order (0076): just before / after another task.
+  let sortOrder: { key: number; said: string } | undefined
+  const anchorId = uuid(a, 'place_before') ?? uuid(a, 'place_after')
+  if (anchorId) {
+    if (anchorId === t.id) return bad('A task can\'t be placed beside itself.')
+    const anchor = (await ctx.store.getTask(anchorId)) ?? bad(`No task with id ${anchorId}.`)
+    const open = await ctx.store.listTasks({ status: 'open', projectId: null, label: null, dueFrom: null, dueTo: null, limit: 5000 })
+    const side = 'place_before' in a ? 'before' : 'after'
+    sortOrder = { key: keyBeside(orderKey(anchor), open.filter((r) => r.id !== t.id && r.id !== anchor.id).map(orderKey), side), said: `placed ${side} "${anchor.title}"` }
+  }
+  // Goal of the day (tasks/api makeGoalWithUndo): it leads today's Top 3 — joining it if it isn't in
+  // yet, never into a full one (the app asks before a swap; here the assistant asks the user).
+  const picks = goal || top3 ? await picksToday(ctx) : []
+  const isPick = picks.some((p) => p.id === t.id)
+  const others = picks.filter((p) => p.id !== t.id)
+  if ((goal || top3) && !isPick && others.length >= MAX_TOP3) {
+    return bad(`Top 3 is full (${others.map((p) => `"${p.title}"`).join(', ')}). Ask the user which one to take out (edit_task with top3: false), then try again.`)
+  }
+
+  let next: TaskRow = { ...t, title, notes, duration_min: durationMin }
+  const changed: string[] = []
+  const logs: [string, Row][] = []
+  const edit = (said: string, type: string, payload: Row = {}) => {
+    changed.push(said)
+    logs.push([type, payload])
+  }
+  if (title !== t.title) edit(`title → "${title}"`, 'task.updated', { field: 'title' })
+  if (notes !== t.notes) edit(notes ? 'notes' : 'notes cleared', 'task.updated', { field: 'notes' })
+  if (durationMin !== t.duration_min) edit(durationMin ? `duration → ${durationMin} min` : 'duration cleared', 'task.updated', { field: 'duration' })
+  if (labels !== undefined && labels.join('\n') !== (t.labels ?? []).join('\n')) {
+    next.labels = labels
+    edit(labels.length ? `labels → ${labels.join(', ')}` : 'labels cleared', 'task.updated', { field: 'labels' })
+  }
+  if (priority !== undefined && priority !== (t.priority ?? null)) {
+    next.priority = priority
+    edit(priority ? `priority → ${PRIORITY_NAMES[priority]}` : 'priority cleared', 'task.updated', { field: 'priority' })
+  }
+  if (place && (place.project_id !== t.project_id || place.area_id !== (t.area_id ?? null) || place.domain_id !== t.domain_id)) {
+    const { said, name, ...fields } = place
+    next = { ...next, ...fields, project_name: name }
+    edit(said, 'task.moved', { project_id: fields.project_id, area_id: fields.area_id, domain_id: fields.domain_id })
+  }
+  if (rule !== undefined && rule !== t.recurrence_rule) {
+    next.recurrence_rule = rule
+    edit(rule ? `repeats ${rule}` : 'no longer repeats', 'task.recurrence_set', { rule })
+    // A repeat needs a date to roll from (tasks/api setRecurrence): an undated one starts today.
+    if (rule && !t.due_at) {
+      next.due_at = wallToInstant(dateKey(ctx.now, z), 9, 0, z).toISOString()
+      next.someday = false
+      edit(`due ${wallTime(next.due_at, z)} (a repeat starts today)`, 'task.rescheduled', { due_at: next.due_at })
+    }
+    if (rule) checkTaskRule(ctx, rule, next.due_at!)
+  }
+  if (remindAt !== undefined && !sameInstant(remindAt, t.reminder_at)) {
+    next.reminder_at = remindAt
+    next.reminder_sent = false
+    edit(remindAt ? `reminder → ${wallTime(remindAt, z)}` : 'reminder off', 'task.reminder_set', { reminder_at: remindAt })
+  }
+  if (someday !== undefined && someday !== t.someday) {
+    next.someday = someday
+    edit(someday ? 'parked for Someday' : 'out of Someday', 'task.someday_set', { someday })
+  }
+  if (paused !== undefined && paused !== t.paused) {
+    next.paused = paused
+    edit(paused ? 'paused' : 'resumed', paused ? 'task.paused' : 'task.resumed')
+  }
+  const ranks: { row: TaskRow; rank: number }[] = []
+  if (goal || (top3 && !isPick)) {
+    if (!isPick) {
+      const s = starred(next, ctx)
+      if (!sameInstant(s.due_at, next.due_at)) changed.push(`due ${wallTime(s.due_at!, z)} (the Top 3 is today's)`)
+      next = s
+      edit("in today's Top 3", 'task.starred')
+    }
+    if (goal) {
+      // The goal leads; the other picks keep their order behind it (top3Order rankWrites).
+      next.top3_rank = 1
+      others.forEach((p, i) => p.top3_rank !== i + 2 && ranks.push({ row: p, rank: i + 2 }))
+      if (picks[0]?.id !== t.id || t.top3_rank !== 1) edit('the goal of the day', 'task.goal_set')
+    }
+  } else if (top3 === false && t.top3) {
+    next.top3 = false
+    next.top3_rank = null
+    edit("out of today's Top 3", 'task.unstarred')
+  }
+  let blocksOff: EventRow[] = []
+  if (slot === null && t.slot_id) {
+    next = { ...next, ...OUT_OF_SLOT }
+    edit('out of its Time slot (unscheduled)', 'task.unscheduled', { slot_id: t.slot_id })
+  } else if (slot) {
+    const fields = intoSlot(slot.rowId, slot.occ, z)
+    if (fields.slot_id !== t.slot_id || fields.slot_date !== t.slot_date || !sameInstant(fields.scheduled_start, t.scheduled_start)) {
+      // In a slot it has no block of its own: one it had comes off (calendar/api putInSlot).
+      blocksOff = await ctx.store.taskBlocks(t.id)
+      next = { ...next, ...fields, ...(dueFollows(t.due_at, fields.scheduled_start, ctx.now, z) ? { due_at: fields.scheduled_start } : null) }
+      edit(`in ${slot.title} · ${spanText(slot.occ, z)}`, 'task.scheduled', { slot_id: fields.slot_id, slot_date: fields.slot_date })
+    }
+  }
+  if (sortOrder) {
+    // An order isn't a domain event (0076): nothing logged, as in the app.
+    next.sort_order = sortOrder.key
+    changed.push(sortOrder.said)
+  }
+  const task = settle(t, next, ctx.now, z)
+  if (t.top3 && !task.top3 && top3 !== false) changed.push("left today's Top 3")
+  if (remindAt === undefined && task.reminder_at && !sameInstant(task.reminder_at, t.reminder_at)) changed.push(`reminder → ${wallTime(task.reminder_at, z)}`)
+  if (changed.length) {
+    await ctx.store.updateTask(task)
+    for (const [type, payload] of logs) await logIt(ctx, type, 'task', t.id, payload)
+    for (const { row, rank } of ranks) await ctx.store.patch('tasks', { id: row.id }, { top3_rank: rank })
+    const gone = blocksOff.length ? await ctx.store.deleteEvents(blocksOff.map((b) => b.id)) : []
+    for (const blockId of gone) await logIt(ctx, 'calendar_event.deleted', 'calendar_event', blockId)
+  }
+  return { edited: taskOut(task, z, true), changed, timezone: z }
 }
 
 export const TOOLS: readonly ToolDef[] = [
@@ -587,7 +1231,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'today',
     title: 'Today',
     description:
-      "The user's day on their own clock: their Top 3 picks, open tasks due or scheduled today, overdue tasks, and today's calendar events. Start here for \"what's on today?\" or \"what should I do next?\". All times are wall-clock in `timezone`.",
+      "The user's day on their own clock: their Top 3 picks (the goal of the day first), open tasks due or scheduled today, overdue tasks, today's calendar events, and whether Plan my day / Shut down were done today (with last night's seeds for this morning). Start here for \"what's on today?\" or \"what should I do next?\". All times are wall-clock in `timezone`.",
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     write: false,
     async run(_a, ctx) {
@@ -595,6 +1239,8 @@ export const TOOLS: readonly ToolDef[] = [
       const rows = await ctx.store.dayTasks(start.toISOString(), end.toISOString())
       const events = await eventsIn(ctx, start, end)
       const { top3, today, overdue } = splitToday(rows, ctx.now, ctx.zone)
+      const trace = await ritualTrace(ctx)
+      const seeds = seededTaskIds(trace.rows, trace.day)
       return {
         date,
         now: wallTime(ctx.now.toISOString(), ctx.zone),
@@ -604,6 +1250,7 @@ export const TOOLS: readonly ToolDef[] = [
         overdue: overdue.slice(0, OVERDUE_SHOWN).map((t) => taskOut(t, ctx.zone)),
         ...(overdue.length > OVERDUE_SHOWN ? { overdue_not_shown: overdue.length - OVERDUE_SHOWN } : {}),
         events: await eventsOut(ctx, events),
+        rituals: { plan_my_day_done: trace.plan, shut_down_done: trace.shutdown, ...(seeds.length ? { seeded_for_today: seeds } : {}) },
       }
     },
   },
@@ -611,7 +1258,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'search',
     title: 'Search',
     description:
-      "Search the user's tasks, inbox notes, projects and calendar events by meaning and keywords. Returns the best matches with their ids (use get_task for a task's details). Journal entries and people are never searched here.",
+      "Search the user's tasks, inbox notes, projects, areas, calendar events and Library (books, notes, quotes) by meaning and keywords — and their journal or people only if this key was allowed them. Returns the best matches with their ids (use get_task for a task's details).",
     inputSchema: {
       type: 'object',
       properties: {
@@ -628,7 +1275,7 @@ export const TOOLS: readonly ToolDef[] = [
       const hits = await ctx.store.search(query, Math.min(50, limit * 2))
       return {
         results: hits
-          .filter((h) => SEARCHABLE.has(h.entity_type))
+          .filter((h) => reachable(h.entity_type, ctx.scopes))
           .slice(0, limit)
           .map((h) => ({ type: h.entity_type, id: h.entity_id, title: h.title, ...(h.snippet ? { snippet: h.snippet } : {}) })),
       }
@@ -638,13 +1285,15 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'list_tasks',
     title: 'List tasks',
     description:
-      'List tasks with optional filters: status (open by default), a project (ids come from the projects tool), a label, and a due-date range. Open tasks come soonest-due first; done tasks most recently finished first.',
+      'List tasks with optional filters: status (open by default), a project or area (ids from the projects tool), a label, Someday, and a due-date range. Open tasks come soonest-due first; done tasks most recently finished first.',
     inputSchema: {
       type: 'object',
       properties: {
         status: { type: 'string', enum: ['open', 'done', 'all'], description: 'open (default), done, or all.' },
         project_id: { ...id, description: 'Only tasks in this project.' },
+        area_id: { ...id, description: 'Only tasks in this area.' },
         label: { type: 'string', description: 'Only tasks carrying this label.' },
+        someday: { type: 'boolean', description: 'true: only Someday tasks; false: none of them.' },
         due_from: dateArg('Due on or after'),
         due_to: dateArg('Due on or before (a date includes that whole day)'),
         limit: { type: 'integer', minimum: 1, maximum: 100, description: 'At most this many (default 50).' },
@@ -658,7 +1307,9 @@ export const TOOLS: readonly ToolDef[] = [
       const rows = await ctx.store.listTasks({
         status: choice(a, 'status', ['open', 'done', 'all'] as const, 'open'),
         projectId: uuid(a, 'project_id') ?? null,
+        areaId: uuid(a, 'area_id') ?? null,
         label: text(a, 'label', 100) ?? null,
+        someday: flag(a, 'someday') ?? null,
         dueFrom: from ? bound(from, 'from', ctx.zone).toISOString() : null,
         dueTo: to ? bound(to, 'to', ctx.zone).toISOString() : null,
         limit: whole(a, 'limit', 1, 100, 50),
@@ -669,7 +1320,7 @@ export const TOOLS: readonly ToolDef[] = [
   {
     name: 'get_task',
     title: 'Get task',
-    description: "One task's full details: notes, due date, calendar block, project, labels, priority, repeat rule, reminder.",
+    description: "One task's full details: notes, due date, calendar block or Time slot, project / area / domain, labels, priority, repeat rule, reminder, link.",
     inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' } }, required: ['id'], additionalProperties: false },
     write: false,
     async run(a, ctx) {
@@ -683,7 +1334,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'add_task',
     title: 'Add task',
     description:
-      "Add a task to the user's task list. Only when the user asks for it. `due`: a date (YYYY-MM-DD, which means 09:00 that day) or a local date-time (YYYY-MM-DDTHH:mm) on the user's clock — a date-time also blocks that time on the calendar, as long as `duration_min` (30 minutes by default), as typing a time in the app does. `top3: true` makes it one of today's Top 3 (at most 3 open picks); the Top 3 is today's, so a later due date comes to today, keeping its time. `repeat` makes it repeat (an undated one then starts today 09:00). Unsure where something belongs? Use add_to_inbox instead.",
+      "Add a task to the user's task list. Only when the user asks for it. `due`: a date (YYYY-MM-DD, which means 09:00 that day) or a local date-time (YYYY-MM-DDTHH:mm) on the user's clock — a date-time also blocks that time on the calendar, as long as `duration_min` (30 minutes by default), as typing a time in the app does. A task lives in one place: a project (`project_id`) or an area (`area_id`). `top3: true` makes it one of today's Top 3 (at most 3 open picks); the Top 3 is today's, so a later due date comes to today, keeping its time. `repeat` makes it repeat (an undated one then starts today 09:00). `someday: true` parks it undated. `parent_id` makes it a subtask (one level deep). Unsure where something belongs? Use add_to_inbox instead.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -691,9 +1342,15 @@ export const TOOLS: readonly ToolDef[] = [
         due: dateArg('When it is due'),
         duration_min: { type: 'integer', minimum: 1, maximum: 1440, description: 'How long it takes, in minutes — a timed task blocks this much of the calendar.' },
         project_id: { ...id, description: 'File it in this project (ids from the projects tool).' },
+        area_id: { ...id, description: 'File it in this area instead (ids from the projects tool).' },
         top3: { type: 'boolean', description: "Star it into today's Top 3." },
         notes: { type: 'string', description: 'Longer details.' },
         repeat: { type: 'string', description: `How it repeats: ${RULE_HELP}, on the user's clock.` },
+        labels: { type: 'array', items: { type: 'string' }, description: 'Labels (free words; the labels tool lists the ones in use).' },
+        priority: { type: 'integer', minimum: 1, maximum: 3, description: '1 critical · 2 high · 3 medium.' },
+        remind_at: { type: 'string', description: "A reminder: YYYY-MM-DDTHH:mm on the user's clock." },
+        someday: { type: 'boolean', description: 'Park it for Someday (no date).' },
+        parent_id: { ...id, description: 'Make it a subtask of this task (one level deep).' },
       },
       required: ['title'],
       additionalProperties: false,
@@ -704,74 +1361,30 @@ export const TOOLS: readonly ToolDef[] = [
       const due = when(a, 'due', ctx.zone)
       const durationMin = minutes(a, 'duration_min')
       const projectId = uuid(a, 'project_id')
+      const areaId = uuid(a, 'area_id')
+      if (projectId && areaId) return bad('A task lives in a project or an area, not both: give one.')
       const top3 = flag(a, 'top3') ?? false
+      const someday = flag(a, 'someday') ?? false
       const notes = text(a, 'notes', 10000) ?? null
       const rule = repeatArg(a, 'repeat') ?? null
-      let project: ProjectRow | null = null
+      if (someday && (due || top3 || rule)) return bad('A Someday task has no date, no repeat and isn\'t a Top 3 pick: leave out "due", "repeat" and "top3", or "someday".')
+      const labels = words(a, 'labels') ?? []
+      const priority = priorityArg(a) ?? null
+      const remindAt = remindAtArg(a, ctx.zone) ?? null
+      const parentId = uuid(a, 'parent_id')
+      let project: Place | null = null
       if (projectId) {
         project = (await ctx.store.projects()).find((p) => p.id === projectId) ?? null
         if (!project) return bad(`No project with id ${projectId}. Call the projects tool for the ids.`)
       }
-      const today = dayWindow(ctx.now, ctx.zone)
-      if (top3 && (await ctx.store.top3Count(today.end.toISOString())) >= MAX_TOP3) {
-        return bad('Top 3 is full (3 open picks). Add it without top3, or ask the user which pick to swap out.')
+      const area = areaId ? ((await liveRow(ctx, 'areas', areaId, 'area')) as unknown as Place) : null
+      if (parentId) {
+        const parent = (await ctx.store.getTask(parentId)) ?? bad(`No task with id ${parentId} to put it under.`)
+        if (parent.parent_task_id) return bad(`Subtasks go one level deep: "${parent.title}" is itself a subtask.`)
       }
-      let dueAt = due ? ('at' in due ? due.at : wallToInstant(due.day, 9, 0, ctx.zone)) : null
-      // The Top 3 is today's (top3Rule): a pick dated a later day comes to today at its own time, as
-      // starring does in the app (tasks/api flipTop3 → planMath todayFor).
-      if (top3 && dueAt && dueAt >= today.end) {
-        const [h, mi] = wallTime(dueAt.toISOString(), ctx.zone).slice(11).split(':').map(Number)
-        dueAt = wallToInstant(today.date, h, mi, ctx.zone)
-      }
-      // A repeat rolls from the due date: an undated one starts today, first thing (tasks/api setRecurrence).
-      if (rule && !dueAt) dueAt = wallToInstant(today.date, 9, 0, ctx.zone)
-      if (rule) checkTaskRule(ctx, rule, dueAt!.toISOString())
-      const now = ctx.now.toISOString()
-      const taskId = crypto.randomUUID()
-      // A typed time puts the capture on the calendar (command-bar quickAdd → capture/api blockIfTimed).
-      const block: EventRow | null =
-        due && 'at' in due && dueAt
-          ? { id: crypto.randomUUID(), title, starts_at: dueAt.toISOString(), ends_at: new Date(dueAt.getTime() + (durationMin || BLOCK_MIN) * 60_000).toISOString(), all_day: false, task_id: taskId, type: 'task' }
-          : null
-      const task: TaskRow = {
-        id: taskId,
-        title,
-        notes,
-        status: 'todo',
-        due_at: dueAt ? dueAt.toISOString() : null,
-        scheduled_start: block?.starts_at ?? null,
-        scheduled_end: block?.ends_at ?? null,
-        top3,
-        someday: false,
-        paused: false,
-        labels: [],
-        priority: null,
-        duration_min: durationMin,
-        project_id: project?.id ?? null,
-        // A task filed in a project carries the project's domain (tasks/api setProject).
-        domain_id: project?.domain_id ?? null,
-        area_id: null,
-        milestone_id: null,
-        parent_task_id: null,
-        recurrence_rule: rule,
-        reminder_at: null,
-        reminder_sent: false,
-        snoozed_until: null,
-        completed_at: null,
-        created_at: now,
-        updated_at: now,
-      }
-      await ctx.store.insertTask(task)
-      await ctx.store.log('task.created', 'task', task.id, { title, source: 'mcp' })
-      // Today's Top 3 history (today/top3Today.ts) is read from these events.
-      if (top3) await ctx.store.log('task.starred', 'task', task.id, { source: 'mcp' })
-      if (rule) await ctx.store.log('task.recurrence_set', 'task', task.id, { rule, source: 'mcp' })
-      if (block) {
-        await ctx.store.insertEvent(block)
-        await ctx.store.log('task.scheduled', 'task', task.id, { calendar_event_id: block.id, source: 'mcp' })
-      }
+      const { task, block } = await createTask(ctx, { title, notes, due: due ?? null, durationMin, project, area, top3, rule, labels, priority, remindAt, someday, parentId: parentId ?? null })
       return {
-        added: taskOut({ ...task, project_name: project?.name ?? null }, ctx.zone),
+        added: taskOut(task, ctx.zone),
         ...(block ? { calendar_block: spanText(block, ctx.zone) } : {}),
         timezone: ctx.zone,
       }
@@ -781,157 +1394,110 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'edit_task',
     title: 'Edit task',
     description:
-      "Change an open task's title, notes, duration, project or repeat — only when the user asks, and give only what changes. null clears `notes`, `duration_min` and `repeat`; `project_id: null` takes it out of its project. A repeat on an undated task dates it today 09:00, as in the app. To move it to another day or time, use reschedule_task.",
+      "Change open tasks — only when the user asks, and give only what changes; `ids` applies the same change to several (the app's bulk bar). Fields: title, notes, duration_min, labels (the whole list), priority, repeat, remind_at, someday, paused (a repeating task rests until resumed), top3 (today's Top 3, at most 3), goal (true: the goal of the day, first in the Top 3), where it lives (one of project_id, area_id, domain_id — null takes it out), a Time slot (slot_id of a Time block, + slot_occurrence for a repeating one; null takes it out), and its place in a list (place_before / place_after another task). null clears notes, duration_min, labels, priority, repeat and remind_at. To move it to another day or time, use reschedule_task.",
     inputSchema: {
       type: 'object',
       properties: {
         id: { ...id, description: 'The task id.' },
+        ids: ids('The task ids'),
         title: { type: 'string', description: 'The new title.' },
         notes: { type: ['string', 'null'], description: 'The new notes (they replace the old ones).' },
         duration_min: { type: ['integer', 'null'], minimum: 1, maximum: 1440, description: 'How long it takes, in minutes.' },
-        project_id: { type: ['string', 'null'], format: 'uuid', description: 'Move it into this project (ids from the projects tool).' },
+        project_id: { type: ['string', 'null'], format: 'uuid', description: 'Move it into this project (ids from the projects tool); null = out of it.' },
+        area_id: { type: ['string', 'null'], format: 'uuid', description: 'Move it into this area; null = out of it.' },
+        domain_id: { type: ['string', 'null'], format: 'uuid', description: 'File it under this domain alone (no project, no area); null = out of it.' },
         repeat: repeatSchema('How it repeats'),
+        labels: { type: ['array', 'null'], items: { type: 'string' }, description: 'Its labels — the whole list (they replace the old ones).' },
+        priority: { type: ['integer', 'null'], minimum: 1, maximum: 3, description: '1 critical · 2 high · 3 medium; null = none.' },
+        remind_at: { type: ['string', 'null'], description: "A reminder at YYYY-MM-DDTHH:mm on the user's clock; null = none." },
+        someday: { type: 'boolean', description: 'true parks it for Someday; false brings it back.' },
+        paused: { type: 'boolean', description: 'Pause (true) or resume (false) a repeating task.' },
+        top3: { type: 'boolean', description: "true stars it into today's Top 3; false takes it out." },
+        goal: { type: 'boolean', enum: [true], description: 'Make it the goal of the day (it joins the Top 3 if it isn\'t in it).' },
+        slot_id: { type: ['string', 'null'], format: 'uuid', description: 'Put it into this Time block (its calendar id); null = out of its slot.' },
+        slot_occurrence: dateArg('For a repeating Time block: the start of the occurrence, as the calendar tool lists it'),
+        place_before: { ...id, description: 'Put it just before this task in its lists.' },
+        place_after: { ...id, description: 'Put it just after this task in its lists.' },
       },
-      required: ['id'],
       additionalProperties: false,
     },
     write: true,
     async run(a, ctx) {
-      const t = await openTask(ctx, uuid(a, 'id', true)!)
-      if (!['title', 'notes', 'duration_min', 'project_id', 'repeat'].some((k) => k in a)) {
-        return bad('Nothing to change: give at least one of title, notes, duration_min, project_id, repeat.')
-      }
-      // Every argument is read before anything is written.
-      const title = 'title' in a ? text(a, 'title', 500, true)! : t.title
-      const notes = 'notes' in a ? (text(a, 'notes', 10000) ?? null) : t.notes
-      const durationMin = 'duration_min' in a ? minutes(a, 'duration_min') : t.duration_min
-      const rule = repeatArg(a, 'repeat')
-      let project: ProjectRow | null | undefined
-      if ('project_id' in a) {
-        const projectId = uuid(a, 'project_id') ?? null
-        project = projectId ? ((await ctx.store.projects()).find((p) => p.id === projectId) ?? bad(`No project with id ${projectId}. Call the projects tool for the ids.`)) : null
-      }
-      const next: TaskRow = { ...t, title, notes, duration_min: durationMin }
-      const changed: string[] = []
-      const logs: [string, Record<string, unknown>][] = []
-      const edit = (said: string, type: string, payload: Record<string, unknown>) => {
-        changed.push(said)
-        logs.push([type, payload])
-      }
-      if (title !== t.title) edit(`title → "${title}"`, 'task.updated', { field: 'title' })
-      if (notes !== t.notes) edit(notes ? 'notes' : 'notes cleared', 'task.updated', { field: 'notes' })
-      if (durationMin !== t.duration_min) edit(durationMin ? `duration → ${durationMin} min` : 'duration cleared', 'task.updated', { field: 'duration' })
-      // "Move to…" (tasks/move.ts placeTask): a project, its domain with it, out of any area; a milestone
-      // stays only in its own project. null = out of all of them.
-      if (project !== undefined && (project?.id ?? null) !== t.project_id) {
-        Object.assign(next, { project_id: project?.id ?? null, area_id: null, domain_id: project?.domain_id ?? null, milestone_id: null, project_name: project?.name ?? null })
-        edit(project ? `project → ${project.name}` : 'out of its project', 'task.moved', { project_id: next.project_id, area_id: null, domain_id: next.domain_id })
-      }
-      if (rule !== undefined && rule !== t.recurrence_rule) {
-        next.recurrence_rule = rule
-        edit(rule ? `repeats ${rule}` : 'no longer repeats', 'task.recurrence_set', { rule })
-        // A repeat needs a date to roll from (tasks/api setRecurrence): an undated one starts today.
-        if (rule && !t.due_at) {
-          next.due_at = wallToInstant(dateKey(ctx.now, ctx.zone), 9, 0, ctx.zone).toISOString()
-          next.someday = false
-          edit(`due ${wallTime(next.due_at, ctx.zone)} (a repeat starts today)`, 'task.rescheduled', { due_at: next.due_at })
-        }
-        if (rule) checkTaskRule(ctx, rule, next.due_at!)
-      }
-      const task = settle(t, next, ctx.now, ctx.zone)
-      if (logs.length) {
-        await ctx.store.updateTask(task)
-        for (const [type, payload] of logs) await ctx.store.log(type, 'task', t.id, { ...payload, source: 'mcp' })
-      }
-      return { edited: taskOut(task, ctx.zone, true), changed, timezone: ctx.zone }
+      if (!EDIT_FIELDS.some((k) => k in a)) return bad(`Nothing to change: give at least one of ${EDIT_FIELDS.join(', ')}.`)
+      if (['project_id', 'area_id', 'domain_id'].filter((k) => k in a).length > 1) return bad('Give one of project_id, area_id or domain_id: a task lives in one place.')
+      if ('place_before' in a && 'place_after' in a) return bad('Give "place_before" or "place_after", not both.')
+      if ('goal' in a && a.goal !== true) return bad('"goal" can only be true. To stop a task being the goal, make another one the goal, or take it out of the Top 3 (top3: false).')
+      if (a.goal === true && a.top3 === false) return bad('The goal of the day is in the Top 3: leave out "top3: false".')
+      if (a.ids !== undefined && ONE_TASK_FIELDS.some((k) => k in a)) return bad(`${ONE_TASK_FIELDS.join(', ')} take one task at a time: give "id".`)
+      return eachId(a, (taskId) => editOne(a, ctx, taskId))
     },
   },
   {
     name: 'reschedule_task',
     title: 'Reschedule task',
     description:
-      "Move an open task to another day or time (only when the user asks). `when`: a date-time (YYYY-MM-DDTHH:mm, the user's clock) puts it on the calendar at that time — its calendar block moves there, keeping its length, else a new block as long as its duration_min (30 minutes by default). A date alone (YYYY-MM-DD) means 09:00 that day in that day's list, with no time on the calendar: a block already on that day stays, one on another day comes off. As in the app, Someday is cleared, a reminder keeps its lead, and a Top 3 pick moved to a later day gives its place up.",
+      "Move open tasks to another day or time (only when the user asks); `ids` moves several. `when`: a date-time (YYYY-MM-DDTHH:mm, the user's clock) puts it on the calendar at that time — its calendar block moves there, keeping its length, else a new block as long as its duration_min (30 minutes by default). A date alone (YYYY-MM-DD) means 09:00 that day in that day's list, with no time on the calendar: a block already on that day stays, one on another day comes off. null takes the date off (and every block). As in the app, a date clears Someday, a task leaves its Time slot, a reminder keeps its lead, and a Top 3 pick moved to a later day gives its place up.",
     inputSchema: {
       type: 'object',
-      properties: { id: { ...id, description: 'The task id.' }, when: dateArg('The new day, or day and time') },
-      required: ['id', 'when'],
+      properties: { id: { ...id, description: 'The task id.' }, ids: ids('The task ids'), when: { type: ['string', 'null'], description: "The new day, or day and time: YYYY-MM-DD, or YYYY-MM-DDTHH:mm on the user's clock. null = no date." } },
+      required: ['when'],
       additionalProperties: false,
     },
     write: true,
     async run(a, ctx) {
-      const t = await openTask(ctx, uuid(a, 'id', true)!)
-      const w = when(a, 'when', ctx.zone) ?? bad('"when" is required.')
-      const due = ('at' in w ? w.at : wallToInstant(w.day, 9, 0, ctx.zone)).toISOString()
-      const { task, placed, removed } = await replanTask(ctx, t, due, 'at' in w)
-      const changed = [`due ${wallTime(due, ctx.zone)}`]
-      if (placed) changed.push(`on the calendar ${spanText(placed, ctx.zone)}`)
-      if (removed) changed.push(`${removed} calendar block${removed === 1 ? '' : 's'} taken off the calendar (in Trash)`)
-      if (t.someday) changed.push('out of Someday')
-      if (t.top3 && !task.top3) changed.push("left today's Top 3")
-      if (task.reminder_at && task.reminder_at !== t.reminder_at) changed.push(`reminder → ${wallTime(task.reminder_at, ctx.zone)}`)
-      return { rescheduled: taskOut(task, ctx.zone), changed, timezone: ctx.zone }
+      const w = whenOrNull(a, 'when', ctx.zone)
+      if (w === undefined) return bad('"when" is required.')
+      return eachId(a, async (taskId) => {
+        const t = await openTask(ctx, taskId)
+        const due = w ? instantOf(w, ctx.zone).toISOString() : null
+        const { task, placed, removed } = await replanTask(ctx, t, due, !!w && 'at' in w)
+        const changed = [due ? `due ${wallTime(due, ctx.zone)}` : 'date taken off']
+        if (placed) changed.push(`on the calendar ${spanText(placed, ctx.zone)}`)
+        if (removed) changed.push(`${removed} calendar block${removed === 1 ? '' : 's'} taken off the calendar (in Trash)`)
+        if (t.slot_id) changed.push('out of its Time slot')
+        if (t.someday && !task.someday) changed.push('out of Someday')
+        if (t.top3 && !task.top3) changed.push("left today's Top 3")
+        if (task.reminder_at && task.reminder_at !== t.reminder_at) changed.push(`reminder → ${wallTime(task.reminder_at, ctx.zone)}`)
+        return { rescheduled: taskOut(task, ctx.zone), changed, timezone: ctx.zone }
+      })
     },
   },
   {
     name: 'complete_task',
     title: 'Complete task',
-    description: "Mark an open task done (only when the user says it's done). A repeating task's next occurrence is created, as in the app — unless the series is paused.",
-    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' } }, required: ['id'], additionalProperties: false },
+    description: "Mark open tasks done (only when the user says they're done); `ids` ticks off several. A repeating task's next occurrence is created, as in the app — unless the series is paused.",
+    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' }, ids: ids('The task ids') }, additionalProperties: false },
     write: true,
     async run(a, ctx) {
-      const t = await openTask(ctx, uuid(a, 'id', true)!)
-      const now = ctx.now.toISOString()
-      // Plan the next occurrence before writing anything: a rule rrule can't read must not leave
-      // the task done with its series silently ended.
-      let next: TaskRow | null = null
-      // A paused series (Perennials ‖) doesn't come back until it's resumed (completion.ts).
-      // "Ends after N times": the copy carries one fewer, and the last one (COUNT=1) spawns nothing.
-      const nextRule = t.recurrence_rule ? ruleAfterThis(t.recurrence_rule) : null
-      if (t.recurrence_rule && nextRule && t.due_at && !t.paused) {
-        // Rolls from max(due, today) like the app (_shared/repeat.ts), not from the old due date.
-        const at = ctx.nextOccurrence(stepOf(t.recurrence_rule), new Date(t.due_at), ctx.zone, rollAfter(t.due_at, ctx.now, ctx.zone))
-        if (at && !(await ctx.store.openOccurrence(t.title, nextRule, at.toISOString(), t.id))) {
-          next = {
-            ...t,
-            id: crypto.randomUUID(),
-            recurrence_rule: nextRule,
-            status: 'todo',
-            completed_at: null,
-            due_at: at.toISOString(),
-            reminder_at: nextReminderAt(t.reminder_at, t.due_at, at),
-            reminder_sent: false,
-            scheduled_start: null,
-            scheduled_end: null,
-            top3: false,
-            created_at: now,
-            updated_at: now,
-          }
-        }
-      }
-      if (!(await ctx.store.markDone(t.id, now))) return bad(`"${t.title}" isn't open any more.`)
-      await ctx.store.log('task.completed', 'task', t.id, { source: 'mcp' })
-      if (next) {
-        await ctx.store.insertTask(next)
-        await ctx.store.log('task.created', 'task', next.id, { recurrence_parent: t.id, source: 'mcp' })
-      }
-      return {
-        done: taskOut({ ...t, status: 'done', completed_at: now, top3: false }, ctx.zone),
-        ...(next ? { next: taskOut(next, ctx.zone) } : {}),
-        timezone: ctx.zone,
-      }
+      return eachId(a, async (taskId) => {
+        const { done, next } = await completeTask(ctx, await openTask(ctx, taskId))
+        return { done: taskOut(done, ctx.zone), ...(next ? { next: taskOut(next, ctx.zone) } : {}), timezone: ctx.zone }
+      })
+    },
+  },
+  {
+    name: 'reopen_task',
+    title: 'Reopen task',
+    description: 'Open done tasks again (the app\'s Reopen); `ids` reopens several. A repeat\'s next occurrence made when it was ticked off stays.',
+    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' }, ids: ids('The task ids') }, additionalProperties: false },
+    write: true,
+    async run(a, ctx) {
+      return eachId(a, async (taskId) => ({ reopened: taskOut(await reopenTask(ctx, taskId), ctx.zone), timezone: ctx.zone }))
     },
   },
   {
     name: 'move_to_tomorrow',
     title: 'Move to tomorrow',
     description:
-      "Move an open task's due date to tomorrow 09:00 on the user's clock — the app's \"Tomorrow\". As in the app, its reminder keeps its lead time, a calendar block on another day comes off the calendar, and a Top 3 pick gives its place up.",
-    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' } }, required: ['id'], additionalProperties: false },
+      "Move open tasks' due date to tomorrow 09:00 on the user's clock — the app's \"Tomorrow\"; `ids` moves several. As in the app, its reminder keeps its lead time, a calendar block on another day comes off the calendar, and a Top 3 pick gives its place up.",
+    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' }, ids: ids('The task ids') }, additionalProperties: false },
     write: true,
     async run(a, ctx) {
-      const t = await openTask(ctx, uuid(a, 'id', true)!)
-      const { task, removed } = await replanTask(ctx, t, tomorrowAt9(ctx.now, ctx.zone), false)
-      return { moved: taskOut(task, ctx.zone), ...(removed ? { calendar_blocks_removed: removed } : {}), timezone: ctx.zone }
+      return eachId(a, async (taskId) => {
+        const t = await openTask(ctx, taskId)
+        const { task, removed } = await replanTask(ctx, t, tomorrowAt9(ctx.now, ctx.zone), false)
+        return { moved: taskOut(task, ctx.zone), ...(removed ? { calendar_blocks_removed: removed } : {}), timezone: ctx.zone }
+      })
     },
   },
   {
@@ -998,21 +1564,8 @@ export const TOOLS: readonly ToolDef[] = [
     },
     write: true,
     async run(a, ctx) {
-      const title = text(a, 'title', 500, true)!
-      const e: EventRow = {
-        id: crypto.randomUUID(),
-        title,
-        ...spanArgs(a, ctx.zone)!,
-        task_id: null,
-        type: choice(a, 'kind', KINDS, 'event'),
-        recurrence_rule: repeatArg(a, 'repeat') ?? null,
-        recurrence_exdates: [],
-      }
-      checkSeries(e, ctx)
-      await ctx.store.insertEvent(e)
-      // calendar/api createEvent's trace.
-      await ctx.store.log('calendar_event.created', 'calendar_event', e.id, { title, type: e.type, source: 'mcp' })
-      return { added: eventOut(e, ctx.zone), timezone: ctx.zone }
+      const { event } = await addEvent(a, ctx)
+      return { added: eventOut(event, ctx.zone), timezone: ctx.zone }
     },
   },
   {
@@ -1046,7 +1599,10 @@ export const TOOLS: readonly ToolDef[] = [
         ...(after.type !== (before.type ?? 'event') ? [`kind → ${after.type}`] : []),
         ...(spanText(after, ctx.zone) !== spanText(before, ctx.zone) ? [`time → ${time(after)}`] : []),
         ...((after.recurrence_rule ?? null) !== (before.recurrence_rule ?? null) ? [after.recurrence_rule ? `repeats ${after.recurrence_rule}` : 'no longer repeats'] : []),
+        ...((after.remind_min ?? null) !== (before.remind_min ?? null) ? [after.remind_min == null ? 'no reminder' : `remind ${after.remind_min} min before`] : []),
       ]
+      /** Tasks held by a moved Time block go with it (calendar/api followSlot). */
+      const moved = (n: number) => (n ? [`${n} task${n === 1 ? '' : 's'} in it moved with it`] : [])
       if (occ) {
         // One occurrence on its own (calendar/api detach): the series skips its start and a one-off
         // copy, linked back to the series, takes the change.
@@ -1054,16 +1610,22 @@ export const TOOLS: readonly ToolDef[] = [
         if (rule !== undefined) return bad('"repeat" belongs to the whole series: leave out "occurrence" to change it.')
         const o = occurrenceOf(row, occ, ctx)
         const start = new Date(o.starts_at).toISOString()
-        const copy: EventRow = { ...row, id: crypto.randomUUID(), title, type: kind, ...(spanArgs(a, ctx.zone, o) ?? { starts_at: o.starts_at, ends_at: o.ends_at, all_day: o.all_day }), recurrence_rule: null, recurrence_exdates: [], series_id: row.id }
+        const span = spanArgs(a, ctx.zone, o) ?? { starts_at: o.starts_at, ends_at: o.ends_at, all_day: o.all_day }
+        const remind = remindArg(a, span.all_day)
+        const copy: EventRow = { ...row, id: crypto.randomUUID(), title, type: kind, ...span, recurrence_rule: null, recurrence_exdates: [], series_id: row.id, ...(remind !== undefined ? { remind_min: remind } : null) }
         const changed = what({ ...o, recurrence_rule: null }, copy)
         if (!changed.length) return { edited: eventOut(o, ctx.zone), changed, timezone: ctx.zone }
         await ctx.store.updateEvent({ ...row, recurrence_exdates: [...(row.recurrence_exdates ?? []), start] })
         await ctx.store.insertEvent(copy)
-        await ctx.store.log('calendar_event.created', 'calendar_event', copy.id, { title, type: kind, series_id: row.id, source: 'mcp' })
-        return { edited: eventOut(copy, ctx.zone), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`], timezone: ctx.zone }
+        await logIt(ctx, 'calendar_event.created', 'calendar_event', copy.id, { title, type: kind, series_id: row.id })
+        const held = row.type === 'time_block' ? await restamp(ctx, await heldBy(ctx, row.id, o), () => intoSlot(copy.id, copy, ctx.zone)) : 0
+        return { edited: eventOut(copy, ctx.zone), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`, ...moved(held)], timezone: ctx.zone }
       }
       const span = row.recurrence_rule ? seriesSpan(a, ctx.zone, row) : spanArgs(a, ctx.zone, row)
-      const next: EventRow = { ...row, title, type: kind, ...span }
+      const remind = remindArg(a, (span ?? row).all_day)
+      const next: EventRow = { ...row, title, type: kind, ...span, ...(remind !== undefined ? { remind_min: remind } : null) }
+      // An all-day event has no start to remind before (0077): a move to all-day drops it.
+      if (next.all_day) next.remind_min = null
       // A series moved to another time of day: each skipped start moves with it, so it still names the
       // same occurrence (calendar/series retimeSeries).
       if (span && row.recurrence_rule) {
@@ -1075,8 +1637,21 @@ export const TOOLS: readonly ToolDef[] = [
       const changed = what(row, next)
       if (!changed.length) return { edited: eventOut(row, ctx.zone), changed, timezone: ctx.zone }
       await ctx.store.updateEvent(next)
-      await ctx.store.log('calendar_event.updated', 'calendar_event', row.id, { title, changed, source: 'mcp' })
-      return { edited: eventOut(next, ctx.zone), changed, timezone: ctx.zone }
+      await logIt(ctx, 'calendar_event.updated', 'calendar_event', row.id, { title, changed })
+      let held = 0
+      if (row.type === 'time_block' && span && spanText(span, ctx.zone) !== spanText(row, ctx.zone)) {
+        if (!row.recurrence_rule) held = await restamp(ctx, await heldBy(ctx, row.id, row), () => intoSlot(row.id, next, ctx.zone))
+        else {
+          // A repeating slot re-timed: its tasks keep their day and take the new time (calendar/api retimeEventWithUndo).
+          const [h, mi] = wallTime(next.starts_at, ctx.zone).slice(11).split(':').map(Number)
+          const len = Date.parse(next.ends_at) - Date.parse(next.starts_at)
+          held = await restamp(ctx, (await heldBy(ctx, row.id, null)).filter((t) => !!t.slot_date), (t) => {
+            const s = wallToInstant(t.slot_date!, h, mi, ctx.zone)
+            return { scheduled_start: s.toISOString(), scheduled_end: new Date(s.getTime() + len).toISOString() }
+          })
+        }
+      }
+      return { edited: eventOut(next, ctx.zone), changed: [...changed, ...moved(held)], timezone: ctx.zone }
     },
   },
   {
@@ -1100,34 +1675,80 @@ export const TOOLS: readonly ToolDef[] = [
         const o = occurrenceOf(row, occ, ctx)
         const start = new Date(o.starts_at).toISOString()
         await ctx.store.updateEvent({ ...row, recurrence_exdates: [...(row.recurrence_exdates ?? []), start] })
-        await ctx.store.log('calendar_event.deleted', 'calendar_event', row.id, { occurrence: start, source: 'mcp' })
-        return { deleted: eventOut(o, ctx.zone), changed: [`skipped the ${spanText(o, ctx.zone)} occurrence; the rest of the series stays`], timezone: ctx.zone }
+        await logIt(ctx, 'calendar_event.deleted', 'calendar_event', row.id, { occurrence: start })
+        // A Time slot lets go of its tasks: unscheduled, back in the rail (calendar/api releaseSlot).
+        const freed = row.type === 'time_block' ? await restamp(ctx, await heldBy(ctx, row.id, o), () => OUT_OF_SLOT) : 0
+        return { deleted: eventOut(o, ctx.zone), changed: [`skipped the ${spanText(o, ctx.zone)} occurrence; the rest of the series stays`, ...released(freed)], timezone: ctx.zone }
       }
-      // An event, or "All events" for a series (deleteSeriesWithUndo): the row and every one-off moved out of it.
-      const ids = await ctx.store.deleteEvents([row.id])
-      for (const deleted of ids) await ctx.store.log('calendar_event.deleted', 'calendar_event', deleted, { source: 'mcp' })
-      const others = ids.length - 1
+      // An event, or "All events" for a series (deleteSeriesWithUndo): the row and every one-off moved
+      // out of it; every task in any of its slots back to the rail.
+      const held = row.type !== 'time_block' ? [] : row.recurrence_rule ? null : await heldBy(ctx, row.id, row)
+      const gone = await ctx.store.deleteEvents([row.id])
+      for (const deleted of gone) await logIt(ctx, 'calendar_event.deleted', 'calendar_event', deleted)
+      const freed = await restamp(ctx, held ?? (await ctx.store.slotTasks(gone)).filter((t) => !!t.slot_id && gone.includes(t.slot_id)), () => OUT_OF_SLOT)
+      const others = gone.length - 1
       return {
         deleted: eventOut(row, ctx.zone),
-        changed: [`${row.recurrence_rule ? 'the whole series' : 'the event'} moved to Trash${others > 0 ? `, with ${others} occurrence${others === 1 ? '' : 's'} moved out of it` : ''}`],
+        changed: [`${row.recurrence_rule ? 'the whole series' : 'the event'} moved to Trash${others > 0 ? `, with ${others} occurrence${others === 1 ? '' : 's'} moved out of it` : ''}`, ...released(freed)],
         timezone: ctx.zone,
       }
     },
   },
   {
     name: 'projects',
-    title: 'Projects',
-    description: "The user's projects (not in Trash): id, name, status, type and target date. Use an id with list_tasks, add_task or edit_task.",
+    title: 'Projects, areas and domains',
+    description:
+      "Where things live (none in Trash): the user's projects (id, name, status — active or archived, type — standard or retainer, target date, domain), areas and domains, and the saved checklist templates. Use the ids with list_tasks, add_task, edit_task, get_project and the save_* tools.",
     inputSchema: { type: 'object', properties: {}, additionalProperties: false },
     write: false,
     async run(_a, ctx) {
       const rows = await ctx.store.projects()
+      const areas = await ctx.store.find('areas', { deleted_at: null }, { order: 'sort_order' })
+      const domains = await ctx.store.find('domains', { deleted_at: null }, { order: 'sort_order' })
+      const [settings] = await ctx.store.find('app_settings', {}, { limit: 1 })
+      const domainName = (d: unknown) => (d ? ((domains.find((x) => x.id === d)?.name as string | undefined) ?? null) : null)
+      const templates = Array.isArray(settings?.checklist_templates) ? (settings.checklist_templates as Row[]) : []
       return {
-        projects: rows.map((p) => ({ id: p.id, name: p.name, status: p.status, type: p.type, ...(p.target_date ? { target_date: dateKey(new Date(p.target_date), ctx.zone) } : {}) })),
+        projects: rows.map((p) => ({
+          id: p.id,
+          name: p.name,
+          status: p.status,
+          type: p.type,
+          // A target is a date in no zone, stored at UTC midnight (the date input's value): read in UTC, as the app does.
+          ...(p.target_date ? { target_date: new Date(p.target_date).toISOString().slice(0, 10) } : {}),
+          ...(domainName(p.domain_id) ? { domain: domainName(p.domain_id) } : {}),
+        })),
+        areas: areas.map((r) => ({ id: r.id, name: r.name, ...(domainName(r.domain_id) ? { domain: domainName(r.domain_id) } : {}), ...(r.color ? { color: colorName(r.color, PLACE_COLORS) } : {}) })),
+        domains: domains.map((d) => ({ id: d.id, name: d.name, ...(d.color ? { color: colorName(d.color, PLACE_COLORS) } : {}) })),
+        ...(templates.length ? { checklist_templates: templates.map((t) => ({ id: t.id, name: t.name, items: Array.isArray(t.items) ? t.items.length : 0 })) } : {}),
       }
     },
   },
 ]
+
+/** "2 tasks it held are back unscheduled". */
+const released = (n: number) => (n ? [`${n} task${n === 1 ? '' : 's'} it held ${n === 1 ? 'is' : 'are'} back unscheduled`] : [])
+
+/** add_event's write, shared with filing an Inbox item as an event: the span, kind, repeat and
+ * reminder from `a`, checked; logs calendar_event.created (calendar/api createEvent). */
+export async function addEvent(a: Args, ctx: ToolContext, fallbackTitle?: string): Promise<{ event: EventRow }> {
+  const title = fallbackTitle !== undefined ? (text(a, 'title', 500) ?? fallbackTitle) : text(a, 'title', 500, true)!
+  const span = spanArgs(a, ctx.zone)!
+  const event: EventRow = {
+    id: crypto.randomUUID(),
+    title,
+    ...span,
+    task_id: null,
+    type: choice(a, 'kind', KINDS, 'event'),
+    recurrence_rule: repeatArg(a, 'repeat') ?? null,
+    recurrence_exdates: [],
+    remind_min: remindArg(a, span.all_day) ?? null,
+  }
+  checkSeries(event, ctx)
+  await ctx.store.insertEvent(event)
+  await logIt(ctx, 'calendar_event.created', 'calendar_event', event.id, { title, type: event.type })
+  return { event }
+}
 
 export interface ToolResult {
   content: { type: 'text'; text: string }[]

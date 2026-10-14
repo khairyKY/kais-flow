@@ -3,180 +3,12 @@ import { describe, expect, it, vi } from 'vitest'
 // mcpKey.ts imports the Supabase client, which throws without VITE_ env (CI has none).
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 
-import { handleMcp, KEY_PATTERN, type Deps, type KeyScope, type Session } from '../../../../supabase/functions/mcp/server.ts'
-import {
-  dayWindow,
-  readWhen,
-  replanMoves,
-  settle,
-  splitToday,
-  tomorrowAt9,
-  userZone,
-  wallTime,
-  type BlockRow,
-  type EventRow,
-  type ProjectRow,
-  type SearchHit,
-  type Store,
-  type TaskFilter,
-  type TaskRow,
-} from '../../../../supabase/functions/mcp/tools.ts'
-import { nextOccurrence } from '../tasks/recurrence'
-import { ruleBetween } from '../calendar/series'
+import { handleMcp, KEY_PATTERN } from '../../../../supabase/functions/mcp/server.ts'
+import { dayWindow, readWhen, replanMoves, settle, splitToday, tomorrowAt9, userZone, wallTime, type BlockRow } from '../../../../supabase/functions/mcp/tools.ts'
 import { claudeCodeCommand, claudeDesktopConfig, genericConfig, newMcpKey } from './mcpKey'
-
-// The MCP endpoint end to end — HTTP in, HTTP out — against an in-memory Store whose filters mirror
-// index.ts's SQL. "Now" is Sun 4 Oct 2026 11:00 UTC: 14:00 in Cairo (UTC+3), 04:00 in Los Angeles.
-const NOW = new Date('2026-10-04T11:00:00Z')
-const P1 = '00000000-0000-4000-8000-0000000000a1'
-const D1 = '00000000-0000-4000-8000-0000000000d1'
-const tid = (n: number) => `00000000-0000-4000-8000-${String(n).padStart(12, '0')}`
-
-function task(n: number, title: string, over: Partial<TaskRow> = {}): TaskRow {
-  return {
-    id: tid(n), title, notes: null, status: 'todo', due_at: null, scheduled_start: null, scheduled_end: null, top3: false, someday: false,
-    paused: false, labels: [], priority: null, duration_min: null, project_id: null, domain_id: null, area_id: null, milestone_id: null,
-    parent_task_id: null, recurrence_rule: null, reminder_at: null, reminder_sent: false, snoozed_until: null, completed_at: null,
-    created_at: '2026-09-01T08:00:00Z', updated_at: '2026-09-01T08:00:00Z', ...over,
-  }
-}
-
-type CalRow = EventRow & { deleted_at?: string | null }
-interface Fake extends Store {
-  tasks: TaskRow[]
-  inbox: { id: string; raw_text: string; payload: Record<string, unknown> }[]
-  logs: { eventType: string; entityType: string; entityId: string; payload: Record<string, unknown> }[]
-  filters: TaskFilter[]
-  /** calendar_events: the events below, then the tasks' blocks. */
-  cal: CalRow[]
-}
-
-function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] = [], blocks: (BlockRow & { task_id: string; deleted_at?: string | null })[] = []): Fake {
-  const projects: ProjectRow[] = [{ id: P1, name: 'Shaheen Website', status: 'active', type: 'standard', domain_id: D1, target_date: '2026-12-01T00:00:00Z' }]
-  const events: EventRow[] = [
-    { id: tid(900), title: 'Standup', starts_at: '2026-10-04T07:00:00Z', ends_at: '2026-10-04T07:15:00Z', all_day: false, task_id: null },
-    { id: tid(901), title: 'Next week', starts_at: '2026-10-20T07:00:00Z', ends_at: '2026-10-20T08:00:00Z', all_day: false, task_id: null },
-    // Repeating (0061): weekly from Thu 1 Oct, 18:00 Cairo — one row, its 15th skipped.
-    { id: tid(902), title: 'Choir', starts_at: '2026-10-01T15:00:00Z', ends_at: '2026-10-01T16:30:00Z', all_day: false, task_id: null, recurrence_rule: 'FREQ=WEEKLY', recurrence_exdates: ['2026-10-15T15:00:00.000Z'] },
-  ]
-  const hits: SearchHit[] = [
-    { entity_type: 'journal_entry', entity_id: tid(800), title: 'Dear diary', snippet: 'private', score: 9 },
-    { entity_type: 'task', entity_id: tid(1), title: 'Call the tyre supplier', snippet: null, score: 5 },
-    { entity_type: 'person', entity_id: tid(801), title: 'Mona', snippet: 'birthday', score: 4 },
-    { entity_type: 'inbox_item', entity_id: tid(802), title: 'tyre prices link', snippet: 'https://…', score: 3 },
-  ]
-  const s: Fake = {
-    tasks: seed.map((t) => ({ ...t })),
-    inbox: [],
-    logs: [],
-    filters: [],
-    cal: [...events, ...blocks.map((b): CalRow => ({ title: 'block', type: 'task', ...b }))],
-    timezone: async () => zone,
-    // index.ts's SQL: open, not in Trash, not someday or paused — dated before `end`, scheduled today, or an undated pick.
-    dayTasks: async (start, end) =>
-      s.tasks.filter((t) => {
-        if (t.status !== 'todo' || t.someday || t.paused) return false
-        const dated = t.due_at ?? t.scheduled_start
-        const sched = t.scheduled_start ? Date.parse(t.scheduled_start) : NaN
-        return (!!dated && Date.parse(dated) < Date.parse(end)) || (sched >= Date.parse(start) && sched < Date.parse(end)) || (t.top3 && !dated)
-      }),
-    listTasks: async (f) => {
-      s.filters.push(f)
-      return s.tasks.filter((t) => f.status === 'all' || (f.status === 'open' ? t.status === 'todo' : t.status === 'done')).slice(0, f.limit)
-    },
-    // A fresh row per read, as the database gives one.
-    getTask: async (id) => {
-      const t = s.tasks.find((x) => x.id === id)
-      return t ? { ...t } : null
-    },
-    projects: async () => projects,
-    events: async (from, to) => s.cal.filter((e) => !e.deleted_at && Date.parse(e.starts_at) < Date.parse(to) && (Date.parse(e.ends_at) > Date.parse(from) || !!e.recurrence_rule)),
-    search: async (_q, limit) => hits.slice(0, limit),
-    top3Count: async (end) =>
-      s.tasks.filter((t) => {
-        const dated = t.due_at ?? t.scheduled_start
-        return t.top3 && t.status === 'todo' && !t.someday && !t.paused && (!dated || Date.parse(dated) < Date.parse(end))
-      }).length,
-    openOccurrence: async (title, rule, due, except) =>
-      s.tasks.some((t) => t.id !== except && t.status === 'todo' && t.title === title && t.recurrence_rule === rule && t.due_at === due),
-    insertTask: async (t) => void s.tasks.push(t),
-    // index.ts's UPDATE: the editable columns only.
-    updateTask: async (t) => {
-      const { title, notes, due_at, scheduled_start, scheduled_end, someday, top3, duration_min, project_id, area_id, domain_id, milestone_id, recurrence_rule, reminder_at, reminder_sent } = t
-      Object.assign(s.tasks.find((x) => x.id === t.id)!, { title, notes, due_at, scheduled_start, scheduled_end, someday, top3, top3_rank: t.top3_rank ?? null, duration_min, project_id, area_id, domain_id, milestone_id, recurrence_rule, reminder_at, reminder_sent })
-    },
-    markDone: async (id, at) => {
-      const t = s.tasks.find((x) => x.id === id && x.status === 'todo')
-      if (!t) return false
-      Object.assign(t, { status: 'done', completed_at: at, top3: false })
-      return true
-    },
-    slotTasks: async (ids) => s.tasks.filter((t) => !!t.slot_id && ids.includes(t.slot_id)),
-    taskBlocks: async (taskId) => s.cal.filter((e) => e.task_id === taskId && !e.deleted_at).map((e) => ({ ...e })),
-    getEvent: async (id) => {
-      const e = s.cal.find((x) => x.id === id && !x.deleted_at)
-      return e ? { ...e } : null
-    },
-    insertEvent: async (e) => void s.cal.push({ ...e, deleted_at: null }),
-    updateEvent: async (e) => {
-      const { title, starts_at, ends_at, all_day } = e
-      Object.assign(s.cal.find((x) => x.id === e.id && !x.deleted_at)!, { title, starts_at, ends_at, all_day, type: e.type ?? 'event', recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [] })
-    },
-    deleteEvents: async (ids) => {
-      const gone = s.cal.filter((e) => !e.deleted_at && (ids.includes(e.id) || (!!e.series_id && ids.includes(e.series_id))))
-      for (const e of gone) e.deleted_at = NOW.toISOString()
-      return gone.map((e) => e.id)
-    },
-    insertInbox: async (row) => void s.inbox.push(row),
-    log: async (eventType, entityType, entityId, payload) => void s.logs.push({ eventType, entityType, entityId, payload }),
-  }
-  return s
-}
-
-const KEY = newMcpKey()
-const READ_KEY = newMcpKey()
-
-function deps(store: Store, over: Partial<Deps> = {}): Deps & { counted: boolean[] } {
-  const keys: Record<string, KeyScope> = { [KEY]: 'read_write', [READ_KEY]: 'read' }
-  const counted: boolean[] = []
-  return {
-    counted,
-    async withSession<T>(key: string, count: boolean, fn: (s: Session) => Promise<T>) {
-      counted.push(count)
-      const scope = keys[key]
-      return scope ? { ok: true as const, value: await fn({ scope, store }) } : { ok: false as const, reason: 'invalid' as const }
-    },
-    originAllowed: (o) => o === 'http://localhost:5173',
-    nextOccurrence,
-    ruleBetween,
-    now: () => NOW,
-    dailyLimit: 500,
-    ...over,
-  }
-}
-
-let nextId = 1
-function post(body: unknown, { key = KEY, headers = {} }: { key?: string | null; headers?: Record<string, string> } = {}): Request {
-  return new Request('http://localhost/functions/v1/mcp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', ...(key ? { Authorization: `Bearer ${key}` } : {}), ...headers },
-    body: typeof body === 'string' ? body : JSON.stringify(body),
-  })
-}
-const rpc = (method: string, params?: unknown) => ({ jsonrpc: '2.0', id: nextId++, method, ...(params === undefined ? {} : { params }) })
-
-/** A legacy (2025-11-25) client's request after initialize. */
-async function legacy(d: Deps, method: string, params?: unknown, key = KEY) {
-  const res = await handleMcp(post(rpc(method, params), { key, headers: { 'MCP-Protocol-Version': '2025-11-25' } }), d)
-  return { status: res.status, body: (await res.json()) as { result?: Record<string, unknown>; error?: { code: number; message: string; data?: unknown } } }
-}
-
-/** tools/call → the parsed JSON a tool returned (or its error text). */
-async function call(d: Deps, name: string, args: unknown = {}, key = KEY) {
-  const { body } = await legacy(d, 'tools/call', { name, arguments: args }, key)
-  const result = body.result as { content: { text: string }[]; isError?: boolean }
-  return { isError: !!result.isError, text: result.content[0].text, data: result.isError ? null : (JSON.parse(result.content[0].text) as Record<string, any>) }
-}
+// The MCP endpoint end to end — HTTP in, HTTP out — against the in-memory Store in ./mcpFake (its
+// filters mirror index.ts's SQL). "Now" is Sun 4 Oct 2026 11:00 UTC: 14:00 in Cairo, 04:00 in LA.
+import { call, D1, deps, fakeStore, KEY, legacy, NOW, P1, post, READ_KEY, rpc, task, tid } from './mcpFake'
 
 describe('MCP: the user clock', () => {
   it('falls back to Cairo for a missing or unknown zone', () => {
@@ -276,21 +108,34 @@ describe('MCP: transport and auth', () => {
     expect(newMcpKey()).not.toBe(KEY)
   })
 
-  it('lists all fifteen tools for a read & write key, only the readers for a read-only key', async () => {
+  it('lists every tool but the personal ones for a read & write key, only the readers for a read-only key', async () => {
     const d = deps(fakeStore())
-    const all = (await legacy(d, 'tools/list')).body.result!.tools as { name: string; inputSchema: { type: string }; annotations: { readOnlyHint: boolean } }[]
+    const all = (await legacy(d, 'tools/list')).body.result!.tools as { name: string; inputSchema: { type: string }; annotations: { readOnlyHint: boolean; destructiveHint?: boolean } }[]
     expect(all.map((t) => t.name)).toEqual([
-      'today', 'search', 'list_tasks', 'get_task', 'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'move_to_tomorrow', 'add_to_inbox',
+      'today', 'search', 'list_tasks', 'get_task', 'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'add_to_inbox',
       'calendar', 'add_event', 'edit_event', 'delete_event', 'projects',
+      'get_project', 'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'labels', 'update_label',
+      'trash', 'move_to_trash', 'restore_from_trash', 'settings', 'update_settings', 'inbox', 'file_inbox_item', 'update_inbox_item',
+      'routines', 'save_routine', 'check_routine', 'start_focus', 'stop_focus', 'plan_my_day', 'shut_down', 'library', 'save_library_item', 'delete_library_item',
+      'insights', 'activity',
     ])
     expect(all.every((t) => t.inputSchema.type === 'object')).toBe(true)
-    const writers = ['add_task', 'edit_task', 'reschedule_task', 'complete_task', 'move_to_tomorrow', 'add_to_inbox', 'add_event', 'edit_event', 'delete_event']
+    const writers = [
+      'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'add_to_inbox', 'add_event', 'edit_event', 'delete_event',
+      'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'update_label', 'move_to_trash', 'restore_from_trash',
+      'update_settings', 'file_inbox_item', 'update_inbox_item', 'save_routine', 'check_routine', 'start_focus', 'stop_focus', 'plan_my_day', 'shut_down',
+      'save_library_item', 'delete_library_item',
+    ]
     expect(all.filter((t) => !t.annotations.readOnlyHint).map((t) => t.name)).toEqual(writers)
+    // Only the deletes with no Trash behind them say so.
+    expect(all.filter((t) => t.annotations.destructiveHint).map((t) => t.name)).toEqual(['delete_library_item'])
     // The instructions name every writer, so the model knows which calls change real data.
     const init = await (await handleMcp(post(rpc('initialize', { protocolVersion: '2025-11-25', capabilities: {} })), d)).json()
     for (const w of writers) expect(init.result.instructions).toContain(w)
     const read = (await legacy(d, 'tools/list', undefined, READ_KEY)).body.result!.tools as { name: string }[]
-    expect(read.map((t) => t.name)).toEqual(['today', 'search', 'list_tasks', 'get_task', 'calendar', 'projects'])
+    expect(read.map((t) => t.name)).toEqual([
+      'today', 'search', 'list_tasks', 'get_task', 'calendar', 'projects', 'get_project', 'labels', 'trash', 'settings', 'inbox', 'routines', 'library', 'insights', 'activity',
+    ])
   })
 
   it('a read-only key cannot write, even by calling a writer by name', async () => {
@@ -339,7 +184,7 @@ describe('MCP: the 2026-07-28 (stateless) protocol', () => {
     const body = await res.json()
     expect(body.result.resultType).toBe('complete')
     expect(body.result._meta['io.modelcontextprotocol/serverInfo'].name).toBe('kais-flow')
-    expect(JSON.parse(body.result.content[0].text).projects[0]).toEqual({ id: P1, name: 'Shaheen Website', status: 'active', type: 'standard', target_date: '2026-12-01' })
+    expect(JSON.parse(body.result.content[0].text).projects[0]).toEqual({ id: P1, name: 'Shaheen Website', status: 'active', type: 'standard', target_date: '2026-12-01', domain: 'Work' })
     const named = await handleMcp(modern('tools/call', { name: 'projects', arguments: {} }, { 'MCP-Protocol-Version': '2026-07-28', 'Mcp-Method': 'tools/call', 'Mcp-Name': `=?base64?${btoa('projects')}?=` }), d)
     expect(named.status).toBe(200)
   })
@@ -415,10 +260,10 @@ describe('MCP: the tools', () => {
   })
 
   it('list_tasks turns dates into user-day bounds and checks its arguments', async () => {
-    const store = fakeStore('Africa/Cairo', seed())
+    const store = fakeStore('Africa/Cairo', seed().map((t) => (t.id === tid(5) ? { ...t, project_id: P1, labels: ['calls'] } : t)))
     const r = await call(deps(store), 'list_tasks', { status: 'done', due_from: '2026-10-01', due_to: '2026-10-04', label: 'calls', project_id: P1, limit: 5 })
     expect(r.data!.tasks.map((t: { title: string }) => t.title)).toEqual(['Old done thing'])
-    expect(store.filters[0]).toEqual({ status: 'done', projectId: P1, label: 'calls', dueFrom: '2026-09-30T21:00:00.000Z', dueTo: '2026-10-04T21:00:00.000Z', limit: 5 })
+    expect(store.filters[0]).toEqual({ status: 'done', projectId: P1, areaId: null, label: 'calls', someday: null, dueFrom: '2026-09-30T21:00:00.000Z', dueTo: '2026-10-04T21:00:00.000Z', limit: 5 })
     for (const [args, msg] of [
       [{ status: 'later' }, 'one of: open, done, all'],
       [{ limit: 500 }, 'from 1 to 100'],
