@@ -8,10 +8,14 @@ import { queryClient } from '../../lib/queryClient'
 import { newCaptureKey, sha256Hex } from './captureKey'
 
 export type McpScope = 'read' | 'read_write'
+/** The personal areas a key reaches only when switched on for it (mcp_keys.scopes, 0080). */
+export type McpPersonal = 'journal' | 'people'
 
 export interface McpKeyRow {
   id: string
   scope: McpScope
+  /** Switched on for this key: none by default, and a new key starts with none. */
+  scopes: McpPersonal[]
   created_at: string
   updated_at: string
   last_used_at: string | null
@@ -25,7 +29,7 @@ export function useMcpKey() {
   return useQuery({
     queryKey: ['mcp_keys'],
     queryFn: async () => {
-      const { data, error } = await supabase.from('mcp_keys').select('id, scope, created_at, updated_at, last_used_at').maybeSingle()
+      const { data, error } = await supabase.from('mcp_keys').select('id, scope, scopes, created_at, updated_at, last_used_at').maybeSingle()
       if (error) throw error
       return data as McpKeyRow | null
     },
@@ -35,13 +39,26 @@ export function useMcpKey() {
 /** `kf_ai_` + 43 base64url characters — the function's KEY_PATTERN. */
 export const newMcpKey = (): string => newCaptureKey('kf_ai_')
 
-/** Makes (or replaces) this user's key; resolves to the key, which is never readable again. */
+/** Makes (or replaces) this user's key; resolves to the key, which is never readable again. A new key
+ * reaches neither the journal nor people until they're switched on for it. */
 export async function createMcpKey(scope: McpScope): Promise<string> {
   const key = newMcpKey()
-  const { error } = await supabase.from('mcp_keys').upsert({ key_hash: await sha256Hex(key), scope }, { onConflict: 'user_id' })
+  const { error } = await supabase.from('mcp_keys').upsert({ key_hash: await sha256Hex(key), scope, scopes: [] }, { onConflict: 'user_id' })
   if (error) throw error
   await queryClient.invalidateQueries({ queryKey: ['mcp_keys'] })
   return key
+}
+
+/** `scopes` with `area` switched on or off, in a fixed order. */
+export const withPersonal = (scopes: readonly McpPersonal[], area: McpPersonal, on: boolean): McpPersonal[] =>
+  (['journal', 'people'] as const).filter((s) => (s === area ? on : scopes.includes(s)))
+
+/** Switches the journal or people on or off for the key — awaited like the key itself, so the card
+ * never shows a switch the server doesn't hold. The next call from the assistant sees it. */
+export async function setMcpPersonal(row: McpKeyRow, area: McpPersonal, on: boolean): Promise<void> {
+  const { error } = await supabase.from('mcp_keys').update({ scopes: withPersonal(row.scopes ?? [], area, on) }).eq('id', row.id)
+  if (error) throw error
+  await queryClient.invalidateQueries({ queryKey: ['mcp_keys'] })
 }
 
 export async function deleteMcpKey(id: string): Promise<void> {

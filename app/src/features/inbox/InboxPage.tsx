@@ -524,7 +524,7 @@ function ResolvedCard({ item }: { item: InboxItem }) {
   const filedTo = (item.payload as { filed_to?: string } | null)?.filed_to
   // A pending capture outside the waiting list is a snoozed one. Days on the user's clock.
   const state = filed
-    ? filedTo === 'journal' ? 'filed to the journal' : filedTo === 'person' ? 'filed to People' : 'already filed as a task'
+    ? filedTo === 'journal' ? 'filed to the journal' : filedTo === 'person' ? 'filed to People' : filedTo === 'event' ? 'filed as an event' : filedTo === 'note' ? 'filed as a Library note' : 'already filed as a task'
     : item.status === 'dismissed' ? 'dismissed' : item.snoozed_until ? `snoozed · back ${dayWord(item.snoozed_until)}` : 'waiting'
   return (
     <div id={`inbox-${item.id}`} className="ib-resolved">

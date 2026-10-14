@@ -1,0 +1,112 @@
+[
+  {
+    "name": "desktop: Journal and People rows under the key",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: both off for an existing key without scopes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: the off help says the assistant never sees them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: the footnote says a new key starts with both off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Journal on → one update of the key row",
+    "ok": true,
+    "detail": "[{\"method\":\"PATCH\",\"table\":\"mcp_keys\",\"query\":\"?id=eq.c0000000-0000-4000-8000-0000000000a1\",\"body\":{\"scopes\":[\"journal\"]}}]"
+  },
+  {
+    "name": "desktop: …with scopes [\"journal\"]",
+    "ok": true,
+    "detail": "{\"scopes\":[\"journal\"]}"
+  },
+  {
+    "name": "desktop: the switch reads on after the refetch",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: the on help says it can read and write the journal",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: People on → scopes [\"journal\",\"people\"]",
+    "ok": true,
+    "detail": "{\"scopes\":[\"journal\",\"people\"]}"
+  },
+  {
+    "name": "desktop: Journal off → scopes [\"people\"]",
+    "ok": true,
+    "detail": "{\"scopes\":[\"people\"]}"
+  },
+  {
+    "name": "desktop: New key resets the scopes to []",
+    "ok": true,
+    "detail": "{\"key_hash\":\"d341d5c21cc9cfa4867be803fb48a0e33004c4c4d864925bcd6499637b2aec6a\",\"scope\":\"read_write\",\"scopes\":[]}"
+  },
+  {
+    "name": "desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no key: no Journal / People switches",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no key: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: People on, Journal off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "phone day: the switch is laid out (the kit Toggle, 52×32, as every Settings switch)",
+    "ok": true,
+    "detail": "{\"x\":305,\"y\":335.53125,\"width\":52,\"height\":32}"
+  },
+  {
+    "name": "phone day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: People on, Journal off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "phone night: the switch is laid out (the kit Toggle, 52×32, as every Settings switch)",
+    "ok": true,
+    "detail": "{\"x\":305,\"y\":335.53125,\"width\":52,\"height\":32}"
+  },
+  {
+    "name": "phone night: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

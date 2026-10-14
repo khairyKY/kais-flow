@@ -26,6 +26,9 @@ const FLYOUT_H: f64 = 460.0;
 const STATES: [&str; 8] = ["normal", "focus1", "focus2", "focus3", "focus4", "needs", "offline", "quiet"];
 /// Launched by "Start with Windows": open quietly to the tray.
 const MINIMIZED: &str = "--minimized";
+/// The Store install's StartupTask (msix/AppxManifest.xml TaskId), which also passes MINIMIZED.
+#[cfg(windows)]
+const STARTUP_TASK: &str = "KaisFlowStartup";
 
 struct TrayLook {
     state: String,
@@ -218,13 +221,64 @@ fn tray_hide(app: AppHandle) {
     }
 }
 
+/// The Microsoft Store install's app id (`<package family>!App`, docs/MICROSOFT-STORE.md); None for
+/// the .exe install. Only an MSIX-packaged app has one.
+#[cfg(windows)]
+fn store_app_id() -> Option<String> {
+    use windows::Win32::Storage::Packaging::Appx::GetCurrentApplicationUserModelId;
+    let mut buf = [0u16; 130]; // APPLICATION_USER_MODEL_ID_MAX_LENGTH
+    let mut len = buf.len() as u32;
+    // ERROR_SUCCESS (0), or APPMODEL_ERROR_NO_APPLICATION for an unpackaged process.
+    let ok = unsafe { GetCurrentApplicationUserModelId(&mut len, Some(windows::core::PWSTR(buf.as_mut_ptr()))) }.0 == 0;
+    ok.then(|| String::from_utf16_lossy(&buf[..(len as usize).saturating_sub(1)]))
+}
+#[cfg(not(windows))]
+fn store_app_id() -> Option<String> {
+    None
+}
+
+/// Settings → App: the Store keeps this install up to date, so it never offers the .exe (appUpdate.ts).
 #[tauri::command]
-fn autostart_get(app: AppHandle) -> bool {
-    app.autolaunch().is_enabled().unwrap_or(false)
+fn store_install() -> bool {
+    store_app_id().is_some()
+}
+
+/// The Store install's "Start with Windows" is the manifest's StartupTask (msix/AppxManifest.xml): the
+/// plugin's Run key would land in the package's private registry, which Windows never reads at sign-in.
+/// None = the .exe install (the plugin answers). `set` turns it on or off first; the answer is its state.
+#[cfg(windows)]
+fn store_autostart(set: Option<bool>) -> Option<bool> {
+    use windows::ApplicationModel::{StartupTask, StartupTaskState as S};
+    store_app_id()?;
+    let Some(task) = StartupTask::GetAsync(&STARTUP_TASK.into()).and_then(|op| op.join()).ok() else { return Some(false) };
+    match set {
+        // A desktop app isn't asked; a task the user turned off in Task Manager stays off.
+        Some(true) => {
+            let _ = task.RequestEnableAsync().and_then(|op| op.join());
+        }
+        Some(false) => {
+            let _ = task.Disable();
+        }
+        None => {}
+    }
+    Some(task.State().is_ok_and(|s| s == S::Enabled || s == S::EnabledByPolicy))
+}
+#[cfg(not(windows))]
+fn store_autostart(_: Option<bool>) -> Option<bool> {
+    None
+}
+
+// async: off the main thread, since the Store install's StartupTask calls wait on Windows.
+#[tauri::command]
+async fn autostart_get(app: AppHandle) -> bool {
+    store_autostart(None).unwrap_or_else(|| app.autolaunch().is_enabled().unwrap_or(false))
 }
 
 #[tauri::command]
-fn autostart_set(app: AppHandle, on: bool) -> bool {
+async fn autostart_set(app: AppHandle, on: bool) -> bool {
+    if let Some(on) = store_autostart(Some(on)) {
+        return on;
+    }
     let manager = app.autolaunch();
     let _ = if on { manager.enable() } else { manager.disable() };
     manager.is_enabled().unwrap_or(false)
@@ -238,8 +292,9 @@ fn notify_local(app: AppHandle, title: String, body: String, actions: Vec<[Strin
     #[cfg(windows)]
     {
         use tauri_winrt_notification::{Sound, Toast};
-        // The installer registers the app under its identifier; a dev build has no such entry.
-        let id = if tauri::is_dev() { Toast::POWERSHELL_APP_ID.to_string() } else { app.config().identifier.clone() };
+        // The installer registers the app under its identifier, the Store install has its package's
+        // own id; a dev build has neither.
+        let id = if tauri::is_dev() { Toast::POWERSHELL_APP_ID.to_string() } else { store_app_id().unwrap_or_else(|| app.config().identifier.clone()) };
         let mut toast = Toast::new(&id).title(&title).text1(&body).sound(if silent { None } else { Some(Sound::Default) });
         for [action, label] in actions.iter().take(2) {
             toast = toast.add_button(label, action);
@@ -264,7 +319,7 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
         // First: a second launch (Start menu, a shortcut) brings this one forward instead.
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main(app)))
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec![MINIMIZED])))
-        .invoke_handler(tauri::generate_handler![tray_set, tray_shown, tray_open, tray_hide, autostart_get, autostart_set, notify_local])
+        .invoke_handler(tauri::generate_handler![tray_set, tray_shown, tray_open, tray_hide, autostart_get, autostart_set, store_install, notify_local])
         .setup(|app| {
             let h = app.handle();
             let item = |id: &str, text: &str| MenuItem::with_id(h, id, text, true, None::<&str>);
