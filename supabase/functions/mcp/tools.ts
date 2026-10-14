@@ -876,8 +876,8 @@ export interface NewTask {
   notes?: string | null
   due?: When | null
   durationMin?: number | null
-  project?: Row | null
-  area?: Row | null
+  project?: { id: string; name?: string | null; domain_id?: string | null } | null
+  area?: { id: string; domain_id?: string | null } | null
   domainId?: string | null
   top3?: boolean
   rule?: string | null
@@ -887,6 +887,8 @@ export interface NewTask {
   someday?: boolean
   parentId?: string | null
   externalRef?: Row | null
+  /** Put it on the calendar at its due time (default: when `due` has a time). */
+  timed?: boolean
 }
 
 /** A new task the way the app makes one (tasks/api createTask, + capture/api blockIfTimed): a due
@@ -911,7 +913,7 @@ export async function createTask(ctx: ToolContext, n: NewTask): Promise<{ task: 
   const taskId = crypto.randomUUID()
   // A typed time puts the capture on the calendar (command-bar quickAdd → capture/api blockIfTimed).
   const block: EventRow | null =
-    n.due && 'at' in n.due && dueAt
+    n.due && (n.timed ?? 'at' in n.due) && dueAt
       ? { id: crypto.randomUUID(), title: n.title, starts_at: dueAt.toISOString(), ends_at: new Date(dueAt.getTime() + (n.durationMin || BLOCK_MIN) * 60_000).toISOString(), all_day: false, task_id: taskId, type: 'task' }
       : null
   const task: TaskRow = {
