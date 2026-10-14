@@ -71,7 +71,8 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
     inbox: [],
     logs: [],
     filters: [],
-    cal: [...events, ...blocks.map((b): CalRow => ({ title: 'block', type: 'task', ...b }))],
+    // source 'native': the column's default (Google rows are 'gcal').
+    cal: [...events, ...blocks.map((b): CalRow => ({ title: 'block', type: 'task', ...b }))].map((e) => ({ source: 'native', ...e })),
     db: {
       projects: projects.map((p) => ({ ...p, deleted_at: null, milestones: [], checklist: [] })),
       domains: [{ id: D1, name: 'Work', color: null, sort_order: 0, deleted_at: null }],
@@ -206,7 +207,7 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
       const e = s.cal.find((x) => x.id === id && !x.deleted_at && x.source !== 'gcal')
       return e ? { ...e } : null
     },
-    insertEvent: async (e) => void s.cal.push({ ...e, deleted_at: null }),
+    insertEvent: async (e) => void s.cal.push({ ...e, source: 'native', deleted_at: null }),
     updateEvent: async (e) => {
       const { title, starts_at, ends_at, all_day } = e
       const row = s.cal.find((x) => x.id === e.id && !x.deleted_at)
