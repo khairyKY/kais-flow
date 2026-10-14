@@ -34,3 +34,9 @@ The web app is at https://kais-flow.kaidagoat.workers.dev and needs no install. 
 3. It installs per-user; no admin is needed. Start menu → **Kai's Flow**.
 
 **Uninstalling:** Settings → Apps → Kai's Flow → Uninstall.
+
+## Windows (Microsoft Store)
+
+Once Kai's Flow is listed (docs/MICROSOFT-STORE.md), install it from the Microsoft Store instead. There's no SmartScreen warning, and the Store keeps it up to date (Settings → App says so).
+
+**Coming from the installer:** open the old app and wait for **Synced**. Uninstall it, with **"Also forget this PC's sign-in and cache"** turned on. Then install from the Store and sign in.

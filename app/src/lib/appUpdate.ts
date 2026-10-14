@@ -7,6 +7,8 @@ import { Capacitor } from '@capacitor/core'
 //   · Android (Capacitor) and Windows (Tauri): GitHub's latest release against the installed
 //     version (versionName / tauri.conf.json, both stamped from the release tag). Newer → open
 //     that release's own installer for this platform.
+//   · Windows from the Microsoft Store (an MSIX, docs/MICROSOFT-STORE.md): the Store updates it, so
+//     nothing is fetched or offered (Kai 2026-10-14: a Store install must not nag about the .exe).
 // One request per click, nothing in the background.
 
 export type AppPlatform = 'web' | 'android' | 'windows'
@@ -17,6 +19,7 @@ export type UpdateResult =
   | { kind: 'download'; version: string; url: string; body?: string | null } // native: a newer release, its installer (+ its notes)
   | { kind: 'pending'; version: string; body?: string | null } // native: a newer release without this platform's file (yet)
   | { kind: 'current'; version: string | null }
+  | { kind: 'store'; version: string | null } // the Microsoft Store install: the Store updates it
   | { kind: 'dev' } // a dev server: nothing was deployed from it
   | { kind: 'offline' }
 
@@ -70,20 +73,31 @@ export function buildStamp(doc: Document = document): { commit: string; builtAt:
   return commit && builtAt ? { commit, builtAt } : null
 }
 
+const tauri = () => (window as unknown as { __TAURI_INTERNALS__?: { invoke(cmd: string): Promise<unknown> } }).__TAURI_INTERNALS__
+
 /** The installed app's version on a native shell (Android versionName / Tauri's version); null on
  * the web or when the shell won't say. */
 export async function installedVersion(platform: AppPlatform = appPlatform()): Promise<string | null> {
   try {
     if (platform === 'android') return (await App.getInfo()).version
     if (platform === 'windows') {
-      const tauri = (window as unknown as { __TAURI_INTERNALS__?: { invoke(cmd: string): Promise<unknown> } }).__TAURI_INTERNALS__
-      const v = await tauri?.invoke('plugin:app|version')
+      const v = await tauri()?.invoke('plugin:app|version')
       return typeof v === 'string' ? v : null
     }
   } catch {
     /* an older shell without the call: shown as "version unknown" */
   }
   return null
+}
+
+/** The Windows app installed from the Microsoft Store (src-tauri tray.rs `store_install`: it has a
+ * package identity). False everywhere else, and on a shell too old to say. */
+export async function storeInstall(platform: AppPlatform = appPlatform()): Promise<boolean> {
+  try {
+    return platform === 'windows' && (await tauri()?.invoke('store_install')) === true
+  } catch {
+    return false
+  }
 }
 
 export async function checkForUpdate(platform: AppPlatform = appPlatform()): Promise<UpdateResult> {
@@ -97,6 +111,7 @@ export async function checkForUpdate(platform: AppPlatform = appPlatform()): Pro
       return live.commit && live.commit !== 'unknown' && live.commit !== mine.commit ? { kind: 'reload', version: live.version } : { kind: 'current', version: null }
     }
     const version = await installedVersion(platform)
+    if (await storeInstall(platform)) return { kind: 'store', version: version && `v${version.replace(/^v/i, '')}` }
     const res = await fetch(RELEASES_LATEST, { headers: { Accept: 'application/vnd.github+json' }, cache: 'no-store' })
     if (!res.ok) return { kind: 'offline' }
     const release = (await res.json()) as Release

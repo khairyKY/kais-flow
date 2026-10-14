@@ -387,6 +387,7 @@ function AppUpdateCard() {
     : r.kind === 'download' ? `${r.version} is out`
     : r.kind === 'pending' ? `${r.version} is out — its ${file} is still on its way, try again in a few minutes`
     : r.kind === 'current' ? `You're on the latest (${r.version ?? running})`
+    : r.kind === 'store' ? 'Updates come from the Microsoft Store'
     : r.kind === 'dev' ? 'This is a development build — nothing to compare it with'
     : 'Couldn’t reach the update check — look at the connection and try again'
   return (

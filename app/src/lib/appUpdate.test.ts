@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest'
-import { compareVersions, nativeVerdict, releaseAssetName } from './appUpdate'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import { checkForUpdate, compareVersions, nativeVerdict, releaseAssetName } from './appUpdate'
 
 describe('compareVersions', () => {
   it('orders releases numerically, with or without the v', () => {
@@ -41,5 +41,23 @@ describe('nativeVerdict', () => {
   it('names the files the release workflows attach', () => {
     expect(releaseAssetName('v1.0.15', 'android')).toBe('kais-flow-v1.0.15.apk')
     expect(releaseAssetName('v1.0.15', 'windows')).toBe('kais-flow-v1.0.15-windows-setup.exe')
+  })
+})
+
+describe('the Microsoft Store install', () => {
+  afterEach(() => vi.unstubAllGlobals())
+  const shell = (store: boolean) => vi.stubGlobal('window', { __TAURI_INTERNALS__: { invoke: async (cmd: string) => (cmd === 'store_install' ? store : '1.1.6') } })
+
+  it('leaves updates to the Store: no GitHub request, no installer', async () => {
+    shell(true)
+    const fetch = vi.fn()
+    vi.stubGlobal('fetch', fetch)
+    expect(await checkForUpdate('windows')).toEqual({ kind: 'store', version: 'v1.1.6' })
+    expect(fetch).not.toHaveBeenCalled()
+  })
+  it('still checks GitHub for the .exe install', async () => {
+    shell(false)
+    vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => release('v1.1.7') })))
+    expect(await checkForUpdate('windows')).toMatchObject({ kind: 'download', version: 'v1.1.7' })
   })
 })

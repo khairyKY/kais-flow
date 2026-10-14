@@ -1904,6 +1904,7 @@ dependencies = [
  "tauri-plugin-autostart",
  "tauri-plugin-single-instance",
  "tauri-winrt-notification",
+ "windows",
 ]
 
 [[package]]
