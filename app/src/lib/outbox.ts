@@ -64,7 +64,8 @@ function withQueue<T>(fn: (queue: OutboxEntry[]) => { next: OutboxEntry[]; resul
   const result = chain.then(async () => {
     const queue = await getQueue()
     const { next, result } = fn(queue)
-    await setQueue(next)
+    // A peek hands the same array back: nothing to write (outbox-speed 2026-10-14).
+    if (next !== queue) await setQueue(next)
     // X-pass foundation patch: let UI (topbar sync chrome) react without polling.
     // Peeks pass the same array through; only real mutations notify.
     if (typeof window !== 'undefined' && next !== queue) window.dispatchEvent(new Event('kf-outbox-change'))
@@ -358,8 +359,25 @@ if (typeof window !== 'undefined') {
 // A block whose write is still queued shows `· saving ◌` + a dashed outer outline; one whose
 // write the server rejected shows the ⚠ / `· retry` treatment. Reads the same two idb keys the
 // queue itself uses, refreshed by the kf-outbox-change event withQueue() already dispatches.
-export function useOutboxMarks(table: string): { pending: Set<string>; failed: Set<string> } {
-  const [marks, setMarks] = useState<{ pending: Set<string>; failed: Set<string> }>({
+export interface OutboxMarks {
+  pending: Set<string>
+  failed: Set<string>
+}
+
+const sameIds = (a: Set<string>, b: Set<string>) => a.size === b.size && [...a].every((id) => b.has(id))
+
+/** `table`'s marks from the two idb lists — `prev` itself when they didn't change. Every queue step
+ * fires kf-outbox-change, and most don't touch this table (a drop queues a task, its activity rows,
+ * the block). New Sets each time re-rendered the whole calendar per step, and the queue's next
+ * IndexedDB step waited behind that render: a drop's writes left 0.5–1.9s late (outbox-speed). */
+export function outboxMarks(prev: OutboxMarks, table: string, queue: OutboxEntry[] = [], dead: OutboxEntry[] = []): OutboxMarks {
+  const pending = new Set(queue.filter((e) => e.table === table).map((e) => e.id))
+  const failed = new Set(dead.filter((e) => e.table === table).map((e) => e.id))
+  return sameIds(prev.pending, pending) && sameIds(prev.failed, failed) ? prev : { pending, failed }
+}
+
+export function useOutboxMarks(table: string): OutboxMarks {
+  const [marks, setMarks] = useState<OutboxMarks>({
     pending: new Set(),
     failed: new Set(),
   })
@@ -371,10 +389,7 @@ export function useOutboxMarks(table: string): { pending: Set<string>; failed: S
         get<OutboxEntry[]>(DEAD_KEY),
       ])
       if (!alive) return
-      setMarks({
-        pending: new Set((queue ?? []).filter((e) => e.table === table).map((e) => e.id)),
-        failed: new Set((dead ?? []).filter((e) => e.table === table).map((e) => e.id)),
-      })
+      setMarks((prev) => outboxMarks(prev, table, queue, dead))
     }
     void refresh()
     window.addEventListener('kf-outbox-change', refresh)

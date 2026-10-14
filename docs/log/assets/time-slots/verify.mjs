@@ -133,8 +133,10 @@ const queued = (page) =>
     }
   })).catch(() => 0)
 async function settle(state) {
-  // slots-phone: first the outbox drains (up to 8s). The drain can lag well past 400ms (a slow
-  // getSession), and a quiet 400ms alone then read as "nothing written" — the s5 / Undo misses.
+  // slots-phone: first the outbox drains (up to 8s). The drain lagged well past 400ms, and a quiet
+  // 400ms alone then read as "nothing written" (the s5 / Undo misses). The lag was not getSession
+  // (0ms): every queue step re-rendered the whole calendar (outbox-speed 2026-10-14, fixed; s5 now
+  // passes without this wait). Kept anyway: writes leave asynchronously by design.
   for (let i = 0; i < 40 && state.page && (await queued(state.page)) > 0; i++) await sleep(200)
   let n = -1
   while (n !== state.writes.length) {

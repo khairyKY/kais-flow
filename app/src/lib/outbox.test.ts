@@ -480,4 +480,35 @@ describe('outbox', () => {
       expect(store.get('kf-outbox-dead')).toHaveLength(1)
     })
   })
+
+  // outbox-speed (2026-10-14): on the calendar a drop's writes left 0.5–1.9s after the drop. Every
+  // queue step fires kf-outbox-change; the calendar's marks were rebuilt as new Sets on each one,
+  // so the whole calendar re-rendered per step and the queue's next IndexedDB step waited behind it.
+  describe('queue steps stay cheap', () => {
+    const entry = (table: string, id: string) => ({ id, table, op: 'upsert' as const, payload: { id }, queuedAt: 0 })
+
+    it("keeps a table's marks (same object, so no re-render) when a change doesn't touch that table", async () => {
+      const { outboxMarks } = await import('./outbox')
+      const none = { pending: new Set<string>(), failed: new Set<string>() }
+      const marks = outboxMarks(none, 'calendar_events', [entry('calendar_events', 'e1')], [])
+      expect([...marks.pending]).toEqual(['e1'])
+      // A task and its activity row join the queue: nothing the calendar draws changed.
+      expect(outboxMarks(marks, 'calendar_events', [entry('calendar_events', 'e1'), entry('tasks', 't1'), entry('activity_log', 'a1')], [])).toBe(marks)
+      // The event went out: the calendar does need to redraw.
+      const sent = outboxMarks(marks, 'calendar_events', [entry('tasks', 't1')], [])
+      expect(sent).not.toBe(marks)
+      expect(sent.pending.size).toBe(0)
+      // The server parked it: failed changes too.
+      expect([...outboxMarks(sent, 'calendar_events', [], [entry('calendar_events', 'e1')]).failed]).toEqual(['e1'])
+    })
+
+    it("reading the queue doesn't write it back", async () => {
+      store.set('kf-outbox', [entry('tasks', 't1')])
+      const { unsyncedChanges } = await import('./outbox')
+      const { set } = await import('idb-keyval')
+      vi.mocked(set).mockClear()
+      expect(await unsyncedChanges()).toBe(1)
+      expect(set).not.toHaveBeenCalled()
+    })
+  })
 })
