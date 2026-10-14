@@ -65,29 +65,32 @@
 .cal-day-header {
   display: flex;
   align-items: center;
-  gap: calc(9px * var(--s));
-  padding: calc(10px * var(--s)) calc(12px * var(--s));
+  gap: calc(7px * var(--s));
+  padding: calc(6px * var(--s)) calc(10px * var(--s));
   text-align: left;
 }
+/* Kai 2026-10-14 (Akiflow's "Fri 10"): the day's name and number on one line — less height above the grid. */
+.cal-day-header > div { display: flex; align-items: baseline; gap: calc(6px * var(--s)); min-width: 0; }
 .cal-day-header-past { opacity: 0.62; }
-.cal-day-daisy { height: calc(26px * var(--s)); flex: none; }
-.cal-day-header-today .cal-day-daisy { height: calc(30px * var(--s)); filter: var(--shadow-drop-sm); }
+.cal-day-daisy { height: calc(20px * var(--s)); flex: none; }
+.cal-day-header-today .cal-day-daisy { height: calc(22px * var(--s)); filter: var(--shadow-drop-sm); }
 .cal-day-header-name {
   font-family: var(--font-mono);
-  font-size: calc(9px * var(--s-text));
+  font-size: calc(11px * var(--s-text));
   letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
 }
 .cal-day-header-num {
   font-family: var(--font-display);
-  font-size: calc(18px * var(--s));
+  font-size: calc(16px * var(--s));
   color: var(--ink-body);
   line-height: 1;
 }
 .cal-day-header-past .cal-day-header-num { color: var(--ink-muted); }
 .cal-day-header-today .cal-day-header-name,
 .cal-day-header-today .cal-day-header-num { color: var(--acc-lavender-text); }
-.cal-day-header-today .cal-day-header-num { font-size: calc(20px * var(--s)); font-weight: 600; }
+/* today's number in a lavender pill, Akiflow's marked date */
+.cal-day-header-today .cal-day-header-num { font-size: calc(16px * var(--s)); font-weight: 600; padding: 1px 7px; border-radius: var(--radius-pill); background: var(--block-lavender); }
 /* today column wash (contract: rgba(168,160,190,0.1) — same mix the body column uses) */
 .fc .fc-col-header-cell.fc-day-today { background: color-mix(in srgb, var(--acc-lavender) 10%, transparent); }
 /* contract: the header row closes with a 1.5px --line-solid rule */
@@ -107,7 +110,7 @@
 }
 /* 27px per 30-min slot -> 54px/hour, matching Calendar.dc.html 1a's hour-row rhythm.
    Punch 38: hour line rides --line-card per CALENDAR.md §1 (was --line-dashed). */
-.fc .fc-timegrid-slot { border-color: var(--line-card); height: calc(27px * var(--s)); }
+.fc .fc-timegrid-slot { border-color: var(--line-card); height: calc(36px * var(--s)); }   /* Kai 2026-10-14 "too crammed": 72px an hour (was 54) */
 .fc .fc-timegrid-slot-minor { border-color: transparent; }
 .fc .fc-timegrid-divider { display: none; }
 
@@ -530,7 +533,15 @@
 
 /* §6 month view: badges/check/wash drop; the pill stays 16px. */
 .fc .fc-daygrid-event .kf-ev-badge, .fc .fc-daygrid-event .kf-ev-check, .fc .fc-daygrid-event .kf-ev-elapsed { display: none; }
-.fc-dayGridMonth-view .fc-daygrid-event { height: 16px; line-height: 14px; border-radius: 8px; font-size: calc(8.5px * var(--s-text)); }
+.fc-dayGridMonth-view .fc-daygrid-event { height: 20px; line-height: 18px; border-radius: 10px; font-size: calc(10.5px * var(--s-text)); }
+/* Kai 2026-10-14 "too crammed": a day-grid pill (the all-day band, the month) is ONE line — the start
+   time, then the title cut with an ellipsis. Its title + time used to stack two lines into a 16–20px
+   pill and spill over the pill below. The all-day band shows no time at all (§6: "no time row"). */
+.fc .fc-daygrid-event .kf-ev-row { min-width: 0; }
+.fc .fc-daygrid-event .kf-ev-text { display: flex; align-items: baseline; gap: 5px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.fc .fc-daygrid-event .fc-event-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.fc .fc-daygrid-event .fc-event-time { order: -1; flex: none; opacity: 0.75; }
+.fc .fc-timegrid .fc-daygrid-event .fc-event-time { display: none; }
 
 /* grip reveal (pairs with the opacity:0 set on the ::after above) */
 .fc .fc-timegrid-event:hover .fc-event-resizer-end::after,

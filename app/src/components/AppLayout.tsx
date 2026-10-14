@@ -576,8 +576,12 @@ function keysResting(e: KeyboardEvent): boolean {
 /** Dispatched on `window` to open search from a page's own top bar (the shell owns the overlay). */
 const OPEN_SEARCH_EVENT = 'kf-open-search'
 
-/** Pages whose desktop frame has no top bar: Today 2a and Inbox 3a (both "reviewed pass"). */
-const NO_TOPBAR = ['/today', '/inbox']
+/** Pages whose desktop frame has no top bar: Today 2a and Inbox 3a (both "reviewed pass"), and the
+ * calendar (Kai 2026-10-14: "I don't want any wasted spaces" — its own header row carries the date). */
+const NO_TOPBAR = ['/today', '/inbox', '/calendar']
+/** Desktop pages that fill the window edge to edge: no page padding, no page scroll (Akiflow's
+ * calendar beside its list). Phones keep the padded column. */
+const FULL_BLEED = ['/calendar']
 
 export function AppLayout() {
   useRealtimeSync()
@@ -587,6 +591,7 @@ export function AppLayout() {
   const location = useLocation()
   const { pathname } = location
   const isMobile = useIsMobile()
+  const bleed = !isMobile && FULL_BLEED.includes(pathname)
   // Motion 2b/3a: the page scroller is the stack's sheet (lib/motion useStackTransition); Effects 2k
   // gives its edges their resistance on touch.
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -1019,9 +1024,9 @@ export function AppLayout() {
       <main style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <DownloadBar />
         {(isMobile || !NO_TOPBAR.includes(pathname)) && <TopBar sync={isMobile} />}
-        <div ref={scrollerRef} className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '30px 40px 64px' }}>
+        <div ref={scrollerRef} className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: bleed ? 'hidden' : 'auto', padding: bleed ? 0 : '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
-            <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined}>
+            <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined} style={bleed ? { height: '100%' } : undefined}>
               <Outlet />
             </div>
           </Suspense>

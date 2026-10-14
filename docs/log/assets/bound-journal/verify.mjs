@@ -119,7 +119,8 @@ const tables = (o = {}) => structuredClone({
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
-const desktop = { viewport: { width: 1280, height: 800 } }
+// Kai's screen: 1920×1080 (the app lays it out at the default 125% interface size).
+const desktop = { viewport: { width: 1920, height: 1080 } }
 
 /** Opens `route` signed in, with the day's data. o: { view, theme, calView, hold, local } */
 async function open(route, o = {}) {

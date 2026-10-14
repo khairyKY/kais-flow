@@ -130,7 +130,6 @@ function anchorOf(id: string): { x: number; y: number } {
 
 const DAY_MS = 86_400_000
 
-const RAIL_TILTS = [0, -0.4, 0, 0.4]
 
 // ── The planning rail's sections and cards (Kai 2026-10-07). ──
 
@@ -146,9 +145,6 @@ function readSections(): Record<RailSection, boolean> {
     return base
   }
 }
-
-const META: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
-const CARD: React.CSSProperties = { background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, padding: '11px 12px' }
 
 function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, children }: {
   name: RailSection
@@ -202,7 +198,7 @@ function PlanButton({ title, onPlan }: { title: string; onPlan: (x: number, y: n
   )
 }
 
-function RailTaskCard({ r, i, domains, projects, areas, onPlan }: { r: RailTask; i: number; domains: Domain[]; projects: Project[]; areas: Area[]; onPlan: (x: number, y: number) => void }) {
+function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; domains: Domain[]; projects: Project[]; areas: Area[]; onPlan: (x: number, y: number) => void }) {
   const { task: t, block } = r
   // Right-click: the one task menu (Pick date… / Tomorrow route through rescheduleDue, so a missed
   // block moves or comes off with the replan); a missed block can also just be unscheduled.
@@ -216,39 +212,30 @@ function RailTaskCard({ r, i, domains, projects, areas, onPlan }: { r: RailTask;
       data-title={t.title}
       data-duration={railMinutes(r)}
       onContextMenu={grammar.onContextMenu}
-      // Motion 5b (WB-1): the card's pasted-in tilt and its resting shadow live in CSS so the
-      // pick-up lift can win the cascade — an inline transform / box-shadow can't be overridden by
-      // a :active rule. FullCalendar's external Draggable never sets a dragging class on the
-      // source card, so :active is the only pick-up signal available here.
-      style={{ ['--kf-tilt' as string]: `${RAIL_TILTS[i % RAIL_TILTS.length]}deg`, ...CARD }}
+      title={tag ? `${t.title} · ${tag.label}` : t.title}
     >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-        {/* R4 (Kai 2026-07-20): tick a task off without scheduling it first. The guard swallows
-            pointerdown so FullCalendar's Draggable never sees it. */}
-        <span ref={dragGuard(() => completeTaskWithUndo(t))} style={{ display: 'inline-flex', marginTop: 1 }}>
-          <Checkbox checked={false} size={15} />
-        </span>
-        <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={t.title} /></div>
-      </div>
-      <div style={{ ...META, marginTop: 7, display: 'flex', alignItems: 'center', gap: 10 }}>
+      {/* R4 (Kai 2026-07-20): tick a task off without scheduling it first. The guard swallows
+          pointerdown so FullCalendar's Draggable never sees it. */}
+      <span ref={dragGuard(() => completeTaskWithUndo(t))} style={{ display: 'inline-flex', flex: 'none' }}>
+        <Checkbox checked={false} size={15} />
+      </span>
+      <span className="cal-row-title"><EmojiText text={t.title} /></span>
+      <span className="cal-row-meta">
         {r.late > 0 ? (
-          <span style={{ color: 'var(--acc-terra)' }} title={missed ? `Missed block: ${missed.toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: appZone() })}` : undefined}>
+          <span style={{ color: 'var(--acc-terra-ink)' }} title={missed ? `Missed block: ${missed.toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: appZone() })}` : undefined}>
             Overdue {r.late}d
           </span>
         ) : (
           <>
-            {tag && (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, minWidth: 0 }}>
-                <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--acc-moss)', flex: 'none' }} />
-                {tag.label}
-              </span>
-            )}
-            {t.duration_min != null && <span>{formatDuration(t.duration_min).toLowerCase()}</span>}
+            {tag && <span aria-hidden style={{ width: 7, height: 7, borderRadius: '50%', background: tag.color ?? 'var(--acc-moss)' }} />}
+            {t.duration_min != null && <span>{formatDuration(t.duration_min)}</span>}
           </>
         )}
+      </span>
+      <span className="cal-row-acts">
         <PlanButton title={t.title} onPlan={onPlan} />
         {/* Conductor review 2026-10-12: ⋯ on every task row — the one task menu, as right-click
-            opens it. dragGuard'd like Plan ▾, so pressing it never picks the card up. */}
+            opens it. dragGuard'd like Plan ▾, so pressing it never picks the row up. */}
         <span
           style={{ display: 'inline-flex', flex: 'none' }}
           ref={(el) =>
@@ -261,30 +248,22 @@ function RailTaskCard({ r, i, domains, projects, areas, onPlan }: { r: RailTask;
         >
           <RowMenuButton title={t.title} onOpen={() => {}} />
         </span>
-      </div>
+      </span>
       {grammar.menuNode}
     </div>
   )
 }
 
-function RailInboxCard({ item, i, onPlan }: { item: InboxItem; i: number; onPlan: (x: number, y: number) => void }) {
+function RailInboxCard({ item, onPlan }: { item: InboxItem; onPlan: (x: number, y: number) => void }) {
   const title = inboxTitle(item)
   return (
-    <div
-      className="unscheduled-task"
-      data-inbox-id={item.id}
-      data-title={title}
-      data-duration={inboxMinutes(item)}
-      style={{ ['--kf-tilt' as string]: `${RAIL_TILTS[i % RAIL_TILTS.length]}deg`, ...CARD }}
-    >
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 9 }}>
-        <Icon name="inbox" size={15} style={{ flex: 'none', marginTop: 2, color: 'var(--ink-faint)' }} />
-        <div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={title} /></div>
-      </div>
-      <div style={{ ...META, marginTop: 7, display: 'flex', alignItems: 'center', gap: 10 }}>
-        <span>Inbox</span>
+    <div className="unscheduled-task" data-inbox-id={item.id} data-title={title} data-duration={inboxMinutes(item)} title={title}>
+      <Icon name="inbox" size={15} style={{ flex: 'none', color: 'var(--ink-faint)' }} />
+      <span className="cal-row-title"><EmojiText text={title} /></span>
+      <span className="cal-row-meta">Inbox</span>
+      <span className="cal-row-acts">
         <PlanButton title={title} onPlan={onPlan} />
-      </div>
+      </span>
     </div>
   )
 }
@@ -815,7 +794,7 @@ function DesktopCalendar() {
     <>
       <style>{`
         .cal-shell { display: flex; align-items: stretch; height: 100%; min-height: 0; }
-        .cal-rail { width: var(--cal-rail-w, 244px); flex: none; border-right: 1px dashed var(--line-solid); display: flex; flex-direction: column; padding: 22px 20px; overflow-y: auto; }
+        .cal-rail { width: var(--cal-rail-w, 244px); flex: none; border-right: 1px solid var(--line-card); display: flex; flex-direction: column; padding: 14px 14px 10px; overflow-y: auto; }
         .cal-railsplit { flex: none; width: 7px; cursor: col-resize; position: relative; }
         .cal-railsplit::after { content: ""; position: absolute; inset: 0 3px; background: transparent; transition: background var(--dur-quick); }
         .cal-railsplit:hover::after, .cal-railsplit[data-dragging]::after { background: var(--acc-lavender); }
@@ -827,10 +806,10 @@ function DesktopCalendar() {
         .cal-rail-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
         .cal-rail-tab:hover .cal-rail-tab-label { color: var(--ink-muted); }
         .cal-railsplit .cal-rail-knob { position: absolute; top: 18px; left: -9px; z-index: 2; }
-        .cal-rail-cards { display: flex; flex-direction: column; gap: 10px; }
+        .cal-rail-cards { display: flex; flex-direction: column; gap: 0; }
         /* Kai 2026-10-07: Overdue · Today · Inbox · Lists, each folding on its own header. */
-        .cal-rail-secs { display: flex; flex-direction: column; gap: 14px; }
-        .cal-rail-sec-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 0; margin-bottom: 8px; border: none; background: none; cursor: pointer; font: inherit; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-muted); text-align: left; }
+        .cal-rail-secs { display: flex; flex-direction: column; gap: 10px; }
+        .cal-rail-sec-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 0; margin-bottom: 2px; border: none; background: none; cursor: pointer; font: inherit; font-family: var(--font-ui); font-size: 13px; font-weight: var(--fw-semibold); color: var(--ink-muted); text-align: left; }
         .cal-rail-sec-head:hover { color: var(--ink-body); }
         .cal-rail-sec-head:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
         .cal-rail-sec-count { margin-left: auto; color: var(--ink-faint); }
@@ -844,13 +823,30 @@ function DesktopCalendar() {
            dragLift(): pick-up 140ms to scale 1.04 / +1.2deg under a 14/30 shadow, release
            settles back over 320ms with the spring overshoot. The tilt composes via --kf-tilt.
            Motion 4a hover/press rides the same transition. */
+        /* Kai 2026-10-14 (Akiflow's list beside its calendar): one line per task — box · title ·
+           project dot · length; Plan ▾ and ⋯ take the meta's place on hover or focus. No card, no
+           tilt: the rail is a tool. */
         .unscheduled-task {
           cursor: grab;
-          box-shadow: var(--shadow-crisp);
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          min-height: 34px;
+          padding: 3px 6px;
+          margin: 0 -6px;
+          border-radius: var(--radius-input);
           transform: rotate(var(--kf-tilt, 0deg));
-          transition: transform 320ms var(--ease-spring), box-shadow 320ms var(--ease-out);
+          transition: transform 320ms var(--ease-spring), box-shadow 320ms var(--ease-out), background-color var(--dur-quick);
         }
-        @media (hover: hover) { .unscheduled-task:hover { box-shadow: var(--shadow-card); } }
+        @media (hover: hover) { .unscheduled-task:hover { background: var(--paper-bone); } }
+        .cal-row-title { flex: 1; min-width: 0; font-size: 13.5px; color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-row-meta { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-meta); color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .cal-row-acts { flex: none; display: inline-flex; align-items: center; gap: 2px; }
+        @media (hover: hover) {
+          .unscheduled-task .cal-row-acts { display: none; }
+          .unscheduled-task:hover .cal-row-acts, .unscheduled-task:focus-within .cal-row-acts { display: inline-flex; }
+          .unscheduled-task:hover .cal-row-meta, .unscheduled-task:focus-within .cal-row-meta { display: none; }
+        }
         .motion-on .unscheduled-task:active {
           cursor: grabbing;
           opacity: 0.92;
@@ -858,7 +854,7 @@ function DesktopCalendar() {
           box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);
           transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
         }
-        .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 12px 22px 10px; }
+        .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0; }
       `}</style>
 
       <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
@@ -880,15 +876,15 @@ function DesktopCalendar() {
         )}
         {/* Stays mounted while folded so the FullCalendar Draggable keeps its container. */}
         <aside className={railFolded || planning ? 'cal-rail is-folded' : 'cal-rail'} ref={railRef} aria-label="Planning rail">
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>To plan</div>
+          <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
+            <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)' }}>To plan</div>
+            <div className="cal-rail-load" style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }} title="Blocks on today's calendar · free time left today">{load.blocked} {load.blocked === 1 ? 'block' : 'blocks'} · {load.free} free</div>
           </div>
-          <div className="cal-rail-extra" style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', margin: '3px 0 12px' }}>drag onto a time to plant it ✿</div>
 
           <div
             className="cal-rail-extra"
             onClick={openQuickAddTask}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 11px', marginBottom: 12, cursor: 'pointer' }}
+            style={{ display: 'flex', alignItems: 'center', gap: 8, minHeight: 32, background: 'var(--paper-bone)', borderRadius: 'var(--radius-input)', padding: '0 10px', marginBottom: 8, cursor: 'pointer' }}
           >
             <span style={{ width: 14, height: 14, border: '1.5px solid var(--ink-hairline)', borderRadius: 4, flex: 'none' }} />
             <span style={{ fontSize: 13, color: 'var(--ink-faint)' }}>Quick add task…</span>
@@ -900,18 +896,18 @@ function DesktopCalendar() {
             ) : (
               <>
                 <RailSectionBox name="overdue" label="Overdue" count={buckets.overdue.length} terra folded={sections.overdue} onToggle={toggleSection} empty="Nothing overdue.">
-                  {buckets.overdue.map((r, i) => (
-                    <RailTaskCard key={r.task.id} r={r} i={i} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r }, x, y })} />
+                  {buckets.overdue.map((r) => (
+                    <RailTaskCard key={r.task.id} r={r} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r }, x, y })} />
                   ))}
                 </RailSectionBox>
                 <RailSectionBox name="today" label="Today" count={buckets.today.length} folded={sections.today} onToggle={toggleSection} empty="Nothing left without a time today.">
-                  {buckets.today.map((r, i) => (
-                    <RailTaskCard key={r.task.id} r={r} i={i} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r }, x, y })} />
+                  {buckets.today.map((r) => (
+                    <RailTaskCard key={r.task.id} r={r} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r }, x, y })} />
                   ))}
                 </RailSectionBox>
                 <RailSectionBox name="inbox" label="Inbox" count={inbox.length} folded={sections.inbox} onToggle={toggleSection} empty="Inbox zero.">
-                  {inbox.map((item, i) => (
-                    <RailInboxCard key={item.id} item={item} i={i} onPlan={(x, y) => setPlan({ target: { kind: 'inbox', item }, x, y })} />
+                  {inbox.map((item) => (
+                    <RailInboxCard key={item.id} item={item} onPlan={(x, y) => setPlan({ target: { kind: 'inbox', item }, x, y })} />
                   ))}
                 </RailSectionBox>
                 <RailSectionBox name="lists" label="Lists" count={listTasks.length} folded={sections.lists} onToggle={toggleSection} empty="Nothing else here to block.">
@@ -931,21 +927,14 @@ function DesktopCalendar() {
                       style={{ fontSize: 'var(--fs-meta-l)', padding: '4px 6px', flex: 1, minWidth: 0 }}
                     />
                   </div>
-                  {listTasks.map((task, i) => (
-                    <RailTaskCard key={task.id} r={{ task, block: null, late: 0 }} i={i} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r: { task, block: null, late: 0 } }, x, y })} />
+                  {listTasks.map((task) => (
+                    <RailTaskCard key={task.id} r={{ task, block: null, late: 0 }} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r: { task, block: null, late: 0 } }, x, y })} />
                   ))}
                 </RailSectionBox>
               </>
             )}
           </div>
 
-          <div className="cal-rail-extra" style={{ flex: 1 }} />
-          <div className="cal-rail-extra" style={{ display: 'flex', alignItems: 'center', gap: 9, marginTop: 16, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
-            <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>
-              {load.blocked} blocked<br />{load.free} free today
-            </div>
-          </div>
         </aside>
 
         {planning && (
@@ -1020,15 +1009,16 @@ function DesktopCalendar() {
             </button>
           )}
           {planning ? stripHead : (
-          <div className="cal-head" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 20, marginBottom: 16, flexWrap: 'wrap' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div className="cal-head" style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 16, minHeight: 52, padding: '6px 14px 6px 16px', borderBottom: '1px solid var(--line-card)', flex: 'none' }}>
+            {/* Kai 2026-10-14: the date and its daisy sit at the far top right, out of the grid's height. */}
+            <div style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', gap: 10, textAlign: 'right' }}>
               {/* Night 1c: the header daisy is a silhouette lit at the rim in lavender. */}
-              <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 52, filter: 'var(--rim-lavender, var(--shadow-drop-sm))' }} />
+              <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 36, filter: 'var(--rim-lavender, var(--shadow-drop-sm))' }} />
               <div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
                   {`Week ${weekNumber(rangeInfo?.start ?? new Date())} · ${daisy.note}`}
                 </div>
-                <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 30, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
+                <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 21, lineHeight: 1.05, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>
                   {rangeInfo ? rangeLabel(rangeInfo.start, rangeInfo.end, viewKind) : ''}
                 </h1>
               </div>
@@ -1079,7 +1069,7 @@ function DesktopCalendar() {
 
           <div
             className={[planning ? 'cal-strip-grid' : 'cal-grid-card', motionOn && 'cal-motion-on'].filter(Boolean).join(' ')}
-            style={planning ? undefined : { flex: 1, background: 'var(--paper-parchment)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-sharp)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+            style={planning ? undefined : { flex: 1, minHeight: 0, background: 'var(--paper-parchment)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
           >
             {/* Kai 2026-07-21: "why cant I scroll horizontally in the week view" — the grid
                 keeps ≥170px per day column (CalendarGrid sets its own min-width) and scrolls

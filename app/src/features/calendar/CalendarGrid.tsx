@@ -690,7 +690,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           )
         } else if (p.kfRanOver) {
           timeText = `Ran over · ${clockTime(p.kfEnd)}`
-        } else if (!done && p.kfStart <= now && now < p.kfEnd) {
+        } else if (!done && !arg.event.allDay && p.kfStart <= now && now < p.kfEnd) {
+          // (an all-day event has no countdown: "Now · 890m left" on a birthday read as noise)
           timeText = `Now · ${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}m left`
         } else if ((p.kfOv || narrow) && arg.timeText) {
           // §6 overlap/stack tier: "time start-only" — half a column can't hold a range. The

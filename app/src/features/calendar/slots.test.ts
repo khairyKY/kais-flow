@@ -85,7 +85,7 @@ describe('slots: the pure rules', () => {
 
   it('fill: "N tasks · Xm of Ym", 30 minutes for a task with no estimate', () => {
     expect(slotFill(CODE, [{ duration_min: 15 }, { duration_min: null }])).toBe('2 tasks · 45m of 2h')
-    expect(slotFill(CODE, [{ duration_min: 90 }])).toBe('1 task · 1h30m of 2h')
+    expect(slotFill(CODE, [{ duration_min: 90 }])).toBe('1 task · 1h\u00a030m of 2h')
   })
 
   it('upcomingSlots ("Into a slot…", `>`): today and the next 7 days, each occurrence, not over yet, soonest first; Time blocks only', () => {
