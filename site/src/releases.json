@@ -1,5 +1,17 @@
 [
   {
+    "v": "v1.1.9",
+    "date": "2026-10-14",
+    "title": "Saves that leave sooner",
+    "highlights": [
+      "Changes on the calendar reach your other devices about three times sooner: dropping a task into a Time Slot saves in under half a second instead of more than one"
+    ],
+    "icons": [
+      "sync"
+    ],
+    "art": "clover-awake"
+  },
+  {
     "v": "v1.1.8",
     "date": "2026-10-14",
     "title": "Tell any AI to do anything",
