@@ -24,10 +24,15 @@
   --pad-card-lg:  28px;
 
   /* Radii — small and squarish. Not rounded modern. */
-  --radius-sharp: 3px;    /* card, most surfaces — this ISN'T a rounded UI */
-  --radius-input: 6px;    /* nav links, checkbox */
-  --radius-md:    8px;    /* inputs (contrast to nav links) */
+  --radius-sharp: var(--radius-card);    /* card, most surfaces — this ISN'T a rounded UI */
+  --radius-input: 12px;    /* nav links, checkbox */
+  --radius-md:    12px;    /* inputs (contrast to nav links) */
   --radius-pill:  999px;  /* buttons only */
+  /* B · tools are rounded, pages stay near-square (paper isn't rounded) */
+  --radius-card:  16px;   /* tool cards, grouped lists, panels (--radius-sharp points here) */
+  --radius-page:  6px;    /* goal of the day, journal, notes, quotes, herbarium */
+  --radius-block: 12px;   /* calendar blocks, time slots */
+  --radius-check: 7px;    /* checkbox */
   /* Added from the 2026-09-28 design-system refresh (design-export/DS-CHANGELOG.md §2). */
   --touch-min: 48px;
   --gutter-phone: 16px;
@@ -35,8 +40,8 @@
   --topbar-h: 56px;
   --tabbar-h: 64px;
   --tabbar-inset: env(safe-area-inset-bottom, 16px);
-  --capture-size: 56px;
-  --sheet-radius: 8px;
+  --capture-size: 48px;
+  --sheet-radius: 20px;
   --sheet-handle-w: 32px;
   --sheet-handle-h: 4px;
   --sheet-handle-hit: 48px;
