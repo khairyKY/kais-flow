@@ -16,6 +16,9 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = ["tray-icon"] }
+# Links to other sites open in the system browser (lib/platform.ts openExternal): the WebView drops
+# window.open and target="_blank".
+tauri-plugin-opener = "2"
 
 # Desktop only: the tray's "Start with Windows", and one running copy (closing to the tray would
 # otherwise let a second launch put a second K by the clock).
