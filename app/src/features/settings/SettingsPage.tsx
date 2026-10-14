@@ -205,7 +205,7 @@ function AppearanceCard() {
       <Row label="Interface size" help={`Scales the whole app · ${Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is this device’s normal`}>
         <Segmented<UiScale> label="Interface size" value={scale} onChange={setScale} options={UI_SCALES.map((s) => ({ value: s, label: `${Math.round(s * 100)}%` }))} />
       </Row>
-      <Row label="Paper texture" help={`The grain over everything · ${grain.pct}%`}>
+      <Row label="Paper texture" help={`The grain on paper pages · ${grain.pct}%`}>
         <Slider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} width={140} />
         <span aria-hidden="true" style={{ width: 56, height: 36, flex: 'none', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', background: 'var(--paper-linen)', position: 'relative', overflow: 'hidden' }}>
           <span style={{ position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: grain.pct / 100 }} />
