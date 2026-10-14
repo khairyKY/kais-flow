@@ -1,3 +1,4 @@
+import { Browser } from '@capacitor/browser'
 import { Capacitor } from '@capacitor/core'
 
 // Where the app is running (M1, docs/phases/M1-android.md). The same dist/ ships as the web app,
@@ -65,4 +66,47 @@ export function authLinkOrigin(
   const publicUrl = typeof env.VITE_PUBLIC_APP_URL === 'string' ? env.VITE_PUBLIC_APP_URL.replace(/\/+$/, '') : ''
   if (isNativeShell(w) && publicUrl) return publicUrl
   return w?.location.origin ?? publicUrl
+}
+
+type TauriBridge = { invoke(cmd: string, args?: Record<string, unknown>): Promise<unknown> }
+
+/** Opens another site in the system browser. Neither shell's web view opens a window.open or a
+ * target="_blank" (Kai 2026-10-14: Settings → Google → Connect did nothing), so: the Windows app
+ * asks Tauri's opener plugin (src-tauri, the same bridge as features/tray/native.ts), the Android
+ * app opens a Custom Tab (where Google allows its sign-in, unlike a web view), a browser a new tab. */
+export async function openExternal(url: string, w: Window | undefined = typeof window === 'undefined' ? undefined : window): Promise<void> {
+  if (isCapacitorShell()) return Browser.open({ url })
+  const tauri = (w as unknown as { __TAURI_INTERNALS__?: TauriBridge } | undefined)?.__TAURI_INTERNALS__
+  if (tauri) return void (await tauri.invoke('plugin:opener|open_url', { url }))
+  w?.open(url, '_blank', 'noopener,noreferrer')
+}
+
+/** The address a link leaves the app for: an http(s) page on another origin than `here` (this
+ * page). Null for the app's own routes, #anchors, mailto: and the like. */
+export function externalHref(href: string, here: string): string | null {
+  try {
+    const u = new URL(href, here)
+    return (u.protocol === 'https:' || u.protocol === 'http:') && u.origin !== new URL(here).origin ? u.href : null
+  } catch {
+    return null
+  }
+}
+
+/** Once, at boot (main.tsx), in the shells only: a click on a link to another site goes through
+ * openExternal, so every <a href> to GitHub, a captured page or a download works without each one
+ * knowing about the shells. The app's own links stay in the app. */
+export function installExternalLinks(w: Window = window): void {
+  if (!isNativeShell(w)) return
+  w.document.addEventListener(
+    'click',
+    (e) => {
+      if (e.defaultPrevented) return
+      const a = (e.target as Element | null)?.closest?.('a[href]')
+      const url = a && externalHref(a.getAttribute('href') ?? '', w.location.href)
+      if (!url) return
+      e.preventDefault()
+      void openExternal(url, w)
+    },
+    true,
+  )
 }

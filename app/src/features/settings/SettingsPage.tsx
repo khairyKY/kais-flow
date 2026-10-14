@@ -21,7 +21,7 @@ import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
 import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
-import { isNativeShell } from '../../lib/platform'
+import { isNativeShell, openExternal } from '../../lib/platform'
 import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
@@ -1188,7 +1188,7 @@ function GoogleProvider({ google }: { google?: IntegrationStatus }) {
       if ('missing' in r) return `Not set up yet: ${r.missing.join(' and ')} ${r.missing.length > 1 ? 'aren’t' : 'isn’t'} set on the server. docs/GOOGLE-SETUP.md has the steps (free, about 10 minutes).`
       if (isNativeShell()) {
         // Google refuses its consent page inside an app's web view: the browser does it, the grid follows.
-        window.open(r.url, '_blank', 'noopener,noreferrer')
+        await openExternal(r.url)
         return 'Finish on Google’s page in your browser. Back here, Sync now brings your calendars in.'
       }
       window.location.assign(r.url)
