@@ -115,10 +115,9 @@ jobs:
     permissions:
       contents: write # only used to attach the package to a published Release
     env:
-      # DRY RUN (temporary): test identity in place of the repo variables.
-      STORE_IDENTITY_NAME: KaisFlow.Test
-      STORE_PUBLISHER: CN=Test
-      STORE_PUBLISHER_DISPLAY_NAME: Kai's Flow (test)
+      STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
+      STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
+      STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
       TAG: ${{ inputs.tag }}
     steps:
       - uses: actions/checkout@v4
@@ -166,40 +165,6 @@ jobs:
           $id = ([xml](Get-Content -Raw unpacked/AppxManifest.xml)).Package.Identity
           echo "MSIX=$out" >> $env:GITHUB_OUTPUT
           echo "- Microsoft Store package: ``$(Split-Path $out -Leaf)`` ($([math]::Round((Get-Item $out).Length / 1MB, 1)) MB) · $($id.Name) $($id.Version) · unsigned, for Partner Center" >> $env:GITHUB_STEP_SUMMARY
-
-      # DRY RUN (temporary): register the unpacked package (Developer Mode, no signature needed), launch
-      # it from the Start menu entry the manifest makes, and prove it runs with a package identity.
-      - name: DRY RUN install and launch the package
-        if: steps.pack.outputs.MSIX
-        shell: powershell
-        run: |
-          $ErrorActionPreference = 'Stop'
-          reg add HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock /t REG_DWORD /f /v AllowDevelopmentWithoutDevLicense /d 1
-          Add-AppxPackage -Register "$PWD\unpacked\AppxManifest.xml"
-          $p = Get-AppxPackage -Name $env:STORE_IDENTITY_NAME
-          $p | Format-List Name, Version, Architecture, PackageFullName, PackageFamilyName, InstallLocation, SignatureKind, Status
-          $m = Get-AppxPackageManifest $p
-          "Extensions: " + (($m.Package.Applications.Application.Extensions.Extension | ForEach-Object { $_.Category }) -join ', ')
-          "Capabilities: " + (($m.Package.Capabilities.ChildNodes | ForEach-Object { $_.Name }) -join ', ')
-          Start-Process "shell:AppsFolder\$($p.PackageFamilyName)!App"
-          Start-Sleep 25
-          $proc = Get-Process kais-flow -ErrorAction SilentlyContinue
-          if (-not $proc) { throw 'The packaged app is not running 25 s after launch' }
-          $proc | Format-List Id, Path, StartTime, MainWindowTitle
-          "--- tasklist /apps (a process with a package identity lists its package):"
-          tasklist /apps /fi "imagename eq kais-flow.exe"
-          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
-          $bmp.Save("$env:RUNNER_TEMP\packaged-app.png")
-
-      - uses: actions/upload-artifact@v4
-        if: always() && steps.pack.outputs.MSIX
-        with:
-          name: dry-run-screenshot
-          path: ${{ runner.temp }}/packaged-app.png
-          if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v4
         if: steps.pack.outputs.MSIX

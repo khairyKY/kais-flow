@@ -154,4 +154,4 @@ The two are separate apps, so don't run both:
   - The tray and single-instance work unchanged.
 - **Testing a package on a PC without the Store:** turn on Developer Mode, then
   `Add-AppxPackage -Register <unpacked folder>\AppxManifest.xml`. The 2026-10-14 CI dry run did exactly
-  this (see `docs/log/2026-10-14-*-msix-handoff.md`).
+  this and launched it with its package identity (`docs/log/2026-10-14-1445-msix-handoff.md`).
