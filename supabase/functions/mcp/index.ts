@@ -61,7 +61,7 @@ const PERSONAL: Partial<Record<Table, Scope>> = { journal_entries: 'journal', pe
 const PERSONAL_HITS: Record<string, Scope> = { journal_entry: 'journal', person: 'people' }
 /** Table and column names come from the tools' own code, never from an argument; checked anyway. */
 function ident(s: string): string {
-  if (!/^[a-z_]+$/.test(s)) throw new Error(`mcp: not an identifier: ${s}`)
+  if (!/^[a-z_][a-z0-9_]*$/.test(s)) throw new Error(`mcp: not an identifier: ${s}`)
   return `"${s}"`
 }
 /** A row as JSON for the tools (timestamps as ISO strings): never its owner, embedding or search vector. */

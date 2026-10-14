@@ -173,7 +173,8 @@ info "harness: mcp on :$FN_PORT; users A=$A_ID B=$B_ID; today (Cairo) $TODAY, lo
 
 # ---------------------------------------------------------------------------------------------
 section "privacy gate: a key without the journal / people scopes"
-NAMES=$(names "$KA")
+names "$KA" >/dev/null
+NAMES=$(jq -r '[.result.tools[].name] | sort | join(" ")' <<<"$BODY")
 expect "tools/list: 45 tools, none of them personal" "45 0" \
   "$(jq -r '[.result.tools[].name] | "\(length) \([.[] | select(IN("journal","save_journal_entry","people","save_person","log_interaction","delete_person"))] | length)"' <<<"$BODY")"
 for t in get_project save_project update_milestone update_checklist checklist_template save_area save_domain labels update_label trash move_to_trash restore_from_trash settings update_settings inbox file_inbox_item update_inbox_item routines save_routine check_routine start_focus stop_focus plan_my_day shut_down library save_library_item delete_library_item insights activity reopen_task; do
@@ -299,7 +300,7 @@ expect "changed" "in today's Top 3 | the goal of the day" "$(changed)"
 expect "logged" "task.goal_set/mcp task.starred/mcp" "$(logs)"
 expect "ranks: the goal 1, the other pick 2" "1 2" "$(sql -c "select (select top3_rank from tasks where id = '$TG') || ' ' || (select top3_rank from tasks where id = '$TP')")"
 call "edit_task: the pick out of the Top 3" "$KA" edit_task '{id: env.TP, top3: false}'
-expect "row" "f -" "$(sql -c "select top3 || ' ' || coalesce(top3_rank::text, '-') from tasks where id = '$TP'")"
+expect "row" "false -" "$(sql -c "select top3 || ' ' || coalesce(top3_rank::text, '-') from tasks where id = '$TP'")"
 
 call "add_task 'Full B1' 2028-01-20" "$KA" add_task '{title: "Full B1", due: "2028-01-20"}'
 export TB1; TB1=$(j .added.id)
@@ -331,7 +332,7 @@ expect "both in Trash, the block with it" "2 0" \
   "$(sql -c "select (select count(*) from tasks where id in ('$TT', '$TB1') and deleted_at is not null) || ' ' || (select count(*) from calendar_events where task_id = '$TT' and deleted_at is null)")"
 call "restore_from_trash the timed one" "$KA" restore_from_trash '{type: "task", id: env.TT}'
 expect "logged" "task.restored/mcp" "$(logs)"
-expect "back, its blocks with it" "t 2" "$(sql -c "select (select deleted_at is null from tasks where id = '$TT') || ' ' || (select count(*) from calendar_events where task_id = '$TT' and deleted_at is null)")"
+expect "back, its blocks with it" "true 2" "$(sql -c "select (select deleted_at is null from tasks where id = '$TT') || ' ' || (select count(*) from calendar_events where task_id = '$TT' and deleted_at is null)")"
 
 section "Time slots: a task into a Time block; the block moved and deleted"
 call "add_event: a Time block 2028-01-18 10:00–12:00, reminding 10 min before" "$KA" add_event '{title: "Full slot", start: "2028-01-18T10:00", end: "2028-01-18T12:00", kind: "time_block", remind_min: 10}'
@@ -392,7 +393,7 @@ call "restore (dismissed → pending)" "$KA" update_inbox_item '{id: env.ID4, ac
 call "move_to_trash the capture" "$KA" move_to_trash '{type: "inbox_item", id: env.ID4}'
 expect "logged" "inbox.purged/mcp" "$(logs)"
 call "restore_from_trash it" "$KA" restore_from_trash '{type: "inbox_item", id: env.ID4}'
-expect "back in the Inbox" "pending t" "$(sql -c "select status || ' ' || (deleted_at is null) from inbox_items where id = '$ID4'")"
+expect "back in the Inbox" "pending true" "$(sql -c "select status || ' ' || (deleted_at is null) from inbox_items where id = '$ID4'")"
 
 # ---------------------------------------------------------------------------------------------
 section "projects, milestones, checklists, templates, areas, domains, labels"
@@ -440,7 +441,7 @@ expect "logged" "domain.created/mcp" "$(logs)"
 call "move_to_trash the new project" "$KA" move_to_trash '{type: "project", id: env.PN2}'
 expect "logged" "project.deleted/mcp" "$(logs)"
 call "restore_from_trash it" "$KA" restore_from_trash '{type: "project", id: env.PN2}'
-expect "live; its tasks untouched" "t 1" "$(sql -c "select (deleted_at is null) || ' ' || (select count(*) from tasks where project_id = '$PN2' and deleted_at is null) from projects where id = '$PN2'")"
+expect "live; its tasks untouched" "true 1" "$(sql -c "select (deleted_at is null) || ' ' || (select count(*) from tasks where project_id = '$PN2' and deleted_at is null) from projects where id = '$PN2'")"
 call "update_label: create 'Full Label' (sage)" "$KA" update_label '{action: "create", name: "Full Label", color: "sage"}'
 expect "label_meta" "var(--acc-sage)" "$(sql -c "select label_meta->>'Full Label' from app_settings where user_id = '$A_ID'")"
 call "update_label: rename 'money' → 'cash'" "$KA" update_label '{action: "rename", name: "money", to: "cash"}'
@@ -478,11 +479,11 @@ expect "logged" "routine.archived/mcp" "$(logs)"
 
 call "start_focus on 'Full goal' (25 min)" "$KA" start_focus '{task_id: env.TG}'
 expect "logged" "project.work_logged/mcp" "$(logs)"
-expect "a running round on the task" "25 t" "$(sql -c "select duration_min || ' ' || (ended_at > now()) from time_entries where task_id = '$TG'")"
+expect "a running round on the task" "25 true" "$(sql -c "select duration_min || ' ' || (ended_at > now()) from time_entries where task_id = '$TG'")"
 refused "a second one" "$KA" start_focus '{task_id: env.TG}' "already running"
 call "stop_focus" "$KA" stop_focus '{}'
 expect "logged" "project.work_edited/mcp" "$(logs)"
-expect "kept what was spent" "1 t" "$(sql -c "select duration_min || ' ' || (ended_at <= now()) from time_entries where task_id = '$TG'")"
+expect "kept what was spent" "1 true" "$(sql -c "select duration_min || ' ' || (ended_at <= now()) from time_entries where task_id = '$TG'")"
 
 call "plan_my_day: the Top 3 is B2 then the goal" "$KA" plan_my_day '{top3: [env.TB2, env.TG]}'
 expect "ranks" "1 2" "$(sql -c "select (select top3_rank from tasks where id = '$TB2') || ' ' || (select top3_rank from tasks where id = '$TG')")"
