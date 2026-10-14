@@ -125,7 +125,7 @@ const desktop = { viewport: { width: 1920, height: 1080 } }
 /** Opens `route` signed in, with the day's data. o: { view, theme, calView, hold, local } */
 async function open(route, o = {}) {
   const view = o.view ?? phone
-  const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
+  const ctx = await browser.newContext({ ...view, deviceScaleFactor: Number(process.env.DPR ?? 1), timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, local, uid]) => {
     localStorage.setItem('kf_theme', t)
     localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
