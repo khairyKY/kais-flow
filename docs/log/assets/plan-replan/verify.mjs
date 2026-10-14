@@ -93,7 +93,7 @@ const DESKTOP = { viewport: { width: 1280, height: 800 } }
 async function open(theme, view, route = '/today', at = '10:00', mutate = (rows) => rows) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, uid]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     // What's new (v1.0.22) toasts "Updated to vX" once per version — this harness counts its own toasts.
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))

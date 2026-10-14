@@ -1,0 +1,247 @@
+[
+  {
+    "name": "b-desktop-day the bar shows in a plain browser tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-desktop-day its line reads \"Get Kai’s Flow for\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-desktop-day two buttons, the device's own first, on the stable latest links",
+    "ok": true,
+    "detail": "[{\"text\":\"Windows\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe\"},{\"text\":\"Android\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk\"}]"
+  },
+  {
+    "name": "b-desktop-day the × is there",
+    "ok": true,
+    "detail": "{\"x\":1195,\"y\":9.4375,\"width\":35,\"height\":35}"
+  },
+  {
+    "name": "b-desktop-day the bar sits at the top of the page column, one slim row",
+    "ok": true,
+    "detail": "{\"x\":302.5,\"y\":0,\"width\":977.5,\"height\":54.875}"
+  },
+  {
+    "name": "b-desktop-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "b-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-desktop-night the bar shows in a plain browser tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-desktop-night its line reads \"Get Kai’s Flow for\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-desktop-night two buttons, the device's own first, on the stable latest links",
+    "ok": true,
+    "detail": "[{\"text\":\"Windows\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe\"},{\"text\":\"Android\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk\"}]"
+  },
+  {
+    "name": "b-desktop-night the × is there",
+    "ok": true,
+    "detail": "{\"x\":1195,\"y\":9.4375,\"width\":35,\"height\":35}"
+  },
+  {
+    "name": "b-desktop-night the bar sits at the top of the page column, one slim row",
+    "ok": true,
+    "detail": "{\"x\":302.5,\"y\":0,\"width\":977.5,\"height\":54.875}"
+  },
+  {
+    "name": "b-desktop-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":800,\"doc\":800,\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "b-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-phone-day the bar shows in a plain browser tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-phone-day its line reads \"Get Kai’s Flow for\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-phone-day two buttons, the device's own first, on the stable latest links",
+    "ok": true,
+    "detail": "[{\"text\":\"Android\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk\"},{\"text\":\"Windows\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe\"}]"
+  },
+  {
+    "name": "b-phone-day the × is a 44px+ touch target",
+    "ok": true,
+    "detail": "{\"x\":326,\"y\":6,\"width\":48,\"height\":48}"
+  },
+  {
+    "name": "b-phone-day the bar sits at the top of the page column, one slim row",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":0,\"width\":390,\"height\":61}"
+  },
+  {
+    "name": "b-phone-day shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "b-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-phone-night the bar shows in a plain browser tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-phone-night its line reads \"Get Kai’s Flow for\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b-phone-night two buttons, the device's own first, on the stable latest links",
+    "ok": true,
+    "detail": "[{\"text\":\"Android\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk\"},{\"text\":\"Windows\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe\"}]"
+  },
+  {
+    "name": "b-phone-night the × is a 44px+ touch target",
+    "ok": true,
+    "detail": "{\"x\":326,\"y\":6,\"width\":48,\"height\":48}"
+  },
+  {
+    "name": "b-phone-night the bar sits at the top of the page column, one slim row",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":0,\"width\":390,\"height\":61}"
+  },
+  {
+    "name": "b-phone-night shell fit: no page scroll, no sideways scroll",
+    "ok": true,
+    "detail": "{\"win\":844,\"doc\":844,\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "b-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop × hides the bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop the dismissal is stored on this device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop still gone after a reload",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop and on another page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop Settings → App has \"Download the apps\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop with the same two links",
+    "ok": true,
+    "detail": "[{\"text\":\"Windows\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe\"},{\"text\":\"Android\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk\"}]"
+  },
+  {
+    "name": "d-desktop no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone × hides the bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone the dismissal is stored on this device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone still gone after a reload",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone and on another page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone Settings → App has \"Download the apps\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone with the same two links",
+    "ok": true,
+    "detail": "[{\"text\":\"Android\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk\"},{\"text\":\"Windows\",\"href\":\"https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe\"}]"
+  },
+  {
+    "name": "d-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h-tauri-desktop no download bar (the app shell rendered: true)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h-tauri-desktop Settings → App still has \"Download the apps\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h-capacitor-phone no download bar (the app shell rendered: true)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h-pwa-desktop no download bar (the app shell rendered: true)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h-pwa-desktop Settings → App still has \"Download the apps\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h-pwa-phone no download bar (the app shell rendered: true)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h-pwa-phone Settings → App still has \"Download the apps\"",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -160,7 +160,7 @@ async function open(route, o = {}) {
       window.__chrome = []
       window.KaisFlowShell = { setChrome: (c, l) => window.__chrome.push([c, l]) }
     }
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     // The one-time "Updated to vX" toast stays out of the shots.
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))

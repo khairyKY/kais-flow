@@ -63,7 +63,7 @@ const VIEWS = { desktop: { viewport: { width: 1280, height: 900 } }, phone: { vi
 async function open(viewName, route, rows = {}) {
   const ctx = await browser.newContext({ ...VIEWS[viewName], deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([sess]) => {
-    localStorage.setItem('kf_theme', 'day')
+    localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
   }, [JSON.stringify(session)])
   const state = { rows: { app_settings: [SETTINGS], ...rows }, writes: [] }

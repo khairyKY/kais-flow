@@ -24,7 +24,7 @@ import './index.css'
 import './features/projects/xfx.css'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
-import { isNativeShell, syncShellChrome } from './lib/platform'
+import { installExternalLinks, isNativeShell, syncShellChrome } from './lib/platform'
 import { setSwRegistration } from './lib/appUpdate'
 import { installNativeMenuGuard } from './lib/nativeMenu'
 
@@ -46,6 +46,8 @@ if (!isNativeShell()) registerSW({
 
 // Kai 2026-10-03: no WebView Back/Refresh/Print menu on a right-click — ours, or none (lib/nativeMenu).
 installNativeMenuGuard()
+// Kai 2026-10-14: in the shells, links to other sites open in the system browser (lib/platform).
+installExternalLinks()
 
 // M1: once styles have settled, give the Android shell the page colour for its bar strips.
 if (isNativeShell()) window.addEventListener('load', () => syncShellChrome(document.documentElement.dataset.theme === 'night' ? 'night' : 'day'))

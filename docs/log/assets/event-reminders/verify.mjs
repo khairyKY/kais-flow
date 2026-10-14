@@ -78,7 +78,7 @@ async function open(route, o = {}) {
   const view = o.view ?? DESKTOP
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, tauri]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', '1')
     localStorage.setItem('kf-whats-new:00000000-0000-4000-8000-00000000d3e0', JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: 4102444800000 }))

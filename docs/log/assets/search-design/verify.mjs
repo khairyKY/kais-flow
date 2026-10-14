@@ -124,7 +124,7 @@ async function open(route, o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, uidKey]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem(uidKey, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: 4102444800000 })) // no "Updated to …" toast over the shots
   }, [o.theme ?? 'day', JSON.stringify(session), `kf-whats-new:${UID}`])

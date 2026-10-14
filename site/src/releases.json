@@ -1,5 +1,21 @@
 [
   {
+    "v": "v1.1.7",
+    "date": "2026-10-14",
+    "title": "Links that open, and the apps one tap away",
+    "highlights": [
+      "In the Windows and Android apps, links open in your browser, so Connect Google Calendar works from there too",
+      "Get the apps from a bar in your browser or Settings → App; the links always fetch the newest version",
+      "New versions are announced within a few hours of release, no longer once a day"
+    ],
+    "icons": [
+      "link",
+      "download",
+      "sprout"
+    ],
+    "art": "clover-awake"
+  },
+  {
     "v": "v1.1.6",
     "date": "2026-10-14",
     "title": "Your plan in Google, reminders for events, and Undo for everything",

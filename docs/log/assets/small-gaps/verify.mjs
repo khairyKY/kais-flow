@@ -57,7 +57,7 @@ async function open(route, rows = {}, o = {}) {
   await ctx.addInitScript(([t, sess, scale, init]) => {
     if (sessionStorage.getItem('kf-verify-init')) return // a reload keeps what the page wrote
     sessionStorage.setItem('kf-verify-init', '1')
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     if (scale) localStorage.setItem('kf_ui_scale', scale)
     for (const [k, v] of Object.entries(init)) localStorage.setItem(k, v)

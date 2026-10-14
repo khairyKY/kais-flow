@@ -67,7 +67,7 @@ const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
 async function open(route = '/calendar', o = {}) {
   const ctx = await browser.newContext({ ...(o.view ?? { viewport: { width: 1440, height: 900 } }), deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([sess, quiet, uid]) => {
-    localStorage.setItem('kf_theme', 'day')
+    localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', '0')
     localStorage.setItem('kf.calRailSections', JSON.stringify({ lists: true }))

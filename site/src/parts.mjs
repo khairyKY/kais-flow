@@ -1,6 +1,6 @@
 // Sections that appear on more than one page.
 import { icon, img, btn, soon } from './lib.mjs'
-import { APP_URL, LATEST, apkUrl, exeUrl, longDate } from './data.mjs'
+import { APP_URL, LATEST, APK_LATEST, EXE_LATEST, longDate } from './data.mjs'
 
 // ── "Get it": web / Android / Windows ── the version is filled in live by site.js
 const ver = () => `<span class="ver"><span data-release-tag>${LATEST.tag}</span> · <span data-release-date>${longDate(LATEST.date)}</span></span>`
@@ -11,10 +11,10 @@ export const getIt = ({ big = false } = {}) => `<div class="getit${big ? ' big' 
   <div class="card get"><div class="get-h"><span class="get-ic">${icon('android', 26)}</span><div><h3>Android</h3>${ver()}</div></div>
     <p>An APK from our GitHub releases, about ${LATEST.apkMB} MB.</p>
     <p class="small">Your phone will ask once to allow installs from your browser — say yes, then install.</p>
-    <div class="act">${btn('Download APK', apkUrl(LATEST.tag), { kind: 'secondary', attrs: 'data-asset="apk"' })}</div></div>
+    <div class="act">${btn('Download APK', APK_LATEST, { kind: 'secondary' })}</div></div>
   <div class="card get"><div class="get-h"><span class="get-ic">${icon('windows', 26)}</span><div><h3>Windows</h3>${ver()}</div></div>
     <p>An installer for Windows 10 and 11, about ${LATEST.exeMB} MB. It installs just for you, so no admin password.</p>
-    <div class="act">${btn('Download for Windows', exeUrl(LATEST.tag), { kind: 'secondary', attrs: 'data-asset="exe"' })}</div></div>
+    <div class="act">${btn('Download for Windows', EXE_LATEST, { kind: 'secondary' })}</div></div>
 </div>`
 
 // ── the eight things inside ──

@@ -62,7 +62,7 @@ async function open(route, o = {}) {
   const ctx = o.ctx ?? (await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: o.deviceZone ?? 'America/New_York', locale: 'en-US' }))
   if (!o.ctx) {
     await ctx.addInitScript((sess) => {
-      localStorage.setItem('kf_theme', 'day')
+      localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
       localStorage.setItem('sb-127-auth-token', sess)
     }, JSON.stringify(session))
   }

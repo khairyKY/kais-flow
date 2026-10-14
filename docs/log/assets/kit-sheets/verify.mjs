@@ -23,7 +23,7 @@ const VIEWS = [
 
 async function open(view, theme, extra = {}) {
   const ctx = await browser.newContext({ viewport: view.viewport, isMobile: view.isMobile, hasTouch: view.hasTouch, deviceScaleFactor: view.deviceScaleFactor, ...extra })
-  await ctx.addInitScript((t) => localStorage.setItem('kf_theme', t), theme)
+  await ctx.addInitScript((t) => { localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') }, theme) // the download bar has its own harness
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))

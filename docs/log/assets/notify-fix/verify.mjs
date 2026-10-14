@@ -60,7 +60,7 @@ async function app(s = {}, o = {}) {
   const ctx = await browser.newContext({ ...DESKTOP, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   if (o.grant) await ctx.grantPermissions(['notifications'], { origin: BASE })
   await ctx.addInitScript(([sess, uid, tauri, deny]) => {
-    localStorage.setItem('kf_theme', 'day')
+    localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: 'v999.0.0', checkedAt: Date.now() }))
     if (deny && typeof Notification !== 'undefined') Object.defineProperty(Notification, 'permission', { get: () => 'denied' })

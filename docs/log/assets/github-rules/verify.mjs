@@ -55,7 +55,7 @@ const VIEWS = { desktop: { viewport: { width: 1280, height: 800 } }, phone: { vi
 async function open(viewName, route, rows = {}, { theme = 'day', failSave = false } = {}) {
   const ctx = await browser.newContext({ ...VIEWS[viewName], deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([sess, th, uid]) => {
-    localStorage.setItem('kf_theme', th)
+    localStorage.setItem('kf_theme', th); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     // The one-time hints have been seen (tour/help.ts) — they'd sit over the rows in the shots.
     localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['tour', 'hint:inbox', 'hint:swipe', 'hint:calendar']))

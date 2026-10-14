@@ -1,7 +1,13 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The app window and the tray flyout (the same app on /tray): core defaults only. The web app talks to Supabase over HTTPS itself; the tray commands are the app's own (src/tray.rs).",
+  "description": "The app window and the tray flyout (the same app on /tray): core defaults, plus opening http(s) links in the system browser (lib/platform.ts openExternal). The web app talks to Supabase over HTTPS itself; the tray commands are the app's own (src/tray.rs).",
   "windows": ["main", "tray"],
-  "permissions": ["core:default"]
+  "permissions": [
+    "core:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://*" }, { "url": "http://*" }]
+    }
+  ]
 }
