@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { BUNDLED_VERSION, NOTES, dueForCheck, highlightsFromBody, isNewAccount, nativeNudgeAllowed, noteFor, shouldNudge, shouldShowUpdated } from './whatsNew'
+import { BUNDLED_VERSION, NOTES, CHECK_EVERY_MS, PENDING_RETRY_MS, checkedStamp, dueForCheck, highlightsFromBody, isNewAccount, nativeNudgeAllowed, noteFor, shouldNudge, shouldShowUpdated } from './whatsNew'
 import { compareVersions } from './appUpdate'
 
 describe('the bundled notes (site/src/releases.json)', () => {
@@ -59,15 +59,21 @@ describe('shouldNudge — "vX is out" once per newer version', () => {
   })
 })
 
-describe('dueForCheck — the quiet check at most once a day', () => {
+describe('dueForCheck — the quiet check every 3 hours', () => {
   const now = Date.parse('2026-10-07T12:00:00Z')
-  it('is due with no check yet, or a day after the last', () => {
+  it('is due with no check yet, or 3 hours after the last', () => {
     expect(dueForCheck(undefined, now)).toBe(true)
-    expect(dueForCheck(now - 86_400_000, now)).toBe(true)
+    expect(dueForCheck(now - CHECK_EVERY_MS, now)).toBe(true)
   })
-  it('is not due within the day', () => {
+  it('is not due within the 3 hours', () => {
     expect(dueForCheck(now - 3_600_000, now)).toBe(false)
-    expect(dueForCheck(now - 86_399_000, now)).toBe(false)
+    expect(dueForCheck(now - CHECK_EVERY_MS + 1_000, now)).toBe(false)
+  })
+  it('a release whose installer is still building is looked at again in 15 minutes, not 3 hours', () => {
+    const stamp = checkedStamp(true, now)
+    expect(dueForCheck(stamp, now + PENDING_RETRY_MS - 1_000)).toBe(false)
+    expect(dueForCheck(stamp, now + PENDING_RETRY_MS)).toBe(true)
+    expect(checkedStamp(false, now)).toBe(now)
   })
   it('is due when the clock went back past the last check', () => {
     expect(dueForCheck(now + 3_600_000, now)).toBe(true)
