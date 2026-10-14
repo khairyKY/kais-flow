@@ -56,7 +56,6 @@
   --ls-stamp:     0.12em;  /* B · date stamps on pages */
   --ls-eyebrow:   0.08em;  /* B · the one uppercase eyebrow a screen may keep */
   --ls-meta:       0;       /* row metadata — sentence case needs no tracking (was 0.12em) */
-  --ls-eyebrow:    0.08em;  /* NEW · the one uppercase eyebrow per screen */
 }
 
 /* Phone — true pixel size, no desktop zoom to hide behind. Floor is 12px. */

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design System B</title>
+<!-- Kai's Flow · Design System, "Bound Journal" (direction B) — the refresh of Design System.dc.html
+     for Kai's approval. Plain HTML: open it straight from disk. Every value comes from ds-bound/
+     tokens, so this page IS the system it describes. Growth stages and icons are unchanged: they
+     stay in Design System.dc.html. -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--acc-lavender-deep)}
+.wrap{max-width:1160px;margin:0 auto;padding:56px 56px 120px}
+@media (max-width:767px){.wrap{padding:32px 16px 80px}}
+code,.tok{font-family:var(--font-stamp);font-size:12px;color:var(--ink-body)}
+.muted{color:var(--ink-muted)}
+.meta{font-size:var(--fs-meta);color:var(--ink-faint)}
+/* section label — B: 14px semibold ink, sentence case, no dashed rule */
+.sec{margin-top:64px}
+.sec-h{display:flex;align-items:baseline;gap:12px;margin:0 0 6px;font-size:22px;font-family:var(--font-display);font-weight:600}
+.sec-h small{font-family:var(--font-ui);font-size:13px;font-weight:500;color:var(--ink-faint)}
+.lede{margin:0 0 24px;max-width:680px;color:var(--ink-muted);font-size:14px}
+.label{font-size:var(--fs-section);font-weight:600;color:var(--ink-body);margin:0 0 12px}
+.grid{display:grid;gap:16px}
+/* a TOOL surface: 16px, flat, hairline */
+.tool{background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:var(--radius-card);padding:20px 22px}
+/* a PAGE surface: 6px, page paper, page shadow, grain, maybe tape and tilt */
+.page{position:relative;background:var(--page-paper);border:1px solid var(--page-line);border-radius:var(--radius-page);box-shadow:var(--shadow-page);padding:22px 24px}
+.page::after{content:'';position:absolute;inset:0;border-radius:inherit;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:calc(0.5 * var(--grain-page));pointer-events:none}
+.tape{position:absolute;top:-9px;left:50%;width:58px;height:15px;margin-left:-29px;background:rgba(138,154,126,0.42);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);border-radius:1px;transform:rotate(-3deg)}
+.stamp{font-family:var(--font-stamp);font-size:11px;letter-spacing:var(--ls-stamp);text-transform:uppercase;color:var(--ink-faint)}
+.hand{font-family:var(--font-hand);font-size:19px;color:var(--ink-hand)}
+/* theme switch */
+.bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.seg{display:inline-flex;gap:2px;padding:3px;background:var(--paper-bone);border-radius:var(--radius-pill)}
+.seg button{font:500 13px/1 var(--font-ui);color:var(--ink-muted);background:none;border:0;border-radius:var(--radius-pill);padding:9px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.seg button:focus-visible,.btn:focus-visible,.dec button:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+/* decisions */
+.dec{display:grid;grid-template-columns:44px 1fr auto;gap:6px 16px;align-items:start;padding:16px 0;border-bottom:1px solid var(--line-card)}
+.dec:last-child{border-bottom:0}
+.dec .n{font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--acc-terra-ink)}
+.dec h3{margin:0;font-size:15px;font-weight:600}
+.dec p{margin:4px 0 0;font-size:13.5px;color:var(--ink-muted)}
+.dec .was{display:block;margin-top:6px;font-size:12.5px;color:var(--ink-faint)}
+.dec .vote{display:flex;gap:6px}
+.dec button{font:500 12.5px/1 var(--font-ui);padding:8px 12px;border-radius:var(--radius-pill);border:1px solid var(--line-control);background:none;color:var(--ink-body);cursor:pointer}
+.dec button[aria-pressed="true"][data-v="yes"]{background:var(--acc-sage-text);border-color:var(--acc-sage-text);color:var(--paper-parchment)}
+.dec button[aria-pressed="true"][data-v="no"]{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.dec textarea{grid-column:2 / 4;display:none;width:100%;min-height:44px;padding:8px 10px;font:14px/1.4 var(--font-ui);color:var(--ink-body);background:var(--paper-bone);border:1px solid var(--line-control);border-radius:var(--radius-md)}
+.dec.has-no textarea,.dec.has-note textarea{display:block}
+@media (max-width:767px){.dec{grid-template-columns:32px 1fr}.dec .vote{grid-column:2}.dec textarea{grid-column:2}}
+/* swatches */
+.sw{height:60px;border-radius:var(--radius-input);border:1px solid var(--line-card)}
+.swn{margin-top:7px;font-size:12.5px;color:var(--ink-body)}
+.swv{font-family:var(--font-stamp);font-size:11px;color:var(--ink-faint)}
+/* type specimens */
+.spec{display:grid;grid-template-columns:220px 1fr;gap:16px;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line-card)}
+.spec:last-child{border-bottom:0}
+@media (max-width:767px){.spec{grid-template-columns:1fr;gap:4px}}
+/* kit */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 22px;border-radius:var(--radius-pill);font:600 14.5px/1 var(--font-ui);border:1px solid transparent;cursor:pointer}
+.btn-p{background:var(--acc-terra-ink);color:var(--on-terra)}
+.btn-s{background:var(--paper-bone);border-color:var(--line-control);color:var(--ink-body)}
+.btn-g{background:none;color:var(--ink-body)}
+.chip{display:inline-flex;align-items:center;height:32px;padding:0 14px;border-radius:var(--radius-pill);font-size:13px;font-weight:500;background:var(--paper-bone);color:var(--ink-muted)}
+.chip.on{background:var(--sel-bg);color:var(--sel-ink)}
+.box{width:20px;height:20px;flex:none;border:1.5px solid var(--check-border);border-radius:var(--radius-check);background:var(--check-bg)}
+.box.on{background:var(--check-fill);border-color:var(--check-fill);color:var(--check-mark);display:grid;place-items:center;font-size:13px;font-weight:700}
+.row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius-input)}
+.row+.row{border-top:1px solid var(--line-card);border-radius:0}
+.row-t{flex:1;min-width:0;font-size:15px}
+.row-m{margin-top:2px;font-size:var(--fs-meta);color:var(--ink-faint)}
+.dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.blk{border-radius:var(--radius-block);padding:8px 10px;font-size:13px;font-weight:500;border:1px solid transparent}
+.blk .t{display:block;margin-top:2px;font-size:11.5px;font-weight:400;color:var(--acc-lavender-text)}
+.tabbar{display:flex;align-items:center;justify-content:space-around;height:64px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:var(--radius-card)}
+.tabbar span{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--ink-muted)}
+.tabbar span.on{color:var(--ink-body);font-weight:600}
+.tabbar span.on i{background:var(--tab-active-bg)}
+.tabbar i{display:grid;place-items:center;width:44px;height:26px;border-radius:var(--radius-pill)}
+.tabbar i img{width:20px;height:20px;opacity:.75}
+.tabbar .on i img{opacity:1}
+[data-theme="night"] .tabbar i img{filter:invert(.92)}
+.tabbar .cap{width:var(--capture-size);height:var(--capture-size);border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:grid;place-items:center;font-size:26px;box-shadow:var(--shadow-cta)}
+.rad{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end}
+.rad div{text-align:center;font-size:12px;color:var(--ink-faint)}
+.rad b{display:block;width:64px;height:48px;margin-bottom:7px;background:var(--paper-bone);border:1.5px solid var(--acc-sage)}
+ul.rules{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:9px;font-size:13.5px;color:var(--ink-muted)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+@media (max-width:767px){.two{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · Design System · direction B, “Bound Journal” · draft for your OK · 14 Oct 2026</div>
+  <h1 style="margin:10px 0 0;font-family:var(--font-display);font-weight:500;font-size:var(--fs-display-xl);line-height:1;letter-spacing:var(--ls-display)">A field journal of days,<br>bound into a tool</h1>
+  <p class="lede" style="margin-top:16px">Same colours, same flowers, same type families as the system you designed. What changes is <em>where</em> the scrapbook lives: everything you <strong>operate</strong> is a quiet, flat, rounded tool; everything you <strong>write and keep</strong> is a paper page with grain, tape and a slight tilt. The old file (<a href="Design System.dc.html">Design System.dc.html</a>) stays as it was; this page is drawn entirely from <code>ds-bound/</code>.</p>
+  <p class="hand" style="margin:0">Ring or whisper — never shout. ✿</p>
+</header>
+
+<div class="bar" role="group" aria-label="Theme">
+  <span class="meta">Theme</span>
+  <div class="seg" id="theme"><button type="button" data-v="day" aria-pressed="true">Day</button><button type="button" data-v="night" aria-pressed="false">Night Garden</button></div>
+  <span class="meta" style="margin-left:auto">Vote on each decision below, then <button type="button" class="btn btn-s" id="copy" style="height:36px;padding:0 14px;font-size:13px">Copy my answers</button></span>
+</div>
+
+<!-- 00 DECISIONS -->
+<section class="sec" aria-labelledby="h-dec">
+  <h2 class="sec-h" id="h-dec">The decisions <small>00 · approve, deny or add a note</small></h2>
+  <p class="lede">Everything B changes, in one list. Nothing outside this list moves.</p>
+  <div class="tool" id="decisions" style="padding:4px 22px">
+    <div class="dec" data-id="D1"><span class="n">D1</span><div><h3>Two kinds of surface: tools and pages</h3><p>Pages: the goal of the day; journal entries, notes and quotes; the herbarium. Everything else (lists, calendar, sheets, rituals, settings) is a tool.</p><span class="was">Was: every card was a placed paper card.</span></div><div class="vote"></div><textarea aria-label="Note on D1"></textarea></div>
+    <div class="dec" data-id="D2"><span class="n">D2</span><div><h3>Colour stays exactly as it was</h3><p>Every paper, ink, line and accent keeps its old value, day and Night Garden. Added only: a page paper (<code>#FBF5E6</code> · night <code>#2C2740</code>), and selection filled with ink instead of a second accent.</p><span class="was">Was: no separate page paper; selection used accent washes.</span></div><div class="vote"></div><textarea aria-label="Note on D2"></textarea></div>
+    <div class="dec" data-id="D3"><span class="n">D3</span><div><h3>Tools are rounded, pages stay near-square</h3><p>Tool cards 16px · rows and inputs 12px · calendar blocks 12px · sheets 20px · checkbox 7px · buttons and chips pill. Pages 6px.</p><span class="was">Was: 3px on every card (“this isn't a rounded UI”).</span></div><div class="vote"></div><textarea aria-label="Note on D3"></textarea></div>
+    <div class="dec" data-id="D4"><span class="n">D4</span><div><h3>Tools are flat; only pages cast a shadow</h3><p>A tool reads by tone and a hairline. Pages keep a soft shadow. Floating layers (popovers, sheets, toasts) keep theirs.</p><span class="was">Was: every card had the two-part warm shadow.</span></div><div class="vote"></div><textarea aria-label="Note on D4"></textarea></div>
+    <div class="dec" data-id="D5"><span class="n">D5</span><div><h3>Metadata in Inter Tight, sentence case</h3><p>“Overdue 2d · 1h 30m” at 12px (12.5 on a phone), untracked. Courier Prime survives as the date stamp on pages. At most one uppercase eyebrow per screen.</p><span class="was">Was: “OVERDUE 2D · 1H30M” in Courier Prime, uppercase, tracked 0.12–0.22em, 9.5–10.5px.</span></div><div class="vote"></div><textarea aria-label="Note on D5"></textarea></div>
+    <div class="dec" data-id="D6"><span class="n">D6</span><div><h3>Section labels: 14px semibold, sentence case</h3><p>“Top 3”, “Up next”, “To plan”, with no dashed rule running after them.</p><span class="was">Was: “TOP 3 - - - - - -” in tracked mono caps with a dashed rule.</span></div><div class="vote"></div><textarea aria-label="Note on D6"></textarea></div>
+    <div class="dec" data-id="D7"><span class="n">D7</span><div><h3>Tape, tilt, grain and handwriting live on pages only</h3><p>The washi recipe is unchanged; it just never lands on a tool. The active sidebar item loses its tape marker; rail cards stop tilting; the app canvas has no grain (Settings' texture slider now sets the page grain).</p><span class="was">Was: tape on the active nav item and placed cards, grain over the whole app.</span></div><div class="vote"></div><textarea aria-label="Note on D7"></textarea></div>
+    <div class="dec" data-id="D8"><span class="n">D8</span><div><h3>Solid hairlines in tools</h3><p>Dividers between rows and sections are solid. Dashed stays for open time slots on the calendar and for ruling on pages.</p><span class="was">Was: dashed rules everywhere, “like a ruled notebook”.</span></div><div class="vote"></div><textarea aria-label="Note on D8"></textarea></div>
+    <div class="dec" data-id="D9"><span class="n">D9</span><div><h3>Capture button 48px, flat in the tab bar</h3><p>Same terra, same place; no drop shadow. Tab icons are Kai's Flow's own; the active tab sits on a soft pill.</p><span class="was">Was: 56px with a terra drop shadow.</span></div><div class="vote"></div><textarea aria-label="Note on D9"></textarea></div>
+    <div class="dec" data-id="D10"><span class="n">D10</span><div><h3>Calendar on a computer: the Akiflow layout</h3><p>Full window, no page margins; one header row (view · ‹ Today › on the left, date and daisy at the far right); a compact To plan list (one line per task, Plan on hover); half-hour rows 36px; under the grid, each day's tasks with no time yet; three blocks at the same time sit in equal thirds.</p><span class="was">Was: a framed grid inside page margins, a tall header, card-sized rail tasks, a shingle that buried the third block.</span></div><div class="vote"></div><textarea aria-label="Note on D10"></textarea></div>
+  </div>
+</section>
+
+<!-- 01 COLOUR -->
+<section class="sec" aria-labelledby="h-col">
+  <h2 class="sec-h" id="h-col">Colour <small>01 · unchanged · values read live from the tokens</small></h2>
+  <p class="lede">Flip the theme above: these are the real values, day or Night Garden. Text tokens clear 4.5:1 on every ground, non-text 3:1 (<code>ds-bound/check_contrast.py</code>). Two pairs sit exactly on 4.50 on the sidebar, as they always have (terra ink, overdue) — they aren't used there.</p>
+  <div class="label">Grounds</div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))" data-swatches="paper-linen:canvas,paper-parchment:tool surface,paper-bone:inputs · pressed,paper-sidebar:sidebar,paper-event:neutral block,paper-goal:goal page,page-paper:page · new"></div>
+  <div class="label" style="margin-top:28px">Ink &amp; line</div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))" data-swatches="ink-body:body,ink-muted:secondary,ink-faint:metadata,ink-hand:handwriting,ink-hairline:non-text only,line-card:tool hairline,line-control:control edge,page-line:page edge · new"></div>
+  <div class="label" style="margin-top:28px">Botanical accents — one per surface</div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(130px,1fr))" data-swatches="acc-sage:plants,acc-moss:projects,acc-terra:alert fill,acc-terra-ink:the one action,acc-blossom:tasks,acc-lavender:calendar,acc-hydrangea:inbox,acc-buttercream:review,acc-clover:chat,acc-gold:goal text,sel-bg:selection · new"></div>
+</section>
+
+<!-- 02 TYPE -->
+<section class="sec" aria-labelledby="h-type">
+  <h2 class="sec-h" id="h-type">Type <small>02 · same four families, new jobs</small></h2>
+  <p class="lede">Source Serif 4 for titles, Inter Tight for everything you operate, metadata included. Courier Prime is now only the date stamp on a page; Caveat only writes on pages.</p>
+  <div class="tool">
+    <div class="spec"><span class="meta">Page title · Serif 500 · 44 / phone 26</span><span style="font-family:var(--font-display);font-weight:500;font-size:var(--fs-display-xl);line-height:1.05;letter-spacing:var(--ls-display)">Wednesday, Oct 14</span></div>
+    <div class="spec"><span class="meta">Card title · Serif 600 · 22</span><span style="font-family:var(--font-display);font-weight:600;font-size:22px">Deliver the forecasting MVP</span></div>
+    <div class="spec"><span class="meta">Lead · Serif 500 · 18</span><span style="font-family:var(--font-display);font-weight:500;font-size:var(--fs-lead)">The one thing that makes today a win</span></div>
+    <div class="spec"><span class="meta">Section label · Inter Tight 600 · 14 · new</span><span style="font-size:var(--fs-section);font-weight:600">Top 3</span></div>
+    <div class="spec"><span class="meta">Body · Inter Tight 400 · 14.5 / phone 15</span><span style="font-size:var(--fs-body)">Rolling 12-week average first; seasonality later.</span></div>
+    <div class="spec"><span class="meta">Metadata · Inter Tight 400 · 12 / phone 12.5 · changed</span><span style="font-size:var(--fs-meta);color:var(--ink-faint)"><span style="color:var(--sig-overdue)">Overdue 2d</span> · <span class="dot" style="background:var(--acc-moss)"></span>Data Structures · 1h 30m</span></div>
+    <div class="spec"><span class="meta">Was · Courier Prime caps · 10</span><span style="font-family:var(--font-stamp);font-size:10px;letter-spacing:0.12em;text-transform:uppercase;color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--ink-hairline)">Overdue 2d · Data Structures · 1H30M</span></div>
+    <div class="spec"><span class="meta">Date stamp · Courier Prime caps · pages only</span><span class="stamp">Wed 14 Oct · 21:40</span></div>
+    <div class="spec"><span class="meta">Marginalia · Caveat · pages only</span><span class="hand">slept badly, still got the sheet done</span></div>
+    <div class="spec"><span class="meta">Eyebrow · one per screen at most</span><span style="font-size:11px;font-weight:600;letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--ink-faint)">Goal of the day</span></div>
+  </div>
+</section>
+
+<!-- 03 SHAPE & DEPTH -->
+<section class="sec" aria-labelledby="h-shape">
+  <h2 class="sec-h" id="h-shape">Tools and pages <small>03 · shape, depth, texture</small></h2>
+  <p class="lede">The same day, two surfaces. Left is a tool: you tick, drag and plan in it. Right is a page: you wrote it, and it should feel kept.</p>
+  <div class="two" style="align-items:start">
+    <div class="tool" style="padding:8px">
+      <div class="label" style="padding:10px 14px 0;margin:0">Top 3</div>
+      <div class="row"><span class="box"></span><span class="row-t">Finish the Data Structures sheet<div class="row-m"><span class="dot" style="background:var(--acc-moss)"></span>Data Structures · Due today · 1h 30m</div></span><span style="color:var(--star-on)">★</span></div>
+      <div class="row"><span class="box"></span><span class="row-t">Reply to Omar about Thursday<div class="row-m">14:30–15:00 · 30m</div></span><span style="color:var(--star-on)">★</span></div>
+      <div class="row"><span class="box on">✓</span><span class="row-t" style="color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--ink-hairline)">Pay the internet bill<div class="row-m" style="text-decoration:none">Done · 10m</div></span></div>
+      <p class="meta" style="margin:10px 14px 8px">Radius 16 · flat · solid hairlines · no tape, no tilt, no grain</p>
+    </div>
+    <div class="page" style="transform:rotate(var(--tilt-neg-sm));margin-top:10px">
+      <span class="tape"></span>
+      <div class="stamp">Wed 14 Oct · 21:40</div>
+      <div style="margin-top:10px;font-family:var(--font-display);font-size:20px;font-weight:600">A long Wednesday</div>
+      <p style="margin:8px 0 0;font-family:var(--font-display);font-size:15.5px;line-height:28px;background-image:repeating-linear-gradient(transparent 0 27px,var(--page-rule) 27px 28px)">Lunch with Sam ran long, so the lecture notes waited. Got the sheet done anyway, and the tyre call is finally off the list.</p>
+      <p class="hand" style="margin:10px 0 0">tomorrow: dentist first ✿</p>
+      <p class="meta" style="margin:12px 0 0;position:relative;z-index:1">Radius 6 · page shadow · grain · tape · −0.3° tilt · ruled · stamp · hand</p>
+    </div>
+  </div>
+  <div class="tool" style="margin-top:20px">
+    <div class="label">Radii</div>
+    <div class="rad">
+      <div><b style="border-radius:var(--radius-card)"></b>16 · tool card</div>
+      <div><b style="border-radius:var(--radius-input)"></b>12 · row, input</div>
+      <div><b style="border-radius:var(--radius-block)"></b>12 · calendar block</div>
+      <div><b style="border-radius:var(--sheet-radius) var(--sheet-radius) 0 0"></b>20 · sheet top</div>
+      <div><b style="width:28px;height:28px;border-radius:var(--radius-check)"></b>7 · checkbox</div>
+      <div><b style="border-radius:var(--radius-page);background:var(--page-paper);border-color:var(--page-line)"></b>6 · page</div>
+      <div><b style="border-radius:var(--radius-pill);height:36px"></b>pill · button, chip</div>
+    </div>
+  </div>
+</section>
+
+<!-- 04 KIT -->
+<section class="sec" aria-labelledby="h-kit">
+  <h2 class="sec-h" id="h-kit">Kit <small>04 · the parts B touches</small></h2>
+  <p class="lede">Every state rule stays: 48 × 48 targets, pressed is an overlay plus 0.97, focus is a ring for keyboards only, nothing lives on hover alone.</p>
+  <div class="two">
+    <div class="tool">
+      <div class="label">Buttons — one terra action per view</div>
+      <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><button type="button" class="btn btn-p">Plan today</button><button type="button" class="btn btn-s">Filter</button><button type="button" class="btn btn-g">Skip</button></div>
+      <div class="label" style="margin-top:22px">Chips and segments — selection is filled with ink</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px"><span class="chip on">All</span><span class="chip">Today</span><span class="chip">Overdue</span></div>
+      <div class="label" style="margin-top:22px">Tab bar — own icons, flat capture</div>
+      <div class="tabbar"><span class="on"><i><img src="ds-bound/icons/kf-today.svg" alt=""></i>Today</span><span><i><img src="ds-bound/icons/kf-inbox.svg" alt=""></i>Inbox</span><span class="cap" aria-hidden="true">+</span><span><i><img src="ds-bound/icons/kf-calendar.svg" alt=""></i>Calendar</span><span><i><img src="ds-bound/icons/kf-more.svg" alt=""></i>More</span></div>
+    </div>
+    <div class="tool">
+      <div class="label">Calendar blocks — radius 12, tinted, never the raw accent</div>
+      <div class="grid" style="grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <div class="blk" style="grid-column:1 / 4;background:var(--block-lavender, color-mix(in srgb,var(--acc-lavender) 24%,transparent));border-color:color-mix(in srgb,var(--acc-lavender) 45%,transparent)">Gym, upper body<span class="t">3:30 PM – 4:30 PM</span></div>
+        <div class="blk" style="background:color-mix(in srgb,var(--acc-blossom) 24%,transparent);border-color:color-mix(in srgb,var(--acc-blossom) 55%,transparent)">Data Structures lecture<span class="t">2:00 PM</span></div>
+        <div class="blk" style="background:color-mix(in srgb,var(--acc-lavender) 24%,transparent)">Reply to Omar<span class="t">2:30 PM</span></div>
+        <div class="blk" style="background:color-mix(in srgb,var(--acc-lavender) 24%,transparent)">Pick up the laptop<span class="t">2:45 PM</span></div>
+        <div class="blk" style="grid-column:1 / 4;background:color-mix(in srgb,var(--acc-terra) 10%,transparent);border:1px dashed color-mix(in srgb,var(--acc-terra) 60%,transparent)">Call the tyre supplier<span class="t" style="color:var(--sig-overdue)">Ran over · 11:45 AM</span></div>
+        <div class="blk" style="grid-column:1 / 4;border:1px dashed var(--line-dashed);text-align:center;color:var(--ink-faint);font-weight:400">1h free</div>
+      </div>
+      <p class="meta" style="margin:12px 0 0">Three at once: equal thirds, 4px gutters. Four or more: three drawn, the rest behind “+N”.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 05 SPECIES -->
+<section class="sec" aria-labelledby="h-sp">
+  <h2 class="sec-h" id="h-sp">The living species <small>05 · unchanged</small></h2>
+  <p class="lede">The flowers still mean something — a count, a progress, a time of day. Their growth stages are in <a href="Design System.dc.html">the old file, §09</a>, untouched.</p>
+  <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(150px,1fr))" id="species"></div>
+</section>
+
+<!-- 06 TAPE -->
+<section class="sec" aria-labelledby="h-tape">
+  <h2 class="sec-h" id="h-tape">Washi tape &amp; the page <small>06 · same recipe, pages only</small></h2>
+  <div class="two" style="align-items:start">
+    <div class="page" style="background:var(--paper-goal);border-color:var(--line-goal);box-shadow:var(--shadow-goal);transform:rotate(-0.4deg);padding-top:44px">
+      <span class="tape" style="width:82px;height:19px;margin-left:-41px;top:-10px;background-color:rgba(201,165,90,0.42)"></span>
+      <span class="stamp" style="position:absolute;top:14px;left:20px;background:var(--acc-gold);color:#FBF4E0;padding:3px 9px;border-radius:2px;letter-spacing:0.18em">✶ Goal of the day</span>
+      <div style="display:flex;gap:14px;align-items:flex-start"><span class="box" style="border-color:var(--acc-gold);margin-top:3px"></span><div><div style="font-family:var(--font-display);font-size:19px;font-weight:600;color:#4a3a1e">Deliver the MVP of the forecasting app</div><div class="meta" style="margin-top:6px;color:var(--acc-gold)">Shaheen Website · 30m</div></div></div>
+    </div>
+    <div class="tool">
+      <div class="label">The recipe (unchanged)</div>
+      <ul class="rules">
+        <li><strong>Tint</strong> — the page's accent at 0.40–0.45; the paper reads through.</li>
+        <li><strong>Weave</strong> — 4px white stripes at 0.32 on an 8px repeat.</li>
+        <li><strong>Edge</strong> — 1px radius, a torn edge, not a chip.</li>
+        <li><strong>Skew</strong> — 2–4°; two strips lean opposite ways.</li>
+        <li><strong>Sizes</strong> — standard 52 × 15, wide 60 × 13, feature 82 × 19 (goal only). The 30 × 9 nav marker is retired (D7).</li>
+      </ul>
+      <div class="label" style="margin-top:20px">Tape it</div>
+      <ul class="rules"><li>The goal of the day, journal entries, notes, quotes, herbarium specimens.</li><li>At most two strips per page, three taped pages per screen.</li></ul>
+      <div class="label" style="margin-top:20px">Never</div>
+      <ul class="rules"><li>On any tool: rows, lists, nav, inputs, buttons, toasts, calendar blocks, rails.</li><li>As meaning — tape is never a status or a colour code.</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- 07 SPACING & MOTION -->
+<section class="sec" aria-labelledby="h-mo">
+  <h2 class="sec-h" id="h-mo">Spacing &amp; motion <small>07 · unchanged</small></h2>
+  <div class="tool"><p style="margin:0" class="muted">4px base (8 · 16 · 24 · 40 · 64). Transform and opacity only: press 100ms + 0.97, chips 150ms, overlays 200ms, panels 300ms, sheets in 300 / out 200 on the emphasized curves, the bloom 600ms. At most two continuous animations per screen; all of it respects reduced motion.</p></div>
+</section>
+
+<!-- 08 HOUSE RULES -->
+<section class="sec" aria-labelledby="h-rules">
+  <h2 class="sec-h" id="h-rules">House rules <small>08 · updated for B</small></h2>
+  <div class="two">
+    <div class="tool" style="border-left:3px solid var(--acc-sage)">
+      <div class="label" style="color:var(--acc-sage-text)">Always</div>
+      <ul class="rules">
+        <li>Semantic tokens only — never a hex literal in a component.</li>
+        <li>Know which surface you're on: a tool is flat and rounded; a page is paper.</li>
+        <li>One terra action and at most one gold goal page per view.</li>
+        <li>Each surface keeps its own flower and accent.</li>
+        <li>Metadata in Inter Tight, sentence case; the typewriter only stamps a page's date.</li>
+        <li>48 × 48 targets; every gesture has a tap path (⋯). Delete is instant: Trash + Undo.</li>
+      </ul>
+    </div>
+    <div class="tool" style="border-left:3px solid var(--acc-terra)">
+      <div class="label" style="color:var(--acc-terra-ink)">Never</div>
+      <ul class="rules">
+        <li>Pure white, hard black, bright saturated primaries — or a new colour.</li>
+        <li>Tape, tilt, grain or handwriting on a tool. A shadow on a resting tool.</li>
+        <li>Uppercase tracked metadata; more than one eyebrow per screen.</li>
+        <li>A stage that contradicts the data — no full bloom on a full inbox.</li>
+        <li>Anything only reachable on hover on a phone. Anything under 12px on a phone.</li>
+        <li>Sukoon's components. Borrow the craft, never the parts.</li>
+      </ul>
+    </div>
+  </div>
+  <p class="meta" style="margin-top:28px">Unchanged and not repeated here: growth stages (§09) and iconography (§10) in <a href="Design System.dc.html">Design System.dc.html</a>. Night stays <a href="Design System Dark.dc.html">Night Garden</a>. Token-by-token changes: <code>ds-bound/README.md</code>.</p>
+</section>
+
+</div>
+<script>
+const root = document.documentElement
+const css = (v) => getComputedStyle(root).getPropertyValue('--' + v).trim()
+// swatches: "token:role,token:role" → a swatch each, value read from the live tokens
+function paintSwatches() {
+  document.querySelectorAll('[data-swatches]').forEach((el) => {
+    el.innerHTML = el.dataset.swatches.split(',').map((pair) => {
+      const [v, role] = pair.split(':')
+      return `<div><div class="sw" style="background:var(--${v})"></div><div class="swn">${role}</div><div class="swv">--${v}<br>${css(v)}</div></div>`
+    }).join('')
+  })
+}
+const SPECIES = [
+  ['Today', 'The terrarium', 'clover/four_leaf.png', 'acc-sage', 'All plants together — the day’s overall state'],
+  ['Inbox', 'Hydrangea', 'hydrangea/medium.png', 'acc-hydrangea', 'Cluster shrinks as items clear; zero = one bloom'],
+  ['Tasks', 'Cherry blossom', 'cherry/bloom.png', 'acc-blossom', 'One petal falls per completed task'],
+  ['Calendar', 'Daisy', 'daisy/midday.png', 'acc-lavender', 'Opens and closes with the clock'],
+  ['Routines', 'Vine', 'vine/flowering.png', 'acc-moss', 'Leaves grow along the streak; buds at 7+'],
+  ['Review', 'Fern', 'fern/full.png', 'acc-buttercream', 'Frond unfurls as you sweep the week'],
+  ['Projects', 'Wisteria', 'wisteria/p60.png', 'acc-moss', 'Climbs with weighted progress'],
+  ['Chat', 'Clover', 'clover/awake.png', 'acc-clover', 'A small everyday sprig'],
+]
+document.getElementById('species').innerHTML = SPECIES.map(([s, p, src, acc, axis]) =>
+  `<div class="tool" style="text-align:center;padding:16px"><div style="height:96px;display:flex;align-items:flex-end;justify-content:center"><img src="ds/assets/${src}" alt="${p}" style="max-height:96px;max-width:100%;object-fit:contain"></div><div style="margin-top:10px;font-family:var(--font-display);font-size:16px;font-weight:600"><span class="dot" style="background:var(--${acc})"></span>${s}</div><div class="meta">${p}</div><div style="margin-top:6px;font-size:12.5px;color:var(--ink-muted)">${axis}</div></div>`).join('')
+
+// theme
+document.getElementById('theme').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return
+  if (b.dataset.v === 'night') root.setAttribute('data-theme', 'night'); else root.removeAttribute('data-theme')
+  e.currentTarget.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+  paintSwatches()
+})
+
+// votes: Approve / Deny per decision, a note opens on Deny or Note; kept in this browser only
+const KEY = 'kf-ds-b-votes'
+let votes = {}
+try { votes = JSON.parse(localStorage.getItem(KEY) || '{}') } catch { /* private window: this visit only */ }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(votes)) } catch { /* no storage */ } }
+document.querySelectorAll('.dec').forEach((d) => {
+  const id = d.dataset.id, ta = d.querySelector('textarea'), vote = d.querySelector('.vote')
+  vote.innerHTML = '<button type="button" data-v="yes">Approve</button><button type="button" data-v="no">Deny</button><button type="button" data-v="note">Note</button>'
+  const sync = () => {
+    const v = votes[id] || {}
+    vote.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v.v || (b.dataset.v === 'note' && !!v.open))))
+    d.classList.toggle('has-no', v.v === 'no'); d.classList.toggle('has-note', !!v.open || !!v.note)
+    ta.value = v.note || ''
+  }
+  vote.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return
+    const v = votes[id] || (votes[id] = {})
+    if (b.dataset.v === 'note') v.open = !v.open; else v.v = v.v === b.dataset.v ? undefined : b.dataset.v
+    save(); sync(); if (v.open || v.v === 'no') ta.focus()
+  })
+  ta.addEventListener('input', () => { (votes[id] || (votes[id] = {})).note = ta.value; save() })
+  sync()
+})
+document.getElementById('copy').addEventListener('click', async (e) => {
+  const lines = [...document.querySelectorAll('.dec')].map((d) => {
+    const v = votes[d.dataset.id] || {}
+    const word = v.v === 'yes' ? 'approve' : v.v === 'no' ? 'deny' : '—'
+    return `${d.dataset.id} ${d.querySelector('h3').textContent}: ${word}${v.note ? ` — ${v.note.trim()}` : ''}`
+  })
+  const text = 'Design System B\n' + lines.join('\n')
+  try { await navigator.clipboard.writeText(text); e.target.textContent = 'Copied' } catch { prompt('Copy this:', text) }
+  setTimeout(() => (e.target.textContent = 'Copy my answers'), 1600)
+})
+paintSwatches()
+</script>
+</body>
+</html>

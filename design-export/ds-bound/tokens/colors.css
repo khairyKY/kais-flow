@@ -1,19 +1,19 @@
 /* Light mode — "Bound Journal" (direction B, chosen by Kai 2026-10-14).
    A copy of ds/tokens/colors.css. The app now has two kinds of surface:
    · TOOLS — everything you operate: bars, lists, the calendar grid, sheets, buttons,
-     Plan your day and Shut down. A clean warm canvas, no grain, depth from tone + hairline.
+     Plan your day and Shut down. The warm cream canvas, no grain, depth from tone + hairline.
    · PAGES — what you write and keep: the goal of the day; journal entries, notes, quotes;
      the herbarium. Paper: grain, tape, ruled lines, a slight tilt, handwriting.
    Every variable from ds/ is still here with the same name; values changed only where B
    changed what the surface is. Contrast is checked by ../check_contrast.py (text ≥4.5, non-text ≥3). */
 :root {
-  /* Ground — tools (B: cleaner, less yellow; was linen paper) */
-  --paper-linen:        #F2EFE8;   /* app canvas            (was #EFE9DB) */
-  --paper-parchment:    #FBFAF6;   /* tool cards, panels, popovers, sheets (was #FBF6E9) */
-  --paper-bone:         #ECE8DF;   /* inputs, pressed, segmented track, icon-button wash (was #F6F0E1) */
-  --paper-sidebar:      #E9E5DC;   /* left rail             (was #EAE3D2) */
+  /* Ground — tools: ds/'s warm cream, unchanged (Kai 2026-10-14) */
+  --paper-linen:        #EFE9DB;   /* app canvas */
+  --paper-parchment:    #FBF6E9;   /* tool cards, panels, popovers, sheets */
+  --paper-bone:         #F6F0E1;   /* inputs, pressed, segmented track, icon-button wash */
+  --paper-sidebar:      #EAE3D2;   /* left rail */
   --paper-goal:         #F8EFD3;   /* goal of the day — a page (unchanged) */
-  --paper-event:        #ECE8DF;   /* neutral calendar block — external / read-only (was #F4EFE0) */
+  --paper-event:        #F4EFE0;   /* neutral calendar block — external / read-only */
 
   /* NEW · Pages — paper surfaces (goal, journal, notes, quotes, herbarium) */
   --page-paper:         #FBF5E6;   /* journal / notes / quotes / herbarium sheet */
@@ -38,10 +38,10 @@
   --ink-hairline:       #88816E;
 
   /* Borders — tools use solid hairlines; dashed is kept for open time slots only */
-  --line-solid:         #d6d0c4;   /* (was #cfc7b0) */
-  --line-dashed:        #cfc9bc;   /* open time slot outline (was #d5cdb5) */
-  --line-sidebar:       #dcd6ca;   /* (was #c9c1aa) */
-  --line-card:          #e3ded3;   /* tool card hairline (was #e0d8c2) */
+  --line-solid:         #cfc7b0;   /* */
+  --line-dashed:        #d5cdb5;   /* open time slot outline */
+  --line-sidebar:       #c9c1aa;   /* */
+  --line-card:          #e0d8c2;   /* tool card hairline */
   --line-goal:          #dcc48e;   /* goal page edge (unchanged) */
   --line-control:       #88816E;
 
@@ -74,9 +74,9 @@
 
   /* Task checkboxes */
   --check-border:       #88816E;
-  --check-bg:           var(--paper-parchment);   /* (was --paper-bone; bone is now the darker pressed wash) */
+  --check-bg:           var(--paper-bone);
   --check-fill:         var(--acc-sage-text);
-  --check-mark:         #FBFAF6;
+  --check-mark:         #FBF6E9;
   --check-glow:         none;
 
   /* Star (Top 3) */
@@ -89,17 +89,17 @@
   --tab-active-bg:      var(--paper-bone);   /* soft pill behind the active tab icon */
 
   /* Interaction colour roles */
-  --on-terra:           #FBFAF6;
+  --on-terra:           #FBF6E9;
   --focus:              #4d6a75;
   --badge-bg:           #9C5139;
-  --badge-ink:          #FBFAF6;
+  --badge-ink:          #FBF6E9;
   --toast-bg:           #2a2420;
-  --toast-ink:          #FBFAF6;
+  --toast-ink:          #FBF6E9;
   --toast-action:       #C9A55A;
   --swipe-right-bg:     #8A9A7E;
   --swipe-right-ink:    #2a2420;
   --swipe-left-bg:      #9C5139;
-  --swipe-left-ink:     #FBFAF6;
+  --swipe-left-ink:     #FBF6E9;
   --select-bg:          rgba(77, 106, 117, 0.10);
   --skeleton:           rgba(42, 36, 32, 0.07);
   --skeleton-hi:        rgba(42, 36, 32, 0.035);

@@ -298,6 +298,15 @@ scene('cal-unscheduled-phone', async (theme) => {
   return s
 })
 
+// PROBE=<scene> PROBE_JS=<expression> runs one scene and prints what the expression returns (debugging).
+if (process.env.PROBE) {
+  const sc = SCENES.find((x) => x.name === process.env.PROBE)
+  const s = await sc.fn(process.env.THEME ?? 'day')
+  console.log(JSON.stringify(await s.page.evaluate(process.env.PROBE_JS), null, 1))
+  await s.page.screenshot({ path: path.join(OUT, 'probe.png') })
+  await browser.close(); process.exit(0)
+}
+
 for (const { name, fn } of SCENES) {
   for (const theme of THEMES) {
     const key = `${name}-${theme}`

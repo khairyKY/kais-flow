@@ -32,7 +32,7 @@
   --shadow-tabbar: 0 -1px 0 rgba(60, 52, 38, 0.10);
   --scrim: rgba(42, 36, 32, 0.36);
   --pressed-overlay: rgba(42, 36, 32, 0.08);
-  --focus-ring: 0 0 0 2px #FBFAF6, 0 0 0 4px #4d6a75;
+  --focus-ring: 0 0 0 2px #FBF6E9, 0 0 0 4px #4d6a75;
   --press-scale: 0.97;
   --grain-app:       0;   /* B · no grain on the tool canvas */
   --grain-page:      1;   /* B · grain inside pages */

@@ -401,7 +401,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             slot?.kind === 'pair'
               ? { left: `calc(${inset.l}px + ${slot.lane} * (${full} / 2 + 2px))`, width: `calc(${full} / 2 - 2px)` }
               : slot?.kind === 'stack'
-                ? { left: `calc(${inset.l}px + ${slot.lane} * 0.22 * ${full})`, width: `calc(0.56 * ${full})` }
+                ? // three equal lanes, 4px gutters (Kai 2026-10-14: the 56%/22% shingle buried the later blocks)
+                  { left: `calc(${inset.l}px + ${slot.lane} * ((${full} - 8px) / 3 + 4px))`, width: `calc((${full} - 8px) / 3)` }
                 : { left: `${inset.l}px`, width: `calc${full}` }
           return block(b.event, b.start, b.end, geo, b)
         })}

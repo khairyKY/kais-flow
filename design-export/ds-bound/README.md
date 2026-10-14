@@ -23,17 +23,11 @@ A copy of `../ds/` with **direction B, Bound Journal**, applied (chosen by Kai, 
 
 **Colours, day** (`tokens/colors.css`)
 
+The paper stays `ds/`'s warm cream: canvas `#EFE9DB`, surfaces `#FBF6E9`, bone `#F6F0E1`, sidebar `#EAE3D2`, and the warm hairlines (Kai, 2026-10-14: "what happened to the main color?" — an earlier cut of B had a cooler near-white `#F2EFE8` / `#FBFAF6`). B only adds:
+
 | Token | Old | New |
 |---|---|---|
-| `--paper-linen` (app canvas) | `#EFE9DB` | `#F2EFE8` |
-| `--paper-parchment` (tool surface) | `#FBF6E9` | `#FBFAF6` |
-| `--paper-bone` (inputs, pressed, segmented track) | `#F6F0E1` | `#ECE8DF` |
-| `--paper-sidebar` | `#EAE3D2` | `#E9E5DC` |
-| `--paper-event` | `#F4EFE0` | `#ECE8DF` |
-| `--line-solid` / `--line-dashed` / `--line-sidebar` / `--line-card` | `#cfc7b0` / `#d5cdb5` / `#c9c1aa` / `#e0d8c2` | `#d6d0c4` / `#cfc9bc` / `#dcd6ca` / `#e3ded3` |
-| `--check-bg` | `var(--paper-bone)` | `var(--paper-parchment)` |
-| `--check-mark`, `--on-terra`, `--badge-ink`, `--toast-ink`, `--swipe-left-ink` | `#FBF6E9` | `#FBFAF6` |
-| Unchanged | | goal paper, all ink, accents, signals, block tints, stars |
+| Unchanged | | all paper and hairlines, goal paper, all ink, accents, signals, block tints, stars |
 
 **Colours, night** (`tokens/colors.dark.css`): **Night Garden, unchanged** (Kai, 2026-10-14: "revert the dark mode to the old night light"). Every value is `ds/`'s. B only adds:
 
@@ -62,7 +56,6 @@ A copy of `../ds/` with **direction B, Bound Journal**, applied (chosen by Kai, 
 |---|---|---|
 | `--shadow-card`, `--shadow-crisp` | two-part warm shadow | `none` |
 | `--shadow-cta` | terra drop | `none` |
-| `--focus-ring` inner | `#FBF6E9` | `#FBFAF6` |
 | Unchanged | | `--shadow-goal`, popover, panel, sheet, toast, tab bar, scrim, noise, tilts |
 
 **Type** (`tokens/typography.css`)

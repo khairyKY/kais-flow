@@ -2,12 +2,12 @@
    a subtree stay day at night — the Notebook page is a page, so it stays light paper (prompt 10). */
 :root, [data-theme="day"] {
   /* Paper ground */
-  --paper-linen:        #F2EFE8;   /* page background */
-  --paper-parchment:    #FBFAF6;   /* cards, panels, popovers */
-  --paper-bone:         #ECE8DF;   /* input fields, hover surfaces */
-  --paper-sidebar:      #E9E5DC;   /* left rail */
+  --paper-linen:        #EFE9DB;   /* page background */
+  --paper-parchment:    #FBF6E9;   /* cards, panels, popovers */
+  --paper-bone:         #F6F0E1;   /* input fields, hover surfaces */
+  --paper-sidebar:      #EAE3D2;   /* left rail */
   --paper-goal:         #F8EFD3;   /* gold card — goal of the day */
-  --paper-event:        #ECE8DF;   /* calendar event chip resting on the grid */
+  --paper-event:        #F3EDDA;   /* calendar event chip resting on the grid */
   /* Bound Journal (B) · pages — goal of the day, journal, notes, quotes, herbarium */
   --page-paper: #FBF5E6;
   --page-line: #E5DBC1;
@@ -21,10 +21,10 @@
   --ink-hand:           #6c6557;   /* hand-script annotations (X-pass foundation patch) */
 
   /* Borders */
-  --line-solid:         #d6d0c4;
-  --line-dashed:        #cfc9bc;   /* dashed hairlines between sections */
-  --line-sidebar:       #dcd6ca;
-  --line-card:          #e3ded3;
+  --line-solid:         #cfc7b0;
+  --line-dashed:        #d5cdb5;   /* dashed hairlines between sections */
+  --line-sidebar:       #c9c1aa;
+  --line-card:          #e0d8c2;
   --line-goal:          #dcc48e;
 
   /* Botanical accents — the six flower tabs */
@@ -52,9 +52,9 @@
 
   /* Task checkboxes */
   --check-border:       #88816E;
-  --check-bg:           var(--paper-parchment);
+  --check-bg:           var(--paper-bone);
   --check-fill:         var(--acc-sage-text);   /* checked square */
-  --check-mark:         #FBFAF6;           /* the ✓ glyph */
+  --check-mark:         #FBF6E9;           /* the ✓ glyph */
   --check-glow:         none;              /* night mode adds a moonlit glow */
 
   /* Semantic aliases (what components should reach for) */
@@ -85,17 +85,17 @@
   --sig-offline: #4d6a75;
   --star-on: #B5654A;
   --star-empty: #88816E;
-  --on-terra: #FBFAF6;
+  --on-terra: #FBF6E9;
   --focus: #4d6a75;
   --badge-bg: #9C5139;
-  --badge-ink: #FBFAF6;
+  --badge-ink: #FBF6E9;
   --toast-bg: #2a2420;
-  --toast-ink: #FBFAF6;
+  --toast-ink: #FBF6E9;
   --toast-action: #C9A55A;
   --swipe-right-bg: #8A9A7E;
   --swipe-right-ink: #2a2420;
   --swipe-left-bg: #9C5139;
-  --swipe-left-ink: #FBFAF6;
+  --swipe-left-ink: #FBF6E9;
   --select-bg: rgba(77, 106, 117, 0.10);
   --skeleton: rgba(42, 36, 32, 0.07);
   --skeleton-hi: rgba(42, 36, 32, 0.035);

@@ -18,7 +18,7 @@ import { RowMenuButton } from '../tasks/SwipeRow'
 import { aiFiling, eventToRail, fileToCalendar, fileToTask, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { railDropAction, scopeTarget, SMART_LISTS, type RailSection } from './railDrop'
 import { dayWord } from '../inbox/inboxDisplay'
-import { nextFreeSlot, railBuckets, railMinutes, type RailTask } from './replan'
+import { dayTray, nextFreeSlot, railBuckets, railMinutes, type RailTask } from './replan'
 import { todayFor } from '../tasks/planMath'
 import { DatePicker } from '../../components/DatePicker'
 import { dayHint } from '../../components/pickerMath'
@@ -49,7 +49,7 @@ import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
-import { railYields, visibleDayCount } from './weekFit'
+import { gridMinWidth, railYields, visibleDayCount } from './weekFit'
 import { useDayRollover } from './useDayRollover'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { daisyColumnStage } from '../../lib/growthStages'
@@ -62,7 +62,7 @@ import { Skeleton } from '../../components/States'
 import type { ContextMenuItem } from '../../components/ContextMenu'
 import { isTypingTarget } from '../../components/useListKeys'
 import { overlayCount } from '../../lib/overlayStack'
-import type { Area, CalendarEvent, Domain, InboxItem, Project } from '../../lib/types'
+import type { Area, CalendarEvent, Domain, InboxItem, Project, Task } from '../../lib/types'
 
 const RAIL_W_KEY = 'kf.calRailWidth'
 const PLANNING_KEY = 'kf.calPlanning'
@@ -144,6 +144,110 @@ function readSections(): Record<RailSection, boolean> {
   } catch {
     return base
   }
+}
+
+// ── Kai 2026-10-14 (Akiflow): under the grid, each day column's tasks with no time yet. A row drags
+// up onto the grid like a rail card (its own Draggable). The cells sit on the grid's measured day
+// columns, so hidden weekends, a sideways scroll and the grid's scrollbar all line up. Not drawn
+// when no shown day has one — no empty band. ──
+
+const TRAY_FOLD_KEY = 'kf.calTrayFolded'
+const TRAY_ROW = 34
+const TRAY_MAX_ROWS = 4
+
+function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, now, domains, projects, areas, onPlan }: {
+  wrapRef: React.RefObject<HTMLDivElement | null>
+  /** Changes when the grid shows other days: re-measure its columns. */
+  rangeKey: string
+  minWidth?: number
+  tasks: Task[]
+  events: CalendarEvent[]
+  now: Date
+  domains: Domain[]
+  projects: Project[]
+  areas: Area[]
+  onPlan: (r: RailTask, x: number, y: number) => void
+}) {
+  const trayRef = useRef<HTMLElement>(null)
+  const [cols, setCols] = useState<{ date: string; left: number; width: number }[]>([])
+  const [folded, setFolded] = useState(() => {
+    try {
+      return localStorage.getItem(TRAY_FOLD_KEY) === '1'
+    } catch {
+      return false // no storage (a private window): open
+    }
+  })
+  useEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap) return
+    let raf = 0
+    const measure = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        // Rects are visual pixels (the root zoom); the tray is laid out in layout pixels.
+        const z = uiZoom()
+        const base = wrap.getBoundingClientRect().left
+        const next = [...wrap.querySelectorAll<HTMLElement>('.fc-timegrid-body .fc-timegrid-col[data-date]')].map((el) => {
+          const r = el.getBoundingClientRect()
+          return { date: el.dataset.date ?? '', left: (r.left - base) / z + wrap.scrollLeft, width: r.width / z }
+        })
+        setCols((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
+      })
+    }
+    measure()
+    const ro = new ResizeObserver(measure)
+    ro.observe(wrap)
+    const fc = wrap.querySelector('.fc')
+    if (fc) ro.observe(fc)
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
+  }, [wrapRef, rangeKey])
+  const dayKeys = cols.map((c) => c.date).join()
+  const byDay = useMemo(() => dayTray(tasks, events, dayKeys ? dayKeys.split(',') : [], now), [tasks, events, dayKeys, now])
+  const most = Math.max(0, ...[...byDay.values()].map((rows) => rows.length))
+  // One Draggable on the tray, as on the rail: it delegates to `.unscheduled-task`.
+  useEffect(() => {
+    if (!trayRef.current) return
+    const draggable = new Draggable(trayRef.current, { itemSelector: '.unscheduled-task', eventData: cardDragData })
+    return () => draggable.destroy()
+  }, [most > 0])
+  if (most === 0) return null
+  const toggle = () => {
+    const next = !folded
+    setFolded(next)
+    try {
+      localStorage.setItem(TRAY_FOLD_KEY, next ? '1' : '0')
+    } catch {
+      /* no storage: this visit only */
+    }
+  }
+  return (
+    <section ref={trayRef} className="cal-tray" aria-label="Each day's tasks with no time yet" style={{ height: folded ? 30 : Math.min(most, TRAY_MAX_ROWS) * TRAY_ROW + 10, minWidth }}>
+      <button
+        type="button"
+        className="cal-tray-fold"
+        style={{ width: cols[0]?.left ?? 0 }}
+        onClick={toggle}
+        aria-expanded={!folded}
+        aria-label={folded ? "Show each day's tasks" : "Hide each day's tasks"}
+        title={folded ? "Show each day's tasks" : "Hide each day's tasks"}
+      >
+        <Icon name="chevdown" size={14} style={{ transform: folded ? 'rotate(-90deg)' : undefined, transition: 'transform var(--dur-quick)' }} />
+      </button>
+      {cols.map((c) => {
+        const rows = byDay.get(c.date) ?? []
+        return (
+          <div key={c.date} className="cal-tray-day" data-date={c.date} style={{ left: c.left, width: c.width }}>
+            {folded
+              ? rows.length > 0 && <span className="cal-tray-count">{rows.length} {rows.length === 1 ? 'task' : 'tasks'}</span>
+              : rows.map((r) => <RailTaskCard key={r.task.id} r={r} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => onPlan(r, x, y)} />)}
+          </div>
+        )
+      })}
+    </section>
+  )
 }
 
 function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, children }: {
@@ -289,6 +393,7 @@ function DesktopCalendar() {
   const sidebarRef = useRef<HTMLDivElement>(null)
   const railRef = useRef<HTMLElement>(null)
   const gridRef = useRef<CalendarGridHandle>(null)
+  const gridWrapRef = useRef<HTMLDivElement>(null)
   // CALENDAR.md §7 pending / sync-failed block states, straight from the outbox.
   const outboxMarks = useOutboxMarks('calendar_events')
   const [selected, setSelected] = useState<Selected | null>(null)
@@ -855,6 +960,16 @@ function DesktopCalendar() {
           transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
         }
         .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0; }
+        /* Kai 2026-10-14: the per-day tray under the grid (Akiflow). */
+        .cal-tray { position: relative; flex: none; border-top: 1px solid var(--line-card); background: var(--paper-parchment); overflow: hidden; }
+        .cal-tray-fold { position: absolute; left: 0; top: 0; bottom: 0; display: flex; align-items: flex-start; justify-content: center; padding: 8px 0 0; border: none; background: none; color: var(--ink-faint); cursor: pointer; }
+        .cal-tray-fold:hover { color: var(--ink-body); }
+        .cal-tray-fold:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+        .cal-tray-day { position: absolute; top: 0; bottom: 0; box-sizing: border-box; overflow-y: auto; padding: 4px 9px; border-left: 1px solid var(--line-card); }
+        .cal-tray-day { container-type: inline-size; }
+        /* a Week column is narrow: the title gets the room, the length and project dot go */
+        @container (max-width: 230px) { .cal-tray-day .cal-row-meta { display: none; } }
+        .cal-tray-count { display: block; padding-top: 5px; font-size: var(--fs-meta); color: var(--ink-faint); }
       `}</style>
 
       <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
@@ -1074,7 +1189,8 @@ function DesktopCalendar() {
             {/* Kai 2026-07-21: "why cant I scroll horizontally in the week view" — the grid
                 keeps ≥170px per day column (CalendarGrid sets its own min-width) and scrolls
                 sideways here instead of crushing the last day (today) into a sliver. */}
-            <div style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'hidden' }}>
+            <div ref={gridWrapRef} style={{ flex: 1, minHeight: 0, overflowX: 'auto', overflowY: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ flex: 1, minHeight: 0 }}>
             <CalendarGrid
               ref={gridRef}
               initialView={planning ? (stripDays === 1 ? 'timeGridDay' : 'customDayCount') : VIEW_MAP[viewKind]}
@@ -1133,6 +1249,21 @@ function DesktopCalendar() {
               pendingIds={pendingIds}
               failedIds={failedIds}
             />
+            </div>
+            {!planning && viewKind !== 'month' && (
+              <DayTray
+                wrapRef={gridWrapRef}
+                rangeKey={`${viewKind}|${dayCount}|${rangeInfo?.start.getTime() ?? 0}|${hiddenWeekend.join()}`}
+                minWidth={gridMinWidth(visibleDayCount(viewKind, dayCount, hiddenWeekend.length))}
+                tasks={tasks}
+                events={events}
+                now={minuteNow}
+                domains={domains}
+                projects={projects}
+                areas={areas}
+                onPlan={(r, x, y) => setPlan({ target: { kind: 'task', r }, x, y })}
+              />
+            )}
             </div>
           </div>
         </div>

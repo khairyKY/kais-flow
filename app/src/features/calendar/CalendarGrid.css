@@ -311,7 +311,10 @@
   font-size: calc(10px * var(--s-text));
   color: var(--text-tertiary);
 }
-.fc .fc-more-popover { border-radius: var(--radius-sharp); border-color: var(--line-card); box-shadow: var(--shadow-popover); }
+/* Kai 2026-10-14: the popover had no fill of its own (FullCalendar paints it from --fc-page-bg-color,
+   which we leave unset), so the month's pills showed through and read as a pile-up. */
+.fc .fc-more-popover { border-radius: var(--radius-sharp); border-color: var(--line-card); box-shadow: var(--shadow-popover); background: var(--paper-parchment); }
+.fc .fc-more-popover .fc-popover-header { background: var(--paper-bone); }
 
 /* Drag mirror + resize handle — fully opaque: at 0.85 the mirror stacked over the still-visible
    original read as a dark doubled rectangle during resize (the original is also hidden while
@@ -496,6 +499,8 @@
   color: var(--ink-body);
   pointer-events: none;
 }
+/* the title stops short of the badge instead of running under it */
+.fc .fc-timegrid-event .kf-ev-row:has(> .kf-ev-badge) .kf-ev-text { padding-right: 12px; }
 /* C10 repeating — the kit's ↻ glyph in the block's own edge hue, quiet. */
 .fc .fc-timegrid-event .kf-ev-repeat { color: var(--kf-ev-edge, var(--acc-lavender-deep)); }
 /* completed petal badge (9x7, tilted 38°) */
@@ -542,6 +547,9 @@
 .fc .fc-daygrid-event .fc-event-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .fc .fc-daygrid-event .fc-event-time { order: -1; flex: none; opacity: 0.75; }
 .fc .fc-timegrid .fc-daygrid-event .fc-event-time { display: none; }
+/* A time slot's task list belongs to the time grid; in a one-line pill (month, its +N more list) it
+   spilled over the pills below. */
+.fc .fc-daygrid-event .kf-ev-slot { display: none; }
 
 /* grip reveal (pairs with the opacity:0 set on the ::after above) */
 .fc .fc-timegrid-event:hover .fc-event-resizer-end::after,
@@ -554,10 +562,12 @@
 /* overlap (2): each calc(50% − 2px), 4px gutter — earlier start left */
 .fc .fc-timegrid-event-harness:has(> .kf-ov-p0:not(.fc-event-mirror)) { left: 0 !important; right: calc(50% + 2px) !important; margin: 0 !important; }
 .fc .fc-timegrid-event-harness:has(> .kf-ov-p1:not(.fc-event-mirror)) { left: calc(50% + 2px) !important; right: 0 !important; margin: 0 !important; }
-/* stacked (3+): shingle 56% wide, offset 22% per index, later on top */
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s0:not(.fc-event-mirror)) { left: 0 !important; right: 44% !important; margin: 0 !important; z-index: 1 !important; }
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s1:not(.fc-event-mirror)) { left: 22% !important; right: 22% !important; margin: 0 !important; z-index: 2 !important; }
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { left: 44% !important; right: 0 !important; margin: 0 !important; z-index: 3 !important; }
+/* stacked (3+): three equal lanes side by side, 4px gutters — nothing covers anything (Kai
+   2026-10-14, Akiflow's way: the 56%/22% shingle buried the later blocks in narrow columns).
+   A fourth block and on still go under lane 2's "+N more". */
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s0:not(.fc-event-mirror)) { left: 0 !important; right: calc(66.667% + 1.333px) !important; margin: 0 !important; z-index: 1 !important; }
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s1:not(.fc-event-mirror)) { left: calc(33.333% + 1.333px) !important; right: calc(33.333% + 1.333px) !important; margin: 0 !important; z-index: 1 !important; }
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { left: calc(66.667% + 1.333px) !important; right: 0 !important; margin: 0 !important; z-index: 1 !important; }
 /* A shingled sheet must hide what it covers: block fills are a 24% tint, so on their own the
    lower title reads straight through the upper block (the overprint J-13 is about). The harness
    under each sheet carries the grid's own paper, so the tint sits on paper exactly as it does on
@@ -569,9 +579,6 @@
 .fc .fc-timegrid-event-harness:has(> .kf-ov-hide:not(.fc-event-mirror)) { display: none !important; }
 /* hover z-bumps only — no geometry change */
 .fc .fc-timegrid-event-harness:has(> .kf-ov:hover) { z-index: 4 !important; }
-/* the drawn shingle separates its upper sheets with the crisp shadow (Calendar.dc.html #3e) */
-.fc .fc-timegrid-event.kf-ov-s1:not(:hover),
-.fc .fc-timegrid-event.kf-ov-s2:not(:hover) { box-shadow: var(--shadow-crisp); }
 /* §6 overlap type scale: padding 6/8, title 11px on one line, time 8px start-only */
 .fc .fc-timegrid-event.kf-ov:not(.fc-timegrid-event-short):not(.kf-tier-micro) { padding: 6px 8px; }
 .fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
