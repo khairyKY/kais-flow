@@ -85,6 +85,13 @@ jobs:
           path: ${{ env.EXE }}
           retention-days: 30
 
+      # The app itself (not its installer), for the msix job below: the Store package is this same build.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kais-flow-app-exe
+          path: app/src-tauri/target/release/kais-flow.exe
+          retention-days: 1
+
       - name: Attach to the Release
         if: inputs.tag != ''
         env:
@@ -96,3 +103,84 @@ jobs:
         run: |
           cp "$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe"
           gh release upload "$TAG" "$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe" --clobber
+
+  # The Microsoft Store package (docs/MICROSOFT-STORE.md): the build above as an UNSIGNED MSIX, which
+  # Kai uploads in Partner Center; the Store signs what it ships, so no certificate is needed ($0).
+  # Its identity is Partner Center's (Product management → Product identity), kept in three repo
+  # VARIABLES: not secrets, every Store app's manifest shows them. Without them this skips, green.
+  msix:
+    name: Microsoft Store package
+    needs: windows
+    runs-on: windows-latest
+    permissions:
+      contents: write # only used to attach the package to a published Release
+    env:
+      STORE_IDENTITY_NAME: ${{ vars.STORE_IDENTITY_NAME }}
+      STORE_PUBLISHER: ${{ vars.STORE_PUBLISHER }}
+      STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.STORE_PUBLISHER_DISPLAY_NAME }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: app/src-tauri
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: kais-flow-app-exe
+          path: exe
+
+      - name: Pack (makeappx)
+        id: pack
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not ($env:STORE_IDENTITY_NAME -and $env:STORE_PUBLISHER -and $env:STORE_PUBLISHER_DISPLAY_NAME)) {
+            echo "::notice title=No Microsoft Store package::Set the STORE_IDENTITY_NAME, STORE_PUBLISHER and STORE_PUBLISHER_DISPLAY_NAME repo variables (docs/MICROSOFT-STORE.md); the next build then makes the .msix."
+            echo "- Microsoft Store package: skipped, the STORE_* repo variables aren't set yet (docs/MICROSOFT-STORE.md)" >> $env:GITHUB_STEP_SUMMARY
+            exit 0
+          }
+          # The Store's version is x.y.z.0: the tag's (v1.2.3 → 1.2.3.0), else this build's tauri.conf.json.
+          $v = if ($env:TAG) { $env:TAG -replace '^v' -replace '-.*$' } else { (Get-Content -Raw app/src-tauri/tauri.conf.json | ConvertFrom-Json).version }
+          if ($v -notmatch '^\d+\.\d+\.\d+$') { throw "'$v' is not x.y.z, which the Store's version needs" }
+          $label = if ($env:TAG) { $env:TAG } else { $env:GITHUB_SHA.Substring(0, 7) }
+          $out = "$env:RUNNER_TEMP\kais-flow-$label.msix"
+
+          New-Item -ItemType Directory -Force layout/Assets | Out-Null
+          Copy-Item exe/kais-flow.exe layout/
+          foreach ($logo in 'StoreLogo', 'Square44x44Logo', 'Square71x71Logo', 'Square150x150Logo') { Copy-Item "app/src-tauri/icons/$logo.png" layout/Assets/ }
+          $x = [System.Security.SecurityElement]
+          (Get-Content -Raw app/src-tauri/msix/AppxManifest.xml).
+            Replace('{{NAME}}', $x::Escape($env:STORE_IDENTITY_NAME)).
+            Replace('{{PUBLISHER}}', $x::Escape($env:STORE_PUBLISHER)).
+            Replace('{{PUBLISHER_DISPLAY_NAME}}', $x::Escape($env:STORE_PUBLISHER_DISPLAY_NAME)).
+            Replace('{{VERSION}}', "$v.0") | Set-Content -Encoding utf8 layout/AppxManifest.xml
+
+          # The newest Windows SDK on the runner. pack checks the manifest against the schema; unpack
+          # proves the file is a whole package.
+          $makeappx = (Get-ChildItem 'C:/Program Files (x86)/Windows Kits/10/bin/10.*/x64/makeappx.exe' | Sort-Object { [version]$_.Directory.Parent.Name } | Select-Object -Last 1).FullName
+          & $makeappx pack /d layout /p $out /o
+          if ($LASTEXITCODE) { throw "makeappx pack failed ($LASTEXITCODE)" }
+          & $makeappx unpack /p $out /d unpacked /o
+          if ($LASTEXITCODE) { throw "makeappx unpack failed ($LASTEXITCODE)" }
+          $id = ([xml](Get-Content -Raw unpacked/AppxManifest.xml)).Package.Identity
+          echo "MSIX=$out" >> $env:GITHUB_OUTPUT
+          echo "- Microsoft Store package: ``$(Split-Path $out -Leaf)`` ($([math]::Round((Get-Item $out).Length / 1MB, 1)) MB) · $($id.Name) $($id.Version) · unsigned, for Partner Center" >> $env:GITHUB_STEP_SUMMARY
+
+      - uses: actions/upload-artifact@v4
+        if: steps.pack.outputs.MSIX
+        with:
+          name: kais-flow-msix
+          path: ${{ steps.pack.outputs.MSIX }}
+          retention-days: 30
+
+      - name: Attach to the Release
+        if: steps.pack.outputs.MSIX && inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        # Versioned for Partner Center, plus a version-less copy (releases/latest/download/kais-flow.msix),
+        # the same pattern as the installer above.
+        run: |
+          msix="$(cygpath -u '${{ steps.pack.outputs.MSIX }}')"
+          cp "$msix" "$RUNNER_TEMP/kais-flow.msix"
+          gh release upload "$TAG" "$msix" "$RUNNER_TEMP/kais-flow.msix" --clobber
