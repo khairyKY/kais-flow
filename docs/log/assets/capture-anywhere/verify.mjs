@@ -49,7 +49,7 @@ async function open(route, o = {}) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE })
   await ctx.addInitScript(([t, sess]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
   }, [o.theme ?? 'day', JSON.stringify(session)])
   const state = { rows: { app_settings: [SETTINGS], capture_keys: [], inbox_items: [], ...(o.rows ?? {}) }, writes: [], urls: [], parses: [] }

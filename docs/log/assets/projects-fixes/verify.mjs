@@ -77,7 +77,7 @@ async function open(route, o = {}) {
   const phone = o.view === PHONE
   const ctx = await browser.newContext({ viewport: o.view ?? { width: 1280, height: 720 }, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', hasTouch: phone, isMobile: phone })
   await ctx.addInitScript(([t, sess, scale]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf_ui_scale', scale)
   }, [o.theme ?? 'day', JSON.stringify(session), String(o.scale ?? 1)])

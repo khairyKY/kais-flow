@@ -74,7 +74,7 @@ async function open(route, o = {}) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.grantPermissions(['microphone'], { origin: BASE })
   await ctx.addInitScript(([t, sess, hintSeen]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     if (hintSeen != null) localStorage.setItem('kf.captureHint', String(hintSeen))
     // Proof the field is focused INSIDE the tap: every focus() on the capture field logs its call stack,

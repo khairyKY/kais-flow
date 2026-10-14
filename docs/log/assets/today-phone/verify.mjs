@@ -127,7 +127,7 @@ async function open(key, theme, view = phone, o = {}) {
   const s = S[key]
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, fold, goal]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.today.more-open', fold ? '1' : '0')
     localStorage.setItem('kf_goal_task_id', goal)

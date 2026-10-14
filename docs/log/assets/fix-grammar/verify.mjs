@@ -81,7 +81,7 @@ async function open(route, o = {}) {
   const ctx = await browser.newContext({ viewport: o.view ?? DESK, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', hasTouch: phone, isMobile: phone })
   live.add(ctx)
   await ctx.addInitScript(([t, sess, uid]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     // the 'Updated to vX' toast would sit over the page (and the Undo toasts) — seen already
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: Date.now() }))

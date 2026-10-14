@@ -49,7 +49,7 @@ async function open(view, url, o = {}) {
   await ctx.addInitScript(([t, sess, email]) => {
     if (sessionStorage.getItem('kf-verify-booted')) return // a reload keeps what the page did
     sessionStorage.setItem('kf-verify-booted', '1')
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     if (sess) localStorage.setItem('sb-127-auth-token', sess)
     if (email) localStorage.setItem('kf.lastEmail', email)
   }, [v.theme, o.signedIn ? JSON.stringify(session) : null, o.email ?? null])

@@ -23,7 +23,7 @@ const SPEC = ['Replan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to
 async function open(view, theme) {
   const ctx = await browser.newContext({ viewport: view.viewport, hasTouch: view.touch, deviceScaleFactor: 1 })
   await ctx.addInitScript((t) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     window.__buzz = 0
     Object.defineProperty(navigator, 'vibrate', { value: () => { window.__buzz++; return true }, configurable: true })
   }, theme)

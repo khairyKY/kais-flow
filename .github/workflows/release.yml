@@ -2,7 +2,7 @@ name: Release
 
 # One click ships a tested release, in the order docs/DEPLOY-RUNBOOK-v1.md demands:
 #   gate + rehearsal → cron-key check → backup → database → edge functions → app (merge into master) → live check
-#   → GitHub Release (tag + notes) → Android APK + Windows installer attached to it.
+#   → GitHub Release (tag + notes) → Android APK + Windows installer (+ the Microsoft Store .msix) attached to it.
 # Nothing touches production until the gate is green and the merge into master is proven to be
 # exactly the tested tree. Trigger: push a `v*` tag or a `claude/ship-v*` branch at the release's
 # tested commit, publish a GitHub Release targeting it, or (once on master) Actions → Run workflow.
@@ -249,7 +249,9 @@ jobs:
           fi
 
   # A GitHub Release per version (tag at the live master commit, generated notes), then the Android
-  # APK and Windows installer built from the same tree and attached to it. A release made with
+  # APK and Windows installer built from the same tree and attached to it. desktop.yml's msix job adds
+  # kais-flow-<tag>.msix for Partner Center once the STORE_* repo variables exist (docs/MICROSOFT-STORE.md);
+  # a called workflow reads the repo's variables itself, so nothing more is passed here. A release made with
   # GITHUB_TOKEN can't start other workflows, so the builds are called from here.
   publish:
     name: GitHub Release

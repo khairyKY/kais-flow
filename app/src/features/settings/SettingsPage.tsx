@@ -388,6 +388,7 @@ function AppUpdateCard() {
     : r.kind === 'download' ? `${r.version} is out`
     : r.kind === 'pending' ? `${r.version} is out — its ${file} is still on its way, try again in a few minutes`
     : r.kind === 'current' ? `You're on the latest (${r.version ?? running})`
+    : r.kind === 'store' ? 'Updates come from the Microsoft Store'
     : r.kind === 'dev' ? 'This is a development build — nothing to compare it with'
     : 'Couldn’t reach the update check — look at the connection and try again'
   return (
@@ -410,12 +411,15 @@ function AppUpdateCard() {
           {checking ? 'Checking…' : 'Check for updates'}
         </Button>
       </Row>
-      {/* Kai 2026-10-14: the download bar's links for good, so dismissing it is never a dead end. */}
-      <Row label="Download the apps" help="Android and Windows · always the newest release">
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-          <DownloadLinks />
-        </div>
-      </Row>
+      {/* Kai 2026-10-14: the download bar's links for good, so dismissing it is never a dead end. Not in the
+          Microsoft Store install: the Store updates it, and a Store app mustn't hand out its own .exe. */}
+      {r?.kind !== 'store' && (
+        <Row label="Download the apps" help="Android and Windows · always the newest release">
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <DownloadLinks />
+          </div>
+        </Row>
+      )}
       {/* Tour & help (Tour and Help Guide.dc.html, "Also in Settings → App"): the notes again. */}
       <Row label="The tour" help="Replays the notes on Today and clears seen hints">
         <Button variant="secondary" onClick={restartTour}>Show me around again</Button>

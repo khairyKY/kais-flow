@@ -66,7 +66,7 @@ const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google
 async function open(route, s = {}, o = {}) {
   const ctx = await browser.newContext({ viewport: o.view ?? { width: 1280, height: 720 }, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, scale, tauri]) => {
-    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf_ui_scale', scale)
     if (tauri) window.__TAURI_INTERNALS__ = { invoke: async (cmd) => (cmd === 'plugin:app|version' ? tauri : null) }
