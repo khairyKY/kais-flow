@@ -74,14 +74,13 @@
   faq(); wide.addEventListener('change', faq)
 
   // ── the current release, straight from GitHub (falls back to the version baked in at build) ──
-  const rel = $$('[data-release], [data-release-tag], [data-asset]')
+  const rel = $$('[data-release], [data-release-tag]')
   if (rel.length) {
     const apply = (r) => {
       const tag = r.tag, date = new Date(r.date)
       const nice = date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Cairo' })
       $$('[data-release-tag]').forEach((e) => { e.textContent = tag })
       $$('[data-release-date]').forEach((e) => { e.textContent = nice })
-      $$('[data-asset]').forEach((a) => { const u = r[a.dataset.asset]; if (u) a.href = u })
     }
     let cached = null
     try { cached = JSON.parse(store.get('kf-release') || 'null') } catch { /* ignore */ }
@@ -89,8 +88,7 @@
     else fetch('https://api.github.com/repos/khairyKY/kais-flow/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
       .then((j) => {
-        const find = (re) => (j.assets || []).find((a) => re.test(a.name))?.browser_download_url
-        const r = { tag: j.tag_name, date: j.published_at, apk: find(/\.apk$/), exe: find(/windows-setup\.exe$/), at: Date.now() }
+        const r = { tag: j.tag_name, date: j.published_at, at: Date.now() }
         if (!r.tag) return
         store.set('kf-release', JSON.stringify(r))
         apply(r)

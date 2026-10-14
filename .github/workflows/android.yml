@@ -130,7 +130,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
-        run: gh release upload "$TAG" "$APK" --clobber
+        # A version-less copy beside the versioned file, so releases/latest/download/kais-flow.apk
+        # always serves the newest one (the web app's download bar, Settings → App, docs/INSTALL.md).
+        # The versioned file stays: the apps' update check and the site read it.
+        run: |
+          cp "$APK" "$RUNNER_TEMP/kais-flow.apk"
+          gh release upload "$TAG" "$APK" "$RUNNER_TEMP/kais-flow.apk" --clobber
 
   smoke:
     name: Emulator smoke test

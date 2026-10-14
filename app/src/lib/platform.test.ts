@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { Capacitor } from '@capacitor/core'
-import { authLinkOrigin, holdShellChrome, isCapacitorShell, isNativeShell, rgbToHex, syncShellChrome } from './platform'
+import { Browser } from '@capacitor/browser'
+import { authLinkOrigin, externalHref, holdShellChrome, isCapacitorShell, isNativeShell, openExternal, rgbToHex, syncShellChrome } from './platform'
+
+vi.mock('@capacitor/browser', () => ({ Browser: { open: vi.fn(async () => {}) } }))
 
 afterEach(() => vi.restoreAllMocks())
 
@@ -90,5 +93,54 @@ describe('authLinkOrigin', () => {
   })
   it('falls back to the page origin when no public URL was built in', () => {
     expect(authLinkOrigin({}, shell)).toBe('https://tauri.localhost')
+  })
+})
+
+describe('openExternal', () => {
+  const url = 'https://accounts.google.com/o/oauth2/v2/auth?x=1'
+  function fakeWindow(tauri?: { invoke: ReturnType<typeof vi.fn> }) {
+    return { __TAURI_INTERNALS__: tauri, open: vi.fn() } as unknown as Window & { open: ReturnType<typeof vi.fn> }
+  }
+  afterEach(() => vi.mocked(Browser.open).mockClear())
+
+  it('Android: a Custom Tab, not the web view', async () => {
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true)
+    const w = fakeWindow()
+    await openExternal(url, w)
+    expect(Browser.open).toHaveBeenCalledWith({ url })
+    expect(w.open).not.toHaveBeenCalled()
+  })
+  it('Windows: the opener plugin through the Tauri bridge', async () => {
+    const tauri = { invoke: vi.fn(async () => undefined) }
+    const w = fakeWindow(tauri)
+    await openExternal(url, w)
+    expect(tauri.invoke).toHaveBeenCalledWith('plugin:opener|open_url', { url })
+    expect(w.open).not.toHaveBeenCalled()
+    expect(Browser.open).not.toHaveBeenCalled()
+  })
+  it('a browser: a new tab', async () => {
+    const w = fakeWindow()
+    await openExternal(url, w)
+    expect(w.open).toHaveBeenCalledWith(url, '_blank', 'noopener,noreferrer')
+    expect(Browser.open).not.toHaveBeenCalled()
+  })
+})
+
+describe('externalHref', () => {
+  const here = 'https://tauri.localhost/settings'
+  it('leaves for http(s) pages on other sites', () => {
+    expect(externalHref('https://github.com/settings/tokens', here)).toBe('https://github.com/settings/tokens')
+    expect(externalHref('http://example.com/a', here)).toBe('http://example.com/a')
+  })
+  it('keeps the app’s own links in the app', () => {
+    expect(externalHref('/today', here)).toBeNull()
+    expect(externalHref('https://tauri.localhost/inbox', here)).toBeNull()
+    expect(externalHref('#top', here)).toBeNull()
+    expect(externalHref('/today', 'https://localhost/')).toBeNull()
+  })
+  it('ignores what isn’t a web page', () => {
+    expect(externalHref('mailto:kai@example.com', here)).toBeNull()
+    expect(externalHref('blob:https://tauri.localhost/1234', here)).toBeNull()
+    expect(externalHref('http://[bad', here)).toBeNull()
   })
 })

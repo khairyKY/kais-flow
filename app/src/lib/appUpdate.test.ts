@@ -1,5 +1,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { checkForUpdate, compareVersions, nativeVerdict, releaseAssetName } from './appUpdate'
+import { checkForUpdate, compareVersions, downloadOrder, inPlainBrowser, nativeVerdict, releaseAssetName } from './appUpdate'
+
+describe('the download bar', () => {
+  const win = (standalone: boolean, extra: object = {}) => ({ matchMedia: () => ({ matches: standalone }), navigator: {}, ...extra }) as unknown as Window
+  it('shows only in a plain browser tab', () => {
+    expect(inPlainBrowser(win(false))).toBe(true)
+    expect(inPlainBrowser(win(true))).toBe(false) // the installed PWA
+    expect(inPlainBrowser(win(false, { __TAURI_INTERNALS__: {} }))).toBe(false) // the Windows app
+    expect(inPlainBrowser(win(false, { navigator: { standalone: true } }))).toBe(false) // iOS home screen
+  })
+  it("puts the device's own app first", () => {
+    expect(downloadOrder('Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129 Mobile')).toEqual(['android', 'windows'])
+    expect(downloadOrder('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129')).toEqual(['windows', 'android'])
+    expect(downloadOrder('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Safari/605')).toEqual(['android', 'windows'])
+  })
+})
 
 describe('compareVersions', () => {
   it('orders releases numerically, with or without the v', () => {

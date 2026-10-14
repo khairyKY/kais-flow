@@ -46,6 +46,23 @@ export function releaseAssetName(tag: string, platform: 'android' | 'windows'): 
   return platform === 'android' ? `kais-flow-${tag}.apk` : `kais-flow-${tag}-windows-setup.exe`
 }
 
+/** The newest release's installers under fixed names: android.yml / desktop.yml upload a version-less
+ * copy beside the versioned file, so these links never go stale (the download bar, Settings → App). */
+export const LATEST_DOWNLOADS = {
+  android: 'https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk',
+  windows: 'https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe',
+} as const
+
+/** The device's own app first: Windows on a Windows computer, Android everywhere else (phones). */
+export function downloadOrder(ua: string = navigator.userAgent): ('android' | 'windows')[] {
+  return /Windows/i.test(ua) && !/Android/i.test(ua) ? ['windows', 'android'] : ['android', 'windows']
+}
+
+/** A plain browser tab: not a native shell, not the installed PWA (display-mode standalone; iOS's own flag). */
+export function inPlainBrowser(w: Window = window): boolean {
+  return appPlatform(w) === 'web' && !w.matchMedia?.('(display-mode: standalone)').matches && !(w.navigator as { standalone?: boolean }).standalone
+}
+
 interface Release {
   tag_name: string
   /** The release's notes (release.yml writes them from site/src/releases.json; lib/whatsNew reads them). */

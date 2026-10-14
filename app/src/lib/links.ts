@@ -1,3 +1,4 @@
+import { openExternal } from './platform'
 import { useToastStore } from './toastStore'
 import type { Task } from './types'
 
@@ -36,6 +37,6 @@ export function linkLabel(url: string): string {
 /** `o` on a task row. */
 export function openTaskLink(task: Pick<Task, 'external_ref'>): void {
   const url = taskLink(task)
-  if (url) window.open(url, '_blank', 'noopener,noreferrer')
+  if (url) void openExternal(url)
   else useToastStore.getState().push({ message: 'No link on this task' })
 }

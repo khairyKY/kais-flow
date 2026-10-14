@@ -52,6 +52,7 @@ import { uiZoom } from '../lib/uiScale'
 import { splitKeyCombo } from '../lib/shortcuts'
 import { overlayCount } from '../lib/overlayStack'
 import { undoLatest } from '../lib/undo'
+import { DownloadBar } from '../features/download/DownloadBar'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
@@ -1016,6 +1017,7 @@ export function AppLayout() {
       </aside>
 
       <main style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
+        <DownloadBar />
         {(isMobile || !NO_TOPBAR.includes(pathname)) && <TopBar sync={isMobile} />}
         <div ref={scrollerRef} className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>

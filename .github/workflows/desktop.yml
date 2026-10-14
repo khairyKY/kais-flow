@@ -97,7 +97,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}
-        run: gh release upload "$TAG" "$EXE" --clobber
+        # A version-less copy beside the versioned file, so releases/latest/download/kais-flow-windows-setup.exe
+        # always serves the newest one (the web app's download bar, Settings → App, docs/INSTALL.md).
+        # The versioned file stays: the apps' update check and the site read it.
+        run: |
+          cp "$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe"
+          gh release upload "$TAG" "$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe" --clobber
 
   # The Microsoft Store package (docs/MICROSOFT-STORE.md): the build above as an UNSIGNED MSIX, which
   # Kai uploads in Partner Center; the Store signs what it ships, so no certificate is needed ($0).
@@ -173,4 +178,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         shell: bash
-        run: gh release upload "$TAG" "$(cygpath -u '${{ steps.pack.outputs.MSIX }}')" --clobber
+        # Versioned for Partner Center, plus a version-less copy (releases/latest/download/kais-flow.msix),
+        # the same pattern as the installer above.
+        run: |
+          msix="$(cygpath -u '${{ steps.pack.outputs.MSIX }}')"
+          cp "$msix" "$RUNNER_TEMP/kais-flow.msix"
+          gh release upload "$TAG" "$msix" "$RUNNER_TEMP/kais-flow.msix" --clobber
