@@ -114,7 +114,7 @@ const settings = (view) => ({ id: 'a0000000-0000-4000-8000-000000000001', user_i
 const tables = (o = {}) => structuredClone({
   tasks: TASKS, calendar_events: EVENTS, projects: [SITE, FORECAST, DS, GCI, SPRING], domains: [SHAHEEN, STUDY], app_settings: [settings(o.calView)],
   journal_entries: [ENTRY], books: [BOOK], quotes: [QUOTE], notes: [NOTE], commentary: [], inbox_items: [], activity_log: [], routines: [], routine_completions: [],
-  time_entries: [], people: [], interactions: [], areas: [],
+  time_entries: [], people: [], interactions: [], areas: [], ...o.rows,
 })
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
@@ -131,9 +131,9 @@ async function open(route, o = {}) {
     localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['tour', 'hint:swipe', 'hint:calendar', 'hint:inbox']))
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: Date.now() + 864e5 }))
-    localStorage.setItem('sb-127-auth-token', sess)
+    if (sess) localStorage.setItem('sb-127-auth-token', sess)
     for (const [k, v] of Object.entries(local)) localStorage.setItem(k, v)
-  }, [o.theme ?? 'day', JSON.stringify(session), o.local ?? {}, UID])
+  }, [o.theme ?? 'day', o.signedOut ? '' : JSON.stringify(session), o.local ?? {}, UID])
   const rows = tables(o)
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -154,7 +154,7 @@ async function open(route, o = {}) {
   await page.clock.install({ time: NOW })
   await page.goto(BASE + route, { waitUntil: 'domcontentloaded' })
   // wait past the lazy route's loading dot: the page column has real text
-  if (!o.hold) await page.waitForFunction(() => (document.querySelector('.app-main-content')?.innerText.trim().length ?? 0) > 60, null, { timeout: 25000 }).catch(() => {})
+  if (!o.hold && !o.signedOut) await page.waitForFunction(() => (document.querySelector('.app-main-content')?.innerText.trim().length ?? 0) > 60, null, { timeout: 25000 }).catch(() => {})
   await sleep(o.hold ? 900 : 1600)
   return { page, ctx, errors }
 }
@@ -297,6 +297,91 @@ scene('cal-unscheduled-phone', async (theme) => {
   await sleep(900)
   return s
 })
+
+// ── bj-shell (2026-10-15): the shell (sidebar, tab bar, More, toasts), the kit's overlays and the
+// tool pages (Settings, Activity, Trash, Guide, chat, sign-in). Scenes are named shell-* / kit-*. ──
+const DEL = '2026-10-13T09:00:00Z'
+const ACTIVITY = [
+  ['task.completed', 'task', id('1', 4), { title: 'Deep work: forecasting' }, iso('11:02')],
+  ['inbox.captured', 'inbox_item', id('9', 1), { text: 'Ask Sam about the lab report' }, iso('10:40')],
+  ['task.created', 'task', id('1', 3), { title: 'Reply to Omar about Thursday' }, iso('09:15')],
+  ['task.completed', 'task', id('1', 11), { title: 'Send the Q3 numbers' }, iso('08:40')],
+  ['task.rescheduled', 'task', id('1', 8), { title: 'Pay the internet bill' }, iso('18:20', 13)],
+  ['task.deleted', 'task', id('1', 60), { title: 'Old draft of the post' }, iso('17:00', 13)],
+].map(([event_type, entity_type, entity_id, payload, created_at], i) => ({ id: id('a', i + 1), user_id: UID, event_type, entity_type, entity_id, payload, created_at }))
+const TRASHED = {
+  tasks: [task(60, 'Old draft of the post', { deleted_at: DEL }), task(61, 'Buy printer ink', { deleted_at: '2026-10-11T12:00:00Z' })],
+  calendar_events: [{ ...ev(70, 'Cancelled: gym', '17:00', '18:00', { day: 12 }), deleted_at: '2026-10-12T08:00:00Z' }],
+  projects: [{ ...project(9, 'Winter reading', STUDY), deleted_at: '2026-10-10T08:00:00Z' }],
+  inbox_items: [], journal_entries: [], areas: [], domains: [],
+}
+const scrolled = (y) => async (s) => {
+  await s.page.evaluate((top) => document.querySelector('.app-main-content')?.scrollTo(0, top === 'end' ? 1e6 : top), y)
+  await sleep(500)
+  return s
+}
+const then = (o, fn) => async (theme) => fn(await open(o.route, { ...o, theme }))
+for (const [v, view] of [['phone', phone], ['desktop', desktop]]) {
+  scene(`shell-activity-${v}`, async (theme) => open('/activity', { theme, view, rows: { activity_log: ACTIVITY } }))
+  scene(`shell-trash-${v}`, async (theme) => open('/trash', { theme, view, rows: TRASHED }))
+  scene(`shell-trash-empty-${v}`, async (theme) => open('/trash', { theme, view, rows: { tasks: [], calendar_events: [], projects: [], domains: [] } }))
+  scene(`shell-guide-${v}`, async (theme) => open('/guide', { theme, view }))
+  scene(`shell-settings-mid-${v}`, then({ route: '/settings', view }, scrolled(v === 'phone' ? 1600 : 1100)))
+  scene(`shell-settings-low-${v}`, then({ route: '/settings', view }, scrolled(v === 'phone' ? 3400 : 2300)))
+  scene(`shell-settings-end-${v}`, then({ route: '/settings', view }, scrolled('end')))
+  scene(`shell-signin-${v}`, async (theme) => open('/sign-in', { theme, view, signedOut: true }))
+  scene(`shell-download-${v}`, async (theme) => open('/tasks', { theme, view, local: { 'kf-download-bar-dismissed': '0' } }))
+  scene(`shell-whatsnew-${v}`, async (theme) => open('/tasks', { theme, view, local: { [`kf-whats-new:${UID}`]: JSON.stringify({ seen: '1.0.0', notified: '99.0.0', checkedAt: Date.now() + 864e5 }) } }))
+  scene(`shell-toast-${v}`, then({ route: '/tasks', view }, async (s) => {
+    await s.page.getByRole('checkbox', { name: /Pay the internet bill/ }).first().click()
+    await sleep(700)
+    return s
+  }))
+  scene(`kit-ref-${v}`, async (theme) => open('/design-system', { theme, view, signedOut: true }))
+  scene(`kit-ref-low-${v}`, then({ route: '/design-system', view, signedOut: true }, async (s) => {
+    await s.page.evaluate(() => window.scrollTo(0, 1e6))
+    await sleep(500)
+    return s
+  }))
+}
+scene('shell-more-phone', then({ route: '/today' }, async (s) => {
+  await s.page.getByRole('button', { name: 'More', exact: true }).click()
+  await sleep(700)
+  return s
+}))
+scene('shell-actionsheet-phone', then({ route: '/tasks' }, async (s) => {
+  await s.page.getByRole('button', { name: /More actions|Actions for|⋯/ }).first().click()
+  await sleep(700)
+  return s
+}))
+scene('shell-chat-phone', then({ route: '/today' }, async (s) => {
+  await s.page.getByRole('button', { name: 'More', exact: true }).click()
+  await sleep(500)
+  await s.page.getByRole('button', { name: 'Chat', exact: true }).click()
+  await sleep(1200)
+  return s
+}))
+scene('shell-chat-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
+  await s.page.keyboard.press('Control+j')
+  await sleep(1200)
+  return s
+}))
+scene('shell-shortcuts-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
+  await s.page.keyboard.press('?')
+  await sleep(900)
+  return s
+}))
+scene('shell-sync-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
+  await s.page.locator('.kf-side-sync').click()
+  await sleep(600)
+  return s
+}))
+scene('shell-collapsed-desktop', async (theme) => open('/tasks', { theme, view: desktop, local: { 'kf.sidebarCollapsed': '1' } }))
+scene('shell-menu-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
+  await s.page.getByText('Pay the internet bill', { exact: true }).first().click({ button: 'right' })
+  await sleep(700)
+  return s
+}))
 
 // PROBE=<scene> PROBE_JS=<expression> runs one scene and prints what the expression returns (debugging).
 if (process.env.PROBE) {
