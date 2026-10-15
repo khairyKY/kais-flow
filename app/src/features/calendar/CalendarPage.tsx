@@ -26,7 +26,7 @@ import { cairoDateKey, scheduleTomorrow, tomorrowHint } from '../../lib/dateShor
 import { appZone } from '../../lib/appZone'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
-import { Checkbox } from '../../components/kit'
+import { Button, Checkbox } from '../../components/kit'
 import { dragGuard } from './dragGuard'
 import { resolveTag, formatDuration } from '../tasks/taskDisplay'
 import { useDomains } from '../domains/api'
@@ -289,7 +289,7 @@ function PlanButton({ title, onPlan }: { title: string; onPlan: (x: number, y: n
       tabIndex={0}
       aria-haspopup="menu"
       aria-label={`Plan ${title}`}
-      className="cal-plan-btn"
+      className="cal-plan-btn kf-button kf-button--secondary kf-press"
       ref={(el) => dragGuard(() => el && open(el))(el)}
       onKeyDown={(e) => {
         if (e.key !== 'Enter' && e.key !== ' ') return
@@ -875,25 +875,23 @@ function DesktopCalendar() {
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button type="button" className="cal-strip-pill" onClick={() => gridRef.current?.today()}>Today</button>
-            {stripDelta !== 0 && <button type="button" className="cal-strip-nav" aria-label="Previous day" onClick={() => gridRef.current?.prev()}>‹</button>}
-            <button type="button" className="cal-strip-nav" aria-label="Next day" onClick={() => gridRef.current?.next()}>›</button>
+            <Button variant="secondary" className="cal-strip-pill" onClick={() => gridRef.current?.today()}>Today</Button>
+            {stripDelta !== 0 && <Button variant="secondary" className="cal-strip-nav" aria-label="Previous day" onClick={() => gridRef.current?.prev()}>‹</Button>}
+            <Button variant="secondary" className="cal-strip-nav" aria-label="Next day" onClick={() => gridRef.current?.next()}>›</Button>
           </div>
         </>
       ) : (
         <>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <button type="button" className="cal-strip-nav" aria-label="Previous two days" onClick={() => gridRef.current?.prev()}>‹</button>
+            <Button variant="secondary" className="cal-strip-nav" aria-label="Previous two days" onClick={() => gridRef.current?.prev()}>‹</Button>
             <div className="cal-strip-range">{stripKeys.map((k) => `${dayName(k, { weekday: 'short' })} ${Number(k.slice(8))}`).join(' — ')}</div>
-            <button type="button" className="cal-strip-nav" aria-label="Next two days" onClick={() => gridRef.current?.next()}>›</button>
+            <Button variant="secondary" className="cal-strip-nav" aria-label="Next two days" onClick={() => gridRef.current?.next()}>›</Button>
           </div>
-          <button type="button" className="cal-strip-pill" onClick={() => gridRef.current?.today()}>Today</button>
+          <Button variant="secondary" className="cal-strip-pill" onClick={() => gridRef.current?.today()}>Today</Button>
         </>
       )}
     </div>
   )
-
-  const pillCircle = { width: 32, height: 32, padding: 0, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', background: 'none', font: 'inherit', color: 'var(--ink-muted)', cursor: 'pointer', flex: 'none' as const }
 
   return (
     <>
@@ -906,7 +904,7 @@ function DesktopCalendar() {
         /* Polish D: the folded rail — a strip with the sidebar's own round collapse button
            (AppLayout's .kf-collapse-btn look) and the rail's own mono label, read upward. */
         .cal-rail.is-folded { display: none; }
-        .cal-rail-tab { flex: none; width: 34px; border: none; border-right: 1px dashed var(--line-solid); background: none; padding: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; font: inherit; color: var(--ink-faint); }
+        .cal-rail-tab { flex: none; width: 34px; border: none; border-right: 1px solid var(--line-card); background: none; padding: 18px 0; display: flex; flex-direction: column; align-items: center; gap: 14px; cursor: pointer; font: inherit; color: var(--ink-faint); }
         .cal-rail-knob { flex: none; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 1px solid var(--line-card); background: var(--paper-parchment); box-shadow: var(--shadow-crisp); color: var(--ink-faint); font-size: 12px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
         .cal-rail-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
         .cal-rail-tab:hover .cal-rail-tab-label { color: var(--ink-muted); }
@@ -914,19 +912,21 @@ function DesktopCalendar() {
         .cal-rail-cards { display: flex; flex-direction: column; gap: 0; }
         /* Kai 2026-10-07: Overdue · Today · Inbox · Lists, each folding on its own header. */
         .cal-rail-secs { display: flex; flex-direction: column; gap: 10px; }
-        .cal-rail-sec-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 0; margin-bottom: 2px; border: none; background: none; cursor: pointer; font: inherit; font-family: var(--font-ui); font-size: 13px; font-weight: var(--fw-semibold); color: var(--ink-muted); text-align: left; }
+        .cal-rail-sec-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 0; margin-bottom: 2px; border: none; background: none; cursor: pointer; font: inherit; font-family: var(--font-ui); font-size: var(--fs-body-s); font-weight: var(--fw-semibold); color: var(--ink-muted); text-align: left; }
         .cal-rail-sec-head:hover { color: var(--ink-body); }
         .cal-rail-sec-head:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }
         .cal-rail-sec-count { margin-left: auto; color: var(--ink-faint); }
         /* Kai 2026-10-12: a block dragged over a section that takes it — the grid's own drop-target
            look (.fc-highlight). Overdue never takes one (it's computed), so it never lights. */
         .cal-rail-sec[data-drop-over]:not([data-section="overdue"]) { background: var(--fc-highlight-color, color-mix(in srgb, var(--acc-lavender) 16%, transparent)); outline: 1px dashed var(--acc-lavender); outline-offset: 3px; border-radius: 4px; }
-        .cal-plan-btn { margin-left: auto; flex: none; cursor: pointer; padding: 2px 7px; border: 1px solid var(--line-solid); border-radius: 999px; color: var(--ink-muted); }
-        .cal-plan-btn:hover { color: var(--ink-body); border-color: var(--ink-faint); }
-        .cal-plan-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+        /* Plan ▾ is the kit's B secondary (bone, no outline, 12px), sized for the one-line row. A hovered
+           row is bone too, so there the button steps up to parchment to keep its edge. */
+        .cal-head-nav.kf-button { width: 36px; padding: 9px 0; justify-content: center; }
+        .cal-plan-btn.kf-button { margin-left: auto; flex: none; gap: 4px; padding: 3px 9px; font-size: var(--fs-meta); }
+        .unscheduled-task:hover .cal-plan-btn.kf-button { background-color: var(--paper-parchment); }
         /* Motion 5b "drag lift" — the one grammar for every draggable, matching lib/motion's
            dragLift(): pick-up 140ms to scale 1.04 / +1.2deg under a 14/30 shadow, release
-           settles back over 320ms with the spring overshoot. The tilt composes via --kf-tilt.
+           settles back over 320ms with the spring overshoot. At rest a row never tilts (B, D7).
            Motion 4a hover/press rides the same transition. */
         /* Kai 2026-10-14 (Akiflow's list beside its calendar): one line per task — box · title ·
            project dot · length; Plan ▾ and ⋯ take the meta's place on hover or focus. No card, no
@@ -940,11 +940,10 @@ function DesktopCalendar() {
           padding: 3px 6px;
           margin: 0 -6px;
           border-radius: var(--radius-input);
-          transform: rotate(var(--kf-tilt, 0deg));
-          transition: transform 320ms var(--ease-spring), box-shadow 320ms var(--ease-out), background-color var(--dur-quick);
+          transition: transform 320ms var(--ease-spring);
         }
         @media (hover: hover) { .unscheduled-task:hover { background: var(--paper-bone); } }
-        .cal-row-title { flex: 1; min-width: 0; font-size: 13.5px; color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-row-title { flex: 1; min-width: 0; font-size: var(--fs-body-s); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cal-row-meta { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-meta); color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
         .cal-row-acts { flex: none; display: inline-flex; align-items: center; gap: 2px; }
         @media (hover: hover) {
@@ -955,7 +954,7 @@ function DesktopCalendar() {
         .motion-on .unscheduled-task:active {
           cursor: grabbing;
           opacity: 0.92;
-          transform: rotate(var(--kf-tilt, 0deg)) scale(1.04) rotate(1.2deg);
+          transform: scale(1.04) rotate(1.2deg);
           box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);
           transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
         }
@@ -1130,10 +1129,10 @@ function DesktopCalendar() {
               {/* Night 1c: the header daisy is a silhouette lit at the rim in lavender. */}
               <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 36, filter: 'var(--rim-lavender, var(--shadow-drop-sm))' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }}>
                   {`Week ${weekNumber(rangeInfo?.start ?? new Date())} · ${daisy.note}`}
                 </div>
-                <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 21, lineHeight: 1.05, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>
+                <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 'var(--fw-medium)', fontSize: 'var(--fs-display-m)', lineHeight: 1.05, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>
                   {rangeInfo ? rangeLabel(rangeInfo.start, rangeInfo.end, viewKind) : ''}
                 </h1>
               </div>
@@ -1141,43 +1140,29 @@ function DesktopCalendar() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
               {/* Punch 32 [K-26]: the ⚟ view-options trigger replaces the segmented control +
                   N-day cycler — view switching now lives in the popover's 1–6/W/M row. */}
-              <span
-                role="button"
+              {/* Bound Journal D11 = B: the header's controls are the kit's secondary button (bone, no outline, 12px). */}
+              <Button
+                variant="secondary"
                 aria-haspopup="dialog"
                 aria-expanded={viewOptsOpen}
                 // Stop the popover's document-level outside-mousedown from firing first —
                 // otherwise a trigger click while open closes-then-reopens (toggle never closes).
                 onMouseDown={(e) => e.stopPropagation()}
                 onClick={(e) => {
-                  const r = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                  const r = e.currentTarget.getBoundingClientRect()
                   setViewOptsAnchor({ x: r.right, y: r.bottom })
                   setViewOptsOpen((v) => !v)
                 }}
-                style={{
-                  padding: '0 14px',
-                  height: 32,
-                  border: '1px solid var(--line-solid)',
-                  borderRadius: 999,
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 7,
-                  fontFamily: 'var(--font-mono)',
-                  fontSize: 'var(--fs-meta)',
-                  letterSpacing: '0.1em',
-                  textTransform: 'uppercase',
-                  color: 'var(--ink-body)',
-                  cursor: 'pointer',
-                  userSelect: 'none',
-                }}
+                style={{ gap: 6, userSelect: 'none' }}
               >
                 {viewKind === 'day' ? 'Day' : viewKind === 'ndays' ? `${dayCount} days` : viewKind === 'week' ? 'Week' : 'Month'}
                 {/* Kai 2026-10-03: the ⚟ glyph read as "≤" — the kit's dropdown chevron, as the phone's title uses. */}
                 <Icon name="chevdown" size={14} style={{ color: 'var(--ink-muted)' }} />
-              </span>
+              </Button>
               {/* p7e A4: real buttons (Tab reaches them; the kit's press + focus ring), keys - t = beside them. */}
-              <button type="button" className="kf-press" aria-label="Previous" title="Previous (- or ←)" onClick={() => gridRef.current?.prev()} style={pillCircle}>‹</button>
-              <button type="button" className="kf-press" title="Today (t)" onClick={() => gridRef.current?.today()} style={{ padding: '0 14px', height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', background: 'none', font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', cursor: 'pointer' }}>Today</button>
-              <button type="button" className="kf-press" aria-label="Next" title="Next (= or →)" onClick={() => gridRef.current?.next()} style={pillCircle}>›</button>
+              <Button variant="secondary" className="cal-head-nav" aria-label="Previous" title="Previous (- or ←)" onClick={() => gridRef.current?.prev()}>‹</Button>
+              <Button variant="secondary" title="Today (t)" onClick={() => gridRef.current?.today()}>Today</Button>
+              <Button variant="secondary" className="cal-head-nav" aria-label="Next" title="Next (= or →)" onClick={() => gridRef.current?.next()}>›</Button>
             </div>
           </div>
           )}

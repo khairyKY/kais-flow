@@ -4,7 +4,8 @@
 /* ── The swollen rail (~60%) ── */
 .cal-plan { flex: 3; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 22px 28px 24px; border-right: 1px solid var(--line-solid); overflow-y: auto; }
 .cal-plan-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.cal-plan-hand { margin-top: 3px; font-family: var(--font-hand); font-size: var(--fs-hand-l); color: var(--ink-muted); }
+/* B (D7): handwriting lives on pages; on this tool the line is a quiet help sentence. */
+.cal-plan-hand { margin-top: 3px; font-family: var(--font-ui); font-size: var(--fs-caption); color: var(--ink-muted); }
 /* The kit Segmented, in the strip's mono — "All · Today · Overdue". */
 .cal-plan-tabs .kf-seg-btn { min-height: 26px; padding: 0 11px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta);}
 .cal-plan-sort { padding: 6px 0; border: none; background: none; cursor: pointer; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
@@ -46,14 +47,10 @@
 /* deviation(2026-10-13): 4b draws the range at 18px; at 1280 × the 125% default the strip is ~300px, so it
    reads at 16px on one line. */
 .cal-strip-range { white-space: nowrap; font-family: var(--font-display); font-weight: var(--fw-medium); font-size: var(--fs-body-l); line-height: 1; color: var(--ink-body); }
-.cal-strip-pill, .cal-strip-nav {
-  height: 28px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-solid); border-radius: var(--radius-pill);
-  background: none; cursor: pointer; font: inherit; color: var(--ink-body);
-}
-.cal-strip-pill { padding: 0 12px; font-size: var(--fs-caption); }
-.cal-strip-nav { width: 28px; padding: 0; color: var(--ink-muted); }
-.cal-strip-pill:focus-visible, .cal-strip-nav:focus-visible, .cal-plan-handle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-.cal-strip-grid { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--paper-linen); border: 1px solid var(--line-solid); border-radius: var(--radius-sharp); }
+/* Today and ‹ › are the kit's B secondary buttons (CalendarPage); the arrows are square. */
+.cal-strip-nav.kf-button { width: 34px; padding: 9px 0; justify-content: center; }
+.cal-plan-handle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.cal-strip-grid { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--paper-linen); border: 1px solid var(--line-solid); border-radius: var(--radius-card); }
 
 /* The toggle: three dots on the rail's right edge — click (or drag the rail past the middle) to plan;
    on the strip's left edge in planning mode — click (or drag it back) to leave. 48px hit area. */
@@ -69,7 +66,8 @@
 
 /* A free stretch on the strip: dashed sage, "2H FREE" (FullCalendar background events). */
 .fc .fc-bg-event.kf-free { background: none; opacity: 1; border: 1px dashed var(--acc-sage); border-radius: var(--radius-block); margin: 0 8px 0 6px; display: flex; align-items: center; justify-content: center; }
-.fc .fc-bg-event.kf-free .kf-free-label { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono-tight); color: var(--acc-sage-text); }
+/* Inside the grid's zoom: scaled with it (--s-text), like the grid's own metadata. */
+.fc .fc-bg-event.kf-free .kf-free-label { font-family: var(--font-mono); font-size: calc(var(--fs-meta) * var(--s-text)); letter-spacing: var(--ls-meta); color: var(--acc-sage-text); }
 /* The strip's day row (4b): "FRI · TODAY" in mono, no daisy. */
-.fc .cal-strip-dayhead { padding: 6px 0; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-mono-tight); color: var(--ink-faint); text-align: center; }
+.fc .cal-strip-dayhead { padding: 6px 0; font-family: var(--font-mono); font-size: calc(var(--fs-meta) * var(--s-text)); letter-spacing: var(--ls-meta); color: var(--ink-faint); text-align: center; }
 .fc .cal-strip-dayhead.is-today { color: var(--acc-lavender-text); }
