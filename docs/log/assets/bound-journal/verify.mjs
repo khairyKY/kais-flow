@@ -443,6 +443,8 @@ scene('shell-sync-desktop', then({ route: '/tasks', view: desktop }, async (s) =
   return s
 }))
 scene('shell-collapsed-desktop', async (theme) => open('/tasks', { theme, view: desktop, local: { 'kf.sidebarCollapsed': '1' } }))
+// A 1280×800 laptop at the default 125%: 640 layout px of sidebar — Tend's five rows must stay in view.
+scene('shell-sidebar-1280', async (theme) => open('/today', { theme, view: { viewport: { width: 1280, height: 800 } } }))
 scene('shell-menu-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
   await s.page.getByText('Pay the internet bill', { exact: true }).first().click({ button: 'right' })
   await sleep(700)

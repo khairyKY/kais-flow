@@ -760,6 +760,10 @@ export function AppLayout() {
           .app-sidebar:not(.collapsed) .app-sidebar-col { padding-top: 16px !important; }
           .app-sidebar:not(.collapsed) .app-sidebar-header { padding-bottom: 12px !important; }
           .app-sidebar:not(.collapsed) nav > .app-nav-label { padding-top: 6px !important; }
+          /* Bound Journal's 12px meta and rounded rows cost the column a few px: Projects ran 2px under the
+             fold at 1280×800 (640 layout px). The nav rows step from 8 to 6px of vertical padding here (35px,
+             a mouse target; phones never see the sidebar), which keeps all of Tend in view. */
+          .app-sidebar:not(.collapsed) nav .kf-side-row { padding-top: 6px !important; padding-bottom: 6px !important; }
           .app-sidebar:not(.collapsed) .app-vine { margin-bottom: 4px; padding-top: 6px; line-height: 1.25; }
           .app-sidebar:not(.collapsed) .app-sidebar-footer { padding-bottom: 8px !important; }
           .app-vine img { height: 28px; }
