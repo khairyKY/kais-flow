@@ -133,7 +133,7 @@ export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; met
             e.preventDefault()
             menu.open(d.id, { x: e.clientX, y: e.clientY })
           }}
-          style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)', background: menu.activeId === d.id ? 'var(--select-bg)' : undefined, borderRadius: 4, ...rowStyle }}
+          style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', background: menu.activeId === d.id ? 'var(--select-bg)' : undefined, borderRadius: 'var(--radius-input)', ...rowStyle }}
         >
           {dot(d.color ?? DEFAULT_DOT, 7)}
           <span style={{ flex: 1, minWidth: 0 }}>
