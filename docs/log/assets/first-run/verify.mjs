@@ -446,17 +446,18 @@ for (const view of ['day', 'night', 'desktop']) {
     await tap(env, start)
     await page.waitForURL('**/today', { timeout: 5000 }).catch(() => {})
     // The outbox writes behind; give it until every write has landed (or 8s).
-    for (let i = 0; i < 40 && !(env.state.rows.tasks.length === 3 && env.state.rows.tasks.every((t) => t.top3) && env.state.rows.app_settings[0].onboarded_at); i++) await sleep(200)
+    for (let i = 0; i < 40 && !(env.state.rows.tasks.length === 3 && env.state.rows.tasks.filter((t) => t.top3).length === 2 && env.state.rows.app_settings[0].onboarded_at); i++) await sleep(200)
     await sleep(400)
     const tasks = env.state.rows.tasks
     const byTitle = Object.fromEntries(tasks.map((t) => [t.title, t]))
     check(`${name} Start → Today`, page.url().endsWith('/today'), page.url())
-    check(`${name} three tasks, every one Top 3`, tasks.length === 3 && tasks.every((t) => t.top3 === true), JSON.stringify(tasks.map((t) => [t.title, t.top3])))
+    // v1.1.10: Top 3 is today's — the tomorrow line keeps its day (as its chip said) and isn't starred.
+    check(`${name} three tasks; today's two are the Top 3, tomorrow's waits for tomorrow`, tasks.length === 3 && byTitle['Finish the flow audit']?.top3 === true && byTitle.Gym?.top3 === true && byTitle['Call the tyre supplier']?.top3 === false, JSON.stringify(tasks.map((t) => [t.title, t.top3])))
     check(`${name} date words left the title and stayed as the date`, byTitle['Call the tyre supplier']?.due_at === '2026-09-28T12:00:00.000Z' && byTitle['Finish the flow audit']?.due_at === null && byTitle.Gym?.due_at === null, JSON.stringify(tasks.map((t) => [t.title, t.due_at])))
     const settings = env.state.rows.app_settings[0]
     check(`${name} name saved, onboarded`, settings.display_name === 'Kai' && !!settings.onboarded_at, JSON.stringify(settings))
     const body = await page.locator('body').innerText()
-    check(`${name} Today lists the three`, ['Call the tyre supplier', 'Finish the flow audit', 'Gym'].every((t) => body.includes(t)))
+    check(`${name} Today lists today's two`, ['Finish the flow audit', 'Gym'].every((t) => body.includes(t)))
     await shot(page, name)
     check(`${name} no page errors`, env.errors.length === 0, env.errors.join(' | '))
     await env.ctx.close()
