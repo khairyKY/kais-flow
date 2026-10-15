@@ -15,7 +15,8 @@
 .lp-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lp-count { flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
 .lp-mark { flex: none; width: 14px; display: inline-flex; justify-content: center; color: var(--acc-terra); }
-.lp-sq { flex: none; width: 10px; height: 10px; border-radius: var(--radius-sharp); }
+/* A label's colour is a square (a place's is a dot): kept square-cornered, not the 16px card corner --radius-sharp now carries. */
+.lp-sq { flex: none; width: 10px; height: 10px; border-radius: 3px; }
 .lp-rule { height: 1px; margin: 4px 8px; background: var(--line-dashed); }
 .lp-mi.is-create { color: var(--acc-terra-ink); }
 .lp-plus { flex: none; width: 16px; text-align: center; }
@@ -30,7 +31,7 @@
 .lp-sheet-rows .lp-sq { width: 12px; height: 12px; }
 
 /* ── manager ── */
-.lm { min-width: 0; overflow: hidden; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-md); box-shadow: var(--shadow-panel); }
+.lm { min-width: 0; overflow: hidden; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); box-shadow: var(--shadow-panel); }
 .lm-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 18px; border-bottom: 1px solid var(--line-dashed); }
 .lm-title { display: inline; margin: 0; font-family: var(--font-display); font-size: var(--fs-lead); font-weight: var(--fw-medium); letter-spacing: var(--ls-display); color: var(--ink-body); }
 .lm-total { margin-left: 9px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
@@ -43,7 +44,7 @@
 .lm-input { width: 100%; box-sizing: border-box; padding: 6px 10px; border: 1px solid var(--acc-lavender); border-radius: var(--radius-input); outline: none;
   background: var(--paper-parchment); font: inherit; font-size: var(--fs-body); color: var(--ink-body); caret-color: var(--acc-terra); }
 .lm-swatches { display: flex; align-items: center; gap: 8px; margin-top: 11px; }
-.lm-swatch { width: 18px; height: 18px; padding: 0; border: none; border-radius: var(--radius-sharp); cursor: pointer; }
+.lm-swatch { width: 18px; height: 18px; padding: 0; border: none; border-radius: 3px; cursor: pointer; }
 .lm-swatch[aria-pressed='true'] { outline: 2px solid var(--paper-parchment); box-shadow: 0 0 0 3.5px currentColor; }
 .lm-swatch:focus-visible { outline: 2px solid var(--paper-parchment); box-shadow: var(--focus-ring); }
 .lm-save { margin-left: auto; padding: 6px 0; border: none; background: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta);
@@ -51,7 +52,8 @@ color: var(--acc-terra-ink); cursor: pointer; }
 .lm-bare { margin: 0 -20px; }
 .lm-new { display: flex; align-items: center; width: 100%; min-height: var(--row-min); padding: 0 18px; border: none; border-bottom: 1px solid var(--line-dashed);
   background: none; font: inherit; font-size: var(--fs-body); text-align: left; color: var(--acc-terra-ink); cursor: pointer; }
-.lm-foot { padding: 12px 18px; font-family: var(--font-hand); font-size: var(--fs-hand); color: var(--ink-hand); }
+/* D7: handwriting is for pages — the panel's closing line is the interface face. */
+.lm-foot { padding: 12px 18px; font-size: var(--fs-caption); color: var(--ink-muted); }
 .lm-empty { padding: 14px 18px; font-size: var(--fs-caption); font-style: italic; color: var(--ink-faint); border-bottom: 1px solid var(--line-dashed); }
 
 @media (max-width: 767px) {
