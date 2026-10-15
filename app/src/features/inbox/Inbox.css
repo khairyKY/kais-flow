@@ -32,11 +32,13 @@
 .ib-link { color: inherit; text-decoration: underline; text-decoration-color: var(--line-control); }
 .ib-link:hover { color: var(--ink-body); }
 .ib-mono { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta);}
-.ib-rule { flex: 1; height: 1px; border-bottom: 1px solid var(--line-dashed); }
-.ib-hand { font-family: var(--font-hand); font-size: var(--fs-hand); color: var(--ink-hand, #7a745f); }
+/* A quiet note under a view (was Caveat, .ib-hand): Bound Journal D7 keeps handwriting to pages, so it is
+   the interface face, the first letter raised as .kf-help does for copy written lower-case. */
+.ib-note { font-size: var(--fs-body-s); color: var(--ink-muted); text-wrap: pretty; }
+.ib-note::first-letter { text-transform: uppercase; }
 
 /* ── Triage card (3a cards 1–2): flat — no tilt. Ringed = the search match or the keyboard focus. ── */
-.ib-card { position: relative; overflow: hidden; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-sharp);
+.ib-card { position: relative; overflow: hidden; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card);
   box-shadow: var(--shadow-crisp); padding: 18px var(--sp-5); outline: none;
   transition: opacity 200ms var(--ease-out), transform var(--dur-quick) var(--ease-out); }
 .ib-card.is-ringed, .ib-row.is-ringed, .ib-gh.is-ringed, .ib-drow.is-ringed { outline: 2px solid color-mix(in srgb, var(--acc-hydrangea) 55%, transparent); outline-offset: 2px; }
@@ -83,7 +85,7 @@
 
 /* ── Compact row (3a card 3): a capture with nothing to decide but File. ── */
 .ib-row { position: relative; display: flex; align-items: center; gap: 14px; padding: 14px var(--sp-5); background: var(--paper-parchment);
-  border: 1px solid var(--line-card); border-radius: var(--radius-sharp); outline: none; }
+  border: 1px solid var(--line-card); border-radius: var(--radius-card); outline: none; }
 .ib-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 0; border: none; background: none; font: inherit; text-align: left; color: inherit; cursor: pointer; }
 .ib-row-text { font-size: var(--fs-body); color: var(--ink-body); overflow-wrap: anywhere; }
 .ib-suggest { font-size: var(--fs-caption); color: var(--acc-hydrangea-deep); white-space: nowrap; }
@@ -93,8 +95,9 @@
 .ib-gh-head { display: flex; align-items: center; gap: var(--sp-3); margin-bottom: var(--sp-1); }
 /* Priority Low (Settings 2a): the GitHub letters wait folded under their heading. */
 .ib-gh-fold { padding: 0; border: none; background: none; font-family: inherit; text-decoration: underline; cursor: pointer; }
-.ib-gh-label { font-family: var(--font-mono); font-size: var(--fs-mono-l); letter-spacing: var(--ls-mono); color: var(--ink-muted); white-space: nowrap; }
-.ib-gh { display: flex; align-items: center; gap: 14px; padding: var(--sp-3) var(--sp-1); border-bottom: 1px solid var(--line-dashed); outline: none; border-radius: var(--radius-sharp); }
+/* D6 (Bound Journal): a section label — 14px semibold ink, no rule running after it. */
+.ib-gh-label { font-size: var(--fs-section); font-weight: var(--fw-semibold); color: var(--ink-body); white-space: nowrap; }
+.ib-gh { display: flex; align-items: center; gap: 14px; padding: var(--sp-3) var(--sp-1); border-bottom: 1px solid var(--line-dashed); outline: none; border-radius: var(--radius-input); }
 .ib-gh-sec > :last-child .ib-gh, .ib-gh-sec > .ib-gh:last-child { border-bottom: none; }
 .ib-gh-num { font-family: var(--font-mono); font-size: var(--fs-mono-l); color: var(--acc-sage-text); min-width: 40px; text-decoration: none; white-space: nowrap; }
 a.ib-gh-num:hover { text-decoration: underline; }
@@ -104,7 +107,7 @@ a.ib-gh-num:hover { text-decoration: underline; }
 
 /* ── Already-resolved deep-link target ── */
 .ib-resolved { display: flex; align-items: center; gap: 10px; padding: 13px 19px; background: var(--paper-bone); border: 1px dashed var(--line-solid);
-  border-radius: var(--radius-sharp); opacity: 0.85; box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc-hydrangea) 30%, transparent); }
+  border-radius: var(--radius-card); opacity: 0.85; box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc-hydrangea) 30%, transparent); }
 .ib-resolved-tick { width: 15px; height: 15px; flex: none; border-radius: var(--radius-sharp); background: var(--ink-hairline); color: var(--paper-parchment);
   font-size: var(--fs-meta); display: inline-flex; align-items: center; justify-content: center; }
 .ib-resolved-tick[data-filed] { background: var(--sig-done); }
@@ -119,9 +122,12 @@ a.ib-gh-num:hover { text-decoration: underline; }
 .ib-dbar-act { padding: 6px 0; border: none; background: none; cursor: pointer; color: var(--ink-muted); }
 .ib-dbar-act:hover { text-decoration: underline; }
 .ib-dbar-sep { width: 1px; height: 14px; background: var(--line-dashed); }
-.ib-group-head { display: flex; align-items: center; gap: 14px; margin: 22px 0 var(--sp-1); font-family: var(--font-mono); font-size: var(--fs-meta-l);
-  letter-spacing: var(--ls-mono); color: var(--ink-muted); white-space: nowrap; }
-.ib-drow { display: flex; align-items: center; gap: 13px; padding: var(--sp-3) 10px; margin: 0 -10px; border-radius: var(--radius-input); border-bottom: 1px solid var(--line-dashed); outline: none; }
+/* D6: a section label; its count sits quiet on the right. */
+.ib-group-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 22px 0 var(--sp-1); font-size: var(--fs-section);
+  font-weight: var(--fw-semibold); color: var(--ink-body); white-space: nowrap; }
+.ib-group-count { font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: var(--fw-regular); color: var(--ink-faint); }
+/* Stacked rows with a hairline between them stay square (DS B .row+.row): a 12px corner bent the hairline's ends. */
+.ib-drow { display: flex; align-items: center; gap: 13px; padding: var(--sp-3) 10px; margin: 0 -10px; border-bottom: 1px solid var(--line-dashed); outline: none; }
 .ib-drow-x { width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--paper-bone); display: inline-flex; align-items: center; justify-content: center;
   color: var(--ink-muted); font-size: var(--fs-mono-l); }
 .ib-drow-text { font-size: var(--fs-body); line-height: 1.4; color: var(--ink-muted); overflow-wrap: anywhere; }
@@ -185,7 +191,6 @@ a.ib-gh-num:hover { text-decoration: underline; }
   .ib-row-text { font-size: var(--fs-body); }
   .ib-row .ib-meta { white-space: normal; }
   .ib-row .kf-button.ib-btn--sm { min-height: 36px; height: 36px; }
-  .ib-gh-label { font-size: var(--fs-mono); letter-spacing: var(--ls-mono); }
   .ib-gh { min-height: 48px; padding: 0; gap: 10px; }
   .ib-gh-title { font-size: var(--fs-body-s); }
   .ib-gh-more .kf-button.ib-btn--sm { min-height: 40px; height: 40px; }
