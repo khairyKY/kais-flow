@@ -265,7 +265,7 @@ if (ONLY.includes('3')) {
   for (const theme of ['day', 'night']) {
     const name = `3-first-today-desktop-${theme}`
     const { ctx, page, errors } = await open('/today', { tasks: three }, { view: desktop, theme, now: '07:40', init: { [FLAG]: '1' } })
-    check(`${name} the hint under the Day card, in the interface face`, (await text(hint(page))) === HINT && (await handFont(page)) && (await below(page, '.kf-daycard-slot')))
+    check(`${name} the hint under the Day card, in the interface face`, (await text(hint(page))) === HINT && (await handFont(page)) && (await below(page, '.td-now'))) // Today 2a: the Day card is the Now card
     await shot(page, name)
     await page.mouse.click(1200, 680)
     await sleep(300)

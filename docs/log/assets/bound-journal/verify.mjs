@@ -213,6 +213,33 @@ for (const [n, route] of [['today', '/today'], ['journal', '/journal'], ['herbar
   scene(`screen-${n}-desktop`, async (theme) => open(route, { theme, view: desktop }))
 }
 
+// ── bj-today: Today below the fold and in the evening, Focus, the rituals, the weekly review ──
+scene('bj-today-scrolled-phone', async (theme) => {
+  const s = await open('/today', { theme })
+  await s.page.evaluate(() => document.querySelector('.app-main-content')?.scrollTo(0, 640))
+  await sleep(400)
+  return s
+})
+for (const [n, view] of [['phone', phone], ['desktop', desktop]]) {
+  scene(`bj-today-evening-${n}`, async (theme) => open('/today', { theme, view, at: cairo('19:30') }))
+  scene(`bj-focus-${n}`, async (theme) => open('/focus', { theme, view }))
+  scene(`bj-review-${n}`, async (theme) => open('/weekly-review', { theme, view }))
+  scene(`bj-plan-${n}`, async (theme) => open('/today?ritual=morning', { theme, view }))
+  scene(`bj-shutdown-${n}`, async (theme) => open('/today?ritual=evening', { theme, view }))
+}
+scene('bj-focus-settings-desktop', async (theme) => {
+  const s = await open('/focus', { theme, view: desktop })
+  await s.page.locator('[title="pomodoro settings"], [aria-label="Pomodoro settings"]').first().click()
+  await sleep(600)
+  return s
+})
+scene('bj-garden-desktop', async (theme) => {
+  const s = await open('/focus', { theme, view: desktop })
+  await s.page.getByText('Open the garden →').first().click()
+  await sleep(900)
+  return s
+})
+
 // ── calendar formats ──
 for (const v of ['day', '3day', 'week']) {
   scene(`cal-${v}-desktop`, async (theme) => open('/calendar', { theme, view: desktop, calView: v }))
@@ -294,33 +321,6 @@ scene('cal-create-phone', async (theme) => {
 scene('cal-unscheduled-phone', async (theme) => {
   const s = await open('/calendar', { theme, calView: 'day' })
   await s.page.locator('button', { hasText: /^Today\s*1$/ }).first().click()
-  await sleep(900)
-  return s
-})
-
-// ── bj-today: Today below the fold and in the evening, Focus, the rituals, the weekly review ──
-scene('bj-today-scrolled-phone', async (theme) => {
-  const s = await open('/today', { theme })
-  await s.page.evaluate(() => document.querySelector('.app-main-content')?.scrollTo(0, 640))
-  await sleep(400)
-  return s
-})
-for (const [n, view] of [['phone', phone], ['desktop', desktop]]) {
-  scene(`bj-today-evening-${n}`, async (theme) => open('/today', { theme, view, at: cairo('19:30') }))
-  scene(`bj-focus-${n}`, async (theme) => open('/focus', { theme, view }))
-  scene(`bj-review-${n}`, async (theme) => open('/weekly-review', { theme, view }))
-  scene(`bj-plan-${n}`, async (theme) => open('/today?ritual=morning', { theme, view }))
-  scene(`bj-shutdown-${n}`, async (theme) => open('/today?ritual=evening', { theme, view }))
-}
-scene('bj-focus-settings-desktop', async (theme) => {
-  const s = await open('/focus', { theme, view: desktop })
-  await s.page.locator('[title="pomodoro settings"], [aria-label="Pomodoro settings"]').first().click()
-  await sleep(600)
-  return s
-})
-scene('bj-garden-desktop', async (theme) => {
-  const s = await open('/focus', { theme, view: desktop })
-  await s.page.getByText('Open the garden →').first().click()
   await sleep(900)
   return s
 })
