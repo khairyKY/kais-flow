@@ -333,3 +333,10 @@ button.kf-capture.kf-press {
   letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
 }
+
+/* The voice sheet's filled button: the kit's primary shape (D11 = B), in the sheet's ink, not terra —
+   the terra mic sits right above it. */
+.kf-button--cta.kf-voice-ink {
+  background-color: var(--ink-body);
+  color: var(--paper-parchment);
+}

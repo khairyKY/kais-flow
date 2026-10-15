@@ -81,7 +81,7 @@ const UNITS: { value: RepeatUnit; label: string }[] = [
   { value: 'month', label: 'Months' },
   { value: 'year', label: 'Years' },
 ]
-const LABEL = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' } as const
+const LABEL = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' } as const
 const ROW = { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 } as const
 
 function Field({ label, children }: { label: string; children: ReactNode }) {

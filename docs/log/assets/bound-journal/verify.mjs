@@ -134,10 +134,11 @@ async function open(route, o = {}) {
     localStorage.setItem('sb-127-auth-token', sess)
     for (const [k, v] of Object.entries(local)) localStorage.setItem(k, v)
   }, [o.theme ?? 'day', JSON.stringify(session), o.local ?? {}, UID])
-  const rows = tables(o)
+  const rows = { ...tables(o), ...structuredClone(o.rows ?? {}) } // o.rows: a scene's own tables over the day's
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
     const url = new URL(req.url())
+    if (o.search && url.pathname === '/functions/v1/search') return r.fulfill({ json: { results: o.search } })
     const table = url.pathname.replace('/rest/v1/', '')
     if (req.method() !== 'GET' && req.method() !== 'HEAD') return r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
     if (url.pathname.startsWith('/auth/v1/user')) return r.fulfill({ json: user })
@@ -314,6 +315,64 @@ scene('cal-google-desktop', async (theme) => {
 scene('cal-new-desktop', async (theme) => open('/new?kind=event', { theme, view: desktop }))
 scene('cal-new-task-desktop', async (theme) => open('/new?kind=task', { theme, view: desktop }))
 scene('cal-task-editor-desktop', async (theme) => open(`/tasks/${id('1', 2)}`, { theme, view: desktop }))
+
+// ── bj-tasks: the tools — Tasks, Inbox, the command bar and capture, Search, labels. Their own rows
+// (labels, someday tasks, an inbox) ride o.rows, so the screens above keep the day as it was. ──
+const LABELLED = TASKS.map((t) => (t.id === id('1', 2) ? { ...t, labels: ['deep work', 'study'], priority: 1 } : t.id === id('1', 9) ? { ...t, labels: ['launch'], recurrence_rule: 'FREQ=WEEKLY' } : t))
+const SOMEDAY = [task(60, 'Learn to bake sourdough', { someday: true }), task(61, 'Plan a trip to Siwa', { someday: true, project_id: SITE.id, domain_id: SHAHEEN.id })]
+const ib = (n, o) => ({ id: id('a', n), user_id: UID, kind: 'text', raw_text: '', transcript: null, ai_parse: null, confidence: null, status: 'pending', filed_task_id: null, payload: null, snoozed_until: null, external_ref: null, deleted_at: null, created_at: iso('09:00', 13), updated_at: iso('09:00', 13), ...o })
+const INBOX = [
+  ib(1, { kind: 'voice', raw_text: 'Call Omar re: pricing Saturday 3pm', confidence: 0.87, created_at: iso('21:14', 12), ai_parse: { kind: 'task', title: 'Call Omar about pricing', cleaned_text: 'Call Omar about pricing Saturday 3pm', confidence: 0.87, project_id: SITE.id, domain_id: SHAHEEN.id, due_at: iso('15:00', 17), has_time: true } }),
+  ib(2, { raw_text: 'that thing salma said about the balcony plants', confidence: 0.44, created_at: iso('19:00', 13), ai_parse: { kind: 'note', title: 'Balcony plants from Salma', cleaned_text: 'That thing Salma said about the balcony plants', confidence: 0.44 } }),
+  ib(3, { kind: 'email', raw_text: 'renew hosting before the 15th', confidence: 0.9, created_at: iso('08:30', 14), ai_parse: { kind: 'task', title: 'Renew hosting before the 15th', cleaned_text: 'renew hosting before the 15th', confidence: 0.9, due_at: iso('09:00', 15), has_time: false } }),
+  ib(4, { kind: 'github_issue', raw_text: 'Checkout drops the coupon field on mobile Safari', created_at: iso('09:00', 12), payload: { repo: 'Shaheen/website', number: 482, url: 'https://github.com/Shaheen/website/issues/482', node_id: 'I_482', created_at: iso('09:00', 12), updated_at: iso('09:00', 13) } }),
+  ib(5, { raw_text: 'look at the new tyre quote', snoozed_until: iso('09:00', 16) }),
+  ib(11, { raw_text: 'maybe a second monitor', status: 'dismissed', updated_at: iso('08:00') }),
+  ib(12, { kind: 'voice', raw_text: 'maybe try oat milk in the cortado', status: 'dismissed', updated_at: iso('10:00', 11) }),
+]
+const hit = (entity_type, entity_id, title, snippet, score) => ({ entity_type, entity_id, title, snippet, score })
+const SEARCH = [
+  hit('task', id('1', 3), 'Reply to Omar about Thursday', '', 2.01), hit('calendar_event', id('e', 4), 'Call with Omar', null, 2.0),
+  hit('inbox_item', id('a', 1), 'Call Omar re: pricing Saturday 3pm', 'Call Omar re: pricing Saturday 3pm', 1.5), hit('project', SITE.id, 'Shaheen Website', null, 0.5),
+]
+const TOOLS = { tasks: [...LABELLED, ...SOMEDAY], inbox_items: INBOX }
+const tool = (route, o = {}) => (theme) => open(route, { theme, rows: TOOLS, ...o })
+const after = async (s, fn, ms = 700) => { await fn(s.page); await sleep(ms); return s }
+for (const [n, route] of [['all', '/tasks?list=all'], ['overdue', '/tasks?list=overdue'], ['someday', '/tasks?list=someday'], ['done', '/tasks?list=done']]) {
+  scene(`bjt-tasks-${n}-desktop`, tool(route, { view: desktop }))
+  scene(`bjt-tasks-${n}-phone`, tool(route))
+}
+const DS_ROW = 'Finish the Data Structures sheet'
+scene('bjt-select-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => { for (const n of [0, 1]) await p.locator('.tr-select').nth(n).click({ force: true }) }))
+scene('bjt-select-phone', async (theme) => after(await tool('/tasks')(theme), async (p) => {
+  await p.getByRole('button', { name: `More actions for "${DS_ROW}"` }).click()
+  await sleep(500)
+  await p.getByRole('button', { name: /^Select/ }).first().click()
+}))
+scene('bjt-menu-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), (p) => p.locator('.task-row', { hasText: DS_ROW }).first().click({ button: 'right' })))
+scene('bjt-popover-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), (p) => p.getByText(DS_ROW, { exact: true }).first().click()))
+scene('bjt-sheet-phone', async (theme) => after(await tool('/tasks')(theme), (p) => p.getByText(DS_ROW, { exact: true }).first().click(), 1000))
+scene('bjt-editor-desktop', tool(`/tasks/${id('1', 2)}`, { view: desktop }))
+scene('bjt-labels-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => { await p.keyboard.press('j'); await p.keyboard.press('l') }))
+scene('bjt-labelmgr-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => {
+  await p.getByRole('button', { name: 'Label filter' }).click()
+  await p.getByRole('option', { name: 'Manage labels…' }).click()
+}))
+scene('bjt-inbox-desktop', tool('/inbox', { view: desktop }))
+scene('bjt-inbox-phone', tool('/inbox'))
+scene('bjt-dismissed-desktop', async (theme) => after(await tool('/inbox', { view: desktop })(theme), (p) => p.locator('.ib-toggle').getByRole('button', { name: /Dismissed/ }).click()))
+scene('bjt-snoozed-desktop', async (theme) => after(await tool('/inbox', { view: desktop })(theme), (p) => p.getByRole('button', { name: /1 snoozed/ }).click()))
+scene('bjt-cmdk-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => { await p.keyboard.press('Control+k'); await sleep(300); await p.keyboard.type('call omar tomorrow 3pm #shaheen 30m') }))
+scene('bjt-capture-phone', async (theme) => after(await tool('/today')(theme), (p) => p.locator('.kf-capture').tap(), 1500))
+scene('bjt-voice-phone', async (theme) => after(await tool('/today', { local: { 'kf-voice-limit-day': JSON.stringify({ day: '2026-10-14', uid: UID }) } })(theme), async (p) => {
+  const b = await p.locator('.kf-capture').boundingBox() // a hold with the voice allowance used up: the sheet's resting state
+  await p.mouse.move(b.x + b.width / 2, b.y + b.height / 2)
+  await p.mouse.down()
+  await sleep(700)
+  await p.mouse.up()
+}, 1000))
+scene('bjt-search-desktop', tool('/search?q=omar', { view: desktop, search: SEARCH }))
+scene('bjt-search-phone', tool('/search?q=omar', { search: SEARCH }))
 
 // PROBE=<scene> PROBE_JS=<expression> runs one scene and prints what the expression returns (debugging).
 if (process.env.PROBE) {

@@ -19,7 +19,8 @@ import { DURATIONS, dayShort, durationLabel } from '../../components/pickerMath'
 import { priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { useIsMobile } from '../../components/BottomSheet'
 import { EmptyState, ErrorCard, OfflineChip, Skeleton } from '../../components/States'
-import { BackLink, Button, Checkbox, KeyCombo, Segmented, Toggle } from '../../components/kit'
+import { BackLink, Button, Checkbox, KeyCombo, SectionLabel, Segmented, Toggle } from '../../components/kit'
+import { filterChip } from '../../components/filterChip'
 import { FLabel, FHelp, DateInput, TimeInput } from './formFields'
 import type { Task } from '../../lib/types'
 
@@ -136,7 +137,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <BackLink to="/tasks">Tasks</BackLink>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
           Created {day(task.created_at)}
           {task.updated_at !== task.created_at && ` · edited ${editedWord === 'Today' || editedWord === 'Tomorrow' ? editedWord.toLowerCase() : editedWord} ${zoneTimeKey(edited, zone)}`}
         </span>
@@ -207,13 +208,10 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
 
           {(linkedEvent || linkedInbox) && (
             <>
-              {/* B (D6): a label with no dashed rule after it. */}
-              <div style={{ margin: '26px 0 10px' }}>
-                <span style={FLabelInline}>Linked</span>
-              </div>
+              <SectionLabel style={{ margin: '26px 0 10px' }}>Linked</SectionLabel>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {linkedEvent && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-lavender) 16%, transparent)', borderLeft: '3px solid var(--acc-lavender)', borderRadius: 'var(--radius-input)', padding: '9px 13px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-lavender) 16%, transparent)', borderLeft: '3px solid var(--acc-lavender)', borderRadius: 'var(--radius-block)', padding: '9px 13px' }}>
                     <span style={{ ...LINK, color: 'var(--acc-lavender-text)' }}>
                       Block · {day(linkedEvent.starts_at).slice(0, 3)} {zoneTimeKey(new Date(linkedEvent.starts_at), zone)}–{zoneTimeKey(new Date(linkedEvent.ends_at), zone)}
                     </span>
@@ -253,9 +251,9 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
               Only for open tasks: nothing to focus on once it's done. */}
           {task.status === 'todo' && <MiniFocus task={task} />}
 
-          {/* B (D1, D4, D7): Organize and Schedule are tool cards — 16px, flat, no tape, no tilt. */}
-          <div style={TOOL_CARD}>
-            <div style={{ ...FLabelInline, marginBottom: 12 }}>Organize</div>
+          {/* Bound Journal (D1 · D3 · D4 · D7): a side card is a tool — 16px, flat, a hairline; Editor.dc.html's tape and tilt are for pages. */}
+          <div style={SIDE_CARD}>
+            <SectionLabel style={{ marginBottom: 12 }}>Organize</SectionLabel>
             <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Project or area</FLabel>
             {/* "Move to…" (tasks/MovePicker): a project, an area or a domain — the domain follows (move.ts
                 placeTask) — or a new project. */}
@@ -266,23 +264,20 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
                 chip opens it, where a tap adds or takes a label off and a new one can be made. */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {task.labels.map((l) => (
-                <button key={l} type="button" aria-label={`Labels: ${l}`} aria-haspopup="menu" onClick={(e) => open('labels', e)} style={{ ...chipStyle, cursor: 'pointer' }}>
+                <button key={l} type="button" aria-label={`Labels: ${l}`} aria-haspopup="menu" onClick={(e) => open('labels', e)} {...chip(false)}>
                   *{l}
                 </button>
               ))}
-              <button type="button" aria-haspopup="menu" onClick={(e) => open('labels', e)} style={{ ...chipStyle, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', background: 'none', cursor: 'pointer' }}>
+              <button type="button" aria-haspopup="menu" onClick={(e) => open('labels', e)} {...chip(false, true)}>
                 + Label
               </button>
             </div>
           </div>
 
-          <div style={TOOL_CARD}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={FLabelInline}>Schedule</span>
-              {/* The Plan list (tasks/PlanMenu): Today, Next free slot, Tomorrow, This weekend, Next week, Pick… */}
-              {/* B (D11): a secondary action — the kit's secondary button. */}
-              <Button variant="secondary" onClick={(e) => open('date', e)} style={{ padding: '5px 10px' }}>Plan ▾</Button>
-            </div>
+          <div style={SIDE_CARD}>
+            {/* The Plan list (tasks/PlanMenu): Today, Next free slot, Tomorrow, This weekend, Next week, Pick… —
+                the kit's secondary button (D11 = B; D13's tonal terra is still open). */}
+            <SectionLabel style={{ marginBottom: 12 }} action={<Button variant="secondary" style={{ padding: '6px 12px' }} onClick={(e) => open('date', e)}>Plan ▾</Button>}>Schedule</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
               <div>
                 <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Due date</FLabel>
@@ -304,7 +299,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
                   type="button"
                   aria-pressed={task.duration_min === m}
                   onClick={() => actions.duration?.(m)}
-                  style={{ ...chipStyle, cursor: 'pointer', background: 'none', ...(task.duration_min === m ? { background: 'var(--sel-bg)', color: 'var(--sel-ink)', borderColor: 'var(--sel-bg)' } : {}) }}
+                  {...chip(task.duration_min === m)}
                 >
                   {m ? durationLabel(m) : 'None'}
                 </button>
@@ -317,7 +312,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
             <Field label="Repeat" value={task.recurrence_rule ? `↻ ${repeatLabel(task.recurrence_rule)}` : 'Doesn’t repeat'} onOpen={(e) => open('repeat', e)} />
             <FHelp>daily · weekly · monthly · custom rule</FHelp>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line-card)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line-dashed)' }}>
               <div>
                 <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Someday</div>
                 <FHelp style={{ marginTop: 2 }}>rests in the fern · leaves every list</FHelp>
@@ -326,8 +321,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
             </div>
           </div>
 
-          {/* B (D7): handwriting lives on pages; here the line is a help sentence. */}
-          <FHelp style={{ padding: '0 6px' }}>every field saves quietly — no dialog unless something gets deleted ✿</FHelp>
+          <div className="kf-help" style={{ padding: '0 6px' }}>every field saves quietly — no dialog unless something gets deleted ✿</div>
         </div>
       </div>
 
@@ -353,23 +347,12 @@ function Field({ label, value, onOpen }: { label: string; value: ReactNode; onOp
   )
 }
 
-// B (D5): metadata, labels and chips in the interface face, sentence case, untracked, even digits.
-const FLabelInline: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)' }
-const LINK: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums' }
-const PILL: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }
-const TOOL_CARD: CSSProperties = { background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 17px 15px' }
+const LINK: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)' }
+const PILL: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }
+const SIDE_CARD: CSSProperties = { background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 17px 15px' }
 
-// B (D3, D12): a chip is a pill with a 3:1 edge and body ink; the picked one is ink-filled.
-const chipStyle: CSSProperties = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: 'var(--fs-meta)',
-  fontVariantNumeric: 'tabular-nums',
-  letterSpacing: 'var(--ls-meta)',
-  padding: '5px 9px',
-  borderRadius: 'var(--radius-pill)',
-  border: '1px solid var(--line-control)',
-  color: 'var(--ink-body)',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 5,
+/** Labels and Duration: the kit's filter chip (D12 — a visible edge, body ink; the chosen one ink-filled). */
+function chip(on: boolean, dashed = false): { className: string; style: CSSProperties } {
+  const c = filterChip(on, dashed)
+  return { className: c.className, style: { ...c.style, cursor: 'pointer' } }
 }

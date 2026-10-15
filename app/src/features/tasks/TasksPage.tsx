@@ -7,6 +7,7 @@ import { useOpenTask } from './openTask'
 import { useDomains, createDomain, renameDomain } from '../domains/api'
 import { DomainList, useDomainMenu } from '../domains/DomainList'
 import { RenameField } from '../../components/RenameField'
+import { filterChip } from '../../components/filterChip'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
@@ -36,7 +37,7 @@ import { cherryStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from '../today/dayComplete'
 import { listState } from '../journal/journalDay'
 import { useOnline } from '../../lib/useOnline'
-import { TapeCard } from '../../components/kit'
+import { Button, SectionLabel } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
@@ -114,8 +115,14 @@ function tabOf(rawList: string | null, list: SmartList | null): Tab | null {
   return list
 }
 
-// The tools' triggers (Sort, Label): mono meta, no box — the click-cycler look J-12 kept.
-const TOOL_TRIGGER: React.CSSProperties = { gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', userSelect: 'none' }
+// The tools' triggers (Sort, Label): metadata, no box — the click-cycler look J-12 kept.
+const TOOL_TRIGGER: React.CSSProperties = { gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', userSelect: 'none' }
+// The page's metadata, and the quiet count or time beside a section label (D6).
+const META: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }
+// Bound Journal (D1 · D3 · D4 · D7): an Organize card is a tool — 16px corners, flat, a hairline; no tape, no tilt.
+const RAIL_CARD: React.CSSProperties = { background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 16px 14px' }
+// D7: handwriting lives on pages — a tool's caption or empty line is the interface face (kf-help raises its first letter).
+const CAPTION: React.CSSProperties = { marginTop: 12 }
 const MANAGE_LABELS = ' manage' // a label is trimmed, so none starts with a space
 const CARET = <span aria-hidden="true" style={{ color: 'var(--ink-faint)', lineHeight: 1 }}>▾</span>
 
@@ -179,7 +186,7 @@ function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcom
         {tab('all', 'All', allCount, 'var(--acc-moss)')}
       </div>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11, whiteSpace: 'nowrap' }}>
-        <Link to="/perennials" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ Repeating</Link>
+        <Link to="/perennials" style={{ ...META, textDecoration: 'none' }}>↻ Repeating</Link>
         {/* Kai 2026-10-03: a Label filter beside Sort, the same popover — only once a label exists. */}
         {(labels.length > 0 || label) && (
           <Select
@@ -221,30 +228,22 @@ function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcom
   )
 }
 
+/** A domain filter chip: the kit's filter chip (D12), with its click cursor. */
+function domainChipLook(on: boolean): { className: string; style: React.CSSProperties } {
+  const c = filterChip(on)
+  return { className: c.className, style: { ...c.style, cursor: 'pointer' } }
+}
+
 function SectionHeader({ group }: { group: TaskGroup }) {
   const terra = group.key === 'overdue'
   const h = Math.floor(group.totalMinutes / 60)
   const m = group.totalMinutes % 60
   const time = group.totalMinutes > 0 ? [h ? `${h}h` : '', m ? `${m}m` : ''].filter(Boolean).join(' ') : null
+  // D6 (Bound Journal): 14px semibold, sentence case, no dashed rule; the count and time sit quietly on the right.
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: terra ? 'var(--acc-terra)' : 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
-      <span>{group.label} · {group.tasks.length}{time ? ` · ${time}` : ''}</span>
-      <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-    </div>
-  )
-}
-
-function OffsetTape({ top, left, right, width, tint, rotate }: { top: number; left?: number; right?: number; width: number; tint: string; rotate: number }) {
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        position: 'absolute', top, left, right, width, height: 16,
-        background: tint,
-        backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 4px, transparent 4px 8px)',
-        transform: `rotate(${rotate}deg)`, borderRadius: 1, boxShadow: 'var(--shadow-crisp)',
-      }}
-    />
+    <SectionLabel style={{ margin: '26px 0 4px' }} action={<span style={META}>{group.tasks.length}{time ? ` · ${time}` : ''}</span>}>
+      <span style={terra ? { color: 'var(--acc-terra)' } : undefined}>{group.label}</span>
+    </SectionLabel>
   )
 }
 
@@ -253,7 +252,7 @@ function InlineAdd({ label, placeholder, color, onSubmit }: { label: string; pla
   const [value, setValue] = useState('')
   if (!open) {
     return (
-      <div onClick={() => setOpen(true)} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color, cursor: 'pointer' }}>
+      <div onClick={() => setOpen(true)} style={{ ...META, marginTop: 11, color, cursor: 'pointer' }}>
         ＋ {label}
       </div>
     )
@@ -269,7 +268,7 @@ function InlineAdd({ label, placeholder, color, onSubmit }: { label: string; pla
         onChange={(e) => setValue(e.target.value)}
         onBlur={() => { if (!value.trim()) setOpen(false) }}
         placeholder={placeholder}
-        style={{ width: '100%', font: 'inherit', fontSize: 12.5, border: '1px solid var(--line-solid)', borderRadius: 6, padding: '6px 9px', background: 'var(--paper-bone)', color: 'var(--ink-body)', outline: 'none' }}
+        style={{ width: '100%', font: 'inherit', fontSize: 'var(--fs-caption)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-input)', padding: '6px 9px', background: 'var(--paper-bone)', color: 'var(--ink-body)', outline: 'none' }}
       />
     </form>
   )
@@ -287,7 +286,7 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
     // the content area's 30px top padding — the overhang clipped the bottom of the Projects
     // card even when the rail's own scrollbar was at the end. Sized to the worst case
     // (unscrolled page) so all three tape cards render fully at 100% zoom.
-    <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: 'calc(var(--kf-vh) - 42px - 30px)', overflowY: 'auto' }}>
+    <div style={{ borderLeft: '1px solid var(--line-solid)', padding: '40px 26px', display: 'flex', flexDirection: 'column', gap: 22, background: 'color-mix(in srgb, var(--paper-sidebar) 35%, transparent)', position: 'sticky', top: 0, alignSelf: 'start', maxHeight: 'calc(var(--kf-vh) - 42px - 30px)', overflowY: 'auto' }}>
       {/* R4-19 (2026-07-20 audit): "should be a bit more of a header… the same font as the title
           of the page… make it a bit more subtle, but to still be visible." Was 9.5px uppercase
           mono in --ink-faint, reading as a caption. Now the display face the page titles use,
@@ -295,33 +294,30 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
       {/* Punch 30: header centered over the card stack (was left-aligned). */}
       <div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink-muted)', marginBottom: 2, textAlign: 'center' }}>Organize</div>
 
-      <TapeCard tilt={-0.5} tape={false} style={{ padding: '16px 16px 14px' }}>
-        <OffsetTape top={-9} left={22} width={58} tint="color-mix(in srgb, var(--acc-moss) 40%, transparent)" rotate={-2} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>
+      <div style={RAIL_CARD}>
+        <SectionLabel action={<span style={META}>{domains.length}</span>}>Domains</SectionLabel>
         {/* Kai 2026-10-06: each domain renames in place, ⋯ / right-click → Rename · Colour · Merge · Delete. */}
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 9 }}>
           <DomainList domains={domains} meta={(d) => open.filter((t) => effectiveDomainId(t, projects, areas) === d.id).length} />
         </div>
         <InlineAdd label="Add domain" placeholder="New domain…" color="var(--acc-terra)" onSubmit={(name) => createDomain(name)} />
-      </TapeCard>
+      </div>
 
-      <TapeCard tilt={0.4} tape={false} style={{ padding: '16px 16px 14px' }}>
-        <OffsetTape top={-9} right={26} width={52} tint="color-mix(in srgb, var(--acc-lavender) 42%, transparent)" rotate={2} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>
+      <div style={RAIL_CARD}>
+        <SectionLabel action={<span style={META}>{areas.length}</span>}>Areas</SectionLabel>
         <div style={{ marginTop: 11, display: 'flex', flexWrap: 'wrap', gap: 7 }}>
           {/* Motion 2d: an area takes a dragged task (Move to… by drag). */}
           {areas.map((a) => (
             <DropZone key={a.id} id={`rail:${a.id}`} spot={{ kind: 'place', label: a.name, to: { kind: 'area', id: a.id, domainId: a.domain_id, name: a.name } }} style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '5px 11px' }}><EmojiText text={a.name} /></DropZone>
           ))}
         </div>
-        <div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+        <div onClick={() => setNewModal('area')} style={{ ...META, marginTop: 11, color: 'var(--acc-terra)', cursor: 'pointer' }}>
           ＋ New area
         </div>
-      </TapeCard>
+      </div>
 
-      <TapeCard tilt={-0.35} tape={false} style={{ padding: '16px 16px 14px' }}>
-        <OffsetTape top={-9} left={30} width={56} tint="color-mix(in srgb, var(--acc-hydrangea) 42%, transparent)" rotate={-1.5} />
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>Projects · {projects.length}</div>
+      <div style={RAIL_CARD}>
+        <SectionLabel action={<span style={META}>{projects.length}</span>}>Projects</SectionLabel>
         <div style={{ marginTop: 11, display: 'flex', flexDirection: 'column', gap: 11 }}>
           {projects.slice(0, 4).map((p) => {
             const inProject = tasks.filter((t) => t.project_id === p.id)
@@ -329,23 +325,23 @@ function OrganizeRail({ domains, projects, areas, tasks }: { domains: Domain[]; 
             // ponytail: real Projects milestones aren't built yet — proxy % done-tasks/total,
             // upgrade to the weighted milestone % once that feature lands.
             const pct = inProject.length === 0 ? 0 : Math.round((done / inProject.length) * 5) * 20
-            const domainName = domains.find((d) => d.id === p.domain_id)?.name ?? 'no domain'
+            const domainName = domains.find((d) => d.id === p.domain_id)?.name ?? 'No domain'
             return (
               // Motion 2d: a project takes a dragged task (Move to… by drag).
               <DropZone key={p.id} id={`rail:${p.id}`} spot={{ kind: 'place', label: p.name, to: { kind: 'project', id: p.id, domainId: p.domain_id, name: p.name } }} style={{ display: 'flex', alignItems: 'center', gap: 10, borderRadius: 8 }}>
                 <img src={`${A}/wisteria/p${pct}.png`} alt="" style={{ height: 30 }} />
                 <div style={{ minWidth: 0 }}>
                   <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pct}%`}</div>
+                  <div style={META}>{domainName} · {pct === 100 ? 'Done' : `${pct}%`}</div>
                 </div>
               </DropZone>
             )
           })}
         </div>
-        <div onClick={() => setNewModal('standard')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+        <div onClick={() => setNewModal('standard')} style={{ ...META, marginTop: 11, color: 'var(--acc-terra)', cursor: 'pointer' }}>
           ＋ New project
         </div>
-      </TapeCard>
+      </div>
 
       {newModal && <NewProjectModal onClose={() => setNewModal(null)} defaultType={newModal} domains={domains} />}
     </div>
@@ -402,25 +398,23 @@ function DoneView({ tasks, motion, justCompletedId, expanded, setExpanded, focus
 
         {doneToday.length > 0 && (
           <>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '6px 0 4px' }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Today · {doneToday.length}</span>
-              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-            </div>
+            <SectionLabel style={{ margin: '6px 0 4px' }} action={<span style={META}>{doneToday.length}</span>}>Today</SectionLabel>
             {doneToday.map((t, i) => (
               <TaskRow key={t.id} task={t} border={i < doneToday.length - 1} justCompletedId={mostRecentId} highlighted={t.id === focusedId} />
             ))}
           </>
         )}
         {doneToday.length === 0 && doneEarlier.length === 0 && (
-          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', padding: '8px 2px' }}>Nothing finished yet today.</div>
+          <div className="kf-help" style={{ padding: '8px 2px' }}>Nothing finished yet today.</div>
         )}
 
         {doneEarlier.length > 0 && (
           <>
             <div onClick={() => setExpanded((v) => !v)} style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 22, padding: '9px 2px', cursor: 'pointer' }}>
               <span style={{ color: 'var(--ink-faint)', fontSize: 11 }}>{expanded ? '▾' : '▸'}</span>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Earlier this week · {doneEarlier.length}</span>
-              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+              <span style={{ fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)', whiteSpace: 'nowrap' }}>Earlier this week</span>
+              <span style={{ flex: 1 }} />
+              <span style={META}>{doneEarlier.length}</span>
               <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 22, opacity: 0.7, filter: 'var(--shadow-drop-sm)' }} />
             </div>
             {expanded && doneEarlier.map((t, i) => (
@@ -432,7 +426,7 @@ function DoneView({ tasks, motion, justCompletedId, expanded, setExpanded, focus
         )}
       </div>
 
-      <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+      <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
         <span>Completed items fade after 30 days — nothing is deleted</span>
         <span onClick={() => setExpanded(false)} style={{ marginLeft: 'auto', color: 'var(--acc-terra)', cursor: 'pointer' }}>Clear view</span>
       </div>
@@ -801,14 +795,14 @@ export function TasksPage() {
             {/* Night 1b: the header plant is a silhouette lit at the rim in its own accent. */}
             <img src={headerIcon} alt="" style={{ height: 56, filter: isSomeday ? 'var(--rim-clover, var(--shadow-drop-sm))' : 'var(--rim-blossom, var(--shadow-drop-sm))' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{eyebrow}</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)' }}>{eyebrow}</div>
               <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>{h1}</h1>
             </div>
           </div>
           {isDone ? (
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, color: 'var(--acc-blossom)', lineHeight: 1 }}>{doneTodayCount}</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>
             </div>
           ) : (
             // Phone: the tab bar's mic is the capture button; a second one here wrapped to two lines.
@@ -817,7 +811,7 @@ export function TasksPage() {
         </div>
 
         <TabBar active={activeTab} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
-        {caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}
+        {caption && <div className="kf-help" style={CAPTION}>{caption}</div>}
         {dupeClusters.length > 0 && (
           <Link to="/settings/import" className="kf-link-terra" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>
             {dupeClusters.length === 1
@@ -829,31 +823,19 @@ export function TasksPage() {
         {/* R4-12 (2026-07-20 audit): "there should be a reschedule button that lets me replan
             the tasks that I missed" — one click pulls every overdue task onto today. */}
         {isOverdue && overdueCount > 0 && (
-          <button
-            type="button"
+          // D11 = B: the kit's secondary button (D13's tonal terra is still open).
+          <Button
+            variant="secondary"
             onClick={() => {
               // The Plan menu's Today for each (its own time), past blocks off the calendar, with Undo.
               const stale = filterByList(displayTasks, 'overdue', now)
               const undos = stale.map((t) => rescheduleDue(t, todayFor(t, now)))
               toastUndo(`${stale.length} overdue task${stale.length === 1 ? '' : 's'} moved to today.`, () => undos.forEach((undo) => undo()))
             }}
-            style={{
-              marginTop: 14,
-              minHeight: 34,
-              padding: '0 14px',
-              borderRadius: 999,
-              border: '1px solid color-mix(in srgb, var(--acc-terra) 40%, transparent)',
-              background: 'color-mix(in srgb, var(--acc-terra) 12%, transparent)',
-              color: 'var(--acc-terra)',
-              fontFamily: 'var(--font-mono)',
-              fontSize: 'var(--fs-meta)',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-            }}
+            style={{ marginTop: 14 }}
           >
             Reschedule all to today
-          </button>
+          </Button>
         )}
         {/* Tasks.dc.html mobile — the swipe affordance is invisible until told */}
         {!singleCol && (
@@ -865,10 +847,8 @@ export function TasksPage() {
         {/* Tasks.dc.html 1b's domain filter chips — on desktop too (Kai 2026-10-12: phone-only hid the filter). */}
         {!singleCol && domains.length > 0 && (
           <div style={{ display: 'flex', gap: 8, marginTop: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
-            <span
-              onClick={() => setDomainChip(null)}
-              style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--acc-blossom-text)' : 'var(--ink-muted)', background: !domainChip ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: !domainChip ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
-            >
+            {/* D12: the kit's filter chip — a visible edge, ink-filled when on (components/filterChip). */}
+            <span onClick={() => setDomainChip(null)} aria-pressed={!domainChip} {...domainChipLook(!domainChip)}>
               All
             </span>
             {domains.map((d) => (
@@ -879,10 +859,11 @@ export function TasksPage() {
                   e.preventDefault()
                   chipMenu.open(d.id, { x: e.clientX, y: e.clientY })
                 }}
-                style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--acc-blossom-text)' : 'var(--ink-muted)', background: domainChip === d.id ? 'color-mix(in srgb, var(--acc-blossom) 20%, transparent)' : 'transparent', border: domainChip === d.id ? 'none' : '1px solid var(--line-solid)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer' }}
+                aria-pressed={domainChip === d.id}
+                {...domainChipLook(domainChip === d.id)}
               >
                 {renamingChip === d.id ? (
-                  <RenameField value={d.name} ariaLabel="Domain name" style={{ width: 120, margin: '-2px -4px', textTransform: 'none' }} onDone={(next) => { setRenamingChip(null); if (next && next !== d.name) renameDomain(d, next) }} />
+                  <RenameField value={d.name} ariaLabel="Domain name" style={{ width: 120, margin: '-2px -4px' }} onDone={(next) => { setRenamingChip(null); if (next && next !== d.name) renameDomain(d, next) }} />
                 ) : d.name}
               </span>
             ))}
@@ -906,7 +887,7 @@ export function TasksPage() {
               }
               setTitle('')
             }}
-            style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 14px', marginTop: 18 }}
+            style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '11px 14px', marginTop: 18 }}
           >
             <span style={{ width: 16, height: 16, border: '1.5px solid var(--check-border)', borderRadius: 4, flex: 'none' }} />
             <input
@@ -924,7 +905,7 @@ export function TasksPage() {
             {[0, 1, 2, 3, 4].map((i) => (
               <span key={i} className="tr-petal tr-burst" style={{ left: `${16 + i * 17}%`, top: 0, animationDelay: `${i * 60}ms` }} />
             ))}
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--acc-gold)', textAlign: 'center', animation: 'entryFadeUp 400ms var(--ease-out) both' }}>
+            <div style={{ fontSize: 'var(--fs-body)', fontWeight: 'var(--fw-medium)', color: 'var(--acc-gold)', textAlign: 'center', animation: 'entryFadeUp 400ms var(--ease-out) both' }}>
               All done. The garden can rest. ✿
             </div>
           </div>
@@ -943,7 +924,7 @@ export function TasksPage() {
             // States t1 rule — the surface's own flower as seed + one hand line (the quick-add above is the one action)
             <div style={{ margin: '28px 0 0', textAlign: 'center' }}>
               <img src={isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/bud.png`} alt="" style={{ height: 44, margin: '0 auto', display: 'block', filter: 'var(--shadow-drop-sm)', opacity: 0.9 }} />
-              <p style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', margin: '10px 0 0' }}>
+              <p className="kf-help" style={{ margin: '10px 0 0' }}>
                 {isSomeday ? 'Nothing parked for someday.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
               </p>
             </div>
@@ -983,11 +964,12 @@ export function TasksPage() {
 
           {activeTab === 'today' && doneTodayTasks.length > 0 && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px' }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>Done today · {doneTodayTasks.length}</span>
-                <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-                <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 26, opacity: 0.8, filter: 'var(--shadow-drop-sm)' }} />
-              </div>
+              <SectionLabel
+                style={{ margin: '26px 0 4px' }}
+                action={<><span style={META}>{doneTodayTasks.length}</span><img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 26, opacity: 0.8, filter: 'var(--shadow-drop-sm)' }} /></>}
+              >
+                Done today
+              </SectionLabel>
               {doneTodayTasks.map((t, i) => (
                 <TaskRow key={t.id} task={t} border={i < doneTodayTasks.length - 1} justCompletedId={justCompletedId} />
               ))}
@@ -995,7 +977,7 @@ export function TasksPage() {
           )}
 
           {isSomeday && (
-            <div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>
+            <div className="kf-help" style={{ marginTop: 20, paddingTop: 14, borderTop: '1px solid var(--line-dashed)' }}>
               pull one up whenever you're ready — it keeps until then
             </div>
           )}

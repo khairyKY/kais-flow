@@ -27,7 +27,8 @@ export function SharePage() {
   }, [params, navigate])
 
   return (
-    <div style={{ padding: '60px 20px', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)' }}>
+    // D7: handwriting is for pages — the interface face (kf-help raises the first letter).
+    <div className="kf-help" style={{ padding: '60px 20px', textAlign: 'center' }}>
       planting it in the inbox ✿
     </div>
   )

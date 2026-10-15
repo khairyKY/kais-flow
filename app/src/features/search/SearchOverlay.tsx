@@ -51,7 +51,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   function ResultGroup({ label, dot, hits, offset }: { label: string; dot: string; hits: SearchHit[]; offset: number }) {
     return (
       <div style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
           {label}
         </div>
         {hits.map((hit, i) => {
@@ -73,7 +73,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
                 background: active ? 'var(--paper-bone)' : 'none',
                 boxShadow: active ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none',
                 border: 'none',
-                borderRadius: 5,
+                borderRadius: 'var(--radius-input)',
                 padding: '8px 6px',
                 cursor: 'pointer',
                 font: 'inherit',
@@ -110,7 +110,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           background: 'color-mix(in srgb, var(--paper-parchment) 82%, transparent)',
           backdropFilter: 'blur(8px)',
           border: '1px solid color-mix(in srgb, var(--line-card) 60%, transparent)',
-          borderRadius: 8,
+          borderRadius: 'var(--radius-card)', // Bound Journal D3: a tool's 16px; it floats, so it keeps its shadow
           boxShadow: 'var(--shadow-popover)',
           padding: '14px 16px',
           animation: 'entryFadeUp 210ms var(--ease-out)',
@@ -136,12 +136,12 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
 
         {loading && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-faint)' }}>Searching…</p>}
         {/* Search.dc.html 1b voice — same line as the full page's empty state, shortened */}
-        {status === 'done' && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>Nothing's come up for that — try fewer words.</p>}
+        {status === 'done' && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>Nothing's come up for that — try fewer words.</p>}
         {/* 2026-09-26 audit: a search that didn't answer is not "nothing's come up" — say so, calmly,
             and offer the retry in the footer rows' own quiet type (no design yet: Phase C). */}
         {status === 'resting' && query.trim() && (
           <div role="status" style={{ marginTop: 12, display: 'flex', alignItems: 'baseline', gap: 12 }}>
-            <p style={{ margin: 0, flex: 1, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>{SEARCH_RESTING}</p>
+            <p style={{ margin: 0, flex: 1, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>{SEARCH_RESTING}</p>
             <button type="button" onClick={search.retry} className="kf-hit" style={{ font: 'inherit', flex: 'none', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', textDecoration: 'underline' }}>
               Try again
             </button>
@@ -161,7 +161,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         </div>
 
         {results.length > 0 && (
-          <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ marginTop: 10, paddingTop: 9, borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Open selected</span>
             <KeyChip text="↵" size="sm" />
           </div>
