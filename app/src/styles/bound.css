@@ -44,17 +44,6 @@ body::before {
   position: relative;
   border-radius: var(--radius-page) !important;
 }
-/* A page that still asks for the tool card's paint gets the page's instead. Goal cards keep their
-   gold paper and shadow; overlay sheets keep their floating shadow. */
-.kf-page[style*="var(--paper-parchment)"] {
-  background-color: var(--bg-page) !important;
-}
-.kf-page[style*="var(--line-card)"] {
-  border-color: var(--border-page) !important;
-}
-.kf-page:not([style*="--shadow-goal"]):not([style*="--shadow-popover"]) {
-  box-shadow: var(--shadow-page) !important;
-}
 .kf-page::after {
   content: '';
   position: absolute;
