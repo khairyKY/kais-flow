@@ -103,6 +103,7 @@
   --sel-bg: var(--ink-body);
   --sel-ink: var(--paper-linen);
   --tab-active-bg: var(--paper-bone);
+  --wash-terra: rgba(181, 101, 74, 0.12); /* D13 (Kai 2026-10-16): --acc-terra at 12% — the tonal button, the terra text button pressed */
   --bg-page: var(--page-paper);
   --border-page: var(--page-line);
 

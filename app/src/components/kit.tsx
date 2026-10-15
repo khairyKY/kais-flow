@@ -16,7 +16,9 @@ import './kit.css'
 
 // ── Button — one terra CTA per view (§04) ──
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'cta' | 'secondary' | 'ghost'
+  /** cta = the view's one terra action · secondary = bone tone · tonal = the terra wash (D13: a second
+   * action that matters) · ghost = the terra text button. */
+  variant?: 'cta' | 'secondary' | 'tonal' | 'ghost'
   icon?: ReactNode
   /** 16px ring spinner in place of the icon, presses blocked; pass the in-progress label ("Saving"). */
   loading?: boolean

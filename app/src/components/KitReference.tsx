@@ -57,6 +57,7 @@ export function KitReference() {
           <Row>
             <Button variant="cta" icon={<Icon name="mic" size={16} />}>Voice capture</Button>
             <Button variant="secondary">Secondary</Button>
+            <Button variant="tonal">Tonal</Button>
             <Button variant="ghost">Ghost</Button>
           </Row>
           <Row>
