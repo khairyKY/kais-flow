@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { useRecentActivity } from './api'
 import { FunnelIcon } from '../../components/controlIcons'
+import { Button } from '../../components/kit'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
@@ -246,22 +247,22 @@ export function ActivityPage() {
     'var(--ink-muted)'
 
   const styles = `
-    .afilter { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); padding:6px 12px; border-radius:999px; cursor:pointer; border:1px solid var(--line-solid); color:var(--ink-muted); background:transparent; white-space:nowrap; user-select:none; display:inline-flex; align-items:center; transition:all 0.2s; }
-    .afilter.on { background:var(--ink-body); color:var(--paper-parchment); border-color:var(--ink-body); }
+    .afilter { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); padding:6px 12px; border-radius:var(--radius-pill); cursor:pointer; border:1px solid var(--line-control); color:var(--ink-body); background:transparent; white-space:nowrap; user-select:none; display:inline-flex; align-items:center; }
+    .afilter.on { background:var(--sel-bg); color:var(--sel-ink); border-color:var(--sel-bg); }
     .aitem { display:flex; gap:15px; padding:0 2px; position:relative; }
     .arail { width:30px; flex:none; display:flex; flex-direction:column; align-items:center; }
     .aicon { width:30px; height:30px; border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none; z-index:2; box-shadow:var(--shadow-crisp); }
-    .aline { flex:1; width:1.5px; border-left:1.5px dashed var(--line-dashed); margin:2px 0; }
+    .aline { flex:1; width:1.5px; border-left:1.5px solid var(--line-dashed); margin:2px 0; }
     .abody { flex:1; min-width:0; padding-bottom:20px; }
-    button.abody { background:none; border:none; padding:0; color:inherit; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:5px; }
+    button.abody { background:none; border:none; padding:0; color:inherit; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:var(--radius-input); }
     button.abody:hover, button.abody:focus-visible { background:color-mix(in oklch, var(--ink-body) 4%, transparent); }
     .chip { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px; }
     .anotice { display:flex; gap:6px; flex-wrap:wrap; margin-top:-8px; }
-    .anotice button { font:inherit; font-size:12.5px; font-weight:600; color:var(--ink-body); background:var(--paper-parchment); border:1px solid var(--line-control); border-radius:3px; padding:5px 10px; cursor:pointer; }
-    .anotice button:hover { background:var(--paper-bone); }
-    .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
-    .slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color:var(--ink-faint); }
-    .slabel .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); }
+    .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+    /* D6: a section label is 14 semibold ink, sentence case, a quiet count on the right, no rule */
+    .slabel { display:flex; align-items:baseline; justify-content:space-between; gap:12px; font-size: var(--fs-section); font-weight: var(--fw-semibold); color:var(--ink-body); }
+    .slabel .n { font-family:var(--font-mono); font-size: var(--fs-meta); font-weight: var(--fw-regular); color:var(--ink-faint); }
+    .ahand { font-size: 13px; color: var(--ink-muted); }
   `
 
   const renderItem = (entry: typeof processedEntries[0], idx: number, groupLen: number) => {
@@ -289,7 +290,7 @@ export function ActivityPage() {
           {!isMobile && <span className="fhelp" style={{ marginLeft: 'auto', whiteSpace: 'nowrap' }}>{formatTime(entry.created_at)}</span>}
         </span>
         <span style={{ marginTop: isMobile ? 3 : 4, display: 'flex', alignItems: 'center', gap: isMobile ? 7 : 8 }}>
-          <span className="chip" style={{ fontSize: 'var(--fs-meta)', padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category}</span>
+          <span className="chip" style={{ fontSize: 'var(--fs-meta)', padding: isMobile ? '3px 7px' : '4px 9px', background: isMobile ? 'var(--paper-bone)' : chipBg(entry.info.category), color: isMobile ? 'var(--ink-muted)' : chipColor(entry.info.category), border: isMobile ? '1px solid var(--line-solid)' : 'none' }}>{entry.info.category[0].toUpperCase() + entry.info.category.slice(1)}</span>
           {/* 12j: a sent notice keeps its body line on the phone too ("09:50 · Car"). */}
           <span className="fhelp">{isMobile ? [formatTime(entry.created_at), entry.info.notice ? entry.info.details : ''].filter(Boolean).join(' · ') : entry.info.details}</span>
         </span>
@@ -298,9 +299,9 @@ export function ActivityPage() {
       {entry.info.notice && entry.info.notice.actions.length > 0 && (
         <div className="anotice" style={{ paddingBottom: isMobile ? 15 : 20 }}>
           {entry.info.notice.actions.map((a) => (
-            <button key={a.action} type="button" onClick={() => void runNotificationAction({ action: a.action, taskIds: entry.info.notice!.taskIds, url: entry.info.href ?? '/today' }, navigate)}>
+            <Button key={a.action} variant="secondary" type="button" onClick={() => void runNotificationAction({ action: a.action, taskIds: entry.info.notice!.taskIds, url: entry.info.href ?? '/today' }, navigate)}>
               {a.title}
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -313,7 +314,6 @@ export function ActivityPage() {
     return (
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
         <style>{styles}</style>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, borderRadius: 46 }} />
         {/* Kai's phone review: the shell's 16px gutter is the page's, not 16 + 18 of its own. */}
         <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
@@ -332,22 +332,21 @@ export function ActivityPage() {
           {isLoading ? (
             <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-muted)' }}>Loading the ledger...</div>
           ) : groupedEntries.length === 0 ? (
-            <div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-muted)' }}>nothing is logged you didn't do — just a trail behind you ✿</div>
+            <div className="ahand" style={{ padding: 40, textAlign: 'center' }}>Nothing is logged you didn't do — just a trail behind you ✿</div>
           ) : (
             groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '16px 0 12px' }}>
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{formatShortDateHeader(dateKey)}</span>
-                  <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-                  <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{group.length}</span>
+                <div className="slabel" style={{ margin: '16px 0 12px' }}>
+                  <span>{formatShortDateHeader(dateKey)}</span>
+                  <span className="n">{group.length}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>{group.map((e, i) => renderItem(e, i, group.length))}</div>
               </div>
             ))
           )}
           {!isLoading && rawEntries.length >= limit && (
-            <div style={{ margin: '8px 0 24px', padding: '14px 0', borderTop: '1px dashed var(--line-dashed)', display: 'flex', justifyContent: 'center' }}>
-              <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
+            <div style={{ margin: '8px 0 24px', padding: '14px 0', borderTop: '1px solid var(--line-dashed)', display: 'flex', justifyContent: 'center' }}>
+              <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
             </div>
           )}
         </div>
@@ -358,7 +357,6 @@ export function ActivityPage() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}>
       <style>{styles}</style>
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       <main style={{ flex: 1, display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 10 }}>
         {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Activity / Africa/Cairo" strip —
             that was Activity.dc.html's mock of the shell topbar (<main>'s first child, 42px), and
@@ -372,7 +370,7 @@ export function ActivityPage() {
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--acc-hydrangea-deep)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h4l2.5 6 5-12 2.5 6h4"/></svg>
               </span>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Activity · the ledger</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)' }}>Activity · the ledger</div>
                 <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Everything, in order</h1>
               </div>
             </div>
@@ -380,7 +378,7 @@ export function ActivityPage() {
               <span className="fhelp">{plural(totalCount, 'event')} · {spanLabel}</span>
               <span
                 onClick={() => setRangeIdx((i) => (i + 1) % RANGES.length)}
-                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, userSelect: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-muted)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '7px 13px', cursor: 'pointer' }}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: 6, userSelect: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-body)', border: '1px solid var(--line-control)', borderRadius: 'var(--radius-pill)', padding: '7px 13px', cursor: 'pointer' }}
               >
                 <FunnelIcon /> {range.label} ▾
               </span>
@@ -397,28 +395,27 @@ export function ActivityPage() {
           {isLoading ? (
             <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--ink-muted)' }}>Loading activity log...</div>
           ) : groupedEntries.length === 0 ? (
-            <div style={{ padding: '60px 0', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)' }}>nothing is logged you didn't do — just a trail behind you ✿</div>
+            <div className="ahand" style={{ padding: '60px 0', textAlign: 'center' }}>Nothing is logged you didn't do — just a trail behind you ✿</div>
           ) : (
             groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
                 <div className="slabel" style={{ margin: '24px 0 16px' }}>
-                  <span style={{ color: 'var(--ink-body)' }}>{formatDateHeader(dateKey)}</span>
-                  <span className="r" />
-                  <span style={{ color: 'var(--ink-faint)' }}>{plural(group.length, 'event')}</span>
+                  <span>{formatDateHeader(dateKey)}</span>
+                  <span className="n">{plural(group.length, 'event')}</span>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>{group.map((e, i) => renderItem(e, i, group.length))}</div>
               </div>
             ))
           )}
           {!isLoading && groupedEntries.length > 0 && (
-            <div style={{ marginTop: 8, padding: '14px 0', borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12 }}>
+            <div style={{ marginTop: 8, padding: '14px 0', borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12 }}>
               {rawEntries.length >= limit ? (
-                <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
+                <span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}>Load earlier ↓</span>
               ) : (
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>End of ledger</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>End of ledger</span>
               )}
               <span style={{ flex: 1 }} />
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do — just a trail behind you ✿</span>
+              <span className="ahand">Nothing is logged you didn't do — just a trail behind you ✿</span>
             </div>
           )}
         </div>
