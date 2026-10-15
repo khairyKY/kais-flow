@@ -6,7 +6,7 @@ import { resultCountLine, SEARCH_RESTING } from './searchState'
 import { chipCounts, describeRow, groupRows, indexSearchData, NO_FILTERS, searchRows, TIME_WINDOWS, type GroupView, type RowView, type SearchFilters, type SearchRow } from './searchView'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
-import { Chip } from '../../components/kit'
+import { Button, Chip, SectionLabel } from '../../components/kit'
 import { filterChip } from '../../components/filterChip'
 import { Select } from '../../components/Select'
 import { Skeleton } from '../../components/States'
@@ -31,13 +31,11 @@ function openChat() {
   window.dispatchEvent(new KeyboardEvent('keydown', { key: 'j', metaKey: true, ctrlKey: true, bubbles: true }))
 }
 
-// `font` first: the shorthand resets font-size, so the size has to come after it (it used to come
-// before, and the pill drew at the inherited 16px instead of 1b's 13.5).
-const PILL: CSSProperties = { font: 'inherit', marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-pill)', padding: '9px 18px', background: 'none', cursor: 'pointer' }
-const HAND: CSSProperties = { marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand-l)', color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }
+// The empty states' one line — the interface face (Bound Journal D7: handwriting is for pages).
+const NOTE: CSSProperties = { marginTop: 20, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: 1.45 }
 // 1a sets these at 8.5–9.5px, tracked 0.06–0.1em; the app's smallest label is --fs-meta (2026-10-08 UI
 // pass: no sub-10px text) on the one metadata tracking, --ls-meta.
-const MONO_META: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', whiteSpace: 'nowrap', flex: 'none' }
+const MONO_META: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', whiteSpace: 'nowrap', flex: 'none' }
 
 /** Every place the query occurs, marked (1a .hl). */
 function Highlight({ text, query }: { text: string; query: string }) {
@@ -84,7 +82,7 @@ function Glyph({ hit, view, dot }: { hit: SearchHit; view: RowView; dot: string 
   }
 }
 
-const RELATED_TAG: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)', background: 'color-mix(in srgb, var(--acc-hydrangea) 16%, transparent)', padding: '2px 6px', borderRadius: 3, marginRight: 7 }
+const RELATED_TAG: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-hydrangea-deep)', background: 'color-mix(in srgb, var(--acc-hydrangea) 16%, transparent)', padding: '2px 6px', borderRadius: 3, marginRight: 7 }
 
 function ResultRow({ row, view, dot, query, active, last, onGo, onHover }: { row: SearchRow; view: RowView; dot: string; query: string; active: boolean; last: boolean; onGo: () => void; onHover: () => void }) {
   // 1a draws a done / past title on --ink-hairline; text rides --ink-faint since the 2026-10-08 UI pass (AA).
@@ -98,7 +96,7 @@ function ResultRow({ row, view, dot, query, active, last, onGo, onHover }: { row
       data-related={view.related || undefined}
       // Selected row = bone fill (Overlays.dc.html .mi selected); deviation(2026-07-18 audit):
       // plus a faint lavender outline ring — Kai's explicit "faint blue outline" ask.
-      style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: '12px 6px', width: '100%', textAlign: 'left', background: active ? 'var(--paper-bone)' : 'none', boxShadow: active ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none', borderRadius: 5, border: 'none', borderBottom: last ? 'none' : '1px dashed var(--line-dashed)', cursor: 'pointer', font: 'inherit' }}
+      style={{ display: 'flex', alignItems: 'flex-start', gap: 13, padding: '12px 6px', width: '100%', textAlign: 'left', background: active ? 'var(--paper-bone)' : 'none', boxShadow: active ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none', borderRadius: active ? 'var(--radius-input)' : 0, border: 'none', borderBottom: last ? 'none' : '1px solid var(--line-dashed)', cursor: 'pointer', font: 'inherit' }}
     >
       <Glyph hit={row.hit} view={view} dot={dot} />
       <div style={{ flex: 1, minWidth: 0 }}>
@@ -126,12 +124,10 @@ function ResultRow({ row, view, dot, query, active, last, onGo, onHover }: { row
 function ResultGroup({ group, query, ix, now, onGo, offset, activeIndex, onHover, onShowAll, showAll }: { group: GroupView; query: string; ix: ReturnType<typeof indexSearchData>; now: Date; onGo: (h: SearchHit) => void; offset: number; activeIndex: number; onHover: (i: number) => void; onShowAll: () => void; showAll: boolean }) {
   return (
     <section data-search-group={group.key}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0 4px' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: group.tint, whiteSpace: 'nowrap' }}>
-          {group.label} · {group.total}
-        </span>
-        <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-      </div>
+      {/* D6 (Bound Journal): a section label, no dashed rule; the label keeps the group's accent, the count sits quiet on the right. */}
+      <SectionLabel style={{ margin: '26px 0 4px' }} action={<span style={MONO_META}>{group.total}</span>}>
+        <span style={{ color: group.tint }}>{group.label}</span>
+      </SectionLabel>
       {group.rows.map((row, i) => (
         <ResultRow
           key={`${row.hit.entity_type}-${row.hit.entity_id}`}
@@ -146,7 +142,7 @@ function ResultGroup({ group, query, ix, now, onGo, offset, activeIndex, onHover
         />
       ))}
       {showAll && (
-        <div style={{ padding: '10px 2px 0', borderTop: '1px dashed var(--line-dashed)' }}>
+        <div style={{ padding: '10px 2px 0', borderTop: '1px solid var(--line-dashed)' }}>
           <button type="button" onClick={onShowAll} className="kf-hit" style={{ font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>
             Show all {group.total} →
           </button>
@@ -168,10 +164,10 @@ function EmptyResult() {
         <div style={{ position: 'absolute', left: '50%', bottom: 14, width: 22, height: 3.5, marginLeft: 10, background: 'var(--ink-faint)', borderRadius: 2, transform: 'rotate(38deg)' }} />
       </div>
       {/* deviation(2026-07-19 X3): hand notes ride var(--ink-muted) so night matches Night.dc's #c9c0d8 (export's light #7a745f was illegible on the night ground) */}
-      <div style={HAND}>Nothing's come up for that — try fewer words, or let the chat dig deeper.</div>
-      <button type="button" onClick={openChat} style={PILL}>
+      <div style={NOTE}>Nothing's come up for that — try fewer words, or let the chat dig deeper.</div>
+      <Button variant="secondary" onClick={openChat} style={{ marginTop: 20 }}>
         Ask the garden (chat) →
-      </button>
+      </Button>
     </div>
   )
 }
@@ -181,10 +177,10 @@ function EmptyResult() {
 function FilteredEmpty({ onClear }: { onClear: () => void }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: 28 }} data-search-state="filtered">
-      <div style={HAND}>Nothing here with these filters.</div>
-      <button type="button" onClick={onClear} style={PILL}>
+      <div style={NOTE}>Nothing here with these filters.</div>
+      <Button variant="secondary" onClick={onClear} style={{ marginTop: 20 }}>
         Clear filters
-      </button>
+      </Button>
     </div>
   )
 }
@@ -198,11 +194,11 @@ function RestingResult({ offline, onRetry }: { offline: boolean; onRetry: () => 
   return (
     <div role="status" style={{ width: '100%', maxWidth: 560, margin: '40px auto 0', display: 'flex', flexDirection: 'column', alignItems: 'center' }} data-search-state={offline ? 'offline' : 'resting'}>
       <img src="/ds/assets/clover/resting.png" alt="" style={{ height: 64, filter: 'var(--shadow-drop-sm)' }} />
-      <div style={HAND}>{offline ? SEARCH_OFFLINE : SEARCH_RESTING}</div>
+      <div style={NOTE}>{offline ? SEARCH_OFFLINE : SEARCH_RESTING}</div>
       {!offline && (
-        <button type="button" onClick={onRetry} style={PILL}>
+        <Button variant="secondary" onClick={onRetry} style={{ marginTop: 20 }}>
           Try again
-        </button>
+        </Button>
       )}
     </div>
   )
@@ -323,7 +319,7 @@ export function SearchPage() {
 
       {/* Phone: the box pins while the groups scroll under it. */}
       <div style={isMobile ? { position: 'sticky', top: -20, zIndex: 2, background: 'var(--paper-linen)', padding: '20px 0 6px', margin: '-20px 0 0' } : undefined}>
-        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: isMobile ? '13px 16px' : '16px 20px', display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 14 }}>
+        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: isMobile ? '13px 16px' : '16px 20px', display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 14 }}>
           <span style={{ fontSize: 'var(--fs-lead)', color: 'var(--ink-faint)' }}>⌕</span>
           <input
             ref={inputRef}
@@ -340,13 +336,13 @@ export function SearchPage() {
             aria-label="Search"
             style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
           />
-          {!isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Esc clears</span>}
+          {!isMobile && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Esc clears</span>}
         </div>
       </div>
 
       {/* One count line, and none while resting — a search that didn't answer knows no count. */}
       {trimmed && resultCountLine(search, rows.length) && (
-        <div data-search-count style={{ marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <div data-search-count style={{ marginTop: 10, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
           {resultCountLine(search, rows.length)}
         </div>
       )}
