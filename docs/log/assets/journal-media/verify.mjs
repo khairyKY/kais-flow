@@ -351,8 +351,9 @@ for (const width of [360, 390, 430]) {
   })
   check(`${name} a tap on an entry's words never lands on its Delete`, del.found && del.stolen === 0, JSON.stringify(del))
   await shot(page, `${name}-3-photo-x`)
-  // The footer sits 23px under the photos; its links are drawn 18px tall and 12px apart.
-  tapChecks(name, 'card footer', await page.evaluate(measureTaps, ['＋ New entry', '🎤 Talk', '＋ Photo']), (t) => t.drawnH === 18)
+  // The footer sits 23px under the photos; its links are drawn one 12.5px line tall (Bound Journal's phone
+  // metadata, sentence case: 18.8px — 18 in the caps it replaced) and 12px apart.
+  tapChecks(name, 'card footer', await page.evaluate(measureTaps, ['＋ New entry', '🎤 Talk', '＋ Photo']), (t) => Math.abs(t.drawnH - 18.8) < 0.5)
   // Cancel and Save, 6px apart, under the thought's textarea: already 44 tall, narrower than 44.
   await page.getByRole('button', { name: '＋ add a thought' }).click()
   await page.getByRole('button', { name: 'Cancel', exact: true }).waitFor({ timeout: 5000 }).catch(() => {})
