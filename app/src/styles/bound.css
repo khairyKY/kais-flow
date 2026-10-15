@@ -21,14 +21,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* 2 · The one typewriter left: a date or kind stamp on a page. */
-.kf-stamp,
-.kf-stamp[style] {
-  font-family: var(--font-stamp) !important;
-  text-transform: uppercase !important;
-  letter-spacing: var(--ls-stamp) !important;
-}
-
 /* D11 = B (Kai 2026-10-15): a hand-built terra button is a 12px rounded rectangle, not a pill. */
 :is(button, a)[style*="background: var(--acc-terra"]:is([style*="border-radius: 999px"], [style*="border-radius: var(--radius-pill)"]) {
   border-radius: var(--radius-input) !important;
@@ -51,17 +43,6 @@ body::before {
 .kf-page[style] {
   position: relative;
   border-radius: var(--radius-page) !important;
-}
-/* A page that still asks for the tool card's paint gets the page's instead. Goal cards keep their
-   gold paper and shadow; overlay sheets keep their floating shadow. */
-.kf-page[style*="var(--paper-parchment)"] {
-  background-color: var(--bg-page) !important;
-}
-.kf-page[style*="var(--line-card)"] {
-  border-color: var(--border-page) !important;
-}
-.kf-page:not([style*="--shadow-goal"]):not([style*="--shadow-popover"]) {
-  box-shadow: var(--shadow-page) !important;
 }
 .kf-page::after {
   content: '';

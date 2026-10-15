@@ -276,7 +276,7 @@ if (want('n2')) {
   const { page } = env
   const paperBg = await page.locator('.nb-desk .nb-paper').evaluate((e) => getComputedStyle(e).backgroundColor)
   const deskBg = await page.locator('.nb-desk').evaluate((e) => getComputedStyle(e).backgroundColor)
-  check('n2 the page stays day parchment at night (#FBF6E9)', paperBg === 'rgb(251, 246, 233)', paperBg)
+  check('n2 the page stays day page paper at night (#FBF5E6, Bound Journal)', paperBg === 'rgb(251, 245, 230)', paperBg)
   check('n2 the chrome around it is night', deskBg === 'rgb(33, 29, 48)', deskBg)
   await shot(page, 'n2-desktop-night')
   await basics(env, 'n2')
@@ -381,7 +381,7 @@ for (const theme of ['day', 'night']) {
   const h = await foot.getByRole('button', { name: 'Copy as text' }).evaluate((e) => e.getBoundingClientRect().height)
   check(`n6 ${theme} touch targets ≥ 44px`, h >= 44, h)
   const paperBg = await page.locator('.nb-phone .nb-paper').evaluate((e) => getComputedStyle(e).backgroundColor)
-  check(`n6 ${theme} the page is light paper`, paperBg === 'rgb(251, 246, 233)', paperBg)
+  check(`n6 ${theme} the page is light page paper (#FBF5E6)`, paperBg === 'rgb(251, 245, 230)', paperBg)
   await shot(page, `n6-phone-${theme}`)
   if (theme === 'day') {
     await tap(env, page.getByRole('button', { name: 'Edit layout' }))

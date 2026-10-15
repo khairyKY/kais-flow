@@ -1,8 +1,9 @@
 // Local in-app confirm dialog — styled to Overlays.dc.html "Confirm · destructive only":
-// parchment card, display title, muted body, Keep + terra destructive action.
+// parchment card, display title, muted body, Keep + terra destructive action — the kit's B buttons.
 // X2 (Motion 3b): scrim+card enter together via .kf-overlay-*; exit is a cut, esc obeys.
 import { useEscapeStack } from '../../lib/overlayStack'
 import { Float } from '../../components/Float'
+import { Button } from '../../components/kit'
 import './xfx.css'
 
 export function ConfirmCard({
@@ -31,23 +32,17 @@ export function ConfirmCard({
       <div
         onClick={(e) => e.stopPropagation()}
         className="kf-overlay-card"
-        style={{ width: 300, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px' }}
+        style={{ width: 300, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '18px 20px' }}
       >
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--ink-body)' }}>{title}</div>
         <div style={{ marginTop: 8, fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.45 }}>{body}</div>
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
-          <button
-            onClick={onCancel}
-            style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, cursor: 'pointer' }}
-          >
+          <Button variant="secondary" onClick={onCancel}>
             {cancelLabel}
-          </button>
-          <button
-            onClick={onConfirm}
-            style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-          >
+          </Button>
+          <Button onClick={onConfirm}>
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

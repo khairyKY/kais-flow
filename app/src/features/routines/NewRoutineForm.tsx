@@ -13,7 +13,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { TimeField } from '../calendar/TimeField'
-import { Toggle } from '../../components/kit'
+import { Button, Segmented, Toggle } from '../../components/kit'
 import { NumberField } from '../../components/NumberField'
 import { NEW_ROUTINE_DEFAULTS, addDays, applyRoutineForm, draftToRoutineFields, formChanged, moveItem, parseMinutes, routineToForm, stepsTotal, writeSteps, type RepeatMode, type RoutineFormState, type StepDraft, type TimeMode } from './newRoutine'
 import { PLANTS, PLANT_ORDER, plantPreviewSrc, plantSrc } from './plant'
@@ -58,9 +58,8 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
   useBodyScrollLock(!isMobile)
   // 2a's fields sit on a parchment modal and use bone for contrast. The phone form now rides the
   // kit BottomSheet, which is parchment too (2b's linen sheet was the hand-made one), so both
-  // keep bone fields with a parchment "raised" tone.
+  // keep bone fields.
   const fieldBg = 'var(--paper-bone)'
-  const fieldBgRaised = 'var(--paper-parchment)'
   const closeSheet = useRef<(() => void) | null>(null)
 
   const draftKey = routine?.id ?? (initialChallenge ? 'new-challenge' : 'new')
@@ -133,48 +132,24 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
     finish()
   }
 
-  const seg = (mode: TimeMode, full: string, short: string) => (
-    <span
-      onClick={() => setTimeMode(mode)}
-      style={{
-        flex: 1,
-        textAlign: 'center',
-        padding: '9px 0',
-        cursor: 'pointer',
-        fontSize: isMobile ? 12 : 12.5,
-        color: timeMode === mode ? 'var(--ink-body)' : 'var(--ink-muted)',
-        fontWeight: timeMode === mode ? 600 : 400,
-        background: timeMode === mode ? fieldBgRaised : 'transparent',
-        boxShadow: timeMode === mode && !isMobile ? 'var(--shadow-crisp)' : 'none',
-      }}
-    >
-      {isMobile ? short : full}
-    </span>
-  )
-
-  const repeatPill = (mode: RepeatMode, label: string) => (
-    <span
-      onClick={() => setRepeatMode(mode)}
-      style={{
-        fontSize: 12.5,
-        borderRadius: 999,
-        padding: '7px 14px',
-        cursor: 'pointer',
-        color: repeatMode === mode ? 'var(--paper-parchment)' : 'var(--ink-muted)',
-        background: repeatMode === mode ? 'var(--acc-moss)' : 'transparent',
-        border: `1px solid ${repeatMode === mode ? 'var(--acc-moss)' : 'var(--line-solid)'}`,
-      }}
-    >
-      {label}
-    </span>
-  )
+  const TIMES: { value: TimeMode; full: string; short: string }[] = [
+    { value: 'morning', full: 'Morning', short: 'Morn' },
+    { value: 'afternoon', full: 'Afternoon', short: 'Aft' },
+    { value: 'evening', full: 'Evening', short: 'Eve' },
+    { value: 'anytime', full: 'Anytime', short: 'Any' },
+  ]
+  const REPEATS: { value: RepeatMode; label: string }[] = [
+    { value: 'daily', label: 'Every day' },
+    { value: 'weekdays', label: 'Weekdays' },
+    { value: 'custom', label: 'Custom' },
+  ]
 
   const body = (
     <>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingBottom: 18, borderBottom: '1px dashed var(--line-dashed)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingBottom: 18, borderBottom: '1px solid var(--line-dashed)' }}>
         <img src={plantSrc(plant, 1)} alt="" style={{ height: isMobile ? 34 : 40, filter: 'var(--shadow-drop-sm)' }} />
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Routines</div>
           <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1, color: 'var(--ink-body)' }}>{routine ? 'Edit routine' : 'New routine'}</h1>
         </div>
         {!isMobile && (
@@ -183,8 +158,8 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
       </div>
 
       <div style={{ marginTop: 18 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>
-        <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--acc-moss)', borderRadius: 8, padding: '11px 13px' }}>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>
+        <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--acc-moss)', borderRadius: 'var(--radius-md)', padding: '11px 13px' }}>
           <input
             autoFocus
             value={name}
@@ -199,42 +174,35 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
       {/* P7 7d (issue #80): the full form's Description — design/New Routine.dc.html's field and words;
           the current export doesn't draw it, so it takes the Name field's look. Optional. */}
       <div style={{ marginTop: 16 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Description</div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Description</div>
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           aria-label="Description"
           rows={2}
           placeholder="Optional — context, what counts, why you're tracking it…"
-          style={{ display: 'block', width: '100%', boxSizing: 'border-box', resize: 'vertical', font: 'inherit', fontSize: 'var(--fs-body-s)', lineHeight: 1.5, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '10px 13px', outline: 'none' }}
+          style={{ display: 'block', width: '100%', boxSizing: 'border-box', resize: 'vertical', font: 'inherit', fontSize: 'var(--fs-body-s)', lineHeight: 1.5, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '10px 13px', outline: 'none' }}
         />
       </div>
 
       <div style={{ marginTop: 16 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 7 }}>
           {/* 2b: the phone carries the total in the label; 2a at the end of the add row */}
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{isMobile ? (stepsTotal(steps) > 0 ? `Steps · ${stepsTotal(steps)} min total` : 'Steps') : 'Steps · what it’s made of'}</span>
-          {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>checked off one by one, or all at once ✿</span>}
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{isMobile ? (stepsTotal(steps) > 0 ? `Steps · ${stepsTotal(steps)} min total` : 'Steps') : 'Steps · what it’s made of'}</span>
+          {!isMobile && <span style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Checked off one by one, or all at once ✿</span>}
         </div>
         <StepsField steps={steps} setSteps={setSteps} isMobile={isMobile} fieldBg={fieldBg} />
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Time of day</div>
-        <div style={{ display: 'flex', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, overflow: 'hidden' }}>
-          {seg('morning', 'Morning', 'Morn')}
-          {seg('afternoon', 'Afternoon', 'Aft')}
-          {seg('evening', 'Evening', 'Eve')}
-          {seg('anytime', 'Anytime', 'Any')}
-        </div>
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Time of day</div>
+        <Segmented value={timeMode} onChange={setTimeMode} label="Time of day" options={TIMES.map((t) => ({ value: t.value, label: isMobile ? t.short : t.full }))} />
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Repeats</div>
-        <div style={{ display: 'flex', gap: 8, marginBottom: 11 }}>
-          {repeatPill('daily', 'Every day')}
-          {repeatPill('weekdays', 'Weekdays')}
-          {repeatPill('custom', 'Custom')}
+        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Repeats</div>
+        <div style={{ marginBottom: 11 }}>
+          <Segmented value={repeatMode} onChange={setRepeatMode} label="Repeats" options={REPEATS} />
         </div>
         {repeatMode === 'custom' && (
           <div style={{ display: 'flex', gap: isMobile ? 6 : 7 }}>
@@ -268,16 +236,16 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
         )}
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, paddingTop: 16, borderTop: '1px solid var(--line-dashed)' }}>
         <div style={{ flex: 1 }}>
           <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Reminder</div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 3 }}>a gentle push notification</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>A gentle push notification</div>
         </div>
         {reminderOn && (
           <TimeField
             value={reminderTime}
             onChange={setReminderTime}
-            style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px' }}
+            style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '8px 12px' }}
           />
         )}
         <Toggle on={reminderOn} label="Remind me" onToggle={() => setReminderOn((v) => !v)} />
@@ -289,10 +257,10 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
             <span role="checkbox" aria-checked={isChallenge} onClick={() => setIsChallenge((v) => !v)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--line-solid)', background: isChallenge ? 'var(--ink-body)' : 'transparent', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flex: 'none' }}>
               {isChallenge && <span style={{ color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', lineHeight: 1 }}>✓</span>}
             </span>
-            <span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>Challenge (optional)</span>
+            <span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Challenge (optional)</span>
           </div>
           {isChallenge && (
-            <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', width: isMobile ? '100%' : 210 }}>
+            <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '9px 12px', width: isMobile ? '100%' : 210 }}>
               {/* Kai 2026-10-06: the shared NumberField; 1–3650 is goal_days' own check (0046). */}
               <NumberField value={challengeDays} onChange={setChallengeDays} min={1} max={3650} ariaLabel="Challenge days" style={{ fontSize: 14 }} inputStyle={{ border: 'none' }} />
               <span style={{ marginLeft: 6, fontSize: 13, color: 'var(--ink-muted)' }}>day streak</span>
@@ -300,8 +268,8 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
           )}
         </div>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>
-          <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px' }}>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>
+          <div style={{ display: 'flex', alignItems: 'center', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '9px 12px' }}>
             {domainId && <span style={{ width: 8, height: 8, borderRadius: '50%', background: domains.find((d) => d.id === domainId)?.color ?? 'var(--acc-hydrangea)', marginRight: 9, flex: 'none' }} />}
             <Select
               value={domainId}
@@ -316,8 +284,8 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
 
       <div style={{ marginTop: 16 }}>
         <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 9 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Its plant</span>
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>starts bare, grows with the streak ✿</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Its plant</span>
+          <span style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Starts bare, grows with the streak ✿</span>
         </div>
         {/* 2a: five tiles sharing the row; 2b: 60px tiles (all five fit at 390). */}
         <div role="radiogroup" aria-label="Its plant" style={{ display: 'flex', gap: isMobile ? 8 : 10, overflowX: 'auto', padding: 2, margin: -2 }}>
@@ -337,25 +305,20 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
                   {/* 2a draws the clover a touch shorter (36 of 40) */}
                   <img src={plantPreviewSrc(p)} alt="" style={{ maxHeight: p === 'clover' ? h - 4 : h }} />
                 </span>
-                <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: on ? 'var(--acc-sage-text)' : 'var(--ink-faint)', marginTop: isMobile ? 4 : 5 }}>{PLANTS[p].label}</span>
+                <span style={{ display: 'block', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: on ? 'var(--acc-sage-text)' : 'var(--ink-faint)', marginTop: isMobile ? 4 : 5 }}>{PLANTS[p].label}</span>
               </button>
             )
           })}
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px solid var(--line-dashed)' }}>
         {!isMobile && <span style={{ flex: 1 }} />}
         {/* Cancel throws the draft away (on a phone too — dismissing the sheet keeps it). */}
-        <button type="button" onClick={finish} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: isMobile ? 'var(--fs-body)' : 'var(--fs-caption)', padding: isMobile ? '14px 18px' : '10px 18px', borderRadius: 999, cursor: 'pointer' }}>Cancel</button>
-        <button
-          type="button"
-          onClick={(e) => submit(e.currentTarget)}
-          style={{ flex: isMobile ? 1 : 'none', border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: isMobile ? 'var(--fs-body)' : 'var(--fs-caption)', padding: isMobile ? '14px' : '10px 20px 10px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
-        >
-          <img src={plantSrc(plant, 1)} alt="" style={{ height: isMobile ? 17 : 16 }} />
+        <Button variant="secondary" onClick={finish}>Cancel</Button>
+        <Button onClick={(e) => submit(e.currentTarget)} icon={<img src={plantSrc(plant, 1)} alt="" style={{ height: isMobile ? 17 : 16 }} />} style={isMobile ? { flex: 1, justifyContent: 'center' } : undefined}>
           {routine ? 'Save routine' : 'Plant routine'}
-        </button>
+        </Button>
       </div>
     </>
   )
@@ -377,7 +340,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
   // Height: --kf-vh is the window in layout px under the interface size (90dvh overflowed at 125%).
   return (
     <div onClick={() => { if (!dirty) finish() }} className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-      <div onClick={(e) => e.stopPropagation()} className="kf-overlay-card" style={{ width: 620, maxWidth: '100%', maxHeight: 'calc(var(--kf-vh) * 0.9)', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-popover)', padding: '26px 30px 28px' }}>
+      <div onClick={(e) => e.stopPropagation()} className="kf-overlay-card" style={{ width: 620, maxWidth: '100%', maxHeight: 'calc(var(--kf-vh) * 0.9)', overflowY: 'auto', overscrollBehavior: 'contain', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '26px 30px 28px' }}>
         {body}
       </div>
     </div>
@@ -427,7 +390,7 @@ function StepsField({ steps, setSteps, isMobile, fieldBg }: { steps: StepDraft[]
     : []
 
   return (
-    <div ref={box} style={{ background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: isMobile ? '2px 12px' : '2px 13px' }}>
+    <div ref={box} style={{ background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: isMobile ? '2px 12px' : '2px 13px' }}>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={() => (justDragged.current = true)} onDragEnd={onDragEnd} onDragCancel={() => (justDragged.current = false)}>
         {steps.map((step, i) => (
           <StepRow
@@ -450,11 +413,11 @@ function StepsField({ steps, setSteps, isMobile, fieldBg }: { steps: StepDraft[]
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 10 : 11, padding: isMobile ? '9px 0' : '10px 0' }}>
         {/* under the handle + number, as 2a's 26px spacer */}
         <span style={{ width: isMobile ? 38 : 26, flex: 'none' }} />
-        <button type="button" onClick={() => setSteps([...steps, { text: '' }])} style={{ minHeight: isMobile ? 44 : undefined, margin: isMobile ? '-10px 0' : 0, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+        <button type="button" onClick={() => setSteps([...steps, { text: '' }])} style={{ minHeight: isMobile ? 44 : undefined, margin: isMobile ? '-10px 0' : 0, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}>
           {isMobile ? '＋ Add step' : '＋ Add a step'}
         </button>
         <span style={{ flex: 1 }} />
-        {!isMobile && total > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{total} min total</span>}
+        {!isMobile && total > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{total} min total</span>}
       </div>
       {menu &&
         (isMobile ? (
@@ -508,14 +471,14 @@ function StepRow({ i, step, last, isMobile, fieldBg, onText, onMinutes, onMove, 
         alignItems: 'center',
         gap: isMobile ? 10 : 11,
         padding: isMobile ? '9px 0' : '10px 0',
-        borderBottom: '1px dashed var(--line-dashed)',
+        borderBottom: '1px solid var(--line-dashed)',
         transform: drag.isDragging ? `translate3d(0, ${y}px, 0)` : undefined,
         zIndex: drag.isDragging ? 5 : undefined,
         background: drag.isDragging ? fieldBg : undefined,
         boxShadow: drag.isDragging ? 'var(--shadow-crisp)' : undefined,
         outline: drop.isOver && !drag.isDragging ? '2px dashed var(--acc-sage)' : undefined,
         outlineOffset: -1,
-        borderRadius: 3,
+        borderRadius: 'var(--radius-input)',
       }}
     >
       <button

@@ -6,11 +6,11 @@
 .nb-paper {
   position: relative;
   box-sizing: border-box;
-  background: var(--bg-page);   /* Bound Journal: a page */
+  background: var(--bg-page);   /* Bound Journal: a page — page paper, edge, 6px corner, page shadow */
   color: var(--ink-body);
-  border: 1px solid var(--line-card);
-  border-radius: var(--radius-sharp);
-  box-shadow: var(--shadow-card);
+  border: 1px solid var(--border-page);
+  border-radius: var(--radius-page);
+  box-shadow: var(--shadow-page);
   padding: var(--sp-8) var(--sp-8) var(--sp-6);
   font-family: var(--font-display);
   font-size: var(--fs-lead);
@@ -41,7 +41,7 @@
 .nb-prompt .nb-text { color: var(--ink-muted); border-bottom: 1px solid var(--line-card); }
 .nb-foot-line { display: flex; align-items: baseline; gap: var(--sp-4); margin-top: var(--sp-6); padding-right: var(--sp-12); }
 .nb-hand { font-family: var(--font-hand); font-size: var(--fs-hand-l); color: var(--ink-hand); }
-.nb-stamp { font-family: var(--font-stamp); font-size: var(--fs-mono); letter-spacing: var(--ls-stamp); text-transform: uppercase; color: var(--acc-sage-text); border: 1px solid currentColor; border-radius: var(--radius-sharp); padding: 0 var(--sp-2); transform: rotate(var(--tilt-neg)); }
+.nb-stamp { font-family: var(--font-stamp); font-size: var(--fs-mono); letter-spacing: var(--ls-stamp); text-transform: uppercase; color: var(--acc-sage-text); border: 1px solid currentColor; border-radius: 2px; padding: 0 var(--sp-2); transform: rotate(var(--tilt-neg)); }
 .nb-flourish { position: absolute; right: var(--sp-4); bottom: var(--sp-4); width: var(--sp-12); height: auto; opacity: 0.9; pointer-events: none; }
 
 /* ── around it ── */
@@ -61,7 +61,7 @@
 .nb-desk-page .nb-paper { aspect-ratio: 148 / 210; } /* A5; a long day grows past it */
 .nb-side { position: sticky; top: var(--sp-6); display: flex; flex-direction: column; align-items: stretch; gap: var(--sp-3); }
 .nb-side .kf-seg { align-self: flex-start; }
-.nb-side-rule { border-top: 1px dashed var(--line-dashed); margin: var(--sp-1) 0; }
+.nb-side-rule { border-top: 1px solid var(--line-dashed); margin: var(--sp-1) 0; }
 .nb-side.is-editor { position: static; }
 
 /* phone: the sheet's body and its sticky footer (11o) */
@@ -72,12 +72,12 @@
 .nb-phone-foot .kf-button { flex: none; }
 
 /* ── the layout editor ── */
-.nb-editor { background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-md); box-shadow: var(--shadow-crisp); padding: var(--sp-2) var(--sp-4) var(--sp-3); color: var(--ink-body); }
+.nb-editor { background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); padding: var(--sp-2) var(--sp-4) var(--sp-3); color: var(--ink-body); }
 .nb-ed-head { display: flex; align-items: center; justify-content: space-between; }
 .nb-ed-title { font-family: var(--font-display); font-size: var(--fs-body-l); font-weight: var(--fw-medium); }
 .nb-ed-label { margin: var(--sp-3) 0 var(--sp-2); font-family: var(--font-mono); font-size: var(--fs-meta-l); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .nb-ed-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); }
-.nb-ed-block { border-bottom: 1px dashed var(--line-dashed); }
+.nb-ed-block { border-bottom: 1px solid var(--line-dashed); }
 .nb-ed-block:last-child { border-bottom: none; }
 .nb-ed-row { display: flex; align-items: center; gap: var(--sp-3); min-height: var(--touch-min); }
 .nb-ed-name { flex: 1; min-width: 0; font-size: var(--fs-body); }
@@ -97,7 +97,7 @@
   html:has(.nb-print-root) body > :not(.nb-print-root) { display: none !important; }
   .nb-print-root { display: block; }
   .nb-print-root .nb-paper { border: none; border-radius: 0; box-shadow: none; background: none; padding: 0; }
-  .nb-print-root .nb-flourish, .nb-print-root .nb-stamp { display: none; }
+  .nb-print-root .nb-flourish, .nb-print-root .nb-stamp, .nb-print-root .nb-paper::after { display: none; }
   .nb-print-root.is-A6 .nb-paper { font-size: var(--fs-body); }
   .nb-print-root.is-A6 .nb-date { font-size: var(--fs-display-m); }
 }
