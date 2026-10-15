@@ -74,23 +74,26 @@
 .cal-day-header-past { opacity: 0.62; }
 .cal-day-daisy { height: calc(20px * var(--s)); flex: none; }
 .cal-day-header-today .cal-day-daisy { height: calc(22px * var(--s)); filter: var(--shadow-drop-sm); }
+/* Bound Journal D5: the grid's own metadata (day names, hour labels, the month's numbers and "+N more")
+   reads the app's metadata size, --fs-meta, scaled with the grid. Block type stays at 04b's scale. */
 .cal-day-header-name {
   font-family: var(--font-mono);
-  font-size: calc(11px * var(--s-text));
+  font-size: calc(var(--fs-meta) * var(--s-text));
   letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
 }
 .cal-day-header-num {
   font-family: var(--font-display);
-  font-size: calc(16px * var(--s));
+  font-size: calc(var(--fs-body-l) * var(--s));
   color: var(--ink-body);
   line-height: 1;
+  font-variant-numeric: tabular-nums;
 }
 .cal-day-header-past .cal-day-header-num { color: var(--ink-muted); }
 .cal-day-header-today .cal-day-header-name,
 .cal-day-header-today .cal-day-header-num { color: var(--acc-lavender-text); }
 /* today's number in a lavender pill, Akiflow's marked date */
-.cal-day-header-today .cal-day-header-num { font-size: calc(16px * var(--s)); font-weight: 600; padding: 1px 7px; border-radius: var(--radius-pill); background: var(--block-lavender); }
+.cal-day-header-today .cal-day-header-num { font-weight: var(--fw-semibold); padding: 1px 7px; border-radius: var(--radius-pill); background: var(--block-lavender); }
 /* today column wash (contract: rgba(168,160,190,0.1) — same mix the body column uses) */
 .fc .fc-col-header-cell.fc-day-today { background: color-mix(in srgb, var(--acc-lavender) 10%, transparent); }
 /* contract: the header row closes with a 1.5px --line-solid rule */
@@ -102,7 +105,8 @@
 .fc .fc-timegrid-axis-cushion,
 .fc .fc-timegrid-slot-label-cushion {
   font-family: var(--font-mono);
-  font-size: calc(9px * var(--s-text));
+  font-size: calc(var(--fs-meta) * var(--s-text));
+  font-variant-numeric: tabular-nums;
   color: var(--ink-faint);
   width: calc(58px * var(--s));
   box-sizing: border-box;
@@ -250,6 +254,7 @@
 }
 .fc .fc-timegrid-event .kf-ev-row.kf-done .fc-event-title {
   text-decoration: line-through;
+  text-decoration-color: var(--ink-hairline);
   color: var(--ink-faint);
 }
 
@@ -260,7 +265,9 @@
 .fc .fc-timegrid-event .kf-ev-slot-row { display: flex; align-items: center; gap: 5px; min-width: 0; }
 .fc .fc-timegrid-event .kf-ev-slot-row .kf-ev-check { opacity: 1; margin-top: 0; }
 .fc .fc-timegrid-event .fc-event-title.kf-ev-slot-title { display: block; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fc .fc-timegrid-event .kf-ev-slot-row.kf-done .kf-ev-slot-title { text-decoration: line-through; color: var(--ink-faint); }
+.fc .fc-timegrid-event .kf-ev-slot-row.kf-done .kf-ev-slot-title { text-decoration: line-through; text-decoration-color: var(--ink-hairline); color: var(--ink-faint); }
+/* 04b "Time slot holding tasks": a hairline in the block's own edge hue over the fill line. */
+.fc .fc-timegrid-event .kf-ev-fill { padding-top: 3px; border-top: 1px solid color-mix(in srgb, var(--kf-ev-edge, var(--acc-lavender-deep)) 22%, transparent); }
 .fc .fc-timegrid-event .kf-ev-slot-more { flex: none; padding: 0 2px; cursor: pointer; color: var(--kf-ev-accent, var(--acc-lavender-text)); }
 
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
@@ -282,7 +289,7 @@
    task"). No drop shadow — a 4c block sits flat on the grid. */
 
 /* All-day row */
-.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s-text)); letter-spacing: var(--ls-mono-tight); color: var(--ink-faint); }
+.fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(var(--fs-meta) * var(--s-text)); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .fc .fc-daygrid-day-frame { min-height: 26px; }
 /* §6 all-day chip: 20px pill in the band above the grid — no grip, no time row */
 .fc .fc-daygrid-event {
@@ -297,10 +304,11 @@
 }
 
 /* Month view (dayGridMonth) */
-.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: calc(10px * var(--s-text)); letter-spacing: var(--ls-mono-tight); color: var(--text-tertiary); text-align: center; }
+.fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: calc(var(--fs-meta) * var(--s-text)); letter-spacing: var(--ls-meta); color: var(--text-tertiary); text-align: center; }
 .fc .fc-daygrid-day-number {
   font-family: var(--font-mono);
-  font-size: calc(10.5px * var(--s-text));
+  font-size: calc(var(--fs-meta) * var(--s-text));
+  font-variant-numeric: tabular-nums;
   color: var(--text-tertiary);
   padding: 5px 7px;
 }
@@ -308,7 +316,7 @@
 .fc .fc-daygrid-day.fc-day-past { background: rgba(var(--kf-shadow-rgb, 60,52,38), 0.045); }
 .fc .fc-daygrid-more-link {
   font-family: var(--font-mono);
-  font-size: calc(10px * var(--s-text));
+  font-size: calc(var(--fs-meta) * var(--s-text));
   color: var(--text-tertiary);
 }
 /* Kai 2026-10-14: the popover had no fill of its own (FullCalendar paints it from --fc-page-bg-color,
@@ -361,7 +369,7 @@
 .kf-cal-ghost {
   opacity: 0.95;
   box-shadow: 0 14px 30px rgba(var(--kf-shadow-rgb, 60,52,38), 0.26);
-  border-radius: 2px;
+  border-radius: var(--radius-block);   /* B: the block it lifts (was 2px) */
 }
 /* Motion 5b lift + the 2c wobble — on the ghost, which is the thing "in hand". */
 .cal-motion-on .kf-cal-ghost { animation: calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
@@ -515,6 +523,8 @@
 .fc .fc-timegrid-event { cursor: grab; }
 .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); transition: transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out); }
 .fc .fc-timegrid-event:active { transform: scale(0.99); box-shadow: none; cursor: grabbing; }
+/* A Google event (read-only, B1) opens its details; it never picks up. */
+.fc .fc-timegrid-event.kf-synced, .fc .fc-timegrid-event.kf-synced:active { cursor: pointer; }
 .fc .fc-timegrid-event:focus-visible { outline: 2px solid var(--kf-ev-edge, var(--acc-lavender-deep)); outline-offset: 2px; }
 /* pending — outbox write still queued: OUTER dashed outline, the border stays semantic */
 .fc .fc-timegrid-event.kf-pending { outline: 1px dashed var(--ink-hairline); outline-offset: 2px; }
@@ -536,9 +546,8 @@
   line-height: 1.3;
 }
 
-/* §6 month view: badges/check/wash drop; the pill stays 16px. */
+/* §6 month view: badges/check/wash drop; the pill is the all-day band's (above). */
 .fc .fc-daygrid-event .kf-ev-badge, .fc .fc-daygrid-event .kf-ev-check, .fc .fc-daygrid-event .kf-ev-elapsed { display: none; }
-.fc-dayGridMonth-view .fc-daygrid-event { height: 20px; line-height: 18px; border-radius: 10px; font-size: calc(10.5px * var(--s-text)); }
 /* Kai 2026-10-14 "too crammed": a day-grid pill (the all-day band, the month) is ONE line — the start
    time, then the title cut with an ellipsis. Its title + time used to stack two lines into a 16–20px
    pill and spill over the pill below. The all-day band shows no time at all (§6: "no time row"). */
