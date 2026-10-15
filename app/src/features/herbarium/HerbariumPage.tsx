@@ -166,14 +166,12 @@ export function HerbariumPage() {
   const styles = `
     .pressed { filter: saturate(0.35) sepia(0.28) contrast(0.88) brightness(1.04); }
     .washi { position:absolute; width:52px; height:15px; background:color-mix(in oklch, var(--acc-sage) 42%, transparent); background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px); border-radius:1px; box-shadow:var(--shadow-crisp); z-index:6; }
-    .spec { position:relative; background:var(--bg-page); border:1px solid var(--border-page); border-radius:var(--radius-page); box-shadow:var(--shadow-page); padding:22px 24px 20px; cursor:pointer; transition:transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); }
-    .spec:hover { transform:translateY(-1px); box-shadow:var(--shadow-panel); }
+    .spec { position:relative; background:var(--bg-page); border:1px solid var(--border-page); border-radius:var(--radius-page); box-shadow:var(--shadow-page); padding:22px 24px 20px; cursor:pointer; transition:transform var(--dur-quick) var(--ease-out); }
+    .spec:hover { transform:translateY(-1px); }
     .spec:active { transform:scale(0.97); transition-duration:80ms; }
     .spec.kf-stagger-item { animation-fill-mode: backwards; }
     .ledger { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color:var(--ink-faint); line-height:2; }
-    .seas { display:flex; align-items:center; gap:14px; margin:30px 0 18px; }
-    .seas span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing: var(--ls-meta); color:var(--ink-faint); white-space:nowrap; }
-    .seas .r { flex:1; height:1px; background:var(--line-solid); }
+    .seas { margin:30px 0 18px; font-family:var(--font-ui); font-size:var(--fs-section); font-weight:var(--fw-semibold); color:var(--ink-body); }
   `
 
   const renderSpecimenModal = () => {
@@ -185,7 +183,7 @@ export function HerbariumPage() {
     const dirty = isEditingLine && editedLineText !== (p.completion_summary || '')
     return (
       <div className="kf-overlay-scrim" onClick={() => { if (!dirty) { setSelectedSpecimen(null); setIsEditingLine(false) } }} style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
-        <div className="kf-overlay-card kf-page" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
+        <div className="kf-overlay-card kf-page" onClick={(e) => e.stopPropagation()} style={{ position: 'relative', width: isMobile ? '92%' : 600, background: 'var(--bg-page)', border: '1px solid var(--border-page)', borderRadius: 'var(--radius-page)', boxShadow: 'var(--shadow-popover)', padding: isMobile ? '24px' : '30px 34px 26px' }}>
           <span className="washi" style={{ top: -9, left: 44, transform: 'rotate(-4deg)' }}></span>
           <span className="washi" style={{ top: -9, right: 44, transform: 'rotate(3deg)', background: 'color-mix(in oklch, var(--acc-gold-warm) 40%, transparent)' }}></span>
           <span onClick={() => { setSelectedSpecimen(null); setIsEditingLine(false) }} style={{ position: 'absolute', top: 14, right: 16, fontSize: 'var(--fs-body-l)', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}>✕</span>
@@ -194,7 +192,7 @@ export function HerbariumPage() {
               <img src={imgSource} alt="" className="pressed" style={{ height: isMobile ? 200 : 265, transform: 'scaleY(0.94) rotate(-1.2deg)' }} />
             </div>
             <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Specimen {String(specimenIndex.get(p.id) || 1).padStart(2, '0')} · {p.engagement_model || 'Standard'}</div>
+              <div className="kf-stamp">Specimen {String(specimenIndex.get(p.id) || 1).padStart(2, '0')} · {p.engagement_model || 'Standard'}</div>
               <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 30, color: 'var(--ink-body)' }}>{p.name}</div>
               <div className="ledger" style={{ marginTop: 12 }}>Planted {formatFullDate(p.created_at)}<br />Bloomed {formatFullDate(p.updated_at)}<br />{specimenStats.hours} hours · {specimenStats.doneMilestones}/{specimenStats.totalMilestones} milestones</div>
               <div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5 }}>
@@ -217,10 +215,10 @@ export function HerbariumPage() {
               )}
               <div style={{ flex: 1 }}></div>
               <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 12, marginTop: 12 }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>A life in numbers</div>
+                <div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>A life in numbers</div>
                 <div style={{ display: 'flex', gap: 26 }}>
-                  <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>tasks bloomed</div></div>
-                  <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>longest focus day</div></div>
+                  <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 2 }}>Tasks bloomed</div></div>
+                  <div><div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 2 }}>Longest focus day</div></div>
                 </div>
               </div>
             </div>
@@ -255,10 +253,10 @@ export function HerbariumPage() {
       <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
         <style>{PRESS_CSS}</style>
         <div className="kf-overlay-card kf-page" style={isMobile
-          ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--paper-parchment)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
-          : { width: 360, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
+          ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--bg-page)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
+          : { width: 360, background: 'var(--bg-page)', border: '1px solid var(--border-page)', borderRadius: 'var(--radius-page)', boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
           {ceremonyBeat === 1 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>
+            <div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '22px 0' }}>
               <div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>
               <div className={motion ? 'hb-press-gap' : undefined} style={{ width: 190, height: motion ? undefined : 104, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', background: 'var(--paper-bone)', borderLeft: '1px solid var(--line-card)', borderRight: '1px solid var(--line-card)', overflow: 'hidden' }}>
@@ -268,31 +266,31 @@ export function HerbariumPage() {
               <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
-              <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
+              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Skip</button>
+              <Button variant="secondary" autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))}>Next →</Button>
             </div>
           </>)}
           {ceremonyBeat === 2 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 2 of 3</div>
+            <div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Ready for the press · 2 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '22px 6px' }}>
               <div style={{ fontFamily: 'var(--font-hand)', fontSize: 24, color: 'var(--ink-body)', textAlign: 'center' }}>{p.name}</div>
               <div style={{ marginTop: 18, borderTop: '1px dashed var(--line-dashed)' }}>
-                {[['Planted', formatDayMonth(p.created_at).toUpperCase()], ['Bloomed', formatDayMonth(new Date().toISOString()).toUpperCase()], ['Hours', String(hours)], ['Milestones', `${doneMilestones}/${milestones.length}`]].map(([label, value], i) => (
+                {[['Planted', formatDayMonth(p.created_at)], ['Bloomed', formatDayMonth(new Date().toISOString())], ['Hours', String(hours)], ['Milestones', `${doneMilestones}/${milestones.length}`]].map(([label, value], i) => (
                   <div key={label} className={motion ? 'hb-stamp' : undefined} style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 2px', borderBottom: i < 3 ? '1px dashed var(--line-dashed)' : 'none', animationDelay: `${300 + i * 380}ms` }}>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{label}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', color: 'var(--ink-body)' }}>{value}</span>
+                    <span style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{label}</span>
+                    <span className="kf-stamp" style={{ color: 'var(--ink-body)' }}>{value}</span>
                   </div>
                 ))}
               </div>
               <div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
-              <button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '8px 18px', borderRadius: 999, cursor: 'pointer' }}>Next →</button>
+              <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Skip</button>
+              <Button variant="secondary" autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))}>Next →</Button>
             </div>
           </>)}
           {ceremonyBeat === 3 && (<>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 3 of 3</div>
+            <div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Ready for the press · 3 of 3</div>
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', padding: '22px 0' }}>
               <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', height: 110 }}>
                 <img src={imgSource} alt="" className={`pressed${motion ? ' hb-settle' : ''}`} style={{ height: 100, transform: 'scaleY(0.94)' }} />
@@ -302,8 +300,8 @@ export function HerbariumPage() {
                 <span style={{ display: 'inline-block', width: 1.5, height: 18, background: 'var(--acc-terra)', marginLeft: 3 }}></span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 16, marginTop: 20 }}>
-                <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer' }}>skip</button>
-                <button onClick={() => finishPressing(ceremonyLine.trim() || null)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '9px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Press it</button>
+                <button type="button" onClick={() => setPressingProject(null)} style={{ border: 'none', background: 'none', padding: 0, minHeight: 44, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Skip</button>
+                <Button onClick={() => finishPressing(ceremonyLine.trim() || null)}>Press it</Button>
               </div>
             </div>
           </>)}
@@ -324,14 +322,13 @@ export function HerbariumPage() {
         <path d="M30 14h8M112 14h8M34 10v8M116 10v8" stroke="var(--ink-faint)" strokeWidth={2.5} strokeLinecap="round"></path>
       </svg>
       <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: '1.45' }}>The press is waiting. Finish a project and it lives here forever.</div>
-      <Link to="/projects" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '9px 18px', textDecoration: 'none' }}>Back to the living garden →</Link>
+      <Button variant="secondary" onClick={() => navigate('/projects')} style={{ marginTop: 20 }}>Back to the living garden →</Button>
     </div>
   )
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{styles}</style>
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Projects · Herbarium" strip — that
           was Herbarium.dc.html's mock of the shell topbar, which the real shell already draws. */}
       {/* Kai 2026-10-03: no overflow-y of its own — unbounded, it only swallowed the wheel. */}
@@ -341,11 +338,11 @@ export function HerbariumPage() {
         <div style={{ width: 880, maxWidth: '100%', padding: isMobile ? 0 : '0 34px' }}>
           <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 14 : 24, marginBottom: 12 }}>
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                 {projectsQ.data ? `${archivedProjects.length} specimens` : ' '}{hasItems && ` · since ${formatMonthYear(archivedProjects.reduce((min, p) => (new Date(p.created_at) < new Date(min) ? p.created_at : min), archivedProjects[0].created_at))}`}
               </div>
               <h1 style={{ margin: '6px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 'var(--fs-page-title)', lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The Herbarium</h1>
-              <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever ✿</div>
+              <div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand-l)', color: 'var(--ink-muted)' }}>what bloomed, kept flat and forever ✿</div>
             </div>
             {/* deviation(2026-07-18 audit): export only has the subtle link; Kai couldn't find the way out */}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', flexWrap: 'wrap', alignItems: isMobile ? 'center' : 'flex-end', gap: isMobile ? '10px 16px' : 10, paddingBottom: 6 }}>
@@ -360,7 +357,7 @@ export function HerbariumPage() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
               {seasonalGroups.map(([seasonKey, group]) => (
                 <div key={seasonKey}>
-                  <div className="seas"><span className="t">{seasonKey}</span><span className="r"></span></div>
+                  <div className="seas">{seasonKey}</div>
                   <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 22 }}>
                     {group.map((p, gi) => {
                       const imgSrc = getSpecimenPlant(p.id)

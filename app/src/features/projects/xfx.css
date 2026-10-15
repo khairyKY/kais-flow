@@ -106,3 +106,7 @@
 .kf-lift:hover .pj-more, .pj-more:focus-visible { opacity: 1; }
 .pj-more:hover { background: var(--paper-bone); color: var(--ink-body); }
 @media (hover: none), (pointer: coarse) { .pj-more { opacity: 1; } }
+
+/* Bound Journal (Kai 2026-10-14, D5): the one typewriter left — a date or kind stamp on a page
+   (journal entries, notes, quotes, herbarium specimens). Never on a tool. Was .kf-stamp in bound.css. */
+.kf-stamp { font-family: var(--font-stamp); font-size: var(--fs-mono); letter-spacing: var(--ls-stamp); text-transform: uppercase; color: var(--ink-faint); }
