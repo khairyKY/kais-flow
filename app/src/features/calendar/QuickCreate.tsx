@@ -581,7 +581,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
               <input
                 value={labelInput}
                 aria-label="Add a label"
-                placeholder="+ label"
+                placeholder="+ Label"
                 onChange={(e) => setLabelInput(e.target.value)}
                 onBlur={addLabel}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); addLabel() } }}

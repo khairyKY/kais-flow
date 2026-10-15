@@ -74,11 +74,13 @@
 .cal-day-header-past { opacity: 0.62; }
 .cal-day-daisy { height: calc(20px * var(--s)); flex: none; }
 .cal-day-header-today .cal-day-daisy { height: calc(22px * var(--s)); filter: var(--shadow-drop-sm); }
-/* Bound Journal D5: the grid's own metadata (day names, hour labels, the month's numbers and "+N more")
-   reads the app's metadata size, --fs-meta, scaled with the grid. Block type stays at 04b's scale. */
+/* Bound Journal D5: the grid's own metadata (hour labels, the month's numbers and "+N more") reads the
+   app's metadata size, --fs-meta, scaled with the grid. Block type stays at 04b's scale. The day name keeps
+   11px: "Wed · Today" and its number share a Week column's one line. */
 .cal-day-header-name {
   font-family: var(--font-mono);
-  font-size: calc(var(--fs-meta) * var(--s-text));
+  font-size: calc(var(--fs-mono-l) * var(--s-text));
+  white-space: nowrap;
   letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
 }
