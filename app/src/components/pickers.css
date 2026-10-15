@@ -1,6 +1,8 @@
 /* MK Date Picker + MK Time Picker (DS-CHANGELOG §3). The phone sizes are the DS rows, inside a
    full-height BottomSheet (whose body has 20px gutters — full-bleed parts pull back out of them).
-   The desktop popover (.kf-pk-pop) carries the same content at desktop density. */
+   The desktop popover (.kf-pk-pop) carries the same content at desktop density. Bound Journal: the
+   chosen day and the chosen time pill are ink-filled (--sel-bg, D2); unselected pills are transparent
+   with a 3:1 edge (D12); the popover is a 16px tool card; hairlines are solid. */
 
 /* ── Date ── */
 .kf-pk-picks { margin: 0 -20px; border-top: 1px solid var(--line-dashed); border-bottom: 1px solid var(--line-dashed); }
@@ -14,7 +16,7 @@
 .kf-pk-nav:active { background: var(--pressed-overlay); }
 .kf-pk-nav:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .kf-pk-row { display: grid; grid-template-columns: repeat(7, 1fr); }
-.kf-pk-wk { height: 24px; align-items: center; text-align: center; font-family: var(--font-mono); font-size: 12px;
+.kf-pk-wk { height: 24px; align-items: center; text-align: center; font-family: var(--font-mono); font-size: var(--fs-meta);
   letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .kf-pk-day { height: 44px; display: flex; align-items: center; justify-content: center; padding: 0; border: none; background: none;
   font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -22,10 +24,10 @@
   font-size: 15px; color: var(--ink-body); transition: background var(--dur-press) var(--ease-standard); }
 .kf-pk-day.is-out > span { color: var(--ink-faint); }
 .kf-pk-day.is-today > span { box-shadow: inset 0 0 0 1.5px var(--acc-terra-ink); color: var(--acc-terra-ink); font-weight: 600; }
-.kf-pk-day[aria-selected='true'] > span { background: var(--acc-lavender-text); color: var(--paper-parchment); font-weight: 600; box-shadow: none; }
+.kf-pk-day[aria-selected='true'] > span { background: var(--sel-bg); color: var(--sel-ink); font-weight: 600; box-shadow: none; }
 .kf-pk-day.has-items > span::after { content: ''; position: absolute; bottom: 5px; left: 50%; margin-left: -2px; width: 4px; height: 4px;
   border-radius: 50%; background: var(--ink-faint); }
-.kf-pk-day[aria-selected='true'].has-items > span::after { background: var(--paper-parchment); }
+.kf-pk-day[aria-selected='true'].has-items > span::after { background: var(--sel-ink); }
 .kf-pk-day:not(:disabled):not([aria-selected='true']):active > span { background: var(--pressed-overlay); }
 .kf-pk-day:focus-visible { outline: none; }
 .kf-pk-day:focus-visible > span { box-shadow: var(--focus-ring); }
@@ -36,10 +38,9 @@
 .kf-pk-tp { height: 100%; display: flex; flex-direction: column; }
 .kf-pk-sl { flex: none; min-height: 48px; display: flex; flex-direction: column; justify-content: center; }
 .kf-pk-slots { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 4px; }
-.kf-pk-slot { height: 48px; padding: 0 14px; border: 1px solid var(--line-control); border-radius: var(--radius-pill); background: var(--paper-bone);
+.kf-pk-slot { height: 48px; padding: 0 14px; border: 1px solid var(--line-control); border-radius: var(--radius-pill); background: transparent;
   font: inherit; font-size: 14px; color: var(--ink-body); white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.kf-pk-slot[aria-pressed='true'] { border-color: transparent; background: var(--block-lavender); box-shadow: inset 0 0 0 1.5px var(--acc-lavender-text);
-  color: var(--acc-lavender-text); font-weight: 600; }
+.kf-pk-slot[aria-pressed='true'] { border-color: var(--sel-bg); background: var(--sel-bg); color: var(--sel-ink); font-weight: 600; }
 .kf-pk-slot:active { background-image: linear-gradient(var(--pressed-overlay), var(--pressed-overlay)); }
 .kf-pk-slot:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .kf-pk-times { position: relative; flex: 1 1 0; min-height: 144px; overflow-y: auto; overscroll-behavior: contain; margin: 0 -20px; }
@@ -56,9 +57,9 @@
 
 /* ── Desktop popover ── */
 .kf-pk-pop { position: fixed; z-index: 1000; width: 340px; display: flex; flex-direction: column; overflow: hidden;
-  background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: var(--shadow-popover); }
+  background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); box-shadow: var(--shadow-popover); }
 .kf-pk-pop-head { flex: none; padding: 12px 20px 8px; font-family: var(--font-display); font-size: 17px; font-weight: 500; line-height: 1.2; color: var(--ink-body); }
-.kf-pk-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; font-weight: 400; line-height: 1.4; letter-spacing: var(--ls-meta);
+.kf-pk-meta { margin-top: 3px; font-family: var(--font-mono); font-size: var(--fs-meta); font-weight: 400; line-height: 1.4; letter-spacing: var(--ls-meta);
 color: var(--ink-faint); }
 .kf-pk-pop-head .kf-pk-meta { font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kf-pk-pop-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 0 20px 8px; }
