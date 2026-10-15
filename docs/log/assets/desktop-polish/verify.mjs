@@ -266,7 +266,10 @@ for (const theme of ['day', 'night']) {
     await sleep(200)
     await page.locator('.kf-lift', { hasText: 'Shaheen Website' }).first().click({ button: 'right' })
     await sleep(300)
-    check(`${N('projects')} right-click a project → Open · Rename · Domain… · Change type… · Finish & press · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Domain… · Change type… · Finish & press · Delete')
+    // 4784af36 (Kai 2026-10-12): "Finish & press" became "Finish" — one tap + Undo, the press optional.
+    const pmenu = (await page.locator('[role="menu"]').innerText().catch(() => '(no menu)')).split('\n').join(' · ')
+    check(`${N('projects')} right-click a project → Open · Rename · Domain… · Change type… · Finish · Delete`, pmenu === 'Open · Rename · Domain… · Change type… · Finish · Delete', pmenu)
+    await shot(page, N('projects-project-menu'))
     await page.keyboard.press('Escape')
     await sleep(200)
     const prevented = await page.evaluate(() => {
