@@ -26,7 +26,7 @@ import { isNativeShell, openExternal } from '../../lib/platform'
 import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
-import { useMcpKey, createMcpKey, deleteMcpKey, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
+import { useMcpKey, createMcpKey, deleteMcpKey, setMcpPersonal, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
 import { PaperSettingsCard } from '../paper/PaperSettings'
 import { useToastStore } from '../../lib/toastStore'
 import { Button, Chip, Segmented, Toggle } from '../../components/kit'
@@ -904,12 +904,23 @@ function McpCard() {
     { name: 'Other MCP clients', how: 'The address and the header, in the usual mcpServers shape.', text: genericConfig(key) },
   ]
   return (
-    <SCard plain padded title="AI assistants (MCP)" sub="Let Claude or another assistant read your tasks, projects and calendar — and, if you allow it, add and tick off tasks.">
+    <SCard plain padded title="AI assistants (MCP)" sub="Let Claude or another assistant read your garden — tasks, projects, calendar, Inbox, routines, Library — and, if you allow it, change things for you.">
       {!row && !shown && <div className="st-help">Not set up yet</div>}
       {row && !shown && (
         <div className="st-help">
           Key made {day(row.updated_at)} · {row.scope === 'read' ? 'read only' : 'read & write'} · {row.last_used_at ? `last used ${day(row.last_used_at)}` : 'not used yet'}
         </div>
+      )}
+      {/* The personal areas (0080): off for every key until switched on here; the server enforces it. */}
+      {row && (
+        <>
+          <Row label="Journal" help={row.scopes?.includes('journal') ? 'This key can read and write your journal entries' : 'Off: the assistant never sees your journal'} style={{ borderTop: 'none' }}>
+            <Toggle on={!!row.scopes?.includes('journal')} label="Let this key reach my journal" disabled={busy} onToggle={() => void run(() => setMcpPersonal(row, 'journal', !row.scopes?.includes('journal')))} />
+          </Row>
+          <Row label="People" help={row.scopes?.includes('people') ? 'This key can read and write the people you keep and your notes about them' : 'Off: the assistant never sees the people you keep'}>
+            <Toggle on={!!row.scopes?.includes('people')} label="Let this key reach my people" disabled={busy} onToggle={() => void run(() => setMcpPersonal(row, 'people', !row.scopes?.includes('people')))} />
+          </Row>
+        </>
       )}
       {shown && (
         <>
@@ -920,7 +931,7 @@ function McpCard() {
           </div>
         </>
       )}
-      <Row label="Access" help={scope === 'read' ? 'The assistant can look but never change anything' : 'It can also add tasks, tick them off, move them to tomorrow and add to your Inbox'} style={{ borderTop: 'none' }}>
+      <Row label="Access" help={scope === 'read' ? 'The assistant can look but never change anything' : 'It can also add, change and tick things off — deletes go to Trash'} style={row ? undefined : { borderTop: 'none' }}>
         <Segmented<McpScope> label="Access" value={scope} onChange={setScope} options={[{ value: 'read_write', label: 'Read & write' }, { value: 'read', label: 'Read only' }]} />
       </Row>
       <div className="st-btns">
@@ -949,7 +960,7 @@ function McpCard() {
         />
       )}
       {err && <div className="st-help" style={{ color: 'var(--acc-terra-ink)', marginTop: 8 }}>{err}</div>}
-      <div className="st-help" style={{ marginTop: 10 }}>A new key stops the old one · your journal and people are never shared · 500 tool calls a day</div>
+      <div className="st-help" style={{ marginTop: 10 }}>A new key stops the old one, and starts with Journal and People off · 500 tool calls a day</div>
       <div className="st-mono-box">{MCP_URL}</div>
       <div style={{ marginTop: 8 }}>
         <Button variant="secondary" onClick={() => copy(MCP_URL, 'Server address')}>Copy server address</Button>

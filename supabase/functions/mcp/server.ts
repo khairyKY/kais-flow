@@ -15,22 +15,37 @@
 // Auth is the user's AI access key (`Authorization: Bearer kf_ai_…`, migration 0051), checked on
 // every request; see docs/MCP.md for why a key and not OAuth.
 import { userZone } from '../_shared/zone.ts'
-import { TOOLS, runTool, type Store, type ToolDef } from './tools.ts'
+import { SCOPES, TOOLS as CORE_TOOLS, runTool, type Scope, type Store, type ToolDef } from './tools.ts'
+import { ORGANIZE_TOOLS } from './organize.ts'
+import { LIFE_TOOLS } from './life.ts'
+import { PERSONAL_TOOLS } from './personal.ts'
 import type { RuleBetween } from '../_shared/series.ts'
 
 export const MODERN_VERSIONS = ['2026-07-28'] as const
 export const LEGACY_VERSIONS = ['2025-11-25', '2025-06-18', '2025-03-26'] as const
 export const SUPPORTED_VERSIONS: readonly string[] = [...MODERN_VERSIONS, ...LEGACY_VERSIONS]
 
-export const SERVER_INFO = { name: 'kais-flow', title: "Kai's Flow", version: '1.1.0' }
+export const SERVER_INFO = { name: 'kais-flow', title: "Kai's Flow", version: '2.0.0' }
 
-export const INSTRUCTIONS =
-  "Kai's Flow is the user's personal planner: tasks, a daily Top 3, an Inbox, projects and a calendar. " +
-  "Dates and times are on the user's own clock — the `timezone` every result names. " +
-  'Read freely. Write only when the user asks: add_task, edit_task, reschedule_task, complete_task, move_to_tomorrow, add_to_inbox, ' +
-  'add_event, edit_event and delete_event change their real lists and calendar, and each says what it changed. ' +
-  'A task given a time is on the calendar; a date alone is not. ' +
-  'When it is unclear whether something is a task, use add_to_inbox. Journal entries and people are not available here.'
+/** Every tool, in the order tools/list shows them. */
+export const TOOLS: readonly ToolDef[] = [...CORE_TOOLS, ...ORGANIZE_TOOLS, ...LIFE_TOOLS, ...PERSONAL_TOOLS]
+
+/** The server's instructions for this key: what it can do, named. */
+export function instructionsFor(scope: KeyScope, scopes: ReadonlySet<Scope>): string {
+  const writers = toolsFor(scope, scopes).filter((t) => t.write).map((t) => t.name)
+  const personal = SCOPES.filter((s) => scopes.has(s))
+  return (
+    "Kai's Flow is the user's personal planner and life OS: tasks, a daily Top 3 (the first is the goal of the day), an Inbox, projects, areas and domains, labels, a calendar with Time blocks, routines, focus rounds, the morning and evening rituals, a Library, and Trash. " +
+    "Dates and times are on the user's own clock — the `timezone` every result names. Start with today; the projects tool gives the ids of where things live. " +
+    (writers.length
+      ? `Read freely. Write only when the user asks: ${writers.join(', ')} change their real data, and each says what it changed. Deletes go to Trash (restore_from_trash brings them back), except the few marked as deleting for good — confirm those with the user first. `
+      : 'This key reads only: it can look, never change anything. ') +
+    'A task given a time is on the calendar; a date alone is not. When it is unclear whether something is a task, use add_to_inbox. ' +
+    (personal.length === 2 ? 'This key may also read and write the journal and the people they keep.' : personal.length ? `This key may also read and write ${personal[0] === 'journal' ? 'the journal' : 'the people they keep'}; ${personal[0] === 'journal' ? 'people are' : 'the journal is'} not available here.` : 'The journal and the people they keep are not available here.')
+  )
+}
+/** The instructions for a full read & write key with no personal scope — the default a new key gets. */
+export const INSTRUCTIONS = instructionsFor('read_write', new Set())
 
 /** `kf_ai_` + 32 random bytes as base64url (43 characters) — features/settings/mcpKey.ts makes them. */
 export const KEY_PATTERN = /^kf_ai_[A-Za-z0-9_-]{43}$/
@@ -39,6 +54,8 @@ export type KeyScope = 'read' | 'read_write'
 
 export interface Session {
   scope: KeyScope
+  /** The personal areas its owner switched on for this key (mcp_keys.scopes, 0080). */
+  scopes: readonly Scope[]
   store: Store
 }
 
@@ -91,9 +108,10 @@ export function decodeHeaderValue(v: string | null): string | null {
   }
 }
 
-/** The tools a key may see: a read-only key gets no writers. */
-export function toolsFor(scope: KeyScope): readonly ToolDef[] {
-  return scope === 'read_write' ? TOOLS : TOOLS.filter((t) => !t.write)
+/** The tools a key may see: a read-only key gets no writers, and a personal tool (journal, people)
+ * only a key granted its scope. */
+export function toolsFor(scope: KeyScope, scopes: ReadonlySet<Scope>): readonly ToolDef[] {
+  return TOOLS.filter((t) => (scope === 'read_write' || !t.write) && (!t.scope || scopes.has(t.scope)))
 }
 
 export function toolListing(t: ToolDef): Json {
@@ -103,32 +121,39 @@ export function toolListing(t: ToolDef): Json {
     description: t.description,
     inputSchema: t.inputSchema,
     annotations: t.write
-      ? { title: t.title, readOnlyHint: false, destructiveHint: false, openWorldHint: false }
+      ? { title: t.title, readOnlyHint: false, destructiveHint: !!t.destructive, openWorldHint: false }
       : { title: t.title, readOnlyHint: true, openWorldHint: false },
   }
 }
 
 async function dispatch(method: string, params: Json, s: Session, deps: Deps): Promise<Outcome> {
+  const scopes = new Set(s.scopes.filter((x): x is Scope => (SCOPES as readonly string[]).includes(x)))
+  const instructions = instructionsFor(s.scope, scopes)
   switch (method) {
     case 'initialize': {
       const asked = params.protocolVersion
       const protocolVersion = (LEGACY_VERSIONS as readonly unknown[]).includes(asked) ? asked : LEGACY_VERSIONS[0]
-      return { result: { protocolVersion, capabilities: { tools: { listChanged: false } }, serverInfo: SERVER_INFO, instructions: INSTRUCTIONS } }
+      return { result: { protocolVersion, capabilities: { tools: { listChanged: false } }, serverInfo: SERVER_INFO, instructions } }
     }
     case 'server/discover':
-      return { result: { supportedVersions: SUPPORTED_VERSIONS, capabilities: { tools: { listChanged: false } }, instructions: INSTRUCTIONS } }
+      return { result: { supportedVersions: SUPPORTED_VERSIONS, capabilities: { tools: { listChanged: false } }, instructions } }
     case 'ping':
       return { result: {} }
     case 'tools/list':
-      return { result: { tools: toolsFor(s.scope).map(toolListing) } }
+      return { result: { tools: toolsFor(s.scope, scopes).map(toolListing) } }
     case 'tools/call': {
       const tool = TOOLS.find((t) => t.name === params.name)
       if (!tool) return { error: { code: -32602, message: `Unknown tool: ${String(params.name)}` } }
+      // A personal tool this key wasn't granted: refused like a writer for a read-only key, and never run.
+      if (tool.scope && !scopes.has(tool.scope)) {
+        const what = tool.scope === 'journal' ? 'the journal' : 'the people the user keeps'
+        return { result: { content: [{ type: 'text', text: `This key can't reach ${what}. The user can switch it on for this key in Kai's Flow → Settings → AI assistants.` }], isError: true } }
+      }
       if (tool.write && s.scope !== 'read_write') {
         return { result: { content: [{ type: 'text', text: "This key is read-only, so it can't change anything. The user can make a read & write key in Kai's Flow → Settings → Integrations → AI assistants." }], isError: true } }
       }
       const zone = userZone(await s.store.timezone())
-      const result = await runTool(tool, params.arguments, { store: s.store, zone, now: deps.now(), nextOccurrence: deps.nextOccurrence, ruleBetween: deps.ruleBetween })
+      const result = await runTool(tool, params.arguments, { store: s.store, zone, now: deps.now(), nextOccurrence: deps.nextOccurrence, ruleBetween: deps.ruleBetween, scopes })
       return { result: { ...result } }
     }
     default:

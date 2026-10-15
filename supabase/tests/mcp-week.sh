@@ -147,9 +147,13 @@ info "harness: mcp on :$FN_PORT; users A=$A_ID B=$B_ID; project A=$P1 (domain $D
 section "tools/list"
 rpc "$KA" tools/list '{}'
 expect "tools/list: HTTP" 200 "$CODE"
-expect "tools/list: all 15 tools for a read & write key" \
+# Since mcp-full (2026-10-14) a key reaches every area of the app; the journal / people tools only with
+# their scope (0080), which these keys don't have. The fifteen planning tools are all still here.
+expect "tools/list: the fifteen planning tools are all there for a read & write key" \
   "add_event add_task add_to_inbox calendar complete_task delete_event edit_event edit_task get_task list_tasks move_to_tomorrow projects reschedule_task search today" \
-  "$(jq -r '[.result.tools[].name] | sort | join(" ")' <<<"$BODY")"
+  "$(jq -r '[.result.tools[].name | select(IN("add_event","add_task","add_to_inbox","calendar","complete_task","delete_event","edit_event","edit_task","get_task","list_tasks","move_to_tomorrow","projects","reschedule_task","search","today"))] | sort | join(" ")' <<<"$BODY")"
+expect "tools/list: no journal or people tool for a key without those scopes" "" \
+  "$(jq -r '[.result.tools[].name | select(IN("journal","save_journal_entry","people","save_person","log_interaction","delete_person"))] | join(" ")' <<<"$BODY")"
 
 # ---------------------------------------------------------------------------------------------
 section "add_task with a time blocks the calendar (Africa/Cairo, UTC+2)"

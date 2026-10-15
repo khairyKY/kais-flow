@@ -1,5 +1,35 @@
 [
   {
+    "v": "v1.1.9",
+    "date": "2026-10-14",
+    "title": "Saves that leave sooner",
+    "highlights": [
+      "Changes on the calendar reach your other devices about three times sooner: dropping a task into a Time Slot saves in under half a second instead of more than one"
+    ],
+    "icons": [
+      "sync"
+    ],
+    "art": "clover-awake"
+  },
+  {
+    "v": "v1.1.8",
+    "date": "2026-10-14",
+    "title": "Tell any AI to do anything",
+    "highlights": [
+      "Your AI assistant can now do what you can in the app: 51 actions over MCP, from tasks, Inbox, projects and labels to calendar, Time Slots, routines, focus, Plan my day, Shut down, the library and settings",
+      "Your journal and the people you keep stay out of its reach unless you switch them on for that key, in Settings → AI assistants",
+      "Deleting or moving a Time block keeps its tasks right, and rescheduling a task takes it out of its slot",
+      "Each release now also builds the Microsoft Store package for Windows"
+    ],
+    "icons": [
+      "chat",
+      "lock",
+      "calendar",
+      "windows"
+    ],
+    "art": "fern-unfurl1"
+  },
+  {
     "v": "v1.1.7",
     "date": "2026-10-14",
     "title": "Links that open, and the apps one tap away",
