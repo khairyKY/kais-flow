@@ -18,6 +18,7 @@ import { useSlipping, markReviewed } from '../slipping/api'
 import { useReviewEventsThisWeek, logReviewEvent } from './api'
 import { useMotionEnabled } from '../../lib/motion'
 import { FieldLabel } from './RitualChrome'
+import { Button, SectionLabel } from '../../components/kit'
 import { useIsMobile } from '../../components/BottomSheet'
 import type { Area, CalendarEvent, Domain, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
@@ -53,12 +54,15 @@ function doneCount(tasks: Task[], start: Date, end: Date): number {
  * records a verdict, nothing destructive (punch item 45's explicit ruling — no archive). */
 export type SweepVerdict = 'still moving' | 'park it' | 'needs a look' | 'reviewed ✓'
 const VERDICTS: SweepVerdict[] = ['still moving', 'park it', 'needs a look', 'reviewed ✓']
+// B D12: an unchosen verdict carries a 3:1 edge and body ink (park it keeps its dashed edge, needs a
+// look its terra wash); the chosen one is ink-filled (VERDICT_ON) instead of dimming the others.
 const VERDICT_STYLE: Record<SweepVerdict, CSSProperties> = {
-  'still moving': { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' },
-  'park it': { border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' },
+  'still moving': { border: '1px solid var(--line-control)', color: 'var(--ink-body)' },
+  'park it': { border: '1px dashed var(--line-control)', color: 'var(--ink-body)' },
   'needs a look': { background: 'color-mix(in srgb, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' },
-  'reviewed ✓': { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' },
+  'reviewed ✓': { border: '1px solid var(--line-control)', color: 'var(--ink-body)' },
 }
+const VERDICT_ON: CSSProperties = { background: 'var(--sel-bg)', border: '1px solid var(--sel-bg)', color: 'var(--sel-ink)' }
 
 export function WeeklyReviewPage() {
   const isMobile = useIsMobile()
@@ -168,32 +172,17 @@ export function WeeklyReviewPage() {
           </div>
 
           {/* The phone had no way to close the week (2026-10-12 parity review). */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'flex-end' : 'space-between', marginTop: isMobile ? 20 : 28, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: isMobile ? 'flex-end' : 'space-between', marginTop: isMobile ? 20 : 28, paddingTop: 16, borderTop: '1px solid var(--line-dashed)' }}>
             {/* The design's "sweep all three" was its sample count — say the real one. */}
-            {!isMobile && domains.length > 0 && !closedAt && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>{domains.length === 1 ? 'sweep it' : `sweep all ${domains.length}`} and the frond unfurls flat ✿</span>}
+            {!isMobile && domains.length > 0 && !closedAt && <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>{domains.length === 1 ? 'Sweep it' : `Sweep all ${domains.length}`} and the frond unfurls flat ✿</span>}
             {closedAt ? (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-muted)', minHeight: isMobile ? 44 : undefined, display: 'inline-flex', alignItems: 'center' }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', minHeight: isMobile ? 44 : undefined, display: 'inline-flex', alignItems: 'center' }}>
                 Week closed ✿ · {new Date(closedAt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })}
               </span>
             ) : (
-            <button
-              type="button"
-              disabled={!allSwept}
-              onClick={closeWeek}
-              style={{
-                border: '1px solid var(--line-solid)',
-                background: allSwept ? 'var(--acc-terra)' : 'var(--paper-bone)',
-                color: allSwept ? 'var(--paper-parchment)' : 'var(--ink-faint)',
-                font: 'inherit',
-                fontSize: 13,
-                padding: '10px 20px',
-                minHeight: isMobile ? 44 : undefined,
-                borderRadius: 999,
-                cursor: allSwept ? 'pointer' : 'default',
-              }}
-            >
+            <Button type="button" variant={allSwept ? 'cta' : 'secondary'} disabled={!allSwept} onClick={closeWeek}>
               {allSwept ? 'Close the week ✓' : `Close the week · ${sweptAt.size}/${domains.length}`}
-            </button>
+            </Button>
             )}
           </div>
 
@@ -208,11 +197,9 @@ export function WeeklyReviewPage() {
               marginTop: 22,
               background: 'var(--paper-parchment)',
               border: '1px solid var(--line-card)',
-              borderRadius: 4,
-              boxShadow: 'var(--shadow-crisp)',
+              borderRadius: 'var(--radius-card)',
               padding: '15px 18px',
               textDecoration: 'none',
-              transform: 'rotate(-0.2deg)',
               cursor: 'pointer',
               font: 'inherit',
               textAlign: 'left',
@@ -221,9 +208,9 @@ export function WeeklyReviewPage() {
             <img src={`${A}/fern/full.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ minWidth: 0, flex: 1 }}>
               <div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>The season so far</div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>The numbers behind the week</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>The numbers behind the week</div>
             </div>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)' }}>{showSeason ? 'Close ↑' : 'Open →'}</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{showSeason ? 'Close ↑' : 'Open →'}</span>
           </button>
 
           {showSeason && (
@@ -283,7 +270,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile }:
         </svg>
       )}
       <div style={{ textAlign: 'right' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>{domainsSwept} of {domainsTotal} domains swept</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-buttercream-text)' }}>{domainsSwept} of {domainsTotal} domains swept</span>
       </div>
     </div>
   )
@@ -291,7 +278,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile }:
 
 // `.fhelp` — Review.dc.html's small mono helper text
 function FHelp({ children }: { children: ReactNode }) {
-  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>{children}</span>
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{children}</span>
 }
 
 /** "touched Tue" for fresh rows, "quiet N days" past a week — from the newest updated_at
@@ -315,8 +302,6 @@ const CHIP_BASE: CSSProperties = {
   whiteSpace: 'nowrap', // "STILL / MOVING" wrapped inside the chip on a phone
   fontFamily: 'var(--font-mono)',
   fontSize: 'var(--fs-meta)',
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
   padding: '4px 9px',
   borderRadius: 999,
   display: 'inline-flex',
@@ -348,7 +333,7 @@ function SweepRow({
   last?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px', borderBottom: last ? 'none' : '1px dashed var(--line-dashed)', flexWrap: 'wrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px', borderBottom: last ? 'none' : '1px solid var(--line-dashed)', flexWrap: 'wrap' }}>
       <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flex: 'none' }} />
       <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={name} /></span>
       <FHelp>{open} open · {touched}</FHelp>
@@ -358,8 +343,9 @@ function SweepRow({
             key={v}
             type="button"
             className="kf-hit"
+            aria-pressed={verdict === v}
             onClick={() => onVerdict(v)}
-            style={{ ...CHIP_BASE, ...VERDICT_STYLE[v], opacity: verdict && verdict !== v ? 0.45 : 1 }}
+            style={{ ...CHIP_BASE, ...VERDICT_STYLE[v], ...(verdict === v ? VERDICT_ON : null) }}
           >
             {v.charAt(0).toUpperCase() + v.slice(1)}
           </button>
@@ -389,7 +375,7 @@ function SweepList({
   style?: CSSProperties
 }) {
   return (
-    <div style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 4, ...style }}>
+    <div style={{ borderTop: '1px solid var(--line-dashed)', paddingTop: 4, ...style }}>
       {projects.map((p, i) => (
         <SweepRow
           key={p.id}
@@ -421,7 +407,7 @@ function SweepList({
         <div style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '8px 2px' }}>
           <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>{looseCount} loose task{looseCount === 1 ? '' : 's'} with no home</span>
           <span style={{ marginLeft: 'auto' }}>
-            <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', textDecoration: 'none' }}>Sort them →</Link>
+            <Link to="/tasks?list=today" style={{ ...CHIP_BASE, border: '1px dashed var(--line-control)', color: 'var(--ink-body)', textDecoration: 'none' }}>Sort them →</Link>
           </span>
         </div>
       )}
@@ -468,7 +454,7 @@ function DomainCard({
   if (state === 'swept') {
     const time = sweptTime ? new Date(sweptTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: appZone() }) : ''
     return (
-      <div style={{ background: 'var(--paper-bone)', border: '1px dashed var(--line-solid)', borderRadius: 3, opacity: reopened ? 1 : 0.85 }}>
+      <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-card)', opacity: reopened ? 1 : 0.85 }}>
         {/* J-27: the summary row itself is the toggle — same look as before, plus a ▾/▴ hint. */}
         <button
           type="button"
@@ -477,27 +463,22 @@ function DomainCard({
           onClick={() => setReopened((o) => !o)}
           style={{ width: '100%', minHeight: 44, padding: '14px 17px', display: 'flex', alignItems: 'center', gap: 11, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: 'inherit' }}
         >
-          <span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+          <span style={{ width: 17, height: 17, borderRadius: 'var(--radius-check)', background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
             <span style={{ color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)' }}>✓</span>
           </span>
           <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-muted)' }}>{domain.name}</span>
           <FHelp>{counts}</FHelp>
-          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
-            swept{time ? ` ${time}` : ''} {reopened ? '▴' : '▾'}
+          <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
+            Swept{time ? ` ${time}` : ''} {reopened ? '▴' : '▾'}
           </span>
         </button>
         {reopened && (
           <div style={{ padding: isMobile ? '0 14px 14px' : '0 18px 16px' }}>
             {sweepList()}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
-              <button
-                type="button"
-                className="kf-hit"
-                onClick={() => setReopened(false)}
-                style={{ ...CHIP_BASE, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}
-              >
-                fold it back ↑
-              </button>
+              <Button type="button" variant="secondary" onClick={() => setReopened(false)}>
+                Fold it back ↑
+              </Button>
             </div>
           </div>
         )}
@@ -507,30 +488,30 @@ function DomainCard({
 
   if (state === 'waiting') {
     return (
-      <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '14px 17px', display: 'flex', alignItems: 'center', gap: 11 }}>
-        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
+      <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '14px 17px', display: 'flex', alignItems: 'center', gap: 11 }}>
+        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 'var(--radius-check)', flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Up next</span>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Up next</span>
       </div>
     )
   }
 
-  // current — the expanded sweep card, Review.dc.html 1a "domain 2 — current, expanded"
+  // current — the expanded sweep card, Review.dc.html 1a "domain 2 — current, expanded". A tool card
+  // (B D3/D4/D7): 16 corners, flat, no tape or tilt.
   return (
-    <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: isMobile ? 14 : '16px 18px', transform: 'rotate(-0.2deg)' }}>
-      <span style={{ position: 'absolute', top: -9, left: 26, width: 54, height: 16, background: 'color-mix(in srgb, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
+    <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: isMobile ? 14 : '16px 18px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
-        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />
+        <span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 'var(--radius-check)', flex: 'none' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>
         <FHelp>{counts}</FHelp>
-        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Sweeping…</span>
+        <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-buttercream-text)' }}>Sweeping…</span>
       </div>
       {sweepList({ marginTop: 12 })}
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12 }}>
-        <button type="button" onClick={onSweep} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>
+        <Button type="button" onClick={onSweep}>
           Mark {domain.name} swept
-        </button>
+        </Button>
       </div>
     </div>
   )
@@ -555,19 +536,19 @@ function RightRail({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24, paddingTop: 8 }}>
       <div>
-        <RailLabel label="Slipping" color="var(--acc-terra)" count={rows.length} />
+        <RailLabel label="Slipping" count={rows.length} />
         {rows.length === 0 ? (
           <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 8 }}>Nothing slipping.</p>
         ) : (
           rows.slice(0, 3).map((row) => (
             // Motion 3e (WB-1): id is how markReviewed() finds the card to slide it out.
-            <div key={`${row.entity_type}-${row.entity_id}`} id={`slipping-${row.entity_type}:${row.entity_id}`} style={{ marginTop: 8, background: 'color-mix(in srgb, var(--acc-terra) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--acc-terra) 25%, transparent)', borderRadius: 3, padding: '12px 14px' }}>
+            <div key={`${row.entity_type}-${row.entity_id}`} id={`slipping-${row.entity_type}:${row.entity_id}`} style={{ marginTop: 8, background: 'color-mix(in srgb, var(--acc-terra) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--acc-terra) 25%, transparent)', borderRadius: 'var(--radius-card)', padding: '12px 14px' }}>
               <div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{row.entity_name}</div>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 }}>
                 <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{Math.floor(row.days_since)} days untouched</span>
-                <button type="button" onClick={() => onReview(row)} style={{ border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer', padding: 0 }}>
-                  reviewed
-                </button>
+                <Button type="button" variant="ghost" onClick={() => onReview(row)}>
+                  Reviewed
+                </Button>
               </div>
             </div>
           ))
@@ -584,7 +565,7 @@ function RightRail({
               const dates = completions.filter((c) => c.routine_id === r.id).map((c) => c.completed_on)
               const { current: c, best: b } = computeStreak(dates, r.cadence)
               return (
-                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', borderBottom: i < 2 ? '1px dashed var(--line-dashed)' : 'none' }}>
+                <div key={r.id} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '8px 0', borderBottom: i < 2 ? '1px solid var(--line-dashed)' : 'none' }}>
                   <span style={{ fontSize: 13, color: 'var(--ink-body)' }}>{r.name}</span>
                   <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--sig-streak)' }}>🔥 {c} · best {b}</span>
                 </div>
@@ -596,30 +577,25 @@ function RightRail({
 
       <div>
         <RailLabel label="Week in petals" />
-        <div style={{ marginTop: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '13px 14px' }}>
+        <div style={{ marginTop: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '13px 14px' }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)' }}>{bloomsThisWeek}</span>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>tasks done</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>tasks done</span>
             <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)' }}>
               {Math.round(hoursThisWeek)}<span style={{ fontSize: 15, color: 'var(--ink-faint)' }}>h</span>
             </span>
           </div>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 4 }}>petals fallen · hours blocked &amp; kept</div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 4 }}>Petals fallen · hours blocked &amp; kept</div>
         </div>
-        <div className="kf-ink" style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15.5, lineHeight: 1.45, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.8deg)' }}>no numbers to chase — just look once, honestly, then close the week</div>
+        <div className="kf-ink" style={{ marginTop: 10, fontSize: 'var(--fs-body-s)', lineHeight: 1.45, color: 'var(--ink-muted)' }}>No numbers to chase — just look once, honestly, then close the week</div>
       </div>
     </div>
   )
 }
 
-function RailLabel({ label, color, count }: { label: string; color?: string; count?: number }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase' }}>
-      <span style={{ color: color ?? 'var(--ink-faint)' }}>{label}</span>
-      <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-      {count != null && <span style={{ color: 'var(--ink-faint)' }}>{count}</span>}
-    </div>
-  )
+/** B D6: the kit section label, a quiet count on the right. */
+function RailLabel({ label, count }: { label: string; count?: number }) {
+  return <SectionLabel action={count != null && <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>{count}</span>}>{label}</SectionLabel>
 }
 
 // ── "The season so far", redone (3c) — supersedes 2c's plainer trend chart. ──
@@ -677,7 +653,7 @@ function SeasonSoFar({
   const topRoutines = routines.filter((r) => r.active).slice(0, 3)
 
   return (
-    <div style={{ marginTop: 22, background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 3, padding: '20px 22px' }}>
+    <div style={{ marginTop: 22, background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '20px 22px' }}>
       {/* Polish F2b: 3c draws these four widgets 2×2 on an 880px card. Beside the sidebar and the
           right rail at 1280 (and on a phone) each widget got ~194px, and the 30 routine cells
           crushed to 0–1px. The widgets now wrap to one column when two can't each keep 260px,
@@ -700,7 +676,7 @@ function SeasonSoFar({
       </div>
 
       <div className="kf-season-grid">
-        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
+        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 18px' }}>
           <FieldLabel>Hours by area</FieldLabel>
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 11 }}>
             {hoursByDomain.length === 0 && <p style={{ fontSize: 12, color: 'var(--ink-faint)', margin: 0 }}>No domains yet.</p>}
@@ -709,7 +685,7 @@ function SeasonSoFar({
                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
                   <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{h.name}</span>
                   <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                    {Math.round(h.thisWeek)}H {h.thisWeek !== h.lastWeek && <span style={{ color: h.thisWeek > h.lastWeek ? 'var(--acc-sage-text)' : 'var(--ink-faint)' }}>({h.thisWeek > h.lastWeek ? '+' : ''}{Math.round(h.thisWeek - h.lastWeek)})</span>}
+                    {Math.round(h.thisWeek)}h {h.thisWeek !== h.lastWeek && <span style={{ color: h.thisWeek > h.lastWeek ? 'var(--acc-sage-text)' : 'var(--ink-faint)' }}>({h.thisWeek > h.lastWeek ? '+' : ''}{Math.round(h.thisWeek - h.lastWeek)})</span>}
                   </span>
                 </div>
                 <div style={{ position: 'relative', height: 9 }}>
@@ -721,7 +697,7 @@ function SeasonSoFar({
           </div>
         </div>
 
-        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
+        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 18px' }}>
           <FieldLabel>Focus trend · last 8 weeks</FieldLabel>
           <div style={{ position: 'relative', marginTop: 12, height: 104 }}>
             <img src={`${A}/fern/coil.png`} alt="" style={{ position: 'absolute', left: 4, bottom: 12, height: 26, opacity: 0.72, transform: 'rotate(-6deg)' }} />
@@ -735,17 +711,17 @@ function SeasonSoFar({
             </svg>
             <img src={`${A}/cherry/half-right.png`} alt="" style={{ position: 'absolute', right: -2, top: Math.max(-8, lastPoint.y - 30), height: 38, filter: 'var(--shadow-drop-sm)' }} />
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px 0 22px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.04em', color: 'var(--ink-faint)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px 0 22px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
             {weeks.map((w, i) => (
               <span key={w.label} style={i === weeks.length - 1 ? { color: 'var(--acc-terra)' } : undefined}>{w.label}</span>
             ))}
           </div>
-          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)', marginTop: 6, transform: 'rotate(-0.4deg)' }}>
-            this week's {weeks[7].hours >= 20 ? 'in full bloom' : 'a bud'} — {Math.round(weeks[7].hours)}h in, still opening ✿
+          <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 6 }}>
+            This week's {weeks[7].hours >= 20 ? 'in full bloom' : 'a bud'} — {Math.round(weeks[7].hours)}h in, still opening ✿
           </div>
         </div>
 
-        <div className="kf-trellis-card" style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px' }}>
+        <div className="kf-trellis-card" style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 18px' }}>
           <FieldLabel>Routine consistency · last 30 days</FieldLabel>
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 12 }}>
             {topRoutines.length === 0 && <p style={{ fontSize: 12, color: 'var(--ink-faint)', margin: 0 }}>No routines yet.</p>}
@@ -778,14 +754,14 @@ function SeasonSoFar({
           </div>
         </div>
 
-        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 18px', display: 'flex', flexDirection: 'column' }}>
           <FieldLabel>Blooms this week</FieldLabel>
           <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 16, paddingTop: 8 }}>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: 58, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>{bloomsThisWeek}</div>
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last week · {bloomsLastWeek}</div>
-              <div style={{ marginTop: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>
-                {bloomsThisWeek === bloomsLastWeek ? 'holding steady ✿' : bloomsThisWeek > bloomsLastWeek ? `${bloomsThisWeek - bloomsLastWeek} more petals down ✿` : `${bloomsLastWeek - bloomsThisWeek} fewer this week`}
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Last week · {bloomsLastWeek}</div>
+              <div style={{ marginTop: 4, fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
+                {bloomsThisWeek === bloomsLastWeek ? 'Holding steady ✿' : bloomsThisWeek > bloomsLastWeek ? `${bloomsThisWeek - bloomsLastWeek} more petals down ✿` : `${bloomsLastWeek - bloomsThisWeek} fewer this week`}
               </div>
             </div>
           </div>
@@ -793,7 +769,7 @@ function SeasonSoFar({
       </div>
 
       {topProjects.length > 0 && (
-        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: '16px 18px', marginTop: 16 }}>
+        <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 18px', marginTop: 16 }}>
           <FieldLabel>Hours per project · this week · {Math.round(totalProjectHours)}h total</FieldLabel>
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 9 }}>
             {topProjects.map((p) => (
@@ -802,16 +778,16 @@ function SeasonSoFar({
                 <div style={{ flex: 1, height: 11, position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(100, (p.hours / totalProjectHours) * 100)}%`, background: 'var(--acc-lavender-deep)', borderRadius: 2, opacity: 0.8 }} />
                 </div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', width: 34, textAlign: 'right', flex: 'none' }}>{Math.round(p.hours)}H</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', width: 34, textAlign: 'right', flex: 'none' }}>{Math.round(p.hours)}h</span>
               </div>
             ))}
             {restHours > 0.1 && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 12, opacity: 0.55 }}>
-                <span style={{ width: 150, fontSize: 12.5, color: 'var(--ink-faint)', flex: 'none' }}>everything else</span>
+                <span style={{ width: 150, fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', flex: 'none' }}>Everything else</span>
                 <div style={{ flex: 1, height: 11, position: 'relative' }}>
                   <span style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${Math.min(100, (restHours / totalProjectHours) * 100)}%`, background: 'var(--ink-hairline)', borderRadius: 2, opacity: 0.6 }} />
                 </div>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', width: 34, textAlign: 'right', flex: 'none' }}>{Math.round(restHours)}H</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', width: 34, textAlign: 'right', flex: 'none' }}>{Math.round(restHours)}h</span>
               </div>
             )}
           </div>

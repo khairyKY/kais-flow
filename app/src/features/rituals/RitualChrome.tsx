@@ -15,9 +15,9 @@ import { useOpenTask } from '../tasks/openTask'
 // centred 1080 panel in two columns with "Esc closes · keeps progress". Everything inside is the
 // Mobile Kit at phone size on both (Plan ruling 8). ──
 
-/** `.flabel` — a mono caption (Weekly review). */
+/** `.flabel` — a metadata caption (Weekly review): sentence case, untracked (B D5). */
 export function FieldLabel({ children, color = 'var(--ink-faint)' }: { children: ReactNode; color?: string }) {
-  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color }}>{children}</span>
+  return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color }}>{children}</span>
 }
 
 export function RitualSheet({ title, sub, onClose, left, right, footer }: {
@@ -100,7 +100,7 @@ export function WorkloadLine({ text, over }: { text: string; over?: string }) {
   )
 }
 
-/** Kit section label: mono 12.5, dashed rule, optional link + chevron in a 48 hit. */
+/** Kit section label (B D6): 14 semibold ink, no rule after it; optional link + chevron in a 48 hit. */
 export function Section({ label, link, first }: { label: string; link?: { label: string; onClick: () => void }; first?: boolean }) {
   return (
     <div className={`rt-sec${first ? ' is-first' : ''}`}>
@@ -128,14 +128,13 @@ export function Collapsed({ label, line }: { label: string; line: string }) {
 }
 
 /** Kit Segmented (DS-CHANGELOG §3): pill, 1px --line-control, 3px inset, 40-tall segments in a
- * 48 row; selected = --block-sage + sage-text 600 + check 16. `value` null = nothing chosen yet. */
+ * 48 row; B D12: no track, body ink, the chosen one ink-filled. `value` null = nothing chosen yet. */
 export function Segmented<T extends string>({ options, value, onChange, label }: { options: { value: T; label: string }[]; value: T | null; onChange: (v: T) => void; label: string }) {
   return (
     <span className="rt-seg-row">
       <span className="rt-seg" role="radiogroup" aria-label={label}>
         {options.map((o) => (
           <button key={o.value} type="button" role="radio" aria-checked={o.value === value} className="rt-seg-opt" onClick={() => onChange(o.value)}>
-            {o.value === value && <Icon name="check" size={16} />}
             {o.label}
           </button>
         ))}
