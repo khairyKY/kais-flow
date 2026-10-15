@@ -11,7 +11,8 @@ import { NewProjectModal } from './NewProjectModal'
 import { TypeMenu, useChangeType, type Convertible } from './ChangeType'
 import { useTasks } from '../tasks/api'
 import { useSlipping } from '../slipping/api'
-import { BackLink, SectionLabel, Segmented } from '../../components/kit'
+import { BackLink, Button, SectionLabel, Segmented } from '../../components/kit'
+import { filterChip } from '../../components/filterChip'
 import { EmojiText } from '../../components/EmojiText'
 import { RenameField } from '../../components/RenameField'
 import { Select } from '../../components/Select'
@@ -49,11 +50,11 @@ function amberLeafTiming(leaf: (typeof AMBER_LEAVES)[number], phase: number): Re
 const EMPTY_STAT = { hours: 0, monthHours: 0, doneMilestones: 0, totalMilestones: 0, pct: 0, weight: 0, doneWeight: 0, hasTop3Task: false }
 
 // Projects.dc.html `.mchip` / `.chip` verbatim (the export's canvas CSS has no counterpart in the app).
-const mchip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+const mchip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }
 const mchipLast: React.CSSProperties = { ...mchip, width: 96, textAlign: 'right' }
-const chip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
+const chip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999, display: 'inline-flex', alignItems: 'center', gap: 5 }
 // Section count on the right of the rule (`<span style="color:var(--ink-hairline)">2</span>`).
-const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono)', color: 'var(--ink-faint)' }}>{n}</span>
+const sectionCount = (n: number) => <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)' }}>{n}</span>
 
 // F2 freeze: thresholds live in lib/growthStages — this is just the asset path.
 export function getWisteriaImage(pct: number): string {
@@ -184,12 +185,12 @@ export function ProjectsPage() {
   // like the export's `slipping · 21d`; the phone branch keeps its shorter `slipping`.
   const slippingChip = (days: number) => (
     <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' }}>
-      slipping · {Math.floor(days)}d
+      Slipping · {Math.floor(days)}d
     </span>
   )
   const mobileSlippingChip = (
     <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
-      slipping
+      Slipping
     </span>
   )
 
@@ -312,14 +313,10 @@ export function ProjectsPage() {
           </g>
         ))}
       </svg>
-      <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No projects growing yet.</div>
-      <button
-        onClick={() => openNew('standard')}
-        className="kf-lift"
-        style={{ marginTop: 20, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13.5, padding: '10px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-      >
+      <div style={{ marginTop: 22, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No projects growing yet.</div>
+      <Button onClick={() => openNew('standard')} style={{ marginTop: 20 }}>
         + Plant the first one
-      </button>
+      </Button>
     </div>
   )
 
@@ -327,7 +324,6 @@ export function ProjectsPage() {
   if (isMobile) {
     return (
       <div style={{ width: '100%', maxWidth: 398, margin: '0 auto', background: 'var(--paper-linen)', minHeight: '90vh', position: 'relative', display: 'flex', flexDirection: 'column' }}>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
         {/* Kai's phone review: the shell's 16px gutter is the page's (Today's), not 16 + 18 of its own. */}
         <div style={{ flex: 1, padding: '0 0 24px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -340,7 +336,7 @@ export function ProjectsPage() {
               onClick={() => openNew('standard')}
               aria-label="New project"
               className="kf-lift"
-              style={{ width: 48, height: 48, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, cursor: 'pointer' }}
+              style={{ width: 48, height: 48, borderRadius: 'var(--radius-input)', background: 'var(--acc-terra-ink)', border: 'none', color: 'var(--on-terra)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 'var(--fs-lead)', cursor: 'pointer' }}
             >
               +
             </button>
@@ -362,40 +358,31 @@ export function ProjectsPage() {
 
           {!isEmpty && view === 'archive' && <>
           {archivedProjects.length === 0 && (
-            <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)' }}>Nothing finished yet — pressed projects rest here ✿</div>
+            <div style={{ marginTop: 18, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>Nothing finished yet — pressed projects rest here ✿</div>
           )}
           {archivedProjects.map((p) => {
             const stat = projectStats[p.id] ?? EMPTY_STAT
             return (
-              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
                 <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 26, flex: 'none' }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body)', fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
                   <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>{stat.hours}h · {stat.doneMilestones}/{stat.totalMilestones} milestones</div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => restoreProjectWithUndo(p)}
-                  aria-label={`Restore ${p.name}`}
-                  className="kf-hit"
-                  style={{ flex: 'none', border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '6px 11px', borderRadius: 999 }}
-                >
-                  restore
-                </button>
+                <Button variant="secondary" onClick={() => restoreProjectWithUndo(p)} aria-label={`Restore ${p.name}`} style={{ flex: 'none' }}>
+                  Restore
+                </Button>
               </div>
             )
           })}
-          <Link to="/herbarium" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+          <Link to="/herbarium" style={{ display: 'inline-flex', alignItems: 'center', minHeight: 44, marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', textDecoration: 'none' }}>
             Open the Herbarium →
           </Link>
           </>}
 
           {!isEmpty && view !== 'archive' && <>
           {/* Active section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '16px 0 4px' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Active</span>
-            <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-          </div>
+          <SectionLabel style={{ margin: '16px 0 4px' }}><span style={{ color: 'var(--acc-sage-text)' }}>Active</span></SectionLabel>
           {filteredProjects
             .filter((p) => p.type === 'standard')
             .map((p, i) => {
@@ -407,7 +394,7 @@ export function ProjectsPage() {
                   onClick={() => navigate(`/projects/${p.id}`)}
                   {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 2px', borderBottom: '1px solid var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 11, height: 11, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-moss)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -430,10 +417,7 @@ export function ProjectsPage() {
             })}
 
           {/* Retainers Section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '18px 0 4px' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Retainers</span>
-            <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-          </div>
+          <SectionLabel style={{ margin: '18px 0 4px' }}>Retainers</SectionLabel>
           {filteredProjects
             .filter((p) => p.type === 'retainer')
             .map((p, i) => {
@@ -459,7 +443,7 @@ export function ProjectsPage() {
                     </div>
                   </div>
                   <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
-                    retainer
+                    Retainer
                   </span>
                   {moreButton('project', p.id, p.name)}
                 </div>
@@ -467,10 +451,7 @@ export function ProjectsPage() {
             })}
 
           {/* Areas Section */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 11, margin: '18px 0 4px' }}>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Areas</span>
-            <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-          </div>
+          <SectionLabel style={{ margin: '18px 0 4px' }}>Areas</SectionLabel>
           {filteredAreas.map((a, i) => {
             const count = areaOpenTaskCounts[a.id] || 0
             const domain = domains.find((d) => d.id === a.domain_id)
@@ -481,7 +462,7 @@ export function ProjectsPage() {
                 onClick={() => navigate(`/projects/${a.id}`)}
                 {...rowMenu('area', a.id, a.name)}
                 className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px solid var(--line-dashed)', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
               >
                 <span style={{ width: 11, height: 11, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                 <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)' }}>{nameOf(a.id, a.name)}</span>
@@ -515,33 +496,17 @@ export function ProjectsPage() {
     <span style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-end', alignItems: 'center', gap: 12, rowGap: 10 }}>
       {view !== 'archive' && (
         /* punch 41: the dead `Timeline` third tab is gone — it was never wired (DRIFT-AUDIT: "Timeline tab dead"). */
-        <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>
-          <span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'list' ? 'var(--paper-parchment)' : 'transparent', border: view === 'list' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'list' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'list' ? 600 : 400, cursor: view === 'list' ? 'default' : 'pointer', fontFamily: 'inherit' }}>List</span>
-          <span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-muted)', background: view === 'board' ? 'var(--paper-parchment)' : 'transparent', border: view === 'board' ? '1px solid var(--line-card)' : '1px solid transparent', boxShadow: view === 'board' ? 'var(--shadow-crisp)' : 'none', fontWeight: view === 'board' ? 600 : 400, cursor: view === 'board' ? 'default' : 'pointer', fontFamily: 'inherit' }}>Board</span>
-        </span>
+        <Segmented value={view} onChange={setView} label="View" options={[{ value: 'list', label: 'List' }, { value: 'board', label: 'Board' }]} />
       )}
       {view === 'archive' && (
-        <span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', border: '1px solid var(--line-solid)', borderRadius: 999, padding: '8px 13px' }}>
-          ← Back to Active
-        </span>
+        <Button variant="secondary" onClick={() => setView('list')}>
+          ← Back to active
+        </Button>
       )}
       {/* E4 (2026-07-18 audit): explicit labeled entry to the archive — the count text alone was undiscoverable */}
-      <button
-        onClick={() => setView(view === 'archive' ? 'list' : 'archive')}
-        style={{
-          border: view === 'archive' ? '1px solid var(--line-solid)' : '1px solid transparent',
-          background: view === 'archive' ? 'var(--paper-parchment)' : 'transparent',
-          color: view === 'archive' ? 'var(--ink-body)' : 'var(--ink-muted)',
-          fontFamily: 'inherit',
-          fontSize: 'var(--fs-caption)',
-          padding: '9px 13px',
-          borderRadius: '999px',
-          cursor: 'pointer',
-          boxShadow: view === 'archive' ? 'var(--shadow-crisp)' : 'none',
-        }}
-      >
+      <Button variant="secondary" selected={view === 'archive'} onClick={() => setView(view === 'archive' ? 'list' : 'archive')}>
         Finished · {archivedProjects.length}
-      </button>
+      </Button>
       {/* R4-33b (2026-07-20 audit): "that drop down menu isn't our theme at all." The pill
           was a styled div with a transparent native <select> laid over it — the trigger
           looked right, but opening it handed you the OS dropdown. The themed Select keeps
@@ -549,27 +514,17 @@ export function ProjectsPage() {
       <Select
         value={selectedDomainId || ''}
         onChange={(v) => setSelectedDomainId(v || null)}
-        options={[{ value: '', label: 'All Domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
+        options={[{ value: '', label: 'All domains' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
         ariaLabel="Filter by domain"
         placeholder="Domain"
-        style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 'var(--fs-meta)',
-          letterSpacing: '0.08em',
-          textTransform: 'uppercase',
-          color: 'var(--ink-muted)',
-          border: '1px solid var(--line-solid)',
-          borderRadius: '999px',
-          padding: '8px 13px',
-        }}
+        style={{ ...filterChip(!!selectedDomainId).style, fontSize: 'var(--fs-meta)', padding: '8px 13px' }}
       />
     </span>
   )
-  // Board / archive / empty list have no section label of their own: SectionLabel's dashed rule,
-  // minus the empty label slot (it would indent the rule), carries the controls.
+  // Board / archive / empty list have no section label of their own: the controls sit on their own
+  // row, right-aligned (Bound Journal: no rule runs along a label row, D6).
   const controlsRule = (maxWidth: number) => (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 14, margin: '26px 0 4px', maxWidth }}>
-      <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
+    <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '26px 0 4px', maxWidth }}>
       {viewControls}
     </div>
   )
@@ -577,7 +532,6 @@ export function ProjectsPage() {
   // Render Desktop
   return (
     <div style={{ position: 'relative', width: '100%', minHeight: '85vh' }}>
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
 
       <main style={{ position: 'relative', zIndex: 10, padding: '10px 8px 40px' }}>
         {/* punch 41: header is Projects.dc.html 1a node-for-node — plant at the set's live stage,
@@ -588,7 +542,7 @@ export function ProjectsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src={getWisteriaImage(forestPct)} alt="" className={motion ? 'kf-sway' : undefined} title={`p${forestPct}`} style={{ height: 52, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)' }}>
                 Projects &amp; areas · the forest
               </div>
               <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>
@@ -598,21 +552,15 @@ export function ProjectsPage() {
           </div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, rowGap: 10 }}>
-            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
+            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
               {activeCount} active · {totalCount} total
             </span>
-            <button
-              onClick={() => openNew('area')}
-              style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', padding: '9px 15px', borderRadius: '999px', cursor: 'pointer' }}
-            >
+            <Button variant="secondary" onClick={() => openNew('area')}>
               + New area
-            </button>
-            <button
-              onClick={() => openNew('standard')}
-              style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', padding: '9px 15px', borderRadius: '999px', boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-            >
+            </Button>
+            <Button onClick={() => openNew('standard')}>
               + New project
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -634,7 +582,7 @@ export function ProjectsPage() {
                   onClick={() => navigate(`/projects/${p.id}`)}
                   {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: i < listActive.length - 1 ? '1px dashed var(--line-dashed)' : 'none', textDecoration: 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: i < listActive.length - 1 ? '1px solid var(--line-dashed)' : 'none', textDecoration: 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-terra)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -650,7 +598,7 @@ export function ProjectsPage() {
                   <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)' }}>
                     {stat.doneMilestones} / {stat.totalMilestones} milestones
                   </span>
-                  <span style={mchipLast}>{p.target_date ? `target ${dayMonth(p.target_date)}` : 'No date'}</span>
+                  <span style={mchipLast}>{p.target_date ? `Target ${dayMonth(p.target_date)}` : 'No date'}</span>
                   {moreButton('project', p.id, p.name)}
                 </div>
               )
@@ -670,7 +618,7 @@ export function ProjectsPage() {
                   onClick={() => navigate(`/projects/${p.id}`)}
                   {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: i < listRetainers.length - 1 ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: i < listRetainers.length - 1 ? '1px solid var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -686,7 +634,7 @@ export function ProjectsPage() {
                       design literal (the 96px cell stays so the columns still line up). */}
                   <span style={mchip}>{stat.monthHours}h this month</span>
                   <span style={{ ...chip, background: 'color-mix(in oklch, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)' }}>
-                    retainer
+                    Retainer
                   </span>
                   <span style={mchipLast} />
                   {moreButton('project', p.id, p.name)}
@@ -708,7 +656,7 @@ export function ProjectsPage() {
                   onClick={() => navigate(`/projects/${a.id}`)}
                   {...rowMenu('area', a.id, a.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: i < filteredAreas.length - 1 ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: i < filteredAreas.length - 1 ? '1px solid var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -718,7 +666,7 @@ export function ProjectsPage() {
                   {slippingItem ? (
                     slippingChip(slippingItem.days_since)
                   ) : (
-                    <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>area</span>
+                    <span style={{ ...chip, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>Area</span>
                   )}
                   <span style={mchipLast}>{count} open</span>
                   {moreButton('area', a.id, a.name)}
@@ -726,8 +674,8 @@ export function ProjectsPage() {
               )
             })}
 
-            <div style={{ marginTop: 26, fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand)', transform: 'rotate(-0.8deg)' }}>
-              projects finish; areas just keep going — both grow leaves as you tend them ✿
+            <div style={{ marginTop: 26, fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
+              Projects finish; areas just keep going — both grow leaves as you tend them ✿
             </div>
           </div>
         )}
@@ -748,18 +696,16 @@ export function ProjectsPage() {
                 // Motion 2c/2d: a project card drags to another domain's column (the row menu's Domain…).
                 const column: FileSpot = { kind: 'domain', label: d.name, id: d.id }
                 return (
-                  // ds-ok: Projects.dc.html 2a draws the board column at a 10px radius
-                  <DropZone key={d.id} id={`board:${d.id}`} spot={column} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 10, padding: '13px 13px 16px' }}>
+                  <DropZone key={d.id} id={`board:${d.id}`} spot={column} style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '13px 13px 16px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 4px 12px' }}>
                       <span style={{ width: 9, height: 9, borderRadius: '50%', background: d.color ?? 'var(--acc-moss)' }} />
-                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>
+                      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-body)' }}>{d.name}</span>
                       <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{domainProjects.length}</span>
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
-                      {domainProjects.map((p, idx) => {
+                      {domainProjects.map((p) => {
                         const stat = projectStats[p.id] ?? EMPTY_STAT
-                        const cardTilt = idx % 2 === 0 ? -0.4 : 0.3
                         const imgSource = getWisteriaImage(stat.pct)
 
                         const slipping = isSlippingProject(p.id)
@@ -768,18 +714,16 @@ export function ProjectsPage() {
                           <div
                             onClick={() => navigate(`/projects/${p.id}`)}
                             {...rowMenu('project', p.id, p.name)}
-                            className="kf-lift-tilt"
+                            className="kf-lift"
                             style={{
                               display: 'block',
                               position: 'relative',
                               overflow: 'hidden',
                               background: 'var(--paper-parchment)',
                               border: '1px solid var(--line-card)',
-                              borderRadius: 8,
-                              boxShadow: 'var(--shadow-crisp)',
+                              borderRadius: 'var(--radius-input)',
                               padding: '13px 14px',
                               cursor: 'pointer',
-                              ['--kf-tilt' as string]: `${cardTilt}deg`,
                             }}
                           >
                             {/* Effects 1t — amber drift over a slipping card, <=3 leaves; plant desaturates ~20% */}
@@ -794,8 +738,8 @@ export function ProjectsPage() {
                               </span>
                               <div style={{ flex: 1, minWidth: 0 }}>
                                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}><EmojiText text={p.name} /></div>
-                                <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
-                                  {p.engagement_model ?? 'Project'} · {p.target_date ? `target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', timeZone: 'UTC' })}` : 'No date'}
+                                <div className="fhelp" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+                                  {p.engagement_model ?? 'Project'} · {p.target_date ? `Target ${new Date(p.target_date).toLocaleDateString('en-US', { day: '2-digit', month: 'short', timeZone: 'UTC' })}` : 'No date'}
                                 </div>
                               </div>
                               <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color ?? d.color ?? (p.type === 'retainer' ? 'var(--acc-lavender-deep)' : 'var(--acc-terra)'), flex: 'none', marginTop: 3 }} />
@@ -809,7 +753,7 @@ export function ProjectsPage() {
                               <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>
                                 {stat.doneMilestones} / {stat.totalMilestones}
                               </span>
-                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{stat.hours}h</span>
+                              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{stat.hours}h</span>
                               {stat.hasTop3Task && <span style={{ marginLeft: 'auto', color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}
                             </div>
                           </div>
@@ -818,15 +762,15 @@ export function ProjectsPage() {
                       })}
 
                       {almostBloomingProject && (
-                        <div style={{ padding: '16px 6px', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-muted)' }}>
-                          almost blooming — one milestone left ✿
+                        <div style={{ padding: '16px 6px', textAlign: 'center', fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
+                          Almost blooming — one milestone left ✿
                         </div>
                       )}
 
                       {/* Plant a project here stub slot */}
                       <div
                         onClick={() => openNew('standard', d.id)}
-                        style={{ display: 'block', background: 'var(--paper-parchment)', border: '1px dashed var(--line-solid)', borderRadius: 8, padding: '13px 14px', cursor: 'pointer' }}
+                        style={{ display: 'block', background: 'var(--paper-parchment)', border: '1px dashed var(--line-solid)', borderRadius: 'var(--radius-input)', padding: '13px 14px', cursor: 'pointer' }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 11 }}>
                           <span style={{ width: 34, height: 34, borderRadius: 8, border: '1px dashed var(--ink-hairline)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 'var(--fs-body-l)', flex: 'none' }}>＋</span>
@@ -843,7 +787,7 @@ export function ProjectsPage() {
         {/* ARCHIVE VIEW */}
         {view === 'archive' && controlsRule(760)}
         {view === 'archive' && (
-          <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', padding: '30px 38px 34px', position: 'relative', marginTop: 10 }}>
+          <div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-card)', padding: '30px 38px 34px', position: 'relative', marginTop: 10 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <BackLink onClick={() => setView('list')}>All projects</BackLink>
               <span style={{ marginLeft: 'auto' }} className="fhelp">{archivedProjects.length} finished · {archivedProjects.reduce((acc, p) => acc + (projectStats[p.id]?.hours || 0), 0)}h all-time</span>
@@ -852,12 +796,12 @@ export function ProjectsPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 13, marginTop: 20 }}>
               <img src="/ds/assets/wisteria/p100.png" alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 46, filter: 'var(--shadow-drop-sm)' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects · archive</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Projects · archive</div>
                 <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>Grown &amp; done</h1>
               </div>
             </div>
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)', marginTop: 10 }}>
-              finished projects reach the full wisteria cascade — kept, not cleared ✿
+            <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 10 }}>
+              Finished projects reach the full wisteria cascade — kept, not cleared ✿
             </div>
 
             {/* Group archived projects by year */}
@@ -872,15 +816,11 @@ export function ProjectsPage() {
               .sort(([yearA], [yearB]) => parseInt(yearB) - parseInt(yearA))
               .map(([year, yearProjs]) => (
                 <div key={year}>
-                  <div className="slabel" style={{ display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '24px 0 4px' }}>
-                    <span>{year}</span>
-                    <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-                    <span style={{ color: 'var(--ink-faint)' }}>{yearProjs.length}</span>
-                  </div>
+                  <SectionLabel style={{ margin: '24px 0 4px' }} action={sectionCount(yearProjs.length)}>{year}</SectionLabel>
                   {yearProjs.map((p) => {
                     const stat = projectStats[p.id] ?? EMPTY_STAT
                     return (
-                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                      <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '13px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
                         <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 30, flex: 'none' }} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-body-l)', fontWeight: 600, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>
@@ -888,27 +828,23 @@ export function ProjectsPage() {
                         </div>
                         <span className="mchip">{stat.hours}h</span>
                         <span className="mchip" style={{ width: 88, textAlign: 'right' }}>
-                          done {new Date(p.updated_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
+                          Done {new Date(p.updated_at).toLocaleDateString('en-US', { day: '2-digit', month: 'short' })}
                         </span>
-                        <span
-                          className="chip"
-                          onClick={() => restoreProjectWithUndo(p)}
-                          style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}
-                        >
-                          restore
-                        </span>
+                        <Button variant="secondary" onClick={() => restoreProjectWithUndo(p)} aria-label={`Restore ${p.name}`}>
+                          Restore
+                        </Button>
                       </div>
                     )
                   })}
                 </div>
               ))}
 
-            <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 16 }}>
-              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', textDecoration: 'none' }}>
+            <div style={{ marginTop: 22, paddingTop: 14, borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 16 }}>
+              <Link to="/herbarium" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', textDecoration: 'none' }}>
                 Open the Herbarium — {archivedProjects.length} pressed specimens →
               </Link>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                Archived projects stay searchable · restore any time
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+                Archived projects stay searchable · Restore any time
               </span>
               <span style={{ flex: 1 }}></span>
               {/* Punch 8: "Export all ↓" was styled clickable with no handler and no export

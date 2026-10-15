@@ -422,7 +422,7 @@ for (const theme of ['day', 'night']) for (const [name, at, s] of PH) {
     await sleep(800)
     check(`${tag} …Open in calendar → /calendar?event=<id>`, page.url().includes(`/calendar?event=${eid(DEEP)}`), page.url())
   }
-  if (name === 'p2-running-0940') check(`${tag} NOW · UNTIL 11:00, ring 1H20M`, /now · until 11:00/i.test(cap) && /1H20M/.test(await text(slip(page).locator('.tp-ring'))), cap)
+  if (name === 'p2-running-0940') check(`${tag} Now · until 11:00, ring 1h 20m`, /now · until 11:00/i.test(cap) && /^1h\s20m$/.test(await text(slip(page).locator('.tp-ring'))), cap)
   if (name === 'p3-idle-1118') check(`${tag} nothing runs → no slip (Kai: only while something runs), no ritual card mid-day`, (await slip(page).count()) === 0 && (await page.locator('.tp-ritual').count()) === 0)
   if (name === 'p4-over-1220') check(`${tag} NOW · 20M OVER, amber ring +20`, /now · 20M over/i.test(cap) && /\+20/.test(await text(slip(page).locator('.tp-ring'))) && (await slip(page).locator('.tp-caption.is-over').count()) === 1, cap)
   if (name === 'p6-idle-1410') check(`${tag} a free gap → no slip`, (await slip(page).count()) === 0)
@@ -462,7 +462,7 @@ if (want('p7')) {
   await sleep(300)
   await page.evaluate(() => { history.pushState({}, '', '/today'); dispatchEvent(new PopStateEvent('popstate')) })
   await sleep(1200)
-  check('p7 PAUSED · SINCE 11:02, hairline ring frozen at 23M', /paused · since 11:0\d/i.test(await text(slip(page).locator('.tp-caption'))) && /23M/.test(await text(slip(page).locator('.tp-ring'))), await text(slip(page)))
+  check('p7 Paused · since 11:02, hairline ring frozen at 23m', /paused · since 11:0\d/i.test(await text(slip(page).locator('.tp-caption'))) && /^23m$/.test(await text(slip(page).locator('.tp-ring'))), await text(slip(page)))
   await shot(page, 'p7-paused-day')
   check('p7 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()

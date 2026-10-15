@@ -107,7 +107,8 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
       // left/bottom live in .kf-bulkbar (AppLayout) — centred on the content column.
       className="kf-bulkbar"
       // deviation(punch 15/26, 2026-07-26): export tilts the bar rotate(-0.4deg); dropped — the
-      // sub-degree transform blurred the 10px mono labels (see QuickCreate's 07-18 deviation).
+      // sub-degree transform blurred the 10px mono labels (see QuickCreate's 07-18 deviation); Bound
+      // Journal (D7) keeps tilt to pages anyway.
       style={{
         position: 'fixed',
         transform: 'translateX(-50%)',

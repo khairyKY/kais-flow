@@ -208,7 +208,8 @@ if (ONLY.includes('3')) {
     const h = document.querySelector('.tp-first-hint')?.getBoundingClientRect()
     return !!a && !!h && h.top >= a.bottom - 1 && h.top - a.bottom < 40
   }, [card])
-  const handFont = (page) => hint(page).evaluate((e) => getComputedStyle(e).fontFamily.includes('Caveat'))
+  // Bound Journal D7: handwriting lives on pages; on Today (a tool) the hint is the interface face.
+  const handFont = (page) => hint(page).evaluate((e) => !getComputedStyle(e).fontFamily.includes('Caveat'))
 
   // From onboarding: Start lands on the first Today with the hint under the ritual card (07:40, not planned).
   for (const theme of ['day', 'night']) {
@@ -221,7 +222,7 @@ if (ONLY.includes('3')) {
     await page.waitForURL(/\/today/)
     await sleep(1200)
     check(`${name} Start → Today, the flag left for this account`, (await flag(page)) === '1')
-    check(`${name} the hint, the drawing's copy, in Caveat`, (await text(hint(page))) === HINT && (await handFont(page)), await text(hint(page)))
+    check(`${name} the hint, the drawing's copy, in the interface face`, (await text(hint(page))) === HINT && (await handFont(page)), await text(hint(page)))
     check(`${name} it sits under the next-move card (the Plan my day ritual card)`, await below(page, '.tp-ritual'))
     await shot(page, name)
     await page.locator('.tp-bar-title').click()
@@ -264,7 +265,7 @@ if (ONLY.includes('3')) {
   for (const theme of ['day', 'night']) {
     const name = `3-first-today-desktop-${theme}`
     const { ctx, page, errors } = await open('/today', { tasks: three }, { view: desktop, theme, now: '07:40', init: { [FLAG]: '1' } })
-    check(`${name} the hint under the Day card, in Caveat`, (await text(hint(page))) === HINT && (await handFont(page)) && (await below(page, '.kf-daycard-slot')))
+    check(`${name} the hint under the Day card, in the interface face`, (await text(hint(page))) === HINT && (await handFont(page)) && (await below(page, '.td-now'))) // Today 2a: the Day card is the Now card
     await shot(page, name)
     await page.mouse.click(1200, 680)
     await sleep(300)

@@ -105,11 +105,13 @@
 .tp-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
 .tp-pending { display: inline-flex; align-items: center; gap: 5px; color: var(--sig-offline); }
 .tp-pending::before { content: ''; width: 7px; height: 7px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid currentColor; }
-.tp-hand { font-family: var(--font-hand); font-size: var(--fs-hand); line-height: 1.3; color: var(--ink-hand); }
+/* Bound Journal D7: handwriting lives on pages only — the app's own asides on Today are the
+   interface face, quiet. */
+.tp-note { font-family: var(--font-ui); font-size: var(--fs-body-s); line-height: 1.4; color: var(--ink-muted); }
 /* First Run 9i: the first-visit line under the next-move card. */
 .tp-first-hint { padding: 0 24px 6px; line-height: 1.2; }
 
-/* Ruling 2: the ritual card — the NOW slip's anatomy, flat. */
+/* Ruling 2: the ritual card — the NOW slip's anatomy, flat (a tool card: 16, hairline, no shadow). */
 .tp-ritual {
   margin: var(--sp-2) var(--gutter-phone) 10px;
   display: flex;
@@ -118,30 +120,16 @@
   padding: 10px var(--sp-2);
   background: var(--paper-parchment);
   border: 1px solid var(--line-card);
-  border-radius: var(--radius-sharp);
-  box-shadow: var(--shadow-crisp);
+  border-radius: var(--radius-card);
 }
 .tp-glyph { width: 44px; height: 44px; flex: none; display: flex; align-items: center; justify-content: center; }
 .tp-ritual-title, .tp-slip-title { margin-top: 3px; font-size: var(--fs-body); line-height: 20px; font-weight: var(--fw-medium); color: var(--ink-body); text-wrap: pretty; }
 .tp-hairline { position: relative; height: 2px; border-radius: 1px; background: var(--line-card); }
 .tp-hairline > span { position: absolute; inset: 0 auto 0 0; border-radius: 1px; background: var(--acc-sage-text); }
 
-/* NOW slip (MK 11, option 1b "Taped slip"). The card look rides SwipeRow's moving layer. */
+/* NOW slip (MK 11). A tool (Bound Journal D4/D7): flat, no tape, no tilt. The card look rides
+   SwipeRow's moving layer. */
 .tp-slip-wrap { padding: var(--sp-3) var(--gutter-phone) 14px; }
-.tp-tape {
-  position: absolute;
-  top: -7px;
-  left: 18px;
-  width: 40px;
-  height: 13px;
-  z-index: 2;
-  border-radius: 1px;
-  background: color-mix(in srgb, var(--acc-sage) 45%, transparent);
-  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 4px, transparent 4px 8px);
-  box-shadow: var(--shadow-crisp);
-  transform: rotate(-4deg);
-  pointer-events: none;
-}
 .tp-ring { position: relative; width: 44px; height: 44px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .tp-ring > span {
   width: 36px;
@@ -199,7 +187,7 @@
   gap: var(--sp-1);
   padding: 0 var(--sp-1) 0 var(--sp-2);
   margin-right: calc(-1 * var(--sp-1));
-  border-radius: var(--radius-sharp);
+  border-radius: var(--radius-input);
   font-size: var(--fs-meta-l);
   letter-spacing: var(--ls-meta);
   color: var(--ink-muted);
@@ -213,7 +201,7 @@
 .tp-fold-line { display: flex; align-items: center; width: 100%; min-height: var(--touch-min); padding-top: 0; text-align: left; background: none; border: 0; cursor: pointer; }
 .tp-pad { padding: var(--sp-2) var(--gutter-phone); display: flex; flex-direction: column; gap: 10px; }
 
-/* A list band: parchment, card line on top, dashed hairline under each row. */
+/* A list band: parchment, card line on top, a solid hairline under each row (B D8). */
 .tp-list { background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
 .tp-quiet {
   min-height: var(--row-min);
@@ -233,6 +221,9 @@
 .tp-hit { width: var(--touch-min); height: var(--touch-min); flex: none; display: flex; align-items: center; justify-content: center; }
 .tp-body { flex: 1; min-width: 0; padding: 14px var(--sp-1) var(--sp-3) 0; cursor: pointer; }
 .tp-title { font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); text-wrap: pretty; }
+/* The task popover's own .tp-title (tasks/taskSheet.css: serif 17/600, offset for its textarea) loads
+   later and won the shared name, so phone rows read serif. A row title is the body face (B type). */
+.tp-body > .tp-title, .tp-ev-body > .tp-title { margin: 0; padding: 0; font-family: var(--font-ui); font-size: var(--fs-body); font-weight: var(--fw-regular); line-height: 1.34; }
 .tp-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 .tp .kf-row-more { margin: 0; }
 
@@ -324,19 +315,19 @@
 .td-head-actions { flex: 1 1 0; min-width: 230px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
 
 /* Rule 6: the typed quick-add pill, the mic inside it. */
-.td-pill { flex: 0 1 340px; width: 340px; min-width: 180px; height: 44px; display: flex; align-items: center; gap: var(--sp-1); padding: 0 5px 0 0; box-sizing: border-box; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-pill); box-shadow: var(--shadow-crisp); }
+.td-pill { flex: 0 1 340px; width: 340px; min-width: 180px; height: 44px; display: flex; align-items: center; gap: var(--sp-1); padding: 0 5px 0 0; box-sizing: border-box; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-pill); }
 .td-pill-field { flex: 1; min-width: 0; height: 100%; display: flex; align-items: center; gap: 10px; padding: 0 var(--sp-2) 0 var(--sp-4); border: none; border-radius: var(--radius-pill); background: none; font: inherit; color: var(--ink-faint); cursor: text; }
 .td-pill-text { flex: 1; min-width: 0; text-align: left; font-size: var(--fs-body); }
-.td-pill-mic { width: 34px; height: 34px; flex: none; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 50%; background: var(--acc-terra); color: var(--on-terra); box-shadow: var(--shadow-cta); cursor: pointer; }
-.td-icon-btn { width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-card); border-radius: 50%; background: var(--paper-parchment); box-shadow: var(--shadow-crisp); color: var(--ink-muted); }
+.td-pill-mic { width: 34px; height: 34px; flex: none; display: flex; align-items: center; justify-content: center; padding: 0; border: none; border-radius: 50%; background: var(--acc-terra); color: var(--on-terra); cursor: pointer; }
+.td-icon-btn { width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--line-card); border-radius: 50%; background: var(--paper-parchment); color: var(--ink-muted); }
 .td-icon-btn:hover, .td-pill-field:hover { color: var(--ink-body); }
 .td-pill-field:focus-visible, .td-pill-mic:focus-visible, .td-icon-btn:focus-visible, .td-more:focus-visible, .td-rit-head:focus-visible, .td-rit-step:focus-visible, .td-rb:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
-/* The Now card (2a #3–4): the moment, the 8–20 ribbon, the next two + Calendar →. */
-.td-now { background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-sharp); box-shadow: var(--shadow-card); padding: 18px 22px var(--sp-4); }
+/* The Now card (2a #3–4): the moment, the 8–20 ribbon, the next two + Calendar →. A tool card (B D3/D4). */
+.td-now { background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); padding: 18px 22px var(--sp-4); }
 .td-now-head { display: flex; align-items: center; gap: 18px; }
 .td-now-glyph { flex: none; display: inline-flex; }
-.td-now-text { flex: 1; min-width: 0; border-radius: var(--radius-sharp); }
+.td-now-text { flex: 1; min-width: 0; border-radius: var(--radius-input); }
 .td-cap { display: flex; align-items: center; gap: var(--sp-2); font-family: var(--font-ui); font-size: var(--fs-section); font-weight: var(--fw-semibold); color: var(--ink-body); }
 .td-cap-dot { display: none; width: 7px; height: 7px; flex: none; border-radius: 50%; background: currentColor; }
 .td-cap[data-tone='now'] { color: var(--acc-terra-ink); }
@@ -345,9 +336,6 @@
 .td-cap[data-tone='now'] .td-cap-dot, .td-cap[data-tone='over'] .td-cap-dot { display: inline-block; }
 .td-now-title { margin-top: 6px; font-family: var(--font-display); font-size: var(--fs-display-m); font-weight: var(--fw-medium); line-height: 1.25; color: var(--ink-body); text-wrap: pretty; }
 .td-now-sub { margin-top: 3px; font-size: var(--fs-body-s); color: var(--ink-muted); }
-.td-now-sub .tp-hand { font-size: var(--fs-hand); }
-/* 2a: Start focus is the dark ink pill. */
-.td-focus-btn.kf-button--secondary { height: 40px; padding: 0 18px; border-color: var(--ink-body); background-color: var(--ink-body); color: var(--paper-parchment); font-size: var(--fs-body-s); box-shadow: none; }
 
 .td-ribbon { margin-top: 18px; }
 /* Nothing runs (no head — Kai's "no card during the day"): the ribbon leads the card. */
@@ -362,7 +350,7 @@
 .td-ribbon-now { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--acc-terra); pointer-events: none; }
 .td-ribbon-axis { display: flex; justify-content: space-between; margin-top: var(--sp-1); font-family: var(--font-mono); font-size: var(--fs-mono); color: var(--ink-muted); }
 .td-next { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2) 22px; margin-top: var(--sp-3); padding-top: var(--sp-3); border-top: 1px solid var(--line-dashed); font-size: var(--fs-caption); color: var(--ink-muted); }
-.td-next-item { display: inline-flex; align-items: center; gap: var(--sp-2); padding: 2px var(--sp-1); margin: -2px calc(-1 * var(--sp-1)); border-radius: var(--radius-sharp); cursor: pointer; }
+.td-next-item { display: inline-flex; align-items: center; gap: var(--sp-2); padding: 2px var(--sp-1); margin: -2px calc(-1 * var(--sp-1)); border-radius: var(--radius-input); cursor: pointer; }
 .td-next-item[data-selected] { background: var(--select-bg); }
 .td-next-item:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .td-next-sq { width: 8px; height: 8px; flex: none; border-radius: 2px; }
@@ -379,7 +367,7 @@
 .td-label-link:hover { color: var(--acc-terra-ink); }
 .td-rail-sub { margin: 2px 0 5px; font-family: var(--font-mono); font-size: var(--fs-mono); letter-spacing: var(--ls-mono-tight); color: var(--ink-muted); }
 
-/* Rows (2a): 20px boxes, sans meta in --ink-muted, a dashed rule between rows. */
+/* Rows (2a): 20px boxes, sans meta in --ink-muted, a solid hairline between rows (B D8). */
 .td-row-title { flex: 1; min-width: 0; font-size: var(--fs-body); color: var(--ink-body); cursor: pointer; }
 .td-row-fact { flex: none; margin: 0; }
 .td-meta { margin-top: 4px; display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--sp-3); font-size: var(--fs-caption); color: var(--ink-muted); }
@@ -413,10 +401,9 @@
 .td-rit-step[data-done] .td-rit-box { border: none; background: var(--sig-done); }
 
 /* Worth a look (2a #7): one nudge, two verbs. */
-.td-nudge { position: relative; padding: 14px var(--sp-4); border: 1px solid var(--line-goal); border-radius: var(--radius-sharp); background: var(--paper-goal); box-shadow: var(--shadow-card); cursor: pointer; }
+.td-nudge { position: relative; padding: 14px var(--sp-4); border: 1px solid var(--line-goal); border-radius: var(--radius-card); background: var(--paper-goal); cursor: pointer; }
 .td-nudge-art { position: absolute; top: 10px; right: var(--sp-3); height: 48px; opacity: 0.75; }
 .td-nudge-name { padding-right: var(--sp-10); font-size: var(--fs-body); font-weight: var(--fw-medium); color: var(--ink-body); }
 .td-nudge-why { margin-top: 3px; font-size: var(--fs-caption); color: var(--acc-gold); }
 .td-nudge-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
 .td-btn-sm.kf-button { height: 30px; padding: 0 var(--sp-3); font-size: var(--fs-caption); }
-.td-btn-sm.kf-button--secondary { box-shadow: none; background: none; color: var(--ink-muted); }

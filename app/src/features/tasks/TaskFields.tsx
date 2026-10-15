@@ -93,7 +93,9 @@ export function useTaskControls(task: Task, onSaved?: (field: string) => void) {
 }
 export type TaskControls = ReturnType<typeof useTaskControls>
 
-const PILL: CSSProperties = { borderRadius: 'var(--radius-pill)' }
+// fontSize: the kit's bordered chip is drawn at 9px on a computer (sized for the old mono caps); in this
+// row it matches its neighbours' metadata size.
+const PILL: CSSProperties = { borderRadius: 'var(--radius-pill)', fontSize: 'var(--fs-meta)' }
 const DASHED: CSSProperties = { ...PILL, border: '1px dashed var(--line-control)' }
 
 /** The chip row (Task Sheet.dc.html 4a; the popover's chips): date · duration · place · priority ·

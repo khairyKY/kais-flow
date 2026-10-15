@@ -41,12 +41,11 @@ function remember(key: string, v: string) {
   }
 }
 
-const MONO: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }
-const TILTS = [0, 0, -0.3, 0.3, 0, 0.4]
+// B (D5): metadata in the interface face, sentence case, even digits.
+const MONO: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }
 
-function PlanCard({ r, i, compact, dot, projects, domains, areas, now, onPlan }: {
+function PlanCard({ r, compact, dot, projects, domains, areas, now, onPlan }: {
   r: RailTask
-  i: number
   compact: boolean
   /** 4b's one-line card wears its project's dot. */
   dot: string | null
@@ -71,7 +70,6 @@ function PlanCard({ r, i, compact, dot, projects, domains, areas, now, onPlan }:
       onContextMenu={grammar.onContextMenu}
       // A click (no drag) plants it from the menu instead: Today · Next free slot · Tomorrow · Pick date…
       onClick={(e) => onPlan(e.clientX, e.clientY)}
-      style={{ ['--kf-tilt' as string]: `${TILTS[i % TILTS.length]}deg` }}
     >
       {/* Tick it off without planting it (the rail card's guard: FullCalendar never sees the press). */}
       <span ref={dragGuard(() => completeTaskWithUndo(t))} style={{ display: 'inline-flex', flex: 'none', marginTop: 1 }}>
@@ -143,9 +141,9 @@ export function PlanningPanel({ tasks, events, loading, projects, domains, areas
     return () => d.destroy()
   }, [])
 
-  const card = (r: RailTask, i: number) => {
+  const card = (r: RailTask) => {
     const tag = tagOf(r.task)
-    return <PlanCard key={r.task.id} r={r} i={i} compact={compact} dot={tag ? tag.color ?? 'var(--acc-moss)' : null} projects={projects} domains={domains} areas={areas} now={now} onPlan={(x, y) => onPlan(r, x, y)} />
+    return <PlanCard key={r.task.id} r={r} compact={compact} dot={tag ? tag.color ?? 'var(--acc-moss)' : null} projects={projects} domains={domains} areas={areas} now={now} onPlan={(x, y) => onPlan(r, x, y)} />
   }
   const empty = tab === 'overdue' ? 'Nothing overdue.' : tab === 'today' ? 'Nothing left without a time today.' : 'Everything has a time.'
 
@@ -155,7 +153,8 @@ export function PlanningPanel({ tasks, events, loading, projects, domains, areas
     <div ref={panelRef} className="cal-plan" data-section={tab === 'all' ? undefined : tab}>
       <div className="cal-plan-head">
         <div>
-          <div style={{ ...MONO, letterSpacing: 'var(--ls-mono-wide)' }}>Unscheduled · {rows.length} {rows.length === 1 ? 'task' : 'tasks'}</div>
+          {/* B (D6): the panel's section label — 14px semibold ink, sentence case. */}
+          <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)', fontVariantNumeric: 'tabular-nums' }}>Unscheduled · {rows.length} {rows.length === 1 ? 'task' : 'tasks'}</div>
           <div className="cal-plan-hand">{compact ? 'two days ahead — plant what matters ✿' : 'pick something, plant it on the right ✿'}</div>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
@@ -188,7 +187,7 @@ export function PlanningPanel({ tasks, events, loading, projects, domains, areas
       <button type="button" className="cal-plan-add" onClick={onQuickAdd}>
         <span className="cal-plan-add-box" aria-hidden />
         <span style={{ flex: 1, textAlign: 'left' }}>Quick add task…</span>
-        <span style={{ ...MONO, textTransform: 'none' }}>N</span>
+        <span style={MONO}>N</span>
       </button>
 
       <div ref={listRef} className="cal-plan-list">
@@ -206,7 +205,7 @@ export function PlanningPanel({ tasks, events, loading, projects, domains, areas
               <section key={g.key} className="cal-plan-group">
                 <div className="cal-plan-group-head">
                   <span className="cal-plan-dot" style={{ background: tag ? tag.color ?? 'var(--acc-moss)' : 'var(--ink-hairline)' }} />
-                  <span style={{ ...MONO, letterSpacing: 'var(--ls-mono)' }}>
+                  <span style={MONO}>
                     <EmojiText text={tag?.label ?? 'No project'} /> · {g.rows.length} {g.rows.length === 1 ? 'task' : 'tasks'} · {minutesLabel(g.minutes)}
                   </span>
                 </div>
@@ -224,7 +223,7 @@ export function PlanningPanel({ tasks, events, loading, projects, domains, areas
 
       <div className="cal-plan-foot">
         <img src={`/ds/assets/daisy/${daisy}.png`} alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
-        <div style={{ ...MONO, letterSpacing: 'var(--ls-mono-tight)', lineHeight: 1.7 }}>
+        <div style={{ ...MONO, lineHeight: 1.7 }}>
           {totalLine(rows)}
           <br />
           {footerLine(events, days, now)}

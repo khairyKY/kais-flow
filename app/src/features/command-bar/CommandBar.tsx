@@ -32,8 +32,6 @@ import '../capture/capture.css'
 const CHIP_BASE: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
   fontSize: 'var(--fs-meta)',
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
   padding: '4px 9px',
   borderRadius: 999,
 }
@@ -415,7 +413,7 @@ export function CommandBar() {
               background: 'color-mix(in srgb, var(--paper-parchment) 82%, transparent)',
               backdropFilter: 'blur(8px)',
               border: '1px solid var(--line-card)',
-              borderRadius: 8,
+              borderRadius: 'var(--radius-card)', // Bound Journal D3: a tool's 16px corner; it floats, so it keeps its shadow (D4)
               boxShadow: 'var(--shadow-popover)',
               padding: '16px 18px',
               overflow: 'hidden',
@@ -452,7 +450,7 @@ export function CommandBar() {
                   gap: 10,
                   marginTop: 10,
                   padding: '8px 10px',
-                  borderRadius: 6,
+                  borderRadius: 'var(--radius-input)',
                   cursor: 'pointer',
                   background: jumpSelected ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent',
                   border: `1px solid ${jumpSelected ? 'var(--acc-lavender)' : 'var(--line-card)'}`,
@@ -530,7 +528,7 @@ export function CommandBar() {
             {/* Polish F2b (J-17): the same key as the `?` overlay's Command bar row (↵ quick add), drawn
                 as a keycap instead of "Enter = …" text — Enter is the one capture path (Kai 2026-10-12).
                 While dictating, the row says what the mic is doing instead. */}
-            <div aria-live="polite" style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+            <div aria-live="polite" style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
               {dictation === 'listening' ? (
                 <>
                   <span className="kf-rec-dot" /> Listening — click stop when you’re done
@@ -540,8 +538,8 @@ export function CommandBar() {
               ) : (
                 <>
                   {kindSwitch}
-                  <KeyChip text="↵" size="sm" /> {kind === 'event' ? 'add event' : 'quick add'}
-                  <KeyChip text="⌘2" size="sm" /> event
+                  <KeyChip text="↵" size="sm" /> {kind === 'event' ? 'Add event' : 'Quick add'}
+                  <KeyChip text="⌘2" size="sm" /> Event
                 </>
               )}
             </div>

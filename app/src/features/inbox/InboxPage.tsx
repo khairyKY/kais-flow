@@ -384,7 +384,7 @@ export function InboxPage() {
       <section className="ib-gh-sec" style={ghPriority === 'high' ? { marginBottom: 'var(--sp-5)' } : undefined}>
         <div className="ib-gh-head">
           <span className="ib-gh-label">{isMobile ? 'From GitHub' : githubHeading(githubItems)}</span>
-          <span className="ib-rule" />
+          <span style={{ flex: 1 }} />
           {/* deviation(Inbox t3): 3a says "most urgent first", but nothing ranks them (P6 step 3 is
               skipped on purpose); they're in last-updated order, and the line says so. */}
           {ghPriority === 'low' ? (
@@ -392,7 +392,7 @@ export function InboxPage() {
               {ghFolded ? `Show ${githubItems.length}` : 'Fold'}
             </button>
           ) : (
-            !isMobile && <span className="ib-meta">recently updated first</span>
+            !isMobile && <span className="ib-meta">Recently updated first</span>
           )}
         </div>
         {!ghFolded && githubItems.map((item) => (
@@ -512,7 +512,7 @@ function EmptyInboxCard() {
       <p style={{ margin: '10px auto 0', maxWidth: 330, fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>
         Captures land here when the command bar can't tell where they go. Nothing waits on you.
       </p>
-      <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>one calm bloom ✿</div>
+      <div className="ib-note" style={{ marginTop: 16 }}>one calm bloom ✿</div>
     </div>
   )
 }
@@ -549,20 +549,20 @@ function DismissedPanel({ items, phone, selected, focusedId, onToggleSelect }: {
   const earlier = items.filter((i) => !isToday(i.updated_at))
 
   if (items.length === 0) {
-    return <div className="ib-hand" style={{ marginTop: 18, padding: '8px 2px' }}>nothing composting right now</div>
+    return <div className="ib-note" style={{ marginTop: 18, padding: '8px 2px' }}>nothing composting right now</div>
   }
 
   const group = (label: string, rows: InboxItem[]) => (
     <div>
       <div className="ib-group-head">
-        <span>{label} · {rows.length}</span>
-        <span className="ib-rule" />
+        <span>{label}</span>
+        <span className="ib-group-count">{rows.length}</span>
       </div>
       {rows.map((item) => (
         <DismissedRow
           key={item.id}
           item={item}
-          meta={phone ? dismissedAgo(item.updated_at) : `dismissed ${dismissedAgo(item.updated_at)}`}
+          meta={phone ? dismissedAgo(item.updated_at) : `Dismissed ${dismissedAgo(item.updated_at)}`}
           phone={phone}
           selected={selected.has(item.id)}
           selecting={selected.size > 0}
@@ -575,11 +575,11 @@ function DismissedPanel({ items, phone, selected, focusedId, onToggleSelect }: {
 
   return (
     <div style={{ marginTop: phone ? 4 : 0 }}>
-      {!phone && <div className="ib-hand" style={{ marginBottom: 12 }}>dismissed captures rest here, then compost after 30 days ✿</div>}
+      {!phone && <div className="ib-note" style={{ marginBottom: 12 }}>dismissed captures rest here, then compost after 30 days ✿</div>}
 
       <div className="ib-dbar">
         <span className="ib-banner-dot" />
-        <span className="ib-dbar-label">{phone ? 'clears after 30 days' : `${items.length} dismissed · auto-clears after 30 days`}</span>
+        <span className="ib-dbar-label">{phone ? 'Clears after 30 days' : `${items.length} dismissed · auto-clears after 30 days`}</span>
         <span style={{ flex: 1 }} />
         <button type="button" className="ib-dbar-act" style={{ color: 'var(--acc-terra-ink)' }} onClick={() => restoreMany(items)}>Restore all</button>
         {!phone && (
@@ -591,12 +591,12 @@ function DismissedPanel({ items, phone, selected, focusedId, onToggleSelect }: {
         )}
       </div>
 
-      {phone && <div className="ib-hand" style={{ margin: '8px 0 4px' }}>swipe → any card to bring it back</div>}
+      {phone && <div className="ib-note" style={{ margin: '8px 0 4px' }}>swipe → any card to bring it back</div>}
 
       {today.length > 0 && group('Today', today)}
       {earlier.length > 0 && group('Earlier', earlier)}
 
-      {!phone && <div className="ib-hand ib-dfoot">a capture is never truly lost — it just goes quiet ✿</div>}
+      {!phone && <div className="ib-note ib-dfoot">a capture is never truly lost — it just goes quiet ✿</div>}
     </div>
   )
 }
@@ -610,13 +610,13 @@ const KIND_CHIP_STYLE: Record<InboxKind, { background?: string; color?: string; 
 
 // ── Snoozed (no frame — the Dismissed view's rows): when each comes back; Unsnooze (R, swipe →) with Undo. ──
 function SnoozedPanel({ items, phone, now, selected, focusedId, onToggleSelect }: { items: InboxItem[]; phone: boolean; now: Date; selected: Set<string>; focusedId: string | null; onToggleSelect: (id: string) => void }) {
-  if (items.length === 0) return <div className="ib-hand" style={{ marginTop: 18, padding: '8px 2px' }}>nothing snoozed right now</div>
+  if (items.length === 0) return <div className="ib-note" style={{ marginTop: 18, padding: '8px 2px' }}>nothing snoozed right now</div>
   return (
     <div style={{ marginTop: phone ? 4 : 0 }}>
-      <div className="ib-hand" style={{ marginBottom: 12 }}>{phone ? 'swipe → any card to bring it back now' : 'snoozed captures come back to Waiting on their own ✿'}</div>
+      <div className="ib-note" style={{ marginBottom: 12 }}>{phone ? 'swipe → any card to bring it back now' : 'snoozed captures come back to Waiting on their own ✿'}</div>
       <div className="ib-group-head">
-        <span>Snoozed · {items.length}</span>
-        <span className="ib-rule" />
+        <span>Snoozed</span>
+        <span className="ib-group-count">{items.length}</span>
       </div>
       {items.map((item) => (
         <DismissedRow
@@ -667,7 +667,8 @@ function DismissedRow({ item, meta, mark = '✕', act = 'Restore', phone, select
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="ib-drow-text"><EmojiText text={item.raw_text} /></div>
         <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 11 }}>
-          <Chip tone="bordered" style={{ border: 'none', ...KIND_CHIP_STYLE[item.kind] }}>{KIND_LABEL[item.kind]}</Chip>
+          {/* fontSize: the kit's bordered chip is 9px on a computer (sized for the old mono caps). */}
+          <Chip tone="bordered" style={{ border: 'none', fontSize: 'var(--fs-meta)', ...KIND_CHIP_STYLE[item.kind] }}>{KIND_LABEL[item.kind]}</Chip>
           <span className="ib-meta ib-mono">{meta}</span>
         </div>
       </div>

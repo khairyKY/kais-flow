@@ -82,7 +82,7 @@ export function LabelManager({ id, style, bare }: { id?: string; style?: CSSProp
           </div>
         ),
       )}
-      {!bare && <div className="lm-foot">labels cut across every domain ✿</div>}
+      {!bare && <div className="lm-foot">Labels cut across every domain ✿</div>}
       {menu &&
         (isMobile ? (
           <ActionSheet

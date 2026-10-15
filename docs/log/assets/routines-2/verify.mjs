@@ -160,7 +160,7 @@ await block(async () => {
   await sleep(300)
   await fillSample(page, false)
   check('desktop: "10 min total" under the steps (2a)', await page.getByText('10 min total', { exact: true }).isVisible())
-  check('desktop: the picker lists the five species, Vine chosen', JSON.stringify(await page.getByRole('radio').allInnerTexts()) === JSON.stringify(['VINE', 'CHERRY', 'FERN', 'CLOVER', 'DAISY']) && (await page.getByRole('radio', { name: 'Vine' }).getAttribute('aria-checked')) === 'true', JSON.stringify(await page.getByRole('radio').allInnerTexts()))
+  check('desktop: the picker lists the five species, Vine chosen', JSON.stringify(await page.getByRole('radio').allInnerTexts()) === JSON.stringify(['Vine', 'Cherry', 'Fern', 'Clover', 'Daisy']) && (await page.getByRole('radio', { name: 'Vine' }).getAttribute('aria-checked')) === 'true', JSON.stringify(await page.getByRole('radio').allInnerTexts()))
   await formShots(page, false, '2a-app-desktop-day')
 
   // drag: step 3's ⠿ onto step 1

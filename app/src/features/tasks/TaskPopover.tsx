@@ -31,7 +31,7 @@ export function placeUnderRow(row: { left: number; top: number; bottom: number }
   return { left, top: Math.max(EDGE, row.top - GAP - size.height), maxHeight: roomAbove }
 }
 
-const MONO: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer' }
+const MONO: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer' }
 
 export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) {
   const navigate = useNavigate()
