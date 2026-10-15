@@ -207,9 +207,8 @@ function Tour({ notes, at, mobile }: { notes: TourNote[]; at: number; mobile: bo
           role="dialog"
           aria-label={n.closing ? 'Garden note, done' : `Garden note ${at + 1} of ${dots}`}
           data-note={n.id}
-          style={{ left: place.left, top: place.top, width: place.width, transform: `rotate(${n.last && !mobile ? 0.5 : n.closing ? -0.4 : -0.6}deg)` }}
+          style={{ left: place.left, top: place.top, width: place.width }}
         >
-          <span className="kf-tour-tape" aria-hidden />
           {n.img && !n.closing && <img className="kf-tour-img" src={n.img} alt="" />}
           <div className="kf-tour-cap">{n.closing ? 'Garden note · done' : `Garden note · ${at + 1} of ${dots}`}</div>
           <div className="kf-tour-line">

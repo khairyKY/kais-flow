@@ -79,8 +79,7 @@ body::before {
 [style*="rgba(255, 255, 255, 0.32) 0px 4px"]:not(.kf-page *),
 .tp-tape,
 .kf-nav-tape,
-.washi-tape-settings,
-.kf-tour-tape {
+.washi-tape-settings {
   display: none !important;
 }
 :not(.kf-page)[style*="transform: rotate(-0."],
