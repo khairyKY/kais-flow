@@ -11,13 +11,14 @@ import { Icon } from './Icon'
 function Category({ title, entries, note }: { title: string; entries: ShortcutEntry[]; note?: string }) {
   return (
     <>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--acc-terra)', margin: '0 0 3px' }}>
+      {/* D6: a section label — 14 semibold ink, sentence case. */}
+      <div style={{ fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)', margin: '0 0 3px' }}>
         {title}
       </div>
       {entries.map((entry, i) => (
         <div
           key={entry.label}
-          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 4px', borderBottom: i === entries.length - 1 ? 'none' : '1px dashed var(--line-dashed)' }}
+          style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 4px', borderBottom: i === entries.length - 1 ? 'none' : '1px solid var(--line-dashed)' }}
         >
           <span style={{ display: 'flex', alignItems: 'center', gap: 5, flex: 'none', minWidth: 104 }}>
             {entry.keys.map((k) => (
@@ -38,8 +39,8 @@ const link = { background: 'none', border: 'none', padding: '6px 0', font: 'inhe
  * task" is what the list page underneath registered (useListKeys → pageShortcutsStore: the keys it
  * really dispatches on, so the sheet can't drift from them), plus the keys every task list has; with
  * no list page mounted it falls back to the Tasks keys table itself (tasks/listShortcuts.ts). Tour & help 14k-3
- * gives it the paper treatment: a solid taped sheet with a fern, a ×, and the way back to the tour
- * and the Guide. */
+ * gives it a solid sheet with a fern, a ×, and the way back to the tour and the Guide (a tool under
+ * Bound Journal: 16px corners, no tape, no handwriting). */
 export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () => void }) {
   useEscapeStack(open, onClose)
   useBodyScrollLock(open)
@@ -76,18 +77,17 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
           boxSizing: 'border-box',
           background: 'var(--paper-parchment)',
           border: '1px solid var(--line-card)',
-          borderRadius: 3,
+          borderRadius: 'var(--radius-card)',
           boxShadow: 'var(--shadow-popover)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', marginLeft: -36, width: 72, height: 18, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
         <img src="/ds/assets/fern/unfurl2.png" alt="" style={{ position: 'absolute', top: 12, right: 72, height: 64, filter: 'var(--shadow-drop-sm)' }} />
         <button type="button" aria-label="Close" onClick={onClose} className="kf-press" style={{ position: 'absolute', top: 16, right: 16, width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', background: 'none', borderRadius: '50%', color: 'var(--ink-muted)', cursor: 'pointer' }}>
           <Icon name="close" size={20} />
         </button>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1.1 }}>Shortcuts</div>
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', marginTop: 4 }}>the quick paths through the garden</div>
+        <div style={{ fontSize: 15, color: 'var(--ink-muted)', marginTop: 4 }}>The quick paths through the garden</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', columnGap: 32, marginTop: 22 }}>
           <div>
@@ -110,7 +110,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
           </div>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', marginTop: 20, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap', marginTop: 20, paddingTop: 12, borderTop: '1px solid var(--line-dashed)' }}>
           <span style={{ flex: 1, minWidth: 200, fontSize: 13.5, color: 'var(--ink-muted)' }}>On a Mac it’s ⌘; on Windows, Ctrl.</span>
           <button type="button" style={link} onClick={() => { onClose(); restartTour() }}>Show me around again</button>
           <button type="button" style={link} onClick={() => { onClose(); navigate('/guide') }}>Open the Guide →</button>

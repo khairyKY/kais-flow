@@ -24,7 +24,7 @@ export function Skeleton({ variant = 'rows', rows = 4 }: { variant?: 'rows' | 'c
   return (
     <div role="status" aria-label="Loading" aria-busy="true" style={pulse}>
       {variant === 'card' ? (
-        <div style={{ height: 190, borderRadius: 3, background: 'var(--skeleton-hi)', border: '1px solid var(--line-card)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
+        <div style={{ height: 190, borderRadius: 'var(--radius-card)', background: 'var(--skeleton-hi)', border: '1px solid var(--line-card)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
           <span style={bar('40%', 10)} />
           <span style={bar('90%', 18)} />
           <span style={bar('70%', 18)} />
@@ -39,8 +39,8 @@ export function Skeleton({ variant = 'rows', rows = 4 }: { variant?: 'rows' | 'c
         Array.from({ length: rows }, (_, i) => {
           const [title, meta] = ROW_WIDTHS[i % ROW_WIDTHS.length]
           return (
-            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '18px 16px 16px', borderBottom: '1px dashed var(--line-dashed)' }}>
-              <span style={{ width: 22, height: 22, borderRadius: 6, background: 'var(--skeleton)', flex: 'none' }} />
+            <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '18px 16px 16px', borderBottom: '1px solid var(--line-dashed)' }}>
+              <span style={{ width: 22, height: 22, borderRadius: 'var(--radius-check)', background: 'var(--skeleton)', flex: 'none' }} />
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 9, paddingTop: 3 }}>
                 <span style={bar(title, 13)} />
                 <span style={bar(meta, 10, true)} />
@@ -72,14 +72,14 @@ export function EmptyState({ image = '/ds/assets/hydrangea/zero.png', line, acti
  * `retryLabel` renames the one action (First Run 9b-1: "Sign in instead"). */
 export function ErrorCard({ message, onRetry, retryLabel = 'Retry' }: { message: ReactNode; onRetry?: () => void; retryLabel?: string }) {
   return (
-    <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 4px 14px', background: 'var(--paper-parchment)', border: '1px solid var(--line-control)', borderRadius: 3 }}>
+    <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '4px 4px 4px 14px', background: 'var(--paper-parchment)', border: '1px solid var(--line-control)', borderRadius: 'var(--radius-input)' }}>
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--ink-muted)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flex: 'none' }}>
         <circle cx="12" cy="12" r="8" />
         <path d="M12 7.8v5M12 16.2v.1" />
       </svg>
       <span style={{ flex: 1, minHeight: 40, display: 'flex', alignItems: 'center', fontSize: 14, lineHeight: 1.4, color: 'var(--ink-body)' }}>{message}</span>
       {onRetry && (
-        <button type="button" onClick={onRetry} style={{ flex: 'none', height: 48, padding: '0 12px', border: 'none', background: 'none', font: 'inherit', fontSize: 14, fontWeight: 600, color: 'var(--acc-terra-ink)', cursor: 'pointer', borderRadius: 3 }}>
+        <button type="button" onClick={onRetry} style={{ flex: 'none', height: 48, padding: '0 12px', border: 'none', background: 'none', font: 'inherit', fontSize: 14, fontWeight: 600, color: 'var(--acc-terra-ink)', cursor: 'pointer', borderRadius: 'var(--radius-input)' }}>
           {retryLabel}
         </button>
       )}
