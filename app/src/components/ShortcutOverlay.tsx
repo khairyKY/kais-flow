@@ -87,7 +87,7 @@ export function ShortcutOverlay({ open, onClose }: { open: boolean; onClose: () 
           <Icon name="close" size={20} />
         </button>
         <div style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1.1 }}>Shortcuts</div>
-        <div style={{ fontSize: 15, color: 'var(--ink-muted)', marginTop: 4 }}>The quick paths through the garden</div>
+        <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', marginTop: 4 }}>The quick paths through the garden</div>
 
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', columnGap: 32, marginTop: 22 }}>
           <div>

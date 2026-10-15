@@ -83,13 +83,14 @@ type NavItem = {
 const TEND: NavItem[] = [
   { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" /> },
   { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph /> },
+  // ds-ok: the flower glyph's centre is the export's illustration colour (unchanged by B)
   { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" /> },
   // R4 (2026-07-20 audit): "the tasks page has a small flower icon while the live local host has
   // the entire rendered flower — the correct thing is the one in the design export." Tasks.dc.html
   // line 225 specifies the 18px five-ellipse glyph (fill var(--acc-blossom), centre #C98A4B), not
   // cherry/bloom.png. Checked every page: Today/Calendar already used the glyph, and
   // Routines/Inbox genuinely do specify PNGs in their own exports — so this is per-page, and
-  // Tasks was the odd one out.
+  // Tasks was the odd one out. ds-ok: the glyph's centre is that illustration colour.
   { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" /> },
   { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph /> },
 ]
@@ -444,7 +445,7 @@ function SyncStatus({ side = false }: { side?: boolean }) {
     </div>
   )
   // A tool's aside (D7: Caveat writes on pages only): the UI face, muted, under a hairline.
-  const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--line-dashed)', fontSize: 13, color: 'var(--ink-muted)' }}>{text}</div>
+  const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--line-dashed)', fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>{text}</div>
   return (
     <>
       {side ? (

@@ -61,7 +61,7 @@
   gap: 10px;
   flex-wrap: wrap;
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: var(--fs-lead);
   font-weight: var(--fw-medium);
   line-height: 1.25;
   color: var(--ink-body);
@@ -201,7 +201,7 @@
 }
 .kf-hint:not([data-below]) .kf-hint-caret { top: auto; bottom: -6px; transform: rotate(225deg); }
 .kf-hint > img { width: 28px; height: 28px; object-fit: contain; flex: none; }
-.kf-hint-line { flex: 1; min-width: 0; padding: 9px 0; font-size: 15px; line-height: 1.35; color: var(--ink-body); text-wrap: pretty; }
+.kf-hint-line { flex: 1; min-width: 0; padding: 9px 0; font-size: var(--fs-body); line-height: 1.35; color: var(--ink-body); text-wrap: pretty; }
 .kf-hint-x {
   width: 48px;
   height: 48px;

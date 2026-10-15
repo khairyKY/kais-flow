@@ -262,7 +262,7 @@ export function ActivityPage() {
     /* D6: a section label is 14 semibold ink, sentence case, a quiet count on the right, no rule */
     .slabel { display:flex; align-items:baseline; justify-content:space-between; gap:12px; font-size: var(--fs-section); font-weight: var(--fw-semibold); color:var(--ink-body); }
     .slabel .n { font-family:var(--font-mono); font-size: var(--fs-meta); font-weight: var(--fw-regular); color:var(--ink-faint); }
-    .ahand { font-size: 13px; color: var(--ink-muted); }
+    .ahand { font-size: var(--fs-caption); color: var(--ink-muted); }
   `
 
   const renderItem = (entry: typeof processedEntries[0], idx: number, groupLen: number) => {

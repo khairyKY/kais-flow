@@ -12,7 +12,7 @@
 .gd-eyebrow { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--acc-terra-ink); }
 .gd-eyebrow.is-faint { color: var(--ink-faint); }
 .gd-h1 { margin: 6px 0 0; font-family: var(--font-display); font-weight: 500; font-size: 44px; line-height: 1.05; letter-spacing: -0.015em; color: var(--ink-body); }
-.gd-hand { margin-top: 6px; font-size: 15px; color: var(--ink-muted); }
+.gd-hand { margin-top: 6px; font-size: var(--fs-body); color: var(--ink-muted); }
 
 .gd-search {
   display: flex;
@@ -82,7 +82,7 @@
 /* D6: a section label — 14 semibold ink, sentence case, no rule after it. */
 .gd-sec { margin: 30px 0 12px; font-size: var(--fs-section); font-weight: var(--fw-semibold); color: var(--ink-body); }
 .gd-sections { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); column-gap: 28px; }
-.gd-none { margin: 8px 0; font-size: 15px; color: var(--ink-muted); }
+.gd-none { margin: 8px 0; font-size: var(--fs-body); color: var(--ink-muted); }
 
 .gd-chip { width: 36px; height: 36px; flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; color: var(--ink-muted); }
 .gd-cards { display: flex; flex-direction: column; gap: 12px; }

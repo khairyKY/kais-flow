@@ -72,7 +72,7 @@ function StatePage({ kind, bare }: { kind: Kind; bare: boolean }) {
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', gap: 'var(--sp-3)', textAlign: 'center' }}>
       <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 40, opacity: 0.7 }} />
       <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)' }}>{title}</h1>
-      <div style={{ fontSize: 15, color: 'var(--ink-muted)' }}>{line}</div>
+      <div style={{ fontSize: 'var(--fs-body)', color: 'var(--ink-muted)' }}>{line}</div>
       <div style={{ marginTop: 'var(--sp-3)', display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 'var(--sp-3)' }}>
         {kind === 'crash' ? (
           <>

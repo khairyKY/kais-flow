@@ -394,7 +394,7 @@
 .st-nav-hand {
   margin-top: 20px;
   padding: 0 4px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: var(--ink-muted);
 }
 .st-main {
@@ -486,7 +486,7 @@
 }
 .st-phone-foot {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: var(--fs-caption);
   color: var(--ink-muted);
 }
 

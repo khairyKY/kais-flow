@@ -443,7 +443,7 @@ function TimezoneCard() {
   const tz = settings.timezone
   const device = deviceZone()
   const matches = searchZones(q)
-  const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', minHeight: 40, textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid var(--line-dashed)', padding: '9px 4px', fontFamily: 'inherit', fontSize: 14, color: 'var(--ink-body)', cursor: 'pointer' }
+  const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', minHeight: 40, textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid var(--line-dashed)', padding: '9px 4px', fontFamily: 'inherit', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', cursor: 'pointer' }
 
   function apply(next: string) {
     if (!isZone(next)) return

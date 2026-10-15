@@ -211,7 +211,7 @@ export function TrashPage() {
         <path d="M60 25c-4-.6-6-2.6-6.6-6.6 4 0 6.2 1.8 6.6 6.6Z" fill="var(--acc-moss)"></path>
         <path d="M60 28c4-.6 6-2.6 6.6-6.6-4 0-6.2 1.8-6.6 6.6Z" fill="var(--acc-sage)"></path>
       </svg>
-      <div style={{ marginTop: 20, fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: '1.45' }}>The heap is empty. Deleted things rest here for 30 days before they compost.</div>
+      <div style={{ marginTop: 20, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: '1.45' }}>The heap is empty. Deleted things rest here for 30 days before they compost.</div>
     </div>
   )
 
@@ -278,7 +278,7 @@ export function TrashPage() {
               {renderAgeGroup('Today', ageGroupedItems.today)}
               {renderAgeGroup('This week', ageGroupedItems.thisWeek)}
               {renderAgeGroup('Older', ageGroupedItems.older)}
-              <div style={{ marginTop: 26, padding: '10px 14px', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-input)', background: 'color-mix(in oklch, var(--ink-hairline) 8%, transparent)', fontSize: 12.5, color: 'var(--ink-faint)', textAlign: 'center' }}>Items compost after 30 days — gone for good, feeding nothing in particular.</div>
+              <div style={{ marginTop: 26, padding: '10px 14px', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-input)', background: 'color-mix(in oklch, var(--ink-hairline) 8%, transparent)', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', textAlign: 'center' }}>Items compost after 30 days — gone for good, feeding nothing in particular.</div>
             </div>
           )}
         </div>

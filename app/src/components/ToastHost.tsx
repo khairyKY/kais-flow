@@ -30,7 +30,7 @@ const CSS = `
   .kf-toast-msg { flex: 1; min-width: 0; padding: 14px 0; font-size: 14px; line-height: 20px; text-wrap: pretty;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
   .kf-toast-act { flex: none; height: 48px; padding: 0 12px; border: none; background: none; cursor: pointer;
-    font: inherit; font-size: 14px; font-weight: 600; color: var(--toast-action); border-radius: var(--radius-input); }
+    font: inherit; font-size: var(--fs-body-s); font-weight: 600; color: var(--toast-action); border-radius: var(--radius-input); }
   .kf-toast-act:active { background: var(--pressed-overlay); }
   .kf-toast-act:focus-visible { outline: none; box-shadow: var(--focus-ring); }
   .kf-toast-life { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--toast-action); opacity: 0.7;
