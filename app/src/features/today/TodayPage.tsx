@@ -521,19 +521,13 @@ export function TodayPage() {
 
     return (
       <div key={person.id} style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>
-            A moment coming
-          </span>
-          <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-        </div>
+        <SectionLabel style={{ marginBottom: 10 }}>A moment coming</SectionLabel>
         <div
           style={{
             position: 'relative',
             background: 'var(--paper-parchment)',
             border: '1px solid var(--line-card)',
-            borderRadius: 3,
-            boxShadow: 'var(--shadow-crisp)',
+            borderRadius: 'var(--radius-card)',
             padding: '13px 16px',
             display: 'flex',
             alignItems: 'center',
@@ -698,7 +692,7 @@ export function TodayPage() {
                   {tended && (
                     <div className="tp-tended">
                       <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 36, height: 'auto', filter: 'var(--shadow-drop-sm)' }} />
-                      <span className="tp-hand" style={{ fontSize: 'var(--fs-hand-l)' }}>{day.tally.picked === 3 ? 'All three tended.' : 'All tended.'} The rest is extra ✿</span>
+                      <span className="tp-note">{day.tally.picked === 3 ? 'All three tended.' : 'All tended.'} The rest is extra ✿</span>
                     </div>
                   )}
                 </>
@@ -823,9 +817,9 @@ export function TodayPage() {
     <section>
       <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
       {routinesTotal === 0 && (
-        <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand)', textDecoration: 'none' }}>
+        <Link to="/routines" className="tp-note" style={{ display: 'block', textDecoration: 'none' }}>
           {/* Polish D: routines exist but every one rests today — say so, don't invite planting. */}
-          {hasActiveRoutines ? 'nothing on repeat today ✿' : 'nothing on repeat yet — plant one ✿'}
+          {hasActiveRoutines ? 'Nothing on repeat today ✿' : 'Nothing on repeat yet — plant one ✿'}
         </Link>
       )}
       {routineGroups.map((g) => (
@@ -870,7 +864,7 @@ export function TodayPage() {
           rowSelection={rowSelection}
         />
       )}
-      {!tasksPending && deskCard && <FirstTodayHint style={{ padding: '0 0 0 24px', marginTop: -14, fontSize: 'var(--fs-hand-l)' }} />}
+      {!tasksPending && deskCard && <FirstTodayHint style={{ padding: '0 0 0 24px', marginTop: -14 }} />}
 
       {/* The side column grows with the page too, from 264 to 340 (Kai 2026-10-03). */}
       <div className="td-grid">
@@ -1072,7 +1066,7 @@ function MomentHead({ state: s, taskById, top3Ids, focus, firstPick, rowSelectio
   // pick (2a: "Deep work — Forecasting · working on <the pick>"); a meeting has nothing to focus on.
   const target = task ?? (block && block.type !== 'event' ? focusTask ?? firstPick : undefined)
   const working = focus?.running && focusTask && focusTask.id !== task?.id ? <> · working on <span className="td-ink"><EmojiText text={focusTask.title} /></span></> : null
-  const focusBtn = (label = 'Start focus') => target && <Button type="button" variant="secondary" className="td-focus-btn" onClick={() => startFocus(target)}>{label}</Button>
+  const focusBtn = (label = 'Start focus') => target && <Button type="button" variant="secondary" onClick={() => startFocus(target)}>{label}</Button>
   let head: CardHead
   switch (s.kind) {
     case 'running':
@@ -1420,7 +1414,7 @@ function FirstTodayHint({ style }: { style?: React.CSSProperties }) {
     document.addEventListener('pointerdown', off, { capture: true, once: true })
     return () => document.removeEventListener('pointerdown', off, { capture: true })
   }, [on, uid])
-  return on ? <div className="tp-hand tp-first-hint" style={style}>{FIRST_TODAY_HINT}</div> : null
+  return on ? <div className="tp-note tp-first-hint" style={style}>{FIRST_TODAY_HINT}</div> : null
 }
 
 /** /calendar?event=<id> — the calendar turns to the event's day and opens it (CalendarPage). */
@@ -1464,10 +1458,10 @@ function NowSlip({ state: s, sel }: { state: NowState<CalendarEvent, Task>; sel:
   }
   const title = block && s.kind !== 'paused' && s.kind !== 'done' ? block.title : task?.title ?? ''
   const open = () => (task ? openTask(task.id) : block ? navigate(eventPath(block)) : undefined)
-  const card = { position: 'relative', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px 10px 12px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', transform: 'rotate(-0.3deg)' } as const
+  // A tool card (B D3/D4/D7): 16 corners, a hairline, flat — no tape, no tilt.
+  const card = { position: 'relative', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px 10px 12px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)' } as const
   const inner = (action?: React.ReactNode) => (
     <>
-      <span aria-hidden className="tp-tape" />
       <span className="tp-ring" data-tone={ring.tone} style={{ background: ring.bg }} aria-label={ring.aria}>
         <span>{ring.label}</span>
       </span>
@@ -1547,10 +1541,10 @@ function PhoneEventRow({ event, meta }: { event: CalendarEvent; meta: string[] }
 /** MK Goal card, loading (2g): skeleton title lines under the tag. */
 function GoalCardLoading() {
   return (
-    <div role="status" aria-label="Loading" aria-busy="true" className="tp-goal kf-page" style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '14px 12px 14px 4px', transform: 'rotate(-0.4deg)' }}>
+    <div role="status" aria-label="Loading" aria-busy="true" className="tp-goal kf-page" style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 'var(--radius-page)', padding: '14px 12px 14px 4px', transform: 'rotate(-0.4deg)' }}>
       <div style={{ paddingLeft: 12 }}><span className="tp-goal-tag">✶ Goal of the day</span></div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 6 }}>
-        <span className="tp-hit"><span style={{ width: 22, height: 22, borderRadius: 6, border: '1.5px solid var(--acc-gold)', boxSizing: 'border-box' }} /></span>
+        <span className="tp-hit"><span style={{ width: 22, height: 22, borderRadius: 'var(--radius-check)', border: '1.5px solid var(--acc-gold)', boxSizing: 'border-box' }} /></span>
         <div style={{ flex: 1, minWidth: 0, paddingTop: 12 }}>
           <div style={{ animation: 'skeletonPulse 1.6s var(--ease-natural) infinite' }}>
             <span className="tp-sk" style={{ width: '88%', height: 14 }} />
@@ -1593,13 +1587,12 @@ function DayCompleteBurst() {
           top: '100%',
           marginTop: 6,
           textAlign: 'center',
-          fontFamily: 'var(--font-hand)',
-          fontSize: 17,
-          color: 'var(--ink-hand, #7a745f)',
+          fontSize: 'var(--fs-body-s)',
+          color: 'var(--ink-muted)',
           animation: 'itemFadeIn 400ms var(--ease-out) 500ms both',
         }}
       >
-        that's the day, gently done ✿
+        That's the day, gently done ✿
       </div>
     </div>
   )
@@ -1615,7 +1608,7 @@ function EmptyTodayCard({ onPlan }: { onPlan: () => void }) {
         <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,var(--sky-horizon,#b9a98a),var(--sky-panel-strong,#a3937a))', boxShadow: 'inset 0 3px 5px rgba(var(--kf-shadow-rgb, 60,52,38),0.25)' }} />
         <img src={`${A}/clover/seedling.png`} alt="" style={{ position: 'absolute', left: '50%', bottom: 34, height: 52, transform: 'translateX(-50%)', filter: 'var(--shadow-drop-sm)' }} />
       </div>
-      <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted for today yet.</div>
+      <div style={{ marginTop: 22, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center' }}>Nothing planted for today yet.</div>
       <Button type="button" variant="cta" onClick={onPlan} style={{ marginTop: 18, fontSize: 13.5, padding: '10px 22px' }}>Plan today</Button>
     </div>
   )
@@ -1635,7 +1628,7 @@ function DoneTodayCard() {
   return (
     <div style={{ padding: '44px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div style={{ position: 'relative', width: 150, height: 64 }}>
-        <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderBottom: '1.5px dashed var(--line-dashed)' }} />
+        <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderBottom: '1.5px solid var(--line-dashed)' }} />
         {petals.map(([left, bottom, w, h, radius], i) => (
           <span
             key={i}
@@ -1644,7 +1637,7 @@ function DoneTodayCard() {
           />
         ))}
       </div>
-      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>All done. The garden can rest.</div>
+      <div style={{ marginTop: 20, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center' }}>All done. The garden can rest.</div>
     </div>
   )
 }
@@ -1719,7 +1712,7 @@ function Top3Slot({ task, index, children }: { task: Task; index: number; childr
   }
   return (
     <DragRow id={task.id} load={load} disabled={!!task.completed_at}>
-      <div ref={drop.ref} className={drop.className} data-top3-slot={task.id} style={{ position: 'relative', borderRadius: 3 }}>
+      <div ref={drop.ref} className={drop.className} data-top3-slot={task.id} style={{ position: 'relative', borderRadius: 'var(--radius-input)' }}>
         {children}
       </div>
     </DragRow>
@@ -1734,7 +1727,7 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
   // Loop A (2026-09-26 daily cycle): the goal is a Top 3 row too — the same grammar as the rows under it.
   const g = useTodayRow(task, { ...sel, place })
   const more = !g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />
-  const card = { position: 'relative', backgroundColor: 'var(--paper-goal)', backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined, border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, display: 'flex', alignItems: 'flex-start', transform: 'rotate(-0.4deg)' } as const
+  const card = { position: 'relative', backgroundColor: 'var(--paper-goal)', backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined, border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 'var(--radius-page)', display: 'flex', alignItems: 'flex-start', transform: 'rotate(-0.4deg)' } as const
   if (compact) {
     // MK Goal card (Today Phone 2a–2e): gold tag, 22 gold box in a 48 hit, serif 18/600, gold meta,
     // clover (four-leaf once done). ⋯ stays, so every swipe has its tap path (DS-CHANGELOG §3).
@@ -1790,7 +1783,7 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
       onClick={() => reopenTaskWithUndo(task)}
       title="Reopen"
       className="kf-hit"
-      style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', flex: 'none', cursor: 'pointer' }}
+      style={{ width: size, height: size, borderRadius: 'var(--radius-check)', background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', flex: 'none', cursor: 'pointer' }}
     >
       ✓
     </span>
@@ -1840,7 +1833,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
     onClickCapture: ctrlSelect(sel, done),
     onContextMenu: g.onContextMenu,
     style: {
-      borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',
+      borderBottom: border ? '1px solid var(--line-dashed)' : 'none',
       background: sel.selected || g.menuOpen ? 'var(--select-bg)' : undefined,
       boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
       outline: 'none',
@@ -1989,7 +1982,7 @@ function RoutineRow({ routine, done, compact }: { routine: Routine; done: boolea
 
 // Loop A — the quiet fold (DAILY-CYCLE.md: "still there, not competing"). Collapsed by default,
 // remembered per device; SectionLabel's look, as a button. On a phone (Today Phone 2n): "More for
-// today · N", a dashed rule and a chevron; its lists sit under mono sub-headers (ruling 7).
+// today · N" and a chevron; its lists sit under quiet sub-headers (ruling 7).
 const MORE_OPEN_KEY = 'kf.today.more-open'
 
 // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue pile is its own fold, folded
@@ -2024,11 +2017,12 @@ function MoreForToday({ summary, phone, label = 'More for today', storageKey = M
     <section>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <button type="button" aria-expanded={open} onClick={toggle} className="kf-hit" style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: '6px 0', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {label}{summary && <span style={{ color: 'var(--ink-faint)' }}> · {summary}</span>}
+          {/* B D6: a section label (14 semibold ink, sentence case), no rule after it. */}
+          <span style={{ fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)', whiteSpace: 'nowrap', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {label}{summary && ` · ${summary}`}
           </span>
-          <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-          <span aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 160ms var(--ease-out)' }}>▸</span>
+          <span style={{ flex: 1 }} />
+          <Icon name="chevright" size={16} style={{ flex: 'none', color: 'var(--ink-faint)', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform var(--dur-quick) var(--ease-out)' }} />
         </button>
         {action}
       </div>
@@ -2038,5 +2032,5 @@ function MoreForToday({ summary, phone, label = 'More for today', storageKey = M
 }
 
 function Empty({ line }: { line: string }) {
-  return <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>{line}</div>
+  return <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)', padding: '8px 2px' }}>{line}</div>
 }
