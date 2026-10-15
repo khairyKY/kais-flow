@@ -39,11 +39,12 @@
 .pc-day[data-range]::before { content: ''; position: absolute; inset: var(--sp-1) 0; background: var(--select-bg); }
 .pc-day[data-range='start']::before { border-radius: 34px 0 0 34px; }
 .pc-day[data-range='end']::before { border-radius: 0 34px 34px 0; }
-.pc-day-l { font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.pc-day-l { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-day[data-today] .pc-day-l { color: var(--acc-terra-ink); }
 .pc-day-n { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: var(--fw-medium); color: var(--ink-body); }
 .pc-day[data-today] .pc-day-n { box-shadow: inset 0 0 0 1.5px var(--acc-terra-ink); color: var(--acc-terra-ink); font-weight: var(--fw-semibold); }
-.pc-day[aria-current] .pc-day-n { background: var(--ink-body); color: var(--paper-parchment); box-shadow: none; font-weight: var(--fw-semibold); }
+/* B (D2): the shown day is the selection, ink-filled with the selection pair. */
+.pc-day[aria-current] .pc-day-n { background: var(--sel-bg); color: var(--sel-ink); box-shadow: none; font-weight: var(--fw-semibold); }
 .pc-day-dot { width: 4px; height: 4px; border-radius: 50%; }
 .pc-day-dot[data-on] { background: var(--ink-faint); }
 
@@ -53,26 +54,26 @@
   overflow-x: auto; scrollbar-width: none; white-space: nowrap;
 }
 .pc-uns::-webkit-scrollbar { display: none; }
-.pc-uns-label { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.pc-uns-label { flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-chip {
   position: relative; flex: none; display: inline-flex; align-items: center; gap: var(--sp-2); height: 40px; padding: 0 var(--sp-3);
-  background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-sharp); box-shadow: var(--shadow-crisp);
+  background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); box-shadow: var(--shadow-crisp);
   font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .pc-chip::after { content: ''; position: absolute; inset: calc(-1 * var(--sp-1)) 0; }
 .pc-chip[aria-expanded='true'] { border-color: var(--ink-body); box-shadow: inset 0 0 0 0.5px var(--ink-body); }
 .pc-chip.is-skel { width: 132px; border: none; box-shadow: none; background: var(--skeleton); animation: skeletonPulse 1.6s var(--ease-natural) infinite; }
 .pc-chip-t { font-size: 14px; color: var(--ink-body); }
-.pc-chip-d { font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.pc-chip-d { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-chip-d.is-late { color: var(--acc-terra-ink); }
 /* Kai 2026-10-07: Overdue · Today · Inbox above the chips (the desktop rail's sections), 48 tall. */
 .pc-segs { flex: none; display: flex; padding: var(--sp-1) var(--gutter-phone) 0; overflow-x: auto; scrollbar-width: none; }
 .pc-segs::-webkit-scrollbar { display: none; }
 
-/* ── The grid: 64px hours, a 60px hour gutter, dashed hour lines. ── */
+/* ── The grid: 64px hours, a 60px hour gutter, solid hour lines (B, D8). ── */
 .pc-grid { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
 .pc-colhead { flex: none; height: 32px; display: flex; padding-left: 60px; border-bottom: 1px solid var(--line-card); }
-.pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
+.pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
 .pc-colhead > span.is-today { color: var(--acc-terra-ink); }
 .pc-allday { flex: none; display: flex; gap: var(--sp-1); padding: var(--sp-1) var(--sp-1) var(--sp-1) 60px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line-card); }
 .pc-allday-chip {
@@ -84,7 +85,7 @@
 .pc-scroll { position: relative; flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .pc-canvas { position: relative; height: calc(24 * 64px); }
 .pc-hour { position: absolute; left: 0; right: 0; display: flex; align-items: flex-start; pointer-events: none; }
-.pc-hour > span { flex: none; width: 60px; padding-left: var(--gutter-phone); margin-top: -8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.pc-hour > span { flex: none; width: 60px; padding-left: var(--gutter-phone); margin-top: -8px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-hour > i { flex: 1; border-top: 1px solid var(--line-dashed); }
 
 /* Only the columns slide on a day swipe (7b); the hour labels and lines stay put. */
@@ -119,7 +120,7 @@
 .pc-check { flex: none; display: inline-flex; }
 .pc-name { min-width: 0; font-size: 14px; font-weight: var(--fw-medium); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* On one row the time gives way first: a narrow lane (a pair, a stack of three) keeps the title. */
-.pc-time { flex: 0 1000 auto; font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-time { flex: 0 1000 auto; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* An overdue block's "Overdue · Replan" (Kai 2026-10-07) reads in terra under the past-muting. */
 .pc-block.is-noted .pc-time { color: var(--acc-terra-ink); }
 .pc-block.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
@@ -153,7 +154,7 @@
 .pc-nowdot { position: absolute; left: 58px; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--acc-terra-ink); z-index: 4; pointer-events: none; }
 .pc-nowtag, .pc-bubble {
   position: absolute; left: var(--sp-1); height: 22px; margin-top: -11px; padding: 0 6px; border-radius: var(--radius-pill);
-  font-family: var(--font-mono); font-size: 12px; line-height: 22px; letter-spacing: var(--ls-meta); white-space: nowrap; pointer-events: none;
+  display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); white-space: nowrap; pointer-events: none;
 }
 .pc-nowtag { background: var(--acc-terra-ink); color: var(--on-terra); z-index: 4; }
 /* The time bubble while a block is lifted: the inverted toast pair. */
@@ -190,12 +191,12 @@
 /* The title is a field (Kai 2026-10-07: the sheet read as read-only) — the quick-create field's chrome. */
 .pc-bs-title-in { width: 100%; font-family: var(--font-display); font-size: 20px; }
 .pc-bs-meta::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: var(--sp-2); border-radius: 50%; background: var(--pc-ink); vertical-align: 1px; }
-.pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-bs-colors { margin: var(--sp-3) 0 var(--sp-3); }
 .pc-bs-rows { margin: 0 -20px; border-top: 1px solid var(--line-dashed); padding-top: var(--sp-1); }
 /* §5a "From task" + the task's title, quiet, above Complete / Open task. */
 .pc-bs-caption { padding: var(--sp-3) 20px var(--sp-1); font-size: var(--fs-body-s); line-height: calc(20 / 14); color: var(--ink-muted); border-top: 1px solid var(--line-dashed); }
-.pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--acc-sage-text); }
+.pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--acc-sage-text); }
 .pc-bs-save.is-pending { color: var(--sig-offline); }
 .pc-bs-delete.kf-button--ghost { margin-right: auto; color: var(--acc-terra-ink); }
 

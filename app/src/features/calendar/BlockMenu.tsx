@@ -41,7 +41,8 @@ const LENGTHS: { min: number; label: string }[] = [
   { min: 120, label: 'Deep' },
 ]
 
-const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+// B (D5): a caption is metadata — sentence case, untracked, even digits.
+const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }
 const check = <Icon name="check" size={13} style={{ color: 'var(--acc-terra)' }} />
 
 /** The swatch a block wears: its own colour, else its kind's (a meeting blossom, a task / block lavender). */
@@ -228,7 +229,7 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
                 LENGTHS.map((l) => ({
                   label: l.label,
                   on: len === l.min,
-                  icon: <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', width: 32, color: len === l.min ? 'var(--acc-lavender-deep)' : 'var(--ink-faint)' }}>{durationLabel(l.min)}</span>,
+                  icon: <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontVariantNumeric: 'tabular-nums', width: 32, color: len === l.min ? 'var(--acc-lavender-deep)' : 'var(--ink-faint)' }}>{durationLabel(l.min)}</span>,
                   run: () => { if (len !== l.min) retimeEventWithUndo(event, span, { ...span, end: span.start + l.min }) },
                 })),
                 closeAll,

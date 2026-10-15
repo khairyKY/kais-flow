@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { Toggle as KitToggle } from '../../components/kit'
+import { Segmented, Toggle as KitToggle } from '../../components/kit'
 import { uiZoom } from '../../lib/uiScale'
 import { useEscapeStack } from '../../lib/overlayStack'
 
@@ -49,27 +49,12 @@ export type ViewCell = (typeof VIEW_CELLS)[number]
 
 const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '7px 10px' }
 const labelStyle: React.CSSProperties = { fontSize: 13, color: 'var(--ink-body)' }
-const segWrapStyle: React.CSSProperties = {
-  display: 'inline-flex',
-  background: 'var(--paper-bone)',
-  border: '1px solid var(--line-card)',
-  borderRadius: 999,
-  overflow: 'hidden',
-  fontFamily: 'var(--font-mono)',
-  fontSize: 'var(--fs-meta)',
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
-}
-
-function segCellStyle(on: boolean, pad = '5px 11px'): React.CSSProperties {
-  return {
-    padding: pad,
-    cursor: 'pointer',
-    color: on ? 'var(--ink-body)' : 'var(--ink-muted)',
-    background: on ? 'var(--paper-parchment)' : 'transparent',
-    boxShadow: on ? 'var(--shadow-crisp)' : 'none',
-  }
-}
+// B (D12): the rows are the kit's Segmented — a visible edge, the pick ink-filled. The view row's eight
+// cells share the popover's width.
+const SEG_CSS = '.cal-vo-row.kf-seg { display: flex; flex-wrap: nowrap; } .cal-vo-row .kf-seg-btn { min-width: 0; padding: 0; }'
+const VIEW_OPTS = VIEW_CELLS.map((c) => ({ value: c, label: c }))
+const DENSITY_OPTS = [{ value: 's' as const, label: 'S' }, { value: 'm' as const, label: 'M' }, { value: 'l' as const, label: 'L' }]
+const WEEK_OPTS = [{ value: 'mon', label: 'Mon' }, { value: 'sun', label: 'Sun' }]
 
 /** A labelled row around the kit Toggle (UI pass: one switch look across the app). */
 function Toggle({ on, label, onToggle }: { on: boolean; label: string; onToggle: () => void }) {
@@ -141,51 +126,27 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
         userSelect: 'none',
       }}
     >
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '6px 10px 8px' }}>
+      <style>{SEG_CSS}</style>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)', padding: '6px 10px 8px' }}>
         View options
       </div>
 
       {/* [K-26] Akiflow view row — replaces the N-day cycler. 1 = day, 2–6 = N-day, W = week, M = month. */}
       <div style={{ padding: '7px 10px' }}>
-        <span style={{ ...segWrapStyle, display: 'flex' }}>
-          {VIEW_CELLS.map((cell) => (
-            <span
-              key={cell}
-              role="button"
-              aria-pressed={activeView === cell}
-              onClick={() => onPickView(cell)}
-              style={{ ...segCellStyle(activeView === cell, '5px 0'), flex: 1, textAlign: 'center' }}
-            >
-              {cell}
-            </span>
-          ))}
-        </span>
+        <Segmented className="cal-vo-row" label="View" value={activeView} onChange={onPickView} options={VIEW_OPTS} />
       </div>
 
       <div style={rowStyle}>
         <span style={labelStyle}>Density</span>
-        <span style={segWrapStyle}>
-          {(['s', 'm', 'l'] as const).map((d) => (
-            <span key={d} role="button" aria-pressed={value.density === d} onClick={() => onChange({ density: d })} style={segCellStyle(value.density === d)}>
-              {d}
-            </span>
-          ))}
-        </span>
+        <Segmented label="Density" value={value.density} onChange={(density) => onChange({ density })} options={DENSITY_OPTS} />
       </div>
 
       <div style={rowStyle}>
         <span style={labelStyle}>Week starts</span>
-        <span style={segWrapStyle}>
-          <span role="button" aria-pressed={value.weekStartsMon} onClick={() => onChange({ weekStartsMon: true })} style={segCellStyle(value.weekStartsMon)}>
-            Mon
-          </span>
-          <span role="button" aria-pressed={!value.weekStartsMon} onClick={() => onChange({ weekStartsMon: false })} style={segCellStyle(!value.weekStartsMon)}>
-            Sun
-          </span>
-        </span>
+        <Segmented label="Week starts" value={value.weekStartsMon ? 'mon' : 'sun'} onChange={(v) => onChange({ weekStartsMon: v === 'mon' })} options={WEEK_OPTS} />
       </div>
 
-      <div style={{ height: 1, background: 'var(--line-dashed)', margin: '5px 8px' }} />
+      <div style={{ height: 1, background: 'var(--line-card)', margin: '5px 8px' }} />
 
       <Toggle on={value.showWeekends} label="Show weekends" onToggle={() => onChange({ showWeekends: !value.showWeekends })} />
       <Toggle on={value.showCompleted} label="Show completed" onToggle={() => onChange({ showCompleted: !value.showCompleted })} />

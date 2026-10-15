@@ -298,6 +298,23 @@ scene('cal-unscheduled-phone', async (theme) => {
   return s
 })
 
+// bj-calendar (2026-10-15): the view options, a Google event's read-only menu, and the editor pages.
+scene('cal-viewopts-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'week' })
+  await s.page.locator('.cal-head [aria-haspopup="dialog"]').click()
+  await sleep(600)
+  return s
+})
+scene('cal-google-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'day' })
+  await s.page.locator('.fc-timegrid-event', { hasText: 'Lunch with Sam' }).first().click().catch(() => {})
+  await sleep(900)
+  return s
+})
+scene('cal-new-desktop', async (theme) => open('/new?kind=event', { theme, view: desktop }))
+scene('cal-new-task-desktop', async (theme) => open('/new?kind=task', { theme, view: desktop }))
+scene('cal-task-editor-desktop', async (theme) => open(`/tasks/${id('1', 2)}`, { theme, view: desktop }))
+
 // PROBE=<scene> PROBE_JS=<expression> runs one scene and prints what the expression returns (debugging).
 if (process.env.PROBE) {
   const sc = SCENES.find((x) => x.name === process.env.PROBE)

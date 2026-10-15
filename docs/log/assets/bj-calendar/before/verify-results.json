@@ -1,0 +1,192 @@
+[
+  {
+    "name": "cal-day-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-day-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-day-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-day-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-3day-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-3day-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-3day-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-3day-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-week-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-week-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-week-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-week-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-month-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-month-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-month-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-month-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-empty-day-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-empty-day-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-loading-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-loading-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-loading-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-loading-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-planning-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-planning-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-details-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-details-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-create-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-create-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-drag-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-drag-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-more-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-more-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-block-sheet-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-block-sheet-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-create-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-create-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-unscheduled-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "cal-unscheduled-phone-night",
+    "ok": true,
+    "detail": ""
+  }
+]
