@@ -138,9 +138,7 @@ export function TrayFlyout() {
         </div>
       ) : null}
 
-      <div className="kf-tray-label">
-        <span className="kf-tray-meta">Top 3</span>
-      </div>
+      <div className="kf-tray-label">Top 3</div>
       <div className="kf-tray-rows">
         {top3.length === 0 && <div className="kf-tray-empty">No Top 3 yet — pick them when you plan the day.</div>}
         {top3.map((t) => (
