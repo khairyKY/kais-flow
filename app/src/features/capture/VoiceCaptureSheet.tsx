@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type ButtonHTMLAttributes } from 'react'
+import { Button } from '../../components/kit'
 import { createPortal } from 'react-dom'
 import { transcribeAudio, captureWithAI, saveUntranscribedVoiceNote } from './api'
 import { isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from './aiAllowance'
@@ -269,30 +270,6 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
   const scrimAnimation = open ? 'captureScrimFadeIn 210ms var(--ease-out) forwards' : 'captureScrimFadeOut 140ms var(--ease-in) forwards'
   const sheetAnimation = open ? 'captureSheetSlideIn 210ms var(--ease-out) forwards' : 'captureSheetSlideOut 140ms var(--ease-in) forwards'
 
-  const outlineButton = (disabled = false): CSSProperties => ({
-    flex: 1,
-    padding: 12,
-    border: '1px solid var(--line-solid)',
-    borderRadius: 999,
-    fontSize: 13,
-    color: 'var(--ink-muted)',
-    background: 'none',
-    cursor: disabled ? 'default' : 'pointer',
-    opacity: disabled ? 0.5 : 1,
-    fontFamily: 'inherit',
-  })
-  const filledButton = (disabled = false): CSSProperties => ({
-    flex: 1,
-    padding: 12,
-    background: 'var(--ink-body)',
-    color: 'var(--paper-parchment)',
-    borderRadius: 999,
-    fontSize: 13,
-    cursor: disabled ? 'default' : 'pointer',
-    opacity: disabled ? 0.5 : 1,
-    border: 'none',
-    fontFamily: 'inherit',
-  })
   // A daily-limit reply makes Try again a long shot today, so saving takes the filled style.
   const saveIsPrimary = keptReason === 'limit'
 
@@ -331,7 +308,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
           width: '100%',
           maxWidth: 440,
           background: 'var(--paper-linen)',
-          borderRadius: '22px 22px 0 0',
+          borderRadius: 'var(--sheet-radius) var(--sheet-radius) 0 0', // D3: a sheet's 20px
           boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.2)',
           padding: '22px 22px calc(30px + env(safe-area-inset-bottom))',
           zIndex: 110,
@@ -382,12 +359,12 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
         </div>
 
         {/* Status text timer */}
-        <div aria-live="polite" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', marginTop: 16 }}>
+        <div aria-live="polite" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', marginTop: 16 }}>
           {statusText}
         </div>
 
-        {/* Prompt string */}
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', marginTop: 6 }}>
+        {/* Prompt string — the interface face (D7: handwriting is for pages); kf-help raises its first letter. */}
+        <div className="kf-help" style={{ marginTop: 6 }}>
           {handText}
         </div>
 
@@ -404,43 +381,31 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
         {/* Action Buttons */}
         {phase === 'resting' ? (
           <div style={{ display: 'flex', gap: 12, marginTop: 22 }}>
-            <button type="button" onClick={handleCancel} style={outlineButton()}>
-              {RESTING.close}
-            </button>
-            <button type="button" onClick={typeInstead} style={filledButton()}>
-              {RESTING.type}
-            </button>
+            <SheetButton onClick={handleCancel}>{RESTING.close}</SheetButton>
+            <SheetButton filled onClick={typeInstead}>{RESTING.type}</SheetButton>
           </div>
         ) : phase === 'kept' ? (
           <>
             <div style={{ display: 'flex', gap: 12, marginTop: 22 }}>
-              <button type="button" onClick={discard} style={outlineButton()}>
-                {KEPT_ACTIONS.discard}
-              </button>
-              <button type="button" onClick={() => void transcribeKept()} style={saveIsPrimary ? outlineButton() : filledButton()}>
-                {KEPT_ACTIONS.retry}
-              </button>
+              <SheetButton onClick={discard}>{KEPT_ACTIONS.discard}</SheetButton>
+              <SheetButton filled={!saveIsPrimary} onClick={() => void transcribeKept()}>{KEPT_ACTIONS.retry}</SheetButton>
             </div>
-            <button
-              type="button"
-              onClick={saveToInbox}
-              style={{ ...(saveIsPrimary ? filledButton() : outlineButton()), width: '100%', marginTop: 10 }}
-            >
-              {KEPT_ACTIONS.save}
-            </button>
+            <SheetButton filled={saveIsPrimary} onClick={saveToInbox} style={{ width: '100%', marginTop: 10 }}>{KEPT_ACTIONS.save}</SheetButton>
           </>
         ) : (
           <div style={{ display: 'flex', gap: 12, marginTop: 22 }}>
-            <button type="button" onClick={handleCancel} disabled={busy} style={outlineButton(busy)}>
-              Cancel
-            </button>
-            <button type="button" onClick={stopAndFile} disabled={busy || !recording} style={filledButton(busy || !recording)}>
-              {stopLabel}
-            </button>
+            <SheetButton onClick={handleCancel} disabled={busy}>Cancel</SheetButton>
+            <SheetButton filled onClick={stopAndFile} disabled={busy || !recording}>{stopLabel}</SheetButton>
           </div>
         )}
       </div>
     </div>,
     document.body,
   )
+}
+
+/** The sheet's buttons: the kit's (D11 = B) — secondary a bone tone. The filled one keeps the sheet's
+ * ink (.kf-voice-ink) in B's shape: B's terra primary would sit right under the terra mic. */
+function SheetButton({ filled = false, style, ...props }: { filled?: boolean } & ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <Button type="button" variant={filled ? 'cta' : 'secondary'} className={filled ? 'kf-voice-ink' : undefined} style={{ flex: 1, justifyContent: 'center', ...style }} {...props} />
 }

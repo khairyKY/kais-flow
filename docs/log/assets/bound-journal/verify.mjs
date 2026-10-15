@@ -346,7 +346,7 @@ scene('bjt-inbox-phone', tool('/inbox'))
 scene('bjt-dismissed-desktop', async (theme) => after(await tool('/inbox', { view: desktop })(theme), (p) => p.locator('.ib-toggle').getByRole('button', { name: /Dismissed/ }).click()))
 scene('bjt-snoozed-desktop', async (theme) => after(await tool('/inbox', { view: desktop })(theme), (p) => p.getByRole('button', { name: /1 snoozed/ }).click()))
 scene('bjt-cmdk-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => { await p.keyboard.press('Control+k'); await sleep(300); await p.keyboard.type('call omar tomorrow 3pm #shaheen 30m') }))
-scene('bjt-capture-phone', async (theme) => after(await tool('/today')(theme), (p) => p.locator('.kf-capture').click(), 900))
+scene('bjt-capture-phone', async (theme) => after(await tool('/today')(theme), (p) => p.locator('.kf-capture').tap(), 1500))
 scene('bjt-voice-phone', async (theme) => after(await tool('/today', { local: { 'kf-voice-limit-day': JSON.stringify({ day: '2026-10-14', uid: UID }) } })(theme), async (p) => {
   const b = await p.locator('.kf-capture').boundingBox() // a hold with the voice allowance used up: the sheet's resting state
   await p.mouse.move(b.x + b.width / 2, b.y + b.height / 2)
