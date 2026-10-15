@@ -48,6 +48,7 @@ Found and fixed two real bugs along the way, both against live behavior, not ass
 
 ## Decision changelog
 
+- **2026-10-16** — **v1.1.10:** onboarding keeps a later line's day ("tomorrow 3pm" was saved as today: every line was starred and the Top 3 rule pulled it to today). Found by the Bound Journal final pass; live bug, fixed on the release line.
 - **2026-10-14** — **v1.1.9** (shipped 16:41 UTC, live at `a6cbe5d7`): the outbox stops re-rendering the calendar on every queue step; calendar saves drain ~3× sooner. Entry: `docs/log/2026-10-14-1700-local-release-v1.1.9.md`.
 - **2026-10-14** — **v1.1.8** (shipped 15:34 UTC, live at `bca255ce`): full MCP (51 tools; journal/people only per key, 0080), privacy §2 updated, Microsoft Store .msix from every Windows build. Entry: `docs/log/2026-10-14-1530-local-release-v1.1.8.md`.
 - **2026-10-14** — **v1.1.7** (shipped 15:00 UTC, live at `a989a778`; stable links releases/latest/download/kais-flow.apk + kais-flow-windows-setup.exe answer 200): links (and Google Connect) open in the system browser from the Windows and Android apps; a download bar + Settings row with always-newest links; the new-version announcement checks every 3 h and re-checks a still-building release in 15 min. Entry: `docs/log/2026-10-14-0430-local-release-v1.1.7.md`.
