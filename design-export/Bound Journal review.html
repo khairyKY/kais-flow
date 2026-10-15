@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bound Journal review</title>
+<!-- Kai's Flow · the Bound Journal reskin, area by area, before and after. Plain HTML: open it straight
+     from disk. Tokens from ds-bound/; screenshots in bound-review/ (webp, copied from the builders'
+     before/after folders). Answers stay in this browser until "Copy my answers". -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:14.5px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--acc-lavender-deep)}
+.wrap{max-width:1160px;margin:0 auto;padding:56px 56px 120px}
+@media (max-width:767px){.wrap{padding:32px 16px 80px}}
+code{font-family:var(--font-stamp);font-size:12px}
+.meta{font-size:var(--fs-meta);color:var(--ink-faint)}
+.lede{margin:0 0 20px;max-width:700px;color:var(--ink-muted);font-size:14px}
+.bar{position:sticky;top:0;z-index:5;display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+@media (max-width:767px){.bar{position:static}}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg button{font:500 13px/1 var(--font-ui);color:var(--ink-body);background:none;border:0;border-radius:var(--radius-pill);padding:9px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.toc{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px}
+.toc a{color:var(--ink-muted);text-decoration:none}
+.toc a:hover{color:var(--ink-body)}
+.btn{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:var(--radius-input);font:600 13px/1 var(--font-ui);border:0;background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+button:focus-visible,a:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.sec{margin-top:64px;scroll-margin-top:64px}
+.sec-h{margin:0 0 6px;font-family:var(--font-display);font-size:26px;font-weight:500;line-height:1.2}
+.label{font-size:var(--fs-section);font-weight:600;margin:28px 0 12px}
+.tool{background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:var(--radius-card);padding:4px 22px}
+/* before | after */
+.pair{margin:0 0 24px}
+.pair h4{margin:0 0 8px;font-size:13.5px;font-weight:600}
+.ba{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.ba figure{margin:0}
+.ba figcaption{margin-bottom:5px;font-size:12px;color:var(--ink-faint)}
+.ba img{display:block;width:100%;height:auto;border-radius:10px;border:1px solid var(--line-card);cursor:zoom-in;background:var(--paper-bone)}
+.phones{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:8px 28px}
+.phones .ba{max-width:440px}
+@media (max-width:767px){.ba{gap:8px}}
+/* the calls: approve / overrule / note */
+.call{display:grid;grid-template-columns:28px 1fr auto;gap:6px 14px;align-items:start;padding:14px 0;border-bottom:1px solid var(--line-card)}
+.call:last-child{border-bottom:0}
+.call .n{font-size:13px;font-weight:600;color:var(--ink-faint);padding-top:1px}
+.call p{margin:0;font-size:13.5px}
+.call p small{display:block;margin-top:3px;font-size:12.5px;color:var(--ink-faint)}
+.vote{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.vote button{font:500 12.5px/1 var(--font-ui);padding:8px 12px;border-radius:var(--radius-pill);border:1px solid var(--line-control);background:none;color:var(--ink-body);cursor:pointer}
+.vote button[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.vote button[aria-pressed="true"][data-v="yes"]{background:var(--acc-sage-text);border-color:var(--acc-sage-text);color:var(--paper-parchment)}
+.vote button[aria-pressed="true"][data-v="no"]{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.call textarea{grid-column:2 / 4;display:none;width:100%;min-height:44px;padding:8px 10px;font:14px/1.4 var(--font-ui);color:var(--ink-body);background:var(--paper-bone);border:1px solid var(--line-control);border-radius:var(--radius-input)}
+.call.has-note textarea{display:block}
+@media (max-width:767px){.call{grid-template-columns:24px 1fr}.vote{grid-column:2;justify-content:flex-start}.call textarea{grid-column:2}}
+/* a question for Kai */
+.q{border-left:3px solid var(--acc-terra);padding-left:14px}
+table{border-collapse:collapse;font-size:13px;margin:8px 0 4px}
+td,th{padding:5px 14px 5px 0;text-align:left;font-weight:400;border-bottom:1px solid var(--line-card)}
+th{color:var(--ink-faint);font-size:12.5px}
+.ok{color:var(--acc-sage-text)}.no{color:var(--acc-terra-ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · the Bound Journal reskin · review · 16 Oct 2026</div>
+  <h1 style="margin:10px 0 0;font-family:var(--font-display);font-weight:500;font-size:var(--fs-display-xl);line-height:1.05;letter-spacing:var(--ls-display)">Bound Journal, area by area</h1>
+  <p class="lede" style="margin-top:16px">Design System B is built into every area of the app (branch <code>claude/bj-final</code>). Below: each area before and after, with the calls the builders made where the spec was silent. Approve or overrule each one, then copy your answers. Click any screenshot to see it full size.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Theme and answers">
+  <div class="seg" id="theme"><button type="button" data-v="day" aria-pressed="true">Day</button><button type="button" data-v="night" aria-pressed="false">Night Garden</button></div>
+  <nav class="toc" aria-label="Areas"><a href="#q">Question</a><a href="#today">Today</a><a href="#calendar">Calendar</a><a href="#tasks">Tasks</a><a href="#pages">Pages</a><a href="#shell">Shell &amp; Settings</a></nav>
+  <button type="button" class="btn" id="copy" style="margin-left:auto">Copy my answers</button>
+</div>
+
+<!-- THE QUESTION -->
+<section class="sec" id="q">
+  <h2 class="sec-h">One question first</h2>
+  <div class="tool" style="padding:18px 22px">
+    <div class="q">
+      <p style="margin:0;font-weight:600">D13's tonal button fails contrast where those buttons sit today.</p>
+      <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink-muted)">You approved the soft terra button for <em>Replan all</em> and a row's <em>Plan ▾</em>. Its terra text on the 12% wash measures, by day:</p>
+      <table>
+        <tr><th>Under the button</th><th>Contrast</th><th></th></tr>
+        <tr><td>A card (parchment)</td><td>4.64 : 1</td><td class="ok">passes AA</td></tr>
+        <tr><td>A hovered row (bone)</td><td>4.42 : 1</td><td class="no">fails</td></tr>
+        <tr><td>The bare canvas (linen)</td><td>4.17 : 1</td><td class="no">fails</td></tr>
+      </table>
+      <p style="margin:6px 0 0;font-size:13.5px;color:var(--ink-muted)">Night Garden passes everywhere (4.7–5.9). Every call site is on the canvas or a hovered row: Today's <em>Replan all ▾</em>, the calendar rail's <em>Plan ▾</em>, and Tasks' <em>Plan ▾</em> on Someday rows (and <em>Reschedule all to today</em>). So they stay the bone secondary for now. A stronger wash would make it worse (a darker fill under the same ink). Which way?</p>
+    </div>
+    <div class="call" data-id="Q1" data-choices="A,B,C,D" style="border-bottom:0">
+      <span class="n">Q1</span>
+      <p>A — put these actions on a card · B — a lighter wash (5% passes on the canvas, but barely shows) · C — a deeper terra for the tonal text (a new colour) · D — keep the bone secondary there</p>
+      <div class="vote"></div><textarea aria-label="Note on Q1"></textarea>
+    </div>
+  </div>
+</section>
+
+<!-- AREAS: filled from AREAS below -->
+<div id="areas"></div>
+
+<p class="meta" style="margin-top:64px">Shots: docs/log/assets/bj-today, bj-calendar, bj-pages, bj-shell, tray-notices; _claude-cloud/kais-flow-design-brainstorm-2026-10-14/bj-tasks. Before = the bound-journal base each builder started from. Handoffs: docs/log/2026-10-15-*-bj-*-handoff.md and 2026-10-16-*-bj-final-handoff.md.</p>
+</div>
+
+<script>
+// Each area: its screens (desktop pairs full width, phone pairs two to a row) and the builder's calls.
+const AREAS = [
+  { id: 'today', title: 'Today and the rituals', lede: 'Today, Focus, Plan my day, Shut down and the weekly review. Flat 16px tool cards; the goal card stays the one page (gold, tape, tilt, stamp).',
+    shots: [['screen-today-desktop', 'Today · computer'], ['screen-today-phone', 'Today · phone'], ['bj-plan-desktop', 'Plan my day · computer'], ['bj-shutdown-phone', 'Shut down · phone'], ['bj-focus-desktop', 'Focus · computer'], ['bj-review-desktop', 'Weekly review · computer']],
+    calls: [
+      ['Handwriting off the tools: every Caveat aside in Today, Focus, the rituals and the weekly review is now the interface face, muted.', 'Kept: your own journal lines in Shut down.'],
+      ['Phone Today row titles are back to the body face (Inter Tight 15).', 'The task popover\'s serif title had leaked in. One rule to delete if you liked the serif.'],
+      ['Start focus: the dark ink pill became the bone secondary button.'],
+      ['Hand-built terra buttons became the kit primary, which is one step deeper terra by day.', 'Close the week, while disabled, is a disabled secondary.'],
+      ['Text actions are the terra text button: End early…, Discard, Reset to classic, Open the garden →, Reviewed.', 'The dusk garden\'s "Stay a while" stays quiet (terra would shout on the dusk veil).'],
+      ['Ink-filled selection beyond the chips the spec drew: Focus lengths, the custom length, the weekly verdicts.', '"Park it" keeps its dashed edge, "Needs a look" its terra wash.'],
+      ['Corners where the spec is silent: the ritual panel on a computer 20, Focus settings card 16, the task picker 12.'],
+      ['The weekly rail\'s "Slipping" label loses its terra (section labels are ink).'],
+      ['Dashed lines became solid in the same colour.', 'Still dashed: suggested times, Park it, Sort them, chart marks, the garden\'s soil line.'],
+      ['The Worth a look nudge keeps goal paper, so a second gold surface sits beside the goal page.'],
+      ['Copy written for capitals is capitalised: Remaining, Recording, Round 1 of 4…', '"of 25 min" under the clock stays lower case (it continues the number).'],
+    ] },
+  { id: 'calendar', title: 'Calendar', lede: 'The calendar on a computer and a phone, its menus and forms: kit buttons and segments, sentence case, solid dividers, 12px inputs.',
+    shots: [['cal-week-desktop', 'Week · computer'], ['cal-day-phone', 'Day · phone'], ['cal-planning-desktop', 'Planning mode · computer'], ['cal-create-phone', 'Tap to create · phone'], ['cal-details-desktop', 'A block\'s details · computer'], ['cal-month-phone', 'Month · phone']],
+    calls: [
+      ['Grid metadata at 12px: hour labels, All day, the weekday row, day numbers, +N more (were 9–10.5px).', 'The day name stays 11px so "Wed · Today 14" fits a Week column.'],
+      ['Colours untouched: month and all-day pills stay lavender, free time stays sage, phone blocks stay fill-only.'],
+      ['Plan ▾ on a hovered rail row steps up to parchment to keep an edge.'],
+      ['Handwritten help lines on the planning panel, create page and task editor keep their words in the interface face.'],
+      ['The planning panel\'s "Unscheduled · N tasks" is a section label.'],
+      ['Solid dividers use the tool hairline.', 'Dashed stays where it means add or empty (+ Label, unset chips, the None swatch), on drop targets and open time.'],
+      ['Picking a block up still tilts: it is motion, not a resting tilt.'],
+      ['Header controls at the kit\'s desktop size (about 36px drawn, not 44). Create and Save are the kit primary; More options ↗ and Delete task are terra text buttons.'],
+      ['Selected chips and segments in the editor forms are ink-filled: durations, Busy / Free, kind, priority.'],
+      ['The create page\'s chosen kind is a flat card with an ink edge (was a taped, tilted card).'],
+    ] },
+  { id: 'tasks', title: 'Tasks, Inbox and capture', lede: 'Tasks, Inbox, the command bar and capture, Search and labels: section labels, filter chips with an edge, kit buttons, no tape or handwriting.',
+    shots: [['screen-tasks-desktop', 'Tasks · computer'], ['screen-tasks-phone', 'Tasks · phone'], ['bjt-tasks-someday-desktop', 'Someday · computer'], ['bjt-sheet-phone', 'Task sheet · phone'], ['bjt-inbox-desktop', 'Inbox · computer'], ['bjt-search-phone', 'Search · phone'], ['bjt-cmdk-desktop', 'Command bar · computer']],
+    calls: [
+      ['Overdue\'s group label keeps its terra; Search\'s group labels keep their accent (the spec says ink).'],
+      ['Caveat removed from every tool line here, words unchanged.', 'Includes "Just now ✿", the day-complete line, inbox zero\'s "one calm bloom ✿".'],
+      ['Someday\'s → Today and Plan ▾ are secondary buttons drawn at 32px, not 44.', 'At 44 a phone title squeezed to one word a line. The 48 touch area stays.'],
+      ['The voice sheet\'s filled button stays ink: the B primary would be terra right under the terra mic.'],
+      ['The editor\'s Save is the kit primary.'],
+      ['Label colour swatches stay small squares, so a label still differs from a place\'s round dot.'],
+      ['Hand-drawn checkbox look-alikes keep the kit checkbox\'s corner.'],
+      ['Dashed outlines kept where they mean unset or optional: unset chips, Inbox\'s choices, "+ Label".'],
+      ['"petals today" under the Done count stays lower case.'],
+      ['Dismissed and Search rows stay square between hairlines; a chosen Search row takes the 12px corner.'],
+      ['Copy written for capitals is capitalised: "No project, area or domain", "Via voice", "View on calendar →"…'],
+    ] },
+  { id: 'pages', title: 'Pages', lede: 'Journal, Notebook, Library and Herbarium are paper pages (6px, page shadow, grain, stamp); Projects, Routines and People around them are tools.',
+    shots: [['screen-journal-desktop', 'Journal · computer'], ['screen-journal-phone', 'Journal · phone'], ['page-lib-note-desktop', 'A Library note · computer'], ['screen-notebook-phone', 'Notebook · phone'], ['screen-herbarium-desktop', 'Herbarium · computer'], ['page-person-phone', 'A person · phone'], ['page-projects-desktop', 'Projects · computer']],
+    calls: [
+      ['Hand-built terra buttons became the kit button: one step deeper terra by day, the same at night.', 'Small inline Add buttons keep their size and terra, with a 12px corner.'],
+      ['Handwriting off the tools.', 'Kept on pages: journal thoughts, specimen names, the notebook, and the Herbarium header line.'],
+      ['Section labels through the kit, including the Journal\'s buttercream "Today\'s prompt" and "Three small things".', 'Accent label colours kept: Active sage, Say hi clover, routine groups sage.'],
+      ['The kit segmented control at its natural width (they were full-width tabs). Mood is a filter chip; the ✿ on the chosen mood is gone.', 'Moss selection kept on the new-project type cards, the plant picker and the weekday cells.'],
+      ['The Library reader on a computer is a page now (paper, shadow, grain). No tape on Library pages.'],
+      ['Typewriter stamps: a journal entry\'s time, the phone Library page\'s date, a specimen\'s number, the press ledger\'s dates.'],
+      ['Centred dialogs (new project, new routine, confirm) are 16px cards, not the sheet\'s 20.', 'Board columns 16, board cards 12, checkbox 7, photos on a page 6.'],
+      ['Journal writing type 15 on a phone, 16 on a computer (was 14.5 / 15.5).'],
+      ['Copy for capitals in sentence case: Slipping, Retainer, Area, Target, Restore…'],
+      ['Shared bits changed look: the confirm card (also in Settings, Sign out, Import) has kit buttons; domain rows are 12px.'],
+    ] },
+  { id: 'shell', title: 'Shell, kit and Settings', lede: 'The sidebar and tab bar, the shared kit, Settings, Activity, Trash, the Guide, and (this pass) the Windows tray flyout.',
+    shots: [['screen-settings-desktop', 'Settings · computer'], ['screen-settings-phone', 'Settings · phone'], ['kit-ref-desktop', 'The kit · computer'], ['shell-more-phone', 'More sheet · phone'], ['shell-activity-desktop', 'Activity · computer'], ['shell-trash-phone', 'Trash · phone'], ['shell-menu-desktop', 'Right-click menu · computer'], ['tray', 'Tray flyout (Windows)', true]],
+    calls: [
+      ['Handwriting off the tools: a headline-like line became the serif lead; an aside became the interface face, muted.'],
+      ['Grain that tool pages drew themselves (Activity, Trash, first run) is gone.'],
+      ['Section labels widened to Settings\' groups, Activity\'s days, Trash\'s age groups, the Guide and the shortcuts sheet.', 'The sidebar\'s "Tend" and "Cultivate" stay quiet nav headers.'],
+      ['Dashed dividers became solid in their old colour.', 'Still dashed: the tour\'s spotlight ring, "+ add repo", Import\'s drop zone.'],
+      ['Selection is ink on chips, the selected secondary, Activity\'s filters, the chosen day and time.', '"Current" rows (action sheet, time list, project picker) and Settings\' sound-pack cards keep sage and a check; an ink 52px row read heavy.'],
+      ['The tab bar\'s active pill keeps its per-surface tint (the spec draws bone, nearly invisible on parchment).'],
+      ['Floating layers: popovers, menus, confirm cards 16; toasts, hints, inline errors 12; the More sheet 20.'],
+      ['The hint and the More sheet carry the popover / sheet shadow, since they float.'],
+      ['Desktop button sizes kept. Trash\'s destructive buttons keep their terra fill.'],
+      ['Bordered chips keep a caller\'s tint: Inbox\'s kind chips are Voice terra, GitHub sage, Text / Email muted.'],
+      ['Type sizes on touched lines come from tokens, so a few moved by up to 0.5px.'],
+      ['The tonal wash is also the terra text button\'s hover (mouse) and pressed fill.'],
+      ['On a short laptop sidebar (1280×800) nav rows lose 2px of padding so Tend\'s five rows fit.'],
+      ['Tray flyout (this pass): no grain, a 16px Now card, 12px field and buttons, the flat bone secondary (was parchment with an outline), "Top 3" a section label, the empty line in the interface face.'],
+      ['Paper capture\'s metadata stays 12px on a phone too (exact-value tokens), not the 12.5 metadata size.'],
+    ] },
+]
+
+const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const pair = (area, [scene, label]) => {
+  const k = scene === 'tray' ? 'shell-tray' : `${area}-${scene}`
+  const fig = (when) => `<figure><figcaption>${when === 'before' ? 'Before' : 'After'}</figcaption><img data-shot="${k}-${when}" src="bound-review/${k}-${when}-day.webp" alt="${esc(label)}, ${when}" loading="lazy"></figure>`
+  return `<div class="pair"><h4>${esc(label)}</h4><div class="ba">${fig('before')}${fig('after')}</div></div>`
+}
+document.getElementById('areas').innerHTML = AREAS.map((a) => {
+  const wide = a.shots.filter(([s, , small]) => /desktop$/.test(s) && !small)
+  const narrow = a.shots.filter((x) => !wide.includes(x))
+  const calls = a.calls.map(([t, sub], i) => `<div class="call" data-id="${a.id}-${i + 1}"><span class="n">${i + 1}</span><p>${esc(t)}${sub ? `<small>${esc(sub)}</small>` : ''}</p><div class="vote"></div><textarea aria-label="Note on ${a.id} ${i + 1}"></textarea></div>`).join('')
+  return `<section class="sec" id="${a.id}"><h2 class="sec-h">${esc(a.title)}</h2><p class="lede">${esc(a.lede)}</p>
+    ${wide.map((s) => pair(a.id, s)).join('')}
+    <div class="phones">${narrow.map((s) => pair(a.id, s)).join('')}</div>
+    <div class="label">The builder's calls · approve or overrule</div><div class="tool">${calls}</div></section>`
+}).join('')
+
+// theme: the page and every screenshot follow it
+const root = document.documentElement
+const paint = () => {
+  const t = root.getAttribute('data-theme') === 'night' ? 'night' : 'day'
+  document.querySelectorAll('img[data-shot]').forEach((i) => { i.src = `bound-review/${i.dataset.shot}-${t}.webp` })
+}
+document.getElementById('theme').addEventListener('click', (e) => {
+  const b = e.target.closest('button'); if (!b) return
+  if (b.dataset.v === 'night') root.setAttribute('data-theme', 'night'); else root.removeAttribute('data-theme')
+  e.currentTarget.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+  paint()
+})
+document.addEventListener('click', (e) => { if (e.target.matches('img[data-shot]')) window.open(e.target.src, '_blank') })
+
+// answers: Approve / Overrule / Note per call (A–D for the question), kept in this browser only
+const KEY = 'kf-bj-review-votes'
+let votes = {}
+try { votes = JSON.parse(localStorage.getItem(KEY) || '{}') } catch { /* private window: this visit only */ }
+const save = () => { try { localStorage.setItem(KEY, JSON.stringify(votes)) } catch { /* no storage */ } }
+document.querySelectorAll('.call').forEach((d) => {
+  const id = d.dataset.id, ta = d.querySelector('textarea'), vote = d.querySelector('.vote')
+  vote.innerHTML = (d.dataset.choices
+    ? d.dataset.choices.split(',').map((c) => `<button type="button" data-v="${c}">${c}</button>`).join('')
+    : '<button type="button" data-v="yes">Approve</button><button type="button" data-v="no">Overrule</button>') + '<button type="button" data-v="note">Note</button>'
+  const sync = () => {
+    const v = votes[id] || {}
+    vote.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v.v || (b.dataset.v === 'note' && !!v.open))))
+    d.classList.toggle('has-note', v.v === 'no' || !!v.open || !!v.note)
+    ta.value = v.note || ''
+  }
+  vote.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return
+    const v = votes[id] || (votes[id] = {})
+    if (b.dataset.v === 'note') v.open = !v.open; else v.v = v.v === b.dataset.v ? undefined : b.dataset.v
+    save(); sync(); if (v.open || v.v === 'no') ta.focus()
+  })
+  ta.addEventListener('input', () => { (votes[id] || (votes[id] = {})).note = ta.value; save() })
+  sync()
+})
+document.getElementById('copy').addEventListener('click', async (e) => {
+  const lines = [...document.querySelectorAll('.call')].map((d) => {
+    const v = votes[d.dataset.id] || {}
+    if (!v.v && !v.note) return null
+    const word = v.v === 'yes' ? 'approve' : v.v === 'no' ? 'overrule' : v.v ? `option ${v.v}` : 'note'
+    return `${d.dataset.id} ${d.querySelector('p').firstChild.textContent.trim()}: ${word}${v.note ? ` — ${v.note.trim()}` : ''}`
+  }).filter(Boolean)
+  const text = 'Bound Journal review\n' + (lines.length ? lines.join('\n') : '(nothing marked yet)')
+  try { await navigator.clipboard.writeText(text); e.target.textContent = 'Copied' } catch { prompt('Copy this:', text) }
+  setTimeout(() => (e.target.textContent = 'Copy my answers'), 1600)
+})
+</script>
+</body>
+</html>
