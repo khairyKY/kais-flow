@@ -3,7 +3,7 @@ import { useToastStore, visibleToasts, lifeLeft, TOAST_LIFE_MS, type Toast } fro
 import { uiZoom } from '../lib/uiScale'
 
 // ── MK Undo Toast (DS-CHANGELOG §3). Inverted snackbar: min-h 48, 12 from the screen edges,
-// bottom = tab bar + 8 on a phone (bottom-centre 16 on desktop, as before), radius 3,
+// bottom = tab bar + 8 on a phone (bottom-centre 16 on desktop, as before), radius 12 (B: a row),
 // --toast-bg / --toast-ink 14/20 wrapping to two lines, action 14/600 --toast-action in a 48 hit,
 // 2px life line. Queue: two on screen, newest at the bottom, the older above at 0.92, a third
 // waits (lib/toastStore). Life is 6s, paused while touched, hovered or focused. In 200ms
@@ -23,14 +23,14 @@ const CSS = `
     body:has([aria-modal="true"]) .kf-toast-host { top: calc(env(safe-area-inset-top) + 8px); bottom: auto; }
   }
   .kf-toast { position: relative; overflow: hidden; pointer-events: auto; display: flex; align-items: center; gap: 4px;
-    min-height: 48px; padding: 0 4px 0 16px; box-sizing: border-box; border-radius: 3px;
+    min-height: 48px; padding: 0 4px 0 16px; box-sizing: border-box; border-radius: var(--radius-input);
     background: var(--toast-bg); color: var(--toast-ink); box-shadow: var(--shadow-toast);
     animation: toastIn var(--dur-toast) var(--ease-standard) backwards; }
   .kf-toast.is-leaving { animation: toastOut var(--dur-toast) var(--ease-standard) forwards; }
   .kf-toast-msg { flex: 1; min-width: 0; padding: 14px 0; font-size: 14px; line-height: 20px; text-wrap: pretty;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
   .kf-toast-act { flex: none; height: 48px; padding: 0 12px; border: none; background: none; cursor: pointer;
-    font: inherit; font-size: 14px; font-weight: 600; color: var(--toast-action); border-radius: 3px; }
+    font: inherit; font-size: 14px; font-weight: 600; color: var(--toast-action); border-radius: var(--radius-input); }
   .kf-toast-act:active { background: var(--pressed-overlay); }
   .kf-toast-act:focus-visible { outline: none; box-shadow: var(--focus-ring); }
   .kf-toast-life { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--toast-action); opacity: 0.7;

@@ -24,12 +24,6 @@
   filter: var(--silhouette);
 }
 
-/* 1a: the active nav row is frosted glass with no washi tape (the frost and the glowing dots are
-   night tokens read inline in components/AppLayout.tsx). */
-:root[data-theme='night'] .kf-nav-tape {
-  display: none;
-}
-
 /* 1b: the ⌘K bar raised over a dimmed page — a dark scrim, and the page beneath at 75%. The dim
    snaps with the scrim (filter isn't a transform/opacity animation); the panel is already frosted. */
 :root[data-theme='night'] .kf-scrim.kf-cmd-scrim {
