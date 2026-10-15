@@ -347,7 +347,7 @@ export function HerbariumPage() {
             {/* deviation(2026-07-18 audit): export only has the subtle link; Kai couldn't find the way out */}
             <div style={{ display: 'flex', flexDirection: isMobile ? 'row' : 'column', flexWrap: 'wrap', alignItems: isMobile ? 'center' : 'flex-end', gap: isMobile ? '10px 16px' : 10, paddingBottom: 6 }}>
               <Button variant="secondary" onClick={() => navigate('/projects')}>← Back to the garden</Button>
-              <Link to="/projects" style={{ fontSize: 12.5, color: 'var(--ink-muted)', textDecoration: 'underline' }}>see the garden as it was →</Link>
+              <Link to="/projects" style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', textDecoration: 'underline' }}>See the garden as it was →</Link>
             </div>
           </div>
           {projectsQ.isPending ? <Skeleton variant="card" />

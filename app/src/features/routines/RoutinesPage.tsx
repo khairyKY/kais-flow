@@ -263,7 +263,7 @@ export function RoutinesPage() {
   // Every challenge running today gets its card (A30) — only the first one used to.
   const activeChallenges = active.filter((r) => r.challenge_start && r.challenge_end && todayKey >= r.challenge_start && todayKey <= r.challenge_end)
 
-  const heroCaption = remaining === 0 ? (active.length > 0 ? 'all tended for today ✿' : 'plant your first routine ✿') : remaining === 1 ? 'one left before the day\'s done' : `${remaining} left before the day's done`
+  const heroCaption = remaining === 0 ? (active.length > 0 ? 'All tended for today ✿' : 'Plant your first routine ✿') : remaining === 1 ? 'One left before the day\'s done' : `${remaining} left before the day's done`
 
   // The challenge card + "Start a challenge" — the desktop rail's, and on a phone under the garden.
   const challenge = (

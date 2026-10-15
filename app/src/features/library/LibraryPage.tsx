@@ -949,7 +949,7 @@ export function LibraryPage() {
               <div style={{ width: '100%', maxWidth: 760, padding: '30px 40px 36px', background: 'var(--paper-linen)', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <BackLink onClick={() => setSearchParams({ tab: 'books' })}>Library / Books</BackLink>
-                  <span className="fhelp">added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                  <span className="fhelp">Added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
                 </div>
 
                 <div style={{ display: 'flex', gap: 22, marginTop: 24 }}>
@@ -1120,7 +1120,7 @@ export function LibraryPage() {
                   <div style={{ flex: 1, minWidth: 0, maxWidth: 720, padding: '30px 40px 40px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       <span className="fhelp">Notes shelf / {activeNote.title || 'Untitled Note'}</span>
-                      <span className="fhelp">kept {new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                      <span className="fhelp">Kept {new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                     </div>
 
                     <div className="kf-page" style={{ position: 'relative', marginTop: 26, padding: '22px 26px 22px 30px', background: 'var(--bg-page)', border: '1px solid var(--border-page)', borderRadius: 'var(--radius-page)', boxShadow: 'var(--shadow-page)' }}>
@@ -1185,7 +1185,7 @@ export function LibraryPage() {
                       <span className="fhelp">Quotes shelf{activeQuote.source ? ` / from ${activeQuote.source}` : ''}</span>
                       {/* WB-4 punch 9: "· resurfaced twice" was a design literal — no resurface
                           count is stored for a quote. The kept-date beside it is real. */}
-                      <span className="fhelp">kept {new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                      <span className="fhelp">Kept {new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                     </div>
 
                     <div className="kf-page" style={{ position: 'relative', marginTop: 26, padding: '22px 26px 22px 30px', background: 'var(--bg-page)', border: '1px solid var(--border-page)', borderRadius: 'var(--radius-page)', boxShadow: 'var(--shadow-page)' }}>
