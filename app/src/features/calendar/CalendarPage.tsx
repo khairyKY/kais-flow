@@ -277,7 +277,8 @@ function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, ch
   )
 }
 
-/** Plan ▾ on a card: a dragGuard'd span, so pressing it never starts the card's drag. */
+/** Plan ▾ on a card: a dragGuard'd span, so pressing it never starts the card's drag. D13's tonal
+ *  isn't used: it shows on a hovered (bone) row, where tonal is 4.42:1 by day (AA 4.5) — Kai's call. */
 function PlanButton({ title, onPlan }: { title: string; onPlan: (x: number, y: number) => void }) {
   const open = (el: HTMLElement) => {
     const r = el.getBoundingClientRect()

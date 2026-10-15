@@ -823,7 +823,7 @@ export function TasksPage() {
         {/* R4-12 (2026-07-20 audit): "there should be a reschedule button that lets me replan
             the tasks that I missed" — one click pulls every overdue task onto today. */}
         {isOverdue && overdueCount > 0 && (
-          // D11 = B: the kit's secondary button (D13's tonal terra is still open).
+          // D11 = B: the kit's secondary button (D13's tonal is 4.17:1 on the bare canvas: Kai's call).
           <Button
             variant="secondary"
             onClick={() => {

@@ -567,6 +567,8 @@ export function TodayPage() {
   })
 
   // The overdue fold's header action: every overdue task through the Plan list (+ Spread into free slots).
+  // D13 wants the tonal button here, but this header sits on the bare canvas, where tonal is 4.17:1
+  // by day (AA needs 4.5): it stays the B secondary until Kai picks (bj-final handoff, 2026-10-16).
   const replanAll = overdueOpen.length > 0 && (
     <Button type="button" variant="secondary" aria-haspopup="dialog" onClick={(e) => setReplanAt({ x: e.clientX, y: e.clientY })}>
       Replan all ▾
