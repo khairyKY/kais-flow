@@ -187,6 +187,7 @@ export function TimeField({ value, onChange, style, day, ariaLabel = 'Time' }: {
                     borderRadius: 4,
                     padding: '5px 9px',
                     fontFamily: 'var(--font-mono)',
+                    fontVariantNumeric: 'tabular-nums',
                     fontSize: 11,
                     color: isSel ? 'var(--acc-terra)' : 'var(--ink-body)',
                     cursor: 'pointer',
