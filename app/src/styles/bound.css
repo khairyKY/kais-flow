@@ -78,7 +78,6 @@ body::before {
    shares one stripe texture; the tool tapes drawn by class are listed by name. */
 [style*="rgba(255, 255, 255, 0.32) 0px 4px"]:not(.kf-page *),
 .kf-nav-tape,
-.washi-tape-settings,
 .kf-tour-tape,
 .gd-tape {
   display: none !important;
