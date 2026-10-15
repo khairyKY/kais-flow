@@ -115,6 +115,7 @@ const tables = (o = {}) => structuredClone({
   tasks: TASKS, calendar_events: EVENTS, projects: [SITE, FORECAST, DS, GCI, SPRING], domains: [SHAHEEN, STUDY], app_settings: [settings(o.calView)],
   journal_entries: [ENTRY], books: [BOOK], quotes: [QUOTE], notes: [NOTE], commentary: [], inbox_items: [], activity_log: [], routines: [], routine_completions: [],
   time_entries: [], people: [], interactions: [], areas: [],
+  ...o.rows,
 })
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
@@ -211,6 +212,43 @@ const scene = (name, fn) => SCENES.push({ name, fn })
 for (const [n, route] of [['today', '/today'], ['journal', '/journal'], ['herbarium', '/herbarium'], ['tasks', '/tasks'], ['inbox', '/inbox'], ['library', '/library'], ['notebook', '/notebook'], ['settings', '/settings']]) {
   scene(`screen-${n}-phone`, async (theme) => open(route, { theme }))
   scene(`screen-${n}-desktop`, async (theme) => open(route, { theme, view: desktop }))
+}
+
+// ── bj-pages: the Library's open pages, Projects, Routines and People, with their own rows (o.rows)
+// so the shared screens above stay as they were ──
+{
+  const P = (n) => id('9', n)
+  const day = (d) => `2026-10-${String(d).padStart(2, '0')}`
+  const routine = (n, name, o) => ({ id: P(n), user_id: UID, name, description: null, time_of_day: 'morning', clock_time: null, cadence: { weekdays: [0, 1, 2, 3, 4, 5, 6] }, challenge_start: null, challenge_end: null, active: true, steps: [], step_minutes: null, domain_id: null, goal_days: null, plant: 'vine', created_at: T, updated_at: T, ...o })
+  const ROUTINES = [
+    routine(1, 'Morning pages', { clock_time: '06:30', steps: ['Water', 'Three pages'], step_minutes: [2, 20], goal_days: 30 }),
+    routine(2, 'Gym', { time_of_day: 'evening', cadence: { weekdays: [1, 3, 5] }, plant: 'cherry', domain_id: STUDY.id }),
+    routine(3, 'Read before bed', { time_of_day: 'evening', plant: 'fern' }),
+  ]
+  const done = (r, days) => days.map((d) => ({ id: `${r}-${d}`, user_id: UID, routine_id: P(r), completed_on: day(d), created_at: T }))
+  const OMAR = { id: P(11), user_id: UID, name: 'Omar Haddad', domain_id: null, created_at: T, updated_at: T, facts: [{ id: 'f1', label: 'Interest', value: 'Bouldering' }, { id: 'f2', label: 'Birthday', value: '3 Nov', date: '2026-11-03', recurs: true }] }
+  const PRIYA = { id: P(12), user_id: UID, name: 'Priya Nair', domain_id: STUDY.id, created_at: T, updated_at: T, facts: [] }
+  const talk = (n, who, summary, d) => ({ id: P(20 + n), user_id: UID, person_id: who.id, summary, occurred_at: iso('16:00', d), created_at: T, updated_at: T })
+  const AREA = { id: P(30), user_id: UID, domain_id: STUDY.id, name: 'Semester 5', description: null, color: null, sort_order: 0, deleted_at: null, created_at: T, updated_at: T }
+  const site = { ...SITE, target_date: '2026-11-20T00:00:00Z',
+    milestones: [{ id: 'm1', title: 'Pricing page live', weight: 2, completed: true }, { id: 'm2', title: 'Launch post', weight: 1, completed: false }, { id: 'm3', title: 'First 10 orders', weight: 3, completed: false }],
+    checklist: [{ id: 'c1', title: 'Domain renewed', type: 'one-shot', completed: true }, { id: 'c2', title: 'Plan the Shaheen launch post', type: 'task-linked', completed: false, task_id: id('1', 9) }] }
+  const rows = {
+    routines: ROUTINES, routine_completions: [...done(1, [6, 7, 8, 9, 10, 11, 12, 13, 14]), ...done(2, [5, 7, 9, 12]), ...done(3, [11, 13])],
+    people: [OMAR, PRIYA], interactions: [talk(1, OMAR, 'Coffee after the lecture', 9), talk(2, PRIYA, 'Lab partner sync', 1)],
+    areas: [AREA], projects: [site, FORECAST, DS, GCI, SPRING],
+  }
+  for (const [n, route] of [['projects', '/projects'], ['project', `/projects/${SITE.id}`], ['routines', '/routines'], ['people', '/people'], ['person', `/people/${OMAR.id}`],
+    ['lib-note', `/library?tab=notes&noteId=${NOTE.id}`], ['lib-quote', `/library?tab=quotes&quoteId=${QUOTE.id}`], ['lib-book', `/library?tab=books&bookId=${BOOK.id}`]]) {
+    scene(`page-${n}-phone`, async (theme) => open(route, { theme, rows }))
+    scene(`page-${n}-desktop`, async (theme) => open(route, { theme, view: desktop, rows }))
+  }
+  scene('page-newproject-desktop', async (theme) => {
+    const s = await open('/projects', { theme, view: desktop, rows })
+    await s.page.getByRole('button', { name: /new project/i }).first().click()
+    await sleep(700)
+    return s
+  })
 }
 
 // ── calendar formats ──
