@@ -443,7 +443,7 @@ function TimezoneCard() {
   const tz = settings.timezone
   const device = deviceZone()
   const matches = searchZones(q)
-  const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', minHeight: 40, textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px dashed var(--line-dashed)', padding: '9px 4px', fontFamily: 'inherit', fontSize: 14, color: 'var(--ink-body)', cursor: 'pointer' }
+  const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', minHeight: 40, textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid var(--line-dashed)', padding: '9px 4px', fontFamily: 'inherit', fontSize: 14, color: 'var(--ink-body)', cursor: 'pointer' }
 
   function apply(next: string) {
     if (!isZone(next)) return
@@ -983,7 +983,7 @@ function McpCard() {
   )
 }
 
-const flabel: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+const flabel: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)' }
 
 // P6 step 1: GitHub issues → inbox. The PAT lives only in this input until it is posted to the
 // github-connect edge function; afterwards the client only ever sees login/status/synced_at, plus
@@ -1066,7 +1066,7 @@ function GithubProvider({ github }: { github?: IntegrationStatus }) {
             e.preventDefault()
             void connect()
           }}
-          style={{ display: 'grid', gap: 12, marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}
+          style={{ display: 'grid', gap: 12, marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line-dashed)' }}
         >
           <label>
             <div style={{ ...flabel, marginBottom: 6 }}>Fine-grained access token</div>
@@ -1306,7 +1306,6 @@ function GroupLabel({ children }: { children: ReactNode }) {
   return (
     <div className="st-group-label">
       <span>{children}</span>
-      <span />
     </div>
   )
 }
@@ -1499,7 +1498,7 @@ function DesktopSettings() {
               {SUBNAV_LABEL[item] ?? item}
             </button>
           ))}
-          <div className="st-nav-hand">{page === 'integrations' ? "the garden's irrigation ✿" : 'everything saves as you touch it ✿'}</div>
+          <div className="st-nav-hand">{page === 'integrations' ? "The garden's irrigation ✿" : 'Everything saves as you touch it ✿'}</div>
         </div>
       </nav>
 
@@ -1573,7 +1572,7 @@ function MobileSettings() {
       <ProfileCard />
       <AppUpdateCard />
       <AdvancedSection />
-      <div className="st-phone-foot">everything saves as you touch it ✿</div>
+      <div className="st-phone-foot">Everything saves as you touch it ✿</div>
     </div>
   )
 }

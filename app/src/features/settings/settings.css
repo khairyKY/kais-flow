@@ -2,8 +2,7 @@
    every setting: a card is a serif title (+ one short line) over rows; a row is a label (Inter Tight
    14, phone 15) and one short help line (13, muted, sentence case) with its control right-aligned at
    its natural width; the control drops under the label only when the two don't fit side by side.
-   Washi tape marks a placed, standalone note (the Goal card, the NOW slip) — a stack of form cards
-   carries none, so Settings has none. Sizes are layout px: the desktop's interface size is root
+   Settings is a tool (Bound Journal): no tape, tilt or handwriting — its asides are the UI face, muted. Sizes are layout px: the desktop's interface size is root
    zoom, and the two-column switch is a container query, so it follows the real width at 100–175%. */
 
 /* ── card ── */
@@ -117,12 +116,6 @@
   line-height: 1.45;
   color: var(--ink-muted);
 }
-.st-hand {
-  padding: 10px 0 12px;
-  font-family: var(--font-hand);
-  font-size: var(--fs-hand);
-  color: var(--ink-hand);
-}
 
 /* A quiet text link that opens or goes somewhere (What do these mean? · Open trash). */
 .st-link {
@@ -195,7 +188,7 @@
   border-radius: var(--radius-pill);
   border: 1px solid var(--line-control);
   font-size: 12px;
-  color: var(--ink-muted);
+  color: var(--ink-body); /* D12: body ink on a visible edge */
   white-space: nowrap;
 }
 .st-dot {
@@ -401,10 +394,8 @@
 .st-nav-hand {
   margin-top: 20px;
   padding: 0 4px;
-  font-family: var(--font-hand);
-  font-size: 15px;
-  color: var(--ink-hand);
-  transform: rotate(-1.2deg);
+  font-size: 13px;
+  color: var(--ink-muted);
 }
 .st-main {
   flex: 1;
@@ -461,22 +452,12 @@
 .st-chip-x:hover {
   color: var(--ink-body);
 }
+/* D6: a section label is 14px semibold ink, sentence case, no rule after it. */
 .st-group-label {
-  display: flex;
-  align-items: center;
-  gap: 12px;
   margin-top: 12px;
-}
-.st-group-label > span:first-child {
-  font-family: var(--font-mono);
-  font-size: var(--fs-meta-l);
-  letter-spacing: var(--ls-meta);
-  color: var(--ink-faint);
-}
-.st-group-label > span:last-child {
-  flex: 1;
-  height: 1px;
-  border-bottom: 1px solid var(--line-dashed);
+  font-size: var(--fs-section);
+  font-weight: var(--fw-semibold);
+  color: var(--ink-body);
 }
 .st-pair {
   display: grid;
@@ -505,10 +486,8 @@
 }
 .st-phone-foot {
   margin-top: 4px;
-  font-family: var(--font-hand);
-  font-size: var(--fs-hand);
-  color: var(--ink-hand);
-  transform: rotate(-0.8deg);
+  font-size: 13px;
+  color: var(--ink-muted);
 }
 
 @media (max-width: 767px) {
