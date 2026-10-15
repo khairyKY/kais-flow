@@ -582,7 +582,7 @@ export function ProjectsPage() {
                   onClick={() => navigate(`/projects/${p.id}`)}
                   {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: i < listActive.length - 1 ? '1px dashed var(--line-dashed)' : 'none', textDecoration: 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', borderBottom: i < listActive.length - 1 ? '1px solid var(--line-dashed)' : 'none', textDecoration: 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-terra)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -618,7 +618,7 @@ export function ProjectsPage() {
                   onClick={() => navigate(`/projects/${p.id}`)}
                   {...rowMenu('project', p.id, p.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: i < listRetainers.length - 1 ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 2px', textDecoration: 'none', borderBottom: i < listRetainers.length - 1 ? '1px solid var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: p.color ?? domain?.color ?? 'var(--acc-lavender-deep)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -656,7 +656,7 @@ export function ProjectsPage() {
                   onClick={() => navigate(`/projects/${a.id}`)}
                   {...rowMenu('area', a.id, a.name)}
                   className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'}
-                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: i < filteredAreas.length - 1 ? '1px dashed var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '12px 2px', borderBottom: i < filteredAreas.length - 1 ? '1px solid var(--line-dashed)' : 'none', cursor: 'pointer', ...(motion ? staggerDelay(i) : {}) }}
                 >
                   <span style={{ width: 12, height: 12, borderRadius: '50%', background: a.color ?? domain?.color ?? 'var(--acc-buttercream)', flex: 'none' }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
