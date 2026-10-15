@@ -1,5 +1,10 @@
 [
   {
+    "name": "phone-day tonal: the terra wash in terra ink, 12px, flat",
+    "ok": true,
+    "detail": "{\"bg\":\"rgba(181, 101, 74, 0.12)\",\"ink\":\"rgb(156, 81, 57)\",\"radius\":\"12px\",\"shadow\":\"none\",\"wash\":\"rgba(181, 101, 74, 0.12)\",\"terraInk\":\"rgb(156, 81, 57)\"}"
+  },
+  {
     "name": "phone-day medium detent ≈ 60%",
     "ok": true,
     "detail": "506 / 844"
@@ -133,6 +138,11 @@
     "name": "phone-day no page errors",
     "ok": true,
     "detail": ""
+  },
+  {
+    "name": "phone-night tonal: the terra wash in terra ink, 12px, flat",
+    "ok": true,
+    "detail": "{\"bg\":\"rgba(226, 148, 115, 0.12)\",\"ink\":\"rgb(226, 148, 115)\",\"radius\":\"12px\",\"shadow\":\"none\",\"wash\":\"rgba(226, 148, 115, 0.12)\",\"terraInk\":\"rgb(226, 148, 115)\"}"
   },
   {
     "name": "phone-night medium detent ≈ 60%",
@@ -270,6 +280,16 @@
     "detail": ""
   },
   {
+    "name": "desktop-day tonal: the terra wash in terra ink, 12px, flat",
+    "ok": true,
+    "detail": "{\"bg\":\"rgba(181, 101, 74, 0.12)\",\"ink\":\"rgb(156, 81, 57)\",\"radius\":\"12px\",\"shadow\":\"none\",\"wash\":\"rgba(181, 101, 74, 0.12)\",\"terraInk\":\"rgb(156, 81, 57)\"}"
+  },
+  {
+    "name": "desktop-day tonal: the terra text button pressed takes the wash",
+    "ok": true,
+    "detail": "{\"bg\":\"rgba(181, 101, 74, 0.12)\",\"ink\":\"rgb(156, 81, 57)\",\"radius\":\"12px\",\"shadow\":\"none\",\"wash\":\"rgba(181, 101, 74, 0.12)\",\"terraInk\":\"rgb(156, 81, 57)\"}"
+  },
+  {
     "name": "desktop-day medium detent ≈ 60%",
     "ok": true,
     "detail": "480 / 800"
@@ -398,6 +418,16 @@
     "name": "desktop-day no page errors",
     "ok": true,
     "detail": ""
+  },
+  {
+    "name": "desktop-night tonal: the terra wash in terra ink, 12px, flat",
+    "ok": true,
+    "detail": "{\"bg\":\"rgba(226, 148, 115, 0.12)\",\"ink\":\"rgb(226, 148, 115)\",\"radius\":\"12px\",\"shadow\":\"none\",\"wash\":\"rgba(226, 148, 115, 0.12)\",\"terraInk\":\"rgb(226, 148, 115)\"}"
+  },
+  {
+    "name": "desktop-night tonal: the terra text button pressed takes the wash",
+    "ok": true,
+    "detail": "{\"bg\":\"rgba(226, 148, 115, 0.12)\",\"ink\":\"rgb(226, 148, 115)\",\"radius\":\"12px\",\"shadow\":\"none\",\"wash\":\"rgba(226, 148, 115, 0.12)\",\"terraInk\":\"rgb(226, 148, 115)\"}"
   },
   {
     "name": "desktop-night medium detent ≈ 60%",
@@ -537,7 +567,7 @@
   {
     "name": "phone keyboard: focused field visible above IME",
     "ok": true,
-    "detail": "field 295–343"
+    "detail": "field 290–338"
   },
   {
     "name": "scroll lock on .app-main-content, not body",
@@ -552,6 +582,6 @@
   {
     "name": "reduced motion: exit fades in place",
     "ok": true,
-    "detail": "0.950162 none"
+    "detail": "0.973568 none"
   }
 ]

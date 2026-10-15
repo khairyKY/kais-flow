@@ -29,7 +29,8 @@ Branch `claude/bj-shell` (pushed, not merged, no PR). Spec: `design-export/Desig
 7. **Radii for floating layers**: popovers, menus, the shortcuts sheet, What's new, the tour note, confirm cards → 16 (`--radius-card`); toasts, hints, inline error card → 12 (a row). The More sheet → 20 (`--sheet-radius`).
 8. **Shadows**: the hint and the More sheet float, so they carry the popover / sheet shadow (they had the resting card shadow, which B made none).
 9. **Buttons**: desktop sizes kept (the 125% interface size draws them ≈44); weights unchanged. Trash's destructive buttons keep their `--acc-terra` fill; only corner (12) and shadow (none) changed.
-10. **Type sizes** on every line touched now come from tokens (`--fs-meta` 12 / 12.5 phone, `--fs-caption`, `--fs-body`, `--fs-lead`), so a few sizes moved by ≤ 0.5px (the ActionSheet / picker meta 12 → 12.5 on a phone, the toast action 14 → 13.5 on desktop).
+10. **Bordered chips**: body ink is now the tone's own colour, not an `!important` over every caller. So a caller that tints its chip keeps its tint: Inbox's kind chips get their accent ink back (Voice terra, GitHub sage, Text / Email muted), which the bound branch had forced to body ink.
+11. **Type sizes** on every line touched now come from tokens (`--fs-meta` 12 / 12.5 phone, `--fs-caption`, `--fs-body`, `--fs-lead`), so a few sizes moved by ≤ 0.5px (the ActionSheet / picker meta 12 → 12.5 on a phone, the toast action 14 → 13.5 on desktop).
 
 ## Left for others (not in this area)
 
