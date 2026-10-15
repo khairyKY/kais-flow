@@ -356,8 +356,9 @@ if (want('g1')) {
     // Overlaps count it: the native Lunch (12:10) overlaps Dhuhr (12:00–12:20) — both flagged.
     check(`g1 ${theme}: overlap logic counts it (Lunch and Dhuhr both conflicted)`, /fc-event-conflict/.test(await dhuhr.getAttribute('class')) && /fc-event-conflict/.test(await fc(page, eid(LUNCH)).getAttribute('class')))
     // Busy: today's footer counts Dhuhr, Asr and Lunch (the all-day Mawlid is tomorrow and all-day).
-    const foot = (await page.locator('text=/\\d+ blocked/').first().textContent().catch(() => '')) ?? ''
-    check(`g1 ${theme}: busy — the rail footer counts the synced blocks ("3 blocked")`, /3 blocked/.test(foot), foot)
+    // The rail's load line (Kai 2026-10-14, Akiflow's compact head): "3 blocks · 2h free".
+    const foot = ((await page.locator('.cal-rail-load').first().textContent().catch(() => '')) ?? '').trim()
+    check(`g1 ${theme}: busy — the rail's load line counts the synced blocks ("3 blocks")`, /^3 blocks\b/.test(foot), foot)
     await shot(page, `g1-grid-${theme}`, false)
     if (theme === 'day') {
       // A drag does nothing: no write, the block stays where it was.
