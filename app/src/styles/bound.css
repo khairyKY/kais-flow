@@ -80,8 +80,7 @@ body::before {
 .tp-tape,
 .kf-nav-tape,
 .washi-tape-settings,
-.kf-tour-tape,
-.gd-tape {
+.kf-tour-tape {
   display: none !important;
 }
 :not(.kf-page)[style*="transform: rotate(-0."],
