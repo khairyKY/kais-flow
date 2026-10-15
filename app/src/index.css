@@ -120,28 +120,7 @@ textarea,
   user-select: text;
 }
 
-/* Paper grain overlay — felt, not seen */
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background-image: var(--noise-url);
-  mix-blend-mode: multiply;
-  /* Foundation patch (punch 53): the Settings paper-texture slider writes --kf-grain-opacity
-     on <html>; 0.5 stays the shipped default when it's unset. It SCALES the theme's base
-     (punch 57) rather than replacing it, so the slider still works in night. */
-  opacity: calc(var(--kf-grain-opacity, 0.5) * var(--kf-grain-base, 1));
-}
-
-/* Foundation patch (punch 57): multiply over the near-black night paper is a no-op, so the
-   grain — the app's signature texture — disappeared entirely after dark. Night.dc.html
-   specifies overlay @ 0.25, which is the 0.5 slider default × base 0.5. */
-[data-theme='night'] body::before {
-  --kf-grain-base: 0.5;
-  mix-blend-mode: overlay;
-}
+/* Bound Journal (D7): the canvas carries no paper grain — pages do (.kf-page, features/projects/xfx.css). */
 
 /* Foundation patch (punch 57): night value for a literal that has no day/night token pair.
    Every other site reuses an existing token, or a night-only token via the fallback pattern

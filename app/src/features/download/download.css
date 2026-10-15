@@ -1,4 +1,4 @@
-/* The download bar (DownloadBar.tsx): the top bar's strip — paper, a dashed rule, the 40px gutter —
+/* The download bar (DownloadBar.tsx): the top bar's strip — paper, a solid hairline, the 40px gutter —
    carrying one short line, two secondary buttons and the Inbox banner's close. */
 .kf-dl-bar {
   flex: none;

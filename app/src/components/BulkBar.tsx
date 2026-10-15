@@ -125,7 +125,7 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
       }}
     >
       <style>{CSS}</style>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra-ink)' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra-ink)', fontVariantNumeric: 'tabular-nums' }}>
         {count} selected
       </span>
       <div style={{ width: 1, height: 18, background: 'var(--line-dashed)', margin: '0 6px' }} />

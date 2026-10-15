@@ -1,6 +1,7 @@
-/* Tour & help — design-export/Tour and Help.dc.html (14a–14f, 14h) + Desktop (14g). The note is the
-   kit's taped paper card; the dim is 24% and never takes a tap (pointer-events: none) — only the
-   card does. Sizes are the export's; logical properties keep it RTL-ready. */
+/* Tour & help — design-export/Tour and Help.dc.html (14a–14f, 14h) + Desktop (14g). The note is a
+   floating tool card (Bound Journal: rounded, untaped, untilted, its line in the serif, not Caveat);
+   the dim is 24% and never takes a tap (pointer-events: none) — only the card does. Sizes are the
+   export's; logical properties keep it RTL-ready. */
 
 .kf-tour { position: fixed; inset: 0; z-index: 950; pointer-events: none; }
 .kf-tour-dim { position: fixed; inset: 0; background: var(--tour-dim); animation: kfFadeIn 210ms var(--ease-out); }
@@ -33,25 +34,13 @@
   box-sizing: border-box;
   background: var(--paper-parchment);
   border: 1px solid var(--line-card);
-  border-radius: 3px;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow-popover);
   padding-block: 16px 6px;
   padding-inline: 16px 12px;
   color: var(--ink-body);
   font-family: var(--font-ui);
   animation: kfOverlayIn 210ms var(--ease-out);
-}
-.kf-tour-tape {
-  position: absolute;
-  top: -8px;
-  inset-inline-start: 28px;
-  width: 56px;
-  height: 16px;
-  background: rgba(138, 154, 126, 0.45);
-  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 4px, transparent 4px 8px);
-  border-radius: 1px;
-  transform: rotate(-4deg);
-  box-shadow: var(--shadow-crisp);
 }
 .kf-tour-img {
   position: absolute;
@@ -63,7 +52,7 @@
   filter: var(--shadow-drop-sm);
 }
 .kf-tour-bloom { position: fixed; width: 120px; height: 120px; object-fit: contain; filter: var(--shadow-drop-sm); z-index: 1; }
-.kf-tour-cap { font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--acc-sage-text); }
+.kf-tour-cap { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--acc-sage-text); }
 .kf-tour-line {
   margin-top: 6px;
   padding-inline-end: 40px;
@@ -71,9 +60,10 @@
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-  font-family: var(--font-hand);
-  font-size: 27px;
-  line-height: 1.12;
+  font-family: var(--font-display);
+  font-size: var(--fs-lead);
+  font-weight: var(--fw-medium);
+  line-height: 1.25;
   color: var(--ink-body);
   text-wrap: pretty;
 }
@@ -110,7 +100,7 @@
   font-size: 15px;
   color: var(--ink-muted);
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: var(--radius-input);
   -webkit-tap-highlight-color: transparent;
 }
 .kf-tour-skip:active { background: var(--pressed-overlay); }
@@ -129,14 +119,13 @@
 .kf-tour-next > span {
   height: 40px;
   padding: 0 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-input); /* D11 = B */
   display: flex;
   align-items: center;
   background: var(--acc-terra-ink);
   color: var(--on-terra);
   font-size: 15px;
   font-weight: 600;
-  box-shadow: var(--shadow-cta);
   white-space: nowrap;
 }
 .kf-tour-next:active > span { transform: scale(0.97); }
@@ -184,7 +173,7 @@
   .kf-tour-ghost-row, .kf-tour-finger { animation: none; }
 }
 
-/* 14h — a hint: gold paper, a seedling, one Caveat line, ×; a caret points at the thing. */
+/* 14h — a hint: gold paper, a seedling, one line, ×; a caret points at the thing. A tool: flat, untilted. */
 .kf-hint {
   position: fixed;
   z-index: 940;
@@ -196,9 +185,8 @@
   padding-inline-start: 12px;
   background: var(--paper-goal);
   border: 1px solid var(--line-goal);
-  border-radius: 3px;
-  box-shadow: var(--shadow-card);
-  transform: rotate(-0.4deg);
+  border-radius: var(--radius-input);
+  box-shadow: var(--shadow-popover);
   animation: kfOverlayIn 210ms var(--ease-out);
 }
 .kf-hint-caret {
@@ -213,7 +201,7 @@
 }
 .kf-hint:not([data-below]) .kf-hint-caret { top: auto; bottom: -6px; transform: rotate(225deg); }
 .kf-hint > img { width: 28px; height: 28px; object-fit: contain; flex: none; }
-.kf-hint-line { flex: 1; min-width: 0; padding: 9px 0; font-family: var(--font-hand); font-size: 21px; line-height: 1.15; color: var(--ink-body); text-wrap: pretty; }
+.kf-hint-line { flex: 1; min-width: 0; padding: 9px 0; font-size: var(--fs-body); line-height: 1.35; color: var(--ink-body); text-wrap: pretty; }
 .kf-hint-x {
   width: 48px;
   height: 48px;

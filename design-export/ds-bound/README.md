@@ -3,7 +3,7 @@
 A copy of `../ds/` with **direction B, Bound Journal**, applied (chosen by Kai, 2026-10-14). The original `../ds/` and the app (`app/src/styles/tokens/`) are untouched.
 
 - **Look at it:** open `preview.html`. Day and Night Garden sit side by side, built only from these tokens. If the fonts or the flower don't load, serve the folder: `python -m http.server 8768 --directory design-export`, then open `http://localhost:8768/ds-bound/preview.html`.
-- **Use it:** load `ds-bound/styles.css` instead of `ds/styles.css`. **Every token name from `ds/` still exists**, so nothing that reads them breaks. 20 tokens are new.
+- **Use it:** load `ds-bound/styles.css` instead of `ds/styles.css`. **Every token name from `ds/` still exists**, so nothing that reads them breaks. 21 tokens are new.
 - **Check it:** `python check_contrast.py`. Every text token is at least 4.5:1 and every line or control at least 3:1 on every ground, day and Night Garden (all pass). It also runs against any token folder: `python check_contrast.py ../ds/tokens`.
 - **Background:** `D:\Coding\_claude-cloud\kais-flow-design-brainstorm-2026-10-14\NOTES.md`.
 
@@ -72,13 +72,13 @@ The paper stays `ds/`'s warm cream: canvas `#EFE9DB`, surfaces `#FBF6E9`, bone `
 | `--fs-meta` / `--fs-meta-l` (phone) | `12px` / `12.5px` | `12.5px` / `13px` |
 | Unchanged | | Source Serif 4, Inter Tight and Caveat; desktop sizes; mono sizes; Caveat sizes |
 
-**New tokens (19):** `--page-paper`, `--page-line`, `--page-rule`, `--bg-page`, `--border-page`, `--sel-bg`, `--sel-ink`, `--tab-active-bg`, `--radius-card`, `--radius-page`, `--radius-block` (12px, calendar blocks and time slots), `--radius-check` (7px), `--shadow-page`, `--grain-app` (0), `--grain-page` (1 by day, 0 at night), `--font-stamp`, `--ls-stamp`, `--fs-section` (14px), `--ls-eyebrow` (0.08em).
+**New tokens (20):** `--wash-terra` (D13: the soft terra wash, day `rgba(181, 101, 74, 0.12)` · night `rgba(226, 148, 115, 0.12)` — `--acc-terra` at 12%), `--page-paper`, `--page-line`, `--page-rule`, `--bg-page`, `--border-page`, `--sel-bg`, `--sel-ink`, `--tab-active-bg`, `--radius-card`, `--radius-page`, `--radius-block` (12px, calendar blocks and time slots), `--radius-check` (7px), `--shadow-page`, `--grain-app` (0), `--grain-page` (1 by day, 0 at night), `--font-stamp`, `--ls-stamp`, `--fs-section` (14px), `--ls-eyebrow` (0.08em).
 
 **Not changed:** `fonts.css`, `motion.css`, `motion-interactions.css`, `icons/`.
 
 ## What components still have to do
 
-Tokens can't carry these. **In the app (branch `claude/bound-journal`) they are done**: the values are in `app/src/styles/tokens/`, and `app/src/styles/bound.css` applies the rules below globally (its header explains each one). Pages carry the class `kf-page`: the goal card (Today, phone and desktop), the journal writing and quote cards, the notebook paper, the Library's open note and open quote, and the Herbarium's specimens and sheets. Copy written for CSS caps was capitalised in the source. The phone page title stays 26px because Today's title shares its row with three buttons.
+Tokens can't carry these. **In the app (branch `claude/bound-journal`) they are done**: the values are in `app/src/styles/tokens/`, and the rules below are folded into the components (the reskin of 15–16 Oct retired the interim `bound.css`): a page's paper, corner and grain are `.kf-page` in `app/src/features/projects/xfx.css`; metadata's even digits are one rule in `app/src/styles/tokens/typography.css`. Pages carry the class `kf-page`: the goal card (Today, phone and desktop), the journal writing and quote cards, the notebook paper, the Library's open note and open quote, and the Herbarium's specimens and sheets. Copy written for CSS caps was capitalised in the source. The phone page title stays 26px because Today's title shares its row with three buttons.
 
 The rules:
 
@@ -102,3 +102,5 @@ Approved: D1 tools and pages · D2 colour unchanged · D3 rounded tools, near-sq
 Denied: D9 — the capture button stays 56px with its terra shadow (`--shadow-capture`).
 
 D11 buttons: **B** — 12px corners, 44px drawn (48 hit on the phone), flat; secondary is a bone tone with no outline; the text button is terra. Kai liked C too: D13 proposes it as the tonal tier (open).
+
+D13, approved (Kai, 2026-10-16): **C inside B · tonal**. B stays the button; the kit's `Button variant="tonal"` (`.kf-button--tonal`) is B's shape filled with `--wash-terra` in `--acc-terra-ink`, for an action that matters but isn't the view's one terra action (an empty state's suggestion; the conductor moves Replan all and a row's Plan ▾ onto it). The same wash is the terra text button's hover and pressed fill.

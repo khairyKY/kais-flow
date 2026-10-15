@@ -3,8 +3,8 @@ import { BottomSheet } from './BottomSheet'
 import { Icon } from './Icon'
 
 // ── MK Action Sheet — the ⋯ menu on a phone (DS-CHANGELOG §3): a content-sized BottomSheet,
-// header title Source Serif 20 + meta mono 12, rows 52 with a 24 icon slot (--ink-muted),
-// label 15/20, hint mono 12 on the right; a destructive row sits last under a dashed rule in
+// header title Source Serif 20 + meta 12, rows 52 with a 24 icon slot (--ink-muted),
+// label 15/20, hint 12 on the right; a destructive row sits last under a hairline in
 // --acc-terra-ink, no confirm (the toast carries Undo). Choosing a row runs it, then closes.
 // Deviation: §3 says "≤ medium", but the full ⋯ menu is 9 rows (~600px; MK Action Sheet draws
 // it 640 tall) — capped at medium, Delete would hide below a scroll. It sizes to content, ≤ full. ──
@@ -32,7 +32,7 @@ export const ACTION_ROW_CSS = `
   .kf-as-row[aria-current='true'] { background: var(--block-sage); color: var(--acc-sage-text); font-weight: 600; }
   .kf-as-icon { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); }
   .kf-as-row.is-destructive .kf-as-icon { color: var(--acc-terra-ink); }
-  .kf-as-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
+  .kf-as-hint { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
   .kf-as-row.is-destructive .kf-as-hint { color: var(--acc-terra-ink); }
 `
 
@@ -47,7 +47,7 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
         <>
           {title}
           {meta != null && (
-            <div style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400, lineHeight: 1.4, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{meta}</div>
+            <div style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', fontWeight: 400, lineHeight: 1.4, letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)' }}>{meta}</div>
           )}
         </>
       }
@@ -74,10 +74,10 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
         )
         // Full-bleed rows: the sheet body has 20px gutters, the rows carry their own.
         return (
-          <div style={{ margin: '0 -20px', paddingTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>
+          <div style={{ margin: '0 -20px', paddingTop: 4, borderTop: '1px solid var(--line-dashed)' }}>
             <style>{ACTION_ROW_CSS}</style>
             {actions.map(row)}
-            {destructive.length > 0 && <div style={{ marginTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>{destructive.map(row)}</div>}
+            {destructive.length > 0 && <div style={{ marginTop: 4, borderTop: '1px solid var(--line-dashed)' }}>{destructive.map(row)}</div>}
           </div>
         )
       }}

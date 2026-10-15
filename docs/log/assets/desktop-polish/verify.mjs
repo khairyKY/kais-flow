@@ -160,7 +160,7 @@ for (const theme of ['day', 'night']) {
   for (const [view, label, cols] of [[undefined, 'Week', 7], ['day', 'Day', 1], ['3day', '3 days', 3], ['week', 'Week', 7]]) {
     if (theme === 'night' && view !== '3day') continue
     const { ctx, page, errors } = await open('/calendar', { view }, { theme })
-    const btn = page.locator('.cal-head span[role="button"][aria-haspopup="dialog"]')
+    const btn = page.locator('.cal-head [aria-haspopup="dialog"]') // a real button since bj-calendar
     const text = (await btn.innerText()).trim()
     const n = await page.locator('.fc-col-header-cell').count()
     check(`${N('calendar')} default ${view ?? 'unset'} → opens on ${label} (${cols} column${cols > 1 ? 's' : ''})`, text === label && n === cols, `${text} · ${n}`)
@@ -369,7 +369,7 @@ for (const theme of ['day', 'night']) {
       const rows = [...document.querySelectorAll('.app-sidebar nav .kf-side-row')].map((r) => { const b = r.getBoundingClientRect(); const i = icon(r); return { off: Math.abs((b.left + b.right) / 2 - (aside.left + aside.right - 1) / 2), iconOff: Math.abs((b.left + b.right) / 2 - (i.left + i.right) / 2) } })
       const act = document.querySelector('.app-sidebar nav .kf-active')
       const a = act.getBoundingClientRect()
-      const t = act.querySelector('.kf-nav-tape').getBoundingClientRect()
+      const t = act.querySelector('.kf-nav-tape')?.getBoundingClientRect() ?? { width: 0, height: 0 } // bj-shell: the row draws none at all now
       const f = document.querySelector('.app-sidebar-footer .kf-side-row').getBoundingClientRect()
       const hit = document.elementFromPoint(f.left + f.width / 2, f.top + f.height / 2)?.closest('.app-sidebar-footer')
       return { maxOff: Math.max(...rows.map((r) => r.off)), maxIconOff: Math.max(...rows.map((r) => r.iconOff)), tapeGone: t.width === 0 && t.height === 0, footerHit: !!hit }

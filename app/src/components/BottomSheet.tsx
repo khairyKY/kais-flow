@@ -52,7 +52,7 @@ export interface BottomSheetProps {
   /** Header title (Source Serif 20). At full height the header gains ✕ — with no title, the ✕ sits
    * in a 48px handle row instead (Task Sheet 4b), so the content's first row looks the same at both heights. */
   title?: ReactNode
-  /** Pinned under the scrolling body (§3 footer: 16 side padding, 12 top, 28 bottom, dashed top rule).
+  /** Pinned under the scrolling body (§3 footer: 16 side padding, 12 top, 28 bottom, a top hairline).
    * Return null to hide it — e.g. while the keyboard is up (Task Sheet 4c). */
   footer?: (close: () => void, keyboardUp: boolean) => ReactNode
   children: (close: () => void) => ReactNode
@@ -324,7 +324,7 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
           {body}
         </div>
         {foot != null && (
-          <div data-sheet-footer style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px max(28px, env(safe-area-inset-bottom))', borderTop: '1px dashed var(--line-dashed)' }}>
+          <div data-sheet-footer style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px max(28px, env(safe-area-inset-bottom))', borderTop: '1px solid var(--line-dashed)' }}>
             {foot}
           </div>
         )}
@@ -349,14 +349,14 @@ export function SheetRow({ dot, label, meta, last, onClick }: { dot?: string; la
         font: 'inherit',
         background: 'none',
         border: 'none',
-        borderBottom: last ? 'none' : '1px dashed var(--line-dashed)',
+        borderBottom: last ? 'none' : '1px solid var(--line-dashed)',
         padding: '13px 4px',
         cursor: 'pointer',
       }}
     >
       {dot && <span style={{ width: 8, height: 8, borderRadius: '50%', background: dot, flex: 'none' }} />}
       <span style={{ flex: 1, fontSize: 14.5, color: 'var(--ink-body)' }}>{label}</span>
-      {meta != null && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-faint)' }}>{meta}</span>}
+      {meta != null && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{meta}</span>}
     </button>
   )
 }

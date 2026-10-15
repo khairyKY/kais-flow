@@ -81,24 +81,24 @@ button.kf-press {
   gap: 9px;
   border-radius: var(--radius-input); /* Kai 2026-10-15, D11 = B: 12px, not a pill */
 }
+/* D11 = B: flat — no shadow on any button. */
 .kf-button--cta {
   border: none;
   background-color: var(--acc-terra-ink);
   color: var(--on-terra);
   padding: 10px 17px 10px 15px;
-  box-shadow: var(--shadow-cta);
 }
 .kf-button--secondary {
   border: 1px solid transparent; /* D11 = B: a tone, no outline */
   background-color: var(--paper-bone);
   color: var(--ink-body);
   padding: 9px 16px;
-  box-shadow: var(--shadow-crisp);
 }
+/* D2: a selected (filter-on) secondary is ink-filled, like a selected chip. */
 .kf-button--secondary[aria-pressed='true'] {
-  background-color: var(--block-sage);
-  border-color: var(--acc-sage-text);
-  color: var(--acc-sage-text);
+  background-color: var(--sel-bg);
+  border-color: var(--sel-bg);
+  color: var(--sel-ink);
 }
 .kf-button--ghost {
   border: none;
@@ -106,8 +106,22 @@ button.kf-press {
   color: var(--acc-terra-ink); /* D11 = B */
   padding: 9px 6px;
 }
-.kf-button:disabled {
-  box-shadow: none;
+/* D13 (Kai 2026-10-16, "C inside B · tonal"): B's shape filled with the soft terra wash — a second
+   action that matters but isn't the view's one terra action (an empty state's suggestion). */
+.kf-button--tonal {
+  border: none;
+  background-color: var(--wash-terra);
+  color: var(--acc-terra-ink);
+  padding: 9px 16px;
+}
+/* D13: the terra text button's hover and pressed fill is the same wash. */
+@media (hover: hover) {
+  .kf-button--ghost:not(:disabled):hover {
+    background-color: var(--wash-terra);
+  }
+}
+.kf-button--ghost:not(:disabled):active {
+  background-color: var(--wash-terra);
 }
 
 /* ── Chip ── desktop keeps its inline-text box; a glyph (icon / check / spinner) needs a flex box. */
@@ -119,20 +133,17 @@ button.kf-press {
   border-radius: var(--radius-pill);
   white-space: nowrap;
 }
+/* D12: transparent, a 3:1 edge (--line-control, kit.tsx) and body ink. */
 .kf-chip--bordered {
-  color: var(--ink-body) !important; /* D12: body ink, not muted */
-  font-size: 9px;
+  font-size: var(--fs-meta);
   letter-spacing: var(--ls-meta);
   padding: 5px 9px;
-  border-radius: var(--radius-sharp);
+  border-radius: var(--radius-pill);
 }
 .kf-chip--glyph {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-}
-.kf-chip--selected {
-  box-shadow: inset 0 0 0 1.5px currentColor;
 }
 /* Filter chip (tone="filter", Search.dc.html `.fchip`): the box is kit.tsx filterChip()'s; on a
    phone the `.kf-chip` rule below (h 32, padding 0 12) wins, as it does for every chip. */
@@ -275,7 +286,8 @@ button.kf-chip {
   }
   .kf-button::after { content: ''; position: absolute; inset: -2px 0; }
   .kf-button--cta { padding: 0 22px; }
-  .kf-button--secondary { padding: 0 18px; box-shadow: none; }
+  .kf-button--secondary,
+  .kf-button--tonal { padding: 0 18px; }
   .kf-button--ghost { padding: 0 14px; }
 
   .kf-chip {
@@ -292,11 +304,11 @@ button.kf-chip {
     padding: 0 10px;
   }
 
-  /* 22 × 22 radius 6 (subtask 18) whatever size the call site drew for desktop; 48 hit. */
+  /* 22 × 22 (subtask 18) whatever size the call site drew for desktop; 48 hit. */
   .kf-checkbox {
     width: 22px !important;
     height: 22px !important;
-    border-radius: 6px !important;
+    border-radius: var(--radius-check) !important;
   }
   .kf-checkbox[data-subtask] {
     width: 18px !important;
@@ -366,7 +378,7 @@ button.kf-chip {
   gap: 2px;
   padding: 2px;
   border: 1px solid var(--line-control);
-  border-radius: 18px;
+  border-radius: var(--radius-pill);
   background: none; /* D12: the edge carries it, not a bone track */
 }
 .kf-seg-btn {
@@ -413,9 +425,6 @@ button.kf-chip {
     content: '';
     position: absolute;
     inset: -8px -2px;
-  }
-  .kf-seg {
-    border-radius: 26px;
   }
   .kf-seg-btn {
     min-height: var(--touch-min);

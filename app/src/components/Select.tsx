@@ -186,7 +186,7 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
               background: 'var(--paper-parchment)',
               border: '1px solid var(--line-card)',
               boxShadow: 'var(--shadow-popover)',
-              borderRadius: 5,
+              borderRadius: 'var(--radius-card)',
               padding: 6,
             }}
           >
@@ -208,7 +208,7 @@ export function Select({ value, onChange, options, style, title, ariaLabel, plac
                     gap: 11,
                     boxSizing: 'border-box',
                     minHeight: pos.touch ? SELECT_TOUCH_ROW_H : undefined,
-                    borderRadius: 5,
+                    borderRadius: 'var(--radius-input)',
                     padding: '7px 10px',
                     fontFamily: 'var(--font-ui)',
                     fontSize: 13,

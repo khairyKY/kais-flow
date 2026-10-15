@@ -11,12 +11,14 @@ import './kit.css'
 // Values are verbatim from §04; the 2026-09-28 refresh (DS-CHANGELOG §3) adds the phone sizes
 // and the pressed / focus / disabled / loading / selected states, which live in kit.css so a
 // media query can size them (desktop keeps its Jul 2026 sizes). Composites (TaskRow, etc.) are
-// built by their owning wave from these atoms. House rules (§06): radius 3px cards, tilt ±0.3–0.5°,
-// tape only on placed standalone cards, one terra CTA + one gold Goal card per view. ──
+// built by their owning wave from these atoms. House rules (Design System B): tools are rounded and
+// flat, pages (TapeCard, .kf-page) keep the tape and tilt; one terra CTA + one gold Goal card per view. ──
 
 // ── Button — one terra CTA per view (§04) ──
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: 'cta' | 'secondary' | 'ghost'
+  /** cta = the view's one terra action · secondary = bone tone · tonal = the terra wash (D13: a second
+   * action that matters) · ghost = the terra text button. */
+  variant?: 'cta' | 'secondary' | 'tonal' | 'ghost'
   icon?: ReactNode
   /** 16px ring spinner in place of the icon, presses blocked; pass the in-progress label ("Saving"). */
   loading?: boolean
@@ -59,12 +61,13 @@ const chipTones: Record<Exclude<ChipTone, 'filter'>, CSSProperties> = {
   gold: { background: 'color-mix(in srgb, var(--acc-gold-warm) 22%, transparent)', color: 'var(--acc-gold)' },
   lavender: { background: 'var(--block-lavender)', color: 'var(--acc-lavender-text)' },
   clover: { background: 'color-mix(in srgb, var(--acc-clover) 18%, transparent)', color: 'var(--acc-clover-text)' },
-  bordered: { border: '1px solid var(--line-control)', color: 'var(--ink-muted)' },
+  bordered: { border: '1px solid var(--line-control)', color: 'var(--ink-body)' }, // D12
   date: { background: 'var(--block-lavender)', color: 'var(--acc-lavender-text)' },
   project: { background: 'var(--block-moss)', color: 'var(--acc-sage-text)' },
   duration: { background: 'var(--block-buttercream)', color: 'var(--acc-buttercream-text)' },
   priority: { background: 'var(--block-terra)', color: 'var(--acc-terra-ink)' },
 }
+const SELECTED_CHIP: CSSProperties = { background: 'var(--sel-bg)', borderColor: 'var(--sel-bg)', color: 'var(--sel-ink)' }
 const parseGlyph: Partial<Record<ChipTone, IconName>> = { date: 'calendar', project: 'projects', duration: 'clock', priority: 'priority' }
 // tone="filter" is Search's `.fchip`: its box is ./filterChip (shared with a Select trigger).
 
@@ -74,7 +77,7 @@ type ChipProps = {
   style?: CSSProperties
   /** A 16px leading glyph; parse tones bring their own. */
   icon?: ReactNode
-  /** 1.5px inset ring in the chip ink + check 16 (tone="filter": the inverted fill instead). */
+  /** Ink-filled (--sel-bg / --sel-ink, D2) + check 16 (tone="filter": filterChip's own fill). */
   selected?: boolean
   loading?: boolean
   disabled?: boolean
@@ -93,7 +96,7 @@ export function Chip({ tone = 'bordered', children, style, icon, selected, loadi
   const glyphName = parseGlyph[tone]
   const glyph = loading ? <span className="kf-spinner kf-spinner--sm" aria-hidden="true" /> : ring ? <Icon name="check" size={16} /> : icon ?? (glyphName && <Icon name={glyphName} size={16} />)
   const className = `${filter ? filter.className : 'kf-chip'}${tone === 'bordered' ? ' kf-chip--bordered' : ''}${glyph ? ' kf-chip--glyph' : ''}${ring ? ' kf-chip--selected' : ''}`
-  const chipStyle = { ...(tone === 'filter' ? filter?.style : chipTones[tone]), ...style }
+  const chipStyle = { ...(tone === 'filter' ? filter?.style : chipTones[tone]), ...(ring ? SELECTED_CHIP : null), ...style }
   const counted = count !== undefined && (
     <b className="kf-chip-count" style={filter && selected ? { color: 'color-mix(in srgb, var(--paper-linen) 55%, transparent)' } : undefined}>
       {count}
@@ -173,7 +176,8 @@ export function KeyCombo({ keys, size = 'md', className, style }: { keys: readon
   )
 }
 
-// ── TapeCard — the placed-note feel (§04). Tape ONLY on placed standalone cards. ──
+// ── TapeCard — the placed-note feel (§04). A PAGE (Bound Journal D1/D7): page paper, the 6px page
+// corner, grain (.kf-page), tape and tilt. Never use it for a tool. ──
 export function TapeCard({
   children,
   tilt = -0.4,
@@ -189,12 +193,13 @@ export function TapeCard({
 }) {
   return (
     <div
+      className="kf-page"
       style={{
         position: 'relative',
-        background: goal ? 'var(--paper-goal)' : 'var(--paper-parchment)',
-        border: `1px solid ${goal ? 'var(--line-goal)' : 'var(--line-card)'}`,
-        borderRadius: 3,
-        boxShadow: goal ? 'var(--shadow-goal)' : 'var(--shadow-card)',
+        background: goal ? 'var(--paper-goal)' : 'var(--bg-page)',
+        border: `1px solid ${goal ? 'var(--line-goal)' : 'var(--border-page)'}`,
+        borderRadius: 'var(--radius-page)',
+        boxShadow: goal ? 'var(--shadow-goal)' : 'var(--shadow-page)',
         transform: `rotate(${tilt}deg)`,
         padding: '22px 24px',
         ...style,
@@ -252,7 +257,7 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style, l
         height: size,
         flex: 'none',
         padding: 0,
-        borderRadius: 5,
+        borderRadius: 'var(--radius-check)',
         cursor: 'pointer',
         display: 'inline-flex',
         alignItems: 'center',
@@ -359,14 +364,12 @@ export function BackLink({ children, style, ...nav }: BackLinkProps) {
     font: 'inherit',
     fontFamily: 'var(--font-mono)',
     fontSize: 'var(--fs-meta)',
-    letterSpacing: '0.16em',
-    textTransform: 'uppercase',
     color: 'var(--ink-muted)',
     textDecoration: 'none',
     background: 'none',
     border: 'none',
     cursor: 'pointer',
-    // Kai's phone review: beside a page's meta line it wrapped "ALL / PROJECTS" — it never wraps or shrinks
+    // Kai's phone review: beside a page's meta line it wrapped "All / projects" — it never wraps or shrinks
     whiteSpace: 'nowrap',
     flex: 'none',
     ...style,

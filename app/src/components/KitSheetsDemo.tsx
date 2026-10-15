@@ -99,7 +99,7 @@ export function KitSheetsDemo() {
                 style={{ height: 48, padding: '0 14px', borderRadius: 8, border: '1px solid var(--line-control)', background: 'var(--paper-bone)', font: 'inherit', fontSize: 15, color: 'var(--ink-body)' }}
               />
               {Array.from({ length: sheet === 'content' ? 2 : 8 }, (_, i) => (
-                <div key={i} style={{ minHeight: 52, display: 'flex', alignItems: 'center', borderBottom: '1px dashed var(--line-dashed)', fontSize: 15 }}>Row {i + 1}</div>
+                <div key={i} style={{ minHeight: 52, display: 'flex', alignItems: 'center', borderBottom: '1px solid var(--line-dashed)', fontSize: 'var(--fs-body)' }}>Row {i + 1}</div>
               ))}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
                 <Button variant="ghost" onClick={() => { setDraft(''); close() }}>Discard</Button>
@@ -136,8 +136,8 @@ export function KitSheetsDemo() {
 function Frame({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div>
-      <div style={{ ...meta, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{label}</div>
-      <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
+      <div style={{ ...meta, marginBottom: 8 }}>{label}</div>
+      <div style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: 12, display: 'flex', flexDirection: 'column', gap: 12 }}>{children}</div>
     </div>
   )
 }

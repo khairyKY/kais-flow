@@ -23,6 +23,10 @@ const today = cairoKey(new Date())
 const tomorrow = addDays(today, 1)
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const wd = (k) => WD[new Date(k + 'T12:00:00Z').getUTCDay()]
+// pickerMath: a pick landing on a day already listed is dropped — with the default Sat + Sun weekend,
+// "This weekend" is Tomorrow on a Friday and Today on a Saturday, so it only shows the other days.
+const WEEKEND_SHOWN = ![5, 6].includes(new Date(today + 'T12:00:00Z').getUTCDay())
+const QUICK = ['Today', 'Tomorrow', ...(WEEKEND_SHOWN ? ['This weekend'] : []), 'Next week', 'Someday', 'No date']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
@@ -69,7 +73,7 @@ for (const theme of ['day', 'night']) {
     check(`${id} date: title "Due date" + task meta`, (await sheet.innerText()).startsWith('Due date\nCALL THE BANK ABOUT THE MORTGAGE') || /Due date\s+Call the bank about the mortgage/i.test(await sheet.innerText()), (await sheet.innerText()).slice(0, 60))
     const rows = sheet.locator('.kf-as-row')
     const labels = (await rows.allInnerTexts()).map((t) => t.split('\n')[0])
-    check(`${id} date: quick picks in MK order`, JSON.stringify(labels) === JSON.stringify(['Today', 'Tomorrow', 'This weekend', 'Next week', 'Someday', 'No date']), JSON.stringify(labels))
+    check(`${id} date: quick picks in MK order`, JSON.stringify(labels) === JSON.stringify(QUICK), JSON.stringify(labels))
     const heights = await Promise.all((await rows.all()).map(async (r) => Math.round((await box(r)).height)))
     check(`${id} date: quick picks 52 tall`, heights.every((h) => h === 52), heights.join(','))
     const tomorrowRow = rows.nth(1)
@@ -79,7 +83,7 @@ for (const theme of ['day', 'night']) {
     const nav = sheet.getByRole('button', { name: 'Next month' })
     check(`${id} date: prev/next 48×48`, (await box(nav)).width === 48 && (await box(nav)).height === 48)
     const wk = sheet.locator('.kf-pk-wk')
-    check(`${id} date: weekday row M T W T F S S, mono 12, h 24`, (await wk.innerText()).replace(/\s/g, '') === 'MTWTFSS' && (await css(wk, 'fontSize')) === '12px' && (await box(wk)).height === 24)
+    check(`${id} date: weekday row M T W T F S S, meta size (12.5 on a phone, Bound Journal), h 24`, (await wk.innerText()).replace(/\s/g, '') === 'MTWTFSS' && (await css(wk, 'fontSize')) === '12.5px' && (await box(wk)).height === 24)
     const first = `${today.slice(0, 7)}-01`
     const firstIdx = await sheet.locator('[role="row"]').nth(1).locator('[role="gridcell"]').evaluateAll((els, k) => els.findIndex((e) => e.getAttribute('data-day') === k), first)
     check(`${id} date: grid is Monday-first`, firstIdx === (new Date(first + 'T12:00:00Z').getUTCDay() + 6) % 7, firstIdx)
@@ -88,14 +92,14 @@ for (const theme of ['day', 'night']) {
     check(`${id} date: today = 1.5px terra-ink ring + aria-current`, (await css(tc.locator('span'), 'boxShadow')).includes((await tok(page, '--acc-terra-ink'))) && (await css(tc.locator('span'), 'boxShadow')).includes('1.5px') && (await tc.getAttribute('aria-current')) === 'date', await css(tc.locator('span'), 'boxShadow'))
     const sel = cell(page, tomorrow)
     if (tomorrow.slice(0, 7) !== today.slice(0, 7)) await nav.tap()
-    check(`${id} date: selected = --acc-lavender-text fill, parchment digit`, (await sel.getAttribute('aria-selected')) === 'true' && (await css(sel.locator('span'), 'backgroundColor')) === (await tok(page, '--acc-lavender-text')) && (await css(sel.locator('span'), 'color')) === (await tok(page, '--paper-parchment')))
+    check(`${id} date: selected = ink-filled (--sel-bg / --sel-ink, Bound Journal D2)`, (await sel.getAttribute('aria-selected')) === 'true' && (await css(sel.locator('span'), 'backgroundColor')) === (await tok(page, '--sel-bg')) && (await css(sel.locator('span'), 'color')) === (await tok(page, '--sel-ink')))
     if (tomorrow.slice(0, 7) !== today.slice(0, 7)) await sheet.getByRole('button', { name: 'Previous month' }).tap()
     const dotted = await page.locator('.kf-pk-day.has-items').evaluateAll((els) => els.map((e) => e.getAttribute('data-day')))
     const d3 = cell(page, `${today.slice(0, 7)}-03`)
     check(`${id} date: has-items dots (4px --ink-faint) on the sample days`, ['03', '08', '14', '21', '29'].every((d) => dotted.includes(`${today.slice(0, 7)}-${d}`)) && (await css(d3.locator('span'), 'width', '::after')) === '4px' && (await css(d3.locator('span'), 'backgroundColor', '::after')) === (await tok(page, '--ink-faint')), dotted.join(','))
     const foot = page.getByRole('button', { name: 'Set time' })
     const done = page.getByRole('button', { name: 'Done' })
-    check(`${id} date: footer Set time (secondary) + Done (terra-ink)`, (await foot.count()) === 1 && (await css(done, 'backgroundColor')) === (await tok(page, '--acc-terra-ink')) && Math.round((await box(done)).height) === 48)
+    check(`${id} date: footer Set time (secondary) + Done (terra-ink, B: drawn 44, 12px corners)`, (await foot.count()) === 1 && (await css(done, 'backgroundColor')) === (await tok(page, '--acc-terra-ink')) && Math.round((await box(done)).height) === 44 && (await css(done, 'borderTopLeftRadius')) === '12px')
     await page.screenshot({ path: path.join(OUT, `${id}-date.png`) })
     // month navigation
     await nav.tap()
@@ -138,17 +142,17 @@ for (const theme of ['day', 'night']) {
     check(`${id} time: header "Time" · "Tomorrow · ${wd(tomorrow)} …"`, (await heading(page)) === 'Time' && new RegExp(`Tomorrow · ${wd(tomorrow)}`, 'i').test(await dialog(page).innerText()), (await dialog(page).innerText()).slice(0, 40))
     const pills = page.locator('.kf-pk-slot')
     check(`${id} time: free slots 09:00–09:30 · 11:00–12:00 · 14:30–16:00, 48 pills`, JSON.stringify(await pills.allInnerTexts()) === JSON.stringify(['09:00–09:30', '11:00–12:00', '14:30–16:00']) && Math.round((await box(pills.first())).height) === 48, JSON.stringify(await pills.allInnerTexts()))
-    check(`${id} time: the 09:00 pill is selected (--block-lavender)`, (await pills.first().getAttribute('aria-pressed')) === 'true' && (await css(pills.first(), 'backgroundColor')) === (await tok(page, '--block-lavender')))
+    check(`${id} time: the 09:00 pill is selected (ink-filled --sel-bg, Bound Journal D2)`, (await pills.first().getAttribute('aria-pressed')) === 'true' && (await css(pills.first(), 'backgroundColor')) === (await tok(page, '--sel-bg')))
     const list = page.locator('.kf-pk-times')
     const r0900 = list.locator('[role="option"]', { hasText: '09:00' })
-    check(`${id} time: rows 48, Courier 15`, Math.round((await box(r0900)).height) === 48 && (await css(r0900.locator('b'), 'fontFamily')).includes('Courier') && (await css(r0900.locator('b'), 'fontSize')) === '15px')
+    check(`${id} time: rows 48, the interface face 15 (Bound Journal: no typewriter in tools)`, Math.round((await box(r0900)).height) === 48 && (await css(r0900.locator('b'), 'fontFamily')).includes('Inter Tight') && (await css(r0900.locator('b'), 'fontSize')) === '15px')
     check(`${id} time: 09:00 selected = --block-sage + check`, (await r0900.getAttribute('aria-selected')) === 'true' && (await css(r0900, 'backgroundColor')) === (await tok(page, '--block-sage')) && (await r0900.locator('svg').count()) === 1)
     const off = (await box(r0900)).y - (await box(list)).y
     check(`${id} time: opens scrolled to the value (3rd row)`, Math.abs(off - 96) <= 2, off)
     const r0930 = list.locator('[role="option"]', { hasText: '09:30' })
     check(`${id} time: busy 09:30 = --ink-faint + "Standup" chip, still selectable`, /standup/i.test(await r0930.innerText()) && (await css(r0930.locator('b'), 'color')) === (await tok(page, '--ink-faint')) && !(await r0930.isDisabled()))
     const chips = page.locator('.kf-pk-durs button')
-    check(`${id} time: duration chips 15m 30m 45m 1h 1h30 2h, 30m selected`, JSON.stringify((await chips.allInnerTexts()).map((t) => t.trim())) === JSON.stringify(['15M', '30M', '45M', '1H', '1H30', '2H']) && (await chips.nth(1).getAttribute('aria-pressed')) === 'true', JSON.stringify(await chips.allInnerTexts()))
+    check(`${id} time: duration chips 15m 30m 45m 1h 1h30 2h, 30m selected`, JSON.stringify((await chips.allInnerTexts()).map((t) => t.trim())) === JSON.stringify(['15m', '30m', '45m', '1h', '1h30', '2h']) && (await chips.nth(1).getAttribute('aria-pressed')) === 'true', JSON.stringify(await chips.allInnerTexts()))
     check(`${id} time: chips 32 tall`, Math.round((await box(chips.first())).height) === 32)
     await page.screenshot({ path: path.join(OUT, `${id}-time.png`) })
     await page.keyboard.press('Escape') // Android Back
@@ -209,7 +213,7 @@ for (const theme of ['day', 'night']) {
     const pop = page.locator('.kf-pk-pop')
     const b = await box(pop)
     check(`${id} date: a popover (not a sheet), inside the viewport`, (await pop.count()) === 1 && b.y >= 0 && b.y + b.height <= 800 && b.x + b.width <= 1280, JSON.stringify(b))
-    check(`${id} date: same content (quick picks + month grid + footer)`, (await pop.locator('.kf-as-row').count()) === 6 && (await pop.locator('[role="grid"]').count()) === 1 && (await pop.getByRole('button', { name: 'Set time' }).count()) === 1)
+    check(`${id} date: same content (quick picks + month grid + footer)`, (await pop.locator('.kf-as-row').count()) === QUICK.length && (await pop.locator('[role="grid"]').count()) === 1 && (await pop.getByRole('button', { name: 'Set time' }).count()) === 1)
     const focused = () => page.evaluate(() => document.activeElement?.getAttribute('data-day'))
     check(`${id} keyboard: focus starts on the selected day`, (await focused()) === tomorrow, await focused())
     await page.keyboard.press('ArrowRight')

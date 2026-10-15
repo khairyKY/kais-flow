@@ -130,7 +130,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     >
       {/* X2 Motion 5d — hover lean: the chat sprig leans a few degrees, pinned at the soil line. */}
       <style>{`.motion-on .kf-lean { transition: transform 420ms var(--ease-out); transform-origin: 50% 100%; } .motion-on .kf-lean:hover { transform: rotate(3.5deg); }`}</style>
-      <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 9, padding: '14px 16px', borderBottom: '1px dashed var(--line-dashed)' }}>
+      <div style={{ flex: 'none', display: 'flex', alignItems: 'center', gap: 9, padding: '14px 16px', borderBottom: '1px solid var(--line-dashed)' }}>
         <img src="/ds/assets/clover/awake.png" alt="" className="kf-lean" style={{ height: 26, width: 'auto', objectFit: 'contain', filter: 'var(--shadow-drop-sm)' }} />
         <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>Chat</span>
         {messages.length > 0 && !busy && (
@@ -191,8 +191,6 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
                         display: 'inline-block',
                         fontFamily: 'var(--font-mono)',
                         fontSize: 'var(--fs-meta)',
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
                         color: 'var(--acc-clover-text)',
                         background: 'color-mix(in srgb, var(--acc-clover) 22%, transparent)',
                         border: 'none',
@@ -216,7 +214,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           e.preventDefault()
           void send()
         }}
-        style={{ flex: 'none', padding: '12px 14px calc(12px + env(safe-area-inset-bottom))', borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}
+        style={{ flex: 'none', padding: '12px 14px calc(12px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}
       >
         <input
           value={input}

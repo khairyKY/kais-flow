@@ -87,6 +87,9 @@
   --sel-bg:             var(--ink-body);     /* selected chip, segment, date */
   --sel-ink:            var(--paper-linen);
   --tab-active-bg:      var(--paper-bone);   /* soft pill behind the active tab icon */
+  /* NEW · D13 (Kai 2026-10-16): the soft terra wash — the tonal button's fill, and the terra text
+     button's hover / pressed fill. = color-mix(in srgb, var(--acc-terra) 12%, transparent). */
+  --wash-terra:         rgba(181, 101, 74, 0.12);
 
   /* Interaction colour roles */
   --on-terra:           #FBF6E9;

@@ -1188,7 +1188,7 @@ export function ProjectDetailPage() {
                       style={{
                         flex: 1,
                         height: 22,
-                        borderRadius: 3,
+                        borderRadius: 'var(--radius-card)',
                         background: tended ? 'var(--acc-moss)' : 'color-mix(in oklch, var(--ink-body) 8%, transparent)',
                         opacity: tended ? opacities[i] : 1,
                       }}

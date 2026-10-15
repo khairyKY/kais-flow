@@ -745,7 +745,7 @@ export function ProjectsPage() {
                               <span style={{ width: 10, height: 10, borderRadius: '50%', background: p.color ?? d.color ?? (p.type === 'retainer' ? 'var(--acc-lavender-deep)' : 'var(--acc-terra)'), flex: 'none', marginTop: 3 }} />
                             </div>
 
-                            <div style={{ marginTop: 11, height: 5, borderRadius: 3, background: 'color-mix(in oklch, var(--ink-body) 8%, transparent)', overflow: 'hidden' }}>
+                            <div style={{ marginTop: 11, height: 5, borderRadius: 'var(--radius-card)', background: 'color-mix(in oklch, var(--ink-body) 8%, transparent)', overflow: 'hidden' }}>
                               <span style={{ display: 'block', width: `${stat.pct}%`, height: '100%', background: 'var(--acc-moss)' }} />
                             </div>
 

@@ -17,8 +17,8 @@ import { SheetTitle, TimePanel } from './TimePicker'
 import './pickers.css'
 
 // ── MK Date Picker (DS-CHANGELOG §3). Phone: a full-height BottomSheet — quick picks 6 × 52, month
-// header Source Serif 18 + prev/next 48, weekday row mono 12, day cells 48 × 44 with a 40 circle
-// (today = 1.5px --acc-terra-ink ring, selected = --acc-lavender-text fill, has items = 4px dot),
+// header Source Serif 18 + prev/next 48, weekday row 12, day cells 48 × 44 with a 40 circle
+// (today = 1.5px --acc-terra-ink ring, selected = ink-filled --sel-bg (B, D2), has items = 4px dot),
 // footer Set time + Done. Desktop: the same content in a popover (arrows move, Enter picks,
 // PageUp/PageDown change month, Esc closes). A quick pick schedules at once; a day is chosen,
 // then Done. Set time swaps in the time sheet for that day (Back returns to the month), whose Done
