@@ -101,3 +101,23 @@
 /* Bound Journal (Kai 2026-10-14, D5): the one typewriter left — a date or kind stamp on a page
    (journal entries, notes, quotes, herbarium specimens). Never on a tool. Was .kf-stamp in bound.css. */
 .kf-stamp { font-family: var(--font-stamp); font-size: var(--fs-mono); letter-spacing: var(--ls-stamp); text-transform: uppercase; color: var(--ink-faint); }
+
+/* Bound Journal (D1/D7): a PAGE — what you write and keep (the goal of the day, journal entries,
+   notes, quotes, the notebook, herbarium specimens, the kit's TapeCard) — is near-square and carries
+   the paper grain; the app canvas has none. The Settings "paper texture" slider (--kf-grain-opacity,
+   default 0.5) sets how much a page carries; --grain-page is 0 at night. Was rule 4 of bound.css. */
+.kf-page,
+.kf-page[style] {
+  position: relative;
+  border-radius: var(--radius-page) !important;
+}
+.kf-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--noise-url);
+  opacity: calc(var(--kf-grain-opacity, 0.5) * 2 * var(--grain-page, 1));
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}

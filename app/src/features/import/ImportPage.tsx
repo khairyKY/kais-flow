@@ -57,11 +57,10 @@ function describe(c: Counts) {
 
 const card: React.CSSProperties = {
   background: 'var(--paper-parchment)', border: '1px solid var(--line-card)',
-  borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '18px 20px',
+  borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-card)', padding: '18px 20px',
 }
 const help: React.CSSProperties = {
-  fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em',
-  textTransform: 'uppercase', color: 'var(--ink-faint)',
+  fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)',
 }
 
 // Mapping memory — per filename pattern (digits stripped so "export (2).csv" matches "export.csv").
@@ -127,9 +126,9 @@ function TidyDuplicates() {
           No duplicate clusters right now — the bed is tidy.
         </div>
       ) : (
-        <div style={{ borderTop: '1px dashed var(--line-dashed)', marginTop: 8 }}>
+        <div style={{ borderTop: '1px solid var(--line-dashed)', marginTop: 8 }}>
           {clusters.map((c) => (
-            <div key={c.keep.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+            <div key={c.keep.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--line-dashed)' }}>
               <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.title}</span>
               <Chip tone="tasks">{c.tasks.length} open</Chip>
               <span style={help}>{cadenceLabel(c)}</span>
@@ -247,7 +246,7 @@ export function ImportPage() {
       {label}
     </label>
   )
-  const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px dashed var(--line-dashed)' }
+  const row: React.CSSProperties = { display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: '1px solid var(--line-dashed)' }
   const rowTitle: React.CSSProperties = { fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }
 
   return (
@@ -364,7 +363,7 @@ export function ImportPage() {
             {/* Punch 2 sweep: an empty CSV made this throw (`rows[0]` undefined) — the one
                 un-guarded index in the app. A file with no rows just maps nothing. */}
             {(step.rows[0] ?? []).map((header, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '8px 0', borderBottom: '1px solid var(--line-dashed)' }}>
                 <span style={{ fontSize: 13, color: 'var(--ink-body)', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>{header || `column ${i + 1}`}</span>
                 <span style={{ ...help, flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', textTransform: 'none' }}>{step.rows[1]?.[i] ?? ''}</span>
                 <Select
@@ -415,7 +414,7 @@ export function ImportPage() {
                 {completedCount > 0 && <Chip>{completedCount} completed</Chip>}
               </div>
               {SOURCES[batch.source as Source]?.match && <div style={{ ...help, marginBottom: 10 }}>{SOURCES[batch.source as Source].match}</div>}
-              <div style={{ borderTop: '1px dashed var(--line-dashed)', marginTop: 8 }}>
+              <div style={{ borderTop: '1px solid var(--line-dashed)', marginTop: 8 }}>
                 {batch.tasks.slice(0, 5).map((t) => {
                   const dup = existing.tasks.has(refKey(t.external_ref.source, t.external_ref.id))
                   const projectName = batch.projects.find((p) => p.external_ref.id === t.sourceProjectId)?.name

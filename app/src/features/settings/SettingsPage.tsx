@@ -98,8 +98,8 @@ function readEffectsOn(): boolean {
 }
 
 // ── Paper texture (punch 53). Per-device visual pref like theme/uiScale → localStorage.
-// Writes --kf-grain-opacity on <html>; index.css's body::before grain consumes it via a
-// pending one-line foundation patch (`opacity: var(--kf-grain-opacity, 0.5)`). ──
+// Writes --kf-grain-opacity on <html>; the pages' grain (.kf-page::after, features/projects/xfx.css)
+// reads it — Bound Journal keeps paper on pages only. ──
 const GRAIN_KEY = 'kf_grain'
 
 function readGrainPct(): number {

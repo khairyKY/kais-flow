@@ -78,7 +78,7 @@ The paper stays `ds/`'s warm cream: canvas `#EFE9DB`, surfaces `#FBF6E9`, bone `
 
 ## What components still have to do
 
-Tokens can't carry these. **In the app (branch `claude/bound-journal`) they are done**: the values are in `app/src/styles/tokens/`, and `app/src/styles/bound.css` applies the rules below globally (its header explains each one). Pages carry the class `kf-page`: the goal card (Today, phone and desktop), the journal writing and quote cards, the notebook paper, the Library's open note and open quote, and the Herbarium's specimens and sheets. Copy written for CSS caps was capitalised in the source. The phone page title stays 26px because Today's title shares its row with three buttons.
+Tokens can't carry these. **In the app (branch `claude/bound-journal`) they are done**: the values are in `app/src/styles/tokens/`, and the rules below are folded into the components (the reskin of 15–16 Oct retired the interim `bound.css`): a page's paper, corner and grain are `.kf-page` in `app/src/features/projects/xfx.css`; metadata's even digits are one rule in `app/src/styles/tokens/typography.css`. Pages carry the class `kf-page`: the goal card (Today, phone and desktop), the journal writing and quote cards, the notebook paper, the Library's open note and open quote, and the Herbarium's specimens and sheets. Copy written for CSS caps was capitalised in the source. The phone page title stays 26px because Today's title shares its row with three buttons.
 
 The rules:
 

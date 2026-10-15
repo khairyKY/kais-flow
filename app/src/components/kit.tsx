@@ -176,7 +176,8 @@ export function KeyCombo({ keys, size = 'md', className, style }: { keys: readon
   )
 }
 
-// ── TapeCard — the placed-note feel (§04). Tape ONLY on placed standalone cards. ──
+// ── TapeCard — the placed-note feel (§04). A PAGE (Bound Journal D1/D7): page paper, the 6px page
+// corner, grain (.kf-page), tape and tilt. Never use it for a tool. ──
 export function TapeCard({
   children,
   tilt = -0.4,
@@ -192,12 +193,13 @@ export function TapeCard({
 }) {
   return (
     <div
+      className="kf-page"
       style={{
         position: 'relative',
-        background: goal ? 'var(--paper-goal)' : 'var(--paper-parchment)',
-        border: `1px solid ${goal ? 'var(--line-goal)' : 'var(--line-card)'}`,
-        borderRadius: 3,
-        boxShadow: goal ? 'var(--shadow-goal)' : 'var(--shadow-card)',
+        background: goal ? 'var(--paper-goal)' : 'var(--bg-page)',
+        border: `1px solid ${goal ? 'var(--line-goal)' : 'var(--border-page)'}`,
+        borderRadius: 'var(--radius-page)',
+        boxShadow: goal ? 'var(--shadow-goal)' : 'var(--shadow-page)',
         transform: `rotate(${tilt}deg)`,
         padding: '22px 24px',
         ...style,

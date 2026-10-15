@@ -63,7 +63,13 @@
      draws every phone title in the page column (a sheet portals to <body>, outside
      .app-main-content, and keeps its own). */
   .app-main-content h1 { font-size: var(--fs-page-title) !important; line-height: 1.08 !important; text-wrap: balance; }
-  /* (The phone-only uppercase tracking rule moved to styles/bound.css: B drops uppercase metadata.) */
+  /* (B drops uppercase metadata, so the phone-only uppercase tracking rule is gone.) */
+}
+
+/* The metadata role (--font-mono) is the interface face now; times and counts keep the typewriter's
+   even digits. Inline styles read the role, so the attribute finds them (was bound.css rule 1). */
+[style*="font-family: var(--font-mono)"] {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Phone tokens from the 2026-09-28 design-system refresh (DS-CHANGELOG.md §1-2). */
