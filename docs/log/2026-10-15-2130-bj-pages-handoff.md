@@ -38,10 +38,10 @@ Kept: `.kf-page` corner + grain `::after` (Today's goal card still uses them) an
 ## Evidence
 
 - `docs/log/assets/bound-journal/verify.mjs` gained bj-pages scenes (`page-*`: projects, project, routines, people, person, lib-note / lib-quote / lib-book, new project), with their own rows via `o.rows` so the shared screens are untouched. Before / after, day and Night Garden: `docs/log/assets/bj-pages/before/` and `docs/log/assets/bj-pages/after/` (webp).
-- Harnesses (mock server, port 5291): RESULTS
+- Harnesses (mock server, port 5291), base branch → this branch: journal-media 117/123 → **123/123**, notebook-page 79/83 → **83/83**, routines-2 44/45 → **45/45**, edit-after-create 25/25 → **25/25**, templates 33/33 → **33/33**, resurface-chat 292/292 → **292/292**, fix-grammar 92 + 4 fail (Settings; that base run was cut short by a session restart) → **97/97**. The base failures were B's own (the 16px photo corner stole the next photo's tap; page paper and caps in the checks; the notebook's print shadow forced by bound.css).
 - Updated for B's copy and shapes (behaviour checks kept): journal-media (the phone footer links are one 12.5px line, 18.8px), notebook-page (page paper `#FBF5E6`, n2 / n6), routines-2 (plant labels in sentence case), fix-grammar (fact "Edit"), edit-after-create (`/^edit$/i`).
 - `npx vitest run` 160 files / 2223 tests; `npm run lint` 0 errors (22 warnings, all pre-existing); `npm run build` ok; `npm run ds:check -- --baseline` 0 NEW in this slice's files (the two NEW in bound.css predate it).
 
 ## Seen, not mine
 
-- fix-grammar: 4 Settings checks (Resurfacing card, importer, capture key in Advanced ×2) fail on the base branch too.
+- fix-grammar's 4 Settings checks (Resurfacing card, importer, capture key in Advanced ×2) failed once on the base branch; they pass here. Worth a look if they flake for another builder.
