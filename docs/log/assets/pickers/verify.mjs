@@ -23,6 +23,10 @@ const today = cairoKey(new Date())
 const tomorrow = addDays(today, 1)
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 const wd = (k) => WD[new Date(k + 'T12:00:00Z').getUTCDay()]
+// pickerMath: a pick landing on a day already listed is dropped — with the default Sat + Sun weekend,
+// "This weekend" is Tomorrow on a Friday and Today on a Saturday, so it only shows the other days.
+const WEEKEND_SHOWN = ![5, 6].includes(new Date(today + 'T12:00:00Z').getUTCDay())
+const QUICK = ['Today', 'Tomorrow', ...(WEEKEND_SHOWN ? ['This weekend'] : []), 'Next week', 'Someday', 'No date']
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
@@ -69,7 +73,7 @@ for (const theme of ['day', 'night']) {
     check(`${id} date: title "Due date" + task meta`, (await sheet.innerText()).startsWith('Due date\nCALL THE BANK ABOUT THE MORTGAGE') || /Due date\s+Call the bank about the mortgage/i.test(await sheet.innerText()), (await sheet.innerText()).slice(0, 60))
     const rows = sheet.locator('.kf-as-row')
     const labels = (await rows.allInnerTexts()).map((t) => t.split('\n')[0])
-    check(`${id} date: quick picks in MK order`, JSON.stringify(labels) === JSON.stringify(['Today', 'Tomorrow', 'This weekend', 'Next week', 'Someday', 'No date']), JSON.stringify(labels))
+    check(`${id} date: quick picks in MK order`, JSON.stringify(labels) === JSON.stringify(QUICK), JSON.stringify(labels))
     const heights = await Promise.all((await rows.all()).map(async (r) => Math.round((await box(r)).height)))
     check(`${id} date: quick picks 52 tall`, heights.every((h) => h === 52), heights.join(','))
     const tomorrowRow = rows.nth(1)
@@ -209,7 +213,7 @@ for (const theme of ['day', 'night']) {
     const pop = page.locator('.kf-pk-pop')
     const b = await box(pop)
     check(`${id} date: a popover (not a sheet), inside the viewport`, (await pop.count()) === 1 && b.y >= 0 && b.y + b.height <= 800 && b.x + b.width <= 1280, JSON.stringify(b))
-    check(`${id} date: same content (quick picks + month grid + footer)`, (await pop.locator('.kf-as-row').count()) === 6 && (await pop.locator('[role="grid"]').count()) === 1 && (await pop.getByRole('button', { name: 'Set time' }).count()) === 1)
+    check(`${id} date: same content (quick picks + month grid + footer)`, (await pop.locator('.kf-as-row').count()) === QUICK.length && (await pop.locator('[role="grid"]').count()) === 1 && (await pop.getByRole('button', { name: 'Set time' }).count()) === 1)
     const focused = () => page.evaluate(() => document.activeElement?.getAttribute('data-day'))
     check(`${id} keyboard: focus starts on the selected day`, (await focused()) === tomorrow, await focused())
     await page.keyboard.press('ArrowRight')

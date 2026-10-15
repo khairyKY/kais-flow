@@ -160,7 +160,7 @@ for (const theme of ['day', 'night']) {
   for (const [view, label, cols] of [[undefined, 'Week', 7], ['day', 'Day', 1], ['3day', '3 days', 3], ['week', 'Week', 7]]) {
     if (theme === 'night' && view !== '3day') continue
     const { ctx, page, errors } = await open('/calendar', { view }, { theme })
-    const btn = page.locator('.cal-head span[role="button"][aria-haspopup="dialog"]')
+    const btn = page.locator('.cal-head [aria-haspopup="dialog"]') // a real button since bj-calendar
     const text = (await btn.innerText()).trim()
     const n = await page.locator('.fc-col-header-cell').count()
     check(`${N('calendar')} default ${view ?? 'unset'} → opens on ${label} (${cols} column${cols > 1 ? 's' : ''})`, text === label && n === cols, `${text} · ${n}`)
