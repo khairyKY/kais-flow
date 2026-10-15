@@ -1,12 +1,12 @@
 // Visual + behaviour check for kit-sheets on the dev-only /design-system route.
-// node verify.mjs <outDir>
+// node verify.mjs <outDir> [baseUrl]
 import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
 
 const OUT = process.argv[2]
 fs.mkdirSync(OUT, { recursive: true })
-const URL = 'http://localhost:5202/design-system'
+const URL = `${process.argv[3] ?? 'http://localhost:5202'}/design-system`
 const results = []
 const check = (name, ok, detail = '') => {
   results.push({ name, ok, detail })
