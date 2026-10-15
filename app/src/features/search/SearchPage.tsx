@@ -82,7 +82,7 @@ function Glyph({ hit, view, dot }: { hit: SearchHit; view: RowView; dot: string 
   }
 }
 
-const RELATED_TAG: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-hydrangea-deep)', background: 'color-mix(in srgb, var(--acc-hydrangea) 16%, transparent)', padding: '2px 6px', borderRadius: 3, marginRight: 7 }
+const RELATED_TAG: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-hydrangea-deep)', background: 'color-mix(in srgb, var(--acc-hydrangea) 16%, transparent)', padding: '2px 6px', borderRadius: 'var(--radius-pill)', marginRight: 7 } // a tag is a pill (D3)
 
 function ResultRow({ row, view, dot, query, active, last, onGo, onHover }: { row: SearchRow; view: RowView; dot: string; query: string; active: boolean; last: boolean; onGo: () => void; onHover: () => void }) {
   // 1a draws a done / past title on --ink-hairline; text rides --ink-faint since the 2026-10-08 UI pass (AA).
