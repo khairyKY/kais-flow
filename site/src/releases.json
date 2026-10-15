@@ -1,5 +1,17 @@
 [
   {
+    "v": "v1.1.10",
+    "date": "2026-10-16",
+    "title": "Your first things keep their day",
+    "highlights": [
+      "When you start, a first thing written for tomorrow stays tomorrow, as its chip said; today's lines become your Top 3"
+    ],
+    "icons": [
+      "sprout"
+    ],
+    "art": "daisy-morning"
+  },
+  {
     "v": "v1.1.9",
     "date": "2026-10-14",
     "title": "Saves that leave sooner",
