@@ -371,7 +371,8 @@ if (want('c')) {
       const need = ['Go to Inbox', 'Go to Upcoming', 'Undo the last action', 'Settings', 'Done now', 'Plan: pick a date', 'Restore', 'Select all', 'Label', 'Duration', 'Labels…', '30m']
       const missing = need.filter((w) => !txt.includes(w))
       check('c1 the cheatsheet lists the real keys', missing.length === 0, missing.join(', ') || 'all present')
-      check('c2 nothing fictional came back (no Calendar section yet, no g Go-to)', !/Calendar/.test(txt) && !/Go to anything/.test(txt))
+      // The Calendar section is real again (p7e A4, lib/shortcuts CALENDAR_KEYS); it only passed here while caps hid it from /Calendar/.
+      check('c2 nothing fictional came back (no g Go-to)', !/Go to anything/.test(txt))
     }
     await shot(page, `c-cheatsheet-${theme}`)
     check(`c3 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
