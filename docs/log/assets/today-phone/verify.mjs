@@ -217,7 +217,7 @@ for (const theme of ['day', 'night']) {
     const up = await upnextIds(page)
     check(`${name} Up next = deep work, call, gym (goal's block skipped)`, JSON.stringify(up) === JSON.stringify([E(1), E(3), E(4)]), JSON.stringify(up))
     check(`${name} goal card carries its block time`, (await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)).includes('13:30–15:00'), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
-    check(`${name} first event says how far off it is`, /IN 1H20M/i.test(await text(page, `[id="upnext-${E(1)}"] .tp-meta`)), await text(page, `[id="upnext-${E(1)}"] .tp-meta`))
+    check(`${name} first event says how far off it is`, /in 1h\s20m/i.test(await text(page, `[id="upnext-${E(1)}"] .tp-meta`)), await text(page, `[id="upnext-${E(1)}"] .tp-meta`))
     const evRow = page.locator(`[id="upnext-${E(3)}"]`)
     // fix-today (2026-10-12): the event row gained the row grammar's ⋯ (Open in calendar · Delete).
     check(`${name} event row: time · lavender rule · no checkbox, a ⋯`, (await evRow.locator('.tp-ev-time').innerText()) === '15:00' && (await evRow.locator('.tp-ev-rule').count()) === 1 && (await evRow.locator('.kf-checkbox').count()) === 0 && (await evRow.locator('.kf-row-more').count()) === 1 && (await evRow.evaluate((e) => e.getBoundingClientRect().height)) >= 56)
@@ -235,13 +235,14 @@ for (const theme of ['day', 'night']) {
     await shot(page, name)
     const slip = page.locator(`[id="slip-${E(1)}"]`)
     check(`${name} slip shows the running block`, (await slip.count()) === 1 && /NOW · UNTIL 10:30/i.test(await slip.innerText()) && (await slip.innerText()).includes('Deep work — forecasting'), (await slip.innerText().catch(() => '')).replace(/\n/g, ' '))
-    check(`${name} ring = minutes left (50M)`, (await slip.locator('.tp-ring').innerText()) === '50M', await slip.locator('.tp-ring').innerText())
+    check(`${name} ring = minutes left (50m)`, (await slip.locator('.tp-ring').innerText()) === '50m', await slip.locator('.tp-ring').innerText())
     check(`${name} slip and ritual card never together`, (await count(page, '.tp-ritual')) === 0)
-    check(`${name} slip is taped and tilted`, (await slip.locator('.tp-tape').count()) === 1 && /matrix/.test(await slip.locator('.kf-swipe-fg').evaluate((e) => getComputedStyle(e).transform)))
+    // Bound Journal D4/D7: the slip is a tool — flat, no tape, no tilt.
+    check(`${name} slip is flat (no tape, no tilt)`, (await slip.locator('.tp-tape').count()) === 0 && (await slip.locator('.kf-swipe-fg').evaluate((e) => getComputedStyle(e).transform)) === 'none')
     check(`${name} header: planned · finish`, /^Day 84 · ~\dh planned · you'll finish ~\d\d:\d0$/.test(await text(page, '.tp-sum')), await text(page, '.tp-sum'))
     const up = await upnextIds(page)
     check(`${name} Up next = only what's still to come (call, gym)`, JSON.stringify(up) === JSON.stringify([E(3), E(4)]), JSON.stringify(up))
-    check(`${name} goal meta: block time + length`, /^13:30–15:00 · 1H30M$/.test(await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
+    check(`${name} goal meta: block time + length`, /^13:30–15:00 · 1h\s30m$/.test(await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
     const doneBtn = slip.getByRole('button', { name: /^Done:/ })
     check(`${name} ✓ is a 40 circle in a 48 target`, (await doneBtn.evaluate((b) => [b.offsetWidth, b.firstElementChild.offsetWidth].join('/'))) === '48/40')
     await tap(cdp, doneBtn)
@@ -279,7 +280,7 @@ for (const theme of ['day', 'night']) {
     check(`${name} no slip, no ritual card`, (await count(page, '[id^="slip-"], .tp-ritual')) === 0)
     check(`${name} header: left · finish`, /^Day 84 · ~\d+[hm] left · you'll finish ~\d\d:\d0$/.test(await text(page, '.tp-sum')), await text(page, '.tp-sum'))
     check(`${name} goal: starts in 20M`, /STARTS IN 20M/i.test(await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
-    check(`${name} done Top 3 row: struck, "Done 11:05", star kept`, (await text(page, `[id="task-${id(REVIEW)}"] .tp-meta`)) === 'DONE 11:05' && (await page.locator(`[id="task-${id(REVIEW)}"] .kf-star[aria-pressed="true"]`).count()) === 1)
+    check(`${name} done Top 3 row: struck, "Done 11:05", star kept`, (await text(page, `[id="task-${id(REVIEW)}"] .tp-meta`)) === 'Done 11:05' && (await page.locator(`[id="task-${id(REVIEW)}"] .kf-star[aria-pressed="true"]`).count()) === 1)
     await tap(cdp, page.locator(`[id="task-${id(NODE)}"] .kf-checkbox`))
     await sleep(300)
     check(`${name} check → "Done" toast + Undo`, (await toasts(page)).includes('Done') && (await page.locator('.kf-toast').getByRole('button', { name: 'Undo' }).count()) >= 1, JSON.stringify(await toasts(page)))
@@ -365,7 +366,7 @@ for (const theme of ['day', 'night']) {
     // going after ~4s shows it (components/syncQueue.ts useLingering). The answers here are held 5s.
     check(`${name} no Syncing dot for the first seconds of a refetch`, (await count(page, '.tp-syncing')) === 0)
     await sleep(2900)
-    check(`${name} Syncing dot beside the header line once the refetch is slow (~4s)`, (await text(page, '.tp-syncing')) === 'SYNCING', await text(page, '.tp-syncing'))
+    check(`${name} Syncing dot beside the header line once the refetch is slow (~4s)`, (await text(page, '.tp-syncing')) === 'Syncing', await text(page, '.tp-syncing'))
     first.state.hold = 0
     await phoneBasics(page, name, errors)
     await first.ctx.close()
@@ -381,7 +382,7 @@ for (const theme of ['day', 'night']) {
     await sleep(800)
     await shot(page, name)
     check(`${name} offline chip replaces the header line`, (await text(page, '.tp')).includes('Offline — changes will sync') && (await count(page, '.tp-sum')) === 0)
-    check(`${name} the unsynced row: Pending sync`, (await text(page, `[id="task-${id(NODE)}"] .tp-pending`)) === 'PENDING SYNC', await text(page, `[id="task-${id(NODE)}"] .tp-meta`))
+    check(`${name} the unsynced row: Pending sync`, (await text(page, `[id="task-${id(NODE)}"] .tp-pending`)) === 'Pending sync', await text(page, `[id="task-${id(NODE)}"] .tp-meta`))
     await ctx.setOffline(false)
     await phoneBasics(page, name, errors.filter((e) => !/fetch|network/i.test(e)))
     await ctx.close()
@@ -391,7 +392,7 @@ for (const theme of ['day', 'night']) {
   {
     const name = '2n-day'
     const { ctx, page, cdp, errors } = await open('2n', theme)
-    const subs = await page.locator('.tp .tp-sub').allInnerTexts()
+    const subs = (await page.locator('.tp .tp-sub').allInnerTexts()).map((s) => s.toUpperCase()) // B: sentence case on screen
     check(`${name} fold: Open · Slipping · From a while ago (mono sub-headers)`, JSON.stringify(subs.filter((s) => !/MORNING|EVENING/.test(s))) === JSON.stringify(['OPEN · 4', 'SLIPPING', 'FROM A WHILE AGO']), JSON.stringify(subs))
     check(`${name} fold's Open: the rest of today, Top 3 once (deep work's block is over, so its task is back here)`, (await count(page, `[id="task-${id(MILK)}"]`)) === 1 && (await count(page, `[id="task-${id(DEEP)}"]`)) === 1 && (await count(page, `[id="task-${id(GOAL)}"]`)) === 1)
     check(`${name} still four section labels`, (await labels(page)).length === 4, JSON.stringify(await labels(page)))

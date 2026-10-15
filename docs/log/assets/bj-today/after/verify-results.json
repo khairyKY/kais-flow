@@ -1,0 +1,152 @@
+[
+  {
+    "name": "screen-today-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "screen-today-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "screen-today-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "screen-today-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-today-scrolled-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-today-scrolled-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-today-evening-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-today-evening-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-focus-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-focus-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-review-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-review-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-plan-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-plan-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-shutdown-phone-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-shutdown-phone-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-today-evening-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-today-evening-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-focus-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-focus-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-review-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-review-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-plan-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-plan-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-shutdown-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-shutdown-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-focus-settings-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-focus-settings-desktop-night",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-garden-desktop-day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "bj-garden-desktop-night",
+    "ok": true,
+    "detail": ""
+  }
+]

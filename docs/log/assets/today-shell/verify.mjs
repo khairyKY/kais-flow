@@ -237,7 +237,8 @@ async function sidebar(page) {
 }
 
 // ── S · the shell on each page, desktop day + night ──
-const PAGES = [['today', '/today', false], ['inbox', '/inbox', false], ['tasks', '/tasks', true], ['calendar', '/calendar', true]]
+// Bound Journal D10 (Kai 2026-10-14): the calendar fills the window too — its own header row carries the date.
+const PAGES = [['today', '/today', false], ['inbox', '/inbox', false], ['tasks', '/tasks', true], ['calendar', '/calendar', false]]
 for (const theme of ['day', 'night']) for (const [key, at, topBar] of PAGES) {
   if (!want(`s-${key}`)) continue
   const tag = `s-${key}-${theme}`

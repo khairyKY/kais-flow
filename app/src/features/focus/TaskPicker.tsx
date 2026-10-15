@@ -58,9 +58,9 @@ export function TaskPicker({ tasks, anchorRef, position, placeholder = 'Select a
       <div
         ref={panelRef}
         className="kf-fade"
-        style={{ position: 'fixed', left: place.left, top: place.top, bottom: place.bottom, width, maxHeight: place.maxHeight, zIndex: 1000, display: 'flex', flexDirection: 'column', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)' }}
+        style={{ position: 'fixed', left: place.left, top: place.top, bottom: place.bottom, width, maxHeight: place.maxHeight, zIndex: 1000, display: 'flex', flexDirection: 'column', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', boxShadow: 'var(--shadow-popover)' }}
       >
-        <div style={{ padding: '8px 10px', borderBottom: '1px dashed var(--line-dashed)' }}>
+        <div style={{ padding: '8px 10px', borderBottom: '1px solid var(--line-dashed)' }}>
           <input
             autoFocus
             value={query}
@@ -84,7 +84,7 @@ export function TaskPicker({ tasks, anchorRef, position, placeholder = 'Select a
                 if (t) onPick(t.id)
               }
             }}
-            style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 13, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 10px', outline: 'none' }}
+            style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '7px 10px', outline: 'none' }}
           />
         </div>
         <div id="kf-focus-picker-list" role="listbox" aria-label="Open tasks" style={{ overflowY: 'auto', padding: '4px 0', minHeight: 0 }}>
@@ -104,9 +104,9 @@ export function TaskPicker({ tasks, anchorRef, position, placeholder = 'Select a
             </div>
           ))}
           {matches.length === 0 && (
-            // States t1 voice — hand line, no alarm, never "error"
-            <div style={{ padding: '12px', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>
-              {query.trim() ? 'nothing open by that name ✿' : 'all clear — nothing waiting ✿'}
+            // States t1 voice — no alarm, never "error"; the interface face on a tool (B D7)
+            <div style={{ padding: '12px', fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)', textAlign: 'center' }}>
+              {query.trim() ? 'Nothing open by that name ✿' : 'All clear — nothing waiting ✿'}
             </div>
           )}
         </div>

@@ -195,7 +195,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
           <div className="rt-summary">
             <img src={`${A}/clover/resting.png`} alt="" />
             <div className="rt-summary-title">The garden's closed.</div>
-            <span className="rt-hand is-mine">See you in the morning ✿</span>
+            <span className="rt-note">See you in the morning ✿</span>
             <div className="rt-meta">{summary.map((s) => <span key={s}>{s}</span>)}</div>
             {/* The Notebook page, for people who set up their paper journal at night. Past midnight the
                 morning these seeds are for is already "today" on the calendar. */}
@@ -333,7 +333,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
       })}
       <div className="rt-planted">
         <img src={`${A}/clover/seedling.png`} alt="" />
-        <span className="rt-hand is-mine">Planted for {seedDayName(now)} — the morning plan opens with these ✿</span>
+        <span className="rt-note">Planted for {seedDayName(now)} — the morning plan opens with these ✿</span>
       </div>
     </>
   )
