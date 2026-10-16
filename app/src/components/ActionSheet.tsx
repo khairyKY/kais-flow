@@ -69,6 +69,7 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
             }}
           >
             <span className="kf-as-icon" aria-hidden>{item.icon}</span>
+            {/* ds-ok: MK Action Sheet's label 15/20, as it was (this line only grew the note) */}
             <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}{item.note != null && <small className="kf-as-note">{item.note}</small>}</span>
             {item.hint != null && <span className="kf-as-hint">{item.hint}</span>}
             {item.chevron && <Icon name="chevright" size={20} style={{ color: 'var(--ink-faint)' }} />}
