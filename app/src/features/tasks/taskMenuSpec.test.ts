@@ -47,6 +47,13 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
     )
   })
 
+  it('a row that draws its subtasks offers Add a subtask after Plan — never on a subtask, never in bulk (Subtasks A)', () => {
+    expect(labels(task(), { tomorrowHint: 'x', subtask: true }).slice(0, 2)).toEqual(['Plan…', 'Add a subtask'])
+    expect(labels(task({ parent_task_id: 'p' }), { tomorrowHint: 'x', subtask: true })).not.toContain('Add a subtask')
+    expect(labels(task(), { tomorrowHint: 'x', subtask: true, bulkCount: 2, selected: true })).not.toContain('Add a subtask')
+    expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Add a subtask')
+  })
+
   it('a row that cannot be selected has no Select', () => {
     expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Select')
   })

@@ -44,6 +44,8 @@ export interface CalendarGridEvent {
   fill?: string
   /** A Google event (google-sync, B1): drawn like any event, never dragged or resized. */
   readOnly?: boolean
+  /** A subtask's own block (Subtasks C, Kai 2026-10-16): its parent's title, "↳ parent" on the time row. */
+  parent?: string | null
 }
 
 export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'rollingWeek' | 'dayGridMonth'
@@ -688,6 +690,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfRepeat: !!e.repeat,
           kfHeld: e.held?.length ? e.held : null,
           kfFill: e.fill ?? null,
+          kfParent: e.parent ?? null,
         }
         return ev
       }).concat(
@@ -711,7 +714,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
           kfRanOver: boolean; kfOverdue: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
           kfOv: boolean; kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
-          kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null
+          kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null; kfParent: string | null
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
@@ -766,6 +769,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const cutFrom = cut && !arg.isStart ? '⌃ from ' + clockTime(startMs) : null
         if (cutInto || cutFrom) timeText = null
         // §7 outbox suffixes ride the time row
+        // Subtasks C: a subtask's own block says whose it is.
+        if (p.kfParent && !arg.isMirror) timeText = <>{timeText}{timeText ? ' · ' : ''}↳ <EmojiText text={p.kfParent} /></>
         if (p.kfPending) timeText = <>{timeText} · saving ◌</>
         if (p.kfFailed) timeText = <>{timeText} · retry</>
 
