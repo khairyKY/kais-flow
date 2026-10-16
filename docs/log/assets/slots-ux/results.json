@@ -1,0 +1,552 @@
+[
+  {
+    "name": "s1 the task is in the slot: slot_id, slot_date, the slot's times",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000001\",\"2026-10-12\",\"2026-10-12T07:00:00.000Z\"]"
+  },
+  {
+    "name": "s1 no task block was made",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 toast \"In Code block💻 · Review Kai\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 the slot draws its row and fill",
+    "ok": true,
+    "detail": "Code block\n10:00 AM\n1 task · 30m of 2h\nReview Kai\n⋯"
+  },
+  {
+    "name": "s1 the card left the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 Undo: out of the slot, back in the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 a slotted task is drawn inside its slot with the fill",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 its checkbox completes it (\"Done\" toast)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 …drawn done in the slot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 Undo reopens it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 ⋯ is the task menu with \"Out of the slot\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 Out of the slot: unscheduled, back in the rail's Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 toast \"Out of the slot · Write the slot spec\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 Undo: back in the slot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s3 the slot moved later (≈12:30; the drag lands on a quarter)",
+    "ok": true,
+    "detail": "2026-10-12T09:30:00.000Z"
+  },
+  {
+    "name": "s3 its task moved with it (start = the slot's new start)",
+    "ok": true,
+    "detail": "[\"2026-10-12T09:30:00.000Z\",\"2026-10-12T09:30:00.000Z\"]"
+  },
+  {
+    "name": "s3 Undo: the task back at 10:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 the slot is trashed and its task unscheduled (back in the rail)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 Undo: the slot back, the task in it",
+    "ok": true,
+    "detail": "[null,\"e0000000-0000-4000-8000-000000000001\",\"2026-10-12T07:00:00.000Z\",1]"
+  },
+  {
+    "name": "s4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 Tuesday's occurrence holds it, Monday's doesn't",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 a task block dropped on Monday's Shaheen: the task in that occurrence",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000003\",\"2026-10-12\",\"2026-10-12T10:00:00.000Z\"]"
+  },
+  {
+    "name": "s5 …its own block trashed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 …drawn in Monday's occurrence only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s6 Tasks shows \"in Code block💻 · 10:00\"",
+    "ok": true,
+    "detail": "Write the slot spec"
+  },
+  {
+    "name": "s6 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 phone: the slot draws its task row and \"1 task · 45m of 2h\"",
+    "ok": true,
+    "detail": "Code block\n10:00–12:00\n1 task · 45m of 2h\nWrite the slot spec"
+  },
+  {
+    "name": "p1 phone: its box completes it (\"Done\" toast)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 phone: …drawn done, and nothing else opened",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 phone: Undo reopens it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 phone: a tap on the row opens the task (its sheet, ?task=)",
+    "ok": true,
+    "detail": "http://localhost:5294/calendar?task=10000000-0000-4000-8000-000000000003"
+  },
+  {
+    "name": "p1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 phone: the ⋯ sheet has \"Into a slot…\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 phone: it lists Code block💻 (Today), then Shaheen🛞 for each of 8 days",
+    "ok": true,
+    "detail": "Code block💻 Today · 10:00–12:00 | Shaheen🛞 Today · 13:00–15:00 | Shaheen🛞 Tomorrow · 13:00–15:00 | Shaheen🛞 Wed 14 Oct · 13:00–15:00 | Shaheen🛞 Thu 15 Oct · 13:00–15:00 | Shaheen🛞 Fri 16 Oct · 13:00–15:00 | Shaheen🛞 Sat 17 Oct · 13:00–15:00 | Shaheen🛞 Sun 18 Oct · 13:00–15:00 | Shaheen🛞 Mon 19 Oct · 13:00–15:00"
+  },
+  {
+    "name": "p2 phone: picked → in Code block💻 (slot, day, times)",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000001\",\"2026-10-12\",\"2026-10-12T07:00:00.000Z\"]"
+  },
+  {
+    "name": "p2 phone: toast \"In Code block💻 · Review Kai\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 phone: the row reads \"in Code block💻 · 10:00\"",
+    "ok": true,
+    "detail": "Review Kai\nIn progress\nin Code block💻 · 10:00\n30m\n☆"
+  },
+  {
+    "name": "p2 phone: Undo takes it back out",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 phone: tomorrow’s Shaheen🛞 → that occurrence (series row, Tue 13)",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000003\",\"2026-10-13\",\"2026-10-13T10:00:00.000Z\"]"
+  },
+  {
+    "name": "p2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 desktop: the task menu has \"Into a slot…\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 desktop: its submenu lists Code block💻 with its time",
+    "ok": true,
+    "detail": "Code block💻\nToday · 10:00–12:00"
+  },
+  {
+    "name": "p3 desktop: picked → in the slot, with the toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4 bar: `>code` shows the \"In Code block💻\" chip",
+    "ok": true,
+    "detail": "In Code block"
+  },
+  {
+    "name": "p4 bar: Enter → the task, in Code block💻 (no block of its own)",
+    "ok": true,
+    "detail": "[\"Fix the login bug\",\"e0000000-0000-4000-8000-000000000001\",\"2026-10-12\"]"
+  },
+  {
+    "name": "p4 bar: toast \"Added to Code block💻\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f1 row → rail: out of the slot, unscheduled",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "f1 …the row left the slot, the card is in the rail, no block of its own",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f1 toast \"Out of the slot · Write the slot spec\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f1 Undo: back in the slot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f2 row → Overdue: nothing changes (the soft-no)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f2 row → Today: out of the slot, due today 09:00",
+    "ok": true,
+    "detail": "[null,\"2026-10-12T06:00:00.000Z\"]"
+  },
+  {
+    "name": "f2 toast \"Out of the slot · Write the slot spec · Today\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f3 row → empty time: out of the slot, at Tue 11:00",
+    "ok": true,
+    "detail": "[null,\"2026-10-13T08:00:00.000Z\"]"
+  },
+  {
+    "name": "f3 …one block of its own there, 45 minutes",
+    "ok": true,
+    "detail": "[[\"2026-10-13T08:00:00.000Z\",\"2026-10-13T08:45:00.000Z\"]]"
+  },
+  {
+    "name": "f3 …drawn once: its block, no row in the slot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f3 toast \"Scheduled · Write the slot spec\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f3 Undo: back in the slot, its block trashed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f3 Tasks then reads \"Tue 11:00\", no \"in Code block\"",
+    "ok": true,
+    "detail": "Write the slot spec In progress Tue 11:00 45m ☆"
+  },
+  {
+    "name": "f4 row → Shaheen🛞: in that slot (series row, Monday, its times)",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000003\",\"2026-10-12\",\"2026-10-12T10:00:00.000Z\"]"
+  },
+  {
+    "name": "f4 …drawn in Shaheen🛞 only, no block of its own",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f4 toast \"In Shaheen🛞 · Write the slot spec\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f4 Undo: back in Code block💻",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f5 dropped back on its own slot: nothing written, still in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f6 the × is hidden until the row is hovered",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f6 …and shows on hover, named \"Out of the slot\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f6 × → out of the slot, back in the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f6 Undo: back in the slot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f7 a click on the row opens the task (?task=), not the slot's menu",
+    "ok": true,
+    "detail": "http://localhost:5294/calendar?task=10000000-0000-4000-8000-000000000003"
+  },
+  {
+    "name": "f7 a right-click on the row: its task menu, with \"Out of the slot\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f6 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f8 Link a task… on the slot: Review Kai IN it",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000001\",\"2026-10-12T07:00:00.000Z\"]"
+  },
+  {
+    "name": "f8 …the slot stays a Time block, no task block made",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f8 …it draws both tasks",
+    "ok": true,
+    "detail": "Code block\n10:00 AM\n2 tasks · 1h 15m of 2h\nReview Kai\n⋯\nWrite the slot spec\n⋯"
+  },
+  {
+    "name": "f8 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f9 More → Event: the task out of the slot, in the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f9 toast \"Out of the slot · Write the slot spec\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f9 Undo: a Time block again, holding it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f9 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f10 Repeat → none: Tuesday's task out of the slot it lost",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "f10 Undo: repeating again, Tuesday's task back in its day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f10 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f11 slot resized later: its task's end follows",
+    "ok": true,
+    "detail": "[\"2026-10-12T09:45:00.000Z\",\"2026-10-12T09:45:00.000Z\"]"
+  },
+  {
+    "name": "f12 Tuesday's occurrence dragged on its own: its task goes with the copy",
+    "ok": true,
+    "detail": "[\"2026-10-13T12:30:00.000Z\",true,\"2026-10-13T12:30:00.000Z\"]"
+  },
+  {
+    "name": "f12 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f13 Tasks reads \"in Code block💻 · 10:00\" first",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f13 Tomorrow: out of the slot, due tomorrow 09:00",
+    "ok": true,
+    "detail": "[null,\"2026-10-13T06:00:00.000Z\"]"
+  },
+  {
+    "name": "f13 …the row no longer says \"in Code block\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f13 …nor does the calendar draw it in the slot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f13 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f14 Today: the Top 3 pick reads \"in Code block💻 · 10:00\"",
+    "ok": true,
+    "detail": "Write the slot spec ✶ GOAL OF THE DAY in Code block💻 · 10:00 Due today"
+  },
+  {
+    "name": "f14 Today: an Also open row reads it too (not just \"Due today\")",
+    "ok": true,
+    "detail": "Also held in Code block💻 · 10:00 ☆"
+  },
+  {
+    "name": "f14 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f14 phone Today: the Top 3 pick reads \"in Code block💻 · 10:00\"",
+    "ok": true,
+    "detail": "✶ GOAL OF THE DAY Write the slot spec in Code block💻 · 10:00"
+  },
+  {
+    "name": "m1 phone: the sheet shows \"In Code block💻 · Mon 12 · 10:00–12:00\" first",
+    "ok": true,
+    "detail": "In Code block\nMon 12 · 10:00–12:00 · 2h\nOut of the slot"
+  },
+  {
+    "name": "m1 phone: …with \"Out of the slot\" in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 phone: Out of the slot → unscheduled (toast with Undo)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 phone: the card gives way to free times",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 phone: Undo → back in the slot, the card back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

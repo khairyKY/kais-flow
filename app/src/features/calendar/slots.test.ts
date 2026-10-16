@@ -19,8 +19,8 @@ vi.mock('../../lib/motion', () => ({ animateRowRemoval: (_el: unknown, run: () =
 const toasts: { message: string; undo: () => void }[] = []
 vi.mock('../../lib/undo', () => ({ toastUndo: (message: string, undo: () => void) => toasts.push({ message, undo }) }))
 
-const { inSlot, intoSlot, slotAt, slotFill, slotTasks, upcomingSlots } = await import('./slots')
-const { deleteEventWithUndo, moveOrResizeEvent, outOfSlotWithUndo, putInSlotWithUndo, resizeEvent } = await import('./api')
+const { inSlot, intoSlot, occurrenceOn, slotAt, slotFill, slotTasks, upcomingSlots } = await import('./slots')
+const { deleteEventWithUndo, linkTaskWithUndo, moveOrResizeEvent, outOfSlotWithUndo, putInSlotWithUndo, resizeEvent, retimeEventWithUndo, setEventRepeat, slotLabel, updateEvent } = await import('./api')
 const { rescheduleDue } = await import('../tasks/api')
 const { railBuckets } = await import('./replan')
 const { expandEvents } = await import('./series')
@@ -86,6 +86,14 @@ describe('slots: the pure rules', () => {
   it('fill: "N tasks · Xm of Ym", 30 minutes for a task with no estimate', () => {
     expect(slotFill(CODE, [{ duration_min: 15 }, { duration_min: null }])).toBe('2 tasks · 45m of 2h')
     expect(slotFill(CODE, [{ duration_min: 90 }])).toBe('1 task · 1h\u00a030m of 2h')
+  })
+
+  it('occurrenceOn: the Time block occurrence on a day — a series expanded, a one-off on its own day only, never an event', () => {
+    expect(occurrenceOn([SHAHEEN], TUE, ZONE)?.starts_at).toBe(cairo(TUE, '14:00'))
+    expect(occurrenceOn([CODE], MON, ZONE)?.id).toBe('code')
+    expect(occurrenceOn([CODE], TUE, ZONE)).toBeUndefined()
+    expect(occurrenceOn([{ ...CODE, type: 'event' }], MON, ZONE)).toBeUndefined()
+    expect(occurrenceOn([{ ...SHAHEEN, recurrence_rule: 'FREQ=WEEKLY;BYDAY=MO' }], TUE, ZONE)).toBeUndefined()
   })
 
   it('upcomingSlots ("Into a slot…", `>`): today and the next 7 days, each occurrence, not over yet, soonest first; Time blocks only', () => {
@@ -176,5 +184,94 @@ describe('slots: the writes', () => {
     expect(slotOf('b')).toEqual({ slot_id: null, slot_date: null, scheduled_start: null, scheduled_end: null })
     undo()
     expect(slotOf('b')).toEqual(intoSlot(CODE, ZONE))
+  })
+
+  // ── slots-ux (Kai 2026-10-16, "something wrong with the logic of the time slots"): every write that
+  // changes what a slot is must say where its tasks go — none may be left held by a slot that's gone. ──
+  const OUT = { slot_id: null, slot_date: null, scheduled_start: null, scheduled_end: null }
+  const code = () => rows().find((e) => e.id === 'code')!
+
+  it('Link a task… on a Time block puts the task IN it: the slot stays a slot and keeps what it held; Undo', () => {
+    putInSlotWithUndo(get('b'), CODE)
+    linkTaskWithUndo(code(), get('a'))
+    expect(code()).toMatchObject({ type: 'time_block', task_id: null })
+    expect(slotOf('a')).toEqual(intoSlot(CODE, ZONE))
+    expect(slotOf('b')).toEqual(intoSlot(CODE, ZONE))
+    toasts.at(-1)!.undo()
+    expect(slotOf('a').slot_id).toBeNull()
+    expect(slotOf('b')).toEqual(intoSlot(CODE, ZONE))
+  })
+
+  it('a Time block made an Event lets its tasks go (only a slot holds tasks); Undo makes it a slot again, with them', () => {
+    putInSlotWithUndo(get('b'), CODE)
+    updateEvent(code(), { type: 'event' })
+    expect(code().type).toBe('event')
+    expect(slotOf('b')).toEqual(OUT)
+    expect(toasts.at(-1)?.message).toBe('Out of the slot · b')
+    toasts.at(-1)!.undo()
+    expect(code().type).toBe('time_block')
+    expect(slotOf('b')).toEqual(intoSlot(CODE, ZONE))
+    // A kind change that holds nothing (or a title) says nothing, as before.
+    const n = toasts.length
+    updateEvent(code(), { title: 'Code' })
+    expect(toasts.length).toBe(n)
+  })
+
+  it('a repeating slot set to Does not repeat: the day it stays on keeps its task, the days gone let theirs go; Undo', () => {
+    putInSlotWithUndo(get('a'), occ(MON))
+    putInSlotWithUndo(get('b'), occ(TUE))
+    setEventRepeat(occ(MON), null)
+    expect(slotOf('a')).toEqual(intoSlot(occ(MON), ZONE))
+    expect(slotOf('b')).toEqual(OUT)
+    toasts.at(-1)!.undo()
+    expect(slotOf('b')).toEqual(intoSlot(occ(TUE), ZONE))
+  })
+
+  it('the repeat changed from a later day (a split): from that day its tasks go with the new series, the earlier stay', () => {
+    putInSlotWithUndo(get('a'), occ(MON))
+    putInSlotWithUndo(get('b'), occ(TUE))
+    setEventRepeat(occ(TUE), 'FREQ=WEEKLY')
+    const tail = rows().find((e) => e.title === 'Shaheen' && e.id !== 'shaheen')!
+    expect(slotOf('a')).toEqual(intoSlot(occ(MON), ZONE))
+    expect(slotOf('b')).toEqual({ slot_id: tail.id, slot_date: TUE, scheduled_start: cairo(TUE, '14:00'), scheduled_end: cairo(TUE, '16:00') })
+    toasts.at(-1)!.undo()
+    expect(slotOf('b')).toEqual(intoSlot(occ(TUE), ZONE))
+  })
+
+  it('a one-off slot given a repeat that skips its own day stays a one-off — and keeps its tasks', () => {
+    putInSlotWithUndo(get('b'), CODE)
+    setEventRepeat(code(), 'FREQ=WEEKLY;BYDAY=TU')
+    const keep = rows().find((e) => e.series_id === 'code')!
+    expect(slotOf('b')).toEqual({ ...intoSlot(CODE, ZONE), slot_id: keep.id })
+    toasts.at(-1)!.undo()
+    expect(slotOf('b')).toEqual(intoSlot(CODE, ZONE))
+  })
+
+  it('a repeating slot re-timed: each day\'s task takes the new time (from a later day on, for a split)', () => {
+    putInSlotWithUndo(get('a'), occ(MON))
+    putInSlotWithUndo(get('b'), occ(TUE))
+    retimeEventWithUndo(occ(TUE), { day: TUE, start: 840, end: 960 }, { day: TUE, start: 540, end: 600 })
+    const tail = rows().find((e) => e.title === 'Shaheen' && e.id !== 'shaheen')!
+    expect(slotOf('a')).toEqual(intoSlot(occ(MON), ZONE))
+    expect(slotOf('b')).toEqual({ slot_id: tail.id, slot_date: TUE, scheduled_start: cairo(TUE, '09:00'), scheduled_end: cairo(TUE, '10:00') })
+    toasts.at(-1)!.undo()
+    expect(slotOf('b')).toEqual(intoSlot(occ(TUE), ZONE))
+  })
+
+  it('a slot dragged into the all-day band holds nothing there (no drop lands in one): its tasks come out; Undo', () => {
+    putInSlotWithUndo(get('b'), CODE)
+    const undo = moveOrResizeEvent(code(), `${MON}T00:00:00.000Z`, `${TUE}T00:00:00.000Z`, true)
+    expect(slotOf('b')).toEqual(OUT)
+    undo()
+    expect(slotOf('b')).toEqual(intoSlot(CODE, ZONE))
+  })
+
+  it('slotLabel: "in Code block · 10:00", the day when it isn\'t today; nothing once the slot is no live Time block', () => {
+    putInSlotWithUndo(get('a'), CODE)
+    putInSlotWithUndo(get('b'), occ(TUE))
+    expect(slotLabel(get('a'), NOW)).toBe('in Code block · 10:00')
+    expect(slotLabel(get('b'), NOW)).toBe('in Shaheen · Tue 14:00')
+    cache.set('calendar_events', rows().map((e) => (e.id === 'code' ? { ...e, deleted_at: NOW.toISOString() } : e)))
+    expect(slotLabel(get('a'), NOW)).toBeNull()
   })
 })

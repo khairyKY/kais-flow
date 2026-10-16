@@ -13,7 +13,7 @@ import { todayListTasks } from '../tasks/grouping'
 import { sortByOrder } from '../tasks/manualOrder'
 import { moveInListWithUndo } from '../tasks/api'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
-import { slotTitleOf, useCalendarEvents } from '../calendar/api'
+import { slotLabel, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
@@ -629,10 +629,8 @@ export function TodayPage() {
   if (isMobile) {
     const tended = day.tally.picked > 0 && day.tally.done >= day.tally.picked
     const metas = eventMetas(upNext, now)
-    const blockMetaOf = (t: Task) => {
-      const b = blockOf(t.id, events, now)
-      return b ? blockMeta(b, now) : undefined
-    }
+    // The desktop's: a held task reads "in Code block · 10:00" here too (slots-ux).
+    const blockMetaOf = (t: Task) => blockMetaFor(t, events, now)
     const row = (t: Task, extra: { pick?: boolean; block?: CalendarEvent; meta?: string[]; place?: RowGrammarOptions['place'] } = {}) => (
       <TaskRow key={extra.block?.id ?? t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
@@ -939,8 +937,8 @@ function blockMetaFor(t: Task, events: CalendarEvent[], now: Date): string[] | u
   const b = blockOf(t.id, events, now)
   if (b) return blockMeta(b, now)
   // In a Time slot (0073) the task has no block of its own: "in Code block · 10:00".
-  const slot = t.slot_id && t.scheduled_start ? slotTitleOf(t) : null
-  return slot ? [`in ${slot} · ${cairoTimeKey(new Date(t.scheduled_start!))}`] : undefined
+  const slot = slotLabel(t, now)
+  return slot ? [slot] : undefined
 }
 
 /** Days past its due date on the user's calendar (lib/appZone) — 0 = due today, null = no date. */
@@ -970,7 +968,9 @@ function metaRow(projectName: string | undefined, dot: string, duration: number 
 /** A block's meta on a desktop row: "Now" reads "in progress" (2a), lengths in lower case. */
 const deskBlockMeta = (meta: string[] | undefined, inProgress: boolean) => (
   <>
-    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.toLowerCase()}</span>)}
+    {/* 2a's lower-case durations ("1h30m"); a slot's line keeps its name ("in Code block💻 · 10:00" —
+        the only meta that starts "in "; blockMeta's own read "starts in …"). */}
+    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.startsWith('in ') ? m : m.toLowerCase()}</span>)}
     {(inProgress || meta?.includes('Now')) && <span className="td-terra">in progress</span>}
   </>
 )
@@ -1819,6 +1819,8 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders — same
   // "Overdue Nd" treatment, same ↻ glyph — counted in the user's days (lib/appZone).
   const dueDays = !done && !task.someday ? overdueDays(task) : null
+  // In a Time slot (0073): "in Code block · 10:00" says more than "Due today" (slots-ux).
+  const held = done ? null : slotLabel(task)
   const dueBadges = dueDays !== null || task.recurrence_rule ? (
     <>
       {dueDays !== null && dueDays > 0 && <span style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>}
@@ -1852,7 +1854,8 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
         : [
             projectName && <span key="p"><span className="tp-dot" style={{ background: dot }} />{projectName}</span>,
             dueDays !== null && dueDays > 0 && <span key="o" style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>,
-            dueDays === 0 && <span key="d">Due today</span>,
+            held && <span key="s">{held}</span>,
+            dueDays === 0 && !held && <span key="d">Due today</span>,
             task.duration_min != null && <span key="m">{formatDuration(task.duration_min)}</span>,
             task.recurrence_rule && <span key="r">↻</span>,
             !!task.labels?.length && <LabelChips key="l" labels={task.labels} />,
@@ -1897,6 +1900,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   if (hollow) {
     // 2a "Also open": one line — the title, then the row's one fact in a right-aligned column.
     const fact = dueDays !== null && dueDays > 0 ? <span className="td-terra">Overdue {dueDays}d</span>
+      : held ? <span>{held}</span>
       : dueDays === 0 ? <span>Due today{task.recurrence_rule ? ' · ↻' : ''}</span>
       : projectName ? <span><span className="td-dot" style={{ background: dot }} />{projectName}</span>
       : task.recurrence_rule ? <span>↻</span> : null

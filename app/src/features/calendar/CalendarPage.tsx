@@ -4,8 +4,8 @@ import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
-import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, putInSlotWithUndo } from './api'
-import { slotAt, slotFill, slotTasks } from './slots'
+import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
+import { inSlot, slotAt, slotFill, slotTasks } from './slots'
 import { TaskMenu } from '../tasks/TaskMenu'
 import { taskActions } from '../tasks/useRowGrammar'
 import { placeName } from '../tasks/move'
@@ -22,7 +22,7 @@ import { dayTray, nextFreeSlot, railBuckets, railMinutes, type RailTask } from '
 import { todayFor } from '../tasks/planMath'
 import { DatePicker } from '../../components/DatePicker'
 import { dayHint } from '../../components/pickerMath'
-import { cairoDateKey, scheduleTomorrow, tomorrowHint } from '../../lib/dateShortcuts'
+import { cairoDateKey, scheduleToday, scheduleTomorrow, tomorrowHint } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
@@ -648,6 +648,17 @@ function DesktopCalendar() {
     return eventToRail(event, railDropAction(section, !!event.task_id), scopeTarget(scope, projects, areas))
   }
 
+  /** slots-ux: a held task's row dragged onto the rail comes out of its slot — the section means what it
+   * does for a task's block (railDrop.ts): Today also dates it today, Overdue is the soft-no. */
+  function handleSlotTaskToRail(taskId: string, section: string | null): boolean {
+    const task = tasks.find((t) => t.id === taskId)
+    const action = task ? railDropAction(section, true) : 'soft-no'
+    if (!task || action === 'soft-no') return false
+    if (action === 'unschedule-today') toastUndo(`Out of the slot · ${task.title} · Today`, rescheduleDue(task, scheduleToday()))
+    else outOfSlotWithUndo(task)
+    return true
+  }
+
   /** Punch 34: double-click on a task-linked block goes straight to the task editor. */
   function handleEventDoubleClick(id: string) {
     const event = gridEvents.find((e) => e.id === id)
@@ -706,9 +717,10 @@ function DesktopCalendar() {
   function handleExternalDrop(from: { taskId?: string; inboxId?: string }, start: string, allDay: boolean) {
     const task = from.taskId ? tasks.find((t) => t.id === from.taskId) : undefined
     const item = from.inboxId ? inbox.find((i) => i.id === from.inboxId) : undefined
-    // Time Slots (0073): a task dropped on a Time block goes IN it — no block of its own.
+    // Time Slots (0073): a task dropped on a Time block goes IN it — no block of its own. A held row
+    // dropped back on its own slot stays as it was.
     const slot = task && !allDay ? slotAt(gridEvents, start) : undefined
-    if (task && slot) return putInSlotWithUndo(task, slot)
+    if (task && slot) return inSlot(task, slot) ? undefined : putInSlotWithUndo(task, slot)
     const min = allDay ? 24 * 60 : task ? railMinutes(buckets.overdue.find((r) => r.task.id === task.id) ?? { task, block: null }) : item ? inboxMinutes(item) : 30
     const end = new Date(new Date(start).getTime() + min * 60000).toISOString()
     const ev = task ? scheduleTaskWithUndo(task, start, end, allDay) : item ? fileToCalendar(item, start, end, allDay) : null
@@ -1187,10 +1199,16 @@ function DesktopCalendar() {
                 const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
                 return {
                   id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e),
-                  ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done' })), fill: slotFill(e, held) } : null),
+                  ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held) } : null),
                 }
               })}
               onSlotTaskMenu={(taskId, x, y) => setSlotMenu({ taskId, x, y })}
+              onSlotTaskOpen={(taskId, el) => openTask(taskId, undefined, el)}
+              onSlotTaskOut={(taskId) => {
+                const t = tasks.find((x) => x.id === taskId)
+                if (t) outOfSlotWithUndo(t)
+              }}
+              onSlotTaskToRail={handleSlotTaskToRail}
               onCompleteTask={(taskId, done) => {
                 const t = tasks.find((x) => x.id === taskId)
                 if (!t) return

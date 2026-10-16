@@ -261,7 +261,8 @@ if (want('a3')) {
   check('a3 ⌫ unschedules it (the block to Trash, the task stays)', !!posts(state, 'calendar_events', w).find((e) => e.id === eid(TYREB))?.deleted_at && (await toastSoon(page, 'Unscheduled · Call the tyre supplier')))
   await undo(page, 'Unscheduled · Call the tyre supplier')
   await settle(state)
-  // Link a task… on the empty time block → Review Kai.
+  // Link a task… on the Time block → Review Kai goes IN it (Time Slots, 0073; slots-ux 2026-10-16:
+  // it used to turn the slot into that task's block, dropping any tasks the slot held).
   await openBlock(page, eid(GYM))
   w = state.writes.length
   await item(page, 'Link a task').click()
@@ -269,12 +270,25 @@ if (want('a3')) {
   await page.getByRole('combobox', { name: 'Search tasks to link' }).fill('review')
   await page.getByRole('option', { name: /Review Kai/ }).click()
   await settle(state)
-  const linked = posts(state, 'calendar_events', w).find((e) => e.id === eid(GYM))
-  const t = posts(state, 'tasks', w).find((x) => x.id === id(REVIEW))
-  check('a3 Link a task: the block holds Review Kai, the task scheduled there', linked?.task_id === id(REVIEW) && linked?.type === 'task' && t?.scheduled_start === iso('13:00'))
+  const slotted = posts(state, 'tasks', w).filter((x) => x.id === id(REVIEW)).at(-1)
+  check('a3 Link a task on a Time block: Review Kai IN the slot, the block still a Time block', slotted?.slot_id === eid(GYM) && slotted?.scheduled_start === iso('13:00') && !posts(state, 'calendar_events', w).some((e) => e.id === eid(GYM) && e.type !== 'time_block'))
+  check('a3 Link a task on a Time block: toast "In Gym · Review Kai" with Undo', await toastSoon(page, 'In Gym · Review Kai'))
+  await undo(page, 'In Gym · Review Kai')
+  await settle(state)
+  // …and on a plain event the event becomes the task's block, as before.
+  await openBlock(page, eid(LUNCH))
+  w = state.writes.length
+  await item(page, 'Link a task').click()
+  await sleep(400)
+  await page.getByRole('combobox', { name: 'Search tasks to link' }).fill('review')
+  await page.getByRole('option', { name: /Review Kai/ }).click()
+  await settle(state)
+  const linked = posts(state, 'calendar_events', w).find((e) => e.id === eid(LUNCH))
+  const t = posts(state, 'tasks', w).filter((x) => x.id === id(REVIEW)).at(-1)
+  check('a3 Link a task on an event: the block holds Review Kai, the task scheduled there', linked?.task_id === id(REVIEW) && linked?.type === 'task' && t?.scheduled_start === iso('10:30'))
   check('a3 Link a task: toast with Undo', await toastSoon(page, 'Linked · Review Kai'))
   // Complete from the popover.
-  await openBlock(page, eid(GYM))
+  await openBlock(page, eid(LUNCH))
   w = state.writes.length
   await item(page, 'Complete').click()
   await settle(state)

@@ -39,6 +39,13 @@ export function slotAt<E extends CalendarEvent>(events: readonly E[], at: string
     .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))[0]
 }
 
+/** The Time block occurrence among `rows` (stored rows: a series expands) on `day`, the user's — where
+ * a task held that day sits once a series edit has re-made the rows. */
+export function occurrenceOn<E extends CalendarEvent>(rows: readonly E[], day: string, zone: string = appZone()): E | undefined {
+  const slots = rows.filter((e) => e.type === 'time_block' && !e.all_day && !e.deleted_at)
+  return expandEvents(slots, new Date(zoneToIso(day, '00:00', zone)), new Date(zoneToIso(addDays(day, 1), '00:00', zone)), zone).find((e) => slotDay(e, zone) === day)
+}
+
 /** What a task takes on going into a slot occurrence: the slot, its day, and its times. */
 export function intoSlot(slot: Slot, zone: string = appZone()): Pick<Task, 'slot_id' | 'slot_date' | 'scheduled_start' | 'scheduled_end'> {
   return { slot_id: slotRow(slot), slot_date: slotDay(slot, zone), scheduled_start: slot.starts_at, scheduled_end: slot.ends_at }
