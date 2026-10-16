@@ -3,7 +3,7 @@ import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Float } from '../../components/Float'
 import { Button } from '../../components/kit'
 import { Icon } from '../../components/Icon'
-import { appPlatform, compareVersions, openDownload, reloadToUpdate, type UpdateResult } from '../../lib/appUpdate'
+import { appPlatform, compareVersions, installUpdate, reloadToUpdate, type UpdateResult } from '../../lib/appUpdate'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useAppSettings } from '../../lib/settings'
 import { useToastStore } from '../../lib/toastStore'
@@ -82,10 +82,19 @@ export function NotesLink() {
   )
 }
 
-/** Update, the way this platform does it (lib/appUpdate): reload the web app, or download the installer. */
+/** Starts installUpdate once; its progress line replaces every Update button meanwhile. */
+function startUpdate(url: string) {
+  if (useWhatsNew.getState().installing) return
+  void installUpdate(url, (line) => useWhatsNew.setState({ installing: line })).finally(() => useWhatsNew.setState({ installing: null }))
+}
+
+/** Update, the way this platform does it (lib/appUpdate): reload the web app, install in place
+ * (Windows), or download the installer (Android). */
 export function UpdateButton({ result }: { result: UpdateResult | null }) {
+  const installing = useWhatsNew((s) => s.installing)
   if (result?.kind === 'reload') return <Button variant="cta" onClick={() => void reloadToUpdate()}>Update</Button>
-  if (result?.kind === 'download') return <Button variant="cta" onClick={() => openDownload(result.url)}>Update</Button>
+  if (installing) return <span role="status" style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-body)' }}>{installing}</span>
+  if (result?.kind === 'download') return <Button variant="cta" onClick={() => startUpdate(result.url)}>Update</Button>
   return <Button variant="cta" disabled title="Its installer is still on its way — try again in a few minutes">Update</Button>
 }
 

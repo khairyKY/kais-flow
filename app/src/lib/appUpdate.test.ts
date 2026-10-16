@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { checkForUpdate, compareVersions, downloadOrder, inPlainBrowser, nativeVerdict, releaseAssetName } from './appUpdate'
+import { checkForUpdate, compareVersions, downloadOrder, inPlainBrowser, installUpdate, nativeVerdict, progressLine, releaseAssetName } from './appUpdate'
+
+const updater = vi.hoisted(() => ({ check: vi.fn() }))
+vi.mock('@tauri-apps/plugin-updater', () => updater)
 
 describe('the download bar', () => {
   const win = (standalone: boolean, extra: object = {}) => ({ matchMedia: () => ({ matches: standalone }), navigator: {}, ...extra }) as unknown as Window
@@ -74,5 +77,59 @@ describe('the Microsoft Store install', () => {
     shell(false)
     vi.stubGlobal('fetch', vi.fn(async () => ({ ok: true, json: async () => release('v1.1.7') })))
     expect(await checkForUpdate('windows')).toMatchObject({ kind: 'download', version: 'v1.1.7' })
+  })
+})
+
+describe('updating the Windows app in place', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+    vi.restoreAllMocks()
+    updater.check.mockReset()
+  })
+  const page = () => {
+    const assign = vi.fn()
+    vi.stubGlobal('window', { location: { assign } })
+    return assign
+  }
+  const url = 'https://github.com/x/releases/download/v1.2.1/kais-flow-v1.2.1-windows-setup.exe'
+
+  it('installs through the updater with a progress line, no browser download', async () => {
+    const assign = page()
+    type On = (e: { event: string; data?: object }) => void
+    const downloadAndInstall = vi.fn(async (on: On) => {
+      on({ event: 'Started', data: { contentLength: 4e6 } })
+      on({ event: 'Progress', data: { chunkLength: 1e6 } })
+      on({ event: 'Finished' })
+    })
+    updater.check.mockResolvedValue({ downloadAndInstall })
+    const lines: string[] = []
+    await installUpdate(url, (l) => lines.push(l), 'windows')
+    expect(lines).toEqual(['Downloading…', 'Downloading… 25%', 'Installing… Kai’s Flow reopens in a moment'])
+    expect(assign).not.toHaveBeenCalled()
+  })
+  it('falls back to the browser download: no latest.json, nothing newer in it, or a failed install', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const cases = [
+      () => updater.check.mockRejectedValue(new Error('404 latest.json')),
+      () => updater.check.mockResolvedValue(null),
+      () => updater.check.mockResolvedValue({ downloadAndInstall: async () => Promise.reject(new Error('bad signature')) }),
+    ]
+    for (const arrange of cases) {
+      const assign = page()
+      arrange()
+      await installUpdate(url, () => {}, 'windows')
+      expect(assign).toHaveBeenCalledWith(url)
+    }
+  })
+  it('leaves Android to the browser download', async () => {
+    const assign = page()
+    await installUpdate('https://x/kais-flow-v1.2.1.apk', () => {}, 'android')
+    expect(updater.check).not.toHaveBeenCalled()
+    expect(assign).toHaveBeenCalledWith('https://x/kais-flow-v1.2.1.apk')
+  })
+  it('says how far the download is', () => {
+    expect(progressLine(0, 8e6)).toBe('Downloading… 0%')
+    expect(progressLine(8e6, 8e6)).toBe('Downloading… 100%')
+    expect(progressLine(2.5e6, 0)).toBe('Downloading… 2.5 MB') // no size from the server
   })
 })
