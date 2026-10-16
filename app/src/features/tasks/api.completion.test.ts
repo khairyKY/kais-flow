@@ -28,7 +28,7 @@ vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsF
 const { completeTask, completeTaskWithUndo, uncompleteTask, skipNextOccurrence, reopenTaskWithUndo, toggleTaskWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } = await import('./api')
 const { scheduleTomorrow } = await import('../../lib/dateShortcuts')
 const { useToastStore } = await import('../../lib/toastStore')
-const { useSubtaskAsk, answerSubtasks } = await import('./subtaskAsk')
+const { useSubtaskAsk, answerSubtasks } = await import('./subtaskQuestion')
 
 function task(over: Partial<Task> = {}): Task {
   return {
@@ -320,7 +320,7 @@ describe('subtasks (Kai 2026-10-16, 4 C)', () => {
     const undo = completeTaskWithUndo(parent)
     expect(useSubtaskAsk.getState().ask).toBeNull()
     const next = undo.spawned!
-    expect([a, b, c].map((s) => row(s.id))).toEqual([a, b, c].map((s) => expect.objectContaining({ parent_task_id: next.id, status: 'todo', completed_at: null })))
+    expect([a, b, c].map((s) => row(s.id))).toEqual([a, b, c].map(() => expect.objectContaining({ parent_task_id: next.id, status: 'todo', completed_at: null })))
     expect(lastToast().message).toBe('Done')
     lastToast().onUndo!()
     await flush()

@@ -100,3 +100,10 @@
 .tp-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 8px; border-top: 1px solid var(--line-dashed); }
 .tp-foot button:hover { color: var(--ink-body); }
 .tp-foot button:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 3px; }
+
+/* 4 C, the question when a parent is ticked with subtasks open (Subtasks options.html scene 4 · C). */
+.tp-ask { width: 290px; padding: 16px 18px; }
+.tp-ask-title { font-size: var(--fs-section); font-weight: var(--fw-semibold); color: var(--ink-body); }
+.tp-ask-meta { margin-top: 4px; font-size: var(--fs-meta); color: var(--ink-faint); }
+.tp-ask-acts { display: flex; gap: 8px; margin-top: 14px; }
+.tp-ask-acts .kf-button { height: 36px; padding: 0 14px; font-size: var(--fs-body-s); }

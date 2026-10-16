@@ -26,7 +26,7 @@ import { addedLine, dueChip } from './taskSheetMath'
 import { PRIORITY_LABELS } from './taskMenuSpec'
 import { planListMove } from './manualOrder'
 import { openSubtasks, subtasksOf } from './subtasks'
-import { askSubtasks } from './subtaskAsk'
+import { askSubtasks } from './subtaskQuestion'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -154,7 +154,11 @@ function carry(subs: readonly Task[], parentId: string): void {
 const recentCompletions = new Map<string, CompletionUndo>()
 
 /** Completing a recurring task materializes its next occurrence as a fresh task (completion.ts). */
-export function completeTask(passed: Task, { quiet = false }: { quiet?: boolean } = {}): CompletionUndo {
+export function completeTask(passed: Task): CompletionUndo {
+  return completeOne(passed, false)
+}
+
+function completeOne(passed: Task, quiet: boolean): CompletionUndo {
   const task = cached(passed)
   // Sounds v2: every way of checking a task off (box, swipe, menu, key) sounds once, here — a parent's
   // subtasks ticked along with it (4 C) are quiet: one check, one sound.
@@ -215,7 +219,7 @@ export function completeTaskWithUndo(task: Task, afterUndo?: () => void): Comple
     })
   const open = undo.spawned ? [] : openSubtasks(cachedTasks(), task.id)
   if (open.length === 0) toast([])
-  else askSubtasks(undo.before, open, (tick) => toast(tick ? open.map((s) => completeTask(s, { quiet: true })) : []))
+  else askSubtasks(undo.before, open, (tick) => toast(tick ? open.map((s) => completeOne(s, true)) : []))
   return undo
 }
 
