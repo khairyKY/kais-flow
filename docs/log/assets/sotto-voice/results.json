@@ -1,0 +1,1256 @@
+{
+  "passed": 250,
+  "failed": 0,
+  "results": [
+    {
+      "name": "phone-day sheet: opens listening on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: the mic comes on (Stop & file ready)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: ✕ on the pill, tap target on its body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet listening: the bars follow the mic (quiet 8.5px → loud 21.5px)",
+      "ok": true,
+      "detail": "8.5 → 21.5"
+    },
+    {
+      "name": "phone-day sheet: tapping the pill finishes → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: words back → done (the tick)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: then the sheet goes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: the words joined the journal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: no AI filing for journal words",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: ✕ cancels — sheet gone, nothing transcribed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: transcription failed → error pill, the take kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: ↻ on the pill + Try again / Save to Inbox / Discard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: no ✕ (a kept take only leaves through its buttons)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: ↻ sends the same take again → done → gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day journal no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day hold: the recording pill is Sotto's, listening",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day hands-free: Sotto's pill in the bar + Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI: transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI: polishing while the AI files it (parse-capture)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI: done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI: filed to the Inbox, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day AI no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: opens listening on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: the mic comes on (Stop & file ready)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: ✕ on the pill, tap target on its body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet listening: the bars follow the mic (quiet 8.5px → loud 21.5px)",
+      "ok": true,
+      "detail": "8.5 → 21.5"
+    },
+    {
+      "name": "phone-night sheet: tapping the pill finishes → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: words back → done (the tick)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: then the sheet goes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: the words joined the journal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: no AI filing for journal words",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: ✕ cancels — sheet gone, nothing transcribed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: transcription failed → error pill, the take kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: ↻ on the pill + Try again / Save to Inbox / Discard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: no ✕ (a kept take only leaves through its buttons)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: ↻ sends the same take again → done → gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night journal no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night hold: the recording pill is Sotto's, listening",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night hands-free: Sotto's pill in the bar + Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI: transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI: polishing while the AI files it (parse-capture)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI: done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI: filed to the Inbox, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night AI no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: opens listening on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: the mic comes on (Stop & file ready)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: ✕ on the pill, tap target on its body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet listening: the bars follow the mic (quiet 8.5px → loud 21.5px)",
+      "ok": true,
+      "detail": "8.5 → 21.5"
+    },
+    {
+      "name": "desk-day sheet: tapping the pill finishes → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: words back → done (the tick)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: then the sheet goes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: the words joined the journal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: no AI filing for journal words",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: ✕ cancels — sheet gone, nothing transcribed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: transcription failed → error pill, the take kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: ↻ on the pill + Try again / Save to Inbox / Discard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: no ✕ (a kept take only leaves through its buttons)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: ↻ sends the same take again → done → gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day journal no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day Today mic: the sheet listens on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI: transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI: polishing while the AI files it (parse-capture)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI: done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI: filed to the Inbox, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day AI no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: dictating shows Sotto's pill + Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: the row still says what the mic is doing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: tapping the pill stops it → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: done, the words in the field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: then the row is the bar's own again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: ✕ drops the take",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day ⌘K no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: opens listening on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: the mic comes on (Stop & file ready)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: ✕ on the pill, tap target on its body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet listening: the bars follow the mic (quiet 8.5px → loud 21.5px)",
+      "ok": true,
+      "detail": "8.5 → 21.5"
+    },
+    {
+      "name": "desk-night sheet: tapping the pill finishes → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: words back → done (the tick)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: then the sheet goes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: the words joined the journal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: no AI filing for journal words",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: ✕ cancels — sheet gone, nothing transcribed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: transcription failed → error pill, the take kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: ↻ on the pill + Try again / Save to Inbox / Discard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: no ✕ (a kept take only leaves through its buttons)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: ↻ sends the same take again → done → gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night journal no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night Today mic: the sheet listens on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI: transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI: polishing while the AI files it (parse-capture)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI: done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI: filed to the Inbox, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night AI no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: dictating shows Sotto's pill + Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: the row still says what the mic is doing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: tapping the pill stops it → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: done, the words in the field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: then the row is the bar's own again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: ✕ drops the take",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night ⌘K no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: opens listening on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: the mic comes on (Stop & file ready)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: ✕ on the pill, tap target on its body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet listening: a still frame (reduced motion)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: tapping the pill finishes → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet transcribing: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: words back → done (the tick)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: then the sheet goes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: the words joined the journal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: no AI filing for journal words",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day sheet: ✕ cancels — sheet gone, nothing transcribed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: transcription failed → error pill, the take kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: ↻ on the pill + Try again / Save to Inbox / Discard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: no ✕ (a kept take only leaves through its buttons)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day kept: ↻ sends the same take again → done → gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day-still journal no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day-still journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day hold: the recording pill is Sotto's, listening",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day hold: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day hands-free: Sotto's pill in the bar + Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI: transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI: polishing while the AI files it (parse-capture)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day polishing: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI: done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day AI: filed to the Inbox, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-day-still AI no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-day-still AI no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: opens listening on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: the mic comes on (Stop & file ready)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: ✕ on the pill, tap target on its body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet listening: a still frame (reduced motion)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: tapping the pill finishes → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet transcribing: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: words back → done (the tick)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: then the sheet goes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: the words joined the journal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: no AI filing for journal words",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night sheet: ✕ cancels — sheet gone, nothing transcribed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: transcription failed → error pill, the take kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: ↻ on the pill + Try again / Save to Inbox / Discard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: no ✕ (a kept take only leaves through its buttons)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night kept: ↻ sends the same take again → done → gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night-still journal no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night-still journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night hold: the recording pill is Sotto's, listening",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night hold: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night hands-free: Sotto's pill in the bar + Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI: transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI: polishing while the AI files it (parse-capture)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night polishing: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI: done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night AI: filed to the Inbox, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone-night-still AI no horizontal scroll at 390",
+      "ok": true,
+      "detail": "390"
+    },
+    {
+      "name": "phone-night-still AI no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: opens listening on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: the mic comes on (Stop & file ready)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: ✕ on the pill, tap target on its body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet listening: a still frame (reduced motion)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: tapping the pill finishes → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet transcribing: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: words back → done (the tick)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: then the sheet goes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: the words joined the journal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: no AI filing for journal words",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day sheet: ✕ cancels — sheet gone, nothing transcribed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: transcription failed → error pill, the take kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: ↻ on the pill + Try again / Save to Inbox / Discard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: no ✕ (a kept take only leaves through its buttons)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day kept: ↻ sends the same take again → done → gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day-still journal no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day-still journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day Today mic: the sheet listens on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI: transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI: polishing while the AI files it (parse-capture)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day polishing: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI: done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day AI: filed to the Inbox, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day-still AI no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day-still AI no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: dictating shows Sotto's pill + Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: the row still says what the mic is doing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: tapping the pill stops it → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: done, the words in the field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: then the row is the bar's own again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day ⌘K: ✕ drops the take",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-day-still ⌘K no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-day-still ⌘K no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: opens listening on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: the mic comes on (Stop & file ready)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: ✕ on the pill, tap target on its body",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet listening: a still frame (reduced motion)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: tapping the pill finishes → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: the take went to transcribe (Groq path)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet transcribing: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: words back → done (the tick)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: then the sheet goes",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: the words joined the journal",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: no AI filing for journal words",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night sheet: ✕ cancels — sheet gone, nothing transcribed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: transcription failed → error pill, the take kept",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: ↻ on the pill + Try again / Save to Inbox / Discard",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: no ✕ (a kept take only leaves through its buttons)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night kept: ↻ sends the same take again → done → gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night-still journal no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night-still journal no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night Today mic: the sheet listens on Sotto's pill",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI: transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI: polishing while the AI files it (parse-capture)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night polishing: a still frame",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI: done",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night AI: filed to the Inbox, sheet gone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night-still AI no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night-still AI no page or console errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: dictating shows Sotto's pill + Powered by Sotto",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: the row still says what the mic is doing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: tapping the pill stops it → transcribing",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: done, the words in the field",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: then the row is the bar's own again",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night ⌘K: ✕ drops the take",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk-night-still ⌘K no horizontal scroll at 1280",
+      "ok": true,
+      "detail": "1280"
+    },
+    {
+      "name": "desk-night-still ⌘K no page or console errors",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

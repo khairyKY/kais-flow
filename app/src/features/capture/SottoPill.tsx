@@ -69,6 +69,8 @@ export function SottoPill({ state, stream, onFinish, onCancel, onRetry, compact 
     if (!el || !ctx) return
     let raf = 0
     const frame = (now: number) => {
+      // Unmounted (React drops the node before this effect's cleanup runs): no styles left to read.
+      if (!el.isConnected) return
       paint(ctx, el, { state, w, button, motion, t: motion ? now - since.current : STILL[state], now: motion ? now : 0, level: motion ? level.current() : 0 })
       if (motion) raf = requestAnimationFrame(frame)
     }
