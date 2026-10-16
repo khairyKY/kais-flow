@@ -632,7 +632,7 @@
   {
     "name": "d3 phone: the lifted task follows the finger over the strip (no ghost)",
     "ok": true,
-    "detail": "{\"x\":30.88459587097168,\"y\":196.20553588867188,\"width\":302.23082160949707,\"height\":39.58892822265625}"
+    "detail": "{\"x\":33.971717834472656,\"y\":196.3646240234375,\"width\":302.0565719604492,\"height\":31.270751953125}"
   },
   {
     "name": "d3 phone: let go → out of the slot, unscheduled",
@@ -686,6 +686,76 @@
   },
   {
     "name": "d4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 desktop day: each held task is a card (1px edge, 8px corners, the slot's wash)",
+    "ok": true,
+    "detail": "{\"bw\":\"1px\",\"bs\":\"solid\",\"r\":\"8px\",\"bg\":\"color(srgb 0.658824 0.627451 0.745098 / 0.24)\",\"bc\":\"color(srgb 0.352941 0.317647 0.439216 / 0.35)\"}"
+  },
+  {
+    "name": "o1 desktop night: each held task is a card (1px edge, 8px corners, the slot's wash)",
+    "ok": true,
+    "detail": "{\"bw\":\"1px\",\"bs\":\"solid\",\"r\":\"8px\",\"bg\":\"color(srgb 0.752941 0.717647 0.878431 / 0.24)\",\"bc\":\"color(srgb 0.847059 0.823529 0.909804 / 0.35)\"}"
+  },
+  {
+    "name": "o1 desktop: a small gap between the cards (4px at 100%, zoomed)",
+    "ok": true,
+    "detail": "4"
+  },
+  {
+    "name": "o1 desktop: the done card keeps its strike",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 desktop hover: the × shows and the edge deepens",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 desktop drag: the card's place stays, dashed",
+    "ok": true,
+    "detail": "{\"bw\":\"1px\",\"bs\":\"dashed\",\"r\":\"8px\",\"bg\":\"rgba(0, 0, 0, 0)\",\"bc\":\"rgb(136, 129, 110)\"}"
+  },
+  {
+    "name": "o1 desktop drag: the card follows the pointer over the grid, its own outline on",
+    "ok": true,
+    "detail": "[{\"x\":821,\"y\":539.625,\"width\":75.34375,\"height\":21.875},{\"x\":850.515625,\"y\":550.875}]"
+  },
+  {
+    "name": "o1 desktop: let go back on its own slot → nothing written, the card back as it was",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o2 phone day: each held task is a card (1px edge, 8px corners, the slot's fill)",
+    "ok": true,
+    "detail": "{\"bw\":\"1px\",\"bs\":\"solid\",\"r\":\"8px\",\"bg\":\"rgba(168, 160, 190, 0.2)\",\"bc\":\"color(srgb 0.352941 0.317647 0.439216 / 0.35)\"}"
+  },
+  {
+    "name": "o2 phone night: each held task is a card (1px edge, 8px corners, the slot's fill)",
+    "ok": true,
+    "detail": "{\"bw\":\"1px\",\"bs\":\"solid\",\"r\":\"8px\",\"bg\":\"rgba(192, 183, 224, 0.22)\",\"bc\":\"color(srgb 0.847059 0.823529 0.909804 / 0.35)\"}"
+  },
+  {
+    "name": "o2 phone drag: its place dashed, the lifted card keeps its own outline",
+    "ok": true,
+    "detail": "[{\"bw\":\"1px\",\"bs\":\"dashed\",\"r\":\"8px\",\"bg\":\"rgba(0, 0, 0, 0)\",\"bc\":\"rgb(136, 129, 110)\"},{\"bw\":\"1px\",\"bs\":\"solid\",\"r\":\"8px\",\"bg\":\"rgb(251, 246, 233)\",\"bc\":\"color(srgb 0.352941 0.317647 0.439216 / 0.35)\"}]"
+  },
+  {
+    "name": "o2 phone: a cancelled touch puts it back, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o2 no page errors",
     "ok": true,
     "detail": ""
   }

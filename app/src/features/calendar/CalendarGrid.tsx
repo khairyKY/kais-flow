@@ -344,11 +344,18 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     let dragged = false
     let stopHover: (() => void) | null = null
     const drag = new Draggable(el, { eventData: cardDragData })
+    // slot-outline (Kai's pick A): the lifted card follows the pointer over the grid too, where
+    // FullCalendar would hide it behind its own placeholder; the card's place stays dashed meanwhile.
+    const mirror = drag.dragging.mirror
+    const showMirror = mirror.setIsVisible.bind(mirror)
+    mirror.setIsVisible = () => showMirror(true)
     drag.dragging.emitter.on('dragstart', () => {
       dragged = true
+      el.dataset.lifted = ''
       stopHover = trackRailHover(heldProps.current.railRef?.current)
     })
     drag.dragging.emitter.on('dragend', (ev: { pageX: number; pageY: number }) => {
+      delete el.dataset.lifted
       stopHover?.()
       const rail = heldProps.current.railRef?.current
       const x = ev.pageX - window.scrollX
