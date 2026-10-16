@@ -343,8 +343,9 @@ for (const theme of ['day', 'night']) {
   const name = `desktop-${theme}`
   const env = await open('/today', { view: desktop, theme })
   const { page, state } = env
-  const cta = page.locator('main .kf-button--cta', { hasText: /^Capture$/ }) // the page-header CTA (the sidebar has its own Capture row)
-  check(`${name} Today's header CTA is "Capture" (no "Voice capture")`, (await cta.count()) === 1 && (await page.getByRole('button', { name: 'Voice capture' }).count()) === 0)
+  // Today 2a (ced71548, 2026-10-12) drew the header's capture as an "Add a task…" pill with its mic inside.
+  const cta = page.locator('main .td-pill-field', { hasText: 'Add a task…' })
+  check(`${name} Today's header capture is the "Add a task…" pill, its mic beside it (2a)`, (await cta.count()) === 1 && (await page.locator('main .td-pill').getByRole('button', { name: 'Voice capture' }).count()) === 1)
   await cta.click()
   await sleep(300)
   check(`${name} Capture → the command bar, cursor in the field`, (await field(page).count()) === 1 && (await page.evaluate(() => document.activeElement?.id)) === 'kf-capture-input')

@@ -303,7 +303,7 @@ if (want('c')) {
     routine(3, 'Old challenge', { challenge_start: '2026-09-01', challenge_end: '2026-09-30', goal_days: 30 }), // over
     routine(4, 'Glass of water'),
   ]
-  const cards = (page) => page.evaluate(() => [...document.querySelectorAll('div')].filter((d) => /days · ends/.test(d.textContent ?? '') && ![...d.children].some((c) => /days · ends/.test(c.textContent ?? ''))).map((d) => d.parentElement?.firstElementChild?.nextElementSibling?.textContent ?? ''))
+  const cards = (page) => page.evaluate(() => [...document.querySelectorAll('div')].filter((d) => /days · ends/.test(d.textContent ?? '') && ![...d.children].some((c) => /days · ends/.test(c.textContent ?? ''))).map((d) => d.parentElement?.firstElementChild?.textContent ?? '')) // bj-pages: no tape strip before the name now
   for (const view of ['desktop', 'phone']) {
     const { ctx, page, errors } = await open('10:00', tables({ routines: challenges }), { view: view === 'phone' ? phone : desktop, path: '/routines' })
     if (view === 'phone') await page.evaluate(() => document.querySelector('.app-main-content')?.scrollTo(0, 99999))

@@ -138,6 +138,8 @@ const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
   await card(page).screenshot({ path: path.join(OUT, 'phone-3-how-to-card.png') })
 
   await card(page).getByRole('button', { name: 'Turn off' }).click()
+  // 5b792a44 (2026-10-12): Turn off asks first (only the hash is stored, so no Undo) — confirm it.
+  await page.locator('.kf-overlay-card').getByRole('button', { name: 'Turn off' }).click()
   await sleep(900)
   const del = state.writes.find((w) => w.table === 'capture_keys' && w.method === 'DELETE')
   check('phone: Turn off deletes the key row', !!del && del.query.includes(`id=eq.${KEY_ROW.id}`), del?.query)

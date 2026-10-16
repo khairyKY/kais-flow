@@ -200,5 +200,5 @@ button.pp-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus)
 .pp-drawing-done { flex: none; color: var(--acc-sage-text); }
 
 /* 11m: the desktop keys, beside Add all; the line the keys act on. */
-.pp-keys { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: var(--fs-mono-l); color: var(--ink-faint); }
+.pp-keys { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
 .pp-row.is-ringed { outline: 2px solid var(--focus); outline-offset: -2px; }
