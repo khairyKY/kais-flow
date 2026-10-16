@@ -28,6 +28,7 @@ vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsF
 const { completeTask, completeTaskWithUndo, uncompleteTask, skipNextOccurrence, reopenTaskWithUndo, toggleTaskWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } = await import('./api')
 const { scheduleTomorrow } = await import('../../lib/dateShortcuts')
 const { useToastStore } = await import('../../lib/toastStore')
+const { useSubtaskAsk, answerSubtasks } = await import('./subtaskAsk')
 
 function task(over: Partial<Task> = {}): Task {
   return {
@@ -266,5 +267,87 @@ describe("the row grammar's delete and Tomorrow (Flow Audit §4)", () => {
     lastToast().onUndo!()
     await flush()
     expect(cache).toEqual([t])
+  })
+})
+
+describe('subtasks (Kai 2026-10-16, 4 C)', () => {
+  beforeEach(() => void vi.stubGlobal('document', { getElementById: () => null }))
+  const family = (parentOver: Partial<Task> = {}) => {
+    const parent = task({ recurrence_rule: null, top3: false, ...parentOver })
+    const a = task({ title: 'Read the notes', recurrence_rule: null, top3: false, parent_task_id: parent.id, status: 'done', completed_at: '2026-09-25T10:00:00.000Z', created_at: '2026-09-01T00:00:01.000Z' })
+    const b = task({ title: 'Questions 1–5', recurrence_rule: null, top3: false, parent_task_id: parent.id, created_at: '2026-09-01T00:00:02.000Z' })
+    const c = task({ title: 'Questions 6–10', recurrence_rule: null, top3: false, parent_task_id: parent.id, created_at: '2026-09-01T00:00:03.000Z' })
+    cache = [parent, a, b, c]
+    return { parent, a, b, c }
+  }
+  const row = (id: string) => cache.find((t) => t.id === id)!
+
+  it('a parent with open subtasks is done at once and asks; "Tick them too" ticks them, one Undo takes it all back', async () => {
+    const { parent, a, b, c } = family()
+    const before = useToastStore.getState().toasts.length
+    completeTaskWithUndo(parent)
+    expect(row(parent.id).status).toBe('done')
+    expect(useSubtaskAsk.getState().ask?.open.map((t) => t.id)).toEqual([b.id, c.id])
+    expect(useToastStore.getState().toasts.length).toBe(before) // the toast waits for the answer
+    answerSubtasks(true)
+    expect(useSubtaskAsk.getState().ask).toBeNull()
+    expect([row(b.id).status, row(c.id).status]).toEqual(['done', 'done'])
+    expect(lastToast().message).toBe('Done, with its 2 open subtasks')
+    lastToast().onUndo!()
+    await flush()
+    expect([row(parent.id), row(a.id), row(b.id), row(c.id)]).toEqual([parent, a, b, c])
+  })
+
+  it('"Leave them open" (and Esc, which answers the same) leaves them, and says plain Done', () => {
+    const { parent, b, c } = family()
+    completeTaskWithUndo(parent)
+    answerSubtasks(false)
+    answerSubtasks(true) // answered once only
+    expect([row(b.id).status, row(c.id).status]).toEqual(['todo', 'todo'])
+    expect(lastToast().message).toBe('Done')
+  })
+
+  it('with no open subtasks it just completes — nothing asked', () => {
+    const parent = task({ recurrence_rule: null })
+    cache = [parent, task({ recurrence_rule: null, parent_task_id: parent.id, status: 'done', completed_at: '2026-09-25T10:00:00.000Z' })]
+    completeTaskWithUndo(parent)
+    expect(useSubtaskAsk.getState().ask).toBeNull()
+    expect(lastToast().message).toBe('Done')
+  })
+
+  it('a repeating parent carries its subtasks to the next copy, open again; nothing is asked; Undo brings them home', async () => {
+    const { parent, a, b, c } = family({ recurrence_rule: 'FREQ=WEEKLY;BYDAY=SA,TU' })
+    const undo = completeTaskWithUndo(parent)
+    expect(useSubtaskAsk.getState().ask).toBeNull()
+    const next = undo.spawned!
+    expect([a, b, c].map((s) => row(s.id))).toEqual([a, b, c].map((s) => expect.objectContaining({ parent_task_id: next.id, status: 'todo', completed_at: null })))
+    expect(lastToast().message).toBe('Done')
+    lastToast().onUndo!()
+    await flush()
+    expect([row(a.id), row(b.id), row(c.id)]).toEqual([a, b, c])
+    expect(cache.some((t) => t.id === next.id)).toBe(false)
+  })
+
+  it('Reopen right after takes the carry back; its Undo carries them again', async () => {
+    const { parent, a } = family({ recurrence_rule: 'FREQ=WEEKLY;BYDAY=SA,TU' })
+    const undo = completeTaskWithUndo(parent)
+    reopenTaskWithUndo(row(parent.id))
+    expect(row(a.id)).toEqual(a)
+    lastToast().onUndo!()
+    await flush()
+    expect(row(a.id)).toMatchObject({ parent_task_id: undo.spawned!.id, status: 'todo' })
+  })
+
+  it('deleting a parent sends its subtasks to Trash with it — one toast, one Undo — and Trash restores them together', async () => {
+    const { parent, a, b, c } = family()
+    const other = task({ recurrence_rule: null, parent_task_id: parent.id, deleted_at: '2026-09-20T00:00:00.000Z' }) // binned on its own, earlier
+    cache.push(other)
+    deleteTasksWithUndo([parent])
+    expect(new Set([parent, a, b, c].map((t) => row(t.id).deleted_at)).size).toBe(1)
+    expect(lastToast().message).toBe('Moved to Trash, with its 3 subtasks')
+    lastToast().onUndo!()
+    await flush()
+    expect([parent, a, b, c].every((t) => row(t.id).deleted_at === null)).toBe(true)
+    expect(row(other.id).deleted_at).toBe('2026-09-20T00:00:00.000Z')
   })
 })
