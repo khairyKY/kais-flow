@@ -72,12 +72,14 @@ async function open(route = '/calendar', o = {}) {
   // o.device: the DEVICE zone — the user's stays Cairo (app_settings), so a different device zone
   // proves the grid reads the user's clock.
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: o.device ?? 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([t, sess, rail]) => {
+  await ctx.addInitScript(([t, sess, rail, uid]) => {
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', rail ? '0' : '1')
     localStorage.setItem('kf.calRailSections', JSON.stringify({ lists: true }))
-  }, [o.theme ?? 'day', JSON.stringify(session), !!o.rail])
+    // The "What's new" toast has its own harness; at the bottom of the screen it can sit under a slot click.
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: Date.now() + 864e5 }))
+  }, [o.theme ?? 'day', JSON.stringify(session), !!o.rail, UID])
   const state = { rows: tables(), writes: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -259,7 +261,8 @@ if (want('a3')) {
   check('a3 ⌫ unschedules it (the block to Trash, the task stays)', !!posts(state, 'calendar_events', w).find((e) => e.id === eid(TYREB))?.deleted_at && (await toastSoon(page, 'Unscheduled · Call the tyre supplier')))
   await undo(page, 'Unscheduled · Call the tyre supplier')
   await settle(state)
-  // Link a task… on the empty time block → Review Kai.
+  // Link a task… on the Time block → Review Kai goes IN it (Time Slots, 0073; slots-ux 2026-10-16:
+  // it used to turn the slot into that task's block, dropping any tasks the slot held).
   await openBlock(page, eid(GYM))
   w = state.writes.length
   await item(page, 'Link a task').click()
@@ -267,12 +270,25 @@ if (want('a3')) {
   await page.getByRole('combobox', { name: 'Search tasks to link' }).fill('review')
   await page.getByRole('option', { name: /Review Kai/ }).click()
   await settle(state)
-  const linked = posts(state, 'calendar_events', w).find((e) => e.id === eid(GYM))
-  const t = posts(state, 'tasks', w).find((x) => x.id === id(REVIEW))
-  check('a3 Link a task: the block holds Review Kai, the task scheduled there', linked?.task_id === id(REVIEW) && linked?.type === 'task' && t?.scheduled_start === iso('13:00'))
+  const slotted = posts(state, 'tasks', w).filter((x) => x.id === id(REVIEW)).at(-1)
+  check('a3 Link a task on a Time block: Review Kai IN the slot, the block still a Time block', slotted?.slot_id === eid(GYM) && slotted?.scheduled_start === iso('13:00') && !posts(state, 'calendar_events', w).some((e) => e.id === eid(GYM) && e.type !== 'time_block'))
+  check('a3 Link a task on a Time block: toast "In Gym · Review Kai" with Undo', await toastSoon(page, 'In Gym · Review Kai'))
+  await undo(page, 'In Gym · Review Kai')
+  await settle(state)
+  // …and on a plain event the event becomes the task's block, as before.
+  await openBlock(page, eid(LUNCH))
+  w = state.writes.length
+  await item(page, 'Link a task').click()
+  await sleep(400)
+  await page.getByRole('combobox', { name: 'Search tasks to link' }).fill('review')
+  await page.getByRole('option', { name: /Review Kai/ }).click()
+  await settle(state)
+  const linked = posts(state, 'calendar_events', w).find((e) => e.id === eid(LUNCH))
+  const t = posts(state, 'tasks', w).filter((x) => x.id === id(REVIEW)).at(-1)
+  check('a3 Link a task on an event: the block holds Review Kai, the task scheduled there', linked?.task_id === id(REVIEW) && linked?.type === 'task' && t?.scheduled_start === iso('10:30'))
   check('a3 Link a task: toast with Undo', await toastSoon(page, 'Linked · Review Kai'))
   // Complete from the popover.
-  await openBlock(page, eid(GYM))
+  await openBlock(page, eid(LUNCH))
   w = state.writes.length
   await item(page, 'Complete').click()
   await settle(state)
@@ -439,12 +455,15 @@ if (want('c1')) {
   await sleep(400)
   // The rail: Review Kai waits in Today. Its ⋯ opens the one task menu.
   const card = page.locator('.unscheduled-task', { hasText: 'Review Kai' }).first()
+  await card.hover() // Bound Journal: the row's ⋯ shows on hover
   await card.getByRole('button', { name: 'More actions for "Review Kai"' }).click()
   await sleep(300)
   check('c1 rail card ⋯ opens the task menu', (await page.getByRole('menuitem', { name: /Move to/ }).count()) >= 1)
   await page.keyboard.press('Escape')
   await sleep(300)
   // Plan ▾ → Tomorrow, first thing = tomorrow 09:00, no block (moveToTomorrowWithUndo).
+  // Bound Journal (2026-10-14): a rail row shows Plan ▾ on hover, so hover it first.
+  await card.hover()
   await card.getByRole('button', { name: 'Plan Review Kai' }).click()
   await sleep(300)
   const tomorrowRow = page.getByRole('menuitem', { name: /Tomorrow, first thing/ })

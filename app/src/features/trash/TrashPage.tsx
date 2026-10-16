@@ -147,11 +147,10 @@ export function TrashPage() {
   ))
 
   const styles = `
-    .tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
-    .trow { display:flex; align-items:center; gap:13px; padding:12px 2px; border-bottom:1px dashed var(--line-dashed); }
-    .aghd { position:relative; display:flex; align-items:center; gap:12px; margin:26px 0 4px; padding:6px 10px; border-radius:5px; overflow:hidden; }
-    .aghd span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; position:relative; }
-    .aghd .r { flex:1; height:1px; border-bottom:1px dashed var(--line-dashed); position:relative; }
+    .tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); padding:3px 7px; border-radius:var(--radius-pill); background:color-mix(in oklch, var(--ink-body) 7%, transparent); color:var(--ink-faint); flex:none; width:58px; text-align:center; }
+    .trow { display:flex; align-items:center; gap:13px; padding:12px 2px; border-bottom:1px solid var(--line-dashed); }
+    .aghd { position:relative; display:flex; align-items:center; gap:12px; margin:26px 0 4px; padding:6px 10px; border-radius:var(--radius-input); overflow:hidden; }
+    .aghd span.t { font-size: var(--fs-section); font-weight: var(--fw-semibold); color:var(--ink-body); white-space:nowrap; position:relative; }
     .leafbg { position:absolute; width:16px; height:10px; border-radius:80% 20% 70% 30%; opacity:0.16; }
   `
 
@@ -168,7 +167,7 @@ export function TrashPage() {
         >
           <span className="tbadge">{item.type}</span>
           <span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{getDeletionMeta(item.deleted_at)}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{getDeletionMeta(item.deleted_at)}</span>
           {isMobile ? (
             <button
               type="button"
@@ -191,11 +190,11 @@ export function TrashPage() {
           )}
         </div>
         {isConfirming && (
-          <div className="kf-overlay-card" style={{ margin: '8px 0 0 71px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-panel)', padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 14, maxWidth: 440 }}>
+          <div className="kf-overlay-card" style={{ margin: '8px 0 0 71px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-panel)', padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 14, maxWidth: 440 }}>
             <span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>Gone for good — compost now?</span>
             <span style={{ flex: 1 }}></span>
             <span onClick={() => setConfirmDeleteId(null)} style={{ fontSize: 12, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
-            <button onClick={() => handleDeleteForever(item)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '6px 13px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Delete forever</button>
+            <button onClick={() => handleDeleteForever(item)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '6px 13px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Delete forever</button>
           </div>
         )}
       </div>
@@ -212,7 +211,7 @@ export function TrashPage() {
         <path d="M60 25c-4-.6-6-2.6-6.6-6.6 4 0 6.2 1.8 6.6 6.6Z" fill="var(--acc-moss)"></path>
         <path d="M60 28c4-.6 6-2.6 6.6-6.6-4 0-6.2 1.8-6.6 6.6Z" fill="var(--acc-sage)"></path>
       </svg>
-      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: '1.45' }}>The heap is empty. Deleted things rest here for 30 days before they compost.</div>
+      <div style={{ marginTop: 20, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: '1.45' }}>The heap is empty. Deleted things rest here for 30 days before they compost.</div>
     </div>
   )
 
@@ -238,7 +237,7 @@ export function TrashPage() {
             <span className="leafbg" style={{ left: '80%', top: 9, background: 'var(--acc-gold)', transform: 'rotate(-48deg)' }}></span>
           </>
         )}
-        <span className="t">{label}</span><span className="r" />
+        <span className="t">{label}</span>
       </div>
       {renderGroupList(items)}
     </>
@@ -247,7 +246,6 @@ export function TrashPage() {
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: '100%', position: 'relative', background: 'var(--paper-linen)' }}>
       <style>{styles}</style>
-      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
       {/* polish-c (2026-09-26 audit): no in-page "Kai's Flow · Settings · Trash" strip — that was
           Trash.dc.html's mock of the shell topbar, which the real shell already draws. */}
       {/* Kai 2026-10-03: no overflow-y of its own — unbounded, it only swallowed the wheel. */}
@@ -258,18 +256,18 @@ export function TrashPage() {
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               <svg width="42" height="40" viewBox="0 0 48 46"><path d="M8 30c0-4 4-9 10-10-2-4 1-9 6-9s8 5 6 9c6 1 10 6 10 10Z" fill="var(--ink-hairline)" opacity="0.5"/><path d="M4 30h40l-3 12H7L4 30Z" fill="none" stroke="var(--ink-faint)" strokeWidth="2" strokeLinejoin="round"/><path d="M24 20v-6" stroke="var(--acc-moss)" strokeWidth="2" strokeLinecap="round"/><path d="M24 15c-3-.5-4.5-2-5-5 3 0 4.7 1.3 5 5Z" fill="var(--acc-moss)"/></svg>
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{deletedQ.data ? `${deletedItems.length} items resting` : ' '}</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{deletedQ.data ? `${deletedItems.length} items resting` : ' '}</div>
                 <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>
               </div>
             </div>
             {hasItems && <span onClick={() => setShowGlobalConfirm(true)} style={{ fontSize: 12.5, color: 'var(--acc-terra)', textDecoration: 'underline', cursor: 'pointer', paddingBottom: 5 }}>Empty trash…</span>}
           </div>
           {showGlobalConfirm && (
-            <div className="kf-overlay-card" style={{ marginTop: 16, marginBottom: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 6, boxShadow: 'var(--shadow-panel)', padding: '13px 17px', display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div className="kf-overlay-card" style={{ marginTop: 16, marginBottom: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-panel)', padding: '13px 17px', display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>Empty everything? {deletedItems.length} items, no way back.</span>
               <span style={{ flex: 1 }}></span>
               <span onClick={() => setShowGlobalConfirm(false)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
-              <button onClick={handleEmptyEverything} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Empty</button>
+              <button onClick={handleEmptyEverything} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Empty</button>
             </div>
           )}
           {deletedQ.isPending ? <Skeleton />
@@ -280,7 +278,7 @@ export function TrashPage() {
               {renderAgeGroup('Today', ageGroupedItems.today)}
               {renderAgeGroup('This week', ageGroupedItems.thisWeek)}
               {renderAgeGroup('Older', ageGroupedItems.older)}
-              <div style={{ marginTop: 26, padding: '10px 14px', border: '1px dashed var(--line-solid)', borderRadius: 6, background: 'color-mix(in oklch, var(--ink-hairline) 8%, transparent)', fontSize: 12.5, color: 'var(--ink-faint)', textAlign: 'center' }}>Items compost after 30 days — gone for good, feeding nothing in particular.</div>
+              <div style={{ marginTop: 26, padding: '10px 14px', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-input)', background: 'color-mix(in oklch, var(--ink-hairline) 8%, transparent)', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', textAlign: 'center' }}>Items compost after 30 days — gone for good, feeding nothing in particular.</div>
             </div>
           )}
         </div>

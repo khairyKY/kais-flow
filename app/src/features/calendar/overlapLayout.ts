@@ -4,8 +4,9 @@
 // answer into classes and CalendarGrid.css draws them.
 //
 //   overlap (2)  → side by side, each calc(50% − 2px), 4px gutter
-//   stacked (3+) → shingle 56% wide, offset 22% per index, later on top; a block that would sit
-//                  past the third index is fully hidden, and the topmost reads "+N more"
+//   stacked (3+) → three equal lanes side by side (Kai 2026-10-14, Akiflow's way — the old 56% /
+//                  22% shingle buried the later blocks); a block past the third lane is hidden,
+//                  and lane 2 reads "+N more"
 //
 // Pure: no DOM, no FullCalendar — so it is unit-tested directly.
 

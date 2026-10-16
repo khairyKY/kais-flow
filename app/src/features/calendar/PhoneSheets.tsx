@@ -47,11 +47,20 @@ function Held({ rect, fill, ink, edge, title, time }: { rect: Rect | null; fill:
   // …and never over the sheet itself: a block taller than the room above the sheet is cut at the
   // sheet's resting top edge (its layout top — the enter animation's transform doesn't count).
   const [sheetTop, setSheetTop] = useState(Infinity)
+  // The keyboard rising lifts the sheet without re-rendering the parent (bj-final: the 16:00 slot drew
+  // over the quick-create chips until the first key), so a visualViewport resize re-measures too.
+  const [vvTick, setVvTick] = useState(0)
+  useEffect(() => {
+    const vv = window.visualViewport
+    const on = () => setVvTick((n) => n + 1)
+    vv?.addEventListener('resize', on)
+    return () => vv?.removeEventListener('resize', on)
+  }, [])
   useLayoutEffect(() => {
     const sheet = [...document.querySelectorAll<HTMLElement>('[role="dialog"]')].at(-1)
     const box = sheet?.offsetParent?.getBoundingClientRect()
     setSheetTop(sheet && box ? box.top + sheet.offsetTop : Infinity)
-  }, [rect]) // a fresh rect each parent render (a title typed, the keyboard up) — so it re-measures then
+  }, [rect, vvTick]) // a fresh rect each parent render (a title typed) — so it re-measures then
   if (!rect) return null
   const height = Math.min(rect.height, sheetTop - rect.top - 4)
   if (height < 12) return null

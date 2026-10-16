@@ -235,6 +235,66 @@ describe('MCP full: the calendar keeps Time slots whole', () => {
     expect(store.tasks[0]).toMatchObject({ slot_id: null, slot_date: null, scheduled_start: null })
   })
 
+  // The app's rule (calendar/api reseat / releaseRow / followSlot, slots-ux 2026-10-16): no task is left
+  // held by a day, a kind or a band that holds none.
+  const held = (n: number, title: string, slot: number, day: string, from: string, to: string) =>
+    task(n, title, { slot_id: tid(slot), slot_date: day, scheduled_start: `${day}T${from}:00Z`, scheduled_end: `${day}T${to}:00Z` })
+  const OUT = { slot_id: null, slot_date: null, scheduled_start: null, scheduled_end: null }
+  const slotLogs = (store: ReturnType<typeof fakeStore>) => store.logs.filter((l) => l.entityType === 'task').map((l) => [l.eventType, l.entityId, l.payload])
+
+  it('a repeating slot re-timed, re-ruled, then not repeating: each task to its day, else out', async () => {
+    // Code block: every day from Mon 5 Oct, 10:00–12:00 Cairo; one task held Mon, Tue and Wed.
+    const store = fakeStore('Africa/Cairo', [held(1, 'Mon', 531, '2026-10-05', '07:00', '09:00'), held(2, 'Tue', 531, '2026-10-06', '07:00', '09:00'), held(3, 'Wed', 531, '2026-10-07', '07:00', '09:00')])
+    store.cal.push({ id: tid(531), title: 'Code block', starts_at: '2026-10-05T07:00:00Z', ends_at: '2026-10-05T09:00:00Z', all_day: false, task_id: null, type: 'time_block', recurrence_rule: 'FREQ=DAILY', recurrence_exdates: [] })
+    const retimed = await call(deps(store), 'edit_event', { id: tid(531), start: '2026-10-05T13:00' })
+    expect(retimed.data!.changed).toEqual(['time → 13:00–15:00, every occurrence', '3 tasks in it moved with it'])
+    expect(store.tasks.map((t) => [t.slot_date, t.scheduled_start, t.scheduled_end])).toEqual([
+      ['2026-10-05', '2026-10-05T10:00:00.000Z', '2026-10-05T12:00:00.000Z'], ['2026-10-06', '2026-10-06T10:00:00.000Z', '2026-10-06T12:00:00.000Z'], ['2026-10-07', '2026-10-07T10:00:00.000Z', '2026-10-07T12:00:00.000Z'],
+    ])
+    expect(slotLogs(store)).toEqual([1, 2, 3].map((n) => ['task.scheduled', tid(n), { slot_id: tid(531), slot_date: `2026-10-0${n + 4}`, source: 'mcp' }]))
+    // Mondays and Wednesdays now: Tuesday's task has no slot that day — out, unscheduled; the others stay, untouched.
+    store.logs = []
+    const reruled = await call(deps(store), 'edit_event', { id: tid(531), repeat: 'FREQ=WEEKLY;BYDAY=MO,WE' })
+    expect(reruled.data!.changed).toEqual(['repeats FREQ=WEEKLY;BYDAY=MO,WE', '1 task it held is back unscheduled'])
+    expect(store.tasks[1]).toMatchObject(OUT)
+    expect(store.tasks[0]).toMatchObject({ slot_id: tid(531), slot_date: '2026-10-05', scheduled_start: '2026-10-05T10:00:00.000Z' })
+    expect(store.tasks[2]).toMatchObject({ slot_id: tid(531), slot_date: '2026-10-07', scheduled_start: '2026-10-07T10:00:00.000Z' })
+    expect(slotLogs(store)).toEqual([['task.unscheduled', tid(2), { slot_id: tid(531), source: 'mcp' }]])
+    // Not repeating: it is its first occurrence (Mon 5) only — Wednesday's task comes out.
+    const once = await call(deps(store), 'edit_event', { id: tid(531), repeat: null })
+    expect(once.data!.changed).toEqual(['no longer repeats', '1 task it held is back unscheduled'])
+    expect(store.tasks[2]).toMatchObject(OUT)
+    expect(store.tasks[0]).toMatchObject({ slot_id: tid(531), slot_date: '2026-10-05', scheduled_start: '2026-10-05T10:00:00.000Z' })
+    const cal = await call(deps(store), 'calendar', { from: '2026-10-05', to: '2026-10-05' })
+    expect(cal.data!.events.find((e: { id: string }) => e.id === tid(531)).tasks).toEqual([{ id: tid(1), title: 'Mon', done: false }])
+  })
+
+  it('a Time block made an event lets its tasks go — the whole row, or one occurrence of a series', async () => {
+    const store = fakeStore('Africa/Cairo', [held(4, 'A', 532, '2026-10-06', '07:00', '09:00'), held(5, 'B', 532, '2026-10-06', '07:00', '09:00'), held(6, 'C', 533, '2026-10-07', '05:00', '06:00'), held(7, 'D', 533, '2026-10-08', '05:00', '06:00')])
+    store.cal.push(
+      { id: tid(532), title: 'Admin', starts_at: '2026-10-06T07:00:00Z', ends_at: '2026-10-06T09:00:00Z', all_day: false, task_id: null, type: 'time_block' },
+      { id: tid(533), title: 'Writing', starts_at: '2026-10-05T05:00:00Z', ends_at: '2026-10-05T06:00:00Z', all_day: false, task_id: null, type: 'time_block', recurrence_rule: 'FREQ=DAILY', recurrence_exdates: [] },
+    )
+    const r = await call(deps(store), 'edit_event', { id: tid(532), kind: 'event' })
+    expect(r.data!.changed).toEqual(['kind → event', '2 tasks it held are back unscheduled'])
+    expect([store.tasks[0], store.tasks[1]]).toEqual([expect.objectContaining(OUT), expect.objectContaining(OUT)])
+    expect(slotLogs(store)).toEqual([4, 5].map((n) => ['task.unscheduled', tid(n), { slot_id: tid(532), source: 'mcp' }]))
+    // Only Wednesday's Writing an event: its task out; Thursday's stays in the series.
+    const one = await call(deps(store), 'edit_event', { id: tid(533), occurrence: '2026-10-07T08:00', kind: 'event' })
+    expect(one.data!.changed).toEqual(['kind → event', 'only the 2026-10-07 08:00–09:00 occurrence: it is an event of its own now', '1 task it held is back unscheduled'])
+    expect(store.tasks[2]).toMatchObject(OUT)
+    expect(store.tasks[3]).toMatchObject({ slot_id: tid(533), slot_date: '2026-10-08', scheduled_start: '2026-10-08T05:00:00Z' })
+  })
+
+  it('a Time block moved into the all-day band lets its tasks go', async () => {
+    const store = fakeStore('Africa/Cairo', [held(8, 'Held', 534, '2026-10-08', '07:00', '09:00')])
+    store.cal.push({ id: tid(534), title: 'Deep', starts_at: '2026-10-08T07:00:00Z', ends_at: '2026-10-08T09:00:00Z', all_day: false, task_id: null, type: 'time_block' })
+    const r = await call(deps(store), 'edit_event', { id: tid(534), start: '2026-10-08' })
+    expect(r.data!.changed).toEqual(['time → 2026-10-08', '1 task it held is back unscheduled'])
+    expect(store.tasks[0]).toMatchObject(OUT)
+    expect(slotLogs(store)).toEqual([['task.unscheduled', tid(8), { slot_id: tid(534), source: 'mcp' }]])
+  })
+
   it('add_event takes a reminder, never on an all-day event', async () => {
     const store = fakeStore()
     const r = await call(deps(store), 'add_event', { title: 'Gym', start: '2026-10-06T18:00', duration_min: 90, remind_min: 15 })

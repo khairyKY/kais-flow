@@ -67,6 +67,7 @@ import { todayFor } from '../tasks/planMath'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { useListVerbs } from '../tasks/useListVerbs'
 import { sortByOrder } from '../tasks/manualOrder'
+import { nestOut } from '../tasks/subtasks'
 import { moveInListWithUndo } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { BulkBar } from '../../components/BulkBar'
@@ -77,7 +78,7 @@ import { rowAnchor } from '../../lib/rowAnchor'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
-import { BackLink, SectionLabel, Checkbox } from '../../components/kit'
+import { BackLink, Button, SectionLabel, Segmented, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { useMotionEnabled } from '../../lib/motion'
 import { DateField } from '../../components/DatePicker'
@@ -86,7 +87,7 @@ import './xfx.css'
 
 // A ✕ that removes a row: a real button, 44px to a finger (.kf-hit), PersonDetailPage's look.
 const removeBtn: React.CSSProperties = { flex: 'none', width: 24, height: 24, border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--acc-terra)', cursor: 'pointer', borderRadius: 999, marginLeft: 4 }
-/** The dashed "+ add task" chip, as a button (save as template, use). */
+/** The dashed "+ Add task" chip, as a button (Save as template, Use). */
 const chipBtn: React.CSSProperties = { flex: 'none', border: '1px dashed var(--ink-hairline)', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer', padding: '2px 8px', borderRadius: 999, font: 'inherit', fontSize: 'var(--fs-meta)' }
 
 // Local query hook to retrieve activity log for a specific project/area
@@ -279,7 +280,9 @@ export function ProjectDetailPage() {
   // serves both pages.
   const pageOpen = useMemo(() => {
     // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
-    const open = sortByOrder(tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id)))
+    const here = tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id))
+    // Subtasks A: one listed under its parent here is drawn nested under it (tasks/SubtaskNest).
+    const open = sortByOrder(nestOut(here, new Set(here.filter((t) => !t.parent_task_id).map((t) => t.id))))
     // An area lists its repeats apart, under "Keeps coming back" after its other open tasks — the
     // keys walk the rows in that same order, and no row is drawn twice.
     return areas.some((a) => a.id === id) ? [...open.filter((t) => !t.recurrence_rule), ...open.filter((t) => t.recurrence_rule)] : open
@@ -437,7 +440,7 @@ export function ProjectDetailPage() {
           const r = e.currentTarget.getBoundingClientRect()
           setTypeMenuAt({ x: r.left, y: r.bottom })
         }}
-        style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+        style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}
       >
         Change type… <span style={{ color: 'var(--ink-faint)' }}>· {KIND_LABEL[kindOf(thing.row, thing.table)]}</span>
       </span>
@@ -634,7 +637,7 @@ export function ProjectDetailPage() {
   // The project page's colour swatches — the area page uses the same row (Kai 2026-10-12).
   const colorRow = (current: string | null | undefined, pick: (c: string) => void) => (
     <>
-      <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
+      <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
       <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
         {colorPalette.map((c) => (
           <span
@@ -688,14 +691,13 @@ export function ProjectDetailPage() {
 
     return (
       // deviation(2026-07-18 audit): export caps at 820px; Kai wants full width
-      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'clip', position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
+      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-card)', overflow: 'clip', position: 'relative' }}>
 
         <div style={{ display: 'flex', position: 'relative', zIndex: 10 }}>
           {/* left vine spine */}
-          <div style={{ width: 34, flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '34px 0 30px', borderRight: '1px dashed var(--line-dashed)' }}>
+          <div style={{ width: 34, flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '34px 0 30px', borderRight: '1px solid var(--line-dashed)' }}>
             <img src="/ds/assets/wisteria/p0.png" alt="" style={{ height: 26, opacity: 0.6 }} title="p0 — where it started" />
-            <span style={{ flex: 1, width: 0, borderLeft: '1px dashed var(--acc-moss)', opacity: 0.6, margin: '8px 0' }}></span>
+            <span style={{ flex: 1, width: 0, borderLeft: '1px solid var(--acc-moss)', opacity: 0.6, margin: '8px 0' }}></span>
             <span style={{ position: 'relative', display: 'inline-flex' }}>
               {/* Effects 1e — bloom glow: one gold breath, looping, while the project sits at 100% */}
               {motion && milestonePct === 100 && <span className="kf-bloom" style={{ inset: -10 }} />}
@@ -705,14 +707,14 @@ export function ProjectDetailPage() {
               )}
               <img src={wisteriaImg} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 26, position: 'relative' }} title={`p${milestonePct}`} />
             </span>
-            <span style={{ flex: 1, width: 0, borderLeft: '1px dashed var(--line-dashed)', margin: '8px 0' }}></span>
+            <span style={{ flex: 1, width: 0, borderLeft: '1px solid var(--line-dashed)', margin: '8px 0' }}></span>
             <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 22, opacity: 0.45 }} title="p100" />
           </div>
 
           <div className="kf-bulk-anchor" style={{ flex: 1, minWidth: 0, padding: isMobile ? '20px 16px 24px' : '30px 36px 36px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
               <BackLink to="/projects">All projects</BackLink>
-              <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
+              <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                 {/* The engagement / client line: click to edit, like the title. */}
                 {editingEngagement ? (
                   <RenameField
@@ -736,8 +738,8 @@ export function ProjectDetailPage() {
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: isMobile ? 'wrap' : undefined, gap: '8px 13px', marginTop: 20 }}>
               <span style={{ width: 15, height: 15, borderRadius: '50%', background: project.color || 'var(--acc-terra)', flex: 'none' }} />
               <h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)', flex: isMobile ? '1 1 calc(100% - 28px)' : 1, minWidth: 0 }}>{titleNode(project.name, (next) => renameProject(project, next))}</h1>
-              <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: isMobile ? 'left' : 'right', marginLeft: isMobile ? 28 : undefined }}>
-                {project.type === 'retainer' ? 'renews' : 'target'}<br />
+              <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', textAlign: isMobile ? 'left' : 'right', marginLeft: isMobile ? 28 : undefined }}>
+                {project.type === 'retainer' ? 'Renews' : 'Target'}<br />
                 {/* Kai 2026-10-12: set or change it here — the app's date picker, Clear in its footer. */}
                 <DateField
                   value={project.target_date?.slice(0, 10) ?? ''}
@@ -753,7 +755,7 @@ export function ProjectDetailPage() {
             {colorRow(project.color, (c) => updateProjectColor(project, c))}
 
             {/* Domain — R4-17: reparent an existing project (the API had this all along) */}
-            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
+            <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
             <Select
               value={project.domain_id ?? ''}
               onChange={(v) => reparentProject(project, v || null, domains.find((d) => d.id === v)?.name)}
@@ -767,9 +769,9 @@ export function ProjectDetailPage() {
                 add row and the weight's −/+ were clipped out of reach). */}
             <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : '150px minmax(0, 1fr)', gap: 26, marginTop: 24 }}>
               <div>
-                <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Hours</div>
+                <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>Hours</div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>{totalHours}</div>
-                <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 4 }}>
+                <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 4 }}>
                   logged across {pTimeEntries.length} sessions
                 </div>
               </div>
@@ -782,7 +784,7 @@ export function ProjectDetailPage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {resolvedMilestones.map((m) => (
-                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                    <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '7px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
                       {/* R4-24: milestones keep the bloom — Kai's one exception alongside Top-3/Goal */}
                       <Checkbox checked={m.resolvedCompleted} onChange={() => handleToggleMilestone(m.id)} size={15} bloom />
                       {editingMilestone?.id === m.id ? (
@@ -795,7 +797,7 @@ export function ProjectDetailPage() {
                             if (e.key === 'Enter') { e.preventDefault(); commitMilestoneEdit() }
                             if (e.key === 'Escape') { e.preventDefault(); setEditingMilestone(null) }
                           }}
-                          style={{ flex: 1, font: 'inherit', fontSize: 'var(--fs-body-s)', background: 'transparent', border: 'none', borderBottom: '1px dashed var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
+                          style={{ flex: 1, font: 'inherit', fontSize: 'var(--fs-body-s)', background: 'transparent', border: 'none', borderBottom: '1px solid var(--ink-hairline)', outline: 'none', color: 'var(--ink-body)', padding: 0 }}
                         />
                       ) : (
                         <span style={{ fontSize: 'var(--fs-body-s)', color: m.resolvedCompleted ? 'var(--ink-faint)' : 'var(--ink-body)', textDecoration: m.resolvedCompleted ? 'line-through' : 'none', flex: 1, minWidth: 0 }}>{m.title}</span>
@@ -811,9 +813,9 @@ export function ProjectDetailPage() {
                           <NumberField value={m.weight} onChange={(n) => reweighProjectMilestone(project, m.id, n)} min={1} max={100} ariaLabel={`Weight of ${m.title}`} style={{ fontSize: 12.5 }} />
                         </span>
                       ) : (
-                        <span role="button" tabIndex={0} title="Change weight" onClick={() => setWeighingMilestone(m.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setWeighingMilestone(m.id) } }} className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', cursor: 'pointer' }}>weight {m.weight}</span>
+                        <span role="button" tabIndex={0} title="Change weight" onClick={() => setWeighingMilestone(m.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setWeighingMilestone(m.id) } }} className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', whiteSpace: 'nowrap', cursor: 'pointer' }}>Weight {m.weight}</span>
                       )}
-                      <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>edit</span>
+                      <span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', cursor: 'pointer', marginLeft: 8 }}>Edit</span>
                       <button type="button" className="kf-hit" onClick={() => removeMilestone(m)} title="Delete milestone" aria-label={`Delete milestone ${m.title}`} style={removeBtn}>✕</button>
                     </div>
                   ))}
@@ -831,7 +833,7 @@ export function ProjectDetailPage() {
                   <NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel="Milestone weight" style={{ fontSize: 12.5 }} />
                   <button
                     onClick={handleAddMilestoneClick}
-                    style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '6px 12px', borderRadius: 999, cursor: 'pointer' }}
+                    style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 'var(--fs-mono-l)', padding: '6px 12px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}
                   >
                     Add
                   </button>
@@ -840,7 +842,7 @@ export function ProjectDetailPage() {
             </div>
 
             {/* Open tasks */}
-            <SectionLabel style={{ margin: '24px 0 6px' }} action={<span onClick={() => setShowAddTask(!showAddTask)} style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', padding: '2px 8px', borderRadius: 999, fontSize: 'var(--fs-meta)' }}>+ add task</span>}>
+            <SectionLabel style={{ margin: '24px 0 6px' }} action={<span onClick={() => setShowAddTask(!showAddTask)} style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', padding: '2px 8px', borderRadius: 999, fontSize: 'var(--fs-meta)' }}>+ Add task</span>}>
               <span>Open tasks · {openTasks.length}</span>
             </SectionLabel>
 
@@ -851,9 +853,9 @@ export function ProjectDetailPage() {
                   value={newAddTaskTitle}
                   onChange={(e) => setNewAddTaskTitle(e.target.value)}
                   placeholder="Task title…"
-                  style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 6, padding: '6px 10px', outline: 'none', color: 'var(--ink-body)' }}
+                  style={{ flex: 1, font: 'inherit', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', padding: '6px 10px', outline: 'none', color: 'var(--ink-body)' }}
                 />
-                <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontSize: 12 }}>Add</button>
+                <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', borderRadius: 'var(--radius-input)', padding: '6px 14px', cursor: 'pointer', fontSize: 'var(--fs-meta)' }}>Add</button>
               </form>
             )}
 
@@ -865,7 +867,7 @@ export function ProjectDetailPage() {
             <SectionLabel
               style={{ margin: '24px 0 6px' }}
               action={templatesReady && (project.checklist ?? []).length > 0 ? (
-                <button type="button" className="kf-hit" onClick={() => { const t = saveTemplateWithUndo(project, project.name); if (t) setRenamingTemplate(t.id) }} style={chipBtn}>save as template</button>
+                <button type="button" className="kf-hit" onClick={() => { const t = saveTemplateWithUndo(project, project.name); if (t) setRenamingTemplate(t.id) }} style={chipBtn}>Save as template</button>
               ) : undefined}
             >
               <span>Checklist</span>
@@ -879,7 +881,7 @@ export function ProjectDetailPage() {
                 const linked = item.task_id ? tasks.find((t) => t.id === item.task_id) : undefined
                 const done = linked ? linked.status === 'done' : item.completed
                 return (
-                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
                   <Checkbox checked={done} label={item.title} onChange={() => (linked ? toggleTaskWithUndo(linked) : toggleProjectChecklistItem(project, item.id))} size={15} />
                   {/* Kai 2026-10-12: rename in place, like a milestone or a log note. */}
                   {renamingChecklist === item.id ? (
@@ -897,8 +899,8 @@ export function ProjectDetailPage() {
                   ) : (
                     <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingChecklist(item.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingChecklist(item.id) } }} style={{ fontSize: 'var(--fs-body-s)', color: done ? 'var(--ink-faint)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none', flex: 1, cursor: 'text' }}>{item.title}</span>
                   )}
-                  <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 3 }}>
-                    {item.type}
+                  <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 'var(--radius-pill)' }}>
+                    {item.type === 'one-shot' ? 'One-shot' : 'Task-linked'}
                   </span>
                   <button type="button" className="kf-hit" onClick={() => removeChecklistItem(item.id)} title="Remove" aria-label={`Remove checklist item ${item.title}`} style={removeBtn}>✕</button>
                 </div>
@@ -917,13 +919,13 @@ export function ProjectDetailPage() {
                 <Select
                   value={newChecklistType}
                   onChange={(v) => setNewChecklistType(v as 'one-shot' | 'task-linked')}
-                  options={[{ value: 'one-shot', label: 'one-shot' }, { value: 'task-linked', label: 'task-linked' }]}
+                  options={[{ value: 'one-shot', label: 'One-shot' }, { value: 'task-linked', label: 'Task-linked' }]}
                   ariaLabel="Checklist item type"
-                  style={{ fontSize: 11, padding: '4px 8px' }}
+                  style={{ fontSize: 'var(--fs-mono-l)', padding: '4px 8px' }}
                 />
                 <button
                   onClick={handleAddChecklistItemClick}
-                  style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '6px 12px', borderRadius: 999, cursor: 'pointer' }}
+                  style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 'var(--fs-mono-l)', padding: '6px 12px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}
                 >
                   Add
                 </button>
@@ -938,7 +940,7 @@ export function ProjectDetailPage() {
                   <span>Templates · {templates.length}</span>
                 </SectionLabel>
                 {templates.map((t) => (
-                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px dashed var(--line-dashed)', minHeight: isMobile ? 44 : undefined }}>
+                  <div key={t.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '7px 2px', borderBottom: '1px solid var(--line-dashed)', minHeight: isMobile ? 44 : undefined }}>
                     {renamingTemplate === t.id ? (
                       <span style={{ flex: 1, minWidth: 0, fontSize: 'var(--fs-body-s)' }}>
                         <RenameField
@@ -954,10 +956,10 @@ export function ProjectDetailPage() {
                     ) : (
                       <span role="button" tabIndex={0} title="Rename" onClick={() => setRenamingTemplate(t.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); setRenamingTemplate(t.id) } }} style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', flex: 1, minWidth: 0, cursor: 'text' }}>{t.name}</span>
                     )}
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>
                       {t.items.length} {t.items.length === 1 ? 'item' : 'items'}
                     </span>
-                    <button type="button" className="kf-hit" onClick={() => applyTemplateWithUndo(project, t)} disabled={t.items.length === 0} aria-label={`Use template ${t.name}`} style={chipBtn}>use</button>
+                    <button type="button" className="kf-hit" onClick={() => applyTemplateWithUndo(project, t)} disabled={t.items.length === 0} aria-label={`Use template ${t.name}`} style={chipBtn}>Use</button>
                     <button type="button" className="kf-hit" onClick={() => deleteTemplateWithUndo(t.id)} title="Delete template" aria-label={`Delete template ${t.name}`} style={removeBtn}>✕</button>
                   </div>
                 ))}
@@ -968,44 +970,7 @@ export function ProjectDetailPage() {
             <SectionLabel
               style={{ margin: '24px 0 8px' }}
               action={
-              <span className="seg" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 2, gap: 2 }}>
-                <span
-                  onClick={() => setLogMode('work')}
-                  className={logMode === 'work' ? 'on' : ''}
-                  style={{
-                    padding: '4px 10px',
-                    fontSize: 11,
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer',
-                    borderRadius: 5,
-                    background: logMode === 'work' ? 'var(--paper-parchment)' : 'transparent',
-                    border: logMode === 'work' ? '1px solid var(--line-card)' : '1px solid transparent',
-                    boxShadow: logMode === 'work' ? 'var(--shadow-crisp)' : 'none',
-                    fontWeight: logMode === 'work' ? 600 : 400,
-                    color: 'var(--ink-body)',
-                  }}
-                >
-                  Work
-                </span>
-                <span
-                  onClick={() => setLogMode('update')}
-                  className={logMode === 'update' ? 'on' : ''}
-                  style={{
-                    padding: '4px 10px',
-                    fontSize: 11,
-                    whiteSpace: 'nowrap',
-                    cursor: 'pointer',
-                    borderRadius: 5,
-                    background: logMode === 'update' ? 'var(--paper-parchment)' : 'transparent',
-                    border: logMode === 'update' ? '1px solid var(--line-card)' : '1px solid transparent',
-                    boxShadow: logMode === 'update' ? 'var(--shadow-crisp)' : 'none',
-                    fontWeight: logMode === 'update' ? 600 : 400,
-                    color: 'var(--ink-body)',
-                  }}
-                >
-                  📌 Update
-                </span>
-              </span>
+              <Segmented value={logMode} onChange={setLogMode} label="Log" options={[{ value: 'work', label: 'Work' }, { value: 'update', label: '📌 Update' }]} />
               }
             >
               <span>Activity · {mergedLogs.length}</span>
@@ -1018,7 +983,7 @@ export function ProjectDetailPage() {
                 value={workNote}
                 onChange={(e) => setWorkNote(e.target.value)}
                 placeholder={logMode === 'work' ? "What did you work on?" : "Post a status update note…"}
-                style={{ flex: '1 1 180px', minWidth: 0, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', outline: 'none' }}
+                style={{ flex: '1 1 180px', minWidth: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '8px 11px', outline: 'none' }}
               />
               {logMode === 'work' && (
                 <>
@@ -1026,7 +991,7 @@ export function ProjectDetailPage() {
                     value={workDuration}
                     onChange={(e) => setWorkDuration(e.target.value)}
                     placeholder="1h30m"
-                    style={{ width: 75, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', textAlign: 'center', outline: 'none' }}
+                    style={{ width: 75, font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '8px 10px', textAlign: 'center', outline: 'none' }}
                   />
                   <DateField
                     value={workDate}
@@ -1035,16 +1000,13 @@ export function ProjectDetailPage() {
                     onChange={(v) => { if (v && v <= zoneDateKey(new Date())) setWorkDate(v) }}
                     title="Worked on"
                     ariaLabel="Date this work happened"
-                    style={{ font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', outline: 'none' }}
+                    style={{ font: 'inherit', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '8px 10px', outline: 'none' }}
                   />
                 </>
               )}
-              <button
-                onClick={handleLogActivity}
-                style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '8px 15px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-              >
+              <Button onClick={handleLogActivity}>
                 Log
-              </button>
+              </Button>
             </div>
 
             {/* Logs List */}
@@ -1052,7 +1014,7 @@ export function ProjectDetailPage() {
               {mergedLogs.map((log) => {
                 const dateLabel = new Date(log.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })
                 return (
-                  <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                  <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
                     {log.type === 'work' ? (
                       // Kai 2026-10-12: a work entry's day changes here (its time of day stays); not the future.
                       <DateField
@@ -1062,15 +1024,15 @@ export function ProjectDetailPage() {
                         onChange={(v) => { if (v && v <= zoneDateKey(new Date())) editWork(log.id, { started_at: zoneToIso(v, zoneTimeKey(new Date(log.date))) }) }}
                         title="Worked on"
                         ariaLabel="Day of this work entry"
-                        style={{ width: 76, flex: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', padding: '3px 0 0', whiteSpace: 'normal' }}
+                        style={{ width: 76, flex: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-mono-l)', color: 'var(--ink-faint)', background: 'none', border: 'none', padding: '3px 0 0', whiteSpace: 'normal' }}
                       />
                     ) : (
                       <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
                     )}
                     <span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>
                       {log.type === 'update' && (
-                        <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', fontSize: 'var(--fs-meta)', padding: '2px 6px', marginRight: 6, borderRadius: 3 }}>
-                          update
+                        <span className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', fontSize: 'var(--fs-meta)', padding: '2px 6px', marginRight: 6, borderRadius: 'var(--radius-pill)' }}>
+                          Update
                         </span>
                       )}
                       {/* Click the note to edit it in place; ✕ deletes with Undo (Kai 2026-10-06). */}
@@ -1110,7 +1072,7 @@ export function ProjectDetailPage() {
                         {log.duration % 60 > 0 ? `${log.duration % 60}m` : ''}
                       </span>
                     ))}
-                    {log.type === 'work' && <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginLeft: 8 }}>manual</span>}
+                    {log.type === 'work' && <span className="mchip" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginLeft: 8 }}>Manual</span>}
                     <button type="button" className="kf-hit" onClick={() => deleteLog(log)} title="Delete" aria-label={`Delete ${log.type}: ${log.note}`} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--acc-terra)', marginLeft: 8, flex: 'none' }}>✕</button>
                   </div>
                 )
@@ -1118,7 +1080,7 @@ export function ProjectDetailPage() {
             </div>
 
             {/* Archive / Change type action footer */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 18px', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px 18px', marginTop: 24, paddingTop: 14, borderTop: '1px solid var(--line-dashed)' }}>
               {/* One tap + Undo (product audit 2026-10-12): archived now, back to the list; the toast offers
                   "Press it ✿" — the pressing ceremony is optional, never a step in the way. */}
               <button
@@ -1128,13 +1090,13 @@ export function ProjectDetailPage() {
                   finishProjectWithUndo(project, () => navigate(`/herbarium?press=${project.id}`))
                   navigate('/projects')
                 }}
-                style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+                style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}
               >
                 Archive project
               </button>
               {typeLink}
               <span style={{ flex: 1 }} />
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
+              <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
                 100% milestones → the wisteria's full cascade ✿
               </span>
             </div>
@@ -1169,13 +1131,12 @@ export function ProjectDetailPage() {
 
     return (
       // deviation(2026-07-18 audit): export caps at 760px; Kai wants full width
-      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', overflow: 'clip', position: 'relative' }}>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 40, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5 }} />
+      <div style={{ background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-card)', overflow: 'clip', position: 'relative' }}>
 
         <div style={{ padding: isMobile ? '20px 16px 24px' : '30px 40px 36px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
             <BackLink to="/projects">All projects</BackLink>
-            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>
+            <span className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
               {domain?.name || 'Personal'} · ongoing since {new Date(area.created_at).toLocaleDateString('en-US', { month: 'short' })}
             </span>
           </div>
@@ -1183,11 +1144,11 @@ export function ProjectDetailPage() {
           <div style={{ display: 'flex', alignItems: 'center', flexWrap: isMobile ? 'wrap' : undefined, gap: '8px 14px', marginTop: 20 }}>
             <span style={{ width: 15, height: 15, borderRadius: '50%', background: area.color || 'var(--acc-buttercream)', flex: 'none' }} />
             <div style={{ flex: isMobile ? '1 1 calc(100% - 29px)' : 1, minWidth: 0 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-buttercream-text)' }}>Area · ongoing</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>{titleNode(area.name, (next) => renameArea(area, next))}</h1>
             </div>
-            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 3, marginLeft: isMobile ? 29 : undefined }}>
-              area, not a project
+            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 'var(--radius-pill)', marginLeft: isMobile ? 29 : undefined }}>
+              Area, not a project
             </span>
           </div>
 
@@ -1195,7 +1156,7 @@ export function ProjectDetailPage() {
           {colorRow(area.color, (c) => recolorArea(area, c))}
 
           {/* Kai 2026-10-07: an area's domain, set or changed here (its tasks follow; Undo in the toast) — the project page's own field. */}
-          <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
+          <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Domain</div>
           <Select
             value={area.domain_id ?? ''}
             onChange={(v) => reparentArea(area, v || null, domains.find((d) => d.id === v)?.name ?? '')}
@@ -1206,8 +1167,8 @@ export function ProjectDetailPage() {
 
           {/* Cadence health cards */}
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : '1fr 1fr', gap: 14, marginTop: 22 }}>
-            <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 9, padding: '14px 16px' }}>
-              <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Cadence</div>
+            <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '14px 16px' }}>
+              <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>Cadence</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span
                   style={{
@@ -1230,7 +1191,7 @@ export function ProjectDetailPage() {
                       style={{
                         flex: 1,
                         height: 22,
-                        borderRadius: 3,
+                        borderRadius: 'var(--radius-card)',
                         background: tended ? 'var(--acc-moss)' : 'color-mix(in oklch, var(--ink-body) 8%, transparent)',
                         opacity: tended ? opacities[i] : 1,
                       }}
@@ -1239,31 +1200,34 @@ export function ProjectDetailPage() {
                 })}
               </div>
               <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 8 }}>
-                tended {tendedCount} of the last 5 weeks
+                Tended {tendedCount} of the last 5 weeks
               </div>
             </div>
 
-            <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 9, padding: '14px 16px' }}>
-              <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>This month</div>
+            <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '14px 16px' }}>
+              <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>This month</div>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>
                   {closedThisMonth.length}
                 </span>
                 <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>tasks closed</span>
               </div>
-              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 11 }}>no target — areas just keep going</div>
+              <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 11 }}>No target — areas just keep going</div>
               <div className="fhelp" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 6 }}>{openTasks.length} open right now</div>
             </div>
           </div>
 
           {/* Open tasks */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 6px' }}>
-            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Open · {oneOffTasks.length}</span>
-            <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-            <span onClick={() => setShowAddTask(!showAddTask)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
-              + add task
-            </span>
-          </div>
+          <SectionLabel
+            style={{ margin: '24px 0 6px' }}
+            action={
+              <span onClick={() => setShowAddTask(!showAddTask)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer', fontSize: 'var(--fs-meta)', padding: '3px 8px', borderRadius: 999 }}>
+                + Add task
+              </span>
+            }
+          >
+            Open · {oneOffTasks.length}
+          </SectionLabel>
 
           {showAddTask && (
             <form onSubmit={handleAddAreaTask} style={{ display: 'flex', gap: 8, padding: '8px 0' }}>
@@ -1272,9 +1236,9 @@ export function ProjectDetailPage() {
                 value={newAddTaskTitle}
                 onChange={(e) => setNewAddTaskTitle(e.target.value)}
                 placeholder="Task title…"
-                style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 6, padding: '6px 10px', outline: 'none', color: 'var(--ink-body)' }}
+                style={{ flex: 1, font: 'inherit', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', padding: '6px 10px', outline: 'none', color: 'var(--ink-body)' }}
               />
-              <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontSize: 12 }}>Add</button>
+              <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', borderRadius: 'var(--radius-input)', padding: '6px 14px', cursor: 'pointer', fontSize: 'var(--fs-meta)' }}>Add</button>
             </form>
           )}
 
@@ -1283,10 +1247,7 @@ export function ProjectDetailPage() {
           </div>
 
           {/* Keeps coming back routines */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 6px' }}>
-            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Keeps coming back</span>
-            <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-          </div>
+          <SectionLabel style={{ margin: '24px 0 6px' }}>Keeps coming back</SectionLabel>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {repeatingTasks.map((t, i) => taskRow(t, i < repeatingTasks.length - 1))}
@@ -1298,16 +1259,13 @@ export function ProjectDetailPage() {
           </div>
 
           {/* Recent activities */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '24px 0 8px' }}>
-            <span className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Recent</span>
-            <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-          </div>
+          <SectionLabel style={{ margin: '24px 0 8px' }}>Recent</SectionLabel>
 
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {areaRecentLogs.slice(0, 5).map((log) => {
               const dateLabel = new Date(log.created_at).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })
               return (
-                <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                <div key={log.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '9px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
                   <span className="fhelp" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>
                   <span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>
                     {log.event_type === 'task.completed' ? "Completed a task" : "Updated area"}
@@ -1323,10 +1281,10 @@ export function ProjectDetailPage() {
           </div>
 
           {/* Actions footer */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px solid var(--line-dashed)' }}>
             {typeLink}
-            <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
-              an area is a garden bed — never done, just kept ✿
+            <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
+              An area is a garden bed — never done, just kept ✿
             </span>
           </div>
         </div>

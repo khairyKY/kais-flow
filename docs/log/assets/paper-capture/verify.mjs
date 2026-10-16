@@ -372,7 +372,7 @@ for (const theme of ['day', 'night']) {
     check(`11e-${name} "From your page · 9 things" (7 + 1 + 1)`, head === 'From your page · 9 things', head)
     check(`11e-${name} meta: OS LECTURE 3 · 3 PAGES · READ`, /OS LECTURE 3 · 3 PAGES · READ \d\d:\d\d/i.test(await text(sheet(page).locator('.pp-meta'))), await text(sheet(page).locator('.pp-meta')))
     const unsure = sheet(page).locator('.pp-row-fg.is-check')
-    check(`11e-${name} two unsure lines, tinted, "Check this"`, (await unsure.count()) === 2 && (await text(unsure.first())).includes('CHECK THIS'), await unsure.count())
+    check(`11e-${name} two unsure lines, tinted, "Check this"`, (await unsure.count()) === 2 && (await text(unsure.first())).includes('Check this'), await unsure.count())
     await sleep(500)
     const crop = await unsure.first().locator('.pp-crop').evaluate((el) => {
       const img = el.querySelector('img')
@@ -451,7 +451,7 @@ for (const theme of ['day', 'night']) {
     check('11h Arabic lines read right-to-left inside the LTR app, in their own words', dirs.length === 3 && dirs.every(([, d]) => d === 'rtl') && dirs[1][0] === 'اجتماع الفريق الساعة ٥', JSON.stringify(dirs))
     const meeting = sheet(page).locator('.pp-row', { hasText: 'اجتماع' })
     check('11h "٥" read as today 17:00, an Event, unsure → its crop', (await text(meeting.locator('.pp-chips'))).replace(/\s+/g, ' ').includes('Event Today · 17:00') && (await meeting.locator('.pp-crop').count()) === 1, await text(meeting.locator('.pp-chips')))
-    check('11h meta says Arabic', /ARABIC/.test(await text(sheet(page).locator('.pp-meta'))), await text(sheet(page).locator('.pp-meta')))
+    check('11h meta says Arabic', /Arabic/.test(await text(sheet(page).locator('.pp-meta'))), await text(sheet(page).locator('.pp-meta')))
     await sleep(400)
     await shot(page, '11h-day')
     const w0 = state.writes.length

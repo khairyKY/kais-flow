@@ -442,6 +442,565 @@ if (want('p4')) {
   await ctx.close()
 }
 
+// ── slots-ux (Kai 2026-10-16: "there is something wrong with the logic of the time slots, how do I
+// remove a task from the time slot"): every flow in the handoff's table, desktop and phone. ──
+const rowPt = async (page, slotN = CODE, taskN = HELD, day) => center(await slotRow(page, slotN, taskN, day).locator('.kf-ev-slot-title').boundingBox())
+/** The task's own blocks on the grid (a held task has none — only its row inside the slot). */
+const ownBlocks = (page, title) => page.locator('.fc-timegrid-event .kf-ev-text > .fc-event-title', { hasText: title }).count()
+const taskWrites = (state, taskN, from) => posts(state, 'tasks', from).filter((x) => x.id === id(taskN))
+const railSec = async (page, name) => {
+  const b = await page.locator(`.cal-rail [data-section="${name}"]`).first().boundingBox()
+  return { x: b.x + b.width / 2, y: b.y + 12 }
+}
+const lanePt = async (page, hhmm, day = '2026-10-12') => {
+  const lane = await page.locator(`td.fc-timegrid-slot-lane[data-time="${hhmm}:00"]`).boundingBox()
+  const col = await page.locator(`td.fc-timegrid-col[data-date="${day}"]`).boundingBox()
+  return { x: col.x + col.width / 2, y: lane.y + 5 }
+}
+const both = { tasks: [...inCode.tasks, task(TUEHELD, 'Tuesday slot task', { duration_min: 30, due_at: iso('09:00', 13), slot_id: eid(SHAHEEN), slot_date: '2026-10-13', scheduled_start: iso('13:00', 13), scheduled_end: iso('15:00', 13) })] }
+
+// F1: drag a held row onto the rail (Inbox) → out of the slot, back in the rail's Today; Undo → back in.
+if (want('f1')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode })
+  await slotPoint(page, '10:30')
+  let w0 = state.writes.length
+  await mouseDrag(page, await rowPt(page), await railSec(page, 'inbox'))
+  await settle(state)
+  check('f1 row → rail: out of the slot, unscheduled', NOSLOT(lastOf(state, 'tasks', id(HELD), w0)), JSON.stringify(lastOf(state, 'tasks', id(HELD), w0)?.slot_id))
+  check('f1 …the row left the slot, the card is in the rail, no block of its own', (await slotRow(page, CODE, HELD).count()) === 0 && (await card(page, HELD).count()) === 1 && (await ownBlocks(page, 'Write the slot spec')) === 0)
+  check('f1 toast "Out of the slot · Write the slot spec"', await toastSoon(page, 'Out of the slot · Write the slot spec'))
+  await shot(page, 'f1-dragged-to-rail')
+  w0 = state.writes.length
+  await undo(page, 'Out of the slot')
+  await settle(state)
+  check('f1 Undo: back in the slot', lastOf(state, 'tasks', id(HELD), w0)?.slot_id === eid(CODE) && (await slotRow(page, CODE, HELD).count()) === 1 && (await card(page, HELD).count()) === 0)
+  check('f1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// F2: onto the rail's Today → out of the slot and due today; onto Overdue → the soft-no (nothing).
+if (want('f2')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode })
+  await slotPoint(page, '10:30')
+  let w0 = state.writes.length
+  await mouseDrag(page, await rowPt(page), await railSec(page, 'overdue'))
+  await settle(state)
+  check('f2 row → Overdue: nothing changes (the soft-no)', taskWrites(state, HELD, w0).length === 0 && (await slotRow(page, CODE, HELD).count()) === 1)
+  w0 = state.writes.length
+  await mouseDrag(page, await rowPt(page), await railSec(page, 'today'))
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(HELD), w0)
+  check('f2 row → Today: out of the slot, due today 09:00', NOSLOT(t) && t?.due_at === iso('09:00'), JSON.stringify(t && [t.slot_id, t.due_at]))
+  check('f2 toast "Out of the slot · Write the slot spec · Today"', await toastSoon(page, 'Out of the slot · Write the slot spec · Today'))
+  check('f2 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// F3: onto an empty time (Tue 11:00) → its own block there, once; Tasks reads its block's time, not
+// the slot; Undo → back in the slot, the block gone.
+if (want('f3')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode })
+  await slotPoint(page, '10:30')
+  let w0 = state.writes.length
+  await mouseDrag(page, await rowPt(page), await lanePt(page, '11:00', '2026-10-13'))
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(HELD), w0)
+  const blocks = posts(state, 'calendar_events', w0).filter((e) => e.task_id === id(HELD))
+  check('f3 row → empty time: out of the slot, at Tue 11:00', t?.slot_id === null && t?.slot_date === null && t?.scheduled_start === iso('11:00', 13), JSON.stringify(t && [t.slot_id, t.scheduled_start]))
+  check('f3 …one block of its own there, 45 minutes', blocks.length === 1 && blocks[0].starts_at === iso('11:00', 13) && blocks[0].ends_at === iso('11:45', 13), JSON.stringify(blocks.map((b) => [b.starts_at, b.ends_at])))
+  await sleep(300)
+  check('f3 …drawn once: its block, no row in the slot', (await ownBlocks(page, 'Write the slot spec')) === 1 && (await slotRow(page, CODE, HELD).count()) === 0)
+  check('f3 toast "Scheduled · Write the slot spec"', await toastSoon(page, 'Scheduled · Write the slot spec'))
+  await shot(page, 'f3-own-block')
+  w0 = state.writes.length
+  await undo(page, 'Scheduled · Write the slot spec')
+  await settle(state)
+  await sleep(300)
+  check('f3 Undo: back in the slot, its block trashed', lastOf(state, 'tasks', id(HELD), w0)?.slot_id === eid(CODE) && !!lastOf(state, 'calendar_events', blocks[0]?.id, w0)?.deleted_at && (await slotRow(page, CODE, HELD).count()) === 1 && (await ownBlocks(page, 'Write the slot spec')) === 0)
+  check('f3 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+  // The same move, then the Tasks list: its block's time, no slot.
+  const b = await open('/calendar', { tables: inCode })
+  await slotPoint(b.page, '10:30')
+  await mouseDrag(b.page, await rowPt(b.page), await lanePt(b.page, '11:00', '2026-10-13'))
+  await settle(b.state)
+  // slot-outline: the drop always lands (checked above), but the reload restores the query cache the
+  // persister last saved (throttled ~1s) and reads it as fresh: give it time to save the drop first.
+  await sleep(1500)
+  await b.page.goto(`${BASE}/tasks?list=all`, { waitUntil: 'networkidle' })
+  await sleep(1200)
+  const row = await b.page.locator(`#task-${id(HELD)}`).innerText().catch(() => '')
+  check('f3 Tasks then reads "Tue 11:00", no "in Code block"', /Tue 11:00/.test(row) && !/in Code block/.test(row), row.replace(/\n/g, ' '))
+  await b.ctx.close()
+}
+
+// F4: onto another slot (Monday's Shaheen🛞) → in that one; Undo → back in Code block💻. F5: dropped
+// back on its own slot → nothing changes.
+if (want('f4')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode })
+  await slotPoint(page, '11:30')
+  let w0 = state.writes.length
+  await mouseDrag(page, await rowPt(page), await lanePt(page, '13:30'))
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(HELD), w0)
+  check('f4 row → Shaheen🛞: in that slot (series row, Monday, its times)', t?.slot_id === eid(SHAHEEN) && t?.slot_date === '2026-10-12' && t?.scheduled_start === iso('13:00'), JSON.stringify(t && [t.slot_id, t.slot_date, t.scheduled_start]))
+  await sleep(300)
+  check('f4 …drawn in Shaheen🛞 only, no block of its own', (await slotRow(page, SHAHEEN, HELD).count()) === 1 && (await slotRow(page, CODE, HELD).count()) === 0 && (await ownBlocks(page, 'Write the slot spec')) === 0)
+  check('f4 toast "In Shaheen🛞 · Write the slot spec"', await toastSoon(page, 'In Shaheen🛞 · Write the slot spec'))
+  await shot(page, 'f4-other-slot')
+  w0 = state.writes.length
+  await undo(page, 'In Shaheen')
+  await settle(state)
+  check('f4 Undo: back in Code block💻', lastOf(state, 'tasks', id(HELD), w0)?.slot_id === eid(CODE) && (await slotRow(page, CODE, HELD).count()) === 1)
+  await sleep(500)
+  w0 = state.writes.length
+  const from = await rowPt(page)
+  await mouseDrag(page, from, { x: from.x, y: from.y + 40 })
+  await settle(state)
+  check('f5 dropped back on its own slot: nothing written, still in it', taskWrites(state, HELD, w0).length === 0 && (await slotRow(page, CODE, HELD).count()) === 1)
+  check('f4 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// F6: hover a held row → its × (Out of the slot) shows; a click takes it out; Undo puts it back.
+// F7: a click on the row opens the task (not the slot's menu); a right-click its task menu.
+if (want('f6')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode })
+  await slotPoint(page, '10:30')
+  const x = slotRow(page, CODE, HELD).locator('.kf-ev-slot-out')
+  check('f6 the × is hidden until the row is hovered', !(await x.isVisible()))
+  await slotRow(page, CODE, HELD).hover()
+  await sleep(200)
+  check('f6 …and shows on hover, named "Out of the slot"', (await x.isVisible()) && (await x.getAttribute('title')) === 'Out of the slot')
+  await shot(page, 'f6-hover-x')
+  let w0 = state.writes.length
+  await x.click()
+  await settle(state)
+  check('f6 × → out of the slot, back in the rail', NOSLOT(lastOf(state, 'tasks', id(HELD), w0)) && (await card(page, HELD).count()) === 1 && (await toastSoon(page, 'Out of the slot · Write the slot spec')))
+  w0 = state.writes.length
+  await undo(page, 'Out of the slot')
+  await settle(state)
+  check('f6 Undo: back in the slot', lastOf(state, 'tasks', id(HELD), w0)?.slot_id === eid(CODE) && (await slotRow(page, CODE, HELD).count()) === 1)
+  await sleep(300)
+  await slotRow(page, CODE, HELD).locator('.kf-ev-slot-title').click()
+  await sleep(800)
+  check('f7 a click on the row opens the task (?task=), not the slot\'s menu', page.url().includes(`task=${id(HELD)}`) && (await page.locator('[role="menuitem"]', { hasText: 'Link a task' }).count()) === 0, page.url())
+  await page.keyboard.press('Escape')
+  await sleep(500)
+  await slotRow(page, CODE, HELD).locator('.kf-ev-slot-title').click({ button: 'right' })
+  await sleep(500)
+  check('f7 a right-click on the row: its task menu, with "Out of the slot"', (await page.locator('[role="menuitem"]', { hasText: 'Out of the slot' }).count()) === 1 && (await page.locator('[role="menuitem"]', { hasText: /^Edit$/ }).count()) === 0)
+  await shot(page, 'f7-row-menu')
+  check('f6 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+/** The slot's own popover (a click on its title), then one of its rows. */
+async function slotMenu(page, n, day) {
+  await fcBlock(page, n, day).locator('.kf-ev-text > .fc-event-title').first().click()
+  await sleep(600)
+}
+
+// F8: the slot's Link a task… → that task goes IN the slot; the slot stays a slot with what it held.
+if (want('f8')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode })
+  await slotPoint(page, '10:30')
+  await slotMenu(page, CODE)
+  await page.locator('[role="menuitem"]', { hasText: 'Link a task' }).first().hover()
+  await sleep(600)
+  const w0 = state.writes.length
+  await page.locator('[role="option"], [role="menuitem"]', { hasText: 'Review Kai' }).first().click()
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(REVIEW), w0)
+  check('f8 Link a task… on the slot: Review Kai IN it', t?.slot_id === eid(CODE) && t?.slot_date === '2026-10-12' && t?.scheduled_start === iso('10:00'), JSON.stringify(t && [t.slot_id, t.scheduled_start]))
+  check('f8 …the slot stays a Time block, no task block made', posts(state, 'calendar_events', w0).every((e) => e.type !== 'task'))
+  await page.keyboard.press('Escape')
+  await sleep(400)
+  check('f8 …it draws both tasks', (await slotRow(page, CODE, REVIEW).count()) === 1 && (await slotRow(page, CODE, HELD).count()) === 1, await fcBlock(page, CODE).innerText().catch(() => ''))
+  await shot(page, 'f8-linked-into-slot')
+  check('f8 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// F9: the slot made an Event (More → Event) → its task back in the rail, with Undo.
+if (want('f9')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode })
+  await slotPoint(page, '10:30')
+  await slotMenu(page, CODE)
+  await page.locator('[role="menuitem"]', { hasText: 'More' }).first().hover()
+  await sleep(600)
+  let w0 = state.writes.length
+  await page.locator('[role="menuitem"], [role="menuitemradio"], [role="menuitemcheckbox"]', { hasText: /^Event$/ }).first().click()
+  await settle(state)
+  check('f9 More → Event: the task out of the slot, in the rail', NOSLOT(lastOf(state, 'tasks', id(HELD), w0)) && lastOf(state, 'calendar_events', eid(CODE), w0)?.type === 'event' && (await card(page, HELD).count()) === 1)
+  check('f9 toast "Out of the slot · Write the slot spec"', await toastSoon(page, 'Out of the slot · Write the slot spec'))
+  await page.keyboard.press('Escape')
+  w0 = state.writes.length
+  await undo(page, 'Out of the slot')
+  await settle(state)
+  await sleep(300)
+  check('f9 Undo: a Time block again, holding it', lastOf(state, 'calendar_events', eid(CODE), w0)?.type === 'time_block' && lastOf(state, 'tasks', id(HELD), w0)?.slot_id === eid(CODE) && (await slotRow(page, CODE, HELD).count()) === 1)
+  check('f9 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// F10: Monday's Shaheen🛞 → Repeat → Does not repeat: Tuesday's is gone, so its task comes out (Undo).
+if (want('f10')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: both })
+  await slotPoint(page, '14:00')
+  await slotMenu(page, SHAHEEN)
+  await page.locator('[role="menuitem"]', { hasText: 'Daily' }).first().hover()
+  await sleep(600)
+  let w0 = state.writes.length
+  await page.locator('[role="menuitem"], [role="menuitemradio"]', { hasText: /Does not repeat|Never/ }).first().click()
+  await settle(state)
+  check('f10 Repeat → none: Tuesday\'s task out of the slot it lost', NOSLOT(lastOf(state, 'tasks', id(TUEHELD), w0)) && !lastOf(state, 'calendar_events', eid(SHAHEEN), w0)?.recurrence_rule, JSON.stringify(lastOf(state, 'tasks', id(TUEHELD), w0)?.slot_id))
+  await page.keyboard.press('Escape')
+  w0 = state.writes.length
+  await page.locator('.kf-toast', { hasText: /Does not repeat|Never/ }).getByRole('button', { name: 'Undo' }).click()
+  await settle(state)
+  await sleep(300)
+  check('f10 Undo: repeating again, Tuesday\'s task back in its day', lastOf(state, 'tasks', id(TUEHELD), w0)?.slot_id === eid(SHAHEEN) && (await slotRow(page, SHAHEEN, TUEHELD, '2026-10-13').count()) === 1)
+  check('f10 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// F11: resize the slot (its bottom edge to 12:30) → its task's end follows. F12: Tuesday's Shaheen🛞
+// dragged to 15:30 on its own → its task goes with the detached copy; Monday's stays.
+if (want('f11')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: both })
+  await slotPoint(page, '11:30')
+  const b = await fcBlock(page, CODE).boundingBox()
+  await page.mouse.move(b.x + b.width / 2, b.y + b.height - 6)
+  await sleep(200)
+  let w0 = state.writes.length
+  await mouseDrag(page, { x: b.x + b.width / 2, y: b.y + b.height - 3 }, { x: b.x + b.width / 2, y: (await laneY(page, '12:30')) + 2 })
+  await settle(state)
+  const slot = lastOf(state, 'calendar_events', eid(CODE), w0)
+  const t = lastOf(state, 'tasks', id(HELD), w0)
+  check('f11 slot resized later: its task\'s end follows', !!slot && Date.parse(slot.ends_at) > Date.parse(iso('12:00')) && t?.scheduled_end === slot.ends_at && t?.scheduled_start === iso('10:00'), JSON.stringify([slot?.ends_at, t?.scheduled_end]))
+  await slotPoint(page, '14:00')
+  const g = center(await fcBlock(page, SHAHEEN, '2026-10-13').locator('.kf-ev-text > .fc-event-title').first().boundingBox())
+  w0 = state.writes.length
+  await mouseDrag(page, g, { x: g.x, y: g.y + (await laneY(page, '15:30')) - (await laneY(page, '13:00')) })
+  await settle(state)
+  const copy = posts(state, 'calendar_events', w0).find((e) => e.series_id === eid(SHAHEEN))
+  const u = lastOf(state, 'tasks', id(TUEHELD), w0)
+  check('f12 Tuesday\'s occurrence dragged on its own: its task goes with the copy', !!copy && u?.slot_id === copy.id && u?.scheduled_start === copy.starts_at && u?.slot_date === '2026-10-13', JSON.stringify([copy?.starts_at, u?.slot_id === copy?.id, u?.scheduled_start]))
+  check('f12 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// F13: replan a held task (Tasks → ⋯ → Tomorrow) → out of the slot, due tomorrow; the row no longer
+// says "in Code block"; the calendar no longer draws it.
+if (want('f13')) {
+  const { ctx, page, errors, state } = await open('/tasks?list=all', { tables: inCode })
+  const row = page.locator(`#task-${id(HELD)}`)
+  check('f13 Tasks reads "in Code block💻 · 10:00" first', /in Code block💻 · 10:00/.test(await row.innerText().catch(() => '')))
+  await row.click({ button: 'right' })
+  await sleep(400)
+  const w0 = state.writes.length
+  await page.locator('[role="menuitem"]', { hasText: 'Tomorrow' }).first().click()
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(HELD), w0)
+  check('f13 Tomorrow: out of the slot, due tomorrow 09:00', NOSLOT(t) && t?.due_at === iso('09:00', 13), JSON.stringify(t && [t.slot_id, t.due_at]))
+  await sleep(400)
+  check('f13 …the row no longer says "in Code block"', !/in Code block/.test(await row.innerText().catch(() => '')))
+  await page.goto(`${BASE}/calendar`, { waitUntil: 'networkidle' })
+  await sleep(1200)
+  await slotPoint(page, '10:30')
+  check('f13 …nor does the calendar draw it in the slot', (await slotRow(page, CODE, HELD).count()) === 0 && (await ownBlocks(page, 'Write the slot spec')) === 0)
+  check('f13 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// F14: Today (desktop): a held Top 3 pick and a held "Also open" row both read "in Code block💻 · 10:00".
+if (want('f14')) {
+  const pick = { tasks: [...TASKS, task(HELD, 'Write the slot spec', { duration_min: 45, due_at: iso('09:00'), top3: true, top3_rank: 1, slot_id: eid(CODE), slot_date: '2026-10-12', scheduled_start: iso('10:00'), scheduled_end: iso('12:00') }), task(5, 'Also held', { due_at: iso('09:00'), slot_id: eid(CODE), slot_date: '2026-10-12', scheduled_start: iso('10:00'), scheduled_end: iso('12:00') })] }
+  const { ctx, page, errors } = await open('/today', { tables: pick })
+  await sleep(800)
+  const top = await page.locator(`#task-${id(HELD)}`).first().innerText().catch(() => '')
+  const also = await page.locator(`#task-${id(5)}`).first().innerText().catch(() => '')
+  check('f14 Today: the Top 3 pick reads "in Code block💻 · 10:00"', /in Code block💻 · 10:00/.test(top), top.replace(/\n/g, ' '))
+  check('f14 Today: an Also open row reads it too (not just "Due today")', /in Code block💻 · 10:00/.test(also), also.replace(/\n/g, ' '))
+  await shot(page, 'f14-today')
+  check('f14 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+  // Phone Today: the same for the pick.
+  const m = await open('/today', { tables: pick, view: phone })
+  await sleep(800)
+  const mtop = await m.page.locator(`#task-${id(HELD)}`).first().innerText().catch(() => '')
+  check('f14 phone Today: the Top 3 pick reads "in Code block💻 · 10:00"', /in Code block💻 · 10:00/.test(mtop), mtop.replace(/\n/g, ' '))
+  await shot(m.page, 'f14-phone-today')
+  await m.ctx.close()
+}
+
+// M1: phone — a tap on a held row opens its sheet: the slot right under the chips with "Out of the
+// slot"; a tap takes it out (Undo); the sheet then offers free times.
+if (want('m1')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: inCode, view: phone })
+  await pcBlock(page, CODE).evaluate((el) => el.scrollIntoView({ block: 'center' }))
+  await sleep(300)
+  await pcRow(page, CODE, HELD).locator('.pc-name').click()
+  await sleep(900)
+  const slotCard = page.locator('.ts-block.is-slot')
+  check('m1 phone: the sheet shows "In Code block💻 · Mon 12 · 10:00–12:00" first', /In Code block/.test(await slotCard.innerText().catch(() => '')) && /10:00–12:00/.test(await slotCard.innerText().catch(() => '')), await slotCard.innerText().catch(() => ''))
+  const btn = page.getByRole('button', { name: 'Out of the slot' })
+  check('m1 phone: …with "Out of the slot" in view', (await btn.count()) === 1 && (await btn.isVisible()) && (await btn.boundingBox()).y + 40 < 844)
+  await shot(page, 'm1-phone-sheet')
+  let w0 = state.writes.length
+  await btn.click()
+  await settle(state)
+  check('m1 phone: Out of the slot → unscheduled (toast with Undo)', NOSLOT(lastOf(state, 'tasks', id(HELD), w0)) && (await toastSoon(page, 'Out of the slot · Write the slot spec')))
+  await sleep(400)
+  check('m1 phone: the card gives way to free times', (await slotCard.count()) === 0 && (await page.locator('.kf-pk-slot').count()) > 0)
+  w0 = state.writes.length
+  await undo(page, 'Out of the slot')
+  await settle(state)
+  check('m1 phone: Undo → back in the slot, the card back', lastOf(state, 'tasks', id(HELD), w0)?.slot_id === eid(CODE) && (await page.locator('.ts-block.is-slot').count()) === 1)
+  check('m1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── slot-outline (Kai 2026-10-16: "can't we drag and drop it…"): on the phone a HOLD on a task row
+// inside a slot lifts THAT task, not the slot. Real CDP touch (calendar-phone's recipe). Drop on empty
+// time → its own block there; on another slot → into it; on the strip → out of the slot; back on its own
+// slot → nothing. Each with Undo. A hold on the slot's title still lifts the slot. ──
+const touch = (cdp, type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts })
+/** A finger held on `from` (550ms > the 400ms long press), moved to `to`, then let go (unless `keep`). */
+async function holdDrag(cdp, from, to, { keep = false, mid, during } = {}) {
+  await touch(cdp, 'touchStart', [from])
+  await sleep(200)
+  if (during) await during()
+  await sleep(350)
+  for (let i = 1; i <= 14; i++) {
+    await touch(cdp, 'touchMove', [{ x: from.x + ((to.x - from.x) * i) / 14, y: from.y + ((to.y - from.y) * i) / 14 }])
+    await sleep(30)
+  }
+  await sleep(250)
+  if (mid) await mid()
+  if (keep) return
+  await touch(cdp, 'touchEnd', [])
+  await sleep(600)
+}
+const pcY = (page, hhmm) =>
+  page.locator('.pc-canvas').evaluate((c, t) => {
+    const [h, m] = t.split(':').map(Number)
+    return c.getBoundingClientRect().top + ((h * 60 + m) * 64) / 60
+  }, hhmm)
+async function phoneOpen() {
+  const o = await open('/calendar', { tables: inCode, view: phone })
+  await pcBlock(o.page, CODE).evaluate((el) => el.scrollIntoView({ block: 'center' }))
+  await sleep(400)
+  o.cdp = await o.ctx.newCDPSession(o.page)
+  o.row = center(await pcRow(o.page, CODE, HELD).locator('.pc-name').boundingBox())
+  return o
+}
+const colX = async (page) => {
+  const b = await pcBlock(page, CODE).boundingBox()
+  return b.x + b.width / 2
+}
+
+// D1: hold the row → the task lifts (the slot doesn't); the bloom shows during the hold; over empty
+// time 12:30 a dashed ghost + "12:30–13:15"; let go → its own block there, out of the slot; Undo → back.
+if (want('d1')) {
+  const { ctx, page, errors, state, cdp, row } = await phoneOpen()
+  const x = await colX(page)
+  const to = { x, y: (await pcY(page, '12:30')) + 6 }
+  const w0 = state.writes.length
+  await holdDrag(cdp, row, to, {
+    during: async () => check('d1 phone: the hold blooms under the finger on the row', (await pcRow(page, CODE, HELD).locator('.kf-press-bloom').count()) === 1),
+    mid: async () => {
+      check('d1 phone: the task is lifted, not the slot', (await page.locator(`.pc-held-task[data-held-task="${id(HELD)}"]`).count()) === 1 && (await page.locator('.pc-block.is-lifted').count()) === 0)
+      check('d1 phone: its place in the slot stays, dashed', (await pcRow(page, CODE, HELD).getAttribute('class'))?.includes('is-gone'))
+      const ghost = await page.locator('.pc-ghost.is-held').count()
+      const bubble = await page.locator('.pc-bubble').innerText().catch(() => '')
+      check('d1 phone: over empty time: a ghost and "12:30–13:15" (its 45 minutes)', ghost === 1 && bubble === '12:30–13:15', bubble)
+      await shot(page, 'd1-phone-lifted')
+    },
+  })
+  await settle(state)
+  const blk = posts(state, 'calendar_events', w0).find((e) => e.task_id === id(HELD) && !e.deleted_at)
+  check('d1 phone: let go → its own block at 12:30–13:15', blk?.starts_at === iso('12:30') && blk?.ends_at === iso('13:15'), JSON.stringify(blk && [blk.starts_at, blk.ends_at]))
+  check('d1 phone: …out of the slot (no slot_id)', lastOf(state, 'tasks', id(HELD), w0)?.slot_id === null && (await pcRow(page, CODE, HELD).count()) === 0)
+  check('d1 phone: the slot did not move', !lastOf(state, 'calendar_events', eid(CODE), w0))
+  check('d1 phone: toast "Scheduled · Write the slot spec"', await toastSoon(page, 'Scheduled · Write the slot spec'))
+  await shot(page, 'd1-phone-dropped')
+  const w1 = state.writes.length
+  await undo(page, 'Scheduled')
+  await settle(state)
+  check('d1 phone: Undo → back in the slot', lastOf(state, 'tasks', id(HELD), w1)?.slot_id === eid(CODE) && (await pcRow(page, CODE, HELD).count()) === 1)
+  check('d1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// D2: dragged onto Shaheen🛞 (13:00–15:00 today) → it rings while over it; let go → into it; Undo.
+if (want('d2')) {
+  const { ctx, page, errors, state, cdp, row } = await phoneOpen()
+  const to = { x: await colX(page), y: (await pcY(page, '13:45')) }
+  const w0 = state.writes.length
+  await holdDrag(cdp, row, to, {
+    mid: async () => {
+      check('d2 phone: over another slot it rings (no ghost)', (await pcBlock(page, SHAHEEN).getAttribute('class'))?.includes('is-drop') && (await page.locator('.pc-ghost.is-held').count()) === 0)
+      await shot(page, 'd2-phone-over-slot')
+    },
+  })
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(HELD), w0)
+  check('d2 phone: let go → in Shaheen🛞 today (13:00–15:00)', t?.slot_id === eid(SHAHEEN) && t?.slot_date === '2026-10-12' && t?.scheduled_start === iso('13:00'), JSON.stringify(t && [t.slot_id, t.slot_date, t.scheduled_start]))
+  check('d2 phone: no block of its own', posts(state, 'calendar_events', w0).every((e) => e.task_id !== id(HELD)))
+  check('d2 phone: toast "In Shaheen🛞 · Write the slot spec"', await toastSoon(page, 'In Shaheen🛞 · Write the slot spec'))
+  const w1 = state.writes.length
+  await undo(page, 'In Shaheen')
+  await settle(state)
+  check('d2 phone: Undo → back in Code block💻', lastOf(state, 'tasks', id(HELD), w1)?.slot_id === eid(CODE))
+  check('d2 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// D3: dragged up onto the strip (off the grid) → out of the slot, back in Today's strip; Undo.
+if (want('d3')) {
+  const { ctx, page, errors, state, cdp, row } = await phoneOpen()
+  const strip = await page.locator('.pc-uns').boundingBox()
+  const w0 = state.writes.length
+  await holdDrag(cdp, row, { x: strip.x + strip.width / 2, y: strip.y + strip.height / 2 }, {
+    mid: async () => {
+      const lifted = await page.locator('.pc-held-task').boundingBox()
+      check('d3 phone: the lifted task follows the finger over the strip (no ghost)', !!lifted && lifted.y < strip.y + strip.height && (await page.locator('.pc-ghost.is-held').count()) === 0, JSON.stringify(lifted))
+      await shot(page, 'd3-phone-over-strip')
+    },
+  })
+  await settle(state)
+  check('d3 phone: let go → out of the slot, unscheduled', NOSLOT(lastOf(state, 'tasks', id(HELD), w0)) && posts(state, 'calendar_events', w0).every((e) => e.task_id !== id(HELD)))
+  check('d3 phone: toast "Out of the slot · Write the slot spec"', await toastSoon(page, 'Out of the slot · Write the slot spec'))
+  await sleep(300)
+  check('d3 phone: it is a chip in the strip now', (await page.locator('.pc-uns .pc-chip', { hasText: 'Write the slot spec' }).count()) === 1)
+  const w1 = state.writes.length
+  await undo(page, 'Out of the slot')
+  await settle(state)
+  check('d3 phone: Undo → back in the slot', lastOf(state, 'tasks', id(HELD), w1)?.slot_id === eid(CODE) && (await pcRow(page, CODE, HELD).count()) === 1)
+  check('d3 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// D4: held and let go inside its own slot → nothing written, nothing opened. D5: a hold on the slot's
+// title still lifts the slot (no task lifted). Night Garden shot of a lifted task.
+if (want('d4')) {
+  const { ctx, page, errors, state, cdp, row } = await phoneOpen()
+  const w0 = state.writes.length
+  await holdDrag(cdp, row, { x: row.x + 20, y: row.y + 8 })
+  await settle(state)
+  check('d4 phone: let go on its own slot → no write, no toast, no sheet', state.writes.length === w0 && (await page.locator('.kf-toast').count()) === 0 && !/[?&]task=/.test(page.url()) && (await page.locator('.pc-held-task').count()) === 0)
+  check('d4 phone: …and the row is back as it was', !(await pcRow(page, CODE, HELD).getAttribute('class'))?.includes('is-gone'))
+  const title = center(await pcBlock(page, CODE).locator('.pc-name').first().boundingBox())
+  await touch(cdp, 'touchStart', [title])
+  await sleep(550)
+  await touch(cdp, 'touchEnd', [])
+  await sleep(400)
+  check('d5 phone: a hold on the slot\'s title lifts the slot, not a task', (await pcBlock(page, CODE).getAttribute('class'))?.includes('is-lifted') && (await page.locator('.pc-held-task').count()) === 0)
+  await page.keyboard.press('Escape')
+  await sleep(400)
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'night'))
+  await sleep(300)
+  const r2 = center(await pcRow(page, CODE, HELD).locator('.pc-name').boundingBox())
+  await holdDrag(cdp, r2, { x: r2.x, y: (await pcY(page, '12:30')) + 6 }, { keep: true })
+  await shot(page, 'd6-phone-lifted-night')
+  check('d6 phone (night): lifted with its ghost', (await page.locator('.pc-held-task').count()) === 1 && (await page.locator('.pc-ghost.is-held').count()) === 1)
+  await touch(cdp, 'touchCancel', [])
+  await sleep(500)
+  check('d6 phone: a cancelled touch puts it back, nothing written', (await page.locator('.pc-held-task').count()) === 0 && !posts(state, 'tasks', w0).length)
+  check('d4 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── slot-outline, Kai's pick A ("Slot tasks: A"): every held task is its own soft card inside the slot —
+// a 1px edge, 8px corners, the slot's wash, a gap between — on the desktop and the phone, day and Night
+// Garden; the hover × stays; dragged out, the card's place stays dashed and the card itself follows the
+// pointer (over the grid too). ──
+/** The card look of an element: its edge, corners and fill. */
+const cardOf = (loc) =>
+  loc.evaluate((el) => {
+    const cs = getComputedStyle(el)
+    return { bw: cs.borderTopWidth, bs: cs.borderTopStyle, r: cs.borderTopLeftRadius, bg: cs.backgroundColor, bc: cs.borderTopColor }
+  })
+const isCard = (c) => c.bw === '1px' && c.bs === 'solid' && c.r === '8px' && c.bg !== 'rgba(0, 0, 0, 0)' && c.bc !== 'rgba(0, 0, 0, 0)'
+const twoDone = { tasks: [...inCode.tasks, task(5, 'Fix the login bug', { status: 'done', completed_at: iso('07:00'), due_at: iso('09:00'), slot_id: eid(CODE), slot_date: '2026-10-12', scheduled_start: iso('10:00'), scheduled_end: iso('12:00') })] }
+
+if (want('o1')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: twoDone })
+  await slotPoint(page, '10:30')
+  for (const theme of ['day', 'night']) {
+    await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme)
+    await sleep(250)
+    const a = await cardOf(slotRow(page, CODE, HELD))
+    const d = await cardOf(slotRow(page, CODE, 5))
+    check(`o1 desktop ${theme}: each held task is a card (1px edge, 8px corners, the slot's wash)`, isCard(a) && isCard(d), JSON.stringify(a))
+  }
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'day'))
+  await sleep(250)
+  const [r1, r2] = [await slotRow(page, CODE, HELD).boundingBox(), await slotRow(page, CODE, 5).boundingBox()]
+  const gap = Math.round(Math.max(r2.y - (r1.y + r1.height), r1.y - (r2.y + r2.height)))
+  check('o1 desktop: a small gap between the cards (4px at 100%, zoomed)', gap >= 3 && gap <= 7, gap)
+  check('o1 desktop: the done card keeps its strike', (await slotRow(page, CODE, 5).getAttribute('class'))?.includes('kf-done') && /line-through/.test(await slotRow(page, CODE, 5).locator('.kf-ev-slot-title').evaluate((el) => getComputedStyle(el).textDecorationLine)))
+  const rest = (await cardOf(slotRow(page, CODE, HELD))).bc
+  await slotRow(page, CODE, HELD).hover()
+  await sleep(250)
+  check('o1 desktop hover: the × shows and the edge deepens', (await slotRow(page, CODE, HELD).locator('.kf-ev-slot-out').isVisible()) && (await cardOf(slotRow(page, CODE, HELD))).bc !== rest)
+  // Drag it out without letting go: its place dashed, the lifted card under the pointer over the grid.
+  const from = await rowPt(page)
+  const to = await lanePt(page, '11:00', '2026-10-13')
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  for (let i = 1; i <= 15; i++) {
+    await page.mouse.move(from.x + ((to.x - from.x) * i) / 15, from.y + ((to.y - from.y) * i) / 15)
+    await sleep(30)
+  }
+  await sleep(400)
+  const gone = await cardOf(slotRow(page, CODE, HELD))
+  check('o1 desktop drag: the card\'s place stays, dashed', (await slotRow(page, CODE, HELD).getAttribute('data-lifted')) === '' && gone.bs === 'dashed', JSON.stringify(gone))
+  const mirror = page.locator('body > .kf-ev-slot-row.fc-event-dragging')
+  const mb = await mirror.boundingBox().catch(() => null)
+  const mc = mb && (await cardOf(mirror))
+  check('o1 desktop drag: the card follows the pointer over the grid, its own outline on', !!mb && Math.abs(mb.x - to.x) < 60 && Math.abs(mb.y + mb.height / 2 - to.y) < 40 && mc.bw === '1px' && mc.r === '8px', JSON.stringify([mb, to]))
+  await shot(page, 'o1-desktop-drag')
+  const w0 = state.writes.length
+  await page.mouse.move(from.x, from.y, { steps: 10 })
+  await sleep(300)
+  await page.mouse.up()
+  await settle(state)
+  check('o1 desktop: let go back on its own slot → nothing written, the card back as it was', state.writes.length === w0 && (await slotRow(page, CODE, HELD).getAttribute('data-lifted')) === null && (await page.locator('.kf-ev-slot-row.fc-event-dragging').count()) === 0)
+  check('o1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+if (want('o2')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: twoDone, view: phone })
+  await pcBlock(page, CODE).evaluate((el) => el.scrollIntoView({ block: 'center' }))
+  await sleep(300)
+  for (const theme of ['day', 'night']) {
+    await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme)
+    await sleep(250)
+    const a = await cardOf(pcRow(page, CODE, HELD))
+    const d = await cardOf(pcRow(page, CODE, 5))
+    check(`o2 phone ${theme}: each held task is a card (1px edge, 8px corners, the slot's fill)`, isCard(a) && isCard(d), JSON.stringify(a))
+    await shot(page, `o2-phone-cards-${theme}`)
+  }
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'day'))
+  const w0 = state.writes.length
+  const cdp = await ctx.newCDPSession(page)
+  const row = center(await pcRow(page, CODE, HELD).locator('.pc-name').boundingBox())
+  await holdDrag(cdp, row, { x: row.x, y: (await pcY(page, '12:30')) + 6 }, { keep: true })
+  const gone = await cardOf(pcRow(page, CODE, HELD))
+  const lifted = await cardOf(page.locator('.pc-held-task'))
+  check('o2 phone drag: its place dashed, the lifted card keeps its own outline', gone.bs === 'dashed' && lifted.bw === '1px' && lifted.r === '8px', JSON.stringify([gone, lifted]))
+  await shot(page, 'o2-phone-drag')
+  await touch(cdp, 'touchCancel', [])
+  await sleep(500)
+  check('o2 phone: a cancelled touch puts it back, nothing written', (await page.locator('.pc-held-task').count()) === 0 && state.writes.length === w0)
+  check('o2 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
 await browser.close()
 const failed = results.filter((r) => !r.ok)
 fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 2))

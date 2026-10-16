@@ -66,7 +66,7 @@ export function InboxBulkBar({ count, onFileTo, onSnooze, onDismiss, onRestore, 
         whiteSpace: 'nowrap',
       }}
     >
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)' }}>
+      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>
         {count} selected
       </span>
       <div style={{ width: 1, height: 18, background: 'var(--line-dashed)', margin: '0 6px' }} />

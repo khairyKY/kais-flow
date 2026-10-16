@@ -195,7 +195,9 @@ async function runScene(viewName, s, seed, expectCounts = s.counts, expectWrites
   await page.getByRole('button', { name: s.label, exact: true }).click()
   check(`${tag}: the pick card says how to export`, (await page.getByText(s.how, { exact: false }).count()) > 0)
   if (s.markdown) {
-    await page.locator('select').first().selectOption('heading')
+    // The kit Select replaced the native <select> (5b792a44): open it, pick the option.
+    await page.getByRole('button', { name: 'Projects from' }).click()
+    await page.getByRole('option', { name: 'the heading above each task' }).click()
     await page.getByLabel('Also bring plain paragraphs in, as Inbox notes').check()
   }
   await shot(page, `${slug}-1-pick`)

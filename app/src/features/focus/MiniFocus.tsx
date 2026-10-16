@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { Button } from '../../components/kit'
 import { useFocusStore } from './focusStore'
 import type { Task } from '../../lib/types'
 
@@ -27,7 +28,7 @@ export function MiniFocus({ task }: { task: Task }) {
   // Kai 2026-09-27 ("a bit gimmicky?"): the full pomodoro card sat at the top of every task page.
   // Idle, it's now one quiet pill; the card only appears while this task is the one being timed.
   if (!isThisTask) {
-    const pill = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 32, padding: '0 13px', borderRadius: 999, border: '1px solid var(--line-card)', background: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.1em', textTransform: 'uppercase' as const, color: 'var(--ink-muted)', cursor: 'pointer', textDecoration: 'none' }
+    const pill = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 32, padding: '0 13px', borderRadius: 999, border: '1px solid var(--line-card)', background: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-muted)', cursor: 'pointer', textDecoration: 'none' }
     return activeTask ? (
       <Link to="/focus" style={pill}>Focus running on another task →</Link>
     ) : (
@@ -38,16 +39,16 @@ export function MiniFocus({ task }: { task: Task }) {
   }
 
   return (
-    <div style={{ border: '1px solid var(--line-card)', borderRadius: 8, padding: '13px 14px', background: 'var(--paper-bone)' }}>
+    <div style={{ border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '13px 14px', background: 'var(--paper-bone)' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
           {label}
         </span>
         <Link
           to="/focus"
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', textDecoration: 'none' }}
+          style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', textDecoration: 'none' }}
         >
-          full view →
+          Full view →
         </Link>
       </div>
 
@@ -64,29 +65,14 @@ export function MiniFocus({ task }: { task: Task }) {
         >
           {mmss(mode === 'stopwatch' ? stopwatchSeconds : secondsLeft)}
         </span>
-        <button
-          type="button"
-          onClick={isThisTask && isRunning ? togglePlay : start}
-          style={{
-            minWidth: 76,
-            minHeight: 34,
-            borderRadius: 999,
-            border: '1px solid var(--line-card)',
-            background: isThisTask && isRunning ? 'var(--paper-parchment)' : 'var(--acc-terra)',
-            color: isThisTask && isRunning ? 'var(--ink-body)' : 'var(--paper-parchment)',
-            fontFamily: 'var(--font-mono)',
-            fontSize: 'var(--fs-meta)',
-            letterSpacing: '0.1em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-          }}
-        >
+        {/* B D11: the kit button — terra to start, bone to pause. */}
+        <Button type="button" variant={isThisTask && isRunning ? 'secondary' : 'cta'} onClick={isThisTask && isRunning ? togglePlay : start}>
           {isThisTask && isRunning ? 'Pause' : 'Focus'}
-        </button>
+        </Button>
       </div>
 
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 8 }}>
-        round {currentRound} of {settings.roundsBeforeLongBreak}
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 8 }}>
+        Round {currentRound} of {settings.roundsBeforeLongBreak}
         {activeTask && !isThisTask && ' · running on another task'}
       </div>
     </div>

@@ -1,13 +1,14 @@
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 
-/** `30` -> "30M", `60` -> "1H", `90` -> "1H30M". */
+/** `30` -> "30m", `60` -> "1h", `90` -> "1h 30m" (Bound Journal: metadata is sentence case, not mono caps).
+ * The space is a no-break space, so a narrow meta line never splits "1h / 30m". */
 export function formatDuration(min: number): string {
   const h = Math.floor(min / 60)
   const m = min % 60
-  if (h === 0) return `${m}M`
-  if (m === 0) return `${h}H`
-  return `${h}H${m}M`
+  if (h === 0) return `${m}m`
+  if (m === 0) return `${h}h`
+  return `${h}h\u00a0${m}m`
 }
 
 /** Calendar-day difference on the user's clock (app_settings.timezone — the day the Overdue list

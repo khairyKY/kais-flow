@@ -11,9 +11,11 @@ import { useListVerbs } from '../tasks/useListVerbs'
 import { formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
 import { sortByOrder } from '../tasks/manualOrder'
-import { moveInListWithUndo } from '../tasks/api'
+import { cachedTask, moveInListWithUndo } from '../tasks/api'
+import { nestOut } from '../tasks/subtasks'
+import { SubtaskAddButton, SubtaskCount, SubtaskNest, hasOpenSubtasks, useNestOpen } from '../tasks/SubtaskNest'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
-import { slotTitleOf, useCalendarEvents } from '../calendar/api'
+import { slotLabel, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
@@ -248,7 +250,12 @@ export function TodayPage() {
   const upNextShown = isMobile ? upNext : upNext.slice(0, 2)
   const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
   // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
-  const allOpen = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen)
+  const listed = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen)
+  // Subtasks A (Kai 2026-10-16): a subtask whose parent is a row on this page (Top 3 or the lists — a parent
+  // finished today too, struck, while it has open ones) sits nested under it, not in a list of its own; one
+  // whose parent isn't here stays a row, "↳ parent". A timed one also shows by itself in Up next (C).
+  const drawnParents = new Set([...top3InOrder, ...listed].filter((t) => !t.parent_task_id).map((t) => t.id))
+  const allOpen = nestOut(listed, drawnParents)
   // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue ones get their own fold with
   // Replan all ▾; More for today keeps the rest. Oldest first (Today's list order).
   const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now))
@@ -521,19 +528,13 @@ export function TodayPage() {
 
     return (
       <div key={person.id} style={{ marginBottom: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>
-            A moment coming
-          </span>
-          <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-        </div>
+        <SectionLabel style={{ marginBottom: 10 }}>A moment coming</SectionLabel>
         <div
           style={{
             position: 'relative',
             background: 'var(--paper-parchment)',
             border: '1px solid var(--line-card)',
-            borderRadius: 3,
-            boxShadow: 'var(--shadow-crisp)',
+            borderRadius: 'var(--radius-card)',
             padding: '13px 16px',
             display: 'flex',
             alignItems: 'center',
@@ -573,6 +574,8 @@ export function TodayPage() {
   })
 
   // The overdue fold's header action: every overdue task through the Plan list (+ Spread into free slots).
+  // D13 wants the tonal button here, but this header sits on the bare canvas, where tonal is 4.17:1
+  // by day (AA needs 4.5): it stays the B secondary until Kai picks (bj-final handoff, 2026-10-16).
   const replanAll = overdueOpen.length > 0 && (
     <Button type="button" variant="secondary" aria-haspopup="dialog" onClick={(e) => setReplanAt({ x: e.clientX, y: e.clientY })}>
       Replan all ▾
@@ -633,10 +636,8 @@ export function TodayPage() {
   if (isMobile) {
     const tended = day.tally.picked > 0 && day.tally.done >= day.tally.picked
     const metas = eventMetas(upNext, now)
-    const blockMetaOf = (t: Task) => {
-      const b = blockOf(t.id, events, now)
-      return b ? blockMeta(b, now) : undefined
-    }
+    // The desktop's: a held task reads "in Code block · 10:00" here too (slots-ux).
+    const blockMetaOf = (t: Task) => blockMetaFor(t, events, now)
     const row = (t: Task, extra: { pick?: boolean; block?: CalendarEvent; meta?: string[]; place?: RowGrammarOptions['place'] } = {}) => (
       <TaskRow key={extra.block?.id ?? t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
@@ -671,7 +672,7 @@ export function TodayPage() {
         {empty ? (
           // Ruling 8: one secondary action that opens capture; the terra capture button stays the CTA.
           <div style={{ paddingTop: 64 }}>
-            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: openCapture }} />
+            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: openCapture }} variant="secondary" />
           </div>
         ) : (
           <>
@@ -698,7 +699,7 @@ export function TodayPage() {
                   {tended && (
                     <div className="tp-tended">
                       <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 36, height: 'auto', filter: 'var(--shadow-drop-sm)' }} />
-                      <span className="tp-hand" style={{ fontSize: 'var(--fs-hand-l)' }}>{day.tally.picked === 3 ? 'All three tended.' : 'All tended.'} The rest is extra ✿</span>
+                      <span className="tp-note">{day.tally.picked === 3 ? 'All three tended.' : 'All tended.'} The rest is extra ✿</span>
                     </div>
                   )}
                 </>
@@ -823,9 +824,9 @@ export function TodayPage() {
     <section>
       <SectionLabel style={{ marginBottom: 10 }}>{routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'}</SectionLabel>
       {routinesTotal === 0 && (
-        <Link to="/routines" style={{ display: 'block', fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand)', textDecoration: 'none' }}>
+        <Link to="/routines" className="tp-note" style={{ display: 'block', textDecoration: 'none' }}>
           {/* Polish D: routines exist but every one rests today — say so, don't invite planting. */}
-          {hasActiveRoutines ? 'nothing on repeat today ✿' : 'nothing on repeat yet — plant one ✿'}
+          {hasActiveRoutines ? 'Nothing on repeat today ✿' : 'Nothing on repeat yet — plant one ✿'}
         </Link>
       )}
       {routineGroups.map((g) => (
@@ -870,7 +871,7 @@ export function TodayPage() {
           rowSelection={rowSelection}
         />
       )}
-      {!tasksPending && deskCard && <FirstTodayHint style={{ padding: '0 0 0 24px', marginTop: -14, fontSize: 'var(--fs-hand-l)' }} />}
+      {!tasksPending && deskCard && <FirstTodayHint style={{ padding: '0 0 0 24px', marginTop: -14 }} />}
 
       {/* The side column grows with the page too, from 264 to 340 (Kai 2026-10-03). */}
       <div className="td-grid">
@@ -943,8 +944,8 @@ function blockMetaFor(t: Task, events: CalendarEvent[], now: Date): string[] | u
   const b = blockOf(t.id, events, now)
   if (b) return blockMeta(b, now)
   // In a Time slot (0073) the task has no block of its own: "in Code block · 10:00".
-  const slot = t.slot_id && t.scheduled_start ? slotTitleOf(t) : null
-  return slot ? [`in ${slot} · ${cairoTimeKey(new Date(t.scheduled_start!))}`] : undefined
+  const slot = slotLabel(t, now)
+  return slot ? [slot] : undefined
 }
 
 /** Days past its due date on the user's calendar (lib/appZone) — 0 = due today, null = no date. */
@@ -974,7 +975,9 @@ function metaRow(projectName: string | undefined, dot: string, duration: number 
 /** A block's meta on a desktop row: "Now" reads "in progress" (2a), lengths in lower case. */
 const deskBlockMeta = (meta: string[] | undefined, inProgress: boolean) => (
   <>
-    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.toLowerCase()}</span>)}
+    {/* 2a's lower-case durations ("1h30m"); a slot's line keeps its name ("in Code block💻 · 10:00" —
+        the only meta that starts "in "; blockMeta's own read "starts in …"). */}
+    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.startsWith('in ') ? m : m.toLowerCase()}</span>)}
     {(inProgress || meta?.includes('Now')) && <span className="td-terra">in progress</span>}
   </>
 )
@@ -1072,7 +1075,7 @@ function MomentHead({ state: s, taskById, top3Ids, focus, firstPick, rowSelectio
   // pick (2a: "Deep work — Forecasting · working on <the pick>"); a meeting has nothing to focus on.
   const target = task ?? (block && block.type !== 'event' ? focusTask ?? firstPick : undefined)
   const working = focus?.running && focusTask && focusTask.id !== task?.id ? <> · working on <span className="td-ink"><EmojiText text={focusTask.title} /></span></> : null
-  const focusBtn = (label = 'Start focus') => target && <Button type="button" variant="secondary" className="td-focus-btn" onClick={() => startFocus(target)}>{label}</Button>
+  const focusBtn = (label = 'Start focus') => target && <Button type="button" variant="secondary" onClick={() => startFocus(target)}>{label}</Button>
   let head: CardHead
   switch (s.kind) {
     case 'running':
@@ -1185,6 +1188,7 @@ function Ribbon({ events, now, head, taskById }: { events: CalendarEvent[]; now:
 /** One of the next two under the ribbon — a task's block is the task (checkbox, opens it, its menu). */
 function NextTaskItem({ event, task, sel }: { event: CalendarEvent; task: Task; sel: RowSelection }) {
   const g = useTodayRow(task, { ...sel, ...blockGrammar(event) })
+  const parentTitle = task.parent_task_id ? cachedTask(task.parent_task_id)?.title : undefined
   const openTask = useOpenTask()
   const done = task.status === 'done'
   return (
@@ -1193,6 +1197,8 @@ function NextTaskItem({ event, task, sel }: { event: CalendarEvent; task: Task; 
         <span onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}><Checkbox label={task.title} checked={done} size={16} onChange={() => toggleTaskWithUndo(task)} /></span>
         <span className="td-next-time">{cairoTimeKey(new Date(event.starts_at))}</span>
         <span className={`td-ink${done ? ' td-struck' : ''}`}><EmojiText text={event.title} /></span>
+        {/* Subtasks C: a timed subtask shows here by itself, with whose it is. */}
+        {parentTitle && <span className="td-sub-of">↳ <EmojiText text={parentTitle} /></span>}
       </span>
       {g.menuNode}
     </>
@@ -1420,7 +1426,7 @@ function FirstTodayHint({ style }: { style?: React.CSSProperties }) {
     document.addEventListener('pointerdown', off, { capture: true, once: true })
     return () => document.removeEventListener('pointerdown', off, { capture: true })
   }, [on, uid])
-  return on ? <div className="tp-hand tp-first-hint" style={style}>{FIRST_TODAY_HINT}</div> : null
+  return on ? <div className="tp-note tp-first-hint" style={style}>{FIRST_TODAY_HINT}</div> : null
 }
 
 /** /calendar?event=<id> — the calendar turns to the event's day and opens it (CalendarPage). */
@@ -1464,10 +1470,10 @@ function NowSlip({ state: s, sel }: { state: NowState<CalendarEvent, Task>; sel:
   }
   const title = block && s.kind !== 'paused' && s.kind !== 'done' ? block.title : task?.title ?? ''
   const open = () => (task ? openTask(task.id) : block ? navigate(eventPath(block)) : undefined)
-  const card = { position: 'relative', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px 10px 12px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', transform: 'rotate(-0.3deg)' } as const
+  // A tool card (B D3/D4/D7): 16 corners, a hairline, flat — no tape, no tilt.
+  const card = { position: 'relative', display: 'flex', alignItems: 'center', gap: 12, padding: '10px 4px 10px 12px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)' } as const
   const inner = (action?: React.ReactNode) => (
     <>
-      <span aria-hidden className="tp-tape" />
       <span className="tp-ring" data-tone={ring.tone} style={{ background: ring.bg }} aria-label={ring.aria}>
         <span>{ring.label}</span>
       </span>
@@ -1547,10 +1553,10 @@ function PhoneEventRow({ event, meta }: { event: CalendarEvent; meta: string[] }
 /** MK Goal card, loading (2g): skeleton title lines under the tag. */
 function GoalCardLoading() {
   return (
-    <div role="status" aria-label="Loading" aria-busy="true" className="tp-goal" style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, padding: '14px 12px 14px 4px', transform: 'rotate(-0.4deg)' }}>
+    <div role="status" aria-label="Loading" aria-busy="true" className="tp-goal kf-page" style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 'var(--radius-page)', padding: '14px 12px 14px 4px', transform: 'rotate(-0.4deg)' }}>
       <div style={{ paddingLeft: 12 }}><span className="tp-goal-tag">✶ Goal of the day</span></div>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 6 }}>
-        <span className="tp-hit"><span style={{ width: 22, height: 22, borderRadius: 6, border: '1.5px solid var(--acc-gold)', boxSizing: 'border-box' }} /></span>
+        <span className="tp-hit"><span style={{ width: 22, height: 22, borderRadius: 'var(--radius-check)', border: '1.5px solid var(--acc-gold)', boxSizing: 'border-box' }} /></span>
         <div style={{ flex: 1, minWidth: 0, paddingTop: 12 }}>
           <div style={{ animation: 'skeletonPulse 1.6s var(--ease-natural) infinite' }}>
             <span className="tp-sk" style={{ width: '88%', height: 14 }} />
@@ -1593,13 +1599,12 @@ function DayCompleteBurst() {
           top: '100%',
           marginTop: 6,
           textAlign: 'center',
-          fontFamily: 'var(--font-hand)',
-          fontSize: 17,
-          color: 'var(--ink-hand, #7a745f)',
+          fontSize: 'var(--fs-body-s)',
+          color: 'var(--ink-muted)',
           animation: 'itemFadeIn 400ms var(--ease-out) 500ms both',
         }}
       >
-        that's the day, gently done ✿
+        That's the day, gently done ✿
       </div>
     </div>
   )
@@ -1615,7 +1620,7 @@ function EmptyTodayCard({ onPlan }: { onPlan: () => void }) {
         <div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,var(--sky-horizon,#b9a98a),var(--sky-panel-strong,#a3937a))', boxShadow: 'inset 0 3px 5px rgba(var(--kf-shadow-rgb, 60,52,38),0.25)' }} />
         <img src={`${A}/clover/seedling.png`} alt="" style={{ position: 'absolute', left: '50%', bottom: 34, height: 52, transform: 'translateX(-50%)', filter: 'var(--shadow-drop-sm)' }} />
       </div>
-      <div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted for today yet.</div>
+      <div style={{ marginTop: 22, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center' }}>Nothing planted for today yet.</div>
       <Button type="button" variant="cta" onClick={onPlan} style={{ marginTop: 18, fontSize: 13.5, padding: '10px 22px' }}>Plan today</Button>
     </div>
   )
@@ -1635,7 +1640,7 @@ function DoneTodayCard() {
   return (
     <div style={{ padding: '44px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
       <div style={{ position: 'relative', width: 150, height: 64 }}>
-        <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderBottom: '1.5px dashed var(--line-dashed)' }} />
+        <span aria-hidden style={{ position: 'absolute', left: 0, right: 0, bottom: 0, height: 2, borderBottom: '1.5px solid var(--line-dashed)' }} />
         {petals.map(([left, bottom, w, h, radius], i) => (
           <span
             key={i}
@@ -1644,7 +1649,7 @@ function DoneTodayCard() {
           />
         ))}
       </div>
-      <div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>All done. The garden can rest.</div>
+      <div style={{ marginTop: 20, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center' }}>All done. The garden can rest.</div>
     </div>
   )
 }
@@ -1687,7 +1692,7 @@ const ctrlSelect = (sel: RowSelection, done: boolean) => (e: React.MouseEvent) =
 }
 
 /** A Today row's grammar: swipe, ⋯ / right-click, hold to select (features/tasks). */
-function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'actions' | 'tomorrowHint' | 'canUnschedule' | 'place'>) {
+function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'actions' | 'tomorrowHint' | 'canUnschedule' | 'place' | 'nest'>) {
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const { data: areas = [] } = useAreas()
@@ -1719,7 +1724,7 @@ function Top3Slot({ task, index, children }: { task: Task; index: number; childr
   }
   return (
     <DragRow id={task.id} load={load} disabled={!!task.completed_at}>
-      <div ref={drop.ref} className={drop.className} data-top3-slot={task.id} style={{ position: 'relative', borderRadius: 3 }}>
+      <div ref={drop.ref} className={drop.className} data-top3-slot={task.id} style={{ position: 'relative', borderRadius: 'var(--radius-input)' }}>
         {children}
       </div>
     </DragRow>
@@ -1732,15 +1737,19 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
   const openTask = useOpenTask()
   const openDetail = () => openTask(task.id) // J-8
   // Loop A (2026-09-26 daily cycle): the goal is a Top 3 row too — the same grammar as the rows under it.
-  const g = useTodayRow(task, { ...sel, place })
+  const g = useTodayRow(task, { ...sel, place, nest: true })
   const more = !g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />
-  const card = { position: 'relative', backgroundColor: 'var(--paper-goal)', backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined, border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 3, display: 'flex', alignItems: 'flex-start', transform: 'rotate(-0.4deg)' } as const
+  // Subtasks A: the goal's subtasks hang under its card (../tasks/SubtaskNest).
+  const nestOpen = useNestOpen(task) && !task.parent_task_id && (!done || hasOpenSubtasks(task))
+  const subs = !task.parent_task_id && <SubtaskCount parent={task} />
+  const card = { position: 'relative', backgroundColor: 'var(--paper-goal)', backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined, border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 'var(--radius-page)', display: 'flex', alignItems: 'flex-start', transform: 'rotate(-0.4deg)' } as const
   if (compact) {
     // MK Goal card (Today Phone 2a–2e): gold tag, 22 gold box in a 48 hit, serif 18/600, gold meta,
     // clover (four-leaf once done). ⋯ stays, so every swipe has its tap path (DS-CHANGELOG §3).
     const lines = done ? [`${doneAt(task)} · a four-leaf day`] : meta ?? ([projectName, task.duration_min != null ? formatDuration(task.duration_min) : null].filter(Boolean) as string[])
     return (
-      <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="tp-goal" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} contentStyle={{ ...card, display: 'block', padding: '14px 4px 14px 4px' }} {...g.swipeProps} overlay={g.menuNode}>
+      <>
+      <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="tp-goal" contentClassName="kf-page" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} contentStyle={{ ...card, display: 'block', padding: '14px 4px 14px 4px' }} {...g.swipeProps} overlay={g.menuNode}>
         <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', marginLeft: -36, width: 72, height: 17, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
         <div style={{ paddingLeft: 12 }}><span className="tp-goal-tag">✶ Goal of the day</span></div>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 6 }}>
@@ -1749,12 +1758,14 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
           </span>
           <div onClick={openDetail} style={{ flex: 1, minWidth: 0, paddingTop: 12, cursor: 'pointer' }}>
             <div className={`tp-goal-title${done ? ' is-done' : ''}`}><EmojiText text={task.title} /></div>
-            <div className="tp-meta">{lines.length ? lines.join(' · ') : 'The one thing that makes today a win'}</div>
+            <div className="tp-meta">{lines.length ? lines.join(' · ') : 'The one thing that makes today a win'}{subs && <> {subs}</>}</div>
           </div>
           <img className="tp-goal-clover" src={`${A}/clover/${done ? 'four_leaf' : 'awake'}.png`} alt="" style={{ width: 34, height: 'auto', marginTop: 12, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
           {more}
         </div>
       </SwipeRow>
+      {nestOpen && <SubtaskNest parent={task} phone />}
+      </>
     )
   }
   // Today 2a: 20 gold box · serif 20/600 title · one meta line led by the mono "✶ Goal of the day",
@@ -1764,7 +1775,8 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
   const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={20} /> : <Checkbox label={task.title} checked={bloom.checking} size={20} bloom onChange={bloom.toggle} style={box} />
   const due = overdueDays(task)
   return (
-    <SwipeRow id={`task-${task.id}`} tabIndex={-1} onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} style={{ marginBottom: 6, outline: 'none' }} contentStyle={{ ...card, padding: '18px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
+    <>
+    <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="kf-goal-row" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} style={{ marginBottom: 6, outline: 'none' }} contentClassName="kf-page" contentStyle={{ ...card, padding: '18px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
       <span style={{ marginTop: 3 }}>{check}</span>
       <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
@@ -1774,11 +1786,15 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
           {projectName && <span><span className="td-dot" style={{ background: dot }} />{projectName}</span>}
           {deskBlockMeta(meta, inProgress && !done)}
           {done ? <span>{doneAt(task)}</span> : due === 0 ? <span>Due today</span> : due !== null && due > 0 ? <span className="td-terra">Overdue {due}d</span> : null}
+          {subs}
         </div>
       </div>
       <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 32, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
+      {!g.selecting && !done && !task.parent_task_id && <SubtaskAddButton parent={task} />}
       {more}
     </SwipeRow>
+    {nestOpen && <SubtaskNest parent={task} />}
+    </>
   )
 }
 
@@ -1790,7 +1806,7 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
       onClick={() => reopenTaskWithUndo(task)}
       title="Reopen"
       className="kf-hit"
-      style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', flex: 'none', cursor: 'pointer' }}
+      style={{ width: size, height: size, borderRadius: 'var(--radius-check)', background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 'var(--fs-meta)', flex: 'none', cursor: 'pointer' }}
     >
       ✓
     </span>
@@ -1824,6 +1840,8 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders — same
   // "Overdue Nd" treatment, same ↻ glyph — counted in the user's days (lib/appZone).
   const dueDays = !done && !task.someday ? overdueDays(task) : null
+  // In a Time slot (0073): "in Code block · 10:00" says more than "Due today" (slots-ux).
+  const held = done ? null : slotLabel(task)
   const dueBadges = dueDays !== null || task.recurrence_rule ? (
     <>
       {dueDays !== null && dueDays > 0 && <span style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>}
@@ -1832,7 +1850,14 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
     </>
   ) : null
   const openTask = useOpenTask()
-  const g = useTodayRow(task, { ...sel, place, ...(block ? blockGrammar(block) : null) })
+  // Subtasks A: a parent's row draws its subtasks under it — not an Up next row (that one is its block).
+  const parent = !block && !task.parent_task_id
+  const g = useTodayRow(task, { ...sel, place, nest: parent, ...(block ? blockGrammar(block) : null) })
+  const nestOpen = useNestOpen(task) && parent && (!done || hasOpenSubtasks(task))
+  // A subtask drawn on its own (its parent isn't on the page, or it's a Top 3 pick / Up next block): "↳ parent".
+  const parentTitle = task.parent_task_id ? cachedTask(task.parent_task_id)?.title : undefined
+  const ofParent = parentTitle && <span key="sub" className="td-sub-of" title={`Subtask of “${parentTitle}”`}>↳ <EmojiText text={parentTitle} /></span>
+  const subs = parent && <SubtaskCount key="subs" parent={task} />
   const open = () => openTask(task.id)
   const rowProps = {
     id: block ? `upnext-${block.id}` : `task-${task.id}`,
@@ -1840,7 +1865,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
     onClickCapture: ctrlSelect(sel, done),
     onContextMenu: g.onContextMenu,
     style: {
-      borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',
+      borderBottom: border && !nestOpen ? '1px solid var(--line-dashed)' : 'none',
       background: sel.selected || g.menuOpen ? 'var(--select-bg)' : undefined,
       boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
       outline: 'none',
@@ -1851,19 +1876,23 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   if (compact) {
     // MK task row (DS-CHANGELOG §3): [check 48][title 15/20 + mono meta][star 48][⋯ 48], min-h 56.
     const details = done
-      ? [<span key="done">{doneAt(task)}</span>]
+      ? [<span key="done">{doneAt(task)}</span>, subs].filter(Boolean)
       : meta
-        ? meta.map((m) => <span key={m} style={m === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{m}</span>)
+        ? [...meta.map((m) => <span key={m} style={m === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{m}</span>), ofParent].filter(Boolean)
         : [
+            ofParent,
             projectName && <span key="p"><span className="tp-dot" style={{ background: dot }} />{projectName}</span>,
             dueDays !== null && dueDays > 0 && <span key="o" style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>,
-            dueDays === 0 && <span key="d">Due today</span>,
+            held && <span key="s">{held}</span>,
+            dueDays === 0 && !held && <span key="d">Due today</span>,
             task.duration_min != null && <span key="m">{formatDuration(task.duration_min)}</span>,
             task.recurrence_rule && <span key="r">↻</span>,
             !!task.labels?.length && <LabelChips key="l" labels={task.labels} />,
+            subs,
           ].filter(Boolean)
     return (
-      <SwipeRow {...rowProps} data-tour="task-row" className="tp-row" style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
+      <>
+      <SwipeRow {...rowProps} data-tour="task-row" className={`tp-row${nestOpen ? ' has-nest' : ''}`} style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
         <span className="tp-hit">
           {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom={task.top3} onChange={bloom.toggle} />}
         </span>
@@ -1883,6 +1912,8 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
           </>
         )}
       </SwipeRow>
+      {nestOpen && <SubtaskNest parent={task} phone rule />}
+      </>
     )
   }
   // Desktop (Today 2a): 20px boxes (rule 14). Top 3 rows carry no star — being in the section says
@@ -1890,6 +1921,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={20} /> : <Checkbox label={task.title} checked={bloom.checking} size={20} bloom={task.top3} onChange={bloom.toggle} />
   const tail = !g.selecting && (
     <>
+      {parent && !done && <SubtaskAddButton parent={task} />}
       {!done && !pick && (
         <button type="button" className="kf-hit td-star" aria-label={task.top3 ? `Remove "${task.title}" from Top 3` : `Add "${task.title}" to Top 3`} onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--star-on)' : 'var(--star-empty)' }}>
           {task.top3 ? '★' : '☆'}
@@ -1901,28 +1933,37 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   const title = <span className={done ? 'td-struck' : undefined}><EmojiText text={task.title} /></span>
   if (hollow) {
     // 2a "Also open": one line — the title, then the row's one fact in a right-aligned column.
-    const fact = dueDays !== null && dueDays > 0 ? <span className="td-terra">Overdue {dueDays}d</span>
+    const fact = parentTitle && !held ? ofParent
+      : dueDays !== null && dueDays > 0 ? <span className="td-terra">Overdue {dueDays}d</span>
+      : held ? <span>{held}</span>
       : dueDays === 0 ? <span>Due today{task.recurrence_rule ? ' · ↻' : ''}</span>
       : projectName ? <span><span className="td-dot" style={{ background: dot }} />{projectName}</span>
       : task.recurrence_rule ? <span>↻</span> : null
     return (
+      <>
       <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'center', gap: 14, padding: '9px 2px' }}>
         {check}
         <div onClick={open} className="td-row-title">{title}</div>
+        {subs && <span className="td-meta td-row-fact">{subs}</span>}
         {fact && <span className="td-meta td-row-fact">{fact}</span>}
         {tail}
       </SwipeRow>
+      {nestOpen && <SubtaskNest parent={task} rule={border} />}
+      </>
     )
   }
   return (
+    <>
     <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 2px' }}>
       <span style={{ marginTop: 1 }}>{check}</span>
       <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
         <div className="td-row-title">{title}</div>
-        {metaRow(projectName, dot, meta ? null : task.duration_min, <>{deskBlockMeta(meta, inProgress && !done)}{dueBadges}{!done && <LabelChips labels={task.labels} />}</>)}
+        {metaRow(projectName, dot, meta ? null : task.duration_min, <>{ofParent}{deskBlockMeta(meta, inProgress && !done)}{dueBadges}{!done && <LabelChips labels={task.labels} />}{subs}</>)}
       </div>
       {tail}
     </SwipeRow>
+    {nestOpen && <SubtaskNest parent={task} rule={border} />}
+    </>
   )
 }
 
@@ -1989,7 +2030,7 @@ function RoutineRow({ routine, done, compact }: { routine: Routine; done: boolea
 
 // Loop A — the quiet fold (DAILY-CYCLE.md: "still there, not competing"). Collapsed by default,
 // remembered per device; SectionLabel's look, as a button. On a phone (Today Phone 2n): "More for
-// today · N", a dashed rule and a chevron; its lists sit under mono sub-headers (ruling 7).
+// today · N" and a chevron; its lists sit under quiet sub-headers (ruling 7).
 const MORE_OPEN_KEY = 'kf.today.more-open'
 
 // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue pile is its own fold, folded
@@ -2024,11 +2065,12 @@ function MoreForToday({ summary, phone, label = 'More for today', storageKey = M
     <section>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
         <button type="button" aria-expanded={open} onClick={toggle} className="kf-hit" style={{ display: 'flex', alignItems: 'center', gap: 14, flex: 1, minWidth: 0, background: 'none', border: 'none', padding: '6px 0', font: 'inherit', textAlign: 'left', cursor: 'pointer' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {label}{summary && <span style={{ color: 'var(--ink-faint)' }}> · {summary}</span>}
+          {/* B D6: a section label (14 semibold ink, sentence case), no rule after it. */}
+          <span style={{ fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)', whiteSpace: 'nowrap', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {label}{summary && ` · ${summary}`}
           </span>
-          <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-          <span aria-hidden style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', display: 'inline-block', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform 160ms var(--ease-out)' }}>▸</span>
+          <span style={{ flex: 1 }} />
+          <Icon name="chevright" size={16} style={{ flex: 'none', color: 'var(--ink-faint)', transform: open ? 'rotate(90deg)' : 'none', transition: 'transform var(--dur-quick) var(--ease-out)' }} />
         </button>
         {action}
       </div>
@@ -2038,5 +2080,5 @@ function MoreForToday({ summary, phone, label = 'More for today', storageKey = M
 }
 
 function Empty({ line }: { line: string }) {
-  return <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>{line}</div>
+  return <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)', padding: '8px 2px' }}>{line}</div>
 }

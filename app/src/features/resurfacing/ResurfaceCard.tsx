@@ -94,7 +94,7 @@ function Card({ pick }: { pick: ResurfacePick }) {
         background: 'var(--paper-parchment)',
         padding: '13px 14px',
         boxShadow: 'var(--shadow-card)',
-        borderRadius: 3,
+        borderRadius: 'var(--radius-card)',
       }}
     >
       <span

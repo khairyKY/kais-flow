@@ -11,6 +11,8 @@ import { transcribeAudio } from '../capture/api'
 import { VOICE_ALLOWANCE_USED_UP, isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from '../capture/aiAllowance'
 import { appendDictation, micAction, pickMimeType } from '../capture/holdToTalk'
 import { VoiceCaptureSheet } from '../capture/VoiceCaptureSheet'
+import { PoweredBySotto, SottoPill } from '../capture/SottoPill'
+import { SOTTO_DONE_MS } from '../capture/sotto'
 import { useAuth } from '../auth/AuthProvider'
 import { useCalendarRows } from '../calendar/api'
 import { upcomingSlots } from '../calendar/slots'
@@ -32,8 +34,6 @@ import '../capture/capture.css'
 const CHIP_BASE: React.CSSProperties = {
   fontFamily: 'var(--font-mono)',
   fontSize: 'var(--fs-meta)',
-  letterSpacing: '0.06em',
-  textTransform: 'uppercase',
   padding: '4px 9px',
   borderRadius: 999,
 }
@@ -71,8 +71,11 @@ export function CommandBar() {
   /** P7e A11 (Akiflow's ⌘2 "New Event"): what Enter makes of the line — a task (and the Inbox), or an event. */
   const [kind, setKind] = useState<'task' | 'event'>('task')
   const [hint, setHint] = useState(false)
-  const [dictation, setDictation] = useState<'off' | 'listening' | 'transcribing'>('off')
+  /** The ⌘K mic's dictation, on Sotto's pill: listening → transcribing → done (the tick) → off. */
+  const [dictation, setDictation] = useState<'off' | 'listening' | 'transcribing' | 'done'>('off')
   const take = useRef<{ recorder: MediaRecorder; stream: MediaStream } | null>(null)
+  /** The live mic, for the pill's level bars. */
+  const [micStream, setMicStream] = useState<MediaStream | null>(null)
   /** Bumped whenever a dictation is stopped or dropped, so a late mic or transcript can't land. */
   const generation = useRef(0)
   /** The voice sheet: the phone mic's talk-instead, or a dictated take that couldn't be transcribed. */
@@ -162,7 +165,7 @@ export function CommandBar() {
       close() // the sheet steps aside (its draft stays); the voice sheet records + files by AI
       setVoice({})
     } else if (dictation === 'listening') stopDictation(true)
-    else if (dictation === 'off') void startDictation()
+    else if (dictation !== 'transcribing') void startDictation()
   }
 
   async function startDictation() {
@@ -187,10 +190,12 @@ export function CommandBar() {
     }
     recorder.onstop = () => {
       stream.getTracks().forEach((t) => t.stop())
+      setMicStream(null)
       void transcribeInto(new Blob(chunks, { type: recorder.mimeType }), Math.round((Date.now() - startedAt) / 1000))
     }
     recorder.start()
     take.current = { recorder, stream }
+    setMicStream(stream)
   }
 
   /** keep = transcribe what was said (the mic toggled off) · otherwise drop it (the bar closed). */
@@ -203,6 +208,7 @@ export function CommandBar() {
     if (!keep) {
       t.recorder.onstop = null
       t.stream.getTracks().forEach((track) => track.stop())
+      setMicStream(null)
       setDictation('off')
     }
     if (t.recorder.state !== 'inactive') t.recorder.stop()
@@ -227,10 +233,15 @@ export function CommandBar() {
       return setVoice({ recording: { blob, seconds }, dictated: true })
     }
     if (gen !== generation.current) return
-    setDictation('off')
-    if (!heard) return toast("Didn't catch that — try again")
+    if (!heard) {
+      setDictation('off')
+      return toast("Didn't catch that — try again")
+    }
     setText((typed) => appendDictation(typed, heard))
     inputRef.current?.focus()
+    // Sotto's tick, then the row is the bar's own again (unless a new take started meanwhile).
+    setDictation('done')
+    window.setTimeout(() => setDictation((d) => (d === 'done' ? 'off' : d)), SOTTO_DONE_MS)
   }
 
   const matchChip = parsed.projectMatch ?? parsed.domainMatch
@@ -415,7 +426,7 @@ export function CommandBar() {
               background: 'color-mix(in srgb, var(--paper-parchment) 82%, transparent)',
               backdropFilter: 'blur(8px)',
               border: '1px solid var(--line-card)',
-              borderRadius: 8,
+              borderRadius: 'var(--radius-card)', // Bound Journal D3: a tool's 16px corner; it floats, so it keeps its shadow (D4)
               boxShadow: 'var(--shadow-popover)',
               padding: '16px 18px',
               overflow: 'hidden',
@@ -452,7 +463,7 @@ export function CommandBar() {
                   gap: 10,
                   marginTop: 10,
                   padding: '8px 10px',
-                  borderRadius: 6,
+                  borderRadius: 'var(--radius-input)',
                   cursor: 'pointer',
                   background: jumpSelected ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent',
                   border: `1px solid ${jumpSelected ? 'var(--acc-lavender)' : 'var(--line-card)'}`,
@@ -529,19 +540,22 @@ export function CommandBar() {
 
             {/* Polish F2b (J-17): the same key as the `?` overlay's Command bar row (↵ quick add), drawn
                 as a keycap instead of "Enter = …" text — Enter is the one capture path (Kai 2026-10-12).
-                While dictating, the row says what the mic is doing instead. */}
-            <div aria-live="polite" style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-              {dictation === 'listening' ? (
+                While dictating, the row is Sotto's pill (tap it to finish, ✕ to drop the take) and what the
+                mic is doing, powered by Sotto. */}
+            <div aria-live="polite" style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: dictation === 'off' ? 6 : 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+              {dictation !== 'off' ? (
                 <>
-                  <span className="kf-rec-dot" /> Listening — click stop when you’re done
+                  <SottoPill state={dictation} stream={micStream} onFinish={() => stopDictation(true)} onCancel={() => stopDictation(false)} />
+                  <span style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 4 }}>
+                    {dictation === 'listening' ? 'Listening — click stop when you’re done' : dictation === 'transcribing' ? 'Transcribing…' : 'In the field — check it, then ↵'}
+                    <PoweredBySotto />
+                  </span>
                 </>
-              ) : dictation === 'transcribing' ? (
-                'Transcribing…'
               ) : (
                 <>
                   {kindSwitch}
-                  <KeyChip text="↵" size="sm" /> {kind === 'event' ? 'add event' : 'quick add'}
-                  <KeyChip text="⌘2" size="sm" /> event
+                  <KeyChip text="↵" size="sm" /> {kind === 'event' ? 'Add event' : 'Quick add'}
+                  <KeyChip text="⌘2" size="sm" /> Event
                 </>
               )}
             </div>

@@ -11,6 +11,7 @@ import {
   colorArg,
   colorName,
   completeTask,
+  subtasksOf,
   createTask,
   dateArg,
   dayArg,
@@ -682,11 +683,16 @@ export const ORGANIZE_TOOLS: readonly ToolDef[] = [
         const [row] = await ctx.store.find(TABLE_OF[type], { id: rowId, deleted_at: null }, { limit: 1 })
         if (!row) return bad(`No ${type.replace('_', ' ')} with id ${rowId} (it may already be in Trash).`)
         if (type === 'task') {
-          // tasks/api deleteTask: its blocks too (deleteEventsForTask), and a pick gives up its place.
-          const blocks = await ctx.store.taskBlocks(rowId)
-          if (blocks.length) await ctx.store.deleteEvents(blocks.map((b) => b.id))
-          await ctx.store.patch('tasks', { id: rowId }, { deleted_at: at, ...(row.top3 ? { top3: false, top3_rank: null } : {}) })
-          await logIt(ctx, 'task.deleted', 'task', rowId)
+          // tasks/api deleteTasksWithUndo: its blocks too (deleteEventsForTask), a pick gives up its place,
+          // and a parent takes its subtasks along at the same instant (restore brings them back together).
+          const subs = await subtasksOf(ctx, rowId)
+          for (const t of [row as unknown as TaskRow, ...subs]) {
+            const blocks = await ctx.store.taskBlocks(t.id)
+            if (blocks.length) await ctx.store.deleteEvents(blocks.map((b) => b.id))
+            await ctx.store.patch('tasks', { id: t.id }, { deleted_at: at, ...(t.top3 ? { top3: false, top3_rank: null } : {}) })
+            await logIt(ctx, 'task.deleted', 'task', t.id)
+          }
+          if (subs.length) return { trashed: { type, id: rowId, title: titleOf(row), with_subtasks: subs.length } }
         } else {
           await ctx.store.patch(TABLE_OF[type], { id: rowId }, { deleted_at: at })
           // inbox/api purgeInboxItem · projects/api deleteProjectWithUndo · areas, domains · journal/api deleteJournalEntry.
@@ -718,10 +724,15 @@ export const ORGANIZE_TOOLS: readonly ToolDef[] = [
         const [row] = await ctx.store.find(TABLE_OF[type], { id: rowId, ...(type === 'calendar_event' ? { source: 'native' } : {}) }, { limit: 1 })
         if (!row || !row.deleted_at) return bad(`No ${type.replace('_', ' ')} with id ${rowId} in Trash. The trash tool lists what's there.`)
         if (type === 'task') {
-          // tasks/api restoreTask: its blocks come back with it (restoreEventsForTask).
-          await ctx.store.patch('tasks', { id: rowId }, { deleted_at: null })
-          await ctx.store.patch('calendar_events', { task_id: rowId, source: 'native' }, { deleted_at: null })
-          await logIt(ctx, 'task.restored', 'task', rowId)
+          // tasks/api restoreTask: its blocks come back with it (restoreEventsForTask), and the subtasks
+          // that went to Trash with it (the same instant).
+          const subs = await ctx.store.find('tasks', { parent_task_id: rowId, deleted_at: row.deleted_at })
+          for (const id of [rowId, ...subs.map((s) => s.id as string)]) {
+            await ctx.store.patch('tasks', { id }, { deleted_at: null })
+            await ctx.store.patch('calendar_events', { task_id: id, source: 'native' }, { deleted_at: null })
+            await logIt(ctx, 'task.restored', 'task', id)
+          }
+          if (subs.length) return { restored: { type, id: rowId, title: titleOf(row), with_subtasks: subs.length } }
         } else if (type === 'inbox_item') {
           await ctx.store.patch('inbox_items', { id: rowId }, { status: 'pending', snoozed_until: null, deleted_at: null })
           await logIt(ctx, 'inbox.restored', 'inbox_item', rowId)

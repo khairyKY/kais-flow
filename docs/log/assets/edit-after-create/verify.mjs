@@ -131,7 +131,7 @@ async function pickDay(page, dd) {
 // 3 — Library: book, note, quote.
 {
   const { ctx, page, errors, state } = await open(`/library?tab=books&bookId=${BOOK.id}`)
-  await page.locator('.chip', { hasText: /^edit$/ }).first().click()
+  await page.locator('.chip', { hasText: /^edit$/i }).first().click()
   await sleep(200)
   await shot(page, '3-book-edit')
   const pages = page.locator('label', { hasText: 'Total pages' }).locator('input')
@@ -143,7 +143,7 @@ async function pickDay(page, dd) {
 
   await page.goto(`${BASE}/library?tab=notes&noteId=${NOTE.id}`, { waitUntil: 'networkidle' })
   await sleep(500)
-  await page.locator('.chip', { hasText: /^edit$/ }).first().click()
+  await page.locator('.chip', { hasText: /^edit$/i }).first().click()
   await page.locator('label', { hasText: 'Note' }).locator('textarea').fill('Slow is smooth, smooth is fast.')
   await shot(page, '3-note-edit')
   await page.getByRole('button', { name: 'Save' }).click()
@@ -152,7 +152,7 @@ async function pickDay(page, dd) {
 
   await page.goto(`${BASE}/library?tab=quotes&quoteId=${QUOTE.id}`, { waitUntil: 'networkidle' })
   await sleep(500)
-  await page.locator('.chip', { hasText: /^edit$/ }).first().click()
+  await page.locator('.chip', { hasText: /^edit$/i }).first().click()
   await page.locator('label', { hasText: 'Author' }).locator('input').fill('Frank Herbert')
   await page.getByRole('button', { name: 'Save' }).click()
   const quote = last(await sent(state, 'quotes'))

@@ -144,6 +144,8 @@ const selectedCount = async (page) => {
 /** Distinct open task rows on the page (done rows can't be selected). */
 const openRows = (page) => page.evaluate(() => new Set([...document.querySelectorAll('[id^="task-"]')].filter((e) => !e.querySelector('[title="Reopen"]') && !e.id.startsWith('task-demo')).map((e) => e.id)).size)
 const syncText = (page) => page.evaluate(() => document.querySelector('.app-topbar-sync')?.textContent ?? null)
+// Today 2a's shell (058a6040): on a computer the sync status sits on the sidebar's Settings row.
+const sideSync = (page) => page.evaluate(() => document.querySelector('.kf-side-sync .app-footer-label')?.textContent ?? null)
 
 for (const theme of ['day', 'night']) {
   const NN = (s) => `${s}-${theme}`
@@ -153,10 +155,11 @@ for (const theme of ['day', 'night']) {
   if (want('1')) {
     // /tasks is the Today tab with every pending task (no ?list); ?list=today is due-today only.
     // Today itself selects its folded "More for today" rows too (TodayPage's own rule), so it has a count, not visible rows.
+    // (/planning left with 65fff148: the Planning board became the calendar's planning mode.)
     const views = [
       ['/tasks', 'tasks-default', 9], ['/tasks?list=today', 'tasks-today', 5], ['/tasks?list=all', 'tasks-all', 11], ['/tasks?list=overdue', 'tasks-overdue', 1], ['/tasks?list=upcoming', 'tasks-upcoming', 1],
       ['/tasks?list=someday', 'tasks-someday', 2], ['/tasks?list=week', 'tasks-week', 7], ['/tasks?list=month', 'tasks-month', null],
-      [`/projects/${SITE.id}`, 'project-page', 2], [`/projects/${HEALTH.id}`, 'area-page', 2], ['/planning', 'planning-board', null], ['/today', 'today', 9],
+      [`/projects/${SITE.id}`, 'project-page', 2], [`/projects/${HEALTH.id}`, 'area-page', 2], ['/today', 'today', 9],
     ]
     for (const [route, name, expected] of views) {
       const { ctx, page, errors } = await open(route, { theme })
@@ -333,7 +336,8 @@ for (const theme of ['day', 'night']) {
       await sleep(400)
       const labels = (await page.locator('.kf-selbar-bottom button').allInnerTexts()).map((t) => t.trim())
       // plan-replan (2026-10-07): the bar's date button opens the Plan list, so it reads Plan.
-      check(`${NN('move')} phone bulk bar: Done · Tomorrow · Plan · Move · Delete`, JSON.stringify(labels) === JSON.stringify(['Done', 'Tomorrow', 'Plan', 'Move', 'Delete']), JSON.stringify(labels))
+      // Kai 2026-10-12 / P7e A18: the phone bar gained Top 3 and More (Priority, Labels).
+      check(`${NN('move')} phone bulk bar: Done · Tomorrow · Plan · Move · Top 3 · More · Delete`, JSON.stringify(labels) === JSON.stringify(['Done', 'Tomorrow', 'Plan', 'Move', 'Top 3', 'More', 'Delete']), JSON.stringify(labels))
       await page.locator('.kf-selbar-bottom').getByRole('button', { name: 'Move' }).click()
       await sleep(700)
       const from = state.writes.length
@@ -437,10 +441,18 @@ for (const theme of ['day', 'night']) {
   // ── 4 · The sync status stays quiet; speaks for slow, offline and not-saved writes ──
   if (want('4')) for (const view of [undefined, PHONE]) {
     const V = view ? 'phone' : 'desktop'
+    // Today 2a (058a6040): a computer's status lives on the sidebar's Settings row, a steady "synced" at
+    // rest; the phone's top bar says nothing at rest. The same events, each in its own words.
+    const sync = (page) => (view ? syncText(page) : sideSync(page))
+    const QUIET = view ? null : 'synced'
+    const W = view
+      ? { syncing: 'Syncing…', offline: 'Offline', waiting: 'Offline · 1 waiting', parked: '1 change not saved ⚠', synced: /^Synced/ }
+      : { syncing: 'syncing…', offline: 'offline', waiting: 'offline · 1', parked: '1 not saved', synced: /^synced/ }
     // Kai's Android screenshot (Routines, via More): "KAI'S FLOW · TUE 6 OCT · SYNCED ●" on every
     // More-section page. The strip is the same component on every page that shows it (Today and
     // Calendar on a phone draw their own app bar instead), so each of these must read the same.
-    for (const route of ['/routines', '/people', '/settings', '/projects', '/tasks', '/inbox']) {
+    // A computer's Inbox has no top bar (Inbox 3a: "The top bar is removed"), so it's checked on the phone only.
+    for (const route of ['/routines', '/people', '/settings', '/projects', '/tasks', ...(view ? ['/inbox'] : [])]) {
       const { ctx, page } = await open(route, { theme, view })
       const strip = await page.locator('.app-topbar').innerText()
       const shown = await page.locator('.app-topbar').isVisible()
@@ -449,20 +461,21 @@ for (const theme of ['day', 'night']) {
         await shot(page, NN(`4-strip-at-rest-routines-${V}`))
         await ctx.setOffline(true)
         await sleep(500)
-        check(`${NN('sync')} ${V} /routines: offline shows on the same strip`, (await syncText(page)) === 'Offline', String(await syncText(page)))
+        const off = view ? await syncText(page) : await sideSync(page)
+        check(`${NN('sync')} ${V} /routines: offline shows ${view ? 'on the same strip' : 'on the sidebar Settings row'}`, /^offline$/i.test(off ?? ''), String(off))
         await shot(page, NN(`4-strip-offline-routines-${V}`))
       }
       await ctx.close()
     }
     {
       const { ctx, page, state } = await open('/tasks?list=all', { theme, view })
-      check(`${NN('sync')} ${V}: nothing shows at rest`, (await syncText(page)) === null, String(await syncText(page)))
-      await page.evaluate(() => {
+      check(`${NN('sync')} ${V}: nothing shows at rest`, (await sync(page)) === QUIET, String(await sync(page)))
+      await page.evaluate((sel) => {
         window.__syncSeen = []
-        const look = () => { const t = document.querySelector('.app-topbar-sync')?.textContent; if (t) window.__syncSeen.push(t) }
+        const look = () => { const t = document.querySelector(sel)?.textContent; if (t && t !== 'synced') window.__syncSeen.push(t) }
         new MutationObserver(look).observe(document.body, { subtree: true, childList: true, characterData: true })
         window.__syncTimer = setInterval(look, 50)
-      })
+      }, view ? '.app-topbar-sync' : '.kf-side-sync .app-footer-label')
       // A burst: star / unstar one task 12 times, ~250ms apart (24 writes with their activity rows).
       const before = state.writes.length
       if (view) {
@@ -484,33 +497,33 @@ for (const theme of ['day', 'night']) {
       const { ctx, page } = await open('/tasks?list=all', { theme, view, hold: (table, n) => (table === 'tasks' && n === 1 ? 5500 : 0) })
       await page.locator(`[id="task-${N(4)}"]`).getByTitle(/Top 3/).click()
       await sleep(2000)
-      const early = await syncText(page)
+      const early = await sync(page)
       await sleep(2600)
-      const slow = await syncText(page)
+      const slow = await sync(page)
       await shot(page, NN(`4-sync-slow-${V}`))
       await sleep(2500)
-      const after = await syncText(page)
-      check(`${NN('sync')} ${V}: slow write — nothing at 2s, "Syncing…" at 4.6s, nothing once it lands`, early === null && slow === 'Syncing…' && after === null, JSON.stringify([early, slow, after]))
+      const after = await sync(page)
+      check(`${NN('sync')} ${V}: slow write — nothing at 2s, "Syncing…" at 4.6s, nothing once it lands`, early === QUIET && slow === W.syncing && after === QUIET, JSON.stringify([early, slow, after]))
       await ctx.close()
     }
     {
       const { ctx, page, state } = await open('/tasks?list=all', { theme, view })
       await ctx.setOffline(true)
       await sleep(500)
-      const off = await syncText(page)
+      const off = await sync(page)
       await page.locator(`[id="task-${N(4)}"]`).getByTitle(/Top 3/).click()
       await sleep(700)
-      const waiting = await syncText(page)
+      const waiting = await sync(page)
       await shot(page, NN(`4-sync-offline-${V}`))
       const before = state.writes.length
       await ctx.setOffline(false)
       await sleep(1200)
-      const back = await syncText(page)
+      const back = await sync(page)
       await shot(page, NN(`4-sync-synced-${V}`))
       await sleep(3000)
-      const later = await syncText(page)
-      check(`${NN('sync')} ${V}: offline → "Offline", a change → "Offline · 1 waiting"`, off === 'Offline' && waiting === 'Offline · 1 waiting', JSON.stringify([off, waiting]))
-      check(`${NN('sync')} ${V}: back online it syncs, says "Synced" briefly, then nothing`, state.writes.length > before && /^Synced/.test(back ?? '') && later === null, JSON.stringify([back, later]))
+      const later = await sync(page)
+      check(`${NN('sync')} ${V}: offline → "Offline", a change → "Offline · 1 waiting"`, off === W.offline && waiting === W.waiting, JSON.stringify([off, waiting]))
+      check(`${NN('sync')} ${V}: back online it syncs, says "Synced" briefly, then nothing`, state.writes.length > before && W.synced.test(back ?? '') && later === QUIET, JSON.stringify([back, later]))
       await ctx.close()
     }
     {
@@ -518,19 +531,19 @@ for (const theme of ['day', 'night']) {
       const { ctx, page } = await open('/tasks?list=all', { theme, view, reject: (table, n) => table === 'tasks' && n === 1 })
       await page.locator(`[id="task-${N(4)}"]`).getByTitle(/Top 3/).click()
       await sleep(1200)
-      const label = await syncText(page)
+      const label = await sync(page)
       const toast = await page.locator('.kf-toast').allInnerTexts()
-      check(`${NN('sync')} ${V}: a refused write → "1 change not saved ⚠" + its toast`, label === '1 change not saved ⚠' && toast.some((t) => /couldn't be saved/.test(t)), JSON.stringify([label, toast]))
-      await page.locator('.app-topbar-sync').click()
+      check(`${NN('sync')} ${V}: a refused write → "1 change not saved ⚠" + its toast`, label === W.parked && toast.some((t) => /couldn't be saved/.test(t)), JSON.stringify([label, toast]))
+      await page.locator(view ? '.app-topbar-sync' : '.kf-side-sync').click()
       await sleep(400)
       const pop = await page.locator('.kf-sync-pop').innerText()
       check(`${NN('sync')} ${V}: its popover names the change that wasn't saved`, /Not saved/i.test(pop) && /Renew the passport/.test(pop), pop.replace(/\n/g, ' / '))
       await shot(page, NN(`4-sync-not-saved-${V}`))
       await page.mouse.click(view ? 200 : 900, view ? 700 : 600)
       await sleep(400)
-      const seen = await syncText(page)
+      const seen = await sync(page)
       await sleep(3000)
-      check(`${NN('sync')} ${V}: once seen it calms — "Synced", then nothing`, /^Synced/.test(seen ?? '') && (await syncText(page)) === null, JSON.stringify([seen, await syncText(page)]))
+      check(`${NN('sync')} ${V}: once seen it calms — "Synced", then nothing`, W.synced.test(seen ?? '') && (await sync(page)) === QUIET, JSON.stringify([seen, await sync(page)]))
       await ctx.close()
     }
   }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { Task } from '../../lib/types'
-import { createTask, renameTask, setNotes as saveTaskNotes } from './api'
+import { renameTask, setNotes as saveTaskNotes } from './api'
+import { addTypedSubtask } from '../command-bar/quickAdd'
 
 export type DraftField = 'title' | 'notes' | 'subtasks'
 
@@ -40,10 +41,10 @@ export function useTaskDraft(task: Task | undefined, onSaved?: (field: DraftFiel
       saveTaskNotes(task, notes || null)
       onSaved?.('notes')
     },
+    // Subtasks C (Kai 2026-10-16): the line goes through the one capture parse — "at 6pm" gives the
+    // subtask its own time, on the calendar (command-bar/quickAdd addTypedSubtask).
     addSubtask() {
-      const t = subtask.trim()
-      if (!task || !t) return
-      createTask({ title: t, parentTaskId: task.id, projectId: task.project_id, areaId: task.area_id ?? null, domainId: task.domain_id })
+      if (!task || !addTypedSubtask(task, subtask)) return
       setSubtask('')
       onSaved?.('subtasks')
     },

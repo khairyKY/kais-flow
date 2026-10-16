@@ -124,7 +124,7 @@ if (want('f1')) {
         for (let el = card.parentElement; el; el = el.parentElement) if (el.scrollHeight > el.clientHeight + 1) el.scrollTop = el.scrollHeight
         document.scrollingElement.scrollTop = 1e6
         await new Promise((r) => setTimeout(r, 300))
-        const foot = [...card.querySelectorAll('span')].find((s) => /reset to classic/i.test(s.textContent)).getBoundingClientRect()
+        const foot = [...card.querySelectorAll('button, span')].find((s) => /reset to classic/i.test(s.textContent)).getBoundingClientRect() // a kit text button since Bound Journal
         const hit = document.elementFromPoint(foot.left + foot.width / 2, foot.top + foot.height / 2)
         return { top, footBottom: foot.bottom, vh: innerHeight, footHit: /reset to classic/i.test(hit?.textContent ?? '') }
       })

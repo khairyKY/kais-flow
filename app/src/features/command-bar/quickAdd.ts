@@ -10,7 +10,9 @@ import { playSound } from '../../lib/sounds'
 import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDueChip } from './dueChip'
-import { hasStructure, quickAddTask, type ParsedCommand } from './parseCommand'
+import { hasStructure, parseCommand, quickAddTask, type ParsedCommand } from './parseCommand'
+import { cairoTimeKey } from '../calendar/eventTime'
+import { dayWord } from '../tasks/taskSheetMath'
 
 /** THE capture rule for a typed line (Kai 2026-10-12: "Enter = the one capture path") — the command
  * bar's Enter and the tray's quick capture (P7e A21) both land through here. Written at once from the
@@ -36,13 +38,53 @@ export function captureTyped(parsed: ParsedCommand, typed: string, kind: 'task' 
  * Time block's next occurrence (on or after a typed day) instead of a block of its own. */
 export function addTypedTask(parsed: ParsedCommand, typed: string, place: string | null, fallbackDue: string | null = null): Task {
   const input = quickAddTask(parsed, typed)
-  const day = input.dueAt && cairoDateKey(new Date(input.dueAt))
-  const slot = parsed.slotMatch ? cachedSlots().find((s) => s.title === parsed.slotMatch && (!day || slotDay(s) >= day)) : undefined
   const task = createTask({ ...input, dueAt: input.dueAt ?? fallbackDue })
-  if (slot) putInSlot(task, slot)
-  else blockIfTimed(task, parsed.dueTimed)
+  const slot = land(task, parsed)
   toastAdded(task, [slot?.title, place].filter(Boolean).join(' · ') || null)
   void enrichTypedTask(task, typed)
+  return task
+}
+
+/** The `>slot` a parse names: that Time block's next occurrence on or after the typed day. */
+const slotFor = (parsed: ParsedCommand): CalendarEvent | undefined => {
+  const day = parsed.dueAt && cairoDateKey(new Date(parsed.dueAt))
+  return parsed.slotMatch ? cachedSlots().find((s) => s.title === parsed.slotMatch && (!day || slotDay(s) >= day)) : undefined
+}
+
+/** A typed line's task lands: into its `>slot`, else on the calendar when a time was typed. */
+function land(task: Task, parsed: ParsedCommand): CalendarEvent | undefined {
+  const slot = slotFor(parsed)
+  if (slot) putInSlot(task, slot)
+  else blockIfTimed(task, parsed.dueTimed)
+  return slot
+}
+
+/** A subtask's line through the one parse (Subtasks A + C, Kai 2026-10-16), with the Time blocks ahead
+ * for `>slot`. Its place is always the parent's, so no #tag is read as one (it still leaves the title). */
+export const parseSubtask = (typed: string, now: Date = new Date()): ParsedCommand =>
+  parseCommand(typed, [], [], { zone: 'cairo', now, slots: [...new Set(cachedSlots(now).map((s) => s.title))] })
+
+/** What a subtask line will do, under it while it's typed: "Today 18:00 · on your calendar", "Tomorrow",
+ * "In Code block" — null for a plain line. */
+export function subtaskHint(typed: string, now: Date = new Date()): string | null {
+  const parsed = parseSubtask(typed, now)
+  const slot = slotFor(parsed)
+  if (slot) return `In ${slot.title}`
+  if (!parsed.dueAt) return null
+  const at = new Date(parsed.dueAt)
+  const day = dayWord(cairoDateKey(at), now)
+  return parsed.dueTimed ? `${day} ${cairoTimeKey(at)} · on your calendar` : day
+}
+
+/** A subtask typed on its parent's add line (the row's +, the sheet, the popover, the editor): the one
+ * capture parse — "at 6pm" / "tomorrow 9am" give it its own time, on the calendar, and leave the title —
+ * in the parent's project / area / domain. No toast (it lands in sight, under its parent) and no AI read. */
+export function addTypedSubtask(parent: Task, typed: string, now: Date = new Date()): Task | null {
+  const text = typed.trim()
+  if (!text) return null
+  const parsed = parseSubtask(text, now)
+  const task = createTask({ ...quickAddTask(parsed, text), parentTaskId: parent.id, projectId: parent.project_id, areaId: parent.area_id ?? null, domainId: parent.domain_id })
+  land(task, parsed)
   return task
 }
 

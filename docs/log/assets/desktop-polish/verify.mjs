@@ -156,10 +156,11 @@ for (const theme of ['day', 'night']) {
   }
 
   // ── 2 + 1 · the calendar opens on the synced default; the toolbar chevron ──
-  for (const [view, label, cols] of [[undefined, 'WEEK', 7], ['day', 'DAY', 1], ['3day', '3 DAYS', 3], ['week', 'WEEK', 7]]) {
+  // Bound Journal (2026-10-14): the view label reads in sentence case.
+  for (const [view, label, cols] of [[undefined, 'Week', 7], ['day', 'Day', 1], ['3day', '3 days', 3], ['week', 'Week', 7]]) {
     if (theme === 'night' && view !== '3day') continue
     const { ctx, page, errors } = await open('/calendar', { view }, { theme })
-    const btn = page.locator('.cal-head span[role="button"][aria-haspopup="dialog"]')
+    const btn = page.locator('.cal-head [aria-haspopup="dialog"]') // a real button since bj-calendar
     const text = (await btn.innerText()).trim()
     const n = await page.locator('.fc-col-header-cell').count()
     check(`${N('calendar')} default ${view ?? 'unset'} → opens on ${label} (${cols} column${cols > 1 ? 's' : ''})`, text === label && n === cols, `${text} · ${n}`)
@@ -265,7 +266,10 @@ for (const theme of ['day', 'night']) {
     await sleep(200)
     await page.locator('.kf-lift', { hasText: 'Shaheen Website' }).first().click({ button: 'right' })
     await sleep(300)
-    check(`${N('projects')} right-click a project → Open · Rename · Domain… · Change type… · Finish & press · Delete`, (await page.locator('[role="menu"]').innerText()).split('\n').join(' · ') === 'Open · Rename · Domain… · Change type… · Finish & press · Delete')
+    // 4784af36 (Kai 2026-10-12): "Finish & press" became "Finish" — one tap + Undo, the press optional.
+    const pmenu = (await page.locator('[role="menu"]').innerText().catch(() => '(no menu)')).split('\n').join(' · ')
+    check(`${N('projects')} right-click a project → Open · Rename · Domain… · Change type… · Finish · Delete`, pmenu === 'Open · Rename · Domain… · Change type… · Finish · Delete', pmenu)
+    await shot(page, N('projects-project-menu'))
     await page.keyboard.press('Escape')
     await sleep(200)
     const prevented = await page.evaluate(() => {
@@ -368,13 +372,14 @@ for (const theme of ['day', 'night']) {
       const rows = [...document.querySelectorAll('.app-sidebar nav .kf-side-row')].map((r) => { const b = r.getBoundingClientRect(); const i = icon(r); return { off: Math.abs((b.left + b.right) / 2 - (aside.left + aside.right - 1) / 2), iconOff: Math.abs((b.left + b.right) / 2 - (i.left + i.right) / 2) } })
       const act = document.querySelector('.app-sidebar nav .kf-active')
       const a = act.getBoundingClientRect()
-      const t = act.querySelector('.kf-nav-tape').getBoundingClientRect()
+      const t = act.querySelector('.kf-nav-tape')?.getBoundingClientRect() ?? { width: 0, height: 0 } // bj-shell: the row draws none at all now
       const f = document.querySelector('.app-sidebar-footer .kf-side-row').getBoundingClientRect()
       const hit = document.elementFromPoint(f.left + f.width / 2, f.top + f.height / 2)?.closest('.app-sidebar-footer')
-      return { maxOff: Math.max(...rows.map((r) => r.off)), maxIconOff: Math.max(...rows.map((r) => r.iconOff)), tapeInside: t.left >= a.left - 1 && t.right <= a.right + 1, footerHit: !!hit }
+      return { maxOff: Math.max(...rows.map((r) => r.off)), maxIconOff: Math.max(...rows.map((r) => r.iconOff)), tapeGone: t.width === 0 && t.height === 0, footerHit: !!hit }
     })
     check(`${N('rail')} @${scale * 100}% every box centred in the rail, its icon centred in the box`, m.maxOff <= 1.5 && m.maxIconOff <= 1.5, JSON.stringify(m))
-    check(`${N('rail')} @${scale * 100}% the active tape sits on its box`, m.tapeInside)
+    // Bound Journal (2026-10-14): tape is for pages; the nav is a tool, so its active row carries none.
+    check(`${N('rail')} @${scale * 100}% the active row carries no tape (Bound Journal)`, m.tapeGone)
     check(`${N('rail')} @${scale * 100}% the footer stays reachable (the column scrolls, it never runs under)`, m.footerHit)
     await page.locator('.app-sidebar nav .kf-side-row').nth(2).hover()
     await sleep(250)

@@ -204,6 +204,11 @@ describe('the row lines (1a)', () => {
     expect(v.chip).toBe('Fri 16 Oct')
   })
 
+  it('task: a subtask says whose it is first (Subtasks, Kai 2026-10-16)', () => {
+    const data = { ...DATA, tasks: [...DATA.tasks!, { ...DATA.tasks!.find((t) => t.id === 't-scope')!, id: 't-sub', title: 'Attach the table', notes: null, parent_task_id: 't-scope' }] }
+    expect(describeRow({ hit: hit('task', 't-sub'), related: null }, indexSearchData(data), 'table', NOW).line).toBe('↳ Send Omar the revised scope · Shaheen website')
+  })
+
   it('task: done reads "Done yesterday · <place>", no chip, struck', () => {
     const v = view(hit('task', 't-done'))
     expect(v).toMatchObject({ line: 'Done yesterday · Shaheen website', done: true, chip: null, flag: null })

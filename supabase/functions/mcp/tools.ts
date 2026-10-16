@@ -36,6 +36,7 @@ export { DEFAULT_ZONE, userZone } from '../_shared/zone.ts'
 export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
 import { expandSeries, type RuleBetween } from '../_shared/series.ts'
 import { rollAfter, ruleAfterThis, stepOf } from '../_shared/repeat.ts'
+import { occurrenceOn } from '../_shared/slots.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
 
@@ -684,6 +685,27 @@ async function restamp(ctx: ToolContext, tasks: readonly TaskRow[], patch: (t: T
   return tasks.length
 }
 
+type SlotFields = ReturnType<typeof intoSlot> | typeof OUT_OF_SLOT
+
+/** A slot edit's held tasks to where `to` says — into an occurrence, or OUT_OF_SLOT (calendar/api
+ * followSlot, reseat, releaseRow). Writes and logs only the ones that change; says what happened. */
+async function rehome(ctx: ToolContext, tasks: readonly TaskRow[], to: (t: TaskRow) => SlotFields): Promise<string[]> {
+  let [stayed, out] = [0, 0]
+  for (const t of tasks) {
+    const f = to(t)
+    if (f.slot_id === (t.slot_id ?? null) && f.slot_date === (t.slot_date ?? null) && sameInstant(f.scheduled_start, t.scheduled_start) && sameInstant(f.scheduled_end, t.scheduled_end)) continue
+    await ctx.store.updateTask(settle(t, { ...t, ...f }, ctx.now, ctx.zone))
+    if (f.slot_id) {
+      stayed++
+      await logIt(ctx, 'task.scheduled', 'task', t.id, { slot_id: f.slot_id, slot_date: f.slot_date })
+    } else {
+      out++
+      await logIt(ctx, 'task.unscheduled', 'task', t.id, { slot_id: t.slot_id ?? null })
+    }
+  }
+  return [...(stayed ? [`${stayed} task${stayed === 1 ? '' : 's'} in it moved with it`] : []), ...released(out)]
+}
+
 // ── writing an event the way the app does ────────────────────────────────────────────────────────
 
 export const KINDS = ['event', 'time_block'] as const
@@ -818,6 +840,9 @@ const eventTimes = {
   kind: { type: 'string', enum: KINDS, description: 'event (a meeting, an appointment) or time_block (time set aside for work — tasks can go into one).' },
   remind_min: { type: ['integer', 'null'], minimum: 0, maximum: 1440, description: 'Remind this many minutes before each start (0 = at the start; timed events only). null = no reminder.' },
 }
+
+/** complete_task's `subtasks`: what happens to a parent's open subtasks (the app's question, 4 C). */
+export const SUBTASK_MODES = ['leave', 'complete'] as const
 
 export async function openTask(ctx: ToolContext, taskId: string): Promise<TaskRow> {
   const t = await ctx.store.getTask(taskId)
@@ -958,9 +983,16 @@ export async function createTask(ctx: ToolContext, n: NewTask): Promise<{ task: 
   return { task: { ...task, project_name: (n.project?.name as string | undefined) ?? null }, block }
 }
 
+/** A parent's live subtasks (tasks.parent_task_id, 0029), oldest first — the app's subtasksOf. */
+export async function subtasksOf(ctx: ToolContext, parentId: string): Promise<TaskRow[]> {
+  const rows = (await ctx.store.find('tasks', { parent_task_id: parentId, deleted_at: null })) as unknown as TaskRow[]
+  return rows.sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+}
+
 /** Ticks an open task off (tasks/api completeTask → completion.ts planCompletion): a repeat's next
- * occurrence comes along — never a paused series', never a second open copy. */
-export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done: TaskRow; next: TaskRow | null }> {
+ * occurrence comes along — never a paused series', never a second open copy — and, like the app
+ * (Kai 2026-10-16), a repeat's subtasks go with it to that copy, open again (`carried`). */
+export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done: TaskRow; next: TaskRow | null; carried: number }> {
   const now = ctx.now.toISOString()
   // Plan the next occurrence before writing anything: a rule rrule can't read must not leave
   // the task done with its series silently ended.
@@ -996,11 +1028,17 @@ export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done
   }
   if (!(await ctx.store.markDone(t.id, now))) return bad(`"${t.title}" isn't open any more.`)
   await logIt(ctx, 'task.completed', 'task', t.id)
+  let carried = 0
   if (next) {
     await ctx.store.insertTask(next)
     await logIt(ctx, 'task.created', 'task', next.id, { recurrence_parent: t.id })
+    for (const s of await subtasksOf(ctx, t.id)) {
+      await ctx.store.patch('tasks', { id: s.id }, { parent_task_id: next.id, ...(s.status === 'done' ? { status: 'todo', completed_at: null } : {}) })
+      if (s.status === 'done') await logIt(ctx, 'task.reopened', 'task', s.id)
+      carried++
+    }
   }
-  return { done: { ...t, status: 'done', completed_at: now, top3: false }, next }
+  return { done: { ...t, status: 'done', completed_at: now, top3: false }, next, carried }
 }
 
 /** A done task back to open (tasks/api reopenTask, after the session that completed it). */
@@ -1465,13 +1503,32 @@ export const TOOLS: readonly ToolDef[] = [
   {
     name: 'complete_task',
     title: 'Complete task',
-    description: "Mark open tasks done (only when the user says they're done); `ids` ticks off several. A repeating task's next occurrence is created, as in the app — unless the series is paused.",
-    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' }, ids: ids('The task ids') }, additionalProperties: false },
+    description:
+      "Mark open tasks done (only when the user says they're done); `ids` ticks off several. A repeating task's next occurrence is created, as in the app — unless the series is paused — and its subtasks go with it, open again. A task with subtasks still open: `subtasks` says what happens to them — 'leave' (the default) leaves them open, 'complete' ticks them too (the app asks the user this; ask them if it isn't clear). The answer says what happened to them.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { ...id, description: 'The task id.' },
+        ids: ids('The task ids'),
+        subtasks: { type: 'string', enum: [...SUBTASK_MODES], description: "Its open subtasks: 'leave' them open (the default) or 'complete' them too." },
+      },
+      additionalProperties: false,
+    },
     write: true,
     async run(a, ctx) {
+      const mode = choice(a, 'subtasks', SUBTASK_MODES, 'leave')
       return eachId(a, async (taskId) => {
-        const { done, next } = await completeTask(ctx, await openTask(ctx, taskId))
-        return { done: taskOut(done, ctx.zone), ...(next ? { next: taskOut(next, ctx.zone) } : {}), timezone: ctx.zone }
+        const { done, next, carried } = await completeTask(ctx, await openTask(ctx, taskId))
+        // 4 C (Kai 2026-10-16): a parent with subtasks still open — ticked too, or left open (the safe default).
+        const open = next ? [] : (await subtasksOf(ctx, taskId)).filter((s) => s.status === 'todo')
+        for (const s of mode === 'complete' ? open : []) await completeTask(ctx, s)
+        const n = (k: number) => `${k} subtask${k === 1 ? '' : 's'}`
+        const subtasks = carried
+          ? `its ${n(carried)} went with it to the next occurrence, open again`
+          : !open.length ? null
+          : mode === 'complete' ? `ticked its ${n(open.length)} still open too: ${open.map((s) => s.title).join('; ')}`
+          : `left its ${n(open.length)} open: ${open.map((s) => s.title).join('; ')} (subtasks: 'complete' ticks them)`
+        return { done: taskOut(done, ctx.zone), ...(next ? { next: taskOut(next, ctx.zone) } : {}), ...(subtasks ? { subtasks } : {}), timezone: ctx.zone }
       })
     },
   },
@@ -1601,8 +1658,6 @@ export const TOOLS: readonly ToolDef[] = [
         ...((after.recurrence_rule ?? null) !== (before.recurrence_rule ?? null) ? [after.recurrence_rule ? `repeats ${after.recurrence_rule}` : 'no longer repeats'] : []),
         ...((after.remind_min ?? null) !== (before.remind_min ?? null) ? [after.remind_min == null ? 'no reminder' : `remind ${after.remind_min} min before`] : []),
       ]
-      /** Tasks held by a moved Time block go with it (calendar/api followSlot). */
-      const moved = (n: number) => (n ? [`${n} task${n === 1 ? '' : 's'} in it moved with it`] : [])
       if (occ) {
         // One occurrence on its own (calendar/api detach): the series skips its start and a one-off
         // copy, linked back to the series, takes the change.
@@ -1618,8 +1673,9 @@ export const TOOLS: readonly ToolDef[] = [
         await ctx.store.updateEvent({ ...row, recurrence_exdates: [...(row.recurrence_exdates ?? []), start] })
         await ctx.store.insertEvent(copy)
         await logIt(ctx, 'calendar_event.created', 'calendar_event', copy.id, { title, type: kind, series_id: row.id })
-        const held = row.type === 'time_block' ? await restamp(ctx, await heldBy(ctx, row.id, o), () => intoSlot(copy.id, copy, ctx.zone)) : 0
-        return { edited: eventOut(copy, ctx.zone), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`, ...moved(held)], timezone: ctx.zone }
+        // Its tasks go with it — out of it as an event or in the all-day band (calendar/api followSlot).
+        const held = row.type === 'time_block' ? await rehome(ctx, await heldBy(ctx, row.id, o), () => (copy.type !== 'time_block' || copy.all_day ? OUT_OF_SLOT : intoSlot(copy.id, copy, ctx.zone))) : []
+        return { edited: eventOut(copy, ctx.zone), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`, ...held], timezone: ctx.zone }
       }
       const span = row.recurrence_rule ? seriesSpan(a, ctx.zone, row) : spanArgs(a, ctx.zone, row)
       const remind = remindArg(a, (span ?? row).all_day)
@@ -1638,20 +1694,27 @@ export const TOOLS: readonly ToolDef[] = [
       if (!changed.length) return { edited: eventOut(row, ctx.zone), changed, timezone: ctx.zone }
       await ctx.store.updateEvent(next)
       await logIt(ctx, 'calendar_event.updated', 'calendar_event', row.id, { title, changed })
-      let held = 0
-      if (row.type === 'time_block' && span && spanText(span, ctx.zone) !== spanText(row, ctx.zone)) {
-        if (!row.recurrence_rule) held = await restamp(ctx, await heldBy(ctx, row.id, row), () => intoSlot(row.id, next, ctx.zone))
-        else {
-          // A repeating slot re-timed: its tasks keep their day and take the new time (calendar/api retimeEventWithUndo).
-          const [h, mi] = wallTime(next.starts_at, ctx.zone).slice(11).split(':').map(Number)
-          const len = Date.parse(next.ends_at) - Date.parse(next.starts_at)
-          held = await restamp(ctx, (await heldBy(ctx, row.id, null)).filter((t) => !!t.slot_date), (t) => {
-            const s = wallToInstant(t.slot_date!, h, mi, ctx.zone)
-            return { scheduled_start: s.toISOString(), scheduled_end: new Date(s.getTime() + len).toISOString() }
+      // Where a Time block's tasks go, the app's rule (calendar/api):
+      let held: string[] = []
+      if (row.type === 'time_block') {
+        const retimed = !!span && spanText(span, ctx.zone) !== spanText(row, ctx.zone)
+        const reruled = (next.recurrence_rule ?? null) !== (row.recurrence_rule ?? null)
+        // made an event: it holds none, so every task comes out (updateEvent → releaseRow);
+        if (next.type !== 'time_block') held = await rehome(ctx, await heldBy(ctx, row.id, null), () => OUT_OF_SLOT)
+        // a one-off moved: they go with it, out of it in the all-day band (followSlot);
+        else if (!row.recurrence_rule && retimed) {
+          held = await rehome(ctx, await heldBy(ctx, row.id, row), () => (next.all_day ? OUT_OF_SLOT : intoSlot(row.id, next, ctx.zone)))
+        }
+        // a series re-timed or its repeat set / changed / ended: each to its day's occurrence of what the
+        // edit leaves, else out of the slot (reseat — the rule shared with the app, _shared/slots.ts).
+        else if (retimed || reruled) {
+          held = await rehome(ctx, (await heldBy(ctx, row.id, null)).filter((t) => !!t.slot_date), (t) => {
+            const occ = occurrenceOn([next], t.slot_date!, ctx.zone, ctx.ruleBetween)
+            return occ ? intoSlot(row.id, occ, ctx.zone) : OUT_OF_SLOT
           })
         }
       }
-      return { edited: eventOut(next, ctx.zone), changed: [...changed, ...moved(held)], timezone: ctx.zone }
+      return { edited: eventOut(next, ctx.zone), changed: [...changed, ...held], timezone: ctx.zone }
     },
   },
   {

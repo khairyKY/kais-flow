@@ -14,11 +14,10 @@ import './firstRun.css'
 // email (9c–9f), sign in (9j),
 // reset (9k), onboarding (9g/9h), night (9l) and desktop (9m). Styles in firstRun.css. ──
 
-/** The page: grain, the wordmark bar (or a ← for 9k-2), one column. Desktop adds the fern. */
+/** The page: the wordmark bar (or a ← for 9k-2), one column. Desktop adds the fern. */
 export function FirstRunPage({ onSubmit, formRef, left, right, wide, children }: { onSubmit: (e: FormEvent) => void; formRef?: Ref<HTMLFormElement>; left?: ReactNode; right?: ReactNode; wide?: boolean; children: ReactNode }) {
   return (
     <div className="fr">
-      <div className="fr-grain" />
       <img className="fr-fern" src="/ds/assets/fern/full.png" alt="" />
       <div className={`fr-bar${left ? ' fr-bar--back' : ''}`}>
         {left ?? <span className="fr-mark">Kai's Flow</span>}
@@ -250,7 +249,7 @@ export function EmailConfirmed({ ready }: { ready: boolean }) {
         >
           Signing you in…
         </Hero>
-        <div className="fr-hand">welcome to the garden</div>
+        <div className="fr-hand">Welcome to the garden</div>
         <div className="fr-progress" data-ready={ready || undefined} aria-hidden="true">
           <span />
         </div>

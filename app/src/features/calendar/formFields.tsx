@@ -6,11 +6,11 @@ import { TimeField } from './TimeField'
 // Editor.dc.html's .flabel / .fhelp / .finput / .fsel / .seg classes, ported as
 // components so the three editor surfaces don't each re-declare the same styles. ──
 
+// B (D5): a field label is metadata — the interface face, sentence case, untracked.
 export const FLABEL: CSSProperties = {
   fontFamily: 'var(--font-mono)',
   fontSize: 'var(--fs-meta)',
-  letterSpacing: '0.16em',
-  textTransform: 'uppercase',
+  letterSpacing: 'var(--ls-meta)',
   color: 'var(--ink-faint)',
 }
 
@@ -29,11 +29,11 @@ export function FHelp({ children, style }: { children: ReactNode; style?: CSSPro
 
 const inputBase: CSSProperties = {
   fontFamily: 'var(--font-ui)',
-  fontSize: 12.5,
+  fontSize: 'var(--fs-caption)',
   color: 'var(--ink-body)',
   background: 'var(--paper-bone)',
   border: '1px solid var(--line-card)',
-  borderRadius: 6,
+  borderRadius: 'var(--radius-md)', // B: inputs 12px (was 6)
   padding: '8px 10px',
   width: '100%',
 }
@@ -51,43 +51,28 @@ export function TimeInput({ value, onChange, style, day }: { value: string; onCh
   return <TimeField value={value} onChange={onChange} day={day} style={{ ...inputBase, ...style }} />
 }
 
-// ── Segmented control — Editor .seg/.on. Generic over any option value. ──
+// ── Segmented control — Editor .seg/.on, drawn by the kit's Segmented classes (B, D12: a visible edge,
+// the pick ink-filled). Generic over any option value; an option's `color` tints its label at rest. ──
 export function Seg<T extends string>({
   options,
   value,
   onChange,
   style,
+  dense,
 }: {
   options: { value: T; label: string; color?: string }[]
   value: T
   onChange: (v: T) => void
   style?: CSSProperties
+  /** Tighter cells, for a row that shares its line (the popover's Busy / Free beside the swatches). */
+  dense?: boolean
 }) {
   return (
-    <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3, ...style }}>
+    <div className="kf-seg" role="group" style={{ display: 'flex', ...style }}>
       {options.map((o) => {
         const on = o.value === value
         return (
-          <button
-            key={o.value}
-            type="button"
-            onClick={() => onChange(o.value)}
-            style={{
-              flex: 1,
-              textAlign: 'center',
-              padding: '6px 8px',
-              borderRadius: 5,
-              fontFamily: 'inherit',
-              fontSize: 12,
-              whiteSpace: 'nowrap',
-              cursor: 'pointer',
-              border: 'none',
-              background: on ? 'var(--paper-parchment)' : 'transparent',
-              boxShadow: on ? 'var(--shadow-crisp)' : 'none',
-              color: o.color ?? (on ? 'var(--ink-body)' : 'var(--ink-muted)'),
-              fontWeight: on ? 600 : 400,
-            }}
-          >
+          <button key={o.value} type="button" className="kf-seg-btn" aria-pressed={on} onClick={() => onChange(o.value)} style={{ ...(dense ? { padding: '0 6px', fontSize: 'var(--fs-meta)' } : null), ...(on || !o.color ? null : { color: o.color }) }}>
             {o.label}
           </button>
         )

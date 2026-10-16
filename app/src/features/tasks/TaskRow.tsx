@@ -11,12 +11,13 @@ import { checkAction } from './completion'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
 import { dayShort } from '../../components/pickerMath'
 import { cairoTimeKey } from '../calendar/eventTime'
-import { slotTitleOf } from '../calendar/api'
-import { Checkbox, Chip } from '../../components/kit'
+import { slotLabel } from '../calendar/api'
+import { Button, Checkbox, Chip } from '../../components/kit'
 import { softNo, useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
 import type { BulkActions } from './TaskMenu'
 import { useRowGrammar } from './useRowGrammar'
+import { SubtaskAddButton, SubtaskCount, SubtaskNest, useNestOpen } from './SubtaskNest'
 import type { Task } from '../../lib/types'
 
 export type { BulkActions } from './TaskMenu'
@@ -40,8 +41,6 @@ const metaStyle: React.CSSProperties = {
   marginTop: 6,
   fontFamily: 'var(--font-mono)',
   fontSize: 'var(--fs-meta)',
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase',
   color: 'var(--ink-faint)',
   display: 'flex',
   // 4px between wrapped lines, 14px between items: on a phone the details wrap, and a flat 14px
@@ -51,7 +50,7 @@ const metaStyle: React.CSSProperties = {
   flexWrap: 'wrap',
 }
 
-// The kit's bordered chip, sized down to sit in a mono meta line (its own height and 9px desktop
+// The kit's bordered chip, sized down to sit in the meta line (its own height and 9px desktop
 // type are for standalone chips).
 const LABEL_CHIP: React.CSSProperties = { height: 'auto', padding: '1px 6px', fontSize: 'inherit', letterSpacing: 'inherit', lineHeight: 'inherit' }
 
@@ -83,7 +82,7 @@ export interface TaskRowProps {
   /** Selection still works (Ctrl/Cmd+click or the menu's Select, bulk actions in the menu) — this only
    * hides the visible checkbox, for surfaces (the Planning board) that select without one. */
   hideCheckbox?: boolean
-  /** Dashed bottom hairline — off for the last row in a group. Default true. */
+  /** Bottom hairline — off for the last row in a group. Default true. */
   border?: boolean
   /** Today's "goal of the day" task id — shows the ✶ Goal chip + a solid star. */
   goalTaskId?: string | null
@@ -132,7 +131,7 @@ export function TaskRow({
   const tag = resolveTag(task, domains, projects, areas)
   // ponytail: read from the cache, not a subscription per row — the list re-renders rows on any task change.
   const parentTitle = task.parent_task_id ? cachedTask(task.parent_task_id)?.title ?? null : null
-  const slotTitle = slotTitleOf(task) // ponytail: the same cache read, for "in Code block · 10:00"
+  const held = slotLabel(task) // ponytail: the same cache read, for "in Code block · 10:00"
   const overdueDays = !done && !task.someday && task.due_at ? daysOverdue(task.due_at) : 0
   const overdue = overdueDays > 0
   const inProgress = !done && !!task.scheduled_start
@@ -157,7 +156,10 @@ export function TaskRow({
 
   // J-3 (K-d, 2026-09-24): right-click never changes the selection. The menu acts on this row, or
   // on the whole selection when this row is part of it (bulk).
-  const grammar = useRowGrammar(task, { projects, domains, areas, selected, onToggleSelect, selecting, bulk, actions: { reopen: handleReopen } })
+  // Subtasks A: a parent draws its subtasks under it (./SubtaskNest), ⋯ → Add a subtask opens the add line.
+  const parent = !task.parent_task_id
+  const nestOpen = useNestOpen(task) && parent && !done && !someday
+  const grammar = useRowGrammar(task, { projects, domains, areas, selected, onToggleSelect, selecting, bulk, nest: parent, actions: { reopen: handleReopen } })
 
   // Ctrl/Cmd+click toggles selection — the mouse path on surfaces with no checkbox (Planning
   // board). Capture phase so it never also completes/stars; DOM-contains check skips clicks
@@ -173,7 +175,7 @@ export function TaskRow({
   const openDetail = () => openTask(task.id)
 
   const rowStyle: React.CSSProperties = {
-    borderBottom: border ? '1px dashed var(--line-dashed)' : 'none',
+    borderBottom: border && !nestOpen ? '1px solid var(--line-dashed)' : 'none',
     boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
     background: selected || grammar.menuOpen ? 'var(--select-bg)' : undefined,
     outline: 'none',
@@ -199,12 +201,12 @@ export function TaskRow({
         </span>
         <span onClick={openDetail} style={{ flex: 1, fontSize: 15, color: 'var(--ink-faint)', textDecoration: 'line-through', cursor: 'pointer' }}><EmojiText text={task.title} /></span>
         {justCompleted ? (
-          // deviation(2026-07-19 X3): hand notes ride --ink-muted so night matches Night.dc (#c9c0d8)
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>just now ✿</span>
+          // D7 (Bound Journal): handwriting lives on pages, so the note reads as metadata.
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)' }}>Just now ✿</span>
         ) : (
           <>
             {tag && (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                 <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
                 {tag.label}
               </span>
@@ -241,26 +243,20 @@ export function TaskRow({
         <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
           <div style={{ fontSize: 15, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></div>
           {tag && (
-            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
               <span style={{ width: 6, height: 6, borderRadius: '50%', background: tag.color ?? 'var(--ink-faint)' }} />
               {tag.label}
             </div>
           )}
         </div>
-        <span
-          className="tr-someday-hover"
-          onClick={() => planWithUndo(task, scheduleToday())}
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
-        >
+        {/* D11 = B: the kit's secondary button (a bone tone, 12px corners), not hand-drawn mono pills.
+            D13's tonal Plan ▾ waits for Kai: on the bare canvas it's 4.17:1 by day (AA 4.5). */}
+        <Button variant="secondary" className="tr-someday-hover" style={{ flex: 'none' }} onClick={() => planWithUndo(task, scheduleToday())}>
           → Today
-        </span>
-        <span
-          className="tr-someday-hover"
-          onClick={(e) => grammar.openPlan({ x: e.clientX, y: e.clientY })}
-          style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', borderRadius: 999, padding: '6px 11px', cursor: 'pointer', flex: 'none' }}
-        >
+        </Button>
+        <Button variant="secondary" className="tr-someday-hover" style={{ flex: 'none' }} onClick={(e) => grammar.openPlan({ x: e.clientX, y: e.clientY })}>
           Plan ▾
-        </span>
+        </Button>
         {more}
       </SwipeRow>
     )
@@ -268,6 +264,7 @@ export function TaskRow({
 
   // ── Open — the main list (1a / 1b) ──
   return (
+    <>
     <SwipeRow
       id={`task-${task.id}`}
       data-tour="task-row"
@@ -315,7 +312,7 @@ export function TaskRow({
         <div style={metaStyle}>
           {/* Kai 2026-10-12 audit: a subtask in a list said nothing of its parent — a quiet "↳ parent". */}
           {parentTitle && (
-            <span title={`Subtask of “${parentTitle}”`} style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textTransform: 'none', letterSpacing: 0 }}>
+            <span title={`Subtask of “${parentTitle}”`} style={{ maxWidth: 220, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               ↳ <EmojiText text={parentTitle} />
             </span>
           )}
@@ -331,9 +328,7 @@ export function TaskRow({
             <span>
               {/* The user's day and clock (app_settings.timezone), not the device's. In a Time slot (0073):
                   "in Code block · 10:00" (its day too when that isn't today). */}
-              {slotTitle && `in ${slotTitle} · `}
-              {slotTitle && cairoDateKey(new Date(task.scheduled_start)) === cairoDateKey(new Date()) ? '' : `${dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} `}
-              {cairoTimeKey(new Date(task.scheduled_start))}
+              {held ?? `${dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} ${cairoTimeKey(new Date(task.scheduled_start))}`}
             </span>
           )}
           {task.duration_min != null && <span>{formatDuration(task.duration_min)}</span>}
@@ -346,9 +341,11 @@ export function TaskRow({
           {task.recurrence_rule && <span>↻</span>}
           {isGoal && <span style={{ color: 'var(--acc-gold)' }}>✶ Goal</span>}
           <LabelChips labels={task.labels} />
+          {parent && <SubtaskCount parent={task} />}
         </div>
       </div>
 
+      {!grammar.selecting && parent && <SubtaskAddButton parent={task} />}
       {!grammar.selecting && (
         <span
           // Effects 2j: a full Top 3 refuses the star — it shakes once and the toast says why.
@@ -362,5 +359,7 @@ export function TaskRow({
       )}
       {more}
     </SwipeRow>
+    {nestOpen && <SubtaskNest parent={task} rule={border} />}
+    </>
   )
 }

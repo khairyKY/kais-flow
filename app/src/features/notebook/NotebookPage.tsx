@@ -144,7 +144,7 @@ function Line({ line }: { line: PageLine }) {
 /** The page itself — the same blocks on screen, in print and in "Copy as text". */
 function Paper({ blocks, dayN, onPaper }: { blocks: PageBlock[]; dayN: number | null; onPaper?: boolean }) {
   return (
-    <article className="nb-paper" data-theme="day" aria-label="Notebook page">
+    <article className="nb-paper kf-page" data-theme="day" aria-label="Notebook page">
       {blocks.map((b) =>
         b.id === 'header' ? (
           <header key={b.id} className="nb-head">
@@ -258,7 +258,7 @@ export function NotebookPage() {
       <Icon name="camera" size={22} />
       <span>
         Bring back your ticks
-        <small>photo of a done page</small>
+        <small>Photo of a done page</small>
       </span>
     </button>
   )

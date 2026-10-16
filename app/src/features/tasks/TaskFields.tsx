@@ -17,7 +17,9 @@ import { useAreas } from '../areas/api'
 import { useDomains } from '../domains/api'
 import { usePaperStore } from '../paper/paperStore'
 import { useProjects } from '../projects/api'
-import { currentTop3, deleteTasksWithUndo, duplicateTaskWithUndo, makeGoalWithUndo, renameTask, toggleTaskWithUndo } from './api'
+import { currentTop3, deleteTasksWithUndo, duplicateTaskWithUndo, makeGoalWithUndo, renameTask, toggleTaskWithUndo, toggleTop3 } from './api'
+import { subtaskHint } from '../command-bar/quickAdd'
+import { subtaskWhen } from './subtasks'
 import { placeName } from './move'
 import { useOpenTask } from './openTask'
 import { RowMenuButton } from './SwipeRow'
@@ -93,7 +95,9 @@ export function useTaskControls(task: Task, onSaved?: (field: string) => void) {
 }
 export type TaskControls = ReturnType<typeof useTaskControls>
 
-const PILL: CSSProperties = { borderRadius: 'var(--radius-pill)' }
+// fontSize: the kit's bordered chip is drawn at 9px on a computer (sized for the old mono caps); in this
+// row it matches its neighbours' metadata size.
+const PILL: CSSProperties = { borderRadius: 'var(--radius-pill)', fontSize: 'var(--fs-meta)' }
 const DASHED: CSSProperties = { ...PILL, border: '1px dashed var(--line-control)' }
 
 /** The chip row (Task Sheet.dc.html 4a; the popover's chips): date · duration · place · priority ·
@@ -189,22 +193,32 @@ export function PhotoSource({ task, className, style }: { task: Task; className?
 }
 
 /** One subtask row: its box checks it off, a tap on the title opens it (sheet / popover), ⋯ or
- * right-click → Rename · Delete (Trash + Undo). Sheet, popover and editor share it; `dense` is the
- * desktop editor's 16px box and 13.5px type (Editor.dc.html 1a). */
-export function SubtaskRow({ sub, edit, dense }: { sub: Task; edit: TaskControls['edit']; dense?: boolean }) {
+ * right-click → Plan… · Add to Top 3 · Rename · Delete (Trash + Undo). Sheet, popover, editor and the
+ * lists (nested under the parent, A) share it; `dense` is the desktop's 16px box and 13.5px type
+ * (Editor.dc.html 1a). Subtasks C (Kai 2026-10-16): a subtask with a time shows it ("16:00", "Tomorrow
+ * 09:00") and a tap there replans it; with `plan` (the sheet, the popover, the editor) an unplanned one
+ * shows a faint clock that does the same. `nested`: drawn in a list, so it is the task's row there
+ * (`task-<id>`: search jumps, the delete's exit, the popover's anchor). */
+export function SubtaskRow({ sub, edit, dense, plan, nested }: { sub: Task; edit: TaskControls['edit']; dense?: boolean; plan?: boolean; nested?: boolean }) {
   const isMobile = useIsMobile()
   const openTask = useOpenTask()
+  const controls = useTaskControls(sub)
   const [menu, setMenu] = useState<Point | null>(null)
   const [renaming, setRenaming] = useState(false)
   const done = sub.status === 'done'
+  const when = subtaskWhen(sub, new Date())
   const items = [
+    ...(done ? [] : [
+      { label: 'Plan…', icon: 'pickdate' as const, run: () => controls.open('date', menu ?? { x: 0, y: 0 }) },
+      { label: sub.top3 ? 'Remove from Top 3' : 'Add to Top 3', icon: 'star' as const, run: () => edit('subtasks', () => void toggleTop3(sub)) },
+    ]),
     { label: 'Rename', icon: 'journal' as const, run: () => setRenaming(true) },
     { label: 'Delete', icon: 'delete' as const, destructive: true, run: () => deleteTasksWithUndo([sub]) },
   ]
   return (
     <div
-      id={`sub-${sub.id}`}
-      className={`ts-sub${dense ? ' is-dense' : ''}`}
+      id={nested ? `task-${sub.id}` : `sub-${sub.id}`}
+      className={`ts-sub${dense ? ' is-dense' : ''}${nested ? ' is-nested' : ''}`}
       onContextMenu={(e) => {
         e.preventDefault()
         setMenu({ x: e.clientX, y: e.clientY })
@@ -229,6 +243,15 @@ export function SubtaskRow({ sub, edit, dense }: { sub: Task; edit: TaskControls
           <EmojiText text={sub.title} />
         </button>
       )}
+      {when ? (
+        <button type="button" className="ts-sub-when" title="Change when" onClick={(e) => controls.open('date', e)}>{when}</button>
+      ) : (
+        plan && !done && (
+          <button type="button" className="ts-sub-clock" aria-label={`Plan “${sub.title}”`} title="Give it a time" onClick={(e) => controls.open('date', e)}>
+            <Icon name="clock" size={dense ? 16 : 20} />
+          </button>
+        )
+      )}
       {sub.duration_min != null && <span className="ts-sub-meta">{durationLabel(sub.duration_min)}</span>}
       <RowMenuButton title={sub.title} onOpen={setMenu} />
       {menu &&
@@ -237,21 +260,24 @@ export function SubtaskRow({ sub, edit, dense }: { sub: Task; edit: TaskControls
         ) : (
           <ContextMenu position={menu} onClose={() => setMenu(null)} items={items.map((i) => ({ label: i.label, danger: i.destructive, icon: <Icon name={i.icon} size={16} />, onClick: i.run }))} />
         ))}
+      {controls.menu}
     </div>
   )
 }
 
-/** The Subtasks section: its heading (done/total), the rows, and the add line — Enter adds one.
- * One level deep: callers leave it out on a task that is itself a child. */
+/** The Subtasks section: its heading (done/total), the rows, and the add line — Enter adds one, through
+ * the one capture parse ("at 6pm" gives it a time; the line under it says so while it's typed). One
+ * level deep: callers leave it out on a task that is itself a child. */
 export function SubtaskList({ subs, draft, edit, dense }: { subs: Task[]; draft: ReturnType<typeof useTaskDraft>; edit: TaskControls['edit']; dense?: boolean }) {
   const done = subs.filter((c) => c.status === 'done').length
   // The editor says "1 of 3" (Editor.dc.html 1a), the sheet "1/3" (Task Sheet.dc.html 4b).
   const count = subs.length > 0 ? ` · ${done}${dense ? ' of ' : '/'}${subs.length}` : ''
+  const hint = draft.subtask.trim() ? subtaskHint(draft.subtask) : null
   return (
     <>
       <div className="ts-sec">Subtasks{count}</div>
       {subs.map((c) => (
-        <SubtaskRow key={c.id} sub={c} edit={edit} dense={dense} />
+        <SubtaskRow key={c.id} sub={c} edit={edit} dense={dense} plan />
       ))}
       <label className={`ts-sub${dense ? ' is-dense' : ''}`}>
         <span className="ts-box">
@@ -271,6 +297,17 @@ export function SubtaskList({ subs, draft, edit, dense }: { subs: Task[]; draft:
         />
         {dense && <span className="ts-sub-meta">enter to add</span>}
       </label>
+      {hint && <SubtaskHintLine hint={hint} />}
     </>
+  )
+}
+
+/** C: what the typed line will do — "Today 18:00 · on your calendar". */
+export function SubtaskHintLine({ hint }: { hint: string }) {
+  return (
+    <div className="ts-sub-hint" role="status">
+      <Icon name="calendar" size={16} />
+      {hint}
+    </div>
   )
 }

@@ -327,7 +327,8 @@ if (want('wiring')) {
   const name = 'evening'
   const { ctx, page, errors } = await open('/today?ritual=evening')
   await stub(page)
-  await page.getByRole('button', { name: 'Close the day' }).filter({ visible: true }).first().click()
+  // The sheet's own button, not the Rituals card's "Close the day" step behind its scrim.
+  await page.locator('button:not(.td-rit-step)', { hasText: 'Close the day' }).filter({ visible: true }).first().click()
   await sleep(500)
   check(`${name} Close the day → ritual_done (before the garden goes quiet)`, JSON.stringify(await heard(page)) === '["ritual_done"]', JSON.stringify(await heard(page)))
   check(`${name} …and the garden is closed now`, (await page.evaluate(() => localStorage.getItem('kf.gardenClosed'))) !== null)

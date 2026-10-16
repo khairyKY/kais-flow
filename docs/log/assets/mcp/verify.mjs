@@ -121,7 +121,8 @@ const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
   check('desktop: Create key shows a kf_ai_ key once', !!key && text.includes('won’t be shown again'), key.slice(0, 9) + '…')
   const up = state.writes.find((w) => w.table === 'mcp_keys' && w.method === 'POST')
   const sent = Array.isArray(up?.body) ? up.body[0] : up?.body
-  check('desktop: only the key\'s SHA-256 and the scope are saved', sent?.key_hash === sha256(key) && sent?.scope === 'read' && Object.keys(sent ?? {}).sort().join() === 'key_hash,scope', JSON.stringify(sent))
+  // mcp-full (2026-10-14) added the per-area `scopes` list, saved empty with a new key.
+  check('desktop: only the key\'s SHA-256, the scope and empty scopes are saved', sent?.key_hash === sha256(key) && sent?.scope === 'read' && JSON.stringify(sent?.scopes) === '[]' && Object.keys(sent ?? {}).sort().join() === 'key_hash,scope,scopes', JSON.stringify(sent))
   check('desktop: saved as an upsert on user_id (a new key replaces the old)', up?.query.includes('on_conflict=user_id') && up?.prefer.includes('merge-duplicates'), `${up?.query} | ${up?.prefer}`)
   check('desktop: the key never appears in any request address', !state.urls.some((u) => key && u.includes(key)))
   await card(page).getByRole('button', { name: 'Copy key' }).click()
@@ -152,6 +153,8 @@ const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
   await shotAt(page, card(page).getByText('Connect an assistant'), 'desktop-2-setups')
 
   await card(page).getByRole('button', { name: 'Turn off' }).click()
+  // 5b792a44 (2026-10-12): Turn off asks first (only the hash is stored, so no Undo) — confirm it.
+  await page.locator('.kf-overlay-card').getByRole('button', { name: 'Turn off' }).click()
   await sleep(900)
   const del = state.writes.find((w) => w.table === 'mcp_keys' && w.method === 'DELETE')
   check('desktop: Turn off deletes the key row', !!del && del.query.includes(`id=eq.${KEY_ROW.id}`), del?.query)

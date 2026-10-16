@@ -62,6 +62,26 @@ export function railBuckets(tasks: readonly Task[], events: readonly CalendarEve
   return { overdue, today: todays }
 }
 
+/** Kai 2026-10-14 (Akiflow's per-day tray under the grid): each shown day's open tasks with no time
+ * on the calendar — the ones due that day; today's also takes a Top 3 pick with no due date, as the
+ * rail's Today does. A task with a block (or a slot) today or later is planned and is on the grid. */
+export function dayTray(tasks: readonly Task[], events: readonly CalendarEvent[], days: readonly string[], now: Date): Map<string, RailTask[]> {
+  const today = cairoDateKey(now)
+  const out = new Map(days.map((d) => [d, [] as RailTask[]]))
+  const planned = new Set<string>()
+  for (const e of events) if (e.task_id && !e.deleted_at && blockLastDay(e) >= today) planned.add(e.task_id)
+  for (const task of tasks) {
+    if (task.status !== 'todo' || task.someday || task.deleted_at || planned.has(task.id)) continue
+    if (task.slot_id && task.scheduled_start && cairoDateKey(new Date(task.scheduled_start)) >= today) continue
+    const due = task.due_at ? cairoDateKey(new Date(task.due_at)) : null
+    const day = due ? due : isTop3Today(task, now) ? today : null
+    out.get(day ?? '')?.push({ task, block: null, late: 0 })
+  }
+  const dueMs = (r: RailTask) => (r.task.due_at ? Date.parse(r.task.due_at) : Infinity)
+  for (const rows of out.values()) rows.sort((a, b) => dueMs(a) - dueMs(b))
+  return out
+}
+
 /** A rail item's length on the grid: its missed block's, else its estimate, else 30 minutes. */
 export function railMinutes(r: Pick<RailTask, 'task' | 'block'>): number {
   if (r.block && !r.block.all_day) return Math.round((Date.parse(r.block.ends_at) - Date.parse(r.block.starts_at)) / 60_000)

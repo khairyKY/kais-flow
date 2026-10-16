@@ -165,7 +165,8 @@ if (ONLY.includes('2')) {
       await sleep(900)
       const tasks = writesTo(state, 'tasks', w0)
       const first = tasks.find((t) => t.title === 'Call the tyre supplier about the invoice')
-      check(`${name} Start → the task keeps the picked date (09:00 Cairo, 1 Oct) and is Top 3`, first && first.due_at === '2026-10-01T06:00:00.000Z' && tasks.some((t) => t.id === first.id && t.top3 === true), JSON.stringify(tasks.map((t) => [t.title, t.due_at, t.top3])))
+      // e651297c (v1.1.10): only today's and undated lines become the Top 3; a later line keeps its day.
+      check(`${name} Start → the task keeps the picked date (09:00 Cairo, 1 Oct), not starred (a later day)`, first && first.due_at === '2026-10-01T06:00:00.000Z' && tasks.some((t) => t.id === first.id && t.top3 === false) && tasks.some((t) => t.title === 'Gym' && t.top3 === true), JSON.stringify(tasks.map((t) => [t.title, t.due_at, t.top3])))
       check(`${name} the undated line has no date`, tasks.some((t) => t.title === 'Gym' && !t.due_at))
       noErrors(name, errors)
       await ctx.close()
@@ -208,7 +209,8 @@ if (ONLY.includes('3')) {
     const h = document.querySelector('.tp-first-hint')?.getBoundingClientRect()
     return !!a && !!h && h.top >= a.bottom - 1 && h.top - a.bottom < 40
   }, [card])
-  const handFont = (page) => hint(page).evaluate((e) => getComputedStyle(e).fontFamily.includes('Caveat'))
+  // Bound Journal D7: handwriting lives on pages; on Today (a tool) the hint is the interface face.
+  const handFont = (page) => hint(page).evaluate((e) => !getComputedStyle(e).fontFamily.includes('Caveat'))
 
   // From onboarding: Start lands on the first Today with the hint under the ritual card (07:40, not planned).
   for (const theme of ['day', 'night']) {
@@ -221,7 +223,7 @@ if (ONLY.includes('3')) {
     await page.waitForURL(/\/today/)
     await sleep(1200)
     check(`${name} Start → Today, the flag left for this account`, (await flag(page)) === '1')
-    check(`${name} the hint, the drawing's copy, in Caveat`, (await text(hint(page))) === HINT && (await handFont(page)), await text(hint(page)))
+    check(`${name} the hint, the drawing's copy, in the interface face`, (await text(hint(page))) === HINT && (await handFont(page)), await text(hint(page)))
     check(`${name} it sits under the next-move card (the Plan my day ritual card)`, await below(page, '.tp-ritual'))
     await shot(page, name)
     await page.locator('.tp-bar-title').click()
@@ -264,7 +266,7 @@ if (ONLY.includes('3')) {
   for (const theme of ['day', 'night']) {
     const name = `3-first-today-desktop-${theme}`
     const { ctx, page, errors } = await open('/today', { tasks: three }, { view: desktop, theme, now: '07:40', init: { [FLAG]: '1' } })
-    check(`${name} the hint under the Day card, in Caveat`, (await text(hint(page))) === HINT && (await handFont(page)) && (await below(page, '.kf-daycard-slot')))
+    check(`${name} the hint under the Day card, in the interface face`, (await text(hint(page))) === HINT && (await handFont(page)) && (await below(page, '.td-now'))) // Today 2a: the Day card is the Now card
     await shot(page, name)
     await page.mouse.click(1200, 680)
     await sleep(300)
@@ -290,7 +292,8 @@ if (ONLY.includes('4')) {
       check(`${name} a row shows its first two labels as kit chips, then +1`, JSON.stringify(await chipsOf(page, 1)) === '["calls","admin"]' && (await text(rowOf(page, 1).getByLabel('1 more label'))) === '+1', JSON.stringify(await chipsOf(page, 1)))
       check(`${name} one label → one chip; none → none`, JSON.stringify(await chipsOf(page, 2)) === '["home"]' && (await chipsOf(page, 3)).length === 0)
       const meta = await rowOf(page, 1).locator('.kf-chip--bordered').first().evaluate((e) => ({ h: e.getBoundingClientRect().height / (Number(document.documentElement.style.zoom) || 1), fs: getComputedStyle(e).fontSize, line: getComputedStyle(e.parentElement).fontSize, border: getComputedStyle(e).borderTopStyle }))
-      check(`${name} the chip sits in the meta line (bordered, ≤22 CSS px tall, the meta's own type${vname === 'phone' ? ', ≥12px' : ''})`, meta.border === 'solid' && meta.h <= 22 && meta.fs === meta.line && (vname === 'desktop' || parseFloat(meta.fs) >= 12), JSON.stringify(meta))
+      // B (D5) set phone metadata to 12.5px, so the chip draws 22.75 tall there.
+      check(`${name} the chip sits in the meta line (bordered, ≤23 CSS px tall, the meta's own type${vname === 'phone' ? ', ≥12px' : ''})`, meta.border === 'solid' && meta.h <= 23 && meta.fs === meta.line && (vname === 'desktop' || parseFloat(meta.fs) >= 12), JSON.stringify(meta))
       const trigger = page.getByRole('button', { name: 'Label filter' })
       check(`${name} Tasks' tools carry "Label · All ▾" beside Sort`, (await trigger.count()) === 1 && /Label · All/i.test(await raw(trigger)), await raw(trigger))
       await shot(page, name)
@@ -298,7 +301,7 @@ if (ONLY.includes('4')) {
         await trigger.click()
         await sleep(300)
         const opts = await page.getByRole('option').allTextContents()
-        check(`${name} the filter lists every label once, A–Z, after All labels`, JSON.stringify(opts) === '["All labels","admin","calls","home","q3"]', JSON.stringify(opts))
+        check(`${name} the filter lists every label once, A–Z, after All labels`, JSON.stringify(opts) === '["All labels","admin","calls","home","q3","Manage labels…"]', JSON.stringify(opts))
         await shot(page, `${name}-filter`)
         await page.getByRole('option', { name: 'home' }).click()
         await sleep(300)

@@ -27,7 +27,7 @@ const itemStyle = {
   color: 'var(--ink-body)',
   background: 'none',
   border: 'none',
-  borderRadius: 5,
+  borderRadius: 'var(--radius-input)',
   padding: '7px 10px',
   cursor: 'pointer',
 }
@@ -35,8 +35,7 @@ const itemStyle = {
 const headerStyle = {
   fontFamily: 'var(--font-mono)',
   fontSize: 'var(--fs-meta)',
-  letterSpacing: '0.16em',
-  textTransform: 'uppercase' as const,
+  letterSpacing: 'var(--ls-meta)',
   color: 'var(--ink-faint)',
   padding: '4px 10px 6px',
 }
@@ -95,7 +94,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
             <div style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 500, marginBottom: 4 }}>
               {title ? `Snooze "${title}"` : 'Snooze'}
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 10 }}>
               Until…
             </div>
             <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -138,7 +137,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
         background: 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
         boxShadow: 'var(--shadow-popover)',
-        borderRadius: 5,
+        borderRadius: 'var(--radius-card)',
         padding: 6,
         minWidth: 210,
       }}

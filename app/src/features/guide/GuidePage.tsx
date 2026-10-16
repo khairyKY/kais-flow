@@ -56,7 +56,6 @@ function Back({ label, to }: { label: string; to?: string }) {
 function TourCard() {
   return (
     <button type="button" className="gd-tour" onClick={restartTour}>
-      <span className="gd-tape" aria-hidden />
       <img src="/ds/assets/clover/seedling.png" alt="" />
       <span className="gd-tour-text">
         <span className="gd-tour-title">Show me around again</span>
@@ -127,7 +126,7 @@ function GuideIndex() {
               <h1 className="gd-h1">Guide</h1>
             </>
           )}
-          <div className="gd-hand">a field guide to the garden</div>
+          <div className="gd-hand">A field guide to the garden</div>
         </div>
         {search}
       </header>
@@ -136,7 +135,6 @@ function GuideIndex() {
         <section aria-live="polite">
           <div className="gd-sec">
             <span>{found.length ? `${found.length} found` : 'Nothing found'}</span>
-            <span className="gd-rule" />
           </div>
           {found.length ? list(found) : <p className="gd-none">Nothing by that name yet — try another word, or ask in Chat.</p>}
         </section>
@@ -162,7 +160,6 @@ function GuideIndex() {
               <section key={s}>
                 <div className="gd-sec">
                   <span>{s}</span>
-                  <span className="gd-rule" />
                 </div>
                 {list(ARTICLES.filter((a) => a.section === s))}
               </section>

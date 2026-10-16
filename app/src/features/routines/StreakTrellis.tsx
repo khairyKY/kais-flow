@@ -81,11 +81,11 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <img src={plantSrc(plant, current)} alt="" style={{ height: 42, filter: 'var(--shadow-drop-sm)' }} />
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: 9, marginTop: 3 }}>
                   <span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{streakOfGoal(current, routine.goal_days)} days</span>
                   {held.length > 0 && (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-hydrangea-deep)' }}>
                       <DropletIcon size={8} />
                       {held.length} rain held
                     </span>
@@ -94,7 +94,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last {DAYS} days</span>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Last {DAYS} days</span>
               {!isMobile && (
                 <button type="button" aria-label="Close" className="kf-hit" onClick={onClose} style={{ width: 26, height: 26, padding: 0, font: 'inherit', borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', fontSize: 'var(--fs-caption)', cursor: 'pointer' }}>✕</button>
               )}
@@ -138,7 +138,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
             })}
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${DAYS}, 1fr)`, marginTop: 2, borderTop: '1px dashed var(--line-dashed)', paddingTop: 7 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: `repeat(${DAYS}, 1fr)`, marginTop: 2, borderTop: '1px solid var(--line-dashed)', paddingTop: 7 }}>
             {days.map((d) => (
               <span key={d.key} title={d.key} style={{ textAlign: 'center', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: tickColor(d), fontWeight: d.state === 'broke' ? 700 : 400 }}>
                 {dayOfMonth(d.key)}
@@ -147,13 +147,13 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '10px 14px', marginTop: 16 }}>
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.7deg)' }}>{caption}</div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><img src={grewMark(0)} alt="" style={{ height: 12 }} />grew</span>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><DropletIcon size={8} />rained, held</span>
+            <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>{caption}</div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><img src={grewMark(0)} alt="" style={{ height: 12 }} />Grew</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><DropletIcon size={8} />Rained, held</span>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                 <svg width={14} height={8} viewBox="0 0 22 10"><path d="M1 5q3 1 5 4" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" /><path d="M21 4q-3 0 -5 3" fill="none" stroke="var(--acc-moss)" strokeWidth={2} strokeLinecap="round" /></svg>
-                broke
+                Broke
               </span>
             </div>
           </div>
@@ -167,7 +167,7 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
     <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{ width: 860, maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '30px 38px' }}
+        style={{ width: 860, maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '30px 38px' }}
       >
         {content}
       </div>

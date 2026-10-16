@@ -396,6 +396,60 @@ describe('MCP: the tools', () => {
     expect((await call(deps(three), 'add_task', { title: 'one more', top3: true })).isError).toBe(false)
   })
 
+  describe('complete_task: a parent with subtasks (Kai 2026-10-16, 4 C)', () => {
+    const family = (over: Partial<Parameters<typeof task>[2]> = {}) =>
+      fakeStore('Africa/Cairo', [
+        task(20, 'Finish the sheet', { due_at: '2026-10-04T06:00:00Z', ...over }),
+        task(21, 'Read the notes', { parent_task_id: tid(20), status: 'done', completed_at: '2026-10-04T08:00:00Z', created_at: '2026-09-02T08:00:00Z' }),
+        task(22, 'Questions 1–5', { parent_task_id: tid(20), created_at: '2026-09-02T08:01:00Z' }),
+        task(23, 'Questions 6–10', { parent_task_id: tid(20), created_at: '2026-09-02T08:02:00Z' }),
+      ])
+    const status = (store: ReturnType<typeof fakeStore>, n: number) => store.tasks.find((t) => t.id === tid(n))!.status
+
+    it("by default ('leave') its open subtasks stay open, and the answer says so", async () => {
+      const store = family()
+      const r = await call(deps(store), 'complete_task', { id: tid(20) })
+      expect([status(store, 20), status(store, 22), status(store, 23)]).toEqual(['done', 'todo', 'todo'])
+      expect(r.data!.subtasks).toBe("left its 2 subtasks open: Questions 1–5; Questions 6–10 (subtasks: 'complete' ticks them)")
+      expect(store.logs.map((l) => l.eventType)).toEqual(['task.completed'])
+    })
+
+    it("subtasks: 'complete' ticks them too, each logged", async () => {
+      const store = family()
+      const r = await call(deps(store), 'complete_task', { id: tid(20), subtasks: 'complete' })
+      expect([status(store, 20), status(store, 22), status(store, 23)]).toEqual(['done', 'done', 'done'])
+      expect(r.data!.subtasks).toBe('ticked its 2 subtasks still open too: Questions 1–5; Questions 6–10')
+      expect(store.logs.map((l) => [l.eventType, l.entityId])).toEqual([['task.completed', tid(20)], ['task.completed', tid(22)], ['task.completed', tid(23)]])
+    })
+
+    it('says nothing of subtasks when none is open; refuses an unknown choice', async () => {
+      const store = fakeStore('Africa/Cairo', [task(30, 'Solo', {})])
+      expect((await call(deps(store), 'complete_task', { id: tid(30) })).data!.subtasks).toBeUndefined()
+      const bad = await call(deps(family()), 'complete_task', { id: tid(20), subtasks: 'all' })
+      expect([bad.isError, bad.text]).toEqual([true, '"subtasks" must be one of: leave, complete.'])
+    })
+
+    it("a repeating parent's subtasks go with it to the next occurrence, open again (as the app)", async () => {
+      const store = family({ recurrence_rule: 'FREQ=DAILY' })
+      const r = await call(deps(store), 'complete_task', { id: tid(20), subtasks: 'complete' })
+      const next = r.data!.next.id
+      expect([21, 22, 23].map((n) => store.tasks.find((t) => t.id === tid(n))).map((t) => [t!.parent_task_id, t!.status])).toEqual([[next, 'todo'], [next, 'todo'], [next, 'todo']])
+      expect(r.data!.subtasks).toBe('its 3 subtasks went with it to the next occurrence, open again')
+    })
+
+    it("move_to_trash takes a parent's subtasks along; restore_from_trash brings them back together", async () => {
+      const store = family()
+      store.tasks.push(task(24, 'Binned before', { parent_task_id: tid(20), deleted_at: '2026-10-01T08:00:00Z' } as Partial<Parameters<typeof task>[2]>))
+      const gone = await call(deps(store), 'move_to_trash', { type: 'task', id: tid(20) })
+      expect(gone.data!.trashed).toMatchObject({ title: 'Finish the sheet', with_subtasks: 3 })
+      expect([20, 21, 22, 23].every((n) => store.tasks.find((t) => t.id === tid(n))!.deleted_at === NOW.toISOString())).toBe(true)
+      const back = await call(deps(store), 'restore_from_trash', { type: 'task', id: tid(20) })
+      expect(back.data!.restored).toMatchObject({ with_subtasks: 3 })
+      expect([20, 21, 22, 23].map((n) => store.tasks.find((t) => t.id === tid(n))!.deleted_at ?? null)).toEqual([null, null, null, null])
+      expect(store.tasks.find((t) => t.id === tid(24))!.deleted_at).toBe('2026-10-01T08:00:00Z')
+    })
+  })
+
   it('complete_task: a repeat rule rrule chokes on writes nothing', async () => {
     const store = fakeStore('Africa/Cairo', [task(8, 'Weird repeat', { due_at: '2026-10-03T06:00:00Z', recurrence_rule: 'FREQ=SOMETIMES' })])
     const err = vi.spyOn(console, 'error').mockImplementation(() => {})

@@ -370,7 +370,7 @@ for (const view of ['day', 'night', 'desktop']) {
     await page.getByRole('heading', { name: 'Email confirmed ✿' }).waitFor({ timeout: 8000 }).catch(() => {})
     await sleep(800) // let the flourish settle for the picture
     check(`${name} "/" re-pointed to /sign-in?confirmed: "Email confirmed ✿", "Signing you in…"`, new URL(page.url()).pathname + new URL(page.url()).search === '/sign-in?confirmed' && (await heading(page)) === 'Email confirmed ✿' && (await page.locator('.fr-sub').innerText()) === 'Signing you in…', page.url())
-    check(`${name} broken seal + seedling, the hand line, no wordmark, no button`, (await page.locator('.fr-sprout img').evaluateAll((imgs) => imgs.map((i) => i.naturalWidth > 0 && i.getAttribute('src')).join(' '))) === '/ds/assets/seal/broken-left.png /ds/assets/clover/seedling.png /ds/assets/seal/broken-right.png' && (await page.locator('.fr-hand').innerText()) === 'welcome to the garden' && (await page.locator('.fr-mark').count()) === 0 && (await page.locator('button:visible').count()) === 0)
+    check(`${name} broken seal + seedling, the hand line, no wordmark, no button`, (await page.locator('.fr-sprout img').evaluateAll((imgs) => imgs.map((i) => i.naturalWidth > 0 && i.getAttribute('src')).join(' '))) === '/ds/assets/seal/broken-left.png /ds/assets/clover/seedling.png /ds/assets/seal/broken-right.png' && (await page.locator('.fr-hand').innerText()) === 'Welcome to the garden' && (await page.locator('.fr-mark').count()) === 0 && (await page.locator('button:visible').count()) === 0)
     check(`${name} stays while signing in`, page.url().includes('/sign-in'))
     await shot(page, name)
     await basics(env, view, name)

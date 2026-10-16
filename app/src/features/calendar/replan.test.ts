@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent, Task } from '../../lib/types'
-import { blockLastDay, dueFollows, nextFreeSlot, placeMoves, railBuckets, railMinutes, replanMoves } from './replan'
+import { blockLastDay, dayTray, dueFollows, nextFreeSlot, placeMoves, railBuckets, railMinutes, replanMoves } from './replan'
 
 // The user's zone is the default Africa/Cairo (UTC+3 until the last Thursday of October 2026), so
 // every instant below is a Cairo wall time — and the suite runs under 4 device zones in CI.
@@ -120,5 +120,31 @@ describe('the small rules beside it', () => {
   it('Next free slot: today’s first gap from now', () => {
     const busy = [block('m', null, '2026-10-07', '15:00', '16:00'), block('t', null, '2026-10-08', '08:00', '09:30')]
     expect(nextFreeSlot(busy, NOW, 30)).toEqual({ starts_at: cairo('2026-10-07', '16:00'), ends_at: cairo('2026-10-07', '16:30') })
+  })
+})
+
+describe('dayTray — the tasks under each day column (the Akiflow tray)', () => {
+  const DAYS = ['2026-10-07', '2026-10-08', '2026-10-09']
+  it('a task sits under its due day; planned, done, someday and off-screen days stay out', () => {
+    const tray = dayTray(
+      [
+        task('thu', { due_at: cairo('2026-10-08', '17:00') }),
+        task('planned', { due_at: cairo('2026-10-08', '17:00') }),
+        task('done', { due_at: cairo('2026-10-08', '17:00'), status: 'done' }),
+        task('later', { due_at: cairo('2026-10-08', '17:00'), someday: true }),
+        task('away', { due_at: cairo('2026-10-20', '17:00') }),
+        task('slotted', { due_at: cairo('2026-10-09', '17:00'), slot_id: 's1', scheduled_start: cairo('2026-10-09', '10:00') }),
+      ],
+      [block('b1', 'planned', '2026-10-08', '10:00', '10:30')],
+      DAYS,
+      NOW,
+    )
+    expect(ids(tray.get('2026-10-08')!)).toEqual(['thu'])
+    expect(ids(tray.get('2026-10-09')!)).toEqual([])
+    expect([...tray.keys()]).toEqual(DAYS)
+  })
+  it('today takes a Top 3 pick with no due date; a missed block from yesterday does not plan it', () => {
+    const tray = dayTray([task('pick', { top3: true, top3_rank: 1 }), task('stuck', { due_at: cairo('2026-10-07', '18:00') })], [block('b0', 'stuck', '2026-10-06', '10:00', '11:00')], DAYS, NOW)
+    expect(ids(tray.get('2026-10-07')!).sort()).toEqual(['pick', 'stuck'])
   })
 })

@@ -370,12 +370,13 @@ if (want('o1')) {
 }
 
 // ── F1: the rail footer counts busy blocks and the free time really left (A15) ──
+// (Bound Journal, 2026-10-14: the count moved from the rail's footer to its header line, .cal-rail-load.)
 if (want('f1')) {
   for (const theme of ['day', 'night']) {
     const { ctx, page, errors } = await open('/calendar', { theme, extra: [FREE_EV], rail: '0' })
-    const foot = (await page.locator('.cal-rail .cal-rail-extra').last().innerText()).replace(/\n/g, ' ')
+    const foot = (await page.locator('.cal-rail .cal-rail-load').innerText()).replace(/\n/g, ' ')
     // 13:20 → free 13:45–15:00 and 16:00–20:00 = 5h 15m → 5h 30m; the Free walk at 17:00 doesn't count.
-    check(`f1 ${theme}: "3 blocked · 5h 30m free today" (the Free walk isn't a block; past time isn't free)`, /^3 blocked 5h 30m free today$/i.test(foot), foot)
+    check(`f1 ${theme}: "3 blocks · 5h 30m free" (the Free walk isn't a block; past time isn't free)`, /^3 blocks · 5h 30m free$/i.test(foot), foot)
     await page.locator('.cal-rail').evaluate((e) => e.scrollTo(0, e.scrollHeight))
     await shot(page, `f1-rail-footer-${theme}`)
     check(`f1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))

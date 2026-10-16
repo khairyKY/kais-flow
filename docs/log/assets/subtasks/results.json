@@ -1,0 +1,237 @@
+[
+  {
+    "name": "d1 the parent row carries \"1/3\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 its three subtasks sit nested under it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 the timed one shows its time (C)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 no subtask is a row of its own in the lists",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1 a subtask due another day still nests under its parent, its day shown",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "d4 the timed subtask is in Up next by itself, \"↳ parent\"",
+    "ok": true,
+    "detail": "16:00\nQuestions 1–5\n↳ Finish the Data Structures sheet"
+  },
+  {
+    "name": "d2 \"1/3\" folds the subtasks away",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 the fold is remembered on this device (after a reload)",
+    "ok": true,
+    "detail": "[\"10000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "d2 and unfolds again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 the row shows its + on hover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 + opens the add line, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 the line says what it will do",
+    "ok": true,
+    "detail": "Today 18:00 · on your calendar"
+  },
+  {
+    "name": "d3 Enter adds it under the parent, the time out of its title",
+    "ok": true,
+    "detail": "{\"id\":\"2990d6a9-e29d-4116-b13f-7f4a52c71b53\",\"project_id\":\"p0000000-0000-4000-8000-000000000001\",\"domain_id\":\"d0000000-0000-4000-8000-000000000001\",\"title\":\"Han"
+  },
+  {
+    "name": "d3 \"at 6pm\" puts it on the calendar at 18:00",
+    "ok": true,
+    "detail": "2026-10-16T15:00:00.000Z"
+  },
+  {
+    "name": "d3 it shows in the nest with its own time",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 the line stays open for the next one, empty",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 Esc closes the line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 the popover has a Subtasks section with the count",
+    "ok": true,
+    "detail": "Today · 09:00\n1h30\nData Structures\nPriority\nRepeat\nRemind\nLabel\nSubtasks · 1 of 4\nRead the linked lists notes\nQuestions "
+  },
+  {
+    "name": "d5 the timed subtask shows its time; an unplanned one a faint clock",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 an add line, \"enter to add\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 ticking the parent asks: 3 still open, Questions 1–5 at 16:00",
+    "ok": true,
+    "detail": "3 subtasks are still open | Questions 1–5 is on your day at 16:00. | Tick them too | Leave them open"
+  },
+  {
+    "name": "d6 the parent is done at once",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 Tick them too ticks every open subtask",
+    "ok": true,
+    "detail": "done,done,done"
+  },
+  {
+    "name": "d6 one toast: \"Done, with its 3 open subtasks\"",
+    "ok": true,
+    "detail": "Done, with its 3 open subtasks\nUndo"
+  },
+  {
+    "name": "d6 its one Undo opens the parent and all three again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 the done one stays done",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 Leave them open: the parent done, its subtasks open, plain \"Done\"",
+    "ok": true,
+    "detail": "Done\nUndo"
+  },
+  {
+    "name": "d8 Esc answers \"Leave them open\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 the timed subtask is its own block on the calendar, \"↳ parent\"",
+    "ok": true,
+    "detail": "Questions 1–5 | 4:00 PM · ↳ Finish the Data Structures sheet"
+  },
+  {
+    "name": "c no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 nested under the Top 3 row, \"1/3\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 the timed one shows 16:00",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 Up next has the timed subtask by itself, \"↳ parent\"",
+    "ok": true,
+    "detail": "Questions 1–5\n16:00–16:45\n45m\n↳ Finish the Data Structures sheet"
+  },
+  {
+    "name": "p2 a tap on \"1/3\" folds them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 and back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 ⋯ offers Add a subtask",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 it opens the add line under the parent, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 the line says \"Today 18:00 · on your calendar\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 Enter adds it with its own time",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4 ticking the parent asks in a sheet, with the timed one's note",
+    "ok": true,
+    "detail": "3 subtasks are still open | Finish the Data Structures sheet | Tick them too | Leave them open | Questions 1–5 stays on your day at 16:00"
+  },
+  {
+    "name": "p4 Tick them too: all ticked, one toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4 the one Undo opens them all again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 Leave them open: the parent done, the subtasks open",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "pc1 the subtask's block on the phone calendar, \"↳ parent\"",
+    "ok": true,
+    "detail": "Questions 1–5 | 16:00–16:45 · ↳ Finish the Data Structures sheet"
+  },
+  {
+    "name": "pc no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -151,7 +151,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
   const page = await open('/tray', FLYOUT)
   const text = await page.locator('.kf-tray').innerText()
   check('12b date + Day N', /Saturday, 3 October/.test(text) && /DAY 84/i.test(text), text.split('\n').slice(0, 2).join(' | '))
-  check('12b Next · 09:00 Judge test Kai’s Flow, with a check', (await page.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ').includes('NEXT · 09:00 Judge test Kai’s Flow') && (await page.locator('.kf-tray-check').count()) === 1)
+  check('12b Next · 09:00 Judge test Kai’s Flow, with a check', (await page.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ').includes('Next · 09:00 Judge test Kai’s Flow') && (await page.locator('.kf-tray-check').count()) === 1)
   const rows = await page.locator('.kf-tray-row-title').allInnerTexts()
   check('12b Top 3 as three rows, goal first', JSON.stringify(rows) === JSON.stringify(['GCI homework 1 — NumPy', 'Do GCI lecture 2’s survey', 'Skim OS lectures 1 + 2']), JSON.stringify(rows))
   check('12b capture field + Start focus · 25:00 + footer', (await page.getByPlaceholder('Write it down…').count()) === 1 && (await page.locator('.kf-tray-btn.is-cta').innerText()).includes('Start focus · 25:00') && (await page.locator('.kf-tray-open').innerText()).includes('Open Kai’s Flow'))
@@ -190,7 +190,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
   await main.clock.runFor(6 * 60_000 + 18_000) // 25:00 → 18:42
   await sleep(500)
   const now = (await tray.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ')
-  check('12c Start focus in the flyout starts the main window’s timer, on the goal', running && /FOCUS · 18:4[12] LEFT GCI homework 1 — NumPy/.test(now), now)
+  check('12c Start focus in the flyout starts the main window’s timer, on the goal', running && /Focus · 18:4[12] left GCI homework 1 — NumPy/.test(now), now)
   check('12c the button becomes Pause · Stop', JSON.stringify(await tray.locator('.kf-tray-btn').allInnerTexts()) === JSON.stringify(['Pause', 'Stop']), JSON.stringify(await tray.locator('.kf-tray-btn').allInnerTexts()))
   check('12c night theme', (await tray.evaluate(() => document.documentElement.dataset.theme)) === 'night')
   check('12c fits 340 × 460', await noOverflow(tray))
@@ -201,7 +201,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 
   await tray.getByRole('button', { name: 'Pause' }).click()
   await sleep(300)
-  check('12c Pause pauses the main timer', (await tray.locator('.kf-tray-now').innerText()).includes('PAUSED') && (await tray.locator('.kf-tray-btn').first().innerText()) === 'Resume')
+  check('12c Pause pauses the main timer', (await tray.locator('.kf-tray-now').innerText()).includes('paused') && (await tray.locator('.kf-tray-btn').first().innerText()) === 'Resume')
   await tray.getByRole('button', { name: 'Stop' }).click()
   await sleep(300)
   check('12c Stop ends the round; Start focus is back', (await tray.locator('.kf-tray-btn.is-cta').count()) === 1 && (await tray.locator('.kf-tray-now').innerText()).includes('Judge test'))
@@ -217,7 +217,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
   // its button runs in the main window: Keep going = a fresh round
   await main.evaluate(() => window.__kfNotifyAction('keep', { kind: 'focus_done', taskIds: [] }))
   await sleep(300)
-  check('12e Keep going starts a new round', /FOCUS · 2[45]:\d\d LEFT/.test((await tray.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ')), await tray.locator('.kf-tray-now').innerText())
+  check('12e Keep going starts a new round', /Focus · 2[45]:\d\d left/.test((await tray.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ')), await tray.locator('.kf-tray-now').innerText())
   check('12c no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }

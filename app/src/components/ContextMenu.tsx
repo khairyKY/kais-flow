@@ -17,7 +17,7 @@ export interface ContextMenuItem {
   shortcut?: string
   /** Right-aligned value before the ▸ — "2h", a project's dot, a check on the current choice. */
   hint?: React.ReactNode
-  /** A dashed hairline above the row. Unset: one is drawn where danger rows start (the old rule). */
+  /** A hairline above the row. Unset: one is drawn where danger rows start (the old rule). */
   divider?: boolean
   /** Quiet content between the divider and the row (the block menu's "From task" caption). */
   before?: React.ReactNode
@@ -32,7 +32,7 @@ interface ContextMenuProps {
   items: ContextMenuItem[]
   position: { x: number; y: number }
   onClose: () => void
-  /** Above the rows, with a dashed hairline under it when rows follow (the block menu's title). */
+  /** Above the rows, with a hairline under it when rows follow (the block menu's title). */
   header?: React.ReactNode
   /** A fixed width instead of growing from 180px. */
   width?: number
@@ -156,18 +156,18 @@ export function ContextMenu({ items, position, onClose, header, width, label }: 
           background: 'var(--paper-parchment)',
           border: '1px solid var(--line-card)',
           boxShadow: 'var(--shadow-popover)',
-          borderRadius: 5,
+          borderRadius: 'var(--radius-card)',
           padding: 6,
           minWidth: width ?? 180,
           width,
         }}
       >
         {header}
-        {header && items.length > 0 && <div style={{ margin: '2px 7px 4px', borderTop: '1px dashed var(--line-dashed)' }} />}
+        {header && items.length > 0 && <div style={{ margin: '2px 7px 4px', borderTop: '1px solid var(--line-dashed)' }} />}
         {items.map((item, i) => (
           <div key={i}>
             {i > 0 && (item.divider ?? items[i - 1].danger !== item.danger) && (
-              <div style={{ margin: '2px 10px', borderTop: '1px dashed var(--line-dashed)' }} />
+              <div style={{ margin: '2px 10px', borderTop: '1px solid var(--line-dashed)' }} />
             )}
             {item.before}
             <button
@@ -190,7 +190,7 @@ export function ContextMenu({ items, position, onClose, header, width, label }: 
                 color: item.danger ? 'var(--sig-overdue)' : item.labelColor ?? 'var(--ink-body)',
                 background: 'none',
                 border: 'none',
-                borderRadius: 5,
+                borderRadius: 'var(--radius-input)',
                 padding: '7px 10px',
                 cursor: item.disabled ? 'default' : 'pointer',
                 opacity: item.disabled ? 0.35 : 1,

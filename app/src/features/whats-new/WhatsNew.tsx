@@ -56,7 +56,7 @@ export function WhatsNewHost({ uid, createdAt }: { uid: string | undefined; crea
   return sheet ? <WhatsNewSheet v={sheet} onClose={() => useWhatsNew.setState({ sheet: null })} /> : null
 }
 
-const eyebrow: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+const eyebrow: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)' }
 const longDate = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' })
 
 /** A version's highlights, one sprout each — or where to read them when this bundle doesn't have them. */
@@ -65,7 +65,7 @@ export function Highlights({ items, size = 14 }: { items: readonly string[]; siz
   return (
     <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
       {items.map((t, i) => (
-        <li key={t} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 0', borderBottom: i === items.length - 1 ? 'none' : '1px dashed var(--line-dashed)', fontSize: size, lineHeight: 1.5, color: 'var(--ink-body)' }}>
+        <li key={t} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 0', borderBottom: i === items.length - 1 ? 'none' : '1px solid var(--line-dashed)', fontSize: size, lineHeight: 1.5, color: 'var(--ink-body)' }}>
           <Icon name="sprout" size={16} style={{ marginTop: 2, color: 'var(--acc-sage-text)' }} />
           <span>{t}</span>
         </li>
@@ -148,7 +148,7 @@ function CentredPanel({ title, onClose, footer, children }: { title: string; onC
           tabIndex={-1}
           onClick={(e) => e.stopPropagation()}
           className="kf-overlay-card"
-          style={{ width: 'min(480px, 100%)', maxHeight: 'calc(var(--kf-vh) - 96px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', outline: 'none' }}
+          style={{ width: 'min(480px, 100%)', maxHeight: 'calc(var(--kf-vh) - 96px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', outline: 'none' }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '14px 10px 4px 22px' }}>
             <div id={titleId} style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--ink-body)' }}>{title}</div>
@@ -157,14 +157,14 @@ function CentredPanel({ title, onClose, footer, children }: { title: string; onC
             </button>
           </div>
           <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: '2px 22px 10px' }}>{children}</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px 14px 22px', borderTop: '1px dashed var(--line-dashed)' }}>{footer}</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px 14px 22px', borderTop: '1px solid var(--line-dashed)' }}>{footer}</div>
         </div>
       </div>
     </Float>
   )
 }
 
-const label: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+const label: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)' }
 
 /** Settings → App, under Check for updates: what's coming (with Update), and what's in this version. */
 export function UpdateNotes({ running }: { running: string }) {
@@ -174,7 +174,7 @@ export function UpdateNotes({ running }: { running: string }) {
   return (
     <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 14 }}>
       {available && (
-        <section aria-label={`Coming in ${available.v}`} style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 12 }}>
+        <section aria-label={`Coming in ${available.v}`} style={{ borderTop: '1px solid var(--line-dashed)', paddingTop: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
             <div style={{ ...label, color: 'var(--acc-terra-ink)', flex: 1 }}>Coming in {available.v}</div>
             <UpdateButton result={result} />
@@ -184,7 +184,7 @@ export function UpdateNotes({ running }: { running: string }) {
           </div>
         </section>
       )}
-      <details style={{ borderTop: '1px dashed var(--line-dashed)', paddingTop: 10 }}>
+      <details style={{ borderTop: '1px solid var(--line-dashed)', paddingTop: 10 }}>
         <summary style={{ cursor: 'pointer', fontSize: 13.5, color: 'var(--ink-body)', padding: '4px 0' }}>What’s new in your version ({running})</summary>
         <div style={{ marginTop: 4 }}>
           <Highlights items={mine?.highlights ?? []} size={13.5} />

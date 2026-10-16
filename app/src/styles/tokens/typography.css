@@ -4,7 +4,8 @@
 :root {
   --font-display:  'Source Serif 4', 'Source Serif Pro', Georgia, serif;
   --font-ui:       'Inter Tight', system-ui, -apple-system, sans-serif;
-  --font-mono:     'Courier Prime', ui-monospace, 'Courier New', monospace;
+  --font-stamp:   'Courier Prime', ui-monospace, 'Courier New', monospace;   /* B · the only typewriter: date stamps on pages */
+  --font-mono:    var(--font-ui);   /* B · the metadata role (482 inline uses read it) — was Courier Prime */
   --font-hand:     'Caveat', 'Segoe Script', cursive;
 
   /* Sizes */
@@ -23,8 +24,9 @@
   /* Small metadata (dates, statuses, captions): 10px on desktop, where the default 125% interface
      size shows it at 12.5px, but a phone runs at 100%, so it rises there (Kai 2026-09-27: "text
      sizing could use a makeover for web-mobile"). Inline styles use these instead of 10/10.5. */
-  --fs-meta:       10px;
-  --fs-meta-l:     10.5px;
+  --fs-meta:       12px;
+  --fs-meta-l:     12.5px;
+  --fs-section:   14px;    /* B · section label, sentence case, semibold */
   --fs-hand:       16px;   /* Caveat marginalia */
   --fs-hand-l:     18px;
 
@@ -40,34 +42,40 @@
   --lh-relaxed:    1.5;
 
   /* Letter spacing — mono labels are always tracked */
-  --ls-mono-tight: 0.12em;
-  --ls-mono:       0.18em;
-  --ls-mono-wide:  0.22em;
+  --ls-mono-tight: 0;
+  --ls-mono:       0;
+  --ls-mono-wide:  0;
   --ls-display:    -0.015em;
+  --ls-stamp:     0.12em;  /* B · date stamps on pages */
+  --ls-eyebrow:   0.08em;  /* B · the one uppercase eyebrow a screen may keep */
   /* Added from the 2026-09-28 design-system refresh (design-export/DS-CHANGELOG.md §2). */
   --fs-page-title: 44px;
   --fs-tab-label: 12px;
   --fs-badge: 12px;
-  --ls-meta: 0.12em;
+  --ls-meta: 0;
 
 }
 
 @media (max-width: 767px) {
-  :root { --fs-meta: 12px; --fs-meta-l: 12.5px; }
-  /* One page-title size on a phone (the export's iPhone mocks use 26px); desktop titles keep
-     their per-page sizes (30–44px), which ranged 22–40px on a 390px screen before. So a page's
-     h1 carries its desktop size only: this draws every phone title in the page column (a sheet
-     portals to <body>, outside .app-main-content, and keeps its own). */
-  .app-main-content h1 { font-size: 26px !important; line-height: 1.08 !important; }
-  /* "Metadata is tiny but tracked wide" — at phone size the 0.14–0.2em tracking made captions
-     wrap ("TASKS · 325 / OPEN") and split task details over three lines. Tighter on a phone. */
-  .app-shell [style*="uppercase"] { letter-spacing: 0.07em !important; }
+  :root { --fs-meta: 12.5px; --fs-meta-l: 13px; }   /* B (was 12 / 12.5) */
+  /* One page-title size on a phone; desktop titles keep their per-page sizes (30–44px), which
+     ranged 22–40px on a 390px screen before. So a page's h1 carries its desktop size only: this
+     draws every phone title in the page column (a sheet portals to <body>, outside
+     .app-main-content, and keeps its own). */
+  .app-main-content h1 { font-size: var(--fs-page-title) !important; line-height: 1.08 !important; text-wrap: balance; }
+  /* (B drops uppercase metadata, so the phone-only uppercase tracking rule is gone.) */
+}
+
+/* The metadata role (--font-mono) is the interface face now; times and counts keep the typewriter's
+   even digits. Inline styles read the role, so the attribute finds them (was bound.css rule 1). */
+[style*="font-family: var(--font-mono)"] {
+  font-variant-numeric: tabular-nums;
 }
 
 /* Phone tokens from the 2026-09-28 design-system refresh (DS-CHANGELOG.md §1-2). */
 @media (max-width: 767px) {
   :root {
-    --fs-display-xl: 26px;
+    --fs-display-xl: 26px;   /* B keeps 26px: Today's phone title shares its row with three buttons */
     --fs-page-title: 26px;
     --fs-display-l: 22px;
     --fs-display-m: 20px;
@@ -82,9 +90,9 @@
     --fs-mono-xs: 12px;
     --fs-hand: 18px;
     --fs-hand-l: 20px;
-    --ls-mono-tight: 0.05em;
-    --ls-mono: 0.07em;
-    --ls-mono-wide: 0.07em;
-    --ls-meta: 0.06em;
+    --ls-mono-tight: 0;
+    --ls-mono: 0;
+    --ls-mono-wide: 0;
+    --ls-meta: 0;
   }
 }

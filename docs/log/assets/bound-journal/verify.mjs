@@ -1,0 +1,560 @@
+// Bound Journal (direction B, Kai 2026-10-14) on the REAL app against a MOCKED backend: the key
+// screens plus every calendar format (Day · 3 days · Week · Month, desktop and phone) and the
+// calendar's states, in day and Night Garden. Recipe as calendar-phone/verify.mjs: the dev server
+// runs with VITE_SUPABASE_URL=http://127.0.0.1:9 (nothing listens), a made-up session sits in
+// localStorage, Playwright answers every REST call. Writes are answered 201 and go nowhere.
+//   node verify.mjs <outDir> [baseUrl] [playwright-core path]
+//   ONLY=cal-week,today runs just those shots (prefix match); THEME=night runs one theme.
+import fs from 'node:fs'
+import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+
+const OUT = process.argv[2]
+const BASE = process.argv[3] ?? 'http://localhost:5280'
+const PW = process.argv[4] ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs'
+const { chromium } = await import(pathToFileURL(PW).href)
+fs.mkdirSync(OUT, { recursive: true })
+const results = []
+const check = (name, ok, detail = '') => {
+  results.push({ name, ok: !!ok, detail: String(detail) })
+  console.log(`${ok ? 'PASS' : 'FAIL'} ${name}${detail !== '' ? ' — ' + detail : ''}`)
+}
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+const want = (k) => !process.env.ONLY || process.env.ONLY.split(',').some((p) => k.startsWith(p))
+const THEMES = process.env.THEME ? [process.env.THEME] : ['day', 'night']
+
+// ── session ──
+const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url')
+const UID = '00000000-0000-4000-8000-00000000d3e0'
+const jwt = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: UID, role: 'authenticated', exp: 4102444800 })}.x`
+const user = { id: UID, aud: 'authenticated', role: 'authenticated', email: 'demo@example.test', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' }
+const session = { access_token: jwt, refresh_token: 'demo', token_type: 'bearer', expires_in: 3600, expires_at: 4102444800, user }
+
+// ── the day: Wednesday 14 Oct 2026, Cairo = UTC+3, the clock at 12:10 ──
+const cairo = (hhmm, day = 14, month = 9) => {
+  const [h, m] = hhmm.split(':').map(Number)
+  return new Date(Date.UTC(2026, month, day, h - 3, m))
+}
+const iso = (hhmm, day, month) => cairo(hhmm, day, month).toISOString()
+const NOW = cairo('12:10')
+const T = '2026-09-01T09:00:00Z'
+const id = (p, n) => `${p}0000000-0000-4000-8000-${String(n).padStart(12, '0')}`
+
+const SHAHEEN = { id: id('4', 1), user_id: UID, name: 'Shaheen', color: '#C9A961', sort_order: 0, deleted_at: null, created_at: T, updated_at: T }
+const STUDY = { id: id('4', 2), user_id: UID, name: 'Study', color: '#7E9A76', sort_order: 1, deleted_at: null, created_at: T, updated_at: T }
+const project = (n, name, d, over = {}) => ({ id: id('2', n), user_id: UID, domain_id: d.id, name, type: 'standard', status: 'active', color: null, target_date: null, milestones: [], checklist: [], deleted_at: null, created_at: T, updated_at: T, ...over })
+const SITE = project(1, 'Shaheen Website', SHAHEEN)
+const FORECAST = project(2, 'Forecasting app', STUDY)
+const DS = project(3, 'Data Structures', STUDY)
+const GCI = project(4, 'GCI course', STUDY, { status: 'archived', completion_summary: 'Fourteen tasks over six weeks. Done before the deadline.', updated_at: '2026-10-03T10:00:00Z' })
+const SPRING = project(5, 'Spring reading list', STUDY, { status: 'archived', completion_summary: 'Nine books, one a fortnight.', updated_at: '2026-09-12T10:00:00Z' })
+
+const task = (n, title, over = {}) => ({
+  id: id('1', n), title, user_id: UID, project_id: null, domain_id: null, area_id: null, notes: null, status: 'todo', due_at: null, scheduled_start: null,
+  scheduled_end: null, top3: false, top3_rank: null, snoozed_until: null, recurrence_rule: null, labels: [], priority: null, duration_min: null, someday: false,
+  reminder_at: null, reminder_sent: false, completed_at: null, paused: false, milestone_id: null, deleted_at: null, parent_task_id: null, slot_id: null, slot_date: null,
+  created_at: T, updated_at: T, ...over,
+})
+const ev = (n, title, from, to, o = {}) => ({
+  id: id('e', n), user_id: UID, title, starts_at: iso(from, o.day ?? 14, o.month), ends_at: iso(to, o.day ?? 14, o.month), all_day: false, task_id: o.task ? id('1', o.task) : null,
+  source: o.gcal ? 'gcal' : 'native', gcal_id: o.gcal ? `g-${n}` : null, gcal_etag: null, busy: o.busy ?? true, type: o.type ?? (o.task ? 'task' : 'event'), color: null,
+  deleted_at: null, created_at: T, updated_at: T,
+})
+const allDay = (n, title, fromDay, toDay) => ({ ...ev(n, title, '03:00', '03:00'), starts_at: `2026-10-${String(fromDay).padStart(2, '0')}T00:00:00.000Z`, ends_at: `2026-10-${String(toDay).padStart(2, '0')}T00:00:00.000Z`, all_day: true })
+
+const SLOT = 7 // the Study slot — a Time block that holds two tasks (0073)
+const TASKS = [
+  task(1, 'Call the tyre supplier about the invoice', { top3: true, top3_rank: 1, project_id: SITE.id, domain_id: SHAHEEN.id, duration_min: 30, due_at: iso('17:00'), scheduled_start: iso('11:15'), scheduled_end: iso('11:45') }),
+  task(2, 'Finish the Data Structures sheet', { top3: true, top3_rank: 2, project_id: DS.id, domain_id: STUDY.id, duration_min: 90, due_at: iso('23:00') }),
+  task(3, 'Reply to Omar about Thursday', { top3: true, top3_rank: 3, duration_min: 15, due_at: iso('18:00', 13), scheduled_start: iso('14:30'), scheduled_end: iso('15:00') }),
+  task(4, 'Deep work: forecasting', { project_id: FORECAST.id, domain_id: STUDY.id, duration_min: 120, scheduled_start: iso('09:00'), scheduled_end: iso('11:00'), status: 'done', completed_at: iso('11:02') }),
+  task(5, 'Revise linked lists', { project_id: DS.id, slot_id: id('e', SLOT), slot_date: '2026-10-14', scheduled_start: iso('12:30'), scheduled_end: iso('14:00'), duration_min: 45 }),
+  task(6, 'Read chapter 4', { project_id: DS.id, slot_id: id('e', SLOT), slot_date: '2026-10-14', scheduled_start: iso('12:30'), scheduled_end: iso('14:00'), duration_min: 30 }),
+  task(7, 'Book the dentist', { due_at: iso('17:00', 16), duration_min: 10 }),
+  task(8, 'Pay the internet bill', { due_at: iso('17:00', 12), duration_min: 10 }),
+  task(9, 'Plan the Shaheen launch post', { project_id: SITE.id, domain_id: SHAHEEN.id, due_at: iso('17:00', 16), duration_min: 45 }),
+  task(10, 'Dentist', { duration_min: 60, scheduled_start: iso('16:00', 15), scheduled_end: iso('17:00', 15), due_at: iso('16:00', 15) }),
+  task(11, 'Send the Q3 numbers', { status: 'done', completed_at: iso('08:40'), project_id: SITE.id }),
+  ...Array.from({ length: 14 }, (_, i) => task(40 + i, `GCI task ${i + 1}`, { project_id: GCI.id, status: 'done', completed_at: '2026-10-02T10:00:00Z' })),
+]
+const EVENTS = [
+  ev(1, 'Fajr & a walk', '05:00', '05:45', { type: 'time_block' }),
+  ev(2, 'Standup', '08:30', '08:45'),
+  ev(3, 'Deep work: forecasting', '09:00', '11:00', { task: 4 }),
+  ev(4, 'Call with Omar', '10:15', '11:00'),
+  ev(5, 'Call the tyre supplier about the invoice', '11:15', '11:45', { task: 1 }),
+  ev(6, 'Lunch with Sam', '12:00', '13:00', { gcal: true }),
+  ev(SLOT, 'Study slot', '12:30', '14:00', { type: 'time_block' }),
+  ev(8, 'Data Structures lecture', '14:00', '15:30', { gcal: true }),
+  ev(9, 'Reply to Omar about Thursday', '14:30', '15:00', { task: 3 }),
+  ev(10, 'Pick up the laptop', '14:45', '15:15'),
+  ev(11, 'Gym, upper body', '15:30', '16:30', { type: 'time_block' }),
+  ev(12, 'Insulin check', '16:40', '16:50'),
+  ev(13, 'Weekly review', '18:00', '19:00', { type: 'time_block' }),
+  allDay(14, "Mum's birthday", 14, 15),
+  allDay(15, 'Midterms week', 12, 17),
+  ev(16, 'Shaheen sync', '10:00', '11:00', { day: 13 }),
+  ev(17, 'Gym', '15:30', '16:30', { day: 13, type: 'time_block' }),
+  ev(18, 'Exam: Algorithms', '09:00', '11:00', { day: 15, gcal: true }),
+  ev(19, 'Dentist', '16:00', '17:00', { day: 15, task: 10 }),
+  ev(20, 'Coffee with Priya', '18:30', '19:30', { day: 15 }),
+  ev(21, "Jumu'ah", '12:00', '13:00', { day: 16, type: 'time_block' }),
+  ev(22, 'Office hours', '10:00', '11:00', { day: 12 }),
+  // a crowded day for the month view's "+N more"
+  ...['Standup', 'Design review', 'Lunch with Sam', 'Lab report', 'Gym', 'Call Mum'].map((t, i) => ev(30 + i, t, `${String(9 + i * 2).padStart(2, '0')}:00`, `${String(10 + i * 2).padStart(2, '0')}:00`, { day: 21 })),
+  ev(40, 'Shaheen sync', '10:00', '11:00', { day: 28 }),
+  ev(41, 'Dentist follow-up', '16:00', '16:30', { day: 6 }),
+  ev(42, 'Weekly review', '18:00', '19:00', { day: 7, type: 'time_block' }),
+]
+const ENTRY = { id: id('6', 1), user_id: UID, body: 'The forecasting build finally clicked this morning. Two hours of real deep work before the dorm woke up. I want to protect these early mornings.', entry_date: '2026-10-14', mood: 'focused', transcript: null, media_paths: [], gratitude: ['Fajr on time, then a quiet walk', 'A working forecast, finally'], deleted_at: null, created_at: iso('07:10'), updated_at: iso('07:10') }
+const BOOK = { id: id('8', 1), user_id: UID, title: 'Pilgrim at Tinker Creek', author: 'Annie Dillard', published_year: 1974, current_page: 120, total_pages: 290, status: 'reading', created_at: T, updated_at: T }
+const QUOTE = { id: id('8', 3), user_id: UID, text: 'How we spend our days is, of course, how we spend our lives.', author: 'Annie Dillard', source: 'The Writing Life', tags: [], book_id: BOOK.id, page: '32', created_at: T, updated_at: T }
+const NOTE = { id: id('8', 2), user_id: UID, title: 'Protect the mornings', body: 'Deep work before 9, meetings after.', tags: ['pace'], domain_id: null, book_id: null, created_at: T, updated_at: T }
+const settings = (view) => ({ id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Kai', timezone: 'Africa/Cairo', calendar_default_view: view ?? null, created_at: T, updated_at: T })
+const tables = (o = {}) => structuredClone({
+  tasks: TASKS, calendar_events: EVENTS, projects: [SITE, FORECAST, DS, GCI, SPRING], domains: [SHAHEEN, STUDY], app_settings: [settings(o.calView)],
+  journal_entries: [ENTRY], books: [BOOK], quotes: [QUOTE], notes: [NOTE], commentary: [], inbox_items: [], activity_log: [], routines: [], routine_completions: [],
+  time_entries: [], people: [], interactions: [], areas: [],
+  ...o.rows,
+})
+
+const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
+const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
+// Kai's screen: 1920×1080 (the app lays it out at the default 125% interface size).
+const desktop = { viewport: { width: 1920, height: 1080 } }
+
+/** Opens `route` signed in, with the day's data. o: { view, theme, calView, hold, local } */
+async function open(route, o = {}) {
+  const view = o.view ?? phone
+  const ctx = await browser.newContext({ ...view, deviceScaleFactor: Number(process.env.DPR ?? 1), timezoneId: 'Africa/Cairo', locale: 'en-US' })
+  await ctx.addInitScript(([t, sess, local, uid]) => {
+    localStorage.setItem('kf_theme', t)
+    localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
+    localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['tour', 'hint:swipe', 'hint:calendar', 'hint:inbox']))
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: Date.now() + 864e5 }))
+    if (sess) localStorage.setItem('sb-127-auth-token', sess)
+    for (const [k, v] of Object.entries(local)) localStorage.setItem(k, v)
+  }, [o.theme ?? 'day', o.signedOut ? '' : JSON.stringify(session), o.local ?? {}, UID])
+  const rows = { ...tables(o), ...structuredClone(o.rows ?? {}) } // o.rows: a scene's own tables over the day's
+  await ctx.route('http://127.0.0.1:9/**', async (r) => {
+    const req = r.request()
+    const url = new URL(req.url())
+    if (o.search && url.pathname === '/functions/v1/search') return r.fulfill({ json: { results: o.search } })
+    const table = url.pathname.replace('/rest/v1/', '')
+    if (req.method() !== 'GET' && req.method() !== 'HEAD') return r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
+    if (url.pathname.startsWith('/auth/v1/user')) return r.fulfill({ json: user })
+    if (url.pathname.startsWith('/functions/') || url.pathname.startsWith('/storage/')) return r.fulfill({ status: 200, json: {} })
+    if (o.hold) await sleep(o.hold)
+    const one = (req.headers()['accept'] ?? '').includes('vnd.pgrst.object')
+    const list = rows[table] ?? []
+    if (one) return list.length ? r.fulfill({ json: list[0] }).catch(() => {}) : r.fulfill({ status: 406, json: { code: 'PGRST116', message: 'no rows' } }).catch(() => {})
+    return r.fulfill({ json: list, headers: { 'content-range': `0-${Math.max(0, list.length - 1)}/${list.length}` } }).catch(() => {})
+  })
+  const page = await ctx.newPage()
+  const errors = []
+  page.on('pageerror', (e) => errors.push(String(e)))
+  await page.clock.install({ time: o.at ?? NOW })
+  await page.goto(BASE + route, { waitUntil: 'domcontentloaded' })
+  // wait past the lazy route's loading dot: the page column has real text
+  if (!o.hold && !o.signedOut) await page.waitForFunction(() => (document.querySelector('.app-main-content')?.innerText.trim().length ?? 0) > 60, null, { timeout: 25000 }).catch(() => {})
+  await sleep(o.hold ? 900 : 1600)
+  return { page, ctx, errors }
+}
+async function shot(page, name) {
+  await page.screenshot({ path: path.join(OUT, `${name}.png`) })
+}
+
+// ── EXPLORE=route prints the buttons on a page, to find a control's name ──
+if (process.env.EXPLORE) {
+  const { page, ctx } = await open(process.env.EXPLORE, { view: process.env.PHONE ? phone : desktop })
+  if (process.env.CLICK) {
+    await page.getByText(process.env.CLICK, { exact: true }).first().click()
+    await sleep(700)
+    await page.screenshot({ path: path.join(OUT, 'explore.png') })
+  }
+  const names = await page.$$eval('button, [role=button], a, [role=tab], [role=menuitemradio]', (els) => els.map((e) => `${e.tagName.toLowerCase()} "${(e.getAttribute('aria-label') || e.textContent || '').trim().slice(0, 50)}"`))
+  console.log([...new Set(names)].join('\n'))
+  await ctx.close(); await browser.close(); process.exit(0)
+}
+
+// ── SCAN=1 lists short labels that start lower-case: copy written for CSS caps, which B no longer
+// applies. Handwriting (Caveat) and inputs are skipped; the rest is for a human to judge. ──
+if (process.env.SCAN) {
+  const routes = ['/today', '/calendar', '/journal', '/herbarium', '/tasks', '/inbox', '/library', '/notebook', '/settings', '/projects', '/routines', '/people', '/focus', '/weekly-review', '/activity', '/trash', '/search']
+  const found = new Map()
+  for (const v of [desktop, phone]) {
+    for (const r of routes) {
+      const { page, ctx } = await open(r, { view: v })
+      if (process.env.SCAN === 'caps') await page.evaluate(() => (window.__capsOnly = true))
+      const hits = await page.evaluate(() => {
+        const out = []
+        for (const el of document.querySelectorAll('body *')) {
+          const own = [...el.childNodes].filter((n) => n.nodeType === 3).map((n) => n.textContent).join('').trim()
+          if (!own || own.length > 40 || !/^[a-z]/.test(own)) continue
+          const cs = getComputedStyle(el)
+          if (window.__capsOnly && cs.textTransform !== 'uppercase') continue
+          if (/Caveat/.test(cs.fontFamily) || cs.display === 'none' || cs.visibility === 'hidden' || el.closest('input,textarea,[contenteditable],script,style')) continue
+          out.push(own)
+        }
+        return out
+      })
+      for (const h of hits) found.set(h, (found.get(h) ?? new Set()).add(r))
+      await ctx.close()
+    }
+  }
+  for (const [t, rs] of [...found].sort()) console.log(`${JSON.stringify(t).padEnd(44)} ${[...rs].join(' ')}`)
+  await browser.close(); process.exit(0)
+}
+
+const SCENES = []
+const scene = (name, fn) => SCENES.push({ name, fn })
+
+// ── the key screens ──
+for (const [n, route] of [['today', '/today'], ['journal', '/journal'], ['herbarium', '/herbarium'], ['tasks', '/tasks'], ['inbox', '/inbox'], ['library', '/library'], ['notebook', '/notebook'], ['settings', '/settings']]) {
+  scene(`screen-${n}-phone`, async (theme) => open(route, { theme }))
+  scene(`screen-${n}-desktop`, async (theme) => open(route, { theme, view: desktop }))
+}
+
+// ── bj-today: Today below the fold and in the evening, Focus, the rituals, the weekly review ──
+scene('bj-today-scrolled-phone', async (theme) => {
+  const s = await open('/today', { theme })
+  await s.page.evaluate(() => document.querySelector('.app-main-content')?.scrollTo(0, 640))
+  await sleep(400)
+  return s
+})
+for (const [n, view] of [['phone', phone], ['desktop', desktop]]) {
+  scene(`bj-today-evening-${n}`, async (theme) => open('/today', { theme, view, at: cairo('19:30') }))
+  scene(`bj-focus-${n}`, async (theme) => open('/focus', { theme, view }))
+  scene(`bj-review-${n}`, async (theme) => open('/weekly-review', { theme, view }))
+  scene(`bj-plan-${n}`, async (theme) => open('/today?ritual=morning', { theme, view }))
+  scene(`bj-shutdown-${n}`, async (theme) => open('/today?ritual=evening', { theme, view }))
+}
+scene('bj-focus-settings-desktop', async (theme) => {
+  const s = await open('/focus', { theme, view: desktop })
+  await s.page.locator('[title="pomodoro settings"], [aria-label="Pomodoro settings"]').first().click()
+  await sleep(600)
+  return s
+})
+scene('bj-garden-desktop', async (theme) => {
+  const s = await open('/focus', { theme, view: desktop })
+  await s.page.getByText('Open the garden →').first().click()
+  await sleep(900)
+  return s
+})
+
+// ── bj-pages: the Library's open pages, Projects, Routines and People, with their own rows (o.rows)
+// so the shared screens above stay as they were ──
+{
+  const P = (n) => id('9', n)
+  const day = (d) => `2026-10-${String(d).padStart(2, '0')}`
+  const routine = (n, name, o) => ({ id: P(n), user_id: UID, name, description: null, time_of_day: 'morning', clock_time: null, cadence: { weekdays: [0, 1, 2, 3, 4, 5, 6] }, challenge_start: null, challenge_end: null, active: true, steps: [], step_minutes: null, domain_id: null, goal_days: null, plant: 'vine', created_at: T, updated_at: T, ...o })
+  const ROUTINES = [
+    routine(1, 'Morning pages', { clock_time: '06:30', steps: ['Water', 'Three pages'], step_minutes: [2, 20], goal_days: 30 }),
+    routine(2, 'Gym', { time_of_day: 'evening', cadence: { weekdays: [1, 3, 5] }, plant: 'cherry', domain_id: STUDY.id }),
+    routine(3, 'Read before bed', { time_of_day: 'evening', plant: 'fern' }),
+  ]
+  const done = (r, days) => days.map((d) => ({ id: `${r}-${d}`, user_id: UID, routine_id: P(r), completed_on: day(d), created_at: T }))
+  const OMAR = { id: P(11), user_id: UID, name: 'Omar Haddad', domain_id: null, created_at: T, updated_at: T, facts: [{ id: 'f1', label: 'Interest', value: 'Bouldering' }, { id: 'f2', label: 'Birthday', value: '3 Nov', date: '2026-11-03', recurs: true }] }
+  const PRIYA = { id: P(12), user_id: UID, name: 'Priya Nair', domain_id: STUDY.id, created_at: T, updated_at: T, facts: [] }
+  const talk = (n, who, summary, d) => ({ id: P(20 + n), user_id: UID, person_id: who.id, summary, occurred_at: iso('16:00', d), created_at: T, updated_at: T })
+  const AREA = { id: P(30), user_id: UID, domain_id: STUDY.id, name: 'Semester 5', description: null, color: null, sort_order: 0, deleted_at: null, created_at: T, updated_at: T }
+  const site = { ...SITE, target_date: '2026-11-20T00:00:00Z',
+    milestones: [{ id: 'm1', title: 'Pricing page live', weight: 2, completed: true }, { id: 'm2', title: 'Launch post', weight: 1, completed: false }, { id: 'm3', title: 'First 10 orders', weight: 3, completed: false }],
+    checklist: [{ id: 'c1', title: 'Domain renewed', type: 'one-shot', completed: true }, { id: 'c2', title: 'Plan the Shaheen launch post', type: 'task-linked', completed: false, task_id: id('1', 9) }] }
+  const rows = {
+    routines: ROUTINES, routine_completions: [...done(1, [6, 7, 8, 9, 10, 11, 12, 13, 14]), ...done(2, [5, 7, 9, 12]), ...done(3, [11, 13])],
+    people: [OMAR, PRIYA], interactions: [talk(1, OMAR, 'Coffee after the lecture', 9), talk(2, PRIYA, 'Lab partner sync', 1)],
+    areas: [AREA], projects: [site, FORECAST, DS, GCI, SPRING],
+  }
+  for (const [n, route] of [['projects', '/projects'], ['project', `/projects/${SITE.id}`], ['routines', '/routines'], ['people', '/people'], ['person', `/people/${OMAR.id}`],
+    ['lib-note', `/library?tab=notes&noteId=${NOTE.id}`], ['lib-quote', `/library?tab=quotes&quoteId=${QUOTE.id}`], ['lib-book', `/library?tab=books&bookId=${BOOK.id}`]]) {
+    scene(`page-${n}-phone`, async (theme) => open(route, { theme, rows }))
+    scene(`page-${n}-desktop`, async (theme) => open(route, { theme, view: desktop, rows }))
+  }
+  scene('page-newproject-desktop', async (theme) => {
+    const s = await open('/projects', { theme, view: desktop, rows })
+    await s.page.getByRole('button', { name: /new project/i }).first().click()
+    await sleep(700)
+    return s
+  })
+}
+
+// ── calendar formats ──
+for (const v of ['day', '3day', 'week']) {
+  scene(`cal-${v}-desktop`, async (theme) => open('/calendar', { theme, view: desktop, calView: v }))
+  scene(`cal-${v}-phone`, async (theme) => open('/calendar', { theme, calView: v }))
+}
+async function deskMonth(s) {
+  await s.page.getByText('Week', { exact: true }).first().click()
+  await sleep(400)
+  await s.page.getByText('M', { exact: true }).first().click()
+  await s.page.keyboard.press('Escape')
+  await sleep(900)
+}
+scene('cal-month-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'week' })
+  await deskMonth(s)
+  return s
+})
+scene('cal-month-phone', async (theme) => {
+  const s = await open('/calendar', { theme, calView: 'day' })
+  await s.page.getByRole('button', { name: 'Wednesday, Oct 14', exact: true }).click()
+  await sleep(500)
+  await s.page.getByText('Month', { exact: true }).first().click()
+  await sleep(900)
+  return s
+})
+
+// ── calendar states ──
+scene('cal-empty-day-phone', async (theme) => open('/calendar?date=2026-10-17', { theme, calView: 'day' }))
+scene('cal-loading-phone', async (theme) => open('/calendar', { theme, calView: 'day', hold: 6000 }))
+scene('cal-loading-desktop', async (theme) => open('/calendar', { theme, view: desktop, calView: 'week', hold: 6000 }))
+scene('cal-planning-desktop', async (theme) => open('/calendar', { theme, view: desktop, calView: 'day', local: { 'kf.calPlanning': '1' } }))
+scene('cal-details-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'day' })
+  await s.page.locator('.fc-timegrid-event', { hasText: 'Call with Omar' }).first().click().catch(() => {})
+  await sleep(900)
+  return s
+})
+scene('cal-create-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'day' })
+  // the free hour under Lunch with Sam, left half of the lane (13:00–14:00)
+  const lane = await s.page.locator('.fc-timegrid-slot-lane[data-time="13:00:00"]').first().boundingBox()
+  await s.page.mouse.move(lane.x + lane.width * 0.15, lane.y + 3)
+  await s.page.mouse.down()
+  await s.page.mouse.move(lane.x + lane.width * 0.15, lane.y + 55, { steps: 8 })
+  await s.page.mouse.up()
+  await sleep(900)
+  return s
+})
+scene('cal-drag-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'day' })
+  const b = await s.page.locator('.fc-timegrid-event', { hasText: 'Call with Omar' }).first().boundingBox()
+  await s.page.mouse.move(b.x + b.width / 2, b.y + 12)
+  await s.page.mouse.down()
+  for (let i = 1; i <= 24; i++) { await s.page.mouse.move(b.x + b.width / 2 - i, b.y + 12 + i * 6); await sleep(25) }
+  await sleep(600)
+  return s // screenshot mid-drag (button still held)
+})
+scene('cal-more-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'week' })
+  await deskMonth(s)
+  await s.page.locator('.fc-daygrid-more-link').first().click()
+  await sleep(700)
+  return s
+})
+scene('cal-block-sheet-phone', async (theme) => {
+  const s = await open('/calendar', { theme, calView: 'day' })
+  await s.page.locator('.pc-block', { hasText: 'Gym' }).first().click().catch(() => {})
+  await sleep(900)
+  return s
+})
+scene('cal-create-phone', async (theme) => {
+  const s = await open('/calendar', { theme, calView: 'day' })
+  // the free half-hour at 13:30, left of the Study slot (Lunch ends 13:00, the lecture starts 14:00)
+  const h = await s.page.getByText('13:00', { exact: true }).first().boundingBox()
+  await s.page.touchscreen.tap(h.x + 110, h.y + 34)
+  await sleep(900)
+  return s
+})
+scene('cal-unscheduled-phone', async (theme) => {
+  const s = await open('/calendar', { theme, calView: 'day' })
+  await s.page.locator('button', { hasText: /^Today\s*1$/ }).first().click()
+  await sleep(900)
+  return s
+})
+
+// ── bj-shell (2026-10-15): the shell (sidebar, tab bar, More, toasts), the kit's overlays and the
+// tool pages (Settings, Activity, Trash, Guide, chat, sign-in). Scenes are named shell-* / kit-*. ──
+const DEL = '2026-10-13T09:00:00Z'
+const ACTIVITY = [
+  ['task.completed', 'task', id('1', 4), { title: 'Deep work: forecasting' }, iso('11:02')],
+  ['inbox.captured', 'inbox_item', id('9', 1), { text: 'Ask Sam about the lab report' }, iso('10:40')],
+  ['task.created', 'task', id('1', 3), { title: 'Reply to Omar about Thursday' }, iso('09:15')],
+  ['task.completed', 'task', id('1', 11), { title: 'Send the Q3 numbers' }, iso('08:40')],
+  ['task.rescheduled', 'task', id('1', 8), { title: 'Pay the internet bill' }, iso('18:20', 13)],
+  ['task.deleted', 'task', id('1', 60), { title: 'Old draft of the post' }, iso('17:00', 13)],
+].map(([event_type, entity_type, entity_id, payload, created_at], i) => ({ id: id('a', i + 1), user_id: UID, event_type, entity_type, entity_id, payload, created_at }))
+const TRASHED = {
+  tasks: [task(60, 'Old draft of the post', { deleted_at: DEL }), task(61, 'Buy printer ink', { deleted_at: '2026-10-11T12:00:00Z' })],
+  calendar_events: [{ ...ev(70, 'Cancelled: gym', '17:00', '18:00', { day: 12 }), deleted_at: '2026-10-12T08:00:00Z' }],
+  projects: [{ ...project(9, 'Winter reading', STUDY), deleted_at: '2026-10-10T08:00:00Z' }],
+  inbox_items: [], journal_entries: [], areas: [], domains: [],
+}
+const scrolled = (y) => async (s) => {
+  await s.page.evaluate((top) => document.querySelector('.app-main-content')?.scrollTo(0, top === 'end' ? 1e6 : top), y)
+  await sleep(500)
+  return s
+}
+const then = (o, fn) => async (theme) => fn(await open(o.route, { ...o, theme }))
+for (const [v, view] of [['phone', phone], ['desktop', desktop]]) {
+  scene(`shell-activity-${v}`, async (theme) => open('/activity', { theme, view, rows: { activity_log: ACTIVITY } }))
+  scene(`shell-trash-${v}`, async (theme) => open('/trash', { theme, view, rows: TRASHED }))
+  scene(`shell-trash-empty-${v}`, async (theme) => open('/trash', { theme, view, rows: { tasks: [], calendar_events: [], projects: [], domains: [] } }))
+  scene(`shell-guide-${v}`, async (theme) => open('/guide', { theme, view }))
+  scene(`shell-settings-mid-${v}`, then({ route: '/settings', view }, scrolled(v === 'phone' ? 1600 : 1100)))
+  scene(`shell-settings-low-${v}`, then({ route: '/settings', view }, scrolled(v === 'phone' ? 3400 : 2300)))
+  scene(`shell-settings-end-${v}`, then({ route: '/settings', view }, scrolled('end')))
+  scene(`shell-signin-${v}`, async (theme) => open('/sign-in', { theme, view, signedOut: true }))
+  scene(`shell-download-${v}`, async (theme) => open('/tasks', { theme, view, local: { 'kf-download-bar-dismissed': '0' } }))
+  scene(`shell-whatsnew-${v}`, async (theme) => open('/tasks', { theme, view, local: { [`kf-whats-new:${UID}`]: JSON.stringify({ seen: '1.0.0', notified: '99.0.0', checkedAt: Date.now() + 864e5 }) } }))
+  scene(`shell-toast-${v}`, then({ route: '/tasks', view }, async (s) => {
+    await s.page.getByRole('checkbox', { name: /Pay the internet bill/ }).first().click()
+    await sleep(700)
+    return s
+  }))
+  scene(`kit-ref-${v}`, async (theme) => open('/design-system', { theme, view, signedOut: true }))
+  scene(`kit-ref-low-${v}`, then({ route: '/design-system', view, signedOut: true }, async (s) => {
+    await s.page.evaluate(() => window.scrollTo(0, 1e6))
+    await sleep(500)
+    return s
+  }))
+}
+scene('shell-more-phone', then({ route: '/today' }, async (s) => {
+  await s.page.getByRole('button', { name: 'More', exact: true }).click()
+  await sleep(700)
+  return s
+}))
+scene('shell-actionsheet-phone', then({ route: '/tasks' }, async (s) => {
+  await s.page.getByRole('button', { name: /More actions|Actions for|⋯/ }).first().click()
+  await sleep(700)
+  return s
+}))
+scene('shell-chat-phone', then({ route: '/today' }, async (s) => {
+  await s.page.getByRole('button', { name: 'More', exact: true }).click()
+  await sleep(500)
+  await s.page.getByRole('button', { name: 'Chat', exact: true }).click()
+  await sleep(1200)
+  return s
+}))
+scene('shell-chat-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
+  await s.page.keyboard.press('Control+j')
+  await sleep(1200)
+  return s
+}))
+scene('shell-shortcuts-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
+  await s.page.keyboard.press('?')
+  await sleep(900)
+  return s
+}))
+scene('shell-sync-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
+  await s.page.locator('.kf-side-sync').click()
+  await sleep(600)
+  return s
+}))
+scene('shell-collapsed-desktop', async (theme) => open('/tasks', { theme, view: desktop, local: { 'kf.sidebarCollapsed': '1' } }))
+// A 1280×800 laptop at the default 125%: 640 layout px of sidebar — Tend's five rows must stay in view.
+scene('shell-sidebar-1280', async (theme) => open('/today', { theme, view: { viewport: { width: 1280, height: 800 } } }))
+scene('shell-menu-desktop', then({ route: '/tasks', view: desktop }, async (s) => {
+  await s.page.getByText('Pay the internet bill', { exact: true }).first().click({ button: 'right' })
+  await sleep(700)
+  return s
+}))
+
+// bj-calendar (2026-10-15): the view options, a Google event's read-only menu, and the editor pages.
+scene('cal-viewopts-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'week' })
+  await s.page.locator('.cal-head [aria-haspopup="dialog"]').click()
+  await sleep(600)
+  return s
+})
+scene('cal-google-desktop', async (theme) => {
+  const s = await open('/calendar', { theme, view: desktop, calView: 'day' })
+  await s.page.locator('.fc-timegrid-event', { hasText: 'Lunch with Sam' }).first().click().catch(() => {})
+  await sleep(900)
+  return s
+})
+scene('cal-new-desktop', async (theme) => open('/new?kind=event', { theme, view: desktop }))
+scene('cal-new-task-desktop', async (theme) => open('/new?kind=task', { theme, view: desktop }))
+scene('cal-task-editor-desktop', async (theme) => open(`/tasks/${id('1', 2)}`, { theme, view: desktop }))
+
+// ── bj-tasks: the tools — Tasks, Inbox, the command bar and capture, Search, labels. Their own rows
+// (labels, someday tasks, an inbox) ride o.rows, so the screens above keep the day as it was. ──
+const LABELLED = TASKS.map((t) => (t.id === id('1', 2) ? { ...t, labels: ['deep work', 'study'], priority: 1 } : t.id === id('1', 9) ? { ...t, labels: ['launch'], recurrence_rule: 'FREQ=WEEKLY' } : t))
+const SOMEDAY = [task(60, 'Learn to bake sourdough', { someday: true }), task(61, 'Plan a trip to Siwa', { someday: true, project_id: SITE.id, domain_id: SHAHEEN.id })]
+const ib = (n, o) => ({ id: id('a', n), user_id: UID, kind: 'text', raw_text: '', transcript: null, ai_parse: null, confidence: null, status: 'pending', filed_task_id: null, payload: null, snoozed_until: null, external_ref: null, deleted_at: null, created_at: iso('09:00', 13), updated_at: iso('09:00', 13), ...o })
+const INBOX = [
+  ib(1, { kind: 'voice', raw_text: 'Call Omar re: pricing Saturday 3pm', confidence: 0.87, created_at: iso('21:14', 12), ai_parse: { kind: 'task', title: 'Call Omar about pricing', cleaned_text: 'Call Omar about pricing Saturday 3pm', confidence: 0.87, project_id: SITE.id, domain_id: SHAHEEN.id, due_at: iso('15:00', 17), has_time: true } }),
+  ib(2, { raw_text: 'that thing salma said about the balcony plants', confidence: 0.44, created_at: iso('19:00', 13), ai_parse: { kind: 'note', title: 'Balcony plants from Salma', cleaned_text: 'That thing Salma said about the balcony plants', confidence: 0.44 } }),
+  ib(3, { kind: 'email', raw_text: 'renew hosting before the 15th', confidence: 0.9, created_at: iso('08:30', 14), ai_parse: { kind: 'task', title: 'Renew hosting before the 15th', cleaned_text: 'renew hosting before the 15th', confidence: 0.9, due_at: iso('09:00', 15), has_time: false } }),
+  ib(4, { kind: 'github_issue', raw_text: 'Checkout drops the coupon field on mobile Safari', created_at: iso('09:00', 12), payload: { repo: 'Shaheen/website', number: 482, url: 'https://github.com/Shaheen/website/issues/482', node_id: 'I_482', created_at: iso('09:00', 12), updated_at: iso('09:00', 13) } }),
+  ib(5, { raw_text: 'look at the new tyre quote', snoozed_until: iso('09:00', 16) }),
+  ib(11, { raw_text: 'maybe a second monitor', status: 'dismissed', updated_at: iso('08:00') }),
+  ib(12, { kind: 'voice', raw_text: 'maybe try oat milk in the cortado', status: 'dismissed', updated_at: iso('10:00', 11) }),
+]
+const hit = (entity_type, entity_id, title, snippet, score) => ({ entity_type, entity_id, title, snippet, score })
+const SEARCH = [
+  hit('task', id('1', 3), 'Reply to Omar about Thursday', '', 2.01), hit('calendar_event', id('e', 4), 'Call with Omar', null, 2.0),
+  hit('inbox_item', id('a', 1), 'Call Omar re: pricing Saturday 3pm', 'Call Omar re: pricing Saturday 3pm', 1.5), hit('project', SITE.id, 'Shaheen Website', null, 0.5),
+]
+const TOOLS = { tasks: [...LABELLED, ...SOMEDAY], inbox_items: INBOX }
+const tool = (route, o = {}) => (theme) => open(route, { theme, rows: TOOLS, ...o })
+const after = async (s, fn, ms = 700) => { await fn(s.page); await sleep(ms); return s }
+for (const [n, route] of [['all', '/tasks?list=all'], ['overdue', '/tasks?list=overdue'], ['someday', '/tasks?list=someday'], ['done', '/tasks?list=done']]) {
+  scene(`bjt-tasks-${n}-desktop`, tool(route, { view: desktop }))
+  scene(`bjt-tasks-${n}-phone`, tool(route))
+}
+const DS_ROW = 'Finish the Data Structures sheet'
+scene('bjt-select-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => { for (const n of [0, 1]) await p.locator('.tr-select').nth(n).click({ force: true }) }))
+scene('bjt-select-phone', async (theme) => after(await tool('/tasks')(theme), async (p) => {
+  await p.getByRole('button', { name: `More actions for "${DS_ROW}"` }).click()
+  await sleep(500)
+  await p.getByRole('button', { name: /^Select/ }).first().click()
+}))
+scene('bjt-menu-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), (p) => p.locator('.task-row', { hasText: DS_ROW }).first().click({ button: 'right' })))
+scene('bjt-popover-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), (p) => p.getByText(DS_ROW, { exact: true }).first().click()))
+scene('bjt-sheet-phone', async (theme) => after(await tool('/tasks')(theme), (p) => p.getByText(DS_ROW, { exact: true }).first().click(), 1000))
+scene('bjt-editor-desktop', tool(`/tasks/${id('1', 2)}`, { view: desktop }))
+scene('bjt-labels-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => { await p.keyboard.press('j'); await p.keyboard.press('l') }))
+scene('bjt-labelmgr-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => {
+  await p.getByRole('button', { name: 'Label filter' }).click()
+  await p.getByRole('option', { name: 'Manage labels…' }).click()
+}))
+scene('bjt-inbox-desktop', tool('/inbox', { view: desktop }))
+scene('bjt-inbox-phone', tool('/inbox'))
+scene('bjt-dismissed-desktop', async (theme) => after(await tool('/inbox', { view: desktop })(theme), (p) => p.locator('.ib-toggle').getByRole('button', { name: /Dismissed/ }).click()))
+scene('bjt-snoozed-desktop', async (theme) => after(await tool('/inbox', { view: desktop })(theme), (p) => p.getByRole('button', { name: /1 snoozed/ }).click()))
+scene('bjt-cmdk-desktop', async (theme) => after(await tool('/tasks', { view: desktop })(theme), async (p) => { await p.keyboard.press('Control+k'); await sleep(300); await p.keyboard.type('call omar tomorrow 3pm #shaheen 30m') }))
+scene('bjt-capture-phone', async (theme) => after(await tool('/today')(theme), (p) => p.locator('.kf-capture').tap(), 1500))
+scene('bjt-voice-phone', async (theme) => after(await tool('/today', { local: { 'kf-voice-limit-day': JSON.stringify({ day: '2026-10-14', uid: UID }) } })(theme), async (p) => {
+  const b = await p.locator('.kf-capture').boundingBox() // a hold with the voice allowance used up: the sheet's resting state
+  await p.mouse.move(b.x + b.width / 2, b.y + b.height / 2)
+  await p.mouse.down()
+  await sleep(700)
+  await p.mouse.up()
+}, 1000))
+scene('bjt-search-desktop', tool('/search?q=omar', { view: desktop, search: SEARCH }))
+scene('bjt-search-phone', tool('/search?q=omar', { search: SEARCH }))
+
+// PROBE=<scene> PROBE_JS=<expression> runs one scene and prints what the expression returns (debugging).
+if (process.env.PROBE) {
+  const sc = SCENES.find((x) => x.name === process.env.PROBE)
+  const s = await sc.fn(process.env.THEME ?? 'day')
+  console.log(JSON.stringify(await s.page.evaluate(process.env.PROBE_JS), null, 1))
+  await s.page.screenshot({ path: path.join(OUT, 'probe.png') })
+  await browser.close(); process.exit(0)
+}
+
+for (const { name, fn } of SCENES) {
+  for (const theme of THEMES) {
+    const key = `${name}-${theme}`
+    if (!want(key)) continue
+    let s
+    try {
+      s = await fn(theme)
+      await shot(s.page, key)
+      const err = s.errors.filter((e) => !/ResizeObserver|AbortError/.test(e))
+      check(key, err.length === 0, err[0] ?? '')
+    } catch (e) {
+      check(key, false, e.message.split('\n')[0])
+    } finally {
+      await s?.ctx.close().catch(() => {})
+    }
+  }
+}
+
+fs.writeFileSync(path.join(OUT, 'verify-results.json'), JSON.stringify(results, null, 2))
+const failed = results.filter((r) => !r.ok).length
+console.log(`${results.length - failed}/${results.length} passed`)
+await browser.close()
+process.exit(failed ? 1 : 0)

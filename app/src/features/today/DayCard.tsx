@@ -58,7 +58,7 @@ function ritualHead(kind: 'plan' | 'shutdown' | 'closed', day: Day, inboxCount: 
       title: 'Day closed ✿',
       sub: seeds.length > 0
         ? <>Tomorrow's seeds · {seeds.map((t, i) => <span key={t.id}>{i > 0 && ' · '}<EmojiText text={t.title} /></span>)}</>
-        : <span className="tp-hand">The garden's closed. See you in the morning ✿</span>,
+        : <span className="tp-note">The garden's closed. See you in the morning ✿</span>,
     }
   }
   const ritual: RitualKind = kind === 'plan' ? 'morning' : 'evening'
@@ -110,7 +110,7 @@ export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, on
     const weekday = new Date(`${seedTargetDate(day.now)}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })
     return (
       <RitualShell glyph={<MoonIcon />} caption={`Evening ✓ · ${clock}`} title="Day closed ✿" meta={n > 0 ? [`${n} seed${n === 1 ? '' : 's'} planted for ${weekday}`] : []}>
-        <div className="tp-hand" style={{ marginTop: 'var(--sp-1)' }}>The garden's closed. See you in the morning.</div>
+        <div className="tp-note" style={{ marginTop: 'var(--sp-1)' }}>The garden's closed. See you in the morning.</div>
       </RitualShell>
     )
   }

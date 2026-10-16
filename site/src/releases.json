@@ -1,5 +1,23 @@
 [
   {
+    "v": "v1.2.0",
+    "date": "2026-10-16",
+    "title": "The Bound Journal look, subtasks and Sotto",
+    "highlights": [
+      "A new look: modern tools, paper pages — the goal of the day, journal, notes and herbarium are taped-in pages; everything else is clean and flat",
+      "Subtasks: add them under any task (its + or ⋯), see “1/3” on the row, and ticking the parent asks whether to tick them too",
+      "Time slots hold tasks properly: tasks show as soft cards inside the slot, drag in and out (phone too), and “Out of the slot” sends one back",
+      "Voice is powered by Sotto: its pill shows listening, transcribing and filing; hold to talk or go hands-free, and dictate straight into ⌘K"
+    ],
+    "icons": [
+      "journal",
+      "check",
+      "calendar",
+      "mic"
+    ],
+    "art": "cherry-bloom"
+  },
+  {
     "v": "v1.1.11",
     "date": "2026-10-16",
     "title": "Make goal always lands",
@@ -176,7 +194,11 @@
       "A day with only a photo counts as written, for Day N, the week's kept days and your Kept count",
       "On a phone, a photo's × is easier to hit without catching the photo beside it"
     ],
-    "icons": ["lock", "journal", "camera"],
+    "icons": [
+      "lock",
+      "journal",
+      "camera"
+    ],
     "art": "clover-awake"
   },
   {
