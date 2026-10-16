@@ -4,13 +4,16 @@ import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import { addDays, durationLabel, toMin } from '../../components/pickerMath'
 import { longPress, tick } from '../../lib/haptics'
+import { useMotionEnabled } from '../../lib/motion'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { uiZoom } from '../../lib/uiScale'
 import type { CalendarEvent } from '../../lib/types'
 import { LONG_PRESS_MS, SETTLE_MS, lockAxis } from '../tasks/swipe'
 import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
-import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, minToPx, pxToMin, rangeText, swipeStep, type DragMode, type Span } from './phoneGridMath'
+import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, minToPx, pxToMin, rangeText, SNAP_MIN, spanIso, swipeStep, type DragMode, type Span } from './phoneGridMath'
+import { slotAt } from './slots'
+import '../tasks/TaskRow.css' // the long-press bloom (.kf-press-bloom)
 import { bandChipLabel, isMultiDaySpan, spanDays } from './daySpans'
 import { appZone } from '../../lib/appZone'
 
@@ -30,7 +33,7 @@ export interface BlockLook {
   note?: string
   /** A Time block's tasks (Time Slots, 0073) as rows under its title, and its "2 tasks · 45m of 2h" —
    * the desktop block's checklist: the box completes (with Undo), a tap opens the task. */
-  slot?: { fill: string; held: { id: string; title: string; done: boolean; toggle: () => void; open: () => void }[] }
+  slot?: { fill: string; held: { id: string; title: string; done: boolean; minutes: number; toggle: () => void; open: () => void }[] }
 }
 
 export interface PhoneGridHandle {
@@ -50,6 +53,25 @@ interface Lift {
   mode: DragMode | null
 }
 
+/** slot-outline: a task held in a slot, lifted by a hold on its row (not the slot) and following the finger. */
+interface HeldLift {
+  taskId: string
+  slotId: string
+  title: string
+  done: boolean
+  minutes: number
+  fill: string
+  ink: string
+  /** Where the finger took the row (client px) and the row's width, so it stays under the finger. */
+  ox: number
+  oy: number
+  w: number
+  x: number
+  y: number
+  /** The quarter under the finger; null off the grid (the strip): out of the slot. */
+  at: { day: string; start: number } | null
+}
+
 interface Props {
   days: string[]
   /** Days one swipe moves (1 · 3 · 7). */
@@ -66,6 +88,9 @@ interface Props {
   /** The "+N" chip on 4+ blocks at once: the blocks it stands for. */
   onTapMore: (hidden: CalendarEvent[]) => void
   onCommit: (e: CalendarEvent, from: Span, to: Span, mode: DragMode) => void
+  /** slot-outline: a held task's row dragged out of its slot and let go — `at` the quarter under the
+   * finger, null off the grid. */
+  onDropHeld?: (taskId: string, at: { day: string; start: number } | null) => void
   /** Over the grid, not scrolling with it (the empty day). */
   overlay?: ReactNode
 }
@@ -79,16 +104,29 @@ const COMPACT_PX = minToPx(25)
 const titleLines = (h: number) => Math.max(1, Math.min(3, Math.floor((h - 12 - 18) / 18)))
 const same = (a: Span, b: Span) => a.day === b.day && a.start === b.start && a.end === b.end
 
-export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onPage, onTapSlot, onTapBlock, onTapMore, onCommit, overlay }, ref) {
+export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onPage, onTapSlot, onTapBlock, onTapMore, onCommit, onDropHeld, overlay }, ref) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const [lift, setLift] = useState<Lift | null>(null)
   const liftRef = useRef(lift)
   liftRef.current = lift
+  const [held, setHeld] = useState<HeldLift | null>(null)
+  const heldRef = useRef(held)
+  heldRef.current = held
+  const floatRef = useRef<HTMLDivElement>(null)
+  // Effects 2l's long-press bloom on a held task's row while the hold counts (SwipeRow's).
+  const motionOn = useMotionEnabled()
+  const [bloom, setBloom] = useState<{ id: string; x: number; y: number; n: number; out: boolean } | null>(null)
+  const drain = () => setBloom((b) => (b && !b.out ? { ...b, out: true } : b))
+  useEffect(() => {
+    if (!bloom?.out) return
+    const t = window.setTimeout(() => setBloom(null), 200)
+    return () => window.clearTimeout(t)
+  }, [bloom])
   const [swipeX, setSwipeX] = useState(0)
   const [settling, setSettling] = useState(false)
   // st0: the grid's scrollTop at the press, so a drag that scrolls the grid (its edges) still tracks the finger.
-  const g = useRef({ id: -1, kind: 'idle' as 'idle' | 'press' | 'swipe' | 'drag', sx: 0, sy: 0, st0: 0, dx: 0, lastX: 0, lastY: 0, lastT: 0, v: 0, timer: 0, swallow: false, raf: 0, acc: 0 })
+  const g = useRef({ id: -1, kind: 'idle' as 'idle' | 'press' | 'swipe' | 'drag' | 'task', sx: 0, sy: 0, st0: 0, dx: 0, lastX: 0, lastY: 0, lastT: 0, v: 0, timer: 0, swallow: false, raf: 0, acc: 0 })
   const multi = days.length > 1
   const nowMin = toMin(cairoTimeKey(now))
 
@@ -108,7 +146,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const el = scrollRef.current
     if (!el) return
     const stop = (e: TouchEvent) => {
-      if (g.current.kind === 'drag' || g.current.kind === 'swipe') e.preventDefault()
+      if (g.current.kind === 'drag' || g.current.kind === 'swipe' || g.current.kind === 'task') e.preventDefault()
     }
     el.addEventListener('touchmove', stop, { passive: false })
     return () => el.removeEventListener('touchmove', stop)
@@ -160,9 +198,27 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const ev = blockEl && events.find((x) => x.id === blockEl.dataset.id)
     if (!ev || ev.source === 'gcal') return // a Google event (B1) never lifts — a tap still opens it
     s.kind = 'press'
+    // slot-outline: a hold on a task row inside a slot lifts THAT task; the slot's header or empty
+    // area still lifts the slot.
+    const rowEl = target.closest<HTMLElement>('[data-slot-task]')
+    const lk = rowEl ? look(ev) : undefined
+    const task = lk?.slot?.held.find((t) => t.id === rowEl?.dataset.slotTask)
+    if (task && rowEl && motionOn) {
+      const r = rowEl.getBoundingClientRect()
+      setBloom({ id: task.id, x: (e.clientX - r.left) / uiZoom(), y: (e.clientY - r.top) / uiZoom(), n: e.timeStamp, out: false })
+    }
     s.timer = window.setTimeout(() => {
       // Held 400ms (--dur-longpress): the block lifts under the finger and follows it.
       longPress()
+      if (task && rowEl && lk) {
+        drain()
+        const r = rowEl.getBoundingClientRect()
+        s.kind = 'task'
+        s.swallow = true
+        heldRef.current = { taskId: task.id, slotId: ev.id, title: task.title, done: task.done, minutes: task.minutes, fill: lk.fill, ink: lk.ink, ox: s.sx - r.left, oy: s.sy - r.top, w: r.width, x: s.lastX, y: s.lastY, at: heldAt(s.lastX, s.lastY, task.minutes) }
+        setHeld(heldRef.current)
+        return
+      }
       const span = eventSpan(ev)
       setLift({ id: ev.id, orig: span, draft: span, mode: 'move' })
       s.kind = 'drag'
@@ -181,8 +237,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     s.lastX = e.clientX
     s.lastY = e.clientY
     s.lastT = e.timeStamp
-    if (s.kind === 'drag') {
-      track()
+    if (s.kind === 'drag' || s.kind === 'task') {
+      if (s.kind === 'task') trackHeld()
+      else track()
       if (!s.raf) {
         s.acc = 0
         s.raf = requestAnimationFrame((t) => edgeScroll(t, t - 16))
@@ -193,6 +250,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       const axis = lockAxis(dx, dy)
       if (!axis) return
       window.clearTimeout(s.timer) // moving is not holding
+      drain()
       if (axis === 'y') {
         s.id = -1 // a scroll: the page keeps it
         return
@@ -221,6 +279,35 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     setLift(liftRef.current)
   }
 
+  /** slot-outline: the quarter under the finger on the shown days, room left for the task's own
+   * minutes — null off the grid (above it: the strip; below: the tab bar). */
+  function heldAt(cx: number, cy: number, minutes: number): { day: string; start: number } | null {
+    const sr = scrollRef.current?.getBoundingClientRect()
+    const tr = trackRef.current?.getBoundingClientRect()
+    if (!sr || !tr || cx < sr.left || cx > sr.right || cy < sr.top || cy > sr.bottom) return null
+    const col = Math.max(0, Math.min(days.length - 1, Math.floor(((cx - tr.left) / tr.width) * days.length)))
+    const min = Math.floor((((cy - tr.top) / tr.height) * DAY_MIN) / SNAP_MIN) * SNAP_MIN
+    return { day: days[col], start: Math.max(0, Math.min(DAY_MIN - minutes, min)) }
+  }
+
+  /** The lifted task follows the finger (moved in place, no re-render) and ticks once per quarter. */
+  function trackHeld() {
+    const s = g.current
+    const h = heldRef.current
+    if (!h) return
+    const el = floatRef.current
+    const z = uiZoom()
+    if (el) {
+      el.style.left = `${(s.lastX - h.ox) / z}px`
+      el.style.top = `${(s.lastY - h.oy) / z}px`
+    }
+    const at = heldAt(s.lastX, s.lastY, h.minutes)
+    if (at?.day === h.at?.day && at?.start === h.at?.start) return
+    if (at) tick()
+    heldRef.current = { ...h, x: s.lastX, y: s.lastY, at }
+    setHeld(heldRef.current)
+  }
+
   /** While the finger sits within 48px of the grid's top or bottom edge, the grid scrolls under it
    * (faster the deeper, capped) and the block keeps tracking, stopping at the day's ends. */
   function edgeScroll(t: number, last: number) {
@@ -228,7 +315,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const el = scrollRef.current
     const z = uiZoom()
     const r = el?.getBoundingClientRect()
-    const v = el && r && s.kind === 'drag' && liftRef.current?.mode ? edgeScrollSpeed(s.lastY / z, r.top / z, r.bottom / z) : 0
+    // A lifted task scrolls the grid only while the finger is over it: above it is the strip.
+    const on = s.kind === 'drag' ? !!liftRef.current?.mode : s.kind === 'task' && !!r && s.lastY >= r.top && s.lastY <= r.bottom
+    const v = el && r && on ? edgeScrollSpeed(s.lastY / z, r.top / z, r.bottom / z) : 0
     if (!el || !v) {
       s.raf = 0
       return
@@ -239,7 +328,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     if (px) {
       // The browser stops at 00:00; 24:00 is ours to hold — a lifted block's handle hangs below the canvas.
       el.scrollTop = Math.min(el.scrollTop + px, minToPx(DAY_MIN) - el.clientHeight)
-      track()
+      if (s.kind === 'task') trackHeld()
+      else track()
     }
     s.raf = requestAnimationFrame((next) => edgeScroll(next, t))
   }
@@ -247,11 +337,17 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   function up(e: ReactPointerEvent<HTMLDivElement>) {
     const s = g.current
     window.clearTimeout(s.timer)
+    drain()
     if (e.pointerId !== s.id) return
     s.id = -1
     const kind = s.kind
     s.kind = 'idle'
-    if (kind === 'drag') {
+    if (kind === 'task') {
+      const h = heldRef.current
+      heldRef.current = null
+      setHeld(null)
+      if (e.type !== 'pointercancel' && h) onDropHeld?.(h.taskId, h.at)
+    } else if (kind === 'drag') {
       const l = liftRef.current
       if (!l) return
       const ev = events.find((x) => x.id === l.id)
@@ -287,6 +383,11 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
 
   /** Calendar 3e "spans midnight": the open edge of a piece cut at 00:00 says where the block runs on. */
   const clock = (ms: number) => cairoTimeKey(new Date(ms))
+  // slot-outline: where a lifted task would land — another Time block takes it (ringed), empty time
+  // gets its own block (a dashed ghost + the time bubble), its own slot nothing.
+  const heldIso = held?.at ? spanIso({ day: held.at.day, start: held.at.start, end: held.at.start + held.minutes }).starts_at : null
+  const heldInto = heldIso ? slotAt(events, heldIso) : undefined
+  const heldGhost = held?.at && !heldInto ? held.at : null
   function block(ev: CalendarEvent, start: number, end: number, geo: { left: string; width: string }, cut: { from: boolean; into: boolean } = { from: false, into: false }) {
     const lifted = lift?.id === ev.id ? lift : null
     const s = lifted ? lifted.draft : { start, end }
@@ -319,7 +420,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     return (
       <div
         key={ev.id}
-        className={`pc-block${lifted ? ' is-lifted' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}${cutFrom ? ' is-cut-from' : ''}${cutInto ? ' is-cut-into' : ''}${cutRoom && cutFrom ? ' has-cut-label' : ''}`}
+        className={`pc-block${lifted ? ' is-lifted' : ''}${heldInto && heldInto.id === ev.id && held?.slotId !== ev.id ? ' is-drop' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}${cutFrom ? ' is-cut-from' : ''}${cutInto ? ' is-cut-into' : ''}${cutRoom && cutFrom ? ' has-cut-label' : ''}`}
         data-id={ev.id}
         data-tour="calendar-block"
         style={{ ...style, '--pc-lines': lk.slot ? 1 : titleLines(h) } as CSSProperties}
@@ -340,15 +441,15 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             </span>
           )}
           {pending.has(ev.id) && <span className="pc-pending" role="img" aria-label="Pending sync" />}
-          {/* Time Slots (0073): the rows clip with the body. A hold on a row still lifts the slot (the
-              press reaches the grid); the box stops its own press, as the block's does. */}
+          {/* Time Slots (0073): the rows clip with the body. A hold on a row lifts its task (slot-outline),
+              and its place stays dashed while it's out; the box stops its own press, as the block's does. */}
           {lk.slot && stacked && !lifted && (
             <div className="pc-slot">
               <span className="pc-time pc-slot-fill">{lk.slot.fill}</span>
               {lk.slot.held.map((t) => (
                 <div
                   key={t.id}
-                  className={`pc-slot-row${t.done ? ' is-done' : ''}`}
+                  className={`pc-slot-row${t.done ? ' is-done' : ''}${held?.taskId === t.id ? ' is-gone' : ''}`}
                   data-slot-task={t.id}
                   onClick={(e) => {
                     e.stopPropagation()
@@ -359,6 +460,11 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
                     <Checkbox subtask checked={t.done} onChange={t.toggle} label={t.title} />
                   </span>
                   <span className="pc-name"><EmojiText text={t.title} /></span>
+                  {bloom?.id === t.id && (
+                    <span className="kf-press-bloom-clip" data-out={bloom.out || undefined} aria-hidden="true">
+                      <span key={bloom.n} className="kf-press-bloom" style={{ left: bloom.x, top: bloom.y }} />
+                    </span>
+                  )}
                 </div>
               ))}
             </div>
@@ -393,6 +499,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       <div key={day} className="pc-col">
         {live && lift && lift.orig.day === day && (
           <span className="pc-ghost" style={{ top: minToPx(lift.orig.start), height: minToPx(lift.orig.end - lift.orig.start), left: inset.l, right: inset.r }} />
+        )}
+        {live && held && heldGhost?.day === day && (
+          <span className="pc-ghost is-held" style={{ top: minToPx(heldGhost.start), height: minToPx(held.minutes), left: inset.l, right: inset.r }} />
         )}
         {blocks.map((b) => {
           const slot = ov.get(b.event.id)
@@ -499,9 +608,25 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           {lift && bubble && (
             <span className="pc-bubble" style={{ top: minToPx(bubble === 'bottom' ? lift.draft.end : lift.draft.start) }}>{bubbleText(lift.draft, bubble)}</span>
           )}
+          {held && heldGhost && <span className="pc-bubble" style={{ top: minToPx(heldGhost.start) }}>{rangeText(heldGhost.start, heldGhost.start + held.minutes)}</span>}
         </div>
       </div>
       {overlay}
+      {/* slot-outline: the lifted task, fixed under the finger wherever it goes (over the strip too). */}
+      {held && (
+        <div
+          ref={floatRef}
+          className="pc-held-task"
+          data-held-task={held.taskId}
+          style={{ left: (held.x - held.ox) / uiZoom(), top: (held.y - held.oy) / uiZoom(), width: held.w / uiZoom(), '--pc-fill': held.fill, '--pc-ink': held.ink } as CSSProperties}
+          aria-hidden
+        >
+          <span className="pc-check">
+            <Checkbox subtask checked={held.done} label={held.title} />
+          </span>
+          <span className="pc-name"><EmojiText text={held.title} /></span>
+        </div>
+      )}
     </div>
   )
 })

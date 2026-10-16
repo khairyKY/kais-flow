@@ -14,14 +14,14 @@ import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
-import { moveEventWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { moveEventWithUndo, outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
 import { findBlock } from './series'
-import { slotFill, slotTasks } from './slots'
+import { heldDrop, slotFill, slotTasks } from './slots'
 import { cairoToIso } from './eventTime'
 import { blockLastDay, railBuckets, railMinutes } from './replan'
 import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { Segmented } from '../rituals/RitualChrome'
-import { addMonths, allDayOn, dayBlocks, eventSpan, monthTitle, rangeText, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
+import { addMonths, allDayOn, dayBlocks, eventSpan, monthTitle, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneMonth } from './PhoneMonth'
 import { readViewOptions } from './ViewOptionsPopover'
 import { SMART_LISTS } from './railDrop'
@@ -159,7 +159,7 @@ export function PhoneCalendar() {
           fill: slotFill(e, held),
           held: held.map((t) => {
             const isDone = t.status === 'done'
-            return { id: t.id, title: t.title, done: isDone, toggle: () => (isDone ? uncompleteTask(t) : completeTaskWithUndo(t)), open: () => openTask(t.id) }
+            return { id: t.id, title: t.title, done: isDone, minutes: t.duration_min || 30, toggle: () => (isDone ? uncompleteTask(t) : completeTaskWithUndo(t)), open: () => openTask(t.id) }
           }),
         }
       : undefined
@@ -184,6 +184,17 @@ export function PhoneCalendar() {
     // Moved from its sheet (Time): keep it in view above the sheet, at its new time.
     if (sheet?.k === 'block' && sheet.id === e.id) gridRef.current?.scrollToMinute(to.start, SHEET_LEAD)
     moveEventWithUndo(e, from, to, mode)
+  }
+
+  /** slot-outline: a held task's row dragged out of its slot (the desktop's rules, slots.heldDrop): off
+   * the grid (the strip) → out of the slot; another Time block → into it; empty time → its own block. */
+  function dropHeld(taskId: string, at: { day: string; start: number } | null) {
+    const task = taskById.get(taskId)
+    if (!task) return
+    const drop = heldDrop(task, at && spanIso({ ...at, end: at.start }).starts_at, gridEvents)
+    if (drop.kind === 'out') outOfSlotWithUndo(task)
+    else if (drop.kind === 'into') putInSlotWithUndo(task, drop.slot)
+    else if (drop.kind === 'block') scheduleTaskWithUndo(task, drop.starts_at, drop.ends_at)
   }
 
   /** A task opens as itself — the Task sheet over the calendar (Kai 2026-10-03, one tap less); a plain
@@ -335,6 +346,7 @@ export function PhoneCalendar() {
         onTapBlock={tapBlock}
         onTapMore={(hidden) => setSheet({ k: 'more', ids: hidden.map((e) => e.id) })}
         onCommit={commit}
+        onDropHeld={dropHeld}
         overlay={
           emptyDay && (
             <div className="pc-empty">

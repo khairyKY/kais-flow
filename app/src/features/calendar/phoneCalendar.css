@@ -131,6 +131,18 @@
 .pc-block-body .pc-slot .pc-time { flex-basis: auto; }
 .pc-block-body .pc-slot-row .pc-check { align-self: center; }
 .pc-slot-row.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+/* slot-outline: a hold on a task row lifts THAT task (the slot's header still lifts the slot): the row
+   takes the long-press bloom, its place stays dashed while it's out, and the task rides the finger with
+   7e's lift. A Time block it would go into is ringed; empty time shows the dashed ghost + time bubble. */
+.pc-slot-row { position: relative; }
+.pc-slot-row.is-gone { outline: 1px dashed var(--ink-hairline); outline-offset: -1px; border-radius: var(--radius-check); }
+.pc-slot-row.is-gone > * { visibility: hidden; }
+.pc-block.is-drop { box-shadow: inset 0 0 0 1.5px var(--pc-ink); }
+.pc-held-task {
+  position: fixed; z-index: 5; display: flex; align-items: center; gap: var(--sp-2); min-height: 32px; padding: 0 10px; pointer-events: none;
+  border-radius: var(--radius-block); background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); box-shadow: var(--shadow-popover);
+  transform: scale(1.04) rotate(1.2deg);
+}
 .pc-pending { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sig-offline); }
 
 /* 4+ blocks at once: three drawn, the rest behind a "+N" chip (kit Chip, 24 tall, a 48 hit) at the stack's top-right. */
