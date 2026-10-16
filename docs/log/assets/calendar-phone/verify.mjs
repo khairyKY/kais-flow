@@ -374,6 +374,12 @@ for (const theme of ['day', 'night']) {
     const w4 = state.writes.length
     await tap(cdp, block(page, 3).locator('.kf-checkbox'))
     check('7h-day a block checkbox right after a gesture still completes the task', writesOf(state, 'tasks', w4).some((t) => t.id === id(TYRE) && t.status === 'done'))
+    // Subtasks 4 C (2026-10-16): the tyre call has two open subtasks, so ticking it asks first —
+    // answered here "Leave them open", which closes the sheet before the swipe below.
+    const ask = page.getByRole('dialog').filter({ hasText: '2 subtasks are still open' })
+    check('7h-day ticking a parent with open subtasks asks (Tick them too / Leave them open)', (await ask.count()) === 1 && /Tick them too/.test(await text(ask)))
+    await tap(cdp, ask.locator('.kf-as-row', { hasText: 'Leave them open' }))
+    await sleep(400)
     const g = await page.locator('.pc-scroll').boundingBox()
     await drag(cdp, { x: 300, y: g.y + 200 }, { dx: -200, steps: 10 })
     await sleep(300)
