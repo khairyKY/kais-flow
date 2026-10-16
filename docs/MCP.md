@@ -97,7 +97,7 @@ at most 50) where it says *bulk*: the same change on each, as the app's bulk bar
 | `move_to_tomorrow` | *Bulk.* Due tomorrow 09:00, the app's "Tomorrow" | ✓ |
 | `calendar` | Events between two days (at most 31): events, Time blocks with the tasks each occurrence holds, tasks' blocks; a series once per occurrence; `remind_min` | |
 | `add_event` | An event or Time block: timed or all-day, optionally repeating, optionally reminding (`remind_min`, timed only) | ✓ |
-| `edit_event` | Title, kind, time, repeat, reminder — of an event, a whole series, or one occurrence on its own. A Time block moved takes the tasks it holds along | ✓ |
+| `edit_event` | Title, kind, time, repeat, reminder — of an event, a whole series, or one occurrence on its own. A Time block moved takes the tasks it holds along; made an event or all-day, it lets them go; a series' new repeat keeps each where its day still has one | ✓ |
 | `delete_event` | An event, one occurrence, or a whole series — to Trash. A Time block lets its tasks go (back unscheduled) | ✓ |
 
 ### The Inbox
@@ -210,7 +210,9 @@ Same rules as the app:
   block it ends on, and a replanned task leaves its Time slot.
 - **Time slots** (0073): a Time block holds tasks. `edit_task slot_id` puts a task into one occurrence
   (its own block comes off; a missed due date follows); `slot_id: null` takes it out, unscheduled. Moving
-  the block moves its tasks; deleting it lets them go.
+  the block moves its tasks; deleting it, making it an event or moving it to all-day lets them go; a
+  series re-timed or given a new repeat (or none) puts each in its day's occurrence, else out
+  (`_shared/slots.ts`, the app's rule).
 - **Tomorrow** is that same replan to tomorrow 09:00.
 - **Every task write settles like the app's** (`lib/outbox` writeRow): a reminder keeps its lead time when
   the task moves (re-armed when it lands in the future — `lib/carryReminder.ts`), a Top 3 pick moved to a
