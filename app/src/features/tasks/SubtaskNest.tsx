@@ -58,6 +58,9 @@ export function SubtaskAddButton({ parent }: { parent: Task }) {
   )
 }
 
+/** A parent finished with subtasks left open keeps them under it (Leave them open); ticked all, it folds. */
+export const hasOpenSubtasks = (parent: Task): boolean => cachedSubtasks(parent.id).some((s) => s.status === 'todo')
+
 /** Is the nest under this parent drawn (subtasks unfolded, or its add line open)? Its row then leaves
  * its bottom rule to the nest, so the parent and its subtasks read as one group. */
 export function useNestOpen(parent: Task): boolean {
@@ -86,7 +89,11 @@ function AddLine({ parent, phone }: { parent: Task; phone?: boolean }) {
   const setAdding = useSubtaskUi((s) => s.setAdding)
   const [text, setText] = useState('')
   const ref = useRef<HTMLInputElement>(null)
-  useEffect(() => ref.current?.focus({ preventScroll: false }), [])
+  const openedAt = useRef(0)
+  useEffect(() => {
+    openedAt.current = Date.now()
+    ref.current?.focus({ preventScroll: false })
+  }, [])
   const hint = text.trim() ? subtaskHint(text) : null
   return (
     <>
@@ -102,7 +109,11 @@ function AddLine({ parent, phone }: { parent: Task; phone?: boolean }) {
           aria-label={`Add a subtask to “${parent.title}”`}
           enterKeyHint="done"
           onChange={(e) => setText(e.target.value)}
-          onBlur={() => !text.trim() && setAdding(null)}
+          onBlur={(e) => {
+            // The phone's ⋯ sheet hands focus back to its ⋯ as it leaves, just after this line opened: keep the line.
+            if (Date.now() - openedAt.current < 800) return void requestAnimationFrame(() => e.target.isConnected && e.target.focus())
+            if (!text.trim()) setAdding(null)
+          }}
           onKeyDown={(e) => {
             e.stopPropagation() // the list's keys stay with the list
             if (e.key === 'Escape') {

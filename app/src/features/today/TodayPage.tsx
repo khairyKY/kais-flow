@@ -13,7 +13,7 @@ import { todayListTasks } from '../tasks/grouping'
 import { sortByOrder } from '../tasks/manualOrder'
 import { cachedTask, moveInListWithUndo } from '../tasks/api'
 import { nestOut } from '../tasks/subtasks'
-import { SubtaskAddButton, SubtaskCount, SubtaskNest, useNestOpen } from '../tasks/SubtaskNest'
+import { SubtaskAddButton, SubtaskCount, SubtaskNest, hasOpenSubtasks, useNestOpen } from '../tasks/SubtaskNest'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotLabel, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
@@ -251,10 +251,10 @@ export function TodayPage() {
   const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
   // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
   const listed = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen)
-  // Subtasks A (Kai 2026-10-16): a subtask whose parent is a row on this page (Top 3 or the lists, open)
-  // sits nested under it, not in a list of its own; one whose parent isn't here stays a row, "↳ parent".
-  // A timed one also shows by itself in Up next (C).
-  const drawnParents = new Set([...top3InOrder, ...listed].filter((t) => !t.completed_at && !t.parent_task_id).map((t) => t.id))
+  // Subtasks A (Kai 2026-10-16): a subtask whose parent is a row on this page (Top 3 or the lists — a parent
+  // finished today too, struck, while it has open ones) sits nested under it, not in a list of its own; one
+  // whose parent isn't here stays a row, "↳ parent". A timed one also shows by itself in Up next (C).
+  const drawnParents = new Set([...top3InOrder, ...listed].filter((t) => !t.parent_task_id).map((t) => t.id))
   const allOpen = nestOut(listed, drawnParents)
   // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue ones get their own fold with
   // Replan all ▾; More for today keeps the rest. Oldest first (Today's list order).
@@ -1740,7 +1740,7 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
   const g = useTodayRow(task, { ...sel, place, nest: true })
   const more = !g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />
   // Subtasks A: the goal's subtasks hang under its card (../tasks/SubtaskNest).
-  const nestOpen = useNestOpen(task) && !done && !task.parent_task_id
+  const nestOpen = useNestOpen(task) && !task.parent_task_id && (!done || hasOpenSubtasks(task))
   const subs = !task.parent_task_id && <SubtaskCount parent={task} />
   const card = { position: 'relative', backgroundColor: 'var(--paper-goal)', backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined, border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 'var(--radius-page)', display: 'flex', alignItems: 'flex-start', transform: 'rotate(-0.4deg)' } as const
   if (compact) {
@@ -1853,7 +1853,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   // Subtasks A: a parent's row draws its subtasks under it — not an Up next row (that one is its block).
   const parent = !block && !task.parent_task_id
   const g = useTodayRow(task, { ...sel, place, nest: parent, ...(block ? blockGrammar(block) : null) })
-  const nestOpen = useNestOpen(task) && parent && !done
+  const nestOpen = useNestOpen(task) && parent && (!done || hasOpenSubtasks(task))
   // A subtask drawn on its own (its parent isn't on the page, or it's a Top 3 pick / Up next block): "↳ parent".
   const parentTitle = task.parent_task_id ? cachedTask(task.parent_task_id)?.title : undefined
   const ofParent = parentTitle && <span key="sub" className="td-sub-of" title={`Subtask of “${parentTitle}”`}>↳ <EmojiText text={parentTitle} /></span>

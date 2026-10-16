@@ -158,3 +158,4 @@
 .tp-pop .ts-sec { min-height: 0; margin-top: 14px; padding-bottom: 2px; }
 .tp-pop .ts-sub-hint { padding-left: 28px; }
 .kf-nest.has-rule { border-bottom: 1px solid var(--line-dashed); }
+.tp-pop label.ts-sub { border-bottom: none; }
