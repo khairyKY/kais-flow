@@ -271,6 +271,14 @@
 /* 04b "Time slot holding tasks": a hairline in the block's own edge hue over the fill line. */
 .fc .fc-timegrid-event .kf-ev-fill { padding-top: 3px; border-top: 1px solid color-mix(in srgb, var(--kf-ev-edge, var(--acc-lavender-deep)) 22%, transparent); }
 .fc .fc-timegrid-event .kf-ev-slot-more { flex: none; padding: 0 2px; cursor: pointer; color: var(--kf-ev-accent, var(--acc-lavender-text)); }
+/* slots-ux: a held row drags its task out (grab), and its × (Out of the slot) shows on hover. */
+.fc .fc-timegrid-event .kf-ev-slot-row { cursor: grab; }
+.fc .fc-timegrid-event .kf-ev-slot-out { display: none; flex: none; padding: 0 2px; cursor: pointer; color: var(--kf-ev-accent, var(--acc-lavender-text)); }
+.fc .fc-timegrid-event .kf-ev-slot-row:hover .kf-ev-slot-out { display: inline; }
+/* …and while it's dragged over the rail, FullCalendar's copy of it (on <body>, out of the block's
+   scope) reads as a block chip, not bare text. Over the grid FullCalendar draws its own placeholder. */
+.kf-ev-slot-row.fc-event-dragging { display: flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: var(--radius-block); border: 1px solid color-mix(in srgb, var(--acc-lavender-deep) 35%, transparent); background: var(--paper-parchment); color: var(--ink-body); font-size: 12px; white-space: nowrap; overflow: hidden; box-shadow: var(--shadow-crisp); }
+.kf-ev-slot-row.fc-event-dragging > :not(.kf-ev-slot-title) { display: none; }
 
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
    seat it without colliding with the text. */

@@ -2,7 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffec
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
-import interactionPlugin, { type DropArg } from '@fullcalendar/interaction'
+import interactionPlugin, { Draggable, type DropArg } from '@fullcalendar/interaction'
 import type { EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core'
 import type { EventResizeDoneArg } from '@fullcalendar/interaction'
 import { EmojiText } from '../../components/EmojiText'
@@ -21,6 +21,7 @@ import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 import { gridMinWidth, isNarrow } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
 import { useDayRollover } from './useDayRollover'
+import { cardDragData } from './planningMode'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -39,7 +40,7 @@ export interface CalendarGridEvent {
   /** One occurrence of a repeating event (CALENDAR-BLOCK-STATES C10): the ↻ badge. */
   repeat?: boolean
   /** A Time block's tasks (Time Slots, 0073), drawn as rows inside it, and its "2 tasks · 45m of 2h". */
-  held?: { id: string; title: string; done: boolean }[]
+  held?: { id: string; title: string; done: boolean; minutes: number }[]
   fill?: string
   /** A Google event (google-sync, B1): drawn like any event, never dragged or resized. */
   readOnly?: boolean
@@ -98,8 +99,14 @@ interface CalendarGridProps {
   onGridContextMenu?: (iso: string, allDay: boolean, x: number, y: number) => void
   /** Toggles the task behind a block from its checkbox. `done` is the state it was just in. */
   onCompleteTask?: (taskId: string, done: boolean) => void
-  /** ⋯ on a task row inside a Time slot: its task menu (Out of the slot…). */
+  /** ⋯ (or a right-click) on a task row inside a Time slot: its task menu (Out of the slot…). */
   onSlotTaskMenu?: (taskId: string, x: number, y: number) => void
+  /** slots-ux: a click on a held row opens its task; its × takes it out of the slot; dragged onto
+   * the rail (`section` as for a block) it comes out — true when handled. Onto the grid it drops
+   * through onExternalDrop, like a rail card. */
+  onSlotTaskOpen?: (taskId: string, el: Element) => void
+  onSlotTaskOut?: (taskId: string) => void
+  onSlotTaskToRail?: (taskId: string, section: string | null) => boolean
   conflictedIds?: string[]
   /* CALENDAR.md §7: outbox visibility — queued writes render pending, rejected ones failed. */
   pendingIds?: string[]
@@ -271,6 +278,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   onGridContextMenu,
   onCompleteTask,
   onSlotTaskMenu,
+  onSlotTaskOpen,
+  onSlotTaskOut,
+  onSlotTaskToRail,
   conflictedIds,
   pendingIds,
   failedIds,
@@ -320,6 +330,53 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   useEffect(() => () => {
     stopGhostRef.current?.() // never strand a ghost (or a lit rail section) on unmount
     stopHoverRef.current?.()
+  }, [])
+  // slots-ux (Kai 2026-10-16: "how do I remove a task from the time slot"): a held row is a drag
+  // source of its own, as a rail card is — onto the grid it lands through `drop` below (its own block
+  // there, or another slot), onto the rail it comes out of the slot (the section decides, as for a
+  // block). Its press never reaches the slot's own drag, a click opens the task (the phone's tap
+  // does too) and a right-click its menu. A stable ref, so a re-render never drops a drag under way.
+  const heldProps = useRef({ railRef, onSlotTaskOpen, onSlotTaskMenu, onSlotTaskToRail })
+  heldProps.current = { railRef, onSlotTaskOpen, onSlotTaskMenu, onSlotTaskToRail }
+  const heldRow = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return
+    const id = el.dataset.slotTask!
+    let dragged = false
+    let stopHover: (() => void) | null = null
+    const drag = new Draggable(el, { eventData: cardDragData })
+    drag.dragging.emitter.on('dragstart', () => {
+      dragged = true
+      stopHover = trackRailHover(heldProps.current.railRef?.current)
+    })
+    drag.dragging.emitter.on('dragend', (ev: { pageX: number; pageY: number }) => {
+      stopHover?.()
+      const rail = heldProps.current.railRef?.current
+      const x = ev.pageX - window.scrollX
+      const y = ev.pageY - window.scrollY
+      const r = rail?.getBoundingClientRect()
+      if (rail && r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) heldProps.current.onSlotTaskToRail?.(id, railSectionAt(rail, x, y)?.dataset.section ?? null)
+    })
+    // No default either: a press would focus the block (FullCalendar's :focus overlay then takes the
+    // click and the right-click), as dragGuard's controls know.
+    const own = (e: Event) => {
+      if (e.type === 'mousedown') {
+        dragged = false
+        e.preventDefault()
+      }
+      e.stopPropagation()
+    }
+    el.addEventListener('mousedown', own)
+    el.addEventListener('touchstart', own, { passive: true })
+    el.addEventListener('click', (e) => {
+      e.stopPropagation()
+      if (!dragged) heldProps.current.onSlotTaskOpen?.(id, el)
+    })
+    el.addEventListener('contextmenu', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      heldProps.current.onSlotTaskMenu?.(id, e.clientX, e.clientY)
+    })
+    return () => drag.destroy()
   }, [])
   // Kai 2026-10-12 ("you can't edit the colours after they've been created"): FullCalendar keeps an
   // event's element across updates, so eventDidMount — the only place the hue was painted — never
@@ -654,7 +711,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
           kfRanOver: boolean; kfOverdue: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
           kfOv: boolean; kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
-          kfHeld: { id: string; title: string; done: boolean }[] | null; kfFill: string | null
+          kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null
         }
         const done = !!p.kfTaskDone
         const now = Date.now()
@@ -775,13 +832,14 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
               ) : (
                 timeText && <div className="fc-event-time">{timeText}</div>
               )}
-              {/* Time Slots (0073): the tasks the slot holds, each with its checkbox and ⋯ — both
-                  dragGuard'd, so ticking or opening one never moves the slot. */}
+              {/* Time Slots (0073): the tasks the slot holds, each with its checkbox, × (hover: Out of
+                  the slot) and ⋯ — all dragGuard'd, so ticking or opening one never moves the slot.
+                  The row itself drags the task out (heldRow). */}
               {p.kfHeld && !arg.isMirror && (
                 <div className="kf-ev-slot">
                   <div className="fc-event-time kf-ev-fill">{p.kfFill}</div>
                   {p.kfHeld.map((h) => (
-                    <div key={h.id} className={`kf-ev-slot-row${h.done ? ' kf-done' : ''}`} data-slot-task={h.id}>
+                    <div key={h.id} ref={heldRow} className={`kf-ev-slot-row${h.done ? ' kf-done' : ''}`} data-slot-task={h.id} data-task-id={h.id} data-title={h.title} data-duration={h.minutes}>
                       <span
                         className={`kf-ev-check${h.done ? ' kf-on' : ''}`}
                         role="checkbox"
@@ -792,6 +850,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
                         {h.done ? '✓' : ''}
                       </span>
                       <span className="fc-event-title kf-ev-slot-title"><EmojiText text={h.title} /></span>
+                      <span className="kf-ev-slot-out" role="button" aria-label={`Out of the slot: ${h.title}`} title="Out of the slot" ref={dragGuard(() => onSlotTaskOut?.(h.id))}>
+                        ×
+                      </span>
                       <span
                         className="kf-ev-slot-more"
                         role="button"

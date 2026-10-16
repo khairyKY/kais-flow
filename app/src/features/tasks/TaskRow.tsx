@@ -11,7 +11,7 @@ import { checkAction } from './completion'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
 import { dayShort } from '../../components/pickerMath'
 import { cairoTimeKey } from '../calendar/eventTime'
-import { slotTitleOf } from '../calendar/api'
+import { slotLabel } from '../calendar/api'
 import { Button, Checkbox, Chip } from '../../components/kit'
 import { softNo, useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
@@ -130,7 +130,7 @@ export function TaskRow({
   const tag = resolveTag(task, domains, projects, areas)
   // ponytail: read from the cache, not a subscription per row — the list re-renders rows on any task change.
   const parentTitle = task.parent_task_id ? cachedTask(task.parent_task_id)?.title ?? null : null
-  const slotTitle = slotTitleOf(task) // ponytail: the same cache read, for "in Code block · 10:00"
+  const held = slotLabel(task) // ponytail: the same cache read, for "in Code block · 10:00"
   const overdueDays = !done && !task.someday && task.due_at ? daysOverdue(task.due_at) : 0
   const overdue = overdueDays > 0
   const inProgress = !done && !!task.scheduled_start
@@ -323,9 +323,7 @@ export function TaskRow({
             <span>
               {/* The user's day and clock (app_settings.timezone), not the device's. In a Time slot (0073):
                   "in Code block · 10:00" (its day too when that isn't today). */}
-              {slotTitle && `in ${slotTitle} · `}
-              {slotTitle && cairoDateKey(new Date(task.scheduled_start)) === cairoDateKey(new Date()) ? '' : `${dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} `}
-              {cairoTimeKey(new Date(task.scheduled_start))}
+              {held ?? `${dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} ${cairoTimeKey(new Date(task.scheduled_start))}`}
             </span>
           )}
           {task.duration_min != null && <span>{formatDuration(task.duration_min)}</span>}
