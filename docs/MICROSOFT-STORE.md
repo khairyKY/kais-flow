@@ -15,6 +15,25 @@ People install from the Store with no warning, and the Store keeps the app up to
   Task Manager → Startup apps.
 - The `.exe` installer on GitHub Releases stays as it is, for anyone who wants it.
 
+## Updates
+
+Kai (2026-10-16): the `.exe` install no longer shows SmartScreen on updates. **Update** (Settings → App,
+or What's new) downloads the new installer inside the app and runs it with a small progress window,
+then the app reopens on its own. A browser download is what SmartScreen flags (Mark-of-the-Web), and
+this skips the browser. The **first** install of a version that has this (the next release after v1.2.0) still shows SmartScreen
+once, because it comes from the browser. Every update after that is quiet.
+
+- How: Tauri's updater (`tauri-plugin-updater`, `installMode: passive`), `installUpdate` in
+  `app/src/lib/appUpdate.ts`. Each release carries `latest.json` plus the installer's `.sig`
+  (`desktop.yml`), and the app only runs an installer signed with Kai's updater key.
+- The key is free (minisign). The private half is in `C:\Users\khair\.kaisflow-signing\`
+  (`tauri-updater.key`, `tauri-updater-password.txt`), and in the GitHub secrets
+  `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`. The public half is
+  `plugins.updater.pubkey` in `tauri.conf.json`. **Keep a backup of that folder:** with a new key, installed
+  apps refuse the update and fall back to the browser download (SmartScreen once more).
+- If a release has no `latest.json`, or anything fails, Update falls back to the browser download.
+- The Store install never uses this. The Store updates it.
+
 ---
 
 ## 1. Reserve the name (once, about 2 minutes)

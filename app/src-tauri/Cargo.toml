@@ -19,12 +19,17 @@ tauri = { version = "2", features = ["tray-icon"] }
 # Links to other sites open in the system browser (lib/platform.ts openExternal): the WebView drops
 # window.open and target="_blank".
 tauri-plugin-opener = "2"
+# generate_context! writes tauri.conf.json's `plugins` (the updater's) as serde_json values.
+serde_json = "1"
 
 # Desktop only: the tray's "Start with Windows", and one running copy (closing to the tray would
 # otherwise let a second launch put a second K by the clock).
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri-plugin-autostart = "2"
 tauri-plugin-single-instance = "2"
+# Updates (docs/MICROSOFT-STORE.md "Updates"): the app fetches the signed installer itself and runs it,
+# so it never carries a browser download's Mark-of-the-Web and SmartScreen stays quiet.
+tauri-plugin-updater = "2"
 
 # Windows toasts with action buttons (Done · Tomorrow, Break 5 min · Keep going). Tauri's own crate —
 # tauri-plugin-notification wraps it but drops the buttons on desktop.

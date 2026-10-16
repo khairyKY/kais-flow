@@ -7,6 +7,6 @@ mod tray;
 pub fn run() {
     let builder = tauri::Builder::default().plugin(tauri_plugin_opener::init());
     #[cfg(desktop)]
-    let builder = tray::install(builder);
+    let builder = tray::install(builder).plugin(tauri_plugin_updater::Builder::new().build());
     builder.run(tauri::generate_context!()).expect("error while running Kai's Flow");
 }

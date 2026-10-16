@@ -9,11 +9,11 @@ import {
 import { testThisDevice, useDeviceState } from '../notifications/device'
 import { blockers } from '../notifications/plan'
 import { useAppSettings, updateAppSetting, useCalendarDefaultView, type CalendarDefaultView } from '../../lib/settings'
-import { appPlatform, buildStamp, installedVersion, openDownload, reloadToUpdate } from '../../lib/appUpdate'
+import { appPlatform, buildStamp, installedVersion, reloadToUpdate } from '../../lib/appUpdate'
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
 import { checkForUpdates } from '../whats-new/check'
 import { DownloadLinks } from '../download/DownloadBar'
-import { UpdateNotes } from '../whats-new/WhatsNew'
+import { UpdateButton, UpdateNotes } from '../whats-new/WhatsNew'
 import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme } from '../../lib/theme'
@@ -402,7 +402,7 @@ function AppUpdateCard() {
               <span role="status" style={{ fontSize: 13, color: r?.kind === 'offline' ? 'var(--ink-muted)' : 'var(--ink-body)' }}>{line}</span>
               {/* A newer release has its Update beside its notes below; this is a newer deploy of the same version. */}
               {!available && r?.kind === 'reload' && <Button variant="cta" onClick={() => void reloadToUpdate()}>Reload</Button>}
-              {!available && r?.kind === 'download' && <Button variant="cta" onClick={() => openDownload(r.url)}>Download</Button>}
+              {!available && r?.kind === 'download' && <UpdateButton result={r} />}
             </div>
           )
         }

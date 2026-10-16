@@ -116,6 +116,8 @@ interface WhatsNewState {
   result: UpdateResult | null
   /** A version newer than the running one, with its notes, from that check. */
   available: ReleaseNote | null
+  /** The Windows app updating in place: its progress line (lib/appUpdate installUpdate); null = not updating. */
+  installing: string | null
 }
-export const useWhatsNew = create<WhatsNewState>(() => ({ sheet: null, checking: false, result: null, available: null }))
+export const useWhatsNew = create<WhatsNewState>(() => ({ sheet: null, checking: false, result: null, available: null, installing: null }))
 export const openWhatsNew = (v: string) => useWhatsNew.setState({ sheet: v })
