@@ -11,6 +11,7 @@ import { dueChip, remindChip, repeatLabel } from './taskSheetMath'
 import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } from './TaskMenu'
 import { cairoTimeKey } from '../calendar/eventTime'
 import { outOfSlotWithUndo } from '../calendar/api'
+import { useSubtaskUi } from './subtaskStore'
 
 // ── The one task-row grammar (Flow Audit §4), as a hook: every row that shows a task (Tasks, Today's
 // Top 3 + goal card, task-backed Up next) gets its SwipeRow props, its ⋯ / right-click opener and the
@@ -61,6 +62,8 @@ export interface RowGrammarOptions {
   place?: { index: number; last: number }
   /** Whether this row is the goal, where the surface decides it (Plan my day's draft). */
   goal?: boolean
+  /** The row draws its subtasks under it (Subtasks A): ⋯ → Add a subtask opens its add line. */
+  nest?: boolean
 }
 
 /** Everything a task row needs for the one grammar: SwipeRow props, the ⋯ / right-click opener and
@@ -74,6 +77,7 @@ export function useRowGrammar(task: Task, o: RowGrammarOptions) {
     ...taskActions(task),
     ...(bulk ? { tomorrow: bulk.onTomorrow, schedule: bulk.onSchedule, someday: bulk.onSomeday, move: bulk.onMove, delete: bulk.onDelete, ...(bulk.onTop3 ? { top3: bulk.onTop3 } : null) } : null),
     ...(o.place ? { reorder: (d: -1 | 1) => void moveInTop3Order(task, o.place!.index + d) } : null),
+    ...(o.nest && !task.parent_task_id && !done ? { addSubtask: () => useSubtaskUi.getState().setAdding(task.id) } : null),
     ...o.actions,
     select: o.onToggleSelect,
   }

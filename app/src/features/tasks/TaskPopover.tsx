@@ -7,12 +7,13 @@ import { uiZoom } from '../../lib/uiScale'
 import type { Task } from '../../lib/types'
 import { deleteTasksWithUndo, toggleTaskWithUndo, toggleTop3, useTasks } from './api'
 import { taskSearch, type TaskAnchor } from './openTask'
-import { TaskChips, useTaskControls } from './TaskFields'
+import { SubtaskList, TaskChips, useTaskControls } from './TaskFields'
+import { subtasksOf } from './subtasks'
 import { useTaskDraft } from './useTaskDraft'
 import './taskSheet.css'
 
 // ── The desktop task detail popover (Overlays.dc.html "Task detail · Enter · expands"): a click on a
-// task row opens it under the row — box, title, star; notes; the chips; Delete · Open full ↗. Every
+// task row opens it under the row — box, title, star; notes; the chips; its subtasks; Delete · Open full ↗. Every
 // edit writes at once (the same controls as the phone sheet, ./TaskFields); Esc, a click outside or a
 // scroll behind closes it; Enter (or Open full ↗) expands to the editor page, /tasks/:id. ──
 
@@ -108,7 +109,7 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
         }}
       >
         {task ? (
-          <Body task={task} commit={commit} onDelete={() => { close(); deleteTasksWithUndo([task]) }} onExpand={expand} />
+          <Body task={task} subs={task.parent_task_id ? null : subtasksOf(tasksQuery.data ?? [], task.id)} commit={commit} onDelete={() => { close(); deleteTasksWithUndo([task]) }} onExpand={expand} />
         ) : tasksQuery.isPending ? (
           <div className="ts-skel" role="status" aria-label="Loading" aria-busy="true" style={{ paddingTop: 0 }}>
             <div><span style={{ width: 19, height: 19, borderRadius: 'var(--radius-check)', flex: 'none' }} /><span style={{ flex: 1, height: 17 }} /></div>
@@ -129,7 +130,7 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
   )
 }
 
-function Body({ task: t, commit, onDelete, onExpand }: { task: Task; commit: { current: () => void }; onDelete: () => void; onExpand: () => void }) {
+function Body({ task: t, subs, commit, onDelete, onExpand }: { task: Task; subs: Task[] | null; commit: { current: () => void }; onDelete: () => void; onExpand: () => void }) {
   const draft = useTaskDraft(t)
   const controls = useTaskControls(t)
   const done = t.status === 'done' || !!t.completed_at
@@ -160,6 +161,8 @@ function Body({ task: t, commit, onDelete, onExpand }: { task: Task; commit: { c
       </div>
       <textarea className="tp-notes" value={draft.notes} placeholder="Add notes" aria-label="Notes" onChange={(e) => draft.setNotes(e.target.value)} onBlur={draft.saveNotes} />
       <TaskChips task={t} controls={controls} />
+      {/* Subtasks A + C (Kai 2026-10-16): the popover has its subtasks — open full is no longer the way to add one. */}
+      {subs && <SubtaskList subs={subs} draft={draft} edit={controls.edit} dense />}
       <div className="tp-foot">
         <button type="button" style={{ ...MONO, color: 'var(--acc-terra)' }} onClick={onDelete}>Delete</button>
         <button type="button" style={{ ...MONO, color: 'var(--ink-faint)' }} onClick={onExpand} title="Open full (Enter)">Open full ↗</button>

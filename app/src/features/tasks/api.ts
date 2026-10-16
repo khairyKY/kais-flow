@@ -116,6 +116,8 @@ const cachedTasks = () => queryClient.getQueryData<Task[]>(['tasks']) ?? []
 const cached = (t: Task) => cachedTasks().find((x) => x.id === t.id) ?? t
 /** A task as the cache has it now (a subtask row's parent title), without subscribing. */
 export const cachedTask = (id: string): Task | undefined => cachedTasks().find((x) => x.id === id && !x.deleted_at)
+/** A parent's live subtasks as the cache has them now (a list row's "1/3" and its nest). */
+export const cachedSubtasks = (parentId: string): Task[] => subtasksOf(cachedTasks(), parentId)
 
 /** Writes `task`'s current row with `patch` applied — the one way a single-field edit lands. */
 function patchTask(task: Task, patch: Partial<Task>): Task {

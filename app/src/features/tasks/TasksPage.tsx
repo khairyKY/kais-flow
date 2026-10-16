@@ -50,6 +50,8 @@ import { cachedStarEvents } from '../today/api'
 import { CaptureCta } from '../capture/CaptureCta'
 import { findDuplicateClusters } from '../import/dedupe'
 import type { Area, Domain, Project, Task } from '../../lib/types'
+import { nestOut } from './subtasks'
+import { useSubtaskUi } from './subtaskStore'
 
 // ── Tasks — pixel contract: Tasks.dc.html 1a (desktop list + rail), 1b (iPhone + filter
 // chips), 2a (Done — fallen petals), 2b (Someday — the quiet shelf), 2c (iPhone Done).
@@ -460,6 +462,7 @@ export function TasksPage() {
     if (!focusId || tabSwitched.current) return
     const t = tasks.find((x) => x.id === focusId)
     if (!t) return
+    if (t.parent_task_id) useSubtaskUi.getState().show(t.parent_task_id) // a search jump to a folded subtask
     // Punch 27: undated (or this-month-dated) tasks render on no other tab — All is the
     // one place a focus deep link can always find them.
     const target =
@@ -573,7 +576,9 @@ export function TasksPage() {
   }, [labelParam])
   const filtered = filteredBase.filter((t) => (!domainChip || effectiveDomainId(t, projects, areas) === domainChip) && (!labelFilter || !!t.labels?.includes(labelFilter)))
   const [sort, setSort] = useState<SortKey>('smart')
-  const groups = applySort(groupTasks(filtered, now), sort)
+  // Subtasks A: a subtask whose parent is listed here sits nested under it (./SubtaskNest), not in a group.
+  const drawnParents = new Set(filtered.filter((t) => !t.parent_task_id).map((t) => t.id))
+  const groups = applySort(groupTasks(nestOut(filtered, drawnParents), now), sort)
   // U-7: 411 rows rendered at once made a 31,000px page (6,196 nodes). Each group shows its first
   // GROUP_CAP rows until "Show N more"; a deep-linked ?focus= row opens its group. Keyboard moves,
   // select-all and bulk actions work on the rows you can see.

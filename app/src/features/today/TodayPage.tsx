@@ -11,7 +11,9 @@ import { useListVerbs } from '../tasks/useListVerbs'
 import { formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
 import { sortByOrder } from '../tasks/manualOrder'
-import { moveInListWithUndo } from '../tasks/api'
+import { cachedTask, moveInListWithUndo } from '../tasks/api'
+import { nestOut } from '../tasks/subtasks'
+import { SubtaskAddButton, SubtaskCount, SubtaskNest, useNestOpen } from '../tasks/SubtaskNest'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotLabel, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey } from '../calendar/eventTime'
@@ -248,7 +250,12 @@ export function TodayPage() {
   const upNextShown = isMobile ? upNext : upNext.slice(0, 2)
   const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
   // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
-  const allOpen = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen)
+  const listed = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen)
+  // Subtasks A (Kai 2026-10-16): a subtask whose parent is a row on this page (Top 3 or the lists, open)
+  // sits nested under it, not in a list of its own; one whose parent isn't here stays a row, "↳ parent".
+  // A timed one also shows by itself in Up next (C).
+  const drawnParents = new Set([...top3InOrder, ...listed].filter((t) => !t.completed_at && !t.parent_task_id).map((t) => t.id))
+  const allOpen = nestOut(listed, drawnParents)
   // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue ones get their own fold with
   // Replan all ▾; More for today keeps the rest. Oldest first (Today's list order).
   const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now))
@@ -1181,6 +1188,7 @@ function Ribbon({ events, now, head, taskById }: { events: CalendarEvent[]; now:
 /** One of the next two under the ribbon — a task's block is the task (checkbox, opens it, its menu). */
 function NextTaskItem({ event, task, sel }: { event: CalendarEvent; task: Task; sel: RowSelection }) {
   const g = useTodayRow(task, { ...sel, ...blockGrammar(event) })
+  const parentTitle = task.parent_task_id ? cachedTask(task.parent_task_id)?.title : undefined
   const openTask = useOpenTask()
   const done = task.status === 'done'
   return (
@@ -1189,6 +1197,8 @@ function NextTaskItem({ event, task, sel }: { event: CalendarEvent; task: Task; 
         <span onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}><Checkbox label={task.title} checked={done} size={16} onChange={() => toggleTaskWithUndo(task)} /></span>
         <span className="td-next-time">{cairoTimeKey(new Date(event.starts_at))}</span>
         <span className={`td-ink${done ? ' td-struck' : ''}`}><EmojiText text={event.title} /></span>
+        {/* Subtasks C: a timed subtask shows here by itself, with whose it is. */}
+        {parentTitle && <span className="td-sub-of">↳ <EmojiText text={parentTitle} /></span>}
       </span>
       {g.menuNode}
     </>
@@ -1682,7 +1692,7 @@ const ctrlSelect = (sel: RowSelection, done: boolean) => (e: React.MouseEvent) =
 }
 
 /** A Today row's grammar: swipe, ⋯ / right-click, hold to select (features/tasks). */
-function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'actions' | 'tomorrowHint' | 'canUnschedule' | 'place'>) {
+function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'actions' | 'tomorrowHint' | 'canUnschedule' | 'place' | 'nest'>) {
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const { data: areas = [] } = useAreas()
@@ -1727,14 +1737,18 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
   const openTask = useOpenTask()
   const openDetail = () => openTask(task.id) // J-8
   // Loop A (2026-09-26 daily cycle): the goal is a Top 3 row too — the same grammar as the rows under it.
-  const g = useTodayRow(task, { ...sel, place })
+  const g = useTodayRow(task, { ...sel, place, nest: true })
   const more = !g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />
+  // Subtasks A: the goal's subtasks hang under its card (../tasks/SubtaskNest).
+  const nestOpen = useNestOpen(task) && !done && !task.parent_task_id
+  const subs = !task.parent_task_id && <SubtaskCount parent={task} />
   const card = { position: 'relative', backgroundColor: 'var(--paper-goal)', backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined, border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 'var(--radius-page)', display: 'flex', alignItems: 'flex-start', transform: 'rotate(-0.4deg)' } as const
   if (compact) {
     // MK Goal card (Today Phone 2a–2e): gold tag, 22 gold box in a 48 hit, serif 18/600, gold meta,
     // clover (four-leaf once done). ⋯ stays, so every swipe has its tap path (DS-CHANGELOG §3).
     const lines = done ? [`${doneAt(task)} · a four-leaf day`] : meta ?? ([projectName, task.duration_min != null ? formatDuration(task.duration_min) : null].filter(Boolean) as string[])
     return (
+      <>
       <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="tp-goal" contentClassName="kf-page" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} contentStyle={{ ...card, display: 'block', padding: '14px 4px 14px 4px' }} {...g.swipeProps} overlay={g.menuNode}>
         <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', marginLeft: -36, width: 72, height: 17, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
         <div style={{ paddingLeft: 12 }}><span className="tp-goal-tag">✶ Goal of the day</span></div>
@@ -1744,12 +1758,14 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
           </span>
           <div onClick={openDetail} style={{ flex: 1, minWidth: 0, paddingTop: 12, cursor: 'pointer' }}>
             <div className={`tp-goal-title${done ? ' is-done' : ''}`}><EmojiText text={task.title} /></div>
-            <div className="tp-meta">{lines.length ? lines.join(' · ') : 'The one thing that makes today a win'}</div>
+            <div className="tp-meta">{lines.length ? lines.join(' · ') : 'The one thing that makes today a win'}{subs && <> {subs}</>}</div>
           </div>
           <img className="tp-goal-clover" src={`${A}/clover/${done ? 'four_leaf' : 'awake'}.png`} alt="" style={{ width: 34, height: 'auto', marginTop: 12, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
           {more}
         </div>
       </SwipeRow>
+      {nestOpen && <SubtaskNest parent={task} phone />}
+      </>
     )
   }
   // Today 2a: 20 gold box · serif 20/600 title · one meta line led by the mono "✶ Goal of the day",
@@ -1759,7 +1775,8 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
   const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={20} /> : <Checkbox label={task.title} checked={bloom.checking} size={20} bloom onChange={bloom.toggle} style={box} />
   const due = overdueDays(task)
   return (
-    <SwipeRow id={`task-${task.id}`} tabIndex={-1} onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} style={{ marginBottom: 6, outline: 'none' }} contentClassName="kf-page" contentStyle={{ ...card, padding: '18px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
+    <>
+    <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="kf-goal-row" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} style={{ marginBottom: 6, outline: 'none' }} contentClassName="kf-page" contentStyle={{ ...card, padding: '18px 18px 16px', gap: 14 }} {...g.swipeProps} overlay={g.menuNode}>
       <span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', width: 78, height: 18, marginLeft: -39, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px)', transform: 'rotate(-1.5deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
       <span style={{ marginTop: 3 }}>{check}</span>
       <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
@@ -1769,11 +1786,15 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
           {projectName && <span><span className="td-dot" style={{ background: dot }} />{projectName}</span>}
           {deskBlockMeta(meta, inProgress && !done)}
           {done ? <span>{doneAt(task)}</span> : due === 0 ? <span>Due today</span> : due !== null && due > 0 ? <span className="td-terra">Overdue {due}d</span> : null}
+          {subs}
         </div>
       </div>
       <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 32, flex: 'none', filter: 'var(--shadow-drop-sm)' }} />
+      {!g.selecting && !done && !task.parent_task_id && <SubtaskAddButton parent={task} />}
       {more}
     </SwipeRow>
+    {nestOpen && <SubtaskNest parent={task} />}
+    </>
   )
 }
 
@@ -1829,7 +1850,14 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
     </>
   ) : null
   const openTask = useOpenTask()
-  const g = useTodayRow(task, { ...sel, place, ...(block ? blockGrammar(block) : null) })
+  // Subtasks A: a parent's row draws its subtasks under it — not an Up next row (that one is its block).
+  const parent = !block && !task.parent_task_id
+  const g = useTodayRow(task, { ...sel, place, nest: parent, ...(block ? blockGrammar(block) : null) })
+  const nestOpen = useNestOpen(task) && parent && !done
+  // A subtask drawn on its own (its parent isn't on the page, or it's a Top 3 pick / Up next block): "↳ parent".
+  const parentTitle = task.parent_task_id ? cachedTask(task.parent_task_id)?.title : undefined
+  const ofParent = parentTitle && <span key="sub" className="td-sub-of" title={`Subtask of “${parentTitle}”`}>↳ <EmojiText text={parentTitle} /></span>
+  const subs = parent && <SubtaskCount key="subs" parent={task} />
   const open = () => openTask(task.id)
   const rowProps = {
     id: block ? `upnext-${block.id}` : `task-${task.id}`,
@@ -1837,7 +1865,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
     onClickCapture: ctrlSelect(sel, done),
     onContextMenu: g.onContextMenu,
     style: {
-      borderBottom: border ? '1px solid var(--line-dashed)' : 'none',
+      borderBottom: border && !nestOpen ? '1px solid var(--line-dashed)' : 'none',
       background: sel.selected || g.menuOpen ? 'var(--select-bg)' : undefined,
       boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
       outline: 'none',
@@ -1848,10 +1876,11 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   if (compact) {
     // MK task row (DS-CHANGELOG §3): [check 48][title 15/20 + mono meta][star 48][⋯ 48], min-h 56.
     const details = done
-      ? [<span key="done">{doneAt(task)}</span>]
+      ? [<span key="done">{doneAt(task)}</span>, subs].filter(Boolean)
       : meta
-        ? meta.map((m) => <span key={m} style={m === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{m}</span>)
+        ? [...meta.map((m) => <span key={m} style={m === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{m}</span>), ofParent].filter(Boolean)
         : [
+            ofParent,
             projectName && <span key="p"><span className="tp-dot" style={{ background: dot }} />{projectName}</span>,
             dueDays !== null && dueDays > 0 && <span key="o" style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>,
             held && <span key="s">{held}</span>,
@@ -1859,9 +1888,11 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
             task.duration_min != null && <span key="m">{formatDuration(task.duration_min)}</span>,
             task.recurrence_rule && <span key="r">↻</span>,
             !!task.labels?.length && <LabelChips key="l" labels={task.labels} />,
+            subs,
           ].filter(Boolean)
     return (
-      <SwipeRow {...rowProps} data-tour="task-row" className="tp-row" style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
+      <>
+      <SwipeRow {...rowProps} data-tour="task-row" className={`tp-row${nestOpen ? ' has-nest' : ''}`} style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
         <span className="tp-hit">
           {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom={task.top3} onChange={bloom.toggle} />}
         </span>
@@ -1881,6 +1912,8 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
           </>
         )}
       </SwipeRow>
+      {nestOpen && <SubtaskNest parent={task} phone rule />}
+      </>
     )
   }
   // Desktop (Today 2a): 20px boxes (rule 14). Top 3 rows carry no star — being in the section says
@@ -1888,6 +1921,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={20} /> : <Checkbox label={task.title} checked={bloom.checking} size={20} bloom={task.top3} onChange={bloom.toggle} />
   const tail = !g.selecting && (
     <>
+      {parent && !done && <SubtaskAddButton parent={task} />}
       {!done && !pick && (
         <button type="button" className="kf-hit td-star" aria-label={task.top3 ? `Remove "${task.title}" from Top 3` : `Add "${task.title}" to Top 3`} onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--star-on)' : 'var(--star-empty)' }}>
           {task.top3 ? '★' : '☆'}
@@ -1899,29 +1933,37 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   const title = <span className={done ? 'td-struck' : undefined}><EmojiText text={task.title} /></span>
   if (hollow) {
     // 2a "Also open": one line — the title, then the row's one fact in a right-aligned column.
-    const fact = dueDays !== null && dueDays > 0 ? <span className="td-terra">Overdue {dueDays}d</span>
+    const fact = parentTitle && !held ? ofParent
+      : dueDays !== null && dueDays > 0 ? <span className="td-terra">Overdue {dueDays}d</span>
       : held ? <span>{held}</span>
       : dueDays === 0 ? <span>Due today{task.recurrence_rule ? ' · ↻' : ''}</span>
       : projectName ? <span><span className="td-dot" style={{ background: dot }} />{projectName}</span>
       : task.recurrence_rule ? <span>↻</span> : null
     return (
+      <>
       <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'center', gap: 14, padding: '9px 2px' }}>
         {check}
         <div onClick={open} className="td-row-title">{title}</div>
+        {subs && <span className="td-meta td-row-fact">{subs}</span>}
         {fact && <span className="td-meta td-row-fact">{fact}</span>}
         {tail}
       </SwipeRow>
+      {nestOpen && <SubtaskNest parent={task} rule={border} />}
+      </>
     )
   }
   return (
+    <>
     <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 2px' }}>
       <span style={{ marginTop: 1 }}>{check}</span>
       <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
         <div className="td-row-title">{title}</div>
-        {metaRow(projectName, dot, meta ? null : task.duration_min, <>{deskBlockMeta(meta, inProgress && !done)}{dueBadges}{!done && <LabelChips labels={task.labels} />}</>)}
+        {metaRow(projectName, dot, meta ? null : task.duration_min, <>{ofParent}{deskBlockMeta(meta, inProgress && !done)}{dueBadges}{!done && <LabelChips labels={task.labels} />}{subs}</>)}
       </div>
       {tail}
     </SwipeRow>
+    {nestOpen && <SubtaskNest parent={task} rule={border} />}
+    </>
   )
 }
 

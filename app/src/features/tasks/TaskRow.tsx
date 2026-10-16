@@ -17,6 +17,7 @@ import { softNo, useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
 import type { BulkActions } from './TaskMenu'
 import { useRowGrammar } from './useRowGrammar'
+import { SubtaskAddButton, SubtaskCount, SubtaskNest, useNestOpen } from './SubtaskNest'
 import type { Task } from '../../lib/types'
 
 export type { BulkActions } from './TaskMenu'
@@ -155,7 +156,10 @@ export function TaskRow({
 
   // J-3 (K-d, 2026-09-24): right-click never changes the selection. The menu acts on this row, or
   // on the whole selection when this row is part of it (bulk).
-  const grammar = useRowGrammar(task, { projects, domains, areas, selected, onToggleSelect, selecting, bulk, actions: { reopen: handleReopen } })
+  // Subtasks A: a parent draws its subtasks under it (./SubtaskNest), ⋯ → Add a subtask opens the add line.
+  const parent = !task.parent_task_id
+  const nestOpen = useNestOpen(task) && parent && !done && !someday
+  const grammar = useRowGrammar(task, { projects, domains, areas, selected, onToggleSelect, selecting, bulk, nest: parent, actions: { reopen: handleReopen } })
 
   // Ctrl/Cmd+click toggles selection — the mouse path on surfaces with no checkbox (Planning
   // board). Capture phase so it never also completes/stars; DOM-contains check skips clicks
@@ -171,7 +175,7 @@ export function TaskRow({
   const openDetail = () => openTask(task.id)
 
   const rowStyle: React.CSSProperties = {
-    borderBottom: border ? '1px solid var(--line-dashed)' : 'none',
+    borderBottom: border && !nestOpen ? '1px solid var(--line-dashed)' : 'none',
     boxShadow: highlighted ? '0 0 0 3px color-mix(in srgb, var(--acc-sage) 28%, transparent)' : undefined,
     background: selected || grammar.menuOpen ? 'var(--select-bg)' : undefined,
     outline: 'none',
@@ -260,6 +264,7 @@ export function TaskRow({
 
   // ── Open — the main list (1a / 1b) ──
   return (
+    <>
     <SwipeRow
       id={`task-${task.id}`}
       data-tour="task-row"
@@ -336,9 +341,11 @@ export function TaskRow({
           {task.recurrence_rule && <span>↻</span>}
           {isGoal && <span style={{ color: 'var(--acc-gold)' }}>✶ Goal</span>}
           <LabelChips labels={task.labels} />
+          {parent && <SubtaskCount parent={task} />}
         </div>
       </div>
 
+      {!grammar.selecting && parent && <SubtaskAddButton parent={task} />}
       {!grammar.selecting && (
         <span
           // Effects 2j: a full Top 3 refuses the star — it shakes once and the toast says why.
@@ -352,5 +359,7 @@ export function TaskRow({
       )}
       {more}
     </SwipeRow>
+    {nestOpen && <SubtaskNest parent={task} rule={border} />}
+    </>
   )
 }
