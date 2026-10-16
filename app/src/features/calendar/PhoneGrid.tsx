@@ -1,5 +1,4 @@
 import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
 import { Checkbox, Chip } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
@@ -613,23 +612,21 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         </div>
       </div>
       {overlay}
-      {/* slot-outline: the lifted task, under the finger wherever it goes (over the strip too). */}
-      {held &&
-        createPortal(
-          <div
-            ref={floatRef}
-            className="pc-held-task"
-            data-held-task={held.taskId}
-            style={{ left: (held.x - held.ox) / uiZoom(), top: (held.y - held.oy) / uiZoom(), width: held.w / uiZoom(), '--pc-fill': held.fill, '--pc-ink': held.ink } as CSSProperties}
-            aria-hidden
-          >
-            <span className="pc-check">
-              <Checkbox subtask checked={held.done} label={held.title} />
-            </span>
-            <span className="pc-name"><EmojiText text={held.title} /></span>
-          </div>,
-          document.body,
-        )}
+      {/* slot-outline: the lifted task, fixed under the finger wherever it goes (over the strip too). */}
+      {held && (
+        <div
+          ref={floatRef}
+          className="pc-held-task"
+          data-held-task={held.taskId}
+          style={{ left: (held.x - held.ox) / uiZoom(), top: (held.y - held.oy) / uiZoom(), width: held.w / uiZoom(), '--pc-fill': held.fill, '--pc-ink': held.ink } as CSSProperties}
+          aria-hidden
+        >
+          <span className="pc-check">
+            <Checkbox subtask checked={held.done} label={held.title} />
+          </span>
+          <span className="pc-name"><EmojiText text={held.title} /></span>
+        </div>
+      )}
     </div>
   )
 })
