@@ -310,5 +310,8 @@ jobs:
     uses: ./.github/workflows/desktop.yml
     permissions:
       contents: write
+    # The updater key (TAURI_SIGNING_PRIVATE_KEY/_PASSWORD) must reach the called workflow, or the
+    # release has no latest.json and the Windows app can't update in place.
+    secrets: inherit
     with:
       tag: ${{ needs.publish.outputs.tag }}

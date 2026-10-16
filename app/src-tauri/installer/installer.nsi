@@ -492,8 +492,10 @@ Function .onInstSuccess
   ${OrIf} ${Silent}
     ${GetOptions} $CMDLINE "/R" $R0
     ${IfNot} ${Errors}
-      ${GetOptions} $CMDLINE "/ARGS" $R0
-      nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" "$R0"
+      ; Kai's Flow: not the old run's /ARGS. An in-app update (lib/appUpdate.ts installUpdate) is
+      ; always started from the open window, and a start-with-Windows run's --minimized would bring
+      ; the new version back hidden in the tray.
+      nsis_tauri_utils::RunAsUser "$INSTDIR\${MAINBINARYNAME}.exe" ""
     ${EndIf}
   ${EndIf}
 FunctionEnd
