@@ -667,7 +667,7 @@ export function TodayPage() {
         {empty ? (
           // Ruling 8: one secondary action that opens capture; the terra capture button stays the CTA.
           <div style={{ paddingTop: 64 }}>
-            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: openCapture }} />
+            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: openCapture }} variant="secondary" />
           </div>
         ) : (
           <>
