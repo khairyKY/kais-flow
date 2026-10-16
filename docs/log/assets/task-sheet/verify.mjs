@@ -451,7 +451,7 @@ for (const theme of ['day', 'night']) {
     await shot(page, '4f-day')
     const del = taskWrites(state, w0)
     check('4f-day Delete → sheet gone, row to Trash (deleted_at), block too', (await sheetOf(page).count()) === 0 && del.some((r) => r.id === id(TYRE) && r.deleted_at) && state.writes.slice(w0).some((x) => x.table === 'calendar_events' && x.body?.deleted_at), JSON.stringify(del.map((r) => r.deleted_at)))
-    check('4f-day toast "Moved to Trash" with Undo, no confirm', (await toasts(page)).includes('Moved to Trash') && (await page.locator('.kf-toast').getByRole('button', { name: 'Undo' }).count()) >= 1, JSON.stringify(await toasts(page)))
+    check('4f-day toast "Moved to Trash" with Undo, no confirm', (await toasts(page)).some((t) => /^Moved to Trash/.test(t)) && /* a parent takes its subtasks along (2026-10-16) */ (await page.locator('.kf-toast').getByRole('button', { name: 'Undo' }).count()) >= 1, JSON.stringify(await toasts(page)))
     check('4f-day the row left the list behind', (await page.locator(`[id="task-${id(TYRE)}"]`).count()) === 0)
     await ctx.close()
   }
