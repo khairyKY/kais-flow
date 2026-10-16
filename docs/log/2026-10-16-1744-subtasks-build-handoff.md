@@ -92,7 +92,7 @@ already use `tasks.parent_task_id` (0029). DATA_MODEL.md's 0029 note now states 
 - `npm run lint`: 0 errors.
 - `npm run build`: OK.
 - `npm run ds:check -- --baseline scripts/ds-baseline.json`: **0 new**.
-- CI `rehearsal.yml` on `claude/subtasks-build`: green. **mcp-full 347/347** (was 321), mcp-week
+- CI `rehearsal.yml` on `claude/subtasks-build`: green on the MCP commit (38913770948) and again at the final commit (**38918270626**). **mcp-full 347/347** (was 321), mcp-week
   158, fix0-auth 85, sec2 110, notify-prune 12, fix5-search 31.
 - Browser, mock backend, port 5295. `docs/log/assets/subtasks/verify.mjs` passes **47/47** on
   desktop and phone. It covers: nest, the fold (kept across a reload), add from the row ("at 6pm" →
@@ -118,3 +118,9 @@ already use `tasks.parent_task_id` (0029). DATA_MODEL.md's 0029 note now states 
 - On a narrow calendar block, "↳ parent" shares the time line and gets cut short with an ellipsis.
 - Bulk complete doesn't ask; it leaves subtasks open. Adding the question there would be a one-line
   change if Kai wants it.
+- Since this branch began, `claude/bound-journal` has moved on (it merged slot-outline). A merge of
+  the two has two small conflicts:
+  - `PhoneGrid.tsx` `BlockLook`: keep both, i.e. slot-outline's `minutes` in `held` and this
+    branch's `parent?`.
+  - `docs/log/INDEX.md`: keep both lines.
+  Rerun time-slots after that merge. It is 138 checks there, and f3 may already be fixed.
