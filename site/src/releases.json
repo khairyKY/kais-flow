@@ -1,5 +1,17 @@
 [
   {
+    "v": "v1.1.11",
+    "date": "2026-10-16",
+    "title": "Make goal always lands",
+    "highlights": [
+      "Making a task for another day your goal, with a full Top 3, brings it to today and makes it the goal, instead of losing it"
+    ],
+    "icons": [
+      "star"
+    ],
+    "art": "daisy-midday"
+  },
+  {
     "v": "v1.1.10",
     "date": "2026-10-16",
     "title": "Your first things keep their day",
