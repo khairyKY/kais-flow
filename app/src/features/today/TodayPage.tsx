@@ -968,7 +968,9 @@ function metaRow(projectName: string | undefined, dot: string, duration: number 
 /** A block's meta on a desktop row: "Now" reads "in progress" (2a), lengths in lower case. */
 const deskBlockMeta = (meta: string[] | undefined, inProgress: boolean) => (
   <>
-    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.toLowerCase()}</span>)}
+    {/* 2a's lower-case durations ("1h30m"); a slot's line keeps its name ("in Code block💻 · 10:00" —
+        the only meta that starts "in "; blockMeta's own read "starts in …"). */}
+    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.startsWith('in ') ? m : m.toLowerCase()}</span>)}
     {(inProgress || meta?.includes('Now')) && <span className="td-terra">in progress</span>}
   </>
 )
