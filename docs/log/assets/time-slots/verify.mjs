@@ -910,6 +910,94 @@ if (want('d4')) {
   await ctx.close()
 }
 
+// ── slot-outline, Kai's pick A ("Slot tasks: A"): every held task is its own soft card inside the slot —
+// a 1px edge, 8px corners, the slot's wash, a gap between — on the desktop and the phone, day and Night
+// Garden; the hover × stays; dragged out, the card's place stays dashed and the card itself follows the
+// pointer (over the grid too). ──
+/** The card look of an element: its edge, corners and fill. */
+const cardOf = (loc) =>
+  loc.evaluate((el) => {
+    const cs = getComputedStyle(el)
+    return { bw: cs.borderTopWidth, bs: cs.borderTopStyle, r: cs.borderTopLeftRadius, bg: cs.backgroundColor, bc: cs.borderTopColor }
+  })
+const isCard = (c) => c.bw === '1px' && c.bs === 'solid' && c.r === '8px' && c.bg !== 'rgba(0, 0, 0, 0)' && c.bc !== 'rgba(0, 0, 0, 0)'
+const twoDone = { tasks: [...inCode.tasks, task(5, 'Fix the login bug', { status: 'done', completed_at: iso('07:00'), due_at: iso('09:00'), slot_id: eid(CODE), slot_date: '2026-10-12', scheduled_start: iso('10:00'), scheduled_end: iso('12:00') })] }
+
+if (want('o1')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: twoDone })
+  await slotPoint(page, '10:30')
+  for (const theme of ['day', 'night']) {
+    await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme)
+    await sleep(250)
+    const a = await cardOf(slotRow(page, CODE, HELD))
+    const d = await cardOf(slotRow(page, CODE, 5))
+    check(`o1 desktop ${theme}: each held task is a card (1px edge, 8px corners, the slot's wash)`, isCard(a) && isCard(d), JSON.stringify(a))
+  }
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'day'))
+  await sleep(250)
+  const [r1, r2] = [await slotRow(page, CODE, HELD).boundingBox(), await slotRow(page, CODE, 5).boundingBox()]
+  const gap = Math.round(Math.max(r2.y - (r1.y + r1.height), r1.y - (r2.y + r2.height)))
+  check('o1 desktop: a small gap between the cards (4px at 100%, zoomed)', gap >= 3 && gap <= 7, gap)
+  check('o1 desktop: the done card keeps its strike', (await slotRow(page, CODE, 5).getAttribute('class'))?.includes('kf-done') && /line-through/.test(await slotRow(page, CODE, 5).locator('.kf-ev-slot-title').evaluate((el) => getComputedStyle(el).textDecorationLine)))
+  const rest = (await cardOf(slotRow(page, CODE, HELD))).bc
+  await slotRow(page, CODE, HELD).hover()
+  await sleep(250)
+  check('o1 desktop hover: the × shows and the edge deepens', (await slotRow(page, CODE, HELD).locator('.kf-ev-slot-out').isVisible()) && (await cardOf(slotRow(page, CODE, HELD))).bc !== rest)
+  // Drag it out without letting go: its place dashed, the lifted card under the pointer over the grid.
+  const from = await rowPt(page)
+  const to = await lanePt(page, '11:00', '2026-10-13')
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  for (let i = 1; i <= 15; i++) {
+    await page.mouse.move(from.x + ((to.x - from.x) * i) / 15, from.y + ((to.y - from.y) * i) / 15)
+    await sleep(30)
+  }
+  await sleep(400)
+  const gone = await cardOf(slotRow(page, CODE, HELD))
+  check('o1 desktop drag: the card\'s place stays, dashed', (await slotRow(page, CODE, HELD).getAttribute('data-lifted')) === '' && gone.bs === 'dashed', JSON.stringify(gone))
+  const mirror = page.locator('body > .kf-ev-slot-row.fc-event-dragging')
+  const mb = await mirror.boundingBox().catch(() => null)
+  const mc = mb && (await cardOf(mirror))
+  check('o1 desktop drag: the card follows the pointer over the grid, its own outline on', !!mb && Math.abs(mb.x - to.x) < 60 && Math.abs(mb.y + mb.height / 2 - to.y) < 40 && mc.bw === '1px' && mc.r === '8px', JSON.stringify([mb, to]))
+  await shot(page, 'o1-desktop-drag')
+  const w0 = state.writes.length
+  await page.mouse.move(from.x, from.y, { steps: 10 })
+  await sleep(300)
+  await page.mouse.up()
+  await settle(state)
+  check('o1 desktop: let go back on its own slot → nothing written, the card back as it was', state.writes.length === w0 && (await slotRow(page, CODE, HELD).getAttribute('data-lifted')) === null && (await page.locator('.kf-ev-slot-row.fc-event-dragging').count()) === 0)
+  check('o1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+if (want('o2')) {
+  const { ctx, page, errors, state } = await open('/calendar', { tables: twoDone, view: phone })
+  await pcBlock(page, CODE).evaluate((el) => el.scrollIntoView({ block: 'center' }))
+  await sleep(300)
+  for (const theme of ['day', 'night']) {
+    await page.evaluate((t) => (document.documentElement.dataset.theme = t), theme)
+    await sleep(250)
+    const a = await cardOf(pcRow(page, CODE, HELD))
+    const d = await cardOf(pcRow(page, CODE, 5))
+    check(`o2 phone ${theme}: each held task is a card (1px edge, 8px corners, the slot's fill)`, isCard(a) && isCard(d), JSON.stringify(a))
+    await shot(page, `o2-phone-cards-${theme}`)
+  }
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'day'))
+  const w0 = state.writes.length
+  const cdp = await ctx.newCDPSession(page)
+  const row = center(await pcRow(page, CODE, HELD).locator('.pc-name').boundingBox())
+  await holdDrag(cdp, row, { x: row.x, y: (await pcY(page, '12:30')) + 6 }, { keep: true })
+  const gone = await cardOf(pcRow(page, CODE, HELD))
+  const lifted = await cardOf(page.locator('.pc-held-task'))
+  check('o2 phone drag: its place dashed, the lifted card keeps its own outline', gone.bs === 'dashed' && lifted.bw === '1px' && lifted.r === '8px', JSON.stringify([gone, lifted]))
+  await shot(page, 'o2-phone-drag')
+  await touch(cdp, 'touchCancel', [])
+  await sleep(500)
+  check('o2 phone: a cancelled touch puts it back, nothing written', (await page.locator('.pc-held-task').count()) === 0 && state.writes.length === w0)
+  check('o2 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
 await browser.close()
 const failed = results.filter((r) => !r.ok)
 fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 2))
