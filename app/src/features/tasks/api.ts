@@ -516,7 +516,10 @@ export function makeGoalWithUndo(task: Task): void {
     }
     const t = cached(task)
     if (!t.top3) {
-      writeRow('tasks', { ...t, top3: true, someday: false, top3_rank: 1 })
+      // As flipTop3: a task dated another day comes to today (at its own time), or the outbox's Top 3
+      // rule hands the star straight back — the swap then emptied a place and the goal never landed.
+      const goal: Task = { ...t, top3: true, someday: false, top3_rank: 1 }
+      writeRow('tasks', isTop3Today(goal, new Date()) ? goal : { ...goal, due_at: todayFor(t) })
       logActivity('task.starred', 'task', t.id, {})
     }
     writeTop3Order(plan.order)
