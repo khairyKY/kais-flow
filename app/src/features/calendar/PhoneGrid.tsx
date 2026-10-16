@@ -34,6 +34,8 @@ export interface BlockLook {
   /** A Time block's tasks (Time Slots, 0073) as rows under its title, and its "2 tasks · 45m of 2h" —
    * the desktop block's checklist: the box completes (with Undo), a tap opens the task. */
   slot?: { fill: string; held: { id: string; title: string; done: boolean; minutes: number; toggle: () => void; open: () => void }[] }
+  /** A subtask's own block (Subtasks C): its parent's title, "↳ parent" on the time line. */
+  parent?: string
 }
 
 export interface PhoneGridHandle {
@@ -403,7 +405,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const stacked = h >= 56
     const cutFrom = !lifted && cut.from
     const cutInto = !lifted && cut.into
-    const time = lk.note ?? (live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : cutFrom || cutInto ? '' : rangeText(s.start, s.end))
+    const clockLine = lk.note ?? (live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : cutFrom || cutInto ? '' : rangeText(s.start, s.end))
+    const time = lk.parent ? `${clockLine ? `${clockLine} · ` : ''}↳ ${lk.parent}` : clockLine
     // room for the cut's own line under / over the title (a sliver keeps just its title)
     const cutRoom = h >= 48
     // A move into another column (3 days / week) slides the same node over, so the finger never loses it.

@@ -407,3 +407,9 @@
 .td-nudge-why { margin-top: 3px; font-size: var(--fs-caption); color: var(--acc-gold); }
 .td-nudge-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
 .td-btn-sm.kf-button { height: 30px; padding: 0 var(--sp-3); font-size: var(--fs-caption); }
+
+/* Subtasks (Kai 2026-10-16): a subtask drawn by itself says whose it is — "↳ parent", quiet, one line. */
+.td-sub-of { max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-faint); }
+.td-next-item .td-sub-of { font-size: var(--fs-meta); }
+/* A phone row with its subtasks under it leaves its rule to them (the nest draws it). */
+.tp-row.has-nest { border-bottom: none; }

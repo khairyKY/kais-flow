@@ -374,7 +374,9 @@ export function describeRow(row: SearchRow, ix: SearchIndex, query: string, now:
       const t = ix.task.get(id)
       if (!t) return base
       const done = t.status !== 'todo'
-      const place = resolveTag(t, ix.data.domains, ix.data.projects, ix.data.areas)?.label ?? null
+      // Subtasks (Kai 2026-10-16): a subtask's line says whose it is first — "↳ Finish the sheet".
+      const parentTitle = t.parent_task_id ? ix.task.get(t.parent_task_id)?.title : null
+      const place = join(parentTitle && `↳ ${parentTitle}`, resolveTag(t, ix.data.domains, ix.data.projects, ix.data.areas)?.label)
       const at = t.scheduled_start ?? t.due_at
       const line = related
         ?? (done ? join(doneWord(t.completed_at ?? t.updated_at, now), place)

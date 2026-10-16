@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties, type MouseEvent as ReactMouseE
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { useTasks, planWithUndo, editWithUndo, setSomeday, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo } from '../tasks/api'
 import { useTaskDraft } from '../tasks/useTaskDraft'
+import { subtasksOf } from '../tasks/subtasks'
 import { PhotoSource, SubtaskList, TaskMoreMenu, anchorUnder, useTaskControls } from '../tasks/TaskFields'
 import { remindChip, repeatLabel, dayWord } from '../tasks/taskSheetMath'
 import { listState } from '../journal/journalDay'
@@ -109,7 +110,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
   const stage = taskCherryStage(task)
   const statusLabel = task.status === 'done' ? 'Done' : task.status === 'cancelled' ? 'Cancelled' : 'Open'
   // Children come straight from the tasks cache — no extra query needed.
-  const subtasks = tasks.filter((t) => t.parent_task_id === task.id)
+  const subtasks = subtasksOf(tasks, task.id)
   const day = (iso: string) => dayShort(zoneDateKey(new Date(iso), zone))
   const edited = new Date(task.updated_at)
   const editedWord = dayWord(zoneDateKey(edited, zone), now)

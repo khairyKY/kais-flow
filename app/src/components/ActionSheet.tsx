@@ -16,6 +16,8 @@ export interface ActionSheetItem {
   destructive?: boolean
   /** The row opens a second picker (MK Action Sheet draws a chevron after the hint). */
   chevron?: boolean
+  /** A quiet second line under the label (the subtask question's "Questions 1–5 stays on your day at 16:00"). */
+  note?: ReactNode
   /** The current choice (Calendar Phone 7n's view list): sage wash + check. */
   selected?: boolean
   onSelect: () => void
@@ -32,6 +34,7 @@ export const ACTION_ROW_CSS = `
   .kf-as-row[aria-current='true'] { background: var(--block-sage); color: var(--acc-sage-text); font-weight: 600; }
   .kf-as-icon { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; color: var(--ink-muted); }
   .kf-as-row.is-destructive .kf-as-icon { color: var(--acc-terra-ink); }
+  .kf-as-note { display: block; font-size: var(--fs-caption); line-height: 1.4; color: var(--ink-faint); }
   .kf-as-hint { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
   .kf-as-row.is-destructive .kf-as-hint { color: var(--acc-terra-ink); }
 `
@@ -66,7 +69,8 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
             }}
           >
             <span className="kf-as-icon" aria-hidden>{item.icon}</span>
-            <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}</span>
+            {/* ds-ok: MK Action Sheet's label 15/20, as it was (this line only grew the note) */}
+            <span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}{item.note != null && <small className="kf-as-note">{item.note}</small>}</span>
             {item.hint != null && <span className="kf-as-hint">{item.hint}</span>}
             {item.chevron && <Icon name="chevright" size={20} style={{ color: 'var(--ink-faint)' }} />}
             {item.selected && <Icon name="check" size={20} />}

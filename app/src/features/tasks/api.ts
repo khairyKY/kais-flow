@@ -25,6 +25,8 @@ import { placeTask, planReparent, type MoveTarget } from './move'
 import { addedLine, dueChip } from './taskSheetMath'
 import { PRIORITY_LABELS } from './taskMenuSpec'
 import { planListMove } from './manualOrder'
+import { openSubtasks, subtasksOf } from './subtasks'
+import { askSubtasks } from './subtaskQuestion'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -114,6 +116,8 @@ const cachedTasks = () => queryClient.getQueryData<Task[]>(['tasks']) ?? []
 const cached = (t: Task) => cachedTasks().find((x) => x.id === t.id) ?? t
 /** A task as the cache has it now (a subtask row's parent title), without subscribing. */
 export const cachedTask = (id: string): Task | undefined => cachedTasks().find((x) => x.id === id && !x.deleted_at)
+/** A parent's live subtasks as the cache has them now (a list row's "1/3" and its nest). */
+export const cachedSubtasks = (parentId: string): Task[] => subtasksOf(cachedTasks(), parentId)
 
 /** Writes `task`'s current row with `patch` applied — the one way a single-field edit lands. */
 function patchTask(task: Task, patch: Partial<Task>): Task {
@@ -133,6 +137,17 @@ export function toastAdded(task: Task, place: string | null): void {
 export interface CompletionUndo {
   before: Task
   spawned: Task | null
+  /** A repeating parent's subtasks as they were before they went to `spawned` (./subtasks). */
+  carried?: Task[]
+}
+
+/** A repeating parent's subtasks are its checklist: ticked, they go with the series to its next copy,
+ * open again (Kai 2026-10-16 subtasks build — nothing is asked; the undo puts them back as they were). */
+function carry(subs: readonly Task[], parentId: string): void {
+  for (const s of subs) {
+    writeRow('tasks', { ...cached(s), parent_task_id: parentId, status: s.status === 'done' ? 'todo' : s.status, completed_at: null })
+    if (s.status === 'done') logActivity('task.reopened', 'task', s.id, {})
+  }
 }
 
 // This session's completions, so "Reopen" right after a check (Today's filled check, the Done
@@ -142,16 +157,25 @@ const recentCompletions = new Map<string, CompletionUndo>()
 
 /** Completing a recurring task materializes its next occurrence as a fresh task (completion.ts). */
 export function completeTask(passed: Task): CompletionUndo {
+  return completeOne(passed, false)
+}
+
+function completeOne(passed: Task, quiet: boolean): CompletionUndo {
   const task = cached(passed)
-  playCompletion(task) // Sounds v2: every way of checking a task off (box, swipe, menu, key) sounds once, here
-  const plan = planCompletion(task, queryClient.getQueryData<Task[]>(['tasks']) ?? [], nowIso(), () => crypto.randomUUID())
+  // Sounds v2: every way of checking a task off (box, swipe, menu, key) sounds once, here — a parent's
+  // subtasks ticked along with it (4 C) are quiet: one check, one sound.
+  if (!quiet) playCompletion(task)
+  const all = cachedTasks()
+  const plan = planCompletion(task, all, nowIso(), () => crypto.randomUUID())
   writeRow('tasks', plan.done)
   logActivity('task.completed', 'task', task.id, {})
+  const carried = plan.next ? subtasksOf(all, task.id) : []
   if (plan.next) {
     writeRow('tasks', plan.next)
     logActivity('task.created', 'task', plan.next.id, { recurrence_parent: task.id })
+    carry(carried, plan.next.id)
   }
-  const undo: CompletionUndo = { before: task, spawned: plan.next }
+  const undo: CompletionUndo = { before: task, spawned: plan.next, carried }
   recentCompletions.set(task.id, undo)
   return undo
 }
@@ -172,18 +196,32 @@ function takeBackCompletion(undo: CompletionUndo): string | null {
   const { restore, removeId } = planUndo(current, undo.before, undo.spawned, spawnedNow)
   writeRow('tasks', restore)
   logActivity('task.reopened', 'task', restore.id, {})
-  if (removeId) writeRow('tasks', { id: removeId }, 'delete')
+  if (removeId) {
+    // The subtasks a repeat carried to that copy come home first (before its delete reaches the server).
+    for (const b of undo.carried ?? []) writeRow('tasks', { ...cached(b), parent_task_id: b.parent_task_id, status: b.status, completed_at: b.completed_at })
+    writeRow('tasks', { id: removeId }, 'delete')
+  }
   return removeId
 }
 
+const subtasksLabel = (n: number) => `${n} open subtask${n === 1 ? '' : 's'}`
+
 /** Punch 6: a single check toasts "Done" with Undo (PAGE_BEHAVIORS.md: "Check → check pop (3b) +
- * toast 'Done — Undo'"). `afterUndo` lets a list put back what it animated away. */
+ * toast 'Done — Undo'"). `afterUndo` lets a list put back what it animated away.
+ * 4 C (Kai 2026-10-16): a parent with subtasks still open is done at once and asks about them
+ * (./subtaskAsk) — "Tick them too" ticks them all, and the one Undo takes the whole thing back. A
+ * repeat that carried its subtasks to the next copy asks nothing. */
 export function completeTaskWithUndo(task: Task, afterUndo?: () => void): CompletionUndo {
   const undo = completeTask(task)
-  toastUndo('Done', () => {
-    undoCompletion(undo)
-    afterUndo?.()
-  })
+  const toast = (subs: CompletionUndo[]) =>
+    toastUndo(subs.length ? `Done, with its ${subtasksLabel(subs.length)}` : 'Done', () => {
+      subs.forEach(undoCompletion)
+      undoCompletion(undo)
+      afterUndo?.()
+    })
+  const open = undo.spawned ? [] : openSubtasks(cachedTasks(), task.id)
+  if (open.length === 0) toast([])
+  else askSubtasks(undo.before, open, (tick) => toast(tick ? open.map((s) => completeOne(s, true)) : []))
   return undo
 }
 
@@ -227,6 +265,7 @@ export function undoReopen(undo: ReopenUndo): void {
   if (reinsert) {
     writeRow('tasks', reinsert)
     logActivity('task.created', 'task', reinsert.id, { recurrence_parent: restore.id })
+    carry(undo.completion?.carried ?? [], reinsert.id)
   }
   if (undo.completion) recentCompletions.set(restore.id, undo.completion)
 }
@@ -256,7 +295,7 @@ export function uncompleteTask(task: Task): void {
 
 /** Moves the task (and any calendar block scheduled for it) to Trash — a soft delete that
  * restoreTask puts back. `after` runs once the write has landed. */
-export function deleteTask(task: Task, after?: () => void): void {
+export function deleteTask(task: Task, after?: () => void, at?: string): void {
   // Motion 3e (WB-1) — the exit lives here rather than at each call site: every task list
   // renders id="task-<id>" on its row, so this one wiring point covers the row menu, swipe,
   // done-row menu, the `#` keyboard delete, bulk delete, Today and Perennials "end series".
@@ -264,7 +303,7 @@ export function deleteTask(task: Task, after?: () => void): void {
   // screen (bulk from a different view, tests) or under reduced motion.
   animateRowRemoval(document.getElementById(`task-${task.id}`), () => {
     deleteEventsForTask(task.id)
-    patchTask(task, { deleted_at: new Date().toISOString() })
+    patchTask(task, { deleted_at: at ?? new Date().toISOString() })
     logActivity('task.deleted', 'task', task.id, {})
     after?.()
   })
@@ -272,14 +311,20 @@ export function deleteTask(task: Task, after?: () => void): void {
 
 /** Every task delete a person makes (Flow Audit §4): straight to Trash, no confirm, "Moved to
  * Trash · Undo". The toast waits for the last write, so an Undo can never land before it. Only
- * Trash's own "Delete forever" / "Empty" confirm. */
+ * Trash's own "Delete forever" / "Empty" confirm. A parent takes its subtasks with it, at the same
+ * instant (restoreTask brings them back together), under the one Undo. */
 export function deleteTasksWithUndo(tasks: Task[]): void {
-  let left = tasks.length
-  const message = tasks.length === 1 ? 'Moved to Trash' : `${tasks.length} tasks moved to Trash`
-  for (const t of tasks) {
+  const ids = new Set(tasks.map((t) => t.id))
+  const subs = tasks.flatMap((t) => subtasksOf(cachedTasks(), t.id)).filter((s) => !ids.has(s.id) && ids.add(s.id))
+  const all = [...tasks, ...subs]
+  const at = nowIso()
+  let left = all.length
+  const withSubs = subs.length ? `, with ${tasks.length === 1 ? 'its' : 'their'} ${subs.length} subtask${subs.length === 1 ? '' : 's'}` : ''
+  const message = `${tasks.length === 1 ? 'Moved to Trash' : `${tasks.length} tasks moved to Trash`}${withSubs}`
+  for (const t of all) {
     deleteTask(t, () => {
-      if (--left === 0) toastUndo(message, () => tasks.forEach(restoreTask))
-    })
+      if (--left === 0) toastUndo(message, () => all.forEach(restoreTask))
+    }, at)
   }
 }
 
@@ -304,9 +349,14 @@ export function duplicateTaskWithUndo(task: Task): Task {
 }
 
 export function restoreTask(task: Task): void {
-  restoreEventsForTask(task.id)
-  patchTask(task, { deleted_at: null })
-  logActivity('task.restored', 'task', task.id, {})
+  // Its subtasks that went to Trash with it (same instant, deleteTasksWithUndo) come back with it.
+  const at = cached(task).deleted_at ?? task.deleted_at
+  const subs = at ? cachedTasks().filter((s) => s.parent_task_id === task.id && s.deleted_at === at) : []
+  for (const t of [task, ...subs]) {
+    restoreEventsForTask(t.id)
+    patchTask(t, { deleted_at: null })
+    logActivity('task.restored', 'task', t.id, {})
+  }
 }
 
 export function setSomeday(task: Task, someday: boolean): void {

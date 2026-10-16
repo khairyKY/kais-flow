@@ -67,6 +67,7 @@ import { todayFor } from '../tasks/planMath'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { useListVerbs } from '../tasks/useListVerbs'
 import { sortByOrder } from '../tasks/manualOrder'
+import { nestOut } from '../tasks/subtasks'
 import { moveInListWithUndo } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { BulkBar } from '../../components/BulkBar'
@@ -279,7 +280,9 @@ export function ProjectDetailPage() {
   // serves both pages.
   const pageOpen = useMemo(() => {
     // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
-    const open = sortByOrder(tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id)))
+    const here = tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id))
+    // Subtasks A: one listed under its parent here is drawn nested under it (tasks/SubtaskNest).
+    const open = sortByOrder(nestOut(here, new Set(here.filter((t) => !t.parent_task_id).map((t) => t.id))))
     // An area lists its repeats apart, under "Keeps coming back" after its other open tasks — the
     // keys walk the rows in that same order, and no row is drawn twice.
     return areas.some((a) => a.id === id) ? [...open.filter((t) => !t.recurrence_rule), ...open.filter((t) => t.recurrence_rule)] : open

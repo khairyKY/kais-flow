@@ -22,6 +22,7 @@ import { PhotoSource, SubtaskList, TaskChips, TaskMoreMenu, useTaskControls } fr
 import { TaskPopover } from './TaskPopover'
 import { blockLine, createdLine, dayWord, doneLine, dueChip, nextDates, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
 import { useTaskDraft } from './useTaskDraft'
+import { subtasksOf } from './subtasks'
 import '../../components/pickers.css'
 import './taskSheet.css'
 
@@ -136,7 +137,7 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
   const done = t.status === 'done' || !!t.completed_at
   const block = events.find((e) => e.task_id === t.id)
   const span = block && eventSpan(block)
-  const subs = t.parent_task_id ? null : tasks.filter((c) => c.parent_task_id === t.id)
+  const subs = t.parent_task_id ? null : subtasksOf(tasks, t.id)
   const pendingOffline = !online && pending.has(t.id)
   const line = saveLine(t, saved?.at ?? null, now, pendingOffline)
   const recurring = !!t.recurrence_rule && !!t.due_at

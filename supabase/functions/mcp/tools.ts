@@ -841,6 +841,9 @@ const eventTimes = {
   remind_min: { type: ['integer', 'null'], minimum: 0, maximum: 1440, description: 'Remind this many minutes before each start (0 = at the start; timed events only). null = no reminder.' },
 }
 
+/** complete_task's `subtasks`: what happens to a parent's open subtasks (the app's question, 4 C). */
+export const SUBTASK_MODES = ['leave', 'complete'] as const
+
 export async function openTask(ctx: ToolContext, taskId: string): Promise<TaskRow> {
   const t = await ctx.store.getTask(taskId)
   if (!t) return bad(`No task with id ${taskId} (it may have been deleted). Use list_tasks or search to find it.`)
@@ -980,9 +983,16 @@ export async function createTask(ctx: ToolContext, n: NewTask): Promise<{ task: 
   return { task: { ...task, project_name: (n.project?.name as string | undefined) ?? null }, block }
 }
 
+/** A parent's live subtasks (tasks.parent_task_id, 0029), oldest first — the app's subtasksOf. */
+export async function subtasksOf(ctx: ToolContext, parentId: string): Promise<TaskRow[]> {
+  const rows = (await ctx.store.find('tasks', { parent_task_id: parentId, deleted_at: null })) as unknown as TaskRow[]
+  return rows.sort((a, b) => a.created_at.localeCompare(b.created_at) || a.id.localeCompare(b.id))
+}
+
 /** Ticks an open task off (tasks/api completeTask → completion.ts planCompletion): a repeat's next
- * occurrence comes along — never a paused series', never a second open copy. */
-export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done: TaskRow; next: TaskRow | null }> {
+ * occurrence comes along — never a paused series', never a second open copy — and, like the app
+ * (Kai 2026-10-16), a repeat's subtasks go with it to that copy, open again (`carried`). */
+export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done: TaskRow; next: TaskRow | null; carried: number }> {
   const now = ctx.now.toISOString()
   // Plan the next occurrence before writing anything: a rule rrule can't read must not leave
   // the task done with its series silently ended.
@@ -1018,11 +1028,17 @@ export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done
   }
   if (!(await ctx.store.markDone(t.id, now))) return bad(`"${t.title}" isn't open any more.`)
   await logIt(ctx, 'task.completed', 'task', t.id)
+  let carried = 0
   if (next) {
     await ctx.store.insertTask(next)
     await logIt(ctx, 'task.created', 'task', next.id, { recurrence_parent: t.id })
+    for (const s of await subtasksOf(ctx, t.id)) {
+      await ctx.store.patch('tasks', { id: s.id }, { parent_task_id: next.id, ...(s.status === 'done' ? { status: 'todo', completed_at: null } : {}) })
+      if (s.status === 'done') await logIt(ctx, 'task.reopened', 'task', s.id)
+      carried++
+    }
   }
-  return { done: { ...t, status: 'done', completed_at: now, top3: false }, next }
+  return { done: { ...t, status: 'done', completed_at: now, top3: false }, next, carried }
 }
 
 /** A done task back to open (tasks/api reopenTask, after the session that completed it). */
@@ -1487,13 +1503,32 @@ export const TOOLS: readonly ToolDef[] = [
   {
     name: 'complete_task',
     title: 'Complete task',
-    description: "Mark open tasks done (only when the user says they're done); `ids` ticks off several. A repeating task's next occurrence is created, as in the app — unless the series is paused.",
-    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' }, ids: ids('The task ids') }, additionalProperties: false },
+    description:
+      "Mark open tasks done (only when the user says they're done); `ids` ticks off several. A repeating task's next occurrence is created, as in the app — unless the series is paused — and its subtasks go with it, open again. A task with subtasks still open: `subtasks` says what happens to them — 'leave' (the default) leaves them open, 'complete' ticks them too (the app asks the user this; ask them if it isn't clear). The answer says what happened to them.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { ...id, description: 'The task id.' },
+        ids: ids('The task ids'),
+        subtasks: { type: 'string', enum: [...SUBTASK_MODES], description: "Its open subtasks: 'leave' them open (the default) or 'complete' them too." },
+      },
+      additionalProperties: false,
+    },
     write: true,
     async run(a, ctx) {
+      const mode = choice(a, 'subtasks', SUBTASK_MODES, 'leave')
       return eachId(a, async (taskId) => {
-        const { done, next } = await completeTask(ctx, await openTask(ctx, taskId))
-        return { done: taskOut(done, ctx.zone), ...(next ? { next: taskOut(next, ctx.zone) } : {}), timezone: ctx.zone }
+        const { done, next, carried } = await completeTask(ctx, await openTask(ctx, taskId))
+        // 4 C (Kai 2026-10-16): a parent with subtasks still open — ticked too, or left open (the safe default).
+        const open = next ? [] : (await subtasksOf(ctx, taskId)).filter((s) => s.status === 'todo')
+        for (const s of mode === 'complete' ? open : []) await completeTask(ctx, s)
+        const n = (k: number) => `${k} subtask${k === 1 ? '' : 's'}`
+        const subtasks = carried
+          ? `its ${n(carried)} went with it to the next occurrence, open again`
+          : !open.length ? null
+          : mode === 'complete' ? `ticked its ${n(open.length)} still open too: ${open.map((s) => s.title).join('; ')}`
+          : `left its ${n(open.length)} open: ${open.map((s) => s.title).join('; ')} (subtasks: 'complete' ticks them)`
+        return { done: taskOut(done, ctx.zone), ...(next ? { next: taskOut(next, ctx.zone) } : {}), ...(subtasks ? { subtasks } : {}), timezone: ctx.zone }
       })
     },
   },

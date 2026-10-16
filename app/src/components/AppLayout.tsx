@@ -41,6 +41,7 @@ const WidgetBridge = lazy(() => import('../features/widgets/WidgetBridge').then(
 const TourHost = lazy(() => import('../features/tour/TourHost').then((m) => ({ default: m.TourHost })))
 
 import { ToastHost } from './ToastHost'
+import { SubtaskAskHost } from '../features/tasks/SubtaskAsk'
 import { MobileTabBar } from './MobileTabBar'
 import { PaperHost } from '../features/paper/PaperHost'
 import { useReadyPages } from '../features/paper/captures'
@@ -1048,6 +1049,7 @@ export function AppLayout() {
       <PaperHost />
       {/* What's new: the after-update toast, the daily quiet update check, the sheet. */}
       <WhatsNewHost uid={user?.id} createdAt={user?.created_at} />
+      <SubtaskAskHost />
       <ToastHost />
       {signOutFlow.prompt}
     </div>

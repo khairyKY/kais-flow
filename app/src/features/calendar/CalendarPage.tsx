@@ -512,6 +512,14 @@ function DesktopCalendar() {
 
   // Punch 32 "Show completed": done task-blocks drop out of the grid when toggled off.
   const doneTaskIds = useMemo(() => new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id)), [tasks])
+  // Subtasks C: a subtask's block → its parent's title ("↳ parent" on the block).
+  const parentTitleOf = useMemo(() => {
+    const byId = new Map(tasks.map((t) => [t.id, t] as const))
+    return (taskId: string | null) => {
+      const pid = taskId ? byId.get(taskId)?.parent_task_id : null
+      return pid ? (byId.get(pid)?.title ?? null) : null
+    }
+  }, [tasks])
   const visibleEvents = viewOpts.showCompleted ? gridEvents : gridEvents.filter((e) => !(e.task_id && doneTaskIds.has(e.task_id)))
   // An occurrence's pending write is its series row's.
   const pendingIds = visibleEvents.filter((e) => outboxMarks.pending.has(e.seriesId ?? e.id)).map((e) => e.id)
@@ -1198,7 +1206,7 @@ function DesktopCalendar() {
                 // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
                 const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
                 return {
-                  id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e),
+                  id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
                   ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held) } : null),
                 }
               })}
