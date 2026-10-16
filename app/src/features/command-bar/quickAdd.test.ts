@@ -21,7 +21,7 @@ vi.mock('../capture/api', () => ({
   enrichTypedInboxItem: async (_item: unknown, typed: string) => void enriched.push(`inbox:${typed}`),
 }))
 
-const { addTypedEvent, captureTyped } = await import('./quickAdd')
+const { addTypedEvent, addTypedSubtask, captureTyped, subtaskHint } = await import('./quickAdd')
 
 const now = new Date('2026-10-12T07:00:00Z') // Mon 12 Oct, 10:00 Cairo (UTC+3)
 const project = { id: 'p1', domain_id: 'd1', name: 'Shaheen', type: 'standard', status: 'active', created_at: '', updated_at: '' } as const
@@ -124,5 +124,39 @@ describe('`>slot` (Time Slots, 0073): the task goes into the Time block’s next
     captureTyped(line('review it thursday >code'), 'review it thursday >code')
     expect(writes.filter((w) => w.table === 'tasks').at(-1)!.row).toMatchObject({ slot_date: '2026-10-15', scheduled_start: '2026-10-15T08:00:00.000Z' })
     vi.useRealTimers()
+  })
+})
+
+describe('addTypedSubtask (Subtasks C: a subtask line goes through the one parse)', () => {
+  beforeEach(() => {
+    writes.length = 0
+    toasts.length = 0
+    blocked.length = 0
+    enriched.length = 0
+  })
+  const parent = { id: 'parent-1', project_id: 'p1', area_id: null, domain_id: 'd1' } as unknown as Parameters<typeof addTypedSubtask>[0]
+  const tasks = () => writes.filter((w) => w.table === 'tasks').map((w) => w.row)
+
+  it('"at 6pm" gives it its own time today, on the calendar; the time leaves the title; it lives where its parent does', () => {
+    addTypedSubtask(parent, 'Hand it in at 6pm #elsewhere', now)
+    expect(tasks()[0]).toMatchObject({ title: 'Hand it in', parent_task_id: 'parent-1', project_id: 'p1', domain_id: 'd1', due_at: '2026-10-12T15:00:00.000Z' })
+    expect(blocked).toEqual([true])
+    expect(toasts).toEqual([]) // lands in sight, under its parent
+    expect(enriched).toEqual([]) // no AI read for a step
+  })
+
+  it('a day alone dates it, off the calendar; a plain line is just a subtask; an empty one is nothing', () => {
+    addTypedSubtask(parent, 'Book the room tomorrow', now)
+    expect(tasks()[0]).toMatchObject({ title: 'Book the room', due_at: expect.stringMatching(/^2026-10-13/) })
+    expect(blocked).toEqual([false])
+    addTypedSubtask(parent, 'Read the notes', now)
+    expect(tasks()[1]).toMatchObject({ title: 'Read the notes', due_at: null })
+    expect(addTypedSubtask(parent, '   ', now)).toBeNull()
+  })
+
+  it('says what the line will do while it is typed', () => {
+    expect(subtaskHint('Hand it in at 6pm', now)).toBe('Today 18:00 · on your calendar')
+    expect(subtaskHint('Hand it in tomorrow', now)).toBe('Tomorrow')
+    expect(subtaskHint('Hand it in', now)).toBeNull()
   })
 })
