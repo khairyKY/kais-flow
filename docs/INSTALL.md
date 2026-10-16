@@ -35,6 +35,7 @@ The web app is at https://kais-flow.kaidagoat.workers.dev and needs no install. 
 1. Run the `.exe`.
 2. Windows SmartScreen may say *"Windows protected your PC"*, because the installer isn't code-signed (that costs money). Click **More info → Run anyway**.
 3. It installs per-user; no admin is needed. Start menu → **Kai's Flow**.
+4. Later versions install from inside the app (Settings → App → **Update**), with no SmartScreen screen.
 
 **Uninstalling:** Settings → Apps → Kai's Flow → Uninstall.
 

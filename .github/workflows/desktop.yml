@@ -65,8 +65,21 @@ jobs:
           VARS_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
         run: python ../.github/scripts/supabase-public-config.py
 
+      # Updates install in place (lib/appUpdate.ts installUpdate, docs/MICROSOFT-STORE.md "Updates"):
+      # Tauri's updater only runs an installer signed with this key (minisign, free; the private half
+      # lives only in Kai's local signing folder and these two secrets). Without them (a fork) the
+      # installer builds as before, with no .sig and no latest.json.
       - name: Build
-        run: npx tauri build --bundles nsis
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          if [ -n "$TAURI_SIGNING_PRIVATE_KEY" ]; then
+            npx tauri build --bundles nsis
+          else
+            echo "::notice title=No updater signature::TAURI_SIGNING_PRIVATE_KEY isn't set, so this installer can't update the app in place."
+            npx tauri build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":false}}'
+          fi
 
       - name: Collect
         run: |
@@ -75,6 +88,8 @@ jobs:
           tag='${{ inputs.tag }}'
           name="kais-flow-${tag:-${GITHUB_SHA::7}}-windows-setup.exe"
           cp "$exe" "$RUNNER_TEMP/$name"
+          # The signature is over the file's bytes, so it holds for the renamed copy too.
+          if [ -f "$exe.sig" ]; then cp "$exe.sig" "$RUNNER_TEMP/$name.sig"; fi
           echo "EXE=$RUNNER_TEMP/$name" >> "$GITHUB_ENV"
           echo "EXE_NAME=$name" >> "$GITHUB_ENV"
           echo "- Windows installer: \`$name\` ($(du -h "$RUNNER_TEMP/$name" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
@@ -99,10 +114,29 @@ jobs:
           TAG: ${{ inputs.tag }}
         # A version-less copy beside the versioned file, so releases/latest/download/kais-flow-windows-setup.exe
         # always serves the newest one (the web app's download bar, Settings → App, docs/INSTALL.md).
-        # The versioned file stays: the apps' update check and the site read it.
+        # The versioned file stays: the apps' update check and the site read it. With a signature, also
+        # latest.json (releases/latest/download/latest.json, tauri.conf.json plugins.updater): the
+        # versioned file's URL and its signature, which the Windows app updates in place from.
         run: |
+          set -euo pipefail
           cp "$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe"
-          gh release upload "$TAG" "$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe" --clobber
+          files=("$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe")
+          if [ -f "$EXE.sig" ]; then
+            NOTES="$(gh release view "$TAG" --json body -q .body || true)" \
+            URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$EXE_NAME" \
+            node -e "
+              const fs = require('fs'), e = process.env
+              fs.writeFileSync(e.RUNNER_TEMP + '/latest.json', JSON.stringify({
+                version: e.TAG.replace(/^v/, ''),
+                notes: e.NOTES || 'Kai’s Flow ' + e.TAG,
+                pub_date: new Date().toISOString(),
+                platforms: { 'windows-x86_64': { signature: fs.readFileSync(e.EXE + '.sig', 'utf8').trim(), url: e.URL } },
+              }, null, 2))"
+            files+=("$EXE.sig" "$RUNNER_TEMP/latest.json")
+          else
+            echo "::warning::No updater signature, so no latest.json: Windows apps update through the browser download this time."
+          fi
+          gh release upload "$TAG" "${files[@]}" --clobber
 
   # The Microsoft Store package (docs/MICROSOFT-STORE.md): the build above as an UNSIGNED MSIX, which
   # Kai uploads in Partner Center; the Store signs what it ships, so no certificate is needed ($0).

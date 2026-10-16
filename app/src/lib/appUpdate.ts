@@ -6,7 +6,8 @@ import { Capacitor } from '@capacitor/core'
 //     commit in this page's own kf-build meta tag. Newer → refresh the service worker and reload.
 //   · Android (Capacitor) and Windows (Tauri): GitHub's latest release against the installed
 //     version (versionName / tauri.conf.json, both stamped from the release tag). Newer → open
-//     that release's own installer for this platform.
+//     that release's own installer for this platform; the Windows app installs it in place
+//     (installUpdate: Tauri's updater, so no SmartScreen screen).
 //   · Windows from the Microsoft Store (an MSIX, docs/MICROSOFT-STORE.md): the Store updates it, so
 //     nothing is fetched or offered (Kai 2026-10-14: a Store install must not nag about the .exe).
 // One request per click, nothing in the background.
@@ -161,4 +162,39 @@ export async function reloadToUpdate(): Promise<void> {
  * download and the app stays where it is. */
 export function openDownload(url: string): void {
   window.location.assign(url)
+}
+
+/** The update's progress line: a percent when the size is known, else the megabytes so far. */
+export function progressLine(done: number, total: number): string {
+  return total > 0 ? `Downloading… ${Math.min(100, Math.round((done / total) * 100))}%` : `Downloading… ${(done / 1e6).toFixed(1)} MB`
+}
+
+/** Update to the newer release whose installer is `url`. The Windows app (the .exe install — a Store
+ * install never gets here, its check says 'store') updates in place (Kai 2026-10-16): Tauri's updater
+ * fetches the release's signed installer itself (latest.json, desktop.yml) and runs it with a small
+ * progress window, then the app quits and the installer reopens it. No browser download means no
+ * Mark-of-the-Web, so no SmartScreen screen. A release without latest.json (v1.2.0 and older), a bad
+ * signature, offline: the browser download, as before. Everywhere else: the browser download. */
+export async function installUpdate(url: string, onProgress: (line: string) => void = () => {}, platform: AppPlatform = appPlatform()): Promise<void> {
+  if (platform === 'windows') {
+    try {
+      onProgress('Downloading…')
+      // Imported here so the web and Android bundles never carry it.
+      const { check } = await import('@tauri-apps/plugin-updater')
+      const update = await check()
+      if (update) {
+        let done = 0
+        let total = 0
+        await update.downloadAndInstall((e) => {
+          if (e.event === 'Started') total = e.data.contentLength ?? 0
+          else if (e.event === 'Progress') onProgress(progressLine((done += e.data.chunkLength), total))
+          else onProgress('Installing… Kai’s Flow reopens in a moment')
+        })
+        return
+      }
+    } catch (e) {
+      console.warn('In-app update failed, downloading the installer instead', e)
+    }
+  }
+  openDownload(url)
 }

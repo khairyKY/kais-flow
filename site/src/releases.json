@@ -1,5 +1,17 @@
 [
   {
+    "v": "v1.2.1",
+    "date": "2026-10-16",
+    "title": "Windows updates without the blue screen",
+    "highlights": [
+      "The Windows app now installs its updates itself (Update → a progress line → it reopens), so Windows' blue “protected your PC” screen no longer shows on updates. Installing this version shows it one last time"
+    ],
+    "icons": [
+      "windows"
+    ],
+    "art": "fern-unfurl1"
+  },
+  {
     "v": "v1.2.0",
     "date": "2026-10-16",
     "title": "The Bound Journal look, subtasks and Sotto",
