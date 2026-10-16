@@ -161,7 +161,8 @@ const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
 // ── 3. Desktop Integrations: the same card ──
 {
   const { ctx, page, errors } = await open('/settings', { view: desktop, rows: { capture_keys: [{ ...KEY_ROW, last_used_at: '2026-10-03T08:00:00.000Z' }] } })
-  await page.getByText('Integrations', { exact: true }).first().click()
+  // Kai 2026-10-12: the capture key left Integrations for Settings → Advanced.
+  await page.getByText('Advanced', { exact: true }).first().click()
   await sleep(600)
   check('desktop: card shows the key state', (await card(page).innerText()).includes('last used 3 Oct'), (await card(page).innerText()).split('\n')[1])
   await card(page).getByText('How to send things here').click()

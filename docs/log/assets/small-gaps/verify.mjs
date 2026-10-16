@@ -165,7 +165,8 @@ if (ONLY.includes('2')) {
       await sleep(900)
       const tasks = writesTo(state, 'tasks', w0)
       const first = tasks.find((t) => t.title === 'Call the tyre supplier about the invoice')
-      check(`${name} Start → the task keeps the picked date (09:00 Cairo, 1 Oct) and is Top 3`, first && first.due_at === '2026-10-01T06:00:00.000Z' && tasks.some((t) => t.id === first.id && t.top3 === true), JSON.stringify(tasks.map((t) => [t.title, t.due_at, t.top3])))
+      // e651297c (v1.1.10): only today's and undated lines become the Top 3; a later line keeps its day.
+      check(`${name} Start → the task keeps the picked date (09:00 Cairo, 1 Oct), not starred (a later day)`, first && first.due_at === '2026-10-01T06:00:00.000Z' && tasks.some((t) => t.id === first.id && t.top3 === false) && tasks.some((t) => t.title === 'Gym' && t.top3 === true), JSON.stringify(tasks.map((t) => [t.title, t.due_at, t.top3])))
       check(`${name} the undated line has no date`, tasks.some((t) => t.title === 'Gym' && !t.due_at))
       noErrors(name, errors)
       await ctx.close()
@@ -291,7 +292,8 @@ if (ONLY.includes('4')) {
       check(`${name} a row shows its first two labels as kit chips, then +1`, JSON.stringify(await chipsOf(page, 1)) === '["calls","admin"]' && (await text(rowOf(page, 1).getByLabel('1 more label'))) === '+1', JSON.stringify(await chipsOf(page, 1)))
       check(`${name} one label → one chip; none → none`, JSON.stringify(await chipsOf(page, 2)) === '["home"]' && (await chipsOf(page, 3)).length === 0)
       const meta = await rowOf(page, 1).locator('.kf-chip--bordered').first().evaluate((e) => ({ h: e.getBoundingClientRect().height / (Number(document.documentElement.style.zoom) || 1), fs: getComputedStyle(e).fontSize, line: getComputedStyle(e.parentElement).fontSize, border: getComputedStyle(e).borderTopStyle }))
-      check(`${name} the chip sits in the meta line (bordered, ≤22 CSS px tall, the meta's own type${vname === 'phone' ? ', ≥12px' : ''})`, meta.border === 'solid' && meta.h <= 22 && meta.fs === meta.line && (vname === 'desktop' || parseFloat(meta.fs) >= 12), JSON.stringify(meta))
+      // B (D5) set phone metadata to 12.5px, so the chip draws 22.75 tall there.
+      check(`${name} the chip sits in the meta line (bordered, ≤23 CSS px tall, the meta's own type${vname === 'phone' ? ', ≥12px' : ''})`, meta.border === 'solid' && meta.h <= 23 && meta.fs === meta.line && (vname === 'desktop' || parseFloat(meta.fs) >= 12), JSON.stringify(meta))
       const trigger = page.getByRole('button', { name: 'Label filter' })
       check(`${name} Tasks' tools carry "Label · All ▾" beside Sort`, (await trigger.count()) === 1 && /Label · All/i.test(await raw(trigger)), await raw(trigger))
       await shot(page, name)
@@ -299,7 +301,7 @@ if (ONLY.includes('4')) {
         await trigger.click()
         await sleep(300)
         const opts = await page.getByRole('option').allTextContents()
-        check(`${name} the filter lists every label once, A–Z, after All labels`, JSON.stringify(opts) === '["All labels","admin","calls","home","q3"]', JSON.stringify(opts))
+        check(`${name} the filter lists every label once, A–Z, after All labels`, JSON.stringify(opts) === '["All labels","admin","calls","home","q3","Manage labels…"]', JSON.stringify(opts))
         await shot(page, `${name}-filter`)
         await page.getByRole('option', { name: 'home' }).click()
         await sleep(300)

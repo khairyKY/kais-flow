@@ -333,7 +333,8 @@ for (const theme of ['day', 'night']) {
       await sleep(400)
       const labels = (await page.locator('.kf-selbar-bottom button').allInnerTexts()).map((t) => t.trim())
       // plan-replan (2026-10-07): the bar's date button opens the Plan list, so it reads Plan.
-      check(`${NN('move')} phone bulk bar: Done · Tomorrow · Plan · Move · Delete`, JSON.stringify(labels) === JSON.stringify(['Done', 'Tomorrow', 'Plan', 'Move', 'Delete']), JSON.stringify(labels))
+      // Kai 2026-10-12 / P7e A18: the phone bar gained Top 3 and More (Priority, Labels).
+      check(`${NN('move')} phone bulk bar: Done · Tomorrow · Plan · Move · Top 3 · More · Delete`, JSON.stringify(labels) === JSON.stringify(['Done', 'Tomorrow', 'Plan', 'Move', 'Top 3', 'More', 'Delete']), JSON.stringify(labels))
       await page.locator('.kf-selbar-bottom').getByRole('button', { name: 'Move' }).click()
       await sleep(700)
       const from = state.writes.length
