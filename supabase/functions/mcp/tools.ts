@@ -36,6 +36,7 @@ export { DEFAULT_ZONE, userZone } from '../_shared/zone.ts'
 export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
 import { expandSeries, type RuleBetween } from '../_shared/series.ts'
 import { rollAfter, ruleAfterThis, stepOf } from '../_shared/repeat.ts'
+import { occurrenceOn } from '../_shared/slots.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
 
@@ -682,6 +683,27 @@ async function heldBy(ctx: ToolContext, rowId: string, occ: Span | null): Promis
 async function restamp(ctx: ToolContext, tasks: readonly TaskRow[], patch: (t: TaskRow) => Partial<TaskRow>): Promise<number> {
   for (const t of tasks) await ctx.store.updateTask(settle(t, { ...t, ...patch(t) }, ctx.now, ctx.zone))
   return tasks.length
+}
+
+type SlotFields = ReturnType<typeof intoSlot> | typeof OUT_OF_SLOT
+
+/** A slot edit's held tasks to where `to` says — into an occurrence, or OUT_OF_SLOT (calendar/api
+ * followSlot, reseat, releaseRow). Writes and logs only the ones that change; says what happened. */
+async function rehome(ctx: ToolContext, tasks: readonly TaskRow[], to: (t: TaskRow) => SlotFields): Promise<string[]> {
+  let [stayed, out] = [0, 0]
+  for (const t of tasks) {
+    const f = to(t)
+    if (f.slot_id === (t.slot_id ?? null) && f.slot_date === (t.slot_date ?? null) && sameInstant(f.scheduled_start, t.scheduled_start) && sameInstant(f.scheduled_end, t.scheduled_end)) continue
+    await ctx.store.updateTask(settle(t, { ...t, ...f }, ctx.now, ctx.zone))
+    if (f.slot_id) {
+      stayed++
+      await logIt(ctx, 'task.scheduled', 'task', t.id, { slot_id: f.slot_id, slot_date: f.slot_date })
+    } else {
+      out++
+      await logIt(ctx, 'task.unscheduled', 'task', t.id, { slot_id: t.slot_id ?? null })
+    }
+  }
+  return [...(stayed ? [`${stayed} task${stayed === 1 ? '' : 's'} in it moved with it`] : []), ...released(out)]
 }
 
 // ── writing an event the way the app does ────────────────────────────────────────────────────────
@@ -1601,8 +1623,6 @@ export const TOOLS: readonly ToolDef[] = [
         ...((after.recurrence_rule ?? null) !== (before.recurrence_rule ?? null) ? [after.recurrence_rule ? `repeats ${after.recurrence_rule}` : 'no longer repeats'] : []),
         ...((after.remind_min ?? null) !== (before.remind_min ?? null) ? [after.remind_min == null ? 'no reminder' : `remind ${after.remind_min} min before`] : []),
       ]
-      /** Tasks held by a moved Time block go with it (calendar/api followSlot). */
-      const moved = (n: number) => (n ? [`${n} task${n === 1 ? '' : 's'} in it moved with it`] : [])
       if (occ) {
         // One occurrence on its own (calendar/api detach): the series skips its start and a one-off
         // copy, linked back to the series, takes the change.
@@ -1618,8 +1638,9 @@ export const TOOLS: readonly ToolDef[] = [
         await ctx.store.updateEvent({ ...row, recurrence_exdates: [...(row.recurrence_exdates ?? []), start] })
         await ctx.store.insertEvent(copy)
         await logIt(ctx, 'calendar_event.created', 'calendar_event', copy.id, { title, type: kind, series_id: row.id })
-        const held = row.type === 'time_block' ? await restamp(ctx, await heldBy(ctx, row.id, o), () => intoSlot(copy.id, copy, ctx.zone)) : 0
-        return { edited: eventOut(copy, ctx.zone), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`, ...moved(held)], timezone: ctx.zone }
+        // Its tasks go with it — out of it as an event or in the all-day band (calendar/api followSlot).
+        const held = row.type === 'time_block' ? await rehome(ctx, await heldBy(ctx, row.id, o), () => (copy.type !== 'time_block' || copy.all_day ? OUT_OF_SLOT : intoSlot(copy.id, copy, ctx.zone))) : []
+        return { edited: eventOut(copy, ctx.zone), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`, ...held], timezone: ctx.zone }
       }
       const span = row.recurrence_rule ? seriesSpan(a, ctx.zone, row) : spanArgs(a, ctx.zone, row)
       const remind = remindArg(a, (span ?? row).all_day)
@@ -1638,20 +1659,27 @@ export const TOOLS: readonly ToolDef[] = [
       if (!changed.length) return { edited: eventOut(row, ctx.zone), changed, timezone: ctx.zone }
       await ctx.store.updateEvent(next)
       await logIt(ctx, 'calendar_event.updated', 'calendar_event', row.id, { title, changed })
-      let held = 0
-      if (row.type === 'time_block' && span && spanText(span, ctx.zone) !== spanText(row, ctx.zone)) {
-        if (!row.recurrence_rule) held = await restamp(ctx, await heldBy(ctx, row.id, row), () => intoSlot(row.id, next, ctx.zone))
-        else {
-          // A repeating slot re-timed: its tasks keep their day and take the new time (calendar/api retimeEventWithUndo).
-          const [h, mi] = wallTime(next.starts_at, ctx.zone).slice(11).split(':').map(Number)
-          const len = Date.parse(next.ends_at) - Date.parse(next.starts_at)
-          held = await restamp(ctx, (await heldBy(ctx, row.id, null)).filter((t) => !!t.slot_date), (t) => {
-            const s = wallToInstant(t.slot_date!, h, mi, ctx.zone)
-            return { scheduled_start: s.toISOString(), scheduled_end: new Date(s.getTime() + len).toISOString() }
+      // Where a Time block's tasks go, the app's rule (calendar/api):
+      let held: string[] = []
+      if (row.type === 'time_block') {
+        const retimed = !!span && spanText(span, ctx.zone) !== spanText(row, ctx.zone)
+        const reruled = (next.recurrence_rule ?? null) !== (row.recurrence_rule ?? null)
+        // made an event: it holds none, so every task comes out (updateEvent → releaseRow);
+        if (next.type !== 'time_block') held = await rehome(ctx, await heldBy(ctx, row.id, null), () => OUT_OF_SLOT)
+        // a one-off moved: they go with it, out of it in the all-day band (followSlot);
+        else if (!row.recurrence_rule && retimed) {
+          held = await rehome(ctx, await heldBy(ctx, row.id, row), () => (next.all_day ? OUT_OF_SLOT : intoSlot(row.id, next, ctx.zone)))
+        }
+        // a series re-timed or its repeat set / changed / ended: each to its day's occurrence of what the
+        // edit leaves, else out of the slot (reseat — the rule shared with the app, _shared/slots.ts).
+        else if (retimed || reruled) {
+          held = await rehome(ctx, (await heldBy(ctx, row.id, null)).filter((t) => !!t.slot_date), (t) => {
+            const occ = occurrenceOn([next], t.slot_date!, ctx.zone, ctx.ruleBetween)
+            return occ ? intoSlot(row.id, occ, ctx.zone) : OUT_OF_SLOT
           })
         }
       }
-      return { edited: eventOut(next, ctx.zone), changed: [...changed, ...moved(held)], timezone: ctx.zone }
+      return { edited: eventOut(next, ctx.zone), changed: [...changed, ...held], timezone: ctx.zone }
     },
   },
   {

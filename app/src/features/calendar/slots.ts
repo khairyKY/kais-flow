@@ -4,7 +4,8 @@ import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDuration } from '../tasks/taskDisplay'
 import { addDays } from '../../components/pickerMath'
 import { zoneToIso } from './eventTime'
-import { expandEvents } from './series'
+import { expandEvents, ruleBetween } from './series'
+import { occurrenceOn as sharedOccurrenceOn } from '../../../../supabase/functions/_shared/slots.ts'
 
 // ── Time Slots (Kai 2026-10-13, parity audit B2 → a; migration 0073): a Time block HOLDS tasks, as
 // Akiflow's slots do. A task in one has slot_id (the block's stored row — a repeating slot's series
@@ -40,11 +41,9 @@ export function slotAt<E extends CalendarEvent>(events: readonly E[], at: string
 }
 
 /** The Time block occurrence among `rows` (stored rows: a series expands) on `day`, the user's — where
- * a task held that day sits once a series edit has re-made the rows. */
-export function occurrenceOn<E extends CalendarEvent>(rows: readonly E[], day: string, zone: string = appZone()): E | undefined {
-  const slots = rows.filter((e) => e.type === 'time_block' && !e.all_day && !e.deleted_at)
-  return expandEvents(slots, new Date(zoneToIso(day, '00:00', zone)), new Date(zoneToIso(addDays(day, 1), '00:00', zone)), zone).find((e) => slotDay(e, zone) === day)
-}
+ * a task held that day sits once a series edit has re-made the rows. The rule is shared with the MCP's
+ * edit_event (supabase/functions/_shared/slots.ts). */
+export const occurrenceOn = <E extends CalendarEvent>(rows: readonly E[], day: string, zone: string = appZone()): E | undefined => sharedOccurrenceOn(rows, day, zone, ruleBetween)
 
 /** What a task takes on going into a slot occurrence: the slot, its day, and its times. */
 export function intoSlot(slot: Slot, zone: string = appZone()): Pick<Task, 'slot_id' | 'slot_date' | 'scheduled_start' | 'scheduled_end'> {
