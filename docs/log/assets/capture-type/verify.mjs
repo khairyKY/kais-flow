@@ -285,7 +285,9 @@ for (const theme of ['day', 'night']) {
   await waitFor(async () => writes(state, 'tasks', w0).length > 0)
   check(`${name} release → sent, transcribed, filed`, state.transcribed === 1 && writes(state, 'tasks', w0).some((x) => x.title === 'Call mum'), JSON.stringify(writes(state, 'tasks', w0).map((x) => x.title)))
   check(`${name} the click that ends a hold does not open the capture sheet`, (await sheet(page).count()) === 0 && (await field(page).count()) === 0)
-  // slide up onto the lock still goes hands-free
+  // slide up onto the lock still goes hands-free — once the voice sheet has shown Sotto's tick and gone
+  // (sotto-voice, 2026-10-16: the sheet holds the done tick ~0.7s; until then it covers the button)
+  await waitFor(async () => (await page.locator('[role="dialog"][aria-label="Voice capture"]').count()) === 0)
   await touch(cdp, 'touchStart', [at])
   await sleep(1000)
   for (let i = 1; i <= 8; i++) {
@@ -408,7 +410,8 @@ for (const route of ['/tasks', '/inbox']) {
   state.transcribe = 'ok'
   state.heard = 'water the plants'
   await voice.getByRole('button', { name: 'Try again' }).click()
-  await waitFor(async () => (await field(page).inputValue()) === 'water the plants')
+  // (sotto-voice: the sheet shows Sotto's done tick ~0.7s before it goes)
+  await waitFor(async () => (await field(page).inputValue()) === 'water the plants' && (await voice.count()) === 0)
   check(`${name} Try again → the words land in the field (not AI-filed behind your back)`, (await field(page).inputValue()) === 'water the plants' && (await voice.count()) === 0 && writes(state, 'tasks').length === 0 && writes(state, 'inbox_items').length === 0)
   basics(env, name)
   await env.ctx.close()

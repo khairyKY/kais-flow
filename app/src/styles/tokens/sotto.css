@@ -1,0 +1,47 @@
+/* Sotto — Kai's own offline dictation app (D:\Coding\sotto). Every voice surface shows its pill
+   ("Powered by Sotto", as Sukoon does), and the pill keeps Sotto's own colours: they are part of
+   Sotto, not Bound Journal, so they live here as their own small set instead of being remapped.
+   Values are Sotto's overlay palette (ui/overlay.js `CL`): Marshmallow by day, its plum dark at night.
+   Used only by features/capture/SottoPill.tsx. */
+:root {
+  --sotto-surface: #F0E9DF;                  /* cream: the pill */
+  --sotto-shadow: rgba(196, 183, 165, 0.40); /* neumorphic shadow, lower right */
+  --sotto-light: rgba(255, 254, 250, 0.60);  /* neumorphic light, upper left */
+  --sotto-sheen: rgba(255, 255, 255, 0.10);  /* the top half's highlight */
+  --sotto-sheen-clear: rgba(255, 255, 255, 0);
+  --sotto-edge: rgba(150, 128, 104, 0.12);   /* 1px rim */
+  --sotto-lilac: #8E74D0;                    /* listening bars, the done tick */
+  --sotto-amber: #D4A06A;                    /* transcribing bubbles */
+  --sotto-amber-glow: rgba(212, 160, 106, 0.35);
+  --sotto-gold: #E8C78A;                     /* polishing blobs */
+  --sotto-glint: #F5E2B0;                    /* polishing shimmer + twinkle */
+  --sotto-glint-clear: rgba(245, 226, 176, 0);
+  --sotto-blush: #F0BFCF;                    /* error disc */
+  --sotto-blush-ink: #A85874;
+  --sotto-muted: #948C86;                    /* the ✕ */
+  --sotto-button: rgba(0, 0, 0, 0.05);       /* the ✕ disc */
+  --sotto-retry: #6E58A8;                    /* the ↻ */
+  --sotto-retry-bg: rgba(110, 88, 168, 0.10);
+  --sotto-mark: #8E74D0;                     /* the app icon: lilac tile… */
+  --sotto-mark-wave: #F0E9DF;                /* …with a cream wave (same in both themes) */
+}
+
+/* Night Garden = Sotto's dark. */
+[data-theme="night"], :root[data-theme="night"] {
+  --sotto-surface: #2C2634;                  /* plum */
+  --sotto-shadow: rgba(0, 0, 0, 0.5);
+  --sotto-light: rgba(255, 255, 255, 0.035);
+  --sotto-edge: rgba(255, 255, 255, 0.06);
+  --sotto-lilac: #C9B8EE;
+  --sotto-amber: #E8C48E;
+  --sotto-amber-glow: rgba(232, 196, 142, 0.35);
+  --sotto-gold: #F0D9A4;
+  --sotto-glint: #FAF0D6;
+  --sotto-glint-clear: rgba(250, 240, 214, 0);
+  --sotto-blush: #5B3F4E;
+  --sotto-blush-ink: #F0C3D2;
+  --sotto-muted: #8F859A;
+  --sotto-button: rgba(255, 255, 255, 0.06);
+  --sotto-retry: #C9B8EE;
+  --sotto-retry-bg: rgba(201, 184, 238, 0.12);
+}

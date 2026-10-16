@@ -11,6 +11,7 @@ import { LOCK_DISTANCE, clickIsTap, formatTake, holdStep, pickMimeType, type Hol
 import './capture.css'
 import { longPress } from '../../lib/haptics'
 import { usePaperStore } from '../paper/paperStore'
+import { PoweredBySotto, SottoPill } from './SottoPill'
 
 // The sheet (and its transcribe/parse chain) only loads once a take needs filing.
 const VoiceCaptureSheet = lazy(() => import('./VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
@@ -23,6 +24,7 @@ const VoiceCaptureSheet = lazy(() => import('./VoiceCaptureSheet').then((m) => (
 // hands-free [Cancel · timer · waveform · Send]; slide left = discard, with Undo.
 // Sending hands the take to VoiceCaptureSheet, which transcribes + files it and keeps it (Try
 // again / Save to Inbox) if that fails — the same "never lose a recording" path as the sheet's mic.
+// While it records, the pill is Sotto's (Kai 2026-10-16): its bars follow the mic.
 
 const GROWN = 72 / 56 // the held button grows from --capture-size 56 to 72
 
@@ -30,13 +32,15 @@ function longPressMs(): number {
   return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-longpress')) || 400
 }
 
-type Take = { stream: MediaStream; recorder: MediaRecorder; chunks: Blob[]; meter: number; audio?: AudioContext }
+type Take = { stream: MediaStream; recorder: MediaRecorder; chunks: Blob[]; tick: number }
 
 export function CaptureButton() {
   const [hold, setHold] = useState<HoldState>({ phase: 'idle' })
   const holdRef = useRef<HoldState>(hold)
   const [startedAt, setStartedAt] = useState<number | null>(null)
-  const [levels, setLevels] = useState<number[]>([])
+  /** The live mic, for Sotto's level bars; a 1s tick keeps the hands-free timer moving. */
+  const [stream, setStream] = useState<MediaStream | null>(null)
+  const [, setTick] = useState(0)
   const [sheet, setSheet] = useState<{ recording?: { blob: Blob; seconds: number } } | null>(null)
   const take = useRef<Take | null>(null)
   /** Bumped whenever a take ends, so a getUserMedia still pending can't start a stale one. */
@@ -99,28 +103,8 @@ export function CaptureButton() {
         if (e.data.size > 0) chunks.push(e.data)
       }
       recorder.start()
-      const next: Take = { stream, recorder, chunks, meter: 0 }
-      // Live level bars (the recording pill's waveform). No Web Audio → the bars stay flat.
-      let sample = () => 0.08
-      try {
-        const audio = new AudioContext()
-        const analyser = audio.createAnalyser()
-        analyser.fftSize = 256
-        audio.createMediaStreamSource(stream).connect(analyser)
-        const buf = new Uint8Array(analyser.fftSize)
-        sample = () => {
-          analyser.getByteTimeDomainData(buf)
-          let sum = 0
-          for (const v of buf) sum += ((v - 128) / 128) ** 2
-          return Math.min(1, Math.sqrt(sum / buf.length) * 4)
-        }
-        next.audio = audio
-      } catch {
-        // meter is decorative
-      }
-      next.meter = window.setInterval(() => setLevels((l) => [...l.slice(-59), sample()]), 100)
-      take.current = next
-      setLevels([])
+      take.current = { stream, recorder, chunks, tick: window.setInterval(() => setTick((n) => n + 1), 1000) }
+      setStream(stream)
       setStartedAt(Date.now())
     } catch {
       stream.getTracks().forEach((t) => t.stop())
@@ -153,13 +137,13 @@ export function CaptureButton() {
     take.current = null
     const seconds = startedAt === null ? 0 : Math.floor((Date.now() - startedAt) / 1000)
     setStartedAt(null)
-    setLevels([])
+    setStream(null)
     if (!t) {
       // Released before the mic was ready (e.g. while answering the permission prompt).
       if (kind === 'send') useToastStore.getState().push({ message: 'Keep holding while you talk' })
       return
     }
-    window.clearInterval(t.meter)
+    window.clearInterval(t.tick)
     t.recorder.onstop = () => {
       release(t)
       const blob = t.chunks.length > 0 ? new Blob(t.chunks, { type: t.recorder.mimeType }) : null
@@ -176,20 +160,12 @@ export function CaptureButton() {
 
   function release(t: Take | null) {
     if (!t) return
-    window.clearInterval(t.meter)
-    void t.audio?.close()
+    window.clearInterval(t.tick)
     t.stream.getTracks().forEach((track) => track.stop())
   }
 
   const recording = hold.phase === 'recording'
   const elapsed = formatTake(startedAt === null ? 0 : Date.now() - startedAt)
-  const wave = (
-    <span className="kf-rec-wave" aria-hidden="true">
-      {levels.map((l, i) => (
-        <span key={i} style={{ height: `${Math.round(4 + l * 24)}px` }} />
-      ))}
-    </span>
-  )
 
   return (
     <>
@@ -230,9 +206,7 @@ export function CaptureButton() {
         createPortal(
           <>
             <div className="kf-rec-pill">
-              <span className="kf-rec-dot" />
-              <span className="kf-rec-time">{elapsed}</span>
-              {wave}
+              <SottoPill state="listening" stream={stream} compact />
             </div>
             <div className="kf-rec-rail" aria-hidden="true">
               <span className="kf-rec-lock" data-near={hold.dy <= -LOCK_DISTANCE / 2 || undefined}>
@@ -247,13 +221,16 @@ export function CaptureButton() {
       {hold.phase === 'locked' &&
         createPortal(
           <div className="kf-rec-locked" role="group" aria-label="Recording, hands-free">
+            <div className="kf-rec-powered">
+              <PoweredBySotto />
+            </div>
             <div className="kf-rec-locked-row">
               <button type="button" className="kf-rec-cancel kf-press" aria-label="Cancel recording" onClick={() => dispatch({ type: 'discard' })}>
                 <Icon name="delete" size={24} />
               </button>
-              <span className="kf-rec-dot" />
               <span className="kf-rec-time">{elapsed}</span>
-              {wave}
+              {/* Tap Sotto's pill to finish, as on the Windows app: the same as Send. */}
+              <SottoPill state="listening" stream={stream} compact onFinish={() => dispatch({ type: 'send' })} />
               <button type="button" className="kf-rec-send kf-press" aria-label="Send recording" onClick={() => dispatch({ type: 'send' })}>
                 <Icon name="send" size={24} />
               </button>
