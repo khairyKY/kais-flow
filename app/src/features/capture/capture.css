@@ -35,49 +35,6 @@
   to { transform: translateY(0); }
 }
 
-/* Mic Button Pulse */
-@keyframes micPulse {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--acc-terra) 40%, transparent), var(--shadow-capture);
-  }
-  70% {
-    box-shadow: 0 0 0 12px transparent, var(--shadow-capture);
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent, var(--shadow-capture);
-  }
-}
-
-.kf-mic-pulsing {
-  animation: micPulse 1.8s infinite ease-in-out;
-}
-
-/* Waveforms animation */
-@keyframes waveformGrow {
-  0%, 100% {
-    transform: scaleY(1);
-  }
-  50% {
-    transform: scaleY(2.2);
-  }
-}
-
-.kf-waveform-bar {
-  display: inline-block;
-  width: 3px;
-  background: var(--acc-terra);
-  border-radius: 2px;
-  transform-origin: bottom;
-}
-
-.kf-waveform-bar:nth-child(1) { height: 10px; animation: waveformGrow 1.2s infinite ease-in-out; }
-.kf-waveform-bar:nth-child(2) { height: 20px; animation: waveformGrow 0.9s infinite ease-in-out 0.1s; }
-.kf-waveform-bar:nth-child(3) { height: 14px; animation: waveformGrow 1.1s infinite ease-in-out 0.2s; }
-.kf-waveform-bar:nth-child(4) { height: 26px; animation: waveformGrow 0.75s infinite ease-in-out 0.05s; }
-.kf-waveform-bar:nth-child(5) { height: 12px; animation: waveformGrow 1.0s infinite ease-in-out 0.3s; }
-.kf-waveform-bar:nth-child(6) { height: 22px; animation: waveformGrow 0.85s infinite ease-in-out 0.15s; }
-.kf-waveform-bar:nth-child(7) { height: 9px; animation: waveformGrow 1.3s infinite ease-in-out 0.25s; }
-
 /* Phone styling for `/capture` demo */
 .kf-phone-bezel {
   width: 398px;
@@ -154,22 +111,17 @@ button.kf-capture.kf-press {
 .kf-rec-rail {
   position: fixed;
   z-index: 39; /* under the tab bar (40), so the held button rides over the rail */
+}
+/* The recording pill is Sotto's (SottoPill, compact): it brings its own body. */
+.kf-rec-pill {
+  left: var(--sp-3);
+  bottom: calc(var(--tabbar-h) + var(--tabbar-inset) + 20px);
+}
+.kf-rec-rail {
   background: var(--paper-parchment);
   border: 1px solid var(--line-card);
   border-radius: var(--radius-pill);
   box-shadow: var(--shadow-panel);
-}
-.kf-rec-pill {
-  left: var(--sp-3);
-  right: calc(50% + 34px);
-  bottom: calc(var(--tabbar-h) + var(--tabbar-inset) + 20px);
-  height: var(--touch-min);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 var(--sp-4);
-}
-.kf-rec-rail {
   left: 50%;
   margin-left: calc(var(--touch-min) / -2);
   bottom: calc(var(--tabbar-h) + var(--tabbar-inset) + var(--sp-4));
@@ -213,13 +165,6 @@ button.kf-capture.kf-press {
   gap: var(--sp-2);
   padding: 0 var(--sp-3) 0 var(--sp-1);
 }
-.kf-rec-dot {
-  width: var(--sp-2);
-  height: var(--sp-2);
-  flex: none;
-  border-radius: 50%;
-  background: var(--acc-terra-ink);
-}
 .kf-rec-time {
   font-family: var(--font-mono);
   font-size: var(--fs-mono-s);
@@ -227,22 +172,13 @@ button.kf-capture.kf-press {
   color: var(--ink-body);
   font-variant-numeric: tabular-nums;
 }
-/* Newest bar on the right; older ones scroll off the left edge. */
-.kf-rec-wave {
-  flex: 1;
-  min-width: 0;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 2px;
-  overflow: hidden;
+.kf-rec-locked-row .sotto-pill {
+  margin: 0 auto;
 }
-.kf-rec-wave > span {
-  width: 3px;
-  flex: none;
-  border-radius: 2px;
-  background: var(--acc-terra-ink);
+.kf-rec-powered {
+  display: flex;
+  justify-content: center;
+  padding-top: var(--sp-2);
 }
 .kf-rec-cancel {
   width: var(--touch-min);
@@ -335,8 +271,53 @@ button.kf-capture.kf-press {
 }
 
 /* The voice sheet's filled button: the kit's primary shape (D11 = B), in the sheet's ink, not terra —
-   the terra mic sits right above it. */
+   Sotto's pill sits right above it. */
 .kf-button--cta.kf-voice-ink {
   background-color: var(--ink-body);
   color: var(--paper-parchment);
+}
+
+/* ── Sotto's pill (SottoPill.tsx) — Sotto's own colours, styles/tokens/sotto.css. The canvas overhangs
+   the pill by its shadow's margin; the tap targets sit over the pill itself. ── */
+.sotto-pill {
+  position: relative;
+  flex: none;
+}
+.sotto-pill canvas {
+  position: absolute;
+  pointer-events: none;
+}
+.sotto-pill button {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.sotto-pill-body {
+  left: 0;
+  width: 100%;
+}
+.sotto-pill-btn {
+  width: var(--touch-min);
+}
+.sotto-pill button:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+/* "Powered by Sotto": small and quiet, under (or beside) the pill, as in Sukoon. */
+.sotto-powered {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-ui);
+  font-size: var(--fs-meta);
+  color: var(--ink-muted);
+}
+.sotto-powered svg {
+  flex: none;
 }
