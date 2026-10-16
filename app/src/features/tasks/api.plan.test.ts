@@ -7,7 +7,10 @@ import type { Task } from '../../lib/types'
 // the Top 3 on the rows. An in-memory cache stands in for TanStack + the outbox (writeRow's
 // optimistic update), so each write is seen by the next, as in the app.
 const cache: { tasks: Task[] } = { tasks: [] }
-function writeRow(_table: 'tasks', row: Task) {
+// …and its Top 3 rule, as lib/outbox writeRow applies it: a pick dated a later day gives its place up.
+const { releaseTop3 } = await import('./top3Rule')
+function writeRow(_table: 'tasks', next: Task) {
+  const row = releaseTop3(next)
   const i = cache.tasks.findIndex((r) => r.id === row.id)
   if (i >= 0) cache.tasks[i] = row
   else cache.tasks.push(row)
@@ -103,6 +106,16 @@ describe('Make goal of the day / Move up–down — the Top 3’s order on the r
     expect(T('x')).toMatchObject({ top3: false, someday: true })
     expect(T('b')).toMatchObject({ top3: true, top3_rank: 3 })
     expect(rank('g')).toBe(1)
+  })
+  it('a task due another day comes to today as the goal, or the Top 3 rule would drop it (with Undo)', () => {
+    const due = scheduleTomorrow()
+    cache.tasks = [task('g', { top3: true, top3_rank: 1 }), task('r', { due_at: due })]
+    makeGoalWithUndo(T('r'))
+    expect(T('r')).toMatchObject({ top3: true, top3_rank: 1 })
+    expect(T('r').due_at).not.toBe(due)
+    expect(currentTop3()[0].id).toBe('r')
+    toasts.at(-1)!.undo!()
+    expect(T('r')).toMatchObject({ top3: false, due_at: due })
   })
   it('Move down / up; up into first place is a new goal (with its Undo)', () => {
     cache.tasks = [task('g', { top3: true, top3_rank: 1 }), task('a', { top3: true, top3_rank: 2 }), task('b', { top3: true, top3_rank: 3 })]

@@ -106,6 +106,8 @@ async function tap(cdp, loc) {
 const shot = (page, name) => page.screenshot({ path: path.join(OUT, `${name}.png`) })
 const text = (loc) => loc.first().innerText().catch(() => '')
 const zoneLabel = (page) => page.locator('.app-topbar-zone').first().textContent().catch(() => '')
+// Today on a computer has no top bar (2a, ced71548): the sidebar's "Personal · <city>" line names the zone.
+const sideCity = (page) => page.locator('.app-sidebar-header div[title]', { hasText: ' · ' }).first().textContent().then((t) => t.split(' · ').pop(), () => '')
 const writesTo = (state, table, from = 0) => state.writes.slice(from).filter((w) => w.table === table && w.method === 'POST').map((w) => w.body)
 const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.locator('.ts-top') })
 
@@ -127,7 +129,9 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
   await shot(page, name)
   const body = (await page.locator('main').innerText()).toUpperCase()
   check(`${name} the shell's date is Sat 3 Oct`, body.includes('SAT 3 OCT'), body.slice(0, 40))
-  check(`${name} TODAY · 2 (rent 22:00, landlord 23:00) · TOMORROW · 1 (Sunday brunch)`, body.includes('TODAY · 2') && body.includes('TOMORROW · 1') && body.indexOf('SUNDAY BRUNCH BOOKING') > body.indexOf('TOMORROW · 1'), body.match(/(TODAY|TOMORROW) · \d/g)?.join(' '))
+  // D6 section labels: "Today" with its count quiet on the right ("2 · 15m"), no "·" after the name.
+  const flat = body.replace(/\s+/g, ' ')
+  check(`${name} Today 2 (rent 22:00, landlord 23:00) · Tomorrow 1 (Sunday brunch)`, flat.includes('TODAY 2 · 15M PAY THE RENT') && flat.indexOf('EMAIL THE LANDLORD') > flat.indexOf('PAY THE RENT') && flat.indexOf('TOMORROW 1 SUNDAY BRUNCH BOOKING') > flat.indexOf('EMAIL THE LANDLORD'), flat.slice(flat.indexOf('TODAY 2 ·'), flat.indexOf('TODAY 2 ·') + 140))
   check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
@@ -203,13 +207,13 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
   await shot(page, name)
   check(`${name} toast: "Your device is in America/New_York — use it?"`, msgs.includes('Your device is in America/New_York — use it?'), JSON.stringify(msgs))
   check(`${name} nothing written until asked`, writesTo(state, 'app_settings').length === 0)
-  check(`${name} the topbar still says Africa/Cairo`, (await zoneLabel(page)) === 'Africa/Cairo', await zoneLabel(page))
+  check(`${name} the sidebar still says Cairo`, (await sideCity(page)) === 'Cairo', await sideCity(page))
   const w0 = state.writes.length
   await page.locator('.kf-toast').getByRole('button', { name: 'Use it' }).click()
   await sleep(800)
   const w = writesTo(state, 'app_settings', w0)
   check(`${name} Use it → timezone America/New_York written`, w.length >= 1 && w.at(-1).timezone === 'America/New_York', JSON.stringify(w.map((x) => x.timezone)))
-  check(`${name} …and the shell follows`, (await zoneLabel(page)) === 'America/New_York', await zoneLabel(page))
+  check(`${name} …and the shell follows`, (await sideCity(page)) === 'New York', await sideCity(page))
   await page.close()
   // Same device again, the account still on the default (say they dismissed it): no second ask.
   state.rows.app_settings = [settings('Africa/Cairo')]

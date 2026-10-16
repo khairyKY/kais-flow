@@ -19,6 +19,8 @@ const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google
 
 // v1.0.23 (plan-replan + tasks-noise): one Plan/Replan entry replaces Tomorrow + Pick date, "Move to…", Make goal, Start focus.
 const SPEC = ['Replan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete']
+// Desktop (Kai 2026-10-12, taskMenuSpec): Tomorrow back on top, and the Label picker after Priority.
+const DESK_SPEC = ['Tomorrow', 'Replan…', 'Move to…', 'Priority', 'Labels', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete']
 
 async function open(view, theme) {
   const ctx = await browser.newContext({ viewport: view.viewport, hasTouch: view.touch, deviceScaleFactor: 1 })
@@ -265,14 +267,14 @@ for (const theme of ['day', 'night']) {
   await page.mouse.click(r2.x + 200, r2.y + 20, { button: 'right' })
   await sleep(250)
   const items = (await page.locator('[role="menuitem"]').allInnerTexts()).map((t) => t.split('\n')[0].trim())
-  check(`${id} right-click = the same list, same order`, JSON.stringify(items) === JSON.stringify(SPEC), JSON.stringify(items))
+  check(`${id} right-click = the same list, same order`, JSON.stringify(items) === JSON.stringify(DESK_SPEC), JSON.stringify(items))
   await page.screenshot({ path: path.join(OUT, `${id}-context-menu.png`) })
   await page.keyboard.press('Escape')
   await sleep(200)
   await row(page, 2).getByRole('button', { name: /More actions/ }).click()
   await sleep(250)
   const items2 = (await page.locator('[role="menuitem"]').allInnerTexts()).map((t) => t.split('\n')[0].trim())
-  check(`${id} ⋯ opens the same menu`, JSON.stringify(items2) === JSON.stringify(SPEC), JSON.stringify(items2))
+  check(`${id} ⋯ opens the same menu`, JSON.stringify(items2) === JSON.stringify(DESK_SPEC), JSON.stringify(items2))
   // Tomorrow lives in the Plan / Replan submenu since v1.0.23.
   await page.locator('[role="menuitem"]', { hasText: /^(Re)?[Pp]lan…/ }).first().click()
   await sleep(300)

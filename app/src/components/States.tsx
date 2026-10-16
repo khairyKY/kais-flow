@@ -54,14 +54,15 @@ export function Skeleton({ variant = 'rows', rows = 4 }: { variant?: 'rows' | 'c
 }
 
 /** The surface's species at its zero stage (≈120 wide), one line, at most one suggestion — the tonal
- * button (D13), so it never competes with the view's one terra action. */
-export function EmptyState({ image = '/ds/assets/hydrangea/zero.png', line, action }: { image?: string; line: ReactNode; action?: { label: string; onClick: () => void } }) {
+ * button (D13), so it never competes with the view's one terra action. `variant="secondary"` where the
+ * state sits on the bare canvas: tonal is 4.17:1 there by day, under AA (Kai's call, bj-final). */
+export function EmptyState({ image = '/ds/assets/hydrangea/zero.png', line, action, variant = 'tonal' }: { image?: string; line: ReactNode; action?: { label: string; onClick: () => void }; variant?: 'tonal' | 'secondary' }) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, padding: '32px 24px', textAlign: 'center' }}>
       <img src={image} alt="" style={{ width: 120, height: 'auto', filter: 'var(--shadow-drop-sm)' }} />
       <div style={{ fontSize: 16, lineHeight: 1.45, color: 'var(--ink-muted)', textWrap: 'pretty' }}>{line}</div>
       {action && (
-        <Button variant="tonal" onClick={action.onClick}>
+        <Button variant={variant} onClick={action.onClick}>
           {action.label}
         </Button>
       )}

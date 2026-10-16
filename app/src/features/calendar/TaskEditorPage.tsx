@@ -72,7 +72,7 @@ export function TaskEditorPage() {
         ) : state === 'resting' ? (
           <ErrorCard message="Couldn’t load this task." onRetry={() => void tasksQuery.refetch()} />
         ) : (
-          <EmptyState image="/ds/assets/cherry/fallen.png" line="This task isn’t here — it may have been deleted." action={{ label: 'Back to Tasks', onClick: () => void navigate('/tasks') }} />
+          <EmptyState image="/ds/assets/cherry/fallen.png" line="This task isn’t here — it may have been deleted." action={{ label: 'Back to Tasks', onClick: () => void navigate('/tasks') }} variant="secondary" />
         )}
       </div>
     </div>

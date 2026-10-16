@@ -245,7 +245,8 @@ export function TaskRow({
             </div>
           )}
         </div>
-        {/* D11 = B: the kit's secondary button (a bone tone, 12px corners), not hand-drawn mono pills. */}
+        {/* D11 = B: the kit's secondary button (a bone tone, 12px corners), not hand-drawn mono pills.
+            D13's tonal Plan ▾ waits for Kai: on the bare canvas it's 4.17:1 by day (AA 4.5). */}
         <Button variant="secondary" className="tr-someday-hover" style={{ flex: 'none' }} onClick={() => planWithUndo(task, scheduleToday())}>
           → Today
         </Button>
