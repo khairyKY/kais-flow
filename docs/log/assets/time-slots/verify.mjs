@@ -759,6 +759,157 @@ if (want('m1')) {
   await ctx.close()
 }
 
+// ── slot-outline (Kai 2026-10-16: "can't we drag and drop it…"): on the phone a HOLD on a task row
+// inside a slot lifts THAT task, not the slot. Real CDP touch (calendar-phone's recipe). Drop on empty
+// time → its own block there; on another slot → into it; on the strip → out of the slot; back on its own
+// slot → nothing. Each with Undo. A hold on the slot's title still lifts the slot. ──
+const touch = (cdp, type, pts) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: pts })
+/** A finger held on `from` (550ms > the 400ms long press), moved to `to`, then let go (unless `keep`). */
+async function holdDrag(cdp, from, to, { keep = false, mid, during } = {}) {
+  await touch(cdp, 'touchStart', [from])
+  await sleep(200)
+  if (during) await during()
+  await sleep(350)
+  for (let i = 1; i <= 14; i++) {
+    await touch(cdp, 'touchMove', [{ x: from.x + ((to.x - from.x) * i) / 14, y: from.y + ((to.y - from.y) * i) / 14 }])
+    await sleep(30)
+  }
+  await sleep(250)
+  if (mid) await mid()
+  if (keep) return
+  await touch(cdp, 'touchEnd', [])
+  await sleep(600)
+}
+const pcY = (page, hhmm) =>
+  page.locator('.pc-canvas').evaluate((c, t) => {
+    const [h, m] = t.split(':').map(Number)
+    return c.getBoundingClientRect().top + ((h * 60 + m) * 64) / 60
+  }, hhmm)
+async function phoneOpen() {
+  const o = await open('/calendar', { tables: inCode, view: phone })
+  await pcBlock(o.page, CODE).evaluate((el) => el.scrollIntoView({ block: 'center' }))
+  await sleep(400)
+  o.cdp = await o.ctx.newCDPSession(o.page)
+  o.row = center(await pcRow(o.page, CODE, HELD).locator('.pc-name').boundingBox())
+  return o
+}
+const colX = async (page) => {
+  const b = await pcBlock(page, CODE).boundingBox()
+  return b.x + b.width / 2
+}
+
+// D1: hold the row → the task lifts (the slot doesn't); the bloom shows during the hold; over empty
+// time 12:30 a dashed ghost + "12:30–13:15"; let go → its own block there, out of the slot; Undo → back.
+if (want('d1')) {
+  const { ctx, page, errors, state, cdp, row } = await phoneOpen()
+  const x = await colX(page)
+  const to = { x, y: (await pcY(page, '12:30')) + 6 }
+  const w0 = state.writes.length
+  await holdDrag(cdp, row, to, {
+    during: async () => check('d1 phone: the hold blooms under the finger on the row', (await pcRow(page, CODE, HELD).locator('.kf-press-bloom').count()) === 1),
+    mid: async () => {
+      check('d1 phone: the task is lifted, not the slot', (await page.locator(`.pc-held-task[data-held-task="${id(HELD)}"]`).count()) === 1 && (await page.locator('.pc-block.is-lifted').count()) === 0)
+      check('d1 phone: its place in the slot stays, dashed', (await pcRow(page, CODE, HELD).getAttribute('class'))?.includes('is-gone'))
+      const ghost = await page.locator('.pc-ghost.is-held').count()
+      const bubble = await page.locator('.pc-bubble').innerText().catch(() => '')
+      check('d1 phone: over empty time: a ghost and "12:30–13:15" (its 45 minutes)', ghost === 1 && bubble === '12:30–13:15', bubble)
+      await shot(page, 'd1-phone-lifted')
+    },
+  })
+  await settle(state)
+  const blk = posts(state, 'calendar_events', w0).find((e) => e.task_id === id(HELD) && !e.deleted_at)
+  check('d1 phone: let go → its own block at 12:30–13:15', blk?.starts_at === iso('12:30') && blk?.ends_at === iso('13:15'), JSON.stringify(blk && [blk.starts_at, blk.ends_at]))
+  check('d1 phone: …out of the slot (no slot_id)', lastOf(state, 'tasks', id(HELD), w0)?.slot_id === null && (await pcRow(page, CODE, HELD).count()) === 0)
+  check('d1 phone: the slot did not move', !lastOf(state, 'calendar_events', eid(CODE), w0))
+  check('d1 phone: toast "Scheduled · Write the slot spec"', await toastSoon(page, 'Scheduled · Write the slot spec'))
+  await shot(page, 'd1-phone-dropped')
+  const w1 = state.writes.length
+  await undo(page, 'Scheduled')
+  await settle(state)
+  check('d1 phone: Undo → back in the slot', lastOf(state, 'tasks', id(HELD), w1)?.slot_id === eid(CODE) && (await pcRow(page, CODE, HELD).count()) === 1)
+  check('d1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// D2: dragged onto Shaheen🛞 (13:00–15:00 today) → it rings while over it; let go → into it; Undo.
+if (want('d2')) {
+  const { ctx, page, errors, state, cdp, row } = await phoneOpen()
+  const to = { x: await colX(page), y: (await pcY(page, '13:45')) }
+  const w0 = state.writes.length
+  await holdDrag(cdp, row, to, {
+    mid: async () => {
+      check('d2 phone: over another slot it rings (no ghost)', (await pcBlock(page, SHAHEEN).getAttribute('class'))?.includes('is-drop') && (await page.locator('.pc-ghost.is-held').count()) === 0)
+      await shot(page, 'd2-phone-over-slot')
+    },
+  })
+  await settle(state)
+  const t = lastOf(state, 'tasks', id(HELD), w0)
+  check('d2 phone: let go → in Shaheen🛞 today (13:00–15:00)', t?.slot_id === eid(SHAHEEN) && t?.slot_date === '2026-10-12' && t?.scheduled_start === iso('13:00'), JSON.stringify(t && [t.slot_id, t.slot_date, t.scheduled_start]))
+  check('d2 phone: no block of its own', posts(state, 'calendar_events', w0).every((e) => e.task_id !== id(HELD)))
+  check('d2 phone: toast "In Shaheen🛞 · Write the slot spec"', await toastSoon(page, 'In Shaheen🛞 · Write the slot spec'))
+  const w1 = state.writes.length
+  await undo(page, 'In Shaheen')
+  await settle(state)
+  check('d2 phone: Undo → back in Code block💻', lastOf(state, 'tasks', id(HELD), w1)?.slot_id === eid(CODE))
+  check('d2 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// D3: dragged up onto the strip (off the grid) → out of the slot, back in Today's strip; Undo.
+if (want('d3')) {
+  const { ctx, page, errors, state, cdp, row } = await phoneOpen()
+  const strip = await page.locator('.pc-uns').boundingBox()
+  const w0 = state.writes.length
+  await holdDrag(cdp, row, { x: strip.x + strip.width / 2, y: strip.y + strip.height / 2 }, {
+    mid: async () => {
+      const lifted = await page.locator('.pc-held-task').boundingBox()
+      check('d3 phone: the lifted task follows the finger over the strip (no ghost)', !!lifted && lifted.y < strip.y + strip.height && (await page.locator('.pc-ghost.is-held').count()) === 0, JSON.stringify(lifted))
+      await shot(page, 'd3-phone-over-strip')
+    },
+  })
+  await settle(state)
+  check('d3 phone: let go → out of the slot, unscheduled', NOSLOT(lastOf(state, 'tasks', id(HELD), w0)) && posts(state, 'calendar_events', w0).every((e) => e.task_id !== id(HELD)))
+  check('d3 phone: toast "Out of the slot · Write the slot spec"', await toastSoon(page, 'Out of the slot · Write the slot spec'))
+  await sleep(300)
+  check('d3 phone: it is a chip in the strip now', (await page.locator('.pc-uns .pc-chip', { hasText: 'Write the slot spec' }).count()) === 1)
+  const w1 = state.writes.length
+  await undo(page, 'Out of the slot')
+  await settle(state)
+  check('d3 phone: Undo → back in the slot', lastOf(state, 'tasks', id(HELD), w1)?.slot_id === eid(CODE) && (await pcRow(page, CODE, HELD).count()) === 1)
+  check('d3 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// D4: held and let go inside its own slot → nothing written, nothing opened. D5: a hold on the slot's
+// title still lifts the slot (no task lifted). Night Garden shot of a lifted task.
+if (want('d4')) {
+  const { ctx, page, errors, state, cdp, row } = await phoneOpen()
+  const w0 = state.writes.length
+  await holdDrag(cdp, row, { x: row.x + 20, y: row.y + 8 })
+  await settle(state)
+  check('d4 phone: let go on its own slot → no write, no toast, no sheet', state.writes.length === w0 && (await page.locator('.kf-toast').count()) === 0 && !/[?&]task=/.test(page.url()) && (await page.locator('.pc-held-task').count()) === 0)
+  check('d4 phone: …and the row is back as it was', !(await pcRow(page, CODE, HELD).getAttribute('class'))?.includes('is-gone'))
+  const title = center(await pcBlock(page, CODE).locator('.pc-name').first().boundingBox())
+  await touch(cdp, 'touchStart', [title])
+  await sleep(550)
+  await touch(cdp, 'touchEnd', [])
+  await sleep(400)
+  check('d5 phone: a hold on the slot\'s title lifts the slot, not a task', (await pcBlock(page, CODE).getAttribute('class'))?.includes('is-lifted') && (await page.locator('.pc-held-task').count()) === 0)
+  await page.keyboard.press('Escape')
+  await sleep(400)
+  await page.evaluate(() => (document.documentElement.dataset.theme = 'night'))
+  await sleep(300)
+  const r2 = center(await pcRow(page, CODE, HELD).locator('.pc-name').boundingBox())
+  await holdDrag(cdp, r2, { x: r2.x, y: (await pcY(page, '12:30')) + 6 }, { keep: true })
+  await shot(page, 'd6-phone-lifted-night')
+  check('d6 phone (night): lifted with its ghost', (await page.locator('.pc-held-task').count()) === 1 && (await page.locator('.pc-ghost.is-held').count()) === 1)
+  await touch(cdp, 'touchCancel', [])
+  await sleep(500)
+  check('d6 phone: a cancelled touch puts it back, nothing written', (await page.locator('.pc-held-task').count()) === 0 && !posts(state, 'tasks', w0).length)
+  check('d4 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
 await browser.close()
 const failed = results.filter((r) => !r.ok)
 fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 2))

@@ -63,6 +63,18 @@ export function slotFill(slot: Pick<CalendarEvent, 'starts_at' | 'ends_at'>, hel
   return `${held.length} task${held.length === 1 ? '' : 's'} · ${mins(used)} of ${mins(total)}`
 }
 
+/** slot-outline (phone): where a task held in a slot lands when its row is dragged out — the desktop's
+ * drag-out rules (CalendarPage). `at`: the time under the finger, null off the grid (the strip): out of
+ * the slot. On a Time block: into it, or nothing when it's the one holding it. Empty time: its own block
+ * there, its estimate long (30 minutes when none, the rail's default). */
+export type HeldDrop<E> = { kind: 'out' } | { kind: 'stay' } | { kind: 'into'; slot: E } | { kind: 'block'; starts_at: string; ends_at: string }
+export function heldDrop<E extends CalendarEvent>(task: Held & Pick<Task, 'duration_min'>, at: string | null, events: readonly E[], zone: string = appZone()): HeldDrop<E> {
+  if (!at) return { kind: 'out' }
+  const slot = slotAt(events, at)
+  if (slot) return inSlot(task, slot, zone) ? { kind: 'stay' } : { kind: 'into', slot }
+  return { kind: 'block', starts_at: at, ends_at: new Date(Date.parse(at) + (task.duration_min || 30) * 60_000).toISOString() }
+}
+
 /** The Time blocks a task can go into without a drag (the task menu's "Into a slot…", the command
  * bar's `>`): today's and the next 7 days', each occurrence of a repeating one, not over yet,
  * soonest first. `rows`: the stored calendar rows. */

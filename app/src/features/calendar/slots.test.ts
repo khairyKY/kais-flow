@@ -19,7 +19,7 @@ vi.mock('../../lib/motion', () => ({ animateRowRemoval: (_el: unknown, run: () =
 const toasts: { message: string; undo: () => void }[] = []
 vi.mock('../../lib/undo', () => ({ toastUndo: (message: string, undo: () => void) => toasts.push({ message, undo }) }))
 
-const { inSlot, intoSlot, occurrenceOn, slotAt, slotFill, slotTasks, upcomingSlots } = await import('./slots')
+const { heldDrop, inSlot, intoSlot, occurrenceOn, slotAt, slotFill, slotTasks, upcomingSlots } = await import('./slots')
 const { deleteEventWithUndo, linkTaskWithUndo, moveOrResizeEvent, outOfSlotWithUndo, putInSlotWithUndo, resizeEvent, retimeEventWithUndo, setEventRepeat, slotLabel, updateEvent } = await import('./api')
 const { rescheduleDue } = await import('../tasks/api')
 const { railBuckets } = await import('./replan')
@@ -81,6 +81,16 @@ describe('slots: the pure rules', () => {
     expect([after.slot_date, after.scheduled_start, after.scheduled_end]).toEqual([TUE, cairo(TUE, '09:00'), cairo(TUE, '11:00')])
     expect(inSlot(after, moved, ZONE)).toBe(true)
     expect(inSlot(after, CODE, ZONE)).toBe(false)
+  })
+
+  it('heldDrop (phone drag-out): off the grid → out; its own slot → stays; another slot → into it; empty time → its own block', () => {
+    const t = task('t', { ...intoSlot(CODE, ZONE), duration_min: 45 })
+    const tue = occ(TUE)
+    expect(heldDrop(t, null, [CODE, tue], ZONE)).toEqual({ kind: 'out' })
+    expect(heldDrop(t, cairo(MON, '11:15'), [CODE, tue], ZONE)).toEqual({ kind: 'stay' })
+    expect(heldDrop(t, cairo(TUE, '14:30'), [CODE, tue], ZONE)).toEqual({ kind: 'into', slot: tue })
+    expect(heldDrop(t, cairo(MON, '12:30'), [CODE, tue], ZONE)).toEqual({ kind: 'block', starts_at: cairo(MON, '12:30'), ends_at: cairo(MON, '13:15') })
+    expect(heldDrop({ ...t, duration_min: null }, cairo(MON, '12:30'), [CODE], ZONE)).toMatchObject({ ends_at: cairo(MON, '13:00') })
   })
 
   it('fill: "N tasks · Xm of Ym", 30 minutes for a task with no estimate', () => {
