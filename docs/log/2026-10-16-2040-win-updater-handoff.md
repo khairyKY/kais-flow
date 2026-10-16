@@ -53,7 +53,10 @@ it once, because that one still comes from the browser.
 - `npm run build`: OK. Entry `index-*.js` 361.60 kB (115.08 gz), about +0.9 kB. The updater is its own 3 KB chunk.
 - `ds:check --baseline`: 0 new.
 - `cargo check`: OK.
-- Local `tauri build --bundles nsis`, with and without the key: see the end of this file.
+- Local `tauri build --bundles nsis` with the key: OK (8m40s). It writes `Kai’s Flow_1.0.0_x64-setup.exe` and its
+  `.sig`. A node check (Ed25519 over BLAKE2b, what the updater checks) verified that `.sig` under the pubkey in
+  `tauri.conf.json`, also for a renamed copy (the CI case). It rejected a tampered file.
+- The same build without the key, with CI's `--config '{"bundle":{"createUpdaterArtifacts":false}}'`: OK, and no `.sig`.
 
 ## Not verified
 
