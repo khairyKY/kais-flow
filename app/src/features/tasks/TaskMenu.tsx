@@ -56,6 +56,8 @@ export interface TaskMenuActions {
   slot?: (startsAt: string, endsAt: string) => void
   /** A Top 3 row's Move up / Move down. */
   reorder?: (delta: -1 | 1) => void
+  /** Opens the add line under the row (Subtasks A). */
+  addSubtask?: () => void
 }
 
 /** When 2+ tasks are selected, the date, project and delete actions of a selected row's menu act on
@@ -80,7 +82,7 @@ export interface MenuAnchor {
 }
 
 const ICONS: Record<TaskMenuKey, IconName> = {
-  tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', intoSlot: 'clock', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
+  tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', intoSlot: 'clock', subtask: 'plus', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
   labels: 'label', top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
@@ -137,6 +139,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     plan: () => setSub('date'),
     unschedule: () => actions.unschedule?.(),
     intoSlot: () => setSub('slot'),
+    subtask: () => actions.addSubtask?.(),
     project: () => setSub('project'),
     priority: () => setSub('priority'),
     labels: () => setSub('labels'),
@@ -152,7 +155,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     delete: actions.delete,
   }
   // Read when the menu opens: overdue → "Replan…"; the goal of the day gets no Make goal.
-  const spec = taskMenuSpec(task, { ...ctx, slots: slots.length > 0, desktop: !isMobile, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
+  const spec = taskMenuSpec(task, { ...ctx, subtask: ctx.subtask ?? !!actions.addSubtask, slots: slots.length > 0, desktop: !isMobile, overdue: ctx.overdue ?? isOverdue(task), goal: ctx.goal ?? currentTop3()[0]?.id === task.id })
 
   // One task: the Plan list offers No date when it has one, and Next free slot.
   const bulk = !!ctx.bulkCount && ctx.bulkCount > 1

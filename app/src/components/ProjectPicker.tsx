@@ -29,7 +29,7 @@ export function ProjectPicker(props: ProjectPickerProps) {
 
 // ── Task Sheet 4d: title "Project" + the task's title · a search field that doubles as create · rows
 // (the project's hue as a dot, its domain on the right, a check on the current one) · "No project" under
-// a dashed rule (the chip's Remove). Tapping a row applies it and closes; there is no Done. ──
+// a hairline (the chip's Remove). Tapping a row applies it and closes; there is no Done. ──
 function ProjectSheet({ projects, domains, currentProjectId, onSelect, onClose, meta, onCreate }: ProjectPickerProps) {
   const [query, setQuery] = useState('')
   const q = query.trim()
@@ -54,7 +54,7 @@ function ProjectSheet({ projects, domains, currentProjectId, onSelect, onClose, 
           <>
             <style>{`${ACTION_ROW_CSS}
               .kf-pp-search { display: flex; align-items: center; gap: 10px; height: 48px; margin-bottom: 8px; padding: 0 14px; border: 1px solid var(--line-control);
-                border-radius: 8px; background: var(--paper-bone); color: var(--ink-muted); }
+                border-radius: var(--radius-md); background: var(--paper-bone); color: var(--ink-muted); }
               .kf-pp-search input { flex: 1; min-width: 0; border: none; background: none; outline: none; font: inherit; font-size: 15px; color: var(--ink-body); }
               .kf-pp-search:focus-within { box-shadow: var(--focus-ring); }
               .kf-as-row.kf-pp-current { background: var(--block-sage); color: var(--acc-sage-text); font-weight: 600; }`}</style>
@@ -81,7 +81,7 @@ function ProjectSheet({ projects, domains, currentProjectId, onSelect, onClose, 
                 return row(p.id, dot, <EmojiText text={p.name} />, domain?.name, p.id === currentProjectId, () => pick(p.id, p.domain_id ?? null))
               })}
               {create && row('create', <Icon name="plus" size={24} />, `Create “${q}”`, undefined, false, create)}
-              <div style={{ marginTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>
+              <div style={{ marginTop: 4, borderTop: '1px solid var(--line-dashed)' }}>
                 {row('none', <Icon name="inbox" size={24} />, 'No project', 'Inbox', !currentProjectId, () => pick(null, null))}
               </div>
             </div>
@@ -103,7 +103,7 @@ const itemStyle = {
   color: 'var(--ink-body)',
   background: 'none',
   border: 'none',
-  borderRadius: 5,
+  borderRadius: 'var(--radius-input)',
   padding: '7px 10px',
   cursor: 'pointer',
 }
@@ -157,7 +157,7 @@ function ProjectPopover({ position, projects, domains, currentProjectId, onSelec
         background: 'var(--paper-parchment)',
         border: '1px solid var(--line-card)',
         boxShadow: 'var(--shadow-popover)',
-        borderRadius: 5,
+        borderRadius: 'var(--radius-card)',
         padding: 6,
         minWidth: 214,
         maxHeight: 320,
@@ -165,7 +165,7 @@ function ProjectPopover({ position, projects, domains, currentProjectId, onSelec
         flexDirection: 'column',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 10px', margin: '2px 2px 6px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '7px 10px', margin: '2px 2px 6px' }}>
         <span style={{ color: 'var(--ink-faint)', fontSize: 12, flex: 'none' }}>⌕</span>
         <input
           autoFocus

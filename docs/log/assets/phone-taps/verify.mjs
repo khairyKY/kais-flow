@@ -102,7 +102,7 @@ const tables = () => structuredClone({
 const PHONES = ['phone360', 'phone', 'phone430']
 const SHOTS = [
   ['journal', '/journal', null, ['desktop', ...PHONES]],
-  ['journal-thought', '/journal', async (p) => { await p.getByRole('button', { name: /add a thought/ }).first().click(); await sleep(700) }, PHONES],
+  ['journal-thought', '/journal', async (p) => { await p.getByRole('button', { name: /add a thought/i }).first().click(); await sleep(700) }, PHONES],
   ['tasks', '/tasks'], ['tasks-all', '/tasks?list=all'],
   ['activity', '/activity'], ['people', '/people'], ['projects', '/projects'], ['weekly-review', '/weekly-review'], ['routines', '/routines'],
   ['guide', '/guide'], ['guide-article', '/guide/getting-started'], ['settings', '/settings'], ['today', '/today'],

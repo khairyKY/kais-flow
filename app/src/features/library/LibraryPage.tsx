@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
-import { BackLink } from '../../components/kit'
+import { BackLink, Button, SectionLabel, Segmented } from '../../components/kit'
 import { Skeleton, ErrorCard } from '../../components/States'
 import {
   useBooks,
@@ -133,7 +133,7 @@ export function LibraryPage() {
   const [editingId, setEditingId] = useState<string | null>(null)
   const closeEdit = () => setEditingId(null)
   const editChip = (id: string) => (
-    <span onClick={() => setEditingId((cur) => (cur === id ? null : id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>edit</span>
+    <span onClick={() => setEditingId((cur) => (cur === id ? null : id))} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>Edit</span>
   )
   const bookEditForm = (b: Book) => (
     <LibraryEditForm
@@ -326,7 +326,7 @@ export function LibraryPage() {
 
   /** "Remove …" = Undo toast, no confirm (Flow Audit §4). A real button, 44px tall on a phone. */
   const removeButton = (label: string, onClick: () => void) => (
-    <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', padding: 0, minHeight: isMobile ? 44 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>
+    <button type="button" onClick={onClick} style={{ border: 'none', background: 'none', padding: 0, minHeight: isMobile ? 44 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}>
       {label}
     </button>
   )
@@ -341,8 +341,7 @@ export function LibraryPage() {
           .chip {
             font-family: var(--font-mono);
             font-size: var(--fs-meta);
-            letter-spacing: 0.06em;
-            text-transform: uppercase;
+            letter-spacing: var(--ls-meta);
             padding: 4px 9px;
             border-radius: 999px;
             display: inline-flex;
@@ -352,14 +351,13 @@ export function LibraryPage() {
           .flabel {
             font-family: var(--font-mono);
             font-size: var(--fs-meta);
-            letter-spacing: 0.16em;
-            text-transform: uppercase;
+            letter-spacing: var(--ls-meta);
             color: var(--ink-faint);
           }
           .fhelp {
             font-family: var(--font-mono);
             font-size: var(--fs-meta);
-            letter-spacing: 0.06em;
+            letter-spacing: var(--ls-meta);
             color: var(--ink-faint);
           }
           .trow {
@@ -367,7 +365,7 @@ export function LibraryPage() {
             align-items: center;
             gap: 9px;
             padding: 10px 12px;
-            border-radius: 6px;
+            border-radius: var(--radius-input);
             font-size: 13.5px;
             color: var(--ink-muted);
             background: var(--paper-parchment);
@@ -375,7 +373,6 @@ export function LibraryPage() {
             margin-bottom: 6px;
           }
         `}</style>
-        <div className="grain" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 10 }} />
 
         {/* Kai's phone review: the shell's 16px gutter is the page's, not 16 + 20 of its own. */}
         <div style={{ flex: 1, padding: '0 0 80px', position: 'relative', zIndex: 15 }}>
@@ -388,31 +385,17 @@ export function LibraryPage() {
           {/* Segmented Tab */}
           {!hasSelection && (
             <>
-              <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 999, overflow: 'hidden', marginBottom: 16 }}>
-                {['notes', 'quotes', 'books'].map((tab) => (
-                  <span
-                    key={tab}
-                    onClick={() => setSearchParams({ tab })}
-                    style={{
-                      flex: 1,
-                      textAlign: 'center',
-                      padding: '8px 0',
-                      fontFamily: 'var(--font-mono)',
-                      fontSize: 'var(--fs-meta)',
-                      letterSpacing: '0.08em',
-                      textTransform: 'uppercase',
-                      color: activeTab === tab ? 'var(--ink-body)' : 'var(--ink-muted)',
-                      background: activeTab === tab ? 'var(--paper-parchment)' : 'transparent',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    {tab}
-                  </span>
-                ))}
+              <div style={{ marginBottom: 16 }}>
+                <Segmented
+                  value={activeTab}
+                  onChange={(tab) => setSearchParams({ tab })}
+                  label="Shelf"
+                  options={['notes', 'quotes', 'books'].map((tab) => ({ value: tab, label: tab.charAt(0).toUpperCase() + tab.slice(1) }))}
+                />
               </div>
 
               {/* Search Bar */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 11px', marginBottom: 14 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '7px 11px', marginBottom: 14 }}>
                 <span style={{ display: 'flex', alignItems: 'center', color: 'var(--ink-faint)' }}>
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
                     <circle cx="11" cy="11" r="6.4"></circle>
@@ -455,22 +438,20 @@ export function LibraryPage() {
               {activeTab === 'books' && (
                 <div style={{ display: 'flex', flexDirection: 'column' }}>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
-                    <button onClick={() => setShowNewBookForm((v) => !v)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '11px', padding: '6px 12px', borderRadius: 999, cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'uppercase' }}>
-                      + Add Book
-                    </button>
+                    <Button onClick={() => setShowNewBookForm((v) => !v)}>+ Add book</Button>
                   </div>
                   {showNewBookForm && (
                     <div style={{ padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, marginBottom: 12 }}>
-                      <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Plant a Book</div>
-                      <input value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} placeholder="Book Title" style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
-                      <input value={newBookAuthor} onChange={(e) => setNewBookAuthor(e.target.value)} placeholder="Author" style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
+                      <div style={{ fontSize: 'var(--fs-meta)', fontWeight: 600, marginBottom: 8 }}>Plant a book</div>
+                      <input value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} placeholder="Book title" style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }} />
+                      <input value={newBookAuthor} onChange={(e) => setNewBookAuthor(e.target.value)} placeholder="Author" style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }} />
                       <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
-                        <input value={newBookPages} onChange={(e) => setNewBookPages(e.target.value)} placeholder="Total Pages" style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
-                        <input value={newBookYear} onChange={(e) => setNewBookYear(e.target.value)} placeholder="Year" style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
+                        <input value={newBookPages} onChange={(e) => setNewBookPages(e.target.value)} placeholder="Total pages" style={{ width: '50%', padding: '5px 8px', fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }} />
+                        <input value={newBookYear} onChange={(e) => setNewBookYear(e.target.value)} placeholder="Year" style={{ width: '50%', padding: '5px 8px', fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }} />
                       </div>
                       <div style={{ display: 'flex', gap: 6, justifyContent: 'flex-end' }}>
-                        <button onClick={() => setShowNewBookForm(false)} style={{ border: 'none', background: 'transparent', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-                        <button onClick={handlePlantBook} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '11px', padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}>Plant</button>
+                        <button onClick={() => setShowNewBookForm(false)} style={{ border: 'none', background: 'transparent', fontSize: 'var(--fs-mono-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+                        <button onClick={handlePlantBook} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-mono-l)', padding: '4px 10px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Plant</button>
                       </div>
                     </div>
                   )}
@@ -490,19 +471,19 @@ export function LibraryPage() {
           {hasSelection && (
             <div style={{ position: 'relative' }}>
               {/* Back button */}
-              <BackLink onClick={() => setSearchParams({ tab: activeTab })} style={{ marginBottom: 16 }}>Back to List</BackLink>
+              <BackLink onClick={() => setSearchParams({ tab: activeTab })} style={{ marginBottom: 16 }}>Back to list</BackLink>
 
               {/* Reader components */}
               {activeBook && (
-                <div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>
+                <div style={{ background: 'var(--paper-linen)', borderRadius: 'var(--radius-card)', border: '1px solid var(--line-card)', padding: '16px 12px' }}>
                   <div style={{ display: 'flex', gap: 16 }}>
-                    <div style={{ width: 80, height: 116, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                    <div style={{ width: 80, height: 116, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                       <img src={getFernImage(progressPercent)} alt="" style={{ height: 36, opacity: 0.6 }} />
                       {/* No covers are stored: the slot shows the book's fern and how far in you are (true data). */}
                       <span className="fhelp" style={{ fontSize: 'var(--fs-meta)' }}>{progressPercent}% read</span>
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Book · {activeBook.status}</div>
+                      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-buttercream-text)' }}>Book · {activeBook.status}</div>
                       <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 'var(--fs-display-m)', lineHeight: 1.2, color: 'var(--ink-body)' }}>{activeBook.title}</h1>
                       <div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{activeBook.author}</div>
                       
@@ -517,35 +498,35 @@ export function LibraryPage() {
                   </div>
 
                   <div style={{ display: 'flex', gap: 6, marginTop: 14, flexWrap: 'wrap' }}>
-                    <span onClick={() => setShowLogSession((v) => !v)} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', cursor: 'pointer' }}>log session</span>
-                    <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>finish</span>
+                    <span onClick={() => setShowLogSession((v) => !v)} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', cursor: 'pointer' }}>Log session</span>
+                    <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Finish</span>
                     {editChip(activeBook.id)}
                   </div>
                   {editingId === activeBook.id && bookEditForm(activeBook)}
 
                   {showLogSession && (
-                    <div style={{ marginTop: 12, padding: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>
+                    <div style={{ marginTop: 12, padding: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)' }}>
                       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                         <span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>Page:</span>
-                        <input value={sessionPage} onChange={(e) => setSessionPage(e.target.value)} placeholder={`max ${activeBook.total_pages}`} style={{ width: 80, padding: '4px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }} />
-                        <button onClick={handleLogBookSession} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '11px', padding: '4px 10px', borderRadius: 999 }}>Log</button>
+                        <input value={sessionPage} onChange={(e) => setSessionPage(e.target.value)} placeholder={`max ${activeBook.total_pages}`} style={{ width: 80, padding: '4px 8px', fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }} />
+                        <button onClick={handleLogBookSession} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-mono-l)', padding: '4px 10px', borderRadius: 'var(--radius-input)' }}>Log</button>
                       </div>
                     </div>
                   )}
 
                   {/* Quotes kept */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Quotes · {bookQuotes.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
+                  <SectionLabel style={{ margin: '20px 0 6px' }}><span style={{ color: 'var(--acc-buttercream-text)' }}>Quotes · {bookQuotes.length}</span></SectionLabel>
                   {bookQuotes.map((q) => (
-                    <div key={q.id} style={{ padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+                    <div key={q.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--line-dashed)' }}>
                       <div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 13.5, color: 'var(--ink-body)' }}>"{q.text}"</div>
                       <div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 4 }}>p. {q.page || 'N/A'}</div>
                     </div>
                   ))}
 
                   {/* Notes */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, margin: '20px 0 6px' }}><span className="flabel">Notes · {bookNotes.length}</span><span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span></div>
+                  <SectionLabel style={{ margin: '20px 0 6px' }}>Notes · {bookNotes.length}</SectionLabel>
                   {bookNotes.map((n) => (
-                    <div key={n.id} style={{ padding: '8px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+                    <div key={n.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--line-dashed)' }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)' }}>{n.title || 'Note'}</div>
                       <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 2 }}>{n.body}</div>
                     </div>
@@ -555,10 +536,10 @@ export function LibraryPage() {
               )}
 
               {activeNote && selectedNoteId && (
-                <div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>
+                <div className="kf-page" style={{ background: 'var(--bg-page)', borderRadius: 'var(--radius-page)', border: '1px solid var(--border-page)', boxShadow: 'var(--shadow-page)', padding: '16px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span className="fhelp">Note</span>
-                    <span className="fhelp">{new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                    <span className="kf-stamp">{new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                   </div>
                   {editingId === activeNote.id ? (
                     noteEditForm(activeNote)
@@ -581,17 +562,17 @@ export function LibraryPage() {
 
                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                     <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
-                    <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>
+                    <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-meta)', padding: '6px 12px', borderRadius: 'var(--radius-input)' }}>Add</button>
                   </div>
                   <div style={{ marginTop: 16 }}>{removeButton('Remove note', () => removeNote(activeNote))}</div>
                 </div>
               )}
 
               {activeQuote && selectedQuoteId && (
-                <div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>
+                <div className="kf-page" style={{ background: 'var(--bg-page)', borderRadius: 'var(--radius-page)', border: '1px solid var(--border-page)', boxShadow: 'var(--shadow-page)', padding: '16px 12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span className="fhelp">Quote</span>
-                    <span className="fhelp">{new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                    <span className="kf-stamp">{new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                   </div>
                   {editingId === activeQuote.id ? (
                     quoteEditForm(activeQuote)
@@ -614,7 +595,7 @@ export function LibraryPage() {
 
                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                     <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
-                    <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>
+                    <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-meta)', padding: '6px 12px', borderRadius: 'var(--radius-input)' }}>Add</button>
                   </div>
                   <div style={{ marginTop: 16 }}>{removeButton('Remove quote', () => removeQuote(activeQuote))}</div>
                 </div>
@@ -632,8 +613,7 @@ export function LibraryPage() {
         .chip {
           font-family: var(--font-mono);
           font-size: var(--fs-meta);
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
+          letter-spacing: var(--ls-meta);
           padding: 4px 9px;
           border-radius: 999px;
           display: inline-flex;
@@ -643,14 +623,13 @@ export function LibraryPage() {
         .flabel {
           font-family: var(--font-mono);
           font-size: var(--fs-meta);
-          letter-spacing: 0.16em;
-          text-transform: uppercase;
+          letter-spacing: var(--ls-meta);
           color: var(--ink-faint);
         }
         .fhelp {
           font-family: var(--font-mono);
           font-size: var(--fs-meta);
-          letter-spacing: 0.06em;
+          letter-spacing: var(--ls-meta);
           color: var(--ink-faint);
         }
         .trow {
@@ -658,7 +637,7 @@ export function LibraryPage() {
           align-items: center;
           gap: 9px;
           padding: 6px 10px;
-          border-radius: 6px;
+          border-radius: var(--radius-input);
           font-size: 13px;
           color: var(--ink-muted);
         }
@@ -666,10 +645,9 @@ export function LibraryPage() {
           background: var(--paper-bone) !important;
         }
       `}</style>
-      <div className="grain" style={{ pointerEvents: 'none', position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, zIndex: 10 }} />
 
       {/* 1. LEFT COLUMN: Shelf tree */}
-      <aside style={{ width: 230, flex: 'none', borderRight: '1px dashed var(--line-solid)', padding: '26px 16px', display: 'flex', flexDirection: 'column', zIndex: 15 }}>
+      <aside style={{ width: 230, flex: 'none', borderRight: '1px solid var(--line-solid)', padding: '26px 16px', display: 'flex', flexDirection: 'column', zIndex: 15 }}>
         
         {/* Title */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14, padding: '0 4px' }}>
@@ -678,7 +656,7 @@ export function LibraryPage() {
         </div>
 
         {/* Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 11px', marginBottom: 14 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '7px 11px', marginBottom: 14 }}>
           <span style={{ display: 'flex', alignItems: 'center', color: 'var(--ink-faint)' }}>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round">
               <circle cx="11" cy="11" r="6.4"></circle>
@@ -805,8 +783,8 @@ export function LibraryPage() {
         <div style={{ flex: 1 }}></div>
 
         {/* Footer plant tag */}
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 14.5, color: 'var(--ink-muted)', transform: 'rotate(-1deg)', padding: '0 4px', marginTop: 20 }}>
-          kept things, growing commentary ✿
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', padding: '0 4px', marginTop: 20 }}>
+          Kept things, growing commentary ✿
         </div>
       </aside>
 
@@ -821,18 +799,15 @@ export function LibraryPage() {
           {/* Sub-column: SHELF CONTENT LIST (to choose items in active category) */}
           {/* Kai 2026-10-03: neither column scrolls on its own — the page around them has no bounded
               height, so they never did; they only swallowed the wheel. */}
-          <div style={{ width: 220, flex: 'none', borderRight: '1px dashed var(--line-solid)', padding: '16px 12px' }}>
+          <div style={{ width: 220, flex: 'none', borderRight: '1px solid var(--line-solid)', padding: '16px 12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                {activeTab} ({activeTab === 'quotes' ? filteredQuotes.length : activeTab === 'notes' ? filteredNotes.length : filteredBooks.length})
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+                {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} ({activeTab === 'quotes' ? filteredQuotes.length : activeTab === 'notes' ? filteredNotes.length : filteredBooks.length})
               </span>
               {activeTab === 'books' && (
-                <button
-                  onClick={() => setShowNewBookForm(true)}
-                  style={{ border: 'none', background: 'transparent', color: 'var(--acc-terra)', fontSize: 'var(--fs-mono-l)', cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacing: '0.06em' }}
-                >
-                  + Add Book
-                </button>
+                <Button variant="ghost" onClick={() => setShowNewBookForm(true)}>
+                  + Add book
+                </Button>
               )}
             </div>
 
@@ -849,7 +824,7 @@ export function LibraryPage() {
                       style={{
                         ...(motion ? staggerDelay(li) : {}),
                         padding: '8px 10px',
-                        borderRadius: 5,
+                        borderRadius: 'var(--radius-input)',
                         cursor: 'pointer',
                         background: isSelected ? 'var(--paper-parchment)' : 'transparent',
                         border: isSelected ? '1px solid var(--line-card)' : '1px solid transparent',
@@ -877,7 +852,7 @@ export function LibraryPage() {
                       style={{
                         ...(motion ? staggerDelay(li) : {}),
                         padding: '8px 10px',
-                        borderRadius: 5,
+                        borderRadius: 'var(--radius-input)',
                         cursor: 'pointer',
                         background: isSelected ? 'var(--paper-parchment)' : 'transparent',
                         border: isSelected ? '1px solid var(--line-card)' : '1px solid transparent',
@@ -909,7 +884,7 @@ export function LibraryPage() {
                       style={{
                         ...(motion ? staggerDelay(li) : {}),
                         padding: '8px 10px',
-                        borderRadius: 5,
+                        borderRadius: 'var(--radius-input)',
                         cursor: 'pointer',
                         background: isSelected ? 'var(--paper-parchment)' : 'transparent',
                         border: isSelected ? '1px solid var(--line-card)' : '1px solid transparent',
@@ -928,37 +903,37 @@ export function LibraryPage() {
 
             {/* Add Book Dialog Overlay */}
             {showNewBookForm && (
-              <div style={{ marginTop: 12, padding: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>
-                <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Plant a Book</div>
+              <div style={{ marginTop: 12, padding: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)' }}>
+                <div style={{ fontSize: 'var(--fs-meta)', fontWeight: 600, marginBottom: 8 }}>Plant a book</div>
                 <input
                   value={newBookTitle}
                   onChange={(e) => setNewBookTitle(e.target.value)}
-                  placeholder="Book Title"
-                  style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}
+                  placeholder="Book title"
+                  style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }}
                 />
                 <input
                   value={newBookAuthor}
                   onChange={(e) => setNewBookAuthor(e.target.value)}
                   placeholder="Author"
-                  style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}
+                  style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }}
                 />
                 <div style={{ display: 'flex', gap: 4 }}>
                   <input
                     value={newBookPages}
                     onChange={(e) => setNewBookPages(e.target.value)}
-                    placeholder="Total Pages"
-                    style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}
+                    placeholder="Total pages"
+                    style={{ width: '50%', padding: '5px 8px', fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }}
                   />
                   <input
                     value={newBookYear}
                     onChange={(e) => setNewBookYear(e.target.value)}
                     placeholder="Year"
-                    style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}
+                    style={{ width: '50%', padding: '5px 8px', fontSize: 'var(--fs-meta)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }}
                   />
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 8, justifyContent: 'flex-end' }}>
-                  <button onClick={() => setShowNewBookForm(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-                  <button onClick={handlePlantBook} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}>Plant</button>
+                  <button onClick={() => setShowNewBookForm(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-mono-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+                  <button onClick={handlePlantBook} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: 'var(--fs-mono-l)', padding: '4px 10px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Plant</button>
                 </div>
               </div>
             )}
@@ -974,18 +949,18 @@ export function LibraryPage() {
               <div style={{ width: '100%', maxWidth: 760, padding: '30px 40px 36px', background: 'var(--paper-linen)', position: 'relative' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <BackLink onClick={() => setSearchParams({ tab: 'books' })}>Library / Books</BackLink>
-                  <span className="fhelp">added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                  <span className="fhelp">Added {new Date(activeBook.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
                 </div>
 
                 <div style={{ display: 'flex', gap: 22, marginTop: 24 }}>
                   {/* cover slot — no covers are stored, so it holds the book's fern + how far in (never a placeholder label) */}
-                  <div style={{ width: 118, height: 172, flex: 'none', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8, transform: 'rotate(-1deg)' }}>
+                  <div style={{ width: 118, height: 172, flex: 'none', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
                     <img src={getFernImage(progressPercent)} alt="" style={{ height: 52, opacity: 0.6 }} />
                     <span className="fhelp" style={{ textAlign: 'center', padding: '0 10px' }}>{progressPercent}% read</span>
                   </div>
                   
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>
+                    <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-buttercream-text)' }}>
                       Book · {activeBook.status}
                     </div>
                     <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 30, lineHeight: 1.15, color: 'var(--ink-body)' }}>{activeBook.title}</h1>
@@ -1001,13 +976,13 @@ export function LibraryPage() {
                       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>p. {activeBook.current_page} / {activeBook.total_pages}</span>
                     </div>
 
-                    <div className="fhelp" style={{ marginTop: 6 }}>the frond unfurls as you read — full at the last page</div>
+                    <div className="fhelp" style={{ marginTop: 6 }}>The frond unfurls as you read — full at the last page</div>
                     
                     <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
-                      <span onClick={() => setShowLogSession(true)} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', cursor: 'pointer' }}>log a session</span>
-                      <span onClick={() => setShowAddQuote(true)} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>+ quote</span>
-                      <span onClick={() => setShowAddNote(true)} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>+ note</span>
-                      <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>mark finished</span>
+                      <span onClick={() => setShowLogSession(true)} className="chip" style={{ background: 'color-mix(in oklch, var(--acc-buttercream) 25%, transparent)', color: 'var(--acc-buttercream-text)', cursor: 'pointer' }}>Log a session</span>
+                      <span onClick={() => setShowAddQuote(true)} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>+ Quote</span>
+                      <span onClick={() => setShowAddNote(true)} className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', cursor: 'pointer' }}>+ Note</span>
+                      <span onClick={() => updateBookProgress(activeBook, activeBook.total_pages)} className="chip" style={{ border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Mark finished</span>
                       {editChip(activeBook.id)}
                     </div>
                   </div>
@@ -1018,93 +993,90 @@ export function LibraryPage() {
                 {/* Inline Log page session form */}
                 {showLogSession && (
                   <div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, maxWidth: 300 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Log Reading Session</div>
+                    <div style={{ fontSize: 'var(--fs-meta)', fontWeight: 600, marginBottom: 8 }}>Log a reading session</div>
                     <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                       <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Page reached:</span>
                       <input
                         value={sessionPage}
                         onChange={(e) => setSessionPage(e.target.value)}
                         placeholder={`max ${activeBook.total_pages}`}
-                        style={{ width: 80, padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}
+                        style={{ width: 80, padding: '4px 8px', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }}
                       />
                     </div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 8, justifyContent: 'flex-end' }}>
-                      <button onClick={() => setShowLogSession(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-                      <button onClick={handleLogBookSession} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}>Log</button>
+                      <button onClick={() => setShowLogSession(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-mono-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+                      <button onClick={handleLogBookSession} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: 'var(--fs-mono-l)', padding: '4px 10px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Log</button>
                     </div>
                   </div>
                 )}
 
                 {/* Add Quote inline Form */}
                 {showAddQuote && (
-                  <div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Add Book Quote</div>
+                  <div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)' }}>
+                    <div style={{ fontSize: 'var(--fs-meta)', fontWeight: 600, marginBottom: 8 }}>Add a quote</div>
                     <textarea
                       value={newQuoteText}
                       onChange={(e) => setNewQuoteText(e.target.value)}
                       placeholder="Quote content..."
-                      style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', outline: 'none', padding: 6, borderRadius: 3, resize: 'none', marginBottom: 6 }}
+                      style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', outline: 'none', padding: 6, borderRadius: 'var(--radius-md)', resize: 'none', marginBottom: 6 }}
                     />
                     <div style={{ display: 'flex', gap: 6 }}>
                       <input
                         value={newQuotePage}
                         onChange={(e) => setNewQuotePage(e.target.value)}
-                        placeholder="Page No (e.g. 148)"
-                        style={{ width: '40%', padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}
+                        placeholder="Page (e.g. 148)"
+                        style={{ width: '40%', padding: '4px 8px', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }}
                       />
                       <input
                         value={newQuoteTags}
                         onChange={(e) => setNewQuoteTags(e.target.value)}
                         placeholder="Tags (comma separated e.g. *pace, *focus)"
-                        style={{ width: '60%', padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}
+                        style={{ width: '60%', padding: '4px 8px', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }}
                       />
                     </div>
                     <div style={{ display: 'flex', gap: 6, marginTop: 8, justifyContent: 'flex-end' }}>
-                      <button onClick={() => setShowAddQuote(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-                      <button onClick={handleAddBookQuote} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}>Add</button>
+                      <button onClick={() => setShowAddQuote(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-mono-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+                      <button onClick={handleAddBookQuote} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: 'var(--fs-mono-l)', padding: '4px 10px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Add</button>
                     </div>
                   </div>
                 )}
 
                 {/* Add Note inline Form */}
                 {showAddNote && (
-                  <div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>
-                    <div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Add Note</div>
+                  <div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)' }}>
+                    <div style={{ fontSize: 'var(--fs-meta)', fontWeight: 600, marginBottom: 8 }}>Add a note</div>
                     <input
                       value={newNoteTitleState}
                       onChange={(e) => setNewNoteTitleState(e.target.value)}
-                      placeholder="Note Title (optional)"
-                      style={{ width: '100%', padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none', marginBottom: 6 }}
+                      placeholder="Note title (optional)"
+                      style={{ width: '100%', padding: '4px 8px', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none', marginBottom: 6 }}
                     />
                     <textarea
                       value={newNoteBody}
                       onChange={(e) => setNewNoteBody(e.target.value)}
                       placeholder="Note content..."
-                      style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', outline: 'none', padding: 6, borderRadius: 3, resize: 'none', marginBottom: 6 }}
+                      style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', outline: 'none', padding: 6, borderRadius: 'var(--radius-md)', resize: 'none', marginBottom: 6 }}
                     />
                     <input
                       value={newNoteTags}
                       onChange={(e) => setNewNoteTags(e.target.value)}
                       placeholder="Tags (comma separated)"
-                      style={{ width: '100%', padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}
+                      style={{ width: '100%', padding: '4px 8px', fontSize: 'var(--fs-body-s)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-md)', outline: 'none' }}
                     />
                     <div style={{ display: 'flex', gap: 6, marginTop: 8, justifyContent: 'flex-end' }}>
-                      <button onClick={() => setShowAddNote(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
-                      <button onClick={handleAddBookNote} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}>Add</button>
+                      <button onClick={() => setShowAddNote(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: 'var(--fs-mono-l)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>
+                      <button onClick={handleAddBookNote} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: 'var(--fs-mono-l)', padding: '4px 10px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Add</button>
                     </div>
                   </div>
                 )}
 
                 {/* Quotes list */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '28px 0 6px' }}>
-                  <span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Quotes kept · {bookQuotes.length}</span>
-                  <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-                </div>
+                <SectionLabel style={{ margin: '28px 0 6px' }}><span style={{ color: 'var(--acc-buttercream-text)' }}>Quotes kept · {bookQuotes.length}</span></SectionLabel>
                 {bookQuotes.map((q) => (
                   <div
                     key={q.id}
                     onClick={() => setSearchParams({ tab: 'quotes', quoteId: q.id })}
-                    style={{ display: 'flex', gap: 14, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer' }}
+                    style={{ display: 'flex', gap: 14, padding: '12px 2px', borderBottom: '1px solid var(--line-dashed)', cursor: 'pointer' }}
                   >
                     <span style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--acc-buttercream-text)', flex: 'none' }}>❝</span>
                     <span style={{ flex: 1, fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 'var(--fs-body)', lineHeight: 1.55, color: 'var(--ink-body)' }}>"{q.text}"</span>
@@ -1113,24 +1085,21 @@ export function LibraryPage() {
                 ))}
 
                 {/* Notes list */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '24px 0 6px' }}>
-                  <span className="flabel">Notes · {bookNotes.length}</span>
-                  <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-                </div>
+                <SectionLabel style={{ margin: '24px 0 6px' }}>Notes · {bookNotes.length}</SectionLabel>
                 {bookNotes.map((n) => (
                   <div
                     key={n.id}
                     onClick={() => setSearchParams({ tab: 'notes', noteId: n.id })}
-                    style={{ display: 'flex', gap: 14, padding: '12px 2px', borderBottom: '1px dashed var(--line-dashed)', cursor: 'pointer' }}
+                    style={{ display: 'flex', gap: 14, padding: '12px 2px', borderBottom: '1px solid var(--line-dashed)', cursor: 'pointer' }}
                   >
                     <span className="fhelp" style={{ width: 70, flex: 'none', paddingTop: 2 }}>{n.title || 'Note'}</span>
                     <span style={{ flex: 1, fontSize: 'var(--fs-body-s)', lineHeight: 1.6, color: 'var(--ink-body)' }}>{n.body}</span>
                   </div>
                 ))}
 
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, paddingTop: 14, borderTop: '1px solid var(--line-dashed)' }}>
                   {removeButton('Remove book', () => removeBook(activeBook))}
-                  <span style={{ fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>finish it and the frond unfurls flat ✿</span>
+                  <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>Finish it and the frond unfurls flat ✿</span>
                 </div>
               </div>
             ) : (
@@ -1140,9 +1109,9 @@ export function LibraryPage() {
                 {/* Unfurl Fern progress vertical column */}
                 <div style={{ width: 44, flex: 'none', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '30px 0', gap: 0 }}>
                   <img src="/ds/assets/fern/coil.png" alt="" style={{ height: 22, opacity: 0.45 }} />
-                  <span style={{ flex: 1, width: 0, borderLeft: '1px dashed var(--acc-buttercream)', opacity: 0.6, margin: '8px 0' }}></span>
+                  <span style={{ flex: 1, width: 0, borderLeft: '1px solid var(--acc-buttercream)', opacity: 0.6, margin: '8px 0' }}></span>
                   <img src="/ds/assets/fern/unfurl1.png" alt="" style={{ height: 26, opacity: 0.7 }} />
-                  <span style={{ flex: 1, width: 0, borderLeft: '1px dashed var(--line-dashed)', margin: '8px 0' }}></span>
+                  <span style={{ flex: 1, width: 0, borderLeft: '1px solid var(--line-dashed)', margin: '8px 0' }}></span>
                   <img src="/ds/assets/fern/unfurl2.png" alt="" style={{ height: 28, opacity: 0.5 }} />
                 </div>
 
@@ -1150,11 +1119,11 @@ export function LibraryPage() {
                   /* Note Reader Mode */
                   <div style={{ flex: 1, minWidth: 0, maxWidth: 720, padding: '30px 40px 40px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span className="fhelp">Notes Shelf / {activeNote.title || 'Untitled Note'}</span>
-                      <span className="fhelp">kept {new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                      <span className="fhelp">Notes shelf / {activeNote.title || 'Untitled Note'}</span>
+                      <span className="fhelp">Kept {new Date(activeNote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                     </div>
 
-                    <div style={{ position: 'relative', marginTop: 26, padding: '6px 0 6px 26px', borderLeft: '2px solid var(--acc-buttercream)' }}>
+                    <div className="kf-page" style={{ position: 'relative', marginTop: 26, padding: '22px 26px 22px 30px', background: 'var(--bg-page)', border: '1px solid var(--border-page)', borderRadius: 'var(--radius-page)', boxShadow: 'var(--shadow-page)' }}>
                       <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', left: -30, top: -16, height: 44, opacity: 0.35, transform: 'rotate(-14deg)' }} />
                       
                       {editingId === activeNote.id ? (
@@ -1178,14 +1147,13 @@ export function LibraryPage() {
                     </div>
 
                     {/* Commentary */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0 6px' }}>
-                      <span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length} thought{commentaries.length === 1 ? '' : 's'}</span>
-                      <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-                    </div>
+                    <SectionLabel style={{ margin: '26px 0 6px' }}>
+                      <span style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length} thought{commentaries.length === 1 ? '' : 's'}</span>
+                    </SectionLabel>
 
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {commentaries.map((c) => (
-                        <div key={c.id} style={{ display: 'flex', gap: 14, padding: '13px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                        <div key={c.id} style={{ display: 'flex', gap: 14, padding: '13px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
                           <span className="fhelp" style={{ width: 70, flex: 'none', paddingTop: 2 }}>
                             {new Date(c.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                           </span>
@@ -1199,9 +1167,9 @@ export function LibraryPage() {
                         value={newThoughtText}
                         onChange={(e) => setNewThoughtText(e.target.value)}
                         placeholder="add a thought to this over time…"
-                        style={{ flex: 1, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontSize: '13px', color: 'var(--ink-body)', outline: 'none' }}
+                        style={{ flex: 1, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '10px 13px', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', outline: 'none' }}
                       />
-                      <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', padding: '9px 17px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Add</button>
+                      <Button onClick={handleAddThought}>Add</Button>
                     </div>
                     
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
@@ -1214,13 +1182,13 @@ export function LibraryPage() {
                   <div style={{ flex: 1, minWidth: 0, maxWidth: 720, padding: '30px 40px 40px 6px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                       {/* Only a source that's stored — no invented "commonplace" (Kai 2026-10-12: Library shows true data). */}
-                      <span className="fhelp">Quotes Shelf{activeQuote.source ? ` / from ${activeQuote.source}` : ''}</span>
+                      <span className="fhelp">Quotes shelf{activeQuote.source ? ` / from ${activeQuote.source}` : ''}</span>
                       {/* WB-4 punch 9: "· resurfaced twice" was a design literal — no resurface
                           count is stored for a quote. The kept-date beside it is real. */}
-                      <span className="fhelp">kept {new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
+                      <span className="fhelp">Kept {new Date(activeQuote.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</span>
                     </div>
 
-                    <div style={{ position: 'relative', marginTop: 26, padding: '6px 0 6px 26px', borderLeft: '2px solid var(--acc-buttercream)' }}>
+                    <div className="kf-page" style={{ position: 'relative', marginTop: 26, padding: '22px 26px 22px 30px', background: 'var(--bg-page)', border: '1px solid var(--border-page)', borderRadius: 'var(--radius-page)', boxShadow: 'var(--shadow-page)' }}>
                       <img src="/ds/assets/cherry/fallen.png" alt="" style={{ position: 'absolute', left: -30, top: -16, height: 44, opacity: 0.35, transform: 'rotate(-14deg)' }} />
                       
                       
@@ -1251,14 +1219,13 @@ export function LibraryPage() {
                         flags a quote from chat, so the honest render is nothing at all. */}
 
                     {/* Commentary */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0 6px' }}>
-                      <span className="flabel" style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length} thought{commentaries.length === 1 ? '' : 's'}</span>
-                      <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-                    </div>
+                    <SectionLabel style={{ margin: '26px 0 6px' }}>
+                      <span style={{ color: 'var(--acc-buttercream-text)' }}>Commentary · {commentaries.length} thought{commentaries.length === 1 ? '' : 's'}</span>
+                    </SectionLabel>
 
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       {commentaries.map((c) => (
-                        <div key={c.id} style={{ display: 'flex', gap: 14, padding: '13px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+                        <div key={c.id} style={{ display: 'flex', gap: 14, padding: '13px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
                           <span className="fhelp" style={{ width: 70, flex: 'none', paddingTop: 2 }}>
                             {new Date(c.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}
                           </span>
@@ -1272,9 +1239,9 @@ export function LibraryPage() {
                         value={newThoughtText}
                         onChange={(e) => setNewThoughtText(e.target.value)}
                         placeholder="add a thought to this over time…"
-                        style={{ flex: 1, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontSize: '13px', color: 'var(--ink-body)', outline: 'none' }}
+                        style={{ flex: 1, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '10px 13px', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', outline: 'none' }}
                       />
-                      <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 'var(--fs-caption)', padding: '9px 17px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Add</button>
+                      <Button onClick={handleAddThought}>Add</Button>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 20 }}>
@@ -1285,8 +1252,8 @@ export function LibraryPage() {
                 ) : (
                   <div style={{ padding: '52px 40px', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
                     <img src="/ds/assets/fern/coil.png" alt="" style={{ height: 56, opacity: 0.7, filter: 'var(--shadow-drop-sm)' }} />
-                    <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>The shelf is bare — quotes and notes you keep will gather here.</div>
-                    <button onClick={() => { setSearchParams({ tab: 'books' }); setShowNewBookForm(true) }} className="kf-lift" style={{ marginTop: 18, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 'var(--fs-body-s)', padding: '10px 20px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>+ Plant a book</button>
+                    <div style={{ marginTop: 18, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>The shelf is bare — quotes and notes you keep will gather here.</div>
+                    <Button onClick={() => { setSearchParams({ tab: 'books' }); setShowNewBookForm(true) }} style={{ marginTop: 18 }}>+ Plant a book</Button>
                   </div>
                 )}
               </>

@@ -41,7 +41,7 @@ const SAMPLE: Task[] = [
   task('demo-5', 'Buy milk'),
 ]
 
-const metaStyle = { marginTop: 4, display: 'flex', flexWrap: 'wrap', columnGap: 12, rowGap: 2, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' } as const
+const metaStyle = { marginTop: 4, display: 'flex', flexWrap: 'wrap', columnGap: 12, rowGap: 2, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' } as const
 
 function dueWord(iso: string): string {
   const key = cairoDateKey(new Date(iso))
@@ -64,7 +64,7 @@ function DemoRow({ t, selected, selecting, onToggleSelect, actions, onComplete }
         e.stopPropagation()
         onToggleSelect()
       }}
-      style={{ borderBottom: '1px dashed var(--line-dashed)', background: selected || g.menuOpen ? 'var(--select-bg)' : undefined }}
+      style={{ borderBottom: '1px solid var(--line-dashed)', background: selected || g.menuOpen ? 'var(--select-bg)' : undefined }}
       contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 2px' }}
       {...g.swipeProps}
       overlay={g.menuNode}

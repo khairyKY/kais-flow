@@ -190,16 +190,3 @@
 }
 .app-shell.motion-on .fp-scrim-in { animation: fpFadeIn 210ms var(--ease-out); }
 .app-shell.motion-on .fp-card-in { animation: entryFadeUp 210ms var(--ease-out); }
-
-/* Washi tape style for custom settings popover */
-.washi-tape-settings {
-  position: absolute;
-  top: -9px;
-  left: 30px;
-  width: 52px;
-  height: 16px;
-  background: color-mix(in srgb, var(--acc-sage) 40%, transparent);
-  background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0 4px, transparent 4px 8px);
-  transform: rotate(-2deg);
-  border-radius: 1px;
-}

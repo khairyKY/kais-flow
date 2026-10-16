@@ -18,8 +18,9 @@ export const NARROW_COL_W = 170
 /** The narrowest a day column gets before the grid scrolls sideways instead: an 11px one-line
  * title and a start time still read here. */
 export const MIN_COL_W = 80
-/** `.cal-main` side padding (22 × 2) + the grid card's 1px border each side. */
-export const GRID_CHROME_W = 46
+/** `.cal-main` side padding + the grid card's border: none since the grid runs edge to edge
+ * (Kai 2026-10-14, "I don't want any wasted spaces"; was 22 × 2 + 2). */
+export const GRID_CHROME_W = 0
 /** `.cal-railsplit`, the resize handle between the rail and the grid. */
 export const RAIL_SPLIT_W = 7
 /** The folded rail: a strip holding the round show button and its "Unscheduled · N" label. */

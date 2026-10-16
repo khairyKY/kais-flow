@@ -93,7 +93,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
         role="dialog"
         aria-modal="true"
         aria-label="More"
-        style={{ width: '100%', background: 'var(--paper-parchment)', borderTop: '1px solid var(--line-card)', borderRadius: '14px 14px 0 0', boxShadow: 'var(--shadow-card)', padding: '18px 16px calc(18px + env(safe-area-inset-bottom))' }}
+        style={{ width: '100%', background: 'var(--paper-parchment)', borderTop: '1px solid var(--line-card)', borderRadius: 'var(--sheet-radius) var(--sheet-radius) 0 0', boxShadow: 'var(--shadow-sheet)', padding: '18px 16px calc(18px + env(safe-area-inset-bottom))' }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Three columns where three fit, two where they don't (the export's caption for this
@@ -108,7 +108,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
               key={item.to}
               to={item.to}
               onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, minHeight: 48, boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '11px 13px', textDecoration: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, minHeight: 48, boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '11px 13px', textDecoration: 'none' }}
             >
               {item.img && <img src={item.img} alt="" style={{ height: item.imgHeight }} />}
               {item.dot && <span style={{ width: 9, height: 9, borderRadius: '50%', background: `var(${item.dot})`, flex: 'none' }} />}
@@ -122,7 +122,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
           ))}
         </div>
         {/* 48px rows and buttons (Kai's phone review: ~40 / ~20px tall before) */}
-        <div style={{ display: 'flex', gap: 16, marginTop: 8, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)' }}>
+        <div style={{ display: 'flex', gap: 16, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line-dashed)' }}>
           <button type="button" onClick={() => { onClose(); onSearch() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>⌕ Search</button>
           <button type="button" onClick={() => { onClose(); onChat() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Chat</button>
           <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-faint)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Sign out</button>

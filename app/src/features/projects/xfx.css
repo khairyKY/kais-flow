@@ -36,16 +36,7 @@
    `both`, so the finished animation stops pinning transform/opacity — the hover transition
    works, and no retained transform turns the row into a containing block for fixed
    popovers (Kai audit B1 ruling). */
-.kf-lift.kf-stagger-item,
-.kf-lift-tilt.kf-stagger-item { animation-fill-mode: backwards; }
-
-/* Same pair for washi/tilt cards — keeps the pasted-in rotation through hover/press.
-   Set `--kf-tilt` inline on the element. */
-.kf-lift-tilt { transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); transform: rotate(var(--kf-tilt, 0deg)); }
-@media (hover: hover) {
-  .kf-lift-tilt:hover { transform: rotate(var(--kf-tilt, 0deg)) translateY(-1px); box-shadow: var(--shadow-card); }
-}
-.kf-lift-tilt:active { transform: rotate(var(--kf-tilt, 0deg)) scale(0.97); transition-duration: 80ms; }
+.kf-lift.kf-stagger-item { animation-fill-mode: backwards; }
 
 /* Effects 1e — bloom glow: one gold radial breath behind the plant at 100%.
    3.6s ease-in-out, ≤0.5 alpha, never on more than one plant at once (enforced in JS). */
@@ -106,3 +97,27 @@
 .kf-lift:hover .pj-more, .pj-more:focus-visible { opacity: 1; }
 .pj-more:hover { background: var(--paper-bone); color: var(--ink-body); }
 @media (hover: none), (pointer: coarse) { .pj-more { opacity: 1; } }
+
+/* Bound Journal (Kai 2026-10-14, D5): the one typewriter left — a date or kind stamp on a page
+   (journal entries, notes, quotes, herbarium specimens). Never on a tool. Was .kf-stamp in bound.css. */
+.kf-stamp { font-family: var(--font-stamp); font-size: var(--fs-mono); letter-spacing: var(--ls-stamp); text-transform: uppercase; color: var(--ink-faint); }
+
+/* Bound Journal (D1/D7): a PAGE — what you write and keep (the goal of the day, journal entries,
+   notes, quotes, the notebook, herbarium specimens, the kit's TapeCard) — is near-square and carries
+   the paper grain; the app canvas has none. The Settings "paper texture" slider (--kf-grain-opacity,
+   default 0.5) sets how much a page carries; --grain-page is 0 at night. Was rule 4 of bound.css. */
+.kf-page,
+.kf-page[style] {
+  position: relative;
+  border-radius: var(--radius-page) !important;
+}
+.kf-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--noise-url);
+  opacity: calc(var(--kf-grain-opacity, 0.5) * 2 * var(--grain-page, 1));
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}

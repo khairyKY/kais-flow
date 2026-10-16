@@ -3,13 +3,14 @@ import { Navigate, useLocation, useNavigate } from 'react-router'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Icon } from '../../components/Icon'
 import { Button, Checkbox, Star } from '../../components/kit'
+import { EmojiText } from '../../components/EmojiText'
 import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { EmptyState, OfflineChip } from '../../components/States'
 import { TimePicker } from '../../components/TimePicker'
 import { useOutboxMarks } from '../../lib/outbox'
 import { useOnline } from '../../lib/useOnline'
 import type { Task } from '../../lib/types'
-import { deleteEventWithUndo, moveEventWithUndo, scheduleTask, useCalendarEvents } from '../calendar/api'
+import { deleteEventWithUndo, moveEventWithUndo, outOfSlotWithUndo, scheduleTask, slotTitleOf, useCalendarEvents } from '../calendar/api'
 import { cairoToIso } from '../calendar/eventTime'
 import { eventSpan } from '../calendar/phoneGridMath'
 import { useFocusStore } from '../focus/focusStore'
@@ -21,6 +22,7 @@ import { PhotoSource, SubtaskList, TaskChips, TaskMoreMenu, useTaskControls } fr
 import { TaskPopover } from './TaskPopover'
 import { blockLine, createdLine, dayWord, doneLine, dueChip, nextDates, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
 import { useTaskDraft } from './useTaskDraft'
+import { subtasksOf } from './subtasks'
 import '../../components/pickers.css'
 import './taskSheet.css'
 
@@ -135,14 +137,16 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
   const done = t.status === 'done' || !!t.completed_at
   const block = events.find((e) => e.task_id === t.id)
   const span = block && eventSpan(block)
-  const subs = t.parent_task_id ? null : tasks.filter((c) => c.parent_task_id === t.id)
+  const subs = t.parent_task_id ? null : subtasksOf(tasks, t.id)
   const pendingOffline = !online && pending.has(t.id)
   const line = saveLine(t, saved?.at ?? null, now, pendingOffline)
   const recurring = !!t.recurrence_rule && !!t.due_at
   const next = recurring && !done ? nextDates(t.recurrence_rule!, t.due_at!) : null
   const link = taskLink(t) // a filed GitHub issue (P6 step 4) or a captured page (P7e A19)
   const dur = t.duration_min || 30
-  const suggestion = block || done ? null : suggestTimes(events, t.due_at, now, dur)
+  // In a Time slot (0073): the slot's own card, and the way out of it, in place of free times.
+  const slot = !block && t.scheduled_start && t.scheduled_end ? slotTitleOf(t) : null
+  const suggestion = block || done || slot ? null : suggestTimes(events, t.due_at, now, dur)
   const meta = [place, t.duration_min ? durationLabel(t.duration_min) : null, t.due_at ? dueChip(t.due_at, now) : null].filter(Boolean).join(' · ')
 
   return (
@@ -211,6 +215,17 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
           )}
 
           <TaskChips task={t} controls={controls} ringed={pendingOffline ? saved?.field : null} now={now} />
+          {slot && (
+            // slots-ux (Kai 2026-10-16, "how do I remove a task from the time slot"): opened from a held
+            // row, the sheet says first where it is, and the way out — back to the rail, with Undo.
+            <div className="ts-block is-slot">
+              <b>In <EmojiText text={slot} /></b>
+              <small>{blockLine({ starts_at: t.scheduled_start!, ends_at: t.scheduled_end! }, now)}</small>
+              <div className="ts-block-acts">
+                <Button variant="ghost" icon={<Icon name="close" size={20} />} onClick={() => edit('schedule', () => outOfSlotWithUndo(t))}>Out of the slot</Button>
+              </div>
+            </div>
+          )}
           {next && (
             <div className="ts-next">
               <Icon name="repeat" size={16} />

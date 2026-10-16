@@ -6,17 +6,16 @@
 /* Full-bleed inside the kit sheet's 20px body padding: rows run edge to edge, sections pad 16. */
 .rt-phone { margin: 0 -20px; padding-bottom: var(--sp-4); }
 
-.rt-mono, .rt-label, .rt-link, .rt-meta, .rt-past-date {
+.rt-mono, .rt-link, .rt-meta, .rt-past-date {
   font-family: var(--font-mono);
-  text-transform: uppercase;
 }
-.rt-mono { font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
+.rt-mono { font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 
-/* Section label: mono 12.5, dashed rule, link + chevron in a 48 hit. */
+/* Section label (B D6): 14 semibold ink, sentence case, no rule after it; link + chevron in a 48 hit. */
 .rt-sec { display: flex; align-items: center; gap: var(--sp-3); min-height: var(--touch-min); padding: var(--sp-2) var(--gutter-phone) 0; }
 .rt-sec.is-first { padding-top: var(--sp-1); }
-.rt-label { font-size: var(--fs-meta-l); letter-spacing: 0.07em; color: var(--ink-faint); white-space: nowrap; }
-.rt-rule { flex: 1; border-bottom: 1px dashed var(--line-dashed); }
+.rt-label { font-size: var(--fs-section); font-weight: var(--fw-semibold); color: var(--ink-body); white-space: nowrap; }
+.rt-rule { flex: 1; }
 .rt-link {
   height: var(--touch-min);
   display: flex;
@@ -25,10 +24,10 @@
   padding: 0 var(--sp-1) 0 var(--sp-2);
   margin-right: calc(-1 * var(--sp-1));
   border: none;
-  border-radius: var(--radius-sharp);
+  border-radius: var(--radius-input);
   background: none;
   font-size: var(--fs-meta-l);
-  letter-spacing: 0.06em;
+  letter-spacing: var(--ls-meta);
   color: var(--ink-muted);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -53,15 +52,15 @@
 }
 .rt-icon:active { background: var(--pressed-overlay); }
 
-/* Kit task row: [lead 48][body][trail], min-h 56, padding 4, dashed hairline under. */
-.rt-row { border-bottom: 1px dashed var(--line-dashed); }
+/* Kit task row: [lead 48][body][trail], min-h 56, padding 4, a solid hairline under (B D8). */
+.rt-row { border-bottom: 1px solid var(--line-dashed); }
 .rt-row .kf-swipe-fg { background: var(--paper-parchment); }
 .rt-row-main { display: flex; align-items: flex-start; min-height: var(--row-min); padding: var(--sp-1); box-sizing: border-box; }
 .rt-hit { width: var(--touch-min); height: var(--touch-min); flex: none; display: flex; align-items: center; justify-content: center; }
 .rt-body { flex: 1; min-width: 0; padding: 14px var(--sp-1) var(--sp-3) 0; cursor: pointer; }
 .rt-title { font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); text-wrap: pretty; }
 .rt-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
-.rt-meta { margin-top: var(--sp-1); display: flex; flex-wrap: wrap; column-gap: var(--sp-3); row-gap: 2px; font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
+.rt-meta { margin-top: var(--sp-1); display: flex; flex-wrap: wrap; column-gap: var(--sp-3); row-gap: 2px; font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .rt-meta > span { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; max-width: 100%; }
 /* UI pass: a long project name wraps inside the body instead of running under the row's Tomorrow button. */
 .rt-meta > span:has(.rt-dot) { white-space: normal; }
@@ -79,9 +78,9 @@
 .rt-below { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-1); padding: 0 var(--sp-1) var(--sp-2) var(--sp-3); margin-top: -6px; }
 .rt-drop.kf-button--ghost { color: var(--acc-terra-ink); }
 
-/* Kit Segmented. */
+/* Kit Segmented — B D12: a 3:1 edge on no track, body ink; the chosen one ink-filled. */
 .rt-seg-row { height: var(--touch-min); display: flex; align-items: center; flex: none; min-width: 0; }
-.rt-seg { display: flex; align-items: center; padding: 3px; border: 1px solid var(--line-control); border-radius: var(--radius-pill); background: var(--paper-bone); }
+.rt-seg { display: flex; align-items: center; padding: 3px; border: 1px solid var(--line-control); border-radius: var(--radius-pill); background: none; }
 .rt-seg-opt {
   display: flex;
   align-items: center;
@@ -96,15 +95,15 @@
   font-size: 14px;
   font-weight: var(--fw-medium);
   white-space: nowrap;
-  color: var(--ink-muted);
+  color: var(--ink-body);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
 }
 .rt-seg-opt:active { background-image: linear-gradient(var(--pressed-overlay), var(--pressed-overlay)); }
-.rt-seg-opt[aria-checked='true'] { padding: 0 10px; background: var(--block-sage); color: var(--acc-sage-text); font-weight: var(--fw-semibold); }
+.rt-seg-opt[aria-checked='true'] { background: var(--sel-bg); color: var(--sel-ink); font-weight: var(--fw-semibold); }
 
 /* Inbox row (ruling 7): text, capture meta, project chip · Dismiss · File. */
-.rt-inbox { border-bottom: 1px dashed var(--line-dashed); padding: var(--sp-3) var(--sp-3) 6px var(--gutter-phone); }
+.rt-inbox { border-bottom: 1px solid var(--line-dashed); padding: var(--sp-3) var(--sp-3) 6px var(--gutter-phone); }
 .rt-inbox-acts { display: flex; align-items: center; gap: var(--sp-1); margin-top: 2px; }
 .rt-inbox-acts > .rt-chip-slot { flex: 1; min-width: 0; height: var(--touch-min); display: flex; align-items: center; }
 
@@ -118,7 +117,7 @@
   box-sizing: border-box;
   padding: 0 var(--sp-3) 0 14px;
   border: 1px solid var(--line-control);
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   background: var(--paper-bone);
   font: inherit;
   font-size: 15px;
@@ -135,13 +134,13 @@
 
 /* Suggested times: the 09–18 mini timeline + legend (ruling 5). */
 .rt-tl { padding: 6px var(--gutter-phone) 10px; }
-.rt-tl-bar { position: relative; height: 38px; background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: var(--radius-sharp); overflow: hidden; }
-.rt-tl-tick { position: absolute; top: 0; bottom: 0; border-left: 1px dashed var(--line-dashed); }
+.rt-tl-bar { position: relative; height: 38px; background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: var(--radius-input); overflow: hidden; }
+.rt-tl-tick { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line-dashed); }
 .rt-tl-b { position: absolute; top: 5px; bottom: 5px; box-sizing: border-box; border-radius: 2px; }
 .rt-tl-hours { position: relative; height: 18px; margin-top: 6px; }
-.rt-tl-hours > span { position: absolute; top: 0; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.04em; color: var(--ink-faint); }
+.rt-tl-hours > span { position: absolute; top: 0; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .rt-legend { display: flex; flex-wrap: wrap; gap: var(--sp-4); margin-top: var(--sp-2); }
-.rt-legend > span { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
+.rt-legend > span { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .rt-sw { width: 16px; height: 12px; flex: none; box-sizing: border-box; border-radius: 2px; }
 .rt-k-event { background: var(--block-lavender); box-shadow: inset 0 0 0 1px var(--acc-lavender); }
 .rt-k-suggested { border: 1.5px dashed var(--acc-sage-text); }
@@ -149,7 +148,7 @@
 .rt-k-changing { border: 2px solid var(--focus); }
 .rt-warn { display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--gutter-phone) var(--sp-1); font-size: 14px; line-height: 20px; color: var(--sig-amber); }
 
-.rt-trow { display: flex; align-items: center; gap: var(--sp-2); min-height: 64px; padding: 6px var(--sp-1) 6px var(--gutter-phone); box-sizing: border-box; border-bottom: 1px dashed var(--line-dashed); }
+.rt-trow { display: flex; align-items: center; gap: var(--sp-2); min-height: 64px; padding: 6px var(--sp-1) 6px var(--gutter-phone); box-sizing: border-box; border-bottom: 1px solid var(--line-dashed); }
 .rt-pill {
   display: inline-flex;
   align-items: center;
@@ -182,12 +181,15 @@
 /* Shut down: One line (ruling 3), seed rows (ruling 2), the seedling, the summary (ruling 5). */
 .rt-line { padding: 0 var(--gutter-phone) var(--sp-2); }
 .rt-past { display: flex; align-items: baseline; gap: var(--sp-3); }
-.rt-past-date { width: 52px; flex: none; font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
+.rt-past-date { width: 52px; flex: none; font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+/* Caveat stays only for what you wrote in your journal (B D7: handwriting lives on pages; these are its
+   lines). The ritual's own asides are the interface face (.rt-note). */
 .rt-hand { font-family: var(--font-hand); font-size: 18px; line-height: 1.3; color: var(--ink-faint); }
 .rt-hand.is-mine { font-size: 20px; color: var(--ink-hand); }
+.rt-note { font-size: var(--fs-body-s); line-height: 1.4; color: var(--ink-muted); }
 .rt-line-form { display: flex; align-items: center; gap: var(--sp-2); margin-top: 10px; }
-.rt-saved { margin-top: 2px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }
-.rt-seedrow { display: flex; align-items: flex-start; min-height: var(--row-min); padding: var(--sp-1) var(--gutter-phone) var(--sp-1) var(--sp-1); box-sizing: border-box; border-bottom: 1px dashed var(--line-dashed); }
+.rt-saved { margin-top: 2px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--acc-sage-text); }
+.rt-seedrow { display: flex; align-items: flex-start; min-height: var(--row-min); padding: var(--sp-1) var(--gutter-phone) var(--sp-1) var(--sp-1); box-sizing: border-box; border-bottom: 1px solid var(--line-dashed); }
 .rt-seedrow .rt-body { cursor: default; }
 .rt-planted { display: flex; align-items: center; gap: var(--sp-3); padding: 14px var(--gutter-phone) var(--sp-1); }
 .rt-planted img { width: 36px; height: auto; flex: none; filter: var(--shadow-drop-sm); }
@@ -210,14 +212,14 @@
   flex-direction: column;
   overflow: hidden;
   background: var(--paper-parchment);
-  border-radius: 8px;
+  border-radius: var(--sheet-radius); /* B D3: a panel is the sheet's desktop form, 20 */
   box-shadow: var(--shadow-popover);
 }
 .rt-desk-head { display: flex; align-items: center; gap: var(--sp-1); padding: var(--sp-4) var(--sp-3) var(--sp-1) 28px; flex: none; }
 .rt-desk-title { font-family: var(--font-display); font-size: 26px; font-weight: var(--fw-medium); line-height: 1.15; color: var(--ink-body); }
 .rt-desk-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: var(--sp-1) var(--sp-3) var(--sp-3); overflow-y: auto; align-items: start; }
 .rt-desk-cols > div > .rt-sec:first-child { padding-top: 0; }
-.rt-desk-foot { flex: none; display: flex; align-items: center; gap: var(--sp-6); padding: 14px var(--sp-5) var(--sp-4) 28px; border-top: 1px dashed var(--line-dashed); }
+.rt-desk-foot { flex: none; display: flex; align-items: center; gap: var(--sp-6); padding: 14px var(--sp-5) var(--sp-4) 28px; border-top: 1px solid var(--line-dashed); }
 .rt-desk .rt-summary { grid-column: 1 / -1; min-height: 480px; }
 /* The kit's phone sizes (kit.css, max-width 767px) — Plan ruling 8 keeps them on desktop. */
 .rt-desk .kf-button { min-height: var(--touch-min); justify-content: center; gap: var(--sp-2); font-size: 15px; font-weight: var(--fw-medium); }
@@ -225,4 +227,4 @@
 .rt-desk .kf-button--secondary { padding: 0 18px; box-shadow: none; }
 .rt-desk .kf-button--ghost { padding: 0 14px; }
 .rt-desk .kf-chip { display: inline-flex; align-items: center; gap: 6px; height: var(--sp-8); box-sizing: border-box; padding: 0 var(--sp-3); }
-.rt-desk .kf-checkbox { width: 22px !important; height: 22px !important; border-radius: 6px !important; }
+.rt-desk .kf-checkbox { width: 22px !important; height: 22px !important; border-radius: var(--radius-check) !important; }

@@ -334,6 +334,41 @@ call "restore_from_trash the timed one" "$KA" restore_from_trash '{type: "task",
 expect "logged" "task.restored/mcp" "$(logs)"
 expect "back, its blocks with it" "true 2" "$(sql -c "select (select deleted_at is null from tasks where id = '$TT') || ' ' || (select count(*) from calendar_events where task_id = '$TT' and deleted_at is null)")"
 
+section "subtasks: ticking a parent (Kai 2026-10-16, 4 C), a repeat carries them on, Trash takes them along"
+call "add_task 'Full parent'" "$KA" add_task '{title: "Full parent", due: "2028-01-18"}'
+export TPA; TPA=$(j .added.id)
+call "add_task its subtask 'Full sub 1'" "$KA" add_task '{title: "Full sub 1", parent_id: env.TPA}'
+export TS1; TS1=$(j .added.id)
+call "add_task its subtask 'Full sub 2'" "$KA" add_task '{title: "Full sub 2", parent_id: env.TPA}'
+export TS2; TS2=$(j .added.id)
+parent_rows() { sql -c "select concat_ws(' ', (select status from tasks where id = '$TPA'), (select status from tasks where id = '$TS1'), (select status from tasks where id = '$TS2'))"; }
+call "complete_task the parent: by default its subtasks are left open" "$KA" complete_task '{id: env.TPA}'
+expect "the answer says so" "left its 2 subtasks open: Full sub 1; Full sub 2 (subtasks: 'complete' ticks them)" "$(j .subtasks)"
+expect "rows: the parent done, the two open" "done todo todo" "$(parent_rows)"
+expect "logged: the parent only" "task.completed/mcp" "$(logs)"
+call "reopen it" "$KA" reopen_task '{id: env.TPA}'
+call "complete_task subtasks: complete" "$KA" complete_task '{id: env.TPA, subtasks: "complete"}'
+expect "the answer says so" "ticked its 2 subtasks still open too: Full sub 1; Full sub 2" "$(j .subtasks)"
+expect "rows: all three done" "done done done" "$(parent_rows)"
+expect "logged: each one" "task.completed/mcp task.completed/mcp task.completed/mcp" "$(logs)"
+refused "an unknown choice" "$KA" complete_task '{id: env.TS1, subtasks: "all"}' 'must be one of: leave, complete'
+call "add_task 'Full daily' (a repeat)" "$KA" add_task '{title: "Full daily", due: "2028-01-18", repeat: "FREQ=DAILY"}'
+export TR; TR=$(j .added.id)
+call "add_task its subtask 'Full daily step'" "$KA" add_task '{title: "Full daily step", parent_id: env.TR}'
+export TRS; TRS=$(j .added.id)
+call "tick the step" "$KA" complete_task '{id: env.TRS}'
+call "complete_task the repeating parent" "$KA" complete_task '{id: env.TR, subtasks: "complete"}'
+export TRN; TRN=$(j .next.id)
+expect "the answer says the step went on with the series" "its 1 subtask went with it to the next occurrence, open again" "$(j .subtasks)"
+expect "row: under the next copy, open again" "$TRN todo -" "$(sql -c "select concat_ws(' ', parent_task_id, status, coalesce(completed_at::text, '-')) from tasks where id = '$TRS'")"
+expect "logged" "task.completed/mcp task.created/mcp task.reopened/mcp" "$(logs)"
+call "move_to_trash the parent" "$KA" move_to_trash '{type: "task", id: env.TPA}'
+expect "its subtasks go with it" "2" "$(j .trashed.with_subtasks)"
+expect "all three in Trash, at one instant" "3 1" "$(sql -c "select count(*) || ' ' || count(distinct deleted_at) from tasks where id in ('$TPA', '$TS1', '$TS2') and deleted_at is not null")"
+expect "logged" "task.deleted/mcp task.deleted/mcp task.deleted/mcp" "$(logs)"
+call "restore_from_trash the parent" "$KA" restore_from_trash '{type: "task", id: env.TPA}'
+expect "its subtasks come back with it" "2 0" "$(j .restored.with_subtasks) $(sql -c "select count(*) from tasks where id in ('$TPA', '$TS1', '$TS2') and deleted_at is not null")"
+
 section "Time slots: a task into a Time block; the block moved and deleted"
 call "add_event: a Time block 2028-01-18 10:00–12:00, reminding 10 min before" "$KA" add_event '{title: "Full slot", start: "2028-01-18T10:00", end: "2028-01-18T12:00", kind: "time_block", remind_min: 10}'
 export SL; SL=$(j .added.id)
@@ -351,6 +386,47 @@ expect "the reminder kept" "10" "$(sql -c "select remind_min from calendar_event
 call "delete_event: the slot" "$KA" delete_event '{id: env.SL}'
 expect "changed" "the event moved to Trash | 1 task it held is back unscheduled" "$(changed)"
 expect "the task is out of it, unscheduled" "- - -" "$(sql -c "select concat_ws(' ', coalesce(slot_id::text, '-'), coalesce(slot_date::text, '-'), coalesce(scheduled_start::text, '-')) from tasks where id = '$TB2'")"
+
+section "Time slots: a repeat, kind or all-day change re-homes the tasks (the app's rule, _shared/slots.ts)"
+held() { sql -c "select concat_ws(' ', coalesce(slot_id::text, '-'), coalesce(slot_date::text, '-'), coalesce(scheduled_start::text, '-')) from tasks where id = '$1'"; }
+call "add_event: a daily Time block from Mon 2028-01-17, 10:00–12:00" "$KA" add_event '{title: "Full daily slot", start: "2028-01-17T10:00", end: "2028-01-17T12:00", kind: "time_block", repeat: "FREQ=DAILY"}'
+export RS; RS=$(j .added.id)
+call "add_task 'Full held Mon'" "$KA" add_task '{title: "Full held Mon"}'
+export HM; HM=$(j .added.id)
+call "add_task 'Full held Tue'" "$KA" add_task '{title: "Full held Tue"}'
+export HT; HT=$(j .added.id)
+call "add_task 'Full held Wed'" "$KA" add_task '{title: "Full held Wed"}'
+export HW; HW=$(j .added.id)
+call "edit_task: Mon's into Monday's" "$KA" edit_task '{id: env.HM, slot_id: env.RS, slot_occurrence: "2028-01-17T10:00"}'
+call "edit_task: Tue's into Tuesday's" "$KA" edit_task '{id: env.HT, slot_id: env.RS, slot_occurrence: "2028-01-18T10:00"}'
+call "edit_task: Wed's into Wednesday's" "$KA" edit_task '{id: env.HW, slot_id: env.RS, slot_occurrence: "2028-01-19T10:00"}'
+call "edit_event: the series to 13:00" "$KA" edit_event '{id: env.RS, start: "2028-01-17T13:00"}'
+expect "changed" "time → 13:00–15:00, every occurrence | 3 tasks in it moved with it" "$(changed)"
+expect "logged" "calendar_event.updated/mcp task.scheduled/mcp task.scheduled/mcp task.scheduled/mcp" "$(logs)"
+expect "each kept its day, at the new time" "$RS 2028-01-17 2028-01-17 11:00:00+00 | $RS 2028-01-18 2028-01-18 11:00:00+00 | $RS 2028-01-19 2028-01-19 11:00:00+00" \
+  "$(held "$HM") | $(held "$HT") | $(held "$HW")"
+call "edit_event: repeat Mondays and Wednesdays" "$KA" edit_event '{id: env.RS, repeat: "FREQ=WEEKLY;BYDAY=MO,WE"}'
+expect "changed" "repeats FREQ=WEEKLY;BYDAY=MO,WE | 1 task it held is back unscheduled" "$(changed)"
+expect "logged" "calendar_event.updated/mcp task.unscheduled/mcp" "$(logs)"
+expect "Tuesday's out, unscheduled; Monday's and Wednesday's stay" "$RS 2028-01-17 2028-01-17 11:00:00+00 | - - - | $RS 2028-01-19 2028-01-19 11:00:00+00" \
+  "$(held "$HM") | $(held "$HT") | $(held "$HW")"
+call "edit_event: repeat null (its first occurrence only)" "$KA" edit_event '{id: env.RS, repeat: null}'
+expect "changed" "no longer repeats | 1 task it held is back unscheduled" "$(changed)"
+expect "Wednesday's out; Monday's stays" "$RS 2028-01-17 2028-01-17 11:00:00+00 | - - -" "$(held "$HM") | $(held "$HW")"
+call "calendar 2028-01-17..19" "$KA" calendar '{from: "2028-01-17", to: "2028-01-19"}'
+expect "one slot left, holding Monday's" "1 Full held Mon" "$(j "\"\([.events[] | select(.id == \"$RS\")] | length) \([.events[] | select(.id == \"$RS\") | .tasks[]?.title] | join(\",\"))\"")"
+call "edit_event: the slot to all-day" "$KA" edit_event '{id: env.RS, start: "2028-01-17"}'
+expect "changed" "time → 2028-01-17 | 1 task it held is back unscheduled" "$(changed)"
+expect "logged" "calendar_event.updated/mcp task.unscheduled/mcp" "$(logs)"
+expect "Monday's out, unscheduled" "- - -" "$(held "$HM")"
+call "add_event: a Time block Thu 2028-01-20 10:00–12:00" "$KA" add_event '{title: "Full kind slot", start: "2028-01-20T10:00", end: "2028-01-20T12:00", kind: "time_block"}'
+export KS; KS=$(j .added.id)
+call "edit_task: Tue's into it" "$KA" edit_task '{id: env.HT, slot_id: env.KS}'
+expect "in it" "$KS 2028-01-20 2028-01-20 08:00:00+00" "$(held "$HT")"
+call "edit_event: kind → event" "$KA" edit_event '{id: env.KS, kind: "event"}'
+expect "changed" "kind → event | 1 task it held is back unscheduled" "$(changed)"
+expect "logged" "calendar_event.updated/mcp task.unscheduled/mcp" "$(logs)"
+expect "out, unscheduled; the row an event" "- - - event" "$(held "$HT") $(sql -c "select type from calendar_events where id = '$KS'")"
 
 # ---------------------------------------------------------------------------------------------
 section "the Inbox: list, file as a task / event / note, triage"

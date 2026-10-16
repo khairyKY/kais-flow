@@ -85,10 +85,10 @@ describe('blockOf / blockMeta — the Top 3 row carries its block', () => {
     expect(blockOf('goal', DAY, at('15:00'))).toBeNull()
   })
   it('far off: range + length (2b)', () => {
-    expect(blockMeta(GOAL, at('09:40'))).toEqual(['13:30–15:00', '1H30M'])
+    expect(blockMeta(GOAL, at('09:40'))).toEqual(['13:30–15:00', '1h\u00a030m'])
   })
   it('within 30 minutes: starts in (2c)', () => {
-    expect(blockMeta(GOAL, at('13:10'))).toEqual(['13:30–15:00', 'starts in 20M'])
+    expect(blockMeta(GOAL, at('13:10'))).toEqual(['13:30–15:00', 'starts in 20m'])
   })
   it('running: Now (a Top 3 task that is also the slip keeps its row, marked)', () => {
     expect(blockMeta(GOAL, at('14:00'))).toEqual(['13:30–15:00', 'Now'])
@@ -97,10 +97,10 @@ describe('blockOf / blockMeta — the Top 3 row carries its block', () => {
 
 describe('eventMetas — ruling 5 rows', () => {
   it('the first still to come says how far off it is (2a)', () => {
-    expect(eventMetas([DEEP, CALL, GYM], at('07:40'))).toEqual([['1H30M', 'in 1H20M'], ['30M'], ['1H']])
+    expect(eventMetas([DEEP, CALL, GYM], at('07:40'))).toEqual([['1h\u00a030m', 'in 1h\u00a020m'], ['30m'], ['1h']])
   })
   it('a running row reads Now and the next one gets the countdown', () => {
-    expect(eventMetas([DEEP, CALL], at('09:40'))).toEqual([['1H30M', 'Now'], ['30M', 'in 5H20M']])
+    expect(eventMetas([DEEP, CALL], at('09:40'))).toEqual([['1h\u00a030m', 'Now'], ['30m', 'in 5h\u00a020m']])
   })
 })
 

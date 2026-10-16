@@ -16,6 +16,7 @@ import { ContextMenu } from '../../components/ContextMenu'
 import { Icon } from '../../components/Icon'
 import { useIsMobile } from '../../components/BottomSheet'
 import { Skeleton, ErrorCard } from '../../components/States'
+import { Button, SectionLabel } from '../../components/kit'
 import { useDayRollover } from '../calendar/useDayRollover'
 import type { Routine, RoutineCompletion, RoutinePlant } from '../../lib/types'
 
@@ -92,7 +93,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
         style={{
           width: 19,
           height: 19,
-          borderRadius: 6,
+          borderRadius: 'var(--radius-check)',
           display: 'inline-flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -131,7 +132,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
           className="kf-hit"
           aria-expanded={showSteps}
           onClick={() => setShowSteps((v) => !v)}
-          style={{ flex: 'none', padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          style={{ flex: 'none', padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', cursor: 'pointer', whiteSpace: 'nowrap' }}
         >
           {steps.length} {steps.length === 1 ? 'step' : 'steps'}
           {total > 0 && ` · ${total} min`} {showSteps ? '▾' : '▸'}
@@ -175,7 +176,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
 
   if (isMobile) {
     return (
-      <div onContextMenu={onContextMenu} style={{ borderBottom: '1px dashed var(--line-dashed)' }}>
+      <div onContextMenu={onContextMenu} style={{ borderBottom: '1px solid var(--line-dashed)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0' }}>
           {check}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -189,7 +190,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
     )
   }
   return (
-    <div onContextMenu={onContextMenu} style={{ borderBottom: '1px dashed var(--line-dashed)' }}>
+    <div onContextMenu={onContextMenu} style={{ borderBottom: '1px solid var(--line-dashed)' }}>
       {/* At 1280 with the sidebar open the column is ~370px: the meta wraps under the name instead
           of sliding over it (the clock used to cover the name's centre). */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px', padding: '11px 2px' }}>
@@ -216,13 +217,13 @@ function GardenCard({ routine, completions, compact }: { routine: Routine; compl
   // Night 1d: a frosted panel, the plant a silhouette lit at the rim in its own accent. The night-only
   // tokens fall back to the day values, so day renders as before.
   return (
-    <div style={{ flex: compact ? 'none' : undefined, width: compact ? 88 : undefined, background: 'var(--frost-bg, var(--paper-parchment))', border: '1px solid var(--frost-line, var(--line-card))', borderRadius: 3, boxShadow: compact ? 'var(--shadow-frost, var(--shadow-crisp))' : 'var(--shadow-frost, var(--shadow-card))', padding: compact ? 9 : 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+    <div style={{ flex: compact ? 'none' : undefined, width: compact ? 88 : undefined, background: 'var(--frost-bg, var(--paper-parchment))', border: '1px solid var(--frost-line, var(--line-card))', borderRadius: 'var(--radius-card)', boxShadow: compact ? 'var(--shadow-frost, var(--shadow-crisp))' : 'var(--shadow-frost, var(--shadow-card))', padding: compact ? 9 : 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ height: compact ? 52 : 74, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
         {/* its own species (0067) at the streak's stage */}
         <img src={plantSrc(plant, current)} alt="" style={{ maxHeight: compact ? 52 : 74, filter: `var(${RIM[plant]}, var(--shadow-drop-sm))`, opacity: stage === 'bare' ? 0.85 : 1 }} />
       </div>
       <div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: stage === 'bare' ? 'var(--ink-faint)' : 'var(--acc-sage-text)', marginTop: 2 }}>{compact ? `${current}d` : sub}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: stage === 'bare' ? 'var(--ink-faint)' : 'var(--acc-sage-text)', marginTop: 2 }}>{compact ? `${current}d` : sub}</div>
     </div>
   )
 }
@@ -262,17 +263,13 @@ export function RoutinesPage() {
   // Every challenge running today gets its card (A30) — only the first one used to.
   const activeChallenges = active.filter((r) => r.challenge_start && r.challenge_end && todayKey >= r.challenge_start && todayKey <= r.challenge_end)
 
-  const heroCaption = remaining === 0 ? (active.length > 0 ? 'all tended for today ✿' : 'plant your first routine ✿') : remaining === 1 ? 'one left before the day\'s done' : `${remaining} left before the day's done`
+  const heroCaption = remaining === 0 ? (active.length > 0 ? 'All tended for today ✿' : 'Plant your first routine ✿') : remaining === 1 ? 'One left before the day\'s done' : `${remaining} left before the day's done`
 
   // The challenge card + "Start a challenge" — the desktop rail's, and on a phone under the garden.
   const challenge = (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Challenge</span>
-        <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-      </div>
+      <SectionLabel style={{ marginBottom: 12 }}>Challenge</SectionLabel>
       {activeChallenges.length > 0 && (
-        // the gap clears each card's tape strip (it rides 9px above the card)
         <div style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
           {activeChallenges.map((r) => <ChallengeCard key={r.id} routine={r} completions={completions} />)}
         </div>
@@ -280,7 +277,7 @@ export function RoutinesPage() {
       <button
         type="button"
         onClick={() => setFormOpen({ challenge: true })}
-        style={{ marginTop: activeChallenges.length ? 12 : 0, minHeight: isMobile ? 44 : undefined, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}
+        style={{ marginTop: activeChallenges.length ? 12 : 0, minHeight: isMobile ? 44 : undefined, padding: 0, border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}
       >
         ＋ Start a challenge
       </button>
@@ -297,8 +294,8 @@ export function RoutinesPage() {
   const garden = (
     <div>
       <div>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The garden</div>
-        {!isMobile && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-hand, #7a745f)', marginTop: 2 }}>each habit grows with its streak</div>}
+        <SectionLabel>The garden</SectionLabel>
+        {!isMobile && <div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 2 }}>Each habit grows with its streak</div>}
       </div>
       {isMobile ? (
         <div style={{ display: 'flex', gap: 12, overflowX: 'auto', marginTop: 10, paddingBottom: 4 }}>
@@ -324,14 +321,14 @@ export function RoutinesPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
             <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--rim-moss-sm, var(--shadow-drop-sm))' }} />
             <div>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)' }}>Routines</div>
               <h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>Daily rituals</h1>
             </div>
           </div>
           {!isMobile && (
-            <button type="button" onClick={() => setFormOpen({ challenge: false })} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13, padding: '10px 17px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}>
+            <Button onClick={() => setFormOpen({ challenge: false })}>
               ＋ New routine
-            </button>
+            </Button>
           )}
         </div>
 
@@ -343,7 +340,7 @@ export function RoutinesPage() {
             <div
               key={kind}
               data-ritual={kind}
-              style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-crisp)', padding: isMobile ? '0 0 0 12px' : '10px 12px' }}
+              style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: isMobile ? '0 0 0 12px' : '10px 12px' }}
             >
               <button
                 type="button"
@@ -351,8 +348,8 @@ export function RoutinesPage() {
                 style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: isMobile ? '8px 0' : 0, font: 'inherit', fontSize: 13.5, color: 'var(--ink-body)', cursor: 'pointer' }}
               >
                 <span data-ritual-title style={{ display: 'block', ...(isMobile ? oneLine : null) }}>{kind === 'morning' ? 'Morning ritual' : 'Evening ritual'}</span>
-                <span data-ritual-sub style={{ display: 'block', ...(isMobile ? oneLine : null), fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>
-                  {kind === 'morning' ? 'plan the day' : 'close its loops'}
+                <span data-ritual-sub style={{ display: 'block', ...(isMobile ? oneLine : null), fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>
+                  {kind === 'morning' ? 'Plan the day' : 'Close its loops'}
                 </span>
               </button>
               <button
@@ -362,45 +359,42 @@ export function RoutinesPage() {
                 aria-label={ritualPins[kind] ? 'Unpin this ritual from Today' : 'Pin this ritual to Today'}
                 aria-pressed={ritualPins[kind]}
                 className="kf-hit"
-                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: 'none', padding: isMobile ? 0 : '4px 2px', width: isMobile ? 48 : undefined, height: isMobile ? 48 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', cursor: 'pointer', color: ritualPins[kind] ? 'var(--acc-terra)' : 'var(--ink-hairline)' }}
+                style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5, background: 'none', border: 'none', padding: isMobile ? 0 : '4px 2px', width: isMobile ? 48 : undefined, height: isMobile ? 48 : undefined, font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', cursor: 'pointer', color: ritualPins[kind] ? 'var(--acc-terra)' : 'var(--ink-hairline)' }}
               >
                 <PinIcon size={isMobile ? 16 : 10} filled={ritualPins[kind]} />
-                {!isMobile && (ritualPins[kind] ? 'pinned' : 'pin')}
+                {!isMobile && (ritualPins[kind] ? 'Pinned' : 'Pin')}
               </button>
             </div>
           ))}
         </div>
 
-        <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: isMobile ? 'var(--shadow-crisp)' : 'var(--shadow-card)', padding: isMobile ? '13px 15px' : '16px 20px', marginTop: isMobile ? 16 : 22, display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 18, transform: isMobile ? undefined : 'rotate(-0.3deg)' }}>
-          {!isMobile && (
-            <span style={{ position: 'absolute', top: -9, left: 38, width: 60, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1, boxShadow: 'var(--shadow-crisp)' }} />
-          )}
+        <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: isMobile ? '13px 15px' : '16px 20px', marginTop: isMobile ? 16 : 22, display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 18 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
               <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {due} tended</span>
-              {!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)' }}>{heroCaption}</span>}
+              {!isMobile && <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>{heroCaption}</span>}
             </div>
             <div style={{ marginTop: isMobile ? 8 : 10, height: isMobile ? 6 : 7, borderRadius: 4, background: 'var(--line-card)', overflow: 'hidden' }}>
               <span style={{ display: 'block', width: due ? `${Math.round((doneToday / due) * 100)}%` : '0%', height: '100%', background: 'var(--acc-moss)' }} />
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, paddingLeft: isMobile ? 12 : 18, borderLeft: '1px dashed var(--line-dashed)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, paddingLeft: isMobile ? 12 : 18, borderLeft: '1px solid var(--line-dashed)' }}>
             <FlameIcon size={isMobile ? 12 : 13} />
             {isMobile ? (
               <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-lead)', color: 'var(--ink-body)' }}>{bestStreak}</span>
             ) : (
               <div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}>{bestStreak}</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>day streak</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Day streak</div>
               </div>
             )}
           </div>
         </div>
 
         {isMobile && (
-          <button type="button" onClick={() => setFormOpen({ challenge: false })} style={{ width: '100%', minHeight: 48, marginTop: 14, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13.5, padding: '11px', borderRadius: 999, cursor: 'pointer', boxShadow: 'var(--shadow-cta)' }}>
+          <Button onClick={() => setFormOpen({ challenge: false })} style={{ width: '100%', justifyContent: 'center', marginTop: 14 }}>
             ＋ New routine
-          </button>
+          </Button>
         )}
 
         {/* X5 States t1 — the surface's own species as sprout + one hand line; the page's
@@ -409,20 +403,16 @@ export function RoutinesPage() {
         {!loadState && active.length === 0 && (
           <div style={{ padding: '36px 20px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <img src={`${A}/vine/bare.png`} alt="" style={{ height: 56, filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted yet.</div>
+            <div style={{ marginTop: 16, fontSize: 'var(--fs-body)', color: 'var(--ink-muted)', textAlign: 'center' }}>Nothing planted yet.</div>
           </div>
         )}
 
         {groups.map((g) => (
           <div key={g.key} style={{ marginTop: isMobile ? 20 : 30 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 6 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: isMobile ? '0.16em' : '0.18em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' }}>
-                {/* a group with nothing due today carries no "0/0" count — it's resting, not behind */}
-                {isMobile && g.tally.due > 0 ? `${g.label} · ${g.tally.done}/${g.tally.due}` : g.label}
-              </span>
-              <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-              {!isMobile && g.tally.due > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.tally.done} / {g.tally.due}</span>}
-            </div>
+            <SectionLabel style={{ marginBottom: 6 }} action={!isMobile && g.tally.due > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{g.tally.done} / {g.tally.due}</span>}>
+              {/* a group with nothing due today carries no "0/0" count — it's resting, not behind */}
+              <span style={{ color: 'var(--acc-sage-text)' }}>{isMobile && g.tally.due > 0 ? `${g.label} · ${g.tally.done}/${g.tally.due}` : g.label}</span>
+            </SectionLabel>
             {g.items.map((r) => (
               <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} onEdit={() => setFormOpen({ challenge: false, routine: r })} onMenu={(at) => setMenu({ routine: r, ...at })} />
             ))}
@@ -434,7 +424,7 @@ export function RoutinesPage() {
       </div>
 
       {!isMobile && (
-        <div style={{ borderLeft: '1px dashed var(--line-solid)', padding: '36px 26px', display: 'flex', flexDirection: 'column', gap: 24, background: 'color-mix(in srgb, var(--paper-sidebar) 40%, transparent)' }}>
+        <div style={{ borderLeft: '1px solid var(--line-solid)', padding: '36px 26px', display: 'flex', flexDirection: 'column', gap: 24, background: 'color-mix(in srgb, var(--paper-sidebar) 40%, transparent)' }}>
           {garden}
           {challenge}
         </div>
@@ -485,13 +475,12 @@ function ChallengeCard({ routine, completions }: { routine: Routine; completions
   const endLabel = new Date(`${end}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   return (
-    <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 3, boxShadow: 'var(--shadow-goal)', padding: '14px 16px', transform: 'rotate(0.4deg)' }}>
-      <span style={{ position: 'absolute', top: -9, right: 20, width: 52, height: 16, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(2deg)', borderRadius: 1 }} />
+    <div style={{ position: 'relative', background: 'var(--paper-goal)', border: '1px solid var(--line-goal)', borderRadius: 'var(--radius-card)', padding: '14px 16px' }}>
       <div style={{ fontSize: 14, color: '#4a3a1e', fontWeight: 500 }}>{routine.name}</div>
       <div style={{ marginTop: 9, height: 6, borderRadius: 4, background: 'color-mix(in srgb, var(--acc-gold) 20%, transparent)', overflow: 'hidden' }}>
         <span style={{ display: 'block', width: `${pct}%`, height: '100%', background: 'var(--acc-gold)' }} />
       </div>
-      <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>
+      <div style={{ marginTop: 7, display: 'flex', alignItems: 'center', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-gold)' }}>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3 }}>
           <FlameIcon size={10} />
           <span style={{ color: 'var(--sig-streak)' }}>{current}</span>

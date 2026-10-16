@@ -9,7 +9,7 @@
 /* Title: Source Serif 20/26 at rest; tapped, the same text becomes a field (4c). */
 .ts-title {
   flex: 1; min-width: 0; margin: 0 0 0 -8px; padding: 7px 8px 8px; box-sizing: border-box; /* + the body's 4px top = the drawing's 11 */
-  border: none; border-radius: 8px; background: none; outline: none; resize: none; overflow: hidden;
+  border: none; border-radius: var(--radius-input); background: none; outline: none; resize: none; overflow: hidden;
   field-sizing: content; /* ponytail: grows with the text in current Chrome/WebView/Safari; an older engine shows one line */
   overflow-wrap: anywhere; font-family: var(--font-display); font-size: var(--fs-display-m); font-weight: var(--fw-medium);
   line-height: 26px; color: var(--ink-body);
@@ -17,9 +17,8 @@
 .ts-title:focus { background: var(--paper-bone); box-shadow: var(--focus-ring); }
 .ts-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 
-.ts-done, .ts-next, .ts-sec, .ts-foot, .ts-block small {
-  font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase;
-}
+.ts-done, .ts-next, .ts-foot, .ts-block small {
+  font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta);}
 .ts-done { display: flex; align-items: center; gap: 6px; margin: -4px 0 12px; color: var(--acc-sage-text); }
 .ts-offline { margin: 0 0 12px; }
 
@@ -28,14 +27,14 @@
 
 .ts-notes {
   display: block; width: 100%; min-height: 48px; box-sizing: border-box; margin: 0 0 4px; padding: 12px 14px;
-  border: 1px solid var(--line-control); border-radius: 8px; background: var(--paper-bone); outline: none; resize: none;
+  border: 1px solid var(--line-control); border-radius: var(--radius-input); background: var(--paper-bone); outline: none; resize: none;
   field-sizing: content; font: inherit; font-size: var(--fs-body); line-height: 1.45; color: var(--ink-body);
 }
 .ts-notes:focus { box-shadow: var(--focus-ring); }
 .ts-notes::placeholder, .ts-sub-add::placeholder { color: var(--ink-faint); }
 
-.ts-sec { display: flex; align-items: center; gap: 12px; min-height: var(--touch-min); font-size: var(--fs-meta-l); letter-spacing: 0.07em; color: var(--ink-faint); white-space: nowrap; }
-.ts-sec::after { content: ''; flex: 1; border-bottom: 1px dashed var(--line-dashed); }
+/* A section label (Bound Journal D6): 14px semibold ink, sentence case, no rule running after it. */
+.ts-sec { display: flex; align-items: center; min-height: var(--touch-min); font-size: var(--fs-section); font-weight: var(--fw-semibold); color: var(--ink-body); white-space: nowrap; }
 
 .ts-sub { display: flex; align-items: center; min-height: var(--touch-min); margin: 0 -16px; padding-right: 16px; }
 .ts-sub-title { min-width: 0; font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); }
@@ -44,19 +43,21 @@
 /* A subtask's title opens it; its ⋯ (or right-click) renames / deletes it. */
 .ts-sub-open { flex: 1; text-align: left; padding: 0; border: none; background: none; font: inherit; font-size: var(--fs-body); cursor: pointer; }
 .ts-sub-open:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 3px; }
-.ts-sub-meta { flex: none; margin-left: auto; padding: 0 8px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.ts-sub-meta { flex: none; margin-left: auto; padding: 0 8px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 /* Desktop density (the editor page, Editor.dc.html 1a: 16px box, 13.5px title, dashed rules). */
-.ts-sub.is-dense { min-height: 0; margin: 0; padding: 4px 2px; gap: 4px; border-bottom: 1px dashed var(--line-dashed); }
+.ts-sub.is-dense { min-height: 0; margin: 0; padding: 4px 2px; gap: 4px; border-bottom: 1px solid var(--line-dashed); }
 .ts-sub.is-dense:last-child { border-bottom: none; }
 .ts-sub.is-dense .ts-box { width: 28px; height: 28px; }
 .ts-sub.is-dense .ts-sub-open, .ts-sub.is-dense .ts-sub-title, .ts-sub.is-dense .ts-sub-add { font-size: var(--fs-body-s); }
 .ts-sub.is-dense .ts-sub-add { height: 28px; }
 
 /* The block card (4b): buttercream; the block's own actions under its time (Change time · Unschedule). */
-.ts-block { padding: 8px 12px 0; border-radius: 3px; background: var(--block-buttercream); color: var(--ink-muted); }
+.ts-block { padding: 8px 12px 0; border-radius: var(--radius-block); background: var(--block-buttercream); color: var(--ink-muted); }
 .ts-block-acts { display: flex; gap: 4px; margin-left: -14px; } /* the ghost buttons' 14px padding: icons line up with the text */
 .ts-block b { display: block; font-size: 14px; font-weight: var(--fw-medium); line-height: 20px; color: var(--ink-body); }
 .ts-block small { display: block; color: var(--acc-buttercream-text); }
+/* slots-ux: a held task's slot card sits right under the chips, the way out in reach at the medium detent. */
+.ts-block.is-slot { margin-bottom: 12px; }
 .ts-hint { display: flex; align-items: center; gap: 6px; min-height: 32px; font-size: 13px; color: var(--ink-muted); }
 .ts-focus { padding: 4px 0; }
 
@@ -96,6 +97,65 @@
 .tp-pop .ts-chips { gap: 8px; padding: 12px 0 0; }
 /* The overlay's chips are text only, as drawn; the parse glyphs stay on the phone sheet's 48 targets. */
 .tp-pop .kf-chip--glyph > svg { display: none !important; } /* over Icon's inline display: block */
-.tp-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 8px; border-top: 1px dashed var(--line-dashed); }
+.tp-foot { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; padding-top: 8px; border-top: 1px solid var(--line-dashed); }
 .tp-foot button:hover { color: var(--ink-body); }
 .tp-foot button:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 3px; }
+
+/* 4 C, the question when a parent is ticked with subtasks open (Subtasks options.html scene 4 · C). */
+.tp-ask { width: 290px; padding: 16px 18px; }
+.tp-ask-title { font-size: var(--fs-section); font-weight: var(--fw-semibold); color: var(--ink-body); }
+.tp-ask-meta { margin-top: 4px; font-size: var(--fs-meta); color: var(--ink-faint); }
+.tp-ask-acts { display: flex; gap: 8px; margin-top: 14px; }
+.tp-ask-acts .kf-button { height: 36px; padding: 0 14px; font-size: var(--fs-body-s); }
+
+/* Subtasks C (Subtasks options.html): a subtask's own time, a lavender pill; an unplanned one in the
+   sheet / popover / editor, a faint clock — both open its Plan list. The typed line's hint under it. */
+.ts-sub-when {
+  flex: none; margin: 0 4px 0 8px; padding: 2px 8px; border: none; border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--acc-lavender) 24%, transparent); color: var(--acc-lavender-text);
+  font: inherit; font-size: var(--fs-meta); line-height: 1.4; white-space: nowrap; cursor: pointer;
+}
+.ts-sub-clock { flex: none; display: inline-flex; align-items: center; justify-content: center; min-width: var(--touch-min); min-height: var(--touch-min); margin: -10px 0; padding: 0; border: none; background: none; color: var(--ink-faint); cursor: pointer; opacity: 0.6; }
+.ts-sub-clock:hover, .ts-sub-clock:focus-visible { opacity: 1; }
+.ts-sub-when:focus-visible, .ts-sub-clock:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.ts-sub.is-dense .ts-sub-clock { min-width: 28px; min-height: 28px; margin: 0; }
+.ts-sub-hint { display: flex; align-items: center; gap: 6px; padding: 2px 0 4px 32px; font-size: var(--fs-meta); color: var(--acc-lavender-text); }
+
+/* Subtasks A: nested under the parent's row in a list — 32px in on the computer (past the parent's box),
+   52 on the phone; a 16 / 18 box, no rules between them. */
+.kf-nest { margin-top: -6px; padding: 0 0 10px 32px; }
+.kf-nest.is-phone { padding: 0 var(--gutter-phone) 10px 52px; }
+.kf-nest .ts-sub.is-nested { min-height: 0; margin: 0; padding: 2px 0; gap: 4px; border-bottom: none; }
+.kf-nest .ts-sub.is-nested .ts-box { width: 28px; height: 28px; }
+.kf-nest .ts-sub.is-nested .ts-sub-open, .kf-nest .ts-sub.is-nested .ts-sub-title { font-size: var(--fs-body-s); }
+.kf-nest.is-phone .ts-sub.is-nested { min-height: 40px; }
+.kf-nest.is-phone .ts-sub.is-nested .ts-box { width: 40px; height: 40px; margin-left: -11px; }
+.kf-nest.is-phone .ts-sub.is-nested .ts-sub-open, .kf-nest.is-phone .ts-sub.is-nested .ts-sub-title { font-size: var(--fs-body); }
+.kf-nest .ts-sub-add { height: 32px; font-size: var(--fs-body-s); border-radius: var(--radius-input); background: var(--paper-bone); box-shadow: var(--focus-ring); padding: 0 10px; }
+.kf-nest.is-phone .ts-sub-add { height: 36px; font-size: var(--fs-body); }
+.kf-nest .ts-sub-hint { padding-left: 32px; }
+
+/* The parent's "1/3 ⌄" (A): a bone pill on its meta line; a tap folds or unfolds the subtasks. */
+.kf-subcount {
+  display: inline-flex; align-items: center; gap: 2px; margin: -1px 0; padding: 1px 6px 1px 8px; border: none;
+  border-radius: var(--radius-pill); background: var(--paper-bone); color: var(--ink-muted); font: inherit; cursor: pointer;
+}
+.kf-subcount svg { transition: transform var(--dur-quick) var(--ease-out); }
+.kf-subcount[aria-expanded='false'] svg { transform: rotate(-90deg); }
+.kf-subcount:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* The row's + (A, computer): shows on the row's hover / focus. The phone's way in is ⋯ → Add a subtask. */
+.kf-sub-add {
+  flex: none; display: grid; place-items: center; width: 28px; height: 28px; margin: -4px 0; padding: 0; border: none;
+  border-radius: 50%; background: var(--paper-parchment); color: var(--ink-body); cursor: pointer; opacity: 0;
+  transition: opacity var(--dur-quick) var(--ease-out);
+}
+/* ds-ok: hover-revealed on the computer only; touch adds through ⋯ → Add a subtask */
+.task-row:hover .kf-sub-add, .td-row:hover .kf-sub-add, .kf-goal-row:hover .kf-sub-add, .kf-sub-add:focus-visible, .task-row:focus-within .kf-sub-add, .td-row:focus-within .kf-sub-add { opacity: 1; }
+.kf-sub-add:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+@media (hover: none) { .kf-sub-add { display: none; } }
+/* The popover's Subtasks (C): a section label at the popover's density, its hint past the 28px box. */
+.tp-pop .ts-sec { min-height: 0; margin-top: 14px; padding-bottom: 2px; }
+.tp-pop .ts-sub-hint { padding-left: 28px; }
+.kf-nest.has-rule { border-bottom: 1px solid var(--line-dashed); }
+.tp-pop label.ts-sub { border-bottom: none; }

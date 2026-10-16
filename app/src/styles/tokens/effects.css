@@ -2,12 +2,14 @@
 :root {
   /* Card shadows — very soft, warm, layered. Two-part: crisp near-edge +
      ambient depth. Never one big blurry drop-shadow. */
-  --shadow-crisp:    0 1px 2px rgba(60, 52, 38, 0.12);
-  --shadow-card:     0 1px 2px rgba(60, 52, 38, 0.14), 0 5px 12px rgba(60, 52, 38, 0.08);
+  --shadow-crisp:    none;
+  --shadow-card:     none;
+  --shadow-page:     0 1px 2px rgba(60, 52, 38, 0.12), 0 10px 22px rgba(60, 52, 38, 0.12);   /* B · pages only; tools are flat */
   --shadow-panel:    0 1px 2px rgba(60, 52, 38, 0.14), 0 10px 26px rgba(60, 52, 38, 0.1);
   --shadow-goal:     0 1px 2px rgba(60, 52, 38, 0.14), 0 8px 20px rgba(154, 123, 58, 0.14);
   --shadow-popover:  0 2px 3px rgba(60, 52, 38, 0.12), 0 24px 60px rgba(60, 52, 38, 0.2);
-  --shadow-cta:      0 2px 4px rgba(120, 60, 40, 0.3);
+  --shadow-cta:      none;
+  --shadow-capture:  0 2px 4px rgba(120, 60, 40, 0.3);   /* the capture button only (Kai 2026-10-15) */
   --shadow-drop-sm:  drop-shadow(0 2px 2px rgba(60, 52, 38, 0.18));
 
   /* Night-garden glows — replace card shadows in dark mode */
@@ -33,5 +35,7 @@
   --pressed-overlay: rgba(42, 36, 32, 0.08);
   --focus-ring: 0 0 0 2px #FBF6E9, 0 0 0 4px #4d6a75;
   --press-scale: 0.97;
+  --grain-app:       0;   /* B · no grain on the tool canvas */
+  --grain-page:      1;   /* B · grain inside pages */
 
 }

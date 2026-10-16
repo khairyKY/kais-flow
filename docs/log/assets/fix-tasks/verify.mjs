@@ -434,7 +434,8 @@ if (want('d')) {
   await page.goto(`${BASE}/tasks?list=all`, { waitUntil: 'networkidle' })
   await sleep(800)
   check('a1 a paused series is on no list', (await row(page, PAUSED).count()) === 0)
-  check('a2 a subtask row names its parent (↳)', /↳\s*Plan & implement forecasting logic/.test(await text(row(page, SUB2))), await text(row(page, SUB2)))
+  // Subtasks A (2026-10-16): with its parent on the page it sits nested under it; drawn alone it says "↳ parent".
+  check('a2 a subtask sits nested under its parent (A)', (await page.locator(`[data-nest="${id(FORE)}"] #task-${id(SUB2)}`).count()) === 1, await text(row(page, SUB2)))
   await steady(row(page, TYRE), { button: 'right' })
   await sleep(300)
   const items = await page.getByRole('menu').first().getByRole('menuitem').allInnerTexts()

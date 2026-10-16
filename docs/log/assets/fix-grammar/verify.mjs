@@ -130,7 +130,7 @@ const confirmShown = async (page) => (await page.getByRole('button', { name: /^(
 await block(async () => {
   const { ctx, page, errors, state } = await open(`/people/${PERSON.id}`)
   // edit used to delete the fact first, then refill the form — now nothing is written until Save
-  await page.getByRole('button', { name: 'edit', exact: true }).first().click()
+  await page.getByRole('button', { name: 'Edit', exact: true }).first().click() // sentence case since Bound Journal
   await sleep(300)
   check('fact "edit" writes nothing (the fact is not deleted)', (await writes(state, 'people')).length === 0)
   check('fact "edit" loads the form', (await page.locator('input[placeholder="e.g. July 17"]').inputValue()) === 'July 17')

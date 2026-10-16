@@ -8,6 +8,10 @@
   --paper-sidebar:      #EAE3D2;   /* left rail */
   --paper-goal:         #F8EFD3;   /* gold card — goal of the day */
   --paper-event:        #F3EDDA;   /* calendar event chip resting on the grid */
+  /* Bound Journal (B) · pages — goal of the day, journal, notes, quotes, herbarium */
+  --page-paper: #FBF5E6;
+  --page-line: #E5DBC1;
+  --page-rule: rgba(196, 186, 158, 0.5);
 
   /* Ink */
   --ink-body:           #2a2420;   /* primary text — bark brown */
@@ -95,5 +99,12 @@
   --select-bg: rgba(77, 106, 117, 0.10);
   --skeleton: rgba(42, 36, 32, 0.07);
   --skeleton-hi: rgba(42, 36, 32, 0.035);
+  /* B · selection is ink-filled, never a second accent */
+  --sel-bg: var(--ink-body);
+  --sel-ink: var(--paper-linen);
+  --tab-active-bg: var(--paper-bone);
+  --wash-terra: rgba(181, 101, 74, 0.12); /* D13 (Kai 2026-10-16): --acc-terra at 12% — the tonal button, the terra text button pressed */
+  --bg-page: var(--page-paper);
+  --border-page: var(--page-line);
 
 }

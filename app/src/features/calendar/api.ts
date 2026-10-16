@@ -9,14 +9,14 @@ import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { useAppZone } from '../../lib/appZone'
-import { dayHint, fromMin } from '../../components/pickerMath'
+import { dayHint, dayShort, fromMin } from '../../components/pickerMath'
 import { eventSpan, movedText, rangeText, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
 import { alignToRule, detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
 import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
 import { isSynced, remindLabel, repeatLabel } from './blockMenuSpec'
-import { zoneToIso } from './eventTime'
-import { intoSlot, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
+import { cairoTimeKey } from './eventTime'
+import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -84,11 +84,29 @@ function restamp(tasks: readonly Task[], patch: (t: Task) => Partial<Task>): () 
 }
 
 /** A slot occurrence moved or resized to `next` (for one dragged out of a series, its detached copy):
- * the tasks it held go with it. Returns their Undo. */
+ * the tasks it held go with it — out of it in the all-day band, where no drop lands in a slot
+ * (slots.slotAt) and its rows aren't drawn. Returns their Undo. */
 function followSlot(prev: CalendarEvent, next: CalendarEvent): () => void {
   if (prev.type !== 'time_block') return () => {}
-  return restamp(slotTasks(prev, cachedTasks()), () => intoSlot(next))
+  return restamp(slotTasks(prev, cachedTasks()), () => (next.all_day ? OUT_OF_SLOT : intoSlot(next)))
 }
+
+/** A series edit (a repeat set or changed, a split, a re-time) re-makes which occurrences there are:
+ * each task row `rowId` held goes to its day's occurrence among `rows` (the edited row, a split's
+ * head and tail, an aligned one-off) at its times — with none left that day, out of the slot. So no
+ * task is held by a day that's gone. Their Undo. */
+function reseat(rowId: string, rows: readonly CalendarEvent[]): () => void {
+  return restamp(
+    cachedTasks().filter((t) => t.slot_id === rowId && !!t.slot_date),
+    (t) => {
+      const occ = occurrenceOn(rows, t.slot_date!)
+      return occ ? intoSlot(occ) : OUT_OF_SLOT
+    },
+  )
+}
+
+/** Every task a stored slot row holds, any day, out of it. Their Undo. */
+const releaseRow = (rowId: string): (() => void) => restamp(cachedTasks().filter((t) => t.slot_id === rowId), () => OUT_OF_SLOT)
 
 /** A slot occurrence going away lets go of its tasks: unscheduled, back in the rail. Their Undo. */
 function releaseSlot(slot: CalendarEvent): () => void {
@@ -129,9 +147,19 @@ export function outOfSlotWithUndo(task: Task): void {
   logActivity('task.unscheduled', 'task', t.id, { slot_id: t.slot_id ?? null })
 }
 
-/** The name of the slot holding a task ("in Code block · 10:00"), read from the cache. */
+/** The name of the slot holding a task, read from the cache — none once its row is no live Time block. */
 export function slotTitleOf(task: Pick<Task, 'slot_id'>): string | null {
-  return task.slot_id ? (cachedRows().find((e) => e.id === task.slot_id)?.title ?? null) : null
+  return task.slot_id ? (cachedRows().find((e) => e.id === task.slot_id && e.type === 'time_block' && !e.deleted_at)?.title ?? null) : null
+}
+
+/** Where a held task is, for its row: "in Code block · 10:00" ("in Shaheen · Tue 14:00" on another
+ * day). Null when no live slot holds it. */
+export function slotLabel(task: Pick<Task, 'slot_id' | 'scheduled_start'>, now: Date = new Date()): string | null {
+  const title = task.scheduled_start ? slotTitleOf(task) : null
+  if (!title) return null
+  const at = new Date(task.scheduled_start!)
+  const day = cairoDateKey(at)
+  return `in ${title} · ${day === cairoDateKey(now) ? '' : `${dayShort(day).slice(0, 3)} `}${cairoTimeKey(at)}`
 }
 
 /** The task's blocks on the calendar now. */
@@ -269,8 +297,19 @@ export function replanTaskBlocks(task: Task, dueAt: string | null, timed: boolea
 /** Save any field edits (title, dates, toggles) on an event. On an occurrence they go to the whole
  * series — minus the times, which move a series only through retimeEventWithUndo. */
 export function updateEvent(event: CalendarEvent, patch: Partial<CalendarEvent>): void {
+  // A Time block made another kind holds no tasks: they come out, and the one Undo puts both back.
+  const row = event.seriesId ? seriesOf(event) : event
+  if (row?.type === 'time_block' && patch.type && patch.type !== 'time_block') {
+    const held = cachedTasks().filter((t) => t.slot_id === row.id)
+    if (held.length) {
+      const undoTasks = releaseRow(row.id)
+      toastUndo(`Out of the slot · ${held.length === 1 ? held[0].title : `${held.length} tasks`}`, () => {
+        writeEvent({ ...(cachedRows().find((r) => r.id === row.id) ?? row), type: 'time_block' })
+        undoTasks()
+      })
+    }
+  }
   if (event.seriesId) {
-    const row = seriesOf(event)
     const { starts_at: _s, ends_at: _e, ...rest } = patch
     if (row) writeEvent({ ...row, ...rest })
     return
@@ -370,7 +409,7 @@ export interface BlockRef {
 /** "This and following" (conductor decision 2026-10-12): the series ends just before `occ` and a new
  * one starts there, built by `tailOf`. Undefined when nothing of the series is left before `occ` —
  * the caller then edits the row in place. The Undo puts the original row back and drops the new one. */
-function splitAt(row: CalendarEvent, occ: CalendarEvent, tailOf: (tail: CalendarEvent) => CalendarEvent): { tail: CalendarEvent; undo: () => void } | undefined {
+function splitAt(row: CalendarEvent, occ: CalendarEvent, tailOf: (tail: CalendarEvent) => CalendarEvent): { head: CalendarEvent; tail: CalendarEvent; undo: () => void } | undefined {
   const split = splitSeries(row, occ, crypto.randomUUID(), nowIso())
   if (!split) return undefined
   const tail = tailOf(split.tail)
@@ -378,6 +417,7 @@ function splitAt(row: CalendarEvent, occ: CalendarEvent, tailOf: (tail: Calendar
   writeEvent(tail)
   logActivity('calendar_event.created', 'calendar_event', tail.id, { title: tail.title, type: tail.type, split_from: row.id })
   return {
+    head: split.head,
     tail,
     undo: () => {
       writeEvent(row)
@@ -399,24 +439,18 @@ export function retimeEventWithUndo(event: CalendarEvent, from: Span, to: Span):
   const message = to.start === from.start ? `Resized to ${rangeText(to.start, to.end)}` : movedText(from, { ...to, day: from.day }, today)
   const retime = (r: CalendarEvent) => retimeSeries(r, fromMin(to.start), to.end - to.start)
   // A repeating slot's tasks keep their day and take the new time (from this occurrence on, for a split).
-  const tasksTo = (rowId: string, fromDay: string) =>
-    row.type !== 'time_block'
-      ? () => {}
-      : restamp(cachedTasks().filter((t) => t.slot_id === row.id && !!t.slot_date && t.slot_date >= fromDay), (t) => {
-          const s = zoneToIso(t.slot_date!, fromMin(to.start))
-          return { slot_id: rowId, scheduled_start: s, scheduled_end: new Date(Date.parse(s) + (to.end - to.start) * 60_000).toISOString() }
-        })
   const split = splitAt(row, event, retime)
   if (split) {
-    const undoTasks = tasksTo(split.tail.id, from.day)
+    const undoTasks = reseat(row.id, [split.head, split.tail])
     toastUndo(`${message} · from ${dayHint(from.day, today)}`, () => {
       split.undo()
       undoTasks()
     })
     return { id: occurrenceId(split.tail.id, new Date(split.tail.starts_at).toISOString()), start: split.tail.starts_at }
   }
-  writeEvent(retime(row))
-  const undoTasks = tasksTo(row.id, '')
+  const next = retime(row)
+  writeEvent(next)
+  const undoTasks = reseat(row.id, [next])
   toastUndo(message, () => {
     writeEvent(row)
     undoTasks()
@@ -442,21 +476,27 @@ export function setEventRepeat(event: CalendarEvent, rule: string | null): Block
     logActivity('calendar_event.created', 'calendar_event', a.keep.id, { title: a.keep.title, type: a.keep.type, series_id: a.series.id })
     return a
   }
+  // A slot's tasks go to their day's occurrence of what the edit leaves, or out (reseat).
+  const reseated = (head: CalendarEvent[], series: CalendarEvent, a: ReturnType<typeof align>) => reseat(row.id, [...head, ...(a ? [a.series, a.keep] : [series])])
   const split = event.seriesId ? splitAt(row, event, (tail) => rerule(tail, tail, rule)) : undefined
   if (split) {
     const a = align(split.tail)
+    const undoTasks = reseated([split.head], split.tail, a)
     toastUndo(`${repeatLabel(rule)}${from(a?.series.starts_at ?? event.starts_at)}`, () => {
       split.undo()
       if (a) writeEvent(a.keep, 'delete')
+      undoTasks()
     })
     return a ? { id: a.keep.id, start: a.keep.starts_at } : ref(split.tail)
   }
   const next = rerule(row, event, rule)
   writeEvent(next)
   const a = align(next)
+  const undoTasks = reseated([], next, a)
   toastUndo(`${repeatLabel(rule)}${a ? from(a.series.starts_at) : ''}`, () => {
     writeEvent(row)
     if (a) writeEvent(a.keep, 'delete')
+    undoTasks()
   })
   return a ? { id: a.keep.id, start: a.keep.starts_at } : ref(next)
 }
@@ -474,8 +514,10 @@ export function setEventRemindWithUndo(event: CalendarEvent, min: number | null)
 }
 
 /** "Link a task…": a plain one-off block takes the task (its block now — the task is scheduled
- * here). One Undo puts the block and the task back. */
+ * here). A Time block holds tasks (0073), so on one the task goes IN it, as a drop does — it used to
+ * turn the slot into that task's block and drop what it held. One Undo puts it all back. */
 export function linkTaskWithUndo(event: CalendarEvent, task: Task): void {
+  if (event.type === 'time_block') return putInSlotWithUndo(task, event)
   if (event.seriesId || event.recurrence_rule) return
   const prior = { ...event }
   const priorTask = cachedTask(task.id) ?? task

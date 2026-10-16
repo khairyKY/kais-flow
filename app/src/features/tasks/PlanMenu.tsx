@@ -50,7 +50,7 @@ const CSS = `
   .kf-pk-pop .kf-plan-slot { font-size: 19px; }
   .kf-plan-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
   .kf-plan-spread { list-style: none; margin: 8px 0; padding: 0; }
-  .kf-plan-spread li { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line-dashed); font-size: 14px; color: var(--ink-body); }
+  .kf-plan-spread li { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--line-dashed); font-size: var(--fs-body-s); color: var(--ink-body); }
   .kf-plan-spread b { flex: none; width: 92px; font-family: var(--font-mono); font-size: 12px; font-weight: 400; color: var(--acc-lavender-text); padding-top: 1px; }
   .kf-plan-spread span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 `

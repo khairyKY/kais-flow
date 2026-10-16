@@ -41,6 +41,7 @@ const WidgetBridge = lazy(() => import('../features/widgets/WidgetBridge').then(
 const TourHost = lazy(() => import('../features/tour/TourHost').then((m) => ({ default: m.TourHost })))
 
 import { ToastHost } from './ToastHost'
+import { SubtaskAskHost } from '../features/tasks/SubtaskAsk'
 import { MobileTabBar } from './MobileTabBar'
 import { PaperHost } from '../features/paper/PaperHost'
 import { useReadyPages } from '../features/paper/captures'
@@ -60,7 +61,7 @@ import { DownloadBar } from '../features/download/DownloadBar'
 // Sidebar groups Plan (drawer) · Tend · Cultivate; later surfaces (Projects,
 // People, Activity) placed per the newer files' sidebars. Colored dot per
 // surface accent when inactive; the species PNG/SVG the design shows when
-// active, washi tape tinted per page. ──
+// active. Bound Journal (Design System B, D7): the nav is a tool — no washi tape, no tilt. ──
 
 const A = '/ds/assets'
 
@@ -72,7 +73,6 @@ type NavItem = {
   activeImg?: string // species PNG shown only when the row is active
   activeIcon?: ReactNode // inline SVG shown when the row is active or the rail is collapsed
   badge?: 'inbox'
-  tape: string // washi-tape rgba tint on the active row (Navigation Reference §02)
 }
 
 // Punch 58 (Kai's V1 ruling): rail icons ALL simple — Inbox/Projects/Routines/
@@ -80,37 +80,38 @@ type NavItem = {
 // Today/Tasks/Calendar keep the flower glyph, People the clover, Activity the dot.
 // Loop B (docs/DAILY-CYCLE.md, 2026-09-26): Tend reads in the daily loop's order — capture lands in
 // Inbox, the day is planned onto the Calendar, then the lists behind it: Today · Inbox · Calendar ·
-// Tasks · Projects. Only the order changed; each row's icon, dot and tape are its own.
+// Tasks · Projects. Only the order changed; each row's icon and dot are its own.
 const TEND: NavItem[] = [
-  { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" />, tape: 'color-mix(in srgb, var(--acc-sage) 40%, transparent)' },
-  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph />, tape: 'color-mix(in srgb, var(--acc-hydrangea) 55%, transparent)' },
-  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" />, tape: 'color-mix(in srgb, var(--acc-lavender) 45%, transparent)' },
+  { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" /> },
+  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph /> },
+  // ds-ok: the flower glyph's centre is the export's illustration colour (unchanged by B)
+  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" /> },
   // R4 (2026-07-20 audit): "the tasks page has a small flower icon while the live local host has
   // the entire rendered flower — the correct thing is the one in the design export." Tasks.dc.html
   // line 225 specifies the 18px five-ellipse glyph (fill var(--acc-blossom), centre #C98A4B), not
   // cherry/bloom.png. Checked every page: Today/Calendar already used the glyph, and
   // Routines/Inbox genuinely do specify PNGs in their own exports — so this is per-page, and
-  // Tasks was the odd one out.
-  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" />, tape: 'color-mix(in srgb, var(--acc-blossom) 45%, transparent)' },
-  { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph />, tape: 'color-mix(in srgb, var(--acc-moss) 45%, transparent)' },
+  // Tasks was the odd one out. ds-ok: the glyph's centre is that illustration colour.
+  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" /> },
+  { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph /> },
 ]
 
 const CULTIVATE: NavItem[] = [
-  { to: '/routines', label: 'Routines', dot: '--acc-moss', activeIcon: <RoutinesGlyph />, tape: 'color-mix(in srgb, var(--acc-moss) 45%, transparent)' },
+  { to: '/routines', label: 'Routines', dot: '--acc-moss', activeIcon: <RoutinesGlyph /> },
   // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Focus was unreachable).
-  { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeIcon: <FocusGlyph />, tape: 'color-mix(in srgb, var(--acc-gold-warm) 45%, transparent)' },
-  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeIcon: <ReviewGlyph />, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
+  { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeIcon: <FocusGlyph /> },
+  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeIcon: <ReviewGlyph /> },
   // Journal is back per D-1 (Kai, 2026-07-26): one daily page, many timestamped entries.
-  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png`, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
+  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png` },
   // [K-26] 2026-07-26 (punch 65) parked the Library; fix-grammar (2026-10-12) brings its row back
   // beside Journal — it was reachable only through Journal or the URL. Same row as before the park.
-  { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png`, tape: 'color-mix(in srgb, var(--acc-buttercream) 45%, transparent)' },
-  { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png`, tape: 'color-mix(in srgb, var(--acc-clover) 45%, transparent)' },
-  // Not in the Navigation Reference (Kai kept it anyway) — same tape formula as every other item, own dot color.
-  { to: '/activity', label: 'Activity', dot: '--acc-gold', tape: 'color-mix(in srgb, var(--acc-gold) 45%, transparent)' },
+  { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png` },
+  { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png` },
+  // Not in the Navigation Reference (Kai kept it anyway) — its own dot color.
+  { to: '/activity', label: 'Activity', dot: '--acc-gold' },
   // Punch 50: the quiet Trash link the design puts at the bottom of the nav (it had no entry
   // point at all — URL-only). Hairline dot keeps it visually last in the list's hierarchy.
-  { to: '/trash', label: 'Trash', dot: '--ink-hairline', tape: 'rgba(122,110,94,0.35)' },
+  { to: '/trash', label: 'Trash', dot: '--ink-hairline' },
 ]
 
 // Motion 2d — the sidebar's filing spots: a task or capture dragged onto Today / Due Today, or a task
@@ -159,7 +160,7 @@ function PlanDrawer() {
         alignItems: 'center',
         gap: 11,
         padding: '6px 11px',
-        borderRadius: 6,
+        borderRadius: 'var(--radius-input)',
         textDecoration: 'none',
         background: active ? 'var(--frost-bg, var(--paper-parchment))' : 'none',
         border: active ? '1px solid var(--frost-line, var(--line-card))' : '1px solid transparent',
@@ -176,7 +177,7 @@ function PlanDrawer() {
   return (
     <div
       className="app-smartlist"
-      style={{ padding: '0 14px 12px', margin: '0 0 10px', borderBottom: '1px dashed var(--line-sidebar)', display: 'flex', flexDirection: 'column', gap: 1 }}
+      style={{ padding: '0 14px 12px', margin: '0 0 10px', borderBottom: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', gap: 1 }}
     >
       <button
         type="button"
@@ -189,7 +190,7 @@ function PlanDrawer() {
           width: '100%',
           padding: '7px 11px',
           marginBottom: 3,
-          borderRadius: 6,
+          borderRadius: 'var(--radius-input)',
           background: 'var(--paper-linen)',
           border: '1px solid var(--line-sidebar)',
           cursor: 'pointer',
@@ -197,7 +198,7 @@ function PlanDrawer() {
         }}
       >
         <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: 15, width: 'auto' }} />
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Plan</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)' }}>Plan</span>
         <span
           aria-hidden="true"
           className="kf-plan-chevron"
@@ -212,7 +213,7 @@ function PlanDrawer() {
       {open && (
         <>
           {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length, undefined, list === 'today' ? TODAY_SPOT : null))}
-          <div style={{ height: 1, borderTop: '1px dashed var(--line-sidebar)', margin: '4px 11px' }} />
+          <div style={{ height: 1, borderTop: '1px solid var(--line-sidebar)', margin: '4px 11px' }} />
           {row('/tasks?list=someday', 'Someday', activeList === 'someday', filterByList(tasks, 'someday').length, (
             <img src={`${A}/fern/coil.png`} alt="" style={{ height: 14, opacity: 0.8 }} />
           ), SOMEDAY_SPOT)}
@@ -269,32 +270,15 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
         alignItems: 'center',
         gap: 11,
         padding: '8px 12px',
-        borderRadius: 6,
+        borderRadius: 'var(--radius-input)',
         textDecoration: 'none',
-        // Night 1a: the active row is frosted glass, untilted (the night tokens; day keeps its own).
+        // Night 1a: the active row is frosted glass (the night tokens; day keeps its own). Upright and
+        // untaped by day too: the nav is a tool (D7).
         background: isActive ? 'var(--frost-bg, var(--paper-parchment))' : 'none',
         border: isActive ? '1px solid var(--frost-line, var(--line-card))' : '1px solid transparent',
         boxShadow: isActive ? 'var(--shadow-frost, var(--shadow-crisp))' : 'none',
-        transform: isActive ? 'var(--nav-tilt, rotate(-0.5deg))' : 'none',
       }}
     >
-      {isActive && (
-        <span
-          aria-hidden="true"
-          className="kf-nav-tape"
-          style={{
-            position: 'absolute',
-            top: -6,
-            left: 16,
-            width: 30,
-            height: 9,
-            background: item.tape,
-            backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',
-            transform: 'rotate(-3deg)',
-            borderRadius: 1,
-          }}
-        />
-      )}
       <span className="kf-nav-icon" style={{ width: 18, display: 'flex', justifyContent: 'center', flex: 'none' }}>{icon(isActive)}</span>
       <span className="app-nav-label" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>
         {item.label}
@@ -320,7 +304,7 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
 
 function GroupLabel({ children }: { children: React.ReactNode }) {
   return (
-    <div className="app-nav-label" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '12px 12px 5px' }}>
+    <div className="app-nav-label" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', padding: '12px 12px 5px' }}>
       {children}
     </div>
   )
@@ -394,7 +378,7 @@ function footerRow(icon: React.ReactNode, label: string, shortcut: string | unde
       className="kf-side-row"
       title={label}
       aria-label={label}
-      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: faint ? '6px 12px' : '7px 12px', borderRadius: 6, background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
+      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: faint ? '6px 12px' : '7px 12px', borderRadius: 'var(--radius-input)', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
     >
       <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{icon}</span>
       <span className="app-footer-label" style={{ fontSize: faint ? 12.5 : 13.5, color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{label}</span>
@@ -454,14 +438,15 @@ function SyncStatus({ side = false }: { side?: boolean }) {
     <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
       {list.map((r) => (
         <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
+          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.text}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
         </div>
       ))}
     </div>
   )
-  const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>{text}</div>
+  // A tool's aside (D7: Caveat writes on pages only): the UI face, muted, under a hairline.
+  const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--line-dashed)', fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>{text}</div>
   return (
     <>
       {side ? (
@@ -496,16 +481,16 @@ function SyncStatus({ side = false }: { side?: boolean }) {
         <div
           ref={popRef}
           className={`kf-sync-pop kf-overlay-card${side ? ' kf-sync-pop--side' : ''}`}
-          style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '12px 14px', textTransform: 'none', letterSpacing: 'normal' }}
+          style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '12px 14px' }}
         >
           {pop.parked ? (
             <>
               {/* The server set these aside (lib/outbox.ts dead letters) so the rest could sync. */}
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra-ink)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra-ink)' }}>
                 Not saved ⚠ · {pop.parked.length} {pop.parked.length === 1 ? 'change' : 'changes'}
               </div>
               {rowList(pop.parked)}
-              {hand('set aside so everything else syncs on — make the change again to keep it')}
+              {hand('Set aside so everything else syncs on — make the change again to keep it')}
             </>
           ) : n === 0 ? (
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>
@@ -513,11 +498,11 @@ function SyncStatus({ side = false }: { side?: boolean }) {
             <>
               {/* polish-c (2026-09-26 audit): human rows only — one per change, never a table
                   name, never the change's bookkeeping activity row alongside it (components/syncQueue.ts). */}
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>
                 {syncHeader(n, online)}
               </div>
               {rowList(rows)}
-              {hand(online ? 'syncing now — nothing lost ✿' : "Everything here syncs the moment you're back.")}
+              {hand(online ? 'Syncing now — nothing lost ✿' : "Everything here syncs the moment you're back.")}
             </>
           )}
         </div>
@@ -541,7 +526,7 @@ function TopBar({ sync }: { sync: boolean }) {
   return (
     <div
       className="app-topbar"
-      style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}
+      style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px solid var(--line-solid)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}
     >
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, minWidth: 0, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
         {/* SPEC §2 topbar `{app name} · {day} {date} · {sync}`: the app wears the owner's name
@@ -576,8 +561,12 @@ function keysResting(e: KeyboardEvent): boolean {
 /** Dispatched on `window` to open search from a page's own top bar (the shell owns the overlay). */
 const OPEN_SEARCH_EVENT = 'kf-open-search'
 
-/** Pages whose desktop frame has no top bar: Today 2a and Inbox 3a (both "reviewed pass"). */
-const NO_TOPBAR = ['/today', '/inbox']
+/** Pages whose desktop frame has no top bar: Today 2a and Inbox 3a (both "reviewed pass"), and the
+ * calendar (Kai 2026-10-14: "I don't want any wasted spaces" — its own header row carries the date). */
+const NO_TOPBAR = ['/today', '/inbox', '/calendar']
+/** Desktop pages that fill the window edge to edge: no page padding, no page scroll (Akiflow's
+ * calendar beside its list). Phones keep the padded column. */
+const FULL_BLEED = ['/calendar']
 
 export function AppLayout() {
   useRealtimeSync()
@@ -587,6 +576,7 @@ export function AppLayout() {
   const location = useLocation()
   const { pathname } = location
   const isMobile = useIsMobile()
+  const bleed = !isMobile && FULL_BLEED.includes(pathname)
   // Motion 2b/3a: the page scroller is the stack's sheet (lib/motion useStackTransition); Effects 2k
   // gives its edges their resistance on touch.
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -751,7 +741,7 @@ export function AppLayout() {
           .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row:hover { transform: none; }
         }
         /* Today 2a's sidebar foot: the streak, pinned above the footer rows (only the nav scrolls). */
-        .app-vine { flex: none; margin: 0 22px 12px; padding-top: 12px; border-top: 1px dashed var(--line-sidebar); display: flex; align-items: center; gap: 10px; }
+        .app-vine { flex: none; margin: 0 22px 12px; padding-top: 12px; border-top: 1px solid var(--line-sidebar); display: flex; align-items: center; gap: 10px; }
         .app-vine img { height: 36px; width: auto; flex: none; filter: var(--shadow-drop-sm); }
         /* 2a's "● synced" on the Settings row: a mono note at the row's right, its own button. */
         .kf-settings-row { position: relative; }
@@ -771,6 +761,10 @@ export function AppLayout() {
           .app-sidebar:not(.collapsed) .app-sidebar-col { padding-top: 16px !important; }
           .app-sidebar:not(.collapsed) .app-sidebar-header { padding-bottom: 12px !important; }
           .app-sidebar:not(.collapsed) nav > .app-nav-label { padding-top: 6px !important; }
+          /* Bound Journal's 12px meta and rounded rows cost the column a few px: Projects ran 2px under the
+             fold at 1280×800 (640 layout px). The nav rows step from 8 to 6px of vertical padding here (35px,
+             a mouse target; phones never see the sidebar), which keeps all of Tend in view. */
+          .app-sidebar:not(.collapsed) nav .kf-side-row { padding-top: 6px !important; padding-bottom: 6px !important; }
           .app-sidebar:not(.collapsed) .app-vine { margin-bottom: 4px; padding-top: 6px; line-height: 1.25; }
           .app-sidebar:not(.collapsed) .app-sidebar-footer { padding-bottom: 8px !important; }
           .app-vine img { height: 28px; }
@@ -782,7 +776,7 @@ export function AppLayout() {
           position: fixed; transform: translateY(-50%);
           white-space: nowrap; pointer-events: none;
           background: var(--paper-parchment); border: 1px solid var(--line-card);
-          box-shadow: var(--shadow-crisp); border-radius: 6px; padding: 6px 11px;
+          box-shadow: var(--shadow-crisp); border-radius: var(--radius-input); padding: 6px 11px;
           font-size: 14px; color: var(--ink-body); z-index: 60;
           animation: kfFadeIn var(--dur-quick) var(--ease-out);
         }
@@ -792,11 +786,9 @@ export function AppLayout() {
         .app-sidebar.collapsed .app-sidebar-col::-webkit-scrollbar { display: none; }
         /* Kai 2026-10-03: collapsed, a row's 12px side padding + its 18px icon (42) were wider than
            the rail leaves it (35), so the icon overflowed the box to the right: the active box read
-           off-centre to the left, its tape poked out past it, and a strip sat empty on the right.
-           The box now hugs the centred icon, the tape centres on the box, and the inbox count
-           rides its corner instead of pushing the icon aside. */
+           off-centre to the left and a strip sat empty on the right. The box now hugs the centred
+           icon, and the inbox count rides its corner instead of pushing the icon aside. */
         .app-sidebar.collapsed .kf-side-row { justify-content: center; padding-left: 0 !important; padding-right: 0 !important; }
-        .app-sidebar.collapsed .kf-nav-tape { left: 50% !important; width: 24px !important; margin-left: -12px; }
         .app-sidebar.collapsed .app-nav-badge { position: absolute; top: 1px; right: 3px; margin: 0 !important; font-size: 9px !important; line-height: 1; }
         .app-sidebar.collapsed .app-sidebar-header,
         .app-sidebar.collapsed .app-nav-label,
@@ -965,7 +957,7 @@ export function AppLayout() {
             <img src="/icon-192.png" alt="" style={{ width: 28, height: 28, flex: 'none' }} />
             <div title={owner.flow} style={{ minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 'var(--fw-semibold)', letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</div>
           </div>
-          <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · {zoneCity(zone)}</div>
+          <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · {zoneCity(zone)}</div>
         </div>
 
         <PlanDrawer />
@@ -994,7 +986,7 @@ export function AppLayout() {
           {footerRow(SearchGlyph, 'Search', '⌘/', () => setSearchOpen(true))}
           {footerRow(ChatGlyph, 'Chat', '⌘J', () => setChatOpen(true))}
           {/* Tour & help 14k: the Guide sits in the sidebar foot, beside Settings. */}
-          <NavLink to="/guide" title="Guide" aria-label="Guide" className="kf-side-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 6, textDecoration: 'none' }}>
+          <NavLink to="/guide" title="Guide" aria-label="Guide" className="kf-side-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 'var(--radius-input)', textDecoration: 'none' }}>
             <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}><GuideGlyph /></span>
             <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Guide</span>
           </NavLink>
@@ -1005,7 +997,7 @@ export function AppLayout() {
               title="Settings"
               aria-label="Settings"
               className="kf-side-row"
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 6, textDecoration: 'none' }}
+              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 'var(--radius-input)', textDecoration: 'none' }}
             >
               <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
               <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
@@ -1019,9 +1011,9 @@ export function AppLayout() {
       <main style={{ flex: 1, minWidth: 0, minHeight: 0, display: 'flex', flexDirection: 'column' }}>
         <DownloadBar />
         {(isMobile || !NO_TOPBAR.includes(pathname)) && <TopBar sync={isMobile} />}
-        <div ref={scrollerRef} className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: 'auto', padding: '30px 40px 64px' }}>
+        <div ref={scrollerRef} className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: bleed ? 'hidden' : 'auto', padding: bleed ? 0 : '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
-            <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined}>
+            <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined} style={bleed ? { height: '100%' } : undefined}>
               <Outlet />
             </div>
           </Suspense>
@@ -1057,6 +1049,7 @@ export function AppLayout() {
       <PaperHost />
       {/* What's new: the after-update toast, the daily quiet update check, the sheet. */}
       <WhatsNewHost uid={user?.id} createdAt={user?.created_at} />
+      <SubtaskAskHost />
       <ToastHost />
       {signOutFlow.prompt}
     </div>

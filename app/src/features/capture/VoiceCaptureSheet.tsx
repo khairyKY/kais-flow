@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useRef, useState, type ButtonHTMLAttributes } from 'react'
+import { Button } from '../../components/kit'
 import { createPortal } from 'react-dom'
 import { transcribeAudio, captureWithAI, saveUntranscribedVoiceNote } from './api'
 import { isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from './aiAllowance'
@@ -9,6 +10,8 @@ import { useToastStore } from '../../lib/toastStore'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useMotionEnabled } from '../../lib/motion'
 import { pickMimeType } from './holdToTalk'
+import { PoweredBySotto, SottoPill } from './SottoPill'
+import { SOTTO_DONE_MS, type SottoState } from './sotto'
 import './capture.css'
 
 interface VoiceCaptureSheetProps {
@@ -29,19 +32,32 @@ interface VoiceCaptureSheetProps {
 
 /**
  * Polish E ("never lose a voice recording", conductor decision 2026-09-26):
- * - `recording` → `transcribing` → filed, as before.
+ * - `recording` → `transcribing` → (`polishing`, the AI filing it) → `done` → closed. Each shows on
+ *   Sotto's pill (Kai 2026-10-16: voice is powered by Sotto, his own dictation app, as in Sukoon).
  * - If transcription fails for any reason (daily limit, offline, a server hiccup) the sheet moves
  *   to `kept`: the recording stays in memory with Try again / Save to Inbox untranscribed /
  *   Discard. Nothing but the Discard button throws it away — tapping outside and Esc don't.
  * - After a daily-limit reply the sheet opens `resting` for the rest of that Cairo day on this
  *   device: it says so up front and offers typing instead of recording.
  */
-type Phase = 'resting' | 'recording' | 'transcribing' | 'kept'
+type Phase = 'resting' | 'recording' | 'transcribing' | 'polishing' | 'done' | 'kept'
+
+/** The sheet's phase on Sotto's pill; a kept take is its error (↻ = Try again). Resting has no pill. */
+const PILL: Record<Phase, SottoState | null> = {
+  resting: null,
+  recording: 'listening',
+  transcribing: 'transcribing',
+  polishing: 'polishing',
+  done: 'done',
+  kept: 'error',
+}
 
 export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText, release, stopLabel = 'Stop & file' }: VoiceCaptureSheetProps) {
   const [phase, setPhase] = useState<Phase>(handedOver ? 'transcribing' : 'recording')
   const [keptReason, setKeptReason] = useState<KeptReason>('other')
   const [recording, setRecording] = useState(false)
+  /** The live mic, for the pill's level bars. */
+  const [stream, setStream] = useState<MediaStream | null>(null)
   const [seconds, setSeconds] = useState(handedOver?.seconds ?? 0)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -62,7 +78,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
   // Track visual open/close state for exit transition
   const [visible, setVisible] = useState(false)
 
-  const busy = phase === 'transcribing'
+  const busy = phase === 'transcribing' || phase === 'polishing' || phase === 'done'
   useEscapeStack(open && !busy, handleCancel)
 
   useEffect(() => {
@@ -132,6 +148,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
       return
     }
     streamRef.current = stream
+    setStream(stream)
 
     const mimeType = pickMimeType()
     const recorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream)
@@ -180,13 +197,18 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
       return
     }
     keptRef.current = null
-    if (text && onText) {
-      onText(text)
-    } else if (text) {
-      await captureWithAI(text, 'voice', text)
-    } else {
+    if (!text) {
       useToastStore.getState().push({ message: "Didn't catch that — try again" })
+      return onClose()
     }
+    if (onText) onText(text)
+    else {
+      setPhase('polishing') // the AI reads it and files it
+      await captureWithAI(text, 'voice', text)
+    }
+    // Sotto's tick, then the sheet goes.
+    setPhase('done')
+    await new Promise((resolve) => window.setTimeout(resolve, SOTTO_DONE_MS))
     onClose()
   }
 
@@ -227,6 +249,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
     }
     mediaRecorderRef.current = null
     setRecording(false)
+    setStream(null)
   }
 
   /** Stops a live recorder without filing it: its handlers are detached first, so a Cancel no
@@ -253,15 +276,20 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
   const minutesStr = Math.floor(seconds / 60)
   const secondsStr = String(seconds % 60).padStart(2, '0')
   const timeFormatted = `${minutesStr}:${secondsStr}`
+  const pill = PILL[phase]
 
   const statusText =
     phase === 'resting' ? RESTING.status
     : phase === 'transcribing' ? 'Transcribing…'
+    : phase === 'polishing' ? 'Filing…'
+    : phase === 'done' ? 'Done'
     : phase === 'kept' ? `${KEPT_STATUS} · ${timeFormatted}`
     : `Listening · ${timeFormatted}`
   const handText =
     phase === 'resting' ? RESTING.hand
     : phase === 'transcribing' ? 'Processing transcription...'
+    : phase === 'polishing' ? 'working out where it goes…'
+    : phase === 'done' ? 'got it'
     : phase === 'kept' ? KEPT_HAND
     : 'say what\'s on your mind…'
 
@@ -269,30 +297,6 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
   const scrimAnimation = open ? 'captureScrimFadeIn 210ms var(--ease-out) forwards' : 'captureScrimFadeOut 140ms var(--ease-in) forwards'
   const sheetAnimation = open ? 'captureSheetSlideIn 210ms var(--ease-out) forwards' : 'captureSheetSlideOut 140ms var(--ease-in) forwards'
 
-  const outlineButton = (disabled = false): CSSProperties => ({
-    flex: 1,
-    padding: 12,
-    border: '1px solid var(--line-solid)',
-    borderRadius: 999,
-    fontSize: 13,
-    color: 'var(--ink-muted)',
-    background: 'none',
-    cursor: disabled ? 'default' : 'pointer',
-    opacity: disabled ? 0.5 : 1,
-    fontFamily: 'inherit',
-  })
-  const filledButton = (disabled = false): CSSProperties => ({
-    flex: 1,
-    padding: 12,
-    background: 'var(--ink-body)',
-    color: 'var(--paper-parchment)',
-    borderRadius: 999,
-    fontSize: 13,
-    cursor: disabled ? 'default' : 'pointer',
-    opacity: disabled ? 0.5 : 1,
-    border: 'none',
-    fontFamily: 'inherit',
-  })
   // A daily-limit reply makes Try again a long shot today, so saving takes the filled style.
   const saveIsPrimary = keptReason === 'limit'
 
@@ -331,7 +335,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
           width: '100%',
           maxWidth: 440,
           background: 'var(--paper-linen)',
-          borderRadius: '22px 22px 0 0',
+          borderRadius: 'var(--sheet-radius) var(--sheet-radius) 0 0', // D3: a sheet's 20px
           boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.2)',
           padding: '22px 22px calc(30px + env(safe-area-inset-bottom))',
           zIndex: 110,
@@ -344,50 +348,26 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
         {/* Top drag handle */}
         <div style={{ width: 38, height: 4, borderRadius: 2, background: 'var(--line-solid)', margin: '0 auto 22px' }} />
 
-        {/* Pulsing red Mic button */}
-        <div
-          className={recording && motion ? 'kf-mic-pulsing' : ''}
-          style={{
-            width: 78,
-            height: 78,
-            borderRadius: '999px',
-            background: 'var(--acc-terra)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '0 auto',
-            boxShadow: '0 0 0 8px color-mix(in srgb, var(--acc-terra) 14%, transparent), var(--shadow-cta)',
-            transition: 'box-shadow var(--dur-normal) var(--ease-natural)',
-            opacity: phase === 'resting' ? 0.45 : 1,
-          }}
-        >
-          <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
-            <rect x="9" y="2.5" width="6" height="11.5" rx="3" fill="var(--paper-parchment)" />
-            <path d="M5.5 11a6.5 6.5 0 0 0 13 0" stroke="var(--paper-parchment)" strokeWidth="1.8" strokeLinecap="round" />
-            <path d="M12 17.5V21M8.5 21h7" stroke="var(--paper-parchment)" strokeWidth="1.8" strokeLinecap="round" />
-          </svg>
-        </div>
-
-        {/* Visual waveforms */}
-        <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 3, height: 26, marginTop: 20 }}>
-          {recording ? (
-            // WB-1: the bars looped forever regardless of the Effects toggle. The heights/
-            // delays are per-nth-child in capture.css; `animation:none` stills them in place.
-            Array.from({ length: 7 }, (_, i) => (
-              <span key={i} className="kf-waveform-bar" style={motion ? undefined : { animation: 'none' }} />
-            ))
-          ) : (
-            <span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>—</span>
-          )}
-        </div>
+        {/* Sotto's pill: listening (tap it to finish, ✕ to cancel), transcribing, polishing, done, kept. */}
+        {pill && (
+          <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0 2px' }}>
+            <SottoPill
+              state={pill}
+              stream={stream}
+              onFinish={recording ? stopAndFile : undefined}
+              onCancel={handleCancel}
+              onRetry={() => void transcribeKept()}
+            />
+          </div>
+        )}
 
         {/* Status text timer */}
-        <div aria-live="polite" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', marginTop: 16 }}>
+        <div aria-live="polite" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', marginTop: 16 }}>
           {statusText}
         </div>
 
-        {/* Prompt string */}
-        <div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', marginTop: 6 }}>
+        {/* Prompt string — the interface face (D7: handwriting is for pages); kf-help raises its first letter. */}
+        <div className="kf-help" style={{ marginTop: 6 }}>
           {handText}
         </div>
 
@@ -404,43 +384,34 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
         {/* Action Buttons */}
         {phase === 'resting' ? (
           <div style={{ display: 'flex', gap: 12, marginTop: 22 }}>
-            <button type="button" onClick={handleCancel} style={outlineButton()}>
-              {RESTING.close}
-            </button>
-            <button type="button" onClick={typeInstead} style={filledButton()}>
-              {RESTING.type}
-            </button>
+            <SheetButton onClick={handleCancel}>{RESTING.close}</SheetButton>
+            <SheetButton filled onClick={typeInstead}>{RESTING.type}</SheetButton>
           </div>
         ) : phase === 'kept' ? (
           <>
             <div style={{ display: 'flex', gap: 12, marginTop: 22 }}>
-              <button type="button" onClick={discard} style={outlineButton()}>
-                {KEPT_ACTIONS.discard}
-              </button>
-              <button type="button" onClick={() => void transcribeKept()} style={saveIsPrimary ? outlineButton() : filledButton()}>
-                {KEPT_ACTIONS.retry}
-              </button>
+              <SheetButton onClick={discard}>{KEPT_ACTIONS.discard}</SheetButton>
+              <SheetButton filled={!saveIsPrimary} onClick={() => void transcribeKept()}>{KEPT_ACTIONS.retry}</SheetButton>
             </div>
-            <button
-              type="button"
-              onClick={saveToInbox}
-              style={{ ...(saveIsPrimary ? filledButton() : outlineButton()), width: '100%', marginTop: 10 }}
-            >
-              {KEPT_ACTIONS.save}
-            </button>
+            <SheetButton filled={saveIsPrimary} onClick={saveToInbox} style={{ width: '100%', marginTop: 10 }}>{KEPT_ACTIONS.save}</SheetButton>
           </>
         ) : (
           <div style={{ display: 'flex', gap: 12, marginTop: 22 }}>
-            <button type="button" onClick={handleCancel} disabled={busy} style={outlineButton(busy)}>
-              Cancel
-            </button>
-            <button type="button" onClick={stopAndFile} disabled={busy || !recording} style={filledButton(busy || !recording)}>
-              {stopLabel}
-            </button>
+            <SheetButton onClick={handleCancel} disabled={busy}>Cancel</SheetButton>
+            <SheetButton filled onClick={stopAndFile} disabled={busy || !recording}>{stopLabel}</SheetButton>
           </div>
         )}
+        <div style={{ marginTop: 16 }}>
+          <PoweredBySotto />
+        </div>
       </div>
     </div>,
     document.body,
   )
+}
+
+/** The sheet's buttons: the kit's (D11 = B) — secondary a bone tone. The filled one keeps the sheet's
+ * ink (.kf-voice-ink) in B's shape: B's terra primary would sit right under the terra mic. */
+function SheetButton({ filled = false, style, ...props }: { filled?: boolean } & ButtonHTMLAttributes<HTMLButtonElement>) {
+  return <Button type="button" variant={filled ? 'cta' : 'secondary'} className={filled ? 'kf-voice-ink' : undefined} style={{ flex: 1, justifyContent: 'center', ...style }} {...props} />
 }

@@ -39,11 +39,12 @@
 .pc-day[data-range]::before { content: ''; position: absolute; inset: var(--sp-1) 0; background: var(--select-bg); }
 .pc-day[data-range='start']::before { border-radius: 34px 0 0 34px; }
 .pc-day[data-range='end']::before { border-radius: 0 34px 34px 0; }
-.pc-day-l { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-day-l { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-day[data-today] .pc-day-l { color: var(--acc-terra-ink); }
 .pc-day-n { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: var(--fw-medium); color: var(--ink-body); }
 .pc-day[data-today] .pc-day-n { box-shadow: inset 0 0 0 1.5px var(--acc-terra-ink); color: var(--acc-terra-ink); font-weight: var(--fw-semibold); }
-.pc-day[aria-current] .pc-day-n { background: var(--ink-body); color: var(--paper-parchment); box-shadow: none; font-weight: var(--fw-semibold); }
+/* B (D2): the shown day is the selection, ink-filled with the selection pair. */
+.pc-day[aria-current] .pc-day-n { background: var(--sel-bg); color: var(--sel-ink); box-shadow: none; font-weight: var(--fw-semibold); }
 .pc-day-dot { width: 4px; height: 4px; border-radius: 50%; }
 .pc-day-dot[data-on] { background: var(--ink-faint); }
 
@@ -53,30 +54,30 @@
   overflow-x: auto; scrollbar-width: none; white-space: nowrap;
 }
 .pc-uns::-webkit-scrollbar { display: none; }
-.pc-uns-label { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-uns-label { flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-chip {
   position: relative; flex: none; display: inline-flex; align-items: center; gap: var(--sp-2); height: 40px; padding: 0 var(--sp-3);
-  background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-sharp); box-shadow: var(--shadow-crisp);
+  background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); box-shadow: var(--shadow-crisp);
   font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
 .pc-chip::after { content: ''; position: absolute; inset: calc(-1 * var(--sp-1)) 0; }
 .pc-chip[aria-expanded='true'] { border-color: var(--ink-body); box-shadow: inset 0 0 0 0.5px var(--ink-body); }
 .pc-chip.is-skel { width: 132px; border: none; box-shadow: none; background: var(--skeleton); animation: skeletonPulse 1.6s var(--ease-natural) infinite; }
 .pc-chip-t { font-size: 14px; color: var(--ink-body); }
-.pc-chip-d { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-chip-d { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-chip-d.is-late { color: var(--acc-terra-ink); }
 /* Kai 2026-10-07: Overdue · Today · Inbox above the chips (the desktop rail's sections), 48 tall. */
 .pc-segs { flex: none; display: flex; padding: var(--sp-1) var(--gutter-phone) 0; overflow-x: auto; scrollbar-width: none; }
 .pc-segs::-webkit-scrollbar { display: none; }
 
-/* ── The grid: 64px hours, a 60px hour gutter, dashed hour lines. ── */
+/* ── The grid: 64px hours, a 60px hour gutter, solid hour lines (B, D8). ── */
 .pc-grid { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
 .pc-colhead { flex: none; height: 32px; display: flex; padding-left: 60px; border-bottom: 1px solid var(--line-card); }
-.pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }
+.pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
 .pc-colhead > span.is-today { color: var(--acc-terra-ink); }
 .pc-allday { flex: none; display: flex; gap: var(--sp-1); padding: var(--sp-1) var(--sp-1) var(--sp-1) 60px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line-card); }
 .pc-allday-chip {
-  position: relative; flex: none; max-width: 100%; height: 32px; padding: 0 10px; border: none; border-radius: var(--radius-sharp); cursor: pointer;
+  position: relative; flex: none; max-width: 100%; height: 32px; padding: 0 10px; border: none; border-radius: var(--radius-block); cursor: pointer;
   background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); font: inherit; font-size: 14px; font-weight: var(--fw-medium);
   color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
@@ -84,8 +85,8 @@
 .pc-scroll { position: relative; flex: 1; min-height: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .pc-canvas { position: relative; height: calc(24 * 64px); }
 .pc-hour { position: absolute; left: 0; right: 0; display: flex; align-items: flex-start; pointer-events: none; }
-.pc-hour > span { flex: none; width: 60px; padding-left: var(--gutter-phone); margin-top: -8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ink-faint); }
-.pc-hour > i { flex: 1; border-top: 1px dashed var(--line-dashed); }
+.pc-hour > span { flex: none; width: 60px; padding-left: var(--gutter-phone); margin-top: -8px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.pc-hour > i { flex: 1; border-top: 1px solid var(--line-dashed); }
 
 /* Only the columns slide on a day swipe (7b); the hour labels and lines stay put. */
 .pc-track { position: absolute; top: 0; bottom: 0; left: 60px; right: 0; }
@@ -93,14 +94,14 @@
 .pc-track.is-sliding { overflow-x: clip; }
 .pc-pane { position: absolute; top: 0; bottom: 0; width: 100%; display: flex; }
 .pc-col { position: relative; flex: 1; min-width: 0; }
-.pc-pane.is-multi .pc-col, .pc-track.is-sliding .pc-col { border-left: 1px dashed var(--line-dashed); }
+.pc-pane.is-multi .pc-col, .pc-track.is-sliding .pc-col { border-left: 1px solid var(--line-dashed); }
 /* Week: ~47px columns — the title gets the room (the checkbox lives in the block sheet). */
 .pc-pane.is-week .pc-block-body { padding: 4px; }
 .pc-pane.is-week .pc-check { display: none; }
 
 /* ── Blocks: fill only, radius 3 (MK Week Strip look); hue from the kind (--pc-fill / --pc-ink). ── */
 .pc-block {
-  position: absolute; border-radius: var(--radius-sharp); cursor: pointer;
+  position: absolute; border-radius: var(--radius-block); cursor: pointer;
   background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment);
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
@@ -118,17 +119,36 @@
 .pc-block.is-compact .pc-name { line-height: 18px; }
 .pc-check { flex: none; display: inline-flex; }
 .pc-name { min-width: 0; font-size: 14px; font-weight: var(--fw-medium); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.pc-time { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* On one row the time gives way first: a narrow lane (a pair, a stack of three) keeps the title. */
+.pc-time { flex: 0 1000 auto; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* An overdue block's "Overdue · Replan" (Kai 2026-10-07) reads in terra under the past-muting. */
 .pc-block.is-noted .pc-time { color: var(--acc-terra-ink); }
 .pc-block.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 /* Time Slots (0073): a Time block's tasks under its title — the block's own check, name and mono
    time type; the fill line ("2 tasks · 45m of 2h") sits where a time line does. */
-.pc-slot { flex-basis: 100%; display: flex; flex-direction: column; gap: 2px; min-width: 0; margin-top: 2px; }
-.pc-slot-row { display: flex; align-items: center; gap: var(--sp-2); min-width: 0; min-height: 24px; }
+.pc-slot { flex-basis: 100%; display: flex; flex-direction: column; gap: 3px; min-width: 0; margin-top: 2px; }
+/* slot-outline, Kai's pick A: each task is its own soft card in the slot — the block's fill, a 1px edge
+   in its ink, 8px corners, 3px between. */
+.pc-slot-row {
+  display: flex; align-items: center; gap: var(--sp-2); min-width: 0; min-height: 24px; padding: 0 8px 0 2px; border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--pc-ink) 35%, transparent); background: var(--pc-fill);
+}
 .pc-block-body .pc-slot .pc-time { flex-basis: auto; }
 .pc-block-body .pc-slot-row .pc-check { align-self: center; }
 .pc-slot-row.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
+/* slot-outline: a hold on a task row lifts THAT task (the slot's header still lifts the slot): the row
+   takes the long-press bloom, its place stays dashed while it's out, and the task rides the finger with
+   7e's lift. A Time block it would go into is ringed; empty time shows the dashed ghost + time bubble. */
+.pc-slot-row { position: relative; }
+.pc-slot-row.is-gone { border-style: dashed; border-color: var(--ink-hairline); background: transparent; }
+.pc-slot-row.is-gone > * { visibility: hidden; }
+.pc-block.is-drop { box-shadow: inset 0 0 0 1.5px var(--pc-ink); }
+.pc-held-task {
+  position: fixed; z-index: 5; display: flex; align-items: center; gap: var(--sp-2); min-height: 24px; padding: 0 8px 0 2px; pointer-events: none;
+  border-radius: 8px; border: 1px solid color-mix(in srgb, var(--pc-ink) 35%, transparent);
+  background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); box-shadow: var(--shadow-popover);
+  transform: scale(1.04) rotate(1.2deg);
+}
 .pc-pending { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sig-offline); }
 
 /* 4+ blocks at once: three drawn, the rest behind a "+N" chip (kit Chip, 24 tall, a 48 hit) at the stack's top-right. */
@@ -140,7 +160,7 @@
   transform: translateX(var(--pc-shift, 0px)) scale(1.04) rotate(1.2deg);
   transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
 }
-.pc-ghost { position: absolute; border: 1px dashed var(--ink-hairline); border-radius: var(--radius-sharp); pointer-events: none; }
+.pc-ghost { position: absolute; border: 1px dashed var(--ink-hairline); border-radius: var(--radius-block); pointer-events: none; }
 /* Resize handles sit outside the block's edges, each its own 48px target. */
 .pc-handle { position: absolute; left: 50%; width: 96px; height: var(--touch-min); margin-left: -48px; display: flex; justify-content: center; touch-action: none; }
 .pc-handle.is-top { bottom: 100%; align-items: flex-end; }
@@ -152,13 +172,13 @@
 .pc-nowdot { position: absolute; left: 58px; width: 10px; height: 10px; margin-top: -5px; border-radius: 50%; background: var(--acc-terra-ink); z-index: 4; pointer-events: none; }
 .pc-nowtag, .pc-bubble {
   position: absolute; left: var(--sp-1); height: 22px; margin-top: -11px; padding: 0 6px; border-radius: var(--radius-pill);
-  font-family: var(--font-mono); font-size: 12px; line-height: 22px; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; pointer-events: none;
+  display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); white-space: nowrap; pointer-events: none;
 }
 .pc-nowtag { background: var(--acc-terra-ink); color: var(--on-terra); z-index: 4; }
 /* The time bubble while a block is lifted: the inverted toast pair. */
 .pc-bubble { background: var(--toast-bg); color: var(--toast-ink); box-shadow: var(--shadow-toast); z-index: 6; }
 
-.pc-skel { position: absolute; border-radius: var(--radius-sharp); background: var(--skeleton); animation: skeletonPulse 1.6s var(--ease-natural) infinite; }
+.pc-skel { position: absolute; border-radius: var(--radius-block); background: var(--skeleton); animation: skeletonPulse 1.6s var(--ease-natural) infinite; }
 
 /* 7i — the empty day sits over the grid; the hours stay tappable around it. */
 .pc-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -179,7 +199,7 @@
 /* The slot (7c) or block (7d) a sheet is about, drawn over the scrim where it sits on the grid. */
 .pc-held {
   position: fixed; z-index: 1001; display: flex; align-items: flex-start; gap: var(--sp-2); padding: 0 10px; box-sizing: border-box; pointer-events: none;
-  border-radius: var(--radius-sharp); background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment);
+  border-radius: var(--radius-block); background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment);
   box-shadow: inset 0 0 0 1.5px var(--pc-edge); overflow: hidden;
 }
 .pc-held > * { line-height: 32px; }
@@ -189,12 +209,12 @@
 /* The title is a field (Kai 2026-10-07: the sheet read as read-only) — the quick-create field's chrome. */
 .pc-bs-title-in { width: 100%; font-family: var(--font-display); font-size: 20px; }
 .pc-bs-meta::before { content: ''; display: inline-block; width: 7px; height: 7px; margin-right: var(--sp-2); border-radius: 50%; background: var(--pc-ink); vertical-align: 1px; }
-.pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }
+.pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-bs-colors { margin: var(--sp-3) 0 var(--sp-3); }
-.pc-bs-rows { margin: 0 -20px; border-top: 1px dashed var(--line-dashed); padding-top: var(--sp-1); }
+.pc-bs-rows { margin: 0 -20px; border-top: 1px solid var(--line-dashed); padding-top: var(--sp-1); }
 /* §5a "From task" + the task's title, quiet, above Complete / Open task. */
-.pc-bs-caption { padding: var(--sp-3) 20px var(--sp-1); font-size: var(--fs-body-s); line-height: calc(20 / 14); color: var(--ink-muted); border-top: 1px dashed var(--line-dashed); }
-.pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }
+.pc-bs-caption { padding: var(--sp-3) 20px var(--sp-1); font-size: var(--fs-body-s); line-height: calc(20 / 14); color: var(--ink-muted); border-top: 1px solid var(--line-dashed); }
+.pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--acc-sage-text); }
 .pc-bs-save.is-pending { color: var(--sig-offline); }
 .pc-bs-delete.kf-button--ghost { margin-right: auto; color: var(--acc-terra-ink); }
 
@@ -218,11 +238,11 @@
 /* ── Month (phone parity): the date in the week strip's circle, a dot row under it. ── */
 .pc-month { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow-y: auto; padding: 0 var(--sp-2) var(--sp-2); background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
 .pc-month-nav { flex: none; display: flex; align-items: center; justify-content: space-between; }
-.pc-month-title { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); text-transform: uppercase; color: var(--ink-faint); }
+.pc-month-title { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-month-wd { flex: none; display: grid; grid-template-columns: repeat(7, 1fr); padding-bottom: var(--sp-1); }
 .pc-month-wd > span { text-align: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .pc-month-grid { flex: 1; display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(64px, 1fr); }
-.pc-mcell { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--sp-1) 0 0; border: none; border-top: 1px dashed var(--line-dashed); background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pc-mcell { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: var(--sp-1) 0 0; border: none; border-top: 1px solid var(--line-dashed); background: none; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .pc-mcell.is-out { opacity: 0.45; }
 .pc-mcell[data-today] .pc-day-n { box-shadow: inset 0 0 0 1.5px var(--acc-terra-ink); color: var(--acc-terra-ink); font-weight: var(--fw-semibold); }
 .pc-mcell:active .pc-day-n { background: var(--pressed-overlay); }

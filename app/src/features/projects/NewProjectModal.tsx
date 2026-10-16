@@ -135,67 +135,67 @@ export function NewProjectModal({
     <>
           {/* Type Selector */}
           <div style={{ marginTop: isMobile ? 0 : 18 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Type</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Type</div>
             <div style={{ display: 'flex', gap: 8 }}>
               <div
                 onClick={() => setType('standard')}
-                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'standard' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'standard' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
+                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'standard' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'standard' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 'var(--radius-input)', padding: '11px 12px', cursor: 'pointer' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><img src="/ds/assets/wisteria/p40.png" alt="" style={{ height: 20 }} /><span style={{ fontSize: 14, fontWeight: type === 'standard' ? 600 : 400, color: 'var(--ink-body)' }}>Project</span></div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 5 }}>has a finish line</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 5 }}>Has a finish line</div>
               </div>
               <div
                 onClick={() => setType('area')}
-                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'area' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'area' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
+                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'area' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'area' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 'var(--radius-input)', padding: '11px 12px', cursor: 'pointer' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--acc-buttercream)' }}></span><span style={{ fontSize: 14, fontWeight: type === 'area' ? 600 : 400, color: 'var(--ink-body)' }}>Area</span></div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 5 }}>ongoing, no end</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 5 }}>Ongoing, no end</div>
               </div>
               <div
                 onClick={() => setType('retainer')}
-                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'retainer' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'retainer' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 9, padding: '11px 12px', cursor: 'pointer' }}
+                style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'retainer' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'retainer' ? '2px solid color-mix(in oklch, var(--acc-moss) 28%, transparent)' : 'none', borderRadius: 'var(--radius-input)', padding: '11px 12px', cursor: 'pointer' }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--acc-lavender-deep)' }}></span><span style={{ fontSize: 14, fontWeight: type === 'retainer' ? 600 : 400, color: 'var(--ink-body)' }}>Retainer</span></div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 5 }}>monthly hours</div>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 5 }}>Monthly hours</div>
               </div>
             </div>
           </div>
 
           {/* Name Input */}
           <div style={{ marginTop: 16 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. Balcony garden rebuild…"
-              style={{ width: '100%', font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--acc-moss)', borderRadius: 8, padding: '11px 13px', outline: 'none' }}
+              style={{ width: '100%', font: 'inherit', fontSize: 'var(--fs-body)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--acc-moss)', borderRadius: 'var(--radius-md)', padding: '11px 13px', outline: 'none' }}
             />
           </div>
 
           {/* Engagement + Domain + Target Date */}
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 14, marginTop: 16 }}>
             <div style={{ flex: '1 1 160px' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>
               <Select
                 value={effectiveDomain}
                 onChange={setDomainId}
                 options={domains.map((d) => ({ value: d.id, label: d.name }))}
                 ariaLabel="Domain"
                 placeholder="Domain"
-                style={{ width: '100%', fontSize: 'var(--fs-body)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', minHeight: isMobile ? 44 : undefined }}
+                style={{ width: '100%', fontSize: 'var(--fs-body)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '9px 12px', minHeight: isMobile ? 44 : undefined }}
               />
             </div>
 
             {type !== 'area' && (
               <div style={{ flex: '1 1 160px' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>
-                  {type === 'retainer' ? 'Renews Date' : 'Target date'}
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>
+                  {type === 'retainer' ? 'Renews' : 'Target date'}
                 </div>
                 <DateField
                   value={targetDate}
                   onChange={setTargetDate}
                   title={type === 'retainer' ? 'Renews' : 'Target date'}
-                  style={{ width: '100%', font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', outline: 'none', minHeight: isMobile ? 44 : undefined }}
+                  style={{ width: '100%', font: 'inherit', fontSize: 'var(--fs-body)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '9px 12px', outline: 'none', minHeight: isMobile ? 44 : undefined }}
                 />
               </div>
             )}
@@ -203,19 +203,19 @@ export function NewProjectModal({
 
           {type !== 'area' && (
             <div style={{ marginTop: 16 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Engagement Model / Client</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 7 }}>Engagement model / client</div>
               <input
                 value={engagementModel}
                 onChange={(e) => setEngagementModel(e.target.value)}
                 placeholder="e.g. Freelance, Personal…"
-                style={{ width: '100%', font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', outline: 'none' }}
+                style={{ width: '100%', font: 'inherit', fontSize: 'var(--fs-body)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '9px 12px', outline: 'none' }}
               />
             </div>
           )}
 
           {/* Color Picker */}
           <div style={{ marginTop: 16 }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Color</div>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>Color</div>
             <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
               {colorPalette.map((c) => (
                 <span
@@ -239,15 +239,15 @@ export function NewProjectModal({
           {type === 'standard' && (
             <div style={{ marginTop: 16 }}>
               <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, marginBottom: 8 }}>
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Starting milestones</span>
-                <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-muted)' }}>optional — the trellis it climbs ✿</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Starting milestones</span>
+                <span style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Optional — the trellis it climbs ✿</span>
               </div>
-              <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '2px 13px' }}>
+              <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '2px 13px' }}>
                 {milestones.map((m, index) => (
-                  <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 0', borderBottom: '1px dashed var(--line-dashed)' }}>
+                  <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 11, padding: '9px 0', borderBottom: '1px solid var(--line-dashed)' }}>
                     <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', width: 12 }}>{index + 1}</span>
                     <span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}>{m.title}</span>
-                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>
+                    <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Weight {m.weight}</span>
                     <button type="button" className="kf-hit" onClick={() => handleRemoveMilestone(index)} title="Remove" aria-label={`Remove milestone ${m.title}`} style={removeBtn}>✕</button>
                   </div>
                 ))}
@@ -263,7 +263,7 @@ export function NewProjectModal({
                   <button
                     type="button"
                     onClick={handleAddMilestone}
-                    style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}
+                    style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 'var(--fs-mono-l)', padding: '4px 10px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}
                   >
                     + Add
                   </button>
@@ -279,7 +279,7 @@ export function NewProjectModal({
     <>
       <Button variant="secondary" onClick={() => { discard(); close() }}>Cancel</Button>
       <Button onClick={(e) => handlePlant(e.currentTarget, close)} icon={<img src="/ds/assets/wisteria/p0.png" alt="" style={{ height: 16 }} />}>
-        {type === 'area' ? 'Plant Area' : 'Plant Project'}
+        {type === 'area' ? 'Plant area' : 'Plant project'}
       </Button>
     </>
   )
@@ -295,14 +295,13 @@ export function NewProjectModal({
 
   return (
     <div className="kf-overlay-scrim" onClick={() => { if (!dirty) onClose() }} style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
-      <div className="dv-card kf-overlay-card" onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: 'calc(var(--kf-vw) - 24px)', maxHeight: 'calc(var(--kf-vh) - 24px)', overflowY: 'auto', background: 'var(--paper-parchment)', position: 'relative', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-input)', boxShadow: 'var(--shadow-popover)' }}>
-        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 5, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.3 }} />
+      <div className="dv-card kf-overlay-card" onClick={(e) => e.stopPropagation()} style={{ width: 620, maxWidth: 'calc(var(--kf-vw) - 24px)', maxHeight: 'calc(var(--kf-vh) - 24px)', overflowY: 'auto', background: 'var(--paper-parchment)', position: 'relative', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)' }}>
         <div style={{ padding: '26px 30px 28px', position: 'relative', zIndex: 10 }}>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingBottom: 18, borderBottom: '1px dashed var(--line-dashed)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 13, paddingBottom: 18, borderBottom: '1px solid var(--line-dashed)' }}>
             <img src="/ds/assets/wisteria/p0.png" alt="" style={{ height: 38, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ flex: 1 }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects</div>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Projects</div>
               <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 'var(--fs-display-l)', lineHeight: 1, color: 'var(--ink-body)' }}>Plant something new</h1>
             </div>
             <button type="button" className="kf-hit" onClick={() => { discard(); onClose() }} title="Close" aria-label="Close" style={{ width: 28, height: 28, padding: 0, borderRadius: '999px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-faint)', font: 'inherit', fontSize: 'var(--fs-body-s)', cursor: 'pointer' }}>✕</button>
@@ -311,7 +310,7 @@ export function NewProjectModal({
           {fields}
 
           {/* Action buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 22, paddingTop: 16, borderTop: '1px solid var(--line-dashed)' }}>
             <span style={{ flex: 1 }}></span>
             {actions(onClose)}
           </div>

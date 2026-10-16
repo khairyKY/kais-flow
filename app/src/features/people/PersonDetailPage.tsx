@@ -14,9 +14,9 @@ import { openCapture } from '../command-bar/commandBarStore'
 
 const FACT_TYPES = ['Interest', 'Birthday', 'Note', 'Family']
 const LOG_CHANNELS = [{ value: 'in person', label: 'In person' }, { value: 'call', label: 'Call' }, { value: 'text', label: 'Text' }, { value: 'email', label: 'Email' }]
-const LOG_DAYS = ['today', 'yesterday', '1w ago'].map((d) => ({ value: d, label: d }))
+const LOG_DAYS = ['today', 'yesterday', '1w ago'].map((d) => ({ value: d, label: d.charAt(0).toUpperCase() + d.slice(1) }))
 // The fsel look (paper-bone field, 12.5px) on the themed Select's trigger.
-const fsel: React.CSSProperties = { background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)' }
+const fsel: React.CSSProperties = { background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '8px 11px', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)' }
 // The .chip pills as real buttons.
 const chipBtn: React.CSSProperties = { border: 'none', background: 'none', cursor: 'pointer' }
 // A ✕ that removes a row: a real button, 44px to a finger (.kf-hit).
@@ -185,23 +185,23 @@ export function PersonDetailPage() {
   return (
     <div style={{ maxWidth: 760 }}>
       <style>{`
-        .chip{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-        .flabel{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}
-        .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }
-        .slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}
-        .slabel .r{flex:1;height:1px;border-bottom:1px dashed var(--line-dashed)}
+        .chip{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing: var(--ls-meta);padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+        .flabel{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing: var(--ls-meta);color:var(--ink-faint)}
+        .fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+        .slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-ui);font-size:var(--fs-section);font-weight:var(--fw-semibold);color:var(--ink-body)}
+        .slabel .r{flex:1}
         .av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:none}
       `}</style>
 
       {/* Breadcrumb */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '6px 16px' }}>
         <BackLink to="/people">People</BackLink>
-        <span className="fhelp">added {new Date(person.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} · {person.facts?.length || 0} facts · {personInteractions.length} interactions</span>
+        <span className="fhelp">Added {new Date(person.created_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })} · {person.facts?.length || 0} facts · {personInteractions.length} interactions</span>
       </div>
 
       {/* Birthday banner (2b) */}
       {daysUntilBday !== null && daysUntilBday <= 14 && bdayFact && (
-        <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, marginTop: 18, transform: 'rotate(-0.3deg)' }}>
+        <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: 14, marginTop: 18 }}>
           <BloomIcon />
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: '14.5px', color: 'var(--ink-body)' }}>{getBannerText(person.name, daysUntilBday)}</div>
@@ -215,7 +215,7 @@ export function PersonDetailPage() {
       <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 22 }}>
         <span className="av" style={{ width: 52, height: 52, fontSize: 21, background: getAvatarBgColor(person.name) }}>{person.name.charAt(0)}</span>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>{domain?.name || 'Uncategorized'} · <span style={{ whiteSpace: 'nowrap' }}>last touch {lastTouchLabel}</span></div>
+          <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-clover-text)' }}>{domain?.name || 'Uncategorized'} · <span style={{ whiteSpace: 'nowrap' }}>last touch {lastTouchLabel}</span></div>
           <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.1, color: 'var(--ink-body)' }}>{person.name}</h1>
         </div>
         <img src={getCloverAsset(lastTouchDays)} alt="" style={{ height: 44, filter: 'var(--shadow-drop-sm)' }} />
@@ -223,19 +223,19 @@ export function PersonDetailPage() {
 
       {/* Quick actions */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 14 }}>
-        <button type="button" onClick={() => logTouchWithUndo(person, 'call')} className="chip kf-hit" style={{ ...chipBtn, background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)' }}>log a call</button>
-        <button type="button" onClick={() => logTouchWithUndo(person, 'meet')} className="chip kf-hit" style={{ ...chipBtn, background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)' }}>met in person</button>
-        <button type="button" onClick={() => logTouchWithUndo(person, 'text')} className="chip kf-hit" style={{ ...chipBtn, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>text</button>
+        <button type="button" onClick={() => logTouchWithUndo(person, 'call')} className="chip kf-hit" style={{ ...chipBtn, background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)' }}>Log a call</button>
+        <button type="button" onClick={() => logTouchWithUndo(person, 'meet')} className="chip kf-hit" style={{ ...chipBtn, background: 'color-mix(in oklch, var(--acc-clover) 20%, transparent)', color: 'var(--acc-clover-text)' }}>Met in person</button>
+        <button type="button" onClick={() => logTouchWithUndo(person, 'text')} className="chip kf-hit" style={{ ...chipBtn, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>Text</button>
         <span style={{ flex: 1 }} />
-        <button type="button" onClick={toggleEditor} className="chip kf-hit" style={{ ...chipBtn, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' }}>{editing ? 'close editor' : 'edit person ▸'}</button>
+        <button type="button" onClick={toggleEditor} className="chip kf-hit" style={{ ...chipBtn, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' }}>{editing ? 'Close editor' : 'Edit person ▸'}</button>
       </div>
 
       {/* Inline editor */}
       {editing && (
-        <form onSubmit={savePerson} style={{ marginTop: 14, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', padding: 14, borderRadius: 3, display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
+        <form onSubmit={savePerson} style={{ marginTop: 14, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', padding: 14, borderRadius: 'var(--radius-card)', display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'flex-end' }}>
           <div style={{ flex: '1 1 160px' }}>
             <div className="flabel" style={{ marginBottom: 4 }}>Name</div>
-            <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 'var(--fs-body-s)' }} />
+            <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: 8, fontSize: 'var(--fs-body-s)' }} />
           </div>
           <div style={{ width: 180 }}>
             <div className="flabel" style={{ marginBottom: 4 }}>Circle</div>
@@ -244,7 +244,7 @@ export function PersonDetailPage() {
               onChange={setEditDomain}
               ariaLabel="Circle"
               options={[{ value: '', label: 'No Circle' }, ...domains.map((d) => ({ value: d.id, label: d.name }))]}
-              style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: 8, fontSize: 'var(--fs-body-s)' }}
+              style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: 8, fontSize: 'var(--fs-body-s)' }}
             />
           </div>
           <Button type="submit" variant="cta" style={{ padding: '8px 16px', fontSize: 12 }}>Save</Button>
@@ -255,15 +255,15 @@ export function PersonDetailPage() {
       <div className="slabel" style={{ margin: '22px 0 6px' }}><span style={{ color: 'var(--acc-clover-text)' }}>Moments</span><span className="r" /></div>
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {momentFacts.map((f) => (
-          <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+          <div key={f.id} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
             <MomentIcon filled={f.label === 'Birthday'} />
             <span style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{f.label}</span>
             <span className="fhelp">{f.date}</span>
             <span style={{ flex: 1 }} />
             {f.recurs
-              ? <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>yearly ✓</span>
-              : <span className="chip" style={{ border: '1px dashed var(--line-solid)', color: 'var(--ink-faint)' }}>once</span>}
-            <button type="button" className="kf-hit" onClick={() => editFact(f)} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: editingFact === f.id ? 'var(--acc-clover-text)' : 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>{editingFact === f.id ? 'editing…' : 'edit'}</button>
+              ? <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }}>Yearly ✓</span>
+              : <span className="chip" style={{ border: '1px dashed var(--line-solid)', color: 'var(--ink-faint)' }}>Once</span>}
+            <button type="button" className="kf-hit" onClick={() => editFact(f)} style={{ border: 'none', background: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', color: editingFact === f.id ? 'var(--acc-clover-text)' : 'var(--ink-faint)', textDecoration: 'underline', cursor: 'pointer' }}>{editingFact === f.id ? 'Editing…' : 'Edit'}</button>
           </div>
         ))}
         <div
@@ -280,11 +280,11 @@ export function PersonDetailPage() {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {(person.facts || []).map((f) => (
           // A phone row too narrow for value + recurs + nudge wraps them whole onto a second line.
-          <div key={f.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', padding: '9px 2px', borderBottom: '1px dashed var(--line-dashed)' }}>
+          <div key={f.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', padding: '9px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
             <span className="flabel" style={{ width: 88, flex: 'none' }}>{f.label}</span>
             <span style={{ fontSize: '13.5px', color: 'var(--ink-body)', flex: '1 1 96px', minWidth: 0 }}>{f.value}</span>
-            {f.recurs && <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>↻ recurs</span>}
-            {f.label === 'Birthday' && f.date && <span className="fhelp" style={{ marginLeft: 'auto' }}>nudges 2 weeks out</span>}
+            {f.recurs && <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>↻ Recurs</span>}
+            {f.label === 'Birthday' && f.date && <span className="fhelp" style={{ marginLeft: 'auto' }}>Nudges 2 weeks out</span>}
             <button type="button" className="kf-hit" aria-label={`Remove ${f.label}`} onClick={() => removeFactWithUndo(person, f.id)} style={{ ...removeBtn, marginLeft: 4 }}>✕</button>
           </div>
         ))}
@@ -298,7 +298,7 @@ export function PersonDetailPage() {
             style={fsel}
           />
           <span style={{ flex: 1, minWidth: 160 }}>
-            <input ref={factValueRef} type="text" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: newFactValue ? 'normal' : 'italic', outline: 'none' }} />
+            <input ref={factValueRef} type="text" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '8px 11px', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', fontStyle: newFactValue ? 'normal' : 'italic', outline: 'none' }} />
           </span>
           <DateField
             value={newFactDate}
@@ -306,11 +306,11 @@ export function PersonDetailPage() {
             title="Date"
             placeholder="date?"
             ariaLabel="Fact date"
-            style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)' }}
+            style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999, border: '1px solid var(--line-solid)', background: 'none', color: 'var(--ink-muted)' }}
           />
           <button type="button" aria-pressed={newFactRecurs} aria-label="Repeats yearly" onClick={() => setNewFactRecurs(!newFactRecurs)} className="chip kf-hit" style={{ ...chipBtn, border: '1px solid var(--line-solid)', color: newFactRecurs ? 'var(--acc-clover-text)' : 'var(--ink-muted)' }}>↻</button>
-          {editingFact && <button type="button" onClick={resetFactForm} className="chip kf-hit" style={{ ...chipBtn, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' }}>cancel</button>}
-          <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>{editingFact ? 'Save fact' : 'Add fact'}</button>
+          {editingFact && <button type="button" onClick={resetFactForm} className="chip kf-hit" style={{ ...chipBtn, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)' }}>Cancel</button>}
+          <Button type="submit">{editingFact ? 'Save fact' : 'Add fact'}</Button>
         </form>
       </div>
 
@@ -319,10 +319,10 @@ export function PersonDetailPage() {
       <form onSubmit={handleLog} style={{ display: 'flex', alignItems: 'center', gap: 9, padding: '2px 0 12px', flexWrap: 'wrap' }}>
         <Select value={logChannel} onChange={setLogChannel} ariaLabel="Channel" options={LOG_CHANNELS} style={fsel} />
         <span style={{ flex: 1, minWidth: 160 }}>
-          <input type="text" placeholder="what did you talk about?" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 11px', fontSize: '12.5px', color: 'var(--ink-body)', fontStyle: logSummary ? 'normal' : 'italic', outline: 'none' }} />
+          <input type="text" placeholder="what did you talk about?" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-md)', padding: '8px 11px', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', fontStyle: logSummary ? 'normal' : 'italic', outline: 'none' }} />
         </span>
         <Select value={logDate} onChange={setLogDate} ariaLabel="When" options={LOG_DAYS} style={fsel} />
-        <button type="submit" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Log</button>
+        <Button type="submit">Log</Button>
       </form>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -331,7 +331,7 @@ export function PersonDetailPage() {
           const channel = s.includes('call') || s.includes('phone') ? 'call' : s.includes('dinner') || s.includes('met ') || s.includes('in person') ? 'in person' : 'text'
           const chipStyle = channel === 'in person' ? { background: 'color-mix(in oklch, var(--acc-terra) 14%, transparent)', color: 'var(--acc-terra)' } : { border: '1px solid var(--line-solid)', color: 'var(--ink-muted)' }
           return (
-            <div key={i.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 2px', borderBottom: idx < personInteractions.length - 1 ? '1px dashed var(--line-dashed)' : 'none' }}>
+            <div key={i.id} style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '10px 2px', borderBottom: idx < personInteractions.length - 1 ? '1px solid var(--line-dashed)' : 'none' }}>
               {/* The day opens the app's date picker (not the future); the time of day stays. */}
               <DateField
                 value={zoneDateKey(new Date(i.occurred_at))}
@@ -340,9 +340,9 @@ export function PersonDetailPage() {
                 onChange={(v) => { if (v && v <= zoneDateKey(new Date())) updateInteraction(i, { occurred_at: zoneToIso(v, zoneTimeKey(new Date(i.occurred_at))) }) }}
                 title="When"
                 ariaLabel="Date of this interaction"
-                style={{ width: 74, flex: 'none', padding: '3px 0 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', whiteSpace: 'normal' }}
+                style={{ width: 74, flex: 'none', padding: '3px 0 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', background: 'none', border: 'none', whiteSpace: 'normal' }}
               />
-              <span className="chip" style={{ ...chipStyle, flex: 'none' }}>{channel}</span>
+              <span className="chip" style={{ ...chipStyle, flex: 'none' }}>{channel.charAt(0).toUpperCase() + channel.slice(1)}</span>
               {editingInteraction === i.id ? (
                 <span style={{ fontSize: '13.5px', lineHeight: 1.5, flex: 1, minWidth: 0 }}>
                   <RenameField
@@ -365,9 +365,9 @@ export function PersonDetailPage() {
       </div>
 
       {/* Footer */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)' }}>
-        <button type="button" className="kf-hit" onClick={removePerson} style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person</button>
-        <span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>the log is the memory ✿</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 24, paddingTop: 14, borderTop: '1px solid var(--line-dashed)' }}>
+        <button type="button" className="kf-hit" onClick={removePerson} style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}>Delete person</button>
+        <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>The log is the memory ✿</span>
       </div>
     </div>
   )

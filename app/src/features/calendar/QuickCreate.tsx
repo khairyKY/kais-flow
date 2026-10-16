@@ -3,7 +3,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperti
 import { placeAtPointer } from '../../components/selectPlacement'
 import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
-import { BackLink, TapeCard, Toggle } from '../../components/kit'
+import { BackLink, Button, Toggle } from '../../components/kit'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
 import { createEvent, scheduleTask, setEventRepeat, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
@@ -116,12 +116,13 @@ const DURATION_CHIPS = [15, 30, 60, 120]
 const LENGTH_CHIPS = [30, 60, 90, 120]
 const lenLabel = (m: number) => (m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m`)
 
-/** Editor's .chip: mono, a pill, tinted or bordered. */
+/** Editor's .chip: a pill, tinted or bordered. B (D5): metadata type, sentence case. */
 function chipStyle(bg: string, color: string, border?: string): CSSProperties {
-  return { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 'var(--radius-pill)', background: bg, color, border: border ?? 'none', display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }
+  return { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', padding: '4px 9px', borderRadius: 'var(--radius-pill)', background: bg, color, border: border ?? 'none', display: 'inline-flex', alignItems: 'center', gap: 5, cursor: 'pointer' }
 }
-const CHIP_ON = chipStyle('color-mix(in srgb, var(--acc-lavender) 22%, transparent)', 'var(--acc-lavender-text)')
-const CHIP_OFF = chipStyle('transparent', 'var(--ink-muted)', '1px solid var(--line-solid)')
+// B (D12): a chip at rest carries a 3:1 edge and body ink; the picked one is ink-filled.
+const CHIP_ON = chipStyle('var(--sel-bg)', 'var(--sel-ink)', '1px solid var(--sel-bg)')
+const CHIP_OFF = chipStyle('transparent', 'var(--ink-body)', '1px solid var(--line-control)')
 const CHIP_ADD = chipStyle('transparent', 'var(--ink-faint)', '1px dashed var(--ink-hairline)')
 const FIELD: CSSProperties = { fontSize: 'var(--fs-caption)', padding: '8px 10px', width: '100%' }
 
@@ -301,13 +302,13 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   // ── Field blocks (shared by the popover and the page) ──
   const kindSwitcher = page ? (
     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginTop: 18 }}>
-      {(Object.keys(KIND_META) as QuickCreateKind[]).map((k, i) => {
+      {(Object.keys(KIND_META) as QuickCreateKind[]).map((k) => {
         const on = k === kind
         const inner = (
           <>
             <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
               {k === 'block' ? (
-                <span style={{ width: 16, height: 16, borderLeft: '3px solid var(--acc-lavender)', background: 'color-mix(in srgb, var(--acc-lavender) 20%, transparent)', borderRadius: 'var(--radius-sharp)' }} />
+                <span style={{ width: 16, height: 16, borderLeft: '3px solid var(--acc-lavender)', background: 'color-mix(in srgb, var(--acc-lavender) 20%, transparent)', borderRadius: 'var(--radius-check)' }} />
               ) : (
                 <img src={`/ds/assets/${k === 'task' ? 'cherry/bud' : 'daisy/midday'}.png`} alt="" style={{ height: 20, opacity: on ? 1 : 0.8 }} />
               )}
@@ -318,14 +319,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         )
         return (
           <button key={k} type="button" aria-pressed={on} onClick={() => setKind(k)} style={{ padding: 0, border: 'none', background: 'none', textAlign: 'left', font: 'inherit', cursor: 'pointer' }}>
-            {on ? (
-              // The chosen kind is a placed card: the kit's TapeCard, tilted the way 1b/1c/1d tilt it.
-              <TapeCard tilt={i === 1 ? 0.5 : -0.5} tape={k === 'task' ? 'color-mix(in srgb, var(--acc-blossom) 55%, transparent)' : 'color-mix(in srgb, var(--acc-lavender) 55%, transparent)'} style={{ padding: '13px 14px' }}>
-                {inner}
-              </TapeCard>
-            ) : (
-              <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-sharp)', padding: '13px 14px', opacity: 0.75 }}>{inner}</div>
-            )}
+            {/* B (D1, D7): this page is a tool. The chosen kind is a flat card with an ink edge: no tape, no tilt. */}
+            <div style={on ? { background: 'var(--paper-parchment)', border: '1px solid var(--ink-body)', borderRadius: 'var(--radius-card)', padding: '13px 14px' } : { background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '13px 14px', opacity: 0.75 }}>{inner}</div>
           </button>
         )
       })}
@@ -350,7 +345,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         borderRadius: page ? 'var(--radius-input)' : 0,
         boxShadow: page ? 'var(--shadow-card)' : 'none',
         padding: page ? '16px 18px' : '0 0 9px',
-        borderBottom: page ? undefined : '1px dashed var(--line-dashed)',
+        borderBottom: page ? undefined : '1px solid var(--line-card)', // B (D8): solid in a tool
         marginTop: page ? 22 : 0,
         marginBottom: page ? 0 : 11,
       }}
@@ -365,7 +360,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         style={{ width: '100%', fontFamily: 'var(--font-display)', fontSize: page ? 'var(--fs-lead)' : 'var(--fs-body-l)', color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
       />
       {caught && (
-        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: page ? 12 : 10, paddingTop: page ? 11 : 9, borderTop: '1px dashed var(--line-dashed)' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: page ? 12 : 10, paddingTop: page ? 11 : 9, borderTop: '1px solid var(--line-card)' }}>
           {(parsed?.dueAt || eventDate) && (
             <span style={chipStyle('color-mix(in srgb, var(--acc-lavender) 22%, transparent)', 'var(--acc-lavender-text)')}>
               → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: appZone() })}
@@ -392,7 +387,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
             <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} style={{ flex: '0 0 78px' }} />
             <span style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>–</span>
             <TimeInput value={endTime} day={date} onChange={(v) => { setEndTime(v); markDateTouched() }} style={{ flex: '0 0 78px' }} />
-            {durationText && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationText}</span>}
+            {durationText && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-muted)', whiteSpace: 'nowrap' }}>{durationText}</span>}
           </>
         )}
       </div>
@@ -404,7 +399,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
       <FLabel>Priority</FLabel>
       <Seg
         options={[
-          { value: '', label: 'none' },
+          { value: '', label: 'None' },
           { value: '3', label: '!', color: 'var(--acc-hydrangea-deep)' },
           { value: '2', label: '!!', color: 'var(--acc-gold)' },
           { value: '1', label: '!!!', color: 'var(--acc-terra)' },
@@ -441,7 +436,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   const busyColor = (size: number) => (
     <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12 }}>
       <ColorDots value={color} onChange={setColor} size={size} />
-      <Seg options={[{ value: 'busy', label: 'Busy' }, { value: 'free', label: 'Free' }]} value={busy ? 'busy' : 'free'} onChange={(v) => setBusy(v === 'busy')} style={{ flex: 'none', padding: 2, marginLeft: 'auto' }} />
+      <Seg options={[{ value: 'busy', label: 'Busy' }, { value: 'free', label: 'Free' }]} value={busy ? 'busy' : 'free'} onChange={(v) => setBusy(v === 'busy')} style={{ flex: 'none', marginLeft: 'auto' }} dense />
     </div>
   )
 
@@ -456,7 +451,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
             <button type="button" aria-label="Clear the task" onClick={() => { setHoldsTaskId(null); setHoldsQuery('') }} style={{ border: 'none', background: 'none', padding: 0, cursor: 'pointer', color: 'var(--ink-faint)', fontSize: 'var(--fs-body-s)' }}>✕</button>
           </div>
         )}
-        <div style={{ position: 'relative', ...(page && holdsTask ? { marginTop: 10, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)' } : null) }}>
+        <div style={{ position: 'relative', ...(page && holdsTask ? { marginTop: 10, paddingTop: 10, borderTop: '1px solid var(--line-card)' } : null) }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {page && <span aria-hidden style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)' }}>⌕</span>}
             <input
@@ -478,7 +473,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
                     setHoldsQuery('')
                     if (page && t.duration_min) setEndTime(plus(startTime, t.duration_min)) // 1d: "pre-filled from the task's duration"
                   }}
-                  style={{ display: 'block', width: '100%', textAlign: 'left', font: 'inherit', padding: '8px 10px', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', cursor: 'pointer', border: 'none', borderBottom: '1px dashed var(--line-dashed)', background: 'none' }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', font: 'inherit', padding: '8px 10px', fontSize: 'var(--fs-caption)', color: 'var(--ink-body)', cursor: 'pointer', border: 'none', borderBottom: '1px solid var(--line-card)', background: 'none' }}
                 >
                   <EmojiText text={t.title} />
                 </button>
@@ -586,7 +581,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
               <input
                 value={labelInput}
                 aria-label="Add a label"
-                placeholder="+ label"
+                placeholder="+ Label"
                 onChange={(e) => setLabelInput(e.target.value)}
                 onBlur={addLabel}
                 onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); e.stopPropagation(); addLabel() } }}
@@ -654,27 +649,22 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   )
 
   const footer = (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: page ? 30 : 14, paddingTop: page ? 16 : 11, borderTop: '1px dashed var(--line-dashed)' }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginTop: page ? 30 : 14, paddingTop: page ? 16 : 11, borderTop: '1px solid var(--line-card)' }}>
+      {/* B (D7, D11): the page's hand line is a help sentence (handwriting lives on pages); the buttons are the kit's. */}
       {page ? (
-        <span style={{ fontFamily: 'var(--font-hand)', fontSize: 'var(--fs-hand)', color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>{KIND_META[kind].hand}</span>
+        <FHelp style={{ marginTop: 0 }}>{KIND_META[kind].hand}</FHelp>
       ) : (
-        <button type="button" onClick={() => onExpand?.(snapshot())} style={{ font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+        <Button variant="ghost" onClick={() => onExpand?.(snapshot())} style={{ padding: '6px 0' }}>
           More options ↗
-        </button>
+        </Button>
       )}
       <div style={{ display: 'flex', alignItems: 'center', gap: page ? 12 : 10 }}>
         {page ? (
-          <button type="button" onClick={onClose} style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: 'var(--fs-body-s)', padding: '10px 18px', borderRadius: 'var(--radius-pill)', cursor: 'pointer' }}>Cancel</button>
+          <Button variant="secondary" onClick={onClose}>Cancel</Button>
         ) : (
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>esc</span>
         )}
-        <button
-          type="button"
-          onClick={(e) => submit(e.currentTarget)}
-          style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: page ? 'var(--fs-body-s)' : 'var(--fs-caption)', padding: page ? '10px 22px' : '8px 16px', borderRadius: 'var(--radius-pill)', boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-        >
-          {page ? `${KIND_META[kind].cta} ⏎` : 'Create ⏎'}
-        </button>
+        <Button onClick={(e) => submit(e.currentTarget)}>{page ? `${KIND_META[kind].cta} ⏎` : 'Create ⏎'}</Button>
       </div>
     </div>
   )
@@ -693,7 +683,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         <div style={{ width: 680, maxWidth: '100%' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
             <BackLink onClick={onClose}>Back</BackLink>
-            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>esc closes · nothing saved until create</span>
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)' }}>Esc closes · nothing saved until Create</span>
           </div>
           {/* Editor 1b draws 32px; the nearest display token. */}
           <h1 style={{ margin: '18px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 'var(--fs-display-l)', letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>Something new</h1>

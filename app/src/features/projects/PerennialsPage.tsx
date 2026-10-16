@@ -207,11 +207,11 @@ export function PerennialsPage() {
           setMenu({ id: t.id, x: e.clientX, y: e.clientY })
         }}
         // Phone: the next-date chip and the series button wrap under the task, or the title gets ~150px.
-        style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : undefined, alignItems: 'center', gap: isMobile ? '0 10px' : 10, paddingBottom: isMobile ? 6 : 0, borderBottom: '1px dashed var(--line-dashed)', opacity: t.paused ? 0.62 : 1, ...(motion ? staggerDelay(rowIndex) : {}) }}
+        style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : undefined, alignItems: 'center', gap: isMobile ? '0 10px' : 10, paddingBottom: isMobile ? 6 : 0, borderBottom: '1px solid var(--line-dashed)', opacity: t.paused ? 0.62 : 1, ...(motion ? staggerDelay(rowIndex) : {}) }}
       >
         <div style={{ flex: isMobile ? '1 1 100%' : 1, minWidth: 0 }}>
           <TaskRow task={t} border={false} />
-          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '-6px 0 0 34px', paddingBottom: 11 }}>
+          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)', margin: '-6px 0 0 34px', paddingBottom: 11 }}>
             {formatRecurrenceRule(t.recurrence_rule || '')} · {t.paused ? 'paused · ' : ''}{formatLastCompleted(lastDone)}
           </div>
         </div>
@@ -254,7 +254,7 @@ export function PerennialsPage() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 46, filter: 'var(--shadow-drop-sm)' }} />
             <div>
-              <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
                 Everything that repeats, in one bed
               </div>
               <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>
@@ -262,7 +262,7 @@ export function PerennialsPage() {
               </h1>
             </div>
           </div>
-          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 4 }}>
+          <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', paddingBottom: 4 }}>
             {activeSeries.length} series · {dueThisWeekCount} due this week
           </div>
         </div>

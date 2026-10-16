@@ -46,7 +46,7 @@ export function MovePicker(props: MovePickerProps) {
   return useIsMobile() ? <MoveSheet {...props} /> : <MovePopover {...props} />
 }
 
-const GROUP_TITLE: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }
+const GROUP_TITLE: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }
 
 function MoveSheet({ current, onPick, onClose, meta, onCreate }: MovePickerProps) {
   const [query, setQuery] = useState('')
@@ -109,11 +109,11 @@ function MoveSheet({ current, onPick, onClose, meta, onCreate }: MovePickerProps
                   <span style={{ flex: 1, minWidth: 0, fontSize: 15 }}>Create project “{q}”</span>
                 </button>
               )}
-              <div style={{ marginTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>
+              <div style={{ marginTop: 4, borderTop: '1px solid var(--line-dashed)' }}>
                 <button type="button" className={`kf-as-row${current === 'none' ? ' kf-mp-current' : ''}`} aria-current={current === 'none' || undefined} onClick={() => pick(NO_PLACE)}>
                   <span className="kf-as-icon" aria-hidden><Icon name="inbox" size={24} /></span>
                   <span style={{ flex: 1, minWidth: 0, fontSize: 15 }}>None</span>
-                  <span className="kf-as-hint">no project, area or domain</span>
+                  <span className="kf-as-hint">No project, area or domain</span>
                   {current === 'none' && <Icon name="check" size={20} />}
                 </button>
               </div>
@@ -127,7 +127,7 @@ function MoveSheet({ current, onPick, onClose, meta, onCreate }: MovePickerProps
 
 const ITEM: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', fontFamily: 'var(--font-ui)', fontSize: 13,
-  color: 'var(--ink-body)', background: 'none', border: 'none', borderRadius: 5, padding: '7px 10px', cursor: 'pointer',
+  color: 'var(--ink-body)', background: 'none', border: 'none', borderRadius: 'var(--radius-input)', padding: '7px 10px', cursor: 'pointer',
 }
 
 function MovePopover({ position, current, onPick, onClose }: MovePickerProps) {
@@ -167,7 +167,7 @@ function MovePopover({ position, current, onPick, onClose }: MovePickerProps) {
       >
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: color(t), flex: 'none' }} />
         <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}><EmojiText text={t.name} /></span>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{on ? '✓' : KIND[t.kind]}</span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', flex: 'none' }}>{on ? '✓' : KIND[t.kind]}</span>
       </button>
     )
   }
@@ -179,9 +179,9 @@ function MovePopover({ position, current, onPick, onClose }: MovePickerProps) {
         role="menu"
         aria-label="Move to"
         className="kf-overlay-card"
-        style={{ position: 'fixed', top: Math.max(12, top), left: Math.max(8, left), zIndex: 1000, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', boxShadow: 'var(--shadow-popover)', borderRadius: 5, padding: 6, width: 240, maxHeight: height, display: 'flex', flexDirection: 'column' }}
+        style={{ position: 'fixed', top: Math.max(12, top), left: Math.max(8, left), zIndex: 1000, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', boxShadow: 'var(--shadow-popover)', borderRadius: 'var(--radius-input)', padding: 6, width: 240, maxHeight: height, display: 'flex', flexDirection: 'column' }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '7px 10px', margin: '2px 2px 6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '7px 10px', margin: '2px 2px 6px' }}>
           <span style={{ color: 'var(--ink-faint)', fontSize: 12, flex: 'none' }}>⌕</span>
           <input
             autoFocus
@@ -201,7 +201,7 @@ function MovePopover({ position, current, onPick, onClose }: MovePickerProps) {
               {g.targets.map((t) => item(t, t.kind !== 'domain'))}
             </div>
           ))}
-          <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px dashed var(--line-dashed)' }}>
+          <div style={{ marginTop: 4, paddingTop: 4, borderTop: '1px solid var(--line-dashed)' }}>
             {item(NO_PLACE, false)}
           </div>
         </div>

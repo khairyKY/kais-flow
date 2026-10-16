@@ -2,6 +2,7 @@ import { useEffect, useState, type CSSProperties, type MouseEvent as ReactMouseE
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { useTasks, planWithUndo, editWithUndo, setSomeday, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo } from '../tasks/api'
 import { useTaskDraft } from '../tasks/useTaskDraft'
+import { subtasksOf } from '../tasks/subtasks'
 import { PhotoSource, SubtaskList, TaskMoreMenu, anchorUnder, useTaskControls } from '../tasks/TaskFields'
 import { remindChip, repeatLabel, dayWord } from '../tasks/taskSheetMath'
 import { listState } from '../journal/journalDay'
@@ -19,7 +20,8 @@ import { DURATIONS, dayShort, durationLabel } from '../../components/pickerMath'
 import { priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { useIsMobile } from '../../components/BottomSheet'
 import { EmptyState, ErrorCard, OfflineChip, Skeleton } from '../../components/States'
-import { BackLink, Checkbox, KeyCombo, Segmented, Toggle } from '../../components/kit'
+import { BackLink, Button, Checkbox, KeyCombo, SectionLabel, Segmented, Toggle } from '../../components/kit'
+import { filterChip } from '../../components/filterChip'
 import { FLabel, FHelp, DateInput, TimeInput } from './formFields'
 import type { Task } from '../../lib/types'
 
@@ -71,7 +73,7 @@ export function TaskEditorPage() {
         ) : state === 'resting' ? (
           <ErrorCard message="Couldn’t load this task." onRetry={() => void tasksQuery.refetch()} />
         ) : (
-          <EmptyState image="/ds/assets/cherry/fallen.png" line="This task isn’t here — it may have been deleted." action={{ label: 'Back to Tasks', onClick: () => void navigate('/tasks') }} />
+          <EmptyState image="/ds/assets/cherry/fallen.png" line="This task isn’t here — it may have been deleted." action={{ label: 'Back to Tasks', onClick: () => void navigate('/tasks') }} variant="secondary" />
         )}
       </div>
     </div>
@@ -108,7 +110,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
   const stage = taskCherryStage(task)
   const statusLabel = task.status === 'done' ? 'Done' : task.status === 'cancelled' ? 'Cancelled' : 'Open'
   // Children come straight from the tasks cache — no extra query needed.
-  const subtasks = tasks.filter((t) => t.parent_task_id === task.id)
+  const subtasks = subtasksOf(tasks, task.id)
   const day = (iso: string) => dayShort(zoneDateKey(new Date(iso), zone))
   const edited = new Date(task.updated_at)
   const editedWord = dayWord(zoneDateKey(edited, zone), now)
@@ -136,7 +138,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <BackLink to="/tasks">Tasks</BackLink>
-        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
           Created {day(task.created_at)}
           {task.updated_at !== task.created_at && ` · edited ${editedWord === 'Today' || editedWord === 'Tomorrow' ? editedWord.toLowerCase() : editedWord} ${zoneTimeKey(edited, zone)}`}
         </span>
@@ -147,12 +149,12 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
           checked={task.status === 'done'}
           onChange={() => toggleTaskWithUndo(task)}
           size={22}
-          style={{ borderRadius: 6, marginTop: 9, ...(task.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}
+          style={{ borderRadius: 'var(--radius-check)', marginTop: 9, ...(task.status === 'done' ? { background: 'var(--sig-done)' } : {}) }}
         />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
             <span style={{ ...PILL, background: task.status === 'done' ? 'color-mix(in srgb, var(--check-border) 30%, transparent)' : 'color-mix(in srgb, var(--acc-sage) 18%, transparent)', color: task.status === 'done' ? 'var(--ink-faint)' : 'var(--acc-sage-text)' }}>{statusLabel}</span>
-            {linkedInbox?.kind === 'voice' && <span style={{ ...PILL, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>via voice</span>}
+            {linkedInbox?.kind === 'voice' && <span style={{ ...PILL, border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>Via voice</span>}
             {link && (
               <a href={link} target="_blank" rel="noopener noreferrer" style={{ ...PILL, border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', textDecoration: 'none' }}>{linkLabel(link)} ↗</a>
             )}
@@ -207,42 +209,39 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
 
           {(linkedEvent || linkedInbox) && (
             <>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '26px 0 10px' }}>
-                <span style={{ ...FLabelInline }}>Linked</span>
-                <span style={{ flex: 1, height: 1, borderBottom: '1px dashed var(--line-dashed)' }} />
-              </div>
+              <SectionLabel style={{ margin: '26px 0 10px' }}>Linked</SectionLabel>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
                 {linkedEvent && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-lavender) 16%, transparent)', borderLeft: '3px solid var(--acc-lavender)', borderRadius: 3, padding: '9px 13px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-lavender) 16%, transparent)', borderLeft: '3px solid var(--acc-lavender)', borderRadius: 'var(--radius-block)', padding: '9px 13px' }}>
                     <span style={{ ...LINK, color: 'var(--acc-lavender-text)' }}>
                       Block · {day(linkedEvent.starts_at).slice(0, 3)} {zoneTimeKey(new Date(linkedEvent.starts_at), zone)}–{zoneTimeKey(new Date(linkedEvent.ends_at), zone)}
                     </span>
-                    <Link to="/calendar" style={{ ...LINK, color: 'var(--acc-lavender-deep)', textDecoration: 'none' }}>view on calendar →</Link>
+                    <Link to="/calendar" style={{ ...LINK, color: 'var(--acc-lavender-deep)', textDecoration: 'none' }}>View on calendar →</Link>
                     <button type="button" onClick={() => deleteEventWithUndo(linkedEvent, 'Unscheduled')} style={{ ...LINK, color: 'var(--acc-terra)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Unschedule</button>
                   </span>
                 )}
                 {linkedInbox && (
-                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 14%, transparent)', borderLeft: '3px solid var(--acc-hydrangea)', borderRadius: 3, padding: '9px 13px' }}>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-hydrangea) 14%, transparent)', borderLeft: '3px solid var(--acc-hydrangea)', borderRadius: 'var(--radius-input)', padding: '9px 13px' }}>
                     <span style={{ ...LINK, color: 'var(--acc-hydrangea-deep)' }}>
                       Capture · {linkedInbox.kind}, {day(linkedInbox.created_at)}
                     </span>
-                    <Link to="/inbox" style={{ ...LINK, color: 'var(--acc-hydrangea-deep)', textDecoration: 'none' }}>open in inbox →</Link>
+                    <Link to="/inbox" style={{ ...LINK, color: 'var(--acc-hydrangea-deep)', textDecoration: 'none' }}>Open in inbox →</Link>
                   </span>
                 )}
               </div>
             </>
           )}
 
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 44, paddingTop: 16, borderTop: '1px dashed var(--line-dashed)', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 44, paddingTop: 16, borderTop: '1px solid var(--line-card)', flexWrap: 'wrap', gap: 12 }}>
             <div>
-              {/* Flow Audit §4: no confirm — it goes to Trash with an Undo. */}
-              <button type="button" onClick={handleDelete} style={{ ...LINK, letterSpacing: 'var(--ls-mono-tight)', color: 'var(--acc-terra)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Delete task</button>
+              {/* Flow Audit §4: no confirm — it goes to Trash with an Undo. B (D11): the kit's terra text button. */}
+              <Button variant="ghost" onClick={handleDelete} style={{ padding: 0 }}>Delete task</Button>
               <FHelp>to Trash, with its calendar block · Undo</FHelp>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               {/* J-17 / 2026-09-26 decision: every shortcut hint is the kit's keycap (was hand-rolled mono text). */}
               <KeyCombo keys={['⌘', '⏎']} size="sm" />
-              <button type="button" onClick={handleSave} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}>Save</button>
+              <Button onClick={handleSave}>Save</Button>
             </div>
           </div>
         </div>
@@ -253,10 +252,9 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
               Only for open tasks: nothing to focus on once it's done. */}
           {task.status === 'todo' && <MiniFocus task={task} />}
 
-          <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 17px 15px', transform: 'rotate(0.4deg)' }}>
-            {/* washi tape — Editor.dc.html 1a:382 */}
-            <span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(-2deg)', borderRadius: 1 }} />
-            <div style={{ ...FLabelInline, marginBottom: 12 }}>Organize</div>
+          {/* Bound Journal (D1 · D3 · D4 · D7): a side card is a tool — 16px, flat, a hairline; Editor.dc.html's tape and tilt are for pages. */}
+          <div style={SIDE_CARD}>
+            <SectionLabel style={{ marginBottom: 12 }}>Organize</SectionLabel>
             <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Project or area</FLabel>
             {/* "Move to…" (tasks/MovePicker): a project, an area or a domain — the domain follows (move.ts
                 placeTask) — or a new project. */}
@@ -267,24 +265,20 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
                 chip opens it, where a tap adds or takes a label off and a new one can be made. */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {task.labels.map((l) => (
-                <button key={l} type="button" aria-label={`Labels: ${l}`} aria-haspopup="menu" onClick={(e) => open('labels', e)} style={{ ...chipStyle, cursor: 'pointer' }}>
+                <button key={l} type="button" aria-label={`Labels: ${l}`} aria-haspopup="menu" onClick={(e) => open('labels', e)} {...chip(false)}>
                   *{l}
                 </button>
               ))}
-              <button type="button" aria-haspopup="menu" onClick={(e) => open('labels', e)} style={{ ...chipStyle, border: '1px dashed var(--ink-hairline)', color: 'var(--ink-faint)', background: 'none', cursor: 'pointer' }}>
-                + label
+              <button type="button" aria-haspopup="menu" onClick={(e) => open('labels', e)} {...chip(false, true)}>
+                + Label
               </button>
             </div>
           </div>
 
-          <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 3, boxShadow: 'var(--shadow-card)', padding: '16px 17px 15px', transform: 'rotate(-0.4deg)' }}>
-            {/* washi tape — Editor.dc.html 1a:398 */}
-            <span style={{ position: 'absolute', top: -9, right: 26, width: 52, height: 16, background: 'color-mix(in srgb, var(--acc-lavender) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgba(255,255,255,0.3) 0 4px,transparent 4px 8px)', transform: 'rotate(2deg)', borderRadius: 1 }} />
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <span style={FLabelInline}>Schedule</span>
-              {/* The Plan list (tasks/PlanMenu): Today, Next free slot, Tomorrow, This weekend, Next week, Pick… */}
-              <button type="button" onClick={(e) => open('date', e)} style={{ ...LINK, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', border: 'none', borderRadius: 999, padding: '5px 10px', cursor: 'pointer' }}>Plan ▾</button>
-            </div>
+          <div style={SIDE_CARD}>
+            {/* The Plan list (tasks/PlanMenu): Today, Next free slot, Tomorrow, This weekend, Next week, Pick… —
+                the kit's secondary button (D11 = B; D13's tonal terra is still open). */}
+            <SectionLabel style={{ marginBottom: 12 }} action={<Button variant="secondary" style={{ padding: '6px 12px' }} onClick={(e) => open('date', e)}>Plan ▾</Button>}>Schedule</SectionLabel>
             <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: 8 }}>
               <div>
                 <FLabel style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Due date</FLabel>
@@ -306,7 +300,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
                   type="button"
                   aria-pressed={task.duration_min === m}
                   onClick={() => actions.duration?.(m)}
-                  style={{ ...chipStyle, cursor: 'pointer', background: 'none', ...(task.duration_min === m ? { background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)', color: 'var(--acc-lavender-text)', borderColor: 'transparent' } : {}) }}
+                  {...chip(task.duration_min === m)}
                 >
                   {m ? durationLabel(m) : 'None'}
                 </button>
@@ -319,7 +313,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
             <Field label="Repeat" value={task.recurrence_rule ? `↻ ${repeatLabel(task.recurrence_rule)}` : 'Doesn’t repeat'} onOpen={(e) => open('repeat', e)} />
             <FHelp>daily · weekly · monthly · custom rule</FHelp>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line-dashed)' }}>
               <div>
                 <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Someday</div>
                 <FHelp style={{ marginTop: 2 }}>rests in the fern · leaves every list</FHelp>
@@ -328,7 +322,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
             </div>
           </div>
 
-          <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)', padding: '0 6px' }}>every field saves quietly — no dialog unless something gets deleted ✿</div>
+          <div className="kf-help" style={{ padding: '0 6px' }}>every field saves quietly — no dialog unless something gets deleted ✿</div>
         </div>
       </div>
 
@@ -354,20 +348,12 @@ function Field({ label, value, onOpen }: { label: string; value: ReactNode; onOp
   )
 }
 
-const FLabelInline = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }
-const LINK: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase' }
-const PILL: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }
+const LINK: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)' }
+const PILL: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }
+const SIDE_CARD: CSSProperties = { background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '16px 17px 15px' }
 
-const chipStyle = {
-  fontFamily: 'var(--font-mono)',
-  fontSize: 'var(--fs-meta)',
-  letterSpacing: '0.08em',
-  textTransform: 'uppercase' as const,
-  padding: '5px 9px',
-  borderRadius: 3,
-  border: '1px solid var(--line-solid)',
-  color: 'var(--ink-muted)',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 5,
+/** Labels and Duration: the kit's filter chip (D12 — a visible edge, body ink; the chosen one ink-filled). */
+function chip(on: boolean, dashed = false): { className: string; style: CSSProperties } {
+  const c = filterChip(on, dashed)
+  return { className: c.className, style: { ...c.style, cursor: 'pointer' } }
 }

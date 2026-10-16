@@ -88,7 +88,7 @@ export function OnboardingPage() {
     >
       <div className="fr-hero" style={{ gap: 4 }}>
         <Plant src="/ds/assets/clover/awake.png" h={64} />
-        <div className="fr-hand">let's plant something ✿</div>
+        <div className="fr-hand">Let's plant something ✿</div>
       </div>
 
       <div style={{ marginTop: 16 }}>

@@ -4,7 +4,8 @@ import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDuration } from '../tasks/taskDisplay'
 import { addDays } from '../../components/pickerMath'
 import { zoneToIso } from './eventTime'
-import { expandEvents } from './series'
+import { expandEvents, ruleBetween } from './series'
+import { occurrenceOn as sharedOccurrenceOn } from '../../../../supabase/functions/_shared/slots.ts'
 
 // ── Time Slots (Kai 2026-10-13, parity audit B2 → a; migration 0073): a Time block HOLDS tasks, as
 // Akiflow's slots do. A task in one has slot_id (the block's stored row — a repeating slot's series
@@ -39,6 +40,11 @@ export function slotAt<E extends CalendarEvent>(events: readonly E[], at: string
     .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))[0]
 }
 
+/** The Time block occurrence among `rows` (stored rows: a series expands) on `day`, the user's — where
+ * a task held that day sits once a series edit has re-made the rows. The rule is shared with the MCP's
+ * edit_event (supabase/functions/_shared/slots.ts). */
+export const occurrenceOn = <E extends CalendarEvent>(rows: readonly E[], day: string, zone: string = appZone()): E | undefined => sharedOccurrenceOn(rows, day, zone, ruleBetween)
+
 /** What a task takes on going into a slot occurrence: the slot, its day, and its times. */
 export function intoSlot(slot: Slot, zone: string = appZone()): Pick<Task, 'slot_id' | 'slot_date' | 'scheduled_start' | 'scheduled_end'> {
   return { slot_id: slotRow(slot), slot_date: slotDay(slot, zone), scheduled_start: slot.starts_at, scheduled_end: slot.ends_at }
@@ -55,6 +61,18 @@ export function slotFill(slot: Pick<CalendarEvent, 'starts_at' | 'ends_at'>, hel
   const used = held.reduce((n, t) => n + (t.duration_min || 30), 0)
   const total = Math.round((Date.parse(slot.ends_at) - Date.parse(slot.starts_at)) / 60_000)
   return `${held.length} task${held.length === 1 ? '' : 's'} · ${mins(used)} of ${mins(total)}`
+}
+
+/** slot-outline (phone): where a task held in a slot lands when its row is dragged out — the desktop's
+ * drag-out rules (CalendarPage). `at`: the time under the finger, null off the grid (the strip): out of
+ * the slot. On a Time block: into it, or nothing when it's the one holding it. Empty time: its own block
+ * there, its estimate long (30 minutes when none, the rail's default). */
+export type HeldDrop<E> = { kind: 'out' } | { kind: 'stay' } | { kind: 'into'; slot: E } | { kind: 'block'; starts_at: string; ends_at: string }
+export function heldDrop<E extends CalendarEvent>(task: Held & Pick<Task, 'duration_min'>, at: string | null, events: readonly E[], zone: string = appZone()): HeldDrop<E> {
+  if (!at) return { kind: 'out' }
+  const slot = slotAt(events, at)
+  if (slot) return inSlot(task, slot, zone) ? { kind: 'stay' } : { kind: 'into', slot }
+  return { kind: 'block', starts_at: at, ends_at: new Date(Date.parse(at) + (task.duration_min || 30) * 60_000).toISOString() }
 }
 
 /** The Time blocks a task can go into without a drag (the task menu's "Into a slot…", the command

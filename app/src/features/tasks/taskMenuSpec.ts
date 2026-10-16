@@ -5,7 +5,7 @@
 import { cairoTimeKey } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
 
-export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'intoSlot' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
+export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'intoSlot' | 'subtask' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
 
 export interface TaskMenuEntry {
   key: TaskMenuKey
@@ -35,6 +35,8 @@ export interface TaskMenuContext {
   goal?: boolean
   /** A Top 3 row on Today: its place (0 = the goal) and the last open place — Move up / Move down. */
   place?: { index: number; last: number }
+  /** The row draws its subtasks under it (Subtasks A, a list): Add a subtask opens its add line. */
+  subtask?: boolean
   /** The desktop right-click / ⋯ menu: Tomorrow gets its own top row (the phone swipes for it). */
   desktop?: boolean
 }
@@ -60,6 +62,8 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     ...(task.slot_id && !n ? [{ key: 'unschedule', label: 'Out of the slot' } as const] : ctx.canUnschedule ? [{ key: 'unschedule', label: 'Unschedule' } as const] : []),
     // The phone's way into a slot (a hold selects there, it doesn't drag) — and the desktop's without a drag.
     ...(ctx.slots && !n ? [{ key: 'intoSlot', label: 'Into a slot…', sub: true } as const] : []),
+    // Subtasks A (Kai 2026-10-16): the phone's way to add one from the row (the computer also has the row's +).
+    ...(ctx.subtask && !n && !task.parent_task_id ? [{ key: 'subtask', label: 'Add a subtask' } as const] : []),
     { key: 'project', label: `Move to…${n}`, hint: ctx.projectName ?? 'None', sub: true },
     { key: 'priority', label: 'Priority', hint: (task.priority && PRIORITY_LABELS[task.priority]) || 'None', sub: true },
     // The Label picker (Overlays.dc.html, keyboard L) — the desktop menu's; the phone edits labels in

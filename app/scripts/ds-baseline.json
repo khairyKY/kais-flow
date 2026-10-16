@@ -6,33 +6,18 @@
     "transition: background var(--dur-press) var(--ease-standard); }": 1
    },
    "font-size-literal": {
-    ".kf-as-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }": 1,
-    "<div style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400, lineHeight: 1.4, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{meta}</di": 1,
     "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}</span>": 1
-   },
-   "letter-spacing-literal": {
-    ".kf-as-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); white-space: nowrap; }": 1,
-    "<div style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 12, fontWeight: 400, lineHeight: 1.4, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{meta}</di": 1
    },
    "line-height-literal": {
     "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}</span>": 1
    }
   },
   "src/components/AppLayout.tsx": {
-   "colour-literal": {
-    "{ to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill=\"var(--acc-lavender)\" center=\"#D9B65C\" />, tape: 'color-mix(in srgb, var(--acc-lavender) 45%, transparent)' },": 1,
-    "{ to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill=\"var(--acc-blossom)\" center=\"#C98A4B\" />, tape: 'color-mix(in srgb, var(--acc-blossom) 45%, transparent)' },": 1,
-    "{ to: '/trash', label: 'Trash', dot: '--ink-hairline', tape: 'rgba(122,110,94,0.35)' },": 1,
-    "backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 3px, transparent 3px 6px)',": 1,
-    "<span style={{ color: 'var(--acc-sage)', animation: motionOn ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: motionOn ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>": 1,
-    ".kf-scrim { animation: kfFadeIn 210ms var(--ease-out); background: rgba(11, 10, 8, 0.2); }": 1
-   },
    "font-size-literal": {
     "<span style={{ fontSize: 13, color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{label}</span>": 1,
     "<span className=\"app-nav-label\" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>": 1,
     "<span className=\"app-footer-label\" style={{ fontSize: faint ? 12.5 : 13.5, color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{label}</span>": 1,
     "<div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>": 1,
-    "const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }": 1,
     "<div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>": 1,
     "font-size: 14px; color: var(--ink-body); z-index: 60;": 1,
     ".app-sidebar.collapsed .app-nav-badge { position: absolute; top: 1px; right: 3px; margin: 0 !important; font-size: 9px !important; line-height: 1; }": 1,
@@ -40,20 +25,12 @@
     "<span className=\"app-footer-label\" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Guide</span>": 1,
     "<span className=\"app-footer-label\" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>": 1
    },
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-muted)' }}>Plan</span>": 1,
-    "<div className=\"app-nav-label\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '12px 12px 5": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-terra-ink)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: !online ? 'var(--ink-muted)' : 'var(--acc-sage-text)' }}>": 1,
-    "style={{ position: 'relative', height: 42, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '0 40px', borderBottom: '1px dashed var(--line-solid)": 1,
-    "<div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)', overflow:": 1
+   "colour-literal": {
+    "<span style={{ color: 'var(--acc-sage)', animation: motionOn ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: motionOn ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>": 1,
+    ".kf-scrim { animation: kfFadeIn 210ms var(--ease-out); background: rgba(11, 10, 8, 0.2); }": 1
    },
    "shadow-literal": {
     "<span style={{ color: 'var(--acc-sage)', animation: motionOn ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: motionOn ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>": 1
-   },
-   "radius-off-scale": {
-    "style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '12px 14px', textTransform: 'none', letterSpacing: 'n": 1
    },
    "motion-property": {
     "transition: transform var(--dur-quick) var(--ease-spring),": 1,
@@ -67,8 +44,7 @@
    },
    "font-size-literal": {
     "<div id={titleId} style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, lineHeight: 1.2, color: 'var(--ink-body)' }}>": 1,
-    "<span style={{ flex: 1, fontSize: 14.5, color: 'var(--ink-body)' }}>{label}</span>": 1,
-    "{meta != null && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11, color: 'var(--ink-faint)' }}>{meta}</span>}": 1
+    "<span style={{ flex: 1, fontSize: 14.5, color: 'var(--ink-body)' }}>{label}</span>": 1
    }
   },
   "src/components/BulkBar.tsx": {
@@ -82,15 +58,9 @@
    },
    "line-height-literal": {
     "font: inherit; font-size: var(--fs-tab-label); line-height: 16px; font-weight: 500; color: var(--ink-body); background: none; border: none;": 1
-   },
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra-ink)' }}>": 1
    }
   },
   "src/components/ContextMenu.tsx": {
-   "radius-off-scale": {
-    "borderRadius: 5,": 2
-   },
    "font-size-literal": {
     "fontSize: 13,": 1,
     "{item.submenu && <span aria-hidden=\"true\" style={{ color: 'var(--ink-faint)', fontSize: 11 }}>▸</span>}": 1
@@ -102,12 +72,7 @@
   "src/components/kit.css": {
    "font-size-literal": {
     "font-size: 13px;": 3,
-    "font-size: 9px;": 1,
     "font-size: 14px;": 1
-   },
-   "letter-spacing-literal": {
-    "letter-spacing: 0.06em;": 2,
-    "letter-spacing: 0.08em;": 1
    },
    "motion-property": {
     "transition: transform var(--dur-press) var(--ease-standard), box-shadow var(--dur-press) var(--ease-standard);": 1,
@@ -118,20 +83,11 @@
    "line-height-literal": {
     "line-height: 16px;": 1,
     "line-height: 20px;": 1
-   },
-   "radius-off-scale": {
-    "border-radius: 18px;": 1,
-    "border-radius: 26px;": 1
    }
   },
   "src/components/kit.tsx": {
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{children}</span>": 1,
-    "letterSpacing: '0.16em',": 1
-   },
    "radius-off-scale": {
-    "borderRadius: sm ? 4 : 5,": 1,
-    "borderRadius: 5,": 1
+    "borderRadius: sm ? 4 : 5,": 1
    },
    "colour-literal": {
     "backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.32) 0 4px, transparent 4px 8px)',": 1
@@ -141,9 +97,6 @@
    }
   },
   "src/components/KitGesturesDemo.tsx": {
-   "letter-spacing-literal": {
-    "const metaStyle = { marginTop: 4, display: 'flex', flexWrap: 'wrap', columnGap: 12, rowGap: 2, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppe": 1
-   },
    "font-size-literal": {
     "<div style={{ fontSize: 15, lineHeight: '20px', color: 'var(--ink-body)', textWrap: 'pretty' }}>{t.title}</div>": 1,
     "<span className=\"kf-hit\" onClick={() => actions.top3?.()} style={{ color: t.top3 ? 'var(--star-on)' : 'var(--star-empty)', fontSize: 16, lineHeight: 1, cursor: 'pointer', marginTop: 1 }}>": 1,
@@ -169,10 +122,6 @@
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: '#4a3a1e', lineHeight: 1.3 }}>Deliver the MVP of the forecasting app</div>": 1,
     "<div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.5 }}>A placed note — tape matches the surface accent, radius 3px, tilt ±0.4°.</div>": 1
    },
-   "letter-spacing-literal": {
-    "<p style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 0 }}>Design System §04 · the atoms ev": 1,
-    "<div style={{ marginTop: 8, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-gold)' }}>The one thing that makes today a": 1
-   },
    "colour-literal": {
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: '#4a3a1e', lineHeight: 1.3 }}>Deliver the MVP of the forecasting app</div>": 1
    }
@@ -180,19 +129,12 @@
   "src/components/KitSheetsDemo.tsx": {
    "font-size-literal": {
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 20, lineHeight: 1.3 }}>Plan and implement the forecasting logic</div>": 1,
-    "style={{ height: 48, padding: '0 14px', borderRadius: 8, border: '1px solid var(--line-control)', background: 'var(--paper-bone)', font: 'inherit', fontSize: 15, color: 'var(--ink-body)' }}": 1,
-    "<div key={i} style={{ minHeight: 52, display: 'flex', alignItems: 'center', borderBottom: '1px dashed var(--line-dashed)', fontSize: 15 }}>Row {i + 1}</div>": 1
-   },
-   "letter-spacing-literal": {
-    "<div style={{ ...meta, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 8 }}>{label}</div>": 1
+    "style={{ height: 48, padding: '0 14px', borderRadius: 8, border: '1px solid var(--line-control)', background: 'var(--paper-bone)', font: 'inherit', fontSize: 15, color: 'var(--ink-body)' }}": 1
    }
   },
   "src/components/MobileTabBar.tsx": {
    "colour-literal": {
     "{ to: '/tasks', label: 'Tasks', glyph: <FlowerIcon fill=\"var(--acc-blossom)\" center=\"#C98A4B\" /> },": 1
-   },
-   "radius-off-scale": {
-    "style={{ width: '100%', background: 'var(--paper-parchment)', borderTop: '1px solid var(--line-card)', borderRadius: '14px 14px 0 0', boxShadow: 'var(--shadow-card)', padding: '18px 16px calc(18px + e": 1
    },
    "font-size-literal": {
     "<span style={{ fontSize: 13, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>": 1,
@@ -213,12 +155,10 @@
    "font-size-literal": {
     ".kf-pk-label { flex: 1; min-width: 0; font-size: 15px; line-height: 20px; }": 1,
     ".kf-pk-month > span { flex: 1; font-family: var(--font-display); font-size: 18px; font-weight: 500; color: var(--ink-body); }": 1,
-    ".kf-pk-wk { height: 24px; align-items: center; text-align: center; font-family: var(--font-mono); font-size: 12px;": 1,
     "font-size: 15px; color: var(--ink-body); transition: background var(--dur-press) var(--ease-standard); }": 1,
     "font: inherit; font-size: 14px; color: var(--ink-body); white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; }": 1,
     ".kf-pk-time > b { flex: none; width: 56px; font-family: var(--font-mono); font-size: 15px; font-weight: 400; }": 1,
     ".kf-pk-pop-head { flex: none; padding: 12px 20px 8px; font-family: var(--font-display); font-size: 17px; font-weight: 500; line-height: 1.2; color: var(--ink-body); }": 1,
-    ".kf-pk-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; font-weight: 400; line-height: 1.4; letter-spacing: 0.06em;": 1,
     ".kf-pk-pop-head .kf-pk-meta { font-size: 10.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }": 1,
     ".kf-pk-pop .kf-as-hint { font-size: 10.5px; }": 1,
     ".kf-pk-pop .kf-pk-label { font-size: 13.5px; }": 1,
@@ -231,15 +171,8 @@
    "line-height-literal": {
     ".kf-pk-label { flex: 1; min-width: 0; font-size: 15px; line-height: 20px; }": 1
    },
-   "letter-spacing-literal": {
-    "letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".kf-pk-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; font-weight: 400; line-height: 1.4; letter-spacing: 0.06em;": 1
-   },
    "motion-property": {
     "font-size: 15px; color: var(--ink-body); transition: background var(--dur-press) var(--ease-standard); }": 1
-   },
-   "radius-off-scale": {
-    "background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: 5px; box-shadow: var(--shadow-popover); }": 1
    }
   },
   "src/components/ProjectPicker.tsx": {
@@ -253,9 +186,6 @@
    },
    "line-height-literal": {
     "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{label}</span>": 1
-   },
-   "radius-off-scale": {
-    "borderRadius: 5,": 2
    }
   },
   "src/components/RenameField.tsx": {
@@ -264,39 +194,22 @@
    }
   },
   "src/components/Select.tsx": {
-   "radius-off-scale": {
-    "borderRadius: 5,": 2
-   },
    "font-size-literal": {
     "fontSize: 13,": 1
    }
   },
   "src/components/ShortcutOverlay.tsx": {
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--acc-terra)', margin: '0 0 3px' }}>": 1
-   },
    "font-size-literal": {
     "<span style={{ fontSize: 14, color: 'var(--ink-body)' }}>{entry.label}</span>": 1,
     "const link = { background: 'none', border: 'none', padding: '6px 0', font: 'inherit', fontSize: 14, fontWeight: 600, color: 'var(--acc-lavender-deep)', cursor: 'pointer' } as const": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1.1 }}>Shortcuts</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', marginTop: 4 }}>the quick paths through the garden</div>": 1,
     "<span style={{ flex: 1, minWidth: 200, fontSize: 13.5, color: 'var(--ink-muted)' }}>On a Mac it’s ⌘; on Windows, Ctrl.</span>": 1
-   },
-   "colour-literal": {
-    "<span aria-hidden style={{ position: 'absolute', top: -9, left: '50%', marginLeft: -36, width: 72, height: 18, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage:": 1
    }
   },
   "src/components/SnoozeMenu.tsx": {
    "font-size-literal": {
     "fontSize: 13,": 1,
     "<div style={{ fontSize: 15, color: 'var(--ink-body)', fontWeight: 500, marginBottom: 4 }}>": 1
-   },
-   "radius-off-scale": {
-    "borderRadius: 5,": 2
-   },
-   "letter-spacing-literal": {
-    "letterSpacing: '0.16em',": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>": 1
    }
   },
   "src/components/States.tsx": {
@@ -309,8 +222,7 @@
   },
   "src/components/ToastHost.tsx": {
    "font-size-literal": {
-    ".kf-toast-msg { flex: 1; min-width: 0; padding: 14px 0; font-size: 14px; line-height: 20px; text-wrap: pretty;": 1,
-    "font: inherit; font-size: 14px; font-weight: 600; color: var(--toast-action); border-radius: 3px; }": 1
+    ".kf-toast-msg { flex: 1; min-width: 0; padding: 14px 0; font-size: 14px; line-height: 20px; text-wrap: pretty;": 1
    },
    "line-height-literal": {
     ".kf-toast-msg { flex: 1; min-width: 0; padding: 14px 0; font-size: 14px; line-height: 20px; text-wrap: pretty;": 1
@@ -323,32 +235,12 @@
    "kit-duplicate": {
     "function useIsMobile(): boolean {": 1
    },
-   "letter-spacing-literal": {
-    ".afilter { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.08em; text-transform:uppercase; padding:6px 12px; border-radius:999px; cursor:pointer; border:1px solid var(--line-": 1,
-    ".chip { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.06em; text-transform:uppercase; padding:4px 9px; border-radius:999px; display:inline-flex; align-items:center; gap:5px": 1,
-    ".fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }": 1,
-    ".slabel { display:flex; align-items:center; gap:12px; font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); }": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{formatShortDateHeader(dateKey)}</span>": 1,
-    "<span onClick={handleLoadEarlier} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer'": 2,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Activity · the ledger</div>": 1,
-    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Everything, in order</h1>": 1,
-    "style={{ display: 'inline-flex', alignItems: 'center', gap: 6, userSelect: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', colo": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>End of ledger</span>": 1
-   },
-   "motion-property": {
-    ".afilter { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.08em; text-transform:uppercase; padding:6px 12px; border-radius:999px; cursor:pointer; border:1px solid var(--line-": 1
-   },
-   "radius-off-scale": {
-    "button.abody { background:none; border:none; padding:0; color:inherit; font:inherit; text-align:left; width:100%; cursor:pointer; border-radius:5px; }": 1,
-    "<div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 50, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: 0.5, borderRadius: 46 }} />": 1
-   },
    "font-size-literal": {
-    ".anotice button { font:inherit; font-size:12.5px; font-weight:600; color:var(--ink-body); background:var(--paper-parchment); border:1px solid var(--line-control); border-radius:3px; padding:5px 10px; ": 1,
     "<span style={{ fontSize: isMobile ? 13.5 : 14.5, color: 'var(--ink-body)' }}>{entry.info.text}</span>": 1,
-    "<div style={{ padding: 40, textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-muted)' }}>nothing is logged you didn't do — just a trail behind you ✿</div>": 1,
-    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Everything, in order</h1>": 1,
-    "<div style={{ padding: '60px 0', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)' }}>nothing is logged you didn't do — just a trail behind you ✿</div>": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>nothing is logged you didn't do — just a trail behind you ✿</span>": 1
+    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Everything, in order</h1>": 1
+   },
+   "letter-spacing-literal": {
+    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Everything, in order</h1>": 1
    }
   },
   "src/features/auth/firstRun.css": {
@@ -359,13 +251,12 @@
     "font-size: 14px;": 5,
     "font-size: 13px;": 3,
     "font-size: 12px;": 1,
-    "font-size: 20px;": 2,
     "font-size: 22px;": 1,
+    "font-size: 20px;": 1,
     "font-size: 32px;": 1
    },
    "letter-spacing-literal": {
-    "letter-spacing: -0.01em;": 2,
-    "letter-spacing: 0.06em;": 1
+    "letter-spacing: -0.01em;": 2
    },
    "line-height-literal": {
     "line-height: 20px;": 1,
@@ -376,24 +267,15 @@
    "font-size-literal": {
     "font-size: calc(19px * var(--s));": 1,
     "font-size: calc(12.5px * var(--s));": 1,
-    "font-size: calc(9px * var(--s-text));": 4,
-    "font-size: calc(18px * var(--s));": 1,
-    ".cal-day-header-today .cal-day-header-num { font-size: calc(20px * var(--s)); font-weight: 600; }": 1,
     "font-size: calc(8.5px * var(--s-text));": 2,
     "font-size: calc(12px * var(--s));": 1,
-    ".fc .fc-timegrid-axis-frame { font-family: var(--font-mono); font-size: calc(9px * var(--s-text)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--ink-faint); }": 1,
-    "font-size: calc(10.5px * var(--s-text));": 2,
-    ".fc .cal-day-header-month { padding: 10px 8px; font-family: var(--font-mono); font-size: calc(10px * var(--s-text)); letter-spacing: var(--ls-mono-tight); text-transform: uppercase; color: var(--text-": 1,
-    "font-size: calc(10px * var(--s-text));": 1,
+    "font-size: calc(9px * var(--s-text));": 2,
+    "font-size: calc(10.5px * var(--s-text));": 1,
     ".fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s-text)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }": 1,
-    ".fc-dayGridMonth-view .fc-daygrid-event { height: 16px; line-height: 14px; border-radius: 8px; font-size: calc(8.5px * var(--s-text)); }": 1,
     ".fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }": 1,
     ".fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s-text)); }": 1,
     ".kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }": 1,
     ".kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s-text)); }": 1
-   },
-   "letter-spacing-literal": {
-    "letter-spacing: 0.16em;": 1
    },
    "colour-literal": {
     "border: 1px solid var(--kf-ev-edge, rgba(124, 106, 154, 0.35));": 1,
@@ -414,37 +296,20 @@
     ".fc .fc-timegrid-event:hover .fc-event-resizer-end::after,": 1
    },
    "line-height-literal": {
-    "line-height: 18px;": 1,
-    ".fc-dayGridMonth-view .fc-daygrid-event { height: 16px; line-height: 14px; border-radius: 8px; font-size: calc(8.5px * var(--s-text)); }": 1
+    "line-height: 18px;": 1
    },
    "shadow-literal": {
     "box-shadow: 0 14px 30px rgba(var(--kf-shadow-rgb, 60,52,38), 0.26);": 1
    }
   },
   "src/features/calendar/CalendarPage.tsx": {
-   "letter-spacing-literal": {
-    "const META: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }": 1,
-    ".cal-rail-tab-label { writing-mode: vertical-rl; transform: rotate(180deg); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink": 1,
-    ".cal-rail-sec-head { display: flex; align-items: center; gap: 6px; width: 100%; padding: 4px 0; margin-bottom: 8px; border: none; background: none; cursor: pointer; font: inherit; font-family: var(--f": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>To plan</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', lineHeight: 1.6 }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
-    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 30, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1,
-    "letterSpacing: '0.1em',": 1
-   },
    "font-size-literal": {
     "{count === 0 && <p style={{ fontSize: 12.5, color: 'var(--ink-faint)', margin: 0 }}>{empty}</p>}": 1,
-    "<div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={t.title} /></div>": 1,
-    "<div style={{ flex: 1, minWidth: 0, fontSize: 13.5, color: 'var(--ink-body)', lineHeight: 1.35 }}><EmojiText text={title} /></div>": 1,
     ".cal-rail-knob { flex: none; width: 24px; height: 24px; padding: 0; border-radius: 50%; border: 1px solid var(--line-card); background: var(--paper-parchment); box-shadow: var(--shadow-crisp); color: ": 1,
-    "<div className=\"cal-rail-extra\" style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', margin: '3px 0 12px' }}>drag onto a time to plant it ✿</div>": 1,
-    "<span style={{ fontSize: 13, color: 'var(--ink-faint)' }}>Quick add task…</span>": 1,
-    "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 30, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1,
-    "<span onClick={() => gridRef.current?.today()} style={{ padding: '0 14px', height: 32, border: '1px solid var(--line-solid)', borderRadius: 999, display: 'inline-flex', alignItems: 'center', fontSize:": 1
+    "<span style={{ fontSize: 13, color: 'var(--ink-faint)' }}>Quick add task…</span>": 1
    },
    "motion-property": {
     ".cal-railsplit::after { content: \"\"; position: absolute; inset: 0 3px; background: transparent; transition: background var(--dur-quick); }": 1,
-    "transition: transform 320ms var(--ease-spring), box-shadow 320ms var(--ease-out);": 1,
     "transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);": 1
    },
    "radius-off-scale": {
@@ -460,17 +325,6 @@
    }
   },
   "src/features/calendar/formFields.tsx": {
-   "letter-spacing-literal": {
-    "letterSpacing: '0.16em',": 1
-   },
-   "font-size-literal": {
-    "fontSize: 12.5,": 1,
-    "fontSize: 12,": 1
-   },
-   "radius-off-scale": {
-    "<div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3, ...style }}>": 1,
-    "borderRadius: 5,": 1
-   },
    "colour-literal": {
     "{ name: 'Lavender', value: '#A8A0BE' },": 1,
     "{ name: 'Sage', value: '#8A9A7E' },": 1,
@@ -485,44 +339,25 @@
   },
   "src/features/calendar/phoneCalendar.css": {
    "letter-spacing-literal": {
-    "font-family: var(--font-display); font-weight: var(--fw-medium); font-size: var(--fs-page-title); line-height: 1.15; letter-spacing: -0.015em;": 1,
-    ".pc-day-l { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".pc-uns-label { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".pc-chip-d { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: upperca": 1,
-    ".pc-hour > span { flex: none; width: 60px; padding-left: var(--gutter-phone); margin-top: -8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ink-faint); }": 1,
-    ".pc-time { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: el": 1,
-    "font-family: var(--font-mono); font-size: 12px; line-height: 22px; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; pointer-events: none;": 1,
-    ".pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }": 1
+    "font-family: var(--font-display); font-weight: var(--fw-medium); font-size: var(--fs-page-title); line-height: 1.15; letter-spacing: -0.015em;": 1
    },
    "radius-off-scale": {
     ".pc-day[data-range='start']::before { border-radius: 34px 0 0 34px; }": 1,
     ".pc-day[data-range='end']::before { border-radius: 0 34px 34px 0; }": 1
    },
    "font-size-literal": {
-    ".pc-day-l { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-faint); }": 1,
     ".pc-day-n { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: var(--fw-medium); color: var(--ink-body); }": 1,
-    ".pc-uns-label { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }": 1,
     ".pc-chip-t { font-size: 14px; color: var(--ink-body); }": 1,
-    ".pc-chip-d { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: upperca": 1,
     "background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); font: inherit; font-size: 14px; font-weight: var(--fw-medium);": 1,
-    ".pc-hour > span { flex: none; width: 60px; padding-left: var(--gutter-phone); margin-top: -8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ink-faint); }": 1,
     ".pc-name { min-width: 0; font-size: 14px; font-weight: var(--fw-medium); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }": 1,
-    ".pc-time { flex: none; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: el": 1,
-    "font-family: var(--font-mono); font-size: 12px; line-height: 22px; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; pointer-events: none;": 1,
     "font: inherit; font-size: 16px; color: var(--ink-body); outline: none;": 1,
     ".pc-bs-title { font-family: var(--font-display); font-size: 20px; line-height: 26px; color: var(--ink-body); padding-top: 10px; text-wrap: pretty; }": 1,
     ".pc-bs-title-in { width: 100%; font-family: var(--font-display); font-size: 20px; }": 1,
-    ".pc-bs-meta { margin-top: 3px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".pc-bs-save { margin-top: var(--sp-3); font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }": 1,
     ".pc-hint { display: flex; align-items: center; gap: var(--sp-2); margin: calc(-1 * var(--sp-1)) 0 var(--sp-3); font-size: 14px; color: var(--ink-muted); }": 1
    },
    "line-height-literal": {
     ".pc-block-body.is-stacked .pc-name { flex: 1 1 0; white-space: normal; display: -webkit-box; -webkit-line-clamp: var(--pc-lines, 2); -webkit-box-orient: vertical; line-height: 18px; }": 1,
     ".pc-block.is-compact .pc-name { line-height: 18px; }": 1,
-    "font-family: var(--font-mono); font-size: 12px; line-height: 22px; letter-spacing: 0.02em; text-transform: uppercase; white-space: nowrap; pointer-events: none;": 1,
     ".pc-held > * { line-height: 32px; }": 1,
     ".pc-bs-title { font-family: var(--font-display); font-size: 20px; line-height: 26px; color: var(--ink-body); padding-top: 10px; text-wrap: pretty; }": 1
    },
@@ -540,31 +375,19 @@
     "borderRadius: 5,": 1,
     "style={{ display: 'flex', alignItems: 'baseline', gap: 10, width: '100%', textAlign: 'left', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)', background: 'none', border: 'none', b": 1
    },
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '4px 10px 6px' }}>": 1
-   },
    "font-size-literal": {
     "style={{ display: 'flex', alignItems: 'baseline', gap: 10, width: '100%', textAlign: 'left', fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)', background: 'none', border: 'none', b": 1
    }
   },
   "src/features/calendar/TaskEditorPage.tsx": {
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
-    "style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: '": 1,
-    "const FLabelInline = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase' as const, color: 'var(--ink-faint)' }": 1,
-    "letterSpacing: '0.08em',": 1
-   },
    "font-size-literal": {
     "style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: '": 1,
     "style={{ color: 'var(--acc-terra)', fontSize: 22, flex: 'none', marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', opacity: task.top3 ? 1 : 0.3 }}": 1,
     "style={{ marginTop: 8, width: '100%', minHeight: 150, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '14px 16px', fontSize: 13.5, lineHeight: 1.65, co": 1,
-    "<button type=\"button\" onClick={handleSave} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: ": 1,
-    "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Someday</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)', padding: '0 6px' }}>every field saves quietly — no dialog unless something gets delet": 1
+    "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Someday</div>": 1
    },
-   "colour-literal": {
-    "<span style={{ position: 'absolute', top: -9, left: 24, width: 56, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgb": 1,
-    "<span style={{ position: 'absolute', top: -9, right: 26, width: 52, height: 16, background: 'color-mix(in srgb, var(--acc-lavender) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90de": 1
+   "letter-spacing-literal": {
+    "style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: '": 1
    }
   },
   "src/features/calendar/TimeField.tsx": {
@@ -582,10 +405,6 @@
   "src/features/calendar/ViewOptionsPopover.tsx": {
    "font-size-literal": {
     "const labelStyle: React.CSSProperties = { fontSize: 13, color: 'var(--ink-body)' }": 1
-   },
-   "letter-spacing-literal": {
-    "letterSpacing: '0.06em',": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', padding: '6px 10px 8px' }}>": 1
    },
    "kit-duplicate": {
     "function Toggle({ on, label, onToggle }: { on: boolean; label: string; onToggle: () => void }) {": 1
@@ -611,10 +430,6 @@
    },
    "shadow-literal": {
     "box-shadow: 0 2px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.2), 0 30px 60px rgba(var(--kf-shadow-rgb, 60,52,38),0.28);": 1
-   },
-   "letter-spacing-literal": {
-    "letter-spacing: 0.04em;": 1,
-    "letter-spacing: 0.06em;": 1
    }
   },
   "src/features/capture/CaptureButton.tsx": {
@@ -622,29 +437,12 @@
     "createPortal(": 2
    }
   },
-  "src/features/capture/SharePage.tsx": {
-   "font-size-literal": {
-    "<div style={{ padding: '60px 20px', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)' }}>": 1
-   }
-  },
   "src/features/capture/VoiceCaptureSheet.tsx": {
-   "font-size-literal": {
-    "fontSize: 13,": 2,
-    "<span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>—</span>": 1,
-    "<div aria-live=\"polite\" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', marginTop: 16 }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', marginTop: 6 }}>": 1,
-    "<div style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.4 }}>{keptReasonLine(keptReason)}</div>": 1,
-    "<div style={{ fontSize: 12, color: 'var(--ink-muted)', lineHeight: 1.4 }}>{KEPT_AUDIO_NOTE}</div>": 1,
-    "<div style={{ marginTop: 12, fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.4 }}>{RESTING.line}</div>": 1
-   },
    "kit-duplicate": {
     "return createPortal(": 1
    },
    "colour-literal": {
     "background: 'rgba(42, 36, 32, 0.42)',": 1
-   },
-   "radius-off-scale": {
-    "borderRadius: '22px 22px 0 0',": 1
    },
    "shadow-literal": {
     "boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.2)',": 1
@@ -652,22 +450,17 @@
    "motion-property": {
     "transition: 'box-shadow var(--dur-normal) var(--ease-natural)',": 1
    },
-   "letter-spacing-literal": {
-    "<div aria-live=\"polite\" style={{ fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-muted)', marginTop: 16 }}>": 1
+   "font-size-literal": {
+    "<span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>—</span>": 1,
+    "<div style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.4 }}>{keptReasonLine(keptReason)}</div>": 1,
+    "<div style={{ fontSize: 12, color: 'var(--ink-muted)', lineHeight: 1.4 }}>{KEPT_AUDIO_NOTE}</div>": 1,
+    "<div style={{ marginTop: 12, fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.4 }}>{RESTING.line}</div>": 1
    }
   },
   "src/features/chat/chat.css": {
    "font-size-literal": {
-    ".kf-chat-empty-line { margin-top: 6px; text-align: center; font-family: var(--font-hand); font-size: 25px; line-height: 1.15; color: var(--ink-body); }": 1,
     ".kf-chat-empty-sub { text-align: center; font-size: 14px; line-height: 1.45; color: var(--ink-muted); }": 1,
-    ".kf-chat-empty-label { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }": 1,
     "font-size: 15px;": 1
-   },
-   "letter-spacing-literal": {
-    ".kf-chat-empty-label { margin-top: 14px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }": 1
-   },
-   "radius-off-scale": {
-    "border-radius: 10px;": 1
    }
   },
   "src/features/chat/ChatPanel.tsx": {
@@ -689,27 +482,17 @@
     "<div key={i} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--": 1
    },
    "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-faint)', letterSpacing: '0.14em' }}>…</span>": 1,
-    "letterSpacing: '0.06em',": 1
+    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-faint)', letterSpacing: '0.14em' }}>…</span>": 1
    }
   },
   "src/features/command-bar/CommandBar.tsx": {
-   "letter-spacing-literal": {
-    "letterSpacing: '0.06em',": 1,
-    "<div aria-live=\"polite\" style={{ marginTop: 12, display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', te": 1
-   },
    "font-size-literal": {
-    "fontSize: 16,": 1,
-    "<span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{jumpView.label}</span>": 1
+    "fontSize: 16,": 1
    }
   },
   "src/features/domains/DomainList.tsx": {
    "font-size-literal": {
-    "style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)', background: menu.activeId === d.id ? 'var(--select-bg)' : undefined, borderRadius: 4, ...rowStyle }}": 1,
     "{domains.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No domains yet — Work, Home, Health…</div>}": 1
-   },
-   "radius-off-scale": {
-    "style={{ display: 'flex', alignItems: 'center', gap: 9, fontSize: 13.5, color: 'var(--ink-body)', background: menu.activeId === d.id ? 'var(--select-bg)' : undefined, borderRadius: 4, ...rowStyle }}": 1
    }
   },
   "src/features/domains/organize.ts": {
@@ -722,8 +505,7 @@
    "colour-literal": {
     "background: linear-gradient(135deg, #E8C4CC, #D4A8B0);": 2,
     "background: #E8D9A0;": 1,
-    "box-shadow: 0 0 8px 3px rgba(232, 217, 160, 0.55);": 1,
-    "background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0 4px, transparent 4px 8px);": 1
+    "box-shadow: 0 0 8px 3px rgba(232, 217, 160, 0.55);": 1
    },
    "shadow-literal": {
     "box-shadow: 0 0 8px 3px rgba(232, 217, 160, 0.55);": 1
@@ -731,104 +513,46 @@
   },
   "src/features/focus/FocusPage.tsx": {
    "colour-literal": {
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-1.2deg)' }}>": 1,
     "<div className=\"flabel\" style={{ marginTop: 3, color: '#8e88a0' }}>Tasks</div>": 1,
     "<span className=\"focus-bloom-glow-slow\" style={{ position: 'absolute', left: '50%', bottom: 40, width: 110, height: 110, transform: 'translateX(-50%)', borderRadius: '50%', background: 'radial-gradien": 2,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(0.8deg)' }}>": 1,
     "<div className=\"flabel\" style={{ marginTop: 3, color: '#8e88a0' }}>Inbox</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-0.8deg)' }}>": 1,
     "<div className=\"flabel\" style={{ marginTop: 3, color: '#8e88a0' }}>Calendar</div>": 1,
     "<span className=\"focus-dew-glint\" style={{ position: 'absolute', right: 8, top: 26, width: 9, height: 9, background: 'radial-gradient(circle at 40% 40%, var(--star, #FDFBF4), transparent 65%)', border": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(1deg)' }}>": 1,
     "<div className=\"flabel\" style={{ marginTop: 3, color: '#8e88a0' }}>Routines</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-1deg)' }}>": 1,
     "<div className=\"flabel\" style={{ marginTop: 3, color: '#8e88a0' }}>Journal</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(0.7deg)' }}>": 1,
     "<div className=\"flabel\" style={{ marginTop: 3, color: '#8e88a0' }}>Projects</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-0.6deg)' }}>": 1,
     "<div className=\"flabel\" style={{ marginTop: 3, color: '#8e88a0' }}>People &amp; chat</div>": 1,
     "<span style={{ position: 'absolute', left: 60, right: 60, bottom: 118, borderBottom: '1.5px dashed rgba(90,82,110,0.5)' }}></span>": 1,
     "<span className=\"focus-veil-breathe\" style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(46,40,62,0.42), rgba(26,22,36,0.66) 85%)', mixBlendMode: 'multiply', pointerEven": 2,
     "<span style={{ position: 'absolute', inset: 0, boxShadow: 'inset 0 0 110px rgba(20,16,28,0.5)', pointerEvents: 'none' }}></span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: '#b8b0c8' }}>": 1,
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, letterSpacing: 'var(--ls-display)', color: '#f0ebdd' }}>": 1,
-    "<span className=\"chip\" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSp": 9,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: '#c9c0d8', transform: 'rotate(-1deg)' }}>": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: '#a89fc0', cursor: 'pointer' }}": 1,
     "<span className=\"focus-bloom-glow\" style={{ position: 'absolute', left: 158 + projects.indexOf(activeProject) * 150, bottom: 16, width: 120, height: 120, borderRadius: '50%', background: 'radial-gradi": 2
    },
+   "shadow-literal": {
+    "<span style={{ position: 'absolute', inset: 0, boxShadow: 'inset 0 0 110px rgba(20,16,28,0.5)', pointerEvents: 'none' }}></span>": 1
+   },
    "font-size-literal": {
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-1.2deg)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(0.8deg)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-0.8deg)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(1deg)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-1deg)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(0.7deg)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-0.6deg)' }}>": 1,
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, letterSpacing: 'var(--ls-display)', color: '#f0ebdd' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: '#c9c0d8', transform: 'rotate(-1deg)' }}>": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', ": 2,
-    "fontSize: 12,": 2,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>": 1,
-    "<div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>": 1,
-    "style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '9px 17px', borderRadius: 999, cursor: 'point": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '9px 19px', borderRadius: 999, boxShadow: 'var(--shadow-cta)',": 2,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 74, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--ink-body)', marginTop: 6 }}>": 1,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 66, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>": 1,
-    "style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--ink-body)', cursor: 'pointer', borderBottom: '1px dashed var(--line-dashed)' }}": 1,
     "{activeTask?.top3 && <span style={{ color: 'var(--acc-terra)', fontSize: 17 }}>★</span>}": 1,
     "<span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>": 1,
     "fontSize: 12.5,": 1,
-    "style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '10px 20px', borderRadius: 999, cursor: 'pointe": 1,
-    "style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '10px 18px', borderRadius: 999, cursor: 'pointe": 1,
-    "<div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>": 1,
-    "<div className=\"fp-garden-note\" style={{ position: 'absolute', left: 36, bottom: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Rounds before a long break</div>": 1,
     "style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSi": 2,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: 'var(--ink-body)', width: 18, textAlign: 'center' }}>": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Auto-start the next round</div>": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Auto-start breaks</div>": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Garden view on long breaks</div>": 1,
-    "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Gentle chime at round's end</div>": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>": 1
-   },
-   "shadow-literal": {
-    "<span style={{ position: 'absolute', inset: 0, boxShadow: 'inset 0 0 110px rgba(20,16,28,0.5)', pointerEvents: 'none' }}></span>": 1
+    "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Gentle chime at round's end</div>": 1
    },
    "letter-spacing-literal": {
-    "<span className=\"chip\" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSp": 3,
-    "<span className=\"chip\" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'u": 1,
-    "<span className=\"fp-round\" style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 6 }}>": 1,
-    "<div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 74, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--ink-body)', marginTop: 6 }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-display)', fontSize: 66, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>": 1,
-    "<span className=\"chip\" style={{ background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpa": 1,
-    "<span className=\"chip\" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'u": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>": 2,
-    "<span className=\"chip\" style={{ background: 'color-mix(in srgb, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpa": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', marginLeft: 6 }}": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>": 3,
-    "letterSpacing: '0.06em',": 3,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 3 }}>": 1,
-    "<div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'v": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 2 }}>": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}": 1
-   },
-   "radius-off-scale": {
-    "borderRadius: 4,": 1
+    "<span style={{ fontFamily: 'var(--font-display)', fontSize: 66, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>": 1
    }
   },
   "src/features/focus/MiniFocus.tsx": {
-   "letter-spacing-literal": {
-    "const pill = { display: 'inline-flex', alignItems: 'center', gap: 7, minHeight: 32, padding: '0 13px', borderRadius: 999, border: '1px solid var(--line-card)', background: 'none', fontFamily: 'var(--f": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', textDecoration: 'none' }}": 1,
-    "letterSpacing: '0.1em',": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 8 }}>": 1
-   },
    "bold-huge": {
     "fontSize: 27,": 1
    },
@@ -837,31 +561,21 @@
    }
   },
   "src/features/focus/TaskPicker.tsx": {
-   "radius-off-scale": {
-    "style={{ position: 'fixed', left: place.left, top: place.top, bottom: place.bottom, width, maxHeight: place.maxHeight, zIndex: 1000, display: 'flex', flexDirection: 'column', background: 'var(--paper-": 1
-   },
    "font-size-literal": {
-    "style={{ width: '100%', boxSizing: 'border-box', font: 'inherit', fontSize: 13, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, paddin": 1,
-    "style={{ padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: i === active ? 'var": 1,
-    "<div style={{ padding: '12px', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>": 1
+    "style={{ padding: '8px 12px', fontSize: 13, color: 'var(--ink-body)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, background: i === active ? 'var": 1
    }
   },
   "src/features/guide/guide.css": {
    "font-size-literal": {
-    ".gd-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--acc-terra-ink); }": 1,
     ".gd-h1 { margin: 6px 0 0; font-family: var(--font-display); font-weight: 500; font-size: 44px; line-height: 1.05; letter-spacing: -0.015em; color: var(--ink-body); }": 1,
-    ".gd-hand { margin-top: 6px; font-family: var(--font-hand); font-size: 22px; color: var(--ink-muted); transform: rotate(-0.6deg); transform-origin: 0 50%; }": 1,
     ".gd-search input { flex: 1; min-width: 0; height: 100%; border: none; outline: none; background: none; font: inherit; font-size: 15px; color: var(--ink-body); }": 1,
     ".gd-tour-title { font-size: 16px; font-weight: 600; }": 1,
     ".gd-tour-sub { font-size: 13px; color: var(--ink-muted); }": 1,
     ".gd-keys-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; border: none; background: none; font: inherit; font-size: 15px; color: var(--ink-body); cursor: point": 1,
     ".gd-keys-btn.is-quiet { font-size: 14px; color: var(--ink-muted); }": 1,
     "font-size: 13px;": 1,
-    ".gd-sec { display: flex; align-items: center; gap: 12px; margin: 30px 0 12px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint);": 1,
-    ".gd-none { margin: 8px 0; font-family: var(--font-hand); font-size: 20px; color: var(--ink-muted); }": 1,
     ".gd-row-title { font-size: 16px; font-weight: 600; color: var(--ink-body); }": 1,
     ".gd-row-sub { font-size: 13px; line-height: 1.35; color: var(--ink-muted); }": 1,
-    ".gd-steps { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: var(--ink-faint); white-space: nowrap; }": 1,
     ".gd-toc a { font-size: 14px; color: var(--ink-muted); text-decoration: none; }": 1,
     ".gd-crumb { font-size: 14px; color: var(--ink-muted); }": 1,
     ".gd-intro { margin: 14px 0 8px; font-family: var(--font-display); font-style: italic; font-size: 18px; line-height: 1.5; color: var(--ink-muted); text-wrap: pretty; }": 1,
@@ -869,19 +583,11 @@
     ".gd-step-text { margin: 0; align-self: start; font-family: var(--font-display); font-size: 18px; line-height: 1.45; color: var(--ink-body); text-wrap: pretty; }": 1,
     ".gd-next { display: inline-flex; align-items: center; gap: 6px; min-height: 48px; margin-top: 18px; font-size: 15px; font-weight: 600; color: var(--acc-lavender-deep); text-decoration: none; }": 1,
     "font-size: 15px;": 1,
-    ".gd-hand { font-size: 20px; }": 1,
     ".gd-row-title { font-size: 15px; }": 1,
     ".gd-intro { font-size: 17px; }": 1
    },
    "letter-spacing-literal": {
-    ".gd-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--acc-terra-ink); }": 1,
-    ".gd-h1 { margin: 6px 0 0; font-family: var(--font-display); font-weight: 500; font-size: 44px; line-height: 1.05; letter-spacing: -0.015em; color: var(--ink-body); }": 1,
-    ".gd-sec { display: flex; align-items: center; gap: 12px; margin: 30px 0 12px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-faint);": 1,
-    ".gd-steps { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; color: var(--ink-faint); white-space: nowrap; }": 1
-   },
-   "colour-literal": {
-    "background: rgba(138, 154, 126, 0.45);": 1,
-    "background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 4px, transparent 4px 8px);": 1
+    ".gd-h1 { margin: 6px 0 0; font-family: var(--font-display); font-weight: 500; font-size: 44px; line-height: 1.05; letter-spacing: -0.015em; color: var(--ink-body); }": 1
    },
    "radius-off-scale": {
     "border-radius: 5px;": 1
@@ -897,45 +603,25 @@
     ".washi { position:absolute; width:52px; height:15px; background:color-mix(in oklch, var(--acc-sage) 42%, transparent); background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,tra": 1,
     "<div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>": 2
    },
-   "motion-property": {
-    ".spec { position:relative; background:var(--paper-parchment); border:1px solid var(--line-card); border-radius:3px; box-shadow:var(--shadow-card); padding:22px 24px 20px; cursor:pointer; transition:tr": 1,
-    "@keyframes hbClose { from { height: 150px } to { height: 104px } }": 1,
-    "@keyframes hbFlatten { from { transform: scaleY(1); filter: saturate(1) } to { transform: scaleY(0.7); filter: saturate(0.6) } }": 1
-   },
-   "letter-spacing-literal": {
-    ".ledger { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; color:var(--ink-faint); line-height:2; }": 1,
-    ".seas span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing:0.22em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; }": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Specimen {String(specimenIndex.get(p.id) || 1": 1,
-    "<div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)'": 1,
-    "<div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-m": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 2 of 3</div>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{label}</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.15em', color: 'var(--ink-body)' }}>{value}</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Ready for the press · 3 of 3</div>": 1
-   },
    "font-size-literal": {
     "<div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 30, color: 'var(--ink-body)' }}>{p.name}</div>": 1,
     "<textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 13, background: 'var(--paper-linen)', border: '1p": 1,
     ") : <div style={{ fontSize: 13.5, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: '1.6' }}>\"{p.completion_summary || 'No summary line written.'}\"</div>}": 1,
-    "<div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.tasksCount}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)'": 1,
-    "<div><div style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)' }}>{specimenStats.longestFocusDay}</div><div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-m": 1,
     "<div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>": 1,
-    "<button autoFocus onClick={() => setCeremonyBeat((b) => (b === 1 ? 2 : 3))} style={{ border: '1px solid var(--line-control)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'in": 2,
     "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 24, color: 'var(--ink-body)', textAlign: 'center' }}>{p.name}</div>": 1,
     "<div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', textAlign: 'center' }}>the ledger stamps itself, line by line</div>": 1,
     "<input value={ceremonyLine} onChange={(e) => setCeremonyLine(e.target.value)} placeholder=\"One line for the field guide…\" style={{ flex: 1, fontStyle: 'italic', fontFamily: 'var(--font-hand)', fontSiz": 1,
-    "<button onClick={() => finishPressing(ceremonyLine.trim() || null)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, paddi": 1,
     "<div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: '1.45' }}>The press is waiting. Finish a project a": 1,
-    "<Link to=\"/projects\" style={{ marginTop: 20, display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 13.5, color: 'var(--ink-body)', border: '1px solid var(--line-solid)', borderRadius: 999, p": 1,
-    "<div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.6deg)' }}>what bloomed, kept flat and forever ✿</div>": 1,
-    "<Link to=\"/projects\" style={{ fontSize: 12.5, color: 'var(--ink-muted)', textDecoration: 'underline' }}>see the garden as it was →</Link>": 1,
     "<div style={{ marginTop: 14, fontFamily: 'var(--font-hand)', fontSize: 22, color: 'var(--ink-body)' }}>{p.name}</div>": 1,
     "<div style={{ marginTop: 10, fontSize: 13, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: 1.55 }}>\"{p.completion_summary || 'Pressed specimen.'}\"</div>": 1
    },
    "radius-off-scale": {
     "<div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5 }}>": 1,
     "<textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 13, background: 'var(--paper-linen)', border: '1p": 1
+   },
+   "motion-property": {
+    "@keyframes hbClose { from { height: 150px } to { height: 104px } }": 1,
+    "@keyframes hbFlatten { from { transform: scaleY(1); filter: saturate(1) } to { transform: scaleY(0.7); filter: saturate(0.6) } }": 1
    },
    "shadow-literal": {
     "<div style={{ width: 210, height: 10, background: 'var(--sky-horizon,#8b7a5e)', borderRadius: 2, boxShadow: '0 2px 4px rgba(var(--kf-shadow-rgb, 60,52,38),0.3)' }}></div>": 2
@@ -946,10 +632,6 @@
    }
   },
   "src/features/import/ImportPage.tsx": {
-   "letter-spacing-literal": {
-    "fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em',": 1,
-    "<div style={{ ...help, marginTop: 8, textTransform: 'none', letterSpacing: '0.04em', lineHeight: 1.5 }}>{src.how}</div>": 1
-   },
    "font-size-literal": {
     "<p style={{ margin: '0 0 4px', fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.5 }}>": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic', padding: '10px 0 2px' }}>": 1,
@@ -974,6 +656,9 @@
     "<input type=\"checkbox\" checked={checked} onChange={(e) => set(e.target.checked)} />": 1,
     "<input type=\"checkbox\" checked={md.paragraphsToInbox} onChange={(e) => setMd({ ...md, paragraphsToInbox: e.target.checked })} />": 1
    },
+   "letter-spacing-literal": {
+    "<div style={{ ...help, marginTop: 8, textTransform: 'none', letterSpacing: '0.04em', lineHeight: 1.5 }}>{src.how}</div>": 1
+   },
    "motion-property": {
     "<div style={{ height: '100%', width: `${step.total ? Math.round((step.done / step.total) * 100) : 0}%`, background: 'var(--acc-sage)', transition: 'width 200ms' }} />": 1
    }
@@ -982,16 +667,12 @@
    "font-size-literal": {
     "fontSize: 12.5,": 1,
     "fontSize: 12,": 1
-   },
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)' }}>": 1
    }
   },
   "src/features/inbox/InboxPage.tsx": {
    "font-size-literal": {
     "<div style={{ marginTop: 18, fontFamily: 'var(--font-display)', fontSize: 24, fontWeight: 500, color: 'var(--ink-body)' }}>Inbox zero</div>": 1,
     "<p style={{ margin: '10px auto 0', maxWidth: 330, fontSize: 13.5, lineHeight: 1.6, color: 'var(--ink-muted)' }}>": 1,
-    "<div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-1deg)' }}>one calm bloom ✿</div>": 1,
     "<span style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}><EmojiText text={item.raw_text} /></span>": 1
    }
   },
@@ -999,66 +680,26 @@
    "font-size-literal": {
     "style={{ position: 'absolute', top: 2, right: 2, width: 24, height: 24, border: 'none', borderRadius: 999, background: 'var(--paper-parchment)', color: 'var(--ink-muted)', boxShadow: 'var(--shadow-cri": 1,
     "<Button type=\"button\" variant=\"secondary\" onClick={onRetry} disabled={retrying} style={{ fontSize: 12, padding: '6px 14px' }}>": 1,
-    "<div style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 17, lineHeight: 1.35, color: 'var(--ink-hand)', textAlign: 'center' }}>{line}</div>": 1,
     "<Button type=\"button\" variant=\"secondary\" onClick={() => void q.refetch()} disabled={q.isFetching} style={{ marginTop: 14, fontSize: 12, padding: '6px 14px' }}>": 1,
     "<div key={c.id} style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', lineHeight: 1.35, marginBottom: 6 }}>": 1,
-    "style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', outline: 'none', resize: 'none', padding: 6, bord": 1,
     "<div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--ink-body)' }}>{n.title || 'Untitled Note'}</div>": 1,
     "<div style={{ fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.4 }}>": 1,
-    "{renderEntries({ fontSize: 14.5, lineHeight: 26, minHeight: 120, placeholder: 'Type to write on this quiet page...', stamp: 8.5 })}": 1,
     "<div style={{ marginTop: 18, fontSize: 13.5, color: 'var(--ink-muted)' }}>Today felt —</div>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, lineHeight: 1.5, color: 'var(--ink-body)', marginTop: 7 }}>": 1,
     ".jn-title { font-size: clamp(28px, 7.8cqi, 40px); text-wrap: balance; }": 1,
-    "style={{ flex: 1, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: '12.5px', padding: '9px 12px', borderRadius: 999, cursor: 'pointer',": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)', fontWeight: 500 }}>{dayName}, {monthDay}</div>": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{dayName}, {monthDay}</div>": 1,
     "style={{ padding: '6px 11px', fontSize: 13, color: 'var(--ink-muted)', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}": 2,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', marginTop: 8 }}>{firstPage ? 'The first page is the hardest — one sentence counts.' : 'a quiet page, only for you": 1,
     "<div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 20, color: 'var(--ink-body)', marginTop: 12, lineHeight: 1.4 }}>": 1,
-    "{renderEntries({ fontSize: 15.5, lineHeight: 27, minHeight: 180, placeholder: 'Start writing...', stamp: 9 })}": 1,
     "<span style={{ fontSize: 15, color: 'var(--ink-muted)' }}>Today felt —</span>": 1,
     "<span style={{ color: 'var(--acc-blossom)', fontSize: 13 }}>✿</span>": 1,
     "<div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 15.5, lineHeight: 1.5, color: 'var(--ink-body)', animationDelay: '180ms' }}>": 1,
     "<div className={motion ? 'kf-ink' : undefined} style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14.5, color: 'var(--ink-body)', marginTop: 7, lineHeight: 1.45, animationDelay": 1,
-    "<div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.4 }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, lineHeight: 1.35, color: 'var(--ink-hand)' }}>": 1
+    "<div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--ink-muted)', lineHeight: 1.4 }}>": 1
    },
    "line-height-literal": {
     "style={{ position: 'absolute', top: 2, right: 2, width: 24, height: 24, border: 'none', borderRadius: 999, background: 'var(--paper-parchment)', color: 'var(--ink-muted)', boxShadow: 'var(--shadow-cri": 1
-   },
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: t.stamp, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>Notes Shelf</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 10 }}>Quotes Shelf</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{known ? `Journal · Day ${dayCount}` : 'Journ": 1,
-    "style={{ flex: 1, textAlign: 'center', padding: '13px 0', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'journal": 1,
-    "style={{ flex: 1, textAlign: 'center', padding: '13px 0', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'notes' ": 1,
-    "style={{ flex: 1, textAlign: 'center', padding: '13px 0', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: mobileTab === 'quotes'": 1,
-    "<div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', marginTop: 12, paddingTop: 10, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-mono)', fontS": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Three small things</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Quote of the day</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '4px 0 8px' }}>This week</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)', marginTop: 3 }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 2 }}>": 1,
-    "{notes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>N": 1,
-    "{quotes.length > 0 && <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '16px 0 8px' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>{known ? `Journal · Day $": 1,
-    "<h1 className=\"jn-title\" style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Today's prompt</span>": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', userSelect: 'none' }}": 1,
-    "<span className=\"jn-card-new\" onClick={(e) => addEntry(selectedDate, e.currentTarget)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'upp": 1,
-    "<button type=\"button\" onClick={() => setTalking(true)} style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>🎤 Talk ": 1,
-    "<button type=\"button\" onClick={onPhoto} style={{ ...footLink, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase' }}>＋ Photo</button>": 1,
-    "<span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>{saveStatus}</span>": 1,
-    "letterSpacing: '0.06em',": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>Three small things</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Quote of the day</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 10 }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>On this day</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Kept</span>": 1
    },
    "colour-literal": {
     "<span style={{ position: 'absolute', top: -8, left: 30, width: 56, height: 15, background: 'color-mix(in oklch, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(9": 1,
@@ -1066,26 +707,17 @@
    },
    "motion-property": {
     "transition: color var(--dur-quick) var(--ease-natural);": 1
+   },
+   "letter-spacing-literal": {
+    "<h1 className=\"jn-title\" style={{ margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>{headerDateStr}</h1>": 1
    }
   },
   "src/features/library/LibraryEditForm.tsx": {
    "font-size-literal": {
-    "const fieldStyle = { width: '100%', padding: '4px 8px', fontSize: '13px', fontFamily: 'inherit', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borde": 1,
-    "<div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>{title}</div>": 1,
-    "<button type=\"button\" onClick={onCancel} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>": 1,
-    "<button type=\"button\" onClick={() => onSave(values)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', bo": 1
-   },
-   "radius-off-scale": {
-    "<div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>": 1
+    "<div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>{title}</div>": 1
    }
   },
   "src/features/library/LibraryPage.tsx": {
-   "letter-spacing-literal": {
-    "letter-spacing: 0.06em;": 4,
-    "letter-spacing: 0.16em;": 2,
-    "letterSpacing: '0.08em',": 1,
-    "style={{ border: 'none', background: 'transparent', color: 'var(--acc-terra)', fontSize: 'var(--fs-mono-l)', cursor: 'pointer', fontFamily: 'var(--font-mono)', textTransform: 'uppercase', letterSpacin": 1
-   },
    "font-size-literal": {
     "font-size: 13.5px;": 1,
     "<h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink-body)' }}>Library</h1>": 1,
@@ -1095,21 +727,11 @@
     "{filteredNotes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No notes found.</div>}": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 14, color: 'var(--ink-body)', lineHeight: 1.4 }}>\"{q.text}\"</div>": 1,
     "{filteredQuotes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No quotes found.</div>}": 1,
-    "<button onClick={() => setShowNewBookForm((v) => !v)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '11px', padding: '6px 12px', borderRadius: 999,": 1,
-    "<div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Plant a Book</div>": 2,
-    "<input value={newBookTitle} onChange={(e) => setNewBookTitle(e.target.value)} placeholder=\"Book Title\" style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(-": 1,
-    "<input value={newBookAuthor} onChange={(e) => setNewBookAuthor(e.target.value)} placeholder=\"Author\" style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(--p": 1,
-    "<input value={newBookPages} onChange={(e) => setNewBookPages(e.target.value)} placeholder=\"Total Pages\" style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', bo": 1,
-    "<input value={newBookYear} onChange={(e) => setNewBookYear(e.target.value)} placeholder=\"Year\" style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1p": 1,
-    "<button onClick={() => setShowNewBookForm(false)} style={{ border: 'none', background: 'transparent', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>": 1,
-    "<button onClick={handlePlantBook} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '11px', padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }": 1,
     "<div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>{b.title}</div>": 1,
     "<div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{b.author || 'Unknown'} · {Math.round((b.current_page / b.total_pages) * 100)}% read</div>": 1,
     "{filteredBooks.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No books found.</div>}": 1,
     "<div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{activeBook.author}</div>": 1,
     "<span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>Page:</span>": 1,
-    "<input value={sessionPage} onChange={(e) => setSessionPage(e.target.value)} placeholder={`max ${activeBook.total_pages}`} style={{ width: 80, padding: '4px 8px', fontSize: '12px', background: 'var(--p": 1,
-    "<button onClick={handleLogBookSession} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '11px', padding: '4px 10px', borderRadius: 999 }}>Log</button>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 13.5, color: 'var(--ink-body)' }}>\"{q.text}\"</div>": 1,
     "<div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)' }}>{n.title || 'Note'}</div>": 1,
     "<div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 2 }}>{n.body}</div>": 1,
@@ -1118,54 +740,27 @@
     "<div style={{ fontSize: 11, color: 'var(--ink-faint)' }}>{new Date(c.created_at).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}</div>": 2,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 2 }}>{c.body}</div>": 2,
     "<input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder=\"add a thought…\" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', ": 2,
-    "<button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: '12px', padding: '6px 12px', borderRadius: 999 }}>Add</button>": 2,
     "<div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 18, lineHeight: 1.45, color: 'var(--ink-body)', marginTop: 12, borderLeft: '2px solid var(--acc-buttercream)', paddingLe": 1,
     "<div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 6, textAlign: 'right' }}>— {activeQuote.author || 'Unknown'} {activeQuote.source && `(${activeQuote.source})`}</div>": 1,
     "font-size: 13px;": 1,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink-body)' }}>Library</span>": 1,
     "style={{ fontSize: 12, padding: '6px 10px', borderRadius: 6, color: 'var(--ink-muted)', cursor: 'pointer', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 14.5, color: 'var(--ink-muted)', transform: 'rotate(-1deg)', padding: '0 4px', marginTop: 20 }}>": 1,
     "<div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)' }}>{b.title}</div>": 1,
     "<div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 2 }}>{b.author || 'Unknown'}</div>": 1,
     "<div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>": 2,
     "<div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>": 1,
     "<div style={{ fontSize: 11, color: 'var(--ink-muted)', marginTop: 2 }}>— {q.author || 'Unknown'}</div>": 1,
-    "style={{ width: '100%', padding: '5px 8px', marginBottom: 6, fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}": 2,
-    "style={{ width: '50%', padding: '5px 8px', fontSize: '12px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}": 2,
-    "<button onClick={() => setShowNewBookForm(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>": 1,
-    "<button onClick={handlePlantBook} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', borderRadius: 999, cu": 1,
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 30, lineHeight: 1.15, color: 'var(--ink-body)' }}>{activeBook.title}</h1>": 1,
-    "<div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Log Reading Session</div>": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>Page reached:</span>": 1,
-    "style={{ width: 80, padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}": 1,
-    "<button onClick={() => setShowLogSession(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>": 1,
-    "<button onClick={handleLogBookSession} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', borderRadius: 99": 1,
-    "<div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Add Book Quote</div>": 1,
-    "style={{ width: '100%', minHeight: 60, fontFamily: 'inherit', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', outline: 'none', padding: 6, borderRadius: 3, re": 2,
-    "style={{ width: '40%', padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}": 1,
-    "style={{ width: '60%', padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}": 1,
-    "<button onClick={() => setShowAddQuote(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>": 1,
-    "<button onClick={handleAddBookQuote} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', borderRadius: 999,": 1,
-    "<div style={{ fontSize: 12, fontWeight: 600, marginBottom: 8 }}>Add Note</div>": 1,
-    "style={{ width: '100%', padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none', marginBottom: 6 }}": 1,
-    "style={{ width: '100%', padding: '4px 8px', fontSize: '13px', background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 3, outline: 'none' }}": 1,
-    "<button onClick={() => setShowAddNote(false)} style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '11px', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</button>": 1,
-    "<button onClick={handleAddBookNote} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', font: 'inherit', fontSize: '11px', padding: '4px 10px', borderRadius: 999, ": 1,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 17, color: 'var(--acc-buttercream-text)', flex: 'none' }}>❝</span>": 1,
     "<div style={{ fontSize: '15px', lineHeight: 1.6, color: 'var(--ink-body)' }}>{activeNote.body}</div>": 1,
     "<span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>Related Book</span>": 1,
-    "style={{ flex: 1, minWidth: 0, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '10px 13px', fontSize: '13px', color: 'var(--ink-body)', outline: 'none'": 2,
     "<div style={{ fontFamily: 'var(--font-display)', fontStyle: 'italic', fontSize: 27, lineHeight: 1.45, color: 'var(--ink-body)' }}>": 1,
-    "<span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>": 1,
-    "<div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>The shelf is bare — quotes and notes you k": 1
+    "<span style={{ fontSize: '13px', color: 'var(--acc-buttercream-text)' }}>": 1
    },
    "radius-off-scale": {
     "<div style={{ padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, marginBottom: 12 }}>": 1,
-    "<div style={{ background: 'var(--paper-linen)', borderRadius: 4, border: '1px solid var(--line-card)', padding: '16px 12px' }}>": 3,
-    "<div style={{ marginTop: 12, padding: 10, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>": 2,
-    "borderRadius: 5,": 3,
-    "<div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, maxWidth: 300 }}>": 1,
-    "<div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4 }}>": 2
+    "<div style={{ marginTop: 16, padding: 12, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 4, maxWidth: 300 }}>": 1
    }
   },
   "src/features/notifications/android.ts": {
@@ -1184,9 +779,7 @@
     ".pp-foot-note { font-size: 14px; color: var(--ink-muted); text-align: center; }": 1,
     ".pp-title { font-family: var(--font-display); font-size: 26px; font-weight: 500; line-height: 1.2; text-align: center; text-wrap: balance; }": 1,
     ".pp-body { font-size: 15px; line-height: 1.55; color: var(--ink-muted); text-align: center; text-wrap: pretty; max-width: 330px; }": 1,
-    ".pp-meta { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }": 1,
     ".pp-link { border: none; background: none; padding: 8px; font: inherit; font-size: 14px; font-weight: 500; color: var(--acc-lavender-deep); cursor: pointer; }": 1,
-    ".pp-strip-head { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); padding-bott": 1,
     ".pp-strip-thumb span { position: absolute; right: 4px; bottom: 2px; font-family: var(--font-mono); font-size: 12px; font-weight: 700; color: var(--ink-body); text-shadow: 0 0 3px var(--paper-parchment": 1,
     ".pp-strip-add { border-style: dashed; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: inherit; font-size: 12px; color: var(--ink-muted); }": 1,
     ".pp-rtitle { font-family: var(--font-display); font-size: 21px; font-weight: 500; line-height: 1.2; }": 1,
@@ -1195,20 +788,9 @@
     ".pp-row-input { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; line-height: 20px; color: var(--ink-body); background: var(--bg-input); border: 1px solid var(--border-default); bo": 1,
     ".pp-type { height: 28px; padding: 0 6px 0 10px; border: none; border-radius: 999px; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-size: 12px; font-weight: 600; cursor: point": 1,
     ".pp-chip { height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: var(--paper-bone); border: 1px solid var(--line-card); font-family: var": 1,
-    ".pp-check-label { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc-gold); }": 1,
-    ".pp-meter { display: flex; align-items: center; gap: 12px; margin-top: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); }": 1,
     ".pp-waiting { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 999px; background: var(--block-hydrangea); color: var(--acc-hydrangea-deep); font-size:": 1,
-    ".pp-set-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 0; border-bottom: 1px dashed var(--line-dashed); font-size: 14px; color: var(--ink-body); }": 1,
     ".pp-set-help { font-size: 12.5px; color: var(--ink-muted); }": 1,
     ".pp-seg-btn { flex: 1; min-height: 44px; border: none; border-radius: 999px; background: none; font: inherit; font-size: 13.5px; color: var(--ink-muted); cursor: pointer; }": 1
-   },
-   "letter-spacing-literal": {
-    ".pp-meta { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".pp-strip-head { display: flex; justify-content: space-between; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-faint); padding-bott": 1,
-    ".pp-chip { height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: var(--paper-bone); border: 1px solid var(--line-card); font-family: var": 1,
-    ".pp-check-label { font-family: var(--font-mono); font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--acc-gold); }": 1,
-    ".pp-meter { display: flex; align-items: center; gap: 12px; margin-top: 8px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-muted); }": 1,
-    ".pp-source { display: inline-flex; align-items: center; gap: 5px; padding: 0; border: none; background: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-tra": 1
    },
    "pure-black-white": {
     ".pp-photo { display: block; max-width: 100cqw; max-height: 100cqh; object-fit: contain; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18), 0 12px 28px rgba(0, 0, 0, 0.22); transition: transform var(--dur-norm": 2,
@@ -1256,34 +838,16 @@
   },
   "src/features/people/PeoplePage.tsx": {
    "font-size-literal": {
-    "style={{ width: 48, height: 48, border: 'none', font: 'inherit', borderRadius: 999, background: 'var(--acc-terra)', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', al": 1,
     "<div style={{ fontSize: '13.5px', color: 'var(--ink-body)' }}>{p.name}</div>": 1,
     "<div style={{ fontSize: '11.5px', color: 'var(--ink-muted)', marginTop: 1 }}>{summaryShort}</div>": 1,
     ".av { width: 32px; height: 32px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-family: var(--font-display); font-size: 13px; font-weight: 600; color: var": 1,
     "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The clover patch</h1>": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 17px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', ": 1,
     "<Button type=\"submit\" variant=\"cta\" style={{ padding: '8px 16px', fontSize: 12 }}>Add</Button>": 1,
-    "<div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No one in the clover patch yet — plant the": 1,
     "<div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>": 1,
     "<div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2 }}>{summaryText}</div>": 1
-   },
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>Say hi</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domain?.name || 'Uncategorized'}</span>": 1,
-    ".chip { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 9px; border-radius: 999px; display: inline-flex; align-items: center; ": 1,
-    ".flabel { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-faint); }": 1,
-    ".fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }": 1
    }
   },
   "src/features/people/PersonDetailPage.tsx": {
-   "letter-spacing-literal": {
-    ".chip{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.06em;text-transform:uppercase;padding:4px 9px;border-radius:999px;display:inline-flex;align-items:center;gap:5px;white-spa": 1,
-    ".flabel{font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.16em;text-transform:uppercase;color:var(--ink-faint)}": 1,
-    ".fhelp { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }": 1,
-    ".slabel{display:flex;align-items:center;gap:12px;font-family:var(--font-mono);font-size: var(--fs-meta);letter-spacing:0.18em;text-transform:uppercase;color:var(--ink-faint)}": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>{domain?.name || 'Uncategorized'} · <s": 1,
-    "style={{ width: 74, flex: 'none', padding: '3px 0 0', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none": 1
-   },
    "font-size-literal": {
     ".av{width:32px;height:32px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:13px;font-weight:600;color:var(--ink-body);flex:non": 1,
     "<div style={{ fontSize: '14.5px', color: 'var(--ink-body)' }}>{getBannerText(person.name, daysUntilBday)}</div>": 1,
@@ -1295,26 +859,17 @@
     "<span style={{ width: 15, textAlign: 'center', color: 'var(--ink-faint)', fontSize: 14, flex: 'none' }}>+</span>": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Add a moment… label · date · repeats yearly</span>": 1,
     "<span style={{ fontSize: '13.5px', color: 'var(--ink-body)', flex: '1 1 96px', minWidth: 0 }}>{f.value}</span>": 1,
-    "<input ref={factValueRef} type=\"text\" placeholder={newFactType === 'Birthday' ? 'e.g. July 17' : 'a thing worth remembering…'} value={newFactValue} onChange={(e) => setNewFactValue(e.target.value)} re": 1,
-    "<button type=\"submit\" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '7px 14px', borderRadius: 999, boxShadow: ": 2,
-    "<input type=\"text\" placeholder=\"what did you talk about?\" value={logSummary} onChange={(e) => setLogSummary(e.target.value)} required style={{ width: '100%', background: 'var(--paper-bone)', border: '": 1,
     "<span style={{ fontSize: '13.5px', lineHeight: 1.5, flex: 1, minWidth: 0 }}>": 1,
-    "<span role=\"button\" tabIndex={0} title=\"Edit\" onClick={() => setEditingInteraction(i.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingInteraction(i.id) } }} style={{ fon": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>the log is the memory ✿</span>": 1
+    "<span role=\"button\" tabIndex={0} title=\"Edit\" onClick={() => setEditingInteraction(i.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setEditingInteraction(i.id) } }} style={{ fon": 1
    }
   },
   "src/features/projects/ConfirmCard.tsx": {
    "colour-literal": {
     "style={{ position: 'fixed', inset: 0, zIndex: 120, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(42,36,32,0.14)' }}": 1
    },
-   "radius-off-scale": {
-    "style={{ width: 300, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px' }}": 1
-   },
    "font-size-literal": {
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 16, fontWeight: 600, color: 'var(--ink-body)' }}>{title}</div>": 1,
-    "<div style={{ marginTop: 8, fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.45 }}>{body}</div>": 1,
-    "style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 15px', borderRadius: 999, cursor: 'point": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 999, boxShadow: 'var(--shadow-cta)',": 1
+    "<div style={{ marginTop: 8, fontSize: 13, color: 'var(--ink-muted)', lineHeight: 1.45 }}>{body}</div>": 1
    }
   },
   "src/features/projects/NewProjectModal.tsx": {
@@ -1322,35 +877,12 @@
     "'#7a4a52',": 1,
     "'#8b8471',": 1
    },
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Type</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 5 }}>has a finish line</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 5 }}>ongoing, no end</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 5 }}>monthly hours</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Engagement Model / Client</": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Color</div>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Starting milestones</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>weight {m.weight}</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Projects</div>": 1
-   },
-   "radius-off-scale": {
-    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'standard' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'standard' ? '2px solid color-mix(in oklc": 1,
-    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'area' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'area' ? '2px solid color-mix(in oklch, var(-": 1,
-    "style={{ flex: 1, background: 'var(--paper-bone)', border: type === 'retainer' ? '1px solid var(--acc-moss)' : '1px solid var(--line-card)', outline: type === 'retainer' ? '2px solid color-mix(in oklc": 1
-   },
    "font-size-literal": {
     "<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><img src=\"/ds/assets/wisteria/p40.png\" alt=\"\" style={{ height: 20 }} /><span style={{ fontSize: 14, fontWeight: type === 'standard' ? 600": 1,
     "<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--acc-buttercream)' }}></span><span style={{ fontSize: 14, fo": 1,
     "<div style={{ display: 'flex', alignItems: 'center', gap: 8 }}><span style={{ width: 20, height: 20, borderRadius: '50%', background: 'var(--acc-lavender-deep)' }}></span><span style={{ fontSize: 14, ": 1,
-    "style={{ width: '100%', font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--acc-moss)', borderRadius: 8, padding: '11px 13px', outline: '": 1,
-    "style={{ width: '100%', font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 8, padding: '9px 12px', outline: '": 2,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-muted)' }}>optional — the trellis it climbs ✿</span>": 1,
     "<span style={{ flex: 1, fontSize: 13.5, color: 'var(--ink-body)' }}>{m.title}</span>": 1,
-    "<NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel=\"Milestone weight\" style={{ fontSize: 12.5 }} />": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '4px 10px', borderRadius: 999, cursor: 'pointer' }}": 1
+    "<NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel=\"Milestone weight\" style={{ fontSize: 12.5 }} />": 1
    }
   },
   "src/features/projects/PerennialsPage.tsx": {
@@ -1364,29 +896,10 @@
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1
    },
    "letter-spacing-literal": {
-    "<div className=\"mono\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.22em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1,
-    "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1,
-    "<div className=\"mono\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', paddingBottom: 4 }}>": 1
+    "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>": 1
    }
   },
   "src/features/projects/ProjectDetailPage.tsx": {
-   "letter-spacing-literal": {
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)', cursor: 'pointer' }}": 1,
-    "<div className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Col": 1,
-    "<span className=\"fhelp\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>": 2,
-    "<span className=\"mchip\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', textAlign: isMobile ? 'left": 1,
-    "<div className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Dom": 2,
-    "<div className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>Hours</d": 1,
-    "<div className=\"fhelp\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 4 }}>": 1,
-    "<span role=\"button\" tabIndex={0} title=\"Change weight\" onClick={() => setWeighingMilestone(m.id)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); setWeighingMilestone(m.id) } }} class": 1,
-    "<span onClick={() => setEditingMilestone({ id: m.id, title: m.title })} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color:": 1,
-    "style={{ width: 76, flex: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', padding: '3px 0": 1,
-    "{log.type === 'work' && <span className=\"mchip\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', mar": 1,
-    "<div className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>Cadence<": 1,
-    "<div className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>This mon": 1,
-    "<span className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Keeps coming back</span>": 1,
-    "<span className=\"flabel\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Recent</span>": 1
-   },
    "colour-literal": {
     "'#7a4a52',": 1,
     "'#8b8471',": 1
@@ -1399,21 +912,10 @@
     "<NumberField value={m.weight} onChange={(n) => reweighProjectMilestone(project, m.id, n)} min={1} max={100} ariaLabel={`Weight of ${m.title}`} style={{ fontSize: 12.5 }} />": 1,
     "style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}": 2,
     "<NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel=\"Milestone weight\" style={{ fontSize: 12.5 }} />": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontSize: 11, padding: '6px 12px', borderRadius: 999, cursor: 'pointer' }}": 2,
-    "style={{ flex: 1, font: 'inherit', fontSize: 13, background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 6, padding: '6px 10px', outline: 'none', color: 'var(--ink-body)'": 2,
-    "<button type=\"submit\" style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', borderRadius: 6, padding: '6px 14px', cursor: 'pointer', fontSize: 12 }}>Add</button>": 2,
-    "style={{ fontSize: 11, padding: '4px 8px' }}": 1,
-    "fontSize: 11,": 2,
-    "style={{ flex: '1 1 180px', minWidth: 0, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8p": 1,
-    "style={{ width: 75, font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', textAlign: '": 1,
-    "style={{ font: 'inherit', fontSize: 12.5, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', outline: 'none' }}": 1,
-    "style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '8px 15px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', c": 1,
-    "style={{ width: 76, flex: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 11, letterSpacing: '0.06em', color: 'var(--ink-faint)', background: 'none', border: 'none', padding: '3px 0": 1,
     "<span className=\"fhelp\" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>": 2,
     "<span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>": 2,
     "<span style={{ width: 70, flex: 'none', fontSize: 12 }}>": 1,
     "<button type=\"button\" className=\"kf-hit\" onClick={() => deleteLog(log)} title=\"Delete\" aria-label={`Delete ${log.type}: ${log.note}`} style={{ border: 'none', background: 'none', padding: 0, cursor: '": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>": 2,
     "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>{titleNode(area.name, (next) => renameArea(area, next))}<": 1,
     "fontSize: 30,": 1,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>": 1,
@@ -1421,36 +923,13 @@
     "<div style={{ color: 'var(--ink-faint)', fontSize: 12.5, fontStyle: 'italic', padding: '6px 2px' }}>": 2
    },
    "radius-off-scale": {
-    "<span style={{ width: 15, height: 15, border: '1.5px dashed var(--ink-hairline)', borderRadius: 4, flex: 'none', opacity: 0.6 }}></span>": 2,
-    "<span className=\"seg\" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 2, gap: 2 }}>": 1,
-    "borderRadius: 5,": 2,
-    "<div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 9, padding: '14px 16px' }}>": 2
+    "<span style={{ width: 15, height: 15, border: '1.5px dashed var(--ink-hairline)', borderRadius: 4, flex: 'none', opacity: 0.6 }}></span>": 2
    }
   },
   "src/features/projects/ProjectsPage.tsx": {
-   "letter-spacing-literal": {
-    "const mchip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }": 1,
-    "const chip: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999, display: 'in": 1,
-    "{i === 1 && <text x={cx} y={62} textAnchor=\"middle\" style={{ font: '600 8px var(--font-mono)', letterSpacing: '0.14em', fill: 'var(--ink-hairline)' }}>SOIL</text>}": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Active</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Retainers</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Areas</span>": 1,
-    "<span onClick={() => setView('list')} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'poin": 1,
-    "letterSpacing: '0.08em',": 1,
-    "<span className=\"fhelp\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-body)' }}>{d.name}</span>": 1,
-    "<div className=\"fhelp\" style={{ marginTop: 3, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{stat.hours}h</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>": 1
-   },
    "font-size-literal": {
     "{i === 1 && <text x={cx} y={62} textAnchor=\"middle\" style={{ font: '600 8px var(--font-mono)', letterSpacing: '0.14em', fill: 'var(--ink-hairline)' }}>SOIL</text>}": 1,
-    "<div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 340, lineHeight: 1.45 }}>No projects growing yet.</div>": 1,
-    "style={{ marginTop: 20, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13.5, padding: '10px 20px', borderRadius: 999, boxShadow: 'var": 1,
-    "style={{ width: 48, height: 48, borderRadius: '999px', background: 'var(--acc-terra)', border: 'none', boxShadow: 'var(--shadow-cta)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'ce": 1,
     "<div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11.5, color: 'var(--ink-muted)', marginTop: 1 }}>": 2,
-    "<span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted": 1,
-    "<span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-mu": 1,
     "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{nameOf(p.id, p.name)}</div>": 2,
     "{stat.hasTop3Task && <span style={{ color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}": 2,
@@ -1459,21 +938,16 @@
     "{domain && <span style={{ fontSize: 12, color: 'var(--ink-muted)', marginLeft: 8 }}>{domain.name}</span>}": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 15.5, fontWeight: 600, color: 'var(--ink-body)', lineHeight: 1.15 }}><EmojiText text={p.name} /></div>": 1,
     "{stat.hasTop3Task && <span style={{ marginLeft: 'auto', color: 'var(--acc-terra)', fontSize: 13 }}>★</span>}": 1,
-    "<div style={{ padding: '16px 6px', textAlign: 'center', fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-muted)' }}>": 1,
     "<div style={{ flex: 1, fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Plant a project here…</div>": 1,
     "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 32, lineHeight: 1.1, color: 'var(--ink-body)' }}>Grown &amp; done</h1>": 1
    },
-   "radius-off-scale": {
-    "<span className=\"seg\" style={{ display: 'inline-flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 7, padding: 3, gap: 3 }}>": 1,
-    "<span onClick={() => setView('list')} className={view === 'list' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'list' ? 'var(--ink-body)' : 'var(--ink-muted": 1,
-    "<span onClick={() => setView('board')} className={view === 'board' ? 'on' : ''} style={{ padding: '6px 13px', borderRadius: 5, fontSize: 12, color: view === 'board' ? 'var(--ink-body)' : 'var(--ink-mu": 1,
-    "<div style={{ maxWidth: 760, background: 'var(--paper-linen)', border: '1px solid var(--line-solid)', borderRadius: 5, boxShadow: 'var(--shadow-card)', padding: '30px 38px 34px', position: 'relative',": 1
+   "letter-spacing-literal": {
+    "{i === 1 && <text x={cx} y={62} textAnchor=\"middle\" style={{ font: '600 8px var(--font-mono)', letterSpacing: '0.14em', fill: 'var(--ink-hairline)' }}>SOIL</text>}": 1
    }
   },
   "src/features/projects/xfx.css": {
    "motion-property": {
     ".kf-lift { transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); }": 1,
-    ".kf-lift-tilt { transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out); transform: rotate(var(--kf-tilt, 0deg)); }": 1,
     "@keyframes kfInkBleed {": 1
    }
   },
@@ -1489,24 +963,11 @@
    }
   },
   "src/features/rituals/RitualChrome.tsx": {
-   "letter-spacing-literal": {
-    "return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color }}>{children}</span>": 1
-   },
    "kit-duplicate": {
     "export function Segmented<T extends string>({ options, value, onChange, label }: { options: { value: T; label: string }[]; value: T | null; onChange: (v: T) => void; label: string }) {": 1
    }
   },
   "src/features/rituals/rituals.css": {
-   "letter-spacing-literal": {
-    ".rt-mono { font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }": 1,
-    ".rt-label { font-size: var(--fs-meta-l); letter-spacing: 0.07em; color: var(--ink-faint); white-space: nowrap; }": 1,
-    "letter-spacing: 0.06em;": 1,
-    ".rt-meta { margin-top: var(--sp-1); display: flex; flex-wrap: wrap; column-gap: var(--sp-3); row-gap: 2px; font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }": 1,
-    ".rt-tl-hours > span { position: absolute; top: 0; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.04em; color: var(--ink-faint); }": 1,
-    ".rt-legend > span { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-f": 1,
-    ".rt-past-date { width: 52px; flex: none; font-size: var(--fs-meta); letter-spacing: 0.06em; color: var(--ink-faint); }": 1,
-    ".rt-saved { margin-top: 2px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase; color: var(--acc-sage-text); }": 1
-   },
    "line-height-literal": {
     ".rt-title { font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); text-wrap: pretty; }": 1,
     ".rt-clear-sub { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--ink-muted); }": 1,
@@ -1534,7 +995,6 @@
   },
   "src/features/rituals/WeeklyReviewPage.tsx": {
    "font-size-literal": {
-    "fontSize: 13,": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>The season so far</div>": 1,
     "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The sweep</h1>": 1,
     "<span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={name} /></span>": 1,
@@ -1543,7 +1003,6 @@
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-muted)' }}>{domain.name}</span>": 1,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>": 1,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 600, color: 'var(--ink-body)' }}>{domain.name}</span>": 1,
-    "<button type=\"button\" onClick={onSweep} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 99": 1,
     "<p style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 8 }}>Nothing slipping.</p>": 1,
     "<div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>{row.entity_name}</div>": 1,
     "<p style={{ fontSize: 12.5, color: 'var(--ink-faint)', marginTop: 8 }}>No routines yet.</p>": 1,
@@ -1551,69 +1010,30 @@
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)' }}>{bloomsThisWeek}</span>": 1,
     "<span style={{ marginLeft: 'auto', fontFamily: 'var(--font-display)', fontSize: 30, fontWeight: 500, color: 'var(--ink-body)' }}>": 1,
     "{Math.round(hoursThisWeek)}<span style={{ fontSize: 15, color: 'var(--ink-faint)' }}>h</span>": 1,
-    "<div className=\"kf-ink\" style={{ marginTop: 10, fontFamily: 'var(--font-hand)', fontSize: 15.5, lineHeight: 1.45, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.8deg)' }}>no numbers to chase": 1,
     "<h2 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--ink-body)' }}>The season so far</h2>": 1,
     "{hoursByDomain.length === 0 && <p style={{ fontSize: 12, color: 'var(--ink-faint)', margin: 0 }}>No domains yet.</p>}": 1,
     "<span style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{h.name}</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)', marginTop: 6, transform: 'rotate(-0.4deg)' }}>": 1,
     "{topRoutines.length === 0 && <p style={{ fontSize: 12, color: 'var(--ink-faint)', margin: 0 }}>No routines yet.</p>}": 1,
     "<span style={{ fontSize: 12, color: 'var(--ink-muted)', minWidth: 0, overflowWrap: 'anywhere' }}>{r.name}</span>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 58, fontWeight: 500, color: 'var(--ink-body)', lineHeight: 1 }}>{bloomsThisWeek}</div>": 1,
-    "<div style={{ marginTop: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-hand, #7a745f)' }}>": 1,
-    "<span style={{ width: 150, fontSize: 12.5, color: 'var(--ink-muted)', flex: 'none' }}><EmojiText text={p.name} /></span>": 1,
-    "<span style={{ width: 150, fontSize: 12.5, color: 'var(--ink-faint)', flex: 'none' }}>everything else</span>": 1
-   },
-   "radius-off-scale": {
-    "borderRadius: 4,": 1,
-    "<span style={{ width: 17, height: 17, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>": 1,
-    "<span style={{ width: 17, height: 17, border: '1.5px solid var(--check-border)', borderRadius: 5, flex: 'none' }} />": 2,
-    "borderRadius: 1.5,": 1
-   },
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra)' }}>{showSeason ? 'close ↑' : 'open →'}</span>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>{domainsSwept} of {domainsTotal} ": 1,
-    "return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>{children}</span>": 1,
-    "letterSpacing: '0.06em',": 1,
-    "<span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowrap' ": 1,
-    "<span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>up next</span>": 1,
-    "<span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--acc-buttercream-text)' }}>sweeping…</s": 1,
-    "<button type=\"button\" onClick={() => onReview(row)} style={{ border: 'none', background: 'none', font: 'inherit', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', t": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)' }}>tasks done</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 4 }}>petals fallen · hours blocked &amp; kept</div>": 1,
-    "<div style={{ display: 'flex', justifyContent: 'space-between', padding: '0 4px 0 22px', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.04em', color: 'var(--ink-faint)' ": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last week · {bloomsLastWeek}</div>": 1
+    "<span style={{ width: 150, fontSize: 12.5, color: 'var(--ink-muted)', flex: 'none' }}><EmojiText text={p.name} /></span>": 1
    },
    "motion-property": {
     "@keyframes weekLine { from { stroke-dashoffset: 220 } to { stroke-dashoffset: 0 } }": 1
    },
-   "colour-literal": {
-    "<span style={{ position: 'absolute', top: -9, left: 26, width: 54, height: 16, background: 'color-mix(in srgb, var(--acc-buttercream) 50%, transparent)', backgroundImage: 'repeating-linear-gradient(90": 1
+   "radius-off-scale": {
+    "borderRadius: 1.5,": 1
    }
   },
   "src/features/routines/NewRoutineForm.tsx": {
    "font-size-literal": {
-    "fontSize: isMobile ? 12 : 12.5,": 1,
-    "fontSize: 12.5,": 1,
     "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1, color: 'var(--ink-body)' }}>{routine ? 'Edit routine' : 'New routine'}<": 1,
     "style={{ flex: 1, font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}": 1,
-    "{!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>checked off one by one, or all at once ✿</span>}": 1,
     "fontSize: 11,": 1,
     "<div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Reminder</div>": 1,
-    "style={{ width: 96, fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: fieldBg, border: '1px solid var(--line-card)', borderRadius: 8, padding: '8px 12px' }}": 1,
     "<NumberField value={challengeDays} onChange={setChallengeDays} min={1} max={3650} ariaLabel=\"Challenge days\" style={{ fontSize: 14 }} inputStyle={{ border: 'none' }} />": 1,
     "<span style={{ marginLeft: 6, fontSize: 13, color: 'var(--ink-muted)' }}>day streak</span>": 1,
-    "style={{ flex: 1, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontSize: 14, color: 'var(--ink-body)' }}": 1,
-    "<span style={{ fontFamily: 'var(--font-hand)', fontSize: 14, color: 'var(--ink-hand, #7a745f)' }}>starts bare, grows with the streak ✿</span>": 1
-   },
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Routines</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Name</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Time of day</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Repeats</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 3 }}>a gentle push notification</div>": 1,
-    "<span onClick={() => setIsChallenge((v) => !v)} style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', cur": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 7 }}>Domain</div>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>Its plant</span>": 1
+    "style={{ flex: 1, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontSize: 14, color: 'var(--ink-body)' }}": 1
    },
    "radius-off-scale": {
     "<span role=\"checkbox\" aria-checked={isChallenge} onClick={() => setIsChallenge((v) => !v)} style={{ width: 16, height: 16, borderRadius: 4, border: '1.5px solid var(--line-solid)', background: isChall": 1
@@ -1625,13 +1045,9 @@
     "<button type=\"button\" onClick={onEdit} title=\"Edit routine\" style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', fontSize: 15, color: doneTod": 1,
     "<div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>": 1,
     "<h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>": 1,
-    "<button type=\"button\" onClick={() => setFormOpen({ challenge: false })} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', font: 'inherit', fontSize: 13, padding": 1,
     "style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: isMobile ? '8px 0' : 0, font: 'inherit', fontSize: 13.5, color: 'var(--ink-body)', cursor: 'pointer' }}": 1,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {due} tended</span>": 1,
-    "{!isMobile && <span style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)' }}>{heroCaption}</span>}": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}>{bestStreak}</div>": 1,
-    "<button type=\"button\" onClick={() => setFormOpen({ challenge: false })} style={{ width: '100%', minHeight: 48, marginTop: 14, border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchm": 1,
-    "<div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted yet.</div>": 1,
     "<div style={{ fontSize: 14, color: '#4a3a1e', fontWeight: 500 }}>{routine.name}</div>": 1
    },
    "hairline-text": {
@@ -1641,36 +1057,20 @@
    "phone-tiny-text": {
     "<div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>": 1
    },
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: stage === 'bare' ? 'var(--ink-faint)' : 'var(--acc-sage-text)', mar": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>The garden</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>day streak</div>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: isMobile ? '0.16em' : '0.18em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', whiteSpace: 'nowr": 1,
-    "{!isMobile && g.tally.due > 0 && <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{g.tally.do": 1
-   },
-   "colour-literal": {
-    "<span style={{ position: 'absolute', top: -9, left: 38, width: 60, height: 16, background: 'color-mix(in srgb, var(--acc-moss) 40%, transparent)', backgroundImage: 'repeating-linear-gradient(90deg,rgb": 1,
-    "<span style={{ position: 'absolute', top: -9, right: 20, width: 52, height: 16, background: 'color-mix(in srgb, var(--acc-gold-warm) 42%, transparent)', backgroundImage: 'repeating-linear-gradient(90d": 1,
-    "<div style={{ fontSize: 14, color: '#4a3a1e', fontWeight: 500 }}>{routine.name}</div>": 1
-   },
    "bold-huge": {
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {due} tended</span>": 1
    },
    "radius-off-scale": {
     "<div style={{ marginTop: isMobile ? 8 : 10, height: isMobile ? 6 : 7, borderRadius: 4, background: 'var(--line-card)', overflow: 'hidden' }}>": 1,
     "<div style={{ marginTop: 9, height: 6, borderRadius: 4, background: 'color-mix(in srgb, var(--acc-gold) 20%, transparent)', overflow: 'hidden' }}>": 1
+   },
+   "colour-literal": {
+    "<div style={{ fontSize: 14, color: '#4a3a1e', fontWeight: 500 }}>{routine.name}</div>": 1
    }
   },
   "src/features/routines/StreakTrellis.tsx": {
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{routine.name} · streak</div>": 1,
-    "<span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-h": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>last {DAYS} days</span>": 1,
-    "<div style={{ display: 'flex', alignItems: 'center', gap: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' ": 1
-   },
    "font-size-literal": {
-    "<span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{streakOfGoal(current, routine.goal_days)} days</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 18, color: 'var(--ink-hand, #7a745f)', transform: 'rotate(-0.7deg)' }}>{caption}</div>": 1
+    "<span style={{ fontFamily: 'var(--font-display)', fontSize: 22, color: 'var(--ink-body)', lineHeight: 1 }}>{streakOfGoal(current, routine.goal_days)} days</span>": 1
    },
    "svg-colour-literal": {
     "<path d=\"M8 1C10.6 7 15 9.5 15 14a7 7 0 0 1-14 0C1 9.5 5.4 7 8 1Z\" fill=\"none\" stroke=\"#7d99a3\" strokeWidth={0.8} />": 1,
@@ -1679,24 +1079,13 @@
    },
    "colour-literal": {
     "<div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>": 1
-   },
-   "radius-off-scale": {
-    "style={{ width: 860, maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)'": 1
    }
   },
   "src/features/search/SearchOverlay.tsx": {
-   "letter-spacing-literal": {
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>": 1
-   },
-   "radius-off-scale": {
-    "borderRadius: 5,": 1
-   },
    "font-size-literal": {
     "<div style={{ fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={hit.title} /></div>": 1,
     "style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 15, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}": 1,
     "{loading && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-faint)' }}>Searching…</p>}": 1,
-    "{status === 'done' && query.trim() && results.length === 0 && <p style={{ marginTop: 12, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>Nothing's come up for that — try few": 1,
-    "<p style={{ margin: 0, flex: 1, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>{SEARCH_RESTING}</p>": 1,
     "<button type=\"button\" onClick={search.retry} className=\"kf-hit\" style={{ font: 'inherit', flex: 'none', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, curso": 1,
     "<span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Open selected</span>": 1,
     "<span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>View all results</span>": 1
@@ -1718,7 +1107,7 @@
     "font-size: 14px;": 4,
     "font-size: 12px;": 2,
     "font-size: 26px;": 1,
-    "font-size: 15px;": 3
+    "font-size: 15px;": 2
    },
    "line-height-literal": {
     "line-height: 20px;": 1,
@@ -1728,7 +1117,6 @@
   "src/features/settings/SettingsPage.tsx": {
    "font-size-literal": {
     "<span role=\"status\" style={{ fontSize: 13, color: r?.kind === 'offline' ? 'var(--ink-muted)' : 'var(--ink-body)' }}>{line}</span>": 1,
-    "const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', minHeight: 40, textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px dashe": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{zoneOffset(z)}</span>": 1,
     "const timeStyle = (on: boolean): CSSProperties => ({ width: 84, boxSizing: 'border-box', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>to</span>": 1,
@@ -1743,10 +1131,6 @@
    }
   },
   "src/features/tasks/MovePicker.tsx": {
-   "letter-spacing-literal": {
-    "const GROUP_TITLE: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', flex: 'none' }}>{on ? '✓' : KIND[t.kind]}</sp": 1
-   },
    "font-size-literal": {
     "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px', fontWeight: t.kind === 'domain' ? 600 : 400 }}><EmojiText text={t.name} /></span>": 1,
     ".kf-mp-search input { flex: 1; min-width: 0; border: none; background: none; outline: none; font: inherit; font-size: 15px; color: var(--ink-body); }": 1,
@@ -1759,10 +1143,6 @@
    },
    "line-height-literal": {
     "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px', fontWeight: t.kind === 'domain' ? 600 : 400 }}><EmojiText text={t.name} /></span>": 1
-   },
-   "radius-off-scale": {
-    "color: 'var(--ink-body)', background: 'none', border: 'none', borderRadius: 5, padding: '7px 10px', cursor: 'pointer',": 1,
-    "style={{ position: 'fixed', top: Math.max(12, top), left: Math.max(8, left), zIndex: 1000, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', boxShadow: 'var(--shadow-popover)": 1
    }
   },
   "src/features/tasks/openTask.ts": {
@@ -1776,7 +1156,6 @@
     ".kf-pk-pop .kf-plan-means { font-size: 11.5px; line-height: 15px; }": 1,
     ".kf-plan-slot { font-family: var(--font-display); font-size: 22px; font-weight: 500; color: var(--ink-body); padding: 8px 0 2px; }": 1,
     ".kf-pk-pop .kf-plan-slot { font-size: 19px; }": 1,
-    ".kf-plan-spread li { display: flex; gap: 12px; padding: 6px 0; border-bottom: 1px dashed var(--line-dashed); font-size: 14px; color: var(--ink-body); }": 1,
     ".kf-plan-spread b { flex: none; width: 92px; font-family: var(--font-mono); font-size: 12px; font-weight: 400; color: var(--acc-lavender-text); padding-top: 1px; }": 1
    },
    "line-height-literal": {
@@ -1785,36 +1164,17 @@
    }
   },
   "src/features/tasks/TaskRow.css": {
-   "hover-only-reveal": {
-    ".tr-someday:hover .tr-someday-hover, .tr-someday:focus-within .tr-someday-hover { opacity: 1; }": 1
-   },
-   "radius-off-scale": {
-    "border-radius: 7px;": 1
-   },
    "colour-literal": {
     "background: linear-gradient(135deg, #E8C4CC, #D4A8B0); border-radius: 70% 30% 60% 40%;": 2
    },
    "line-height-literal": {
     "padding: 0; border: none; background: none; color: inherit; font: inherit; font-size: var(--fs-tab-label); line-height: 16px;": 1
    },
-   "font-size-literal": {
-    ".kf-swipe-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }": 1
-   },
-   "letter-spacing-literal": {
-    ".kf-swipe-hint { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; white-space: nowrap; }": 1
-   },
    "motion-property": {
     "-webkit-tap-highlight-color: transparent; transition: background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard);": 1
    }
   },
   "src/features/tasks/TaskRow.tsx": {
-   "letter-spacing-literal": {
-    "letterSpacing: '0.08em',": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignItems: 'center',": 1,
-    "<div style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)', display: 'inline-flex', alignIte": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-sage-text)', background: 'color-mix(in srgb, var(--acc-moss)": 1,
-    "style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-l": 1
-   },
    "font-size-literal": {
     "style={{ width: 18, height: 18, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: 11, f": 1,
     "<span onClick={openDetail} style={{ flex: 1, fontSize: 15, color: 'var(--ink-faint)', textDecoration: 'line-through', cursor: 'pointer' }}><EmojiText text={task.title} /></span>": 1,
@@ -1833,52 +1193,27 @@
     ".ts-sub-title { min-width: 0; font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); }": 1,
     ".ts-block b { display: block; font-size: 14px; font-weight: var(--fw-medium); line-height: 20px; color: var(--ink-body); }": 1
    },
-   "letter-spacing-literal": {
-    "font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: 0.06em; text-transform: uppercase;": 1,
-    ".ts-sec { display: flex; align-items: center; gap: 12px; min-height: var(--touch-min); font-size: var(--fs-meta-l); letter-spacing: 0.07em; color: var(--ink-faint); white-space: nowrap; }": 1
-   },
    "font-size-literal": {
     ".ts-block b { display: block; font-size: 14px; font-weight: var(--fw-medium); line-height: 20px; color: var(--ink-body); }": 1,
     ".ts-hint { display: flex; align-items: center; gap: 6px; min-height: 32px; font-size: 13px; color: var(--ink-muted); }": 1
    }
   },
   "src/features/tasks/TasksPage.tsx": {
-   "letter-spacing-literal": {
-    "const TOOL_TRIGGER: React.CSSProperties = { gap: 6, background: 'none', border: 'none', borderRadius: 0, padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em',": 1,
-    "<Link to=\"/perennials\" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', textDecoration: 'none' }}>↻ R": 1,
-    "<div onClick={() => setOpen(true)} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color, cursor: 'pointer' }}>": 1,
-    "<div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink-muted)', marginBottom: 2, textAlign: 'center' }}>Organize</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-sage-text)' }}>Domains · {domains.length}</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-lavender-text)' }}>Areas · {areas.length}</div>": 1,
-    "<div onClick={() => setNewModal('area')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-terra": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-hydrangea-deep)' }}>Projects · {projects.length}</div>": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>{domainName} · {pct === 100 ? 'done' : `${pc": 1,
-    "<div onClick={() => setNewModal('standard')} style={{ marginTop: 11, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--acc-t": 1,
-    "<div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', let": 1,
-    "<div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 3 }}>petals today</div>": 1,
-    "letterSpacing: '0.1em',": 1,
-    "style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: !domainChip ? 'var(--acc-blossom-text)' : 'var(--ink-mute": 1,
-    "style={{ flex: 'none', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: domainChip === d.id ? 'var(--acc-blossom-text)' : 'var(--": 1
-   },
    "font-size-literal": {
     "fontSize: 14,": 1,
-    "style={{ width: '100%', font: 'inherit', fontSize: 12.5, border: '1px solid var(--line-solid)', borderRadius: 6, padding: '6px 9px', background: 'var(--paper-bone)', color: 'var(--ink-body)', outline:": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink-muted)', marginBottom: 2, textAlign: 'center' }}>Organize</div>": 1,
     "<div style={{ fontSize: 13.5, color: 'var(--ink-body)' }}><EmojiText text={p.name} /></div>": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', padding: '8px 2px' }}>Nothing finished yet today.</div>": 1,
     "<span style={{ color: 'var(--ink-faint)', fontSize: 11 }}>{expanded ? '▾' : '▸'}</span>": 1,
     "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>{h1}</h1>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 30, color: 'var(--acc-blossom)', lineHeight: 1 }}>{doneTodayCount}</div>": 1,
-    "{caption && <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', marginTop: 12 }}>{caption}</div>}": 1,
     "<Link to=\"/settings/import\" className=\"kf-link-terra\" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>": 1,
     "style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}": 1,
-    "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--acc-gold)', textAlign: 'center', animation: 'entryFadeUp 400ms var(--ease-out) both' }}>": 1,
-    "<p style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', margin: '10px 0 0' }}>": 1,
-    "style={{ background: 'none', border: 'none', padding: '10px 0 4px', font: 'inherit', fontSize: 13, cursor: 'pointer' }}": 1,
-    "<div style={{ marginTop: 20, paddingTop: 14, borderTop: '1px dashed var(--line-dashed)', fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>": 1
+    "style={{ background: 'none', border: 'none', padding: '10px 0 4px', font: 'inherit', fontSize: 13, cursor: 'pointer' }}": 1
+   },
+   "letter-spacing-literal": {
+    "<div style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 500, letterSpacing: '-0.01em', color: 'var(--ink-muted)', marginBottom: 2, textAlign: 'center' }}>Organize</div>": 1
    },
    "colour-literal": {
-    "backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,0.3) 0 4px, transparent 4px 8px)',": 1,
     "background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)',": 2
    },
    "radius-off-scale": {
@@ -1890,14 +1225,7 @@
     "transition: color var(--dur-quick) var(--ease-out);": 1
    },
    "letter-spacing-literal": {
-    "letter-spacing: -0.015em;": 1,
-    ".tp-caption { font-size: var(--fs-meta); letter-spacing: 0.07em; color: var(--ink-faint); }": 1,
-    "letter-spacing: 0.06em;": 2,
-    "letter-spacing: 0.02em;": 1,
-    ".tp-label { font-size: var(--fs-meta-l); letter-spacing: 0.07em; color: var(--ink-faint); white-space: nowrap; }": 1,
-    ".tp-sub { padding: 14px var(--gutter-phone) 0; font-size: var(--fs-meta); letter-spacing: 0.07em; color: var(--ink-faint); }": 1,
-    ".tp-ev-time { width: 56px; flex: none; display: flex; align-items: center; padding-left: var(--sp-3); font-size: var(--fs-meta-l); letter-spacing: 0.04em; color: var(--ink-body); }": 1,
-    "letter-spacing: 0.07em;": 1
+    "letter-spacing: -0.015em;": 1
    },
    "font-size-literal": {
     "font-size: 18px !important;": 1,
@@ -1907,26 +1235,15 @@
     "line-height: 20px;": 2,
     ".tp-ritual-title, .tp-slip-title { margin-top: 3px; font-size: var(--fs-body); line-height: 20px; font-weight: var(--fw-medium); color: var(--ink-body); text-wrap: pretty; }": 1,
     ".tp-title { font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); text-wrap: pretty; }": 1
-   },
-   "colour-literal": {
-    "background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 4px, transparent 4px 8px);": 1
    }
   },
   "src/features/today/TodayPage.tsx": {
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--acc-clover-text)' }}>": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap', minWidth: 0, overflow": 1
-   },
    "font-size-literal": {
     "<div style={{ fontSize: '14px', color: 'var(--ink-body)' }}>{text}</div>": 1,
     "style={{ fontSize: '12.5px', color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer', flex: 'none' }}": 1,
     "style={{ fontSize: '12px', color: 'var(--ink-faint)', cursor: 'pointer', flex: 'none', paddingLeft: 2 }}": 1,
-    "fontSize: 17,": 1,
-    "<div style={{ marginTop: 22, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>Nothing planted for today yet.</div>": 1,
     "<Button type=\"button\" variant=\"cta\" onClick={onPlan} style={{ marginTop: 18, fontSize: 13.5, padding: '10px 22px' }}>Plan today</Button>": 1,
-    "<div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-hand, #7a745f)', textAlign: 'center' }}>All done. The garden can rest.</div>": 1,
-    "<span style={{ flex: 1, fontSize: 13, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{routine.name}</span>": 1,
-    "return <div style={{ fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-hand, #7a745f)', padding: '8px 2px' }}>{line}</div>": 1
+    "<span style={{ flex: 1, fontSize: 13, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{routine.name}</span>": 1
    },
    "colour-literal": {
     "background: 'linear-gradient(135deg,#E8C4CC,#D4A8B0)',": 2,
@@ -1939,8 +1256,7 @@
    },
    "radius-off-scale": {
     "<div style={{ position: 'absolute', inset: 0, border: '2.5px solid rgba(107,100,85,0.45)', borderRadius: '14px 14px 10px 10px', background: 'rgba(244,241,234,0.4)' }} />": 1,
-    "<div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,var(--sky-horizon,#b9a98a),var(--sky-panel-strong,#a3": 1,
-    "style={{ width: size, height: size, borderRadius: 5, background: 'var(--sig-done)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', color: 'var(--paper-parchment)', fontSize: '": 1
+    "<div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,var(--sky-horizon,#b9a98a),var(--sky-panel-strong,#a3": 1
    },
    "shadow-literal": {
     "<div style={{ position: 'absolute', left: 8, right: 8, bottom: 8, height: 30, borderRadius: '4px 4px 7px 7px', background: 'linear-gradient(180deg,var(--sky-horizon,#b9a98a),var(--sky-panel-strong,#a3": 1
@@ -1953,22 +1269,14 @@
    "colour-literal": {
     ":root { --tour-dim: rgba(42, 36, 32, 0.24); }": 1,
     ":root[data-theme='night'] { --tour-dim: rgba(8, 7, 10, 0.4); }": 1,
-    "background: rgba(138, 154, 126, 0.45);": 1,
-    "background-image: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.32) 0 4px, transparent 4px 8px);": 1,
     "background: rgba(42, 36, 32, 0.16);": 1,
     "box-shadow: 0 0 0 2px rgba(251, 246, 233, 0.85), 0 2px 6px rgba(42, 36, 32, 0.2);": 2
    },
    "font-size-literal": {
-    ".kf-tour-cap { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--acc-sage-text); }": 1,
-    "font-size: 27px;": 1,
     "font-size: 13px;": 1,
     ".kf-tour-sub { margin-top: 6px; font-size: 14px; line-height: 1.45; color: var(--ink-muted); text-wrap: pretty; }": 1,
     "font-size: 15px;": 2,
-    ".kf-tour-under > span { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }": 1,
-    ".kf-hint-line { flex: 1; min-width: 0; padding: 9px 0; font-family: var(--font-hand); font-size: 21px; line-height: 1.15; color: var(--ink-body); text-wrap: pretty; }": 1
-   },
-   "letter-spacing-literal": {
-    ".kf-tour-cap { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--acc-sage-text); }": 1
+    ".kf-tour-under > span { flex: 1; display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; }": 1
    },
    "radius-off-scale": {
     "border-radius: 5px;": 1
@@ -1983,16 +1291,6 @@
    }
   },
   "src/features/trash/TrashPage.tsx": {
-   "letter-spacing-literal": {
-    ".tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7": 1,
-    ".aghd span.t { font-family:var(--font-mono); font-size: var(--fs-meta-l); letter-spacing:0.18em; text-transform:uppercase; color:var(--ink-faint); white-space:nowrap; position:relative; }": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)', whiteSpace: 'nowrap' }}>{getDeletionMeta(item": 1,
-    "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>": 1
-   },
-   "radius-off-scale": {
-    ".tbadge { font-family:var(--font-mono); font-size: var(--fs-meta); letter-spacing:0.12em; text-transform:uppercase; padding:3px 7px; border-radius:4px; background:color-mix(in oklch, var(--ink-body) 7": 1,
-    ".aghd { position:relative; display:flex; align-items:center; gap:12px; margin:26px 0 4px; padding:6px 10px; border-radius:5px; overflow:hidden; }": 1
-   },
    "font-size-literal": {
     "<span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>": 1,
     "<span onClick={() => handleRestore(item)} style={{ fontSize: 12.5, color: 'var(--ink-body)', textDecoration: 'underline', cursor: 'pointer' }}>Restore</span>": 1,
@@ -2000,18 +1298,19 @@
     "<span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>Gone for good — compost now?</span>": 1,
     "<span onClick={() => setConfirmDeleteId(null)} style={{ fontSize: 12, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>": 1,
     "<button onClick={() => handleDeleteForever(item)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '6px 13px', bo": 1,
-    "<div style={{ marginTop: 20, fontFamily: 'var(--font-hand)', fontSize: 19, color: 'var(--ink-muted)', textAlign: 'center', maxWidth: 360, lineHeight: '1.45' }}>The heap is empty. Deleted things rest h": 1,
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>": 1,
     "{hasItems && <span onClick={() => setShowGlobalConfirm(true)} style={{ fontSize: 12.5, color: 'var(--acc-terra)', textDecoration: 'underline', cursor: 'pointer', paddingBottom: 5 }}>Empty trash…</span": 1,
     "<span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>Empty everything? {deletedItems.length} items, no way back.</span>": 1,
     "<span onClick={() => setShowGlobalConfirm(false)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>": 1,
-    "<button onClick={handleEmptyEverything} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadi": 1,
-    "<div style={{ marginTop: 26, padding: '10px 14px', border: '1px dashed var(--line-solid)', borderRadius: 6, background: 'color-mix(in oklch, var(--ink-hairline) 8%, transparent)', fontSize: 12.5, colo": 1
+    "<button onClick={handleEmptyEverything} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadi": 1
    },
    "svg-colour-literal": {
     "<ellipse cx=\"60\" cy=\"62\" rx=\"46\" ry=\"12\" fill=\"var(--sky-horizon,#b9a98a)\" opacity=\"0.55\"></ellipse>": 1,
     "<path d=\"M22 60c4-14 18-24 38-24s34 10 38 24\" fill=\"var(--sky-panel-strong,#a3937a)\" opacity=\"0.6\"></path>": 1,
     "<path d=\"M34 52c8-8 40-10 52-2\" stroke=\"var(--sky-horizon,#8b7a5e)\" strokeWidth={1.5} fill=\"none\" opacity={0.5}></path>": 1
+   },
+   "letter-spacing-literal": {
+    "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>": 1
    }
   },
   "src/features/tray/tray.css": {
@@ -2020,19 +1319,13 @@
     "font-size: 12px;": 1,
     "font-size: 14.5px;": 1,
     "font-size: 14px;": 3,
-    "font-size: 16px;": 1,
     "font-size: 13.5px;": 1
    },
    "letter-spacing-literal": {
-    "letter-spacing: -0.01em;": 1,
-    "letter-spacing: 0.08em;": 1
+    "letter-spacing: -0.01em;": 1
    }
   },
   "src/features/whats-new/WhatsNew.tsx": {
-   "letter-spacing-literal": {
-    "const eyebrow: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)' }": 1,
-    "const label: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.16em', textTransform: 'uppercase', color: 'var(--ink-faint)' }": 1
-   },
    "font-size-literal": {
     "if (!items.length) return <p style={{ margin: '8px 0', fontSize: size - 0.5, lineHeight: 1.5, color: 'var(--ink-muted)' }}>The notes for this one are on the site.</p>": 1,
     "<a href={RELEASE_NOTES_URL} target=\"_blank\" rel=\"noopener noreferrer\" style={{ fontSize: 13, fontWeight: 600, color: 'var(--acc-lavender-deep)', textUnderlineOffset: 3 }}>": 1,
@@ -2040,9 +1333,6 @@
     "{isNewer && result?.kind === 'pending' && <p style={{ margin: '8px 0 0', fontSize: 13, color: 'var(--ink-muted)' }}>Its installer is still on its way — try again in a few minutes.</p>}": 1,
     "<div id={titleId} style={{ flex: 1, fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--ink-body)' }}>{title}</div>": 1,
     "<summary style={{ cursor: 'pointer', fontSize: 13.5, color: 'var(--ink-body)', padding: '4px 0' }}>What’s new in your version ({running})</summary>": 1
-   },
-   "radius-off-scale": {
-    "style={{ width: 'min(480px, 100%)', maxHeight: 'calc(var(--kf-vh) - 96px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', border": 1
    }
   },
   "src/lib/motion.ts": {

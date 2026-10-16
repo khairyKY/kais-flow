@@ -21,7 +21,7 @@ import { useAppZone } from '../../lib/appZone'
 import type { ActivityLogEntry } from '../../lib/types'
 import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
 import { NumberField } from '../../components/NumberField'
-import { Checkbox, Toggle } from '../../components/kit'
+import { Button, Checkbox, Chip, Segmented, Toggle } from '../../components/kit'
 import { Skeleton, ErrorCard } from '../../components/States'
 import './FocusPage.css'
 
@@ -42,10 +42,11 @@ function CustomMin({ value, presets, onChange }: { value: number; presets: numbe
           fontFamily: 'var(--font-mono)',
           fontSize: 'var(--fs-meta)',
           padding: '4px 6px',
-          borderRadius: 999,
-          color: isCustom ? 'var(--acc-terra)' : 'var(--ink-muted)',
-          background: isCustom ? 'color-mix(in srgb, var(--acc-terra) 16%, transparent)' : 'none',
-          border: `1px solid ${isCustom ? 'color-mix(in srgb, var(--acc-terra) 30%, transparent)' : 'var(--line-solid)'}`,
+          borderRadius: 'var(--radius-pill)',
+          // B D12: a custom length is the chosen chip, ink-filled; otherwise a 3:1 edge and body ink.
+          color: isCustom ? 'var(--sel-ink)' : 'var(--ink-body)',
+          background: isCustom ? 'var(--sel-bg)' : 'none',
+          border: `1px solid ${isCustom ? 'var(--sel-bg)' : 'var(--line-control)'}`,
         }}
       />
       <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>min</span>
@@ -415,7 +416,7 @@ export function FocusPage() {
     if (children.length > 0) {
       const done = children.filter((t) => t.status === 'done').length
       const next = children.find((t) => t.status !== 'done')
-      return `subtask ${Math.min(done + 1, children.length)} of ${children.length}${next ? ` · ${next.title}` : ''}`
+      return `Subtask ${Math.min(done + 1, children.length)} of ${children.length}${next ? ` · ${next.title}` : ''}`
     }
     return activeTask.notes?.trim() || null
   }, [activeTask, tasks])
@@ -503,7 +504,7 @@ export function FocusPage() {
           {/* Bed 1: Tasks */}
           <div style={{ textAlign: 'center' }}>
             <img className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 150, filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-1.2deg)' }}>
+            <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {cherryData.note}
             </div>
             <div className="flabel" style={{ marginTop: 3, color: '#8e88a0' }}>Tasks</div>
@@ -513,7 +514,7 @@ export function FocusPage() {
           <div style={{ textAlign: 'center', position: 'relative' }}>
             <span className="focus-bloom-glow-slow" style={{ position: 'absolute', left: '50%', bottom: 40, width: 110, height: 110, transform: 'translateX(-50%)', borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,165,90,0.35), rgba(201,165,90,0) 70%)', pointerEvents: 'none' }}></span>
             <img className="focus-sway" src={`/ds/assets/hydrangea/${hydrangeaData.stage}.png`} alt="" style={{ height: 120, animationDelay: '1.4s', filter: 'var(--shadow-drop-sm)', position: 'relative' }} />
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(0.8deg)' }}>
+            <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {hydrangeaData.note}
             </div>
             <div className="flabel" style={{ marginTop: 3, color: '#8e88a0' }}>Inbox</div>
@@ -522,7 +523,7 @@ export function FocusPage() {
           {/* Bed 3: Calendar */}
           <div style={{ textAlign: 'center' }}>
             <img className="focus-sway" src={`/ds/assets/daisy/${daisyData.stage}.png`} alt="" style={{ height: 118, animationDelay: '2.8s', filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-0.8deg)' }}>
+            <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {daisyData.note}
             </div>
             <div className="flabel" style={{ marginTop: 3, color: '#8e88a0' }}>Calendar</div>
@@ -532,7 +533,7 @@ export function FocusPage() {
           <div style={{ textAlign: 'center', position: 'relative' }}>
             <img className="focus-sway" src={`/ds/assets/vine/${vineData.stage}.png`} alt="" style={{ height: 140, animationDelay: '0.9s', filter: 'var(--shadow-drop-sm)' }} />
             <span className="focus-dew-glint" style={{ position: 'absolute', right: 8, top: 26, width: 9, height: 9, background: 'radial-gradient(circle at 40% 40%, var(--star, #FDFBF4), transparent 65%)', borderRadius: '50%' }}></span>
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(1deg)' }}>
+            <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {vineData.note}
             </div>
             <div className="flabel" style={{ marginTop: 3, color: '#8e88a0' }}>Routines</div>
@@ -541,7 +542,7 @@ export function FocusPage() {
           {/* Bed 5: Journal */}
           <div style={{ textAlign: 'center' }}>
             <img className="focus-sway" src={`/ds/assets/fern/${fernData.stage}.png`} alt="" style={{ height: 124, animationDelay: '3.6s', filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-1deg)' }}>
+            <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {fernData.note}
             </div>
             <div className="flabel" style={{ marginTop: 3, color: '#8e88a0' }}>Journal</div>
@@ -550,7 +551,7 @@ export function FocusPage() {
           {/* Bed 6: Projects */}
           <div style={{ textAlign: 'center' }}>
             <img className="focus-sway" src={`/ds/assets/wisteria/${wisteriaData.stage}.png`} alt="" style={{ height: 136, animationDelay: '1.9s', filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(0.7deg)' }}>
+            <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {wisteriaData.note}
             </div>
             <div className="flabel" style={{ marginTop: 3, color: '#8e88a0' }}>Projects</div>
@@ -559,7 +560,7 @@ export function FocusPage() {
           {/* Bed 7: People */}
           <div style={{ textAlign: 'center' }}>
             <img className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 86, animationDelay: '4.4s', filter: 'var(--shadow-drop-sm)' }} />
-            <div style={{ fontFamily: 'var(--font-hand)', fontSize: 16, color: '#5f5a6e', marginTop: 10, transform: 'rotate(-0.6deg)' }}>
+            <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {cloverData.note}
             </div>
             <div className="flabel" style={{ marginTop: 3, color: '#8e88a0' }}>People &amp; chat</div>
@@ -585,12 +586,10 @@ export function FocusPage() {
           </>
         )}
 
-        <div className="grain" style={{ opacity: 0.3 }}></div>
-
         {/* Header */}
         <div style={{ position: 'absolute', top: 0, left: 0, right: 0, display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', padding: '30px 40px', zIndex: 20 }}>
           <div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: '#b8b0c8' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: '#b8b0c8' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */ }}>
               Your garden{activityQ.data ? ` · day ${stats.daysCount}` : ''}
             </div>
             <h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, letterSpacing: 'var(--ls-display)', color: '#f0ebdd' }}>
@@ -598,13 +597,13 @@ export function FocusPage() {
             </h1>
           </div>
           {!gardenPending && !gardenFailed && <div style={{ display: 'flex', gap: 8 }}>
-            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
+            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>{/* ds-ok: the dusk scene keeps its own palette (B D2) */}
               {stats.completedToday} task{stats.completedToday === 1 ? '' : 's'} done
             </span>
-            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
+            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>{/* ds-ok: the dusk scene keeps its own palette (B D2) */}
               {stats.timeText}
             </span>
-            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
+            <span className="chip" style={{ background: 'rgba(240,235,221,0.14)', color: '#e4ddcc', border: '1px solid rgba(240,235,221,0.25)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 999 }}>{/* ds-ok: the dusk scene keeps its own palette (B D2) */}
               {vineData.streak}-day streak
             </span>
           </div>}
@@ -612,25 +611,22 @@ export function FocusPage() {
 
         {/* Footer */}
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '26px 40px', zIndex: 20 }}>
-          <span style={{ fontFamily: 'var(--font-hand)', fontSize: 19, color: '#c9c0d8', transform: 'rotate(-1deg)' }}>
-            everything tended, nothing waiting ✿
+          <span style={{ fontSize: 'var(--fs-body)', color: '#c9c0d8' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */ }}>
+            Everything tended, nothing waiting ✿
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <span
               onClick={() => setMode('pomodoro')}
-              style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: '#a89fc0', cursor: 'pointer' }}
+              style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: '#a89fc0' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, cursor: 'pointer' }}
             >
-              stay a while
+              Stay a while
             </span>
             {/* Punch 52: the CTA says "evening ritual" and used to open the *weekly* review.
                 The evening ritual has no route of its own — it's a fixed-inset overlay that
                 Today and Routines mount from local state — so Focus mounts it the same way. */}
-            <button
-              onClick={() => setEveningOpen(true)}
-              style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-            >
+            <Button type="button" onClick={() => setEveningOpen(true)}>
               Close the day → evening ritual
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -674,18 +670,17 @@ export function FocusPage() {
           .fp-breaks { grid-template-columns: 1fr !important; }
         }
       `}</style>
-      <div className="grain" style={{ pointerEvents: 'none' }}></div>
 
       {/* Quiet top strip */}
-      <div className="fp-strip" style={{ height: 46, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 36px', borderBottom: '1px dashed var(--line-solid)', position: 'relative', zIndex: 10 }}>
+      <div className="fp-strip" style={{ height: 46, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 36px', borderBottom: '1px solid var(--line-solid)', position: 'relative', zIndex: 10 }}>
         <span className="flabel" style={{ fontSize: 'var(--fs-meta)' }}>Focus{blockLabel ? ` · ${blockLabel}` : ''}</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           {sessionsToday > 0 && (
-            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '4px 9px', borderRadius: 999 }}>
-              session {sessionsToday} today
+            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 'var(--radius-pill)' }}>
+              Session {sessionsToday} today
             </span>
           )}
-          <span className="flabel fp-esc">esc leaves quietly</span>
+          <span className="fp-esc" style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Esc leaves quietly</span>
         </div>
       </div>
 
@@ -704,48 +699,18 @@ export function FocusPage() {
         {/* Mode Switcher pill and settings button */}
         {mode !== 'break' && (
           <div className="fp-modes" style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 26, position: 'relative', zIndex: 10 }}>
-            <div style={{ display: 'flex', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 999, padding: 3, gap: 3 }}>
-              <span
-                onClick={() => {
-                  setMode('pomodoro')
-                  setIsRunning(false)
-                  setSecondsLeft(settings.focusRoundMin * 60)
-                }}
-                style={{
-                  padding: '6px 16px',
-                  borderRadius: 999,
-                  background: mode === 'pomodoro' ? 'var(--paper-parchment)' : 'none',
-                  border: mode === 'pomodoro' ? '1px solid var(--line-card)' : '1px solid transparent',
-                  boxShadow: mode === 'pomodoro' ? 'var(--shadow-crisp)' : 'none',
-                  fontSize: 12,
-                  fontWeight: mode === 'pomodoro' ? 600 : 400,
-                  color: mode === 'pomodoro' ? 'var(--ink-body)' : 'var(--ink-muted)',
-                  cursor: 'pointer',
-                }}
-              >
-                Pomodoro
-              </span>
-              <span
-                onClick={() => {
-                  setMode('stopwatch')
-                  setIsRunning(false)
-                  setStopwatchSeconds(0)
-                }}
-                style={{
-                  padding: '6px 16px',
-                  borderRadius: 999,
-                  background: mode === 'stopwatch' ? 'var(--paper-parchment)' : 'none',
-                  border: mode === 'stopwatch' ? '1px solid var(--line-card)' : '1px solid transparent',
-                  boxShadow: mode === 'stopwatch' ? 'var(--shadow-crisp)' : 'none',
-                  fontSize: 12,
-                  fontWeight: mode === 'stopwatch' ? 600 : 400,
-                  color: mode === 'stopwatch' ? 'var(--ink-body)' : 'var(--ink-muted)',
-                  cursor: 'pointer',
-                }}
-              >
-                Stopwatch
-              </span>
-            </div>
+            {/* B D12: the kit segmented control — a 3:1 edge, the chosen one ink-filled. */}
+            <Segmented
+              label="Timer"
+              value={mode === 'stopwatch' ? 'stopwatch' : 'pomodoro'}
+              options={[{ value: 'pomodoro', label: 'Pomodoro' }, { value: 'stopwatch', label: 'Stopwatch' }]}
+              onChange={(m) => {
+                setMode(m)
+                setIsRunning(false)
+                if (m === 'pomodoro') setSecondsLeft(settings.focusRoundMin * 60)
+                else setStopwatchSeconds(0)
+              }}
+            />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
               {mode === 'pomodoro' && (
@@ -768,8 +733,8 @@ export function FocusPage() {
                       />
                     )
                   })}
-                  <span className="fp-round" style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                    round {currentRound} of {settings.roundsBeforeLongBreak} · long break after
+                  <span className="fp-round" style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+                    Round {currentRound} of {settings.roundsBeforeLongBreak} · long break after
                   </span>
                 </>
               )}
@@ -789,7 +754,7 @@ export function FocusPage() {
         {/* 1c: BREAK VIEW */}
         {mode === 'break' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--acc-sage-text)', position: 'relative', zIndex: 5 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-sage-text)', position: 'relative', zIndex: 5 }}>
               {breakType === 'short' ? `Short break · round ${currentRound} done` : 'Long break · cycle complete'}
             </div>
             <div style={{ position: 'relative', width: 190, height: 190, marginTop: 18 }}>
@@ -801,40 +766,41 @@ export function FocusPage() {
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>
                   {formatTime(secondsLeft)}
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 6 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 6 }}>
                   of {breakType === 'short' ? settings.shortBreakMin : settings.longBreakMin} min
                 </div>
               </div>
             </div>
-            <div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
-              stand up — go water something real ✿
+            <div style={{ marginTop: 16, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>
+              Stand up — go water something real ✿
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
-              <button
+              <Button
+                type="button"
+                variant="secondary"
                 onClick={() => {
                   setIsRunning(false)
                   setMode('pomodoro')
                   setSecondsLeft(settings.focusRoundMin * 60)
                   setCurrentRound((r) => (r >= settings.roundsBeforeLongBreak ? 1 : r + 1))
                 }}
-                style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 12.5, padding: '9px 17px', borderRadius: 999, cursor: 'pointer' }}
               >
                 Skip break
-              </button>
-              <button
+              </Button>
+              <Button
+                type="button"
                 onClick={() => {
                   setMode('pomodoro')
                   setSecondsLeft(settings.focusRoundMin * 60)
                   setCurrentRound((r) => (r >= settings.roundsBeforeLongBreak ? 1 : r + 1))
                   setIsRunning(true)
                 }}
-                style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '9px 19px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
               >
                 Back to work →
-              </button>
+              </Button>
             </div>
-            <div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-              after round {settings.roundsBeforeLongBreak} · a {settings.longBreakMin}-min long break, garden view opens on its own
+            <div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+              After round {settings.roundsBeforeLongBreak} · a {settings.longBreakMin}-min long break, garden view opens on its own
             </div>
           </div>
         )}
@@ -851,13 +817,13 @@ export function FocusPage() {
                   Kai: "there is a weird flower at the top of the timer". At a full timer it
                   parks dead-centre above the clock and reads as a stray graphic. */}
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-wide)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                  remaining
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+                  Remaining
                 </div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 74, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--ink-body)', marginTop: 6 }}>
                   {formatTime(secondsLeft)}
                 </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 8 }}>
                   {/* Punch 52: the export reads `of 25 min · 5-min break at 10:20` — the length
                       qualifier had been dropped. It's the *next* break, so it's the long one on
                       the last round of the cycle. */}
@@ -879,8 +845,8 @@ export function FocusPage() {
               </span>
               <span className="focus-bloom-glow" style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-terra)' }} />
             </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginTop: 8 }}>
-              {isRunning ? 'recording' : 'paused'}
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 8 }}>
+              {isRunning ? 'Recording' : 'Paused'}
               {stopwatchStartStr ? ` · started ${stopwatchStartStr}` : ''}
             </div>
           </div>
@@ -900,7 +866,7 @@ export function FocusPage() {
               <span
                 ref={pickerAnchor}
                 onClick={() => setTaskPickerOpen(!taskPickerOpen)}
-                style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 500, color: 'var(--ink-body)', cursor: 'pointer', borderBottom: '1px dashed var(--line-dashed)' }}
+                style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 500, color: 'var(--ink-body)', cursor: 'pointer', borderBottom: '1px solid var(--line-dashed)' }}
                 title="Click to select another task"
               >
                 {activeTask ? activeTask.title : 'No active task selected'}
@@ -916,12 +882,12 @@ export function FocusPage() {
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
               {activeProject && (
-                <span className="chip" style={{ background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }}>
+                <span className="chip" style={{ background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }}>
                   {activeProject.name}
                 </span>
               )}
               {subtaskLabel && (
-                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.08em', textTransform: 'uppercase', padding: '5px 9px', borderRadius: 3 }}>
+                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '5px 9px', borderRadius: 'var(--radius-pill)' }}>
                   {subtaskLabel}
                 </span>
               )}
@@ -931,20 +897,20 @@ export function FocusPage() {
 
         {/* 1d: STOPWATCH target project / logging panel */}
         {mode === 'stopwatch' && (
-          <div style={{ width: '420px', marginTop: 24, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 8, boxShadow: 'var(--shadow-crisp)', padding: '12px 16px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>
-              on stop, this lands automatically
+          <div style={{ width: '420px', marginTop: 24, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '12px 16px' }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>
+              On stop, this lands automatically
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span className="chip" style={{ background: 'color-mix(in srgb, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', padding: '5px 10px', borderRadius: 999 }}>
-                work · {Math.round(stopwatchSeconds / 60)}m
+              <span className="chip" style={{ background: 'color-mix(in srgb, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }}>
+                Work · {Math.round(stopwatchSeconds / 60)}m
               </span>
               <span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>
                 Projects → {activeProject ? activeProject.name : 'Unlinked'} → Activity
               </span>
               {stopwatchProjectedHours && (
                 <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                  hours {stopwatchProjectedHours.before} → <b style={{ color: 'var(--ink-body)', fontWeight: 600 }}>{stopwatchProjectedHours.after}</b>
+                  Hours {stopwatchProjectedHours.before} → <b style={{ color: 'var(--ink-body)', fontWeight: 600 }}>{stopwatchProjectedHours.after}</b>
                 </span>
               )}
             </div>
@@ -957,7 +923,7 @@ export function FocusPage() {
                 width: '100%',
                 background: 'var(--paper-bone)',
                 border: '1px solid var(--line-card)',
-                borderRadius: 4,
+                borderRadius: 'var(--radius-md)',
                 padding: '6px 10px',
                 fontSize: 12.5,
                 color: 'var(--ink-body)',
@@ -971,66 +937,52 @@ export function FocusPage() {
         {/* Controls */}
         {mode !== 'break' && (
           <div className="fp-ctrls" style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 32 }}>
-            <button
-              onClick={togglePlay}
-              style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '10px 20px', borderRadius: 999, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6 }}
-            >
+            {/* B D11: the kit's buttons — terra for the one action, bone for the rest, terra text. */}
+            <Button type="button" variant="secondary" onClick={togglePlay}>
               {isRunning ? '❙❙ Pause' : '▶ Start'}
-            </button>
+            </Button>
             {mode === 'pomodoro' ? (
               <>
-                <button
-                  onClick={handleCheckOff}
-                  style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 13, padding: '10px 22px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer' }}
-                >
+                <Button type="button" onClick={handleCheckOff}>
                   Done — check it off ✓
-                </button>
-                <button
-                  onClick={addFiveMinutes}
-                  style={{ border: '1px solid var(--line-solid)', background: 'var(--paper-bone)', color: 'var(--ink-body)', fontFamily: 'inherit', fontSize: 13, padding: '10px 18px', borderRadius: 999, cursor: 'pointer' }}
-                >
+                </Button>
+                <Button type="button" variant="secondary" onClick={addFiveMinutes}>
                   +5 min
-                </button>
-                <span
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
                   onClick={() => {
                     setIsRunning(false)
                     setSecondsLeft(settings.focusRoundMin * 60)
                     setPomodoroStartIso(null)
                   }}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer', marginLeft: 6 }}
                 >
-                  end early…
-                </span>
+                  End early…
+                </Button>
               </>
             ) : (
               <>
-                <button
-                  onClick={handleStopAndLog}
-                  disabled={stopwatchSeconds === 0}
-                  style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '9px 19px', borderRadius: 999, boxShadow: 'var(--shadow-cta)', cursor: 'pointer', opacity: stopwatchSeconds === 0 ? 0.6 : 1 }}
-                >
+                <Button type="button" onClick={handleStopAndLog} disabled={stopwatchSeconds === 0}>
                   Stop &amp; log ✓
-                </button>
-                <span
-                  onClick={handleDiscardStopwatch}
-                  style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-faint)', cursor: 'pointer' }}
-                >
-                  discard
-                </span>
+                </Button>
+                <Button type="button" variant="ghost" onClick={handleDiscardStopwatch}>
+                  Discard
+                </Button>
               </>
             )}
           </div>
         )}
 
         {mode !== 'break' && (
-          <div style={{ marginTop: 18, fontFamily: 'var(--font-hand)', fontSize: 17, color: 'var(--ink-muted)', transform: 'rotate(-0.8deg)' }}>
-            nothing else exists for the next hour ✿
+          <div style={{ marginTop: 18, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>
+            Nothing else exists for the next hour ✿
           </div>
         )}
       </div>
 
       {/* Garden Strip at the bottom */}
-      <div style={{ flex: 'none', position: 'relative', height: 190, borderTop: '1px dashed var(--line-solid)', overflow: 'hidden' }}>
+      <div style={{ flex: 'none', position: 'relative', height: 190, borderTop: '1px solid var(--line-solid)', overflow: 'hidden' }}>
         {motionOn && (
           <>
             <span className="petal" style={{ left: '12%', animationDelay: '1s', animationDuration: '8.4s' }}></span>
@@ -1056,30 +1008,24 @@ export function FocusPage() {
           <img className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 78, animationDelay: '4.2s', filter: 'var(--shadow-drop-sm)' }} title={cloverData.note} />
         </div>
         )}
-        <span style={{ position: 'absolute', left: 0, right: 0, bottom: 24, borderBottom: '1px dashed var(--line-dashed)' }}></span>
-        <div className="fp-garden-note" style={{ position: 'absolute', left: 36, bottom: 4, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
-          the garden grows while you work
+        <span style={{ position: 'absolute', left: 0, right: 0, bottom: 24, borderBottom: '1px solid var(--line-dashed)' }}></span>
+        <div className="fp-garden-note" style={{ position: 'absolute', left: 36, bottom: 4, fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
+          The garden grows while you work
         </div>
-        <span
-          onClick={() => setMode('garden')}
-          className="fp-garden-link"
-          style={{ position: 'absolute', right: 36, bottom: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono-tight)', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
-        >
-          open the garden →
-        </span>
+        <Button type="button" variant="ghost" className="fp-garden-link" onClick={() => setMode('garden')} style={{ position: 'absolute', right: 30, bottom: 0 }}>
+          Open the garden →
+        </Button>
       </div>
 
       {/* 1e: SETTINGS POPOVER (Modal Overlay) */}
       {isSettingsOpen && (
         <div className="fp-scrim-in" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(var(--kf-shadow-rgb, 60,52,38), 0.05)', zIndex: 100 }}>
           {/* deviation(2026-07-18 audit): no rotate() on the settings card — text containers stay
-              transform-free for crisp rendering (same ruling as C4). Washi tape keeps the tilt. */}
-          <div className="fp-card-in" style={{ position: 'relative', width: 420, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 5, boxShadow: 'var(--shadow-popover)', padding: '18px 20px 20px' }}>
-            {/* Washi tape decoration */}
-            <span className="washi-tape-settings"></span>
-
+              transform-free for crisp rendering (same ruling as C4). B D7: a tool, so no washi tape either;
+              a floating layer keeps its shadow (D4). */}
+          <div className="fp-card-in" style={{ position: 'relative', width: 420, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '18px 20px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-mono)', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
+              <span style={{ fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)' }}>
                 Pomodoro settings
               </span>
               <span
@@ -1091,29 +1037,15 @@ export function FocusPage() {
             </div>
 
             {/* Focus round */}
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>
+            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
               Focus round
             </div>
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
+              {/* B D12: kit filter chips — a 3:1 edge, the chosen length ink-filled. */}
               {[15, 25, 45, 50].map((t) => (
-                <span
-                  key={t}
-                  onClick={() => saveSettings({ ...settings, focusRoundMin: t })}
-                  style={{
-                    fontFamily: 'var(--font-mono)',
-                    fontSize: 'var(--fs-meta)',
-                    letterSpacing: '0.06em',
-                    textTransform: 'uppercase',
-                    padding: '4px 9px',
-                    borderRadius: 999,
-                    cursor: 'pointer',
-                    background: settings.focusRoundMin === t ? 'color-mix(in srgb, var(--acc-terra) 16%, transparent)' : 'none',
-                    color: settings.focusRoundMin === t ? 'var(--acc-terra)' : 'var(--ink-muted)',
-                    border: settings.focusRoundMin === t ? '1px solid color-mix(in srgb, var(--acc-terra) 30%, transparent)' : '1px solid var(--line-solid)',
-                  }}
-                >
+                <Chip key={t} tone="filter" selected={settings.focusRoundMin === t} onClick={() => saveSettings({ ...settings, focusRoundMin: t })}>
                   {t}m
-                </span>
+                </Chip>
               ))}
               <CustomMin value={settings.focusRoundMin} presets={[15, 25, 45, 50]} onChange={(v) => saveSettings({ ...settings, focusRoundMin: v })} />
             </div>
@@ -1121,29 +1053,14 @@ export function FocusPage() {
             <div className="fp-breaks" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
               {/* Short break */}
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
                   Short break
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {[3, 5, 10].map((t) => (
-                    <span
-                      key={t}
-                      onClick={() => saveSettings({ ...settings, shortBreakMin: t })}
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 'var(--fs-meta)',
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        padding: '4px 9px',
-                        borderRadius: 999,
-                        cursor: 'pointer',
-                        background: settings.shortBreakMin === t ? 'color-mix(in srgb, var(--acc-moss) 20%, transparent)' : 'none',
-                        color: settings.shortBreakMin === t ? 'var(--acc-sage-text)' : 'var(--ink-muted)',
-                        border: settings.shortBreakMin === t ? '1px solid color-mix(in srgb, var(--acc-moss) 35%, transparent)' : '1px solid var(--line-solid)',
-                      }}
-                    >
+                    <Chip key={t} tone="filter" selected={settings.shortBreakMin === t} onClick={() => saveSettings({ ...settings, shortBreakMin: t })}>
                       {t}m
-                    </span>
+                    </Chip>
                   ))}
                   <CustomMin value={settings.shortBreakMin} presets={[3, 5, 10]} onChange={(v) => saveSettings({ ...settings, shortBreakMin: v })} />
                 </div>
@@ -1151,29 +1068,14 @@ export function FocusPage() {
 
               {/* Long break */}
               <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 6 }}>
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
                   Long break
                 </div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {[15, 20, 30].map((t) => (
-                    <span
-                      key={t}
-                      onClick={() => saveSettings({ ...settings, longBreakMin: t })}
-                      style={{
-                        fontFamily: 'var(--font-mono)',
-                        fontSize: 'var(--fs-meta)',
-                        letterSpacing: '0.06em',
-                        textTransform: 'uppercase',
-                        padding: '4px 9px',
-                        borderRadius: 999,
-                        cursor: 'pointer',
-                        background: settings.longBreakMin === t ? 'color-mix(in srgb, var(--acc-moss) 20%, transparent)' : 'none',
-                        color: settings.longBreakMin === t ? 'var(--acc-sage-text)' : 'var(--ink-muted)',
-                        border: settings.longBreakMin === t ? '1px solid color-mix(in srgb, var(--acc-moss) 35%, transparent)' : '1px solid var(--line-solid)',
-                      }}
-                    >
+                    <Chip key={t} tone="filter" selected={settings.longBreakMin === t} onClick={() => saveSettings({ ...settings, longBreakMin: t })}>
                       {t}m
-                    </span>
+                    </Chip>
                   ))}
                   <CustomMin value={settings.longBreakMin} presets={[15, 20, 30]} onChange={(v) => saveSettings({ ...settings, longBreakMin: v })} />
                 </div>
@@ -1181,11 +1083,11 @@ export function FocusPage() {
             </div>
 
             {/* Rounds count */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px dashed var(--line-dashed)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px solid var(--line-dashed)' }}>
               <div>
                 <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Rounds before a long break</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 3 }}>
-                  the classic is 4
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>
+                  The classic is 4
                 </div>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1208,8 +1110,8 @@ export function FocusPage() {
             </div>
 
             {/* Rhythm preview */}
-            <div style={{ marginTop: 14, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '11px 13px' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--ink-faint)', marginBottom: 8 }}>
+            <div style={{ marginTop: 14, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '11px 13px' }}>
+              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>
                 Your rhythm · {rhythmPreviewData.text}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
@@ -1224,15 +1126,15 @@ export function FocusPage() {
                   </React.Fragment>
                 ))}
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--ink-faint)' }}>
-                <span><span style={{ color: 'var(--acc-terra)' }}>■</span> focus {settings.focusRoundMin}</span>
-                <span><span style={{ color: 'var(--acc-sage)' }}>■</span> break {settings.shortBreakMin}</span>
-                <span><span style={{ color: 'var(--acc-lavender-deep)' }}>■</span> long {settings.longBreakMin}</span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
+                <span><span style={{ color: 'var(--acc-terra)' }}>■</span> Focus {settings.focusRoundMin}</span>
+                <span><span style={{ color: 'var(--acc-sage)' }}>■</span> Break {settings.shortBreakMin}</span>
+                <span><span style={{ color: 'var(--acc-lavender-deep)' }}>■</span> Long {settings.longBreakMin}</span>
               </div>
             </div>
 
             {/* Toggles */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px dashed var(--line-dashed)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line-dashed)' }}>
               <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Auto-start the next round</div>
               <Toggle on={settings.autoStartNextRound} label="Auto-start the next round" onToggle={() => saveSettings({ ...settings, autoStartNextRound: !settings.autoStartNextRound })} />
             </div>
@@ -1243,8 +1145,8 @@ export function FocusPage() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
               <div>
                 <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Garden view on long breaks</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.06em', color: 'var(--ink-faint)', marginTop: 2 }}>
-                  the dusk scene opens by itself
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 2 }}>
+                  The dusk scene opens by itself
                 </div>
               </div>
               <Toggle on={settings.gardenViewOnLongBreaks} label="Garden view on long breaks" onToggle={() => saveSettings({ ...settings, gardenViewOnLongBreaks: !settings.gardenViewOnLongBreaks })} />
@@ -1263,16 +1165,13 @@ export function FocusPage() {
               }} />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px dashed var(--line-dashed)' }}>
-              <span style={{ fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)', transform: 'rotate(-1deg)' }}>
-                saves quietly, per you ✿
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px solid var(--line-dashed)' }}>
+              <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
+                Saves quietly, per you ✿
               </span>
-              <span
-                onClick={() => saveSettings(DEFAULT_SETTINGS)}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--ink-muted)', cursor: 'pointer' }}
-              >
-                reset to classic
-              </span>
+              <Button type="button" variant="ghost" onClick={() => saveSettings(DEFAULT_SETTINGS)}>
+                Reset to classic
+              </Button>
             </div>
           </div>
         </div>

@@ -1,12 +1,12 @@
 // Visual + behaviour check for kit-sheets on the dev-only /design-system route.
-// node verify.mjs <outDir>
+// node verify.mjs <outDir> [baseUrl]
 import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
 
 const OUT = process.argv[2]
 fs.mkdirSync(OUT, { recursive: true })
-const URL = 'http://localhost:5202/design-system'
+const URL = `${process.argv[3] ?? 'http://localhost:5202'}/design-system`
 const results = []
 const check = (name, ok, detail = '') => {
   results.push({ name, ok, detail })
@@ -39,6 +39,29 @@ for (const view of VIEWS) {
   for (const theme of ['day', 'night']) {
     const id = `${view.tag}-${theme}`
     const { ctx, page, errors } = await open(view, theme)
+
+    // D13 (Kai 2026-10-16, "C inside B · tonal"): B's 12px shape, the soft terra wash (--wash-terra =
+    // --acc-terra at 12%), terra ink, flat; the terra text button takes the same wash while pressed.
+    const tone = (name) => page.getByRole('button', { name, exact: true }).evaluate((e) => {
+      const probe = document.createElement('i')
+      document.body.append(probe)
+      const resolve = (v) => { probe.style.backgroundColor = v; return getComputedStyle(probe).backgroundColor }
+      const cs = getComputedStyle(e)
+      const out = { bg: cs.backgroundColor, ink: cs.color, radius: cs.borderTopLeftRadius, shadow: cs.boxShadow, wash: resolve('var(--wash-terra)'), terraInk: resolve('var(--acc-terra-ink)') }
+      probe.remove()
+      return out
+    })
+    const tonal = await tone('Tonal')
+    const wash = theme === 'night' ? 'rgba(226, 148, 115, 0.12)' : 'rgba(181, 101, 74, 0.12)'
+    check(`${id} tonal: the terra wash in terra ink, 12px, flat`, tonal.wash === wash && tonal.bg === wash && tonal.ink === tonal.terraInk && tonal.radius === '12px' && tonal.shadow === 'none', JSON.stringify(tonal))
+    if (view.tag === 'desktop') {
+      await page.getByRole('button', { name: 'Ghost', exact: true }).hover()
+      await page.mouse.down()
+      await sleep(150)
+      const pressed = await tone('Ghost')
+      await page.mouse.up()
+      check(`${id} tonal: the terra text button pressed takes the wash`, pressed.bg === wash && pressed.ink === pressed.terraInk, JSON.stringify(pressed))
+    }
 
     // States
     const states = page.getByText('Loading · no cache')

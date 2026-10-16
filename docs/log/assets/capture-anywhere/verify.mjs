@@ -138,6 +138,8 @@ const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
   await card(page).screenshot({ path: path.join(OUT, 'phone-3-how-to-card.png') })
 
   await card(page).getByRole('button', { name: 'Turn off' }).click()
+  // 5b792a44 (2026-10-12): Turn off asks first (only the hash is stored, so no Undo) — confirm it.
+  await page.locator('.kf-overlay-card').getByRole('button', { name: 'Turn off' }).click()
   await sleep(900)
   const del = state.writes.find((w) => w.table === 'capture_keys' && w.method === 'DELETE')
   check('phone: Turn off deletes the key row', !!del && del.query.includes(`id=eq.${KEY_ROW.id}`), del?.query)
@@ -159,7 +161,8 @@ const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
 // ── 3. Desktop Integrations: the same card ──
 {
   const { ctx, page, errors } = await open('/settings', { view: desktop, rows: { capture_keys: [{ ...KEY_ROW, last_used_at: '2026-10-03T08:00:00.000Z' }] } })
-  await page.getByText('Integrations', { exact: true }).first().click()
+  // Kai 2026-10-12: the capture key left Integrations for Settings → Advanced.
+  await page.getByText('Advanced', { exact: true }).first().click()
   await sleep(600)
   check('desktop: card shows the key state', (await card(page).innerText()).includes('last used 3 Oct'), (await card(page).innerText()).split('\n')[1])
   await card(page).getByText('How to send things here').click()

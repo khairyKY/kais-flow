@@ -194,7 +194,7 @@ if (want('desktop')) {
   for (const theme of ['day', 'night']) {
     const name = `desk-${theme}`
     const { ctx, page, errors, state } = await open(theme, DESKTOP)
-    await page.getByText('Top 3 for today').waitFor()
+    await page.getByText("Today's three").waitFor() // Today 2a's label (ced71548)
     await shot(page, `${name}-today`)
     check(`${name} goal = the first pick starred (Crypto), rest by block: Gym 17:15, Read 22:00`, JSON.stringify(await slots(page)) === JSON.stringify([id(CRYPTO), id(GYM), id(READ)]), JSON.stringify((await slots(page)).map((s) => s.slice(-2))))
     check(`${name} the gold card names Crypto`, /Crypto/.test(await page.locator(`[data-top3-slot="${id(CRYPTO)}"]`).innerText()) && /Goal of the day/i.test(await page.locator(`[data-top3-slot="${id(CRYPTO)}"]`).innerText()))
@@ -209,7 +209,7 @@ if (want('desktop')) {
     await settle()
     const items = await menuItems(page)
     await shot(page, `${name}-menu-top3`)
-    check(`${name} Top 3 row menu: Plan… first, Make goal of the day, Move up, Move down`, items[0].startsWith('Plan…') && items.some((t) => t.startsWith('Make goal of the day')) && items.some((t) => t.startsWith('Move up')) && items.some((t) => t.startsWith('Move down')) && !items.some((t) => t.startsWith('Tomorrow')), JSON.stringify(items))
+    check(`${name} Top 3 row menu: Tomorrow, then Plan…, Make goal of the day, Move up, Move down`, items[0].startsWith('Tomorrow') && items[1]?.startsWith('Plan…') && items.some((t) => t.startsWith('Make goal of the day')) && items.some((t) => t.startsWith('Move up')) && items.some((t) => t.startsWith('Move down')), JSON.stringify(items))
     await page.locator('[role="menuitem"]', { hasText: 'Make goal of the day' }).click()
     await settle()
     check(`${name} Make goal → Gym leads, ranks 1·2·3 written`, JSON.stringify(await slots(page)) === JSON.stringify([id(GYM), id(CRYPTO), id(READ)]) && lastWrite(state, GYM)?.top3_rank === 1 && lastWrite(state, CRYPTO)?.top3_rank === 2 && lastWrite(state, READ)?.top3_rank === 3, JSON.stringify([lastWrite(state, GYM)?.top3_rank, lastWrite(state, CRYPTO)?.top3_rank, lastWrite(state, READ)?.top3_rank]))
@@ -227,7 +227,8 @@ if (want('desktop')) {
     await settle()
 
     // Keyboard: ↓ focuses the first row (the goal), Alt+↓ moves it down.
-    await page.locator('body').click({ position: { x: 1200, y: 780 } })
+    // Nothing focused (a fixed click spot landed on the Rituals card's Evening head once Today grew).
+    await page.evaluate(() => (document.activeElement)?.blur?.())
     await page.keyboard.press('ArrowDown')
     await sleep(150)
     await page.keyboard.press('Alt+ArrowDown')
@@ -258,8 +259,9 @@ if (want('desktop')) {
     // The overdue fold: its own, folded, with the count and Replan all ▾; More for today keeps the rest.
     const overdueFold = page.getByRole('button', { name: /^Overdue · 7/ })
     check(`${name} "Overdue · 7" fold, folded by default`, (await overdueFold.count()) === 1 && (await overdueFold.getAttribute('aria-expanded')) === 'false' && (await page.locator(`#task-${id(BANK)}`).count()) === 0)
-    const more = page.getByRole('button', { name: /^More for today/ })
-    check(`${name} More for today no longer counts the overdue ones`, /More for today · 2 open/i.test(await more.innerText()), await more.innerText())
+    // Today 2a (ced71548): "More for today" became "Also open · N", its first three rows in view.
+    const alsoOpen = await page.getByText(/^Also open · \d+$/).first().innerText().catch(() => '')
+    check(`${name} Also open no longer counts the overdue ones`, alsoOpen === 'Also open · 2', alsoOpen)
     await overdueFold.click()
     await settle()
     await shot(page, `${name}-overdue-open`)
@@ -267,17 +269,17 @@ if (want('desktop')) {
     await rclick(page.locator(`#task-${id(BANK)}`))
     await settle()
     const odItems = await menuItems(page)
-    check(`${name} an overdue row's menu starts with Replan…`, odItems[0].startsWith('Replan…'), JSON.stringify(odItems.slice(0, 3)))
+    check(`${name} an overdue row's menu: Tomorrow, then Replan…`, odItems[0].startsWith('Tomorrow') && odItems[1]?.startsWith('Replan…'), JSON.stringify(odItems.slice(0, 3)))
     await page.locator('[role="menuitem"]', { hasText: 'Replan…' }).click()
     await settle()
     const plan = await rows(pop(page))
     await shot(page, `${name}-replan-list`)
     check(`${name} Replan list: one line each — where it lands and what it means`, JSON.stringify(plan) === JSON.stringify([
-      'Today today, keeps its 15:00 WED 7 · 15:00',
-      'Next free slot ASAP: the first free gap that fits — you confirm TODAY 10:00–10:30',
-      'Tomorrow, first thing the start of your day THU 8 · 09:00',
-      'This weekend the first day of your weekend (Sat + Sun) SAT 10 · 09:00',
-      'Next week Monday of next week MON 12 · 09:00',
+      'Today today, keeps its 15:00 Wed 7 · 15:00',
+      'Next free slot ASAP: the first free gap that fits — you confirm Today 10:00–10:30',
+      'Tomorrow, first thing the start of your day Thu 8 · 09:00',
+      'This weekend the first day of your weekend (Sat + Sun) Sat 10 · 09:00',
+      'Next week Monday of next week Mon 12 · 09:00',
       'Pick date & time… any day — and a time, if you want one',
       'Someday no date — parked until you pull it up',
       'No date takes the date off',
@@ -293,9 +295,7 @@ if (want('desktop')) {
     await settle()
     check(`${name} Undo → the due and the block both come back`, lastWrite(state, BANK)?.due_at === iso('15:00', 5) && lastWrite(state, BANK)?.scheduled_start === iso('15:00', 5) && evWrite(state, evId(5))?.deleted_at === null, JSON.stringify([lastWrite(state, BANK)?.due_at, evWrite(state, evId(5))?.deleted_at]))
 
-    // Next free slot on Buy milk (More for today): propose, Another time, Confirm.
-    await more.click()
-    await settle()
+    // Next free slot on Buy milk (Also open): propose, Another time, Confirm.
     await rclick(page.locator(`#task-${id(MILK)}`))
     await settle()
     await page.locator('[role="menuitem"]', { hasText: /^Plan…/ }).click()
@@ -336,7 +336,7 @@ if (want('desktop')) {
     const all = await rows(pop(page))
     check(`${name} Replan all: Today · Spread into free slots · Tomorrow, first thing · … · Someday`, all[0].startsWith('Today') && all[1].startsWith('Spread into free slots') && all[2].startsWith('Tomorrow, first thing') && all.some((r) => r.startsWith('Pick date & time')) && all.at(-1).startsWith('Someday') && !all.some((r) => r.startsWith('Next free slot')), JSON.stringify(all))
     // Today's calendar now: milk 10:15, lunch 12:00, Crypto 14:45, Gym 17:15 (its block stays), Read 22:00.
-    check(`${name} Spread says how it splits: 6 today · 1 tomorrow`, /6 TODAY · 1 TOMORROW/.test(all[1]), all[1])
+    check(`${name} Spread says how it splits: 6 today · 1 tomorrow`, /6 today · 1 tomorrow/i.test(all[1]), all[1])
     await shot(page, `${name}-replan-all`)
     await pop(page).locator('.kf-as-row', { hasText: 'Spread into free slots' }).click()
     await settle()
@@ -435,7 +435,7 @@ if (want('settings')) {
   await page.locator('[role="menuitem"]', { hasText: /^Plan…/ }).click()
   await settle()
   const wk = (await rows(pop(page))).find((r) => r.startsWith('This weekend'))
-  check('desk-weekend Plan → This weekend lands on Friday with a Fri + Sat weekend', /\(Fri \+ Sat\) FRI 9 · 09:00$/.test(wk ?? ''), wk)
+  check('desk-weekend Plan → This weekend lands on Friday with a Fri + Sat weekend', /\(Fri \+ Sat\) Fri 9 · 09:00$/.test(wk ?? ''), wk)
   await shot(page, 'desk-weekend-fri-sat')
   await ctx.close()
 }
@@ -455,12 +455,12 @@ if (want('phone')) {
     check(`${name} under 420px the clover steps aside`, await goal.locator('.tp-goal-clover').evaluate((e) => getComputedStyle(e).display === 'none'))
     const order = await page.locator('.tp-list .tp-row').evaluateAll((els) => els.slice(0, 2).map((e) => e.id))
     check(`${name} the rest of the Top 3 by block: Gym 17:15, then Read 22:00`, JSON.stringify(order) === JSON.stringify([`task-${id(GYM)}`, `task-${id(READ)}`]), JSON.stringify(order))
-    // The overdue fold: count visible, folded, Replan all ▾ ≥ 48.
+    // The overdue fold: count visible, folded, Replan all ▾ drawn ≥ 44 (D11 = B: its ::after keeps a 48 hit).
     const fold = page.getByRole('button', { name: /^Overdue · 7/ })
     await fold.scrollIntoViewIfNeeded()
     const rb = page.getByRole('button', { name: 'Replan all ▾' })
     const rh = Math.round((await rb.boundingBox()).height)
-    check(`${name} "Overdue · 7" folded, Replan all ▾ beside it (${rh}px), More for today · 2`, (await fold.getAttribute('aria-expanded')) === 'false' && rh >= 48 && /More for today · 2/i.test(await page.getByRole('button', { name: /^More for today/ }).innerText()))
+    check(`${name} "Overdue · 7" folded, Replan all ▾ beside it (${rh}px), More for today · 2`, (await fold.getAttribute('aria-expanded')) === 'false' && rh >= 44 && /More for today · 2/i.test(await page.getByRole('button', { name: /^More for today/ }).innerText()))
     await shot(page, `${name}-folds`)
     if (theme === 'night') {
       await tap(cdp, rb)
@@ -498,7 +498,7 @@ if (want('phone')) {
     const bh = await dialog(page).getByRole('button', { name: /^(Cancel|Another time|Confirm)$/ }).evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
     await shot(page, `${name}-next-free-slot`)
     // Crypto is 90m and its own block doesn't count: the first 90m gap is 10:00–11:30 (Lunch at 12:00).
-    check(`${name} Next free slot (90m): Today 10:00–11:30; Cancel · Another time · Confirm ≥ 48`, slotText === 'Today 10:00–11:30' && bh.length === 3 && bh.every((h) => h >= 48), `${slotText} ${JSON.stringify(bh)}`)
+    check(`${name} Next free slot (90m): Today 10:00–11:30; Cancel · Another time · Confirm drawn ≥ 44 (48 hit)`, slotText === 'Today 10:00–11:30' && bh.length === 3 && bh.every((h) => h >= 44), `${slotText} ${JSON.stringify(bh)}`)
     await tap(cdp, dialog(page).getByRole('button', { name: 'Confirm' }))
     await settle()
     check(`${name} Confirm moves Crypto's block (no second block)`, evWrite(state, evId(2))?.starts_at === iso('10:00') && state.writes.filter((w) => w.table === 'calendar_events' && w.row.task_id === id(CRYPTO) && w.row.id !== evId(2)).length === 0, JSON.stringify(evWrite(state, evId(2))?.starts_at))

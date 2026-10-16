@@ -14,8 +14,9 @@ export function filterChip(on: boolean, dashed = false): { className: string; st
       gap: 7,
       borderRadius: 'var(--radius-pill)',
       background: on ? 'var(--ink-body)' : 'none',
-      color: on ? 'var(--paper-linen)' : 'var(--ink-muted)',
-      border: `1px ${dashed && !on ? 'dashed' : 'solid'} ${on ? 'var(--ink-body)' : 'var(--line-solid)'}`,
+      // D12 (Kai 2026-10-15): off, a 3:1 edge and body ink — --line-solid / --ink-muted all but vanished
+      color: on ? 'var(--paper-linen)' : 'var(--ink-body)',
+      border: `1px ${dashed && !on ? 'dashed' : 'solid'} ${on ? 'var(--ink-body)' : 'var(--line-control)'}`,
     },
   }
 }

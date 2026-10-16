@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Slot task outline</title>
+<!-- Kai's Flow · tasks held inside a Time slot: three looks for Kai to pick from (16 Oct 2026,
+     "can't we drag and drop it and give it its own outline without making it look weird?").
+     Plain HTML, open it straight from disk. The colours, sizes and spacing are the app's own:
+     the tokens are the app's real files (../app/src/styles/tokens), the blocks copy
+     CalendarGrid.css (computer, at the default 125% size) and phoneCalendar.css (phone). -->
+<link rel="stylesheet" href="ds-bound/tokens/fonts.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.dark.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/typography.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/spacing.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/effects.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding:40px 32px 120px}
+@media (max-width:767px){.wrap{padding:24px 16px 80px}}
+h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:13px;color:var(--ink-faint)}
+.lede{margin:12px 0 0;max-width:640px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 18px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.look{margin-top:56px;padding-top:28px;border-top:1px solid var(--line-card)}
+.look.picked h2::after{content:'Your pick';margin-left:12px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 12px/1.4 var(--font-ui);vertical-align:6px}
+.look h2{margin:0;font-family:var(--font-display);font-size:28px;font-weight:600;line-height:1.2}
+.look .say{margin:6px 0 0;max-width:640px;font-size:16px;color:var(--ink-body)}
+.row-h{margin:26px 0 10px;font-size:14px;font-weight:600;color:var(--ink-muted)}
+.shots{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;overflow-x:auto;padding-bottom:4px}
+figure{margin:0;flex:none}
+figcaption{margin-top:8px;max-width:420px;font-size:13px;color:var(--ink-muted)}
+.pick-row{margin-top:22px}
+
+/* ── a picture: the app's surface, in its own theme ───────────────────────────────────────── */
+.frame{position:relative;overflow:hidden;border:1px solid var(--line-card);border-radius:16px;background:var(--paper-parchment);color:var(--ink-body);font-family:var(--font-ui);line-height:1.25}
+.shell{display:block}
+.shell[data-theme="night"] .frame{border-color:var(--line-solid)}
+
+/* computer · week (CalendarGrid.css at the default 125% size: 90px an hour, 15px block titles) */
+.d .hd{position:absolute;left:0;right:0;top:0;height:40px;display:flex;background:var(--paper-bone);border-bottom:1.5px solid var(--line-solid)}
+.d .hd .g{flex:none;width:72px}
+.d .hd .c{flex:none;width:112px;display:flex;align-items:baseline;gap:7px;padding:10px 10px 0;border-left:1px solid var(--line-card);white-space:nowrap}
+.d .hd .nm{font-size:13px;color:var(--ink-faint)}
+.d .hd .num{font-family:var(--font-display);font-size:19px;line-height:1;color:var(--ink-body)}
+.d .hd .c.td{background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.d .hd .c.td .nm,.d .hd .c.td .num{color:var(--acc-lavender-text)}
+.d .hd .c.td .num{font-weight:600;padding:1px 7px;border-radius:var(--radius-pill);background:var(--block-lavender)}
+.d .bd{position:absolute;left:0;right:0;top:41.5px;bottom:0}
+.d .tdw{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.d .vl{position:absolute;top:0;bottom:0;border-left:1px solid var(--line-dashed)}
+.d .hl{position:absolute;left:72px;right:0;border-top:1px solid var(--line-card)}
+.d .hl b{position:absolute;right:100%;top:4px;width:72px;padding-right:12px;text-align:right;font-weight:400;font-size:15px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+[data-theme="night"] .d .hl{border-top-color:var(--line-solid);box-shadow:var(--glow-hairline)}
+.ev{position:absolute;overflow:hidden;border-radius:var(--radius-block);border:1px solid var(--edge);background:var(--wash);padding:7px 10px}
+.ev,.lift{--wash:color-mix(in srgb,var(--acc-lavender) 24%,transparent);--edge:rgba(124,106,154,0.35);--acc:var(--acc-lavender-text);--line:color-mix(in srgb,var(--acc) 35%,transparent)}
+.ev .tt{font-size:15px;color:var(--ink-body)}
+.ev .tm{margin-top:2px;font-size:10.6px;color:var(--acc)}
+.ev .rep{float:right;font-size:12px;color:var(--ink-body)}
+.ev.short{padding:2px 8px}
+.ev.short .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .ck0{float:left;width:12px;height:12px;margin:3px 7px 0 0;border:1.5px solid var(--acc);border-radius:4px;opacity:0}
+.ev .slot{margin-top:4px}
+.ev .fill{padding-top:3px;border-top:1px solid color-mix(in srgb,var(--acc-lavender-deep) 22%,transparent);font-size:10.6px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev .rows{display:flex;flex-direction:column;gap:2px;margin-top:2px}
+.r{display:flex;align-items:center;gap:5px;min-width:0;font-size:15px;line-height:19px;color:var(--ink-body)}
+.r .ck{flex:none;width:12px;height:12px;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--acc);border-radius:4px;background:transparent;font-size:9px;line-height:1;color:var(--paper-parchment)}
+.r.done .ck{background:var(--check-fill);border-color:transparent}
+.r .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.r.done .t{color:var(--ink-faint);text-decoration:line-through;text-decoration-color:var(--ink-hairline)}
+.r .x,.r .m{flex:none;padding:0 2px;color:var(--acc)}
+.r .x{display:none}
+.r.hov .x{display:inline}
+.r.gone>*{visibility:hidden}
+.drop{position:absolute;border:1px dashed var(--acc-lavender);background:color-mix(in srgb,var(--acc-lavender) 16%,transparent);border-radius:var(--radius-block)}
+.lift{position:absolute;z-index:5}
+.lift .r{background:var(--paper-parchment);box-shadow:var(--shadow-popover)}
+.ptr{position:absolute;z-index:6;pointer-events:none}
+
+/* phone · day (phoneCalendar.css: 64px an hour, 14px names, the 18px task box) */
+.p .segs{display:flex;padding:4px 16px 0}
+.p .seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.p .seg span{padding:8px 11px;border-radius:var(--radius-pill);font-size:13.5px;font-weight:500;line-height:1;color:var(--ink-body);white-space:nowrap}
+.p .seg span.on{background:var(--sel-bg);color:var(--sel-ink)}
+.p .uns{height:56px;display:flex;align-items:center;gap:8px;padding:0 16px}
+.p .chip{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 12px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:var(--radius-card);font-size:14px}
+.p .chip i{font-style:normal;font-size:12px;color:var(--ink-faint)}
+.p .pg{position:absolute;left:0;right:0;bottom:0;border-top:1px solid var(--line-card)}
+.p .ph{position:absolute;left:0;right:0;display:flex;align-items:flex-start}
+.p .ph span{flex:none;width:60px;padding-left:16px;margin-top:-8px;font-size:12px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+.p .ph i{flex:1;border-top:1px solid var(--line-dashed)}
+[data-theme="night"] .p .ph i{border-top-color:var(--line-solid);box-shadow:var(--glow-hairline)}
+.pb{position:absolute;overflow:hidden;border-radius:var(--radius-block);background:linear-gradient(var(--block-lavender),var(--block-lavender)),var(--paper-parchment)}
+.pb,.p .lift{--acc:var(--acc-lavender-text);--wash:var(--block-lavender);--line:color-mix(in srgb,var(--acc) 35%,transparent)}
+.pb .body{display:flex;flex-direction:column;padding:6px 10px}
+.pb .nm{font-size:14px;font-weight:500;line-height:18px}
+.pb .tm{font-size:12px;line-height:16px;color:var(--acc)}
+.pb .rep{margin-right:4px}
+.pb .rows{display:flex;flex-direction:column;gap:2px;margin-top:2px}
+.p .r{gap:8px;min-height:24px;font-size:14px;font-weight:500;line-height:18px}
+.p .r .ck{width:18px;height:18px;border:1.5px solid var(--check-border);border-radius:var(--radius-check);background:var(--check-bg);font-size:12px;color:var(--check-mark)}
+.p .r.done .ck{border-color:transparent;background:var(--check-fill)}
+.p .r .x,.p .r .m{display:none}
+.bubble{position:absolute;left:4px;height:22px;margin-top:-11px;padding:0 6px;display:inline-flex;align-items:center;border-radius:var(--radius-pill);background:var(--toast-bg);color:var(--toast-ink);box-shadow:var(--shadow-toast);font-size:12px;white-space:nowrap;z-index:6}
+.finger{position:absolute;z-index:7;width:42px;height:42px;margin:-21px 0 0 -21px;border-radius:50%;background:color-mix(in srgb,var(--ink-body) 12%,transparent);border:1px solid color-mix(in srgb,var(--ink-body) 30%,transparent)}
+.p .lift .r{transform:scale(1.04) rotate(1.2deg)}
+
+/* ── A · soft cards: the slot's own wash, a 1px hairline edge, 8px corners, a small gap ── */
+.lk-a .rows{gap:4px;margin-top:4px}
+.lk-a .r{padding:1px 4px 1px 5px;border:1px solid var(--line);border-radius:8px;background:var(--wash)}
+.lk-a .r.hov{border-color:color-mix(in srgb,var(--acc) 70%,transparent)}
+.lk-a .r.gone{background:transparent;border:1px dashed var(--ink-hairline)}
+.lk-a.lift .r{background:linear-gradient(var(--wash),var(--wash)),var(--paper-parchment)}
+.p .lk-a .r{min-height:24px;padding:0 8px 0 2px}
+.p .lk-a .rows{gap:3px}
+
+/* ── B · quiet rows: a left bar in the slot's hue, a hairline between rows ── */
+.lk-b .rows{gap:0;margin-top:3px}
+.lk-b .r{position:relative;padding:2px 0 2px 8px}
+.lk-b .r::before{content:'';position:absolute;left:0;top:4px;bottom:4px;width:2px;border-radius:2px;background:var(--acc)}
+.lk-b .r.done::before{opacity:.45}
+.lk-b .r+.r{border-top:1px solid color-mix(in srgb,var(--acc) 22%,transparent)}
+.lk-b .r.hov{background:color-mix(in srgb,var(--acc) 8%,transparent)}
+.lk-b .r.gone::before{background:none;border-left:2px dashed var(--ink-hairline);width:0}
+.lk-b.lift .r{padding:4px 10px 4px 12px;border-radius:4px}
+.lk-b.lift .r::before{left:4px}
+.p .lk-b .r{padding:2px 0 2px 10px}
+.p .lk-b .r::before{width:3px;top:5px;bottom:5px}
+.p .lk-b.lift .r{padding:4px 12px 4px 14px}
+.p .lk-b.lift .r::before{left:5px}
+
+/* ── C · pills: each task a small chip with its own outline (the kit's bordered chip), stacked ── */
+.lk-c .rows{gap:4px;margin-top:4px;align-items:flex-start}
+.lk-c .r{max-width:100%;height:21px;padding:0 7px 0 4px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.lk-c .r.hov{border-color:var(--ink-body)}
+.lk-c .r.gone{border-style:dashed;border-color:var(--ink-hairline)}
+.lk-c.lift .r{height:26px;padding:0 10px 0 6px}
+.p .lk-c .r{height:24px;padding:0 12px 0 3px}
+.p .lk-c .rows{gap:3px}
+.p .lk-c.lift .r{height:30px;padding:0 14px 0 6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · tasks inside a Time slot · 16 Oct 2026</div>
+  <h1>Which looks better?</h1>
+  <p class="lede">Today a task inside a slot is a plain line of text. Here are three ways to give each task its own outline, so it reads as its own thing you can pick up and drag out. Same colours and sizes as the app, on the computer and the phone, by day and in Night Garden.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your pick">
+  <span>Your pick: <b id="mine">none yet</b></span>
+  <button type="button" class="btn btn-p" id="copy">Copy my pick</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="look" id="now">
+  <h2>How it looks now</h2>
+  <p class="say">For comparison: no outline, just the box and the name.</p>
+  <div class="shots" data-shots="now:rest"></div>
+</section>
+
+<section class="look" data-look="A">
+  <h2>A · Soft cards</h2>
+  <p class="say">Each task sits on its own soft card inside the slot, with a thin edge and a little room between them.</p>
+  <div data-set="A"></div>
+  <div class="pick-row"><button type="button" class="btn pick" data-pick="A" aria-pressed="false">This one</button></div>
+</section>
+
+<section class="look" data-look="B">
+  <h2>B · Quiet rows</h2>
+  <p class="say">Each task is a plain line with a short bar in the slot's colour on its left, and a thin line between tasks.</p>
+  <div data-set="B"></div>
+  <div class="pick-row"><button type="button" class="btn pick" data-pick="B" aria-pressed="false">This one</button></div>
+</section>
+
+<section class="look" data-look="C">
+  <h2>C · Pills</h2>
+  <p class="say">Each task is a small rounded pill with its own outline, stacked one under the other.</p>
+  <div data-set="C"></div>
+  <div class="pick-row"><button type="button" class="btn pick" data-pick="C" aria-pressed="false">This one</button></div>
+</section>
+
+</div>
+
+<script>
+// One slot, "Code block💻", Mon 12 Oct 10:00–12:00, holding three tasks (one done).
+const TASKS = [
+  { t: 'Write the slot spec', done: false },
+  { t: 'Fix the login bug', done: true },
+  { t: 'Review the PR', done: false },
+]
+const FILL = '3 tasks · 1h 45m of 2h'
+const ARROW = '<svg class="ptr" width="18" height="24" viewBox="0 0 18 24" aria-hidden="true"><path d="M1.5 1.5v18l4.6-4.4 3.2 7 3-1.4-3.2-6.8h6.4z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>'
+const lk = (look) => (look === 'now' ? '' : ` lk-${look.toLowerCase()}`)
+
+function row(tk, { hov = false, gone = false } = {}) {
+  return `<div class="r${tk.done ? ' done' : ''}${hov ? ' hov' : ''}${gone ? ' gone' : ''}"><span class="ck">${tk.done ? '✓' : ''}</span><span class="t">${tk.t}</span><span class="x" title="Out of the slot">×</span><span class="m">⋯</span></div>`
+}
+const rows = (state) => TASKS.map((tk, i) => row(tk, { hov: state === 'hover' && i === 0, gone: state === 'drag' && i === 0 })).join('')
+
+// ── computer · week: the time gutter + `cols` days, 9 AM to just past 1 PM ──
+function desk(look, state, cols) {
+  const G = 72, C = 112, H = 90, S = 9
+  const x = (c) => G + c * C
+  const y = (h) => (h - S) * H
+  const W = G + cols * C
+  const days = [['Mon', 12], ['Tue', 13], ['Wed', 14], ['Thu', 15]].slice(0, cols)
+  const block = (c, a, b, inner, cls = '') => `<div class="ev${cls}" style="left:${x(c) + 3}px;width:${C - 9}px;top:${y(a) + 1}px;height:${(b - a) * H - 2}px">${inner}</div>`
+  let h = `<div class="frame d" style="width:${W}px;height:${41.5 + 4.35 * H}px">`
+  h += `<div class="hd"><span class="g"></span>${days.map(([n, d], i) => `<span class="c${i ? '' : ' td'}"><span class="nm">${n}</span><span class="num">${d}</span></span>`).join('')}</div><div class="bd">`
+  h += `<span class="tdw" style="left:${x(0)}px;width:${C}px"></span>`
+  for (let c = 0; c < cols; c++) h += `<span class="vl" style="left:${x(c)}px"></span>`
+  ;['9 AM', '10 AM', '11 AM', '12 PM', '1 PM'].forEach((l, k) => (h += `<span class="hl" style="top:${k * H}px"><b>${l}</b></span>`))
+  // the rest of the week, as the app draws it
+  h += block(1, 9.5, 10.5, '<div class="tt">Gym 🏋️</div><div class="tm">9:30 AM</div>')
+  if (cols > 2) h += block(2, 11, 11.5, '<span class="ck0"></span><div class="tt">Call the tyre supplier</div>', ' short')
+  for (let c = 0; c < cols; c++) h += block(c, 13, 15, '<span class="rep">↻</span><div class="tt">Shaheen🛞</div><div class="tm">1:00 PM</div>')
+  // the slot
+  h += block(0, 10, 12, `<div class="tt">Code block💻</div><div class="tm">10:00 AM</div><div class="slot"><div class="fill">${FILL}</div><div class="rows">${rows(state)}</div></div>`, lk(look))
+  if (state === 'hover') h += `<span style="position:absolute;left:${x(0) + 30}px;top:${y(10) + 94}px">${ARROW}</span>`
+  if (state === 'drag') {
+    // where it will land (Tue 11:15–12:00, its 45 minutes), and the task under the pointer
+    h += `<div class="drop" style="left:${x(1) + 3}px;width:${C - 9}px;top:${y(11.25) + 1}px;height:${0.75 * H - 2}px"></div>`
+    h += `<div class="lift${lk(look)}" style="left:${x(1) + 6}px;top:${y(11.25) + 14}px;width:150px">${row(TASKS[0])}</div>`
+    h += `<span style="position:absolute;left:${x(1) + 34}px;top:${y(11.25) + 22}px">${ARROW}</span>`
+  }
+  return h + '</div></div>'
+}
+
+// ── phone · day: the To plan strip, then 09:00 to 13:00+ ──
+function phone(look, state) {
+  const W = 360, G = 60, H = 64, S = 9, TOP = 104
+  const y = (h) => (h - S) * H
+  let h = `<div class="frame p" style="width:${W}px;height:${TOP + 4.4 * H}px">`
+  h += '<div class="segs"><span class="seg"><span>Overdue 0</span><span class="on">Today 1</span><span>Inbox 0</span><span>Lists 0</span></span></div>'
+  h += '<div class="uns"><span class="chip">Review Kai <i>30m</i></span></div>'
+  h += `<div class="pg" style="top:${TOP}px">`
+  ;['09:00', '10:00', '11:00', '12:00', '13:00'].forEach((l, k) => (h += `<div class="ph" style="top:${k * H}px"><span>${k ? l : ''}</span><i></i></div>`))
+  const left = G + 4, width = W - G - 20
+  h += `<div class="pb" style="left:${left}px;width:${width}px;top:${y(13)}px;height:${2 * H}px"><div class="body"><span class="nm">Shaheen🛞</span><span class="tm"><span class="rep">↻</span>13:00–15:00</span></div></div>`
+  h += `<div class="pb${lk(look)}" style="left:${left}px;width:${width}px;top:${y(10)}px;height:${2 * H}px"><div class="body"><span class="nm">Code block💻</span><span class="tm">10:00–12:00</span><span class="tm">${FILL}</span><div class="rows">${rows(state)}</div></div></div>`
+  if (state === 'drag') {
+    // held and lifted: it follows the finger on the 15-minute grid; the gutter says where it lands
+    h += `<span class="bubble" style="top:${y(12.5)}px">12:30–13:15</span>`
+    h += `<div class="lift${lk(look)}" style="left:${left + 22}px;top:${y(12.5) - 4}px;width:${width - 40}px">${row(TASKS[0])}</div>`
+    h += `<span class="finger" style="left:${left + width - 80}px;top:${y(12.5) + 14}px"></span>`
+  }
+  return h + '</div></div>'
+}
+
+const fig = (theme, inner, cap) => `<figure><div class="shell" data-theme="${theme}">${inner}</div><figcaption>${cap}</figcaption></figure>`
+const T = { day: 'Day', night: 'Night Garden' }
+
+// "How it looks now"
+document.querySelector('[data-shots="now:rest"]').innerHTML =
+  fig('day', desk('now', 'rest', 4), 'Computer · week') + fig('day', phone('now', 'rest'), 'Phone · day')
+
+document.querySelectorAll('[data-set]').forEach((el) => {
+  const L = el.dataset.set
+  el.innerHTML = ['day', 'night'].map((th) => `
+    <div class="row-h">${T[th]}</div>
+    <div class="shots">${fig(th, desk(L, 'rest', 4), `Computer · week · ${T[th]}`)}${fig(th, phone(L, 'rest'), `Phone · day · ${T[th]}`)}</div>
+    <div class="row-h">Moving a task · ${T[th]}</div>
+    <div class="shots">
+      ${fig(th, desk(L, 'hover', 3), 'Computer · the pointer on a task: the × takes it out of the slot')}
+      ${fig(th, desk(L, 'drag', 3), 'Computer · dragging it out: it keeps its own outline, the slot keeps its place')}
+      ${fig(th, phone(L, 'drag'), 'Phone · hold the task and drag it out: the slot keeps its place')}
+    </div>`).join('')
+})
+
+// the pick
+const KEY = 'kf-slot-outline-pick'
+let pick = null
+try { pick = localStorage.getItem(KEY) } catch {}
+function paint() {
+  document.getElementById('mine').textContent = pick ?? 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === pick)))
+  document.querySelectorAll('.look[data-look]').forEach((s) => s.classList.toggle('picked', s.dataset.look === pick))
+}
+document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
+  pick = b.dataset.pick
+  try { localStorage.setItem(KEY, pick) } catch {}
+  paint()
+}))
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = pick ? `Slot tasks: ${pick}` : 'Slot tasks: none picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    try { ok = document.execCommand('copy') } catch {}
+    ta.remove()
+  }
+  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paint()
+</script>
+</body>
+</html>
