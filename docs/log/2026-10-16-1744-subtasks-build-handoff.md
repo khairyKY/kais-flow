@@ -124,3 +124,22 @@ already use `tasks.parent_task_id` (0029). DATA_MODEL.md's 0029 note now states 
     branch's `parent?`.
   - `docs/log/INDEX.md`: keep both lines.
   Rerun time-slots after that merge. It is 138 checks there, and f3 may already be fixed.
+
+## After the merge (83a13d43)
+
+calendar-phone failed at "7h-day a swipe pages three days" on the merged tree. The cause was not
+PhoneGrid. Just before the swipe, the harness ticks the tyre call's block, and the tyre call has two
+open subtasks. Ticking it now asks "2 subtasks are still open" (4 C, by design). The harness never
+answered, so the open sheet's scrim took the swipe, and then the title tap.
+
+The harness now checks that the question is asked and answers "Leave them open". Results on the
+merged tree:
+
+| Harness | Result |
+|---|---|
+| calendar-phone | 177/177 (176 + that check) |
+| time-slots | 152/152 (f3 is fixed there) |
+| subtasks | 47/47 |
+| cal-wave2 | 83/83 |
+
+Tests: 2260 pass. Lint: 0 errors.
