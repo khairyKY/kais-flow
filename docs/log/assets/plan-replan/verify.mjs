@@ -227,7 +227,8 @@ if (want('desktop')) {
     await settle()
 
     // Keyboard: ↓ focuses the first row (the goal), Alt+↓ moves it down.
-    await page.locator('body').click({ position: { x: 1200, y: 780 } })
+    // Nothing focused (a fixed click spot landed on the Rituals card's Evening head once Today grew).
+    await page.evaluate(() => (document.activeElement)?.blur?.())
     await page.keyboard.press('ArrowDown')
     await sleep(150)
     await page.keyboard.press('Alt+ArrowDown')
