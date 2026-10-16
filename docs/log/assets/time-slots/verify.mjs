@@ -524,6 +524,9 @@ if (want('f3')) {
   await slotPoint(b.page, '10:30')
   await mouseDrag(b.page, await rowPt(b.page), await lanePt(b.page, '11:00', '2026-10-13'))
   await settle(b.state)
+  // slot-outline: the drop always lands (checked above), but the reload restores the query cache the
+  // persister last saved (throttled ~1s) and reads it as fresh: give it time to save the drop first.
+  await sleep(1500)
   await b.page.goto(`${BASE}/tasks?list=all`, { waitUntil: 'networkidle' })
   await sleep(1200)
   const row = await b.page.locator(`#task-${id(HELD)}`).innerText().catch(() => '')
