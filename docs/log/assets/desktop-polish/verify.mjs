@@ -268,7 +268,7 @@ for (const theme of ['day', 'night']) {
     await sleep(300)
     // 4784af36 (Kai 2026-10-12): "Finish & press" became "Finish" — one tap + Undo, the press optional.
     const pmenu = (await page.locator('[role="menu"]').innerText().catch(() => '(no menu)')).split('\n').join(' · ')
-    check(`${N('projects')} right-click a project → Open · Rename · Domain… · Change type… · Finish · Delete`, pmenu === 'Open · Rename · Domain… · Change type… · Finish · Delete', pmenu)
+    check(`${N('projects')} right-click a project → Open · Rename · Domain… · Change type… · Duplicate · Finish · Delete`, pmenu === 'Open · Rename · Domain… · Change type… · Duplicate · Finish · Delete', pmenu) // Duplicate: dup-open, 2026-10-17
     await shot(page, N('projects-project-menu'))
     await page.keyboard.press('Escape')
     await sleep(200)

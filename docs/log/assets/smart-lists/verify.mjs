@@ -113,6 +113,8 @@ async function open(route, o = {}) {
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle' })
+  // The sidebar's smart lists are their own chunk (AppLayout lazy) — wait for them where there are some.
+  if (o.smart?.length) await page.locator('.kf-sl-row').first().waitFor({ state: 'attached', timeout: 10000 }).catch(() => {})
   await sleep(1500)
   return { ctx, page, errors, state }
 }
@@ -171,7 +173,8 @@ for (const theme of want('m') ? ['day', 'night'] : []) {
   await shot(page, `m6-made-desktop-${theme}`)
   if (theme === 'day') {
     await page.reload({ waitUntil: 'networkidle' })
-    await sleep(1500)
+    await sideRow(page, 'Work quickies').waitFor({ timeout: 10000 }).catch(() => {})
+    await sleep(500)
     check('m7 a reload keeps it: the list, its title, its count', (await h1(page)) === 'Work quickies' && /Work quickies\s*3/.test(await text(sideRow(page, 'Work quickies'))) && (await rowShown(page, LATE)))
     await page.getByRole('link', { name: /^Due Today/ }).click()
     await sleep(600)
@@ -238,7 +241,8 @@ if (want('e')) {
   check('e8 Undo brings it back, where it was, and the open page applies it again',
     posts(state, 'smart_lists', w0).at(-1)?.deleted_at === null && JSON.stringify(await sideNames(page)) === JSON.stringify(['Errands 2', 'Quick work 3']) && (await h1(page)) === 'Quick work')
   await page.reload({ waitUntil: 'networkidle' })
-  await sleep(1500)
+  await sideRow(page, 'Quick work').waitFor({ timeout: 10000 }).catch(() => {}) // the rows are their own chunk
+  await sleep(500)
   check('e9 a reload keeps every change: names, order, show done', JSON.stringify(await sideNames(page)) === JSON.stringify(['Errands 2', 'Quick work 3']) && (await page.locator('text=File the old report').count()) === 1)
 
   await page.getByRole('button', { name: 'New smart list' }).click()

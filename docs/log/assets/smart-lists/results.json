@@ -1,0 +1,207 @@
+[
+  {
+    "name": "m1 [day] \"Save as smart list\" opens the editor, starting from the view: Today's days, the Career chip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m2 [day] a live count: Career (own or through its project), ≤ 30 min, overdue or today = 3",
+    "ok": true,
+    "detail": "3 open tasks match right now."
+  },
+  {
+    "name": "m3 [day] Save writes one smart_lists row through the outbox: name, the filter",
+    "ok": true,
+    "detail": "{\"id\":\"28af0f27-eac5-4d2f-b358-6d5acdff99fb\",\"name\":\"Work quickies\",\"icon\":null,\"filter\":{\"places\":[\"d0000000-0000-4000-8000-000000000001\"],\"when\":[\"overdue\",\"today\"],\"length\":30},\"position\":0,\"deleted_at\":null,\"created_at\":\"2026-10-12T07:00:05.882Z\",\"updated_at\":\"2026-10-12T07:00:05.882Z\"}"
+  },
+  {
+    "name": "m4 [day] it opens: /tasks?list=<its id>, its name as the title, its conditions in words",
+    "ok": true,
+    "detail": "?list=28af0f27-eac5-4d2f-b358-6d5acdff99fb · Work quickies · Career · Overdue or Today · ≤ 30 min"
+  },
+  {
+    "name": "m5 [day] the rows: the three that fit, not the others",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m6 [day] the sidebar's Plan group lists it with its count, active",
+    "ok": true,
+    "detail": "Work quickies\n3"
+  },
+  {
+    "name": "m7 a reload keeps it: the list, its title, its count",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m8 the fixed lists still work beside it (Due Today has no smart list active)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m1 [night] \"Save as smart list\" opens the editor, starting from the view: Today's days, the Career chip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m2 [night] a live count: Career (own or through its project), ≤ 30 min, overdue or today = 3",
+    "ok": true,
+    "detail": "3 open tasks match right now."
+  },
+  {
+    "name": "m3 [night] Save writes one smart_lists row through the outbox: name, the filter",
+    "ok": true,
+    "detail": "{\"id\":\"e3797381-d4a4-4eb6-bc7a-77cba9bd665e\",\"name\":\"Work quickies\",\"icon\":null,\"filter\":{\"places\":[\"d0000000-0000-4000-8000-000000000001\"],\"when\":[\"overdue\",\"today\"],\"length\":30},\"position\":0,\"deleted_at\":null,\"created_at\":\"2026-10-12T07:00:05.978Z\",\"updated_at\":\"2026-10-12T07:00:05.978Z\"}"
+  },
+  {
+    "name": "m4 [night] it opens: /tasks?list=<its id>, its name as the title, its conditions in words",
+    "ok": true,
+    "detail": "?list=e3797381-d4a4-4eb6-bc7a-77cba9bd665e · Work quickies · Career · Overdue or Today · ≤ 30 min"
+  },
+  {
+    "name": "m5 [night] the rows: the three that fit, not the others",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m6 [night] the sidebar's Plan group lists it with its count, active",
+    "ok": true,
+    "detail": "Work quickies\n3"
+  },
+  {
+    "name": "m [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e0 two seeded lists in the sidebar, in their order, with counts",
+    "ok": true,
+    "detail": "[\"Work quickies 3\",\"Errands 2\"]"
+  },
+  {
+    "name": "e1 right-click → Edit… · Rename · Move down · Delete (no Move up on the first)",
+    "ok": true,
+    "detail": "[\"Edit…\",\"Rename\",\"Move down\",\"Delete\\nUndo 6s\"]"
+  },
+  {
+    "name": "e2 Edit… opens the editor on this list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e3 Save writes the change on the same row",
+    "ok": true,
+    "detail": "{\"id\":\"51000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"name\":\"Work quickies\",\"icon\":null,\"filter\":{\"places\":[\"d0000000-0000-4000-8000-000000000001\"],\"when\":[\"overdue\",\"today\"],\"length\":30,\"show_done\":true},\"position\":0,\"deleted_at\":null,\"created_at\":\"2026-10-01T06:00:00.000Z\",\"updated_at\":\"2026-10-12T07:00:06.020Z\"}"
+  },
+  {
+    "name": "e4 done ones show last, under Done; the count stays the open ones",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e5 Rename in place: the row, the title",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e6 Move up renumbers: Errands first",
+    "ok": true,
+    "detail": "{\"Errands\":0,\"Quick work\":1} [\"Errands 2\",\"Quick work 3\"]"
+  },
+  {
+    "name": "e7 Delete: off the sidebar at once, a soft delete, an Undo toast — no confirm",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e8 Undo brings it back, where it was, and the open page applies it again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e9 a reload keeps every change: names, order, show done",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e10 \"+ New smart list\" opens an empty editor; Save waits for a name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e11 an area works as a place (Book the gym)",
+    "ok": true,
+    "detail": "1 open task match right now."
+  },
+  {
+    "name": "e12 Esc closes it, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "en1 [night] the open list is active in the sidebar; Errands = two labelled tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "en [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [day] the phone's strip carries the smart lists, with counts",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 [day] tapped, it opens and its tab is current",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 [day] \"Edit smart list\" is a sheet on the phone, Delete in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4 Delete from the sheet: soft-deleted, its tab gone, an Undo toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [night] the phone's strip carries the smart lists, with counts",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 [night] tapped, it opens and its tab is current",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 [night] \"Edit smart list\" is a sheet on the phone, Delete in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [night] no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
