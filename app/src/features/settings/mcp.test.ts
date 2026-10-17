@@ -114,7 +114,7 @@ describe('MCP: transport and auth', () => {
     expect(all.map((t) => t.name)).toEqual([
       'today', 'search', 'list_tasks', 'get_task', 'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'duplicate_task', 'add_to_inbox',
       'calendar', 'add_event', 'edit_event', 'delete_event', 'duplicate_event', 'projects',
-      'get_project', 'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'labels', 'update_label',
+      'get_project', 'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'labels', 'update_label', 'smart_lists',
       'trash', 'move_to_trash', 'restore_from_trash', 'settings', 'update_settings', 'inbox', 'file_inbox_item', 'update_inbox_item',
       'routines', 'save_routine', 'check_routine', 'start_focus', 'stop_focus', 'plan_my_day', 'shut_down', 'library', 'save_library_item', 'delete_library_item',
       'insights', 'activity',
@@ -134,7 +134,7 @@ describe('MCP: transport and auth', () => {
     for (const w of writers) expect(init.result.instructions).toContain(w)
     const read = (await legacy(d, 'tools/list', undefined, READ_KEY)).body.result!.tools as { name: string }[]
     expect(read.map((t) => t.name)).toEqual([
-      'today', 'search', 'list_tasks', 'get_task', 'calendar', 'projects', 'get_project', 'labels', 'trash', 'settings', 'inbox', 'routines', 'library', 'insights', 'activity',
+      'today', 'search', 'list_tasks', 'get_task', 'calendar', 'projects', 'get_project', 'labels', 'smart_lists', 'trash', 'settings', 'inbox', 'routines', 'library', 'insights', 'activity',
     ])
   })
 

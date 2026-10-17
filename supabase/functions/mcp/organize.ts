@@ -3,6 +3,7 @@
 // settings. Pure, like ./tools.ts (tested from app/src/features/settings/mcp.test.ts and
 // mcpFull.test.ts); each write restates the app's own (features/<f>/api.ts, named on each).
 import { dateKey, userZone, wallTime } from '../_shared/zone.ts'
+import { describeFilter, smartMatch } from '../_shared/smartList.ts'
 import {
   addEvent,
   bad,
@@ -25,6 +26,8 @@ import {
   liveRow,
   logIt,
   PLACE_COLORS,
+  placeBook,
+  smartLists,
   reopenTask,
   spanText,
   taskOut,
@@ -645,6 +648,31 @@ export const ORGANIZE_TOOLS: readonly ToolDef[] = [
       const event = into === null ? 'label.deleted' : target ? 'label.merged' : 'label.renamed'
       await logIt(ctx, event, 'label', own.name, { name: own.name, ...(into ? { to: into } : {}), tasks: carriers.length })
       return { [into === null ? 'deleted' : target ? 'merged' : 'renamed']: { from: own.name, ...(into ? { to: into } : {}), tasks: carriers.length } }
+    },
+  },
+  {
+    name: 'smart_lists',
+    title: 'Smart lists',
+    description:
+      "The user's smart lists — saved filters in the app's sidebar (\"work tasks under 30 min this week\"): each one's id, name, its conditions in plain words and as stored (`places` are project / area / domain ids), and how many open tasks it shows now. Give list_tasks a list's id or name as `smart_list` for its tasks.",
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    write: false,
+    async run(_a, ctx) {
+      const lists = await smartLists(ctx)
+      if (!lists.length) return { smart_lists: [] }
+      const { domainOf, nameOf } = await placeBook(ctx)
+      const open = await ctx.store.listTasks({ status: 'open', projectId: null, label: null, dueFrom: null, dueTo: null, limit: 5000 })
+      return {
+        timezone: ctx.zone,
+        smart_lists: lists.map((l) => ({
+          id: l.id,
+          name: l.name,
+          ...(l.icon ? { icon: l.icon } : {}),
+          conditions: describeFilter(l.filter, nameOf),
+          filter: l.filter,
+          open: open.filter((t) => smartMatch(t, l.filter, { now: ctx.now, zone: ctx.zone, domainOf })).length,
+        })),
+      }
     },
   },
   {

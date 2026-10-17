@@ -55,7 +55,7 @@ const textArray = (xs: readonly string[] | null | undefined) => JSON.stringify(x
 // and this refuses the tables too, so no tool can reach them by mistake.
 const TABLES: ReadonlySet<string> = new Set<Table>([
   'tasks', 'inbox_items', 'calendar_events', 'projects', 'areas', 'domains', 'routines', 'routine_completions', 'time_entries',
-  'books', 'notes', 'quotes', 'app_settings', 'slipping', 'journal_entries', 'people', 'interactions',
+  'books', 'notes', 'quotes', 'app_settings', 'slipping', 'journal_entries', 'people', 'interactions', 'smart_lists',
 ])
 const PERSONAL: Partial<Record<Table, Scope>> = { journal_entries: 'journal', people: 'people', interactions: 'people' }
 const PERSONAL_HITS: Record<string, Scope> = { journal_entry: 'journal', person: 'people' }
