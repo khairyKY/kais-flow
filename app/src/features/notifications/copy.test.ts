@@ -27,17 +27,18 @@ const NAMES = { lock_screen_names: true }
 describe('task reminder', () => {
   const tyre = { id: 't1', title: 'Call the tyre supplier', due_at: cairo('09:50').toISOString(), project: 'Car' }
 
-  it('says the drawn copy, with Done · Tomorrow', () => {
+  // Snooze (Kai 2026-10-17): In 10 min / In 1 hour after Done — Chrome shows two, Android three, Windows four.
+  it('says the drawn copy, with Done · In 10 min · In 1 hour · Tomorrow', () => {
     const n = reminderNotice([tyre], NAMES, cairo('09:40'))
     expect(n).toMatchObject({ title: 'Call the tyre supplier · in 10 min', body: '09:50 · Car', taskIds: ['t1'], url: '/tasks?focus=t1', silent: false })
-    expect(n.actions.map((a) => a.title)).toEqual(['Done', 'Tomorrow'])
+    expect(n.actions.map((a) => a.title)).toEqual(['Done', 'In 10 min', 'In 1 hour', 'Tomorrow'])
   })
 
   it('hides the task on the lock screen unless names are on (the default)', () => {
     const n = reminderNotice([tyre], {}, cairo('09:40'))
     expect([n.title, n.body]).toEqual(['A reminder', 'Unlock to see it'])
     expect(JSON.stringify(n)).not.toContain('tyre')
-    expect(n.actions.map((a) => a.action)).toEqual(['done', 'tomorrow']) // the buttons still work
+    expect(n.actions.map((a) => a.action)).toEqual(['done', 'snooze10', 'snooze60', 'tomorrow']) // the buttons still work
   })
 
   it('reads "now" at the time and "at 14:00" further off; no time, no lead', () => {
@@ -50,7 +51,7 @@ describe('task reminder', () => {
     const tasks = ['Reply to Omar', 'Buy milk', 'Water the plants', 'Book the dentist'].map((title, i) => ({ id: `g${i}`, title }))
     const n = reminderNotice(tasks.slice(0, 3), NAMES, cairo('08:10'))
     expect(n).toMatchObject({ title: '3 reminders', body: 'Reply to Omar · Buy milk · Water the plants', tag: 'reminders' })
-    expect(n.actions.map((a) => a.title)).toEqual(['Open'])
+    expect(n.actions.map((a) => a.title)).toEqual(['Open', 'In 10 min', 'In 1 hour']) // snoozes all three
     expect(reminderNotice(tasks, NAMES, cairo('08:10')).body).toBe('Reply to Omar · Buy milk · Water the plants · +1 more')
     expect(reminderNotice(tasks, {}, cairo('08:10'))).toMatchObject({ title: '4 reminders', body: 'Unlock to see them' })
   })

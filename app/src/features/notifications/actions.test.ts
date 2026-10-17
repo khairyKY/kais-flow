@@ -24,7 +24,12 @@ const cache: { tasks?: unknown[] } = {}
 vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: () => cache.tasks } }))
 const completeTaskWithUndo = vi.fn()
 const moveToTomorrowWithUndo = vi.fn()
-vi.mock('../tasks/api', () => ({ completeTaskWithUndo: (t: unknown) => completeTaskWithUndo(t), moveToTomorrowWithUndo: (t: unknown) => moveToTomorrowWithUndo(t) }))
+const remindAgainWithUndo = vi.fn()
+vi.mock('../tasks/api', () => ({
+  completeTaskWithUndo: (t: unknown) => completeTaskWithUndo(t),
+  moveToTomorrowWithUndo: (t: unknown) => moveToTomorrowWithUndo(t),
+  remindAgainWithUndo: (t: unknown, min: number) => remindAgainWithUndo(t, min),
+}))
 const focus = { mode: 'break', isRunning: true, setMode: vi.fn(), togglePlay: vi.fn() }
 vi.mock('../focus/focusStore', () => ({ useFocusStore: { getState: () => focus } }))
 
@@ -73,6 +78,17 @@ describe('notification actions', () => {
     await runNotificationAction({ action: 'tomorrow', taskIds: ['a', 'd'] }, vi.fn())
     expect(moveToTomorrowWithUndo).toHaveBeenCalledTimes(1)
     expect((moveToTomorrowWithUndo.mock.calls[0][0] as { id: string }[]).map((t) => t.id)).toEqual(['a'])
+  })
+
+  // Snooze (Kai 2026-10-17): a reminder's In 10 min / In 1 hour — the reminder again, the task untouched.
+  it('In 10 min / In 1 hour remind the open ones again then, one undo each press', async () => {
+    const nav = vi.fn()
+    await runNotificationAction({ action: 'snooze10', taskIds: ['a', 'd'] }, nav)
+    await runNotificationAction({ action: 'snooze60', taskIds: ['a'] }, nav)
+    expect(remindAgainWithUndo.mock.calls.map(([ts, min]) => [(ts as { id: string }[]).map((t) => t.id), min])).toEqual([[['a'], 10], [['a'], 60]])
+    expect(nav).not.toHaveBeenCalled() // a background press: nothing opens
+    expect(moveToTomorrowWithUndo).not.toHaveBeenCalled()
+    expect(actionFromSearch('?kfAction=snooze10&kfTasks=a')).toEqual({ action: 'snooze10', taskIds: ['a'] }) // a cold window runs it too
   })
 
   it('the rituals and Open navigate; the focus buttons drive the timer', async () => {

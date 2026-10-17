@@ -185,7 +185,8 @@ function describeTask(e: ActivityLogEntry, names: ActivityNames): ActivityLine {
         ...line(said?.title || named(name, (q) => `A reminder about ${q}`, 'A reminder'), said?.body ?? ''),
         category: 'notifications',
         icon: 'notice',
-        notice: { kind: 'task_reminder', actions: open ? reminderNotice([{ id, title: name }], {}, new Date(), appZone()).actions : [], taskIds: [id] },
+        // Done · Tomorrow: a reminder's In 10 min / In 1 hour (snooze) belong to the notification itself.
+        notice: { kind: 'task_reminder', actions: open ? reminderNotice([{ id, title: name }], {}, new Date(), appZone()).actions.filter((x) => !x.action.startsWith('snooze')) : [], taskIds: [id] },
       }
     }
     case 'task.skipped':

@@ -64,6 +64,8 @@ export interface Task {
   someday: boolean
   reminder_at: string | null
   reminder_sent: boolean
+  /** A snoozed reminder's one more reminder ("In 10 min" / "In 1 hour", migration 0082); null/absent = none. */
+  remind_again_at?: string | null
   completed_at: string | null
   paused?: boolean
   milestone_id?: string | null
