@@ -1,0 +1,832 @@
+[
+  {
+    "name": "desktop-day Settings → Your data has \"Export your data\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day three choices",
+    "ok": true,
+    "detail": "[\"Everything (.json)\",\"Tasks (.csv)\",\"Calendar (.ics)\"]"
+  },
+  {
+    "name": "desktop-day the buttons fit the screen",
+    "ok": true,
+    "detail": "[[700,163,49],[878,125,49],[1017,142,49]]"
+  },
+  {
+    "name": "desktop-day no sideways scroll",
+    "ok": true,
+    "detail": "{\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "desktop-day the buttons wait while one runs",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day json: the file is named kais-flow-2026-10-17.json",
+    "ok": true,
+    "detail": "kais-flow-2026-10-17.json"
+  },
+  {
+    "name": "desktop-day json: json envelope { app, version, exported_at, tables }",
+    "ok": true,
+    "detail": "{\"app\":\"Kai's Flow\",\"version\":\"1.2.2\",\"exported_at\":\"2026-10-17T10:32:12.033Z\"}"
+  },
+  {
+    "name": "desktop-day json: json has every owned table, and only those",
+    "ok": true,
+    "detail": "app_settings,domains,areas,projects,tasks,inbox_items,calendar_events,routines,routine_completions,time_entries,journal_entries,people,interactions,books,notes,quotes,commentary,captures,resurfaced_log,activity_log"
+  },
+  {
+    "name": "desktop-day json: json tasks: all 1234 over two pages, Trash included and flagged",
+    "ok": true,
+    "detail": "1234"
+  },
+  {
+    "name": "desktop-day json: json calendar_events / journal / people rows as stored",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day json: json carries no key, hash or token",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day json: the export never asked for integrations / keys / push subscriptions",
+    "ok": true,
+    "detail": "app_settings,domains,areas,projects,tasks,inbox_items,calendar_events,routines,routine_completions,time_entries,journal_entries,people,interactions,books,notes,quotes,commentary,captures,resurfaced_log,activity_log"
+  },
+  {
+    "name": "desktop-day json: tasks read 1000 a page, without the search columns",
+    "ok": true,
+    "detail": "[\"0\",\"1000\"]"
+  },
+  {
+    "name": "desktop-day json: toast \"Saved kais-flow-2026-10-17.json\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day json: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… app settings 1\",\"Exporting… domains 1\",\"Exporting… areas 1\",\"Exporting… projects 1\",\"Exporting… tasks 1,000\"]"
+  },
+  {
+    "name": "desktop-day json: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day csv: the file is named kais-flow-tasks-2026-10-17.csv",
+    "ok": true,
+    "detail": "kais-flow-tasks-2026-10-17.csv"
+  },
+  {
+    "name": "desktop-day csv: csv starts with a UTF-8 BOM",
+    "ok": true,
+    "detail": "239,187,191"
+  },
+  {
+    "name": "desktop-day csv: csv header",
+    "ok": true,
+    "detail": "Title,Status,Due date,Scheduled start,Scheduled end,Duration (min),Priority,Labels,Project,Area,Domain,Parent task,Notes,Created,Completed"
+  },
+  {
+    "name": "desktop-day csv: csv one row per task outside Trash (1233)",
+    "ok": true,
+    "detail": "1233"
+  },
+  {
+    "name": "desktop-day csv: csv quoting, names not ids, the user's clock",
+    "ok": true,
+    "detail": "\"Launch, the \"\"big\"\" one 🚀\",To do,,2026-10-17 10:00,2026-10-17 10:45,45,High,\"Urgent, Deep work\",Website,Work,Shaheen,,\"Line one\nline two\",2026-10-01 12:00,"
+  },
+  {
+    "name": "desktop-day csv: csv Arabic intact, the subtask names its parent",
+    "ok": true,
+    "detail": "اكتب النص,Done,,,,,,,,,,\"Launch, the \"\"big\"\" one 🚀\",,2026-10-01 12:00,2026-10-02 13:15"
+  },
+  {
+    "name": "desktop-day csv: csv a formula is shown, not run",
+    "ok": true,
+    "detail": "'=1+1 sums,To do,,,,,,,,,,,,2026-10-01 12:00,"
+  },
+  {
+    "name": "desktop-day csv: toast \"Saved kais-flow-tasks-2026-10-17.csv\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day csv: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… tasks 1,000\",\"Exporting… tasks 1,234\",\"Exporting… projects 1\",\"Exporting… areas 1\",\"A copy for you to keep · it can’t be imported back yet\"]"
+  },
+  {
+    "name": "desktop-day csv: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ics: the file is named kais-flow-calendar-2026-10-17.ics",
+    "ok": true,
+    "detail": "kais-flow-calendar-2026-10-17.ics"
+  },
+  {
+    "name": "desktop-day ics: ics VCALENDAR, CRLF only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ics: ics every line ≤ 75 octets",
+    "ok": true,
+    "detail": "41"
+  },
+  {
+    "name": "desktop-day ics: ics own events + task block, not Google's, not Trash (UID = row id)",
+    "ok": true,
+    "detail": "e0000000-0000-4000-8000-000000000001,e0000000-0000-4000-8000-000000000002,e0000000-0000-4000-8000-000000000003,e0000000-0000-4000-8000-000000000004"
+  },
+  {
+    "name": "desktop-day ics: ics one-off in UTC, text escaped",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ics: ics all-day as dates (end exclusive), free = TRANSPARENT",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ics: ics the repeat: TZID wall clock, RRULE, EXDATE",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ics: ics the task block's emoji title survives folding",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ics: toast \"Saved kais-flow-calendar-2026-10-17.ics\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ics: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night Settings → Your data has \"Export your data\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night three choices",
+    "ok": true,
+    "detail": "[\"Everything (.json)\",\"Tasks (.csv)\",\"Calendar (.ics)\"]"
+  },
+  {
+    "name": "desktop-night the buttons fit the screen",
+    "ok": true,
+    "detail": "[[700,163,49],[878,125,49],[1017,142,49]]"
+  },
+  {
+    "name": "desktop-night no sideways scroll",
+    "ok": true,
+    "detail": "{\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "desktop-night json: the file is named kais-flow-2026-10-17.json",
+    "ok": true,
+    "detail": "kais-flow-2026-10-17.json"
+  },
+  {
+    "name": "desktop-night json: json envelope { app, version, exported_at, tables }",
+    "ok": true,
+    "detail": "{\"app\":\"Kai's Flow\",\"version\":\"1.2.2\",\"exported_at\":\"2026-10-17T10:32:23.263Z\"}"
+  },
+  {
+    "name": "desktop-night json: json has every owned table, and only those",
+    "ok": true,
+    "detail": "app_settings,domains,areas,projects,tasks,inbox_items,calendar_events,routines,routine_completions,time_entries,journal_entries,people,interactions,books,notes,quotes,commentary,captures,resurfaced_log,activity_log"
+  },
+  {
+    "name": "desktop-night json: json tasks: all 1234 over two pages, Trash included and flagged",
+    "ok": true,
+    "detail": "1234"
+  },
+  {
+    "name": "desktop-night json: json calendar_events / journal / people rows as stored",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night json: json carries no key, hash or token",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night json: the export never asked for integrations / keys / push subscriptions",
+    "ok": true,
+    "detail": "app_settings,domains,areas,projects,tasks,inbox_items,calendar_events,routines,routine_completions,time_entries,journal_entries,people,interactions,books,notes,quotes,commentary,captures,resurfaced_log,activity_log"
+  },
+  {
+    "name": "desktop-night json: tasks read 1000 a page, without the search columns",
+    "ok": true,
+    "detail": "[\"0\",\"1000\"]"
+  },
+  {
+    "name": "desktop-night json: toast \"Saved kais-flow-2026-10-17.json\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night json: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… app settings 1\",\"Exporting… domains 1\",\"Exporting… areas 1\",\"Exporting… projects 1\",\"Exporting… tasks 1,000\"]"
+  },
+  {
+    "name": "desktop-night json: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night csv: the file is named kais-flow-tasks-2026-10-17.csv",
+    "ok": true,
+    "detail": "kais-flow-tasks-2026-10-17.csv"
+  },
+  {
+    "name": "desktop-night csv: csv starts with a UTF-8 BOM",
+    "ok": true,
+    "detail": "239,187,191"
+  },
+  {
+    "name": "desktop-night csv: csv header",
+    "ok": true,
+    "detail": "Title,Status,Due date,Scheduled start,Scheduled end,Duration (min),Priority,Labels,Project,Area,Domain,Parent task,Notes,Created,Completed"
+  },
+  {
+    "name": "desktop-night csv: csv one row per task outside Trash (1233)",
+    "ok": true,
+    "detail": "1233"
+  },
+  {
+    "name": "desktop-night csv: csv quoting, names not ids, the user's clock",
+    "ok": true,
+    "detail": "\"Launch, the \"\"big\"\" one 🚀\",To do,,2026-10-17 10:00,2026-10-17 10:45,45,High,\"Urgent, Deep work\",Website,Work,Shaheen,,\"Line one\nline two\",2026-10-01 12:00,"
+  },
+  {
+    "name": "desktop-night csv: csv Arabic intact, the subtask names its parent",
+    "ok": true,
+    "detail": "اكتب النص,Done,,,,,,,,,,\"Launch, the \"\"big\"\" one 🚀\",,2026-10-01 12:00,2026-10-02 13:15"
+  },
+  {
+    "name": "desktop-night csv: csv a formula is shown, not run",
+    "ok": true,
+    "detail": "'=1+1 sums,To do,,,,,,,,,,,,2026-10-01 12:00,"
+  },
+  {
+    "name": "desktop-night csv: toast \"Saved kais-flow-tasks-2026-10-17.csv\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night csv: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… tasks 1,000\",\"Exporting… tasks 1,234\",\"Exporting… projects 1\",\"Exporting… areas 1\",\"A copy for you to keep · it can’t be imported back yet\"]"
+  },
+  {
+    "name": "desktop-night csv: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night ics: the file is named kais-flow-calendar-2026-10-17.ics",
+    "ok": true,
+    "detail": "kais-flow-calendar-2026-10-17.ics"
+  },
+  {
+    "name": "desktop-night ics: ics VCALENDAR, CRLF only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night ics: ics every line ≤ 75 octets",
+    "ok": true,
+    "detail": "41"
+  },
+  {
+    "name": "desktop-night ics: ics own events + task block, not Google's, not Trash (UID = row id)",
+    "ok": true,
+    "detail": "e0000000-0000-4000-8000-000000000001,e0000000-0000-4000-8000-000000000002,e0000000-0000-4000-8000-000000000003,e0000000-0000-4000-8000-000000000004"
+  },
+  {
+    "name": "desktop-night ics: ics one-off in UTC, text escaped",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night ics: ics all-day as dates (end exclusive), free = TRANSPARENT",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night ics: ics the repeat: TZID wall clock, RRULE, EXDATE",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night ics: ics the task block's emoji title survives folding",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night ics: toast \"Saved kais-flow-calendar-2026-10-17.ics\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night ics: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day Settings → Your data has \"Export your data\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day three choices",
+    "ok": true,
+    "detail": "[\"Everything (.json)\",\"Tasks (.csv)\",\"Calendar (.ics)\"]"
+  },
+  {
+    "name": "phone-day the buttons fit the screen, 44px+ tall",
+    "ok": true,
+    "detail": "[[75,153,44],[240,117,44],[224,133,44]]"
+  },
+  {
+    "name": "phone-day no sideways scroll",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "phone-day json: the file is named kais-flow-2026-10-17.json",
+    "ok": true,
+    "detail": "kais-flow-2026-10-17.json"
+  },
+  {
+    "name": "phone-day json: json envelope { app, version, exported_at, tables }",
+    "ok": true,
+    "detail": "{\"app\":\"Kai's Flow\",\"version\":\"1.2.2\",\"exported_at\":\"2026-10-17T10:32:35.079Z\"}"
+  },
+  {
+    "name": "phone-day json: json has every owned table, and only those",
+    "ok": true,
+    "detail": "app_settings,domains,areas,projects,tasks,inbox_items,calendar_events,routines,routine_completions,time_entries,journal_entries,people,interactions,books,notes,quotes,commentary,captures,resurfaced_log,activity_log"
+  },
+  {
+    "name": "phone-day json: json tasks: all 1234 over two pages, Trash included and flagged",
+    "ok": true,
+    "detail": "1234"
+  },
+  {
+    "name": "phone-day json: json calendar_events / journal / people rows as stored",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day json: json carries no key, hash or token",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day json: the export never asked for integrations / keys / push subscriptions",
+    "ok": true,
+    "detail": "app_settings,domains,areas,projects,tasks,inbox_items,calendar_events,routines,routine_completions,time_entries,journal_entries,people,interactions,books,notes,quotes,commentary,captures,resurfaced_log,activity_log"
+  },
+  {
+    "name": "phone-day json: tasks read 1000 a page, without the search columns",
+    "ok": true,
+    "detail": "[\"0\",\"1000\"]"
+  },
+  {
+    "name": "phone-day json: toast \"Saved kais-flow-2026-10-17.json\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day json: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… app settings 1\",\"Exporting… domains 1\",\"Exporting… areas 1\",\"Exporting… projects 1\",\"Exporting… tasks 1,000\"]"
+  },
+  {
+    "name": "phone-day json: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day csv: the file is named kais-flow-tasks-2026-10-17.csv",
+    "ok": true,
+    "detail": "kais-flow-tasks-2026-10-17.csv"
+  },
+  {
+    "name": "phone-day csv: csv starts with a UTF-8 BOM",
+    "ok": true,
+    "detail": "239,187,191"
+  },
+  {
+    "name": "phone-day csv: csv header",
+    "ok": true,
+    "detail": "Title,Status,Due date,Scheduled start,Scheduled end,Duration (min),Priority,Labels,Project,Area,Domain,Parent task,Notes,Created,Completed"
+  },
+  {
+    "name": "phone-day csv: csv one row per task outside Trash (1233)",
+    "ok": true,
+    "detail": "1233"
+  },
+  {
+    "name": "phone-day csv: csv quoting, names not ids, the user's clock",
+    "ok": true,
+    "detail": "\"Launch, the \"\"big\"\" one 🚀\",To do,,2026-10-17 10:00,2026-10-17 10:45,45,High,\"Urgent, Deep work\",Website,Work,Shaheen,,\"Line one\nline two\",2026-10-01 12:00,"
+  },
+  {
+    "name": "phone-day csv: csv Arabic intact, the subtask names its parent",
+    "ok": true,
+    "detail": "اكتب النص,Done,,,,,,,,,,\"Launch, the \"\"big\"\" one 🚀\",,2026-10-01 12:00,2026-10-02 13:15"
+  },
+  {
+    "name": "phone-day csv: csv a formula is shown, not run",
+    "ok": true,
+    "detail": "'=1+1 sums,To do,,,,,,,,,,,,2026-10-01 12:00,"
+  },
+  {
+    "name": "phone-day csv: toast \"Saved kais-flow-tasks-2026-10-17.csv\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day csv: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… tasks 1,000\",\"Exporting… tasks 1,234\",\"Exporting… projects 1\",\"Exporting… areas 1\",\"A copy for you to keep · it can’t be imported back yet\"]"
+  },
+  {
+    "name": "phone-day csv: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ics: the file is named kais-flow-calendar-2026-10-17.ics",
+    "ok": true,
+    "detail": "kais-flow-calendar-2026-10-17.ics"
+  },
+  {
+    "name": "phone-day ics: ics VCALENDAR, CRLF only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ics: ics every line ≤ 75 octets",
+    "ok": true,
+    "detail": "41"
+  },
+  {
+    "name": "phone-day ics: ics own events + task block, not Google's, not Trash (UID = row id)",
+    "ok": true,
+    "detail": "e0000000-0000-4000-8000-000000000001,e0000000-0000-4000-8000-000000000002,e0000000-0000-4000-8000-000000000003,e0000000-0000-4000-8000-000000000004"
+  },
+  {
+    "name": "phone-day ics: ics one-off in UTC, text escaped",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ics: ics all-day as dates (end exclusive), free = TRANSPARENT",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ics: ics the repeat: TZID wall clock, RRULE, EXDATE",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ics: ics the task block's emoji title survives folding",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ics: toast \"Saved kais-flow-calendar-2026-10-17.ics\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ics: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night Settings → Your data has \"Export your data\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night three choices",
+    "ok": true,
+    "detail": "[\"Everything (.json)\",\"Tasks (.csv)\",\"Calendar (.ics)\"]"
+  },
+  {
+    "name": "phone-night the buttons fit the screen, 44px+ tall",
+    "ok": true,
+    "detail": "[[75,153,44],[240,117,44],[224,133,44]]"
+  },
+  {
+    "name": "phone-night no sideways scroll",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "phone-night json: the file is named kais-flow-2026-10-17.json",
+    "ok": true,
+    "detail": "kais-flow-2026-10-17.json"
+  },
+  {
+    "name": "phone-night json: json envelope { app, version, exported_at, tables }",
+    "ok": true,
+    "detail": "{\"app\":\"Kai's Flow\",\"version\":\"1.2.2\",\"exported_at\":\"2026-10-17T10:32:46.441Z\"}"
+  },
+  {
+    "name": "phone-night json: json has every owned table, and only those",
+    "ok": true,
+    "detail": "app_settings,domains,areas,projects,tasks,inbox_items,calendar_events,routines,routine_completions,time_entries,journal_entries,people,interactions,books,notes,quotes,commentary,captures,resurfaced_log,activity_log"
+  },
+  {
+    "name": "phone-night json: json tasks: all 1234 over two pages, Trash included and flagged",
+    "ok": true,
+    "detail": "1234"
+  },
+  {
+    "name": "phone-night json: json calendar_events / journal / people rows as stored",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night json: json carries no key, hash or token",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night json: the export never asked for integrations / keys / push subscriptions",
+    "ok": true,
+    "detail": "app_settings,domains,areas,projects,tasks,inbox_items,calendar_events,routines,routine_completions,time_entries,journal_entries,people,interactions,books,notes,quotes,commentary,captures,resurfaced_log,activity_log"
+  },
+  {
+    "name": "phone-night json: tasks read 1000 a page, without the search columns",
+    "ok": true,
+    "detail": "[\"0\",\"1000\"]"
+  },
+  {
+    "name": "phone-night json: toast \"Saved kais-flow-2026-10-17.json\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night json: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… app settings 1\",\"Exporting… domains 1\",\"Exporting… areas 1\",\"Exporting… projects 1\",\"Exporting… tasks 1,000\"]"
+  },
+  {
+    "name": "phone-night json: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night csv: the file is named kais-flow-tasks-2026-10-17.csv",
+    "ok": true,
+    "detail": "kais-flow-tasks-2026-10-17.csv"
+  },
+  {
+    "name": "phone-night csv: csv starts with a UTF-8 BOM",
+    "ok": true,
+    "detail": "239,187,191"
+  },
+  {
+    "name": "phone-night csv: csv header",
+    "ok": true,
+    "detail": "Title,Status,Due date,Scheduled start,Scheduled end,Duration (min),Priority,Labels,Project,Area,Domain,Parent task,Notes,Created,Completed"
+  },
+  {
+    "name": "phone-night csv: csv one row per task outside Trash (1233)",
+    "ok": true,
+    "detail": "1233"
+  },
+  {
+    "name": "phone-night csv: csv quoting, names not ids, the user's clock",
+    "ok": true,
+    "detail": "\"Launch, the \"\"big\"\" one 🚀\",To do,,2026-10-17 10:00,2026-10-17 10:45,45,High,\"Urgent, Deep work\",Website,Work,Shaheen,,\"Line one\nline two\",2026-10-01 12:00,"
+  },
+  {
+    "name": "phone-night csv: csv Arabic intact, the subtask names its parent",
+    "ok": true,
+    "detail": "اكتب النص,Done,,,,,,,,,,\"Launch, the \"\"big\"\" one 🚀\",,2026-10-01 12:00,2026-10-02 13:15"
+  },
+  {
+    "name": "phone-night csv: csv a formula is shown, not run",
+    "ok": true,
+    "detail": "'=1+1 sums,To do,,,,,,,,,,,,2026-10-01 12:00,"
+  },
+  {
+    "name": "phone-night csv: toast \"Saved kais-flow-tasks-2026-10-17.csv\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night csv: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… tasks 1,000\",\"Exporting… tasks 1,234\",\"Exporting… projects 1\",\"Exporting… areas 1\",\"A copy for you to keep · it can’t be imported back yet\"]"
+  },
+  {
+    "name": "phone-night csv: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ics: the file is named kais-flow-calendar-2026-10-17.ics",
+    "ok": true,
+    "detail": "kais-flow-calendar-2026-10-17.ics"
+  },
+  {
+    "name": "phone-night ics: ics VCALENDAR, CRLF only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ics: ics every line ≤ 75 octets",
+    "ok": true,
+    "detail": "41"
+  },
+  {
+    "name": "phone-night ics: ics own events + task block, not Google's, not Trash (UID = row id)",
+    "ok": true,
+    "detail": "e0000000-0000-4000-8000-000000000001,e0000000-0000-4000-8000-000000000002,e0000000-0000-4000-8000-000000000003,e0000000-0000-4000-8000-000000000004"
+  },
+  {
+    "name": "phone-night ics: ics one-off in UTC, text escaped",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ics: ics all-day as dates (end exclusive), free = TRANSPARENT",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ics: ics the repeat: TZID wall clock, RRULE, EXDATE",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ics: ics the task block's emoji title survives folding",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ics: toast \"Saved kais-flow-calendar-2026-10-17.ics\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ics: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tauri csv: the file is named kais-flow-tasks-2026-10-17.csv",
+    "ok": true,
+    "detail": "kais-flow-tasks-2026-10-17.csv"
+  },
+  {
+    "name": "tauri csv: csv starts with a UTF-8 BOM",
+    "ok": true,
+    "detail": "239,187,191"
+  },
+  {
+    "name": "tauri csv: csv header",
+    "ok": true,
+    "detail": "Title,Status,Due date,Scheduled start,Scheduled end,Duration (min),Priority,Labels,Project,Area,Domain,Parent task,Notes,Created,Completed"
+  },
+  {
+    "name": "tauri csv: csv one row per task outside Trash (1233)",
+    "ok": true,
+    "detail": "1233"
+  },
+  {
+    "name": "tauri csv: csv quoting, names not ids, the user's clock",
+    "ok": true,
+    "detail": "\"Launch, the \"\"big\"\" one 🚀\",To do,,2026-10-17 10:00,2026-10-17 10:45,45,High,\"Urgent, Deep work\",Website,Work,Shaheen,,\"Line one\nline two\",2026-10-01 12:00,"
+  },
+  {
+    "name": "tauri csv: csv Arabic intact, the subtask names its parent",
+    "ok": true,
+    "detail": "اكتب النص,Done,,,,,,,,,,\"Launch, the \"\"big\"\" one 🚀\",,2026-10-01 12:00,2026-10-02 13:15"
+  },
+  {
+    "name": "tauri csv: csv a formula is shown, not run",
+    "ok": true,
+    "detail": "'=1+1 sums,To do,,,,,,,,,,,,2026-10-01 12:00,"
+  },
+  {
+    "name": "tauri csv: toast \"Saved kais-flow-tasks-2026-10-17.csv\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tauri csv: progress \"Exporting… tasks 1,000\" while it reads",
+    "ok": true,
+    "detail": "[\"Exporting…\",\"Exporting… tasks 1,000\",\"Exporting… tasks 1,234\",\"Exporting… projects 1\",\"Exporting… areas 1\",\"A copy for you to keep · it can’t be imported back yet\"]"
+  },
+  {
+    "name": "tauri csv: the row settles back to its help line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "tauri no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android writes kais-flow-calendar-2026-10-17.ics to the app's cache as UTF-8",
+    "ok": true,
+    "detail": "{\"path\":\"kais-flow-calendar-2026-10-17.ics\",\"data\":\"BEGIN:VCALENDAR\\r\\nVER\",\"directory\":\"CACHE\",\"encoding\":\"utf8\"}"
+  },
+  {
+    "name": "android opens the share sheet on that file",
+    "ok": true,
+    "detail": "{\"title\":\"kais-flow-calendar-2026-10-17.ics\",\"files\":[\"file:///data/user/0/com.kaisflow.garden/cache/kais-flow-calendar-2026-10-17.ics\"]}"
+  },
+  {
+    "name": "android no Blob download inside the Android app",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android toast \"Shared …\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android no page errors (beyond the fake bridge's missing plugins)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android-cancel writes kais-flow-calendar-2026-10-17.ics to the app's cache as UTF-8",
+    "ok": true,
+    "detail": "{\"path\":\"kais-flow-calendar-2026-10-17.ics\",\"data\":\"BEGIN:VCALENDAR\\r\\nVER\",\"directory\":\"CACHE\",\"encoding\":\"utf8\"}"
+  },
+  {
+    "name": "android-cancel opens the share sheet on that file",
+    "ok": true,
+    "detail": "{\"title\":\"kais-flow-calendar-2026-10-17.ics\",\"files\":[\"file:///data/user/0/com.kaisflow.garden/cache/kais-flow-calendar-2026-10-17.ics\"]}"
+  },
+  {
+    "name": "android-cancel no Blob download inside the Android app",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android-cancel closing the sheet: no toast, no error",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android-cancel no page errors (beyond the fake bridge's missing plugins)",
+    "ok": true,
+    "detail": ""
+  }
+]
