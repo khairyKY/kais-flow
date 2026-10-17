@@ -68,10 +68,6 @@
   addEventListener('resize', onScroll)
   onScroll()
 
-  // ── the hero's date, like the top of the app's Today page ──
-  const today = document.querySelector('[data-today]')
-  if (today) today.textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) + ' — a fresh page'
-
   // ── FAQ: open on wide screens, folded on phones ──
   const wide = matchMedia('(min-width: 761px)')
   const faq = () => $$('.faq details').forEach((x) => { x.open = wide.matches })

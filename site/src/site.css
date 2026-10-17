@@ -142,20 +142,22 @@ main:focus { outline: none; }
 .foot-links a:hover { color: var(--ink-body); text-decoration: underline; }
 .fine { margin-top: 32px; font-size: 14px; color: var(--ink-faint); }
 
-/* ── home: hero ── */
-.hero { position: relative; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: center; padding-block: 72px 128px; }
+/* ── home: hero ── the pre-v2 composition Kai liked, with real screenshots */
+.hero { position: relative; overflow-x: clip; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 40px; align-items: center; padding-block: 90px 120px; }
+.hero-wisteria { position: absolute; top: -30px; left: 520px; width: 150px; opacity: .85; transform: rotate(-4deg); pointer-events: none; }
 .hero-copy { position: relative; z-index: 2; }
-.hero-date { font-size: 26px; line-height: 1.2; transform: rotate(-2deg); transform-origin: 0 50%; }
-.hero h1 { margin-top: 16px; font-size: 72px; line-height: 1; letter-spacing: -.025em; }
-.hero-copy > .sub { margin-top: 24px; max-width: 30em; font-size: 20px; line-height: 1.55; color: var(--ink-muted); }
-.hero .btns { margin-top: 40px; }
+.hero-eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint); }
+.hero h1 { margin-top: 18px; font-size: 78px; line-height: 1; letter-spacing: -.022em; }
+.hero-copy > .sub { margin-top: 24px; max-width: 30em; font-size: 19px; line-height: 1.6; color: var(--ink-muted); }
+.hero .btns { margin-top: 34px; }
 .hero-note { margin-top: 16px; font-size: 14px; color: var(--ink-faint); }
-.hero-art { position: relative; margin-inline-end: calc(-1 * var(--gutter) - 120px); padding: 40px 0 64px 48px; }
-.hero-art .shot-desk { z-index: 1; width: 100%; max-width: 1040px; }
-.hero-art .hero-phone { position: absolute; z-index: 2; left: -16px; bottom: 0; width: 220px; padding: 7px; border-radius: 36px; }
-.hero-art .hero-phone img { border-radius: 30px; }
-/* hangs in the gap between the words and the screens, tucked behind them, never over the app */
-.hero-wisteria { position: absolute; z-index: 0; top: -72px; left: -64px; width: 112px; transform: rotate(2deg); transform-origin: 50% 0; pointer-events: none; filter: drop-shadow(0 6px 8px rgba(60, 52, 38, .12)); }
+.hero-mock { position: relative; height: 620px; }
+.hero-mock .shot-desk { position: absolute; top: 20px; right: -60px; width: 720px; border-radius: 6px; }
+.hero-mock .hero-phone { position: absolute; z-index: 2; top: 150px; left: 10px; width: 232px; padding: 7px; border-radius: 36px; }
+.hero-mock .hero-phone img { border-radius: 30px; }
+.hero-hand { position: absolute; z-index: 3; top: 150px; left: 300px; font-family: var(--font-hand); font-size: 24px; color: var(--ink-hand); transform: rotate(-4deg); white-space: nowrap; }
+.btn.outline { border: 1.5px solid var(--line-control); color: var(--ink-body); background: var(--paper-parchment); }
+.btn.outline:hover { background: var(--paper-bone); color: var(--ink-body); }
 
 /* ── home: the day, told by scrolling ── */
 .story { position: relative; }
@@ -657,9 +659,11 @@ html[lang="ar"] .hand { font-family: 'IBM Plex Sans Arabic', var(--font-ui); fon
   :root { --gutter: 32px; }
   .sec { padding-block: 96px; }
   .head h2 { font-size: 48px; }
-  .hero { grid-template-columns: 1fr; padding-block: 48px 96px; }
-  .hero-art { margin-inline: 0 calc(-1 * var(--gutter)); padding-left: 32px; }
-  .hero-wisteria { top: -340px; left: auto; right: 48px; width: 96px; }
+  .hero { grid-template-columns: 1fr; padding-block: 64px 72px; }
+  .hero-wisteria { left: auto; right: 0; top: -20px; width: 110px; }
+  [dir="rtl"] .hero-wisteria { right: auto; left: 0; }
+  .hero-mock { height: 560px; }
+  .hero-mock .shot-desk { right: auto; left: 160px; }
   .beat { gap: 40px; padding-block: 72px; }
   .beat-text h3 { font-size: 44px; }
   .isteps, .day3, .getfree, .contents { grid-template-columns: 1fr; }
@@ -695,17 +699,16 @@ html[lang="ar"] .hand { font-family: 'IBM Plex Sans Arabic', var(--font-ui); fon
   .sec { padding-block: 72px; }
   .head h2 { font-size: 40px; line-height: 1.06; }
   .lead, .head h1 + .lead { font-size: 17px; }
-  .hero { padding-block: 32px 72px; gap: 24px; }
-  .hero-date { font-size: 22px; }
+  .hero { padding-block: 44px 40px; gap: 32px; }
   .hero h1 { font-size: 44px; line-height: 1.02; }
   .hero-copy > .sub { font-size: 17px; }
-  .hero .btns { flex-direction: column; margin-top: 32px; }
-  .hero .btns .btn { width: 100%; }
-  .hero-note { text-align: center; }
-  .hero-art { margin-inline: calc(-1 * var(--gutter)); padding: 24px 0 0; overflow: hidden; }
-  .hero-art .shot-desk { width: 760px; max-width: none; margin-left: 24px; border-radius: 10px; }
-  .hero-art .hero-phone { position: relative; left: auto; bottom: auto; width: 230px; margin: -230px auto 0; }
-  .hero-wisteria { display: none; }
+  .hero-wisteria { width: 80px; right: 0; top: -8px; opacity: .75; }
+  .hero-copy { padding-inline-end: 44px; }
+  .hero .btns, .hero-note { margin-inline-end: -44px; }
+  .hero-mock { height: 470px; margin-inline: calc(-1 * var(--gutter)); overflow: hidden; }
+  .hero-mock .shot-desk { width: 518px; left: 0; right: auto; top: 0; }
+  .hero-mock .hero-phone { width: 230px; left: calc(50% - 115px); top: 70px; }
+  .hero-hand { display: none; }
   .beat { grid-template-columns: 1fr; gap: 32px; padding: 64px var(--gutter); justify-items: center; }
   .beat-text { justify-self: stretch; }
   .beat-text h3 { font-size: 36px; }

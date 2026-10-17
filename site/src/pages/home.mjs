@@ -2,19 +2,20 @@ import { img, shot, btn, icon } from '../lib.mjs'
 import { getIt, papers, promises } from '../parts.mjs'
 import { APP_URL, RELEASES } from '../data.mjs'
 
-// ── the hero: the real Today page, desk and phone ──
-const hero = () => `<section class="hero wrap">
+// ── the hero: kept as Kai liked it before v2 (wisteria above, the week behind, Today in front), now with real screens ──
+const hero = () => `<section class="wrap hero">
+  ${img('wisteria-p100', 'A hanging spray of pale wisteria', { w: 150, cls: 'hero-wisteria', eager: true })}
   <div class="hero-copy">
-    <p class="hand hero-date" data-today aria-hidden="true">a fresh page</p>
+    <span class="hero-eyebrow">A field journal of days</span>
     <h1>Your days, planned in one quiet place.</h1>
-    <p class="sub">Tasks, time blocks, habits and your journal on one page. Plan it in the morning, tend it through the day, close it at night.</p>
-    <div class="btns">${btn('Open the app', APP_URL, { size: 'lg' })}${btn('Download', '/download/', { kind: 'tonal', size: 'lg', ic: 'download' })}</div>
-    <p class="hero-note">Free, on the web, Android and Windows.</p>
+    <p class="sub">Tasks, time blocks, habits and your journal on one page of paper. Plan in the morning, tend it through the day, close it at night.</p>
+    <div class="btns">${btn('Open the app', APP_URL, { size: 'lg' })}${btn('Download', '/download/', { kind: 'outline', size: 'lg', ic: 'download' })}</div>
+    <p class="hero-note">Free · Web, Android and Windows</p>
   </div>
-  <div class="hero-art">
-    ${img('wisteria-p100', '', { w: 150, cls: 'hero-wisteria', eager: true })}
-    ${shot('today-desk', 'Today on a computer: the goal of the day on a taped page, the Top 3 with a task’s steps folded under it, the day’s timeline and the morning ritual', { eager: true })}
-    ${shot('today-phone', 'Today on a phone: the date, Plan my day, the goal of the day and what’s up next', { eager: true, cls: 'hero-phone' })}
+  <div class="hero-mock">
+    ${shot('week-desk', 'The week calendar on a computer, with time blocks, a Study slot holding tasks, and events from Google Calendar', { eager: true })}
+    ${shot('today-phone', 'Today on a phone: the goal of the day, the Top 3 and what’s up next', { eager: true, cls: 'hero-phone' })}
+    <span class="hero-hand" aria-hidden="true">← what now, what’s next</span>
   </div>
 </section>`
 
