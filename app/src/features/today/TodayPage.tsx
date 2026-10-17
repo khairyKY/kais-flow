@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, planWithUndo, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, duplicateTasksWithUndo, planWithUndo, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { isOverdue, todayFor } from '../tasks/planMath'
 import { DragRow, useDropSpot, type DragLoad, type Spot } from '../../components/drag'
@@ -339,9 +339,10 @@ export function TodayPage() {
   // Flow Audit §4: delete = Trash + Undo, no confirm.
   function bulkDelete() { deleteTasksWithUndo(selectedTasks); clearSelection() }
   function bulkTop3() { toggleTop3ManyWithUndo(selectedTasks); clearSelection() }
+  function bulkDuplicate() { duplicateTasksWithUndo(selectedTasks); clearSelection() }
   // Kai 2026-10-12: a row's menu ignored the selection — it gets the page's bulk handlers.
   const bulk: BulkActions | undefined = selected.size > 1
-    ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
+    ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate }
     : undefined
 
   // F3 (punch 12/22/29): Today's list keyboard was an empty bindings array — dead keys on the
@@ -596,6 +597,7 @@ export function TodayPage() {
           onTop3={bulkTop3}
           onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
           onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
+          onDuplicate={bulkDuplicate}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(selectable.map((t) => t.id)))}
         />

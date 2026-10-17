@@ -20,6 +20,7 @@ import { BLOCK_MENU_WIDTH, EVENT_REMIND, blockMenuSpec, isRepeatingBlock, isSync
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { ColorDots } from './formFields'
 import { eventSpan } from './phoneGridMath'
+import { duplicateBlockWithUndo } from './duplicate'
 
 // ── design-export/Calendar.dc.html §5 "Block detail — a menu, not a form" (desktop): a 238px popover
 // beside the clicked block in the Tasks context menu's own language — it IS the kit ContextMenu,
@@ -30,7 +31,7 @@ import { eventSpan } from './phoneGridMath'
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete', google: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
 
 /** §5c's Duration submenu. */
@@ -319,6 +320,7 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
     complete: () => task && (task.status === 'done' ? uncompleteTask(task) : completeTaskWithUndo(task)),
     open: () => event.task_id && openTask(event.task_id),
     replan: () => onReplan?.(position.x, position.y),
+    duplicate: () => duplicateBlockWithUndo(event, task),
     unschedule,
     delete: del,
   }

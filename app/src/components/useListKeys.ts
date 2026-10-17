@@ -9,18 +9,24 @@ export interface ListBinding<T> {
   runAll?: (items: T[]) => void
   /** A page key (Tasks' ⇧F / ⇧S): runs with no row focused, even on an empty list. */
   page?: boolean
+  /** Pressed with ⌘/Ctrl (⌘/Ctrl+D Duplicate): matches only then, and the bare key never matches it. */
+  mod?: boolean
 }
 
 /** The binding a key press means. Letters match whatever the layout or Caps Lock make of them (Kai
  * 2026-10-12: T did nothing) — on an Arabic layout T arrives as key 'ف', code 'KeyT'. Shift + a letter
  * is its capital's binding when there is one (Tasks' ⇧F filter, ⇧S sort — P7e A18), else the letter's. */
-export function bindingFor<T>(bindings: readonly ListBinding<T>[], e: Pick<KeyboardEvent, 'key' | 'code'> & { shiftKey?: boolean }): ListBinding<T> | undefined {
-  const find = (k: string) => bindings.find((b) => b.keys.includes(k))
+export function bindingFor<T>(bindings: readonly ListBinding<T>[], e: Pick<KeyboardEvent, 'key' | 'code'> & { shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }): ListBinding<T> | undefined {
+  // ⌘/Ctrl + a letter only ever means a `mod` binding (its capital: ['⌘/Ctrl', 'D']); a bare key never does.
+  const mod = !!(e.ctrlKey || e.metaKey)
+  const pool = bindings.filter((b) => !!b.mod === mod)
+  const find = (k: string) => pool.find((b) => b.keys.includes(k))
   const latin = /^[a-z]$/i.test(e.key)
   const exact = latin ? undefined : find(e.key)
   if (exact) return exact
   const letter = latin ? e.key.toLowerCase() : /^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase()
   if (!letter) return undefined
+  if (mod) return find(letter.toUpperCase())
   return (e.shiftKey ? find(letter.toUpperCase()) : undefined) ?? find(letter)
 }
 
@@ -119,7 +125,7 @@ export function useListKeys<T extends { id: string }>(
         if (focusedId) requestAnimationFrame(() => document.getElementById(`${idPrefix}${focusedId}`)?.focus())
         return
       }
-      if (e.ctrlKey || e.metaKey || e.altKey) return
+      if (e.altKey || ((e.ctrlKey || e.metaKey) && !bindingFor(bindings, e))) return
       if (items.length === 0 && !bindingFor(bindings, e)?.page) return
       const idx = items.findIndex((i) => i.id === focusedId)
 

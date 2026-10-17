@@ -77,7 +77,7 @@ Anything that speaks remote MCP over Streamable HTTP with a custom header (Curso
 
 ## The tools
 
-51 tools: 45 for every key (the writers only for a Read & write key), plus 6 for the journal and people
+53 tools: 47 for every key (the writers only for a Read & write key), plus 6 for the journal and people
 that a key lists only when its owner switched them on. A tool that takes `id` also takes `ids` (a list,
 at most 50) where it says *bulk*: the same change on each, as the app's bulk bar does — a refusal for one
 (say, an already-done task) is reported in `failed` and the rest go ahead.
@@ -95,10 +95,12 @@ at most 50) where it says *bulk*: the same change on each, as the app's bulk bar
 | `reschedule_task` | *Bulk.* To a day (09:00, off the calendar), a day and time (on the calendar there), or `null` (no date, every block off) — the app's replan | ✓ |
 | `complete_task` / `reopen_task` | *Bulk.* Tick off (a repeat's next copy comes, unless paused, its subtasks with it, open again) / open again. A parent's open subtasks: `subtasks: 'leave'` (the default) or `'complete'`; the answer says which | ✓ |
 | `move_to_tomorrow` | *Bulk.* Due tomorrow 09:00, the app's "Tomorrow" | ✓ |
+| `duplicate_task` | *Bulk.* The app's Duplicate: an open copy (same title, notes, date, place, labels, priority, duration, repeat, reminder), off the calendar and out of the Top 3. A parent's subtasks come along as open subtasks of the copy; a subtask's copy stays under its parent | ✓ |
 | `calendar` | Events between two days (at most 31): events, Time blocks with the tasks each occurrence holds, tasks' blocks; a series once per occurrence; `remind_min` | |
 | `add_event` | An event or Time block: timed or all-day, optionally repeating, optionally reminding (`remind_min`, timed only) | ✓ |
 | `edit_event` | Title, kind, time, repeat, reminder — of an event, a whole series, or one occurrence on its own. A Time block moved takes the tasks it holds along; made an event or all-day, it lets them go; a series' new repeat keeps each where its day still has one | ✓ |
 | `delete_event` | An event, one occurrence, or a whole series — to Trash. A Time block lets its tasks go (back unscheduled) | ✓ |
+| `duplicate_event` | The app's Duplicate: a copy at the same time (a repeat's `occurrence`, as a one-off). A task's block duplicates its task (subtasks along) and blocks the copy there. Never a Time block or a Google event | ✓ |
 
 ### The Inbox
 

@@ -218,6 +218,10 @@
 .pc-bs-save.is-pending { color: var(--sig-offline); }
 .pc-bs-delete.kf-button--ghost { margin-right: auto; color: var(--acc-terra-ink); }
 
+/* Kai 2026-10-17: a chip's Schedule sheet opens its task in one tap — the title, or the first row. */
+.pc-sched-title { all: unset; display: block; cursor: pointer; border-radius: var(--radius-input); }
+.pc-sched-title:focus-visible { box-shadow: var(--focus-ring); }
+.pc-bs-rows.pc-sched-open { border-top: none; padding-top: 0; margin-bottom: var(--sp-2); }
 .pc-slots { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin: var(--sp-3) 0 var(--sp-4); }
 .pc-hint { display: flex; align-items: center; gap: var(--sp-2); margin: calc(-1 * var(--sp-1)) 0 var(--sp-3); font-size: 14px; color: var(--ink-muted); }
 

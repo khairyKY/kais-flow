@@ -18,6 +18,8 @@ export interface BulkBarProps {
    * behind More: the phone bar has no room for two more tabs, the desktop pill none at 1280px. */
   onPriority?: (e: ReactMouseEvent) => void
   onLabels?: (e: ReactMouseEvent) => void
+  /** Duplicate the selection, one Undo (Kai 2026-10-17) — behind More with Priority and Labels. */
+  onDuplicate?: () => void
   onClear: () => void
   /** Phone app bar's "Select all" — every row the page shows. */
   onSelectAll?: () => void
@@ -52,15 +54,16 @@ const CSS = `
 
 /** Selection mode's bars (DS-CHANGELOG §3 "Selection mode", MK Selection). On a phone: an app bar
  * (✕ · "N selected" · Select all) over the top bar, and a bulk bar that replaces the tab bar —
- * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Move · Top 3 · More (Priority, Labels) ·
+ * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Move · Top 3 · More (Priority, Labels, Duplicate) ·
  * Delete. On desktop: the floating pill, same actions (More is a menu there).
  * Every button loops the existing per-task writes over the selection ("zero new API surface"). */
-export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onTop3, onPriority, onLabels, onClear, onSelectAll }: BulkBarProps) {
+export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onTop3, onPriority, onLabels, onDuplicate, onClear, onSelectAll }: BulkBarProps) {
   const isMobile = useIsMobile()
   const [more, setMore] = useState<ReactMouseEvent | null>(null)
   const extras: { label: string; icon: IconName; run: (e: ReactMouseEvent) => void }[] = [
-    ...(onPriority ? [{ label: 'Priority', icon: 'priority' as const, run: onPriority }] : []),
-    ...(onLabels ? [{ label: 'Labels', icon: 'label' as const, run: onLabels }] : []),
+    ...(onPriority ? [{ label: 'Priority…', icon: 'priority' as const, run: onPriority }] : []),
+    ...(onLabels ? [{ label: 'Labels…', icon: 'label' as const, run: onLabels }] : []),
+    ...(onDuplicate ? [{ label: 'Duplicate', icon: 'duplicate' as const, run: onDuplicate }] : []),
   ]
   const actions: { label: string; icon: IconName; run: (e: ReactMouseEvent) => void; menu?: boolean; destructive?: boolean }[] = [
     { label: 'Done', icon: 'check', run: onComplete },
@@ -96,7 +99,7 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
             </button>
           ))}
         </div>
-        {more && <ActionSheet title={`${count} selected`} onClose={() => setMore(null)} items={extras.map((x) => ({ label: `${x.label}…`, icon: <Icon name={x.icon} size={24} />, onSelect: () => x.run(more) }))} />}
+        {more && <ActionSheet title={`${count} selected`} onClose={() => setMore(null)} items={extras.map((x) => ({ label: x.label, icon: <Icon name={x.icon} size={24} />, onSelect: () => x.run(more) }))} />}
       </>
     )
   }
@@ -136,7 +139,7 @@ export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToPro
           {a.menu && <span aria-hidden="true" style={{ color: 'var(--ink-faint)', fontSize: 'var(--fs-meta)' }}>▾</span>}
         </button>
       ))}
-      {more && <ContextMenu position={{ x: more.clientX, y: more.clientY }} onClose={() => setMore(null)} items={extras.map((x) => ({ label: `${x.label}…`, icon: <Icon name={x.icon} size={16} />, onClick: () => x.run(more) }))} />}
+      {more && <ContextMenu position={{ x: more.clientX, y: more.clientY }} onClose={() => setMore(null)} items={extras.map((x) => ({ label: x.label, icon: <Icon name={x.icon} size={16} />, onClick: () => x.run(more) }))} />}
       <button type="button" className="kf-bulk-act" title="Clear selection (Esc)" aria-label="Clear selection" onClick={onClear} style={{ width: 28, height: 28, padding: 0, marginLeft: 4, justifyContent: 'center', background: 'var(--paper-bone)' }}>
         <Icon name="close" size={14} />
       </button>

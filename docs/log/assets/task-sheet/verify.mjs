@@ -432,8 +432,12 @@ for (const theme of ['day', 'night']) {
     const w0 = state.writes.length
     await tap(cdp, menu.locator('.kf-as-row', { hasText: 'Duplicate' }))
     await sleep(300)
-    const dup = taskWrites(state, w0)
-    check(`${name} Duplicate → a new open copy + "Duplicated · Undo"`, dup.length === 1 && dup[0].id !== id(TYRE) && dup[0].title === 'Call the tyre supplier about the invoice' && dup[0].status === 'todo' && (await toasts(page)).includes('Duplicated'), JSON.stringify(await toasts(page)))
+    const dup = taskWrites(state, w0).flat()
+    // dup-open (Kai 2026-10-17): a parent's subtasks come along, open, under the copy.
+    const top = dup.filter((t) => !t.parent_task_id)
+    const subs = dup.filter((t) => t.parent_task_id === top[0]?.id)
+    check(`${name} Duplicate → a new open copy + "Duplicated, with its 2 subtasks · Undo"`, top.length === 1 && top[0].id !== id(TYRE) && top[0].title === 'Call the tyre supplier about the invoice' && top[0].status === 'todo' && (await toasts(page)).includes('Duplicated, with its 2 subtasks'), JSON.stringify(await toasts(page)))
+    check(`${name} …its 2 subtasks copied open, under the copy, in order`, subs.map((s) => `${s.title}:${s.status}`).join() === 'Find the invoice number:todo,Ask about delivery dates:todo', JSON.stringify(subs.map((s) => [s.title, s.status])))
     await tap(cdp, sheetOf(page).locator('.ts-more'))
     await tap(cdp, page.locator('[role="dialog"]').last().locator('.kf-as-row', { hasText: 'Copy link' }))
     await sleep(300)

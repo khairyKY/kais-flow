@@ -202,6 +202,23 @@ for (const theme of ['day', 'night']) {
     check(`${name} Inbox: the AI's cleaned title ("Buy printer ink") and the voice capture`, ib.length === 2 && /Buy printer ink/.test(ib[0]) && /Call the bank/.test(ib[1]), JSON.stringify(ib.map(flat)))
     check(`${name} every card has Plan ▾`, (await page.locator('.cal-rail .unscheduled-task .cal-plan-btn').count()) === 6)
     check(`${name} Lists is folded by default`, (await sec(page, 'lists').locator('.cal-rail-cards').count()) === 0)
+    // Kai 2026-10-17: a click on a card (no drag) opens the task — the popover at the card, ?task= — and
+    // Enter on the focused card does too. The checkbox, Plan ▾ and ⋯ keep their own (D2/D3 below).
+    if (!night) {
+      const review = card(page, 'today', 'Review Kai')
+      await review.locator('.cal-row-title').click()
+      await sleep(400)
+      const pop = page.locator('.tp-pop[role="dialog"]')
+      check(`${name} a click on a card opens the task (the popover, ?task=)`, (await pop.count()) === 1 && /Review Kai/.test((await pop.getAttribute('aria-label')) ?? '') && new URL(page.url()).searchParams.get('task') === id(REVIEW), page.url())
+      await page.keyboard.press('Escape')
+      await sleep(300)
+      await review.focus()
+      await page.keyboard.press('Enter')
+      await sleep(400)
+      check(`${name} Enter on a focused card opens it too`, new URL(page.url()).searchParams.get('task') === id(REVIEW) && (await pop.count()) === 1, page.url())
+      await page.keyboard.press('Escape')
+      await sleep(300)
+    }
     // Fold a section; it stays folded on reload (per device).
     await sec(page, 'today').locator('.cal-rail-sec-head').click()
     check(`${name} a section folds on its header (aria-expanded false, cards gone)`, (await sec(page, 'today').locator('.cal-rail-sec-head').getAttribute('aria-expanded')) === 'false' && (await sec(page, 'today').locator('.unscheduled-task').count()) === 0)

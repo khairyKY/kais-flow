@@ -3,7 +3,7 @@ import { openTaskLink } from '../../lib/links'
 import type { ListBinding } from '../../components/useListKeys'
 
 export type ListActionKey = 'complete' | 'open' | 'today' | 'tomorrow' | 'nextWeek' | 'top3' | 'project' | 'labels' | 'delete' | 'toggleSelect' | 'link'
-  | 'plan' | 'someday' | 'priority' | 'duration' | 'goal' | 'focus' | 'filter' | 'sort'
+  | 'plan' | 'someday' | 'priority' | 'duration' | 'goal' | 'focus' | 'filter' | 'sort' | 'duplicate'
 
 interface ListShortcutMeta {
   keys: string[]
@@ -11,6 +11,8 @@ interface ListShortcutMeta {
   label: string
   /** A page key (⇧F, ⇧S): runs with no row focused. */
   page?: true
+  /** Held with ⌘/Ctrl (⌘/Ctrl+D); the bare letter stays its own key (D = Plan…). */
+  mod?: true
 }
 
 /** The single source for Tasks/Today list-nav keys: drives real dispatch (via
@@ -38,6 +40,8 @@ export const LIST_SHORTCUTS: ListShortcutMeta[] = [
   { keys: ['f'], action: 'focus', label: 'Start focus' },
   { keys: ['⇧', 'F'], action: 'filter', label: 'Filter by label', page: true },
   { keys: ['⇧', 'S'], action: 'sort', label: 'Sort', page: true },
+  // Kai 2026-10-17: Duplicate — ⌘/Ctrl+D as in Todoist, Notion, Akiflow (bare D is Plan…).
+  { keys: ['⌘/Ctrl', 'D'], action: 'duplicate', label: 'Duplicate', mod: true },
 ]
 
 /** Pages supply only the actions they actually wire up; missing ones are silently skipped — except
@@ -48,12 +52,14 @@ export function buildListBindings(
   bulk: Partial<Record<ListActionKey, (tasks: Task[]) => void>> = {},
 ): ListBinding<Task>[] {
   const all: typeof actions = { link: openTaskLink, ...actions }
-  return LIST_SHORTCUTS.filter((s) => all[s.action]).map((s) => ({ keys: s.keys, label: s.label, run: all[s.action]!, runAll: bulk[s.action], page: s.page }))
+  return LIST_SHORTCUTS.filter((s) => all[s.action]).map((s) => ({ keys: s.keys, label: s.label, run: all[s.action]!, runAll: bulk[s.action], page: s.page, mod: s.mod }))
 }
 
 /** The matching key for an action's own context-menu row (right-aligned hint) — one source, no drift. */
 export function shortcutHint(action: ListActionKey): string {
-  const key = LIST_SHORTCUTS.find((s) => s.action === action)?.keys[0]
+  const s = LIST_SHORTCUTS.find((x) => x.action === action)
+  if (s?.mod) return `⌃${s.keys.at(-1)}` // the menus' ⌃ glyph (⌃click), as Ctrl on Windows
+  const key = s?.keys[0]
   if (!key) return ''
   return key === ' ' ? 'SPACE' : key.toUpperCase()
 }
