@@ -15,7 +15,6 @@ import { dayOfJourney, firstCreatedAt } from '../features/today/journey'
 import { useIsMobile } from './BottomSheet'
 import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/grouping'
 import { TASK_PARAM } from '../features/tasks/openTask'
-import { SmartListNav } from '../features/smart-lists/SmartListNav'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
@@ -40,6 +39,8 @@ const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => 
 const WidgetBridge = lazy(() => import('../features/widgets/WidgetBridge').then((m) => ({ default: m.WidgetBridge })))
 // Tour & help: the garden notes after onboarding and the one-line hints (its own chunk).
 const TourHost = lazy(() => import('../features/tour/TourHost').then((m) => ({ default: m.TourHost })))
+// Smart lists (0081): the Plan drawer's saved filters — their rows, menu and rules (its own chunk).
+const SmartListNav = lazy(() => import('../features/smart-lists/SmartListNav').then((m) => ({ default: m.SmartListNav })))
 
 import { ToastHost } from './ToastHost'
 import { SubtaskAskHost } from '../features/tasks/SubtaskAsk'
@@ -219,7 +220,9 @@ function PlanDrawer() {
             <img src={`${A}/fern/coil.png`} alt="" style={{ height: 14, opacity: 0.8 }} />
           ), SOMEDAY_SPOT)}
           {/* Smart lists (0081): saved filters, each with its count — features/smart-lists. */}
-          <SmartListNav activeList={activeList} />
+          <Suspense fallback={null}>
+            <SmartListNav activeList={activeList} />
+          </Suspense>
           {/* R4-27 (Kai's 2026-07-20 ruling): "planning board looks like shit, park it until I
               redesign it." Nav entry removed so it can't be reached by accident; the route and
               component stay in the codebase for when he redesigns it. */}

@@ -52,7 +52,7 @@ import { findDuplicateClusters } from '../import/dedupe'
 import type { Area, Domain, Project, SmartListRow, Task } from '../../lib/types'
 import { nestOut } from './subtasks'
 import { useSubtaskUi } from './subtaskStore'
-import { smartTasks, useSmartLists } from '../smart-lists/api'
+import { openCount, smartTasks, useSmartLists } from '../smart-lists/api'
 import { describeFilter, readFilter, type SmartFilter } from '../../../../supabase/functions/_shared/smartList.ts'
 
 // "Save as smart list" starts from what the page shows: its tab's days, its domain chip, its label.
@@ -776,7 +776,7 @@ export function TasksPage() {
   const isOverdue = activeTab === 'overdue'
   const h1 = smart ? smart.name : isDone ? 'Done' : isSomeday ? 'Someday' : isOverdue ? 'Overdue' : 'Tasks'
   const placeName = (id: string) => (domains.find((d) => d.id === id) ?? areas.find((a) => a.id === id) ?? projects.find((p) => p.id === id))?.name
-  const eyebrow = smart ? `Smart list · ${filteredBase.filter((t) => t.status === 'todo').length} open` : isDone ? `Tasks · ${doneTodayCount} done today` : isSomeday ? `Tasks · ${somedayCount} someday` : `Tasks · ${openTotal} open`
+  const eyebrow = smart ? `Smart list · ${openCount(filteredBase)} open` : isDone ? `Tasks · ${doneTodayCount} done today` : isSomeday ? `Tasks · ${somedayCount} someday` : `Tasks · ${openTotal} open`
   const caption =
     smart ? describeFilter(smart.filter, placeName)
     : activeTab === 'today' ? `everything due or scheduled for today — ${todayCount} to tend`
@@ -828,7 +828,7 @@ export function TasksPage() {
           )}
         </div>
 
-        <TabBar active={smart ? smart.id : activeTab} smart={smartLists.map((l) => ({ id: l.id, name: l.name, count: smartTasks(displayTasks, l.filter, projects, areas, now).filter((t) => t.status === 'todo').length }))} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
+        <TabBar active={smart ? smart.id : activeTab} smart={smartLists.map((l) => ({ id: l.id, name: l.name, count: openCount(smartTasks(displayTasks, l.filter, projects, areas, now)) }))} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
         {caption && <div className="kf-help" style={CAPTION}>{caption}</div>}
         {dupeClusters.length > 0 && (
           <Link to="/settings/import" className="kf-link-terra" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>
