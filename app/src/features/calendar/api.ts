@@ -217,6 +217,18 @@ export function createEvent(title: string, startsAt: string, endsAt: string, typ
   return event
 }
 
+/** Duplicate (Kai 2026-10-17): a plain event copied to the same time — side by side on the grid. An
+ * occurrence copies as a one-off of its own (the series stays as it is). Returns the copy and its
+ * Undo, which removes it outright (it never should have existed). A task's block: ./duplicate. */
+export function copyEvent(event: CalendarEvent): { copy: CalendarEvent; undo: () => void } {
+  const { seriesId: _occurrenceOf, ...rest } = event
+  const at = nowIso()
+  const copy: CalendarEvent = { ...rest, id: crypto.randomUUID(), recurrence_rule: null, recurrence_exdates: [], series_id: null, source: 'native', gcal_id: null, gcal_etag: null, external_ref: null, deleted_at: null, created_at: at, updated_at: at }
+  writeEvent(copy)
+  logActivity('calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, duplicate_of: event.seriesId ?? event.id })
+  return { copy, undo: () => writeEvent(copy, 'delete') }
+}
+
 /** Carries out a BlockMoves (replan.ts) for one task; returns the block it ends on and the Undo
  * (every step taken back, last first, then the task row's due date / schedule as they were). */
 function applyMoves(task: Task, moves: BlockMoves, allDay = false): { event: CalendarEvent | null; undo: () => void } {

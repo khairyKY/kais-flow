@@ -9,7 +9,7 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'unschedule' | 'delete' | 'google'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'unschedule' | 'delete' | 'google'
 
 export interface BlockMenuEntry {
   key: BlockMenuKey
@@ -120,6 +120,8 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
       { key: 'open', label: 'Open task' },
     )
     if (ctx.missed) out.push({ key: 'replan', label: 'Replan…' }) // the calendar's Plan menu, in its place
+    // Kai 2026-10-17: a copy of the task, blocked at this same time.
+    out.push({ key: 'duplicate', label: 'Duplicate' })
   }
   if (e.task_id) out.push({ key: 'unschedule', label: 'Unschedule', hint: '⌫', divider: true })
   else {
@@ -127,6 +129,9 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
     // here, one quiet row, so creating a block is not the only place to set them.
     if (!repeating) out.push({ key: 'link', label: 'Link a task…', divider: true })
     out.push({ key: 'more', label: 'More', sub: true, divider: repeating })
+    // Kai 2026-10-17: a copy at the same time (side by side) — an event, never a Time block (a slot
+    // repeats instead); a repeat's copy is this one occurrence, on its own.
+    if (e.type !== 'time_block') out.push({ key: 'duplicate', label: 'Duplicate' })
   }
   // p7e A4: ⌫ deletes a plain one-off (Akiflow's Backspace); a repeat asks This / All on the row instead.
   out.push({ key: 'delete', label: isUntitled(e, ctx.now) ? 'Discard' : 'Delete', destructive: true, sub: repeating, ...(!e.task_id && !repeating ? { hint: '⌫' } : null) })

@@ -26,6 +26,7 @@ import { completeTaskWithUndo, createTask, setRecurrence, toggleTop3, uncomplete
 import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRemindWithUndo, setEventRepeat, updateEvent, type BlockRef } from './api'
+import { duplicateBlockWithUndo } from './duplicate'
 import { EVENT_REMIND, blockMenuSpec, isSynced, isUntitled, type BlockMenuKey } from './blockMenuSpec'
 import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
@@ -95,7 +96,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', unschedule: 'plus', delete: 'delete', google: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
 
 /** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
@@ -391,6 +392,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
       else completeTaskWithUndo(task)
     },
     open: () => leave(() => event.task_id && openTask(event.task_id)),
+    duplicate: () => leave(() => duplicateBlockWithUndo(event, task)),
     unschedule: () => leave(() => deleteEventWithUndo(event, 'Unscheduled')),
     link: (el) => {
       const r = el.getBoundingClientRect()
