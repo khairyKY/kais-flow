@@ -40,7 +40,7 @@ export async function runExport(kind: ExportKind, progress?: ExportProgress): Pr
   if (kind === 'json') {
     const tables: Record<string, unknown[]> = {}
     for (const t of EXPORT_TABLES) tables[t] = await rowsOf(t, progress)
-    text = JSON.stringify(exportEnvelope(tables, BUNDLED_VERSION, now), null, 2)
+    text = JSON.stringify(exportEnvelope(tables, BUNDLED_VERSION.replace(/^v/i, ''), now), null, 2)
   } else if (kind === 'csv') {
     const tasks = await rowsOf<Task>('tasks', progress)
     const projects = await rowsOf<Project>('projects', progress)
