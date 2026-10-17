@@ -311,6 +311,7 @@
 .td-sum { margin-top: var(--sp-2); font-size: var(--fs-body); color: var(--ink-muted); text-wrap: pretty; }
 .td-ink { color: var(--ink-body); }
 .td-terra { color: var(--acc-terra-ink); }
+.td-back { color: var(--acc-lavender-text); } /* Snooze: "Back from snooze" (tasks/snooze) */
 .td-struck { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 .td-head-actions { flex: 1 1 0; min-width: 230px; display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
 

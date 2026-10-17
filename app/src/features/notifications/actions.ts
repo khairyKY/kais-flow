@@ -1,7 +1,7 @@
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { TASK_COLUMNS } from '../../lib/columns'
-import { completeTaskWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { completeTaskWithUndo, moveToTomorrowWithUndo, remindAgainWithUndo } from '../tasks/api'
 import { useFocusStore } from '../focus/focusStore'
 import { BUNDLED_VERSION, openWhatsNew } from '../../lib/whatsNew'
 import { native } from '../tray/native'
@@ -14,6 +14,9 @@ import type { Task } from '../../lib/types'
 // the service worker (public/sw-push.js — a message, or ?kfAction= on a fresh window), a Windows toast
 // (src-tauri tray.rs → window.__kfNotifyAction) or a row in the in-app history (Activity). Every
 // write is this window's own outbox write, so it is the signed-in user's, offline-safe and logged.
+
+/** A reminder's snooze buttons (copy.ts reminderNotice): minutes until it reminds again. */
+export const REMIND_AGAIN_MIN: Readonly<Record<string, number>> = { snooze10: 10, snooze60: 60 }
 
 export interface NotificationAction {
   action: string
@@ -83,6 +86,13 @@ export async function runNotificationAction(a: NotificationAction, navigate: (to
     case 'tomorrow': {
       const open = await openTasksFor(a, navigate)
       if (open?.length) moveToTomorrowWithUndo(open)
+      return
+    }
+    case 'snooze10':
+    case 'snooze60': {
+      // Snooze (Kai 2026-10-17): the reminder again in 10 min / 1 hour — the task doesn't move.
+      const open = await openTasksFor(a, navigate)
+      if (open?.length) remindAgainWithUndo(open, REMIND_AGAIN_MIN[a.action])
       return
     }
     case 'break':

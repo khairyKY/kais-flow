@@ -12,12 +12,13 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { useCalendarRows } from '../calendar/api'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, planWithUndo, toggleTop3, toggleTop3ManyWithUndo, duplicateTasksWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, planWithUndo, toggleTop3, toggleTop3ManyWithUndo, duplicateTasksWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, snoozeTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
 import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
+import { isSnoozed } from './snooze'
 import { buildListBindings } from './listShortcuts'
 import { useListVerbs } from './useListVerbs'
 import { moveInListWithUndo } from './api'
@@ -106,7 +107,7 @@ function parseList(raw: string | null): SmartList | null {
   return SMART_LISTS.includes(raw as SmartList) ? (raw as SmartList) : null
 }
 
-type Tab = 'today' | 'week' | 'month' | 'overdue' | 'upcoming' | 'someday' | 'done' | 'all'
+type Tab = 'today' | 'week' | 'month' | 'overdue' | 'upcoming' | 'someday' | 'done' | 'all' | 'snoozed'
 
 // Punch 27: `/tasks?list=all` is the stable deep-link contract for "every open task" —
 // Today's "View all →" (WA-4), Inbox filing feedback, and search deep links all target it
@@ -128,7 +129,7 @@ const CAPTION: React.CSSProperties = { marginTop: 12 }
 const MANAGE_LABELS = ' manage' // a label is trimmed, so none starts with a space
 const CARET = <span aria-hidden="true" style={{ color: 'var(--ink-faint)', lineHeight: 1 }}>▾</span>
 
-function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel, onManageLabels }: { active: Tab | null; todayCount: number; weekCount: number; monthCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void; onManageLabels: (at: { x: number; y: number }) => void }) {
+function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcomingCount, somedayCount, snoozedCount, doneCount, allCount, sort, onSort, labels, label, onLabel, onManageLabels }: { active: Tab | null; todayCount: number; weekCount: number; monthCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; snoozedCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void; onManageLabels: (at: { x: number; y: number }) => void }) {
   const stripRef = useRef<HTMLDivElement>(null)
   const labelRef = useRef<HTMLButtonElement>(null)
   // Polish D: on a narrow screen the strip scrolls sideways — keep the active tab in view
@@ -182,6 +183,8 @@ function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcom
         {tab('overdue', 'Overdue', overdueCount, 'var(--acc-terra)')}
         {tab('upcoming', 'Upcoming', upcomingCount, 'var(--acc-blossom)')}
         {tab('someday', 'Someday', somedayCount, 'var(--acc-sage)')}
+        {/* Snooze (Kai 2026-10-17): the snoozed tasks and when each is back — a tab only while there are some. */}
+        {(snoozedCount > 0 || active === 'snoozed') && tab('snoozed', 'Snoozed', snoozedCount, 'var(--acc-lavender)')}
         {tab('done', 'Done', doneCount, 'var(--acc-blossom)')}
         {/* Punch 27 (Kai's "All filter"): last, after Done — the catch-all where every open
             task lives, undated project filings included. */}
@@ -468,6 +471,7 @@ export function TasksPage() {
     const target =
       t.status === 'done' ? 'done'
       : t.someday ? 'someday'
+      : isSnoozed(t, now) ? 'snoozed'
       : filterByList([t], 'today', now).length > 0 ? 'today'
       : filterByList([t], 'upcoming', now).length > 0 ? 'upcoming'
       : 'all'
@@ -597,6 +601,7 @@ export function TasksPage() {
   const overdueCount = filterByList(displayTasks, 'overdue', now).length
   const upcomingCount = filterByList(displayTasks, 'upcoming', now).length
   const somedayCount = filterByList(displayTasks, 'someday', now).length
+  const snoozedCount = filterByList(displayTasks, 'snoozed', now).length
   const doneCount = tasks.filter((t) => t.status === 'done').length
   const allCount = filterByList(displayTasks, 'all', now).length
 
@@ -677,6 +682,10 @@ export function TasksPage() {
     duplicateTasksWithUndo(selectedTasks)
     clearSelection()
   }
+  function bulkSnooze(iso: string) {
+    snoozeTasksWithUndo(selectedTasks, iso)
+    clearSelection()
+  }
 
   // Motion 2c/2d: a row picks up — with the rest of the selection when it's part of one — and files
   // onto the sidebar's Today / Someday or the rail's areas and projects (./fileDrop; the ⋯ menu's
@@ -697,7 +706,7 @@ export function TasksPage() {
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate, onSnooze: bulkSnooze }
       : undefined
 
   // P7e A18: D Plan…, ! Priority, = Duration, S Someday, H goal, F focus; the bulk bar's Priority / Labels.
@@ -762,18 +771,20 @@ export function TasksPage() {
   })
 
   const isSomeday = activeTab === 'someday'
-  // Someday and Done are single-column (Tasks.dc.html 2a/2b — no Organize rail).
-  const singleCol = isSomeday || isDone
+  const isSnoozedTab = activeTab === 'snoozed'
+  // Someday and Done are single-column (Tasks.dc.html 2a/2b — no Organize rail); Snoozed too (no quick add).
+  const singleCol = isSomeday || isDone || isSnoozedTab
   const stage = cherryStage(openTotal, doneTodayCount)
   const headerIcon = isDone ? `${A}/cherry/fallen.png` : isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/${stage}.png`
   const isOverdue = activeTab === 'overdue'
-  const h1 = isDone ? 'Done' : isSomeday ? 'Someday' : isOverdue ? 'Overdue' : 'Tasks'
-  const eyebrow = isDone ? `Tasks · ${doneTodayCount} done today` : isSomeday ? `Tasks · ${somedayCount} someday` : `Tasks · ${openTotal} open`
+  const h1 = isDone ? 'Done' : isSomeday ? 'Someday' : isOverdue ? 'Overdue' : isSnoozedTab ? 'Snoozed' : 'Tasks'
+  const eyebrow = isDone ? `Tasks · ${doneTodayCount} done today` : isSomeday ? `Tasks · ${somedayCount} someday` : isSnoozedTab ? `Tasks · ${snoozedCount} snoozed` : `Tasks · ${openTotal} open`
   const caption =
     activeTab === 'today' ? `everything due or scheduled for today — ${todayCount} to tend`
     : isDone ? 'everything you tended today — one petal fell for each ✿'
     : isSomeday ? 'no date, no pressure — the shelf where ideas wait'
     : isOverdue ? overdueCount > 0 ? `${overdueCount} past their date — reschedule what still matters` : 'Nothing overdue — the garden is current.'
+    : isSnoozedTab ? 'off your lists until they come back by themselves — Unsnooze brings one back now'
     : activeTab === 'all' ? allCount > 0 ? `every open task in the garden — dated, undated, someday, all ${allCount}` : 'every open task in the garden — nothing open yet'
     : null
 
@@ -819,7 +830,7 @@ export function TasksPage() {
           )}
         </div>
 
-        <TabBar active={activeTab} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
+        <TabBar active={activeTab} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} snoozedCount={snoozedCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
         {caption && <div className="kf-help" style={CAPTION}>{caption}</div>}
         {dupeClusters.length > 0 && (
           <Link to="/settings/import" className="kf-link-terra" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>
@@ -934,13 +945,13 @@ export function TasksPage() {
             <div style={{ margin: '28px 0 0', textAlign: 'center' }}>
               <img src={isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/bud.png`} alt="" style={{ height: 44, margin: '0 auto', display: 'block', filter: 'var(--shadow-drop-sm)', opacity: 0.9 }} />
               <p className="kf-help" style={{ margin: '10px 0 0' }}>
-                {isSomeday ? 'Nothing parked for someday.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
+                {isSomeday ? 'Nothing parked for someday.' : isSnoozedTab ? 'Nothing snoozed.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
               </p>
             </div>
           ) : (
             groups.map((group) => (
               <div key={group.key}>
-                {!isSomeday && <SectionHeader group={group} />}
+                {!isSomeday && !isSnoozedTab && <SectionHeader group={group} />}
                 {shownTasks(group).map((t, i) => (
                   <DragRow key={t.id} id={t.id} load={dragLoad(t)} className={motion && !focusId ? 'kf-stagger-item' : undefined} style={motion && !focusId ? staggerDelay(i) : undefined}>
                     <TaskRow
@@ -1020,6 +1031,7 @@ export function TasksPage() {
           onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
           onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
           onDuplicate={bulkDuplicate}
+          onSnooze={(e) => verbs.open(selectedTasks, 'snooze', { x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(flatTasks.map((t) => t.id)))}

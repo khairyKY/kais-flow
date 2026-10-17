@@ -14,7 +14,7 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
   // Kai 2026-10-07: Tomorrow + Pick date… became the one Plan… list; Make goal of the day joined.
   it('is MK Action Sheet, in its order, Delete last', () => {
     expect(labels(task(), { tomorrowHint: 'Mon 09:00', canSelect: true })).toEqual([
-      'Plan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Duplicate', 'Select', 'Delete',
+      'Plan…', 'Snooze…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Duplicate', 'Select', 'Delete',
     ])
   })
 
@@ -37,8 +37,9 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
     expect(spec.filter((e) => e.destructive)).toHaveLength(1)
   })
 
-  it('never offers Snooze, Complete or a confirm', () => {
-    expect(labels(task(), { tomorrowHint: 'Mon 09:00' }).some((l) => /snooze|complete|…\?/i.test(l))).toBe(false)
+  // Kai 2026-10-17 ("build snooze"): Snooze… is back (./snooze); still no Complete or confirm.
+  it('never offers Complete or a confirm', () => {
+    expect(labels(task(), { tomorrowHint: 'Mon 09:00' }).some((l) => /complete|…\?/i.test(l))).toBe(false)
   })
 
   it('says Remove from Top 3 / Deselect when that is the state', () => {
@@ -60,7 +61,7 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
 
   it('bulk: the plan, move and delete rows name how many they move; no goal, no focus', () => {
     expect(labels(task(), { tomorrowHint: 'x', bulkCount: 3, selected: true, canSelect: true, overdue: true, place: { index: 1, last: 2 } })).toEqual([
-      'Plan… (3)', 'Move to… (3)', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Duplicate (3)', 'Deselect', 'Delete (3)',
+      'Plan… (3)', 'Snooze… (3)', 'Move to… (3)', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Duplicate (3)', 'Deselect', 'Delete (3)',
     ])
   })
 

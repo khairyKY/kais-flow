@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { Link, useNavigate, useSearchParams } from 'react-router'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, duplicateTasksWithUndo, planWithUndo, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, toggleTaskWithUndo, toggleTop3, toggleTop3ManyWithUndo, duplicateTasksWithUndo, planWithUndo, moveInTop3Order, spreadWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, snoozeTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo } from '../tasks/api'
 import { PlanMenu } from '../tasks/PlanMenu'
 import { isOverdue, todayFor } from '../tasks/planMath'
 import { DragRow, useDropSpot, type DragLoad, type Spot } from '../../components/drag'
@@ -10,6 +10,7 @@ import { buildListBindings } from '../tasks/listShortcuts'
 import { useListVerbs } from '../tasks/useListVerbs'
 import { formatDuration } from '../tasks/taskDisplay'
 import { todayListTasks } from '../tasks/grouping'
+import { backFromSnooze } from '../tasks/snooze'
 import { sortByOrder } from '../tasks/manualOrder'
 import { cachedTask, moveInListWithUndo } from '../tasks/api'
 import { nestOut } from '../tasks/subtasks'
@@ -250,7 +251,9 @@ export function TodayPage() {
   const upNextShown = isMobile ? upNext : upNext.slice(0, 2)
   const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
   // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
-  const listed = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen)
+  // Snooze: one back today leads the list (its "Back from snooze" marker), ahead of the date order.
+  const backFirst = (a: Task, b: Task) => Number(backFromSnooze(b, now)) - Number(backFromSnooze(a, now))
+  const listed = sortByOrder(foldOpen(visible, top3Ids, headBlock ? [headBlock, ...upNextShown] : upNextShown)).sort(doneAfterOpen).sort(backFirst)
   // Subtasks A (Kai 2026-10-16): a subtask whose parent is a row on this page (Top 3 or the lists — a parent
   // finished today too, struck, while it has open ones) sits nested under it, not in a list of its own; one
   // whose parent isn't here stays a row, "↳ parent". A timed one also shows by itself in Up next (C).
@@ -258,7 +261,7 @@ export function TodayPage() {
   const allOpen = nestOut(listed, drawnParents)
   // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue ones get their own fold with
   // Replan all ▾; More for today keeps the rest. Oldest first (Today's list order).
-  const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now))
+  const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now) && !backFromSnooze(t, now))
   const overdueIds = new Set(overdueOpen.map((t) => t.id))
   const restOpen = allOpen.filter((t) => !overdueIds.has(t.id))
   const openCount = restOpen.filter((t) => !t.completed_at).length
@@ -340,9 +343,10 @@ export function TodayPage() {
   function bulkDelete() { deleteTasksWithUndo(selectedTasks); clearSelection() }
   function bulkTop3() { toggleTop3ManyWithUndo(selectedTasks); clearSelection() }
   function bulkDuplicate() { duplicateTasksWithUndo(selectedTasks); clearSelection() }
+  function bulkSnooze(iso: string) { snoozeTasksWithUndo(selectedTasks, iso); clearSelection() }
   // Kai 2026-10-12: a row's menu ignored the selection — it gets the page's bulk handlers.
   const bulk: BulkActions | undefined = selected.size > 1
-    ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate }
+    ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate, onSnooze: bulkSnooze }
     : undefined
 
   // F3 (punch 12/22/29): Today's list keyboard was an empty bindings array — dead keys on the
@@ -598,6 +602,7 @@ export function TodayPage() {
           onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
           onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
           onDuplicate={bulkDuplicate}
+          onSnooze={(e) => verbs.open(selectedTasks, 'snooze', { x: e.clientX, y: e.clientY })}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(selectable.map((t) => t.id)))}
         />
@@ -643,7 +648,10 @@ export function TodayPage() {
     const row = (t: Task, extra: { pick?: boolean; block?: CalendarEvent; meta?: string[]; place?: RowGrammarOptions['place'] } = {}) => (
       <TaskRow key={extra.block?.id ?? t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
-    const foldCount = restOpen.length + slipping.length + (resurfacing ? 1 : 0)
+    // Snooze: what came back today sits above the folds, as on the desktop it leads Also open.
+    const backOpen = restOpen.filter((t) => backFromSnooze(t, now))
+    const foldOpenRows = restOpen.filter((t) => !backFromSnooze(t, now))
+    const foldCount = foldOpenRows.length + slipping.length + (resurfacing ? 1 : 0)
     const workload: Omit<WorkloadInput, 'focusedMin'> = {
       day: dayNumber,
       phase: day.state.phase,
@@ -756,6 +764,12 @@ export function TodayPage() {
           </section>
         )}
 
+        {!tasksPending && backOpen.length > 0 && (
+          <section>
+            <PhoneSection label="Back from snooze" />
+            <div className="tp-list">{backOpen.map((t) => row(t))}</div>
+          </section>
+        )}
         {!tasksPending && overdueOpen.length > 0 && (
           <MoreForToday phone label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
             <div className="tp-list">{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
@@ -764,11 +778,11 @@ export function TodayPage() {
         )}
         {!tasksPending && foldCount > 0 && (
           <MoreForToday phone summary={String(foldCount)}>
-            {restOpen.length > 0 && (
+            {foldOpenRows.length > 0 && (
               <>
-                <div className="tp-sub is-first" style={{ paddingBottom: 6 }}>Open · {openCount}</div>
-                <div className="tp-list">{restOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
-                {restOpen.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="tp-link" style={{ marginLeft: 8 }}>View all</Link>}
+                <div className="tp-sub is-first" style={{ paddingBottom: 6 }}>Open · {foldOpenRows.filter((t) => !t.completed_at).length}</div>
+                <div className="tp-list">{foldOpenRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
+                {foldOpenRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="tp-link" style={{ marginLeft: 8 }}>View all</Link>}
               </>
             )}
             {slipping.length > 0 && (
@@ -1839,6 +1853,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
 } & RowSelection) {
   const bloom = useBloomCheck(task)
   const done = !!task.completed_at
+  const back = backFromSnooze(task) // Snooze: back today (tasks/snooze)
   // Punch 18 (drift T-10): the same overdue/due-today/↻ meta the Tasks TaskRow renders — same
   // "Overdue Nd" treatment, same ↻ glyph — counted in the user's days (lib/appZone).
   const dueDays = !done && !task.someday ? overdueDays(task) : null
@@ -1882,6 +1897,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
       : meta
         ? [...meta.map((m) => <span key={m} style={m === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{m}</span>), ofParent].filter(Boolean)
         : [
+            back && <span key="b" className="td-back">Back from snooze</span>,
             ofParent,
             projectName && <span key="p"><span className="tp-dot" style={{ background: dot }} />{projectName}</span>,
             dueDays !== null && dueDays > 0 && <span key="o" style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>,
@@ -1935,7 +1951,8 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   const title = <span className={done ? 'td-struck' : undefined}><EmojiText text={task.title} /></span>
   if (hollow) {
     // 2a "Also open": one line — the title, then the row's one fact in a right-aligned column.
-    const fact = parentTitle && !held ? ofParent
+    const fact = back ? <span className="td-back">Back from snooze</span>
+      : parentTitle && !held ? ofParent
       : dueDays !== null && dueDays > 0 ? <span className="td-terra">Overdue {dueDays}d</span>
       : held ? <span>{held}</span>
       : dueDays === 0 ? <span>Due today{task.recurrence_rule ? ' · ↻' : ''}</span>

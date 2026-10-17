@@ -7,6 +7,7 @@ import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { Checkbox, Chip } from '../../components/kit'
 import { RenameField } from '../../components/RenameField'
+import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { durationLabel } from '../../components/pickerMath'
 import { tomorrowHint } from '../../lib/dateShortcuts'
 import { useToastStore } from '../../lib/toastStore'
@@ -17,7 +18,8 @@ import { useAreas } from '../areas/api'
 import { useDomains } from '../domains/api'
 import { usePaperStore } from '../paper/paperStore'
 import { useProjects } from '../projects/api'
-import { currentTop3, deleteTasksWithUndo, duplicateTaskWithUndo, makeGoalWithUndo, renameTask, toggleTaskWithUndo, toggleTop3 } from './api'
+import { currentTop3, deleteTasksWithUndo, duplicateTaskWithUndo, makeGoalWithUndo, renameTask, snoozeTasksWithUndo, somedayTasksWithUndo, toggleTaskWithUndo, toggleTop3, unsnoozeTasksWithUndo } from './api'
+import { isSnoozed, snoozeWhen } from './snooze'
 import { subtaskHint } from '../command-bar/quickAdd'
 import { subtaskWhen } from './subtasks'
 import { placeName } from './move'
@@ -157,19 +159,32 @@ export function TaskMoreMenu({ task, at, meta, block, onClose, onDelete, edit }:
   edit: TaskControls['edit']
 }) {
   const isMobile = useIsMobile()
+  const [snoozing, setSnoozing] = useState(false)
   const done = task.status === 'done' || !!task.completed_at
-  const items: { label: string; icon: IconName; hint?: string; destructive?: boolean; run: () => void }[] = [
+  const snooze = (position: Point, close: () => void, closeAll: () => void) => (
+    <SnoozeMenu position={position} title={task.title} onClose={close} onSnooze={(iso) => { edit('snooze', () => snoozeTasksWithUndo([task], iso)); closeAll() }} onSomeday={() => { edit('someday', () => somedayTasksWithUndo([task])); closeAll() }} />
+  )
+  const items: { label: string; icon: IconName; hint?: string; destructive?: boolean; snooze?: true; run: () => void }[] = [
     // Kai 2026-10-07: the goal of the day from the task itself (not on the goal, not once done).
     ...(done || currentTop3()[0]?.id === task.id ? [] : [{ label: 'Make goal of the day', icon: 'focus-ring' as const, run: () => edit('top3', () => makeGoalWithUndo(task)) }]),
+    // Snooze (Kai 2026-10-17): the row menu's Snooze… / Unsnooze, from the task itself.
+    ...(done ? [] : isSnoozed(task)
+      ? [{ label: 'Unsnooze', icon: 'moon' as const, hint: `back ${snoozeWhen(task.snoozed_until!)}`, run: () => edit('snooze', () => unsnoozeTasksWithUndo([task])) }]
+      : [{ label: 'Snooze…', icon: 'moon' as const, snooze: true as const, run: () => setSnoozing(true) }]),
     { label: 'Duplicate', icon: 'duplicate', run: () => duplicateTaskWithUndo(task) },
     { label: 'Copy link', icon: 'link', run: () => copyTaskLink(task) },
     ...(block ? [{ label: 'Unschedule', icon: 'calendar' as const, run: () => edit('schedule', () => deleteEventWithUndo(block, 'Unscheduled')) }] : []),
     { label: 'Delete', icon: 'delete', hint: 'Undo 6s', destructive: true, run: onDelete ?? (() => deleteTasksWithUndo([task])) },
   ]
+  if (snoozing) return snooze(at, onClose, onClose) // the phone's sheet (a fresh one, as TaskMenu's pickers)
   return isMobile ? (
-    <ActionSheet title={task.title} meta={meta} onClose={onClose} items={items.map((i) => ({ label: i.label, icon: <Icon name={i.icon} size={24} />, hint: i.hint, destructive: i.destructive, onSelect: i.run }))} />
+    <ActionSheet title={task.title} meta={meta} onClose={onClose} items={items.map((i) => ({ label: i.label, icon: <Icon name={i.icon} size={24} />, hint: i.hint, destructive: i.destructive, chevron: i.snooze, onSelect: i.run }))} />
   ) : (
-    <ContextMenu position={at} onClose={onClose} items={items.map((i) => ({ label: i.label, danger: i.destructive, icon: <Icon name={i.icon} size={16} />, onClick: i.run }))} />
+    <ContextMenu
+      position={at}
+      onClose={onClose}
+      items={items.map((i) => ({ label: i.label, danger: i.destructive, icon: <Icon name={i.icon} size={16} />, hint: i.hint, onClick: i.run, submenu: i.snooze && (({ position, onClose: back, closeAll }) => snooze(position, back, closeAll)) }))}
+    />
   )
 }
 

@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 
 import { handleMcp, KEY_PATTERN } from '../../../../supabase/functions/mcp/server.ts'
-import { dayWindow, readWhen, replanMoves, settle, splitToday, tomorrowAt9, userZone, wallTime, type BlockRow } from '../../../../supabase/functions/mcp/tools.ts'
+import { dayWindow, readWhen, replanMoves, settle, snoozePreset, splitToday, tomorrowAt9, userZone, wallTime, type BlockRow } from '../../../../supabase/functions/mcp/tools.ts'
 import { claudeCodeCommand, claudeDesktopConfig, genericConfig, newMcpKey } from './mcpKey'
 // The MCP endpoint end to end — HTTP in, HTTP out — against the in-memory Store in ./mcpFake (its
 // filters mirror index.ts's SQL). "Now" is Sun 4 Oct 2026 11:00 UTC: 14:00 in Cairo, 04:00 in LA.
@@ -62,6 +62,49 @@ describe('MCP: the user clock', () => {
   })
 })
 
+// Snooze (Kai 2026-10-17): the app's SnoozeMenu words, on the user's clock. NOW is a Sunday — 14:00 in
+// Cairo, 04:00 in LA, 20:00 in Tokyo — so "next week" is the Monday after tomorrow's (dateShortcuts).
+describe('MCP: snooze', () => {
+  it("reads the Snooze menu's words on the user's clock", () => {
+    expect(['later today', 'This evening', 'tomorrow', 'next week'].map((w) => snoozePreset(w, NOW, 'Africa/Cairo'))).toEqual([
+      '2026-10-04T14:00:00.000Z', '2026-10-04T15:00:00.000Z', '2026-10-05T06:00:00.000Z', '2026-10-12T06:00:00.000Z',
+    ])
+    expect(snoozePreset('this evening', NOW, 'America/Los_Angeles')).toBe('2026-10-05T01:00:00.000Z') // 18:00 Sunday in LA
+    expect(snoozePreset('this evening', NOW, 'Asia/Tokyo')).toBe('2026-10-05T09:00:00.000Z') // past 18:00 there: Monday's
+    expect(snoozePreset('next week', NOW, 'Asia/Tokyo')).toBe('2026-10-12T00:00:00.000Z')
+    expect(snoozePreset('next week', new Date('2026-10-07T08:00:00Z'), 'Africa/Cairo')).toBe('2026-10-12T06:00:00.000Z') // a Wednesday: the coming Monday
+    expect(snoozePreset('soonish', NOW, 'Africa/Cairo')).toBeNull()
+  })
+
+  it('snooze_task: off Today until then, the date kept, a pick lets its place go; unsnooze_task brings it back', async () => {
+    const store = fakeStore('Africa/Cairo', [task(40, 'Call the bank', { due_at: '2026-10-04T06:00:00Z', top3: true, top3_rank: 1 }), task(41, 'Buy milk', { due_at: '2026-10-04T08:00:00Z' })])
+    const d = deps(store)
+    const r = await call(d, 'snooze_task', { id: tid(40), until: 'later today' })
+    expect(r.data).toMatchObject({ back: '2026-10-04 17:00', note: "left today's Top 3" })
+    expect(store.tasks.find((t) => t.id === tid(40))).toMatchObject({ snoozed_until: '2026-10-04T14:00:00.000Z', due_at: '2026-10-04T06:00:00Z', top3: false, top3_rank: null })
+    expect(store.logs.at(-1)).toMatchObject({ eventType: 'task.snoozed', entityId: tid(40), payload: { snoozed_until: '2026-10-04T14:00:00.000Z', source: 'mcp' } })
+    const day = (await call(d, 'today')).data!
+    expect([...day.top3, ...day.today, ...day.overdue].map((t: { title: string }) => t.title)).toEqual(['Buy milk'])
+    // A local date-time, and several at once.
+    const both = await call(d, 'snooze_task', { ids: [tid(40), tid(41)], until: '2026-10-06T08:30' })
+    expect(both.data!.results.map((x: { back: string }) => x.back)).toEqual(['2026-10-06 08:30', '2026-10-06 08:30'])
+    const back = await call(d, 'unsnooze_task', { id: tid(41) })
+    expect(back.isError).toBeFalsy()
+    expect(store.tasks.find((t) => t.id === tid(41))!.snoozed_until).toBeNull()
+    expect(store.logs.at(-1)).toMatchObject({ eventType: 'task.unsnoozed', entityId: tid(41) })
+    expect((await call(d, 'today')).data!.today.map((t: { title: string }) => t.title)).toEqual(['Buy milk'])
+  })
+
+  it('refuses a time already past, a word it does not know, and unsnoozing a task that is not snoozed', async () => {
+    const d = deps(fakeStore('Africa/Cairo', [task(42, 'Water the ferns')]))
+    const past = await call(d, 'snooze_task', { id: tid(42), until: '2026-10-04T13:00' })
+    expect([past.isError, past.text]).toEqual([true, `"until" must be in the future (it's 2026-10-04 14:00 now).`])
+    expect((await call(d, 'snooze_task', { id: tid(42), until: 'soonish' })).isError).toBe(true)
+    const not = await call(d, 'unsnooze_task', { id: tid(42) })
+    expect([not.isError, not.text]).toEqual([true, `"Water the ferns" isn't snoozed.`])
+  })
+})
+
 describe('MCP: transport and auth', () => {
   it('answers initialize with the asked version, tools capability and instructions — no session', async () => {
     const d = deps(fakeStore())
@@ -112,7 +155,7 @@ describe('MCP: transport and auth', () => {
     const d = deps(fakeStore())
     const all = (await legacy(d, 'tools/list')).body.result!.tools as { name: string; inputSchema: { type: string }; annotations: { readOnlyHint: boolean; destructiveHint?: boolean } }[]
     expect(all.map((t) => t.name)).toEqual([
-      'today', 'search', 'list_tasks', 'get_task', 'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'duplicate_task', 'add_to_inbox',
+      'today', 'search', 'list_tasks', 'get_task', 'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'duplicate_task', 'snooze_task', 'unsnooze_task', 'add_to_inbox',
       'calendar', 'add_event', 'edit_event', 'delete_event', 'duplicate_event', 'projects',
       'get_project', 'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'labels', 'update_label',
       'trash', 'move_to_trash', 'restore_from_trash', 'settings', 'update_settings', 'inbox', 'file_inbox_item', 'update_inbox_item',
@@ -121,7 +164,7 @@ describe('MCP: transport and auth', () => {
     ])
     expect(all.every((t) => t.inputSchema.type === 'object')).toBe(true)
     const writers = [
-      'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'duplicate_task', 'add_to_inbox', 'add_event', 'edit_event', 'delete_event',
+      'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'duplicate_task', 'snooze_task', 'unsnooze_task', 'add_to_inbox', 'add_event', 'edit_event', 'delete_event',
       'duplicate_event', 'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'update_label', 'move_to_trash', 'restore_from_trash',
       'update_settings', 'file_inbox_item', 'update_inbox_item', 'save_routine', 'check_routine', 'start_focus', 'stop_focus', 'plan_my_day', 'shut_down',
       'save_library_item', 'delete_library_item',

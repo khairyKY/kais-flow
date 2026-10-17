@@ -144,7 +144,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   } as Task
   const nop = () => {}
   const actions: TaskMenuActions = {
-    tomorrow: nop, schedule: nop, someday: nop, top3: nop, goal: nop, reopen: nop, delete: nop,
+    tomorrow: nop, schedule: nop, someday: nop, top3: nop, goal: nop, reopen: nop, delete: nop, snooze: nop, unsnooze: nop,
     move: setPlaceTo,
     priority: (p) => setPriority(p),
     repeat: setRepeat,
