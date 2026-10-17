@@ -27,6 +27,7 @@ import {
   removeProjectChecklistItem,
   setProjectChecklist,
   finishProjectWithUndo,
+  duplicateProjectWithUndo,
   logTimeEntry,
   useTimeEntries,
   isThisMonth,
@@ -1099,6 +1100,15 @@ export function ProjectDetailPage() {
                 style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}
               >
                 Archive project
+              </button>
+              {/* Kai 2026-10-17: a copy with its milestones, checklist and tasks afresh — "Duplicated" + Undo. */}
+              <button
+                type="button"
+                className="kf-hit"
+                onClick={() => duplicateProjectWithUndo(project)}
+                style={{ border: 'none', background: 'none', padding: 0, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)', cursor: 'pointer' }}
+              >
+                Duplicate project
               </button>
               {typeLink}
               <span style={{ flex: 1 }} />

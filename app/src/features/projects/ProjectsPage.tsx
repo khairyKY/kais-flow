@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
-import { useProjects, useTimeEntries, restoreProjectWithUndo, finishProjectWithUndo, isThisMonth, renameProject, deleteProjectWithUndo, reparentProject } from './api'
+import { useProjects, useTimeEntries, restoreProjectWithUndo, finishProjectWithUndo, isThisMonth, renameProject, deleteProjectWithUndo, reparentProject, duplicateProjectWithUndo } from './api'
 import { useAreas, renameArea, deleteAreaWithUndo, reparentArea } from '../areas/api'
 import { ContextMenu } from '../../components/ContextMenu'
 import { ActionSheet } from '../../components/ActionSheet'
@@ -249,6 +249,8 @@ export function ProjectsPage() {
       { label: 'Domain…', icon: 'projects', run: () => setDomainMenu(m) },
       // Kai 2026-10-06: project ↔ retainer, project / retainer ↔ area (./ChangeType.tsx).
       ...(project || area ? [{ label: 'Change type…', icon: 'rotate' as IconName, run: () => setTypeMenu({ thing: project ? { table: 'projects' as const, row: project } : { table: 'areas' as const, row: area! }, at: { x: m.x, y: m.y } }) }] : []),
+      // Kai 2026-10-17: a copy — its milestones, checklist and tasks afresh (open, unscheduled) — with Undo.
+      ...(project ? [{ label: 'Duplicate', icon: 'duplicate' as IconName, run: () => void duplicateProjectWithUndo(project) }] : []),
       // One tap + Undo (product audit 2026-10-12): the toast offers "Press it ✿" — the ceremony is optional.
       ...(project ? [{ label: 'Finish', icon: 'check' as IconName, run: () => finishProjectWithUndo(project, () => navigate(`/herbarium?press=${project.id}`)) }] : []),
       { label: 'Delete', icon: 'delete', danger: true, run: () => (project ? deleteProjectWithUndo(project) : area && deleteAreaWithUndo(area)) },
