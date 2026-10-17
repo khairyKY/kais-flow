@@ -38,6 +38,7 @@ export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
 import { expandSeries, type RuleBetween } from '../_shared/series.ts'
 import { rollAfter, ruleAfterThis, stepOf } from '../_shared/repeat.ts'
 import { occurrenceOn } from '../_shared/slots.ts'
+import { readFilter, smartMatch, type SmartFilter, type SmartTask } from '../_shared/smartList.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
 
@@ -228,7 +229,7 @@ export const SCOPES: readonly Scope[] = ['journal', 'people']
  * a key without their scope). */
 export type Table =
   | 'tasks' | 'inbox_items' | 'calendar_events' | 'projects' | 'areas' | 'domains' | 'routines' | 'routine_completions' | 'time_entries'
-  | 'books' | 'notes' | 'quotes' | 'app_settings' | 'slipping' | 'journal_entries' | 'people' | 'interactions'
+  | 'books' | 'notes' | 'quotes' | 'app_settings' | 'slipping' | 'journal_entries' | 'people' | 'interactions' | 'smart_lists'
 export type Row = Record<string, unknown>
 
 export interface FindOptions {
@@ -1317,6 +1318,41 @@ async function editOne(a: Args, ctx: ToolContext, taskId: string): Promise<Row> 
   return { edited: taskOut(task, z, true), changed, timezone: z }
 }
 
+// ── smart lists (0081, _shared/smartList.ts) ─────────────────────────────────────────────────
+
+export interface SmartList {
+  id: string
+  name: string
+  icon: string | null
+  filter: SmartFilter
+}
+
+/** The user's live smart lists in sidebar order, each filter read as the app reads it. */
+export async function smartLists(ctx: ToolContext): Promise<SmartList[]> {
+  const rows = await ctx.store.find('smart_lists', { deleted_at: null }, { order: 'position' })
+  return rows.map((r) => ({ id: r.id as string, name: r.name as string, icon: (r.icon as string | null) ?? null, filter: readFilter(r.filter) }))
+}
+
+/** Where things live, for a list's "where": a task's domain as the app reads it (grouping.ts
+ * effectiveDomainId — its own, else its project's or area's) and any place's name. */
+export async function placeBook(ctx: ToolContext): Promise<{ domainOf: (t: SmartTask) => string | null; nameOf: (id: string) => string | undefined }> {
+  const projects = await ctx.store.projects()
+  const areas = await ctx.store.find('areas', { deleted_at: null })
+  const domains = await ctx.store.find('domains', { deleted_at: null })
+  const domainBy = new Map<string, string | null>([...projects, ...areas].map((p) => [p.id as string, (p.domain_id as string | null) ?? null]))
+  const names = new Map([...projects, ...areas, ...domains].map((p) => [p.id as string, p.name as string]))
+  return {
+    domainOf: (t) => t.domain_id ?? (t.project_id && domainBy.get(t.project_id)) ?? (t.area_id && domainBy.get(t.area_id)) ?? null,
+    nameOf: (id) => names.get(id),
+  }
+}
+
+/** The rows a list shows, of `rows` (already narrowed by status — so done ones pass here). */
+export async function inSmartList<T extends TaskRow>(ctx: ToolContext, rows: readonly T[], filter: SmartFilter): Promise<T[]> {
+  const domainOf = filter.places?.length ? (await placeBook(ctx)).domainOf : undefined
+  return rows.filter((t) => smartMatch(t, { ...filter, show_done: true }, { now: ctx.now, zone: ctx.zone, domainOf }))
+}
+
 export const TOOLS: readonly ToolDef[] = [
   {
     name: 'today',
@@ -1376,7 +1412,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'list_tasks',
     title: 'List tasks',
     description:
-      'List tasks with optional filters: status (open by default), a project or area (ids from the projects tool), a label, Someday, and a due-date range. Open tasks come soonest-due first; done tasks most recently finished first.',
+      "List tasks with optional filters: status (open by default), a project or area (ids from the projects tool), a label, Someday, a due-date range, and a smart list (the user's saved filters — the smart_lists tool). Open tasks come soonest-due first; done tasks most recently finished first.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -1387,6 +1423,7 @@ export const TOOLS: readonly ToolDef[] = [
         someday: { type: 'boolean', description: 'true: only Someday tasks; false: none of them.' },
         due_from: dateArg('Due on or after'),
         due_to: dateArg('Due on or before (a date includes that whole day)'),
+        smart_list: { type: 'string', description: "A smart list's id or name: only the tasks it shows (its conditions on the user's clock; done ones too when it shows them, unless status says otherwise). Combines with the filters above." },
         limit: { type: 'integer', minimum: 1, maximum: 100, description: 'At most this many (default 50).' },
       },
       additionalProperties: false,
@@ -1395,17 +1432,23 @@ export const TOOLS: readonly ToolDef[] = [
     async run(a, ctx) {
       const from = when(a, 'due_from', ctx.zone)
       const to = when(a, 'due_to', ctx.zone)
+      const ref = text(a, 'smart_list', 100)
+      const lists = ref ? await smartLists(ctx) : []
+      const smart = ref ? (lists.find((l) => l.id === ref.toLowerCase()) ?? lists.find((l) => l.name.toLowerCase() === ref.toLowerCase()) ?? bad(`No smart list "${ref}". The smart_lists tool lists them.`)) : null
+      const limit = whole(a, 'limit', 1, 100, 50)
       const rows = await ctx.store.listTasks({
-        status: choice(a, 'status', ['open', 'done', 'all'] as const, 'open'),
+        status: choice(a, 'status', ['open', 'done', 'all'] as const, smart?.filter.show_done ? 'all' : 'open'),
         projectId: uuid(a, 'project_id') ?? null,
         areaId: uuid(a, 'area_id') ?? null,
         label: text(a, 'label', 100) ?? null,
         someday: flag(a, 'someday') ?? null,
         dueFrom: from ? bound(from, 'from', ctx.zone).toISOString() : null,
         dueTo: to ? bound(to, 'to', ctx.zone).toISOString() : null,
-        limit: whole(a, 'limit', 1, 100, 50),
+        limit: smart ? 5000 : limit,
       })
-      return { count: rows.length, timezone: ctx.zone, tasks: rows.map((t) => taskOut(t, ctx.zone)) }
+      // ponytail: a list's conditions run here, over every row of that status (5000 at most) — SQL if that ever binds.
+      const shown = smart ? (await inSmartList(ctx, rows, smart.filter)).slice(0, limit) : rows
+      return { count: shown.length, timezone: ctx.zone, ...(smart ? { smart_list: smart.name } : {}), tasks: shown.map((t) => taskOut(t, ctx.zone)) }
     },
   },
   {

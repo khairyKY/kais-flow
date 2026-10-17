@@ -1,5 +1,5 @@
 import { cairoDateKey } from '../../lib/dateShortcuts'
-import type { Task } from '../../lib/types'
+import type { Area, Project, Task } from '../../lib/types'
 import { isTop3Today } from './top3Rule'
 import { orderKey } from './manualOrder'
 import { isSnoozed } from './snooze'
@@ -7,6 +7,16 @@ import { isSnoozed } from './snooze'
 export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue' | 'all' | 'snoozed'
 
 export const SMART_LISTS: readonly SmartList[] = ['today', 'week', 'month', 'upcoming', 'someday', 'overdue', 'all', 'snoozed']
+
+type Placed = { domain_id?: string | null; project_id?: string | null; area_id?: string | null }
+
+/** A task's domain: its own, else its project's or area's (the Tasks page's domain chips, smart lists). */
+export function effectiveDomainId(task: Placed, projects: readonly Pick<Project, 'id' | 'domain_id'>[], areas: readonly Pick<Area, 'id' | 'domain_id'>[]): string | null {
+  if (task.domain_id) return task.domain_id
+  if (task.project_id) return projects.find((p) => p.id === task.project_id)?.domain_id ?? null
+  if (task.area_id) return areas.find((a) => a.id === task.area_id)?.domain_id ?? null
+  return null
+}
 
 /** Calendar-day difference from `a` to `b` (positive = b is later), computed on local day keys
  * so a task due 23:00 today reads as day 0, not "tomorrow" via a raw ms comparison. */

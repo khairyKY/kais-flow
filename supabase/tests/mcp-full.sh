@@ -175,7 +175,7 @@ info "harness: mcp on :$FN_PORT; users A=$A_ID B=$B_ID; today (Cairo) $TODAY, lo
 section "privacy gate: a key without the journal / people scopes"
 names "$KA" >/dev/null
 NAMES=$(jq -r '[.result.tools[].name] | sort | join(" ")' <<<"$BODY")
-expect "tools/list: 49 tools, none of them personal" "49 0" \
+expect "tools/list: 50 tools, none of them personal" "50 0" \
   "$(jq -r '[.result.tools[].name] | "\(length) \([.[] | select(IN("journal","save_journal_entry","people","save_person","log_interaction","delete_person"))] | length)"' <<<"$BODY")"
 for t in get_project save_project update_milestone update_checklist checklist_template save_area save_domain labels update_label trash move_to_trash restore_from_trash settings update_settings inbox file_inbox_item update_inbox_item routines save_routine check_routine start_focus stop_focus plan_my_day shut_down library save_library_item delete_library_item insights activity reopen_task duplicate_task duplicate_event snooze_task unsnooze_task; do
   grep -qw "$t" <<<"$NAMES" && ok "listed: $t" || bad "not listed: $t"
@@ -215,7 +215,7 @@ section "privacy gate: Journal and People switched on (as the card does)"
 expect "PATCH scopes as the user" "204" "$(set_scopes "$A_TOK" "$A_ID" '["journal","people"]')"
 expect "stored" "{journal,people}" "$(sql -c "select scopes from mcp_keys where user_id = '$A_ID'")"
 names "$KA" >/dev/null
-expect "tools/list: 55 tools, the six personal ones among them" "55 6" \
+expect "tools/list: 56 tools, the six personal ones among them" "56 6" \
   "$(jq -r '[.result.tools[].name] | "\(length) \([.[] | select(IN("journal","save_journal_entry","people","save_person","log_interaction","delete_person"))] | length)"' <<<"$BODY")"
 call "journal 2028-01-01..31" "$KA" journal '{from: "2028-01-01", to: "2028-01-31"}'
 expect "journal: A's live entry only (not the trashed one, not B's)" "$JA zebrafoxtrot morning pages" "$(j '[.entries[] | "\(.id) \(.body)"] | join(",")')"
@@ -269,7 +269,7 @@ refused "journal" "$KA" journal '{}' "This key can't reach the journal"
 call "search 'zebrafoxtrot'" "$KA" search '{query: "zebrafoxtrot"}'
 expect "search: no journal or people hit again" "0" "$(j '[.results[] | select(.type == "journal_entry" or .type == "person")] | length')"
 names "$KA" >/dev/null
-expect "tools/list: back to 49" "49" "$(jq -r '.result.tools | length' <<<"$BODY")"
+expect "tools/list: back to 50" "50" "$(jq -r '.result.tools | length' <<<"$BODY")"
 expect "B's journal / people untouched" "zebrafoxtrot B private Full Person B" \
   "$(sql -c "select (select body from journal_entries where user_id = '$B_ID') || ' ' || (select name from people where user_id = '$B_ID')")"
 
@@ -538,6 +538,17 @@ call "labels" "$KA" labels '{}'
 expect "the list" "cash:1 Full Label:0" "$(j '[.labels[] | select(.name == "cash" or .name == "Full Label") | "\(.name):\(.count)"] | join(" ")')"
 call "update_label: delete 'cash'" "$KA" update_label '{action: "delete", name: "cash"}'
 expect "gone from the task" "{}" "$(sql -c "select labels from tasks where id = '$T1'")"
+# Smart lists (0081): made in the app (a row through PostgREST, as the outbox writes it); read here.
+SLC=$(curl -sS -o "$TMP/sl.out" -w '%{http_code}' -X POST "$API_URL/rest/v1/smart_lists" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $A_TOK" \
+  -H 'Content-Type: application/json' -H 'Prefer: return=minimal' --data "{\"name\":\"Full Smart\",\"filter\":{\"places\":[\"$P1\"]}}")
+expect "the app's write lands (grants + RLS)" "201" "$SLC"
+SL_OPEN=$(sql -c "select count(*) from tasks where user_id = '$A_ID' and project_id = '$P1' and status = 'todo' and deleted_at is null and not someday and not paused")
+call "smart_lists" "$KA" smart_lists '{}'
+expect "the list, its where in words, its open count" "Full Smart Full Project A $SL_OPEN" "$(j '.smart_lists[0] | "\(.name) \(.conditions) \(.open)"')"
+call "list_tasks: smart_list by name" "$KA" list_tasks '{smart_list: "full smart"}'
+expect "the same tasks" "$SL_OPEN Full Smart" "$(j '"\(.count) \(.smart_list)"')"
+call "smart_lists: another user's key sees none of them" "$KB" smart_lists '{}'
+expect "none" "0" "$(j '.smart_lists | length')"
 
 # ---------------------------------------------------------------------------------------------
 section "settings"
