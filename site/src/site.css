@@ -151,10 +151,11 @@ main:focus { outline: none; }
 .hero .btns { margin-top: 40px; }
 .hero-note { margin-top: 16px; font-size: 14px; color: var(--ink-faint); }
 .hero-art { position: relative; margin-inline-end: calc(-1 * var(--gutter) - 120px); padding: 40px 0 64px 48px; }
-.hero-art .shot-desk { width: 100%; max-width: 1040px; }
-.hero-art .hero-phone { position: absolute; left: -16px; bottom: 0; width: 220px; padding: 7px; border-radius: 36px; }
+.hero-art .shot-desk { z-index: 1; width: 100%; max-width: 1040px; }
+.hero-art .hero-phone { position: absolute; z-index: 2; left: -16px; bottom: 0; width: 220px; padding: 7px; border-radius: 36px; }
 .hero-art .hero-phone img { border-radius: 30px; }
-.hero-wisteria { position: absolute; z-index: 3; top: 4px; left: calc(48px + 6%); width: 118px; transform: rotate(-4deg); pointer-events: none; filter: drop-shadow(0 6px 8px rgba(60, 52, 38, .12)); }
+/* hangs in the gap between the words and the screens, tucked behind them, never over the app */
+.hero-wisteria { position: absolute; z-index: 0; top: -72px; left: -64px; width: 112px; transform: rotate(2deg); transform-origin: 50% 0; pointer-events: none; filter: drop-shadow(0 6px 8px rgba(60, 52, 38, .12)); }
 
 /* ── home: the day, told by scrolling ── */
 .story { position: relative; }
@@ -658,6 +659,7 @@ html[lang="ar"] .hand { font-family: 'IBM Plex Sans Arabic', var(--font-ui); fon
   .head h2 { font-size: 48px; }
   .hero { grid-template-columns: 1fr; padding-block: 48px 96px; }
   .hero-art { margin-inline: 0 calc(-1 * var(--gutter)); padding-left: 32px; }
+  .hero-wisteria { top: -340px; left: auto; right: 48px; width: 96px; }
   .beat { gap: 40px; padding-block: 72px; }
   .beat-text h3 { font-size: 44px; }
   .isteps, .day3, .getfree, .contents { grid-template-columns: 1fr; }
@@ -703,7 +705,7 @@ html[lang="ar"] .hand { font-family: 'IBM Plex Sans Arabic', var(--font-ui); fon
   .hero-art { margin-inline: calc(-1 * var(--gutter)); padding: 24px 0 0; overflow: hidden; }
   .hero-art .shot-desk { width: 760px; max-width: none; margin-left: 24px; border-radius: 10px; }
   .hero-art .hero-phone { position: relative; left: auto; bottom: auto; width: 230px; margin: -230px auto 0; }
-  .hero-wisteria { left: 56px; top: 0; width: 64px; }
+  .hero-wisteria { display: none; }
   .beat { grid-template-columns: 1fr; gap: 32px; padding: 64px var(--gutter); justify-items: center; }
   .beat-text { justify-self: stretch; }
   .beat-text h3 { font-size: 36px; }
