@@ -587,6 +587,8 @@ if (want('f6')) {
   check('f7 a click on the row opens the task (?task=), not the slot\'s menu', page.url().includes(`task=${id(HELD)}`) && (await page.locator('[role="menuitem"]', { hasText: 'Link a task' }).count()) === 0, page.url())
   await page.keyboard.press('Escape')
   await sleep(500)
+  // Kai 2026-10-17: a click left FullCalendar's lifted copy stuck over the slot (the press forced it visible).
+  check('f7 the click leaves no lifted copy behind', (await page.locator('body > .fc-event-dragging').count()) === 0, String(await page.locator('body > .fc-event-dragging').count()))
   await slotRow(page, CODE, HELD).locator('.kf-ev-slot-title').click({ button: 'right' })
   await sleep(500)
   check('f7 a right-click on the row: its task menu, with "Out of the slot"', (await page.locator('[role="menuitem"]', { hasText: 'Out of the slot' }).count()) === 1 && (await page.locator('[role="menuitem"]', { hasText: /^Edit$/ }).count()) === 0)

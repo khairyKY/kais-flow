@@ -348,15 +348,20 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     const drag = new Draggable(el, { eventData: cardDragData })
     // slot-outline (Kai's pick A): the lifted card follows the pointer over the grid too, where
     // FullCalendar would hide it behind its own placeholder; the card's place stays dashed meanwhile.
+    // Only while a drag is under way: FullCalendar's press calls setIsVisible(false) as its reset, and a
+    // click (no drag) never stops the mirror, so forcing it there left the copy stuck over the slot.
     const mirror = drag.dragging.mirror
     const showMirror = mirror.setIsVisible.bind(mirror)
-    mirror.setIsVisible = () => showMirror(true)
+    let lifting = false
+    mirror.setIsVisible = (v: boolean) => showMirror(v || lifting)
     drag.dragging.emitter.on('dragstart', () => {
       dragged = true
+      lifting = true
       el.dataset.lifted = ''
       stopHover = trackRailHover(heldProps.current.railRef?.current)
     })
     drag.dragging.emitter.on('dragend', (ev: { pageX: number; pageY: number }) => {
+      lifting = false
       delete el.dataset.lifted
       stopHover?.()
       const rail = heldProps.current.railRef?.current
