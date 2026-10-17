@@ -37,7 +37,7 @@
   const story = document.querySelector('.story')
   const beats = story ? $$('.beat', story) : []
   const stage = story?.querySelector('.story-stage')
-  const navItems = story ? $$('.story-nav li, .story-bars i', story) : []
+  const navItems = story ? $$('.story-nav li', story) : []
   let current = -1
   const setBeat = (i) => {
     if (i === current) return
@@ -46,7 +46,6 @@
     beats.forEach((b, j) => { b.classList.toggle('on', j === i); b.classList.toggle('past', j < i) })
     navItems.forEach((n) => n.classList.toggle('on', +n.dataset.i === i))
     if (i === beats.length - 1) stage.dataset.theme = 'night'; else delete stage.dataset.theme
-    const hint = story.querySelector('.story-hint b'); if (hint) hint.textContent = i + 1
   }
   const pinned = () => story && getComputedStyle(stage).position === 'sticky'
 
@@ -61,12 +60,17 @@
       const r = story.getBoundingClientRect()
       const span = story.offsetHeight - innerHeight
       const p = Math.min(Math.max(-r.top / span, 0), 0.9999)
+      story.style.setProperty('--p', ((Math.floor(p * beats.length) + 1) / beats.length).toFixed(3))
       setBeat(Math.floor(p * beats.length))
     })
   }
   addEventListener('scroll', onScroll, { passive: true })
   addEventListener('resize', onScroll)
   onScroll()
+
+  // ── the hero's date, like the top of the app's Today page ──
+  const today = document.querySelector('[data-today]')
+  if (today) today.textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }) + ' — a fresh page'
 
   // ── FAQ: open on wide screens, folded on phones ──
   const wide = matchMedia('(min-width: 761px)')

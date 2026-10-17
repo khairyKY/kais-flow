@@ -71,12 +71,14 @@ in general). Optionally **Settings → Build → Build watch paths → `site/*`*
 | `src/lib.mjs` · `src/parts.mjs` | the page shell (header, footer, head tags) and shared sections |
 | `src/tokens.css` | the app's colour/type tokens, copied (not imported) from `app/src/styles/tokens` |
 | `src/site.css` · `src/site.js` | the styles, and the bits of behaviour: sun/moon, menu, scroll story, live version, guide search |
-| `src/screens/*.html` | the app screens drawn in Kai's design (`design-export/Site*.dc.html`), shown scaled down |
+| `public/shots/*.webp` | **real screenshots of the app** (day + night), made by `tools/shoot-app.mjs` against a mocked backend. `shot()` in `lib.mjs` shows them in a drawn bezel; `screen()` uses them wherever one exists |
+| `src/screens/*.html` | the older drawn screens (pre-Bound Journal); only used where no real shot exists yet |
 | `public/img/*.webp` | the botanical art, converted from `app/public/ds/assets` |
 | `public/og/*.png`, `favicon*`, `press/*.zip` | rendered by `tools/render-assets.mjs` (needs Playwright + Chrome; run by hand, commit the output) |
 
 ## Keeping it true
 
+- **The pictures**: when the app's look changes, re-run `tools/shoot-app.mjs` (its header says how), then `tools/render-assets.mjs` for the share cards and press kit.
 - **A new release**: add it to the top of `src/releases.json` **before tagging** — `{ v, date, title?, highlights,
   icons?, art }`, short warm lines, no jargon. `LATEST` follows it (the page also asks GitHub for the newest
   release when it loads). The app bundles the same file (its What's new sheet), and the release workflow

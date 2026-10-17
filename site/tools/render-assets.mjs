@@ -25,7 +25,6 @@ const server = http.createServer((q, r) => {
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); r.end(); return } r.writeHead(200, { 'content-type': TYPES[path.extname(f)] ?? 'application/octet-stream' }); r.end(b) })
 }).listen(0)
 const BASE = `http://localhost:${server.address().port}/`
-const screenHtml = (n) => fs.readFileSync(path.join(ROOT, 'src/screens', n + '.html'), 'utf8').replace(/ds\/assets\/(\w+)\/([\w-]+)\.png/g, 'img/$1-$2.webp')
 const FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;500&family=Courier+Prime:wght@400;700&family=Inter+Tight:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500;8..60,600&family=Noto+Naskh+Arabic:wght@500&family=IBM+Plex+Sans+Arabic:wght@400&display=swap">'
 const doc = (body, extra = '') => `<!doctype html><html data-theme="day"><head><meta charset="utf-8"><base href="${BASE}">${FONTS}<link rel="stylesheet" href="site.css"><style>body{margin:0;background:var(--paper-linen)}${extra}</style></head><body>${body}</body></html>`
 const kTile = (size, { grain = true, weight = 500 } = {}) => `<span style="position:relative;display:block;width:${size}px;height:${size}px;border-radius:${size * 0.225}px;overflow:hidden;background:linear-gradient(158deg,#FBF6E9,#EFE9DB 68%,#E7E0CE);box-shadow:inset 0 0 0 ${Math.max(1, size / 64)}px rgba(224,216,194,.95)">${grain ? '<span style="position:absolute;inset:0;background-image:var(--noise-url);mix-blend-mode:multiply;opacity:.5"></span>' : ''}<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:${weight};font-size:${size * 0.66}px;line-height:1;color:#2a2420">K</span></span>`
@@ -33,29 +32,30 @@ const kTile = (size, { grain = true, weight = 500 } = {}) => `<span style="posit
 // ── the share cards ──
 const art = {
   wisteria: '<img src="img/wisteria-p100.webp" style="position:absolute;top:-40px;right:120px;height:640px;transform:rotate(-3deg)"><img src="img/cherry-bloom.webp" style="position:absolute;right:40px;bottom:30px;width:170px;transform:rotate(12deg)">',
-  desk: `<div style="position:absolute;right:-80px;top:70px;transform:rotate(-2deg)"><div class="screen desk" style="--s:.36"><div class="screen-in">${screenHtml('calendar-week')}</div></div></div>`,
-  phone: (n) => `<div style="position:absolute;right:110px;top:56px;transform:rotate(3deg)"><div class="screen" style="--s:.62"><div class="screen-in">${screenHtml(n)}</div></div></div>`,
+  // the real app (public/shots, from tools/shoot-app.mjs), in the same bezel the site draws
+  desk: `<div class="shot-desk" style="position:absolute;right:-120px;top:96px;width:720px"><img src="shots/week-desk-day.webp"></div>`,
+  phone: (n) => `<div class="shot-phone" style="position:absolute;right:96px;top:48px;width:280px"><img src="shots/${n}-day.webp"></div>`,
   img: (n, w = 360) => `<img src="img/${n}.webp" style="position:absolute;right:80px;top:50%;transform:translateY(-50%);width:${w}px;max-height:470px;object-fit:contain">`,
 }
 const card = ({ eb, t, s, a, rtl = false }) => doc(`<div style="position:relative;width:1200px;height:630px;overflow:hidden;background:var(--paper-linen);color:var(--ink-body)"${rtl ? ' dir="rtl"' : ''}>
   ${a}<div style="position:absolute;${rtl ? 'right' : 'left'}:84px;top:80px;bottom:80px;width:${rtl ? 700 : 640}px;display:flex;flex-direction:column">
   <div style="display:flex;align-items:center;gap:16px">${kTile(64)}<span style="font-family:var(--font-display);font-size:30px;font-weight:500">Kai’s Flow</span></div>
-  <div style="margin-top:auto"><span style="font-family:${rtl ? "'IBM Plex Sans Arabic'" : 'var(--font-mono)'};font-size:16px;letter-spacing:${rtl ? 0 : '.14em'};text-transform:uppercase;color:var(--acc-terra-ink)">${eb}</span>
+  <div style="margin-top:auto"><span style="font-family:${rtl ? "'IBM Plex Sans Arabic'" : 'var(--font-ui)'};font-size:22px;font-weight:600;color:var(--acc-terra-ink)">${eb}</span>
   <div style="margin-top:16px;font-family:${rtl ? "'Noto Naskh Arabic'" : 'var(--font-display)'};font-weight:500;font-size:${t.length > 40 ? 56 : 64}px;line-height:${rtl ? 1.4 : 1.04};letter-spacing:${rtl ? 0 : '-.02em'};text-wrap:balance">${t}</div>
   <div style="margin-top:20px;font-size:24px;color:var(--ink-muted)">${s}</div></div></div></div>`)
 const r0 = RELEASES[0]
 const CARDS = {
-  home: { eb: 'Home', t: 'Your days, planned in one quiet place.', s: 'Free · Web, Android, Windows', a: art.wisteria },
+  home: { eb: 'Home', t: 'Your days, planned in one quiet place.', s: 'Free, on the web, Android and Windows.', a: art.phone('today-phone') },
   ...(ARABIC && { ar: { eb: 'الرئيسية', t: 'أيامك، مُخطَّطة في مكان واحد هادئ.', s: 'مجاني · الويب، أندرويد، ويندوز', a: art.wisteria.replace('right:120px', 'left:120px').replace('right:40px', 'left:40px'), rtl: true } }),
   features: { eb: 'Features', t: 'Everything that’s in the journal', s: 'Seven parts, each small. Start anywhere.', a: art.img('daisy-midday') },
-  'feature-plan-and-today': { eb: 'Features · Plan & Today', t: 'A plan you can finish', s: 'Plan my day, the Top 3, the NOW slip.', a: art.phone('plan') },
-  'feature-calendar': { eb: 'Features · Calendar', t: 'A calendar that’s yours', s: 'Time blocks, 15-minute steps, made for thumbs.', a: art.desk },
-  'feature-capture': { eb: 'Features · Capture', t: 'Get it out of your head', s: 'Type it, say it, or share it from any app.', a: art.phone('voice') },
-  'feature-rituals': { eb: 'Features · Rituals', t: 'Small rituals at both ends of the day', s: 'Plan my day, Shut down, routines and streaks.', a: art.phone('shutdown') },
+  'feature-plan-and-today': { eb: 'Features · Plan & Today', t: 'A plan you can finish', s: 'Plan my day, the Top 3, the NOW slip.', a: art.phone('plan-phone') },
+  'feature-calendar': { eb: 'Features · Calendar', t: 'A calendar that’s yours', s: 'Time blocks, Time slots, and your Google calendars beside them.', a: art.desk },
+  'feature-capture': { eb: 'Features · Capture', t: 'Get it out of your head', s: 'Type it, say it, or share it from any app.', a: art.phone('voice-phone') },
+  'feature-rituals': { eb: 'Features · Rituals', t: 'Small rituals at both ends of the day', s: 'Plan my day, Shut down, routines and streaks.', a: art.phone('shutdown-phone') },
   'feature-journal': { eb: 'Features · Journal', t: 'Write the day down', s: 'A journal, a library, and a herbarium.', a: art.img('hydrangea-medium') },
   'feature-people': { eb: 'Features · People', t: 'The people you care about', s: 'Birthdays, the last time you spoke, and notes.', a: art.img('cherry-bloom', 300) },
-  'feature-apps': { eb: 'Features · Apps', t: 'One garden, three doors', s: 'Web, Android and Windows, synced.', a: art.phone('today') },
-  paper: { eb: 'Paper people', t: 'For people who think on paper', s: 'Paper capture is here · the Notebook page is next', a: art.img('tools-pen', 420) },
+  'feature-apps': { eb: 'Features · Apps', t: 'One garden, three doors', s: 'Web, Android and Windows, synced.', a: art.phone('today-phone') },
+  paper: { eb: 'Paper people', t: 'For people who think on paper', s: 'Print the page, write on it, and the ticks come back as done.', a: art.img('tools-pen', 420) },
   integrations: { eb: 'Integrations & imports', t: 'Bring what you have', s: 'Akiflow, Todoist, TickTick, Notion, Obsidian and more.', a: art.img('vine-leaf-right', 220) },
   compare: { eb: 'Compare', t: 'Kai’s Flow, next to the others', s: 'Honest about what it doesn’t do yet.', a: art.img('clover-four_leaf', 300) },
   'field-notes': { eb: `Field notes · ${shortDate(r0.date)}`, t: `${r0.v}: ${r0.title.charAt(0).toLowerCase() + r0.title.slice(1)}`, s: `${r0.highlights.length} small change${r0.highlights.length === 1 ? '' : 's'}`, a: art.img('hydrangea-light') },
@@ -67,7 +67,7 @@ const CARDS = {
   terms: { eb: 'Terms', t: 'The short terms', s: 'Five things, on one page.', a: art.img('vine-leaf-right', 220) },
   about: { eb: 'About', t: 'Why I built this', s: 'Built by one student, for himself first.', a: art.img('clover-seedling', 200) },
   press: { eb: 'Press kit', t: 'Everything you need to write about it', s: 'The mark, colours, type and screenshots.', a: art.img('cherry-bloom', 300) },
-  ...Object.fromEntries(GUIDES.map((g) => [`guide-${g.slug}`, { eb: 'Guides', t: g.title, s: `${g.min} minutes · ${g.blurb}`, a: g.slug === 'install-android' ? art.phone('today') : art.img({ 'install-windows': 'fern-coil', 'connect-an-ai-assistant': 'clover-awake' }[g.slug] ?? 'fern-unfurl2', 180) }])),
+  ...Object.fromEntries(GUIDES.map((g) => [`guide-${g.slug}`, { eb: 'Guides', t: g.title, s: `${g.min} minutes · ${g.blurb}`, a: g.slug === 'install-android' ? art.phone('today-phone') : art.img({ 'install-windows': 'fern-coil', 'connect-an-ai-assistant': 'clover-awake' }[g.slug] ?? 'fern-unfurl2', 180) }])),
 }
 
 const browser = await chromium.launch({ executablePath: CHROME })
@@ -104,13 +104,13 @@ for (const [name, bg] of [['k-mark-light', '#FBF6E9'], ['k-mark-dark', '#211D30'
   await page.setViewportSize({ width: 1024, height: 1024 })
   files.push([`${name}-1024.png`, await shot(doc(`<div style="width:1024px;height:1024px;display:flex;align-items:center;justify-content:center;background:${bg}">${kTile(720)}</div>`), path.join(DIST, 'tmp.png'), { x: 0, y: 0, width: 1024, height: 1024 })])
 }
-const SHOTS = [['today', 'today-phone'], ['plan', 'plan-my-day-phone'], ['calendar-phone', 'calendar-phone'], ['voice', 'capture-by-voice-phone'], ['shutdown', 'shut-down-phone'], ['calendar-week', 'week-calendar-desktop']]
+const SHOTS = [['today-phone', 'today-phone'], ['plan-phone', 'plan-my-day-phone'], ['slot-phone', 'time-slot-phone'], ['voice-phone', 'capture-by-voice-phone'], ['shutdown-phone', 'shut-down-phone'], ['today-desk', 'today-desktop'], ['week-desk', 'week-calendar-desktop']]
 const ctx2 = await browser.newContext({ deviceScaleFactor: 2 })
 const p2 = await ctx2.newPage()
 for (const [s, name] of SHOTS) {
-  const [w, h] = s === 'calendar-week' ? [1440, 900] : [390, 844]
+  const [w, h] = s.endsWith('-desk') ? [1440, 900] : [390, 844]
   await p2.setViewportSize({ width: w + 48, height: h + 48 })
-  await p2.setContent(doc(`<div style="padding:24px"><div class="screen${s === 'calendar-week' ? ' desk' : ''}" style="--s:1"><div class="screen-in">${screenHtml(s)}</div></div></div>`, 'body{background:transparent}'), { waitUntil: 'networkidle' })
+  await p2.setContent(doc(`<div style="padding:24px"><img src="shots/${s}-day.webp" style="display:block;width:${w}px;height:${h}px;border-radius:${s.endsWith('-desk') ? 12 : 36}px"></div>`, 'body{background:transparent}'), { waitUntil: 'networkidle' })
   await p2.evaluate(() => document.fonts.ready)
   files.push([`screenshots/${name}.png`, await p2.screenshot({ omitBackground: true, clip: { x: 0, y: 0, width: w + 48, height: h + 48 } })])
 }

@@ -32,9 +32,25 @@ const SCREEN_CACHE = {}
 const screenHtml = (name) => (SCREEN_CACHE[name] ??= fs.readFileSync(ROOT + `src/screens/${name}.html`, 'utf8')
   .replace(/ds\/assets\/(\w+)\/([\w-]+)\.png/g, '/img/$1-$2.webp').replace(/<img /g, '<img loading="lazy" decoding="async" '))
 // `s` = scale; leave it out when the stylesheet sets --s for the context (so it can change per breakpoint).
+// The drawn screens predate the Bound Journal look, so where a real screenshot exists it wins.
+const REAL = { plan: 'plan-phone', today: 'today-phone', 'calendar-week': 'week-desk', 'calendar-phone': 'slot-phone', voice: 'voice-phone', shutdown: 'shutdown-phone' }
+const hasShot = (n) => fs.existsSync(ROOT + `public/shots/${n}-day.webp`)
 export const screen = (name, label, { s, cls = '' } = {}) => {
+  const real = REAL[name]
+  if (real && hasShot(real)) return shot(real, label, { cls: `as-screen ${cls}`, style: s ? `--s:${s}` : '' })
   const desk = name === 'calendar-week'
   return `<div class="screen${desk ? ' desk' : ''} ${cls}" role="img" aria-label="${label}"${s ? ` style="--s:${s}"` : ''}><div class="screen-in" dir="ltr" lang="en">${screenHtml(name)}</div></div>`
+}
+
+// ── real app screenshots ── tools/shoot-app.mjs writes public/shots/<name>-day.webp + -night.webp
+// (phones at 390×844, desks at 1440×900, both 2×-ish). Both are in the page; CSS shows the one that
+// matches the theme, and the hidden one never loads (display:none + lazy).
+const SHOT = { phone: [390, 844], desk: [1440, 900] }
+export const shot = (name, alt, { eager = false, cls = '', style = '' } = {}) => {
+  const kind = name.endsWith('-desk') ? 'desk' : 'phone'
+  const [w, h] = SHOT[kind]
+  const one = (t) => `<img class="${t}" src="/shots/${name}-${t}.webp" alt="${alt}" width="${w}" height="${h}"${eager && t === 'day' ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async">`
+  return `<div class="shot-${kind} ${cls}"${style ? ` style="${style}"` : ''}>${one('day')}${one('night')}</div>`
 }
 
 // ── small components ──
