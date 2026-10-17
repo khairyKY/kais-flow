@@ -6,7 +6,8 @@ import { toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
 import { queryClient } from '../../lib/queryClient'
 import { carryTasksToDomain } from '../tasks/api'
-import type { Project, TimeEntry } from '../../lib/types'
+import { duplicateProjectRows } from '../tasks/duplicate'
+import type { Project, Task, TimeEntry } from '../../lib/types'
 
 export function useProjects() {
   return useQuery({
@@ -133,6 +134,25 @@ export function deleteProjectWithUndo(project: Project): void {
   writeRow('projects', { ...project, deleted_at: nowIso(), updated_at: nowIso() })
   logActivity('project.deleted', 'project', project.id, { name: project.name })
   toastUndo('Moved to Trash', () => restoreTrashedProject(project))
+}
+
+/** Duplicate project (Kai 2026-10-17; the Projects row menu, the project page's footer): "<name> (copy)"
+ * with its milestones and checklist afresh and its tasks as open, undated, unscheduled copies
+ * (tasks/duplicate duplicateProjectRows). One Undo removes the copy and its tasks outright. */
+export function duplicateProjectWithUndo(project: Project): Project {
+  const { project: copy, tasks } = duplicateProjectRows(project, queryClient.getQueryData<Task[]>(['tasks']) ?? [], new Date())
+  writeRow('projects', copy)
+  logActivity('project.created', 'project', copy.id, { name: copy.name, domain_id: copy.domain_id, type: copy.type, duplicate_of: project.id })
+  for (const { copy: t, of } of tasks) {
+    writeRow('tasks', t)
+    logActivity('task.created', 'task', t.id, { duplicate_of: of })
+  }
+  const n = tasks.filter((r) => r.copy.project_id === copy.id).length
+  toastUndo(`Duplicated · ${copy.name}${n ? ` · ${n} task${n === 1 ? '' : 's'}` : ''}`, () => {
+    for (const { copy: t } of [...tasks].reverse()) writeRow('tasks', { id: t.id }, 'delete')
+    writeRow('projects', { id: copy.id }, 'delete')
+  })
+  return copy
 }
 
 export function restoreTrashedProject(project: Project): void {

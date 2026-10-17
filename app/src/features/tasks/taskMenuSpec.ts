@@ -5,7 +5,7 @@
 import { cairoTimeKey } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
 
-export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'intoSlot' | 'subtask' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'select' | 'reopen' | 'delete'
+export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'intoSlot' | 'subtask' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'duplicate' | 'select' | 'reopen' | 'delete'
 
 export interface TaskMenuEntry {
   key: TaskMenuKey
@@ -79,6 +79,9 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     ...(place && place.index < place.last ? [{ key: 'down', label: 'Move down' } as const] : []),
     // Kai 2026-09-27: the inline ▶ buttons went, so Focus lives here — one task, never in bulk.
     ...(n ? [] : [{ key: 'focus', label: 'Start focus' } as const]),
+    // Kai 2026-10-17 ("we need to add duplicating options"): an open copy, its subtasks along — with a
+    // selection, of every selected task (one Undo). Todoist / Akiflow keep it just above the end.
+    { key: 'duplicate', label: `Duplicate${n}` },
     ...(ctx.canSelect ? [{ key: 'select', label: ctx.selected ? 'Deselect' : 'Select', hint: 'or hold a row' } as const] : []),
     del,
   ]

@@ -134,7 +134,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
 
   return (
     <div>
-      <style>{`.te-body { display: grid; grid-template-columns: minmax(0, 1fr) 316px; gap: 36px; margin-top: 26px; }`}</style>
+      <style>{`.te-body { display: grid; grid-template-columns: minmax(0, 1fr) 316px; gap: 36px; margin-top: 26px; } .kf-button.te-del { color: var(--ink-muted); } .kf-button.te-del:not(:disabled):hover { color: var(--acc-terra-ink); }`}</style>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
         <BackLink to="/tasks">Tasks</BackLink>
@@ -233,11 +233,9 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
           )}
 
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 44, paddingTop: 16, borderTop: '1px solid var(--line-card)', flexWrap: 'wrap', gap: 12 }}>
-            <div>
-              {/* Flow Audit §4: no confirm — it goes to Trash with an Undo. B (D11): the kit's terra text button. */}
-              <Button variant="ghost" onClick={handleDelete} style={{ padding: 0 }}>Delete task</Button>
-              <FHelp>to Trash, with its calendar block · Undo</FHelp>
-            </div>
+            {/* Flow Audit §4: no confirm — it goes to Trash with an Undo (the toast says so). Kai 2026-10-17
+                picked A: a quiet trash + words, terra on hover; the ⋯ by the title has Delete too (C). */}
+            <Button variant="ghost" className="te-del" icon={<Icon name="delete" size={18} />} onClick={handleDelete}>Delete task</Button>
             <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
               {/* J-17 / 2026-09-26 decision: every shortcut hint is the kit's keycap (was hand-rolled mono text). */}
               <KeyCombo keys={['⌘', '⏎']} size="sm" />

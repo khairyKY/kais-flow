@@ -3,7 +3,7 @@ import { useIsMobile } from '../../components/BottomSheet'
 import { tomorrowHint as defaultTomorrowHint } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
 import type { Area, Domain, Project, Task } from '../../lib/types'
-import { deleteTasksWithUndo, editWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, planWithUndo, prioritizeWithUndo, reopenTaskWithUndo, rescheduleDue, setDuration, setRecurrence, setReminder, somedayTasksWithUndo, toggleTop3 } from './api'
+import { deleteTasksWithUndo, duplicateTasksWithUndo, editWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, planWithUndo, prioritizeWithUndo, reopenTaskWithUndo, rescheduleDue, setDuration, setRecurrence, setReminder, somedayTasksWithUndo, toggleTop3 } from './api'
 import { durationLabel } from '../../components/pickerMath'
 import { placeName } from './move'
 import type { SwipeActions } from './SwipeRow'
@@ -36,6 +36,7 @@ export function taskActions(task: Task): TaskMenuActions {
     goal: () => makeGoalWithUndo(task),
     reopen: () => reopenTaskWithUndo(task),
     delete: () => deleteTasksWithUndo([task]),
+    duplicate: () => duplicateTasksWithUndo([task]),
     // Next free slot's Confirm = a timed replan into the slot: the task's block moves there (or one
     // is placed) and it is due then (calendar/replan's rule, through rescheduleDue).
     slot: (startsAt, endsAt) => toastUndo(`Planned · ${dueChip(startsAt, new Date())}–${cairoTimeKey(new Date(endsAt))}`, rescheduleDue(task, startsAt, true)),
@@ -75,7 +76,7 @@ export function useRowGrammar(task: Task, o: RowGrammarOptions) {
   const bulk = o.bulk && o.selected && o.bulk.count > 1 ? o.bulk : undefined
   const actions: TaskMenuActions = {
     ...taskActions(task),
-    ...(bulk ? { tomorrow: bulk.onTomorrow, schedule: bulk.onSchedule, someday: bulk.onSomeday, move: bulk.onMove, delete: bulk.onDelete, ...(bulk.onTop3 ? { top3: bulk.onTop3 } : null) } : null),
+    ...(bulk ? { tomorrow: bulk.onTomorrow, schedule: bulk.onSchedule, someday: bulk.onSomeday, move: bulk.onMove, delete: bulk.onDelete, duplicate: bulk.onDuplicate, ...(bulk.onTop3 ? { top3: bulk.onTop3 } : null) } : null),
     ...(o.place ? { reorder: (d: -1 | 1) => void moveInTop3Order(task, o.place!.index + d) } : null),
     ...(o.nest && !task.parent_task_id && !done ? { addSubtask: () => useSubtaskUi.getState().setAdding(task.id) } : null),
     ...o.actions,

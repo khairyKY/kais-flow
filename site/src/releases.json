@@ -1,5 +1,23 @@
 [
   {
+    "v": "v1.2.3",
+    "date": "2026-10-17",
+    "title": "Duplicate anything, open from the calendar",
+    "highlights": [
+      "Duplicate is everywhere: any task's right-click or ⋯ menu, Ctrl+D, several selected tasks at once, calendar events and blocks, and whole projects; a task's subtasks come along",
+      "Clicking a task in the calendar's side list (or in planning mode) opens it; dragging still plans it. On the phone, Open task is the first row of its sheet",
+      "The task editor's Delete is a quiet trash button that turns red on hover",
+      "Your AI assistant can duplicate tasks and events too"
+    ],
+    "icons": [
+      "check",
+      "calendar",
+      "menu",
+      "chat"
+    ],
+    "art": "hydrangea-light"
+  },
+  {
     "v": "v1.2.2",
     "date": "2026-10-17",
     "title": "No ghost copy in Time slots",

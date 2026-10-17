@@ -36,6 +36,10 @@
 .cal-plan-meta { flex: none; display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 .cal-plan-line .cal-plan-meta { gap: 5px; }
 .cal-plan-grip { flex: none; margin-top: 2px; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
+/* Kai 2026-10-17: a click opens the task, so Plan ▾ (the rail's) plants it — shown on hover or focus, as on the rail. */
+.cal-plan-card .cal-plan-btn { align-self: flex-start; }
+.cal-plan-card:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+@media (hover: hover) { .cal-plan-card:not(:hover):not(:focus-within) .cal-plan-btn { opacity: 0; } }
 
 .cal-plan-foot { margin-top: auto; padding-top: 14px; border-top: 1px solid var(--line-dashed); display: flex; align-items: center; gap: 16px; }
 

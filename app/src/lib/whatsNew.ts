@@ -21,7 +21,7 @@ export const NOTES: readonly ReleaseNote[] = NOTES_JSON
 /** The newest version these notes know = the version this build is (the web app has no other number). */
 export const BUNDLED_VERSION = NOTES[0].v
 /** "All release notes →": the site's What's new page (the address site/build.mjs defaults SITE_URL to). */
-export const RELEASE_NOTES_URL = 'https://kais-flow-site.pages.dev/whats-new/'
+export const RELEASE_NOTES_URL = 'https://kais-flow-site.khairyshhn1.workers.dev/whats-new/'
 
 export function noteFor(v: string): ReleaseNote | null {
   return NOTES.find((n) => compareVersions(n.v, v) === 0) ?? null

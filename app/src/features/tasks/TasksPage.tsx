@@ -12,7 +12,7 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { NewProjectModal } from '../projects/NewProjectModal'
 import { useCalendarRows } from '../calendar/api'
-import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, planWithUndo, toggleTop3, toggleTop3ManyWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
+import { useTasks, completeTask, completeTaskWithUndo, undoCompletion, reopenTaskWithUndo, rescheduleDue, planWithUndo, toggleTop3, toggleTop3ManyWithUndo, duplicateTasksWithUndo, moveTasksWithUndo, rescheduleTasksWithUndo, somedayTasksWithUndo, deleteTasksWithUndo, moveToTomorrowWithUndo, type CompletionUndo } from './api'
 import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
@@ -673,6 +673,10 @@ export function TasksPage() {
     toggleTop3ManyWithUndo(selectedTasks)
     clearSelection()
   }
+  function bulkDuplicate() {
+    duplicateTasksWithUndo(selectedTasks)
+    clearSelection()
+  }
 
   // Motion 2c/2d: a row picks up — with the rest of the selection when it's part of one — and files
   // onto the sidebar's Today / Someday or the rail's areas and projects (./fileDrop; the ⋯ menu's
@@ -693,7 +697,7 @@ export function TasksPage() {
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate }
       : undefined
 
   // P7e A18: D Plan…, ! Priority, = Duration, S Someday, H goal, F focus; the bulk bar's Priority / Labels.
@@ -1015,6 +1019,7 @@ export function TasksPage() {
           onTop3={bulkTop3}
           onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
           onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
+          onDuplicate={bulkDuplicate}
           onDelete={bulkDelete}
           onClear={clearSelection}
           onSelectAll={() => setSelected(new Set(flatTasks.map((t) => t.id)))}

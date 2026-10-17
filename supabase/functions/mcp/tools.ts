@@ -1041,6 +1041,32 @@ export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done
   return { done: { ...t, status: 'done', completed_at: now, top3: false }, next, carried }
 }
 
+/** A task as Duplicate copies it (the app's tasks/duplicate.ts duplicateRows): open, off the calendar,
+ * out of the Top 3 and any Time slot, the origin key left with the original. */
+const taskCopy = (t: TaskRow, at: string, over: Partial<TaskRow> = {}): TaskRow => ({
+  ...t, id: crypto.randomUUID(), status: 'todo', completed_at: null, top3: false, top3_rank: null, scheduled_start: null, scheduled_end: null,
+  slot_id: null, slot_date: null, reminder_sent: false, external_ref: null, created_at: at, updated_at: at, ...over,
+})
+
+/** Duplicate (the app's row menu, Kai 2026-10-17): an open copy; a parent's subtasks come along as open
+ * subtasks of the copy, in their order (a millisecond apart, so they keep it); a subtask's copy stays
+ * under its parent. `over`: what the copy takes instead (duplicate_event's block times). Logs each
+ * task.created with duplicate_of. */
+export async function duplicateTask(ctx: ToolContext, t: TaskRow, over: Partial<TaskRow> = {}): Promise<{ copy: TaskRow; subtasks: TaskRow[] }> {
+  const at = ctx.now.getTime()
+  const copy = taskCopy(t, new Date(at).toISOString(), over)
+  await ctx.store.insertTask(copy)
+  await logIt(ctx, 'task.created', 'task', copy.id, { title: copy.title, duplicate_of: t.id })
+  const subtasks: TaskRow[] = []
+  for (const [i, s] of (t.parent_task_id ? [] : await subtasksOf(ctx, t.id)).entries()) {
+    const c = taskCopy(s, new Date(at + i + 1).toISOString(), { parent_task_id: copy.id })
+    await ctx.store.insertTask(c)
+    await logIt(ctx, 'task.created', 'task', c.id, { title: c.title, duplicate_of: s.id })
+    subtasks.push(c)
+  }
+  return { copy, subtasks }
+}
+
 /** A done task back to open (tasks/api reopenTask, after the session that completed it). */
 export async function reopenTask(ctx: ToolContext, taskId: string): Promise<TaskRow> {
   const t = await ctx.store.getTask(taskId)
@@ -1558,6 +1584,24 @@ export const TOOLS: readonly ToolDef[] = [
     },
   },
   {
+    name: 'duplicate_task',
+    title: 'Duplicate task',
+    description:
+      "Copy tasks (only when the user asks) — the app's Duplicate: an open copy with the same title, notes, date, project or area, labels, priority, duration, repeat and reminder, not on the calendar and not in the Top 3. A parent's subtasks come along as open subtasks of the copy; a subtask's copy stays under the same parent. `ids` copies several.",
+    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' }, ids: ids('The task ids') }, additionalProperties: false },
+    write: true,
+    async run(a, ctx) {
+      const picked = new Set(Array.isArray(a.ids) ? (a.ids as string[]) : [])
+      return eachId(a, async (taskId) => {
+        const t = (await ctx.store.getTask(taskId)) ?? bad(`No task with id ${taskId} (it may be in Trash). Use list_tasks or search to find it.`)
+        // Picked with its parent: it comes along with the parent's copy, once (as in the app).
+        if (t.parent_task_id && picked.has(t.parent_task_id)) return { duplicated: null, note: `"${t.title}" is copied with its parent.`, timezone: ctx.zone }
+        const { copy, subtasks } = await duplicateTask(ctx, t)
+        return { duplicated: taskOut({ ...copy, project_name: t.project_name ?? null }, ctx.zone), ...(subtasks.length ? { subtasks: subtasks.map((s) => s.title) } : {}), timezone: ctx.zone }
+      })
+    },
+  },
+  {
     name: 'add_to_inbox',
     title: 'Add to inbox',
     description:
@@ -1755,6 +1799,42 @@ export const TOOLS: readonly ToolDef[] = [
         changed: [`${row.recurrence_rule ? 'the whole series' : 'the event'} moved to Trash${others > 0 ? `, with ${others} occurrence${others === 1 ? '' : 's'} moved out of it` : ''}`, ...released(freed)],
         timezone: ctx.zone,
       }
+    },
+  },
+  {
+    name: 'duplicate_event',
+    title: 'Duplicate event',
+    description:
+      "Copy an event to the same time (only when the user asks) — the app's Duplicate: it shows side by side, and edit_event then moves or renames it. For a repeating event give `occurrence` (its start, as the calendar tool lists it): the copy is that one occurrence, on its own. A task's calendar block duplicates its task (its subtasks along) and blocks the copy at the same time. Not for a Time block (it holds tasks and repeats instead; add_event makes another) or a Google event (read-only).",
+    inputSchema: {
+      type: 'object',
+      properties: { id: { ...id, description: 'The event id (for a repeating event, its series).' }, occurrence: dateArg('For a repeating event: the occurrence to copy — its start') },
+      required: ['id'],
+      additionalProperties: false,
+    },
+    write: true,
+    async run(a, ctx) {
+      const eventId = uuid(a, 'id', true)!
+      const row = (await ctx.store.getEvent(eventId)) ?? bad(`No event with id ${eventId} (it may have been deleted, or it's a read-only Google event). Use calendar or search to find it.`)
+      if (row.type === 'time_block') return bad(`"${row.title}" is a Time block: it holds tasks and repeats instead — add_event makes another.`)
+      const occ = when(a, 'occurrence', ctx.zone)
+      if (occ && !row.recurrence_rule) return bad(`"${row.title}" doesn't repeat: leave out "occurrence".`)
+      if (!occ && row.recurrence_rule) return bad(`"${row.title}" repeats: give "occurrence" — the start of the one to copy, as the calendar tool lists it.`)
+      const src = occ ? occurrenceOf(row, occ, ctx) : row
+      const span: Span = { starts_at: new Date(src.starts_at).toISOString(), ends_at: new Date(src.ends_at).toISOString(), all_day: src.all_day }
+      if (row.task_id) {
+        // A task's block: the task's copy, on the calendar at this same time (calendar/duplicate.ts).
+        const t = (await ctx.store.getTask(row.task_id)) ?? bad(`"${row.title}" is a block whose task is gone (in Trash?).`)
+        const { copy, subtasks } = await duplicateTask(ctx, t, { scheduled_start: span.starts_at, scheduled_end: span.ends_at })
+        const block: EventRow = { id: crypto.randomUUID(), title: copy.title, ...span, task_id: copy.id, type: 'task' }
+        await ctx.store.insertEvent(block)
+        await logIt(ctx, 'task.scheduled', 'task', copy.id, { calendar_event_id: block.id })
+        return { duplicated: eventOut(block, ctx.zone), task: taskOut({ ...copy, project_name: t.project_name ?? null }, ctx.zone), ...(subtasks.length ? { subtasks: subtasks.map((s) => s.title) } : {}), timezone: ctx.zone }
+      }
+      const copy: EventRow = { id: crypto.randomUUID(), title: row.title, ...span, task_id: null, type: row.type ?? 'event', recurrence_rule: null, recurrence_exdates: [], remind_min: row.remind_min ?? null }
+      await ctx.store.insertEvent(copy)
+      await logIt(ctx, 'calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, duplicate_of: row.id })
+      return { duplicated: eventOut(copy, ctx.zone), timezone: ctx.zone }
     },
   },
   {

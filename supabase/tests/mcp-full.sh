@@ -175,9 +175,9 @@ info "harness: mcp on :$FN_PORT; users A=$A_ID B=$B_ID; today (Cairo) $TODAY, lo
 section "privacy gate: a key without the journal / people scopes"
 names "$KA" >/dev/null
 NAMES=$(jq -r '[.result.tools[].name] | sort | join(" ")' <<<"$BODY")
-expect "tools/list: 45 tools, none of them personal" "45 0" \
+expect "tools/list: 47 tools, none of them personal" "47 0" \
   "$(jq -r '[.result.tools[].name] | "\(length) \([.[] | select(IN("journal","save_journal_entry","people","save_person","log_interaction","delete_person"))] | length)"' <<<"$BODY")"
-for t in get_project save_project update_milestone update_checklist checklist_template save_area save_domain labels update_label trash move_to_trash restore_from_trash settings update_settings inbox file_inbox_item update_inbox_item routines save_routine check_routine start_focus stop_focus plan_my_day shut_down library save_library_item delete_library_item insights activity reopen_task; do
+for t in get_project save_project update_milestone update_checklist checklist_template save_area save_domain labels update_label trash move_to_trash restore_from_trash settings update_settings inbox file_inbox_item update_inbox_item routines save_routine check_routine start_focus stop_focus plan_my_day shut_down library save_library_item delete_library_item insights activity reopen_task duplicate_task duplicate_event; do
   grep -qw "$t" <<<"$NAMES" && ok "listed: $t" || bad "not listed: $t"
 done
 BEFORE_P=$(PERSONAL_ROWS)
@@ -215,7 +215,7 @@ section "privacy gate: Journal and People switched on (as the card does)"
 expect "PATCH scopes as the user" "204" "$(set_scopes "$A_TOK" "$A_ID" '["journal","people"]')"
 expect "stored" "{journal,people}" "$(sql -c "select scopes from mcp_keys where user_id = '$A_ID'")"
 names "$KA" >/dev/null
-expect "tools/list: 51 tools, the six personal ones among them" "51 6" \
+expect "tools/list: 53 tools, the six personal ones among them" "53 6" \
   "$(jq -r '[.result.tools[].name] | "\(length) \([.[] | select(IN("journal","save_journal_entry","people","save_person","log_interaction","delete_person"))] | length)"' <<<"$BODY")"
 call "journal 2028-01-01..31" "$KA" journal '{from: "2028-01-01", to: "2028-01-31"}'
 expect "journal: A's live entry only (not the trashed one, not B's)" "$JA zebrafoxtrot morning pages" "$(j '[.entries[] | "\(.id) \(.body)"] | join(",")')"
@@ -269,7 +269,7 @@ refused "journal" "$KA" journal '{}' "This key can't reach the journal"
 call "search 'zebrafoxtrot'" "$KA" search '{query: "zebrafoxtrot"}'
 expect "search: no journal or people hit again" "0" "$(j '[.results[] | select(.type == "journal_entry" or .type == "person")] | length')"
 names "$KA" >/dev/null
-expect "tools/list: back to 45" "45" "$(jq -r '.result.tools | length' <<<"$BODY")"
+expect "tools/list: back to 47" "47" "$(jq -r '.result.tools | length' <<<"$BODY")"
 expect "B's journal / people untouched" "zebrafoxtrot B private Full Person B" \
   "$(sql -c "select (select body from journal_entries where user_id = '$B_ID') || ' ' || (select name from people where user_id = '$B_ID')")"
 

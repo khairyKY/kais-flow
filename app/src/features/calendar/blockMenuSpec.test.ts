@@ -16,12 +16,13 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('5a a task block: when · project, the task as a quiet group, Unschedule ⌫, Delete last — no Repeat', () => {
     const spec = blockMenuSpec(block({ task_id: 't1', type: 'task' }), { task: { title: 'Host all the AI in one place', status: 'todo' }, projectName: 'Forecasting', now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'unschedule', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'duplicate', 'unschedule', 'delete'])
     expect(spec[0]).toMatchObject({ label: 'Wed, Jul 29', sub: true })
     expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h', sub: true }) // Cairo, UTC+3
     expect(spec[2]).toMatchObject({ label: 'Forecasting', unset: false })
     expect(spec[3]).toMatchObject({ label: 'Complete', divider: true, caption: { label: 'From task', text: 'Host all the AI in one place' } })
-    expect(spec[5]).toMatchObject({ label: 'Unschedule', hint: '⌫', divider: true })
+    expect(spec[5]).toMatchObject({ label: 'Duplicate' }) // Kai 2026-10-17: the task's copy, blocked at this time
+    expect(spec[6]).toMatchObject({ label: 'Unschedule', hint: '⌫', divider: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', label: 'Delete', destructive: true, sub: false })
     expect(spec.filter((r) => r.destructive)).toHaveLength(1)
   })
@@ -37,6 +38,14 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
     expect(spec.find((r) => r.key === 'project')).toMatchObject({ label: 'No project', unset: true })
     expect(spec.find((r) => r.key === 'repeat')).toMatchObject({ label: 'Does not repeat', unset: true, sub: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', hint: '⌫' }) // p7e A4: Backspace deletes it
+  })
+
+  it('Duplicate (Kai 2026-10-17): an event and a task block — never a Time block (a slot repeats), a Google event, or a block whose task is not loaded', () => {
+    expect(keys(block({ type: 'event' }), { now: NOW })).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'link', 'more', 'duplicate', 'delete'])
+    expect(keys(block({ type: 'event', recurrence_rule: 'FREQ=WEEKLY' }))).toContain('duplicate')
+    expect(keys(block())).not.toContain('duplicate')
+    expect(keys(block({ type: 'event', source: 'gcal' }))).not.toContain('duplicate')
+    expect(keys(block({ task_id: 't1', type: 'task' }))).not.toContain('duplicate')
   })
 
   it('a repeating block: no Link a task, and Delete asks This event / All events', () => {

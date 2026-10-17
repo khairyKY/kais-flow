@@ -467,6 +467,17 @@ for (const theme of ['day', 'night']) {
     await tap(cdp, page.locator('.kf-toast', { hasText: 'Scheduled · Review Kai' }).getByRole('button', { name: 'Undo' }))
     check(`${name} Undo → the block goes and the chip comes back`, (await page.locator('.pc-chip', { hasText: 'Review Kai' }).count()) === 1 && writesOf(state, 'calendar_events', w0).some((x) => x.task_id === id(REVIEW) && x.deleted_at))
     await basics(page, name, errors)
+    // Kai 2026-10-17: opening the chip's task is one tap inside the sheet — "Open task" is its first
+    // row, and its title opens the task too (the task sheet, ?task=); Back closes it again.
+    await tap(cdp, page.locator('.pc-chip', { hasText: 'Review Kai' }))
+    const d0 = dialog(page)
+    check(`${name} the Schedule sheet's first row is Open task`, (await d0.locator('.kf-as-row').first().innerText()).trim() === 'Open task', await d0.locator('.kf-as-row').first().innerText())
+    await tap(cdp, d0.locator('.pc-sched-title'))
+    await sleep(600)
+    check(`${name} a tap on the sheet's title opens the task (?task=)`, new URL(page.url()).searchParams.get('task') === id(REVIEW), page.url())
+    await page.goBack()
+    await sleep(700)
+    check(`${name} Back closes the task, the strip is there`, !new URL(page.url()).searchParams.has('task') && (await page.locator('.pc-chip', { hasText: 'Review Kai' }).count()) === 1, page.url())
 
     const n2 = '7g2-day'
     await tap(cdp, page.locator('.pc-chip', { hasText: 'Search for a node.js source' }))

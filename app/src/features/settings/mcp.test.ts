@@ -112,8 +112,8 @@ describe('MCP: transport and auth', () => {
     const d = deps(fakeStore())
     const all = (await legacy(d, 'tools/list')).body.result!.tools as { name: string; inputSchema: { type: string }; annotations: { readOnlyHint: boolean; destructiveHint?: boolean } }[]
     expect(all.map((t) => t.name)).toEqual([
-      'today', 'search', 'list_tasks', 'get_task', 'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'add_to_inbox',
-      'calendar', 'add_event', 'edit_event', 'delete_event', 'projects',
+      'today', 'search', 'list_tasks', 'get_task', 'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'duplicate_task', 'add_to_inbox',
+      'calendar', 'add_event', 'edit_event', 'delete_event', 'duplicate_event', 'projects',
       'get_project', 'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'labels', 'update_label',
       'trash', 'move_to_trash', 'restore_from_trash', 'settings', 'update_settings', 'inbox', 'file_inbox_item', 'update_inbox_item',
       'routines', 'save_routine', 'check_routine', 'start_focus', 'stop_focus', 'plan_my_day', 'shut_down', 'library', 'save_library_item', 'delete_library_item',
@@ -121,8 +121,8 @@ describe('MCP: transport and auth', () => {
     ])
     expect(all.every((t) => t.inputSchema.type === 'object')).toBe(true)
     const writers = [
-      'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'add_to_inbox', 'add_event', 'edit_event', 'delete_event',
-      'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'update_label', 'move_to_trash', 'restore_from_trash',
+      'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'reopen_task', 'move_to_tomorrow', 'duplicate_task', 'add_to_inbox', 'add_event', 'edit_event', 'delete_event',
+      'duplicate_event', 'save_project', 'update_milestone', 'update_checklist', 'checklist_template', 'save_area', 'save_domain', 'update_label', 'move_to_trash', 'restore_from_trash',
       'update_settings', 'file_inbox_item', 'update_inbox_item', 'save_routine', 'check_routine', 'start_focus', 'stop_focus', 'plan_my_day', 'shut_down',
       'save_library_item', 'delete_library_item',
     ]
@@ -435,6 +435,31 @@ describe('MCP: the tools', () => {
       const next = r.data!.next.id
       expect([21, 22, 23].map((n) => store.tasks.find((t) => t.id === tid(n))).map((t) => [t!.parent_task_id, t!.status])).toEqual([[next, 'todo'], [next, 'todo'], [next, 'todo']])
       expect(r.data!.subtasks).toBe('its 3 subtasks went with it to the next occurrence, open again')
+    })
+
+    it('duplicate_task: an open copy, off the calendar and out of the Top 3; the subtasks come along open, in order (Kai 2026-10-17)', async () => {
+      const store = family({ top3: true, top3_rank: 1, scheduled_start: '2026-10-04T12:00:00Z', scheduled_end: '2026-10-04T12:30:00Z', labels: ['study'], priority: 2 })
+      const r = await call(deps(store), 'duplicate_task', { id: tid(20) })
+      const copy = store.tasks.find((t) => t.id === r.data!.duplicated.id)!
+      expect(copy).toMatchObject({ title: 'Finish the sheet', status: 'todo', due_at: '2026-10-04T06:00:00Z', labels: ['study'], priority: 2, top3: false, top3_rank: null, scheduled_start: null, scheduled_end: null, created_at: NOW.toISOString() })
+      const subs = store.tasks.filter((t) => t.parent_task_id === copy.id)
+      expect(subs.map((t) => [t.title, t.status])).toEqual([['Read the notes', 'todo'], ['Questions 1–5', 'todo'], ['Questions 6–10', 'todo']])
+      expect(subs.map((t) => t.created_at)).toEqual(['2026-10-04T11:00:00.001Z', '2026-10-04T11:00:00.002Z', '2026-10-04T11:00:00.003Z'])
+      expect(r.data!.subtasks).toEqual(['Read the notes', 'Questions 1–5', 'Questions 6–10'])
+      expect(store.logs.map((l) => [l.eventType, l.payload.duplicate_of])).toEqual([['task.created', tid(20)], ['task.created', tid(21)], ['task.created', tid(22)], ['task.created', tid(23)]])
+      // The original is untouched.
+      expect(store.tasks.find((t) => t.id === tid(20))).toMatchObject({ top3: true, scheduled_start: '2026-10-04T12:00:00Z' })
+    })
+
+    it('duplicate_task: a subtask copies under the same parent; picked with its parent, it comes along once', async () => {
+      const store = family()
+      const one = await call(deps(store), 'duplicate_task', { id: tid(22) })
+      expect(store.tasks.find((t) => t.id === one.data!.duplicated.id)!.parent_task_id).toBe(tid(20))
+      const both = fakeStore('Africa/Cairo', family().tasks)
+      const r = await call(deps(both), 'duplicate_task', { ids: [tid(22), tid(20)] })
+      expect(r.data!.results[0]).toMatchObject({ duplicated: null })
+      expect(both.tasks.filter((t) => t.title === 'Questions 1–5')).toHaveLength(2)
+      expect(both.tasks).toHaveLength(8) // 4 + the parent's copy with its 3
     })
 
     it("move_to_trash takes a parent's subtasks along; restore_from_trash brings them back together", async () => {
@@ -860,6 +885,38 @@ describe('MCP: planning the week', () => {
       { source: 'mcp' }, { occurrence: '2026-10-22T15:00:00.000Z', source: 'mcp' }, { source: 'mcp' }, { source: 'mcp' },
     ])
     expect((await call(deps(store), 'delete_event', { id: tid(902) })).text).toContain('No event with id')
+  })
+
+  it('duplicate_event (Kai 2026-10-17): an event copies to the same time; a repeat by its occurrence, as a one-off', async () => {
+    const store = fakeStore('Africa/Cairo')
+    const one = await call(deps(store), 'duplicate_event', { id: tid(900) })
+    expect(one.data!.duplicated).toMatchObject({ title: 'Standup', start: '2026-10-04 10:00', end: '2026-10-04 10:15' })
+    expect(one.data!.duplicated.id).not.toBe(tid(900))
+    expect(store.cal.filter((e) => e.title === 'Standup' && !e.deleted_at)).toHaveLength(2)
+    expect(store.logs.at(-1)).toMatchObject({ eventType: 'calendar_event.created', payload: { duplicate_of: tid(900) } })
+    const occ = await call(deps(store), 'duplicate_event', { id: tid(902), occurrence: '2026-10-22' })
+    expect(occ.data!.duplicated).toEqual({ id: expect.any(String), title: 'Choir', start: '2026-10-22 18:00', end: '2026-10-22 19:30' }) // no "repeats"
+    for (const [args, msg] of [
+      [{ id: tid(902) }, 'give "occurrence"'],
+      [{ id: tid(900), occurrence: '2026-10-04' }, "doesn't repeat"],
+      [{ id: tid(404) }, 'No event with id'],
+    ] as const) {
+      const bad = await call(deps(store), 'duplicate_event', args)
+      expect([bad.isError, bad.text]).toEqual([true, expect.stringContaining(msg)])
+    }
+    const slot = await call(deps(store), 'add_event', { title: 'Deep work', start: '2026-10-05T09:00', kind: 'time_block' })
+    expect((await call(deps(store), 'duplicate_event', { id: slot.data!.added.id })).text).toContain('Time block')
+  })
+
+  it("duplicate_event on a task's block: the task's copy (subtasks along), blocked at the same time", async () => {
+    const store = fakeStore('Africa/Cairo', [task(42, 'Draft the deck', { due_at: '2026-10-05T07:00:00Z', scheduled_start: '2026-10-05T07:00:00Z', scheduled_end: '2026-10-05T08:00:00Z' }), task(43, 'Outline', { parent_task_id: tid(42) })], [{ id: tid(542), task_id: tid(42), starts_at: '2026-10-05T07:00:00Z', ends_at: '2026-10-05T08:00:00Z', all_day: false }])
+    const r = await call(deps(store), 'duplicate_event', { id: tid(542) })
+    const copy = store.tasks.find((t) => t.id === r.data!.task.id)!
+    expect(copy).toMatchObject({ title: 'Draft the deck', status: 'todo', scheduled_start: '2026-10-05T07:00:00.000Z', scheduled_end: '2026-10-05T08:00:00.000Z' })
+    expect(r.data!.duplicated).toMatchObject({ start: '2026-10-05 10:00', end: '2026-10-05 11:00', kind: 'task', task_id: copy.id })
+    expect(store.cal.filter((e) => e.task_id === copy.id && !e.deleted_at)).toHaveLength(1)
+    expect(r.data!.subtasks).toEqual(['Outline'])
+    expect(store.logs.map((l) => l.eventType)).toEqual(['task.created', 'task.created', 'task.scheduled'])
   })
 
   it('today and calendar: Time blocks and task blocks say their kind; a task block carries its task', async () => {
