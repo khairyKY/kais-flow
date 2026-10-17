@@ -17,7 +17,7 @@
   {
     "name": "s3 [day] written: snoozed_until three hours on, the due date kept",
     "ok": true,
-    "detail": "2026-10-17T10:00:04.501Z / 2026-10-17T08:00:00.000Z"
+    "detail": "2026-10-17T10:00:04.243Z / 2026-10-17T08:00:00.000Z"
   },
   {
     "name": "s4 [day] gone from All",
@@ -77,7 +77,7 @@
   {
     "name": "s3 [night] written: snoozed_until three hours on, the due date kept",
     "ok": true,
-    "detail": "2026-10-17T10:00:04.852Z / 2026-10-17T08:00:00.000Z"
+    "detail": "2026-10-17T10:00:04.460Z / 2026-10-17T08:00:00.000Z"
   },
   {
     "name": "s4 [night] gone from All",
@@ -310,6 +310,46 @@
     "detail": ""
   },
   {
+    "name": "o1 editor ⋯ → Snooze… → This evening: \"Snoozed until 18:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o2 written",
+    "ok": true,
+    "detail": "2026-10-17T15:00:00.000Z"
+  },
+  {
+    "name": "o3 …and now offers Unsnooze, saying when it is back",
+    "ok": true,
+    "detail": "Unsnooze\nback 18:00"
+  },
+  {
+    "name": "o4 Unsnooze from there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o6 phone sheet ⋯ → Snooze… → Tomorrow morning: \"Snoozed until Tomorrow · 09:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o7 written",
+    "ok": true,
+    "detail": "2026-10-18T06:00:00.000Z"
+  },
+  {
+    "name": "o8 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
     "name": "n1 In 10 min: \"Reminding you again at 10:10\" with Undo",
     "ok": true,
     "detail": ""
@@ -317,7 +357,7 @@
   {
     "name": "n2 written: remind_again_at = 10:10; due date, reminder_at and Top 3 untouched",
     "ok": true,
-    "detail": "{\"again\":\"2026-10-17T07:10:01.173Z\",\"rem\":\"2026-10-17T06:45:00.000Z\"}"
+    "detail": "{\"again\":\"2026-10-17T07:10:01.552Z\",\"rem\":\"2026-10-17T06:45:00.000Z\"}"
   },
   {
     "name": "n3 the address drops the action (a reload won't run it twice)",
