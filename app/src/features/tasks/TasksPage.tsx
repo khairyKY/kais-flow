@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { EmojiText } from '../../components/EmojiText'
 import { SortIcon } from '../../components/controlIcons'
 import { Select } from '../../components/Select'
@@ -17,7 +17,7 @@ import { PlanMenu } from './PlanMenu'
 import { todayFor } from './planMath'
 import { checkAction } from './completion'
 import { TaskRow, type BulkActions } from './TaskRow'
-import { filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
+import { effectiveDomainId, filterByList, groupTasks, SMART_LISTS, type SmartList, type TaskGroup } from './grouping'
 import { buildListBindings } from './listShortcuts'
 import { useListVerbs } from './useListVerbs'
 import { moveInListWithUndo } from './api'
@@ -49,9 +49,15 @@ import { goalIdOf } from '../today/top3Order'
 import { cachedStarEvents } from '../today/api'
 import { CaptureCta } from '../capture/CaptureCta'
 import { findDuplicateClusters } from '../import/dedupe'
-import type { Area, Domain, Project, Task } from '../../lib/types'
+import type { Area, Domain, Project, SmartListRow, Task } from '../../lib/types'
 import { nestOut } from './subtasks'
 import { useSubtaskUi } from './subtaskStore'
+import { smartTasks, useSmartLists } from '../smart-lists/api'
+import { describeFilter, readFilter, type SmartFilter } from '../../../../supabase/functions/_shared/smartList.ts'
+
+// "Save as smart list" starts from what the page shows: its tab's days, its domain chip, its label.
+const TAB_WHEN: Partial<Record<Tab, SmartFilter['when']>> = { today: ['overdue', 'today'], week: ['overdue', 'next7'], overdue: ['overdue'], someday: ['someday'] }
+const SmartListEditor = lazy(() => import('../smart-lists/SmartListEditor').then((m) => ({ default: m.SmartListEditor })))
 
 // ── Tasks — pixel contract: Tasks.dc.html 1a (desktop list + rail), 1b (iPhone + filter
 // chips), 2a (Done — fallen petals), 2b (Someday — the quiet shelf), 2c (iPhone Done).
@@ -69,13 +75,6 @@ function isToday(iso: string | null): boolean {
 
 function daysSince(iso: string): number {
   return (Date.now() - new Date(iso).getTime()) / 86400000
-}
-
-function effectiveDomainId(task: Task, projects: Project[], areas: Area[]): string | null {
-  if (task.domain_id) return task.domain_id
-  if (task.project_id) return projects.find((p) => p.id === task.project_id)?.domain_id ?? null
-  if (task.area_id) return areas.find((a) => a.id === task.area_id)?.domain_id ?? null
-  return null
 }
 
 /** Scrolls a deep-linked task row into view once it exists in the rendered list. */
@@ -128,7 +127,7 @@ const CAPTION: React.CSSProperties = { marginTop: 12 }
 const MANAGE_LABELS = ' manage' // a label is trimmed, so none starts with a space
 const CARET = <span aria-hidden="true" style={{ color: 'var(--ink-faint)', lineHeight: 1 }}>▾</span>
 
-function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel, onManageLabels }: { active: Tab | null; todayCount: number; weekCount: number; monthCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void; onManageLabels: (at: { x: number; y: number }) => void }) {
+function TabBar({ active, smart, todayCount, weekCount, monthCount, overdueCount, upcomingCount, somedayCount, doneCount, allCount, sort, onSort, labels, label, onLabel, onManageLabels }: { active: string | null; smart: { id: string; name: string; count: number }[]; todayCount: number; weekCount: number; monthCount: number; overdueCount: number; upcomingCount: number; somedayCount: number; doneCount: number; allCount: number; sort: SortKey; onSort: (s: SortKey) => void; labels: string[]; label: string | null; onLabel: (l: string | null) => void; onManageLabels: (at: { x: number; y: number }) => void }) {
   const stripRef = useRef<HTMLDivElement>(null)
   const labelRef = useRef<HTMLButtonElement>(null)
   // Polish D: on a narrow screen the strip scrolls sideways — keep the active tab in view
@@ -140,7 +139,7 @@ function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcom
     const left = el.offsetLeft - strip.offsetLeft
     if (left < strip.scrollLeft || left + el.offsetWidth > strip.scrollLeft + strip.clientWidth) strip.scrollLeft = Math.max(0, left - 16)
   }, [active])
-  const tab = (key: Tab, label: string, count: number, underline: string, className?: string) => (
+  const tab = (key: string, label: ReactNode, count: number, underline: string, className?: string) => (
     <Link
       key={key}
       to={key === 'done' ? '/tasks?list=done' : `/tasks?list=${key}`}
@@ -186,6 +185,8 @@ function TabBar({ active, todayCount, weekCount, monthCount, overdueCount, upcom
         {/* Punch 27 (Kai's "All filter"): last, after Done — the catch-all where every open
             task lives, undated project filings included. */}
         {tab('all', 'All', allCount, 'var(--acc-moss)')}
+        {/* Smart lists: the sidebar's Plan group on a computer, the end of this strip on a phone. */}
+        {smart.map((l) => tab(l.id, <EmojiText text={l.name} />, l.count, 'var(--acc-blossom)', 'tr-mobile-only'))}
       </div>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11, whiteSpace: 'nowrap' }}>
         <Link to="/perennials" style={{ ...META, textDecoration: 'none' }}>↻ Repeating</Link>
@@ -440,6 +441,7 @@ export function TasksPage() {
   const { data: domains = [] } = useDomains()
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
+  const { data: smartLists = [] } = useSmartLists()
   const tasksQuery = useTasks()
   useCalendarRows() // Time Slots (0073): rows read a slot's name from this cache ("in Code block · 10:00")
   const { data: tasks = [] } = tasksQuery
@@ -480,6 +482,8 @@ export function TasksPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [focusId, tasks])
   const list = parseList(rawList)
+  // `?list=<id>` of a smart list (0081): its saved filter instead of a tab's.
+  const smart = smartLists.find((l) => l.id === rawList)
   const activeTab = tabOf(rawList, list)
   const motion = useMotionEnabled()
   const goalTaskId = useMemo(() => goalIdOf(tasks, legacyGoalId(), cachedStarEvents()), [tasks])
@@ -561,7 +565,7 @@ export function TasksPage() {
   const [renamingChip, setRenamingChip] = useState<string | null>(null)
   const chipMenu = useDomainMenu(domains, setRenamingChip)
 
-  const filteredBase = filterByList(displayTasks, list, now)
+  const filteredBase = smart ? smartTasks(displayTasks, smart.filter, projects, areas, now) : filterByList(displayTasks, list, now)
   const [labelFilter, setLabelFilter] = useState<string | null>(null)
   // P7e A9: ⌘K's label jump lands as ?label=<name>. Taken into the filter, then dropped from the
   // address, so the next jump (even to the same label, even from this page) applies again.
@@ -575,6 +579,9 @@ export function TasksPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelParam])
   const filtered = filteredBase.filter((t) => (!domainChip || effectiveDomainId(t, projects, areas) === domainChip) && (!labelFilter || !!t.labels?.includes(labelFilter)))
+  // A smart list that shows done tasks lists them last, newest first (groupTasks takes open ones only).
+  const smartDone = smart?.filter.show_done ? filtered.filter((t) => t.status === 'done').sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? '')) : []
+  const [editor, setEditor] = useState<SmartListRow | 'new' | null>(null)
   const [sort, setSort] = useState<SortKey>('smart')
   // Subtasks A: a subtask whose parent is listed here sits nested under it (./SubtaskNest), not in a group.
   const drawnParents = new Set(filtered.filter((t) => !t.parent_task_id).map((t) => t.id))
@@ -767,10 +774,12 @@ export function TasksPage() {
   const stage = cherryStage(openTotal, doneTodayCount)
   const headerIcon = isDone ? `${A}/cherry/fallen.png` : isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/${stage}.png`
   const isOverdue = activeTab === 'overdue'
-  const h1 = isDone ? 'Done' : isSomeday ? 'Someday' : isOverdue ? 'Overdue' : 'Tasks'
-  const eyebrow = isDone ? `Tasks · ${doneTodayCount} done today` : isSomeday ? `Tasks · ${somedayCount} someday` : `Tasks · ${openTotal} open`
+  const h1 = smart ? smart.name : isDone ? 'Done' : isSomeday ? 'Someday' : isOverdue ? 'Overdue' : 'Tasks'
+  const placeName = (id: string) => (domains.find((d) => d.id === id) ?? areas.find((a) => a.id === id) ?? projects.find((p) => p.id === id))?.name
+  const eyebrow = smart ? `Smart list · ${filteredBase.filter((t) => t.status === 'todo').length} open` : isDone ? `Tasks · ${doneTodayCount} done today` : isSomeday ? `Tasks · ${somedayCount} someday` : `Tasks · ${openTotal} open`
   const caption =
-    activeTab === 'today' ? `everything due or scheduled for today — ${todayCount} to tend`
+    smart ? describeFilter(smart.filter, placeName)
+    : activeTab === 'today' ? `everything due or scheduled for today — ${todayCount} to tend`
     : isDone ? 'everything you tended today — one petal fell for each ✿'
     : isSomeday ? 'no date, no pressure — the shelf where ideas wait'
     : isOverdue ? overdueCount > 0 ? `${overdueCount} past their date — reschedule what still matters` : 'Nothing overdue — the garden is current.'
@@ -819,7 +828,7 @@ export function TasksPage() {
           )}
         </div>
 
-        <TabBar active={activeTab} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
+        <TabBar active={smart ? smart.id : activeTab} smart={smartLists.map((l) => ({ id: l.id, name: l.name, count: smartTasks(displayTasks, l.filter, projects, areas, now).filter((t) => t.status === 'todo').length }))} todayCount={todayCount} weekCount={weekCount} monthCount={monthCount} overdueCount={overdueCount} upcomingCount={upcomingCount} somedayCount={somedayCount} doneCount={doneCount} allCount={allCount} sort={sort} onSort={setSort} labels={labelOptions(tasks)} label={labelFilter} onLabel={setLabelFilter} onManageLabels={setManageLabelsAt} />
         {caption && <div className="kf-help" style={CAPTION}>{caption}</div>}
         {dupeClusters.length > 0 && (
           <Link to="/settings/import" className="kf-link-terra" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>
@@ -854,8 +863,10 @@ export function TasksPage() {
         )}
 
         {/* Tasks.dc.html 1b's domain filter chips — on desktop too (Kai 2026-10-12: phone-only hid the filter). */}
-        {!singleCol && domains.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 14, overflowX: 'auto', scrollbarWidth: 'none' }}>
+        {!singleCol && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 14 }}>
+          {domains.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', scrollbarWidth: 'none', flex: '0 1 auto', minWidth: 0 }}>
             {/* D12: the kit's filter chip — a visible edge, ink-filled when on (components/filterChip). */}
             <span onClick={() => setDomainChip(null)} aria-pressed={!domainChip} {...domainChipLook(!domainChip)}>
               All
@@ -877,6 +888,17 @@ export function TasksPage() {
               </span>
             ))}
             {chipMenu.node}
+          </div>
+          )}
+          {/* Smart lists (0081): this view's filters, saved under a name in the sidebar (and the phone's strip). */}
+          <button
+            type="button"
+            className="kf-link-terra"
+            onClick={() => setEditor(smart ?? 'new')}
+            style={{ flex: 'none', marginLeft: 'auto', background: 'none', border: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+          >
+            {smart ? 'Edit smart list' : '＋ Save as smart list'}
+          </button>
           </div>
         )}
 
@@ -929,12 +951,12 @@ export function TasksPage() {
           <DoneView tasks={displayTasks} motion={motion} justCompletedId={justCompletedId} expanded={doneExpanded} setExpanded={setDoneExpanded} focusedId={kbFocusedId} />
         ) : (
         <div style={{ paddingTop: isSomeday ? 16 : 0 }}>
-          {groups.length === 0 ? (
+          {groups.length === 0 && smartDone.length === 0 ? (
             // States t1 rule — the surface's own flower as seed + one hand line (the quick-add above is the one action)
             <div style={{ margin: '28px 0 0', textAlign: 'center' }}>
               <img src={isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/bud.png`} alt="" style={{ height: 44, margin: '0 auto', display: 'block', filter: 'var(--shadow-drop-sm)', opacity: 0.9 }} />
               <p className="kf-help" style={{ margin: '10px 0 0' }}>
-                {isSomeday ? 'Nothing parked for someday.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
+                {isSomeday ? 'Nothing parked for someday.' : smart ? 'Nothing matches this list right now.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
               </p>
             </div>
           ) : (
@@ -969,6 +991,15 @@ export function TasksPage() {
                 )}
               </div>
             ))
+          )}
+
+          {smartDone.length > 0 && (
+            <>
+              <SectionLabel style={{ margin: '26px 0 4px' }} action={<span style={META}>{smartDone.length}</span>}>Done</SectionLabel>
+              {smartDone.slice(0, GROUP_CAP).map((t, i, shown) => (
+                <TaskRow key={t.id} task={t} border={i < shown.length - 1} justCompletedId={justCompletedId} highlighted={t.id === focusId} />
+              ))}
+            </>
           )}
 
           {activeTab === 'today' && doneTodayTasks.length > 0 && (
@@ -1007,6 +1038,15 @@ export function TasksPage() {
 
       {kbLabelIds && <LabelPicker taskIds={kbLabelIds} position={rowAnchor('task-', kbLabelIds[0])} onClose={() => setKbLabelIds(null)} />}
       {verbs.node}
+      {editor && (
+        <Suspense fallback={null}>
+          <SmartListEditor
+            list={editor === 'new' ? undefined : editor}
+            seed={readFilter({ places: domainChip ? [domainChip] : undefined, labels: labelFilter ? [labelFilter] : undefined, when: activeTab ? TAB_WHEN[activeTab] : undefined })}
+            onClose={() => setEditor(null)}
+          />
+        </Suspense>
+      )}
       {manageLabelsAt && <LabelManagerOverlay at={manageLabelsAt} onClose={() => setManageLabelsAt(null)} />}
 
       {!isDone && selected.size > 0 && (

@@ -37,6 +37,7 @@ const KIND: Record<string, string> = {
   notes: 'Library',
   quotes: 'Library',
   commentary: 'Library',
+  smart_lists: 'Smart list',
 }
 
 /** Event family (the part before the dot) → kind, for activity-only rows. */

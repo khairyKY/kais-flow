@@ -15,6 +15,7 @@ const SYNCED_TABLES = [
   'routine_completions',
   'resurfaced_log',
   'time_entries',
+  'smart_lists',
 ] as const
 
 // Tables carrying `deleted_at` that the Trash page (features/trash/api.ts) unions over —
