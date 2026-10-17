@@ -1,5 +1,17 @@
 [
   {
+    "v": "v1.2.2",
+    "date": "2026-10-17",
+    "title": "No ghost copy in Time slots",
+    "highlights": [
+      "Clicking a task inside a Time slot no longer leaves a second, floating copy of it over the slot"
+    ],
+    "icons": [
+      "calendar"
+    ],
+    "art": "clover-awake"
+  },
+  {
     "v": "v1.2.1",
     "date": "2026-10-16",
     "title": "Windows updates without the blue screen",
