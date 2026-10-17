@@ -28,6 +28,8 @@ import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { Button, Checkbox } from '../../components/kit'
 import { dragGuard } from './dragGuard'
+import { PlanButton } from './PlanButton'
+import { useCardOpen } from './cardOpen'
 import { resolveTag, formatDuration } from '../tasks/taskDisplay'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
@@ -277,32 +279,6 @@ function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, ch
   )
 }
 
-/** Plan ▾ on a card: a dragGuard'd span, so pressing it never starts the card's drag. D13's tonal
- *  isn't used: it shows on a hovered (bone) row, where tonal is 4.42:1 by day (AA 4.5) — Kai's call. */
-function PlanButton({ title, onPlan }: { title: string; onPlan: (x: number, y: number) => void }) {
-  const open = (el: HTMLElement) => {
-    const r = el.getBoundingClientRect()
-    onPlan(r.left, r.bottom + 4)
-  }
-  return (
-    <span
-      role="button"
-      tabIndex={0}
-      aria-haspopup="menu"
-      aria-label={`Plan ${title}`}
-      className="cal-plan-btn kf-button kf-button--secondary kf-press"
-      ref={(el) => dragGuard(() => el && open(el))(el)}
-      onKeyDown={(e) => {
-        if (e.key !== 'Enter' && e.key !== ' ') return
-        e.preventDefault()
-        open(e.currentTarget)
-      }}
-    >
-      Plan ▾
-    </span>
-  )
-}
-
 function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; domains: Domain[]; projects: Project[]; areas: Area[]; onPlan: (x: number, y: number) => void }) {
   const { task: t, block } = r
   // Right-click: the one task menu (Pick date… / Tomorrow route through rescheduleDue, so a missed
@@ -310,9 +286,11 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
   const grammar = useRowGrammar(t, { projects, domains, canUnschedule: !!block, actions: block ? { unschedule: () => deleteEventWithUndo(block, 'Unscheduled') } : undefined })
   const tag = resolveTag(t, domains, projects, areas)
   const missed = block ? new Date(block.starts_at) : null
+  const open = useCardOpen(t.id)
   return (
     <div
       className="unscheduled-task"
+      {...open}
       data-task-id={t.id}
       data-title={t.title}
       data-duration={railMinutes(r)}
@@ -964,6 +942,8 @@ function DesktopCalendar() {
           transition: transform 320ms var(--ease-spring);
         }
         @media (hover: hover) { .unscheduled-task:hover { background: var(--paper-bone); } }
+        /* Kai 2026-10-17: a card opens its task on a click or Enter (./cardOpen) — so it takes focus. */
+        .unscheduled-task:focus-visible { outline: none; box-shadow: var(--focus-ring); }
         .cal-row-title { flex: 1; min-width: 0; font-size: var(--fs-body-s); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .cal-row-meta { flex: none; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-meta); color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
         .cal-row-acts { flex: none; display: inline-flex; align-items: center; gap: 2px; }

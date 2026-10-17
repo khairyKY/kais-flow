@@ -616,11 +616,26 @@ export function ScheduleSheet({ title, duration, events, heading = 'Schedule', o
   const dur = duration
   const { today: fitsToday, slots } = scheduleSlots(events, now, dur)
   const place = (startsAt: string, len: number) => onPlace(startsAt, new Date(Date.parse(startsAt) + len * 60_000).toISOString())
+  // Kai 2026-10-17: opening a chip's task is one tap — its title, or the first row (the sheet leaves first).
+  const closeRef = useRef<(() => void) | null>(null)
+  const open = onOpen && (() => { closeRef.current?.(); onOpen() })
+  const head = <SheetTitle title={heading} meta={`${title} · ${durationLabel(dur)}`} />
   return (
     <>
-      <BottomSheet onClose={onClose} title={<SheetTitle title={heading} meta={`${title} · ${durationLabel(dur)}`} />}>
-        {(close) => (
+      <BottomSheet
+        onClose={onClose}
+        title={open ? <button type="button" className="pc-sched-title" aria-label={`Open ${title}`} onClick={open}>{head}</button> : head}
+      >
+        {(close) => {
+          closeRef.current = close
+          return (
           <>
+            {open && (
+              <div className="pc-bs-rows pc-sched-open">
+                <style>{ACTION_ROW_CSS}</style>
+                <Row icon="tasks" label="Open task" onClick={open} />
+              </div>
+            )}
             <SectionLabel>{fitsToday ? 'Next free today' : 'Next free'}</SectionLabel>
             <div className="pc-slots">
               {slots.map((s) => (
@@ -640,10 +655,10 @@ export function ScheduleSheet({ title, duration, events, heading = 'Schedule', o
               <Row icon="clock" label="Pick a time…" onClick={() => setPicker('time')} />
               <Row icon="pickdate" label="Pick a date…" onClick={() => setPicker('date')} />
               {onComplete && <Row icon="check" label="Complete" chevron={false} onClick={() => { close(); onComplete() }} />}
-              {onOpen && <Row icon="tasks" label="Open task" onClick={() => { close(); onOpen() }} />}
             </div>
           </>
-        )}
+          )
+        }}
       </BottomSheet>
       {picker === 'time' && (
         <TimePicker day={today} value={null} duration={dur} title={title} onDone={(hhmm, d) => { place(cairoToIso(today, hhmm), d ?? dur); onClose() }} onClose={() => setPicker(null)} />

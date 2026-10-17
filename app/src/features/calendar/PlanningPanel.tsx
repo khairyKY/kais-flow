@@ -11,14 +11,17 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { useRowGrammar } from '../tasks/useRowGrammar'
 import { deleteEventWithUndo } from './api'
 import { dragGuard } from './dragGuard'
+import { PlanButton } from './PlanButton'
+import { useCardOpen } from './cardOpen'
 import { cardDragData, dueWord, footerLine, groupPlan, minutesLabel, PLAN_SORTS, planningTasks, sortPlan, totalLine, type PlanSort, type PlanTab } from './planningMode'
 import { railMinutes, type RailTask } from './replan'
 import './planning.css'
 
 // ── design-export/Calendar.dc.html §4 — planning mode: the unscheduled rail swollen to ~60% of the
 // calendar (4a groups by project; 4b, two days in the strip, one line a task). Cards drag onto the
-// agenda strip on the right (FullCalendar's Draggable, as the rail's); a click opens the calendar's
-// Plan menu, a right-click the task menu. The pure half is ./planningMode. ──
+// agenda strip on the right (FullCalendar's Draggable, as the rail's); a click opens the task (Kai
+// 2026-10-17, ./cardOpen), Plan ▾ the calendar's Plan menu, a right-click the task menu. The pure
+// half is ./planningMode. ──
 
 const TAB_KEY = 'kf.calPlanTab'
 const SORT_KEY = 'kf.calPlanSort'
@@ -61,15 +64,15 @@ function PlanCard({ r, compact, dot, projects, domains, areas, now, onPlan }: {
   const repeat = t.recurrence_rule ? (compact ? '↻' : `↻ ${REPEAT_LABELS[t.recurrence_rule] ?? 'Repeats'}`) : null
   const due = r.late === 0 && t.due_at ? dueWord(t.due_at, now, compact) : null
   const meta = [len, due, repeat].filter(Boolean).join(' · ')
+  const open = useCardOpen(t.id)
   return (
     <div
       className={`unscheduled-task cal-plan-card${compact ? ' is-compact' : ''}`}
+      {...open}
       data-task-id={t.id}
       data-title={t.title}
       data-duration={railMinutes(r)}
       onContextMenu={grammar.onContextMenu}
-      // A click (no drag) plants it from the menu instead: Today · Next free slot · Tomorrow · Pick date…
-      onClick={(e) => onPlan(e.clientX, e.clientY)}
     >
       {/* Tick it off without planting it (the rail card's guard: FullCalendar never sees the press). */}
       <span ref={dragGuard(() => completeTaskWithUndo(t))} style={{ display: 'inline-flex', flex: 'none', marginTop: 1 }}>
@@ -93,6 +96,8 @@ function PlanCard({ r, compact, dot, projects, domains, areas, now, onPlan }: {
           </div>
         </div>
       )}
+      {/* Plants it from the menu: Today · Next free slot · Tomorrow · Pick date… — the rail card's own. */}
+      <PlanButton title={t.title} onPlan={onPlan} />
       {!compact && (
         <span className="cal-plan-grip" aria-hidden>
           ⠿

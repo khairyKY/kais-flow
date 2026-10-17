@@ -489,6 +489,14 @@ for (const theme of ['day', 'night']) {
     await sleep(300)
     check(`${n2} Pick a time… → 19:00 → placed today`, writesOf(state, 'calendar_events', w2).some((x) => x.starts_at === iso('19:00')))
     await basics(page, n2, errors)
+    // Kai 2026-10-17: opening the chip's task is one tap inside the sheet — "Open task" is its first
+    // row, and its title opens the task too (the task sheet, ?task=).
+    await tap(cdp, page.locator('.pc-chip', { hasText: 'Search for a node.js source' }))
+    const d3 = dialog(page)
+    check(`${n2} the Schedule sheet's first row is Open task`, (await d3.locator('.kf-as-row').first().innerText()).trim() === 'Open task', await d3.locator('.kf-as-row').first().innerText())
+    await tap(cdp, d3.locator('.pc-sched-title'))
+    await sleep(600)
+    check(`${n2} a tap on the sheet's title opens the task (?task=)`, new URL(page.url()).searchParams.get('task') === id(SEARCH), page.url())
     await ctx.close()
   }
 

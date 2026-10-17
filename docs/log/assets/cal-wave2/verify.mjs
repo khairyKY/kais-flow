@@ -221,11 +221,20 @@ if (want('p4a')) {
       const placed = posts(state, 'calendar_events', w).find((e) => e.task_id === tid(8))
       check('p4a drag a card onto the strip: its block lands at 16:30, the card leaves the list', placed?.starts_at === iso('16:30') && (await panel.locator('.cal-plan-card', { hasText: 'Reply to Youssef' }).count()) === 0, JSON.stringify({ placed: placed?.starts_at, want: iso('16:30'), all: posts(state, 'calendar_events', w).map((e) => [e.title, e.starts_at]), slot, col, from }))
       await shot(page, 'p4a-after-drop')
-      // A click (no drag) opens the Plan menu.
-      await panel.locator('.cal-plan-card', { hasText: 'Renew car insurance' }).click()
+      // Kai 2026-10-17: a click (no drag) opens the task, as a block does — the popover at the card.
+      const renew = panel.locator('.cal-plan-card', { hasText: 'Renew car insurance' })
+      await renew.click()
+      await sleep(400)
+      const pop = page.locator('.tp-pop[role="dialog"]')
+      check('p4a a click on a card opens the task (the popover, ?task=)', (await pop.count()) === 1 && /Renew car insurance/.test((await pop.getAttribute('aria-label')) ?? '') && new URL(page.url()).searchParams.get('task') === tid(12), page.url())
+      await page.keyboard.press('Escape')
+      await sleep(300)
+      // …and Plan ▾ on it opens the Plan menu.
+      await renew.hover()
+      await renew.locator('.cal-plan-btn').click()
       await sleep(400)
       const plan = await page.locator('[role="menu"]').last().innerText()
-      check('p4a a click on a card opens the Plan menu (Today · Next free slot · Tomorrow · Pick date…)', /Today/.test(plan) && /Next free slot/.test(plan) && /Pick date/.test(plan), plan.replace(/\n/g, ' | '))
+      check('p4a Plan ▾ on a card opens the Plan menu (Today · Next free slot · Tomorrow · Pick date…)', /Today/.test(plan) && /Next free slot/.test(plan) && /Pick date/.test(plan), plan.replace(/\n/g, ' | '))
       await page.keyboard.press('Escape')
       // Leave: the dots on the strip's left edge.
       await page.getByRole('button', { name: /Leave planning mode/ }).click()
