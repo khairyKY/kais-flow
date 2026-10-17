@@ -648,7 +648,10 @@ export function TodayPage() {
     const row = (t: Task, extra: { pick?: boolean; block?: CalendarEvent; meta?: string[]; place?: RowGrammarOptions['place'] } = {}) => (
       <TaskRow key={extra.block?.id ?? t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
-    const foldCount = restOpen.length + slipping.length + (resurfacing ? 1 : 0)
+    // Snooze: what came back today sits above the folds, as on the desktop it leads Also open.
+    const backOpen = restOpen.filter((t) => backFromSnooze(t, now))
+    const foldOpenRows = restOpen.filter((t) => !backFromSnooze(t, now))
+    const foldCount = foldOpenRows.length + slipping.length + (resurfacing ? 1 : 0)
     const workload: Omit<WorkloadInput, 'focusedMin'> = {
       day: dayNumber,
       phase: day.state.phase,
@@ -761,6 +764,12 @@ export function TodayPage() {
           </section>
         )}
 
+        {!tasksPending && backOpen.length > 0 && (
+          <section>
+            <PhoneSection label="Back from snooze" />
+            <div className="tp-list">{backOpen.map((t) => row(t))}</div>
+          </section>
+        )}
         {!tasksPending && overdueOpen.length > 0 && (
           <MoreForToday phone label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
             <div className="tp-list">{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
@@ -769,11 +778,11 @@ export function TodayPage() {
         )}
         {!tasksPending && foldCount > 0 && (
           <MoreForToday phone summary={String(foldCount)}>
-            {restOpen.length > 0 && (
+            {foldOpenRows.length > 0 && (
               <>
-                <div className="tp-sub is-first" style={{ paddingBottom: 6 }}>Open · {openCount}</div>
-                <div className="tp-list">{restOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
-                {restOpen.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="tp-link" style={{ marginLeft: 8 }}>View all</Link>}
+                <div className="tp-sub is-first" style={{ paddingBottom: 6 }}>Open · {foldOpenRows.filter((t) => !t.completed_at).length}</div>
+                <div className="tp-list">{foldOpenRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
+                {foldOpenRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="tp-link" style={{ marginLeft: 8 }}>View all</Link>}
               </>
             )}
             {slipping.length > 0 && (
