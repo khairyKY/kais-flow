@@ -139,6 +139,8 @@ function describeTask(e: ActivityLogEntry, names: ActivityNames): ActivityLine {
       return line(named(name, (q) => `Restored ${q} from Trash`, 'Restored a task from Trash'), 'back on the list')
     case 'task.snoozed':
       return line(named(name, (q) => `Snoozed ${q}`, 'Snoozed a task'), 'back later')
+    case 'task.unsnoozed':
+      return line(named(name, (q) => `Unsnoozed ${q}`, 'Unsnoozed a task'), 'back on the list')
     case 'task.someday_set':
       return payload?.someday === false
         ? line(named(name, (q) => `Brought ${q} back from Someday`, 'Brought a task back from Someday'))

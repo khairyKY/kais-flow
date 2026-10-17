@@ -2,6 +2,7 @@ import { useState, type CSSProperties } from 'react'
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
+import { SnoozeMenu } from '../../components/SnoozeMenu'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { DURATIONS, durationLabel } from '../../components/pickerMath'
@@ -60,6 +61,9 @@ export interface TaskMenuActions {
   addSubtask?: () => void
   /** Duplicate: an open copy, its subtasks along (tasks/api duplicateTasksWithUndo). */
   duplicate?: () => void
+  /** Snooze until `iso` (the SnoozeMenu) / back now (tasks/api snoozeTasksWithUndo, unsnoozeTasksWithUndo). */
+  snooze: (iso: string) => void
+  unsnooze: () => void
 }
 
 /** When 2+ tasks are selected, the date, project and delete actions of a selected row's menu act on
@@ -75,10 +79,12 @@ export interface BulkActions {
   onTop3?: () => void
   /** Duplicate every selected task, one Undo (Kai 2026-10-17). */
   onDuplicate: () => void
+  /** Snooze every selected task until `iso`, one Undo (Kai 2026-10-17). */
+  onSnooze: (iso: string) => void
 }
 
 /** 'date' = the Plan list (./PlanMenu), whose Pick date & time… is the date picker. */
-export type MenuSub = 'date' | 'project' | 'priority' | 'repeat' | 'remind' | 'duration' | 'labels' | 'slot'
+export type MenuSub = 'date' | 'project' | 'priority' | 'repeat' | 'remind' | 'duration' | 'labels' | 'slot' | 'snooze'
 export interface MenuAnchor {
   at: { x: number; y: number }
   /** Open straight on a picker (the swipe's Plan / Project, the task sheet's chips). */
@@ -86,7 +92,7 @@ export interface MenuAnchor {
 }
 
 const ICONS: Record<TaskMenuKey, IconName> = {
-  tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', intoSlot: 'clock', subtask: 'plus', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
+  tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', intoSlot: 'clock', subtask: 'plus', snooze: 'moon', unsnooze: 'moon', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
   labels: 'label', top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', duplicate: 'duplicate', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
@@ -94,7 +100,7 @@ const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
   tomorrow: shortcutHint('tomorrow'), project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
   // P7e A18
   plan: shortcutHint('plan'), priority: shortcutHint('priority'), labels: shortcutHint('labels'), goal: shortcutHint('goal'), focus: shortcutHint('focus'),
-  duplicate: shortcutHint('duplicate'),
+  duplicate: shortcutHint('duplicate'), snooze: shortcutHint('snooze'), unsnooze: shortcutHint('snooze'),
 }
 const REMIND_OFFSETS: { min: number | null; label: string }[] = [
   { min: null, label: 'No reminder' },
@@ -145,6 +151,8 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     unschedule: () => actions.unschedule?.(),
     intoSlot: () => setSub('slot'),
     subtask: () => actions.addSubtask?.(),
+    snooze: () => setSub('snooze'),
+    unsnooze: actions.unsnooze,
     project: () => setSub('project'),
     priority: () => setSub('priority'),
     labels: () => setSub('labels'),
@@ -183,6 +191,11 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     />
   )
   if (sub === 'date') return plan((w) => w(), at, onClose)
+  // Snooze… — the Inbox's own menu (Later today · This evening · Tomorrow · Next week · Someday · Pick a date…).
+  const snooze = (position: { x: number; y: number }, close: () => void, done: (run: () => void) => void) => (
+    <SnoozeMenu position={position} title={ctx.bulkCount ? undefined : task.title} onClose={close} onSnooze={(iso) => done(() => actions.snooze(iso))} onSomeday={() => done(actions.someday)} />
+  )
+  if (sub === 'snooze') return snooze(at, onClose, (w) => w())
   const here = ctx.bulkCount ? null : placeKey(task)
   if (sub === 'project') {
     return (
@@ -225,6 +238,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
 
   const submenu = (key: TaskMenuKey): ContextMenuItem['submenu'] => {
     if (key === 'plan') return ({ position, onClose: back, closeAll }) => plan((w) => { w(); closeAll() }, position, back)
+    if (key === 'snooze') return ({ position, onClose: back, closeAll }) => snooze(position, back, (w) => { w(); closeAll() })
     if (key === 'project') return ({ position, onClose: back, closeAll }) => <MovePicker position={position} current={here} onPick={(to) => { actions.move(to); closeAll() }} onClose={back} />
     if (key === 'labels') return ({ position, onClose: back }) => <LabelPicker taskIds={[task.id]} position={position} onClose={back} onSet={actions.labels} />
     if (key === 'repeat') return ({ position, onClose: back, closeAll }) => <RepeatMenu {...repeat} position={position} onClose={back} onChange={(r) => { actions.repeat(r); closeAll() }} onCustom={() => setSub('repeat-custom')} />

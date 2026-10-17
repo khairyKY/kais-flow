@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useOpenTask } from './openTask'
 import { EmojiText } from '../../components/EmojiText'
 import './TaskRow.css'
-import { cachedTask, completeTaskWithUndo, reopenTaskWithUndo, toggleTop3, planWithUndo } from './api'
+import { cachedTask, completeTaskWithUndo, reopenTaskWithUndo, toggleTop3, planWithUndo, unsnoozeTasksWithUndo } from './api'
+import { backFromSnooze, isSnoozed, snoozeWhen } from './snooze'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
@@ -136,6 +137,9 @@ export function TaskRow({
   const overdue = overdueDays > 0
   const inProgress = !done && !!task.scheduled_start
   const isGoal = task.top3 && !!goalTaskId && task.id === goalTaskId
+  // Snooze: the Snoozed list's row says when it's back and has Unsnooze; one back today says so.
+  const snoozed = !done && isSnoozed(task)
+  const back = !snoozed && backFromSnooze(task)
   const justCompleted = done && !!justCompletedId && task.id === justCompletedId
 
   // Polish F2a: inside Tasks' grace window a just-checked row is still drawn open with its box
@@ -323,6 +327,8 @@ export function TaskRow({
             </span>
           )}
           {overdue && <span style={{ color: 'var(--sig-overdue)' }}>Overdue {overdueDays}d</span>}
+          {snoozed && <span style={{ color: 'var(--acc-lavender-text)' }}>Snoozed · back {snoozeWhen(task.snoozed_until!)}</span>}
+          {back && <span style={{ color: 'var(--acc-lavender-text)' }}>Back from snooze</span>}
           {inProgress && <span style={{ color: 'var(--acc-blossom-text)' }}>In progress</span>}
           {inProgress && task.scheduled_start && (
             <span>
@@ -346,6 +352,11 @@ export function TaskRow({
       </div>
 
       {!grammar.selecting && parent && <SubtaskAddButton parent={task} />}
+      {snoozed && !grammar.selecting && (
+        <Button variant="secondary" style={{ flex: 'none' }} onClick={() => unsnoozeTasksWithUndo([task])}>
+          Unsnooze
+        </Button>
+      )}
       {!grammar.selecting && (
         <span
           // Effects 2j: a full Top 3 refuses the star — it shakes once and the toast says why.

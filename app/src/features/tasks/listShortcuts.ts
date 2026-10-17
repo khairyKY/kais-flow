@@ -3,7 +3,7 @@ import { openTaskLink } from '../../lib/links'
 import type { ListBinding } from '../../components/useListKeys'
 
 export type ListActionKey = 'complete' | 'open' | 'today' | 'tomorrow' | 'nextWeek' | 'top3' | 'project' | 'labels' | 'delete' | 'toggleSelect' | 'link'
-  | 'plan' | 'someday' | 'priority' | 'duration' | 'goal' | 'focus' | 'filter' | 'sort' | 'duplicate'
+  | 'plan' | 'someday' | 'priority' | 'duration' | 'goal' | 'focus' | 'filter' | 'sort' | 'duplicate' | 'snooze'
 
 interface ListShortcutMeta {
   keys: string[]
@@ -42,6 +42,8 @@ export const LIST_SHORTCUTS: ListShortcutMeta[] = [
   { keys: ['⇧', 'S'], action: 'sort', label: 'Sort', page: true },
   // Kai 2026-10-17: Duplicate — ⌘/Ctrl+D as in Todoist, Notion, Akiflow (bare D is Plan…).
   { keys: ['⌘/Ctrl', 'D'], action: 'duplicate', label: 'Duplicate', mod: true },
+  // Kai 2026-10-17: Snooze… (a snoozed row: Unsnooze). S is Someday, so Z — "zzz", free on every list.
+  { keys: ['z'], action: 'snooze', label: 'Snooze…' },
 ]
 
 /** Pages supply only the actions they actually wire up; missing ones are silently skipped — except

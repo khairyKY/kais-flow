@@ -56,6 +56,7 @@ import {
   rescheduleTasksWithUndo,
   planWithUndo,
   somedayTasksWithUndo,
+  snoozeTasksWithUndo,
   deleteTasksWithUndo,
   moveToTomorrowWithUndo,
   toggleTop3,
@@ -304,10 +305,14 @@ export function ProjectDetailPage() {
     duplicateTasksWithUndo(selectedTasks)
     clearSelection()
   }
+  const bulkSnooze = (iso: string) => {
+    snoozeTasksWithUndo(selectedTasks, iso)
+    clearSelection()
+  }
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate, onSnooze: bulkSnooze }
       : undefined
 
   // The ? cheatsheet's list keys, as on Tasks (features/tasks/TasksPage.tsx): one row, or with rows
@@ -389,6 +394,7 @@ export function ProjectDetailPage() {
           onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
           onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
           onDuplicate={bulkDuplicate}
+          onSnooze={(e) => verbs.open(selectedTasks, 'snooze', { x: e.clientX, y: e.clientY })}
           onDelete={bulkDelete}
           onClear={clearSelection}
           onSelectAll={selectAllOpen}

@@ -28,6 +28,7 @@ import { planListMove } from './manualOrder'
 import { openSubtasks, subtasksOf } from './subtasks'
 import { duplicateMessage, duplicateRows } from './duplicate'
 import { askSubtasks } from './subtaskQuestion'
+import { snoozeLine } from './snooze'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -440,6 +441,38 @@ export function somedayTasksWithUndo(tasks: Task[]): void {
     before.forEach((b) => {
       patchTask(b, { someday: b.someday, top3: b.top3, top3_rank: b.top3_rank ?? null })
       logActivity('task.someday_set', 'task', b.id, { someday: b.someday })
+    }),
+  )
+}
+
+/** Snooze for one task or many — the row ⋯, the task sheet's ⋯, the bulk bar, Z — with one Undo. Off Today,
+ * the lists and the calendar rail until `until`, then back on its own; the date and plan stay, a Top 3
+ * pick gives its place up (top3Rule). Undo gives back each row's snooze and that place. */
+export function snoozeTasksWithUndo(tasks: readonly Task[], until: string): void {
+  const before = tasks.map(cached)
+  for (const t of before) {
+    patchTask(t, { snoozed_until: until })
+    logActivity('task.snoozed', 'task', t.id, { snoozed_until: until })
+  }
+  toastUndo(snoozeLine(until, tasks.length), () =>
+    before.forEach((b) => {
+      patchTask(b, { snoozed_until: b.snoozed_until, top3: b.top3, top3_rank: b.top3_rank ?? null })
+      logActivity('task.unsnoozed', 'task', b.id, {})
+    }),
+  )
+}
+
+/** Unsnooze (the Snoozed list, the ⋯ menu, Z on a snoozed row): back on the lists now, with Undo. */
+export function unsnoozeTasksWithUndo(tasks: readonly Task[]): void {
+  const before = tasks.map(cached)
+  for (const t of before) {
+    patchTask(t, { snoozed_until: null })
+    logActivity('task.unsnoozed', 'task', t.id, {})
+  }
+  toastUndo(tasks.length === 1 ? 'Unsnoozed' : `${tasksLabel(tasks.length)} unsnoozed`, () =>
+    before.forEach((b) => {
+      patchTask(b, { snoozed_until: b.snoozed_until })
+      logActivity('task.snoozed', 'task', b.id, { snoozed_until: b.snoozed_until })
     }),
   )
 }

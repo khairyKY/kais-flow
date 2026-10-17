@@ -4,8 +4,9 @@
 
 import { cairoTimeKey } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
+import { isSnoozed, snoozeWhen } from './snooze'
 
-export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'intoSlot' | 'subtask' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'duplicate' | 'select' | 'reopen' | 'delete'
+export type TaskMenuKey = 'tomorrow' | 'plan' | 'unschedule' | 'intoSlot' | 'subtask' | 'snooze' | 'unsnooze' | 'project' | 'priority' | 'labels' | 'repeat' | 'remind' | 'top3' | 'goal' | 'up' | 'down' | 'focus' | 'duplicate' | 'select' | 'reopen' | 'delete'
 
 export interface TaskMenuEntry {
   key: TaskMenuKey
@@ -64,6 +65,9 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     ...(ctx.slots && !n ? [{ key: 'intoSlot', label: 'Into a slot…', sub: true } as const] : []),
     // Subtasks A (Kai 2026-10-16): the phone's way to add one from the row (the computer also has the row's +).
     ...(ctx.subtask && !n && !task.parent_task_id ? [{ key: 'subtask', label: 'Add a subtask' } as const] : []),
+    // Snooze (Kai 2026-10-17): off every list until a time, then back — the date stays (./snooze). A
+    // snoozed task (the Snoozed list) says when it's back, and comes back now.
+    !n && isSnoozed(task) ? { key: 'unsnooze', label: 'Unsnooze', hint: `back ${snoozeWhen(task.snoozed_until!)}` } : { key: 'snooze', label: `Snooze…${n}`, sub: true },
     { key: 'project', label: `Move to…${n}`, hint: ctx.projectName ?? 'None', sub: true },
     { key: 'priority', label: 'Priority', hint: (task.priority && PRIORITY_LABELS[task.priority]) || 'None', sub: true },
     // The Label picker (Overlays.dc.html, keyboard L) — the desktop menu's; the phone edits labels in

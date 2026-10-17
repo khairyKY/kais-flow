@@ -5,8 +5,9 @@
 // Today, the Today smart list, the 3-slot cap) — so a moved pick can't be shown, counted or kept.
 import type { Task } from '../../lib/types'
 import { taskDayDiff } from './grouping'
+import { isSnoozed } from './snooze'
 
-type Top3Fields = Pick<Task, 'top3' | 'top3_rank' | 'someday' | 'deleted_at' | 'status' | 'due_at' | 'scheduled_start' | 'paused'>
+type Top3Fields = Pick<Task, 'top3' | 'top3_rank' | 'someday' | 'deleted_at' | 'status' | 'due_at' | 'scheduled_start' | 'paused'> & { snoozed_until?: string | null }
 
 /** Does this starred task still count as one of TODAY's Top 3?
  *
@@ -16,6 +17,9 @@ export function isTop3Today(task: Top3Fields, now: Date): boolean {
   if (!task.top3) return false
   // Parked, paused, binned or no longer open: not anybody's pick.
   if (task.someday || task.paused || task.deleted_at || task.status !== 'todo') return false
+  // Snoozed (Kai 2026-10-17): off Today until it's back, so it gives its place up like a move off today
+  // — even "Later today"; Undo gives it back.
+  if (isSnoozed(task, now)) return false
   const diff = taskDayDiff(task, now)
   // Undated = "today, whenever" (starring never needs a date). Earlier = yesterday's unfinished pick
   // carried over — the morning ritual offers it again (rituals/loopDay.ts) and Keep & continue keeps
