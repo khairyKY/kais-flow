@@ -6,6 +6,7 @@ import { toastUndo } from '../../lib/undo'
 import { appZone } from '../../lib/appZone'
 import { readFilter, smartFilter, type SmartFilter } from '../../../../supabase/functions/_shared/smartList.ts'
 import { effectiveDomainId } from '../tasks/grouping'
+import { isSnoozed } from '../tasks/snooze'
 import type { Area, Project, SmartListRow, Task } from '../../lib/types'
 
 // Smart lists (migration 0081): saved filters in the sidebar's Plan group. The rules live in
@@ -36,7 +37,8 @@ export function useSmartLists() {
 
 /** The tasks a list shows — its count is the open ones among them. `now` decides "today" / "this week". */
 export function smartTasks(tasks: readonly Task[], filter: SmartFilter, projects: readonly Project[], areas: readonly Area[], now: Date = new Date()): Task[] {
-  return smartFilter(tasks, filter, { now, zone: appZone(), domainOf: (t) => effectiveDomainId(t, projects, areas) })
+  // A snoozed task is out of every list until it's back (../tasks/snooze), smart ones too.
+  return smartFilter(tasks.filter((t) => !isSnoozed(t, now)), filter, { now, zone: appZone(), domainOf: (t) => effectiveDomainId(t, projects, areas) })
 }
 
 export const openCount = (tasks: readonly Task[]): number => tasks.filter((t) => t.status === 'todo').length

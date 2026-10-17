@@ -15,7 +15,7 @@ import { calendarIcs, exportEnvelope, exportFileName, EXPORT_TYPES, tasksCsv, ty
 export const EXPORT_TABLES = [
   'app_settings', 'domains', 'areas', 'projects', 'tasks', 'inbox_items', 'calendar_events',
   'routines', 'routine_completions', 'time_entries', 'journal_entries', 'people', 'interactions',
-  'books', 'notes', 'quotes', 'commentary', 'captures', 'resurfaced_log', 'activity_log',
+  'books', 'notes', 'quotes', 'commentary', 'captures', 'resurfaced_log', 'activity_log', 'smart_lists',
 ] as const
 
 // tasks / inbox_items: every column but the search ones (lib/columns.ts — the embeddings are ~4.5 KB a row).
