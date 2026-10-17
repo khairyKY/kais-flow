@@ -967,7 +967,7 @@ export function TasksPage() {
             <div style={{ margin: '28px 0 0', textAlign: 'center' }}>
               <img src={isSomeday ? `${A}/clover/resting.png` : `${A}/cherry/bud.png`} alt="" style={{ height: 44, margin: '0 auto', display: 'block', filter: 'var(--shadow-drop-sm)', opacity: 0.9 }} />
               <p className="kf-help" style={{ margin: '10px 0 0' }}>
-                {isSomeday ? 'Nothing parked for someday.' : smart ? 'Nothing matches this list right now.' : isSnoozedTab ? 'Nothing snoozed.' : 'Nothing here. Type one above, or press ⌘K and just say what's on your mind.'}
+                {isSomeday ? 'Nothing parked for someday.' : smart ? 'Nothing matches this list right now.' : isSnoozedTab ? 'Nothing snoozed.' : 'Nothing here. Type one above, or press ⌘K and just say what\'s on your mind.'}
               </p>
             </div>
           ) : (
