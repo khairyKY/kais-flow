@@ -58,6 +58,8 @@ export interface TaskMenuActions {
   reorder?: (delta: -1 | 1) => void
   /** Opens the add line under the row (Subtasks A). */
   addSubtask?: () => void
+  /** Duplicate: an open copy, its subtasks along (tasks/api duplicateTasksWithUndo). */
+  duplicate?: () => void
 }
 
 /** When 2+ tasks are selected, the date, project and delete actions of a selected row's menu act on
@@ -71,6 +73,8 @@ export interface BulkActions {
   onDelete: () => void
   /** Add to / Remove from Top 3 for the selection (Kai 2026-10-12). */
   onTop3?: () => void
+  /** Duplicate every selected task, one Undo (Kai 2026-10-17). */
+  onDuplicate: () => void
 }
 
 /** 'date' = the Plan list (./PlanMenu), whose Pick date & time… is the date picker. */
@@ -83,13 +87,14 @@ export interface MenuAnchor {
 
 const ICONS: Record<TaskMenuKey, IconName> = {
   tomorrow: 'tomorrow', plan: 'pickdate', unschedule: 'calendar', intoSlot: 'clock', subtask: 'plus', project: 'project', priority: 'priority', repeat: 'repeat', remind: 'remind',
-  labels: 'label', top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', select: 'tasks', reopen: 'undo', delete: 'delete',
+  labels: 'label', top3: 'star', goal: 'focus-ring', up: 'chevdown', down: 'chevdown', focus: 'focus', duplicate: 'duplicate', select: 'tasks', reopen: 'undo', delete: 'delete',
 }
 const ICON_STYLE: Partial<Record<TaskMenuKey, CSSProperties>> = { up: { transform: 'rotate(180deg)' } }
 const KEYCAPS: Partial<Record<TaskMenuKey, string>> = {
   tomorrow: shortcutHint('tomorrow'), project: shortcutHint('project'), top3: shortcutHint('top3'), up: '⌥↑', down: '⌥↓', select: '⌃click', delete: shortcutHint('delete'),
   // P7e A18
   plan: shortcutHint('plan'), priority: shortcutHint('priority'), labels: shortcutHint('labels'), goal: shortcutHint('goal'), focus: shortcutHint('focus'),
+  duplicate: shortcutHint('duplicate'),
 }
 const REMIND_OFFSETS: { min: number | null; label: string }[] = [
   { min: null, label: 'No reminder' },
@@ -150,6 +155,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
     up: () => actions.reorder?.(-1),
     down: () => actions.reorder?.(1),
     focus: () => { onClose(); startFocus(task) },
+    duplicate: () => actions.duplicate?.(),
     select: () => actions.select?.(),
     reopen: actions.reopen,
     delete: actions.delete,

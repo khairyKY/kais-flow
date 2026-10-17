@@ -59,6 +59,7 @@ import {
   moveToTomorrowWithUndo,
   toggleTop3,
   toggleTop3ManyWithUndo,
+  duplicateTasksWithUndo,
   toggleTaskWithUndo,
 } from '../tasks/api'
 import { TaskRow, type BulkActions } from '../tasks/TaskRow'
@@ -298,10 +299,14 @@ export function ProjectDetailPage() {
     toggleTop3ManyWithUndo(selectedTasks)
     clearSelection()
   }
+  const bulkDuplicate = () => {
+    duplicateTasksWithUndo(selectedTasks)
+    clearSelection()
+  }
 
   const bulkActions: BulkActions | undefined =
     selected.size > 1
-      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3 }
+      ? { count: selected.size, onTomorrow: bulkTomorrow, onSomeday: bulkSomeday, onSchedule: bulkSchedule, onMove: bulkMove, onDelete: bulkDelete, onTop3: bulkTop3, onDuplicate: bulkDuplicate }
       : undefined
 
   // The ? cheatsheet's list keys, as on Tasks (features/tasks/TasksPage.tsx): one row, or with rows
@@ -382,6 +387,7 @@ export function ProjectDetailPage() {
           onTop3={bulkTop3}
           onPriority={(e) => verbs.open(selectedTasks, 'priority', { x: e.clientX, y: e.clientY })}
           onLabels={(e) => verbs.open(selectedTasks, 'labels', { x: e.clientX, y: e.clientY })}
+          onDuplicate={bulkDuplicate}
           onDelete={bulkDelete}
           onClear={clearSelection}
           onSelectAll={selectAllOpen}

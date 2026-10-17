@@ -66,3 +66,36 @@ describe('the A18 keys', () => {
     expect(new Set(keys).size).toBe(keys.length)
   })
 })
+
+// Kai 2026-10-17: ⌘/Ctrl+D duplicates the focused row (or the selection); a bare D stays Plan….
+describe('⌘/Ctrl+D — Duplicate', () => {
+  const one = vi.fn()
+  const all = vi.fn()
+  const bindings = buildListBindings({ duplicate: one, plan: vi.fn() }, { duplicate: all })
+  const label = (e: { key: string; code: string; shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean }) => bindingFor(bindings, e)?.label
+
+  it('Ctrl+D and ⌘D are Duplicate, on any layout; D, ⇧D and Caps Lock D stay Plan…', () => {
+    expect(label({ key: 'd', code: 'KeyD', ctrlKey: true })).toBe('Duplicate')
+    expect(label({ key: 'd', code: 'KeyD', metaKey: true })).toBe('Duplicate')
+    expect(label({ key: 'ي', code: 'KeyD', ctrlKey: true })).toBe('Duplicate') // Arabic layout
+    expect(label({ key: 'd', code: 'KeyD' })).toBe('Plan…')
+    expect(label({ key: 'D', code: 'KeyD', shiftKey: true })).toBe('Plan…')
+    expect(label({ key: 'D', code: 'KeyD' })).toBe('Plan…')
+  })
+
+  it('no other key answers to Ctrl (Ctrl+P stays the browser\'s), and the menus say ⌃D', () => {
+    expect(label({ key: 'p', code: 'KeyP', ctrlKey: true })).toBeUndefined()
+    expect(bindingFor(buildListBindings({ project: vi.fn() }), { key: 'p', code: 'KeyP', ctrlKey: true })).toBeUndefined()
+    expect(shortcutHint('duplicate')).toBe('⌃D')
+    expect(LIST_SHORTCUTS.find((s) => s.action === 'duplicate')?.keys).toEqual(['⌘/Ctrl', 'D']) // the cheatsheet's row
+  })
+
+  it('with a selection it duplicates all of it, without one the focused row', () => {
+    const b = bindingFor(bindings, { key: 'd', code: 'KeyD', ctrlKey: true })!
+    const a = { id: 'a' } as Task
+    b.runAll?.([a])
+    expect(all).toHaveBeenCalledWith([a])
+    b.run(a)
+    expect(one).toHaveBeenCalledWith(a)
+  })
+})

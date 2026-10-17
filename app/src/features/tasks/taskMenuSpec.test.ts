@@ -14,7 +14,7 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
   // Kai 2026-10-07: Tomorrow + Pick date… became the one Plan… list; Make goal of the day joined.
   it('is MK Action Sheet, in its order, Delete last', () => {
     expect(labels(task(), { tomorrowHint: 'Mon 09:00', canSelect: true })).toEqual([
-      'Plan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete',
+      'Plan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Duplicate', 'Select', 'Delete',
     ])
   })
 
@@ -60,7 +60,7 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
 
   it('bulk: the plan, move and delete rows name how many they move; no goal, no focus', () => {
     expect(labels(task(), { tomorrowHint: 'x', bulkCount: 3, selected: true, canSelect: true, overdue: true, place: { index: 1, last: 2 } })).toEqual([
-      'Plan… (3)', 'Move to… (3)', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Deselect', 'Delete (3)',
+      'Plan… (3)', 'Move to… (3)', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Duplicate (3)', 'Deselect', 'Delete (3)',
     ])
   })
 
@@ -86,6 +86,14 @@ describe('taskMenuSpec — one ⋯ list for every task row', () => {
     expect(at(2)).toEqual(['Move up'])
     expect(at(0, 0)).toEqual([]) // the only open pick
     expect(labels(task(), { tomorrowHint: 'x' })).not.toContain('Move up') // not a Top 3 row
+  })
+
+  it('Duplicate (Kai 2026-10-17) sits after Start focus, before Select and Delete; in bulk it names how many', () => {
+    const l = labels(task(), { tomorrowHint: 'x', canSelect: true, desktop: true })
+    expect(l.slice(l.indexOf('Start focus'), l.indexOf('Start focus') + 4)).toEqual(['Start focus', 'Duplicate', 'Select', 'Delete'])
+    expect(labels(task({ parent_task_id: 'p' }), { tomorrowHint: 'x' })).toContain('Duplicate') // a subtask copies under its parent
+    expect(labels(task(), { tomorrowHint: 'x', bulkCount: 2, selected: true })).toContain('Duplicate (2)')
+    expect(labels(task({ status: 'done', completed_at: '2026-09-27T08:00:00Z' }), { tomorrowHint: 'x' })).not.toContain('Duplicate')
   })
 
   it('a done row only reopens or goes to Trash', () => {
