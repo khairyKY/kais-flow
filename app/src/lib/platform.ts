@@ -81,6 +81,34 @@ export async function openExternal(url: string, w: Window | undefined = typeof w
   w?.open(url, '_blank', 'noopener,noreferrer')
 }
 
+/** Hands a file the app made (Settings → Export your data) to the person. A browser tab, the PWA and
+ * the Windows app: a Blob download (WebView2 saves it to Downloads and shows its download flyout, as
+ * it did the installer before the updater). The Android app's WebView has no downloads, so the file
+ * goes to the app's cache and the share sheet opens on it — Files, Drive, mail, wherever they pick
+ * (@capacitor/filesystem + share, imported only there). 'cancelled' = they closed the sheet. */
+export async function saveFile(name: string, type: string, text: string): Promise<'saved' | 'shared' | 'cancelled'> {
+  if (isCapacitorShell()) {
+    const [{ Filesystem, Directory, Encoding }, { Share }] = await Promise.all([import('@capacitor/filesystem'), import('@capacitor/share')])
+    const { uri } = await Filesystem.writeFile({ path: name, data: text, directory: Directory.Cache, encoding: Encoding.UTF8 })
+    try {
+      await Share.share({ title: name, files: [uri] })
+      return 'shared'
+    } catch (e) {
+      if (/cancel/i.test(String((e as Error)?.message ?? e))) return 'cancelled'
+      throw e
+    }
+  }
+  const url = URL.createObjectURL(new Blob([text], { type }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = name
+  document.body.append(a)
+  a.click()
+  a.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 60_000)
+  return 'saved'
+}
+
 /** The address a link leaves the app for: an http(s) page on another origin than `here` (this
  * page). Null for the app's own routes, #anchors, mailto: and the like. */
 export function externalHref(href: string, here: string): string | null {
