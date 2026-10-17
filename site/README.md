@@ -13,6 +13,10 @@ Both run in CI (`.github/workflows/ci.yml`, job **Site build**), so a broken pag
 Preview: serve `dist/` with any static server (`python -m http.server -d dist`), or `npx wrangler dev` here to see it
 exactly as the Worker serves it.
 
+## Live (2026-10-17)
+
+**https://kais-flow-site.khairyshhn1.workers.dev**: a Worker with static assets in Kai's Cloudflare account, deployed from this machine (Kai pressed Allow once for `wrangler login`; the dashboard's GitHub connect never listed the repo). Each release: `cd site && node build.mjs && npx wrangler deploy`. The sections below are the dashboard routes, kept for reference.
+
 ## Put it live ($0) — Kai does this once, either way
 
 Two free ways on Cloudflare; pick one. Both build from `master`, need no secrets, and rebuild on every push.

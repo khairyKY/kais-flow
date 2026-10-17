@@ -13,14 +13,13 @@ export const ARABIC = false
 
 // The site's public address (canonical links, share cards, sitemap, RSS). SITE_URL wins. Without it:
 // Cloudflare Pages names its deployment (CF_PAGES_URL = https://<hash>.<project>.pages.dev, so the
-// project's own address is that minus the first label); Workers Builds names nothing, so we assume the
-// account's workers.dev subdomain, where the app already lives (kais-flow.kaidagoat.workers.dev).
+// project's own address is that minus the first label); otherwise the Worker the site deploys to
+// (2026-10-17: `npx wrangler deploy` from site/, Kai's account subdomain khairyshhn1).
 export const siteUrl = (env) => {
   const strip = (u) => u.replace(/\/+$/, '')
   if (env.SITE_URL) return strip(env.SITE_URL)
   if (env.CF_PAGES_URL) return strip(env.CF_PAGES_URL.replace(/^(https?:\/\/)[^.]+\.(?=[^.]+\.pages\.dev)/, '$1'))
-  if (env.WORKERS_CI) return 'https://kais-flow-site.kaidagoat.workers.dev'
-  return 'https://kais-flow-site.pages.dev'
+  return 'https://kais-flow-site.khairyshhn1.workers.dev'
 }
 
 // The release notes: ONE file that the site (Field notes, What's new, RSS), the app (its What's new

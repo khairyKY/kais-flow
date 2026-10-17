@@ -7,12 +7,11 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { ARABIC, siteUrl } from '../src/data.mjs'
 
-// siteUrl: SITE_URL wins; Pages' deployment URL → the project's; Workers Builds → the account subdomain
+// siteUrl: SITE_URL wins; Pages' deployment URL → the project's; otherwise the Worker's address
 assert.equal(siteUrl({ SITE_URL: 'https://example.org/' }), 'https://example.org')
 assert.equal(siteUrl({ CF_PAGES_URL: 'https://9e5c2a6f.kais-flow-site.pages.dev' }), 'https://kais-flow-site.pages.dev')
 assert.equal(siteUrl({ CF_PAGES_URL: 'https://kais-flow-site.pages.dev' }), 'https://kais-flow-site.pages.dev')
-assert.equal(siteUrl({ WORKERS_CI: '1' }), 'https://kais-flow-site.kaidagoat.workers.dev')
-assert.equal(siteUrl({}), 'https://kais-flow-site.pages.dev')
+assert.equal(siteUrl({}), 'https://kais-flow-site.khairyshhn1.workers.dev')
 
 const DIST = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist')
 // Kai's own words, still to come (site/README.md "Placeholders for Kai"): page → how many
