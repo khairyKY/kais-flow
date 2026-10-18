@@ -1,11 +1,22 @@
 import { cairoDateKey } from '../../lib/dateShortcuts'
-import type { Task } from '../../lib/types'
+import type { Area, Project, Task } from '../../lib/types'
 import { isTop3Today } from './top3Rule'
 import { orderKey } from './manualOrder'
+import { isSnoozed } from './snooze'
 
-export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue' | 'all'
+export type SmartList = 'today' | 'week' | 'month' | 'upcoming' | 'someday' | 'overdue' | 'all' | 'snoozed'
 
-export const SMART_LISTS: readonly SmartList[] = ['today', 'week', 'month', 'upcoming', 'someday', 'overdue', 'all']
+export const SMART_LISTS: readonly SmartList[] = ['today', 'week', 'month', 'upcoming', 'someday', 'overdue', 'all', 'snoozed']
+
+type Placed = { domain_id?: string | null; project_id?: string | null; area_id?: string | null }
+
+/** A task's domain: its own, else its project's or area's (the Tasks page's domain chips, smart lists). */
+export function effectiveDomainId(task: Placed, projects: readonly Pick<Project, 'id' | 'domain_id'>[], areas: readonly Pick<Area, 'id' | 'domain_id'>[]): string | null {
+  if (task.domain_id) return task.domain_id
+  if (task.project_id) return projects.find((p) => p.id === task.project_id)?.domain_id ?? null
+  if (task.area_id) return areas.find((a) => a.id === task.area_id)?.domain_id ?? null
+  return null
+}
 
 /** Calendar-day difference from `a` to `b` (positive = b is later), computed on local day keys
  * so a task due 23:00 today reads as day 0, not "tomorrow" via a raw ms comparison. */
@@ -39,7 +50,9 @@ function monthEndDiff(now: Date): number {
  */
 export function filterByList(tasks: Task[], list: SmartList | null, now: Date = new Date()): Task[] {
   // A paused series (Perennials ‖) rests on the Perennials page until it's resumed — no list shows it.
-  const open = tasks.filter((t) => t.status === 'todo' && !t.paused)
+  const open = tasks.filter((t) => t.status === 'todo' && !t.paused && !isSnoozed(t, now))
+  // Snooze (Kai 2026-10-17): a snoozed task is in Snoozed only, soonest back first, until it's back.
+  if (list === 'snoozed') return tasks.filter((t) => t.status === 'todo' && isSnoozed(t, now)).sort((a, b) => Date.parse(a.snoozed_until!) - Date.parse(b.snoozed_until!))
   // Punch 27: `all` is every open task — dated, undated (project filings), and someday alike.
   // It's the one list where nothing can hide; groupTasks gives undated rows their own
   // "No date" group so a fresh Inbox filing is findable in seconds.
@@ -84,7 +97,7 @@ export function todayListTasks(tasks: Task[], now: Date = new Date()): Task[] {
     // Finished rows stay listed (struck through) on the Cairo day they were finished. A `done` row
     // with no completed_at (e.g. a CSV import) can't be placed on a day — never show it as open.
     if (t.completed_at) return cairoDateKey(new Date(t.completed_at)) === today
-    return t.status !== 'done'
+    return t.status !== 'done' && !isSnoozed(t, now) // snoozed: back on its own at snoozed_until
   })
 }
 
@@ -108,7 +121,7 @@ export interface RailScope {
  * (the rail is for placing work on the calendar, and someday tasks are explicitly parked). */
 export function filterByScope(tasks: Task[], scope: RailScope, now: Date = new Date()): Task[] {
   if (scope.kind === 'smart') return filterByList(tasks, scope.id as SmartList, now)
-  const open = tasks.filter((t) => t.status === 'todo' && !t.someday && !t.paused)
+  const open = tasks.filter((t) => t.status === 'todo' && !t.someday && !t.paused && !isSnoozed(t, now))
   switch (scope.kind) {
     case 'project':
       return open.filter((t) => t.project_id === scope.id)
@@ -119,7 +132,7 @@ export function filterByScope(tasks: Task[], scope: RailScope, now: Date = new D
   }
 }
 
-export type GroupKey = 'overdue' | 'today' | 'scheduled' | 'tomorrow' | 'week' | 'later' | 'unplanned' | 'someday'
+export type GroupKey = 'overdue' | 'today' | 'scheduled' | 'tomorrow' | 'week' | 'later' | 'unplanned' | 'someday' | 'snoozed'
 
 export interface TaskGroup {
   key: GroupKey
@@ -140,9 +153,11 @@ const GROUP_ORDER: { key: GroupKey; label: string }[] = [
   // so a project filing with no date is visible the moment it lands.
   { key: 'unplanned', label: 'No date' },
   { key: 'someday', label: 'Someday' },
+  { key: 'snoozed', label: 'Snoozed' }, // only the Snoozed list has these — soonest back first
 ]
 
 function bucketOf(task: Task, now: Date): GroupKey {
+  if (isSnoozed(task, now)) return 'snoozed'
   if (task.someday) return 'someday'
   if (isScheduledToday(task, now)) return 'scheduled'
   const diff = taskDayDiff(task, now)
@@ -170,7 +185,8 @@ export function groupTasks(tasks: Task[], now: Date = new Date()): TaskGroup[] {
   return GROUP_ORDER.flatMap(({ key, label }) => {
     const groupTasksArr = byKey.get(key)
     if (!groupTasksArr || groupTasksArr.length === 0) return []
-    groupTasksArr.sort((a, b) => orderKey(a) - orderKey(b)) // oldest-first everywhere; overdue = most negative first
+    if (key === 'snoozed') groupTasksArr.sort((a, b) => Date.parse(a.snoozed_until!) - Date.parse(b.snoozed_until!))
+    else groupTasksArr.sort((a, b) => orderKey(a) - orderKey(b)) // oldest-first everywhere; overdue = most negative first
     const totalMinutes = groupTasksArr.reduce((sum, t) => sum + (t.duration_min ?? 0), 0)
     return [{ key, label, tasks: groupTasksArr, totalMinutes }]
   })

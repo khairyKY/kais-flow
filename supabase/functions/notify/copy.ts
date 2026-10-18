@@ -9,7 +9,7 @@ import { dateKey } from '../_shared/zone.ts'
 export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'test'
 
 export interface NoticeAction {
-  action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep' | 'review'
+  action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep' | 'review' | 'snooze10' | 'snooze60'
   title: string
 }
 
@@ -20,7 +20,7 @@ export interface Notice {
   body: string
   /** A newer notice with the same tag replaces the older one instead of stacking. */
   tag: string
-  /** Up to two (Windows and Chrome show two). The first is the likely one. */
+  /** In order of likelihood: Chrome shows the first two, Android three, a Windows toast four. */
   actions: NoticeAction[]
   /** Where a click on the notification itself lands. */
   url: string
@@ -124,8 +124,9 @@ function lead(dueAt: string, now: Date, zone: string): string {
   return min < 60 ? `in ${min} min` : `at ${clock(dueAt, zone)}`
 }
 
-/** Task reminder: "Call the tyre supplier · in 10 min" / "09:50 · Car" · Done · Tomorrow. Several at
- * once are one grouped notice ("3 reminders"). Private (lock-screen names off): "A reminder". */
+/** Task reminder: "Call the tyre supplier · in 10 min" / "09:50 · Car" · Done · In 10 min · In 1 hour ·
+ * Tomorrow (snooze, Kai 2026-10-17: the reminder again later — 0082 remind_again_at — the task stays put).
+ * Several at once are one grouped notice ("3 reminders"). Private (lock-screen names off): "A reminder". */
 export function reminderNotice(tasks: readonly ReminderTask[], p: NoticePrefs | null | undefined, now: Date, zone: string = RITUAL_ZONE): Notice {
   const names = showNames(p)
   const taskIds = tasks.map((t) => t.id)
@@ -139,6 +140,8 @@ export function reminderNotice(tasks: readonly ReminderTask[], p: NoticePrefs | 
       tag: `reminder-${t.id}`,
       actions: [
         { action: 'done', title: 'Done' },
+        { action: 'snooze10', title: 'In 10 min' },
+        { action: 'snooze60', title: 'In 1 hour' },
         { action: 'tomorrow', title: 'Tomorrow' },
       ],
       url: `/tasks?focus=${t.id}`,
@@ -152,7 +155,11 @@ export function reminderNotice(tasks: readonly ReminderTask[], p: NoticePrefs | 
     title: `${tasks.length} reminders`,
     body: names ? (tasks.length > 3 ? `${shown} · +${tasks.length - 3} more` : shown) : 'Unlock to see them',
     tag: 'reminders',
-    actions: [{ action: 'open', title: 'Open' }],
+    actions: [
+      { action: 'open', title: 'Open' },
+      { action: 'snooze10', title: 'In 10 min' },
+      { action: 'snooze60', title: 'In 1 hour' },
+    ],
     url: '/today',
     silent: false,
     taskIds,

@@ -7,7 +7,7 @@ export const TASK_COLUMNS = [
   'id', 'user_id', 'project_id', 'domain_id', 'area_id', 'milestone_id', 'parent_task_id', 'slot_id', 'slot_date',
   'title', 'notes', 'status', 'priority', 'labels', 'top3', 'top3_rank', 'sort_order', 'someday', 'paused',
   'due_at', 'scheduled_start', 'scheduled_end', 'duration_min', 'snoozed_until',
-  'recurrence_rule', 'reminder_at', 'reminder_sent', 'external_ref',
+  'recurrence_rule', 'reminder_at', 'reminder_sent', 'remind_again_at', 'external_ref',
   'completed_at', 'deleted_at', 'created_at', 'updated_at',
 ].join(',') as '*' // typed as '*' so supabase-js's select-string parser types rows like select('*')
 

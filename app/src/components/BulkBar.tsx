@@ -20,6 +20,8 @@ export interface BulkBarProps {
   onLabels?: (e: ReactMouseEvent) => void
   /** Duplicate the selection, one Undo (Kai 2026-10-17) — behind More with Priority and Labels. */
   onDuplicate?: () => void
+  /** Snooze… — the SnoozeMenu for the selection (Kai 2026-10-17), under More. */
+  onSnooze?: (e: ReactMouseEvent) => void
   onClear: () => void
   /** Phone app bar's "Select all" — every row the page shows. */
   onSelectAll?: () => void
@@ -57,12 +59,13 @@ const CSS = `
  * Done · Tomorrow · Plan (the Plan list, features/tasks/PlanMenu) · Move · Top 3 · More (Priority, Labels, Duplicate) ·
  * Delete. On desktop: the floating pill, same actions (More is a menu there).
  * Every button loops the existing per-task writes over the selection ("zero new API surface"). */
-export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onTop3, onPriority, onLabels, onDuplicate, onClear, onSelectAll }: BulkBarProps) {
+export function BulkBar({ count, onComplete, onTomorrow, onSchedule, onMoveToProject, onDelete, onTop3, onPriority, onLabels, onDuplicate, onSnooze, onClear, onSelectAll }: BulkBarProps) {
   const isMobile = useIsMobile()
   const [more, setMore] = useState<ReactMouseEvent | null>(null)
   const extras: { label: string; icon: IconName; run: (e: ReactMouseEvent) => void }[] = [
     ...(onPriority ? [{ label: 'Priority…', icon: 'priority' as const, run: onPriority }] : []),
     ...(onLabels ? [{ label: 'Labels…', icon: 'label' as const, run: onLabels }] : []),
+    ...(onSnooze ? [{ label: 'Snooze…', icon: 'moon' as const, run: onSnooze }] : []),
     ...(onDuplicate ? [{ label: 'Duplicate', icon: 'duplicate' as const, run: onDuplicate }] : []),
   ]
   const actions: { label: string; icon: IconName; run: (e: ReactMouseEvent) => void; menu?: boolean; destructive?: boolean }[] = [

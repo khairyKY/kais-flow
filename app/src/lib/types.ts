@@ -1,3 +1,4 @@
+import type { SmartFilter } from '../../../supabase/functions/_shared/smartList.ts'
 export interface Domain {
   id: string
   name: string
@@ -64,6 +65,8 @@ export interface Task {
   someday: boolean
   reminder_at: string | null
   reminder_sent: boolean
+  /** A snoozed reminder's one more reminder ("In 10 min" / "In 1 hour", migration 0082); null/absent = none. */
+  remind_again_at?: string | null
   completed_at: string | null
   paused?: boolean
   milestone_id?: string | null
@@ -199,6 +202,19 @@ export interface Area {
   color: string | null
   sort_order: number
   /** In Trash since (migration 0044); absent before it is pushed. */
+  deleted_at?: string | null
+  created_at: string
+  updated_at: string
+}
+
+/** A smart list (migration 0081): a saved filter in the sidebar's Plan group. `filter` is the
+ * jsonb as read by _shared/smartList.ts readFilter (features/smart-lists/api.ts reads it). */
+export interface SmartListRow {
+  id: string
+  name: string
+  icon: string | null
+  filter: SmartFilter
+  position: number
   deleted_at?: string | null
   created_at: string
   updated_at: string

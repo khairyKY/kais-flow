@@ -52,7 +52,7 @@ describe('the notice → an Android notification', () => {
       body: '08:50',
       channelId: 'reminders',
       smallIcon: 'ic_stat_kf',
-      actionTypeId: 'done:Done|tomorrow:Tomorrow',
+      actionTypeId: 'done:Done|snooze10:In 10 min|snooze60:In 1 hour|tomorrow:Tomorrow',
       extra: { kind: 'task_reminder', url: '/tasks?focus=t1', taskIds: ['t1'] },
       schedule: { at, allowWhileIdle: true },
       isExactNotification: false,
@@ -80,7 +80,7 @@ describe('show now / schedule', () => {
     await showAndroid(reminder)
     expect(ln.createChannel).toHaveBeenCalledWith(expect.objectContaining({ id: 'reminders', importance: 4 }))
     expect(ln.createChannel).toHaveBeenCalledWith(expect.objectContaining({ id: 'quiet', importance: 2 }))
-    expect(ln.registerActionTypes).toHaveBeenCalledWith({ types: [{ id: 'done:Done|tomorrow:Tomorrow', actions: [{ id: 'done', title: 'Done' }, { id: 'tomorrow', title: 'Tomorrow' }] }] })
+    expect(ln.registerActionTypes).toHaveBeenCalledWith({ types: [{ id: 'done:Done|snooze10:In 10 min|snooze60:In 1 hour|tomorrow:Tomorrow', actions: [{ id: 'done', title: 'Done' }, { id: 'snooze10', title: 'In 10 min' }, { id: 'snooze60', title: 'In 1 hour' }, { id: 'tomorrow', title: 'Tomorrow' }] }] })
     expect(ln.schedule.mock.calls[0][0].notifications[0]).toMatchObject({ id: notificationId(reminder.tag), title: reminder.title })
   })
 

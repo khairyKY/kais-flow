@@ -39,6 +39,8 @@ const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => 
 const WidgetBridge = lazy(() => import('../features/widgets/WidgetBridge').then((m) => ({ default: m.WidgetBridge })))
 // Tour & help: the garden notes after onboarding and the one-line hints (its own chunk).
 const TourHost = lazy(() => import('../features/tour/TourHost').then((m) => ({ default: m.TourHost })))
+// Smart lists (0081): the Plan drawer's saved filters — their rows, menu and rules (its own chunk).
+const SmartListNav = lazy(() => import('../features/smart-lists/SmartListNav').then((m) => ({ default: m.SmartListNav })))
 
 import { ToastHost } from './ToastHost'
 import { SubtaskAskHost } from '../features/tasks/SubtaskAsk'
@@ -179,6 +181,7 @@ function PlanDrawer() {
       className="app-smartlist"
       style={{ padding: '0 14px 12px', margin: '0 0 10px', borderBottom: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', gap: 1 }}
     >
+      <div style={{ position: 'relative' }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -210,6 +213,21 @@ function PlanDrawer() {
           <span title={`${todayCount} open on Today`} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{todayCount}</span>
         )}
       </button>
+      {/* New smart list (0081): a + beside the open header, not a row of its own — a row pushed Projects
+          under the fold on an 800px window (today-shell). features/smart-lists/SmartListNav listens. */}
+      {open && (
+        <button
+          type="button"
+          aria-label="New smart list"
+          title="New smart list"
+          className="kf-press"
+          onClick={() => window.dispatchEvent(new Event('kf-new-smart-list'))}
+          style={{ position: 'absolute', right: 6, top: 'calc(50% - 1.5px)', transform: 'translateY(-50%)', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-input)', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer', font: 'inherit' }}
+        >
+          ＋
+        </button>
+      )}
+      </div>
       {open && (
         <>
           {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length, undefined, list === 'today' ? TODAY_SPOT : null))}
@@ -217,6 +235,10 @@ function PlanDrawer() {
           {row('/tasks?list=someday', 'Someday', activeList === 'someday', filterByList(tasks, 'someday').length, (
             <img src={`${A}/fern/coil.png`} alt="" style={{ height: 14, opacity: 0.8 }} />
           ), SOMEDAY_SPOT)}
+          {/* Smart lists (0081): saved filters, each with its count — features/smart-lists. */}
+          <Suspense fallback={null}>
+            <SmartListNav activeList={activeList} />
+          </Suspense>
           {/* R4-27 (Kai's 2026-07-20 ruling): "planning board looks like shit, park it until I
               redesign it." Nav entry removed so it can't be reached by accident; the route and
               component stay in the codebase for when he redesigns it. */}

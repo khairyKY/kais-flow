@@ -27,6 +27,8 @@ export interface PlanTask {
   status: string
   due_at: string | null
   reminder_at: string | null
+  /** A snoozed reminder's one more (0082, "In 10 min" / "In 1 hour"). */
+  remind_again_at?: string | null
   deleted_at?: string | null
   project_id?: string | null
   top3?: boolean
@@ -92,9 +94,11 @@ export function localPlan({ tasks, events = [], projects = [], routines = [], co
   }
   const live = tasks.filter((t) => !t.deleted_at)
 
-  // Task reminders: the ones due at the same moment are one grouped notice (copy.ts).
+  // Task reminders: the ones due at the same moment are one grouped notice (copy.ts). A snoozed one
+  // (0082 remind_again_at) is a reminder at that moment too — keyed by it, so it shows once more.
   const groups = new Map<number, PlanTask[]>()
-  for (const t of dueReminders(live, from, to)) {
+  const again = live.flatMap((t) => (t.remind_again_at ? [{ ...t, reminder_at: t.remind_again_at }] : []))
+  for (const t of [...dueReminders(live, from, to), ...dueReminders(again, from, to)]) {
     const at = Date.parse(t.reminder_at!)
     groups.set(at, [...(groups.get(at) ?? []), t])
   }

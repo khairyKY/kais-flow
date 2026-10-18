@@ -1,5 +1,24 @@
 [
   {
+    "v": "v1.3.0",
+    "date": "2026-10-19",
+    "title": "Smart lists, snooze and your data to keep",
+    "highlights": [
+      "Smart lists: save a filter (where, labels, priority, when, length, on the calendar or not) and it sits in the sidebar with its count. Make one from the Tasks page or the + next to Plan",
+      "Snooze any task (Later today, This evening, Tomorrow, Next week, or pick a time): it leaves your lists without losing its date, then comes back at the top of Today. Z on the keyboard; a Snoozed tab shows what's waiting",
+      "Reminders can be snoozed too: In 10 min or In 1 hour, right on the notification",
+      "Export your data from Settings: everything as one file, your tasks as a spreadsheet, your calendar for any calendar app",
+      "Your AI assistant can snooze tasks and read your smart lists"
+    ],
+    "icons": [
+      "search",
+      "clock",
+      "mail",
+      "download"
+    ],
+    "art": "wisteria-p40"
+  },
+  {
     "v": "v1.2.3",
     "date": "2026-10-17",
     "title": "Duplicate anything, open from the calendar",

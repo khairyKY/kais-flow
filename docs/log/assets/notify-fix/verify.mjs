@@ -138,7 +138,7 @@ async function toTest(page) {
   await sleep(500)
   const toasts = (await calls(main, 'notify_local')).map((c) => c.args)
   const tyre = toasts.filter((t) => t.title?.startsWith('Call the tyre'))
-  check('Windows: a due reminder → notify_local, worded at the real clock, with its project', tyre.length === 1 && /^Call the tyre supplier · in [89] min$/.test(tyre[0].title) && tyre[0].body === '08:50 · Car' && JSON.stringify(tyre[0].actions) === JSON.stringify([['done', 'Done'], ['tomorrow', 'Tomorrow']]), JSON.stringify(tyre))
+  check('Windows: a due reminder → notify_local, worded at the real clock, with its project', tyre.length === 1 && /^Call the tyre supplier · in [89] min$/.test(tyre[0].title) && tyre[0].body === '08:50 · Car' && JSON.stringify(tyre[0].actions) === JSON.stringify([['done', 'Done'], ['snooze10', 'In 10 min'], ['snooze60', 'In 1 hour'], ['tomorrow', 'Tomorrow']]) /* snooze, 2026-10-17 */, JSON.stringify(tyre))
   check('Windows: a trashed task never reminds', !toasts.some((t) => /Trashed|2 reminders/.test(t.title)), JSON.stringify(toasts.map((t) => t.title)))
   check('Windows: the payload carries the task for Done/Tomorrow', JSON.parse(tyre[0]?.payload ?? '{}').taskIds?.[0] === id(TYRE), tyre[0]?.payload)
   await main.clock.runFor(61_000)

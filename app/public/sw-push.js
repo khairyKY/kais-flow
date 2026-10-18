@@ -8,10 +8,11 @@
 // `notificationclick`: no keys and no session here — every write goes through the app itself, so it
 // is the signed-in app's own outbox write (RLS, offline-safe, logged):
 //  - an open window gets the action as a message (features/notifications/actions.ts). Done,
-//    Tomorrow, Break and Keep going run there without bringing it forward; the rest focus it.
+//    Tomorrow, In 10 min / In 1 hour (a reminder's snooze), Break and Keep going run there without
+//    bringing it forward; the rest focus it.
 //  - with no window open, the app opens at the notice's page with ?kfAction=…&kfTasks=…, and runs
 //    the action once it has loaded.
-const KF_BACKGROUND = ['done', 'tomorrow', 'break', 'keep']
+const KF_BACKGROUND = ['done', 'tomorrow', 'snooze10', 'snooze60', 'break', 'keep']
 
 self.addEventListener('push', (event) => {
   let n = {}
@@ -35,7 +36,8 @@ async function kfShow(n) {
     tag: n.tag || undefined,
     renotify: !!n.tag && !n.silent,
     silent: !!n.silent,
-    actions: (n.actions || []).slice(0, 2),
+    // As many buttons as this browser shows (Chrome: 2 — a reminder's Done · In 10 min), the likeliest first.
+    actions: (n.actions || []).slice(0, (self.Notification && self.Notification.maxActions) || 2),
     data: { kind: n.kind || null, url: n.url || '/today', taskIds: n.taskIds || [] },
   })
 }

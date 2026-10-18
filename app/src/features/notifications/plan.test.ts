@@ -27,7 +27,17 @@ describe('localPlan — reminders', () => {
     expect(p.at.toISOString()).toBe(tyre.reminder_at)
     expect(p.notice.title).toBe('Call the tyre supplier · in 30 min')
     expect(p.notice.body).toBe('08:50 · Car')
-    expect(p.notice.actions.map((a) => a.action)).toEqual(['done', 'tomorrow'])
+    expect(p.notice.actions.map((a) => a.action)).toEqual(['done', 'snooze10', 'snooze60', 'tomorrow'])
+  })
+
+  // Snooze (0082): "In 10 min" set remind_again_at — one more reminder then, its own key (Windows shows
+  // each key once), the task's reminder_at untouched.
+  it('a snoozed reminder comes again at remind_again_at', () => {
+    const again = { ...tyre, reminder_at: cairo('07:20').toISOString(), remind_again_at: cairo('08:25').toISOString() }
+    const [p, ...rest] = localPlan(base({ tasks: [again], projects: [{ id: 'p1', name: 'Car' }] }))
+    expect(rest).toEqual([])
+    expect([p.key, p.at.toISOString(), p.notice.title]).toEqual([`t1@${again.remind_again_at}`, again.remind_again_at, 'Call the tyre supplier · in 25 min'])
+    expect(localPlan(base({ tasks: [{ ...again, status: 'done' }] }))).toEqual([])
   })
 
   it('a late sweep words it at the real clock', () => {

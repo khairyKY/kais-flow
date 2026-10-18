@@ -47,6 +47,8 @@ import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
 import { LabelManager } from '../tasks/LabelManager'
 import { ConfirmCard } from '../projects/ConfirmCard'
+import { runExport } from '../export/api'
+import type { ExportKind } from '../export/files'
 import './settings.css'
 
 // Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed onto real data. UI pass (Kai 2026-10-08,
@@ -735,10 +737,45 @@ function DataCard() {
       <Row label="Import" help="From Akiflow or a CSV file · re-importing never duplicates">
         <Link to="/settings/import" className={linkBtn} style={{ textDecoration: 'none' }}>Open importer</Link>
       </Row>
+      <ExportRow />
       <Row label="Trash" help={`${deletedItems.length === 0 ? 'Nothing resting' : `${deletedItems.length} item${deletedItems.length === 1 ? '' : 's'} resting`} · composts after 30 days`}>
         <Link to="/trash" className={linkBtn} style={{ textDecoration: 'none' }}>Open trash</Link>
       </Row>
     </SCard>
+  )
+}
+
+// Gap audit #1 (Kai: "build it"): take it all out — the whole account, tasks for a spreadsheet, the calendar.
+const EXPORTS: { kind: ExportKind; label: string }[] = [
+  { kind: 'json', label: 'Everything (.json)' },
+  { kind: 'csv', label: 'Tasks (.csv)' },
+  { kind: 'ics', label: 'Calendar (.ics)' },
+]
+function ExportRow() {
+  const push = useToastStore((s) => s.push)
+  const [busy, setBusy] = useState<ExportKind | null>(null)
+  const [progress, setProgress] = useState<string | null>(null)
+  async function run(kind: ExportKind) {
+    setBusy(kind)
+    setProgress('Exporting…')
+    try {
+      const { name, result } = await runExport(kind, (table, n) => setProgress(`Exporting… ${table.replace(/_/g, ' ')} ${n.toLocaleString('en-US')}`))
+      if (result !== 'cancelled') push({ message: `${result === 'shared' ? 'Shared' : 'Saved'} ${name}` })
+    } catch (e) {
+      push({ message: `Couldn’t export: ${(e as { message?: string } | null)?.message ?? String(e)}` })
+    } finally {
+      setBusy(null)
+      setProgress(null)
+    }
+  }
+  return (
+    <Row label="Export your data" help={<span role="status">{progress ?? 'A copy for you to keep · it can’t be imported back yet'}</span>}>
+      {EXPORTS.map((x) => (
+        <Button key={x.kind} variant="secondary" loading={busy === x.kind} disabled={busy !== null} onClick={() => void run(x.kind)}>
+          {x.label}
+        </Button>
+      ))}
+    </Row>
   )
 }
 

@@ -4,9 +4,10 @@ import code from '../../../public/sw-push.js?raw'
 // public/sw-push.js, run against a fake service-worker global: what a push shows, and where a
 // notification button goes (no keys in the worker — the app does the write).
 
-function worker(windows: { visibilityState: string; focused?: boolean; postMessage: ReturnType<typeof vi.fn>; focus: ReturnType<typeof vi.fn> }[]) {
+function worker(windows: { visibilityState: string; focused?: boolean; postMessage: ReturnType<typeof vi.fn>; focus: ReturnType<typeof vi.fn> }[], Notification?: { maxActions: number }) {
   const listeners: Record<string, (e: unknown) => void> = {}
   const self = {
+    Notification,
     location: { origin: 'https://kais-flow.example' },
     addEventListener: (type: string, fn: (e: unknown) => void) => (listeners[type] = fn),
     registration: { showNotification: vi.fn(async () => {}) },
@@ -48,6 +49,26 @@ describe('sw-push.js', () => {
       actions: reminder.actions,
       data: { kind: 'task_reminder', url: '/tasks?focus=t1', taskIds: ['t1'] },
     })
+  })
+
+  // Snooze (Kai 2026-10-17): a reminder carries Done · In 10 min · In 1 hour · Tomorrow; the worker shows as
+  // many as the browser does (Chrome: 2), the likeliest first.
+  it('shows as many buttons as the browser has room for', async () => {
+    const four = { ...reminder, actions: [{ action: 'done', title: 'Done' }, { action: 'snooze10', title: 'In 10 min' }, { action: 'snooze60', title: 'In 1 hour' }, { action: 'tomorrow', title: 'Tomorrow' }] }
+    const chrome = worker([])
+    await chrome.fire('push', { data: { json: () => four } })
+    expect(chrome.self.registration.showNotification).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ actions: four.actions.slice(0, 2) }))
+    const roomy = worker([], { maxActions: 3 })
+    await roomy.fire('push', { data: { json: () => four } })
+    expect(roomy.self.registration.showNotification).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ actions: four.actions.slice(0, 3) }))
+  })
+
+  it('In 10 min / In 1 hour with the app open: the window does it in the background', async () => {
+    const open = win()
+    const { fire } = worker([open])
+    for (const action of ['snooze10', 'snooze60']) await fire('notificationclick', clicked({ kind: 'task_reminder', url: '/tasks?focus=t1', taskIds: ['t1'] }, action))
+    expect(open.postMessage.mock.calls.map(([m]) => m.action)).toEqual(['snooze10', 'snooze60'])
+    expect(open.focus).not.toHaveBeenCalled()
   })
 
   it('a silent notice (digest, quiet hours) never renotifies', async () => {

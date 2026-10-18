@@ -17,6 +17,8 @@ export interface DayRow {
   deleted_at?: string | null
   due_at: string | null
   scheduled_start?: string | null
+  /** Snoozed (top3Rule.ts): off Today until this instant. */
+  snoozed_until?: string | null
 }
 
 export interface Top3Row extends DayRow {
@@ -36,6 +38,7 @@ const open = (t: DayRow) => t.status === 'todo' && !t.someday && !t.paused && !t
 /** Does this starred task still count as one of today's Top 3 (top3Rule.ts isTop3Today)? */
 export function isTop3Today(t: Top3Row, now: Date, zone: string): boolean {
   if (!t.top3 || !open(t)) return false
+  if (t.snoozed_until && Date.parse(t.snoozed_until) > now.getTime()) return false // snoozed: not today's
   const day = dayOf(t, zone)
   return day === null || day <= dateKey(now, zone)
 }

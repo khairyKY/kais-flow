@@ -13,6 +13,7 @@
 //   a date-time  puts a task on the calendar at that time; a date alone doesn't (calendar/replan.ts)
 //   completing   a repeat spawns its next occurrence — never a paused one (features/tasks/completion.ts planCompletion)
 //   paused       a paused series (Perennials ‖) rests until it's resumed: no list, no pick (grouping.ts)
+//   snoozed      snoozed_until ahead: off Today and every list, not a pick, until then (tasks/snooze.ts)
 //   task writes  carry a reminder's lead and let a moved pick go, as lib/outbox writeRow does (settle)
 //   repeats      an RRULE body on the user's wall clock (_shared/repeat.ts for tasks, _shared/series.ts
 //                for events — one row per series, never materialised)
@@ -37,6 +38,7 @@ export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
 import { expandSeries, type RuleBetween } from '../_shared/series.ts'
 import { rollAfter, ruleAfterThis, stepOf } from '../_shared/repeat.ts'
 import { occurrenceOn } from '../_shared/slots.ts'
+import { readFilter, smartMatch, type SmartFilter, type SmartTask } from '../_shared/smartList.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
 
@@ -44,6 +46,31 @@ import { occurrenceOn } from '../_shared/slots.ts'
 export function tomorrowAt9(now: Date, zone: string): string {
   return wallToInstant(addDays(dateKey(now, zone), 1), 9, 0, zone).toISOString()
 }
+
+/** Snooze's words (the app's SnoozeMenu): later today = 3 hours on; this evening = 18:00 (tomorrow's once
+ * past); tomorrow = 09:00; next week = the coming Monday 09:00 (on a Sunday, the Monday after — that one
+ * is tomorrow: lib/dateShortcuts daysUntilNextWeek). ISO, or null for any other word. */
+export function snoozePreset(word: string, now: Date, zone: string): string | null {
+  const today = dateKey(now, zone)
+  const at = (days: number, h: number) => wallToInstant(addDays(today, days), h, 0, zone)
+  switch (word.trim().toLowerCase()) {
+    case 'later today':
+      return new Date(now.getTime() + 3 * 3_600_000).toISOString()
+    case 'this evening':
+      return (at(0, 18) > now ? at(0, 18) : at(1, 18)).toISOString()
+    case 'tomorrow':
+      return tomorrowAt9(now, zone)
+    case 'next week': {
+      const weekday = new Date(`${today}T00:00:00Z`).getUTCDay()
+      const toMonday = (8 - weekday) % 7 || 7
+      return at(toMonday === 1 ? 8 : toMonday, 9).toISOString()
+    }
+  }
+  return null
+}
+
+/** Snoozed: off Today and every list until snoozed_until (features/tasks/snooze.ts isSnoozed). */
+export const snoozedNow = (t: { snoozed_until?: string | null }, now: Date): boolean => !!t.snoozed_until && Date.parse(t.snoozed_until) > now.getTime()
 
 /** A date argument: a whole day, or an instant. */
 export type When = { day: string } | { at: Date }
@@ -202,7 +229,7 @@ export const SCOPES: readonly Scope[] = ['journal', 'people']
  * a key without their scope). */
 export type Table =
   | 'tasks' | 'inbox_items' | 'calendar_events' | 'projects' | 'areas' | 'domains' | 'routines' | 'routine_completions' | 'time_entries'
-  | 'books' | 'notes' | 'quotes' | 'app_settings' | 'slipping' | 'journal_entries' | 'people' | 'interactions'
+  | 'books' | 'notes' | 'quotes' | 'app_settings' | 'slipping' | 'journal_entries' | 'people' | 'interactions' | 'smart_lists'
 export type Row = Record<string, unknown>
 
 export interface FindOptions {
@@ -504,6 +531,7 @@ export function taskOut(t: TaskRow, zone: string, full = false): Record<string, 
   if (t.someday) o.someday = true
   if (t.recurrence_rule) o.repeats = t.recurrence_rule
   if (t.paused) o.paused = true
+  if (snoozedNow(t, new Date())) o.snoozed_until = wallTime(t.snoozed_until!, zone) // ponytail: the real clock (taskOut has no ctx)
   if (t.slot_id) o.in_slot = t.slot_id
   if (t.completed_at) o.completed = wallTime(t.completed_at, zone)
   if (full) {
@@ -561,7 +589,7 @@ export function splitToday(rows: readonly TaskRow[], now: Date, zone: string): {
   const day = dateKey(now, zone)
   const out = { top3: todaysTop3(rows, now, zone), today: [] as TaskRow[], overdue: [] as TaskRow[] }
   for (const t of rows) {
-    if (t.status !== 'todo' || t.someday || t.paused || isTop3Today(t, now, zone)) continue
+    if (t.status !== 'todo' || t.someday || t.paused || isTop3Today(t, now, zone) || snoozedNow(t, now)) continue
     const scheduledToday = !!t.scheduled_start && dateKey(new Date(t.scheduled_start), zone) === day
     const dated = t.due_at ?? t.scheduled_start
     const on = dated ? dateKey(new Date(dated), zone) : null
@@ -1290,6 +1318,41 @@ async function editOne(a: Args, ctx: ToolContext, taskId: string): Promise<Row> 
   return { edited: taskOut(task, z, true), changed, timezone: z }
 }
 
+// ── smart lists (0081, _shared/smartList.ts) ─────────────────────────────────────────────────
+
+export interface SmartList {
+  id: string
+  name: string
+  icon: string | null
+  filter: SmartFilter
+}
+
+/** The user's live smart lists in sidebar order, each filter read as the app reads it. */
+export async function smartLists(ctx: ToolContext): Promise<SmartList[]> {
+  const rows = await ctx.store.find('smart_lists', { deleted_at: null }, { order: 'position' })
+  return rows.map((r) => ({ id: r.id as string, name: r.name as string, icon: (r.icon as string | null) ?? null, filter: readFilter(r.filter) }))
+}
+
+/** Where things live, for a list's "where": a task's domain as the app reads it (grouping.ts
+ * effectiveDomainId — its own, else its project's or area's) and any place's name. */
+export async function placeBook(ctx: ToolContext): Promise<{ domainOf: (t: SmartTask) => string | null; nameOf: (id: string) => string | undefined }> {
+  const projects = await ctx.store.projects()
+  const areas = await ctx.store.find('areas', { deleted_at: null })
+  const domains = await ctx.store.find('domains', { deleted_at: null })
+  const domainBy = new Map<string, string | null>([...projects, ...areas].map((p) => [p.id as string, (p.domain_id as string | null) ?? null]))
+  const names = new Map([...projects, ...areas, ...domains].map((p) => [p.id as string, p.name as string]))
+  return {
+    domainOf: (t) => t.domain_id ?? (t.project_id && domainBy.get(t.project_id)) ?? (t.area_id && domainBy.get(t.area_id)) ?? null,
+    nameOf: (id) => names.get(id),
+  }
+}
+
+/** The rows a list shows, of `rows` (already narrowed by status — so done ones pass here). */
+export async function inSmartList<T extends TaskRow>(ctx: ToolContext, rows: readonly T[], filter: SmartFilter): Promise<T[]> {
+  const domainOf = filter.places?.length ? (await placeBook(ctx)).domainOf : undefined
+  return rows.filter((t) => smartMatch(t, { ...filter, show_done: true }, { now: ctx.now, zone: ctx.zone, domainOf }))
+}
+
 export const TOOLS: readonly ToolDef[] = [
   {
     name: 'today',
@@ -1349,7 +1412,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'list_tasks',
     title: 'List tasks',
     description:
-      'List tasks with optional filters: status (open by default), a project or area (ids from the projects tool), a label, Someday, and a due-date range. Open tasks come soonest-due first; done tasks most recently finished first.',
+      "List tasks with optional filters: status (open by default), a project or area (ids from the projects tool), a label, Someday, a due-date range, and a smart list (the user's saved filters — the smart_lists tool). Open tasks come soonest-due first; done tasks most recently finished first.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -1360,6 +1423,7 @@ export const TOOLS: readonly ToolDef[] = [
         someday: { type: 'boolean', description: 'true: only Someday tasks; false: none of them.' },
         due_from: dateArg('Due on or after'),
         due_to: dateArg('Due on or before (a date includes that whole day)'),
+        smart_list: { type: 'string', description: "A smart list's id or name: only the tasks it shows (its conditions on the user's clock; done ones too when it shows them, unless status says otherwise). Combines with the filters above." },
         limit: { type: 'integer', minimum: 1, maximum: 100, description: 'At most this many (default 50).' },
       },
       additionalProperties: false,
@@ -1368,17 +1432,23 @@ export const TOOLS: readonly ToolDef[] = [
     async run(a, ctx) {
       const from = when(a, 'due_from', ctx.zone)
       const to = when(a, 'due_to', ctx.zone)
+      const ref = text(a, 'smart_list', 100)
+      const lists = ref ? await smartLists(ctx) : []
+      const smart = ref ? (lists.find((l) => l.id === ref.toLowerCase()) ?? lists.find((l) => l.name.toLowerCase() === ref.toLowerCase()) ?? bad(`No smart list "${ref}". The smart_lists tool lists them.`)) : null
+      const limit = whole(a, 'limit', 1, 100, 50)
       const rows = await ctx.store.listTasks({
-        status: choice(a, 'status', ['open', 'done', 'all'] as const, 'open'),
+        status: choice(a, 'status', ['open', 'done', 'all'] as const, smart?.filter.show_done ? 'all' : 'open'),
         projectId: uuid(a, 'project_id') ?? null,
         areaId: uuid(a, 'area_id') ?? null,
         label: text(a, 'label', 100) ?? null,
         someday: flag(a, 'someday') ?? null,
         dueFrom: from ? bound(from, 'from', ctx.zone).toISOString() : null,
         dueTo: to ? bound(to, 'to', ctx.zone).toISOString() : null,
-        limit: whole(a, 'limit', 1, 100, 50),
+        limit: smart ? 5000 : limit,
       })
-      return { count: rows.length, timezone: ctx.zone, tasks: rows.map((t) => taskOut(t, ctx.zone)) }
+      // ponytail: a list's conditions run here, over every row of that status (5000 at most) — SQL if that ever binds.
+      const shown = smart ? (await inSmartList(ctx, rows, smart.filter)).slice(0, limit) : rows
+      return { count: shown.length, timezone: ctx.zone, ...(smart ? { smart_list: smart.name } : {}), tasks: shown.map((t) => taskOut(t, ctx.zone)) }
     },
   },
   {
@@ -1598,6 +1668,54 @@ export const TOOLS: readonly ToolDef[] = [
         if (t.parent_task_id && picked.has(t.parent_task_id)) return { duplicated: null, note: `"${t.title}" is copied with its parent.`, timezone: ctx.zone }
         const { copy, subtasks } = await duplicateTask(ctx, t)
         return { duplicated: taskOut({ ...copy, project_name: t.project_name ?? null }, ctx.zone), ...(subtasks.length ? { subtasks: subtasks.map((s) => s.title) } : {}), timezone: ctx.zone }
+      })
+    },
+  },
+  {
+    name: 'snooze_task',
+    title: 'Snooze task',
+    description:
+      "Snooze open tasks (only when the user asks) — the app's Snooze: off Today, the task lists and the calendar rail until `until`, then back by itself. Its due date, calendar block and reminder stay; a Top 3 pick gives its place up. `until`: 'later today' (3 hours on), 'this evening' (18:00), 'tomorrow' (09:00), 'next week' (Monday 09:00), a date (09:00 that day) or a date-time on the user's clock — in the future. `ids` snoozes several.",
+    inputSchema: {
+      type: 'object',
+      properties: {
+        id: { ...id, description: 'The task id.' },
+        ids: ids('The task ids'),
+        until: { type: 'string', description: "When it comes back: 'later today', 'this evening', 'tomorrow', 'next week', YYYY-MM-DD, YYYY-MM-DDTHH:mm (the user's clock) or an ISO time with a zone." },
+      },
+      required: ['until'],
+      additionalProperties: false,
+    },
+    write: true,
+    async run(a, ctx) {
+      const word = text(a, 'until', 40, true)!
+      const given = readWhen(word, ctx.zone)
+      const w = snoozePreset(word, ctx.now, ctx.zone) ?? (given ? instantOf(given, ctx.zone).toISOString() : null)
+      if (!w) return bad(`"until" must be 'later today', 'this evening', 'tomorrow', 'next week', a date (YYYY-MM-DD), a local date-time (YYYY-MM-DDTHH:mm) or an ISO time with a zone.`)
+      if (Date.parse(w) <= ctx.now.getTime()) return bad(`"until" must be in the future (it's ${wallTime(ctx.now.toISOString(), ctx.zone)} now).`)
+      return eachId(a, async (taskId) => {
+        const t = await openTask(ctx, taskId)
+        const task = settle(t, { ...t, snoozed_until: w }, ctx.now, ctx.zone)
+        await ctx.store.updateTask(task)
+        await logIt(ctx, 'task.snoozed', 'task', t.id, { snoozed_until: w })
+        return { snoozed: taskOut(task, ctx.zone), back: wallTime(w, ctx.zone), ...(t.top3 && !task.top3 ? { note: "left today's Top 3" } : {}), timezone: ctx.zone }
+      })
+    },
+  },
+  {
+    name: 'unsnooze_task',
+    title: 'Unsnooze task',
+    description: "Bring snoozed tasks back now (the app's Unsnooze): on Today and the lists again, as their dates say. `ids` brings several.",
+    inputSchema: { type: 'object', properties: { id: { ...id, description: 'The task id.' }, ids: ids('The task ids') }, additionalProperties: false },
+    write: true,
+    async run(a, ctx) {
+      return eachId(a, async (taskId) => {
+        const t = await openTask(ctx, taskId)
+        if (!snoozedNow(t, ctx.now)) return bad(`"${t.title}" isn't snoozed.`)
+        const task = settle(t, { ...t, snoozed_until: null }, ctx.now, ctx.zone)
+        await ctx.store.updateTask(task)
+        await logIt(ctx, 'task.unsnoozed', 'task', t.id)
+        return { unsnoozed: taskOut(task, ctx.zone), timezone: ctx.zone }
       })
     },
   },

@@ -139,6 +139,8 @@ function describeTask(e: ActivityLogEntry, names: ActivityNames): ActivityLine {
       return line(named(name, (q) => `Restored ${q} from Trash`, 'Restored a task from Trash'), 'back on the list')
     case 'task.snoozed':
       return line(named(name, (q) => `Snoozed ${q}`, 'Snoozed a task'), 'back later')
+    case 'task.unsnoozed':
+      return line(named(name, (q) => `Unsnoozed ${q}`, 'Unsnoozed a task'), 'back on the list')
     case 'task.someday_set':
       return payload?.someday === false
         ? line(named(name, (q) => `Brought ${q} back from Someday`, 'Brought a task back from Someday'))
@@ -183,7 +185,8 @@ function describeTask(e: ActivityLogEntry, names: ActivityNames): ActivityLine {
         ...line(said?.title || named(name, (q) => `A reminder about ${q}`, 'A reminder'), said?.body ?? ''),
         category: 'notifications',
         icon: 'notice',
-        notice: { kind: 'task_reminder', actions: open ? reminderNotice([{ id, title: name }], {}, new Date(), appZone()).actions : [], taskIds: [id] },
+        // Done · Tomorrow: a reminder's In 10 min / In 1 hour (snooze) belong to the notification itself.
+        notice: { kind: 'task_reminder', actions: open ? reminderNotice([{ id, title: name }], {}, new Date(), appZone()).actions.filter((x) => !x.action.startsWith('snooze')) : [], taskIds: [id] },
       }
     }
     case 'task.skipped':

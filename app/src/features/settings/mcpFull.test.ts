@@ -555,3 +555,44 @@ describe('MCP full: Library, insights, journal and people', () => {
     expect(store.logs.map((l) => l.eventType)).toEqual(['people.created', 'people.interaction_logged', 'people.deleted'])
   })
 })
+
+// Smart lists (0081): the saved filters, read through the same rules the app uses (_shared/smartList.ts).
+describe('MCP full: smart lists', () => {
+  const L1 = tid(701), L2 = tid(702), L3 = tid(703)
+  const seeded = () => {
+    const store = fakeStore('Africa/Cairo', [
+      task(1, 'Fix header', { project_id: P1, duration_min: 20 }), // in Work through its project
+      task(2, 'Rewrite the site', { project_id: P1, duration_min: 90 }),
+      task(3, 'Own domain', { domain_id: D1, duration_min: 15 }),
+      task(4, 'Call mum', { labels: ['calls'] }),
+      task(5, 'Call the bank', { labels: ['calls'], status: 'done', completed_at: '2026-10-03T09:00:00Z' }),
+    ])
+    store.db.smart_lists = [
+      { id: L2, name: 'Calls', icon: null, filter: { labels: ['calls'], show_done: true }, position: 1, deleted_at: null },
+      { id: L1, name: 'Quick work', icon: '⚡', filter: { places: [D1], length: 30, junk: 1 }, position: 0, deleted_at: null },
+      { id: L3, name: 'Gone', icon: null, filter: {}, position: 2, deleted_at: '2026-10-02T09:00:00Z' },
+    ]
+    return store
+  }
+  const titles = (r: { data: Record<string, any> | null }) => r.data!.tasks.map((t: { title: string }) => t.title)
+
+  it('smart_lists: each live list in sidebar order, its conditions in words, its open count — for a read-only key too', async () => {
+    const r = await call(deps(seeded()), 'smart_lists', {}, READ_KEY)
+    expect(r.data!.smart_lists).toEqual([
+      { id: L1, name: 'Quick work', icon: '⚡', conditions: 'Work · ≤ 30 min', filter: { places: [D1], length: 30 }, open: 2 },
+      { id: L2, name: 'Calls', conditions: 'calls · done ones too', filter: { labels: ['calls'], show_done: true }, open: 1 },
+    ])
+    expect((await call(deps(fakeStore()), 'smart_lists', {})).data).toEqual({ smart_lists: [] })
+  })
+
+  it('list_tasks smart_list: by name or id; a list showing done tasks brings them unless status says open', async () => {
+    const store = seeded()
+    const quick = await call(deps(store), 'list_tasks', { smart_list: 'QUICK work' })
+    expect([titles(quick), quick.data!.smart_list]).toEqual([['Fix header', 'Own domain'], 'Quick work'])
+    expect(titles(await call(deps(store), 'list_tasks', { smart_list: L2 }))).toEqual(['Call mum', 'Call the bank'])
+    expect(titles(await call(deps(store), 'list_tasks', { smart_list: L2, status: 'open' }))).toEqual(['Call mum'])
+    expect(titles(await call(deps(store), 'list_tasks', { smart_list: 'Quick work', limit: 1 }))).toEqual(['Fix header'])
+    const gone = await call(deps(store), 'list_tasks', { smart_list: 'Gone' })
+    expect([gone.isError, gone.text]).toEqual([true, expect.stringContaining('No smart list "Gone"')])
+  })
+})

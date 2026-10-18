@@ -5,12 +5,15 @@ export const PAGE_SIZE = 1000
 
 export async function fetchAll<T>(
   page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
+  /** Called with the running total after each page (an export's "tasks 1,200"). */
+  onPage?: (rows: number) => void,
 ): Promise<T[]> {
   const rows: T[] = []
   for (let from = 0; ; from += PAGE_SIZE) {
     const { data, error } = await page(from, from + PAGE_SIZE - 1)
     if (error) throw error
     rows.push(...(data ?? []))
+    onPage?.(rows.length)
     if (!data || data.length < PAGE_SIZE) return rows
   }
 }

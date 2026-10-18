@@ -1,0 +1,372 @@
+[
+  {
+    "name": "s0 [day] All lists the open tasks; the one snoozed till Tuesday isn't among them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 [day] right-click → Snooze… opens the Snooze menu (Later today · This evening · Tomorrow · Next week · Someday · Pick a date…)",
+    "ok": true,
+    "detail": "Snooze until… | Later today | Sat 1:00 PM | This evening | Sat 6:00 PM | Tomorrow | Sun 9:00 AM | Next week | Mon 9:00 AM | Someday | Pick a date…"
+  },
+  {
+    "name": "s2 [day] Later today: \"Snoozed until 13:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s3 [day] written: snoozed_until three hours on, the due date kept",
+    "ok": true,
+    "detail": "2026-10-17T10:00:04.243Z / 2026-10-17T08:00:00.000Z"
+  },
+  {
+    "name": "s4 [day] gone from All",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 [day] a Snoozed tab, counting two",
+    "ok": true,
+    "detail": "Snoozed2"
+  },
+  {
+    "name": "s6 [day] Snoozed lists them, soonest back first",
+    "ok": true,
+    "detail": "f1000000-0000-4000-8000-000000000002,f1000000-0000-4000-8000-000000000005"
+  },
+  {
+    "name": "s7 [day] each says when it's back",
+    "ok": true,
+    "detail": "Plant the basil | Snoozed · back 13:00 | Unsnooze | ☆"
+  },
+  {
+    "name": "s8 [day] Unsnooze: \"Unsnoozed\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 [day] written: snoozed_until cleared",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "s10 [day] back on All",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s11 [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s0 [night] All lists the open tasks; the one snoozed till Tuesday isn't among them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 [night] right-click → Snooze… opens the Snooze menu (Later today · This evening · Tomorrow · Next week · Someday · Pick a date…)",
+    "ok": true,
+    "detail": "Snooze until… | Later today | Sat 1:00 PM | This evening | Sat 6:00 PM | Tomorrow | Sun 9:00 AM | Next week | Mon 9:00 AM | Someday | Pick a date…"
+  },
+  {
+    "name": "s2 [night] Later today: \"Snoozed until 13:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s3 [night] written: snoozed_until three hours on, the due date kept",
+    "ok": true,
+    "detail": "2026-10-17T10:00:04.460Z / 2026-10-17T08:00:00.000Z"
+  },
+  {
+    "name": "s4 [night] gone from All",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 [night] a Snoozed tab, counting two",
+    "ok": true,
+    "detail": "Snoozed2"
+  },
+  {
+    "name": "s6 [night] Snoozed lists them, soonest back first",
+    "ok": true,
+    "detail": "f1000000-0000-4000-8000-000000000002,f1000000-0000-4000-8000-000000000005"
+  },
+  {
+    "name": "s7 [night] each says when it's back",
+    "ok": true,
+    "detail": "Plant the basil | Snoozed · back 13:00 | Unsnooze | ☆"
+  },
+  {
+    "name": "s8 [night] Unsnooze: \"Unsnoozed\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 [night] written: snoozed_until cleared",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "s10 [night] back on All",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s11 [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u1 Tomorrow: \"Snoozed until Tomorrow · 09:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u2 written: until tomorrow 09:00; the goal let its Top 3 place go; the date and reminder kept",
+    "ok": true,
+    "detail": "{\"s\":\"2026-10-18T06:00:00.000Z\",\"top3\":false}"
+  },
+  {
+    "name": "u3 Undo: not snoozed, back in the Top 3 as the goal",
+    "ok": true,
+    "detail": "{\"s\":null,\"top3\":true,\"rank\":1}"
+  },
+  {
+    "name": "u4 …and on the list again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k0 j walks to a row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k1 Z opens the Snooze menu under the row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k2 Next week: \"Snoozed until Mon 19 Oct · 09:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k3 written",
+    "ok": true,
+    "detail": "2026-10-19T06:00:00.000Z"
+  },
+  {
+    "name": "k4 Ctrl+Z takes it back",
+    "ok": true,
+    "detail": "null"
+  },
+  {
+    "name": "k5 the ? cheatsheet lists Z · Snooze…",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k6 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 [desktop day] back from snooze: on Today, first after the Top 3",
+    "ok": true,
+    "detail": "Call the bank | Reply to Omar | Plant the basil | Water the ferns"
+  },
+  {
+    "name": "b2 [desktop day] …marked \"Back from snooze\"",
+    "ok": true,
+    "detail": "Reply to Omar | Back from snooze | ☆"
+  },
+  {
+    "name": "b3 [desktop day] the one snoozed till Tuesday isn't on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 [desktop day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 [desktop night] back from snooze: on Today, first after the Top 3",
+    "ok": true,
+    "detail": "Call the bank | Reply to Omar | Plant the basil | Water the ferns"
+  },
+  {
+    "name": "b2 [desktop night] …marked \"Back from snooze\"",
+    "ok": true,
+    "detail": "Reply to Omar | Back from snooze | ☆"
+  },
+  {
+    "name": "b3 [desktop night] the one snoozed till Tuesday isn't on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 [desktop night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 [phone day] back from snooze: on Today, first after the Top 3",
+    "ok": true,
+    "detail": "Call the bank | Reply to Omar"
+  },
+  {
+    "name": "b2 [phone day] …marked \"Back from snooze\"",
+    "ok": true,
+    "detail": "Reply to Omar | Back from snooze | Overdue 1d"
+  },
+  {
+    "name": "b3 [phone day] the one snoozed till Tuesday isn't on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 [phone day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 [phone night] back from snooze: on Today, first after the Top 3",
+    "ok": true,
+    "detail": "Call the bank | Reply to Omar"
+  },
+  {
+    "name": "b2 [phone night] …marked \"Back from snooze\"",
+    "ok": true,
+    "detail": "Reply to Omar | Back from snooze | Overdue 1d"
+  },
+  {
+    "name": "b3 [phone night] the one snoozed till Tuesday isn't on Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 [phone night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [day] phone: ⋯ → Snooze… opens the snooze sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 [day] Later today: \"Snoozed until 13:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 [day] written, and off the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4 [day] the Snoozed tab on the phone, with Unsnooze",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 [day] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 [night] phone: ⋯ → Snooze… opens the snooze sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 [night] Later today: \"Snoozed until 13:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 [night] written, and off the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4 [night] the Snoozed tab on the phone, with Unsnooze",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 [night] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 editor ⋯ → Snooze… → This evening: \"Snoozed until 18:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o2 written",
+    "ok": true,
+    "detail": "2026-10-17T15:00:00.000Z"
+  },
+  {
+    "name": "o3 …and now offers Unsnooze, saying when it is back",
+    "ok": true,
+    "detail": "Unsnooze\nback 18:00"
+  },
+  {
+    "name": "o4 Unsnooze from there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o6 phone sheet ⋯ → Snooze… → Tomorrow morning: \"Snoozed until Tomorrow · 09:00\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o7 written",
+    "ok": true,
+    "detail": "2026-10-18T06:00:00.000Z"
+  },
+  {
+    "name": "o8 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1 In 10 min: \"Reminding you again at 10:10\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n2 written: remind_again_at = 10:10; due date, reminder_at and Top 3 untouched",
+    "ok": true,
+    "detail": "{\"again\":\"2026-10-17T07:10:01.552Z\",\"rem\":\"2026-10-17T06:45:00.000Z\"}"
+  },
+  {
+    "name": "n3 the address drops the action (a reload won't run it twice)",
+    "ok": true,
+    "detail": "http://localhost:5293/tasks?focus=f1000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "n4 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

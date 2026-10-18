@@ -77,7 +77,7 @@ Anything that speaks remote MCP over Streamable HTTP with a custom header (Curso
 
 ## The tools
 
-53 tools: 47 for every key (the writers only for a Read & write key), plus 6 for the journal and people
+56 tools: 50 for every key (the writers only for a Read & write key), plus 6 for the journal and people
 that a key lists only when its owner switched them on. A tool that takes `id` also takes `ids` (a list,
 at most 50) where it says *bulk*: the same change on each, as the app's bulk bar does — a refusal for one
 (say, an already-done task) is reported in `failed` and the rest go ahead.
@@ -88,7 +88,7 @@ at most 50) where it says *bulk*: the same change on each, as the app's bulk bar
 |---|---|---|
 | `today` | Top 3 (the goal of the day first), open tasks due or scheduled today, overdue, today's events, and whether Plan my day / Shut down were done today (with last night's seeds) | |
 | `search` | Tasks, Inbox notes, projects, areas, events and the Library by meaning and keywords (+ journal / people for a key allowed them) | |
-| `list_tasks` | Tasks by status (open/done/all), project, area, label, Someday, due range | |
+| `list_tasks` | Tasks by status (open/done/all), project, area, label, Someday, due range, or a smart list (`smart_list`: its id or name — the list's own conditions, on the user's clock) | |
 | `get_task` | One task in full: notes, dates, block or Time slot, project / area / domain, labels, priority, repeat, reminder, link | |
 | `add_task` | A new task: title, due, duration, project **or** area, Top 3, notes, repeat, labels, priority (1 critical · 2 high · 3 medium), `remind_at`, Someday, `parent_id` (a subtask, one level). A due **time** also blocks the calendar | ✓ |
 | `edit_task` | *Bulk.* Any field: title, notes, duration, labels (the whole list), priority, repeat, `remind_at`, Someday, `paused`, `top3`, `goal` (the goal of the day), where it lives (`project_id` / `area_id` / `domain_id`), a Time slot (`slot_id` + `slot_occurrence`; null = out), its place in a list (`place_before` / `place_after`) | ✓ |
@@ -96,6 +96,7 @@ at most 50) where it says *bulk*: the same change on each, as the app's bulk bar
 | `complete_task` / `reopen_task` | *Bulk.* Tick off (a repeat's next copy comes, unless paused, its subtasks with it, open again) / open again. A parent's open subtasks: `subtasks: 'leave'` (the default) or `'complete'`; the answer says which | ✓ |
 | `move_to_tomorrow` | *Bulk.* Due tomorrow 09:00, the app's "Tomorrow" | ✓ |
 | `duplicate_task` | *Bulk.* The app's Duplicate: an open copy (same title, notes, date, place, labels, priority, duration, repeat, reminder), off the calendar and out of the Top 3. A parent's subtasks come along as open subtasks of the copy; a subtask's copy stays under its parent | ✓ |
+| `snooze_task` / `unsnooze_task` | *Bulk.* The app's Snooze: off Today, the lists and the calendar rail until `until` — `'later today'` (3 hours on), `'this evening'` (18:00), `'tomorrow'` (09:00), `'next week'` (Monday 09:00), a date (09:00) or a date-time — then back by itself; the date, block and reminder stay, a Top 3 pick lets its place go. / Back now. A snoozed task reads `snoozed_until` in `list_tasks` / `get_task` and isn't in `today` | ✓ |
 | `calendar` | Events between two days (at most 31): events, Time blocks with the tasks each occurrence holds, tasks' blocks; a series once per occurrence; `remind_min` | |
 | `add_event` | An event or Time block: timed or all-day, optionally repeating, optionally reminding (`remind_min`, timed only) | ✓ |
 | `edit_event` | Title, kind, time, repeat, reminder — of an event, a whole series, or one occurrence on its own. A Time block moved takes the tasks it holds along; made an event or all-day, it lets them go; a series' new repeat keeps each where its day still has one | ✓ |
@@ -111,7 +112,7 @@ at most 50) where it says *bulk*: the same change on each, as the app's bulk bar
 | `file_inbox_item` | Sort one: as a **task** (the AI's date applies when none is given; a time puts it on the calendar; its link rides along), an **event**, a Library **note**, into today's **journal** (journal key), or onto a **person** (people key) | ✓ |
 | `update_inbox_item` | *Bulk.* Dismiss, snooze until a day or time, unsnooze, restore a dismissed one | ✓ |
 
-### Projects, areas, domains, labels
+### Projects, areas, domains, labels, smart lists
 
 | Tool | Does | Write |
 |---|---|---|
@@ -124,6 +125,7 @@ at most 50) where it says *bulk*: the same change on each, as the app's bulk bar
 | `save_area` / `save_domain` | Create or change (a new domain takes the area's tasks along); `save_domain` with `merge_into` merges one domain into another (then to Trash) | ✓ |
 | `labels` | Every label, its count and colour | |
 | `update_label` | Create (with a colour), recolour, rename (onto an existing name: a merge), merge, delete — across every task | ✓ |
+| `smart_lists` | The saved filters in the sidebar's Plan group (0081): id, name, the conditions in plain words and as stored, the open count now. Made and changed in the app only | |
 
 ### Trash and settings
 

@@ -76,6 +76,13 @@ interface RunClock {
   reminderWindowStart: string
 }
 
+/** A task reminder due in the sweep's 10-minute window: its own (reminder_at, not sent yet), or a snoozed
+ * one's "In 10 min" / "In 1 hour" (0082 remind_again_at, cleared once sent). A PostgREST `or` filter. */
+function reminderDue(clock: RunClock): string {
+  const window = (col: string) => `${col}.lte.${clock.nowIso},${col}.gte.${clock.reminderWindowStart}`
+  return `and(reminder_sent.eq.false,${window('reminder_at')}),and(${window('remind_again_at')})`
+}
+
 function runClock(): RunClock {
   const now = Date.now()
   return {
@@ -167,22 +174,23 @@ async function buildPayload(
   if (kind === 'task_reminder') {
     const { data: due } = await supabase
       .from('tasks')
-      .select('id, title, due_at, project:projects(name)')
+      .select('id, title, due_at, reminder_at, project:projects(name)')
       .eq('user_id', userId)
       .eq('status', 'todo')
       .is('deleted_at', null) // a task in Trash never reminds
       .eq('paused', false) // nor a paused series (Perennials ‖) until it's resumed
-      .eq('reminder_sent', false)
-      .lte('reminder_at', clock.nowIso)
-      .gte('reminder_at', clock.reminderWindowStart)
+      .or(reminderDue(clock))
     if (!due || due.length === 0) return null
     const tasks = due.map((t) => {
       const project = t.project as { name?: string } | { name?: string }[] | null
-      return { id: t.id as string, title: t.title as string, due_at: t.due_at as string | null, project: (Array.isArray(project) ? project[0] : project)?.name ?? null }
+      return { id: t.id as string, title: t.title as string, due_at: t.due_at as string | null, reminder_at: t.reminder_at as string | null, project: (Array.isArray(project) ? project[0] : project)?.name ?? null }
     })
     for (const task of tasks) {
       const said = reminderNotice([task], NAMES, clock.now, zone)
-      await supabase.from('tasks').update({ reminder_sent: true }).eq('id', task.id).eq('user_id', userId)
+      // A snoozed reminder (0082 remind_again_at) is sent once: cleared here. `reminder_sent` only when the
+      // task's own reminder was the due one — a snooze before it mustn't swallow it.
+      const own = !!task.reminder_at && Date.parse(task.reminder_at) <= clock.now.getTime()
+      await supabase.from('tasks').update({ remind_again_at: null, ...(own ? { reminder_sent: true } : {}) }).eq('id', task.id).eq('user_id', userId)
       await supabase.from('activity_log').insert({
         id: crypto.randomUUID(),
         user_id: userId,
@@ -369,9 +377,7 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
       .eq('status', 'todo')
       .is('deleted_at', null) // a task in Trash never reminds
       .eq('paused', false) // nor a paused series (Perennials ‖) until it's resumed
-      .eq('reminder_sent', false)
-      .lte('reminder_at', clock.nowIso)
-      .gte('reminder_at', clock.reminderWindowStart)
+      .or(reminderDue(clock))
     for (const row of dueOwners ?? []) userIds.add(row.user_id as string)
   }
   // routine: only the push users who have a routine with a reminder time at all.

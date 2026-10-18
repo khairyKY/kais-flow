@@ -8,7 +8,7 @@
 //   app, above the tray. It hides on blur or Esc (`tray_hide`).
 // - Closing the main window hides it to the tray while the tray is shown (Settings → Notifications
 //   → Show in the system tray); otherwise it quits, as before.
-// - Toasts (12e) with up to two buttons (`notify_local`); a button runs `window.__kfNotifyAction`.
+// - Toasts (12e) with up to four buttons (`notify_local`; Windows allows five); a button runs `window.__kfNotifyAction`.
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -284,7 +284,8 @@ async fn autostart_set(app: AppHandle, on: bool) -> bool {
     manager.is_enabled().unwrap_or(false)
 }
 
-/// A Windows toast in the app's voice (12e): title, one body line, up to two buttons
+/// A Windows toast in the app's voice (12e): title, one body line, up to four buttons (a reminder:
+/// Done · In 10 min · In 1 hour · Tomorrow)
 /// (`actions` = [[id, label]…]). A button calls `window.__kfNotifyAction(id, payload)` in the main
 /// window; a click on the toast itself opens the app. `payload` is the web app's own JSON.
 #[tauri::command]
@@ -296,7 +297,7 @@ fn notify_local(app: AppHandle, title: String, body: String, actions: Vec<[Strin
         // own id; a dev build has neither.
         let id = if tauri::is_dev() { Toast::POWERSHELL_APP_ID.to_string() } else { store_app_id().unwrap_or_else(|| app.config().identifier.clone()) };
         let mut toast = Toast::new(&id).title(&title).text1(&body).sound(if silent { None } else { Some(Sound::Default) });
-        for [action, label] in actions.iter().take(2) {
+        for [action, label] in actions.iter().take(4) {
             toast = toast.add_button(label, action);
         }
         let handle = app.clone();
