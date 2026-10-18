@@ -1,4 +1,4 @@
-/* Copied from app/src/styles/tokens (colors, colors.dark, effects, typography) on 2026-10-04 —
+/* Copied from app/src/styles/tokens (colors, colors.dark, effects, typography, spacing) — B "Bound Journal" values 2026-10-17 —
    only the variables this site uses. The site doesn't import from app/; if the app's palette
    changes, re-copy these values by hand. Night = the app's "Night Garden" (data-theme="night"). */
 :root {
@@ -49,9 +49,19 @@
   --paper-parchment: #FBF6E9;
   --paper-sidebar: #EAE3D2;
   --scrim: rgba(42, 36, 32, 0.36);
-  --shadow-card: 0 1px 2px rgba(60, 52, 38, 0.14), 0 5px 12px rgba(60, 52, 38, 0.08);
-  --shadow-crisp: 0 1px 2px rgba(60, 52, 38, 0.12);
-  --shadow-cta: 0 2px 4px rgba(120, 60, 40, 0.3);
+  /* B: tools are flat (no card shadow); pages (goal, journal, notebook) keep a paper shadow */
+  --shadow-card: none;
+  --shadow-crisp: none;
+  --shadow-cta: none;
+  --shadow-page: 0 1px 2px rgba(60, 52, 38, 0.12), 0 10px 22px rgba(60, 52, 38, 0.12);
+  --shadow-shot: 0 1px 2px rgba(60, 52, 38, 0.10), 0 24px 56px rgba(60, 52, 38, 0.16);
+  --page-paper: #FBF5E6;
+  --page-line: #E5DBC1;
+  --wash-terra: rgba(181, 101, 74, 0.12);
+  --radius-card: 16px;
+  --radius-row: 12px;
+  --radius-block: 12px;
+  --radius-page: 6px;
   --shadow-panel: 0 1px 2px rgba(60, 52, 38, 0.14), 0 10px 26px rgba(60, 52, 38, 0.1);
   --shadow-popover: 0 2px 3px rgba(60, 52, 38, 0.12), 0 24px 60px rgba(60, 52, 38, 0.2);
   --shadow-sheet: 0 -1px 2px rgba(60, 52, 38, 0.10), 0 -12px 32px rgba(60, 52, 38, 0.16);
@@ -105,9 +115,11 @@
   --paper-parchment: #262233;
   --paper-sidebar: #1C1929;
   --scrim: rgba(12, 10, 20, 0.62);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 5px 12px rgba(0, 0, 0, 0.3);
-  --shadow-crisp: 0 1px 2px rgba(0, 0, 0, 0.35);
-  --shadow-cta: 0 2px 4px rgba(0, 0, 0, 0.5);
+  --shadow-page: 0 1px 2px rgba(0, 0, 0, 0.4), 0 5px 12px rgba(0, 0, 0, 0.3);
+  --shadow-shot: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 56px rgba(0, 0, 0, 0.45);
+  --page-paper: #2C2740;
+  --page-line: rgba(240, 235, 221, 0.14);
+  --wash-terra: rgba(226, 148, 115, 0.12);
   --shadow-panel: 0 1px 2px rgba(0, 0, 0, 0.4), 0 10px 26px rgba(0, 0, 0, 0.35);
   --shadow-popover: 0 2px 3px rgba(0, 0, 0, 0.4), 0 24px 60px rgba(0, 0, 0, 0.55);
   --shadow-sheet: 0 -1px 0 rgba(240, 235, 221, 0.08), 0 -12px 36px rgba(0, 0, 0, 0.5);

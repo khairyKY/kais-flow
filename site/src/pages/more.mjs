@@ -6,8 +6,9 @@ const INTEGRATIONS = [
   [1, 'code', 't-hyd', 'GitHub issues → Inbox', 'Issues assigned to you, and issues in repos you watch, arrive as Inbox items with a link back.'],
   [1, 'link', 't-terra', 'The capture link', 'One private address for Shortcuts, Tasker, a bookmarklet or curl.'],
   [1, 'share', 't-sage', 'Android share sheet', 'Share a page or some text from any app straight into Kai’s Flow.'],
-  [1, 'chat', 't-blossom', 'AI assistants (MCP)', 'Claude Desktop, Claude Code or any MCP client can read your days, and add to them only if you allow it. With your own key.'],
-  [1, 'android', 't-sage', 'Android widgets', 'See your day and tick things off from the home screen; capture is one tap away.'],
+  [1, 'chat', 't-blossom', 'AI assistants (MCP)', 'Claude Desktop, Claude Code or any MCP client can do what you can in the app, with your own key. Your journal and people only if you switch them on.'],
+  [1, 'calendar', 't-lav', 'Google Calendar', 'Your chosen Google calendars show on yours as busy. Your time blocks, scheduled tasks and events can show in your main Google calendar as private busy time.'],
+  [1, 'android', 't-sage', 'Android widgets', '34 widgets: see your day and tick things off from the home screen; capture is one tap away.'],
   [1, 'A', 't-lav', 'Akiflow', 'Tasks, projects and their dates, from a JSON dump of your account.'],
   [1, 'T', 't-terra', 'Todoist', 'Projects, sections, labels and recurring tasks, from its CSV export.'],
   [1, 'TT', 't-hyd', 'TickTick', 'Lists, dates, tags and checklists, from its backup file.'],
@@ -15,20 +16,19 @@ const INTEGRATIONS = [
   [1, 'Md', 't-lav', 'Obsidian / Markdown', 'Every “- [ ]” in a folder of notes becomes a task.'],
   [1, 'book', 't-butter', 'Kindle highlights', 'Your highlights land in the Library, by book.'],
   [1, 'G', 't-butter', 'Goodreads', 'Your shelves come in as books in the Library.'],
-  [0, 'calendar', 't-lav', 'Google Calendar · two-way', 'Events in, time blocks out.'],
   [0, 'mail', 't-hyd', 'Email → Inbox', 'Forward an email to your own address and it becomes a task.'],
 ]
 const mono = (m) => (m.length <= 2 ? `<span aria-hidden="true">${m}</span>` : icon(m))
 const integrations = {
   path: '/integrations/',
   title: 'Integrations & imports',
-  description: 'Move in from Akiflow, Todoist, TickTick, Notion, Obsidian, Kindle and Goodreads, capture from GitHub, the Android share sheet, widgets or your own capture link, and connect an AI assistant over MCP.',
+  description: 'Move in from Akiflow, Todoist, TickTick, Notion, Obsidian, Kindle and Goodreads, capture from GitHub, the Android share sheet, widgets or your own capture link, see your Google calendars, and connect an AI assistant over MCP.',
   og: 'integrations',
   body: `<section class="sec first"><div class="wrap">
   ${head2({ eyebrow: 'Integrations & imports', title: 'Bring what you have', lead: 'Move in from your old app in one go, and keep capturing from the tools you already use. Third-party names are theirs; we just read your exports.', h: 'h1' })}
   <div class="counts"><span class="chip live"><i aria-hidden="true"></i>Live · ${INTEGRATIONS.filter((i) => i[0]).length}</span><span class="chip soon">Coming · ${INTEGRATIONS.filter((i) => !i[0]).length}</span></div>
   <ul class="igrid" role="list">${INTEGRATIONS.map(([isLive, m, tone, name, line]) => `<li class="icell${isLive ? '' : ' coming'}"><div class="icell-top"><span class="dot ${tone}">${mono(m)}</span>${isLive ? live() : coming()}</div><h2 class="h3">${name}</h2><p>${line}</p></li>`).join('')}${'<li class="fill" aria-hidden="true"></li>'.repeat((4 - (INTEGRATIONS.length % 4)) % 4)}</ul>
-  <p style="margin-top:28px" class="btns"><a class="more" href="/guides/import/">How to import your old app →</a><a class="more" href="/guides/capture-from-anywhere/">Capture from anywhere →</a><a class="more" href="/guides/connect-an-ai-assistant/">Connect an AI assistant →</a></p>
+  <p style="margin-top:28px" class="btns"><a class="more" href="/guides/import/">How to import your old app</a><a class="more" href="/guides/capture-from-anywhere/">Capture from anywhere</a><a class="more" href="/guides/connect-an-ai-assistant/">Connect an AI assistant</a></p>
 </div></section>`,
 }
 
@@ -37,10 +37,10 @@ const COLS = ['Kai’s Flow', 'Akiflow', 'Todoist', 'Notion', 'A paper notebook'
 const ROWS = [
   ['Best at', 'A calm day, start to finish', 'Pulling many inboxes into one timeline', 'Fast, dependable task lists', 'Docs and databases for anything', 'Thinking slowly, by hand'],
   ['Price', 'Free', 'Paid subscription', 'Free plan + paid', 'Free plan + paid', 'A few euros'],
-  ['Calendar + time blocks', 'Built in', 'Built in', 'Calendar views', 'Through Notion Calendar', 'If you draw it'],
+  ['Calendar + time blocks', 'Built in, with your Google calendars', 'Built in', 'Calendar views', 'Through Notion Calendar', 'If you draw it'],
   ['Morning / evening rituals', 'Built in', 'Built in', '—', 'Build your own', 'Your own habit'],
   ['Journal', 'Built in', '—', '—', 'Build your own', 'That’s the point'],
-  ['Paper loop', 'Photo → tasks now · the loop is coming', '—', '—', '—', 'It is paper'],
+  ['Paper loop', 'Built in: photo → tasks, ticks → done', '—', '—', '—', 'It is paper'],
   ['iPhone app', 'Not yet · web works', 'Yes', 'Yes', 'Yes', 'Fits a pocket'],
   ['Teams', 'No', 'Some', 'Yes', 'Yes', 'Pass it round'],
 ]
@@ -67,7 +67,7 @@ const compare = {
   <div>${head2({ eyebrow: 'Not yet', title: 'What it doesn’t do' })}<ul class="ticks no">
     <li>No iPhone app. The web app works in Safari.</li>
     <li>No teams, sharing or assigning.</li>
-    <li>No Google Calendar sync yet — it’s next.</li>
+    <li>No smart lists yet — they’re next.</li>
     <li>No one-tap export yet. Ask, and we’ll send you your data.</li></ul></div>
 </div></section>`,
 }
@@ -99,7 +99,7 @@ const whatsNew = {
 <section class="sec"><div class="wrap">
   ${head2({ eyebrow: 'Before that', title: 'The two releases before' })}
   <div class="wn-prev">${BEFORE.slice(0, 2).map(older).join('')}</div>
-  <p class="btns" style="margin-top:36px"><a class="more" href="/field-notes/">All field notes →</a><a class="more" href="${REPO}/releases">GitHub releases →</a></p>
+  <p class="btns" style="margin-top:36px"><a class="more" href="/field-notes/">All field notes</a><a class="more" href="${REPO}/releases">GitHub releases</a></p>
 </div></section>`,
 }
 
@@ -142,7 +142,7 @@ const growing = {
     ${bed('next', 'cherry-bud', 'A cherry bud about to open', 'Next', 'Budding · after that', ROADMAP.next)}
     ${bed('later', 'clover-seedling', 'A small seedling', 'Later', 'Seeds · one day', ROADMAP.later)}
   </div>
-  <p style="margin-top:36px"><a class="more" href="/field-notes/">What already grew: Field notes →</a></p>
+  <p style="margin-top:36px"><a class="more" href="/field-notes/">What already grew: Field notes</a></p>
 </div></section>`,
 }
 

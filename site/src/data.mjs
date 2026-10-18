@@ -41,7 +41,7 @@ export const apkUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag
 // Next / Later = the open items in docs/ROADMAP.md. Shipped things leave for Field notes.
 export const ROADMAP = {
   now: ['Fixes from living with v1.3'],
-  next: ['Google Calendar sync', 'Smart lists'],
+  next: ['Being weighed: start dates, attachments on tasks, a quick-add key on Windows'],
   later: ['Email → Inbox', 'More themes', 'An iPhone app <i>(if it ever stops costing money)</i>'],
 }
 
