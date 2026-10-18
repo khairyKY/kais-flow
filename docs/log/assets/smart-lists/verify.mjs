@@ -240,6 +240,7 @@ if (want('e')) {
   await settle(state)
   check('e8 Undo brings it back, where it was, and the open page applies it again',
     posts(state, 'smart_lists', w0).at(-1)?.deleted_at === null && JSON.stringify(await sideNames(page)) === JSON.stringify(['Errands 2', 'Quick work 3']) && (await h1(page)) === 'Quick work')
+  await sleep(1500) // the cache persister writes ~1s behind (lib/queryClient); a sub-second reload reads the copy before the Undo
   await page.reload({ waitUntil: 'networkidle' })
   await sideRow(page, 'Quick work').waitFor({ timeout: 10000 }).catch(() => {}) // the rows are their own chunk
   await sleep(500)

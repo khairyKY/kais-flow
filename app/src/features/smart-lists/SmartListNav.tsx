@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState, type CSSProperties } from 'react'
+import { Suspense, lazy, useEffect, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { ContextMenu } from '../../components/ContextMenu'
 import { EmojiText } from '../../components/EmojiText'
@@ -44,6 +44,12 @@ export function SmartListNav({ activeList }: { activeList: string | null }) {
   const [menu, setMenu] = useState<{ id: string; at: { x: number; y: number } } | null>(null)
   const [renaming, setRenaming] = useState<string | null>(null)
   const [editing, setEditing] = useState<SmartListRow | 'new' | null>(null)
+  // The sidebar's Plan header has the + (AppLayout): it opens the editor here.
+  useEffect(() => {
+    const open = () => setEditing('new')
+    window.addEventListener('kf-new-smart-list', open)
+    return () => window.removeEventListener('kf-new-smart-list', open)
+  }, [])
   const now = new Date()
   const current = menu && lists.find((l) => l.id === menu.id)
 
@@ -93,15 +99,6 @@ export function SmartListNav({ activeList }: { activeList: string | null }) {
           </div>
         )
       })}
-      <button
-        type="button"
-        className="kf-side-row"
-        onClick={() => setEditing('new')}
-        style={{ ...rowStyle(false), width: '100%', background: 'none', cursor: 'pointer', font: 'inherit', textAlign: 'left' }}
-      >
-        <span style={{ width: 16, flex: 'none', textAlign: 'center', color: 'var(--ink-faint)' }}>＋</span>
-        <span style={{ ...LABEL(false), color: 'var(--ink-faint)' }}>New smart list</span>
-      </button>
       {current && menu && (
         <ContextMenu
           position={menu.at}

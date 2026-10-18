@@ -427,7 +427,7 @@ for (const theme of ['day', 'night']) {
     await shot(page, name)
     const rows = (await menu.locator('.kf-as-row').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim())
     // plan-replan (2026-10-07): Make goal of the day leads the sheet's ⋯ (the task isn't the goal).
-    check(`${name} ⋯ = Make goal of the day · Duplicate · Copy link · Delete (last, terra, Undo 6s)`, JSON.stringify(rows) === JSON.stringify(['Make goal of the day', 'Duplicate', 'Copy link', 'Delete Undo 6s']) && (await menu.locator('.kf-as-row.is-destructive').innerText()).startsWith('Delete'), JSON.stringify(rows))
+    check(`${name} ⋯ = Make goal of the day · Snooze… · Duplicate · Copy link · Delete (last, terra, Undo 6s)`, JSON.stringify(rows) === JSON.stringify(['Make goal of the day', 'Snooze…', 'Duplicate', 'Copy link', 'Delete Undo 6s']) && (await menu.locator('.kf-as-row.is-destructive').innerText()).startsWith('Delete'), JSON.stringify(rows))
     check(`${name} header: title + project · 30m · due`, (await menu.innerText()).includes('Shaheen Tasks · 30m · Today · 15:00'))
     const w0 = state.writes.length
     await tap(cdp, menu.locator('.kf-as-row', { hasText: 'Duplicate' }))

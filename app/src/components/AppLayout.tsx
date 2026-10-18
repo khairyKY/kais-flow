@@ -181,6 +181,7 @@ function PlanDrawer() {
       className="app-smartlist"
       style={{ padding: '0 14px 12px', margin: '0 0 10px', borderBottom: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', gap: 1 }}
     >
+      <div style={{ position: 'relative' }}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -212,6 +213,21 @@ function PlanDrawer() {
           <span title={`${todayCount} open on Today`} style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{todayCount}</span>
         )}
       </button>
+      {/* New smart list (0081): a + beside the open header, not a row of its own — a row pushed Projects
+          under the fold on an 800px window (today-shell). features/smart-lists/SmartListNav listens. */}
+      {open && (
+        <button
+          type="button"
+          aria-label="New smart list"
+          title="New smart list"
+          className="kf-press"
+          onClick={() => window.dispatchEvent(new Event('kf-new-smart-list'))}
+          style={{ position: 'absolute', right: 6, top: 'calc(50% - 1.5px)', transform: 'translateY(-50%)', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-input)', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer', font: 'inherit' }}
+        >
+          ＋
+        </button>
+      )}
+      </div>
       {open && (
         <>
           {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length, undefined, list === 'today' ? TODAY_SPOT : null))}

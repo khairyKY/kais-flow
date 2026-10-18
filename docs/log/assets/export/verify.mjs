@@ -70,7 +70,7 @@ const ROWS = {
   push_subscriptions: [{ id: id(5, 'f'), user_id: UID, endpoint: 'https://push.example/SECRET_ENDPOINT', keys: { auth: 'SECRET_PUSH_AUTH' }, device_label: 'x', created_at: T }],
 }
 const SECRETS = ['SECRET_MCP_HASH', 'SECRET_CAPTURE_HASH', 'SECRET_ENDPOINT', 'SECRET_PUSH_AUTH']
-const TABLES = ['app_settings', 'domains', 'areas', 'projects', 'tasks', 'inbox_items', 'calendar_events', 'routines', 'routine_completions', 'time_entries', 'journal_entries', 'people', 'interactions', 'books', 'notes', 'quotes', 'commentary', 'captures', 'resurfaced_log', 'activity_log']
+const TABLES = ['app_settings', 'domains', 'areas', 'projects', 'tasks', 'inbox_items', 'calendar_events', 'routines', 'routine_completions', 'time_entries', 'journal_entries', 'people', 'interactions', 'books', 'notes', 'quotes', 'commentary', 'captures', 'resurfaced_log', 'activity_log', 'smart_lists']
 const DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(new Date())
 const NAMES = { json: `kais-flow-${DAY}.json`, csv: `kais-flow-tasks-${DAY}.csv`, ics: `kais-flow-calendar-${DAY}.ics` }
 const LABELS = { json: 'Everything (.json)', csv: 'Tasks (.csv)', ics: 'Calendar (.ics)' }
