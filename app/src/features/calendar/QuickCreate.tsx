@@ -256,13 +256,20 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     if (repeat) setEventRepeat(made, repeat)
   }
 
+  // Kai 2026-10-21 (an "Untitled task" he never meant): a task waits for its title — Enter or Create on an
+  // empty one does nothing and the draft stays (the phone sheet's own rule). An event or a block keeps its
+  // stand-in name; the block menu then reads it as untitled (Discard).
+  const taskTitle = parsed?.title.trim() || title.trim()
+  const ready = kind !== 'task' || !!taskTitle
+
   function submit(from?: HTMLElement) {
+    if (!ready) return
     seedPlant(from, motion) // Motion 5f — every calendar create lands with the drop+puff
     if (kind === 'task') {
       const dueAt = date ? cairoToIso(date, startTime || '09:00') : null
       const task = createTask({
         // "the title types it, the fields catch it": what the parse caught leaves the title.
-        title: parsed?.title.trim() || title.trim() || 'Untitled task',
+        title: taskTitle,
         // The title's `// notes` and link leave it (the shared parse, P7e A6/A19): they land here, not nowhere.
         notes: notes.trim() || parsed?.notes || null,
         ...(parsed?.url ? { externalRef: linkRef(parsed.url) } : null),
@@ -667,7 +674,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         ) : (
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>esc</span>
         )}
-        <Button onClick={(e) => submit(e.currentTarget)}>{page ? `${KIND_META[kind].cta} ⏎` : 'Create ⏎'}</Button>
+        <Button disabled={!ready} onClick={(e) => submit(e.currentTarget)}>{page ? `${KIND_META[kind].cta} ⏎` : 'Create ⏎'}</Button>
       </div>
     </div>
   )

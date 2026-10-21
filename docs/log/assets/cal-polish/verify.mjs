@@ -551,13 +551,15 @@ if (want('e1')) {
   const w0 = state.writes.length
   // Ctrl-click (a task there) and the rail's "Quick add task…": Enter / Create with no title.
   const p = await slotPoint(page, '15:00')
-  await page.mouse.click(p.x, p.y + 4, { modifiers: ['Control'] })
+  await page.keyboard.down('Control')
+  await page.mouse.click(p.x, p.y + 4)
+  await page.keyboard.up('Control')
   await sleep(500)
   const qc = page.locator('.kf-quickcreate')
-  check('e1 Ctrl-click opens quick create', (await qc.count()) === 1)
+  check('e1 Ctrl-click opens quick create on Task', (await qc.count()) === 1 && (await qc.locator('button[aria-pressed="true"], [role="radio"][aria-checked="true"]').first().innerText().catch(() => '')).trim() === 'Task', await qc.locator('button[aria-pressed="true"], [role="radio"][aria-checked="true"]').first().innerText().catch(() => ''))
   await qc.getByLabel('Title').press('Enter')
   await sleep(300)
-  check('e1 Enter with no title: nothing made, the popover stays', (await qc.count()) === 1 && posts(state, 'tasks', w0).length === 0)
+  check('e1 Enter with no title: nothing made, the popover stays', (await qc.count()) === 1 && posts(state, 'tasks', w0).length === 0, JSON.stringify(state.writes.slice(w0).map((w) => w.table + ':' + (w.body?.title ?? ''))))
   check('e1 …Create is disabled until there is a title', await qc.getByRole('button', { name: /^Create/ }).isDisabled())
   await page.keyboard.press('Escape')
   await sleep(300)
