@@ -7,7 +7,7 @@ import type { IconName } from '../../components/icons/kf'
 import { Button } from '../../components/kit'
 import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
-import { SheetTitle, TimePanel } from '../../components/TimePicker'
+import { LengthChips, SheetTitle, TimePanel } from '../../components/TimePicker'
 import { uiZoom } from '../../lib/uiScale'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
 import { useDomains } from '../domains/api'
@@ -353,7 +353,16 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
       onClose={onClose}
       width={BLOCK_MENU_WIDTH}
       label="Block details"
-      header={<TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />}
+      header={
+        <>
+          <TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />
+          {/* Kai 2026-10-21: the length in one tap — the block resizes from its start (a task's estimate
+              follows, calendar/api resizeEvent), with Undo; Time ▸ keeps Custom…. */}
+          {!synced && !event.all_day && (
+            <LengthChips value={len} onPick={(m) => { if (m !== len) retimeEventWithUndo(event, span, { ...span, end: span.start + m }) }} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, max-content)', gap: 5, padding: '0 9px 8px' }} />
+          )}
+        </>
+      }
       items={spec.map(item)}
     />
   )

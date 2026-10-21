@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { cairoDateKey } from '../lib/dateShortcuts'
 import { tick } from '../lib/haptics'
 import { queryClient } from '../lib/queryClient'
@@ -21,6 +21,21 @@ export function SheetTitle({ title, meta }: { title: ReactNode; meta?: ReactNode
       {title}
       {meta != null && <div className="kf-pk-meta">{meta}</div>}
     </>
+  )
+}
+
+/** The one-tap length row — 15m · 30m · 45m · 1h · 1h30 · 2h, the current one ringed. The time panel
+ * draws it, and (Kai 2026-10-21, Akiflow / Google Calendar's quick create) the calendar's small popups
+ * and sheets: quick create, the block popover, the phone event and task sheets. */
+export function LengthChips({ value, onPick, style }: { value: number | null | undefined; onPick: (min: number) => void; style?: CSSProperties }) {
+  return (
+    <div className="kf-pk-durs" role="group" aria-label="Length" style={style}>
+      {DURATIONS.map((m) => (
+        <Chip key={m} tone="duration" icon={false} selected={value === m} onClick={() => onPick(m)}>
+          {durationLabel(m)}
+        </Chip>
+      ))}
+    </div>
   )
 }
 
@@ -85,13 +100,7 @@ export function TimePanel({ day, value, onValue, duration, onDuration, events }:
       {onDuration && (
         <>
           <div className="kf-pk-sl"><SectionLabel>Duration</SectionLabel></div>
-          <div className="kf-pk-durs">
-            {DURATIONS.map((m) => (
-              <Chip key={m} tone="duration" icon={false} selected={duration === m} onClick={() => { tick(); onDuration(m) }}>
-                {durationLabel(m)}
-              </Chip>
-            ))}
-          </div>
+          <LengthChips value={duration} onPick={(m) => { tick(); onDuration(m) }} />
         </>
       )}
     </div>

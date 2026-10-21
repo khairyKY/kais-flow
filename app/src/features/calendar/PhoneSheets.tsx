@@ -9,7 +9,7 @@ import type { IconName } from '../../components/icons/kf'
 import { Button, Chip, SectionLabel, Star } from '../../components/kit'
 import { DURATIONS, dayHint, durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
-import { SheetTitle, TimePicker } from '../../components/TimePicker'
+import { LengthChips, SheetTitle, TimePicker } from '../../components/TimePicker'
 import { cairoDateKey, tomorrowHint } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { useAreas } from '../areas/api'
@@ -454,6 +454,22 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                   }}
                 />
               </div>}
+              {/* Kai 2026-10-21: the length in one tap, from the start — as the Time sheet's chips do. */}
+              {!synced && !event.all_day && (
+                <LengthChips
+                  value={len}
+                  style={{ minHeight: 0, padding: '4px 0 8px' }}
+                  onPick={(m) => {
+                    if (m === len) return
+                    const to = { ...span, end: span.start + m }
+                    if (event.seriesId) {
+                      const ref = retimeEventWithUndo(event, span, to)
+                      if (ref) onRebind?.(ref)
+                    } else onMove(event, span, to, 'bottom')
+                    saved()
+                  }}
+                />
+              )}
               <div className="pc-bs-rows">
                 <style>{ACTION_ROW_CSS}</style>
                 {(synced ? spec : spec.slice(0, -1)).map((e) => (

@@ -5,6 +5,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
 import { BackLink, Button, Toggle } from '../../components/kit'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
+import { LengthChips } from '../../components/TimePicker'
 import { createEvent, scheduleTask, setEventRepeat, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { cairoDateKey } from '../../lib/dateShortcuts'
@@ -391,6 +392,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
           </>
         )}
       </div>
+      {/* Kai 2026-10-21: the length in one tap — it sets the end (and a task's estimate). */}
+      {!allDay && <LengthChips value={durationMin} onPick={(m) => { setEndTime(plus(startTime, m)); markDateTouched() }} style={{ minHeight: 0, marginTop: 8 }} />}
     </div>
   )
 

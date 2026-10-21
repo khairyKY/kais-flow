@@ -284,6 +284,7 @@ if (want('d5')) {
     check(`d5-${theme} 15m → the end reads 15:15, 15m picked`, times.includes('3:15 PM') && (await lenChip(page, '15m').getAttribute('aria-pressed')) === 'true', JSON.stringify(times))
     await shot(page, `d5-quickcreate-${theme}`)
     if (theme === 'day') {
+      await qc.locator('button', { hasText: /^Task$/ }).first().click()
       await qc.getByLabel('Title').fill('Call mum')
       const w0 = state.writes.length
       await qc.getByLabel('Title').press('Enter')
