@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
-import { Draggable } from '@fullcalendar/interaction'
 import { ContextMenu } from '../../components/ContextMenu'
 import { EmojiText } from '../../components/EmojiText'
 import { Checkbox, Segmented } from '../../components/kit'
@@ -13,7 +12,9 @@ import { deleteEventWithUndo } from './api'
 import { dragGuard } from './dragGuard'
 import { PlanButton } from './PlanButton'
 import { useCardOpen } from './cardOpen'
-import { cardDragData, dueWord, footerLine, groupPlan, minutesLabel, PLAN_SORTS, planningTasks, sortPlan, totalLine, type PlanSort, type PlanTab } from './planningMode'
+import { cardDraggable } from './cardDrag'
+import { durationLabel } from '../../components/pickerMath'
+import { dueWord, footerLine, groupPlan, minutesLabel, PLAN_SORTS, planningTasks, sortPlan, totalLine, type PlanSort, type PlanTab } from './planningMode'
 import { railMinutes, type RailTask } from './replan'
 import './planning.css'
 
@@ -72,6 +73,7 @@ function PlanCard({ r, compact, dot, projects, domains, areas, now, onPlan }: {
       data-task-id={t.id}
       data-title={t.title}
       data-duration={railMinutes(r)}
+      data-length={durationLabel(railMinutes(r))}
       onContextMenu={grammar.onContextMenu}
     >
       {/* Tick it off without planting it (the rail card's guard: FullCalendar never sees the press). */}
@@ -142,7 +144,7 @@ export function PlanningPanel({ tasks, events, loading, projects, domains, areas
   const listRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     if (!listRef.current) return
-    const d = new Draggable(listRef.current, { itemSelector: '.unscheduled-task', eventData: cardDragData })
+    const d = cardDraggable(listRef.current)
     return () => d.destroy()
   }, [])
 

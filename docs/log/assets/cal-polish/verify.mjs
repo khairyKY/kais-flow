@@ -75,14 +75,16 @@ const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
 async function open(route = '/calendar', o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([t, sess, scale]) => {
+  await ctx.addInitScript(([t, sess, scale, uid, now]) => {
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', '0')
     localStorage.setItem('kf.calPlanning', '0')
     localStorage.setItem('kf.calRailSections', JSON.stringify({ overdue: false, today: false, inbox: false, lists: true }))
     if (scale) localStorage.setItem('kf_ui_scale', scale)
-  }, [o.theme ?? 'day', JSON.stringify(session), o.scale ? String(o.scale) : null])
+    // "Updated to vX · What's new" sits over the day tray: this device has seen every version.
+    localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: now }))
+  }, [o.theme ?? 'day', JSON.stringify(session), o.scale ? String(o.scale) : null, UID, cairo(NOW).getTime()])
   const state = { rows: tables(), writes: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -474,6 +476,7 @@ const ghostInfo = (page, srcSel) =>
       srcBorder: src && getComputedStyle(src).borderTopStyle,
       srcTransform: src && getComputedStyle(src).transform,
       placeholder: !!document.querySelector('.fc .fc-event-mirror'),
+      scale: Number(getComputedStyle(document.documentElement).getPropertyValue('--kf-ui-scale')) || 1,
     }
   }, srcSel)
 const inside = (p, r) => !!r && p.x >= r.left && p.x <= r.right && p.y >= r.top && p.y <= r.bottom
@@ -488,7 +491,7 @@ async function ghostChecks(name, page, srcSel, src, title, len, over) {
     check(`${name} over the ${where}: one lifted copy (no second ghost)`, g.count === 1, g.count)
     check(`${name} over the ${where}: a card — filled, rounded, shadowed, edged`, (g.bg !== 'rgba(0, 0, 0, 0)' || g.bgImage !== 'none') && parseFloat(g.radius) > 0 && g.shadow !== 'none' && g.border === 'solid', JSON.stringify([g.bg, g.bgImage, g.radius, g.shadow, g.border]))
     check(`${name} over the ${where}: the pointer is on it (no zoom offset)`, inside(to, g.rect), JSON.stringify([to, g.rect]))
-    check(`${name} over the ${where}: compact — narrower than the row it came from`, g.rect && g.rect.width < g.srcRect.width, JSON.stringify([g.rect?.width, g.srcRect?.width]))
+    check(`${name} over the ${where}: compact — at most 200px (at 100%), never the full row`, g.rect && g.rect.width <= 200 * g.scale + 1 && (g.rect.width < g.srcRect.width || g.srcRect.width <= 200 * g.scale), JSON.stringify([g.rect?.width, g.srcRect?.width, g.scale]))
     check(`${name} over the ${where}: the title and "${len}", no checkbox or buttons`, g.shown.includes(title) && g.shown.includes(len) && g.controls === 0, `${g.shown} / ${g.controls}`)
     check(`${name} over the ${where}: the row's place is a quiet dashed outline, not lifted in place`, g.srcLifted && (g.srcOutline === 'dashed' || g.srcBorder === 'dashed') && g.srcTransform === 'none', JSON.stringify([g.srcLifted, g.srcOutline, g.srcBorder, g.srcTransform]))
     if (where === 'grid') check(`${name} over the grid: FullCalendar's placeholder shows where it lands`, g.placeholder)

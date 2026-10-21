@@ -12,7 +12,7 @@ import { dragGuard } from './dragGuard'
 import { markSeen } from '../tour/help'
 import { layoutOverlaps } from './overlapLayout'
 import { cairoDateKey, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
-import { addDays } from '../../components/pickerMath'
+import { addDays, durationLabel } from '../../components/pickerMath'
 import { bandSegments, isMultiDaySpan, spanDays } from './daySpans'
 import { zoneHour } from './eventTime'
 import { appZone, useAppZone } from '../../lib/appZone'
@@ -22,6 +22,7 @@ import { gridMinWidth, isNarrow } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
 import { useDayRollover } from './useDayRollover'
 import { cardDragData } from './planningMode'
+import { liftCards } from './cardDrag'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -347,23 +348,14 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     let dragged = false
     let stopHover: (() => void) | null = null
     const drag = new Draggable(el, { eventData: cardDragData })
-    // slot-outline (Kai's pick A): the lifted card follows the pointer over the grid too, where
-    // FullCalendar would hide it behind its own placeholder; the card's place stays dashed meanwhile.
-    // Only while a drag is under way: FullCalendar's press calls setIsVisible(false) as its reset, and a
-    // click (no drag) never stops the mirror, so forcing it there left the copy stuck over the slot.
-    const mirror = drag.dragging.mirror
-    const showMirror = mirror.setIsVisible.bind(mirror)
-    let lifting = false
-    mirror.setIsVisible = (v: boolean) => showMirror(v || lifting)
+    // slot-outline (Kai's pick A): the lifted card follows the pointer over the grid too; the card's
+    // place stays dashed meanwhile (./cardDrag — every card dragged onto the grid lifts this way now).
+    liftCards(drag)
     drag.dragging.emitter.on('dragstart', () => {
       dragged = true
-      lifting = true
-      el.dataset.lifted = ''
       stopHover = trackRailHover(heldProps.current.railRef?.current)
     })
     drag.dragging.emitter.on('dragend', (ev: { pageX: number; pageY: number }) => {
-      lifting = false
-      delete el.dataset.lifted
       stopHover?.()
       const rail = heldProps.current.railRef?.current
       const x = ev.pageX - window.scrollX
@@ -861,7 +853,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
                 <div className="kf-ev-slot">
                   <div className="fc-event-time kf-ev-fill">{p.kfFill}</div>
                   {p.kfHeld.map((h) => (
-                    <div key={h.id} ref={heldRow} className={`kf-ev-slot-row${h.done ? ' kf-done' : ''}`} data-slot-task={h.id} data-task-id={h.id} data-title={h.title} data-duration={h.minutes}>
+                    <div key={h.id} ref={heldRow} className={`kf-ev-slot-row${h.done ? ' kf-done' : ''}`} data-slot-task={h.id} data-task-id={h.id} data-title={h.title} data-duration={h.minutes} data-length={durationLabel(h.minutes)}>
                       <span
                         className={`kf-ev-check${h.done ? ' kf-on' : ''}`}
                         role="checkbox"

@@ -2,7 +2,6 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
-import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
 import { inSlot, slotAt, slotFill, slotTasks } from './slots'
@@ -40,10 +39,11 @@ import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { cairoTimeKey, slotFields, zoneHour } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
-import { blockedOn, cardDragData, freeGaps, freeLeft, minutesLabel } from './planningMode'
+import { blockedOn, freeGaps, freeLeft, minutesLabel } from './planningMode'
+import { cardDraggable } from './cardDrag'
 import { conflictsOf } from './overlapLayout'
 import { parseWeekend } from '../../lib/weekend'
-import { addDays } from '../../components/pickerMath'
+import { addDays, durationLabel } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
 import { BLOCK_MENU_WIDTH, besideBlock, isSynced } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
@@ -212,7 +212,7 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, now, domains, pro
   // One Draggable on the tray, as on the rail: it delegates to `.unscheduled-task`.
   useEffect(() => {
     if (!trayRef.current) return
-    const draggable = new Draggable(trayRef.current, { itemSelector: '.unscheduled-task', eventData: cardDragData })
+    const draggable = cardDraggable(trayRef.current)
     return () => draggable.destroy()
   }, [most > 0])
   if (most === 0) return null
@@ -294,6 +294,7 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
       data-task-id={t.id}
       data-title={t.title}
       data-duration={railMinutes(r)}
+      data-length={durationLabel(railMinutes(r))}
       onContextMenu={grammar.onContextMenu}
       title={tag ? `${t.title} · ${tag.label}` : t.title}
     >
@@ -340,7 +341,7 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
 function RailInboxCard({ item, onPlan }: { item: InboxItem; onPlan: (x: number, y: number) => void }) {
   const title = inboxTitle(item)
   return (
-    <div className="unscheduled-task" data-inbox-id={item.id} data-title={title} data-duration={inboxMinutes(item)} title={title}>
+    <div className="unscheduled-task" data-inbox-id={item.id} data-title={title} data-duration={inboxMinutes(item)} data-length={durationLabel(inboxMinutes(item))} title={title}>
       <Icon name="inbox" size={15} style={{ flex: 'none', color: 'var(--ink-faint)' }} />
       <span className="cal-row-title"><EmojiText text={title} /></span>
       <span className="cal-row-meta">Inbox</span>
@@ -523,7 +524,7 @@ function DesktopCalendar() {
   // come and go (a section opened, a task planned) need no re-binding.
   useEffect(() => {
     if (!sidebarRef.current) return
-    const draggable = new Draggable(sidebarRef.current, { itemSelector: '.unscheduled-task', eventData: cardDragData })
+    const draggable = cardDraggable(sidebarRef.current)
     return () => draggable.destroy()
   }, [])
 
@@ -953,13 +954,17 @@ function DesktopCalendar() {
           .unscheduled-task:hover .cal-row-acts, .unscheduled-task:focus-within .cal-row-acts { display: inline-flex; }
           .unscheduled-task:hover .cal-row-meta, .unscheduled-task:focus-within .cal-row-meta { display: none; }
         }
-        .motion-on .unscheduled-task:active {
+        .motion-on .unscheduled-task:active:not([data-lifted]) {
           cursor: grabbing;
           opacity: 0.92;
           transform: scale(1.04) rotate(1.2deg);
           box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);
           transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
         }
+        /* Kai 2026-10-21 (slot-outline A, ./cardDrag): while its lifted copy is out, a card's place stays a
+           quiet dashed outline — the held rows' rule — never a second copy lifted in place. */
+        .unscheduled-task[data-lifted] { outline: 1px dashed var(--ink-hairline); outline-offset: -1px; border-color: transparent; background: transparent; box-shadow: none; }
+        .unscheduled-task[data-lifted] > * { visibility: hidden; }
         .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0; }
         /* Kai 2026-10-14: the per-day tray under the grid (Akiflow). */
         .cal-tray { position: relative; flex: none; border-top: 1px solid var(--line-card); background: var(--paper-parchment); overflow: hidden; }
@@ -968,8 +973,10 @@ function DesktopCalendar() {
         .cal-tray-fold:focus-visible { outline: none; box-shadow: var(--focus-ring); }
         .cal-tray-day { position: absolute; top: 0; bottom: 0; box-sizing: border-box; overflow-y: auto; padding: 4px 9px; border-left: 1px solid var(--line-card); }
         .cal-tray-day { container-type: inline-size; }
-        /* a Week column is narrow: the title gets the room, the length and project dot go */
-        @container (max-width: 230px) { .cal-tray-day .cal-row-meta { display: none; } }
+        /* a Week column is narrow: the title gets the room, the length and project dot go — and Plan ▾ / ⋯
+           on hover too (Kai 2026-10-21): they took the title's place, so a press to drag the row landed on
+           Plan ▾. A click still opens the task, a right-click its menu. */
+        @container (max-width: 230px) { .cal-tray-day .cal-row-meta, .cal-tray-day .unscheduled-task .cal-row-acts { display: none; } }
         .cal-tray-count { display: block; padding-top: 5px; font-size: var(--fs-meta); color: var(--ink-faint); }
       `}</style>
 
