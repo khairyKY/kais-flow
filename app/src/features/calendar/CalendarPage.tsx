@@ -655,11 +655,12 @@ function DesktopCalendar() {
   // T-4 (Polish F2b): QuickCreate's fields are Cairo wall-clock; slotFields converts the slot so
   // the form shows the clicked time on Cairo's clock and saves that exact instant back.
   // p7e A4: with ⌘/Ctrl held it's a Task there (Akiflow's ⌘-click), its block on that slot.
-  function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean }) {
+  function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) {
     // The grid snaps to 15 min (Kai 2026-10-03), so a plain click selects one quarter; it still
-    // makes the half-hour it always did. A drag keeps exactly what was dragged.
+    // makes the half-hour it always did. A drag keeps exactly what was dragged — one quarter too
+    // (Kai 2026-10-21: a 15-minute drag used to come out 30).
     const startMs = new Date(info.start).getTime()
-    const end = !info.allDay && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
+    const end = !info.allDay && !info.dragged && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
     setQuickCreate({
       kind: info.task ? 'task' : 'event',
       slot: slotFields(info.start, end, info.allDay),

@@ -74,8 +74,9 @@ interface CalendarGridProps {
   hideToolbar?: boolean
   /** Fires on mount and after every nav/view change — drives CalendarPage's header title. */
   onRangeChange?: (info: { title: string; start: Date; end: Date }) => void
-  /** An empty slot clicked or dragged. `task`: with ⌘/Ctrl held — Akiflow's ⌘-click makes a task there (p7e A4). */
-  onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean }) => void
+  /** An empty slot clicked or dragged. `task`: with ⌘/Ctrl held — Akiflow's ⌘-click makes a task there (p7e A4).
+   * `dragged`: the pointer moved between press and release (a click selects one quarter too). */
+  onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) => void
   /** allDay flips when a drag crosses the all-day band ↔ time grid boundary (CALENDAR.md §6). */
   onMove: (id: string, start: string, end: string, allDay: boolean) => void
   onResize: (id: string, start: string, end: string) => void
@@ -460,6 +461,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     },
   }))
 
+  // Where the last press on the grid was: `select` tells a click (one quarter) from a short drag by it.
+  const downAt = useRef<{ x: number; y: number } | null>(null)
+
   // p7e A4: Ctrl-click an empty slot = a task there. FullCalendar starts no selection with Ctrl held (its
   // isPrimaryMouseButton), so the slot under the pointer is resolved here; ⌘ (a Mac) does select, and
   // `select` below reads the key. The slot's half hour, 30 minutes long (a whole day in the all-day band).
@@ -495,6 +499,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       className={narrow ? 'kf-cal-narrow' : undefined}
       onContextMenu={handleGridContextMenu}
       onClick={handleCtrlClick}
+      onMouseDown={(e) => { downAt.current = { x: e.clientX, y: e.clientY } }}
       style={{ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
     >
     <FullCalendar
@@ -913,7 +918,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       }}
       select={(info) => {
         const jsEvent = info.jsEvent as MouseEvent | null
-        onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2, task: !!jsEvent?.metaKey })
+        const from = downAt.current
+        const dragged = !!(jsEvent && from && Math.abs(jsEvent.clientX - from.x) + Math.abs(jsEvent.clientY - from.y) > 3)
+        onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2, task: !!jsEvent?.metaKey, dragged })
       }}
       eventClick={(info: EventClickArg) => info.event.display !== 'background' && onEventClick(blockIdOf(info.event))}
       // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder
@@ -976,11 +983,12 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         flashSnap(info.el)
         flashSnapLine(info.el)
         if (info.event.start && info.event.end) {
-          // §7 resizing: min 30 min. Clamp on the edge that moved — a top-edge (start) resize
-          // pushes the start back up; a bottom-edge resize pulls the end back down.
+          // §7 resizing: min 15 min — one snap (Kai 2026-10-21: "we cant have a task of 15 mins", the
+          // old 30 here pulled a 15-minute resize back). Clamp on the edge that moved — a top-edge
+          // (start) resize pushes the start back up; a bottom-edge resize pulls the end back down.
           let startMs = info.event.start.getTime()
           let endMs = info.event.end.getTime()
-          const MIN = 30 * 60_000
+          const MIN = 15 * 60_000
           if (!info.event.allDay && endMs - startMs < MIN) {
             const startMoved = info.startDelta.milliseconds !== 0 || info.startDelta.days !== 0
             if (startMoved) startMs = endMs - MIN
