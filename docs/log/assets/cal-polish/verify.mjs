@@ -46,24 +46,26 @@ const task = (n, title, over = {}) => ({
   reminder_at: null, reminder_sent: false, completed_at: null, paused: false, milestone_id: null, deleted_at: null, parent_task_id: null,
   slot_id: null, slot_date: null, created_at: CREATED, updated_at: CREATED, ...over,
 })
-const EMAIL = 1, STRETCH = 2, WATER = 3, REPLY = 4, LONG = 5
+const EMAIL = 1, STRETCH = 2, WATER = 3, REPLY = 4, LONG = 5, DEEP = 6
 const ev = (n, title, from, to, taskN = null, type, over = {}) => ({
   id: eid(n), user_id: UID, title, starts_at: iso(from), ends_at: iso(to), all_day: false, task_id: taskN ? id(taskN) : null, source: 'native',
   gcal_id: null, gcal_etag: null, busy: true, type: type ?? (taskN ? 'task' : 'event'), color: null, deleted_at: null, created_at: CREATED, updated_at: CREATED, ...over,
 })
-const WATERB = 1, STANDUP = 2, ADMIN = 3, LONGB = 4
+const WATERB = 1, STANDUP = 2, ADMIN = 3, LONGB = 4, DEEPB = 5
 const TASKS = [
   task(EMAIL, "Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸", { duration_min: 20, due_at: iso('09:00') }),
   task(STRETCH, 'Stretch', { duration_min: 15, due_at: iso('09:00') }),
   task(WATER, 'Water the plants', { duration_min: 15, due_at: iso('11:00'), scheduled_start: iso('11:00'), scheduled_end: iso('11:15') }),
   task(REPLY, 'Reply to Omar', { duration_min: 15, slot_id: eid(ADMIN), slot_date: DATE, scheduled_start: iso('13:00'), scheduled_end: iso('14:30') }),
   task(LONG, 'Write the report', { duration_min: 30, due_at: iso('16:00'), scheduled_start: iso('16:00'), scheduled_end: iso('16:30') }),
+  task(DEEP, 'Deep work on the quarterly forecast numbers', { duration_min: 60, due_at: iso('17:00'), scheduled_start: iso('17:00'), scheduled_end: iso('18:00') }),
 ]
 const EVENTS = [
   ev(WATERB, 'Water the plants', '11:00', '11:15', WATER),
   ev(STANDUP, 'Standup', '12:00', '13:00'),
   ev(ADMIN, 'Admin', '13:00', '14:30', null, 'time_block'),
   ev(LONGB, 'Write the report', '16:00', '16:30', LONG),
+  ev(DEEPB, 'Deep work on the quarterly forecast numbers', '17:00', '18:00', DEEP),
 ]
 const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', help_seen: ['hint:calendar'], created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
 const tables = () => structuredClone({ tasks: TASKS, calendar_events: EVENTS, inbox_items: [], projects: [], domains: [], areas: [], app_settings: [SETTINGS] })
@@ -240,6 +242,47 @@ if (want('d3')) {
   const t2 = posts(state, 'tasks', w1).filter((t) => t.id === id(LONG)).at(-1)
   check('d3 the task block "Write the report" resized to 16:00–16:15; its estimate → 15', b2 && mins(b2) === 15 && t2?.duration_min === 15, JSON.stringify([b2 && mins(b2), t2?.duration_min]))
   check('d3 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// D8 — the top edge resizes too (15-minute snap, a visible grip); the bottom grip shows on hover.
+/** Drags block n's top edge into the first quarter of the `hhmm` half hour (the start lands on hhmm). */
+async function resizeTopTo(page, n, hhmm, quarter = 0) {
+  const blk = fcBlock(page, n)
+  const bb = await blk.boundingBox()
+  await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2)
+  await sleep(250)
+  const handle = await blk.locator('.fc-event-resizer-start').boundingBox()
+  const lane = await page.locator(`td.fc-timegrid-slot-lane[data-time="${hhmm}:00"]`).boundingBox()
+  await mouseDrag(page, center(handle), { x: handle.x + handle.width / 2, y: lane.y + lane.height * (quarter ? 0.55 : 0.05) })
+}
+if (want('d8')) {
+  const { ctx, page, errors, state } = await open()
+  await slotPoint(page, '12:00')
+  const blk = fcBlock(page, STANDUP)
+  const bb = await blk.boundingBox()
+  await page.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2)
+  await sleep(300)
+  const grips = await blk.evaluate((e) => ['.fc-event-resizer-start', '.fc-event-resizer-end'].map((s) => { const g = getComputedStyle(e.querySelector(s), '::after'); return [g.opacity, g.width, getComputedStyle(e.querySelector(s)).cursor] }))
+  check('d8 on hover both edges show the grip and a resize cursor', grips.every(([o, w, c]) => o === '1' && w !== 'auto' && /resize/.test(c)), JSON.stringify(grips))
+  await shot(page, 'd8-grips')
+  let w0 = state.writes.length
+  await resizeTopTo(page, STANDUP, '12:00', 1)
+  await settle(state)
+  let b = posts(state, 'calendar_events', w0).find((e) => e.id === eid(STANDUP))
+  check('d8 Standup by its top edge down a quarter → 12:15–13:00', b && b.starts_at === iso('12:15') && b.ends_at === iso('13:00'), JSON.stringify(b && [b.starts_at, b.ends_at]))
+  w0 = state.writes.length
+  await resizeTopTo(page, STANDUP, '11:30', 1)
+  await settle(state)
+  b = posts(state, 'calendar_events', w0).find((e) => e.id === eid(STANDUP))
+  check('d8 …and up to 11:45 → 11:45–13:00 (the end stays)', b && b.starts_at === iso('11:45') && b.ends_at === iso('13:00'), JSON.stringify(b && [b.starts_at, b.ends_at]))
+  w0 = state.writes.length
+  await resizeTopTo(page, STANDUP, '12:30', 1)
+  await settle(state)
+  b = posts(state, 'calendar_events', w0).find((e) => e.id === eid(STANDUP))
+  check('d8 …down to 12:45 → a 15-minute block 12:45–13:00', b && b.starts_at === iso('12:45') && mins(b) === 15, JSON.stringify(b && [b.starts_at, mins(b)]))
+  check('d8 "Resized" toasts carry Undo', (await page.locator('.kf-toast', { hasText: 'Resized' }).getByRole('button', { name: 'Undo' }).count()) >= 1)
+  check('d8 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
 
@@ -541,6 +584,66 @@ if (want('g2')) {
     check('g2-held a held task lifts the same card, with its length (Kai\'s slot-outline A)', g.count === 1 && inside(to, g.rect) && g.shown.includes('Reply to Omar') && g.shown.includes('15m') && g.shadow !== 'none', JSON.stringify([g.count, g.rect, g.shown]))
     check('g2-held no page errors', errors.length === 0, errors.join(' | '))
     await ctx.close()
+  }
+}
+
+// ═══ A: a block's checkbox sits on its title's first line ═══
+/** Vertical centres of the check and of the title's first line, inside `sel` (the first match). */
+const checkVsTitle = (page, sel, checkSel, titleSel) =>
+  page.evaluate(([sel, checkSel, titleSel]) => {
+    const host = document.querySelector(sel)
+    const c = host?.querySelector(checkSel)?.getBoundingClientRect()
+    const t = host?.querySelector(titleSel)
+    if (!c || !t) return null
+    const r = document.createRange()
+    r.selectNodeContents(t)
+    const line = [...r.getClientRects()].filter((x) => x.height > 0)[0]
+    return { check: c.top + c.height / 2, line: line.top + line.height / 2, ch: c.height, lh: line.height }
+  }, [sel, checkSel, titleSel])
+if (want('a1')) {
+  for (const theme of ['day', 'night']) {
+    for (const scale of [1, 1.25, 1.5]) {
+      const tag = `a1-${theme}-${scale * 100}`
+      const { ctx, page, errors } = await open('/calendar', { theme, scale })
+      for (const [n, what] of [[LONGB, '30m task block'], [DEEPB, '1h task block (wraps)']]) {
+        await slotPoint(page, n === LONGB ? '16:00' : '17:00')
+        const m = await checkVsTitle(page, `.fc-event[data-kf-id="${eid(n)}"]`, '.kf-ev-check', '.fc-event-title')
+        check(`${tag} ${what}: the check sits on the title's first line`, m && Math.abs(m.check - m.line) <= 1.5, JSON.stringify(m))
+      }
+      await slotPoint(page, '13:30')
+      const h = await checkVsTitle(page, `.kf-ev-slot-row[data-slot-task="${id(REPLY)}"]`, '.kf-ev-check', '.kf-ev-slot-title')
+      check(`${tag} a held slot row: the check sits on its title's line`, h && Math.abs(h.check - h.line) <= 1.5, JSON.stringify(h))
+      if (scale === 1.25) {
+        await slotPoint(page, '16:30')
+        await fcBlock(page, DEEPB).hover()
+        await sleep(300)
+        await shot(page, `a1-checks-${theme}`)
+      }
+      check(`${tag} no page errors`, errors.length === 0, errors.join(' | '))
+      await ctx.close()
+    }
+  }
+}
+if (want('a2')) {
+  for (const theme of ['day', 'night']) {
+    for (const scale of [1, 1.25, 1.5]) {
+      const tag = `a2-phone-${theme}-${scale * 100}`
+      const { ctx, page, errors } = await open('/calendar', { view: phone, theme, scale })
+      for (const [n, what, min] of [[LONGB, '30m task block', 16 * 60], [DEEPB, '1h task block', 17 * 60]]) {
+        await scrollPhone(page, min)
+        const m = await checkVsTitle(page, `.pc-block[data-id="${eid(n)}"]`, '.pc-check', '.pc-name')
+        check(`${tag} ${what}: the check sits on the title's first line`, m && Math.abs(m.check - m.line) <= 1.5, JSON.stringify(m))
+      }
+      await scrollPhone(page, 13 * 60 + 30)
+      const h = await checkVsTitle(page, `.pc-slot-row[data-slot-task="${id(REPLY)}"]`, '.pc-check', '.pc-name')
+      check(`${tag} a held slot row: the check sits on its title's line`, h && Math.abs(h.check - h.line) <= 1.5, JSON.stringify(h))
+      if (scale === 1) {
+        await scrollPhone(page, 16 * 60 + 30)
+        await shot(page, `a2-phone-checks-${theme}`)
+      }
+      check(`${tag} no page errors`, errors.length === 0, errors.join(' | '))
+      await ctx.close()
+    }
   }
 }
 

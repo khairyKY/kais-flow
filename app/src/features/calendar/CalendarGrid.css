@@ -206,6 +206,9 @@
   white-space: nowrap;
 }
 .fc .fc-timegrid-event.fc-timegrid-event-short .fc-event-time { display: none; }
+/* The block title's line height, stated (it was the font's `normal`, whose glyphs sat 2–3px below a box
+   drawn from the top) so the check lines up with its first line at every interface scale. */
+.fc .fc-timegrid-event .fc-event-title { line-height: 1.2; }
 /* Any block, short or not: never let the text bleed past the rounded edge. */
 .fc .fc-timegrid-event .kf-ev-text { overflow: hidden; }
 .fc .fc-timegrid-event .fc-event-main { padding: 0; }
@@ -230,9 +233,13 @@
 .fc .fc-timegrid-event .kf-ev-text { flex: 1; min-width: 0; }
 .fc .fc-timegrid-event .kf-ev-check {
   flex: none;
-  width: 12px;
-  height: 12px;
-  margin-top: 1px;
+  /* Kai 2026-10-22 ("the checkbox isn't aligned with the title"): it was a fixed 12px box 1px down while
+     the title (12px × --s) scales with the interface — at 125% it sat 3px high, at 150% 5px. It scales
+     with the title now and sits on its first line, whose height is stated below (cal-polish a1: within
+     1px of the line's centre, 100–150%). */
+  width: calc(12px * var(--s));
+  height: calc(12px * var(--s));
+  margin-top: 0;
   /* §2/§9: never visible at rest — revealed on hover/focus, or when already checked */
   opacity: 0;
   transition: opacity 120ms var(--ease-out);
@@ -310,8 +317,10 @@ body > .fc-event-dragging[data-title]::before { content: attr(data-title); min-w
 body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex: none; font-family: var(--font-mono); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--acc-lavender-text); }
 
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
-   seat it without colliding with the text. */
-.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-end::after {
+   seat it without colliding with the text. Kai 2026-10-22: the top edge resizes too, so it wears the
+   same grip (it was a hidden hit area — nobody found it). */
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-end::after,
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-start::after {
   opacity: 0;
   transition: opacity 120ms var(--ease-out);
   content: '';
@@ -324,6 +333,7 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
   border-radius: 2px;
   background: var(--kf-ev-grip, rgba(124, 106, 154, 0.5));
 }
+.fc .fc-timegrid-event .fc-event-resizer-start::after { bottom: auto; top: 3px; }
 /* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from
    task"). No drop shadow — a 4c block sits flat on the grid. */
 
@@ -372,8 +382,8 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
    28x3 lavender grip (rendered via ::after above), so the resizer is now purely a hit area. */
 .fc .fc-event-resizer { border: none; background: none; }
 .fc .fc-timegrid-event .fc-event-resizer-end { height: 10px; bottom: 0; }
-/* Punch 35: top-edge resize (eventResizableFromStart) — hit area only; §2 defines a single
-   visible grip and it stays the bottom bar. */
+/* Punch 35: top-edge resize (eventResizableFromStart) — the same 10px hit area as the bottom, and (Kai
+   2026-10-22) the same grip on hover. */
 .fc .fc-timegrid-event .fc-event-resizer-start { height: 10px; top: 0; }
 
 /* Punch 38: §1 column inset — blocks sit 5px off both column edges (FC default was the
@@ -575,7 +585,8 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s-text)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-time,
 .fc .fc-timegrid-event.kf-tier-micro .kf-ev-check,
-.fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-end::after { display: none; }
+.fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-end::after,
+.fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-start::after { display: none; }
 /* §6 full tier (≥81px): the title may wrap to two lines — never three. */
 .fc .fc-timegrid-event.kf-tier-full .fc-event-title {
   display: -webkit-box;
@@ -601,7 +612,9 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 
 /* grip reveal (pairs with the opacity:0 set on the ::after above) */
 .fc .fc-timegrid-event:hover .fc-event-resizer-end::after,
-.fc .fc-timegrid-event:focus-within .fc-event-resizer-end::after { opacity: 1; }
+.fc .fc-timegrid-event:focus-within .fc-event-resizer-end::after,
+.fc .fc-timegrid-event:hover .fc-event-resizer-start::after,
+.fc .fc-timegrid-event:focus-within .fc-event-resizer-start::after { opacity: 1; }
 
 /* ═══ §6 Layout — overlap geometry (J-13). overlapLayout.ts picks each block's slot; these draw
    it. FullCalendar positions every block's harness with inline left/right/z-index (its own
