@@ -299,7 +299,7 @@ body > .fc-event-dragging[data-title] {
   zoom: calc(1 / var(--u));
   display: flex; align-items: center; gap: calc(8px * var(--u)); padding: calc(4px * var(--u)) calc(9px * var(--u));
   width: auto !important; height: auto !important; max-width: calc(200px * var(--u)); margin: 0;
-  border-radius: calc(8px * var(--u)); color: var(--ink-body); font-family: var(--font-ui); font-size: calc(var(--fs-meta) * var(--u)); line-height: 1.4;
+  border-radius: 8px; color: var(--ink-body); font-family: var(--font-ui); font-size: calc(var(--fs-meta) * var(--u)); line-height: 1.4;
   white-space: nowrap; overflow: hidden; outline: none; opacity: 1; transform: none; cursor: grabbing;
   border: 1px solid color-mix(in srgb, var(--acc-lavender-text) 35%, transparent);
   background: linear-gradient(color-mix(in srgb, var(--acc-lavender) 24%, transparent), color-mix(in srgb, var(--acc-lavender) 24%, transparent)), var(--paper-parchment);
