@@ -18,7 +18,7 @@ import { upsertJournalEntry } from '../journal/api'
 import { tellPaperRead } from '../notifications/local'
 import { preparePage } from './image'
 import { usePaperStore } from './paperStore'
-import { addedSummary, planWrites, shouldResume, type CaptureRow, type EditLine, type PageDrawing } from './paperMath'
+import { addedSummary, lineKey, markItems, pendingKeys, planWrites, shouldResume, type CaptureRow, type EditLine, type LineDone, type PageDrawing } from './paperMath'
 import { fetchCaptures } from './captures'
 import type { AppSettings, InboxItem, Project, Task } from '../../lib/types'
 
@@ -101,6 +101,10 @@ function patchCache(id: string, patch: Partial<CaptureRow>, base?: Partial<Captu
   })
 }
 
+/** The row as the cache holds it now — each review write builds on the last one, not on a render's copy. */
+const cached = (id: string) => queryClient.getQueryData<CaptureRow[]>(['captures'])?.find((r) => r.id === id)
+const latest = (c: CaptureRow) => cached(c.id) ?? c
+
 const running = new Set<string>()
 /** Is the reading screen for this capture on screen (not "left reading")? */
 const watching = (id: string) => {
@@ -116,13 +120,15 @@ async function readFrom(id: string, paths: string[], from: number, takenAt: stri
   running.add(id)
   try {
     for (let page = from; page < paths.length; page++) {
+      if (cached(id)?.reviewed_at) return // dismissed or deleted mid-read: no more pages
       const answer = await callRead(id, paths, page, takenAt)
       if (typeof answer === 'string') return stopped(id, answer, page, paths, takenAt)
       patchCache(id, answer)
       const s = usePaperStore.getState()
       if (watching(id) && s.stage?.kind === 'reading') s.show({ ...s.stage, read: page + 1 })
     }
-    const row = queryClient.getQueryData<CaptureRow[]>(['captures'])?.find((r) => r.id === id)
+    const row = cached(id)
+    if (row?.reviewed_at) return
     const n = row?.items.length ?? 0
     if (row?.status === 'done') tellPaperRead(row) // the notice (12k), when nobody's looking at the app
     if (row?.status === 'failed') {
@@ -319,10 +325,70 @@ function photoNote(capture: CaptureRow, line: EditLine): InboxItem {
 /** Reviewed: off the Inbox's "ready" list. "Delete after reading" (or `dropPhoto`: a page we couldn't
  * read) brings the photo's expiry to now, so the hourly sweep takes it — unless `keepPhoto`: a drawing
  * went to the Inbox as an image, and that note shows this photo (its usual 7 days). */
-export function markReviewed(capture: CaptureRow, dropPhoto = false, keepPhoto = false): void {
+function reviewed(row: CaptureRow, dropPhoto = false, keepPhoto = false): CaptureRow {
   const now = new Date().toISOString()
   const keep = !dropPhoto && (keepPhoto || queryClient.getQueryData<AppSettings>(['app_settings'])?.capture_keep_photos !== false)
-  writeRow('captures', { ...capture, reviewed_at: now, ...(keep ? {} : { expires_at: now }) })
+  return { ...row, reviewed_at: now, ...(keep ? {} : { expires_at: now }) }
+}
+export function markReviewed(capture: CaptureRow, dropPhoto = false, keepPhoto = false): void {
+  writeRow('captures', reviewed(latest(capture), dropPhoto, keepPhoto))
+}
+
+/** `keepPhoto`: a drawing went to the Inbox as an image. `only`: the lines this review shows (11l's leftovers). */
+interface ReviewOpts {
+  keepPhoto?: boolean
+  only?: string[]
+}
+
+/** Review marks on lines, written back on the capture; nothing left to review → reviewed. `undo` puts
+ * those lines' marks and the review back as they were. */
+function markLines(capture: CaptureRow, marks: Record<string, LineDone | undefined>, o: ReviewOpts = {}): { finished: boolean; undo: () => void } {
+  const before = latest(capture)
+  const row = { ...before, items: markItems(before.items, marks) }
+  const finished = !before.reviewed_at && !pendingKeys(row.items, o.only).length
+  writeRow('captures', finished ? reviewed(row, false, o.keepPhoto) : row)
+  const prior = Object.fromEntries(before.items.flatMap((it, i) => (lineKey(it, i) in marks ? [[lineKey(it, i), it.done]] : [])))
+  return {
+    finished,
+    undo: () => {
+      const now = latest(capture)
+      writeRow('captures', { ...now, items: markItems(now.items, prior), reviewed_at: before.reviewed_at, expires_at: before.expires_at })
+    },
+  }
+}
+
+/** Lines dismissed (not a task, not wanted): off the review for good — the capture remembers — with Undo.
+ * True when nothing is left to review. */
+export function dismissLines(capture: CaptureRow, keys: readonly string[], o: ReviewOpts = {}): boolean {
+  const back = markLines(capture, Object.fromEntries(keys.map((k) => [k, 'skipped' as const])), o)
+  toastUndo(keys.length === 1 ? 'Line dismissed' : `${keys.length} lines dismissed`, back.undo)
+  return back.finished
+}
+
+/** "Bring back": dismissed lines return to the review. */
+export function restoreLines(capture: CaptureRow, keys: readonly string[]): void {
+  markLines(capture, Object.fromEntries(keys.map((k) => [k, undefined])))
+}
+
+const pagesWord = (c: CaptureRow) => (c.pages > 1 ? 'Pages' : 'Page')
+
+/** "Dismiss page": out of review, nothing more added. The photo follows Settings (7 days, or within the hour). */
+export function dismissCapture(capture: CaptureRow): void {
+  const before = latest(capture)
+  writeRow('captures', reviewed(before))
+  logActivity('capture.reviewed', 'capture', capture.id, { mode: 'dismissed' })
+  toastUndo(`${pagesWord(capture)} dismissed`, () => writeRow('captures', { ...latest(capture), reviewed_at: before.reviewed_at, expires_at: before.expires_at }))
+}
+
+/** "Delete": the read is wiped and the photo goes at the hourly sweep (capture-image), the way "Delete
+ * after reading" works. Undo writes the row back as it was. What was already added stays where it went. */
+export function deleteCapture(capture: CaptureRow): void {
+  const before = latest(capture)
+  // ponytail: 10 minutes' grace so an Undo can never race the sweep; the photo still goes within the hour or so.
+  const expires = new Date(Math.min(Date.now() + 10 * 60_000, Date.parse(before.expires_at))).toISOString()
+  writeRow('captures', { ...before, reviewed_at: before.reviewed_at ?? new Date().toISOString(), expires_at: expires, title: null, items: [], drawings: [] })
+  logActivity('capture.reviewed', 'capture', capture.id, { mode: 'deleted' })
+  toastUndo(`${pagesWord(capture)} deleted · the photo goes within the hour`, () => writeRow('captures', before))
 }
 
 /** 11l "Mark N done": the ticked tasks done (still-open ones only), one toast, one Undo. A capture with
@@ -369,33 +435,42 @@ export function addDrawingNote(capture: CaptureRow, drawing: PageDrawing, onUndo
   })
 }
 
-/** "Add all" / "Inbox only": every kept line through the usual helpers, one toast, one Undo. */
-export function applyResults(capture: CaptureRow, lines: readonly EditLine[], mode: 'all' | 'inbox', keepPhoto = false): void {
+/** "Add all" / "Inbox only" / one line / the selection: each line through the usual helpers, marked on the
+ * capture with where it went, so a page can be added a few lines at a time. One toast, one Undo. True when
+ * nothing is left to review (the capture is reviewed). */
+export function fileLines(capture: CaptureRow, lines: readonly EditLine[], mode: 'all' | 'inbox', o: ReviewOpts = {}): boolean {
   const plan = planWrites(lines, capture.id, mode)
   const undo: (() => void)[] = []
+  const marks: Record<string, LineDone> = {}
   for (const p of plan) {
+    let id: string
     if (p.to === 'task') {
       const task = createTask({ title: p.title, dueAt: p.dueAt, projectId: p.projectId, domainId: p.domainId, areaId: p.areaId, priority: p.priority, externalRef: { source: 'photo', id: p.ref } })
+      id = task.id
       undo.push(() => writeRow('tasks', task, 'delete'))
     } else if (p.to === 'event') {
       const event = createEvent(p.title, p.startsAt, p.endsAt, 'event', null, p.allDay)
+      id = event.id
       undo.push(() => writeRow('calendar_events', event, 'delete'))
     } else if (p.to === 'inbox') {
       const item = photoNote(capture, p.line)
       writeRow('inbox_items', item)
       logActivity('inbox.captured', 'inbox_item', item.id, { kind: 'photo' })
+      id = item.id
       undo.push(() => writeRow('inbox_items', item, 'delete'))
     } else {
       const entry = upsertJournalEntry({ entry_date: cairoDateKey(new Date()), body: p.body }, true)
+      id = entry.id
       undo.push(() => writeRow('journal_entries', entry, 'delete'))
     }
+    for (const k of p.keys) marks[k] = { to: p.to, id }
   }
-  const prior = { ...capture }
-  markReviewed(capture, false, keepPhoto)
-  logActivity('capture.reviewed', 'capture', capture.id, { mode, written: plan.length })
+  const back = markLines(capture, marks, o)
+  if (back.finished) logActivity('capture.reviewed', 'capture', capture.id, { mode, written: plan.length })
   toastUndo(addedSummary(plan), () => {
     for (const fn of undo) fn()
-    writeRow('captures', prior)
+    back.undo()
   })
+  return back.finished
 }
 

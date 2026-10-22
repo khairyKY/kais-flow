@@ -198,6 +198,9 @@ button.pp-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus)
 .pp-drawing-add { flex: none; min-height: 48px; padding: 0; border: none; background: none; font: inherit; font-weight: var(--fw-semibold); color: var(--acc-lavender-deep); cursor: pointer; }
 .pp-drawing-add:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
 .pp-drawing-done { flex: none; color: var(--acc-sage-text); }
+/* Lines reviewed already, in the same quiet rows: each added line and where it went; the dismissed ones with Bring back. */
+.pp-done { border-top: 1px solid var(--line-dashed); padding-bottom: var(--sp-2); }
+.pp-done-head { padding: var(--sp-3) 16px 0; font-family: var(--font-mono); font-size: var(--fs-tab-label); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
 
 /* 11m: the desktop keys, beside Add all; the line the keys act on. */
 .pp-keys { flex: 1; min-width: 0; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }

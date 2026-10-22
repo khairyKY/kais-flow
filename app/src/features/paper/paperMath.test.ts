@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
-  addedSummary, cropFrame, editLines, fitWithin, hasClock, isHeic, matchProject, movePage, needsCheck, placeEdit, planWrites, rotatedSize, scansLeft, shouldResume, toEditLine, toggleKey,
+  addedSummary, cropFrame, editLines, fitWithin, hasClock, isHeic, lineKey, markItems, matchProject, movePage, needsCheck, pendingKeys, placeEdit, planWrites, rotatedSize, scansLeft, shouldResume, toEditLine, toggleKey,
   type CaptureRow, type PageLine,
 } from './paperMath'
 import { imageFiles } from './image'
@@ -127,7 +127,7 @@ describe('results → writes', () => {
     expect(plan[1]).toMatchObject({ to: 'task', title: 'Assignment 2', dueAt: '2026-10-08T20:59:00.000Z', ref: 'cap-1:0:1' })
     expect(plan[2]).toMatchObject({ to: 'event', allDay: true, startsAt: '2026-10-11T00:00:00.000Z', endsAt: '2026-10-12T00:00:00.000Z' })
     expect(plan[3]).toMatchObject({ to: 'event', title: 'اجتماع الفريق الساعة ٥', allDay: false, startsAt: '2026-10-04T14:00:00.000Z', endsAt: '2026-10-04T15:00:00.000Z' })
-    expect(plan[5]).toEqual({ to: 'journal', body: 'tired but happy\nlecture ran late' })
+    expect(plan[5]).toEqual({ to: 'journal', body: 'tired but happy\nlecture ran late', keys: ['0:5', '0:6'] }) // one entry, both lines
     expect(addedSummary(plan)).toBe('Added 1 task · 2 events · 2 notes · a journal entry')
   })
   it('Inbox only: every line becomes a note', () => {
@@ -148,7 +148,7 @@ describe('chip edits, selection, page order, HEIC (the 11c–11f gaps)', () => {
     const e2 = editLines(e1, ['0:1', '0:4'], { priority: 1 })
     expect(e2).toEqual({ '0:1': { type: 'event', priority: 1 }, '0:4': { priority: 1 } })
     expect(e1).toEqual({ '0:1': { type: 'event' } }) // never mutated
-    expect(editLines(e2, [], { dropped: true })).toEqual(e2)
+    expect(editLines(e2, [], { type: 'note' })).toEqual(e2)
   })
   it('long-press selection toggles one line in and out', () => {
     const one = toggleKey(new Set(), '0:3')
@@ -200,5 +200,33 @@ describe('chip edits, selection, page order, HEIC (the 11c–11f gaps)', () => {
     const f = (name: string, type: string) => new File(['x'], name, { type })
     const kept = imageFiles([f('a.jpg', 'image/jpeg'), f('b.heic', ''), f('c.pdf', 'application/pdf'), f('d.HEIC', 'image/heic'), f('e.txt', '')])
     expect(kept.map((x) => x.name)).toEqual(['a.jpg', 'b.heic', 'd.HEIC'])
+  })
+})
+
+describe('review a page a few lines at a time (Kai 2026-10-22: dismiss, delete, add one)', () => {
+  const items = [line('OS lecture 3', { type: 'note' }), line('Assignment 2'), line('Quiz'), line('pens', { page: 1 })]
+  it('a line’s key is page:index, the same one toEditLine and the task’s photo link use', () => {
+    expect(lineKey(items[3], 3)).toBe('1:3')
+    expect(toEditLine(items[3], 3, PROJECTS, TAKEN).key).toBe('1:3')
+  })
+  it('every write says which lines it came from', () => {
+    const lines = items.map((l, i) => toEditLine(l, i, PROJECTS, TAKEN))
+    expect(planWrites(lines, 'c', 'all').map((p) => p.keys)).toEqual([['0:0'], ['0:1'], ['0:2'], ['1:3']])
+    expect(planWrites(lines, 'c', 'inbox').map((p) => p.keys)).toEqual([['0:0'], ['0:1'], ['0:2'], ['1:3']])
+  })
+  it('marks set where a line went, or that it was dismissed; undefined puts it back; nothing else moves', () => {
+    const marked = markItems(items, { '0:1': { to: 'task', id: 't1' }, '1:3': 'skipped' })
+    expect(marked.map((i) => i.done)).toEqual([undefined, { to: 'task', id: 't1' }, undefined, 'skipped'])
+    expect(marked[0]).toBe(items[0]) // untouched lines keep their object
+    expect(items[1].done).toBeUndefined() // never mutated
+    expect(markItems(marked, { '1:3': undefined })[3].done).toBeUndefined()
+    expect(toEditLine(marked[1], 1, PROJECTS, TAKEN).done).toEqual({ to: 'task', id: 't1' })
+  })
+  it('what is left to review — of the whole page, or of the lines a ticks review left', () => {
+    const marked = markItems(items, { '0:1': { to: 'task', id: 't1' }, '1:3': 'skipped' })
+    expect(pendingKeys(items)).toEqual(['0:0', '0:1', '0:2', '1:3'])
+    expect(pendingKeys(marked)).toEqual(['0:0', '0:2'])
+    expect(pendingKeys(marked, ['0:1', '1:3'])).toEqual([]) // the leftovers are all done → the page leaves review
+    expect(pendingKeys(markItems(marked, { '0:0': 'skipped', '0:2': { to: 'inbox', id: 'n1' } }))).toEqual([])
   })
 })
