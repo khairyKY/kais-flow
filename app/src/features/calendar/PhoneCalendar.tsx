@@ -14,6 +14,10 @@ import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { formatDuration } from '../tasks/taskDisplay'
 import { useMinuteNow } from '../today/useMinuteNow'
+import { goalIdOf } from '../today/top3Order'
+import { legacyGoalId } from '../today/goalStore'
+import { cachedStarEvents } from '../today/api'
+import { blockHue } from './blockHue'
 import { moveEventWithUndo, outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
 import { findBlock } from './series'
 import { heldDrop, slotFill, slotTasks } from './slots'
@@ -140,6 +144,8 @@ export function PhoneCalendar() {
   const seg: Seg = segPick ?? (['overdue', 'today', 'inbox'] as const).find((s) => counts[s] > 0) ?? 'today'
   const marked = useMemo(() => daysWithItems(tasks, gridEvents), [tasks, gridEvents])
 
+  // Goal A (Kai 2026-10-23): the first of today's Top 3 (today/top3Order) — its block on today wears the gold edge.
+  const goalTaskId = useMemo(() => goalIdOf(tasks, legacyGoalId(), cachedStarEvents()), [tasks, today]) // eslint-disable-line react-hooks/exhaustive-deps
   // CALENDAR.md §3, first match wins: a colour set on the block · a task's project hue (its own, else
   // its domain's) · a meeting (a plain event) blossom · any other task or block lavender. S10: worked out
   // once per block while the data holds (a swipe drew every block of three panes on every move).
@@ -153,16 +159,15 @@ export function PhoneCalendar() {
       }
       return v
     }
-  }, [tasks, taskById, projects, domains, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [tasks, taskById, projects, domains, today, goalTaskId]) // eslint-disable-line react-hooks/exhaustive-deps
   function lookOf(e: CalendarEvent): BlockLook {
     const task = e.task_id ? taskById.get(e.task_id) : undefined
     const project = task?.project_id ? projects.find((p) => p.id === task.project_id) : undefined
     const hue = e.color ?? project?.color ?? (project && domains.find((d) => d.id === project.domain_id)?.color) ?? null
-    const tone = hue
-      ? { fill: `color-mix(in srgb, ${hue} 24%, transparent)`, ink: `color-mix(in srgb, ${hue} 55%, var(--ink-body))` }
-      : e.type === 'event' && !e.task_id
-        ? { fill: 'var(--block-blossom)', ink: 'var(--acc-blossom-text)' }
-        : { fill: 'var(--block-lavender)', ink: 'var(--acc-lavender-text)' }
+    // cal-looks ("Now" as drawn, as the desktop's): the accent at 24% for the fill, 45% for the edge, its text tone
+    // for the time and the check — a swatch is its token (./blockHue), so Night Garden redraws it.
+    const hueOf = hue ? blockHue(hue) : e.type === 'event' && !e.task_id ? { c: 'var(--acc-blossom)', ink: 'var(--acc-blossom-text)' } : { c: 'var(--acc-lavender)', ink: 'var(--acc-lavender-text)' }
+    const tone = { fill: `color-mix(in srgb, ${hueOf.c} 24%, transparent)`, edge: `color-mix(in srgb, ${hueOf.c} 45%, transparent)`, ink: hueOf.ink }
     const done = task?.status === 'done'
     // Time Slots (0073): a Time block draws the tasks this occurrence holds, as the desktop's does.
     const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
@@ -177,7 +182,8 @@ export function PhoneCalendar() {
       : undefined
     // Subtasks C: a subtask's own block says whose it is.
     const parent = task?.parent_task_id ? taskById.get(task.parent_task_id)?.title : undefined
-    return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent }
+    const goal = !!task && task.id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === today
+    return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
   }
 
   /** A task block that ended before today, not done — it reads "Overdue · Replan" and a tap replans it. */

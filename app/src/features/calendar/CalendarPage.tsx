@@ -56,6 +56,10 @@ import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOpti
 import { gridMinWidth, railYields, visibleDayCount } from './weekFit'
 import { useDayRollover } from './useDayRollover'
 import { useMinuteNow } from '../today/useMinuteNow'
+import { goalIdOf } from '../today/top3Order'
+import { legacyGoalId } from '../today/goalStore'
+import { cachedStarEvents } from '../today/api'
+import { useStartFocus } from '../today/startFocus'
 import { useMinuteClock } from '../../lib/minuteClock'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -407,6 +411,7 @@ export function CalendarPage() {
 function DesktopCalendar() {
   const openTask = useOpenTask()
   const navigate = useNavigate()
+  const startFocus = useStartFocus()
   // Repeating events (migration 0061) are expanded twice over: `events` covers the year around
   // today (the rail, Plan's free slots, the footer); `gridEvents` the range the grid shows, wherever
   // it was paged to. Clicks, drags and the popover act on the grid's.
@@ -559,18 +564,24 @@ function DesktopCalendar() {
   const pendingIds = useSameIds(visibleEvents.filter((e) => outboxMarks.pending.has(e.seriesId ?? e.id)).map((e) => e.id))
   const failedIds = useSameIds(visibleEvents.filter((e) => outboxMarks.failed.has(e.seriesId ?? e.id)).map((e) => e.id))
   const conflictedIds = useSameIds(Array.from(conflicts.keys()))
+  // Goal A (Kai 2026-10-23): the goal of the day is the first of today's Top 3 (today/top3Order, as Tasks' ✶ Goal
+  // chip reads it); only its block on today's date wears the gold edge and ✶.
+  const goalTaskId = useMemo(() => goalIdOf(tasks, legacyGoalId(), cachedStarEvents()), [tasks, today]) // eslint-disable-line react-hooks/exhaustive-deps
   // S1: the blocks as the grid takes them, rebuilt only when what they draw changes.
   const gridBlocks = useMemo(
-    () =>
-      visibleEvents.map((e) => {
+    () => {
+      const todayKey = cairoDateKey(new Date())
+      return visibleEvents.map((e) => {
         // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
         const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
         return {
           id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
+          goal: !!goalTaskId && e.task_id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === todayKey,
           ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held) } : null),
         }
-      }),
-    [visibleEvents, tasks, doneTaskIds, parentTitleOf],
+      })
+    },
+    [visibleEvents, tasks, doneTaskIds, parentTitleOf, goalTaskId, today], // eslint-disable-line react-hooks/exhaustive-deps -- today: a new day re-reads the goal's date
   )
   const selectedEvent = selected ? findBlock(gridEvents, selected.id, selected.start) ?? null : null
 
@@ -990,6 +1001,11 @@ function DesktopCalendar() {
       if (!t) return
       if (done) uncompleteTask(t)
       else completeTaskWithUndo(t)
+    },
+    // A task block's ▶ (hover, "Now" as drawn): Focus on its task, as Today's ▶ does.
+    onFocusTask: (taskId: string) => {
+      const t = tasks.find((x) => x.id === taskId)
+      if (t) startFocus(t)
     },
     onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) => handleGridCreate(info),
     // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.

@@ -13,6 +13,9 @@
   --s: calc(var(--kf-ui-scale, 1) * var(--kf-cal-density, 1));
   /* Text-only scale (the time rows): kept apart from --s so type can move without the slots. */
   --s-text: var(--s);
+  /* cal-looks: one px of design-export/Calendar blocks options.html, drawn at the app's default 125% — its
+     "150%" is the same block zoomed, so a block's insets ride the scale as its type does. */
+  --kf-d: calc(var(--s) / 1.25);
   --fc-border-color: var(--line-dashed);
   --fc-page-bg-color: transparent;
   --fc-neutral-bg-color: var(--bg-input);
@@ -165,15 +168,32 @@
        time:          mono 8.5px, --acc-lavender-text, margin-top 2px
        handle:        28×3 bar, centred, 3px off the bottom, rgba(124,106,154,0.5)
    --kf-ev-accent (published per event in eventDidMount) lets a coloured event swap the lavender
-   for its own hue while keeping this exact geometry. */
+   for its own hue while keeping this exact geometry.
+   cal-looks (Kai 2026-10-23, "blocks: Now" — design-export/Calendar blocks options.html, its "Now" as drawn):
+   every hue reads one way — the fill its accent at 24%, the edge at 45%, the time row and the check in its
+   text tone (--kf-ev-c / --kf-ev-accent; a coloured block's arrive from ./blockHue). Insets ride the scale. */
 .fc .fc-timegrid-event {
+  --kf-ev-c: var(--acc-lavender);
+  --kf-ev-accent: var(--acc-lavender-text);
+  --kf-ev-deep: var(--acc-lavender-deep);
+  --kf-ev-fill: color-mix(in srgb, var(--kf-ev-c) 24%, transparent);
+  --kf-ev-edge: color-mix(in srgb, var(--kf-ev-c) 45%, transparent);
+  --kf-ev-grip: color-mix(in srgb, var(--kf-ev-c) 65%, transparent);
   border-radius: var(--radius-block);   /* Bound Journal (was 6px) */
-  border: 1px solid var(--kf-ev-edge, rgba(124, 106, 154, 0.35));
-  background: var(--kf-ev-fill, color-mix(in srgb, var(--acc-lavender) 24%, transparent));
-  padding: 7px 10px;
+  border: 1px solid var(--kf-ev-edge);
+  /* --kf-ev-under: what the tint sits on — the grid, or paper where a cascaded block covers another */
+  background: linear-gradient(var(--kf-ev-fill), var(--kf-ev-fill)), var(--kf-ev-under, transparent);
+  padding: calc(7px * var(--kf-d)) calc(10px * var(--kf-d));
+  line-height: 1.25;
   box-shadow: none;
   overflow: hidden;
+  /* the hover actions ask how wide the block is (below) */
+  container-type: inline-size;
 }
+/* FullCalendar darkens a focused block (25% black, its :focus::after) and shadows it — neither is drawn; the
+   keyboard ring is ours (:focus-visible below). Selected B's wash takes that ::after for a picked block. */
+.fc .fc-event:focus { --fc-event-selected-overlay-color: transparent; }
+.fc .fc-timegrid-event:focus { box-shadow: none; }
 /* Motion 4a (WB-1) — hover & press on the block itself. Restated here rather than adding
    .kf-lift: the block element is FullCalendar's, built by FC, and the only className we control
    is on the inner content slot (.kf-ev-row), which would lift the text out of its own box.
@@ -187,29 +207,41 @@
 }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .cal-motion-on .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
+  /* goal A keeps its gold edge while it lifts */
+  .cal-motion-on .fc .fc-timegrid-event.kf-goal:hover { box-shadow: inset 3px 0 0 var(--acc-gold), var(--shadow-hover); }
 }
 
 /* Kai 2026-07-21: "when the event is too small the text inside gets clipped". A short block
    can't fit 4c's stacked title+time, so it collapses to one line: title truncates with an
    ellipsis and the time is dropped rather than half-drawn. The grip goes too — there's no
-   room to seat it clear of the text. */
-.fc .fc-timegrid-event.fc-timegrid-event-short { padding: 2px 8px; }
-.fc .fc-timegrid-event.fc-timegrid-event-short .kf-ev-row { align-items: center; gap: 5px; }
-.fc .fc-timegrid-event.fc-timegrid-event-short .kf-ev-text {
+   room to seat it clear of the text. cal-looks ("Now" as drawn): every block of 30 minutes or less
+   (.kf-one) is that one line — the check, the title, its actions on hover. */
+.fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) { padding: calc(2px * var(--kf-d)) calc(8px * var(--kf-d)); }
+.fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .kf-ev-row { align-items: center; }
+.fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .kf-ev-check { margin-top: 0; }
+.fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .kf-ev-text {
   display: flex;
   align-items: baseline;
   gap: 6px;
   overflow: hidden;
 }
-.fc .fc-timegrid-event.fc-timegrid-event-short .fc-event-title {
+.fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .kf-ev-head { flex: 1; align-items: center; }
+.fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .fc-event-title {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.fc .fc-timegrid-event.fc-timegrid-event-short .fc-event-time { display: none; }
+.fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .fc-event-time { display: none; }
+/* Taller: the title wraps as far as the block holds over its time row — CalendarGrid sets the line count
+   (-webkit-line-clamp) from the block's length, the last line ending in an ellipsis. */
+.fc .fc-timegrid-event:not(.kf-one):not(.fc-timegrid-event-short) .kf-ev-head > .fc-event-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
 /* The block title's line height, stated (it was the font's `normal`, whose glyphs sat 2–3px below a box
-   drawn from the top) so the check lines up with its first line at every interface scale. */
-.fc .fc-timegrid-event .fc-event-title { line-height: 1.2; }
+   drawn from the top) so the check lines up with its first line at every interface scale. "Now" draws 1.25. */
+.fc .fc-timegrid-event .fc-event-title { line-height: 1.25; }
 /* Any block, short or not: never let the text bleed past the rounded edge. */
 .fc .fc-timegrid-event .kf-ev-text { overflow: hidden; }
 .fc .fc-timegrid-event .fc-event-main { padding: 0; }
@@ -223,6 +255,7 @@
   font-size: calc(8.5px * var(--s-text));
   color: var(--kf-ev-accent, var(--acc-lavender-text));
 }
+.fc .fc-timegrid-event .fc-event-time { overflow: hidden; text-overflow: ellipsis; }
 /* 4c puts the title first and the time under it — CalendarGrid's eventContent renders them in
    that order directly, so this is only the gap between them. */
 .fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-time { margin-top: 2px; }
@@ -230,17 +263,21 @@
 /* In-block checkbox on task-linked events (R4, Kai 2026-07-20). Sits left of the text, uses the
    block's own accent so a coloured event stays coherent, and swallows the drag gesture
    (dragGuard) so ticking one never starts a move. */
-.fc .fc-timegrid-event .kf-ev-row { display: flex; align-items: flex-start; gap: 7px; height: 100%; }
+.fc .fc-timegrid-event .kf-ev-row { display: flex; align-items: flex-start; gap: calc(6px * var(--kf-d)); height: 100%; }
 .fc .fc-timegrid-event .kf-ev-text { flex: 1; min-width: 0; }
+/* the title's line: the title, then (on hover) its actions — as the drawing's first row; the time row and a
+   slot's rows below keep the block's whole width */
+.fc .fc-timegrid-event .kf-ev-head { display: flex; align-items: flex-start; gap: calc(6px * var(--kf-d)); min-width: 0; }
+.fc .fc-timegrid-event .kf-ev-head > .fc-event-title { flex: 1; min-width: 0; }
 .fc .fc-timegrid-event .kf-ev-check {
   flex: none;
   /* Kai 2026-10-22 ("the checkbox isn't aligned with the title"): it was a fixed 12px box 1px down while
      the title (12px × --s) scales with the interface — at 125% it sat 3px high, at 150% 5px. It scales
-     with the title now and sits on its first line, whose height is stated below (cal-polish a1: within
-     1px of the line's centre, 100–150%). */
+     with the title now and sits on its first line, whose height is stated above (cal-polish a1: within
+     1px of the line's centre, 100–150%): the 1.25 line is 3px × --s taller than the box, half above it. */
   width: calc(12px * var(--s));
   height: calc(12px * var(--s));
-  margin-top: 0;
+  margin-top: calc(1.5px * var(--s));
   /* §2/§9: never visible at rest — revealed on hover/focus, or when already checked */
   opacity: 0;
   transition: opacity 120ms var(--ease-out);
@@ -249,7 +286,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(9px * var(--s-text));
+  font-size: calc(10px * var(--kf-d)); /* ds-ok: the drawn check's glyph, scaled with the grid as the block type around it */
   line-height: 1;
   color: var(--paper-parchment);
   cursor: pointer;
@@ -263,22 +300,32 @@
   border-color: transparent;
 }
 .fc .fc-timegrid-event .kf-ev-row.kf-done .fc-event-title {
+  /* "Now" as drawn: struck in the hairline, the title keeping its body ink (the block's .62 past fade quiets it) */
   text-decoration: line-through;
   text-decoration-color: var(--ink-hairline);
-  color: var(--ink-faint);
 }
 
 /* Time Slots (0073): the tasks a Time block holds, as rows under its title — the block's own title
    type, check and accent; the fill line ("2 tasks · 45m of 2h") is the time row's mono. The checks
-   stay visible here: they are the tasks, not the block's own state. */
-.fc .fc-timegrid-event .kf-ev-slot { margin-top: 4px; display: flex; flex-direction: column; gap: 4px; }
+   stay visible here: they are the tasks, not the block's own state. cal-looks ("Now" as drawn): the fill
+   line under a hairline, then the rows 3px apart, each 13px type with a 12px check (at 125%). */
+.fc .fc-timegrid-event .kf-ev-slot { margin-top: calc(4px * var(--kf-d)); display: flex; flex-direction: column; gap: calc(3px * var(--kf-d)); }
 /* slot-outline, Kai's pick A (design-export/Slot task outline.html): each task is its own soft card inside
-   the slot — the slot's own wash, a 1px edge in its accent, 8px corners, 4px between. */
+   the slot — the slot's own wash, a 1px edge in its accent, 8px corners. Kept over the "Now" drawing's plain
+   outlined rows: pick A is Kai's own call for exactly these cards (time-slots o1/o2). */
 .fc .fc-timegrid-event .kf-ev-slot-row {
-  display: flex; align-items: center; gap: 5px; min-width: 0; padding: 1px 4px 1px 5px; border-radius: 8px;
+  display: flex; align-items: center; min-width: 0; padding: calc(1px * var(--kf-d)) calc(4px * var(--kf-d)); border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--kf-ev-accent, var(--acc-lavender-text)) 35%, transparent);
   background: var(--kf-ev-fill, color-mix(in srgb, var(--acc-lavender) 24%, transparent));
 }
+/* the drawn 6px after the check; the row's own × and ⋯ (not drawn) sit closer, so a week column's row keeps
+   some title while they show */
+.fc .fc-timegrid-event .kf-ev-slot-row > .kf-ev-check { margin-right: calc(6px * var(--kf-d)); }
+.fc .fc-timegrid-event .kf-ev-slot-row > :is(.kf-ev-slot-out, .kf-ev-slot-more) { margin-left: calc(2px * var(--kf-d)); }
+/* ds-ok: the drawn slot rows' type (13px at 125%), scaled with the grid as the block type around it */
+.fc .fc-timegrid-event .kf-ev-slot-row .fc-event-title.kf-ev-slot-title { font-size: calc(13px * var(--kf-d)); }
+/* ds-ok: the drawn row check (12px at 125%), its glyph scaled with it */
+.fc .fc-timegrid-event .kf-ev-slot-row .kf-ev-check { width: calc(12px * var(--kf-d)); height: calc(12px * var(--kf-d)); font-size: calc(9px * var(--kf-d)); }
 .fc .fc-timegrid-event .kf-ev-slot-row:hover { border-color: color-mix(in srgb, var(--kf-ev-accent, var(--acc-lavender-text)) 70%, transparent); }
 /* While its task is dragged out, the card's place stays as a dashed outline (CalendarGrid heldRow). */
 .fc .fc-timegrid-event .kf-ev-slot-row[data-lifted] { border-style: dashed; border-color: var(--ink-hairline); background: transparent; }
@@ -287,7 +334,7 @@
 .fc .fc-timegrid-event .fc-event-title.kf-ev-slot-title { display: block; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc .fc-timegrid-event .kf-ev-slot-row.kf-done .kf-ev-slot-title { text-decoration: line-through; text-decoration-color: var(--ink-hairline); color: var(--ink-faint); }
 /* 04b "Time slot holding tasks": a hairline in the block's own edge hue over the fill line. */
-.fc .fc-timegrid-event .kf-ev-fill { padding-top: 3px; border-top: 1px solid color-mix(in srgb, var(--kf-ev-edge, var(--acc-lavender-deep)) 22%, transparent); }
+.fc .fc-timegrid-event .kf-ev-fill { padding-top: calc(3px * var(--kf-d)); margin-bottom: calc(2px * var(--kf-d)); border-top: 1px solid color-mix(in srgb, var(--kf-ev-c, var(--acc-lavender)) 30%, transparent); }
 .fc .fc-timegrid-event .kf-ev-slot-more { flex: none; padding: 0 2px; cursor: pointer; color: var(--kf-ev-accent, var(--acc-lavender-text)); }
 /* slots-ux: a held row drags its task out (grab), and its × (Out of the slot) shows on hover. */
 .fc .fc-timegrid-event .kf-ev-slot-row { cursor: grab; }
@@ -496,20 +543,21 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
    from eventDidMount and win over these class values. Ritual/Focus/Admin/External kinds need
    source data the schema does not carry yet. */
 .fc .fc-timegrid-event.kf-kind-event {
-  --kf-ev-fill: color-mix(in srgb, var(--acc-blossom) 24%, transparent);
-  --kf-ev-edge: color-mix(in srgb, var(--acc-blossom) 55%, transparent);
-  --kf-ev-accent: var(--acc-clover-text);
-  --kf-ev-grip: color-mix(in srgb, var(--acc-blossom) 65%, transparent);
+  --kf-ev-c: var(--acc-blossom);
+  --kf-ev-accent: var(--acc-blossom-text);
+  --kf-ev-deep: var(--acc-blossom-text);
 }
 
-/* §5 Temporal — opacity/saturation only. Past stays draggable (§9). */
-.fc .fc-timegrid-event.kf-past { opacity: 0.55; filter: saturate(0.6); }
-/* ran over — the ONE terra exception on the grid */
-.fc .fc-timegrid-event.kf-ranover {
-  --kf-ev-fill: color-mix(in srgb, var(--acc-terra) 10%, transparent);
-  border: 1px dashed color-mix(in srgb, var(--acc-terra) 55%, transparent);
-}
-.fc .fc-timegrid-event.kf-ranover .fc-event-time { color: var(--acc-terra); }
+/* Goal A (Kai 2026-10-23, the options page's "goal" section): today's block of the goal of the day keeps its
+   own look with a gold edge down its left and the goal paper's edge, and a gold ✶ before its title. */
+.fc .fc-timegrid-event.kf-goal:not(.fc-event-mirror) { border-color: var(--line-goal); box-shadow: inset 3px 0 0 var(--acc-gold); }
+.fc .fc-timegrid-event .kf-ev-star { color: var(--acc-gold); }
+
+/* §5 Temporal — opacity only ("Now" as drawn: past at .62, its hue kept). Past stays draggable (§9). */
+.fc .fc-timegrid-event.kf-past { opacity: 0.62; }
+/* ran over — the ONE terra exception on the grid: a terra edge, the time row in terra ink, the hue kept */
+.fc .fc-timegrid-event.kf-ranover { border-color: var(--acc-terra); }
+.fc .fc-timegrid-event.kf-ranover .fc-event-time { color: var(--acc-terra-ink); }
 /* overdue (Kai 2026-10-07) — ended before today, not done: past-muted, the time row says
    "Overdue · Replan" in terra; Replan opens the Plan menu. A short block keeps that row inline. */
 .fc .fc-timegrid-event.kf-overdue { opacity: 0.55; filter: saturate(0.6); }
@@ -521,20 +569,13 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .fc .fc-timegrid-event.kf-overdue.kf-ov .kf-ev-overdue-word { display: none; }
 .fc .fc-timegrid-event .kf-ev-replan { cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
 .fc .fc-timegrid-event:hover.kf-overdue { opacity: 0.8; }
-/* in-progress elapsed wash — the lived proportion, ACCENT-DEEP at 14% */
-.fc .fc-timegrid-event .kf-ev-elapsed {
-  position: absolute;
-  left: 0; right: 0; top: 0;
-  background: color-mix(in srgb, var(--kf-ev-edge, var(--acc-lavender-deep)) 14%, transparent);
-  pointer-events: none;
+/* in-progress elapsed wash — the lived proportion (--kf-elapsed, CalendarGrid LiveTime), ACCENT-DEEP at 14%,
+   washing in from the block's top edge across its whole width ("Now" as drawn). */
+.fc .fc-timegrid-event.kf-inprog {
+  background: linear-gradient(color-mix(in srgb, var(--kf-ev-deep) 14%, transparent) var(--kf-elapsed, 0%), transparent 0), linear-gradient(var(--kf-ev-fill), var(--kf-ev-fill)), var(--kf-ev-under, transparent);
 }
 
-/* §4 completed — drains to paper, hue leaves entirely; strike lives on .kf-done above. */
-.fc .fc-timegrid-event.kf-done {
-  --kf-ev-fill: var(--paper-bone);
-  --kf-ev-accent: var(--ink-faint);
-  border-color: var(--line-solid);
-}
+/* §4 completed — the filled check and the struck title (on .kf-done above); "Now" as drawn keeps the hue. */
 
 /* §4 conflict — solid DEEP edge; the ⚠ badge is ink, never terra. */
 .fc .fc-timegrid-event.fc-event-conflict {
@@ -551,17 +592,44 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
   color: var(--ink-body);
   pointer-events: none;
 }
-/* the title stops short of the badge instead of running under it */
-.fc .fc-timegrid-event .kf-ev-row:has(> .kf-ev-badge) .kf-ev-text { padding-right: 12px; }
+/* the title (and the hover actions) stop short of the badge instead of running under it */
+.fc .fc-timegrid-event .kf-ev-row:has(> .kf-ev-badge) { padding-right: 12px; }
 /* C10 repeating — the kit's ↻ glyph in the block's own edge hue, quiet. */
 .fc .fc-timegrid-event .kf-ev-repeat { color: var(--kf-ev-edge, var(--acc-lavender-deep)); }
-/* completed petal badge (9x7, tilted 38°) */
-.fc .fc-timegrid-event .kf-ev-petal {
-  width: 9px; height: 7px;
-  border-radius: 70% 30% 60% 40%;
-  background: var(--acc-blossom);
-  transform: rotate(38deg);
+
+/* "Now" as drawn: the pointer over a block shows its actions at the end of the title's line — ▶ Focus (a
+   task) and ⋯ its menu, 20px marks in the block's ink. */
+.fc .fc-timegrid-event .kf-ev-acts { display: none; flex: none; gap: 2px; margin: calc(-1px * var(--kf-d)) 0 calc(-1px * var(--kf-d)) auto; }
+/* Only where the block has room for them beside its title (a week column at 1280 doesn't): there a click on
+   the block is the block's. */
+@container (min-width: 120px) {
+  /* ds-ok: a pointer's shortcut — touch has the same actions in the block's popover and its long-press menu */
+  .fc .fc-timegrid-event:is(:hover, :focus-visible, :has(:focus-visible)) .kf-ev-acts { display: inline-flex; }
 }
+.fc .fc-timegrid-event .kf-ev-act {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: calc(20px * var(--kf-d)); height: calc(20px * var(--kf-d)); border-radius: 6px;
+  font-size: calc(12px * var(--kf-d)); line-height: 1; color: var(--kf-ev-accent); cursor: pointer; /* ds-ok: the drawn action marks, scaled with the grid */
+}
+
+/* Selected B (Kai 2026-10-23, the options page's "selected" section): a picked block darkens under a wash of the
+   selection ink and wears a check badge in its top corner (square-cornered like its check); the title stops
+   short of it. Replaces the plain outline. */
+.fc .fc-event[data-picked]::after { content: ''; position: absolute; inset: 0; z-index: 1; background: color-mix(in srgb, var(--sel-bg) 13%, transparent); pointer-events: none; }
+.fc .fc-timegrid-event .kf-ev-pick { display: none; }
+.fc .fc-timegrid-event[data-picked] .kf-ev-row { padding-right: calc(20px * var(--kf-d)); }
+.fc .fc-timegrid-event[data-picked] .kf-ev-pick {
+  /* placed from the content box: 5px off the block's top and right edges (its padding is 7 / 10) */
+  position: absolute; top: calc(-2px * var(--kf-d)); right: calc(-5px * var(--kf-d)); z-index: 1;
+  display: flex; align-items: center; justify-content: center;
+  width: calc(16px * var(--kf-d)); height: calc(16px * var(--kf-d));
+  border-radius: 5px; /* ds-ok: the drawn badge's corner (Calendar blocks options, selected B) */
+  background: var(--sel-bg); color: var(--sel-ink); font-size: calc(10px * var(--kf-d)); font-weight: 700; line-height: 1; /* ds-ok: the drawn badge's ✓, scaled with the grid */
+  pointer-events: none;
+}
+/* a one-line block: the badge on the line's middle */
+.fc .fc-timegrid-event[data-picked]:is(.kf-one, .fc-timegrid-event-short) .kf-ev-row { padding-right: calc(18px * var(--kf-d)); }
+.fc .fc-timegrid-event[data-picked]:is(.kf-one, .fc-timegrid-event-short) .kf-ev-pick { top: 50%; margin-top: calc(-8px * var(--kf-d)); right: calc(-3px * var(--kf-d)); }
 
 /* §7 Interaction — overlay only, the fill never re-tints. */
 .fc .fc-timegrid-event { cursor: grab; }
@@ -577,24 +645,13 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 /* sync-failed — server rejected: sig-overdue OUTLINE + ⚠; the FILL never goes terra */
 .fc .fc-timegrid-event.kf-failed { outline: 1.5px solid var(--sig-overdue); outline-offset: 2px; }
 
-/* §6 micro tier (<27px drawn): one mono strip — no padding rows, radius eases to 3. */
-.fc .fc-timegrid-event.kf-tier-micro { padding: 0 6px; border-radius: var(--radius-block); }
-.fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s-text)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fc .fc-timegrid-event.kf-tier-micro .fc-event-time,
-.fc .fc-timegrid-event.kf-tier-micro .kf-ev-check,
+/* §6 micro tier (under 30 minutes): no room to seat the grips clear of the line. "Now" as drawn draws its
+   title and check as any one-line block (.kf-one), no longer a mono strip. */
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-end::after,
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-start::after { display: none; }
-/* §6 full tier (≥81px): the title may wrap to two lines — never three. */
-.fc .fc-timegrid-event.kf-tier-full .fc-event-title {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  line-height: 1.3;
-}
 
-/* §6 month view: badges/check/wash drop; the pill is the all-day band's (above). */
-.fc .fc-daygrid-event .kf-ev-badge, .fc .fc-daygrid-event .kf-ev-check, .fc .fc-daygrid-event .kf-ev-elapsed { display: none; }
+/* §6 month view: badges/check/actions drop; the pill is the all-day band's (above). */
+.fc .fc-daygrid-event .kf-ev-badge, .fc .fc-daygrid-event .kf-ev-check, .fc .fc-daygrid-event .kf-ev-acts, .fc .fc-daygrid-event .kf-ev-pick { display: none; }
 /* Kai 2026-10-14 "too crammed": a day-grid pill (the all-day band, the month) is ONE line — the start
    time, then the title cut with an ellipsis. Its title + time used to stack two lines into a 16–20px
    pill and spill over the pill below. The all-day band shows no time at all (§6: "no time row"). */
@@ -607,10 +664,6 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
    spilled over the pills below. */
 .fc .fc-daygrid-event .kf-ev-slot { display: none; }
 
-/* Multi-select (Kai 2026-10-22): a picked block wears a plain outline in the selection ink — the look is
-   Kai's call later (Calendar blocks options); this one only has to read. */
-.fc .fc-event[data-picked] { outline: 2px solid var(--sel-bg); outline-offset: 1px; }
-
 /* grip reveal (pairs with the opacity:0 set on the ::after above) */
 .fc .fc-timegrid-event:hover .fc-event-resizer-end::after,
 .fc .fc-timegrid-event:focus-within .fc-event-resizer-end::after,
@@ -621,38 +674,25 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
    it. FullCalendar positions every block's harness with inline left/right/z-index (its own
    shingle overprinted titles and times), so the rules below are !important, reach the harness
    through :has(), and skip FC's drag mirror (it rides a full-width harness of its own). ═══ */
-/* overlap (2): each calc(50% − 2px), 4px gutter — earlier start left */
-.fc .fc-timegrid-event-harness:has(> .kf-ov-p0:not(.fc-event-mirror)) { left: 0 !important; right: calc(50% + 2px) !important; margin: 0 !important; }
-.fc .fc-timegrid-event-harness:has(> .kf-ov-p1:not(.fc-event-mirror)) { left: calc(50% + 2px) !important; right: 0 !important; margin: 0 !important; }
-/* stacked (3+): three equal lanes side by side, 4px gutters — nothing covers anything (Kai
-   2026-10-14, Akiflow's way: the 56%/22% shingle buried the later blocks in narrow columns).
-   A fourth block and on still go under lane 2's "+N more". */
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s0:not(.fc-event-mirror)) { left: 0 !important; right: calc(66.667% + 1.333px) !important; margin: 0 !important; z-index: 1 !important; }
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s1:not(.fc-event-mirror)) { left: calc(33.333% + 1.333px) !important; right: calc(33.333% + 1.333px) !important; margin: 0 !important; z-index: 1 !important; }
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { left: calc(66.667% + 1.333px) !important; right: 0 !important; margin: 0 !important; z-index: 1 !important; }
-/* A shingled sheet must hide what it covers: block fills are a 24% tint, so on their own the
-   lower title reads straight through the upper block (the overprint J-13 is about). The harness
-   under each sheet carries the grid's own paper, so the tint sits on paper exactly as it does on
-   the bare column — same hue, same alpha, now opaque (the #3e drawing's sheets are opaque too). */
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s0:not(.fc-event-mirror)),
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s1:not(.fc-event-mirror)),
-.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { background: var(--paper-parchment); border-radius: var(--radius-block); }
+/* Overlap B · cascade (Kai 2026-10-23, the options page's "overlapping blocks" section): each later block steps
+   22% to the right over the one under it and keeps the rest of the width; the earlier ones peek out on the
+   left, a 2px paper edge between them. Lanes 0–2 (a pair: 0–1); later ones stack higher. A fourth block and
+   on still go under lane 2's "+N more". */
+.fc .fc-timegrid-event-harness:has(> .kf-ov:not(.fc-event-mirror)) { left: 0 !important; right: 0 !important; margin: 0 !important; z-index: 1 !important; }
+.fc .fc-timegrid-event-harness:has(> :is(.kf-ov-p1, .kf-ov-s1):not(.fc-event-mirror)) { left: 22% !important; z-index: 2 !important; }
+.fc .fc-timegrid-event-harness:has(> .kf-ov-s2:not(.fc-event-mirror)) { left: 44% !important; z-index: 3 !important; }
+/* A cascaded sheet must hide what it covers: block fills are a 24% tint, so on their own the lower title
+   reads straight through the upper block. Each one's tint sits on the grid's own paper — same hue, same
+   alpha, now opaque — carried by the block, so it lifts with it on hover. */
+.fc .fc-timegrid-event.kf-ov:not(.fc-event-mirror) { --kf-ev-under: var(--paper-parchment); }
+.fc .fc-timegrid-event:is(.kf-ov-p1, .kf-ov-s1, .kf-ov-s2):not(.fc-event-mirror) { box-shadow: -2px 0 0 var(--paper-parchment); }
+.fc .fc-timegrid-event.kf-goal:is(.kf-ov-p1, .kf-ov-s1, .kf-ov-s2):not(.fc-event-mirror) { box-shadow: inset 3px 0 0 var(--acc-gold), -2px 0 0 var(--paper-parchment); }
 /* past the third index: fully hidden — listed by the topmost's "+N more" */
 .fc .fc-timegrid-event-harness:has(> .kf-ov-hide:not(.fc-event-mirror)) { display: none !important; }
-/* hover z-bumps only — no geometry change */
-.fc .fc-timegrid-event-harness:has(> .kf-ov:hover) { z-index: 4 !important; }
-/* §6 overlap type scale: padding 6/8, title 11px on one line, time 8px start-only */
-.fc .fc-timegrid-event.kf-ov:not(.fc-timegrid-event-short):not(.kf-tier-micro) { padding: 6px 8px; }
-.fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
-.fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro):not(.kf-tier-full) .fc-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s-text)); }
-/* §6 narrow column (< 170px, Polish D): "short-tier type scale, start time only. Width never
-   changes what the block is." Same scale as the overlap tier above; CalendarGrid puts
-   .kf-cal-narrow on its wrapper and trims the time to the start (weekFit.ts decides). */
-.kf-cal-narrow .fc .fc-timegrid-event:not(.fc-timegrid-event-short):not(.kf-tier-micro) { padding: 6px 8px; }
-.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }
-.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro):not(.kf-tier-full) .fc-event-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s-text)); }
+/* No hover raise: a raised lower block would cover the ones over it for as long as the pointer stayed on it.
+   Each one's own part stays in reach where it shows — the lower ones' checks and titles sit in their peek. */
+/* An overlapping or narrow block reads as any other ("Now" as drawn: the same type, its title wrapping, its
+   range): the cascade leaves it most of the column. Polish D's narrow class still trims "Overdue · " (below). */
 .fc .fc-timegrid-event .kf-ev-more { cursor: pointer; }
 @media (hover: hover) {
   .fc .fc-timegrid-event .kf-ev-more:hover { text-decoration: underline; text-underline-offset: 2px; }

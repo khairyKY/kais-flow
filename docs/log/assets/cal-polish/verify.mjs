@@ -208,8 +208,10 @@ if (want('d2')) {
   const from = await row.boundingBox()
   const lane = await page.locator('td.fc-timegrid-slot-lane[data-time="11:30:00"]').boundingBox()
   const col = await page.locator(`td.fc-timegrid-col[data-date="${DATE}"]`).boundingBox()
-  // the row's title, clear of its check and its × / ⋯
-  await mouseDrag(page, { x: from.x + from.width * 0.45, y: from.y + from.height / 2 }, { x: col.x + col.width / 2, y: lane.y + 3 }, () => shot(page, 'd2-mid'))
+  // the row itself, just past its check — in a week column the hover's × takes the title's room (cal-looks: the
+  // drawn row's 6px gaps), so a point at 45% of the row can land on the ×
+  const ck = await row.locator('.kf-ev-check').boundingBox()
+  await mouseDrag(page, { x: ck.x + ck.width + 2.5, y: from.y + from.height / 2 }, { x: col.x + col.width / 2, y: lane.y + 3 }, () => shot(page, 'd2-mid'))
   await settle(state)
   const b = posts(state, 'calendar_events', w0).find((e) => e.task_id === id(REPLY))
   check('d2 a held 15m task dragged out → a 15-minute block at 11:30', b && b.starts_at === iso('11:30') && mins(b) === 15, JSON.stringify(b && [b.starts_at, mins(b)]))
@@ -302,8 +304,10 @@ if (want('d9')) {
     await sleep(300)
     let ids = await pickedIds(page)
     check(`d9-${theme} Ctrl+click and Shift+click pick two blocks — outlined, no popover`, ids.length === 2 && ids.includes(eid(STANDUP)) && ids.includes(eid(WATERB)) && (await page.locator('[role="menu"]').count()) === 0, JSON.stringify(ids))
-    const outline = await fcBlock(page, STANDUP).evaluate((e) => [getComputedStyle(e).outlineStyle, getComputedStyle(e).outlineWidth])
-    check(`d9-${theme} …a plain 2px outline`, outline[0] === 'solid' && outline[1] === '2px', JSON.stringify(outline))
+    // cal-looks (Kai 2026-10-23, "selected B"): the selection ink's wash and a check badge, no outline.
+    // (blurred first: a Ctrl-click can leave the keyboard focus ring, which is focus, not the selection)
+    const look = await fcBlock(page, STANDUP).evaluate((e) => { document.activeElement?.blur(); return [getComputedStyle(e).outlineStyle, getComputedStyle(e, '::after').content, getComputedStyle(e.querySelector('.kf-ev-pick')).display] })
+    check(`d9-${theme} …each under a wash with its check badge (selected B), no outline`, look[0] === 'none' && look[1] !== 'none' && look[2] === 'flex', JSON.stringify(look))
     await shot(page, `d9-picked-${theme}`)
     if (theme === 'day') {
       // Drag Standup down an hour: Water the plants comes along.
@@ -658,7 +662,9 @@ if (want('g2')) {
     const b = await page.locator(sel).boundingBox()
     let g
     const to = { x: b.x + b.width / 2 + 120, y: b.y - 60 }
-    await mouseDrag(page, { x: b.x + b.width * 0.45, y: b.y + b.height / 2 }, to, async () => {
+    // just past the row's check (as d2): in a week column the hover's × takes the title's room
+    const ck = await page.locator(`${sel} .kf-ev-check`).boundingBox()
+    await mouseDrag(page, { x: ck.x + ck.width + 2.5, y: b.y + b.height / 2 }, to, async () => {
       g = await ghostInfo(page, sel)
       await shot(page, 'g2-held-drag')
     })
@@ -735,7 +741,8 @@ if (want('b1')) {
   {
     const { ctx, page, errors, state } = await open('/calendar', { clock12: true })
     await slotPoint(page, '12:00')
-    check('b1 calendar (12h): the gutter and block times read 12 PM / 12:00 PM', /12 PM/.test(await page.locator('.fc-timegrid-slot-label').allInnerTexts().then((x) => x.join(' '))) && /12:00 PM/.test(await fcBlock(page, STANDUP).innerText()), await fcBlock(page, STANDUP).innerText())
+    // cal-looks: a week column's block reads its range ("12:00–1:00 PM · 1h", as drawn), no longer the start alone
+    check('b1 calendar (12h): the gutter and block times read 12 PM / 12:00–1:00 PM', /12 PM/.test(await page.locator('.fc-timegrid-slot-label').allInnerTexts().then((x) => x.join(' '))) && /12:00(–1:00)? PM/.test(await fcBlock(page, STANDUP).innerText()), (await fcBlock(page, STANDUP).innerText()).replace(/\s+/g, ' '))
     check('b1 calendar (12h): no 24-hour time anywhere on the page', (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
     await slotPoint(page, '16:00')
     await fcBlock(page, LONGB).click()
@@ -779,8 +786,9 @@ if (want('b1')) {
     await sleep(300)
     await page.goto(`${BASE}/calendar`, { waitUntil: 'networkidle' })
     await sleep(1200)
-    await slotPoint(page, '16:00')
-    check('b1 Settings ▸ 24-hour: the calendar reads 16:00', /16:00(?! PM)/.test(await fcBlock(page, LONGB).innerText()), await fcBlock(page, LONGB).innerText())
+    // cal-looks: a 30-minute block is one line with no time row (as drawn) — the hour-long one carries the time
+    await slotPoint(page, '17:00')
+    check('b1 Settings ▸ 24-hour: the calendar reads 17:00–18:00', /17:00–18:00/.test(await fcBlock(page, DEEPB).innerText()), (await fcBlock(page, DEEPB).innerText()).replace(/\s+/g, ' '))
     check('b1 settings no page errors', errors.length === 0, errors.join(' | '))
     await ctx.close()
   }

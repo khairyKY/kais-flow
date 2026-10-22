@@ -99,13 +99,35 @@
 .pc-pane.is-week .pc-block-body { padding: 4px; }
 .pc-pane.is-week .pc-check { display: none; }
 
-/* ── Blocks: fill only, radius 3 (MK Week Strip look); hue from the kind (--pc-fill / --pc-ink). ── */
+/* ── Blocks: hue from the kind (--pc-fill / --pc-edge / --pc-ink). cal-looks (Kai 2026-10-23, "blocks: Now" —
+   design-export/Calendar blocks options.html, as the desktop's): the accent's tint over paper, a 1px edge in
+   it, the title in the regular weight; the time and the check in its ink. The phone keeps its touch sizes
+   (a 14px title, the kit's 17px check, always shown). ── */
 .pc-block {
   position: absolute; border-radius: var(--radius-block); cursor: pointer;
+  /* the edge is an inset ring, not a border: a border shifted the block's content box, and a block held in a
+     3-day view no longer lifted (calendar-phone 7h) */
+  box-shadow: inset 0 0 0 1px var(--pc-line, var(--pc-edge, transparent));
   background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment);
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
 }
-.pc-block.is-past { opacity: 0.55; filter: saturate(0.6); }
+.pc-block.is-past { opacity: 0.62; }
+/* overdue (ended before today, not done — "Overdue · Replan"): the app's own muting, as on the desktop (not drawn) */
+.pc-block.is-past.is-noted { opacity: 0.55; filter: saturate(0.6); }
+/* in progress: the lived share washes in from the top, the accent's ink at 14% */
+.pc-block.is-now { background: linear-gradient(color-mix(in srgb, var(--pc-ink) 14%, transparent) var(--pc-elapsed, 0%), transparent 0), linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); }
+/* ran over — the one terra exception: a terra edge, the time in terra ink */
+.pc-block.is-ranover { --pc-line: var(--acc-terra); }
+.pc-block.is-ranover .pc-time { color: var(--acc-terra-ink); }
+/* goal A: a gold edge down the left, the goal paper's edge, a gold ✶ before the title */
+.pc-block.is-goal { --pc-line: var(--line-goal); box-shadow: inset 3px 0 0 var(--acc-gold), inset 0 0 0 1px var(--pc-line); }
+.pc-star { color: var(--acc-gold); }
+/* overlap B: a cascaded block's 2px paper edge over the one it covers */
+.pc-block.is-cascade { box-shadow: inset 0 0 0 1px var(--pc-line, var(--pc-edge, transparent)), -2px 0 0 var(--paper-parchment); }
+.pc-block.is-cascade.is-goal { box-shadow: inset 3px 0 0 var(--acc-gold), inset 0 0 0 1px var(--pc-line), -2px 0 0 var(--paper-parchment); }
+/* the check ("Now" as drawn): open, edged in the block's ink; done, the check fill */
+.pc-block .pc-check .kf-checkbox { border-radius: 4px !important; } /* ds-ok: the drawn block check's corner (Calendar blocks options, "Now") */
+.pc-block .pc-check .kf-checkbox[aria-checked="false"] { border-color: var(--pc-ink) !important; background: transparent !important; }
 /* A block scrolled half off keeps its title in the visible part. */
 .pc-block-body {
   position: sticky; top: 0; display: flex; align-items: center; gap: var(--sp-2); min-width: 0; max-height: 100%; padding: 0 10px; overflow: hidden;
@@ -118,7 +140,7 @@
 .pc-block.is-compact .pc-block-body { gap: 6px; padding: 0 6px; }
 .pc-block.is-compact .pc-name { line-height: 18px; }
 .pc-check { flex: none; display: inline-flex; }
-.pc-name { min-width: 0; font-size: 14px; font-weight: var(--fw-medium); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-name { min-width: 0; font-size: 14px; /* ds-ok: the phone's touch title, unchanged (only its weight follows the drawing) */ font-weight: var(--fw-regular, 400); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* On one row the time gives way first: a narrow lane (a pair, a stack of three) keeps the title. */
 .pc-time { flex: 0 1000 auto; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* An overdue block's "Overdue · Replan" (Kai 2026-10-07) reads in terra under the past-muting. */
@@ -128,11 +150,13 @@
    time type; the fill line ("2 tasks · 45m of 2h") sits where a time line does. */
 .pc-slot { flex-basis: 100%; display: flex; flex-direction: column; gap: 3px; min-width: 0; margin-top: 2px; }
 /* slot-outline, Kai's pick A: each task is its own soft card in the slot — the block's fill, a 1px edge
-   in its ink, 8px corners, 3px between. */
+   in its ink, 8px corners, 3px between (kept over the "Now" drawing's plain rows: Kai's pick for these
+   cards). The fill line sits under a hairline in the accent, as drawn. */
 .pc-slot-row {
   display: flex; align-items: center; gap: var(--sp-2); min-width: 0; min-height: 24px; padding: 0 8px 0 2px; border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--pc-ink) 35%, transparent); background: var(--pc-fill);
 }
+.pc-slot-fill { padding-top: 3px; border-top: 1px solid color-mix(in srgb, var(--pc-edge, var(--pc-ink)) 66%, transparent); }
 .pc-block-body .pc-slot .pc-time { flex-basis: auto; }
 .pc-block-body .pc-slot-row .pc-check { align-self: center; }
 .pc-slot-row.is-done .pc-name { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
@@ -152,11 +176,11 @@
 .pc-pending { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sig-offline); }
 
 /* 4+ blocks at once: three drawn, the rest behind a "+N" chip (kit Chip, 24 tall, a 48 hit) at the stack's top-right. */
-.pc-more { position: absolute; z-index: 2; display: flex; }
+.pc-more { position: absolute; z-index: 4; display: flex; }
 
 /* 7e/7f — lifted: scale 1.04, +1.2°, --shadow-popover (Motion 5b); its old place a dashed outline. */
 .pc-block.is-lifted {
-  z-index: 3; touch-action: none; box-shadow: var(--shadow-popover);
+  z-index: 5; touch-action: none; box-shadow: inset 0 0 0 1px var(--pc-line, var(--pc-edge, transparent)), var(--shadow-popover);
   transform: translateX(var(--pc-shift, 0px)) scale(1.04) rotate(1.2deg);
   transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
 }
