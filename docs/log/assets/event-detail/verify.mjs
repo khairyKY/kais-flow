@@ -196,7 +196,7 @@ if (want('a2')) {
   await menu(page, 'Colour').getByRole('button', { name: 'Sage' }).click()
   await settle(state)
   const accent = await fc(page, eid(LUNCH)).evaluate((el) => el.style.getPropertyValue('--kf-ev-accent'))
-  check('a2 colour: Sage saved and the block repaints (no reload)', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.color === '#8A9A7E') && accent === '#8A9A7E', accent)
+  check('a2 colour: Sage saved and the block repaints (no reload)', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.color === '#8A9A7E') && (accent === '#8A9A7E' || accent === 'var(--acc-sage-text)'), accent) // cal-looks: a swatch draws as its token (calendar/blockHue)
   // None clears it (the popover stays open; the swatch menu shows the pick).
   await menu(page).getByRole('button', { name: 'Colour' }).click()
   await sleep(250)

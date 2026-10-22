@@ -2,7 +2,7 @@ import { forwardRef, useEffect, useImperativeHandle, useLayoutEffect, useRef, us
 import { Checkbox, Chip } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
-import { addDays, durationLabel, toMin } from '../../components/pickerMath'
+import { addDays, durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { longPress, tick } from '../../lib/haptics'
 import { useMotionEnabled } from '../../lib/motion'
 import { useEscapeStack } from '../../lib/overlayStack'
@@ -25,9 +25,12 @@ import { appZone } from '../../lib/appZone'
 // where only the columns slide. ──
 
 export interface BlockLook {
-  /** Kind hue (CALENDAR.md §3): the fill and its ink. */
+  /** Kind hue (CALENDAR.md §3): the fill, its edge and its ink ("Now" as drawn: the accent at 24% / 45%). */
   fill: string
+  edge: string
   ink: string
+  /** Today's block of the goal of the day: the gold edge and ✶ (goal A, Kai 2026-10-23). */
+  goal?: boolean
   /** Task blocks draw the 18px checkbox, always (never on hover only). */
   check?: { done: boolean; toggle: () => void }
   /** Replaces the time line — an overdue block's "Overdue · Replan" (Kai 2026-10-07). */
@@ -398,7 +401,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const heldIso = held?.at ? spanIso({ day: held.at.day, start: held.at.start, end: held.at.start + held.minutes }).starts_at : null
   const heldInto = heldIso ? slotAt(events, heldIso) : undefined
   const heldGhost = held?.at && !heldInto ? held.at : null
-  function block(ev: CalendarEvent, start: number, end: number, geo: { left: string; width: string }, cut: { from: boolean; into: boolean } = { from: false, into: false }) {
+  function block(ev: CalendarEvent, start: number, end: number, geo: { left: string; width: string; z?: number }, cut: { from: boolean; into: boolean } = { from: false, into: false }) {
     const lifted = lift?.id === ev.id ? lift : null
     const s = lifted ? lifted.draft : { start, end }
     const h = Math.max(MIN_BLOCK_PX, minToPx(s.end - s.start))
@@ -407,13 +410,19 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const evEnd = Date.parse(ev.ends_at)
     const t = now.getTime()
     const live = !lifted && evStart <= t && t < evEnd
-    const past = !lifted && evEnd <= t
+    // "Ran over" (as the desktop's, "Now" as drawn): a task block not done whose end passed today — a terra
+    // edge and its end time, never faded. One that ended before today is overdue (lk.note) instead.
+    const ran = !lifted && !!lk.check && !lk.check.done && !lk.note && evEnd <= t
+    const past = !lifted && evEnd <= t && !ran
     // Title, then time on its own line, from 56px — task blocks too since Kai 2026-10-07 ("Crypto —
     // heavy sessio…" on one line of a 1h30 block, the rest empty); under that, one row.
     const stacked = h >= 56
     const cutFrom = !lifted && cut.from
     const cutInto = !lifted && cut.into
-    const clockLine = lk.note ?? (live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : cutFrom || cutInto ? '' : rangeText(s.start, s.end))
+    // An hour or more reads its range and length ("9:00–10:00 AM · 1h"), a slot holding tasks its start.
+    const mins = s.end - s.start
+    const span = lk.slot ? clockText(fromMin(s.start)) : `${rangeText(s.start, s.end)}${mins >= 60 ? ` · ${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : ''}`
+    const clockLine = lk.note ?? (live ? `Now · ${durationLabel(Math.max(1, Math.ceil((evEnd - t) / 60_000)))} left` : ran ? `Ran over · ${clock(evEnd)}` : cutFrom || cutInto ? '' : span)
     const time = lk.parent ? `${clockLine ? `${clockLine} · ` : ''}↳ ${lk.parent}` : clockLine
     // room for the cut's own line under / over the title (a sliver keeps just its title)
     const cutRoom = h >= 48
@@ -425,13 +434,17 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       left: geo.left,
       width: geo.width,
       '--pc-fill': lk.fill,
+      '--pc-edge': lk.edge,
       '--pc-ink': lk.ink,
       '--pc-shift': colShift ? `${(colShift * width()) / days.length}px` : undefined,
+      // the lived share, washing in from the top ("Now" as drawn)
+      '--pc-elapsed': live ? `${Math.round(((t - evStart) / (evEnd - evStart)) * 100)}%` : undefined,
+      zIndex: lifted ? undefined : geo.z,
     } as CSSProperties
     return (
       <div
         key={ev.id}
-        className={`pc-block${lifted ? ' is-lifted' : ''}${heldInto && heldInto.id === ev.id && held?.slotId !== ev.id ? ' is-drop' : ''}${past ? ' is-past' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}${cutFrom ? ' is-cut-from' : ''}${cutInto ? ' is-cut-into' : ''}${cutRoom && cutFrom ? ' has-cut-label' : ''}`}
+        className={`pc-block${lifted ? ' is-lifted' : ''}${heldInto && heldInto.id === ev.id && held?.slotId !== ev.id ? ' is-drop' : ''}${past ? ' is-past' : ''}${live ? ' is-now' : ''}${ran ? ' is-ranover' : ''}${lk.goal ? ' is-goal' : ''}${geo.z && geo.z > 1 ? ' is-cascade' : ''}${lk.check?.done ? ' is-done' : ''}${h < COMPACT_PX ? ' is-compact' : ''}${lk.note ? ' is-noted' : ''}${cutFrom ? ' is-cut-from' : ''}${cutInto ? ' is-cut-into' : ''}${cutRoom && cutFrom ? ' has-cut-label' : ''}`}
         data-id={ev.id}
         data-tour="calendar-block"
         style={{ ...style, '--pc-lines': lk.slot ? 1 : titleLines(h) } as CSSProperties}
@@ -443,7 +456,10 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
               <Checkbox subtask checked={lk.check.done} onChange={lk.check.toggle} label={ev.title} />
             </span>
           )}
-          <span className="pc-name"><EmojiText text={ev.title} /></span>
+          <span className="pc-name">
+            {lk.goal && <span className="pc-star" aria-label="Goal of the day: ">✶ </span>}
+            <EmojiText text={ev.title} />
+          </span>
           {(!multi || stacked) && time && (
             <span className="pc-time">
               {/* C10: one occurrence of a repeating event */}
@@ -517,13 +533,10 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         {blocks.map((b) => {
           const slot = ov.get(b.event.id)
           if (slot?.kind === 'hidden') return null // 4+ at once: under the topmost's "+N" chip
-          const geo =
-            slot?.kind === 'pair'
-              ? { left: `calc(${inset.l}px + ${slot.lane} * (${full} / 2 + 2px))`, width: `calc(${full} / 2 - 2px)` }
-              : slot?.kind === 'stack'
-                ? // three equal lanes, 4px gutters (Kai 2026-10-14: the 56%/22% shingle buried the later blocks)
-                  { left: `calc(${inset.l}px + ${slot.lane} * ((${full} - 8px) / 3 + 4px))`, width: `calc((${full} - 8px) / 3)` }
-                : { left: `${inset.l}px`, width: `calc${full}` }
+          // Overlap B · cascade (Kai 2026-10-23, as the desktop's): each later block steps 22% right over the one
+          // under it and keeps the rest of the width, stacked higher; the earlier ones peek out on the left.
+          const lane = slot?.kind === 'pair' || slot?.kind === 'stack' ? slot.lane : 0
+          const geo = slot ? { left: `calc(${inset.l}px + ${full} * ${0.22 * lane})`, width: `calc(${full} * ${1 - 0.22 * lane})`, z: lane + 1 } : { left: `${inset.l}px`, width: `calc${full}` }
           return block(b.event, b.start, b.end, geo, b)
         })}
         {/* At most three drawn at once; the rest collapse into "+N" at the top-right of the stack. */}

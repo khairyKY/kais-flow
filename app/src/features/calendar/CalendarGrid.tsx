@@ -25,6 +25,7 @@ import { StackMorePopover } from './StackMorePopover'
 import { useDayRollover } from './useDayRollover'
 import { cardDragData } from './planningMode'
 import { liftCards } from './cardDrag'
+import { blockHue } from './blockHue'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -49,6 +50,8 @@ export interface CalendarGridEvent {
   readOnly?: boolean
   /** A subtask's own block (Subtasks C, Kai 2026-10-16): its parent's title, "↳ parent" on the time row. */
   parent?: string | null
+  /** Today's block of the goal of the day (the first of today's Top 3): the gold edge and ✶ (goal A, Kai 2026-10-23). */
+  goal?: boolean
 }
 
 export type CalendarGridView = 'timeGridDay' | 'customDayCount' | 'rollingWeek' | 'dayGridMonth'
@@ -110,6 +113,8 @@ interface CalendarGridProps {
   onGridContextMenu?: (iso: string, allDay: boolean, x: number, y: number) => void
   /** Toggles the task behind a block from its checkbox. `done` is the state it was just in. */
   onCompleteTask?: (taskId: string, done: boolean) => void
+  /** A task block's ▶ (on hover, as the options page's "Now" draws it): Focus on its task. */
+  onFocusTask?: (taskId: string) => void
   /** ⋯ (or a right-click) on a task row inside a Time slot: its task menu (Out of the slot…). */
   onSlotTaskMenu?: (taskId: string, x: number, y: number) => void
   /** slots-ux: a click on a held row opens its task; its × takes it out of the slot; dragged onto
@@ -172,19 +177,19 @@ function trackRailHover(rail: HTMLElement | null | undefined): () => void {
   }
 }
 
-/** Motion 4c: one geometry, per-event hue. The defaults in CSS are 4c's own lavender values (fill
- * .24 / edge .35 / grip .5); a coloured event restates them in its colour at the same alphas, so
- * nothing about the block's shape or weight changes. No colour clears them (back to the kind's hue). */
+/** One geometry, per-event hue: the CSS mixes the fill, edge and grip from --kf-ev-c (the kind's accent by
+ * default) and reads --kf-ev-accent for the time row and the check (cal-looks: the options page's "Now").
+ * A coloured block sets its accent and ink (./blockHue); no colour clears them (back to the kind's hue). */
 function paintColor(el: HTMLElement, color: string | null | undefined): void {
   const s = el.style
   if (!color) {
-    for (const v of ['--kf-ev-accent', '--kf-ev-fill', '--kf-ev-edge', '--kf-ev-grip']) s.removeProperty(v)
+    for (const v of ['--kf-ev-c', '--kf-ev-accent', '--kf-ev-deep']) s.removeProperty(v)
     return
   }
-  s.setProperty('--kf-ev-accent', color)
-  s.setProperty('--kf-ev-fill', `color-mix(in srgb, ${color} 24%, transparent)`)
-  s.setProperty('--kf-ev-edge', `color-mix(in srgb, ${color} 55%, transparent)`)
-  s.setProperty('--kf-ev-grip', `color-mix(in srgb, ${color} 65%, transparent)`)
+  const { c, ink } = blockHue(color)
+  s.setProperty('--kf-ev-c', c)
+  s.setProperty('--kf-ev-accent', ink)
+  s.setProperty('--kf-ev-deep', ink)
 }
 
 /** Calendar 3e: a multi-day span is drawn as one all-day piece per day (`<id>§<day>`); every
@@ -290,8 +295,8 @@ function clockFormatter(zone: string, h24: boolean): (ms: number) => string {
 
 type BlockProps = {
   kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number; kfTaskish: boolean
-  kfOverdue: boolean; kfConflict: boolean; kfFull: boolean; kfNarrow: boolean
-  kfOv: boolean; kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
+  kfOverdue: boolean; kfConflict: boolean; kfGoal: boolean
+  kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
   kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null; kfParent: string | null
 }
 
@@ -313,18 +318,20 @@ const phaseClass = (phase: string): string | null => PHASE_CLASS[phase.split(':'
 function LiveTime({ p, allDay, overdue, clock, children }: { p: BlockProps; allDay: boolean; overdue: boolean; clock: (ms: number) => string; children: (live: string | null) => ReactNode }) {
   const phase = useMinuteClock((s) => phaseAt(p, allDay, s.now))
   const ref = useRef<HTMLSpanElement>(null)
+  const [kind, left, pct] = phase.split(':')
   useLayoutEffect(() => {
-    const el = ref.current?.closest('.fc-event')
+    const el = ref.current?.closest<HTMLElement>('.fc-event')
     if (!el || overdue) return
     const want = phaseClass(phase)
     for (const c of Object.values(PHASE_CLASS)) el.classList.toggle(c, c === want)
-  }, [phase, overdue])
-  const [kind, left, pct] = phase.split(':')
+    // The lived share washes in from the block's top edge, the whole width (CalendarGrid.css .kf-inprog).
+    if (kind === 'now' && pct) el.style.setProperty('--kf-elapsed', `${pct}%`)
+    else el.style.removeProperty('--kf-elapsed')
+  }, [phase, overdue, kind, pct])
   const live = overdue ? null : kind === 'ranover' ? `Ran over · ${clock(p.kfEnd)}` : kind === 'now' && left ? `Now · ${left}m left` : null
   return (
     <>
       <span ref={ref} hidden />
-      {kind === 'now' && pct && Number(pct) > 0 && <span className="kf-ev-elapsed" style={{ height: `${pct}%` }} aria-hidden="true" />}
       {children(live)}
     </>
   )
@@ -621,6 +628,10 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       // Layout (§6): tier by DRAWN height at 0.9px/min — micro <27, short <54, std <81, full ≥81.
       const drawnPx = ((endMs - startMs) / 60_000) * 0.9
       classes.push(drawnPx < 27 ? 'kf-tier-micro' : drawnPx < 54 ? 'kf-tier-short' : drawnPx < 81 ? 'kf-tier-std' : 'kf-tier-full')
+      // cal-looks ("Now" as drawn): 30 minutes or less is one line — the check, the title, nothing under it.
+      if (endMs - startMs <= 30 * 60_000 && !e.held?.length) classes.push('kf-one')
+      // Goal A (Kai 2026-10-23): today's block of the goal of the day wears the gold edge and ✶.
+      if (e.goal) classes.push('kf-goal')
       // Temporal (§5) — the minute's (past / in progress / ran over) is eventClassNames' and LiveTime's.
       // Kai 2026-10-07: a task block that ended before today, not done, is overdue — muted, "Overdue ·
       // Replan" (the rail's Overdue holds the same task): the day's, so it's here.
@@ -632,8 +643,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       const isConflict = conflicted.has(e.id)
       if (isConflict) classes.push('fc-event-conflict')
       if (e.readOnly) classes.push('kf-synced')
-      // Layout (§6) geometry: pair = side by side, stack = 56% shingle, hidden = under the
-      // topmost's "+N more". CalendarGrid.css positions FC's harness from these.
+      // Layout (§6) geometry: overlap B (Kai 2026-10-23) — each later block steps 22% right over the one
+      // under it (lanes 0–2); hidden = under the topmost's "+N more". CalendarGrid.css places FC's harness.
       const slot = overlap.get(e.id)
       if (slot) {
         classes.push('kf-ov')
@@ -653,11 +664,9 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         kfEnd: endMs,
         kfOverdue: overdue,
         kfConflict: isConflict,
-        kfFull: drawnPx >= 81,
-        kfNarrow: narrow,
+        kfGoal: !!e.goal,
         kfH24: hour24,
-        kfOv: !!slot,
-        kfMore: slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
+        kfMore:slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
         kfPinned: e.id === pinnedId,
         kfRepeat: !!e.repeat,
         kfHeld: e.held?.length ? e.held : null,
@@ -672,7 +681,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     fcShared.current = shareEvents(fcShared.current, next)
     return fcShared.current.arr
     // `today` re-reads "overdue" when a new day starts.
-  }, [events, isSpan, zone, shownDays, clockTime, conflictedIds, overlap, narrow, hour24, pinnedId, freeGaps, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [events, isSpan, zone, shownDays, clockTime, conflictedIds, overlap, hour24, pinnedId, freeGaps, today]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // M7: paging slides the days in from the side they come from — 160 ms, opacity and translate, on the
   // day columns only (never the time axis or the scroller). Off with Effects off / reduced motion (CSS).
@@ -827,17 +836,17 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         const startMs = arg.event.start?.getTime() ?? p.kfStart
         const endMs = arg.event.end?.getTime() ?? p.kfEnd
 
-        // §5 time labels that don't move with the minute (LiveTime adds "Ran over" / "Now · 51m left").
+        // §5 time labels that don't move with the minute (LiveTime adds "Ran over" / "Now · 51m left"), as the
+        // options page's "Now" draws them (cal-looks): an hour or more reads its range and length ("9:00–10:00 AM ·
+        // 1h"), less its range, a slot holding tasks its start. Overlapping and narrow blocks read the same (the
+        // cascade leaves them the width); a one-line block (≤30m) shows none (CSS).
+        const mins = Math.round((endMs - startMs) / 60_000)
         let staticTime: ReactNode = arg.timeText
-        if ((p.kfOv || p.kfNarrow) && arg.timeText) {
-          // §6 overlap/stack tier: "time start-only" — half a column can't hold a range. The
-          // narrow-column tier (< 170px) reads the same way (Polish D).
-          staticTime = clock(startMs)
-        } else if (p.kfFull && arg.timeText) {
-          // full tier has room for the duration suffix (§2 "as space allows")
-          const mins = Math.round((endMs - startMs) / 60_000)
-          staticTime = `${arg.timeText} · ${mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`}`
-        }
+        if (arg.timeText && p.kfHeld) staticTime = clock(startMs)
+        else if (arg.timeText && mins >= 60) staticTime = `${arg.timeText} · ${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}`
+        // The title wraps as far as the block holds over its time row (drawn px: 72 an hour, 7px padding, a
+        // 15px title line, a 12.6px time row — the interface scale cancels out); a slot's title is one line.
+        const lines = p.kfHeld ? 1 : Math.max(1, Math.floor((1.2 * mins - 25.8) / 15))
         const overdueTime = p.kfOverdue && !arg.isMirror && (
           // dragGuard: a click here opens the Plan menu instead of starting a drag or the details.
           <>
@@ -888,9 +897,11 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         // user must see); its "+N more" rides the time row until the pin lets go.
         const pinnedMore = !!(more && p.kfPinned)
 
-        // §0 one badge slot, ranked: ⚠ (conflict) > completed petal > ↻ repeating (C10). A sync failure
-        // is the block's outline and its time row's "retry ⚠" (CalendarGrid.css), off FullCalendar's data.
-        const badge = p.kfConflict ? '⚠' : done ? 'petal' : p.kfRepeat && !arg.isMirror ? 'repeat' : null
+        // §0 one badge slot, ranked: ⚠ (conflict) > ↻ repeating (C10). A done block is its filled check and
+        // struck title, as drawn ("Now", cal-looks: no petal). A sync failure is the block's outline and its time
+        // row's "retry ⚠" (CalendarGrid.css), off FullCalendar's data.
+        const badge = p.kfConflict ? '⚠' : p.kfRepeat && !arg.isMirror ? 'repeat' : null
+        const title = arg.event.title
 
         // The time row: the overdue link, else the minute's words, else the static label — then whose
         // subtask it is (Subtasks C) and the outbox's suffix (§7, CSS on .kf-ev-sync).
@@ -902,11 +913,40 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           return timeText ? <div className="fc-event-time">{timeText}<span className="kf-ev-sync" /></div> : null
         }
 
+        // "Now" as drawn: the pointer over a block shows its actions at the end of the title's line — ▶ Focus on
+        // a task, ⋯ its menu (the right-click one). dragGuard: a press here never starts a drag. Touch reaches
+        // both through the block's popover and its long-press menu. Hidden on a block too narrow for them (CSS).
+        const acts = !arg.isMirror && (
+          <span className="kf-ev-acts">
+            {p.kfTaskId && !done && !arg.event.allDay && (
+              <span role="button" className="kf-ev-act" title="Focus" aria-label={`Focus on ${title}`} ref={dragGuard(() => L().props.onFocusTask?.(p.kfTaskId!))}>
+                ▶
+              </span>
+            )}
+            <span
+              role="button"
+              className="kf-ev-act"
+              title="More"
+              aria-label={`More for ${title}`}
+              ref={(el) => {
+                dragGuard(() => {
+                  if (!el) return
+                  const r = el.getBoundingClientRect()
+                  L().props.onEventContextMenu?.(blockIdOf(arg.event), r.left, r.bottom)
+                })(el)
+              }}
+            >
+              ⋯
+            </span>
+          </span>
+        )
+
         return (
           <div className={`kf-ev-row${done ? ' kf-done' : ''}`} data-tour={arg.isMirror ? undefined : 'calendar-block'}>
             {badge === '⚠' && <span className="kf-ev-badge" title="Overlaps another block">⚠</span>}
-            {badge === 'petal' && <span className="kf-ev-badge kf-ev-petal" aria-hidden="true" />}
             {badge === 'repeat' && <span className="kf-ev-badge kf-ev-repeat" title="Repeats"><Icon name="repeat" size={10} label="Repeats" /></span>}
+            {/* Selected B (Kai 2026-10-23): a picked block's check badge — shown by [data-picked], set off FullCalendar's data. */}
+            {!arg.isMirror && <span className="kf-ev-pick" aria-hidden="true">✓</span>}
             {cutFrom && <span className="fc-event-time kf-ev-cut kf-ev-cut-from">{cutFrom}</span>}
             {cutInto && <span className="fc-event-time kf-ev-cut kf-ev-cut-into">{cutInto}</span>}
             {p.kfTaskId && !arg.isMirror && (
@@ -921,11 +961,17 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
               </span>
             )}
             <div className="kf-ev-text">
-              {more && !pinnedMore ? (
-                <div className="fc-event-title" title={arg.event.title}>{moreLink}</div>
-              ) : (
-                <div className="fc-event-title"><EmojiText text={arg.event.title} /></div>
-              )}
+              <div className="kf-ev-head">
+                {more && !pinnedMore ? (
+                  <div className="fc-event-title" title={title}>{moreLink}</div>
+                ) : (
+                  <div className="fc-event-title" style={{ WebkitLineClamp: lines }}>
+                    {p.kfGoal && <span className="kf-ev-star" aria-label="Goal of the day: ">✶ </span>}
+                    <EmojiText text={title} />
+                  </div>
+                )}
+                {acts}
+              </div>
               {arg.isMirror ? timeRow(null) : (
                 <LiveTime p={p} allDay={arg.event.allDay} overdue={!!p.kfOverdue} clock={clock}>
                   {timeRow}

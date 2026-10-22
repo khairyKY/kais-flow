@@ -342,7 +342,8 @@ if (want('p1')) {
   check('p1 a tap on Sage saves it', posts(state, 'calendar_events', w0).some((e) => e.id === eid(LUNCH) && e.color === '#8A9A7E'))
   check('p1 …Sage reads as picked, "✓ Saved"', (await page.locator('.pc-bs-colors button[title="Sage"]').getAttribute('aria-pressed')) === 'true' && /saved/i.test(await text(page.locator('.pc-bs-save'))))
   const fill1 = await block.evaluate((e) => e.style.getPropertyValue('--pc-fill'))
-  check('p1 the grid block takes the new hue', fill1 !== fill0 && fill1.includes('#8A9A7E'), `${fill0} → ${fill1}`)
+  // cal-looks (Kai 2026-10-23): a swatch colour draws as its token (calendar/blockHue), so Night Garden redraws it
+  check('p1 the grid block takes the new hue', fill1 !== fill0 && (fill1.includes('#8A9A7E') || fill1.includes('var(--acc-sage)')), `${fill0} → ${fill1}`)
   await shot(page, 'p1-phone-sheet')
   check('p1 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()

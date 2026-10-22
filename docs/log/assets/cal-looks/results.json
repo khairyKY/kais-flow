@@ -1,0 +1,537 @@
+[
+  {
+    "name": "s-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day a task, in progress (lavender): edge, corners, insets, title, time row, check and hue as drawn",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day \"Ran over\" (a buttercream task): the terra edge, the time in terra ink, its own tint kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day a past event (blossom): its blossom tint and edge, the blossom ink, faded to .62",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day done and past, 30 minutes: one line (no time row), the check filled, the title struck, its hue kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day a Time slot holding tasks: the fill line under a hairline, 13px rows with 12px checks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day …the slot's time row is its start (\"1:30 PM\", as drawn)",
+    "ok": true,
+    "detail": "1:30 PM"
+  },
+  {
+    "name": "c1-day hover on a task (buttercream, 1h): the check shows; ▶ and ⋯ as drawn",
+    "ok": true,
+    "detail": " / [[\"▶\",\"20px\",\"rgb(113, 100, 49)\"],[\"⋯\",\"20px\",\"rgb(113, 100, 49)\"]] / [[\"▶\",\"20px\",\"rgb(113, 100, 49)\"],[\"⋯\",\"20px\",\"rgb(113, 100, 49)\"]]"
+  },
+  {
+    "name": "c1-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night a task, in progress (lavender): edge, corners, insets, title, time row, check and hue as drawn",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night \"Ran over\" (a buttercream task): the terra edge, the time in terra ink, its own tint kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night a past event (blossom): its blossom tint and edge, the blossom ink, faded to .62",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night done and past, 30 minutes: one line (no time row), the check filled, the title struck, its hue kept",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night a Time slot holding tasks: the fill line under a hairline, 13px rows with 12px checks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night …the slot's time row is its start (\"1:30 PM\", as drawn)",
+    "ok": true,
+    "detail": "1:30 PM"
+  },
+  {
+    "name": "c1-night hover on a task (buttercream, 1h): the check shows; ▶ and ⋯ as drawn",
+    "ok": true,
+    "detail": " / [[\"▶\",\"20px\",\"rgb(220, 207, 160)\"],[\"⋯\",\"20px\",\"rgb(220, 207, 160)\"]] / [[\"▶\",\"20px\",\"rgb(220, 207, 160)\"],[\"⋯\",\"20px\",\"rgb(220, 207, 160)\"]]"
+  },
+  {
+    "name": "c1-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-100 15 and 30 minutes are one line, no time row",
+    "ok": true,
+    "detail": "Water the plants and refill the bird feeder / Kai's Flow email: Gmail App Password + 2 GitHub secrets"
+  },
+  {
+    "name": "c2-100 1h: the range and its length (\"10:15–11:15 AM · 1h\")",
+    "ok": true,
+    "detail": "Deep work on the quarterly forecast numbers for Shaheen 10:15–11:15 AM · 1h"
+  },
+  {
+    "name": "c2-100 1h45: \"11:30 AM–1:15 PM · 1h 45m\"",
+    "ok": true,
+    "detail": "Write the investor update and the hiring plan for the first quarter 11:30 AM–1:15 PM · 1h 45m"
+  },
+  {
+    "name": "c2-100 1h45 with a long title: it wraps (2 lines) and the time row still shows",
+    "ok": true,
+    "detail": "{\"lines\":2,\"inside\":true}"
+  },
+  {
+    "name": "c2-100 1h with a long title: the time row still shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-100 \"Now · 51m left\", the lived share washing in from the top (43%)",
+    "ok": true,
+    "detail": "Crypto — heavy session Now · 51m left"
+  },
+  {
+    "name": "c2-100 \"Ran over · 10:30 AM\"",
+    "ok": true,
+    "detail": "Call the tyre supplier Ran over · 10:30 AM"
+  },
+  {
+    "name": "c2-100 a done block has no petal (its check and strike say it)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-100 the check sits on the title's first line",
+    "ok": true,
+    "detail": "{\"check\":276.6875,\"line\":276.6875}"
+  },
+  {
+    "name": "c2-100 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-125 15 and 30 minutes are one line, no time row",
+    "ok": true,
+    "detail": "Water the plants and refill the bird feeder / Kai's Flow email: Gmail App Password + 2 GitHub secrets"
+  },
+  {
+    "name": "c2-125 1h: the range and its length (\"10:15–11:15 AM · 1h\")",
+    "ok": true,
+    "detail": "Deep work on the quarterly forecast numbers for Shaheen 10:15–11:15 AM · 1h"
+  },
+  {
+    "name": "c2-125 1h45: \"11:30 AM–1:15 PM · 1h 45m\"",
+    "ok": true,
+    "detail": "Write the investor update and the hiring plan for the first quarter 11:30 AM–1:15 PM · 1h 45m"
+  },
+  {
+    "name": "c2-125 1h45 with a long title: it wraps (2 lines) and the time row still shows",
+    "ok": true,
+    "detail": "{\"lines\":2,\"inside\":true}"
+  },
+  {
+    "name": "c2-125 1h with a long title: the time row still shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-125 \"Now · 51m left\", the lived share washing in from the top (43%)",
+    "ok": true,
+    "detail": "Crypto — heavy session Now · 51m left"
+  },
+  {
+    "name": "c2-125 \"Ran over · 10:30 AM\"",
+    "ok": true,
+    "detail": "Call the tyre supplier Ran over · 10:30 AM"
+  },
+  {
+    "name": "c2-125 a done block has no petal (its check and strike say it)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-125 the check sits on the title's first line",
+    "ok": true,
+    "detail": "{\"check\":334.25,\"line\":333.375}"
+  },
+  {
+    "name": "c2-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-150 15 and 30 minutes are one line, no time row",
+    "ok": true,
+    "detail": "Water the plants and refill the bird feeder / Kai's Flow email: Gmail App Password + 2 GitHub secrets"
+  },
+  {
+    "name": "c2-150 1h: the range and its length (\"10:15–11:15 AM · 1h\")",
+    "ok": true,
+    "detail": "Deep work on the quarterly forecast numbers for Shaheen 10:15–11:15 AM · 1h"
+  },
+  {
+    "name": "c2-150 1h45: \"11:30 AM–1:15 PM · 1h 45m\"",
+    "ok": true,
+    "detail": "Write the investor update and the hiring plan for the first quarter 11:30 AM–1:15 PM · 1h 45m"
+  },
+  {
+    "name": "c2-150 1h45 with a long title: it wraps (3 lines) and the time row still shows",
+    "ok": true,
+    "detail": "{\"lines\":3,\"inside\":true}"
+  },
+  {
+    "name": "c2-150 1h with a long title: the time row still shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-150 \"Now · 51m left\", the lived share washing in from the top (43%)",
+    "ok": true,
+    "detail": "Crypto — heavy session Now · 51m left"
+  },
+  {
+    "name": "c2-150 \"Ran over · 10:30 AM\"",
+    "ok": true,
+    "detail": "Call the tyre supplier Ran over · 10:30 AM"
+  },
+  {
+    "name": "c2-150 a done block has no petal (its check and strike say it)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2-150 the check sits on the title's first line",
+    "ok": true,
+    "detail": "{\"check\":390.78125,\"line\":390.03125}"
+  },
+  {
+    "name": "c2-150 at 150% a block reads as the drawing's \"Fri at 150%\" (title 18px, time 12.75px, line 22.5px, inset 9.4px)",
+    "ok": true,
+    "detail": "{\"drawn\":{\"inset\":9.390625,\"lineH\":22.5,\"timeFont\":12.719999999999999,\"titleFont\":18},\"app\":{\"inset\":9.390625,\"lineH\":22.5,\"timeFont\":12.75,\"titleFont\":18}}"
+  },
+  {
+    "name": "c2-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day a block has its 1px edge (an inset ring, the accent at 45%) and a regular-weight title",
+    "ok": true,
+    "detail": "[\"color(srgb 0.658824 0.627451 0.745098 / 0.45) 0px 0px 0px 1px inset\",\"color-mix(in srgb, #A8A0BE 45%, transparent)\"]"
+  },
+  {
+    "name": "p-day past at .62, no desaturation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day ran over: a terra edge, \"Ran over · 10:30 AM\", not faded",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day in progress: the lived share washes in from the top (43%)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day an open check is edged in the block's ink, no fill",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night a block has its 1px edge (an inset ring, the accent at 45%) and a regular-weight title",
+    "ok": true,
+    "detail": "[\"color(srgb 0.752941 0.717647 0.878431 / 0.45) 0px 0px 0px 1px inset\",\"color-mix(in srgb, #C0B7E0 45%, transparent)\"]"
+  },
+  {
+    "name": "p-night past at .62, no desaturation",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night ran over: a terra edge, \"Ran over · 10:30 AM\", not faded",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night in progress: the lived share washes in from the top (43%)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night an open check is edged in the block's ink, no fill",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-day only today's block of the goal of the day (Top 3 #1) wears it — not its Thursday block, not Top 3 #2",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000005\"]"
+  },
+  {
+    "name": "g-day …a 3px gold edge inside its left, the goal paper's edge, a gold ✶ before the title",
+    "ok": true,
+    "detail": "[[\"rgb(127, 100, 40) 3px 0px 0px 0px inset\",\"rgb(220, 196, 142)\",\"rgb(127, 100, 40)\",\"✶ Ship the calendar polish\"],[\"rgb(127, 100, 40)\",\"rgb(220, 196, 142)\"]]"
+  },
+  {
+    "name": "g-day …kept while it lifts on hover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-night only today's block of the goal of the day (Top 3 #1) wears it — not its Thursday block, not Top 3 #2",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000005\"]"
+  },
+  {
+    "name": "g-night …a 3px gold edge inside its left, the goal paper's edge, a gold ✶ before the title",
+    "ok": true,
+    "detail": "[[\"rgb(228, 195, 107) 3px 0px 0px 0px inset\",\"rgba(228, 195, 107, 0.45)\",\"rgb(228, 195, 107)\",\"✶ Ship the calendar polish\"],[\"rgb(228, 195, 107)\",\"rgba(228, 195, 107, 0.45)\"]]"
+  },
+  {
+    "name": "g-night …kept while it lifts on hover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-phone only today's goal block wears the gold edge and ✶",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000005\"]"
+  },
+  {
+    "name": "g-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o-day two at once: the later one steps 22% right over the first, keeps the rest of the width, above it",
+    "ok": true,
+    "detail": "[{\"off\":0,\"w\":1,\"z\":1},{\"off\":0.2199977119322732,\"w\":0.7800022880677268,\"z\":2}]"
+  },
+  {
+    "name": "o-day three at once: 0 · 22% · 44%, each above the one before",
+    "ok": true,
+    "detail": "[{\"off\":0,\"w\":1,\"z\":1},{\"off\":0.2199977119322732,\"w\":0.7800022880677268,\"z\":2},{\"off\":0.4399954238645464,\"w\":0.5600045761354536,\"z\":3}]"
+  },
+  {
+    "name": "o-day a cascaded block has a 2px paper edge over the one under it and covers it (its tint on paper)",
+    "ok": true,
+    "detail": "[\"rgb(251, 246, 233) -2px 0px 0px 0px\",\"rgb(251, 246, 233)\",\"linear-gradient(color(srgb 0.658824 0.627451 0.745098 / 0.24), color(srgb 0.658824 0.627451 0.745098 / 0.24)), none\"]"
+  },
+  {
+    "name": "o-day an overlapping block reads as any other: its range and length (\"9:00–10:00 AM · 1h\")",
+    "ok": true,
+    "detail": "Standup 9:00–10:00 AM · 1h"
+  },
+  {
+    "name": "o a click on the covered block's peek opens that block (Standup), not the one over it",
+    "ok": true,
+    "detail": "Standup"
+  },
+  {
+    "name": "o the bottom block's check (Gym, under two others) is on top where it sits and completes it",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000013\",\"done\"]"
+  },
+  {
+    "name": "o the middle block of three (Lunch with Omar) is on top where it shows and drags by its body (about an hour and a half later, on a quarter)",
+    "ok": true,
+    "detail": "[\"e0000000-0000-4000-8000-000000000012\",\"2026-10-22T10:00:00.000Z\"]"
+  },
+  {
+    "name": "o the upper of two (Review Kai's PR) drags: an hour later",
+    "ok": true,
+    "detail": "\"2026-10-22T07:30:00.000Z\""
+  },
+  {
+    "name": "o-night two at once: the later one steps 22% right over the first, keeps the rest of the width, above it",
+    "ok": true,
+    "detail": "[{\"off\":0,\"w\":1,\"z\":1},{\"off\":0.2199977119322732,\"w\":0.7800022880677268,\"z\":2}]"
+  },
+  {
+    "name": "o-night three at once: 0 · 22% · 44%, each above the one before",
+    "ok": true,
+    "detail": "[{\"off\":0,\"w\":1,\"z\":1},{\"off\":0.2199977119322732,\"w\":0.7800022880677268,\"z\":2},{\"off\":0.4399954238645464,\"w\":0.5600045761354536,\"z\":3}]"
+  },
+  {
+    "name": "o-night a cascaded block has a 2px paper edge over the one under it and covers it (its tint on paper)",
+    "ok": true,
+    "detail": "[\"rgb(38, 34, 51) -2px 0px 0px 0px\",\"rgb(38, 34, 51)\",\"linear-gradient(color(srgb 0.752941 0.717647 0.878431 / 0.24), color(srgb 0.752941 0.717647 0.878431 / 0.24)), none\"]"
+  },
+  {
+    "name": "o-night an overlapping block reads as any other: its range and length (\"9:00–10:00 AM · 1h\")",
+    "ok": true,
+    "detail": "Standup 9:00–10:00 AM · 1h"
+  },
+  {
+    "name": "o-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "op-day the phone cascades as the desktop: 22% / 44% steps, each above the one before",
+    "ok": true,
+    "detail": "{\"two\":[{\"off\":4,\"w\":310,\"z\":1},{\"off\":72.1875,\"w\":241.796875,\"z\":2}],\"three\":[{\"off\":4,\"w\":310,\"z\":1},{\"off\":72.1875,\"w\":241.796875,\"z\":2},{\"off\":140.390625,\"w\":173.59375,\"z\":3}]}"
+  },
+  {
+    "name": "op the phone's bottom block's check (Gym) is in reach and completes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "op a tap on the middle block opens its sheet (Lunch with Omar)",
+    "ok": true,
+    "detail": "Lunch with Omar"
+  },
+  {
+    "name": "op-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "op-night the phone cascades as the desktop: 22% / 44% steps, each above the one before",
+    "ok": true,
+    "detail": "{\"two\":[{\"off\":4,\"w\":310,\"z\":1},{\"off\":72.1875,\"w\":241.796875,\"z\":2}],\"three\":[{\"off\":4,\"w\":310,\"z\":1},{\"off\":72.1875,\"w\":241.796875,\"z\":2},{\"off\":140.390625,\"w\":173.59375,\"z\":3}]}"
+  },
+  {
+    "name": "op-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day two picked: each under the selection ink's wash with the check badge in its corner, as drawn; no outline",
+    "ok": true,
+    "detail": "{\"a\":{\"picked\":true,\"wash\":\"color(srgb 0.164706 0.141176 0.12549 / 0.13)\",\"outline\":\"none\",\"badge\":\"flex\",\"size\":[16,16],\"fromTop\":14,\"fromRight\":6,\"radius\":\"5px\"},\"b\":{\"picked\":true,\"wash\":\"color(srgb 0.164706 0.141176 0.12549 / 0.13)\",\"outline\":\"none\",\"badge\":\"flex\",\"size\":[16,16],\"fromTop\":14,\"fromRight\":6,\"radius\":\"5px\"},\"drawn\":{\"size\":[16,16],\"fromTop\":13.5,\"fromRight\":6,\"radius\":\"5px\",\"wash\":\"color(srgb 0.164706 0.141176 0.12549 / 0.13)\"}}"
+  },
+  {
+    "name": "p-day …an unpicked block has neither",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day …FullCalendar's dark focus overlay is gone (the focused pick shows the wash, not 25% black)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night two picked: each under the selection ink's wash with the check badge in its corner, as drawn; no outline",
+    "ok": true,
+    "detail": "{\"a\":{\"picked\":true,\"wash\":\"color(srgb 0.941176 0.921569 0.866667 / 0.13)\",\"outline\":\"none\",\"badge\":\"flex\",\"size\":[16,16],\"fromTop\":14,\"fromRight\":6,\"radius\":\"5px\"},\"b\":{\"picked\":true,\"wash\":\"color(srgb 0.941176 0.921569 0.866667 / 0.13)\",\"outline\":\"none\",\"badge\":\"flex\",\"size\":[16,16],\"fromTop\":14,\"fromRight\":6,\"radius\":\"5px\"},\"drawn\":{\"size\":[16,16],\"fromTop\":13.5,\"fromRight\":6,\"radius\":\"5px\",\"wash\":\"color(srgb 0.941176 0.921569 0.866667 / 0.13)\"}}"
+  },
+  {
+    "name": "p-night …an unpicked block has neither",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night …FullCalendar's dark focus overlay is gone (the focused pick shows the wash, not 25% black)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h a block under the pointer lifts 1px with a soft shadow and shows ▶ ⋯",
+    "ok": true,
+    "detail": "{\"t\":\"matrix(1, 0, 0, 1, 0, -1)\",\"s\":\"rgba(60, 52, 38, 0.16) 0px 2px 6px 0px\",\"acts\":\"flex\"}"
+  },
+  {
+    "name": "h …at rest the actions are hidden",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "h ⋯ opens the block's menu (Edit Task · Complete · Unschedule · Delete)",
+    "ok": true,
+    "detail": "Edit Task | Complete | Unschedule | Delete"
+  },
+  {
+    "name": "h ▶ starts a focus on the task (the Focus page)",
+    "ok": true,
+    "detail": "http://localhost:5303/focus"
+  },
+  {
+    "name": "h no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "h week column (109px): hover shows no actions",
+    "ok": true,
+    "detail": "[\"none\",109]"
+  },
+  {
+    "name": "h reduced motion: no lift (the actions still show)",
+    "ok": true,
+    "detail": "{\"t\":\"none\",\"s\":\"none\",\"acts\":\"flex\"}"
+  }
+]

@@ -167,7 +167,8 @@ async function slotPoint(page, hhmm, day = '2026-10-12') {
 /** A lane's top on screen (no scrolling). */
 const laneY = async (page, hhmm) => (await page.locator(`td.fc-timegrid-slot-lane[data-time="${hhmm}:00"]`).boundingBox()).y
 /** Where to pick a block up: its own title (the slot's task rows and the checkbox swallow a press). */
-const grip = async (page, n) => center(await fcBlock(page, n).locator('.kf-ev-text > .fc-event-title').first().boundingBox())
+// cal-looks: the block's title sits in its title line (.kf-ev-head) with the hover actions
+const grip = async (page, n) => center(await fcBlock(page, n).locator('.kf-ev-head > .fc-event-title').first().boundingBox())
 async function mouseDrag(page, from, to) {
   await page.mouse.move(from.x, from.y)
   await sleep(150)
@@ -445,9 +446,14 @@ if (want('p4')) {
 
 // ── slots-ux (Kai 2026-10-16: "there is something wrong with the logic of the time slots, how do I
 // remove a task from the time slot"): every flow in the handoff's table, desktop and phone. ──
-const rowPt = async (page, slotN = CODE, taskN = HELD, day) => center(await slotRow(page, slotN, taskN, day).locator('.kf-ev-slot-title').boundingBox())
+// cal-looks: grabbed just past the row's check — in a week column the hover's × takes the title's room (the drawn
+// row's 6px gaps), so the title's centre could land on the ×
+const rowPt = async (page, slotN = CODE, taskN = HELD, day) => {
+  const ck = await slotRow(page, slotN, taskN, day).locator('.kf-ev-check').boundingBox()
+  return { x: ck.x + ck.width + 2.5, y: ck.y + ck.height / 2 }
+}
 /** The task's own blocks on the grid (a held task has none — only its row inside the slot). */
-const ownBlocks = (page, title) => page.locator('.fc-timegrid-event .kf-ev-text > .fc-event-title', { hasText: title }).count()
+const ownBlocks = (page, title) => page.locator('.fc-timegrid-event .kf-ev-head > .fc-event-title', { hasText: title }).count()
 const taskWrites = (state, taskN, from) => posts(state, 'tasks', from).filter((x) => x.id === id(taskN))
 const railSec = async (page, name) => {
   const b = await page.locator(`.cal-rail [data-section="${name}"]`).first().boundingBox()
@@ -600,7 +606,7 @@ if (want('f6')) {
 
 /** The slot's own popover (a click on its title), then one of its rows. */
 async function slotMenu(page, n, day) {
-  await fcBlock(page, n, day).locator('.kf-ev-text > .fc-event-title').first().click()
+  await fcBlock(page, n, day).locator('.kf-ev-head > .fc-event-title').first().click()
   await sleep(600)
 }
 
@@ -683,7 +689,7 @@ if (want('f11')) {
   const t = lastOf(state, 'tasks', id(HELD), w0)
   check('f11 slot resized later: its task\'s end follows', !!slot && Date.parse(slot.ends_at) > Date.parse(iso('12:00')) && t?.scheduled_end === slot.ends_at && t?.scheduled_start === iso('10:00'), JSON.stringify([slot?.ends_at, t?.scheduled_end]))
   await slotPoint(page, '14:00')
-  const g = center(await fcBlock(page, SHAHEEN, '2026-10-13').locator('.kf-ev-text > .fc-event-title').first().boundingBox())
+  const g = center(await fcBlock(page, SHAHEEN, '2026-10-13').locator('.kf-ev-head > .fc-event-title').first().boundingBox())
   w0 = state.writes.length
   await mouseDrag(page, g, { x: g.x, y: g.y + (await laneY(page, '15:30')) - (await laneY(page, '13:00')) })
   await settle(state)
