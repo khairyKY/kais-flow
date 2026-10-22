@@ -1,5 +1,28 @@
 [
   {
+    "v": "v1.4.0",
+    "date": "2026-10-23",
+    "title": "A smoother calendar, a cleaner sidebar",
+    "highlights": [
+      "The calendar is much faster: month view, opening a block, dropping one and dragging the divider all respond at once; blocks land where you drop them with no flicker",
+      "Calendar: 15-minute blocks, set a block's length right from its popup, resize from the top edge, select several blocks (Ctrl/Shift+click) to move or delete together, and the dragged block follows your cursor as a small card",
+      "Every time follows your 12h or 24h choice, everywhere",
+      "A new sidebar: one set of line icons, Capture with Search and Chat at the bottom, and your streak, Settings and Sign out under your name",
+      "Today keeps today's tasks apart from Also open; the goal card shows its whole edge; no clipping at 150%",
+      "Scanned pages: dismiss or delete a page or a single line with Undo, add lines one by one, keep a page for later",
+      "The first tick of the day no longer waits on its sound"
+    ],
+    "icons": [
+      "calendar",
+      "menu",
+      "clock",
+      "sun",
+      "camera",
+      "check"
+    ],
+    "art": "cherry-bud"
+  },
+  {
     "v": "v1.3.0",
     "date": "2026-10-19",
     "title": "Smart lists, snooze and your data to keep",
