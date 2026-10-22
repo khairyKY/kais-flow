@@ -2,7 +2,8 @@
 // dev server with VITE_SUPABASE_URL=http://127.0.0.1:9 (`--mode mock`), a made-up session, Playwright answers
 // every REST call; writes are recorded AND applied to the mock rows.
 //   node verify.mjs <outDir> [baseUrl] [playwright-core path]      (ONLY=s,u,k,b,p,o,n runs a subset)
-// The day: Saturday 17 Oct 2026, Cairo (UTC+3), the clock at 10:00.
+// The day: Saturday 17 Oct 2026, Cairo (UTC+3), the clock at 10:00. Times read in the 12h default
+// (cal-polish 2026-10-22: one clock for every time the app shows — the toasts said 24h before).
 import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -144,7 +145,7 @@ for (const theme of want('s') ? ['day', 'night'] : []) {
   check(`s1 [${theme}] right-click → Snooze… opens the Snooze menu (Later today · This evening · Tomorrow · Next week · Someday · Pick a date…)`, ['Later today', 'This evening', 'Tomorrow', 'Next week', 'Someday', 'Pick a date…'].every((l) => menuText.includes(l)), menuText.replace(/\n/g, ' | '))
   await shot(page, `s1-snooze-menu-${theme}`)
   await snoozePick(page, 'Later today')
-  check(`s2 [${theme}] Later today: "Snoozed until 13:00" with Undo`, await undoToast(page, 'Snoozed until 13:00'))
+  check(`s2 [${theme}] Later today: "Snoozed until 1:00 PM" with Undo`, await undoToast(page, 'Snoozed until 1:00 PM'))
   await settle(state)
   const until = row(state, BASIL)?.snoozed_until
   check(`s3 [${theme}] written: snoozed_until three hours on, the due date kept`, until && Math.abs(Date.parse(until) - cairo('13:00').getTime()) < 120_000 && row(state, BASIL).due_at === iso('11:00'), `${until} / ${row(state, BASIL)?.due_at}`)
@@ -157,7 +158,7 @@ for (const theme of want('s') ? ['day', 'night'] : []) {
   const snoozedRows = (await order(page)).filter((id) => [tid(BASIL), tid(DENTIST)].includes(id))
   check(`s6 [${theme}] Snoozed lists them, soonest back first`, snoozedRows.join() === [tid(BASIL), tid(DENTIST)].join(), snoozedRows.join())
   const basilText = await rowEl(page, BASIL).innerText()
-  check(`s7 [${theme}] each says when it's back`, /Snoozed · back 13:00/.test(basilText) && /Snoozed · back Tue 20 Oct · 09:00/.test(await rowEl(page, DENTIST).innerText()), basilText.replace(/\n/g, ' | '))
+  check(`s7 [${theme}] each says when it's back`, /Snoozed · back 1:00 PM/.test(basilText) && /Snoozed · back Tue 20 Oct · 9:00 AM/.test(await rowEl(page, DENTIST).innerText()), basilText.replace(/\n/g, ' | '))
   await shot(page, `s7-snoozed-list-${theme}`)
   await rowEl(page, BASIL).getByRole('button', { name: 'Unsnooze' }).click()
   check(`s8 [${theme}] Unsnooze: "Unsnoozed" with Undo`, await undoToast(page, 'Unsnoozed'))
@@ -175,10 +176,10 @@ if (want('u')) {
   const { ctx, page, errors, state } = await open('/tasks?list=all')
   await snoozeMenu(page, BANK)
   await snoozePick(page, 'Tomorrow')
-  check('u1 Tomorrow: "Snoozed until Tomorrow · 09:00" with Undo', await undoToast(page, 'Snoozed until Tomorrow · 09:00'))
+  check('u1 Tomorrow: "Snoozed until Tomorrow · 9:00 AM" with Undo', await undoToast(page, 'Snoozed until Tomorrow · 9:00 AM'))
   await settle(state)
   check('u2 written: until tomorrow 09:00; the goal let its Top 3 place go; the date and reminder kept', row(state, BANK).snoozed_until === iso('09:00', 18) && row(state, BANK).top3 === false && row(state, BANK).top3_rank === null && row(state, BANK).due_at === iso('09:00') && row(state, BANK).reminder_at === iso('09:45'), JSON.stringify({ s: row(state, BANK).snoozed_until, top3: row(state, BANK).top3 }))
-  await pressUndo(page, 'Snoozed until Tomorrow · 09:00')
+  await pressUndo(page, 'Snoozed until Tomorrow · 9:00 AM')
   await settle(state)
   check('u3 Undo: not snoozed, back in the Top 3 as the goal', row(state, BANK).snoozed_until === null && row(state, BANK).top3 === true && row(state, BANK).top3_rank === 1, JSON.stringify({ s: row(state, BANK).snoozed_until, top3: row(state, BANK).top3, rank: row(state, BANK).top3_rank }))
   check('u4 …and on the list again', await shown(page, BANK))
@@ -201,7 +202,7 @@ if (want('k')) {
   await sleep(500)
   check('k1 Z opens the Snooze menu under the row', (await page.locator('.kf-overlay-card', { hasText: 'Snooze until…' }).count()) > 0)
   await snoozePick(page, 'Next week')
-  check('k2 Next week: "Snoozed until Mon 19 Oct · 09:00" with Undo', await undoToast(page, 'Snoozed until Mon 19 Oct · 09:00'))
+  check('k2 Next week: "Snoozed until Mon 19 Oct · 9:00 AM" with Undo', await undoToast(page, 'Snoozed until Mon 19 Oct · 9:00 AM'))
   await settle(state)
   check('k3 written', row(state, FERNS).snoozed_until === iso('09:00', 19), row(state, FERNS).snoozed_until)
   await page.keyboard.press('Control+z')
@@ -245,7 +246,7 @@ for (const theme of want('p') ? ['day', 'night'] : []) {
   check(`p1 [${theme}] phone: ⋯ → Snooze… opens the snooze sheet`, sheetOk)
   await shot(page, `p1-phone-sheet-${theme}`)
   await page.getByRole('button', { name: /Later today/ }).first().click()
-  check(`p2 [${theme}] Later today: "Snoozed until 13:00" with Undo`, await undoToast(page, 'Snoozed until 13:00'))
+  check(`p2 [${theme}] Later today: "Snoozed until 1:00 PM" with Undo`, await undoToast(page, 'Snoozed until 1:00 PM'))
   await settle(state)
   check(`p3 [${theme}] written, and off the list`, !!row(state, BASIL).snoozed_until && !(await shown(page, BASIL)))
   await page.goto(`${BASE}/tasks?list=snoozed`, { waitUntil: 'networkidle' })
@@ -265,13 +266,13 @@ if (want('o')) {
     await page.getByRole('menuitem', { name: 'Snooze…' }).last().click()
     await sleep(400)
     await snoozePick(page, 'This evening')
-    check('o1 editor ⋯ → Snooze… → This evening: "Snoozed until 18:00" with Undo', await undoToast(page, 'Snoozed until 18:00'))
+    check('o1 editor ⋯ → Snooze… → This evening: "Snoozed until 6:00 PM" with Undo', await undoToast(page, 'Snoozed until 6:00 PM'))
     await settle(state)
     check('o2 written', row(state, FERNS).snoozed_until === iso('18:00'), row(state, FERNS).snoozed_until)
     await page.getByRole('button', { name: 'More for "Water the ferns"' }).first().click()
     await sleep(400)
     const un = page.getByRole('menuitem', { name: /Unsnooze/ })
-    check('o3 …and now offers Unsnooze, saying when it is back', (await un.count()) === 1 && /back 18:00/.test(await un.innerText()), await un.innerText().catch(() => '-'))
+    check('o3 …and now offers Unsnooze, saying when it is back', (await un.count()) === 1 && /back 6:00 PM/.test(await un.innerText()), await un.innerText().catch(() => '-'))
     await un.click()
     await settle(state)
     check('o4 Unsnooze from there', row(state, FERNS).snoozed_until === null)
@@ -287,7 +288,7 @@ if (want('o')) {
     await page.locator('.kf-as-row', { hasText: 'Snooze…' }).first().click()
     await sleep(900)
     await page.getByRole('button', { name: /Tomorrow morning/ }).first().click()
-    check('o6 phone sheet ⋯ → Snooze… → Tomorrow morning: "Snoozed until Tomorrow · 09:00" with Undo', await undoToast(page, 'Snoozed until Tomorrow · 09:00'))
+    check('o6 phone sheet ⋯ → Snooze… → Tomorrow morning: "Snoozed until Tomorrow · 9:00 AM" with Undo', await undoToast(page, 'Snoozed until Tomorrow · 9:00 AM'))
     await settle(state)
     check('o7 written', row(state, FERNS).snoozed_until === iso('09:00', 18), row(state, FERNS).snoozed_until)
     check('o8 no page errors', errors.length === 0, errors.join(' | '))
@@ -299,7 +300,7 @@ if (want('o')) {
 // at 10:10 — remind_again_at, the task and its own reminder untouched. ──
 if (want('n')) {
   const { ctx, page, errors, state } = await open(`/tasks?focus=${tid(BANK)}&kfAction=snooze10&kfTasks=${tid(BANK)}`)
-  check('n1 In 10 min: "Reminding you again at 10:10" with Undo', await undoToast(page, 'Reminding you again at 10:10'))
+  check('n1 In 10 min: "Reminding you again at 10:10 AM" with Undo', await undoToast(page, 'Reminding you again at 10:10 AM'))
   await settle(state)
   const b = row(state, BANK)
   check('n2 written: remind_again_at = 10:10; due date, reminder_at and Top 3 untouched', b.remind_again_at && Math.abs(Date.parse(b.remind_again_at) - cairo('10:10').getTime()) < 120_000 && b.due_at === iso('09:00') && b.reminder_at === iso('09:45') && b.top3 === true, JSON.stringify({ again: b.remind_again_at, rem: b.reminder_at }))
