@@ -1,5 +1,22 @@
 [
   {
+    "v": "v1.4.1",
+    "date": "2026-10-23",
+    "title": "Calendar blocks, redrawn",
+    "highlights": [
+      "Calendar blocks take their own colour for the edge and text, short ones read on one line, longer ones show “9:00–10:00 AM · 1h”, past ones fade, done ones are struck",
+      "Overlapping blocks cascade so each one stays visible, clickable and draggable",
+      "Today's goal of the day has a gold edge and ✶ on its block",
+      "Selecting several blocks shows a wash with a check badge"
+    ],
+    "icons": [
+      "calendar",
+      "star",
+      "check"
+    ],
+    "art": "hydrangea-medium"
+  },
+  {
     "v": "v1.4.0",
     "date": "2026-10-23",
     "title": "A smoother calendar, a cleaner sidebar",
