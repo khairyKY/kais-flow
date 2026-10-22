@@ -402,7 +402,8 @@ for (const theme of ['day', 'night']) {
       check(`11f-${name} tap the text to edit it`, (await text(sheet(page).locator('.pp-row', { hasText: 'Quiz — OS' }).locator('.pp-row-text'))) === 'Quiz — OS')
       const pens = sheet(page).locator('.pp-row', { hasText: 'Buy blue pens' })
       await swipeLeft(env, pens)
-      check(`11f-${name} swipe left drops a line ("Line dropped · Undo", 8 left)`, (await sheet(page).locator('.pp-row', { hasText: 'Buy blue pens' }).count()) === 0 && (await toasts(page)).includes('Line dropped') && (await page.getByRole('button', { name: 'Add all 8' }).count()) === 1, JSON.stringify(await toasts(page)))
+      // paper-review (2026-10-22): "Drop" is "Dismiss" now (the Inbox's word).
+      check(`11f-${name} swipe left dismisses a line ("Line dismissed · Undo", 8 left)`, (await sheet(page).locator('.pp-row', { hasText: 'Buy blue pens' }).count()) === 0 && (await toasts(page)).includes('Line dismissed') && (await page.getByRole('button', { name: 'Add all 8' }).count()) === 1, JSON.stringify(await toasts(page)))
       // 11g — Add all → the writes, one toast with Undo, Inbox rows with the 📷.
       const w0 = state.writes.length
       await tap(env, page.getByRole('button', { name: 'Add all 8' }))
