@@ -156,7 +156,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.dot, flex: 'none' }} />
           <span style={{ flex: 1 }}>{p.label}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-            {p.at.toLocaleString([], { weekday: 'short', ...clockOptions(), timeZone: appZone() })}
+            {p.at.toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })}
           </span>
         </button>
       ))}

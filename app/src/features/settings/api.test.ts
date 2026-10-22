@@ -3,7 +3,7 @@ import { setHour24 } from '../../lib/clock'
 
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 
-import { githubRulesOf, githubState, watchingHelp } from './api'
+import { githubRulesOf, githubState, syncedLabel, watchingHelp } from './api'
 
 // These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
 beforeAll(() => setHour24(true))
@@ -24,6 +24,13 @@ describe('githubState', () => {
   it('shows the day of the last good sync, in Cairo time, so a stuck sync is visible', () => {
     // 08:07 UTC on 1 Oct = 11:07 in Cairo (EEST, UTC+3).
     expect(githubState({ status: 'ok', synced_at: '2026-10-01T08:07:00Z' }).text).toBe('Connected · synced 1 Oct, 11:07')
+    setHour24(false) // the 12-hour clock: the app's "AM", not en-GB's "am"
+    try {
+      expect(githubState({ status: 'ok', synced_at: '2026-10-01T08:07:00Z' }).text).toBe('Connected · synced 1 Oct, 11:07 AM')
+      expect(syncedLabel('2026-10-12T21:30:00Z')).toBe('13 Oct, 12:30 AM') // past Cairo's midnight: the 13th
+    } finally {
+      setHour24(true)
+    }
   })
 })
 

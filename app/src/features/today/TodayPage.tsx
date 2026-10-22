@@ -18,7 +18,7 @@ import { SubtaskAddButton, SubtaskCount, SubtaskNest, hasOpenSubtasks, useNestOp
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotLabel, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey, timeRange, timeText } from '../calendar/eventTime'
-import { clockText } from '../../lib/clock'
+import { clockText, useHour24 } from '../../lib/clock'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useAreas } from '../areas/api'
@@ -1008,8 +1008,9 @@ function metaRow(projectName: string | undefined, dot: string, duration: number 
 const deskBlockMeta = (meta: string[] | undefined, inProgress: boolean) => (
   <>
     {/* 2a's lower-case durations ("1h30m"); a slot's line keeps its name ("in Code block💻 · 10:00" —
-        the only meta that starts "in "; blockMeta's own read "starts in …"). */}
-    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.startsWith('in ') ? m : m.toLowerCase()}</span>)}
+        the only meta that starts "in "; blockMeta's own read "starts in …"), and a time keeps the clock's
+        "1:30–3:00 PM" (it read "pm"). */}
+    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.startsWith('in ') || /\d:\d\d/.test(m) ? m : m.toLowerCase()}</span>)}
     {(inProgress || meta?.includes('Now')) && <span className="td-terra">in progress</span>}
   </>
 )
@@ -1564,12 +1565,13 @@ function EventMenu({ event, at, onClose }: { event: CalendarEvent; at: { x: numb
  * still bubble a menu tap into the row. */
 function PhoneEventRow({ event, meta }: { event: CalendarEvent; meta: string[] }) {
   const navigate = useNavigate()
+  const h24 = useHour24()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   const open = () => navigate(eventPath(event))
   return (
     <>
       <div id={`upnext-${event.id}`} className="tp-ev" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
-        <span className="tp-ev-time">{timeText(new Date(event.starts_at))}</span>
+        <span className={`tp-ev-time${h24 ? '' : ' tp-ev-time--12h'}`}>{timeText(new Date(event.starts_at))}</span>
         <span className="tp-ev-rule" aria-hidden />
         <div className="tp-ev-body">
           <div className="tp-title"><EmojiText text={event.title} /></div>
