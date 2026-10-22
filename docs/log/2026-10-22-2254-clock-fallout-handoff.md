@@ -77,11 +77,37 @@ Gate:
 - ds:check: 0 new.
 - `birthday_on` grep: 1 in `types.ts`, and 1 `birthday_on: false` in `settings.ts`.
 
-## 4 · Not run, likely stale the same way
+## 4 · Round 2: the suites flagged in §4 of the first pass
 
-These suites outside this round still assert 24h text. They were already stale after cal-polish:
+The coordinator's run on :5270 gave `today-phone` 138/160, `search-design` 60/62 and `google-sync` 97/101. `event-detail` (70/70) and `calendar-phone` (180/180) were already fine.
 
-- `today-phone` 2b: "Now · 09:00–10:30".
-- `search-design`: "15:00 – 15:45".
-- `event-detail`, `google-sync`, `calendar-phone`: the sheet rows "10:30 – 11:30", "12:00 – 12:20".
-- `calendar-rail` line 701: "13:00 – 14:00", in a branch the default run doesn't reach.
+### Real bugs, fixed in the app
+
+- **Phone Today, Up next event row.** The time column was 56px, sized for "15:00", so "3:00 PM" wrapped onto two lines ("3:00 / PM"). The time now stays on one line, and the column is 70px on the 12-hour clock so the lavender rules still line up (`today.css` `.tp-ev-time--12h`, `PhoneEventRow`). The harness now also asserts the one line.
+- **Desktop Today, goal card meta.** `deskBlockMeta` lower-cased every item, which was meant for 2a's durations, so the range read "1:30–3:00 pm". A time now keeps the clock's AM/PM (`TodayPage.tsx`).
+- **Settings ▸ Integrations, synced line.** en-GB's own 12-hour form wrote "synced 12 Oct, 9:48 am". `syncedLabel` is now the date followed by lib/clock's time, and `githubState` shares it (`settings/api.ts`, with a test).
+- **Snooze menu.** The preset times used the device's locale (`[]`), so an Arabic phone would get Arabic digits. They now use `en-US`, like every other time (`SnoozeMenu.tsx`).
+
+### Stale wording or layout, harness updated
+
+- `today-phone`: the times "1:30–3:00 PM", "you'll finish ~7:00 PM", "Done 11:05 AM", "Evening · 7:30 PM", "all three done by 4:10 PM" and "Now · 9:00–10:30 AM".
+- `today-phone`, today-scale's split: five section labels, with "Today's tasks · 1" plus "Also open · N" where "More for today · 3" used to be. In 2n the fold's Open is 3, because the task due today leads in Today's tasks.
+- `today-phone` 2n's EARLIER · MORNING and LATER · EVENING: these are the Routines section's own fold lines (`.tp-sub.tp-fold-line`), not part of the Also open fold. The harness already filtered them out, so this is intended.
+- `search-design`: "Tomorrow 3:00 PM" and "Sat 11 Jul · 3:00 – 3:45 PM". A past event says "Past · Tue 30 Jun" with no time, by design (`searchView`).
+- `google-sync`: "12 Oct, 9:48 AM".
+
+### Results, each suite run alone
+
+| Suite | Result |
+|---|---|
+| today-phone | 160/160 |
+| search-design | 62/62 (one run timed out loading the design-export file, then passed on the rerun) |
+| google-sync | 101/101 |
+| fix-today | 116/116 (re-run, since Today changed) |
+| today-shell | 86/86 (re-run) |
+| today-scale | 330/330 (re-run) |
+| snooze | 74/74 (re-run) |
+
+The gate was green again: `tsc -b` clean, vitest 2348/2348 in each of the 4 time zones, lint 0 errors, build ok, ds:check 0 new, and the `birthday_on` greps 1 and 1.
+
+`calendar-rail` line 701 ("13:00 – 14:00") is still in a branch the default run doesn't reach.
