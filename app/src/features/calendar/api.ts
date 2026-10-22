@@ -15,7 +15,7 @@ import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
 import { alignToRule, detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
 import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
 import { isSynced, remindLabel, repeatLabel } from './blockMenuSpec'
-import { cairoTimeKey } from './eventTime'
+import { timeText } from './eventTime'
 import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
 
 const fetchEvents = () =>
@@ -159,7 +159,7 @@ export function slotLabel(task: Pick<Task, 'slot_id' | 'scheduled_start'>, now: 
   if (!title) return null
   const at = new Date(task.scheduled_start!)
   const day = cairoDateKey(at)
-  return `in ${title} · ${day === cairoDateKey(now) ? '' : `${dayShort(day).slice(0, 3)} `}${cairoTimeKey(at)}`
+  return `in ${title} · ${day === cairoDateKey(now) ? '' : `${dayShort(day).slice(0, 3)} `}${timeText(at)}`
 }
 
 /** The task's blocks on the calendar now. */
@@ -569,6 +569,32 @@ export function deleteEventWithUndo(event: CalendarEvent, verb: 'Unscheduled' | 
     restoreEvent(prior)
     undoTasks()
   })
+}
+
+/** Multi-select (Kai 2026-10-22, Google / Notion Calendar): the picked blocks off the calendar at once — a
+ * task's block is unscheduled (the task stays), an event goes to Trash — with one Undo. A Google event is
+ * never touched. */
+export function deleteEventsWithUndo(events: readonly CalendarEvent[]): void {
+  const own = events.filter((e) => !isSynced(e))
+  if (!own.length) return
+  const undos = own.map((e) => {
+    const prior = { ...e }
+    const undoTasks = deleteEvent(e)
+    return () => {
+      restoreEvent(prior)
+      undoTasks()
+    }
+  })
+  toastUndo(`Removed · ${own.length} ${own.length === 1 ? 'block' : 'blocks'}`, () => undos.reverse().forEach((u) => u()))
+}
+
+/** Multi-select: the picked blocks moved by the same amount as the one dragged, one Undo. */
+export function moveEventsByWithUndo(events: readonly CalendarEvent[], deltaMs: number): void {
+  const own = events.filter((e) => !isSynced(e) && !e.all_day)
+  if (!own.length || !deltaMs) return
+  const at = (iso: string) => new Date(Date.parse(iso) + deltaMs).toISOString()
+  const undos = own.map((e) => moveOrResizeEvent(e, at(e.starts_at), at(e.ends_at)))
+  toastUndo(`Moved · ${own.length} ${own.length === 1 ? 'block' : 'blocks'}`, () => undos.reverse().forEach((u) => u()))
 }
 
 /** "All events": the series row and every occurrence dragged out of it go to Trash, one Undo. Every

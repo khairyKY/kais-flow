@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { readFirstThing, whenChip, withPicked } from './firstThings'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Sunday 27 Sep 2026, 07:40 in Cairo (UTC+3) — First Run 9h's morning. The suite runs under
 // several TZs; every answer must be Cairo's.

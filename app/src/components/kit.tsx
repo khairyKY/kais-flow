@@ -1,7 +1,8 @@
-import type { ButtonHTMLAttributes, CSSProperties, MouseEvent, ReactNode } from 'react'
+import { useState, type ButtonHTMLAttributes, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useMotionEnabled } from '../lib/motion'
 import { Icon } from './Icon'
+import { firstTick, nextTick } from './checkTick'
 import { filterChip } from './filterChip'
 import type { IconName } from './icons/kf'
 import './kit.css'
@@ -240,6 +241,12 @@ export function TapeCard({
 // 48 hit whatever `size` says — `size` stays the desktop size; kit.css owns the phone override.
 export function Checkbox({ checked, onChange, size = 17, bloom = false, style, label, subtask, disabled }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; bloom?: boolean; style?: CSSProperties; label?: string; subtask?: boolean; disabled?: boolean }) {
   const motionOn = useMotionEnabled()
+  // M3: pop only on a tick made while the box is on screen, never because it mounted ticked
+  // (every phone day swipe re-popped the done boxes). State-from-props, so it never lags a render.
+  const [tick, setTick] = useState(() => firstTick(checked))
+  const next = nextTick(tick, checked)
+  if (next !== tick) setTick(next)
+  const pop = next.pop && motionOn
   return (
     <button
       type="button"
@@ -269,7 +276,7 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style, l
         fontSize: size * 0.62,
         lineHeight: 1,
         // Motion 3b (F4): boxFill 90ms on every checkbox; the mark pops after it.
-        animation: checked && motionOn ? 'boxFill 90ms var(--ease-out)' : 'none',
+        animation: pop ? 'boxFill 90ms var(--ease-out)' : 'none',
         ...style,
       }}
     >
@@ -281,7 +288,7 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style, l
             width: '72%',
             height: '72%',
             // checkPop 180ms (0→1.3→1), delayed behind the 90ms fill; `both` holds scale(0) during the delay.
-            animation: motionOn ? 'checkPop 180ms var(--ease-out) 90ms both' : 'none',
+            animation: pop ? 'checkPop 180ms var(--ease-out) 90ms both' : 'none',
           }}
         >
           <Icon name="check" strokeWidth={2.2} style={{ width: '100%', height: '100%' }} />

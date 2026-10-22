@@ -6,12 +6,13 @@ import { Button, Checkbox, Star } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { EmptyState, OfflineChip } from '../../components/States'
-import { TimePicker } from '../../components/TimePicker'
+import { LengthChips, TimePicker } from '../../components/TimePicker'
 import { useOutboxMarks } from '../../lib/outbox'
 import { useOnline } from '../../lib/useOnline'
 import type { Task } from '../../lib/types'
 import { deleteEventWithUndo, moveEventWithUndo, outOfSlotWithUndo, scheduleTask, slotTitleOf, useCalendarEvents } from '../calendar/api'
 import { cairoToIso } from '../calendar/eventTime'
+import { clockText } from '../../lib/clock'
 import { eventSpan } from '../calendar/phoneGridMath'
 import { useFocusStore } from '../focus/focusStore'
 import { linkLabel, taskLink } from '../../lib/links'
@@ -248,14 +249,27 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
           {block ? (
             // The block's own actions live here (Kai 2026-10-03: a task block on the calendar opens this
             // sheet, not a block sheet first): Change time moves it, Unschedule takes it off — the task stays.
-            <div className="ts-block">
-              <b>On your calendar</b>
-              <small>{blockLine(block, now)}</small>
-              <div className="ts-block-acts">
-                <Button variant="ghost" icon={<Icon name="clock" size={20} />} onClick={() => setBlockTime(true)}>Change time</Button>
-                <Button variant="ghost" onClick={() => edit('schedule', () => deleteEventWithUndo(block, 'Unscheduled'))}>Unschedule</Button>
+            <>
+              <div className="ts-block">
+                <b>On your calendar</b>
+                <small>{blockLine(block, now)}</small>
+                <div className="ts-block-acts">
+                  <Button variant="ghost" icon={<Icon name="clock" size={20} />} onClick={() => setBlockTime(true)}>Change time</Button>
+                  <Button variant="ghost" onClick={() => edit('schedule', () => deleteEventWithUndo(block, 'Unscheduled'))}>Unschedule</Button>
+                </div>
               </div>
-            </div>
+              {/* Kai 2026-10-21: the block's length in one tap, from its start — the estimate follows. Under
+                  the card: the chips' own buttercream would vanish on it. */}
+              {span && !block.all_day && (
+                <LengthChips
+                  value={span.end - span.start}
+                  style={{ minHeight: 0, marginTop: 10 }}
+                  onPick={(m) => {
+                    if (m !== span.end - span.start) edit('schedule', () => moveEventWithUndo(block, span, { ...span, end: span.start + m }, 'bottom'))
+                  }}
+                />
+              )}
+            </>
           ) : (
             suggestion && (
               <>
@@ -269,7 +283,7 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
                         aria-pressed={i === 0}
                         onClick={() => edit('schedule', () => scheduleTask(t, cairoToIso(suggestion.day, fromMin(m)), cairoToIso(suggestion.day, fromMin(m + dur))))}
                       >
-                        {i === 0 ? `${dayWord(suggestion.day, now)} ${fromMin(m)}` : fromMin(m)}
+                        {i === 0 ? `${dayWord(suggestion.day, now)} ${clockText(fromMin(m))}` : clockText(fromMin(m))}
                       </button>
                     ))}
                   </div>

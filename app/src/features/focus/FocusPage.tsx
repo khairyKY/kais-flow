@@ -10,7 +10,7 @@ import { useJournalEntries } from '../journal/api'
 import { usePeople, useInteractions } from '../people/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useDayRollover } from '../calendar/useDayRollover'
-import { zoneTimeKey } from '../calendar/eventTime'
+import { timeRange, zoneTimeKey } from '../calendar/eventTime'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { readSoundEvents, writeSoundEvents, previewSound } from '../../lib/sounds'
 import { useMotionEnabled } from '../../lib/motion'
@@ -18,6 +18,7 @@ import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
 import { cherryStage, vineStage, fernByLength, wisteriaStage } from '../../lib/growthStages'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import { useAppZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 import type { ActivityLogEntry } from '../../lib/types'
 import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
 import { NumberField } from '../../components/NumberField'
@@ -388,17 +389,17 @@ export function FocusPage() {
   // (times, no name, because nothing in the data names it), then to nothing.
   const blockLabel = useMemo(() => {
     if (!activeTask) return null
-    const t = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false, timeZone: zone })
+    const span = (a: Date, b: Date) => timeRange(a, b, zone).replace('–', ' – ')
 
     const block = events.find(
       (e) => e.task_id === activeTask.id && !e.all_day && zoneDateKey(new Date(e.starts_at), zone) === todayStr
     )
-    if (block) return `${block.title} · ${t(new Date(block.starts_at))} – ${t(new Date(block.ends_at))}`
+    if (block) return `${block.title} · ${span(new Date(block.starts_at), new Date(block.ends_at))}`
 
     if (!activeTask.scheduled_start || !activeTask.scheduled_end) return null
     const start = new Date(activeTask.scheduled_start)
     if (zoneDateKey(start, zone) !== todayStr) return null
-    return `${t(start)} – ${t(new Date(activeTask.scheduled_end))}`
+    return span(start, new Date(activeTask.scheduled_end))
   }, [activeTask, events, todayStr, zone])
 
   // Sessions today: work already logged today, plus the one in progress.
@@ -647,6 +648,8 @@ export function FocusPage() {
           edge and the mode row wrapped a word per line. On a phone it grows with its content (the
           page scrolls), the rows wrap whole, and the desktop-only "esc leaves quietly" steps aside. */}
       <style>{`
+        /* today-scale (Kai 2026-10-22, 125-150%): a title as wide as the page put its checkbox on the edge. */
+        .fp-task { padding: 0 16px; max-width: 100%; box-sizing: border-box; }
         @media (max-width: 767px) {
           .focus-bleed {
             margin: -20px -16px 0 !important;
@@ -661,7 +664,6 @@ export function FocusPage() {
           .fp-round { min-width: 0; }
           .fp-ctrls > button { min-height: 48px; white-space: nowrap; }
           .fp-ctrls > span { padding: 14px 4px; }
-          .fp-task { padding: 0 16px; }
           .fp-garden-note { left: 16px !important; }
           .fp-garden-link { right: 16px !important; bottom: auto !important; top: 10px; }
           /* width:100% + the negative margins left the page 32px short of the right edge, so the
@@ -829,7 +831,7 @@ export function FocusPage() {
                       the last round of the cycle. */}
                   of {settings.focusRoundMin} min ·{' '}
                   {currentRound >= settings.roundsBeforeLongBreak ? settings.longBreakMin : settings.shortBreakMin}-min break at{' '}
-                  {new Date(Date.now() + secondsLeft * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false, timeZone: zone })}
+                  {new Date(Date.now() + secondsLeft * 1000).toLocaleTimeString('en-US', { ...clockOptions(), timeZone: zone })}
                 </div>
               </div>
             </div>

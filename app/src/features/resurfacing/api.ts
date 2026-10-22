@@ -9,8 +9,7 @@ import { useJournalEntries } from '../journal/api'
 import { useBooks, useNotes, useQuotes } from '../library/api'
 import { completeTask, deleteTask, rescheduleDue, restoreTask, setSomeday, undoCompletion, useTasks } from '../tasks/api'
 import type { PlanActions } from '../tasks/PlanMenu'
-import { dueChip } from '../tasks/taskSheetMath'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { dueChip, slotChip } from '../tasks/taskSheetMath'
 import { doneAction, latestPick, memoryOf, putOffCount, serverSettles, type Memory } from './rules'
 import type { InboxItem, ResurfaceAction, ResurfacedLogRow, Task } from '../../lib/types'
 
@@ -133,7 +132,7 @@ export function planResurfaced(row: ResurfacedLogRow, task: Task): Required<Pick
   return {
     schedule: (iso, timed) => planned(`Planned · ${dueChip(iso, new Date())}`, rescheduleDue(task, iso, timed)),
     tomorrow: () => planned('Moved to tomorrow', rescheduleDue(task, scheduleTomorrow())),
-    slot: (startsAt, endsAt) => planned(`Planned · ${dueChip(startsAt, new Date())}–${cairoTimeKey(new Date(endsAt))}`, rescheduleDue(task, startsAt, true)),
+    slot: (startsAt, endsAt) => planned(`Planned · ${slotChip(startsAt, endsAt, new Date())}`, rescheduleDue(task, startsAt, true)),
     someday: () => {
       setSomeday(task, true)
       planned('Parked for someday', () => setSomeday(task, task.someday))

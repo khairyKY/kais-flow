@@ -1,0 +1,487 @@
+[
+  {
+    "name": "phone-day Inbox: the three page rows, each with ⋯",
+    "ok": true,
+    "detail": "Monday notes · 7 things Ready to review Review Your page Not read yet Try again Your page Read tomorrow"
+  },
+  {
+    "name": "phone-day waiting row ⋯ → the action sheet: See the photo · Dismiss page · Delete page and photo (no Try again: it’s the daily limit)",
+    "ok": true,
+    "detail": "[\"See the photo\",\"Dismiss page adds nothing\",\"Delete page and photo\"]"
+  },
+  {
+    "name": "phone-day inbox menu no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "phone-day inbox menu no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day inbox menu no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day Delete page and photo → toast \"Page deleted · the photo goes within the hour\", the row leaves",
+    "ok": true,
+    "detail": "[\"Page deleted · the photo goes within the hour\"]"
+  },
+  {
+    "name": "phone-day …the row written reviewed, read wiped (items [], title null), photo due ≤ 10 minutes on (the hourly sweep takes it)",
+    "ok": true,
+    "detail": "{\"reviewed_at\":\"2026-10-04T06:52:04.516Z\",\"expires_at\":\"2026-10-04T07:02:04.516Z\",\"items\":0}"
+  },
+  {
+    "name": "phone-day …Undo writes it back as it was (unreviewed, its expiry back to 7 days) and the row returns",
+    "ok": true,
+    "detail": "{\"reviewed_at\":null,\"expires_at\":\"2026-10-11T06:40:00Z\"}"
+  },
+  {
+    "name": "phone-day failed row ⋯ starts with \"Try again · read it now\"",
+    "ok": true,
+    "detail": "[\"Try again read it now\",\"See the photo\",\"Dismiss page adds nothing\",\"Delete page and photo\"]"
+  },
+  {
+    "name": "phone-day …Try again reads it (one capture-image call) and opens the results: 7 things",
+    "ok": true,
+    "detail": "1 / 7"
+  },
+  {
+    "name": "phone-day the page’s ⋯: See the photo · Scan another page · Keep for later · Dismiss page · Delete page and photo",
+    "ok": true,
+    "detail": "[\"See the photo\",\"Scan another page\",\"Keep for later stays in the Inbox\",\"Dismiss page adds nothing more\",\"Delete page and photo\"]"
+  },
+  {
+    "name": "phone-day Dismiss page → the review closes, \"Page dismissed\", the row leaves; written reviewed, nothing added",
+    "ok": true,
+    "detail": "[\"Page dismissed\"]"
+  },
+  {
+    "name": "phone-day …Undo → back in the Inbox, ready to review",
+    "ok": true,
+    "detail": "OS lecture 3 · 7 things Ready to review Review"
+  },
+  {
+    "name": "phone-day the banner says how: \"Swipe a line left to dismiss it, or tap its ⊞ for more.\"",
+    "ok": true,
+    "detail": "2 lines need a look — the handwriting is beside them. Swipe a line left to dismiss it, or tap its ⊞ for more."
+  },
+  {
+    "name": "phone-day a line’s ⋯: Add this line (to do) · Edit the text · Change the type… · … · Select · Dismiss this line",
+    "ok": true,
+    "detail": "[\"Add this line to do\",\"Edit the text\",\"Change the type…\",\"Change the date…\",\"Move to…\",\"Change the priority…\",\"Select\",\"Dismiss this line not wanted\"]"
+  },
+  {
+    "name": "phone-day line menu no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "phone-day line menu no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day line menu no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day Add this line → \"Added 1 task\", the task written with its photo link, 6 things left",
+    "ok": true,
+    "detail": "[\"Added 1 task\"]"
+  },
+  {
+    "name": "phone-day …the capture remembers where it went (items[1].done = task + its id), still in review",
+    "ok": true,
+    "detail": "{\"to\":\"task\",\"id\":\"ce5f64f5-b9c2-4b75-9b21-df44ab44077a\"}"
+  },
+  {
+    "name": "phone-day …\"Added already · Assignment 2 · in Tasks\" under the lines",
+    "ok": true,
+    "detail": "Added already Assignment 2 in Tasks"
+  },
+  {
+    "name": "phone-day added no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "phone-day added no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day added no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day …Undo deletes the task and puts the line back (7 things, no \"Added\")",
+    "ok": true,
+    "detail": "1 / 7"
+  },
+  {
+    "name": "phone-day swipe left → \"Line dismissed\", 6 things, the capture marks it skipped",
+    "ok": true,
+    "detail": "[\"Line dismissed\"]"
+  },
+  {
+    "name": "phone-day …Undo → back (7 things)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day dismissed again → \"1 line dismissed · Bring back\" under the lines",
+    "ok": true,
+    "detail": "1 line dismissed Bring back"
+  },
+  {
+    "name": "phone-day Bring back → the line returns",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day edit the text → \"Read chapter 4\"; ⋯ → Change the type… → Event",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day Keep for later → the review closes, the Inbox row still \"Ready to review\", 6 things",
+    "ok": true,
+    "detail": "Monday notes · 6 things Ready to review Review"
+  },
+  {
+    "name": "phone-day …reopened: the edits kept (Read chapter 4, Quiz an Event), the dismissed line still off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day hold a line → \"1 selected\", footer Add · Type · Date · Project · Dismiss",
+    "ok": true,
+    "detail": "1 selected\nSelect all / Add Type Date Project Dismiss"
+  },
+  {
+    "name": "phone-day Select all → \"6 selected\"",
+    "ok": true,
+    "detail": "6 selected\nSelect all"
+  },
+  {
+    "name": "phone-day selection no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "phone-day selection no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day selection no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day ✕ → none selected, the usual footer back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-day select two → Add: \"Added 1 task · 1 note\" (the edited text written), 4 things left",
+    "ok": true,
+    "detail": "[\"Added 1 task · 1 note\"]"
+  },
+  {
+    "name": "phone-day …\"Added already\" lists both, and where they went",
+    "ok": true,
+    "detail": "Added already OS lecture 3 — 4 Oct in the Inbox Read chapter 4 in Tasks 1 line dismissed Bring back"
+  },
+  {
+    "name": "phone-day select three → Dismiss: \"3 lines dismissed\", 1 thing left",
+    "ok": true,
+    "detail": "[\"Added 1 task · 1 note\",\"3 lines dismissed\"]"
+  },
+  {
+    "name": "phone-day the last line added → the review closes and the page leaves the Inbox (reviewed)",
+    "ok": true,
+    "detail": "{\"reviewed_at\":\"2026-10-04T06:52:39.715Z\"}"
+  },
+  {
+    "name": "phone-day …Undo → back in the Inbox with 1 thing, 2 added",
+    "ok": true,
+    "detail": "Monday notes · 1 thing Ready to review · 2 added Review"
+  },
+  {
+    "name": "phone-night Inbox: the three page rows, each with ⋯",
+    "ok": true,
+    "detail": "Monday notes · 7 things Ready to review Review Your page Not read yet Try again Your page Read tomorrow"
+  },
+  {
+    "name": "phone-night waiting row ⋯ → the action sheet: See the photo · Dismiss page · Delete page and photo (no Try again: it’s the daily limit)",
+    "ok": true,
+    "detail": "[\"See the photo\",\"Dismiss page adds nothing\",\"Delete page and photo\"]"
+  },
+  {
+    "name": "phone-night inbox menu no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "phone-night inbox menu no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night inbox menu no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night the banner says how: \"Swipe a line left to dismiss it, or tap its ⊞ for more.\"",
+    "ok": true,
+    "detail": "2 lines need a look — the handwriting is beside them. Swipe a line left to dismiss it, or tap its ⊞ for more."
+  },
+  {
+    "name": "phone-night a line’s ⋯: Add this line (to do) · Edit the text · Change the type… · … · Select · Dismiss this line",
+    "ok": true,
+    "detail": "[\"Add this line to do\",\"Edit the text\",\"Change the type…\",\"Change the date…\",\"Move to…\",\"Change the priority…\",\"Select\",\"Dismiss this line not wanted\"]"
+  },
+  {
+    "name": "phone-night line menu no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "phone-night line menu no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night line menu no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night Add this line → \"Added 1 task\", the task written with its photo link, 6 things left",
+    "ok": true,
+    "detail": "[\"Added 1 task\"]"
+  },
+  {
+    "name": "phone-night …the capture remembers where it went (items[1].done = task + its id), still in review",
+    "ok": true,
+    "detail": "{\"to\":\"task\",\"id\":\"5ae3407e-e87e-48d5-96c0-14eca7fdf5b0\"}"
+  },
+  {
+    "name": "phone-night …\"Added already · Assignment 2 · in Tasks\" under the lines",
+    "ok": true,
+    "detail": "Added already Assignment 2 in Tasks"
+  },
+  {
+    "name": "phone-night added no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "phone-night added no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night added no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night …Undo deletes the task and puts the line back (7 things, no \"Added\")",
+    "ok": true,
+    "detail": "1 / 7"
+  },
+  {
+    "name": "phone-night hold a line → \"1 selected\", footer Add · Type · Date · Project · Dismiss",
+    "ok": true,
+    "detail": "1 selected\nSelect all / Add Type Date Project Dismiss"
+  },
+  {
+    "name": "phone-night Select all → \"7 selected\"",
+    "ok": true,
+    "detail": "7 selected\nSelect all"
+  },
+  {
+    "name": "phone-night selection no horizontal scroll",
+    "ok": true,
+    "detail": "390/390"
+  },
+  {
+    "name": "phone-night selection no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night selection no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone-night ✕ → none selected, the usual footer back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day the Inbox badge counts the ready page (1 capture + 1 page)",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "desktop-day right-click the ready row → See the photo · Dismiss page · Delete page and photo",
+    "ok": true,
+    "detail": "[\"See the photo\",\"Dismiss page adds nothing\",\"Delete page and photo\"]"
+  },
+  {
+    "name": "desktop-day …Dismiss page → the row leaves, the badge drops to 1, \"Page dismissed\"",
+    "ok": true,
+    "detail": "1 [\"Page dismissed\"]"
+  },
+  {
+    "name": "desktop-day …Undo → the row and the badge back",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "desktop-day ⋯ → See the photo → the photo, full size",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day the footer names the keys: ↑↓ a line · ⏎ add · ⌫ dismiss · T type · A select all",
+    "ok": true,
+    "detail": "↑↓ a line · ⏎ add · ⌫ dismiss · T type · A select all"
+  },
+  {
+    "name": "desktop-day review no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "desktop-day review no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day review no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day right-click a line → Add this line ⏎ … Dismiss this line ⌫",
+    "ok": true,
+    "detail": "[\"Add this line to do ⏎\",\"Edit the text\",\"Change the type… T\",\"Change the date…\",\"Move to…\",\"Add a priority…\",\"Select ⌃ click\",\"Dismiss this line not wanted ⌫\"]"
+  },
+  {
+    "name": "desktop-day …Dismiss this line → \"Line dismissed\", 6 things",
+    "ok": true,
+    "detail": "[\"Line dismissed\"]"
+  },
+  {
+    "name": "desktop-day …Undo → 7 things",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ↓ rings the first line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day ⏎ adds the ringed line (\"Added 1 note\"), the ring moves to the next",
+    "ok": true,
+    "detail": "[\"Added 1 note\"]"
+  },
+  {
+    "name": "desktop-day ⌫ dismisses it (\"Line dismissed\"), 5 things, the ring on Read ch. 4",
+    "ok": true,
+    "detail": "[\"Added 1 note\",\"Line dismissed\"]"
+  },
+  {
+    "name": "desktop-day Del works the same (4 things)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day A selects every line (\"4 selected\")",
+    "ok": true,
+    "detail": "4 selected\nSelect all"
+  },
+  {
+    "name": "desktop-day Esc ends the selection, the panel stays",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day Esc again closes it (kept for later): the row says \"4 things · Ready to review · 1 added\"",
+    "ok": true,
+    "detail": "Monday notes · 4 things Ready to review · 1 added Review"
+  },
+  {
+    "name": "desktop-day reopened: \"Added already\" (the note) and \"2 lines dismissed · Bring back\"",
+    "ok": true,
+    "detail": "Added already OS lecture 3 — 4 Oct in the Inbox 2 lines dismissed Bring back"
+  },
+  {
+    "name": "desktop-day the page’s ⋯ (a menu here): … Keep for later · Dismiss page · Delete page and photo",
+    "ok": true,
+    "detail": "[\"See the photo\",\"Scan another page\",\"Keep for later stays in the Inbox\",\"Dismiss page adds nothing more\",\"Delete page and photo\"]"
+  },
+  {
+    "name": "desktop-day Delete page and photo → closed, row gone, read wiped; what was added stays (no deletes)",
+    "ok": true,
+    "detail": "[\"Added 1 note\",\"Line dismissed\"]"
+  },
+  {
+    "name": "desktop-day …Undo → back with its 4 lines",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-day Add all 4 → only the lines left are written, the page reviewed; the badge counts its notes, not the page",
+    "ok": true,
+    "detail": "3/1 3"
+  },
+  {
+    "name": "desktop-night the Inbox badge counts the ready page (1 capture + 1 page)",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "desktop-night right-click the ready row → See the photo · Dismiss page · Delete page and photo",
+    "ok": true,
+    "detail": "[\"See the photo\",\"Dismiss page adds nothing\",\"Delete page and photo\"]"
+  },
+  {
+    "name": "desktop-night the footer names the keys: ↑↓ a line · ⏎ add · ⌫ dismiss · T type · A select all",
+    "ok": true,
+    "detail": "↑↓ a line · ⏎ add · ⌫ dismiss · T type · A select all"
+  },
+  {
+    "name": "desktop-night review no horizontal scroll",
+    "ok": true,
+    "detail": "1280/1280"
+  },
+  {
+    "name": "desktop-night review no text under 12px",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night review no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop-night right-click a line → Add this line ⏎ … Dismiss this line ⌫",
+    "ok": true,
+    "detail": "[\"Add this line to do ⏎\",\"Edit the text\",\"Change the type… T\",\"Change the date…\",\"Move to…\",\"Add a priority…\",\"Select ⌃ click\",\"Dismiss this line not wanted ⌫\"]"
+  }
+]

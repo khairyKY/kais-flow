@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { taskMenuSpec } from './taskMenuSpec'
 import type { Task } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 const task = (over: Partial<Task> = {}): Task => ({
   id: 't1', project_id: null, domain_id: null, area_id: null, title: 'Call the bank about the mortgage', notes: null,

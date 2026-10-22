@@ -1,4 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi, beforeAll } from 'vitest'
+import { setHour24 } from './clock'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // User time zones (2026-10-04): the same helpers the Cairo suites pin, run for a user in New York
 // and one in Tokyo (app_settings.timezone → setAppZone). Every `now` is an explicit instant and
@@ -102,14 +106,14 @@ describe('a New York user (EDT, UTC-4) late on Wed 8 Jul — already Thursday in
     const p = parseCommand('call mom tomorrow 3pm', [], [], { zone: 'cairo', now })
     expect(p.dueAt).toBe('2026-07-09T19:00:00.000Z')
     expect(p.title).toBe('call mom')
-    expect(formatDueChip(p.dueAt!, now)).toBe('Tomorrow · 3:00 PM')
+    expect(formatDueChip(p.dueAt!, now)).toBe('Tomorrow · 15:00')
   })
   it('Today’s Up next keeps tonight’s event and leaves tomorrow morning’s for tomorrow', () => {
     const tonight = { id: 'a', starts_at: '2026-07-09T03:45:00Z', ends_at: '2026-07-09T04:15:00Z', all_day: false } // 23:45 NY
     const tomorrowAm = { id: 'b', starts_at: '2026-07-09T12:00:00Z', ends_at: '2026-07-09T13:00:00Z', all_day: false } // 08:00 NY Thu
     setAppZone(NY)
     expect(upNextEvents([tomorrowAm, tonight], now).map((e) => e.id)).toEqual(['a'])
-    expect(upNextClock(tonight.starts_at)).toBe('11:45 PM')
+    expect(upNextClock(tonight.starts_at)).toBe('23:45')
     setAppZone(DEFAULT_ZONE) // in Cairo it's already Thursday, so both are today's
     expect(upNextEvents([tomorrowAm, tonight], now).map((e) => e.id)).toEqual(['a', 'b'])
   })

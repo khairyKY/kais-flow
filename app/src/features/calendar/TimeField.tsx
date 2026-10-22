@@ -5,6 +5,7 @@ import { QUARTERS as OPTIONS } from '../../components/pickerMath'
 import { TimePicker } from '../../components/TimePicker'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { uiZoom } from '../../lib/uiScale'
+import { clockText } from '../../lib/clock'
 import { placeSelect, type SelectPlacement } from '../../components/selectPlacement'
 
 // ── C5 (2026-07-18 audit): themed replacement for native <input type="time"> — the OS
@@ -15,10 +16,10 @@ import { placeSelect, type SelectPlacement } from '../../components/selectPlacem
 
 const PANEL_MAX_H = 224
 
+// The field reads the person's clock (lib/clock: "3:30 PM", or "15:30" on the 24-hour clock — Kai
+// 2026-10-22); what it hands back is always "HH:mm".
 function format12(hhmm: string): string {
-  const [h, m] = hhmm.split(':').map(Number)
-  if (Number.isNaN(h) || Number.isNaN(m)) return ''
-  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`
+  return /^\d{1,2}:\d{2}$/.test(hhmm) ? clockText(hhmm) : ''
 }
 
 /** "3pm" · "3:30 PM" · "15:00" · "0930" → "HH:mm", or null if unparseable. */

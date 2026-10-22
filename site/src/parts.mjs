@@ -4,32 +4,28 @@ import { APP_URL, LATEST, APK_LATEST, EXE_LATEST, longDate } from './data.mjs'
 
 // ── "Get it": web / Android / Windows ── the version is filled in live by site.js
 const ver = () => `<span class="ver"><span data-release-tag>${LATEST.tag}</span> · <span data-release-date>${longDate(LATEST.date)}</span></span>`
-export const getIt = ({ big = false } = {}) => `<div class="getit${big ? ' big' : ''}" data-release>
-  <div class="card get"><div class="get-h"><span class="get-ic">${icon('globe', 26)}</span><div><h3>Web</h3>${ver()}</div></div>
-    <p>Open it in any browser. Install it from the address bar to get its own window and offline use.</p>
-    <div class="act">${btn('Open in browser', APP_URL)}</div></div>
-  <div class="card get"><div class="get-h"><span class="get-ic">${icon('android', 26)}</span><div><h3>Android</h3>${ver()}</div></div>
-    <p>An APK from our GitHub releases, about ${LATEST.apkMB} MB.</p>
-    <p class="small">Your phone will ask once to allow installs from your browser — say yes, then install.</p>
-    <div class="act">${btn('Download APK', APK_LATEST, { kind: 'secondary' })}</div></div>
-  <div class="card get"><div class="get-h"><span class="get-ic">${icon('windows', 26)}</span><div><h3>Windows</h3>${ver()}</div></div>
-    <p>An installer for Windows 10 and 11, about ${LATEST.exeMB} MB. It installs just for you, so no admin password.</p>
-    <div class="act">${btn('Download for Windows', EXE_LATEST, { kind: 'secondary' })}</div></div>
-</div>`
+const getRow = (ic, name, text, small, action) => `<li class="get"><span class="get-ic">${icon(ic, 24)}</span>
+    <div class="get-t"><h3>${name}</h3><p>${text}</p>${small ? `<p class="small">${small}</p>` : ''}</div>
+    <div class="get-act">${action}${ver()}</div></li>`
+export const getIt = ({ big = false } = {}) => `<ul class="getit${big ? ' big' : ''}" data-release role="list">
+  ${getRow('globe', 'Web', 'Open it in any browser. Install it from the address bar to get its own window and offline use.', '', btn('Open in browser', APP_URL))}
+  ${getRow('android', 'Android', `An APK from our GitHub releases, about ${LATEST.apkMB} MB. Updates install over the top.`, 'Your phone asks once to allow installs from your browser. Say yes, then install.', btn('Download APK', APK_LATEST, { kind: 'tonal' }))}
+  ${getRow('windows', 'Windows', `An installer for Windows 10 and 11, about ${LATEST.exeMB} MB. It installs just for you, no admin password, and updates itself.`, '', btn('Download for Windows', EXE_LATEST, { kind: 'tonal' }))}
+</ul>`
 
 // ── the eight things inside ──
 export const FEATURES = [
   ['mic', 't-terra', 'Capture in two taps', 'Say it or type it. “Call Omar Friday 5pm” lands with the date already set.', '/features/capture/'],
-  ['calendar', 't-lav', 'Your calendar, with time blocks', 'Drag tasks onto the day, in 15-minute steps. Google Calendar sync is on its way.', '/features/calendar/'],
+  ['calendar', 't-lav', 'Your calendar, with time blocks', 'Drag tasks onto the day in 15-minute steps. Google Calendar shows beside your blocks.', '/features/calendar/'],
   ['routine', 't-sage', 'Routines and streaks', 'Small daily habits, with a streak that forgives a missed day.', '/features/rituals/'],
   ['star', 't-terra', 'Top 3', 'Three things that make today a good day. One is the goal.', '/features/plan-and-today/'],
   ['journal', 't-butter', 'Journal and herbarium', 'Write the day down. Finished projects are pressed like flowers.', '/features/journal/'],
   ['people', 't-blossom', 'People', 'Birthdays, the last time you spoke, and notes on each person.', '/features/people/'],
   ['download', 't-hyd', 'Bring your lists', 'Import from Todoist, TickTick, Notion, Obsidian or Akiflow.', '/integrations/'],
-  ['notebook', 't-butter', 'Paper capture', 'Photograph your handwritten notes and they come back as tasks — Arabic too. The Notebook page is next.', '/paper/'],
+  ['notebook', 't-butter', 'Paper capture', 'Print the Notebook page, write on it, photograph it, and the ticks come back as done. Arabic too.', '/paper/'],
 ]
 export const fcell = ([ic, tone, title, line, href, isSoon], { link = false, more = '' } = {}) => `<div class="fcell"><span class="dot ${tone}">${icon(ic)}</span>
-  <div class="fcell-t"><h3>${title}</h3>${isSoon ? soon() : ''}</div><p>${line}</p>${link ? `<a class="go" href="${href}">${more || title} →</a>` : ''}</div>`
+  <div class="fcell-t"><h3>${title}</h3>${isSoon ? soon() : ''}</div><p>${line}</p>${link ? `<a class="go" href="${href}">${more || title}</a>` : ''}</div>`
 
 // ── paper: the app's Notebook page beside a real notebook ──
 export const notebookPage = () => `<div class="npage" role="img" aria-label="The Notebook page for Saturday 3 October: data, Top 3, schedule and tasks, laid out to copy by hand">
@@ -66,5 +62,5 @@ export const promises = () => `<div>
   <div class="promise"><span class="ring">${icon('lock', 22)}</span><div><h3>No ads, no selling data</h3><p>There is nothing to sell. No trackers, no analytics scripts, no cookie banner.</p></div></div>
   <div class="promise"><span class="ring">${icon('up', 22)}</span><div><h3>AI that forgets</h3><p>Capture and chat use Groq, an AI provider that doesn’t train on your words and, with zero data retention, keeps nothing after replying.</p></div></div>
   <div class="promise"><span class="ring">${icon('download', 22)}</span><div><h3>Yours to take</h3><p>Your days belong to you. Ask, and we’ll send you everything you’ve written, or delete your account and all of it.</p></div></div>
-  <a class="more" href="/privacy/">Read the privacy policy →</a>
+  <a class="more" href="/privacy/">Read the privacy policy</a>
 </div>`

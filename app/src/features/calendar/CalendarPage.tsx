@@ -1,10 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
 import { useNavigate } from 'react-router'
 import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
-import { Draggable } from '@fullcalendar/interaction'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
-import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
+import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
 import { inSlot, slotAt, slotFill, slotTasks } from './slots'
 import { TaskMenu } from '../tasks/TaskMenu'
 import { taskActions } from '../tasks/useRowGrammar'
@@ -24,6 +24,7 @@ import { DatePicker } from '../../components/DatePicker'
 import { dayHint } from '../../components/pickerMath'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, tomorrowHint } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
+import { clockOptions, hour24, setHour24, useHour24 } from '../../lib/clock'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { Button, Checkbox } from '../../components/kit'
@@ -38,12 +39,13 @@ import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../
 import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
-import { cairoTimeKey, slotFields, zoneHour } from './eventTime'
+import { slotFields, timeText, zoneHour } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
-import { blockedOn, cardDragData, freeGaps, freeLeft, minutesLabel } from './planningMode'
+import { blockedOn, freeGaps, freeLeft, minutesLabel } from './planningMode'
+import { cardDraggable } from './cardDrag'
 import { conflictsOf } from './overlapLayout'
 import { parseWeekend } from '../../lib/weekend'
-import { addDays } from '../../components/pickerMath'
+import { addDays, durationLabel } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
 import { BLOCK_MENU_WIDTH, besideBlock, isSynced } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
@@ -54,6 +56,7 @@ import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOpti
 import { gridMinWidth, railYields, visibleDayCount } from './weekFit'
 import { useDayRollover } from './useDayRollover'
 import { useMinuteNow } from '../today/useMinuteNow'
+import { useMinuteClock } from '../../lib/minuteClock'
 import { daisyColumnStage } from '../../lib/growthStages'
 import { useIsMobile } from '../../components/BottomSheet'
 import { PhoneCalendar } from './PhoneCalendar'
@@ -132,6 +135,50 @@ function anchorOf(id: string): { x: number; y: number } {
 
 const DAY_MS = 86_400_000
 
+// ── Calendar smoothness S1 (2026-10-22 audit): the grid is memoised and FullCalendar compares what it's
+// handed by identity, so the page hands it stable things. ──
+
+/** An ids array that keeps its identity while its contents don't change. */
+function useSameIds(ids: string[]): string[] {
+  const key = ids.join()
+  return useMemo(() => ids, [key]) // eslint-disable-line react-hooks/exhaustive-deps
+}
+
+/** Stable wrappers around handlers that close over the latest render (the grid's props). */
+function useStableHandlers<T extends Record<string, (...args: never[]) => unknown>>(handlers: T): T {
+  const ref = useRef(handlers)
+  useLayoutEffect(() => {
+    ref.current = handlers
+  })
+  return useMemo(
+    () => Object.fromEntries(Object.keys(handlers).map((k) => [k, (...args: never[]) => (ref.current[k] as (...a: never[]) => unknown)(...args)])) as T,
+    [], // eslint-disable-line react-hooks/exhaustive-deps
+  )
+}
+
+/** M2: what a popover showed, kept while it plays its way out after its state was cleared. */
+function useKept<T>(value: T | null, mounted: boolean): T | null {
+  const kept = useRef(value)
+  if (value) kept.current = value
+  return value ?? (mounted ? kept.current : null)
+}
+
+/** The rail footer (p7e A15): busy blocks today, and the free time left inside 08:00–20:00 from now —
+ * Free events, past time and off-hours aren't free time (the planning strip's own footer rule). S9: the
+ * minute is read here, not by the page. */
+function RailLoad({ events }: { events: CalendarEvent[] }) {
+  const now = useMinuteNow()
+  const load = useMemo(() => {
+    const day = cairoDateKey(now)
+    return { blocked: blockedOn(events, day), free: minutesLabel(freeLeft(events, day, now)) }
+  }, [events, now])
+  return (
+    <div className="cal-rail-load" style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }} title="Blocks on today's calendar · free time left today">
+      {load.blocked} {load.blocked === 1 ? 'block' : 'blocks'} · {load.free} free
+    </div>
+  )
+}
+
 
 // ── The planning rail's sections and cards (Kai 2026-10-07). ──
 
@@ -157,20 +204,20 @@ const TRAY_FOLD_KEY = 'kf.calTrayFolded'
 const TRAY_ROW = 34
 const TRAY_MAX_ROWS = 4
 
-function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, now, domains, projects, areas, onPlan }: {
+function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects, areas, onPlan }: {
   wrapRef: React.RefObject<HTMLDivElement | null>
   /** Changes when the grid shows other days: re-measure its columns. */
   rangeKey: string
   minWidth?: number
   tasks: Task[]
   events: CalendarEvent[]
-  now: Date
   domains: Domain[]
   projects: Project[]
   areas: Area[]
   onPlan: (r: RailTask, x: number, y: number) => void
 }) {
   const trayRef = useRef<HTMLElement>(null)
+  const now = useMinuteNow() // S9: the tray's own minute, not the page's
   const [cols, setCols] = useState<{ date: string; left: number; width: number }[]>([])
   const [folded, setFolded] = useState(() => {
     try {
@@ -212,7 +259,7 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, now, domains, pro
   // One Draggable on the tray, as on the rail: it delegates to `.unscheduled-task`.
   useEffect(() => {
     if (!trayRef.current) return
-    const draggable = new Draggable(trayRef.current, { itemSelector: '.unscheduled-task', eventData: cardDragData })
+    const draggable = cardDraggable(trayRef.current)
     return () => draggable.destroy()
   }, [most > 0])
   if (most === 0) return null
@@ -294,6 +341,7 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
       data-task-id={t.id}
       data-title={t.title}
       data-duration={railMinutes(r)}
+      data-length={durationLabel(railMinutes(r))}
       onContextMenu={grammar.onContextMenu}
       title={tag ? `${t.title} · ${tag.label}` : t.title}
     >
@@ -305,7 +353,7 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
       <span className="cal-row-title"><EmojiText text={t.title} /></span>
       <span className="cal-row-meta">
         {r.late > 0 ? (
-          <span style={{ color: 'var(--acc-terra-ink)' }} title={missed ? `Missed block: ${missed.toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: appZone() })}` : undefined}>
+          <span style={{ color: 'var(--acc-terra-ink)' }} title={missed ? `Missed block: ${missed.toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })}` : undefined}>
             Overdue {r.late}d
           </span>
         ) : (
@@ -340,7 +388,7 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
 function RailInboxCard({ item, onPlan }: { item: InboxItem; onPlan: (x: number, y: number) => void }) {
   const title = inboxTitle(item)
   return (
-    <div className="unscheduled-task" data-inbox-id={item.id} data-title={title} data-duration={inboxMinutes(item)} title={title}>
+    <div className="unscheduled-task" data-inbox-id={item.id} data-title={title} data-duration={inboxMinutes(item)} data-length={durationLabel(inboxMinutes(item))} title={title}>
       <Icon name="inbox" size={15} style={{ flex: 'none', color: 'var(--ink-faint)' }} />
       <span className="cal-row-title"><EmojiText text={title} /></span>
       <span className="cal-row-meta">Inbox</span>
@@ -407,8 +455,11 @@ function DesktopCalendar() {
   const [justDroppedId, setJustDroppedId] = useState<string | null>(null)
   const [rangeInfo, setRangeInfo] = useState<{ title: string; start: Date; end: Date } | null>(null)
   // A week either side: month view draws its neighbours' days too.
-  const gridFrom = rangeInfo ? rangeInfo.start.getTime() - 7 * DAY_MS : null
-  const gridTo = rangeInfo ? rangeInfo.end.getTime() + 7 * DAY_MS : null
+  // S4 (2026-10-22 audit): snapped to whole weeks (from the Unix epoch's Thursday — any fixed week works), so
+  // paging inside the window keeps the same query and its events array: one grid pass a page, not two.
+  const WEEK_MS = 7 * DAY_MS
+  const gridFrom = rangeInfo ? Math.floor((rangeInfo.start.getTime() - 7 * DAY_MS) / WEEK_MS) * WEEK_MS : null
+  const gridTo = rangeInfo ? Math.ceil((rangeInfo.end.getTime() + 7 * DAY_MS) / WEEK_MS) * WEEK_MS : null
   const gridRange = useMemo(() => (gridFrom != null && gridTo != null ? { start: new Date(gridFrom), end: new Date(gridTo) } : undefined), [gridFrom, gridTo])
   const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
@@ -467,9 +518,13 @@ function DesktopCalendar() {
   }
   const dayCount = visitDays ?? settings?.calendar_day_count ?? 4
 
+  // The 24-hour switch is the app's one clock (lib/clock, Kai 2026-10-22): it lives in the shared store, so
+  // Settings and every other surface follow it; the rest of the view options stay this page's.
+  const h24 = useHour24()
   function patchViewOpts(patch: Partial<CalViewOptions>) {
+    if (patch.hour24 !== undefined) setHour24(patch.hour24)
     setViewOpts((v) => {
-      const next = { ...v, ...patch }
+      const next = { ...v, ...patch, hour24: patch.hour24 ?? hour24() }
       writeViewOptions(next)
       return next
     })
@@ -498,10 +553,25 @@ function DesktopCalendar() {
       return pid ? (byId.get(pid)?.title ?? null) : null
     }
   }, [tasks])
-  const visibleEvents = viewOpts.showCompleted ? gridEvents : gridEvents.filter((e) => !(e.task_id && doneTaskIds.has(e.task_id)))
-  // An occurrence's pending write is its series row's.
-  const pendingIds = visibleEvents.filter((e) => outboxMarks.pending.has(e.seriesId ?? e.id)).map((e) => e.id)
-  const failedIds = visibleEvents.filter((e) => outboxMarks.failed.has(e.seriesId ?? e.id)).map((e) => e.id)
+  const visibleEvents = useMemo(() => (viewOpts.showCompleted ? gridEvents : gridEvents.filter((e) => !(e.task_id && doneTaskIds.has(e.task_id)))), [viewOpts.showCompleted, gridEvents, doneTaskIds])
+  // An occurrence's pending write is its series row's. (S2: these never reach FullCalendar's data — the grid
+  // marks the blocks' elements.)
+  const pendingIds = useSameIds(visibleEvents.filter((e) => outboxMarks.pending.has(e.seriesId ?? e.id)).map((e) => e.id))
+  const failedIds = useSameIds(visibleEvents.filter((e) => outboxMarks.failed.has(e.seriesId ?? e.id)).map((e) => e.id))
+  const conflictedIds = useSameIds(Array.from(conflicts.keys()))
+  // S1: the blocks as the grid takes them, rebuilt only when what they draw changes.
+  const gridBlocks = useMemo(
+    () =>
+      visibleEvents.map((e) => {
+        // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
+        const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
+        return {
+          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
+          ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held) } : null),
+        }
+      }),
+    [visibleEvents, tasks, doneTaskIds, parentTitleOf],
+  )
   const selectedEvent = selected ? findBlock(gridEvents, selected.id, selected.start) ?? null : null
 
   const scopeValueOptions =
@@ -523,7 +593,7 @@ function DesktopCalendar() {
   // come and go (a section opened, a task planned) need no re-binding.
   useEffect(() => {
     if (!sidebarRef.current) return
-    const draggable = new Draggable(sidebarRef.current, { itemSelector: '.unscheduled-task', eventData: cardDragData })
+    const draggable = cardDraggable(sidebarRef.current)
     return () => draggable.destroy()
   }, [])
 
@@ -541,7 +611,7 @@ function DesktopCalendar() {
     const next = nextFreeSlot(events, now, dur)
     const at = (s: { starts_at: string; ends_at: string }) => {
       const d = new Date(s.starts_at)
-      return cairoDateKey(d) === cairoDateKey(now) ? cairoTimeKey(d) : `${dayHint(cairoDateKey(d), cairoDateKey(now))} ${cairoTimeKey(d)}`
+      return cairoDateKey(d) === cairoDateKey(now) ? timeText(d) : `${dayHint(cairoDateKey(d), cairoDateKey(now))} ${timeText(d)}`
     }
     const place = (startsAt: string, endsAt: string) => {
       if (target.kind === 'task') scheduleTaskWithUndo(target.r.task, startsAt, endsAt)
@@ -595,11 +665,21 @@ function DesktopCalendar() {
     setSelected({ id: event.id, start: event.starts_at, at: at ?? anchorOf(event.id) })
   }
 
-  function handleEventClick(id: string) {
+  // Multi-select (Kai 2026-10-22, Google / Notion Calendar): Ctrl / ⌘ / Shift + click picks blocks; dragging one
+  // moves them all, Delete / Backspace takes them off with one Undo, Esc lets go. A plain click starts over.
+  const [picked, setPicked] = useState<string[]>([])
+  function handleEventClick(id: string, add?: boolean) {
     setContextMenu(null)
+    if (add) {
+      setSelected(null)
+      setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
+      return
+    }
+    setPicked([])
     const event = gridEvents.find((e) => e.id === id)
     if (event) openExisting(event)
   }
+  const pickedLive = useMemo(() => picked.filter((id) => gridEvents.some((e) => e.id === id)), [picked, gridEvents])
 
   // Punch 6 (calendar slice): every destructive calendar mutation undoes through the same api — never a bare toast.
   const unscheduleWithUndo = (event: CalendarEvent) => deleteEventWithUndo(event, 'Unscheduled')
@@ -655,11 +735,13 @@ function DesktopCalendar() {
   // T-4 (Polish F2b): QuickCreate's fields are Cairo wall-clock; slotFields converts the slot so
   // the form shows the clicked time on Cairo's clock and saves that exact instant back.
   // p7e A4: with ⌘/Ctrl held it's a Task there (Akiflow's ⌘-click), its block on that slot.
-  function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean }) {
+  function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) {
     // The grid snaps to 15 min (Kai 2026-10-03), so a plain click selects one quarter; it still
-    // makes the half-hour it always did. A drag keeps exactly what was dragged.
+    // makes the half-hour it always did. A drag keeps exactly what was dragged — one quarter too
+    // (Kai 2026-10-21: a 15-minute drag used to come out 30).
+    setPicked([])
     const startMs = new Date(info.start).getTime()
-    const end = !info.allDay && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
+    const end = !info.allDay && !info.dragged && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
     setQuickCreate({
       kind: info.task ? 'task' : 'event',
       slot: slotFields(info.start, end, info.allDay),
@@ -789,6 +871,12 @@ function DesktopCalendar() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target) || overlayCount() > 0) return
+      if (pickedLive.length && (e.key === 'Escape' || e.key === 'Delete' || e.key === 'Backspace')) {
+        e.preventDefault()
+        if (e.key !== 'Escape') deleteEventsWithUndo(pickedLive.flatMap((id) => gridEvents.filter((x) => x.id === id)))
+        setPicked([])
+        return
+      }
       const key = /^[\x20-\x7e]$/.test(e.key) ? e.key.toLowerCase() : (/^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase() ?? /^Digit(\d)$/.exec(e.code)?.[1] ?? e.key)
       const grid = gridRef.current
       const run: Record<string, (() => void) | undefined> = {
@@ -810,44 +898,39 @@ function DesktopCalendar() {
 
   const stripDays = viewKind === 'day' ? 1 : 2
   const planRef = useRef<HTMLDivElement>(null)
-  const minuteNow = useMinuteNow()
+  // S9: the page re-renders on the minute only in planning mode (its strip head and free gaps); the rail
+  // footer and the day tray read the clock themselves.
+  const planMinute = useMinuteClock((s) => (planning ? s.now : 0))
+  const minuteNow = useMemo(() => (planMinute ? new Date(planMinute) : new Date()), [planMinute])
   const stripStart = rangeInfo ? cairoDateKey(rangeInfo.start) : cairoDateKey(minuteNow)
   const stripKeys = stripDays === 1 ? [stripStart] : [stripStart, addDays(stripStart, 1)]
-  const gaps = planning ? stripKeys.flatMap((d) => freeGaps(events, d, minuteNow)) : undefined
+  const stripKeysKey = stripKeys.join()
+  const gaps = useMemo(() => (planning ? stripKeysKey.split(',').flatMap((d) => freeGaps(events, d, minuteNow)) : undefined), [planning, stripKeysKey, events, minuteNow])
   // The rail footer (p7e A15): busy blocks today, and the free time left inside 08:00–20:00 from now —
   // Free events, past time and off-hours aren't free time (the planning strip's own footer rule).
-  const load = useMemo(() => {
-    const day = cairoDateKey(minuteNow)
-    return { blocked: blockedOn(events, day), free: minutesLabel(freeLeft(events, day, minuteNow)) }
-  }, [events, minuteNow])
-  /** The strip's handle dragged back left (or clicked): the grid returns. */
-  function startStripHandle(e: React.PointerEvent<HTMLButtonElement>) {
-    if (e.button !== 0) return
-    const x0 = e.clientX
-    const up = (ev: PointerEvent) => {
-      window.removeEventListener('pointerup', up)
-      if (x0 - ev.clientX > 40) setPlanning(false)
-    }
-    window.addEventListener('pointerup', up)
-  }
-
   function startRailDrag(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0) return // J-4a: a right-button drag used to resize the rail
     e.preventDefault()
     const startX = e.clientX
     const startW = railWidth
     setRailDragging(true)
+    // S3 (2026-10-22 audit: 40 moves took 26.7 s — two grid passes a move): while it moves, the width is
+    // written on the rail itself, one write a frame (a variable on the shell restyled the whole page each
+    // move); React hears of it once, on release.
+    const rail = railRef.current
+    let next = startW
+    let raf = 0
     const onMove = (ev: PointerEvent) => {
-      const next = Math.min(RAIL_MAX, Math.max(RAIL_MIN, startW + (ev.clientX - startX)))
-      setRailWidth(next)
+      next = Math.min(RAIL_MAX, Math.max(RAIL_MIN, startW + (ev.clientX - startX)))
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => rail?.style.setProperty('width', `${next}px`))
     }
-    const onUp = (ev: PointerEvent) => {
-      // §4: let go past 60% of the calendar and the rail takes it over (the width it had stays).
-      const shell = shellRef.current?.getBoundingClientRect()
-      if (shell && ev.clientX - shell.left > shell.width * 0.6) {
-        setRailWidth(startW)
-        setPlanning(true)
-      }
+    // Kai 2026-10-22 ("it shows a new foreign state"): the splitter only resizes — letting go past 60%
+    // of the calendar no longer swaps in planning mode (View options ▸ Planning mode does, by name).
+    const onUp = () => {
+      cancelAnimationFrame(raf)
+      flushSync(() => setRailWidth(next))
+      rail?.style.removeProperty('width')
       setRailDragging(false)
       window.removeEventListener("pointermove", onMove)
       window.removeEventListener("pointerup", onUp)
@@ -891,6 +974,58 @@ function DesktopCalendar() {
       )}
     </div>
   )
+
+  // S1: the grid's handlers, stable across renders (each reads the latest render's state when it runs).
+  const grid = useStableHandlers({
+    onRangeChange: (info: { title: string; start: Date; end: Date }) => setRangeInfo(info),
+    onSlotTaskMenu: (taskId: string, x: number, y: number) => setSlotMenu({ taskId, x, y }),
+    onSlotTaskOpen: (taskId: string, el: Element) => openTask(taskId, undefined, el),
+    onSlotTaskOut: (taskId: string) => {
+      const t = tasks.find((x) => x.id === taskId)
+      if (t) outOfSlotWithUndo(t)
+    },
+    onSlotTaskToRail: (taskId: string, section: string | null) => handleSlotTaskToRail(taskId, section),
+    onCompleteTask: (taskId: string, done: boolean) => {
+      const t = tasks.find((x) => x.id === taskId)
+      if (!t) return
+      if (done) uncompleteTask(t)
+      else completeTaskWithUndo(t)
+    },
+    onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) => handleGridCreate(info),
+    // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.
+    onMove: (id: string, start: string, end: string, allDay: boolean) => {
+      const event = gridEvents.find((e) => e.id === id)
+      if (!event) return
+      // A task's block dropped on a Time block: the task goes into the slot, its block comes off.
+      const task = event.task_id && !allDay ? tasks.find((t) => t.id === event.task_id) : undefined
+      const slot = task ? slotAt(gridEvents, start, id) : undefined
+      if (task && slot) return putInSlotWithUndo(task, slot)
+      toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
+    },
+    onResize: (id: string, start: string, end: string) => {
+      const event = gridEvents.find((e) => e.id === id)
+      if (event) toastUndo(`Resized · ${event.title}`, resizeEvent(event, start, end))
+    },
+    onEventClick: (id: string, add?: boolean) => handleEventClick(id, add),
+    onMoveMany: (ids: readonly string[], delta: number) => {
+      moveEventsByWithUndo(ids.flatMap((id) => gridEvents.filter((x) => x.id === id)), delta)
+      return true
+    },
+    onEventDoubleClick: (id: string) => handleEventDoubleClick(id),
+    onExternalDrop: (from: { taskId?: string; inboxId?: string }, start: string, allDay: boolean) => handleExternalDrop(from, start, allDay),
+    onReplan: (id: string, x: number, y: number) => {
+      const event = gridEvents.find((e) => e.id === id)
+      if (event) replanEvent(event, x, y)
+    },
+    onDragToRail: (eventId: string, section: string | null) => handleDragToRail(eventId, section),
+    onEventContextMenu: (id: string, x: number, y: number) => handleEventContextMenu(id, x, y),
+    onGridContextMenu: (iso: string, allDay: boolean, x: number, y: number) => handleGridContextMenu(iso, allDay, x, y),
+  })
+  // M2: the block popover and quick create play their way out (100ms) after their state is cleared.
+  const blockExit = useOverlayExit(!!(selected && selectedEvent), 100)
+  const blockShown = useKept(selected && selectedEvent ? { sel: selected, event: selectedEvent } : null, blockExit.mounted)
+  const qcExit = useOverlayExit(!!quickCreate, 100)
+  const qcShown = useKept(quickCreate ? { ...quickCreate, key: JSON.stringify([quickCreate.kind, quickCreate.slot, quickCreate.anchor]) } : null, qcExit.mounted)
 
   return (
     <>
@@ -939,7 +1074,6 @@ function DesktopCalendar() {
           padding: 3px 6px;
           margin: 0 -6px;
           border-radius: var(--radius-input);
-          transition: transform 320ms var(--ease-spring);
         }
         @media (hover: hover) { .unscheduled-task:hover { background: var(--paper-bone); } }
         /* Kai 2026-10-17: a card opens its task on a click or Enter (./cardOpen) — so it takes focus. */
@@ -952,13 +1086,13 @@ function DesktopCalendar() {
           .unscheduled-task:hover .cal-row-acts, .unscheduled-task:focus-within .cal-row-acts { display: inline-flex; }
           .unscheduled-task:hover .cal-row-meta, .unscheduled-task:focus-within .cal-row-meta { display: none; }
         }
-        .motion-on .unscheduled-task:active {
-          cursor: grabbing;
-          opacity: 0.92;
-          transform: scale(1.04) rotate(1.2deg);
-          box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);
-          transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
-        }
+        /* M6 (2026-10-22): the press no longer lifts the row in place — the lift is the card's under the
+           pointer (cardDrag, CalendarGrid.css), once. */
+        .unscheduled-task:active { cursor: grabbing; }
+        /* Kai 2026-10-21 (slot-outline A, ./cardDrag): while its lifted copy is out, a card's place stays a
+           quiet dashed outline — the held rows' rule — never a second copy lifted in place. */
+        .unscheduled-task[data-lifted] { outline: 1px dashed var(--ink-hairline); outline-offset: -1px; border-color: transparent; background: transparent; box-shadow: none; }
+        .unscheduled-task[data-lifted] > * { visibility: hidden; }
         .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0; }
         /* Kai 2026-10-14: the per-day tray under the grid (Akiflow). */
         .cal-tray { position: relative; flex: none; border-top: 1px solid var(--line-card); background: var(--paper-parchment); overflow: hidden; }
@@ -967,8 +1101,10 @@ function DesktopCalendar() {
         .cal-tray-fold:focus-visible { outline: none; box-shadow: var(--focus-ring); }
         .cal-tray-day { position: absolute; top: 0; bottom: 0; box-sizing: border-box; overflow-y: auto; padding: 4px 9px; border-left: 1px solid var(--line-card); }
         .cal-tray-day { container-type: inline-size; }
-        /* a Week column is narrow: the title gets the room, the length and project dot go */
-        @container (max-width: 230px) { .cal-tray-day .cal-row-meta { display: none; } }
+        /* a Week column is narrow: the title gets the room, the length and project dot go — and Plan ▾ / ⋯
+           on hover too (Kai 2026-10-21): they took the title's place, so a press to drag the row landed on
+           Plan ▾. A click still opens the task, a right-click its menu. */
+        @container (max-width: 230px) { .cal-tray-day .cal-row-meta, .cal-tray-day .unscheduled-task .cal-row-acts { display: none; } }
         .cal-tray-count { display: block; padding-top: 5px; font-size: var(--fs-meta); color: var(--ink-faint); }
       `}</style>
 
@@ -993,7 +1129,7 @@ function DesktopCalendar() {
         <aside className={railFolded || planning ? 'cal-rail is-folded' : 'cal-rail'} ref={railRef} aria-label="Planning rail">
           <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8, marginBottom: 8 }}>
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)' }}>To plan</div>
-            <div className="cal-rail-load" style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }} title="Blocks on today's calendar · free time left today">{load.blocked} {load.blocked === 1 ? 'block' : 'blocks'} · {load.free} free</div>
+            <RailLoad events={events} />
           </div>
 
           <div
@@ -1066,6 +1202,9 @@ function DesktopCalendar() {
             panelRef={planRef}
             onPlan={(r, x, y) => setPlan({ target: { kind: 'task', r }, x, y })}
             onQuickAdd={openQuickAddTask}
+            // Kai 2026-10-22: planning mode is entered and left by name (View options ▸ Planning mode /
+            // this button), never by the pane handle.
+            onLeave={() => setPlanning(false)}
           />
         )}
 
@@ -1093,36 +1232,15 @@ function DesktopCalendar() {
             >
               ‹
             </button>
-            {/* §4: the planning-mode toggle, the three dots on the rail's right edge. */}
-            <button
-              type="button"
-              className="cal-plan-handle"
-              aria-pressed={false}
-              aria-label="Planning mode: collapse the calendar to a strip"
-              title="Plan — collapse the calendar"
-              onPointerDown={(e) => e.stopPropagation()}
-              onDoubleClick={(e) => e.stopPropagation()}
-              onClick={() => setPlanning(true)}
-            >
+            {/* The splitter's grip: drawn only — a press drags the splitter, a double-click resets it. Kai
+                2026-10-22: a click on it used to swap in planning mode. */}
+            <span className="cal-plan-handle" aria-hidden="true" style={{ pointerEvents: 'none' }}>
               <i /><i /><i />
-            </button>
+            </span>
           </div>
         )}
 
         <div className={planning ? 'cal-main cal-strip' : 'cal-main'}>
-          {planning && (
-            <button
-              type="button"
-              className="cal-plan-handle"
-              aria-pressed
-              aria-label="Leave planning mode: bring the calendar back"
-              title="Bring the calendar back"
-              onPointerDown={startStripHandle}
-              onClick={() => setPlanning(false)}
-            >
-              <i /><i /><i />
-            </button>
-          )}
           {planning ? stripHead : (
           <div className="cal-head" style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 16, minHeight: 52, padding: '6px 14px 6px 16px', borderBottom: '1px solid var(--line-card)', flex: 'none' }}>
             {/* Kai 2026-10-14: the date and its daisy sit at the far top right, out of the grid's height. */}
@@ -1181,53 +1299,11 @@ function DesktopCalendar() {
               ref={gridRef}
               initialView={planning ? (stripDays === 1 ? 'timeGridDay' : 'customDayCount') : VIEW_MAP[viewKind]}
               hideToolbar
-              onRangeChange={setRangeInfo}
-              events={visibleEvents.map((e) => {
-                // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
-                const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
-                return {
-                  id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
-                  ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held) } : null),
-                }
-              })}
-              onSlotTaskMenu={(taskId, x, y) => setSlotMenu({ taskId, x, y })}
-              onSlotTaskOpen={(taskId, el) => openTask(taskId, undefined, el)}
-              onSlotTaskOut={(taskId) => {
-                const t = tasks.find((x) => x.id === taskId)
-                if (t) outOfSlotWithUndo(t)
-              }}
-              onSlotTaskToRail={handleSlotTaskToRail}
-              onCompleteTask={(taskId, done) => {
-                const t = tasks.find((x) => x.id === taskId)
-                if (!t) return
-                if (done) uncompleteTask(t)
-                else completeTaskWithUndo(t)
-              }}
-              onCreate={handleGridCreate}
-              // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.
-              onMove={(id, start, end, allDay) => {
-                const event = gridEvents.find((e) => e.id === id)
-                if (!event) return
-                // A task's block dropped on a Time block: the task goes into the slot, its block comes off.
-                const task = event.task_id && !allDay ? tasks.find((t) => t.id === event.task_id) : undefined
-                const slot = task ? slotAt(gridEvents, start, id) : undefined
-                if (task && slot) return putInSlotWithUndo(task, slot)
-                toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
-              }}
-              onResize={(id, start, end) => {
-                const event = gridEvents.find((e) => e.id === id)
-                if (event) toastUndo(`Resized · ${event.title}`, resizeEvent(event, start, end))
-              }}
-              onEventClick={handleEventClick}
-              onEventDoubleClick={handleEventDoubleClick}
-              onExternalDrop={handleExternalDrop}
-              onReplan={(id, x, y) => {
-                const event = gridEvents.find((e) => e.id === id)
-                if (event) replanEvent(event, x, y)
-              }}
+              events={gridBlocks}
+              {...grid}
+              pickedIds={pickedLive}
               railRef={planning ? planRef : railRef}
-              onDragToRail={handleDragToRail}
-              hour24={viewOpts.hour24}
+              hour24={h24}
               firstDay={viewOpts.weekStartsMon ? 1 : 0}
               hiddenDays={planning || !hiddenWeekend.length ? undefined : hiddenWeekend}
               density={viewOpts.density}
@@ -1235,9 +1311,7 @@ function DesktopCalendar() {
               dayCount={planning ? 2 : dayCount}
               strip={planning}
               freeGaps={gaps}
-              onEventContextMenu={handleEventContextMenu}
-              onGridContextMenu={handleGridContextMenu}
-              conflictedIds={Array.from(conflicts.keys())}
+              conflictedIds={conflictedIds}
               pendingIds={pendingIds}
               failedIds={failedIds}
             />
@@ -1249,7 +1323,6 @@ function DesktopCalendar() {
                 minWidth={gridMinWidth(visibleDayCount(viewKind, dayCount, hiddenWeekend.length))}
                 tasks={tasks}
                 events={events}
-                now={minuteNow}
                 domains={domains}
                 projects={projects}
                 areas={areas}
@@ -1268,25 +1341,32 @@ function DesktopCalendar() {
           onClose={() => setViewOptsOpen(false)}
           activeView={activeViewCell}
           onPickView={pickView}
-          value={viewOpts}
+          value={{ ...viewOpts, hour24: h24 }}
           onChange={patchViewOpts}
+          onPlanMode={() => {
+            setViewOptsOpen(false)
+            setPlanning(true)
+          }}
         />
       )}
-      {selected && selectedEvent && (
+      {blockShown && (
         <BlockMenu
-          key={selected.id}
-          event={selectedEvent}
-          position={selected.at}
+          key={blockShown.sel.id}
+          event={blockShown.event}
+          position={blockShown.sel.at}
+          closing={blockExit.closing}
           onClose={() => setSelected(null)}
-          onReplan={(x, y) => replanEvent(selectedEvent, x, y)}
+          onReplan={(x, y) => replanEvent(blockShown.event, x, y)}
         />
       )}
       {plan && <ContextMenu items={planFor(plan.target)} position={{ x: plan.x, y: plan.y }} onClose={() => setPlan(null)} />}
-      {quickCreate && (
+      {qcShown && (
         <QuickCreate
-          initialKind={quickCreate.kind}
-          slot={quickCreate.slot}
-          anchor={quickCreate.anchor}
+          key={qcShown.key}
+          initialKind={qcShown.kind}
+          slot={qcShown.slot}
+          anchor={qcShown.anchor}
+          closing={qcExit.closing}
           onClose={() => {
             setQuickCreate(null)
             gridRef.current?.unselect()

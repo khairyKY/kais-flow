@@ -1,6 +1,6 @@
 import { appZone } from '../../lib/appZone'
 import { zoneDateKey } from '../../lib/dateShortcuts'
-import { zoneTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 
 // Perennials' row text (PerennialsPage). Days are the user's (app_settings.timezone), not the device's.
 
@@ -78,7 +78,7 @@ function dayLabel(d: Date, zone: string): string {
 export function formatLastCompleted(completedAt: string | null, now: Date = new Date(), zone: string = appZone()): string {
   if (!completedAt) return 'never done'
   const days = daysFromToday(completedAt, now, zone)
-  if (days === 0) return `last done today ${zoneTimeKey(new Date(completedAt), zone)}`
+  if (days === 0) return `last done today ${timeText(new Date(completedAt), zone)}`
   if (days === -1) return 'last done yesterday'
   return `last done ${dayLabel(new Date(completedAt), zone)}`
 }

@@ -12,7 +12,7 @@ import { Icon } from '../../components/Icon'
 import { MiniFocus } from '../focus/MiniFocus'
 import { useAllInboxItems } from '../inbox/api'
 import { linkLabel, taskLink } from '../../lib/links'
-import { zoneTimeKey, zoneToIso } from './eventTime'
+import { timeRange, timeText, zoneTimeKey, zoneToIso } from './eventTime'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import { useAppZone } from '../../lib/appZone'
 import { useOnline } from '../../lib/useOnline'
@@ -140,7 +140,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
         <BackLink to="/tasks">Tasks</BackLink>
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
           Created {day(task.created_at)}
-          {task.updated_at !== task.created_at && ` · edited ${editedWord === 'Today' || editedWord === 'Tomorrow' ? editedWord.toLowerCase() : editedWord} ${zoneTimeKey(edited, zone)}`}
+          {task.updated_at !== task.created_at && ` · edited ${editedWord === 'Today' || editedWord === 'Tomorrow' ? editedWord.toLowerCase() : editedWord} ${timeText(edited, zone)}`}
         </span>
       </div>
 
@@ -214,7 +214,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
                 {linkedEvent && (
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: 9, background: 'color-mix(in srgb, var(--acc-lavender) 16%, transparent)', borderLeft: '3px solid var(--acc-lavender)', borderRadius: 'var(--radius-block)', padding: '9px 13px' }}>
                     <span style={{ ...LINK, color: 'var(--acc-lavender-text)' }}>
-                      Block · {day(linkedEvent.starts_at).slice(0, 3)} {zoneTimeKey(new Date(linkedEvent.starts_at), zone)}–{zoneTimeKey(new Date(linkedEvent.ends_at), zone)}
+                      Block · {day(linkedEvent.starts_at).slice(0, 3)} {timeRange(new Date(linkedEvent.starts_at), new Date(linkedEvent.ends_at), zone)}
                     </span>
                     <Link to="/calendar" style={{ ...LINK, color: 'var(--acc-lavender-deep)', textDecoration: 'none' }}>View on calendar →</Link>
                     <button type="button" onClick={() => deleteEventWithUndo(linkedEvent, 'Unscheduled')} style={{ ...LINK, color: 'var(--acc-terra)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}>Unschedule</button>

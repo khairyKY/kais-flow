@@ -1,9 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import {
   chipCounts, describeRow, doneWord, excerpt, groupRows, hitDay, inWindow, indexSearchData, isOpen, journalDate, relatedRows, searchRows, NO_FILTERS, RELATED_MAX,
   type SearchData, type SearchRow,
 } from './searchView'
 import type { Book, CalendarEvent, InboxItem, Interaction, JournalEntry, Note, Person, Project, Quote, SearchEntityType, SearchHit, Task, TimeEntry } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Monday 12 Oct 2026, 10:00 on the user's clock (Africa/Cairo, the default zone: UTC+3 until the
 // last Thursday of October). Every day below is a Cairo day, whatever zone the device runs in.

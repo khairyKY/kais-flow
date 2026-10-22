@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { MAX_PAGES } from './paperMath'
+import { MAX_PAGES, type LineEdit } from './paperMath'
 import { imageFiles } from './image'
 import { isCapacitorShell } from '../../lib/platform'
 
@@ -48,6 +48,8 @@ interface PaperState {
   local: Record<string, string[]>
   /** Captures that are photos of a Notebook page (this session): their results are the ticks review. */
   ticksFor: Record<string, TicksTarget>
+  /** Line edits not added yet, by capture: closing the review (Keep for later) keeps them for this session. */
+  edits: Record<string, Record<string, LineEdit>>
   addFiles: (files: File[], ticks?: TicksTarget) => void
   show: (stage: Stage | null) => void
   close: () => void
@@ -61,6 +63,7 @@ export const usePaperStore = create<PaperState>((set, get) => ({
   waiting: 0,
   local: {},
   ticksFor: {},
+  edits: {},
   addFiles: (files, ticks) => {
     const s = get()
     const look = s.stage?.kind === 'look' ? s.stage : null

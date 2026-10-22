@@ -4,6 +4,7 @@
 // app_settings.timezone (lib/appZone.ts, Africa/Cairo by default). The `cairo*` names below are
 // historical — they read the user's zone; the `zone*` ones also take an explicit zone.
 import { appZone, perZone } from './appZone'
+import { clockText } from './clock'
 
 // One cached formatter per zone: grouping calls this thousands of times a render.
 const dayFmt = perZone((timeZone) => new Intl.DateTimeFormat('en-CA', { timeZone }))
@@ -97,9 +98,10 @@ export function scheduleTomorrow(now: Date = new Date()): string {
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
-/** "Mon 09:00" — the hint beside every "Tomorrow" (MK Action Sheet, MK Swipe Row). */
+/** "Mon 9:00 AM" (or "Mon 09:00" on the 24-hour clock) — the hint beside every "Tomorrow" (MK Action
+ * Sheet, MK Swipe Row). */
 export function tomorrowHint(now: Date = new Date()): string {
-  return `${WEEKDAYS[new Date(zoneDayUtc(now, appZone()) + 86400000).getUTCDay()]} 09:00`
+  return `${WEEKDAYS[new Date(zoneDayUtc(now, appZone()) + 86400000).getUTCDay()]} ${clockText('09:00')}`
 }
 
 /** Day-offset to the coming Monday (7 if today already is one), by the user's weekday — the one

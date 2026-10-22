@@ -53,19 +53,17 @@
 .cal-strip-range { white-space: nowrap; font-family: var(--font-display); font-weight: var(--fw-medium); font-size: var(--fs-body-l); line-height: 1; color: var(--ink-body); }
 /* Today and ‹ › are the kit's B secondary buttons (CalendarPage); the arrows are square. */
 .cal-strip-nav.kf-button { width: 34px; padding: 9px 0; justify-content: center; }
-.cal-plan-handle:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .cal-strip-grid { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--paper-linen); border: 1px solid var(--line-solid); border-radius: var(--radius-card); }
 
-/* The toggle: three dots on the rail's right edge — click (or drag the rail past the middle) to plan;
-   on the strip's left edge in planning mode — click (or drag it back) to leave. 48px hit area. */
+/* The splitter's grip: three dots on the rail's right edge, drawn only — the splitter under it drags and
+   double-click resets (Kai 2026-10-22: it no longer opens planning mode; View options ▸ Planning mode does). */
 .cal-plan-handle {
   position: absolute; top: 50%; z-index: 3; width: 6px; height: 40px; margin-top: -20px; padding: 0; border: none; background: none; cursor: col-resize;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
 }
 .cal-plan-handle::before { content: ''; position: absolute; inset: -4px -21px; }
 .cal-plan-handle > i { width: 3px; height: 3px; border-radius: 50%; background: var(--ink-hairline); }
-.cal-plan-handle:hover > i, .cal-plan-handle[aria-pressed='true']:hover > i { background: var(--ink-muted); }
-.cal-strip > .cal-plan-handle { left: 0; }
+.cal-railsplit:hover > .cal-plan-handle > i, .cal-railsplit[data-dragging] > .cal-plan-handle > i { background: var(--ink-muted); }
 .cal-railsplit > .cal-plan-handle { left: 0; }
 
 /* A free stretch on the strip: dashed sage, "2H FREE" (FullCalendar background events). */

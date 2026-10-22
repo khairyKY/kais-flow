@@ -7,6 +7,7 @@ import { longPress, tick } from '../../lib/haptics'
 import { useMotionEnabled } from '../../lib/motion'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { uiZoom } from '../../lib/uiScale'
+import { clockText, hourLabel, useHour24 } from '../../lib/clock'
 import type { CalendarEvent } from '../../lib/types'
 import { LONG_PRESS_MS, SETTLE_MS, lockAxis } from '../tasks/swipe'
 import { cairoTimeKey } from './eventTime'
@@ -125,11 +126,17 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const t = window.setTimeout(() => setBloom(null), 200)
     return () => window.clearTimeout(t)
   }, [bloom])
-  const [swipeX, setSwipeX] = useState(0)
+  // S10 (2026-10-22 audit: a swipe re-rendered all three panes on every move): the offset is a CSS variable
+  // on the grid, written as the finger moves; React hears once, when a swipe starts (the neighbour panes
+  // mount) and when it settles.
+  const gridRef = useRef<HTMLDivElement>(null)
+  const setSwipe = (x: number) => gridRef.current?.style.setProperty('--pc-swipe', `${x}px`)
+  const [sliding, setSliding] = useState(false)
   const [settling, setSettling] = useState(false)
   // st0: the grid's scrollTop at the press, so a drag that scrolls the grid (its edges) still tracks the finger.
   const g = useRef({ id: -1, kind: 'idle' as 'idle' | 'press' | 'swipe' | 'drag' | 'task', sx: 0, sy: 0, st0: 0, dx: 0, lastX: 0, lastY: 0, lastT: 0, v: 0, timer: 0, swallow: false, raf: 0, acc: 0 })
   const multi = days.length > 1
+  const h24 = useHour24() // the person's clock (lib/clock) for the gutter and the now tag
   const nowMin = toMin(cairoTimeKey(now))
 
   // Back (and Esc) puts a lifted block down before anything else closes.
@@ -261,7 +268,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       s.swallow = true
     }
     s.dx = dx
-    setSwipeX(dx)
+    if (!sliding) setSliding(true)
+    setSwipe(dx)
   }
 
   /** The lifted block follows the finger on the 15-min grid — through any scroll since the press. */
@@ -362,11 +370,12 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       const v = e.type === 'pointercancel' || e.timeStamp - s.lastT > 100 ? 0 : s.v
       const dir = swipeStep(s.dx, v, width())
       setSettling(true)
-      setSwipeX(dir ? -dir * width() : 0)
+      setSwipe(dir ? -dir * width() : 0)
       window.setTimeout(() => {
         if (dir) onPage(dir)
-        setSwipeX(0)
+        setSwipe(0)
         setSettling(false)
+        setSliding(false)
       }, SETTLE_MS)
     }
   }
@@ -379,12 +388,11 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     onTapSlot(days[col], Math.floor(((e.clientY - r.top) / r.height) * 1440))
   }
 
-  const sliding = swipeX !== 0 || settling
   const panes = sliding ? [-1, 0, 1] : [0]
   const inset = multi ? { l: 2, r: 2 } : { l: 4, r: 16 }
 
   /** Calendar 3e "spans midnight": the open edge of a piece cut at 00:00 says where the block runs on. */
-  const clock = (ms: number) => cairoTimeKey(new Date(ms))
+  const clock = (ms: number) => clockText(cairoTimeKey(new Date(ms)))
   // slot-outline: where a lifted task would land — another Time block takes it (ringed), empty time
   // gets its own block (a dashed ghost + the time bubble), its own slot nothing.
   const heldIso = held?.at ? spanIso({ day: held.at.day, start: held.at.start, end: held.at.start + held.minutes }).starts_at : null
@@ -541,9 +549,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const zone = appZone()
   const bubble = lift && (lift.mode ?? 'move')
   return (
-    <div className="pc-grid">
+    <div className="pc-grid" ref={gridRef}>
       {multi && (
-        <div className="pc-colhead" style={{ transform: sliding ? `translateX(${swipeX}px)` : undefined }}>
+        <div className="pc-colhead" style={{ transform: sliding ? 'translateX(var(--pc-swipe, 0px))' : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
           {days.map((d) => (
             <span key={d} className={d === today ? 'is-today' : undefined}>{columnLabel(d, days.length > 3)}</span>
           ))}
@@ -586,7 +594,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         <div className="pc-canvas" onClick={tapGrid}>
           {HOURS.map((h) => (
             <div key={h} className="pc-hour" style={{ top: h * 64 }}>
-              <span>{h ? `${String(h).padStart(2, '0')}:00` : ''}</span>
+              <span>{h ? hourLabel(h, h24) : ''}</span>
               <i />
             </div>
           ))}
@@ -595,7 +603,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             {panes.map((p) => {
               const pdays = p ? days.map((d) => addDays(d, p * step)) : days
               return (
-                <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}${days.length > 3 ? ' is-week' : ''}`} style={{ left: `${p * 100}%`, transform: sliding ? `translateX(${swipeX}px)` : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
+                <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}${days.length > 3 ? ' is-week' : ''}`} style={{ left: `${p * 100}%`, transform: sliding ? 'translateX(var(--pc-swipe, 0px))' : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
                   {pdays.map((d) => column(d, p === 0))}
                   {pdays.includes(today) && <span className="pc-nowline" style={{ top: minToPx(nowMin) }} />}
                 </div>
@@ -604,7 +612,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           </div>
           {showNow && !sliding && (
             <>
-              <span className="pc-nowtag" style={{ top: minToPx(nowMin) }}>{cairoTimeKey(now)}</span>
+              <span className="pc-nowtag" style={{ top: minToPx(nowMin) }}>{clockText(cairoTimeKey(now), h24)}</span>
               <span className="pc-nowdot" style={{ top: minToPx(nowMin) }} />
             </>
           )}

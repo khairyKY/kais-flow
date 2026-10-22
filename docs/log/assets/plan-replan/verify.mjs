@@ -260,8 +260,9 @@ if (want('desktop')) {
     const overdueFold = page.getByRole('button', { name: /^Overdue · 7/ })
     check(`${name} "Overdue · 7" fold, folded by default`, (await overdueFold.count()) === 1 && (await overdueFold.getAttribute('aria-expanded')) === 'false' && (await page.locator(`#task-${id(BANK)}`).count()) === 0)
     // Today 2a (ced71548): "More for today" became "Also open · N", its first three rows in view.
+    // today-scale (Kai 2026-10-22): Buy milk is due today, so it's in Today's tasks now; Also open keeps the report.
     const alsoOpen = await page.getByText(/^Also open · \d+$/).first().innerText().catch(() => '')
-    check(`${name} Also open no longer counts the overdue ones`, alsoOpen === 'Also open · 2', alsoOpen)
+    check(`${name} Also open no longer counts the overdue ones (nor today's: Buy milk is in Today's tasks)`, alsoOpen === 'Also open · 1' && (await page.locator(`section[aria-label="Today's tasks"] #task-${id(MILK)}`).count()) === 1, alsoOpen)
     await overdueFold.click()
     await settle()
     await shot(page, `${name}-overdue-open`)
@@ -274,12 +275,13 @@ if (want('desktop')) {
     await settle()
     const plan = await rows(pop(page))
     await shot(page, `${name}-replan-list`)
+    // One clock (lib/clock, cal-polish 2026-10-22 + clock fallout the same day): the 12-hour default, one range style.
     check(`${name} Replan list: one line each — where it lands and what it means`, JSON.stringify(plan) === JSON.stringify([
-      'Today today, keeps its 15:00 Wed 7 · 15:00',
-      'Next free slot ASAP: the first free gap that fits — you confirm Today 10:00–10:30',
-      'Tomorrow, first thing the start of your day Thu 8 · 09:00',
-      'This weekend the first day of your weekend (Sat + Sun) Sat 10 · 09:00',
-      'Next week Monday of next week Mon 12 · 09:00',
+      'Today today, keeps its 3:00 PM Wed 7 · 3:00 PM',
+      'Next free slot ASAP: the first free gap that fits — you confirm Today 10:00–10:30 AM',
+      'Tomorrow, first thing the start of your day Thu 8 · 9:00 AM',
+      'This weekend the first day of your weekend (Sat + Sun) Sat 10 · 9:00 AM',
+      'Next week Monday of next week Mon 12 · 9:00 AM',
       'Pick date & time… any day — and a time, if you want one',
       'Someday no date — parked until you pull it up',
       'No date takes the date off',
@@ -304,15 +306,16 @@ if (want('desktop')) {
     await settle()
     const slotNow = await pop(page).locator('.kf-plan-slot').innerText()
     await shot(page, `${name}-next-free-slot`)
-    check(`${name} Next free slot proposes the first 15m gap: Today 10:00–10:15`, slotNow === 'Today 10:00–10:15', slotNow)
+    check(`${name} Next free slot proposes the first 15m gap: Today 10:00–10:15 AM`, slotNow === 'Today 10:00–10:15 AM', slotNow) // 12h (lib/clock)
     await pop(page).getByRole('button', { name: 'Another time' }).click()
     await sleep(200)
-    check(`${name} Another time → the next one: Today 10:15–10:30`, (await pop(page).locator('.kf-plan-slot').innerText()) === 'Today 10:15–10:30')
+    check(`${name} Another time → the next one: Today 10:15–10:30 AM`, (await pop(page).locator('.kf-plan-slot').innerText()) === 'Today 10:15–10:30 AM') // 12h (lib/clock)
     await pop(page).getByRole('button', { name: 'Confirm' }).click()
     await settle()
     const block = state.writes.filter((w) => w.table === 'calendar_events' && w.row.task_id === id(MILK)).at(-1)?.row
     check(`${name} Confirm → a block 10:15–10:30, the task due then`, block?.starts_at === iso('10:15') && block?.ends_at === iso('10:30') && lastWrite(state, MILK)?.due_at === iso('10:15') && lastWrite(state, MILK)?.scheduled_start === iso('10:15'), JSON.stringify([block?.starts_at, lastWrite(state, MILK)?.due_at]))
-    check(`${name} "Planned · Today · 10:15–10:30 · Undo"`, (await toasts(page)).some((t) => t === 'Planned · Today · 10:15–10:30') && (await toastBtn(page, 'Undo').count()) >= 1, JSON.stringify(await toasts(page)))
+    // 12h, one range style (lib/clock clockRange — it read "10:15 AM–10:30 AM" before the fallout fix)
+    check(`${name} "Planned · Today · 10:15–10:30 AM · Undo"`, (await toasts(page)).some((t) => t === 'Planned · Today · 10:15–10:30 AM') && (await toastBtn(page, 'Undo').count()) >= 1, JSON.stringify(await toasts(page)))
 
     // Make goal on a task outside a full Top 3: the swap toast first.
     await noToast(page)
@@ -343,7 +346,8 @@ if (want('desktop')) {
     const preview = (await pop(page).locator('.kf-plan-spread li').allInnerTexts()).map((t) => t.replace(/\s+/g, ' '))
     await shot(page, `${name}-spread-preview`)
     check(`${name} the preview: in order, each in the first gap that fits its own length`, JSON.stringify(preview) === JSON.stringify([
-      '10:30–11:00 Old thing 1', '11:00–11:45 Old thing 2', '13:00–14:00 Old thing 3', '14:00–14:30 Old thing 4', '16:15–16:45 Old thing 6', '16:45–17:15 Call the bank',
+      // 12h (lib/clock clockRange)
+      '10:30–11:00 AM Old thing 1', '11:00–11:45 AM Old thing 2', '1:00–2:00 PM Old thing 3', '2:00–2:30 PM Old thing 4', '4:15–4:45 PM Old thing 6', '4:45–5:15 PM Call the bank',
     ]), JSON.stringify(preview))
     check(`${name} …and the 2h one that fits nowhere goes tomorrow, first thing`, /1 goes to tomorrow, first thing/.test(await pop(page).innerText()))
     const before = state.writes.length
@@ -397,7 +401,7 @@ if (want('settings')) {
         return t
       }
       const g0 = await glossary()
-      check(`${name} "What do these mean?" opens the plan shortcuts, each option explained; not inline in the card`, /Next free slot\s+ASAP/.test(g0) && /Tomorrow, first thing\s+tomorrow at 09:00/i.test(g0) && !/Next free slot\s+ASAP/.test(await card.innerText()), g0.slice(0, 80))
+      check(`${name} "What do these mean?" opens the plan shortcuts, each option explained; not inline in the card`, /Next free slot\s+ASAP/.test(g0) && /Tomorrow, first thing\s+tomorrow at 9:00 AM/i.test(g0) /* 12h (lib/clock) */ && !/Next free slot\s+ASAP/.test(await card.innerText()), g0.slice(0, 80))
       if (label === 'phone') {
         const hs = await segs.evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
         check(`${name} the presets are ≥ 48 tall`, hs.every((h) => h >= 48), JSON.stringify(hs))
@@ -435,7 +439,7 @@ if (want('settings')) {
   await page.locator('[role="menuitem"]', { hasText: /^Plan…/ }).click()
   await settle()
   const wk = (await rows(pop(page))).find((r) => r.startsWith('This weekend'))
-  check('desk-weekend Plan → This weekend lands on Friday with a Fri + Sat weekend', /\(Fri \+ Sat\) Fri 9 · 09:00$/.test(wk ?? ''), wk)
+  check('desk-weekend Plan → This weekend lands on Friday with a Fri + Sat weekend', /\(Fri \+ Sat\) Fri 9 · 9:00 AM$/.test(wk ?? '') /* 12h (lib/clock) */, wk)
   await shot(page, 'desk-weekend-fri-sat')
   await ctx.close()
 }
@@ -460,7 +464,8 @@ if (want('phone')) {
     await fold.scrollIntoViewIfNeeded()
     const rb = page.getByRole('button', { name: 'Replan all ▾' })
     const rh = Math.round((await rb.boundingBox()).height)
-    check(`${name} "Overdue · 7" folded, Replan all ▾ beside it (${rh}px), More for today · 2`, (await fold.getAttribute('aria-expanded')) === 'false' && rh >= 44 && /More for today · 2/i.test(await page.getByRole('button', { name: /^More for today/ }).innerText()))
+    // today-scale (Kai 2026-10-22): the phone's "More for today" fold is "Also open" now, and Buy milk (due today) is in Today's tasks above it.
+    check(`${name} "Overdue · 7" folded, Replan all ▾ beside it (${rh}px), Also open · 1`, (await fold.getAttribute('aria-expanded')) === 'false' && rh >= 44 && /Also open · 1/i.test(await page.getByRole('button', { name: /^Also open/ }).innerText()))
     await shot(page, `${name}-folds`)
     if (theme === 'night') {
       await tap(cdp, rb)
@@ -498,14 +503,14 @@ if (want('phone')) {
     const bh = await dialog(page).getByRole('button', { name: /^(Cancel|Another time|Confirm)$/ }).evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
     await shot(page, `${name}-next-free-slot`)
     // Crypto is 90m and its own block doesn't count: the first 90m gap is 10:00–11:30 (Lunch at 12:00).
-    check(`${name} Next free slot (90m): Today 10:00–11:30; Cancel · Another time · Confirm drawn ≥ 44 (48 hit)`, slotText === 'Today 10:00–11:30' && bh.length === 3 && bh.every((h) => h >= 44), `${slotText} ${JSON.stringify(bh)}`)
+    check(`${name} Next free slot (90m): Today 10:00–11:30 AM; Cancel · Another time · Confirm drawn ≥ 44 (48 hit)`, slotText === 'Today 10:00–11:30 AM' /* 12h (lib/clock) */ && bh.length === 3 && bh.every((h) => h >= 44), `${slotText} ${JSON.stringify(bh)}`)
     await tap(cdp, dialog(page).getByRole('button', { name: 'Confirm' }))
     await settle()
     check(`${name} Confirm moves Crypto's block (no second block)`, evWrite(state, evId(2))?.starts_at === iso('10:00') && state.writes.filter((w) => w.table === 'calendar_events' && w.row.task_id === id(CRYPTO) && w.row.id !== evId(2)).length === 0, JSON.stringify(evWrite(state, evId(2))?.starts_at))
 
     // The task sheet's date chip → the same Plan sheet.
     await page.waitForFunction(() => !document.querySelector('.kf-toast'), null, { timeout: 9000 }).catch(() => {})
-    await page.getByRole('button', { name: /^More for today/ }).click()
+    await page.locator(`#task-${id(MILK)}`).scrollIntoViewIfNeeded() // in Today's tasks (today-scale), no fold to open
     await settle()
     // The first tap may only close the row the swipe left open (one row open at a time).
     for (let i = 0; i < 2 && !(await page.locator('.ts-chips').count()); i++) {

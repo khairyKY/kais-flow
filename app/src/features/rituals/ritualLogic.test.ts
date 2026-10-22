@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import {
   captureMeta,
   carryMeta,
@@ -21,6 +22,9 @@ import {
 } from './ritualLogic'
 import type { Busy } from '../../components/pickerMath'
 import type { Task } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // The design's sample day: Sunday 27 Sep 2026, Cairo = UTC+3. Instants are written in UTC from a
 // Cairo wall clock, so every assertion holds under any TZ the suite runs in.

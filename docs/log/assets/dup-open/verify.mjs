@@ -80,6 +80,7 @@ const desktop = { viewport: { width: 1360, height: 900 } }
 async function open(route) {
   const ctx = await browser.newContext({ ...desktop, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([sess, uid]) => {
+    localStorage.setItem('kf.calViewOptions', JSON.stringify({ hour24: true })) // its strings read the 24-hour clock (lib/clock, 2026-10-22)
     if (sessionStorage.getItem('kf-verify-booted')) return
     sessionStorage.setItem('kf-verify-booted', '1')
     localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1')

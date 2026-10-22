@@ -206,7 +206,8 @@ for (const theme of ['day', 'night']) {
     const title = await card.locator('.tp-ritual-title').boundingBox()
     check(`${name} Plan sits to the right of the card text`, btn && title && btn.x > title.x + title.width - 1 && Math.abs(btn.y + btn.height / 2 - (title.y + title.height / 2)) < 30, JSON.stringify({ btn, title }))
     check(`${name} card is flat (no tilt)`, (await card.evaluate((e) => getComputedStyle(e).transform)) === 'none')
-    check(`${name} four section labels`, JSON.stringify(await labels(page)) === JSON.stringify(['TOP 3', 'UP NEXT', 'ROUTINES · 1/5', 'MORE FOR TODAY · 3']), JSON.stringify(await labels(page)))
+    // today-scale (2026-10-22): the phone fold "More for today" split into Today's tasks (its own section) + Also open.
+    check(`${name} five section labels`, JSON.stringify(await labels(page)) === JSON.stringify(['TOP 3', 'UP NEXT', "TODAY'S TASKS · 1", 'ROUTINES · 1/5', 'ALSO OPEN · 2']), JSON.stringify(await labels(page)))
     // Kai 2026-10-03: at 07:40 only the morning routines show; the evening folds into one line that opens in place.
     const seen = async (n) => (await page.getByText(n, { exact: true }).count()) > 0
     const fold = page.locator('.tp-fold-line')
@@ -216,11 +217,13 @@ for (const theme of ['day', 'night']) {
     check(`${name} tapping the fold line opens the evening routines in place`, (await seen('Tidy the desk')) && (await seen('Phone on the charger')) && (await fold.count()) === 0)
     const up = await upnextIds(page)
     check(`${name} Up next = deep work, call, gym (goal's block skipped)`, JSON.stringify(up) === JSON.stringify([E(1), E(3), E(4)]), JSON.stringify(up))
-    check(`${name} goal card carries its block time`, (await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)).includes('13:30–15:00'), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
+    check(`${name} goal card carries its block time`, (await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)).includes('1:30–3:00 PM') /* 12h (lib/clock, cal-polish 2026-10-22) */, await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
     check(`${name} first event says how far off it is`, /in 1h\s20m/i.test(await text(page, `[id="upnext-${E(1)}"] .tp-meta`)), await text(page, `[id="upnext-${E(1)}"] .tp-meta`))
     const evRow = page.locator(`[id="upnext-${E(3)}"]`)
     // fix-today (2026-10-12): the event row gained the row grammar's ⋯ (Open in calendar · Delete).
-    check(`${name} event row: time · lavender rule · no checkbox, a ⋯`, (await evRow.locator('.tp-ev-time').innerText()) === '15:00' && (await evRow.locator('.tp-ev-rule').count()) === 1 && (await evRow.locator('.kf-checkbox').count()) === 0 && (await evRow.locator('.kf-row-more').count()) === 1 && (await evRow.evaluate((e) => e.getBoundingClientRect().height)) >= 56)
+    // 12h (lib/clock): "3:00 PM", on one line — it wrapped to "3:00 / PM" in the 24h-sized column (fixed 2026-10-22).
+    const evTimeLines = await evRow.locator('.tp-ev-time').evaluate((e) => { const r = document.createRange(); r.selectNodeContents(e); return new Set([...r.getClientRects()].map((x) => Math.round(x.top))).size })
+    check(`${name} event row: time · lavender rule · no checkbox, a ⋯`, (await evRow.locator('.tp-ev-time').innerText()) === '3:00 PM' && evTimeLines === 1 && (await evRow.locator('.tp-ev-rule').count()) === 1 && (await evRow.locator('.kf-checkbox').count()) === 0 && (await evRow.locator('.kf-row-more').count()) === 1 && (await evRow.evaluate((e) => e.getBoundingClientRect().height)) >= 56)
     check(`${name} task rows are ≥ 56 tall with 48 targets`, await page.locator(`[id="task-${id(REVIEW)}"]`).evaluate((e) => e.getBoundingClientRect().height >= 56 && [...e.querySelectorAll('.kf-star, .kf-row-more')].every((b) => b.getBoundingClientRect().width >= 48)))
     check(`${name} each item once: deep work's task is its Up next row, not also a task row`, (await count(page, `[id="task-${id(DEEP)}"]`)) === 0 && (await count(page, `[id="upnext-${E(1)}"] .kf-checkbox`)) === 1)
     check(`${name} fold closed, no fold rows`, (await count(page, '.tp-fold[aria-expanded="false"]')) === 1 && (await count(page, `[id="task-${id(MILK)}"]`)) === 0)
@@ -239,10 +242,10 @@ for (const theme of ['day', 'night']) {
     check(`${name} slip and ritual card never together`, (await count(page, '.tp-ritual')) === 0)
     // Bound Journal D4/D7: the slip is a tool — flat, no tape, no tilt.
     check(`${name} slip is flat (no tape, no tilt)`, (await slip.locator('.tp-tape').count()) === 0 && (await slip.locator('.kf-swipe-fg').evaluate((e) => getComputedStyle(e).transform)) === 'none')
-    check(`${name} header: planned · finish`, /^Day 84 · ~\dh planned · you'll finish ~\d\d:\d0$/.test(await text(page, '.tp-sum')), await text(page, '.tp-sum'))
+    check(`${name} header: planned · finish`, /^Day 84 · ~\dh planned · you'll finish ~\d{1,2}:\d0 [AP]M$/.test( /* 12h (lib/clock, cal-polish 2026-10-22) */await text(page, '.tp-sum')), await text(page, '.tp-sum'))
     const up = await upnextIds(page)
     check(`${name} Up next = only what's still to come (call, gym)`, JSON.stringify(up) === JSON.stringify([E(3), E(4)]), JSON.stringify(up))
-    check(`${name} goal meta: block time + length`, /^13:30–15:00 · 1h\s30m$/.test(await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
+    check(`${name} goal meta: block time + length`, /^1:30–3:00 PM · 1h\s30m$/.test( /* 12h (lib/clock, cal-polish 2026-10-22) */await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
     const doneBtn = slip.getByRole('button', { name: /^Done:/ })
     check(`${name} ✓ is a 40 circle in a 48 target`, (await doneBtn.evaluate((b) => [b.offsetWidth, b.firstElementChild.offsetWidth].join('/'))) === '48/40')
     await tap(cdp, doneBtn)
@@ -278,9 +281,9 @@ for (const theme of ['day', 'night']) {
     const name = '2c-day'
     const { ctx, page, cdp, errors } = await open('2c', theme)
     check(`${name} no slip, no ritual card`, (await count(page, '[id^="slip-"], .tp-ritual')) === 0)
-    check(`${name} header: left · finish`, /^Day 84 · ~\d+[hm] left · you'll finish ~\d\d:\d0$/.test(await text(page, '.tp-sum')), await text(page, '.tp-sum'))
+    check(`${name} header: left · finish`, /^Day 84 · ~\d+[hm] left · you'll finish ~\d{1,2}:\d0 [AP]M$/.test( /* 12h (lib/clock, cal-polish 2026-10-22) */await text(page, '.tp-sum')), await text(page, '.tp-sum'))
     check(`${name} goal: starts in 20M`, /STARTS IN 20M/i.test(await text(page, `[id="task-${id(GOAL)}"] .tp-meta`)), await text(page, `[id="task-${id(GOAL)}"] .tp-meta`))
-    check(`${name} done Top 3 row: struck, "Done 11:05", star kept`, (await text(page, `[id="task-${id(REVIEW)}"] .tp-meta`)) === 'Done 11:05' && (await page.locator(`[id="task-${id(REVIEW)}"] .kf-star[aria-pressed="true"]`).count()) === 1)
+    check(`${name} done Top 3 row: struck, "Done 11:05 AM", star kept`, (await text(page, `[id="task-${id(REVIEW)}"] .tp-meta`)) === 'Done 11:05 AM' /* 12h (lib/clock, cal-polish 2026-10-22) */ && (await page.locator(`[id="task-${id(REVIEW)}"] .kf-star[aria-pressed="true"]`).count()) === 1)
     await tap(cdp, page.locator(`[id="task-${id(NODE)}"] .kf-checkbox`))
     await sleep(300)
     check(`${name} check → "Done" toast + Undo`, (await toasts(page)).includes('Done') && (await page.locator('.kf-toast').getByRole('button', { name: 'Undo' }).count()) >= 1, JSON.stringify(await toasts(page)))
@@ -296,7 +299,7 @@ for (const theme of ['day', 'night']) {
     const { ctx, page, errors } = await open('2d', theme)
     await shot(page, name)
     const t = await text(page, '.tp-ritual')
-    check(`${name} "Shut down the day" + Shut down on the right`, t.includes('Shut down the day') && (await page.locator('.tp-ritual').getByRole('button', { name: 'Shut down' }).count()) === 1 && /EVENING · 19:30/i.test(t), t.replace(/\n/g, ' '))
+    check(`${name} "Shut down the day" + Shut down on the right`, t.includes('Shut down the day') && (await page.locator('.tp-ritual').getByRole('button', { name: 'Shut down' }).count()) === 1 && /EVENING · 7:30 PM/i.test(t) /* 12h (lib/clock, cal-polish 2026-10-22) */, t.replace(/\n/g, ' '))
     check(`${name} header: 2 of 3 done · 2h 10m focused`, (await text(page, '.tp-sum')) === 'Day 84 · 2 of 3 done · 2h 10m focused', await text(page, '.tp-sum'))
     check(`${name} Up next empty line`, (await text(page, '.tp-quiet')) === 'Nothing else on the calendar today')
     check(`${name} done goal: four-leaf, gold check, struck`, (await count(page, `[id="task-${id(GOAL)}"] .tp-goal-title.is-done`)) === 1 && /four_leaf/.test(await page.locator(`[id="task-${id(GOAL)}"] img`).last().getAttribute('src')))
@@ -314,7 +317,7 @@ for (const theme of ['day', 'night']) {
     const { ctx, page, errors } = await open('2i', theme)
     await shot(page, name)
     check(`${name} "All three tended" line, no ritual card`, (await text(page, '.tp-tended')).includes('All three tended.') && (await count(page, '.tp-ritual')) === 0)
-    check(`${name} header: all three done by 16:10 (the last one)`, (await text(page, '.tp-sum')) === 'Day 84 · all three done by 16:10', await text(page, '.tp-sum'))
+    check(`${name} header: all three done by 4:10 PM (the last one)`, (await text(page, '.tp-sum')) === 'Day 84 · all three done by 4:10 PM' /* 12h (lib/clock, cal-polish 2026-10-22) */, await text(page, '.tp-sum'))
     await phoneBasics(page, name, errors)
     await ctx.close()
   }
@@ -393,9 +396,11 @@ for (const theme of ['day', 'night']) {
     const name = '2n-day'
     const { ctx, page, cdp, errors } = await open('2n', theme)
     const subs = (await page.locator('.tp .tp-sub').allInnerTexts()).map((s) => s.toUpperCase()) // B: sentence case on screen
-    check(`${name} fold: Open · Slipping · From a while ago (mono sub-headers)`, JSON.stringify(subs.filter((s) => !/MORNING|EVENING/.test(s))) === JSON.stringify(['OPEN · 4', 'SLIPPING', 'FROM A WHILE AGO']), JSON.stringify(subs))
+    // The MORNING / EVENING subs are the Routines section's own fold lines (.tp-fold-line), not the fold's.
+    // today-scale (2026-10-22): the task due today leads in Today's tasks now, so the fold's Open holds 3.
+    check(`${name} fold: Open · Slipping · From a while ago (mono sub-headers)`, JSON.stringify(subs.filter((s) => !/MORNING|EVENING/.test(s))) === JSON.stringify(['OPEN · 3', 'SLIPPING', 'FROM A WHILE AGO']), JSON.stringify(subs))
     check(`${name} fold's Open: the rest of today, Top 3 once (deep work's block is over, so its task is back here)`, (await count(page, `[id="task-${id(MILK)}"]`)) === 1 && (await count(page, `[id="task-${id(DEEP)}"]`)) === 1 && (await count(page, `[id="task-${id(GOAL)}"]`)) === 1)
-    check(`${name} still four section labels`, (await labels(page)).length === 4, JSON.stringify(await labels(page)))
+    check(`${name} still five section labels`, (await labels(page)).length === 5, JSON.stringify(await labels(page))) // today-scale's split
     const size = () => page.locator('.tp-bar-title').evaluate((e) => getComputedStyle(e).fontSize)
     check(`${name} title at rest: 26px serif`, (await size()) === '26px', await size())
     await page.locator('.app-main-content').evaluate((m) => m.scrollTo({ top: m.scrollHeight }))
@@ -430,8 +435,8 @@ for (const theme of ['day', 'night']) {
     // fix-today (Today 2a): desktop lists the next two under the Now card's ribbon (the running one is the card).
     check(`${name} Up next skips the Top 3 block, keeps the rest`, JSON.stringify(up) === JSON.stringify(key === '2a' ? [E(1), E(3)] : [E(3), E(4)]), JSON.stringify(up))
     if (key === '2a') check(`${name} Day card: Plan your day`, (await text(page, '[data-day-card]')).includes('Plan your day'))
-    if (key === '2b') check(`${name} the running block is the Now card (no phone slip on desktop)`, /Now · 09:00–10:30/i.test(await text(page, '.td-now .td-cap')) && (await count(page, '[id^="slip-"]')) === 0)
-    check(`${name} goal card shows its block time`, (await text(page, `[id="task-${id(GOAL)}"]`)).includes('13:30–15:00'))
+    if (key === '2b') check(`${name} the running block is the Now card (no phone slip on desktop)`, /Now · 9:00–10:30 AM/i.test(await text(page, '.td-now .td-cap')) /* 12h (lib/clock, cal-polish 2026-10-22) */ && (await count(page, '[id^="slip-"]')) === 0)
+    check(`${name} goal card shows its block time`, (await text(page, `[id="task-${id(GOAL)}"]`)).includes('1:30–3:00 PM'), (await text(page, `[id="task-${id(GOAL)}"]`)).replace(/\n/g, ' | ')) /* 12h (lib/clock, cal-polish 2026-10-22) */
     check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
   }

@@ -6,7 +6,7 @@ import { EmojiText } from '../../components/EmojiText'
 import type { RitualKind } from '../rituals/api'
 import { seedTargetDate } from '../rituals/loopDay'
 import { resumeMeta } from '../rituals/ritualLogic'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 import { ritualFinished } from './dayPhase'
 import type { Day } from './useDay'
 import { useTheme } from '../../lib/theme'
@@ -104,7 +104,7 @@ export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, on
   sweepCount: number
   onOpenRitual: (kind: RitualKind) => void
 }) {
-  const clock = cairoTimeKey(day.now)
+  const clock = timeText(day.now)
   if (kind === 'closed') {
     const n = day.seeds.length
     const weekday = new Date(`${seedTargetDate(day.now)}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' })

@@ -7,9 +7,8 @@ import { deleteTasksWithUndo, duplicateTasksWithUndo, editWithUndo, makeGoalWith
 import { durationLabel } from '../../components/pickerMath'
 import { placeName } from './move'
 import type { SwipeActions } from './SwipeRow'
-import { dueChip, remindChip, repeatLabel } from './taskSheetMath'
+import { remindChip, repeatLabel, slotChip } from './taskSheetMath'
 import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } from './TaskMenu'
-import { cairoTimeKey } from '../calendar/eventTime'
 import { outOfSlotWithUndo } from '../calendar/api'
 import { useSubtaskUi } from './subtaskStore'
 
@@ -41,7 +40,7 @@ export function taskActions(task: Task): TaskMenuActions {
     unsnooze: () => unsnoozeTasksWithUndo([task]),
     // Next free slot's Confirm = a timed replan into the slot: the task's block moves there (or one
     // is placed) and it is due then (calendar/replan's rule, through rescheduleDue).
-    slot: (startsAt, endsAt) => toastUndo(`Planned · ${dueChip(startsAt, new Date())}–${cairoTimeKey(new Date(endsAt))}`, rescheduleDue(task, startsAt, true)),
+    slot: (startsAt, endsAt) => toastUndo(`Planned · ${slotChip(startsAt, endsAt, new Date())}`, rescheduleDue(task, startsAt, true)),
     // In a Time slot (0073): ⋯ → Out of the slot (taskMenuSpec).
     ...(task.slot_id ? { unschedule: () => outOfSlotWithUndo(task) } : null),
   }

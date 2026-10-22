@@ -1,9 +1,11 @@
+import { useState } from 'react'
 import { Button } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import type { InboxItem } from '../../lib/types'
-import { useCaptures, usePageUrls } from './api'
-import type { CaptureRow } from './paperMath'
+import { deleteCapture, dismissCapture, retryCapture, useCaptures, usePageUrls } from './api'
+import { shouldResume, type CaptureRow } from './paperMath'
 import { pickPhotos, usePaperStore, type Stage } from './paperStore'
+import { PaperMenu, type PaperMenuItem } from './PaperMenu'
 
 // Paper capture in the Inbox (11d right, 11g): "Scan paper" in the header, a "ready to review" row per
 // read page, and the 📷 source on items that came from a photo.
@@ -18,7 +20,8 @@ export function ScanPaperButton() {
 
 function status(c: CaptureRow): { line: string; open?: Stage; action?: string } {
   const n = c.items.length
-  if (c.status === 'done') return { line: 'Ready to review', open: { kind: 'results', captureId: c.id }, action: 'Review' }
+  const added = c.items.filter((i) => i.done && i.done !== 'skipped').length
+  if (c.status === 'done') return { line: `Ready to review${added ? ` · ${added} added` : ''}`, open: { kind: 'results', captureId: c.id }, action: 'Review' }
   if (c.status === 'failed') return c.error === 'unreadable' ? { line: 'Couldn’t read it', open: { kind: 'unreadable', captureId: c.id }, action: 'Look' } : { line: 'Not read yet', open: { kind: 'failed', captureId: c.id }, action: 'Try again' }
   if (c.error === 'daily_limit') return { line: `Read tomorrow${n ? ` · ${n} so far` : ''}` }
   if (c.error === 'rate_limited') return { line: 'Read in a bit' }
@@ -28,9 +31,26 @@ function status(c: CaptureRow): { line: string; open?: Stage; action?: string } 
 function ReadyRow({ capture }: { capture: CaptureRow }) {
   const urls = usePageUrls(capture)
   const s = status(capture)
-  const n = capture.items.length
+  const n = capture.items.filter((i) => !i.done).length
+  const title = capture.title ?? 'Your page'
+  // The row's ⋯ (or a right-click): try a stuck or failed read again, see the photo, dismiss, delete.
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const word = capture.pages > 1 ? 'pages' : 'page'
+  const retry = shouldResume(capture, new Date()) || (capture.status === 'failed' && capture.error !== 'unreadable')
+  const items: PaperMenuItem[] = [
+    ...(retry ? [{ label: 'Try again', icon: 'repeat' as const, hint: 'read it now', run: () => retryCapture(capture) }] : []),
+    ...(capture.storage_paths.length ? [{ label: 'See the photo', icon: 'image' as const, run: () => usePaperStore.getState().show({ kind: 'photo', captureId: capture.id, page: 0 }) }] : []),
+    { label: `Dismiss ${word}`, icon: 'close', hint: 'adds nothing', run: () => dismissCapture(capture) },
+    { label: `Delete ${word} and ${word === 'page' ? 'photo' : 'photos'}`, icon: 'delete', danger: true, run: () => deleteCapture(capture) },
+  ]
   return (
-    <div className="pp-ready">
+    <div
+      className="pp-ready"
+      onContextMenu={(e) => {
+        e.preventDefault()
+        setMenu({ x: e.clientX, y: e.clientY })
+      }}
+    >
       {urls[0] ? (
         <span className="pp-thumb" aria-hidden="true">
           <img src={urls[0]} alt="" />
@@ -40,7 +60,7 @@ function ReadyRow({ capture }: { capture: CaptureRow }) {
       )}
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontSize: 15, color: 'var(--ink-body)', overflowWrap: 'anywhere' }}>
-          {capture.title ?? 'Your page'}
+          {title}
           {capture.status === 'done' && ` · ${n} ${n === 1 ? 'thing' : 'things'}`}
         </div>
         <div className="pp-meta" style={{ marginTop: 4 }}>
@@ -52,6 +72,19 @@ function ReadyRow({ capture }: { capture: CaptureRow }) {
           {s.action}
         </Button>
       )}
+      <button
+        type="button"
+        className="pp-icon"
+        aria-label={`More for “${title}”`}
+        aria-haspopup="menu"
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect()
+          setMenu({ x: r.left, y: r.bottom + 4 })
+        }}
+      >
+        <Icon name="more" size={24} />
+      </button>
+      {menu && <PaperMenu title={title} meta={s.line} at={menu} items={items} onClose={() => setMenu(null)} />}
     </div>
   )
 }

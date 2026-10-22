@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Link, NavLink, Outlet, useLocation, useNavigate, useSearchParams, type LinkProps } from 'react-router'
+import { Link, Outlet, useLocation, useNavigate, useSearchParams, type LinkProps } from 'react-router'
 import { useShellSpot } from './dragSpots'
 import type { FileSpot } from '../features/tasks/fileDrop'
 import { PageFallback } from './PageFallback'
@@ -21,7 +21,9 @@ import { useBoundaryResistance, useMotionEnabled, useStackTransition } from '../
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
-import { FlowerIcon, FocusGlyph, GuideGlyph, InboxGlyph, ProjectsGlyph, ReviewGlyph, RoutinesGlyph } from './icons/NavGlyphs'
+import { Icon } from './Icon'
+import type { IconName } from './icons/kf'
+import { ContextMenu } from './ContextMenu'
 import { widgetsAvailable } from '../features/widgets/native'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open — except CommandBar, which mounts once the
@@ -61,59 +63,45 @@ import { DownloadBar } from '../features/download/DownloadBar'
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
 // Navigation Reference" (per-item active icon + washi-tape spec, 2026-07-16).
 // Sidebar groups Plan (drawer) · Tend · Cultivate; later surfaces (Projects,
-// People, Activity) placed per the newer files' sidebars. Colored dot per
-// surface accent when inactive; the species PNG/SVG the design shows when
-// active. Bound Journal (Design System B, D7): the nav is a tool — no washi tape, no tilt. ──
-
-const A = '/ds/assets'
+// People, Activity) placed per the newer files' sidebars. Bound Journal (Design System B, D7): the
+// nav is a tool — no washi tape, no tilt. Sidebar options.html icons A (Kai, 2026-10-22: "I don't
+// like the icon set that we have for the sidebar"): one kf line icon per row, open or on the rail,
+// in place of the dots, the flower glyphs and the species PNGs. ──
 
 type NavItem = {
   to: string
   label: string
-  dot: string // accent CSS var for the resting dot
-  img?: string // always-shown species PNG (design shows Journal's fern this way), opacity bumps on active
-  activeImg?: string // species PNG shown only when the row is active
-  activeIcon?: ReactNode // inline SVG shown when the row is active or the rail is collapsed
+  icon: IconName
   badge?: 'inbox'
 }
 
-// Punch 58 (Kai's V1 ruling): rail icons ALL simple — Inbox/Projects/Routines/
-// Focus/Review swap their species PNG renders for line glyphs (icons/NavGlyphs.tsx).
-// Today/Tasks/Calendar keep the flower glyph, People the clover, Activity the dot.
 // Loop B (docs/DAILY-CYCLE.md, 2026-09-26): Tend reads in the daily loop's order — capture lands in
 // Inbox, the day is planned onto the Calendar, then the lists behind it: Today · Inbox · Calendar ·
-// Tasks · Projects. Only the order changed; each row's icon and dot are its own.
+// Tasks · Projects.
 const TEND: NavItem[] = [
-  { to: '/today', label: 'Today', dot: '--acc-sage', activeIcon: <FlowerIcon fill="var(--acc-sage)" center="var(--acc-gold-warm)" /> },
-  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: 'inbox', activeIcon: <InboxGlyph /> },
-  // ds-ok: the flower glyph's centre is the export's illustration colour (unchanged by B)
-  { to: '/calendar', label: 'Calendar', dot: '--acc-lavender', activeIcon: <FlowerIcon fill="var(--acc-lavender)" center="#D9B65C" /> },
-  // R4 (2026-07-20 audit): "the tasks page has a small flower icon while the live local host has
-  // the entire rendered flower — the correct thing is the one in the design export." Tasks.dc.html
-  // line 225 specifies the 18px five-ellipse glyph (fill var(--acc-blossom), centre #C98A4B), not
-  // cherry/bloom.png. Checked every page: Today/Calendar already used the glyph, and
-  // Routines/Inbox genuinely do specify PNGs in their own exports — so this is per-page, and
-  // Tasks was the odd one out. ds-ok: the glyph's centre is that illustration colour.
-  { to: '/tasks', label: 'Tasks', dot: '--acc-blossom', activeIcon: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" /> },
-  { to: '/projects', label: 'Projects', dot: '--acc-moss', activeIcon: <ProjectsGlyph /> },
+  { to: '/today', label: 'Today', icon: 'today' },
+  { to: '/inbox', label: 'Inbox', icon: 'inbox', badge: 'inbox' },
+  { to: '/calendar', label: 'Calendar', icon: 'calendar' },
+  { to: '/tasks', label: 'Tasks', icon: 'tasks' },
+  { to: '/projects', label: 'Projects', icon: 'projects' },
 ]
 
 const CULTIVATE: NavItem[] = [
-  { to: '/routines', label: 'Routines', dot: '--acc-moss', activeIcon: <RoutinesGlyph /> },
+  { to: '/routines', label: 'Routines', icon: 'routines' },
   // Not in the Navigation Reference — added per 2026-07-18 audit A7 (Focus was unreachable).
-  { to: '/focus', label: 'Focus', dot: '--acc-gold-warm', activeIcon: <FocusGlyph /> },
-  { to: '/weekly-review', label: 'Review', dot: '--acc-buttercream', activeIcon: <ReviewGlyph /> },
+  { to: '/focus', label: 'Focus', icon: 'focus' },
+  { to: '/weekly-review', label: 'Review', icon: 'clipboard' },
   // Journal is back per D-1 (Kai, 2026-07-26): one daily page, many timestamped entries.
-  { to: '/journal', label: 'Journal', dot: '--acc-buttercream', img: `${A}/fern/full.png` },
+  { to: '/journal', label: 'Journal', icon: 'journal' },
   // [K-26] 2026-07-26 (punch 65) parked the Library; fix-grammar (2026-10-12) brings its row back
-  // beside Journal — it was reachable only through Journal or the URL. Same row as before the park.
-  { to: '/library', label: 'Library', dot: '--acc-buttercream', activeImg: `${A}/tools/pen.png` },
-  { to: '/people', label: 'People', dot: '--acc-clover', activeImg: `${A}/clover/awake.png` },
-  // Not in the Navigation Reference (Kai kept it anyway) — its own dot color.
-  { to: '/activity', label: 'Activity', dot: '--acc-gold' },
+  // beside Journal — it was reachable only through Journal or the URL.
+  { to: '/library', label: 'Library', icon: 'library' },
+  { to: '/people', label: 'People', icon: 'people' },
+  // Not in the Navigation Reference (Kai kept it anyway).
+  { to: '/activity', label: 'Activity', icon: 'activity' },
   // Punch 50: the quiet Trash link the design puts at the bottom of the nav (it had no entry
-  // point at all — URL-only). Hairline dot keeps it visually last in the list's hierarchy.
-  { to: '/trash', label: 'Trash', dot: '--ink-hairline' },
+  // point at all — URL-only).
+  { to: '/trash', label: 'Trash', icon: 'delete' },
 ]
 
 // Motion 2d — the sidebar's filing spots: a task or capture dragged onto Today / Due Today, or a task
@@ -168,7 +156,7 @@ function PlanDrawer() {
         border: active ? '1px solid var(--frost-line, var(--line-card))' : '1px solid transparent',
       }}
     >
-      <span style={{ width: 16, flex: 'none', display: 'flex', justifyContent: 'center' }}>{icon}</span>
+      <span style={{ width: 16, flex: 'none', display: 'flex', justifyContent: 'center', color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{icon}</span>
       <span style={{ fontSize: 13, color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{label}</span>
       {count != null && (
         <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>{count}</span>
@@ -200,7 +188,7 @@ function PlanDrawer() {
           font: 'inherit',
         }}
       >
-        <img src={`${A}/vine/sprouting.png`} alt="" style={{ height: 15, width: 'auto' }} />
+        <Icon name="plan" size={15} style={{ color: 'var(--ink-muted)' }} />
         <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)' }}>Plan</span>
         <span
           aria-hidden="true"
@@ -224,7 +212,7 @@ function PlanDrawer() {
           onClick={() => window.dispatchEvent(new Event('kf-new-smart-list'))}
           style={{ position: 'absolute', right: 6, top: 'calc(50% - 1.5px)', transform: 'translateY(-50%)', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', borderRadius: 'var(--radius-input)', background: 'none', color: 'var(--ink-faint)', cursor: 'pointer', font: 'inherit' }}
         >
-          ＋
+          <Icon name="plus" size={16} />
         </button>
       )}
       </div>
@@ -233,7 +221,7 @@ function PlanDrawer() {
           {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length, undefined, list === 'today' ? TODAY_SPOT : null))}
           <div style={{ height: 1, borderTop: '1px solid var(--line-sidebar)', margin: '4px 11px' }} />
           {row('/tasks?list=someday', 'Someday', activeList === 'someday', filterByList(tasks, 'someday').length, (
-            <img src={`${A}/fern/coil.png`} alt="" style={{ height: 14, opacity: 0.8 }} />
+            <Icon name="someday" size={16} />
           ), SOMEDAY_SPOT)}
           {/* Smart lists (0081): saved filters, each with its count — features/smart-lists. */}
           <Suspense fallback={null}>
@@ -252,21 +240,6 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
   const { pathname } = useLocation()
   const isActive = pathname === item.to
 
-  // R4-1 (2026-07-20 audit): "I don't see the cluster of icons that are supposed to happen when
-  // these sidebars collapse." Only the *active* row ever drew its species icon; every other row
-  // fell through to an 8px dot. Expanded that's fine — the label carries the meaning — but
-  // collapsing hides the labels, leaving a column of anonymous dots instead of Editor-1g's icon
-  // rail. Collapsed, every row now draws its own icon (dimmed until active).
-  const icon = (active: boolean) => {
-    const showSpecies = active || collapsed
-    if (item.img) return <img src={item.img} alt="" style={{ height: 16, opacity: active ? 1 : 0.85 }} />
-    if (showSpecies && item.activeIcon)
-      // Explicit color: line glyphs stroke currentColor, and the Link sets no color of its own.
-      return <span style={{ display: 'flex', opacity: active ? 1 : 0.7, color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{item.activeIcon}</span>
-    if (showSpecies && item.activeImg) return <img src={item.activeImg} alt="" style={{ height: 16, opacity: active ? 1 : 0.7 }} />
-    // Night 1a: the dots glow in their own colour (--glow-dot is night-only; by day, no shadow).
-    return <span style={{ width: 8, height: 8, borderRadius: '50%', background: `var(${item.dot})`, color: `var(${item.dot})`, boxShadow: 'var(--glow-dot, none)' }} />
-  }
   const [fly, setFly] = useState<{ x: number; y: number } | null>(null)
   const showFly = (e: React.SyntheticEvent<HTMLElement>) => {
     if (!collapsed) return
@@ -301,7 +274,11 @@ function NavRow({ item, pendingInbox, collapsed }: { item: NavItem; pendingInbox
         boxShadow: isActive ? 'var(--shadow-frost, var(--shadow-crisp))' : 'none',
       }}
     >
-      <span className="kf-nav-icon" style={{ width: 18, display: 'flex', justifyContent: 'center', flex: 'none' }}>{icon(isActive)}</span>
+      {/* Icons A (2026-10-22): the row's own line icon, open or on the rail — R4-1's "cluster of icons"
+          when collapsed, with no dot / flower / species art in between. Explicit colour: the Link sets none. */}
+      <span className="kf-nav-icon" style={{ width: 18, display: 'flex', justifyContent: 'center', flex: 'none', color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>
+        <Icon name={item.icon} size={18} />
+      </span>
       <span className="app-nav-label" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>
         {item.label}
       </span>
@@ -332,11 +309,11 @@ function GroupLabel({ children }: { children: React.ReactNode }) {
   )
 }
 
-// Today 2a's sidebar foot: "6-day streak / best 21 · day 42" — the highest current routine streak (the
+// Today 2a's streak: "6-day streak / best 21 · day 42" — the highest current routine streak (the
 // streak the removed terrarium band showed), the best, and the day of the journey (today/journey, the
-// phone header's "Day N"). Pinned with the footer rows, so a short window never scrolls it out of view.
-// Vine stage by streak length: bare / sprouting / flowering / lush (growth system).
-function StreakWidget() {
+// phone header's "Day N"). Bottom B (Sidebar options.html, Kai 2026-10-22): the top of the menu under
+// your name, words only — the vine that sat beside it at the foot is gone.
+function SideStreak() {
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const { data: tasks = [] } = useTasks()
@@ -362,52 +339,121 @@ function StreakWidget() {
     return { current, best }
   }, [routines, completions])
 
-  const stage = current >= 30 ? 'lush' : current >= 7 ? 'flowering' : current >= 1 ? 'sprouting' : 'bare'
-
   return (
-    <div className="app-vine">
-      <img src={`${A}/vine/${stage}.png`} alt="" />
-      <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
-        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
-      </div>
+    <div className="kf-side-streak" style={{ padding: '6px 10px 4px' }}>
+      <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
+      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
     </div>
   )
 }
 
-// Footer utility icons — inline verbatim from Editor 1a.
-const PlusGlyph = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><path d="M12 5v14M5 12h14" /></svg>
-)
-const SearchGlyph = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round"><circle cx="11" cy="11" r="6.4" /><path d="M19.5 19.5 16 16" /></svg>
-)
-const ChatGlyph = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M20 4.5H4a1 1 0 0 0-1 1V16a1 1 0 0 0 1 1h3v3.2L11.2 17H20a1 1 0 0 0 1-1V5.5a1 1 0 0 0-1-1Z" /></svg>
-)
-const GearGlyph = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="7.4" /><path d="M12 2.6v2M12 19.4v2M2.6 12h2M19.4 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M18.7 5.3l-1.4 1.4M6.7 17.3l-1.4 1.4" /></svg>
-)
-const SignOutGlyph = (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 4.5H5.5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h4M15 8l4 4-4 4M19 12H9" /></svg>
-)
-
-function footerRow(icon: React.ReactNode, label: string, shortcut: string | undefined, onClick: () => void, faint = false) {
+// Bottom B (Sidebar options.html, Kai's pick 2026-10-22): the foot is Capture, Search and Chat — one wide
+// Capture button and two icon buttons. Hover or focus shows the name and its keys above the button (on
+// the rail, beside it, Capture included), drawn on <body> like the rail's nav labels. The shell's own
+// keys (⌘K, ⌘/, ⌘J) are unchanged.
+function ToolButton({ icon, label, keys, onClick, wide = false, collapsed = false }: { icon: IconName; label: string; keys: string; onClick: () => void; wide?: boolean; collapsed?: boolean }) {
+  const [tip, setTip] = useState<{ x: number; y: number } | null>(null)
+  const showTip = (e: React.SyntheticEvent<HTMLElement>) => {
+    if (wide && !collapsed) return // its name and keys are written on it
+    const r = e.currentTarget.getBoundingClientRect()
+    const z = uiZoom() // visual → layout px
+    setTip(collapsed ? { x: r.right / z + 8, y: (r.top + r.height / 2) / z } : { x: (r.left + r.width / 2) / z, y: r.top / z - 6 })
+  }
+  const hideTip = () => setTip(null)
   return (
     <button
       type="button"
-      onClick={onClick}
-      className="kf-side-row"
-      title={label}
+      className={`kf-side-tool${wide ? ' kf-side-capture' : ''}`}
       aria-label={label}
-      style={{ display: 'flex', alignItems: 'center', gap: 10, padding: faint ? '6px 12px' : '7px 12px', borderRadius: 'var(--radius-input)', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', font: 'inherit' }}
+      onClick={() => {
+        hideTip()
+        onClick()
+      }}
+      onMouseEnter={showTip}
+      onMouseLeave={hideTip}
+      onFocus={showTip}
+      onBlur={hideTip}
     >
-      <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{icon}</span>
-      <span className="app-footer-label" style={{ fontSize: faint ? 12.5 : 13.5, color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{label}</span>
-      {/* J-17: keycaps, not mono text. The class keeps them hidden on the collapsed rail. */}
-      {shortcut && <KeyCombo className="app-footer-label" keys={splitKeyCombo(shortcut)} size="sm" style={{ marginLeft: 'auto' }} />}
+      <Icon name={icon} size={18} />
+      {wide && <span className="app-footer-label">{label}</span>}
+      {wide && <KeyCombo className="app-footer-label" keys={splitKeyCombo(keys)} size="sm" style={{ marginLeft: 'auto' }} />}
+      {tip && (
+        <Float>
+          <span className={`kf-nav-flyout kf-tool-tip${collapsed ? '' : ' kf-tool-tip--above'}`} aria-hidden="true" style={{ left: tip.x, top: tip.y }}>
+            {label}
+            <KeyCombo keys={splitKeyCombo(keys)} size="sm" />
+          </span>
+        </Float>
+      )}
     </button>
   )
+}
+
+type SideSync = { kind: SyncView['kind']; label: string; open: (at: { x: number; y: number }) => void }
+
+// Bottom B: the name at the top opens a menu — the streak, Settings, Guide, the sync status and Sign out,
+// which used to stack at the foot. On the rail it is the app icon. The sync dot rides the icon (Today 2a's
+// "● synced", same states); its words are the menu's sync row, which opens the queue popover as before.
+function SideHeader({ collapsed, sync: withSync, onSignOut }: { collapsed: boolean; sync: boolean; onSignOut: () => void }) {
+  const owner = useOwner()
+  const zone = useAppZone()
+  const navigate = useNavigate()
+  const motionOn = useMotionEnabled()
+  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
+  const dot = (sync: SideSync | null) =>
+    // Its words as a tooltip on hover ("offline · 1"); aria-hidden, as the menu's sync row (and the
+    // name button) already says them — a titled span would read twice inside that row.
+    sync && <span className="kf-side-sync-dot" aria-hidden="true" data-sync={sync.kind} title={sync.label} style={sync.kind === 'synced' && motionOn ? { animation: 'twinkle 300ms var(--ease-out)' } : undefined} />
+  const header = (sync: SideSync | null) => (
+    // Onboarding's promise: "the whole app takes your name" + the workspace line. Unset answers keep
+    // the old "Kai's Flow / Personal · Cairo". The city is the user's zone's (Settings → Timezone; Cairo
+    // by default) — the app's day boundary (B2). Names are user-typed, so both lines ellipsize.
+    <div className="app-sidebar-header" style={{ padding: '0 14px 14px', visibility: owner.pending ? 'hidden' : undefined }}>
+      <button
+        type="button"
+        className="kf-side-me"
+        aria-haspopup="menu"
+        aria-expanded={menu !== null}
+        aria-label={`${owner.flow}: Settings, Guide, Sign out${sync ? ` · sync: ${sync.label}` : ''}`}
+        onClick={(e) => {
+          if (menu) return setMenu(null)
+          const r = e.currentTarget.getBoundingClientRect()
+          setMenu(collapsed ? { x: r.right + 6, y: r.top } : { x: r.left, y: r.bottom + 4 })
+        }}
+      >
+        <span className="kf-side-me-icon">
+          <img src="/icon-192.png" alt="" style={{ width: 28, height: 28, display: 'block' }} />
+          {dot(sync)}
+        </span>
+        <span className="kf-side-me-text">
+          <span style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span title={owner.flow} style={{ minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 'var(--fw-semibold)', letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</span>
+            <Icon name="chevdown" size={14} style={{ color: 'var(--ink-faint)' }} />
+          </span>
+          <span title={owner.workspace} style={{ display: 'block', marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · {zoneCity(zone)}</span>
+        </span>
+      </button>
+      {menu && (
+        <ContextMenu
+          position={menu}
+          onClose={() => setMenu(null)}
+          label={owner.flow}
+          width={240}
+          header={<SideStreak />}
+          items={[
+            { label: 'Settings', icon: <Icon name="settings" size={18} />, shortcut: '⌘,', onClick: () => navigate('/settings') },
+            { label: 'Guide', icon: <Icon name="guide" size={18} />, onClick: () => navigate('/guide') },
+            ...(sync
+              ? [{ label: sync.label[0].toUpperCase() + sync.label.slice(1), icon: <span className="kf-side-sync-row">{dot(sync)}</span>, onClick: () => sync.open({ x: menu.x / uiZoom(), y: menu.y / uiZoom() }) }]
+              : []),
+            { label: 'Sign out', icon: <Icon name="signout" size={18} />, divider: true, onClick: onSignOut },
+          ]}
+        />
+      )}
+    </div>
+  )
+  // A phone has no sidebar (its top bar carries the sync words): no second sync watcher there.
+  return withSync ? <SyncStatus side={header} /> : header(null)
 }
 
 function queueAgo(ts: number): string {
@@ -425,25 +471,27 @@ function sideSyncLabel(v: SyncView): string {
 }
 
 // ── The sync status — States.dc.html 2a/2b/2d, wired to the REAL outbox queue — and its queue
-// popover. One home per layout: a computer's sidebar Settings row (Today 2a / Inbox 3a: "● synced"),
-// a phone's top bar (no sidebar there). Kai 2026-10-07: the strip flipped "Syncing ↻ 1" ↔ "Synced ●"
+// popover. One home per layout: a computer's sidebar header (Today 2a / Inbox 3a's "● synced"; bottom B
+// puts the dot on the app icon and the words in the menu under your name), a phone's top bar (no sidebar
+// there). Kai 2026-10-07: the strip flipped "Syncing ↻ 1" ↔ "Synced ●"
 // (with a glint) on every write, about two seconds per change. The phone strip now says nothing while
 // writes flush and speaks only when something is slow, offline or not saved (useSyncStatus,
 // ./syncQueue.ts); the sidebar keeps 2a's steady "synced" and changes only on the same events. A brief
 // "Synced" (2d's glint) ends an offline / not-saved spell. ──
-function SyncStatus({ side = false }: { side?: boolean }) {
+function SyncStatus({ side }: { side?: (sync: SideSync) => ReactNode }) {
   const motionOn = useMotionEnabled()
   const { view, online, queue, waiting: n, parked, seeParked } = useSyncStatus()
   const rows = useMemo(() => syncRows(queue), [queue])
-  const label = side ? sideSyncLabel(view) : syncLabel(view)
+  const label = syncLabel(view)
   // The popover; `parked` holds the not-saved rows it was opened on — opening it is seeing them.
-  const [pop, setPop] = useState<{ parked: SyncRow[] | null } | null>(null)
+  // `at` (layout px) places the sidebar's popover where its menu was.
+  const [pop, setPop] = useState<{ parked: SyncRow[] | null; at?: { x: number; y: number } } | null>(null)
   const popRef = useRef<HTMLDivElement>(null)
   const popOpen = pop !== null
-  const togglePop = () => {
+  const togglePop = (at?: { x: number; y: number }) => {
     if (popOpen) return setPop(null)
-    if (view.kind !== 'parked') return setPop({ parked: null })
-    setPop({ parked: syncRows(parked, 'changed') })
+    if (view.kind !== 'parked') return setPop({ parked: null, at })
+    setPop({ parked: syncRows(parked, 'changed'), at })
     seeParked()
   }
 
@@ -469,22 +517,19 @@ function SyncStatus({ side = false }: { side?: boolean }) {
   )
   // A tool's aside (D7: Caveat writes on pages only): the UI face, muted, under a hairline.
   const hand = (text: string) => <div style={{ marginTop: 10, paddingTop: 8, borderTop: '1px solid var(--line-dashed)', fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>{text}</div>
+  // The sidebar's popover draws on <body> (fixed, where the menu was): the sidebar column scrolls and would clip it.
+  const place = (el: ReactNode) => (side ? <Float>{el}</Float> : el)
   return (
     <>
       {side ? (
-        // Today 2a: a 6px dot + "synced" at the Settings row's right; on the icon rows (a short or
-        // collapsed sidebar) only the dot shows, on the gear's corner, and the words are its title.
-        <button type="button" onClick={togglePop} className="kf-side-sync" data-sync={view.kind} title={`Sync: ${label}`} aria-label={`Sync: ${label}`}>
-          <span className="kf-side-sync-dot" style={view.kind === 'synced' && motionOn ? { animation: 'twinkle 300ms var(--ease-out)' } : undefined} />
-          <span className="app-footer-label">{label}</span>
-        </button>
+        side({ kind: view.kind, label: sideSyncLabel(view), open: togglePop })
       ) : (
         label && (
           <>
             <span aria-hidden="true">·</span>
             <button
               type="button"
-              onClick={togglePop}
+              onClick={() => togglePop()}
               className="kf-hit app-topbar-sync"
               data-sync={view.kind}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 6, font: 'inherit', letterSpacing: 'inherit', textTransform: 'inherit', color: view.kind === 'parked' ? 'var(--acc-terra-ink)' : view.kind === 'synced' ? 'inherit' : 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, cursor: 'pointer' }}
@@ -499,11 +544,11 @@ function SyncStatus({ side = false }: { side?: boolean }) {
         )
       )}
 
-      {pop && (
+      {pop && place(
         <div
           ref={popRef}
           className={`kf-sync-pop kf-overlay-card${side ? ' kf-sync-pop--side' : ''}`}
-          style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '12px 14px' }}
+          style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '12px 14px', ...(pop.at && { top: pop.at.y, left: pop.at.x }) }}
         >
           {pop.parked ? (
             <>
@@ -536,7 +581,7 @@ function SyncStatus({ side = false }: { side?: boolean }) {
 // ── The shell's top bar (SPEC §2): `{app name} · {day} {date}` · the season echo … the user's zone.
 // Not on a computer's Today (2a: "Date said three times (top bar, eyebrow, H1). Now it's only the H1")
 // or Inbox (3a: "The top bar is removed") — AppLayout skips it there; every other page's frame keeps
-// it. The sync status rides it only on a phone; on a computer it lives on the sidebar's Settings row. ──
+// it. The sync status rides it only on a phone; on a computer it lives in the sidebar's header. ──
 function TopBar({ sync }: { sync: boolean }) {
   const owner = useOwner()
   const zone = useAppZone()
@@ -595,6 +640,10 @@ export function AppLayout() {
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()
+  // M2: what lives on <body> (popovers, the drag's lifted card) reads the Effects setting from <html>.
+  useEffect(() => {
+    document.documentElement.classList.toggle('kf-motion-on', motionOn)
+  }, [motionOn])
   const location = useLocation()
   const { pathname } = location
   const isMobile = useIsMobile()
@@ -622,7 +671,6 @@ export function AppLayout() {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
 
-  const owner = useOwner()
   // User time zones: every date below reads the user's zone; a new zone remounts the page (key
   // below) so nothing memoised keeps the old day. Once per device, offer the device's own zone.
   const zone = useAppZone()
@@ -750,36 +798,37 @@ export function AppLayout() {
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
-        /* Shell fit (2026-09-26): the footer is pinned, so on a short sidebar (1280×800 at the
-           default 125% is only 640 layout px tall) its five labelled rows (194px) pushed Tasks,
-           Calendar and Projects out of view. Below 800px of sidebar height it becomes one row of
-           icons (~47px) — same controls, titled + labelled, the collapsed rail's own treatment.
-           A size container query, not a media query: it measures the sidebar in zoomed CSS px. */
+        /* A size container query, not a media query: it measures the sidebar in zoomed CSS px. */
         .app-sidebar { container: kf-sidebar / size; }
-        @container kf-sidebar (max-height: 799px) {
-          .app-sidebar:not(.collapsed) .app-sidebar-footer { flex-direction: row !important; justify-content: space-between; padding: 4px 12px 12px !important; }
-          .app-sidebar:not(.collapsed) .app-sidebar-footer .app-footer-label { display: none !important; }
-          .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row { padding: 8px !important; }
-          .app-sidebar:not(.collapsed) .app-sidebar-footer .kf-side-row:hover { transform: none; }
-        }
-        /* Today 2a's sidebar foot: the streak, pinned above the footer rows (only the nav scrolls). */
-        .app-vine { flex: none; margin: 0 22px 12px; padding-top: 12px; border-top: 1px solid var(--line-sidebar); display: flex; align-items: center; gap: 10px; }
-        .app-vine img { height: 36px; width: auto; flex: none; filter: var(--shadow-drop-sm); }
-        /* 2a's "● synced" on the Settings row: a mono note at the row's right, its own button. */
-        .kf-settings-row { position: relative; }
-        .kf-side-sync { position: absolute; top: 50%; right: 12px; transform: translateY(-50%); display: inline-flex; align-items: center; gap: 6px; padding: 4px 0 4px 6px; border: none; background: none; font-family: var(--font-mono); font-size: var(--fs-meta-l); color: var(--ink-muted); cursor: pointer; }
-        .kf-side-sync[data-sync='parked'] { color: var(--acc-terra-ink); }
+        /* Bottom B (Sidebar options.html, Kai 2026-10-22): the name is the menu's button, and the app
+           icon carries Today 2a's "● synced" dot; the foot is one row, Capture · Search · Chat. */
+        .kf-side-me { display: flex; align-items: center; gap: 10px; width: 100%; padding: 2px 8px; border: none; border-radius: var(--radius-input); background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+        .kf-side-me:hover, .kf-side-me[aria-expanded='true'] { background: var(--paper-bone); }
+        .kf-side-me:focus-visible, .kf-side-tool:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+        .kf-side-me-icon { position: relative; flex: none; display: flex; }
+        .kf-side-me-text { flex: 1; min-width: 0; }
         .kf-side-sync-dot { width: 6px; height: 6px; flex: none; box-sizing: border-box; border-radius: 50%; background: var(--acc-sage); }
-        .kf-side-sync[data-sync='syncing'] .kf-side-sync-dot { background: var(--ink-faint); }
-        .kf-side-sync[data-sync='offline'] .kf-side-sync-dot { background: none; border: 1px solid var(--ink-muted); }
-        .kf-side-sync[data-sync='parked'] .kf-side-sync-dot { background: var(--acc-terra); }
-        .kf-sync-pop.kf-sync-pop--side { top: auto; bottom: calc(100% + 6px); left: 0; }
-        /* Icon rows (a short or a collapsed sidebar): the dot alone, on the gear's corner. */
-        .app-sidebar.collapsed .kf-side-sync { top: 2px; right: 2px; transform: none; padding: 2px; }
-        /* Short sidebar (1280×800 at the default 125% is 640 layout px): the pinned streak costs ~50px,
-           so the column tightens a little to keep Tend's five rows in view with the Plan drawer open. */
+        .kf-side-sync-dot[data-sync='syncing'] { background: var(--ink-faint); }
+        .kf-side-sync-dot[data-sync='offline'] { background: none; border: 1px solid var(--ink-muted); }
+        .kf-side-sync-dot[data-sync='parked'] { background: var(--acc-terra); }
+        .kf-side-me-icon .kf-side-sync-dot { position: absolute; top: -3px; right: -3px; width: 10px; height: 10px; border: 2px solid var(--paper-sidebar); }
+        .kf-side-me-icon .kf-side-sync-dot[data-sync='offline'] { background: var(--paper-sidebar); border: 1.5px solid var(--ink-muted); }
+        .kf-side-sync-row { width: 18px; display: flex; justify-content: center; }
+        .kf-sync-pop.kf-sync-pop--side { position: fixed; }
+        .kf-side-tools { display: flex; align-items: center; gap: 4px; padding-top: 10px; border-top: 1px solid var(--line-sidebar); }
+        .kf-side-tool { flex: none; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0; border: none; border-radius: var(--radius-input); background: none; color: var(--ink-muted); font: inherit; cursor: pointer; }
+        .kf-side-tool:hover { background: var(--paper-bone); color: var(--ink-body); }
+        .kf-side-tool.kf-side-capture { flex: 1; min-width: 0; width: auto; height: 36px; justify-content: flex-start; padding: 0 10px; background: var(--paper-bone); color: var(--ink-body); font-size: var(--fs-body-s); font-weight: var(--fw-medium); }
+        .kf-side-tool.kf-side-capture:hover { box-shadow: inset 0 0 0 1px var(--line-card); }
+        .kf-tool-tip { display: flex; align-items: center; gap: 8px; }
+        .kf-nav-flyout.kf-tool-tip--above { transform: translate(-50%, -100%); }
+        .app-sidebar.collapsed .kf-side-tools { flex-direction: column; gap: 2px; }
+        .app-sidebar.collapsed .kf-side-tool.kf-side-capture { flex: none; width: 34px; justify-content: center; padding: 0; }
+        .app-sidebar.collapsed .app-sidebar-header { padding: 0 14px 12px !important; }
+        .app-sidebar.collapsed .kf-side-me { justify-content: center; padding: 3px 0; }
+        /* Short sidebar (1280×800 at the default 125% is 640 layout px): the column tightens a little to
+           keep Tend's five rows in view with the Plan drawer open. */
         @container kf-sidebar (max-height: 799px) {
-          .app-sidebar:not(.collapsed) .kf-side-sync { top: 2px; right: 2px; transform: none; padding: 2px; }
           .app-sidebar:not(.collapsed) .app-sidebar-col { padding-top: 16px !important; }
           .app-sidebar:not(.collapsed) .app-sidebar-header { padding-bottom: 12px !important; }
           .app-sidebar:not(.collapsed) nav > .app-nav-label { padding-top: 6px !important; }
@@ -787,9 +836,7 @@ export function AppLayout() {
              fold at 1280×800 (640 layout px). The nav rows step from 8 to 6px of vertical padding here (35px,
              a mouse target; phones never see the sidebar), which keeps all of Tend in view. */
           .app-sidebar:not(.collapsed) nav .kf-side-row { padding-top: 6px !important; padding-bottom: 6px !important; }
-          .app-sidebar:not(.collapsed) .app-vine { margin-bottom: 4px; padding-top: 6px; line-height: 1.25; }
           .app-sidebar:not(.collapsed) .app-sidebar-footer { padding-bottom: 8px !important; }
-          .app-vine img { height: 28px; }
         }
         /* Collapsed-rail hover label (R4). Sits outside the 64px rail, so the rail keeps its
            width and the label floats over the page. Styled to the export's nav row: parchment,
@@ -805,6 +852,15 @@ export function AppLayout() {
         /* The collapsed rail scrolls when a short window can't hold it (it used to run under the
            pinned footer at 125–150%); no scrollbar strip on a 64px rail. */
         .app-sidebar.collapsed .app-sidebar-col { scrollbar-width: none; }
+        /* Kai 2026-10-22 (150%: "Library" cut at the bottom of Cultivate): a short sidebar scrolls its nav, and the
+           last row in view ended hard against the pinned foot, as if clipped. While there's more below, the column's
+           last 36px fade out; scrolled to the end (or nothing to scroll) there's no fade. A scroll-driven animation:
+           an inactive timeline (no overflow) leaves --kf-side-fade at 0. */
+        @property --kf-side-fade { syntax: '<length>'; inherits: false; initial-value: 0px; }
+        @keyframes kfSideFade { from, 96% { --kf-side-fade: 36px; } to { --kf-side-fade: 0px; } }
+        @supports (animation-timeline: scroll()) {
+          .app-sidebar-col { mask-image: linear-gradient(to bottom, var(--ink-body) calc(100% - var(--kf-side-fade)), transparent); /* a mask reads alpha only */ animation: kfSideFade linear both; animation-timeline: scroll(self); }
+        }
         .app-sidebar.collapsed .app-sidebar-col::-webkit-scrollbar { display: none; }
         /* Kai 2026-10-03: collapsed, a row's 12px side padding + its 18px icon (42) were wider than
            the rail leaves it (35), so the icon overflowed the box to the right: the active box read
@@ -812,10 +868,9 @@ export function AppLayout() {
            icon, and the inbox count rides its corner instead of pushing the icon aside. */
         .app-sidebar.collapsed .kf-side-row { justify-content: center; padding-left: 0 !important; padding-right: 0 !important; }
         .app-sidebar.collapsed .app-nav-badge { position: absolute; top: 1px; right: 3px; margin: 0 !important; font-size: 9px !important; line-height: 1; }
-        .app-sidebar.collapsed .app-sidebar-header,
+        .app-sidebar.collapsed .kf-side-me-text,
         .app-sidebar.collapsed .app-nav-label,
         .app-sidebar.collapsed .app-footer-label,
-        .app-sidebar.collapsed .app-vine,
         .app-sidebar.collapsed .app-smartlist { display: none !important; }
 
         .kf-side-row {
@@ -824,7 +879,6 @@ export function AppLayout() {
         .kf-side-row:hover { background: var(--paper-bone) !important; transform: translateX(3px); }
         .kf-side-row:active { transform: translateX(1px); }
         .kf-side-row.kf-active:hover { background: var(--frost-bg, var(--paper-parchment)) !important; }
-        .motion-on .kf-side-row:hover .kf-nav-icon { animation: cloverSway 1.6s var(--ease-natural) infinite; transform-origin: 50% 100%; }
 
         .kf-collapse-btn {
           transition: transform var(--dur-quick) var(--ease-spring),
@@ -859,6 +913,18 @@ export function AppLayout() {
         .kf-sheet { animation: kfSheetIn 210ms var(--ease-out); }
         .kf-drawer { animation: kfDrawerIn 210ms var(--ease-out); }
         .kf-fade { animation: kfFadeIn 160ms var(--ease-out); }
+        /* Calendar motion M2 (2026-10-22): one popover recipe — 140ms in, scaling from its anchor side
+           (--pop-origin), 100ms out. The scale only with Effects on (html.kf-motion-on: popovers live on
+           <body>, outside .motion-on); the fade always. A backwards fill ends at no transform, so a fixed
+           submenu anchors to the viewport once the menu has arrived. */
+        @keyframes kfPopIn { from { opacity: 0; transform: scale(0.97); } }
+        @keyframes kfPopFadeIn { from { opacity: 0; } }
+        @keyframes kfPopOut { to { opacity: 0; transform: scale(0.98); } }
+        @keyframes kfPopFadeOut { to { opacity: 0; } }
+        .kf-pop { transform-origin: var(--pop-origin, top left); animation: kfPopFadeIn var(--dur-pop-in) var(--ease-out) backwards; }
+        .kf-motion-on .kf-pop { animation-name: kfPopIn; }
+        .kf-pop.kf-pop--out { animation: kfPopFadeOut var(--dur-pop-out) var(--ease-in) both; pointer-events: none; }
+        .kf-motion-on .kf-pop.kf-pop--out { animation-name: kfPopOut; }
 
         /* F4 Motion 3c — overlay OUT: 140ms drop; pair with useOverlayExit (lib/motion.ts).
            .kf-scrim now carries the canonical 20% scrim (3c); feature-file inline backgrounds
@@ -900,10 +966,6 @@ export function AppLayout() {
           .kf-stack-under-in { animation-name: stackUnderInX; }
           .kf-stack-under-out { animation-name: stackUnderOutX; }
         }
-
-        /* X2 Motion 1f — the sidebar streak plant is the app's sole persistent loop. */
-        @keyframes kfLeafSway { 0%, 100% { transform: rotate(-2.2deg); } 50% { transform: rotate(2.2deg); } }
-        .motion-on .app-vine img { animation: kfLeafSway 5.8s var(--ease-natural) infinite; transform-origin: 50% 100%; }
 
         /* X4 — >=44px touch targets for small glyph controls, coarse pointers only. */
         .kf-hit { position: relative; }
@@ -966,21 +1028,11 @@ export function AppLayout() {
             so the column scrolls in both states. */}
         <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
 
-        {/* Onboarding's promise: "the whole app takes your name" + the workspace line. Unset
-            answers keep the old "Kai's Flow / Personal · Cairo". The city is the user's zone's
-            (Settings → Timezone; Cairo by default) — the app's day boundary (B2). Names are
-            user-typed, so both lines ellipsize instead of wrapping the sidebar. */}
         {/* Today 2a: the app icon beside the wordmark; 2a drops the hand line ("a field journal of
             days ✿"). deviation(2026-10-13 today-shell): the workspace · city line stays — it is
             the only place the workspace answer shows, and with no top bar on Today / Inbox the
-            only place the user's zone does. */}
-        <div className="app-sidebar-header" style={{ padding: '0 22px 16px', visibility: owner.pending ? 'hidden' : undefined }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <img src="/icon-192.png" alt="" style={{ width: 28, height: 28, flex: 'none' }} />
-            <div title={owner.flow} style={{ minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 'var(--fw-semibold)', letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.flow}</div>
-          </div>
-          <div title={owner.workspace} style={{ marginTop: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{owner.workspace} · {zoneCity(zone)}</div>
-        </div>
+            only place the user's zone does. Bottom B (2026-10-22): it is the menu's button. */}
+        <SideHeader collapsed={collapsed} sync={!isMobile} onSignOut={signOutFlow.request} />
 
         <PlanDrawer />
 
@@ -998,35 +1050,14 @@ export function AppLayout() {
         <div style={{ flex: 1 }} />
         </div>
 
-        <StreakWidget />
-
-        {/* Shell fit (2026-09-26): the footer rows are pinned below the scrolling column. At the
-            default 125% size a 1280×800 window is only ~640 layout px tall, so inside the scroll
-            Settings / Sign out sat ~290px below the fold. Pinned, they're always one tap away. */}
-        <div className="app-sidebar-footer" style={{ flex: 'none', padding: '4px 14px 18px', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {footerRow(PlusGlyph, 'Capture', '⌘K', openCapture)}
-          {footerRow(SearchGlyph, 'Search', '⌘/', () => setSearchOpen(true))}
-          {footerRow(ChatGlyph, 'Chat', '⌘J', () => setChatOpen(true))}
-          {/* Tour & help 14k: the Guide sits in the sidebar foot, beside Settings. */}
-          <NavLink to="/guide" title="Guide" aria-label="Guide" className="kf-side-row" style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 'var(--radius-input)', textDecoration: 'none' }}>
-            <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}><GuideGlyph /></span>
-            <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Guide</span>
-          </NavLink>
-          {/* Today 2a: the sync status sits on the Settings row ("● synced"), its own button beside the link. */}
-          <div className="kf-settings-row">
-            <NavLink
-              to="/settings"
-              title="Settings"
-              aria-label="Settings"
-              className="kf-side-row"
-              style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px', borderRadius: 'var(--radius-input)', textDecoration: 'none' }}
-            >
-              <span style={{ width: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)' }}>{GearGlyph}</span>
-              <span className="app-footer-label" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>
-            </NavLink>
-            {!isMobile && <SyncStatus side />}
+        {/* Shell fit (2026-09-26): the foot is pinned below the scrolling column, so it is always one tap
+            away. Bottom B (2026-10-22): one row — Capture, Search, Chat; the rest moved to the header. */}
+        <div className="app-sidebar-footer" style={{ flex: 'none', padding: '4px 14px 14px' }}>
+          <div className="kf-side-tools">
+            <ToolButton wide icon="plus" label="Capture" keys="⌘K" onClick={openCapture} collapsed={collapsed} />
+            <ToolButton icon="search" label="Search" keys="⌘/" onClick={() => setSearchOpen(true)} collapsed={collapsed} />
+            <ToolButton icon="chat" label="Chat" keys="⌘J" onClick={() => setChatOpen(true)} collapsed={collapsed} />
           </div>
-          {footerRow(SignOutGlyph, 'Sign out', undefined, signOutFlow.request, true)}
         </div>
       </aside>
 

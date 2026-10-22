@@ -395,16 +395,42 @@ export function renderSound(pack: SoundPack, event: SoundEvent, seconds = MAX_DU
   return ac.startRendering()
 }
 
-// One lazily-created context (browsers require a user gesture; every call site is one).
+// One context. S8 (audit 2026-10-22): `new AudioContext()` ran inside the first sound's click and held
+// that tick's paint 0.4–5 s (headless Chrome, starting its audio service). It is never built on an
+// interaction path now: it's built once in idle time after the page loads. Before any gesture Chrome
+// makes it suspended, and the first sound resumes it from inside its own click (autoplay rules) without
+// waiting on it. One that comes up running anyway (a WebView) is suspended until a sound wants it.
+// Built at load, not after the first sound, so nothing blocks right after an interaction either.
+// Master volume 0 at load: not built until a sound asks (previews), then in idle time after its click.
 let ctx: AudioContext | null = null
-function audio(): AudioContext | null {
-  if (typeof window === 'undefined') return null
+let pending: (() => void) | null = null // only the latest sound waits — they're 80 ms apart anyway
+
+function build() {
   try {
-    if (!ctx) ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
-    if (ctx.state === 'suspended') void ctx.resume()
-    return ctx
+    ctx ??= new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)()
+    bus(ctx) // the limiter curve and the room, so the first sound has nothing left to make
+    if (!pending && ctx.state === 'running') void ctx.suspend()
   } catch {
-    return null // no Web Audio (or blocked): silence is the correct fallback
+    /* no Web Audio (or blocked): silence is the correct fallback */
+  }
+  const p = pending
+  pending = null
+  p?.()
+}
+const idle = (fn: () => void, timeout?: number) => (typeof requestIdleCallback === 'function' ? requestIdleCallback(fn, timeout ? { timeout } : undefined) : setTimeout(fn, 16))
+if (typeof window !== 'undefined' && readVolume() > 0) {
+  const warm = () => idle(() => ctx || build())
+  if (document.readyState === 'complete') warm()
+  else window.addEventListener('load', warm, { once: true })
+}
+
+function sound(event: SoundEvent, pack: SoundPack, volume: number) {
+  if (!ctx) return
+  try {
+    if (ctx.state === 'suspended') void ctx.resume()
+    voice(ctx, pack, event, volume, ctx.currentTime)
+  } catch {
+    /* a failed sound must never break the interaction that triggered it */
   }
 }
 
@@ -412,13 +438,11 @@ function audio(): AudioContext | null {
  * which event fired (docs/log/assets/sounds/verify.mjs). */
 export const player = {
   play(event: SoundEvent, pack: SoundPack, volume: number): void {
-    const ac = audio()
-    if (!ac) return
-    try {
-      voice(ac, pack, event, volume, ac.currentTime)
-    } catch {
-      /* a failed sound must never break the interaction that triggered it */
-    }
+    if (typeof window === 'undefined') return
+    if (ctx) return sound(event, pack, volume)
+    const first = !pending
+    pending = () => sound(event, pack, volume)
+    if (first) idle(build, 300)
   },
 }
 

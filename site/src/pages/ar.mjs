@@ -1,5 +1,6 @@
 // The Arabic home (RTL). Copy from Kai's Arabic design (13b-12), with two lines corrected to match
-// the app as it is today (Google Calendar isn't connected yet; People keeps notes, not promises).
+// the app as it is today (People keeps notes, not promises). 2026-10-17: Google Calendar and the
+// Notebook page are live (v1.1.4/v1.1.6, v1.1.0), so those two lines no longer say "coming".
 // The app screens stay in English and left-to-right until the app itself is translated.
 // Not built while data.mjs ARABIC is false (Kai 2026-10-12: turned off).
 import { img, screen, btn, head2, icon, soon } from '../lib.mjs'
@@ -7,14 +8,13 @@ import { APP_URL } from '../data.mjs'
 
 const FEATURES = [
   ['mic', 't-terra', 'التقاط بلمستين', 'قلها أو اكتبها، فتصل ومعها الموعد.'],
-  ['calendar', 't-lav', 'تقويمك، بفترات زمنية', 'اسحب المهام إلى اليوم، بخطوات من ١٥ دقيقة. مزامنة تقويم Google قادمة.'],
+  ['calendar', 't-lav', 'تقويمك، بفترات زمنية', 'اسحب المهام إلى اليوم، بخطوات من ١٥ دقيقة، وتقاويم Google بجانبها.'],
   ['routine', 't-sage', 'عادات وسلاسل', 'عادات يومية صغيرة، وسلسلة تسامحك على يوم فائت.'],
   ['star', 't-terra', 'أهم ثلاث', 'ثلاثة أشياء تجعل اليوم جيدًا، وأحدها هو الهدف.'],
   ['journal', 't-butter', 'اليوميات والمعشبة', 'دوّن يومك. المشاريع المنتهية تُكبس كالزهور.'],
   ['people', 't-blossom', 'الأشخاص', 'أعياد الميلاد، وآخر مرة تحدثتما، وملاحظات عن كل شخص.'],
   ['download', 't-hyd', 'انقل قوائمك', 'استورد من Todoist وTickTick وNotion وObsidian وAkiflow.'],
-  // 2026-10-12: Paper capture is live (v1.0.20); the Notebook page is still to come.
-  ['notebook', 't-butter', 'الالتقاط الورقي', 'صوّر ملاحظاتك المكتوبة بخط اليد فتعود مهامّ، بالعربية أيضًا. صفحة الدفتر قادمة.'],
+  ['notebook', 't-butter', 'الالتقاط الورقي', 'صوّر ملاحظاتك المكتوبة بخط اليد فتعود مهامّ، بالعربية أيضًا. وصفحة الدفتر تنسخ يومك باليد.'],
 ]
 const DAY = [
   ['plan', '١', 'الصباح · نحو ٣ دقائق', 'خطّط ليومي', 'اختر أهم ثلاث مهام، وامنحها وقتًا في التقويم، ودع الباقي ينتظر.', 'sage', 'شاشة خطّط ليومي على الهاتف'],
@@ -56,6 +56,6 @@ export const ar = {
   ${img('cherry-bloom', 'زهرة كرز', { w: 130 })}
   <h2><span lang="en" dir="ltr">Kai’s Flow</span> مجاني.</h2>
   <p>بلا تجربة، ولا باقات، ولا بطاقة. مشروع صغير صنعه شخص واحد احتاجه، وسيبقى مجانيًا.</p>
-  <p style="font-size:15px"><a href="/" hreflang="en" lang="en">Read the rest in English →</a></p>
+  <p style="font-size:15px"><a href="/" hreflang="en" lang="en">Read the rest in English</a></p>
 </div></section>`,
 }

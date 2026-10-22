@@ -1,0 +1,218 @@
+[
+  {
+    "run": 1,
+    "firstGesture": "the tick itself",
+    "first": {
+      "clickToPaint": 168,
+      "flipToFrame": 27,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3630,
+          "ms": 90,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": 10,
+        "state": "suspended"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 14,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -6774,
+          "ms": 90,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": -3134,
+        "state": "suspended"
+      }
+    }
+  },
+  {
+    "run": 1,
+    "firstGesture": "press elsewhere, then tick",
+    "first": {
+      "clickToPaint": 40,
+      "flipToFrame": 21,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -5031,
+          "ms": 37,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": 6,
+        "state": "suspended"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 18,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -8181,
+          "ms": 37,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": -3144,
+        "state": "suspended"
+      }
+    }
+  },
+  {
+    "run": 2,
+    "firstGesture": "the tick itself",
+    "first": {
+      "clickToPaint": 48,
+      "flipToFrame": 18,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3549,
+          "ms": 47,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": 5,
+        "state": "suspended"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 16,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -6683,
+          "ms": 47,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": -3129,
+        "state": "suspended"
+      }
+    }
+  },
+  {
+    "run": 2,
+    "firstGesture": "press elsewhere, then tick",
+    "first": {
+      "clickToPaint": 64,
+      "flipToFrame": 24,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -5225,
+          "ms": 76,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": 6,
+        "state": "suspended"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 16,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -8362,
+          "ms": 76,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": -3130,
+        "state": "suspended"
+      }
+    }
+  },
+  {
+    "run": 3,
+    "firstGesture": "the tick itself",
+    "first": {
+      "clickToPaint": 40,
+      "flipToFrame": 20,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3645,
+          "ms": 40,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": 7,
+        "state": "suspended"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 15,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -6762,
+          "ms": 40,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": -3110,
+        "state": "suspended"
+      }
+    }
+  },
+  {
+    "run": 3,
+    "firstGesture": "press elsewhere, then tick",
+    "first": {
+      "clickToPaint": 56,
+      "flipToFrame": 24,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -5005,
+          "ms": 28,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": 8,
+        "state": "suspended"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 12,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -8137,
+          "ms": 28,
+          "stateNow": "running"
+        }
+      ],
+      "firstOsc": {
+        "at": -3124,
+        "state": "suspended"
+      }
+    }
+  }
+]

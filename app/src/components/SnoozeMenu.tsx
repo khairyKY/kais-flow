@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { scheduleNextWeek, scheduleThisEvening, scheduleTomorrow } from '../lib/dateShortcuts'
 import { appZone } from '../lib/appZone'
+import { clockOptions } from '../lib/clock'
 import { BottomSheet, SheetRow, useIsMobile } from './BottomSheet'
 import { DatePicker } from './DatePicker'
 import { Float } from './Float'
@@ -155,7 +156,7 @@ export function SnoozeMenu({ position, title, onClose, onSnooze, onSomeday }: Sn
           <span style={{ width: 7, height: 7, borderRadius: '50%', background: p.dot, flex: 'none' }} />
           <span style={{ flex: 1 }}>{p.label}</span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-            {p.at.toLocaleString([], { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: appZone() })}
+            {p.at.toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })}
           </span>
         </button>
       ))}

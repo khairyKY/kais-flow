@@ -11,7 +11,7 @@ import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDueChip } from './dueChip'
 import { hasStructure, parseCommand, quickAddTask, type ParsedCommand } from './parseCommand'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 import { dayWord } from '../tasks/taskSheetMath'
 
 /** THE capture rule for a typed line (Kai 2026-10-12: "Enter = the one capture path") — the command
@@ -73,7 +73,7 @@ export function subtaskHint(typed: string, now: Date = new Date()): string | nul
   if (!parsed.dueAt) return null
   const at = new Date(parsed.dueAt)
   const day = dayWord(cairoDateKey(at), now)
-  return parsed.dueTimed ? `${day} ${cairoTimeKey(at)} · on your calendar` : day
+  return parsed.dueTimed ? `${day} ${timeText(at)} · on your calendar` : day
 }
 
 /** A subtask typed on its parent's add line (the row's +, the sheet, the popover, the editor): the one

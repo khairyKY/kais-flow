@@ -3,6 +3,7 @@
 // Pure, so the order is tested. Every row commits on selection; there is no Save.
 
 import { appZone } from '../../lib/appZone'
+import { clockRange } from '../../lib/clock'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { durationLabel, fromMin } from '../../components/pickerMath'
 import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
@@ -97,7 +98,7 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
   if (isSynced(e)) {
     return [
       { key: 'date', label: blockDate(e) },
-      e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: `${fromMin(span.start)} – ${span.end >= 1440 ? '24:00' : fromMin(span.end)}`, hint: durationLabel(span.end - span.start) },
+      e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start) },
       { key: 'google', label: `From Google · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
     ]
   }
@@ -106,7 +107,7 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
     { key: 'date', label: blockDate(e), sub: true },
     e.all_day
       ? { key: 'time', label: 'All day' }
-      : { key: 'time', label: `${fromMin(span.start)} – ${span.end >= 1440 ? '24:00' : fromMin(span.end)}`, hint: durationLabel(span.end - span.start), sub: true },
+      : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: true },
     { key: 'project', label: ctx.projectName ?? 'No project', unset: !ctx.projectName, sub: true },
   ]
   // A task block repeats through its task's own rule, never on the calendar.

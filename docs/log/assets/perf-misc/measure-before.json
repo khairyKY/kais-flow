@@ -1,0 +1,244 @@
+[
+  {
+    "run": 1,
+    "firstGesture": "the tick itself",
+    "first": {
+      "clickToPaint": 672,
+      "flipToFrame": 518,
+      "longTasks": [
+        {
+          "at": 2,
+          "ms": 514
+        },
+        {
+          "at": 520,
+          "ms": 51
+        }
+      ],
+      "audio": [
+        {
+          "at": 7,
+          "ms": 482
+        }
+      ],
+      "firstOsc": {
+        "at": 502,
+        "state": "running"
+      }
+    },
+    "second": {
+      "clickToPaint": 56,
+      "flipToFrame": 19,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3675,
+          "ms": 482
+        }
+      ],
+      "firstOsc": {
+        "at": -3180,
+        "state": "running"
+      }
+    }
+  },
+  {
+    "run": 1,
+    "firstGesture": "press elsewhere, then tick",
+    "first": {
+      "clickToPaint": 672,
+      "flipToFrame": 648,
+      "longTasks": [
+        {
+          "at": 2,
+          "ms": 643
+        },
+        {
+          "at": 650,
+          "ms": 52
+        }
+      ],
+      "audio": [
+        {
+          "at": 7,
+          "ms": 604
+        }
+      ],
+      "firstOsc": {
+        "at": 629,
+        "state": "running"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 18,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3974,
+          "ms": 604
+        }
+      ],
+      "firstOsc": {
+        "at": -3352,
+        "state": "running"
+      }
+    }
+  },
+  {
+    "run": 2,
+    "firstGesture": "the tick itself",
+    "first": {
+      "clickToPaint": 576,
+      "flipToFrame": 554,
+      "longTasks": [
+        {
+          "at": 3,
+          "ms": 549
+        }
+      ],
+      "audio": [
+        {
+          "at": 9,
+          "ms": 511
+        }
+      ],
+      "firstOsc": {
+        "at": 535,
+        "state": "running"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 16,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3793,
+          "ms": 511
+        }
+      ],
+      "firstOsc": {
+        "at": -3267,
+        "state": "running"
+      }
+    }
+  },
+  {
+    "run": 2,
+    "firstGesture": "press elsewhere, then tick",
+    "first": {
+      "clickToPaint": 504,
+      "flipToFrame": 477,
+      "longTasks": [
+        {
+          "at": 2,
+          "ms": 473
+        }
+      ],
+      "audio": [
+        {
+          "at": 7,
+          "ms": 447
+        }
+      ],
+      "firstOsc": {
+        "at": 464,
+        "state": "running"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 16,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3574,
+          "ms": 447
+        }
+      ],
+      "firstOsc": {
+        "at": -3116,
+        "state": "running"
+      }
+    }
+  },
+  {
+    "run": 3,
+    "firstGesture": "the tick itself",
+    "first": {
+      "clickToPaint": 424,
+      "flipToFrame": 405,
+      "longTasks": [
+        {
+          "at": 2,
+          "ms": 402
+        }
+      ],
+      "audio": [
+        {
+          "at": 5,
+          "ms": 378
+        }
+      ],
+      "firstOsc": {
+        "at": 392,
+        "state": "running"
+      }
+    },
+    "second": {
+      "clickToPaint": 40,
+      "flipToFrame": 15,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3511,
+          "ms": 378
+        }
+      ],
+      "firstOsc": {
+        "at": -3124,
+        "state": "running"
+      }
+    }
+  },
+  {
+    "run": 3,
+    "firstGesture": "press elsewhere, then tick",
+    "first": {
+      "clickToPaint": 536,
+      "flipToFrame": 511,
+      "longTasks": [
+        {
+          "at": 4,
+          "ms": 505
+        }
+      ],
+      "audio": [
+        {
+          "at": 10,
+          "ms": 449
+        }
+      ],
+      "firstOsc": {
+        "at": 485,
+        "state": "running"
+      }
+    },
+    "second": {
+      "clickToPaint": 56,
+      "flipToFrame": 19,
+      "longTasks": [],
+      "audio": [
+        {
+          "at": -3769,
+          "ms": 449
+        }
+      ],
+      "firstOsc": {
+        "at": -3295,
+        "state": "running"
+      }
+    }
+  }
+]

@@ -13,6 +13,8 @@ import { useDomains } from '../domains/api'
 import { useCalendarRows } from '../calendar/api'
 import { describeActivity, plural, type ActivityIcon, type ActivityNames } from './describe'
 import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { appZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 import { KindGlyph } from '../notifications/KindGlyph'
 import { runNotificationAction } from '../notifications/actions'
 import '../projects/xfx.css'
@@ -142,7 +144,7 @@ export function ActivityPage() {
 
   const formatTime = (isoString: string) => {
     const d = new Date(isoString)
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false })
+    return d.toLocaleTimeString('en-US', { ...clockOptions(), timeZone: appZone() })
   }
 
   const formatDateHeader = (dateStr: string) => {

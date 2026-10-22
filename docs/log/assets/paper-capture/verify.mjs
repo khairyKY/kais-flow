@@ -370,7 +370,8 @@ for (const theme of ['day', 'night']) {
     // 11e — the results.
     const head = await text(sheet(page).locator('.pp-rtitle'))
     check(`11e-${name} "From your page · 9 things" (7 + 1 + 1)`, head === 'From your page · 9 things', head)
-    check(`11e-${name} meta: OS LECTURE 3 · 3 PAGES · READ`, /OS LECTURE 3 · 3 PAGES · READ \d\d:\d\d/i.test(await text(sheet(page).locator('.pp-meta'))), await text(sheet(page).locator('.pp-meta')))
+    // Times read on the 12-hour default (lib/clock, cal-polish 2026-10-22): "read 9:52 AM", "11:59 PM", "5:00 PM".
+    check(`11e-${name} meta: OS LECTURE 3 · 3 PAGES · READ`, /OS LECTURE 3 · 3 PAGES · READ \d{1,2}:\d\d [AP]M/i.test(await text(sheet(page).locator('.pp-meta'))), await text(sheet(page).locator('.pp-meta')))
     const unsure = sheet(page).locator('.pp-row-fg.is-check')
     check(`11e-${name} two unsure lines, tinted, "Check this"`, (await unsure.count()) === 2 && (await text(unsure.first())).includes('Check this'), await unsure.count())
     await sleep(500)
@@ -381,7 +382,7 @@ for (const theme of ['day', 'night']) {
     })
     check(`11e-${name} the unsure line shows its handwriting, cropped from the photo`, crop.loaded && crop.h >= 20 && crop.w > crop.h && parseFloat(crop.top) < 0, JSON.stringify(crop))
     const assignment = sheet(page).locator('.pp-row', { hasText: 'Assignment 2' })
-    check(`11e-${name} parse chips: Task · Thu 8 Oct · 23:59 · OS`, (await text(assignment.locator('.pp-chips'))).replace(/\s+/g, ' ').includes('Task Thu 8 Oct · 23:59 OS'), await text(assignment.locator('.pp-chips')))
+    check(`11e-${name} parse chips: Task · Thu 8 Oct · 11:59 PM · OS`, (await text(assignment.locator('.pp-chips'))).replace(/\s+/g, ' ').includes('Task Thu 8 Oct · 11:59 PM OS'), await text(assignment.locator('.pp-chips')))
     check(`11e-${name} footer: Inbox only · Add all 9`, (await page.getByRole('button', { name: 'Add all 9' }).count()) === 1 && (await page.getByRole('button', { name: 'Inbox only' }).count()) === 1)
     await sheet(page).locator('.pp-row').first().scrollIntoViewIfNeeded()
     await shot(page, `11e-${name}`)
@@ -402,7 +403,8 @@ for (const theme of ['day', 'night']) {
       check(`11f-${name} tap the text to edit it`, (await text(sheet(page).locator('.pp-row', { hasText: 'Quiz — OS' }).locator('.pp-row-text'))) === 'Quiz — OS')
       const pens = sheet(page).locator('.pp-row', { hasText: 'Buy blue pens' })
       await swipeLeft(env, pens)
-      check(`11f-${name} swipe left drops a line ("Line dropped · Undo", 8 left)`, (await sheet(page).locator('.pp-row', { hasText: 'Buy blue pens' }).count()) === 0 && (await toasts(page)).includes('Line dropped') && (await page.getByRole('button', { name: 'Add all 8' }).count()) === 1, JSON.stringify(await toasts(page)))
+      // paper-review (2026-10-22): "Drop" is "Dismiss" now (the Inbox's word).
+      check(`11f-${name} swipe left dismisses a line ("Line dismissed · Undo", 8 left)`, (await sheet(page).locator('.pp-row', { hasText: 'Buy blue pens' }).count()) === 0 && (await toasts(page)).includes('Line dismissed') && (await page.getByRole('button', { name: 'Add all 8' }).count()) === 1, JSON.stringify(await toasts(page)))
       // 11g — Add all → the writes, one toast with Undo, Inbox rows with the 📷.
       const w0 = state.writes.length
       await tap(env, page.getByRole('button', { name: 'Add all 8' }))
@@ -450,7 +452,7 @@ for (const theme of ['day', 'night']) {
     const dirs = await rows.evaluateAll((els) => els.map((e) => [e.textContent, getComputedStyle(e).direction, e.getAttribute('dir')]))
     check('11h Arabic lines read right-to-left inside the LTR app, in their own words', dirs.length === 3 && dirs.every(([, d]) => d === 'rtl') && dirs[1][0] === 'اجتماع الفريق الساعة ٥', JSON.stringify(dirs))
     const meeting = sheet(page).locator('.pp-row', { hasText: 'اجتماع' })
-    check('11h "٥" read as today 17:00, an Event, unsure → its crop', (await text(meeting.locator('.pp-chips'))).replace(/\s+/g, ' ').includes('Event Today · 17:00') && (await meeting.locator('.pp-crop').count()) === 1, await text(meeting.locator('.pp-chips')))
+    check('11h "٥" read as today 5:00 PM, an Event, unsure → its crop', (await text(meeting.locator('.pp-chips'))).replace(/\s+/g, ' ').includes('Event Today · 5:00 PM') /* 12h (lib/clock) */ && (await meeting.locator('.pp-crop').count()) === 1, await text(meeting.locator('.pp-chips')))
     check('11h meta says Arabic', /Arabic/.test(await text(sheet(page).locator('.pp-meta'))), await text(sheet(page).locator('.pp-meta')))
     await sleep(400)
     await shot(page, '11h-day')

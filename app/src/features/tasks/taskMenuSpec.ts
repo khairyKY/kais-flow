@@ -2,7 +2,7 @@
 // one order, for the phone action sheet, the desktop ⋯ / right-click menu, and every row that
 // shows a task (Tasks, Today's Top 3 + goal card, task-backed Up next). Pure, so the order is tested.
 
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 import type { Task } from '../../lib/types'
 import { isSnoozed, snoozeWhen } from './snooze'
 
@@ -74,7 +74,7 @@ export function taskMenuSpec(task: Task, ctx: TaskMenuContext): TaskMenuEntry[] 
     // the task sheet's chips, and its action sheet stays as MK Action Sheet draws it.
     ...(ctx.desktop ? [{ key: 'labels', label: 'Labels', sub: true } as const] : []),
     { key: 'repeat', label: 'Repeat', hint: task.recurrence_rule ? (REPEAT_LABELS[task.recurrence_rule] ?? 'Custom') : 'Never', sub: true },
-    { key: 'remind', label: 'Remind', hint: task.reminder_at ? cairoTimeKey(new Date(task.reminder_at)) : 'Off', sub: true },
+    { key: 'remind', label: 'Remind', hint: task.reminder_at ? timeText(new Date(task.reminder_at)) : 'Off', sub: true },
     { key: 'top3', label: task.top3 ? 'Remove from Top 3' : 'Add to Top 3' },
     // Kai 2026-10-07: "Just give me a button for making something the goal of the day."
     ...(n || ctx.goal ? [] : [{ key: 'goal', label: 'Make goal of the day' } as const]),

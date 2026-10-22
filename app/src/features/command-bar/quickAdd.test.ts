@@ -1,5 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { parseCommand } from './parseCommand'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // The bar's landings, on the real parse and the real task / event writes (outbox recorded).
 const writes: { table: string; row: Record<string, unknown>; op?: string }[] = []
@@ -38,7 +42,7 @@ describe('addTypedEvent (P7e A11: the bar can make an event)', () => {
     const typed = 'Dinner with Reem tomorrow 8pm 1h30m'
     addTypedEvent(parse(typed), typed, now)
     expect(events()[0]).toMatchObject({ title: 'Dinner with Reem', starts_at: '2026-10-13T17:00:00.000Z', ends_at: '2026-10-13T18:30:00.000Z', all_day: false, type: 'event', task_id: null })
-    expect(toasts[0].message).toBe('Added to Calendar · Tomorrow · 8:00 PM')
+    expect(toasts[0].message).toBe('Added to Calendar · Tomorrow · 20:00')
     toasts[0].undo()
     expect(events().at(-1)).toMatchObject({ id: events()[0].id, deleted_at: expect.any(String) })
   })

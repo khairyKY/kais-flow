@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { isOverdue, planGlossary, planOptions, slotText, spreadPlan, todayFor } from './planMath'
 import { scheduleNextWeek, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Cairo is UTC+3 until 30 Oct 2026. The app's zone, not the device's (the ×4 TZ run proves it).
 const at = (s: string) => new Date(`${s}+03:00`)
@@ -64,6 +68,14 @@ describe('planOptions — one Plan list, each option saying where it lands', () 
     const late = task({ due_at: at('2026-10-05T15:30:00').toISOString() })
     expect(todayFor(late, WED)).toBe(at('2026-10-07T15:30:00').toISOString())
     expect(planOptions(WED, { task: late, weekend: SAT_SUN })[0]).toMatchObject({ hint: 'Wed 7 · 15:30', means: 'today, keeps its 15:30' })
+    setHour24(false) // Kai 2026-10-22: the Replan list said "keeps its 15:00 · Thu 8 · 09:00" on the 12-hour clock
+    try {
+      const o = planOptions(WED, { task: late, weekend: SAT_SUN })
+      expect(o[0]).toMatchObject({ hint: 'Wed 7 · 3:30 PM', means: 'today, keeps its 3:30 PM' })
+      expect(o.find((x) => x.key === 'tomorrow')?.hint).toBe('Thu 8 · 9:00 AM')
+    } finally {
+      setHour24(true)
+    }
     expect(todayFor(task(), WED)).toBe(scheduleToday(WED))
     expect(planOptions(WED, { task: task({ due_at: at('2026-10-05T09:00:00').toISOString() }), weekend: SAT_SUN })[0].means).toBe('today, no set time')
   })

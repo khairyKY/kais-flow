@@ -15,6 +15,7 @@ import { useCalendarEvents } from '../calendar/api'
 import { cairoToIso } from '../calendar/eventTime'
 import { isOverdue, planOptions, slotText, spreadPlan, type PlanKey, type PlanOption, type SpreadPick } from './planMath'
 import { tomorrowHint } from '../../lib/dateShortcuts'
+import { clockText } from '../../lib/clock'
 import '../../components/pickers.css'
 
 // ── The Plan menu (Kai 2026-10-07): one list wherever a task gets a date — the ⋯ / right-click
@@ -228,7 +229,7 @@ function SlotConfirm({ meta, slots, dur, position, mobile, onConfirm, onPick, on
       <style>{CSS}</style>
       <div className="kf-plan-slot" aria-live="polite">{slotText(s, dur)}</div>
       <span className="kf-plan-means">
-        {i === 0 ? `ASAP: the first free ${durationLabel(dur)} on your calendar, between 08:00 and 20:00` : `the next free ${durationLabel(dur)} after that (${i + 1} of ${slots.length})`}
+        {i === 0 ? `ASAP: the first free ${durationLabel(dur)} on your calendar, between ${clockText('08:00')} and ${clockText('20:00')}` : `the next free ${durationLabel(dur)} after that (${i + 1} of ${slots.length})`}
       </span>
     </>
   )

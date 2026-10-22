@@ -4,6 +4,7 @@ import { useTasks, completeTaskWithUndo, createTask, currentTop3, deleteTasksWit
 import { usePendingInboxItems, fileToTask, dismissInboxItem } from '../inbox/api'
 import { useCalendarEvents, scheduleTask } from '../calendar/api'
 import { cairoToIso } from '../calendar/eventTime'
+import { clockRange, clockText } from '../../lib/clock'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useRowGrammar } from '../tasks/useRowGrammar'
@@ -354,7 +355,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
         {slots.every((s) => s.kind === 'noslot') && (
           <div className="rt-warn">
             <Icon name="alert" size={20} />
-            <span>Your calendar is full from {fromMin(Math.max(DAY_FROM, Math.ceil(nowMin / 15) * 15))} to 18:00.</span>
+            <span>Your calendar is full from {clockText(fromMin(Math.max(DAY_FROM, Math.ceil(nowMin / 15) * 15)))} to {clockText('18:00')}.</span>
           </div>
         )}
         {toPlace(slots).length > 0 && <div className="rt-hint">Times are suggestions — tap one to change it. Start the day puts them on your calendar.</div>}
@@ -621,9 +622,9 @@ function TimeRow({ task, slot, changing, onChange }: { task: Task; slot: Slot; c
           type="button"
           className={`rt-pill${changing ? ' is-changing' : mine ? ' rt-k-accepted is-set' : ' is-suggested'}`}
           onClick={onChange}
-          aria-label={`${mine ? 'Time' : 'Suggested time'} for "${task.title}": ${fromMin(slot.start)}–${fromMin(slot.end)}. Change it`}
+          aria-label={`${mine ? 'Time' : 'Suggested time'} for "${task.title}": ${clockRange(fromMin(slot.start), fromMin(slot.end))}. Change it`}
         >
-          {fromMin(slot.start)}–{fromMin(slot.end)}
+          {clockRange(fromMin(slot.start), fromMin(slot.end))}
         </button>
       )}
     </div>

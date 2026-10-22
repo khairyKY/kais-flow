@@ -9,7 +9,7 @@ import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { useListVerbs } from '../tasks/useListVerbs'
 import { formatDuration } from '../tasks/taskDisplay'
-import { todayListTasks } from '../tasks/grouping'
+import { isTodayTask, todayListTasks } from '../tasks/grouping'
 import { backFromSnooze } from '../tasks/snooze'
 import { sortByOrder } from '../tasks/manualOrder'
 import { cachedTask, moveInListWithUndo } from '../tasks/api'
@@ -17,7 +17,8 @@ import { nestOut } from '../tasks/subtasks'
 import { SubtaskAddButton, SubtaskCount, SubtaskNest, hasOpenSubtasks, useNestOpen } from '../tasks/SubtaskNest'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotLabel, useCalendarEvents } from '../calendar/api'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { cairoTimeKey, timeRange, timeText } from '../calendar/eventTime'
+import { clockText, useHour24 } from '../../lib/clock'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useAreas } from '../areas/api'
@@ -264,7 +265,14 @@ export function TodayPage() {
   const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now) && !backFromSnooze(t, now))
   const overdueIds = new Set(overdueOpen.map((t) => t.id))
   const restOpen = allOpen.filter((t) => !overdueIds.has(t.id))
-  const openCount = restOpen.filter((t) => !t.completed_at).length
+  // Kai 2026-10-22 ("the today tasks are combined with the also open tasks"): what's due or on the
+  // calendar today (../tasks/grouping isTodayTask, the Tasks "Today" list's rule) is its own
+  // section, Today's tasks; Also open is the rest. Same order rules in both.
+  // One back from snooze came back today: it leads Today's tasks (the list's order puts it first), whatever its date.
+  const todayRows = restOpen.filter((t) => isTodayTask(t, now) || backFromSnooze(t, now))
+  const alsoRows = restOpen.filter((t) => !isTodayTask(t, now) && !backFromSnooze(t, now))
+  const todayCount = todayRows.filter((t) => !t.completed_at).length
+  const openCount = alsoRows.filter((t) => !t.completed_at).length
   const allDone = !tasksPending && open.length === 0 && doneToday > 0
 
   // X1 Effects 2d (+ Motion 1b) — the last check of the day earns a 5-petal fall and a
@@ -391,11 +399,11 @@ export function TodayPage() {
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
     selected: selectedTasks,
     // ⌘/Ctrl+↑/↓ (p7e A22): a Top 3 row moves in the Top 3 (as Alt+↑/↓); the rest within the overdue
-    // fold or More for today. Up next follows the calendar, so it has no order to change.
+    // fold, Today's tasks or Also open. Up next follows the calendar, so it has no order to change.
     reorder: (rows, dir) => {
       const pick = rows.length === 1 ? top3InOrder.find((t) => t.id === rows[0].id && !t.completed_at) : undefined
       if (pick) moveInTop3Order(pick, top3InOrder.indexOf(pick) + dir)
-      else moveInListWithUndo([overdueOpen, restOpen.filter((t) => !t.completed_at)], rows, dir)
+      else moveInListWithUndo([overdueOpen, todayRows.filter((t) => !t.completed_at), alsoRows.filter((t) => !t.completed_at)], rows, dir)
     },
   })
 
@@ -639,7 +647,7 @@ export function TodayPage() {
   )
 
   // ── Phone: Today Phone.dc.html 2a–2n. Header line → NOW slip or ritual card → Top 3 → Up next
-  // → Routines → the quiet fold. Four section labels, each item once. ──
+  // → Today's tasks → Routines → the quiet fold. Each item once. ──
   if (isMobile) {
     const tended = day.tally.picked > 0 && day.tally.done >= day.tally.picked
     const metas = eventMetas(upNext, now)
@@ -648,9 +656,9 @@ export function TodayPage() {
     const row = (t: Task, extra: { pick?: boolean; block?: CalendarEvent; meta?: string[]; place?: RowGrammarOptions['place'] } = {}) => (
       <TaskRow key={extra.block?.id ?? t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
-    // Snooze: what came back today sits above the folds, as on the desktop it leads Also open.
-    const backOpen = restOpen.filter((t) => backFromSnooze(t, now))
-    const foldOpenRows = restOpen.filter((t) => !backFromSnooze(t, now))
+    // Snooze: what came back today leads Today's tasks, as on the desktop (each row wears its marker).
+    const todayPhoneRows = todayRows
+    const foldOpenRows = alsoRows
     const foldCount = foldOpenRows.length + slipping.length + (resurfacing ? 1 : 0)
     const workload: Omit<WorkloadInput, 'focusedMin'> = {
       day: dayNumber,
@@ -735,6 +743,13 @@ export function TodayPage() {
                 </div>
               )}
             </section>
+
+            {!tasksPending && todayPhoneRows.length > 0 && (
+              <section aria-label="Today's tasks">
+                <PhoneSection label={`Today's tasks · ${todayPhoneRows.filter((t) => !t.completed_at).length}`} link={todayPhoneRows.length > ALL_OPEN_CAP ? { to: '/tasks?list=today', label: 'View all' } : undefined} />
+                <div className="tp-list">{todayPhoneRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
+              </section>
+            )}
           </>
         )}
 
@@ -764,12 +779,6 @@ export function TodayPage() {
           </section>
         )}
 
-        {!tasksPending && backOpen.length > 0 && (
-          <section>
-            <PhoneSection label="Back from snooze" />
-            <div className="tp-list">{backOpen.map((t) => row(t))}</div>
-          </section>
-        )}
         {!tasksPending && overdueOpen.length > 0 && (
           <MoreForToday phone label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
             <div className="tp-list">{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
@@ -806,7 +815,7 @@ export function TodayPage() {
 
   // ── Desktop: Today.dc.html 2a ("Desktop — reviewed pass"). One date and a one-line summary, the
   // typed capture pill → the Now card (the moment, the 8–20 ribbon, the next two) → Today's three,
-  // Overdue, Also open | the rail: Rituals, Routines, Worth a look. The terrarium band is gone (2a:
+  // Today's tasks, Overdue, Also open | the rail: Rituals, Routines, Worth a look. The terrarium band is gone (2a:
   // "replaces the decorative terrarium band"); its counts live in the summary and the sidebar. ──
   const nextUp = upNextEvents(events, now).find((e) => new Date(e.starts_at).getTime() > now.getTime() && !(e.task_id && doneTaskIds.has(e.task_id)))
   const header = (
@@ -817,7 +826,7 @@ export function TodayPage() {
           <div className="td-sum">
             {counts.total > 0 && `${counts.done} of ${counts.total} done`}
             {counts.total > 0 && nextUp && ' · '}
-            {nextUp && <>next up <span className="td-ink"><EmojiText text={nextUp.title} /> at {cairoTimeKey(new Date(nextUp.starts_at))}</span></>}
+            {nextUp && <>next up <span className="td-ink"><EmojiText text={nextUp.title} /> at {timeText(new Date(nextUp.starts_at))}</span></>}
             {counts.total === 0 && !nextUp && 'A fresh page'}
           </div>
         )}
@@ -925,6 +934,13 @@ export function TodayPage() {
             )}
           </section>
 
+          {showLists && todayRows.length > 0 && (
+            <section aria-label="Today's tasks" className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
+              <SectionLabel style={{ marginBottom: 6 }}>{`Today's tasks · ${todayCount}`}</SectionLabel>
+              <div className="kf-dim">{todayRows.slice(0, ALL_OPEN_CAP).map(openRow)}</div>
+              {todayRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=today" className="td-more">View all {todayRows.length} →</Link>}
+            </section>
+          )}
           {showLists && overdueOpen.length > 0 && (
             <MoreForToday label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
               <section>
@@ -935,7 +951,7 @@ export function TodayPage() {
               </section>
             </MoreForToday>
           )}
-          {showLists && restOpen.length > 0 && <AlsoOpen count={openCount} rows={restOpen} render={openRow} motion={motion} />}
+          {showLists && alsoRows.length > 0 && <AlsoOpen count={openCount} rows={alsoRows} render={openRow} motion={motion} />}
         </div>
 
         <div className="td-rail">
@@ -992,8 +1008,9 @@ function metaRow(projectName: string | undefined, dot: string, duration: number 
 const deskBlockMeta = (meta: string[] | undefined, inProgress: boolean) => (
   <>
     {/* 2a's lower-case durations ("1h30m"); a slot's line keeps its name ("in Code block💻 · 10:00" —
-        the only meta that starts "in "; blockMeta's own read "starts in …"). */}
-    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.startsWith('in ') ? m : m.toLowerCase()}</span>)}
+        the only meta that starts "in "; blockMeta's own read "starts in …"), and a time keeps the clock's
+        "1:30–3:00 PM" (it read "pm"). */}
+    {meta?.filter((m) => m !== 'Now').map((m) => <span key={m}>{m.startsWith('in ') || /\d:\d\d/.test(m) ? m : m.toLowerCase()}</span>)}
     {(inProgress || meta?.includes('Now')) && <span className="td-terra">in progress</span>}
   </>
 )
@@ -1083,7 +1100,7 @@ function NowCard({ slot, state: s, ritual, events, now, next, taskById, top3Ids,
 function MomentHead({ state: s, taskById, top3Ids, focus, firstPick, rowSelection }: { state: NowState<CalendarEvent, Task>; taskById: Map<string, Task>; top3Ids: ReadonlySet<string>; focus: ReturnType<typeof useFocusNow>; firstPick?: Task; rowSelection: (t: Task) => RowSelection }) {
   const startFocus = useStartFocus()
   const navigate = useNavigate()
-  const time = (iso: string | Date) => cairoTimeKey(new Date(iso))
+  const time = (iso: string | Date) => timeText(new Date(iso))
   const block = nowBlock(s)
   const task = 'task' in s ? s.task : undefined
   const focusTask = focus ? taskById.get(focus.taskId) : undefined
@@ -1095,7 +1112,7 @@ function MomentHead({ state: s, taskById, top3Ids, focus, firstPick, rowSelectio
   let head: CardHead
   switch (s.kind) {
     case 'running':
-      head = { caption: `Now · ${time(s.block.starts_at)}–${time(s.block.ends_at)}`, tone: 'now', title: <EmojiText text={s.block.title} />, sub: <>{minsText(s.leftMin)} left{working}</>, action: focusBtn() }
+      head = { caption: `Now · ${timeRange(new Date(s.block.starts_at), new Date(s.block.ends_at))}`, tone: 'now', title: <EmojiText text={s.block.title} />, sub: <>{minsText(s.leftMin)} left{working}</>, action: focusBtn() }
       break
     case 'over':
       head = { caption: `Now · ${minsText(s.overMin)} over`, tone: 'over', title: <EmojiText text={s.block.title} />, sub: <>ended {time(s.block.ends_at)}{working}</>, action: focusBtn() }
@@ -1186,8 +1203,8 @@ function Ribbon({ events, now, head, taskById }: { events: CalendarEvent[]; now:
               data-past={end <= t || undefined}
               data-done={task?.status === 'done' || undefined}
               style={{ left: `${pos.left}%`, width: `${pos.width}%`, '--rb': color } as React.CSSProperties}
-              title={`${cairoTimeKey(new Date(start))}–${cairoTimeKey(new Date(end))} · ${e.title}`}
-              aria-label={`${cairoTimeKey(new Date(start))}–${cairoTimeKey(new Date(end))} ${e.title}`}
+              title={`${timeRange(new Date(start), new Date(end))} · ${e.title}`}
+              aria-label={`${timeRange(new Date(start), new Date(end))} ${e.title}`}
               onClick={() => (task ? openTask(task.id) : navigate(eventPath(e)))}
             >
               {isHead && spent > 0 && <span className="td-rb-spent" style={{ width: `${spent}%` }} />}
@@ -1211,7 +1228,7 @@ function NextTaskItem({ event, task, sel }: { event: CalendarEvent; task: Task; 
     <>
       <span id={`upnext-${event.id}`} className="td-next-item" data-selected={sel.selected || g.menuOpen || undefined} role="link" tabIndex={0} title="Open task" onClickCapture={ctrlSelect(sel, done)} onClick={() => openTask(task.id)} onKeyDown={(e) => e.key === 'Enter' && openTask(task.id)} onContextMenu={g.onContextMenu}>
         <span onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}><Checkbox label={task.title} checked={done} size={16} onChange={() => toggleTaskWithUndo(task)} /></span>
-        <span className="td-next-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className="td-next-time">{timeText(new Date(event.starts_at))}</span>
         <span className={`td-ink${done ? ' td-struck' : ''}`}><EmojiText text={event.title} /></span>
         {/* Subtasks C: a timed subtask shows here by itself, with whose it is. */}
         {parentTitle && <span className="td-sub-of">↳ <EmojiText text={parentTitle} /></span>}
@@ -1230,7 +1247,7 @@ function NextEventItem({ event }: { event: CalendarEvent }) {
     <>
       <span id={`upnext-${event.id}`} className="td-next-item" role="link" tabIndex={0} title="Open in calendar" onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
         <span className="td-next-sq" style={{ background: event.color ?? (event.task_id ? 'var(--acc-lavender)' : event.type === 'event' ? 'var(--acc-blossom)' : 'var(--acc-lavender)') }} aria-hidden />
-        <span className="td-next-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className="td-next-time">{timeText(new Date(event.starts_at))}</span>
         <span className="td-ink"><EmojiText text={event.title} /></span>
       </span>
       {menu && <EventMenu event={event} at={menu} onClose={() => setMenu(null)} />}
@@ -1277,7 +1294,7 @@ const STEP_LABEL: Record<string, string> = { overdue: 'Carry-over', inbox: 'Inbo
  * (Shut down's 17:00, Kai 2026-09-28 — 2a drew 7 PM); then Evening. Any row opens its ritual. */
 function RitualsRail({ day, now, onOpen, review }: { day: ReturnType<typeof useDay>; now: Date; onOpen: (kind: RitualKind) => void; review: boolean }) {
   const evening = isEvening(now) // on until 04:00, the loop day's turn (A29)
-  const from = `${String(Math.floor(SHUTDOWN_FROM / 60)).padStart(2, '0')}:${String(SHUTDOWN_FROM % 60).padStart(2, '0')}`
+  const from = clockText(`${String(Math.floor(SHUTDOWN_FROM / 60)).padStart(2, '0')}:${String(SHUTDOWN_FROM % 60).padStart(2, '0')}`)
   return (
     <section aria-label="Rituals" data-tour="plan">
       <SectionLabel action={<Link to="/routines" className="td-label-note td-label-link">Edit</Link>} style={{ marginBottom: 12 }}>Rituals</SectionLabel>
@@ -1458,7 +1475,7 @@ function NowSlip({ state: s, sel }: { state: NowState<CalendarEvent, Task>; sel:
   const openTask = useOpenTask()
   const block = nowBlock(s)
   const task = 'task' in s ? s.task : undefined
-  const time = (iso: string | Date) => cairoTimeKey(new Date(iso))
+  const time = (iso: string | Date) => timeText(new Date(iso))
   const track = 'var(--line-card)'
   let ring: { bg: string; label: React.ReactNode; tone: string; aria: string }
   let caption: string
@@ -1548,12 +1565,13 @@ function EventMenu({ event, at, onClose }: { event: CalendarEvent; at: { x: numb
  * still bubble a menu tap into the row. */
 function PhoneEventRow({ event, meta }: { event: CalendarEvent; meta: string[] }) {
   const navigate = useNavigate()
+  const h24 = useHour24()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   const open = () => navigate(eventPath(event))
   return (
     <>
       <div id={`upnext-${event.id}`} className="tp-ev" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
-        <span className="tp-ev-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className={`tp-ev-time${h24 ? '' : ' tp-ev-time--12h'}`}>{timeText(new Date(event.starts_at))}</span>
         <span className="tp-ev-rule" aria-hidden />
         <div className="tp-ev-body">
           <div className="tp-title"><EmojiText text={event.title} /></div>
@@ -1720,7 +1738,7 @@ function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'acti
  * Tomorrow keeps the block's time, and the menu can take it off the calendar. */
 const blockGrammar = (event: CalendarEvent) => ({ actions: { tomorrow: () => moveBlockToTomorrow(event), unschedule: () => unscheduleWithUndo(event) }, tomorrowHint: blockTomorrowHint(event), canUnschedule: true })
 
-const doneAt = (task: Task) => (task.completed_at ? `Done ${cairoTimeKey(new Date(task.completed_at))}` : 'Done')
+const doneAt = (task: Task) => (task.completed_at ? `Done ${timeText(new Date(task.completed_at))}` : 'Done')
 
 /** A place in the Top 3: its index in the day's order (0 = the goal). */
 type Top3Spot = Spot & { kind: 'top3'; index: number }
@@ -2048,15 +2066,16 @@ function RoutineRow({ routine, done, compact }: { routine: Routine; done: boolea
 }
 
 // Loop A — the quiet fold (DAILY-CYCLE.md: "still there, not competing"). Collapsed by default,
-// remembered per device; SectionLabel's look, as a button. On a phone (Today Phone 2n): "More for
-// today · N" and a chevron; its lists sit under quiet sub-headers (ruling 7).
+// remembered per device; SectionLabel's look, as a button. On a phone (Today Phone 2n): "Also open ·
+// N" (it was "More for today" until Kai 2026-10-22 split Today's tasks out) and a chevron; its lists
+// sit under quiet sub-headers (ruling 7).
 const MORE_OPEN_KEY = 'kf.today.more-open'
 
 // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue pile is its own fold, folded
 // by default, its count and Replan all ▾ on the header (`action`, beside the toggle).
 const OVERDUE_OPEN_KEY = 'kf.today.overdue-open'
 
-function MoreForToday({ summary, phone, label = 'More for today', storageKey = MORE_OPEN_KEY, action, children }: { summary: string; phone?: boolean; label?: string; storageKey?: string; action?: React.ReactNode; children: React.ReactNode }) {
+function MoreForToday({ summary, phone, label = 'Also open', storageKey = MORE_OPEN_KEY, action, children }: { summary: string; phone?: boolean; label?: string; storageKey?: string; action?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(() => {
     try { return localStorage.getItem(storageKey) === '1' } catch { return false }
   })

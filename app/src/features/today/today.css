@@ -239,11 +239,19 @@
   -webkit-tap-highlight-color: transparent;
 }
 .tp-ev:active { background: var(--pressed-overlay); }
-.tp-ev-time { width: 56px; flex: none; display: flex; align-items: center; padding-left: var(--sp-3); font-size: var(--fs-meta-l); letter-spacing: var(--ls-meta); color: var(--ink-body); }
+.tp-ev-time { width: 56px; flex: none; display: flex; align-items: center; padding-left: var(--sp-3); font-size: var(--fs-meta-l); letter-spacing: var(--ls-meta); color: var(--ink-body); white-space: nowrap; }
+/* The 12-hour clock's "10:30 PM" is ~66px with the padding: one column wide enough for every row, so the rules line up. */
+.tp-ev-time--12h { width: 70px; }
 .tp-ev-rule { width: 3px; flex: none; margin: var(--sp-3) var(--sp-3) var(--sp-3) 0; border-radius: 2px; background: var(--acc-lavender); }
 .tp-ev-body { flex: 1; min-width: 0; padding: 10px 0 var(--sp-2); }
 
 /* Goal card (kit): gold tag, 22 gold box, serif 18/600 title, gold meta, clover. */
+/* Kai 2026-10-22 ("the right side of the card's outline is overlapped"): rows clip sideways at their edge
+   (.kf-swipe, so a swiped row can't spill), and the goal card is tilted (-0.4deg) with --shadow-goal, so its
+   corners' border (the right side at 125-150%) and its shadow's spread were cut. At rest it keeps a shadow's
+   width of room (overflow-clip-margin counts only when both axes clip; 28px holds the tape above and the
+   shadow below); swiped, it clips at its edge like every row. Desktop and phone. */
+.kf-swipe:is(.kf-goal-row, .tp-goal):not([data-swiping]):not(:has(> .kf-swipe-fg[data-moved])) { overflow: clip; overflow-clip-margin: 28px; }
 .tp-goal-wrap { padding: 14px var(--gutter-phone); }
 .tp-goal-tag {
   display: inline-block;
@@ -361,6 +369,11 @@
 
 /* The columns: main | the rail (264–340, Kai 2026-10-03). */
 .td-grid { display: grid; grid-template-columns: minmax(0, 1fr) clamp(264px, 28%, 340px); gap: var(--sp-10); align-items: start; }
+/* today-scale (Kai 2026-10-22): at 150% on a 1280 window the page is ~530px, and beside the 264 rail the lists
+   had ~227: titles a word a line, a row's ⋯ pushed out of the row. Below 700px of page the rail goes under
+   the lists (a container query: media queries read the unzoomed window). */
+.td { container: td / inline-size; }
+@container td (max-width: 699px) { .td-grid { grid-template-columns: minmax(0,1fr); } }
 .td-main { display: flex; flex-direction: column; gap: 30px; }
 .td-rail { display: flex; flex-direction: column; gap: var(--sp-7); }
 .td-label-note { font-family: var(--font-ui); font-size: var(--fs-caption); letter-spacing: 0; text-transform: none; color: var(--ink-muted); white-space: nowrap; }

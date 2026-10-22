@@ -6,7 +6,7 @@ import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { EmojiText } from '../../components/EmojiText'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
-import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
+import { ContextMenu } from '../../components/ContextMenu'
 import { ActionSheet } from '../../components/ActionSheet'
 import { ScheduleMenu } from '../../components/ScheduleMenu'
 import { SelectCircle, SwipeRow } from '../tasks/SwipeRow'
@@ -16,19 +16,20 @@ import { LONG_PRESS_MS } from '../tasks/swipe'
 import { PRIORITY_LABELS } from '../tasks/taskMenuSpec'
 import { priorityColor } from '../tasks/taskDisplay'
 import { useEscapeStack } from '../../lib/overlayStack'
-import { useListKeys, type ListBinding } from '../../components/useListKeys'
-import { toastUndo } from '../../lib/undo'
+import { isTypingTarget, useListKeys, type ListBinding } from '../../components/useListKeys'
 import { useToastStore } from '../../lib/toastStore'
 import { longPress } from '../../lib/haptics'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { perZone } from '../../lib/appZone'
+import { timeText } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useTasks } from '../tasks/api'
 import { openCapture } from '../command-bar/commandBarStore'
 import { matchTicks } from '../notebook/ticks'
-import { addDrawingNote, applyResults, markReviewed, markTicksDone, retryCapture, startReading, useCapture, usePageUrls } from './api'
-import { cropFrame, DAILY_PAGES, editLines, isHeic, MAX_PAGES, movePage, needsCheck, placeEdit, toEditLine, toggleKey, type CaptureRow, type EditLine, type LineEdit, type LineType, type PageDrawing } from './paperMath'
+import { addDrawingNote, deleteCapture, dismissCapture, dismissLines, fileLines, markReviewed, markTicksDone, restoreLines, retryCapture, startReading, useCapture, usePageUrls } from './api'
+import { cropFrame, DAILY_PAGES, editLines, isHeic, MAX_PAGES, movePage, needsCheck, placeEdit, toEditLine, toggleKey, type CaptureRow, type EditLine, type LineEdit, type LineType, type PageDrawing, type Planned } from './paperMath'
 import { pickPhotos, usePaperStore, type PageDraft, type Stage, type TicksTarget } from './paperStore'
+import { PaperMenu, type PaperMenuItem } from './PaperMenu'
 
 // Paper capture's screens (Paper Capture.dc.html): a quick look 11b/11c, reading 11d, the results sheet
 // 11e–11h (a centred panel on desktop, 11m), couldn't read 11i, the daily limit 11j, camera off 11k,
@@ -37,6 +38,8 @@ import { pickPhotos, usePaperStore, type PageDraft, type Stage, type TicksTarget
 
 const TYPE_LABEL: Record<LineType, string> = { task: 'Task', event: 'Event', note: 'Note', journal: 'Journal' }
 const TYPE_HINT: Record<LineType, string> = { task: 'to do', event: 'on the calendar', note: 'to Inbox', journal: 'to today’s entry' } // 11f
+/** Where an added line went. */
+const WENT_TO: Record<Planned['to'], string> = { task: 'in Tasks', event: 'on the calendar', inbox: 'in the Inbox', journal: 'in the journal' }
 
 const store = () => usePaperStore.getState()
 
@@ -264,36 +267,38 @@ function Reading({ stage }: { stage: Extract<Stage, { kind: 'reading' }> }) {
 
 // The user's zone (lib/appZone.ts).
 const cairoDay = perZone((timeZone) => new Intl.DateTimeFormat('en-GB', { timeZone, weekday: 'short', day: 'numeric', month: 'short' }))
-const cairoTime = perZone((timeZone) => new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }))
 function dateChip(iso: string, timed: boolean): string {
   const d = new Date(iso)
   const day = cairoDateKey(d) === cairoDateKey(new Date()) ? 'Today' : cairoDay().format(d).replace(',', '')
-  return timed ? `${day} · ${cairoTime().format(d)}` : day
+  return timed ? `${day} · ${timeText(d)}` : day
 }
 
-/** The capture's lines as the user has them: read against their projects, with their edits and drops.
- * `only`: just these keys (what's left after a Notebook page's ticks review). */
+const NO_EDITS: Record<string, LineEdit> = {}
+
+/** The capture's lines as the user has them: read against their projects, with their edits (kept for the
+ * session, so "Keep for later" keeps them). `lines`: still to review; `filed`: added already, and where;
+ * `skipped`: dismissed. `only`: just these keys (what's left after a Notebook page's ticks review). */
 function useLines(capture: CaptureRow | null, only?: string[]) {
   const { data: projects = [] } = useProjects()
-  const [edits, setEdits] = useState<Record<string, LineEdit>>({})
+  const edits = usePaperStore((s) => (capture && s.edits[capture.id]) || NO_EDITS)
   const read = useMemo(() => {
     if (!capture) return []
     const live = projects.filter((p) => !p.deleted_at)
     return capture.items.map((it, i) => toEditLine(it, i, live, new Date(capture.created_at))).filter((l) => !only || only.includes(l.key))
   }, [capture, projects, only])
-  const lines = read.map((l) => ({ ...l, ...edits[l.key] })).filter((l) => !edits[l.key]?.dropped)
-  const edit = (keys: Iterable<string>, patch: LineEdit) => setEdits((e) => editLines(e, keys, patch))
-  const drop = (keys: string[]) => {
-    edit(keys, { dropped: true })
-    toastUndo(keys.length === 1 ? 'Line dropped' : `${keys.length} lines dropped`, () => edit(keys, { dropped: false }))
+  const lines = read.filter((l) => !l.done).map((l) => ({ ...l, ...edits[l.key] }))
+  const filed = read.flatMap((l) => (l.done && l.done !== 'skipped' ? [{ line: { ...l, ...edits[l.key] }, to: l.done.to }] : []))
+  const skipped = read.filter((l) => l.done === 'skipped').map((l) => l.key)
+  const edit = (keys: Iterable<string>, patch: LineEdit) => {
+    if (capture) usePaperStore.setState((s) => ({ edits: { ...s.edits, [capture.id]: editLines(s.edits[capture.id] ?? {}, keys, patch) } }))
   }
-  return { lines, edit, drop }
+  return { lines, filed, skipped, edit }
 }
 
 function metaLine(c: CaptureRow): string {
   const pages = `${c.pages} ${c.pages === 1 ? 'page' : 'pages'}`
   const arabic = c.items.some((i) => /[؀-ۿ]/.test(i.text)) ? ' · Arabic' : ''
-  return [c.title, `${pages}${arabic}`, `read ${cairoTime().format(new Date(c.updated_at))}`].filter(Boolean).join(' · ')
+  return [c.title, `${pages}${arabic}`, `read ${timeText(new Date(c.updated_at))}`].filter(Boolean).join(' · ')
 }
 
 function Crop({ url, box, height = 40, maxWidth = 290 }: { url?: string; box: EditLine['box']; height?: number; maxWidth?: number }) {
@@ -365,16 +370,18 @@ interface RowProps {
   selecting: boolean
   onToggleSelect: () => void
   onEdit: (patch: LineEdit) => void
-  onDrop: () => void
+  /** Add this line now (the others wait). */
+  onFile: () => void
+  onDismiss: () => void
   onHover?: (on: boolean) => void
   /** Desktop keys (11m): the row's DOM id for the list's focus, and whether it has the focus ring. */
   rowId?: string
   ringed?: boolean
 }
 
-function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecting, onToggleSelect, onEdit, onDrop, onHover, rowId, ringed }: RowProps) {
+function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecting, onToggleSelect, onEdit, onFile, onDismiss, onHover, rowId, ringed }: RowProps) {
   const [menu, setMenu] = useState<{ kind: PickerKind | 'more'; at: At } | null>(null)
-  // A ⋯ item that opens a picker: ContextMenu runs the item, then its own onClose — which opens this.
+  // A ⋯ item that opens a picker: the menu runs the item, then its own onClose — which opens this.
   const then = useRef<{ kind: PickerKind; at: At } | null>(null)
   const check = needsCheck(line)
   const dated = line.type === 'task' || line.type === 'event'
@@ -382,20 +389,24 @@ function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecti
   const chain = (kind: PickerKind) => () => {
     then.current = menu && { kind, at: menu.at }
   }
-  const more: ContextMenuItem[] = [
-    { label: 'Edit the text', onClick: () => onEditing(true) },
-    ...(dated ? [{ label: line.dueAt ? 'Change the date…' : 'Add a date…', onClick: chain('date') }] : []),
-    { label: line.projectLabel ? 'Move to…' : 'Add a project…', onClick: chain('place') },
-    ...(line.type === 'task' ? [{ label: line.priority ? 'Change the priority…' : 'Add a priority…', onClick: chain('priority') }] : []),
-    { label: 'Select', onClick: onToggleSelect },
-    { label: 'Drop this line', danger: true, onClick: onDrop },
+  const more: PaperMenuItem[] = [
+    { label: 'Add this line', icon: 'check', hint: TYPE_HINT[line.type], shortcut: '⏎', run: onFile },
+    { label: 'Edit the text', run: () => onEditing(true) },
+    { label: 'Change the type…', icon: 'tasks', shortcut: 'T', chevron: true, run: chain('type') },
+    ...(dated ? [{ label: line.dueAt ? 'Change the date…' : 'Add a date…', icon: 'pickdate' as const, chevron: true, run: chain('date') }] : []),
+    { label: line.projectLabel ? 'Move to…' : 'Add a project…', icon: 'project', chevron: true, run: chain('place') },
+    ...(line.type === 'task' ? [{ label: line.priority ? 'Change the priority…' : 'Add a priority…', icon: 'priority' as const, chevron: true, run: chain('priority') }] : []),
+    { label: 'Select', shortcut: '⌃click', run: onToggleSelect },
+    { label: 'Dismiss this line', icon: 'close', hint: 'not wanted', shortcut: '⌫', danger: true, run: onDismiss },
   ]
   const overlay =
     menu &&
     (menu.kind === 'more' ? (
-      <ContextMenu
+      <PaperMenu
+        title={line.text}
+        meta={TYPE_LABEL[line.type]}
         items={more}
-        position={menu.at}
+        at={menu.at}
         onClose={() => {
           setMenu(then.current)
           then.current = null
@@ -406,7 +417,7 @@ function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecti
     ))
   return (
     <SwipeRow
-      actions={{ delete: onDrop, deleteLabel: 'Drop' }}
+      actions={{ delete: onDismiss, deleteLabel: 'Dismiss', deleteIcon: 'close' }}
       tomorrowHint=""
       id={rowId}
       tabIndex={rowId ? -1 : undefined}
@@ -421,6 +432,12 @@ function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecti
         e.preventDefault()
         e.stopPropagation()
         onToggleSelect()
+      }}
+      // Desktop: right-click is the ⋯ (a touch hold selects instead — SwipeRow swallows its contextmenu).
+      onContextMenu={(e) => {
+        if (isTypingTarget(e.target)) return // the text field keeps its own menu (paste)
+        e.preventDefault()
+        setMenu({ kind: 'more', at: { x: e.clientX, y: e.clientY } })
       }}
       onMouseEnter={() => onHover?.(true)}
       onMouseLeave={() => onHover?.(false)}
@@ -502,7 +519,7 @@ function ResultRow({ line, url, pageTitle, editing, onEditing, selected, selecti
 function useResults(id: string, only?: string[]) {
   const capture = useCapture(id)
   const urls = usePageUrls(capture)
-  const { lines, edit, drop } = useLines(capture, only)
+  const { lines, filed, skipped, edit } = useLines(capture, only)
   const [editing, setEditing] = useState<string | null>(null)
   // Long-press selection (MK Selection): only lines still on the sheet count.
   const [picked, setPicked] = useState<Set<string>>(new Set())
@@ -525,10 +542,18 @@ function useResults(id: string, only?: string[]) {
       }),
     )
   }
+  const opts = () => ({ keepPhoto: drawn.size > 0, only })
   const apply = (mode: 'all' | 'inbox') => {
     if (!capture) return
-    applyResults(capture, lines, mode, drawn.size > 0)
+    fileLines(capture, lines, mode, opts())
     close()
+  }
+  // One line or a few, now; the rest wait. The last one leaves review.
+  const file = (keys: readonly string[]) => {
+    if (capture && fileLines(capture, lines.filter((l) => keys.includes(l.key)), 'all', opts())) close()
+  }
+  const dismiss = (keys: readonly string[]) => {
+    if (capture && dismissLines(capture, keys, opts())) close()
   }
   const unsure = lines.filter(needsCheck).length
   const viewPhoto = (page = 0) => store().show({ kind: 'photo', captureId: id, page, back: { kind: 'results', captureId: id } })
@@ -541,7 +566,8 @@ function useResults(id: string, only?: string[]) {
     selecting: selected.length > 0,
     onToggleSelect: () => setPicked((s) => toggleKey(s, l.key)),
     onEdit: (p: LineEdit) => edit([l.key], p),
-    onDrop: () => drop([l.key]),
+    onFile: () => file([l.key]),
+    onDismiss: () => dismiss([l.key]),
   })
   const bulk = {
     count: selected.length,
@@ -551,16 +577,49 @@ function useResults(id: string, only?: string[]) {
       edit(selected, p)
       clear()
     },
-    drop: () => {
-      drop(selected)
+    file: () => {
       clear()
+      file(selected)
+    },
+    drop: () => {
+      clear()
+      dismiss(selected)
     },
   }
-  return { capture, urls, lines, close, apply, unsure, editing: !!editing, viewPhoto, row, bulk, drawings, drawn, addDrawing, drop, edit, selectedKeys: selected }
+  // The page's own ⋯ (11e's head): the photo, another page, keep it for later, dismiss it, delete it.
+  const word = capture && capture.pages > 1 ? 'pages' : 'page'
+  const pageItems: PaperMenuItem[] = capture
+    ? [
+        ...(urls.length ? [{ label: 'See the photo', icon: 'image' as const, run: () => viewPhoto() }] : []),
+        { label: 'Scan another page', icon: 'camera', run: () => void pickPhotos('camera') },
+        { label: 'Keep for later', icon: 'inbox', hint: 'stays in the Inbox', run: close },
+        {
+          label: `Dismiss ${word}`,
+          icon: 'close',
+          hint: 'adds nothing more',
+          run: () => {
+            dismissCapture(capture)
+            close()
+          },
+        },
+        {
+          label: `Delete ${word} and ${word === 'page' ? 'photo' : 'photos'}`,
+          icon: 'delete',
+          danger: true,
+          run: () => {
+            deleteCapture(capture)
+            close()
+          },
+        },
+      ]
+    : []
+  const bringBack = () => capture && restoreLines(capture, skipped)
+  return { capture, urls, lines, filed, skipped, bringBack, close, apply, file, dismiss, unsure, editing: !!editing, viewPhoto, row, bulk, pageItems, drawings, drawn, addDrawing, edit, selectedKeys: selected }
 }
 type Bulk = ReturnType<typeof useResults>['bulk']
 
-function ResultsHead({ capture, urls, count, onPhoto }: { capture: CaptureRow; urls: string[]; count: number; onPhoto: () => void }) {
+function ResultsHead({ capture, urls, count, onPhoto, items }: { capture: CaptureRow; urls: string[]; count: number; onPhoto: () => void; items: PaperMenuItem[] }) {
+  const [menu, setMenu] = useState<At | null>(null)
   return (
     <div className="pp-rhead">
       {urls[0] && (
@@ -574,6 +633,40 @@ function ResultsHead({ capture, urls, count, onPhoto }: { capture: CaptureRow; u
         </div>
         <div className="pp-meta">{metaLine(capture)}</div>
       </div>
+      <button type="button" className="pp-icon" aria-label="More for this page" aria-haspopup="menu" onClick={(e) => setMenu(below(e.currentTarget))}>
+        <Icon name="more" size={24} />
+      </button>
+      {menu && <PaperMenu title={capture.title ?? 'Your page'} meta={metaLine(capture)} at={menu} items={items} onClose={() => setMenu(null)} />}
+    </div>
+  )
+}
+
+/** Below the lines: what was added already and where it went, and the dismissed ones with Bring back. */
+function DoneRows({ filed, skipped, onBringBack }: { filed: { line: EditLine; to: Planned['to'] }[]; skipped: string[]; onBringBack: () => void }) {
+  if (!filed.length && !skipped.length) return null
+  return (
+    <div className="pp-done">
+      {filed.length > 0 && <div className="pp-done-head">Added already</div>}
+      {filed.map(({ line, to }) => (
+        <div key={line.key} className="pp-drawing">
+          <Icon name="check" size={18} />
+          <span className="pp-drawing-what" dir="auto">
+            {line.text}
+          </span>
+          <span className="pp-drawing-done">{WENT_TO[to]}</span>
+        </div>
+      ))}
+      {skipped.length > 0 && (
+        <div className="pp-drawing">
+          <Icon name="close" size={18} />
+          <span className="pp-drawing-what">
+            {skipped.length} {skipped.length === 1 ? 'line' : 'lines'} dismissed
+          </span>
+          <button type="button" className="pp-drawing-add" onClick={onBringBack}>
+            Bring back
+          </button>
+        </div>
+      )}
     </div>
   )
 }
@@ -595,10 +688,10 @@ function Banner({ unsure, touch, editing, bulk }: { unsure: number; touch: boole
     )
   }
   if (editing) return <div className="pp-banner">Editing 1 line</div>
-  const drop = touch ? 'Swipe left to drop a line.' : 'Use ⊞ to drop a line.'
+  const how = touch ? 'Swipe a line left to dismiss it, or tap its ⊞ for more.' : 'Right-click a line, or use its ⊞, to add it alone or dismiss it.'
   return (
     <div className="pp-banner">
-      {unsure ? `${unsure} ${unsure === 1 ? 'line needs' : 'lines need'} a look — the handwriting is beside ${unsure === 1 ? 'it' : 'them'}. ${drop}` : drop}
+      {unsure ? `${unsure} ${unsure === 1 ? 'line needs' : 'lines need'} a look — the handwriting is beside ${unsure === 1 ? 'it' : 'them'}. ${how}` : how}
     </div>
   )
 }
@@ -617,12 +710,16 @@ function ResultsFoot({ count, apply, bulk, focusAddAll }: { count: number; apply
     <>
       {bulk.count ? (
         <div className="pp-selfoot" role="toolbar" aria-label="Selected lines">
+          <button type="button" className="pp-selbtn" onClick={bulk.file}>
+            <Icon name="check" size={24} />
+            Add
+          </button>
           {act('type', 'tasks', 'Type')}
           {act('date', 'pickdate', 'Date')}
           {act('place', 'project', 'Project')}
           <button type="button" className="pp-selbtn is-destructive" onClick={bulk.drop}>
-            <Icon name="delete" size={24} />
-            Drop
+            <Icon name="close" size={24} />
+            Dismiss
           </button>
         </div>
       ) : (
@@ -670,12 +767,13 @@ function PhoneResults({ id, only }: { id: string; only?: string[] }) {
     <BottomSheet detent="full" onClose={r.close} footer={(_, keyboardUp) => (keyboardUp ? null : <div className="pp-sheet-foot"><ResultsFoot count={r.lines.length} apply={r.apply} bulk={r.bulk} /></div>)}>
       {() => (
         <div className="pp-sheet-body">
-          <ResultsHead capture={capture} urls={r.urls} count={r.lines.length} onPhoto={() => r.viewPhoto()} />
+          <ResultsHead capture={capture} urls={r.urls} count={r.lines.length} onPhoto={() => r.viewPhoto()} items={r.pageItems} />
           <Banner unsure={r.unsure} touch editing={r.editing} bulk={r.bulk} />
           {r.lines.map((l) => (
             <ResultRow key={l.key} url={r.urls[l.page]} {...r.row(l)} />
           ))}
           <DrawingRows drawings={r.drawings} drawn={r.drawn} onAdd={r.addDrawing} />
+          <DoneRows filed={r.filed} skipped={r.skipped} onBringBack={r.bringBack} />
         </div>
       )}
     </BottomSheet>
@@ -689,8 +787,9 @@ function DesktopResults({ id, only }: { id: string; only?: string[] }) {
   const r = useResults(id, only)
   const [page, setPage] = useState(0)
   const [hover, setHover] = useState<EditLine | null>(null)
-  // 11m "⏎ Add all · ⌫ drop line · T change type": the shared list keys over the lines (↑/↓ move the
-  // ring). Add all also has the focus when the results open, so ⏎ works before any line is picked.
+  // 11m's keys over the lines (↑/↓ move the ring): ⏎ adds the ringed line (or the selection), ⌫ / Del
+  // dismisses it, T changes its type, A selects every line; Esc ends a selection, then closes. Add all
+  // has the focus when the results open, so ⏎ before any line is picked adds them all.
   const [typeMenu, setTypeMenu] = useState<{ at: At; keys: string[] } | null>(null)
   const keyed = r.lines.map((l) => ({ ...l, id: l.key }))
   const anchor = (key: string): At => {
@@ -700,19 +799,17 @@ function DesktopResults({ id, only }: { id: string; only?: string[] }) {
   const unlessMenu = <A,>(fn: (a: A) => void) => (a: A) => {
     if (!menuUp()) fn(a)
   }
+  // The ring moves on to the next line as this one leaves.
+  const andNext = (fn: (keys: string[]) => void) => (l: (typeof keyed)[number]) => {
+    const at = keyed.findIndex((k) => k.id === l.id)
+    setFocusedId(keyed[at + 1]?.id ?? keyed[at - 1]?.id ?? null)
+    fn([l.key])
+  }
   const bindings: ListBinding<(typeof keyed)[number]>[] = [
-    { keys: ['Enter'], label: 'Add all', run: unlessMenu(() => r.lines.length && !r.bulk.count && r.apply('all')) },
-    {
-      keys: ['Backspace', 'Delete'],
-      label: 'Drop line',
-      run: unlessMenu((l) => {
-        const at = keyed.findIndex((k) => k.id === l.id)
-        r.drop([l.key])
-        setFocusedId(keyed[at + 1]?.id ?? keyed[at - 1]?.id ?? null)
-      }),
-      runAll: unlessMenu(() => r.bulk.drop()),
-    },
+    { keys: ['Enter'], label: 'Add the line', run: unlessMenu(andNext(r.file)), runAll: unlessMenu(() => r.bulk.file()) },
+    { keys: ['Backspace', 'Delete'], label: 'Dismiss the line', run: unlessMenu(andNext(r.dismiss)), runAll: unlessMenu(() => r.bulk.drop()) },
     { keys: ['t'], label: 'Change type', run: unlessMenu((l) => setTypeMenu({ at: anchor(l.key), keys: [l.key] })), runAll: unlessMenu((sel) => setTypeMenu({ at: anchor(sel[0].key), keys: sel.map((l) => l.key) })) },
+    { keys: ['a'], label: 'Select all', page: true, run: unlessMenu(() => r.bulk.all()) },
   ]
   const { focusedId, setFocusedId } = useListKeys(keyed, bindings, {
     idPrefix: 'pp-line-',
@@ -745,7 +842,7 @@ function DesktopResults({ id, only }: { id: string; only?: string[] }) {
         </div>
         <div className="pp-main-col">
           <div className="pp-rhead-row">
-            <ResultsHead capture={r.capture} urls={[]} count={r.lines.length} onPhoto={() => r.viewPhoto(page)} />
+            <ResultsHead capture={r.capture} urls={[]} count={r.lines.length} onPhoto={() => r.viewPhoto(page)} items={r.pageItems} />
             <button type="button" className="pp-icon" aria-label="Close" onClick={r.close}>
               <Icon name="close" size={24} />
             </button>
@@ -766,9 +863,10 @@ function DesktopResults({ id, only }: { id: string; only?: string[] }) {
               />
             ))}
             <DrawingRows drawings={r.drawings} drawn={r.drawn} onAdd={r.addDrawing} />
+            <DoneRows filed={r.filed} skipped={r.skipped} onBringBack={r.bringBack} />
           </div>
           <div data-sheet-footer className="pp-foot is-row is-end">
-            {!r.bulk.count && <span className="pp-keys">⏎ Add all · ⌫ drop line · T change type</span>}
+            {!r.bulk.count && <span className="pp-keys">↑↓ a line · ⏎ add · ⌫ dismiss · T type · A select all</span>}
             <ResultsFoot count={r.lines.length} apply={r.apply} bulk={r.bulk} focusAddAll />
           </div>
         </div>

@@ -23,16 +23,16 @@ const download = {
     ${istep(2, 'Allow this one source', 'Android asks once. Turn on “Allow from this source”.', mini('Install unknown apps, with Allow from this source switched on', '<div class="row">Install unknown apps</div><div class="row">Allow from this source<span class="tg"></span></div>'))}
     ${istep(3, 'Install and open', 'Tap Install. Sign in with the same account as the web.', mini('Android asking to install Kai’s Flow', '<div class="row" style="justify-content:flex-start"><span class="k">K</span><b>Kai’s Flow</b></div><div class="row" style="justify-content:flex-end;gap:14px"><span class="lnk">Cancel</span><span class="lnk">Install</span></div>'))}
   </div>
-  <p style="margin-top:20px"><a class="more" href="/guides/install-android/">The full Android guide →</a></p>
+  <p style="margin-top:20px"><a class="more" href="/guides/install-android/">The full Android guide</a></p>
 </div></section>
 <section class="sec" id="windows"><div class="wrap">
   <div class="ihead">${icon('windows', 28)}<h2>Installing on Windows</h2></div>
   <div class="isteps">
     ${istep(1, 'Download the installer', `About ${LATEST.exeMB} MB, for Windows 10 and 11.`, mini('The installer in Downloads', `<b>kais-flow-<span data-release-tag>${LATEST.tag}</span>-windows-setup.exe</b>Downloads · ${LATEST.exeMB} MB`, true))}
-    ${istep(2, 'Say yes to SmartScreen', 'It isn’t code-signed yet, so Windows may warn you: More info → Run anyway.', mini('Windows SmartScreen with Run anyway', '<b>Windows protected your PC</b><span style="text-decoration:underline">More info</span><div class="row" style="justify-content:flex-end;margin-top:8px"><span style="border:1px solid currentColor;padding:2px 8px">Run anyway</span></div>', true))}
+    ${istep(2, 'Say yes to SmartScreen', 'It isn’t code-signed yet, so Windows may warn you: More info → Run anyway. Only this once: updates install themselves.', mini('Windows SmartScreen with Run anyway', '<b>Windows protected your PC</b><span style="text-decoration:underline">More info</span><div class="row" style="justify-content:flex-end;margin-top:8px"><span style="border:1px solid currentColor;padding:2px 8px">Run anyway</span></div>', true))}
     ${istep(3, 'Run it', 'It installs for you only — no admin password. Then open it from the Start menu.', mini('The Kai’s Flow installer running', '<span class="k">K</span><b style="display:inline">Installing Kai’s Flow…</b><div class="bar2"><i></i></div>', true))}
   </div>
-  <p style="margin-top:20px"><a class="more" href="/guides/install-windows/">The full Windows guide →</a></p>
+  <p style="margin-top:20px"><a class="more" href="/guides/install-windows/">The full Windows guide</a></p>
 </div></section>
 <section class="sec"><div class="wrap dlfoot">
   <p>Older versions: <a href="${RELEASES_URL}">GitHub releases</a></p>

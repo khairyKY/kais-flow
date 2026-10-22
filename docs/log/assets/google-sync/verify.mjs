@@ -202,10 +202,11 @@ if (want('s4')) {
     check(`s4 ${theme}: ?google= is gone from the address`, !page.url().includes('google='), page.url())
     const card = googleCard(page)
     const txt = await card.textContent()
-    check(`s4 ${theme}: the account and "Connected · synced 12 Oct, 09:48"`, txt.includes('kai@gmail.com') && /Connected · synced 12 Oct, 09:48/.test(txt), txt)
+    // 12h (lib/clock): "9:48 AM" — en-GB had written "9:48 am" (fixed 2026-10-22, settings/api syncedLabel).
+    check(`s4 ${theme}: the account and "Connected · synced 12 Oct, 9:48 AM"`, txt.includes('kai@gmail.com') && /Connected · synced 12 Oct, 9:48 AM/.test(txt), txt)
     const sw = (name) => card.getByRole('switch', { name: `Show ${name}` })
     check(`s4 ${theme}: one switch per calendar, the chosen ones on`, (await sw('Kai').getAttribute('aria-checked')) === 'true' && (await sw('Prayer times').getAttribute('aria-checked')) === 'true' && (await sw('Holidays in Egypt').getAttribute('aria-checked')) === 'false')
-    check(`s4 ${theme}: "Last synced 12 Oct, 09:48", Sync now, Disconnect`, /Last synced.*12 Oct, 09:48/.test(txt) && (await card.getByRole('button', { name: 'Sync now' }).count()) === 1 && (await card.getByRole('button', { name: 'Disconnect' }).count()) === 1)
+    check(`s4 ${theme}: "Last synced 12 Oct, 9:48 AM", Sync now, Disconnect`, /Last synced.*12 Oct, 9:48 AM/.test(txt) && (await card.getByRole('button', { name: 'Sync now' }).count()) === 1 && (await card.getByRole('button', { name: 'Disconnect' }).count()) === 1)
     await card.screenshot({ path: path.join(OUT, `s4-integrations-connected-${theme}.png`) })
     check(`s4 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()

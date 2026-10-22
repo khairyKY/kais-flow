@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useState, type FormEvent } from 'react'
 import { useTasks, completeTaskWithUndo } from '../tasks/api'
 import { todayListTasks } from '../tasks/grouping'
 import { useCalendarEvents } from '../calendar/api'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useRoutines } from '../routines/api'
 import { usePendingInboxItems } from '../inbox/api'
@@ -126,7 +126,7 @@ export function TrayFlyout() {
         <div className="kf-tray-now">
           <div className="kf-tray-now-text">
             <span className="kf-tray-meta" style={{ color: 'var(--acc-lavender-deep)' }}>
-              {isInProgress(next.starts_at, next.ends_at, now) ? 'Now' : `Next · ${cairoTimeKey(new Date(next.starts_at))}`}
+              {isInProgress(next.starts_at, next.ends_at, now) ? 'Now' : `Next · ${timeText(new Date(next.starts_at))}`}
             </span>
             <div className="kf-tray-title">{next.title}</div>
           </div>

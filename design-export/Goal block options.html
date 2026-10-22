@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Goal block options</title>
+<!-- Kai's Flow · the goal of the day's block on the calendar: three looks for Kai to pick from
+     (21 Oct 2026, "there is no special flare or event style to the block of the goal of the day").
+     Plain HTML, open it straight from disk. Tokens: ds-bound/styles.css (the Bound Journal set, the
+     app's own values). The blocks copy CalendarGrid.css at the default 125% size: 90px an hour, 15px
+     titles, 10.6px mono time row, 12px corners. Nothing here is in the app yet. -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1320px;margin:0 auto;padding:40px 32px 120px}
+@media (max-width:767px){.wrap{padding:24px 16px 80px}}
+h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:13px;color:var(--ink-faint)}
+.lede{margin:12px 0 0;max-width:680px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 18px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg .btn{height:32px;border:none;background:none;padding:0 14px}
+.seg .btn[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.look{margin-top:56px;padding-top:28px;border-top:1px solid var(--line-card)}
+.look.picked h2::after{content:'Your pick';margin-left:12px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 12px/1.4 var(--font-ui);vertical-align:6px}
+.look h2{margin:0;font-family:var(--font-display);font-size:28px;font-weight:600;line-height:1.2}
+.look .say{margin:6px 0 0;max-width:680px;font-size:16px;color:var(--ink-body)}
+.shots{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start;margin-top:20px}
+figure{margin:0;flex:none}
+figcaption{margin-top:8px;max-width:300px;font-size:13px;color:var(--ink-muted)}
+.pick-row{margin-top:22px}
+.data{margin-top:64px;padding-top:28px;border-top:1px solid var(--line-card);max-width:760px}
+.data h2{margin:0;font-family:var(--font-display);font-size:24px;font-weight:600}
+.data p,.data li{color:var(--ink-muted)}
+.data code{font-family:var(--font-mono);font-size:13px;color:var(--ink-body)}
+
+/* ── a picture: one calendar column, as the app draws it ─────────────────────────────────── */
+.shell{display:block}
+.frame{position:relative;overflow:hidden;border:1px solid var(--line-card);border-radius:16px;background:var(--paper-parchment);color:var(--ink-body);font-family:var(--font-ui);line-height:1.25}
+.shell[data-theme="night"] .frame{border-color:var(--line-solid)}
+.hd{position:absolute;left:0;right:0;top:0;height:40px;display:flex;background:var(--paper-bone);border-bottom:1.5px solid var(--line-solid)}
+.hd .g{flex:none;width:72px}
+.hd .c{flex:1;display:flex;align-items:baseline;gap:7px;padding:10px 10px 0;border-left:1px solid var(--line-card);white-space:nowrap;background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.hd .nm{font-size:13px;color:var(--acc-lavender-text)}
+.hd .num{font-family:var(--font-display);font-size:19px;line-height:1;font-weight:600;padding:1px 7px;border-radius:var(--radius-pill);background:var(--block-lavender);color:var(--acc-lavender-text)}
+.bd{position:absolute;left:0;right:0;top:41.5px;bottom:0}
+.tdw{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.vl{position:absolute;top:0;bottom:0;border-left:1px solid var(--line-dashed)}
+.hl{position:absolute;left:72px;right:0;border-top:1px solid var(--line-card)}
+.hl.half{border-top-style:dashed;border-top-color:var(--line-dashed)}
+.hl b{position:absolute;right:100%;top:4px;width:72px;padding-right:12px;text-align:right;font-weight:400;font-size:15px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+[data-theme="night"] .hl{border-top-color:var(--line-solid);box-shadow:var(--glow-hairline)}
+
+/* a block (CalendarGrid.css .fc-timegrid-event at 125%) */
+.ev{position:absolute;border-radius:var(--radius-block);border:1px solid var(--edge);background:var(--wash);padding:7px 10px;overflow:hidden}
+.ev{--wash:color-mix(in srgb,var(--acc-lavender) 24%,transparent);--edge:rgba(124,106,154,0.35);--acc:var(--acc-lavender-text)}
+.ev .tt{font-size:15px;color:var(--ink-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.full .tt{white-space:normal}
+.ev .tm{margin-top:2px;font-family:var(--font-mono);font-size:10.6px;color:var(--acc);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev.event{--wash:color-mix(in srgb,var(--acc-blossom) 24%,transparent);--edge:color-mix(in srgb,var(--acc-blossom) 55%,transparent);--acc:var(--acc-blossom-text)}
+
+/* ── A · Gold edge: the task's own block, a gold edge down its left and ✶ before the title ── */
+.g-a{border-color:var(--line-goal);border-left:3px solid var(--acc-gold);padding-left:8px}
+.g-a .tt::before{content:'✶ ';color:var(--acc-gold)}
+
+/* ── B · Goal paper: the goal card's paper, edge and shadow, a short strip of its washi tape on the top
+      edge; the time row says "✶ Goal" in its stamp ── */
+.g-b{overflow:visible;background:var(--paper-goal);border-color:var(--line-goal);box-shadow:var(--shadow-goal)}
+.g-b .tape{position:absolute;top:-5px;left:50%;width:40px;height:10px;margin-left:-20px;background:color-mix(in srgb,var(--acc-gold-warm) 42%,transparent);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px;box-shadow:var(--shadow-crisp)}
+.g-b .tm{color:var(--acc-gold)}
+.g-b .stamp{font-family:var(--font-stamp);letter-spacing:var(--ls-stamp);text-transform:uppercase}
+
+/* ── C · Gold outline + clover: the task's own block in a gold outline, the four-leaf clover in its
+      top corner ── */
+.g-c{border:1.5px solid var(--acc-gold);padding-right:30px}
+.g-c .clover{position:absolute;top:5px;right:6px;width:20px;height:auto;filter:var(--shadow-drop-sm)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · the goal of the day on the calendar · 21 Oct 2026</div>
+  <h1>Which goal block?</h1>
+  <p class="lede">On Today the goal of the day is the one gold, taped page with the clover. On the calendar its block looks like every other task. Here are three ways to give it the goal card's own touch. Each is shown at 30 minutes (the smallest a goal block usually is) and at an hour, in a week column and a day column, by day and in Night Garden. Nothing changes colour: these are the app's own goal tokens.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your pick">
+  <span>Your pick: <b id="mine">none yet</b></span>
+  <span class="seg" role="group" aria-label="Theme">
+    <button type="button" class="btn" data-th="day" aria-pressed="true">Day</button>
+    <button type="button" class="btn" data-th="night" aria-pressed="false">Night</button>
+  </span>
+  <button type="button" class="btn btn-p" id="copy">Copy my pick</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="look" data-look="now">
+  <h2>Now</h2>
+  <p class="say">For comparison: today the goal's block is a plain task block, like "Review Kai" above it.</p>
+  <div class="shots" data-set="now"></div>
+  <div class="pick-row"><button type="button" class="btn pick" data-pick="Now" aria-pressed="false">Keep it plain</button></div>
+</section>
+
+<section class="look" data-look="A">
+  <h2>A · Gold edge</h2>
+  <p class="say">The task's own block, with a gold edge down its left side and a small gold ✶ before the title. The quietest of the three.</p>
+  <div class="shots" data-set="A"></div>
+  <div class="pick-row"><button type="button" class="btn pick" data-pick="A" aria-pressed="false">This one</button></div>
+</section>
+
+<section class="look" data-look="B">
+  <h2>B · Goal paper</h2>
+  <p class="say">The goal card's own gold paper, edge and shadow, with a short strip of its washi tape on the top edge. The time row reads "✶ Goal" in the card's stamp.</p>
+  <div class="shots" data-set="B"></div>
+  <div class="pick-row"><button type="button" class="btn pick" data-pick="B" aria-pressed="false">This one</button></div>
+</section>
+
+<section class="look" data-look="C">
+  <h2>C · Gold outline + clover</h2>
+  <p class="say">The task's own block in a gold outline, with the four-leaf clover in its top corner, as on the goal card.</p>
+  <div class="shots" data-set="C"></div>
+  <div class="pick-row"><button type="button" class="btn pick" data-pick="C" aria-pressed="false">This one</button></div>
+</section>
+
+<section class="data">
+  <h2>How the calendar would know which block is the goal's</h2>
+  <p>The goal of the day is the first of today's Top 3 — what Today draws as the gold card. The app already has the one rule for it:</p>
+  <ul>
+    <li><code>goalIdOf(tasks, legacyGoalId(), cachedStarEvents())</code> (<code>features/today/top3Order.ts</code>) — the first of <code>dayTop3(…)</code>, the same order Today shows (<code>top3_rank</code> 1 = the goal; only picks that are still today's count, <code>isTop3Today</code> in <code>features/tasks/top3Rule.ts</code>). The Tasks page's ✶ Goal chip, the tray and the widgets already read it.</li>
+    <li>The calendar page would work it out once (a <code>useMemo</code> over the tasks) and mark the block whose <code>task_id</code> is that id — a <code>goal</code> flag on the grid's event, a <code>kf-goal</code> class on the block; the phone grid the same through its <code>look()</code>.</li>
+    <li>Only that task's block today. If the goal sits inside a Time slot, its row in the slot would carry the mark, not the slot. Done, it keeps the mark and takes the usual done look.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+// One column, 9 AM to just past 12 PM: "Review Kai" 9:00–9:30 (a plain task), the goal at 10:00.
+const H = 90, S = 9, G = 72
+const y = (h) => (h - S) * H
+const GOAL = 'Ship the calendar polish 🌸'
+function goal(look, a, b) {
+  const full = b - a >= 1
+  const t = full ? '10:00 – 11:00 · 1h' : '10:00 AM'
+  if (look === 'A') return { cls: ' g-a', inner: `<div class="tt">${GOAL}</div><div class="tm">${t}</div>` }
+  if (look === 'B') return { cls: ' g-b', inner: `<span class="tape" aria-hidden="true"></span><div class="tt">${GOAL}</div><div class="tm"><span class="stamp">✶ Goal</span> · ${t}</div>` }
+  if (look === 'C') return { cls: ' g-c', inner: `<img class="clover" src="ds/assets/clover/four_leaf.png" alt=""><div class="tt">${GOAL}</div><div class="tm">${t}</div>` }
+  return { cls: '', inner: `<div class="tt">${GOAL}</div><div class="tm">${t}</div>` }
+}
+
+function column(look, width, goalEnd) {
+  const W = G + width
+  const block = (a, b, cls, inner) => `<div class="ev${cls}${b - a >= 1 ? ' full' : ''}" style="left:${G + 3}px;width:${width - 9}px;top:${y(a) + 1}px;height:${(b - a) * H - 2}px">${inner}</div>`
+  let h = `<div class="frame" style="width:${W}px;height:${41.5 + 3.4 * H}px">`
+  h += `<div class="hd"><span class="g"></span><span class="c"><span class="nm">Wed · Today</span><span class="num">21</span></span></div><div class="bd">`
+  h += `<span class="tdw" style="left:${G}px;width:${width}px"></span><span class="vl" style="left:${G}px"></span>`
+  ;['9 AM', '10 AM', '11 AM', '12 PM'].forEach((l, k) => (h += `<span class="hl" style="top:${k * H}px"><b>${l}</b></span><span class="hl half" style="top:${k * H + H / 2}px"></span>`))
+  h += block(9, 9.5, '', '<div class="tt">Review Kai</div><div class="tm">9:00 AM</div>')
+  const g = goal(look, 10, goalEnd)
+  h += block(10, goalEnd, g.cls, g.inner)
+  if (goalEnd <= 10.5) h += block(11, 12, ' event', '<div class="tt">Lunch with Omar</div><div class="tm">11:00 – 12:00 · 1h</div>')
+  return h + '</div></div>'
+}
+
+const fig = (inner, cap) => `<figure>${inner}<figcaption>${cap}</figcaption></figure>`
+let theme = 'day'
+function paintSets() {
+  document.querySelectorAll('[data-set]').forEach((el) => {
+    const L = el.dataset.set
+    el.innerHTML = `<div class="shell" data-theme="${theme}" style="display:flex;flex-wrap:wrap;gap:20px">
+      ${fig(column(L, 112, 10.5), 'Week column · the goal at 30 minutes')}
+      ${fig(column(L, 260, 10.5), 'Day column · 30 minutes')}
+      ${fig(column(L, 112, 11), 'Week column · an hour')}
+    </div>`
+  })
+  document.querySelectorAll('[data-th]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.th === theme)))
+  document.documentElement.dataset.theme = theme // the page itself turns too (colors.dark.css :root[data-theme="night"])
+}
+document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => { theme = b.dataset.th; paintSets() }))
+
+// the pick
+const KEY = 'kf-goal-block-pick'
+let pick = null
+try { pick = localStorage.getItem(KEY) } catch {}
+function paint() {
+  document.getElementById('mine').textContent = pick ?? 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pick === pick)))
+  document.querySelectorAll('.look[data-look]').forEach((s) => s.classList.toggle('picked', (s.dataset.look === 'now' ? 'Now' : s.dataset.look) === pick))
+}
+document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
+  pick = b.dataset.pick
+  try { localStorage.setItem(KEY, pick) } catch {}
+  paint()
+}))
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = pick ? `Goal block: ${pick}` : 'Goal block: none picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    try { ok = document.execCommand('copy') } catch {}
+    ta.remove()
+  }
+  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paintSets()
+paint()
+</script>
+</body>
+</html>
