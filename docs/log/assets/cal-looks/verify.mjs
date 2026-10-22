@@ -585,6 +585,16 @@ if (want('h')) {
   check('h ▶ starts a focus on the task (the Focus page)', page.url().endsWith('/focus'), page.url())
   check('h no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
+  // a week column at 1280 (about 86px): no room beside the title — the pointer gets no actions, a click is the block's
+  {
+    const w = await open('/calendar', { scale: 1.25 })
+    const wb = await fcBlock(w.page, 4).boundingBox()
+    await w.page.mouse.move(wb.x + wb.width / 2, wb.y + wb.height / 2)
+    await sleep(400)
+    const a = await fcBlock(w.page, 4).evaluate((el) => [getComputedStyle(el.querySelector('.kf-ev-acts')).display, Math.round(el.getBoundingClientRect().width)])
+    check(`h week column (${a[1]}px): hover shows no actions`, a[0] === 'none', JSON.stringify(a))
+    await w.ctx.close()
+  }
   const r = await open('/calendar', { reducedMotion: true, scale: 1.25 })
   await nDays(r.page, 3)
   const rm = await lift(r.page, 22)

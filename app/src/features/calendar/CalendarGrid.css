@@ -187,6 +187,8 @@
   line-height: 1.25;
   box-shadow: none;
   overflow: hidden;
+  /* the hover actions ask how wide the block is (below) */
+  container-type: inline-size;
 }
 /* FullCalendar darkens a focused block (25% black, its :focus::after) and shadows it — neither is drawn; the
    keyboard ring is ours (:focus-visible below). Selected B's wash takes that ::after for a picked block. */
@@ -223,6 +225,7 @@
   gap: 6px;
   overflow: hidden;
 }
+.fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .kf-ev-head { flex: 1; align-items: center; }
 .fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .fc-event-title {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -231,7 +234,7 @@
 .fc .fc-timegrid-event:is(.kf-one, .fc-timegrid-event-short) .fc-event-time { display: none; }
 /* Taller: the title wraps as far as the block holds over its time row — CalendarGrid sets the line count
    (-webkit-line-clamp) from the block's length, the last line ending in an ellipsis. */
-.fc .fc-timegrid-event:not(.kf-one):not(.fc-timegrid-event-short) .fc-event-title {
+.fc .fc-timegrid-event:not(.kf-one):not(.fc-timegrid-event-short) .kf-ev-head > .fc-event-title {
   display: -webkit-box;
   -webkit-box-orient: vertical;
   overflow: hidden;
@@ -262,6 +265,10 @@
    (dragGuard) so ticking one never starts a move. */
 .fc .fc-timegrid-event .kf-ev-row { display: flex; align-items: flex-start; gap: calc(6px * var(--kf-d)); height: 100%; }
 .fc .fc-timegrid-event .kf-ev-text { flex: 1; min-width: 0; }
+/* the title's line: the title, then (on hover) its actions — as the drawing's first row; the time row and a
+   slot's rows below keep the block's whole width */
+.fc .fc-timegrid-event .kf-ev-head { display: flex; align-items: flex-start; gap: calc(6px * var(--kf-d)); min-width: 0; }
+.fc .fc-timegrid-event .kf-ev-head > .fc-event-title { flex: 1; min-width: 0; }
 .fc .fc-timegrid-event .kf-ev-check {
   flex: none;
   /* Kai 2026-10-22 ("the checkbox isn't aligned with the title"): it was a fixed 12px box 1px down while
@@ -586,9 +593,13 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 
 /* "Now" as drawn: the pointer over a block shows its actions at the end of the title's line — ▶ Focus (a
    task) and ⋯ its menu, 20px marks in the block's ink. */
-.fc .fc-timegrid-event .kf-ev-acts { display: none; flex: none; gap: 2px; margin-left: auto; }
-/* ds-ok: a pointer's shortcut — touch has the same actions in the block's popover and its long-press menu */
-.fc .fc-timegrid-event:is(:hover, :focus-visible, :has(:focus-visible)) .kf-ev-acts { display: inline-flex; }
+.fc .fc-timegrid-event .kf-ev-acts { display: none; flex: none; gap: 2px; margin: calc(-1px * var(--kf-d)) 0 calc(-1px * var(--kf-d)) auto; }
+/* Only where the block has room for them beside its title (a week column at 1280 doesn't): there a click on
+   the block is the block's. */
+@container (min-width: 120px) {
+  /* ds-ok: a pointer's shortcut — touch has the same actions in the block's popover and its long-press menu */
+  .fc .fc-timegrid-event:is(:hover, :focus-visible, :has(:focus-visible)) .kf-ev-acts { display: inline-flex; }
+}
 .fc .fc-timegrid-event .kf-ev-act {
   display: inline-flex; align-items: center; justify-content: center;
   width: calc(20px * var(--kf-d)); height: calc(20px * var(--kf-d)); border-radius: 6px;

@@ -913,6 +913,34 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           return timeText ? <div className="fc-event-time">{timeText}<span className="kf-ev-sync" /></div> : null
         }
 
+        // "Now" as drawn: the pointer over a block shows its actions at the end of the title's line — ▶ Focus on
+        // a task, ⋯ its menu (the right-click one). dragGuard: a press here never starts a drag. Touch reaches
+        // both through the block's popover and its long-press menu. Hidden on a block too narrow for them (CSS).
+        const acts = !arg.isMirror && (
+          <span className="kf-ev-acts">
+            {p.kfTaskId && !done && !arg.event.allDay && (
+              <span role="button" className="kf-ev-act" title="Focus" aria-label={`Focus on ${title}`} ref={dragGuard(() => L().props.onFocusTask?.(p.kfTaskId!))}>
+                ▶
+              </span>
+            )}
+            <span
+              role="button"
+              className="kf-ev-act"
+              title="More"
+              aria-label={`More for ${title}`}
+              ref={(el) => {
+                dragGuard(() => {
+                  if (!el) return
+                  const r = el.getBoundingClientRect()
+                  L().props.onEventContextMenu?.(blockIdOf(arg.event), r.left, r.bottom)
+                })(el)
+              }}
+            >
+              ⋯
+            </span>
+          </span>
+        )
+
         return (
           <div className={`kf-ev-row${done ? ' kf-done' : ''}`} data-tour={arg.isMirror ? undefined : 'calendar-block'}>
             {badge === '⚠' && <span className="kf-ev-badge" title="Overlaps another block">⚠</span>}
@@ -933,14 +961,17 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
               </span>
             )}
             <div className="kf-ev-text">
-              {more && !pinnedMore ? (
-                <div className="fc-event-title" title={title}>{moreLink}</div>
-              ) : (
-                <div className="fc-event-title" style={{ WebkitLineClamp: lines }}>
-                  {p.kfGoal && <span className="kf-ev-star" aria-label="Goal of the day: ">✶ </span>}
-                  <EmojiText text={title} />
-                </div>
-              )}
+              <div className="kf-ev-head">
+                {more && !pinnedMore ? (
+                  <div className="fc-event-title" title={title}>{moreLink}</div>
+                ) : (
+                  <div className="fc-event-title" style={{ WebkitLineClamp: lines }}>
+                    {p.kfGoal && <span className="kf-ev-star" aria-label="Goal of the day: ">✶ </span>}
+                    <EmojiText text={title} />
+                  </div>
+                )}
+                {acts}
+              </div>
               {arg.isMirror ? timeRow(null) : (
                 <LiveTime p={p} allDay={arg.event.allDay} overdue={!!p.kfOverdue} clock={clock}>
                   {timeRow}
@@ -986,33 +1017,6 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                 </div>
               )}
             </div>
-            {/* "Now" as drawn: the pointer over a block shows its actions on the title's line — ▶ Focus on a
-                task, ⋯ its menu (the right-click one). dragGuard: a press here never starts a drag. Touch
-                reaches both through the block's popover and its long-press menu. */}
-            {!arg.isMirror && (
-              <span className="kf-ev-acts">
-                {p.kfTaskId && !done && !arg.event.allDay && (
-                  <span role="button" className="kf-ev-act" title="Focus" aria-label={`Focus on ${title}`} ref={dragGuard(() => L().props.onFocusTask?.(p.kfTaskId!))}>
-                    ▶
-                  </span>
-                )}
-                <span
-                  role="button"
-                  className="kf-ev-act"
-                  title="More"
-                  aria-label={`More for ${title}`}
-                  ref={(el) => {
-                    dragGuard(() => {
-                      if (!el) return
-                      const r = el.getBoundingClientRect()
-                      L().props.onEventContextMenu?.(blockIdOf(arg.event), r.left, r.bottom)
-                    })(el)
-                  }}
-                >
-                  ⋯
-                </span>
-              </span>
-            )}
           </div>
         )
       },

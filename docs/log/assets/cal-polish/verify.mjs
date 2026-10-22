@@ -208,8 +208,10 @@ if (want('d2')) {
   const from = await row.boundingBox()
   const lane = await page.locator('td.fc-timegrid-slot-lane[data-time="11:30:00"]').boundingBox()
   const col = await page.locator(`td.fc-timegrid-col[data-date="${DATE}"]`).boundingBox()
-  // the row's title, clear of its check and its × / ⋯
-  await mouseDrag(page, { x: from.x + from.width * 0.45, y: from.y + from.height / 2 }, { x: col.x + col.width / 2, y: lane.y + 3 }, () => shot(page, 'd2-mid'))
+  // the row itself, just past its check — in a week column the hover's × takes the title's room (cal-looks: the
+  // drawn row's 6px gaps), so a point at 45% of the row can land on the ×
+  const ck = await row.locator('.kf-ev-check').boundingBox()
+  await mouseDrag(page, { x: ck.x + ck.width + 2.5, y: from.y + from.height / 2 }, { x: col.x + col.width / 2, y: lane.y + 3 }, () => shot(page, 'd2-mid'))
   await settle(state)
   const b = posts(state, 'calendar_events', w0).find((e) => e.task_id === id(REPLY))
   check('d2 a held 15m task dragged out → a 15-minute block at 11:30', b && b.starts_at === iso('11:30') && mins(b) === 15, JSON.stringify(b && [b.starts_at, mins(b)]))
@@ -303,7 +305,8 @@ if (want('d9')) {
     let ids = await pickedIds(page)
     check(`d9-${theme} Ctrl+click and Shift+click pick two blocks — outlined, no popover`, ids.length === 2 && ids.includes(eid(STANDUP)) && ids.includes(eid(WATERB)) && (await page.locator('[role="menu"]').count()) === 0, JSON.stringify(ids))
     // cal-looks (Kai 2026-10-23, "selected B"): the selection ink's wash and a check badge, no outline.
-    const look = await fcBlock(page, STANDUP).evaluate((e) => [getComputedStyle(e).outlineStyle, getComputedStyle(e, '::after').content, getComputedStyle(e.querySelector('.kf-ev-pick')).display])
+    // (blurred first: a Ctrl-click can leave the keyboard focus ring, which is focus, not the selection)
+    const look = await fcBlock(page, STANDUP).evaluate((e) => { document.activeElement?.blur(); return [getComputedStyle(e).outlineStyle, getComputedStyle(e, '::after').content, getComputedStyle(e.querySelector('.kf-ev-pick')).display] })
     check(`d9-${theme} …each under a wash with its check badge (selected B), no outline`, look[0] === 'none' && look[1] !== 'none' && look[2] === 'flex', JSON.stringify(look))
     await shot(page, `d9-picked-${theme}`)
     if (theme === 'day') {
