@@ -741,7 +741,7 @@ if (want('b1')) {
     await fcBlock(page, LONGB).click()
     await sleep(500)
     const menu = await page.locator('[role="menu"]').last().innerText()
-    check('b1 the block popover: "4:00–4:30 PM"', /4:00–4:30 PM/.test(menu), menu.replace(/\n/g, ' | '))
+    check('b1 the block popover: "4:00 – 4:30 PM" (its own spaced range)', /4:00 – 4:30 PM/.test(menu), menu.replace(/\n/g, ' | '))
     check('b1 …and no 24-hour time in it', (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
     await lenChip(page, '15m').click()
     check('b1 the resize toast: "Resized to 4:00–4:15 PM"', await toastSoon(page, 'Resized to 4:00–4:15 PM'))
