@@ -128,13 +128,16 @@ export function ContextMenu({ items, position, onClose, header, width, label, cl
   // Layout effect = measured and nudged before first paint, so it never visibly jumps.
   const menuRef = useRef<HTMLDivElement>(null)
   const [nudge, setNudge] = useState({ x: 0, y: 0 })
+  // The size is the layout box's (offset*, layout px): kf-pop's entrance is scaling the rect down right
+  // now (from its top left, so the corner holds).
   useLayoutEffect(() => {
-    const r = menuRef.current?.getBoundingClientRect()
-    if (!r) return
+    const el = menuRef.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
     const zoom = uiZoom()
     setNudge({
-      x: Math.max(0, r.right - (window.innerWidth - 8 * zoom)) / zoom,
-      y: Math.max(0, r.bottom - (window.innerHeight - 12 * zoom)) / zoom,
+      x: Math.max(0, r.left + el.offsetWidth * zoom - (window.innerWidth - 8 * zoom)) / zoom,
+      y: Math.max(0, r.top + el.offsetHeight * zoom - (window.innerHeight - 12 * zoom)) / zoom,
     })
   }, [])
 

@@ -193,8 +193,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     if (!el || !anchor) return
     const place = () => {
       const z = uiZoom()
-      const r = el.getBoundingClientRect()
-      setPos(placeAtPointer({ x: anchor.x / z, y: anchor.y / z }, { width: r.width / z, height: r.height / z }, { width: window.innerWidth / z, height: window.innerHeight / z }))
+      // the layout box's size (layout px): kf-pop's entrance scales the rect while it plays
+      setPos(placeAtPointer({ x: anchor.x / z, y: anchor.y / z }, { width: el.offsetWidth, height: el.offsetHeight }, { width: window.innerWidth / z, height: window.innerHeight / z }))
     }
     place()
     if (typeof ResizeObserver === 'undefined') return
