@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router'
 import { ContextMenu } from '../../components/ContextMenu'
+import { Float } from '../../components/Float'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import { RenameField } from '../../components/RenameField'
@@ -113,10 +114,13 @@ export function SmartListNav({ activeList }: { activeList: string | null }) {
           ]}
         />
       )}
+      {/* On <body>: inside the sidebar, its scroll fade's mask (AppLayout) kept the editor under the page. */}
       {editing && (
-        <Suspense fallback={null}>
-          <SmartListEditor list={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} />
-        </Suspense>
+        <Float>
+          <Suspense fallback={null}>
+            <SmartListEditor list={editing === 'new' ? undefined : editing} onClose={() => setEditing(null)} />
+          </Suspense>
+        </Float>
       )}
     </>
   )
