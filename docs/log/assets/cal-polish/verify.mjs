@@ -520,8 +520,7 @@ if (want('g2')) {
   }
   {
     const { ctx, page, errors } = await open('/calendar', { scale: 1.25 })
-    await page.getByRole('button', { name: 'Planning mode: collapse the calendar to a strip' }).click()
-    await sleep(800)
+    await enterPlanning(page)
     const sel = `.cal-plan .unscheduled-task[data-task-id="${id(EMAIL)}"]`
     const b = await page.locator(sel).boundingBox()
     await ghostChecks('g2-plan', page, sel, { x: b.x + 60, y: b.y + 14 }, "Kai's Flow email", '20m', ['grid'])
@@ -543,6 +542,39 @@ if (want('g2')) {
     check('g2-held no page errors', errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
+}
+
+// ═══ C: the ⋮ between the panes only resizes; planning mode by name ═══
+async function enterPlanning(page) {
+  await page.locator('.cal-head button[aria-haspopup="dialog"]').click()
+  await sleep(300)
+  await page.getByRole('switch', { name: 'Planning mode' }).click()
+  await sleep(800)
+}
+if (want('c1')) {
+  const { ctx, page, errors } = await open()
+  const split = page.locator('.cal-railsplit')
+  const railW = () => page.locator('.cal-rail').evaluate((e) => Math.round(e.getBoundingClientRect().width))
+  const w0 = await railW()
+  const grip = await split.locator('.cal-plan-handle').boundingBox()
+  await page.mouse.click(grip.x + grip.width / 2, grip.y + grip.height / 2)
+  await sleep(600)
+  check('c1 a click on the ⋮ does nothing — no planning mode, same width', (await page.locator('.cal-plan').count()) === 0 && (await page.locator('.cal-head').count()) === 1 && (await railW()) === w0, `${w0} → ${await railW()}`)
+  const g = center(await split.boundingBox())
+  await mouseDrag(page, { x: g.x, y: grip.y + grip.height / 2 }, { x: g.x + 520, y: grip.y + grip.height / 2 })
+  check('c1 dragged far right (past 60%): it only widens the rail, no planning mode', (await page.locator('.cal-plan').count()) === 0 && (await railW()) > w0 + 100, `${w0} → ${await railW()}`)
+  const g2 = center(await split.boundingBox())
+  await page.mouse.dblclick(g2.x, grip.y + grip.height / 2 + 60)
+  await sleep(500)
+  check('c1 double-click resets the width', Math.abs((await railW()) - w0) <= 2, `${await railW()} vs ${w0}`)
+  await enterPlanning(page)
+  check('c1 View options ▸ Planning mode opens it, by name', (await page.locator('.cal-plan').count()) === 1)
+  await shot(page, 'c1-planning')
+  await page.getByRole('button', { name: 'Leave planning mode' }).click()
+  await sleep(800)
+  check('c1 "Leave planning mode" brings the grid back', (await page.locator('.cal-plan').count()) === 0 && (await page.locator('.cal-head').count()) === 1)
+  check('c1 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
 }
 
 // ═══ No empty-title task ═══

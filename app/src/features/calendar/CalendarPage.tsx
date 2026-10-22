@@ -822,17 +822,6 @@ function DesktopCalendar() {
     const day = cairoDateKey(minuteNow)
     return { blocked: blockedOn(events, day), free: minutesLabel(freeLeft(events, day, minuteNow)) }
   }, [events, minuteNow])
-  /** The strip's handle dragged back left (or clicked): the grid returns. */
-  function startStripHandle(e: React.PointerEvent<HTMLButtonElement>) {
-    if (e.button !== 0) return
-    const x0 = e.clientX
-    const up = (ev: PointerEvent) => {
-      window.removeEventListener('pointerup', up)
-      if (x0 - ev.clientX > 40) setPlanning(false)
-    }
-    window.addEventListener('pointerup', up)
-  }
-
   function startRailDrag(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0) return // J-4a: a right-button drag used to resize the rail
     e.preventDefault()
@@ -843,13 +832,9 @@ function DesktopCalendar() {
       const next = Math.min(RAIL_MAX, Math.max(RAIL_MIN, startW + (ev.clientX - startX)))
       setRailWidth(next)
     }
-    const onUp = (ev: PointerEvent) => {
-      // §4: let go past 60% of the calendar and the rail takes it over (the width it had stays).
-      const shell = shellRef.current?.getBoundingClientRect()
-      if (shell && ev.clientX - shell.left > shell.width * 0.6) {
-        setRailWidth(startW)
-        setPlanning(true)
-      }
+    // Kai 2026-10-22 ("it shows a new foreign state"): the splitter only resizes — letting go past 60%
+    // of the calendar no longer swaps in planning mode (View options ▸ Planning mode does, by name).
+    const onUp = () => {
       setRailDragging(false)
       window.removeEventListener("pointermove", onMove)
       window.removeEventListener("pointerup", onUp)
@@ -1074,6 +1059,9 @@ function DesktopCalendar() {
             panelRef={planRef}
             onPlan={(r, x, y) => setPlan({ target: { kind: 'task', r }, x, y })}
             onQuickAdd={openQuickAddTask}
+            // Kai 2026-10-22: planning mode is entered and left by name (View options ▸ Planning mode /
+            // this button), never by the pane handle.
+            onLeave={() => setPlanning(false)}
           />
         )}
 
@@ -1101,36 +1089,15 @@ function DesktopCalendar() {
             >
               ‹
             </button>
-            {/* §4: the planning-mode toggle, the three dots on the rail's right edge. */}
-            <button
-              type="button"
-              className="cal-plan-handle"
-              aria-pressed={false}
-              aria-label="Planning mode: collapse the calendar to a strip"
-              title="Plan — collapse the calendar"
-              onPointerDown={(e) => e.stopPropagation()}
-              onDoubleClick={(e) => e.stopPropagation()}
-              onClick={() => setPlanning(true)}
-            >
+            {/* The splitter's grip: drawn only — a press drags the splitter, a double-click resets it. Kai
+                2026-10-22: a click on it used to swap in planning mode. */}
+            <span className="cal-plan-handle" aria-hidden="true" style={{ pointerEvents: 'none' }}>
               <i /><i /><i />
-            </button>
+            </span>
           </div>
         )}
 
         <div className={planning ? 'cal-main cal-strip' : 'cal-main'}>
-          {planning && (
-            <button
-              type="button"
-              className="cal-plan-handle"
-              aria-pressed
-              aria-label="Leave planning mode: bring the calendar back"
-              title="Bring the calendar back"
-              onPointerDown={startStripHandle}
-              onClick={() => setPlanning(false)}
-            >
-              <i /><i /><i />
-            </button>
-          )}
           {planning ? stripHead : (
           <div className="cal-head" style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 16, minHeight: 52, padding: '6px 14px 6px 16px', borderBottom: '1px solid var(--line-card)', flex: 'none' }}>
             {/* Kai 2026-10-14: the date and its daisy sit at the far top right, out of the grid's height. */}
@@ -1278,6 +1245,10 @@ function DesktopCalendar() {
           onPickView={pickView}
           value={viewOpts}
           onChange={patchViewOpts}
+          onPlanMode={() => {
+            setViewOptsOpen(false)
+            setPlanning(true)
+          }}
         />
       )}
       {selected && selectedEvent && (

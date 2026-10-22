@@ -172,8 +172,10 @@ if (want('p4a')) {
   for (const theme of ['day', 'night']) {
     const { ctx, page, errors, state } = await open('/calendar', { theme })
     await pickView(page, '1')
-    // The toggle: the three dots on the rail's right edge.
-    await page.getByRole('button', { name: /Planning mode/ }).click()
+    // By name (Kai 2026-10-22: the dots between the panes only resize now): View options ▸ Planning mode.
+    await page.locator('.cal-head button[aria-haspopup="dialog"]').click()
+    await sleep(300)
+    await page.getByRole('switch', { name: 'Planning mode' }).click()
     await sleep(1200)
     const panel = page.locator('.cal-plan')
     check(`p4a ${theme}: planning mode opens — the rail swells, the strip shows one day`, (await panel.count()) === 1 && (await page.locator('.cal-strip .fc-timegrid-col[data-date]').count()) === 1)

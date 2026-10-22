@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { ContextMenu } from '../../components/ContextMenu'
 import { EmojiText } from '../../components/EmojiText'
-import { Checkbox, Segmented } from '../../components/kit'
+import { Button, Checkbox, Segmented } from '../../components/kit'
 import { Skeleton } from '../../components/States'
 import type { Area, CalendarEvent, Domain, Project, Task } from '../../lib/types'
 import { completeTaskWithUndo } from '../tasks/api'
@@ -110,7 +110,7 @@ function PlanCard({ r, compact, dot, projects, domains, areas, now, onPlan }: {
   )
 }
 
-export function PlanningPanel({ tasks, events, loading, projects, domains, areas, days, now, daisy, panelRef, onPlan, onQuickAdd }: {
+export function PlanningPanel({ tasks, events, loading, projects, domains, areas, days, now, daisy, panelRef, onPlan, onQuickAdd, onLeave }: {
   tasks: Task[]
   /** The year-around-today events (a series' occurrences included). */
   events: CalendarEvent[]
@@ -126,6 +126,8 @@ export function PlanningPanel({ tasks, events, loading, projects, domains, areas
   panelRef: React.RefObject<HTMLDivElement | null>
   onPlan: (r: RailTask, x: number, y: number) => void
   onQuickAdd: (e: React.MouseEvent) => void
+  /** "Leave planning mode": the rail and the grid come back. */
+  onLeave: () => void
 }) {
   const [tab, setTabState] = useState<PlanTab>(() => remembered(TAB_KEY, 'all', ['all', 'today', 'overdue']))
   const [sort, setSortState] = useState<PlanSort>(() => remembered(SORT_KEY, 'due', PLAN_SORTS.map((s) => s.value)))
@@ -188,6 +190,7 @@ export function PlanningPanel({ tasks, events, loading, projects, domains, areas
           >
             Sort ↕
           </button>
+          <Button variant="secondary" onClick={onLeave}>Leave planning mode</Button>
         </div>
       </div>
 

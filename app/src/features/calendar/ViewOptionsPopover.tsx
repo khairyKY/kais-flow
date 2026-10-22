@@ -76,9 +76,11 @@ interface ViewOptionsPopoverProps {
   onPickView: (cell: ViewCell) => void
   value: CalViewOptions
   onChange: (patch: Partial<CalViewOptions>) => void
+  /** Calendar §4 planning mode, by name (Kai 2026-10-22: never by the pane handle). */
+  onPlanMode?: () => void
 }
 
-export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPickView, value, onChange }: ViewOptionsPopoverProps) {
+export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPickView, value, onChange, onPlanMode }: ViewOptionsPopoverProps) {
   const ref = useRef<HTMLDivElement>(null)
   useEscapeStack(!closing, onClose)
 
@@ -151,6 +153,12 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
       <Toggle on={value.showWeekends} label="Show weekends" onToggle={() => onChange({ showWeekends: !value.showWeekends })} />
       <Toggle on={value.showCompleted} label="Show completed" onToggle={() => onChange({ showCompleted: !value.showCompleted })} />
       <Toggle on={value.hour24} label="24-hour time" onToggle={() => onChange({ hour24: !value.hour24 })} />
+      {onPlanMode && (
+        <>
+          <div style={{ height: 1, background: 'var(--line-card)', margin: '5px 8px' }} />
+          <Toggle on={false} label="Planning mode" onToggle={onPlanMode} />
+        </>
+      )}
     </div>
   )
 }
