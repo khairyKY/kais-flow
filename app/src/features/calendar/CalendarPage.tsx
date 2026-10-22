@@ -581,7 +581,7 @@ function DesktopCalendar() {
         }
       })
     },
-    [visibleEvents, tasks, doneTaskIds, parentTitleOf, goalTaskId, today],
+    [visibleEvents, tasks, doneTaskIds, parentTitleOf, goalTaskId, today], // eslint-disable-line react-hooks/exhaustive-deps -- today: a new day re-reads the goal's date
   )
   const selectedEvent = selected ? findBlock(gridEvents, selected.id, selected.start) ?? null : null
 

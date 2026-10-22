@@ -279,7 +279,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px * var(--kf-d));
+  font-size: calc(10px * var(--kf-d)); /* ds-ok: the drawn check's glyph, scaled with the grid as the block type around it */
   line-height: 1;
   color: var(--paper-parchment);
   cursor: pointer;
@@ -309,7 +309,9 @@
   display: flex; align-items: center; gap: calc(6px * var(--kf-d)); min-width: 0; padding: calc(1px * var(--kf-d)) calc(4px * var(--kf-d)); border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--kf-ev-accent, var(--acc-lavender-text)) 35%, transparent);
 }
+/* ds-ok: the drawn slot rows' type (13px at 125%), scaled with the grid as the block type around it */
 .fc .fc-timegrid-event .kf-ev-slot-row .fc-event-title.kf-ev-slot-title { font-size: calc(13px * var(--kf-d)); }
+/* ds-ok: the drawn row check (12px at 125%), its glyph scaled with it */
 .fc .fc-timegrid-event .kf-ev-slot-row .kf-ev-check { width: calc(12px * var(--kf-d)); height: calc(12px * var(--kf-d)); font-size: calc(9px * var(--kf-d)); }
 .fc .fc-timegrid-event .kf-ev-slot-row:hover { border-color: color-mix(in srgb, var(--kf-ev-accent, var(--acc-lavender-text)) 70%, transparent); }
 /* While its task is dragged out, the card's place stays as a dashed outline (CalendarGrid heldRow). */
@@ -590,7 +592,7 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .fc .fc-timegrid-event .kf-ev-act {
   display: inline-flex; align-items: center; justify-content: center;
   width: calc(20px * var(--kf-d)); height: calc(20px * var(--kf-d)); border-radius: 6px;
-  font-size: calc(12px * var(--kf-d)); line-height: 1; color: var(--kf-ev-accent); cursor: pointer;
+  font-size: calc(12px * var(--kf-d)); line-height: 1; color: var(--kf-ev-accent); cursor: pointer; /* ds-ok: the drawn action marks, scaled with the grid */
 }
 
 /* Selected B (Kai 2026-10-23, the options page's "selected" section): a picked block darkens under a wash of the
@@ -605,7 +607,7 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
   display: flex; align-items: center; justify-content: center;
   width: calc(16px * var(--kf-d)); height: calc(16px * var(--kf-d));
   border-radius: 5px; /* ds-ok: the drawn badge's corner (Calendar blocks options, selected B) */
-  background: var(--sel-bg); color: var(--sel-ink); font-size: calc(10px * var(--kf-d)); font-weight: var(--fw-bold, 700); line-height: 1;
+  background: var(--sel-bg); color: var(--sel-ink); font-size: calc(10px * var(--kf-d)); font-weight: 700; line-height: 1; /* ds-ok: the drawn badge's ✓, scaled with the grid */
   pointer-events: none;
 }
 /* a one-line block: the badge on the line's middle */

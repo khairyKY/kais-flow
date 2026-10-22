@@ -122,6 +122,7 @@
 .pc-block.is-cascade { box-shadow: -2px 0 0 var(--paper-parchment); }
 .pc-block.is-cascade.is-goal { box-shadow: inset 3px 0 0 var(--acc-gold), -2px 0 0 var(--paper-parchment); }
 /* the check ("Now" as drawn): open, edged in the block's ink; done, the check fill */
+.pc-block .pc-check .kf-checkbox { border-radius: 4px !important; } /* ds-ok: the drawn block check's corner (Calendar blocks options, "Now") */
 .pc-block .pc-check .kf-checkbox[aria-checked="false"] { border-color: var(--pc-ink) !important; background: transparent !important; }
 /* A block scrolled half off keeps its title in the visible part. */
 .pc-block-body {
@@ -135,7 +136,7 @@
 .pc-block.is-compact .pc-block-body { gap: 6px; padding: 0 6px; }
 .pc-block.is-compact .pc-name { line-height: 18px; }
 .pc-check { flex: none; display: inline-flex; }
-.pc-name { min-width: 0; font-size: 14px; font-weight: var(--fw-regular, 400); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pc-name { min-width: 0; font-size: 14px; /* ds-ok: the phone's touch title, unchanged (only its weight follows the drawing) */ font-weight: var(--fw-regular, 400); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* On one row the time gives way first: a narrow lane (a pair, a stack of three) keeps the title. */
 .pc-time { flex: 0 1000 auto; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--pc-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* An overdue block's "Overdue · Replan" (Kai 2026-10-07) reads in terra under the past-muting. */

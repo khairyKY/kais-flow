@@ -617,7 +617,7 @@ if (want('v')) {
     await sleep(400)
     const grid = await page.locator('.fc-timegrid-body').boundingBox()
     const top = await page.locator('td.fc-timegrid-slot-lane[data-time="08:30:00"]').boundingBox()
-    await page.screenshot({ path: path.join(OUT, `v-app-${theme}.png`), clip: { x: Math.max(0, grid.x - 75), y: top.y - 50, width: grid.width + 75, height: 800 - top.y + 50 } })
+    await page.screenshot({ path: path.join(OUT, `v-app-${theme}.png`), clip: { x: grid.x, y: top.y - 50, width: grid.width, height: 800 - top.y + 50 } })
     await ctx.close()
     const bg = theme === 'night' ? '#1c1a24; color: #ddd' : '#f3ecdc; color: #333'
     await pair(`side-by-side-blocks-${theme}`, `v-drawn-${theme}.png`, `v-app-${theme}.png`, `Drawn: Calendar blocks options.html, "Now" (${theme})`, `The app: 3 days at 125%, Reply to Omar + Pay the rent picked, the pointer on Design review (${theme})`, bg)

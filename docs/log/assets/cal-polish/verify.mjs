@@ -302,8 +302,9 @@ if (want('d9')) {
     await sleep(300)
     let ids = await pickedIds(page)
     check(`d9-${theme} Ctrl+click and Shift+click pick two blocks — outlined, no popover`, ids.length === 2 && ids.includes(eid(STANDUP)) && ids.includes(eid(WATERB)) && (await page.locator('[role="menu"]').count()) === 0, JSON.stringify(ids))
-    const outline = await fcBlock(page, STANDUP).evaluate((e) => [getComputedStyle(e).outlineStyle, getComputedStyle(e).outlineWidth])
-    check(`d9-${theme} …a plain 2px outline`, outline[0] === 'solid' && outline[1] === '2px', JSON.stringify(outline))
+    // cal-looks (Kai 2026-10-23, "selected B"): the selection ink's wash and a check badge, no outline.
+    const look = await fcBlock(page, STANDUP).evaluate((e) => [getComputedStyle(e).outlineStyle, getComputedStyle(e, '::after').content, getComputedStyle(e.querySelector('.kf-ev-pick')).display])
+    check(`d9-${theme} …each under a wash with its check badge (selected B), no outline`, look[0] === 'none' && look[1] !== 'none' && look[2] === 'flex', JSON.stringify(look))
     await shot(page, `d9-picked-${theme}`)
     if (theme === 'day') {
       // Drag Standup down an hour: Water the plants comes along.
