@@ -32,7 +32,7 @@ describe('clockRange — a span, the meridiem once when both ends share it', () 
     expect(clockRange('13:00', '13:30', true)).toBe('13:00–13:30')
     expect(clockRange('10:15', '10:30', true)).toBe('10:15–10:30')
   })
-  // Kai 2026-10-23: one range style — the toast and Today's Now card said "10:15 AM–10:30 AM".
+  // Kai 2026-10-22 (the clock fallout): one range style — the toast and Today's Now card said "10:15 AM–10:30 AM".
   it('one style: the meridiem once when shared, both when the span crosses it', () => {
     expect(clockRange('10:15', '10:30', false)).toBe('10:15–10:30 AM')
     expect(clockRange('09:00', '11:00', false)).toBe('9:00–11:00 AM')

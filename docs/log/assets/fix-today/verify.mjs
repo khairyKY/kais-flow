@@ -240,7 +240,7 @@ for (const theme of ['day', 'night']) for (const [name, at, s] of DESK) {
   if (name === 'd1-plan-0800' && theme === 'day') {
     check(`${tag} desktop at the 125% default`, String(zoom).startsWith('1.25'), zoom)
     check(`${tag} one date: the H1 only, no "Today" eyebrow`, (await page.locator('main h1, .td h1').count()) === 1 && !(await text(page.locator('.td'))).startsWith('TODAY'))
-    // Times read on the 12-hour default, one range style (lib/clock — cal-polish 2026-10-22, clock fallout 2026-10-23).
+    // Times read on the 12-hour default, one range style (lib/clock — cal-polish 2026-10-22, clock fallout the same day).
     check(`${tag} summary "1 of 6 done · next up Deep work — Forecasting at 9:00 AM"`, /1 of 6 done · next up Deep work — Forecasting at 9:00 AM/.test(await text(page.locator('.td-sum'))), await text(page.locator('.td-sum')))
     check(`${tag} no terrarium band`, (await page.getByText('The terrarium').count()) === 0 && (await page.getByText('pressed & kept').count()) === 0)
     check(`${tag} typed "Add a task…" pill with the mic`, (await page.locator('.td-pill-field', { hasText: 'Add a task…' }).count()) === 1 && (await page.locator('.td-pill-mic').count()) === 1)

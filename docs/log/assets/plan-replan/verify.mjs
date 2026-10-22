@@ -275,7 +275,7 @@ if (want('desktop')) {
     await settle()
     const plan = await rows(pop(page))
     await shot(page, `${name}-replan-list`)
-    // One clock (lib/clock, cal-polish 2026-10-22 + clock fallout 2026-10-23): the 12-hour default, one range style.
+    // One clock (lib/clock, cal-polish 2026-10-22 + clock fallout the same day): the 12-hour default, one range style.
     check(`${name} Replan list: one line each — where it lands and what it means`, JSON.stringify(plan) === JSON.stringify([
       'Today today, keeps its 3:00 PM Wed 7 · 3:00 PM',
       'Next free slot ASAP: the first free gap that fits — you confirm Today 10:00–10:30 AM',

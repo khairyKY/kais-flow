@@ -68,7 +68,7 @@ describe('planOptions — one Plan list, each option saying where it lands', () 
     const late = task({ due_at: at('2026-10-05T15:30:00').toISOString() })
     expect(todayFor(late, WED)).toBe(at('2026-10-07T15:30:00').toISOString())
     expect(planOptions(WED, { task: late, weekend: SAT_SUN })[0]).toMatchObject({ hint: 'Wed 7 · 15:30', means: 'today, keeps its 15:30' })
-    setHour24(false) // Kai 2026-10-23: the Replan list said "keeps its 15:00 · Thu 8 · 09:00" on the 12-hour clock
+    setHour24(false) // Kai 2026-10-22: the Replan list said "keeps its 15:00 · Thu 8 · 09:00" on the 12-hour clock
     try {
       const o = planOptions(WED, { task: late, weekend: SAT_SUN })
       expect(o[0]).toMatchObject({ hint: 'Wed 7 · 3:30 PM', means: 'today, keeps its 3:30 PM' })
