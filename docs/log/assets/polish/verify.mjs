@@ -164,7 +164,7 @@ if (want('i1')) {
     await sleep(400)
     const pressed = await page.locator('.ib-toggle [aria-pressed="true"]').innerText()
     const metas = await page.locator('.ib-drow .ib-meta').allInnerTexts()
-    check(`i1 desktop ${theme}: Snoozed view — toggle on "Snoozed 2", rows soonest first with when they come back`, pressed === 'Snoozed 2' && metas.join('|').toLowerCase() === 'back tomorrow · 09:00|back mon 19 oct · 09:00', `${pressed} · ${metas.join(' | ')}`)
+    check(`i1 desktop ${theme}: Snoozed view — toggle on "Snoozed 2", rows soonest first with when they come back`, pressed === 'Snoozed 2' && metas.join('|').toLowerCase() === 'back tomorrow · 9:00 am|back mon 19 oct · 9:00 am' /* 12h (lib/clock, cal-polish 2026-10-22) */, `${pressed} · ${metas.join(' | ')}`)
     await shot(page, `i1-snoozed-desktop-${theme}`)
     if (theme === 'day') {
       await page.locator(`[id="inbox-${iid(3)}"]`).getByRole('button', { name: /Unsnooze/ }).click()
@@ -231,7 +231,7 @@ if (want('i3')) {
     const metas = await page.locator('.ib-drow .ib-meta').allInnerTexts()
     const wide = await page.evaluate(() => document.scrollingElement.scrollWidth <= innerWidth && [...document.querySelectorAll('.ib-page *')].every((e) => e.getBoundingClientRect().right <= innerWidth + 0.5))
     check(`i3 phone ${theme}: "· 2 snoozed" → the Snoozed view, the link reads "Waiting 3", rows say when they come back, nothing off the edge`,
-      /2 snoozed/.test(sum) && link === 'Waiting 3' && /back Tomorrow · 09:00/i.test(metas[0] ?? '') && wide, `${sum} · ${link} · ${metas.join(' | ')}`)
+      /2 snoozed/.test(sum) && link === 'Waiting 3' && /back Tomorrow · 9:00 AM/i.test(metas[0] ?? '') /* 12h (lib/clock, cal-polish 2026-10-22) */ && wide, `${sum} · ${link} · ${metas.join(' | ')}`)
     await shot(page, `i3-snoozed-phone-${theme}`)
     await page.locator('.ib-head-link').click()
     await sleep(300)

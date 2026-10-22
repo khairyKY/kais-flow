@@ -240,7 +240,8 @@ for (const theme of ['day', 'night']) for (const [name, at, s] of DESK) {
   if (name === 'd1-plan-0800' && theme === 'day') {
     check(`${tag} desktop at the 125% default`, String(zoom).startsWith('1.25'), zoom)
     check(`${tag} one date: the H1 only, no "Today" eyebrow`, (await page.locator('main h1, .td h1').count()) === 1 && !(await text(page.locator('.td'))).startsWith('TODAY'))
-    check(`${tag} summary "1 of 6 done · next up Deep work — Forecasting at 09:00"`, /1 of 6 done · next up Deep work — Forecasting at 09:00/.test(await text(page.locator('.td-sum'))), await text(page.locator('.td-sum')))
+    // Times read on the 12-hour default, one range style (lib/clock — cal-polish 2026-10-22, clock fallout 2026-10-23).
+    check(`${tag} summary "1 of 6 done · next up Deep work — Forecasting at 9:00 AM"`, /1 of 6 done · next up Deep work — Forecasting at 9:00 AM/.test(await text(page.locator('.td-sum'))), await text(page.locator('.td-sum')))
     check(`${tag} no terrarium band`, (await page.getByText('The terrarium').count()) === 0 && (await page.getByText('pressed & kept').count()) === 0)
     check(`${tag} typed "Add a task…" pill with the mic`, (await page.locator('.td-pill-field', { hasText: 'Add a task…' }).count()) === 1 && (await page.locator('.td-pill-mic').count()) === 1)
     check(`${tag} "Today's three · 1h 30m planned"`, /Today's three/i.test(await text(page.locator('section[data-tour="top3"]'))) && (await text(page.locator('section[data-tour="top3"] .td-label-note'))) === '1h 30m planned', await text(page.locator('section[data-tour="top3"] .td-label-note')))
@@ -255,7 +256,7 @@ for (const theme of ['day', 'night']) for (const [name, at, s] of DESK) {
     check(`${tag} Overdue keeps its own fold with Replan all (Kai 2026-10-07)`, (await page.getByRole('button', { name: /Overdue · 1/ }).count()) === 1 && (await page.getByRole('button', { name: /Replan all/ }).count()) === 1)
     check(`${tag} card head = Plan your day + Begin (the Day card loop)`, /Plan your day/.test(await text(now(page))) && (await now(page).getByRole('button', { name: 'Begin' }).count()) === 1)
     check(`${tag} the ribbon draws today's 4 blocks, the next two listed with Calendar →`, (await page.locator('.td-rb').count()) === 4 && (await page.locator('.td-next-item').count()) === 2 && (await page.locator('.td-cal-link').count()) === 1)
-    check(`${tag} rail Rituals: Morning open with its 4 steps, Evening · from 17:00 folded`, (await page.locator('.td-rit[data-ritual="morning"] .td-rit-step').count()) === 4 && (await page.locator('.td-rit[data-ritual="evening"] .td-rit-step').count()) === 0 && /Evening · from 17:00/.test(await text(page.locator('.td-rit[data-ritual="evening"]'))))
+    check(`${tag} rail Rituals: Morning open with its 4 steps, Evening · from 5:00 PM folded`, /* 12h (lib/clock) */ (await page.locator('.td-rit[data-ritual="morning"] .td-rit-step').count()) === 4 && (await page.locator('.td-rit[data-ritual="evening"] .td-rit-step').count()) === 0 && /Evening · from 5:00 PM/.test(await text(page.locator('.td-rit[data-ritual="evening"]'))))
     check(`${tag} Routines stay in the rail`, /Routines · 1\/3/i.test(await text(page.locator('.td-rail'))))
     const worth = page.locator('section[aria-label="Worth a look"]')
     check(`${tag} Worth a look · 1 of 2 — not the goal's own project (rule 7)`, /1 of 2/.test(await text(worth)) && !(await text(worth)).includes('Forecasting App') && (await worth.getByRole('button', { name: 'Plan a step' }).count()) === 1 && (await worth.getByRole('button', { name: 'Snooze a week' }).count()) === 1, await text(worth))
@@ -265,7 +266,7 @@ for (const theme of ['day', 'night']) for (const [name, at, s] of DESK) {
     check(`${tag} the notebook button`, (await page.getByRole('link', { name: 'Notebook page' }).count()) === 1)
   }
   if (name === 'd2-running-0940') {
-    check(`${tag} Now · 09:00–11:00 · Deep work — Forecasting · 1h 20m left · Start focus`, /Now · 09:00–11:00/i.test(await text(now(page).locator('.td-cap'))) && /Deep work — Forecasting/.test(await text(now(page).locator('.td-now-title'))) && /1h 20m left/.test(await text(now(page).locator('.td-now-sub'))) && (await now(page).getByRole('button', { name: 'Start focus' }).count()) === 1, await text(now(page)))
+    check(`${tag} Now · 9:00–11:00 AM · Deep work — Forecasting · 1h 20m left · Start focus`, /Now · 9:00–11:00 AM/i.test( /* 12h, one range style (lib/clock) */await text(now(page).locator('.td-cap'))) && /Deep work — Forecasting/.test(await text(now(page).locator('.td-now-title'))) && /1h 20m left/.test(await text(now(page).locator('.td-now-sub'))) && (await now(page).getByRole('button', { name: 'Start focus' }).count()) === 1, await text(now(page)))
     check(`${tag} the running block outlined on the ribbon, a now line`, (await page.locator('.td-rb[data-head] .td-rb-spent').count()) === 1 && (await page.locator('.td-ribbon-now').count()) === 1)
     check(`${tag} Up next skips the card's block`, (await page.locator(`#upnext-${eid(DEEP)}`).count()) === 0)
   }
@@ -279,7 +280,7 @@ for (const theme of ['day', 'night']) for (const [name, at, s] of DESK) {
     check(`${tag} Now · 20 min over (amber)`, /Now · 20 min over/i.test(await text(now(page).locator('.td-cap'))) && (await now(page).locator('.td-cap[data-tone="over"]').count()) === 1, await text(now(page).locator('.td-cap')))
   }
   if (name === 'd6-idle-1410') {
-    check(`${tag} idle: no head (no "Free" card), the next two are 15:00 Review the portfolio site`, (await now(page).locator('.td-now-head').count()) === 0 && /15:00\s*Review the portfolio site/.test(await text(page.locator('.td-next'))), await text(page.locator('.td-next')))
+    check(`${tag} idle: no head (no "Free" card), the next two are 3:00 PM Review the portfolio site`, (await now(page).locator('.td-now-head').count()) === 0 && /3:00 PM\s*Review the portfolio site/.test( /* 12h (lib/clock) */await text(page.locator('.td-next'))), await text(page.locator('.td-next')))
   }
   if (name === 'd8-shutdown-1900') check(`${tag} card head = Shut down the day; Evening opens in the rail`, /Shut down the day/.test(await text(now(page))) && (await page.locator('.td-rit[data-ritual="evening"] .td-rit-step').count()) === 4)
   if (name === 'd9-closed-2110') check(`${tag} card head = Day closed ✿`, /Day closed/.test(await text(now(page))))
@@ -320,7 +321,7 @@ if (want('d7')) {
   await page.evaluate(() => { history.pushState({}, '', '/today'); dispatchEvent(new PopStateEvent('popstate')) })
   await sleep(1200)
   // A time block with no task: Start focus took the first open pick (2a's "working on" the pick).
-  check('d7 Paused · since 09:43 — the goal, "left in the round", Resume focus', /Paused · since 09:4\d/i.test(await text(now(page).locator('.td-cap'))) && /Deliver the MVP/.test(await text(now(page))) && /left in the round/.test(await text(now(page))) && (await now(page).getByRole('button', { name: 'Resume focus' }).count()) === 1, await text(now(page)))
+  check('d7 Paused · since 9:43 AM — the goal, "left in the round", Resume focus', /Paused · since 9:4\d AM/i.test( /* 12h (lib/clock) */await text(now(page).locator('.td-cap'))) && /Deliver the MVP/.test(await text(now(page))) && /left in the round/.test(await text(now(page))) && (await now(page).getByRole('button', { name: 'Resume focus' }).count()) === 1, await text(now(page)))
   await shot(page, 'd7-paused-day')
   check('d7 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
