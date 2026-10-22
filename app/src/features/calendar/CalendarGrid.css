@@ -181,10 +181,12 @@
    FC places blocks with `inset`, not transform, so nothing is fighting for the property —
    except mid-drag, where the mirror/ghost carry their own transforms and this can't apply. */
 .fc .fc-timegrid-event {
-  transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
 }
-@media (hover: hover) {
-  .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
+/* Kai 2026-10-22 ("yes, blocks lift slightly on hover"): 1px up and a soft shadow over 140ms —
+   transform and shadow only; none with Effects off (.cal-motion-on) or reduced motion. */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .cal-motion-on .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
 }
 
 /* Kai 2026-07-21: "when the event is too small the text inside gets clipped". A short block
@@ -563,7 +565,6 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 
 /* §7 Interaction — overlay only, the fill never re-tints. */
 .fc .fc-timegrid-event { cursor: grab; }
-.fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); transition: transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out); }
 .fc .fc-timegrid-event:active { cursor: grabbing; }
 /* A Google event (read-only, B1) opens its details; it never picks up. */
 .fc .fc-timegrid-event.kf-synced, .fc .fc-timegrid-event.kf-synced:active { cursor: pointer; }

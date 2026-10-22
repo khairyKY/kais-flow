@@ -76,7 +76,7 @@ const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
 
 async function open(route = '/calendar', o = {}) {
   const view = o.view ?? desktop
-  const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
+  const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', ...(o.reducedMotion ? { reducedMotion: 'reduce' } : null) })
   await ctx.addInitScript(([t, sess, scale, uid, now, clock12]) => {
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
@@ -831,6 +831,35 @@ if (want('c1')) {
 }
 
 // ═══ No empty-title task ═══
+// h1 (Kai 2026-10-22, "yes, blocks lift slightly on hover"): 1px up and a soft shadow; none under reduced
+// motion or with Effects off.
+if (want('h1')) {
+  const lift = async (page) => {
+    const b = fcBlock(page, STANDUP)
+    await b.hover()
+    await sleep(450)
+    const s = await b.evaluate((el) => { const c = getComputedStyle(el); return { t: c.transform, s: c.boxShadow, d: c.transitionDuration } })
+    await page.mouse.move(2, 2)
+    return s
+  }
+  for (const theme of ['day', 'night']) {
+    const { ctx, page, errors } = await open('/calendar', { theme })
+    const s = await lift(page)
+    check(`h1 ${theme}: a block under the pointer lifts 1px with a soft shadow over 140ms`, s.t === 'matrix(1, 0, 0, 1, 0, -1)' && s.s !== 'none' && s.d.startsWith('0.14s'), JSON.stringify(s))
+    if (theme === 'day') {
+      await page.evaluate(() => { localStorage.setItem('kf_effects', '0'); window.dispatchEvent(new Event('kf-effects-change')) })
+      await sleep(300)
+      const off = await lift(page)
+      check('h1 Effects off: no lift', off.t === 'none' && off.s === 'none', JSON.stringify(off))
+    }
+    check(`h1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+  const { ctx, page } = await open('/calendar', { reducedMotion: true })
+  const r = await lift(page)
+  check('h1 reduced motion: no lift', r.t === 'none' && r.s === 'none', JSON.stringify(r))
+  await ctx.close()
+}
 if (want('e1')) {
   const { ctx, page, errors, state } = await open()
   const w0 = state.writes.length
