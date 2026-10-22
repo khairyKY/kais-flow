@@ -310,12 +310,18 @@
    stay visible here: they are the tasks, not the block's own state. cal-looks ("Now" as drawn): the fill
    line under a hairline, then the rows 3px apart, each 13px type with a 12px check (at 125%). */
 .fc .fc-timegrid-event .kf-ev-slot { margin-top: calc(4px * var(--kf-d)); display: flex; flex-direction: column; gap: calc(3px * var(--kf-d)); }
-/* slot-outline, Kai's pick A (design-export/Slot task outline.html): each task is its own outlined card
-   inside the slot — a 1px edge in its accent, 8px corners, on the slot's own wash ("Now": no second fill). */
+/* slot-outline, Kai's pick A (design-export/Slot task outline.html): each task is its own soft card inside
+   the slot — the slot's own wash, a 1px edge in its accent, 8px corners. Kept over the "Now" drawing's plain
+   outlined rows: pick A is Kai's own call for exactly these cards (time-slots o1/o2). */
 .fc .fc-timegrid-event .kf-ev-slot-row {
-  display: flex; align-items: center; gap: calc(6px * var(--kf-d)); min-width: 0; padding: calc(1px * var(--kf-d)) calc(4px * var(--kf-d)); border-radius: 8px;
+  display: flex; align-items: center; min-width: 0; padding: calc(1px * var(--kf-d)) calc(4px * var(--kf-d)); border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--kf-ev-accent, var(--acc-lavender-text)) 35%, transparent);
+  background: var(--kf-ev-fill, color-mix(in srgb, var(--acc-lavender) 24%, transparent));
 }
+/* the drawn 6px after the check; the row's own × and ⋯ (not drawn) sit closer, so a week column's row keeps
+   some title while they show */
+.fc .fc-timegrid-event .kf-ev-slot-row > .kf-ev-check { margin-right: calc(6px * var(--kf-d)); }
+.fc .fc-timegrid-event .kf-ev-slot-row > :is(.kf-ev-slot-out, .kf-ev-slot-more) { margin-left: calc(2px * var(--kf-d)); }
 /* ds-ok: the drawn slot rows' type (13px at 125%), scaled with the grid as the block type around it */
 .fc .fc-timegrid-event .kf-ev-slot-row .fc-event-title.kf-ev-slot-title { font-size: calc(13px * var(--kf-d)); }
 /* ds-ok: the drawn row check (12px at 125%), its glyph scaled with it */

@@ -149,12 +149,12 @@
 /* Time Slots (0073): a Time block's tasks under its title — the block's own check, name and mono
    time type; the fill line ("2 tasks · 45m of 2h") sits where a time line does. */
 .pc-slot { flex-basis: 100%; display: flex; flex-direction: column; gap: 3px; min-width: 0; margin-top: 2px; }
-/* slot-outline, Kai's pick A: each task is its own outlined card in the slot — a 1px edge in its ink, 8px
-   corners, 3px between, on the slot's own wash ("Now" as drawn: no second fill). The fill line sits under a
-   hairline in the accent. */
+/* slot-outline, Kai's pick A: each task is its own soft card in the slot — the block's fill, a 1px edge
+   in its ink, 8px corners, 3px between (kept over the "Now" drawing's plain rows: Kai's pick for these
+   cards). The fill line sits under a hairline in the accent, as drawn. */
 .pc-slot-row {
   display: flex; align-items: center; gap: var(--sp-2); min-width: 0; min-height: 24px; padding: 0 8px 0 2px; border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--pc-ink) 35%, transparent);
+  border: 1px solid color-mix(in srgb, var(--pc-ink) 35%, transparent); background: var(--pc-fill);
 }
 .pc-slot-fill { padding-top: 3px; border-top: 1px solid color-mix(in srgb, var(--pc-edge, var(--pc-ink)) 66%, transparent); }
 .pc-block-body .pc-slot .pc-time { flex-basis: auto; }

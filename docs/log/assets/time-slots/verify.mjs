@@ -446,7 +446,12 @@ if (want('p4')) {
 
 // ── slots-ux (Kai 2026-10-16: "there is something wrong with the logic of the time slots, how do I
 // remove a task from the time slot"): every flow in the handoff's table, desktop and phone. ──
-const rowPt = async (page, slotN = CODE, taskN = HELD, day) => center(await slotRow(page, slotN, taskN, day).locator('.kf-ev-slot-title').boundingBox())
+// cal-looks: grabbed just past the row's check — in a week column the hover's × takes the title's room (the drawn
+// row's 6px gaps), so the title's centre could land on the ×
+const rowPt = async (page, slotN = CODE, taskN = HELD, day) => {
+  const ck = await slotRow(page, slotN, taskN, day).locator('.kf-ev-check').boundingBox()
+  return { x: ck.x + ck.width + 2.5, y: ck.y + ck.height / 2 }
+}
 /** The task's own blocks on the grid (a held task has none — only its row inside the slot). */
 const ownBlocks = (page, title) => page.locator('.fc-timegrid-event .kf-ev-head > .fc-event-title', { hasText: title }).count()
 const taskWrites = (state, taskN, from) => posts(state, 'tasks', from).filter((x) => x.id === id(taskN))
