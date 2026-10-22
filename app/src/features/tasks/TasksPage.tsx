@@ -812,8 +812,11 @@ export function TasksPage() {
         .tasks-page { container: tasks-page / inline-size; }
         .tasks-grid { display: grid; grid-template-columns: minmax(0,1fr); }
         .tasks-rail { display: none; }
-        @container tasks-page (min-width: 760px) {
-          .tasks-grid { grid-template-columns: minmax(0,1fr) 288px; }
+        @container tasks-page (min-width: 788px) {
+          /* today-scale (Kai 2026-10-22, 150%): below the list's 780 cap it ran into the rail's rule —
+             the quick-add box's border on the divider, the counts touching it. 28px between; the
+             switch moves up by as much, so the list keeps its 472. */
+          .tasks-grid { grid-template-columns: minmax(0,1fr) 288px; column-gap: 28px; }
           .tasks-rail { display: block; }
         }
       `}</style>

@@ -1,0 +1,1652 @@
+[
+  {
+    "name": "split-desk-day \"Today's tasks · 3\" (3 open; the 1 done today listed, not counted — as Also open), its own section",
+    "ok": true,
+    "detail": "Today's tasks · 3"
+  },
+  {
+    "name": "split-desk-day Today's tasks = due today, on the calendar today, done today, the parent (its subtask nested under it)",
+    "ok": true,
+    "detail": "4,7,8,5,6"
+  },
+  {
+    "name": "split-desk-day …done today last (done-after-open)",
+    "ok": true,
+    "detail": "4,7,8,5,6"
+  },
+  {
+    "name": "split-desk-day no Top 3 pick and no overdue row in Today's tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-desk-day \"Also open · 5\", a separate section",
+    "ok": true,
+    "detail": "Also open · 5"
+  },
+  {
+    "name": "split-desk-day Also open (unfolded) = later, undated, done-today-undated — none of today's",
+    "ok": true,
+    "detail": "10,11,12,13,14,15"
+  },
+  {
+    "name": "split-desk-day order: Today's three → Today's tasks → Overdue → Also open",
+    "ok": true,
+    "detail": "top3 → Today's tasks → Overdue → Also open"
+  },
+  {
+    "name": "split-desk-day the overdue one stays in its own fold",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-desk-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-phone-day \"Today's tasks · 3\" section (3 open), not folded",
+    "ok": true,
+    "detail": "Today's tasks · 3"
+  },
+  {
+    "name": "split-phone-day Today's tasks rows = the same four (+ the nested subtask)",
+    "ok": true,
+    "detail": "4,7,8,5,6"
+  },
+  {
+    "name": "split-phone-day \"Also open · N\" is the fold below it (was \"More for today\")",
+    "ok": true,
+    "detail": "Also open · 7"
+  },
+  {
+    "name": "split-phone-day the fold sits below Today's tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-phone-day the fold lists the rest, none of today's",
+    "ok": true,
+    "detail": "10,11,12,13,14,15"
+  },
+  {
+    "name": "split-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-desk-night \"Today's tasks · 3\" (3 open; the 1 done today listed, not counted — as Also open), its own section",
+    "ok": true,
+    "detail": "Today's tasks · 3"
+  },
+  {
+    "name": "split-desk-night Today's tasks = due today, on the calendar today, done today, the parent (its subtask nested under it)",
+    "ok": true,
+    "detail": "4,7,8,5,6"
+  },
+  {
+    "name": "split-desk-night …done today last (done-after-open)",
+    "ok": true,
+    "detail": "4,7,8,5,6"
+  },
+  {
+    "name": "split-desk-night no Top 3 pick and no overdue row in Today's tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-desk-night \"Also open · 5\", a separate section",
+    "ok": true,
+    "detail": "Also open · 5"
+  },
+  {
+    "name": "split-desk-night Also open (unfolded) = later, undated, done-today-undated — none of today's",
+    "ok": true,
+    "detail": "10,11,12,13,14,15"
+  },
+  {
+    "name": "split-desk-night order: Today's three → Today's tasks → Overdue → Also open",
+    "ok": true,
+    "detail": "top3 → Today's tasks → Overdue → Also open"
+  },
+  {
+    "name": "split-desk-night the overdue one stays in its own fold",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-desk-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-phone-night \"Today's tasks · 3\" section (3 open), not folded",
+    "ok": true,
+    "detail": "Today's tasks · 3"
+  },
+  {
+    "name": "split-phone-night Today's tasks rows = the same four (+ the nested subtask)",
+    "ok": true,
+    "detail": "4,7,8,5,6"
+  },
+  {
+    "name": "split-phone-night \"Also open · N\" is the fold below it (was \"More for today\")",
+    "ok": true,
+    "detail": "Also open · 7"
+  },
+  {
+    "name": "split-phone-night the fold sits below Today's tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "split-phone-night the fold lists the rest, none of today's",
+    "ok": true,
+    "detail": "10,11,12,13,14,15"
+  },
+  {
+    "name": "split-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1280-100-day the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":281.6,\"r\":932.1,\"w\":650.5} "
+  },
+  {
+    "name": "goal-1280-100-day nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1280-100-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1280-125-day the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":351.9,\"r\":850.6,\"w\":498.8} "
+  },
+  {
+    "name": "goal-1280-125-day nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1280-125-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1280-150-day the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":422.4,\"r\":1220.6,\"w\":798.1} "
+  },
+  {
+    "name": "goal-1280-150-day nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1280-150-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1920-100-day the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":281.7,\"r\":1182.3,\"w\":900.6} "
+  },
+  {
+    "name": "goal-1920-100-day nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1920-100-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1920-125-day the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":352.1,\"r\":1395.5,\"w\":1043.3} "
+  },
+  {
+    "name": "goal-1920-125-day nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1920-125-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1920-150-day the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":422.4,\"r\":1398.2,\"w\":975.7} "
+  },
+  {
+    "name": "goal-1920-150-day nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1920-150-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1280-100-night the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":281.6,\"r\":932.1,\"w\":650.5} "
+  },
+  {
+    "name": "goal-1280-100-night nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1280-100-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1280-125-night the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":351.9,\"r\":850.6,\"w\":498.8} "
+  },
+  {
+    "name": "goal-1280-125-night nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1280-125-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1280-150-night the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":422.4,\"r\":1220.6,\"w\":798.1} "
+  },
+  {
+    "name": "goal-1280-150-night nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1280-150-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1920-100-night the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":281.7,\"r\":1182.3,\"w\":900.6} "
+  },
+  {
+    "name": "goal-1920-100-night nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1920-100-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1920-125-night the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":352.1,\"r\":1395.5,\"w\":1043.3} "
+  },
+  {
+    "name": "goal-1920-125-night nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1920-125-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-1920-150-night the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":422.4,\"r\":1398.2,\"w\":975.7} "
+  },
+  {
+    "name": "goal-1920-150-night nothing drawn over its right border; + and ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-1920-150-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-phone-day the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":15.4,\"r\":374.6,\"w\":359.2} "
+  },
+  {
+    "name": "goal-phone-day nothing drawn over its right border; ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "goal-phone-night the goal card's outline and shadow room clear every clipping box",
+    "ok": true,
+    "detail": "{\"l\":15.4,\"r\":374.6,\"w\":359.2} "
+  },
+  {
+    "name": "goal-phone-night nothing drawn over its right border; ⋯ inside it",
+    "ok": true,
+    "detail": " "
+  },
+  {
+    "name": "goal-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-today-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-today-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-today-day the page's columns fit (lists 398px)",
+    "ok": true,
+    "detail": "lists 398px"
+  },
+  {
+    "name": "scale-1280-125-today-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": false,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":553,\"need\":867,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":36}"
+  },
+  {
+    "name": "scale-1280-125-today-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-inbox-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-inbox-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-inbox-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-calendar-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-calendar-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-calendar-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-tasks-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-tasks-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-tasks-day the page's columns fit (one column)",
+    "ok": true,
+    "detail": "one column"
+  },
+  {
+    "name": "scale-1280-125-tasks-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-projects-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-projects-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-projects-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-project-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-project-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-project-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-routines-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-routines-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-routines-day the page's columns fit (list column 382px)",
+    "ok": true,
+    "detail": "list column 382px"
+  },
+  {
+    "name": "scale-1280-125-routines-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-focus-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-focus-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-focus-day the page's columns fit (checkbox 16px in)",
+    "ok": true,
+    "detail": "checkbox 16px in"
+  },
+  {
+    "name": "scale-1280-125-focus-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-review-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-review-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-review-day the page's columns fit (sweep column 382px, header clear of the side column: true)",
+    "ok": true,
+    "detail": "sweep column 382px, header clear of the side column: true"
+  },
+  {
+    "name": "scale-1280-125-review-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-journal-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-journal-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-journal-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-library-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-library-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-library-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-people-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-people-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-people-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-settings-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-125-settings-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-125-settings-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":553,\"need\":867,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "scale-1280-125-settings-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-today-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-today-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-today-day the page's columns fit (lists 531px)",
+    "ok": true,
+    "detail": "lists 531px"
+  },
+  {
+    "name": "scale-1280-150-today-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":446,\"need\":862,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "scale-1280-150-today-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-inbox-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-inbox-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-inbox-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-calendar-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-calendar-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-calendar-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-tasks-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-tasks-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-tasks-day the page's columns fit (one column)",
+    "ok": true,
+    "detail": "one column"
+  },
+  {
+    "name": "scale-1280-150-tasks-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-projects-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-projects-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-projects-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-project-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-project-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-project-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-routines-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-routines-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-routines-day the page's columns fit (list column 531px)",
+    "ok": true,
+    "detail": "list column 531px"
+  },
+  {
+    "name": "scale-1280-150-routines-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-focus-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-focus-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-focus-day the page's columns fit (checkbox 16px in)",
+    "ok": true,
+    "detail": "checkbox 16px in"
+  },
+  {
+    "name": "scale-1280-150-focus-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-review-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-review-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-review-day the page's columns fit (sweep column 531px, header clear of the side column: true)",
+    "ok": true,
+    "detail": "sweep column 531px, header clear of the side column: true"
+  },
+  {
+    "name": "scale-1280-150-review-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-journal-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-journal-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-journal-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-library-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-library-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-library-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-people-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-people-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-people-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-settings-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1280-150-settings-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1280-150-settings-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":446,\"need\":862,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "scale-1280-150-settings-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-today-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-today-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-today-day the page's columns fit (lists 834px)",
+    "ok": true,
+    "detail": "lists 834px"
+  },
+  {
+    "name": "scale-1920-125-today-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":570,\"need\":943,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "scale-1920-125-today-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-inbox-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-inbox-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-inbox-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-calendar-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-calendar-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-calendar-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-tasks-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-tasks-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-tasks-day the page's columns fit (list to rail 146px)",
+    "ok": true,
+    "detail": "list to rail 146px"
+  },
+  {
+    "name": "scale-1920-125-tasks-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-projects-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-projects-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-projects-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-project-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-project-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-project-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-routines-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-routines-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-routines-day the page's columns fit (list column 720px)",
+    "ok": true,
+    "detail": "list column 720px"
+  },
+  {
+    "name": "scale-1920-125-routines-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-focus-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-focus-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-focus-day the page's columns fit (checkbox 254px in)",
+    "ok": true,
+    "detail": "checkbox 254px in"
+  },
+  {
+    "name": "scale-1920-125-focus-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-review-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-review-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-review-day the page's columns fit (sweep column 680px, header clear of the side column: true)",
+    "ok": true,
+    "detail": "sweep column 680px, header clear of the side column: true"
+  },
+  {
+    "name": "scale-1920-125-review-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-journal-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-journal-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-journal-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-library-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-library-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-library-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-people-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-people-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-people-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-settings-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-125-settings-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-125-settings-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":570,\"need\":943,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "scale-1920-125-settings-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-today-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-today-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-today-day the page's columns fit (lists 650px)",
+    "ok": true,
+    "detail": "lists 650px"
+  },
+  {
+    "name": "scale-1920-150-today-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": false,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":633,\"need\":862,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":36}"
+  },
+  {
+    "name": "scale-1920-150-today-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-inbox-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-inbox-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-inbox-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-calendar-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-calendar-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-calendar-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-tasks-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-tasks-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-tasks-day the page's columns fit (list to rail 28px)",
+    "ok": true,
+    "detail": "list to rail 28px"
+  },
+  {
+    "name": "scale-1920-150-tasks-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-projects-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-projects-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-projects-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-project-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-project-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-project-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-routines-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-routines-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-routines-day the page's columns fit (list column 638px)",
+    "ok": true,
+    "detail": "list column 638px"
+  },
+  {
+    "name": "scale-1920-150-routines-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-focus-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-focus-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-focus-day the page's columns fit (checkbox 126px in)",
+    "ok": true,
+    "detail": "checkbox 126px in"
+  },
+  {
+    "name": "scale-1920-150-focus-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-review-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-review-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-review-day the page's columns fit (sweep column 638px, header clear of the side column: true)",
+    "ok": true,
+    "detail": "sweep column 638px, header clear of the side column: true"
+  },
+  {
+    "name": "scale-1920-150-review-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-journal-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-journal-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-journal-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-library-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-library-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-library-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-people-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-people-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-people-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-settings-day no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-settings-day no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-settings-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":633,\"need\":862,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "scale-1920-150-settings-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-today-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-today-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-today-night the page's columns fit (lists 650px)",
+    "ok": true,
+    "detail": "lists 650px"
+  },
+  {
+    "name": "scale-1920-150-today-night sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":633,\"need\":862,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "scale-1920-150-today-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-inbox-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-inbox-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-inbox-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-calendar-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-calendar-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-calendar-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-tasks-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-tasks-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-tasks-night the page's columns fit (list to rail 28px)",
+    "ok": true,
+    "detail": "list to rail 28px"
+  },
+  {
+    "name": "scale-1920-150-tasks-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-projects-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-projects-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-projects-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-project-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-project-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-project-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-routines-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-routines-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-routines-night the page's columns fit (list column 638px)",
+    "ok": true,
+    "detail": "list column 638px"
+  },
+  {
+    "name": "scale-1920-150-routines-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-focus-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-focus-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-focus-night the page's columns fit (checkbox 126px in)",
+    "ok": true,
+    "detail": "checkbox 126px in"
+  },
+  {
+    "name": "scale-1920-150-focus-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-review-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-review-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-review-night the page's columns fit (sweep column 638px, header clear of the side column: true)",
+    "ok": true,
+    "detail": "sweep column 638px, header clear of the side column: true"
+  },
+  {
+    "name": "scale-1920-150-review-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-journal-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-journal-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-journal-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-library-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-library-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-library-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-people-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-people-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-people-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-settings-night no sideways scroll",
+    "ok": true,
+    "detail": "window 0 · page 0"
+  },
+  {
+    "name": "scale-1920-150-settings-night no key control cut",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "scale-1920-150-settings-night sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":633,\"need\":862,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "scale-1920-150-settings-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-collapsed-1280-125 collapsed rail: every nav row reachable, none cut without the fade, the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":441,\"need\":478,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "ui-collapsed-1280-125 no key control cut, no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-collapsed-1280-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-popover-1280-125 the task popover opens wholly inside the window, nothing in it cut",
+    "ok": true,
+    "detail": "{\"x\":387.5,\"y\":329,\"width\":375,\"height\":371.0625} "
+  },
+  {
+    "name": "ui-popover-1280-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-cmdbar-1280-125 the command bar opens wholly inside the window, nothing in it cut",
+    "ok": true,
+    "detail": "{\"x\":365,\"y\":120,\"width\":550,\"height\":212.5} "
+  },
+  {
+    "name": "ui-cmdbar-1280-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-collapsed-1280-150 collapsed rail: every nav row reachable, none cut without the fade, the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":334,\"need\":474,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
+  },
+  {
+    "name": "ui-collapsed-1280-150 no key control cut, no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-collapsed-1280-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-popover-1280-150 the task popover opens wholly inside the window, nothing in it cut",
+    "ok": true,
+    "detail": "{\"x\":465,\"y\":12,\"width\":450,\"height\":354.671875} "
+  },
+  {
+    "name": "ui-popover-1280-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-cmdbar-1280-150 the command bar opens wholly inside the window, nothing in it cut",
+    "ok": true,
+    "detail": "{\"x\":310,\"y\":144,\"width\":660,\"height\":254} "
+  },
+  {
+    "name": "ui-cmdbar-1280-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-collapsed-1920-125 collapsed rail: every nav row reachable, none cut without the fade, the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":665,\"need\":665,\"scrolls\":false,\"fadeTop\":0,\"fadeEnd\":0}"
+  },
+  {
+    "name": "ui-collapsed-1920-125 no key control cut, no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-collapsed-1920-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-popover-1920-125 the task popover opens wholly inside the window, nothing in it cut",
+    "ok": true,
+    "detail": "{\"x\":387.5,\"y\":329,\"width\":375,\"height\":371.0625} "
+  },
+  {
+    "name": "ui-popover-1920-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-cmdbar-1920-125 the command bar opens wholly inside the window, nothing in it cut",
+    "ok": true,
+    "detail": "{\"x\":685,\"y\":120,\"width\":550,\"height\":212.5} "
+  },
+  {
+    "name": "ui-cmdbar-1920-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-collapsed-1920-150 collapsed rail: every nav row reachable, none cut without the fade, the foot whole",
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":521,\"need\":521,\"scrolls\":false,\"fadeTop\":0,\"fadeEnd\":0}"
+  },
+  {
+    "name": "ui-collapsed-1920-150 no key control cut, no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-collapsed-1920-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-popover-1920-150 the task popover opens wholly inside the window, nothing in it cut",
+    "ok": true,
+    "detail": "{\"x\":465,\"y\":437.296875,\"width\":450,\"height\":443.875} "
+  },
+  {
+    "name": "ui-popover-1920-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ui-cmdbar-1920-150 the command bar opens wholly inside the window, nothing in it cut",
+    "ok": true,
+    "detail": "{\"x\":630,\"y\":144,\"width\":660,\"height\":254} "
+  },
+  {
+    "name": "ui-cmdbar-1920-150 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

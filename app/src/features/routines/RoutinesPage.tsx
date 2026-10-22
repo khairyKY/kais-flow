@@ -314,7 +314,18 @@ export function RoutinesPage() {
   )
 
   return (
-    <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 320px', minHeight: '100%' }}>
+    <div className="routines-page">
+    {/* today-scale (Kai 2026-10-22): the window's width (isMobile) isn't the page's under the 125-150% zoom; at
+        150% on a 1280 window the list column was ~120px beside the 320 rail, its cards overlapping. Below 700px
+        of page the garden goes under the list (a container query reads the page's laid-out width). */}
+    <style>{`
+      .routines-page { container: routines-page / inline-size; }
+      @container routines-page (max-width: 699px) {
+        .routines-grid { grid-template-columns: minmax(0,1fr) !important; }
+        .routines-rail { border-left: none !important; border-top: 1px solid var(--line-solid); }
+      }
+    `}</style>
+    <div className="routines-grid" style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 320px', minHeight: '100%' }}>
       {/* Phone: the shell's 16px gutter is the page's (Today's), not 16 + 20 of its own. */}
       <div style={{ minWidth: 0, padding: isMobile ? 0 : '36px 44px 48px', maxWidth: isMobile ? undefined : 720 }}>
         <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 0 : 20, flexWrap: 'wrap' }}>
@@ -424,7 +435,7 @@ export function RoutinesPage() {
       </div>
 
       {!isMobile && (
-        <div style={{ borderLeft: '1px solid var(--line-solid)', padding: '36px 26px', display: 'flex', flexDirection: 'column', gap: 24, background: 'color-mix(in srgb, var(--paper-sidebar) 40%, transparent)' }}>
+        <div className="routines-rail" style={{ borderLeft: '1px solid var(--line-solid)', padding: '36px 26px', display: 'flex', flexDirection: 'column', gap: 24, background: 'color-mix(in srgb, var(--paper-sidebar) 40%, transparent)' }}>
           {garden}
           {challenge}
         </div>
@@ -460,6 +471,7 @@ export function RoutinesPage() {
             ]}
           />
         ))}
+    </div>
     </div>
   )
 }

@@ -142,8 +142,14 @@ export function WeeklyReviewPage() {
   const currentDomainId = domains.find((d) => !sweptAt.has(d.id))?.id ?? null
 
   return (
-    <div style={{ maxWidth: isMobile ? undefined : 1000 }}>
-      <div style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 280px', gap: isMobile ? 0 : 40 }}>
+    <div className="wr-page" style={{ maxWidth: isMobile ? undefined : 1000 }}>
+      {/* today-scale (Kai 2026-10-22): at 150% on a 1280 window the sweep column was ~210px and its header ran
+          into the right column. Below 640px of page the right column goes under it (container query). */}
+      <style>{`
+        .wr-page { container: wr-page / inline-size; }
+        @container wr-page (max-width: 639px) { .wr-grid { grid-template-columns: minmax(0,1fr) !important; } }
+      `}</style>
+      <div className="wr-grid" style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 280px', gap: isMobile ? 0 : 40 }}>
         <div style={{ minWidth: 0 }}>
           <SweepHeader domainsSwept={sweptAt.size} domainsTotal={domains.length} allSwept={allSwept} closed={!!closedAt} isMobile={isMobile} />
 
@@ -246,7 +252,7 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile }:
   const motion = useMotionEnabled()
   const weekNumber = Math.ceil((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 604_800_000)
   return (
-    <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : undefined, alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? '8px 20px' : 20 }}>
+    <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? '8px 20px' : 20 }}>
       <style>{`
         @keyframes weekLine { from { stroke-dashoffset: 220 } to { stroke-dashoffset: 0 } }
         @keyframes weekDot { 0%, 60% { transform: scale(0); opacity: 0 } 80% { transform: scale(1.3); opacity: 1 } 100% { transform: scale(1); opacity: 1 } }
