@@ -223,7 +223,12 @@ if (want('phone')) for (const theme of ['day', 'night']) {
   await tap(block)
   const rows = await page.locator('.pc-bs-rows .kf-as-row').allInnerTexts()
   check(`p1 ${theme}: the sheet has "No reminder" after the repeat row`, /Does not repeat/.test(rows[3]) && /No reminder/.test(rows[4]), JSON.stringify(rows))
-  await tap(page.locator('.pc-bs-rows .kf-as-row', { hasText: 'No reminder' }))
+  // cal-polish (2026-10-22) put the length chips in this sheet: the Remind row now starts under the
+  // footer until the sheet body scrolls — as a thumb would, scroll it up before the tap.
+  const remindRow = page.locator('.pc-bs-rows .kf-as-row', { hasText: 'No reminder' })
+  await remindRow.evaluate((el) => el.scrollIntoView({ block: 'center' }))
+  await sleep(200)
+  await tap(remindRow)
   const sheet = (await page.locator('.kf-as-row').allInnerTexts()).map((t) => t.trim())
   check(`p1 ${theme}: the Remind sheet lists the seven choices`, REMIND.split('|').every((c) => sheet.some((s) => s.startsWith(c))), JSON.stringify(sheet))
   await shot(page, `p1-remind-sheet-${theme}`)

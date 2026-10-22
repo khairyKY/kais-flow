@@ -7,7 +7,7 @@ import type { PlaceSlot } from '../calendar/phoneGridMath'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
 import { daysToWeekend, weekendLabel } from '../../lib/weekend'
 import { cairoTimeKey } from '../calendar/eventTime'
-import { clockRange } from '../../lib/clock'
+import { clockRange, clockText } from '../../lib/clock'
 import { filterByList } from './grouping'
 import type { CalendarEvent, Task } from '../../lib/types'
 
@@ -16,7 +16,7 @@ export type PlanKey = 'today' | 'slot' | 'spread' | 'tomorrow' | 'weekend' | 'ne
 export interface PlanOption {
   key: PlanKey
   label: string
-  /** Where it lands: "Thu 8 · 09:00", "Today 14:30–15:00". */
+  /** Where it lands, on the person's clock: "Thu 8 · 9:00 AM", "Today 2:30–3:00 PM". */
   hint: string
   /** What it does, in one plain line. */
   means: string
@@ -74,15 +74,16 @@ export function spreadPlan(tasks: readonly Task[], events: readonly CalendarEven
 /** Settings → Calendar's "What the plan shortcuts mean": each Plan option in a sentence. */
 export function planGlossary(weekend: readonly number[]): { label: string; means: string }[] {
   const first = daysToWeekend(0, weekend)
+  const nine = clockText(DEFAULT_TIME)
   return [
-    { label: 'Today', means: 'today, at the task’s own time if it has one, else 09:00.' },
-    { label: 'Next free slot', means: 'ASAP: the first gap on your calendar (08:00–20:00) that fits the task’s length — today if there is one, else the next day that has one. You see it and confirm; Another time offers the next gap.' },
-    { label: 'Tomorrow, first thing', means: 'tomorrow at 09:00, the start of your day. Swipe right and the 2 key do the same.' },
+    { label: 'Today', means: `today, at the task’s own time if it has one, else ${nine}.` },
+    { label: 'Next free slot', means: `ASAP: the first gap on your calendar (${clockRange('08:00', '20:00')}) that fits the task’s length — today if there is one, else the next day that has one. You see it and confirm; Another time offers the next gap.` },
+    { label: 'Tomorrow, first thing', means: `tomorrow at ${nine}, the start of your day. Swipe right and the 2 key do the same.` },
     {
       label: 'This weekend',
-      means: first == null ? 'not offered — you have no weekend set.' : `the first day of your weekend (${weekendLabel(weekend)}) at 09:00 — later in the weekend, the next one. Not offered when that is today or tomorrow (Today and Tomorrow cover it).`,
+      means: first == null ? 'not offered — you have no weekend set.' : `the first day of your weekend (${weekendLabel(weekend)}) at ${nine} — later in the weekend, the next one. Not offered when that is today or tomorrow (Today and Tomorrow cover it).`,
     },
-    { label: 'Next week', means: 'Monday of next week at 09:00 (on a Sunday, the Monday after tomorrow).' },
+    { label: 'Next week', means: `Monday of next week at ${nine} (on a Sunday, the Monday after tomorrow).` },
     { label: 'Pick date & time…', means: 'any day, and a time if you want one.' },
     { label: 'Replan', means: 'what Plan says once a task is overdue. A calendar block of it that is already over comes off the calendar.' },
   ]
@@ -109,21 +110,23 @@ export function planOptions(now: Date, c: PlanContext): PlanOption[] {
   const today = cairoDateKey(now)
   const current = c.task?.due_at ? cairoDateKey(new Date(c.task.due_at)) : null
   const ownTime = c.task?.due_at ? cairoTimeKey(new Date(c.task.due_at)) : DEFAULT_TIME
+  const own = clockText(ownTime)
+  const nine = clockText(DEFAULT_TIME)
   const out: PlanOption[] = []
   for (const q of quickPicks(now, true, c.weekend)) {
     const at = `${dayHint(q.day, today)} · `
     const base = { current: q.day === current }
     if (q.key === 'today') {
-      out.push({ key: 'today', label: 'Today', hint: at + ownTime, means: ownTime === DEFAULT_TIME ? 'today, no set time' : `today, keeps its ${ownTime}`, iso: todayFor(c.task, now), ...base })
+      out.push({ key: 'today', label: 'Today', hint: at + own, means: ownTime === DEFAULT_TIME ? 'today, no set time' : `today, keeps its ${own}`, iso: todayFor(c.task, now), ...base })
       if (c.slot !== undefined) {
         out.push({ key: 'slot', label: 'Next free slot', hint: c.slot ? slotText(c.slot, c.dur ?? 30, now) : 'None free', means: 'ASAP: the first free gap that fits — you confirm' })
       }
       if (c.spread) {
         out.push({ key: 'spread', label: 'Spread into free slots', hint: `${c.spread.today} today · ${c.spread.tomorrow} tomorrow`, means: 'today’s free gaps in order, each its own length; the rest tomorrow — you confirm' })
       }
-    } else if (q.key === 'tomorrow') out.push({ key: 'tomorrow', label: 'Tomorrow, first thing', hint: at + DEFAULT_TIME, means: 'the start of your day', iso: q.iso, ...base })
-    else if (q.key === 'weekend') out.push({ key: 'weekend', label: 'This weekend', hint: at + DEFAULT_TIME, means: `the first day of your weekend (${weekendLabel(c.weekend)})`, iso: q.iso, ...base })
-    else out.push({ key: 'nextweek', label: 'Next week', hint: at + DEFAULT_TIME, means: 'Monday of next week', iso: q.iso, ...base })
+    } else if (q.key === 'tomorrow') out.push({ key: 'tomorrow', label: 'Tomorrow, first thing', hint: at + nine, means: 'the start of your day', iso: q.iso, ...base })
+    else if (q.key === 'weekend') out.push({ key: 'weekend', label: 'This weekend', hint: at + nine, means: `the first day of your weekend (${weekendLabel(c.weekend)})`, iso: q.iso, ...base })
+    else out.push({ key: 'nextweek', label: 'Next week', hint: at + nine, means: 'Monday of next week', iso: q.iso, ...base })
   }
   out.push({ key: 'pick', label: 'Pick date & time…', hint: '', means: 'any day — and a time, if you want one' })
   if (c.someday) out.push({ key: 'someday', label: 'Someday', hint: '', means: 'no date — parked until you pull it up' })
