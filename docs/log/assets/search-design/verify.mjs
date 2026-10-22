@@ -202,9 +202,10 @@ if (want('a')) {
       check('a Tasks peeks 5, the last a Related row "In Shaheen website"', (await rowsIn(page, 'task').count()) === 5 && (await text(rowsIn(page, 'task').nth(4))).includes('Related') && (await text(rowsIn(page, 'task').nth(4))).includes('In Shaheen website'), await text(rowsIn(page, 'task').nth(4)))
       check('a "Show all 9 →" under Tasks, "Show all 5 →" under Journal, none under Events', (await group(page, 'task').getByRole('button', { name: 'Show all 9 →' }).count()) === 1 && (await group(page, 'journal_entry').getByRole('button', { name: 'Show all 5 →' }).count()) === 1 && (await group(page, 'calendar_event').getByRole('button', { name: /Show all/ }).count()) === 0)
       const first = await text(rowsIn(page, 'task').first())
-      check('a task row: the day chip "Tomorrow 15:00" and the "!!" flag', first.includes('Tomorrow 15:00') && first.includes('!!'), first.replace(/\n/g, ' | '))
+      check('a task row: the day chip "Tomorrow 3:00 PM" and the "!!" flag', first.includes('Tomorrow 3:00 PM') /* 12h (lib/clock, cal-polish 2026-10-22) */ && first.includes('!!'), first.replace(/\n/g, ' | '))
       check('a task row with a matching note shows it quoted', first.includes('"Lock the retainer number before Omar flies out on Thursday."'), first.replace(/\n/g, ' | '))
-      check('a event rows: day + times; the past one says so', (await text(rowsIn(page, 'calendar_event').first())).includes('Sat 11 Jul · 15:00 – 15:45') && (await text(rowsIn(page, 'calendar_event').nth(2))).includes('Past · Tue 30 Jun'), await text(rowsIn(page, 'calendar_event').nth(2)))
+      // 12h, one range style (lib/clock): "3:00 – 3:45 PM" (the spaced sheet dash); a past event says Past + its day, no time.
+      check('a event rows: day + times; the past one says so', (await text(rowsIn(page, 'calendar_event').first())).includes('Sat 11 Jul · 3:00 – 3:45 PM') && (await text(rowsIn(page, 'calendar_event').nth(2))).includes('Past · Tue 30 Jun'), `${await text(rowsIn(page, 'calendar_event').first())} | ${await text(rowsIn(page, 'calendar_event').nth(2))}`.replace(/\n/g, ' '))
       check('a person row: "Last touch · 2d ago"', (await text(rowsIn(page, 'person').first())).includes('Last touch · 2d ago'), await text(rowsIn(page, 'person').first()))
       const proj = await text(rowsIn(page, 'project').first())
       check('a project row: "1 open · retainer", "11h this month"', proj.includes('1 open · retainer') && proj.includes('11h this month'), proj.replace(/\n/g, ' | '))
