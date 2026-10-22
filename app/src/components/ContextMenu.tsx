@@ -38,6 +38,8 @@ interface ContextMenuProps {
   width?: number
   /** The menu's accessible name. */
   label?: string
+  /** M2 (2026-10-22): the 100ms way out — the caller keeps it mounted meanwhile (lib/motion useOverlayExit). */
+  closing?: boolean
 }
 
 const SUBMENU_OPEN_DELAY = 150
@@ -48,18 +50,21 @@ const SUBMENU_OPEN_DELAY = 150
 const SUBMENU_SWITCH_DELAY = 300
 const SUBMENU_WIDTH = 220
 
-export function ContextMenu({ items, position, onClose, header, width, label }: ContextMenuProps) {
+export function ContextMenu({ items, position, onClose, header, width, label, closing = false }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null)
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([])
   const openTimer = useRef<number | null>(null)
   const [openIndex, setOpenIndex] = useState<number | null>(null)
   // When the menu opened — once, on mount (callers often pass a new onClose every render).
   const openedAt = useRef(performance.now())
+  const closingRef = useRef(closing)
+  closingRef.current = closing
 
-  useEscapeStack(true, onClose)
+  useEscapeStack(!closing, onClose)
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
+      if (closingRef.current) return
       if (ref.current && !ref.current.contains(e.target as Node)) {
         onClose()
       }
@@ -141,14 +146,16 @@ export function ContextMenu({ items, position, onClose, header, width, label }: 
         the viewport, not to this menu's box — a `transform` on any ancestor turns it into the
         containing block for fixed descendants. */}
     <div ref={ref}>
-      {/* kf-fade (opacity only) — kfOverlayIn's transform would make this menu the
-          containing block for its fixed submenu while animating. */}
+      {/* M2: the one popover recipe (kf-pop, 140ms in from the side it opened toward, 100ms out). Its
+          backwards fill ends at no transform, so a fixed submenu anchors to the viewport once the menu
+          has arrived. */}
       <div
         ref={menuRef}
         role="menu"
         aria-label={label}
-        className="kf-fade"
+        className={`kf-pop${closing ? ' kf-pop--out' : ''}`}
         style={{
+          ['--pop-origin' as string]: `${nudge.y > 0 ? 'bottom' : 'top'} ${nudge.x > 0 ? 'right' : 'left'}`,
           position: 'fixed',
           top: Math.max(12, position.y / z - nudge.y),
           left: Math.max(8, position.x / z - nudge.x),

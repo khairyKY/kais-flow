@@ -57,7 +57,7 @@ export function StackMorePopover({ anchor, items, onPick, onClose }: StackMorePo
         role="menu"
         aria-label="Stacked blocks"
         data-kf-more-popover=""
-        className="kf-overlay-card"
+        className="kf-pop"
         style={{
           position: 'fixed',
           top,

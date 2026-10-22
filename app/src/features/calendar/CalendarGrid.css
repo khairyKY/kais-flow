@@ -186,7 +186,6 @@
 @media (hover: hover) {
   .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
 }
-.fc .fc-timegrid-event:active { transform: scale(0.97); transition-duration: 80ms; }
 
 /* Kai 2026-07-21: "when the event is too small the text inside gets clipped". A short block
    can't fit 4c's stacked title+time, so it collapses to one line: title truncates with an
@@ -313,6 +312,8 @@ body > .fc-event-dragging[data-title] {
   box-shadow: var(--shadow-popover);
 }
 body > .fc-event-dragging[data-title] > * { display: none !important; }
+@keyframes kfLiftCard { from { scale: 0.96; box-shadow: none; } }
+.kf-motion-on body > .fc-event-dragging[data-title] { animation: kfLiftCard 120ms var(--ease-out) backwards; }
 body > .fc-event-dragging[data-title]::before { content: attr(data-title); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex: none; font-family: var(--font-mono); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--acc-lavender-text); }
 
@@ -415,13 +416,16 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
    · .kf-cal-ghost  — our own clone, follows the pointer continuously (CalendarGrid.tsx)
    · .fc-event-mirror — FullCalendar's snapping element, demoted to the stepped placeholder
    Previously the mirror played both parts, so nothing ever moved freely. */
+@keyframes kfLift { from { scale: 0.962; box-shadow: none; } }
 .kf-cal-ghost {
   opacity: 0.95;
   box-shadow: 0 14px 30px rgba(var(--kf-shadow-rgb, 60,52,38), 0.26);
   border-radius: var(--radius-block);   /* B: the block it lifts (was 2px) */
 }
 /* Motion 5b lift + the 2c wobble — on the ghost, which is the thing "in hand". */
-.cal-motion-on .kf-cal-ghost { animation: calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
+.cal-motion-on .kf-cal-ghost { animation: kfLift 120ms var(--ease-out) backwards, calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
+/* M1: the settle — the float stops, the lift comes off, while the host glides onto the block (160ms). */
+.kf-cal-ghost.kf-cal-ghost-settle { animation: none; transform: none; box-shadow: none; transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out); }
 /* Effects toggle off / reduced motion: no wobble, but the block still reads as picked up. */
 .kf-cal-ghost { transform: scale(1.04); }
 
@@ -454,32 +458,6 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .fc .fc-event-mirror .fc-event-time { opacity: 0.55; }
 .cal-motion-on .fc-event-mirror { animation: none; }
 
-/* 4c's resize snap line — "the handle commits to the grid line", flashed at the committed
-   slot. 1.5px solid --acc-lavender-deep, up over 120ms per the recipe. */
-@keyframes calSnapLineFlash {
-  0% { opacity: 0; }
-  25%, 70% { opacity: 1; }
-  100% { opacity: 0; }
-}
-.kf-cal-snapline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 0;
-  border-top: 1.5px solid var(--acc-lavender-deep);
-  pointer-events: none;
-  z-index: 6;
-  opacity: 0;
-}
-.cal-motion-on .kf-cal-snapline { animation: calSnapLineFlash 320ms var(--ease-out); }
-@keyframes calGridSnapFlash {
-  0% { box-shadow: 0 0 0 2px var(--acc-lavender-deep), var(--shadow-card); }
-  100% { box-shadow: var(--shadow-crisp); }
-}
-.cal-motion-on .fc-timegrid-event.kf-snap-flash {
-  animation: calGridSnapFlash 120ms var(--ease-out);
-}
-
 /* Effects 21 "Settle-in" — a task dropped from the rail lands: falls, overshoots a breath,
    settles. One-shot on the freshly created chip (CalendarGrid gets the id via justDroppedId).
    Ends at transform:none per the 2026-07-18 containing-block ruling. */
@@ -489,9 +467,24 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
   from { box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc-lavender-deep) 18%, transparent); }
   to   { box-shadow: 0 0 0 3px transparent; }
 }
-.cal-motion-on .fc-timegrid-event.kf-settle-in {
+.cal-motion-on .fc .fc-timegrid-event[data-landed] {
   animation: calJustLanded 300ms var(--ease-out);
 }
+/* S2 + M1: a moved block stays hidden until the ghost has settled onto it (CalendarGrid settleGhost). */
+.fc .fc-event[data-landing] { visibility: hidden; }
+/* M8: a block that left fades where it was — a copy over the grid (CalendarGrid fadeOut). */
+@keyframes kfCalLeave { to { opacity: 0; transform: scale(0.98); } }
+.kf-cal-leaving { animation: kfCalLeave 120ms var(--ease-in) forwards; }
+/* M7: paging slides the days in from the side they come from (CalendarGrid slide) — the day columns
+   and their headers only, never the time axis or the scroller. */
+@keyframes kfCalNavNext { from { opacity: 0.4; transform: translateX(16px); } }
+@keyframes kfCalNavPrev { from { opacity: 0.4; transform: translateX(-16px); } }
+.cal-motion-on [data-nav="next"] .fc-timegrid-body .fc-timegrid-cols,
+.cal-motion-on [data-nav="next"] .fc-col-header,
+.cal-motion-on [data-nav="next"] .fc-daygrid-body { animation: kfCalNavNext 160ms var(--ease-out); }
+.cal-motion-on [data-nav="prev"] .fc-timegrid-body .fc-timegrid-cols,
+.cal-motion-on [data-nav="prev"] .fc-col-header,
+.cal-motion-on [data-nav="prev"] .fc-daygrid-body { animation: kfCalNavPrev 160ms var(--ease-out); }
 
 
 /* ═══ CALENDAR.md v2 — the five axes, composed as classes (CalendarGrid.tsx events map) ═══ */
@@ -571,10 +564,13 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 /* §7 Interaction — overlay only, the fill never re-tints. */
 .fc .fc-timegrid-event { cursor: grab; }
 .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); transition: transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out); }
-.fc .fc-timegrid-event:active { transform: scale(0.99); box-shadow: none; cursor: grabbing; }
+.fc .fc-timegrid-event:active { cursor: grabbing; }
 /* A Google event (read-only, B1) opens its details; it never picks up. */
 .fc .fc-timegrid-event.kf-synced, .fc .fc-timegrid-event.kf-synced:active { cursor: pointer; }
 .fc .fc-timegrid-event:focus-visible { outline: 2px solid var(--kf-ev-edge, var(--acc-lavender-deep)); outline-offset: 2px; }
+/* §7 the outbox's words on the time row (S2: set on the element, never through FullCalendar's data) */
+.fc .fc-timegrid-event.kf-pending .kf-ev-sync::after { content: ' · saving ◌'; }
+.fc .fc-timegrid-event.kf-failed .kf-ev-sync::after { content: ' · retry ⚠'; }
 /* pending — outbox write still queued: OUTER dashed outline, the border stays semantic */
 .fc .fc-timegrid-event.kf-pending { outline: 1px dashed var(--ink-hairline); outline-offset: 2px; }
 /* sync-failed — server rejected: sig-overdue OUTLINE + ⚠; the FILL never goes terra */

@@ -154,13 +154,15 @@ function CustomTime({ event, position, onDone, onClose }: { event: CalendarEvent
   )
 }
 
-export function BlockMenu({ event, position, onClose, onReplan }: {
+export function BlockMenu({ event, position, onClose, onReplan, closing }: {
   event: CalendarEvent
   /** Screen px — besideBlock() of the block. */
   position: { x: number; y: number }
   onClose: () => void
   /** A missed task block's Replan…: the calendar's Plan menu at this point. */
   onReplan?: (x: number, y: number) => void
+  /** M2: on its way out (100ms). */
+  closing?: boolean
 }) {
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
@@ -351,6 +353,7 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
     <ContextMenu
       position={position}
       onClose={onClose}
+      closing={closing}
       width={BLOCK_MENU_WIDTH}
       label="Block details"
       header={

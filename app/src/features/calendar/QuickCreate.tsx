@@ -70,6 +70,8 @@ export interface QuickCreateProps {
   draft?: CreateDraft
   /** The popover's "More options ↗": the page takes over with what's typed so far. */
   onExpand?: (draft: CreateDraft) => void
+  /** M2 (2026-10-22): the popover on its way out (100ms) — the caller keeps it mounted meanwhile. */
+  closing?: boolean
 }
 
 const KIND_META: Record<QuickCreateKind, { label: string; desc: string; cta: string; hand: string }> = {
@@ -143,7 +145,7 @@ function PickField({ children, onClick, label }: { children: ReactNode; onClick:
   )
 }
 
-export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, draft, onExpand }: QuickCreateProps) {
+export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, draft, onExpand, closing = false }: QuickCreateProps) {
   const motion = useMotionEnabled()
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
@@ -180,7 +182,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   const [priorityTouched, setPriorityTouched] = useState(false)
   const [projectTouched, setProjectTouched] = useState(false)
 
-  useEscapeStack(!repeatAt, onClose)
+  useEscapeStack(!repeatAt && !closing, onClose)
   useBodyScrollLock(!page)
 
   // The compact popover's place, from its measured size (VISUAL px ÷ zoom = layout px, lib/uiScale).
@@ -720,13 +722,13 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   const at = anchor ? pos ?? { left: Math.max(8, Math.min(anchor.x / z, vw - 368)), top: Math.max(8, anchor.y / z) } : { left: Math.max(8, (vw - 360) / 2), top: Math.max(8, vh / 5) }
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998, pointerEvents: closing ? 'none' : undefined }} />
       <div
         ref={popRef}
-        className="kf-quickcreate" onClick={(e) => e.stopPropagation()}
+        className={`kf-quickcreate kf-pop${closing ? ' kf-pop--out' : ''}`} onClick={(e) => e.stopPropagation()}
         // deviation(2026-07-18 audit): export 2a tilts the popover rotate(-0.3deg), but the
         // sub-pixel transform blurred all popover text — dropped for crisp rendering.
-        style={{ position: 'fixed', left: at.left, top: at.top, width: 360, maxWidth: vw - 16, maxHeight: vh - 16, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
+        style={{ position: 'fixed', left: at.left, top: at.top, width: 360, maxWidth: vw - 16, maxHeight: vh - 16, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', boxShadow: 'var(--shadow-popover)', padding: '15px 16px', ['--pop-origin' as string]: anchor ? `${anchor.y / z > at.top + 40 ? 'bottom' : 'top'} ${anchor.x / z > at.left + 180 ? 'right' : 'left'}` : 'center' }}
       >
         {kindSwitcher}
         {titleField}

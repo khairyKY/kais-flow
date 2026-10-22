@@ -112,8 +112,9 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
       ref={ref}
       role="dialog"
       aria-label="View options"
-      className={`kf-overlay-card${closing ? ' kf-overlay-card--out' : ''}`}
+      className={`kf-pop${closing ? ' kf-pop--out' : ''}`}
       style={{
+        ['--pop-origin' as string]: 'top right',
         position: 'fixed',
         top,
         left,

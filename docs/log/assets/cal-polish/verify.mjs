@@ -376,7 +376,7 @@ if (want('d4')) {
   await mouseDrag(page, { x: p.x, y: lane.y + 2 }, { x: p.x, y: lane.y + lane.height * 0.4 })
   const qc = page.locator('.kf-quickcreate')
   const times = await qcTimes(page)
-  check('d4 the drag opens quick create on 10:00–10:15', times.includes('10:00 AM') && times.includes('10:15 AM'), JSON.stringify(times))
+  check('d4 the drag opens quick create on 10:00–10:15', times.includes('10:00') && times.includes('10:15'), JSON.stringify(times))
   await qc.locator('button', { hasText: /^Event$/ }).first().click()
   await qc.getByLabel('Title').fill('Quick sync')
   const w0 = state.writes.length
@@ -389,7 +389,7 @@ if (want('d4')) {
   await page.mouse.click(p2.x, p2.y + 4)
   await sleep(500)
   const t2 = await qcTimes(page)
-  check('d4 a plain click opens 15:00–15:30 (the half hour, as before)', t2.includes('3:00 PM') && t2.includes('3:30 PM'), JSON.stringify(t2))
+  check('d4 a plain click opens 15:00–15:30 (the half hour, as before)', t2.includes('15:00') && t2.includes('15:30'), JSON.stringify(t2))
   check('d4 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
@@ -407,7 +407,7 @@ if (want('d5')) {
     await lenChip(page, '15m').click()
     await sleep(200)
     const times = await qcTimes(page)
-    check(`d5-${theme} 15m → the end reads 15:15, 15m picked`, times.includes('3:15 PM') && (await lenChip(page, '15m').getAttribute('aria-pressed')) === 'true', JSON.stringify(times))
+    check(`d5-${theme} 15m → the end reads 15:15, 15m picked`, times.includes('15:15') && (await lenChip(page, '15m').getAttribute('aria-pressed')) === 'true', JSON.stringify(times))
     await shot(page, `d5-quickcreate-${theme}`)
     if (theme === 'day') {
       await qc.locator('button', { hasText: /^Task$/ }).first().click()
