@@ -812,7 +812,7 @@ export function AppLayout() {
         @property --kf-side-fade { syntax: '<length>'; inherits: false; initial-value: 0px; }
         @keyframes kfSideFade { from, 96% { --kf-side-fade: 36px; } to { --kf-side-fade: 0px; } }
         @supports (animation-timeline: scroll()) {
-          .app-sidebar-col { mask-image: linear-gradient(to bottom, #000 calc(100% - var(--kf-side-fade)), transparent); animation: kfSideFade linear both; animation-timeline: scroll(self); }
+          .app-sidebar-col { mask-image: linear-gradient(to bottom, var(--ink-body) calc(100% - var(--kf-side-fade)), transparent); /* a mask reads alpha only */ animation: kfSideFade linear both; animation-timeline: scroll(self); }
         }
         .app-sidebar.collapsed .app-sidebar-col::-webkit-scrollbar { display: none; }
         /* Kai 2026-10-03: collapsed, a row's 12px side padding + its 18px icon (42) were wider than
