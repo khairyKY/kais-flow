@@ -401,8 +401,9 @@ function SideHeader({ collapsed, sync: withSync, onSignOut }: { collapsed: boole
   const motionOn = useMotionEnabled()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   const dot = (sync: SideSync | null) =>
-    // Its words as a tooltip — the dot alone says nothing on hover or to a screen reader ("offline · 1").
-    sync && <span className="kf-side-sync-dot" data-sync={sync.kind} title={sync.label} style={sync.kind === 'synced' && motionOn ? { animation: 'twinkle 300ms var(--ease-out)' } : undefined} />
+    // Its words as a tooltip on hover ("offline · 1"); aria-hidden, as the menu's sync row (and the
+    // name button) already says them — a titled span would read twice inside that row.
+    sync && <span className="kf-side-sync-dot" aria-hidden="true" data-sync={sync.kind} title={sync.label} style={sync.kind === 'synced' && motionOn ? { animation: 'twinkle 300ms var(--ease-out)' } : undefined} />
   const header = (sync: SideSync | null) => (
     // Onboarding's promise: "the whole app takes your name" + the workspace line. Unset answers keep
     // the old "Kai's Flow / Personal · Cairo". The city is the user's zone's (Settings → Timezone; Cairo
