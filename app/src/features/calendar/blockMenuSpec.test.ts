@@ -22,7 +22,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
     const spec = blockMenuSpec(block({ task_id: 't1', type: 'task' }), { task: { title: 'Host all the AI in one place', status: 'todo' }, projectName: 'Forecasting', now: NOW })
     expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'duplicate', 'unschedule', 'delete'])
     expect(spec[0]).toMatchObject({ label: 'Wed, Jul 29', sub: true })
-    expect(spec[1]).toMatchObject({ label: '09:00–11:00', hint: '2h', sub: true }) // Cairo, UTC+3
+    expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h', sub: true }) // Cairo, UTC+3
     expect(spec[2]).toMatchObject({ label: 'Forecasting', unset: false })
     expect(spec[3]).toMatchObject({ label: 'Complete', divider: true, caption: { label: 'From task', text: 'Host all the AI in one place' } })
     expect(spec[5]).toMatchObject({ label: 'Duplicate' }) // Kai 2026-10-17: the task's copy, blocked at this time
@@ -108,7 +108,7 @@ describe('a Google event (B1): read-only', () => {
     expect(isSynced(e)).toBe(true)
     expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google'])
     expect(spec.every((r) => !r.sub && !r.destructive)).toBe(true)
-    expect(spec[1]).toMatchObject({ label: '09:00–11:00', hint: '2h' })
+    expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h' })
     expect(spec[2]).toMatchObject({ label: 'From Google · Prayer times', divider: true })
     expect(blockMenuSpec(block({ source: 'gcal', all_day: true }))[1]).toMatchObject({ label: 'All day' })
     expect(isSynced(block())).toBe(false)

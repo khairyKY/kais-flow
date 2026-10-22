@@ -319,12 +319,12 @@ if (want('e3')) {
     await page.locator(`.fc-event[data-kf-id="${eid(NIGHT)}"]`).first().scrollIntoViewIfNeeded()
     await sleep(400)
     const segs = await page.locator('.fc-daygrid-event.kf-seg').allInnerTexts()
-    check(`e3 ${theme}: the Offsite span is three pieces in the band — "Offsite »", "« »", "« ends 3:00 PM"`, segs.length === 3 && /^Offsite »$/.test(segs[0].trim()) && /^« »$/.test(segs[1].trim()) && /« ends 3:00 PM/.test(segs[2]), JSON.stringify(segs))
+    check(`e3 ${theme}: the Offsite span is three pieces in the band — "Offsite »", "« »", "« ends 15:00"`, segs.length === 3 && /^Offsite »$/.test(segs[0].trim()) && /^« »$/.test(segs[1].trim()) && /« ends 15:00/.test(segs[2]), JSON.stringify(segs))
     const shapes = await page.locator('.fc-daygrid-event.kf-seg').evaluateAll((els) => els.map((el) => getComputedStyle(el).borderTopLeftRadius + '/' + getComputedStyle(el).borderTopRightRadius))
     check(`e3 ${theme}: only the outer corners round`, shapes[0].startsWith('0px') === false && shapes[0].endsWith('/0px') && shapes[1] === '0px/0px' && shapes[2].startsWith('0px/'), JSON.stringify(shapes))
     check(`e3 ${theme}: the span is not also drawn in the time grid`, (await page.locator(`.fc-timegrid-event[data-kf-id="${eid(OFFSITE)}"]`).count()) === 0)
     const cuts = await page.locator(`.fc-timegrid-event[data-kf-id="${eid(NIGHT)}"] .kf-ev-cut`).allInnerTexts()
-    check(`e3 ${theme}: the night shift is cut at midnight — "⌄ 1:30 AM" on Tue, "⌃ from 11:00 PM" on Wed`, cuts.some((c) => /⌄ 1:30 AM/.test(c)) && cuts.some((c) => /⌃ from 11:00 PM/.test(c)), JSON.stringify(cuts))
+    check(`e3 ${theme}: the night shift is cut at midnight — "⌄ 01:30" on Tue, "⌃ from 23:00" on Wed (the 24-hour clock this harness pins)`, cuts.some((c) => /⌄ 01:30/.test(c)) && cuts.some((c) => /⌃ from 23:00/.test(c)), JSON.stringify(cuts))
     // A click on a span piece opens the block itself.
     if (theme === 'day') {
       await page.locator('.fc-daygrid-event.kf-seg').nth(1).click()

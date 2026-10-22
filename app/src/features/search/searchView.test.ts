@@ -223,7 +223,7 @@ describe('the row lines (1a)', () => {
   })
 
   it('events: day + times; a past one fades and says so', () => {
-    expect(view(hit('calendar_event', 'e-next')).line).toBe('Tue 13 Oct · 15:00–15:45')
+    expect(view(hit('calendar_event', 'e-next')).line).toBe('Tue 13 Oct · 15:00 – 15:45')
     expect(view(hit('calendar_event', 'e-past'))).toMatchObject({ line: 'Past · Wed 30 Sep', faded: true })
   })
 

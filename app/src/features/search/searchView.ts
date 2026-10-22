@@ -394,7 +394,7 @@ export function describeRow(row: SearchRow, ix: SearchIndex, query: string, now:
       const s = new Date(e.starts_at)
       const past = Date.parse(e.ends_at) < now.getTime()
       const day = dayShort(zoneDateKey(s))
-      return { ...base, title: e.title, faded: past, line: past ? `Past · ${day}` : e.all_day ? `${day} · All day` : `${day} · ${timeRange(s, new Date(e.ends_at))}` }
+      return { ...base, title: e.title, faded: past, line: past ? `Past · ${day}` : e.all_day ? `${day} · All day` : `${day} · ${timeRange(s, new Date(e.ends_at)).replace('–', ' – ')}` }
     }
     case 'journal_entry': {
       const j = ix.journal_entry.get(id)

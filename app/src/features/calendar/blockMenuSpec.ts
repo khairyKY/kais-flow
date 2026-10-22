@@ -98,7 +98,7 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
   if (isSynced(e)) {
     return [
       { key: 'date', label: blockDate(e) },
-      e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)), hint: durationLabel(span.end - span.start) },
+      e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start) },
       { key: 'google', label: `From Google · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
     ]
   }
@@ -107,7 +107,7 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
     { key: 'date', label: blockDate(e), sub: true },
     e.all_day
       ? { key: 'time', label: 'All day' }
-      : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)), hint: durationLabel(span.end - span.start), sub: true },
+      : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: true },
     { key: 'project', label: ctx.projectName ?? 'No project', unset: !ctx.projectName, sub: true },
   ]
   // A task block repeats through its task's own rule, never on the calendar.

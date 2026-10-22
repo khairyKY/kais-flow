@@ -180,11 +180,11 @@
    Values match .kf-lift exactly (xfx.css): -1px + shadow on hover, 0.97 at 80ms on press.
    FC places blocks with `inset`, not transform, so nothing is fighting for the property —
    except mid-drag, where the mirror/ghost carry their own transforms and this can't apply. */
-.fc .fc-timegrid-event {
-  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
-}
 /* Kai 2026-10-22 ("yes, blocks lift slightly on hover"): 1px up and a soft shadow over 140ms —
    transform and shadow only; none with Effects off (.cal-motion-on) or reduced motion. */
+.fc .fc-timegrid-event {
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out); /* ds-ok: Kai asked for the hover shadow (2026-10-22) */
+}
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .cal-motion-on .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
 }
@@ -314,7 +314,7 @@ body > .fc-event-dragging[data-title] {
   box-shadow: var(--shadow-popover);
 }
 body > .fc-event-dragging[data-title] > * { display: none !important; }
-@keyframes kfLiftCard { from { scale: 0.96; box-shadow: none; } }
+@keyframes kfLiftCard { from { scale: 0.96; } }
 .kf-motion-on body > .fc-event-dragging[data-title] { animation: kfLiftCard 120ms var(--ease-out) backwards; }
 body > .fc-event-dragging[data-title]::before { content: attr(data-title); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex: none; font-family: var(--font-mono); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--acc-lavender-text); }
@@ -418,7 +418,7 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
    · .kf-cal-ghost  — our own clone, follows the pointer continuously (CalendarGrid.tsx)
    · .fc-event-mirror — FullCalendar's snapping element, demoted to the stepped placeholder
    Previously the mirror played both parts, so nothing ever moved freely. */
-@keyframes kfLift { from { scale: 0.962; box-shadow: none; } }
+@keyframes kfLift { from { scale: 0.962; } }
 .kf-cal-ghost {
   opacity: 0.95;
   box-shadow: 0 14px 30px rgba(var(--kf-shadow-rgb, 60,52,38), 0.26);
@@ -427,7 +427,7 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 /* Motion 5b lift + the 2c wobble — on the ghost, which is the thing "in hand". */
 .cal-motion-on .kf-cal-ghost { animation: kfLift 120ms var(--ease-out) backwards, calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
 /* M1: the settle — the float stops, the lift comes off, while the host glides onto the block (160ms). */
-.kf-cal-ghost.kf-cal-ghost-settle { animation: none; transform: none; box-shadow: none; transition: transform 160ms var(--ease-out), box-shadow 160ms var(--ease-out); }
+.kf-cal-ghost.kf-cal-ghost-settle { animation: none; transform: none; box-shadow: none; transition: transform 160ms var(--ease-out); }
 /* Effects toggle off / reduced motion: no wobble, but the block still reads as picked up. */
 .kf-cal-ghost { transform: scale(1.04); }
 
