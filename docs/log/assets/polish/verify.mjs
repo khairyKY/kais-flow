@@ -338,14 +338,15 @@ if (want('p3')) {
 }
 
 if (want('p4')) {
-  // 11m: "⏎ Add all · ⌫ drop line · T change type" on the computer.
+  // 11m: "⏎ Add all · ⌫ drop line · T change type" on the computer — paper-review (2026-10-22) made the line
+  // "↑↓ a line · ⏎ add · ⌫ dismiss · T type · A select all": ⏎ adds the ringed line (all with none ringed), ⌫ dismisses.
   for (const theme of ['day', 'night']) {
     const { ctx, page, errors, state } = await openPaper('/inbox', { view: desktop, theme })
     await page.locator('.pp-ready').getByRole('button', { name: 'Review' }).click()
     await sleep(900)
     const hint = await page.locator('.pp-keys').innerText().catch(() => '')
     const focused = await page.evaluate(() => document.activeElement?.textContent ?? '')
-    check(`p4 ${theme}: the keys line as 11m draws it; Add all has the focus`, hint === '⏎ Add all · ⌫ drop line · T change type' && /Add all 4/.test(focused), `${hint} · focus "${focused}"`)
+    check(`p4 ${theme}: the keys line as 11m draws it; Add all has the focus`, hint === '↑↓ a line · ⏎ add · ⌫ dismiss · T type · A select all' && /Add all 4/.test(focused), `${hint} · focus "${focused}"`)
     await shot(page, `p4-keys-desktop-${theme}`)
     if (theme === 'day') {
       await page.keyboard.press('ArrowDown')
@@ -356,7 +357,7 @@ if (want('p4')) {
       await sleep(300)
       const left = await page.locator('.pp-row .pp-row-text').allInnerTexts()
       const ring2 = await page.locator('.pp-row.is-ringed .pp-row-text').innerText().catch(() => '')
-      check('p4 ↓↓ then ⌫ drops that line ("Line dropped" + Undo), the ring moves on', ring === 'Assignment 2' && !left.includes('Assignment 2') && ring2 === 'Read ch. 4 — scheduling' && (await toastSoon(page, 'Line dropped')), `${ring} → ${ring2} · ${left.join(' | ')}`)
+      check('p4 ↓↓ then ⌫ dismisses that line ("Line dismissed" + Undo), the ring moves on', ring === 'Assignment 2' && !left.includes('Assignment 2') && ring2 === 'Read ch. 4 — scheduling' && (await toastSoon(page, 'Line dismissed')), `${ring} → ${ring2} · ${left.join(' | ')}`)
       await page.keyboard.press('t')
       await sleep(400)
       const menu = page.locator('[role="menu"]')
@@ -367,12 +368,15 @@ if (want('p4')) {
       await sleep(300)
       const type = await page.locator('.pp-row.is-ringed .pp-type').innerText()
       check('p4 the pick lands on that line (Read ch. 4 → Event), ⌫ under the menu dropped nothing', /Event/.test(type) && (await page.locator('.pp-row').count()) === 3, type)
-      await page.keyboard.press('Enter')
+      await page.keyboard.press('Enter') // ⏎ adds the ringed line now (paper-review)
+      await sleep(700)
+      check('p4 ⏎ adds the ringed line alone: Read ch. 4 (an undated event) to the Inbox', state.rows.inbox_items.some((i) => i.raw_text === 'Read ch. 4 — scheduling') && state.rows.tasks.length === 0, JSON.stringify(state.rows.inbox_items.map((i) => i.raw_text)))
+      await page.getByRole('button', { name: /^Add all/ }).first().click()
       await sleep(700)
       const tasks = state.rows.tasks.map((t) => t.title)
       const inbox = state.rows.inbox_items.map((i) => i.raw_text)
       // An event with no date goes to the Inbox (planWrites), the heading is a note there too.
-      check('p4 ⏎ adds all what is left: Buy blue pens a task, the undated event + the heading to the Inbox, Assignment 2 nowhere; the results close',
+      check('p4 Add all adds what is left: Buy blue pens a task, the heading to the Inbox (the event went first), Assignment 2 nowhere; the results close',
         tasks.join() === 'Buy blue pens' && inbox.includes('Read ch. 4 — scheduling') && inbox.includes('OS lecture 3 — 4 Oct') && !inbox.includes('Assignment 2') && (await page.locator('.pp-keys').count()) === 0, JSON.stringify({ tasks, inbox }))
     }
     check(`p4 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))

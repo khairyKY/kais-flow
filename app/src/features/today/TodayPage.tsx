@@ -267,8 +267,9 @@ export function TodayPage() {
   // Kai 2026-10-22 ("the today tasks are combined with the also open tasks"): what's due or on the
   // calendar today (../tasks/grouping isTodayTask, the Tasks "Today" list's rule) is its own
   // section, Today's tasks; Also open is the rest. Same order rules in both.
-  const todayRows = restOpen.filter((t) => isTodayTask(t, now))
-  const alsoRows = restOpen.filter((t) => !isTodayTask(t, now))
+  // One back from snooze came back today: it leads Today's tasks (the list's order puts it first), whatever its date.
+  const todayRows = restOpen.filter((t) => isTodayTask(t, now) || backFromSnooze(t, now))
+  const alsoRows = restOpen.filter((t) => !isTodayTask(t, now) && !backFromSnooze(t, now))
   const todayCount = todayRows.filter((t) => !t.completed_at).length
   const openCount = alsoRows.filter((t) => !t.completed_at).length
   const allDone = !tasksPending && open.length === 0 && doneToday > 0
@@ -654,10 +655,9 @@ export function TodayPage() {
     const row = (t: Task, extra: { pick?: boolean; block?: CalendarEvent; meta?: string[]; place?: RowGrammarOptions['place'] } = {}) => (
       <TaskRow key={extra.block?.id ?? t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
-    // Snooze: what came back today sits above the folds, as on the desktop it leads its list.
-    const backOpen = restOpen.filter((t) => backFromSnooze(t, now))
-    const todayPhoneRows = todayRows.filter((t) => !backFromSnooze(t, now))
-    const foldOpenRows = alsoRows.filter((t) => !backFromSnooze(t, now))
+    // Snooze: what came back today leads Today's tasks, as on the desktop (each row wears its marker).
+    const todayPhoneRows = todayRows
+    const foldOpenRows = alsoRows
     const foldCount = foldOpenRows.length + slipping.length + (resurfacing ? 1 : 0)
     const workload: Omit<WorkloadInput, 'focusedMin'> = {
       day: dayNumber,
@@ -778,12 +778,6 @@ export function TodayPage() {
           </section>
         )}
 
-        {!tasksPending && backOpen.length > 0 && (
-          <section>
-            <PhoneSection label="Back from snooze" />
-            <div className="tp-list">{backOpen.map((t) => row(t))}</div>
-          </section>
-        )}
         {!tasksPending && overdueOpen.length > 0 && (
           <MoreForToday phone label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
             <div className="tp-list">{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>

@@ -145,7 +145,8 @@ const selectedCount = async (page) => {
 const openRows = (page) => page.evaluate(() => new Set([...document.querySelectorAll('[id^="task-"]')].filter((e) => !e.querySelector('[title="Reopen"]') && !e.id.startsWith('task-demo')).map((e) => e.id)).size)
 const syncText = (page) => page.evaluate(() => document.querySelector('.app-topbar-sync')?.textContent ?? null)
 // Today 2a's shell (058a6040): on a computer the sync status sits on the sidebar's Settings row.
-const sideSync = (page) => page.evaluate(() => document.querySelector('.kf-side-sync .app-footer-label')?.textContent ?? null)
+// sidebar-ab (2026-10-22, bottom B): a computer's sync words left the Settings row; the name's dot carries them (its title).
+const sideSync = (page) => page.evaluate(() => document.querySelector('.kf-side-sync-dot')?.getAttribute('title') ?? null)
 
 for (const theme of ['day', 'night']) {
   const NN = (s) => `${s}-${theme}`
@@ -462,7 +463,7 @@ for (const theme of ['day', 'night']) {
         await ctx.setOffline(true)
         await sleep(500)
         const off = view ? await syncText(page) : await sideSync(page)
-        check(`${NN('sync')} ${V} /routines: offline shows ${view ? 'on the same strip' : 'on the sidebar Settings row'}`, /^offline$/i.test(off ?? ''), String(off))
+        check(`${NN('sync')} ${V} /routines: offline shows ${view ? 'on the same strip' : "on the sidebar's sync dot"}`, /^offline$/i.test(off ?? ''), String(off))
         await shot(page, NN(`4-strip-offline-routines-${V}`))
       }
       await ctx.close()
@@ -472,10 +473,10 @@ for (const theme of ['day', 'night']) {
       check(`${NN('sync')} ${V}: nothing shows at rest`, (await sync(page)) === QUIET, String(await sync(page)))
       await page.evaluate((sel) => {
         window.__syncSeen = []
-        const look = () => { const t = document.querySelector(sel)?.textContent; if (t && t !== 'synced') window.__syncSeen.push(t) }
-        new MutationObserver(look).observe(document.body, { subtree: true, childList: true, characterData: true })
+        const look = () => { const el = document.querySelector(sel); const t = el?.getAttribute('title') ?? el?.textContent; if (t && t !== 'synced') window.__syncSeen.push(t) }
+        new MutationObserver(look).observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['title'] })
         window.__syncTimer = setInterval(look, 50)
-      }, view ? '.app-topbar-sync' : '.kf-side-sync .app-footer-label')
+      }, view ? '.app-topbar-sync' : '.kf-side-sync-dot')
       // A burst: star / unstar one task 12 times, ~250ms apart (24 writes with their activity rows).
       const before = state.writes.length
       if (view) {
@@ -534,7 +535,11 @@ for (const theme of ['day', 'night']) {
       const label = await sync(page)
       const toast = await page.locator('.kf-toast').allInnerTexts()
       check(`${NN('sync')} ${V}: a refused write → "1 change not saved ⚠" + its toast`, label === W.parked && toast.some((t) => /couldn't be saved/.test(t)), JSON.stringify([label, toast]))
-      await page.locator(view ? '.app-topbar-sync' : '.kf-side-sync').click()
+      if (view) await page.locator('.app-topbar-sync').click()
+      else { // bottom B: the popover opens from the name menu's sync row
+        await page.locator('.kf-side-me').click()
+        await page.getByRole('menuitem', { name: /not saved/ }).click()
+      }
       await sleep(400)
       const pop = await page.locator('.kf-sync-pop').innerText()
       check(`${NN('sync')} ${V}: its popover names the change that wasn't saved`, /Not saved/i.test(pop) && /Renew the passport/.test(pop), pop.replace(/\n/g, ' / '))
