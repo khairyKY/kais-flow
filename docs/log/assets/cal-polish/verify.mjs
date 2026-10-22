@@ -662,7 +662,9 @@ if (want('g2')) {
     const b = await page.locator(sel).boundingBox()
     let g
     const to = { x: b.x + b.width / 2 + 120, y: b.y - 60 }
-    await mouseDrag(page, { x: b.x + b.width * 0.45, y: b.y + b.height / 2 }, to, async () => {
+    // just past the row's check (as d2): in a week column the hover's × takes the title's room
+    const ck = await page.locator(`${sel} .kf-ev-check`).boundingBox()
+    await mouseDrag(page, { x: ck.x + ck.width + 2.5, y: b.y + b.height / 2 }, to, async () => {
       g = await ghostInfo(page, sel)
       await shot(page, 'g2-held-drag')
     })
@@ -739,7 +741,8 @@ if (want('b1')) {
   {
     const { ctx, page, errors, state } = await open('/calendar', { clock12: true })
     await slotPoint(page, '12:00')
-    check('b1 calendar (12h): the gutter and block times read 12 PM / 12:00 PM', /12 PM/.test(await page.locator('.fc-timegrid-slot-label').allInnerTexts().then((x) => x.join(' '))) && /12:00 PM/.test(await fcBlock(page, STANDUP).innerText()), await fcBlock(page, STANDUP).innerText())
+    // cal-looks: a week column's block reads its range ("12:00–1:00 PM · 1h", as drawn), no longer the start alone
+    check('b1 calendar (12h): the gutter and block times read 12 PM / 12:00–1:00 PM', /12 PM/.test(await page.locator('.fc-timegrid-slot-label').allInnerTexts().then((x) => x.join(' '))) && /12:00(–1:00)? PM/.test(await fcBlock(page, STANDUP).innerText()), (await fcBlock(page, STANDUP).innerText()).replace(/\s+/g, ' '))
     check('b1 calendar (12h): no 24-hour time anywhere on the page', (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
     await slotPoint(page, '16:00')
     await fcBlock(page, LONGB).click()
@@ -783,8 +786,9 @@ if (want('b1')) {
     await sleep(300)
     await page.goto(`${BASE}/calendar`, { waitUntil: 'networkidle' })
     await sleep(1200)
-    await slotPoint(page, '16:00')
-    check('b1 Settings ▸ 24-hour: the calendar reads 16:00', /16:00(?! PM)/.test(await fcBlock(page, LONGB).innerText()), await fcBlock(page, LONGB).innerText())
+    // cal-looks: a 30-minute block is one line with no time row (as drawn) — the hour-long one carries the time
+    await slotPoint(page, '17:00')
+    check('b1 Settings ▸ 24-hour: the calendar reads 17:00–18:00', /17:00–18:00/.test(await fcBlock(page, DEEPB).innerText()), (await fcBlock(page, DEEPB).innerText()).replace(/\s+/g, ' '))
     check('b1 settings no page errors', errors.length === 0, errors.join(' | '))
     await ctx.close()
   }

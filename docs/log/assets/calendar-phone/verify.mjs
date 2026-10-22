@@ -222,8 +222,9 @@ for (const theme of ['day', 'night']) {
     check(`${name} Lunch reads "Now · 20m left", in blossom`, (await text(block(page, 2))).includes('Now · 20m left') && (await block(page, 2).evaluate((e) => e.style.getPropertyValue('--pc-fill'))) .includes('var(--acc-blossom) 24%'))
     check(`${name} the tyre block: 15:00–15:30, 32px, the project hue, an 18px checkbox`, (await text(block(page, 3))).includes('15:00–15:30') && (await block(page, 3).evaluate((e) => [e.getBoundingClientRect().height, getComputedStyle(e).getPropertyValue('--pc-fill').includes('#C9A961'), e.querySelector('.kf-checkbox').getBoundingClientRect().width].join())) === '32,true,18')
     check(`${name} Gym (a time block) lavender, no checkbox`, (await block(page, 4).evaluate((e) => e.style.getPropertyValue('--pc-fill').includes('var(--acc-lavender) 24%') && !e.querySelector('.kf-checkbox'))))
-    // cal-looks (Kai 2026-10-23, "blocks: Now" as drawn): past blocks fade to .62 and keep their hue.
-    check(`${name} past block at 62%, its hue kept`, (await block(page, 1).evaluate((e) => getComputedStyle(e).opacity === '0.62' && getComputedStyle(e).filter === 'none')))
+    // cal-looks (Kai 2026-10-23, "blocks: Now" as drawn, as the desktop): a task block past its end today, not done, is
+    // "Ran over" — a terra edge, never faded (a past event fades to .62, cal-looks c2).
+    check(`${name} the past task block reads "Ran over", not faded`, (await text(block(page, 1))).includes('Ran over') && (await block(page, 1).evaluate((e) => e.classList.contains('is-ranover') && getComputedStyle(e).opacity === '1')), await text(block(page, 1)))
     const y1340 = await yOf(page, '13:40')
     const now = await page.locator('.pc-nowtag').evaluate((e) => [e.innerText, Math.round(e.getBoundingClientRect().top + 11)])
     check(`${name} now tag 13:40 on the line`, now[0] === '13:40' && Math.abs(now[1] - y1340) <= 1, JSON.stringify(now))

@@ -630,7 +630,7 @@ for (const theme of ['day', 'night']) {
       const box = e.querySelector('.kf-checkbox')?.getBoundingClientRect()
       return { h: e.getBoundingClientRect().height, compact: e.classList.contains('is-compact'), nameClipped: name.scrollHeight > name.clientHeight + 1, nameFits: name.getBoundingClientRect().bottom <= e.getBoundingClientRect().bottom + 0.5, time: time?.innerText, check: box && [Math.round(box.width), Math.round(box.height)] }
     })
-    check(`${name} "Read 2 pages" (10 min) draws 24 tall, compact, its title whole on one line with its time`, m.h >= 24 && m.compact && !m.nameClipped && m.nameFits && m.time === '11:00–11:10', JSON.stringify(m))
+    check(`${name} "Read 2 pages" (10 min) draws 24 tall, compact, its title whole on one line with its time`, m.h >= 24 && m.compact && !m.nameClipped && m.nameFits && (m.time === '11:00–11:10' || m.time === 'Ran over · 11:10'), JSON.stringify(m)) // cal-looks: a task block past its end today reads "Ran over", as on the desktop
     check(`${name} …its checkbox is a whole 18px box`, m.check && m.check[0] === 18 && m.check[1] === 18, JSON.stringify(m.check))
     const deep = await pcBlock(page, 6).evaluate((e) => {
       const name = e.querySelector('.pc-name')
