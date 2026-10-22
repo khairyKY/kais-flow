@@ -23,6 +23,7 @@ import { DatePicker } from '../../components/DatePicker'
 import { dayHint } from '../../components/pickerMath'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, tomorrowHint } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
+import { clockOptions, hour24, setHour24, useHour24 } from '../../lib/clock'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { Button, Checkbox } from '../../components/kit'
@@ -37,7 +38,7 @@ import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../
 import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
-import { cairoTimeKey, slotFields, zoneHour } from './eventTime'
+import { slotFields, timeText, zoneHour } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
 import { blockedOn, freeGaps, freeLeft, minutesLabel } from './planningMode'
 import { cardDraggable } from './cardDrag'
@@ -306,7 +307,7 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
       <span className="cal-row-title"><EmojiText text={t.title} /></span>
       <span className="cal-row-meta">
         {r.late > 0 ? (
-          <span style={{ color: 'var(--acc-terra-ink)' }} title={missed ? `Missed block: ${missed.toLocaleString('en-US', { weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: appZone() })}` : undefined}>
+          <span style={{ color: 'var(--acc-terra-ink)' }} title={missed ? `Missed block: ${missed.toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })}` : undefined}>
             Overdue {r.late}d
           </span>
         ) : (
@@ -468,9 +469,13 @@ function DesktopCalendar() {
   }
   const dayCount = visitDays ?? settings?.calendar_day_count ?? 4
 
+  // The 24-hour switch is the app's one clock (lib/clock, Kai 2026-10-22): it lives in the shared store, so
+  // Settings and every other surface follow it; the rest of the view options stay this page's.
+  const h24 = useHour24()
   function patchViewOpts(patch: Partial<CalViewOptions>) {
+    if (patch.hour24 !== undefined) setHour24(patch.hour24)
     setViewOpts((v) => {
-      const next = { ...v, ...patch }
+      const next = { ...v, ...patch, hour24: patch.hour24 ?? hour24() }
       writeViewOptions(next)
       return next
     })
@@ -542,7 +547,7 @@ function DesktopCalendar() {
     const next = nextFreeSlot(events, now, dur)
     const at = (s: { starts_at: string; ends_at: string }) => {
       const d = new Date(s.starts_at)
-      return cairoDateKey(d) === cairoDateKey(now) ? cairoTimeKey(d) : `${dayHint(cairoDateKey(d), cairoDateKey(now))} ${cairoTimeKey(d)}`
+      return cairoDateKey(d) === cairoDateKey(now) ? timeText(d) : `${dayHint(cairoDateKey(d), cairoDateKey(now))} ${timeText(d)}`
     }
     const place = (startsAt: string, endsAt: string) => {
       if (target.kind === 'task') scheduleTaskWithUndo(target.r.task, startsAt, endsAt)
@@ -1202,7 +1207,7 @@ function DesktopCalendar() {
               }}
               railRef={planning ? planRef : railRef}
               onDragToRail={handleDragToRail}
-              hour24={viewOpts.hour24}
+              hour24={h24}
               firstDay={viewOpts.weekStartsMon ? 1 : 0}
               hiddenDays={planning || !hiddenWeekend.length ? undefined : hiddenWeekend}
               density={viewOpts.density}
@@ -1243,7 +1248,7 @@ function DesktopCalendar() {
           onClose={() => setViewOptsOpen(false)}
           activeView={activeViewCell}
           onPickView={pickView}
-          value={viewOpts}
+          value={{ ...viewOpts, hour24: h24 }}
           onChange={patchViewOpts}
           onPlanMode={() => {
             setViewOptsOpen(false)

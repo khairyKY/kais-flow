@@ -90,6 +90,7 @@ async function open(route = '/calendar', o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, extra]) => {
+    localStorage.setItem('kf.calViewOptions', JSON.stringify({ hour24: true })) // its strings read the 24-hour clock (lib/clock, 2026-10-22)
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     for (const [k, v] of Object.entries(extra)) localStorage.setItem(k, v)

@@ -77,16 +77,18 @@ const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile:
 async function open(route = '/calendar', o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([t, sess, scale, uid, now]) => {
+  await ctx.addInitScript(([t, sess, scale, uid, now, clock12]) => {
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', '0')
     localStorage.setItem('kf.calPlanning', '0')
     localStorage.setItem('kf.calRailSections', JSON.stringify({ overdue: false, today: false, inbox: false, lists: true }))
     if (scale) localStorage.setItem('kf_ui_scale', scale)
+    // The strings below read the 24-hour clock unless a check asks for the 12-hour one (lib/clock, B).
+    if (!clock12) localStorage.setItem('kf.calViewOptions', JSON.stringify({ hour24: true }))
     // "Updated to vX · What's new" sits over the day tray: this device has seen every version.
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: now }))
-  }, [o.theme ?? 'day', JSON.stringify(session), o.scale ? String(o.scale) : null, UID, cairo(NOW).getTime()])
+  }, [o.theme ?? 'day', JSON.stringify(session), o.scale ? String(o.scale) : null, UID, cairo(NOW).getTime(), !!o.clock12])
   const state = { rows: tables(), writes: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -644,6 +646,75 @@ if (want('a2')) {
       check(`${tag} no page errors`, errors.length === 0, errors.join(' | '))
       await ctx.close()
     }
+  }
+}
+
+// ═══ B: one clock — 12-hour by default, every surface; the 24-hour switch flips them all ═══
+/** Visible text that can only be a 24-hour time (13:00–23:59) — a leak on the 12-hour clock. */
+const leaks = (page) => page.evaluate(() => [...new Set((document.body.innerText.match(/(?<![\d:])(1[3-9]|2[0-3]):[0-5]\d(?!\s?[AP]M)/g) ?? []))])
+if (want('b1')) {
+  {
+    const { ctx, page, errors, state } = await open('/calendar', { clock12: true })
+    await slotPoint(page, '12:00')
+    check('b1 calendar (12h): the gutter and block times read 12 PM / 12:00 PM', /12 PM/.test(await page.locator('.fc-timegrid-slot-label').allInnerTexts().then((x) => x.join(' '))) && /12:00 PM/.test(await fcBlock(page, STANDUP).innerText()), await fcBlock(page, STANDUP).innerText())
+    check('b1 calendar (12h): no 24-hour time anywhere on the page', (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
+    await slotPoint(page, '16:00')
+    await fcBlock(page, LONGB).click()
+    await sleep(500)
+    const menu = await page.locator('[role="menu"]').last().innerText()
+    check('b1 the block popover: "4:00–4:30 PM"', /4:00–4:30 PM/.test(menu), menu.replace(/\n/g, ' | '))
+    check('b1 …and no 24-hour time in it', (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
+    await lenChip(page, '15m').click()
+    check('b1 the resize toast: "Resized to 4:00–4:15 PM"', await toastSoon(page, 'Resized to 4:00–4:15 PM'))
+    await page.keyboard.press('Escape')
+    await sleep(300)
+    await page.locator('.cal-head button[aria-haspopup="dialog"]').click()
+    await sleep(300)
+    await shot(page, 'b1-viewoptions-12h')
+    await page.getByRole('switch', { name: '24-hour time' }).click()
+    await sleep(500)
+    await page.keyboard.press('Escape')
+    await sleep(300)
+    await slotPoint(page, '12:00')
+    check('b1 View options ▸ 24-hour time: the blocks read 12:00', /12:00(?! PM)/.test(await fcBlock(page, STANDUP).innerText()), await fcBlock(page, STANDUP).innerText())
+    for (const route of ['/today', '/tasks']) {
+      await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle' })
+      await sleep(1200)
+      check(`b1 …and ${route} follows it (24-hour times show)`, (await leaks(page)).length > 0 || !/[AP]M/.test(await page.locator('body').innerText()), JSON.stringify(await leaks(page)))
+    }
+    check('b1 no page errors', errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+  for (const route of ['/today', '/tasks', '/inbox']) {
+    const { ctx, page, errors } = await open(route, { clock12: true })
+    await shot(page, `b1-${route.slice(1)}-12h`)
+    check(`b1 ${route} (12h): no 24-hour time on the page`, (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
+    check(`b1 ${route} no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+  {
+    const { ctx, page, errors } = await open('/settings', { clock12: true })
+    const row = page.getByRole('group', { name: 'Time format' })
+    check('b1 Settings ▸ Appearance has "Time format" 12-hour (picked) · 24-hour', (await row.getByRole('button', { name: '12-hour' }).getAttribute('aria-pressed')) === 'true')
+    await row.getByRole('button', { name: '24-hour' }).click()
+    await sleep(300)
+    await page.goto(`${BASE}/calendar`, { waitUntil: 'networkidle' })
+    await sleep(1200)
+    await slotPoint(page, '16:00')
+    check('b1 Settings ▸ 24-hour: the calendar reads 16:00', /16:00(?! PM)/.test(await fcBlock(page, LONGB).innerText()), await fcBlock(page, LONGB).innerText())
+    check('b1 settings no page errors', errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+  {
+    const { ctx, page, errors } = await open('/calendar', { view: phone, clock12: true })
+    await scrollPhone(page, 16 * 60)
+    const gutter = await page.locator('.pc-hour span').allInnerTexts()
+    check('b1 phone (12h): the gutter reads 9 AM … 4 PM', gutter.includes('9 AM') && gutter.includes('4 PM'), gutter.slice(0, 6).join(','))
+    check('b1 phone (12h): a block reads 4:00–4:30 PM', /4:00–4:30 PM/.test(await pcBlock(page, LONGB).innerText()), await pcBlock(page, LONGB).innerText())
+    check('b1 phone (12h): no 24-hour time on screen', (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
+    await shot(page, 'b1-phone-12h')
+    check('b1 phone no page errors', errors.length === 0, errors.join(' | '))
+    await ctx.close()
   }
 }
 

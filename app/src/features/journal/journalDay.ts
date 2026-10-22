@@ -3,6 +3,7 @@
 // TZ Africa/Cairo per house convention (store UTC, render Cairo).
 import type { JournalEntry } from '../../lib/types'
 import { appZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 
 /** An empty row is a "+ New entry" the user never typed into. It must not count as a day
  * written, or the streak / Day-N / "kept" markers would lie (punch item 10). A photo is something
@@ -102,7 +103,7 @@ export function daysLabel(n: number): string {
 
 /** Timestamp shown above each entry inside the notebook card. */
 export function entryTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: appZone() })
+  return new Date(iso).toLocaleTimeString('en-US', { ...clockOptions(), timeZone: appZone() })
 }
 
 // ── Talk it out + photos (the IO half is ./media.ts) ──

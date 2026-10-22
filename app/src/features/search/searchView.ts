@@ -1,6 +1,6 @@
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import { addDays, dayShort, MONTHS, weekday } from '../../components/pickerMath'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeRange, timeText } from '../calendar/eventTime'
 import { dayWord } from '../tasks/taskSheetMath'
 import { priorityFlag, resolveTag } from '../tasks/taskDisplay'
 import { formatDuration } from '../projects/duration'
@@ -385,7 +385,7 @@ export function describeRow(row: SearchRow, ix: SearchIndex, query: string, now:
       return {
         ...base, title: t.title, line, done,
         flag: done ? null : priorityFlag(t.priority),
-        chip: done || !at ? null : `${dayWord(dayOf(at)!, now)}${t.scheduled_start ? ` ${cairoTimeKey(new Date(t.scheduled_start))}` : ''}`,
+        chip: done || !at ? null : `${dayWord(dayOf(at)!, now)}${t.scheduled_start ? ` ${timeText(new Date(t.scheduled_start))}` : ''}`,
       }
     }
     case 'calendar_event': {
@@ -394,7 +394,7 @@ export function describeRow(row: SearchRow, ix: SearchIndex, query: string, now:
       const s = new Date(e.starts_at)
       const past = Date.parse(e.ends_at) < now.getTime()
       const day = dayShort(zoneDateKey(s))
-      return { ...base, title: e.title, faded: past, line: past ? `Past · ${day}` : e.all_day ? `${day} · All day` : `${day} · ${cairoTimeKey(s)} – ${cairoTimeKey(new Date(e.ends_at))}` }
+      return { ...base, title: e.title, faded: past, line: past ? `Past · ${day}` : e.all_day ? `${day} · All day` : `${day} · ${timeRange(s, new Date(e.ends_at))}` }
     }
     case 'journal_entry': {
       const j = ix.journal_entry.get(id)

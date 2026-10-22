@@ -21,6 +21,7 @@ import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { appZone } from '../../lib/appZone'
 import { linkRef } from '../../lib/links'
+import { clockOptions } from '../../lib/clock'
 import type { CalendarEvent } from '../../lib/types'
 
 // ── Editor.dc.html 2a/2b — the compact popover a click on the grid opens — and 1b/1c/1d, the full
@@ -371,7 +372,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: page ? 12 : 10, paddingTop: page ? 11 : 9, borderTop: '1px solid var(--line-card)' }}>
           {(parsed?.dueAt || eventDate) && (
             <span style={chipStyle('color-mix(in srgb, var(--acc-lavender) 22%, transparent)', 'var(--acc-lavender-text)')}>
-              → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: appZone() })}
+              → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })}
             </span>
           )}
           {parsed?.projectMatch && <span style={chipStyle('color-mix(in srgb, var(--acc-moss) 20%, transparent)', 'var(--acc-sage-text)')}>→ {parsed.projectMatch}</span>}

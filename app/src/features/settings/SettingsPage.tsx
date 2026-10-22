@@ -17,6 +17,7 @@ import { UpdateButton, UpdateNotes } from '../whats-new/WhatsNew'
 import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme } from '../../lib/theme'
+import { setHour24, useHour24 } from '../../lib/clock'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, uiZoom, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
@@ -196,6 +197,7 @@ function AppearanceCard() {
   const [animOn, setAnimOn] = useState(readEffectsOn)
   const osReduced = usePrefersReducedMotion()
   const grain = useGrain()
+  const h24 = useHour24()
 
   return (
     <SCard id="settings-Appearance" title="Appearance">
@@ -206,6 +208,11 @@ function AppearanceCard() {
           device (125% on a computer, 100% on a phone), so the help names this device's own normal. */}
       <Row label="Interface size" help={`Scales the whole app · ${Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is this device’s normal`}>
         <Segmented<UiScale> label="Interface size" value={scale} onChange={setScale} options={UI_SCALES.map((s) => ({ value: s, label: `${Math.round(s * 100)}%` }))} />
+      </Row>
+      {/* Kai 2026-10-22: one clock for every time the app shows — the calendar's View options switch, here
+          too (lib/clock; this device). */}
+      <Row label="Time format" help={h24 ? 'Every time reads 13:30' : 'Every time reads 1:30 PM'}>
+        <Segmented<'12' | '24'> label="Time format" value={h24 ? '24' : '12'} onChange={(v) => setHour24(v === '24')} options={[{ value: '12', label: '12-hour' }, { value: '24', label: '24-hour' }]} />
       </Row>
       <Row label="Paper texture" help={`The grain on paper pages · ${grain.pct}%`}>
         <Slider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} width={140} />

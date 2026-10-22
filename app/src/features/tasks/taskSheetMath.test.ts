@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import type { CalendarEvent } from '../../lib/types'
 import { addedLine, blockLine, createdLine, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // The drawing's day: Sunday 27 Sep 2026, Cairo = UTC+3. Every `now` is an explicit instant and every
 // expectation Cairo wall-clock, so these hold under any device zone (UTC, Cairo, LA, Tokyo).

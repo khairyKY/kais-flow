@@ -1,9 +1,13 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { backFromSnooze, isSnoozed, snoozeLine, snoozeWhen } from './snooze'
 import { filterByList, filterByScope, groupTasks, todayListTasks } from './grouping'
 import { isTop3Today, releaseTop3 } from './top3Rule'
 import { taskMenuSpec } from './taskMenuSpec'
 import type { Task } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Snooze (Kai 2026-10-17). Sat 17 Oct 2026, 10:00 in Cairo (UTC+3) — the user's clock (lib/appZone's
 // default), whatever zone the machine runs in: CI runs this file in Cairo, UTC, Los Angeles and Tokyo.

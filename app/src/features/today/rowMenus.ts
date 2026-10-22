@@ -5,7 +5,7 @@
 import type { ContextMenuItem } from '../../components/ContextMenu'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
-import { cairoTimeKey, cairoToIso } from '../calendar/eventTime'
+import { cairoTimeKey, cairoToIso, timeText } from '../calendar/eventTime'
 import { deleteEvent, moveOrResizeEvent, restoreEvent } from '../calendar/api'
 import type { CalendarEvent } from '../../lib/types'
 import { appZone } from '../../lib/appZone'
@@ -48,7 +48,7 @@ export function moveBlockToTomorrow(event: CalendarEvent): void {
  * keeps the time it was given — only undated "Tomorrow" means 09:00 (lib/dateShortcuts). */
 export function blockTomorrowHint(event: CalendarEvent): string {
   const next = new Date(sameTimeTomorrow(event.starts_at, event.ends_at).starts_at)
-  return `${next.toLocaleDateString('en-US', { weekday: 'short', timeZone: appZone() })} ${cairoTimeKey(next)}`
+  return `${next.toLocaleDateString('en-US', { weekday: 'short', timeZone: appZone() })} ${timeText(next)}`
 }
 
 /** The menu on an Up next row with no task behind it: it only opens or goes. (A task-backed row

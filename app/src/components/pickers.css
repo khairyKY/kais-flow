@@ -46,7 +46,7 @@
 .kf-pk-times { position: relative; flex: 1 1 0; min-height: 144px; overflow-y: auto; overscroll-behavior: contain; margin: 0 -20px; }
 .kf-pk-time { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 0 20px; border: none; background: none;
   font: inherit; text-align: left; color: var(--ink-body); cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.kf-pk-time > b { flex: none; width: 56px; font-family: var(--font-mono); font-size: 15px; font-weight: 400; }
+.kf-pk-time > b { flex: none; min-width: 56px; white-space: nowrap; font-family: var(--font-mono); font-size: 15px; font-weight: 400; }
 .kf-pk-time.is-busy > b { color: var(--ink-faint); }
 .kf-pk-time[aria-selected='true'] { background: var(--block-sage); }
 .kf-pk-time[aria-selected='true'] > b { color: var(--acc-sage-text); font-weight: 700; }

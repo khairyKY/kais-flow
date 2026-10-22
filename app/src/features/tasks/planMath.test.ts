@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { isOverdue, planGlossary, planOptions, slotText, spreadPlan, todayFor } from './planMath'
 import { scheduleNextWeek, scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Cairo is UTC+3 until 30 Oct 2026. The app's zone, not the device's (the ×4 TZ run proves it).
 const at = (s: string) => new Date(`${s}+03:00`)

@@ -4,7 +4,7 @@
 // move off today does). Pure — every list reads these, and so do the tests (all four CI zones).
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { addDays, dayShort } from '../../components/pickerMath'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 
 type Snoozable = { snoozed_until?: string | null }
 
@@ -23,8 +23,8 @@ export function backFromSnooze(t: Snoozable & { completed_at?: string | null }, 
 export function snoozeWhen(untilIso: string, now: Date = new Date()): string {
   const at = new Date(untilIso)
   const [day, today] = [cairoDateKey(at), cairoDateKey(now)]
-  if (day === today) return cairoTimeKey(at)
-  return `${day === addDays(today, 1) ? 'Tomorrow' : dayShort(day)} · ${cairoTimeKey(at)}`
+  if (day === today) return timeText(at)
+  return `${day === addDays(today, 1) ? 'Tomorrow' : dayShort(day)} · ${timeText(at)}`
 }
 
 /** The toast: "Snoozed until 15:00" / "3 tasks snoozed until Tomorrow · 09:00". */

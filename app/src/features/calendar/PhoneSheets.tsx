@@ -33,6 +33,7 @@ import { cairoTimeKey, cairoToIso } from './eventTime'
 import { ColorDots } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { linkRef } from '../../lib/links'
+import { clockText } from '../../lib/clock'
 
 // ── The phone calendar's sheets (Calendar Phone.dc.html): 7c quick create, 7d the event sheet,
 // 7g / 7g2 Schedule. All on the kit BottomSheet; every write goes through calendar/api and
@@ -220,7 +221,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
             />
             <div className="pc-qc-chips">
               <Chip tone="date" onClick={() => setTimeOpen(true)}>
-                {dayHint(day, cairoDateKey(new Date()))} · {fromMin(start)}
+                {dayHint(day, cairoDateKey(new Date()))} · {clockText(fromMin(start))}
               </Chip>
               {DURATIONS.map((m) => (
                 <Chip key={m} tone="duration" icon={false} selected={dur === m} onClick={() => setDur(m)}>

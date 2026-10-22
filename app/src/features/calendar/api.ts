@@ -15,7 +15,7 @@ import { dueFollows, placeMoves, replanMoves, type BlockMoves } from './replan'
 import { alignToRule, detachedCopy, eventWindow, expandEvents, rerule, retimeSeries, rowOf, splitSeries, withExdate, withoutExdate } from './series'
 import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
 import { isSynced, remindLabel, repeatLabel } from './blockMenuSpec'
-import { cairoTimeKey } from './eventTime'
+import { timeText } from './eventTime'
 import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
 
 const fetchEvents = () =>
@@ -159,7 +159,7 @@ export function slotLabel(task: Pick<Task, 'slot_id' | 'scheduled_start'>, now: 
   if (!title) return null
   const at = new Date(task.scheduled_start!)
   const day = cairoDateKey(at)
-  return `in ${title} · ${day === cairoDateKey(now) ? '' : `${dayShort(day).slice(0, 3)} `}${cairoTimeKey(at)}`
+  return `in ${title} · ${day === cairoDateKey(now) ? '' : `${dayShort(day).slice(0, 3)} `}${timeText(at)}`
 }
 
 /** The task's blocks on the calendar now. */

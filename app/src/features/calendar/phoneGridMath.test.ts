@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import type { CalendarEvent } from '../../lib/types'
 import { allDayOn, bubbleText, dayBlocks, dragSpan, edgeScrollSpeed, EDGE_MAX_SPEED, eventSpan, movedText, pxToMin, scheduleSlots, slotLabel, spanIso, swipeStep, tapStart, viewTitle, visibleDays, weekPage, weekdayRange, columnLabel, monthGrid, addMonths, monthTitle } from './phoneGridMath'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // The drawing's day: Sunday 27 Sep 2026, Cairo = UTC+3. Every `now` is an explicit instant and every
 // expectation Cairo wall-clock, so these hold under any device zone (UTC, Cairo, LA, Tokyo).

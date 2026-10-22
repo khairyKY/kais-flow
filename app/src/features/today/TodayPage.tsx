@@ -17,7 +17,8 @@ import { nestOut } from '../tasks/subtasks'
 import { SubtaskAddButton, SubtaskCount, SubtaskNest, hasOpenSubtasks, useNestOpen } from '../tasks/SubtaskNest'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotLabel, useCalendarEvents } from '../calendar/api'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { cairoTimeKey, timeRange, timeText } from '../calendar/eventTime'
+import { clockText } from '../../lib/clock'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
 import { useAreas } from '../areas/api'
@@ -817,7 +818,7 @@ export function TodayPage() {
           <div className="td-sum">
             {counts.total > 0 && `${counts.done} of ${counts.total} done`}
             {counts.total > 0 && nextUp && ' · '}
-            {nextUp && <>next up <span className="td-ink"><EmojiText text={nextUp.title} /> at {cairoTimeKey(new Date(nextUp.starts_at))}</span></>}
+            {nextUp && <>next up <span className="td-ink"><EmojiText text={nextUp.title} /> at {timeText(new Date(nextUp.starts_at))}</span></>}
             {counts.total === 0 && !nextUp && 'A fresh page'}
           </div>
         )}
@@ -1083,7 +1084,7 @@ function NowCard({ slot, state: s, ritual, events, now, next, taskById, top3Ids,
 function MomentHead({ state: s, taskById, top3Ids, focus, firstPick, rowSelection }: { state: NowState<CalendarEvent, Task>; taskById: Map<string, Task>; top3Ids: ReadonlySet<string>; focus: ReturnType<typeof useFocusNow>; firstPick?: Task; rowSelection: (t: Task) => RowSelection }) {
   const startFocus = useStartFocus()
   const navigate = useNavigate()
-  const time = (iso: string | Date) => cairoTimeKey(new Date(iso))
+  const time = (iso: string | Date) => timeText(new Date(iso))
   const block = nowBlock(s)
   const task = 'task' in s ? s.task : undefined
   const focusTask = focus ? taskById.get(focus.taskId) : undefined
@@ -1186,8 +1187,8 @@ function Ribbon({ events, now, head, taskById }: { events: CalendarEvent[]; now:
               data-past={end <= t || undefined}
               data-done={task?.status === 'done' || undefined}
               style={{ left: `${pos.left}%`, width: `${pos.width}%`, '--rb': color } as React.CSSProperties}
-              title={`${cairoTimeKey(new Date(start))}–${cairoTimeKey(new Date(end))} · ${e.title}`}
-              aria-label={`${cairoTimeKey(new Date(start))}–${cairoTimeKey(new Date(end))} ${e.title}`}
+              title={`${timeRange(new Date(start), new Date(end))} · ${e.title}`}
+              aria-label={`${timeRange(new Date(start), new Date(end))} ${e.title}`}
               onClick={() => (task ? openTask(task.id) : navigate(eventPath(e)))}
             >
               {isHead && spent > 0 && <span className="td-rb-spent" style={{ width: `${spent}%` }} />}
@@ -1211,7 +1212,7 @@ function NextTaskItem({ event, task, sel }: { event: CalendarEvent; task: Task; 
     <>
       <span id={`upnext-${event.id}`} className="td-next-item" data-selected={sel.selected || g.menuOpen || undefined} role="link" tabIndex={0} title="Open task" onClickCapture={ctrlSelect(sel, done)} onClick={() => openTask(task.id)} onKeyDown={(e) => e.key === 'Enter' && openTask(task.id)} onContextMenu={g.onContextMenu}>
         <span onClick={(e) => e.stopPropagation()} style={{ display: 'inline-flex' }}><Checkbox label={task.title} checked={done} size={16} onChange={() => toggleTaskWithUndo(task)} /></span>
-        <span className="td-next-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className="td-next-time">{timeText(new Date(event.starts_at))}</span>
         <span className={`td-ink${done ? ' td-struck' : ''}`}><EmojiText text={event.title} /></span>
         {/* Subtasks C: a timed subtask shows here by itself, with whose it is. */}
         {parentTitle && <span className="td-sub-of">↳ <EmojiText text={parentTitle} /></span>}
@@ -1230,7 +1231,7 @@ function NextEventItem({ event }: { event: CalendarEvent }) {
     <>
       <span id={`upnext-${event.id}`} className="td-next-item" role="link" tabIndex={0} title="Open in calendar" onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
         <span className="td-next-sq" style={{ background: event.color ?? (event.task_id ? 'var(--acc-lavender)' : event.type === 'event' ? 'var(--acc-blossom)' : 'var(--acc-lavender)') }} aria-hidden />
-        <span className="td-next-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className="td-next-time">{timeText(new Date(event.starts_at))}</span>
         <span className="td-ink"><EmojiText text={event.title} /></span>
       </span>
       {menu && <EventMenu event={event} at={menu} onClose={() => setMenu(null)} />}
@@ -1277,7 +1278,7 @@ const STEP_LABEL: Record<string, string> = { overdue: 'Carry-over', inbox: 'Inbo
  * (Shut down's 17:00, Kai 2026-09-28 — 2a drew 7 PM); then Evening. Any row opens its ritual. */
 function RitualsRail({ day, now, onOpen, review }: { day: ReturnType<typeof useDay>; now: Date; onOpen: (kind: RitualKind) => void; review: boolean }) {
   const evening = isEvening(now) // on until 04:00, the loop day's turn (A29)
-  const from = `${String(Math.floor(SHUTDOWN_FROM / 60)).padStart(2, '0')}:${String(SHUTDOWN_FROM % 60).padStart(2, '0')}`
+  const from = clockText(`${String(Math.floor(SHUTDOWN_FROM / 60)).padStart(2, '0')}:${String(SHUTDOWN_FROM % 60).padStart(2, '0')}`)
   return (
     <section aria-label="Rituals" data-tour="plan">
       <SectionLabel action={<Link to="/routines" className="td-label-note td-label-link">Edit</Link>} style={{ marginBottom: 12 }}>Rituals</SectionLabel>
@@ -1458,7 +1459,7 @@ function NowSlip({ state: s, sel }: { state: NowState<CalendarEvent, Task>; sel:
   const openTask = useOpenTask()
   const block = nowBlock(s)
   const task = 'task' in s ? s.task : undefined
-  const time = (iso: string | Date) => cairoTimeKey(new Date(iso))
+  const time = (iso: string | Date) => timeText(new Date(iso))
   const track = 'var(--line-card)'
   let ring: { bg: string; label: React.ReactNode; tone: string; aria: string }
   let caption: string
@@ -1553,7 +1554,7 @@ function PhoneEventRow({ event, meta }: { event: CalendarEvent; meta: string[] }
   return (
     <>
       <div id={`upnext-${event.id}`} className="tp-ev" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
-        <span className="tp-ev-time">{cairoTimeKey(new Date(event.starts_at))}</span>
+        <span className="tp-ev-time">{timeText(new Date(event.starts_at))}</span>
         <span className="tp-ev-rule" aria-hidden />
         <div className="tp-ev-body">
           <div className="tp-title"><EmojiText text={event.title} /></div>
@@ -1720,7 +1721,7 @@ function useTodayRow(task: Task, o: RowSelection & Pick<RowGrammarOptions, 'acti
  * Tomorrow keeps the block's time, and the menu can take it off the calendar. */
 const blockGrammar = (event: CalendarEvent) => ({ actions: { tomorrow: () => moveBlockToTomorrow(event), unschedule: () => unscheduleWithUndo(event) }, tomorrowHint: blockTomorrowHint(event), canUnschedule: true })
 
-const doneAt = (task: Task) => (task.completed_at ? `Done ${cairoTimeKey(new Date(task.completed_at))}` : 'Done')
+const doneAt = (task: Task) => (task.completed_at ? `Done ${timeText(new Date(task.completed_at))}` : 'Done')
 
 /** A place in the Top 3: its index in the day's order (0 = the goal). */
 type Top3Spot = Spot & { kind: 'top3'; index: number }

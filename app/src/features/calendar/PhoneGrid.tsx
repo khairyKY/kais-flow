@@ -7,6 +7,7 @@ import { longPress, tick } from '../../lib/haptics'
 import { useMotionEnabled } from '../../lib/motion'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { uiZoom } from '../../lib/uiScale'
+import { clockText, hourLabel, useHour24 } from '../../lib/clock'
 import type { CalendarEvent } from '../../lib/types'
 import { LONG_PRESS_MS, SETTLE_MS, lockAxis } from '../tasks/swipe'
 import { cairoTimeKey } from './eventTime'
@@ -130,6 +131,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   // st0: the grid's scrollTop at the press, so a drag that scrolls the grid (its edges) still tracks the finger.
   const g = useRef({ id: -1, kind: 'idle' as 'idle' | 'press' | 'swipe' | 'drag' | 'task', sx: 0, sy: 0, st0: 0, dx: 0, lastX: 0, lastY: 0, lastT: 0, v: 0, timer: 0, swallow: false, raf: 0, acc: 0 })
   const multi = days.length > 1
+  const h24 = useHour24() // the person's clock (lib/clock) for the gutter and the now tag
   const nowMin = toMin(cairoTimeKey(now))
 
   // Back (and Esc) puts a lifted block down before anything else closes.
@@ -384,7 +386,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const inset = multi ? { l: 2, r: 2 } : { l: 4, r: 16 }
 
   /** Calendar 3e "spans midnight": the open edge of a piece cut at 00:00 says where the block runs on. */
-  const clock = (ms: number) => cairoTimeKey(new Date(ms))
+  const clock = (ms: number) => clockText(cairoTimeKey(new Date(ms)))
   // slot-outline: where a lifted task would land — another Time block takes it (ringed), empty time
   // gets its own block (a dashed ghost + the time bubble), its own slot nothing.
   const heldIso = held?.at ? spanIso({ day: held.at.day, start: held.at.start, end: held.at.start + held.minutes }).starts_at : null
@@ -586,7 +588,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         <div className="pc-canvas" onClick={tapGrid}>
           {HOURS.map((h) => (
             <div key={h} className="pc-hour" style={{ top: h * 64 }}>
-              <span>{h ? `${String(h).padStart(2, '0')}:00` : ''}</span>
+              <span>{h ? hourLabel(h, h24) : ''}</span>
               <i />
             </div>
           ))}
@@ -604,7 +606,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           </div>
           {showNow && !sliding && (
             <>
-              <span className="pc-nowtag" style={{ top: minToPx(nowMin) }}>{cairoTimeKey(now)}</span>
+              <span className="pc-nowtag" style={{ top: minToPx(nowMin) }}>{clockText(cairoTimeKey(now), h24)}</span>
               <span className="pc-nowdot" style={{ top: minToPx(nowMin) }} />
             </>
           )}

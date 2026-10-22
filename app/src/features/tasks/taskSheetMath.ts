@@ -4,7 +4,8 @@
 import { RRule } from 'rrule'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { cairoTimeKey, timeRange, timeText } from '../calendar/eventTime'
+import { clockText } from '../../lib/clock'
 import { addDays, busyOnDay, dayHint, dayShort, durationLabel, freeSlots, fromMin, toMin } from '../../components/pickerMath'
 import { nextDue, ruleAfterThis } from './recurrence'
 import { REPEAT_LABELS } from './taskMenuSpec'
@@ -15,9 +16,9 @@ export const SAVED_MS = 1500
 /** "21 Sep" */
 const dayMonth = (key: string) => dayShort(key).slice(4)
 
-/** HH:MM when `at` is on today's Cairo date, else "21 Sep". */
+/** The time (the person's clock) when `at` is on today's date, else "21 Sep". */
 function stamp(at: Date, now: Date): string {
-  return cairoDateKey(at) === cairoDateKey(now) ? cairoTimeKey(at) : dayMonth(cairoDateKey(at))
+  return cairoDateKey(at) === cairoDateKey(now) ? timeText(at) : dayMonth(cairoDateKey(at))
 }
 
 export type SaveTone = 'pending' | 'saved' | 'quiet'
@@ -45,7 +46,7 @@ export const createdLine = (createdAt: string) => `Created ${dayMonth(cairoDateK
 /** "Done · Sun 27 · 15:24" — under a completed task's title. */
 export function doneLine(completedAt: string, now: Date): string {
   const c = new Date(completedAt)
-  return `Done · ${dayHint(cairoDateKey(c), cairoDateKey(now))} · ${cairoTimeKey(c)}`
+  return `Done · ${dayHint(cairoDateKey(c), cairoDateKey(now))} · ${timeText(c)}`
 }
 
 /** "Today", "Tomorrow", else "Sun 27 Sep". */
@@ -57,7 +58,7 @@ export function dayWord(day: string, now: Date): string {
 /** The date chip: "Today · 15:00", "Tomorrow · 09:00", else "Sun 27 Sep · 15:00". */
 export function dueChip(dueIso: string, now: Date): string {
   const d = new Date(dueIso)
-  return `${dayWord(cairoDateKey(d), now)} · ${cairoTimeKey(d)}`
+  return `${dayWord(cairoDateKey(d), now)} · ${timeText(d)}`
 }
 
 /** Where a typed capture landed, for its toast — no silent landings (Kai 2026-10-12 audit): "Added to
@@ -76,14 +77,14 @@ export function blockLine(ev: Pick<CalendarEvent, 'starts_at' | 'ends_at'>, now:
   const s = new Date(ev.starts_at)
   const e = new Date(ev.ends_at)
   const min = Math.round((e.getTime() - s.getTime()) / 60_000)
-  return `${dayHint(cairoDateKey(s), cairoDateKey(now))} · ${cairoTimeKey(s)}–${cairoTimeKey(e)} · ${durationLabel(min)}`
+  return `${dayHint(cairoDateKey(s), cairoDateKey(now))} · ${timeRange(s, e)} · ${durationLabel(min)}`
 }
 
 /** The Remind chip: "10m before", "1h before", "At due time" (the ⋯ Remind offsets); a reminder
  * with no due date, or one after it, reads as its own time. */
 export function remindChip(reminderIso: string, dueIso: string | null): string {
   const min = dueIso ? Math.round((Date.parse(dueIso) - Date.parse(reminderIso)) / 60_000) : -1
-  if (min < 0) return cairoTimeKey(new Date(reminderIso))
+  if (min < 0) return timeText(new Date(reminderIso))
   return min === 0 ? 'At due time' : `${durationLabel(min)} before`
 }
 
@@ -108,7 +109,7 @@ export function nextDates(rule: string, dueIso: string, now: Date = new Date()):
   if (!a) return null
   const b = nextDue(ruleAfterThis(rule)!, a.toISOString(), now)
   const ka = cairoDateKey(a)
-  return `Next · ${dayShort(ka)} ${cairoTimeKey(a)}${b ? ` · then ${dayHint(cairoDateKey(b), ka)}` : ''}`
+  return `Next · ${dayShort(ka)} ${timeText(a)}${b ? ` · then ${dayHint(cairoDateKey(b), ka)}` : ''}`
 }
 
 export interface Suggestion {
@@ -144,7 +145,7 @@ export function suggestTimes(events: readonly CalendarEvent[], dueIso: string | 
 
 /** The line under the slots: "Free before 15:00 · tap one to place it", or why there are none. */
 export function suggestHint(s: Suggestion, now: Date): string {
-  const by = s.before == null ? null : fromMin(s.before)
+  const by = s.before == null ? null : clockText(fromMin(s.before))
   if (!s.starts.length) return by ? `No free time before ${by}` : 'No free time today or tomorrow'
   // No due time binds only on today or its tomorrow fallback, so the word is "today" / "tomorrow".
   return `Free ${by ? `before ${by}` : dayWord(s.day, now).toLowerCase()} · tap one to place it`

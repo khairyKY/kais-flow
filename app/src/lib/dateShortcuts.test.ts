@@ -1,5 +1,7 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from './clock'
 import {
+
   cairoDateKey,
   cairoOffsetMinutes,
   cairoWallTimeToIso,
@@ -10,6 +12,9 @@ import {
   scheduleTomorrow,
   tomorrowHint,
 } from './dateShortcuts'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // T-2: every `now` below is an explicit instant and every expectation an explicit UTC ISO, so
 // these hold on any device timezone. 09:00 Cairo is 06:00Z in summer time (UTC+3) and 07:00Z

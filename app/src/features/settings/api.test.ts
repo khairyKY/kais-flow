@@ -1,8 +1,12 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it, vi, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 
 import { githubRulesOf, githubState, watchingHelp } from './api'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 describe('githubState', () => {
   it('names each real state of the row github-sync keeps', () => {

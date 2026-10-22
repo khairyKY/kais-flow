@@ -18,6 +18,7 @@ import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
 import { cherryStage, vineStage, fernByLength, wisteriaStage } from '../../lib/growthStages'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import { useAppZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 import type { ActivityLogEntry } from '../../lib/types'
 import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
 import { NumberField } from '../../components/NumberField'
@@ -388,7 +389,7 @@ export function FocusPage() {
   // (times, no name, because nothing in the data names it), then to nothing.
   const blockLabel = useMemo(() => {
     if (!activeTask) return null
-    const t = (d: Date) => d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false, timeZone: zone })
+    const t = (d: Date) => d.toLocaleTimeString('en-US', { ...clockOptions(), timeZone: zone })
 
     const block = events.find(
       (e) => e.task_id === activeTask.id && !e.all_day && zoneDateKey(new Date(e.starts_at), zone) === todayStr
@@ -829,7 +830,7 @@ export function FocusPage() {
                       the last round of the cycle. */}
                   of {settings.focusRoundMin} min ·{' '}
                   {currentRound >= settings.roundsBeforeLongBreak ? settings.longBreakMin : settings.shortBreakMin}-min break at{' '}
-                  {new Date(Date.now() + secondsLeft * 1000).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false, timeZone: zone })}
+                  {new Date(Date.now() + secondsLeft * 1000).toLocaleTimeString('en-US', { ...clockOptions(), timeZone: zone })}
                 </div>
               </div>
             </div>

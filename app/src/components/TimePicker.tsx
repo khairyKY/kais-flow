@@ -1,6 +1,7 @@
 import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { cairoDateKey } from '../lib/dateShortcuts'
 import { tick } from '../lib/haptics'
+import { clockRange, clockText } from '../lib/clock'
 import { queryClient } from '../lib/queryClient'
 import type { CalendarEvent } from '../lib/types'
 import { BottomSheet } from './BottomSheet'
@@ -76,7 +77,7 @@ export function TimePanel({ day, value, onValue, duration, onDuration, events }:
           <div className="kf-pk-slots">
             {slots.map((s) => (
               <button key={s.start} type="button" className="kf-pk-slot" aria-pressed={value === fromMin(s.start)} onClick={() => pick(fromMin(s.start))}>
-                {fromMin(s.start)}–{fromMin(s.end)}
+                {clockRange(fromMin(s.start), fromMin(s.end))}
               </button>
             ))}
           </div>
@@ -89,7 +90,7 @@ export function TimePanel({ day, value, onValue, duration, onDuration, events }:
           const on = t === value
           return (
             <button key={t} type="button" role="option" aria-selected={on} className={`kf-pk-time${b ? ' is-busy' : ''}`} onClick={() => pick(t)}>
-              <b>{t}</b>
+              <b>{clockText(t)}</b>
               {b && b.start >= i * 15 && <Chip tone="bordered">{b.title}</Chip>}
               <span style={{ flex: 1 }} />
               {on && <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--acc-sage-text)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>}

@@ -12,6 +12,7 @@ import { useOnline } from '../../lib/useOnline'
 import type { Task } from '../../lib/types'
 import { deleteEventWithUndo, moveEventWithUndo, outOfSlotWithUndo, scheduleTask, slotTitleOf, useCalendarEvents } from '../calendar/api'
 import { cairoToIso } from '../calendar/eventTime'
+import { clockText } from '../../lib/clock'
 import { eventSpan } from '../calendar/phoneGridMath'
 import { useFocusStore } from '../focus/focusStore'
 import { linkLabel, taskLink } from '../../lib/links'
@@ -282,7 +283,7 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
                         aria-pressed={i === 0}
                         onClick={() => edit('schedule', () => scheduleTask(t, cairoToIso(suggestion.day, fromMin(m)), cairoToIso(suggestion.day, fromMin(m + dur))))}
                       >
-                        {i === 0 ? `${dayWord(suggestion.day, now)} ${fromMin(m)}` : fromMin(m)}
+                        {i === 0 ? `${dayWord(suggestion.day, now)} ${clockText(fromMin(m))}` : clockText(fromMin(m))}
                       </button>
                     ))}
                   </div>

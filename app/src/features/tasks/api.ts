@@ -17,7 +17,7 @@ import { scheduleToday, scheduleTomorrow } from '../../lib/dateShortcuts'
 import { legacyGoalId } from '../today/goalStore'
 import { dayTop3, moveInTop3, planMakeGoal, rankWrites } from '../today/top3Order'
 import { cachedStarEvents } from '../today/api'
-import { cairoTimeKey, cairoToIso } from '../calendar/eventTime'
+import { cairoToIso, timeText } from '../calendar/eventTime'
 import { fromMin } from '../../components/pickerMath'
 import { todayFor, type SpreadPick } from './planMath'
 import { isTop3Today, openTop3Count } from './top3Rule'
@@ -466,7 +466,7 @@ export function snoozeTasksWithUndo(tasks: readonly Task[], until: string): void
  * remind_again_at; notify and the device planners send it) — the task and its own reminder stay put. */
 export function remindAgainWithUndo(tasks: readonly Task[], minutes: number, now: Date = new Date()): void {
   const at = new Date(now.getTime() + minutes * 60_000).toISOString()
-  editWithUndo(tasks, `Reminding you again at ${cairoTimeKey(new Date(at))}`, (t) => patchTask(t, { remind_again_at: at }))
+  editWithUndo(tasks, `Reminding you again at ${timeText(new Date(at))}`, (t) => patchTask(t, { remind_again_at: at }))
 }
 
 /** Unsnooze (the Snoozed list, the ⋯ menu, Z on a snoozed row): back on the lists now, with Undo. */

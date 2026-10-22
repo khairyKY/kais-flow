@@ -96,6 +96,7 @@ async function open(route = '/calendar', o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: o.device ?? 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, planning, view, hints, uid]) => {
+    localStorage.setItem('kf.calViewOptions', JSON.stringify({ hour24: true })) // its strings read the 24-hour clock (lib/clock, 2026-10-22)
     localStorage.setItem(`kf-help:${uid}`, hints)
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', checkedAt: 4102444800000 }))
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
