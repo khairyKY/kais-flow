@@ -20,7 +20,15 @@ export interface PageLine {
   checked?: boolean | null
   /** 1 (most urgent) – 3, when the page marks the line (!, ★, "urgent"); absent on older reads. */
   priority?: number | null
+  /** Set in review (the app writes it back on the row): where the line went, or dismissed. Absent: still to review. */
+  done?: LineDone
 }
+
+/** A reviewed line: added (`to` and the row it became) or 'skipped' — dismissed, not wanted. */
+export type LineDone = { to: Planned['to']; id: string } | 'skipped'
+
+/** A line's key in review, `page:index` (its place in `items`, which the app never reorders). */
+export const lineKey = (line: Pick<PageLine, 'page'>, index: number) => `${line.page}:${index}`
 
 /** A drawing the read skipped (11e "1 drawing skipped (…) · Add as image"; capture-image/read.ts). */
 export interface PageDrawing {
@@ -143,10 +151,11 @@ export interface EditLine {
   confidence: number
   box: PageLine['box']
   page: number
+  done: LineDone | null
 }
 
-/** What the user changed on a line (the chips, the text) — or dropped it. */
-export type LineEdit = Partial<Pick<EditLine, 'text' | 'type' | 'dueAt' | 'timed' | 'projectId' | 'domainId' | 'areaId' | 'projectLabel' | 'priority'>> & { dropped?: boolean }
+/** What the user changed on a line before adding it (the chips, the text). */
+export type LineEdit = Partial<Pick<EditLine, 'text' | 'type' | 'dueAt' | 'timed' | 'projectId' | 'domainId' | 'areaId' | 'projectLabel' | 'priority'>>
 
 /** The project chip's Move to… pick, as a line edit (tasks/move's places: project, area, domain, none). */
 export function placeEdit(to: MoveTarget): LineEdit {
@@ -193,7 +202,7 @@ export function toEditLine(line: PageLine, index: number, projects: readonly Pro
   const dueAt = line.when ? parseCommand(line.when, [], [], { zone: 'cairo', now: takenAt }).dueAt : null
   const project = matchProject(line.project, projects)
   return {
-    key: `${line.page}:${index}`,
+    key: lineKey(line, index),
     text: line.text,
     type: line.type,
     dueAt,
@@ -206,14 +215,17 @@ export function toEditLine(line: PageLine, index: number, projects: readonly Pro
     confidence: line.confidence,
     box: line.box,
     page: line.page,
+    done: line.done ?? null,
   }
 }
 
-export type Planned =
+/** `keys`: the lines each write comes from (the journal entry joins several). */
+export type Planned = { keys: string[] } & (
   | { to: 'task'; title: string; dueAt: string | null; projectId: string | null; domainId: string | null; areaId: string | null; priority: number | null; ref: string }
   | { to: 'event'; title: string; startsAt: string; endsAt: string; allDay: boolean }
   | { to: 'inbox'; line: EditLine }
   | { to: 'journal'; body: string }
+)
 
 const HOUR = 60 * 60_000
 
@@ -221,29 +233,43 @@ const HOUR = 60 * 60_000
  * timed one is an hour, an untimed one all-day); without one it waits in the Inbox with its read
  * attached, like a note. Journal lines join into one entry. `ref` links a task back to its photo. */
 export function planWrites(lines: readonly EditLine[], captureId: string, mode: 'all' | 'inbox'): Planned[] {
-  if (mode === 'inbox') return lines.map((line) => ({ to: 'inbox', line }))
+  if (mode === 'inbox') return lines.map((line) => ({ to: 'inbox', line, keys: [line.key] }))
   const out: Planned[] = []
-  const journal: string[] = []
+  const journal: EditLine[] = []
   for (const line of lines) {
+    const keys = [line.key]
     if (line.type === 'task') {
-      out.push({ to: 'task', title: line.text, dueAt: line.dueAt, projectId: line.projectId, domainId: line.domainId, areaId: line.areaId, priority: line.priority, ref: `${captureId}:${line.key}` })
+      out.push({ to: 'task', title: line.text, dueAt: line.dueAt, projectId: line.projectId, domainId: line.domainId, areaId: line.areaId, priority: line.priority, ref: `${captureId}:${line.key}`, keys })
     } else if (line.type === 'event' && line.dueAt) {
       if (line.timed) {
-        out.push({ to: 'event', title: line.text, startsAt: line.dueAt, endsAt: new Date(new Date(line.dueAt).getTime() + HOUR).toISOString(), allDay: false })
+        out.push({ to: 'event', title: line.text, startsAt: line.dueAt, endsAt: new Date(new Date(line.dueAt).getTime() + HOUR).toISOString(), allDay: false, keys })
       } else {
         const day = cairoDateKey(new Date(line.dueAt))
         const next = new Date(`${day}T00:00:00.000Z`)
         next.setUTCDate(next.getUTCDate() + 1)
-        out.push({ to: 'event', title: line.text, startsAt: `${day}T00:00:00.000Z`, endsAt: next.toISOString(), allDay: true })
+        out.push({ to: 'event', title: line.text, startsAt: `${day}T00:00:00.000Z`, endsAt: next.toISOString(), allDay: true, keys })
       }
     } else if (line.type === 'journal') {
-      journal.push(line.text)
+      journal.push(line)
     } else {
-      out.push({ to: 'inbox', line })
+      out.push({ to: 'inbox', line, keys })
     }
   }
-  if (journal.length) out.push({ to: 'journal', body: journal.join('\n') })
+  if (journal.length) out.push({ to: 'journal', body: journal.map((l) => l.text).join('\n'), keys: journal.map((l) => l.key) })
   return out
+}
+
+/** `items` with review marks set by line key (`undefined`: back to review); other lines untouched. */
+export function markItems(items: readonly PageLine[], marks: Readonly<Record<string, LineDone | undefined>>): PageLine[] {
+  return items.map((it, i) => {
+    const k = lineKey(it, i)
+    return k in marks ? { ...it, done: marks[k] } : it
+  })
+}
+
+/** The lines still to review — of `only`, when given (the new scribbles left after a Notebook page's ticks). */
+export function pendingKeys(items: readonly PageLine[], only?: readonly string[]): string[] {
+  return items.flatMap((it, i) => (!it.done && (!only || only.includes(lineKey(it, i))) ? [lineKey(it, i)] : []))
 }
 
 const plural = (n: number, one: string, many = `${one}s`) => `${n} ${n === 1 ? one : many}`

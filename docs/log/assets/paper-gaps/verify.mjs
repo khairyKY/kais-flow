@@ -458,7 +458,7 @@ for (const theme of ['day', 'night']) {
 
     // A line with no priority gets one from ⋯ (the chip appears).
     await tap(env, row('Buy blue pens').getByRole('button', { name: /^More for/ }))
-    await tap(env, page.getByRole('menuitem', { name: /Add a priority/ }))
+    await tap(env, page.locator('.kf-as-row', { hasText: 'Add a priority' })) // paper-review (2026-10-22): the phone ⋯ is the action sheet
     await sleep(400)
     await tap(env, page.getByRole('button', { name: /^P1 · Critical/ }))
     await sleep(500)
@@ -471,7 +471,8 @@ for (const theme of ['day', 'night']) {
   check(`select-${theme} hold a line → "1 selected", circles on every line`, (await banner(page)).includes('1 selected') && (await sheet(page).locator('.kf-select-circle').count()) === 7, await banner(page))
   await tap(env, row('Idea'))
   const foot = await text(page.locator('.pp-selfoot'))
-  check(`select-${theme} a tap adds a line → "2 selected"; footer Type · Date · Project · Drop`, (await banner(page)).includes('2 selected') && foot.replace(/\s+/g, ' ').trim() === 'Type Date Project Drop', `${await banner(page)} / ${foot}`)
+  // paper-review (2026-10-22): the bar gained Add, and Drop is Dismiss (the Inbox's word).
+  check(`select-${theme} a tap adds a line → "2 selected"; footer Add · Type · Date · Project · Dismiss`, (await banner(page)).includes('2 selected') && foot.replace(/\s+/g, ' ').trim() === 'Add Type Date Project Dismiss', `${await banner(page)} / ${foot}`)
   await shot(page, `select-${theme}`)
   await basics(env, `select-${theme}`)
   if (!night) {
@@ -480,9 +481,9 @@ for (const theme of ['day', 'night']) {
     check('bulk Type → Note: both lines are Notes, the selection ends', (await chips(row('Ask Dr. Hany'))).startsWith('Note') && (await chips(row('Idea'))).startsWith('Note') && !(await banner(page)).includes('selected'), `${await chips(row('Ask Dr. Hany'))} / ${await chips(row('Idea'))}`)
     await hold(env, row('OS lecture 3 — 4 Oct'))
     await tap(env, row('Idea'))
-    await tap(env, page.locator('.pp-selfoot').getByRole('button', { name: 'Drop' }))
-    check('bulk Drop: "2 lines dropped" with Undo, Add all 5', (await toasts(page)).includes('2 lines dropped') && (await page.getByRole('button', { name: 'Add all 5' }).count()) === 1, JSON.stringify(await toasts(page)))
-    await tap(env, page.locator('.kf-toast', { hasText: '2 lines dropped' }).getByRole('button', { name: 'Undo' }))
+    await tap(env, page.locator('.pp-selfoot').getByRole('button', { name: 'Dismiss' }))
+    check('bulk Dismiss: "2 lines dismissed" with Undo, Add all 5', (await toasts(page)).includes('2 lines dismissed') && (await page.getByRole('button', { name: 'Add all 5' }).count()) === 1, JSON.stringify(await toasts(page)))
+    await tap(env, page.locator('.kf-toast', { hasText: '2 lines dismissed' }).getByRole('button', { name: 'Undo' }))
     check('…Undo brings both back (Add all 7)', (await page.getByRole('button', { name: 'Add all 7' }).count()) === 1)
     await hold(env, row('Buy blue pens'))
     await tap(env, page.getByRole('button', { name: 'Select all' }))
@@ -521,7 +522,7 @@ for (const theme of ['day', 'night']) {
   await row('Read ch. 4').locator('.pp-row-text').click({ modifiers: ['Control'] })
   await row('Buy blue pens').locator('.pp-row-text').click({ modifiers: ['Control'] })
   await sleep(300)
-  check(`desktop-${theme} ⌃-click two lines → "2 selected", the footer Type · Date · Project · Drop`, (await text(panel.locator('.pp-banner'))).includes('2 selected') && (await panel.locator('.pp-selfoot').count()) === 1, await text(panel.locator('.pp-banner')))
+  check(`desktop-${theme} ⌃-click two lines → "2 selected", the footer Add · Type · Date · Project · Dismiss`, (await text(panel.locator('.pp-banner'))).includes('2 selected') && (await panel.locator('.pp-selfoot').count()) === 1, await text(panel.locator('.pp-banner')))
   await shot(page, `select-desktop-${theme}`)
   await basics(env, `select-desktop-${theme}`)
   if (!night) {
