@@ -17,13 +17,6 @@
   box-shadow: var(--shadow-frost);
 }
 
-/* 1a: the sidebar vine is a still silhouette at night (its daytime sway is the one loop that would
-   push Today past the ambient budget). */
-:root[data-theme='night'] .app-vine img {
-  animation: none;
-  filter: var(--silhouette);
-}
-
 /* 1b: the ⌘K bar raised over a dimmed page — a dark scrim, and the page beneath at 75%. The dim
    snaps with the scrim (filter isn't a transform/opacity animation); the panel is already frosted. */
 :root[data-theme='night'] .kf-scrim.kf-cmd-scrim {
