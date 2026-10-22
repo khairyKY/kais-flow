@@ -1,0 +1,32 @@
+[
+  {
+    "name": "a done block that loads ticked doesn't pop",
+    "ok": false,
+    "detail": "1 ticked on screen · pops: boxFill,checkPop"
+  },
+  {
+    "name": "two day swipes re-pop nothing",
+    "ok": false,
+    "detail": "forward: boxFill,boxFill,checkPop,checkPop,boxFill,checkPop · back: boxFill,checkPop,boxFill,checkPop · 1 ticked on today"
+  },
+  {
+    "name": "a real tick still pops (boxFill then checkPop)",
+    "ok": true,
+    "detail": "boxFill,checkPop"
+  },
+  {
+    "name": "reduced motion: a done block that loads ticked doesn't pop",
+    "ok": true,
+    "detail": "1 ticked on screen · pops: none"
+  },
+  {
+    "name": "reduced motion: two day swipes re-pop nothing",
+    "ok": true,
+    "detail": "forward: none · back: none · 1 ticked on today"
+  },
+  {
+    "name": "reduced motion: a real tick fills without the pop",
+    "ok": true,
+    "detail": "none"
+  }
+]
