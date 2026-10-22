@@ -1,0 +1,1292 @@
+[
+  {
+    "name": "day @100% open: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "day @100% open: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "day @100% open: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "day @100% open: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "day @100% open: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: Capture reads \"Capture ⌘ K\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: hovering Search shows \"Search\" + its keycaps, above",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":true,\"right\":false,\"inWin\":true}"
+  },
+  {
+    "name": "day @100% open: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "day @100% open: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "day @100% open: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% open: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "day @100% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "day @100% rail: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "day @100% rail: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "day @100% rail: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "day @100% rail: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: hovering Search shows \"Search\" + its keycaps, to the right",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":false,\"right\":true,\"inWin\":true}"
+  },
+  {
+    "name": "day @100% rail: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "day @100% rail: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "day @100% rail: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @100% rail: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "day @100% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "day @125% open: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "day @125% open: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "day @125% open: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "day @125% open: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: Capture reads \"Capture ⌘ K\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: hovering Search shows \"Search\" + its keycaps, above",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":true,\"right\":false,\"inWin\":true}"
+  },
+  {
+    "name": "day @125% open: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "day @125% open: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "day @125% open: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% open: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "day @125% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "day @125% rail: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "day @125% rail: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "day @125% rail: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "day @125% rail: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: hovering Search shows \"Search\" + its keycaps, to the right",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":false,\"right\":true,\"inWin\":true}"
+  },
+  {
+    "name": "day @125% rail: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "day @125% rail: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "day @125% rail: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @125% rail: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "day @125% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "day @150% open: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "day @150% open: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "day @150% open: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "day @150% open: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: Capture reads \"Capture ⌘ K\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: hovering Search shows \"Search\" + its keycaps, above",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":true,\"right\":false,\"inWin\":true}"
+  },
+  {
+    "name": "day @150% open: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "day @150% open: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "day @150% open: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% open: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "day @150% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "day @150% rail: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "day @150% rail: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "day @150% rail: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "day @150% rail: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: hovering Search shows \"Search\" + its keycaps, to the right",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":false,\"right\":true,\"inWin\":true}"
+  },
+  {
+    "name": "day @150% rail: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "day @150% rail: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "day @150% rail: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day @150% rail: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "day @150% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "night @100% open: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "night @100% open: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "night @100% open: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "night @100% open: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: Capture reads \"Capture ⌘ K\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: hovering Search shows \"Search\" + its keycaps, above",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":true,\"right\":false,\"inWin\":true}"
+  },
+  {
+    "name": "night @100% open: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "night @100% open: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "night @100% open: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% open: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "night @100% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "night @100% rail: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "night @100% rail: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "night @100% rail: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "night @100% rail: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: hovering Search shows \"Search\" + its keycaps, to the right",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":false,\"right\":true,\"inWin\":true}"
+  },
+  {
+    "name": "night @100% rail: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "night @100% rail: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "night @100% rail: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @100% rail: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "night @100% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "night @125% open: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "night @125% open: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "night @125% open: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "night @125% open: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: Capture reads \"Capture ⌘ K\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: hovering Search shows \"Search\" + its keycaps, above",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":true,\"right\":false,\"inWin\":true}"
+  },
+  {
+    "name": "night @125% open: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "night @125% open: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "night @125% open: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% open: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "night @125% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "night @125% rail: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "night @125% rail: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "night @125% rail: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "night @125% rail: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: hovering Search shows \"Search\" + its keycaps, to the right",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":false,\"right\":true,\"inWin\":true}"
+  },
+  {
+    "name": "night @125% rail: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "night @125% rail: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "night @125% rail: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @125% rail: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "night @125% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "night @150% open: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "night @150% open: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "night @150% open: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "night @150% open: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: Capture reads \"Capture ⌘ K\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: hovering Search shows \"Search\" + its keycaps, above",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":true,\"right\":false,\"inWin\":true}"
+  },
+  {
+    "name": "night @150% open: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "night @150% open: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "night @150% open: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% open: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "night @150% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: 13 nav rows, each with its line icon",
+    "ok": true,
+    "detail": "{\"rows\":13,\"withIcon\":13,\"imgs\":[],\"dots\":0,\"active\":\"Today\"}"
+  },
+  {
+    "name": "night @150% rail: no watercolour / species image and no plain dot in the sidebar",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "night @150% rail: Today is the active row",
+    "ok": true,
+    "detail": "Today"
+  },
+  {
+    "name": "night @150% rail: the foot is Capture · Search · Chat",
+    "ok": true,
+    "detail": "[\"Capture\",\"Search\",\"Chat\"]"
+  },
+  {
+    "name": "night @150% rail: the foot and the name button are in view",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: the sync dot rides the app icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: hovering Search shows \"Search\" + its keycaps, to the right",
+    "ok": true,
+    "detail": "{\"text\":\"Search⌘/\",\"keys\":2,\"above\":false,\"right\":true,\"inWin\":true}"
+  },
+  {
+    "name": "night @150% rail: a click on Calendar's icon goes to /calendar",
+    "ok": true,
+    "detail": "http://localhost:5297/calendar"
+  },
+  {
+    "name": "night @150% rail: Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: Search opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: Chat opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: the name menu holds the streak, Settings, Guide, Synced, Sign out",
+    "ok": true,
+    "detail": "{\"streak\":\"1-day streak\\nbest 1 · day 12\",\"items\":[\"Settings\\n⌘\\n,\",\"Guide\",\"Synced\",\"Sign out\"]}"
+  },
+  {
+    "name": "night @150% rail: the menu sits in the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: the menu's sync row has its dot",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: Synced opens the sync popover (\"All caught up.\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: a press elsewhere closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: Settings goes to /settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: Guide goes to /guide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "night @150% rail: Sign out signs out",
+    "ok": true,
+    "detail": "http://localhost:5297/sign-in"
+  },
+  {
+    "name": "night @150% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "keys Ctrl+K opens the capture bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "keys Ctrl+/ opens search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "keys Ctrl+J opens chat",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "keys Ctrl+, goes to Settings",
+    "ok": true,
+    "detail": "http://localhost:5297/settings"
+  },
+  {
+    "name": "keys Enter on the name button opens its menu",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "keys Esc closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "keys no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "plan the open drawer: Plan, Someday and + are line icons, no images",
+    "ok": true,
+    "detail": "{\"imgs\":0,\"svgs\":3,\"someday\":true,\"plus\":true}"
+  },
+  {
+    "name": "plan no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone the sidebar is hidden, the tab bar shows",
+    "ok": true,
+    "detail": "{\"sidebar\":\"none\",\"tabbar\":\"flex\"}"
+  },
+  {
+    "name": "phone no second sync dot (the top bar has the words)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
