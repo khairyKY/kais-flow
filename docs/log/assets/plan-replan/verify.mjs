@@ -260,8 +260,9 @@ if (want('desktop')) {
     const overdueFold = page.getByRole('button', { name: /^Overdue · 7/ })
     check(`${name} "Overdue · 7" fold, folded by default`, (await overdueFold.count()) === 1 && (await overdueFold.getAttribute('aria-expanded')) === 'false' && (await page.locator(`#task-${id(BANK)}`).count()) === 0)
     // Today 2a (ced71548): "More for today" became "Also open · N", its first three rows in view.
+    // today-scale (Kai 2026-10-22): Buy milk is due today, so it's in Today's tasks now; Also open keeps the report.
     const alsoOpen = await page.getByText(/^Also open · \d+$/).first().innerText().catch(() => '')
-    check(`${name} Also open no longer counts the overdue ones`, alsoOpen === 'Also open · 2', alsoOpen)
+    check(`${name} Also open no longer counts the overdue ones (nor today's: Buy milk is in Today's tasks)`, alsoOpen === 'Also open · 1' && (await page.locator(`section[aria-label="Today's tasks"] #task-${id(MILK)}`).count()) === 1, alsoOpen)
     await overdueFold.click()
     await settle()
     await shot(page, `${name}-overdue-open`)
@@ -460,7 +461,8 @@ if (want('phone')) {
     await fold.scrollIntoViewIfNeeded()
     const rb = page.getByRole('button', { name: 'Replan all ▾' })
     const rh = Math.round((await rb.boundingBox()).height)
-    check(`${name} "Overdue · 7" folded, Replan all ▾ beside it (${rh}px), More for today · 2`, (await fold.getAttribute('aria-expanded')) === 'false' && rh >= 44 && /More for today · 2/i.test(await page.getByRole('button', { name: /^More for today/ }).innerText()))
+    // today-scale (Kai 2026-10-22): the phone's "More for today" fold is "Also open" now, and Buy milk (due today) is in Today's tasks above it.
+    check(`${name} "Overdue · 7" folded, Replan all ▾ beside it (${rh}px), Also open · 1`, (await fold.getAttribute('aria-expanded')) === 'false' && rh >= 44 && /Also open · 1/i.test(await page.getByRole('button', { name: /^Also open/ }).innerText()))
     await shot(page, `${name}-folds`)
     if (theme === 'night') {
       await tap(cdp, rb)
@@ -505,7 +507,7 @@ if (want('phone')) {
 
     // The task sheet's date chip → the same Plan sheet.
     await page.waitForFunction(() => !document.querySelector('.kf-toast'), null, { timeout: 9000 }).catch(() => {})
-    await page.getByRole('button', { name: /^More for today/ }).click()
+    await page.locator(`#task-${id(MILK)}`).scrollIntoViewIfNeeded() // in Today's tasks (today-scale), no fold to open
     await settle()
     // The first tap may only close the row the swipe left open (one row open at a time).
     for (let i = 0; i < 2 && !(await page.locator('.ts-chips').count()); i++) {

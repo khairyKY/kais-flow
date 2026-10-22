@@ -246,10 +246,11 @@ for (const theme of ['day', 'night']) for (const [name, at, s] of DESK) {
     check(`${tag} "Today's three · 1h 30m planned"`, /Today's three/i.test(await text(page.locator('section[data-tour="top3"]'))) && (await text(page.locator('section[data-tour="top3"] .td-label-note'))) === '1h 30m planned', await text(page.locator('section[data-tour="top3"] .td-label-note')))
     check(`${tag} no stars on the Top 3 rows`, (await page.locator('section[data-tour="top3"] .td-star').count()) === 0)
     const also = page.locator('section[aria-label="Also open"]')
-    check(`${tag} "Also open · 7" — three rows, then "Show 4 more →"`, /Also open · 7/i.test(await text(also)) && (await also.locator('[id^="task-"]').count()) === 3 && /Show 4 more →/.test(await text(also.locator('.td-more'))), await text(also.locator('.td-more')))
+    // today-scale (Kai 2026-10-22): Audit ads (due today) is in Today's tasks now, so Also open is one fewer.
+    check(`${tag} "Today's tasks · 1" (Audit ads, due today) above "Also open · 6" — three rows, then "Show 3 more →"`, (await page.locator(`section[aria-label="Today's tasks"] #task-${id(ADS)}`).count()) === 1 && /Also open · 6/i.test(await text(also)) && (await also.locator('[id^="task-"]').count()) === 3 && /Show 3 more →/.test(await text(also.locator('.td-more'))), await text(also.locator('.td-more')))
     await also.locator('.td-more').click()
     await sleep(200)
-    check(`${tag} Show more opens the rest in place (remembered as the old fold was)`, (await also.locator('[id^="task-"]').count()) === 8 && (await page.evaluate(() => localStorage.getItem('kf.today.more-open'))) === '1')
+    check(`${tag} Show more opens the rest in place (remembered as the old fold was)`, (await also.locator('[id^="task-"]').count()) === 7 && (await page.evaluate(() => localStorage.getItem('kf.today.more-open'))) === '1')
     await also.locator('.td-more').click()
     check(`${tag} Overdue keeps its own fold with Replan all (Kai 2026-10-07)`, (await page.getByRole('button', { name: /Overdue · 1/ }).count()) === 1 && (await page.getByRole('button', { name: /Replan all/ }).count()) === 1)
     check(`${tag} card head = Plan your day + Begin (the Day card loop)`, /Plan your day/.test(await text(now(page))) && (await now(page).getByRole('button', { name: 'Begin' }).count()) === 1)

@@ -9,7 +9,7 @@ import { checkAction } from '../tasks/completion'
 import { buildListBindings } from '../tasks/listShortcuts'
 import { useListVerbs } from '../tasks/useListVerbs'
 import { formatDuration } from '../tasks/taskDisplay'
-import { todayListTasks } from '../tasks/grouping'
+import { isTodayTask, todayListTasks } from '../tasks/grouping'
 import { backFromSnooze } from '../tasks/snooze'
 import { sortByOrder } from '../tasks/manualOrder'
 import { cachedTask, moveInListWithUndo } from '../tasks/api'
@@ -264,7 +264,13 @@ export function TodayPage() {
   const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now) && !backFromSnooze(t, now))
   const overdueIds = new Set(overdueOpen.map((t) => t.id))
   const restOpen = allOpen.filter((t) => !overdueIds.has(t.id))
-  const openCount = restOpen.filter((t) => !t.completed_at).length
+  // Kai 2026-10-22 ("the today tasks are combined with the also open tasks"): what's due or on the
+  // calendar today (../tasks/grouping isTodayTask, the Tasks "Today" list's rule) is its own
+  // section, Today's tasks; Also open is the rest. Same order rules in both.
+  const todayRows = restOpen.filter((t) => isTodayTask(t, now))
+  const alsoRows = restOpen.filter((t) => !isTodayTask(t, now))
+  const todayCount = todayRows.filter((t) => !t.completed_at).length
+  const openCount = alsoRows.filter((t) => !t.completed_at).length
   const allDone = !tasksPending && open.length === 0 && doneToday > 0
 
   // X1 Effects 2d (+ Motion 1b) — the last check of the day earns a 5-petal fall and a
@@ -391,11 +397,11 @@ export function TodayPage() {
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
     selected: selectedTasks,
     // ⌘/Ctrl+↑/↓ (p7e A22): a Top 3 row moves in the Top 3 (as Alt+↑/↓); the rest within the overdue
-    // fold or More for today. Up next follows the calendar, so it has no order to change.
+    // fold, Today's tasks or Also open. Up next follows the calendar, so it has no order to change.
     reorder: (rows, dir) => {
       const pick = rows.length === 1 ? top3InOrder.find((t) => t.id === rows[0].id && !t.completed_at) : undefined
       if (pick) moveInTop3Order(pick, top3InOrder.indexOf(pick) + dir)
-      else moveInListWithUndo([overdueOpen, restOpen.filter((t) => !t.completed_at)], rows, dir)
+      else moveInListWithUndo([overdueOpen, todayRows.filter((t) => !t.completed_at), alsoRows.filter((t) => !t.completed_at)], rows, dir)
     },
   })
 
@@ -639,7 +645,7 @@ export function TodayPage() {
   )
 
   // ── Phone: Today Phone.dc.html 2a–2n. Header line → NOW slip or ritual card → Top 3 → Up next
-  // → Routines → the quiet fold. Four section labels, each item once. ──
+  // → Today's tasks → Routines → the quiet fold. Each item once. ──
   if (isMobile) {
     const tended = day.tally.picked > 0 && day.tally.done >= day.tally.picked
     const metas = eventMetas(upNext, now)
@@ -648,9 +654,10 @@ export function TodayPage() {
     const row = (t: Task, extra: { pick?: boolean; block?: CalendarEvent; meta?: string[]; place?: RowGrammarOptions['place'] } = {}) => (
       <TaskRow key={extra.block?.id ?? t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
-    // Snooze: what came back today sits above the folds, as on the desktop it leads Also open.
+    // Snooze: what came back today sits above the folds, as on the desktop it leads its list.
     const backOpen = restOpen.filter((t) => backFromSnooze(t, now))
-    const foldOpenRows = restOpen.filter((t) => !backFromSnooze(t, now))
+    const todayPhoneRows = todayRows.filter((t) => !backFromSnooze(t, now))
+    const foldOpenRows = alsoRows.filter((t) => !backFromSnooze(t, now))
     const foldCount = foldOpenRows.length + slipping.length + (resurfacing ? 1 : 0)
     const workload: Omit<WorkloadInput, 'focusedMin'> = {
       day: dayNumber,
@@ -735,6 +742,13 @@ export function TodayPage() {
                 </div>
               )}
             </section>
+
+            {!tasksPending && todayPhoneRows.length > 0 && (
+              <section aria-label="Today's tasks">
+                <PhoneSection label={`Today's tasks · ${todayPhoneRows.filter((t) => !t.completed_at).length}`} link={todayPhoneRows.length > ALL_OPEN_CAP ? { to: '/tasks?list=today', label: 'View all' } : undefined} />
+                <div className="tp-list">{todayPhoneRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
+              </section>
+            )}
           </>
         )}
 
@@ -806,7 +820,7 @@ export function TodayPage() {
 
   // ── Desktop: Today.dc.html 2a ("Desktop — reviewed pass"). One date and a one-line summary, the
   // typed capture pill → the Now card (the moment, the 8–20 ribbon, the next two) → Today's three,
-  // Overdue, Also open | the rail: Rituals, Routines, Worth a look. The terrarium band is gone (2a:
+  // Today's tasks, Overdue, Also open | the rail: Rituals, Routines, Worth a look. The terrarium band is gone (2a:
   // "replaces the decorative terrarium band"); its counts live in the summary and the sidebar. ──
   const nextUp = upNextEvents(events, now).find((e) => new Date(e.starts_at).getTime() > now.getTime() && !(e.task_id && doneTaskIds.has(e.task_id)))
   const header = (
@@ -925,6 +939,13 @@ export function TodayPage() {
             )}
           </section>
 
+          {showLists && todayRows.length > 0 && (
+            <section aria-label="Today's tasks" className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(1) : undefined}>
+              <SectionLabel style={{ marginBottom: 6 }}>{`Today's tasks · ${todayCount}`}</SectionLabel>
+              <div className="kf-dim">{todayRows.slice(0, ALL_OPEN_CAP).map(openRow)}</div>
+              {todayRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=today" className="td-more">View all {todayRows.length} →</Link>}
+            </section>
+          )}
           {showLists && overdueOpen.length > 0 && (
             <MoreForToday label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
               <section>
@@ -935,7 +956,7 @@ export function TodayPage() {
               </section>
             </MoreForToday>
           )}
-          {showLists && restOpen.length > 0 && <AlsoOpen count={openCount} rows={restOpen} render={openRow} motion={motion} />}
+          {showLists && alsoRows.length > 0 && <AlsoOpen count={openCount} rows={alsoRows} render={openRow} motion={motion} />}
         </div>
 
         <div className="td-rail">
@@ -2048,15 +2069,16 @@ function RoutineRow({ routine, done, compact }: { routine: Routine; done: boolea
 }
 
 // Loop A — the quiet fold (DAILY-CYCLE.md: "still there, not competing"). Collapsed by default,
-// remembered per device; SectionLabel's look, as a button. On a phone (Today Phone 2n): "More for
-// today · N" and a chevron; its lists sit under quiet sub-headers (ruling 7).
+// remembered per device; SectionLabel's look, as a button. On a phone (Today Phone 2n): "Also open ·
+// N" (it was "More for today" until Kai 2026-10-22 split Today's tasks out) and a chevron; its lists
+// sit under quiet sub-headers (ruling 7).
 const MORE_OPEN_KEY = 'kf.today.more-open'
 
 // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue pile is its own fold, folded
 // by default, its count and Replan all ▾ on the header (`action`, beside the toggle).
 const OVERDUE_OPEN_KEY = 'kf.today.overdue-open'
 
-function MoreForToday({ summary, phone, label = 'More for today', storageKey = MORE_OPEN_KEY, action, children }: { summary: string; phone?: boolean; label?: string; storageKey?: string; action?: React.ReactNode; children: React.ReactNode }) {
+function MoreForToday({ summary, phone, label = 'Also open', storageKey = MORE_OPEN_KEY, action, children }: { summary: string; phone?: boolean; label?: string; storageKey?: string; action?: React.ReactNode; children: React.ReactNode }) {
   const [open, setOpen] = useState(() => {
     try { return localStorage.getItem(storageKey) === '1' } catch { return false }
   })

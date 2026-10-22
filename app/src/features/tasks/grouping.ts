@@ -37,6 +37,12 @@ function isScheduledToday(task: Task, now: Date): boolean {
   return !!task.scheduled_start && cairoDateKey(new Date(task.scheduled_start)) === cairoDateKey(now)
 }
 
+/** Today's work: due today or on the calendar today, on the user's own day (lib/appZone). The Tasks
+ * "Today" list is this plus the Top 3 and the overdue ones; Today's "Today's tasks" section is this. */
+export function isTodayTask(task: Task, now: Date = new Date()): boolean {
+  return isScheduledToday(task, now) || taskDayDiff(task, now) === 0
+}
+
 /** Day-offset of this month's last day from today — the upper bound for the "month" list. */
 function monthEndDiff(now: Date): number {
   const [y, m, d] = cairoDateKey(now).split('-').map(Number)
@@ -69,7 +75,7 @@ export function filterByList(tasks: Task[], list: SmartList | null, now: Date = 
       case 'overdue':
         return diff !== null && diff < 0
       case 'today':
-        return isTop3Today(t, now) || isScheduledToday(t, now) || (diff !== null && diff <= 0)
+        return isTop3Today(t, now) || isTodayTask(t, now) || (diff !== null && diff < 0)
       case 'week':
         return diff !== null && diff <= 6
       case 'month':

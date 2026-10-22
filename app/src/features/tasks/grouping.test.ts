@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterByList, filterByScope, groupTasks, todayListTasks, todayOpenCount } from './grouping'
+import { filterByList, filterByScope, groupTasks, isTodayTask, todayListTasks, todayOpenCount } from './grouping'
 import type { Task } from '../../lib/types'
 
 // Fixed "now": Wed 2026-07-08, mid-afternoon in Cairo. B2/T-2: the app's day boundary is
@@ -209,6 +209,17 @@ describe('todayListTasks / todayOpenCount (the Today page and its sidebar badge)
 
   it('an empty garden counts 0', () => {
     expect(todayOpenCount([], NOW)).toBe(0)
+  })
+})
+
+describe("isTodayTask (Today's tasks vs Also open, Kai 2026-10-22)", () => {
+  it('due today or on the calendar today is today; overdue, later and undated are not', () => {
+    expect(isTodayTask(task({ due_at: at(0, 23) }), NOW)).toBe(true)
+    expect(isTodayTask(task({ scheduled_start: at(0, 18) }), NOW)).toBe(true)
+    expect(isTodayTask(task({ due_at: at(3), scheduled_start: at(0, 10) }), NOW)).toBe(true) // planned today, due later
+    expect(isTodayTask(task({ due_at: at(-1) }), NOW)).toBe(false)
+    expect(isTodayTask(task({ due_at: at(1, 0) }), NOW)).toBe(false) // just past midnight, Cairo
+    expect(isTodayTask(task({}), NOW)).toBe(false)
   })
 })
 

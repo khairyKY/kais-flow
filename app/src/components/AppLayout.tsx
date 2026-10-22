@@ -846,6 +846,15 @@ export function AppLayout() {
         /* The collapsed rail scrolls when a short window can't hold it (it used to run under the
            pinned footer at 125–150%); no scrollbar strip on a 64px rail. */
         .app-sidebar.collapsed .app-sidebar-col { scrollbar-width: none; }
+        /* Kai 2026-10-22 (150%: "Library" cut at the bottom of Cultivate): a short sidebar scrolls its nav, and the
+           last row in view ended hard against the pinned foot, as if clipped. While there's more below, the column's
+           last 36px fade out; scrolled to the end (or nothing to scroll) there's no fade. A scroll-driven animation:
+           an inactive timeline (no overflow) leaves --kf-side-fade at 0. */
+        @property --kf-side-fade { syntax: '<length>'; inherits: false; initial-value: 0px; }
+        @keyframes kfSideFade { from, 96% { --kf-side-fade: 36px; } to { --kf-side-fade: 0px; } }
+        @supports (animation-timeline: scroll()) {
+          .app-sidebar-col { mask-image: linear-gradient(to bottom, var(--ink-body) calc(100% - var(--kf-side-fade)), transparent); /* a mask reads alpha only */ animation: kfSideFade linear both; animation-timeline: scroll(self); }
+        }
         .app-sidebar.collapsed .app-sidebar-col::-webkit-scrollbar { display: none; }
         /* Kai 2026-10-03: collapsed, a row's 12px side padding + its 18px icon (42) were wider than
            the rail leaves it (35), so the icon overflowed the box to the right: the active box read

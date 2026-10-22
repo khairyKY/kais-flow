@@ -647,6 +647,8 @@ export function FocusPage() {
           edge and the mode row wrapped a word per line. On a phone it grows with its content (the
           page scrolls), the rows wrap whole, and the desktop-only "esc leaves quietly" steps aside. */}
       <style>{`
+        /* today-scale (Kai 2026-10-22, 125-150%): a title as wide as the page put its checkbox on the edge. */
+        .fp-task { padding: 0 16px; max-width: 100%; box-sizing: border-box; }
         @media (max-width: 767px) {
           .focus-bleed {
             margin: -20px -16px 0 !important;
@@ -661,7 +663,6 @@ export function FocusPage() {
           .fp-round { min-width: 0; }
           .fp-ctrls > button { min-height: 48px; white-space: nowrap; }
           .fp-ctrls > span { padding: 14px 4px; }
-          .fp-task { padding: 0 16px; }
           .fp-garden-note { left: 16px !important; }
           .fp-garden-link { right: 16px !important; bottom: auto !important; top: 10px; }
           /* width:100% + the negative margins left the page 32px short of the right edge, so the
