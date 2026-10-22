@@ -14,9 +14,9 @@ import { layoutOverlaps } from './overlapLayout'
 import { cairoDateKey, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
 import { addDays, durationLabel } from '../../components/pickerMath'
 import { bandSegments, isMultiDaySpan, spanDays } from './daySpans'
-import { zoneHour } from './eventTime'
+import { timeRange, zoneHour } from './eventTime'
 import { appZone, useAppZone } from '../../lib/appZone'
-import { clockOptions } from '../../lib/clock'
+import { clockOptions, clockRange, clockText } from '../../lib/clock'
 import { useMinuteClock } from '../../lib/minuteClock'
 import { intlZonePlugin } from './zonePlugin'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
@@ -760,7 +760,12 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     },
   }), [dayCount])
   // Punch 32: 24-hour toggle drives both the block time rows and the gutter labels (lib/clock).
-  const eventTimeFormat = useMemo(() => (hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } as const : { hour: 'numeric', minute: '2-digit', hour12: true } as const), [hour24])
+  // One range style (lib/clock clockRange): "10:00–10:30 AM", not FullCalendar's "10:00 AM - 10:30 AM".
+  // FC hands the zoned wall clock (zonePlugin), so the hour and minute are the person's.
+  const eventTimeFormat = useMemo(() => {
+    const hm = (z: { hour: number; minute: number }) => `${String(z.hour).padStart(2, '0')}:${String(z.minute).padStart(2, '0')}`
+    return (a: { start: { hour: number; minute: number }; end?: { hour: number; minute: number } }) => (a.end ? clockRange(hm(a.start), hm(a.end), hour24) : clockText(hm(a.start), hour24))
+  }, [hour24])
   const slotLabelFormat = useMemo(() => (hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } as const : { hour: 'numeric', hour12: true } as const), [hour24])
   const headerToolbar = useMemo(() => (hideToolbar ? false : { left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }), [hideToolbar])
   // J-15: land two hours above the now-line instead of a fixed 08:00. FC reads scrollTime once per
@@ -1230,7 +1235,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         anchor={stackMore}
         items={stackMore.ids.flatMap((id) => {
           const e = events.find((x) => x.id === id)
-          return e ? [{ id, title: e.title, time: `${clockTime(new Date(e.start).getTime())}–${clockTime(new Date(e.end).getTime())}` }] : []
+          return e ? [{ id, title: e.title, time: timeRange(new Date(e.start), new Date(e.end), zone, hour24) }] : []
         })}
         onPick={props.onEventClick}
         onClose={closeStackMore}

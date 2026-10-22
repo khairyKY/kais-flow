@@ -1111,7 +1111,7 @@ function MomentHead({ state: s, taskById, top3Ids, focus, firstPick, rowSelectio
   let head: CardHead
   switch (s.kind) {
     case 'running':
-      head = { caption: `Now · ${time(s.block.starts_at)}–${time(s.block.ends_at)}`, tone: 'now', title: <EmojiText text={s.block.title} />, sub: <>{minsText(s.leftMin)} left{working}</>, action: focusBtn() }
+      head = { caption: `Now · ${timeRange(new Date(s.block.starts_at), new Date(s.block.ends_at))}`, tone: 'now', title: <EmojiText text={s.block.title} />, sub: <>{minsText(s.leftMin)} left{working}</>, action: focusBtn() }
       break
     case 'over':
       head = { caption: `Now · ${minsText(s.overMin)} over`, tone: 'over', title: <EmojiText text={s.block.title} />, sub: <>ended {time(s.block.ends_at)}{working}</>, action: focusBtn() }

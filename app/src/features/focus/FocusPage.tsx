@@ -10,7 +10,7 @@ import { useJournalEntries } from '../journal/api'
 import { usePeople, useInteractions } from '../people/api'
 import { useCalendarEvents } from '../calendar/api'
 import { useDayRollover } from '../calendar/useDayRollover'
-import { zoneTimeKey } from '../calendar/eventTime'
+import { timeRange, zoneTimeKey } from '../calendar/eventTime'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { readSoundEvents, writeSoundEvents, previewSound } from '../../lib/sounds'
 import { useMotionEnabled } from '../../lib/motion'
@@ -389,17 +389,17 @@ export function FocusPage() {
   // (times, no name, because nothing in the data names it), then to nothing.
   const blockLabel = useMemo(() => {
     if (!activeTask) return null
-    const t = (d: Date) => d.toLocaleTimeString('en-US', { ...clockOptions(), timeZone: zone })
+    const span = (a: Date, b: Date) => timeRange(a, b, zone).replace('–', ' – ')
 
     const block = events.find(
       (e) => e.task_id === activeTask.id && !e.all_day && zoneDateKey(new Date(e.starts_at), zone) === todayStr
     )
-    if (block) return `${block.title} · ${t(new Date(block.starts_at))} – ${t(new Date(block.ends_at))}`
+    if (block) return `${block.title} · ${span(new Date(block.starts_at), new Date(block.ends_at))}`
 
     if (!activeTask.scheduled_start || !activeTask.scheduled_end) return null
     const start = new Date(activeTask.scheduled_start)
     if (zoneDateKey(start, zone) !== todayStr) return null
-    return `${t(start)} – ${t(new Date(activeTask.scheduled_end))}`
+    return span(start, new Date(activeTask.scheduled_end))
   }, [activeTask, events, todayStr, zone])
 
   // Sessions today: work already logged today, plus the one in progress.

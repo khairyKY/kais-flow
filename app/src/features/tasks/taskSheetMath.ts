@@ -61,6 +61,12 @@ export function dueChip(dueIso: string, now: Date): string {
   return `${dayWord(cairoDateKey(d), now)} · ${timeText(d)}`
 }
 
+/** A slot's chip: "Today · 10:15–10:30 AM" — the day, then the span (lib/clock clockRange). */
+export function slotChip(startIso: string, endIso: string, now: Date): string {
+  const s = new Date(startIso)
+  return `${dayWord(cairoDateKey(s), now)} · ${timeRange(s, new Date(endIso))}`
+}
+
 /** Where a typed capture landed, for its toast — no silent landings (Kai 2026-10-12 audit): "Added to
  * Today", "Added to Tomorrow · Forecasting", "Added to Sat 17 Oct", "Added to Someday", an undated
  * filing "Added to Forecasting", and plain "Added to Tasks · no date". */

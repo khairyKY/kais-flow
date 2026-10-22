@@ -1,7 +1,7 @@
 import { describe, expect, it, beforeAll } from 'vitest'
 import { setHour24 } from '../../lib/clock'
 import type { CalendarEvent } from '../../lib/types'
-import { addedLine, blockLine, createdLine, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, suggestHint, suggestTimes } from './taskSheetMath'
+import { addedLine, blockLine, createdLine, doneLine, dueChip, nextDates, remindChip, repeatLabel, saveLine, SAVED_MS, slotChip, suggestHint, suggestTimes } from './taskSheetMath'
 
 // These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
 beforeAll(() => setHour24(true))
@@ -57,6 +57,16 @@ describe('chips', () => {
     expect(dueChip(iso('09:00', 28), now)).toBe('Tomorrow · 09:00')
     expect(dueChip(iso('09:00', 30), now)).toBe('Wed 30 Sep · 09:00')
     expect(dueChip('2026-09-27T22:30:00Z', now)).toBe('Tomorrow · 01:30') // past UTC midnight, still Cairo's 28th
+  })
+  it('slot: the day, then the span (lib/clock clockRange)', () => {
+    expect(slotChip(iso('10:15'), iso('10:30'), now)).toBe('Today · 10:15–10:30')
+    setHour24(false)
+    try {
+      expect(slotChip(iso('10:15'), iso('10:30'), now)).toBe('Today · 10:15–10:30 AM')
+      expect(slotChip(iso('11:30', 28), iso('12:30', 28), now)).toBe('Tomorrow · 11:30 AM–12:30 PM')
+    } finally {
+      setHour24(true)
+    }
   })
   it('remind: minutes before the due time', () => {
     expect(remindChip(iso('14:50'), iso('15:00'))).toBe('10m before')

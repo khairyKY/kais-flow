@@ -32,8 +32,8 @@ export function timeText(d: Date, zone: string = appZone()): string {
 }
 
 /** "1:00–1:30 PM" between two instants, on `zone`'s clock (lib/clock clockRange). */
-export function timeRange(from: Date, to: Date, zone: string = appZone()): string {
-  return clockRange(zoneTimeKey(from, zone), zoneTimeKey(to, zone))
+export function timeRange(from: Date, to: Date, zone: string = appZone(), h24?: boolean): string {
+  return clockRange(zoneTimeKey(from, zone), zoneTimeKey(to, zone), h24)
 }
 
 /** The hour on the user's clock (0–23) — what the daisy's stage reads, never the device's hour. */

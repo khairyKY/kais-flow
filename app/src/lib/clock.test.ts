@@ -30,6 +30,14 @@ describe('clockRange — a span, the meridiem once when both ends share it', () 
   })
   it('24-hour', () => {
     expect(clockRange('13:00', '13:30', true)).toBe('13:00–13:30')
+    expect(clockRange('10:15', '10:30', true)).toBe('10:15–10:30')
+  })
+  // Kai 2026-10-23: one range style — the toast and Today's Now card said "10:15 AM–10:30 AM".
+  it('one style: the meridiem once when shared, both when the span crosses it', () => {
+    expect(clockRange('10:15', '10:30', false)).toBe('10:15–10:30 AM')
+    expect(clockRange('09:00', '11:00', false)).toBe('9:00–11:00 AM')
+    expect(clockRange('11:30', '12:30', false)).toBe('11:30 AM–12:30 PM')
+    expect(clockRange('00:00', '00:30', false)).toBe('12:00–12:30 AM')
   })
 })
 
@@ -55,6 +63,7 @@ describe('timeText / timeRange — an instant on a zone\'s clock, as the setting
     try {
       expect(timeText(at, 'Africa/Cairo')).toBe('13:05')
       expect(timeRange(at, end, 'UTC')).toBe('10:05–10:35')
+      expect(timeRange(at, end, 'UTC', false)).toBe('10:05–10:35 AM') // the grid passes its own clock
     } finally {
       setHour24(false)
     }
