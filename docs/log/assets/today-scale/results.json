@@ -376,8 +376,8 @@
   },
   {
     "name": "scale-1280-125-today-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
-    "ok": false,
-    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":553,\"need\":867,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":36}"
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":553,\"need\":867,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
   },
   {
     "name": "scale-1280-125-today-day no page errors",
@@ -1066,8 +1066,8 @@
   },
   {
     "name": "scale-1920-150-today-day sidebar: every nav row reachable, none cut without the \"more below\" fade (gone at the end), the foot whole",
-    "ok": false,
-    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":633,\"need\":862,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":36}"
+    "ok": true,
+    "detail": "{\"unreachable\":[],\"half\":[],\"footOut\":[],\"colH\":633,\"need\":862,\"scrolls\":true,\"fadeTop\":36,\"fadeEnd\":0}"
   },
   {
     "name": "scale-1920-150-today-day no page errors",
