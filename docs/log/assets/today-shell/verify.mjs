@@ -1,5 +1,5 @@
-// today-shell: the shell side of Today 2a — the sidebar foot (streak · best · day), "● synced" on the
-// Settings row, no top bar on a computer's Today / Inbox (their frames), the top bar kept on Tasks /
+// today-shell: the shell side of Today 2a — the streak (streak · best · day) and "● synced" (sidebar-ab
+// 2026-10-22: in the menu under the name, the dot on the app icon), no top bar on a computer's Today / Inbox (their frames), the top bar kept on Tasks /
 // Calendar — plus Today's keys (N = New task, Shift+N = Notebook, in the cheatsheet), Worth a look's
 // Plan a step / Snooze a week, and the bulk bar's Top 3. Same mocked backend as fix-today/verify.mjs
 // (its setup is copied verbatim; only open() takes a path).
@@ -230,10 +230,16 @@ async function sidebar(page) {
     const col = document.querySelector('.app-sidebar-col').getBoundingClientRect()
     const vis = (el) => { const r = el.getBoundingClientRect(); return r.bottom <= col.bottom + 1 && r.top >= col.top - 1 }
     const rows = [...document.querySelectorAll('nav[data-tour="sidebar"] a')].map((a) => ({ label: a.textContent.trim(), visible: vis(a) }))
-    const vine = document.querySelector('.app-vine')
-    const vr = vine?.getBoundingClientRect()
-    return { rows, vine: vine ? { text: vine.innerText.replace(/\n/g, ' / '), inView: vr.bottom <= innerHeight && vr.top >= 0 && vr.height > 0 } : null }
+    return { rows }
   })
+}
+// sidebar-ab (2026-10-22, bottom B): the streak and the sync words moved into the menu under the name.
+async function nameMenu(page) {
+  await page.locator('.kf-side-me').click()
+  await page.locator('[role="menu"]').waitFor({ timeout: 4000 })
+  const streak = (await text(page.locator('[role="menu"] .kf-side-streak'))).replace(/\n/g, ' / ')
+  const sync = await text(page.getByRole('menuitem', { name: /^(Synced|Syncing|Offline|\d+ not saved)/ }))
+  return { streak, sync }
 }
 
 // ── S · the shell on each page, desktop day + night ──
@@ -245,10 +251,13 @@ for (const theme of ['day', 'night']) for (const [key, at, topBar] of PAGES) {
   const { ctx, page, errors } = await open('09:40', { morning: true }, { theme, path: at })
   const bar = page.locator('.app-topbar')
   check(`${tag} top bar ${topBar ? "kept (the page's frame)" : 'gone (2a / 3a)'}`, (await bar.count()) === (topBar ? 1 : 0))
-  if (topBar) check(`${tag} the top bar: owner · date, no sync words on a computer (they're on the Settings row)`, /Demo's Flow · Mon 12 Oct/i.test(await text(bar)) && (await bar.locator('.app-topbar-sync').count()) === 0, await text(bar))
+  if (topBar) check(`${tag} the top bar: owner · date, no sync words on a computer (they're in the sidebar)`, /Demo's Flow · Mon 12 Oct/i.test(await text(bar)) && (await bar.locator('.app-topbar-sync').count()) === 0, await text(bar))
   const sb = await sidebar(page)
-  check(`${tag} sidebar foot: "1-day streak / best 1 · day 12", in view`, sb.vine?.inView && /1-day streak \/ best 1 · day 12/.test(sb.vine.text), JSON.stringify(sb.vine))
-  check(`${tag} Settings row: ● synced`, (await page.locator('.kf-settings-row .kf-side-sync[data-sync="quiet"]').count()) === 1 && (await page.locator('.kf-side-sync').getAttribute('title')) === 'Sync: synced')
+  check(`${tag} the app icon's sync dot: ● synced`, (await page.locator('.kf-side-me-icon .kf-side-sync-dot[data-sync="quiet"]').count()) === 1 && /sync: synced$/.test(await page.locator('.kf-side-me').getAttribute('aria-label')))
+  const menu = await nameMenu(page)
+  check(`${tag} the name menu: "1-day streak / best 1 · day 12" and "Synced"`, /1-day streak \/ best 1 · day 12/.test(menu.streak) && /^Synced/.test(menu.sync), JSON.stringify(menu))
+  await page.keyboard.press('Escape')
+  await sleep(300)
   check(`${tag} Tend rows all in view (Today · Inbox · Calendar · Tasks · Projects)`, sb.rows.slice(0, 5).every((r) => r.visible), sb.rows.map((r) => `${r.label}:${r.visible ? 'in' : 'out'}`).join(' '))
   if (key === 'today') check(`${tag} the app icon beside the wordmark`, (await page.locator('.app-sidebar-header img[src="/icon-192.png"]').count()) === 1)
   await fitCheck(page, tag)
@@ -258,30 +267,31 @@ for (const theme of ['day', 'night']) for (const [key, at, topBar] of PAGES) {
   await ctx.close()
 }
 
-// ── S · a tall window (the footer rows labelled): "● synced" sits on the Settings row ──
+// ── S · a tall window: "● synced" — the dot on the app icon, the words in the name menu ──
 if (want('s-tall')) {
   const { ctx, page, errors } = await open('09:40', { morning: true }, { view: { viewport: { width: 1280, height: 1100 } } })
-  const sync = page.locator('.kf-side-sync')
-  check('s-tall Settings row reads "Settings … ● synced"', /Settings/.test(await text(page.locator('.kf-settings-row'))) && /synced/.test(await text(sync)) && (await sync.locator('.app-footer-label').isVisible()), await text(page.locator('.kf-settings-row')))
+  const menu = await nameMenu(page)
+  check('s-tall the name menu reads "Settings … Synced", the sync row with its dot', /^Synced/.test(menu.sync) && (await page.locator('[role="menu"] .kf-side-sync-dot[data-sync="quiet"]').count()) === 1 && (await page.getByRole('menuitem', { name: /^Settings/ }).count()) === 1, JSON.stringify(menu))
   await shot(page, 's-tall-today-day')
+  await page.keyboard.press('Escape')
   await page.locator('.app-sidebar').screenshot({ path: path.join(OUT, 'sidebar-tall-day.png') })
   check('s-tall no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
 
-// ── S · offline: the sidebar says so, and its popover opens above the Settings row, in view ──
+// ── S · offline: the sidebar says so, and its popover opens from the name menu, in view ──
 if (want('s-offline')) {
   const { ctx, page, errors } = await open('09:40', { morning: true }, { view: { viewport: { width: 1280, height: 1100 } } })
   await ctx.setOffline(true)
   await sleep(800)
-  const sync = page.locator('.kf-side-sync')
-  check('s-offline the Settings row says "offline", hollow dot', (await sync.getAttribute('data-sync')) === 'offline' && /offline/.test(await text(sync)), await text(sync))
-  await sync.click()
+  const menu = await nameMenu(page)
+  check('s-offline the app icon\'s dot is hollow, the menu says "Offline"', (await page.locator('.kf-side-me-icon .kf-side-sync-dot').getAttribute('data-sync')) === 'offline' && /^Offline/.test(menu.sync), JSON.stringify(menu))
+  await page.getByRole('menuitem', { name: /^Offline/ }).click()
   await sleep(400)
   const pop = page.locator('.kf-sync-pop--side')
   const box = await pop.boundingBox()
   const vp = page.viewportSize()
-  check('s-offline …its popover opens above the row, inside the window', !!box && box.y >= 0 && box.y + box.height <= vp.height && box.x >= 0 && box.x + box.width <= vp.width, JSON.stringify(box))
+  check('s-offline …its popover opens where the menu was, inside the window', !!box && box.y >= 0 && box.y + box.height <= vp.height && box.x >= 0 && box.x + box.width <= vp.width, JSON.stringify(box))
   check('s-offline …"All caught up." (nothing queued)', /All caught up/.test(await text(pop)), await text(pop))
   await shot(page, 's-offline-popover-day', false)
   await ctx.setOffline(false)
@@ -289,16 +299,17 @@ if (want('s-offline')) {
   await ctx.close()
 }
 
-// ── S · the collapsed rail: the sync dot rides the gear; the streak folds away with the labels ──
+// ── S · the collapsed rail: the sync dot rides the app icon at the top; the name folds away with the labels ──
 if (want('s-collapsed')) {
   const { ctx, page, errors } = await open('09:40', { morning: true })
   await page.evaluate(() => localStorage.setItem('kf.sidebarCollapsed', '1'))
   await page.reload({ waitUntil: 'networkidle' })
   await sleep(1500)
   const dot = await page.locator('.kf-side-sync-dot').boundingBox()
-  const gear = await page.locator('.kf-settings-row a').boundingBox()
-  check('s-collapsed the sync dot sits on the gear row, inside the 64px rail', !!dot && !!gear && dot.x >= gear.x && dot.x + dot.width <= gear.x + gear.width + 1 && dot.y >= gear.y - 1 && dot.y <= gear.y + gear.height, JSON.stringify({ dot, gear }))
-  check('s-collapsed the label is hidden, the streak folds away', !(await page.locator('.kf-side-sync .app-footer-label').isVisible()) && !(await page.locator('.app-vine').isVisible()))
+  const icon = await page.locator('.kf-side-me-icon').boundingBox()
+  const rail = await page.locator('.app-sidebar').boundingBox()
+  check('s-collapsed the sync dot sits on the app icon\'s corner, inside the 64px rail', !!dot && !!icon && dot.x >= icon.x && dot.x + dot.width <= rail.x + rail.width && dot.y <= icon.y + 4 && dot.y + dot.height >= icon.y, JSON.stringify({ dot, icon }))
+  check('s-collapsed the name is hidden, no streak on the rail', !(await page.locator('.kf-side-me-text').isVisible()) && (await page.locator('.kf-side-streak').count()) === 0)
   await shot(page, 's-collapsed-today-day')
   check('s-collapsed no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()

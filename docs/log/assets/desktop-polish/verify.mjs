@@ -373,7 +373,7 @@ for (const theme of ['day', 'night']) {
       const act = document.querySelector('.app-sidebar nav .kf-active')
       const a = act.getBoundingClientRect()
       const t = act.querySelector('.kf-nav-tape')?.getBoundingClientRect() ?? { width: 0, height: 0 } // bj-shell: the row draws none at all now
-      const f = document.querySelector('.app-sidebar-footer .kf-side-row').getBoundingClientRect()
+      const f = document.querySelector('.app-sidebar-footer button').getBoundingClientRect() // sidebar-ab: the foot's buttons (Capture first)
       const hit = document.elementFromPoint(f.left + f.width / 2, f.top + f.height / 2)?.closest('.app-sidebar-footer')
       return { maxOff: Math.max(...rows.map((r) => r.off)), maxIconOff: Math.max(...rows.map((r) => r.iconOff)), tapeGone: t.width === 0 && t.height === 0, footerHit: !!hit }
     })

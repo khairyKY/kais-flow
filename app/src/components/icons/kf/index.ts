@@ -8,6 +8,8 @@ export const ICON_NAMES = [
   'send', 'settings', 'star', 'stop', 'tasks', 'today', 'tomorrow', 'undo',
   // Tray and Notifications.dc.html 12l (bell, moon, focus-ring) + 12k's digest sprout.
   'bell', 'moon', 'focus-ring', 'sprout',
+  // The sidebar's line set (Sidebar options.html, icons A, Kai 2026-10-22): its rows, the Plan drawer and the foot.
+  'activity', 'chat', 'clipboard', 'guide', 'library', 'plan', 'signout', 'someday',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]

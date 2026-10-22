@@ -55,7 +55,7 @@ export const PHONE_NOTES: TourNote[] = [
 
 /** 14g: the sidebar, the command bar, Top 3, the calendar, and the shortcut card that closes it. */
 export const DESKTOP_NOTES: TourNote[] = [
-  { id: 'sidebar', anchors: ['sidebar'], path: '/today', line: 'Every bed has a path.', sub: 'Plan up top, the slower things below. Search, Chat and the Guide wait at the foot.', img: `${A}/fern/unfurl1.png` },
+  { id: 'sidebar', anchors: ['sidebar'], path: '/today', line: 'Every bed has a path.', sub: 'Plan up top, the slower things below. Capture, Search and Chat wait at the foot; Settings and the Guide, under your name.', img: `${A}/fern/unfurl1.png` },
   { id: 'command', anchors: ['command-bar'], path: '/today', line: `${MOD}K does nearly everything.`, sub: 'Write a task, jump anywhere, or ask. The date and the details are filled in for you.', img: `${A}/cherry/bud.png` },
   { id: 'top3', anchors: ['top3'], path: '/today', line: 'Star the three that matter today.', sub: 'Tap ☆ on any task. Three is plenty.', img: `${A}/clover/four_leaf.png` },
   { id: 'calendar', anchors: ['calendar-block', 'calendar'], path: '/calendar', line: 'Drag a block to move it; pull an edge to resize.', sub: 'Everything snaps to the quarter hour. Drag tasks in from the rail, too.', img: `${A}/wisteria/p40.png`, teaches: 'hint:calendar' },
