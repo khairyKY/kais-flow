@@ -1,10 +1,10 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useLayoutEffect, useRef, useState } from 'react'
+import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useInsertionEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin, { Draggable, type DropArg } from '@fullcalendar/interaction'
-import type { EventClickArg, EventDropArg, DatesSetArg } from '@fullcalendar/core'
-import type { EventResizeDoneArg } from '@fullcalendar/interaction'
+import type { DateSelectArg, DatesSetArg, DayHeaderContentArg, EventClickArg, EventContentArg, EventDropArg, EventMountArg, NowIndicatorContentArg } from '@fullcalendar/core'
+import type { EventDragStartArg, EventDragStopArg, EventResizeDoneArg, EventResizeStartArg, EventResizeStopArg } from '@fullcalendar/interaction'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import { daisyColumnStage } from '../../lib/growthStages'
@@ -12,16 +12,19 @@ import { dragGuard } from './dragGuard'
 import { markSeen } from '../tour/help'
 import { layoutOverlaps } from './overlapLayout'
 import { cairoDateKey, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
-import { addDays } from '../../components/pickerMath'
+import { addDays, durationLabel } from '../../components/pickerMath'
 import { bandSegments, isMultiDaySpan, spanDays } from './daySpans'
 import { zoneHour } from './eventTime'
 import { appZone, useAppZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
+import { useMinuteClock } from '../../lib/minuteClock'
 import { intlZonePlugin } from './zonePlugin'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 import { gridMinWidth, isNarrow } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
 import { useDayRollover } from './useDayRollover'
 import { cardDragData } from './planningMode'
+import { liftCards } from './cardDrag'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -74,12 +77,18 @@ interface CalendarGridProps {
   hideToolbar?: boolean
   /** Fires on mount and after every nav/view change — drives CalendarPage's header title. */
   onRangeChange?: (info: { title: string; start: Date; end: Date }) => void
-  /** An empty slot clicked or dragged. `task`: with ⌘/Ctrl held — Akiflow's ⌘-click makes a task there (p7e A4). */
-  onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean }) => void
+  /** An empty slot clicked or dragged. `task`: with ⌘/Ctrl held — Akiflow's ⌘-click makes a task there (p7e A4).
+   * `dragged`: the pointer moved between press and release (a click selects one quarter too). */
+  onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) => void
   /** allDay flips when a drag crosses the all-day band ↔ time grid boundary (CALENDAR.md §6). */
   onMove: (id: string, start: string, end: string, allDay: boolean) => void
   onResize: (id: string, start: string, end: string) => void
-  onEventClick: (id: string) => void
+  /** `add`: with Ctrl / ⌘ / Shift held — the block joins (or leaves) the multi-selection. */
+  onEventClick: (id: string, add?: boolean) => void
+  /** Multi-select (Kai 2026-10-22): the picked blocks, outlined; dragging one of them moves them all. */
+  pickedIds?: readonly string[]
+  /** The picked blocks moved by the dragged one's delta — true when handled. */
+  onMoveMany?: (ids: readonly string[], deltaMs: number) => boolean
   /** Punch 34: double-click a task-linked block → straight to the task editor. */
   onEventDoubleClick?: (id: string) => void
   /** A rail card dropped on the grid: a task (`data-task-id`) or an inbox item (`data-inbox-id`). */
@@ -190,22 +199,6 @@ function dayRange(first: string, last: string, max = 62): string[] {
   return out
 }
 
-function flashSnap(el: HTMLElement): void {
-  el.classList.add('kf-snap-flash')
-  window.setTimeout(() => el.classList.remove('kf-snap-flash'), 250)
-}
-
-/** 4c's resize snap line: the grid line the handle just committed to, flashed once. */
-function flashSnapLine(el: HTMLElement): void {
-  const parent = el.parentElement
-  if (!parent) return
-  const line = document.createElement('div')
-  line.className = 'kf-cal-snapline'
-  line.style.top = `${el.offsetTop + el.offsetHeight}px`
-  parent.appendChild(line)
-  window.setTimeout(() => line.remove(), 340)
-}
-
 // Motion 4c — "the ghost floats free, the placeholder snaps to the grid". FullCalendar only
 // draws ONE dragging element and it snaps, so the free half of the dialect didn't exist. This
 // mints a real ghost that tracks the pointer continuously; FC's own mirror is restyled (CSS,
@@ -257,150 +250,211 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
   }
 }
 
-export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(function CalendarGrid({
-  events,
-  dayCount = 7,
-  initialView = 'rollingWeek',
-  hideToolbar,
-  onRangeChange,
-  onCreate,
-  onMove,
-  onResize,
-  onEventClick,
-  onEventDoubleClick,
-  onExternalDrop,
-  onReplan,
-  railRef,
-  onDragToRail,
-  hour24,
-  firstDay,
-  hiddenDays,
-  density = 'm',
-  onEventContextMenu,
-  onGridContextMenu,
-  onCompleteTask,
-  onSlotTaskMenu,
-  onSlotTaskOpen,
-  onSlotTaskOut,
-  onSlotTaskToRail,
-  conflictedIds,
-  pendingIds,
-  failedIds,
-  justDroppedId,
-  scrollLeadMinutes = SCROLL_LEAD_DESKTOP_MIN,
-  strip = false,
-  freeGaps,
-}, ref) {
+// ── Calendar smoothness S1 (2026-10-22 audit): FullCalendar's React adapter re-runs resetOptions on every
+// render and compares callbacks and formats by identity and `events` element by element — a new array
+// re-parses every event and re-renders every block. So everything handed to it below is stable: module
+// constants, memoised values, and callbacks that read the latest props through `latest` (a ref). What
+// changes a block's drawing travels in that block's extendedProps; what changes only its look (outbox
+// marks, multi-select, the minute's temporal state) is set on its element, never through the data. ──
+const PLUGINS = [timeGridPlugin, dayGridPlugin, interactionPlugin, intlZonePlugin]
+
+type FcShared = { arr: Record<string, unknown>[]; byKey: Map<string, Record<string, unknown>> }
+/** Motion pass (2026-10-22): FullCalendar compares `events` one object at a time, by identity. A block
+ * whose drawing didn't change keeps last time's object, so the server's echo of a write the screen
+ * already shows — new rows, the same blocks — costs FullCalendar nothing (it was a second full pass). */
+function shareEvents(prev: FcShared, next: Record<string, unknown>[]): FcShared {
+  const byKey = new Map<string, Record<string, unknown>>()
+  let same = next.length === prev.arr.length
+  const arr = next.map((ev, i) => {
+    const k = JSON.stringify(ev)
+    const v = prev.byKey.get(k) ?? ev
+    byKey.set(k, v)
+    if (v !== prev.arr[i]) same = false
+    return v
+  })
+  return same ? prev : { arr, byKey }
+}
+
+// S7: one Intl formatter per (zone, clock) — toLocaleTimeString built a new one per call, several per block.
+const clockFormats = new Map<string, Intl.DateTimeFormat>()
+function clockFormatter(zone: string, h24: boolean): (ms: number) => string {
+  const key = `${zone}|${h24 ? 24 : 12}`
+  let f = clockFormats.get(key)
+  if (!f) {
+    f = new Intl.DateTimeFormat('en-US', { ...clockOptions(h24), timeZone: zone })
+    clockFormats.set(key, f)
+  }
+  const fmt = f
+  return (ms: number) => fmt.format(ms)
+}
+
+type BlockProps = {
+  kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number; kfTaskish: boolean
+  kfOverdue: boolean; kfConflict: boolean; kfFull: boolean; kfNarrow: boolean
+  kfOv: boolean; kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
+  kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null; kfParent: string | null
+}
+
+/** §5 temporal state at `now`: ran over (a task not done, its end passed) outranks past; in progress
+ * carries the minutes left and the lived share. Overdue (ended before today) is the day's, not the minute's. */
+function phaseAt(p: Pick<BlockProps, 'kfStart' | 'kfEnd' | 'kfTaskId' | 'kfTaskDone' | 'kfTaskish'>, allDay: boolean, now: number): string {
+  if (p.kfTaskish && p.kfTaskId && !p.kfTaskDone && p.kfEnd < now && !allDay) return 'ranover'
+  if (p.kfEnd < now) return 'past'
+  if (p.kfStart <= now) return allDay || p.kfTaskDone ? 'now' : `now:${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}:${Math.round(((now - p.kfStart) / (p.kfEnd - p.kfStart)) * 100)}`
+  return 'later'
+}
+const PHASE_CLASS: Record<string, string> = { ranover: 'kf-ranover', past: 'kf-past', now: 'kf-inprog' }
+const phaseClass = (phase: string): string | null => PHASE_CLASS[phase.split(':')[0]] ?? null
+
+/** S9: a block's time row and its elapsed wash read the app's one minute clock (lib/minuteClock) —
+ * only a block whose state changed re-renders, and its element's temporal class follows, so the minute
+ * never re-renders the grid. `children` draws the row from the live words ("Ran over · 4:45 PM", "Now ·
+ * 51m left") or null. */
+function LiveTime({ p, allDay, overdue, clock, children }: { p: BlockProps; allDay: boolean; overdue: boolean; clock: (ms: number) => string; children: (live: string | null) => ReactNode }) {
+  const phase = useMinuteClock((s) => phaseAt(p, allDay, s.now))
+  const ref = useRef<HTMLSpanElement>(null)
+  useLayoutEffect(() => {
+    const el = ref.current?.closest('.fc-event')
+    if (!el || overdue) return
+    const want = phaseClass(phase)
+    for (const c of Object.values(PHASE_CLASS)) el.classList.toggle(c, c === want)
+  }, [phase, overdue])
+  const [kind, left, pct] = phase.split(':')
+  const live = overdue ? null : kind === 'ranover' ? `Ran over · ${clock(p.kfEnd)}` : kind === 'now' && left ? `Now · ${left}m left` : null
+  return (
+    <>
+      <span ref={ref} hidden />
+      {kind === 'now' && pct && Number(pct) > 0 && <span className="kf-ev-elapsed" style={{ height: `${pct}%` }} aria-hidden="true" />}
+      {children(live)}
+    </>
+  )
+}
+
+/** S2 + M1 (2026-10-22 audit): a moved block used to show at its old slot for ~0.4 s after the drop,
+ * then jump. The ghost now stays up until the block has painted in its new place (kept hidden meanwhile,
+ * `data-landing`), settles onto it — 160 ms, --ease-out, transform only — and goes; the block then wears
+ * the just-landed ring. With Effects off or reduced motion it just goes once the block is there. */
+function settleGhost(landing: { stop: () => void; host: HTMLElement | null }, id: string, motion: boolean): void {
+  const sel = `.fc-event[data-kf-id="${CSS.escape(id)}"]:not(.fc-event-mirror)`
+  const mark = (on: boolean) => document.querySelectorAll<HTMLElement>(sel).forEach((el) => el.toggleAttribute('data-landing', on))
+  const finish = () => {
+    mark(false)
+    landing.stop()
+    if (motion) landRing(id)
+  }
+  mark(true)
+  requestAnimationFrame(() =>
+    requestAnimationFrame(() => {
+      mark(true) // FullCalendar may have drawn a new element meanwhile
+      const el = document.querySelector<HTMLElement>(sel)
+      const host = landing.host
+      const ghost = host?.firstElementChild as HTMLElement | null
+      if (!el || !host || !ghost || !motion || matchMedia('(prefers-reduced-motion: reduce)').matches) return finish()
+      const r = el.getBoundingClientRect()
+      host.style.transition = 'transform 160ms var(--ease-out)'
+      host.style.transform = `translate(${r.left}px, ${r.top}px)`
+      ghost.classList.add('kf-cal-ghost-settle')
+      window.setTimeout(finish, 170)
+    }),
+  )
+}
+
+/** M1 / M8: the just-landed ring (§7, 300 ms) on a block that arrived — dropped, created, restored. An
+ * attribute on its element, never FullCalendar's data (no repaint). */
+function landRing(id: string): void {
+  document.querySelectorAll<HTMLElement>(`.fc-event[data-kf-id="${CSS.escape(id)}"]:not(.fc-event-mirror)`).forEach((el) => {
+    el.removeAttribute('data-landed')
+    void el.offsetWidth // restart the animation
+    el.setAttribute('data-landed', '')
+    window.setTimeout(() => el.removeAttribute('data-landed'), 340)
+  })
+}
+
+/** M8: a block that left (deleted, unscheduled, undone) fades out where it was — a copy over the grid,
+ * 120 ms, opacity and a little scale; the data never waits for it. */
+function fadeOut(el: HTMLElement): void {
+  const r = el.getBoundingClientRect()
+  if (!r.width || !r.height) return
+  const host = document.createElement('div')
+  host.className = el.closest('.cal-motion-on') ? 'fc cal-motion-on' : 'fc'
+  host.style.cssText = `position:fixed;left:0;top:0;pointer-events:none;z-index:60;transform:translate(${r.left}px, ${r.top}px)`
+  const copy = el.cloneNode(true) as HTMLElement
+  copy.classList.add('kf-cal-leaving')
+  copy.removeAttribute('data-kf-id')
+  copy.style.position = 'relative'
+  copy.style.inset = 'auto'
+  copy.style.margin = '0'
+  copy.style.width = `${r.width}px`
+  copy.style.height = `${r.height}px`
+  host.appendChild(copy)
+  document.body.appendChild(host)
+  window.setTimeout(() => host.remove(), 160)
+}
+
+export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProps>(function CalendarGrid(props, ref) {
+  const {
+    events,
+    dayCount = 7,
+    initialView = 'rollingWeek',
+    hideToolbar,
+    pickedIds,
+    hour24 = false,
+    firstDay,
+    hiddenDays,
+    density = 'm',
+    conflictedIds,
+    pendingIds,
+    failedIds,
+    justDroppedId,
+    scrollLeadMinutes = SCROLL_LEAD_DESKTOP_MIN,
+    strip = false,
+    freeGaps,
+  } = props
   const customView = 'customDayCount'
   // Conductor review 2026-10-12: the grid lays out on the user's zone (lib/appZone) like every other
   // surface — a slot, a block and the now-line read the same clock QuickCreate and the phone do.
   const zone = useAppZone()
   const fcRef = useRef<FullCalendar>(null)
   const wrapRef = useRef<HTMLDivElement>(null)
-  // CALENDAR.md §5 temporal states (in progress / past / ran over) move with the clock — one
-  // re-render per minute keeps them honest without any per-block timers.
-  const [, setMinute] = useState(0)
-  useEffect(() => {
-    const id = window.setInterval(() => setMinute((m) => m + 1), 60_000)
-    return () => window.clearInterval(id)
-  }, [])
   // Polish F2b: re-render the day headers ("· Today", the daisy stages) the moment a new day
   // starts, not up to a minute later; a background tab catches up when it becomes visible.
-  useDayRollover()
+  const today = useDayRollover()
   // Rendered day-column count, from datesSet — drives the min-width that makes the grid
   // horizontally scrollable instead of crushing columns (Kai: "why cant I scroll horizontally").
   const [visibleDays, setVisibleDays] = useState(initialView === 'timeGridDay' ? 1 : 7)
   // Polish D: the wrapper's laid-out width (page CSS px, zoom already inside) decides whether the
-  // day columns are §6-narrow (< 170px) — then blocks draw the narrow tier (see weekFit.ts).
-  const [gridWidth, setGridWidth] = useState(0)
+  // day columns are §6-narrow (< 170px) — then blocks draw the narrow tier (see weekFit.ts). S3: only
+  // the narrow / not-narrow answer is state, so a width change that doesn't cross it renders nothing.
+  const widthRef = useRef(0)
+  const daysRef = useRef(visibleDays)
+  daysRef.current = visibleDays
+  const [narrowCols, setNarrowCols] = useState(false)
   useEffect(() => {
     const el = wrapRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
-    const ro = new ResizeObserver(([entry]) => setGridWidth(Math.round(entry.contentRect.width)))
+    const ro = new ResizeObserver(([entry]) => {
+      widthRef.current = Math.round(entry.contentRect.width)
+      setNarrowCols(isNarrow(widthRef.current, daysRef.current))
+    })
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-  const narrow = initialView !== 'dayGridMonth' && isNarrow(gridWidth, visibleDays)
+  useEffect(() => setNarrowCols(isNarrow(widthRef.current, visibleDays)), [visibleDays])
+  const narrow = initialView !== 'dayGridMonth' && narrowCols
   // Calendar 3e: the dates on screen (the user's zone), so a multi-day span is cut into the pieces
   // that show. Null until FullCalendar reports its first range.
   const [shownDays, setShownDays] = useState<string[] | null>(null)
-  const spanOf = (e: CalendarGridEvent) => ({ starts_at: e.start, ends_at: e.end, all_day: !!e.allDay })
-  const isSpan = (e: CalendarGridEvent) => isMultiDaySpan(spanOf(e), zone)
+  const clockTime = useMemo(() => clockFormatter(zone, hour24), [zone, hour24])
   // Teardown for the Motion 4c free ghost; held across the drag lifecycle.
   const stopGhostRef = useRef<(() => void) | null>(null)
   const stopHoverRef = useRef<(() => void) | null>(null)
+  // S2 + M1: a ghost handed from the drag's end to the drop, which settles it once the block has landed.
+  const landingRef = useRef<{ stop: () => void; host: HTMLElement | null; timer: number } | null>(null)
   useEffect(() => () => {
     stopGhostRef.current?.() // never strand a ghost (or a lit rail section) on unmount
     stopHoverRef.current?.()
+    landingRef.current?.stop()
   }, [])
-  // slots-ux (Kai 2026-10-16: "how do I remove a task from the time slot"): a held row is a drag
-  // source of its own, as a rail card is — onto the grid it lands through `drop` below (its own block
-  // there, or another slot), onto the rail it comes out of the slot (the section decides, as for a
-  // block). Its press never reaches the slot's own drag, a click opens the task (the phone's tap
-  // does too) and a right-click its menu. A stable ref, so a re-render never drops a drag under way.
-  const heldProps = useRef({ railRef, onSlotTaskOpen, onSlotTaskMenu, onSlotTaskToRail })
-  heldProps.current = { railRef, onSlotTaskOpen, onSlotTaskMenu, onSlotTaskToRail }
-  const heldRow = useCallback((el: HTMLDivElement | null) => {
-    if (!el) return
-    const id = el.dataset.slotTask!
-    let dragged = false
-    let stopHover: (() => void) | null = null
-    const drag = new Draggable(el, { eventData: cardDragData })
-    // slot-outline (Kai's pick A): the lifted card follows the pointer over the grid too, where
-    // FullCalendar would hide it behind its own placeholder; the card's place stays dashed meanwhile.
-    // Only while a drag is under way: FullCalendar's press calls setIsVisible(false) as its reset, and a
-    // click (no drag) never stops the mirror, so forcing it there left the copy stuck over the slot.
-    const mirror = drag.dragging.mirror
-    const showMirror = mirror.setIsVisible.bind(mirror)
-    let lifting = false
-    mirror.setIsVisible = (v: boolean) => showMirror(v || lifting)
-    drag.dragging.emitter.on('dragstart', () => {
-      dragged = true
-      lifting = true
-      el.dataset.lifted = ''
-      stopHover = trackRailHover(heldProps.current.railRef?.current)
-    })
-    drag.dragging.emitter.on('dragend', (ev: { pageX: number; pageY: number }) => {
-      lifting = false
-      delete el.dataset.lifted
-      stopHover?.()
-      const rail = heldProps.current.railRef?.current
-      const x = ev.pageX - window.scrollX
-      const y = ev.pageY - window.scrollY
-      const r = rail?.getBoundingClientRect()
-      if (rail && r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) heldProps.current.onSlotTaskToRail?.(id, railSectionAt(rail, x, y)?.dataset.section ?? null)
-    })
-    // No default either: a press would focus the block (FullCalendar's :focus overlay then takes the
-    // click and the right-click), as dragGuard's controls know.
-    const own = (e: Event) => {
-      if (e.type === 'mousedown') {
-        dragged = false
-        e.preventDefault()
-      }
-      e.stopPropagation()
-    }
-    el.addEventListener('mousedown', own)
-    el.addEventListener('touchstart', own, { passive: true })
-    el.addEventListener('click', (e) => {
-      e.stopPropagation()
-      if (!dragged) heldProps.current.onSlotTaskOpen?.(id, el)
-    })
-    el.addEventListener('contextmenu', (e) => {
-      e.preventDefault()
-      e.stopPropagation()
-      heldProps.current.onSlotTaskMenu?.(id, e.clientX, e.clientY)
-    })
-    return () => drag.destroy()
-  }, [])
-  // Kai 2026-10-12 ("you can't edit the colours after they've been created"): FullCalendar keeps an
-  // event's element across updates, so eventDidMount — the only place the hue was painted — never
-  // re-ran for a recoloured one. Repaint every block from the current data after each render.
-  useLayoutEffect(() => {
-    const colors = new Map(events.map((e) => [e.id, e.color]))
-    wrapRef.current?.querySelectorAll<HTMLElement>('[data-kf-id]').forEach((el) => {
-      if (colors.has(el.dataset.kfId!)) paintColor(el, colors.get(el.dataset.kfId!))
-    })
-  })
   // §6 stacked (3+): the "+N more" popover — the ids it lists and the label it hangs from.
   const [stackMore, setStackMore] = useState<{ ids: string[]; left: number; bottom: number } | null>(null)
   const closeStackMore = useCallback(() => setStackMore(null), [])
@@ -431,34 +485,238 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
       document.removeEventListener('keydown', release, true)
     }
   }, [pinnedId])
+
+  // The latest props and derived values, for the stable callbacks below.
+  const latest = useRef({ props, zone, narrow, clockTime, strip, pickedIds: pickedIds ?? [], pending: new Set<string>(), failed: new Set<string>() })
+  latest.current = { props, zone, narrow, clockTime, strip, pickedIds: pickedIds ?? [], pending: new Set(pendingIds), failed: new Set(failedIds) }
+
+  // slots-ux (Kai 2026-10-16: "how do I remove a task from the time slot"): a held row is a drag
+  // source of its own, as a rail card is — onto the grid it lands through `drop` below (its own block
+  // there, or another slot), onto the rail it comes out of the slot (the section decides, as for a
+  // block). Its press never reaches the slot's own drag, a click opens the task (the phone's tap
+  // does too) and a right-click its menu. A stable ref, so a re-render never drops a drag under way.
+  const heldRow = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return
+    const id = el.dataset.slotTask!
+    let dragged = false
+    let stopHover: (() => void) | null = null
+    const drag = new Draggable(el, { eventData: cardDragData })
+    // slot-outline (Kai's pick A): the lifted card follows the pointer over the grid too; the card's
+    // place stays dashed meanwhile (./cardDrag — every card dragged onto the grid lifts this way now).
+    liftCards(drag)
+    drag.dragging.emitter.on('dragstart', () => {
+      dragged = true
+      stopHover = trackRailHover(latest.current.props.railRef?.current)
+    })
+    drag.dragging.emitter.on('dragend', (ev: { pageX: number; pageY: number }) => {
+      stopHover?.()
+      const rail = latest.current.props.railRef?.current
+      const x = ev.pageX - window.scrollX
+      const y = ev.pageY - window.scrollY
+      const r = rail?.getBoundingClientRect()
+      if (rail && r && x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) latest.current.props.onSlotTaskToRail?.(id, railSectionAt(rail, x, y)?.dataset.section ?? null)
+    })
+    // No default either: a press would focus the block (FullCalendar's :focus overlay then takes the
+    // click and the right-click), as dragGuard's controls know.
+    const own = (e: Event) => {
+      if (e.type === 'mousedown') {
+        dragged = false
+        e.preventDefault()
+      }
+      e.stopPropagation()
+    }
+    el.addEventListener('mousedown', own)
+    el.addEventListener('touchstart', own, { passive: true })
+    el.addEventListener('click', (e) => {
+      e.stopPropagation()
+      if (!dragged) latest.current.props.onSlotTaskOpen?.(id, el)
+    })
+    el.addEventListener('contextmenu', (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+      latest.current.props.onSlotTaskMenu?.(id, e.clientX, e.clientY)
+    })
+    return () => drag.destroy()
+  }, [])
+
+  // Kai 2026-10-12 ("you can't edit the colours after they've been created"): FullCalendar keeps an
+  // event's element across updates, so eventDidMount — the only place the hue was painted — never
+  // re-ran for a recoloured one. Repaint every block from the current data after each render. The same
+  // pass sets what never goes through FullCalendar's data: multi-select's data-picked, and (S2) the
+  // outbox's pending / failed marks.
+  useLayoutEffect(() => {
+    const colors = new Map(events.map((e) => [e.id, e.color]))
+    const { pickedIds: picked, pending, failed } = latest.current
+    wrapRef.current?.querySelectorAll<HTMLElement>('[data-kf-id]').forEach((el) => {
+      const id = el.dataset.kfId!
+      if (colors.has(id)) paintColor(el, colors.get(id))
+      el.toggleAttribute('data-picked', picked.includes(id))
+      el.classList.toggle('kf-pending', pending.has(id))
+      el.classList.toggle('kf-failed', failed.has(id))
+    })
+  })
+
+  // M8: blocks that arrive (created, duplicated, restored, dropped from the rail) wear the just-landed
+  // ring; blocks that leave fade out where they were. Only while the same days are on screen — paging
+  // brings whole weeks in and out, which is no arrival.
+  const seen = useRef<{ ids: Set<string>; days: string[] | null } | null>(null)
+  useInsertionEffect(() => {
+    // Before FullCalendar redraws: the blocks about to go are still on screen.
+    const prev = seen.current
+    const wrap = wrapRef.current
+    if (!prev || prev.days !== shownDays || !wrap?.closest('.cal-motion-on') || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const ids = new Set(events.map((e) => e.id))
+    for (const id of prev.ids) if (!ids.has(id)) wrap.querySelectorAll<HTMLElement>(`.fc-event[data-kf-id="${CSS.escape(id)}"]`).forEach(fadeOut)
+  }, [events, shownDays])
+  useLayoutEffect(() => {
+    const prev = seen.current
+    const ids = new Set(events.map((e) => e.id))
+    seen.current = { ids, days: shownDays }
+    if (!prev || prev.days !== shownDays || !wrapRef.current?.closest('.cal-motion-on')) return
+    for (const id of ids) if (!prev.ids.has(id)) landRing(id)
+  }, [events, shownDays])
+
   // J-13 — §6 overlap geometry, decided here and drawn by CalendarGrid.css (FC's own shingle
   // overprinted titles). All-day chips live in the band above the grid and never collide.
-  const overlap = layoutOverlaps(
-    events.filter((e) => !e.allDay && !isSpan(e)).map((e) => ({ id: e.id, start: new Date(e.start).getTime(), end: new Date(e.end).getTime() })),
-    pinnedId,
+  const isSpan = useCallback((e: CalendarGridEvent) => isMultiDaySpan({ starts_at: e.start, ends_at: e.end, all_day: !!e.allDay }, zone), [zone])
+  const overlap = useMemo(
+    () => layoutOverlaps(events.filter((e) => !e.allDay && !isSpan(e)).map((e) => ({ id: e.id, start: new Date(e.start).getTime(), end: new Date(e.end).getTime() })), pinnedId),
+    [events, isSpan, pinnedId],
   )
-  const clockTime = (ms: number) => new Date(ms).toLocaleTimeString('en-US', { hour: hour24 ? '2-digit' : 'numeric', minute: '2-digit', hour12: !hour24, timeZone: zone })
 
+  // The blocks, as FullCalendar takes them. Built only when what they draw changes.
+  const fcShared = useRef<FcShared>({ arr: [], byKey: new Map() })
+  const fcEvents = useMemo(() => {
+    const day = cairoDateKey(new Date())
+    const conflicted = new Set(conflictedIds)
+    const next = events.flatMap<Record<string, unknown>>((e) => {
+      // Calendar 3e "multi-day span": in the all-day band, one piece per day on screen — only the
+      // outer corners round, the open edges read « / », the title on the first piece. A piece is
+      // not dragged or resized (the block menu moves it); clicks act on the block.
+      if (isSpan(e)) {
+        const span = { starts_at: e.start, ends_at: e.end, all_day: !!e.allDay }
+        const { first, last } = spanDays(span, zone)
+        const kind = e.type !== 'event' ? 'kf-kind-task' : 'kf-kind-event'
+        return bandSegments({ ...span, title: e.title }, shownDays ?? dayRange(first, last), zone, clockTime).map((seg, i): Record<string, unknown> => ({
+          id: `${e.id}${SEG}${seg.day}`,
+          title: seg.label,
+          start: seg.day,
+          end: addDays(seg.day, 1),
+          allDay: true,
+          editable: false,
+          classNames: ['fc-event-type-' + e.type, kind, 'kf-seg', `kf-seg-${seg.shape}`, ...(i === 0 ? ['kf-seg-titled'] : []), ...(e.taskDone ? ['kf-done'] : [])],
+          extendedProps: { kfColor: e.color ?? null, kfSegOf: e.id, kfTitle: e.title },
+        }))
+      }
+      // ── CALENDAR.md §0: one block, five independent axes, composed as classes. ──
+      const startMs = new Date(e.start).getTime()
+      const endMs = new Date(e.end).getTime()
+      const isTaskish = e.type !== 'event' // task + time_block are completable kinds
+
+      const classes = ['fc-event-type-' + e.type]
+      // Kind (§3, hue only): tasks/blocks ride lavender (or their project hue, set inline in
+      // eventDidMount); a plain event is a Meeting → blossom. Ritual/Focus/Admin/External
+      // kinds need data the schema doesn't carry yet.
+      classes.push(isTaskish ? 'kf-kind-task' : 'kf-kind-event')
+      // Layout (§6): tier by DRAWN height at 0.9px/min — micro <27, short <54, std <81, full ≥81.
+      const drawnPx = ((endMs - startMs) / 60_000) * 0.9
+      classes.push(drawnPx < 27 ? 'kf-tier-micro' : drawnPx < 54 ? 'kf-tier-short' : drawnPx < 81 ? 'kf-tier-std' : 'kf-tier-full')
+      // Temporal (§5) — the minute's (past / in progress / ran over) is eventClassNames' and LiveTime's.
+      // Kai 2026-10-07: a task block that ended before today, not done, is overdue — muted, "Overdue ·
+      // Replan" (the rail's Overdue holds the same task): the day's, so it's here.
+      const overdue = isTaskish && !!e.taskId && !e.taskDone && !e.allDay && cairoDateKey(new Date(endMs - 1)) < day
+      if (overdue) classes.push('kf-overdue')
+      // Semantic (§4): completed / conflict are the two states the data can express today
+      // (tentative/declined/cancelled/RSVP/free need status columns the schema doesn't have).
+      if (e.taskDone) classes.push('kf-done')
+      const isConflict = conflicted.has(e.id)
+      if (isConflict) classes.push('fc-event-conflict')
+      if (e.readOnly) classes.push('kf-synced')
+      // Layout (§6) geometry: pair = side by side, stack = 56% shingle, hidden = under the
+      // topmost's "+N more". CalendarGrid.css positions FC's harness from these.
+      const slot = overlap.get(e.id)
+      if (slot) {
+        classes.push('kf-ov')
+        classes.push(slot.kind === 'pair' ? `kf-ov-p${slot.lane}` : slot.kind === 'stack' ? `kf-ov-s${slot.lane}` : 'kf-ov-hide')
+      }
+
+      const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes, ...(e.readOnly ? { editable: false } : null) }
+      // A coloured event keeps 4c's exact geometry and only swaps the hue. The colour rides
+      // extendedProps rather than FC's backgroundColor/borderColor, because those land as
+      // inline styles that would beat the stylesheet and undo the 4c fill/edge.
+      ev.extendedProps = {
+        kfColor: e.color ?? null,
+        kfTaskId: e.taskId ?? null,
+        kfTaskDone: !!e.taskDone,
+        kfTaskish: isTaskish,
+        kfStart: startMs,
+        kfEnd: endMs,
+        kfOverdue: overdue,
+        kfConflict: isConflict,
+        kfFull: drawnPx >= 81,
+        kfNarrow: narrow,
+        kfH24: hour24,
+        kfOv: !!slot,
+        kfMore: slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
+        kfPinned: e.id === pinnedId,
+        kfRepeat: !!e.repeat,
+        kfHeld: e.held?.length ? e.held : null,
+        kfFill: e.fill ?? null,
+        kfParent: e.parent ?? null,
+      }
+      return ev
+    }).concat(
+      // §4 planning strip: the free stretches, behind the blocks (FullCalendar background events).
+      (freeGaps ?? []).map((g, i) => ({ id: `kf-free-${i}`, title: g.label, start: g.start, end: g.end, display: 'background', classNames: ['kf-free'] })),
+    )
+    fcShared.current = shareEvents(fcShared.current, next)
+    return fcShared.current.arr
+    // `today` re-reads "overdue" when a new day starts.
+  }, [events, isSpan, zone, shownDays, clockTime, conflictedIds, overlap, narrow, hour24, pinnedId, freeGaps, today]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // M7: paging slides the days in from the side they come from — 160 ms, opacity and translate, on the
+  // day columns only (never the time axis or the scroller). Off with Effects off / reduced motion (CSS).
+  const slide = (dir: 'next' | 'prev') => {
+    const w = wrapRef.current
+    if (!w) return
+    delete w.dataset.nav
+    void w.offsetWidth
+    w.dataset.nav = dir
+    window.setTimeout(() => {
+      if (w.dataset.nav === dir) delete w.dataset.nav
+    }, 220)
+  }
   useImperativeHandle(ref, () => ({
     unselect: () => fcRef.current?.getApi().unselect(),
-    prev: () => fcRef.current?.getApi().prev(),
-    next: () => fcRef.current?.getApi().next(),
+    prev: () => {
+      slide('prev')
+      fcRef.current?.getApi().prev()
+    },
+    next: () => {
+      slide('next')
+      fcRef.current?.getApi().next()
+    },
     gotoDate: (date) => {
       const api = fcRef.current?.getApi()
       if (!api) return
       // Already on screen (a block just planned this week): only the hours scroll to it.
       if (date < api.view.activeStart || date >= api.view.activeEnd) api.gotoDate(date)
-      api.scrollToTime(scrollTimeNear(date, scrollLeadMinutes))
+      api.scrollToTime(scrollTimeNear(date, latest.current.props.scrollLeadMinutes ?? SCROLL_LEAD_DESKTOP_MIN))
     },
     // J-15: Today also brings the now-line back into view (FC's scroll API, never scrollIntoView,
     // which would scroll every ancestor too).
     today: () => {
       const api = fcRef.current?.getApi()
       if (!api) return
+      const now = new Date()
+      if (now < api.view.activeStart || now >= api.view.activeEnd) slide(now < api.view.activeStart ? 'prev' : 'next')
       api.today()
-      api.scrollToTime(scrollTimeNear(new Date(), scrollLeadMinutes))
+      api.scrollToTime(scrollTimeNear(new Date(), latest.current.props.scrollLeadMinutes ?? SCROLL_LEAD_DESKTOP_MIN))
     },
-  }))
+  }), [])
+
+  // Where the last press on the grid was: `select` tells a click (one quarter) from a short drag by it.
+  const downAt = useRef<{ x: number; y: number } | null>(null)
 
   // p7e A4: Ctrl-click an empty slot = a task there. FullCalendar starts no selection with Ctrl held (its
   // isPrimaryMouseButton), so the slot under the pointer is resolved here; ⌘ (a Mac) does select, and
@@ -468,251 +726,75 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
     const at = resolveGridDateTime(e.clientX, e.clientY)
     if (!at) return
     const end = new Date(Date.parse(at.iso) + (at.allDay ? 1440 : 30) * 60_000).toISOString()
-    onCreate({ start: at.iso, end, allDay: at.allDay, x: e.clientX, y: e.clientY, task: true })
+    props.onCreate({ start: at.iso, end, allDay: at.allDay, x: e.clientX, y: e.clientY, task: true })
   }
 
   function handleGridContextMenu(e: React.MouseEvent) {
-    if (!onGridContextMenu) return
+    if (!props.onGridContextMenu) return
     const target = e.target as HTMLElement
     if (target.closest('.fc-event')) return
     const resolved = resolveGridDateTime(e.clientX, e.clientY)
     if (!resolved) return
     e.preventDefault()
-    onGridContextMenu(resolved.iso, resolved.allDay, e.clientX, e.clientY)
+    props.onGridContextMenu(resolved.iso, resolved.allDay, e.clientX, e.clientY)
   }
 
-  return (
-    // MIN_COL_W per day column + the time axis: below that the grid scrolls horizontally in the
-    // page's scroller instead of crushing the last day into a sliver. Polish D: that floor was
-    // 170px — §6's narrow-column THRESHOLD, not a floor — so at the default 125% zoom a 1280px
-    // window showed two days of seven. Between MIN_COL_W and 170 a column now draws §6's narrow
-    // tier (`kf-cal-narrow`: short-tier type scale, start time only). weekFit.ts has the numbers.
-    // --kf-cal-density folds the view-options Density into the --s scale (CalendarGrid.css);
-    // it's also in the FC key because slot geometry is measured once per mount.
-    <div
-      ref={wrapRef}
-      data-tour="calendar"
-      className={narrow ? 'kf-cal-narrow' : undefined}
-      onContextMenu={handleGridContextMenu}
-      onClick={handleCtrlClick}
-      style={{ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 } as React.CSSProperties}
-    >
-    <FullCalendar
-      key={`${initialView}-${dayCount}-${density}`}
-      ref={fcRef}
-      plugins={[timeGridPlugin, dayGridPlugin, interactionPlugin, intlZonePlugin]}
-      timeZone={zone}
-      initialView={initialView}
-      firstDay={firstDay}
-      hiddenDays={hiddenDays}
-      // Punch 35: top-edge resize — start moves, end stays put. FC's own start handle.
-      eventResizableFromStart
-      // Punch 33/35: an off-grid drop reverts instantly (rail handles deletion, soft-no shakes);
-      // the default 500ms glide-back would fight both.
-      dragRevertDuration={0}
-      // Punch 32: 24-hour toggle drives both the block time rows and the gutter labels.
-      eventTimeFormat={hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', minute: '2-digit', hour12: true }}
-      slotLabelFormat={hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } : { hour: 'numeric', hour12: true }}
-      views={{
-        [customView]: {
-          type: 'timeGrid',
-          duration: { days: dayCount },
-          // Duration views start at the current date, so today leads instead of trailing.
-          dateAlignment: 'day',
-          dateIncrement: { days: dayCount },
-          buttonText: `${dayCount}d`,
-        },
-        // Kai 2026-07-21: "why am I stuck with having to see today as the last day of the
-        // week" — a Sun-Sat week puts Saturday last all day Saturday. Week is now a ROLLING
-        // 7 days starting today; prev/next steps a full week.
-        rollingWeek: {
-          type: 'timeGrid',
-          duration: { days: 7 },
-          dateAlignment: 'day',
-          dateIncrement: { days: 7 },
-        },
-      }}
-      headerToolbar={hideToolbar ? false : { left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }}
-      datesSet={(arg: DatesSetArg) => {
-        onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })
-        const days = dayRange(zoneDateKey(arg.view.activeStart, zone), zoneDateKey(new Date(arg.view.activeEnd.getTime() - 1), zone))
+  // ── FullCalendar's options, stable ──
+  const views = useMemo(() => ({
+    [customView]: {
+      type: 'timeGrid',
+      duration: { days: dayCount },
+      // Duration views start at the current date, so today leads instead of trailing.
+      dateAlignment: 'day',
+      dateIncrement: { days: dayCount },
+      buttonText: `${dayCount}d`,
+    },
+    // Kai 2026-07-21: "why am I stuck with having to see today as the last day of the
+    // week" — a Sun-Sat week puts Saturday last all day Saturday. Week is now a ROLLING
+    // 7 days starting today; prev/next steps a full week.
+    rollingWeek: {
+      type: 'timeGrid',
+      duration: { days: 7 },
+      dateAlignment: 'day',
+      dateIncrement: { days: 7 },
+    },
+  }), [dayCount])
+  // Punch 32: 24-hour toggle drives both the block time rows and the gutter labels (lib/clock).
+  const eventTimeFormat = useMemo(() => (hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } as const : { hour: 'numeric', minute: '2-digit', hour12: true } as const), [hour24])
+  const slotLabelFormat = useMemo(() => (hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } as const : { hour: 'numeric', hour12: true } as const), [hour24])
+  const headerToolbar = useMemo(() => (hideToolbar ? false : { left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }), [hideToolbar])
+  // J-15: land two hours above the now-line instead of a fixed 08:00. FC reads scrollTime once per
+  // mount (each view switch remounts via `key`); prev/next keep the hour you're looking at, and Today
+  // re-scrolls explicitly (the handle above).
+  const [scrollTime] = useState(() => scrollTimeNear(new Date(), scrollLeadMinutes))
+
+  const cb = useMemo(() => {
+    const L = () => latest.current
+    return {
+      datesSet: (arg: DatesSetArg) => {
+        L().props.onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })
+        const days = dayRange(zoneDateKey(arg.view.activeStart, L().zone), zoneDateKey(new Date(arg.view.activeEnd.getTime() - 1), L().zone))
         setShownDays((cur) => (cur && cur.join() === days.join() ? cur : days))
         if (arg.view.type !== 'dayGridMonth') setVisibleDays(Math.max(1, Math.round((arg.view.currentEnd.getTime() - arg.view.currentStart.getTime()) / 86_400_000)))
-      }}
-      height="100%"
-      // J-15: land two hours above the now-line instead of a fixed 08:00. FC reads scrollTime once per mount (each view switch remounts via `key`);
-      // prev/next keep the hour you're looking at, and Today re-scrolls explicitly (the handle above).
-      scrollTime={scrollTimeNear(new Date(), scrollLeadMinutes)}
-      scrollTimeReset={false}
-      // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
-      // relying on FullCalendar's defaults happening to be 30min — state the contract instead,
-      // so the placeholder steps in half-hours and a drag can't land on an off-grid time.
-      // Kai 2026-10-03: drags, moves and resizes land on quarter hours (the time fields' own
-      // 15-min list); the drawn grid stays half-hourly. A plain click still makes 30 min
-      // (CalendarPage.handleGridCreate widens a one-snap selection).
-      slotDuration="00:30:00"
-      snapDuration="00:15:00"
-      // Punch 37: edge auto-scroll while dragging is FC's own AutoScroller — enabled by default,
-      // wired to `.fc-scroller` (the time-grid's vertical scroller), 50px edge zone, quadratic
-      // ramp to a gentle 300px/s. Stated explicitly so nobody "cleans it up" to false.
-      dragScroll
-      dayMaxEvents
-      allDayText="All day"
-      // §4 strip: one day needs no day row; two read "FRI · TODAY" in mono. No empty all-day band.
-      dayHeaders={!strip || visibleDays > 1}
-      allDaySlot={!strip || events.some((e) => e.allDay || isSpan(e))}
-      dayHeaderContent={(arg) => {
-        if (strip) {
-          const day = headerDay(arg.date, new Date())
-          return <div className={`cal-strip-dayhead${day.delta === 0 ? ' is-today' : ''}`}>{day.weekday}{day.delta === 0 ? ' · Today' : ''}</div>
+      },
+      eventClassNames: (arg: EventContentArg): string[] => {
+        // The minute's temporal class (LiveTime keeps it moving between renders) and the outbox marks,
+        // so a re-render of the block by FullCalendar never drops them.
+        const p = arg.event.extendedProps as Partial<BlockProps> & { kfSegOf?: string }
+        if (arg.event.display === 'background' || p.kfSegOf || arg.isMirror || p.kfStart == null) return []
+        const out: string[] = []
+        if (!p.kfOverdue) {
+          const c = phaseClass(phaseAt(p as BlockProps, arg.event.allDay, Date.now()))
+          if (c) out.push(c)
         }
-        // Month view's header row is one cell per weekday, not per date — no daisy, no number.
-        if (arg.view.type === 'dayGridMonth') {
-          return <div className="cal-day-header-month">{arg.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: zone })}</div>
-        }
-        // Punch 39 — WA2 contract "Day headers with daisy": past column past.png 26px + cell
-        // opacity .62 · today = clock stage 30px + shadow-drop-sm + lavender + "Fri · Today" ·
-        // future = future.png 26px. Stages come from lib/growthStages (never re-bucketed here).
-        // J-15: arg.date is a real local-midnight Date, read with local getters (gridClock.ts
-        // explains how the old getUTC* read put "Today" one column late east of Greenwich).
-        const now = new Date()
-        const day = headerDay(arg.date, now)
-        const stage = daisyColumnStage(day.delta, zoneHour(now)) // the user's clock, not the device's
-        const isToday = day.delta === 0
-        return (
-          <div className={`cal-day-header${isToday ? ' cal-day-header-today' : ''}${stage === 'past' ? ' cal-day-header-past' : ''}`}>
-            <img src={`/ds/assets/daisy/${stage}.png`} alt="" className="cal-day-daisy" />
-            <div>
-              <div className="cal-day-header-name">
-                {day.weekday}
-                {isToday ? ' · Today' : ''}
-              </div>
-              <div className="cal-day-header-num">{day.day}</div>
-            </div>
-          </div>
-        )
-      }}
-      nowIndicator
-      // Calendar.dc.html:213 — live mono time chip riding the now line; FC's NowTimer
-      // re-renders this every minute, so no interval of our own.
-      // R4 (2026-07-20): the chip read a constant "12:00 AM". `arg.date` is a FullCalendar
-      // DateMarker — wall-clock encoded AS UTC — so toLocaleTimeString shifted it a second time
-      // by the local offset (21:41 Cairo -> 00:41 "local"). The chip always means "now", and FC's
-      // NowTimer re-renders it every minute, so read the real clock instead of the marker.
-      nowIndicatorContent={(arg) =>
-        arg.isAxis ? null : (
-          <span className="cal-now-chip">
-            {clockTime(Date.now())}
-          </span>
-        )
-      }
-      // M1b: on touch, a 400ms hold picks up a block or starts a slot selection — the DS long-press
-      // (DS-CHANGELOG §3). FullCalendar's 1000ms default read as "nothing happens".
-      longPressDelay={400}
-      eventLongPressDelay={400}
-      selectLongPressDelay={400}
-      selectable
-      selectMirror
-      // Kai 2026-07-21: "when I change the type the ghost highlight dissapears" — clicking
-      // anything in our own popover counts as a click outside the grid, so FC unselectAuto
-      // wiped the slot highlight. Exempt the popover from it.
-      unselectCancel=".kf-quickcreate"
-      editable
-      droppable
-      events={events.flatMap<Record<string, unknown>>((e) => {
-        // Calendar 3e "multi-day span": in the all-day band, one piece per day on screen — only the
-        // outer corners round, the open edges read « / », the title on the first piece. A piece is
-        // not dragged or resized (the block menu moves it); clicks act on the block.
-        if (isSpan(e)) {
-          const { first, last } = spanDays(spanOf(e), zone)
-          const kind = e.type !== 'event' ? 'kf-kind-task' : 'kf-kind-event'
-          const marks = [pendingIds?.includes(e.id) && 'kf-pending', failedIds?.includes(e.id) && 'kf-failed', e.taskDone && 'kf-done'].filter((c): c is string => !!c)
-          return bandSegments({ ...spanOf(e), title: e.title }, shownDays ?? dayRange(first, last), zone, (ms) => clockTime(ms)).map((seg, i): Record<string, unknown> => ({
-            id: `${e.id}${SEG}${seg.day}`,
-            title: seg.label,
-            start: seg.day,
-            end: addDays(seg.day, 1),
-            allDay: true,
-            editable: false,
-            classNames: ['fc-event-type-' + e.type, kind, 'kf-seg', `kf-seg-${seg.shape}`, ...(i === 0 ? ['kf-seg-titled'] : []), ...marks],
-            extendedProps: { kfColor: e.color ?? null, kfSegOf: e.id, kfTitle: e.title },
-          }))
-        }
-        // ── CALENDAR.md §0: one block, five independent axes, composed as classes. ──
-        const startMs = new Date(e.start).getTime()
-        const endMs = new Date(e.end).getTime()
-        const now = Date.now()
-        const isTaskish = e.type !== 'event' // task + time_block are completable kinds
-
-        const classes = ['fc-event-type-' + e.type]
-        // Kind (§3, hue only): tasks/blocks ride lavender (or their project hue, set inline in
-        // eventDidMount); a plain event is a Meeting → blossom. Ritual/Focus/Admin/External
-        // kinds need data the schema doesn't carry yet.
-        classes.push(isTaskish ? 'kf-kind-task' : 'kf-kind-event')
-        // Layout (§6): tier by DRAWN height at 0.9px/min — micro <27, short <54, std <81, full ≥81.
-        const drawnPx = ((endMs - startMs) / 60_000) * 0.9
-        classes.push(drawnPx < 27 ? 'kf-tier-micro' : drawnPx < 54 ? 'kf-tier-short' : drawnPx < 81 ? 'kf-tier-std' : 'kf-tier-full')
-        // Temporal (§5): ran-over (task not done, end passed) is the one terra exception and
-        // outranks plain past-dimming; in-progress carries the elapsed wash.
-        const ranOver = isTaskish && !!e.taskId && !e.taskDone && endMs < now && !e.allDay
-        // Kai 2026-10-07: one that ended before today is overdue — muted, "Overdue · Replan" (the
-        // rail's Overdue holds the same task). Ran over earlier today keeps the terra exception.
-        const overdue = ranOver && cairoDateKey(new Date(endMs - 1)) < cairoDateKey(new Date(now))
-        if (overdue) classes.push('kf-overdue')
-        else if (ranOver) classes.push('kf-ranover')
-        else if (endMs < now) classes.push('kf-past')
-        else if (startMs <= now) classes.push('kf-inprog')
-        // Semantic (§4): completed / conflict are the two states the data can express today
-        // (tentative/declined/cancelled/RSVP/free need status columns the schema doesn't have).
-        if (e.taskDone) classes.push('kf-done')
-        const conflicted = conflictedIds?.includes(e.id) ?? false
-        if (conflicted) classes.push('fc-event-conflict')
-        // Interaction (§7): outbox visibility — pending dashes, sync-failed warns.
-        if (pendingIds?.includes(e.id)) classes.push('kf-pending')
-        if (failedIds?.includes(e.id)) classes.push('kf-failed')
-        if (e.id === justDroppedId) classes.push('kf-settle-in')
-        if (e.readOnly) classes.push('kf-synced')
-        // Layout (§6) geometry: pair = side by side, stack = 56% shingle, hidden = under the
-        // topmost's "+N more". CalendarGrid.css positions FC's harness from these.
-        const slot = overlap.get(e.id)
-        if (slot) {
-          classes.push('kf-ov')
-          classes.push(slot.kind === 'pair' ? `kf-ov-p${slot.lane}` : slot.kind === 'stack' ? `kf-ov-s${slot.lane}` : 'kf-ov-hide')
-        }
-
-        const ev: Record<string, unknown> = { id: e.id, title: e.title, start: e.start, end: e.end, allDay: e.allDay, classNames: classes, ...(e.readOnly ? { editable: false } : null) }
-        // A coloured event keeps 4c's exact geometry and only swaps the hue. The colour rides
-        // extendedProps rather than FC's backgroundColor/borderColor, because those land as
-        // inline styles that would beat the stylesheet and undo the 4c fill/edge.
-        ev.extendedProps = {
-          kfColor: e.color ?? null,
-          kfTaskId: e.taskId ?? null,
-          kfTaskDone: !!e.taskDone,
-          kfStart: startMs,
-          kfEnd: endMs,
-          kfRanOver: ranOver,
-          kfOverdue: overdue,
-          kfConflict: conflicted,
-          kfPending: pendingIds?.includes(e.id) ?? false,
-          kfFailed: failedIds?.includes(e.id) ?? false,
-          kfFull: drawnPx >= 81,
-          kfOv: !!slot,
-          kfMore: slot?.kind === 'stack' && slot.hidden.length ? [e.id, ...slot.hidden] : null,
-          kfPinned: e.id === pinnedId,
-          kfRepeat: !!e.repeat,
-          kfHeld: e.held?.length ? e.held : null,
-          kfFill: e.fill ?? null,
-          kfParent: e.parent ?? null,
-        }
-        return ev
-      }).concat(
-        // §4 planning strip: the free stretches, behind the blocks (FullCalendar background events).
-        (freeGaps ?? []).map((g, i) => ({ id: `kf-free-${i}`, title: g.label, start: g.start, end: g.end, display: 'background', classNames: ['kf-free'] })),
-      )}
+        if (L().pending.has(arg.event.id)) out.push('kf-pending')
+        if (L().failed.has(arg.event.id)) out.push('kf-failed')
+        return out
+      },
       // 4c renders the title above the time. FC emits them the other way round, so own the
       // structure outright — that also gives task-linked blocks their checkbox (R4, 2026-07-20)
       // and finally puts real emoji in event titles (the last EmojiText gap from R4-4).
-      eventContent={(arg) => {
+      eventContent: (arg: EventContentArg) => {
         if (arg.event.display === 'background') return <span className="kf-free-label">{arg.event.title}</span>
         // Calendar 3e: a span's day piece reads its own label ("Offsite »", "« »", "« ends 3 PM").
         if (arg.event.extendedProps.kfSegOf) {
@@ -722,14 +804,17 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             </div>
           )
         }
-        const p = arg.event.extendedProps as {
-          kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number
-          kfRanOver: boolean; kfOverdue: boolean; kfConflict: boolean; kfPending: boolean; kfFailed: boolean; kfFull: boolean
-          kfOv: boolean; kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
-          kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null; kfParent: string | null
-        }
+        const { clockTime: clock } = L()
+        const p = arg.event.extendedProps as BlockProps
         const done = !!p.kfTaskDone
-        const now = Date.now()
+        // S5: a month cell is a one-line pill — the title, nothing the time grid draws.
+        if (arg.view.type === 'dayGridMonth') {
+          return (
+            <div className={`kf-ev-row${done ? ' kf-done' : ''}`}>
+              <div className="kf-ev-text"><div className="fc-event-title"><EmojiText text={arg.event.title} /></div></div>
+            </div>
+          )
+        }
         // A mirror (the drag-select preview, or a block mid-drag/resize) has no kf props of its own
         // — or the original block's — so its labels read the event's live times. Kai 2026-10-03:
         // a narrow column (150%) drew the preview's start-only label as clockTime(undefined),
@@ -737,57 +822,45 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const startMs = arg.event.start?.getTime() ?? p.kfStart
         const endMs = arg.event.end?.getTime() ?? p.kfEnd
 
-        // §5 temporal time labels: in-progress counts down, ran-over names the missed end.
-        let timeText: React.ReactNode = arg.timeText
-        if (p.kfOverdue && !arg.isMirror) {
-          // dragGuard: a click here opens the Plan menu instead of starting a drag or the details.
-          timeText = (
-            <>
-              <span className="kf-ev-overdue-word">Overdue · </span>
-              <span
-                className="kf-ev-replan"
-                role="button"
-                aria-label={`Replan ${arg.event.title}`}
-                ref={(el) => {
-                  dragGuard(() => {
-                    if (!el) return
-                    const r = el.getBoundingClientRect()
-                    onReplan?.(arg.event.id, r.left, r.bottom)
-                  })(el)
-                }}
-              >
-                Replan
-              </span>
-            </>
-          )
-        } else if (p.kfRanOver) {
-          timeText = `Ran over · ${clockTime(p.kfEnd)}`
-        } else if (!done && !arg.event.allDay && p.kfStart <= now && now < p.kfEnd) {
-          // (an all-day event has no countdown: "Now · 890m left" on a birthday read as noise)
-          timeText = `Now · ${Math.max(1, Math.ceil((p.kfEnd - now) / 60_000))}m left`
-        } else if ((p.kfOv || narrow) && arg.timeText) {
+        // §5 time labels that don't move with the minute (LiveTime adds "Ran over" / "Now · 51m left").
+        let staticTime: ReactNode = arg.timeText
+        if ((p.kfOv || p.kfNarrow) && arg.timeText) {
           // §6 overlap/stack tier: "time start-only" — half a column can't hold a range. The
           // narrow-column tier (< 170px) reads the same way (Polish D).
-          timeText = clockTime(startMs)
+          staticTime = clock(startMs)
         } else if (p.kfFull && arg.timeText) {
           // full tier has room for the duration suffix (§2 "as space allows")
           const mins = Math.round((endMs - startMs) / 60_000)
-          timeText = `${arg.timeText} · ${mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`}`
+          staticTime = `${arg.timeText} · ${mins >= 60 ? `${Math.floor(mins / 60)}h${mins % 60 ? ` ${mins % 60}m` : ''}` : `${mins}m`}`
         }
+        const overdueTime = p.kfOverdue && !arg.isMirror && (
+          // dragGuard: a click here opens the Plan menu instead of starting a drag or the details.
+          <>
+            <span className="kf-ev-overdue-word">Overdue · </span>
+            <span
+              className="kf-ev-replan"
+              role="button"
+              aria-label={`Replan ${arg.event.title}`}
+              ref={(el) => {
+                dragGuard(() => {
+                  if (!el) return
+                  const r = el.getBoundingClientRect()
+                  L().props.onReplan?.(arg.event.id, r.left, r.bottom)
+                })(el)
+              }}
+            >
+              Replan
+            </span>
+          </>
+        )
         // Calendar 3e "spans midnight": a piece cut at 00:00 names the far end at the cut (⌄ 1:30 AM /
         // ⌃ from 11 PM) instead of a time row; FullCalendar squares the cut corners (CalendarGrid.css).
-        const cut = !arg.isMirror && !arg.event.allDay && arg.view.type !== 'dayGridMonth'
-        const cutInto = cut && !arg.isEnd ? '⌄ ' + clockTime(endMs) : null
-        const cutFrom = cut && !arg.isStart ? '⌃ from ' + clockTime(startMs) : null
-        if (cutInto || cutFrom) timeText = null
-        // §7 outbox suffixes ride the time row
-        // Subtasks C: a subtask's own block says whose it is.
-        if (p.kfParent && !arg.isMirror) timeText = <>{timeText}{timeText ? ' · ' : ''}↳ <EmojiText text={p.kfParent} /></>
-        if (p.kfPending) timeText = <>{timeText} · saving ◌</>
-        if (p.kfFailed) timeText = <>{timeText} · retry</>
+        const cut = !arg.isMirror && !arg.event.allDay
+        const cutInto = cut && !arg.isEnd ? '⌄ ' + clock(endMs) : null
+        const cutFrom = cut && !arg.isStart ? '⌃ from ' + clock(startMs) : null
 
         // Month view has no shingle — its pills never trade the title for "+N more".
-        const more = arg.view.type !== 'dayGridMonth' && !arg.isMirror ? p.kfMore : null
+        const more = !arg.isMirror ? p.kfMore : null
         // §6: the topmost shingle reads "+N more" when blocks are fully hidden under it.
         // dragGuard: a tap here opens the list instead of starting a drag or eventClick.
         const moreLink = more && (
@@ -810,19 +883,23 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // user must see); its "+N more" rides the time row until the pin lets go.
         const pinnedMore = !!(more && p.kfPinned)
 
-        // §0 one badge slot, ranked: ⚠ (conflict or sync-fail) > completed petal > ↻ repeating (C10).
-        const badge = p.kfConflict || p.kfFailed ? '⚠' : done ? 'petal' : p.kfRepeat && !arg.isMirror ? 'repeat' : null
+        // §0 one badge slot, ranked: ⚠ (conflict) > completed petal > ↻ repeating (C10). A sync failure
+        // is the block's outline and its time row's "retry ⚠" (CalendarGrid.css), off FullCalendar's data.
+        const badge = p.kfConflict ? '⚠' : done ? 'petal' : p.kfRepeat && !arg.isMirror ? 'repeat' : null
 
-        // §5 in-progress elapsed wash: the lived proportion, ACCENT-DEEP at 14%.
-        const elapsedPct =
-          !done && !p.kfRanOver && p.kfStart <= now && now < p.kfEnd
-            ? Math.round(((now - p.kfStart) / (p.kfEnd - p.kfStart)) * 100)
-            : 0
+        // The time row: the overdue link, else the minute's words, else the static label — then whose
+        // subtask it is (Subtasks C) and the outbox's suffix (§7, CSS on .kf-ev-sync).
+        const timeRow = (live: string | null) => {
+          let timeText: ReactNode = overdueTime || live || staticTime
+          if (cutInto || cutFrom) timeText = null
+          if (p.kfParent && !arg.isMirror) timeText = <>{timeText}{timeText ? ' · ' : ''}↳ <EmojiText text={p.kfParent} /></>
+          if (pinnedMore) return <div className="fc-event-time">{timeText ? <>{timeText} · </> : ''}{moreLink}<span className="kf-ev-sync" /></div>
+          return timeText ? <div className="fc-event-time">{timeText}<span className="kf-ev-sync" /></div> : null
+        }
 
         return (
           <div className={`kf-ev-row${done ? ' kf-done' : ''}`} data-tour={arg.isMirror ? undefined : 'calendar-block'}>
-            {elapsedPct > 0 && <span className="kf-ev-elapsed" style={{ height: `${elapsedPct}%` }} aria-hidden="true" />}
-            {badge === '⚠' && <span className="kf-ev-badge" title={p.kfFailed ? 'Sync failed' : 'Overlaps another block'}>⚠</span>}
+            {badge === '⚠' && <span className="kf-ev-badge" title="Overlaps another block">⚠</span>}
             {badge === 'petal' && <span className="kf-ev-badge kf-ev-petal" aria-hidden="true" />}
             {badge === 'repeat' && <span className="kf-ev-badge kf-ev-repeat" title="Repeats"><Icon name="repeat" size={10} label="Repeats" /></span>}
             {cutFrom && <span className="fc-event-time kf-ev-cut kf-ev-cut-from">{cutFrom}</span>}
@@ -833,7 +910,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
                 role="checkbox"
                 aria-checked={done}
                 aria-label={`${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
-                ref={dragGuard(() => onCompleteTask?.(p.kfTaskId!, done))}
+                ref={dragGuard(() => L().props.onCompleteTask?.(p.kfTaskId!, done))}
               >
                 {done ? '✓' : ''}
               </span>
@@ -844,10 +921,10 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
               ) : (
                 <div className="fc-event-title"><EmojiText text={arg.event.title} /></div>
               )}
-              {pinnedMore ? (
-                <div className="fc-event-time">{timeText ? <>{timeText} · </> : ''}{moreLink}</div>
-              ) : (
-                timeText && <div className="fc-event-time">{timeText}</div>
+              {arg.isMirror ? timeRow(null) : (
+                <LiveTime p={p} allDay={arg.event.allDay} overdue={!!p.kfOverdue} clock={clock}>
+                  {timeRow}
+                </LiveTime>
               )}
               {/* Time Slots (0073): the tasks the slot holds, each with its checkbox, × (hover: Out of
                   the slot) and ⋯ — all dragGuard'd, so ticking or opening one never moves the slot.
@@ -856,18 +933,18 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
                 <div className="kf-ev-slot">
                   <div className="fc-event-time kf-ev-fill">{p.kfFill}</div>
                   {p.kfHeld.map((h) => (
-                    <div key={h.id} ref={heldRow} className={`kf-ev-slot-row${h.done ? ' kf-done' : ''}`} data-slot-task={h.id} data-task-id={h.id} data-title={h.title} data-duration={h.minutes}>
+                    <div key={h.id} ref={heldRow} className={`kf-ev-slot-row${h.done ? ' kf-done' : ''}`} data-slot-task={h.id} data-task-id={h.id} data-title={h.title} data-duration={h.minutes} data-length={durationLabel(h.minutes)}>
                       <span
                         className={`kf-ev-check${h.done ? ' kf-on' : ''}`}
                         role="checkbox"
                         aria-checked={h.done}
                         aria-label={`${h.done ? 'Reopen' : 'Complete'} ${h.title}`}
-                        ref={dragGuard(() => onCompleteTask?.(h.id, h.done))}
+                        ref={dragGuard(() => L().props.onCompleteTask?.(h.id, h.done))}
                       >
                         {h.done ? '✓' : ''}
                       </span>
                       <span className="fc-event-title kf-ev-slot-title"><EmojiText text={h.title} /></span>
-                      <span className="kf-ev-slot-out" role="button" aria-label={`Out of the slot: ${h.title}`} title="Out of the slot" ref={dragGuard(() => onSlotTaskOut?.(h.id))}>
+                      <span className="kf-ev-slot-out" role="button" aria-label={`Out of the slot: ${h.title}`} title="Out of the slot" ref={dragGuard(() => L().props.onSlotTaskOut?.(h.id))}>
                         ×
                       </span>
                       <span
@@ -878,7 +955,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
                           dragGuard(() => {
                             if (!el) return
                             const r = el.getBoundingClientRect()
-                            onSlotTaskMenu?.(h.id, r.left, r.bottom)
+                            L().props.onSlotTaskMenu?.(h.id, r.left, r.bottom)
                           })(el)
                         }}
                       >
@@ -891,41 +968,46 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
             </div>
           </div>
         )
-      }}
-      eventDidMount={(info) => {
+      },
+      eventDidMount: (info: EventMountArg) => {
         if (info.event.display === 'background') return // §4's free stretches: not a block
         // Polish F2b: lets the pin's "next interaction" listener tell a press on the pinned block
         // itself (keep it) from a press anywhere else (let go).
-        info.el.dataset.kfId = blockIdOf(info.event)
+        const id = blockIdOf(info.event)
+        info.el.dataset.kfId = id
+        info.el.toggleAttribute('data-picked', L().pickedIds.includes(id))
         paintColor(info.el, (info.event.extendedProps as { kfColor?: string | null })?.kfColor)
-
         // Punch 34: double-click goes straight to the task editor (single click still opens
         // the details popover — the navigation unmounts it, so the two don't fight).
-        if (onEventDoubleClick) {
-          info.el.addEventListener('dblclick', () => onEventDoubleClick(blockIdOf(info.event)))
-        }
-
-        if (!onEventContextMenu) return
+        info.el.addEventListener('dblclick', () => L().props.onEventDoubleClick?.(id))
         info.el.addEventListener('contextmenu', (e: MouseEvent) => {
+          if (!L().props.onEventContextMenu) return
           e.preventDefault()
-          onEventContextMenu(blockIdOf(info.event), e.clientX, e.clientY)
+          L().props.onEventContextMenu?.(id, e.clientX, e.clientY)
         })
-      }}
-      select={(info) => {
+      },
+      select: (info: DateSelectArg) => {
         const jsEvent = info.jsEvent as MouseEvent | null
-        onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2, task: !!jsEvent?.metaKey })
-      }}
-      eventClick={(info: EventClickArg) => info.event.display !== 'background' && onEventClick(blockIdOf(info.event))}
+        const from = downAt.current
+        const dragged = !!(jsEvent && from && Math.abs(jsEvent.clientX - from.x) + Math.abs(jsEvent.clientY - from.y) > 3)
+        L().props.onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2, task: !!jsEvent?.metaKey, dragged })
+      },
+      eventClick: (info: EventClickArg) => {
+        if (info.event.display === 'background') return
+        const e = info.jsEvent as MouseEvent
+        L().props.onEventClick(blockIdOf(info.event), e.ctrlKey || e.metaKey || e.shiftKey)
+      },
       // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder
-      // is FC's own mirror. eventDragStop fires before eventDrop, so cleanup is safe here.
-      eventDragStart={(info) => {
+      // is FC's own mirror. eventDragStop fires before eventDrop.
+      eventDragStart: (info: EventDragStartArg) => {
         // Whoever drags a block knows it: the one-time "Drag a block to move it" hint never shows after
         // (it used to land 1.5 s after the first drag, over the block the next one reached for).
         markSeen('hint:calendar')
+        landingRef.current?.stop()
         stopGhostRef.current = startGhost(info.el, info.jsEvent as MouseEvent | null)
-        stopHoverRef.current = trackRailHover(railRef?.current)
-      }}
-      eventDragStop={(info) => {
+        stopHoverRef.current = trackRailHover(L().props.railRef?.current)
+      },
+      eventDragStop: (info: EventDragStopArg) => {
         const stop = stopGhostRef.current
         stopGhostRef.current = null
         stopHoverRef.current?.()
@@ -940,9 +1022,9 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // Rail = the section under the pointer decides (punch 33, Kai 2026-10-12); anywhere else
         // = §7 invalid drop → the soft-no: the ghost shakes ±4px decaying ~320ms, nothing changes.
         if (je && wrapRef.current && !contains(wrapRef.current)) {
-          const rail = railRef?.current
+          const rail = L().props.railRef?.current
           const section = rail && contains(rail) ? (railSectionAt(rail, je.clientX, je.clientY)?.dataset.section ?? null) : undefined
-          const handled = section !== undefined && (onDragToRail?.(info.event.id, section) ?? false)
+          const handled = section !== undefined && (L().props.onDragToRail?.(info.event.id, section) ?? false)
           if (!handled) {
             const host = document.getElementById(GHOST_ID)
             if (host) {
@@ -951,50 +1033,197 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
               return
             }
           }
+          stop?.()
+          return
         }
-        stop?.()
-      }}
-      eventDrop={(info: EventDropArg) => {
-        // Motion 4c: the placeholder snaps to the grid on commit — a brief flash marks the moment,
-        // scoped in CSS to `.cal-motion-on` so it's a no-op when the caller's motion gate is off.
-        flashSnap(info.el)
-        if (info.event.start) {
+        // S2 + M1: over the grid the ghost stays up for the drop to settle it where the block lands (an
+        // unchanged drop fires no eventDrop — the timer lets it go).
+        if (!stop) return
+        const landing = { stop, host: document.getElementById(GHOST_ID), timer: 0 }
+        landing.timer = window.setTimeout(() => {
+          if (landingRef.current === landing) landingRef.current = null
+          stop()
+        }, 400)
+        landingRef.current = landing
+      },
+      eventDrop: (info: EventDropArg) => {
+        const landing = landingRef.current
+        landingRef.current = null
+        if (landing) window.clearTimeout(landing.timer)
+        const id = info.event.id
+        // Multi-select: a picked block dragged carries the other picked blocks by the same amount.
+        const picked = L().pickedIds
+        let handled = false
+        if (picked.length > 1 && picked.includes(id) && info.event.start && info.oldEvent.start && !info.event.allDay && !info.oldEvent.allDay) {
+          handled = !!L().props.onMoveMany?.(picked, info.event.start.getTime() - info.oldEvent.start.getTime())
+        }
+        if (!handled && info.event.start) {
           // Crossing the all-day boundary nulls the end (FC convention) — restate a real one:
           // a converted all-day block spans its day; a re-timed chip gets the default hour.
           const allDay = info.event.allDay
           const end = info.event.end ?? new Date(info.event.start.getTime() + (allDay ? 86_400_000 : 3_600_000))
-          setPinnedId(info.event.id) // Polish F2b: where it landed stays in view
-          onMove(info.event.id, info.event.start.toISOString(), end.toISOString(), allDay)
+          L().props.onMove(id, info.event.start.toISOString(), end.toISOString(), allDay)
         }
-      }}
+        setPinnedId(id) // Polish F2b: where it landed stays in view
+        if (landing) settleGhost(landing, id, !!wrapRef.current?.closest('.cal-motion-on'))
+      },
       // While resizing, FC keeps the original chip visible under the mirror — with both drawn
       // the overlap reads as a dark doubled rectangle. Hide the original for the duration.
-      eventResizeStart={(info) => { info.el.style.visibility = 'hidden' }}
-      eventResizeStop={(info) => { info.el.style.visibility = '' }}
-      eventResize={(info: EventResizeDoneArg) => {
-        // 4c: "the block stretches freely, the handle commits to the grid line" — mark the line.
-        flashSnap(info.el)
-        flashSnapLine(info.el)
+      eventResizeStart: (info: EventResizeStartArg) => { info.el.style.visibility = 'hidden' },
+      eventResizeStop: (info: EventResizeStopArg) => { info.el.style.visibility = '' },
+      eventResize: (info: EventResizeDoneArg) => {
         if (info.event.start && info.event.end) {
-          // §7 resizing: min 30 min. Clamp on the edge that moved — a top-edge (start) resize
-          // pushes the start back up; a bottom-edge resize pulls the end back down.
+          // §7 resizing: min 15 min — one snap (Kai 2026-10-21: "we cant have a task of 15 mins", the
+          // old 30 here pulled a 15-minute resize back). Clamp on the edge that moved — a top-edge
+          // (start) resize pushes the start back up; a bottom-edge resize pulls the end back down.
           let startMs = info.event.start.getTime()
           let endMs = info.event.end.getTime()
-          const MIN = 30 * 60_000
+          const MIN = 15 * 60_000
           if (!info.event.allDay && endMs - startMs < MIN) {
             const startMoved = info.startDelta.milliseconds !== 0 || info.startDelta.days !== 0
             if (startMoved) startMs = endMs - MIN
             else endMs = startMs + MIN
           }
           setPinnedId(info.event.id) // Polish F2b: a resize into a stack stays in view too
-          onResize(info.event.id, new Date(startMs).toISOString(), new Date(endMs).toISOString())
+          L().props.onResize(info.event.id, new Date(startMs).toISOString(), new Date(endMs).toISOString())
         }
-      }}
-      drop={(info: DropArg) => {
+      },
+      drop: (info: DropArg) => {
         const { taskId, inboxId } = info.draggedEl.dataset
         if (!(taskId || inboxId) || !info.date) return
-        onExternalDrop({ taskId, inboxId }, info.date.toISOString(), info.allDay)
-      }}
+        L().props.onExternalDrop({ taskId, inboxId }, info.date.toISOString(), info.allDay)
+      },
+    }
+  }, [heldRow])
+
+  // The day headers and the now chip change with the day and the clock, so they're rebuilt then only.
+  const dayHeaderContent = useCallback((arg: DayHeaderContentArg) => {
+    if (latest.current.strip) {
+      const day = headerDay(arg.date, new Date())
+      return <div className={`cal-strip-dayhead${day.delta === 0 ? ' is-today' : ''}`}>{day.weekday}{day.delta === 0 ? ' · Today' : ''}</div>
+    }
+    // Month view's header row is one cell per weekday, not per date — no daisy, no number.
+    if (arg.view.type === 'dayGridMonth') {
+      return <div className="cal-day-header-month">{arg.date.toLocaleDateString('en-US', { weekday: 'short', timeZone: latest.current.zone })}</div>
+    }
+    // Punch 39 — WA2 contract "Day headers with daisy": past column past.png 26px + cell
+    // opacity .62 · today = clock stage 30px + shadow-drop-sm + lavender + "Fri · Today" ·
+    // future = future.png 26px. Stages come from lib/growthStages (never re-bucketed here).
+    // J-15: arg.date is a real local-midnight Date, read with local getters (gridClock.ts
+    // explains how the old getUTC* read put "Today" one column late east of Greenwich).
+    const now = new Date()
+    const day = headerDay(arg.date, now)
+    const stage = daisyColumnStage(day.delta, zoneHour(now)) // the user's clock, not the device's
+    const isToday = day.delta === 0
+    return (
+      <div className={`cal-day-header${isToday ? ' cal-day-header-today' : ''}${stage === 'past' ? ' cal-day-header-past' : ''}`}>
+        <img src={`/ds/assets/daisy/${stage}.png`} alt="" className="cal-day-daisy" />
+        <div>
+          <div className="cal-day-header-name">
+            {day.weekday}
+            {isToday ? ' · Today' : ''}
+          </div>
+          <div className="cal-day-header-num">{day.day}</div>
+        </div>
+      </div>
+    )
+  }, [strip, zone, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  // Calendar.dc.html:213 — live mono time chip riding the now line; FC's NowTimer re-renders this every
+  // minute, so no interval of our own. R4 (2026-07-20): `arg.date` is a FullCalendar DateMarker —
+  // wall-clock encoded AS UTC — so read the real clock instead of the marker.
+  const nowIndicatorContent = useCallback((arg: NowIndicatorContentArg) => (arg.isAxis ? null : <span className="cal-now-chip">{clockTime(Date.now())}</span>), [clockTime])
+  const allDaySlot = useMemo(() => !strip || events.some((e) => e.allDay || isSpan(e)), [strip, events, isSpan])
+  const wrapStyle = useMemo(
+    () => ({ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 }) as React.CSSProperties,
+    [visibleDays, density],
+  )
+
+  return (
+    // MIN_COL_W per day column + the time axis: below that the grid scrolls horizontally in the
+    // page's scroller instead of crushing the last day into a sliver. Polish D: that floor was
+    // 170px — §6's narrow-column THRESHOLD, not a floor — so at the default 125% zoom a 1280px
+    // window showed two days of seven. Between MIN_COL_W and 170 a column now draws §6's narrow
+    // tier (`kf-cal-narrow`: short-tier type scale, start time only). weekFit.ts has the numbers.
+    // --kf-cal-density folds the view-options Density into the --s scale (CalendarGrid.css);
+    // it's also in the FC key because slot geometry is measured once per mount.
+    <div
+      ref={wrapRef}
+      data-tour="calendar"
+      className={narrow ? 'kf-cal-narrow' : undefined}
+      onContextMenu={handleGridContextMenu}
+      onClick={handleCtrlClick}
+      onMouseDown={(e) => { downAt.current = { x: e.clientX, y: e.clientY } }}
+      style={wrapStyle}
+    >
+    <FullCalendar
+      key={`${initialView}-${dayCount}-${density}`}
+      ref={fcRef}
+      plugins={PLUGINS}
+      timeZone={zone}
+      initialView={initialView}
+      firstDay={firstDay}
+      hiddenDays={hiddenDays}
+      // Punch 35: top-edge resize — start moves, end stays put. FC's own start handle.
+      eventResizableFromStart
+      // Punch 33/35: an off-grid drop reverts instantly (rail handles deletion, soft-no shakes);
+      // the default 500ms glide-back would fight both.
+      dragRevertDuration={0}
+      eventTimeFormat={eventTimeFormat}
+      slotLabelFormat={slotLabelFormat}
+      views={views}
+      headerToolbar={headerToolbar}
+      datesSet={cb.datesSet}
+      height="100%"
+      scrollTime={scrollTime}
+      scrollTimeReset={false}
+      // Motion 4c "Calendar drag dialect · snap": "30-min grid in the real view". Both were
+      // relying on FullCalendar's defaults happening to be 30min — state the contract instead,
+      // so the placeholder steps in half-hours and a drag can't land on an off-grid time.
+      // Kai 2026-10-03: drags, moves and resizes land on quarter hours (the time fields' own
+      // 15-min list); the drawn grid stays half-hourly. A plain click still makes 30 min
+      // (CalendarPage.handleGridCreate widens a one-snap selection).
+      slotDuration="00:30:00"
+      snapDuration="00:15:00"
+      // Punch 37: edge auto-scroll while dragging is FC's own AutoScroller — enabled by default,
+      // wired to `.fc-scroller` (the time-grid's vertical scroller), 50px edge zone, quadratic
+      // ramp to a gentle 300px/s. Stated explicitly so nobody "cleans it up" to false.
+      dragScroll
+      // S5: a month cell draws three pills and "+N more" (every pill cost the whole view 2 s to open);
+      // the time grid keeps FullCalendar's own fit.
+      dayMaxEvents={initialView === 'dayGridMonth' ? 3 : true}
+      allDayText="All day"
+      // §4 strip: one day needs no day row; two read "FRI · TODAY" in mono. No empty all-day band.
+      dayHeaders={!strip || visibleDays > 1}
+      allDaySlot={allDaySlot}
+      dayHeaderContent={dayHeaderContent}
+      nowIndicator
+      nowIndicatorContent={nowIndicatorContent}
+      // M1b: on touch, a 400ms hold picks up a block or starts a slot selection — the DS long-press
+      // (DS-CHANGELOG §3). FullCalendar's 1000ms default read as "nothing happens".
+      longPressDelay={400}
+      eventLongPressDelay={400}
+      selectLongPressDelay={400}
+      selectable
+      selectMirror
+      // Kai 2026-07-21: "when I change the type the ghost highlight dissapears" — clicking
+      // anything in our own popover counts as a click outside the grid, so FC unselectAuto
+      // wiped the slot highlight. Exempt the popover from it.
+      unselectCancel=".kf-quickcreate"
+      editable
+      droppable
+      events={fcEvents}
+      eventClassNames={cb.eventClassNames}
+      eventContent={cb.eventContent}
+      eventDidMount={cb.eventDidMount}
+      select={cb.select}
+      eventClick={cb.eventClick}
+      eventDragStart={cb.eventDragStart}
+      eventDragStop={cb.eventDragStop}
+      eventDrop={cb.eventDrop}
+      eventResizeStart={cb.eventResizeStart}
+      eventResizeStop={cb.eventResizeStop}
+      eventResize={cb.eventResize}
+      drop={cb.drop}
     />
     {stackMore && (
       <StackMorePopover
@@ -1003,10 +1232,10 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
           const e = events.find((x) => x.id === id)
           return e ? [{ id, title: e.title, time: `${clockTime(new Date(e.start).getTime())}–${clockTime(new Date(e.end).getTime())}` }] : []
         })}
-        onPick={onEventClick}
+        onPick={props.onEventClick}
         onClose={closeStackMore}
       />
     )}
     </div>
   )
-})
+}))

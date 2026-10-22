@@ -1,5 +1,9 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import type { CalendarEvent, Task } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Time Slots (Kai 2026-10-13, parity audit B2 → a; migration 0073): the pure rules (slots.ts) and the
 // real calendar/api + tasks/api writes against an in-memory cache that behaves like the outbox's.

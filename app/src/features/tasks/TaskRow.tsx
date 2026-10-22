@@ -11,7 +11,7 @@ import { daysOverdue, formatDuration, priorityColor, priorityFlag, resolveTag, r
 import { checkAction } from './completion'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
 import { dayShort } from '../../components/pickerMath'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 import { slotLabel } from '../calendar/api'
 import { Button, Checkbox, Chip } from '../../components/kit'
 import { softNo, useMotionEnabled } from '../../lib/motion'
@@ -217,7 +217,7 @@ export function TaskRow({
             )}
             {task.completed_at && (
               <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                {cairoTimeKey(new Date(task.completed_at))}
+                {timeText(new Date(task.completed_at))}
               </span>
             )}
           </>
@@ -334,7 +334,7 @@ export function TaskRow({
             <span>
               {/* The user's day and clock (app_settings.timezone), not the device's. In a Time slot (0073):
                   "in Code block · 10:00" (its day too when that isn't today). */}
-              {held ?? `${dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} ${cairoTimeKey(new Date(task.scheduled_start))}`}
+              {held ?? `${dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} ${timeText(new Date(task.scheduled_start))}`}
             </span>
           )}
           {task.duration_min != null && <span>{formatDuration(task.duration_min)}</span>}

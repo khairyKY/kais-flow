@@ -7,6 +7,7 @@ import type { PlaceSlot } from '../calendar/phoneGridMath'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
 import { daysToWeekend, weekendLabel } from '../../lib/weekend'
 import { cairoTimeKey } from '../calendar/eventTime'
+import { clockRange } from '../../lib/clock'
 import { filterByList } from './grouping'
 import type { CalendarEvent, Task } from '../../lib/types'
 
@@ -42,7 +43,7 @@ export function todayFor(task: Pick<Task, 'due_at'> | undefined, now = new Date(
 export function slotText(s: PlaceSlot, dur: number, now = new Date()): string {
   const today = cairoDateKey(now)
   const day = s.day === today ? 'Today' : s.day === addDays(today, 1) ? 'Tomorrow' : dayHint(s.day, today)
-  return `${day} ${fromMin(s.start)}–${fromMin(s.start + dur)}`
+  return `${day} ${clockRange(fromMin(s.start), fromMin(s.start + dur))}`
 }
 
 export interface SpreadPick {

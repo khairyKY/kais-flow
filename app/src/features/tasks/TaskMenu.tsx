@@ -21,7 +21,7 @@ import { PRIORITY_LABELS, taskMenuSpec, type TaskMenuContext, type TaskMenuKey }
 import { useStartFocus } from '../today/startFocus'
 import { putInSlotWithUndo, useCalendarRows } from '../calendar/api'
 import { inSlot, upcomingSlots } from '../calendar/slots'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 import { dueChip } from './taskSheetMath'
 
 // ── The ⋯ menu of every task row (MK Action Sheet): phone = ActionSheet (+ a second sheet for the
@@ -135,7 +135,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   // one through the drop's own write (calendar/api putInSlotWithUndo), with Undo.
   const { data: rows = [] } = useCalendarRows()
   const slots = upcomingSlots(rows)
-  const slotOptions: Option[] = slots.map((s) => ({ label: s.title, hint: `${dueChip(s.starts_at, new Date())}–${cairoTimeKey(new Date(s.ends_at))}`, selected: inSlot(task, s), run: () => putInSlotWithUndo(task, s) }))
+  const slotOptions: Option[] = slots.map((s) => ({ label: s.title, hint: `${dueChip(s.starts_at, new Date())}–${timeText(new Date(s.ends_at))}`, selected: inSlot(task, s), run: () => putInSlotWithUndo(task, s) }))
 
   const options: Record<'priority' | 'remind' | 'duration' | 'slot', Option[]> = {
     slot: slotOptions,

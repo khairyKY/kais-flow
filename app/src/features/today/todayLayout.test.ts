@@ -1,9 +1,13 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { blockMeta, blockOf, dayCounts, dayOfJourney, eventMetas, focusedToday, foldOpen, overCapacity, projectTag, remainingWork, reviewDue, ribbonPct, ribbonSpan, runningBlock, top3Planned, topCard, upNextItems, workloadLine, type Block, type WorkloadInput } from './todayLayout'
 import { firstCreatedAt } from './journey'
 import { claimDayComplete, DAY_DONE_KEY } from './dayComplete'
 import { setAppZone } from '../../lib/appZone'
 import type { Task } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Instants are written in UTC; Cairo is UTC+3 on 2026-09-27 (EEST) — the design's sample day.
 const at = (cairoHHMM: string) => {

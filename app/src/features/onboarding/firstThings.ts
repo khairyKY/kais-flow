@@ -2,7 +2,7 @@ import { parseCommand } from '../command-bar/parseCommand'
 import { linkRef } from '../../lib/links'
 import type { CreateTaskInput } from '../tasks/api'
 import { dayWord } from '../inbox/inboxDisplay'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 
 // First Run 9g/9h — "What are 3 things on your mind today?". Each line is read by the command
 // bar's own parser (chrono, on Cairo's clock): the date words leave the title and stay as the due
@@ -40,7 +40,7 @@ export function readFirstThing(line: string, now: Date = new Date()): FirstThing
 
 /** The date parse chip under a line (9h): "Tomorrow · 15:00", Cairo's day and 24h clock. */
 export function whenChip(iso: string, now: Date = new Date()): string {
-  return `${dayWord(iso, now)} · ${cairoTimeKey(new Date(iso))}`
+  return `${dayWord(iso, now)} · ${timeText(new Date(iso))}`
 }
 
 /** A day + time picked on a line's chip (9h: tapping the chip opens the date picker; null = No

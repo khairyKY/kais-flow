@@ -1,4 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 
 vi.mock('../calendar/api', () => ({ deleteEvent: vi.fn(), moveOrResizeEvent: vi.fn(), restoreEvent: vi.fn() }))
 vi.mock('../../lib/undo', () => ({ toastUndo: vi.fn() }))
@@ -7,6 +8,9 @@ import { deleteEvent, moveOrResizeEvent, restoreEvent } from '../calendar/api'
 import { toastUndo } from '../../lib/undo'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, sameTimeTomorrow, unscheduleWithUndo } from './rowMenus'
 import type { CalendarEvent } from '../../lib/types'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Instants are written in UTC; Cairo is UTC+3 on 2026-09-26 (EEST).
 const cairo = (day: number, hhmm: string) => {

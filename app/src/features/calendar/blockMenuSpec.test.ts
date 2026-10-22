@@ -1,7 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { setAppZone } from '../../lib/appZone'
 import type { CalendarEvent } from '../../lib/types'
 import { besideBlock, blockMenuSpec, isSynced, isUntitled, remindLabel, repeatLabel } from './blockMenuSpec'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 const block = (over: Partial<CalendarEvent> = {}): CalendarEvent => ({
   id: 'b1', title: 'Deep work — Forecasting', starts_at: '2026-07-29T06:00:00.000Z', ends_at: '2026-07-29T08:00:00.000Z', all_day: false,

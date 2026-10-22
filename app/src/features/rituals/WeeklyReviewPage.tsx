@@ -12,6 +12,7 @@ import { cairoDateKey } from '../../lib/dateShortcuts'
 import { addDays, startOfWeek, weekClosedAt } from './reviewWeek'
 import { loopNow } from './loopDay'
 import { appZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 import { fernByFraction } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
 import { useSlipping, markReviewed } from '../slipping/api'
@@ -458,7 +459,7 @@ function DomainCard({
   )
 
   if (state === 'swept') {
-    const time = sweptTime ? new Date(sweptTime).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', timeZone: appZone() }) : ''
+    const time = sweptTime ? new Date(sweptTime).toLocaleTimeString('en-US', { ...clockOptions(), timeZone: appZone() }) : ''
     return (
       <div style={{ background: 'var(--paper-bone)', border: '1px solid var(--line-solid)', borderRadius: 'var(--radius-card)', opacity: reopened ? 1 : 0.85 }}>
         {/* J-27: the summary row itself is the toggle — same look as before, plus a ▾/▴ hint. */}

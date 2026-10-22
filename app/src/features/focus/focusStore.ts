@@ -2,6 +2,8 @@ import { useEffect } from 'react'
 import { create } from 'zustand'
 import { logTimeEntry } from '../projects/api'
 import { queryClient } from '../../lib/queryClient'
+import { appZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 import { playSound } from '../../lib/sounds'
 
 // R4-D3 (Kai's 2026-07-20 ruling): Focus needs "multiple ways to enter it" — a Focus action on
@@ -147,7 +149,7 @@ export const useFocusStore = create<FocusState>((set, get) => ({
       if (mode === 'stopwatch' && stopwatchSeconds === 0) {
         set({
           stopwatchStartIso: now.toISOString(),
-          stopwatchStartStr: now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: false }),
+          stopwatchStartStr: now.toLocaleTimeString('en-US', { ...clockOptions(), timeZone: appZone() }),
         })
       }
     }

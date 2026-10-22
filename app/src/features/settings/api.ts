@@ -3,6 +3,7 @@ import { FunctionsHttpError } from '@supabase/supabase-js'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 import { readRules, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
 import type { GCalendar } from '../../../../supabase/functions/_shared/google.ts'
 import { authLinkOrigin } from '../../lib/platform'
@@ -51,7 +52,7 @@ export function githubState(github?: Pick<IntegrationStatus, 'status' | 'synced_
   if (github.status === 'failing') return { text: 'Token expired — reconnect', tone: 'bad' }
   if (readRules(github.rules).paused) return { text: 'Paused', tone: 'off' }
   if (!github.synced_at) return { text: 'Connected · not synced yet', tone: 'ok' }
-  const at = new Date(github.synced_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: appZone() })
+  const at = new Date(github.synced_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', ...clockOptions(), timeZone: appZone() })
   return { text: `Connected · synced ${at}`, tone: 'ok' }
 }
 
@@ -168,7 +169,7 @@ export async function saveGithubRules(repos: string[], rules: GithubRules, prior
 
 /** "13 Oct, 19:03" on the user's clock; "Not yet". */
 export function syncedLabel(iso: string | null | undefined): string {
-  return iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', timeZone: appZone() }) : 'Not yet'
+  return iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', ...clockOptions(), timeZone: appZone() }) : 'Not yet'
 }
 
 /** The Google row's real state — the same shape as githubState. */

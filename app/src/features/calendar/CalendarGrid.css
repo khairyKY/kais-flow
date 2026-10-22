@@ -180,13 +180,14 @@
    Values match .kf-lift exactly (xfx.css): -1px + shadow on hover, 0.97 at 80ms on press.
    FC places blocks with `inset`, not transform, so nothing is fighting for the property —
    except mid-drag, where the mirror/ghost carry their own transforms and this can't apply. */
+/* Kai 2026-10-22 ("yes, blocks lift slightly on hover"): 1px up and a soft shadow over 140ms —
+   transform and shadow only; none with Effects off (.cal-motion-on) or reduced motion. */
 .fc .fc-timegrid-event {
-  transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out); /* ds-ok: Kai asked for the hover shadow (2026-10-22) */
 }
-@media (hover: hover) {
-  .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); }
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .cal-motion-on .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
 }
-.fc .fc-timegrid-event:active { transform: scale(0.97); transition-duration: 80ms; }
 
 /* Kai 2026-07-21: "when the event is too small the text inside gets clipped". A short block
    can't fit 4c's stacked title+time, so it collapses to one line: title truncates with an
@@ -206,6 +207,9 @@
   white-space: nowrap;
 }
 .fc .fc-timegrid-event.fc-timegrid-event-short .fc-event-time { display: none; }
+/* The block title's line height, stated (it was the font's `normal`, whose glyphs sat 2–3px below a box
+   drawn from the top) so the check lines up with its first line at every interface scale. */
+.fc .fc-timegrid-event .fc-event-title { line-height: 1.2; }
 /* Any block, short or not: never let the text bleed past the rounded edge. */
 .fc .fc-timegrid-event .kf-ev-text { overflow: hidden; }
 .fc .fc-timegrid-event .fc-event-main { padding: 0; }
@@ -230,9 +234,13 @@
 .fc .fc-timegrid-event .kf-ev-text { flex: 1; min-width: 0; }
 .fc .fc-timegrid-event .kf-ev-check {
   flex: none;
-  width: 12px;
-  height: 12px;
-  margin-top: 1px;
+  /* Kai 2026-10-22 ("the checkbox isn't aligned with the title"): it was a fixed 12px box 1px down while
+     the title (12px × --s) scales with the interface — at 125% it sat 3px high, at 150% 5px. It scales
+     with the title now and sits on its first line, whose height is stated below (cal-polish a1: within
+     1px of the line's centre, 100–150%). */
+  width: calc(12px * var(--s));
+  height: calc(12px * var(--s));
+  margin-top: 0;
   /* §2/§9: never visible at rest — revealed on hover/focus, or when already checked */
   opacity: 0;
   transition: opacity 120ms var(--ease-out);
@@ -286,22 +294,36 @@
 .fc .fc-timegrid-event .kf-ev-slot-out { display: none; flex: none; padding: 0 2px; cursor: pointer; color: var(--kf-ev-accent, var(--acc-lavender-text)); }
 .fc .fc-timegrid-event .kf-ev-slot-row:hover .kf-ev-slot-out { display: inline; }
 /* …and FullCalendar's copy of it (on <body>, out of the block's scope) is the same card, lifted: it
-   follows the pointer everywhere (over the grid too, beside FullCalendar's placeholder where it lands). */
-.kf-ev-slot-row.fc-event-dragging {
+   follows the pointer everywhere (over the grid too, beside FullCalendar's placeholder where it lands).
+   Kai 2026-10-21: every card dragged onto the grid lifts this one card (./cardDrag) — a rail, day-tray or
+   planning card too, whose copy was the bare row: no card, full width, a zoom away from the pointer.
+   Only the title (one line, ellipsis) and the length show — its data-title / data-length; the check,
+   buttons and meta it was cloned with stay hidden. */
+body > .fc-event-dragging[data-title] {
   /* FullCalendar places it in screen px on <body>: undo the interface zoom there (as .fc does above), and
-     size its type and insets back up by the same factor. */
-  zoom: calc(1 / var(--kf-ui-scale, 1));
-  display: flex; align-items: center; gap: calc(5px * var(--kf-ui-scale, 1)); padding: calc(4px * var(--kf-ui-scale, 1)) calc(8px * var(--kf-ui-scale, 1));
-  border-radius: 8px; color: var(--ink-body); font-size: calc(var(--fs-meta) * var(--kf-ui-scale, 1)); white-space: nowrap; overflow: hidden;
+     size its type and insets back up by the same factor. Its width and height are the card's own, not the
+     row's that FullCalendar writes inline. */
+  --u: var(--kf-ui-scale, 1);
+  zoom: calc(1 / var(--u));
+  display: flex; align-items: center; gap: calc(8px * var(--u)); padding: calc(4px * var(--u)) calc(9px * var(--u));
+  width: auto !important; height: auto !important; max-width: calc(200px * var(--u)); margin: 0;
+  border-radius: 8px; color: var(--ink-body); font-family: var(--font-ui); font-size: calc(var(--fs-meta) * var(--u)); line-height: 1.4;
+  white-space: nowrap; overflow: hidden; outline: none; opacity: 1; transform: none; cursor: grabbing;
   border: 1px solid color-mix(in srgb, var(--acc-lavender-text) 35%, transparent);
   background: linear-gradient(color-mix(in srgb, var(--acc-lavender) 24%, transparent), color-mix(in srgb, var(--acc-lavender) 24%, transparent)), var(--paper-parchment);
   box-shadow: var(--shadow-popover);
 }
-.kf-ev-slot-row.fc-event-dragging > :not(.kf-ev-slot-title) { display: none; }
+body > .fc-event-dragging[data-title] > * { display: none !important; }
+@keyframes kfLiftCard { from { scale: 0.96; } }
+.kf-motion-on body > .fc-event-dragging[data-title] { animation: kfLiftCard 120ms var(--ease-out) backwards; }
+body > .fc-event-dragging[data-title]::before { content: attr(data-title); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex: none; font-family: var(--font-mono); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--acc-lavender-text); }
 
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
-   seat it without colliding with the text. */
-.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-end::after {
+   seat it without colliding with the text. Kai 2026-10-22: the top edge resizes too, so it wears the
+   same grip (it was a hidden hit area — nobody found it). */
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-end::after,
+.fc .fc-timegrid-event:not(.fc-timegrid-event-short) .fc-event-resizer-start::after {
   opacity: 0;
   transition: opacity 120ms var(--ease-out);
   content: '';
@@ -314,6 +336,7 @@
   border-radius: 2px;
   background: var(--kf-ev-grip, rgba(124, 106, 154, 0.5));
 }
+.fc .fc-timegrid-event .fc-event-resizer-start::after { bottom: auto; top: 3px; }
 /* Task-linked blocks carry their Tasks lineage as a blush inset edge (mockup: "Block — from
    task"). No drop shadow — a 4c block sits flat on the grid. */
 
@@ -362,8 +385,8 @@
    28x3 lavender grip (rendered via ::after above), so the resizer is now purely a hit area. */
 .fc .fc-event-resizer { border: none; background: none; }
 .fc .fc-timegrid-event .fc-event-resizer-end { height: 10px; bottom: 0; }
-/* Punch 35: top-edge resize (eventResizableFromStart) — hit area only; §2 defines a single
-   visible grip and it stays the bottom bar. */
+/* Punch 35: top-edge resize (eventResizableFromStart) — the same 10px hit area as the bottom, and (Kai
+   2026-10-22) the same grip on hover. */
 .fc .fc-timegrid-event .fc-event-resizer-start { height: 10px; top: 0; }
 
 /* Punch 38: §1 column inset — blocks sit 5px off both column edges (FC default was the
@@ -395,13 +418,16 @@
    · .kf-cal-ghost  — our own clone, follows the pointer continuously (CalendarGrid.tsx)
    · .fc-event-mirror — FullCalendar's snapping element, demoted to the stepped placeholder
    Previously the mirror played both parts, so nothing ever moved freely. */
+@keyframes kfLift { from { scale: 0.962; } }
 .kf-cal-ghost {
   opacity: 0.95;
   box-shadow: 0 14px 30px rgba(var(--kf-shadow-rgb, 60,52,38), 0.26);
   border-radius: var(--radius-block);   /* B: the block it lifts (was 2px) */
 }
 /* Motion 5b lift + the 2c wobble — on the ghost, which is the thing "in hand". */
-.cal-motion-on .kf-cal-ghost { animation: calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
+.cal-motion-on .kf-cal-ghost { animation: kfLift 120ms var(--ease-out) backwards, calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
+/* M1: the settle — the float stops, the lift comes off, while the host glides onto the block (160ms). */
+.kf-cal-ghost.kf-cal-ghost-settle { animation: none; transform: none; box-shadow: none; transition: transform 160ms var(--ease-out); }
 /* Effects toggle off / reduced motion: no wobble, but the block still reads as picked up. */
 .kf-cal-ghost { transform: scale(1.04); }
 
@@ -434,32 +460,6 @@
 .fc .fc-event-mirror .fc-event-time { opacity: 0.55; }
 .cal-motion-on .fc-event-mirror { animation: none; }
 
-/* 4c's resize snap line — "the handle commits to the grid line", flashed at the committed
-   slot. 1.5px solid --acc-lavender-deep, up over 120ms per the recipe. */
-@keyframes calSnapLineFlash {
-  0% { opacity: 0; }
-  25%, 70% { opacity: 1; }
-  100% { opacity: 0; }
-}
-.kf-cal-snapline {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 0;
-  border-top: 1.5px solid var(--acc-lavender-deep);
-  pointer-events: none;
-  z-index: 6;
-  opacity: 0;
-}
-.cal-motion-on .kf-cal-snapline { animation: calSnapLineFlash 320ms var(--ease-out); }
-@keyframes calGridSnapFlash {
-  0% { box-shadow: 0 0 0 2px var(--acc-lavender-deep), var(--shadow-card); }
-  100% { box-shadow: var(--shadow-crisp); }
-}
-.cal-motion-on .fc-timegrid-event.kf-snap-flash {
-  animation: calGridSnapFlash 120ms var(--ease-out);
-}
-
 /* Effects 21 "Settle-in" — a task dropped from the rail lands: falls, overshoots a breath,
    settles. One-shot on the freshly created chip (CalendarGrid gets the id via justDroppedId).
    Ends at transform:none per the 2026-07-18 containing-block ruling. */
@@ -469,9 +469,24 @@
   from { box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc-lavender-deep) 18%, transparent); }
   to   { box-shadow: 0 0 0 3px transparent; }
 }
-.cal-motion-on .fc-timegrid-event.kf-settle-in {
+.cal-motion-on .fc .fc-timegrid-event[data-landed] {
   animation: calJustLanded 300ms var(--ease-out);
 }
+/* S2 + M1: a moved block stays hidden until the ghost has settled onto it (CalendarGrid settleGhost). */
+.fc .fc-event[data-landing] { visibility: hidden; }
+/* M8: a block that left fades where it was — a copy over the grid (CalendarGrid fadeOut). */
+@keyframes kfCalLeave { to { opacity: 0; transform: scale(0.98); } }
+.kf-cal-leaving { animation: kfCalLeave 120ms var(--ease-in) forwards; }
+/* M7: paging slides the days in from the side they come from (CalendarGrid slide) — the day columns
+   and their headers only, never the time axis or the scroller. */
+@keyframes kfCalNavNext { from { opacity: 0.4; transform: translateX(16px); } }
+@keyframes kfCalNavPrev { from { opacity: 0.4; transform: translateX(-16px); } }
+.cal-motion-on [data-nav="next"] .fc-timegrid-body .fc-timegrid-cols,
+.cal-motion-on [data-nav="next"] .fc-col-header,
+.cal-motion-on [data-nav="next"] .fc-daygrid-body { animation: kfCalNavNext 160ms var(--ease-out); }
+.cal-motion-on [data-nav="prev"] .fc-timegrid-body .fc-timegrid-cols,
+.cal-motion-on [data-nav="prev"] .fc-col-header,
+.cal-motion-on [data-nav="prev"] .fc-daygrid-body { animation: kfCalNavPrev 160ms var(--ease-out); }
 
 
 /* ═══ CALENDAR.md v2 — the five axes, composed as classes (CalendarGrid.tsx events map) ═══ */
@@ -550,11 +565,13 @@
 
 /* §7 Interaction — overlay only, the fill never re-tints. */
 .fc .fc-timegrid-event { cursor: grab; }
-.fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); transition: transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out); }
-.fc .fc-timegrid-event:active { transform: scale(0.99); box-shadow: none; cursor: grabbing; }
+.fc .fc-timegrid-event:active { cursor: grabbing; }
 /* A Google event (read-only, B1) opens its details; it never picks up. */
 .fc .fc-timegrid-event.kf-synced, .fc .fc-timegrid-event.kf-synced:active { cursor: pointer; }
 .fc .fc-timegrid-event:focus-visible { outline: 2px solid var(--kf-ev-edge, var(--acc-lavender-deep)); outline-offset: 2px; }
+/* §7 the outbox's words on the time row (S2: set on the element, never through FullCalendar's data) */
+.fc .fc-timegrid-event.kf-pending .kf-ev-sync::after { content: ' · saving ◌'; }
+.fc .fc-timegrid-event.kf-failed .kf-ev-sync::after { content: ' · retry ⚠'; }
 /* pending — outbox write still queued: OUTER dashed outline, the border stays semantic */
 .fc .fc-timegrid-event.kf-pending { outline: 1px dashed var(--ink-hairline); outline-offset: 2px; }
 /* sync-failed — server rejected: sig-overdue OUTLINE + ⚠; the FILL never goes terra */
@@ -565,7 +582,8 @@
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s-text)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fc .fc-timegrid-event.kf-tier-micro .fc-event-time,
 .fc .fc-timegrid-event.kf-tier-micro .kf-ev-check,
-.fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-end::after { display: none; }
+.fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-end::after,
+.fc .fc-timegrid-event.kf-tier-micro .fc-event-resizer-start::after { display: none; }
 /* §6 full tier (≥81px): the title may wrap to two lines — never three. */
 .fc .fc-timegrid-event.kf-tier-full .fc-event-title {
   display: -webkit-box;
@@ -589,9 +607,15 @@
    spilled over the pills below. */
 .fc .fc-daygrid-event .kf-ev-slot { display: none; }
 
+/* Multi-select (Kai 2026-10-22): a picked block wears a plain outline in the selection ink — the look is
+   Kai's call later (Calendar blocks options); this one only has to read. */
+.fc .fc-event[data-picked] { outline: 2px solid var(--sel-bg); outline-offset: 1px; }
+
 /* grip reveal (pairs with the opacity:0 set on the ::after above) */
 .fc .fc-timegrid-event:hover .fc-event-resizer-end::after,
-.fc .fc-timegrid-event:focus-within .fc-event-resizer-end::after { opacity: 1; }
+.fc .fc-timegrid-event:focus-within .fc-event-resizer-end::after,
+.fc .fc-timegrid-event:hover .fc-event-resizer-start::after,
+.fc .fc-timegrid-event:focus-within .fc-event-resizer-start::after { opacity: 1; }
 
 /* ═══ §6 Layout — overlap geometry (J-13). overlapLayout.ts picks each block's slot; these draw
    it. FullCalendar positions every block's harness with inline left/right/z-index (its own

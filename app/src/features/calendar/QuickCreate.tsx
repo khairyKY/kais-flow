@@ -5,6 +5,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { Select } from '../../components/Select'
 import { BackLink, Button, Toggle } from '../../components/kit'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
+import { LengthChips } from '../../components/TimePicker'
 import { createEvent, scheduleTask, setEventRepeat, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { cairoDateKey } from '../../lib/dateShortcuts'
@@ -20,6 +21,7 @@ import { seedPlant } from '../../lib/seedPlant'
 import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { appZone } from '../../lib/appZone'
 import { linkRef } from '../../lib/links'
+import { clockOptions } from '../../lib/clock'
 import type { CalendarEvent } from '../../lib/types'
 
 // ── Editor.dc.html 2a/2b — the compact popover a click on the grid opens — and 1b/1c/1d, the full
@@ -68,6 +70,8 @@ export interface QuickCreateProps {
   draft?: CreateDraft
   /** The popover's "More options ↗": the page takes over with what's typed so far. */
   onExpand?: (draft: CreateDraft) => void
+  /** M2 (2026-10-22): the popover on its way out (100ms) — the caller keeps it mounted meanwhile. */
+  closing?: boolean
 }
 
 const KIND_META: Record<QuickCreateKind, { label: string; desc: string; cta: string; hand: string }> = {
@@ -141,7 +145,7 @@ function PickField({ children, onClick, label }: { children: ReactNode; onClick:
   )
 }
 
-export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, draft, onExpand }: QuickCreateProps) {
+export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, draft, onExpand, closing = false }: QuickCreateProps) {
   const motion = useMotionEnabled()
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
@@ -178,7 +182,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   const [priorityTouched, setPriorityTouched] = useState(false)
   const [projectTouched, setProjectTouched] = useState(false)
 
-  useEscapeStack(!repeatAt, onClose)
+  useEscapeStack(!repeatAt && !closing, onClose)
   useBodyScrollLock(!page)
 
   // The compact popover's place, from its measured size (VISUAL px ÷ zoom = layout px, lib/uiScale).
@@ -189,8 +193,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     if (!el || !anchor) return
     const place = () => {
       const z = uiZoom()
-      const r = el.getBoundingClientRect()
-      setPos(placeAtPointer({ x: anchor.x / z, y: anchor.y / z }, { width: r.width / z, height: r.height / z }, { width: window.innerWidth / z, height: window.innerHeight / z }))
+      // the layout box's size (layout px): kf-pop's entrance scales the rect while it plays
+      setPos(placeAtPointer({ x: anchor.x / z, y: anchor.y / z }, { width: el.offsetWidth, height: el.offsetHeight }, { width: window.innerWidth / z, height: window.innerHeight / z }))
     }
     place()
     if (typeof ResizeObserver === 'undefined') return
@@ -255,13 +259,20 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     if (repeat) setEventRepeat(made, repeat)
   }
 
+  // Kai 2026-10-21 (an "Untitled task" he never meant): a task waits for its title — Enter or Create on an
+  // empty one does nothing and the draft stays (the phone sheet's own rule). An event or a block keeps its
+  // stand-in name; the block menu then reads it as untitled (Discard).
+  const taskTitle = parsed?.title.trim() || title.trim()
+  const ready = kind !== 'task' || !!taskTitle
+
   function submit(from?: HTMLElement) {
+    if (!ready) return
     seedPlant(from, motion) // Motion 5f — every calendar create lands with the drop+puff
     if (kind === 'task') {
       const dueAt = date ? cairoToIso(date, startTime || '09:00') : null
       const task = createTask({
         // "the title types it, the fields catch it": what the parse caught leaves the title.
-        title: parsed?.title.trim() || title.trim() || 'Untitled task',
+        title: taskTitle,
         // The title's `// notes` and link leave it (the shared parse, P7e A6/A19): they land here, not nowhere.
         notes: notes.trim() || parsed?.notes || null,
         ...(parsed?.url ? { externalRef: linkRef(parsed.url) } : null),
@@ -363,7 +374,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 8, marginTop: page ? 12 : 10, paddingTop: page ? 11 : 9, borderTop: '1px solid var(--line-card)' }}>
           {(parsed?.dueAt || eventDate) && (
             <span style={chipStyle('color-mix(in srgb, var(--acc-lavender) 22%, transparent)', 'var(--acc-lavender-text)')}>
-              → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: appZone() })}
+              → {new Date(parsed?.dueAt ?? eventDate!).toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })}
             </span>
           )}
           {parsed?.projectMatch && <span style={chipStyle('color-mix(in srgb, var(--acc-moss) 20%, transparent)', 'var(--acc-sage-text)')}>→ {parsed.projectMatch}</span>}
@@ -391,6 +402,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
           </>
         )}
       </div>
+      {/* Kai 2026-10-21: the length in one tap — it sets the end (and a task's estimate). */}
+      {!allDay && <LengthChips value={durationMin} onPick={(m) => { setEndTime(plus(startTime, m)); markDateTouched() }} style={{ minHeight: 0, marginTop: 8 }} />}
     </div>
   )
 
@@ -664,7 +677,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         ) : (
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>esc</span>
         )}
-        <Button onClick={(e) => submit(e.currentTarget)}>{page ? `${KIND_META[kind].cta} ⏎` : 'Create ⏎'}</Button>
+        <Button disabled={!ready} onClick={(e) => submit(e.currentTarget)}>{page ? `${KIND_META[kind].cta} ⏎` : 'Create ⏎'}</Button>
       </div>
     </div>
   )
@@ -709,13 +722,13 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   const at = anchor ? pos ?? { left: Math.max(8, Math.min(anchor.x / z, vw - 368)), top: Math.max(8, anchor.y / z) } : { left: Math.max(8, (vw - 360) / 2), top: Math.max(8, vh / 5) }
   return (
     <>
-      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998 }} />
+      <div onClick={onClose} style={{ position: 'fixed', inset: 0, zIndex: 998, pointerEvents: closing ? 'none' : undefined }} />
       <div
         ref={popRef}
-        className="kf-quickcreate" onClick={(e) => e.stopPropagation()}
+        className={`kf-quickcreate kf-pop${closing ? ' kf-pop--out' : ''}`} onClick={(e) => e.stopPropagation()}
         // deviation(2026-07-18 audit): export 2a tilts the popover rotate(-0.3deg), but the
         // sub-pixel transform blurred all popover text — dropped for crisp rendering.
-        style={{ position: 'fixed', left: at.left, top: at.top, width: 360, maxWidth: vw - 16, maxHeight: vh - 16, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', boxShadow: 'var(--shadow-popover)', padding: '15px 16px', animation: 'entryFadeUp 210ms var(--ease-out)' }}
+        style={{ position: 'fixed', left: at.left, top: at.top, width: 360, maxWidth: vw - 16, maxHeight: vh - 16, overflowY: 'auto', overscrollBehavior: 'contain', zIndex: 999, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', boxShadow: 'var(--shadow-popover)', padding: '15px 16px', ['--pop-origin' as string]: anchor ? `${anchor.y / z > at.top + 40 ? 'bottom' : 'top'} ${anchor.x / z > at.left + 180 ? 'right' : 'left'}` : 'center' }}
       >
         {kindSwitcher}
         {titleField}

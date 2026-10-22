@@ -5,7 +5,7 @@
 
 import { cairoDateKey, cairoWallTimeToIso } from '../../lib/dateShortcuts'
 import { daysToWeekend } from '../../lib/weekend'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeRange, timeText } from '../calendar/eventTime'
 import { DAY_FROM, DAY_TO } from '../rituals/ritualLogic'
 import { loopNow } from '../rituals/loopDay'
 import { startOfWeek, weekClosedAt, type ReviewEvent } from '../rituals/reviewWeek'
@@ -66,7 +66,7 @@ export const STARTS_SOON_MIN = 30
 /** A block's meta on its task row (Today Phone 2b/2c goal card): "13:30–15:00", then "Now" while it
  * runs, "starts in 20M" within STARTS_SOON_MIN, else its length. */
 export function blockMeta(b: UpNextEvent, now: Date): string[] {
-  const range = `${cairoTimeKey(new Date(b.starts_at))}–${cairoTimeKey(new Date(b.ends_at))}`
+  const range = timeRange(new Date(b.starts_at), new Date(b.ends_at))
   if (isInProgress(b.starts_at, b.ends_at, now)) return [range, 'Now']
   const until = untilMin(b, now)
   return [range, until <= STARTS_SOON_MIN ? `starts in ${formatDuration(until)}` : formatDuration(lengthMin(b))]
@@ -240,13 +240,13 @@ export function workloadLine(i: WorkloadInput): string {
   if (i.phase === 'shutdown') return `${day} · ${i.top3.picked > 0 ? `${i.top3.done} of ${i.top3.picked}` : i.doneToday} done${focused}`
   if (i.phase === 'plan') return `${day} · not planned yet`
   if (i.top3.picked > 0 && i.top3.done >= i.top3.picked) {
-    const by = i.top3DoneAt ? ` by ${cairoTimeKey(new Date(i.top3DoneAt))}` : ''
+    const by = i.top3DoneAt ? ` by ${timeText(new Date(i.top3DoneAt))}` : ''
     return `${day} · ${i.top3.picked === 3 ? 'all three' : 'Top 3'} done${by}`
   }
   const m = i.remaining.minutes
   if (m > 0) {
     const size = m >= 60 ? `${Math.round(m / 60)}h` : `${m}m`
-    return `${day} · ~${size} ${i.doneToday > 0 ? 'left' : 'planned'} · you'll finish ~${cairoTimeKey(i.remaining.finishAt)}`
+    return `${day} · ~${size} ${i.doneToday > 0 ? 'left' : 'planned'} · you'll finish ~${timeText(i.remaining.finishAt)}`
   }
   return `${day} · ${i.doneToday} done`
 }

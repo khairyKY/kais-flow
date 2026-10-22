@@ -1,0 +1,637 @@
+[
+  {
+    "name": "d1 rail \"Stretch\" (15m) → a 15-minute block at 09:00",
+    "ok": true,
+    "detail": "[\"2026-10-21T06:00:00.000Z\",15]"
+  },
+  {
+    "name": "d1 rail \"Kai's Flow email\" (20m) → a 20-minute block at 10:00",
+    "ok": true,
+    "detail": "[\"2026-10-21T07:00:00.000Z\",20]"
+  },
+  {
+    "name": "d1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2 a held 15m task dragged out → a 15-minute block at 11:30",
+    "ok": true,
+    "detail": "[\"2026-10-21T08:30:00.000Z\",15]"
+  },
+  {
+    "name": "d2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 Standup resized by its bottom edge to 12:00–12:15 (15 minutes kept)",
+    "ok": true,
+    "detail": "[\"2026-10-21T09:00:00.000Z\",15]"
+  },
+  {
+    "name": "d3 the task block \"Write the report\" resized to 16:00–16:15; its estimate → 15",
+    "ok": true,
+    "detail": "[15,15]"
+  },
+  {
+    "name": "d3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4 the drag opens quick create on 10:00–10:15",
+    "ok": true,
+    "detail": "[\"\",\"10:00 AM\",\"10:15 AM\"]"
+  },
+  {
+    "name": "d4 Enter → the event \"Quick sync\" 10:00–10:15",
+    "ok": true,
+    "detail": "[\"2026-10-21T07:00:00.000Z\",15]"
+  },
+  {
+    "name": "d4 a plain click opens 15:00–15:30 (the half hour, as before)",
+    "ok": true,
+    "detail": "[\"\",\"3:00 PM\",\"3:30 PM\"]"
+  },
+  {
+    "name": "d4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5-day quick create shows the length row 15m · 30m · 45m · 1h · 1h30 · 2h, 30m picked",
+    "ok": true,
+    "detail": "15m · 30m · 45m · 1h · 1h30 · 2h"
+  },
+  {
+    "name": "d5-day 15m → the end reads 15:15, 15m picked",
+    "ok": true,
+    "detail": "[\"\",\"3:00 PM\",\"3:15 PM\"]"
+  },
+  {
+    "name": "d5 Enter → the task \"Call mum\", 15 minutes, and its block 15:00–15:15",
+    "ok": true,
+    "detail": "[15,[\"2026-10-21T12:00:00.000Z\",15]]"
+  },
+  {
+    "name": "d5-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5-night quick create shows the length row 15m · 30m · 45m · 1h · 1h30 · 2h, 30m picked",
+    "ok": true,
+    "detail": "15m · 30m · 45m · 1h · 1h30 · 2h"
+  },
+  {
+    "name": "d5-night 15m → the end reads 15:15, 15m picked",
+    "ok": true,
+    "detail": "[\"\",\"3:00 PM\",\"3:15 PM\"]"
+  },
+  {
+    "name": "d5-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6-day the block popover shows the length row, 30m picked",
+    "ok": true,
+    "detail": "15m · 30m · 45m · 1h · 1h30 · 2h"
+  },
+  {
+    "name": "d6 15m → the block 16:00–16:15 and the task's estimate 15",
+    "ok": true,
+    "detail": "[[\"2026-10-21T13:00:00.000Z\",15],15]"
+  },
+  {
+    "name": "d6 …\"Resized to 16:00–16:15\" with Undo; the popover stays, 15m picked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 Undo → 16:00–16:30 and 30 again",
+    "ok": true,
+    "detail": "[30,30]"
+  },
+  {
+    "name": "d6 an event: Standup 45m → 12:00–12:45",
+    "ok": true,
+    "detail": "[\"2026-10-21T09:00:00.000Z\",45]"
+  },
+  {
+    "name": "d6-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6-night the block popover shows the length row, 30m picked",
+    "ok": true,
+    "detail": "15m · 30m · 45m · 1h · 1h30 · 2h"
+  },
+  {
+    "name": "d6-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 at 100% a 15m block draws half a 30m one (17.0 / 35.0px)",
+    "ok": true,
+    "detail": "0.486"
+  },
+  {
+    "name": "d7 at 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 at 125% a 15m block draws half a 30m one (21.0 / 44.0px)",
+    "ok": true,
+    "detail": "0.477"
+  },
+  {
+    "name": "d7 at 125% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 at 150% a 15m block draws half a 30m one (26.0 / 53.0px)",
+    "ok": true,
+    "detail": "0.491"
+  },
+  {
+    "name": "d7 at 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1 phone quick create 15m → the task (15) and its block 15:00–15:15",
+    "ok": true,
+    "detail": "[15,[\"2026-10-21T12:00:00.000Z\",15]]"
+  },
+  {
+    "name": "p1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2-day the event sheet shows the length row, 1h picked",
+    "ok": true,
+    "detail": "15m · 30m · 45m · 1h · 1h30 · 2h"
+  },
+  {
+    "name": "p2 30m → Standup 12:00–12:30, \"Resized to 12:00–12:30\"",
+    "ok": true,
+    "detail": "[\"2026-10-21T09:00:00.000Z\",30]"
+  },
+  {
+    "name": "p2-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2-night the event sheet shows the length row, 1h picked",
+    "ok": true,
+    "detail": "15m · 30m · 45m · 1h · 1h30 · 2h"
+  },
+  {
+    "name": "p2-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 the task sheet's block card has the length row, 30m picked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 15m → the block 16:00–16:15 and the estimate 15",
+    "ok": true,
+    "detail": "[15,15]"
+  },
+  {
+    "name": "p3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p4 phone: a 15m block 24px vs a 30m one 32px — not drawn 30 minutes tall",
+    "ok": true,
+    "detail": "0.750"
+  },
+  {
+    "name": "p4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1-rail-day-125 over the rail: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g1-rail-day-125 over the rail: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(251, 246, 233)\",\"linear-gradient(color(srgb 0.658824 0.627451 0.745098 / 0.24), color(srgb 0.658824 0.627451 0.745098 / 0.24)), none\",\"10px\",\"rgba(60, 52, 38, 0.12) 0px 2px 3px 0px, rgba(60, 52, 38, 0.2) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g1-rail-day-125 over the rail: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":494.5,\"y\":306.5625},{\"x\":464,\"y\":292.25,\"width\":250,\"height\":34,\"top\":292.25,\"right\":714,\"bottom\":326.25,\"left\":464}]"
+  },
+  {
+    "name": "g1-rail-day-125 over the rail: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[250,284,1.25]"
+  },
+  {
+    "name": "g1-rail-day-125 over the rail: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g1-rail-day-125 over the rail: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g1-rail-day-125 over the grid: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g1-rail-day-125 over the grid: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(251, 246, 233)\",\"linear-gradient(color(srgb 0.658824 0.627451 0.745098 / 0.24), color(srgb 0.658824 0.627451 0.745098 / 0.24)), none\",\"10px\",\"rgba(60, 52, 38, 0.12) 0px 2px 3px 0px, rgba(60, 52, 38, 0.2) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g1-rail-day-125 over the grid: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":740.03125,\"y\":432.875},{\"x\":710,\"y\":418.25,\"width\":250,\"height\":34,\"top\":418.25,\"right\":960,\"bottom\":452.25,\"left\":710}]"
+  },
+  {
+    "name": "g1-rail-day-125 over the grid: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[250,284,1.25]"
+  },
+  {
+    "name": "g1-rail-day-125 over the grid: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g1-rail-day-125 over the grid: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g1-rail-day-125 over the grid: FullCalendar's placeholder shows where it lands",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1-rail-day-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1-rail-day-150 over the rail: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g1-rail-day-150 over the rail: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(251, 246, 233)\",\"linear-gradient(color(srgb 0.658824 0.627451 0.745098 / 0.24), color(srgb 0.658824 0.627451 0.745098 / 0.24)), none\",\"12px\",\"rgba(60, 52, 38, 0.12) 0px 2px 3px 0px, rgba(60, 52, 38, 0.2) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g1-rail-day-150 over the rail: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":585.5,\"y\":353.875},{\"x\":549,\"y\":336.5,\"width\":300,\"height\":39.1875,\"top\":336.5,\"right\":849,\"bottom\":375.6875,\"left\":549}]"
+  },
+  {
+    "name": "g1-rail-day-150 over the rail: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[300,341,1.5]"
+  },
+  {
+    "name": "g1-rail-day-150 over the rail: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g1-rail-day-150 over the rail: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g1-rail-day-150 over the grid: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g1-rail-day-150 over the grid: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(251, 246, 233)\",\"linear-gradient(color(srgb 0.658824 0.627451 0.745098 / 0.24), color(srgb 0.658824 0.627451 0.745098 / 0.24)), none\",\"12px\",\"rgba(60, 52, 38, 0.12) 0px 2px 3px 0px, rgba(60, 52, 38, 0.2) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g1-rail-day-150 over the grid: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":888.28125,\"y\":540.0625},{\"x\":852,\"y\":523.5,\"width\":300,\"height\":39.1875,\"top\":523.5,\"right\":1152,\"bottom\":562.6875,\"left\":852}]"
+  },
+  {
+    "name": "g1-rail-day-150 over the grid: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[300,341,1.5]"
+  },
+  {
+    "name": "g1-rail-day-150 over the grid: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g1-rail-day-150 over the grid: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g1-rail-day-150 over the grid: FullCalendar's placeholder shows where it lands",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1-rail-day-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1-rail-night-125 over the rail: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g1-rail-night-125 over the rail: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(38, 34, 51)\",\"linear-gradient(color(srgb 0.752941 0.717647 0.878431 / 0.24), color(srgb 0.752941 0.717647 0.878431 / 0.24)), none\",\"10px\",\"rgba(0, 0, 0, 0.4) 0px 2px 3px 0px, rgba(0, 0, 0, 0.55) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g1-rail-night-125 over the rail: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":494.5,\"y\":306.5625},{\"x\":464,\"y\":292.25,\"width\":250,\"height\":34,\"top\":292.25,\"right\":714,\"bottom\":326.25,\"left\":464}]"
+  },
+  {
+    "name": "g1-rail-night-125 over the rail: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[250,284,1.25]"
+  },
+  {
+    "name": "g1-rail-night-125 over the rail: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g1-rail-night-125 over the rail: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g1-rail-night-125 over the grid: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g1-rail-night-125 over the grid: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(38, 34, 51)\",\"linear-gradient(color(srgb 0.752941 0.717647 0.878431 / 0.24), color(srgb 0.752941 0.717647 0.878431 / 0.24)), none\",\"10px\",\"rgba(0, 0, 0, 0.4) 0px 2px 3px 0px, rgba(0, 0, 0, 0.55) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g1-rail-night-125 over the grid: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":740.03125,\"y\":432.875},{\"x\":710,\"y\":418.25,\"width\":250,\"height\":34,\"top\":418.25,\"right\":960,\"bottom\":452.25,\"left\":710}]"
+  },
+  {
+    "name": "g1-rail-night-125 over the grid: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[250,284,1.25]"
+  },
+  {
+    "name": "g1-rail-night-125 over the grid: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g1-rail-night-125 over the grid: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g1-rail-night-125 over the grid: FullCalendar's placeholder shows where it lands",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1-rail-night-125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1-rail-night-150 over the rail: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g1-rail-night-150 over the rail: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(38, 34, 51)\",\"linear-gradient(color(srgb 0.752941 0.717647 0.878431 / 0.24), color(srgb 0.752941 0.717647 0.878431 / 0.24)), none\",\"12px\",\"rgba(0, 0, 0, 0.4) 0px 2px 3px 0px, rgba(0, 0, 0, 0.55) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g1-rail-night-150 over the rail: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":585.5,\"y\":353.875},{\"x\":549,\"y\":336.5,\"width\":300,\"height\":39.1875,\"top\":336.5,\"right\":849,\"bottom\":375.6875,\"left\":549}]"
+  },
+  {
+    "name": "g1-rail-night-150 over the rail: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[300,341,1.5]"
+  },
+  {
+    "name": "g1-rail-night-150 over the rail: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g1-rail-night-150 over the rail: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g1-rail-night-150 over the grid: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g1-rail-night-150 over the grid: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(38, 34, 51)\",\"linear-gradient(color(srgb 0.752941 0.717647 0.878431 / 0.24), color(srgb 0.752941 0.717647 0.878431 / 0.24)), none\",\"12px\",\"rgba(0, 0, 0, 0.4) 0px 2px 3px 0px, rgba(0, 0, 0, 0.55) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g1-rail-night-150 over the grid: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":888.28125,\"y\":540.0625},{\"x\":852,\"y\":523.5,\"width\":300,\"height\":39.1875,\"top\":523.5,\"right\":1152,\"bottom\":562.6875,\"left\":852}]"
+  },
+  {
+    "name": "g1-rail-night-150 over the grid: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[300,341,1.5]"
+  },
+  {
+    "name": "g1-rail-night-150 over the grid: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g1-rail-night-150 over the grid: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g1-rail-night-150 over the grid: FullCalendar's placeholder shows where it lands",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g1-rail-night-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2-tray over the grid: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g2-tray over the grid: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(251, 246, 233)\",\"linear-gradient(color(srgb 0.658824 0.627451 0.745098 / 0.24), color(srgb 0.658824 0.627451 0.745098 / 0.24)), none\",\"10px\",\"rgba(60, 52, 38, 0.12) 0px 2px 3px 0px, rgba(60, 52, 38, 0.2) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g2-tray over the grid: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":740.03125,\"y\":432.875},{\"x\":710,\"y\":418.25,\"width\":111.671875,\"height\":34,\"top\":418.25,\"right\":821.671875,\"bottom\":452.25,\"left\":710}]"
+  },
+  {
+    "name": "g2-tray over the grid: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[111.671875,91.0625,1.25]"
+  },
+  {
+    "name": "g2-tray over the grid: the title and \"15m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Stretch\" \"15m\"  / 0"
+  },
+  {
+    "name": "g2-tray over the grid: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g2-tray over the grid: FullCalendar's placeholder shows where it lands",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2-tray no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2-plan over the grid: one lifted copy (no second ghost)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "g2-plan over the grid: a card — filled, rounded, shadowed, edged",
+    "ok": true,
+    "detail": "[\"rgb(251, 246, 233)\",\"linear-gradient(color(srgb 0.658824 0.627451 0.745098 / 0.24), color(srgb 0.658824 0.627451 0.745098 / 0.24)), none\",\"10px\",\"rgba(60, 52, 38, 0.12) 0px 2px 3px 0px, rgba(60, 52, 38, 0.2) 0px 24px 60px 0px\",\"solid\"]"
+  },
+  {
+    "name": "g2-plan over the grid: the pointer is on it (no zoom offset)",
+    "ok": true,
+    "detail": "[{\"x\":1050.65625,\"y\":455.375},{\"x\":1020,\"y\":441.25,\"width\":250,\"height\":34,\"top\":441.25,\"right\":1270,\"bottom\":475.25,\"left\":1020}]"
+  },
+  {
+    "name": "g2-plan over the grid: compact — at most 200px (at 100%), never the full row",
+    "ok": true,
+    "detail": "[250,519.90625,1.25]"
+  },
+  {
+    "name": "g2-plan over the grid: the title and \"20m\", no checkbox or buttons",
+    "ok": true,
+    "detail": "\"Kai's Flow email: Gmail App Password + 2 GitHub secrets🌸\" \"20m\"  / 0"
+  },
+  {
+    "name": "g2-plan over the grid: the row's place is a quiet dashed outline, not lifted in place",
+    "ok": true,
+    "detail": "[true,\"dashed\",\"solid\",\"none\"]"
+  },
+  {
+    "name": "g2-plan over the grid: FullCalendar's placeholder shows where it lands",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2-plan no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g2-held a held task lifts the same card, with its length (Kai's slot-outline A)",
+    "ok": true,
+    "detail": "[1,{\"x\":830,\"y\":384.75,\"width\":156.28125,\"height\":33,\"top\":384.75,\"right\":986.28125,\"bottom\":417.75,\"left\":830},\"\\\"Reply to Omar\\\" \\\"15m\\\" \"]"
+  },
+  {
+    "name": "g2-held no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e1 Ctrl-click opens quick create on Task",
+    "ok": true,
+    "detail": "Task"
+  },
+  {
+    "name": "e1 Enter with no title: nothing made, the popover stays",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "e1 …Create is disabled until there is a title",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e1 the rail's Quick add: Enter, then Esc — no task at all (\"Untitled task\" never made)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "e1 …with a title it is made as before",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e1 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e2 phone quick create: Save disabled and Enter makes nothing with no title",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e2 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

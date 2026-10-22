@@ -21,6 +21,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { longPress } from '../../lib/haptics'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { perZone } from '../../lib/appZone'
+import { timeText } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useTasks } from '../tasks/api'
 import { openCapture } from '../command-bar/commandBarStore'
@@ -266,11 +267,10 @@ function Reading({ stage }: { stage: Extract<Stage, { kind: 'reading' }> }) {
 
 // The user's zone (lib/appZone.ts).
 const cairoDay = perZone((timeZone) => new Intl.DateTimeFormat('en-GB', { timeZone, weekday: 'short', day: 'numeric', month: 'short' }))
-const cairoTime = perZone((timeZone) => new Intl.DateTimeFormat('en-GB', { timeZone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }))
 function dateChip(iso: string, timed: boolean): string {
   const d = new Date(iso)
   const day = cairoDateKey(d) === cairoDateKey(new Date()) ? 'Today' : cairoDay().format(d).replace(',', '')
-  return timed ? `${day} · ${cairoTime().format(d)}` : day
+  return timed ? `${day} · ${timeText(d)}` : day
 }
 
 const NO_EDITS: Record<string, LineEdit> = {}
@@ -298,7 +298,7 @@ function useLines(capture: CaptureRow | null, only?: string[]) {
 function metaLine(c: CaptureRow): string {
   const pages = `${c.pages} ${c.pages === 1 ? 'page' : 'pages'}`
   const arabic = c.items.some((i) => /[؀-ۿ]/.test(i.text)) ? ' · Arabic' : ''
-  return [c.title, `${pages}${arabic}`, `read ${cairoTime().format(new Date(c.updated_at))}`].filter(Boolean).join(' · ')
+  return [c.title, `${pages}${arabic}`, `read ${timeText(new Date(c.updated_at))}`].filter(Boolean).join(' · ')
 }
 
 function Crop({ url, box, height = 40, maxWidth = 290 }: { url?: string; box: EditLine['box']; height?: number; maxWidth?: number }) {

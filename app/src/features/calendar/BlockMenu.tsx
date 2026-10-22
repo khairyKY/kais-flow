@@ -7,7 +7,7 @@ import type { IconName } from '../../components/icons/kf'
 import { Button } from '../../components/kit'
 import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
-import { SheetTitle, TimePanel } from '../../components/TimePicker'
+import { LengthChips, SheetTitle, TimePanel } from '../../components/TimePicker'
 import { uiZoom } from '../../lib/uiScale'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
 import { useDomains } from '../domains/api'
@@ -154,13 +154,15 @@ function CustomTime({ event, position, onDone, onClose }: { event: CalendarEvent
   )
 }
 
-export function BlockMenu({ event, position, onClose, onReplan }: {
+export function BlockMenu({ event, position, onClose, onReplan, closing }: {
   event: CalendarEvent
   /** Screen px — besideBlock() of the block. */
   position: { x: number; y: number }
   onClose: () => void
   /** A missed task block's Replan…: the calendar's Plan menu at this point. */
   onReplan?: (x: number, y: number) => void
+  /** M2: on its way out (100ms). */
+  closing?: boolean
 }) {
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
@@ -351,9 +353,19 @@ export function BlockMenu({ event, position, onClose, onReplan }: {
     <ContextMenu
       position={position}
       onClose={onClose}
+      closing={closing}
       width={BLOCK_MENU_WIDTH}
       label="Block details"
-      header={<TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />}
+      header={
+        <>
+          <TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />
+          {/* Kai 2026-10-21: the length in one tap — the block resizes from its start (a task's estimate
+              follows, calendar/api resizeEvent), with Undo; Time ▸ keeps Custom…. */}
+          {!synced && !event.all_day && (
+            <LengthChips value={len} onPick={(m) => { if (m !== len) retimeEventWithUndo(event, span, { ...span, end: span.start + m }) }} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, max-content)', gap: 5, padding: '0 9px 8px' }} />
+          )}
+        </>
+      }
       items={spec.map(item)}
     />
   )

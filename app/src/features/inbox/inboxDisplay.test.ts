@@ -1,8 +1,12 @@
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { ageLabel, backLabel, captureLink, capturedLabel, cardShape, confidenceWord, dayWord, defaultDraft, dismissedAgo, draftText, dueLabel, dueShort, githubHeading, githubUrl, inboxSummary, isToday, mentionedPerson, snoozedOf, suggestedPlace, suggestedTitle } from './inboxDisplay'
 import type { Domain, Project } from '../../lib/types'
 import { queryClient } from '../../lib/queryClient'
 import { linkLabel, taskLink } from '../../lib/links'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 describe('isToday', () => {
   it('matches the current calendar day', () => {

@@ -15,6 +15,9 @@
   --ease-natural: cubic-bezier(0.4, 0, 0.2, 1);
   /* Added from the 2026-09-28 design-system refresh (design-export/DS-CHANGELOG.md §2). */
   --dur-press: 100ms;
+  /* Calendar motion M2 (2026-10-22): the small popovers' one recipe — in from the anchor, out quicker. */
+  --dur-pop-in: 140ms;
+  --dur-pop-out: 100ms;
   --dur-sheet-enter: 300ms;
   --dur-sheet-exit: 200ms;
   --dur-toast: 200ms;
@@ -35,6 +38,8 @@
   --shadow-stack-x: -12px 0 30px rgba(var(--kf-shadow-rgb, 60, 52, 38), 0.22);
   /* Motion 2c / 5b — the ghost in hand; Effects 2j — it rides home in 380ms when a drop is refused. */
   --shadow-lift: 0 14px 30px rgba(var(--kf-shadow-rgb, 60, 52, 38), 0.26);
+  /* a calendar block under the pointer (Kai 2026-10-22): the lift's shadow, much smaller */
+  --shadow-hover: 0 2px 6px rgba(var(--kf-shadow-rgb, 60, 52, 38), 0.16);
   --dur-ghost-home: 380ms;
 }
 @media (max-width: 767px) {
@@ -156,7 +161,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  /* M14: pseudo-elements too — the resize grip's and the splitter's ::after fades still ran. */
+  *, *::before, *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

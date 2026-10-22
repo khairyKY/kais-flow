@@ -1,5 +1,6 @@
 import { appZone, perZone } from '../../lib/appZone'
 import { cairoDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
+import { clockRange, clockText } from '../../lib/clock'
 
 // T-4 (Polish F2b for the calendar's QuickCreate): a time typed into the form means that time on
 // the user's clock (their app_settings.timezone, lib/appZone.ts) on any device, like the command
@@ -22,6 +23,17 @@ export function zoneTimeKey(d: Date, zone: string = appZone()): string {
 /** HH:MM on the user's clock. */
 export function cairoTimeKey(d: Date): string {
   return zoneTimeKey(d)
+}
+
+/** The time a person reads (lib/clock: "1:05 PM", or "13:05" on the 24-hour clock) on `zone`'s clock —
+ * never for an input or a key (those are zoneTimeKey's "HH:MM"). */
+export function timeText(d: Date, zone: string = appZone()): string {
+  return clockText(zoneTimeKey(d, zone))
+}
+
+/** "1:00–1:30 PM" between two instants, on `zone`'s clock (lib/clock clockRange). */
+export function timeRange(from: Date, to: Date, zone: string = appZone()): string {
+  return clockRange(zoneTimeKey(from, zone), zoneTimeKey(to, zone))
 }
 
 /** The hour on the user's clock (0–23) — what the daisy's stage reads, never the device's hour. */

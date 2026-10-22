@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import { daysFromToday, formatLastCompleted, formatNextDue, formatRecurrenceRule, getCadenceType } from './perennials'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 // Zones are pinned per call, so the device's own zone never decides a day. 21:30Z on Mon 12 Oct 2026
 // is already Tue 13 Oct 00:30 in Cairo (UTC+3) but still Mon 12 Oct 17:30 in New York (UTC-4).

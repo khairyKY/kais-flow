@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar blocks options</title>
+<!-- Kai's Flow · how the calendar's blocks look: four directions, three ways to lay out overlapping
+     blocks, three goal-of-the-day looks, three looks for selected blocks (22 Oct 2026, Kai: "maybe it is how the blocks look, they
+     don't look the best thing possible, I like akiflow's, maybe we can explore a couple directions",
+     "group overlapped slots", "I don't like the display of the blocks"). Plain HTML, open it straight
+     from disk. Tokens: ds-bound/styles.css (the Bound Journal set, the app's own values — no colour is
+     changed here). Geometry: the app at its default 125% size (90px an hour); the "150%" pictures are
+     the same column zoomed as the app zooms. Looks only: nothing here is in the app yet. -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<!-- The app's own colours file too: it also answers to [data-theme="day"], so a day picture stays day on the Night page. -->
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.dark.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:40px 32px 120px}
+@media (max-width:767px){.wrap{padding:24px 16px 80px}}
+h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:13px;color:var(--ink-faint)}
+.lede{margin:12px 0 0;max-width:760px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg .btn{height:30px;border:none;background:none;padding:0 13px}
+.seg .btn[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.group{margin-top:64px}
+.group>h2{margin:0;font-family:var(--font-display);font-size:32px;font-weight:600;line-height:1.15}
+.group>.say{margin:6px 0 0;max-width:760px;color:var(--ink-muted)}
+.look{margin-top:36px;padding-top:24px;border-top:1px solid var(--line-card)}
+.look h3{margin:0;font-family:var(--font-display);font-size:24px;font-weight:600;line-height:1.2}
+.look h3 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;margin-right:10px;padding:0 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 16px/1 var(--font-ui);vertical-align:3px}
+.look.picked h3::after{content:'Your pick';margin-left:12px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 12px/1.4 var(--font-ui);vertical-align:5px}
+.look .say{margin:6px 0 0;max-width:760px;font-size:15.5px;color:var(--ink-body)}
+.shots{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin-top:18px}
+figure{margin:0;flex:none}
+figcaption{margin-top:8px;max-width:680px;font-size:13px;color:var(--ink-muted)}
+.pick-row{margin-top:16px}
+.notes{margin-top:28px;max-width:900px}
+.notes h2{margin:0 0 6px;font-family:var(--font-display);font-size:22px;font-weight:600}
+.notes ul{margin:6px 0 0;padding-left:20px;color:var(--ink-muted)}
+.notes li{margin:3px 0}
+.notes b{color:var(--ink-body);font-weight:600}
+
+/* ── the calendar frame: hour grid, day header, columns (CalendarGrid.css at 125%) ─────────────── */
+.shell{display:block}
+.frame{position:relative;overflow:hidden;border:1px solid var(--line-card);border-radius:16px;background:var(--paper-parchment);color:var(--ink-body);font-family:var(--font-ui);line-height:1.25}
+[data-theme="night"] .frame,[data-theme="night"].frame{border-color:var(--line-solid)}
+.hd{position:absolute;left:0;right:0;top:0;height:40px;display:flex;background:var(--paper-bone);border-bottom:1.5px solid var(--line-solid)}
+.hd .g{flex:none}
+.hd .c{flex:none;display:flex;align-items:baseline;gap:7px;padding:10px 10px 0;border-left:1px solid var(--line-card);white-space:nowrap;overflow:hidden}
+.hd .nm{font-size:13px;color:var(--ink-faint)}
+.hd .num{font-family:var(--font-display);font-size:19px;line-height:1;color:var(--ink-body)}
+.hd .c.td{background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.hd .c.td .nm,.hd .c.td .num{color:var(--acc-lavender-text)}
+.hd .c.td .num{font-weight:600;padding:1px 7px;border-radius:var(--radius-pill);background:var(--block-lavender)}
+.hd .c.pa{opacity:.62}
+.bd{position:absolute;left:0;right:0;top:41.5px;bottom:0}
+.tdw{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.vl{position:absolute;top:0;bottom:0;border-left:1px solid var(--line-dashed)}
+.hl{position:absolute;right:0;border-top:1px solid var(--line-card)}
+.hl.half{border-top:1px dashed var(--line-dashed)}
+.hl b{position:absolute;right:100%;top:4px;padding-right:10px;text-align:right;font-weight:400;font-size:14px;color:var(--ink-faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+[data-theme="night"] .hl{border-top-color:var(--line-solid);box-shadow:var(--glow-hairline)}
+.nowl{position:absolute;height:0;border-top:2px solid var(--acc-lavender);z-index:4}
+.nowl::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--acc-lavender)}
+.ptr{position:absolute;z-index:9;pointer-events:none}
+
+/* ── a block: the parts every direction shares ── */
+.blk{position:absolute;overflow:hidden;display:flex;flex-direction:column;z-index:2}
+.blk .r1{display:flex;align-items:flex-start;gap:6px;min-width:0}
+.blk .tt{min-width:0;flex:1}
+.blk .ck{flex:none;display:inline-flex;align-items:center;justify-content:center;line-height:1}
+.blk .acts{display:none;flex:none;gap:2px;margin-left:auto}
+.blk.hov .acts{display:inline-flex}
+.blk .acts i{font-style:normal;display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border-radius:6px;font-size:12px}
+.blk .wash{position:absolute;left:0;right:0;top:0;pointer-events:none}
+.blk .rows{display:flex;flex-direction:column;gap:3px;margin-top:5px;min-width:0}
+.blk .row{display:flex;align-items:center;gap:6px;min-width:0}
+.blk .row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk .bar{position:absolute;left:0;right:0;bottom:0;height:3px}
+.blk .bar i{display:block;height:100%}
+.blk.one{flex-direction:row;align-items:center}
+.blk.one .r1{align-items:center;flex:1}
+.blk.one .tt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk.sel{box-shadow:0 0 0 2px var(--paper-parchment),0 0 0 4px var(--sel-bg)!important;z-index:5}
+.blk.done .tt{text-decoration:line-through;text-decoration-color:var(--ink-hairline);color:var(--ink-faint)}
+.blk .gold{color:var(--acc-gold)}
+
+/* ═══ Now — the app today (CalendarGrid.css): lavender wash, 1px edge, 12px corners, check hidden at rest ═══ */
+.dN .blk{border-radius:var(--radius-block);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) 24%,transparent);padding:7px 10px}
+.dN .blk.ev{--c:var(--acc-blossom)!important}
+.dN .blk .tt{font-size:15px;color:var(--ink-body)}
+.dN .blk .tm{margin-top:2px;font-size:10.6px;color:var(--ct)}
+.dN .blk .ck{width:15px;height:15px;border:1.5px solid var(--ct);border-radius:4px;opacity:0;font-size:10px;color:var(--paper-parchment)}
+.dN .blk.hov .ck,.dN .blk.done .ck{opacity:1}
+.dN .blk.done .ck{background:var(--check-fill);border-color:transparent}
+.dN .blk.one{padding:2px 8px}
+.dN .blk.one .tm{display:none}
+.dN .blk.past{opacity:.62}
+.dN .blk.ran{border-color:var(--acc-terra)}
+.dN .blk.ran .tm{color:var(--acc-terra-ink)}
+.dN .blk .wash{background:color-mix(in srgb,var(--acc-lavender-deep) 14%,transparent)}
+.dN .blk .acts i{color:var(--ct)}
+.dN .blk.slot .row{padding:1px 4px;border:1px solid color-mix(in srgb,var(--ct) 35%,transparent);border-radius:8px;font-size:13px}
+.dN .blk.slot .row .ck{opacity:1;width:12px;height:12px}
+.dN .blk.slot .fill{margin-top:4px;padding-top:3px;border-top:1px solid color-mix(in srgb,var(--c) 30%,transparent);font-size:10.6px;color:var(--ct)}
+.dN .blk.goal{border-color:var(--line-goal)}
+
+/* ═══ A · Akiflow-faithful: a tinted block, a solid colour bar down the left, semibold title, the time
+       under it; the task's square check before the title; short blocks one line with the time; past and
+       done blocks fade ═══ */
+.dA .blk{border-radius:6px;background:color-mix(in srgb,var(--c) 20%,var(--paper-parchment));border-left:3px solid var(--c);padding:5px 7px 5px 7px}
+.dA .blk .tt{font-size:14px;font-weight:600;color:var(--ink-body);line-height:1.25}
+.dA .blk .tm{margin-top:2px;font-size:12.5px;color:var(--ink-muted)}
+.dA .blk .ck{width:14px;height:14px;margin-top:1.5px;border:1.5px solid var(--ct);border-radius:4px;font-size:10px;color:var(--paper-parchment)}
+.dA .blk.done .ck{background:var(--ct);border-color:var(--ct)}
+.dA .blk.one{padding:2px 7px}
+.dA .blk.one .r1{gap:5px}
+.dA .blk.one .tm{margin:0 0 0 6px;flex:none;font-size:12px}
+.dA .blk.past,.dA .blk.done{opacity:.55}
+.dA .blk.now{background:color-mix(in srgb,var(--c) 30%,var(--paper-parchment))}
+.dA .blk.now .tm{color:var(--ct);font-weight:600}
+.dA .blk.ran{border-left-color:var(--acc-terra)}
+.dA .blk.ran .tm{color:var(--acc-terra-ink);font-weight:600}
+.dA .blk.hov{background:color-mix(in srgb,var(--c) 32%,var(--paper-parchment))}
+.dA .blk .acts i{background:var(--paper-parchment);color:var(--ink-body);box-shadow:var(--shadow-crisp)}
+.dA .blk.slot{background:color-mix(in srgb,var(--c) 10%,var(--paper-parchment));border:1px dashed color-mix(in srgb,var(--c) 70%,transparent);border-left:3px solid var(--c)}
+.dA .blk.slot .cnt{margin-left:6px;padding:0 6px;border-radius:var(--radius-pill);background:var(--c);color:var(--paper-parchment);font-size:11px;font-weight:600;line-height:17px}
+.dA .blk.slot .row{font-size:13px}
+.dA .blk.slot .row .ck{width:12px;height:12px;margin:0}
+.dA .blk.slot .row.done .t{text-decoration:line-through;color:var(--ink-faint)}
+.dA .blk.slot .bar{background:color-mix(in srgb,var(--c) 25%,transparent)}
+.dA .blk.slot .bar i{background:var(--c)}
+.dA .blk.goal{border-left-color:var(--acc-gold);background:color-mix(in srgb,var(--acc-gold-warm) 18%,var(--paper-parchment))}
+
+/* ═══ B · Akiflow-inspired, ours: Akiflow's bar and one-line short blocks, in B's flat tool language —
+       a hairline edge, 8px corners, our type (UI title, quiet meta), the kit's check, area colours ═══ */
+.dB .blk{border-radius:8px;background:color-mix(in srgb,var(--c) 14%,var(--paper-parchment));border:1px solid color-mix(in srgb,var(--c) 38%,transparent);box-shadow:inset 3px 0 0 var(--c);padding:6px 8px 6px 11px}
+.dB .blk .tt{font-size:14px;font-weight:500;color:var(--ink-body);line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.dB .blk .tm{margin-top:3px;font-size:12px;color:var(--ct);font-variant-numeric:tabular-nums}
+.dB .blk .ck{width:15px;height:15px;margin-top:1px;border:1.5px solid var(--check-border);border-radius:5px;background:var(--check-bg);font-size:10px;color:var(--check-mark)}
+.dB .blk.done .ck{background:var(--check-fill);border-color:transparent}
+.dB .blk.one{padding:2px 8px 2px 11px}
+.dB .blk.one .tt{display:block;-webkit-line-clamp:unset}
+.dB .blk.one .tm{margin:0 0 0 6px;flex:none;font-size:11.5px}
+.dB .blk.past{opacity:.6}
+.dB .blk.done{opacity:.7}
+.dB .blk .wash{background:color-mix(in srgb,var(--c) 18%,transparent)}
+.dB .blk.ran{box-shadow:inset 3px 0 0 var(--acc-terra);border-color:color-mix(in srgb,var(--acc-terra) 45%,transparent)}
+.dB .blk.ran .tm{color:var(--acc-terra-ink)}
+.dB .blk.hov{border-color:color-mix(in srgb,var(--c) 70%,transparent);background:color-mix(in srgb,var(--c) 20%,var(--paper-parchment))}
+.dB .blk .acts i{color:var(--ct);background:color-mix(in srgb,var(--paper-parchment) 70%,transparent)}
+.dB .blk.slot{background:color-mix(in srgb,var(--c) 8%,var(--paper-parchment))}
+.dB .blk.slot .row{padding:2px 6px;border:1px solid color-mix(in srgb,var(--c) 32%,transparent);border-radius:7px;background:var(--paper-parchment);font-size:13px}
+.dB .blk.slot .row .ck{width:13px;height:13px;margin:0}
+.dB .blk.slot .row.done .t{text-decoration:line-through;color:var(--ink-faint)}
+.dB .blk.slot .fill{margin-top:3px;font-size:11.5px;color:var(--ct)}
+.dB .blk.goal{background:var(--paper-goal);border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold),var(--shadow-goal)}
+
+/* ═══ C · Calm (Notion Calendar / Amie): a soft tint, no edge, no bar; the time in quiet ink; a round
+       check; titles wrap as far as the block allows ═══ */
+.dC .blk{border-radius:6px;background:color-mix(in srgb,var(--c) 16%,transparent);padding:5px 8px}
+.dC .blk .tt{font-size:14px;font-weight:500;color:var(--ink-body);line-height:1.25}
+.dC .blk .tm{margin-top:2px;font-size:12px;color:var(--ink-faint)}
+.dC .blk .ck{width:14px;height:14px;margin-top:1.5px;border:1px solid var(--ink-hairline);border-radius:50%;font-size:9px;color:var(--paper-parchment)}
+.dC .blk.done .ck{background:var(--sig-done);border-color:transparent}
+.dC .blk.one{padding:2px 8px}
+.dC .blk.one .tm{display:none}
+.dC .blk.past,.dC .blk.done{background:color-mix(in srgb,var(--c) 7%,transparent)}
+.dC .blk.past .tt{color:var(--ink-faint)}
+.dC .blk.now .tm::before{content:'● ';color:var(--ct)}
+.dC .blk.ran .tm{color:var(--acc-terra-ink)}
+.dC .blk.ran .tm::before{content:'● ';color:var(--acc-terra)}
+.dC .blk.hov{background:color-mix(in srgb,var(--c) 26%,transparent)}
+.dC .blk .acts i{color:var(--ink-muted)}
+.dC .blk.slot{background:none;border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.dC .blk.slot .row{font-size:13px}
+.dC .blk.slot .row .ck{width:12px;height:12px;margin:0}
+.dC .blk.slot .row.done .t{text-decoration:line-through;color:var(--ink-faint)}
+.dC .blk.slot .fill{margin-top:3px;font-size:11.5px;color:var(--ink-faint)}
+.dC .blk.goal{background:color-mix(in srgb,var(--acc-gold-warm) 20%,transparent)}
+
+/* ═══ D · Journal card (my pick to try): a paper card that hides the grid behind it, a hairline edge and
+       a coloured rule; the title on one line with an ellipsis, the time on its own quiet line; the
+       elapsed part of "now" washes in from the top ═══ */
+.dD .blk{border-radius:8px;background:var(--paper-parchment);border:1px solid var(--line-card);border-left:3px solid var(--c);padding:6px 8px;box-shadow:var(--shadow-crisp)}
+[data-theme="night"] .dD .blk{background:var(--paper-bone)}
+.dD .blk .tt{font-size:14px;font-weight:500;color:var(--ink-body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.25}
+.dD .blk .tm{margin-top:3px;font-size:12px;color:var(--ct);font-variant-numeric:tabular-nums}
+.dD .blk .ck{width:15px;height:15px;margin-top:0;border:1.5px solid var(--check-border);border-radius:5px;background:var(--check-bg);font-size:10px;color:var(--check-mark)}
+.dD .blk.done .ck{background:var(--check-fill);border-color:transparent}
+.dD .blk.one{padding:1px 8px}
+.dD .blk.one .tm{margin:0 0 0 6px;flex:none;font-size:11.5px}
+.dD .blk.past .tt,.dD .blk.past .tm{color:var(--ink-faint)}
+.dD .blk.past{border-left-color:var(--ink-hairline)}
+.dD .blk .wash{background:color-mix(in srgb,var(--c) 14%,transparent)}
+.dD .blk.ran{border-left-color:var(--acc-terra)}
+.dD .blk.ran .tm{color:var(--acc-terra-ink)}
+.dD .blk.hov{border-color:color-mix(in srgb,var(--c) 55%,transparent);border-left-color:var(--c)}
+.dD .blk .acts i{color:var(--ct)}
+.dD .blk.slot{background:color-mix(in srgb,var(--c) 8%,var(--paper-parchment))}
+.dD .blk.slot .row{padding:2px 0;border-top:1px solid var(--line-card);font-size:13px}
+.dD .blk.slot .row .ck{width:13px;height:13px;margin:0}
+.dD .blk.slot .row.done .t{text-decoration:line-through;color:var(--ink-faint)}
+.dD .blk.slot .fill{margin-top:3px;font-size:11.5px;color:var(--ct)}
+.dD .blk.goal{border-left-color:var(--acc-gold)}
+.dD .blk.goal .clover{position:absolute;top:4px;right:5px;width:18px;filter:var(--shadow-drop-sm)}
+
+/* ═══ Overlap layouts (drawn in B) ═══ */
+.ovB .blk{box-shadow:inset 3px 0 0 var(--c),-2px 0 0 var(--paper-parchment)}
+.ovC .blk.ovg .row{font-size:13px}
+.ovC .blk.ovg .more{margin-top:3px;font-size:12px;color:var(--ct)}
+.ovC .blk.ovg .cnt{margin-left:auto;padding:0 6px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--c) 30%,transparent);color:var(--ct);font-size:11px;font-weight:600;line-height:17px}
+
+/* ═══ Goal looks (drawn in B) ═══ */
+.gA .blk.goal{box-shadow:inset 3px 0 0 var(--acc-gold);background:color-mix(in srgb,var(--c) 14%,var(--paper-parchment));border-color:var(--line-goal)}
+.gA .blk.goal .tt::before{content:'✶ ';color:var(--acc-gold)}
+.gB .blk.goal{overflow:visible;background:var(--paper-goal);border-color:var(--line-goal);box-shadow:var(--shadow-goal)}
+.gB .blk.goal .tape{position:absolute;top:-5px;left:50%;width:40px;height:10px;margin-left:-20px;background:color-mix(in srgb,var(--acc-gold-warm) 42%,transparent);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);transform:rotate(-2deg);border-radius:1px}
+.gB .blk.goal .tm{color:var(--acc-gold)}
+.gB .blk.goal .stamp{font-family:var(--font-stamp);letter-spacing:var(--ls-stamp);text-transform:uppercase}
+.gC .blk.goal{border:1.5px solid var(--acc-gold);box-shadow:none;background:color-mix(in srgb,var(--c) 14%,var(--paper-parchment));padding-right:28px}
+.gC .blk.goal .clover{position:absolute;top:4px;right:5px;width:19px;filter:var(--shadow-drop-sm)}
+
+/* ═══ Selected looks (multi-select, Kai 22 Oct): drawn on whichever blocks direction is chosen, and fitted
+       to it — the ring keeps the block's corners, the badge takes the direction's check shape, the lifted
+       card's edge takes the place of the direction's own colour bar ═══ */
+.sel-dirs{margin-top:14px}
+/* A · outline ring: the selection ink, 2px, a paper gap, the block's own corners */
+.sA .blk.pk{outline:2px solid var(--sel-bg);outline-offset:2px;z-index:5}
+/* B · filled wash + check badge */
+.sB .blk.pk::after{content:'';position:absolute;inset:0;background:color-mix(in srgb,var(--sel-bg) 13%,transparent);pointer-events:none}
+.sB .blk.pk .pkb{position:absolute;top:5px;right:5px;z-index:1;display:flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:5px;background:var(--sel-bg);color:var(--sel-ink);font-size:10px;font-weight:700;line-height:1}
+.sB.dC .blk.pk .pkb{border-radius:50%}
+.sB .blk.pk.one .pkb{top:50%;margin-top:-8px}
+.sB .blk.pk .r1{padding-right:20px}
+.sB .blk.pk.one{padding-right:26px}
+.sB .blk.pk.one .r1{padding-right:0}
+/* C · lifted card + accent edge */
+.sC .blk.pk{transform:translateY(-2px);z-index:5;box-shadow:var(--shadow-panel)}
+.sC.dA .blk.pk,.sC.dD .blk.pk{border-left:4px solid var(--sel-bg)}
+.sC.dB .blk.pk{box-shadow:inset 4px 0 0 var(--sel-bg),var(--shadow-panel)}
+.sC.dC .blk.pk{box-shadow:inset 4px 0 0 var(--sel-bg),var(--shadow-panel);background:color-mix(in srgb,var(--c) 22%,var(--paper-parchment));padding-left:11px}
+.sC .blk.pk .tt{font-weight:600}
+[data-theme="night"] .sC .blk.pk{background:color-mix(in srgb,var(--c) 26%,var(--paper-bone))}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · calendar blocks · 22 Oct 2026</div>
+  <h1>How should the calendar's blocks look?</h1>
+  <p class="lede">Four directions for the blocks, drawn on the same calendar: yesterday (past), today (with the now line), and two more days, at the app's default 125% size, by day and in Night Garden, and one column at 150%. Then three ways to lay out blocks that overlap, three looks for the goal of the day, and three looks for selected blocks. Answer with letters, for example <b>"blocks B, overlap A, goal C, selected B"</b>. Colours are the app's own tokens; none is changed.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your picks">
+  <span>Your picks: <b id="mine">none yet</b></span>
+  <span class="seg" role="group" aria-label="Page theme">
+    <button type="button" class="btn" data-th="day" aria-pressed="true">Day page</button>
+    <button type="button" class="btn" data-th="night" aria-pressed="false">Night page</button>
+  </span>
+  <button type="button" class="btn btn-p" id="copy">Copy my picks</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="notes">
+  <h2>What Akiflow, Notion Calendar and Amie do</h2>
+  <ul>
+    <li><b>Akiflow:</b> a block is a rounded rectangle tinted in its project's colour with a solid bar of that colour down the left; a bold title with the time under it; a task carries a small square check before its title; a 15–30 minute block shrinks to one line (title, then the time); done and past blocks fade, done titles are struck. Overlapping blocks sit side by side. A Time Slot is a project-coloured box with its name, a task count and a completion bar along the bottom, its tasks listed inside.</li>
+    <li><b>Notion Calendar:</b> soft tinted fills from an eight-colour palette, small 4–6px corners, no heavy edges, hairline grid; the title, then the time in grey; past events fade; overlaps side by side.</li>
+    <li><b>Amie:</b> playful, rounder pastel blocks; to-dos dragged onto the calendar become blocks with a round check; done ones strike through.</li>
+  </ul>
+</section>
+
+<section class="group" id="blocks">
+  <h2>Blocks</h2>
+  <p class="say">Every direction shows: a task with its check and an event · a Time slot holding two tasks · the goal of the day · done and past · "Now · 51m left" and "Ran over" · 15, 30, 60 and 105 minutes with a long title · two and three overlapping blocks · the pointer over a block (its actions) · two blocks selected (for the new multi-select).</p>
+  <div id="dirs"></div>
+</section>
+
+<section class="group" id="overlap">
+  <h2>Overlapping blocks</h2>
+  <p class="say">Two blocks at 9:00 and 9:30, three between 11:00 and 12:15. Drawn in direction B; any of these works with any blocks look.</p>
+  <div id="ovs"></div>
+</section>
+
+<section class="group" id="goal">
+  <h2>The goal of the day</h2>
+  <p class="say">On Today the goal is the one gold, taped page with the clover. Three ways for its block to carry that, drawn in direction B, at 30 minutes and at an hour.</p>
+  <div id="goals"></div>
+</section>
+
+<section class="group" id="selected">
+  <h2>Selected blocks</h2>
+  <p class="say">Ctrl/⌘/Shift + click picks more than one block; they move and delete together. Three looks for a picked block, each drawn with one, two and three picked in a real column, by day and in Night Garden. They're drawn on your blocks pick (B until you pick one); switch below to see them on the others. The app keeps its plain outline until you choose.</p>
+  <div class="sel-dirs"><span class="seg" role="group" aria-label="Drawn on blocks">
+    <button type="button" class="btn" data-seldir="A">On A</button>
+    <button type="button" class="btn" data-seldir="B">On B</button>
+    <button type="button" class="btn" data-seldir="C">On C</button>
+    <button type="button" class="btn" data-seldir="D">On D</button>
+  </span></div>
+  <div id="sels"></div>
+</section>
+
+</div>
+
+<script>
+// ── the week on screen: Tue (yesterday), Wed (today, now 12:09), Thu, Fri — 9 AM to 3 PM ──
+const H = 90, S = 9, E = 15, G = 64
+const NOW = 12 + 9 / 60
+const y = (h) => (h - S) * H
+const C = { lav: ['var(--acc-lavender)', 'var(--acc-lavender-text)'], blo: ['var(--acc-blossom)', 'var(--acc-blossom-text)'], sag: ['var(--acc-sage)', 'var(--acc-sage-text)'], hyd: ['var(--acc-hydrangea)', 'var(--acc-hydrangea-deep)'], ter: ['var(--acc-terra)', 'var(--acc-terra-ink)'], but: ['var(--acc-buttercream)', 'var(--acc-buttercream-text)'], clo: ['var(--acc-clover)', 'var(--acc-clover-text)'] }
+const DAYS = [{ nm: 'Tue', n: 20, past: true }, { nm: 'Wed · Today', n: 21, today: true }, { nm: 'Thu', n: 22 }, { nm: 'Fri', n: 23 }]
+const clock = (h) => { const hh = Math.floor(h + 1e-9), mm = Math.round((h - hh) * 60); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'AM' : 'PM'}` }
+const range = (a, b) => { const x = clock(a), z = clock(b); return x.slice(-2) === z.slice(-2) ? `${x.slice(0, -3)}–${z}` : `${x}–${z}` }
+// one-line blocks (15–30 minutes) carry the compact time: "9am", "1:15pm"
+const short = (h) => clock(h).replace(':00', '').replace(' AM', 'am').replace(' PM', 'pm')
+const len = (a, b) => { const m = Math.round((b - a) * 60); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m` }
+
+// Kai's areas, drawn in the accents: Work hydrangea · Health sage · Personal blossom · Shaheen buttercream; tasks with no area lavender.
+const BLOCKS = [
+  // Tue — past
+  { d: 0, a: 9, b: 9.5, t: 'Send the tax papers', k: 'task', c: 'lav', st: ['done', 'past'] },
+  { d: 0, a: 10, b: 11, t: 'Dentist', k: 'event', c: 'blo', st: ['past'] },
+  { d: 0, a: 12, b: 13.5, t: 'Errands', k: 'slot', c: 'sag', st: ['past'], held: [['Buy stamps', 1], ['Return the parcel', 1]] },
+  // Wed — today
+  { d: 1, a: 9.5, b: 10.5, t: 'Call the tyre supplier', k: 'task', c: 'but', st: ['ran'] },
+  { d: 1, a: 11.5, b: 13, t: 'Crypto — heavy session', k: 'task', c: 'lav', st: ['now'] },
+  { d: 1, a: 13.25, b: 13.75, t: 'Ship the calendar polish 🌸', k: 'goal', c: 'lav', st: [] },
+  { d: 1, a: 14, b: 14.5, t: 'Reply to Omar', k: 'task', c: 'hyd', st: ['sel'] },
+  { d: 1, a: 14.5, b: 15, t: 'Pay the rent', k: 'event', c: 'blo', st: ['sel'] },
+  // Thu — overlaps, an event under the pointer
+  { d: 2, a: 9, b: 10, t: 'Standup', k: 'event', c: 'hyd', st: [], lane: [0, 2] },
+  { d: 2, a: 9.5, b: 10.5, t: "Review Kai's PR", k: 'task', c: 'lav', st: [], lane: [1, 2] },
+  { d: 2, a: 11, b: 12, t: 'Lunch with Omar', k: 'event', c: 'blo', st: [], lane: [0, 3] },
+  { d: 2, a: 11.25, b: 12.25, t: 'Gym', k: 'task', c: 'sag', st: [], lane: [1, 3] },
+  { d: 2, a: 11.5, b: 12, t: 'Read 2 pages', k: 'task', c: 'lav', st: [], lane: [2, 3] },
+  { d: 2, a: 13, b: 14, t: 'Design review', k: 'event', c: 'hyd', st: ['hov'] },
+  // Fri — heights, a long title each, and a slot
+  { d: 3, a: 9, b: 9.25, t: 'Water the plants and refill the bird feeder', k: 'task', c: 'sag', st: [] },
+  { d: 3, a: 9.5, b: 10, t: "Kai's Flow email: Gmail App Password + 2 GitHub secrets 🌸", k: 'task', c: 'lav', st: [] },
+  { d: 3, a: 10.25, b: 11.25, t: 'Deep work on the quarterly forecast numbers for Shaheen', k: 'task', c: 'but', st: ['hov'] },
+  { d: 3, a: 11.5, b: 13.25, t: 'Write the investor update and the hiring plan for the first quarter', k: 'task', c: 'hyd', st: [] },
+  { d: 3, a: 13.5, b: 15, t: 'Admin', k: 'slot', c: 'hyd', st: [], held: [['Renew car insurance', 1], ['Book the vet', 0]] },
+]
+
+const ck = (done) => `<span class="ck">${done ? '✓' : ''}</span>`
+function inner(b, dir, goalLook) {
+  const done = b.st.includes('done')
+  const one = b.b - b.a <= 0.5 && b.k !== 'slot'
+  let tm = b.b - b.a >= 1 ? `${range(b.a, b.b)} · ${len(b.a, b.b)}` : clock(b.a)
+  if (b.st.includes('now')) tm = 'Now · 51m left'
+  if (b.st.includes('ran')) tm = `Ran over · ${clock(b.b)}`
+  const check = b.k === 'task' || b.k === 'goal' ? ck(done) : ''
+  const acts = b.st.includes('hov') ? `<span class="acts">${b.k === 'event' ? '' : '<i title="Focus">▶</i>'}<i title="More">⋯</i></span>` : ''
+  const wash = b.st.includes('now') && (dir === 'N' || dir === 'B' || dir === 'D') ? `<span class="wash" style="height:${Math.round(((NOW - b.a) / (b.b - b.a)) * 100)}%"></span>` : ''
+  let extra = ''
+  if (b.k === 'goal') {
+    if (goalLook === 'B') { extra = '<span class="tape" aria-hidden="true"></span>'; tm = `<span class="stamp">✶ Goal</span> · ${tm}` }
+    if (goalLook === 'C' || (!goalLook && dir === 'D')) extra = '<img class="clover" src="ds/assets/clover/four_leaf.png" alt="">'
+  }
+  const goalStar = b.k === 'goal' && !goalLook && dir !== 'N' && dir !== 'D' ? '<span class="gold">✶ </span>' : ''
+  if (b.k === 'slot') {
+    const left = b.held.filter((h) => !h[1]).length
+    const head = dir === 'A' ? `<div class="r1"><span class="tt">${b.t}</span><span class="cnt">${left}</span></div>` : `<div class="r1"><span class="tt">${b.t}</span></div><div class="tm">${clock(b.a)}</div>`
+    const rows = `<div class="rows">${b.held.map(([t, d]) => `<div class="row${d ? ' done' : ''}">${ck(d)}<span class="t">${t}</span></div>`).join('')}</div>`
+    const fill = dir === 'A' ? `<div class="bar"><i style="width:${Math.round(((b.held.length - left) / b.held.length) * 100)}%"></i></div>` : `<div class="fill">${b.held.length} tasks · 45m of ${len(b.a, b.b)}</div>`
+    return { cls: 'slot', html: head + (dir === 'N' ? fill + rows : rows + fill) }
+  }
+  if (one) return { cls: 'one', html: `${extra}<div class="r1">${check}<span class="tt">${goalStar}${b.t}</span>${acts}</div><span class="tm">${b.st.includes('now') || b.st.includes('ran') ? tm : short(b.a)}</span>` }
+  return { cls: '', html: `${wash}${extra}<div class="r1">${check}<span class="tt">${goalStar}${b.t}</span>${acts}</div><div class="tm">${tm}</div>` }
+}
+
+function frame(dir, { days = [0, 1, 2, 3], col = 150, from = S, to = E, only = null, goalLook = null, extraCls = '', blocks = BLOCKS, heads = DAYS } = {}) {
+  const DAYS = heads
+  const W = G + days.length * col
+  const Y = (h) => (h - from) * H
+  let h = `<div class="frame d${dir} ${extraCls}" style="width:${W}px;height:${41.5 + (to - from) * H + 6}px">`
+  h += `<div class="hd"><span class="g" style="width:${G}px"></span>${days.map((i) => `<span class="c${DAYS[i].today ? ' td' : ''}${DAYS[i].past ? ' pa' : ''}" style="width:${col}px"><span class="nm">${DAYS[i].nm}</span><span class="num">${DAYS[i].n}</span></span>`).join('')}</div><div class="bd">`
+  days.forEach((i, k) => {
+    if (DAYS[i].today) h += `<span class="tdw" style="left:${G + k * col}px;width:${col}px"></span>`
+    h += `<span class="vl" style="left:${G + k * col}px"></span>`
+  })
+  for (let t = from; t < to; t += 0.5) h += `<span class="hl${t % 1 ? ' half' : ''}" style="left:${G}px;top:${Y(t)}px">${t % 1 ? '' : `<b>${clock(t).replace(':00', '')}</b>`}</span>`
+  for (const b of blocks) {
+    const k = days.indexOf(b.d)
+    if (k < 0 || (only && !only(b))) continue
+    const [lane, lanes] = b.lane ?? [0, 1]
+    const lw = (col - 6) / lanes
+    const { cls, html } = inner(b, dir, goalLook)
+    const [c, ct] = C[b.c]
+    const cl = ['blk', cls, b.k === 'event' ? 'ev' : '', b.k === 'goal' ? 'goal' : '', ...b.st].filter(Boolean).join(' ')
+    h += `<div class="${cl}" style="--c:${c};--ct:${ct};left:${G + k * col + 3 + lane * lw}px;width:${lw - (lanes > 1 ? 2 : 0)}px;top:${Y(b.a) + 1}px;height:${(b.b - b.a) * H - 2}px">${b.st.includes('pk') && extraCls.includes('sB') ? '<span class="pkb" aria-hidden="true">✓</span>' : ''}${html}</div>`
+    if (b.st.includes('hov')) h += `<svg class="ptr" style="left:${G + k * col + col * 0.55}px;top:${Y(b.a) + 22}px" width="16" height="22" viewBox="0 0 18 24" aria-hidden="true"><path d="M1.5 1.5v18l4.6-4.4 3.2 7 3-1.4-3.2-6.8h6.4z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>`
+  }
+  const ti = days.findIndex((i) => DAYS[i].today)
+  if (ti >= 0 && NOW > from && NOW < to) h += `<span class="nowl" style="left:${G + ti * col}px;width:${col}px;top:${Y(NOW)}px"></span>`
+  return h + '</div></div>'
+}
+
+const fig = (theme, inner, cap) => `<figure><div class="shell" data-theme="${theme}">${inner}</div><figcaption>${cap}</figcaption></figure>`
+const pickBtn = (grp, v, label = 'This one') => `<div class="pick-row"><button type="button" class="btn pick" data-grp="${grp}" data-pick="${v}" aria-pressed="false">${label}</button></div>`
+
+const DIRS = [
+  ['N', 'Now', "The app today, for comparison: a lavender wash with a 1px edge and 12px corners, the title wrapping as far as it fits, the time under it in small type, the check hidden until the pointer is over it."],
+  ['A', 'Akiflow-faithful', 'As close to Akiflow as our tokens go: a tint with a solid colour bar down the left, a bold title, the time under it, a square check always showing. Short blocks are one line with their time. Past and done blocks fade.'],
+  ['B', 'Akiflow-inspired, ours', "Akiflow's bar and one-line short blocks, in our flat tool look: a hairline edge, 8px corners, a medium title clamped to two lines, the time in the area's colour, the kit's own check. Each area keeps its colour."],
+  ['C', 'Calm (Notion Calendar / Amie)', 'The quietest: a soft tint, no edge, no bar, grey time, a thin round check. Titles wrap as far as the block allows. "Now" and "Ran over" are a small dot before the time.'],
+  ['D', 'Journal card', 'My idea: a paper card that covers the grid lines behind it, a hairline edge and a coloured rule, the title always on one line with an ellipsis and the time on its own line. The elapsed part of the current block washes in from the top.'],
+]
+
+document.getElementById('dirs').innerHTML = DIRS.map(([d, name, say]) => `
+  <div class="look" data-grp="blocks" data-look="${d}">
+    <h3>${d === 'N' ? '' : `<span class="tag">${d}</span>`}${name}</h3>
+    <p class="say">${say}</p>
+    <div class="shots">
+      ${fig('day', frame(d), 'Day · Tue (past) · Wed (today, now 12:09) · Thu · Fri')}
+      ${fig('night', frame(d), 'Night Garden')}
+      ${fig('day', `<div style="zoom:1.2">${frame(d, { days: [3], col: 150, from: 9, to: 15 })}</div>`, 'Fri at 150% (zoomed as the app zooms)')}
+    </div>
+    ${d === 'N' ? '' : pickBtn('blocks', d)}
+  </div>`).join('')
+
+// ── overlaps ──
+const OV = BLOCKS.filter((b) => b.d === 2 && b.a < 13)
+const cascade = OV.map((b) => ({ ...b, lane: undefined, cas: b.lane }))
+function ovFrame(look, col) {
+  if (look === 'A') return frame('B', { days: [2], col, from: 8.5, to: 12.75, blocks: OV, extraCls: 'ovA' })
+  if (look === 'B') {
+    // each later block steps 22% to the right over the one under it, full width after that
+    let html = frame('B', { days: [2], col, from: 8.5, to: 12.75, blocks: [], extraCls: 'ovB' })
+    const parts = cascade.map((b) => {
+      const [i] = b.cas
+      const off = i * 0.22 * (col - 6)
+      const { cls, html: inn } = inner(b, 'B')
+      const [c, ct] = C[b.c]
+      return `<div class="blk ${cls} ${b.k === 'event' ? 'ev' : ''}" style="--c:${c};--ct:${ct};left:${G + 3 + off}px;width:${col - 6 - off}px;top:${(b.a - 8.5) * H + 1}px;height:${(b.b - b.a) * H - 2}px;z-index:${2 + i}">${inn}</div>`
+    }).join('')
+    return html.replace(/<\/div><\/div>$/, parts + '</div></div>')
+  }
+  // C · grouped: overlapping blocks become one "N overlapping" block; a click opens them side by side
+  const group = (a, b, items, c) => ({ d: 2, a, b, t: `${items.length} at once`, k: 'group', c, items })
+  const G2 = group(9, 10.5, OV.slice(0, 2), 'hyd'), G3 = group(11, 12.25, OV.slice(2), 'blo')
+  let html = frame('B', { days: [2], col, from: 8.5, to: 12.75, blocks: [], extraCls: 'ovC' })
+  const parts = [G2, G3].map((g) => {
+    const [c, ct] = C[g.c]
+    const rows = g.items.slice(0, 2).map((b) => `<div class="row"><span class="t">${b.t}</span><span style="flex:none;font-size:11.5px;color:var(--ct)">${clock(b.a).replace(' AM', '').replace(' PM', '')}</span></div>`).join('')
+    const more = g.items.length > 2 ? `<div class="more">+${g.items.length - 2} more</div>` : ''
+    return `<div class="blk ovg" style="--c:${c};--ct:${ct};left:${G + 3}px;width:${col - 6}px;top:${(g.a - 8.5) * H + 1}px;height:${(g.b - g.a) * H - 2}px"><div class="r1"><span class="tt">${g.t}</span><span class="cnt">${g.items.length}</span></div><div class="rows">${rows}</div>${more}</div>`
+  }).join('')
+  return html.replace(/<\/div><\/div>$/, parts + '</div></div>')
+}
+const OVS = [
+  ['A', 'Side by side', 'Like Google Calendar and Akiflow: overlapping blocks share the column in equal lanes. Everything shows; three at once in a week column get narrow.'],
+  ['B', 'Cascade', 'Each later block steps a little to the right over the one under it and keeps most of the width; the earlier ones peek out on the left.'],
+  ['C', 'Grouped', 'Blocks that overlap become one block — "3 at once" with the first two names — and a click opens them side by side. The calmest at a glance, one more click to see all.'],
+]
+document.getElementById('ovs').innerHTML = OVS.map(([d, name, say]) => `
+  <div class="look" data-grp="overlap" data-look="${d}">
+    <h3><span class="tag">${d}</span>${name}</h3>
+    <p class="say">${say}</p>
+    <div class="shots">
+      ${fig('day', ovFrame(d, 150), 'Week column · day')}
+      ${fig('night', ovFrame(d, 150), 'Week column · Night Garden')}
+      ${fig('day', ovFrame(d, 300), 'Day view · day')}
+    </div>
+    ${pickBtn('overlap', d)}
+  </div>`).join('')
+
+// ── goal looks ──
+const GOALS = [
+  ['A', 'Gold edge', "The block's own look with a gold edge down its left side and a small gold ✶ before the title."],
+  ['B', 'Goal paper', "The goal card's own gold paper, edge and shadow, a short strip of its washi tape on the top edge, the time row led by \"✶ Goal\" in its stamp."],
+  ['C', 'Gold outline + clover', 'The block in a gold outline with the four-leaf clover in its top corner, as on the goal card.'],
+]
+const goalBlocks = [
+  { d: 1, a: 9.5, b: 10, t: 'Review Kai', k: 'task', c: 'lav', st: [] },
+  { d: 1, a: 10.5, b: 11, t: 'Ship the calendar polish 🌸', k: 'goal', c: 'lav', st: [] },
+  { d: 1, a: 11.5, b: 12.5, t: 'Ship the calendar polish 🌸', k: 'goal', c: 'lav', st: [] },
+]
+document.getElementById('goals').innerHTML = GOALS.map(([d, name, say]) => `
+  <div class="look" data-grp="goal" data-look="${d}">
+    <h3><span class="tag">${d}</span>${name}</h3>
+    <p class="say">${say}</p>
+    <div class="shots">
+      ${fig('day', frame('B', { days: [1], col: 150, from: 9, to: 13, blocks: goalBlocks, goalLook: d, extraCls: `g${d}` }), 'Week column · 30 minutes and an hour · day')}
+      ${fig('night', frame('B', { days: [1], col: 150, from: 9, to: 13, blocks: goalBlocks, goalLook: d, extraCls: `g${d}` }), 'Night Garden')}
+      ${fig('day', frame('B', { days: [1], col: 300, from: 9, to: 13, blocks: goalBlocks, goalLook: d, extraCls: `g${d}` }), 'Day view')}
+    </div>
+    ${pickBtn('goal', d)}
+  </div>`).join('')
+
+// ── selected looks ──
+const SELS = [
+  ['A', 'Outline ring', "A 2px ring in the selection ink with a thin paper gap, following the block's own corners. The block itself is unchanged. The quietest; closest to what the app does now."],
+  ['B', 'Filled wash + check', 'The picked block darkens under a wash of the selection ink and wears a small check badge in its top corner (square-cornered on A, B and D like their checks, round on C). Reads at a glance, even on a busy week.'],
+  ['C', 'Lifted card', 'The picked block lifts a little off the page with a soft shadow, its title goes semibold, and its edge turns the selection ink (in place of the area colour, until you let go). Feels ready to be moved.'],
+]
+// three columns, each with the same four blocks: one, two and three of them picked
+const SEL_HEADS = [{ nm: '1 picked', n: '' }, { nm: '2 picked', n: '' }, { nm: '3 picked', n: '' }]
+const selBlocks = [0, 1, 2].flatMap((d) => [
+  { d, a: 9, b: 10, t: 'Review the quarterly numbers', k: 'task', c: 'hyd', st: d >= 1 ? ['pk'] : [] },
+  { d, a: 10, b: 10.5, t: 'Reply to Omar', k: 'task', c: 'lav', st: ['pk'] },
+  { d, a: 10.75, b: 11.75, t: 'Lunch with Omar', k: 'event', c: 'blo', st: [] },
+  { d, a: 11.75, b: 12.25, t: 'Gym', k: 'task', c: 'sag', st: d >= 2 ? ['pk'] : [] },
+])
+let selDir = null
+function renderSel() {
+  const dir = selDir ?? picks.blocks ?? 'B'
+  document.querySelectorAll('[data-seldir]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.seldir === dir)))
+  const f = (s) => frame(dir, { days: [0, 1, 2], col: 150, from: 8.75, to: 12.5, blocks: selBlocks, heads: SEL_HEADS, extraCls: `s${s}` })
+  document.getElementById('sels').innerHTML = SELS.map(([s, name, say]) => `
+  <div class="look" data-grp="selected" data-look="${s}">
+    <h3><span class="tag">${s}</span>${name}</h3>
+    <p class="say">${say}</p>
+    <div class="shots">
+      ${fig('day', f(s), `On blocks ${dir} · day`)}
+      ${fig('night', f(s), `On blocks ${dir} · Night Garden`)}
+    </div>
+    ${pickBtn('selected', s)}
+  </div>`).join('')
+  document.querySelectorAll('#sels .pick').forEach(wirePick)
+}
+document.querySelectorAll('[data-seldir]').forEach((b) => b.addEventListener('click', () => { selDir = b.dataset.seldir; renderSel(); paint() }))
+
+// ── the page theme ──
+document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.th
+  document.querySelectorAll('[data-th]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+}))
+
+// ── the picks ──
+const KEY = 'kf-calendar-blocks-picks'
+let picks = {}
+try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
+const NAMES = { blocks: 'blocks', overlap: 'overlap', goal: 'goal', selected: 'selected' }
+const line = () => Object.keys(NAMES).filter((g) => picks[g]).map((g) => `${NAMES[g]} ${picks[g]}`).join(', ')
+function paint() {
+  document.getElementById('mine').textContent = line() || 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(picks[b.dataset.grp] === b.dataset.pick)))
+  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', picks[s.dataset.grp] === s.dataset.look))
+}
+function wirePick(b) {
+  b.addEventListener('click', () => {
+    picks[b.dataset.grp] = b.dataset.pick
+    try { localStorage.setItem(KEY, JSON.stringify(picks)) } catch {}
+    if (b.dataset.grp === 'blocks' && !selDir) renderSel()
+    paint()
+  })
+}
+renderSel()
+document.querySelectorAll('.pick:not(#sels .pick)').forEach(wirePick)
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = line() ? `Calendar: ${line()}` : 'Calendar: nothing picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    try { ok = document.execCommand('copy') } catch {}
+    ta.remove()
+  }
+  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paint()
+</script>
+</body>
+</html>

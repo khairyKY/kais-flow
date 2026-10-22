@@ -84,9 +84,9 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
     const el = ref.current
     if (!el) return
     const z = uiZoom()
-    const r = el.getBoundingClientRect()
     const row = { left: anchor.rect.left / z, top: anchor.rect.top / z, bottom: anchor.rect.bottom / z }
-    const next = placeUnderRow(row, { width: r.width / z, height: el.scrollHeight + 2 }, { width: window.innerWidth / z, height: window.innerHeight / z })
+    // offsetWidth, not the rect: kf-pop's entrance scales the rect while it plays
+    const next = placeUnderRow(row, { width: el.offsetWidth, height: el.scrollHeight + 2 }, { width: window.innerWidth / z, height: window.innerHeight / z })
     setPos((p) => (p && p.left === next.left && p.top === next.top && p.maxHeight === next.maxHeight ? p : next))
   })
 
@@ -97,7 +97,7 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
         role="dialog"
         aria-label={task ? `Task: ${task.title}` : 'Task'}
         tabIndex={-1}
-        className="kf-fade tp-pop"
+        className="kf-pop tp-pop"
         style={{ left: pos?.left ?? -9999, top: pos?.top ?? 0, maxHeight: pos?.maxHeight, width: WIDTH }}
         onKeyDown={(e) => {
           if (e.key === 'Escape') return // the overlay stack's

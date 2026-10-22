@@ -141,8 +141,20 @@ export function PhoneCalendar() {
   const marked = useMemo(() => daysWithItems(tasks, gridEvents), [tasks, gridEvents])
 
   // CALENDAR.md §3, first match wins: a colour set on the block · a task's project hue (its own, else
-  // its domain's) · a meeting (a plain event) blossom · any other task or block lavender.
-  function look(e: CalendarEvent): BlockLook {
+  // its domain's) · a meeting (a plain event) blossom · any other task or block lavender. S10: worked out
+  // once per block while the data holds (a swipe drew every block of three panes on every move).
+  const look = useMemo(() => {
+    const cache = new WeakMap<CalendarEvent, BlockLook>()
+    return (e: CalendarEvent): BlockLook => {
+      let v = cache.get(e)
+      if (!v) {
+        v = lookOf(e)
+        cache.set(e, v)
+      }
+      return v
+    }
+  }, [tasks, taskById, projects, domains, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  function lookOf(e: CalendarEvent): BlockLook {
     const task = e.task_id ? taskById.get(e.task_id) : undefined
     const project = task?.project_id ? projects.find((p) => p.id === task.project_id) : undefined
     const hue = e.color ?? project?.color ?? (project && domains.find((d) => d.id === project.domain_id)?.color) ?? null

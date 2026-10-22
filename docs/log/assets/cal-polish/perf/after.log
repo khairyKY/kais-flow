@@ -1,0 +1,218 @@
+
+=== d1280x1 (1280×800 @100%) — blocks on screen: 98
+  idle: 2018ms frames=121 dropped=0 max=18 p95=16.8 LT=[] forced=0 commits=0 L=0/0ms S=122/16ms JS=12ms
+     renders {}
+  scroll-wheel: 1146ms frames=68 dropped=1 max=33 p95=16.8 LT=[] forced=0 commits=0 L=10/3ms S=72/17ms JS=10ms
+     renders {}
+     anims transition opacity 120ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on span.kf-ev-check | transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×5 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×5 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition opacity 43.92614846593506ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on span.kf-ev-check | transition transform 44.51066365651292ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 44.51066365651292ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 104.41271313132059ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 104.41271313132059ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition opacity 44.09491427309001ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on span.kf-ev-check | transition transform 44.68669415600749ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 44.68669415600749ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 44.61481553045264ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 44.61481553045264ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+  scroll-fling: 969ms frames=58 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=0 L=2/1ms S=58/10ms JS=8ms
+     renders {}
+     anims transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+  hover-sweep: 1801ms frames=104 dropped=1 max=83 p95=16.8 LT=[] forced=0 commits=0 L=23/9ms S=116/45ms JS=23ms
+     renders {}
+     anims transition opacity 120ms cubic-bezier(0.22, 0.61, 0.36, 1) ×3 on span.kf-ev-check | transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×16 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×16 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 135.41789820840629ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 135.41789820840629ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition opacity 115.36793140963394ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on span.kf-ev-check | transition transform 129.51161810099723ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 129.51161810099723ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 129.50394293468122ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition opacity 115.3630018824693ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on span.kf-ev-check | transition box-shadow 129.50394293468122ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 129.50845821299865ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 129.50845821299865ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 129.52740756649413ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+  block-drag-3h·move: 1309ms frames=78 dropped=1 max=33 p95=16.8 LT=[] forced=0 commits=16 L=21/7ms S=150/28ms JS=194ms
+     renders {"dp":24,"up":16,"d":12}
+     anims animation kfLift 120ms linear ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | animation calGridDragFloat 2100ms linear ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+  block-drag-3h·drop: 1530ms frames=68 dropped=2 max=217 p95=16.9 LT=[206,203] forced=25 commits=12 L=14/11ms S=82/70ms JS=428ms
+     renders {"d":284,"dp":214,"Cg":197,"r":93,"ev":75,"g":75,"Og":75,"m":75,"f":52,"o":12,"$_":12,"up":7,"ac":4,"oe":4}
+     anims transition transform 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | animation toastIn 200ms linear ×1 on div.kf-toast | animation kfToastLife 6000ms linear ×1 on span.kf-toast-life | transition transform 160ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on div.fc.cal-motion-on#kf-cal-ghost | animation calJustLanded 300ms linear ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+     loaf TimerHandler:setTimeout n @CalendarPage-Czyeq5Zn.js 206ms (forced 16) | TimerHandler:setTimeout @snooze-DqQMYuUP.js 204ms (forced 9)
+  resize-1h·move: 729ms frames=44 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=9 L=17/5ms S=58/19ms JS=84ms
+     renders {"dp":10,"up":9,"d":5}
+     anims transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×6 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×6 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition transform 135.41894243311208ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 135.41894243311208ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition transform 83.92518572941822ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 49.15187711695589ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition transform 44.585064097621384ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 44.585064097621384ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition opacity 120ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on span.kf-ev-check | transition opacity 44.08778793119342ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on span.kf-ev-check | transition transform 44.679259786330235ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 80.28974599961457ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable
+  resize-1h·drop: 1533ms frames=82 dropped=2 max=100 p95=16.7 LT=[110,80] forced=13 commits=13 L=11/4ms S=91/49ms JS=200ms
+     renders {"d":284,"dp":214,"Cg":197,"r":93,"ev":75,"g":75,"Og":75,"m":75,"f":52,"o":12,"$_":12,"up":7,"ac":4,"oe":4}
+     anims transition transform 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | animation kfToastLife 6000ms linear ×1 on span.kf-toast-life | animation toastIn 200ms linear ×1 on div.kf-toast | transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+     loaf TimerHandler:setTimeout n @CalendarPage-Czyeq5Zn.js 110ms (forced 9) | TimerHandler:setTimeout @snooze-DqQMYuUP.js 81ms (forced 4)
+  rail-card-drag·move: 1240ms frames=75 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=2 L=65/7ms S=144/49ms JS=52ms
+     renders {"up":2,"dp":2,"d":1}
+     anims animation kfLiftCard 120ms linear ×1 on div.unscheduled-task.fc-event-dragging | transition color 100ms cubic-bezier(0.2, 0, 0, 1) ×1 on button.kf-row-more | transition background-color 150ms ease ×1 on ::after | transition background-color 16.796689407972348ms ease ×1 on ::after | transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable
+  rail-card-drag·drop: 1553ms frames=78 dropped=2 max=250 p95=16.8 LT=[235] forced=19 commits=25 L=9/7ms S=85/76ms JS=276ms
+     renders {"d":198,"r":116,"dp":109,"Cg":100,"ev":92,"g":92,"Og":92,"m":92,"f":31,"o":16,"$_":16,"ac":10,"oe":10,"up":6}
+     anims animation toastIn 200ms linear ×1 on div.kf-toast | animation kfToastLife 6000ms linear ×1 on span.kf-toast-life | animation calJustLanded 300ms linear ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+     loaf TimerHandler:setTimeout n @CalendarPage-Czyeq5Zn.js 235ms (forced 19)
+  held-task-out·move: 963ms frames=58 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=12 L=69/13ms S=123/50ms JS=149ms
+     renders {"dp":22,"up":12,"d":11}
+     anims transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×5 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×5 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition transform 80.05432622343491ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | animation kfLiftCard 120ms linear ×1 on div.kf-ev-slot-row.fc-event-dragging | transition transform 101.63485607061828ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 59.94567377656509ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition transform 126.63574949194096ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition transform 57.19958333380557ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 0.577701046714747ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition transform 139.67587949273815ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 45.000670765761534ms cubic-bezier(0.22, 0.61, 0.36, 1) ×2 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition transform 44.54290768456881ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable | transition box-shadow 44.54290768456881ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-draggable.fc-event-resizable
+  held-task-out·drop: 1522ms frames=86 dropped=1 max=117 p95=16.8 LT=[128] forced=8 commits=25 L=10/3ms S=93/47ms JS=171ms
+     renders {"d":198,"r":116,"dp":110,"Cg":101,"ev":92,"g":92,"Og":92,"m":92,"f":31,"o":16,"$_":16,"ac":9,"oe":9,"up":6}
+     anims animation toastIn 200ms linear ×1 on div.kf-toast | animation kfToastLife 6000ms linear ×1 on span.kf-toast-life | animation calJustLanded 300ms linear ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+     loaf TimerHandler:setTimeout n @CalendarPage-Czyeq5Zn.js 128ms (forced 8)
+  write-complete-echo: 2971ms frames=155 dropped=3 max=250 p95=16.8 LT=[259,132] forced=4 commits=20 L=6/3ms S=162/46ms JS=412ms
+     renders {"d":240,"dp":217,"Cg":200,"f":49,"r":37,"ev":30,"g":30,"Og":30,"m":30,"oe":8,"ac":7,"up":5,"Gs":5,"Link":5}
+     anims animation kfToastLife 6000ms linear ×1 on span.kf-toast-life | animation toastIn 200ms linear ×1 on div.kf-toast
+     loaf #document.onpointerdown e @CalendarPage-Czyeq5Zn.js 138ms (forced 0) | TimerHandler:setTimeout @snooze-DqQMYuUP.js 133ms (forced 4) | SPAN.onclick @CalendarPage-Czyeq5Zn.js 116ms (forced 0)
+  snapback move-3h: 34-34ms top=311 +ghost hidden | 51-455ms top=311 +ghost | 473-2503ms top=311  frame gaps>50ms: []
+  snapback move-30m: 29-181ms top=503 +ghost hidden | 304-479ms top=467 +ghost hidden | 498-2513ms top=467  frame gaps>50ms: [152,123]
+  profiled: 1729ms frames=97 dropped=2 max=83 p95=16.8 LT=[88,86] forced=2 commits=16 L=4/1ms S=102/27ms JS=185ms
+     renders {"d":233,"dp":216,"Cg":200,"f":48,"r":29,"ev":23,"g":23,"Og":23,"m":23,"ac":6,"oe":6,"Gs":5,"Link":5,"up":4}
+     anims animation toastIn 200ms linear ×1 on div.kf-toast | animation kfToastLife 6000ms linear ×1 on span.kf-toast-life
+     loaf TimerHandler:setTimeout @snooze-DqQMYuUP.js 86ms (forced 2) | #document.onpointerdown e @CalendarPage-Czyeq5Zn.js 80ms (forced 0)
+  self:
+   1374ms (idle) :0:0
+   303ms (program) :0:0
+   32ms vo CalendarPage-Czyeq5Zn.js:2:46743
+   22ms ql snooze-DqQMYuUP.js:17:795
+   17ms (garbage collector) :0:0
+   11ms G CalendarPage-Czyeq5Zn.js:2:3522
+   7ms Tr CalendarPage-Czyeq5Zn.js:2:6333
+   5ms getBoundingClientRect :0:0
+   5ms mr CalendarPage-Czyeq5Zn.js:2:4079
+   4ms W.vnode CalendarPage-Czyeq5Zn.js:2:19544
+   4ms Ar CalendarPage-Czyeq5Zn.js:2:8074
+   4ms formatRange CalendarPage-Czyeq5Zn.js:2:45890
+   3ms is CalendarPage-Czyeq5Zn.js:2:56619
+   2ms (anon) CalendarPage-Czyeq5Zn.js:2:275987
+   2ms fs snooze-DqQMYuUP.js:11:54616
+  total:
+   1882ms (root) :0:0
+   1374ms (idle) :0:0
+   303ms (program) :0:0
+   166ms gu index-BPRa5CbD.js:9:110878
+   162ms id index-BPRa5CbD.js:9:121168
+   162ms od index-BPRa5CbD.js:9:121581
+   162ms (anon) index-BPRa5CbD.js:9:122993
+   161ms ld index-BPRa5CbD.js:9:122931
+   144ms Lu index-BPRa5CbD.js:9:116681
+   144ms _u index-BPRa5CbD.js:9:111969
+   139ms sl index-BPRa5CbD.js:9:96073
+   139ms xl index-BPRa5CbD.js:9:104880
+   139ms zu index-BPRa5CbD.js:9:118486
+   138ms drain CalendarPage-Czyeq5Zn.js:2:159164
+   138ms tryDrain CalendarPage-Czyeq5Zn.js:2:36538
+   138ms request CalendarPage-Czyeq5Zn.js:2:36156
+   138ms request CalendarPage-Czyeq5Zn.js:2:159024
+   138ms resetOptions CalendarPage-Czyeq5Zn.js:2:162726
+   138ms resetOptions CalendarPage-Czyeq5Zn.js:2:178660
+   138ms componentDidUpdate CalendarPage-Czyeq5Zn.js:2:179980
+   125ms updateData CalendarPage-Czyeq5Zn.js:2:164587
+   125ms drained CalendarPage-Czyeq5Zn.js:2:159333
+   125ms ss CalendarPage-Czyeq5Zn.js:2:62949
+   124ms handleRenderRequest CalendarPage-Czyeq5Zn.js:2:177589
+   124ms handleData CalendarPage-Czyeq5Zn.js:2:177481
+  write-complete-1: 2797ms frames=159 dropped=1 max=167 p95=16.8 LT=[175] forced=4 commits=13 L=2/1ms S=164/39ms JS=199ms
+     renders {"d":128,"dp":108,"Cg":100,"r":29,"f":25,"ev":23,"g":23,"Og":23,"m":23,"ac":6,"oe":6,"Gs":5,"Link":5,"o":4}
+     loaf TimerHandler:setTimeout @snooze-DqQMYuUP.js 175ms (forced 4)
+  write-complete-2: 2555ms frames=151 dropped=1 max=50 p95=16.9 LT=[68] forced=2 commits=17 L=6/1ms S=158/39ms JS=85ms
+     renders {"d":128,"dp":108,"Cg":100,"r":29,"f":25,"ev":23,"g":23,"Og":23,"m":23,"ac":6,"oe":6,"Gs":5,"Link":5,"Or":4}
+     anims animation kfToastLife 6000ms linear ×1 on span.kf-toast-life | animation toastIn 200ms linear ×1 on div.kf-toast | animation toastOut 200ms linear ×1 on div.kf-toast.is-leaving
+     loaf TimerHandler:setTimeout @snooze-DqQMYuUP.js 68ms (forced 2)
+  delete-block: 1659ms frames=95 dropped=1 max=83 p95=16.8 LT=[98] forced=6 commits=15 L=10/3ms S=108/32ms JS=115ms
+     renders {"d":173,"dp":107,"Cg":99,"r":87,"ev":69,"g":69,"Og":69,"m":69,"f":29,"o":12,"$_":12,"ac":6,"oe":6,"rv":3}
+     anims animation kfToastLife 6000ms linear ×1 on span.kf-toast-life | animation kfCalLeave 120ms linear ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | animation toastIn 200ms linear ×1 on div.kf-toast | transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start
+     loaf BODY.onclick cp @index-BPRa5CbD.js 95ms (forced 6)
+  undo-delete: 1756ms frames=97 dropped=1 max=150 p95=16.8 LT=[148] forced=4 commits=17 L=6/2ms S=107/28ms JS=164ms
+     renders {"d":127,"dp":107,"Cg":99,"r":29,"f":25,"ev":23,"g":23,"Og":23,"m":23,"ac":6,"oe":6,"Gs":5,"Link":5,"o":4}
+     anims transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | animation toastOut 200ms linear ×1 on div.kf-toast.is-leaving | transition opacity 120ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on span.kf-ev-check
+     loaf TimerHandler:setTimeout @snooze-DqQMYuUP.js 148ms (forced 4)
+  page-next: 1234ms frames=66 dropped=1 max=150 p95=16.8 LT=[151] forced=12 commits=5 L=6/22ms S=77/34ms JS=130ms
+     renders {"d":121,"dp":105,"Cg":98,"f":30,"r":29,"ev":23,"g":23,"Og":23,"m":23,"o":4,"$_":4,"Q_":3,"up":2,"rv":1}
+     anims transition transform 0ms cubic-bezier(0.2, 0, 0, 1) ×1 on button.kf-btn.kf-press.kf-button.kf-button--secondary | animation kfCalNavNext 160ms linear ×3 on div.fc-timegrid-cols
+     loaf DIV#root.onclick cp @index-BPRa5CbD.js 125ms (forced 12)
+  page-next2: 1128ms frames=65 dropped=1 max=50 p95=16.8 LT=[52] forced=3 commits=6 L=5/3ms S=75/21ms JS=49ms
+     renders {"r":21,"ev":16,"g":16,"Og":16,"d":16,"m":16,"dp":7,"o":4,"$_":4,"up":2,"Q_":2,"rv":1,"f":1,"K_":1}
+     anims transition transform 0ms cubic-bezier(0.2, 0, 0, 1) ×1 on button.kf-btn.kf-press.kf-button.kf-button--secondary | animation kfCalNavNext 160ms linear ×3 on div.fc-timegrid-cols | animation toastOut 200ms linear ×1 on div.kf-toast.is-leaving
+     loaf DIV#root.onclick cp @index-BPRa5CbD.js 41ms (forced 3)
+  page-prev: 1177ms frames=64 dropped=2 max=100 p95=16.8 LT=[113] forced=7 commits=5 L=4/12ms S=73/27ms JS=93ms
+     renders {"d":114,"dp":105,"Cg":98,"f":29,"r":21,"ev":16,"g":16,"Og":16,"m":16,"o":4,"$_":4,"up":2,"Q_":2,"rv":1}
+     anims transition transform 0ms cubic-bezier(0.2, 0, 0, 1) ×1 on button.kf-btn.kf-press.kf-button.kf-button--secondary | animation kfCalNavPrev 160ms linear ×3 on div.fc-timegrid-cols
+     loaf DIV#root.onclick cp @index-BPRa5CbD.js 88ms (forced 7)
+  page-today: 1221ms frames=66 dropped=1 max=133 p95=16.8 LT=[136] forced=15 commits=5 L=6/16ms S=87/40ms JS=127ms
+     renders {"d":134,"dp":109,"Cg":99,"r":37,"f":33,"ev":30,"g":30,"Og":30,"m":30,"up":4,"o":4,"$_":4,"Q_":3,"rv":1}
+     anims transition transform 0ms cubic-bezier(0.2, 0, 0, 1) ×1 on button.kf-btn.kf-press.kf-button.kf-button--secondary | animation kfCalNavPrev 160ms linear ×3 on div.fc-timegrid-cols
+     loaf DIV#root.onclick cp @index-BPRa5CbD.js 114ms (forced 15)
+  view-d: 1302ms frames=74 dropped=1 max=83 p95=16.8 LT=[82] forced=0 commits=8 L=8/7ms S=82/19ms JS=77ms
+     renders {"d":89,"r":66,"ev":53,"g":53,"Og":53,"m":53,"dp":37,"Cg":32,"f":14,"o":8,"$_":8,"up":4,"Q_":3,"rv":2}
+     anims transition transform 100ms cubic-bezier(0.2, 0, 0, 1) ×1 on button.kf-btn.kf-press.kf-button.kf-button--secondary
+  view-3: 1291ms frames=75 dropped=1 max=50 p95=16.8 LT=[65] forced=13 commits=11 L=7/13ms S=85/22ms JS=68ms
+     renders {"d":101,"r":71,"ev":53,"g":53,"Og":53,"m":53,"dp":48,"Cg":43,"f":25,"Link":23,"Js":13,"o":8,"$_":8,"P":5}
+     anims transition transform 100ms cubic-bezier(0.2, 0, 0, 1) ×2 on button.kf-btn.kf-press.kf-button.kf-button--secondary
+     loaf DOMWindow.onkeydown e @CalendarPage-Czyeq5Zn.js 65ms (forced 13)
+  view-w: 1524ms frames=73 dropped=1 max=317 p95=16.8 LT=[308] forced=48 commits=7 L=9/29ms S=88/42ms JS=270ms
+     renders {"d":261,"dp":215,"Cg":198,"r":66,"f":58,"ev":53,"g":53,"Og":53,"m":53,"o":8,"$_":8,"up":4,"Q_":3,"rv":2}
+     loaf DOMWindow.onkeydown e @CalendarPage-Czyeq5Zn.js 308ms (forced 48)
+  view-m: 1407ms frames=75 dropped=1 max=167 p95=16.8 LT=[182] forced=44 commits=4 L=14/24ms S=90/33ms JS=146ms
+     renders {"d":327,"dp":302,"f":86,"r":42,"ev":32,"g":32,"Og":32,"m":32,"o":8,"$_":8,"rv":2,"up":2,"K_":2}
+     loaf DOMWindow.onkeydown e @CalendarPage-Czyeq5Zn.js 182ms (forced 44)
+  view-w: 1428ms frames=75 dropped=1 max=200 p95=16.8 LT=[200] forced=0 commits=5 L=6/24ms S=88/39ms JS=168ms
+     renders {"d":143,"dp":108,"Cg":99,"r":50,"ev":39,"g":39,"Og":39,"m":39,"f":33,"o":8,"$_":8,"Q_":3,"up":3,"rv":2}
+  quickcreate-open: 819ms frames=43 dropped=2 max=100 p95=16.8 LT=[101] forced=0 commits=8 L=8/28ms S=53/66ms JS=43ms
+     renders {"r":62,"d":47,"ev":46,"g":46,"Og":46,"m":46,"u":32,"o":16,"f":8,"l":8,"Ac":8,"$_":8,"v":4,"A":4}
+     anims transition transform 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-start.fc-event-end | transition box-shadow 0ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-mirror.fc-event-start.fc-event-end | transition transform 100ms cubic-bezier(0.2, 0, 0, 1) ×1 on button.kf-btn.kf-press.kf-button.kf-button--secondary | animation kfPopIn 140ms linear ×1 on div.kf-quickcreate.kf-pop
+  quickcreate-close: 645ms frames=38 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=5 L=7/2ms S=48/20ms JS=29ms
+     renders {"r":90,"ev":69,"g":69,"Og":69,"d":69,"m":69,"u":24,"o":18,"$_":12,"f":9,"l":6,"Ac":6,"rv":3,"Q_":3}
+     anims animation kfPopOut 100ms linear ×1 on div.kf-quickcreate.kf-pop.kf-pop--out
+  blockmenu-open: 854ms frames=47 dropped=1 max=83 p95=16.8 LT=[97] forced=78 commits=2 L=3/36ms S=53/55ms JS=15ms
+     renders {"r":39,"ev":23,"g":23,"Og":23,"d":23,"m":23,"u":6,"p":4,"f":4,"o":4,"$_":4,"c":2,"rv":1,"Jg":1}
+     anims transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | animation kfPopIn 140ms linear ×1 on div.kf-pop
+     loaf DIV.onclick @CalendarPage-Czyeq5Zn.js 68ms (forced 60) | DIV.onmousedown @CalendarPage-Czyeq5Zn.js 20ms (forced 18)
+  blockmenu-close: 619ms frames=37 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=4 L=4/2ms S=41/14ms JS=15ms
+     renders {"r":97,"ev":69,"g":69,"Og":69,"d":69,"m":69,"o":12,"$_":12,"f":8,"u":6,"p":4,"rv":3,"Q_":3,"K_":3}
+     anims animation kfPopOut 100ms linear ×1 on div.kf-pop.kf-pop--out
+  taskpopover-open: 959ms frames=57 dropped=1 max=33 p95=16.8 LT=[] forced=0 commits=3 L=4/3ms S=63/46ms JS=42ms
+     renders {"r":52,"m":25,"Link":23,"ev":23,"g":23,"Og":23,"d":23,"u":14,"Js":13,"f":8,"P":5,"Gs":5,"o":4,"$_":4}
+     anims transition transform 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | transition box-shadow 140ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on a.fc-event.fc-event-draggable.fc-event-resizable.fc-event-start | animation kfPopIn 140ms linear ×1 on div.kf-pop.tp-pop
+  taskpopover-close: 723ms frames=43 dropped=0 max=17 p95=16.7 LT=[] forced=0 commits=1 L=1/0ms S=46/9ms JS=15ms
+     renders {"r":34,"Link":23,"ev":23,"g":23,"Og":23,"d":23,"m":23,"Js":13,"f":8,"P":5,"Gs":5,"o":4,"$_":4,"zn":3}
+  planning-on: 1755ms frames=95 dropped=2 max=150 p95=16.7 LT=[152] forced=34 commits=9 L=11/19ms S=111/37ms JS=171ms
+     renders {"d":213,"Og":111,"m":111,"dp":100,"Cg":87,"Lg":63,"r":60,"g":52,"ev":48,"f":38,"o":12,"$_":12,"up":6,"_":6}
+     anims animation kfPopOut 100ms linear ×1 on div.kf-pop.kf-pop--out
+     loaf DIV#root.onclick cp @index-BPRa5CbD.js 148ms (forced 34)
+  planning-off: 1695ms frames=97 dropped=1 max=100 p95=16.8 LT=[110] forced=26 commits=6 L=7/11ms S=115/38ms JS=95ms
+     renders {"d":143,"dp":108,"Cg":99,"r":50,"ev":39,"g":39,"Og":39,"m":39,"f":33,"o":8,"$_":8,"Q_":3,"up":3,"rv":2}
+     loaf DIV#root.onclick cp @index-BPRa5CbD.js 107ms (forced 26)
+  block nodes kept: quick-create open 99/99 · outbox-change 99/99 · one write 99/99
+  rail-splitter-drag·move: 835ms frames=50 dropped=0 max=17 p95=16.7 LT=[] forced=0 commits=0 L=40/33ms S=88/13ms JS=17ms
+     renders {}
+  rail-splitter-drag·drop: 1534ms frames=92 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=2 L=1/0ms S=93/34ms JS=12ms
+     renders {"r":58,"ev":46,"g":46,"Og":46,"d":46,"m":46,"o":8,"$_":8,"f":4,"rv":2,"Q_":2,"K_":2}
+  rail-fold: 1280ms frames=77 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=4 L=3/1ms S=85/19ms JS=12ms
+     renders {"r":29,"ev":23,"g":23,"Og":23,"d":23,"m":23,"o":4,"$_":4,"f":2,"rv":1,"Q_":1,"K_":1,"Or":1,"Dr":1}
+     anims animation toastOut 200ms linear ×1 on div.kf-toast.is-leaving
+  rail-unfold: 1267ms frames=76 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=2 L=2/2ms S=83/16ms JS=11ms
+     renders {"r":29,"ev":23,"g":23,"Og":23,"d":23,"m":23,"o":4,"$_":4,"f":2,"rv":1,"Q_":1,"K_":1}
+  idle-62s-with-minute-ticks: 62006ms frames=3720 dropped=1 max=33 p95=16.8 LT=[] forced=0 commits=9 L=3/11ms S=3723/569ms JS=246ms
+     renders {"r":8,"ev":7,"g":7,"Og":7,"d":7,"m":7,"oe":4,"up":2,"dp":2,"ac":2,"Q_":1,"f":1,"Cg":1,"K_":1}
+
+=== phone 390×844 — blocks drawn: 14
+  idle: 2013ms frames=121 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=0 L=0/0ms S=0/0ms JS=7ms
+     renders {}
+  scroll-touch: 1229ms frames=74 dropped=0 max=17 p95=16.7 LT=[] forced=0 commits=0 L=0/0ms S=0/0ms JS=13ms
+     renders {}
+  swipe-next·move: 533ms frames=32 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=3 L=4/5ms S=24/123ms JS=28ms
+     renders {"d":48,"m":18,"f":12,"r":3}
+     anims animation checkPop 180ms linear ×3 on span | animation boxFill 90ms linear ×3 on button.kf-checkbox
+  swipe-next·settle: 712ms frames=43 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=3 L=3/2ms S=14/12ms JS=23ms
+     renders {"d":65,"m":25,"f":16,"r":4,"k_":1,"v":1,"o":1}
+     anims transition transform 200ms cubic-bezier(0.2, 0, 0, 1) ×3 on div.pc-pane
+  swipe-prev·move: 478ms frames=29 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=2 L=2/2ms S=16/70ms JS=19ms
+     renders {"d":48,"m":18,"f":12}
+  swipe-prev·settle: 729ms frames=44 dropped=0 max=17 p95=16.7 LT=[] forced=0 commits=3 L=2/2ms S=14/11ms JS=23ms
+     renders {"d":65,"m":25,"f":16,"k_":1,"v":1,"o":1,"r":1}
+     anims transition transform 200ms cubic-bezier(0.2, 0, 0, 1) ×3 on div.pc-pane
+  block-drag-3h·move: 1899ms frames=113 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=12 L=12/6ms S=14/8ms JS=63ms
+     renders {"d":204,"m":84,"f":48}
+  block-drag-3h·drop: 1527ms frames=92 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=12 L=5/3ms S=91/19ms JS=53ms
+     renders {"d":68,"m":28,"f":16,"ac":4,"oe":4,"k_":3,"v":3,"o":3,"r":3,"Dr":1,"Or":1,"S":1}
+     anims animation kfToastLife 6000ms linear ×1 on span.kf-toast-life | animation toastIn 200ms linear ×1 on div.kf-toast
+  blocksheet-open: 1021ms frames=61 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=5 L=7/15ms S=66/16ms JS=18ms
+     renders {"r":17,"d":17,"x_":8,"m":7,"u":6,"f":5,"y_":2,"o":2,"Dr":2,"Or":2,"k_":1,"w_":1,"b":1,"A":1}
+     anims animation sheetIn 300ms linear ×1 on div.kf-bs-fade | animation scrimIn 300ms linear ×1 on div.kf-bs-fade
+  blocksheet-close: 723ms frames=44 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=5 L=3/1ms S=47/10ms JS=14ms
+     renders {"d":17,"m":7,"f":4,"o":2,"r":2,"b":1,"k_":1,"v":1,"Dr":1,"Or":1}
+     anims transition transform 200ms cubic-bezier(0.3, 0, 0.8, 0.15) ×1 on div.kf-bs-fade | transition opacity 200ms cubic-bezier(0.3, 0, 0.8, 0.15) ×1 on div.kf-bs-fade
+  quicksheet-open: 975ms frames=58 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=2 L=0/0ms S=58/11ms JS=6ms
+     renders {"Or":2}
+  quicksheet-close: 709ms frames=43 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=0 L=0/0ms S=43/6ms JS=2ms
+     renders {}
+  viewsheet-open: 898ms frames=54 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=4 L=5/2ms S=36/9ms JS=14ms
+     renders {"d":17,"m":7,"r":6,"f":4,"k_":1,"a":1,"b":1,"v":1,"o":1,"Or":1,"Dr":1}
+     anims animation scrimIn 300ms linear ×1 on div.kf-bs-fade | transition transform 150ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on svg.pc-chev | animation sheetIn 300ms linear ×1 on div.kf-bs-fade | animation toastOut 200ms linear ×1 on div.kf-toast.is-leaving
+  view-3days: 1295ms frames=78 dropped=0 max=17 p95=16.8 LT=[] forced=0 commits=4 L=4/3ms S=29/9ms JS=25ms
+     renders {"d":96,"m":36,"f":24,"r":7,"k_":2,"v":2,"o":2,"a":1,"b":1}
+     anims transition transform 200ms cubic-bezier(0.3, 0, 0.8, 0.15) ×1 on div.kf-bs-fade | transition background-color 100ms cubic-bezier(0.2, 0, 0, 1) ×2 on button.kf-as-row | transition opacity 200ms cubic-bezier(0.3, 0, 0.8, 0.15) ×1 on div.kf-bs-fade | transition transform 150ms cubic-bezier(0.22, 0.61, 0.36, 1) ×1 on svg.pc-chev
+  idle-62s-with-minute-ticks: 62001ms frames=3720 dropped=2 max=33 p95=16.8 LT=[] forced=0 commits=6 L=1/0ms S=1/1ms JS=269ms
+     renders {"d":48,"m":18,"f":11,"oe":4,"ac":2,"k_":1,"v":1,"o":1,"r":1}
+
+wrote D:\temp\claude\D--Coding-kais-flow\364f4c21-606b-40e0-a1f2-b46300b06cdf\scratchpad\perf-out-after-final\results.json

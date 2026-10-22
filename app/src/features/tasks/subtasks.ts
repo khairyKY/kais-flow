@@ -4,7 +4,7 @@
 
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { Task } from '../../lib/types'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 import { dayShort } from '../../components/pickerMath'
 import { dayWord } from './taskSheetMath'
 
@@ -38,7 +38,7 @@ export function subtaskWhen(sub: Pick<Task, 'scheduled_start' | 'due_at' | 'stat
   if (sub.scheduled_start) {
     const at = new Date(sub.scheduled_start)
     const day = cairoDateKey(at)
-    const time = cairoTimeKey(at)
+    const time = timeText(at)
     if (day === today) return time
     return `${dayWord(day, now) === 'Tomorrow' ? 'Tomorrow' : dayShort(day).slice(0, 3)} ${time}`
   }
@@ -51,5 +51,5 @@ export function subtaskWhen(sub: Pick<Task, 'scheduled_start' | 'due_at' | 'stat
 export function timedToday(open: readonly Task[], now: Date): { title: string; at: string } | null {
   const today = cairoDateKey(now)
   const hit = open.find((t) => t.scheduled_start && cairoDateKey(new Date(t.scheduled_start)) === today)
-  return hit ? { title: hit.title, at: cairoTimeKey(new Date(hit.scheduled_start!)) } : null
+  return hit ? { title: hit.title, at: timeText(new Date(hit.scheduled_start!)) } : null
 }

@@ -6,6 +6,7 @@
 
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 
 export type UpNextTone = 'now' | 'time'
 
@@ -22,7 +23,7 @@ export function isInProgress(startsAt: string, endsAt: string, now: Date): boole
 
 /** The clock the row prints, in Cairo whatever the device zone (same format as the row's range). */
 export function upNextClock(iso: string): string {
-  return new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: appZone() })
+  return new Date(iso).toLocaleTimeString('en-US', { ...clockOptions(), timeZone: appZone() })
 }
 
 /** "Now" while the event is in progress, otherwise its start time. */

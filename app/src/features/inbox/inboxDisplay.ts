@@ -3,9 +3,10 @@
 
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
+import { clockOptions } from '../../lib/clock'
 import { urlIn, webUrl } from '../../lib/links'
 import { addDays, dayHint, dayShort } from '../../components/pickerMath'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { timeText } from '../calendar/eventTime'
 import { confidenceThreshold } from '../capture/aiFill'
 import { NO_PLACE, type MoveTarget } from '../tasks/move'
 import type { Domain, InboxItem, InboxKind, Person, Project } from '../../lib/types'
@@ -127,9 +128,9 @@ export function capturedLabel(iso: string, now: Date = new Date(), withTime = tr
   const at = new Date(iso)
   const day = cairoDateKey(at)
   const today = cairoDateKey(now)
-  if (day === today) return withTime ? cairoTimeKey(at) : 'today'
+  if (day === today) return withTime ? timeText(at) : 'today'
   if (day === addDays(today, -1)) return 'yesterday'
-  if (day > addDays(today, -7)) return withTime ? `${dayShort(day).slice(0, 3)} ${cairoTimeKey(at)}` : dayShort(day).slice(0, 3)
+  if (day > addDays(today, -7)) return withTime ? `${dayShort(day).slice(0, 3)} ${timeText(at)}` : dayShort(day).slice(0, 3)
   return dayShort(day).slice(4)
 }
 
@@ -140,7 +141,7 @@ export function dueLabel(iso: string, timed: boolean, now: Date = new Date(), sh
   const key = cairoDateKey(d)
   const today = cairoDateKey(now)
   const day = key === today ? 'Today' : key === addDays(today, 1) ? 'Tomorrow' : short ? dayShort(key).slice(0, 3) : dayShort(key)
-  return timed ? `${day}${short ? ' ' : ' · '}${cairoTimeKey(d)}` : day
+  return timed ? `${day}${short ? ' ' : ' · '}${timeText(d)}` : day
 }
 
 /** The compact row's "due Tue 14" (3a card 3): today / tomorrow by name, else the day. */
@@ -178,7 +179,7 @@ export function isToday(iso: string): boolean {
 }
 
 export function formatDue(iso: string): string {
-  return new Date(iso).toLocaleString('en-US', { weekday: 'short', hour: 'numeric', minute: '2-digit', timeZone: appZone() })
+  return new Date(iso).toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })
 }
 
 /** Day-only label for the filing toast (punch 7): "Today" / "Tomorrow" / "Wed, Aug 5".

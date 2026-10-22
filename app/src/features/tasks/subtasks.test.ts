@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, beforeAll } from 'vitest'
+import { setHour24 } from '../../lib/clock'
 import type { Task } from '../../lib/types'
 import { nestOut, subCount, subtaskWhen, subtasksOf, timedToday } from './subtasks'
+
+// These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
+beforeAll(() => setHour24(true))
 
 const t = (over: Partial<Task>): Task => ({
   id: crypto.randomUUID(), project_id: null, domain_id: null, area_id: null, title: 'x', notes: null, status: 'todo', due_at: null,

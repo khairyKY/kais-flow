@@ -640,6 +640,10 @@ export function AppLayout() {
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()
+  // M2: what lives on <body> (popovers, the drag's lifted card) reads the Effects setting from <html>.
+  useEffect(() => {
+    document.documentElement.classList.toggle('kf-motion-on', motionOn)
+  }, [motionOn])
   const location = useLocation()
   const { pathname } = location
   const isMobile = useIsMobile()
@@ -909,6 +913,18 @@ export function AppLayout() {
         .kf-sheet { animation: kfSheetIn 210ms var(--ease-out); }
         .kf-drawer { animation: kfDrawerIn 210ms var(--ease-out); }
         .kf-fade { animation: kfFadeIn 160ms var(--ease-out); }
+        /* Calendar motion M2 (2026-10-22): one popover recipe — 140ms in, scaling from its anchor side
+           (--pop-origin), 100ms out. The scale only with Effects on (html.kf-motion-on: popovers live on
+           <body>, outside .motion-on); the fade always. A backwards fill ends at no transform, so a fixed
+           submenu anchors to the viewport once the menu has arrived. */
+        @keyframes kfPopIn { from { opacity: 0; transform: scale(0.97); } }
+        @keyframes kfPopFadeIn { from { opacity: 0; } }
+        @keyframes kfPopOut { to { opacity: 0; transform: scale(0.98); } }
+        @keyframes kfPopFadeOut { to { opacity: 0; } }
+        .kf-pop { transform-origin: var(--pop-origin, top left); animation: kfPopFadeIn var(--dur-pop-in) var(--ease-out) backwards; }
+        .kf-motion-on .kf-pop { animation-name: kfPopIn; }
+        .kf-pop.kf-pop--out { animation: kfPopFadeOut var(--dur-pop-out) var(--ease-in) both; pointer-events: none; }
+        .kf-motion-on .kf-pop.kf-pop--out { animation-name: kfPopOut; }
 
         /* F4 Motion 3c — overlay OUT: 140ms drop; pair with useOverlayExit (lib/motion.ts).
            .kf-scrim now carries the canonical 20% scrim (3c); feature-file inline backgrounds

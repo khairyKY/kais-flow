@@ -1,5 +1,6 @@
 import { cairoDateKey, tomorrowHint } from '../../lib/dateShortcuts'
-import { cairoTimeKey } from '../calendar/eventTime'
+import { cairoTimeKey, timeText } from '../calendar/eventTime'
+import { clockText } from '../../lib/clock'
 import { fromMin, type Busy } from '../../components/pickerMath'
 import { filterByList } from '../tasks/grouping'
 import { addDaysToKey, MAX_SEEDS, seedTargetDate } from './loopDay'
@@ -192,7 +193,7 @@ export function planWorkload(busy: readonly Busy[], picks: readonly PickIn[], sl
     const n = loose.length
     return { text: `~${span(meetings)} of meetings · ${n === 1 ? "the pick doesn't" : `the ${n} picks don't`} fit`, over }
   }
-  return { text: `~${span(planned)} planned · you${over ? "'d" : "'ll"} finish around ${fromMin(finish)}`, over }
+  return { text: `~${span(planned)} planned · you${over ? "'d" : "'ll"} finish around ${clockText(fromMin(finish))}`, over }
 }
 
 /** What Start the day puts on the calendar (Kai 2026-10-03: no per-row ✓): every pick with a time,
@@ -222,7 +223,7 @@ export function captureMeta(item: Pick<InboxItem, 'kind' | 'created_at'>, now: D
   const at = new Date(item.created_at)
   const k = cairoDateKey(at)
   const days = daysBetween(k, cairoDateKey(now))
-  const hhmm = cairoTimeKey(at)
+  const hhmm = timeText(at)
   const when =
     days <= 0 ? `today ${hhmm}` : days === 1 ? (cairoMin(at) >= 18 * 60 ? `last night ${hhmm}` : 'yesterday') : days < 7 ? weekdayOf(k) : `${Number(k.slice(8))} ${new Date(`${k}T12:00:00Z`).toLocaleDateString('en-US', { month: 'short', timeZone: 'UTC' })}`
   return `${how} · ${when}`

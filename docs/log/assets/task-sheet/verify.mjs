@@ -95,6 +95,7 @@ async function open(route, s = {}, o = {}) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE })
   await ctx.addInitScript(([t, sess, uid]) => {
+    localStorage.setItem('kf.calViewOptions', JSON.stringify({ hour24: true })) // its strings read the 24-hour clock (lib/clock, 2026-10-22)
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     // The one-time "Updated to vX" toast held a toast slot, so "Link copied" queued behind it (v1.0.26).

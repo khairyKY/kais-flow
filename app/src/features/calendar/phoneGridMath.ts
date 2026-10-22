@@ -10,6 +10,7 @@ import { FLICK_VELOCITY, SWIPE_COMMIT } from '../tasks/swipe'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { isMultiDaySpan, spanDays } from './daySpans'
 import { appZone } from '../../lib/appZone'
+import { clockRange, clockText } from '../../lib/clock'
 
 export const HOUR_PX = 64
 export const SNAP_MIN = 15
@@ -149,8 +150,8 @@ export function dragSpan(orig: Span, mode: DragMode, dMin: number, dDay = 0): Sp
 
 /** The time bubble in the hour gutter: the start while moving, the dragged edge · length while resizing (7f). */
 export function bubbleText(s: Span, mode: DragMode): string {
-  if (mode === 'move') return fromMin(s.start)
-  return `${fromMin(mode === 'top' ? s.start : s.end)} · ${durationLabel(s.end - s.start)}`
+  if (mode === 'move') return clockText(fromMin(s.start))
+  return `${clockText(fromMin(mode === 'top' ? s.start : s.end))} · ${durationLabel(s.end - s.start)}`
 }
 
 export const EDGE_PX = 48
@@ -166,16 +167,16 @@ export function edgeScrollSpeed(y: number, top: number, bottom: number): number 
   return down > 0 ? EDGE_MAX_SPEED * Math.min(1, down / EDGE_PX) : 0
 }
 
-/** 7m's toast: "Moved to 16:15" (another day: "Moved to Mon 28 16:15"). */
+/** 7m's toast: "Moved to 4:15 PM" (another day: "Moved to Mon 28 4:15 PM") — the person's clock (lib/clock). */
 export function movedText(from: Span, to: Span, today: string): string {
-  return `Moved to ${to.day === from.day ? '' : `${dayHint(to.day, today)} `}${fromMin(to.start)}`
+  return `Moved to ${to.day === from.day ? '' : `${dayHint(to.day, today)} `}${clockText(fromMin(to.start))}`
 }
 
 /** A tap on the empty grid: the quarter it landed in, room left for the default 30 minutes. */
 export const tapStart = (minute: number): number => Math.min(Math.max(0, Math.floor(minute / SNAP_MIN) * SNAP_MIN), DAY_MIN - 30)
 
-/** "15:00–15:30" */
-export const rangeText = (start: number, end: number): string => `${fromMin(start)}–${end >= DAY_MIN ? '24:00' : fromMin(end)}`
+/** "3:00–3:30 PM" — or "15:00–15:30" on the 24-hour clock (lib/clock). */
+export const rangeText = (start: number, end: number): string => clockRange(fromMin(start), end >= DAY_MIN ? '24:00' : fromMin(end))
 
 /** Where a released day swipe goes: +1 the next page, −1 the previous, 0 springs back. Past
  * --swipe-commit (40%) of the column, or a fling the same way, commits. `dx` < 0 = finger went left. */
@@ -208,8 +209,8 @@ export function scheduleSlots(events: readonly CalendarEvent[], now: Date, dur: 
   return { today: false, slots }
 }
 
-/** A slot pill: "14:00–14:30" today, else "Tomorrow 09:00" / "Tue 29 11:00". */
+/** A slot pill: "2:00–2:30 PM" today, else "Tomorrow 9:00 AM" / "Tue 29 11:00 AM" (the person's clock). */
 export function slotLabel(s: PlaceSlot, dur: number, today: string): string {
   if (s.day === today) return rangeText(s.start, s.start + dur)
-  return `${s.day === addDays(today, 1) ? 'Tomorrow' : dayHint(s.day, today)} ${fromMin(s.start)}`
+  return `${s.day === addDays(today, 1) ? 'Tomorrow' : dayHint(s.day, today)} ${clockText(fromMin(s.start))}`
 }
