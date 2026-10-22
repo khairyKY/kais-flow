@@ -288,6 +288,85 @@ if (want('d8')) {
   await ctx.close()
 }
 
+// D9 — multi-select (Kai 2026-10-22): Ctrl / Shift + click picks blocks (outlined); dragging one moves them all
+// with one Undo; Delete takes them off with one Undo; Esc lets go; a plain click starts over.
+const pickedIds = (page) => page.evaluate(() => [...document.querySelectorAll('.fc-event[data-picked]')].map((e) => e.dataset.kfId))
+if (want('d9')) {
+  for (const theme of ['day', 'night']) {
+    const { ctx, page, errors, state } = await open('/calendar', { theme })
+    await slotPoint(page, '13:00')
+    await page.keyboard.down('Control')
+    await fcBlock(page, STANDUP).click()
+    await page.keyboard.up('Control')
+    await fcBlock(page, WATERB).click({ modifiers: ['Shift'] })
+    await sleep(300)
+    let ids = await pickedIds(page)
+    check(`d9-${theme} Ctrl+click and Shift+click pick two blocks — outlined, no popover`, ids.length === 2 && ids.includes(eid(STANDUP)) && ids.includes(eid(WATERB)) && (await page.locator('[role="menu"]').count()) === 0, JSON.stringify(ids))
+    const outline = await fcBlock(page, STANDUP).evaluate((e) => [getComputedStyle(e).outlineStyle, getComputedStyle(e).outlineWidth])
+    check(`d9-${theme} …a plain 2px outline`, outline[0] === 'solid' && outline[1] === '2px', JSON.stringify(outline))
+    await shot(page, `d9-picked-${theme}`)
+    if (theme === 'day') {
+      // Drag Standup down an hour: Water the plants comes along.
+      const w0 = state.writes.length
+      const sb = await fcBlock(page, STANDUP).boundingBox()
+      const lane = await page.locator('td.fc-timegrid-slot-lane[data-time="13:00:00"]').boundingBox()
+      await mouseDrag(page, { x: sb.x + sb.width / 2, y: sb.y + 10 }, { x: sb.x + sb.width / 2, y: lane.y + 10 })
+      await settle(state)
+      const st = posts(state, 'calendar_events', w0).filter((e) => e.id === eid(STANDUP)).at(-1)
+      const wa = posts(state, 'calendar_events', w0).filter((e) => e.id === eid(WATERB)).at(-1)
+      const dSt = st && Date.parse(st.starts_at) - Date.parse(iso('12:00'))
+      const dWa = wa && Date.parse(wa.starts_at) - Date.parse(iso('11:00'))
+      check('d9 drag one picked block about an hour: both move by the same amount (Water the plants keeps its 15 minutes)', dSt >= 3_600_000 && dSt === dWa && mins(wa) === 15, JSON.stringify([st?.starts_at, wa?.starts_at]))
+      check('d9 …one toast "Moved · 2 blocks" with Undo', await toastSoon(page, 'Moved · 2 blocks'))
+      const w1 = state.writes.length
+      await page.locator('.kf-toast', { hasText: 'Moved · 2 blocks' }).getByRole('button', { name: 'Undo' }).click()
+      await settle(state)
+      const st1 = posts(state, 'calendar_events', w1).filter((e) => e.id === eid(STANDUP)).at(-1)
+      const wa1 = posts(state, 'calendar_events', w1).filter((e) => e.id === eid(WATERB)).at(-1)
+      check('d9 Undo puts both back', st1?.starts_at === iso('12:00') && wa1?.starts_at === iso('11:00'), JSON.stringify([st1?.starts_at, wa1?.starts_at]))
+      // Still picked: Delete takes both off (the task block unscheduled, the event to Trash), one Undo.
+      await sleep(300)
+      ids = await pickedIds(page)
+      if (ids.length < 2) {
+        await page.keyboard.down('Control')
+        await fcBlock(page, STANDUP).click()
+        await fcBlock(page, WATERB).click()
+        await page.keyboard.up('Control')
+      }
+      const w2 = state.writes.length
+      await page.mouse.move(5, 400)
+      await page.keyboard.press('Delete')
+      await settle(state)
+      const gone = posts(state, 'calendar_events', w2).filter((e) => e.deleted_at).map((e) => e.id)
+      const t = posts(state, 'tasks', w2).filter((x) => x.id === id(WATER)).at(-1)
+      check('d9 Delete: both blocks off (deleted_at), the task stays and is unscheduled', gone.includes(eid(STANDUP)) && gone.includes(eid(WATERB)) && t && t.scheduled_start === null && !t.deleted_at, JSON.stringify([gone, t && [t.scheduled_start, t.deleted_at]]))
+      check('d9 …one toast "Removed · 2 blocks" with Undo', await toastSoon(page, 'Removed · 2 blocks'))
+      const w3 = state.writes.length
+      await page.locator('.kf-toast', { hasText: 'Removed · 2 blocks' }).getByRole('button', { name: 'Undo' }).click()
+      await settle(state)
+      const back = posts(state, 'calendar_events', w3).filter((e) => e.deleted_at === null).map((e) => e.id)
+      check('d9 Undo brings both back', back.includes(eid(STANDUP)) && back.includes(eid(WATERB)), JSON.stringify(back))
+      await sleep(400)
+      await page.keyboard.down('Control')
+      await fcBlock(page, STANDUP).click()
+      await page.keyboard.up('Control')
+      await sleep(200)
+      await page.keyboard.press('Escape')
+      await sleep(200)
+      check('d9 Esc lets go of the selection', (await pickedIds(page)).length === 0)
+      await page.keyboard.down('Control')
+      await fcBlock(page, STANDUP).click()
+      await page.keyboard.up('Control')
+      await slotPoint(page, '16:00')
+      await fcBlock(page, LONGB).click()
+      await sleep(400)
+      check('d9 a plain click starts over: the selection clears, the popover opens', (await pickedIds(page)).length === 0 && (await page.locator('[role="menu"]').count()) === 1)
+    }
+    check(`d9-${theme} no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
 const qcTimes = (page) => page.locator('.kf-quickcreate input').evaluateAll((els) => els.map((e) => e.value))
 // D4 — a click-drag across one quarter (10:00 → 10:10): quick create reads 10:00–10:15 and makes 15.
 if (want('d4')) {

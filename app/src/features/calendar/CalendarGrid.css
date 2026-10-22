@@ -610,6 +610,10 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
    spilled over the pills below. */
 .fc .fc-daygrid-event .kf-ev-slot { display: none; }
 
+/* Multi-select (Kai 2026-10-22): a picked block wears a plain outline in the selection ink — the look is
+   Kai's call later (Calendar blocks options); this one only has to read. */
+.fc .fc-event[data-picked] { outline: 2px solid var(--sel-bg); outline-offset: 1px; }
+
 /* grip reveal (pairs with the opacity:0 set on the ::after above) */
 .fc .fc-timegrid-event:hover .fc-event-resizer-end::after,
 .fc .fc-timegrid-event:focus-within .fc-event-resizer-end::after,

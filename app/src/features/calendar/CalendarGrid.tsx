@@ -81,7 +81,12 @@ interface CalendarGridProps {
   /** allDay flips when a drag crosses the all-day band ↔ time grid boundary (CALENDAR.md §6). */
   onMove: (id: string, start: string, end: string, allDay: boolean) => void
   onResize: (id: string, start: string, end: string) => void
-  onEventClick: (id: string) => void
+  /** `add`: with Ctrl / ⌘ / Shift held — the block joins (or leaves) the multi-selection. */
+  onEventClick: (id: string, add?: boolean) => void
+  /** Multi-select (Kai 2026-10-22): the picked blocks, outlined; dragging one of them moves them all. */
+  pickedIds?: readonly string[]
+  /** The picked blocks moved by the dragged one's delta — true when handled. */
+  onMoveMany?: (ids: readonly string[], deltaMs: number) => boolean
   /** Punch 34: double-click a task-linked block → straight to the task editor. */
   onEventDoubleClick?: (id: string) => void
   /** A rail card dropped on the grid: a task (`data-task-id`) or an inbox item (`data-inbox-id`). */
@@ -269,6 +274,8 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   onMove,
   onResize,
   onEventClick,
+  pickedIds,
+  onMoveMany,
   onEventDoubleClick,
   onExternalDrop,
   onReplan,
@@ -388,10 +395,15 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
   // Kai 2026-10-12 ("you can't edit the colours after they've been created"): FullCalendar keeps an
   // event's element across updates, so eventDidMount — the only place the hue was painted — never
   // re-ran for a recoloured one. Repaint every block from the current data after each render.
+  // Multi-select's outline rides the block's element as data-picked (not FullCalendar's data: no repaint).
+  const pickedRef = useRef<readonly string[]>([])
+  pickedRef.current = pickedIds ?? []
   useLayoutEffect(() => {
     const colors = new Map(events.map((e) => [e.id, e.color]))
+    const picked = new Set(pickedRef.current)
     wrapRef.current?.querySelectorAll<HTMLElement>('[data-kf-id]').forEach((el) => {
       if (colors.has(el.dataset.kfId!)) paintColor(el, colors.get(el.dataset.kfId!))
+      el.toggleAttribute('data-picked', picked.has(el.dataset.kfId!))
     })
   })
   // §6 stacked (3+): the "+N more" popover — the ids it lists and the label it hangs from.
@@ -894,6 +906,7 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // Polish F2b: lets the pin's "next interaction" listener tell a press on the pinned block
         // itself (keep it) from a press anywhere else (let go).
         info.el.dataset.kfId = blockIdOf(info.event)
+        info.el.toggleAttribute('data-picked', pickedRef.current.includes(info.el.dataset.kfId))
         paintColor(info.el, (info.event.extendedProps as { kfColor?: string | null })?.kfColor)
 
         // Punch 34: double-click goes straight to the task editor (single click still opens
@@ -914,7 +927,11 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         const dragged = !!(jsEvent && from && Math.abs(jsEvent.clientX - from.x) + Math.abs(jsEvent.clientY - from.y) > 3)
         onCreate({ start: info.startStr, end: info.endStr, allDay: info.allDay, x: jsEvent?.clientX ?? window.innerWidth / 2, y: jsEvent?.clientY ?? window.innerHeight / 2, task: !!jsEvent?.metaKey, dragged })
       }}
-      eventClick={(info: EventClickArg) => info.event.display !== 'background' && onEventClick(blockIdOf(info.event))}
+      eventClick={(info: EventClickArg) => {
+        if (info.event.display === 'background') return
+        const e = info.jsEvent as MouseEvent
+        onEventClick(blockIdOf(info.event), e.ctrlKey || e.metaKey || e.shiftKey)
+      }}
       // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder
       // is FC's own mirror. eventDragStop fires before eventDrop, so cleanup is safe here.
       eventDragStart={(info) => {
@@ -957,6 +974,14 @@ export const CalendarGrid = forwardRef<CalendarGridHandle, CalendarGridProps>(fu
         // Motion 4c: the placeholder snaps to the grid on commit — a brief flash marks the moment,
         // scoped in CSS to `.cal-motion-on` so it's a no-op when the caller's motion gate is off.
         flashSnap(info.el)
+        // Multi-select: a picked block dragged carries the other picked blocks by the same amount.
+        const picked = pickedRef.current
+        if (picked.length > 1 && picked.includes(info.event.id) && info.event.start && info.oldEvent.start && !info.event.allDay && !info.oldEvent.allDay) {
+          if (onMoveMany?.(picked, info.event.start.getTime() - info.oldEvent.start.getTime())) {
+            setPinnedId(info.event.id)
+            return
+          }
+        }
         if (info.event.start) {
           // Crossing the all-day boundary nulls the end (FC convention) — restate a real one:
           // a converted all-day block spans its day; a re-timed chip gets the default hour.

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router'
 import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
-import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
+import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
 import { inSlot, slotAt, slotFill, slotTasks } from './slots'
 import { TaskMenu } from '../tasks/TaskMenu'
 import { taskActions } from '../tasks/useRowGrammar'
@@ -601,11 +601,21 @@ function DesktopCalendar() {
     setSelected({ id: event.id, start: event.starts_at, at: at ?? anchorOf(event.id) })
   }
 
-  function handleEventClick(id: string) {
+  // Multi-select (Kai 2026-10-22, Google / Notion Calendar): Ctrl / ⌘ / Shift + click picks blocks; dragging one
+  // moves them all, Delete / Backspace takes them off with one Undo, Esc lets go. A plain click starts over.
+  const [picked, setPicked] = useState<string[]>([])
+  function handleEventClick(id: string, add?: boolean) {
     setContextMenu(null)
+    if (add) {
+      setSelected(null)
+      setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]))
+      return
+    }
+    setPicked([])
     const event = gridEvents.find((e) => e.id === id)
     if (event) openExisting(event)
   }
+  const pickedLive = useMemo(() => picked.filter((id) => gridEvents.some((e) => e.id === id)), [picked, gridEvents])
 
   // Punch 6 (calendar slice): every destructive calendar mutation undoes through the same api — never a bare toast.
   const unscheduleWithUndo = (event: CalendarEvent) => deleteEventWithUndo(event, 'Unscheduled')
@@ -665,6 +675,7 @@ function DesktopCalendar() {
     // The grid snaps to 15 min (Kai 2026-10-03), so a plain click selects one quarter; it still
     // makes the half-hour it always did. A drag keeps exactly what was dragged — one quarter too
     // (Kai 2026-10-21: a 15-minute drag used to come out 30).
+    setPicked([])
     const startMs = new Date(info.start).getTime()
     const end = !info.allDay && !info.dragged && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
     setQuickCreate({
@@ -796,6 +807,12 @@ function DesktopCalendar() {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target) || overlayCount() > 0) return
+      if (pickedLive.length && (e.key === 'Escape' || e.key === 'Delete' || e.key === 'Backspace')) {
+        e.preventDefault()
+        if (e.key !== 'Escape') deleteEventsWithUndo(pickedLive.flatMap((id) => gridEvents.filter((x) => x.id === id)))
+        setPicked([])
+        return
+      }
       const key = /^[\x20-\x7e]$/.test(e.key) ? e.key.toLowerCase() : (/^Key([A-Z])$/.exec(e.code)?.[1].toLowerCase() ?? /^Digit(\d)$/.exec(e.code)?.[1] ?? e.key)
       const grid = gridRef.current
       const run: Record<string, (() => void) | undefined> = {
@@ -1199,6 +1216,11 @@ function DesktopCalendar() {
                 if (event) toastUndo(`Resized · ${event.title}`, resizeEvent(event, start, end))
               }}
               onEventClick={handleEventClick}
+              pickedIds={pickedLive}
+              onMoveMany={(ids, delta) => {
+                moveEventsByWithUndo(ids.flatMap((id) => gridEvents.filter((x) => x.id === id)), delta)
+                return true
+              }}
               onEventDoubleClick={handleEventDoubleClick}
               onExternalDrop={handleExternalDrop}
               onReplan={(id, x, y) => {
