@@ -68,8 +68,10 @@ export interface SeedPayload {
   date: string
 }
 
-export function seedPayload(now: Date): SeedPayload {
-  return { ritual: 'evening', step: 'seeds', for_date: seedTargetDate(now), date: loopDayKey(now) }
+/** `forDate` defaults to the next morning (the evening's Tomorrow's 3); Today's day view plants for
+ * the day it shows (features/today/dayView). */
+export function seedPayload(now: Date, forDate: string = seedTargetDate(now)): SeedPayload {
+  return { ritual: 'evening', step: 'seeds', for_date: forDate, date: loopDayKey(now) }
 }
 
 /** Task ids seeded for `forDate`, in the order they were (last) seeded. `rows` must be oldest
