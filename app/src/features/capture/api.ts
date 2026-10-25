@@ -3,6 +3,7 @@ import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
 import { autoFileOn, autoProjectMode } from '../../lib/settings'
 import { offerProject } from '../projects/autoProject'
+import { claimFiling, releaseFiling } from '../inbox/filing'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { useToastStore } from '../../lib/toastStore'
@@ -256,11 +257,14 @@ export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Pr
     writeRow('inbox_items', read)
     return
   }
+  // Filed by hand while this read was out (Kai's 2026-10-23 double task): it stays filed once.
+  if (!claimFiling(current)) return
   const task = taskFromCapture(ai, rawText)
   const unblock = blockIfTimed(task, ai.has_time === true)
   writeRow('inbox_items', { ...read, status: 'filed', filed_task_id: task.id })
   logActivity('capture.autofiled', 'task', task.id, { confidence: ai.confidence, source: 'typed' })
   toastUndo(`✦ Filed by AI: “${task.title}”`, () => {
+    releaseFiling(current.id)
     unblock?.()
     writeRow('tasks', task, 'delete')
     logActivity('task.deleted', 'task', task.id, { reason: 'capture undo' })
@@ -314,13 +318,18 @@ async function parseQueued(): Promise<void> {
           .from('inbox_items')
           .update({ payload })
           .eq('id', item.id)
+          .eq('status', 'pending')
           .eq('payload->>needs_parse', 'true')
           .select('id')
         if (error || !claimed?.length) continue
       }
       const parse = await callParseCapture(item.raw_text, item.created_at)
+      // The row as it is NOW: filed by hand while the read was out (the 2026-10-23 double task), it is
+      // left alone — never filed twice, never set back to pending by this stale copy.
+      const current = queryClient.getQueryData<InboxItem[]>(['inbox_items'])?.find((i) => i.id === item.id) ?? item
+      if (current.status !== 'pending' || current.deleted_at) continue
       // Filed only while "File captures for me" is on (0086); off, the read rides along as the suggestion.
-      if (parse.kind === 'task' && parse.confidence >= confidenceThreshold() && autoFileOn()) {
+      if (parse.kind === 'task' && parse.confidence >= confidenceThreshold() && autoFileOn() && claimFiling(current)) {
         const over = rest as { priority_override?: number | null; duration_override?: number | null }
         const task = taskFromCapture(parse, item.raw_text, { priority: over.priority_override, durationMin: over.duration_override })
         blockIfTimed(task, parse.has_time === true)

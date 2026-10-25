@@ -15,6 +15,7 @@ import { createInteraction, deleteInteraction } from '../people/api'
 import { cairoDateKey, scheduleToday } from '../../lib/dateShortcuts'
 import { captureLink, dayWord, formatDue, githubUrl, suggestedTitle } from './inboxDisplay'
 import { linkRef } from '../../lib/links'
+import { claimFiling, releaseFiling } from './filing'
 import { INBOX_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
 import type { CalendarEvent, InboxItem, Person, Task } from '../../lib/types'
@@ -103,6 +104,7 @@ function filedLine(task: Task): string {
  * the auto-file undo in `capture/api.ts`; a task the user un-made shouldn't need composting.
  * Its block (a timed filing's, fileToTask) goes first, while the task it points at still exists. */
 function unfile(item: InboxItem, task: Task): void {
+  releaseFiling(item.id)
   deleteEventsForTask(task.id)
   writeRow('tasks', task, 'delete')
   logActivity('task.deleted', 'task', task.id, { reason: 'inbox file undo' })
@@ -123,11 +125,13 @@ export function snoozeInboxItem(item: InboxItem, until: string, silent = false):
  * (the AI's `cleaned_text` used to be shown but never actually filed). Priority/duration typed
  * locally at capture time (command bar `!`/`30m` syntax) ride along on `item.payload` when the
  * item didn't auto-file — applied here so a deferred manual filing doesn't lose them either. */
-// Returns the created task so callers can offer a real Undo (WA-4 punch 21 — convertResurfaced).
+// Returns the created task so callers can offer a real Undo (WA-4 punch 21 — convertResurfaced) —
+// or null when the item is filed already (./filing: once per item; the second attempt does nothing).
 export function fileToTask(
   item: InboxItem,
   opts: { domainId?: string | null; projectId?: string | null; areaId?: string | null; dueAt?: string | null; timed?: boolean; title?: string; silent?: boolean; someday?: boolean } = {},
-): Task {
+): Task | null {
+  if (!claimFiling(item)) return null
   const prior = { ...item }
   // …and, from a held ⌘K line (quickAdd holdTyped), its `*labels`, repeat and `// notes`.
   const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null; labels_override?: string[]; repeat_override?: string | null; notes_override?: string | null } | null
@@ -206,6 +210,7 @@ function fileQuietly(item: InboxItem, to: FileTo, now = new Date()): { message: 
   }
   const at = placeIn(NOWHERE, to.place)
   const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, timed: !!to.timed, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, someday: to.someday, silent: true })
+  if (!task) return { message: 'Already filed', undo: () => undefined }
   return { message: filedLine(task), undo: () => unfile(prior, task) }
 }
 
@@ -234,6 +239,7 @@ export function fileDone(pairs: readonly (readonly [InboxItem, Extract<FileTo, {
     const prior = { ...item }
     const at = placeIn(NOWHERE, to.place)
     const task = fileToTask(item, { title: to.title, dueAt: to.dueAt, projectId: at.project_id, areaId: at.area_id, domainId: at.domain_id, silent: true })
+    if (!task) return { title: item.raw_text, undo: () => undefined }
     completeTask(task)
     return { title: task.title, undo: () => unfile(prior, task) }
   })
@@ -266,9 +272,10 @@ export const inboxMinutes = (item: InboxItem): number => (item.payload as { dura
 
 /** The calendar rail (Kai 2026-10-07): an inbox item dropped on the grid, or planned at a time, is
  * filed as its AI suggestion says and time-blocked there. One toast, one Undo for both. */
-export function fileToCalendar(item: InboxItem, startsAt: string, endsAt: string, allDay = false): CalendarEvent {
+export function fileToCalendar(item: InboxItem, startsAt: string, endsAt: string, allDay = false): CalendarEvent | null {
   const prior = { ...item }
   const task = fileToTask(item, { ...aiFiling(item), dueAt: startsAt, silent: true })
+  if (!task) return null
   const { event, undo } = placeTask(task, startsAt, endsAt, allDay)
   toastUndo(`Scheduled · ${task.title}`, () => {
     undo()

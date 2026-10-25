@@ -16,7 +16,8 @@
 //       its suggestion; a ⌘K line with a date and #project waits too, filed in one tap; Today's "Add a
 //       task…" row still adds at once), switched on in Settings (it files itself).
 //   P — the project chip: "→ Forecasting App?" applies in one tap; "Assign" puts it there with Undo.
-//   node verify.mjs <outDir> [baseUrl] [playwright-core path]     (ONLY=g,u,f,m,a,p to pick)
+//   R — a capture filed by hand while the AI's read of it is out is filed ONCE (no second task).
+//   node verify.mjs <outDir> [baseUrl] [playwright-core path]     (ONLY=g,u,f,m,a,r,p to pick)
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -171,15 +172,15 @@ function chatMock(state, body) {
 // The AI read for the two captures A is about; anything else is over today's allowance (429), so a
 // typed task's read stays out of the way (the project chip, Today's add row).
 const parseFor = (raw) =>
-  /mum|landlord/i.test(raw)
-    ? { kind: 'task', cleaned_text: raw, title: /landlord/.test(raw) ? 'Email the landlord about the boiler' : 'Call mum about Sunday', priority: 1, confidence: 0.95 }
+  /mum|landlord|renew hosting/i.test(raw)
+    ? { kind: 'task', cleaned_text: raw, title: /landlord/.test(raw) ? 'Email the landlord about the boiler' : /renew/.test(raw) ? 'Renew hosting' : 'Call mum about Sunday', priority: 1, confidence: 0.95 }
     : null
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 const DESKTOP = { viewport: { width: 1280, height: 800 } }
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
 
-async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/today' } = {}) {
+async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/today', inbox = [], waitUntil = 'networkidle' } = {}) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: ZONE, locale: 'en-US' })
   await ctx.addInitScript(([t, sess, uid]) => {
     localStorage.setItem('kf_theme', t)
@@ -189,6 +190,7 @@ async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/to
     localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['tour', 'hint:swipe', 'hint:calendar', 'hint:inbox']))
   }, [theme, JSON.stringify(session), UID])
   const state = { rows: tables(settings), writes: [], fn: [], runs: [], rounds: [], gets: [] }
+  state.rows.inbox_items.push(...inbox)
   let seq = 0
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -206,11 +208,22 @@ async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/to
       const body = JSON.parse(req.postData() ?? '{}')
       state.fn.push({ name: 'parse-capture', body })
       const p = parseFor(body.raw_text ?? '')
+      if (/renew hosting/.test(body.raw_text ?? '')) await sleep(8000) // R: the read is still out while it's filed by hand
       return p ? r.fulfill({ json: p, headers: cors }) : r.fulfill({ status: 429, json: { error: 'daily_limit' }, headers: cors })
     }
     if (url.pathname.startsWith('/functions/v1/')) {
       state.fn.push({ name: url.pathname.slice(14) })
       return r.fulfill({ json: {}, headers: cors })
+    }
+    // A PATCH by query (processQueuedCaptures' server claim: id + still pending): the rows it matched, as written.
+    if (req.method() === 'PATCH' && url.searchParams.get('id')) {
+      const id = url.searchParams.get('id').replace(/^eq\./, '')
+      const status = url.searchParams.get('status')?.replace(/^eq\./, '')
+      const patch = JSON.parse(req.postData() ?? '{}')
+      const hit = (state.rows[table] ?? []).filter((x) => x.id === id && (!status || x.status === status))
+      for (const x of hit) Object.assign(x, patch)
+      state.writes.push({ table, row: { id, ...patch }, method: 'PATCH' })
+      return r.fulfill({ status: 200, json: hit.map((x) => ({ id: x.id })) })
     }
     if (req.method() === 'POST' || req.method() === 'PATCH') {
       let body = []
@@ -246,7 +259,7 @@ async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/to
   page.on('pageerror', (e) => errors.push(e.message))
   // The 429 is this mock's own: the typed task's AI read is over today's allowance on purpose (parseFor).
   page.on('console', (m) => m.type() === 'error' && !m.text().startsWith("WebSocket connection to 'ws://127.0.0.1:9/") && !m.text().includes('status of 429') && errors.push(`console: ${m.text()}`))
-  await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${route}`, { waitUntil })
   await sleep(900)
   return { ctx, page, errors, state }
 }
@@ -469,6 +482,28 @@ if (want('a')) {
   check('a …the capture marked filed, "✦ Filed by AI" with Undo', await until(() => posts(state, 'inbox_items', w).some((i) => i.status === 'filed')) && (await toastSoon(page, 'Filed by AI')))
   check('a the notice is not shown twice', (await toasts(page)).every((t) => !t.includes('Captures now wait')))
   check('a no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))
+  await ctx.close()
+}
+
+// ── R: the double-task race (Kai's log 2026-10-23 16:20 — one capture, two tasks) ──
+if (want('r')) {
+  // A capture sent with the key while "File captures for me" is on: queued for the AI on this device.
+  const RENEW = '30000000-0000-4000-8000-0000000000r1'.replace('r1', 'a1')
+  const queued = { id: RENEW, user_id: UID, kind: 'text', raw_text: 'renew hosting', transcript: null, ai_parse: null, confidence: null, status: 'pending', filed_task_id: null, payload: { source: 'capture', needs_parse: true }, snoozed_until: null, deleted_at: null, created_at: iso('11:00'), updated_at: iso('11:00') }
+  const { ctx, page, errors, state } = await open({ route: '/inbox', settings: { auto_file_captures: true, help_seen: [...SETTINGS.help_seen, 'notice:autofile'] }, inbox: [queued], waitUntil: 'domcontentloaded' })
+  check('r the AI read is out (claimed on the server, parsing)', await until(() => state.fn.some((f) => f.name === 'parse-capture')))
+  const row = page.locator(`[id="inbox-${RENEW}"]`)
+  await row.waitFor({ timeout: 8000 })
+  check('r …and the capture is still waiting in the Inbox', state.rows.inbox_items.find((i) => i.id === RENEW)?.status === 'pending')
+  await row.getByRole('button', { name: /^File/ }).first().click()
+  const byHand = await until(() => posts(state, 'tasks').length === 1)
+  await until(() => state.fn.filter((f) => f.name === 'parse-capture').length >= 1, 1000)
+  await sleep(9000) // the read lands
+  const tasks = posts(state, 'tasks')
+  check('r filed by hand while the read was out → exactly ONE task', byHand && new Set(tasks.map((x) => x.id)).size === 1, JSON.stringify(tasks.map((x) => x.title)))
+  check('r …no capture.autofiled, and the capture stays filed', !posts(state, 'activity_log').some((a) => a.event_type === 'capture.autofiled') && state.rows.inbox_items.find((i) => i.id === RENEW)?.status === 'filed', JSON.stringify(posts(state, 'activity_log').map((a) => a.event_type)))
+  await shot(page, 'r1-day-filed-once')
+  check('r no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))
   await ctx.close()
 }
 

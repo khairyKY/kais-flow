@@ -55,6 +55,16 @@ describe('fileToTask', () => {
     expect(taskWrite()).not.toHaveProperty('external_ref')
   })
 
+  // Kai's log 2026-10-23: the same capture filed twice made two tasks. Now the second attempt does nothing.
+  it('filing the same capture twice files it once', () => {
+    const one = item({ id: 'twice' })
+    expect(fileToTask(one, { silent: true })).not.toBeNull()
+    const tasksBefore = writes.filter((w) => w.table === 'tasks').length
+    expect(fileToTask(one, { silent: true })).toBeNull()
+    expect(fileToTask({ ...one, status: 'filed' }, { silent: true })).toBeNull()
+    expect(writes.filter((w) => w.table === 'tasks').length).toBe(tasksBefore)
+  })
+
   // Kai 2026-10-25: a ⌘K line held in the Inbox (auto-filing off) files with everything it typed.
   it('a held typed line files with its labels, repeat and notes', () => {
     fileToTask(item({ payload: { priority_override: 2, labels_override: ['calls'], repeat_override: 'FREQ=WEEKLY', notes_override: 'bring the deck' } }), { silent: true })

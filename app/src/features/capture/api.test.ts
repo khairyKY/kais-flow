@@ -176,7 +176,7 @@ describe('processQueuedCaptures with an endpoint capture', () => {
 
     await processQueuedCaptures()
 
-    expect(claimCalls).toEqual([['from', 'inbox_items'], ['update', { payload: { source: 'capture' } }], ['eq', 'id', 'i1'], ['eq', 'payload->>needs_parse', 'true']])
+    expect(claimCalls).toEqual([['from', 'inbox_items'], ['update', { payload: { source: 'capture' } }], ['eq', 'id', 'i1'], ['eq', 'status', 'pending'], ['eq', 'payload->>needs_parse', 'true']])
     expect((invoke.mock.calls[0][1] as { body: { context: { today: string } } }).body.context.today).toBe(item.created_at)
     expect(createTask).toHaveBeenCalledWith(expect.objectContaining({ title: 'Dentist', dueAt: parse.due_at }))
     expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ id: 'i1', status: 'filed', filed_task_id: 't1', payload: { source: 'capture' } }))
@@ -373,5 +373,46 @@ describe('File captures for me: off (the default)', () => {
     expect(claimCalls[1]).toEqual(['update', { payload: { source: 'mcp' } }])
     expect(createTask).not.toHaveBeenCalled()
     expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ id: 'i2', status: 'pending', confidence: 0.95, payload: { source: 'mcp' } }))
+  })
+})
+
+// Kai's log, 2026-10-23 16:20: one capture became two tasks — filed by hand (inbox.filed) while the AI's
+// read was still out (capture.autofiled). Filing is once per inbox item.
+describe('filing is once per inbox item (the double-task race)', () => {
+  const sure = { kind: 'task', cleaned_text: 'x', title: 'Renew hosting', confidence: 0.95 }
+
+  it('a queued capture filed by hand while its read was out is left alone — no second task, not set back to pending', async () => {
+    const item = { id: 'r1', status: 'pending', raw_text: 'renew hosting', created_at: '2026-10-23T13:20:00.000Z', payload: { source: 'capture', needs_parse: true } }
+    cachedInbox = [item]
+    claimRows = [{ id: 'r1' }]
+    let release: (v: unknown) => void = () => undefined
+    invoke.mockReturnValue(new Promise((r) => (release = r)))
+    const auto = processQueuedCaptures()
+    await new Promise((r) => setTimeout(r, 0))
+    // …meanwhile, filed by hand: the cached row says so
+    cachedInbox = [{ ...item, status: 'filed', filed_task_id: 'by-hand' }]
+    release({ data: sure, error: null })
+    await auto
+    expect(createTask).not.toHaveBeenCalled()
+    expect(writeRow).not.toHaveBeenCalled()
+  })
+
+  it('a typed line filed by hand before its read lands is not filed again', async () => {
+    const item = { id: 'r2', status: 'pending', raw_text: 'renew hosting', payload: null }
+    cachedInbox = [{ ...item, status: 'filed', filed_task_id: 'by-hand' }]
+    invoke.mockResolvedValue({ data: sure, error: null })
+    await enrichTypedInboxItem(item as never, 'renew hosting')
+    expect(createTask).not.toHaveBeenCalled()
+  })
+
+  it('the auto-file claims the item first: a second filer of the same item is a no-op', async () => {
+    const { claimFiling } = await import('../inbox/filing')
+    const item = { id: 'r3', status: 'pending', raw_text: 'renew hosting', payload: null }
+    cachedInbox = [item]
+    invoke.mockResolvedValue({ data: sure, error: null })
+    createTask.mockReturnValue({ id: 't3', title: 'Renew hosting' })
+    await enrichTypedInboxItem(item as never, 'renew hosting')
+    expect(createTask).toHaveBeenCalledTimes(1)
+    expect(claimFiling(item)).toBe(false) // the manual File, a moment later
   })
 })
