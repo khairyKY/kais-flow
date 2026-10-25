@@ -350,7 +350,8 @@ if (want('g1')) {
     await dhuhr.scrollIntoViewIfNeeded()
     await sleep(300)
     check(`g1 ${theme}: Dhuhr is on the grid, marked synced`, (await dhuhr.count()) === 1 && /kf-synced/.test(await dhuhr.getAttribute('class')))
-    const accent = await dhuhr.evaluate((el) => el.style.getPropertyValue('--kf-ev-accent'))
+    // Since the 2026-10-22 block looks (ffe24812) the calendar's colour is --kf-ev-c; --kf-ev-accent is its ink mix.
+    const accent = await dhuhr.evaluate((el) => el.style.getPropertyValue('--kf-ev-c'))
     check(`g1 ${theme}: in the calendar's colour (#9fe1e7)`, accent === '#9fe1e7', accent)
     check(`g1 ${theme}: the all-day Mawlid sits in the all-day band (Tue)`, (await page.locator('.fc-daygrid-event', { hasText: 'Mawlid' }).count()) >= 1)
     check(`g1 ${theme}: no resize handle on a synced event`, (await dhuhr.locator('.fc-event-resizer').count()) === 0)
@@ -364,7 +365,8 @@ if (want('g1')) {
     if (theme === 'day') {
       // A drag does nothing: no write, the block stays where it was.
       const b0 = await dhuhr.boundingBox()
-      const from = center(b0)
+      // Overlap B (cascade, 2026-10-22): Lunch (12:10) lies over Dhuhr's lower half, so grab its uncovered top.
+      const from = { x: b0.x + 10, y: b0.y + 4 }
       const w = state.writes.length
       await page.mouse.move(from.x, from.y)
       await page.mouse.down()
@@ -388,7 +390,7 @@ if (want('g2')) {
     const { ctx, page, errors, state } = await open('/calendar', { theme })
     await fc(page, eid(DHUHR)).scrollIntoViewIfNeeded()
     await sleep(200)
-    await fc(page, eid(DHUHR)).click()
+    await fc(page, eid(DHUHR)).click({ position: { x: 10, y: 4 } }) // its top: Lunch overlaps the rest (cascade)
     await menu(page).waitFor({ timeout: 4000 }).catch(() => {})
     await sleep(300)
     const labels = await menu(page).getByRole('menuitem').allInnerTexts()
@@ -403,14 +405,14 @@ if (want('g2')) {
       check('g2 the date row opens no picker', (await page.locator('[role="dialog"]').count()) === 0)
       await page.keyboard.press('Escape')
       await sleep(200)
-      await fc(page, eid(DHUHR)).click()
+      await fc(page, eid(DHUHR)).click({ position: { x: 10, y: 4 } }) // its top: Lunch overlaps the rest (cascade)
       await menu(page).waitFor({ timeout: 4000 }).catch(() => {})
       await page.keyboard.press('Backspace')
       await sleep(1500)
       check('g2 ⌫ with its menu open deletes nothing', calWrites(state, w).length === 0 && (await fc(page, eid(DHUHR)).count()) === 1)
       await page.keyboard.press('Escape')
       await sleep(200)
-      await fc(page, eid(DHUHR)).click({ button: 'right' })
+      await fc(page, eid(DHUHR)).click({ button: 'right', position: { x: 10, y: 4 } })
       await sleep(400)
       const ctxItems = await page.locator('[role="menu"]').last().getByRole('menuitem').allInnerTexts()
       check('g2 right-click: only "Details" — no Delete', ctxItems.length === 1 && /Details/.test(ctxItems[0]), JSON.stringify(ctxItems))

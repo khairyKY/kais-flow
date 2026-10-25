@@ -2,9 +2,11 @@
 // TimePicker / DateField / TimeField over MK's sample day, phone 390×844 touch + desktop 1280
 // mouse, day + night. Everything stays in the demo's state — no backend.
 // node verify.mjs <outDir> [baseUrl]   (needs playwright-core + system Chrome)
-import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL as kfPathToFileURL } from 'node:url'
+// playwright-core isn't installed in the repo: load it from the same path the sibling harnesses use (argv[4]).
+const { chromium } = await import(kfPathToFileURL(process.argv[4] ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs').href)
 
 const OUT = process.argv[2]
 const BASE = process.argv[3] ?? 'http://localhost:5247'

@@ -1,8 +1,10 @@
 // Visual + behaviour check for kit-sheets on the dev-only /design-system route.
 // node verify.mjs <outDir> [baseUrl]
-import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL as kfPathToFileURL } from 'node:url'
+// playwright-core isn't installed in the repo: load it from the same path the sibling harnesses use (argv[4]).
+const { chromium } = await import(kfPathToFileURL(process.argv[4] ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs').href)
 
 const OUT = process.argv[2]
 fs.mkdirSync(OUT, { recursive: true })
