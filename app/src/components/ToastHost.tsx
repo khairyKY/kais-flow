@@ -57,7 +57,19 @@ function sheetFooterDock(): number | string | null {
   const top = modals[modals.length - 1]
   if (!top) return null
   const footer = top.querySelector('[data-sheet-footer]')
-  if (footer) return (window.innerHeight - footer.getBoundingClientRect().top) / uiZoom() + 8
+  if (footer) {
+    const footTop = footer.getBoundingClientRect().top
+    // bugs-1023 (Kai: "main + button isn't tappable to capture"): the capture sheet's field sits right on
+    // its footer, so a toast docked there ("Added to Inbox · Undo", a sync notice) covered the field the
+    // + had just opened — every tap hit the toast. A field the toast would cover sends it to the top dock.
+    const toastH = (document.querySelector('.kf-toast-host')?.getBoundingClientRect().height ?? 56) + 8 * uiZoom()
+    const covered = [...top.querySelectorAll('input, textarea, [contenteditable="true"]')].some((f) => {
+      const r = f.getBoundingClientRect()
+      return r.height > 0 && r.bottom > footTop - toastH && r.top < footTop
+    })
+    if (covered) return null
+    return (window.innerHeight - footTop) / uiZoom() + 8
+  }
   // A sheet's top edge sits ≥ 48px down (the full detent's gap) — the top dock goes there. A modal
   // that starts at the screen's top edge has its header where that dock would land.
   return top.getBoundingClientRect().top < 24 ? TABBAR_DOCK : null
