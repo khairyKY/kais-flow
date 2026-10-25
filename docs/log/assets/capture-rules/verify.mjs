@@ -332,7 +332,7 @@ if (want('p')) for (const theme of ['day', 'night']) {
 
 // ── T: A21 — the tray flyout's capture is the bar's rule ──
 if (want('t')) {
-  const { ctx, page, errors, state } = await open('/tray', { view: flyout, tauri: true })
+  const { ctx, page, errors, state } = await open('/tray.html', { view: flyout, tauri: true })
   const field = page.getByPlaceholder('Write it down…')
   await field.waitFor({ timeout: 8000 })
   let w = state.writes.length

@@ -364,7 +364,7 @@ if (want('sync')) {
 // ── the flyout (12b), day + night: untouched by the new kinds ──
 if (want('flyout')) for (const theme of ['day', 'night']) {
   const { ctx, errors, open } = await app({}, { tauri: true, theme })
-  const page = await open('/tray', FLYOUT, '08:41')
+  const page = await open('/tray.html', FLYOUT, '08:41')
   await page.locator('.kf-tray-row-title', { hasText: 'GCI homework 1 — NumPy' }).waitFor({ timeout: 8000 }).catch(() => {})
   const text = await page.locator('.kf-tray').innerText()
   check(`12b flyout ${theme}: date, Top 3, capture, focus, footer`, /Saturday, 3 October/.test(text) && text.includes('GCI homework 1 — NumPy') && (await page.getByPlaceholder('Write it down…').count()) === 1 && text.includes('Open Kai’s Flow'))

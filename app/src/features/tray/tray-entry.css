@@ -1,0 +1,30 @@
+/* tray.html's base (./entry.tsx): the app's resets and tokens, without the app's utilities and page CSS.
+   index.css is the app's; these are the same token files it imports, in its order (night last). */
+@import "tailwindcss/preflight.css" layer(base);
+@import "../../styles/tokens/colors.css";
+@import "../../styles/tokens/typography.css";
+@import "../../styles/tokens/spacing.css";
+@import "../../styles/tokens/motion.css";
+@import "../../styles/tokens/effects.css";
+@import "../../styles/tokens/colors.dark.css";
+@import "./tray.css";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--paper-parchment);
+}
+body {
+  color: var(--ink-body);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  -webkit-user-select: none;
+  user-select: none;
+}
+input {
+  -webkit-user-select: text;
+  user-select: text;
+}
