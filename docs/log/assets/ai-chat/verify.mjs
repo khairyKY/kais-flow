@@ -168,10 +168,12 @@ function chatMock(state, body) {
   }
 }
 
+// The AI read for the two captures A is about; anything else is over today's allowance (429), so a
+// typed task's read stays out of the way (the project chip, Today's add row).
 const parseFor = (raw) =>
-  /forecast/i.test(raw)
-    ? null // the typed task's AI read stays out of the project chip's way: over today's allowance
-    : { kind: 'task', cleaned_text: raw, title: /landlord/.test(raw) ? 'Email the landlord about the boiler' : 'Call mum about Sunday', priority: 1, confidence: 0.95 }
+  /mum|landlord/i.test(raw)
+    ? { kind: 'task', cleaned_text: raw, title: /landlord/.test(raw) ? 'Email the landlord about the boiler' : 'Call mum about Sunday', priority: 1, confidence: 0.95 }
+    : null
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 const DESKTOP = { viewport: { width: 1280, height: 800 } }
@@ -447,7 +449,8 @@ if (want('a')) {
   await bar(page).fill('Water the ferns tomorrow 9am')
   await sleep(250)
   await bar(page).press('Enter')
-  check("a Today's \"Add a task…\" row is a task field: the task at once, nothing held", await until(() => posts(state, 'tasks', w).some((t) => t.title === 'Water the ferns')) && !posts(state, 'inbox_items', w).length)
+  const ferns = await until(() => posts(state, 'tasks', w).some((t) => t.title === 'Water the ferns'))
+  check("a Today's \"Add a task…\" row is a task field: the task at once, nothing held", ferns && !posts(state, 'inbox_items', w).some((i) => /ferns/.test(i.raw_text ?? '')), JSON.stringify([posts(state, 'tasks', w).map((t) => t.title), posts(state, 'inbox_items', w).map((i) => [i.raw_text, i.status])]))
   await page.goto(`${BASE}/settings`, { waitUntil: 'networkidle' })
   await sleep(700)
   const sw = page.getByRole('switch', { name: 'File captures for me' })
