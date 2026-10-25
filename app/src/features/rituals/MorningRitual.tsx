@@ -602,7 +602,7 @@ function TimeRow({ task, slot, changing, onChange }: { task: Task; slot: Slot; c
     loose && task.duration_min != null && <Meta key="m">{formatDuration(task.duration_min)}</Meta>,
     slot.after && <Meta key="a">after {slot.after}</Meta>,
     slot.kind === 'booked' && <Meta key="b">On the calendar</Meta>,
-    slot.late && <Meta key="l" tone="var(--sig-amber)">Runs past 18:00</Meta>,
+    slot.late && <Meta key="l" tone="var(--sig-amber)">Runs past {clockText('18:00')}</Meta>,
     slot.kind === 'noslot' && <Meta key="n" tone="var(--sig-amber)">No free slot</Meta>,
     slot.kind === 'untimed' && <Meta key="u">No time</Meta>,
   ].filter(Boolean)

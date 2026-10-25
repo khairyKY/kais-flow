@@ -3,6 +3,9 @@ import { create } from 'zustand'
 
 interface CommandBarState {
   open: boolean
+  /** Opened from an "add a task" field (Today's add row): a line with tokens is a task at once, even
+   * with "File captures for me" off (quickAdd captureTyped). Any other opening is a capture. */
+  asTask: boolean
   setOpen: (open: boolean) => void
   toggle: () => void
 }
@@ -10,8 +13,9 @@ interface CommandBarState {
 /** Open state lives here (not local to CommandBar) so the global `n` shortcut in AppLayout can open it. */
 export const useCommandBarStore = create<CommandBarState>((set) => ({
   open: false,
-  setOpen: (open) => set({ open }),
-  toggle: () => set((s) => ({ open: !s.open })),
+  asTask: false,
+  setOpen: (open) => set({ open, asTask: false }),
+  toggle: () => set((s) => ({ open: !s.open, asTask: false })),
 }))
 
 /** The capture field — the phone sheet's and the desktop bar's (one input, one id). */
@@ -27,5 +31,12 @@ export const CAPTURE_INPUT_ID = 'kf-capture-input'
  */
 export function openCapture(): void {
   flushSync(() => useCommandBarStore.getState().setOpen(true))
+  document.getElementById(CAPTURE_INPUT_ID)?.focus()
+}
+
+/** The same bar, opened from an "add a task" field (Today's add row): a line with tokens is a task at
+ * once even with "File captures for me" off. */
+export function openTaskCapture(): void {
+  flushSync(() => useCommandBarStore.setState({ open: true, asTask: true }))
   document.getElementById(CAPTURE_INPUT_ID)?.focus()
 }

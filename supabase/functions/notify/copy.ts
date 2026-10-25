@@ -6,7 +6,7 @@
 import { minutesOf, RITUAL_ZONE, wallMinutes } from './ritual.ts'
 import { dateKey } from '../_shared/zone.ts'
 
-export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'test'
+export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'terms' | 'test'
 
 export interface NoticeAction {
   action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep' | 'review' | 'snooze10' | 'snooze60'
@@ -388,6 +388,22 @@ export function testNotice(): Notice {
     tag: 'test',
     actions: [],
     url: '/settings',
+    silent: false,
+    taskIds: [],
+  }
+}
+
+/** The Terms of Use / Privacy Policy changed (0083, docs/LEGAL.md): notify's hourly `terms` sweep, once
+ * per version. No toggle of its own (kindOn: always on); pause and quiet hours still apply. The app
+ * asks them to agree when it opens, so Review just opens it. */
+export function termsNotice(): Notice {
+  return {
+    kind: 'terms',
+    title: 'Our terms changed',
+    body: 'Tap to review',
+    tag: 'terms',
+    actions: [{ action: 'open', title: 'Review' }],
+    url: '/today',
     silent: false,
     taskIds: [],
   }

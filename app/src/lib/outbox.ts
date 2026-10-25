@@ -60,8 +60,15 @@ async function setQueue(queue: OutboxEntry[]): Promise<void> {
 // whichever write loses (the flush's stale local snapshot overwrites a newer enqueue).
 let chain: Promise<void> = Promise.resolve()
 
+/** The chain orders this window's steps only. Another window of the app on the same key — the Windows
+ * tray's flyout beside the main window, or a second tab — could otherwise read the queue between this
+ * window's read and write and lose an entry, so each step also holds a Web Lock (where there is one). */
+function acrossWindows<T>(step: () => Promise<T>): Promise<T> {
+  return typeof navigator !== 'undefined' && navigator.locks ? navigator.locks.request('kf-outbox', step) : step()
+}
+
 function serial<T>(step: () => Promise<T>): Promise<T> {
-  const result = chain.then(step)
+  const result = chain.then(() => acrossWindows(step))
   // Keep the chain alive even if this step failed, so later ops aren't stuck behind a rejection.
   chain = result.then(
     () => undefined,

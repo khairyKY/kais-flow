@@ -59,3 +59,49 @@
 }
 .kf-chat-mic:disabled { opacity: 0.5; cursor: default; }
 .kf-chat-clear:focus-visible, .kf-chat-mic:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* Queue item 5 — a reply as real paragraphs, lists and tables (it printed raw pipes). */
+.kf-md p { margin: 0; }
+.kf-md p + p, .kf-md p + ul, .kf-md p + ol, .kf-md ul + p, .kf-md ol + p, .kf-md-table + p, .kf-md p + .kf-md-table { margin-top: 6px; }
+.kf-md ul, .kf-md ol { margin: 4px 0 0; padding-left: 18px; }
+.kf-md li + li { margin-top: 2px; }
+.kf-md .kf-md-h { font-weight: 600; }
+.kf-md code { font-family: var(--font-mono); font-size: 0.92em; background: color-mix(in srgb, var(--ink-body) 7%, transparent); padding: 0 4px; border-radius: 3px; }
+.kf-md-table { margin-top: 6px; overflow-x: auto; }
+.kf-md table { border-collapse: collapse; font-size: var(--fs-caption); }
+.kf-md th, .kf-md td { text-align: start; padding: 4px 8px; border-bottom: 1px solid var(--line-dashed); vertical-align: top; }
+.kf-md th { font-weight: 600; color: var(--ink-muted); }
+
+/* Queue item 5 — the card a plan arrives as: what WILL happen, Confirm / Edit / Cancel; then what did. */
+.kf-chat-card {
+  align-self: stretch;
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-input);
+  background: var(--paper-parchment);
+  padding: 10px 12px;
+  font-size: var(--fs-caption);
+  line-height: 1.45;
+  color: var(--ink-body);
+}
+.kf-chat-card-head { font-weight: 600; }
+.kf-chat-card-lines { margin: 6px 0 0; padding-left: 18px; }
+.kf-chat-card-lines li + li { margin-top: 3px; }
+.kf-chat-card-lines li.is-refused { color: var(--acc-terra-ink); }
+.kf-chat-card-note { margin-top: 8px; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.kf-chat-card-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.kf-chat-card-btn {
+  min-height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--line-control);
+  border-radius: 999px;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-caption);
+  color: var(--ink-body);
+  cursor: pointer;
+}
+.kf-chat-card-btn:hover { background: var(--paper-bone); }
+.kf-chat-card-btn.is-primary { border-color: transparent; background: var(--acc-clover); color: var(--paper-parchment); font-weight: 600; }
+.kf-chat-card-btn.is-primary:hover { background: color-mix(in srgb, var(--acc-clover) 88%, var(--ink-body)); }
+.kf-chat-card-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.kf-chat-card-lines.is-undone li { text-decoration: line-through; color: var(--ink-muted); }

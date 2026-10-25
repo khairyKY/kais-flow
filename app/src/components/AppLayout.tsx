@@ -51,6 +51,7 @@ import { MobileTabBar } from './MobileTabBar'
 import { PaperHost } from '../features/paper/PaperHost'
 import { useReadyPages } from '../features/paper/captures'
 import { WhatsNewHost } from '../features/whats-new/WhatsNew'
+import { TermsNoticeHost } from '../features/legal/LegalDialogs'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
 import { Float } from './Float'
@@ -59,6 +60,7 @@ import { splitKeyCombo } from '../lib/shortcuts'
 import { overlayCount } from '../lib/overlayStack'
 import { undoLatest } from '../lib/undo'
 import { DownloadBar } from '../features/download/DownloadBar'
+import { useAutoFileNotice } from '../features/capture/autoFileNotice'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
@@ -654,6 +656,7 @@ const FULL_BLEED = ['/calendar']
 
 export function AppLayout() {
   useRealtimeSync()
+  useAutoFileNotice() // queue item 7: captures wait in the Inbox now — told once
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()
@@ -1119,6 +1122,8 @@ export function AppLayout() {
       <PaperHost />
       {/* What's new: the after-update toast, the daily quiet update check, the sheet. */}
       <WhatsNewHost uid={user?.id} createdAt={user?.created_at} />
+      {/* docs/LEGAL.md: "We've updated our terms", until they agree (or leave). */}
+      <TermsNoticeHost />
       <SubtaskAskHost />
       <ToastHost />
       {signOutFlow.prompt}

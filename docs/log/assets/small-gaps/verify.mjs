@@ -146,7 +146,7 @@ if (ONLY.includes('2')) {
       await page.getByLabel('Thing 1').fill('Call the tyre supplier tomorrow 3pm')
       await page.getByLabel('Thing 2').fill('Gym')
       const chip = page.locator('.fr-when .kf-chip')
-      check(`${name} the dated line shows its chip, as a button`, (await chip.count()) === 1 && (await raw(chip)) === 'Tomorrow · 15:00' && (await chip.evaluate((e) => e.tagName)) === 'BUTTON', await raw(chip))
+      check(`${name} the dated line shows its chip, as a button`, (await chip.count()) === 1 && (await raw(chip)) === 'Tomorrow · 3:00 PM' /* 12h clock since v1.4.0 */ && (await chip.evaluate((e) => e.tagName)) === 'BUTTON', await raw(chip))
       await chip.click()
       await sleep(500)
       const dialog = page.getByRole('dialog').filter({ hasText: 'Due date' })
@@ -155,10 +155,10 @@ if (ONLY.includes('2')) {
       await dialog.locator('[data-day="2026-10-01"]').click()
       await dialog.getByRole('button', { name: 'Done' }).click()
       await sleep(400)
-      check(`${name} Done → the chip reads the picked day (Thu 1 Oct · 09:00), picker closed`, (await raw(chip)) === 'Thu, Oct 1 · 09:00' && (await page.getByRole('dialog').count()) === 0, await raw(chip))
+      check(`${name} Done → the chip reads the picked day (Thu 1 Oct · 9:00 AM), picker closed`, (await raw(chip)) === 'Thu, Oct 1 · 9:00 AM' && (await page.getByRole('dialog').count()) === 0, await raw(chip))
       await page.getByLabel('Thing 1').fill('Call the tyre supplier about the invoice tomorrow 3pm')
       await sleep(200)
-      check(`${name} more title words keep the pick`, (await raw(chip)) === 'Thu, Oct 1 · 09:00', await raw(chip))
+      check(`${name} more title words keep the pick`, (await raw(chip)) === 'Thu, Oct 1 · 9:00 AM', await raw(chip))
       await shot(page, name)
       const w0 = state.writes.length
       await page.getByRole('button', { name: 'Start' }).click()
@@ -329,7 +329,8 @@ if (ONLY.includes('4')) {
   // The command bar's quick add: `*label` shows as a chip and lands on the task.
   {
     const name = '4-labels-command-bar'
-    const { ctx, page, errors, state } = await open('/tasks?list=all', { tasks: rows }, { view: desktop })
+    // "File captures for me" defaults OFF since v1.5.0 (ai-chat item 7): on here, the check is the dated line filing as a task.
+    const { ctx, page, errors, state } = await open('/tasks?list=all', { tasks: rows, app_settings: [settings({ auto_file_captures: true, help_seen: ['notice:autofile'] })] }, { view: desktop })
     await page.keyboard.press('Control+k')
     await sleep(300)
     const input = page.getByPlaceholder('Send the quote tomorrow 3pm #shaheen')

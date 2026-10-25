@@ -166,8 +166,13 @@ if (want('k1')) {
   await press(page, '3')
   await settle(state)
   check('k1 3 → 3 days (and the day count is remembered, as the popover does)', /3 days/i.test(await viewLabel(page)) && (await cols(page)).length === 3 && posts(state, 'app_settings', w).some((s) => s.calendar_day_count === 3), `${await viewLabel(page)} ${(await cols(page)).length}`)
+  const w6 = state.writes.length
   await press(page, '6')
-  check('k1 6 → 6 days', /6 days/i.test(await viewLabel(page)) && (await cols(page)).length === 6, await viewLabel(page))
+  await settle(state)
+  // cal-wave (2026-10-25): the N-day view drops days rather than go under the 80px column, so at 1280 with
+  // the rail open 6 shows as many as fit (5). The key still picks 6; the header names what is shown.
+  const n6 = (await cols(page)).length
+  check('k1 6 → 6 days (shown as many as fit, header says so)', posts(state, 'app_settings', w6).some((s) => s.calendar_day_count === 6) && n6 >= 5 && n6 <= 6 && new RegExp(`${n6} days`, 'i').test(await viewLabel(page)), `${await viewLabel(page)} ${n6}`)
   await press(page, 'w')
   check('k1 w → Week', /week/i.test(await viewLabel(page)) && (await cols(page)).length === 7, await viewLabel(page))
   await press(page, '1')
@@ -414,12 +419,13 @@ if (want('r1')) {
 if (want('r2')) {
   const { ctx, page, errors, state } = await open(`/tasks?task=${tid(STRETCH)}`, { view: phone })
   const next = (await page.locator('.ts-next').innerText().catch(() => '')).trim()
-  check('r2 an overdue daily repeat previews from today: "Next · Sat 11 Jul 09:00 · then Sun 12" (not Wed 8)', /^next · sat 11 jul 09:00 · then sun 12$/i.test(next), next)
+  // 12h clock since v1.4.0 (one-clock change): "9:00 AM", not "09:00".
+  check('r2 an overdue daily repeat previews from today: "Next · Sat 11 Jul 9:00 AM · then Sun 12" (not Wed 8)', /^next · sat 11 jul 9:00 am · then sun 12$/i.test(next), next)
   await shot(page, 'r2-next-overdue')
   await page.goto(`${BASE}/tasks?task=${tid(PILLS)}`, { waitUntil: 'networkidle' })
   await sleep(1200)
   const pills = (await page.locator('.ts-next').innerText().catch(() => '')).trim()
-  check('r2 "Ends after 2 times", the first: one more next (no "then")', /^next · sat 11 jul 09:00$/i.test(pills), pills)
+  check('r2 "Ends after 2 times", the first: one more next (no "then")', /^next · sat 11 jul 9:00 am$/i.test(pills), pills)
   const w = state.writes.length
   await page.getByRole('button', { name: 'Done for today' }).click()
   await settle(state)

@@ -1,0 +1,122 @@
+/* Terms notice + Delete account (LegalDialogs.tsx): the Overlays.dc.html confirm card, a little wider,
+   tokens only. Both open over any page, so they carry their own styles. */
+.lg-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 115; /* under ConfirmCard (120): Sign out's "changes not synced" ask shows over the notice */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: var(--scrim);
+}
+.lg-card {
+  width: min(420px, 100%);
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-popover);
+  padding: 20px 22px;
+  color: var(--ink-body);
+}
+.lg-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--fs-lead);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.lg-body {
+  margin: 10px 0 0;
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+.lg-list {
+  margin: 10px 0 0;
+  padding-left: 18px;
+  list-style: disc;
+  font-size: var(--fs-body-s);
+  line-height: 1.5;
+  color: var(--ink-body);
+}
+.lg-list li + li {
+  margin-top: 4px;
+}
+.lg-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  margin-top: 12px;
+  font-size: var(--fs-body-s);
+}
+.lg-links a {
+  color: var(--acc-lavender-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+.lg-links a:hover {
+  text-decoration: underline;
+}
+.lg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+/* The way out: quiet text buttons under the main row. */
+.lg-out {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0 4px;
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--line-dashed);
+}
+.lg-out button {
+  min-height: var(--touch-min);
+  padding: 0 8px;
+  border: none;
+  background: none;
+  font: inherit;
+  font-size: var(--fs-body-s);
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.lg-out button:hover {
+  color: var(--ink-body);
+}
+.lg-label {
+  display: block;
+  margin-top: 14px;
+  font-size: var(--fs-body-s);
+  color: var(--ink-body);
+}
+.lg-field {
+  display: block;
+  width: 100%;
+  min-height: var(--touch-min);
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 8px 12px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-input);
+  font: inherit;
+  font-size: var(--fs-body-l);
+  color: var(--ink-body);
+}
+.lg-field:focus {
+  outline: 2px solid var(--acc-terra-ink);
+  outline-offset: 1px;
+}
+.lg-error {
+  margin: 10px 0 0;
+  font-size: var(--fs-body-s);
+  color: var(--acc-terra-ink);
+}

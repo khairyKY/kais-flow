@@ -1,0 +1,782 @@
+[
+  {
+    "name": "s-desktop-day sign up has the terms box, unticked, and Create account waits for it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-day unticked: neither a tap nor Enter signs up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-day the box's line links both pages",
+    "ok": true,
+    "detail": "[[\"Terms of Use\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"],[\"Privacy Policy\",\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\"]]"
+  },
+  {
+    "name": "s-desktop-day its Terms link opens the page and doesn't tick the box",
+    "ok": true,
+    "detail": "https://kais-flow-site.khairyshhn1.workers.dev/terms/"
+  },
+  {
+    "name": "s-desktop-day footer: Privacy Policy · Terms of Use",
+    "ok": true,
+    "detail": "[[\"Privacy Policy\",\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\"],[\"Terms of Use\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"]]"
+  },
+  {
+    "name": "s-desktop-day password eye: no word, one glyph, \"Show password\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-day a tap shows it and the eye is \"Hide password\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-day a tap on the line ticks it; Create account is ready",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-day sign-up sends the versions agreed to",
+    "ok": true,
+    "detail": "{\"terms_version\":\"2026-10-25\",\"privacy_version\":\"2026-10-25\"}"
+  },
+  {
+    "name": "s-desktop-day consent rows written (the trigger's job, mocked) — 2 rows at the current versions",
+    "ok": true,
+    "detail": "[[\"terms\",\"2026-10-25\"],[\"privacy\",\"2026-10-25\"]]"
+  },
+  {
+    "name": "s-desktop-day the new account lands in the app with no notice",
+    "ok": true,
+    "detail": "http://localhost:5305/today"
+  },
+  {
+    "name": "s-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-day sign in: no terms box, the footer links",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-night sign up has the terms box, unticked, and Create account waits for it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-night unticked: neither a tap nor Enter signs up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-night the box's line links both pages",
+    "ok": true,
+    "detail": "[[\"Terms of Use\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"],[\"Privacy Policy\",\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\"]]"
+  },
+  {
+    "name": "s-desktop-night its Terms link opens the page and doesn't tick the box",
+    "ok": true,
+    "detail": "https://kais-flow-site.khairyshhn1.workers.dev/terms/"
+  },
+  {
+    "name": "s-desktop-night footer: Privacy Policy · Terms of Use",
+    "ok": true,
+    "detail": "[[\"Privacy Policy\",\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\"],[\"Terms of Use\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"]]"
+  },
+  {
+    "name": "s-desktop-night password eye: no word, one glyph, \"Show password\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-night a tap shows it and the eye is \"Hide password\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-night a tap on the line ticks it; Create account is ready",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-night sign-up sends the versions agreed to",
+    "ok": true,
+    "detail": "{\"terms_version\":\"2026-10-25\",\"privacy_version\":\"2026-10-25\"}"
+  },
+  {
+    "name": "s-desktop-night consent rows written (the trigger's job, mocked) — 2 rows at the current versions",
+    "ok": true,
+    "detail": "[[\"terms\",\"2026-10-25\"],[\"privacy\",\"2026-10-25\"]]"
+  },
+  {
+    "name": "s-desktop-night the new account lands in the app with no notice",
+    "ok": true,
+    "detail": "http://localhost:5305/today"
+  },
+  {
+    "name": "s-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-desktop-night sign in: no terms box, the footer links",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-day sign up has the terms box, unticked, and Create account waits for it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-day unticked: neither a tap nor Enter signs up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-day the box's line links both pages",
+    "ok": true,
+    "detail": "[[\"Terms of Use\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"],[\"Privacy Policy\",\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\"]]"
+  },
+  {
+    "name": "s-phone-day its Terms link opens the page and doesn't tick the box",
+    "ok": true,
+    "detail": "https://kais-flow-site.khairyshhn1.workers.dev/terms/"
+  },
+  {
+    "name": "s-phone-day footer: Privacy Policy · Terms of Use",
+    "ok": true,
+    "detail": "[[\"Privacy Policy\",\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\"],[\"Terms of Use\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"]]"
+  },
+  {
+    "name": "s-phone-day password eye: no word, one glyph, \"Show password\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-day a tap shows it and the eye is \"Hide password\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-day a tap on the line ticks it; Create account is ready",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-day sign-up sends the versions agreed to",
+    "ok": true,
+    "detail": "{\"terms_version\":\"2026-10-25\",\"privacy_version\":\"2026-10-25\"}"
+  },
+  {
+    "name": "s-phone-day consent rows written (the trigger's job, mocked) — 2 rows at the current versions",
+    "ok": true,
+    "detail": "[[\"terms\",\"2026-10-25\"],[\"privacy\",\"2026-10-25\"]]"
+  },
+  {
+    "name": "s-phone-day the new account lands in the app with no notice",
+    "ok": true,
+    "detail": "http://localhost:5305/today"
+  },
+  {
+    "name": "s-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-day sign in: no terms box, the footer links",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-night sign up has the terms box, unticked, and Create account waits for it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-night unticked: neither a tap nor Enter signs up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-night the box's line links both pages",
+    "ok": true,
+    "detail": "[[\"Terms of Use\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"],[\"Privacy Policy\",\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\"]]"
+  },
+  {
+    "name": "s-phone-night its Terms link opens the page and doesn't tick the box",
+    "ok": true,
+    "detail": "https://kais-flow-site.khairyshhn1.workers.dev/terms/"
+  },
+  {
+    "name": "s-phone-night footer: Privacy Policy · Terms of Use",
+    "ok": true,
+    "detail": "[[\"Privacy Policy\",\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\"],[\"Terms of Use\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"]]"
+  },
+  {
+    "name": "s-phone-night password eye: no word, one glyph, \"Show password\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-night a tap shows it and the eye is \"Hide password\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-night a tap on the line ticks it; Create account is ready",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-night sign-up sends the versions agreed to",
+    "ok": true,
+    "detail": "{\"terms_version\":\"2026-10-25\",\"privacy_version\":\"2026-10-25\"}"
+  },
+  {
+    "name": "s-phone-night consent rows written (the trigger's job, mocked) — 2 rows at the current versions",
+    "ok": true,
+    "detail": "[[\"terms\",\"2026-10-25\"],[\"privacy\",\"2026-10-25\"]]"
+  },
+  {
+    "name": "s-phone-night the new account lands in the app with no notice",
+    "ok": true,
+    "detail": "http://localhost:5305/today"
+  },
+  {
+    "name": "s-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-phone-night sign in: no terms box, the footer links",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-day Settings has \"Privacy & terms\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-day Read → the Privacy Policy and the Terms of Use",
+    "ok": true,
+    "detail": "[\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"]"
+  },
+  {
+    "name": "p-desktop-day says when it was updated and that you agreed",
+    "ok": true,
+    "detail": "Privacy & terms | Privacy Policy | Updated 25 Oct 2026 · you agreed 25 Oct 2026 | Read | Terms of Use | Updated 25 Oct 2026 · you agreed 25 Oct 2026 | Read | What we keep, and where | Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export or delete it all under Your data"
+  },
+  {
+    "name": "p-desktop-day the short \"where\": Supabase in the EU, Groq keeps nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-day Read opens the Privacy Policy",
+    "ok": true,
+    "detail": "https://kais-flow-site.khairyshhn1.workers.dev/privacy/"
+  },
+  {
+    "name": "p-desktop-day the side nav has \"Privacy & terms\" and goes there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-day Your data has Delete account",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-night Settings has \"Privacy & terms\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-night Read → the Privacy Policy and the Terms of Use",
+    "ok": true,
+    "detail": "[\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"]"
+  },
+  {
+    "name": "p-desktop-night says when it was updated and that you agreed",
+    "ok": true,
+    "detail": "Privacy & terms | Privacy Policy | Updated 25 Oct 2026 · you agreed 25 Oct 2026 | Read | Terms of Use | Updated 25 Oct 2026 · you agreed 25 Oct 2026 | Read | What we keep, and where | Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export or delete it all under Your data"
+  },
+  {
+    "name": "p-desktop-night the short \"where\": Supabase in the EU, Groq keeps nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-night Read opens the Privacy Policy",
+    "ok": true,
+    "detail": "https://kais-flow-site.khairyshhn1.workers.dev/privacy/"
+  },
+  {
+    "name": "p-desktop-night the side nav has \"Privacy & terms\" and goes there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-night Your data has Delete account",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-day Settings has \"Privacy & terms\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-day Read → the Privacy Policy and the Terms of Use",
+    "ok": true,
+    "detail": "[\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"]"
+  },
+  {
+    "name": "p-phone-day says when it was updated and that you agreed",
+    "ok": true,
+    "detail": "Privacy & terms | Privacy Policy | Updated 25 Oct 2026 · you agreed 25 Oct 2026 | Read | Terms of Use | Updated 25 Oct 2026 · you agreed 25 Oct 2026 | Read | What we keep, and where | Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export or delete it all under Your data"
+  },
+  {
+    "name": "p-phone-day the short \"where\": Supabase in the EU, Groq keeps nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-day Read opens the Privacy Policy",
+    "ok": true,
+    "detail": "https://kais-flow-site.khairyshhn1.workers.dev/privacy/"
+  },
+  {
+    "name": "p-phone-day Your data has Delete account",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-night Settings has \"Privacy & terms\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-night Read → the Privacy Policy and the Terms of Use",
+    "ok": true,
+    "detail": "[\"https://kais-flow-site.khairyshhn1.workers.dev/privacy/\",\"https://kais-flow-site.khairyshhn1.workers.dev/terms/\"]"
+  },
+  {
+    "name": "p-phone-night says when it was updated and that you agreed",
+    "ok": true,
+    "detail": "Privacy & terms | Privacy Policy | Updated 25 Oct 2026 · you agreed 25 Oct 2026 | Read | Terms of Use | Updated 25 Oct 2026 · you agreed 25 Oct 2026 | Read | What we keep, and where | Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export or delete it all under Your data"
+  },
+  {
+    "name": "p-phone-night the short \"where\": Supabase in the EU, Groq keeps nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-night Read opens the Privacy Policy",
+    "ok": true,
+    "detail": "https://kais-flow-site.khairyshhn1.workers.dev/privacy/"
+  },
+  {
+    "name": "p-phone-night Your data has Delete account",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-day an older agreement → \"We’ve updated our Terms of Use and Privacy Policy\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-day 2–4 lines of what changed, both links",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "n-desktop-day the ways out: Export my data, Delete my account, Sign out",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-day the card fits the screen",
+    "ok": true,
+    "detail": "{\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "n-desktop-day Esc and a tap outside don't close it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-day I agree → the current versions written (outbox → consents)",
+    "ok": true,
+    "detail": "[{\"id\":\"580dbdc8-9c8d-489c-835e-03ced75ce45e\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:31:41.192Z\"},{\"id\":\"9059fba4-eaac-4bf4-8729-d2de8ec04d97\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:31:41.192Z\"}]"
+  },
+  {
+    "name": "n-desktop-day and the notice is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-day still gone after a reload",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-night an older agreement → \"We’ve updated our Terms of Use and Privacy Policy\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-night 2–4 lines of what changed, both links",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "n-desktop-night the ways out: Export my data, Delete my account, Sign out",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-night the card fits the screen",
+    "ok": true,
+    "detail": "{\"sw\":1280,\"iw\":1280}"
+  },
+  {
+    "name": "n-desktop-night Esc and a tap outside don't close it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-night I agree → the current versions written (outbox → consents)",
+    "ok": true,
+    "detail": "[{\"id\":\"76843233-a74b-4e94-980d-987a4bb20e10\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:31:51.788Z\"},{\"id\":\"631f2c7a-7074-4ea3-8af0-b8d7ed5e9f1d\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:31:51.788Z\"}]"
+  },
+  {
+    "name": "n-desktop-night and the notice is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-night still gone after a reload",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-day an older agreement → \"We’ve updated our Terms of Use and Privacy Policy\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-day 2–4 lines of what changed, both links",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "n-phone-day the ways out: Export my data, Delete my account, Sign out",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-day the card fits the screen",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "n-phone-day Esc and a tap outside don't close it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-day I agree → the current versions written (outbox → consents)",
+    "ok": true,
+    "detail": "[{\"id\":\"dbea085d-4fa9-4a4d-97fd-a50916b91067\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:01.838Z\"},{\"id\":\"eca7ce59-c44c-4e94-95d1-acf92f73cfb7\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:01.838Z\"}]"
+  },
+  {
+    "name": "n-phone-day and the notice is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-day still gone after a reload",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-night an older agreement → \"We’ve updated our Terms of Use and Privacy Policy\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-night 2–4 lines of what changed, both links",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "n-phone-night the ways out: Export my data, Delete my account, Sign out",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-night the card fits the screen",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "n-phone-night Esc and a tap outside don't close it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-night I agree → the current versions written (outbox → consents)",
+    "ok": true,
+    "detail": "[{\"id\":\"c93bf76a-bec3-4a7b-b2bf-6612ce956aa6\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:12.019Z\"},{\"id\":\"f17dc235-8413-4487-b285-3ec25a73200e\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:12.019Z\"}]"
+  },
+  {
+    "name": "n-phone-night and the notice is gone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-night still gone after a reload",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-none an account with no agreement at all is asked for both",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-one only the Privacy Policy older → only it is named",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n-one I agree writes just the Privacy Policy",
+    "ok": true,
+    "detail": "[{\"id\":\"11be7de5-b6f0-4bc4-9232-98d9ff3b6074\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:24.446Z\"}]"
+  },
+  {
+    "name": "d-desktop-day the dialog asks, offers the export, Delete waits for the word",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-day Export everything first saves the .json",
+    "ok": true,
+    "detail": "kais-flow-2026-10-25.json"
+  },
+  {
+    "name": "d-desktop-day a wrong word keeps Delete off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-day DELETE typed (any case) → Delete is ready",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-day Esc keeps the account (closes the dialog, nothing sent)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-day Google disconnected first, then delete-account { confirm: DELETE }",
+    "ok": true,
+    "detail": "[[{\"action\":\"disconnect\"}],[{\"confirm\":\"DELETE\"}]]"
+  },
+  {
+    "name": "d-desktop-day signed out, on /sign-in, with the toast",
+    "ok": true,
+    "detail": "http://localhost:5305/sign-in"
+  },
+  {
+    "name": "d-desktop-day this device forgot the session",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-night the dialog asks, offers the export, Delete waits for the word",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-night a wrong word keeps Delete off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-night DELETE typed (any case) → Delete is ready",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-night Esc keeps the account (closes the dialog, nothing sent)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-night Google disconnected first, then delete-account { confirm: DELETE }",
+    "ok": true,
+    "detail": "[[{\"action\":\"disconnect\"}],[{\"confirm\":\"DELETE\"}]]"
+  },
+  {
+    "name": "d-desktop-night signed out, on /sign-in, with the toast",
+    "ok": true,
+    "detail": "http://localhost:5305/sign-in"
+  },
+  {
+    "name": "d-desktop-night this device forgot the session",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-day the dialog asks, offers the export, Delete waits for the word",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-day a wrong word keeps Delete off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-day DELETE typed (any case) → Delete is ready",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-day Esc keeps the account (closes the dialog, nothing sent)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-day Google disconnected first, then delete-account { confirm: DELETE }",
+    "ok": true,
+    "detail": "[[{\"action\":\"disconnect\"}],[{\"confirm\":\"DELETE\"}]]"
+  },
+  {
+    "name": "d-phone-day signed out, on /sign-in, with the toast",
+    "ok": true,
+    "detail": "http://localhost:5305/sign-in"
+  },
+  {
+    "name": "d-phone-day this device forgot the session",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-night the dialog asks, offers the export, Delete waits for the word",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-night a wrong word keeps Delete off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-night DELETE typed (any case) → Delete is ready",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-night Esc keeps the account (closes the dialog, nothing sent)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-night Google disconnected first, then delete-account { confirm: DELETE }",
+    "ok": true,
+    "detail": "[[{\"action\":\"disconnect\"}],[{\"confirm\":\"DELETE\"}]]"
+  },
+  {
+    "name": "d-phone-night signed out, on /sign-in, with the toast",
+    "ok": true,
+    "detail": "http://localhost:5305/sign-in"
+  },
+  {
+    "name": "d-phone-night this device forgot the session",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-notice Delete my account opens the dialog over the notice",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-notice Keep my account → back to the notice",
+    "ok": true,
+    "detail": ""
+  }
+]

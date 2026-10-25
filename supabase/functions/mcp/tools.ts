@@ -38,6 +38,7 @@ export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
 import { expandSeries, type RuleBetween } from '../_shared/series.ts'
 import { rollAfter, ruleAfterThis, stepOf } from '../_shared/repeat.ts'
 import { occurrenceOn } from '../_shared/slots.ts'
+import { spanMinutes, taskOnBlock, withLength } from '../_shared/blockLength.ts'
 import { readFilter, smartMatch, type SmartFilter, type SmartTask } from '../_shared/smartList.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
@@ -331,6 +332,9 @@ export interface ToolContext {
   ruleBetween: RuleBetween
   /** The personal areas this key may reach (mcp_keys.scopes). */
   scopes: ReadonlySet<Scope>
+  /** Who acts, in activity payloads and an Inbox capture's payload: 'mcp' (an assistant's key — the
+   * default) or 'chat' (the app's own chat, chat/index.ts, which runs these same tools as its user). */
+  source?: string
 }
 
 /** The events in [start, end): one-off rows as the store found them, each repeating row as its
@@ -460,7 +464,7 @@ export function whenOrNull(a: Args, k: string, zone: string): When | null | unde
  * ritual's day, a label's name) gets a fresh id and rides along as payload.entity_key, as activityRow does. */
 export async function logIt(ctx: ToolContext, eventType: string, entityType: string, key: string, payload: Row = {}): Promise<void> {
   const keyed = UUID.test(key)
-  await ctx.store.log(eventType, entityType, keyed ? key : crypto.randomUUID(), { ...payload, ...(keyed ? {} : { entity_key: key }), source: 'mcp' })
+  await ctx.store.log(eventType, entityType, keyed ? key : crypto.randomUUID(), { ...payload, ...(keyed ? {} : { entity_key: key }), source: ctx.source ?? 'mcp' })
 }
 
 /** The most rows one bulk call takes (the app's bulk bar has no cap; this keeps a call short). */
@@ -653,8 +657,9 @@ export async function replanTask(ctx: ToolContext, t: TaskRow, due: string | nul
   const on = m.place ?? m.keep
   // Replanned, a task leaves its Time slot (tasks/api rescheduleDue → OUT_OF_SLOT).
   const outOfSlot = t.slot_id ? OUT_OF_SLOT : {}
-  const schedule = on ? { scheduled_start: on.starts_at, scheduled_end: on.ends_at } : m.clear.length ? { scheduled_start: null, scheduled_end: null } : {}
-  const task = settle(t, { ...t, ...outOfSlot, due_at: due, someday: due ? false : t.someday, ...schedule }, ctx.now, ctx.zone)
+  // The block it ends on is the task's schedule and its length the estimate (_shared/blockLength, as the app's touchTaskSchedule).
+  const schedule = on ? taskOnBlock(t, on.starts_at, on.ends_at, !m.place && !!m.keep?.all_day) : m.clear.length ? { scheduled_start: null, scheduled_end: null } : {}
+  const task = settle(t, { ...t, ...outOfSlot, ...schedule, due_at: due, someday: due ? false : t.someday }, ctx.now, ctx.zone)
   await ctx.store.updateTask(task)
   await ctx.store.log('task.rescheduled', 'task', t.id, { due_at: due, source: 'mcp' })
   const removed = m.clear.length ? await ctx.store.deleteEvents(m.clear.map((b) => b.id)) : []
@@ -1231,6 +1236,17 @@ async function editOne(a: Args, ctx: ToolContext, taskId: string): Promise<Row> 
   if (title !== t.title) edit(`title → "${title}"`, 'task.updated', { field: 'title' })
   if (notes !== t.notes) edit(notes ? 'notes' : 'notes cleared', 'task.updated', { field: 'notes' })
   if (durationMin !== t.duration_min) edit(durationMin ? `duration → ${durationMin} min` : 'duration cleared', 'task.updated', { field: 'duration' })
+  // On the calendar the estimate is the block's length: its latest timed block keeps its start and takes
+  // the new length (calendar/api lengthenTaskBlock, _shared/blockLength).
+  let stretched: EventRow | null = null
+  if (durationMin && durationMin !== t.duration_min) {
+    const block = (await ctx.store.taskBlocks(t.id)).filter((b) => !b.all_day).sort((x, y) => Date.parse(y.starts_at) - Date.parse(x.starts_at))[0]
+    if (block && spanMinutes(block.starts_at, block.ends_at) !== durationMin) {
+      stretched = { ...block, ...withLength(block.starts_at, durationMin) }
+      next = { ...next, scheduled_start: stretched.starts_at, scheduled_end: stretched.ends_at }
+      changed.push(`on the calendar ${spanText(stretched, z)}`)
+    }
+  }
   if (labels !== undefined && labels.join('\n') !== (t.labels ?? []).join('\n')) {
     next.labels = labels
     edit(labels.length ? `labels → ${labels.join(', ')}` : 'labels cleared', 'task.updated', { field: 'labels' })
@@ -1310,6 +1326,7 @@ async function editOne(a: Args, ctx: ToolContext, taskId: string): Promise<Row> 
   if (remindAt === undefined && task.reminder_at && !sameInstant(task.reminder_at, t.reminder_at)) changed.push(`reminder → ${wallTime(task.reminder_at, z)}`)
   if (changed.length) {
     await ctx.store.updateTask(task)
+    if (stretched) await ctx.store.updateEvent(stretched)
     for (const [type, payload] of logs) await logIt(ctx, type, 'task', t.id, payload)
     for (const { row, rank } of ranks) await ctx.store.patch('tasks', { id: row.id }, { top3_rank: rank })
     const gone = blocksOff.length ? await ctx.store.deleteEvents(blocksOff.map((b) => b.id)) : []
@@ -1740,9 +1757,14 @@ export const TOOLS: readonly ToolDef[] = [
       if (url !== undefined && !/^https?:\/\/\S+$/i.test(url)) return bad('"url" must be an http(s) link.')
       const rawText = url && !note.includes(url) ? `${note}\n${url}` : note
       const itemId = crypto.randomUUID()
-      await ctx.store.insertInbox({ id: itemId, raw_text: rawText, payload: { source: 'mcp', ...(url ? { url } : {}) } })
+      const source = ctx.source ?? 'mcp'
+      // "File captures for me" (0086): on, the app files it like any capture once a device sees it
+      // (needs_parse → features/capture/api.ts processQueuedCaptures); off — the default — it waits here.
+      const [settings] = await ctx.store.find('app_settings', {}, { limit: 1 })
+      const fileIt = settings?.auto_file_captures === true
+      await ctx.store.insertInbox({ id: itemId, raw_text: rawText, payload: { source, ...(url ? { url } : {}), ...(fileIt ? { needs_parse: true } : {}) } })
       // The trace a ⌘K capture leaves (lib/activity.ts), so streaks and Activity see it.
-      await ctx.store.log('inbox.captured', 'inbox_item', itemId, { kind: 'text', source: 'mcp' })
+      await ctx.store.log('inbox.captured', 'inbox_item', itemId, { kind: 'text', source })
       return { added_to_inbox: { id: itemId, text: rawText } }
     },
   },

@@ -191,8 +191,10 @@ for (const theme of ['day', 'night']) {
     const name = `rail-${theme}`
     const { ctx, page, errors } = await open('/calendar', { theme })
     await shot(page, name)
-    const heads = await page.locator('.cal-rail-sec-head').allInnerTexts()
-    check(`${name} four sections with counts: Overdue 2 · Today 2 · Inbox 2 · Lists`, flat(heads.join(' | ')).toUpperCase().startsWith('OVERDUE 2 | TODAY 2 | INBOX 2 | LISTS'), flat(heads.join(' | ')))
+    // cal-wave (Kai 2026-10-25, item 18): an empty section steps aside (Lists 0 → a quiet "Lists…"), and
+    // Scheduled (today's tasks already on the calendar) sits between Today and Inbox.
+    const heads = await page.locator('.cal-rail-sec-head:visible').allInnerTexts()
+    check(`${name} the sections with something in them: Overdue 2 · Today 2 · Scheduled 3 · Inbox 2 (Lists 0 steps aside)`, flat(heads.join(' | ')).toUpperCase() === 'OVERDUE 2 | TODAY 2 | SCHEDULED 3 | INBOX 2' && (await page.locator('.cal-rail-more', { hasText: 'Lists…' }).count()) === 1, flat(heads.join(' | ')))
     check(`${name} the rail is open by itself (an overdue pile, no fold chosen)`, (await page.locator('.cal-rail:not(.is-folded)').count()) === 1)
     const od = await sec(page, 'overdue').locator('.unscheduled-task').allInnerTexts()
     check(`${name} Overdue: the tax papers (2d) then the crypto session (its block missed yesterday, 1d)`, od.length === 2 && /Send the tax papers[\s\S]*OVERDUE 2D/i.test(od[0]) && /Crypto — heavy session[\s\S]*OVERDUE 1D/i.test(od[1]), JSON.stringify(od.map(flat)))
@@ -201,7 +203,7 @@ for (const theme of ['day', 'night']) {
     check(`${name} Today: Review Kai (17:00, no time on the calendar) and the Top 3 pick — not the planned tyre call`, td.length === 2 && /Review Kai/.test(td[0]) && /Pick the 3/.test(td[1]), JSON.stringify(td.map(flat)))
     const ib = await sec(page, 'inbox').locator('.unscheduled-task').allInnerTexts()
     check(`${name} Inbox: the AI's cleaned title ("Buy printer ink") and the voice capture`, ib.length === 2 && /Buy printer ink/.test(ib[0]) && /Call the bank/.test(ib[1]), JSON.stringify(ib.map(flat)))
-    check(`${name} every card has Plan ▾`, (await page.locator('.cal-rail .unscheduled-task .cal-plan-btn').count()) === 6)
+    check(`${name} every card has Plan ▾ (the 3 Scheduled ones too)`, (await page.locator('.cal-rail .unscheduled-task .cal-plan-btn').count()) === 9)
     check(`${name} Lists is folded by default`, (await sec(page, 'lists').locator('.cal-rail-cards').count()) === 0)
     // Kai 2026-10-17: a click on a card (no drag) opens the task — the popover at the card, ?task= — and
     // Enter on the focused card does too. The checkbox, Plan ▾ and ⋯ keep their own (D2/D3 below).
@@ -504,7 +506,8 @@ for (const theme of ['day', 'night']) {
     await shot(page, name)
     const segs = (await page.locator('.pc-segs [role="radio"]').allInnerTexts()).map(flat)
     // cal-wave2 (2026-10-12): the rail's Lists is the strip's fourth segment.
-    check(`${name} segments "Overdue 2 · Today 2 · Inbox 2 · Lists 0", Overdue chosen`, JSON.stringify(segs) === JSON.stringify(['Overdue 2', 'Today 2', 'Inbox 2', 'Lists 0']) && (await seg(page, 'Overdue').getAttribute('aria-checked')) === 'true', JSON.stringify(segs))
+    // cal-wave (item 18): the desktop rail's rule — Scheduled added, an empty segment (Lists 0) steps aside.
+    check(`${name} segments "Overdue 2 · Today 2 · Scheduled 3 · Inbox 2", Overdue chosen`, JSON.stringify(segs) === JSON.stringify(['Overdue 2', 'Today 2', 'Scheduled 3', 'Inbox 2']) && (await seg(page, 'Overdue').getAttribute('aria-checked')) === 'true', JSON.stringify(segs))
     const sb = await page.locator('.pc-segs .rt-seg-row').boundingBox()
     const opts = await page.locator('.pc-segs [role="radio"]').evaluateAll((els) => els.map((e) => Math.round(e.getBoundingClientRect().height)))
     check(`${name} the segment row is a 48px target row (options 40 inside it)`, Math.round(sb.height) >= 48 && opts.every((h) => h === 40), `${sb.height} · ${opts}`)

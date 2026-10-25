@@ -10,6 +10,8 @@ import { playSound } from '../../lib/sounds'
 import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDueChip } from './dueChip'
+import { offerProject } from '../projects/autoProject'
+import { autoFileOn } from '../../lib/settings'
 import { hasStructure, parseCommand, quickAddTask, type ParsedCommand } from './parseCommand'
 import { timeText } from '../calendar/eventTime'
 import { dayWord } from '../tasks/taskSheetMath'
@@ -19,15 +21,39 @@ import { dayWord } from '../tasks/taskSheetMath'
  * local parse, never waiting on the network: an event when one was asked for; a line with tokens as a
  * task (addTypedTask); a plain line in the Inbox, where the AI then reads it and may file it
  * (capture/api enrichTypedInboxItem). Every landing says where it went. */
-export function captureTyped(parsed: ParsedCommand, typed: string, kind: 'task' | 'event' = 'task'): void {
+// Kai 2026-10-25 ("I guess?"): with "File captures for me" off (0086, the default) a line WITH tokens
+// waits in the Inbox too — its tokens the card's one-tap suggestion (holdTyped). `asTask`: the bar was
+// opened from an "add a task" field (Today's add row), which still makes the task at once — as the
+// Tasks page's quick add (addTypedTask) and the rail's quick create do.
+export function captureTyped(parsed: ParsedCommand, typed: string, kind: 'task' | 'event' = 'task', asTask = false): void {
   playSound('capture')
   if (kind === 'event') addTypedEvent(parsed, typed)
-  else if (hasStructure(parsed)) addTypedTask(parsed, typed, parsed.projectMatch ?? parsed.domainMatch)
+  else if (hasStructure(parsed) && (asTask || autoFileOn())) addTypedTask(parsed, typed, parsed.projectMatch ?? parsed.domainMatch)
+  else if (hasStructure(parsed)) holdTyped(parsed, typed)
   else {
     const item = captureText(typed)
     void enrichTypedInboxItem(item, typed)
     toastUndo('Added to Inbox', () => uncapture(item)) // P7e A17: it had no Undo
   }
+}
+
+/** A line with tokens, held in the Inbox: what they said is its read (confidence 1 — the person typed
+ * it), so the card shows "Tomorrow 3:00 PM · Work" ready to file in one tap; the extras ride on the
+ * payload for filing (inbox/api fileToTask). No AI read: the tokens already are one. */
+function holdTyped(parsed: ParsedCommand, typed: string): void {
+  const t = quickAddTask(parsed, typed)
+  const item = captureText(typed, {
+    ai_parse: { kind: 'task', cleaned_text: typed, title: t.title, due_at: t.dueAt, has_time: parsed.dueTimed, project_id: t.projectId, domain_id: t.domainId, duration_min: t.durationMin, priority: t.priority, confidence: 1, source: 'typed' },
+    payload: {
+      ...(t.priority != null ? { priority_override: t.priority } : null),
+      ...(t.durationMin != null ? { duration_override: t.durationMin } : null),
+      ...(t.labels.length ? { labels_override: t.labels } : null),
+      ...(t.recurrenceRule ? { repeat_override: t.recurrenceRule } : null),
+      ...(t.notes ? { notes_override: t.notes } : null),
+    },
+  })
+  const when = parsed.dueAt ? formatDueChip(parsed.dueAt, new Date(), parsed.dueTimed) : null
+  toastUndo(['Added to Inbox', when, parsed.projectMatch ?? parsed.domainMatch].filter(Boolean).join(' · '), () => uncapture(item))
 }
 
 /** The one capture rule for a typed task (Kai 2026-10-12: "Enter = the one capture path"; the command
@@ -41,7 +67,9 @@ export function addTypedTask(parsed: ParsedCommand, typed: string, place: string
   const task = createTask({ ...input, dueAt: input.dueAt ?? fallbackDue })
   const slot = land(task, parsed)
   toastAdded(task, [slot?.title, place].filter(Boolean).join(' · ') || null)
-  void enrichTypedTask(task, typed)
+  // Queue item 17: no place typed → its likely project from history; the AI's read may offer one after.
+  const offered = offerProject({ kind: 'task', row: task })
+  void enrichTypedTask(task, typed, offered)
   return task
 }
 
@@ -109,5 +137,6 @@ export function addTypedEvent(parsed: ParsedCommand, typed: string, now: Date = 
     writeRow('calendar_events', event)
   }
   toastUndo(`Added to Calendar · ${formatDueChip(at, now, timed)}`, () => void deleteEvent(event))
+  offerProject({ kind: 'event', row: event }) // queue item 17 (nothing when a #project was typed)
   return event
 }

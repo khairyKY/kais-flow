@@ -4,6 +4,7 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import type { Plugin } from 'vite'
 
 // T-3: stamp every build with the commit it came from, so "live = the merged commit" is provable
@@ -107,5 +108,7 @@ export default defineConfig({
   // The notification copy is one module shared with the notify edge function
   // (supabase/functions/notify/copy.ts), and the release notes are the site's (site/src/releases.json,
   // lib/whatsNew); the dev server may read those two outside app/.
+  // Two pages: the app, and the Windows tray's windows (tray.html — src-tauri tray.rs, features/tray/entry.tsx).
+  build: { rollupOptions: { input: { main: fileURLToPath(new URL('./index.html', import.meta.url)), tray: fileURLToPath(new URL('./tray.html', import.meta.url)) } } },
   server: { fs: { allow: [searchForWorkspaceRoot(process.cwd()), '../supabase/functions/notify', '../site/src/releases.json'] } },
 })

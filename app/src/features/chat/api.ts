@@ -1,13 +1,48 @@
 import { supabase } from '../../lib/supabase'
+import { hour24 } from '../../lib/clock'
 import type { ChatMessage, Citation } from '../../lib/types'
 import { isDailyLimitResponse } from '../capture/aiAllowance'
 
+/** A tool call the chat function runs as the user (the MCP server's tools — supabase/functions/chat). */
+export interface ChatCall {
+  tool: string
+  args: Record<string, unknown>
+}
+
+/** A plan to confirm: the calls, and what each tool answered in the dry run (nothing written yet). */
+export interface ChatPlan {
+  calls: ChatCall[]
+  previews: Record<string, unknown>[]
+}
+
+/** One call's real result: the tool's answer or its refusal. */
+export interface ChatOutcome extends ChatCall {
+  ok: boolean
+  output?: Record<string, unknown>
+  error?: string
+}
+
+/** A confirmed batch's one Undo (supabase/functions/chat/plan.ts restorePlan): every row it changed,
+ * exactly as it was, and every row it made. */
+export interface ChatRestore {
+  put: { table: string; row: Record<string, unknown> & { id: string } }[]
+  drop: { table: string; id: string }[]
+}
+
 export interface StreamChatHandlers {
   onDelta: (delta: string) => void
-  onDone: (citations: Citation[]) => void
+  /** `plan`: the answer is a card to confirm (queue item 5) — nothing has changed yet. */
+  onDone: (citations: Citation[], plan?: ChatPlan) => void
   /** `reason` is 'daily_limit' when today's AI allowance is used up (SEC-2) — a known state with
-   * its own calm copy, not a failure. */
-  onError: (message: string, reason?: 'daily_limit') => void
+   * its own calm copy, not a failure; 'busy' when the shared Groq plan is out of tokens this minute. */
+  onError: (message: string, reason?: 'daily_limit' | 'busy') => void
+}
+
+const CHAT_URL = () => `${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/chat`
+
+async function bearer(): Promise<string | undefined> {
+  const { data: sessionData } = await supabase.auth.getSession()
+  return sessionData.session?.access_token
 }
 
 /** Raw fetch (not supabase.functions.invoke) because the response body must be read as a stream. */
@@ -16,17 +51,17 @@ export async function streamChat(
   handlers: StreamChatHandlers,
   signal?: AbortSignal,
 ): Promise<void> {
-  const { data: sessionData } = await supabase.auth.getSession()
-  const token = sessionData.session?.access_token
-
-  const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL as string}/functions/v1/chat`, {
+  const token = await bearer()
+  const res = await fetch(CHAT_URL(), {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages }),
+    // The person's own clock style, so the answer writes times the way the app does (lib/clock).
+    body: JSON.stringify({ messages, hour24: hour24() }),
     signal,
   })
   if (!res.ok || !res.body) {
     if (await isDailyLimitResponse(res)) handlers.onError('daily_limit', 'daily_limit')
+    else if (res.status === 503 && ((await res.json().catch(() => null)) as { error?: string } | null)?.error === 'busy') handlers.onError('busy', 'busy')
     else handlers.onError(`chat failed: ${res.status}`)
     return
   }
@@ -53,7 +88,7 @@ export async function streamChat(
       try {
         const json = JSON.parse(raw)
         if (currentEvent === 'done') {
-          handlers.onDone((json.citations ?? []) as Citation[])
+          handlers.onDone((json.citations ?? []) as Citation[], json.plan as ChatPlan | undefined)
         } else if (json.delta) {
           handlers.onDelta(json.delta as string)
         }
@@ -63,4 +98,19 @@ export async function streamChat(
       currentEvent = 'message'
     }
   }
+}
+
+/** Runs confirmed calls as the user: every tool's own answer back, in order, and the batch's Undo.
+ * Throws when the request itself fails — then nothing can be said about what ran, and the panel says so. */
+export async function runChatCalls(calls: readonly ChatCall[]): Promise<{ results: ChatOutcome[]; restore: ChatRestore }> {
+  const token = await bearer()
+  const res = await fetch(CHAT_URL(), {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ run: calls }),
+  })
+  if (!res.ok) throw new Error(`chat run failed: ${res.status}`)
+  const { results, restore } = (await res.json()) as { results?: ChatOutcome[]; restore?: ChatRestore }
+  if (!Array.isArray(results)) throw new Error('chat run: no results')
+  return { results, restore: restore ?? { put: [], drop: [] } }
 }

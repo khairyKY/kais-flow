@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { useClockStore } from '../lib/clock'
 import { scheduleNextWeek, scheduleToday, scheduleTomorrow } from '../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../lib/types'
 import {
@@ -103,7 +104,15 @@ describe('quickPicks', () => {
     expect(labels('2026-10-01T10:00:00+03:00')).toEqual(['Today', 'Tomorrow', 'This weekend', 'Next week']) // Thursday
   })
 
+  it("Tomorrow's hint follows the one clock: 9:00 AM, or 09:00 on the 24-hour clock", () => {
+    useClockStore.setState({ hour24: false })
+    expect(quickPicks(sunday, true)[1].hint).toBe('Mon 28 · 9:00 AM')
+    useClockStore.setState({ hour24: true })
+    expect(quickPicks(sunday, true)[1].hint).toBe('Mon 28 · 09:00')
+  })
+
   it('the MK drawing: Today Sun 27 · Tomorrow Mon 28 · 09:00 · This weekend Sat 3 Oct', () => {
+    useClockStore.setState({ hour24: true }) // the drawing's 24-hour clock
     const q = quickPicks(sunday, true)
     expect(q.map((p) => [p.label, p.hint])).toEqual([
       ['Today', 'Sun 27'],

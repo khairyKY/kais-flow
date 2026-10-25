@@ -1,6 +1,7 @@
 import { cairoDateKey, daysUntilNextWeek, scheduleNextWeek, scheduleToday, scheduleTomorrow } from '../lib/dateShortcuts'
 import { daysToWeekend, weekendDays as weekendDaysSetting } from '../lib/weekend'
 import { cairoTimeKey, cairoToIso } from '../features/calendar/eventTime'
+import { clockText } from '../lib/clock'
 import { eventWindow, expandEvents } from '../features/calendar/series'
 import type { CalendarEvent, Task } from '../lib/types'
 
@@ -110,7 +111,7 @@ export interface QuickPick {
 }
 
 /** MK Date Picker's dated quick picks (up to four, one per day). This weekend = the first day of the
- * user's weekend (lib/weekend; none when they have no weekend). `withTime` adds "· 09:00" to
+ * user's weekend (lib/weekend; none when they have no weekend). `withTime` adds "· 9:00 AM" ("· 09:00" on the 24-hour clock) to
  * Tomorrow's hint where the caller stores an instant. */
 export function quickPicks(now: Date, withTime: boolean, weekendDays: readonly number[] = weekendDaysSetting()): QuickPick[] {
   const today = cairoDateKey(now)
@@ -120,7 +121,7 @@ export function quickPicks(now: Date, withTime: boolean, weekendDays: readonly n
   const nextWeek = addDays(today, daysUntilNextWeek(now))
   const picks: QuickPick[] = [
     { key: 'today', label: 'Today', day: today, iso: scheduleToday(now), hint: dayHint(today, today) },
-    { key: 'tomorrow', label: 'Tomorrow', day: tomorrow, iso: scheduleTomorrow(now), hint: dayHint(tomorrow, today) + (withTime ? ' · 09:00' : '') },
+    { key: 'tomorrow', label: 'Tomorrow', day: tomorrow, iso: scheduleTomorrow(now), hint: dayHint(tomorrow, today) + (withTime ? ` · ${clockText('09:00')}` : '') }, // the one clock (12h/24h)
     ...(weekend ? [{ key: 'weekend' as const, label: 'This weekend', day: weekend, iso: atDay(weekend), hint: dayHint(weekend, today) }] : []),
     { key: 'nextweek', label: 'Next week', day: nextWeek, iso: scheduleNextWeek(now), hint: dayHint(nextWeek, today) },
   ]

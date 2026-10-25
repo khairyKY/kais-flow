@@ -18,12 +18,12 @@ import { RowMenuButton } from '../tasks/SwipeRow'
 import { aiFiling, eventToRail, fileToCalendar, fileToTask, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { railDropAction, scopeTarget, SMART_LISTS, type RailSection } from './railDrop'
 import { dayWord } from '../inbox/inboxDisplay'
-import { dayTray, nextFreeSlot, railBuckets, railMinutes, type RailTask } from './replan'
+import { dayTray, nextFreeSlot, railBuckets, railMinutes, scheduledToday, type RailTask } from './replan'
 import { todayFor } from '../tasks/planMath'
 import { DatePicker } from '../../components/DatePicker'
 import { dayHint } from '../../components/pickerMath'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, tomorrowHint } from '../../lib/dateShortcuts'
-import { appZone } from '../../lib/appZone'
+import { appZone, isZone } from '../../lib/appZone'
 import { clockOptions, hour24, setHour24, useHour24 } from '../../lib/clock'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
@@ -39,7 +39,7 @@ import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../
 import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
-import { slotFields, timeText, zoneHour } from './eventTime'
+import { slotFields, timeRange, timeText, zoneHour, zoneTimeKey } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
 import { blockedOn, freeGaps, freeLeft, minutesLabel } from './planningMode'
 import { cardDraggable } from './cardDrag'
@@ -53,7 +53,8 @@ import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
-import { gridMinWidth, railYields, visibleDayCount } from './weekFit'
+import { fitDays, fitHours, gridMinWidth, MIN_COL_W, RAIL_SPLIT_W, RAIL_TAB_W, railYields, RESPONSIVE_COL_W, TIME_AXIS_W, visibleDayCount, ZONE2_W } from './weekFit'
+import { NowCard } from './NowCard'
 import { useDayRollover } from './useDayRollover'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { goalIdOf } from '../today/top3Order'
@@ -72,6 +73,7 @@ import type { ContextMenuItem } from '../../components/ContextMenu'
 import { isTypingTarget } from '../../components/useListKeys'
 import { overlayCount } from '../../lib/overlayStack'
 import type { Area, CalendarEvent, Domain, InboxItem, Project, Task } from '../../lib/types'
+import { taskMinutes } from '../../../../supabase/functions/_shared/blockLength.ts'
 
 const RAIL_W_KEY = 'kf.calRailWidth'
 const PLANNING_KEY = 'kf.calPlanning'
@@ -79,6 +81,8 @@ const PLANNING_KEY = 'kf.calPlanning'
 // (folded only when the visible days wouldn't keep their minimum width beside it — weekFit.ts).
 const RAIL_FOLD_KEY = 'kf.calRailFolded'
 const DEFAULT_RAIL_W = 244
+/** cal-wave item 8: the grid's least width beside the rail — the one-line header and a day column. */
+const GRID_MIN_W = 320
 const RAIL_MIN = 150
 const RAIL_MAX = 760
 
@@ -106,10 +110,12 @@ function weekNumber(d: Date): number {
 }
 
 /** FullCalendar's range end is exclusive — its last day is the one just before it. */
-function rangeLabel(start: Date, end: Date, viewKind: ViewKind): string {
+function rangeLabel(start: Date, end: Date, viewKind: ViewKind, short = false): string {
   const first = noon(cairoDateKey(start))
   const last = noon(cairoDateKey(new Date(end.getTime() - 1)))
   const fmt = (d: Date, o: Intl.DateTimeFormatOptions) => d.toLocaleDateString('en-US', { ...o, timeZone: 'UTC' })
+  // cal-wave: a narrow header's form — "Oct", "25", "25–28".
+  if (short) return viewKind === 'month' ? fmt(first, { month: 'short' }) : viewKind === 'day' || first.getTime() === last.getTime() ? String(first.getUTCDate()) : `${first.getUTCDate()}–${last.getUTCDate()}`
   if (viewKind === 'month') return fmt(first, { month: 'long', year: 'numeric' })
   if (viewKind === 'day') return fmt(first, { weekday: 'short', month: 'short', day: 'numeric' })
   const endStr = first.getUTCMonth() === last.getUTCMonth() ? String(last.getUTCDate()) : fmt(last, { month: 'short', day: 'numeric' })
@@ -191,7 +197,7 @@ type PlanTarget = { kind: 'task'; r: RailTask } | { kind: 'inbox'; item: InboxIt
 
 /** Which sections the person folded (per device). Lists starts folded. */
 function readSections(): Record<RailSection, boolean> {
-  const base = { overdue: false, today: false, inbox: false, lists: true }
+  const base = { overdue: false, today: false, scheduled: false, inbox: false, lists: true }
   try {
     return { ...base, ...JSON.parse(localStorage.getItem(RAIL_SECTIONS_KEY) ?? '{}') }
   } catch {
@@ -303,7 +309,7 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects
   )
 }
 
-function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, children }: {
+function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, keep, children }: {
   name: RailSection
   label: string
   count: number
@@ -311,10 +317,14 @@ function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, ch
   folded: boolean
   onToggle: (name: RailSection) => void
   empty: string
+  /** Shown with nothing in it (Lists on a scope the person picked). */
+  keep?: boolean
   children: React.ReactNode
 }) {
+  // cal-wave item 18 (Kai 2026-10-25): an empty section steps aside — back only while a block is dragged
+  // (it is still a drop target: the CSS shows it while the drag ghost is up).
   return (
-    <section className="cal-rail-sec" data-section={name}>
+    <section className="cal-rail-sec" data-section={name} data-empty={count === 0 && !keep ? '' : undefined}>
       <button type="button" className="cal-rail-sec-head" aria-expanded={!folded} onClick={() => onToggle(name)}>
         <Icon name="chevdown" size={14} style={{ transform: folded ? 'rotate(-90deg)' : undefined, transition: 'transform var(--dur-quick)' }} />
         <span style={{ color: terra && count > 0 ? 'var(--acc-terra)' : undefined }}>{label}</span>
@@ -330,14 +340,35 @@ function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, ch
   )
 }
 
-function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; domains: Domain[]; projects: Project[]; areas: Area[]; onPlan: (x: number, y: number) => void }) {
+function RailTaskCard({ r, domains, projects, areas, onPlan, onJump }: {
+  r: RailTask
+  domains: Domain[]
+  projects: Project[]
+  areas: Area[]
+  onPlan: (x: number, y: number) => void
+  /** cal-wave Scheduled: the card shows its block's time and a click goes to the block. */
+  onJump?: () => void
+}) {
   const { task: t, block } = r
   // Right-click: the one task menu (Pick date… / Tomorrow route through rescheduleDue, so a missed
   // block moves or comes off with the replan); a missed block can also just be unscheduled.
   const grammar = useRowGrammar(t, { projects, domains, canUnschedule: !!block, actions: block ? { unschedule: () => deleteEventWithUndo(block, 'Unscheduled') } : undefined })
   const tag = resolveTag(t, domains, projects, areas)
   const missed = block ? new Date(block.starts_at) : null
-  const open = useCardOpen(t.id)
+  const cardOpen = useCardOpen(t.id)
+  const open = onJump
+    ? {
+        ...cardOpen,
+        onClick: (e: React.MouseEvent<HTMLElement>) => {
+          if (e.currentTarget.contains(e.target as Node)) onJump()
+        },
+        onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+          if (e.key !== 'Enter' || e.target !== e.currentTarget) return
+          e.preventDefault()
+          onJump()
+        },
+      }
+    : cardOpen
   return (
     <div
       className="unscheduled-task"
@@ -356,14 +387,16 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
       </span>
       <span className="cal-row-title"><EmojiText text={t.title} /></span>
       <span className="cal-row-meta">
-        {r.late > 0 ? (
+        {onJump && block && !block.all_day ? (
+          <span className="cal-row-at">{timeRange(new Date(block.starts_at), new Date(block.ends_at))}</span>
+        ) : r.late > 0 ? (
           <span style={{ color: 'var(--acc-terra-ink)' }} title={missed ? `Missed block: ${missed.toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })}` : undefined}>
             Overdue {r.late}d
           </span>
         ) : (
           <>
             {tag && <span aria-hidden style={{ width: 7, height: 7, borderRadius: '50%', background: tag.color ?? 'var(--acc-moss)' }} />}
-            {t.duration_min != null && <span>{formatDuration(t.duration_min)}</span>}
+            {taskMinutes(t) != null && <span>{formatDuration(taskMinutes(t)!)}</span>}
           </>
         )}
       </span>
@@ -484,10 +517,15 @@ function DesktopCalendar() {
   // earlier day) · Today (no time yet) · Inbox (un-triaged captures), then the old scoped Lists.
   const { data: inbox = [] } = usePendingInboxItems()
   const buckets = useMemo(() => railBuckets(tasks, events, new Date()), [tasks, events, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  // cal-wave item 18: today's tasks already on the calendar, with their times.
+  const scheduled = useMemo(() => scheduledToday(tasks, events, new Date()), [tasks, events, today]) // eslint-disable-line react-hooks/exhaustive-deps
   const inRail = new Set([...buckets.overdue, ...buckets.today].map((r) => r.task.id))
   const listTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start && !inRail.has(t.id))
   const toPlan = buckets.overdue.length + buckets.today.length + inbox.length
   const [sections, setSections] = useState<Record<RailSection, boolean>>(readSections)
+  // cal-wave item 18: Lists stays once the person opened it from "Lists…" or picked a scope of their own.
+  const [listsShown, setListsShown] = useState(false)
+  const listsKept = listsShown || !(scope.kind === 'smart' && scope.id === 'week')
   function toggleSection(k: RailSection) {
     setSections((s) => {
       const next = { ...s, [k]: !s[k] }
@@ -800,7 +838,7 @@ function DesktopCalendar() {
     // dropped back on its own slot stays as it was.
     const slot = task && !allDay ? slotAt(gridEvents, start) : undefined
     if (task && slot) return inSlot(task, slot) ? undefined : putInSlotWithUndo(task, slot)
-    const min = allDay ? 24 * 60 : task ? railMinutes(buckets.overdue.find((r) => r.task.id === task.id) ?? { task, block: null }) : item ? inboxMinutes(item) : 30
+    const min = allDay ? 24 * 60 : task ? railMinutes(buckets.overdue.find((r) => r.task.id === task.id) ?? scheduled.find((r) => r.task.id === task.id) ?? { task, block: null }) : item ? inboxMinutes(item) : 30
     const end = new Date(new Date(start).getTime() + min * 60000).toISOString()
     const ev = task ? scheduleTaskWithUndo(task, start, end, allDay) : item ? fileToCalendar(item, start, end, allDay) : null
     if (!ev) return
@@ -844,8 +882,32 @@ function DesktopCalendar() {
   })
   // Kai 2026-10-07: an overdue pile opens the rail by itself (that's what the calendar is for then);
   // the person's own fold still wins, and the folded tab shows the pile's count in terra.
-  const railFolded = railPref ? railPref === 'folded' : buckets.overdue.length === 0 && railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, hiddenWeekend.length))
+  // cal-wave items 8 + 13: "Days fit the width" (Akiflow's Responsive) turns the N-day and Week views into as
+  // many days as fit at RESPONSIVE_COL_W; a plain N-day view drops days before its columns would go under
+  // MIN_COL_W (Week keeps its seven and scrolls — Kai 2026-07-21). Narrowing, the rail folds first (unless the
+  // person opened or folded it themselves), then the days drop.
+  const [railForced, setRailForced] = useState(false)
+  const timeGridView = viewKind === 'week' || viewKind === 'ndays'
+  const responsive = viewOpts.responsive && timeGridView
+  const secondZone = viewOpts.secondZone && isZone(viewOpts.secondZone) ? viewOpts.secondZone : null
+  const axisW = TIME_AXIS_W + (secondZone ? ZONE2_W : 0)
+  // The rail never takes the grid under GRID_MIN_W (the one-line header and a day): a wide rail gives way
+  // to the window; where even its narrowest wouldn't fit, it steps aside although the person opened it —
+  // the tab still opens it, for this visit, at that width (`railForced`).
+  const railMaxFit = shellWidth > 0 ? shellWidth - RAIL_SPLIT_W - GRID_MIN_W : RAIL_MAX
+  const railShownW = Math.max(RAIL_MIN, Math.min(railWidth, railMaxFit))
+  const railOpenGrid = shellWidth - RAIL_SPLIT_W - railShownW
+  const railCramped = shellWidth > 0 && railMaxFit < RAIL_MIN
+  const railFolded = railPref === 'folded' || (railCramped && !railForced)
+    ? true
+    : railPref === 'open' || railForced
+      ? false
+      : buckets.overdue.length === 0 && (responsive ? shellWidth > 0 && fitDays(railOpenGrid, RESPONSIVE_COL_W, 7, axisW) < 2 : railYields(shellWidth, railShownW, visibleDayCount(viewKind, dayCount, hiddenWeekend.length)))
+  const gridWidth = shellWidth > 0 ? (railFolded ? shellWidth - RAIL_TAB_W : railOpenGrid) : 0
+  const shownDays = responsive ? fitDays(gridWidth, RESPONSIVE_COL_W, 7, axisW) : viewKind === 'ndays' ? fitDays(gridWidth, MIN_COL_W, dayCount, axisW) : dayCount
+  const daysView = responsive || viewKind === 'ndays'
   function setRailFolded(folded: boolean) {
+    setRailForced(!folded && railCramped)
     setRailPref(folded ? 'folded' : 'open')
     try {
       localStorage.setItem(RAIL_FOLD_KEY, folded ? '1' : '0')
@@ -917,13 +979,34 @@ function DesktopCalendar() {
   const stripKeys = stripDays === 1 ? [stripStart] : [stripStart, addDays(stripStart, 1)]
   const stripKeysKey = stripKeys.join()
   const gaps = useMemo(() => (planning ? stripKeysKey.split(',').flatMap((d) => freeGaps(events, d, minuteNow)) : undefined), [planning, stripKeysKey, events, minuteNow])
+  // cal-wave item 13 "Hours fit the day" (Akiflow's Dynamic): the shown days' blocks set the hours drawn.
+  const rangeFirst = rangeInfo ? cairoDateKey(rangeInfo.start) : null
+  const rangeLast = rangeInfo ? cairoDateKey(new Date(rangeInfo.end.getTime() - 1)) : null
+  const dynHours = useMemo(() => {
+    if (!viewOpts.dynamic || planning || viewKind === 'month' || !rangeFirst || !rangeLast) return null
+    const days: string[] = []
+    for (let d = rangeFirst; d <= rangeLast && days.length < 7; d = addDays(d, 1)) days.push(d)
+    const [lo, hi] = fitHours(visibleEvents, days, cairoDateKey, (d) => {
+      const [h, m] = zoneTimeKey(d).split(':').map(Number)
+      return h + m / 60
+    })
+    return { min: `${String(lo).padStart(2, '0')}:00:00`, max: `${String(hi).padStart(2, '0')}:00:00` }
+  }, [viewOpts.dynamic, planning, viewKind, rangeFirst, rangeLast, visibleEvents])
+  /** The Now card's click: the block's details, the grid turned to its day first if it isn't shown. */
+  function openFromNow(e: CalendarEvent) {
+    if (rangeInfo && Date.parse(e.starts_at) >= rangeInfo.start.getTime() && Date.parse(e.starts_at) < rangeInfo.end.getTime()) openExisting(e)
+    else setLinkOpen(e)
+  }
+  const nowCardOn = viewOpts.nowCard && !planning
+  const nowCard = nowCardOn && <NowCard events={events} tasks={tasks} onOpen={openFromNow} variant={railFolded ? 'float' : 'dock'} />
   // The rail footer (p7e A15): busy blocks today, and the free time left inside 08:00–20:00 from now —
   // Free events, past time and off-hours aren't free time (the planning strip's own footer rule).
   function startRailDrag(e: React.PointerEvent<HTMLDivElement>) {
     if (e.button !== 0) return // J-4a: a right-button drag used to resize the rail
     e.preventDefault()
     const startX = e.clientX
-    const startW = railWidth
+    const startW = railShownW
+    const maxW = Math.max(RAIL_MIN, Math.min(RAIL_MAX, railMaxFit))
     setRailDragging(true)
     // S3 (2026-10-22 audit: 40 moves took 26.7 s — two grid passes a move): while it moves, the width is
     // written on the rail itself, one write a frame (a variable on the shell restyled the whole page each
@@ -932,7 +1015,7 @@ function DesktopCalendar() {
     let next = startW
     let raf = 0
     const onMove = (ev: PointerEvent) => {
-      next = Math.min(RAIL_MAX, Math.max(RAIL_MIN, startW + (ev.clientX - startX)))
+      next = Math.min(maxW, Math.max(RAIL_MIN, startW + (ev.clientX - startX)))
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => rail?.style.setProperty('width', `${next}px`))
     }
@@ -1068,7 +1151,7 @@ function DesktopCalendar() {
         .cal-rail-sec-count { margin-left: auto; color: var(--ink-faint); }
         /* Kai 2026-10-12: a block dragged over a section that takes it — the grid's own drop-target
            look (.fc-highlight). Overdue never takes one (it's computed), so it never lights. */
-        .cal-rail-sec[data-drop-over]:not([data-section="overdue"]) { background: var(--fc-highlight-color, color-mix(in srgb, var(--acc-lavender) 16%, transparent)); outline: 1px dashed var(--acc-lavender); outline-offset: 3px; border-radius: 4px; }
+        .cal-rail-sec[data-drop-over]:not([data-section="overdue"]):not([data-section="scheduled"]) { background: var(--fc-highlight-color, color-mix(in srgb, var(--acc-lavender) 16%, transparent)); outline: 1px dashed var(--acc-lavender); outline-offset: 3px; border-radius: 4px; /* ds-ok: the drop target's 4px as it was (Kai 2026-10-12); cal-wave only adds Scheduled to the no-drop list */ }
         /* Plan ▾ is the kit's B secondary (bone, no outline, 12px), sized for the one-line row. A hovered
            row is bone too, so there the button steps up to parchment to keep its edge. */
         .cal-head-nav.kf-button { width: 36px; padding: 9px 0; justify-content: center; }
@@ -1109,7 +1192,35 @@ function DesktopCalendar() {
            quiet dashed outline — the held rows' rule — never a second copy lifted in place. */
         .unscheduled-task[data-lifted] { outline: 1px dashed var(--ink-hairline); outline-offset: -1px; border-color: transparent; background: transparent; box-shadow: none; }
         .unscheduled-task[data-lifted] > * { visibility: hidden; }
-        .cal-main { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0; }
+        .cal-main { position: relative; flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; padding: 0; }
+        /* cal-wave item 8: the header keeps one line at any width — the week/daisy note goes first, then the
+           date steps down a size, then the controls tighten; the date ellipsizes only as a last resort. */
+        .cal-head { container-type: inline-size; flex-wrap: nowrap; }
+        .cal-head-date { display: flex; flex-direction: row-reverse; align-items: center; gap: 10px; min-width: 0; margin-left: 16px; text-align: right; }
+        .cal-head-kicker { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--ink-faint); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-head-h1 { margin: 2px 0 0; font-family: var(--font-display); font-weight: var(--fw-medium); font-size: var(--fs-display-m); line-height: 1.05; letter-spacing: var(--ls-display); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .cal-head-ctrls { flex: none; display: flex; align-items: center; gap: 10px; }
+        @container (max-width: 620px) { .cal-head-kicker, .cal-head-daisy { display: none; } .cal-head-h1 { margin: 0; } }
+        @container (max-width: 470px) { .cal-head-h1 { font-size: var(--fs-body-l); } .cal-head-ctrls { gap: 6px; } }
+        .cal-head-short { display: none; }
+        @container (max-width: 380px) { .cal-head-long { display: none; } .cal-head-short { display: inline; } }
+        @container (max-width: 380px) { .cal-head-ctrls .kf-button { padding-left: 10px; padding-right: 10px; } .cal-head-ctrls .cal-head-nav.kf-button { width: 28px; padding: 9px 0; } }
+        @container (max-width: 300px) { .cal-head-date { margin-left: 6px; } .cal-head-ctrls { gap: 4px; } .cal-head-ctrls .kf-button:not(.cal-head-nav) { padding-left: 8px; padding-right: 8px; } }
+        /* cal-wave item 18: empty sections step aside (back while a block is dragged — they still take drops). */
+        .cal-rail-sec[data-empty] { display: none; }
+        .cal-rail[data-dragging] .cal-rail-sec[data-empty] { display: block; order: 1; } /* after the shown ones: nothing moves under the pointer */
+        .cal-rail[data-dragging] .cal-rail-none { display: none; }
+        .cal-rail-more { align-self: flex-start; margin: 2px 0 0; padding: 2px 0; border: none; background: none; font: inherit; font-size: var(--fs-meta-l); color: var(--ink-faint); cursor: pointer; }
+        .cal-rail-more:hover { color: var(--ink-body); }
+        .cal-rail-more:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+        .cal-rail[data-dragging] .cal-rail-more { display: none; }
+        .cal-rail-none { margin: 4px 0 0; font-size: var(--fs-body-s); color: var(--ink-faint); }
+        .cal-row-at { font-family: var(--font-mono); font-size: var(--fs-mono-l); }
+        /* cal-wave item 19: the Now card at the foot of the rail (the list scrolls behind it), or floating
+           16px in from the grid's bottom-left corner when the rail is folded. */
+        .cal-now-dock { position: sticky; bottom: -10px; z-index: 3; margin: auto -2px -10px; padding: 16px 2px 12px; background: linear-gradient(transparent, var(--bg-app) 22px); }
+        .cal-now-float .kf-now-quiet { display: inline-flex; max-width: 100%; box-sizing: border-box; padding: 0 10px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-block); box-shadow: var(--shadow-panel); }
+        .cal-now-float { position: absolute; left: 16px; bottom: 16px; z-index: 8; width: min(280px, calc(100% - 32px)); }
         /* Kai 2026-10-14: the per-day tray under the grid (Akiflow). */
         .cal-tray { position: relative; flex: none; border-top: 1px solid var(--line-card); background: var(--paper-parchment); overflow: hidden; }
         .cal-tray-fold { position: absolute; left: 0; top: 0; bottom: 0; display: flex; align-items: flex-start; justify-content: center; padding: 8px 0 0; border: none; background: none; color: var(--ink-faint); cursor: pointer; }
@@ -1124,7 +1235,7 @@ function DesktopCalendar() {
         .cal-tray-count { display: block; padding-top: 5px; font-size: var(--fs-meta); color: var(--ink-faint); }
       `}</style>
 
-      <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
+      <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railShownW}px` } as React.CSSProperties}>
         {railFolded && !planning && (
           <button
             type="button"
@@ -1172,12 +1283,17 @@ function DesktopCalendar() {
                     <RailTaskCard key={r.task.id} r={r} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r }, x, y })} />
                   ))}
                 </RailSectionBox>
+                <RailSectionBox name="scheduled" label="Scheduled" count={scheduled.length} folded={sections.scheduled} onToggle={toggleSection} empty="Nothing on the calendar today.">
+                  {scheduled.map((r) => (
+                    <RailTaskCard key={r.task.id} r={r} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r }, x, y })} onJump={() => r.block && openFromNow(r.block)} />
+                  ))}
+                </RailSectionBox>
                 <RailSectionBox name="inbox" label="Inbox" count={inbox.length} folded={sections.inbox} onToggle={toggleSection} empty="Inbox zero.">
                   {inbox.map((item) => (
                     <RailInboxCard key={item.id} item={item} onPlan={(x, y) => setPlan({ target: { kind: 'inbox', item }, x, y })} />
                   ))}
                 </RailSectionBox>
-                <RailSectionBox name="lists" label="Lists" count={listTasks.length} folded={sections.lists} onToggle={toggleSection} empty="Nothing else here to block.">
+                <RailSectionBox name="lists" label="Lists" count={listTasks.length} keep={listsKept} folded={sections.lists} onToggle={toggleSection} empty="Nothing else here to block.">
                   <div style={{ display: 'flex', gap: 6 }}>
                     <Select
                       value={scope.kind}
@@ -1198,9 +1314,18 @@ function DesktopCalendar() {
                     <RailTaskCard key={task.id} r={{ task, block: null, late: 0 }} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => setPlan({ target: { kind: 'task', r: { task, block: null, late: 0 } }, x, y })} />
                   ))}
                 </RailSectionBox>
+                {/* cal-wave item 18: every section empty — one calm line instead of four zeros. */}
+                {toPlan + scheduled.length + listTasks.length === 0 && !listsKept && <p className="cal-rail-none">Nothing to plan</p>}
+                {/* Lists with nothing in it steps aside too; its scope picker is one click away. */}
+                {listTasks.length === 0 && !listsKept && (
+                  <button type="button" className="cal-rail-more" onClick={() => { setListsShown(true); if (sections.lists) toggleSection('lists') }}>
+                    Lists…
+                  </button>
+                )}
               </>
             )}
           </div>
+          {!railFolded && nowCard && <div className="cal-now-dock">{nowCard}</div>}
 
         </aside>
 
@@ -1258,21 +1383,20 @@ function DesktopCalendar() {
 
         <div className={planning ? 'cal-main cal-strip' : 'cal-main'}>
           {planning ? stripHead : (
-          <div className="cal-head" style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 16, minHeight: 52, padding: '6px 14px 6px 16px', borderBottom: '1px solid var(--line-card)', flex: 'none' }}>
+          <div className="cal-head" style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 0, minHeight: 52, padding: '6px 14px 6px 16px', borderBottom: '1px solid var(--line-card)', flex: 'none' }}>
             {/* Kai 2026-10-14: the date and its daisy sit at the far top right, out of the grid's height. */}
-            <div style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', gap: 10, textAlign: 'right' }}>
+            <div className="cal-head-date">
               {/* Night 1c: the header daisy is a silhouette lit at the rim in lavender. */}
-              <img src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 36, filter: 'var(--rim-lavender, var(--shadow-drop-sm))' }} />
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }}>
-                  {`Week ${weekNumber(rangeInfo?.start ?? new Date())} · ${daisy.note}`}
-                </div>
-                <h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 'var(--fw-medium)', fontSize: 'var(--fs-display-m)', lineHeight: 1.05, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>
-                  {rangeInfo ? rangeLabel(rangeInfo.start, rangeInfo.end, viewKind) : ''}
+              <img className="cal-head-daisy" src={`/ds/assets/daisy/${daisy.src}.png`} alt="" style={{ height: 36, filter: 'var(--rim-lavender, var(--shadow-drop-sm))' }} />
+              <div style={{ minWidth: 0 }}>
+                <div className="cal-head-kicker">{`Week ${weekNumber(rangeInfo?.start ?? new Date())} · ${daisy.note}`}</div>
+                <h1 className="cal-head-h1">
+                  <span className="cal-head-long">{rangeInfo ? rangeLabel(rangeInfo.start, rangeInfo.end, daysView ? 'ndays' : viewKind) : ''}</span>
+                  <span className="cal-head-short">{rangeInfo ? rangeLabel(rangeInfo.start, rangeInfo.end, daysView ? 'ndays' : viewKind, true) : ''}</span>
                 </h1>
               </div>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div className="cal-head-ctrls">
               {/* Punch 32 [K-26]: the ⚟ view-options trigger replaces the segmented control +
                   N-day cycler — view switching now lives in the popover's 1–6/W/M row. */}
               {/* Bound Journal D11 = B: the header's controls are the kit's secondary button (bone, no outline, 12px). */}
@@ -1289,8 +1413,9 @@ function DesktopCalendar() {
                   setViewOptsOpen((v) => !v)
                 }}
                 style={{ gap: 6, userSelect: 'none' }}
+                title={responsive ? 'Days fit the width (View options)' : undefined}
               >
-                {viewKind === 'day' ? 'Day' : viewKind === 'ndays' ? `${dayCount} days` : viewKind === 'week' ? 'Week' : 'Month'}
+                {viewKind === 'day' ? 'Day' : daysView ? `${shownDays} ${shownDays === 1 ? 'day' : 'days'}` : viewKind === 'week' ? 'Week' : 'Month'}
                 {/* Kai 2026-10-03: the ⚟ glyph read as "≤" — the kit's dropdown chevron, as the phone's title uses. */}
                 <Icon name="chevdown" size={14} style={{ color: 'var(--ink-muted)' }} />
               </Button>
@@ -1313,7 +1438,7 @@ function DesktopCalendar() {
             <div style={{ flex: 1, minHeight: 0 }}>
             <CalendarGrid
               ref={gridRef}
-              initialView={planning ? (stripDays === 1 ? 'timeGridDay' : 'customDayCount') : VIEW_MAP[viewKind]}
+              initialView={planning ? (stripDays === 1 ? 'timeGridDay' : 'customDayCount') : daysView ? 'customDayCount' : VIEW_MAP[viewKind]}
               hideToolbar
               events={gridBlocks}
               {...grid}
@@ -1324,7 +1449,11 @@ function DesktopCalendar() {
               hiddenDays={planning || !hiddenWeekend.length ? undefined : hiddenWeekend}
               density={viewOpts.density}
               justDroppedId={justDroppedId}
-              dayCount={planning ? 2 : dayCount}
+              dayCount={planning ? 2 : shownDays}
+              slotMinTime={dynHours?.min}
+              slotMaxTime={dynHours?.max}
+              expandRows={!!dynHours}
+              secondZone={planning ? null : secondZone}
               strip={planning}
               freeGaps={gaps}
               conflictedIds={conflictedIds}
@@ -1335,8 +1464,8 @@ function DesktopCalendar() {
             {!planning && viewKind !== 'month' && (
               <DayTray
                 wrapRef={gridWrapRef}
-                rangeKey={`${viewKind}|${dayCount}|${rangeInfo?.start.getTime() ?? 0}|${hiddenWeekend.join()}`}
-                minWidth={gridMinWidth(visibleDayCount(viewKind, dayCount, hiddenWeekend.length))}
+                rangeKey={`${viewKind}|${shownDays}|${rangeInfo?.start.getTime() ?? 0}|${hiddenWeekend.join()}|${secondZone ?? ''}`}
+                minWidth={gridMinWidth(visibleDayCount(daysView ? 'ndays' : viewKind, shownDays, hiddenWeekend.length), axisW)}
                 tasks={tasks}
                 events={events}
                 domains={domains}
@@ -1347,6 +1476,7 @@ function DesktopCalendar() {
             )}
             </div>
           </div>
+          {railFolded && nowCard && <div className="cal-now-float">{nowCard}</div>}
         </div>
       </div>
 

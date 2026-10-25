@@ -21,8 +21,9 @@ import { blockHue } from './blockHue'
 import { moveEventWithUndo, outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
 import { findBlock } from './series'
 import { heldDrop, slotFill, slotTasks } from './slots'
-import { cairoToIso } from './eventTime'
-import { blockLastDay, railBuckets, railMinutes } from './replan'
+import { cairoToIso, timeRange } from './eventTime'
+import { blockLastDay, railBuckets, railMinutes, scheduledToday } from './replan'
+import { NowCard } from './NowCard'
 import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { Segmented } from '../rituals/RitualChrome'
 import { addMonths, allDayOn, dayBlocks, eventSpan, monthTitle, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
@@ -56,7 +57,8 @@ type Sheet =
   /** The Lists segment's list picker: the smart lists and the project / area / domain kinds, then one of those. */
   | { k: 'scope'; kind?: Exclude<RailScopeKind, 'smart'> }
 
-type Seg = 'overdue' | 'today' | 'inbox' | 'lists'
+type Seg = 'overdue' | 'today' | 'scheduled' | 'inbox' | 'lists'
+const SEG_LABEL: Record<Seg, string> = { overdue: 'Overdue', today: 'Today', scheduled: 'Scheduled', inbox: 'Inbox', lists: 'Lists' }
 
 // How far under the grid's top a block or slot lands when its sheet opens (7c, 7d). The planning
 // strip's segment row (Kai 2026-10-07) moved the grid down 48px, so it's 32, not 80: the block sits
@@ -139,9 +141,14 @@ export function PhoneCalendar() {
     scope.kind === 'smart'
       ? SMART_LISTS.find((l) => l.value === scope.id)?.label
       : placeName({ project_id: scope.kind === 'project' ? scope.id : null, area_id: scope.kind === 'area' ? scope.id : null, domain_id: scope.kind === 'domain' ? scope.id : null }, projects, areas, domains)
-  const counts: Record<Seg, number> = { overdue: buckets.overdue.length, today: buckets.today.length, inbox: inbox.length, lists: listTasks.length }
+  // cal-wave item 18 (the desktop rail's rule): Scheduled = today's tasks already on the calendar; a segment
+  // with nothing in it steps aside (Lists stays on a scope the person picked).
+  const scheduled = useMemo(() => scheduledToday(tasks, events, now), [tasks, events, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  const counts: Record<Seg, number> = { overdue: buckets.overdue.length, today: buckets.today.length, scheduled: scheduled.length, inbox: inbox.length, lists: listTasks.length }
+  const keepLists = !(scope.kind === 'smart' && scope.id === 'week')
+  const segs = (['overdue', 'today', 'scheduled', 'inbox', 'lists'] as const).filter((k) => counts[k] > 0 || (k === 'lists' && keepLists))
   const [segPick, setSegPick] = useState<Seg | null>(null)
-  const seg: Seg = segPick ?? (['overdue', 'today', 'inbox'] as const).find((s) => counts[s] > 0) ?? 'today'
+  const seg: Seg | undefined = segPick && segs.includes(segPick as never) ? segPick : segs[0]
   const marked = useMemo(() => daysWithItems(tasks, gridEvents), [tasks, gridEvents])
 
   // Goal A (Kai 2026-10-23): the first of today's Top 3 (today/top3Order) — its block on today wears the gold edge.
@@ -283,18 +290,14 @@ export function PhoneCalendar() {
       </div>
       )}
 
-      {(tasksPending || inboxPending || counts.overdue + counts.today + counts.inbox + counts.lists > 0) && (
+      {!tasksPending && !inboxPending && !seg && <div className="pc-none">Nothing to plan</div>}
+      {(tasksPending || inboxPending || seg) && (
         <>
           <div className="pc-segs">
             <Segmented
               label="To plan"
-              options={[
-                { value: 'overdue', label: `Overdue ${counts.overdue}` },
-                { value: 'today', label: `Today ${counts.today}` },
-                { value: 'inbox', label: `Inbox ${counts.inbox}` },
-                { value: 'lists', label: `Lists ${counts.lists}` },
-              ]}
-              value={tasksPending ? null : seg}
+              options={segs.map((k) => ({ value: k, label: `${SEG_LABEL[k]} ${counts[k]}` }))}
+              value={tasksPending || !seg ? null : seg}
               onChange={setSegPick}
             />
           </div>
@@ -314,19 +317,26 @@ export function PhoneCalendar() {
                       </button>
                     )),
                   ]
+              : seg === 'scheduled'
+                ? scheduled.map((r) => (
+                    <button key={r.task.id} type="button" className="pc-chip" onClick={() => r.block && tapBlock(r.block)}>
+                      <span className="pc-chip-t">{r.task.title}</span>
+                      {r.block && <span className="pc-chip-d">{timeRange(new Date(r.block.starts_at), new Date(r.block.ends_at))}</span>}
+                    </button>
+                  ))
               : seg === 'inbox'
                 ? inbox.map((item) => (
                     <button key={item.id} type="button" className="pc-chip" aria-expanded={filing?.id === item.id} onClick={() => setSheet({ k: 'file', id: item.id })}>
                       <span className="pc-chip-t">{inboxTitle(item)}</span>
                     </button>
                   ))
-                : buckets[seg].map((r) => (
+                : !seg ? null : buckets[seg].map((r) => (
                     <button key={r.task.id} type="button" className="pc-chip" aria-expanded={scheduling?.id === r.task.id} onClick={() => setSheet({ k: 'schedule', id: r.task.id })}>
                       <span className="pc-chip-t">{r.task.title}</span>
                       {r.late > 0 ? <span className="pc-chip-d is-late">{r.late}d</span> : r.task.duration_min != null && <span className="pc-chip-d">{formatDuration(r.task.duration_min)}</span>}
                     </button>
                   ))}
-            {!tasksPending && counts[seg] === 0 && <span className="pc-uns-label">{seg === 'overdue' ? 'Nothing overdue' : seg === 'today' ? 'Nothing left without a time' : seg === 'lists' ? 'Nothing else to block' : 'Inbox zero'}</span>}
+            {!tasksPending && seg && counts[seg] === 0 && <span className="pc-uns-label">{seg === 'overdue' ? 'Nothing overdue' : seg === 'today' ? 'Nothing left without a time' : seg === 'lists' ? 'Nothing else to block' : 'Inbox zero'}</span>}
           </div>
         </>
       )}
@@ -375,6 +385,21 @@ export function PhoneCalendar() {
           )
         }
       />
+      )}
+
+      {/* cal-wave item 19: the Now card, a one-line strip over the grid's foot (tap it to open the card). */}
+      {readViewOptions().nowCard && view !== 'month' && (
+        <div className="pc-now">
+          <NowCard
+            events={events}
+            tasks={tasks}
+            variant="phone"
+            onOpen={(e) => {
+              setAnchor(cairoDateKey(new Date(e.starts_at)))
+              tapBlock(e)
+            }}
+          />
+        </div>
       )}
 
       {sheet?.k === 'view' && (

@@ -58,7 +58,8 @@ const EVENTS = [
   ev(TYREB, 'Call the tyre supplier', '16:30', '17:00', TYRE),
   ev(SHAHEEN, 'Shaheen🛞', '13:00', '15:00', null, 'time_block', { recurrence_rule: 'FREQ=DAILY' }),
 ]
-const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', help_seen: ['hint:calendar'] }
+// "File captures for me" defaults OFF since v1.5.0 (ai-chat item 7); p4's ⌘K line is about slot filing, so it's on.
+const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', auto_file_captures: true, help_seen: ['hint:calendar', 'notice:autofile'] }
 const tables = (extra = {}) => structuredClone({ tasks: TASKS, calendar_events: EVENTS, inbox_items: [], projects: [], domains: [], areas: [], app_settings: [SETTINGS], ...extra })
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
@@ -174,6 +175,12 @@ async function mouseDrag(page, from, to) {
   await sleep(150)
   await page.mouse.down()
   await sleep(150)
+  // cal-wave (item 18): an empty rail section only comes back once a drag is up — `to` may be read then.
+  if (typeof to === 'function') {
+    await page.mouse.move(from.x + 12, from.y + 4)
+    await sleep(200)
+    to = await to()
+  }
   for (let i = 1; i <= 20; i++) {
     await page.mouse.move(from.x + ((to.x - from.x) * i) / 20, from.y + ((to.y - from.y) * i) / 20)
     await sleep(30)
@@ -455,7 +462,7 @@ const rowPt = async (page, slotN = CODE, taskN = HELD, day) => {
 /** The task's own blocks on the grid (a held task has none — only its row inside the slot). */
 const ownBlocks = (page, title) => page.locator('.fc-timegrid-event .kf-ev-head > .fc-event-title', { hasText: title }).count()
 const taskWrites = (state, taskN, from) => posts(state, 'tasks', from).filter((x) => x.id === id(taskN))
-const railSec = async (page, name) => {
+const railSec = async (page, name) => async () => {
   const b = await page.locator(`.cal-rail [data-section="${name}"]`).first().boundingBox()
   return { x: b.x + b.width / 2, y: b.y + 12 }
 }

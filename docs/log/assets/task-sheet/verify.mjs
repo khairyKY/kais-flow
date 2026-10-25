@@ -384,7 +384,9 @@ for (const theme of ['day', 'night']) {
     }
     // plan-replan (2026-10-07): the date chip opens the Plan list; its Tomorrow, first thing = tomorrow 09:00.
     let r = await pick('Today · 15:00', 'Tomorrow, first thing', 'Plan')
-    check(`${name} date chip → the Plan list; Tomorrow, first thing = tomorrow 09:00 Cairo`, r.titled && r.w.length === 1 && r.w[0].due_at === iso('09:00', 28), JSON.stringify(r.w.map((x) => x.due_at)))
+    // A timed task's block moves too; since bugs-1023 the block's write lands on the task again (calendar/api
+    // touchTaskSchedule), so the task may be written twice — every write must say tomorrow 09:00.
+    check(`${name} date chip → the Plan list; Tomorrow, first thing = tomorrow 09:00 Cairo`, r.titled && r.w.length >= 1 && r.w.length <= 2 && r.w.every((x) => x.due_at === iso('09:00', 28)), JSON.stringify(r.w.map((x) => x.due_at)))
     check(`${name} date chip reads Tomorrow · 09:00`, (await chipTexts(page))[0] === 'Tomorrow · 09:00', (await chipTexts(page))[0])
     r = await pick('30m', '1h', 'Duration')
     check(`${name} duration chip → 1h`, r.titled && r.w.length === 1 && r.w[0].duration_min === 60, JSON.stringify(r.w.map((x) => x.duration_min)))

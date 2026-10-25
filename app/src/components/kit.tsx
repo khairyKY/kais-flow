@@ -239,7 +239,7 @@ export function TapeCard({
 // only "checkbox, not checked" 411 times on Tasks. Without it, a generic action name.
 // 2026-09-28 (DS-CHANGELOG §3): on a phone every box draws 22 × 22 radius 6 (`subtask` 18) in a
 // 48 hit whatever `size` says — `size` stays the desktop size; kit.css owns the phone override.
-export function Checkbox({ checked, onChange, size = 17, bloom = false, style, label, subtask, disabled }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; bloom?: boolean; style?: CSSProperties; label?: string; subtask?: boolean; disabled?: boolean }) {
+export function Checkbox({ checked, onChange, size = 17, bloom = false, style, label, labelledBy, subtask, disabled }: { checked: boolean; onChange?: (next: boolean) => void; size?: number; bloom?: boolean; style?: CSSProperties; label?: string; /** Not a task: the id of the text that names the box (sign-up's "I agree…"). */ labelledBy?: string; subtask?: boolean; disabled?: boolean }) {
   const motionOn = useMotionEnabled()
   // M3: pop only on a tick made while the box is on screen, never because it mounted ticked
   // (every phone day swipe re-popped the done boxes). State-from-props, so it never lags a render.
@@ -254,7 +254,8 @@ export function Checkbox({ checked, onChange, size = 17, bloom = false, style, l
       aria-checked={checked}
       disabled={disabled}
       data-subtask={subtask || undefined}
-      aria-label={label ? `Complete "${label}"` : checked ? 'Mark not done' : 'Mark done'}
+      aria-label={labelledBy ? undefined : label ? `Complete "${label}"` : checked ? 'Mark not done' : 'Mark done'}
+      aria-labelledby={labelledBy}
       // Sounds v2 (2026-10-07): a task's sound plays where it completes (tasks/api completeTask),
       // so swipes, menus and keys sound too and the Goal / last Top 3 gets its phrase.
       onClick={() => onChange?.(!checked)}

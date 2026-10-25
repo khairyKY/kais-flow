@@ -15,7 +15,8 @@ import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { useProjects } from '../projects/api'
 import { useInteractions, usePeople } from '../people/api'
 import { useRitualFinishedRows } from '../rituals/api'
-import { useCalendarRows } from '../calendar/api'
+import { useCalendarEvents, useCalendarRows } from '../calendar/api'
+import { useTasks } from '../tasks/api'
 import { installNotificationActions } from '../notifications/actions'
 import { lookingHere, showLocal, tellSyncProblem } from '../notifications/local'
 import { NO_INCIDENT, syncIncidentStep } from '../notifications/syncIncident'
@@ -23,14 +24,15 @@ import { localPlan, type Planned } from '../notifications/plan'
 import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
-import { focusMenuLabel, focusTarget, pauseMenuLabel, trayIconState } from './trayState'
+import { focusMenuLabel, focusTarget, pauseMenuLabel, pauseUntil, trayIconState, trayMenuState, trayNow } from './trayState'
+import { SIGNED_OUT } from './menuRows'
 import type { ActivityLogEntry, AppSettings, CalendarEvent, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // The app's half of the tray and of local notifications, mounted once in the main window's shell
 // (AppLayout). Everywhere: notification buttons land here (actions.ts), a finished focus round
-// says so when nobody is looking, and the flyout's focus mirror is served. In the Windows app also:
-// the K's state and menu rows, the menu's actions (window.__kfTray), and the reminders and rituals
-// while it runs. In the Android app: the OS's notification schedule (notifications/android.ts).
+// says so when nobody is looking, and the tray windows' focus mirror is served. In the Windows app also:
+// the K's state and menu rows (the native menu's labels, menu B's state), the menus' actions
+// (window.__kfTray), and the reminders and rituals while it runs. In the Android app: the OS's notification schedule (notifications/android.ts).
 
 /** "Something needs you": a reminder fired here and nobody has looked since. */
 const useNeedsYou = create<{ on: boolean }>(() => ({ on: false }))
@@ -132,6 +134,13 @@ function togglePause(): void {
   updateAppSetting('notify_paused_until', until && new Date(until).getTime() > Date.now() ? null : new Date(Date.now() + 3_600_000).toISOString())
 }
 
+/** Menu B's Pause ▸ 30 minutes / 1 hour / Until tomorrow, and Resume (the native menu keeps its toggle). */
+function pauseFromMenu(arg: string): void {
+  if (arg === 'resume') return updateAppSetting('notify_paused_until', null)
+  const choice = arg.slice('pause:'.length)
+  if (choice === '30' || choice === '60' || choice === 'tomorrow') updateAppSetting('notify_paused_until', pauseUntil(choice, new Date()))
+}
+
 function useSystemDark(): boolean {
   const [dark, setDark] = useState(() => matchMedia('(prefers-color-scheme: dark)').matches)
   useEffect(() => {
@@ -164,6 +173,21 @@ function EventsForReminders(): null {
   return null
 }
 
+/** Menu B's header and rows (tray.rs keeps it for the menu window): what's on now or next, and
+ * notifications paused — and, while this is mounted, that the signed-in app can run its rows. */
+function MenuForTray(): null {
+  const { data: settings } = useAppSettings()
+  const { data: events = [] } = useCalendarEvents()
+  const { data: tasks = [] } = useTasks()
+  const now = useMinuteNow()
+  const done = new Set(tasks.filter((t) => t.status === 'done').map((t) => t.id))
+  const menu = JSON.stringify(trayMenuState(trayNow(events, (id) => done.has(id), now), settings?.notify_paused_until, now))
+  useEffect(() => void native('tray_menu', { menu }), [menu])
+  // Signed out (the shell unmounts): only Open and Quit.
+  useEffect(() => () => void native('tray_menu', { menu: JSON.stringify(SIGNED_OUT) }), [])
+  return null
+}
+
 /** Rendered once in the main window's shell. A component of its own, so the timer's every-second
  * tick re-renders only this, never the shell. */
 export function TrayBridge() {
@@ -185,6 +209,7 @@ export function TrayBridge() {
       else if (arg === 'capture') useCommandBarStore.getState().setOpen(true)
       else if (arg === 'focus') startOrStopFocus()
       else if (arg === 'pause') togglePause()
+      else if (arg === 'resume' || arg.startsWith('pause:')) pauseFromMenu(arg)
       else if (arg === 'settings') navigate('/settings')
     }
     const seen = () => useNeedsYou.setState({ on: false })
@@ -263,5 +288,5 @@ export function TrayBridge() {
     if (tauri) void native('tray_set', { state, dark, focusLabel, pauseLabel })
   }, [tauri, state, dark, focusLabel, pauseLabel])
   if (!tauri && !android) return null
-  return createElement(Fragment, null, createElement(ShutDownForNudge), createElement(EventsForReminders), settings?.birthday_on ? createElement(PeopleForBirthdays) : null)
+  return createElement(Fragment, null, createElement(ShutDownForNudge), createElement(EventsForReminders), settings?.birthday_on ? createElement(PeopleForBirthdays) : null, tauri ? createElement(MenuForTray) : null)
 }

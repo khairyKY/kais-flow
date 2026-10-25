@@ -55,7 +55,8 @@ const TASKS = [
   task(STRETCH, 'Stretch', { recurrence_rule: 'FREQ=DAILY', due_at: iso('09:00', 7) }),
   task(PAUSED, 'Paused practice', { recurrence_rule: 'FREQ=DAILY', due_at: iso('09:00'), paused: true }),
 ]
-const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
+// "File captures for me" defaults OFF since v1.5.0 (ai-chat item 7); these checks are about filing, so it's on.
+const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', auto_file_captures: true, help_seen: ['notice:autofile'] }
 const DOMAINS = [
   { id: D1, user_id: UID, name: 'Career', color: '#8A9A7E', sort_order: 0, created_at: CREATED, updated_at: CREATED },
   { id: D2, user_id: UID, name: 'Personal', color: '#C9A55A', sort_order: 1, created_at: CREATED, updated_at: CREATED },

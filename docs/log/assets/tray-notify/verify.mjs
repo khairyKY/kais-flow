@@ -148,10 +148,12 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 // ── 12b · the flyout, day, nothing running ──
 {
   const { ctx, state, errors, open } = await app({}, { tauri: true })
-  const page = await open('/tray', FLYOUT)
+  const page = await open('/tray.html', FLYOUT)
   const text = await page.locator('.kf-tray').innerText()
   check('12b date + Day N', /Saturday, 3 October/.test(text) && /DAY 84/i.test(text), text.split('\n').slice(0, 2).join(' | '))
-  check('12b Next · 09:00 Judge test Kai’s Flow, with a check', (await page.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ').includes('Next · 09:00 Judge test Kai’s Flow') && (await page.locator('.kf-tray-check').count()) === 1)
+  // Popover B (2026-10-25, docs/log/assets/tray): the Now card — "Up next · in Nm", the block's check, its times.
+  const nowText = (await page.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ')
+  check('12b Up next · Judge test Kai’s Flow, with a check', /^Up next in \d+m Judge test Kai’s Flow 9:00 AM/.test(nowText) && (await page.locator('.kf-tray-now [role="checkbox"]').count()) === 1, nowText)
   const rows = await page.locator('.kf-tray-row-title').allInnerTexts()
   check('12b Top 3 as three rows, goal first', JSON.stringify(rows) === JSON.stringify(['GCI homework 1 — NumPy', 'Do GCI lecture 2’s survey', 'Skim OS lectures 1 + 2']), JSON.stringify(rows))
   check('12b capture field + Start focus · 25:00 + footer', (await page.getByPlaceholder('Write it down…').count()) === 1 && (await page.locator('.kf-tray-btn.is-cta').innerText()).includes('Start focus · 25:00') && (await page.locator('.kf-tray-open').innerText()).includes('Open Kai’s Flow'))
@@ -183,7 +185,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 {
   const { ctx, errors, open } = await app({}, { theme: 'night', tauri: true })
   const main = await open('/today', DESKTOP)
-  const tray = await open('/tray', FLYOUT)
+  const tray = await open('/tray.html', FLYOUT)
   await tray.locator('.kf-tray-btn.is-cta').click()
   await sleep(300)
   const running = await main.evaluate(() => document.title !== undefined)
@@ -229,7 +231,8 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
   await main.clock.runFor(31_000) // the next 30-second sweep, with tasks loaded
   await sleep(500)
   const toast = (await calls(main, 'notify_local')).find((c) => c.args?.title?.startsWith('Call the tyre'))?.args
-  check('12e a reminder due while the app runs → its toast, Done · Tomorrow', /^Call the tyre supplier · in [89] min$/.test(toast?.title ?? '') && toast?.body === '08:50' && JSON.stringify(toast?.actions) === JSON.stringify([['done', 'Done'], ['tomorrow', 'Tomorrow']]), JSON.stringify(toast))
+  // The snooze wave (migration 0082) added In 10 min / In 1 hour between Done and Tomorrow.
+  check('12e a reminder due while the app runs → its toast, Done · In 10 min · In 1 hour · Tomorrow', /^Call the tyre supplier · in [89] min$/.test(toast?.title ?? '') && toast?.body === '08:50' && JSON.stringify(toast?.actions) === JSON.stringify([['done', 'Done'], ['snooze10', 'In 10 min'], ['snooze60', 'In 1 hour'], ['tomorrow', 'Tomorrow']]), JSON.stringify(toast))
   check('12a … and the K gets the needs-you dot', (await calls(main, 'tray_set')).at(-1)?.args?.state === 'needs', JSON.stringify((await calls(main, 'tray_set')).at(-1)?.args))
   await main.evaluate(() => window.__kfNotifyAction('tomorrow', JSON.parse(JSON.stringify({ kind: 'task_reminder', taskIds: ['10000000-0000-4000-8000-000000000005'] }))))
   await sleep(600)

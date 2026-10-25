@@ -1,12 +1,24 @@
 import type { Citation } from '../../lib/types'
+import type { ChatOutcome, ChatPlan, ChatRestore } from './api'
 
 // P7e A28 (Flow Audit J15): the chat keeps its conversation until you press Clear — on this device, per
 // account, in localStorage. Sign-out forgets it (AuthProvider), like the query cache.
 
+/** A plan's card (queue item 5): waiting for the OK, being changed, cancelled, running, or run. */
+export type PlanState = 'pending' | 'editing' | 'cancelled' | 'running' | 'done'
+
 export interface DisplayMessage {
   role: 'user' | 'assistant'
+  /** What the model reads back (for a card: what was proposed, and what really happened). */
   content: string
   citations?: Citation[]
+  plan?: ChatPlan & { state: PlanState }
+  /** What each confirmed call really did. */
+  outcomes?: ChatOutcome[]
+  /** The confirmed batch's one Undo: its rows as they were (dropped once it has run). */
+  restore?: ChatRestore
+  /** Its Undo ran. */
+  undone?: boolean
 }
 
 const PREFIX = 'kf.chat.'
@@ -21,9 +33,11 @@ export function loadChat(uid: string | undefined): DisplayMessage[] {
   try {
     const raw: unknown = JSON.parse(localStorage.getItem(PREFIX + uid) ?? '[]')
     // An answer cut off before its first word (the panel closed mid-reply) has nothing to show.
-    return Array.isArray(raw)
-      ? raw.filter((m): m is DisplayMessage => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string' && m.content !== '')
-      : []
+    if (!Array.isArray(raw)) return []
+    return raw
+      .filter((m): m is DisplayMessage => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string' && m.content !== '')
+      // A card closed while it ran can't say what happened: it says so, and is never offered again.
+      .map((m) => (m.plan?.state === 'running' ? { ...m, plan: { ...m.plan, state: 'done' as const }, content: `${m.content}\n(The page closed while this ran — check before trying again.)` } : m))
   } catch {
     return []
   }

@@ -58,10 +58,13 @@ export interface DatePickerProps {
   /** Demo data; otherwise the cached tasks and events. */
   tasks?: readonly Task[]
   events?: readonly CalendarEvent[]
+  /** A day to look at, not a date to set (Today's day picker): a tap on a day picks it at once, and a
+   * past value opens on its own month. */
+  browse?: boolean
 }
 
 export function DatePicker(p: DatePickerProps) {
-  const { title, meta, mode = 'iso', value, onPick, onClose, quick, onSomeday, onClear, withTime, duration, max, position, trigger, tasks, events } = p
+  const { title, meta, mode = 'iso', value, onPick, onClose, quick, onSomeday, onClear, withTime, duration, max, position, trigger, tasks, events, browse } = p
   const isMobile = useIsMobile()
   const monthId = useId()
   const now = new Date()
@@ -70,7 +73,7 @@ export function DatePicker(p: DatePickerProps) {
   const [day, setDay] = useState(initialDay)
   // Rescheduling an overdue task means picking a day from now on, so a past value opens on this month
   // (its day stays selected — Done without a tap keeps it).
-  const opensOn = initialDay && initialDay >= today ? initialDay : today
+  const opensOn = initialDay && (browse || initialDay >= today) ? initialDay : today
   const [focusKey, setFocusKey] = useState(opensOn)
   const [month, setMonth] = useState(() => monthOf(opensOn))
   const [stage, setStage] = useState<'date' | 'time'>('date')
@@ -194,7 +197,13 @@ export function DatePicker(p: DatePickerProps) {
                       aria-current={k === today ? 'date' : undefined}
                       aria-label={`${dayLabel(k)}${marks.has(k) ? ', has items' : ''}`}
                       className={`kf-pk-day${k.slice(0, 7) !== `${month.y}-${String(month.m).padStart(2, '0')}` ? ' is-out' : ''}${k === today ? ' is-today' : ''}${marks.has(k) ? ' has-items' : ''}`}
-                      onClick={() => choose(k)}
+                      onClick={() => {
+                        choose(k)
+                        if (browse) {
+                          emit(k, null)
+                          close()
+                        }
+                      }}
                     >
                       <span>{Number(k.slice(8))}</span>
                     </button>

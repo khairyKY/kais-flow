@@ -2,9 +2,12 @@
 // (KitGesturesDemo: the real SwipeRow, useRowGrammar → TaskMenu, and BulkBar over sample rows).
 // Touch is real CDP touch input (Input.dispatchTouchEvent), so touch-action / scrolling apply.
 // node verify.mjs <outDir> [baseUrl]
-import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+// playwright-core isn't installed in the repo: load it from the same path the sibling harnesses use (argv[4]).
+const PW = process.argv[4] ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs'
+const { chromium } = await import(pathToFileURL(PW).href)
 
 const OUT = process.argv[2]
 const BASE = process.argv[3] ?? 'http://localhost:5231'
@@ -18,9 +21,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 
 // v1.0.23 (plan-replan + tasks-noise): one Plan/Replan entry replaces Tomorrow + Pick date, "Move to…", Make goal, Start focus.
-const SPEC = ['Replan…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete']
+// v1.4 added Snooze… (snooze wave, 0082) after Replan… and Duplicate before Select.
+const SPEC = ['Replan…', 'Snooze…', 'Move to…', 'Priority', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Duplicate', 'Select', 'Delete']
 // Desktop (Kai 2026-10-12, taskMenuSpec): Tomorrow back on top, and the Label picker after Priority.
-const DESK_SPEC = ['Tomorrow', 'Replan…', 'Move to…', 'Priority', 'Labels', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Select', 'Delete']
+const DESK_SPEC = ['Tomorrow', 'Replan…', 'Snooze…', 'Move to…', 'Priority', 'Labels', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Duplicate', 'Select', 'Delete']
 
 async function open(view, theme) {
   const ctx = await browser.newContext({ viewport: view.viewport, hasTouch: view.touch, deviceScaleFactor: 1 })
@@ -145,7 +149,7 @@ for (const theme of ['day', 'night']) {
       await page.screenshot({ path: path.join(OUT, `${id}-swipe-right-past-line.png`) })
     },
   })
-  check(`${id} past 40%: "Tomorrow · <day> 09:00"`, /^Tomorrow\s+[A-Z]{3} 09:00$/i.test(commitText.replace(/\n/g, ' ').trim()), JSON.stringify(commitText))
+  check(`${id} past 40%: "Tomorrow · <day> 9:00 AM"`, /^Tomorrow\s+[A-Z]{3} 9:00 AM$/i /* 12h clock since v1.4.0 */.test(commitText.replace(/\n/g, ' ').trim()), JSON.stringify(commitText))
   // Haptics are native-only since lib/haptics (the web has no tick), so nothing to count here.
   void buzz0
   await sleep(300)

@@ -350,7 +350,8 @@ if (want('g1')) {
     await dhuhr.scrollIntoViewIfNeeded()
     await sleep(300)
     check(`g1 ${theme}: Dhuhr is on the grid, marked synced`, (await dhuhr.count()) === 1 && /kf-synced/.test(await dhuhr.getAttribute('class')))
-    const accent = await dhuhr.evaluate((el) => el.style.getPropertyValue('--kf-ev-accent'))
+    // Since the 2026-10-22 block looks (ffe24812) the calendar's colour is --kf-ev-c; --kf-ev-accent is its ink mix.
+    const accent = await dhuhr.evaluate((el) => el.style.getPropertyValue('--kf-ev-c'))
     check(`g1 ${theme}: in the calendar's colour (#9fe1e7)`, accent === '#9fe1e7', accent)
     check(`g1 ${theme}: the all-day Mawlid sits in the all-day band (Tue)`, (await page.locator('.fc-daygrid-event', { hasText: 'Mawlid' }).count()) >= 1)
     check(`g1 ${theme}: no resize handle on a synced event`, (await dhuhr.locator('.fc-event-resizer').count()) === 0)
@@ -364,7 +365,8 @@ if (want('g1')) {
     if (theme === 'day') {
       // A drag does nothing: no write, the block stays where it was.
       const b0 = await dhuhr.boundingBox()
-      const from = center(b0)
+      // Overlap B (cascade, 2026-10-22): Lunch (12:10) lies over Dhuhr's lower half, so grab its uncovered top.
+      const from = { x: b0.x + 10, y: b0.y + 4 }
       const w = state.writes.length
       await page.mouse.move(from.x, from.y)
       await page.mouse.down()
@@ -388,7 +390,7 @@ if (want('g2')) {
     const { ctx, page, errors, state } = await open('/calendar', { theme })
     await fc(page, eid(DHUHR)).scrollIntoViewIfNeeded()
     await sleep(200)
-    await fc(page, eid(DHUHR)).click()
+    await fc(page, eid(DHUHR)).click({ position: { x: 10, y: 4 } }) // its top: Lunch overlaps the rest (cascade)
     await menu(page).waitFor({ timeout: 4000 }).catch(() => {})
     await sleep(300)
     const labels = await menu(page).getByRole('menuitem').allInnerTexts()
@@ -403,14 +405,14 @@ if (want('g2')) {
       check('g2 the date row opens no picker', (await page.locator('[role="dialog"]').count()) === 0)
       await page.keyboard.press('Escape')
       await sleep(200)
-      await fc(page, eid(DHUHR)).click()
+      await fc(page, eid(DHUHR)).click({ position: { x: 10, y: 4 } }) // its top: Lunch overlaps the rest (cascade)
       await menu(page).waitFor({ timeout: 4000 }).catch(() => {})
       await page.keyboard.press('Backspace')
       await sleep(1500)
       check('g2 ⌫ with its menu open deletes nothing', calWrites(state, w).length === 0 && (await fc(page, eid(DHUHR)).count()) === 1)
       await page.keyboard.press('Escape')
       await sleep(200)
-      await fc(page, eid(DHUHR)).click({ button: 'right' })
+      await fc(page, eid(DHUHR)).click({ button: 'right', position: { x: 10, y: 4 } })
       await sleep(400)
       const ctxItems = await page.locator('[role="menu"]').last().getByRole('menuitem').allInnerTexts()
       check('g2 right-click: only "Details" — no Delete', ctxItems.length === 1 && /Details/.test(ctxItems[0]), JSON.stringify(ctxItems))
@@ -437,7 +439,8 @@ if (want('p1')) {
     check(`p1 ${theme}: the phone grid draws Dhuhr`, (await block.count()) === 1)
     if (theme === 'day') {
       // A 600ms hold lifts a native block; a synced one stays down.
-      const p = center(await block.boundingBox())
+      const bb = await block.boundingBox()
+      const p = { x: bb.x + 10, y: bb.y + 4 } // its uncovered top: Lunch (12:10) overlaps the rest
       const w = state.writes.length
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p] })
       await sleep(700)
@@ -448,7 +451,8 @@ if (want('p1')) {
       await page.keyboard.press('Escape').catch(() => {})
       await sleep(500)
     }
-    const p = center(await block.boundingBox())
+    const bb2 = await block.boundingBox()
+    const p = { x: bb2.x + 10, y: bb2.y + 4 } // its uncovered top: Lunch (12:10) overlaps the rest
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p] })
     await sleep(40)
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })

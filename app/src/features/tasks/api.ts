@@ -4,7 +4,7 @@ import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { animateRowRemoval } from '../../lib/motion'
-import { deleteEventsForTask, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
+import { deleteEventsForTask, lengthenTaskBlock, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
 import { OUT_OF_SLOT } from '../calendar/slots'
 import { toastAction, toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
@@ -385,8 +385,9 @@ const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
 
 /** Every move (⋯ / right-click "Move to…", the swipe, the `p` key, the task sheet, bulk): into a
  * project, an area, a domain, or out of all three (./move.ts placeTask), with one "Moved to X ·
- * Undo". Undo puts back each row's project, area, domain and milestone — only those. */
-export function moveTasksWithUndo(tasks: Task[], to: MoveTarget): void {
+ * Undo". Undo puts back each row's project, area, domain and milestone — only those. `said` replaces
+ * the toast's words and `onUndo` runs with its Undo (projects/autoProject: "→ Forecasting App"). */
+export function moveTasksWithUndo(tasks: Task[], to: MoveTarget, said?: string, onUndo?: () => void): void {
   const place = (t: Task) => ({ project_id: t.project_id, area_id: t.area_id ?? null, domain_id: t.domain_id })
   for (const t of tasks) {
     const moved = placeTask(cached(t), to)
@@ -394,7 +395,8 @@ export function moveTasksWithUndo(tasks: Task[], to: MoveTarget): void {
     logActivity('task.moved', 'task', t.id, place(moved))
   }
   const many = tasks.length === 1 ? '' : `${tasksLabel(tasks.length)} `
-  toastUndo(to.kind === 'none' ? `${many}${many ? 'unfiled' : 'Unfiled'}` : `${many}${many ? 'moved' : 'Moved'} to ${to.name}`, () => {
+  toastUndo(said ?? (to.kind === 'none' ? `${many}${many ? 'unfiled' : 'Unfiled'}` : `${many}${many ? 'moved' : 'Moved'} to ${to.name}`), () => {
+    onUndo?.()
     const now = queryClient.getQueryData<Task[]>(['tasks']) ?? []
     for (const t of tasks) {
       const current = now.find((c) => c.id === t.id) ?? t
@@ -466,7 +468,7 @@ export function snoozeTasksWithUndo(tasks: readonly Task[], until: string): void
  * remind_again_at; notify and the device planners send it) — the task and its own reminder stay put. */
 export function remindAgainWithUndo(tasks: readonly Task[], minutes: number, now: Date = new Date()): void {
   const at = new Date(now.getTime() + minutes * 60_000).toISOString()
-  editWithUndo(tasks, `Reminding you again at ${timeText(new Date(at))}`, (t) => patchTask(t, { remind_again_at: at }))
+  editWithUndo(tasks, `Reminding you again at ${timeText(new Date(at))}`, (t) => void patchTask(t, { remind_again_at: at }))
 }
 
 /** Unsnooze (the Snoozed list, the ⋯ menu, Z on a snoozed row): back on the lists now, with Undo. */
@@ -489,18 +491,20 @@ const logUpdate = (task: Task, field: string) => logActivity('task.updated', 'ta
 
 /** P7e A17: a field edit with "<message> · Undo" — Priority, Repeat, Remind and Duration from a menu,
  * the task sheet, the editor or a key. `write` runs on each task (through its own setter); Undo writes
- * back every field it changed, as it was. Nothing changed (the same pick again), no toast. */
-export function editWithUndo(tasks: readonly Task[], message: string, write: (task: Task) => void): void {
+ * back every field it changed, as it was — and takes back what the setter did beyond the row (the block
+ * a Duration stretched), when it returns that Undo. Nothing changed (the same pick again), no toast. */
+export function editWithUndo(tasks: readonly Task[], message: string, write: (task: Task) => void | (() => void)): void {
   const changes = tasks.flatMap((t) => {
     const before = cached(t)
-    write(before)
+    const more = write(before)
     const after = cached(t)
     const keys = (Object.keys(after) as (keyof Task)[]).filter((k) => k !== 'updated_at' && after[k] !== before[k])
-    return keys.length ? [{ before, back: Object.fromEntries(keys.map((k) => [k, before[k] ?? null])) as Partial<Task> }] : []
+    return keys.length ? [{ before, more, back: Object.fromEntries(keys.map((k) => [k, before[k] ?? null])) as Partial<Task> }] : []
   })
   if (changes.length === 0) return
   toastUndo(message, () =>
-    changes.forEach(({ before, back }) => {
+    changes.forEach(({ before, more, back }) => {
+      more?.()
       patchTask(before, back)
       logUpdate(before, Object.keys(back).join(','))
     }),
@@ -530,9 +534,14 @@ export function setPriority(task: Task, priority: number | null): void {
   logUpdate(task, 'priority')
 }
 
-export function setDuration(task: Task, durationMin: number | null): void {
-  patchTask(task, { duration_min: durationMin })
+/** The estimate. On the calendar it is the block's length, so the block keeps its start and takes the
+ * new length (bugs-1023: the chip changed only the number). Returns that block's Undo. */
+export function setDuration(task: Task, durationMin: number | null): () => void {
+  // The block's write carries the estimate with it (touchTaskSchedule): one task write either way.
+  const undo = durationMin ? lengthenTaskBlock(task.id, durationMin) : () => {}
+  if (cached(task).duration_min !== durationMin) patchTask(task, { duration_min: durationMin })
   logUpdate(task, 'duration')
+  return undo
 }
 
 /** The notes field (task sheet, popover, editor) — written once, when it's left. */

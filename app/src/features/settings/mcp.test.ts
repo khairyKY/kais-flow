@@ -602,6 +602,17 @@ describe('MCP: the tools', () => {
     expect((await call(deps(store), 'add_to_inbox', { text: 'x', url: 'javascript:alert(1)' })).text).toContain('http(s) link')
   })
 
+  // Queue item 7: with "File captures for me" on (0086) the app files it once a device sees it.
+  it('add_to_inbox: queued for the app to file while "File captures for me" is on; off, it just waits', async () => {
+    const store = fakeStore()
+    store.db.app_settings[0].auto_file_captures = true
+    const r = await call(deps(store), 'add_to_inbox', { text: 'dentist friday 3pm' })
+    expect(store.inbox[0]).toEqual({ id: r.data!.added_to_inbox.id, raw_text: 'dentist friday 3pm', payload: { source: 'mcp', needs_parse: true } })
+    store.db.app_settings[0].auto_file_captures = false
+    await call(deps(store), 'add_to_inbox', { text: 'x' })
+    expect(store.inbox[1].payload).toEqual({ source: 'mcp' })
+  })
+
   it('calendar: this week by default, inclusive days, at most 31 days', async () => {
     const d = deps(fakeStore())
     const week = await call(d, 'calendar')
@@ -670,6 +681,20 @@ describe('MCP: planning the week', () => {
     })
     expect(r.data!.changed).toEqual(['due 2026-10-06 10:00', 'on the calendar 2026-10-06 10:00–11:30', '1 calendar block taken off the calendar (in Trash)', "left today's Top 3", 'reminder → 2026-10-06 09:45'])
     expect(store.logs.map((l) => [l.eventType, l.entityId])).toEqual([['task.rescheduled', tid(21)], ['calendar_event.deleted', tid(511)], ['task.scheduled', tid(21)]])
+  })
+
+  // bugs-1023 (Kai 2026-10-23: "duration doesn't sync with the times of scheduling"): the app's one rule.
+  it('edit_task duration_min: the block keeps its start and takes the new length; reschedule_task makes the estimate the block’s', async () => {
+    const blocks = [{ id: tid(530), task_id: tid(24), starts_at: '2026-10-04T14:15:00Z', ends_at: '2026-10-04T14:30:00Z', all_day: false }] // today 17:15–17:30
+    const store = fakeStore('Africa/Cairo', [task(24, 'Pre workout', { due_at: '2026-10-04T14:15:00Z', duration_min: 15, scheduled_start: '2026-10-04T14:15:00Z', scheduled_end: '2026-10-04T14:30:00Z' })], blocks)
+    const r = await call(deps(store), 'edit_task', { id: tid(24), duration_min: 60 })
+    expect(r.data!.changed).toEqual(['duration → 60 min', 'on the calendar 2026-10-04 17:15–18:15'])
+    expect(store.cal.find((e) => e.id === tid(530))).toMatchObject({ starts_at: '2026-10-04T14:15:00.000Z', ends_at: '2026-10-04T15:15:00.000Z' })
+    expect(store.tasks[0]).toMatchObject({ duration_min: 60, scheduled_start: '2026-10-04T14:15:00.000Z', scheduled_end: '2026-10-04T15:15:00.000Z' })
+    // A block out of step with its estimate (an older app moved it): a replan keeps the block's length and the estimate follows.
+    store.cal.find((e) => e.id === tid(530))!.ends_at = '2026-10-04T14:45:00.000Z'
+    await call(deps(store), 'reschedule_task', { id: tid(24), when: '2026-10-05T09:00' })
+    expect(store.tasks[0]).toMatchObject({ duration_min: 30, scheduled_start: '2026-10-05T06:00:00.000Z', scheduled_end: '2026-10-05T06:30:00.000Z' })
   })
 
   it("reschedule_task: a date alone is 09:00 that day and keeps only that day's block — the user's day, not UTC's (Tokyo)", async () => {

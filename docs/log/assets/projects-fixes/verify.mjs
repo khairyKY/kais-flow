@@ -348,7 +348,8 @@ for (const theme of ['day', 'night']) {
       ['remy', 'People', 'person', async (page) => (await page.locator('.app-main-content').innerText()).includes('Remy Manage')],
       ['vendor', 'Inbox', 'inbox item (filed, Inbox at zero)', async (page) => (await page.locator(`[id="inbox-${FILED.id}"]`).count()) === 1 && /already filed/i.test(await page.locator(`[id="inbox-${FILED.id}"]`).innerText())],
       ['garden beds', 'Journal', 'journal entry (an older day)', async (page) => (await page.locator(`[id="journal-${ENTRY.id}"]`).count()) === 1 && (await page.locator(`[id="journal-${ENTRY.id}"]`).isVisible())],
-      ['review', 'Events', 'calendar event (two weeks out)', async (page) => (await page.locator('input').evaluateAll((els) => els.some((e) => e.value === 'Remanage review'))) || ((await page.getByRole('dialog').count()) > 0 && (await page.getByRole('dialog').last().innerText()).includes('Remanage review'))],
+      // The block menu's title is a textarea since the Design System B menus (9d8741c4, 2026-10-15).
+      ['review', 'Events', 'calendar event (two weeks out)', async (page) => (await page.locator('input, textarea').evaluateAll((els) => els.some((e) => e.value === 'Remanage review'))) || ((await page.getByRole('dialog').count()) > 0 && (await page.getByRole('dialog').last().innerText()).includes('Remanage review'))],
     ]
     for (const view of DAY ? [undefined, PHONE] : [undefined]) {
       const v = view ? 'phone' : 'desktop'

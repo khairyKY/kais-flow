@@ -107,7 +107,8 @@ const shot = (page, name) => page.screenshot({ path: path.join(OUT, `${name}.png
 const text = (loc) => loc.first().innerText().catch(() => '')
 const zoneLabel = (page) => page.locator('.app-topbar-zone').first().textContent().catch(() => '')
 // Today on a computer has no top bar (2a, ced71548): the sidebar's "Personal · <city>" line names the zone.
-const sideCity = (page) => page.locator('.app-sidebar-header div[title]', { hasText: ' · ' }).first().textContent().then((t) => t.split(' · ').pop(), () => '')
+// The new sidebar (509b16f8, 2026-10-22) puts "workspace · City" in a titled span under the name.
+const sideCity = (page) => page.locator('.app-sidebar-header [title]', { hasText: ' · ' }).first().textContent().then((t) => t.split(' · ').pop(), () => '')
 const writesTo = (state, table, from = 0) => state.writes.slice(from).filter((w) => w.table === table && w.method === 'POST').map((w) => w.body)
 const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.locator('.ts-top') })
 
@@ -153,7 +154,8 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
   await sleep(500)
   const w = writesTo(state, 'tasks', w0)
   check(`${name} Tomorrow → due Sun 4 Oct 09:00 New York (2026-10-04T13:00Z)`, w.length === 1 && w[0].due_at === '2026-10-04T13:00:00.000Z', JSON.stringify(w.map((x) => x.due_at)))
-  check(`${name} the chip reads Tomorrow · 09:00`, (await text(sheetOf(page).locator('.ts-chips .kf-chip').first())).toUpperCase() === 'TOMORROW · 09:00', await text(sheetOf(page).locator('.ts-chips .kf-chip').first()))
+  // 12h clock since v1.4.0 (one-clock change).
+  check(`${name} the chip reads Tomorrow · 9:00 AM`, (await text(sheetOf(page).locator('.ts-chips .kf-chip').first())).toUpperCase() === 'TOMORROW · 9:00 AM', await text(sheetOf(page).locator('.ts-chips .kf-chip').first()))
   await shot(page, name)
   check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
   await ctx.close()
@@ -166,7 +168,7 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
   await page.locator('.pc-nowtag').scrollIntoViewIfNeeded().catch(() => {})
   await sleep(300)
   await shot(page, name)
-  check(`${name} now tag reads 21:30 (New York), not 04:30 (Cairo)`, (await text(page.locator('.pc-nowtag'))) === '21:30', await text(page.locator('.pc-nowtag')))
+  check(`${name} now tag reads 9:30 PM (New York), not 4:30 AM (Cairo)`, (await text(page.locator('.pc-nowtag'))) === '9:30 PM', await text(page.locator('.pc-nowtag')))
   check(`${name} tonight's events are drawn on today`, (await page.locator('.pc-block', { hasText: 'Dinner with Sam' }).count()) === 1 && (await page.locator('.pc-block', { hasText: 'Late call with Cairo' }).count()) === 1)
   check(`${name} Sunday's market is not on today's column`, (await page.locator('.pc-block', { hasText: 'Farmers market' }).count()) === 0)
   check(`${name} no page errors`, errors.length === 0, errors.join(' | '))

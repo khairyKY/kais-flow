@@ -1,5 +1,29 @@
 [
   {
+    "v": "v1.5.0",
+    "date": "2026-10-26",
+    "title": "A chat that does things, and any day on Today",
+    "highlights": [
+      "The chat can now really add, move and finish things: it shows what it will do, you confirm, it tells you exactly what happened, and one Undo takes it all back",
+      "Today: step to tomorrow or any day with ‹ › or the date picker; plan a future day's three, look back at a past day",
+      "Captures wait in your Inbox unless you turn on “File captures for me”; new tasks can suggest their project",
+      "The calendar fills the window, can fit the days to its width and the hours to your day, hides empty lists, shows what's Scheduled, and has an Ongoing / Next card at the bottom left",
+      "Length and times stay in step everywhere; the + capture field is never covered",
+      "The Windows tray opens signed in, with a new popover and menu",
+      "Privacy and Terms everywhere, agreeing at sign-up, and Delete my account"
+    ],
+    "icons": [
+      "chat",
+      "sun",
+      "mail",
+      "calendar",
+      "clock",
+      "windows",
+      "lock"
+    ],
+    "art": "wisteria-p40"
+  },
+  {
     "v": "v1.4.2",
     "date": "2026-10-25",
     "title": "Every change saves",

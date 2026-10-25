@@ -1,0 +1,1122 @@
+[
+  {
+    "name": "w 840@100 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":840,\"w\":347,\"h\":663.5},\"body\":{\"l\":494,\"r\":839,\"w\":345,\"h\":1728},\"card\":{\"l\":493,\"r\":840,\"w\":347,\"h\":707.5}}"
+  },
+  {
+    "name": "w 840@100 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":840,\"w\":347,\"h\":52.5},\"ctrls\":{\"l\":509,\"r\":703.109375,\"w\":194.109375,\"h\":39.5},\"date\":{\"l\":809.25,\"r\":826,\"w\":16.75,\"h\":16.796875}}"
+  },
+  {
+    "name": "w 840@100 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":840,\"w\":347,\"h\":663.5},\"body\":{\"l\":494,\"r\":839,\"w\":345,\"h\":1728},\"card\":{\"l\":493,\"r\":840,\"w\":347,\"h\":707.5}}"
+  },
+  {
+    "name": "w 840@100 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":840,\"w\":347,\"h\":52.5},\"ctrls\":{\"l\":509,\"r\":718.578125,\"w\":209.578125,\"h\":39.5},\"date\":{\"l\":784.421875,\"r\":826,\"w\":41.578125,\"h\":16.796875}}"
+  },
+  {
+    "name": "w 840@100 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "3 days 95,95,95"
+  },
+  {
+    "name": "w 840@100 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":840,\"w\":347,\"h\":663.5},\"body\":{\"l\":494,\"r\":839,\"w\":345,\"h\":1728},\"card\":{\"l\":493,\"r\":840,\"w\":347,\"h\":707.5}}"
+  },
+  {
+    "name": "w 840@100 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":840,\"w\":347,\"h\":52.5},\"ctrls\":{\"l\":509,\"r\":718.171875,\"w\":209.171875,\"h\":39.5},\"date\":{\"l\":784.421875,\"r\":826,\"w\":41.578125,\"h\":16.796875}}"
+  },
+  {
+    "name": "w 840@100 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 143,143"
+  },
+  {
+    "name": "w 840@100 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":840,\"w\":347,\"h\":663.5},\"body\":{\"l\":494,\"r\":839,\"w\":345,\"h\":1728},\"card\":{\"l\":493,\"r\":840,\"w\":347,\"h\":707.5}}"
+  },
+  {
+    "name": "w 840@100 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":840,\"w\":347,\"h\":52.5},\"ctrls\":{\"l\":509,\"r\":718.578125,\"w\":209.578125,\"h\":39.5},\"date\":{\"l\":784.421875,\"r\":826,\"w\":41.578125,\"h\":16.796875}}"
+  },
+  {
+    "name": "w 840@100 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "3 days 95,95,95"
+  },
+  {
+    "name": "w 840@100 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1111,\"w\":618,\"h\":663.5},\"body\":{\"l\":494,\"r\":1110,\"w\":616,\"h\":1728},\"card\":{\"l\":493,\"r\":840,\"w\":347,\"h\":707.5}}"
+  },
+  {
+    "name": "w 840@100 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":840,\"w\":347,\"h\":52.5},\"ctrls\":{\"l\":509,\"r\":712.75,\"w\":203.75,\"h\":39.5},\"date\":{\"l\":784.421875,\"r\":826,\"w\":41.578125,\"h\":16.796875}}"
+  },
+  {
+    "name": "w 840@100 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1111,\"w\":618,\"h\":707.5},\"body\":{\"l\":494,\"r\":1110,\"w\":616,\"h\":665},\"card\":{\"l\":493,\"r\":840,\"w\":347,\"h\":707.5}}"
+  },
+  {
+    "name": "w 840@100 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":840,\"w\":347,\"h\":52.5},\"ctrls\":{\"l\":509,\"r\":717.765625,\"w\":208.765625,\"h\":39.5},\"date\":{\"l\":800.640625,\"r\":826,\"w\":25.359375,\"h\":16.796875}}"
+  },
+  {
+    "name": "w 840@100 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":277,\"r\":839,\"w\":562,\"h\":1728},{\"l\":276,\"r\":840,\"w\":564,\"h\":663.5},{\"l\":494,\"r\":839,\"w\":345,\"h\":1728},{\"l\":493,\"r\":840,\"w\":347,\"h\":663.5}]"
+  },
+  {
+    "name": "w 840@100 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w 840@125 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":345,\"r\":840,\"w\":495,\"h\":640},\"body\":{\"l\":346,\"r\":839,\"w\":493,\"h\":2160},\"card\":{\"l\":345,\"r\":840,\"w\":495,\"h\":695}}"
+  },
+  {
+    "name": "w 840@125 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":345,\"r\":840,\"w\":495,\"h\":65},\"ctrls\":{\"l\":365,\"r\":606.640625,\"w\":241.640625,\"h\":48.875},\"date\":{\"l\":801.578125,\"r\":822.5,\"w\":20.921875,\"h\":21}}"
+  },
+  {
+    "name": "w 840@125 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":345,\"r\":840,\"w\":495,\"h\":640},\"body\":{\"l\":346,\"r\":839,\"w\":493,\"h\":2160},\"card\":{\"l\":345,\"r\":840,\"w\":495,\"h\":695}}"
+  },
+  {
+    "name": "w 840@125 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":345,\"r\":840,\"w\":495,\"h\":65},\"ctrls\":{\"l\":365,\"r\":626.046875,\"w\":261.046875,\"h\":48.875},\"date\":{\"l\":770.53125,\"r\":822.5,\"w\":51.96875,\"h\":21}}"
+  },
+  {
+    "name": "w 840@125 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "4 days 105,105,105,105"
+  },
+  {
+    "name": "w 840@125 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":345,\"r\":840,\"w\":495,\"h\":640},\"body\":{\"l\":346,\"r\":839,\"w\":493,\"h\":2160},\"card\":{\"l\":345,\"r\":840,\"w\":495,\"h\":695}}"
+  },
+  {
+    "name": "w 840@125 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":345,\"r\":840,\"w\":495,\"h\":65},\"ctrls\":{\"l\":365,\"r\":625.46875,\"w\":260.46875,\"h\":48.875},\"date\":{\"l\":770.53125,\"r\":822.5,\"w\":51.96875,\"h\":21}}"
+  },
+  {
+    "name": "w 840@125 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 210,210"
+  },
+  {
+    "name": "w 840@125 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":345,\"r\":840,\"w\":495,\"h\":640},\"body\":{\"l\":346,\"r\":839,\"w\":493,\"h\":2160},\"card\":{\"l\":345,\"r\":840,\"w\":495,\"h\":695}}"
+  },
+  {
+    "name": "w 840@125 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":345,\"r\":840,\"w\":495,\"h\":65},\"ctrls\":{\"l\":365,\"r\":626.046875,\"w\":261.046875,\"h\":48.875},\"date\":{\"l\":770.53125,\"r\":822.5,\"w\":51.96875,\"h\":21}}"
+  },
+  {
+    "name": "w 840@125 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "4 days 105,105,105,105"
+  },
+  {
+    "name": "w 840@125 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":345,\"r\":1117.5,\"w\":772.5,\"h\":640},\"body\":{\"l\":346,\"r\":1116,\"w\":770,\"h\":2160},\"card\":{\"l\":345,\"r\":840,\"w\":495,\"h\":695}}"
+  },
+  {
+    "name": "w 840@125 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":345,\"r\":840,\"w\":495,\"h\":65},\"ctrls\":{\"l\":365,\"r\":618.703125,\"w\":253.703125,\"h\":48.875},\"date\":{\"l\":770.53125,\"r\":822.5,\"w\":51.96875,\"h\":21}}"
+  },
+  {
+    "name": "w 840@125 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":345,\"r\":1117.5,\"w\":772.5,\"h\":695},\"body\":{\"l\":346,\"r\":1116,\"w\":770,\"h\":648},\"card\":{\"l\":345,\"r\":840,\"w\":495,\"h\":695}}"
+  },
+  {
+    "name": "w 840@125 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":345,\"r\":840,\"w\":495,\"h\":65},\"ctrls\":{\"l\":365,\"r\":624.96875,\"w\":259.96875,\"h\":48.875},\"date\":{\"l\":790.8125,\"r\":822.5,\"w\":31.6875,\"h\":21}}"
+  },
+  {
+    "name": "w 840@125 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":499.75,\"r\":838.75,\"w\":339,\"h\":2160},{\"l\":498.75,\"r\":840,\"w\":341.25,\"h\":640},{\"l\":346,\"r\":839,\"w\":493,\"h\":2160},{\"l\":345,\"r\":840,\"w\":495,\"h\":640}]"
+  },
+  {
+    "name": "w 840@125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w 840@150 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":414,\"r\":840,\"w\":426,\"h\":616},\"body\":{\"l\":415,\"r\":839,\"w\":424,\"h\":2592},\"card\":{\"l\":414,\"r\":840,\"w\":426,\"h\":682}}"
+  },
+  {
+    "name": "w 840@150 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":414,\"r\":840,\"w\":426,\"h\":78},\"ctrls\":{\"l\":438,\"r\":706.171875,\"w\":268.171875,\"h\":58.25},\"date\":{\"l\":793.890625,\"r\":819,\"w\":25.109375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 840@150 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":414,\"r\":840,\"w\":426,\"h\":616},\"body\":{\"l\":415,\"r\":839,\"w\":424,\"h\":2592},\"card\":{\"l\":414,\"r\":840,\"w\":426,\"h\":682}}"
+  },
+  {
+    "name": "w 840@150 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":414,\"r\":840,\"w\":426,\"h\":78},\"ctrls\":{\"l\":438,\"r\":728.75,\"w\":290.75,\"h\":58.25},\"date\":{\"l\":756.640625,\"r\":819,\"w\":62.359375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 840@150 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 168,168"
+  },
+  {
+    "name": "w 840@150 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":414,\"r\":840,\"w\":426,\"h\":616},\"body\":{\"l\":415,\"r\":839,\"w\":424,\"h\":2592},\"card\":{\"l\":414,\"r\":840,\"w\":426,\"h\":682}}"
+  },
+  {
+    "name": "w 840@150 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":414,\"r\":840,\"w\":426,\"h\":78},\"ctrls\":{\"l\":438,\"r\":728.75,\"w\":290.75,\"h\":58.25},\"date\":{\"l\":756.640625,\"r\":819,\"w\":62.359375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 840@150 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 168,168"
+  },
+  {
+    "name": "w 840@150 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":414,\"r\":840,\"w\":426,\"h\":616},\"body\":{\"l\":415,\"r\":839,\"w\":424,\"h\":2592},\"card\":{\"l\":414,\"r\":840,\"w\":426,\"h\":682}}"
+  },
+  {
+    "name": "w 840@150 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":414,\"r\":840,\"w\":426,\"h\":78},\"ctrls\":{\"l\":438,\"r\":728.75,\"w\":290.75,\"h\":58.25},\"date\":{\"l\":756.640625,\"r\":819,\"w\":62.359375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 840@150 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 168,168"
+  },
+  {
+    "name": "w 840@150 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":414,\"r\":1341,\"w\":927,\"h\":616},\"body\":{\"l\":415,\"r\":1340,\"w\":925,\"h\":2592},\"card\":{\"l\":414,\"r\":840,\"w\":426,\"h\":682}}"
+  },
+  {
+    "name": "w 840@150 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":414,\"r\":840,\"w\":426,\"h\":78},\"ctrls\":{\"l\":438,\"r\":720.640625,\"w\":282.640625,\"h\":58.25},\"date\":{\"l\":756.640625,\"r\":819,\"w\":62.359375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 840@150 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":414,\"r\":1341,\"w\":927,\"h\":682},\"body\":{\"l\":415,\"r\":1340,\"w\":925,\"h\":631},\"card\":{\"l\":414,\"r\":840,\"w\":426,\"h\":682}}"
+  },
+  {
+    "name": "w 840@150 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":414,\"r\":840,\"w\":426,\"h\":78},\"ctrls\":{\"l\":438,\"r\":728.15625,\"w\":290.15625,\"h\":58.25},\"date\":{\"l\":780.96875,\"r\":819,\"w\":38.03125,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 840@150 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":599.5,\"r\":838.5,\"w\":239,\"h\":2592},{\"l\":598.5,\"r\":840,\"w\":241.5,\"h\":616},{\"l\":415,\"r\":839,\"w\":424,\"h\":2592},{\"l\":414,\"r\":840,\"w\":426,\"h\":616}]"
+  },
+  {
+    "name": "w 840@150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w 1280@100 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1279,\"w\":785,\"h\":1728},\"card\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1280@100 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":755.109375,\"w\":246.109375,\"h\":39.5},\"date\":{\"l\":1049.734375,\"r\":1266,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1280@100 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1279,\"w\":785,\"h\":1728},\"card\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1280@100 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":770.640625,\"w\":261.640625,\"h\":39.5},\"date\":{\"l\":1049.734375,\"r\":1266,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1280@100 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "4 days 182,182,182,182"
+  },
+  {
+    "name": "w 1280@100 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1279,\"w\":785,\"h\":1728},\"card\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1280@100 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":770.171875,\"w\":261.171875,\"h\":39.5},\"date\":{\"l\":1049.734375,\"r\":1266,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1280@100 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 363,363"
+  },
+  {
+    "name": "w 1280@100 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1279,\"w\":785,\"h\":1728},\"card\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1280@100 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":770.296875,\"w\":261.296875,\"h\":39.5},\"date\":{\"l\":1049.734375,\"r\":1266,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1280@100 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "6 days 121,121,121,121,121,121"
+  },
+  {
+    "name": "w 1280@100 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1279,\"w\":785,\"h\":1728},\"card\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1280@100 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":764.75,\"w\":255.75,\"h\":39.5},\"date\":{\"l\":1049.734375,\"r\":1266,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1280@100 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":703.90625},\"body\":{\"l\":494,\"r\":1279,\"w\":785,\"h\":661},\"card\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1280@100 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1280,\"w\":787,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":769.765625,\"w\":260.765625,\"h\":39.5},\"date\":{\"l\":1049.734375,\"r\":1266,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1280@100 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":277,\"r\":1279,\"w\":1002,\"h\":1728},{\"l\":276,\"r\":1280,\"w\":1004,\"h\":659.90625},{\"l\":494,\"r\":1279,\"w\":785,\"h\":1728},{\"l\":493,\"r\":1280,\"w\":787,\"h\":659.90625}]"
+  },
+  {
+    "name": "w 1280@100 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w 1280@125 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":640},\"body\":{\"l\":617.25,\"r\":1278.25,\"w\":661,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":695}}"
+  },
+  {
+    "name": "w 1280@125 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":65},\"ctrls\":{\"l\":636.25,\"r\":942.890625,\"w\":306.640625,\"h\":48.875},\"date\":{\"l\":1113.984375,\"r\":1262.5,\"w\":148.515625,\"h\":28.875}}"
+  },
+  {
+    "name": "w 1280@125 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":640},\"body\":{\"l\":617.25,\"r\":1278.25,\"w\":661,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":695}}"
+  },
+  {
+    "name": "w 1280@125 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":65},\"ctrls\":{\"l\":636.25,\"r\":962.296875,\"w\":326.046875,\"h\":48.875},\"date\":{\"l\":1121.328125,\"r\":1262.5,\"w\":141.171875,\"h\":28.875}}"
+  },
+  {
+    "name": "w 1280@125 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "4 days 147,147,147,147"
+  },
+  {
+    "name": "w 1280@125 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":640},\"body\":{\"l\":617.25,\"r\":1278.25,\"w\":661,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":695}}"
+  },
+  {
+    "name": "w 1280@125 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":65},\"ctrls\":{\"l\":636.25,\"r\":961.71875,\"w\":325.46875,\"h\":48.875},\"date\":{\"l\":1121.328125,\"r\":1262.5,\"w\":141.171875,\"h\":28.875}}"
+  },
+  {
+    "name": "w 1280@125 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 294,294"
+  },
+  {
+    "name": "w 1280@125 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":640},\"body\":{\"l\":617.25,\"r\":1278.25,\"w\":661,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":695}}"
+  },
+  {
+    "name": "w 1280@125 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":65},\"ctrls\":{\"l\":636.25,\"r\":961.671875,\"w\":325.421875,\"h\":48.875},\"date\":{\"l\":1121.328125,\"r\":1262.5,\"w\":141.171875,\"h\":28.875}}"
+  },
+  {
+    "name": "w 1280@125 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "5 days 118,118,118,118,118"
+  },
+  {
+    "name": "w 1280@125 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1388.75,\"w\":772.5,\"h\":640},\"body\":{\"l\":617.25,\"r\":1387.25,\"w\":770,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":695}}"
+  },
+  {
+    "name": "w 1280@125 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":65},\"ctrls\":{\"l\":636.25,\"r\":954.953125,\"w\":318.703125,\"h\":48.875},\"date\":{\"l\":1121.328125,\"r\":1262.5,\"w\":141.171875,\"h\":28.875}}"
+  },
+  {
+    "name": "w 1280@125 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1388.75,\"w\":772.5,\"h\":695},\"body\":{\"l\":617.25,\"r\":1387.25,\"w\":770,\"h\":648},\"card\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":695}}"
+  },
+  {
+    "name": "w 1280@125 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":65},\"ctrls\":{\"l\":636.25,\"r\":961.21875,\"w\":324.96875,\"h\":48.875},\"date\":{\"l\":1096.5625,\"r\":1262.5,\"w\":165.9375,\"h\":28.875}}"
+  },
+  {
+    "name": "w 1280@125 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":346,\"r\":1279,\"w\":933,\"h\":2160},{\"l\":345,\"r\":1280,\"w\":935,\"h\":635.125},{\"l\":617.25,\"r\":1278.25,\"w\":661,\"h\":2160},{\"l\":616.25,\"r\":1280,\"w\":663.75,\"h\":640}]"
+  },
+  {
+    "name": "w 1280@125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w 1280@150 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":616},\"body\":{\"l\":740.5,\"r\":1278.5,\"w\":538,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":682}}"
+  },
+  {
+    "name": "w 1280@150 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":78},\"ctrls\":{\"l\":763.5,\"r\":1052.671875,\"w\":289.171875,\"h\":58.25},\"date\":{\"l\":1233.890625,\"r\":1259,\"w\":25.109375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 1280@150 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":616},\"body\":{\"l\":740.5,\"r\":1278.5,\"w\":538,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":682}}"
+  },
+  {
+    "name": "w 1280@150 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":78},\"ctrls\":{\"l\":763.5,\"r\":1075.859375,\"w\":312.359375,\"h\":58.25},\"date\":{\"l\":1196.640625,\"r\":1259,\"w\":62.359375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 1280@150 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "3 days 150,150,150"
+  },
+  {
+    "name": "w 1280@150 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":616},\"body\":{\"l\":740.5,\"r\":1278.5,\"w\":538,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":682}}"
+  },
+  {
+    "name": "w 1280@150 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":78},\"ctrls\":{\"l\":763.5,\"r\":1075.25,\"w\":311.75,\"h\":58.25},\"date\":{\"l\":1196.640625,\"r\":1259,\"w\":62.359375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 1280@150 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 225,225"
+  },
+  {
+    "name": "w 1280@150 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":616},\"body\":{\"l\":740.5,\"r\":1278.5,\"w\":538,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":682}}"
+  },
+  {
+    "name": "w 1280@150 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":78},\"ctrls\":{\"l\":763.5,\"r\":1075.859375,\"w\":312.359375,\"h\":58.25},\"date\":{\"l\":1196.640625,\"r\":1259,\"w\":62.359375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 1280@150 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "3 days 150,150,150"
+  },
+  {
+    "name": "w 1280@150 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1666.5,\"w\":927,\"h\":616},\"body\":{\"l\":740.5,\"r\":1665.5,\"w\":925,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":682}}"
+  },
+  {
+    "name": "w 1280@150 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":78},\"ctrls\":{\"l\":763.5,\"r\":1067.140625,\"w\":303.640625,\"h\":58.25},\"date\":{\"l\":1196.640625,\"r\":1259,\"w\":62.359375,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 1280@150 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1666.5,\"w\":927,\"h\":682},\"body\":{\"l\":740.5,\"r\":1665.5,\"w\":925,\"h\":631},\"card\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":682}}"
+  },
+  {
+    "name": "w 1280@150 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":78},\"ctrls\":{\"l\":763.5,\"r\":1074.65625,\"w\":311.15625,\"h\":58.25},\"date\":{\"l\":1220.96875,\"r\":1259,\"w\":38.03125,\"h\":25.1875}}"
+  },
+  {
+    "name": "w 1280@150 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":415,\"r\":1279,\"w\":864,\"h\":2592},{\"l\":414,\"r\":1280,\"w\":866,\"h\":616},{\"l\":740.5,\"r\":1278.5,\"w\":538,\"h\":2592},{\"l\":739.5,\"r\":1280,\"w\":540.5,\"h\":616}]"
+  },
+  {
+    "name": "w 1280@150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w 1920@100 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1919,\"w\":1425,\"h\":1728},\"card\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1920@100 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":755.109375,\"w\":246.109375,\"h\":39.5},\"date\":{\"l\":1689.734375,\"r\":1906,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1920@100 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1919,\"w\":1425,\"h\":1728},\"card\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1920@100 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":770.640625,\"w\":261.640625,\"h\":39.5},\"date\":{\"l\":1689.734375,\"r\":1906,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1920@100 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "4 days 342,342,342,342"
+  },
+  {
+    "name": "w 1920@100 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1919,\"w\":1425,\"h\":1728},\"card\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1920@100 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":770.171875,\"w\":261.171875,\"h\":39.5},\"date\":{\"l\":1689.734375,\"r\":1906,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1920@100 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 683,683"
+  },
+  {
+    "name": "w 1920@100 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1919,\"w\":1425,\"h\":1728},\"card\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1920@100 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":770.296875,\"w\":261.296875,\"h\":39.5},\"date\":{\"l\":1689.734375,\"r\":1906,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1920@100 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "6 days 228,228,228,228,228,228"
+  },
+  {
+    "name": "w 1920@100 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":659.90625},\"body\":{\"l\":494,\"r\":1919,\"w\":1425,\"h\":1728},\"card\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1920@100 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":764.75,\"w\":255.75,\"h\":39.5},\"date\":{\"l\":1689.734375,\"r\":1906,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1920@100 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":703.90625},\"body\":{\"l\":494,\"r\":1919,\"w\":1425,\"h\":661},\"card\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":703.90625}}"
+  },
+  {
+    "name": "w 1920@100 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":493,\"r\":1920,\"w\":1427,\"h\":56.09375},\"ctrls\":{\"l\":509,\"r\":769.765625,\"w\":260.765625,\"h\":39.5},\"date\":{\"l\":1689.734375,\"r\":1906,\"w\":216.265625,\"h\":43.09375}}"
+  },
+  {
+    "name": "w 1920@100 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":277,\"r\":1919,\"w\":1642,\"h\":1728},{\"l\":276,\"r\":1920,\"w\":1644,\"h\":659.90625},{\"l\":494,\"r\":1919,\"w\":1425,\"h\":1728},{\"l\":493,\"r\":1920,\"w\":1427,\"h\":659.90625}]"
+  },
+  {
+    "name": "w 1920@100 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w 1920@125 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":635.125},\"body\":{\"l\":617.25,\"r\":1918.25,\"w\":1301,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":690.125}}"
+  },
+  {
+    "name": "w 1920@125 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":69.875},\"ctrls\":{\"l\":636.25,\"r\":942.890625,\"w\":306.640625,\"h\":48.875},\"date\":{\"l\":1632.171875,\"r\":1902.5,\"w\":270.328125,\"h\":53.875}}"
+  },
+  {
+    "name": "w 1920@125 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":635.125},\"body\":{\"l\":617.25,\"r\":1918.25,\"w\":1301,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":690.125}}"
+  },
+  {
+    "name": "w 1920@125 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":69.875},\"ctrls\":{\"l\":636.25,\"r\":962.296875,\"w\":326.046875,\"h\":48.875},\"date\":{\"l\":1632.171875,\"r\":1902.5,\"w\":270.328125,\"h\":53.875}}"
+  },
+  {
+    "name": "w 1920@125 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "4 days 307,307,307,307"
+  },
+  {
+    "name": "w 1920@125 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":635.125},\"body\":{\"l\":617.25,\"r\":1918.25,\"w\":1301,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":690.125}}"
+  },
+  {
+    "name": "w 1920@125 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":69.875},\"ctrls\":{\"l\":636.25,\"r\":961.71875,\"w\":325.46875,\"h\":48.875},\"date\":{\"l\":1632.171875,\"r\":1902.5,\"w\":270.328125,\"h\":53.875}}"
+  },
+  {
+    "name": "w 1920@125 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 614,614"
+  },
+  {
+    "name": "w 1920@125 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":635.125},\"body\":{\"l\":617.25,\"r\":1918.25,\"w\":1301,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":690.125}}"
+  },
+  {
+    "name": "w 1920@125 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":69.875},\"ctrls\":{\"l\":636.25,\"r\":961.875,\"w\":325.625,\"h\":48.875},\"date\":{\"l\":1632.171875,\"r\":1902.5,\"w\":270.328125,\"h\":53.875}}"
+  },
+  {
+    "name": "w 1920@125 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "6 days 205,205,205,205,205,205"
+  },
+  {
+    "name": "w 1920@125 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":635.125},\"body\":{\"l\":617.25,\"r\":1918.25,\"w\":1301,\"h\":2160},\"card\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":690.125}}"
+  },
+  {
+    "name": "w 1920@125 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":69.875},\"ctrls\":{\"l\":636.25,\"r\":954.953125,\"w\":318.703125,\"h\":48.875},\"date\":{\"l\":1632.171875,\"r\":1902.5,\"w\":270.328125,\"h\":53.875}}"
+  },
+  {
+    "name": "w 1920@125 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":690.125},\"body\":{\"l\":617.25,\"r\":1918.25,\"w\":1301,\"h\":643},\"card\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":690.125}}"
+  },
+  {
+    "name": "w 1920@125 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":69.875},\"ctrls\":{\"l\":636.25,\"r\":961.21875,\"w\":324.96875,\"h\":48.875},\"date\":{\"l\":1632.171875,\"r\":1902.5,\"w\":270.328125,\"h\":53.875}}"
+  },
+  {
+    "name": "w 1920@125 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":346,\"r\":1919,\"w\":1573,\"h\":2160},{\"l\":345,\"r\":1920,\"w\":1575,\"h\":635.125},{\"l\":617.25,\"r\":1918.25,\"w\":1301,\"h\":2160},{\"l\":616.25,\"r\":1920,\"w\":1303.75,\"h\":635.125}]"
+  },
+  {
+    "name": "w 1920@125 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w 1920@150 Day: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":610.359375},\"body\":{\"l\":740.5,\"r\":1918.5,\"w\":1178,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":676.359375}}"
+  },
+  {
+    "name": "w 1920@150 Day: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":83.640625},\"ctrls\":{\"l\":763.5,\"r\":1130.671875,\"w\":367.171875,\"h\":58.25},\"date\":{\"l\":1574.59375,\"r\":1899,\"w\":324.40625,\"h\":64.640625}}"
+  },
+  {
+    "name": "w 1920@150 4 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":610.359375},\"body\":{\"l\":740.5,\"r\":1918.5,\"w\":1178,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":676.359375}}"
+  },
+  {
+    "name": "w 1920@150 4 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":83.640625},\"ctrls\":{\"l\":763.5,\"r\":1153.953125,\"w\":390.453125,\"h\":58.25},\"date\":{\"l\":1574.59375,\"r\":1899,\"w\":324.40625,\"h\":64.640625}}"
+  },
+  {
+    "name": "w 1920@150 4 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "4 days 273,273,273,273"
+  },
+  {
+    "name": "w 1920@150 2 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":610.359375},\"body\":{\"l\":740.5,\"r\":1918.5,\"w\":1178,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":676.359375}}"
+  },
+  {
+    "name": "w 1920@150 2 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":83.640625},\"ctrls\":{\"l\":763.5,\"r\":1153.25,\"w\":389.75,\"h\":58.25},\"date\":{\"l\":1574.59375,\"r\":1899,\"w\":324.40625,\"h\":64.640625}}"
+  },
+  {
+    "name": "w 1920@150 2 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "2 days 545,545"
+  },
+  {
+    "name": "w 1920@150 6 days: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":610.359375},\"body\":{\"l\":740.5,\"r\":1918.5,\"w\":1178,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":676.359375}}"
+  },
+  {
+    "name": "w 1920@150 6 days: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":83.640625},\"ctrls\":{\"l\":763.5,\"r\":1153.4375,\"w\":389.9375,\"h\":58.25},\"date\":{\"l\":1574.59375,\"r\":1899,\"w\":324.40625,\"h\":64.640625}}"
+  },
+  {
+    "name": "w 1920@150 6 days: no column under the minimum (80px × scale), days dropped instead",
+    "ok": true,
+    "detail": "6 days 182,182,182,182,182,182"
+  },
+  {
+    "name": "w 1920@150 Week: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":610.359375},\"body\":{\"l\":740.5,\"r\":1918.5,\"w\":1178,\"h\":2592},\"card\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":676.359375}}"
+  },
+  {
+    "name": "w 1920@150 Week: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":83.640625},\"ctrls\":{\"l\":763.5,\"r\":1145.140625,\"w\":381.640625,\"h\":58.25},\"date\":{\"l\":1574.59375,\"r\":1899,\"w\":324.40625,\"h\":64.640625}}"
+  },
+  {
+    "name": "w 1920@150 Month: the grid fills its width",
+    "ok": true,
+    "detail": "{\"fc\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":676.359375},\"body\":{\"l\":740.5,\"r\":1918.5,\"w\":1178,\"h\":625},\"card\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":676.359375}}"
+  },
+  {
+    "name": "w 1920@150 Month: the header is one line, the date unclipped",
+    "ok": true,
+    "detail": "{\"head\":{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":83.640625},\"ctrls\":{\"l\":763.5,\"r\":1152.65625,\"w\":389.15625,\"h\":58.25},\"date\":{\"l\":1574.59375,\"r\":1899,\"w\":324.40625,\"h\":64.640625}}"
+  },
+  {
+    "name": "w 1920@150 the rail folded and opened (0): the grid fills both ways",
+    "ok": true,
+    "detail": "[{\"l\":415,\"r\":1919,\"w\":1504,\"h\":2592},{\"l\":414,\"r\":1920,\"w\":1506,\"h\":610.359375},{\"l\":740.5,\"r\":1918.5,\"w\":1178,\"h\":2592},{\"l\":739.5,\"r\":1920,\"w\":1180.5,\"h\":610.359375}]"
+  },
+  {
+    "name": "w 1920@150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w Kai's 840px window at 125%, 4 days: filled edge to edge, the rail stepped aside although it was opened",
+    "ok": true,
+    "detail": "[105,105,105,105]"
+  },
+  {
+    "name": "w …its tab still opens it at that width (this visit), the days drop to fit beside it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w resized narrower by the window: still filled",
+    "ok": true,
+    "detail": "[{\"l\":499.75,\"r\":778.75,\"w\":279,\"h\":2160},{\"l\":498.75,\"r\":780,\"w\":281.25,\"h\":580},{\"l\":498.75,\"r\":780,\"w\":281.25,\"h\":635}]"
+  },
+  {
+    "name": "w planning mode: the strip fills its width",
+    "ok": true,
+    "detail": "[{\"l\":912.90625,\"r\":1244.90625,\"w\":332,\"h\":2160},{\"l\":911.90625,\"r\":1246.5,\"w\":334.59375,\"h\":669.125}]"
+  },
+  {
+    "name": "w planning mode: no Now card (planning is its own focus)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w planning mode, window narrowed: still filled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v1 Days fit the width: 1920 → 6, 1280 → 3, 900 → 1 days",
+    "ok": true,
+    "detail": "325"
+  },
+  {
+    "name": "v1 …the header names the count (\"N days\")",
+    "ok": true,
+    "detail": "1 day"
+  },
+  {
+    "name": "v1 …and fills",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2 View options has \"Days fit the width\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2 View options has \"Hours fit the day\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2 View options has \"Second time zone\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2 View options has \"Now card\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2 View options has \"Show weekends\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2 View options has \"24-hour time\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2 View options has \"Planning mode\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v2 Density reads Small · Medium · Large",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3 Hours fit the day: the grid runs 10:00 (an hour before the 11:00 block) to 22:00 (an hour after Isha ends 20:20)",
+    "ok": true,
+    "detail": "10:00:00 … 21:30:00"
+  },
+  {
+    "name": "v3 …the rows fit the screen (no vertical scroll)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3 …remembered with the view options",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v4 Density Small < Medium < Large row heights (36.0 / 45.0 / 54.0)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v5 Second time zone (New York): 18:00 Cairo reads 11:00 beside it",
+    "ok": true,
+    "detail": "11:00 18:00"
+  },
+  {
+    "name": "v5 …the corner names both zones (theirs, yours)",
+    "ok": true,
+    "detail": "\"EDT\" · \"GMT+3\""
+  },
+  {
+    "name": "v5 …and the grid still fills",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v6 single keys d · 3 · w · m · 1 switch the view",
+    "ok": true,
+    "detail": "Day|3 days|Week|Month|Day"
+  },
+  {
+    "name": "v6 the ? cheatsheet lists them (Day · Week · Month, 1 day · 2–6 days · Week)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 nothing anywhere: no section headers, one \"Nothing to plan\" line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 only sections with something in them, in order: Overdue · Today · Scheduled",
+    "ok": true,
+    "detail": "overdue,today,scheduled"
+  },
+  {
+    "name": "r2 Scheduled lists today's blocked tasks by start, with their times",
+    "ok": true,
+    "detail": "[\"Pay the rent 14:00–14:15\",\"Deep work on the forecast 15:00–16:30\",\"Gym 17:00–18:00\",\"Call Mom 19:10–19:30\"]"
+  },
+  {
+    "name": "r3 a Scheduled row jumps to its block (its details open)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r4 Plan ▾ on a Scheduled row reschedules it (Next free slot · Tomorrow · Pick date…)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r5 …its right-click Unschedule takes the block off (one write to calendar_events)",
+    "ok": true,
+    "detail": "[\"POST calendar_events\",\"POST tasks\",\"POST activity_log\"]"
+  },
+  {
+    "name": "r5 …and the row leaves Scheduled",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n1-none at 21:00: state \"none\", reads as drawn",
+    "ok": true,
+    "detail": "none · Nothing else today"
+  },
+  {
+    "name": "n1-none no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n2-far at 12:45: state \"far\", reads as drawn",
+    "ok": true,
+    "detail": "far · Next · Design review · 14:00"
+  },
+  {
+    "name": "n2-far no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n3-soon at 18:05: state \"soon\", reads as drawn",
+    "ok": true,
+    "detail": "soon · Up next in 10m المغرب 18:15 18:40"
+  },
+  {
+    "name": "n3-soon no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n4-ongoing-next at 18:25: state \"on\", reads as drawn",
+    "ok": true,
+    "detail": "on · Ongoing 15m left المغرب 18:15 18:40 Next Call Mom in 45m"
+  },
+  {
+    "name": "n4-ongoing-next no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n5-two-ongoing at 11:20: state \"many-on\", reads as drawn",
+    "ok": true,
+    "detail": "many-on · Ongoing · 2 Join 10m left Standup https://meet.example.test/abc-defg 11:15 11:30"
+  },
+  {
+    "name": "n5 ⌄ opens the other one above (Deep work block, its own bar and time left)",
+    "ok": true,
+    "detail": "Deep work block 1h 10m left Ongoing · 2 Join 10m left Standup https://meet.example.test/abc-defg 11:15 11:30"
+  },
+  {
+    "name": "n5 Join is there for the event with a meeting link",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n5-two-ongoing no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n6-many-upcoming at 13:50: state \"many-soon\", reads as drawn",
+    "ok": true,
+    "detail": "many-soon · Up next in 10m Design review 14:00 14:45"
+  },
+  {
+    "name": "n6 ⌄ lists the rest of the hour; the one at the same minute shows its clock time",
+    "ok": true,
+    "detail": "Up next in 10m Design review 14:00 14:45 Next Pay the rent 14:00"
+  },
+  {
+    "name": "n6-many-upcoming no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n7 rail open: the card sits at the foot of the rail",
+    "ok": true,
+    "detail": "{\"inRail\":true,\"gap\":0}"
+  },
+  {
+    "name": "n8 an Arabic title reads right to left, right-aligned in its line",
+    "ok": true,
+    "detail": "{\"dir\":\"rtl\",\"right\":0,\"left\":155}"
+  },
+  {
+    "name": "n9 the bar fills smoothly (a transform animation on the compositor), 40% through at 18:25",
+    "ok": true,
+    "detail": "{\"anim\":\"kf-now-fill\",\"m\":0.402451}"
+  },
+  {
+    "name": "n10 a click on the card opens its block",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n11 the label folds it to one line (\"Ongoing · المغرب · 15m left\")",
+    "ok": true,
+    "detail": "Ongoing\n·\nالمغرب\n15m left"
+  },
+  {
+    "name": "n11 …remembered on this device (kf.calNowFolded)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n12 rail folded: the card floats at the grid's bottom-left, 16px in",
+    "ok": true,
+    "detail": "{\"left\":20,\"bottom\":20}"
+  },
+  {
+    "name": "n13 View options ▸ Now card off: the card goes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n14 Focus is hidden until the pointer is over the task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n14 …and shows on hover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "n15 the card's checkbox ticks the task (Gym → done, through the outbox)",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000002\",\"title\":\"Gym\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":null,\"domain_id\":null,\"area_id\":null,\"notes\":null,\"status\":\"done\",\"due_at\":\"2026-10-21T14:00:00.000Z\",\"scheduled_start\":\"2026-10-21T14:00:00.000Z\",\"scheduled_end\":\"2026-10-21T15:00:00.000Z\",\"top3\":false,\"top3_rank\":null,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":60,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":\"2026-10-21T14:30:04.043Z\",\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"slot_id\":null,\"slot_date\":null,\"created_at\":\"2026-10-01T04:00:00.000Z\",\"updated_at\":\"2026-10-01T04:00:00.000Z\"}"
+  },
+  {
+    "name": "n15 …and the card moves on (Gym done → up next is المغرب at 18:15 → \"far\", over an hour)",
+    "ok": true,
+    "detail": "soon"
+  },
+  {
+    "name": "n16 Focus on the card starts a focus round on the task (→ /focus)",
+    "ok": true,
+    "detail": "http://localhost:5309/focus"
+  },
+  {
+    "name": "n17 the 12-hour clock: 6:15 PM … 6:40 PM",
+    "ok": true,
+    "detail": "Ongoing 15m left المغرب 6:15 PM 6:40 PM Next Call Mom in 45m"
+  },
+  {
+    "name": "n18 reduced motion: no animation, the bar stands at the minute's share (40%)",
+    "ok": true,
+    "detail": "{\"anim\":\"none\",\"m\":0.400569}"
+  },
+  {
+    "name": "p1 phone: only the segments with something in them — Overdue 1 · Today 1 · Scheduled 4",
+    "ok": true,
+    "detail": "Overdue 1,Today 1,Scheduled 4"
+  },
+  {
+    "name": "p2 Scheduled chips carry their times",
+    "ok": true,
+    "detail": "Pay the rent 14:00–14:15 | Deep work on the forecast 15:00–16:30 | Gym 17:00–18:00 | Call Mom 19:10–19:30"
+  },
+  {
+    "name": "p3 the Now card is a one-line strip over the grid's foot",
+    "ok": true,
+    "detail": "Ongoing\n·\nالمغرب\n15m left"
+  },
+  {
+    "name": "p3 …inside the gutters, above the tab bar",
+    "ok": true,
+    "detail": "{\"x\":12,\"y\":729.8125,\"width\":366,\"height\":38.1875}"
+  },
+  {
+    "name": "p4 a tap opens it into the card (Ongoing · المغرب · Next Call Mom)",
+    "ok": true,
+    "detail": "Ongoing 15m left المغرب 18:15 18:40 Next Call Mom in 45m"
+  },
+  {
+    "name": "p no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p5 phone with nothing to plan: one \"Nothing to plan\" line, no segments",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s the app's card states screenshotted beside the drawing",
+    "ok": true,
+    "detail": ""
+  }
+]

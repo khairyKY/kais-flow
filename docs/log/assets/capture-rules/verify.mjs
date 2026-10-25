@@ -58,7 +58,8 @@ const INBOX = [
   ib(SHARED, { raw_text: `Calm interfaces essay\n${ESSAY}`, created_at: iso('09:20') }),
   ib(ENDPOINT, { raw_text: 'look at this pricing page\nhttps://example.org/pricing', payload: { source: 'capture', url: 'https://example.org/pricing' }, created_at: iso('09:10') }),
 ]
-const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
+// "File captures for me" on (0086): these checks are about the filing rule itself (ai-chat covers it off).
+const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', auto_file_captures: true, help_seen: ['notice:autofile'], created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
 const DOMAINS = [
   { id: D1, user_id: UID, name: 'Career', color: '#8A9A7E', sort_order: 0, created_at: CREATED, updated_at: CREATED },
   { id: D2, user_id: UID, name: 'Personal', color: '#C9A55A', sort_order: 1, created_at: CREATED, updated_at: CREATED },
@@ -332,7 +333,7 @@ if (want('p')) for (const theme of ['day', 'night']) {
 
 // ── T: A21 — the tray flyout's capture is the bar's rule ──
 if (want('t')) {
-  const { ctx, page, errors, state } = await open('/tray', { view: flyout, tauri: true })
+  const { ctx, page, errors, state } = await open('/tray.html', { view: flyout, tauri: true })
   const field = page.getByPlaceholder('Write it down…')
   await field.waitFor({ timeout: 8000 })
   let w = state.writes.length

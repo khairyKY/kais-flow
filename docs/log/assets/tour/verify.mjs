@@ -301,9 +301,11 @@ if (want('guide')) {
   }
   for (const theme of ['day', 'night']) {
     const { ctx, page, errors } = await open('/today', { theme, view: desktop, storage: seenAll })
-    await page.getByRole('link', { name: 'Guide' }).click()
+    // The new sidebar (509b16f8, 2026-10-22): Guide lives in the name button's menu, not the foot.
+    await page.locator('.kf-side-me').click()
+    await page.getByRole('menuitem', { name: 'Guide' }).click()
     await page.locator('.gd-card').first().waitFor()
-    check(`desktop guide (${theme}): from the sidebar foot; eleven cards`, new URL(page.url()).pathname === '/guide' && (await page.locator('.gd-card').count()) === 11)
+    check(`desktop guide (${theme}): from the sidebar's name menu; eleven cards`, new URL(page.url()).pathname === '/guide' && (await page.locator('.gd-card').count()) === 11)
     await shot(page, `desktop-${theme}-guide`)
     await page.getByRole('link', { name: /Calendar\s*Blocks/ }).click()
     await page.locator('.gd-step').first().waitFor()

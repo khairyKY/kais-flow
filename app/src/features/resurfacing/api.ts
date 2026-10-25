@@ -164,6 +164,7 @@ export function letGoResurfaced(row: ResurfacedLogRow, entity: { task?: Task; it
 export function convertResurfaced(row: ResurfacedLogRow, item: InboxItem): void {
   const prior = { ...item }
   const task = fileToTask(item, { silent: true }) // this call site pushes its own Undo below
+  if (!task) return settle(row, 'converted', 'Already a task', { event: 'kept' })
   settle(row, 'converted', 'Made it a task', {
     undo: () => {
       deleteTask(task)

@@ -192,7 +192,8 @@ if (want('s')) {
     await sleep(700)
     const rolled = posts({ writes: state.writes.slice(before) }, 'tasks').find((r) => r.id === id(LEFT))
     check(`${tag} Tomorrow → Tuesday 09:00, the morning it seeds (was Wednesday)`, rolled?.due_at === iso('09:00', 13), rolled?.due_at)
-    check(`${tag} …and its meta says "→ Tue 09:00"`, /→ TUE 09:00/i.test(await text(left)), (await text(left)).replace(/\n/g, ' '))
+    // 12h clock since v1.4.0 (one-clock change): "9:00 AM", not "09:00".
+    check(`${tag} …and its meta says "→ Tue 9:00 AM"`, /→ TUE 9:00 AM/i.test(await text(left)), (await text(left)).replace(/\n/g, ' '))
     if (view === 'phone') await shot(page, `${tag}-0030-shutdown`)
     await page.locator('.kf-button--cta', { hasText: 'Close the day' }).click()
     await sleep(1200)
