@@ -1,0 +1,838 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Settings options</title>
+<!-- Kai's Flow · Settings grouped into categories, with a polish pass (queue item 22, 25 Oct 2026, Kai:
+     "The settings need grouping, where the settings are categorized and the user chooses what he wants
+     to do"). Plain HTML, open it straight from disk; ?night opens it at night. Tokens: ds-bound/styles.css
+     (the Bound Journal set, the app's own values; no colour is changed here) plus the app's colour files,
+     which also answer to [data-theme="day"], so a day picture stays day on the Night page. Every screen
+     is drawn from the one list of settings below (CATS), so the three layouts show the same rows.
+     Looks only: nothing here is in the app yet. -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.dark.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:40px 32px 120px}
+@media (max-width:767px){.wrap{padding:24px 16px 80px}}
+h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:13px;color:var(--ink-faint)}
+.lede{margin:12px 0 0;max-width:780px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg .btn{height:30px;border:none;background:none;padding:0 13px}
+.seg .btn[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.group{margin-top:64px}
+.group>h2{margin:0;font-family:var(--font-display);font-size:32px;font-weight:600;line-height:1.15}
+.group>.say{margin:6px 0 0;max-width:800px;color:var(--ink-muted)}
+.look{margin-top:36px;padding-top:24px;border-top:1px solid var(--line-card)}
+.look>h3{margin:0;font-family:var(--font-display);font-size:24px;font-weight:600;line-height:1.2}
+.look>h3 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;margin-right:10px;padding:0 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 16px/1 var(--font-ui);vertical-align:3px}
+.look.picked>h3::after{content:'Your pick';margin-left:12px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 12px/1.4 var(--font-ui);vertical-align:5px}
+.look .say{margin:6px 0 0;max-width:800px;font-size:15.5px;color:var(--ink-body)}
+.look .moves{margin:4px 0 0;max-width:800px;font-size:14px;color:var(--ink-muted)}
+.shots{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin-top:18px}
+figure{margin:0;flex:none}
+figcaption{margin-top:8px;max-width:680px;font-size:13px;color:var(--ink-muted)}
+.pick-row{margin-top:16px}
+.drawn-on{margin-top:14px;display:flex;align-items:center;gap:10px;font-size:14px;color:var(--ink-muted)}
+.notes{margin-top:28px;max-width:960px}
+.notes h2{margin:0 0 6px;font-family:var(--font-display);font-size:22px;font-weight:600}
+.notes ul{margin:6px 0 0;padding-left:20px;color:var(--ink-muted)}
+.notes li{margin:3px 0}
+.notes b{color:var(--ink-body);font-weight:600}
+table.map{width:100%;max-width:1200px;margin-top:14px;border-collapse:collapse;font-size:14px}
+table.map th,table.map td{text-align:left;vertical-align:top;padding:10px 12px;border-top:1px solid var(--line-card)}
+table.map th{font-weight:600;color:var(--ink-muted);font-size:13px}
+table.map td:first-child{white-space:nowrap;font-weight:600}
+table.map td:first-child svg{vertical-align:-4px;margin-right:8px;color:var(--ink-muted)}
+table.map .nw,table.map .mv{display:inline-block;margin-left:4px;padding:0 6px;border-radius:var(--radius-pill);font-size:11px;font-weight:600;line-height:17px;vertical-align:1px}
+table.map .nw{background:var(--block-sage);color:var(--acc-sage-text)}
+table.map .mv{background:var(--block-lavender);color:var(--acc-lavender-text)}
+table.map td.from{color:var(--ink-muted);font-size:13px}
+
+/* ══ a screen: the frame and the app shell ═══════════════════════════════════════════════════════ */
+.frame{position:relative;overflow:hidden;border:1px solid var(--line-card);border-radius:14px;background:var(--paper-linen)}
+[data-theme="night"] .frame,[data-theme="night"].frame{border-color:var(--line-solid)}
+.scr{position:relative;display:flex;overflow:hidden;background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:14px;line-height:1.4;text-align:left}
+.scr svg{flex:none;display:block}
+/* sidebar (AppLayout: 242 wide, name menu on top, Plan drawer, Tend / Cultivate, Capture · Search · Chat) */
+.sb{width:242px;flex:none;display:flex;flex-direction:column;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar)}
+.sb-col{flex:1;min-height:0;overflow:hidden;padding:24px 0 8px}
+.sb-me{display:flex;align-items:center;gap:10px;margin:0 14px 14px;padding:2px 8px}
+.sb-me img{width:28px;height:28px;display:block}
+.sb-me b{display:flex;align-items:center;gap:6px;font-family:var(--font-display);font-size:var(--fs-display-m);font-weight:600;letter-spacing:var(--ls-display)}
+.sb-me b svg{color:var(--ink-faint)}
+.sb-me small{display:block;margin-top:4px;font-family:var(--font-mono);font-size:var(--fs-meta);color:var(--ink-faint)}
+.sb-plan{display:flex;align-items:center;gap:8px;margin:0 14px 10px;padding:6px 12px 12px;border-bottom:1px solid var(--line-sidebar);font-family:var(--font-mono);font-size:var(--fs-meta);color:var(--ink-muted)}
+.sb-plan em{margin-left:auto;font-style:normal;color:var(--ink-faint)}
+.sb-gl{padding:12px 26px 5px;font-family:var(--font-mono);font-size:var(--fs-meta);color:var(--ink-faint)}
+.sb-row{display:flex;align-items:center;gap:11px;margin:0 14px 2px;padding:8px 12px;border-radius:var(--radius-input);color:var(--ink-muted);font-size:14px}
+.sb-row em{margin-left:auto;font-style:normal;font-family:var(--font-mono);font-size:var(--fs-meta);color:var(--acc-terra)}
+.sb-foot{flex:none;padding:4px 14px 14px}
+.sb-tools{display:flex;align-items:center;gap:4px;padding-top:10px;border-top:1px solid var(--line-sidebar)}
+.sb-cap{flex:1;display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border-radius:var(--radius-input);background:var(--paper-bone);font-size:var(--fs-body-s);font-weight:500}
+.sb-cap kbd{margin-left:auto}
+.sb-tool{width:34px;height:34px;display:flex;align-items:center;justify-content:center;color:var(--ink-muted)}
+kbd{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid var(--line-control);border-bottom-width:2px;border-radius:5px;background:var(--paper-parchment);font:500 11px/1 var(--font-ui);color:var(--ink-muted)}
+.mn{flex:1;min-width:0;display:flex;flex-direction:column}
+.tb{height:42px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid var(--line-solid);font-family:var(--font-mono);font-size:var(--fs-meta);color:var(--ink-faint)}
+.mc{flex:1;min-height:0;overflow:hidden;display:flex}
+
+/* ══ settings, shared ═════════════════════════════════════════════════════════════════════════════ */
+.st-ttl{display:flex;align-items:center;gap:10px;margin:0 0 16px}
+.st-ttl img{height:26px}
+.st-ttl h1{margin:0;font-family:var(--font-display);font-size:26px;font-weight:500;line-height:1.2;letter-spacing:0}
+.srch{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border:1px solid var(--line-control);border-radius:var(--radius-md);background:var(--paper-bone);color:var(--ink-faint);font-size:13px}
+.srch.on{color:var(--ink-body);border-color:var(--ink-muted)}
+.srch .caret{display:inline-block;width:1px;height:15px;margin-left:-6px;background:var(--ink-body)}
+.srch kbd{margin-left:auto}
+.cp-h{margin:0 0 18px}
+.cp-h h2{margin:0;font-family:var(--font-display);font-size:28px;font-weight:500;line-height:1.2}
+.cp-h p{margin:4px 0 0;font-size:13.5px;color:var(--ink-muted)}
+.saves{margin-top:18px;font-size:var(--fs-caption);color:var(--ink-muted)}
+
+/* A · two panes */
+.la{display:flex;flex:1;min-width:0}
+.la-nav{width:228px;flex:none;padding:26px 14px 20px;border-right:1px solid var(--line-solid);overflow:hidden}
+.la-nav .srch{margin-bottom:12px}
+.la-grp{display:flex;flex-direction:column;gap:2px;padding:6px 0;border-top:1px solid var(--line-card)}
+.la-grp:first-of-type{border-top:none}
+.nv{display:flex;align-items:center;gap:10px;padding:7px 10px;border:1px solid transparent;border-radius:var(--radius-input);color:var(--ink-muted);font-size:14px;white-space:nowrap}
+.nv.on{background:var(--frost-bg,var(--paper-parchment));border-color:var(--frost-line,var(--line-card));color:var(--ink-body);font-weight:600}
+.nv.on svg{color:var(--ink-body)}
+.la-main{flex:1;min-width:0;padding:28px 36px 40px;overflow:hidden}
+.la-main>.in{max-width:700px}
+
+/* B · cards home, then one category a page */
+.lb{flex:1;min-width:0;padding:30px 40px 40px;overflow:hidden}
+.lb>.in{max-width:980px;margin:0 auto}
+.lb .srch{max-width:420px;margin-bottom:22px}
+.lb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.lb-card{display:flex;flex-direction:column;gap:4px;min-height:132px;padding:16px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment)}
+.lb-card .ic{width:36px;height:36px;margin-bottom:6px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:var(--paper-bone);color:var(--ink-body)}
+.lb-card b{font-size:15px;font-weight:600}
+.lb-card span{font-size:13px;line-height:1.4;color:var(--ink-muted)}
+.lb-card .st{margin-top:auto;padding-top:6px;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-faint)}
+.lb-page>.in{max-width:720px}
+.back{display:inline-flex;align-items:center;gap:4px;margin:0 0 14px -4px;color:var(--acc-lavender-deep);font-size:14px}
+
+/* C · one page, a sticky index */
+.lc{display:flex;flex:1;min-width:0}
+.lc-nav{width:228px;flex:none;padding:26px 14px 20px;border-right:1px solid var(--line-solid);overflow:hidden}
+.lc-nav .srch{margin-bottom:12px}
+.lc-nav .sub{display:flex;flex-direction:column;gap:1px;margin:2px 0 6px 30px;padding-left:10px;border-left:1px solid var(--line-card)}
+.lc-nav .sub span{padding:4px 8px;font-size:13px;color:var(--ink-muted)}
+.lc-nav .sub span.on{color:var(--ink-body);font-weight:600}
+.lc-main{flex:1;min-width:0;padding:0 36px;overflow:hidden}
+.lc-main>.in{max-width:700px}
+.lc-ch{padding:26px 0 18px;border-top:1px solid var(--line-solid)}
+.lc-ch:first-child{border-top:none}
+.lc-ch .cp-h h2{display:flex;align-items:center;gap:10px}
+.lc-ch .cp-h h2 svg{color:var(--ink-muted)}
+
+/* ══ rows A · panels ══════════════════════════════════════════════════════════════════════════════ */
+.ra-sec{margin-top:22px}
+.ra-sec:first-child{margin-top:0}
+.ra-sec>h3{margin:0 0 8px 4px;font-size:var(--fs-section);font-weight:600;line-height:1.3;color:var(--ink-body)}
+.ra-sec>h3 small,.rb-sec>h3 small{margin-left:8px;font-weight:400;font-size:12.5px;color:var(--ink-faint)}
+.ra-panel{border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);overflow:hidden}
+.ra-row{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;min-height:54px;padding:11px 16px}
+.ra-row+.ra-row::before{content:'';position:absolute;top:0;left:16px;right:0;border-top:1px solid var(--line-card)}
+.ra-row.has-lead+.ra-row::before,.ra-row.has-lead::before{left:58px}
+.ra-row .lead{flex:none;width:28px;display:flex;justify-content:center;margin-right:-4px}
+.rt{flex:1 1 200px;min-width:0}
+.rl{font-size:14px;font-weight:500;line-height:20px}
+.rh{margin-top:1px;font-size:13px;line-height:18px;color:var(--ink-muted)}
+.ra-row .rc{flex:0 1 auto;margin-left:auto;display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:8px 10px;max-width:100%}
+.ra-sec.is-danger>h3{color:var(--acc-terra-ink)}
+.ra-sec.is-danger .ra-panel{border-color:color-mix(in srgb,var(--acc-terra-ink) 45%,var(--line-card))}
+.ru{flex-basis:100%;min-width:0}
+
+/* ══ rows B · open form ═══════════════════════════════════════════════════════════════════════════ */
+.rb-sec{margin-top:26px}
+.rb-sec:first-child{margin-top:0}
+.rb-sec>h3{margin:0;padding-bottom:8px;border-bottom:1.5px solid var(--line-solid);font-family:var(--font-display);font-size:18px;font-weight:500;line-height:1.3;color:var(--ink-body)}
+.rb-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 28px;align-items:center;padding:13px 0;border-top:1px solid var(--line-dashed)}
+.rb-sec>h3+.rb-row,.rb-sec>.rb-row:first-child{border-top:none}
+.rb-row .rt{display:flex;align-items:center;gap:12px}
+.rb-row .rc{display:flex;align-items:center;flex-wrap:wrap;gap:8px 10px;min-width:0}
+.rb-row.solo{grid-template-columns:1fr}
+.tgw{font-size:13px;color:var(--ink-muted)}
+.rb-sec.is-danger>h3{color:var(--acc-terra-ink);border-bottom-color:color-mix(in srgb,var(--acc-terra-ink) 50%,transparent)}
+.rb-sec.is-danger .rb-row{margin-top:10px;padding:14px 16px;border:none;border-radius:var(--radius-input);background:var(--wash-terra)}
+
+/* ══ controls (kit.css values: toggle 36×20, segmented pill, flat buttons) ═════════════════════════ */
+.tg{position:relative;flex:none;display:inline-block;width:36px;height:20px;border-radius:var(--radius-pill);border:1.5px solid var(--line-control);background:var(--paper-bone)}
+.tg i{position:absolute;top:50%;left:3px;width:10px;height:10px;border-radius:50%;background:var(--line-control);transform:translateY(-50%)}
+.tg.on{background:var(--check-fill);border-color:var(--check-fill)}
+.tg.on i{left:calc(100% - 16px);width:14px;height:14px;background:var(--paper-parchment)}
+.sg{display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.sg b{display:inline-flex;align-items:center;min-height:28px;padding:0 12px;border-radius:var(--radius-pill);font-size:13px;font-weight:400;white-space:nowrap}
+.sg b.on{background:var(--sel-bg);color:var(--sel-ink);font-weight:600}
+.pk{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px 0 12px;border:1px solid var(--line-control);border-radius:var(--radius-md);background:var(--paper-bone);font-size:13px;white-space:nowrap}
+.pk svg{color:var(--ink-faint)}
+.sl{position:relative;display:inline-block;width:140px;height:3px;border-radius:2px;background:var(--line-control)}
+.sl i{position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:var(--ink-body)}
+.sl b{position:absolute;top:50%;width:14px;height:14px;margin:-7px 0 0 -7px;border-radius:50%;background:var(--paper-parchment);border:1.5px solid var(--ink-body)}
+.slv{min-width:52px;font-size:13px;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.bt{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:var(--radius-input);font-size:13px;white-space:nowrap}
+.bt-sec{background:var(--paper-bone);color:var(--ink-body)}
+.bt-cta{background:var(--acc-terra-ink);color:var(--on-terra)}
+.bt-danger{color:var(--acc-terra-ink);font-weight:600;padding:0 8px}
+.rb-sec .bt-danger{background:var(--paper-parchment);padding:0 14px}
+.lk{font-size:13px;color:var(--acc-lavender-deep);text-decoration:underline;text-decoration-color:color-mix(in srgb,currentColor 35%,transparent);text-underline-offset:3px;white-space:nowrap}
+.ch{display:inline-flex;align-items:center;gap:6px;padding:3px 9px;border:1px solid var(--line-control);border-radius:var(--radius-pill);font-size:12px;white-space:nowrap}
+.dot{display:inline-block;width:8px;height:8px;flex:none;border-radius:50%}
+.dot.ok{background:var(--check-fill)}
+.dot.off{background:var(--line-control)}
+.tm{display:inline-flex;align-items:center;height:32px;padding:0 10px;border:1px solid var(--line-control);border-radius:var(--radius-md);background:var(--paper-bone);font-family:var(--font-mono);font-size:12px}
+.va{font-size:13px;color:var(--ink-muted);white-space:nowrap}
+.ex{padding:3px 8px;border-radius:7px;background:var(--paper-bone);font-family:var(--font-mono);font-size:12.5px;white-space:nowrap}
+.kcs{display:inline-flex;gap:4px}
+.go{color:var(--ink-faint)}
+.dots{display:inline-flex;width:28px;height:28px;align-items:center;justify-content:center;border-radius:8px;color:var(--ink-muted)}
+.mt{display:inline-flex;align-items:center;gap:10px;font-size:13px;color:var(--ink-muted);font-family:var(--font-mono)}
+.mt i{display:block;width:110px;height:6px;border-radius:3px;background:var(--line-card);overflow:hidden}
+.mt i b{display:block;height:100%;background:var(--acc-hydrangea-deep)}
+.kg{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.lg{display:flex;color:var(--ink-muted)}
+.pl{width:28px;height:28px;border-radius:50%;border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-muted);display:flex;align-items:center;justify-content:center}
+.brand{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center}
+.brand.gh{background:var(--ink-body);color:var(--paper-parchment)}
+.brand.bn{background:var(--paper-bone);border:1px solid var(--line-card);color:var(--ink-muted)}
+.add{display:flex;gap:8px;width:100%}
+.add .fld{flex:1;height:34px;display:flex;align-items:center;padding:0 12px;border:1px solid var(--line-control);border-radius:var(--radius-md);background:var(--paper-bone);color:var(--ink-faint);font-size:13px}
+
+/* ══ search results ══════════════════════════════════════════════════════════════════════════════ */
+.res-h{margin:0 0 14px;font-size:13px;color:var(--ink-muted)}
+.res-h b{color:var(--ink-body)}
+.crumb{display:flex;align-items:center;gap:6px;margin:18px 0 8px 4px;font-size:12.5px;color:var(--ink-muted)}
+.crumb:first-of-type{margin-top:0}
+.crumb svg{color:var(--ink-muted)}
+mark{background:color-mix(in srgb,var(--acc-buttercream) 55%,transparent);color:inherit;border-radius:3px;padding:0 1px}
+.res-foot{margin-top:18px;font-size:13px;color:var(--ink-muted)}
+
+/* ══ phone (390) ════════════════════════════════════════════════════════════════════════════════ */
+.ph{flex-direction:column;font-size:15px}
+.ph-top{height:44px;flex:none;display:flex;align-items:center;padding:0 16px;border-bottom:1px solid var(--line-solid);font-family:var(--font-mono);font-size:var(--fs-meta);color:var(--ink-faint)}
+.ph-body{flex:1;min-height:0;overflow:hidden;padding:18px 16px 24px}
+.ph-tabs{height:64px;flex:none;display:flex;align-items:center;justify-content:space-around;background:var(--paper-parchment);box-shadow:var(--shadow-tabbar);border-top:1px solid var(--line-card)}
+.ph-tabs>span{display:flex;flex-direction:column;align-items:center;gap:3px;width:64px;font-size:11px;color:var(--ink-muted)}
+.ph-tabs>span.on{color:var(--ink-body);font-weight:600}
+.ph-tabs .cap{width:52px;height:52px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:flex;align-items:center;justify-content:center}
+.ph .st-ttl h1{font-size:30px}
+.ph .st-ttl img{height:32px}
+.ph .srch{height:44px;font-size:15px;margin-bottom:16px}
+.ph .srch kbd{display:none}
+.ph .rl{font-size:15px}
+.ph .tg{width:52px;height:32px;border-width:2px}
+.ph .tg i{left:6px;width:16px;height:16px}
+.ph .tg.on i{left:calc(100% - 28px);width:24px;height:24px}
+.ph .sg b{min-height:40px;padding:0 12px;font-size:14px}
+.ph .bt{height:44px;padding:0 16px;font-size:15px}
+.ph .bt-danger{padding:0 10px}
+.ph .pk,.ph .tm{height:40px}
+.ph .ra-row{min-height:56px;padding:10px 14px}
+.ph .ra-row .rt{flex-basis:120px}
+.ph .ra-row .rc.wide{flex-basis:100%;justify-content:flex-start;margin-left:0}
+.ph .ra-row .rc.wide .sg{display:flex;width:100%}
+.ph .ra-row .rc.wide .sg b{flex:1;justify-content:center}
+.ph .rb-row{grid-template-columns:1fr;gap:10px}
+.ph .cp-h h2{font-size:26px}
+.ph .back{font-size:15px;min-height:32px}
+.pl-list{border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);overflow:hidden;margin-bottom:14px}
+.pl-row{position:relative;display:flex;align-items:center;gap:12px;min-height:52px;padding:0 12px 0 14px}
+.pl-row+.pl-row::before{content:'';position:absolute;top:0;left:48px;right:0;border-top:1px solid var(--line-card)}
+.pl-row .n{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pl-row .v{font-size:14px;color:var(--ink-faint);white-space:nowrap}
+.pl-row>svg:first-child{color:var(--ink-muted)}
+.me-card{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:14px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment)}
+.me-card .av{width:44px;height:44px;border-radius:50%;background:var(--paper-bone);display:flex;align-items:center;justify-content:center;color:var(--ink-muted)}
+.me-card b{display:block;font-weight:600}
+.me-card span{font-size:13px;color:var(--ink-muted)}
+.pb-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pb-grid .lb-card{min-height:118px;padding:14px}
+.pb-grid .lb-card span{font-size:12.5px}
+.chips{display:flex;gap:6px;overflow:hidden;margin:0 -16px 6px;padding:0 16px 12px;border-bottom:1px solid var(--line-card)}
+.chips span{flex:none;display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:1px solid var(--line-control);border-radius:var(--radius-pill);font-size:14px;color:var(--ink-muted);white-space:nowrap}
+.chips span.on{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink);font-weight:600}
+.ph .lc-ch{padding:18px 0 10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · Settings · 25 Oct 2026</div>
+  <h1>How should Settings be grouped and laid out?</h1>
+  <p class="lede">Today Settings is two columns of cards plus a separate Integrations page. Below, every setting is sorted into 11 categories (the table), then drawn three ways: two panes, a cards home, or one page with an index. Each layout is shown on a 1280 computer at 100% and at 150%, by day and in Night Garden, and on a 390 phone, with real labels and controls. Then two looks for the rows themselves, and where search goes. Answer with letters, for example <b>"layout A, rows B"</b>. Colours are the app's own tokens; none is changed.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your picks">
+  <span>Your picks: <b id="mine">none yet</b></span>
+  <span class="seg" role="group" aria-label="Page theme">
+    <button type="button" class="btn" data-th="day" aria-pressed="true">Day page</button>
+    <button type="button" class="btn" data-th="night" aria-pressed="false">Night page</button>
+  </span>
+  <button type="button" class="btn btn-p" id="copy">Copy my picks</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="notes" id="grouping">
+  <h2>The grouping: every setting, and where it goes</h2>
+  <ul>
+    <li>Today's 12 cards (Appearance, Sound, Calendar, Time zone, Resurfacing, Notifications, Integrations, Organize, Your data, Profile, App, Advanced) and the Integrations page become <b>11 categories</b>.</li>
+    <li>The new rows from the builders running now are in place. <b>legal</b> adds Privacy &amp; terms and Delete account. <b>ai-chat</b> adds File captures for me (off by default) and Pick a project (Suggest by default). <b>cal-wave</b> adds Fit days to the window, Fit hours to my day, Density, Second time zone and the Now card. <b>tray</b> adds none so far; its two Windows rows already exist.</li>
+    <li><span class="nw" style="padding:0 6px;border-radius:999px;background:var(--block-sage);color:var(--acc-sage-text);font-size:11px;font-weight:600">new</span> = coming from those builders · <span style="padding:0 6px;border-radius:999px;background:var(--block-lavender);color:var(--acc-lavender-text);font-size:11px;font-weight:600">moved</span> = there today, in another place.</li>
+  </ul>
+  <table class="map" id="map"></table>
+</section>
+
+<section class="group" id="layout">
+  <h2>Layout</h2>
+  <p class="say">One list of settings, drawn three ways. Each layout shows a computer at 100% by day and in Night Garden, the same computer at 150% (the window is the same, the app is zoomed as it zooms), and the phone. The rows are drawn in your rows pick (A until you pick one); switch here to see them in B.</p>
+  <div class="drawn-on">Rows drawn as <span class="seg" role="group" aria-label="Rows drawn as">
+    <button type="button" class="btn" data-rowsdraw="A">A · panels</button>
+    <button type="button" class="btn" data-rowsdraw="B">B · open form</button>
+  </span></div>
+  <div id="layouts"></div>
+</section>
+
+<section class="group" id="rows">
+  <h2>Rows and controls</h2>
+  <p class="say">Two polish passes for the rows themselves, drawn on the same three categories: Capture &amp; AI (the new AI switches), Appearance (a five-way choice and a slider), and Account (the danger zone). Both work with any layout.</p>
+  <div id="rowlooks"></div>
+</section>
+
+<section class="group" id="search">
+  <h2>Search</h2>
+  <p class="say">Search sits at the top of the category list (A), the cards home (B) or the index (C), with <kbd>Ctrl</kbd> <kbd>F</kbd> to reach it. Typing swaps the settings for results, grouped by category. Each result has its real control, so you change it right there, and › opens its category with the row lit. Words match what they mean too: "dark" finds Theme, "delete" finds Delete account and Trash, "AI" finds the Capture &amp; AI rows and AI assistants.</p>
+  <div id="searchshot"></div>
+</section>
+
+<section class="notes">
+  <h2>Notes</h2>
+  <ul>
+    <li><b>Icons:</b> six categories reuse the kf line set: calendar, inbox (Capture &amp; AI), bell, label (Organize), link (Integrations) and lock. Five are new, drawn on the same pen (24 grid, stroke 1.6, round): person (Account), half-moon disc (Appearance), cylinder (Your data), keyboard (Shortcuts) and info (App &amp; updates). The Plan drawer's box stays only for Someday, so Your data doesn't share it.</li>
+    <li><b>Stays its own page:</b> the importer (/settings/import) and Trash. Each provider in Integrations (Google, GitHub, AI assistants, capture key) opens its own page from its row, with today's controls on it.</li>
+    <li><b>Shows in two places:</b> Google Calendar is a link row in Calendar &amp; time, and its controls stay in Integrations. "What AI assistants can see" in Privacy &amp; terms links to the same switches.</li>
+    <li><b>Only where it applies:</b> "On this computer" shows in the Windows app only, "On this phone" in the Android app only, and "This device" (push) in a browser only, as today.</li>
+    <li><b>Kept:</b> every row saves as you touch it. Copy, help lines and defaults are today's, or the builders' own.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+// ── kf line icons (app/src/components/icons/kf), plus the five new category glyphs (marked) ──
+const IC = {
+  today: '<path d="M12 20.5v-8"/><path d="M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z"/><path d="M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z"/><path d="M7.5 20.5h9"/>',
+  inbox: '<path d="M4 13.5 6.2 6.3A1.8 1.8 0 0 1 7.9 5h8.2a1.8 1.8 0 0 1 1.7 1.3L20 13.5v4.7a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2z"/><path d="M4 13.5h4.4l1.3 2.3h4.6l1.3-2.3H20"/>',
+  calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  tasks: '<rect x="4.5" y="4.5" width="15" height="15" rx="3"/><path d="M8.5 12.2l2.4 2.4 4.6-4.9"/>',
+  projects: '<path d="M3.5 7.5a2 2 0 0 1 2-2h3.6l2 2h7.4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/>',
+  routines: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.8 4.2v4.3h-4.3"/><path d="M12 15.5v-3.2c0-1.6 1.2-2.8 2.8-2.8 0 1.6-1.2 2.8-2.8 2.8"/>',
+  focus: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12h.01"/>',
+  clipboard: '<path d="M9 5H7.5A1.5 1.5 0 0 0 6 6.5v12A1.5 1.5 0 0 0 7.5 20h9a1.5 1.5 0 0 0 1.5-1.5v-12A1.5 1.5 0 0 0 16.5 5H15"/><rect x="9" y="3.5" width="6" height="3" rx="1"/><path d="m9.3 13 1.9 1.9 3.6-3.9"/>',
+  journal: '<path d="M5.5 5.5A1.5 1.5 0 0 1 7 4h11.5v13.5H7a1.5 1.5 0 0 0-1.5 1.5z"/><path d="M5.5 19A1.5 1.5 0 0 0 7 20.5h11.5v-3"/><path d="M9.5 8h5.5"/>',
+  library: '<rect x="4" y="4.5" width="4" height="15" rx="1"/><rect x="9.5" y="4.5" width="4" height="15" rx="1"/><path d="M14.4 6.6 17.8 5.7 21 18.9 17.6 19.8z"/>',
+  people: '<circle cx="9" cy="8.5" r="3.2"/><path d="M3 19a6 6 0 0 1 12 0"/><path d="M16 5.8a3.2 3.2 0 0 1 0 6M17.2 14.3a6 6 0 0 1 3.8 4.7"/>',
+  activity: '<path d="M3.5 12.5h3.6l2.4-6 4.2 11.5 2.6-5.5h4.2"/>',
+  delete: '<path d="M4 7h16M9.5 7V4.8h5V7M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/>',
+  plan: '<path d="M9.5 7h10M9.5 12h10M9.5 17h10"/><circle cx="5.2" cy="7" r="1.1" fill="currentColor" stroke="none"/><circle cx="5.2" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="5.2" cy="17" r="1.1" fill="currentColor" stroke="none"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4 4"/>',
+  chat: '<path d="M5.5 5h13A1.5 1.5 0 0 1 20 6.5v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V17h-1A1.5 1.5 0 0 1 4 15.5v-9A1.5 1.5 0 0 1 5.5 5z"/>',
+  chevdown: '<path d="M6 9.5l6 6 6-6"/>',
+  chevright: '<path d="M9.5 6l6 6-6 6"/>',
+  back: '<path d="M14.5 6l-6 6 6 6"/>',
+  bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  link: '<path d="M10.2 13.8a3.6 3.6 0 0 0 5.1 0l3.1-3.1a3.6 3.6 0 0 0-5.1-5.1l-1 1"/><path d="M13.8 10.2a3.6 3.6 0 0 0-5.1 0l-3.1 3.1a3.6 3.6 0 0 0 5.1 5.1l1-1"/>',
+  label: '<path d="M4 11.2V5h6.2l9 9-6.2 6.2z"/><circle cx="8.3" cy="9.3" r="1.3"/>',
+  lock: '<rect x="5.5" y="10.5" width="13" height="10" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
+  moon: '<path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/>',
+  remind: '<path d="M6 10a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 15 6 10z"/><path d="M10 19.5a2 2 0 0 0 4 0"/>',
+  sprout: '<path d="M12 20.5v-8"/><path d="M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z"/><path d="M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z"/><path d="M7.5 20.5h9"/>',
+  'focus-ring': '<path d="M12 4a8 8 0 1 1-8 8"/><path d="M12 4a8 8 0 0 0-8 8" stroke-dasharray="1.2 2.6"/><circle cx="12" cy="12" r="2"/>',
+  camera: '<path d="M4 8.5A1.5 1.5 0 0 1 5.5 7h2.2l1.5-2h5.6l1.5 2h2.2A1.5 1.5 0 0 1 20 8.5v9a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 17.5z"/><circle cx="12" cy="13" r="3.5"/>',
+  offline: '<path d="M7 18h9.5a3.8 3.8 0 0 0 .7-7.5A5.5 5.5 0 0 0 6.6 9.3 4.4 4.4 0 0 0 7 18z"/><path d="M4 4l16 16"/>',
+  dots: '<circle cx="5.5" cy="12" r="1.1"/><circle cx="12" cy="12" r="1.1"/><circle cx="18.5" cy="12" r="1.1"/>',
+  more: '<rect x="4.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="4.5" y="13.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="13.5" width="6" height="6" rx="1.5"/>',
+  play: '<path d="M8 5.5v13l10.5-6.5z" fill="currentColor" stroke="none"/>',
+  // new · drawn on the kf pen for the categories that had no glyph
+  person: '<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>',
+  appearance: '<circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z" fill="currentColor" stroke="none"/>',
+  data: '<ellipse cx="12" cy="6.5" rx="7" ry="2.5"/><path d="M5 6.5v11c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-11"/><path d="M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>',
+  keyboard: '<rect x="3" y="6.5" width="18" height="11" rx="2"/><path d="M7 10.5h.01M10.3 10.5h.01M13.7 10.5h.01M17 10.5h.01M8 14h8"/>',
+  info: '<circle cx="12" cy="12" r="8"/><path d="M12 11v5.2M12 7.8v.1"/>',
+}
+const GH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.6 2 12.3c0 4.6 2.9 8.4 6.8 9.8.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.3-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5.1 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 4-2.4 4.8-4.6 5.1.4.3.7 1 .7 1.9v2.8c0 .3.2.6.7.5a10.2 10.2 0 0 0 6.8-9.8C22 6.6 17.5 2 12 2Z"/></svg>'
+const icon = (n, s = 18, cls = '') => `<svg${cls ? ` class="${cls}"` : ''} width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]}</svg>`
+
+// ── controls ──
+const T = (on) => ({ t: 'tg', on })
+const S = (opts, sel) => ({ t: 'sg', opts, sel })
+const P = (v) => ({ t: 'pk', v })
+const SL = (pct, v) => ({ t: 'sl', pct, v })
+const B = (l, k = 'sec', ic) => ({ t: 'bt', l, k, ic })
+const L = (l) => ({ t: 'lk', l })
+const CH = (l, tone = 'ok') => ({ t: 'ch', l, tone })
+const TM = (v) => ({ t: 'tm', v })
+const K = (...keys) => ({ t: 'kc', keys })
+const X = (v) => ({ t: 'ex', v })
+const V = (v) => ({ t: 'va', v })
+const GO = { t: 'go' }
+const DOTS = { t: 'dots' }
+const M = (used, of) => ({ t: 'mt', used, of })
+// leads
+const KG = (ic, tint, ink) => ({ k: 'kg', ic, tint, ink })
+const LG = (ic) => ({ k: 'lg', ic })
+const PLAY = { k: 'pl' }
+const DOT = (c) => ({ k: 'dot', c })
+const BR = (kind, ic) => ({ k: 'br', kind, ic })
+
+const mix = (v, p) => `color-mix(in oklch, var(${v}) ${p}%, transparent)`
+const KINDS = [
+  ['Task reminder', 'Reminders · with sound', KG('remind', mix('--acc-blossom', 30), 'var(--acc-terra)')],
+  ['Event reminder', 'Reminders · with sound', KG('calendar', mix('--acc-blossom', 30), 'var(--acc-blossom-text)')],
+  ['Routine reminder', 'Reminders · with sound', KG('routines', mix('--acc-clover', 30), 'var(--acc-clover-text)')],
+  ['Morning digest', 'Rituals · silent', KG('sprout', mix('--acc-sage', 30), 'var(--acc-sage-text)'), '8:00 AM'],
+  ['Evening nudge', 'Rituals · with sound', KG('moon', mix('--acc-lavender', 30), 'var(--acc-lavender-deep)'), '9:00 PM'],
+  ['Focus done', 'Focus · with sound', KG('focus-ring', mix('--acc-sage', 22), 'var(--acc-sage-text)')],
+  ['Paper capture ready', 'Captures · silent', KG('camera', 'var(--block-hydrangea)', 'var(--acc-hydrangea-deep)')],
+  ['Birthday', 'People · silent', KG('people', 'var(--block-blossom)', 'var(--acc-blossom-text)')],
+  ['Sync problem', 'Sync · silent', KG('offline', 'var(--block-hydrangea)', 'var(--acc-hydrangea-deep)')],
+].map(([l, h, lead, at]) => ({ l, h, lead, c: at ? [TM(at), T(true)] : [T(true)] }))
+const SOUNDS = [['Task done', 'A soft tock as you check one off'], ['Goal done', 'The Goal of the day, or the last of your Top 3'], ['Captured', 'Saved from the capture bar'], ['Focus begins', 'A fresh round starts'], ['Focus ends', 'The round is over, heard across the room'], ['Ritual', 'Start the day · Goodnight'], ['Undo', 'A tiny step back']]
+  .map(([l, h]) => ({ l, h, lead: PLAY, c: [T(true)] }))
+
+// ── every setting, in its category. tag: new = from a builder running now · moved = elsewhere today ──
+const CATS = [
+  { id: 'account', n: 'Account', i: 'person', sum: 'Your email and name, sign out, delete your account', val: 'kai@example.com', from: 'Profile card; Sign out from the name menu; Delete account (legal puts it under Your data)', secs: [
+    { rows: [
+      { l: 'kai@example.com', tl: 'Email · Sign out', h: 'Signed in · one person, one garden', c: [B('Sign out')], tag: 'moved' },
+      { l: 'Name and workspace', h: 'Kai’s Flow · Personal · the whole app wears it', c: [L('Rerun the welcome')] },
+    ] },
+    { t: 'Danger zone', danger: true, rows: [
+      { l: 'Delete account', h: 'Your account and everything in it, for good · export first under Your data', c: [B('Delete account…', 'danger')], tag: 'new' },
+    ] },
+  ] },
+  { id: 'appearance', n: 'Appearance', i: 'appearance', sum: 'Theme, interface size, paper texture, animations', val: 'Light · 125%', from: 'Appearance card (Time format moves to Calendar & time)', secs: [
+    { rows: [
+      { l: 'Theme', h: 'Auto follows your system', c: [S(['Light', 'Dark', 'Auto'], 0)] },
+      { l: 'Interface size', h: 'Scales the whole app · 125% is this computer’s normal', c: [S(['100%', '110%', '125%', '150%', '175%'], 2)] },
+      { l: 'Paper texture', h: 'The grain on paper pages', c: [SL(50, '50%')] },
+      { l: 'Botanical animations', h: 'Petals fall, leaves sway', c: [T(true)] },
+    ] },
+  ] },
+  { id: 'calendar', n: 'Calendar & time', i: 'calendar', sum: 'Time zone, the clock, your weekend, how the calendar opens and fits', val: 'Cairo', from: 'Calendar + Time zone cards; Time format from Appearance; Week starts and Density from the calendar’s View options', secs: [
+    { t: 'Time', rows: [
+      { l: 'Time zone', h: 'What “today” means, on every device', c: [P('Africa/Cairo · GMT+2')] },
+      { l: 'Time format', h: 'Every time reads 1:30 PM', c: [S(['12-hour', '24-hour'], 0)], tag: 'moved' },
+      { l: 'Weekend', h: '“This weekend” lands on its first day', c: [S(['Fri + Sat', 'Sat + Sun', 'Sun only', 'Custom'], 0)] },
+      { l: 'Week starts on', h: 'Also in the calendar’s View options', c: [S(['Mon', 'Sun'], 0)], tag: 'moved' },
+    ] },
+    { t: 'Calendar', rows: [
+      { l: 'Opens on', h: 'On every device · the toolbar still switches it', c: [S(['Day', '3 days', 'Week'], 2)] },
+      { l: 'Fit days to the window', h: 'Responsive: fewer days when the window is narrow', c: [T(true)], tag: 'new' },
+      { l: 'Fit hours to my day', h: 'Dynamic: the grid starts and ends with your blocks', c: [T(false)], tag: 'new' },
+      { l: 'Density', h: 'How tall an hour is', c: [S(['Small', 'Medium', 'Large'], 1)], tag: 'new' },
+      { l: 'Second time zone', h: 'A second hour column beside yours', c: [P('Off')], tag: 'new' },
+      { l: 'Now card', h: 'Bottom left of the calendar: what’s on now, or next', c: [T(true)], tag: 'new' },
+    ] },
+    { t: 'Planning', rows: [
+      { l: 'Plan shortcuts', h: 'Today, Next free slot, This weekend…', c: [L('What do these mean?')] },
+      { l: 'Google Calendar', h: 'Read-only on yours · your plan there as busy', c: [CH('Connected'), L('Manage')] },
+    ] },
+  ] },
+  { id: 'capture', n: 'Capture & AI', i: 'inbox', sum: 'Whether the AI files captures, project suggestions, page photos, sharing', val: 'Inbox first', from: 'New (ai-chat); photos and Share target from the Integrations page', secs: [
+    { t: 'What the AI may do', rows: [
+      { l: 'File captures for me', h: 'Off: everything waits in your Inbox · the AI’s guess is one tap away', c: [T(false)], tag: 'new' },
+      { l: 'Pick a project for new things', h: 'Suggest: offers its likely project, one tap to accept', c: [S(['Off', 'Suggest', 'Assign'], 1)], tag: 'new' },
+    ] },
+    { t: 'Photos of your pages', rows: [
+      { l: 'Page photos', h: 'So you can look back at the page, then they’re deleted', c: [S(['Keep for 7 days', 'Delete after reading'], 0)], tag: 'moved' },
+      { l: 'Scans today', h: '15 pages a day', c: [M(4, 15)], tag: 'moved' },
+      { l: 'Read when offline', h: 'Waiting on this device', c: [V('Queue · 0')], tag: 'moved' },
+    ] },
+    { t: 'Sharing', rows: [
+      { l: 'Share to Kai’s Flow', h: 'In the phone’s share sheet once the app is on it · text and links, not images yet', tag: 'moved' },
+    ] },
+  ] },
+  { id: 'notify', n: 'Notifications & sound', i: 'bell', sum: 'Which reminders reach you, quiet hours, the sounds', val: 'Quiet 10:30 PM', from: 'Notifications + Sound cards (the Windows rows move to App & updates)', secs: [
+    { rows: [{ l: 'This device', h: 'Nothing in the way on this device', c: [B('Send a test', 'sec', 'bell')] }] },
+    { t: 'Kinds', tl: 'The 9 kinds of notification, each on or off (digest and nudge with their times)', rows: KINDS },
+    { t: 'Quiet', rows: [
+      { l: 'Quiet hours', h: 'Nothing makes a sound; the tray shows a moon', lead: LG('moon'), c: [TM('10:30 PM'), V('to'), TM('7:00 AM'), T(true)] },
+      { l: 'Task names on the lock screen', h: 'Off: “Kai’s Flow · A reminder”', lead: LG('lock'), c: [T(false)] },
+    ] },
+    { t: 'Sound', tl: 'Sound: on/off and volume, the pack (Kalimba, Felt, Glass), each of the 7 sounds on or off, Silent after Shut down', rows: [
+      { l: 'Sound', h: 'Soft, warm, a little musical', c: [S(['Whisper', 'Soft', 'Full'], 0), T(true)] },
+      { l: 'Sound pack', h: 'Kalimba · plucked tines, bright and round', c: [S(['Kalimba', 'Felt', 'Glass'], 0)] },
+      ...SOUNDS,
+      { l: 'Silent after Shut down', h: 'Until morning', c: [T(true)] },
+    ] },
+    { t: 'This browser', note: 'web only', rows: [{ l: '2 devices get notifications', tl: 'This browser: get notifications here', h: 'This device ✓ · Pixel 8', c: [B('Unsubscribe this device')] }] },
+  ] },
+  { id: 'organize', n: 'Organize', i: 'label', sum: 'Domains, labels, and when “Not now” comes back', val: '4 domains', from: 'Organize card (domains + labels) and the Resurfacing card', secs: [
+    { t: 'Domains', tl: 'Domains (make, rename, recolour, merge, delete)', rows: [
+      { l: 'Work', h: '5 projects', lead: DOT('--acc-hydrangea'), c: [DOTS] },
+      { l: 'Health', h: '2 projects', lead: DOT('--acc-sage'), c: [DOTS] },
+      { l: 'Personal', h: '3 projects', lead: DOT('--acc-blossom'), c: [DOTS] },
+      { l: 'Shaheen', h: '4 projects', lead: DOT('--acc-buttercream'), c: [DOTS] },
+      { add: 'New domain' },
+    ] },
+    { t: 'Labels', tl: 'Labels (make, rename, recolour, delete)', rows: [
+      { l: 'errand', h: '12 tasks', lead: DOT('--acc-terra'), c: [DOTS] },
+      { l: 'deep', h: '7 tasks', lead: DOT('--acc-lavender'), c: [DOTS] },
+      { l: 'waiting', h: '3 tasks', lead: DOT('--acc-clover'), c: [DOTS] },
+      { add: 'New label' },
+    ] },
+    { t: '“Not now” comes back after', tl: '“Not now” cooldowns for high, medium and low priority', rows: [
+      { l: 'High priority', h: 'Comes back soonest', c: [SL(4, '2 days')] },
+      { l: 'Medium priority', h: 'A working week, roughly', c: [SL(14, '5 days')] },
+      { l: 'Low priority', h: 'The long shelf', c: [SL(31, '10 days')] },
+    ] },
+  ] },
+  { id: 'integrations', n: 'Integrations', i: 'link', sum: 'Google Calendar, GitHub, AI assistants, the capture key', val: '2 connected', from: 'Integrations card + page; the capture key from Advanced', secs: [
+    { t: 'Connected apps', rows: [
+      { l: 'Google Calendar', h: 'Your calendars on ours, read-only · your plan there as busy', lead: BR('bn', 'calendar'), c: [CH('Synced 4 min ago'), GO] },
+      { l: 'GitHub', h: 'Issues land in your Inbox · watching 3 repos', lead: BR('gh'), c: [CH('@kai'), GO] },
+    ] },
+    { t: 'AI', rows: [
+      { l: 'AI assistants (MCP)', h: 'Let Claude or another assistant read your garden, and change it if you allow', lead: BR('bn', 'chat'), c: [CH('Read & write'), GO] },
+      { l: 'Groq', h: 'Chat and capture parsing · keeps nothing', lead: BR('bn', 'sprout'), c: [V('Built in')] },
+    ] },
+    { t: 'Capture from anywhere', rows: [
+      { l: 'Capture key & bookmarklet', h: 'Send anything to your Inbox from shortcuts, scripts or a bookmark', lead: BR('bn', 'link'), c: [CH('Key made 12 Oct', 'off'), GO], tag: 'moved' },
+    ] },
+  ] },
+  { id: 'data', n: 'Your data', i: 'data', sum: 'Import from Akiflow or a CSV, export everything, Trash', val: '', from: 'Your data card (Delete account moves to Account)', secs: [
+    { rows: [
+      { l: 'Import', h: 'From Akiflow or a CSV file · re-importing never duplicates', c: [B('Open importer')] },
+      { l: 'Export your data', h: 'A copy for you to keep', c: [B('Everything (.json)'), B('Tasks (.csv)'), B('Calendar (.ics)')] },
+      { l: 'Trash', h: '3 items resting · composts after 30 days', c: [B('Open trash')] },
+    ] },
+  ] },
+  { id: 'privacy', n: 'Privacy & terms', i: 'lock', sum: 'The Privacy Policy and Terms, what we keep and where', val: '', from: 'New (legal)', secs: [
+    { rows: [
+      { l: 'Privacy Policy', h: 'Updated 25 Oct 2026 · you agreed 25 Oct 2026', c: [B('Read')], tag: 'new' },
+      { l: 'Terms of Use', h: 'Updated 25 Oct 2026 · you agreed 25 Oct 2026', c: [B('Read')], tag: 'new' },
+      { l: 'What we keep, and where', h: 'Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking', tag: 'new' },
+      { l: 'What AI assistants can see', h: 'Journal and People stay off unless you allow them', c: [L('Manage')] },
+    ] },
+  ] },
+  { id: 'shortcuts', n: 'Shortcuts', i: 'keyboard', sum: 'Keyboard keys, and what you can type in a task', val: '', from: 'New: today only in the ? overlay; the typing guide from typing (item 9)', secs: [
+    { t: 'Keys', rows: [
+      { l: 'Capture', c: [K('Ctrl', 'K')] },
+      { l: 'Search', c: [K('Ctrl', '/')] },
+      { l: 'Chat', c: [K('Ctrl', 'J')] },
+      { l: 'Settings', c: [K('Ctrl', ',')] },
+      { l: 'Calendar views', h: 'Day, week, month · on the calendar', c: [K('D'), K('W'), K('M')], tag: 'new' },
+      { l: 'Every shortcut', h: 'The full list, anywhere in the app', c: [K('?')] },
+    ] },
+    { t: 'Typing a task', tl: 'Typing a task: dates, #project, *label, ! priority, length, repeat, // notes', rows: [
+      { l: 'A date or time', c: [X('tomorrow 3pm')] },
+      { l: 'A project', c: [X('#Forecasting')] },
+      { l: 'A label', c: [X('*errand')] },
+      { l: 'Priority', h: 'Medium, high, critical', c: [X('!  !!  !!!')] },
+      { l: 'How long', c: [X('30m · 1h30')] },
+      { l: 'Repeat', c: [X('every mon, fri')] },
+      { l: 'Notes', c: [X('// the details')] },
+    ] },
+  ] },
+  { id: 'about', n: 'App & updates', i: 'info', sum: 'Version, updates, what’s new, the Windows and Android apps', val: 'v1.4.1', from: 'App card; tray + Start with Windows and the widgets row from Notifications', secs: [
+    { rows: [
+      { l: 'Kai’s Flow v1.4.1', h: 'Build a01d4af · built 25 Oct 2026 · you’re on the latest', c: [B('Check for updates')] },
+      { l: 'What’s new', h: 'v1.4.1 · the calendar’s new block looks', c: [L('Read the notes')] },
+      { l: 'Download the apps', h: 'Android and Windows · always the newest release', c: [B('Android'), B('Windows')] },
+      { l: 'The tour', h: 'Replays the notes on Today and clears seen hints', c: [B('Show me around again')] },
+      { l: 'Guide', h: 'How the method and every page work', c: [L('Open the Guide')] },
+    ] },
+    { t: 'On this computer', note: 'Windows app only', rows: [
+      { l: 'Show in the system tray', h: 'The K by the clock, with a quick flyout', c: [T(true)], tag: 'moved' },
+      { l: 'Start with Windows', h: 'Opens quietly to the tray', c: [T(false)], tag: 'moved' },
+    ] },
+    { t: 'On this phone', note: 'Android app only', rows: [
+      { l: 'Hide titles on the home screen', h: 'Widgets say “Your goal” · “Pick 2”', c: [T(false)], tag: 'moved' },
+    ] },
+  ] },
+]
+const CAT = Object.fromEntries(CATS.map((c) => [c.id, c]))
+// the category list's groups (hairlines between): you · how it looks and behaves · what it connects and keeps · help
+const GROUPS = [['account'], ['appearance', 'calendar', 'capture', 'notify', 'organize'], ['integrations', 'data', 'privacy'], ['shortcuts', 'about']]
+
+// ── the table at the top ──
+document.getElementById('map').innerHTML = `<tr><th>Category</th><th>What's in it</th><th>Where it is today</th></tr>` + CATS.map((c) => {
+  const items = c.secs.flatMap((s) => (s.tl ? [{ l: s.tl }] : s.rows)).filter((r) => r.l).map((r) => `${r.tl ?? r.l}${r.tag === 'new' ? '<span class="nw">new</span>' : r.tag === 'moved' ? '<span class="mv">moved</span>' : ''}`)
+  return `<tr><td>${icon(c.i, 18)}${c.n}</td><td>${items.join(' · ')}</td><td class="from">${c.from}</td></tr>`
+}).join('')
+
+// ── rendering a control, a lead, a row ──
+function ctrl(c, R, ph) {
+  switch (c.t) {
+    case 'tg': return `<span class="tg${c.on ? ' on' : ''}"><i></i></span>${R === 'B' ? `<span class="tgw">${c.on ? 'On' : 'Off'}</span>` : ''}`
+    case 'sg':
+      // A: a choice of more than three is a picker (B shows every choice)
+      if (R === 'A' && c.opts.length > 3) return ctrl(P(c.opts[c.sel]), R, ph)
+      return `<span class="sg">${c.opts.map((o, i) => `<b${i === c.sel ? ' class="on"' : ''}>${o}</b>`).join('')}</span>`
+    case 'pk': return `<span class="pk">${c.v}${icon('chevdown', 14)}</span>`
+    case 'sl': return `<span class="sl"><i style="width:${c.pct}%"></i><b style="left:${c.pct}%"></b></span>${c.v ? `<span class="slv">${c.v}</span>` : ''}`
+    case 'bt': return `<span class="bt bt-${c.k}">${c.ic ? icon(c.ic, 16) : ''}${c.l}</span>`
+    case 'lk': return `<span class="lk">${c.l}</span>`
+    case 'ch': return `<span class="ch"><i class="dot ${c.tone}"></i>${c.l}</span>`
+    case 'tm': return `<span class="tm">${c.v}</span>`
+    case 'kc': return `<span class="kcs">${c.keys.map((k) => `<kbd>${k}</kbd>`).join('')}</span>`
+    case 'ex': return `<code class="ex">${c.v}</code>`
+    case 'va': return `<span class="va">${c.v}</span>`
+    case 'go': return icon('chevright', 16, 'go')
+    case 'dots': return `<span class="dots">${icon('dots', 16)}</span>`
+    case 'mt': return `<span class="mt"><i><b style="width:${(c.used / c.of) * 100}%"></b></i>${c.used} of ${c.of}</span>`
+  }
+  return ''
+}
+function lead(l) {
+  if (l.k === 'kg') return `<span class="kg" style="background:${l.tint};color:${l.ink}">${icon(l.ic, 16)}</span>`
+  if (l.k === 'lg') return `<span class="lg">${icon(l.ic, 18)}</span>`
+  if (l.k === 'pl') return `<span class="pl">${icon('play', 10)}</span>`
+  if (l.k === 'dot') return `<span class="dot" style="width:10px;height:10px;background:var(${l.c})"></span>`
+  if (l.k === 'br') return l.kind === 'gh' ? `<span class="brand gh">${GH}</span>` : `<span class="brand bn">${icon(l.ic, 17)}</span>`
+  return ''
+}
+const wide = (r) => r.c && (r.c.some((c) => c.t === 'sg' && c.opts.length > 1 && c.opts.join('').length > 8) || r.c.filter((c) => c.t === 'bt').length > 1)
+const addRow = (r) => `<div class="add"><span class="fld">${icon('plus', 15)}&nbsp;${r.add}</span><span class="bt bt-sec">Add</span></div>`
+
+function rowA(r, ph) {
+  if (r.add) return `<div class="ra-row">${addRow(r)}</div>`
+  const ctl = r.c ? `<div class="rc${ph && wide(r) ? ' wide' : ''}">${r.c.map((c) => ctrl(c, 'A', ph)).join('')}</div>` : ''
+  return `<div class="ra-row${r.lead ? ' has-lead' : ''}">${r.lead ? `<span class="lead">${lead(r.lead)}</span>` : ''}<div class="rt"><div class="rl">${r.l}</div>${r.h ? `<div class="rh">${r.h}</div>` : ''}</div>${ctl}</div>`
+}
+function rowB(r, ph) {
+  if (r.add) return `<div class="rb-row solo">${addRow(r)}</div>`
+  return `<div class="rb-row${r.c ? '' : ' solo'}"><div class="rt">${r.lead ? lead(r.lead) : ''}<div><div class="rl">${r.l}</div>${r.h ? `<div class="rh">${r.h}</div>` : ''}</div></div>${r.c ? `<div class="rc">${r.c.map((c) => ctrl(c, 'B', ph)).join('')}</div>` : ''}</div>`
+}
+function body(cat, R, ph) {
+  return cat.secs.map((s) => {
+    const head = s.t ? `<h3>${s.t}${s.note ? `<small>${s.note}</small>` : ''}</h3>` : ''
+    return R === 'A'
+      ? `<div class="ra-sec${s.danger ? ' is-danger' : ''}">${head}<div class="ra-panel">${s.rows.map((r) => rowA(r, ph)).join('')}</div></div>`
+      : `<div class="rb-sec${s.danger ? ' is-danger' : ''}">${head}${s.rows.map((r) => rowB(r, ph)).join('')}</div>`
+  }).join('')
+}
+const pageHead = (c) => `<header class="cp-h"><h2>${c.n}</h2><p>${c.sum}</p></header>`
+const srch = (q) => q ? `<div class="srch on">${icon('search', 16)}${q}<span class="caret"></span><kbd>Esc</kbd></div>` : `<div class="srch">${icon('search', 16)}Search settings<kbd>Ctrl F</kbd></div>`
+const clover = () => `<div class="st-ttl"><img src="ds/assets/clover/seedling.png" alt="" style="filter:var(--rim-clover,none)"><h1>Settings</h1></div>`
+
+// ── the app shell (desktop) ──
+const TEND = [['today', 'Today'], ['inbox', 'Inbox', '3'], ['calendar', 'Calendar'], ['tasks', 'Tasks'], ['projects', 'Projects']]
+const CULT = [['routines', 'Routines'], ['focus', 'Focus'], ['clipboard', 'Review'], ['journal', 'Journal'], ['library', 'Library'], ['people', 'People'], ['activity', 'Activity'], ['delete', 'Trash']]
+const sbRow = ([i, l, b]) => `<div class="sb-row">${icon(i, 18)}<span>${l}</span>${b ? `<em>${b}</em>` : ''}</div>`
+const sidebar = () => `<aside class="sb"><div class="sb-col">
+  <div class="sb-me"><img src="../app/public/icon-192.png" alt=""><div><b>Kai’s Flow ${icon('chevdown', 14)}</b><small>Personal · Cairo</small></div></div>
+  <div class="sb-plan">${icon('plan', 15)}<span>Plan</span><span>›</span><em>4</em></div>
+  <div class="sb-gl">Tend</div>${TEND.map(sbRow).join('')}
+  <div class="sb-gl">Cultivate</div>${CULT.map(sbRow).join('')}
+  </div><div class="sb-foot"><div class="sb-tools"><span class="sb-cap">${icon('plus', 18)}Capture<span class="kcs"><kbd>Ctrl</kbd><kbd>K</kbd></span></span><span class="sb-tool">${icon('search', 18)}</span><span class="sb-tool">${icon('chat', 18)}</span></div></div></aside>`
+function desk(inner, theme, z = 1) {
+  const w = 1280 / z, h = 800 / z
+  return `<div class="frame" data-theme="${theme}" style="width:1280px;height:800px"><div class="scr" style="width:${w}px;height:${h}px;zoom:${z}">${sidebar()}<div class="mn"><div class="tb"><span>Kai’s Flow · Sat 25 Oct</span><span>Africa/Cairo</span></div><div class="mc">${inner}</div></div></div></div>`
+}
+function phone(inner, theme) {
+  const tab = (i, l, on) => `<span${on ? ' class="on"' : ''}>${icon(i, 22)}${l}</span>`
+  return `<div class="frame" data-theme="${theme}" style="width:390px;height:780px"><div class="scr ph" style="width:390px;height:780px"><div class="ph-top">Kai’s Flow · Sat 25 Oct</div><div class="ph-body">${inner}</div><div class="ph-tabs">${tab('today', 'Today')}${tab('inbox', 'Inbox')}<span><span class="cap">${icon('plus', 24)}</span></span>${tab('calendar', 'Calendar')}${tab('more', 'More', true)}</div></div></div>`
+}
+
+// ── A · two panes ──
+const nv = (id, on) => `<div class="nv${on ? ' on' : ''}">${icon(CAT[id].i, 18)}<span>${CAT[id].n}</span></div>`
+function layA(catId, R, q) {
+  const list = GROUPS.map((g) => `<div class="la-grp">${g.map((id) => nv(id, !q && id === catId)).join('')}</div>`).join('')
+  const right = q ? results(q, R) : `${pageHead(CAT[catId])}${body(CAT[catId], R, false)}`
+  return `<div class="la"><nav class="la-nav">${clover()}${srch(q)}${list}</nav><div class="la-main"><div class="in">${right}</div></div></div>`
+}
+// ── B · cards home, then one category ──
+const STATUS = { calendar: 'Africa/Cairo · 12-hour', capture: 'Captures wait in the Inbox', notify: 'Quiet 10:30 PM – 7:00 AM', integrations: '<i class="dot ok"></i>Google · GitHub', about: 'v1.4.1 · up to date' }
+const card = (c) => `<div class="lb-card"><span class="ic">${icon(c.i, 20)}</span><b>${c.n}</b><span>${c.sum}</span>${STATUS[c.id] ? `<span class="st">${STATUS[c.id]}</span>` : ''}</div>`
+const layBHome = () => `<div class="lb"><div class="in">${clover()}${srch()}<div class="lb-grid">${CATS.map(card).join('')}</div><div class="saves">Everything saves as you touch it</div></div></div>`
+const layBPage = (catId, R) => `<div class="lb lb-page"><div class="in"><div class="back">${icon('back', 16)}Settings</div>${pageHead(CAT[catId])}${body(CAT[catId], R, false)}</div></div>`
+// ── C · one page, a sticky index that follows the scroll ──
+function layC(catId, R, sub) {
+  const idx = CATS.findIndex((c) => c.id === catId)
+  const index = CATS.map((c) => {
+    const on = c.id === catId
+    const subs = on ? `<div class="sub">${c.secs.filter((s) => s.t).map((s) => `<span${s.t === sub ? ' class="on"' : ''}>${s.t}</span>`).join('')}</div>` : ''
+    return nv(c.id, on) + subs
+  }).join('')
+  const chapters = CATS.slice(idx).map((c) => `<section class="lc-ch">${pageHead(c).replace('<h2>', `<h2>${icon(c.i, 22)}`)}${body(c, R, false)}</section>`).join('')
+  return `<div class="lc"><nav class="lc-nav">${clover()}${srch()}${index}</nav><div class="lc-main"><div class="in">${chapters}</div></div></div>`
+}
+
+// ── phones ──
+const phHome = () => {
+  const groups = GROUPS.slice(1).map((g) => `<div class="pl-list">${g.map((id) => `<div class="pl-row">${icon(CAT[id].i, 20)}<span class="n">${CAT[id].n}</span><span class="v">${CAT[id].val}</span>${icon('chevright', 16, 'go')}</div>`).join('')}</div>`).join('')
+  return `${clover()}${srch()}<div class="me-card"><span class="av">${icon('person', 22)}</span><div style="flex:1;min-width:0"><b>Kai’s Flow</b><span>kai@example.com · Account</span></div>${icon('chevright', 16, 'go')}</div>${groups}`
+}
+const phPage = (catId, R) => `<div class="back">${icon('back', 18)}Settings</div>${pageHead(CAT[catId])}${body(CAT[catId], R, true)}`
+const phCards = () => `${clover()}${srch()}<div class="pb-grid">${CATS.map((c) => `<div class="lb-card"><span class="ic">${icon(c.i, 20)}</span><b>${c.n}</b><span>${c.sum}</span></div>`).join('')}</div>`
+const phOne = (catId, R) => {
+  const idx = CATS.findIndex((c) => c.id === catId)
+  const chips = CATS.slice(Math.max(0, idx - 1)).map((c) => `<span${c.id === catId ? ' class="on"' : ''}>${c.n}</span>`).join('')
+  return `${srch()}<div class="chips">${chips}</div>${CATS.slice(idx).map((c) => `<section class="lc-ch">${pageHead(c)}${body(c, R, true)}</section>`).join('')}`
+}
+
+// ── search results (drawn in A) ──
+const hit = (s, q) => s.replace(new RegExp(`(${q})`, 'ig'), '<mark>$1</mark>')
+function results(q, R, ph = false) {
+  const found = [
+    ['calendar', 'Time', ['Time zone', 'Time format', 'Second time zone']],
+    ['notify', 'Kinds', ['Morning digest', 'Evening nudge']],
+    ['notify', 'Quiet', ['Quiet hours']],
+  ]
+  const n = found.reduce((a, f) => a + f[2].length, 0)
+  const all = (id) => CAT[id].secs.flatMap((s) => s.rows)
+  const blocks = found.map(([id, sec, labels]) => {
+    const rows = labels.map((l) => all(id).find((r) => r.l === l)).map((r) => ({ ...r, l: hit(r.l, q), h: r.h && hit(r.h, q), c: ph ? r.c : [...(r.c ?? []), GO] }))
+    const crumb = `<div class="crumb">${icon(CAT[id].i, 15)}${CAT[id].n} › ${sec}</div>`
+    return R === 'A' ? `${crumb}<div class="ra-panel">${rows.map((r) => rowA(r, ph)).join('')}</div>` : `${crumb}<div class="rb-sec">${rows.map((r) => rowB(r, ph)).join('')}</div>`
+  }).join('')
+  return `<p class="res-h"><b>${n} settings</b> match “${q}”</p>${blocks}<p class="res-foot">Not it? Ask Chat: “turn off the evening nudge”</p>`
+}
+
+// ── page wiring ──
+const fig = (inner, cap) => `<figure>${inner}<figcaption>${cap}</figcaption></figure>`
+const pickBtn = (grp, v) => `<div class="pick-row"><button type="button" class="btn pick" data-grp="${grp}" data-pick="${v}" aria-pressed="false">This one</button></div>`
+const LAYOUTS = [
+  ['A', 'Two panes', 'Categories down the left, each with its icon, and only the picked category on the right, as in macOS, Notion and Todoist. Search heads the list.',
+    'What moves: the two columns of cards and the separate Integrations page go; every card lands in one of the 11 categories. The phone becomes a list that opens one category a page.'],
+  ['B', 'Cards home, then one page', 'Settings opens on a grid of 11 cards, each saying what is inside (and a status where it helps: your zone, Quiet hours, what is connected). A card opens that category alone, with ‹ Settings to go back, as on iOS.',
+    'What moves: the same as A, but changing category is one more click. The computer and the phone work the same way.'],
+  ['C', 'One page with an index', 'Everything stays on one scrolling page, the 11 categories as chapters in one column. The index on the left follows you, shows the current chapter’s sections and jumps; search heads it.',
+    'What moves: the closest to today. Nothing hides, so the page stays long. The phone keeps one long page, with a row of category chips that sticks to the top and follows you.'],
+]
+let drawRows = null
+function renderLayouts() {
+  const R = drawRows ?? picks.rows ?? 'A'
+  document.querySelectorAll('[data-rowsdraw]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.rowsdraw === R)))
+  const shots = {
+    A: [
+      fig(desk(layA('calendar', R), 'day'), 'Computer · 1280 at 100% · day · Calendar &amp; time picked'),
+      fig(desk(layA('notify', R), 'night'), 'Night Garden · Notifications &amp; sound'),
+      fig(desk(layA('capture', R), 'day', 1.5), 'The same window at 150% · Capture &amp; AI · the rows put their control under the label when it doesn’t fit'),
+      fig(phone(phHome(), 'day'), 'Phone · the list (Account on top, as iOS does)'),
+      fig(phone(phPage('capture', R), 'day'), 'Tap a category: its page, ‹ Settings to go back'),
+      fig(phone(phPage('account', R), 'night'), 'Night Garden · Account, with the danger zone'),
+    ],
+    B: [
+      fig(desk(layBHome(), 'day'), 'Computer · 1280 at 100% · day · the cards home'),
+      fig(desk(layBPage('calendar', R), 'night'), 'Night Garden · a card opened: Calendar &amp; time'),
+      fig(desk(layBHome(), 'day', 1.5), 'The same window at 150% · the grid drops to two columns'),
+      fig(phone(phCards(), 'day'), 'Phone · the cards, two across'),
+      fig(phone(phPage('notify', R), 'day'), 'Tap a card: its page'),
+      fig(phone(phCards(), 'night'), 'Night Garden · the cards'),
+    ],
+    C: [
+      fig(desk(layC('calendar', R, 'Calendar'), 'day'), 'Computer · 1280 at 100% · day · scrolled to Calendar &amp; time; the index lights it and its sections'),
+      fig(desk(layC('notify', R, 'Kinds'), 'night'), 'Night Garden · scrolled on to Notifications &amp; sound'),
+      fig(desk(layC('account', R), 'day', 1.5), 'The same window at 150% · the top of the page'),
+      fig(phone(phOne('appearance', R), 'day'), 'Phone · one long page; the chips stick to the top'),
+      fig(phone(phOne('capture', R), 'day'), 'Scrolled on: the chip follows (or tap a chip to jump)'),
+      fig(phone(phOne('calendar', R), 'night'), 'Night Garden'),
+    ],
+  }
+  document.getElementById('layouts').innerHTML = LAYOUTS.map(([k, name, say, moves]) => `
+  <div class="look" data-grp="layout" data-look="${k}">
+    <h3><span class="tag">${k}</span>${name}</h3>
+    <p class="say">${say}</p>
+    <p class="moves">${moves}</p>
+    <div class="shots">${shots[k].join('')}</div>
+    ${pickBtn('layout', k)}
+  </div>`).join('')
+  document.querySelectorAll('#layouts .pick').forEach(wirePick)
+}
+document.querySelectorAll('[data-rowsdraw]').forEach((b) => b.addEventListener('click', () => { drawRows = b.dataset.rowsdraw; renderLayouts(); paint() }))
+
+// ── rows looks: one pane (the content side of A, 760 wide), and the phone ──
+const pane = (inner, theme) => `<div class="frame" data-theme="${theme}" style="width:760px"><div class="scr" style="display:block;padding:28px 32px 32px">${inner}</div></div>`
+const ROWS = [
+  ['A', 'Panels', 'Each section is a rounded panel with hairlines between the rows, label and help on the left, the control on the right. A choice of more than three becomes a picker (Interface size: 125% ⌄). The danger zone is its own panel with a terra edge.',
+    'On the phone the rows keep the panel, and a long segmented choice spreads across the full width under its label.'],
+  ['B', 'Open form', 'No panels: a serif section title over plain rows, and the control in its own column, so every switch and picker lines up down the page. Every choice stays visible, each switch says On or Off beside it, and the danger zone is one tinted row.',
+    'On the phone every control sits under its label, like a form.'],
+]
+document.getElementById('rowlooks').innerHTML = ROWS.map(([k, name, say, moves]) => `
+  <div class="look" data-grp="rows" data-look="${k}">
+    <h3><span class="tag">${k}</span>${name}</h3>
+    <p class="say">${say}</p>
+    <p class="moves">${moves}</p>
+    <div class="shots">
+      ${fig(pane(pageHead(CAT.capture) + body(CAT.capture, k, false), 'day'), 'Capture &amp; AI · day')}
+      ${fig(pane(pageHead(CAT.appearance) + body(CAT.appearance, k, false) + '<div style="height:34px"></div>' + pageHead(CAT.account) + body(CAT.account, k, false), 'night'), 'Appearance, then Account · Night Garden')}
+      ${fig(phone(phPage('appearance', k), 'day'), 'Phone · Appearance')}
+      ${fig(phone(phPage('account', k), 'night'), 'Phone · Account · Night Garden')}
+    </div>
+    ${pickBtn('rows', k)}
+  </div>`).join('')
+
+// ── search ──
+document.getElementById('searchshot').innerHTML = `<div class="shots">
+  ${fig(desk(layA('calendar', 'A', 'time'), 'day'), 'Computer · “time” typed at the top of the list; each result keeps its control, › opens its category')}
+  ${fig(phone(`${srch('time')}${results('time', 'A', true)}`, 'day'), 'Phone · the same results under the field')}
+</div>`
+
+// ── the page theme ──
+function setTheme(th) {
+  document.documentElement.dataset.theme = th
+  document.querySelectorAll('[data-th]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.th === th)))
+}
+document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => setTheme(b.dataset.th)))
+if (new URLSearchParams(location.search).has('night')) setTheme('night')
+
+// ── the picks ──
+const KEY = 'kf-settings-picks'
+let picks = {}
+try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
+const NAMES = { layout: 'layout', rows: 'rows' }
+const line = () => Object.keys(NAMES).filter((g) => picks[g]).map((g) => `${NAMES[g]} ${picks[g]}`).join(', ')
+function paint() {
+  document.getElementById('mine').textContent = line() || 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(picks[b.dataset.grp] === b.dataset.pick)))
+  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', picks[s.dataset.grp] === s.dataset.look))
+}
+function wirePick(b) {
+  b.addEventListener('click', () => {
+    picks[b.dataset.grp] = b.dataset.pick
+    try { localStorage.setItem(KEY, JSON.stringify(picks)) } catch {}
+    if (b.dataset.grp === 'rows' && !drawRows) renderLayouts()
+    paint()
+  })
+}
+renderLayouts()
+document.querySelectorAll('#rowlooks .pick').forEach(wirePick)
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = line() ? `Settings: ${line()}` : 'Settings: nothing picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    try { ok = document.execCommand('copy') } catch {}
+    ta.remove()
+  }
+  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paint()
+</script>
+</body>
+</html>
