@@ -169,6 +169,7 @@ function railSectionAt(rail: HTMLElement | null | undefined, x: number, y: numbe
  * `data-drop-over` (CalendarPage styles it). Returns the teardown. */
 function trackRailHover(rail: HTMLElement | null | undefined): () => void {
   if (!rail) return () => {}
+  rail.dataset.dragging = '' // cal-wave: the rail's empty sections come back as drop targets meanwhile
   let over: HTMLElement | null = null
   const move = (e: MouseEvent) => {
     const sec = railSectionAt(rail, e.clientX, e.clientY)
@@ -181,6 +182,8 @@ function trackRailHover(rail: HTMLElement | null | undefined): () => void {
   return () => {
     window.removeEventListener('mousemove', move)
     over?.removeAttribute('data-drop-over')
+    // after the drop has read the section under the pointer (the callers hit-test right after this)
+    requestAnimationFrame(() => delete rail.dataset.dragging)
   }
 }
 

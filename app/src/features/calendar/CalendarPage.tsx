@@ -1207,12 +1207,12 @@ function DesktopCalendar() {
         @container (max-width: 300px) { .cal-head-date { margin-left: 6px; } .cal-head-ctrls { gap: 4px; } .cal-head-ctrls .kf-button:not(.cal-head-nav) { padding-left: 8px; padding-right: 8px; } }
         /* cal-wave item 18: empty sections step aside (back while a block is dragged — they still take drops). */
         .cal-rail-sec[data-empty] { display: none; }
-        body:has(> #kf-cal-ghost) .cal-rail-sec[data-empty] { display: block; order: 1; } /* after the shown ones: nothing moves under the pointer */
-        body:has(> #kf-cal-ghost) .cal-rail-none { display: none; }
+        .cal-rail[data-dragging] .cal-rail-sec[data-empty] { display: block; order: 1; } /* after the shown ones: nothing moves under the pointer */
+        .cal-rail[data-dragging] .cal-rail-none { display: none; }
         .cal-rail-more { align-self: flex-start; margin: 2px 0 0; padding: 2px 0; border: none; background: none; font: inherit; font-size: var(--fs-meta-l); color: var(--ink-faint); cursor: pointer; }
         .cal-rail-more:hover { color: var(--ink-body); }
         .cal-rail-more:focus-visible { outline: none; box-shadow: var(--focus-ring); }
-        body:has(> #kf-cal-ghost) .cal-rail-more { display: none; }
+        .cal-rail[data-dragging] .cal-rail-more { display: none; }
         .cal-rail-none { margin: 4px 0 0; font-size: var(--fs-body-s); color: var(--ink-faint); }
         .cal-row-at { font-family: var(--font-mono); font-size: var(--fs-mono-l); }
         /* cal-wave item 19: the Now card at the foot of the rail (the list scrolls behind it), or floating
