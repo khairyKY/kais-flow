@@ -77,7 +77,7 @@
   {
     "name": "g Undo sends the three events to Trash (delete_event × 3)",
     "ok": true,
-    "detail": "[{\"tool\":\"delete_event\",\"args\":{\"id\":\"2b22cfe8-97b2-439b-bd6d-f626aaef11ed\"}},{\"tool\":\"delete_event\",\"args\":{\"id\":\"0b923634-0197-4fa7-9781-91f71da0228d\"}},{\"tool\":\"delete_event\",\"args\":{\"id\":\"aea1e5cc-b66b-486b-b636-4754d55a676b\"}}]"
+    "detail": "[{\"tool\":\"delete_event\",\"args\":{\"id\":\"f37cd29a-9c45-4b5e-82ac-d66646cb1c5d\"}},{\"tool\":\"delete_event\",\"args\":{\"id\":\"13b09ef9-19db-44bb-8365-ea95fa769157\"}},{\"tool\":\"delete_event\",\"args\":{\"id\":\"cb6566b6-5e51-4a8c-9e90-c35cf280c1e0\"}}]"
   },
   {
     "name": "g …and the card says so",
