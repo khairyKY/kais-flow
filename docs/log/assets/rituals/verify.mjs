@@ -603,7 +603,7 @@ if (want('8b')) {
   await tap(cdp, row(page, OMAR).locator('.kf-checkbox'))
   await sleep(300)
   await shot(page, '8b-night')
-  check('8b Tomorrow → selected (sage + check), meta "→ Mon 09:00", due tomorrow 09:00', (await row(page, REVIEW).getByRole('button', { name: 'Tomorrow' }).getAttribute('aria-pressed')) === 'true' && /→ MON 09:00/i.test(await text(row(page, REVIEW))) && state.writes.some((w) => w.row.id === id(REVIEW) && w.row.due_at === iso('09:00', 28)))
+  check('8b Tomorrow → selected (sage + check), meta "→ Mon 9:00 AM", due tomorrow 09:00', (await row(page, REVIEW).getByRole('button', { name: 'Tomorrow' }).getAttribute('aria-pressed')) === 'true' && /→ MON 9:00 AM/i.test(await text(row(page, REVIEW))) && state.writes.some((w) => w.row.id === id(REVIEW) && w.row.due_at === iso('09:00', 28)))
   check('8b checkbox = Done: the row stays, struck, + Done toast', (await row(page, OMAR).locator('.rt-title.is-done').count()) === 1 && (await toasts(page)).includes('Done'), JSON.stringify(await toasts(page)))
   check('8b label: Sweep · 2 of 4 left', (await labels(page))[0] === 'SWEEP · 2 OF 4 LEFT', (await labels(page))[0])
   await tap(cdp, row(page, REVIEW).getByRole('button', { name: 'Tomorrow' }))
