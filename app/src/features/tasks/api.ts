@@ -535,9 +535,11 @@ export function setPriority(task: Task, priority: number | null): void {
 /** The estimate. On the calendar it is the block's length, so the block keeps its start and takes the
  * new length (bugs-1023: the chip changed only the number). Returns that block's Undo. */
 export function setDuration(task: Task, durationMin: number | null): () => void {
-  patchTask(task, { duration_min: durationMin })
+  // The block's write carries the estimate with it (touchTaskSchedule): one task write either way.
+  const undo = durationMin ? lengthenTaskBlock(task.id, durationMin) : () => {}
+  if (cached(task).duration_min !== durationMin) patchTask(task, { duration_min: durationMin })
   logUpdate(task, 'duration')
-  return durationMin ? lengthenTaskBlock(task.id, durationMin) : () => {}
+  return undo
 }
 
 /** The notes field (task sheet, popover, editor) — written once, when it's left. */
