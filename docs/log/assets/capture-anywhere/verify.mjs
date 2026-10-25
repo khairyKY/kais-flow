@@ -186,7 +186,8 @@ const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex')
 
 // ── 5. ?file=1 — a queued endpoint capture is claimed, parsed as of when it was sent and filed ──
 {
-  const { ctx, page, errors, state } = await open('/today', { rows: { inbox_items: [QUEUED] } })
+  // "File captures for me" defaults OFF since v1.5.0 (ai-chat item 7): this check is about filing, so it's on here.
+  const { ctx, page, errors, state } = await open('/today', { rows: { inbox_items: [QUEUED], app_settings: [{ ...SETTINGS, auto_file_captures: true, help_seen: ['notice:autofile'] }] } })
   await sleep(2500)
   const claim = state.writes.find((w) => w.method === 'PATCH' && w.table === 'inbox_items' && w.query.includes('needs_parse'))
   check('file=1: claimed with a conditional update', !!claim && claim.query.includes(`id=eq.${QUEUED.id}`) && claim.query.includes('payload->>needs_parse=eq.true'), claim?.query)

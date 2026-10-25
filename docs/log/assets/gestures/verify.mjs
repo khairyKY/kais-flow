@@ -2,9 +2,12 @@
 // (KitGesturesDemo: the real SwipeRow, useRowGrammar → TaskMenu, and BulkBar over sample rows).
 // Touch is real CDP touch input (Input.dispatchTouchEvent), so touch-action / scrolling apply.
 // node verify.mjs <outDir> [baseUrl]
-import { chromium } from 'playwright-core'
 import fs from 'node:fs'
 import path from 'node:path'
+import { pathToFileURL } from 'node:url'
+// playwright-core isn't installed in the repo: load it from the same path the sibling harnesses use (argv[4]).
+const PW = process.argv[4] ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs'
+const { chromium } = await import(pathToFileURL(PW).href)
 
 const OUT = process.argv[2]
 const BASE = process.argv[3] ?? 'http://localhost:5231'

@@ -35,7 +35,8 @@ const session = { access_token: jwt, refresh_token: 'demo', token_type: 'bearer'
 const CREATED = '2026-09-21T06:00:00Z'
 const DOMAINS = [{ id: 'd0000000-0000-4000-8000-000000000001', user_id: UID, name: 'Shaheen', color: '#C9A961', sort_order: 1, created_at: CREATED, updated_at: CREATED }]
 const PROJECTS = [{ id: 'p0000000-0000-4000-8000-000000000001', user_id: UID, domain_id: DOMAINS[0].id, name: 'Website', type: 'standard', status: 'active', color: null, milestones: [], checklist: [], created_at: CREATED, updated_at: CREATED }]
-const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', created_at: CREATED, updated_at: CREATED }
+// "File captures for me" defaults OFF since v1.5.0 (ai-chat item 7); these checks are about filing, so it's on.
+const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', created_at: CREATED, updated_at: CREATED, auto_file_captures: true, help_seen: ['notice:autofile'] }
 const PENDING = { id: 'i0000000-0000-4000-8000-000000000001', user_id: UID, kind: 'text', raw_text: 'book dentist', transcript: null, ai_parse: null, confidence: null, status: 'pending', filed_task_id: null, payload: null, snoozed_until: null, created_at: CREATED, updated_at: CREATED }
 
 /** What the mocked parse-capture answers (keyed by a phrase in raw_text); anything else = an unsure note. */
@@ -179,10 +180,10 @@ async function focusProof(page, name, handler) {
   const stack = log.first?.stack ?? ''
   check(`${name} the field has focus when the click finishes dispatching (same task as the tap)`, log.atEnd === 'kf-capture-input', JSON.stringify({ atEnd: log.atEnd, active: log.active }))
   check(`${name} its first focus() ran inside the click's task, with user activation, called from ${handler} → openCapture`,
-    log.first && log.first.inClickTask && log.first.activation === true && stack.includes('openCapture') && stack.includes(handler),
+    log.first && log.first.inClickTask && log.first.activation === true && /open(Task)?Capture/.test(stack) && stack.includes(handler),
     log.first
       ? `inClickTask=${log.first.inClickTask} activation=${log.first.activation} · ` +
-          stack.split('\n').filter((l) => /openCapture|onClick|flushSync|CommandBar|executeDispatch/.test(l)).slice(0, 6).map((l) => l.trim().replace(/^at /, '').replace(/ \(.*\/(src|deps)\//, ' (').replace(/\?[^:)]*/, '')).join(' ← ')
+          stack.split('\n').filter((l) => /open(Task)?Capture|onClick|flushSync|CommandBar|executeDispatch/.test(l)).slice(0, 6).map((l) => l.trim().replace(/^at /, '').replace(/ \(.*\/(src|deps)\//, ' (').replace(/\?[^:)]*/, '')).join(' ← ')
       : 'no focus() on the field')
 }
 function basics(env, name) {
@@ -334,7 +335,8 @@ for (const theme of ['day', 'night']) {
   const add = page.getByRole('button', { name: 'Add your first three things' })
   if (await add.count()) {
     await tap(env, add)
-    await focusProof(page, name, 'openCapture')
+    // Today's openers are task fields since v1.5.0 (ai-chat follow-up): openTaskCapture, the same synchronous path.
+    await focusProof(page, name, 'openTaskCapture')
   } else check(`${name} (no empty state on this data)`, true, 'skipped')
   basics(env, name)
   await env.ctx.close()
@@ -351,7 +353,7 @@ for (const theme of ['day', 'night']) {
   await cta.click()
   await sleep(300)
   check(`${name} Capture → the command bar, cursor in the field`, (await field(page).count()) === 1 && (await page.evaluate(() => document.activeElement?.id)) === 'kf-capture-input')
-  await focusProof(page, name, 'openCapture')
+  await focusProof(page, name, 'openTaskCapture') // Today's pill = openTaskCapture since v1.5.0
   const dictate = page.getByRole('button', { name: 'Dictate' })
   check(`${name} a mic toggle in the bar (+ the camera keeps its place)`, (await dictate.count()) === 1 && (await page.getByRole('button', { name: 'Scan paper' }).count()) === 1)
   await page.keyboard.type('Call the bank ')
