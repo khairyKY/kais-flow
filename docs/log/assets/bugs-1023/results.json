@@ -1,0 +1,542 @@
+[
+  {
+    "name": "d1-day editor Duration 1h → the block 5:15–6:15 PM and the task's schedule + estimate with it",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T15:15:00.000Z\",60],\"t\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T15:15:00.000Z\",60],\"due\":\"2026-10-23T14:30:00.000Z\"}"
+  },
+  {
+    "name": "d1-day …the editor's Block line reads it",
+    "ok": true,
+    "detail": "Block · Fri 5:15–6:15 PM"
+  },
+  {
+    "name": "d1 one task write for the pick (the block carries the estimate)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "d1 Undo → 5:15–5:30 PM and 15 again",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T14:30:00.000Z\",15],\"t\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T14:30:00.000Z\",15],\"due\":\"2026-10-23T14:30:00.000Z\"}"
+  },
+  {
+    "name": "d1-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d1-night editor Duration 1h → the block 5:15–6:15 PM and the task's schedule + estimate with it",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T15:15:00.000Z\",60],\"t\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T15:15:00.000Z\",60],\"due\":\"2026-10-23T14:30:00.000Z\"}"
+  },
+  {
+    "name": "d1-night …the editor's Block line reads it",
+    "ok": true,
+    "detail": "Block · Fri 5:15–6:15 PM"
+  },
+  {
+    "name": "d1-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2-day the popover's date chip says the block's start: Today · 5:15 PM; Duration 15m",
+    "ok": true,
+    "detail": "[\"Today · 5:15 PM\",\"15m\",\"Move to…\",\"Priority\",\"Repeat\",\"Remind\",\"Label\"]"
+  },
+  {
+    "name": "d2 Duration 45m → the block 5:15–6:00 PM, schedule and estimate in step",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T15:00:00.000Z\",45],\"t\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T15:00:00.000Z\",45],\"due\":\"2026-10-23T14:30:00.000Z\"}"
+  },
+  {
+    "name": "d2 …the chips read Today · 5:15 PM · 45m",
+    "ok": true,
+    "detail": "[\"Today · 5:15 PM\",\"45m\",\"Move to…\",\"Priority\",\"Repeat\",\"Remind\",\"Label\"]"
+  },
+  {
+    "name": "d2-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d2-night the popover's date chip says the block's start: Today · 5:15 PM; Duration 15m",
+    "ok": true,
+    "detail": "[\"Today · 5:15 PM\",\"15m\",\"Move to…\",\"Priority\",\"Repeat\",\"Remind\",\"Label\"]"
+  },
+  {
+    "name": "d2-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d3 \"Write the report\" dragged 2:00 → 4:00 PM: 30 minutes kept, schedule + estimate in step",
+    "ok": false,
+    "detail": "{\"b\":[\"2026-10-23T11:00:00.000Z\",\"2026-10-23T11:30:00.000Z\",30],\"t\":[\"2026-10-23T11:00:00.000Z\",\"2026-10-23T11:30:00.000Z\",30],\"due\":\"2026-10-23T11:00:00.000Z\"}"
+  },
+  {
+    "name": "d3 …its due time (it was the block's start) moved with it",
+    "ok": false,
+    "detail": "2026-10-23T11:00:00.000Z"
+  },
+  {
+    "name": "d3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4 bottom edge 2:30 → 3:15 PM: a 75-minute block, estimate 75",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T11:00:00.000Z\",\"2026-10-23T12:15:00.000Z\",75],\"t\":[\"2026-10-23T11:00:00.000Z\",\"2026-10-23T12:15:00.000Z\",75],\"due\":\"2026-10-23T11:00:00.000Z\"}"
+  },
+  {
+    "name": "d4 top edge 2:00 → 1:30 PM: 1:30–3:15 PM, estimate 105, and the due (its start) with it",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T10:30:00.000Z\",\"2026-10-23T12:15:00.000Z\",105],\"t\":[\"2026-10-23T10:30:00.000Z\",\"2026-10-23T12:15:00.000Z\",105],\"due\":\"2026-10-23T10:30:00.000Z\"}"
+  },
+  {
+    "name": "d4 \"Resized\" carries Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d4 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5 task block 30m → 5:15–5:45 PM, the estimate 30",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T14:45:00.000Z\",30],\"t\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T14:45:00.000Z\",30],\"due\":\"2026-10-23T14:30:00.000Z\"}"
+  },
+  {
+    "name": "d5-day the Gym slot's time row: 6:00 – 7:00 PM · 1h",
+    "ok": true,
+    "detail": "6:00 – 7:00 PM 1h ▸"
+  },
+  {
+    "name": "d5 the slot 1h30 → 6:00–7:30 PM; \"Stretch\" inside keeps its 20 minutes at the slot's new times",
+    "ok": true,
+    "detail": "[\"2026-10-23T15:00:00.000Z\",90,20,\"2026-10-23T16:30:00.000Z\"]"
+  },
+  {
+    "name": "d5 …its time row reads 6:00 – 7:30 PM · 1h30",
+    "ok": true,
+    "detail": "6:00 – 7:30 PM 1h30 ▸"
+  },
+  {
+    "name": "d5-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d5-night the Gym slot's time row: 6:00 – 7:00 PM · 1h",
+    "ok": true,
+    "detail": "6:00 – 7:00 PM 1h ▸"
+  },
+  {
+    "name": "d5-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d6 Next free slot → a 20-minute block; the task's schedule and estimate match it",
+    "ok": true,
+    "detail": "[\"2026-10-23T09:00:00.000Z\",20,\"2026-10-23T09:00:00.000Z\",20]"
+  },
+  {
+    "name": "d6 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d7 quick create 45m → the task \"Floss teeth\" (45) and its block 8:00–8:45 PM",
+    "ok": true,
+    "detail": "[45,[\"2026-10-23T17:00:00.000Z\",45]]"
+  },
+  {
+    "name": "d7 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d8 the Tasks row says 45m (its block), not the stale 30m",
+    "ok": true,
+    "detail": "Read the paper In progress Fri 3:00 PM 45m ☆"
+  },
+  {
+    "name": "d8 a task in a Time slot keeps its own 20m (not the slot's hour)",
+    "ok": true,
+    "detail": "Stretch In progress in Gym · 6:00 PM 20m ☆"
+  },
+  {
+    "name": "d8 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1-day the sheet's chips: Today · 5:15 PM (the block's start, not the 5:30 due) · 15m",
+    "ok": true,
+    "detail": "[\"Today · 5:15 PM\",\"15m\",\"Move to…\",\"Priority\",\"Repeat\",\"Remind\",\"Label\"]"
+  },
+  {
+    "name": "p1 Duration chip 1h → the block 5:15–6:15 PM, schedule and estimate in step",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T15:15:00.000Z\",60],\"t\":[\"2026-10-23T14:15:00.000Z\",\"2026-10-23T15:15:00.000Z\",60],\"due\":\"2026-10-23T14:30:00.000Z\"}"
+  },
+  {
+    "name": "p1 …the block card reads 5:15–6:15 PM · 1h and the chips Today · 5:15 PM · 1h",
+    "ok": true,
+    "detail": "Fri 23 · 5:15–6:15 PM · 1h | [\"Today · 5:15 PM\",\"1h\",\"Move to…\",\"Priority\",\"Repeat\",\"Remind\",\"Label\"]"
+  },
+  {
+    "name": "p1-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p1-night the sheet's chips: Today · 5:15 PM (the block's start, not the 5:30 due) · 15m",
+    "ok": true,
+    "detail": "[\"Today · 5:15 PM\",\"15m\",\"Move to…\",\"Priority\",\"Repeat\",\"Remind\",\"Label\"]"
+  },
+  {
+    "name": "p1-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p2 the sheet's length chip 45m → 2:00–2:45 PM, estimate 45",
+    "ok": true,
+    "detail": "{\"b\":[\"2026-10-23T11:00:00.000Z\",\"2026-10-23T11:45:00.000Z\",45],\"t\":[\"2026-10-23T11:00:00.000Z\",\"2026-10-23T11:45:00.000Z\",45],\"due\":\"2026-10-23T11:00:00.000Z\"}"
+  },
+  {
+    "name": "p2 …the Duration chip reads 45m",
+    "ok": true,
+    "detail": "[\"Today · 2:00 PM\",\"45m\",\"Move to…\",\"Priority\",\"Repeat\",\"Remind\",\"Label\"]"
+  },
+  {
+    "name": "p2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p3 the Gym slot's sheet 30m → 6:00–6:30 PM",
+    "ok": true,
+    "detail": "[\"2026-10-23T15:00:00.000Z\",30]"
+  },
+  {
+    "name": "p3 …and its sheet says 30m",
+    "ok": true,
+    "detail": "Time block · 30m — 15m 30m 45m 1h 1h30 2h Fri, Oct 23 6:00 – 6:30 PM 30m No project Does not repeat No reminder Link a task… More ✓ Saved Delete"
+  },
+  {
+    "name": "p3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day the tab bar's + is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c1-day a tap opens the capture sheet, its field focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day the capture landed with its toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-day the + again (toast still up): the field is open, its middle takes the tap, no toast over it",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"BUTTON.kf-bs-handle\",\"ok\"]"
+  },
+  {
+    "name": "c1-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night the tab bar's + is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c1-night a tap opens the capture sheet, its field focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night the capture landed with its toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1-night the + again (toast still up): the field is open, its middle takes the tap, no toast over it",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"BUTTON.kf-bs-handle\",\"ok\"]"
+  },
+  {
+    "name": "c1-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 100% open: Capture is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c2 100% open: a click opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 100% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 100% rail: Capture is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c2 100% rail: a click opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 100% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 125% open: Capture is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c2 125% open: a click opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 125% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 125% rail: Capture is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c2 125% rail: a click opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 125% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 150% open: Capture is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c2 150% open: a click opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 150% open: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 150% rail: Capture is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c2 150% rail: a click opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 150% rail: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 Today's add row is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c3 Today's add row opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 Ctrl+K opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 no page errors (Today)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 the Inbox's Capture is hit-clean",
+    "ok": true,
+    "detail": "[\"ok\",\"ok\",\"ok\",\"ok\",\"ok\"]"
+  },
+  {
+    "name": "c3 the Inbox's Capture opens the capture bar, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3 no page errors (Inbox)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-desktop-day the page waiting for review AND both captures are listed",
+    "ok": true,
+    "detail": "1 page · [\"buy printer ink Typed · today Task File \",\"Call the bank about the card Voice · tod\"]"
+  },
+  {
+    "name": "i1-desktop-day …the page first, then the captures",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-desktop-day no \"Inbox zero\" beside them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-desktop-day Waiting 3 (2 captures + 1 page) · the summary says both · the badge 3",
+    "ok": true,
+    "detail": "Waiting 3 Dismissed 0 | 2 to sort · 1 page to review · oldest is from today | badge 3"
+  },
+  {
+    "name": "i1-desktop-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-desktop-night the page waiting for review AND both captures are listed",
+    "ok": true,
+    "detail": "1 page · [\"buy printer ink Typed · today Task File \",\"Call the bank about the card Voice · tod\"]"
+  },
+  {
+    "name": "i1-desktop-night …the page first, then the captures",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-desktop-night no \"Inbox zero\" beside them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-desktop-night Waiting 3 (2 captures + 1 page) · the summary says both · the badge 3",
+    "ok": true,
+    "detail": "Waiting 3 Dismissed 0 | 2 to sort · 1 page to review · oldest is from today | badge 3"
+  },
+  {
+    "name": "i1-desktop-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-phone-day the page waiting for review AND both captures are listed",
+    "ok": true,
+    "detail": "1 page · [\"buy printer ink Typed · Task File\",\"Call the bank about the card Voice · Tas\"]"
+  },
+  {
+    "name": "i1-phone-day …the page first, then the captures",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-phone-day no \"Inbox zero\" beside them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-phone-day the Inbox tab's badge 3",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "i1-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-phone-night the page waiting for review AND both captures are listed",
+    "ok": true,
+    "detail": "1 page · [\"buy printer ink Typed · Task File\",\"Call the bank about the card Voice · Tas\"]"
+  },
+  {
+    "name": "i1-phone-night …the page first, then the captures",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-phone-night no \"Inbox zero\" beside them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i1-phone-night the Inbox tab's badge 3",
+    "ok": true,
+    "detail": "3"
+  },
+  {
+    "name": "i1-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i2 a page alone: its row, \"1 page to review\", Waiting 1, no Inbox zero",
+    "ok": true,
+    "detail": "1 page to review"
+  },
+  {
+    "name": "i2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i2 nothing waiting: Inbox zero",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i2 no page errors (zero)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "i3 two captures selected (\"2 selected\"), D dismisses both with one toast; the page's row stays",
+    "ok": true,
+    "detail": "2 selected File to… ▾ Snooze ▾ Dismiss ✕ | [\"a1000000-0000-4000-8000-000000000001\",\"a1000000-0000-4000-8000-000000000002\"]"
+  },
+  {
+    "name": "i3 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
