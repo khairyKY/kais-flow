@@ -522,6 +522,9 @@ function DesktopCalendar() {
   const listTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start && !inRail.has(t.id))
   const toPlan = buckets.overdue.length + buckets.today.length + inbox.length
   const [sections, setSections] = useState<Record<RailSection, boolean>>(readSections)
+  // cal-wave item 18: Lists stays once the person opened it from "Lists…" or picked a scope of their own.
+  const [listsShown, setListsShown] = useState(false)
+  const listsKept = listsShown || !(scope.kind === 'smart' && scope.id === 'week')
   function toggleSection(k: RailSection) {
     setSections((s) => {
       const next = { ...s, [k]: !s[k] }
@@ -1204,8 +1207,12 @@ function DesktopCalendar() {
         @container (max-width: 300px) { .cal-head-date { margin-left: 6px; } .cal-head-ctrls { gap: 4px; } .cal-head-ctrls .kf-button:not(.cal-head-nav) { padding-left: 8px; padding-right: 8px; } }
         /* cal-wave item 18: empty sections step aside (back while a block is dragged — they still take drops). */
         .cal-rail-sec[data-empty] { display: none; }
-        body:has(> #kf-cal-ghost) .cal-rail-sec[data-empty] { display: block; }
+        body:has(> #kf-cal-ghost) .cal-rail-sec[data-empty] { display: block; order: 1; } /* after the shown ones: nothing moves under the pointer */
         body:has(> #kf-cal-ghost) .cal-rail-none { display: none; }
+        .cal-rail-more { align-self: flex-start; margin: 2px 0 0; padding: 2px 0; border: none; background: none; font: inherit; font-size: var(--fs-meta-l); color: var(--ink-faint); cursor: pointer; }
+        .cal-rail-more:hover { color: var(--ink-body); }
+        .cal-rail-more:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+        body:has(> #kf-cal-ghost) .cal-rail-more { display: none; }
         .cal-rail-none { margin: 4px 0 0; font-size: var(--fs-body-s); color: var(--ink-faint); }
         .cal-row-at { font-family: var(--font-mono); font-size: var(--fs-mono-l); }
         /* cal-wave item 19: the Now card at the foot of the rail (the list scrolls behind it), or floating
@@ -1285,7 +1292,7 @@ function DesktopCalendar() {
                     <RailInboxCard key={item.id} item={item} onPlan={(x, y) => setPlan({ target: { kind: 'inbox', item }, x, y })} />
                   ))}
                 </RailSectionBox>
-                <RailSectionBox name="lists" label="Lists" count={listTasks.length} keep={!(scope.kind === 'smart' && scope.id === 'week')} folded={sections.lists} onToggle={toggleSection} empty="Nothing else here to block.">
+                <RailSectionBox name="lists" label="Lists" count={listTasks.length} keep={listsKept} folded={sections.lists} onToggle={toggleSection} empty="Nothing else here to block.">
                   <div style={{ display: 'flex', gap: 6 }}>
                     <Select
                       value={scope.kind}
@@ -1307,7 +1314,13 @@ function DesktopCalendar() {
                   ))}
                 </RailSectionBox>
                 {/* cal-wave item 18: every section empty — one calm line instead of four zeros. */}
-                {toPlan + scheduled.length + listTasks.length === 0 && scope.kind === 'smart' && scope.id === 'week' && <p className="cal-rail-none">Nothing to plan</p>}
+                {toPlan + scheduled.length + listTasks.length === 0 && !listsKept && <p className="cal-rail-none">Nothing to plan</p>}
+                {/* Lists with nothing in it steps aside too; its scope picker is one click away. */}
+                {listTasks.length === 0 && !listsKept && (
+                  <button type="button" className="cal-rail-more" onClick={() => { setListsShown(true); if (sections.lists) toggleSection('lists') }}>
+                    Lists…
+                  </button>
+                )}
               </>
             )}
           </div>
