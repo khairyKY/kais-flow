@@ -55,6 +55,7 @@ vi.mock('./queryClient', () => ({
   queryClient: {
     setQueryData: (key: unknown[], updater: unknown) => setQueryDataMock(key, updater),
     cancelQueries: vi.fn(),
+    invalidateQueries: vi.fn(),
     getQueryData: () => undefined,
     getQueryCache: () => ({ subscribe: vi.fn() }),
   },
@@ -126,13 +127,95 @@ describe('outbox', () => {
     expect(toastPushMock).toHaveBeenCalledTimes(1)
     // House rule (F5c): calm copy only — no raw server text, no table name, never "error".
     const toastMessage = (toastPushMock.mock.calls[0][0] as { message: string }).message
-    expect(toastMessage).toContain("couldn't be saved")
+    // sync-fix (2026-10-25): it names WHAT failed, and offers the two ways out.
+    expect(toastMessage).toBe("Couldn't save: task 'x'. Set aside so the rest sync on.")
     expect(toastMessage).not.toMatch(/permission denied|error|tasks/i)
-    // Parked, not retried forever, and kept for inspection rather than silently dropped.
+    const t = toastPushMock.mock.calls[0][0] as { action?: { label: string }; secondary?: { label: string } }
+    expect([t.action?.label, t.secondary?.label]).toEqual(['Try again', 'Discard'])
+    // Parked, not retried forever, and kept for inspection — with the server's code — rather than silently dropped.
     expect(store.get('kf-outbox')).toEqual([])
     expect(store.get('kf-outbox-dead')).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: 't-rejected', error: 'permission denied' })]),
+      expect.arrayContaining([expect.objectContaining({ id: 't-rejected', error: 'permission denied', code: '42501' })]),
     )
+  })
+
+  // sync-fix (2026-10-25), Kai's "One change couldn't be saved" on every create: placeTask writes the new
+  // block, then the task again (scheduled_start). The old dedupe moved the task to the back of the queue —
+  // behind its block — so the block went out first and the server refused it (23503, foreign key).
+  it('a row written again keeps its place ahead of the writes that depend on it', async () => {
+    const sent: string[] = []
+    upsertMock.mockImplementation(async (table: string, p: { id: string; v?: number }) => {
+      sent.push(`${table}:${p.id}${p.v ? `@${p.v}` : ''}`)
+      return { error: null }
+    })
+    const { writeRow, flushOutbox } = await import('./outbox')
+    writeRow('tasks', { id: 'T', v: 1 }) // the new task
+    writeRow('activity_log', { id: 'a1' })
+    writeRow('calendar_events', { id: 'B', task_id: 'T' }) // its block
+    writeRow('tasks', { id: 'T', v: 2 }) // the task again, now scheduled
+    await flushMicrotasks()
+    await flushOutbox()
+    expect(sent).toEqual(['tasks:T@1', 'activity_log:a1', 'calendar_events:B', 'tasks:T@2'])
+    expect(store.get('kf-outbox')).toEqual([])
+  })
+
+  it('still folds back-to-back writes of one row (activity rows between them do not count)', async () => {
+    upsertMock.mockResolvedValue({ error: new Error('offline') }) // keep items queued
+    const { writeRow } = await import('./outbox')
+    writeRow('tasks', { id: 'T', title: 'a' })
+    writeRow('activity_log', { id: 'a1' })
+    writeRow('tasks', { id: 'T', title: 'b' })
+    await flushMicrotasks()
+    const queue = store.get('kf-outbox') as { id: string; payload: { title?: string } }[]
+    expect(queue.map((e) => [e.id, e.payload.title])).toEqual([['a1', undefined], ['T', 'b']])
+  })
+
+  it('a newer write of the row in flight is sent after it, not dropped with it', async () => {
+    let release!: (v: { error: null }) => void
+    const sent: string[] = []
+    upsertMock.mockImplementationOnce((_t: string, p: { title: string }) => {
+      sent.push(p.title)
+      return new Promise((r) => (release = r))
+    })
+    upsertMock.mockImplementation(async (_t: string, p: { title: string }) => {
+      sent.push(p.title)
+      return { error: null }
+    })
+    const { writeRow, flushOutbox } = await import('./outbox')
+    writeRow('tasks', { id: 'T', title: 'first' }) // goes out and stalls
+    await flushMicrotasks()
+    writeRow('tasks', { id: 'T', title: 'second' }) // while the first is in flight
+    await flushMicrotasks()
+    release({ error: null })
+    await flushMicrotasks()
+    await flushOutbox()
+    expect(sent).toEqual(['first', 'second'])
+    expect(store.get('kf-outbox')).toEqual([])
+  })
+
+  it('Try again puts a parked write back and sends it; Discard just lets it go', async () => {
+    upsertMock.mockResolvedValueOnce({ error: { code: '23503', message: 'violates foreign key constraint' } })
+    upsertMock.mockResolvedValue({ error: null })
+    const { writeRow, flushOutbox, retryParked, discardParked } = await import('./outbox')
+    writeRow('calendar_events', { id: 'B', title: 'Gym', type: 'task' })
+    await flushMicrotasks()
+    await flushOutbox()
+    expect((toastPushMock.mock.calls[0][0] as { message: string }).message).toBe("Couldn't save: block 'Gym'. Set aside so the rest sync on.")
+    const [parked] = store.get('kf-outbox-dead') as { id: string; code: string }[]
+    expect(parked).toMatchObject({ id: 'B', code: '23503' })
+    await retryParked(parked as never)
+    expect(upsertMock).toHaveBeenLastCalledWith('calendar_events', expect.objectContaining({ id: 'B', title: 'Gym' }))
+    expect(store.get('kf-outbox-dead')).toEqual([])
+    expect(store.get('kf-outbox')).toEqual([])
+
+    upsertMock.mockResolvedValueOnce({ error: { code: '23514', message: 'check' } })
+    writeRow('tasks', { id: 'T', title: 'x' })
+    await flushMicrotasks()
+    await flushOutbox()
+    const calls = upsertMock.mock.calls.length
+    await discardParked((store.get('kf-outbox-dead') as never[])[0])
+    expect(store.get('kf-outbox-dead')).toEqual([])
+    expect(upsertMock.mock.calls.length).toBe(calls)
   })
 
   // The regression that wedged Kai's whole sync: one poison row blocked everything behind it.

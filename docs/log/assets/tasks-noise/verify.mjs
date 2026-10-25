@@ -534,7 +534,7 @@ for (const theme of ['day', 'night']) {
       await sleep(1200)
       const label = await sync(page)
       const toast = await page.locator('.kf-toast').allInnerTexts()
-      check(`${NN('sync')} ${V}: a refused write → "1 change not saved ⚠" + its toast`, label === W.parked && toast.some((t) => /couldn't be saved/.test(t)), JSON.stringify([label, toast]))
+      check(`${NN('sync')} ${V}: a refused write → "1 change not saved ⚠" + its toast`, label === W.parked && toast.some((t) => /couldn't save: task 'Renew the passport'/i.test(t)), JSON.stringify([label, toast]))
       if (view) await page.locator('.app-topbar-sync').click()
       else { // bottom B: the popover opens from the name menu's sync row
         await page.locator('.kf-side-me').click()
