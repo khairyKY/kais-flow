@@ -20,7 +20,7 @@
 [data-theme='night'] .kf-now-card { background: var(--paper-bone); border-color: var(--line-solid); }
 .kf-now-card:focus-visible, .kf-now-nx:focus-visible, .kf-now-quiet:focus-visible, .kf-now-row:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .kf-now-h { display: flex; align-items: center; gap: 7px; font-size: var(--fs-meta-l); font-weight: var(--fw-semibold); }
-.kf-now-lbl { padding: 0; border: none; background: none; font: inherit; color: inherit; cursor: pointer; }
+.kf-now-lbl { flex: none; white-space: nowrap; padding: 0; border: none; background: none; font: inherit; color: inherit; cursor: pointer; }
 .kf-now-lbl:focus-visible, .kf-now-join:focus-visible, .kf-now-chev-btn:focus-visible, .kf-now-act:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .kf-now-join { flex: none; margin-left: auto; display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: var(--radius-pill); border: 1px solid var(--line-control); background: var(--paper-parchment); font: inherit; font-size: var(--fs-meta); color: var(--acc-hydrangea-deep); cursor: pointer; }
 .kf-now-join + .kf-now-cd { margin-left: 4px; }

@@ -798,12 +798,12 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   }, [hour24])
   const slotLabelFormat = useMemo(() => (hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } as const : { hour: 'numeric', hour12: true } as const), [hour24])
   // cal-wave: the second clock beside each hour label — that hour on today's date in the user's zone, read
-  // on the other zone's clock (so a half-hour zone reads "1:30 PM"). FC hands the hour as a marker whose
-  // UTC fields are the user's wall clock (zonePlugin).
+  // on the other zone's clock (so a half-hour zone reads "1:30 PM"). FC hands the slot's time of day.
   const slotLabelContent = useMemo(() => {
     if (!secondZone) return undefined
-    return (arg: { date: Date; text: string }) => {
-      const hm = `${String(arg.date.getUTCHours()).padStart(2, '0')}:${String(arg.date.getUTCMinutes()).padStart(2, '0')}`
+    return (arg: { time?: { milliseconds: number }; text: string }) => {
+      const min = Math.round((arg.time?.milliseconds ?? 0) / 60_000)
+      const hm = `${String(Math.floor(min / 60) % 24).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
       const other = zoneTimeKey(new Date(zoneToIso(zoneDateKey(new Date(), zone), hm, zone)), secondZone)
       return (
         <>
@@ -1238,7 +1238,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     <div
       ref={wrapRef}
       data-tour="calendar"
-      className={[narrow && 'kf-cal-narrow', secondZone && 'kf-cal-2z'].filter(Boolean).join(' ') || undefined}
+      className={[narrow && 'kf-cal-narrow', secondZone && 'kf-cal-2z', expandRows && 'kf-cal-fit'].filter(Boolean).join(' ') || undefined}
       onContextMenu={handleGridContextMenu}
       onClick={handleCtrlClick}
       onMouseDown={(e) => { downAt.current = { x: e.clientX, y: e.clientY } }}

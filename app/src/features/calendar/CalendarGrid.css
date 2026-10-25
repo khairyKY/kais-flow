@@ -79,6 +79,8 @@
 .cal-day-header-past { opacity: 0.62; }
 .cal-day-daisy { height: calc(20px * var(--s)); flex: none; }
 .cal-day-header-today .cal-day-daisy { height: calc(22px * var(--s)); filter: var(--shadow-drop-sm); }
+/* cal-wave: a narrow column gives its header's room to the day's name and number. */
+.kf-cal-narrow .cal-day-daisy { display: none; }
 /* Bound Journal D5: the grid's own metadata (hour labels, the month's numbers and "+N more") reads the
    app's metadata size, --fs-meta, scaled with the grid. Block type stays at 04b's scale. The day name keeps
    11px: "Wed · Today" and its number share a Week column's one line. */
@@ -136,6 +138,9 @@
 /* 27px per 30-min slot -> 54px/hour, matching Calendar.dc.html 1a's hour-row rhythm.
    Punch 38: hour line rides --line-card per CALENDAR.md §1 (was --line-dashed). */
 .fc .fc-timegrid-slot { border-color: var(--line-card); height: calc(36px * var(--s)); }   /* Kai 2026-10-14 "too crammed": 72px an hour (was 54) */
+/* cal-wave "Hours fit the day": the rows start small and FullCalendar's expandRows stretches them to the
+   grid's height, so the day's hours fit the screen with no scroll (a long range keeps a readable floor). */
+.kf-cal-fit .fc .fc-timegrid-slot { height: calc(16px * var(--s)); }
 .fc .fc-timegrid-slot-minor { border-color: transparent; }
 .fc .fc-timegrid-divider { display: none; }
 
