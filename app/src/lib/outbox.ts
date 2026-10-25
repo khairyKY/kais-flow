@@ -60,8 +60,18 @@ async function setQueue(queue: OutboxEntry[]): Promise<void> {
 // whichever write loses (the flush's stale local snapshot overwrites a newer enqueue).
 let chain: Promise<void> = Promise.resolve()
 
+function serial<T>(step: () => Promise<T>): Promise<T> {
+  const result = chain.then(step)
+  // Keep the chain alive even if this step failed, so later ops aren't stuck behind a rejection.
+  chain = result.then(
+    () => undefined,
+    () => undefined,
+  )
+  return result
+}
+
 function withQueue<T>(fn: (queue: OutboxEntry[]) => { next: OutboxEntry[]; result: T }): Promise<T> {
-  const result = chain.then(async () => {
+  return serial(async () => {
     const queue = await getQueue()
     const { next, result } = fn(queue)
     // A peek hands the same array back: nothing to write (outbox-speed 2026-10-14).
@@ -71,20 +81,22 @@ function withQueue<T>(fn: (queue: OutboxEntry[]) => { next: OutboxEntry[]; resul
     if (typeof window !== 'undefined' && next !== queue) window.dispatchEvent(new Event('kf-outbox-change'))
     return result
   })
-  // Keep the chain alive even if this step failed, so later ops aren't stuck behind a rejection.
-  chain = result.then(
-    () => undefined,
-    () => undefined,
-  )
-  return result
 }
 
 function enqueue(entry: OutboxEntry): Promise<void> {
   return withQueue((queue) => {
-    // Idempotent: a newer write for the same row replaces the queued one (last full-row-write wins).
-    const filtered = queue.filter((e) => !(e.id === entry.id && e.table === entry.table))
-    filtered.push(entry)
-    return { next: filtered, result: undefined }
+    // queuedAt rises strictly, so (table, id, queuedAt) names one entry: the drain removes exactly
+    // the one it sent, never a newer write for the same row queued while it was in flight.
+    const last = queue.reduce((m, e) => Math.max(m, e.queuedAt), 0)
+    const next = { ...entry, queuedAt: Math.max(entry.queuedAt, last + 1) }
+    // Writes go out in the order they were made. A newer write for the same row replaces the queued
+    // one only while nothing but activity rows (nothing references those) sits behind it. It used to
+    // always move the row to the back — behind the writes that need it: a new task's block went out
+    // before the task, the server refused it (foreign key), and every create-with-a-time lost its
+    // block ("One change couldn't be saved", sync-fix 2026-10-25).
+    const i = queue.findLastIndex((e) => e.id === entry.id && e.table === entry.table)
+    const replace = i !== -1 && queue.slice(i + 1).every((e) => e.table === 'activity_log')
+    return { next: [...(replace ? queue.filter((_, j) => j !== i) : queue), next], result: undefined }
   })
 }
 
@@ -92,9 +104,11 @@ function peekQueue(): Promise<OutboxEntry[]> {
   return withQueue((queue) => ({ next: queue, result: queue }))
 }
 
-function removeEntry(id: string, table: string): Promise<void> {
+const sameEntry = (a: OutboxEntry) => (b: OutboxEntry) => b.id === a.id && b.table === a.table && b.queuedAt === a.queuedAt
+
+function removeEntry(sent: OutboxEntry): Promise<void> {
   return withQueue((queue) => ({
-    next: queue.filter((e) => !(e.id === id && e.table === table)),
+    next: queue.filter((e) => !sameEntry(sent)(e)),
     result: undefined,
   }))
 }
@@ -138,7 +152,7 @@ async function drain(): Promise<void> {
           ? await supabase.from(entry.table).delete().eq('id', entry.id)
           : await supabase.from(entry.table).upsert(entry.payload)
       if (error) throw error
-      await removeEntry(entry.id, entry.table)
+      await removeEntry(entry)
       toastedEntries.delete(`${entry.table}:${entry.id}`)
     } catch (err) {
       // A PostgrestError means the server actually responded and rejected the write —
@@ -152,22 +166,26 @@ async function drain(): Promise<void> {
       // entry (user_id: '') was enough to wedge the whole outbox: later writes never reached
       // the server, the optimistic cache made them look applied, and the next refetch reverted
       // them. Park the poison row so the queue keeps draining, and say so out loud.
-      const message = (err as { message?: string }).message || 'server rejected the write'
-      await removeEntry(entry.id, entry.table)
+      // The server's own words stay with the record (code, message, details, hint), so the next
+      // refusal says what it was without a debugger (sync-fix: it used to keep the message only).
+      const e = err as { code?: string; message?: string; details?: string | null; hint?: string | null }
+      const parked: DeadEntry = { ...entry, error: e.message || 'server rejected the write', code: e.code, details: e.details ?? null, hint: e.hint ?? null, failedAt: Date.now() }
+      await removeEntry(entry)
       try {
-        const dead = (await get<OutboxEntry[]>(DEAD_KEY)) ?? []
-        await set(DEAD_KEY, [...dead, { ...entry, error: message, failedAt: Date.now() }])
-        // The topbar's "not saved ⚠" (components/syncQueue.ts) reads the dead letters on this event.
-        window.dispatchEvent(new Event('kf-outbox-change'))
+        await editDead((dead) => [...dead, parked])
       } catch {
         /* storage full/unavailable — dropping it still beats wedging every later write */
       }
       const key = `${entry.table}:${entry.id}`
       if (!toastedEntries.has(key)) {
         toastedEntries.add(key)
-        // House rule: the word "error" (and raw server text / table names) never reaches the UI.
-        // The full diagnostic lives in the dead-letter record above.
-        useToastStore.getState().push({ message: "One change couldn't be saved — set aside so the rest sync on." })
+        // House rule: the word "error" (and raw server text / table names) never reaches the UI —
+        // the toast names the change in the app's words ("Couldn't save: block 'Gym'").
+        useToastStore.getState().push({
+          message: `Couldn't save: ${changeName(entry)}. Set aside so the rest sync on.`,
+          action: { label: 'Try again', run: () => void retryParked(parked) },
+          secondary: { label: 'Discard', run: () => void discardParked(parked) },
+        })
       }
       // continue — the next entry gets its turn instead of queueing behind a dead one
     }
@@ -179,7 +197,81 @@ async function drain(): Promise<void> {
  * nothing else is waiting: one capture reads as one change, and a lone activity row still counts. */
 export async function unsyncedChanges(): Promise<number> {
   const queue = await peekQueue()
-  return queue.filter((e) => e.table !== 'activity_log').length || queue.length
+  // A row can wait twice (an earlier write still owed before a newer one): it's one change.
+  const rows = (es: OutboxEntry[]) => new Set(es.map((e) => `${e.table}:${e.id}`)).size
+  return rows(queue.filter((e) => e.table !== 'activity_log')) || queue.length
+}
+
+// ── Parked writes: what they were, and the two ways out (the toast, the sync popover) ──
+
+/** Human names for every table the app writes through the outbox. Never the table name itself. */
+export const CHANGE_KIND: Record<string, string> = {
+  tasks: 'Task',
+  inbox_items: 'Inbox',
+  journal_entries: 'Journal',
+  calendar_events: 'Event',
+  routines: 'Routine',
+  routine_completions: 'Routine',
+  people: 'Person',
+  interactions: 'Person',
+  projects: 'Project',
+  areas: 'Area',
+  domains: 'Domain',
+  time_entries: 'Focus',
+  app_settings: 'Settings',
+  push_subscriptions: 'Settings',
+  resurfaced_log: 'Resurfaced',
+  books: 'Library',
+  notes: 'Library',
+  quotes: 'Library',
+  commentary: 'Library',
+  smart_lists: 'Smart list',
+  captures: 'Paper',
+  activity_log: 'History',
+}
+
+/** A change's title in one line ('' for a journal entry: its words stay out of the chrome). */
+export function changeLabel(e: OutboxEntry): string {
+  const p = e.payload as Record<string, unknown>
+  if (e.table === 'journal_entries') return ''
+  const v = p.title ?? p.raw_text ?? p.name ?? p.summary
+  return typeof v === 'string' ? v.replace(/\s+/g, ' ').trim() : ''
+}
+
+/** What a parked toast names: "task 'buy milk'", "block 'Gym'", "Time block 'Admin'", "settings". */
+export function changeName(e: OutboxEntry): string {
+  const type = (e.payload as { type?: unknown }).type
+  const noun = e.table === 'calendar_events' ? (type === 'task' ? 'block' : type === 'time_block' ? 'Time block' : 'event') : (CHANGE_KIND[e.table] ?? 'change').toLowerCase()
+  const label = changeLabel(e)
+  return label ? `${noun} '${label}'` : noun
+}
+
+/** On the queue's chain: a parked write leaving and the drain parking another can't clobber each other. */
+function editDead(fn: (dead: DeadEntry[]) => DeadEntry[]): Promise<void> {
+  return serial(async () => {
+    await set(DEAD_KEY, fn((await get<DeadEntry[]>(DEAD_KEY)) ?? []))
+    // The topbar's "not saved ⚠" (components/syncQueue.ts) and the blocks' ⚠ read the dead letters on this event.
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event('kf-outbox-change'))
+  })
+}
+
+/** Try again: the write goes back in the queue — as the row reads on this device now, when it's still
+ * cached (a later edit wins over the parked copy), else as it was. */
+export async function retryParked(parked: OutboxEntry): Promise<void> {
+  await editDead((dead) => dead.filter((d) => !sameEntry(parked)(d)))
+  toastedEntries.delete(`${parked.table}:${parked.id}`)
+  const cached = queryClient.getQueryData<unknown>([parked.table])
+  const live = (Array.isArray(cached) ? cached.find((r: { id?: string }) => r.id === parked.id) : (cached as { id?: string } | undefined)?.id === parked.id ? cached : undefined) as Record<string, unknown> | undefined
+  const payload = parked.op === 'upsert' && live ? networkPayload({ ...parked.payload, ...live }) : parked.payload
+  await enqueue({ id: parked.id, table: parked.table, op: parked.op, payload, queuedAt: Date.now(), ...(parked.uid ? { uid: parked.uid } : account ? { uid: account } : {}) })
+  await flushOutbox()
+}
+
+/** Discard: forget the parked write; the screen goes back to what the server has. */
+export async function discardParked(parked: OutboxEntry): Promise<void> {
+  await editDead((dead) => dead.filter((d) => !sameEntry(parked)(d)))
+  toastedEntries.delete(`${parked.table}:${parked.id}`)
+  void queryClient.invalidateQueries({ queryKey: [parked.table] })
 }
 
 /** Applies one queued write onto a cached value, mirroring writeRow's optimistic update. */
@@ -227,7 +319,8 @@ function networkPayload(row: Record<string, unknown>): Record<string, unknown> {
   return payload
 }
 
-type DeadEntry = OutboxEntry & { error?: string; failedAt?: number }
+/** A write the server refused, with what it said. */
+export type DeadEntry = OutboxEntry & { error?: string; code?: string; details?: string | null; hint?: string | null; failedAt?: number }
 let rescuing = false
 
 /** One-time rescue for the `user_id: ''` bug above: writes the server rejected ONLY because of

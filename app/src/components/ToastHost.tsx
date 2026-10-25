@@ -124,7 +124,7 @@ function ToastCard({ toast, older }: { toast: Toast; older: boolean }) {
     return () => clearTimeout(t)
   }, [leaving, dismiss, toast.id])
 
-  const actions = [toast.onUndo && { label: 'Undo', run: toast.onUndo }, toast.action].filter(
+  const actions = [toast.onUndo && { label: 'Undo', run: toast.onUndo }, toast.action, toast.secondary].filter(
     (a): a is { label: string; run: () => void } => !!a,
   )
 
