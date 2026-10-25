@@ -887,15 +887,18 @@ function DesktopCalendar() {
   const responsive = viewOpts.responsive && timeGridView
   const secondZone = viewOpts.secondZone && isZone(viewOpts.secondZone) ? viewOpts.secondZone : null
   const axisW = TIME_AXIS_W + (secondZone ? ZONE2_W : 0)
-  const railOpenGrid = shellWidth - RAIL_SPLIT_W - railWidth
-  // Narrower than GRID_MIN_W beside it, even a rail the person opened steps aside (the header and one day
-  // need that much); the tab still opens it, for this visit, at that width (`railForced`).
-  const railCramped = shellWidth > 0 && railOpenGrid < GRID_MIN_W
+  // The rail never takes the grid under GRID_MIN_W (the one-line header and a day): a wide rail gives way
+  // to the window; where even its narrowest wouldn't fit, it steps aside although the person opened it —
+  // the tab still opens it, for this visit, at that width (`railForced`).
+  const railMaxFit = shellWidth > 0 ? shellWidth - RAIL_SPLIT_W - GRID_MIN_W : RAIL_MAX
+  const railShownW = Math.max(RAIL_MIN, Math.min(railWidth, railMaxFit))
+  const railOpenGrid = shellWidth - RAIL_SPLIT_W - railShownW
+  const railCramped = shellWidth > 0 && railMaxFit < RAIL_MIN
   const railFolded = railPref === 'folded' || (railCramped && !railForced)
     ? true
     : railPref === 'open' || railForced
       ? false
-      : buckets.overdue.length === 0 && (responsive ? shellWidth > 0 && fitDays(railOpenGrid, RESPONSIVE_COL_W, 7, axisW) < 2 : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, hiddenWeekend.length)))
+      : buckets.overdue.length === 0 && (responsive ? shellWidth > 0 && fitDays(railOpenGrid, RESPONSIVE_COL_W, 7, axisW) < 2 : railYields(shellWidth, railShownW, visibleDayCount(viewKind, dayCount, hiddenWeekend.length)))
   const gridWidth = shellWidth > 0 ? (railFolded ? shellWidth - RAIL_TAB_W : railOpenGrid) : 0
   const shownDays = responsive ? fitDays(gridWidth, RESPONSIVE_COL_W, 7, axisW) : viewKind === 'ndays' ? fitDays(gridWidth, MIN_COL_W, dayCount, axisW) : dayCount
   const daysView = responsive || viewKind === 'ndays'
@@ -998,7 +1001,8 @@ function DesktopCalendar() {
     if (e.button !== 0) return // J-4a: a right-button drag used to resize the rail
     e.preventDefault()
     const startX = e.clientX
-    const startW = railWidth
+    const startW = railShownW
+    const maxW = Math.max(RAIL_MIN, Math.min(RAIL_MAX, railMaxFit))
     setRailDragging(true)
     // S3 (2026-10-22 audit: 40 moves took 26.7 s — two grid passes a move): while it moves, the width is
     // written on the rail itself, one write a frame (a variable on the shell restyled the whole page each
@@ -1007,7 +1011,7 @@ function DesktopCalendar() {
     let next = startW
     let raf = 0
     const onMove = (ev: PointerEvent) => {
-      next = Math.min(RAIL_MAX, Math.max(RAIL_MIN, startW + (ev.clientX - startX)))
+      next = Math.min(maxW, Math.max(RAIL_MIN, startW + (ev.clientX - startX)))
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => rail?.style.setProperty('width', `${next}px`))
     }
@@ -1223,7 +1227,7 @@ function DesktopCalendar() {
         .cal-tray-count { display: block; padding-top: 5px; font-size: var(--fs-meta); color: var(--ink-faint); }
       `}</style>
 
-      <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railWidth}px` } as React.CSSProperties}>
+      <div className="cal-shell" ref={shellRef} style={{ ['--cal-rail-w' as string]: `${railShownW}px` } as React.CSSProperties}>
         {railFolded && !planning && (
           <button
             type="button"
