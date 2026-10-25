@@ -21,7 +21,7 @@ vi.mock('../../lib/outbox', () => ({
 }))
 vi.mock('../../lib/activity', () => ({ logActivity: (type: string, _e: string, id: string, payload: unknown) => events.push({ type, id, payload }) }))
 vi.mock('../../lib/undo', () => ({ toastUndo: vi.fn(), toastAction: vi.fn() }))
-vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsForTask: vi.fn(), replanTaskBlocks: () => () => {} }))
+vi.mock('../calendar/api', () => ({ deleteEventsForTask: vi.fn(), restoreEventsForTask: vi.fn(), replanTaskBlocks: () => () => {}, lengthenTaskBlock: () => () => {} }))
 const api = await import('./api')
 
 beforeEach(() => {

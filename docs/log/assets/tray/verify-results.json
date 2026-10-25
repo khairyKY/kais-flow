@@ -1,0 +1,367 @@
+[
+  {
+    "name": "popover day: the date and Day N",
+    "ok": true,
+    "detail": "Sunday, 25 October Day 41"
+  },
+  {
+    "name": "popover day: the Now card — Up next · in 12m · المغرب · 6:15 PM – 6:40 PM, a ring in the event's colour",
+    "ok": true,
+    "detail": "Up next in 12m المغرب 6:15 PM 6:40 PM"
+  },
+  {
+    "name": "popover day: Top 3, goal first",
+    "ok": true,
+    "detail": "[\"Ship the calendar polish\",\"Call the tyre supplier\",\"Book the vet\"]"
+  },
+  {
+    "name": "popover day: the gold star on the goal only",
+    "ok": true,
+    "detail": "[true,false,false]"
+  },
+  {
+    "name": "popover day: the star is --acc-gold",
+    "ok": true,
+    "detail": "rgb(127, 100, 40) vs rgb(127, 100, 40)"
+  },
+  {
+    "name": "popover day: capture line, Start focus · 25:00, Open Kai's Flow + Settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popover day: the theme",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popover day: fits 340 × 480 (no scroll)",
+    "ok": true,
+    "detail": "480px: kf-tray-head 51, kf-tray-now 106, kf-tray-label 39, kf-tray-rows 121, kf-tray-capture 40, kf-tray-focus 62, kf-tray-foot 47, kf-toast-host 0"
+  },
+  {
+    "name": "popover day: no interface zoom here (index.html's isn't loaded)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popover day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popover night: the date and Day N",
+    "ok": true,
+    "detail": "Sunday, 25 October Day 41"
+  },
+  {
+    "name": "popover night: the Now card — Up next · in 12m · المغرب · 6:15 PM – 6:40 PM, a ring in the event's colour",
+    "ok": true,
+    "detail": "Up next in 12m المغرب 6:15 PM 6:40 PM"
+  },
+  {
+    "name": "popover night: Top 3, goal first",
+    "ok": true,
+    "detail": "[\"Ship the calendar polish\",\"Call the tyre supplier\",\"Book the vet\"]"
+  },
+  {
+    "name": "popover night: the gold star on the goal only",
+    "ok": true,
+    "detail": "[true,false,false]"
+  },
+  {
+    "name": "popover night: the star is --acc-gold",
+    "ok": true,
+    "detail": "rgb(228, 195, 107) vs rgb(228, 195, 107)"
+  },
+  {
+    "name": "popover night: capture line, Start focus · 25:00, Open Kai's Flow + Settings",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popover night: the theme",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popover night: fits 340 × 480 (no scroll)",
+    "ok": true,
+    "detail": "480px: kf-tray-head 51, kf-tray-now 106, kf-tray-label 39, kf-tray-rows 121, kf-tray-capture 40, kf-tray-focus 62, kf-tray-foot 47, kf-toast-host 0"
+  },
+  {
+    "name": "popover night: no interface zoom here (index.html's isn't loaded)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popover night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ongoing: Ongoing · 12m left, the bar 52% along",
+    "ok": true,
+    "detail": "Ongoing 12m left المغرب 6:15 PM 6:40 PM · 52%"
+  },
+  {
+    "name": "capture → an Inbox item (through the outbox)",
+    "ok": true,
+    "detail": "[{\"id\":\"84a84706-4a86-4e1d-aef4-487d22a175b5\",\"kind\":\"text\",\"raw_text\":\"buy milk\",\"transcript\":null,\"ai_parse\":null,\"con"
+  },
+  {
+    "name": "ticking a Top 3 row completes it (outbox write)",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000003\",\"title\":\"Book the vet\",\"user_id\":\"0"
+  },
+  {
+    "name": "Open → tray_open; Settings → tray_open /settings; Esc → tray_hide",
+    "ok": true,
+    "detail": "[\"tray_open {\\\"route\\\":null}\",\"tray_open {\\\"route\\\":\\\"/settings\\\"}\",\"tray_hide\"]"
+  },
+  {
+    "name": "actions: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Start focus (popover) starts the main timer on the goal: Focus · 18:42 left",
+    "ok": true,
+    "detail": "Focus · 18:42 left Ship the calendar polish"
+  },
+  {
+    "name": "running: Pause · Stop",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "running popover fits",
+    "ok": true,
+    "detail": "480px: kf-tray-head 51, kf-tray-now 72, kf-tray-label 39, kf-tray-rows 121, kf-tray-capture 40, kf-tray-focus 58, kf-tray-foot 47, kf-toast-host 0"
+  },
+  {
+    "name": "menu: Stop focus with the time left, in terra; status Focus · 18:4x left",
+    "ok": true,
+    "detail": "K Kai’s Flow Focus · 18:41 left Open Kai’s Flow Quick capture… Stop focus 18:41 Pause notifications ▸ Settings Quit Kai’s Flow"
+  },
+  {
+    "name": "Pause pauses the main timer (· paused, Resume)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Stop ends the round; Start focus is back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "main window → tray_menu: signed in, Next · المغرب · 6:15 PM",
+    "ok": true,
+    "detail": "{\"signedIn\":true,\"next\":{\"now\":false,\"title\":\"المغرب\",\"at\":\"6:15 PM\"},\"pausedUntil\":null}"
+  },
+  {
+    "name": "menu B Pause ▸ 1 hour → paused for an hour",
+    "ok": true,
+    "detail": "2026-10-25T16:09:21.893Z vs 2026-10-25T16:09:22.400Z · [\"2026-10-25T16:09:21.893Z\"]"
+  },
+  {
+    "name": "Resume → not paused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Until tomorrow → 09:00 tomorrow, Cairo",
+    "ok": true,
+    "detail": "2026-10-26T06:00:00.000Z"
+  },
+  {
+    "name": "an unknown pause choice writes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "focus: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "signed out day: \"Sign in in Kai’s Flow\" and the way to the app — not a sign-in form",
+    "ok": true,
+    "detail": "Sunday, 25 October K Sign in in Kai’s Flow Your day shows here once you’re signed in. Open Kai’s Flow"
+  },
+  {
+    "name": "signed out day: its button opens the main window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "signed out day: the menu is Open and Quit",
+    "ok": true,
+    "detail": "[\"Open Kai’s Flow\",\"Quit Kai’s Flow\"]"
+  },
+  {
+    "name": "signed out day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "signed out night: \"Sign in in Kai’s Flow\" and the way to the app — not a sign-in form",
+    "ok": true,
+    "detail": "Sunday, 25 October K Sign in in Kai’s Flow Your day shows here once you’re signed in. Open Kai’s Flow"
+  },
+  {
+    "name": "signed out night: its button opens the main window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "signed out night: the menu is Open and Quit",
+    "ok": true,
+    "detail": "[\"Open Kai’s Flow\",\"Quit Kai’s Flow\"]"
+  },
+  {
+    "name": "signed out night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "menu day: the drawn rows",
+    "ok": true,
+    "detail": "[\"Open Kai’s Flow\",\"Quick capture…\",\"Start focus 25:00\",\"Pause notifications ▸\",\"Settings\",\"Quit Kai’s Flow\"]"
+  },
+  {
+    "name": "menu day: the K, Kai's Flow, Next · المغرب · 6:15 PM",
+    "ok": true,
+    "detail": "K Kai’s Flow Next · المغرب · 6:15 PM"
+  },
+  {
+    "name": "menu day: tells tray.rs its height once drawn (tray_menu_ready)",
+    "ok": true,
+    "detail": "278 vs 278"
+  },
+  {
+    "name": "menu day: ↓ End Home ↓↓↓ move through the rows",
+    "ok": true,
+    "detail": "Open Kai’s Flow | Quit Kai’s Flow | Pause notifications▸"
+  },
+  {
+    "name": "menu day: → opens Pause: back, 30 minutes, 1 hour, Until tomorrow — the window keeps its height",
+    "ok": true,
+    "detail": "[\"Pause notifications\",\"30 minutes\",\"1 hour\",\"Until tomorrow\"]"
+  },
+  {
+    "name": "menu day: → lands on 30 minutes",
+    "ok": true,
+    "detail": "30 minutes"
+  },
+  {
+    "name": "menu day: Enter on 1 hour → tray_menu_pick pause:60",
+    "ok": true,
+    "detail": "[{\"cmd\":\"tray_menu_pick\",\"args\":{\"id\":\"pause:60\"}}]"
+  },
+  {
+    "name": "menu day: shown again → the main list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "menu day: Esc leaves Pause, then hides the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "menu day: a click picks (capture, quit)",
+    "ok": true,
+    "detail": "[\"pause:60\",\"capture\",\"quit\"]"
+  },
+  {
+    "name": "menu day: pushed state → Resume notifications until 7:03 PM, Now · Standup · until 11:30 AM",
+    "ok": true,
+    "detail": "Resume notifications until 7:03 PM · Now · Standup · until 11:30 AM"
+  },
+  {
+    "name": "menu day: signed out pushed → Open + Quit, and the smaller height goes to tray.rs",
+    "ok": true,
+    "detail": "133 < 278"
+  },
+  {
+    "name": "menu day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "menu night: the drawn rows",
+    "ok": true,
+    "detail": "[\"Open Kai’s Flow\",\"Quick capture…\",\"Start focus 25:00\",\"Pause notifications ▸\",\"Settings\",\"Quit Kai’s Flow\"]"
+  },
+  {
+    "name": "menu night: the K, Kai's Flow, Next · المغرب · 6:15 PM",
+    "ok": true,
+    "detail": "K Kai’s Flow Next · المغرب · 6:15 PM"
+  },
+  {
+    "name": "menu night: tells tray.rs its height once drawn (tray_menu_ready)",
+    "ok": true,
+    "detail": "278 vs 278"
+  },
+  {
+    "name": "menu night: ↓ End Home ↓↓↓ move through the rows",
+    "ok": true,
+    "detail": "Open Kai’s Flow | Quit Kai’s Flow | Pause notifications▸"
+  },
+  {
+    "name": "menu night: → opens Pause: back, 30 minutes, 1 hour, Until tomorrow — the window keeps its height",
+    "ok": true,
+    "detail": "[\"Pause notifications\",\"30 minutes\",\"1 hour\",\"Until tomorrow\"]"
+  },
+  {
+    "name": "menu night: → lands on 30 minutes",
+    "ok": true,
+    "detail": "30 minutes"
+  },
+  {
+    "name": "menu night: Enter on 1 hour → tray_menu_pick pause:60",
+    "ok": true,
+    "detail": "[{\"cmd\":\"tray_menu_pick\",\"args\":{\"id\":\"pause:60\"}}]"
+  },
+  {
+    "name": "menu night: shown again → the main list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "menu night: Esc leaves Pause, then hides the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "menu night: a click picks (capture, quit)",
+    "ok": true,
+    "detail": "[\"pause:60\",\"capture\",\"quit\"]"
+  },
+  {
+    "name": "menu night: pushed state → Resume notifications until 7:03 PM, Now · Standup · until 11:30 AM",
+    "ok": true,
+    "detail": "Resume notifications until 7:03 PM · Now · Standup · until 11:30 AM"
+  },
+  {
+    "name": "menu night: signed out pushed → Open + Quit, and the smaller height goes to tray.rs",
+    "ok": true,
+    "detail": "133 < 278"
+  },
+  {
+    "name": "menu night: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "menu window: no app shell, supabase, flyout or page code",
+    "ok": true,
+    "detail": "64 modules"
+  },
+  {
+    "name": "popover window: no app shell or other pages; the capture reader waits until it is used",
+    "ok": true,
+    "detail": "159 modules"
+  }
+]

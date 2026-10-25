@@ -1,0 +1,18 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kai's Flow</title>
+    <!-- The Windows tray's two windows (src-tauri/src/tray.rs): the flyout (tray.html) and the right-click
+         menu (tray.html?menu). Their own small entry, not the app's index.html: no router, no shell, no page
+         preloading, no interface zoom (the window is drawn at its own size, and Windows scales it). -->
+    <script>
+      try { document.documentElement.dataset.theme = localStorage.getItem('kf_theme') === 'night' ? 'night' : 'day' } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/features/tray/entry.tsx"></script>
+  </body>
+</html>

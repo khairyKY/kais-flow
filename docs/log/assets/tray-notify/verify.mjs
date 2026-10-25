@@ -148,10 +148,12 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 // ── 12b · the flyout, day, nothing running ──
 {
   const { ctx, state, errors, open } = await app({}, { tauri: true })
-  const page = await open('/tray', FLYOUT)
+  const page = await open('/tray.html', FLYOUT)
   const text = await page.locator('.kf-tray').innerText()
   check('12b date + Day N', /Saturday, 3 October/.test(text) && /DAY 84/i.test(text), text.split('\n').slice(0, 2).join(' | '))
-  check('12b Next · 09:00 Judge test Kai’s Flow, with a check', (await page.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ').includes('Next · 09:00 Judge test Kai’s Flow') && (await page.locator('.kf-tray-check').count()) === 1)
+  // Popover B (2026-10-25, docs/log/assets/tray): the Now card — "Up next · in Nm", the block's check, its times.
+  const nowText = (await page.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ')
+  check('12b Up next · Judge test Kai’s Flow, with a check', /^Up next in \d+m Judge test Kai’s Flow 9:00 AM/.test(nowText) && (await page.locator('.kf-tray-now [role="checkbox"]').count()) === 1, nowText)
   const rows = await page.locator('.kf-tray-row-title').allInnerTexts()
   check('12b Top 3 as three rows, goal first', JSON.stringify(rows) === JSON.stringify(['GCI homework 1 — NumPy', 'Do GCI lecture 2’s survey', 'Skim OS lectures 1 + 2']), JSON.stringify(rows))
   check('12b capture field + Start focus · 25:00 + footer', (await page.getByPlaceholder('Write it down…').count()) === 1 && (await page.locator('.kf-tray-btn.is-cta').innerText()).includes('Start focus · 25:00') && (await page.locator('.kf-tray-open').innerText()).includes('Open Kai’s Flow'))
@@ -183,7 +185,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 {
   const { ctx, errors, open } = await app({}, { theme: 'night', tauri: true })
   const main = await open('/today', DESKTOP)
-  const tray = await open('/tray', FLYOUT)
+  const tray = await open('/tray.html', FLYOUT)
   await tray.locator('.kf-tray-btn.is-cta').click()
   await sleep(300)
   const running = await main.evaluate(() => document.title !== undefined)

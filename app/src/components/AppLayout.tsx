@@ -6,6 +6,7 @@ import { PageFallback } from './PageFallback'
 import { useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
 import { syncHeader, syncLabel, syncRows, useSyncStatus, type SyncRow, type SyncView } from './syncQueue'
+import { discardParked, retryParked } from '../lib/outbox'
 import { useRealtimeSync } from '../lib/realtime'
 import { openCapture, useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
@@ -506,13 +507,29 @@ function SyncStatus({ side }: { side?: (sync: SideSync) => ReactNode }) {
     return () => document.removeEventListener('mousedown', onDown)
   }, [popOpen])
 
-  const rowList = (list: SyncRow[]) => (
+  // A not-saved row's two ways out (lib/outbox): it leaves the list either way.
+  const settle = (r: SyncRow, way: (e: SyncRow['entry']) => Promise<void>) => {
+    void way(r.entry)
+    setPop((p) => {
+      const left = p?.parked?.filter((x) => x.key !== r.key)
+      return left ? (left.length ? { ...p, parked: left } : null) : p
+    })
+  }
+  const rowAct = { font: 'inherit', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra-ink)', background: 'none', border: 'none', padding: '0 2px', cursor: 'pointer', flex: 'none' } as const
+  const rowList = (list: SyncRow[], parked = false) => (
     <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 180, overflowY: 'auto' }}>
       {list.map((r) => (
         <div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', flex: 'none' }}>{r.kind}</span>
           <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.text}</span>
-          <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
+          {parked ? (
+            <>
+              <button type="button" className="kf-hit" style={rowAct} onClick={() => settle(r, retryParked)}>Try again</button>
+              <button type="button" className="kf-hit" style={{ ...rowAct, color: 'var(--ink-muted)' }} onClick={() => settle(r, discardParked)}>Discard</button>
+            </>
+          ) : (
+            <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', flex: 'none' }}>{queueAgo(r.queuedAt)}</span>
+          )}
         </div>
       ))}
     </div>
@@ -558,8 +575,8 @@ function SyncStatus({ side }: { side?: (sync: SideSync) => ReactNode }) {
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra-ink)' }}>
                 Not saved ⚠ · {pop.parked.length} {pop.parked.length === 1 ? 'change' : 'changes'}
               </div>
-              {rowList(pop.parked)}
-              {hand('Set aside so everything else syncs on — make the change again to keep it')}
+              {rowList(pop.parked, true)}
+              {hand('Set aside so everything else syncs on — Try again, or Discard to let it go')}
             </>
           ) : n === 0 ? (
             <div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>

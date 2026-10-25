@@ -51,7 +51,13 @@ describe('syncRows', () => {
   it('journal rows never print the body', () => {
     const rows = syncRows([row('journal_entries', 'j1', { body: 'private words' }), act('journal.updated', 'j1')])
     expect(rows[0]).toEqual(expect.objectContaining({ kind: 'Journal', text: 'updated' }))
-    expect(JSON.stringify(rows)).not.toContain('private words')
+    // (`entry` is the raw write the not-saved list's Try again / Discard act on — never printed)
+    expect(JSON.stringify(rows.map(({ entry: _raw, ...shown }) => shown))).not.toContain('private words')
+  })
+
+  it('a row owed twice (an earlier write still queued before a newer one) is one change, the newest speaking', () => {
+    const rows = syncRows([row('tasks', 't1', { title: 'old' }), row('calendar_events', 'b1', { title: 'old' }), row('tasks', 't1', { title: 'new' })])
+    expect(rows.map((r) => [r.key, r.text])).toEqual([['tasks-t1', "'new' · saved"], ['calendar_events-b1', "'old' · saved"]])
   })
 
   it('when only activity rows wait (a ritual step), they are the changes — named, not raw', () => {

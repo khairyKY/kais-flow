@@ -26,6 +26,7 @@ import { useTaskDraft } from './useTaskDraft'
 import { subtasksOf } from './subtasks'
 import '../../components/pickers.css'
 import './taskSheet.css'
+import { taskMinutes, taskWhen } from '../../../../supabase/functions/_shared/blockLength.ts'
 
 // ── The task sheet (Wave N · Task Sheet.dc.html 4a–4n, SCREENS-2026-09-28-sheets §Task sheet): a phone
 // opens any task here, over the page it was on (AppLayout draws it for `?task=<id>`; features/tasks/
@@ -148,7 +149,9 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
   // In a Time slot (0073): the slot's own card, and the way out of it, in place of free times.
   const slot = !block && t.scheduled_start && t.scheduled_end ? slotTitleOf(t) : null
   const suggestion = block || done || slot ? null : suggestTimes(events, t.due_at, now, dur)
-  const meta = [place, t.duration_min ? durationLabel(t.duration_min) : null, t.due_at ? dueChip(t.due_at, now) : null].filter(Boolean).join(' · ')
+  const minutes = taskMinutes(t)
+  const when = taskWhen(t)
+  const meta = [place, minutes ? durationLabel(minutes) : null, when ? dueChip(when, now) : null].filter(Boolean).join(' · ')
 
   return (
     <BottomSheet

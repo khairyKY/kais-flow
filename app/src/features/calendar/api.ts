@@ -17,6 +17,7 @@ import { occurrenceId } from '../../../../supabase/functions/_shared/series.ts'
 import { isSynced, remindLabel, repeatLabel } from './blockMenuSpec'
 import { timeText } from './eventTime'
 import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
+import { spanMinutes, taskOnBlock, withLength } from '../../../../supabase/functions/_shared/blockLength.ts'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -57,14 +58,28 @@ function cachedTask(taskId: string): Task | undefined {
 }
 
 /** Every block write lands here. Kai 2026-10-07: a block moved or placed on today or later carries a
- * missed due date with it (replan.dueFollows), so a replanned task stops reading "Overdue". */
-function touchTaskSchedule(taskId: string, start: string | null, end: string | null): void {
+ * missed due date with it (replan.dueFollows), so a replanned task stops reading "Overdue". bugs-1023
+ * (Kai 2026-10-23): the task and its block are one thing — its estimate is the block's length and a due
+ * time that was the block's moves with it (_shared/blockLength taskOnBlock), however the block changed. */
+function touchTaskSchedule(taskId: string, start: string | null, end: string | null, allDay = false): void {
   const task = cachedTask(taskId)
   if (!task) return
   const follows = !!start && dueFollows(task.due_at, start, new Date())
+  const block = start && end ? taskOnBlock(task, start, end, allDay) : { scheduled_start: start, scheduled_end: end }
+  const due = follows ? start : (block.due_at ?? task.due_at)
   // A block of its own takes a task out of any Time slot (0073): it's here now, not there.
-  writeRow('tasks', { ...task, scheduled_start: start, scheduled_end: end, ...(task.slot_id ? { slot_id: null, slot_date: null } : null), ...(follows ? { due_at: start } : null) })
-  if (follows) logActivity('task.rescheduled', 'task', taskId, { due_at: start })
+  writeRow('tasks', { ...task, ...block, due_at: due, ...(task.slot_id ? { slot_id: null, slot_date: null } : null) })
+  if (due !== task.due_at) logActivity('task.rescheduled', 'task', taskId, { due_at: due })
+}
+
+/** The task's estimate changed (the Duration chip in the sheet, the popover, the editor): its block —
+ * the latest timed one — keeps its start and takes the new length. Returns the Undo (none: a no-op). */
+export function lengthenTaskBlock(taskId: string, minutes: number): () => void {
+  const block = liveBlocks(taskId)
+    .filter((e) => !e.all_day)
+    .sort((a, b) => Date.parse(b.starts_at) - Date.parse(a.starts_at))[0]
+  if (!block || spanMinutes(block.starts_at, block.ends_at) === minutes) return () => {}
+  return moveOrResizeEvent(block, block.starts_at, withLength(block.starts_at, minutes).ends_at)
 }
 
 // ── Time Slots (migration 0073, features/calendar/slots.ts): a Time block holds tasks. ──
@@ -263,13 +278,13 @@ function applyMoves(task: Task, moves: BlockMoves, allDay = false): { event: Cal
         updated_at: nowIso(),
       }
       writeEvent(created)
-      touchTaskSchedule(task.id, starts_at, ends_at)
+      touchTaskSchedule(task.id, starts_at, ends_at, allDay)
       event = created
       steps.push(() => deleteEvent(created))
     }
     logActivity('task.scheduled', 'task', task.id, { calendar_event_id: event.id })
   } else if (moves.keep) {
-    touchTaskSchedule(task.id, moves.keep.starts_at, moves.keep.ends_at) // a cleared sibling un-set it
+    touchTaskSchedule(task.id, moves.keep.starts_at, moves.keep.ends_at, moves.keep.all_day) // a cleared sibling un-set it
   }
   return {
     event,
@@ -331,7 +346,7 @@ export function updateEvent(event: CalendarEvent, patch: Partial<CalendarEvent>)
     const newStart = patch.starts_at ?? event.starts_at
     const newEnd = patch.ends_at ?? event.ends_at
     if (newStart !== event.starts_at || newEnd !== event.ends_at) {
-      touchTaskSchedule(event.task_id, newStart, newEnd)
+      touchTaskSchedule(event.task_id, newStart, newEnd, patch.all_day ?? event.all_day)
     }
   }
 }
@@ -343,7 +358,7 @@ export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt
   const prior = { ...event }
   const next = { ...event, starts_at: startsAt, ends_at: endsAt, all_day: allDay ?? event.all_day }
   writeEvent(next)
-  if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt)
+  if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt, next.all_day)
   const undoTasks = followSlot(event, next)
   return () => {
     moveOrResizeEvent(prior, prior.starts_at, prior.ends_at, prior.all_day)
@@ -362,33 +377,24 @@ export function restoreEvent(event: CalendarEvent): void {
     return
   }
   writeEvent({ ...event, deleted_at: null })
-  if (event.task_id) touchTaskSchedule(event.task_id, event.starts_at, event.ends_at)
+  if (event.task_id) touchTaskSchedule(event.task_id, event.starts_at, event.ends_at, event.all_day)
   logActivity('calendar_event.restored', 'calendar_event', event.id, {})
 }
 
 /** Resizing a task-linked block is the calendar's estimate editor: the new length writes back to
- * duration_min. An occurrence is resized on its own (detach). Returns the Undo. */
+ * duration_min (touchTaskSchedule; an all-day block's days never do, p7e A15). An occurrence is
+ * resized on its own (detach). Returns the Undo. */
 export function resizeEvent(event: CalendarEvent, startsAt: string, endsAt: string): () => void {
   if (event.seriesId) return detach(event, startsAt, endsAt, event.all_day)
   const prior = { ...event }
   const next = { ...event, starts_at: startsAt, ends_at: endsAt }
   writeEvent(next)
+  if (event.task_id) touchTaskSchedule(event.task_id, startsAt, endsAt, event.all_day)
   const undoTasks = followSlot(event, next)
-  const undo = () => {
+  return () => {
     resizeEvent(prior, prior.starts_at, prior.ends_at)
     undoTasks()
   }
-  if (!event.task_id) return undo
-  const tasks = queryClient.getQueryData<Task[]>(['tasks']) ?? []
-  const task = tasks.find((t) => t.id === event.task_id)
-  if (!task) return undo
-  const durationMin = Math.round((new Date(endsAt).getTime() - new Date(startsAt).getTime()) / 60000)
-  const patch: Partial<Task> = { scheduled_start: startsAt, scheduled_end: endsAt }
-  // p7e A15: an all-day block's length is days on the calendar, not the task's estimate — stretching it
-  // to three days wrote 4320 minutes into duration_min.
-  if (!event.all_day && durationMin !== task.duration_min) patch.duration_min = durationMin
-  writeRow('tasks', { ...task, ...patch })
-  return undo
 }
 
 /** A block moved or resized on the phone (a drop, a handle, a sheet's time): one write, one toast
@@ -534,7 +540,7 @@ export function linkTaskWithUndo(event: CalendarEvent, task: Task): void {
   const prior = { ...event }
   const priorTask = cachedTask(task.id) ?? task
   writeEvent({ ...event, task_id: task.id, type: 'task' })
-  touchTaskSchedule(task.id, event.starts_at, event.ends_at)
+  touchTaskSchedule(task.id, event.starts_at, event.ends_at, event.all_day)
   logActivity('task.scheduled', 'task', task.id, { calendar_event_id: event.id })
   toastUndo(`Linked · ${task.title}`, () => {
     writeEvent(prior)

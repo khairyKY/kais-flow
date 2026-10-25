@@ -1,25 +1,12 @@
-import { useEffect, useRef, useState } from 'react'
 import { useFocusStore } from '../focus/focusStore'
-import { beginFocus, type FocusableTask } from '../today/startFocus'
+import { beginFocus } from '../today/startFocus'
+import { FOCUS_CHANNEL, type FocusCommand, type FocusMessage, type FocusSnapshot } from './focusMirror'
 
-// The tray flyout is a second window on the same app; the one focus timer lives in the main window
-// (focusStore, driven by the shell's ticker). This channel mirrors it: the main window posts every
-// change and obeys commands, the flyout shows the mirror and sends commands. BroadcastChannel —
-// same-origin windows only, nothing leaves the device.
+// The tray's windows are second and third windows on the same app; the one focus timer lives in the main
+// window (focusStore, driven by the shell's ticker). This is the main window's side of the channel: it
+// posts every change and obeys commands. The tray windows' side is ./focusMirror.
 
-const NAME = 'kf-focus'
-
-export interface FocusSnapshot {
-  mode: 'pomodoro' | 'break' | 'stopwatch' | 'garden'
-  isRunning: boolean
-  secondsLeft: number
-  roundMin: number
-  taskId: string | null
-}
-
-export type FocusCommand = { type: 'start'; task: FocusableTask | null } | { type: 'toggle' } | { type: 'stop' }
-
-type Message = { kind: 'snapshot'; s: FocusSnapshot } | { kind: 'hello' } | { kind: 'command'; c: FocusCommand }
+export type { FocusCommand, FocusSnapshot } from './focusMirror'
 
 export function focusSnapshot(): FocusSnapshot {
   const s = useFocusStore.getState()
@@ -43,10 +30,10 @@ export function applyFocusCommand(c: FocusCommand): void {
 /** Main window: publish the timer, take commands. */
 export function serveFocus(): () => void {
   if (typeof BroadcastChannel === 'undefined') return () => {}
-  const ch = new BroadcastChannel(NAME)
-  const post = () => ch.postMessage({ kind: 'snapshot', s: focusSnapshot() } satisfies Message)
+  const ch = new BroadcastChannel(FOCUS_CHANNEL)
+  const post = () => ch.postMessage({ kind: 'snapshot', s: focusSnapshot() } satisfies FocusMessage)
   const unsubscribe = useFocusStore.subscribe(post)
-  ch.onmessage = (e: MessageEvent<Message>) => {
+  ch.onmessage = (e: MessageEvent<FocusMessage>) => {
     if (e.data.kind === 'hello') post()
     else if (e.data.kind === 'command') applyFocusCommand(e.data.c)
   }
@@ -54,28 +41,4 @@ export function serveFocus(): () => void {
     unsubscribe()
     ch.close()
   }
-}
-
-/** Flyout: the main window's timer, live (null until it answers), and a way to drive it. */
-export function useFocusMirror(): [FocusSnapshot | null, (c: FocusCommand) => void] {
-  const [snapshot, setSnapshot] = useState<FocusSnapshot | null>(null)
-  const ch = useRef<BroadcastChannel | null>(null)
-  useEffect(() => {
-    if (typeof BroadcastChannel === 'undefined') return
-    const c = new BroadcastChannel(NAME)
-    ch.current = c
-    c.onmessage = (e: MessageEvent<Message>) => {
-      if (e.data.kind === 'snapshot') setSnapshot(e.data.s)
-    }
-    const hello = () => c.postMessage({ kind: 'hello' } satisfies Message)
-    hello()
-    // The flyout is hidden and shown, not reloaded: ask again whenever it comes back.
-    window.addEventListener('focus', hello)
-    return () => {
-      window.removeEventListener('focus', hello)
-      c.close()
-      ch.current = null
-    }
-  }, [])
-  return [snapshot, (c) => ch.current?.postMessage({ kind: 'command', c } satisfies Message)]
 }

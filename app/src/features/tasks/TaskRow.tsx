@@ -20,6 +20,7 @@ import type { BulkActions } from './TaskMenu'
 import { useRowGrammar } from './useRowGrammar'
 import { SubtaskAddButton, SubtaskCount, SubtaskNest, useNestOpen } from './SubtaskNest'
 import type { Task } from '../../lib/types'
+import { taskMinutes } from '../../../../supabase/functions/_shared/blockLength.ts'
 
 export type { BulkActions } from './TaskMenu'
 
@@ -337,7 +338,7 @@ export function TaskRow({
               {held ?? `${dayShort(cairoDateKey(new Date(task.scheduled_start))).slice(0, 3)} ${timeText(new Date(task.scheduled_start))}`}
             </span>
           )}
-          {task.duration_min != null && <span>{formatDuration(task.duration_min)}</span>}
+          {taskMinutes(task) != null && <span>{formatDuration(taskMinutes(task)!)}</span>}
           {priorityFlag(task.priority) && (
             <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, color: priorityColor(task.priority) ?? 'var(--acc-terra)' }}>
               <PriorityFlag color={priorityColor(task.priority) ?? 'var(--acc-terra)'} />

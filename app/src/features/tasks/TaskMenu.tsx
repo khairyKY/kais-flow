@@ -22,6 +22,7 @@ import { useStartFocus } from '../today/startFocus'
 import { putInSlotWithUndo, useCalendarRows } from '../calendar/api'
 import { inSlot, upcomingSlots } from '../calendar/slots'
 import { slotChip } from './taskSheetMath'
+import { taskMinutes } from '../../../../supabase/functions/_shared/blockLength.ts'
 
 // ── The ⋯ menu of every task row (MK Action Sheet): phone = ActionSheet (+ a second sheet for the
 // pickers), desktop = the ContextMenu with submenus. One list (./taskMenuSpec); the writes come in
@@ -222,7 +223,8 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   }
 
   if (isMobile) {
-    const meta = [ctx.projectName, task.duration_min != null ? formatDuration(task.duration_min) : null].filter(Boolean).join(' · ')
+    const minutes = taskMinutes(task)
+    const meta = [ctx.projectName, minutes != null ? formatDuration(minutes) : null].filter(Boolean).join(' · ')
     return (
       // Keyed: a picker chosen from this sheet mounts a fresh sheet instead of inheriting this one's exit.
       <ActionSheet

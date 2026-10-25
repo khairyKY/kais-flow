@@ -1,5 +1,19 @@
 [
   {
+    "v": "v1.4.2",
+    "date": "2026-10-25",
+    "title": "Every change saves",
+    "highlights": [
+      "Fixed: giving a task a time could leave its calendar block (and its subtasks) unsaved, with a “couldn't be saved” notice; changes now go out in the order you made them",
+      "If something ever can't be saved, the notice says what it was, with Try again and Discard"
+    ],
+    "icons": [
+      "sync",
+      "check"
+    ],
+    "art": "clover-four_leaf"
+  },
+  {
     "v": "v1.4.1",
     "date": "2026-10-23",
     "title": "Calendar blocks, redrawn",
