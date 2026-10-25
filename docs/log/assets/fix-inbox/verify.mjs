@@ -255,7 +255,8 @@ if (want('d3')) {
   const w0 = state.writes.length
   await menu.getByRole('menuitem', { name: /Health/ }).click()
   await settle(state)
-  const tasks = posts(state, 'tasks', w0)
+  // Per task (its last write): a timed filing writes the task again as its block lands (bugs-1023 blockLength keeps duration, schedule and block in step).
+  const tasks = [...new Map(posts(state, 'tasks', w0).map((t) => [t.id, t])).values()]
   check('d3 two tasks in the Health AREA (no project)', tasks.length === 2 && tasks.every((t) => t.area_id === A1 && t.project_id === null), JSON.stringify(tasks.map((t) => [t.title, t.area_id])))
   check('d3 card 1 files under the AI\'s short title and its date', tasks.some((t) => t.title === 'Call Omar about pricing' && t.due_at === iso('15:00', 17)))
   check('d3 one toast "2 captures filed"', await toastSoon(page, '2 captures filed'))

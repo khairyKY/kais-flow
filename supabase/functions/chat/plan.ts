@@ -22,8 +22,8 @@ export const WRITE_TOOLS = [
   'add_task', 'edit_task', 'reschedule_task', 'complete_task', 'move_to_tomorrow', 'snooze_task',
   'add_event', 'edit_event', 'delete_event', 'add_to_inbox', 'file_inbox_item', 'move_to_trash',
 ] as const
-/** …plus the ones an Undo runs. */
-export const RUNNABLE: ReadonlySet<string> = new Set<string>([...WRITE_TOOLS, 'reopen_task', 'restore_from_trash'])
+/** What a confirmed card may run. (Its Undo isn't a tool call: the app writes the rows back, restorePlan.) */
+export const RUNNABLE: ReadonlySet<string> = new Set<string>(WRITE_TOOLS)
 /** The most steps one card holds. */
 export const MAX_STEPS = 20
 
@@ -127,25 +127,31 @@ export function stepToCall(step: Record<string, unknown>, refs: Refs, now: Date,
   return { tool: name, args }
 }
 
-/** The call that takes a confirmed one back, when the app has one: an add goes to Trash, a finished
- * task reopens, a trashed thing comes back. Edits and moves have none (say so; ask to change it back). */
-export function undoFor(call: Call, output: Record<string, unknown>): Call | null {
-  const made = (k: string) => (output[k] as { id?: string } | undefined)?.id
-  switch (call.tool) {
-    case 'add_task':
-      return made('added') ? { tool: 'move_to_trash', args: { type: 'task', id: made('added') } } : null
-    case 'add_event':
-      return made('added') ? { tool: 'delete_event', args: { id: made('added') } } : null
-    case 'add_to_inbox':
-      return made('added_to_inbox') ? { tool: 'move_to_trash', args: { type: 'inbox_item', id: made('added_to_inbox') } } : null
-    case 'complete_task':
-      return typeof call.args.id === 'string' ? { tool: 'reopen_task', args: { id: call.args.id } } : null
-    case 'move_to_trash':
-      return typeof call.args.id === 'string' ? { tool: 'restore_from_trash', args: { type: call.args.type, id: call.args.id } } : null
-    case 'delete_event':
-      return typeof call.args.id === 'string' && !call.args.occurrence ? { tool: 'restore_from_trash', args: { type: 'calendar_event', id: call.args.id } } : null
+/** The tables a confirmed batch can change — what its Undo puts back (Kai 2026-10-25: "add the undo
+ * bit" — edits, moves, unschedules, status and project changes too, not only adds). In write order:
+ * a task before its blocks. */
+export const UNDO_TABLES = ['tasks', 'calendar_events', 'inbox_items', 'notes'] as const
+
+/** Rows by table → id → the row as stored (minus the owner and search columns). */
+export type Snapshot = Record<string, Map<string, Record<string, unknown>>>
+
+/** One Undo for a whole batch: every row it changed or removed, exactly as it was (`put`), and every
+ * row it made (`drop`, children first). The app writes them through its outbox. */
+export interface Restore {
+  put: { table: string; row: Record<string, unknown> }[]
+  drop: { table: string; id: string }[]
+}
+
+/** The batch's Undo, from the rows before and after it: no tool call needed, nothing guessed. */
+export function restorePlan(before: Snapshot, after: Snapshot): Restore {
+  const out: Restore = { put: [], drop: [] }
+  for (const table of UNDO_TABLES) {
+    const was = before[table] ?? new Map()
+    const now = after[table] ?? new Map()
+    for (const [id, row] of was) if (JSON.stringify(now.get(id)) !== JSON.stringify(row)) out.put.push({ table, row })
+    for (const id of now.keys()) if (!was.has(id)) out.drop.unshift({ table, id })
   }
-  return null
+  return out
 }
 
 /** A request to change something (not a question): retrieval hits and the app guide stay out of its

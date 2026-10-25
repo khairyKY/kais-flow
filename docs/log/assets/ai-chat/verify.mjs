@@ -5,16 +5,19 @@
 //
 // The `chat` function is mocked at the network layer AS THE SERVER BEHAVES: a scripted model makes its
 // tool-call rounds (a read, then `propose`), the steps go through the REAL supabase/functions/chat/plan.ts
-// (stepToCall → the real date reader, undoFor), the dry run answers as the MCP tools do, and `{ run }`
+// (stepToCall → the real date reader; restorePlan → the batch's one Undo), the dry run answers as the MCP tools do, and `{ run }`
 // writes the rows into this mock's tables and answers each tool's result.
 //   G — Kai's gym request → a card with the right days, in his order, nothing written → Confirm → 3 event
 //       writes at the right instants → the honest summary, its Undo; no raw pipes, no stray chips.
+//   U — Undo for edits and moves too: one Undo puts the whole confirmed batch back, row for row, via the outbox.
 //   F — a failed tool → an honest "1 of 2 done" naming the refusal; a plan the tools refused → said, no card.
 //   M — a question's markdown table renders as a table.
 //   A — "File captures for me": off by default (the one notice, a confident capture waits in the Inbox with
-//       its suggestion), switched on in Settings (it files itself).
+//       its suggestion; a ⌘K line with a date and #project waits too, filed in one tap; Today's "Add a
+//       task…" row still adds at once), switched on in Settings (it files itself).
 //   P — the project chip: "→ Forecasting App?" applies in one tap; "Assign" puts it there with Undo.
-//   node verify.mjs <outDir> [baseUrl] [playwright-core path]     (ONLY=g,f,m,a,p to pick)
+//   R — a capture filed by hand while the AI's read of it is out is filed ONCE (no second task).
+//   node verify.mjs <outDir> [baseUrl] [playwright-core path]     (ONLY=g,u,f,m,a,r,p to pick)
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
@@ -27,7 +30,7 @@ const want = (k) => !ONLY || ONLY.has(k)
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 const { chromium } = await import(pathToFileURL(PW).href)
 // The chat function's own planning code, run here as the server runs it.
-const { stepToCall, undoFor } = await import(pathToFileURL(path.join(ROOT, 'supabase/functions/chat/plan.ts')).href)
+const { stepToCall, restorePlan, UNDO_TABLES } = await import(pathToFileURL(path.join(ROOT, 'supabase/functions/chat/plan.ts')).href)
 fs.mkdirSync(OUT, { recursive: true })
 const results = []
 const check = (name, ok, detail = '') => {
@@ -102,6 +105,10 @@ const SCRIPT = [
     when: (q) => q.startsWith('Move the dentist'),
     rounds: [{ tool: 'propose', args: { steps: [{ do: 'reschedule_task', id: 't1', when: 'Fri 4pm' }, { do: 'add_event', title: 'Swim', when: 'Thu 6pm' }] } }],
   },
+  {
+    when: (q) => q.startsWith('Push the dentist'),
+    rounds: [{ tool: 'propose', args: { steps: [{ do: 'reschedule_task', id: 't1', when: 'Fri 4pm' }, { do: 'edit_task', id: 't1', project_id: P_FC }, { do: 'add_event', title: 'Swim', when: 'Thu 6pm' }] } }],
+  },
   // The tools refuse the plan twice: the server says so in words, and draws no card.
   { when: (q) => q.startsWith('Add a meeting'), refused: 'I couldn\'t set that up: step 1 (add_event): "end" must be after "start".' },
   { when: (q) => q.startsWith("What's on"), text: 'This week:\n\n| Day | What |\n|---|---|\n| Mon | Gym · HC, 7:00 AM |\n| Mon | **Dentist**, 4:00 PM |\n\nWant me to add anything?' },
@@ -119,9 +126,16 @@ function toolAnswer(state, call, write) {
     return { ok: true, output: { added: { id, title: call.args.title, start: wallOf(start), end: wallOf(end) }, timezone: ZONE } }
   }
   if (call.tool === 'reschedule_task') {
-    // The dentist was deleted on another device between the plan and the OK: the tool refuses.
-    if (write) return { ok: false, error: `No task with id ${call.args.id} (it may have been deleted). Use list_tasks or search to find it.` }
+    // F: the dentist was deleted on another device between the plan and the OK — the tool refuses.
+    if (write && state.dentistGone) return { ok: false, error: `No task with id ${call.args.id} (it may have been deleted). Use list_tasks or search to find it.` }
+    const t = rows.tasks.find((x) => x.id === call.args.id)
+    if (write) Object.assign(t, { due_at: wallIso(call.args.when), updated_at: iso('12:05') })
     return { ok: true, output: { rescheduled: { id: call.args.id, title: 'Dentist', due: call.args.when.replace('T', ' ') }, changed: ['due'], timezone: ZONE } }
+  }
+  if (call.tool === 'edit_task') {
+    const t = rows.tasks.find((x) => x.id === call.args.id)
+    if (write) Object.assign(t, { project_id: call.args.project_id, updated_at: iso('12:05') })
+    return { ok: true, output: { edited: { id: t.id, title: t.title }, changed: ['project → Forecasting App'], timezone: ZONE } }
   }
   if (call.tool === 'delete_event') {
     const e = rows.calendar_events.find((x) => x.id === call.args.id)
@@ -134,11 +148,11 @@ function toolAnswer(state, call, write) {
 function chatMock(state, body) {
   if (Array.isArray(body.run)) {
     state.runs.push(body.run)
-    const out = body.run.map((call) => {
-      const a = toolAnswer(state, call, true)
-      return { ...call, ...a, undo: a.ok ? undoFor(call, a.output) : null }
-    })
-    return { json: { results: out } }
+    // As the server does: the rows before and after the batch give its one Undo (the real restorePlan).
+    const snap = () => Object.fromEntries(UNDO_TABLES.map((tb) => [tb, new Map((state.rows[tb] ?? []).map((r) => [r.id, structuredClone(r)]))]))
+    const before = snap()
+    const out = body.run.map((call) => ({ ...call, ...toolAnswer(state, call, true) }))
+    return { json: { results: out, restore: restorePlan(before, snap()) } }
   }
   const q = body.messages.at(-1).content
   const s = SCRIPT.find((x) => x.when(q))
@@ -155,16 +169,18 @@ function chatMock(state, body) {
   }
 }
 
+// The AI read for the two captures A is about; anything else is over today's allowance (429), so a
+// typed task's read stays out of the way (the project chip, Today's add row).
 const parseFor = (raw) =>
-  /forecast/i.test(raw)
-    ? null // the typed task's AI read stays out of the project chip's way: over today's allowance
-    : { kind: 'task', cleaned_text: raw, title: /landlord/.test(raw) ? 'Email the landlord about the boiler' : 'Call mum about Sunday', priority: 1, confidence: 0.95 }
+  /mum|landlord|renew hosting/i.test(raw)
+    ? { kind: 'task', cleaned_text: raw, title: /landlord/.test(raw) ? 'Email the landlord about the boiler' : /renew/.test(raw) ? 'Renew hosting' : 'Call mum about Sunday', priority: 1, confidence: 0.95 }
+    : null
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
 const DESKTOP = { viewport: { width: 1280, height: 800 } }
 const PHONE = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true }
 
-async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/today' } = {}) {
+async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/today', inbox = [], waitUntil = 'networkidle' } = {}) {
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: ZONE, locale: 'en-US' })
   await ctx.addInitScript(([t, sess, uid]) => {
     localStorage.setItem('kf_theme', t)
@@ -174,6 +190,7 @@ async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/to
     localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['tour', 'hint:swipe', 'hint:calendar', 'hint:inbox']))
   }, [theme, JSON.stringify(session), UID])
   const state = { rows: tables(settings), writes: [], fn: [], runs: [], rounds: [], gets: [] }
+  state.rows.inbox_items.push(...inbox)
   let seq = 0
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -191,11 +208,22 @@ async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/to
       const body = JSON.parse(req.postData() ?? '{}')
       state.fn.push({ name: 'parse-capture', body })
       const p = parseFor(body.raw_text ?? '')
+      if (/renew hosting/.test(body.raw_text ?? '')) await sleep(8000) // R: the read is still out while it's filed by hand
       return p ? r.fulfill({ json: p, headers: cors }) : r.fulfill({ status: 429, json: { error: 'daily_limit' }, headers: cors })
     }
     if (url.pathname.startsWith('/functions/v1/')) {
       state.fn.push({ name: url.pathname.slice(14) })
       return r.fulfill({ json: {}, headers: cors })
+    }
+    // A PATCH by query (processQueuedCaptures' server claim: id + still pending): the rows it matched, as written.
+    if (req.method() === 'PATCH' && url.searchParams.get('id')) {
+      const id = url.searchParams.get('id').replace(/^eq\./, '')
+      const status = url.searchParams.get('status')?.replace(/^eq\./, '')
+      const patch = JSON.parse(req.postData() ?? '{}')
+      const hit = (state.rows[table] ?? []).filter((x) => x.id === id && (!status || x.status === status))
+      for (const x of hit) Object.assign(x, patch)
+      state.writes.push({ table, row: { id, ...patch }, method: 'PATCH' })
+      return r.fulfill({ status: 200, json: hit.map((x) => ({ id: x.id })) })
     }
     if (req.method() === 'POST' || req.method() === 'PATCH') {
       let body = []
@@ -213,7 +241,9 @@ async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/to
       return r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
     }
     if (req.method() === 'DELETE') {
-      state.writes.push({ table, row: { deleted: url.search } })
+      state.writes.push({ table, row: { deleted: url.search }, method: 'DELETE' })
+      const gone = /id=eq\.([0-9a-f-]+)/.exec(decodeURIComponent(url.search))?.[1]
+      if (gone && state.rows[table]) state.rows[table] = state.rows[table].filter((r) => r.id !== gone)
       return r.fulfill({ status: 204, body: '' })
     }
     if (req.method() !== 'GET' && req.method() !== 'HEAD') return r.fulfill({ status: 201, contentType: 'application/json', body: '[]' })
@@ -229,7 +259,7 @@ async function open({ theme = 'day', view = DESKTOP, settings = {}, route = '/to
   page.on('pageerror', (e) => errors.push(e.message))
   // The 429 is this mock's own: the typed task's AI read is over today's allowance on purpose (parseFor).
   page.on('console', (m) => m.type() === 'error' && !m.text().startsWith("WebSocket connection to 'ws://127.0.0.1:9/") && !m.text().includes('status of 429') && errors.push(`console: ${m.text()}`))
-  await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${route}`, { waitUntil })
   await sleep(900)
   return { ctx, page, errors, state }
 }
@@ -309,19 +339,20 @@ if (want('g')) {
     const kept = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? '[]').at(-1)?.content ?? '', `kf.chat.${UID}`)
     check('g what the model reads back next time: what the app really did', kept.startsWith('The user confirmed. What the app did:') && kept.includes('Added event · Mon 26 Oct'), kept.slice(0, 80))
     await shot(page, 'g2-day-done')
+    const made = ev.map((e) => e.id)
     await card(page).getByRole('button', { name: 'Undo' }).click()
-    check('g Undo sends the three events to Trash (delete_event × 3)', await until(() => state.runs.length === 2 && state.runs[1].every((c) => c.tool === 'delete_event') && ev.every((e) => e.deleted_at)), JSON.stringify(state.runs.at(-1)))
-    check('g …and the card says so', await until(async () => (await cardText(page)).includes('Undone.')), await cardText(page))
+    check('g Undo removes the three events it made, through the outbox (no second run)', await until(() => made.every((id) => !state.rows.calendar_events.some((e) => e.id === id))) && state.runs.length === 1, JSON.stringify(state.rows.calendar_events.map((e) => e.title)))
+    check('g …and the card shows the batch undone', await until(async () => (await cardText(page)).startsWith('Undone — back as it was')), await cardText(page))
     // Cancel and Edit on a fresh plan: nothing runs.
     await ask(page, GYM_ASK)
     await until(async () => (await card(page).locator('button', { hasText: 'Cancel' }).count()) === 1)
     await card(page).getByRole('button', { name: 'Cancel' }).click()
-    check('g Cancel: nothing runs, "Cancelled — nothing changed."', state.runs.length === 2 && (await cardText(page)).includes('Cancelled — nothing changed.'), await cardText(page))
+    check('g Cancel: nothing runs, "Cancelled — nothing changed."', state.runs.length === 1 && (await cardText(page)).includes('Cancelled — nothing changed.'), await cardText(page))
     await ask(page, GYM_ASK)
     await until(async () => (await card(page).locator('button', { hasText: 'Edit' }).count()) === 1)
     await card(page).getByRole('button', { name: 'Edit' }).click()
     const ph = await drawer(page).locator('form input').getAttribute('placeholder')
-    check('g Edit: not done, the field asks what should change', state.runs.length === 2 && ph === 'What should change?' && (await cardText(page)).includes('Not done — tell me what to change.'), ph)
+    check('g Edit: not done, the field asks what should change', state.runs.length === 1 && ph === 'What should change?' && (await cardText(page)).includes('Not done — tell me what to change.'), ph)
     check('g no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))
     await ctx.close()
   }
@@ -336,9 +367,36 @@ if (want('g')) {
   await ctx.close()
 }
 
+// ── U: one Undo for the whole batch — an edit and a move too ──
+if (want('u')) {
+  const { ctx, page, errors, state } = await open()
+  const dentistBefore = structuredClone(state.rows.tasks.find((x) => x.id === DENTIST))
+  await openChat(page)
+  await ask(page, 'Push the dentist to Friday 4pm, file it under Forecasting, and add a swim Thursday 6pm')
+  await until(async () => (await card(page).count()) === 1)
+  await card(page).getByRole('button', { name: 'Confirm' }).click()
+  const moved = await until(() => state.rows.tasks.find((x) => x.id === DENTIST)?.project_id === P_FC)
+  check('u the batch ran: the dentist moved to Fri 16:00 and into Forecasting App, a swim added', moved && state.rows.tasks.find((x) => x.id === DENTIST).due_at === iso('16:00', 30) && state.rows.calendar_events.some((e) => e.title === 'Swim'))
+  check('u Done — all 3, with Undo', await until(async () => (await cardText(page)).startsWith('Done — all 3')) && (await card(page).getByRole('button', { name: 'Undo' }).count()) === 1, await cardText(page))
+  const w = state.writes.length
+  await card(page).getByRole('button', { name: 'Undo' }).click()
+  const back = await until(() => posts(state, 'tasks', w).some((r) => r.id === DENTIST))
+  const sent = posts(state, 'tasks', w).find((r) => r.id === DENTIST)
+  check('u Undo writes the dentist back exactly as it was (due Mon 16:00, no project) through the outbox', back && sent.due_at === dentistBefore.due_at && sent.project_id === null && sent.title === 'Dentist', JSON.stringify(sent && [sent.due_at, sent.project_id]))
+  check('u …and removes the swim it made', await until(() => !state.rows.calendar_events.some((e) => e.title === 'Swim')))
+  check('u one Undo, no second run of tools', state.runs.length === 1)
+  check('u the card shows the batch undone', await until(async () => (await cardText(page)).startsWith('Undone — back as it was')), await cardText(page))
+  const kept = await page.evaluate((k) => JSON.parse(localStorage.getItem(k) ?? '[]').at(-1)?.content ?? '', `kf.chat.${UID}`)
+  check('u what the model reads back: done, then undone', kept.startsWith('What the app did, then the user undid:'), kept.slice(0, 60))
+  await shot(page, 'u1-day-undone')
+  check('u no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))
+  await ctx.close()
+}
+
 // ── F: a failed tool, honestly ──
 if (want('f')) {
   const { ctx, page, errors, state } = await open()
+  state.dentistGone = true
   await openChat(page)
   await ask(page, 'Move the dentist to Friday 4pm and add a swim Thursday 6pm')
   await until(async () => (await card(page).count()) === 1)
@@ -380,6 +438,32 @@ if (want('a')) {
   await capture(page, 'ring mum back about the party')
   check('a off (the default): a confident capture waits in the Inbox with the AI read', await until(() => posts(state, 'inbox_items', w).some((i) => i.status === 'pending' && i.ai_parse?.title === 'Call mum about Sunday' && i.confidence === 0.95)))
   check('a …no task made by itself', !posts(state, 'tasks', w).length, JSON.stringify(posts(state, 'tasks', w).map((t) => t.title)))
+  w = state.writes.length
+  await capture(page, 'Call the plumber tomorrow 3pm #forecasting')
+  const held = await until(() => posts(state, 'inbox_items', w).find((i) => i.ai_parse?.source === 'typed'))
+  const heldRow = posts(state, 'inbox_items', w).find((i) => i.ai_parse?.source === 'typed')
+  check('a off: a ⌘K line with a date and #project waits in the Inbox too, its tokens the suggestion', held && heldRow.ai_parse.due_at === iso('15:00', 26) && heldRow.ai_parse.has_time === true && heldRow.ai_parse.project_id === P_FC && !posts(state, 'tasks', w).length, JSON.stringify(heldRow?.ai_parse))
+  check('a …said so: "Added to Inbox · Tomorrow · 3:00 PM · Forecasting…"', await toastSoon(page, 'Added to Inbox ·'), JSON.stringify(await toasts(page)))
+  await page.goto(`${BASE}/inbox`, { waitUntil: 'networkidle' })
+  await sleep(800)
+  const heldCard = page.locator(`[id="inbox-${heldRow?.id}"]`)
+  await shot(page, 'a2-day-held-card')
+  check('a the Inbox card offers it ready to file (date + project)', /Forecasting App/.test(await heldCard.innerText().catch(() => '')), (await heldCard.innerText().catch(() => '')).replace(/\n/g, ' | '))
+  w = state.writes.length
+  await heldCard.getByRole('button', { name: /File as task/ }).first().click()
+  const filed = await until(() => posts(state, 'tasks', w).find((t) => t.title === 'Call the plumber'))
+  const filedRow = posts(state, 'tasks', w).find((t) => t.title === 'Call the plumber')
+  check('a one tap files it: tomorrow 15:00, in Forecasting App', filed && filedRow.due_at === iso('15:00', 26) && filedRow.project_id === P_FC, JSON.stringify(filedRow && [filedRow.due_at, filedRow.project_id]))
+  await page.goto(`${BASE}/today`, { waitUntil: 'networkidle' })
+  await sleep(700)
+  w = state.writes.length
+  await page.locator('.td-pill-field').first().click()
+  await bar(page).waitFor({ timeout: 5000 })
+  await bar(page).fill('Water the ferns tomorrow 9am')
+  await sleep(250)
+  await bar(page).press('Enter')
+  const ferns = await until(() => posts(state, 'tasks', w).some((t) => t.title === 'Water the ferns'))
+  check("a Today's \"Add a task…\" row is a task field: the task at once, nothing held", ferns && !posts(state, 'inbox_items', w).some((i) => /ferns/.test(i.raw_text ?? '')), JSON.stringify([posts(state, 'tasks', w).map((t) => t.title), posts(state, 'inbox_items', w).map((i) => [i.raw_text, i.status])]))
   await page.goto(`${BASE}/settings`, { waitUntil: 'networkidle' })
   await sleep(700)
   const sw = page.getByRole('switch', { name: 'File captures for me' })
@@ -401,11 +485,42 @@ if (want('a')) {
   await ctx.close()
 }
 
+// ── R: the double-task race (Kai's log 2026-10-23 16:20 — one capture, two tasks) ──
+if (want('r')) {
+  // A capture sent with the key while "File captures for me" is on: queued for the AI on this device.
+  const RENEW = '30000000-0000-4000-8000-0000000000r1'.replace('r1', 'a1')
+  const queued = { id: RENEW, user_id: UID, kind: 'text', raw_text: 'renew hosting', transcript: null, ai_parse: null, confidence: null, status: 'pending', filed_task_id: null, payload: { source: 'capture', needs_parse: true }, snoozed_until: null, deleted_at: null, created_at: iso('11:00'), updated_at: iso('11:00') }
+  const { ctx, page, errors, state } = await open({ route: '/inbox', settings: { auto_file_captures: true, help_seen: [...SETTINGS.help_seen, 'notice:autofile'] }, inbox: [queued], waitUntil: 'domcontentloaded' })
+  check('r the AI read is out (claimed on the server, parsing)', await until(() => state.fn.some((f) => f.name === 'parse-capture')))
+  const row = page.locator(`[id="inbox-${RENEW}"]`)
+  await row.waitFor({ timeout: 8000 })
+  check('r …and the capture is still waiting in the Inbox', state.rows.inbox_items.find((i) => i.id === RENEW)?.status === 'pending')
+  await row.getByRole('button', { name: /^File/ }).first().click()
+  const byHand = await until(() => posts(state, 'tasks').length === 1)
+  await until(() => state.fn.filter((f) => f.name === 'parse-capture').length >= 1, 1000)
+  await sleep(9000) // the read lands
+  const tasks = posts(state, 'tasks')
+  check('r filed by hand while the read was out → exactly ONE task', byHand && new Set(tasks.map((x) => x.id)).size === 1, JSON.stringify(tasks.map((x) => x.title)))
+  check('r …no capture.autofiled, and the capture stays filed', !posts(state, 'activity_log').some((a) => a.event_type === 'capture.autofiled') && state.rows.inbox_items.find((i) => i.id === RENEW)?.status === 'filed', JSON.stringify(posts(state, 'activity_log').map((a) => a.event_type)))
+  await shot(page, 'r1-day-filed-once')
+  check('r no page errors', errors.length === 0, errors.slice(0, 3).join(' | '))
+  await ctx.close()
+}
+
 // ── P: the project chip ──
 if (want('p')) {
   const { ctx, page, errors, state } = await open({ settings: { help_seen: [...SETTINGS.help_seen, 'notice:autofile'] } })
+  // Tasks come in through Today's "Add a task…" row: a task field (⌘K would hold them in the Inbox, auto-filing off).
+  const addTask = async (line) => {
+    await page.locator('.td-pill-field').first().click()
+    await bar(page).waitFor({ timeout: 5000 })
+    await bar(page).fill(line)
+    await sleep(250)
+    await bar(page).press('Enter')
+    await sleep(600)
+  }
   let w = state.writes.length
-  await capture(page, 'Forecast chart tooltip tomorrow')
+  await addTask('Forecast chart tooltip tomorrow')
   const made = posts(state, 'tasks', w).find((t) => t.title === 'Forecast chart tooltip')
   check('p a typed task with no project lands where typed (no project)', !!made && made.project_id === null, JSON.stringify(made && [made.title, made.project_id]))
   const chip = page.locator('.kf-toast', { hasText: '→ Forecasting App?' })
@@ -426,7 +541,7 @@ if (want('p')) {
   await page.goto(`${BASE}/today`, { waitUntil: 'networkidle' })
   await sleep(700)
   w = state.writes.length
-  await capture(page, 'Forecasting app: release notes tomorrow')
+  await addTask('Forecasting app: release notes tomorrow')
   const second = await until(() => posts(state, 'tasks', w).some((t) => t.project_id === P_FC))
   check('p assign: a sure match is put there by itself', second, JSON.stringify(posts(state, 'tasks', w).map((t) => [t.title, t.project_id])))
   const undoBtn = page.locator('.kf-toast', { hasText: '→ Forecasting App' }).getByRole('button', { name: 'Undo' })

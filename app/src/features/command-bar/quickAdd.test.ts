@@ -10,7 +10,11 @@ const writes: { table: string; row: Record<string, unknown>; op?: string }[] = [
 const toasts: { message: string; undo: () => void }[] = []
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 const calRows: Record<string, unknown>[] = []
-vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: (key: string[]) => (key[0] === 'calendar_events' ? calRows : []), cancelQueries: () => undefined } }))
+// "File captures for me" (0086): on in the suites about the filing rule; its off case has its own.
+let settingsRow: Record<string, unknown> = { auto_file_captures: true }
+vi.mock('../../lib/queryClient', () => ({
+  queryClient: { getQueryData: (key: string[]) => (key[0] === 'calendar_events' ? calRows : key[0] === 'app_settings' ? settingsRow : []), cancelQueries: () => undefined },
+}))
 vi.mock('../../lib/outbox', () => ({ writeRow: (table: string, row: Record<string, unknown>, op?: string) => writes.push({ table, row, op }) }))
 vi.mock('../../lib/activity', () => ({ logActivity: () => undefined }))
 vi.mock('../../lib/undo', () => ({ toastUndo: (message: string, undo: () => void) => toasts.push({ message, undo }) }))
@@ -105,6 +109,41 @@ describe('captureTyped (the one capture rule)', () => {
   it('kind event: an event, not a task', () => {
     captureTyped(parse('Dinner 8pm'), 'Dinner 8pm', 'event')
     expect(writes.map((w) => w.table)).toEqual(['calendar_events'])
+  })
+})
+
+// Kai 2026-10-25: with "File captures for me" off (the default), a ⌘K line with a date or #project
+// waits in the Inbox too, its tokens the one-tap suggestion; an "add a task" field still adds.
+describe('captureTyped with "File captures for me" off', () => {
+  beforeEach(() => {
+    writes.length = 0
+    toasts.length = 0
+    enriched.length = 0
+    settingsRow = { auto_file_captures: false }
+  })
+
+  it('a line with tokens is held in the Inbox, its tokens the suggestion and the extras kept for filing', () => {
+    const typed = 'Call Omar tomorrow 3pm #shaheen !! 30m *calls every week // bring the deck'
+    captureTyped(parse(typed), typed)
+    expect(writes.map((w) => w.table)).toEqual(['inbox_items'])
+    expect(writes[0].row).toMatchObject({
+      raw_text: typed,
+      status: 'pending',
+      confidence: 1,
+      ai_parse: { kind: 'task', title: 'Call Omar', due_at: '2026-10-13T12:00:00.000Z', has_time: true, project_id: 'p1', domain_id: 'd1', confidence: 1 },
+      payload: { priority_override: 2, duration_override: 30, labels_override: ['calls'], repeat_override: 'FREQ=WEEKLY', notes_override: 'bring the deck' },
+    })
+    expect(toasts[0].message).toMatch(/^Added to Inbox · .+ · Shaheen$/)
+    expect(enriched).toEqual([]) // its tokens already are the read
+    settingsRow = { auto_file_captures: true }
+  })
+
+  it("an 'add a task' field (Today's add row) still makes the task at once", () => {
+    const typed = 'Call Omar tomorrow 3pm #shaheen'
+    captureTyped(parse(typed), typed, 'task', true)
+    expect(writes.some((w) => w.table === 'tasks')).toBe(true)
+    expect(writes.some((w) => w.table === 'inbox_items')).toBe(false)
+    settingsRow = { auto_file_captures: true }
   })
 })
 

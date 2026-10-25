@@ -1,5 +1,5 @@
 import type { Citation } from '../../lib/types'
-import type { ChatOutcome, ChatPlan } from './api'
+import type { ChatOutcome, ChatPlan, ChatRestore } from './api'
 
 // P7e A28 (Flow Audit J15): the chat keeps its conversation until you press Clear — on this device, per
 // account, in localStorage. Sign-out forgets it (AuthProvider), like the query cache.
@@ -15,6 +15,8 @@ export interface DisplayMessage {
   plan?: ChatPlan & { state: PlanState }
   /** What each confirmed call really did. */
   outcomes?: ChatOutcome[]
+  /** The confirmed batch's one Undo: its rows as they were (dropped once it has run). */
+  restore?: ChatRestore
   /** Its Undo ran. */
   undone?: boolean
 }

@@ -75,14 +75,14 @@
     "detail": "The user confirmed. What the app did:\n- Added event · Mon 26 Oct · 7:00–8:15 AM "
   },
   {
-    "name": "g Undo sends the three events to Trash (delete_event × 3)",
+    "name": "g Undo removes the three events it made, through the outbox (no second run)",
     "ok": true,
-    "detail": "[{\"tool\":\"delete_event\",\"args\":{\"id\":\"f37cd29a-9c45-4b5e-82ac-d66646cb1c5d\"}},{\"tool\":\"delete_event\",\"args\":{\"id\":\"13b09ef9-19db-44bb-8365-ea95fa769157\"}},{\"tool\":\"delete_event\",\"args\":{\"id\":\"cb6566b6-5e51-4a8c-9e90-c35cf280c1e0\"}}]"
+    "detail": "[]"
   },
   {
-    "name": "g …and the card says so",
+    "name": "g …and the card shows the batch undone",
     "ok": true,
-    "detail": "Done — all 3 | Added event · Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7) | Added event · Wed 28 Oct · 5:45–7:00 PM · Gym · HQ (Session 2, ID 10) | Added event · Tue 27 Oct · 5:45–7:00 PM · Gym · West (Session 3, ID 18) | Undone."
+    "detail": "Undone — back as it was | Added event · Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7) | Added event · Wed 28 Oct · 5:45–7:00 PM · Gym · HQ (Session 2, ID 10) | Added event · Tue 27 Oct · 5:45–7:00 PM · Gym · West (Session 3, ID 18) | Every change in this batch was put back."
   },
   {
     "name": "g Cancel: nothing runs, \"Cancelled — nothing changed.\"",
@@ -155,6 +155,46 @@
     "detail": ""
   },
   {
+    "name": "u the batch ran: the dentist moved to Fri 16:00 and into Forecasting App, a swim added",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u Done — all 3, with Undo",
+    "ok": true,
+    "detail": "Done — all 3 | Moved · due Fri 30 Oct 4:00 PM · Dentist | Changed · Dentist · project → Forecasting App | Added event · Thu 29 Oct · 6:00–6:30 PM · Swim | Undo"
+  },
+  {
+    "name": "u Undo writes the dentist back exactly as it was (due Mon 16:00, no project) through the outbox",
+    "ok": true,
+    "detail": "[\"2026-10-26T13:00:00.000Z\",null]"
+  },
+  {
+    "name": "u …and removes the swim it made",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u one Undo, no second run of tools",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u the card shows the batch undone",
+    "ok": true,
+    "detail": "Undone — back as it was | Moved · due Fri 30 Oct 4:00 PM · Dentist | Changed · Dentist · project → Forecasting App | Added event · Thu 29 Oct · 6:00–6:30 PM · Swim | Every change in this batch was put back."
+  },
+  {
+    "name": "u what the model reads back: done, then undone",
+    "ok": true,
+    "detail": "What the app did, then the user undid:\n- Moved · due Fri 30 "
+  },
+  {
+    "name": "u no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
     "name": "f the card names each step with its verb",
     "ok": true,
     "detail": "[\"Move · due Fri 30 Oct 4:00 PM · Dentist\",\"Add event · Thu 29 Oct · 6:00–6:30 PM · Swim\"]"
@@ -220,6 +260,31 @@
     "detail": "[]"
   },
   {
+    "name": "a off: a ⌘K line with a date and #project waits in the Inbox too, its tokens the suggestion",
+    "ok": true,
+    "detail": "{\"kind\":\"task\",\"cleaned_text\":\"Call the plumber tomorrow 3pm #forecasting\",\"title\":\"Call the plumber\",\"due_at\":\"2026-10-26T12:00:00.000Z\",\"has_time\":true,\"project_id\":\"f0000000-0000-4000-8000-0000000000fc\",\"domain_id\":null,\"duration_min\":null,\"priority\":null,\"confidence\":1,\"source\":\"typed\"}"
+  },
+  {
+    "name": "a …said so: \"Added to Inbox · Tomorrow · 3:00 PM · Forecasting…\"",
+    "ok": true,
+    "detail": "[\"Added to Inbox\",\"Added to Inbox · Tomorrow · 3:00 PM · Forecasting App\"]"
+  },
+  {
+    "name": "a the Inbox card offers it ready to file (date + project)",
+    "ok": true,
+    "detail": "Call the plumber tomorrow 3pm #forecasting | Typed · 12:00 PM | Suggested | Task | ▾ | “Call the plumber” | Tomorrow · 3:00 PM | ▾ | Forecasting App | ▾ | high confidence | File as task | E | Snooze | S | Dismiss | D"
+  },
+  {
+    "name": "a one tap files it: tomorrow 15:00, in Forecasting App",
+    "ok": true,
+    "detail": "[\"2026-10-26T12:00:00.000Z\",\"f0000000-0000-4000-8000-0000000000fc\"]"
+  },
+  {
+    "name": "a Today's \"Add a task…\" row is a task field: the task at once, nothing held",
+    "ok": true,
+    "detail": "[[\"Water the ferns\"],[]]"
+  },
+  {
     "name": "a Settings → Capture & AI: the switch reads off",
     "ok": true,
     "detail": ""
@@ -246,6 +311,31 @@
   },
   {
     "name": "a no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r the AI read is out (claimed on the server, parsing)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r …and the capture is still waiting in the Inbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r filed by hand while the read was out → exactly ONE task",
+    "ok": true,
+    "detail": "[\"renew hosting\"]"
+  },
+  {
+    "name": "r …no capture.autofiled, and the capture stays filed",
+    "ok": true,
+    "detail": "[\"task.created\",\"inbox.filed\"]"
+  },
+  {
+    "name": "r no page errors",
     "ok": true,
     "detail": ""
   },

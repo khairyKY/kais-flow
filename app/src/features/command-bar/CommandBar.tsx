@@ -152,7 +152,7 @@ export function CommandBar() {
     // "every property is extracted… let the AI understand the intent and decide").
     // Enter is the one capture path (Kai 2026-10-12 cut ⌘↵ "AI capture": the AI fills every typed
     // capture after it lands anyway) — ./quickAdd captureTyped, shared with the tray (P7e A21).
-    captureTyped(parsed, trimmed, kind)
+    captureTyped(parsed, trimmed, kind, useCommandBarStore.getState().asTask)
     setText('')
     setIgnored([])
     setKind('task')
