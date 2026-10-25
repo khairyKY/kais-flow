@@ -1,4 +1,5 @@
-// P4: Web Push sender — digests, evening nudges, task, event (0077) and routine reminders, birthdays. Invoked by
+// P4: Web Push sender — digests, evening nudges, task, event (0077) and routine reminders, birthdays, a
+// changed Terms of Use / Privacy Policy (`terms`, 0083 — hourly, once per version). Invoked by
 // pg_cron (via pg_net) on a schedule, by capture-image when a page is read to the end (paper ready),
 // and by a manual "send test" button in Settings.
 //
@@ -29,7 +30,8 @@ import { dateKey, dayWindow, userZone } from '../_shared/zone.ts'
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
 import { eventRemindersDue, reminderKey, type RemindRow } from '../_shared/eventReminder.ts'
 import type { RuleBetween } from '../_shared/series.ts'
-import { birthdayNotice, deliver, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+import { birthdayNotice, deliver, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, termsNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+import { LEGAL_KEY, PRIVACY_VERSION, TERMS_VERSION } from '../_shared/legal.ts'
 // rrule is CommonJS: Deno takes its default export only (see mcp/index.ts).
 import rrulePkg from 'npm:rrule@2'
 const { RRule } = rrulePkg
@@ -94,8 +96,8 @@ function runClock(): RunClock {
 
 /** The in-app history (Activity) keeps what was sent, always with names (it's behind the lock).
  * `ref`: what its button opens (paper ready: capture_id; one birthday: person_id). */
-async function logNotice(supabase: SupabaseClient, userId: string, n: Notice, ref: Record<string, string> = {}): Promise<void> {
-  await supabase.from('activity_log').insert({
+async function logNotice(supabase: SupabaseClient, userId: string, n: Notice, ref: Record<string, string> = {}): Promise<{ message: string } | null> {
+  const { error } = await supabase.from('activity_log').insert({
     id: crypto.randomUUID(),
     user_id: userId,
     event_type: `notify.${n.kind}`,
@@ -103,6 +105,7 @@ async function logNotice(supabase: SupabaseClient, userId: string, n: Notice, re
     entity_id: crypto.randomUUID(),
     payload: { title: n.title, body: n.body, ...ref },
   })
+  return error // `terms` needs it (the row is its "told" mark); the others carry on without
 }
 
 const NAMES: NoticePrefs = { lock_screen_names: true }
@@ -491,6 +494,43 @@ async function runPaperReady(req: Request, captureId: string): Promise<Response>
   return jsonResponse(req, { ...result, skipped: false })
 }
 
+/** pg_cron, hourly (0083): the Terms of Use / Privacy Policy changed (_shared/legal.ts). Each person who
+ * hasn't agreed to the current versions and hasn't been told under this key gets one Activity row (the
+ * in-app notice, and the "told" mark — written first, so a failed push is never retried into a second
+ * one) and a push on their own devices. Paused notifications: nothing yet, the next run tries again. */
+async function runTerms(req: Request): Promise<Response> {
+  const supabase = createClient(SUPABASE_URL, SERVICE_ROLE_KEY)
+  const clock = runClock()
+  const { data: targets, error } = await supabase.rpc('terms_notice_targets', { p_terms: TERMS_VERSION, p_privacy: PRIVACY_VERSION, p_key: LEGAL_KEY })
+  if (error) throw error
+  const ids = ((targets ?? []) as { user_id: string }[]).map((t) => t.user_id)
+  if (ids.length === 0) return jsonResponse(req, { told: 0, sent: 0 })
+  const [settings, subs] = await Promise.all([
+    supabase.from('app_settings').select('*').in('user_id', ids),
+    supabase.from('push_subscriptions').select('id, user_id, endpoint, keys').in('user_id', ids),
+  ])
+  if (settings.error || subs.error) throw settings.error ?? subs.error
+  const prefsByUser = new Map(((settings.data ?? []) as UserPrefs[]).map((p) => [p.user_id, p]))
+  let told = 0
+  let sent = 0
+  for (const userId of ids) {
+    try {
+      const prefs = prefsByUser.get(userId)
+      const payload = deliver(termsNotice(), prefs, clock.now, userZone(prefs?.timezone))
+      if (!payload) continue
+      const failed = await logNotice(supabase, userId, termsNotice(), { version: LEGAL_KEY })
+      if (failed) throw failed // no mark, no push: the next run tries again
+      told++
+      const mine = ((subs.data ?? []) as Subscription[]).filter((s) => s.user_id === userId)
+      if (mine.length) sent += (await sendToSubscriptions(supabase, userId, mine, payload)).sent
+    } catch (e) {
+      console.error(`notify terms: user ${userId} failed`, e)
+    }
+  }
+  // Counts only, never who — the pg_net response log holds no personal data.
+  return jsonResponse(req, { told, sent })
+}
+
 /** Signed-in user path: a test push to the caller's own devices, nothing else. */
 async function runTestForUser(req: Request, userId: string, token: string): Promise<Response> {
   // Runs as the user (RLS applies) — the service-role key is not needed for this path at all.
@@ -527,7 +567,7 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const { kind, scheduled, capture_id } = (await req.json()) as { kind: NotifyKind | 'paper_ready'; scheduled?: boolean; capture_id?: unknown }
+    const { kind, scheduled, capture_id } = (await req.json()) as { kind: NotifyKind | 'paper_ready' | 'terms'; scheduled?: boolean; capture_id?: unknown }
 
     if (!serviceRole) {
       // Digests, nudges, reminders and sweeps are cron-only; a user may only test their own devices.
@@ -539,6 +579,7 @@ Deno.serve(async (req) => {
       if (typeof capture_id !== 'string' || !/^[0-9a-f-]{36}$/i.test(capture_id)) return jsonResponse(req, { error: 'bad_request' }, 400)
       return await runPaperReady(req, capture_id)
     }
+    if (kind === 'terms') return await runTerms(req)
     if (!KINDS.includes(kind)) return jsonResponse(req, { error: 'unknown kind' }, 400)
     return await runForAllUsers(req, kind as NotifyKind, scheduled === true)
   } catch (e) {

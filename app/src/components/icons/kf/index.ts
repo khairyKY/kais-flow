@@ -10,6 +10,8 @@ export const ICON_NAMES = [
   'bell', 'moon', 'focus-ring', 'sprout',
   // The sidebar's line set (Sidebar options.html, icons A, Kai 2026-10-22): its rows, the Plan drawer and the foot.
   'activity', 'chat', 'clipboard', 'guide', 'library', 'plan', 'signout', 'someday',
+  // The password field's Show / Hide (queue item 6, 2026-10-25): drawn here, the export has no eye.
+  'eye', 'eye-off',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]

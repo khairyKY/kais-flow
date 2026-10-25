@@ -29,6 +29,10 @@ const UID = '00000000-0000-4000-8000-00000000e4a0'
 const jwt = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: UID, role: 'authenticated', exp: 4102444800 })}.x`
 const user = { id: UID, aud: 'authenticated', role: 'authenticated', email: 'demo@example.test', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' }
 const session = { access_token: jwt, refresh_token: 'demo', token_type: 'bearer', expires_in: 3600, expires_at: 4102444800, user }
+// The account has agreed to the current Terms / Privacy versions (legal, 0083) — otherwise the app's
+// "We've updated our terms" notice covers the page. The versions come from the one file that holds them.
+const LEGAL_TS = fs.readFileSync(new URL('../../../../supabase/functions/_shared/legal.ts', import.meta.url), 'utf8')
+const CONSENTS = ['terms', 'privacy'].map((d, i) => ({ id: `c0000000-0000-4000-8000-00000000000${i + 1}`, user_id: UID, document: d, version: LEGAL_TS.match(new RegExp(`${d.toUpperCase()}_VERSION = '([0-9-]+)'`))[1], accepted_at: '2026-10-25T00:00:00Z' }))
 const T = '2026-10-01T09:00:00Z'
 const id = (n, p = '1') => `${p}0000000-0000-4000-8000-${String(n).padStart(12, '0')}`
 const SETTINGS = { id: true, user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: T, updated_at: T }
@@ -57,6 +61,7 @@ const EVENTS = [
 const OWN_EVENTS = EVENTS.filter((e) => e.source !== 'gcal' && !e.deleted_at)
 const ROWS = {
   app_settings: [SETTINGS],
+  consents: CONSENTS,
   tasks: TASKS,
   projects: [{ id: P1, user_id: UID, domain_id: D1, name: 'Website', type: 'standard', status: 'active', milestones: [], checklist: [], deleted_at: null, created_at: T, updated_at: T }],
   areas: [{ id: A1, user_id: UID, name: 'Work', domain_id: D1, sort_order: 0, deleted_at: null, created_at: T, updated_at: T }],
@@ -70,7 +75,7 @@ const ROWS = {
   push_subscriptions: [{ id: id(5, 'f'), user_id: UID, endpoint: 'https://push.example/SECRET_ENDPOINT', keys: { auth: 'SECRET_PUSH_AUTH' }, device_label: 'x', created_at: T }],
 }
 const SECRETS = ['SECRET_MCP_HASH', 'SECRET_CAPTURE_HASH', 'SECRET_ENDPOINT', 'SECRET_PUSH_AUTH']
-const TABLES = ['app_settings', 'domains', 'areas', 'projects', 'tasks', 'inbox_items', 'calendar_events', 'routines', 'routine_completions', 'time_entries', 'journal_entries', 'people', 'interactions', 'books', 'notes', 'quotes', 'commentary', 'captures', 'resurfaced_log', 'activity_log', 'smart_lists']
+const TABLES = ['app_settings', 'domains', 'areas', 'projects', 'tasks', 'inbox_items', 'calendar_events', 'routines', 'routine_completions', 'time_entries', 'journal_entries', 'people', 'interactions', 'books', 'notes', 'quotes', 'commentary', 'captures', 'resurfaced_log', 'activity_log', 'smart_lists', 'consents']
 const DAY = new Intl.DateTimeFormat('en-CA', { timeZone: 'Africa/Cairo' }).format(new Date())
 const NAMES = { json: `kais-flow-${DAY}.json`, csv: `kais-flow-tasks-${DAY}.csv`, ics: `kais-flow-calendar-${DAY}.ics` }
 const LABELS = { json: 'Everything (.json)', csv: 'Tasks (.csv)', ics: 'Calendar (.ics)' }

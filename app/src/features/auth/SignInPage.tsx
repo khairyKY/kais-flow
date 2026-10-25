@@ -1,7 +1,9 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import { useToastStore } from '../../lib/toastStore'
+import { Checkbox } from '../../components/kit'
+import { LegalFooter, LegalLink, PRIVACY_URL, TERMS_URL, signupConsent } from '../legal/LegalLinks'
 import { useOnline } from '../../lib/useOnline'
 import { OfflineChip } from '../../components/States'
 import { useAuth } from './AuthProvider'
@@ -32,6 +34,10 @@ export function SignInPage() {
   const [email, setEmail] = useState(rememberedEmail)
   const [mode, setMode] = useState<Mode>(searchParams.has('forgot') ? 'forgot' : email ? 'signin' : 'signup')
   const [password, setPassword] = useState('')
+  // Sign up asks for the Terms of Use and the Privacy Policy, ticked (docs/LEGAL.md): Create account
+  // waits for it, and the versions ride along as metadata for 0083's trigger to record.
+  const [agreed, setAgreed] = useState(false)
+  const agreeId = useId()
   const [problem, setProblem] = useState<AuthProblem | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [sentTo, setSentTo] = useState<string | null>(null)
@@ -91,6 +97,7 @@ export function SignInPage() {
     if (submitting) return
     setProblem(null)
     if (mode === 'forgot') return sendReset()
+    if (mode === 'signup' && !agreed) return
     if (mode === 'signup' && passwordRule(password).state !== 'ok') {
       passwordRef.current?.focus()
       return
@@ -103,7 +110,7 @@ export function SignInPage() {
       else rememberEmail(email)
       return
     }
-    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: confirmRedirect() } })
+    const { data, error } = await supabase.auth.signUp({ email, password, options: { emailRedirectTo: confirmRedirect(), data: signupConsent() } })
     setSubmitting(false)
     if (error) return setProblem(authProblem(error))
     const outcome = signUpOutcome(data)
@@ -230,8 +237,20 @@ export function SignInPage() {
             )}
           </div>
         )}
+        {mode === 'signup' && (
+          // The box's own click bubbles up here, so the line is one target: a tap anywhere on it ticks
+          // (keyboard: Space on the box); its two links open the pages instead (LegalLink stops it).
+          <div className="fr-consent" onClick={() => setAgreed((a) => !a)}>
+            <Checkbox checked={agreed} size={20} labelledBy={agreeId} />
+            <span id={agreeId}>
+              I agree to the <LegalLink href={TERMS_URL}>Terms of Use</LegalLink> and the <LegalLink href={PRIVACY_URL}>Privacy Policy</LegalLink>
+            </span>
+          </div>
+        )}
         {card}
-        <Cta loading={submitting}>{mode === 'signup' ? 'Create account' : mode === 'signin' ? 'Sign in' : 'Send reset link'}</Cta>
+        <Cta loading={submitting} disabled={mode === 'signup' && !agreed}>
+          {mode === 'signup' ? 'Create account' : mode === 'signin' ? 'Sign in' : 'Send reset link'}
+        </Cta>
         {mode === 'signup' ? (
           <div className="fr-alt">
             Already have an account?<LinkButton onClick={() => go('signin')}>Sign in</LinkButton>
@@ -245,6 +264,7 @@ export function SignInPage() {
             <LinkButton onClick={() => go('signin')}>Back to sign in</LinkButton>
           </div>
         )}
+        <LegalFooter />
       </div>
     </FirstRunPage>
   )

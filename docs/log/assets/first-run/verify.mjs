@@ -30,6 +30,10 @@ const PASSWORD = 'made-up-pass' // 12 characters, never a real password
 const jwt = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: UID, role: 'authenticated', exp: 4102444800 })}.x`
 const user = { id: UID, aud: 'authenticated', role: 'authenticated', email: EMAIL, app_metadata: {}, user_metadata: {}, identities: [{ id: UID, provider: 'email' }], created_at: '2026-09-27T04:00:00Z' }
 const session = { access_token: jwt, refresh_token: 'demo', token_type: 'bearer', expires_in: 3600, expires_at: 4102444800, user }
+// The account has agreed to the current Terms / Privacy versions (legal, 0083) — otherwise the app's
+// "We've updated our terms" notice covers the page. The versions come from the one file that holds them.
+const LEGAL_TS = fs.readFileSync(new URL('../../../../supabase/functions/_shared/legal.ts', import.meta.url), 'utf8')
+const CONSENTS = ['terms', 'privacy'].map((d, i) => ({ id: `c0000000-0000-4000-8000-00000000000${i + 1}`, user_id: UID, document: d, version: LEGAL_TS.match(new RegExp(`${d.toUpperCase()}_VERSION = '([0-9-]+)'`))[1], accepted_at: '2026-10-25T00:00:00Z' }))
 const SETTINGS = (onboarded) => ({ id: true, user_id: UID, timezone: 'Africa/Cairo', display_name: null, workspace_name: 'Personal', seed_avatar: null, onboarded_at: onboarded ? '2026-09-01T00:00:00Z' : null, created_at: '2026-09-27T04:00:00Z', updated_at: '2026-09-27T04:00:00Z' })
 // Sunday 27 Sep 2026, 07:40 in Cairo (UTC+3) — 9i's morning.
 const NOW = new Date('2026-09-27T04:40:00Z')
@@ -53,7 +57,7 @@ async function open(view, url, o = {}) {
     if (sess) localStorage.setItem('sb-127-auth-token', sess)
     if (email) localStorage.setItem('kf.lastEmail', email)
   }, [v.theme, o.signedIn ? JSON.stringify(session) : null, o.email ?? null])
-  const state = { offline: false, calls: [], rows: { app_settings: [SETTINGS(!!o.onboarded)], tasks: [] }, auth: o.auth ?? {} }
+  const state = { offline: false, calls: [], rows: { app_settings: [SETTINGS(!!o.onboarded)], tasks: [], consents: CONSENTS }, auth: o.auth ?? {} }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
     const u = new URL(req.url())
@@ -139,6 +143,9 @@ async function basics(env, view, name) {
   const theme = await page.evaluate(() => document.documentElement.dataset.theme ?? '')
   check(`${name} theme ${VIEWS[view].theme}`, (VIEWS[view].theme === 'night') === (theme === 'night'), theme)
   if (view === 'desktop' && (await page.locator('.fr').count())) {
+    // Measured from the top: a tap on a CTA below a 760px window's fold scrolls the page to it (legal,
+    // 2026-10-25: sign up's terms line made the form 64px taller).
+    await page.evaluate(() => window.scrollTo(0, 0))
     const z = await zoomOf(page)
     const fern = await page.locator('.fr-fern').isVisible()
     const bar = await box(page, page.locator('.fr-bar'))
@@ -150,6 +157,11 @@ async function basics(env, view, name) {
 }
 
 const fill = async (page, label, value) => page.getByLabel(label, { exact: true }).fill(value)
+// Sign up's "I agree to the Terms of Use and the Privacy Policy" (legal, 2026-10-25): Create account waits for it.
+const consentBox = (page) => page.getByRole('checkbox', { name: /I agree to the Terms of Use and the Privacy Policy/ })
+async function agree(env) {
+  if ((await consentBox(env.page).getAttribute('aria-checked')) !== 'true') await tap(env, consentBox(env.page))
+}
 
 for (const view of ['day', 'night', 'desktop']) {
   const tag = (frame) => `${frame}-${view}`
@@ -166,9 +178,10 @@ for (const view of ['day', 'night', 'desktop']) {
     const rule = page.locator('.fr-rule')
     check(`${name} live rule turns sage at 8+`, (await rule.getAttribute('data-state')) === 'ok' && (await rule.innerText()) === '8+ characters' && (await rule.evaluate((e) => getComputedStyle(e).color)) === (await page.evaluate(() => { const s = document.createElement('span'); s.style.color = 'var(--acc-sage-text)'; document.body.append(s); const c = getComputedStyle(s).color; s.remove(); return c })))
     const pw = page.getByLabel('Password', { exact: true })
-    check(`${name} password hidden, "Show" is a word`, (await pw.getAttribute('type')) === 'password' && (await page.locator('.fr-show').innerText()) === 'Show')
+    // Queue item 6 (2026-10-25): the eye alone — no word — and its name says what a tap does.
+    check(`${name} password hidden, an eye named "Show password", no word`, (await pw.getAttribute('type')) === 'password' && (await page.locator('.fr-show').innerText()) === '' && (await page.locator('.fr-show').getAttribute('aria-label')) === 'Show password' && (await page.locator('.fr-show svg').count()) === 1)
     await tap(env, page.locator('.fr-show'))
-    check(`${name} Show reveals, then reads Hide`, (await pw.getAttribute('type')) === 'text' && (await page.locator('.fr-show').innerText()) === 'Hide')
+    check(`${name} the eye reveals, then is named "Hide password"`, (await pw.getAttribute('type')) === 'text' && (await page.locator('.fr-show').getAttribute('aria-label')) === 'Hide password')
     await tap(env, page.locator('.fr-show'))
     const input = await box(page, page.locator('.fr-box').first())
     check(`${name} inputs are 48 tall`, Math.round(input.height) === 48, input.height)
@@ -176,13 +189,17 @@ for (const view of ['day', 'night', 'desktop']) {
     const cb = await box(page, cta)
     check(`${name} one CTA, full width, 48`, (await ctaCount(page)) === 1 && Math.round(cb.height) === 48 && Math.round(cb.width) === (phone ? 358 : 400), JSON.stringify(cb))
     check(`${name} "Sign in" one tap away`, (await page.locator('.fr-alt').innerText()).includes('Already have an account?') && (await page.getByRole('button', { name: 'Sign in', exact: true }).count()) === 1)
+    check(`${name} Create account waits for the terms box`, (await cta.isDisabled()) && (await consentBox(page).getAttribute('aria-checked')) === 'false')
     await shot(page, name)
     await basics(env, view, name)
+    await agree(env)
+    check(`${name} ticked → Create account is ready`, (await cta.isEnabled()) && (await consentBox(page).getAttribute('aria-checked')) === 'true')
     // Create account → a session (Confirm email off, as today) → "/" → onboarding, no 9c/9f.
     await tap(env, cta)
     await page.waitForURL('**/onboarding', { timeout: 5000 }).catch(() => {})
     const signup = calls(env, 'POST /auth/v1/signup')[0]
     check(`${name} confirmation off: Create account signs up and lands straight on onboarding`, page.url().endsWith('/onboarding') && signup?.body?.email === EMAIL, page.url())
+    check(`${name} the agreed versions ride along for the server to record`, /^\d{4}-\d{2}-\d{2}$/.test(signup?.body?.data?.terms_version ?? '') && /^\d{4}-\d{2}-\d{2}$/.test(signup?.body?.data?.privacy_version ?? ''), JSON.stringify(signup?.body?.data))
     check(`${name} the address is remembered for next time`, (await page.evaluate(() => localStorage.getItem('kf.lastEmail'))) === EMAIL)
     await env.ctx.close()
   }
@@ -194,6 +211,7 @@ for (const view of ['day', 'night', 'desktop']) {
     const { page } = env
     await fill(page, 'Email', EMAIL)
     await fill(page, 'Password', PASSWORD)
+    await agree(env)
     await tap(env, page.getByRole('button', { name: 'Create account' }))
     await sleep(300)
     const card = page.locator('[role="alert"]')
@@ -222,6 +240,8 @@ for (const view of ['day', 'night', 'desktop']) {
     check(`${name} terra line: "Use 8 or more characters — 3 to go"`, (await rule.getAttribute('data-state')) === 'short' && (await rule.innerText()) === 'Use 8 or more characters — 3 to go', await rule.innerText())
     check(`${name} the box shows the focus ring`, (await page.locator('.fr-box:focus-within').count()) === 1)
     await shot(page, name)
+    await agree(env)
+    await page.getByLabel('Password', { exact: true }).focus()
     await tap(env, page.getByRole('button', { name: 'Create account' }))
     check(`${name} Create account sends nothing and keeps the password field focused`, calls(env, 'POST /auth/v1/signup').length === 0 && (await page.evaluate(() => document.activeElement?.getAttribute('autocomplete'))) === 'new-password')
     await basics(env, view, name)
@@ -239,6 +259,7 @@ for (const view of ['day', 'night', 'desktop']) {
     state.offline = true
     await sleep(300)
     check(`${name} offline chip "Offline — connect to sign up"`, (await page.getByText('Offline — connect to sign up').count()) === 1)
+    await agree(env)
     await tap(env, page.getByRole('button', { name: 'Create account' }))
     await sleep(500)
     const card = page.locator('[role="alert"]')
@@ -266,6 +287,7 @@ for (const view of ['day', 'night', 'desktop']) {
   async function signUpWaiting(env, email = EMAIL) {
     await fill(env.page, 'Email', email)
     await fill(env.page, 'Password', PASSWORD)
+    await agree(env)
     await tap(env, env.page.getByRole('button', { name: 'Create account' }))
     await sleep(300)
   }
@@ -555,7 +577,7 @@ for (const view of ['day', 'night', 'desktop']) {
     const env = await open(view, `/reset#access_token=${jwt}&expires_at=4102444800&expires_in=3600&refresh_token=demo&token_type=bearer&type=recovery`, { onboarded: true })
     const { page } = env
     check(`${name} "Set a new password" for the account`, (await heading(page)) === 'Set a new password' && (await page.locator('.fr-sub').innerText()).startsWith(`For ${EMAIL}.`), await page.locator('.fr-sub').innerText().catch(() => ''))
-    check(`${name} one password field (no confirm) + Show`, (await page.locator('input[type="password"]').count()) === 1 && (await page.locator('.fr-show').count()) === 1)
+    check(`${name} one password field (no confirm) + the eye`, (await page.locator('input[type="password"]').count()) === 1 && (await page.locator('.fr-show').getAttribute('aria-label')) === 'Show password' && (await page.locator('.fr-show').innerText()) === '')
     check(`${name} ← in the bar instead of the wordmark`, (await page.getByRole('button', { name: 'Back to sign in' }).count()) === 1 && (await page.locator('.fr-mark').count()) === 0)
     await page.getByLabel('New password').fill('short')
     await tap(env, page.getByRole('button', { name: 'Save password' }))

@@ -40,6 +40,15 @@ const download = {
 </div></section>`,
 }
 
+// The policies' dates: the versions the app asks people to agree to, read out of the one file that
+// holds them (supabase/functions/_shared/legal.ts — docs/LEGAL.md says how to bump them).
+const LEGAL_SRC = fs.readFileSync(new URL('../../../supabase/functions/_shared/legal.ts', import.meta.url), 'utf8')
+const legalDate = (name) => {
+  const m = LEGAL_SRC.match(new RegExp(`export const ${name} = '([0-9]{4}-[0-9]{2}-[0-9]{2})'`))
+  if (!m) throw new Error(`${name} not found in supabase/functions/_shared/legal.ts`)
+  return longDate(m[1])
+}
+
 // ── privacy (a book chapter) ──
 const clause = (n, id, title, body, aside, cls = '') => `<section class="clause" aria-labelledby="${id}"><div><h2 id="${id}"><small>§${n}</small>${title}</h2>${body.replace('<p>', `<p class="${cls}">`)}</div><p class="aside">${aside}</p></section>`
 const privacy = {
@@ -48,19 +57,20 @@ const privacy = {
   description: 'What Kai’s Flow keeps, who else sees any of it, what the AI sees, and how to take it all back. No ads, no tracking, no selling data.',
   og: 'privacy',
   body: `<div class="chapter"><div class="wrap"><div class="chapter-in">
-  ${head2({ eyebrow: 'Privacy policy · updated 14 Oct 2026', title: 'What happens to your days', lead: 'Kai’s Flow is a journal. This page says, in plain words, what it keeps, who else sees any of it, and how to take it all back.', h: 'h1', tone: 'faint' })}
+  ${head2({ eyebrow: `Privacy policy · updated ${legalDate('PRIVACY_VERSION')}`, title: 'What happens to your days', lead: 'Kai’s Flow is a journal. This page says, in plain words, what it keeps, who else sees any of it, and how to take it all back.', h: 'h1', tone: 'faint' })}
   ${img('vine-leaf-right', 'A single pressed leaf', { w: 52, cls: 'leaf' })}
-  ${clause(1, 'keep', 'What we keep', `<p>Your account email, and what you put in the app: tasks, projects, calendar blocks, routines, your journal, the people you add, books, notes and quotes. It lives in a database run by Supabase, in the EU (Frankfurt). Each account can read only its own rows. We open the database only to keep the service running, or when you ask us to.</p>
+  ${clause(1, 'keep', 'What we keep', `<p>Your account email, and what you put in the app: tasks, projects, calendar blocks, routines, your journal, the people you add, books, notes and quotes. It lives in a database run by Supabase, in the EU (Frankfurt). Each account can read only its own rows. We open the database only to keep the service running, or when you ask us to. When you create an account, we also note which version of the terms and of this policy you agreed to, and when.</p>
     <p>The app also keeps a working copy of your tasks and plans on your device so it opens and works offline. Your journal, notes about people and the Trash are left out of that copy.</p>
     <p>Photos of your handwritten pages (Paper capture) are kept for 7 days so you can look back at them, then deleted — or within the hour after you review them, if you choose that in Settings.</p>
     <p>When a new version of the app is released, a copy of the database is saved to private storage in case something goes wrong. Only the 14 newest copies are kept: each new one clears the oldest. So something you delete stays in those copies until 14 more versions have come out, and then it’s gone.</p>`, 'In short: your email and your days, in the EU.', 'dropcap')}
   ${clause(2, 'ai', 'What the AI sees', `<p>What you capture in the app — typed, spoken, or a photo of your notes — so it can pick out the date, the time and the rest; and a message in chat, with the items from your account it looks up to answer you. We send these to Groq, which doesn’t train on them and, with zero data retention, keeps nothing after replying. Search inside the app runs in our own database, not through an AI company. Things sent to your capture link stay away from the AI unless you ask, and nothing else in your account goes to Groq.</p>
     <p>If you connect an AI assistant of your own with a key from Settings, it can do through that key what you can do in the app: read and change your tasks, projects, calendar, Inbox, routines, library and settings. Your journal and the people you keep stay out of its reach unless you switch them on for that key, one switch each. What it reads goes to that assistant’s maker, whose policy covers it. Turn the key off and it stops at once.</p>`, 'Only what you hand it, and it forgets.')}
-  ${clause(3, 'google', 'Google Calendar', `<p>Only if you connect it in Settings, Kai’s Flow reads the events of the Google calendars you choose and shows them on your calendar beside your tasks, so you can plan around them. If you also leave “Show my plan in Google as busy” on, it writes your time blocks, scheduled tasks and your own events to your main Google calendar as private, busy events — others see that you’re busy, not what you’re doing — and keeps them up to date. It never changes or deletes any other event in your Google Calendar: only the ones it wrote. Everything refreshes every 15 minutes. Disconnect any time from Settings, and the events it wrote are removed from Google, together with its access and the copies it kept. We don’t use your calendar for anything else, sell it, or show it to anyone, and what comes from Google isn’t sent to the AI. Kai’s Flow’s use of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.</p>`, 'Read to show; busy blocks only when you ask.')}
+  ${clause(3, 'google', 'Google Calendar and GitHub', `<p>Only if you connect it in Settings, Kai’s Flow reads the events of the Google calendars you choose and shows them on your calendar beside your tasks, so you can plan around them. If you also leave “Show my plan in Google as busy” on, it writes your time blocks, scheduled tasks and your own events to your main Google calendar as private, busy events — others see that you’re busy, not what you’re doing — and keeps them up to date. It never changes or deletes any other event in your Google Calendar: only the ones it wrote. Everything refreshes every 15 minutes. Disconnect any time from Settings, and the events it wrote are removed from Google, together with its access and the copies it kept. We don’t use your calendar for anything else, sell it, or show it to anyone, and what comes from Google isn’t sent to the AI. Kai’s Flow’s use of information received from Google APIs will adhere to the Google API Services User Data Policy, including the Limited Use requirements.</p>
+    <p>GitHub works the same way: only if you connect it in Settings with a token you make. The token stays on our server, and every 30 minutes Kai’s Flow brings the open issues assigned to you, or from the repositories you pick, into your Inbox. Disconnect any time, and the token is deleted.</p>`, 'Read to show; busy blocks only when you ask.')}
   ${clause(4, 'never', 'What we never do', `<p>No ads. No selling or sharing your data. No tracking, analytics or fingerprinting, in the app or on this site. This site sets no cookies; the app keeps you signed in with your browser’s own storage.</p>
-    <p>To work at all, a few services see a little: Cloudflare serves the app and this site, and sees your IP address like any web host. This site loads its fonts from Google Fonts and asks GitHub for the newest version number, so your browser talks to those two as well.</p>`, 'Nothing to sell.')}
-  ${clause(5, 'leaving', 'Taking it with you, or leaving', `<p>There’s no export button yet. Write to us and we’ll send you everything you’ve written, as plain files — or delete your account and everything in it from the database. Things you put in the Trash are deleted for good after 30 days.</p>`, 'Ask, and it’s yours. Or gone.')}
-  ${clause(6, 'contact', 'Talking to us', `<p>Write to ${contact()}. Kai’s Flow is made by one person, Kai, and he reads every message. If this policy changes, the date at the top changes and Field notes says what moved.</p>`, 'A person answers.')}
+    <p>To work at all, a few services see a little. Cloudflare serves the app and this site, and sees your IP address like any web host. Supabase sends the emails that confirm your address or reset your password. If you turn notifications on in a browser or the Windows app, they travel through that browser’s push service (Google, Mozilla, Microsoft or Apple), encrypted so it can’t read them — and with “Show task names on the lock screen” off, they carry no task names at all; the Android app schedules its reminders on the phone itself. The apps and this site ask GitHub for the newest version number, and the Windows and Android apps download their updates from there. This site loads its fonts from Google Fonts.</p>`, 'Nothing to sell.')}
+  ${clause(5, 'leaving', 'Taking it with you, or leaving', `<p>Settings → Your data → Export your data saves everything you’ve written, as plain files: all of it as JSON, your tasks as a spreadsheet (CSV), your calendar as .ics. Delete account, just below it, deletes your account and everything in it — photos included — at once and for good; the copies in the release backups (§1) are gone after 14 more releases. Things you put in the Trash are deleted for good after 30 days. Or write to us, and we’ll do either for you.</p>`, 'It’s yours to take. Or gone.')}
+  ${clause(6, 'contact', 'Talking to us', `<p>Write to ${contact()}. Kai’s Flow is made by one person, Kai, and he reads every message. If this policy changes, the date at the top changes, Field notes says what moved, and the app asks you to read and agree to the new version the next time you open it — with a notification too, if you’ve turned them on.</p>`, 'A person answers.')}
 </div></div></div>`,
 }
 
@@ -71,13 +81,13 @@ const terms = {
   description: 'The short terms for using Kai’s Flow: free for your own days, your content is yours, no warranty.',
   og: 'terms',
   body: `<div class="chapter"><div class="wrap"><div class="chapter-in" style="max-width:680px">
-  ${head2({ eyebrow: 'Terms · updated 4 Oct 2026', title: 'The short terms', lead: 'Five things, so it fits on one page.', h: 'h1', tone: 'faint' })}
+  ${head2({ eyebrow: `Terms of Use · updated ${legalDate('TERMS_VERSION')}`, title: 'The short terms', lead: 'Five things, so it fits on one page.', h: 'h1', tone: 'faint' })}
   <ol class="terms">
-    <li><div><h2>Using it</h2><p>Kai’s Flow is free to use for your own days. Please don’t use it to break the law, or to harm the service or other people.</p></div></li>
+    <li><div><h2>Using it</h2><p>Kai’s Flow is free to use for your own days. Creating an account means you agree to these terms and the <a href="/privacy/">privacy policy</a>. Please don’t use it to break the law, or to harm the service or other people.</p></div></li>
     <li><div><h2>Your content</h2><p>What you write is yours. We store it only to run the app for you, as the <a href="/privacy/">privacy policy</a> explains.</p></div></li>
     <li><div><h2>No warranty</h2><p>We look after it carefully, but it comes as it is. Keep your own copy of anything you can’t lose.</p></div></li>
-    <li><div><h2>Changes</h2><p>If these terms change, the date at the top changes and Field notes says so, before the new terms apply.</p></div></li>
-    <li><div><h2>Ending</h2><p>You can stop and have your account deleted any time. We may close accounts that abuse the service.</p></div></li>
+    <li><div><h2>Changes</h2><p>If these terms change, the date at the top changes, Field notes says so, and the app asks you to agree to the new version before you carry on. If you’d rather not, you can export your data and delete your account instead.</p></div></li>
+    <li><div><h2>Ending</h2><p>You can stop any time, and delete your account yourself in Settings → Your data. We may close accounts that abuse the service.</p></div></li>
   </ol>
   <p style="margin-top:40px;font-size:15px" class="muted">Questions: ${contact()}</p>
 </div></div></div>`,

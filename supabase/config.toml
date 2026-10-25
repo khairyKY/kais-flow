@@ -452,6 +452,10 @@ verify_jwt = true
 [functions.capture-image]
 verify_jwt = true
 
+[functions.delete-account]
+# Settings → Delete account: the signed-in user deletes their own account (docs/LEGAL.md).
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327
