@@ -140,7 +140,7 @@ async function viewOptions(page) {
   await sleep(300)
 }
 async function key(page, k) {
-  await page.mouse.click(5, 300) // off any field
+  await page.evaluate(() => (document.activeElement instanceof HTMLElement ? document.activeElement.blur() : undefined)) // off any field
   await page.keyboard.press(k)
   await sleep(900)
 }
