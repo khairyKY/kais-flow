@@ -459,7 +459,8 @@ for (const view of ['day', 'night', 'desktop']) {
     await page.getByLabel('Thing 3').fill('Gym')
     await page.getByLabel('Thing 3').blur()
     const chips = await page.locator('.fr-when').allInnerTexts()
-    check(`${name} the date parses into a chip under its line only`, JSON.stringify(chips.map((c) => c.toUpperCase().trim())) === JSON.stringify(['TOMORROW · 15:00']), JSON.stringify(chips))
+    // 12h clock since v1.4.0 (one-clock change): "3:00 PM", not "15:00".
+    check(`${name} the date parses into a chip under its line only`, JSON.stringify(chips.map((c) => c.toUpperCase().trim())) === JSON.stringify(['TOMORROW · 3:00 PM']), JSON.stringify(chips))
     check(`${name} Start enabled`, await start.isEnabled())
     await shot(page, name)
     await basics(env, view, name)
