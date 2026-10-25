@@ -23,7 +23,7 @@ import { dropSynced } from '../_shared/google.ts'
 import { userZone } from '../_shared/zone.ts'
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
 import { expandSeries } from '../_shared/series.ts'
-import { asUser, nextOccurrence, ruleBetween, sql, store } from '../mcp/store.ts'
+import { asUser, nextOccurrence, ruleBetween, sql, store, type Tx } from '../mcp/store.ts'
 import { TOOLS } from '../mcp/server.ts'
 import { runTool, type Scope, type ToolResult } from '../mcp/tools.ts'
 import { dayStart, snapshotText, systemPrompt } from './prompt.ts'
@@ -82,11 +82,12 @@ const resultText = (r: ToolResult) => r.content.map((c) => c.text).join('\n')
 /** This user's rows (RLS) in the tables a batch can change, as stored. ponytail: whole tables, read
  * twice per confirmed batch — exact and simple; narrow it to the touched ids if a big account makes
  * Confirm slow. */
-async function snapshot(tx: Parameters<Parameters<typeof sql.begin>[0]>[0]): Promise<Snapshot> {
+// Tx = postgres.TransactionSql (mcp/store): `Parameters<typeof sql.begin>` picks begin's (options, cb) overload under Deno.
+async function snapshot(tx: Tx): Promise<Snapshot> {
   const out: Snapshot = {}
   for (const table of UNDO_TABLES) {
     const rows = await tx`select t.id::text as id, to_jsonb(t) - 'user_id' - 'embedding' - 'search_tsv' as r from ${tx.unsafe(table)} t`
-    out[table] = new Map(rows.map((x) => [x.id as string, x.r as Record<string, unknown>]))
+    out[table] = new Map(rows.map((x: Record<string, unknown>) => [x.id as string, x.r as Record<string, unknown>]))
   }
   return out
 }
