@@ -1,39 +1,166 @@
-import { Suspense, lazy, useEffect, useState, type FormEvent } from 'react'
+import { Suspense, lazy, useEffect, useState, type CSSProperties, type FormEvent } from 'react'
+import type { Root } from 'react-dom/client'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { persistQueryClientRestore } from '@tanstack/query-persist-client-core'
+import { queryClient, idbPersister } from '../../lib/queryClient'
+import { AuthProvider, useAuth } from '../auth/AuthProvider'
+import { useAppZoneFromSettings } from '../../lib/settings'
 import { useTasks, completeTaskWithUndo } from '../tasks/api'
 import { todayListTasks } from '../tasks/grouping'
 import { useCalendarEvents } from '../calendar/api'
+import { blockHue } from '../calendar/blockHue'
 import { timeText } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useRoutines } from '../routines/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { useDomains } from '../domains/api'
-import { parseCommand } from '../command-bar/parseCommand'
-import { captureTyped } from '../command-bar/quickAdd'
 import { useStarEvents } from '../today/api'
 import { legacyGoalId } from '../today/goalStore'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { dayTop3 } from '../today/top3Order'
-import { isInProgress, upNextEvents } from '../today/upNext'
 import { dayOfJourney } from '../today/todayLayout'
 import { Checkbox } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { ToastHost } from '../../components/ToastHost'
-import { useFocusMirror } from './focusChannel'
-import { focusTarget } from './trayState'
+import { inRound, mmss, useFocusMirror } from './focusMirror'
+import { focusTarget, minutesText, trayNow, type TrayNow } from './trayState'
 import { native } from './native'
-import './tray.css'
 import { appZone, useAppZone } from '../../lib/appZone'
+import type { CalendarEvent, Domain, Project, Task } from '../../lib/types'
 
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
+// The capture line's reader (chrono and the quick-add rules) — the heaviest part, loaded when it's used.
+const reader = () => Promise.all([import('../command-bar/parseCommand'), import('../command-bar/quickAdd')])
 
-// The tray flyout (Tray and Notifications.dc.html 12b day · nothing running, 12c focus running ·
-// night): a 340 × 460 borderless window above the K (src-tauri tray.rs), on this route of the same
-// app. The same reads as Today — the date and Day N, Now/Next, the Top 3 — a capture field, and
-// the focus timer, which lives in the main window and is mirrored here (./focusChannel).
+// Popover B (Calendar extras options.html §5, "Today in a glance"; Kai's pick): a 340 × 460 borderless
+// window above the K (src-tauri tray.rs) on tray.html. The date and Day N, the Now card (§4, card A) or
+// the running focus round, the Top 3 with the goal's gold star, a capture line, focus, Open and Settings.
+// The focus timer lives in the main window and is mirrored here (./focusMirror). Writes go through the
+// outbox, as everywhere; the read cache is the app's own, restored from IndexedDB (read, never written
+// from here, so the main window's fuller copy isn't thinned to what this window reads).
 
-function mmss(seconds: number): string {
-  const s = Math.max(0, Math.round(seconds))
-  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
+/** tray.html without ?menu (./entry): the app's cached day first, then the account. */
+export async function mountPopover(root: Root): Promise<void> {
+  try {
+    await persistQueryClientRestore({ queryClient, persister: idbPersister })
+  } catch {
+    /* no cache yet: it loads */
+  }
+  root.render(
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <Popover />
+      </AuthProvider>
+    </QueryClientProvider>,
+  )
+}
+
+function Popover() {
+  const { session, loading } = useAuth()
+  // Shown again (it's hidden, not closed): what changed meanwhile, in the main window or elsewhere.
+  useEffect(() => {
+    const fresh = () => void queryClient.refetchQueries({ type: 'active', stale: true })
+    window.addEventListener('focus', fresh)
+    return () => window.removeEventListener('focus', fresh)
+  }, [])
+  if (loading) return null
+  return session ? <SignedIn /> : <SignedOut />
+}
+
+function SignedIn() {
+  useAppZoneFromSettings()
+  return <TrayFlyout />
+}
+
+/** Esc hides the window (a click away is its blur, tray.rs). */
+function useEscHides(on: boolean): void {
+  useEffect(() => {
+    if (!on) return
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') void native('tray_hide')
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [on])
+}
+
+const open = (route?: string) => void native('tray_open', { route: route ?? null })
+
+function dateLine(now: Date): string {
+  return now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: appZone() }).replace(/^(\w+)/, '$1,')
+}
+
+const OpenGlyph = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M14 5h5v5M19 5l-8 8M17 14v5H5V7h5" />
+  </svg>
+)
+
+/** The app is genuinely signed out (this window shares its session, so it's the app's state too). */
+function SignedOut() {
+  const now = useMinuteNow()
+  useEscHides(true)
+  return (
+    <div className="kf-tray">
+      <header className="kf-tray-head">
+        <span className="kf-tray-date">{dateLine(now)}</span>
+      </header>
+      <div className="kf-tray-out">
+        <span className="kf-tray-k" aria-hidden="true">K</span>
+        <p className="kf-tray-out-title">Sign in in Kai’s Flow</p>
+        <p className="kf-tray-out-text">Your day shows here once you’re signed in.</p>
+        <button type="button" className="kf-tray-btn is-cta" onClick={() => open()}>
+          Open Kai’s Flow
+          <OpenGlyph />
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** The block's accent, as the calendar draws it (its colour, else its project's or domain's). */
+function hueOf(e: CalendarEvent, task: Task | undefined, projects: Project[], domains: Domain[]): CSSProperties {
+  const project = projects.find((p) => p.id === (task?.project_id ?? e.project_id))
+  const color = e.color ?? project?.color ?? (project && domains.find((d) => d.id === project.domain_id)?.color) ?? null
+  const h = color ? blockHue(color) : e.task_id ? { c: 'var(--acc-lavender)', ink: 'var(--acc-lavender-text)' } : { c: 'var(--acc-blossom)', ink: 'var(--acc-blossom-text)' }
+  return { '--c': h.c, '--ct': h.ink } as CSSProperties
+}
+
+/** §4 card A: Up next / Ongoing, the block's mark (its check for a task, a ring for an event), a bar, the times. */
+function NowCard({ n, taskById, projects, domains }: { n: TrayNow<CalendarEvent>; taskById: Map<string, Task>; projects: Project[]; domains: Domain[] }) {
+  if (n.kind === 'none') return <div className="kf-tray-quiet">Nothing else today</div>
+  const e = n.event
+  const task = e.task_id ? taskById.get(e.task_id) : undefined
+  const mark = task ? <Checkbox checked={false} label={task.title} size={16} onChange={(on) => on && completeTaskWithUndo(task)} /> : <span className="kf-tray-ring-mark" aria-hidden="true" />
+  if (n.kind === 'far')
+    return (
+      <div className="kf-tray-quiet" style={hueOf(e, task, projects, domains)}>
+        Next ·{mark}
+        <bdi dir="auto" className="kf-tray-quiet-t">{e.title}</bdi>
+        <span className="kf-tray-quiet-tm">· {timeText(new Date(e.starts_at))}</span>
+      </div>
+    )
+  const label = n.kind === 'on' ? `Ongoing${n.others ? ` · ${n.others + 1}` : ''}` : 'Up next'
+  const countdown = n.kind === 'on' ? `${minutesText(n.leftMin)} left` : `in ${minutesText(n.inMin)}`
+  return (
+    <div className="kf-tray-now kf-tray-nc" style={hueOf(e, task, projects, domains)}>
+      <div className="kf-tray-nc-h">
+        {label}
+        <span className="kf-tray-nc-cd">{countdown}</span>
+      </div>
+      <div className="kf-tray-nc-t">
+        {mark}
+        <bdi dir="auto" className="kf-tray-title">{e.title}</bdi>
+      </div>
+      <div className="kf-tray-nc-bar">
+        <i style={{ width: `${n.kind === 'on' ? n.pct : 0}%` }} />
+      </div>
+      <div className="kf-tray-nc-tms">
+        <span>{timeText(new Date(e.starts_at))}</span>
+        <span>{timeText(new Date(e.ends_at))}</span>
+      </div>
+    </div>
+  )
 }
 
 export function TrayFlyout() {
@@ -48,22 +175,7 @@ export function TrayFlyout() {
   const [focus, sendFocus] = useFocusMirror()
   const [text, setText] = useState('')
   const [voiceOpen, setVoiceOpen] = useState(false)
-
-  // Esc closes (click-away is the window's blur, tray.rs). The theme follows the main window's.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !voiceOpen) void native('tray_hide')
-    }
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'kf_theme') document.documentElement.dataset.theme = e.newValue === 'night' ? 'night' : 'day'
-    }
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('storage', onStorage)
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('storage', onStorage)
-    }
-  }, [voiceOpen])
+  useEscHides(!voiceOpen) // the voice sheet's own Esc closes it first
 
   // Today's Top 3 in its order, goal first, finished picks included (Today's own rule, ../today/top3Order).
   const visible = todayListTasks(tasks, now)
@@ -75,10 +187,9 @@ export function TrayFlyout() {
     now,
   )
   const taskById = new Map(tasks.map((t) => [t.id, t] as const))
-  const next = upNextEvents(events, now).find((e) => !(e.task_id && taskById.get(e.task_id)?.status === 'done')) ?? null
-  const nextTask = next?.task_id ? taskById.get(next.task_id) : undefined
+  const nowCard = trayNow(events, (id) => taskById.get(id)?.status === 'done', now)
 
-  const inRound = !!focus && (focus.isRunning || (focus.mode === 'pomodoro' && focus.secondsLeft < focus.roundMin * 60))
+  const running = inRound(focus)
   const focusTask = focus?.taskId ? taskById.get(focus.taskId) : undefined
   const onBreak = focus?.mode === 'break' || focus?.mode === 'garden'
   const done = focus && !onBreak ? 1 - focus.secondsLeft / Math.max(1, focus.roundMin * 60) : 0
@@ -88,28 +199,27 @@ export function TrayFlyout() {
     sendFocus({ type: 'start', task: target && { id: target.id, project_id: target.project_id } })
   }
 
-  function capture(e: FormEvent) {
+  async function capture(e: FormEvent) {
     e.preventDefault()
     const t = text.trim()
     if (!t) return
     setText('')
     // P7e A21: the bar's own rule — read here at once (dates on the user's clock, #project, *labels,
     // !, 30m, every …, //, a link), a typed time makes a block, a plain line goes to the Inbox, and
-    // the AI fills the rest after. It used to wait on the AI and skip the local read.
+    // the AI fills the rest after.
+    const [{ parseCommand }, { captureTyped }] = await reader()
     captureTyped(parseCommand(t, domains, projects, { zone: 'cairo' }), t)
   }
-
-  const open = (route?: string) => void native('tray_open', { route: route ?? null })
 
   return (
     <div className="kf-tray">
       <header className="kf-tray-head">
-        <span className="kf-tray-date">{now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', timeZone: appZone() }).replace(/^(\w+)/, '$1,')}</span>
+        <span className="kf-tray-date">{dateLine(now)}</span>
         <span className="kf-tray-meta">Day {day}</span>
       </header>
 
-      {inRound ? (
-        <div className="kf-tray-now">
+      {running ? (
+        <div className="kf-tray-now kf-tray-fb">
           <span className="kf-tray-ring" style={{ background: `conic-gradient(var(--acc-sage-text) 0 ${Math.round(done * 100)}%, var(--line-card) 0 100%)` }}>
             <span>
               <Icon name="focus-ring" size={18} />
@@ -122,21 +232,9 @@ export function TrayFlyout() {
             <div className="kf-tray-title">{onBreak ? 'Rest your eyes' : (focusTask?.title ?? 'A round of focus')}</div>
           </div>
         </div>
-      ) : next ? (
-        <div className="kf-tray-now">
-          <div className="kf-tray-now-text">
-            <span className="kf-tray-meta" style={{ color: 'var(--acc-lavender-deep)' }}>
-              {isInProgress(next.starts_at, next.ends_at, now) ? 'Now' : `Next · ${timeText(new Date(next.starts_at))}`}
-            </span>
-            <div className="kf-tray-title">{next.title}</div>
-          </div>
-          {nextTask && (
-            <button type="button" className="kf-tray-check" aria-label={`Complete "${nextTask.title}"`} onClick={() => completeTaskWithUndo(nextTask)}>
-              <Icon name="check" size={18} />
-            </button>
-          )}
-        </div>
-      ) : null}
+      ) : (
+        <NowCard n={nowCard} taskById={taskById} projects={projects} domains={domains} />
+      )}
 
       <div className="kf-tray-label">Top 3</div>
       <div className="kf-tray-rows">
@@ -147,39 +245,36 @@ export function TrayFlyout() {
             <button type="button" className="kf-tray-row-title" onClick={() => open(`/tasks?focus=${t.id}`)}>
               {t.title}
             </button>
-            <span className="kf-tray-star" aria-hidden="true">
-              <Icon name="star" size={18} fill="currentColor" />
-            </span>
+            {t.id === goalId && (
+              <span className="kf-tray-star" title="Goal of the day">
+                <Icon name="star" size={16} fill="currentColor" />
+              </span>
+            )}
           </div>
         ))}
       </div>
 
-      <form className="kf-tray-capture" onSubmit={capture}>
-        <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Write it down…" aria-label="Quick capture" />
+      <form className="kf-tray-capture" onSubmit={(e) => void capture(e)}>
+        <input value={text} onChange={(e) => setText(e.target.value)} onFocus={() => void reader().catch(() => {})} placeholder="Write it down…" aria-label="Quick capture" />
         <button type="button" aria-label="Voice capture" onClick={() => setVoiceOpen(true)}>
           <Icon name="mic" size={18} />
         </button>
       </form>
 
       <div className="kf-tray-focus">
-        {inRound ? (
+        {running ? (
           <>
             <button type="button" className="kf-tray-btn" onClick={() => sendFocus({ type: 'toggle' })}>
-              {focus!.isRunning ? (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" /><rect x="14" y="5" width="4" height="14" rx="1" /></svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-              )}
               {focus!.isRunning ? 'Pause' : 'Resume'}
             </button>
             <button type="button" className="kf-tray-btn" onClick={() => sendFocus({ type: 'stop' })}>
-              <Icon name="stop" size={16} />
+              <Icon name="stop" size={14} />
               Stop
             </button>
           </>
         ) : (
           <button type="button" className="kf-tray-btn is-cta" onClick={startFocus}>
-            <Icon name="focus-ring" size={18} />
+            <Icon name="focus-ring" size={16} />
             Start focus · {focus?.roundMin ?? 25}:00
           </button>
         )}
@@ -188,7 +283,7 @@ export function TrayFlyout() {
       <footer className="kf-tray-foot">
         <button type="button" className="kf-tray-open" onClick={() => open()}>
           Open Kai’s Flow
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M17 14v5H5V7h5" /></svg>
+          <OpenGlyph />
         </button>
         <button type="button" className="kf-tray-icon" aria-label="Settings" onClick={() => open('/settings')}>
           <Icon name="settings" size={18} />

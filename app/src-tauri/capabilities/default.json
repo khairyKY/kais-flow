@@ -1,8 +1,8 @@
 {
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
-  "description": "The app window and the tray flyout (the same app on /tray): core defaults, plus opening http(s) links in the system browser (lib/platform.ts openExternal). Updates in place (lib/appUpdate.ts installUpdate). The web app talks to Supabase over HTTPS itself; the tray commands are the app's own (src/tray.rs).",
-  "windows": ["main", "tray"],
+  "description": "The app window and the tray's two windows (the same app on tray.html: the flyout, and the right-click menu on tray.html?menu): core defaults, plus opening http(s) links in the system browser (lib/platform.ts openExternal). Updates in place (lib/appUpdate.ts installUpdate). The web app talks to Supabase over HTTPS itself; the tray commands are the app's own (src/tray.rs).",
+  "windows": ["main", "tray", "traymenu"],
   "permissions": [
     "core:default",
     "updater:default",
