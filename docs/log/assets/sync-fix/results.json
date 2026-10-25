@@ -1,0 +1,172 @@
+[
+  {
+    "name": "a1 grid quick create + 45m: the task AND its block reach the server",
+    "ok": true,
+    "detail": "[\"Gym\",[\"2026-10-21T12:00:00.000Z\",45]]"
+  },
+  {
+    "name": "a1: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "a2 the rail's Quick add: the task reaches the server",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a2: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "a3 Duplicate a task's block: the copy AND its block (11:00–11:15) reach the server",
+    "ok": true,
+    "detail": "[\"80073218-a369-4808-a2b5-398804f93505\",\"2026-10-21T08:00:00.000Z\"]"
+  },
+  {
+    "name": "a3: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "a4 Duplicate a parent's block: the copy, its 2 subtasks and its block all reach the server",
+    "ok": true,
+    "detail": "[\"e34b242e-4c25-41be-bf80-5504050a8dfa\",[\"Pull last quarter\",\"Draft the numbers\"],\"2026-10-21T14:00:00.000Z\"]"
+  },
+  {
+    "name": "a4: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "a6 ticking a slot's task: done on the server",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a6: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "a5 a multi-move lands on the server: both blocks moved by the same amount",
+    "ok": true,
+    "detail": "[\"2026-10-21T10:15:00.000Z\",\"2026-10-21T09:15:00.000Z\"]"
+  },
+  {
+    "name": "a5: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "a7 ⌘K \"call the dentist tomorrow 3pm\": the task AND its block reach the server",
+    "ok": true,
+    "detail": "[\"2026-10-22T12:00:00.000Z\",\"2026-10-22T12:00:00.000Z\"]"
+  },
+  {
+    "name": "a7: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "a· no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 quick add with a time: the task (in Forecasting) AND its block reach the server",
+    "ok": true,
+    "detail": "[\"b0000000-0000-4000-8000-000000000001\",\"2026-10-22T12:00:00.000Z\"]"
+  },
+  {
+    "name": "b1: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "b· no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 Duplicate a row: the copy reaches the server",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "c2 Snooze → Later today: snoozed_until on the server",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "c3 Complete: done on the server",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c3: the server refused nothing, no dead letter",
+    "ok": true,
+    "detail": "[] dead=[]"
+  },
+  {
+    "name": "c· no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u1 the toast says WHAT failed: \"Couldn't save: task 'Stretch'\"",
+    "ok": true,
+    "detail": "Couldn't save: task 'Stretch'. Set aside so the rest sync on. | Try again | Discard"
+  },
+  {
+    "name": "u1 …and offers Try again and Discard",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "u1 …no raw server words in it",
+    "ok": true,
+    "detail": "Couldn't save: task 'Stretch'. Set aside so the rest sync on.\nTry again\nDiscard"
+  },
+  {
+    "name": "u2 the dead letter keeps the server's code and message",
+    "ok": true,
+    "detail": "[[\"tasks\",\"23514\",\"new row for relation \\\"tasks\\\" violates check constraint \\\"harness_says_no\\\"\"]]"
+  },
+  {
+    "name": "u3 the popover names it, with Try again and Discard",
+    "ok": true,
+    "detail": "Not saved ⚠ · 1 change / Task / 'Stretch' · changed / Try again / Discard / Set aside so everything else syncs on — Try again, or Discard to let it go"
+  },
+  {
+    "name": "u4 Try again sends it again; it lands (snoozed on the server), the dead letter is gone",
+    "ok": true,
+    "detail": "[\"2026-10-21T08:00:04.463Z\",0]"
+  },
+  {
+    "name": "u4 …and the row leaves the popover (its last row: the popover closes)",
+    "ok": true,
+    "detail": "closed"
+  },
+  {
+    "name": "u5 Discard lets it go: no dead letter, nothing sent again, the server row as it was",
+    "ok": true,
+    "detail": "[0,0]"
+  },
+  {
+    "name": "u· no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

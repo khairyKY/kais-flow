@@ -6,6 +6,8 @@ export interface Toast {
   onUndo?: () => void
   /** Non-undo action rendered like the Undo button, e.g. { label: 'Jump there →', run: () => navigate(...) } */
   action?: { label: string; run: () => void }
+  /** A second one beside it, e.g. a parked write's Try again · Discard (lib/outbox). */
+  secondary?: { label: string; run: () => void }
 }
 
 interface ToastState {

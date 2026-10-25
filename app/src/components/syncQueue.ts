@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { get } from 'idb-keyval'
-import { DEAD_KEY, OUTBOX_KEY, unsyncedChanges, type OutboxEntry } from '../lib/outbox'
+import { CHANGE_KIND as KIND, changeLabel as labelOf, DEAD_KEY, OUTBOX_KEY, unsyncedChanges, type OutboxEntry } from '../lib/outbox'
 import { useOnline } from '../lib/useOnline'
 
 // Deliberately NOT importing features/activity/describe.ts: this runs in the shell's initial
@@ -16,29 +16,8 @@ import { useOnline } from '../lib/useOnline'
 // verdict) — those. The paired activity row only lends its verb ("completed", "captured").
 // (lib/outbox.ts belongs to another worker; if it ever exports its filter, use it here.)
 
-/** Human names for every table the app writes through the outbox. Never the table name itself. */
-const KIND: Record<string, string> = {
-  tasks: 'Task',
-  inbox_items: 'Inbox',
-  journal_entries: 'Journal',
-  calendar_events: 'Event',
-  routines: 'Routine',
-  routine_completions: 'Routine',
-  people: 'Person',
-  interactions: 'Person',
-  projects: 'Project',
-  areas: 'Area',
-  domains: 'Domain',
-  time_entries: 'Focus',
-  app_settings: 'Settings',
-  push_subscriptions: 'Settings',
-  resurfaced_log: 'Resurfaced',
-  books: 'Library',
-  notes: 'Library',
-  quotes: 'Library',
-  commentary: 'Library',
-  smart_lists: 'Smart list',
-}
+// The table → kind names (KIND) and a change's one-line title (labelOf) live in lib/outbox, which
+// names a parked write's toast with them too.
 
 /** Event family (the part before the dot) → kind, for activity-only rows. */
 const FAMILY_KIND: Record<string, string> = {
@@ -72,6 +51,8 @@ export interface SyncRow {
   /** e.g. `'buy milk' · completed`, or `step completed` for an activity-only row. */
   text: string
   queuedAt: number
+  /** The queued write itself (the not-saved list's Try again / Discard act on it). */
+  entry: OutboxEntry
 }
 
 /** The fields of a queued activity_log row this popover reads. */
@@ -92,23 +73,16 @@ function verbOf(eventType: string): string {
   return suffix.replace(/_/g, ' ')
 }
 
-function labelOf(e: OutboxEntry): string {
-  const p = e.payload as Record<string, unknown>
-  // Journal bodies stay out of the chrome — the row says "Journal · added", like the export.
-  if (e.table === 'journal_entries') return ''
-  const v = p.title ?? p.raw_text ?? p.name ?? p.summary
-  return typeof v === 'string' ? v.replace(/\s+/g, ' ').trim() : ''
-}
-
 /** `saved` is the verb for a change with no activity row of its own; the not-saved list passes "changed". */
 export function syncRows(queue: OutboxEntry[], saved = 'saved'): SyncRow[] {
   const activity = queue.filter((e) => e.table === 'activity_log')
-  const changes = queue.filter((e) => e.table !== 'activity_log')
+  // One row per changed row: an earlier write still owed before a newer one is the same change (the newest speaks).
+  const changes = [...new Map(queue.filter((e) => e.table !== 'activity_log').map((e) => [`${e.table}-${e.id}`, e])).values()]
 
   if (changes.length === 0) {
     return activity.map((e) => {
       const { type } = eventOf(e)
-      return { key: `activity_log-${e.id}`, kind: FAMILY_KIND[type.split('.')[0]] ?? 'Change', text: verbOf(type) || saved, queuedAt: e.queuedAt }
+      return { key: `activity_log-${e.id}`, kind: FAMILY_KIND[type.split('.')[0]] ?? 'Change', text: verbOf(type) || saved, queuedAt: e.queuedAt, entry: e }
     })
   }
 
@@ -128,6 +102,7 @@ export function syncRows(queue: OutboxEntry[], saved = 'saved'): SyncRow[] {
       kind: KIND[e.table] ?? 'Change',
       text: label ? `'${label}' · ${verb}` : verb,
       queuedAt: e.queuedAt,
+      entry: e,
     }
   })
 }
