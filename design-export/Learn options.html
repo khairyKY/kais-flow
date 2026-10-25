@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Learn options</title>
+<!-- Kai's Flow · how a new person learns the app and the way of working (23 Oct 2026, Kai: "the onboarding
+     needs a more in-depth guide because there is a lot of details to the app, also how do we teach people the
+     way of productivity and the best way to use the app"). Three sections: onboarding, teaching the method,
+     in-depth reference (with the typing-shortcuts card and live token hints, queue item 9). Plain HTML, open
+     it straight from disk; ?night opens it in Night Garden. Tokens: ds-bound/styles.css (the Bound Journal
+     set); no colour value is changed here. Looks only: nothing on this page is in the app yet. The method's
+     words come from docs/METHOD.md. -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:40px 32px 120px}
+@media (max-width:767px){.wrap{padding:24px 16px 80px}}
+h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:13px;color:var(--ink-faint)}
+.lede{margin:12px 0 0;max-width:820px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg .btn{height:30px;border:none;background:none;padding:0 13px}
+.seg .btn[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.group{margin-top:72px}
+.group>h2{margin:0;font-family:var(--font-display);font-size:32px;font-weight:600;line-height:1.15}
+.group>.say{margin:6px 0 0;max-width:820px;color:var(--ink-muted)}
+.sub-h{margin:56px 0 0;font-family:var(--font-display);font-size:26px;font-weight:600}
+.look{margin-top:36px;padding-top:24px;border-top:1px solid var(--line-card)}
+.look h3{margin:0;font-family:var(--font-display);font-size:24px;font-weight:600;line-height:1.2}
+.look h3 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;margin-right:10px;padding:0 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 16px/1 var(--font-ui);vertical-align:3px}
+.look.picked h3::after{content:'Your pick';margin-left:12px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 12px/1.4 var(--font-ui);vertical-align:5px}
+.look .say{margin:6px 0 0;max-width:820px;font-size:15.5px;color:var(--ink-body)}
+.look .cost{margin:4px 0 0;max-width:820px;font-size:14px;color:var(--ink-muted)}
+.look .cost b{display:inline-block;min-width:22px;margin-right:6px;padding:1px 8px;border-radius:var(--radius-pill);background:var(--paper-bone);border:1px solid var(--line-control);color:var(--ink-body);font-weight:600;text-align:center}
+.shots{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin-top:18px;max-width:100%;overflow-x:auto;padding-bottom:4px}
+figure{margin:0;flex:none;width:min-content}
+figcaption{margin-top:8px;max-width:760px;font-size:13px;color:var(--ink-muted)}
+.pick-row{margin-top:16px}
+code{font-family:var(--font-ui);font-weight:600;font-size:.95em;padding:1px 5px;border-radius:5px;background:var(--paper-bone);color:var(--ink-body)}
+.notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(380px,100%),1fr));gap:20px 40px;margin-top:32px}
+.notes h2{margin:0 0 6px;font-family:var(--font-display);font-size:22px;font-weight:600}
+.notes ul{margin:6px 0 0;padding-left:20px;color:var(--ink-muted);font-size:14.5px}
+.notes li{margin:4px 0}
+.notes b{color:var(--ink-body);font-weight:600}
+.mine{margin-top:28px;padding:14px 18px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);max-width:900px;font-size:14.5px}
+.mine b{font-weight:600}
+
+/* ══ the drawings: shared parts (the app at 100%) ══ */
+.dk,.ph,.cmd{position:relative;overflow:hidden;border:1px solid var(--line-card);background:var(--paper-linen);color:var(--ink-body);line-height:1.35;text-align:left}
+[data-theme="night"] .dk,[data-theme="night"] .ph,[data-theme="night"] .cmd{border-color:var(--line-solid)}
+.dk{width:760px;height:470px;display:flex;border-radius:14px;font-size:13.5px}
+.ph{width:300px;height:620px;display:flex;flex-direction:column;border-radius:32px;font-size:14px}
+i.ic{display:inline-flex;font-style:normal;flex:none;line-height:0}
+.flw{display:block;object-fit:contain;filter:var(--shadow-drop-sm)}
+
+/* desktop sidebar (sidebar A, as shipped in v1.4.0) */
+.sd{width:176px;flex:none;display:flex;flex-direction:column;padding:14px 10px 10px;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar)}
+.sd .br{display:flex;align-items:center;gap:8px;padding:0 6px 10px;font-family:var(--font-display);font-size:17px;font-weight:600}
+.sd .av{width:24px;height:24px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line-card);border-radius:7px;background:var(--paper-bone);font-size:13px}
+.sd .pl{display:flex;align-items:center;gap:8px;margin:0 2px 6px;padding:6px 10px;border:1px solid var(--line-card);border-radius:12px;background:var(--paper-bone);font-size:12.5px;color:var(--ink-muted)}
+.sd .lb{padding:8px 8px 3px;font-size:11.5px;color:var(--ink-faint)}
+.sd .it{display:flex;align-items:center;gap:9px;padding:5px 8px;border:1px solid transparent;border-radius:10px;font-size:13px;color:var(--ink-muted)}
+.sd .it.on{background:var(--paper-parchment);border-color:var(--line-card);color:var(--ink-body);font-weight:600}
+.sd .it .n{margin-left:auto;font-size:11.5px;color:var(--acc-terra-ink)}
+.sd .ft{margin-top:auto;display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid var(--line-sidebar);color:var(--ink-muted)}
+.sd .capb{display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:10px;background:var(--paper-bone);color:var(--ink-body);font-size:12.5px;font-weight:600}
+.mn{flex:1;min-width:0;position:relative;overflow:hidden;padding:20px 26px}
+
+/* phone */
+.sb{height:30px;flex:none;display:flex;align-items:center;justify-content:space-between;padding:0 22px;font-size:12px;font-weight:600}
+.ct{flex:1;min-height:0;position:relative;overflow:hidden;padding:4px 16px 0}
+.tb{flex:none;height:62px;display:flex;align-items:center;justify-content:space-around;border-top:1px solid var(--line-card);background:var(--paper-linen);padding:0 4px}
+.tb span{display:flex;flex-direction:column;align-items:center;gap:2px;width:54px;padding:4px 0;border-radius:14px;font-size:10.5px;color:var(--ink-muted)}
+.tb span.on{background:var(--tab-active-bg);color:var(--ink-body);font-weight:600}
+.tb .cap{width:48px;height:48px;padding:0;justify-content:center;border-radius:50%;background:var(--acc-terra);color:var(--on-terra);box-shadow:var(--shadow-capture)}
+.pt{display:flex;align-items:center;gap:10px}
+.pt .h{flex:1;min-width:0;font-family:var(--font-display);font-size:23px;font-weight:500;letter-spacing:var(--ls-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pt i{color:var(--ink-muted)}
+.dl{display:flex;align-items:center;gap:6px;margin-top:4px;font-size:12.5px;color:var(--ink-muted)}
+
+/* type, cards, rows */
+.hpg{font-family:var(--font-display);font-weight:500;font-size:28px;line-height:1.1;letter-spacing:var(--ls-display)}
+.eb{font-size:11.5px;font-weight:600;letter-spacing:var(--ls-eyebrow);text-transform:uppercase;color:var(--ink-faint)}
+.sl{display:flex;justify-content:space-between;align-items:baseline;margin:14px 0 6px;font-size:var(--fs-section);font-weight:600}
+.sl small{font-weight:400;font-size:12px;color:var(--ink-faint)}
+.mt{font-size:12px;color:var(--ink-faint)}
+.mu{color:var(--ink-muted)}
+.hand{font-family:var(--font-hand);font-size:18px;line-height:1.15;color:var(--ink-hand)}
+.card{background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:var(--radius-card);padding:12px 14px}
+.row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line-card)}
+.row .tt{flex:1;min-width:0}
+.row .tt small{display:block;font-size:11.5px;color:var(--ink-faint)}
+.cb{width:18px;height:18px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--check-border);border-radius:var(--radius-check);background:var(--check-bg);color:var(--check-mark)}
+.cb.on{background:var(--check-fill);border-color:transparent}
+.cb.sm{width:15px;height:15px;border-radius:5px}
+.st{color:var(--star-empty)}
+.st.on{color:var(--star-on)}
+.done-t{text-decoration:line-through;text-decoration-color:var(--ink-hairline);color:var(--ink-faint)}
+.goal{position:relative;padding:18px 14px 12px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:var(--radius-page);box-shadow:var(--shadow-goal);transform:rotate(var(--tilt-neg-sm))}
+.goal .tape{position:absolute;top:-8px;left:50%;width:70px;height:15px;margin-left:-35px;background:color-mix(in srgb,var(--acc-gold-warm) 42%,transparent);transform:rotate(-2deg)}
+.goal .gt{display:flex;align-items:flex-start;gap:10px;margin-top:8px;font-family:var(--font-display);font-size:17px;font-weight:600;line-height:1.2}
+.stamp{display:inline-block;padding:3px 7px;background:var(--acc-gold);color:var(--paper-goal);font-family:var(--font-stamp);font-size:10px;letter-spacing:var(--ls-stamp);text-transform:uppercase;line-height:1.3}
+.chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:var(--radius-pill);font-size:12px;line-height:1.35;white-space:nowrap}
+.c-date{background:var(--block-lavender);color:var(--acc-lavender-text)}
+.c-proj{background:var(--block-moss);color:var(--acc-sage-text)}
+.c-dur{background:var(--block-buttercream);color:var(--acc-buttercream-text)}
+.c-pri{background:var(--block-terra);color:var(--acc-terra-ink)}
+.c-in{background:var(--block-hydrangea);color:var(--acc-hydrangea-deep)}
+.c-bd{border:1px solid var(--line-control);color:var(--ink-body)}
+.c-new{background:var(--wash-terra);color:var(--acc-terra-ink);font-size:10.5px;padding:1px 7px}
+.b{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:40px;padding:0 16px;border-radius:12px;background:var(--paper-bone);color:var(--ink-body);font-size:13.5px;font-weight:600;white-space:nowrap}
+.b.p{background:var(--acc-terra-ink);color:var(--on-terra)}
+.b.t{background:var(--wash-terra);color:var(--acc-terra-ink)}
+.b.g{background:none;color:var(--acc-terra-ink);padding:0 6px}
+.b.s{height:32px;padding:0 12px;font-size:12.5px}
+.b.w{display:flex;width:100%}
+.kc{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 5px;border:1px solid var(--line-control);border-bottom-width:2px;border-radius:6px;background:var(--paper-parchment);color:var(--ink-body);font-size:11px;font-weight:600;line-height:1}
+.dots{display:inline-flex;gap:5px;align-items:center}
+.dots i{width:7px;height:7px;border-radius:50%;background:var(--line-control)}
+.dots i.on{background:var(--acc-moss)}
+.dots i.now{background:var(--acc-terra);width:18px;border-radius:4px}
+.prog{height:5px;border-radius:3px;background:var(--line-card);overflow:hidden}
+.prog i{display:block;height:100%;background:var(--acc-moss);border-radius:3px}
+.tip{display:flex;align-items:flex-start;gap:10px;padding:10px 10px 10px 12px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:var(--radius-input);box-shadow:var(--shadow-popover)}
+.tip img{width:26px;height:30px;flex:none;object-fit:contain}
+.tip .tl{flex:1;min-width:0;font-size:13px}
+.tip .tl b{display:block;font-weight:600;font-size:13.5px}
+.tip .x{color:var(--ink-muted)}
+.now{display:flex;align-items:center;gap:12px}
+.ring{width:40px;height:40px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:3px solid var(--acc-moss);border-right-color:var(--line-card);border-bottom-color:var(--line-card);border-radius:50%;font-size:11.5px;color:var(--acc-sage-text)}
+.now small{display:block;font-size:11.5px;color:var(--acc-sage-text)}
+.tgl{width:34px;height:20px;flex:none;border-radius:10px;background:var(--acc-moss);position:relative}
+.tgl::after{content:'';position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:var(--paper-parchment)}
+.time{padding:5px 10px;border:1px solid var(--line-control);border-radius:10px;background:var(--paper-parchment);font-variant-numeric:tabular-nums;font-weight:600;font-size:13px}
+
+/* first-run setup frame (no sidebar), the onboarding page's own shell */
+.su{flex-direction:column}
+.su-top{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line-card)}
+.su-top .brand{font-family:var(--font-display);font-weight:600;font-size:16px}
+.stp{display:flex;gap:4px;margin:0 auto}
+.stp span{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--radius-pill);font-size:11.5px;color:var(--ink-faint)}
+.stp span.ok{color:var(--ink-muted)}
+.stp span.ok::before{content:'✓';color:var(--acc-moss);font-weight:700}
+.stp span.now{background:var(--sel-bg);color:var(--sel-ink);font-weight:600}
+.su-body{flex:1;min-height:0;display:flex;gap:26px;padding:18px 24px}
+.su-foot{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-top:1px solid var(--line-card)}
+.q{font-family:var(--font-display);font-size:23px;font-weight:500;line-height:1.15;letter-spacing:var(--ls-display)}
+.qs{margin:6px 0 0;color:var(--ink-muted);font-size:13px}
+
+/* a day column (1A) */
+.dcol{position:relative;flex:1;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);overflow:hidden}
+.dcol .dh{height:34px;display:flex;align-items:center;gap:6px;padding:0 12px 0 54px;border-bottom:1.5px solid var(--line-solid);background:var(--paper-bone);font-size:12.5px;color:var(--ink-muted)}
+.dcol .dh b{font-family:var(--font-display);font-size:16px;color:var(--acc-lavender-text)}
+.dcol .grid{position:absolute;left:0;right:0;top:35px;bottom:0}
+.dcol .hr{position:absolute;left:46px;right:0;border-top:1px solid var(--line-card)}
+.dcol .hr b{position:absolute;right:100%;top:3px;padding-right:8px;font-weight:400;font-size:11.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+.blk{position:absolute;left:52px;right:8px;padding:4px 8px;border-radius:var(--radius-block);font-size:12px;overflow:hidden;line-height:1.25}
+.blk small{display:block;font-size:10.5px;opacity:.8}
+.blk.ev{background:color-mix(in srgb,var(--acc-blossom) 24%,transparent);border:1px solid color-mix(in srgb,var(--acc-blossom) 45%,transparent);color:var(--ink-body)}
+.blk.gs{background:color-mix(in srgb,var(--acc-hydrangea) 18%,transparent);border:1px dashed color-mix(in srgb,var(--acc-hydrangea) 60%,transparent);color:var(--ink-body)}
+.blk.gh{background:var(--paper-goal);border:1.5px dashed var(--acc-gold);box-shadow:var(--shadow-popover);transform:rotate(-1.2deg);font-weight:600}
+.blk.gh small{color:var(--acc-gold);opacity:1;font-weight:400}
+.ptr{position:absolute;z-index:6;pointer-events:none}
+
+/* path cards (1B) */
+.path{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment)}
+.path img{width:44px;height:48px;flex:none;object-fit:contain}
+.path b{display:block;font-size:15px;font-weight:600}
+.path small{display:block;font-size:12px;color:var(--ink-muted)}
+.path.sel{border:2px solid var(--sel-bg);padding:9px 11px}
+.path .ok{margin-left:auto;width:22px;height:22px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--sel-bg);color:var(--sel-ink)}
+.seed{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:13px}
+.seed .mt{margin-left:auto}
+.pg.tight .row{padding:5px 0}
+.pg{position:relative;background:var(--bg-page);border:1px solid var(--border-page);border-radius:var(--radius-page);box-shadow:var(--shadow-page)}
+
+/* the method loop (section 2) */
+.loop{display:flex;flex-wrap:wrap;align-items:stretch;gap:0;margin-top:22px;padding:18px 10px 14px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);max-width:1180px}
+.loop .s{flex:1;min-width:150px;display:flex;flex-direction:column;align-items:center;text-align:center;padding:0 8px;position:relative}
+.loop .s img{height:58px;width:70px;object-fit:contain}
+.loop .s b{display:block;margin-top:6px;font-size:14.5px;font-weight:600}
+.loop .s small{display:block;font-size:12.5px;color:var(--ink-muted)}
+.loop .s .nm{position:absolute;top:0;left:12px;font-family:var(--font-display);font-size:18px;color:var(--ink-faint)}
+.loop .s+.s::before{content:'→';position:absolute;left:-8px;top:22px;color:var(--ink-faint)}
+.loop .wk{flex-basis:100%;display:flex;align-items:center;justify-content:center;gap:12px;margin-top:14px;padding-top:12px;border-top:1px dashed var(--line-dashed);font-size:14px;color:var(--ink-muted)}
+.loop .wk img{height:36px}
+.loop .wk b{color:var(--ink-body)}
+
+/* lesson cards (2A) */
+.lessons{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}
+.les{display:flex;flex-direction:column;gap:4px;padding:10px;border:1px solid var(--line-card);border-radius:14px;background:var(--paper-parchment);min-height:128px}
+.les img{height:44px;width:52px;object-fit:contain}
+.les b{font-size:13px;font-weight:600;line-height:1.25}
+.les .mt{margin-top:auto;display:flex;justify-content:space-between;align-items:center}
+.les.read{background:var(--paper-bone)}
+.les.pr{border-style:dashed;background:none;justify-content:center;align-items:flex-start}
+
+/* inbox rows (2B) */
+.ib{display:flex;align-items:center;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line-card)}
+.ib .tt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ib .sg{display:flex;gap:5px}
+.ib .dot{width:7px;height:7px;border-radius:50%;background:var(--acc-hydrangea);flex:none}
+
+/* the printable card (2D) */
+.print{width:520px;padding:30px 34px 26px;font-size:12.5px;line-height:1.4;transform:rotate(var(--tilt-pos-sm))}
+.print h4{margin:0;font-family:var(--font-display);font-size:28px;font-weight:600;line-height:1.1}
+.print h5{margin:16px 0 6px;font-size:13px;font-weight:600;border-bottom:1px solid var(--page-line);padding-bottom:4px}
+.print ol{margin:0;padding-left:0;list-style:none;counter-reset:s}
+.print ol li{counter-increment:s;display:grid;grid-template-columns:20px 1fr auto;gap:2px 8px;padding:4px 0;border-bottom:1px solid var(--page-rule)}
+.print ol li::before{content:counter(s);font-family:var(--font-display);font-size:15px;color:var(--acc-gold)}
+.print ol li b{font-weight:600}
+.print ol li em{font-style:normal;color:var(--ink-faint);font-size:11.5px;text-align:right}
+.print ul{margin:0;padding-left:16px}
+.print .keys{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:14px;padding-top:10px;border-top:1px solid var(--page-line);font-size:11.5px;color:var(--ink-muted)}
+
+/* guide (3) */
+.gsearch{display:flex;align-items:center;gap:8px;width:250px;height:36px;padding:0 12px;border:1px solid var(--line-control);border-radius:12px;background:var(--paper-parchment);font-size:12.5px;color:var(--ink-faint)}
+.gcols{display:grid;grid-template-columns:repeat(4,1fr);gap:12px 16px;margin-top:12px}
+.gcol b{display:block;margin-bottom:4px;font-size:12px;font-weight:600}
+.gcol div{display:flex;align-items:center;gap:5px;padding:2px 0;font-size:12px;color:var(--ink-muted)}
+.tourc{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--line-card);border-radius:14px;background:var(--paper-parchment);font-size:12.5px}
+.tourc img{height:30px}
+.tourc b{display:block;font-size:13px}
+.lrow{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-card);font-size:13.5px}
+.lrow .tt{flex:1}
+.lrow small{display:block;font-size:11.5px;color:var(--ink-faint)}
+.lrow .ex{color:var(--ink-faint)}
+.clip{position:relative;height:150px;margin:10px 0;border:1px solid var(--line-card);border-radius:14px;background:var(--paper-parchment);overflow:hidden}
+.clip .play{position:absolute;right:8px;bottom:8px;display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font-size:11px}
+.stepl{display:flex;gap:10px;padding:6px 0;font-size:13px}
+.stepl .n{width:20px;height:20px;flex:none;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--paper-bone);font-size:11.5px;font-weight:600}
+.keystrip{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:8px;padding:8px 10px;border-radius:12px;background:var(--paper-bone);font-size:12px;color:var(--ink-muted)}
+.url{display:flex;align-items:center;gap:6px;height:30px;margin:0 -16px;padding:0 16px;background:var(--paper-bone);border-bottom:1px solid var(--line-card);font-size:11.5px;color:var(--ink-muted)}
+.off{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:var(--block-terra);color:var(--acc-terra-ink);font-size:12.5px}
+
+/* typing (3 · while you type): the ⌘K bar and the phone add sheet */
+.cmd{width:640px;height:330px;border-radius:14px;font-size:13.5px}
+.cmd .bgp{position:absolute;inset:0;padding:22px 28px;opacity:.55}
+.scrim{position:absolute;inset:0;background:var(--scrim)}
+.pop{position:absolute;left:44px;right:44px;top:26px;padding:14px 16px 12px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:var(--radius-card);box-shadow:var(--shadow-popover)}
+.pop .in{display:flex;align-items:center;gap:10px;padding-bottom:11px;border-bottom:1px solid var(--line-card);font-size:16px}
+.pop .in .mic{color:var(--acc-terra-ink)}
+.tx{flex:1;min-width:0;white-space:nowrap;overflow:hidden}
+.caret{display:inline-block;width:1.5px;height:18px;margin-left:1px;background:var(--acc-terra);vertical-align:-3px}
+.qb{width:26px;height:26px;flex:none;display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--line-control);border-radius:50%;font-size:13px;font-weight:600;color:var(--ink-muted)}
+.qb.on{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.pop .ft{display:flex;gap:12px;align-items:center;margin-top:10px;font-size:12px;color:var(--ink-faint)}
+.pop .ft span{display:inline-flex;align-items:center;gap:5px}
+.cheat{position:absolute;z-index:3;padding:12px 14px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:var(--radius-card);box-shadow:var(--shadow-popover);font-size:12.5px}
+.cheat .hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;font-size:13px;font-weight:600}
+.ctab{display:grid;grid-template-columns:70px 1fr auto;gap:0 10px;align-items:center}
+.ctab>*{padding:4px 0;border-bottom:1px solid var(--line-card)}
+.ctab .k{color:var(--ink-muted)}
+.ctab code,.cheat code,.sheet code{font-family:var(--font-ui);font-weight:600;padding:1px 5px;border-radius:5px;background:var(--paper-bone);color:var(--ink-body)}
+.cheat .fn{margin-top:8px;font-size:11.5px;color:var(--ink-faint)}
+/* B: the labelled sentence */
+.ex-line{display:flex;flex-wrap:wrap;align-items:flex-start;gap:4px 5px;font-size:15px;line-height:1.3}
+.lab{display:inline-flex;flex-direction:column;align-items:center}
+.lab>span{padding-bottom:2px;border-bottom:2.5px solid var(--lc);color:var(--ink-body)}
+.lab small{margin-top:3px;font-size:10.5px;font-weight:600;white-space:nowrap;color:var(--lc)}
+.lab.d{--lc:var(--acc-lavender-text)}.lab.p{--lc:var(--acc-sage-text)}.lab.r{--lc:var(--acc-terra-ink)}.lab.u{--lc:var(--acc-buttercream-text)}.lab.l{--lc:var(--acc-hydrangea-deep)}.lab.n{--lc:var(--ink-muted)}
+/* C: the insert strip */
+.strip{display:flex;gap:6px;overflow:hidden}
+.strip span{flex:none;display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 9px;border:1px solid var(--line-control);border-radius:9px;background:var(--paper-parchment);font-size:12.5px;font-weight:600;color:var(--ink-body)}
+.strip span small{font-weight:400;color:var(--ink-faint)}
+.strip span.hv{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.strip span.hv small{color:inherit;opacity:.8}
+.bub{position:absolute;z-index:4;padding:7px 10px;border-radius:10px;background:var(--toast-bg);color:var(--toast-ink);font-size:12px;box-shadow:var(--shadow-popover);white-space:nowrap}
+/* hints */
+.tk{border-radius:4px;padding:0 2px;margin:0 -1px}
+.tk.d{background:var(--block-lavender);color:var(--acc-lavender-text)}
+.tk.p{background:var(--block-moss);color:var(--acc-sage-text)}
+.tk.r{background:var(--block-terra);color:var(--acc-terra-ink)}
+.tk.u{background:var(--block-buttercream);color:var(--acc-buttercream-text)}
+.tkm{color:var(--ink-faint)}
+.parsed{margin-top:9px;font-size:13px;color:var(--ink-muted)}
+.parsed b{color:var(--ink-body);font-weight:600}
+.explain{display:flex;align-items:center;gap:8px;margin-top:9px;padding:7px 10px;border-radius:10px;background:var(--paper-bone);font-size:12.5px;color:var(--ink-muted)}
+.explain b{color:var(--ink-body)}
+.ac{position:absolute;z-index:3;width:190px;padding:5px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:12px;box-shadow:var(--shadow-popover);font-size:12.5px}
+.ac div{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:8px}
+.ac div.on{background:var(--sel-bg);color:var(--sel-ink)}
+.ac i.sw{width:8px;height:8px;border-radius:50%}
+/* the phone add sheet */
+.ph .scrim{z-index:1}
+.sheet{position:absolute;z-index:2;left:0;right:0;bottom:0;padding:10px 14px 0;background:var(--paper-parchment);border-radius:20px 20px 0 0;box-shadow:var(--shadow-sheet)}
+.sheet .hdl{width:32px;height:4px;margin:0 auto 12px;border-radius:2px;background:var(--line-control)}
+.sheet .in{display:flex;align-items:flex-start;gap:8px;font-size:15px;line-height:1.35}
+.sheet .in .tx{white-space:normal}
+.sheet .acts{display:flex;align-items:center;gap:10px;margin-top:12px;padding-top:10px;border-top:1px dashed var(--line-dashed);color:var(--acc-terra-ink)}
+.sheet .send{margin-left:auto;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra)}
+.kbd{display:grid;grid-template-columns:repeat(10,1fr);gap:5px;margin:10px -14px 0;padding:8px 4px 14px;background:color-mix(in srgb,var(--ink-body) 9%,var(--paper-bone))}
+.kbd i{height:30px;border-radius:5px;background:var(--paper-parchment);box-shadow:0 1px 0 var(--line-control)}
+.kbd i.w2{grid-column:span 2}.kbd i.w6{grid-column:span 6}
+.acc{margin:10px -14px 0;padding:7px 10px;background:var(--paper-bone);border-top:1px solid var(--line-card)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · learning the app and the way of working · 23 Oct 2026</div>
+  <h1>How should Kai's Flow teach?</h1>
+  <p class="lede">Three questions, each with options drawn as real screens on a computer and a phone: how a new person gets set up, how they learn the <b>way of working</b> (not only the buttons), and where the in-depth how-to lives, including the typing shortcuts. Pick as many as you like in each section; they combine. Then press <b>Copy my picks</b>, for example <b>"onboarding A+C, method B+D, reference C, typing card B, token hints A"</b>. Each option says how it feels and what it costs to build: <b>S</b> is a day or so, <b>M</b> a few days, <b>L</b> a week or more. Colours are the app's own tokens; none is changed. The method itself is drafted in <code>docs/METHOD.md</code> for you to edit.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your picks">
+  <span>Your picks: <b id="mine">none yet</b></span>
+  <span class="seg" role="group" aria-label="Page theme">
+    <button type="button" class="btn" data-th="day" aria-pressed="true">Day page</button>
+    <button type="button" class="btn" data-th="night" aria-pressed="false">Night page</button>
+  </span>
+  <button type="button" class="btn btn-p" id="copy">Copy my picks</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="notes">
+  <div>
+    <h2>What's there today</h2>
+    <ul>
+      <li><b>Onboarding:</b> one screen. It asks for your name (optional) and three things that become today's Top 3, with dates read as you type. It has Skip and Import. Settings → Replant opens it again.</li>
+      <li><b>The tour:</b> five garden notes on your first Today. On a phone they cover capture, Top 3, swipe, Plan / Shut down and Chat; on a computer, the sidebar, ⌘K, Top 3, the calendar and <span class="kc">?</span>. Then three one-line hints you meet once each (swipe, calendar, Inbox). "Seen" syncs, so a new phone doesn't repeat them.</li>
+      <li><b>The in-app Guide:</b> 11 short articles in 4 sections. Each step is one line with a crop of the real screen. There's search, "Show me around again", the shortcut sheet and Chat.</li>
+      <li><b>The website:</b> 9 guides (getting started, import, gestures, keyboard shortcuts, capture from anywhere, AI assistants, Android, Windows, your data), 7 feature pages, and field notes (the changelog).</li>
+    </ul>
+  </div>
+  <div>
+    <h2>What a new person still needs</h2>
+    <ul>
+      <li><b>The why.</b> Every piece teaches a button. Nothing says "clear the Inbox daily", "three is plenty" or "close the day", or why.</li>
+      <li><b>Days 2 to 7.</b> Onboarding ends on day one. Ritual times are never asked for, and nothing introduces focus rounds or the weekly review.</li>
+      <li><b>Half the app has no Guide article:</b> the Inbox, Time slots, Focus, Review, Journal, People, Library, Paper, smart lists, snooze, areas and domains, labels, Chat, MCP.</li>
+      <li><b>The typing marks</b> (<code>#</code> <code>*</code> <code>!</code> <code>30m</code> <code>every</code> <code>//</code> <code>&gt;</code>) are only in the website's shortcut table, never where you type.</li>
+    </ul>
+  </div>
+  <div>
+    <h2>How other apps teach</h2>
+    <ul>
+      <li><b>Sunsama:</b> your first daily plan is the tutorial (7 guided steps), and the guide repeats lightly on days 2 and 3. The method ("plan to do less") lives on its blog.</li>
+      <li><b>Akiflow:</b> <span class="kc">?</span> opens Help &amp; Guides: repeat onboarding, a setup checklist, everyday tips. Paid plans get a 1:1 call.</li>
+      <li><b>Todoist:</b> a hub of 15 productivity methods tied to templates, and a quiz that picks one from your biggest problem.</li>
+      <li><b>Things:</b> first launch makes a "Meet Things" project; each task teaches one thing, and you can re-create it from Help.</li>
+      <li><b>Notion:</b> asks your role and use, then seeds about five templates. Its Getting Started page is a do-it-yourself checklist.</li>
+      <li><b>TickTick:</b> a pre-filled Welcome list and a New User Guide. It teaches features, not a method.</li>
+      <li><b>Superhuman:</b> a 1:1 call doubled full switching. Its self-serve version copied games: a practice inbox, one shortcut at a time. Setup completion went from 30% to 98%.</li>
+    </ul>
+  </div>
+</section>
+
+<!-- ═════════════════════════ 1 · ONBOARDING ═════════════════════════ -->
+<section class="group" id="onboarding">
+  <h2>1 · Onboarding</h2>
+  <p class="say">The first ten minutes. Today: name + three things → Today → five notes. All three options keep that start and add to it.</p>
+
+  <!-- 1A -->
+  <div class="look" data-grp="onboarding" data-look="A">
+    <h3><span class="tag">A</span>Your first morning, for real</h3>
+    <p class="say">Six short steps where you do real things: your three things, pick the goal, drag it onto the day, set your ritual times, try ⌘K or hold-to-talk, done. It feels like being walked through your actual first morning, not a slideshow. Every step has <b>Later</b>, which saves your place, and Settings → <b>Finish setting up</b> picks it back up.</p>
+    <p class="cost"><b>M</b>It reuses today's onboarding screen and Plan my day's pick and time steps. New: the step frame, one saved "where you were", and the ritual-time step.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk su">
+          <div class="su-top">
+            <span class="brand">Kai's Flow</span>
+            <span class="stp"><span class="ok">Your three</span><span class="ok">The goal</span><span class="now">3 · Give it a time</span><span>Rituals</span><span>Try the bar</span><span>Done</span></span>
+            <span class="b g s">Later</span>
+          </div>
+          <div class="su-body">
+            <div style="width:280px;flex:none">
+              <img class="flw" src="ds/assets/wisteria/p40.png" alt="" style="height:50px;width:60px">
+              <div class="q" style="margin-top:6px">Give your goal a time</div>
+              <p class="qs">Drag it onto the day. A task with a time gets done. Everything snaps to 15 minutes, and you can move it later.</p>
+              <div class="goal" style="margin-top:22px;opacity:.45">
+                <span class="tape"></span><span class="stamp">✶ Goal of the day</span>
+                <div class="gt"><span class="cb"></span>Call the tyre supplier</div>
+              </div>
+              <div class="row" style="margin-top:8px"><span class="cb"></span><span class="tt">Finish the flow audit</span><span class="chip c-dur">1h</span></div>
+              <div class="row"><span class="cb"></span><span class="tt">Gym</span><span class="chip c-date">18:00</span></div>
+            </div>
+            <div class="dcol" style="--h:62px">
+              <div class="dh"><b>26</b> Monday · today</div>
+              <div class="grid">
+                <div class="hr" style="top:0"><b>08:00</b></div>
+                <div class="hr" style="top:calc(var(--h)*1)"><b>09:00</b></div>
+                <div class="hr" style="top:calc(var(--h)*2)"><b>10:00</b></div>
+                <div class="hr" style="top:calc(var(--h)*3)"><b>11:00</b></div>
+                <div class="hr" style="top:calc(var(--h)*4)"><b>12:00</b></div>
+                <div class="blk ev" style="top:calc(var(--h)*1 + 2px);height:calc(var(--h)*.5 - 4px)">Standup <small style="display:inline">· 09:00–09:30 · from Google</small></div>
+                <div class="blk ev" style="top:calc(var(--h)*4 + 2px);height:calc(var(--h)*.5 - 4px)">Dhuhr <small style="display:inline">· 12:00–12:30 · from Google</small></div>
+                <div class="blk gh" style="top:calc(var(--h)*2 + 4px);height:calc(var(--h)*.5 - 2px)">Call the tyre supplier <small style="display:inline">· 10:00–10:30</small></div>
+                <svg class="ptr" style="left:200px;top:150px" width="22" height="26" viewBox="0 0 22 26"><path d="M3 2v18l5-4 3 7 3-1-3-7h6z" fill="var(--paper-parchment)" stroke="var(--ink-body)" stroke-width="1.5" stroke-linejoin="round"/></svg>
+                <span class="hand" style="position:absolute;right:16px;top:calc(var(--h)*2.95)">your best hour, before it fills up</span>
+              </div>
+            </div>
+          </div>
+          <div class="su-foot"><span class="b s">Back</span><span class="dots"><i class="on"></i><i class="on"></i><i class="now"></i><i></i><i></i><i></i></span><span class="b p s">Next</span></div>
+        </div>
+        <figcaption>Computer, step 3 of 6: the goal is lifted from your three and dropped on today, around what's already there from Google.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct" style="display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="now"></i><i></i><i></i></span><span class="b g s">Later</span></div>
+            <img class="flw" src="ds/assets/daisy/morning.png" alt="" style="height:60px;width:70px;margin:14px auto 0">
+            <div class="q" style="margin-top:10px">When do you plan, and when do you stop?</div>
+            <p class="qs">Kai's Flow offers <b>Plan my day</b> in the morning and <b>Shut down</b> in the evening. About three minutes each.</p>
+            <div class="card" style="margin-top:14px;padding:4px 12px">
+              <div class="row"><img src="ds/assets/daisy/morning.png" alt="" style="width:26px;height:26px;object-fit:contain"><span class="tt">Plan my day<small>the morning</small></span><span class="time">08:00</span></div>
+              <div class="row" style="border:0"><img src="ds/assets/daisy/evening.png" alt="" style="width:26px;height:26px;object-fit:contain"><span class="tt">Shut down<small>from five</small></span><span class="time">17:30</span></div>
+            </div>
+            <div class="row" style="border:0;margin-top:4px"><span class="tt">A gentle nudge at both</span><span class="tgl"></span></div>
+            <p class="hand" style="margin:2px 0 0;text-align:center">change them any time in Settings</p>
+            <div style="margin-top:auto;padding-bottom:18px"><span class="b p w">Next</span><div style="margin-top:8px;text-align:center"><span class="b g s">Skip this step</span></div></div>
+          </div>
+        </div>
+        <figcaption>Phone, step 4: the ritual times (this sets the morning digest and evening nudge you already have).</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="onboarding" data-pick="A" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- 1B -->
+  <div class="look" data-grp="onboarding" data-look="B">
+    <h3><span class="tag">B</span>Choose your path</h3>
+    <p class="say">One question: <b>studies, work or life?</b> Then a small starter garden to match: a few areas, a Time slot, two routines, and a <b>Meet Kai's Flow</b> project whose six tasks each teach one thing (Things does this). It feels like walking into a house that's already furnished. You can untick anything, or start empty.</p>
+    <p class="cost"><b>M</b>The three starter sets are data. One seeding function writes them through the outbox, with an Undo for a week. The Meet Kai's Flow project is the cheap, high-value half, and works without the rest.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk su">
+          <div class="su-top"><span class="brand">Kai's Flow</span><span class="stp"><span class="ok">Studies</span><span class="now">Your starter garden</span><span>Your three</span></span><span class="b g s">Later</span></div>
+          <div class="su-body" style="gap:22px">
+            <div style="width:330px;flex:none">
+              <div class="q">Your starter garden, for studies</div>
+              <p class="qs">Untick what you don't want. It's all yours to change, and Settings → Starter garden takes it back out for a week.</p>
+              <div class="card" style="margin-top:12px;padding:8px 12px">
+                <div class="mt">Areas</div>
+                <div class="seed"><span class="cb on sm"><i class="ic" data-i="check" data-s="11"></i></span>Classes<span class="cb on sm" style="margin-left:14px"><i class="ic" data-i="check" data-s="11"></i></span>Health<span class="cb on sm" style="margin-left:14px"><i class="ic" data-i="check" data-s="11"></i></span>Home</div>
+                <div class="mt" style="margin-top:6px">A Time slot</div>
+                <div class="seed"><span class="cb on sm"><i class="ic" data-i="check" data-s="11"></i></span>Study block<span class="mt">Sun–Thu · 16:00–18:00</span></div>
+                <div class="mt" style="margin-top:6px">Routines</div>
+                <div class="seed"><span class="cb on sm"><i class="ic" data-i="check" data-s="11"></i></span>Read 20 minutes<span class="mt">evening</span></div>
+                <div class="seed"><span class="cb on sm"><i class="ic" data-i="check" data-s="11"></i></span>Pack tomorrow's bag<span class="mt">evening</span></div>
+                <div class="seed"><span class="cb sm"></span><span class="mu">Morning walk</span><span class="mt">morning</span></div>
+                <div class="mt" style="margin-top:6px">A project</div>
+                <div class="seed"><span class="cb on sm"><i class="ic" data-i="check" data-s="11"></i></span>Meet Kai's Flow<span class="mt">6 tasks that teach</span></div>
+              </div>
+            </div>
+            <div class="pg tight" style="flex:1;padding:14px 16px 8px">
+              <div style="display:flex;align-items:center;gap:10px"><img src="ds/assets/clover/seedling.png" alt="" style="height:38px"><div><div class="mt">Project</div><div style="font-family:var(--font-display);font-size:19px;font-weight:600">Meet Kai's Flow</div></div></div>
+              <div class="row"><span class="cb"></span><span class="tt">Write anything with the capture button<small>tap to type, hold to talk</small></span></div>
+              <div class="row"><span class="cb"></span><span class="tt">Star me<small>I'll join today's Top 3</small></span><i class="ic st" data-i="star"></i></div>
+              <div class="row"><span class="cb"></span><span class="tt">Drag me onto the calendar<small>a task with a time gets done</small></span></div>
+              <div class="row"><span class="cb"></span><span class="tt">Swipe me right<small>tomorrow is one swipe away</small></span></div>
+              <div class="row"><span class="cb"></span><span class="tt">Ask Chat "what's on today?"</span></div>
+              <div class="row" style="border:0"><span class="cb"></span><span class="tt">Shut down tonight<small>from five, about three minutes</small></span></div>
+            </div>
+          </div>
+          <div class="su-foot"><span class="b s">Start empty</span><span class="b p s">Plant it</span></div>
+        </div>
+        <figcaption>Computer: what "Studies" plants, before you say yes. The project on the right is a real project. Tick its tasks by doing them.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct" style="display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-family:var(--font-display);font-weight:600">Kai's Flow</span><span class="b g s">Skip</span></div>
+            <img class="flw" src="ds/assets/clover/awake.png" alt="" style="height:56px;width:66px;margin:12px auto 0">
+            <div class="q" style="margin-top:8px">What's it for, mostly?</div>
+            <p class="qs">We'll plant a small starter garden to match.</p>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:14px">
+              <div class="path sel"><img src="ds/assets/hydrangea/medium.png" alt=""><div><b>Studies</b><small>Classes, study blocks, exams</small></div><span class="ok"><i class="ic" data-i="check" data-s="13"></i></span></div>
+              <div class="path"><img src="ds/assets/fern/unfurl2.png" alt=""><div><b>Work</b><small>Projects, deep work, meetings</small></div></div>
+              <div class="path"><img src="ds/assets/daisy/midday.png" alt=""><div><b>Life</b><small>Home, health, the people you keep</small></div></div>
+            </div>
+            <div style="margin-top:10px;text-align:center"><span class="b g s">A bit of everything</span></div>
+            <div style="margin-top:auto;padding-bottom:18px"><span class="b p w">Next</span><div style="margin-top:8px;text-align:center"><span class="b g s">Start with an empty garden</span></div></div>
+          </div>
+        </div>
+        <figcaption>Phone: the one question. Then the preview, then your three things as today.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="onboarding" data-pick="B" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- 1C -->
+  <div class="look" data-grp="onboarding" data-look="C">
+    <h3><span class="tag">C</span>Getting started, on Today</h3>
+    <p class="say">A small card on Today: <b>Getting started · 3 of 7</b>. Each item ticks itself the moment you do the real thing, so it teaches by doing over the first week. When all seven are done it turns into a pressed flower and goes; <b>Hide</b> sends it away sooner. It feels like a friend's sticky note, and it never nags or sends a notification.</p>
+    <p class="cost"><b>S</b>Every one of the seven is already written to the activity log (capture, top3, scheduled, inbox filed, focus, shut down, review). One card reads them; one setting hides it.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk">
+          <div class="sd" data-sd="today" data-inbox="4"></div>
+          <div class="mn" style="display:flex;gap:22px">
+            <div style="flex:1;min-width:0">
+              <div class="hpg">Monday, Oct 26</div>
+              <div class="dl"><i class="ic" data-i="clock" data-s="14"></i>Day 3 · 1 of 3 done</div>
+              <div class="card now" style="margin-top:12px"><span class="ring">1h</span><div><small>Now · until 11:00</small>Deep work — Forecasting</div></div>
+              <div class="sl">Top 3<small>All tasks ›</small></div>
+              <div class="goal"><span class="tape"></span><span class="stamp">✶ Goal of the day</span><div class="gt"><span class="cb"></span>Deliver the forecast draft</div></div>
+              <div class="row" style="margin-top:6px"><span class="cb on"><i class="ic" data-i="check" data-s="12"></i></span><span class="tt done-t">Call the tyre supplier</span><i class="ic st on" data-i="star" data-f="1"></i></div>
+              <div class="row"><span class="cb"></span><span class="tt">Gym<small>Health · 18:00</small></span><i class="ic st on" data-i="star" data-f="1"></i></div>
+            </div>
+            <div style="width:212px;flex:none">
+              <div class="card" style="padding:12px">
+                <div style="display:flex;align-items:center;gap:8px"><img src="ds/assets/clover/awake.png" alt="" style="height:34px"><div style="flex:1"><b style="font-size:13.5px;font-weight:600">Getting started</b><div class="mt">3 of 7</div></div></div>
+                <div class="prog" style="margin:8px 0 6px"><i style="width:43%"></i></div>
+                <div class="seed"><span class="cb on sm"><i class="ic" data-i="check" data-s="11"></i></span><span class="done-t">Capture three things</span></div>
+                <div class="seed"><span class="cb on sm"><i class="ic" data-i="check" data-s="11"></i></span><span class="done-t">Star a Top 3</span></div>
+                <div class="seed"><span class="cb on sm"><i class="ic" data-i="check" data-s="11"></i></span><span class="done-t">Give one a time</span></div>
+                <div class="seed" style="font-weight:600"><span class="cb sm"></span>Clear the Inbox once<span class="b g s" style="height:22px;margin-left:auto;font-size:12px">Show me</span></div>
+                <div class="seed"><span class="cb sm"></span>Do one focus round</div>
+                <div class="seed"><span class="cb sm"></span>Shut down tonight</div>
+                <div class="seed"><span class="cb sm"></span>Your first weekly review</div>
+                <div class="mt" style="margin-top:6px;display:flex;justify-content:space-between"><span>Each ticks itself when you do it.</span><span style="color:var(--acc-terra-ink)">Hide</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Computer: the card sits in Today's right column, beside the plan. "Show me" opens the thing itself (here the Inbox), not an article.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct">
+            <div class="pt"><span class="h">Monday, Oct 26</span><i class="ic" data-i="journal" data-s="20"></i><i class="ic" data-i="search" data-s="20"></i></div>
+            <div class="dl"><i class="ic" data-i="clock" data-s="14"></i>Day 3 · not planned yet</div>
+            <div class="card" style="margin-top:12px;padding:10px 12px;display:flex;align-items:center;gap:10px">
+              <img src="ds/assets/clover/awake.png" alt="" style="height:32px">
+              <div style="flex:1;min-width:0"><div class="mt">Getting started · 3 of 7</div><div style="font-weight:600;font-size:13.5px">Next: clear the Inbox once</div><div class="dots" style="margin-top:5px"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div></div>
+              <i class="ic mu" data-i="chev"></i>
+            </div>
+            <div class="sl">Top 3<small>All tasks ›</small></div>
+            <div class="goal"><span class="tape"></span><span class="stamp">✶ Goal of the day</span><div class="gt"><span class="cb"></span>Deliver the forecast draft</div></div>
+            <div class="row" style="margin-top:8px"><span class="cb"></span><span class="tt">Plan the forecasting logic<small>Forecasting · 30m</small></span><i class="ic st on" data-i="star" data-f="1"></i></div>
+            <div class="row"><span class="cb"></span><span class="tt">Gym<small>Health · 18:00</small></span><i class="ic st on" data-i="star" data-f="1"></i></div>
+          </div>
+          <div class="tb" data-tb="today" data-inbox="4"></div>
+        </div>
+        <figcaption>Phone: one line above Top 3, the next step only. Tap it for the full list.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="onboarding" data-pick="C" aria-pressed="false">This one</button></div>
+  </div>
+
+  <div class="mine"><b>My suggestion:</b> A for the first ten minutes, then C for the rest of the week. B's <i>Meet Kai's Flow</i> project could ride along with either. The research points the same way: make the first real morning the tutorial (Sunsama, Superhuman), then let the app teach by doing.</div>
+</section>
+
+<!-- ═════════════════════════ 2 · TEACHING THE METHOD ═════════════════════════ -->
+<section class="group" id="method">
+  <h2>2 · Teaching the method: the Kai's Flow way</h2>
+  <p class="say">A short method with opinions. Six steps a day, one a week, five habits. The words are drafted in <code>docs/METHOD.md</code>. The options below are four ways to carry it; they work together.</p>
+  <div class="loop" aria-label="The daily loop and the weekly loop">
+    <div class="s"><span class="nm">1</span><img src="ds/assets/cherry/bud.png" alt=""><b>Capture everything</b><small>all day · seconds each</small></div>
+    <div class="s"><span class="nm">2</span><img src="ds/assets/envelope/back-open-full.png" alt=""><b>Clear the Inbox</b><small>once a day · 2 min</small></div>
+    <div class="s"><span class="nm">3</span><img src="ds/assets/clover/four_leaf.png" alt=""><b>Top 3, one goal</b><small>morning · 3 min</small></div>
+    <div class="s"><span class="nm">4</span><img src="ds/assets/wisteria/p40.png" alt=""><b>Give it a time</b><small>morning · 1 min</small></div>
+    <div class="s"><span class="nm">5</span><img src="ds/assets/fern/unfurl1.png" alt=""><b>One thing at a time</b><small>focus rounds · 25 min</small></div>
+    <div class="s"><span class="nm">6</span><img src="ds/assets/daisy/evening.png" alt=""><b>Close the day</b><small>from five · 3 min</small></div>
+    <div class="wk"><img src="ds/assets/hydrangea/heavy.png" alt=""><span><b>Once a week: the sweep.</b> The weekly review. What moved, what went quiet, what's done, what matters next week. About 20 minutes.</span></div>
+  </div>
+
+  <!-- 2A -->
+  <div class="look" data-grp="method" data-look="A">
+    <h3><span class="tag">A</span>A Learn page: seven short lessons</h3>
+    <p class="say">One lesson per step, plus the weekly review. Each takes one or two minutes to read and has a flower, three short paragraphs, the "why" in the margin, and a <b>Try it now</b> button that opens the real thing. It feels like a slim field book you can finish in a sitting. It lives in the Guide and the name menu.</p>
+    <p class="cost"><b>M</b>Seven lessons of writing (METHOD.md is the source) on the Guide's own article view, plus a read/unread mark that syncs like "seen" does.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk">
+          <div class="sd" data-sd="none"></div>
+          <div class="mn">
+            <div class="eb">Learn</div>
+            <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px">
+              <div><div class="hpg">The Kai's Flow way</div><div class="hand" style="margin-top:2px">seven small habits, about two minutes each</div></div>
+              <div style="width:150px"><div class="mt" style="text-align:right">2 of 7 read</div><div class="prog" style="margin-top:4px"><i style="width:29%"></i></div></div>
+            </div>
+            <div class="lessons">
+              <div class="les read"><img src="ds/assets/cherry/bud.png" alt=""><b>1 · Capture everything</b><div class="mt">2 min<span style="color:var(--acc-sage-text)">Read ✓</span></div></div>
+              <div class="les read"><img src="ds/assets/envelope/back-open-full.png" alt=""><b>2 · Clear the Inbox daily</b><div class="mt">2 min<span style="color:var(--acc-sage-text)">Read ✓</span></div></div>
+              <div class="les"><img src="ds/assets/clover/four_leaf.png" alt=""><b>3 · Three things, one goal</b><div class="mt">2 min<span class="chip c-new">Next</span></div></div>
+              <div class="les"><img src="ds/assets/wisteria/p40.png" alt=""><b>4 · Give it a time</b><div class="mt">1 min</div></div>
+              <div class="les"><img src="ds/assets/fern/unfurl1.png" alt=""><b>5 · One thing at a time</b><div class="mt">2 min</div></div>
+              <div class="les"><img src="ds/assets/daisy/evening.png" alt=""><b>6 · Close the day</b><div class="mt">2 min</div></div>
+              <div class="les"><img src="ds/assets/hydrangea/heavy.png" alt=""><b>7 · The weekly sweep</b><div class="mt">2 min</div></div>
+              <div class="les pr"><i class="ic mu" data-i="print" data-s="22"></i><b>Print the method card</b><div class="mt" style="margin-top:2px">one page</div></div>
+            </div>
+            <div class="row" style="margin-top:10px;border:0"><span class="tt mt">When the day goes wrong · What not to do · Your first week</span><span class="b g s">Read the whole thing · 8 min</span></div>
+          </div>
+        </div>
+        <figcaption>Computer: the Learn page. Lessons you've read go to bone, and the next one is marked.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct" style="display:flex;flex-direction:column">
+            <div style="display:flex;justify-content:space-between;align-items:center;color:var(--ink-muted);font-size:13px"><span><i class="ic" data-i="back" data-s="16"></i> Learn</span><span>3 of 7</span></div>
+            <img class="flw" src="ds/assets/clover/four_leaf.png" alt="" style="height:78px;width:90px;margin:10px auto 0">
+            <div class="eb" style="margin-top:8px">Lesson 3 · 2 min</div>
+            <div class="q" style="font-size:24px">Three things, one goal</div>
+            <p style="margin:8px 0 0;font-size:13.5px">Star three things for today. The first one is the goal of the day: if only one thing gets done, it's this one.</p>
+            <p style="margin:8px 0 0;font-size:13.5px">Three is plenty. Everything else is still there; it just isn't today's promise.</p>
+            <p class="hand" style="margin:10px 0 0;padding-left:10px;border-left:2px solid var(--line-goal)">why: a short list gets finished. A long one gets moved to tomorrow.</p>
+            <div style="margin-top:auto;padding-bottom:16px"><span class="b p w"><i class="ic" data-i="star" data-s="16"></i>Try it now · star three</span><div style="margin-top:8px;text-align:center"><span class="b g s">Next: Give it a time →</span></div></div>
+          </div>
+        </div>
+        <figcaption>Phone: a lesson. "Try it now" goes to Today with the stars lit up.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="method" data-pick="A" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- 2B -->
+  <div class="look" data-grp="method" data-look="B">
+    <h3><span class="tag">B</span>Tips the first time it matters</h3>
+    <p class="say">One line of "why", shown the first time a habit matters: nine things in the Inbox, a fourth star, your first evening at five, a task moved to tomorrow for the fourth time. It feels like someone kind looking over your shoulder once, then never again.</p>
+    <p class="cost"><b>S</b>These are the hints you already have (once ever, synced, one at a time, never during the tour) with a condition each, and one switch in Settings.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk">
+          <div class="sd" data-sd="inbox" data-inbox="9"></div>
+          <div class="mn">
+            <div style="display:flex;align-items:baseline;justify-content:space-between"><div class="hpg">Inbox</div><span class="mt">9 waiting</span></div>
+            <div class="tip" style="margin-top:12px">
+              <img src="ds/assets/clover/seedling.png" alt="">
+              <div class="tl"><b>Nine waiting. Clear them once a day.</b>Each one becomes a task, a note, or nothing. About two minutes. Start at the top: <span class="kc">e</span> files it, <span class="kc">d</span> lets it go.</div>
+              <span class="b t s">Start</span><i class="ic x" data-i="close" data-s="16"></i>
+            </div>
+            <div class="card" style="margin-top:12px;padding:0 4px">
+              <div class="ib"><span class="dot"></span><span class="tt">Book the dentist for next week</span><span class="sg"><span class="chip c-date">Mon</span><span class="chip c-proj">Health</span></span></div>
+              <div class="ib"><span class="dot"></span><span class="tt">article on spaced repetition</span><span class="sg"><span class="chip c-bd">→ Library</span></span></div>
+              <div class="ib"><span class="dot"></span><span class="tt">Omar's birthday present</span><span class="sg"><span class="chip c-bd">→ People</span></span></div>
+              <div class="ib"><span class="dot"></span><span class="tt">fix the bike light</span><span class="sg"><span class="chip c-proj">Home</span></span></div>
+              <div class="ib"><span class="dot"></span><span class="tt">idea: a reading streak for the Library</span></div>
+              <div class="ib" style="border:0"><span class="dot"></span><span class="tt">renew the domain before Friday</span><span class="sg"><span class="chip c-date">Fri</span><span class="chip c-pri">High</span></span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Computer: the Inbox tip, first time it holds more than seven. "Start" puts the cursor on the first row.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct">
+            <div class="pt"><span class="h">Monday, Oct 26</span><i class="ic" data-i="search" data-s="20"></i></div>
+            <div class="sl">Top 3<small>4 starred</small></div>
+            <div class="goal" style="padding:14px 12px 10px"><span class="tape"></span><span class="stamp">✶ Goal of the day</span><div class="gt" style="font-size:15.5px"><span class="cb"></span>Deliver the forecast draft</div></div>
+            <div class="row" style="margin-top:6px"><span class="cb"></span><span class="tt">Finish the flow audit</span><i class="ic st on" data-i="star" data-f="1"></i></div>
+            <div class="row"><span class="cb"></span><span class="tt">Gym</span><i class="ic st on" data-i="star" data-f="1"></i></div>
+            <div class="row" style="background:var(--wash-terra);margin:0 -16px;padding:8px 16px"><span class="cb"></span><span class="tt">Reply to the landlord</span><i class="ic st on" data-i="star" data-f="1"></i></div>
+            <div class="tip" style="margin-top:10px;flex-wrap:wrap">
+              <img src="ds/assets/clover/seedling.png" alt="">
+              <div class="tl"><b>Three is plenty.</b>A short list gets finished. Make this one tomorrow's?</div>
+              <i class="ic x" data-i="close" data-s="16"></i>
+              <div style="flex-basis:100%;display:flex;gap:8px;padding-left:36px"><span class="b t s">Tomorrow's</span><span class="b g s">Keep four</span></div>
+            </div>
+          </div>
+          <div class="tb" data-tb="today"></div>
+        </div>
+        <figcaption>Phone: a fourth star. One tap makes it tomorrow's first star instead.</figcaption>
+      </figure>
+      <figure>
+        <div class="card" style="width:300px;padding:14px 16px;font-size:13px">
+          <div style="font-weight:600;font-size:14px">The six tips</div>
+          <div class="seed" style="align-items:flex-start;border-bottom:1px solid var(--line-card);padding:6px 0"><span class="mu" style="width:104px;flex:none">Inbox over 7</span><span>Clear them once a day.</span></div>
+          <div class="seed" style="align-items:flex-start;border-bottom:1px solid var(--line-card);padding:6px 0"><span class="mu" style="width:104px;flex:none">A fourth star</span><span>Three is plenty.</span></div>
+          <div class="seed" style="align-items:flex-start;border-bottom:1px solid var(--line-card);padding:6px 0"><span class="mu" style="width:104px;flex:none">Goal with no time, 11:00</span><span>Give your goal a time, before the day fills up.</span></div>
+          <div class="seed" style="align-items:flex-start;border-bottom:1px solid var(--line-card);padding:6px 0"><span class="mu" style="width:104px;flex:none">First evening, 17:00</span><span>Close the day: three minutes, then stop.</span></div>
+          <div class="seed" style="align-items:flex-start;border-bottom:1px solid var(--line-card);padding:6px 0"><span class="mu" style="width:104px;flex:none">Moved 4 times</span><span>Too big? Break it into steps, or let it go.</span></div>
+          <div class="seed" style="align-items:flex-start;padding:6px 0"><span class="mu" style="width:104px;flex:none">First week's end</span><span>Twenty minutes for the weekly sweep?</span></div>
+          <div class="mt" style="margin-top:8px">Rules: once each, ever. At most one a day. Never during a ritual or the tour. × means gone for good. Off in Settings → App → Tips.</div>
+        </div>
+        <figcaption>All of them. Each is one line, written from METHOD.md.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="method" data-pick="B" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- 2C -->
+  <div class="look" data-grp="method" data-look="C">
+    <h3><span class="tag">C</span>A seven-day course on Today</h3>
+    <p class="say">One habit a day for your first week, on Today: <b>Day 3 of 7 · Give your goal a time</b>, with a <b>Do it now</b>. The lesson follows the hour, so day 6's "Close the day" shows up in the evening. No email. It feels like a short course that happens inside your real week. It could share one card with onboarding C: the checklist item is the day's "do it".</p>
+    <p class="cost"><b>M</b>Seven short texts, a day counter from the account's first day, and a card that picks today's lesson. It ticks itself the same way onboarding C does.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk">
+          <div class="sd" data-sd="today" data-inbox="2"></div>
+          <div class="mn">
+            <div class="hpg">Wednesday, Oct 28</div>
+            <div class="dl"><i class="ic" data-i="clock" data-s="14"></i>Day 3 · planned</div>
+            <div class="card" style="margin-top:14px;display:flex;gap:14px;align-items:center;padding:14px 16px">
+              <img class="flw" src="ds/assets/wisteria/p40.png" alt="" style="height:64px;width:64px">
+              <div style="flex:1;min-width:0">
+                <div class="mt">Day 3 of 7 · the Kai's Flow way</div>
+                <div style="font-family:var(--font-display);font-size:20px;font-weight:600;margin-top:2px">Give your goal a time</div>
+                <div class="mu" style="font-size:13px;margin-top:2px">A task with a time gets done. Drag today's goal onto the calendar, into your best hour.</div>
+                <div style="display:flex;gap:8px;margin-top:10px"><span class="b t s">Do it now</span><span class="b g s">Read · 1 min</span></div>
+              </div>
+              <div style="text-align:center"><div class="dots"><i class="on"></i><i class="on"></i><i class="now"></i><i></i><i></i><i></i><i></i></div><div class="mt" style="margin-top:6px">2 done</div></div>
+            </div>
+            <div class="sl">Top 3<small>All tasks ›</small></div>
+            <div class="goal" style="width:330px"><span class="tape"></span><span class="stamp">✶ Goal of the day</span><div class="gt"><span class="cb"></span>Deliver the forecast draft</div><div class="mt" style="margin:4px 0 0 28px;color:var(--acc-gold)">no time yet</div></div>
+            <div class="row" style="width:330px;margin-top:6px"><span class="cb"></span><span class="tt">Finish the flow audit</span><i class="ic st on" data-i="star" data-f="1"></i></div>
+          </div>
+        </div>
+        <figcaption>Computer, the morning of day 3. "Do it now" opens the calendar with the goal ready to drag.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct">
+            <div class="pt"><span class="h">Saturday, Oct 31</span><i class="ic" data-i="search" data-s="20"></i></div>
+            <div class="dl"><i class="ic" data-i="clock" data-s="14"></i>Day 6 · evening</div>
+            <div class="card" style="margin-top:12px;padding:12px">
+              <div style="display:flex;gap:10px;align-items:center"><img src="ds/assets/daisy/evening.png" alt="" style="height:44px;width:44px;object-fit:contain"><div><div class="mt">Day 6 of 7 · tonight</div><div style="font-family:var(--font-display);font-size:18px;font-weight:600">Close the day</div></div></div>
+              <div class="mu" style="font-size:13px;margin-top:6px">Tick what's done, move the rest, write one line. Then stop. Tomorrow is already planned.</div>
+              <div style="display:flex;gap:8px;align-items:center;margin-top:10px"><span class="b p s">Shut down</span><span class="b g s">Why</span><span class="dots" style="margin-left:auto"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="now"></i><i></i></span></div>
+            </div>
+            <div class="sl">Top 3<small>2 of 3 done</small></div>
+            <div class="row"><span class="cb on"><i class="ic" data-i="check" data-s="12"></i></span><span class="tt done-t">Deliver the forecast draft</span></div>
+            <div class="row"><span class="cb on"><i class="ic" data-i="check" data-s="12"></i></span><span class="tt done-t">Finish the flow audit</span></div>
+            <div class="row"><span class="cb"></span><span class="tt">Gym</span><i class="ic st on" data-i="star" data-f="1"></i></div>
+          </div>
+          <div class="tb" data-tb="today"></div>
+        </div>
+        <figcaption>Phone, the evening of day 6: the lesson comes when the habit happens.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="method" data-pick="C" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- 2D -->
+  <div class="look" data-grp="method" data-look="D">
+    <h3><span class="tag">D</span>A printable method card</h3>
+    <p class="say">The whole way on one page, the six steps, the weekly sweep, the five habits and the keys, in the journal's page look. Print it and pin it where you plan. It feels like the card that comes in the box with a good notebook, and it suits the people who think on paper.</p>
+    <p class="cost"><b>S</b>One print-styled page, linked from the Guide (and Learn, if A), and the same page on the website.</p>
+    <div class="shots">
+      <figure>
+        <div class="pg print">
+          <span class="stamp">Kai's Flow</span>
+          <h4 style="margin-top:10px">The Kai's Flow way</h4>
+          <div class="hand" style="margin-top:2px">pin it where you plan ✿</div>
+          <h5>Every day</h5>
+          <ol>
+            <li><b>Capture everything.</b><em>all day</em><span style="grid-column:2/4" class="mu">Tap to type, hold to talk, ⌘K. Don't sort yet.</span></li>
+            <li><b>Clear the Inbox.</b><em>once · 2 min</em><span style="grid-column:2/4" class="mu">A task, a note, or nothing. e · d · s.</span></li>
+            <li><b>Pick a Top 3, with one goal.</b><em>morning · 3 min</em><span style="grid-column:2/4" class="mu">The first is the goal: if only one thing gets done, this one.</span></li>
+            <li><b>Give it a time.</b><em>morning · 1 min</em><span style="grid-column:2/4" class="mu">Drag it onto the calendar. Your best hour, before it fills.</span></li>
+            <li><b>One thing at a time.</b><em>25 min rounds</em><span style="grid-column:2/4" class="mu">Focus, then a short break.</span></li>
+            <li><b>Close the day.</b><em>from five · 3 min</em><span style="grid-column:2/4" class="mu">Done, tomorrow, or let it go. One line. Tomorrow's three. Stop.</span></li>
+          </ol>
+          <h5>Every week · the sweep, 20 min</h5>
+          <div class="mu">What moved? What went quiet? What's finished? How did the routines go? What matters next week?</div>
+          <h5>Five habits</h5>
+          <ul class="mu"><li>Write it down the moment you think of it.</li><li>Empty the Inbox every day.</li><li>Decide the day before it starts: three things, one goal.</li><li>Give important things a time.</li><li>Close the day, every day.</li></ul>
+          <div class="keys"><span><b>⌘K</b> capture</span><span><b>?</b> every shortcut</span><span><b>t</b> Top 3</span><span><b>h</b> goal</span><span><b>e d s</b> Inbox</span><span><b>⌘J</b> Chat</span></div>
+        </div>
+        <figcaption>The page, A5 or A4. It prints in ink on white; the paper look is for the screen.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct">
+            <div style="color:var(--ink-muted);font-size:13px"><i class="ic" data-i="back" data-s="16"></i> More</div>
+            <div class="hpg" style="margin-top:6px">Guide</div>
+            <div class="hand">A field guide to the garden</div>
+            <div class="gsearch" style="width:auto;margin-top:10px"><i class="ic" data-i="search" data-s="16"></i>Search</div>
+            <div class="tourc" style="margin-top:10px"><img src="ds/assets/clover/seedling.png" alt=""><div style="flex:1"><b>Show me around again</b><span class="mt">5 short notes · 1 min</span></div></div>
+            <div class="tourc" style="margin-top:8px;border-color:var(--line-goal);background:var(--paper-goal)"><i class="ic" data-i="print" data-s="22"></i><div style="flex:1"><b>Print the method card</b><span class="mt">the whole way on one page</span></div><i class="ic mu" data-i="chev"></i></div>
+            <div class="sl">Start here</div>
+            <div class="lrow"><span class="tt">Getting started<small>Your first morning, in five minutes</small></span><i class="ic ex" data-i="chev"></i></div>
+            <div class="lrow"><span class="tt">Capture<small>Tap to write, hold to talk</small></span><i class="ic ex" data-i="chev"></i></div>
+            <div class="lrow"><span class="tt">Today &amp; Top 3<small>What now, what next</small></span><i class="ic ex" data-i="chev"></i></div>
+          </div>
+          <div class="tb" data-tb="more"></div>
+        </div>
+        <figcaption>Phone: where it lives. The Guide, under the tour card. It opens the system's print / save-as-PDF.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="method" data-pick="D" aria-pressed="false">This one</button></div>
+  </div>
+
+  <div class="mine"><b>My suggestion:</b> B everywhere (it's the cheapest and the calmest), plus A as the place the tips' "why" links to. C only if you skip onboarding C, since two cards on Today is one too many. D is a nice extra for the paper people.</div>
+</section>
+
+<!-- ═════════════════════════ 3 · IN-DEPTH REFERENCE ═════════════════════════ -->
+<section class="group" id="reference">
+  <h2>3 · In-depth reference</h2>
+  <p class="say">Where "how do I…" gets answered for every feature. Today: 11 articles in the app and 9 on the website, written twice, and they overlap.</p>
+
+  <!-- 3A -->
+  <div class="look" data-grp="reference" data-look="A">
+    <h3><span class="tag">A</span>The Guide grows, inside the app</h3>
+    <p class="say">Every feature gets an article: from 11 to about 32, in seven sections. Each has a short looping clip of the real screen, its steps and its keys. It works offline and sits one tap away. It feels complete, like a manual that's actually short.</p>
+    <p class="cost"><b>L</b>The page exists; the cost is about 21 new articles and their clips. Clips would come from the mock harness the crops already come from, as short WebM loops.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk">
+          <div class="sd" data-sd="none"></div>
+          <div class="mn">
+            <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:16px">
+              <div><div class="eb">Help</div><div class="hpg">Guide</div><div class="hand">A field guide to the garden</div></div>
+              <div class="gsearch"><i class="ic" data-i="search" data-s="16"></i>Search — "slot", "snooze", "MCP"</div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <div class="tourc" style="flex:1"><img src="ds/assets/clover/seedling.png" alt=""><div><b>Show me around again</b><span class="mt">5 short notes · 1 min</span></div></div>
+              <div class="tourc" style="flex:1"><span class="kc">?</span><div><b>Every shortcut</b><span class="mt">on any page</span></div></div>
+              <div class="tourc" style="flex:1"><img src="ds/assets/clover/four_leaf.png" alt=""><div><b>The Kai's Flow way</b><span class="mt">the method · 8 min</span></div></div>
+            </div>
+            <div class="gcols">
+              <div class="gcol"><b>Start here</b><div>Getting started</div><div>Capture</div><div>Today &amp; Top 3</div><div>Gestures</div><div>Typing shortcuts <span class="chip c-new">new</span></div></div>
+              <div class="gcol"><b>Your day</b><div>Plan &amp; Shut down</div><div>Calendar</div><div>Time slots <span class="chip c-new">new</span></div><div>Focus rounds <span class="chip c-new">new</span></div><div>Weekly review <span class="chip c-new">new</span></div></div>
+              <div class="gcol"><b>Habits &amp; records</b><div>Routines</div><div>Journal <span class="chip c-new">new</span></div><div>People <span class="chip c-new">new</span></div><div>Library <span class="chip c-new">new</span></div><div>Paper pages <span class="chip c-new">new</span></div></div>
+              <div class="gcol"><b>Organizing</b><div>Projects &amp; Herbarium</div><div>Areas &amp; domains <span class="chip c-new">new</span></div><div>Labels <span class="chip c-new">new</span></div><div>Smart lists <span class="chip c-new">new</span></div><div>Snooze <span class="chip c-new">new</span></div></div>
+              <div class="gcol"><b>AI</b><div>Chat <span class="chip c-new">new</span></div><div>AI assistants (MCP) <span class="chip c-new">new</span></div></div>
+              <div class="gcol"><b>Bringing things in</b><div>Import</div><div>Capture from anywhere</div><div>Google Calendar <span class="chip c-new">new</span></div></div>
+              <div class="gcol"><b>Your data</b><div>Your data &amp; privacy</div><div>Notifications <span class="chip c-new">new</span></div><div>Settings, a tour <span class="chip c-new">new</span></div></div>
+              <div class="gcol"><b>Apps</b><div>Android &amp; widgets <span class="chip c-new">new</span></div><div>Windows &amp; the tray <span class="chip c-new">new</span></div></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Computer: the Guide index with every feature. "new" marks what doesn't exist yet.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct">
+            <div style="color:var(--ink-muted);font-size:13px"><i class="ic" data-i="back" data-s="16"></i> Guide</div>
+            <div class="eb" style="margin-top:8px">Guide · 4 steps · 1 min</div>
+            <div class="q" style="font-size:24px">Time slots</div>
+            <p class="qs" style="font-size:13px">A block that holds tasks, for a kind of work rather than one task.</p>
+            <div class="clip">
+              <div class="blk gs" style="left:14px;right:14px;top:14px;height:118px;padding:8px 10px">
+                <b style="font-weight:600">Study block</b> <small style="display:inline">16:00–18:00</small>
+                <div class="row" style="padding:4px 6px;margin-top:6px;border:1px solid var(--line-card);border-radius:8px;background:var(--paper-parchment)"><span class="cb sm"></span>Read chapter 4</div>
+                <div class="row" style="padding:4px 6px;margin-top:4px;border:1px solid var(--line-card);border-radius:8px;background:var(--paper-parchment)"><span class="cb sm"></span>Past paper, Q1–3</div>
+              </div>
+              <span class="play"><i class="ic" data-i="play" data-s="10"></i>loops · 6 s</span>
+            </div>
+            <div class="stepl"><span class="n">1</span><span>Drag across a gap on the calendar, choose <b>Time block</b>, and name it, like "Study block".</span></div>
+            <div class="stepl"><span class="n">2</span><span><b>Drag tasks into it.</b> They move when the block moves.</span></div>
+            <div class="keystrip"><b style="color:var(--ink-body)">Keys</b><span><code>&gt;study</code> in ⌘K</span><span>drag on a gap → <b>Time block</b></span></div>
+          </div>
+          <div class="tb" data-tb="more"></div>
+        </div>
+        <figcaption>Phone: an article. The clip loops silently and holds still with reduced motion.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="reference" data-pick="A" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- 3B -->
+  <div class="look" data-grp="reference" data-look="B">
+    <h3><span class="tag">B</span>The website's guides, linked from the app</h3>
+    <p class="say">The app's Guide becomes a short list of links to the website's guides; the tour, the shortcut sheet and Chat stay. There's one place to write. It feels lighter, but every answer leaves the app, needs a connection, and opens a browser on the phone.</p>
+    <p class="cost"><b>S</b>Swap the articles for links, and grow the website's guides instead.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk">
+          <div class="sd" data-sd="none"></div>
+          <div class="mn" style="max-width:520px">
+            <div class="eb">Help</div><div class="hpg">Guide</div>
+            <p class="qs">The guides live on the website, so they're always current.</p>
+            <div style="display:flex;gap:10px;margin-top:10px"><div class="tourc" style="flex:1"><img src="ds/assets/clover/seedling.png" alt=""><div><b>Show me around again</b><span class="mt">5 notes · 1 min</span></div></div><div class="tourc" style="flex:1"><span class="kc">?</span><div><b>Every shortcut</b><span class="mt">on any page</span></div></div></div>
+            <div style="margin-top:8px">
+              <div class="lrow"><span class="tt">Getting started<small>Your first day, in ten minutes</small></span><i class="ic ex" data-i="ext"></i></div>
+              <div class="lrow"><span class="tt">Import your old app<small>Akiflow, Todoist, TickTick, Notion…</small></span><i class="ic ex" data-i="ext"></i></div>
+              <div class="lrow"><span class="tt">Gestures<small>Swipe, hold and ⋯</small></span><i class="ic ex" data-i="ext"></i></div>
+              <div class="lrow"><span class="tt">Keyboard shortcuts<small>N, ?, ⌘K and the rest</small></span><i class="ic ex" data-i="ext"></i></div>
+              <div class="lrow"><span class="tt">Capture from anywhere<small>Share sheet, widgets, the tray, Shortcuts</small></span><i class="ic ex" data-i="ext"></i></div>
+              <div class="lrow" style="border:0"><span class="tt">Connect an AI assistant<small>Claude or any MCP client</small></span><i class="ic ex" data-i="ext"></i></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Computer: each row opens the website's guide in your browser.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct">
+            <div style="color:var(--ink-muted);font-size:13px"><i class="ic" data-i="back" data-s="16"></i> More</div>
+            <div class="hpg" style="margin-top:6px">Guide</div>
+            <div class="off" style="margin-top:10px"><i class="ic" data-i="alert" data-s="16"></i>You're offline. The guides need a connection.</div>
+            <div class="lrow" style="margin-top:6px;opacity:.55"><span class="tt">Getting started</span><i class="ic ex" data-i="ext"></i></div>
+            <div class="lrow" style="opacity:.55"><span class="tt">Import your old app</span><i class="ic ex" data-i="ext"></i></div>
+            <div class="lrow" style="opacity:.55"><span class="tt">Gestures</span><i class="ic ex" data-i="ext"></i></div>
+            <div class="lrow" style="opacity:.55"><span class="tt">Keyboard shortcuts</span><i class="ic ex" data-i="ext"></i></div>
+            <div class="lrow" style="opacity:.55"><span class="tt">Capture from anywhere</span><i class="ic ex" data-i="ext"></i></div>
+            <div class="lrow" style="opacity:.55;border:0"><span class="tt">Connect an AI assistant</span><i class="ic ex" data-i="ext"></i></div>
+          </div>
+          <div class="tb" data-tb="more"></div>
+        </div>
+        <figcaption>Phone, on the bus with no signal: the honest cost of B.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="reference" data-pick="B" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- 3C -->
+  <div class="look" data-grp="reference" data-look="C">
+    <h3><span class="tag">C</span>Both, written once</h3>
+    <p class="say">One file of articles feeds both. The app shows the short version, offline, with the clip and the keys; the website builds the long version (every setting, troubleshooting) from the same file. Each links to the other. It feels like A inside the app, with the website catching up for free.</p>
+    <p class="cost"><b>M</b>One shared article file that <code>site/</code> and <code>app/</code> both read, plus A's new articles, written once instead of twice.</p>
+    <div class="shots">
+      <figure>
+        <div class="dk">
+          <div class="sd" data-sd="none"></div>
+          <div class="mn" style="display:flex;gap:22px">
+            <div style="width:130px;flex:none;font-size:12px;color:var(--ink-muted)"><div class="mt" style="margin-bottom:4px">On this page</div><div>1 · Make one</div><div>2 · Drag tasks in</div><div>3 · How full</div><div>4 · From ⌘K</div></div>
+            <div style="flex:1;min-width:0">
+              <div class="mt">Guide › Your day</div>
+              <div style="display:flex;align-items:center;gap:10px"><div class="hpg">Time slots</div><span class="chip c-proj">works offline</span></div>
+              <p class="qs">A block that holds tasks, for a kind of work rather than one task.</p>
+              <div class="stepl"><span class="n">1</span><span>Drag across a gap on the calendar, choose <b>Time block</b>, and name it, like "Study block".</span></div>
+              <div class="clip" style="height:116px"><div class="blk gs" style="left:14px;right:110px;top:12px;height:92px;padding:7px 10px"><b style="font-weight:600">Study block</b> <small style="display:inline">16:00–18:00 · 2 tasks · 45m of 2h</small><div class="row" style="padding:3px 6px;margin-top:5px;border:1px solid var(--line-card);border-radius:8px;background:var(--paper-parchment)"><span class="cb sm"></span>Read chapter 4</div><div class="row" style="padding:3px 6px;margin-top:4px;border:1px solid var(--line-card);border-radius:8px;background:var(--paper-parchment)"><span class="cb sm"></span>Past paper, Q1–3</div></div><span class="play"><i class="ic" data-i="play" data-s="10"></i>loops · 6 s</span></div>
+              <div class="stepl"><span class="n">2</span><span><b>Drag tasks into it.</b> They move when the block moves.</span></div>
+              <div class="keystrip"><b style="color:var(--ink-body)">Keys</b><span><code>&gt;study</code> in ⌘K</span><span>drag on a gap → <b>Time block</b></span></div>
+              <div class="lrow" style="margin-top:8px;border:0"><span class="tt mu">The long version, with every setting and what to do when it misbehaves</span><span class="b g s">On the website <i class="ic" data-i="ext" data-s="14"></i></span></div>
+            </div>
+          </div>
+        </div>
+        <figcaption>Computer: the app's short article. The last line hands over to the website.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="ct">
+            <div class="url"><i class="ic" data-i="lock" data-s="12"></i>kaisflow · /guides/time-slots/</div>
+            <div class="mt" style="margin-top:10px">Guides › Your day</div>
+            <div class="q" style="font-size:24px">Time slots</div>
+            <div class="mt">3 min · updated 23 Oct 2026</div>
+            <p class="qs" style="font-size:13px">A block that holds tasks, for a kind of work rather than one task. Move the slot, and its tasks move with it.</p>
+            <div style="margin-top:10px;font-weight:600;font-size:14px">1 · Make one</div>
+            <p class="qs" style="font-size:13px">Click or drag across a gap on the calendar, and switch the kind to Time block. Give it a name and a colour, and say whether it repeats…</p>
+            <div style="margin-top:8px;font-weight:600;font-size:14px">2 · Drag tasks in</div>
+            <p class="qs" style="font-size:13px">From the rail, or type <code>&gt;study</code> in the command bar…</p>
+            <div style="margin-top:10px"><span class="b t s">Open in the app</span></div>
+          </div>
+        </div>
+        <figcaption>Phone: the same article on the website, the long version, built from the same file.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="reference" data-pick="C" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- ─── 3 · while you type (queue item 9) ─── -->
+  <h3 class="sub-h" id="typing">While you type: the typing shortcuts</h3>
+  <p class="say" style="margin:6px 0 0;max-width:820px;color:var(--ink-muted)">Kai: <i>"a guide for the shortcuts while typing, like what counts as low priority and due dates, descriptions, etc."</i> These go wherever you write a task: ⌘K, Tasks quick add, Today's add row, the rail's "Quick add task…" and the phone add sheet. The same content goes in the <span class="kc">?</span> sheet and the Typing shortcuts article. Pick a <b>look for the card</b> (opened by a small <span class="kc">?</span> in the field) and a <b>look for the live hints</b> (as you type).</p>
+  <div class="mine" style="margin-top:14px"><b>What the bar reads today</b> (checked in <code>parseCommand.ts</code>): a date or time ("tomorrow 3pm", "fri", "in 2 hours", "3pm UTC"; <code>&lt;fri</code> works too) · <code>#project</code> (fuzzy, else a domain) · <code>*label</code> · <code>!</code> / <code>!!</code> / <code>!!!</code> · <code>30m</code> <code>1h</code> <code>1h30m</code> · "every day / every 2 weeks / every mon, fri / every weekday" · <code>// notes</code> · the first link · <code>&gt;slot</code> (a Time block ahead, by name). <span class="kc">Esc</span> gives the last one back as plain words; <span class="kc">⌘2</span> makes it an event.<br><b>One thing to decide:</b> the app calls <code>!</code> <b>Medium</b>, <code>!!</code> <b>High</b> and <code>!!!</code> <b>Critical</b>; no mark means no priority. The queue note called <code>!</code> "low". The cards below use the app's words. Say if you'd rather <code>!</code> read Low.</div>
+
+  <!-- card A -->
+  <div class="look" data-grp="card" data-look="A">
+    <h3><span class="tag">A</span>Card: a small table</h3>
+    <p class="say">Each mark on one row: what it is, an example, and the chip it becomes, in its real colour. It feels like a reference you glance at.</p>
+    <p class="cost"><b>S</b>One popover (a sheet on the phone) that reads a list of marks, the same list the <span class="kc">?</span> sheet shows.</p>
+    <div class="shots">
+      <figure>
+        <div class="cmd" style="height:452px">
+          <div class="bgp"><div class="hpg">Monday, Oct 26</div></div>
+          <div class="scrim"></div>
+          <div class="pop">
+            <div class="in"><i class="ic mic" data-i="mic" data-s="18"></i><span class="tx">Send the quote<span class="caret"></span></span><span class="qb on">?</span></div>
+            <div class="ft"><span><span class="kc">↵</span> Quick add</span><span><span class="kc">⌘2</span> Event</span></div>
+          </div>
+          <div class="cheat" style="left:44px;right:44px;top:126px">
+            <div class="hd">Write it the way you'd say it<i class="ic mu" data-i="close" data-s="14"></i></div>
+            <div class="ctab">
+              <span class="k">When</span><span><code>tomorrow 3pm</code> <code>fri</code></span><span style="text-align:right"><span class="chip c-date">Tomorrow · 3:00 PM</span></span>
+              <span class="k">Project</span><span><code>#shaheen</code></span><span style="text-align:right"><span class="chip c-proj">Shaheen</span></span>
+              <span class="k">Priority</span><span><code>!</code> <code>!!</code> <code>!!!</code></span><span style="text-align:right"><span class="chip c-pri">Medium · High · Critical</span></span>
+              <span class="k">How long</span><span><code>30m</code> <code>1h30m</code></span><span style="text-align:right"><span class="chip c-dur">30m</span></span>
+              <span class="k">Repeats</span><span><code>every mon, fri</code></span><span style="text-align:right"><span class="chip c-date">↻ Mon, Fri</span></span>
+              <span class="k">Label</span><span><code>*calls</code></span><span style="text-align:right"><span class="chip c-bd">*calls</span></span>
+              <span class="k">Time slot</span><span><code>&gt;study</code></span><span style="text-align:right"><span class="chip c-date">◷ Study block</span></span>
+              <span class="k">Notes</span><span><code>// ask about VAT</code></span><span style="text-align:right"><span class="chip c-bd">// Notes</span></span>
+            </div>
+            <div class="fn">A link is kept as the task's link. <span class="kc">Esc</span> gives the last mark back as words.</div>
+          </div>
+        </div>
+        <figcaption>Computer: ⌘K with the card open under it. Click a row to put that mark in the line.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="hdl"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px">Typing shortcuts<i class="ic mu" data-i="close" data-s="16"></i></div>
+            <div class="ctab" style="grid-template-columns:62px 1fr;margin-top:6px;font-size:13px">
+              <span class="k">When</span><span><code>tomorrow 3pm</code> <code>fri</code></span>
+              <span class="k">Project</span><span><code>#shaheen</code></span>
+              <span class="k">Priority</span><span><code>!</code> medium · <code>!!</code> high · <code>!!!</code> critical</span>
+              <span class="k">Length</span><span><code>30m</code> <code>1h30m</code></span>
+              <span class="k">Repeats</span><span><code>every mon, fri</code></span>
+              <span class="k">Label</span><span><code>*calls</code></span>
+              <span class="k">Slot</span><span><code>&gt;study</code></span>
+              <span class="k">Notes</span><span><code>// ask about VAT</code></span>
+            </div>
+            <div class="mt" style="margin:8px 0 14px">Tap one to add it.</div>
+          </div>
+        </div>
+        <figcaption>Phone: the same table as a sheet over the add sheet.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="card" data-pick="A" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- card B -->
+  <div class="look" data-grp="card" data-look="B">
+    <h3><span class="tag">B</span>Card: one sentence, labelled</h3>
+    <p class="say">One real example line, each mark underlined in its colour with a small label under it, like a diagram in a textbook. A short list of the rest follows. It feels like being shown, not told, and it's the one most people remember.</p>
+    <p class="cost"><b>S</b>The same popover as A; the example is drawn from the same list.</p>
+    <div class="shots">
+      <figure>
+        <div class="cmd" style="height:320px">
+          <div class="bgp"><div class="hpg">Monday, Oct 26</div></div>
+          <div class="scrim"></div>
+          <div class="pop">
+            <div class="in"><i class="ic mic" data-i="mic" data-s="18"></i><span class="tx"><span class="caret"></span><span class="tkm">Write a task…</span></span><span class="qb on">?</span></div>
+            <div class="ft"><span><span class="kc">↵</span> Quick add</span><span><span class="kc">⌘2</span> Event</span></div>
+          </div>
+          <div class="cheat" style="left:44px;right:44px;top:126px">
+            <div class="hd">Write it the way you'd say it<i class="ic mu" data-i="close" data-s="14"></i></div>
+            <div class="ex-line" style="margin-top:6px">
+              <span>Send the quote</span>
+              <span class="lab d"><span>tomorrow 3pm</span><small>when</small></span>
+              <span class="lab p"><span>#shaheen</span><small>project</small></span>
+              <span class="lab r"><span>!!</span><small>high</small></span>
+              <span class="lab u"><span>30m</span><small>how long</small></span>
+              <span class="lab n"><span>// ask about VAT</span><small>notes</small></span>
+            </div>
+            <div style="margin-top:12px;padding-top:8px;border-top:1px solid var(--line-card);display:grid;grid-template-columns:1fr 1fr;gap:4px 14px;font-size:12px" class="mu">
+              <span><code>!</code> medium · <code>!!!</code> critical</span><span><code>every mon, fri</code> repeats</span>
+              <span><code>*calls</code> a label</span><span><code>&gt;study</code> into a Time slot</span>
+              <span><code>fri</code> <code>in 2 hours</code> <code>&lt;fri</code></span><span>a link stays the task's link</span>
+            </div>
+          </div>
+        </div>
+        <figcaption>Computer: the empty bar with the card. It opens itself the first two times ⌘K is empty, then only on <span class="kc">?</span>.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="hdl"></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:14px">Write it the way you'd say it<i class="ic mu" data-i="close" data-s="16"></i></div>
+            <div class="ex-line" style="margin-top:10px;font-size:15px">
+              <span>Send the quote</span>
+              <span class="lab d"><span>tomorrow 3pm</span><small>when</small></span>
+              <span class="lab p"><span>#shaheen</span><small>project</small></span>
+              <span class="lab r"><span>!!</span><small>high</small></span>
+              <span class="lab u"><span>30m</span><small>long</small></span>
+              <span class="lab n"><span>// ask about VAT</span><small>notes</small></span>
+            </div>
+            <div class="mu" style="margin-top:12px;padding-top:8px;border-top:1px solid var(--line-card);font-size:12.5px;display:flex;flex-direction:column;gap:3px">
+              <span><code>!</code> medium · <code>!!</code> high · <code>!!!</code> critical</span><span><code>every mon, fri</code> repeats · <code>*calls</code> a label</span><span><code>&gt;study</code> into a Time slot</span>
+            </div>
+            <div style="margin:12px 0 16px"><span class="b t s w">Try this example</span></div>
+          </div>
+        </div>
+        <figcaption>Phone: "Try this example" puts the line in the add sheet, so you see the chips appear.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="card" data-pick="B" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- card C -->
+  <div class="look" data-grp="card" data-look="C">
+    <h3><span class="tag">C</span>Card: a strip of marks</h3>
+    <p class="say">No card at all. A strip of the marks sits under the field, and above the keyboard on a phone. Tap one to insert it; hover or hold to see what it does. On a phone it saves hunting for <code>#</code> and <code>!</code> on the keyboard. It feels like a tool, always there and never in the way.</p>
+    <p class="cost"><b>M</b>A keyboard accessory row on the phone has to follow the keyboard as it opens and closes, which is fiddly on Android and iOS. On desktop it's a plain row.</p>
+    <div class="shots">
+      <figure>
+        <div class="cmd" style="height:250px">
+          <div class="bgp"><div class="hpg">Monday, Oct 26</div></div>
+          <div class="scrim"></div>
+          <div class="pop">
+            <div class="in"><i class="ic mic" data-i="mic" data-s="18"></i><span class="tx">Send the quote tomorrow 3pm #shaheen !<span class="caret"></span></span></div>
+            <div class="chips"><span class="chip c-date">Tomorrow · 3:00 PM</span><span class="chip c-proj">Shaheen</span><span class="chip c-pri">Medium</span></div>
+            <div class="strip" style="margin-top:12px"><span><i class="ic" data-i="calendar" data-s="13"></i>when</span><span># <small>project</small></span><span>* <small>label</small></span><span class="hv">! <small>priority</small></span><span>30m <small>length</small></span><span>↻ <small>every</small></span><span>// <small>notes</small></span><span>&gt; <small>slot</small></span></div>
+          </div>
+          <div class="bub" style="left:260px;top:178px">! medium · !! high · !!! critical</div>
+        </div>
+        <figcaption>Computer: the strip under the chips, with the pointer resting on "!".</figcaption>
+      </figure>
+      <figure>
+        <div class="ph">
+          <div class="sb"></div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="hdl"></div>
+            <div class="in"><span class="tx">Send the quote tomorrow 3pm #<span class="caret"></span></span></div>
+            <div class="chips"><span class="chip c-date">Tomorrow · 3:00 PM</span></div>
+            <div class="acc"><div class="strip"><span><i class="ic" data-i="calendar" data-s="13"></i></span><span class="hv">#</span><span>*</span><span>!</span><span>30m</span><span>↻</span><span>//</span><span>&gt;</span></div></div>
+            <div class="kbd" data-kbd></div>
+          </div>
+        </div>
+        <figcaption>Phone: the strip rides on the keyboard. Tapping # inserts it and lists your projects.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="card" data-pick="C" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- hints A -->
+  <div class="look" data-grp="hints" data-look="A">
+    <h3><span class="tag">A</span>Hints: highlight the words</h3>
+    <p class="say">The words the bar understood get a soft tint in their chip's colour, right in the line, the moment they're read (Todoist does this). The chips stay underneath as they are today. It feels alive: you watch the sentence being understood.</p>
+    <p class="cost"><b>M</b>The parser already returns the words each mark took. Drawing tints inside a text field needs a mirror layer behind the input (the usual trick), on five inputs.</p>
+    <div class="shots">
+      <figure>
+        <div class="cmd" style="height:200px">
+          <div class="bgp"><div class="hpg">Monday, Oct 26</div></div>
+          <div class="scrim"></div>
+          <div class="pop">
+            <div class="in"><i class="ic mic" data-i="mic" data-s="18"></i><span class="tx">Send the forecast <span class="tk d">tomorrow 3pm</span> <span class="tk p">#forecasting</span> <span class="tk r">!!</span> <span class="tk u">30m</span><span class="caret"></span></span></div>
+            <div class="chips"><span class="chip c-date">Tomorrow · 3:00 PM</span><span class="chip c-proj">Forecasting</span><span class="chip c-pri">High</span><span class="chip c-dur">30m</span></div>
+            <div class="ft"><span><span class="kc">↵</span> Quick add</span><span><span class="kc">Esc</span> undo the last one</span></div>
+          </div>
+        </div>
+        <figcaption>Computer: ⌘K.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph" style="height:420px">
+          <div class="sb"></div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="hdl"></div>
+            <div class="in"><span class="tx">Send the forecast <span class="tk d">tomorrow 3pm</span> <span class="tk p">#forecasting</span> <span class="tk r">!!</span> <span class="tk u">30m</span><span class="caret"></span></span></div>
+            <div class="chips"><span class="chip c-date">Tomorrow · 3:00 PM</span><span class="chip c-proj">Forecasting</span><span class="chip c-pri">High</span><span class="chip c-dur">30m</span></div>
+            <div class="acts"><i class="ic" data-i="camera" data-s="20"></i><i class="ic" data-i="mic" data-s="20"></i><span class="send"><i class="ic" data-i="up" data-s="18"></i></span></div>
+            <div style="height:16px"></div>
+          </div>
+        </div>
+        <figcaption>Phone: the add sheet.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="hints" data-pick="A" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- hints B -->
+  <div class="look" data-grp="hints" data-look="B">
+    <h3><span class="tag">B</span>Hints: quiet words, one parsed line</h3>
+    <p class="say">The words the bar took go faint in the line, so your title stands out. Under it, one quiet sentence says what will happen: "Tomorrow 3:00 PM · Forecasting · High · 30m → a task". It feels calm and readable, closest to Akiflow.</p>
+    <p class="cost"><b>M</b>The same mirror layer as A for the faint words; the parsed line replaces the chip row.</p>
+    <div class="shots">
+      <figure>
+        <div class="cmd" style="height:200px">
+          <div class="bgp"><div class="hpg">Monday, Oct 26</div></div>
+          <div class="scrim"></div>
+          <div class="pop">
+            <div class="in"><i class="ic mic" data-i="mic" data-s="18"></i><span class="tx">Send the forecast <span class="tkm">tomorrow 3pm #forecasting !! 30m</span><span class="caret"></span></span></div>
+            <div class="parsed"><b>Tomorrow 3:00 PM</b> · <b>Forecasting</b> · <b>!! High</b> · <b>30m</b> → a task, on the calendar</div>
+            <div class="ft"><span><span class="kc">↵</span> Quick add</span><span><span class="kc">Esc</span> undo the last one</span></div>
+          </div>
+        </div>
+        <figcaption>Computer: ⌘K.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph" style="height:420px">
+          <div class="sb"></div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="hdl"></div>
+            <div class="in"><span class="tx">Send the forecast <span class="tkm">tomorrow 3pm #forecasting !! 30m</span><span class="caret"></span></span></div>
+            <div class="parsed"><b>Tomorrow 3:00 PM</b> · <b>Forecasting</b> · <b>High</b> · <b>30m</b><br>→ a task, on the calendar</div>
+            <div class="acts"><i class="ic" data-i="camera" data-s="20"></i><i class="ic" data-i="mic" data-s="20"></i><span class="send"><i class="ic" data-i="up" data-s="18"></i></span></div>
+            <div style="height:16px"></div>
+          </div>
+        </div>
+        <figcaption>Phone: the add sheet.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="hints" data-pick="B" aria-pressed="false">This one</button></div>
+  </div>
+
+  <!-- hints C -->
+  <div class="look" data-grp="hints" data-look="C">
+    <h3><span class="tag">C</span>Hints: explain the mark you just typed</h3>
+    <p class="say">Today's chips stay. When you type a mark, one line under them says what it means and the choices: type <code>!</code> and it reads "<b>!</b> medium · !! high · !!! critical — no mark, no priority". <code>#fo</code> lists matching projects. The line goes once you type on. It feels like the bar is teaching you as you go; after a week you stop noticing it.</p>
+    <p class="cost"><b>S</b>No mirror layer. It reads the mark just before the cursor, says one line about it, and keeps the project list the bar already has.</p>
+    <div class="shots">
+      <figure>
+        <div class="cmd" style="height:260px">
+          <div class="bgp"><div class="hpg">Monday, Oct 26</div></div>
+          <div class="scrim"></div>
+          <div class="pop">
+            <div class="in"><i class="ic mic" data-i="mic" data-s="18"></i><span class="tx">Send the forecast tomorrow 3pm #forecasting !!<span class="caret"></span></span></div>
+            <div class="chips"><span class="chip c-date">Tomorrow · 3:00 PM</span><span class="chip c-proj">Forecasting</span><span class="chip c-pri">High</span></div>
+            <div class="explain"><code>!!</code><span><b>High priority.</b> <code>!</code> medium · <code>!!!</code> critical · no mark, no priority</span></div>
+            <div class="ft"><span><span class="kc">↵</span> Quick add</span><span><span class="kc">?</span> all the marks</span></div>
+          </div>
+        </div>
+        <figcaption>Computer: just after typing <code>!!</code>.</figcaption>
+      </figure>
+      <figure>
+        <div class="ph" style="height:520px">
+          <div class="sb"></div>
+          <div class="scrim"></div>
+          <div class="sheet">
+            <div class="hdl"></div>
+            <div class="in"><span class="tx">Send the forecast tomorrow 3pm #fo<span class="caret"></span></span></div>
+            <div class="chips"><span class="chip c-date">Tomorrow · 3:00 PM</span></div>
+            <div class="explain"><code>#</code><span><b>A project.</b> Keep typing its name.</span></div>
+            <div class="card" style="margin-top:6px;padding:4px">
+              <div class="seed" style="padding:6px 8px;border-radius:8px;background:var(--sel-bg);color:var(--sel-ink)"><i class="ic" data-i="projects" data-s="14"></i>Forecasting</div>
+              <div class="seed" style="padding:6px 8px"><i class="ic" data-i="projects" data-s="14"></i>Food &amp; meal plan</div>
+            </div>
+            <div class="kbd" data-kbd></div>
+          </div>
+        </div>
+        <figcaption>Phone: typing <code>#fo</code>. The line says what <code>#</code> is, with your matching projects under it.</figcaption>
+      </figure>
+    </div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="hints" data-pick="C" aria-pressed="false">This one</button></div>
+  </div>
+
+  <div class="mine"><b>My suggestion:</b> reference C (written once, offline in the app) · card B (the labelled sentence teaches fastest) · hints C (it answers "what counts as low priority" at the exact moment you wonder, with no mirror layer to build).</div>
+</section>
+
+</div>
+
+<script>
+// ── kf line icons (24 grid, stroke 1.6, round), filled in wherever <i data-i> sits ──
+const I = {
+  today: 'M12 21v-8M12 13c0-4-3-6.5-7-6.5 0 4 3 6.5 7 6.5zM12 11c0-3 2.5-5.5 6.5-5.5 0 3.5-2.5 5.5-6.5 5.5z',
+  inbox: 'M3 13h5l1.5 3h5l1.5-3h5M5.5 5h13l2.5 8v6H3v-6z',
+  calendar: 'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',
+  tasks: 'M4 4h16v16H4zM8 12l3 3 5-6',
+  projects: 'M3 7h6l2 2h10v10H3z',
+  routines: 'M20 12a8 8 0 1 1-2.4-5.7M20 4v5h-5',
+  focus: 'M12 4a8 8 0 1 0 0 16 8 8 0 1 0 0-16zM12 9a3 3 0 1 0 0 6 3 3 0 1 0 0-6z',
+  review: 'M9 3h6v3H9zM7 4.5H5V21h14V4.5h-2M9 13l2 2 4-4',
+  journal: 'M6 3h12v18H6zM9.5 3v18',
+  library: 'M5 4v16M9 4v16M13 5l4 15',
+  search: 'M11 4a7 7 0 1 0 0 14 7 7 0 1 0 0-14zM16 16l5 5',
+  chat: 'M4 5h16v11H9l-5 4z',
+  plus: 'M12 5v14M5 12h14',
+  mic: 'M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM5 11a7 7 0 0 0 14 0M12 18v3',
+  more: 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z',
+  star: 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8L3.5 9.7l5.9-.9z',
+  check: 'M5 12.5l4.5 4.5L19 7',
+  close: 'M6 6l12 12M18 6L6 18',
+  chev: 'M9 6l6 6-6 6',
+  back: 'M15 6l-6 6 6 6',
+  clock: 'M12 4a8 8 0 1 0 0 16 8 8 0 1 0 0-16zM12 8v4l3 2',
+  ext: 'M14 4h6v6M20 4l-9 9M18 14v6H4V6h6',
+  play: 'M8 5v14l11-7z',
+  print: 'M7 8V3h10v5M6 17H4V9h16v8h-2M7 14h10v7H7z',
+  menu: 'M4 7h16M4 12h16M4 17h16',
+  alert: 'M12 4l9 16H3zM12 10v4M12 17v.5',
+  lock: 'M6 11h12v9H6zM9 11V8a3 3 0 0 1 6 0v3',
+  camera: 'M4 8h4l2-3h4l2 3h4v11H4zM12 10a3.5 3.5 0 1 0 0 7 3.5 3.5 0 1 0 0-7z',
+  up: 'M12 19V5M6 11l6-6 6 6',
+}
+const svg = (name, s, fill) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="${fill ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${I[name]}"/></svg>`
+const paintIcons = (root = document) => root.querySelectorAll('i[data-i]').forEach((el) => { el.classList.add('ic'); el.innerHTML = svg(el.dataset.i, el.dataset.s || 16, el.dataset.f) })
+
+// ── the sidebar (sidebar A, as shipped), the phone tab bar, status bars, keyboards ──
+const NAV1 = [['today', 'Today'], ['inbox', 'Inbox'], ['calendar', 'Calendar'], ['tasks', 'Tasks'], ['projects', 'Projects']]
+const NAV2 = [['routines', 'Routines'], ['focus', 'Focus'], ['review', 'Review'], ['journal', 'Journal'], ['library', 'Library']]
+document.querySelectorAll('[data-sd]').forEach((el) => {
+  const on = el.dataset.sd, n = el.dataset.inbox
+  const it = ([k, t]) => `<div class="it${k === on ? ' on' : ''}"><i data-i="${k}"></i>${t}${k === 'inbox' && n ? `<span class="n">${n}</span>` : ''}</div>`
+  el.innerHTML = `<div class="br"><span class="av">K</span>Kai's Flow</div><div class="pl"><i data-i="menu" data-s="14"></i>Plan<span style="margin-left:auto">12</span></div><div class="lb">Tend</div>${NAV1.map(it).join('')}<div class="lb">Cultivate</div>${NAV2.map(it).join('')}<div class="ft"><span class="capb"><i data-i="plus" data-s="14"></i>Capture <span class="kc" style="height:17px;font-size:10px">⌘K</span></span><i data-i="search"></i></div>`
+})
+document.querySelectorAll('[data-tb]').forEach((el) => {
+  const on = el.dataset.tb, n = el.dataset.inbox
+  const tab = (k, t) => `<span class="${k === on ? 'on' : ''}"><i data-i="${k}" data-s="20"></i>${t}${k === 'inbox' && n ? '' : ''}</span>`
+  el.innerHTML = tab('today', 'Today') + tab('inbox', 'Inbox') + `<span class="cap"><i data-i="plus" data-s="22"></i></span>` + tab('calendar', 'Calendar') + tab('more', 'More')
+})
+document.querySelectorAll('.sb').forEach((el) => { el.innerHTML = '<span>9:41</span><span style="letter-spacing:2px">▪▪▪ ▮</span>' })
+document.querySelectorAll('[data-kbd]').forEach((el) => {
+  el.innerHTML = '<i></i>'.repeat(20) + '<i class="w2"></i>' + '<i></i>'.repeat(6) + '<i class="w2"></i><i class="w2"></i><i class="w6"></i><i class="w2"></i>'
+})
+paintIcons()
+
+// ── the page theme (?night opens it at night) ──
+const setTheme = (th) => {
+  document.documentElement.dataset.theme = th
+  document.querySelectorAll('[data-th]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.th === th)))
+}
+document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => setTheme(b.dataset.th)))
+if (new URLSearchParams(location.search).has('night')) setTheme('night')
+
+// ── the picks: any number per section; they combine ──
+const KEY = 'kf-learn-picks'
+let picks = {}
+try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
+const NAMES = { onboarding: 'onboarding', method: 'method', reference: 'reference', card: 'typing card', hints: 'token hints' }
+const has = (g, v) => Array.isArray(picks[g]) && picks[g].includes(v)
+const line = () => Object.keys(NAMES).filter((g) => picks[g]?.length).map((g) => `${NAMES[g]} ${[...picks[g]].sort().join('+')}`).join(', ')
+function paint() {
+  document.getElementById('mine').textContent = line() || 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(has(b.dataset.grp, b.dataset.pick))))
+  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', has(s.dataset.grp, s.dataset.look)))
+}
+document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
+  const g = b.dataset.grp, v = b.dataset.pick
+  const cur = Array.isArray(picks[g]) ? picks[g] : []
+  picks[g] = cur.includes(v) ? cur.filter((x) => x !== v) : [...cur, v]
+  try { localStorage.setItem(KEY, JSON.stringify(picks)) } catch {}
+  paint()
+}))
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = line() ? `Learn: ${line()}` : 'Learn: nothing picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    try { ok = document.execCommand('copy') } catch {}
+    ta.remove()
+  }
+  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paint()
+</script>
+</body>
+</html>
