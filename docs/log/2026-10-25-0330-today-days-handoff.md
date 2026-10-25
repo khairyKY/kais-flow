@@ -54,7 +54,18 @@ How four mainstream apps move off "today", and what it costs:
 
 ## 3 · Gate
 
-GATE_PLACEHOLDER
+All in `app/`, against the dual-stack mock server (`npx vite --port 5306 --strictPort --mode mock --host ::`, http://localhost:5306, warmed):
+
+- `npx tsc -b` — clean.
+- `npx vitest run` ×4 TZ (PowerShell `$env:TZ`): Africa/Cairo, UTC, America/Los_Angeles, Asia/Tokyo — **173 files · 2366 tests** each, all green (`dayView.test.ts` new: 16).
+- `npm run lint` — 0 errors (the old warnings only).
+- `npm run build` — entry `index` 365.39 kB, gzip 117.15 kB (v1.4.0/1 handoffs: 363.8–366.2 kB; TodayPage is its own lazy chunk).
+- `npm run ds:check -- --baseline scripts/ds-baseline.json` — 0 new.
+- **today-days** (`docs/log/assets/today-days/verify.mjs`, new) — **90/90**: day + night, desktop + phone; arrows, the picker (popover and sheet, Nov 3 in 3 clicks, a day this month in 2), `?day=` across a reload, Shift+←/→ (two quick presses = two days), future-day contents, planting its 3 (seed for that date, Undo → unseed, a fourth refused, last night's seed shows), the past day (Done picks first, ✓ reopen, Move ▾ → Today, its line, routines 2/3 read-only), Back to today.
+- Existing harnesses, one at a time: today-shell 86/86 · today-scale 330/330 · today-phone 160/160 · fix-today 116/116 · snooze 74/74. **plan-replan 101/103, rituals (6 fails, then a crash waiting for a "14:00" slot), subtasks 38/47** — each re-run alone with the same result, and each fails the **same checks on v1.4.1 itself** (base `a73a0c00` run on its own mock server: plan-replan 100/103, rituals the same 6 + the same crash, subtasks the same 9). They expect the old 24h wording ("16:00", "Today 18:00", "Thu 09:00") — stale since the one-clock change, not this branch.
+- `grep -c birthday_on app/src/lib/types.ts` = 1, `grep -c 'birthday_on: false' app/src/lib/settings.ts` = 1.
+
+Follow-ups (not built): the MCP server's own seeds read (`supabase/functions/mcp/tools.ts`) still looks back 3 days only; the desktop calendar doesn't read `?date=`; the three stale harnesses above need their 12h wording.
 
 ## 4 · Screenshots (`docs/log/assets/today-days/`)
 
