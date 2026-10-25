@@ -407,7 +407,7 @@ describe('filing is once per inbox item (the double-task race)', () => {
 
   it('the auto-file claims the item first: a second filer of the same item is a no-op', async () => {
     const { claimFiling } = await import('../inbox/filing')
-    const item = { id: 'r3', status: 'pending', raw_text: 'renew hosting', payload: null }
+    const item = { id: 'r3', status: 'pending' as const, raw_text: 'renew hosting', payload: null }
     cachedInbox = [item]
     invoke.mockResolvedValue({ data: sure, error: null })
     createTask.mockReturnValue({ id: 't3', title: 'Renew hosting' })
