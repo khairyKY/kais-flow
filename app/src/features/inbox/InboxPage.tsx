@@ -28,6 +28,7 @@ import type { MoveTarget } from '../tasks/move'
 import { listState } from '../journal/journalDay'
 import { CaptureCta } from '../capture/CaptureCta'
 import { ReadyScans, ScanPaperButton } from '../paper/PaperInbox'
+import { useReadyPages } from '../paper/captures'
 import { useListKeys, type ListBinding } from '../../components/useListKeys'
 import { INBOX_KEYS } from '../../lib/shortcuts'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
@@ -293,8 +294,11 @@ export function InboxPage() {
     document.getElementById(`inbox-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }, [focusId, items, allItems])
 
-  const zero = items.length === 0
-  const summary = inboxSummary(captures, githubItems.length, now, !isMobile)
+  // A read page waiting for review is one more thing in the Inbox (Paper Capture 11d, as the sidebar's
+  // badge counts it): no "Inbox zero" under it, and the counts say it (bugs-1023).
+  const pages = useReadyPages()
+  const zero = items.length === 0 && pages === 0
+  const summary = inboxSummary(captures, githubItems.length, now, !isMobile, pages)
   const switchTab = (t: Tab) => {
     setTab(t)
     setFocusedId(null)
@@ -328,7 +332,7 @@ export function InboxPage() {
       <div className="ib-head-view">
         {isMobile ? (
           <button type="button" className="ib-head-link" onClick={() => switchTab(tab === 'waiting' ? 'dismissed' : 'waiting')}>
-            {tab === 'waiting' ? `Dismissed ${dismissedItems.length}` : `Waiting ${items.length}`}
+            {tab === 'waiting' ? `Dismissed ${dismissedItems.length}` : `Waiting ${items.length + pages}`}
           </button>
         ) : (
           <Segmented
@@ -337,7 +341,7 @@ export function InboxPage() {
             value={tab}
             onChange={switchTab}
             options={[
-              { value: 'waiting', label: `Waiting ${items.length}` },
+              { value: 'waiting', label: `Waiting ${items.length + pages}` },
               { value: 'dismissed', label: `Dismissed ${dismissedItems.length}` },
               ...(tab === 'snoozed' ? [{ value: 'snoozed' as const, label: `Snoozed ${snoozedItems.length}` }] : []),
             ]}

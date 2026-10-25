@@ -29,9 +29,11 @@ export const parseOf = (item: Pick<InboxItem, 'ai_parse'>): AiParse | null => it
 
 /** "3 to sort · 2 from GitHub · oldest is 1 day old" (3a); the phone drops the oldest (3b). Empty at
  * Inbox zero — the zero card says it. GitHub issues are counted on their own, never "to sort". */
-export function inboxSummary(captures: readonly Pick<InboxItem, 'created_at'>[], github: number, now: Date = new Date(), withOldest = true): string {
-  if (captures.length === 0 && github === 0) return ''
-  const parts = [captures.length ? `${captures.length} to sort` : 'Nothing to sort']
+export function inboxSummary(captures: readonly Pick<InboxItem, 'created_at'>[], github: number, now: Date = new Date(), withOldest = true, pages = 0): string {
+  if (captures.length === 0 && github === 0 && pages === 0) return ''
+  const parts = captures.length ? [`${captures.length} to sort`] : pages ? [] : ['Nothing to sort']
+  // Paper Capture 11d: a read page waiting for review is one more thing in the Inbox.
+  if (pages) parts.push(`${pages} ${pages === 1 ? 'page' : 'pages'} to review`)
   if (github) parts.push(`${github} from GitHub`)
   if (withOldest && captures.length) {
     const oldest = captures.reduce((a, b) => (a.created_at < b.created_at ? a : b)).created_at

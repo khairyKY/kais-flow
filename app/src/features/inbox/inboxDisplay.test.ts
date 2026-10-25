@@ -78,6 +78,13 @@ describe('inboxSummary', () => {
     expect(inboxSummary([at('2026-10-09T08:00:00Z')], 2, NOW, false)).toBe('1 to sort · 2 from GitHub')
     expect(inboxSummary([], 2, NOW)).toBe('Nothing to sort · 2 from GitHub')
   })
+  // bugs-1023 (Kai 2026-10-23: "the inbox only shows scanned pages"): a read page waiting for review is one
+  // more thing in the Inbox (Paper Capture 11d, as the sidebar badge counts it) — never "nothing" beside it.
+  it('says the pages waiting for review, alone or beside the captures', () => {
+    expect(inboxSummary([], 0, NOW, true, 1)).toBe('1 page to review')
+    expect(inboxSummary([at('2026-10-12T06:00:00Z')], 0, NOW, false, 2)).toBe('1 to sort · 2 pages to review')
+    expect(inboxSummary([], 2, NOW, true, 1)).toBe('1 page to review · 2 from GitHub')
+  })
   it('is empty at Inbox zero (the zero card says it)', () => {
     expect(inboxSummary([], 0, NOW)).toBe('')
   })
