@@ -121,7 +121,8 @@ function logRitualEvent(key: readonly unknown[], eventType: string, entityType: 
 
 const SEEDS_KEY = ['activity_log', 'ritual_seeds'] as const
 
-/** Seed/unseed rows from the last three days, oldest first (the order seededTaskIds replays). */
+/** Seed/unseed rows from the last three days, and any planted for today or later (Today's day view
+ * plants a day weeks ahead), oldest first (the order seededTaskIds replays). */
 export function useRitualSeedRows() {
   return useQuery({
     queryKey: SEEDS_KEY,
@@ -130,7 +131,7 @@ export function useRitualSeedRows() {
         .from('activity_log')
         .select('*')
         .in('event_type', [SEED_EVENT, UNSEED_EVENT])
-        .gte('created_at', new Date(Date.now() - 3 * 86_400_000).toISOString())
+        .or(`created_at.gte.${new Date(Date.now() - 3 * 86_400_000).toISOString()},payload->>for_date.gte.${loopDayKey(new Date())}`)
         .order('created_at', { ascending: true })
       if (error) throw error
       return data as ActivityLogEntry[]
@@ -147,9 +148,9 @@ export function useSeedsFor(forDate: string): Task[] {
   return useMemo(() => liveSeeds(seededTaskIds(rows ?? [], forDate), tasks ?? []), [rows, tasks, forDate])
 }
 
-/** Plant (or take back) a seed for the next morning — the loop day after `now`'s. */
-export function setSeed(task: Task, seeded: boolean, now: Date = new Date()): void {
-  logRitualEvent(SEEDS_KEY, seeded ? SEED_EVENT : UNSEED_EVENT, 'task', task.id, { ...seedPayload(now) })
+/** Plant (or take back) a seed for the next morning — the loop day after `now`'s — or for `forDate`. */
+export function setSeed(task: Task, seeded: boolean, now: Date = new Date(), forDate?: string): void {
+  logRitualEvent(SEEDS_KEY, seeded ? SEED_EVENT : UNSEED_EVENT, 'task', task.id, { ...seedPayload(now, forDate) })
 }
 
 // ── Loop B: "was the ritual finished today?" — the trace the Today Day card reads. ──

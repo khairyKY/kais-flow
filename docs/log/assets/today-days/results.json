@@ -1,0 +1,452 @@
+[
+  {
+    "name": "d-day Today: ‹ the date › — the date is a button that opens the picker",
+    "ok": true,
+    "detail": "Monday, October 26"
+  },
+  {
+    "name": "d-day …no Back to today on today; the Now card and the rituals as before",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day › (1 click) → ?day=2026-10-27, \"Tuesday, October 27\"",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-10-27 · Tuesday, October 27"
+  },
+  {
+    "name": "d-day …Back to today shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …\"Tomorrow's three\" (nothing planted yet) and \"Tomorrow's tasks · 5\" with its tasks in time order",
+    "ok": true,
+    "detail": "Tomorrow's tasks · 5 / Draft the quarterly letter / ☆ / Dentist / 10:00–11:00 AM / ☆ / Pay the rent / ☆ / Water the plants / ☆ / Call Mum / ☆"
+  },
+  {
+    "name": "d-day …in time order: letter 09:00, Dentist 10:00, rent 11:30, plants 18:00, Mum 19:00",
+    "ok": true,
+    "detail": "Draft the quarterly letter|Dentist|Pay the rent|Water the plants|Call Mum"
+  },
+  {
+    "name": "d-day …the Dentist row carries its block's time",
+    "ok": true,
+    "detail": "Dentist\n10:00–11:00 AM\n☆"
+  },
+  {
+    "name": "d-day …the ribbon has the day's 2 blocks, no now line; the calendar list has Team sync (the Dentist is a row)",
+    "ok": true,
+    "detail": "1:00 PM\nTeam sync\nCalendar →"
+  },
+  {
+    "name": "d-day …the rituals are a quiet line (\"Tonight's Shut down…\"); no Now card head, no Top 3 goal card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …routines for the day: 0/3, read-only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …the add pill is there for the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day ☆ on a row → ritual.seeded for 2026-10-27, through the outbox",
+    "ok": true,
+    "detail": "[{\"id\":\"186017af-67ab-4807-a4a3-a2fa13c87002\",\"event_type\":\"ritual.seeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000010\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "d-day …the row moves into Tomorrow's three, ★, and the toast has Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …Undo → ritual.unseeded, the row goes back",
+    "ok": true,
+    "detail": "[{\"id\":\"52b89e46-5cc7-4dea-9177-60d1d076b137\",\"event_type\":\"ritual.unseeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000010\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "d-day three planted → \"3 of 3 planted\"",
+    "ok": true,
+    "detail": "Tomorrow's three\n3 of 3 planted\nDraft the quarterly letter\n★\nPay the rent\n★\nWater the plants\n★"
+  },
+  {
+    "name": "d-day …a fourth is refused, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day reload keeps ?day — still Tuesday, still three planted",
+    "ok": true,
+    "detail": "Tomorrow's three\n3 of 3 planted\nDraft the quarterly letter\n★\nPay the rent\n★\nWater the plants\n★"
+  },
+  {
+    "name": "d-day Shift+→ → Wednesday 28",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-10-28"
+  },
+  {
+    "name": "d-day Shift+← twice → today: the param is gone, Today's own page",
+    "ok": true,
+    "detail": "http://localhost:5306/today"
+  },
+  {
+    "name": "d-day the cheatsheet lists ⇧ ←/→ Previous · next day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day the date opens the app's date picker (\"Go to a day\", quick picks)",
+    "ok": true,
+    "detail": "Go to a day\nToday\nMon 26\nTomorrow\nTue 27\nThis weekend\nSat 31\nNext week\nMon 2 Nov"
+  },
+  {
+    "name": "d-day …Nov 3 → ?day=2026-11-03, \"Tuesday, November 3\", the picker closed",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-11-03"
+  },
+  {
+    "name": "d-day …\"The day's tasks · 1\": Renew the passport",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …the rituals line for a later day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day past (?day=2026-10-24): \"Saturday, October 24\"; Done · 2 — the day's goal first",
+    "ok": true,
+    "detail": "Send the invoice|Tidy the garage"
+  },
+  {
+    "name": "d-day …Left open · 1 (Fix the gate) with Move ▾, no checkbox to tick it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …its line, routines 2/3 ticked (read-only), the calendar's Lunch with Salma",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …no rituals, no add pill, no stars",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …the summary: \"2 done · 1 left open · routines 2/3\"",
+    "ok": true,
+    "detail": "2 done · 1 left open · routines 2/3"
+  },
+  {
+    "name": "d-day …✓ reopens (status todo) with Undo",
+    "ok": true,
+    "detail": "Tidy the garage:todo"
+  },
+  {
+    "name": "d-day …Move ▾ → Today moves \"Fix the gate\" to today",
+    "ok": true,
+    "detail": "2026-10-26T06:00:00.000Z"
+  },
+  {
+    "name": "d-day Back to today → /today, Today's page",
+    "ok": true,
+    "detail": "http://localhost:5306/today"
+  },
+  {
+    "name": "d-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night Today: ‹ the date › — the date is a button that opens the picker",
+    "ok": true,
+    "detail": "Monday, October 26"
+  },
+  {
+    "name": "d-night …no Back to today on today; the Now card and the rituals as before",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night › (1 click) → ?day=2026-10-27, \"Tuesday, October 27\"",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-10-27 · Tuesday, October 27"
+  },
+  {
+    "name": "d-night …Back to today shows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …\"Tomorrow's three\" (nothing planted yet) and \"Tomorrow's tasks · 5\" with its tasks in time order",
+    "ok": true,
+    "detail": "Tomorrow's tasks · 5 / Draft the quarterly letter / ☆ / Dentist / 10:00–11:00 AM / ☆ / Pay the rent / ☆ / Water the plants / ☆ / Call Mum / ☆"
+  },
+  {
+    "name": "d-night …in time order: letter 09:00, Dentist 10:00, rent 11:30, plants 18:00, Mum 19:00",
+    "ok": true,
+    "detail": "Draft the quarterly letter|Dentist|Pay the rent|Water the plants|Call Mum"
+  },
+  {
+    "name": "d-night …the Dentist row carries its block's time",
+    "ok": true,
+    "detail": "Dentist\n10:00–11:00 AM\n☆"
+  },
+  {
+    "name": "d-night …the ribbon has the day's 2 blocks, no now line; the calendar list has Team sync (the Dentist is a row)",
+    "ok": true,
+    "detail": "1:00 PM\nTeam sync\nCalendar →"
+  },
+  {
+    "name": "d-night …the rituals are a quiet line (\"Tonight's Shut down…\"); no Now card head, no Top 3 goal card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …routines for the day: 0/3, read-only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …the add pill is there for the day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night ☆ on a row → ritual.seeded for 2026-10-27, through the outbox",
+    "ok": true,
+    "detail": "[{\"id\":\"84e47f52-c005-43d4-97eb-8cea1fb53dda\",\"event_type\":\"ritual.seeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000010\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "d-night …the row moves into Tomorrow's three, ★, and the toast has Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …Undo → ritual.unseeded, the row goes back",
+    "ok": true,
+    "detail": "[{\"id\":\"2c290784-3f96-4cef-b31c-cc5440f1e777\",\"event_type\":\"ritual.unseeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000010\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "d-night three planted → \"3 of 3 planted\"",
+    "ok": true,
+    "detail": "Tomorrow's three\n3 of 3 planted\nDraft the quarterly letter\n★\nPay the rent\n★\nWater the plants\n★"
+  },
+  {
+    "name": "d-night …a fourth is refused, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night reload keeps ?day — still Tuesday, still three planted",
+    "ok": true,
+    "detail": "Tomorrow's three\n3 of 3 planted\nDraft the quarterly letter\n★\nPay the rent\n★\nWater the plants\n★"
+  },
+  {
+    "name": "d-night Shift+→ → Wednesday 28",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-10-28"
+  },
+  {
+    "name": "d-night Shift+← twice → today: the param is gone, Today's own page",
+    "ok": true,
+    "detail": "http://localhost:5306/today"
+  },
+  {
+    "name": "d-night the cheatsheet lists ⇧ ←/→ Previous · next day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night the date opens the app's date picker (\"Go to a day\", quick picks)",
+    "ok": true,
+    "detail": "Go to a day\nToday\nMon 26\nTomorrow\nTue 27\nThis weekend\nSat 31\nNext week\nMon 2 Nov"
+  },
+  {
+    "name": "d-night …Nov 3 → ?day=2026-11-03, \"Tuesday, November 3\", the picker closed",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-11-03"
+  },
+  {
+    "name": "d-night …\"The day's tasks · 1\": Renew the passport",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …the rituals line for a later day",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night past (?day=2026-10-24): \"Saturday, October 24\"; Done · 2 — the day's goal first",
+    "ok": true,
+    "detail": "Send the invoice|Tidy the garage"
+  },
+  {
+    "name": "d-night …Left open · 1 (Fix the gate) with Move ▾, no checkbox to tick it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …its line, routines 2/3 ticked (read-only), the calendar's Lunch with Salma",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …no rituals, no add pill, no stars",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …the summary: \"2 done · 1 left open · routines 2/3\"",
+    "ok": true,
+    "detail": "2 done · 1 left open · routines 2/3"
+  },
+  {
+    "name": "d-night …✓ reopens (status todo) with Undo",
+    "ok": true,
+    "detail": "Tidy the garage:todo"
+  },
+  {
+    "name": "d-night …Move ▾ → Today moves \"Fix the gate\" to today",
+    "ok": true,
+    "detail": "2026-10-26T06:00:00.000Z"
+  },
+  {
+    "name": "d-night Back to today → /today, Today's page",
+    "ok": true,
+    "detail": "http://localhost:5306/today"
+  },
+  {
+    "name": "d-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-seeded a seed the evening planted for tomorrow is in Tomorrow's three",
+    "ok": true,
+    "detail": "Tomorrow's three\n1 of 3 planted\nPay the rent\n★"
+  },
+  {
+    "name": "d-seeded no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day Today: the title unchanged (\"Monday, Oct 26\"), the strip \"‹ Yesterday · picker · Tomorrow ›\"",
+    "ok": true,
+    "detail": "Yesterday Tomorrow"
+  },
+  {
+    "name": "p-day …the Today menu (rituals) is still in the bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day …nothing runs sideways",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p-day › (1 tap) → tomorrow: \"Tuesday, Oct 27\", Back to today in the strip, no Today menu",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-10-27"
+  },
+  {
+    "name": "p-day …its three, On the calendar (Team sync), its tasks · 5, routines, the rituals line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day ☆ (tap) plants \"Water the plants\" for 2026-10-27",
+    "ok": true,
+    "detail": "[{\"id\":\"93af63e7-93fb-438c-a981-98d698d792a8\",\"event_type\":\"ritual.seeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000012\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "p-day the title opens the date sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day …a tap on Sat 24 → the past day, the sheet closed",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-10-24"
+  },
+  {
+    "name": "p-day …Done · 2, Left open · 1 with Move ▾, its line, routines 2/3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day Back to today → Today",
+    "ok": true,
+    "detail": "http://localhost:5306/today"
+  },
+  {
+    "name": "p-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night Today: the title unchanged (\"Monday, Oct 26\"), the strip \"‹ Yesterday · picker · Tomorrow ›\"",
+    "ok": true,
+    "detail": "Yesterday Tomorrow"
+  },
+  {
+    "name": "p-night …the Today menu (rituals) is still in the bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night …nothing runs sideways",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p-night › (1 tap) → tomorrow: \"Tuesday, Oct 27\", Back to today in the strip, no Today menu",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-10-27"
+  },
+  {
+    "name": "p-night …its three, On the calendar (Team sync), its tasks · 5, routines, the rituals line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night ☆ (tap) plants \"Water the plants\" for 2026-10-27",
+    "ok": true,
+    "detail": "[{\"id\":\"6a723103-7583-47b6-892f-4b839d3a19ec\",\"event_type\":\"ritual.seeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000012\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "p-night the title opens the date sheet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night …a tap on Sat 24 → the past day, the sheet closed",
+    "ok": true,
+    "detail": "http://localhost:5306/today?day=2026-10-24"
+  },
+  {
+    "name": "p-night …Done · 2, Left open · 1 with Move ▾, its line, routines 2/3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night Back to today → Today",
+    "ok": true,
+    "detail": "http://localhost:5306/today"
+  },
+  {
+    "name": "p-night no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

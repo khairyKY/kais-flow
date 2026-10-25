@@ -85,8 +85,18 @@ import { queryClient } from '../../lib/queryClient'
 import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../lib/types'
 import type { ContextMenuItem } from '../../components/ContextMenu'
 import './today.css'
-import { appZone } from '../../lib/appZone'
+import { appZone, useAppZone } from '../../lib/appZone'
 import { weekendDays } from '../../lib/weekend'
+import { uiZoom } from '../../lib/uiScale'
+import { useToastStore } from '../../lib/toastStore'
+import { usePageShortcutsStore } from '../../lib/pageShortcutsStore'
+import { DatePicker } from '../../components/DatePicker'
+import { addDays } from '../../components/pickerMath'
+import { setSeed, useSeedsFor } from '../rituals/api'
+import { MAX_SEEDS } from '../rituals/loopDay'
+import { useJournalEntries } from '../journal/api'
+import { useMinuteNow } from './useMinuteNow'
+import { captureFor, dayBlocks, dayBounds, dayHeading, dayName, dayNoon, dayWord, futureTasks, pastTasks, viewDay } from './dayView'
 
 // The 2a capture pill's mic: the voice sheet, loaded on first use (as the tray does).
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
@@ -124,7 +134,15 @@ function isToday(iso: string | null): boolean {
   return cairoDateKey(new Date(iso)) === cairoDateKey(new Date())
 }
 
+/** Today, or — with `?day=YYYY-MM-DD` from its ‹ › and date picker — another day to look at and plan
+ * (Kai 2026-10-23). Today itself is unchanged; another day is OtherDay, Today's layout with only what
+ * the day needs (docs/log 2026-10-23 today-days handoff, the flow map). */
 export function TodayPage() {
+  const nav = useDayNav()
+  return nav.day ? <OtherDay nav={{ ...nav, day: nav.day }} /> : <TodayView nav={nav} />
+}
+
+function TodayView({ nav }: { nav: DayNav }) {
   // J-10: `isPending` (no data yet), not `isLoading` — while the IndexedDB cache is still being
   // restored the query is pending but not fetching, so isLoading is false and the empty states lied.
   const tasksQuery = useTasks()
@@ -392,7 +410,7 @@ export function TodayPage() {
     top3: () => bulkTop3(),
     labels: (ts) => setKbLabelIds(ts.map((t) => t.id)),
     delete: () => bulkDelete(),
-  }), { keys: NOTEBOOK_KEY, label: 'Notebook page', run: () => navigate(NOTEBOOK_PATH) }]
+  }), { keys: NOTEBOOK_KEY, label: 'Notebook page', run: () => navigate(NOTEBOOK_PATH) }, { ...DAY_KEYS, run: () => {} }]
   const { focusedId } = useListKeys(selectable, listBindings, {
     active: !morningOpen && !eveningOpen && !bulkSchedulePos && !bulkProjectPos && !kbProjectId && !kbLabelIds && !replanAt && !verbs.picking,
     sectionLabel: 'Lists',
@@ -674,7 +692,8 @@ export function TodayPage() {
     return (
       <div className="tp">
         <Fireflies phone />
-        <PhoneBar title={dateLabelShort} morning={day.morning} evening={day.evening} onOpenRitual={openRitual} />
+        <PhoneBar title={dateLabelShort} nav={nav} rituals={{ morning: day.morning, evening: day.evening, onOpen: openRitual }} />
+        <PhoneDayStrip nav={nav} />
         {tasksPending ? (
           <div style={{ padding: '4px 16px 12px' }}><span className="tp-sk" style={{ width: '64%' }} /></div>
         ) : (
@@ -821,15 +840,16 @@ export function TodayPage() {
   const header = (
     <div className="td-head">
       <div>
-        <h1 className="td-date">{dateLabel}</h1>
-        {!tasksPending && (
-          <div className="td-sum">
-            {counts.total > 0 && `${counts.done} of ${counts.total} done`}
-            {counts.total > 0 && nextUp && ' · '}
-            {nextUp && <>next up <span className="td-ink"><EmojiText text={nextUp.title} /> at {timeText(new Date(nextUp.starts_at))}</span></>}
-            {counts.total === 0 && !nextUp && 'A fresh page'}
-          </div>
-        )}
+        <DayHead nav={nav} label={dateLabel}>
+          {!tasksPending && (
+            <div className="td-sum">
+              {counts.total > 0 && `${counts.done} of ${counts.total} done`}
+              {counts.total > 0 && nextUp && ' · '}
+              {nextUp && <>next up <span className="td-ink"><EmojiText text={nextUp.title} /> at {timeText(new Date(nextUp.starts_at))}</span></>}
+              {counts.total === 0 && !nextUp && 'A fresh page'}
+            </div>
+          )}
+        </DayHead>
       </div>
       <div className="td-head-actions">
         <NotebookButton />
@@ -966,6 +986,410 @@ export function TodayPage() {
   )
 }
 
+// ── Another day (today-days, Kai 2026-10-23: "he doesn't want to be stuck to the today page"). Today's
+// ‹ date › and day picker, `?day=YYYY-MM-DD` so a reload keeps it, Shift+←/→. A future day is planned
+// with the evening ritual's seeds (rituals/loopDay `ritual.seeded` for that date — its morning ritual
+// pre-selects them); a past day is a calm read-only summary. The pure half is ./dayView. ──
+
+interface DayNav {
+  /** The day on screen when it isn't today ("YYYY-MM-DD"); null = today. */
+  day: string | null
+  /** Today on the user's clock (lib/appZone). */
+  today: string
+  /** Show `key`; today or null → plain /today. */
+  go: (key: string | null) => void
+  /** ‹ / ›: a day back or on. */
+  step: (n: number) => void
+}
+
+/** Shift+←/→: plain ←/→ is the Calendar's, ⌥/Alt+← the browser's Back, ⌘/Ctrl+← a word jump. */
+const DAY_KEYS = { keys: ['⇧', '←/→'], label: 'Previous · next day' }
+
+function useDayNav(): DayNav {
+  const zone = useAppZone()
+  const today = zoneDateKey(useMinuteNow(), zone)
+  const [params, setParams] = useSearchParams()
+  const day = viewDay(params.get('day'), today)
+  // replace: stepping through days doesn't fill the history (Android Back leaves Today, as before).
+  // From the address bar as it is now (the hook's params are this render's), so two quick presses
+  // take two steps.
+  const to = (pick: (from: string) => string | null) =>
+    setParams((p) => {
+      const key = pick(viewDay(new URLSearchParams(window.location.search).get('day'), today) ?? today)
+      if (!key || key === today) p.delete('day')
+      else p.set('day', key)
+      return p
+    }, { replace: true })
+  const go = (key: string | null) => to(() => key)
+  const step = (n: number) => to((from) => addDays(from, n))
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if ((e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || !e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return
+      if (document.querySelector('[role="dialog"], [role="menu"]')) return
+      e.preventDefault()
+      step(e.key === 'ArrowLeft' ? -1 : 1)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+  return { day, today, go, step }
+}
+
+/** Opens the app's date picker on the day shown; a tap on a day goes there (DatePicker `browse`). */
+function DayPickButton({ nav, className, label, children }: { nav: DayNav; className: string; label?: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLButtonElement>(null)
+  const [at, setAt] = useState<{ x: number; y: number } | null>(null)
+  return (
+    <>
+      <button
+        ref={ref}
+        type="button"
+        className={className}
+        aria-label={label}
+        title="Pick a day"
+        aria-haspopup="dialog"
+        aria-expanded={!!at}
+        onClick={(e) => {
+          const r = e.currentTarget.getBoundingClientRect()
+          setAt({ x: r.left, y: r.bottom + 4 * uiZoom() })
+        }}
+      >
+        {children}
+      </button>
+      {at && <DatePicker mode="day" browse quick title="Go to a day" value={nav.day ?? nav.today} position={at} trigger={ref} onPick={(k) => nav.go(k)} onClose={() => setAt(null)} />}
+    </>
+  )
+}
+
+/** Desktop: the date (it opens the picker), and under it ‹ › (+ Back to today while away) ahead of
+ * the summary line — beside the date they pushed 2a's capture pill onto a row of its own at 1280. */
+function DayHead({ nav, label, children }: { nav: DayNav; label: string; children?: React.ReactNode }) {
+  return (
+    <>
+      <h1 className="td-date"><DayPickButton nav={nav} className="td-date-btn">{label}</DayPickButton></h1>
+      <div className="td-daynav">
+        <button type="button" className="td-icon-btn td-day-step" aria-label="Previous day" title="Previous day (Shift+←)" onClick={() => nav.step(-1)}>
+          <Icon name="chevright" size={16} style={{ transform: 'scaleX(-1)' }} />
+        </button>
+        <button type="button" className="td-icon-btn td-day-step" aria-label="Next day" title="Next day (Shift+→)" onClick={() => nav.step(1)}>
+          <Icon name="chevright" size={16} />
+        </button>
+        {nav.day && <Button type="button" variant="secondary" className="td-btn-sm" onClick={() => nav.go(null)}>Back to today</Button>}
+        {children}
+      </div>
+    </>
+  )
+}
+
+/** Phone: the strip under the bar — ‹ yesterday · the picker (+ Back to today while away) · tomorrow ›.
+ * No page swipe: the rows own the sideways swipe (SwipeRow), and the screen edge is Android's Back. */
+function PhoneDayStrip({ nav }: { nav: DayNav }) {
+  const here = nav.day ?? nav.today
+  const name = (k: string) => (k === nav.today ? 'Today' : dayName(k, nav.today))
+  return (
+    <nav className="tp-daynav" aria-label="Days">
+      <button type="button" className="tp-day-step" aria-label="Previous day" onClick={() => nav.step(-1)}>
+        <Icon name="chevright" size={18} style={{ transform: 'scaleX(-1)' }} />
+        <span>{name(addDays(here, -1))}</span>
+      </button>
+      <span className="tp-daynav-mid">
+        {nav.day && <button type="button" className="tp-day-back" onClick={() => nav.go(null)}><span>Back to today</span></button>}
+        <DayPickButton nav={nav} className="tp-icon" label="Pick a day"><Icon name="pickdate" /></DayPickButton>
+      </span>
+      <button type="button" className="tp-day-step" aria-label="Next day" onClick={() => nav.step(1)}>
+        <span>{name(addDays(here, 1))}</span>
+        <Icon name="chevright" size={18} />
+      </button>
+    </nav>
+  )
+}
+
+/** Another day on Today's layout: the date bar, the day's ribbon and calendar, its 3 and its tasks (a
+ * future day) or what was done and left open (a past one), its routines; the rituals stay today's. */
+function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
+  const key = nav.day
+  const past = key < nav.today
+  const zone = useAppZone()
+  const isMobile = useIsMobile()
+  const now = useMinuteNow()
+  const { start, end } = dayBounds(key, zone)
+  const { data: tasks = [], isPending } = useTasks()
+  const { data: events = [] } = useCalendarEvents({ start, end })
+  const { data: projects = [] } = useProjects()
+  const { data: routines = [] } = useRoutines()
+  const { data: completions = [] } = useRoutineCompletions()
+  const { data: journal = [] } = useJournalEntries(past)
+  const seeds = useSeedsFor(key)
+  const word = dayWord(key, nav.today)
+  const taskById = new Map(tasks.map((t) => [t.id, t] as const))
+  const projectName = (id: string | null) => projects.find((p) => p.id === id)?.name
+  const projectDot = (id: string | null) => {
+    const idx = id ? projects.findIndex((p) => p.id === id) : 0
+    return `var(${PROJECT_DOTS[idx >= 0 ? idx % PROJECT_DOTS.length : 0]})`
+  }
+  const blocks = dayBlocks(events, key, zone)
+  const timeOf = (t: Task) => {
+    const b = blocks.find((e) => e.task_id === t.id)
+    return b ? [timeRange(new Date(b.starts_at), new Date(b.ends_at))] : undefined
+  }
+
+  // The cheatsheet's section for this page: its one key.
+  useEffect(() => {
+    usePageShortcutsStore.getState().set('Day', [DAY_KEYS])
+    return () => usePageShortcutsStore.getState().clear()
+  }, [])
+
+  // A future day: its 3 are seeds for that date (at most MAX_SEEDS); the rest of its tasks below.
+  const seedIds = new Set(seeds.map((t) => t.id))
+  function plant(t: Task) {
+    const on = seedIds.has(t.id)
+    if (!on && seeds.length >= MAX_SEEDS) return void useToastStore.getState().push({ message: `${word} already has three — take one out first` })
+    setSeed(t, !on, new Date(), key)
+    toastUndo(on ? `Taken out of ${word}'s three` : `Planted for ${word}`, () => setSeed(t, on, new Date(), key))
+  }
+  const starOf = (t: Task) => ({ on: seedIds.has(t.id), label: seedIds.has(t.id) ? `Take "${t.title}" out of ${word}'s three` : `Plant "${t.title}" as one of ${word}'s three`, onToggle: () => plant(t) })
+  const dayRows = past ? [] : futureTasks(tasks, key, zone).filter((t) => !seedIds.has(t.id))
+  const { done, open } = past ? pastTasks(tasks, key, zone) : { done: [], open: [] }
+  // Each item once: a task drawn as a row carries its block's time; the calendar list has the rest.
+  const rowIds = new Set((past ? [...done, ...open] : [...seeds, ...dayRows]).map((t) => t.id))
+  const calBlocks = blocks.filter((e) => !(e.task_id && rowIds.has(e.task_id)))
+  // Routines that day: scheduled or ticked (Routines' own rule), never one planted after the day.
+  const dayRoutines = routinesForToday(routines, completions, dayNoon(key, zone)).filter((r) => !r.created_at || Date.parse(r.created_at) < end.getTime())
+  const ticked = new Set(completions.filter((c) => c.completed_on === key).map((c) => c.routine_id))
+  const tickedCount = dayRoutines.filter((r) => ticked.has(r.id)).length
+  const line = past ? journal.find((e) => e.entry_date === key && e.body.trim())?.body.trim() : undefined
+  const tomorrow = key === addDays(nav.today, 1)
+  const ritualLine = tomorrow ? "Tonight's Shut down starts from these three." : 'On the day, the morning ritual starts from these three.'
+  const plural = (n: number, w: string) => `${n} ${w}${n === 1 ? '' : 's'}`
+  const summary = past
+    ? [done.length ? `${done.length} done` : null, open.length ? `${open.length} left open` : null, dayRoutines.length ? `routines ${tickedCount}/${dayRoutines.length}` : null].filter(Boolean).join(' · ') || 'A quiet day'
+    : [seeds.length + dayRows.length ? plural(seeds.length + dayRows.length, 'task') : null, blocks.length ? `${blocks.length} on the calendar` : null, seeds.length ? `${seeds.length} of ${MAX_SEEDS} planted` : null].filter(Boolean).join(' · ') || 'Nothing planned yet'
+  const heading = dayHeading(key, nav.today, isMobile ? 'short' : 'long')
+  const kind = past ? 'past' : 'future'
+
+  if (isMobile) {
+    const row = (t: Task, pick?: boolean) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t.project_id)} compact pick={pick} meta={timeOf(t)} star={starOf(t)} />
+    const pastRow = (t: Task) => <PastRow key={t.id} task={t} projectName={projectName(t.project_id)} meta={timeOf(t)} compact />
+    return (
+      <div className="tp" data-day={key} data-day-kind={kind}>
+        <Fireflies phone />
+        <PhoneBar title={heading} nav={nav} />
+        <PhoneDayStrip nav={nav} />
+        <div className="tp-sum">
+          <Icon name={past ? 'check' : 'calendar'} size={20} />
+          <span style={{ flex: 1, minWidth: 0 }}>{isPending ? '' : summary}</span>
+        </div>
+        {isPending ? (
+          <div className="tp-list"><Skeleton rows={3} /></div>
+        ) : past ? (
+          <>
+            <section aria-label="Done">
+              <PhoneSection label={`Done · ${done.length}`} first />
+              {done.length ? <div className="tp-list">{done.map(pastRow)}</div> : <div className="tp-quiet">Nothing finished that day</div>}
+            </section>
+            {open.length > 0 && (
+              <section aria-label="Left open">
+                <PhoneSection label={`Left open · ${open.length}`} />
+                <div className="tp-list">{open.map(pastRow)}</div>
+              </section>
+            )}
+          </>
+        ) : (
+          <section aria-label={`${word}'s three`}>
+            <PhoneSection label={`${word}'s three`} first />
+            {seeds.length ? <div className="tp-list">{seeds.map((t) => row(t, true))}</div> : <div className="tp-quiet">Nothing planted yet — ☆ a task to plant it</div>}
+          </section>
+        )}
+        <section aria-label="On the calendar">
+          <PhoneSection label="On the calendar" link={{ to: `/calendar?date=${key}`, label: 'Calendar' }} />
+          {calBlocks.length ? (
+            <div className="tp-list">{calBlocks.map((e) => <DayBlockItem key={e.id} event={e} task={e.task_id ? taskById.get(e.task_id) : undefined} phone />)}</div>
+          ) : (
+            <div className="tp-quiet">{blocks.length ? 'Its blocks are the tasks here' : 'Nothing on the calendar'}</div>
+          )}
+        </section>
+        {!past && !isPending && (
+          <section aria-label={`${word}'s tasks`}>
+            <PhoneSection label={`${word}'s tasks · ${dayRows.length}`} />
+            {dayRows.length ? <div className="tp-list">{dayRows.map((t) => row(t))}</div> : <div className="tp-quiet">Nothing else on this day yet</div>}
+          </section>
+        )}
+        {past && (
+          <section aria-label="The day's line">
+            <PhoneSection label="The day's line" />
+            <div className="tp-quiet">{line ?? 'No line written that day'}</div>
+          </section>
+        )}
+        <section aria-label="Routines">
+          <PhoneSection label={dayRoutines.length ? `Routines · ${tickedCount}/${dayRoutines.length}` : 'Routines'} link={{ to: '/routines', label: 'Routines' }} />
+          {dayRoutines.length ? <div className="tp-list">{dayRoutines.map((r) => <RoutineRow key={r.id} routine={r} done={ticked.has(r.id)} compact readOnly />)}</div> : <div className="tp-quiet">Nothing on repeat that day</div>}
+        </section>
+        {!past && <div className="tp-quiet tp-day-rituals">{ritualLine}</div>}
+      </div>
+    )
+  }
+
+  return (
+    <div className="td" data-day={key} data-day-kind={kind} style={{ maxWidth: 'var(--kf-page-max)' }}>
+      <Fireflies phone={false} />
+      <div className="td-head">
+        <div>
+          <DayHead nav={nav} label={heading}>{!isPending && <div className="td-sum">{summary}</div>}</DayHead>
+        </div>
+        {!past && <div className="td-head-actions"><AddTaskPill prefill={captureFor(key)} /></div>}
+      </div>
+
+      <section className="td-now" aria-label={`${word} on the calendar`}>
+        <Ribbon events={blocks} now={now} head={null} taskById={taskById} day={dayNoon(key, zone)} />
+        <div className="td-next">
+          {blocks.length === 0 && <span>Nothing on the calendar</span>}
+          {calBlocks.map((e) => <DayBlockItem key={e.id} event={e} task={e.task_id ? taskById.get(e.task_id) : undefined} />)}
+          <Link to={`/calendar?date=${key}`} className="td-cal-link">Calendar →</Link>
+        </div>
+      </section>
+
+      <div className="td-grid">
+        <div className="td-main">
+          {isPending ? (
+            <Skeleton rows={3} />
+          ) : past ? (
+            <>
+              <section aria-label="Done">
+                <SectionLabel style={{ marginBottom: 6 }}>{`Done · ${done.length}`}</SectionLabel>
+                {done.length ? done.map((t, i) => <PastRow key={t.id} task={t} projectName={projectName(t.project_id)} meta={timeOf(t)} border={i > 0} />) : <Empty line="Nothing finished that day." />}
+              </section>
+              {open.length > 0 && (
+                <section aria-label="Left open">
+                  <SectionLabel style={{ marginBottom: 6 }}>{`Left open · ${open.length}`}</SectionLabel>
+                  {open.map((t, i) => <PastRow key={t.id} task={t} projectName={projectName(t.project_id)} meta={timeOf(t)} border={i > 0} />)}
+                </section>
+              )}
+            </>
+          ) : (
+            <>
+              <section aria-label={`${word}'s three`}>
+                <SectionLabel action={<span className="td-label-note">{`${seeds.length} of ${MAX_SEEDS} planted`}</span>} style={{ marginBottom: 6 }}>{`${word}'s three`}</SectionLabel>
+                {seeds.length ? (
+                  seeds.map((t, i) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t.project_id)} border={i < seeds.length - 1} pick meta={timeOf(t)} star={starOf(t)} />)
+                ) : (
+                  <Empty line="Nothing planted yet — ☆ a task to plant it." />
+                )}
+              </section>
+              <section aria-label={`${word}'s tasks`}>
+                <SectionLabel style={{ marginBottom: 6 }}>{`${word}'s tasks · ${dayRows.length}`}</SectionLabel>
+                {dayRows.length ? (
+                  dayRows.map((t, i) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t.project_id)} border={i < dayRows.length - 1} meta={timeOf(t)} star={starOf(t)} />)
+                ) : (
+                  <Empty line="Nothing else on this day yet." />
+                )}
+              </section>
+            </>
+          )}
+        </div>
+
+        <div className="td-rail">
+          {past ? (
+            <section aria-label="The day's line">
+              <SectionLabel style={{ marginBottom: 10 }}>The day's line</SectionLabel>
+              <div className="tp-note">{line ?? 'No line written that day.'}</div>
+            </section>
+          ) : (
+            <section aria-label="Rituals">
+              <SectionLabel style={{ marginBottom: 10 }}>Rituals</SectionLabel>
+              <div className="tp-note">{ritualLine}</div>
+            </section>
+          )}
+          <section aria-label="Routines">
+            <SectionLabel style={{ marginBottom: 10 }}>{dayRoutines.length ? `Routines · ${tickedCount}/${dayRoutines.length}` : 'Routines'}</SectionLabel>
+            {dayRoutines.length ? dayRoutines.map((r) => <RoutineRow key={r.id} routine={r} done={ticked.has(r.id)} readOnly />) : <div className="tp-note">Nothing on repeat that day</div>}
+          </section>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** A past day's row (read-only but two moves): a finished task's ✓ reopens it (Undo); one left open
+ * has Move ▾ — the Plan list (Today, Tomorrow, a date…). The title opens the task, as everywhere. */
+function PastRow({ task, projectName, meta, compact, border }: { task: Task; projectName?: string; meta?: string[]; compact?: boolean; border?: boolean }) {
+  const openTask = useOpenTask()
+  const [plan, setPlan] = useState<{ x: number; y: number } | null>(null)
+  const done = task.status === 'done'
+  const facts = [...(meta ?? []), projectName, done ? doneAt(task) : null].filter(Boolean) as string[]
+  const move = !done && (
+    <Button type="button" variant="secondary" className="td-btn-sm" aria-haspopup="dialog" aria-label={`Move "${task.title}"`} onClick={(e) => setPlan({ x: e.clientX, y: e.clientY })}>
+      Move ▾
+    </Button>
+  )
+  const menu = plan && (
+    <PlanMenu
+      task={task}
+      position={plan}
+      onClose={() => setPlan(null)}
+      actions={{ schedule: (iso, timed) => rescheduleTasksWithUndo([task], iso, { timed }), tomorrow: () => moveToTomorrowWithUndo([task]), someday: () => somedayTasksWithUndo([task]) }}
+    />
+  )
+  const title = <EmojiText text={task.title} />
+  if (compact) {
+    return (
+      <>
+        <div id={`task-${task.id}`} className="tp-row" data-past={done ? 'done' : 'open'} style={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
+          <span className="tp-hit">{done && <DoneCheck task={task} size={22} />}</span>
+          <div onClick={() => openTask(task.id)} className="tp-body">
+            <div className={`tp-title${done ? ' is-done' : ''}`}>{title}</div>
+            {facts.length > 0 && <div className="tp-meta">{facts.map((f) => <span key={f}>{f}</span>)}</div>}
+          </div>
+          {move && <span style={{ alignSelf: 'center', paddingRight: 'var(--sp-2)' }}>{move}</span>}
+        </div>
+        {menu}
+      </>
+    )
+  }
+  return (
+    <>
+      <div id={`task-${task.id}`} className="td-row" data-past={done ? 'done' : 'open'} style={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 2px', borderTop: border ? '1px solid var(--line-dashed)' : 'none' }}>
+        <span style={{ marginTop: 1, width: 20, flex: 'none' }}>{done && <DoneCheck task={task} size={20} />}</span>
+        <div onClick={() => openTask(task.id)} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
+          <div className="td-row-title"><span className={done ? 'td-struck' : undefined}>{title}</span></div>
+          {facts.length > 0 && <div className="td-meta">{facts.map((f) => <span key={f}>{f}</span>)}</div>}
+        </div>
+        {move}
+      </div>
+      {menu}
+    </>
+  )
+}
+
+/** One of another day's calendar blocks — its time and title; a tap opens the task or the event. */
+function DayBlockItem({ event, task, phone }: { event: CalendarEvent; task?: Task; phone?: boolean }) {
+  const navigate = useNavigate()
+  const openTask = useOpenTask()
+  const h24 = useHour24()
+  const open = () => (task ? openTask(task.id) : navigate(eventPath(event)))
+  const done = task?.status === 'done'
+  const start = new Date(event.starts_at)
+  const keys = (e: React.KeyboardEvent) => e.key === 'Enter' && open()
+  if (phone) {
+    return (
+      <div id={`upnext-${event.id}`} className="tp-ev" role="link" tabIndex={0} onClick={open} onKeyDown={keys}>
+        <span className={`tp-ev-time${h24 ? '' : ' tp-ev-time--12h'}`}>{timeText(start)}</span>
+        <span className="tp-ev-rule" aria-hidden />
+        <div className="tp-ev-body">
+          <div className={`tp-title${done ? ' is-done' : ''}`}><EmojiText text={event.title} /></div>
+          <div className="tp-meta"><span>{timeRange(start, new Date(event.ends_at))}</span></div>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <span id={`upnext-${event.id}`} className="td-next-item" role="link" tabIndex={0} title={task ? 'Open task' : 'Open in calendar'} onClick={open} onKeyDown={keys}>
+      <span className="td-next-sq" style={{ background: event.color ?? (event.type === 'event' && !event.task_id ? 'var(--acc-blossom)' : 'var(--acc-lavender)') }} aria-hidden />
+      <span className="td-next-time">{timeText(start)}</span>
+      <span className={`td-ink${done ? ' td-struck' : ''}`}><EmojiText text={event.title} /></span>
+    </span>
+  )
+}
+
 /** The Notebook page (another builder's route; Kai's analog-journal export). */
 const NOTEBOOK_PATH = '/notebook?day=today'
 /** Its key on Today, as the cheatsheet draws it (two caps). */
@@ -1020,11 +1444,15 @@ const deskBlockMeta = (meta: string[] | undefined, inProgress: boolean) => (
 /** 2a header: "+ Add a task…" with the capture keycap and the mic inside (rule 6: capture is
  * type-first). The field opens the capture bar; the mic, the voice sheet. The keycap reads N, as 2a
  * draws it: N is New task everywhere (the Notebook page is Shift+N). */
-function AddTaskPill() {
+function AddTaskPill({ prefill }: { /** Another day's pill: the capture bar opens on its `<date`. */ prefill?: string }) {
   const [voice, setVoice] = useState(false)
+  const capture = () => {
+    if (prefill) window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: prefill }))
+    openCapture()
+  }
   return (
     <div className="td-pill">
-      <button type="button" className="td-pill-field" data-tour="command-bar" onClick={openCapture} title="Capture — type, or use the mic to talk (N)">
+      <button type="button" className="td-pill-field" data-tour="command-bar" onClick={capture} title="Capture — type, or use the mic to talk (N)">
         <Icon name="plus" size={18} />
         <span className="td-pill-text">Add a task…</span>
         <KeyCombo keys={['N']} size="sm" />
@@ -1173,20 +1601,21 @@ function NowHeadTask({ task, block, head, check, sel }: { task: Task; block?: Ca
 /** 2a's day ribbon: 8 AM–8 PM, every timed block today in its calendar colour (CALENDAR.md kinds:
  * a meeting blossom, a task / time block lavender, or the event's own colour), the card's block
  * outlined in terra with its spent part filled, a terra now line. A block opens on click. */
-function Ribbon({ events, now, head, taskById }: { events: CalendarEvent[]; now: Date; head: CalendarEvent | null; taskById: Map<string, Task> }) {
+function Ribbon({ events, now, head, taskById, day }: { events: CalendarEvent[]; now: Date; head: CalendarEvent | null; taskById: Map<string, Task>; /** Another day's ribbon (noon on it): its blocks, no now line. */ day?: Date }) {
   const navigate = useNavigate()
   const openTask = useOpenTask()
-  const today = cairoDateKey(now)
+  const at = day ?? now
+  const today = cairoDateKey(at)
   const t = now.getTime()
-  const blocks = events.filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || isInProgress(e.starts_at, e.ends_at, now)))
-  const nowPct = ribbonPct(t, now)
+  const blocks = day ? events : events.filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || isInProgress(e.starts_at, e.ends_at, now)))
+  const nowPct = day ? 0 : ribbonPct(t, now)
   const hours = Array.from({ length: (RIBBON_TO_MIN - RIBBON_FROM_MIN) / 120 + 1 }, (_, i) => RIBBON_FROM_MIN / 60 + i * 2)
   return (
     <div className="td-ribbon">
       <div className="td-ribbon-track">
         <span className="td-ribbon-rail" aria-hidden />
         {blocks.map((e) => {
-          const pos = ribbonSpan(e, now)
+          const pos = ribbonSpan(e, at)
           if (!pos) return null
           const task = e.task_id ? taskById.get(e.task_id) : undefined
           const start = new Date(e.starts_at).getTime()
@@ -1360,7 +1789,7 @@ function WorthALook({ rows, resurfacing, stageOf }: { rows: SlippingRow[]; resur
 /** MK top bar: the date as the page title (Source Serif 26), search and ⋯. Scrolled → the small-
  * title variant (Inter 18/600, ruling 7). ⋯ keeps the two rituals one tap away in every state, as
  * the desktop Day card's links do. Re-tapping the Today tab scrolls to the top (MobileTabBar). */
-function PhoneBar({ title, morning, evening, onOpenRitual }: { title: string; morning: RitualState; evening: RitualState; onOpenRitual: (kind: RitualKind) => void }) {
+function PhoneBar({ title, nav, rituals }: { title: string; nav: DayNav; /** Today only: ⋯ = the two rituals. */ rituals?: { morning: RitualState; evening: RitualState; onOpen: (kind: RitualKind) => void } }) {
   const [scrolled, setScrolled] = useState(false)
   const [menu, setMenu] = useState(false)
   useEffect(() => {
@@ -1373,7 +1802,8 @@ function PhoneBar({ title, morning, evening, onOpenRitual }: { title: string; mo
   }, [])
   return (
     <div className="tp-bar" data-scrolled={scrolled || undefined}>
-      <h1 className="tp-bar-title">{title}</h1>
+      {/* The date opens the day picker (today-days) — the title's words stay the same. */}
+      <h1 className="tp-bar-title"><DayPickButton nav={nav} className="tp-title-btn">{title}</DayPickButton></h1>
       {/* The Notebook page's quiet way in (Kai's 2026-10-03 brainstorm). */}
       <Link to={NOTEBOOK_PATH} className="tp-icon" aria-label="Notebook page">
         <Icon name="journal" />
@@ -1382,15 +1812,17 @@ function PhoneBar({ title, morning, evening, onOpenRitual }: { title: string; mo
       <button type="button" className="tp-icon" aria-label="Search" onClick={() => window.dispatchEvent(new Event('kf-open-search'))}>
         <Icon name="search" />
       </button>
-      <button type="button" className="tp-icon" data-tour="plan-menu" aria-label="Today menu" aria-haspopup="dialog" onClick={() => setMenu(true)}>
-        <Icon name="dots" />
-      </button>
-      {menu && (
+      {rituals && (
+        <button type="button" className="tp-icon" data-tour="plan-menu" aria-label="Today menu" aria-haspopup="dialog" onClick={() => setMenu(true)}>
+          <Icon name="dots" />
+        </button>
+      )}
+      {menu && rituals && (
         <ActionSheet
           title="Today"
           items={[
-            { label: 'Morning ritual', hint: ritualProgress(morning), icon: <Icon name="today" />, onSelect: () => onOpenRitual('morning') },
-            { label: 'Evening ritual', hint: ritualProgress(evening), icon: <Icon name="routines" />, onSelect: () => onOpenRitual('evening') },
+            { label: 'Morning ritual', hint: ritualProgress(rituals.morning), icon: <Icon name="today" />, onSelect: () => rituals.onOpen('morning') },
+            { label: 'Evening ritual', hint: ritualProgress(rituals.evening), icon: <Icon name="routines" />, onSelect: () => rituals.onOpen('evening') },
           ]}
           onClose={() => setMenu(false)}
         />
@@ -1847,8 +2279,10 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted, pick, block, meta, pending, inProgress = false, place, ...sel }: {
+function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted, pick, block, meta, pending, inProgress = false, place, star, ...sel }: {
   task: Task
+  /** Another day's star (today-days): plants the task as one of that day's 3 seeds, not today's Top 3. */
+  star?: { on: boolean; label: string; onToggle: () => void }
   /** A Top 3 row: its place, for Move up / Move down in its menu. */
   place?: RowGrammarOptions['place']
   projectName?: string
@@ -1943,7 +2377,11 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
         </div>
         {!g.selecting && (
           <>
-            {(!done || pick) && <Star on={task.top3 || (done && !!pick)} label={task.title} disabled={done} onChange={() => toggleTop3(task)} style={done ? { opacity: 1 } : undefined} />}
+            {star ? (
+              <button type="button" className="kf-star" aria-pressed={star.on} aria-label={star.label} onClick={star.onToggle}>
+                <Icon name="star" size={22} fill={star.on ? 'currentColor' : 'none'} />
+              </button>
+            ) : (!done || pick) && <Star on={task.top3 || (done && !!pick)} label={task.title} disabled={done} onChange={() => toggleTop3(task)} style={done ? { opacity: 1 } : undefined} />}
             <RowMenuButton title={task.title} onOpen={g.openMenu} />
           </>
         )}
@@ -1958,7 +2396,11 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
   const tail = !g.selecting && (
     <>
       {parent && !done && <SubtaskAddButton parent={task} />}
-      {!done && !pick && (
+      {star ? (
+        <button type="button" className="kf-hit td-star" aria-pressed={star.on} aria-label={star.label} onClick={star.onToggle} style={{ color: star.on ? 'var(--star-on)' : 'var(--star-empty)' }}>
+          {star.on ? '★' : '☆'}
+        </button>
+      ) : !done && !pick && (
         <button type="button" className="kf-hit td-star" aria-label={task.top3 ? `Remove "${task.title}" from Top 3` : `Add "${task.title}" to Top 3`} onClick={() => toggleTop3(task)} style={{ color: task.top3 ? 'var(--star-on)' : 'var(--star-empty)' }}>
           {task.top3 ? '★' : '☆'}
         </button>
@@ -2045,12 +2487,12 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
   )
 }
 
-function RoutineRow({ routine, done, compact }: { routine: Routine; done: boolean; compact?: boolean }) {
+function RoutineRow({ routine, done, compact, readOnly }: { routine: Routine; done: boolean; compact?: boolean; /** Another day's (today-days): shown, not ticked. */ readOnly?: boolean }) {
   if (compact) {
     // Today Phone: the kit task row without star or ⋯ (a routine only checks off).
     return (
       <div className="tp-row" style={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
-        <span className="tp-hit"><Checkbox label={routine.name} checked={done} onChange={() => toggleCompletion(routine)} /></span>
+        <span className="tp-hit"><Checkbox label={routine.name} checked={done} disabled={readOnly} onChange={() => toggleCompletion(routine)} /></span>
         <div className="tp-body" style={{ cursor: 'default' }}>
           <div className={`tp-title${done ? ' is-done' : ''}`}>{routine.name}</div>
         </div>
@@ -2059,7 +2501,7 @@ function RoutineRow({ routine, done, compact }: { routine: Routine; done: boolea
   }
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '5px 0' }}>
-      <Checkbox label={routine.name} checked={done} size={16} onChange={() => toggleCompletion(routine)} />
+      <Checkbox label={routine.name} checked={done} size={16} disabled={readOnly} onChange={() => toggleCompletion(routine)} />
       <span style={{ flex: 1, fontSize: 13, color: done ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: done ? 'line-through' : 'none' }}>{routine.name}</span>
     </div>
   )

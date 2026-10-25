@@ -427,3 +427,22 @@
 .td-next-item .td-sub-of { font-size: var(--fs-meta); }
 /* A phone row with its subtasks under it leaves its rule to them (the nest draws it). */
 .tp-row.has-nest { border-bottom: none; }
+
+/* today-days (Kai 2026-10-23): ‹ the date › on Today — the date opens the day picker; another day's
+   strip on a phone. Existing tokens only. */
+.td-daynav { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-2); margin-top: var(--sp-2); }
+.td-daynav .td-sum { margin-top: 0; }
+.td-day-step { width: 28px; height: 28px; }
+.td-date-btn, .tp-title-btn { font: inherit; color: inherit; letter-spacing: inherit; background: none; border: none; padding: 0; cursor: pointer; border-radius: var(--radius-input); text-align: left; }
+.tp-title-btn { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-date-btn:hover { text-decoration: underline; text-decoration-color: var(--line-card); text-underline-offset: 6px; }
+.td-date-btn:focus-visible, .tp-title-btn:focus-visible, .tp-day-step:focus-visible, .tp-day-back:focus-visible > span { outline: none; box-shadow: var(--focus-ring); }
+.tp-day-back:focus-visible { outline: none; }
+.td-star[aria-pressed='true'] { opacity: 1; }
+.tp-daynav { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-1); padding: 0 var(--sp-1); }
+.tp-day-step { display: inline-flex; align-items: center; gap: var(--sp-1); min-height: var(--touch-min); padding: 0 var(--sp-2); border: none; background: none; font: inherit; font-size: var(--fs-body-s); color: var(--ink-muted); cursor: pointer; border-radius: var(--radius-input); }
+.tp-daynav-mid { display: inline-flex; align-items: center; gap: var(--sp-1); }
+/* A 48px target around a slimmer pill, so it doesn't crowd the summary line under the strip. */
+.tp-day-back { min-height: var(--touch-min); padding: 0; border: none; background: none; font: inherit; cursor: pointer; }
+.tp-day-back > span { display: inline-flex; align-items: center; height: 32px; padding: 0 var(--sp-3); border: 1px solid var(--line-card); border-radius: var(--radius-pill); background: var(--paper-parchment); font-size: var(--fs-body-s); color: var(--ink-body); }
+.tp-day-rituals { margin-top: var(--sp-4); }
