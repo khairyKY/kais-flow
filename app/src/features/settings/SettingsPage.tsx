@@ -271,7 +271,16 @@ function CaptureAiCard() {
   const later = 'Arrives with the next server update'
   return (
     <SCard id="settings-Capture" title="Capture & AI" sub="What the AI may do on its own with what you capture and make">
-      <Row label="File captures for me" help={!ready ? later : fileOn ? 'A capture the AI is sure of becomes a task, with Undo' : 'Everything waits in your Inbox; the AI’s guess is one tap away'}>
+      <Row
+        label="File captures for me"
+        help={
+          !ready
+            ? later
+            : fileOn
+              ? 'A capture with a date or #project, or one the AI is sure of, becomes a task (Undo) · quick add always makes tasks'
+              : 'Captures wait in your Inbox, ⌘K lines with a date or #project too — one tap files them · quick add on Tasks and Today still makes tasks'
+        }
+      >
         <Toggle on={fileOn} label="File captures for me" disabled={!ready} onToggle={() => updateAppSetting('auto_file_captures', !fileOn)} />
       </Row>
       <Row label="Pick a project for new things" help={!ready ? later : project === 'assign' ? 'Puts a new task or event in its likely project, with Undo' : project === 'suggest' ? 'Offers its likely project — one tap to accept' : 'Leaves new things where you put them'}>

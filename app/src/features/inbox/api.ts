@@ -47,17 +47,19 @@ function nowIso() {
   return new Date().toISOString()
 }
 
-export function captureText(rawText: string): InboxItem {
+/** A typed capture into the Inbox. `read`: what its typed tokens already say (quickAdd holdTyped,
+ * "File captures for me" off) — the card's one-tap suggestion, and the extras filing keeps. */
+export function captureText(rawText: string, read?: { ai_parse: Record<string, unknown>; payload: Record<string, unknown> | null }): InboxItem {
   const item: InboxItem = {
     id: crypto.randomUUID(),
     kind: 'text',
     raw_text: rawText,
     transcript: null,
-    ai_parse: null,
-    confidence: null,
+    ai_parse: read?.ai_parse ?? null,
+    confidence: typeof read?.ai_parse.confidence === 'number' ? read.ai_parse.confidence : null,
     status: 'pending',
     filed_task_id: null,
-    payload: null,
+    payload: read?.payload ?? null,
     snoozed_until: null,
     created_at: nowIso(),
     updated_at: nowIso(),
@@ -127,7 +129,8 @@ export function fileToTask(
   opts: { domainId?: string | null; projectId?: string | null; areaId?: string | null; dueAt?: string | null; timed?: boolean; title?: string; silent?: boolean; someday?: boolean } = {},
 ): Task {
   const prior = { ...item }
-  const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null } | null
+  // …and, from a held ⌘K line (quickAdd holdTyped), its `*labels`, repeat and `// notes`.
+  const overrides = item.payload as { priority_override?: number | null; duration_override?: number | null; labels_override?: string[]; repeat_override?: string | null; notes_override?: string | null } | null
   const parse = item.ai_parse as { due_at?: string | null; has_time?: boolean | null; duration_min?: number | null } | null
   // The triage card shows the AI's parsed date as a promise ("→ Sat, 18:00"); no caller was
   // passing it through, so every manual filing silently dropped it — and the punch-7 toast
@@ -151,6 +154,9 @@ export function fileToTask(
     // A typed `30m`, else the length the AI read ("for an hour") — the block's length too.
     durationMin: overrides?.duration_override ?? durationOf(parse?.duration_min),
     someday: opts.someday,
+    labels: overrides?.labels_override ?? [],
+    recurrenceRule: opts.someday ? null : (overrides?.repeat_override ?? null),
+    notes: overrides?.notes_override ?? null,
     // A capture's link rides along too (P7e A19): the task's "↗ site" and `o`.
     externalRef: issue?.node_id && issueUrl ? { source: 'github', id: issue.node_id, url: issueUrl } : linkRef(captureLink(item)),
   })

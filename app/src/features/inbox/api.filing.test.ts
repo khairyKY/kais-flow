@@ -55,6 +55,12 @@ describe('fileToTask', () => {
     expect(taskWrite()).not.toHaveProperty('external_ref')
   })
 
+  // Kai 2026-10-25: a ⌘K line held in the Inbox (auto-filing off) files with everything it typed.
+  it('a held typed line files with its labels, repeat and notes', () => {
+    fileToTask(item({ payload: { priority_override: 2, labels_override: ['calls'], repeat_override: 'FREQ=WEEKLY', notes_override: 'bring the deck' } }), { silent: true })
+    expect(taskWrite()).toMatchObject({ priority: 2, labels: ['calls'], recurrence_rule: 'FREQ=WEEKLY', notes: 'bring the deck' })
+  })
+
   // P7e A2: it used to land as a task due at 15:00 with nothing on the calendar.
   it('a timed card files with its calendar block, as long as the AI read (the one capture rule)', () => {
     const due = '2026-10-17T12:00:00.000Z'

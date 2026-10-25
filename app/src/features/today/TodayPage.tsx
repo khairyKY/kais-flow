@@ -40,7 +40,7 @@ import { useResurfacePick } from '../resurfacing/api'
 import { useTimeEntries } from '../focus/api'
 import { legacyGoalId } from './goalStore'
 import { dayTop3 } from './top3Order'
-import { CAPTURE_INPUT_ID, openCapture } from '../command-bar/commandBarStore'
+import { CAPTURE_INPUT_ID, openTaskCapture } from '../command-bar/commandBarStore'
 import { SectionLabel, Checkbox, Button, Star, KeyCombo } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { ActionSheet } from '../../components/ActionSheet'
@@ -587,7 +587,7 @@ function TodayView({ nav }: { nav: DayNav }) {
           <span
             onClick={() => {
               window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: `task: for ${person.name}'s birthday` }))
-              openCapture()
+              openTaskCapture()
             }}
             style={{ fontSize: '12.5px', color: 'var(--ink-muted)', textDecoration: 'underline', cursor: 'pointer', flex: 'none' }}
           >
@@ -709,7 +709,7 @@ function TodayView({ nav }: { nav: DayNav }) {
         {empty ? (
           // Ruling 8: one secondary action that opens capture; the terra capture button stays the CTA.
           <div style={{ paddingTop: 64 }}>
-            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: openCapture }} variant="secondary" />
+            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: () => openTaskCapture() }} variant="secondary" />
           </div>
         ) : (
           <>
@@ -934,7 +934,7 @@ function TodayView({ nav }: { nav: DayNav }) {
                 <Skeleton rows={2} />
               </>
             ) : nothingPlanned ? (
-              <EmptyTodayCard onPlan={openCapture} />
+              <EmptyTodayCard onPlan={() => openTaskCapture()} />
             ) : allDone ? (
               <DoneTodayCard />
             ) : (
@@ -1448,7 +1448,7 @@ function AddTaskPill({ prefill }: { /** Another day's pill: the capture bar open
   const [voice, setVoice] = useState(false)
   const capture = () => {
     if (prefill) window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: prefill }))
-    openCapture()
+    openTaskCapture() // Today's add row is a task field: a line with a date is a task at once
   }
   return (
     <div className="td-pill">
@@ -2462,7 +2462,7 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
     if (!project) return navigate(to)
     const text = `${projectTag(project, projects)} `
     window.dispatchEvent(new CustomEvent('prefill-command-bar', { detail: text }))
-    openCapture()
+    openTaskCapture() // a step for that project: a task at once
     const input = document.getElementById(CAPTURE_INPUT_ID) as HTMLInputElement | null
     requestAnimationFrame(() => input?.setSelectionRange(text.length, text.length)) // type after the tag
   }
