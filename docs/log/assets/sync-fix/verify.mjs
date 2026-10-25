@@ -172,7 +172,8 @@ const EVENTS = [
   ev(DEEPB, 'Deep work on the forecast', '17:00', '18:00', DEEP),
 ]
 const PROJECT = { id: P1, user_id: UID, domain_id: null, area_id: null, name: 'Forecasting', type: 'standard', status: 'active', color: null, milestones: [], checklist: [], deleted_at: null, created_at: CREATED, updated_at: CREATED }
-const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', help_seen: ['hint:calendar'], created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
+// "File captures for me" defaults OFF since v1.5.0 (ai-chat item 7); a7's dated ⌘K line is about the task + block syncing, so it's on.
+const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', auto_file_captures: true, help_seen: ['hint:calendar', 'notice:autofile'], created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
 const tables = () => structuredClone({ tasks: TASKS, calendar_events: EVENTS, inbox_items: [], projects: [PROJECT], domains: [], areas: [], app_settings: [SETTINGS], activity_log: [] })
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })

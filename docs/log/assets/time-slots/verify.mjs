@@ -58,7 +58,8 @@ const EVENTS = [
   ev(TYREB, 'Call the tyre supplier', '16:30', '17:00', TYRE),
   ev(SHAHEEN, 'Shaheen🛞', '13:00', '15:00', null, 'time_block', { recurrence_rule: 'FREQ=DAILY' }),
 ]
-const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', help_seen: ['hint:calendar'] }
+// "File captures for me" defaults OFF since v1.5.0 (ai-chat item 7); p4's ⌘K line is about slot filing, so it's on.
+const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z', auto_file_captures: true, help_seen: ['hint:calendar', 'notice:autofile'] }
 const tables = (extra = {}) => structuredClone({ tasks: TASKS, calendar_events: EVENTS, inbox_items: [], projects: [], domains: [], areas: [], app_settings: [SETTINGS], ...extra })
 
 const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true })
