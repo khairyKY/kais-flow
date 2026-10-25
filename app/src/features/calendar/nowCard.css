@@ -1,0 +1,66 @@
+/* cal-wave item 19 — the calendar's Ongoing / Up next card, option A as drawn in
+   design-export/Calendar extras options.html §4 (.nA): a paper card, a 4px bar in the item's colour, the
+   clock times under it, and Next as a lighter strip hung under the card. App tokens only; --c / --ct are
+   the item's accent and its text ink (./blockHue, the grid's own colours). */
+
+.kf-now { position: relative; width: 100%; font-family: var(--font-ui); color: var(--ink-body); line-height: 1.3; }
+.kf-now-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: start; }
+.kf-now-cd { flex: none; margin-left: auto; font-family: var(--font-mono); font-size: var(--fs-meta); font-variant-numeric: tabular-nums; color: var(--ink-muted); white-space: nowrap; }
+.kf-now-ring { flex: none; width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 2px solid var(--c); }
+.kf-now-ck { flex: none; display: inline-flex; }
+
+/* 1 · 2 — nothing left / later today: one quiet line, no frame */
+.kf-now-quiet { display: flex; align-items: center; gap: 7px; min-height: 30px; padding: 0 4px; font-size: var(--fs-body-s); color: var(--ink-muted); }
+.kf-now-quiet[role='button'] { cursor: pointer; border-radius: var(--radius-input); }
+.kf-now-quiet .kf-now-t { flex: 0 1 auto; color: var(--ink-body); }
+.kf-now-tm { flex: none; font-family: var(--font-mono); font-size: var(--fs-mono-l); color: var(--ink-faint); white-space: nowrap; }
+
+/* the card */
+.kf-now-card { position: relative; z-index: 1; display: block; width: 100%; box-sizing: border-box; padding: 10px 12px 9px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-block); box-shadow: var(--shadow-panel); text-align: left; color: inherit; font: inherit; cursor: pointer; }
+[data-theme='night'] .kf-now-card { background: var(--paper-bone); border-color: var(--line-solid); }
+.kf-now-card:focus-visible, .kf-now-nx:focus-visible, .kf-now-quiet:focus-visible, .kf-now-row:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.kf-now-h { display: flex; align-items: center; gap: 7px; font-size: var(--fs-meta-l); font-weight: var(--fw-semibold); }
+.kf-now-lbl { flex: none; white-space: nowrap; padding: 0; border: none; background: none; font: inherit; color: inherit; cursor: pointer; }
+.kf-now-lbl:focus-visible, .kf-now-join:focus-visible, .kf-now-chev-btn:focus-visible, .kf-now-act:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.kf-now-join { flex: none; margin-left: auto; display: inline-flex; align-items: center; height: 22px; padding: 0 9px; border-radius: var(--radius-pill); border: 1px solid var(--line-control); background: var(--paper-parchment); font: inherit; font-size: var(--fs-meta); color: var(--acc-hydrangea-deep); cursor: pointer; }
+.kf-now-join + .kf-now-cd { margin-left: 4px; }
+.kf-now-chev-btn { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; padding: 0; border: none; border-radius: var(--radius-page); background: none; color: var(--ink-faint); cursor: pointer; }
+.kf-now-tl { display: flex; align-items: center; gap: 8px; min-width: 0; margin-top: 7px; font-size: var(--fs-body); font-weight: var(--fw-medium); }
+.kf-now-tms { display: flex; justify-content: space-between; margin-top: 5px; font-family: var(--font-mono); font-size: var(--fs-mono-l); font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+
+/* the bar: a track, and a fill scaled from the left (transform only — compositor work, no layout) */
+.kf-now-br { display: block; height: 4px; margin-top: 9px; border-radius: 2px; background: color-mix(in srgb, var(--ink-body) 9%, transparent); overflow: hidden; }
+.kf-now-br > i { display: block; height: 100%; border-radius: 2px; background: color-mix(in srgb, var(--c) 55%, var(--ct)); transform-origin: left center; }
+.kf-now-br > i.is-live { animation-name: kf-now-fill; animation-timing-function: linear; animation-fill-mode: both; }
+@keyframes kf-now-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .kf-now-br > i.is-live { animation: none; } }
+.kf-now-br.is-thin { flex: none; width: 44px; height: 4px; margin: 0; }
+
+/* Focus: on a mouse it shows while the pointer is over the item; on touch it is always there */
+.kf-now-act { flex: none; display: inline-flex; align-items: center; gap: 4px; height: 22px; padding: 0 8px; border-radius: var(--radius-pill); border: 1px solid var(--line-card); background: var(--paper-bone); font: inherit; font-size: var(--fs-meta); font-weight: var(--fw-medium); color: var(--ink-body); cursor: pointer; }
+@media (hover: hover) {
+  /* ds-ok: hover-only on a mouse; the (hover: none) default below keeps it on screen for touch */
+  .kf-now-focus { display: none; }
+  .kf-now-tl:hover .kf-now-focus, .kf-now-card:focus-within .kf-now-tl .kf-now-focus, .kf-now-row:hover .kf-now-focus { display: inline-flex; }
+}
+
+/* the others running, above the main one (⌄ opened) */
+.kf-now-more { display: flex; flex-direction: column; gap: 6px; margin: -2px 0 9px; padding-bottom: 8px; border-bottom: 1px dashed var(--line-dashed); }
+.kf-now-row { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: var(--fs-body-s); font-weight: var(--fw-regular); cursor: pointer; border-radius: var(--radius-page); }
+.kf-now-plus { font-size: var(--fs-meta); color: var(--ink-faint); }
+
+/* Next: a lighter strip hung under the card, tucked 10px behind it */
+.kf-now-nx { position: relative; display: flex; align-items: center; gap: 8px; margin: -10px 8px 0; padding: 16px 11px 8px; background: var(--paper-bone); border: 1px solid var(--line-card); border-top: 0; border-radius: 0 0 var(--radius-block) var(--radius-block); font-size: var(--fs-body-s); cursor: pointer; }
+.kf-now-nx + .kf-now-nx { margin-top: 0; padding-top: 8px; }
+.kf-now-nx.is-mid { border-radius: 0; }
+[data-theme='night'] .kf-now-nx { background: var(--paper-parchment); border-color: var(--line-solid); }
+.kf-now-k { flex: none; width: 34px; font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
+
+/* 7 · folded to one line, a 2px bar along its foot */
+.kf-now-fold { display: flex; align-items: center; gap: 7px; padding: 8px 10px 10px 12px; font-size: var(--fs-body-s); overflow: hidden; }
+.kf-now-fold b { flex: none; font-weight: var(--fw-semibold); }
+.kf-now-chev { flex: none; color: var(--ink-faint); }
+.kf-now-fold .kf-now-br { position: absolute; left: 12px; right: 12px; bottom: 5px; width: auto; height: 2px; margin: 0; }
+
+/* where it sits (CalendarPage / PhoneCalendar): the foot of the rail, the grid's corner, over the phone grid */
+.kf-now--phone .kf-now-card { box-shadow: var(--shadow-sheet); }

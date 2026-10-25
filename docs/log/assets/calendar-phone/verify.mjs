@@ -215,7 +215,8 @@ for (const theme of ['day', 'night']) {
     // calendar-rail (Kai 2026-10-07) replaced the "Unscheduled · 2" label with the rail's segments; Lists joined them.
     const segs = (await page.locator('.pc-segs [role="radio"]').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim()).join()
     const chipH = (await page.locator('.pc-chip').evaluateAll((els) => els.map((e) => e.getBoundingClientRect().height))).join()
-    check(`${name} planning strip: "Overdue 0 · Today 2 · Inbox 0 · Lists 0" (Today chosen), paper cards 40 tall`, segs === 'Overdue 0,Today 2,Inbox 0,Lists 0' && (await page.locator('.pc-segs [aria-checked="true"]').innerText()).includes('Today') && chipH === '40,40', `${segs} / ${chipH}`)
+    // cal-wave (item 18): empty segments step aside; Scheduled = today's tasks already on the calendar.
+    check(`${name} planning strip: "Today 2 · Scheduled 2" (Today chosen), paper cards 40 tall`, segs === 'Today 2,Scheduled 2' && (await page.locator('.pc-segs [aria-checked="true"]').innerText()).includes('Today') && chipH === '40,40', `${segs} / ${chipH}`)
     const labels = await page.locator('.pc-hour > span').evaluateAll((els) => els.slice(11, 13).map((e) => e.getBoundingClientRect().top))
     check(`${name} hours are 64px`, labels[1] - labels[0] === 64, labels[1] - labels[0])
     check(`${name} four blocks today`, (await page.locator('.pc-pane .pc-block').count()) === 4)

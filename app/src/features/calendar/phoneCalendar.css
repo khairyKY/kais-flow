@@ -9,6 +9,7 @@
 /* Full-bleed, exactly down to the tab bar: out through .app-main-content's phone padding (20 top,
    16 sides, tab bar + 24 bottom) — the grid scrolls inside itself. */
 .pc {
+  position: relative;
   display: flex;
   flex-direction: column;
   margin: calc(-1 * var(--sp-5)) calc(-1 * var(--gutter-phone)) calc(-1 * var(--sp-6));
@@ -277,3 +278,8 @@
 .pc-mdots { display: flex; align-items: center; gap: 3px; min-height: 12px; }
 .pc-mdots > i { width: 6px; height: 6px; border-radius: 50%; background: var(--pc-dot); }
 .pc-mdots > span { font-family: var(--font-mono); font-size: var(--fs-meta); color: var(--ink-faint); }
+
+/* cal-wave item 18: every planning segment empty — one calm line. */
+.pc-none { flex: none; padding: var(--sp-2) var(--gutter-phone); font-size: var(--fs-body-s); color: var(--ink-faint); }
+/* cal-wave item 19: the Now card over the foot of the grid, inside the gutters, above the tab bar. */
+.pc-now { position: absolute; left: var(--sp-3); right: var(--sp-3); bottom: var(--sp-3); z-index: 6; }

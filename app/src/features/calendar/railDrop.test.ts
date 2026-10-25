@@ -56,6 +56,8 @@ describe('railDropAction — section × kind', () => {
   it('Overdue is a computed bucket: it never takes anything', () => {
     expect(railDropAction('overdue', true)).toBe('soft-no')
     expect(railDropAction('overdue', false)).toBe('soft-no')
+    expect(railDropAction('scheduled', true)).toBe('soft-no') // cal-wave: Scheduled holds what is already on the calendar
+    expect(railDropAction('scheduled', false)).toBe('soft-no')
   })
   it('a task block comes off the calendar anywhere else; onto Today it is also due today', () => {
     expect(railDropAction('inbox', true)).toBe('unschedule')

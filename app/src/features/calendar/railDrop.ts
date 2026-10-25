@@ -6,7 +6,7 @@ import { NO_PLACE, type MoveTarget } from '../tasks/move'
 // Inbox / Today. It didn't accept any of them and wiggled." A block dropped on the planning rail
 // now does what the section it lands on means. Pure — the writes are inbox/api's eventToRail. ──
 
-export type RailSection = 'overdue' | 'today' | 'inbox' | 'lists'
+export type RailSection = 'overdue' | 'today' | 'scheduled' | 'inbox' | 'lists'
 
 export type RailDropAction =
   /** The §7 soft-no: the ghost shakes, nothing changes. */
@@ -22,7 +22,7 @@ export type RailDropAction =
   /** …becomes a task in the Lists section's scope. */
   | 'to-list'
 
-const SECTIONS: readonly string[] = ['overdue', 'today', 'inbox', 'lists']
+const SECTIONS: readonly string[] = ['overdue', 'today', 'scheduled', 'inbox', 'lists']
 
 /** The Lists section's smart lists (tasks/grouping filterByScope) — the desktop rail's and the phone strip's. */
 export const SMART_LISTS = [
@@ -34,10 +34,11 @@ export const SMART_LISTS = [
 ]
 
 /** Section × kind → what the drop does. Overdue is a computed bucket (nothing can be put there), so
- * it always says no; rail chrome outside any section unschedules a task block as it always did. */
+ * it always says no (Scheduled too: it lists what is already on the calendar); rail chrome outside any section unschedules a task block as it always did. */
 export function railDropAction(section: string | null | undefined, taskBlock: boolean): RailDropAction {
   const s = section && SECTIONS.includes(section) ? (section as RailSection) : null
-  if (s === 'overdue') return 'soft-no'
+  // Scheduled (cal-wave) lists what is already on the calendar today: a block dropped there stays put.
+  if (s === 'overdue' || s === 'scheduled') return 'soft-no'
   if (taskBlock) return s === 'today' ? 'unschedule-today' : 'unschedule'
   if (s === 'inbox') return 'to-inbox'
   if (s === 'today') return 'to-today'

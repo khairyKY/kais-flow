@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent, Task } from '../../lib/types'
-import { blockLastDay, dayTray, dueFollows, nextFreeSlot, placeMoves, railBuckets, railMinutes, replanMoves } from './replan'
+import { blockLastDay, dayTray, dueFollows, nextFreeSlot, placeMoves, railBuckets, railMinutes, replanMoves, scheduledToday } from './replan'
 
 // The user's zone is the default Africa/Cairo (UTC+3 until the last Thursday of October 2026), so
 // every instant below is a Cairo wall time — and the suite runs under 4 device zones in CI.
@@ -146,5 +146,26 @@ describe('dayTray — the tasks under each day column (the Akiflow tray)', () =>
   it('today takes a Top 3 pick with no due date; a missed block from yesterday does not plan it', () => {
     const tray = dayTray([task('pick', { top3: true, top3_rank: 1 }), task('stuck', { due_at: cairo('2026-10-07', '18:00') })], [block('b0', 'stuck', '2026-10-06', '10:00', '11:00')], DAYS, NOW)
     expect(ids(tray.get('2026-10-07')!).sort()).toEqual(['pick', 'stuck'])
+  })
+})
+
+describe("scheduledToday — the rail's Scheduled (cal-wave item 18)", () => {
+  it("today's open tasks with a timed block today, by start, each once", () => {
+    const r = scheduledToday(
+      [task('gym'), task('read'), task('done', { status: 'done' }), task('tomorrow'), task('allday'), task('twice')],
+      [
+        block('b1', 'read', '2026-10-07', '18:00', '18:30'),
+        block('b2', 'gym', '2026-10-07', '07:00', '08:00'),
+        block('b3', 'done', '2026-10-07', '09:00', '09:30'),
+        block('b4', 'tomorrow', '2026-10-08', '09:00', '09:30'),
+        block('b5', 'allday', '2026-10-07', '00:00', '00:00', { all_day: true }),
+        block('b6', 'twice', '2026-10-07', '20:00', '20:30'),
+        block('b7', 'twice', '2026-10-07', '10:00', '10:30'),
+        block('b8', null, '2026-10-07', '11:00', '12:00'),
+      ],
+      NOW,
+    )
+    expect(ids(r)).toEqual(['gym', 'twice', 'read'])
+    expect(r[1].block?.id).toBe('b7')
   })
 })

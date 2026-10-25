@@ -82,6 +82,20 @@ export function dayTray(tasks: readonly Task[], events: readonly CalendarEvent[]
   return out
 }
 
+/** cal-wave item 18 (Kai 2026-10-25): the rail's Scheduled — today's open tasks that already have a timed
+ * block today, by the block's start (a task with two blocks today is listed once, at its first). */
+export function scheduledToday(tasks: readonly Task[], events: readonly CalendarEvent[], now: Date): RailTask[] {
+  const today = cairoDateKey(now)
+  const open = new Map(tasks.filter((t) => t.status === 'todo' && !t.deleted_at).map((t) => [t.id, t] as const))
+  const out = new Map<string, RailTask>()
+  const timed = events.filter((e) => e.task_id && !e.deleted_at && !e.all_day && blockDay(e) === today)
+  for (const e of timed.sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at))) {
+    const task = open.get(e.task_id!)
+    if (task && !out.has(task.id)) out.set(task.id, { task, block: e, late: 0 })
+  }
+  return [...out.values()]
+}
+
 /** A rail item's length on the grid: its missed block's, else its estimate, else 30 minutes. */
 export function railMinutes(r: Pick<RailTask, 'task' | 'block'>): number {
   if (r.block && !r.block.all_day) return Math.round((Date.parse(r.block.ends_at) - Date.parse(r.block.starts_at)) / 60_000)

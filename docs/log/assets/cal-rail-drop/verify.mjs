@@ -144,11 +144,15 @@ async function dragToSection(page, n, s, mid) {
     box = next
   }
   const from = center(box)
-  const to = center(await sec(page, s).locator('.cal-rail-sec-head').boundingBox())
   await page.mouse.move(from.x, from.y)
   await sleep(150)
   await page.mouse.down()
   await sleep(150)
+  // cal-wave (item 18): an empty section steps aside and comes back (last) once the drag is up — so the
+  // target is read after the block has started moving.
+  await page.mouse.move(from.x + 12, from.y + 4)
+  await sleep(200)
+  const to = center(await sec(page, s).locator('.cal-rail-sec-head').boundingBox())
   for (let i = 1; i <= 20; i++) {
     await page.mouse.move(from.x + ((to.x - from.x) * i) / 20, from.y + ((to.y - from.y) * i) / 20)
     await sleep(30)
@@ -213,6 +217,8 @@ if (want('r2')) {
 // ── R3: a plain event onto Lists scoped to a project → a task in that project ──
 if (want('r3')) {
   const { ctx, page, errors, state } = await open()
+  // cal-wave (item 18): Lists with nothing in it steps aside — "Lists…" brings it (and its scope picker) back.
+  if (await page.locator('.cal-rail-more', { hasText: 'Lists…' }).count()) await page.locator('.cal-rail-more').click()
   await page.getByRole('button', { name: 'Rail scope type' }).click()
   await page.locator('[role="option"]', { hasText: 'Project' }).first().click()
   await sleep(300)
