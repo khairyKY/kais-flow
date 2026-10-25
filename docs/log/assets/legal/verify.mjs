@@ -55,6 +55,7 @@ const VIEWS = { desktop: { viewport: { width: 1280, height: 800 }, userAgent: WI
 async function open(at, o = {}) {
   const ctx = await browser.newContext({ ...VIEWS[o.view ?? 'desktop'], deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', acceptDownloads: true })
   await ctx.addInitScript(() => {
+    localStorage.setItem('kf-mock-legal', '1') // the mock build hides the terms notice unless a harness asks (features/legal/api)
     // openExternal on the web = window.open(url, '_blank', …): record it instead of opening a tab.
     window.__opened = []
     window.open = (url) => { window.__opened.push(String(url)); return null }

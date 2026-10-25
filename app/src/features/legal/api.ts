@@ -30,7 +30,14 @@ export function useConsents() {
  * error) — the app never blocks on not knowing. */
 export function useOutdated(): LegalDoc[] | null {
   const { data } = useConsents()
+  // The mock build (`--mode mock`, the browser harnesses' fake backend) answers every table with no rows,
+  // so the notice would cover every page there; it shows only when a harness asks (kf-mock-legal).
+  if (import.meta.env.MODE === 'mock' && !mockAsks()) return null
   return data ? outdated(data) : null
+}
+
+function mockAsks(): boolean {
+  try { return localStorage.getItem('kf-mock-legal') === '1' } catch { return false }
 }
 
 /** "I agree": one row per document, at its current version. */
