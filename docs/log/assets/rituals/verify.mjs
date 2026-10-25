@@ -272,13 +272,14 @@ for (const theme of ['day', 'night']) {
   check(`${name} full-height kit sheet with ✕ and the title`, (await dlg.count()) === 1 && (await dlg.getByRole('button', { name: 'Close' }).count()) === 1 && (await text(dlg)).includes('Plan my day') && /SUN 27 SEP · ABOUT 3 MINUTES/i.test(await text(dlg)), (await text(dlg)).slice(0, 80))
   check(`${name} four sections in order`, JSON.stringify(await labels(page)) === JSON.stringify(['CARRY-OVER · 2', 'INBOX · 2', 'PICK YOUR 3 · 2/3', 'SUGGESTED TIMES']), JSON.stringify(await labels(page)))
   check(`${name} carry rows: overdue meta + Segmented + Drop`, /OVERDUE 64D/i.test(await text(row(page, REVIEW))) && /FROM YESTERDAY/i.test(await text(row(page, UNTITLED))) && (await row(page, REVIEW).getByRole('radio').count()) === 3 && (await row(page, REVIEW).getByRole('button', { name: 'Drop' }).count()) === 1)
-  check(`${name} inbox rows: capture meta, project chip, Dismiss, File`, /VOICE · LAST NIGHT 23:10/i.test(await text(page.locator('.rt-inbox').first())) && /TYPED · FRI/i.test(await text(page.locator('.rt-inbox').nth(1))) && /KAI.S FLOW/i.test(await text(page.locator('.rt-inbox').first())), (await text(page.locator('.rt-inbox').first())).replace(/\n/g, ' '))
-  check(`${name} footer: workload + status (suggested times count as timed) + Start the day`, /~\d+h.* planned · you'll finish around \d\d:\d0/.test(await text(page.locator('.rt-wl'))) && /2 PICKED · 2 TIMED/i.test(await text(page.locator('.rt-foot'))) && (await page.getByRole('button', { name: 'Start the day' }).count()) === 1, await text(page.locator('.rt-foot')))
+  check(`${name} inbox rows: capture meta, project chip, Dismiss, File`, /VOICE · LAST NIGHT 11:10 PM/i.test(await text(page.locator('.rt-inbox').first())) && /TYPED · FRI/i.test(await text(page.locator('.rt-inbox').nth(1))) && /KAI.S FLOW/i.test(await text(page.locator('.rt-inbox').first())), (await text(page.locator('.rt-inbox').first())).replace(/\n/g, ' '))
+  check(`${name} footer: workload + status (suggested times count as timed) + Start the day`, /~\d+h.* planned · you'll finish around \d{1,2}:\d0 [AP]M/.test(await text(page.locator('.rt-wl'))) && /2 PICKED · 2 TIMED/i.test(await text(page.locator('.rt-foot'))) && (await page.getByRole('button', { name: 'Start the day' }).count()) === 1, await text(page.locator('.rt-foot')))
   await phoneBasics(page, name, errors)
   await ctx.close()
 }
 
-// 6b — carry-over: Today chosen stays on the row; a row mid-swipe right reads Tomorrow · Mon 09:00.
+// 6b — carry-over: Today chosen stays on the row; a row mid-swipe right reads Tomorrow · Mon 9:00 AM.
+// (Times below read the 12h clock since v1.4.0's one-clock change.)
 if (want('6b')) {
   const name = '6b-day'
   const { ctx, page, cdp, errors, state } = await open({ kind: 'plan', at: '07:40', omarCarry: true }, 'day')
@@ -288,7 +289,7 @@ if (want('6b')) {
   check(`${name} status: 1 of 3 decided`, /1 OF 3 DECIDED/i.test(await text(page.locator('.rt-foot'))), await text(page.locator('.rt-foot')))
   const release = await swipe(cdp, row(page, OMAR), 230, true)
   await shot(page, name)
-  check(`${name} mid-swipe right shows Tomorrow · Mon 09:00`, /Tomorrow\s*Mon 09:00/i.test(await text(row(page, OMAR).locator('.kf-swipe-bg'))), await text(row(page, OMAR).locator('.kf-swipe-bg')))
+  check(`${name} mid-swipe right shows Tomorrow · Mon 9:00 AM`, /Tomorrow\s*Mon 9:00 AM/i.test(await text(row(page, OMAR).locator('.kf-swipe-bg'))), await text(row(page, OMAR).locator('.kf-swipe-bg')))
   await release()
   check(`${name} swipe past the line = Tomorrow, the row stays showing it`, state.writes.some((w) => w.row.id === id(OMAR) && w.row.due_at === iso('09:00', 28)) && (await row(page, OMAR).getByRole('radio', { name: 'Tomorrow' }).getAttribute('aria-checked')) === 'true')
   await tap(cdp, row(page, UNTITLED).getByRole('button', { name: 'Drop' }))
@@ -314,7 +315,7 @@ if (want('6c')) {
   await scrollSheet(page, '.rt-sec:has(.rt-label:text-matches("Suggested", "i"))')
   const times = page.locator('.rt-trow')
   check('6d every pick gets a suggested time (always suggests)', (await times.count()) === 3 && (await page.locator('.rt-trow .rt-pill').count()) === 3, await times.count())
-  check('6d the first slot follows Deep work', /10:30–12:30/.test(await text(times.first())) && /AFTER DEEP WORK/i.test(await text(times.first())), (await text(times.first())).replace(/\n/g, ' '))
+  check('6d the first slot follows Deep work', /10:30 AM–12:30 PM/.test(await text(times.first())) && /AFTER DEEP WORK/i.test(await text(times.first())), (await text(times.first())).replace(/\n/g, ' '))
   const borders = () => page.locator('.rt-trow .rt-pill').evaluateAll((els) => els.map((e) => getComputedStyle(e).borderTopStyle))
   check('6d no ✓ / Accept button on any row (plan fixes)', (await page.locator('.rt-ok').count()) === 0 && (await sheet(page).getByRole('button', { name: /accept/i }).count()) === 0)
   check('6d suggested pills read as proposals: dashed', (await page.locator('.rt-pill.is-suggested').count()) === 3 && JSON.stringify(await borders()) === JSON.stringify(['dashed', 'dashed', 'dashed']), JSON.stringify(await borders()))
@@ -325,12 +326,12 @@ if (want('6c')) {
   await shot(page, '6d-day-picker')
   const picker = page.locator('[role="dialog"]').last()
   check('6d Time Picker: free slots, 15-min list, duration, footer No time (ghost) + Done', /Free on your calendar/i.test(await text(picker)) && (await picker.locator('.kf-pk-time').count()) === 96 && (await picker.getByRole('button', { name: 'No time' }).getAttribute('class')).includes('kf-button--ghost') && (await picker.getByRole('button', { name: 'Done' }).count()) === 1)
-  await tap(cdp, picker.locator('.kf-pk-slot', { hasText: /^14:00/ }))
+  await tap(cdp, picker.locator('.kf-pk-slot', { hasText: /^2:00/ }))
   await tap(cdp, picker.getByRole('button', { name: 'Done' }))
   await sleep(400)
   await scrollSheet(page, '.rt-tl')
   await shot(page, '6d-day')
-  check('6d Done → the set pill turns solid (the others stay dashed), after Lunch', /14:00–14:45/.test(await text(times.nth(2))) && /AFTER LUNCH WITH OMAR/i.test(await text(times.nth(2))) && (await times.nth(2).locator('.rt-pill.is-set').count()) === 1 && JSON.stringify(await borders()) === JSON.stringify(['dashed', 'dashed', 'solid']) && /3 PICKED · 3 TIMED/i.test(await text(page.locator('.rt-foot'))), JSON.stringify(await borders()) + ' ' + (await text(page.locator('.rt-foot'))))
+  check('6d Done → the set pill turns solid (the others stay dashed), after Lunch', /2:00–2:45 PM/.test(await text(times.nth(2))) && /AFTER LUNCH WITH OMAR/i.test(await text(times.nth(2))) && (await times.nth(2).locator('.rt-pill.is-set').count()) === 1 && JSON.stringify(await borders()) === JSON.stringify(['dashed', 'dashed', 'solid']) && /3 PICKED · 3 TIMED/i.test(await text(page.locator('.rt-foot'))), JSON.stringify(await borders()) + ' ' + (await text(page.locator('.rt-foot'))))
   // No time: the ghost in the picker's footer.
   await tap(cdp, times.nth(2).locator('.rt-pill'))
   await tap(cdp, page.locator('[role="dialog"]').last().getByRole('button', { name: 'No time' }))
@@ -384,7 +385,7 @@ if (want('6e')) {
   await sleep(200)
   await shot(page, '6e-day')
   check('6e workload line amber with alert + "… over"', (await page.locator('.rt-wl.is-over').count()) === 1 && /\d+[HM] OVER$/i.test(await text(page.locator('.rt-wl'))) && /you'd finish/.test(await text(page.locator('.rt-wl'))), await text(page.locator('.rt-wl')))
-  check('6e the long pick: "Runs past 18:00"', /RUNS PAST 18:00/i.test(await text(page.locator('.rt-trow').nth(2))), await text(page.locator('.rt-trow').nth(2)))
+  check('6e the long pick: "Runs past 6:00 PM"', /RUNS PAST 6:00 PM/i.test(await text(page.locator('.rt-trow').nth(2))), await text(page.locator('.rt-trow').nth(2)))
   await phoneBasics(page, '6e-day', errors)
   await ctx.close()
 }
@@ -417,7 +418,7 @@ if (want('6j')) {
   await scrollSheet(page, '.rt-sec:has(.rt-label:text-matches("Suggested", "i"))')
   await sleep(200)
   await shot(page, '6j-day')
-  check('6j "Your calendar is full from 09:00 to 18:00."', (await text(page.locator('.rt-warn'))).includes('Your calendar is full from 09:00 to 18:00.'))
+  check('6j "Your calendar is full from 9:00 AM to 6:00 PM."', (await text(page.locator('.rt-warn'))).includes('Your calendar is full from 9:00 AM to 6:00 PM.'))
   check('6j every pick: "No free slot" + a secondary "Pick one"', (await page.locator('.rt-trow').count()) === 3 && (await page.locator('.rt-trow', { hasText: /No free slot/i }).count()) === 3 && (await page.locator('.rt-trow .kf-button--secondary', { hasText: 'Pick one' }).count()) === 3)
   check("6j workload: meetings · the 3 picks don't fit · over", /~9h of meetings · the 3 picks don't fit/.test(await text(page.locator('.rt-wl'))) && /3H 15M OVER/i.test(await text(page.locator('.rt-wl'))), await text(page.locator('.rt-wl')))
   await phoneBasics(page, '6j-day', errors)
