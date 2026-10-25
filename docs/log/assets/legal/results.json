@@ -437,7 +437,7 @@
   {
     "name": "n-desktop-day I agree → the current versions written (outbox → consents)",
     "ok": true,
-    "detail": "[{\"id\":\"a85947d0-c68b-47ad-a403-2e4ee56c702d\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:55:58.441Z\"},{\"id\":\"63f3e401-95ac-4e4d-9ac5-c2d50381cc34\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:55:58.441Z\"}]"
+    "detail": "[{\"id\":\"580dbdc8-9c8d-489c-835e-03ced75ce45e\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:31:41.192Z\"},{\"id\":\"9059fba4-eaac-4bf4-8729-d2de8ec04d97\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:31:41.192Z\"}]"
   },
   {
     "name": "n-desktop-day and the notice is gone",
@@ -482,7 +482,7 @@
   {
     "name": "n-desktop-night I agree → the current versions written (outbox → consents)",
     "ok": true,
-    "detail": "[{\"id\":\"f2dccf8f-4430-40b5-8b64-175111d6ce2f\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:56:09.888Z\"},{\"id\":\"c3de5d67-5be5-4d3b-9b34-718690399654\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:56:09.888Z\"}]"
+    "detail": "[{\"id\":\"76843233-a74b-4e94-980d-987a4bb20e10\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:31:51.788Z\"},{\"id\":\"631f2c7a-7074-4ea3-8af0-b8d7ed5e9f1d\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:31:51.788Z\"}]"
   },
   {
     "name": "n-desktop-night and the notice is gone",
@@ -527,7 +527,7 @@
   {
     "name": "n-phone-day I agree → the current versions written (outbox → consents)",
     "ok": true,
-    "detail": "[{\"id\":\"390d1557-9bde-4306-8a00-d4ebbcad090e\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:56:19.498Z\"},{\"id\":\"47dc1d55-5ea9-4f72-b143-f74b09fcb9cc\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:56:19.498Z\"}]"
+    "detail": "[{\"id\":\"dbea085d-4fa9-4a4d-97fd-a50916b91067\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:01.838Z\"},{\"id\":\"eca7ce59-c44c-4e94-95d1-acf92f73cfb7\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:01.838Z\"}]"
   },
   {
     "name": "n-phone-day and the notice is gone",
@@ -572,7 +572,7 @@
   {
     "name": "n-phone-night I agree → the current versions written (outbox → consents)",
     "ok": true,
-    "detail": "[{\"id\":\"29958754-a5dd-4f30-9123-cb846aee300c\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:56:28.589Z\"},{\"id\":\"fda15569-4a5b-41d1-9242-ef58072c4c5c\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:56:28.589Z\"}]"
+    "detail": "[{\"id\":\"c93bf76a-bec3-4a7b-b2bf-6612ce956aa6\",\"document\":\"terms\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:12.019Z\"},{\"id\":\"f17dc235-8413-4487-b285-3ec25a73200e\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:12.019Z\"}]"
   },
   {
     "name": "n-phone-night and the notice is gone",
@@ -602,7 +602,7 @@
   {
     "name": "n-one I agree writes just the Privacy Policy",
     "ok": true,
-    "detail": "[{\"id\":\"e411eee0-dd82-44e7-acdf-bdd246f95851\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T00:56:42.887Z\"}]"
+    "detail": "[{\"id\":\"11be7de5-b6f0-4bc4-9232-98d9ff3b6074\",\"document\":\"privacy\",\"version\":\"2026-10-25\",\"accepted_at\":\"2026-10-25T01:32:24.446Z\"}]"
   },
   {
     "name": "d-desktop-day the dialog asks, offers the export, Delete waits for the word",
