@@ -49,6 +49,10 @@ import { DomainsSettings } from '../domains/DomainList'
 import { LabelManager } from '../tasks/LabelManager'
 import { ConfirmCard } from '../projects/ConfirmCard'
 import { runExport } from '../export/api'
+import { useConsents } from '../legal/api'
+import { LegalLink, PRIVACY_URL, TERMS_URL } from '../legal/LegalLinks'
+import { DeleteAccountDialog } from '../legal/LegalDialogs'
+import { PRIVACY_VERSION, TERMS_VERSION } from '../../../../supabase/functions/_shared/legal.ts'
 import type { ExportKind } from '../export/files'
 import './settings.css'
 
@@ -748,6 +752,44 @@ function DataCard() {
       <Row label="Trash" help={`${deletedItems.length === 0 ? 'Nothing resting' : `${deletedItems.length} item${deletedItems.length === 1 ? '' : 's'} resting`} · composts after 30 days`}>
         <Link to="/trash" className={linkBtn} style={{ textDecoration: 'none' }}>Open trash</Link>
       </Row>
+      <DeleteAccountRow />
+    </SCard>
+  )
+}
+
+// docs/LEGAL.md: leaving, from the app itself — the account and everything in it, for good (function
+// `delete-account`). The dialog asks for the word DELETE and offers the export first.
+function DeleteAccountRow() {
+  const [open, setOpen] = useState(false)
+  return (
+    <Row label="Delete account" help="Your account and everything in it, for good">
+      <Button variant="ghost" onClick={() => setOpen(true)}>Delete account…</Button>
+      {open && <DeleteAccountDialog onClose={() => setOpen(false)} />}
+    </Row>
+  )
+}
+
+// docs/LEGAL.md: the two policies (on the site, opened in the browser), when you agreed, and the short
+// version of where your things live — the Privacy Policy has the long one.
+const dayOf = (iso: string) => new Date(iso.length === 10 ? `${iso}T12:00:00Z` : iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: appZone() })
+function LegalCard() {
+  const { data: consents = [] } = useConsents()
+  const agreed = (doc: 'terms' | 'privacy', version: string) => {
+    const row = consents.filter((c) => c.document === doc && c.version >= version).sort((a, b) => b.accepted_at.localeCompare(a.accepted_at))[0]
+    return row ? ` · you agreed ${dayOf(row.accepted_at)}` : ''
+  }
+  return (
+    <SCard id="settings-Legal" title="Privacy & terms">
+      <Row label="Privacy Policy" help={`Updated ${dayOf(PRIVACY_VERSION)}${agreed('privacy', PRIVACY_VERSION)}`}>
+        <LegalLink href={PRIVACY_URL} className={linkBtn}>Read</LegalLink>
+      </Row>
+      <Row label="Terms of Use" help={`Updated ${dayOf(TERMS_VERSION)}${agreed('terms', TERMS_VERSION)}`}>
+        <LegalLink href={TERMS_URL} className={linkBtn}>Read</LegalLink>
+      </Row>
+      <Row
+        label="What we keep, and where"
+        help="Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export or delete it all under Your data"
+      />
     </SCard>
   )
 }
@@ -1509,9 +1551,9 @@ function OrganizeCard() {
 // The capture endpoint's key card lives in Advanced, at the bottom of the page (Kai 2026-10-12).
 // 'Sound' returned when Kai un-cut it (2026-07-26); 'Resurfacing' is the cooldown card (punch 21);
 // 'Data' holds the importer and punch 50's Trash entry point. UI pass: in the order the page reads.
-const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Integrations', 'Organize', 'Data', 'Profile', 'App', 'Advanced'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Integrations', 'Organize', 'Data', 'Legal', 'Profile', 'App', 'Advanced'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
-const SUBNAV_LABEL: Partial<Record<SubnavItem, string>> = { Timezone: 'Time zone', Data: 'Your data' }
+const SUBNAV_LABEL: Partial<Record<SubnavItem, string>> = { Timezone: 'Time zone', Data: 'Your data', Legal: 'Privacy & terms' }
 
 // Back from Google's consent page (?google=…): straight to Integrations, where the row says how it went.
 const fromGoogle = () => new URLSearchParams(window.location.search).has('google')
@@ -1570,6 +1612,7 @@ function DesktopSettings() {
               <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
               <OrganizeCard />
               <DataCard />
+              <LegalCard />
               <ProfileCard />
               <AppUpdateCard />
             </div>
@@ -1613,6 +1656,7 @@ function MobileSettings() {
       <McpCard />
       {/* Punch 50: the phone's way into Trash — and, like the computer, the importer and Profile. */}
       <DataCard />
+      <LegalCard />
       <ProfileCard />
       <AppUpdateCard />
       <AdvancedSection />

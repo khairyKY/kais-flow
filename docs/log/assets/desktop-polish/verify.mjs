@@ -26,6 +26,10 @@ const UID = '00000000-0000-4000-8000-00000000d3e0'
 const jwt = `${b64({ alg: 'HS256', typ: 'JWT' })}.${b64({ sub: UID, role: 'authenticated', exp: 4102444800 })}.x`
 const user = { id: UID, aud: 'authenticated', role: 'authenticated', email: 'demo@example.test', app_metadata: {}, user_metadata: {}, created_at: '2026-01-01T00:00:00Z' }
 const session = { access_token: jwt, refresh_token: 'demo', token_type: 'bearer', expires_in: 3600, expires_at: 4102444800, user }
+// The account has agreed to the current Terms / Privacy versions (legal, 0083) — otherwise the app's
+// "We've updated our terms" notice covers the page. The versions come from the one file that holds them.
+const LEGAL_TS = fs.readFileSync(new URL('../../../../supabase/functions/_shared/legal.ts', import.meta.url), 'utf8')
+const CONSENTS = ['terms', 'privacy'].map((d, i) => ({ id: `c0000000-0000-4000-8000-00000000000${i + 1}`, user_id: UID, document: d, version: LEGAL_TS.match(new RegExp(`${d.toUpperCase()}_VERSION = '([0-9-]+)'`))[1], accepted_at: '2026-10-25T00:00:00Z' }))
 
 // ── data ──
 const T = '2026-09-01T09:00:00Z'
@@ -57,6 +61,7 @@ function tables(s = {}) {
     inbox_items: [],
     journal_entries: [],
     activity_log: [],
+    consents: CONSENTS,
   }
 }
 

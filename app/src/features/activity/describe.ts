@@ -616,6 +616,11 @@ export function describeActivity(e: ActivityLogEntry, names: ActivityNames = NO_
         const href = at ? `/calendar?date=${zoneDateKey(new Date(at))}` : '/calendar'
         return { ...said, text: said.text || 'An event', href, notice: { kind: 'event_reminder', actions: [{ action: 'open', title: 'Open' }], taskIds: [] } }
       }
+      if (type === 'notify.terms') {
+        // A changed Terms of Use / Privacy Policy (0083): the app itself asks to agree; this row opens
+        // Settings → Privacy & terms, where both are linked.
+        return { ...said, text: said.text || 'Our terms changed', details: said.details || 'Tap to review', href: '/settings' }
+      }
       if (type === 'notify.sync_problem') {
         return { ...said, text: said.text || syncNotice(1).title, href: '/today', notice: { kind: 'sync_problem', actions: syncNotice(1).actions, taskIds: [] } }
       }

@@ -77,7 +77,8 @@ export function Field({ label, hint, after, below, boxClass, inputRef, ...input 
   )
 }
 
-/** Password with Show/Hide as a word (no eye glyph in the set). `rule` adds the live 8+ line. */
+/** Password with an eye to show / hide it (queue item 6: the eye only, no word — and the browser's own
+ * reveal eye is hidden in firstRun.css, so there is one). `rule` adds the live 8+ line. */
 export function PasswordField({ rule, value, ...field }: Omit<FieldProps, 'type' | 'after' | 'below'> & { rule?: boolean; value: string }) {
   const [shown, setShown] = useState(false)
   const r = passwordRule(value)
@@ -89,7 +90,7 @@ export function PasswordField({ rule, value, ...field }: Omit<FieldProps, 'type'
       required
       after={
         <button type="button" className="fr-show" aria-label={shown ? 'Hide password' : 'Show password'} onClick={() => setShown((s) => !s)}>
-          {shown ? 'Hide' : 'Show'}
+          <Icon name={shown ? 'eye-off' : 'eye'} size={20} />
         </button>
       }
       below={
