@@ -72,6 +72,7 @@ import type { ContextMenuItem } from '../../components/ContextMenu'
 import { isTypingTarget } from '../../components/useListKeys'
 import { overlayCount } from '../../lib/overlayStack'
 import type { Area, CalendarEvent, Domain, InboxItem, Project, Task } from '../../lib/types'
+import { taskMinutes } from '../../../../supabase/functions/_shared/blockLength.ts'
 
 const RAIL_W_KEY = 'kf.calRailWidth'
 const PLANNING_KEY = 'kf.calPlanning'
@@ -363,7 +364,7 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
         ) : (
           <>
             {tag && <span aria-hidden style={{ width: 7, height: 7, borderRadius: '50%', background: tag.color ?? 'var(--acc-moss)' }} />}
-            {t.duration_min != null && <span>{formatDuration(t.duration_min)}</span>}
+            {taskMinutes(t) != null && <span>{formatDuration(taskMinutes(t)!)}</span>}
           </>
         )}
       </span>
