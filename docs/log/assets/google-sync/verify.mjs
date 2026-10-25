@@ -439,7 +439,8 @@ if (want('p1')) {
     check(`p1 ${theme}: the phone grid draws Dhuhr`, (await block.count()) === 1)
     if (theme === 'day') {
       // A 600ms hold lifts a native block; a synced one stays down.
-      const p = center(await block.boundingBox())
+      const bb = await block.boundingBox()
+      const p = { x: bb.x + 10, y: bb.y + 4 } // its uncovered top: Lunch (12:10) overlaps the rest
       const w = state.writes.length
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p] })
       await sleep(700)
@@ -450,7 +451,8 @@ if (want('p1')) {
       await page.keyboard.press('Escape').catch(() => {})
       await sleep(500)
     }
-    const p = center(await block.boundingBox())
+    const bb2 = await block.boundingBox()
+    const p = { x: bb2.x + 10, y: bb2.y + 4 } // its uncovered top: Lunch (12:10) overlaps the rest
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p] })
     await sleep(40)
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
