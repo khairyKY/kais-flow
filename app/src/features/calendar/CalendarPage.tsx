@@ -1143,7 +1143,7 @@ function DesktopCalendar() {
         .cal-rail-sec-count { margin-left: auto; color: var(--ink-faint); }
         /* Kai 2026-10-12: a block dragged over a section that takes it — the grid's own drop-target
            look (.fc-highlight). Overdue never takes one (it's computed), so it never lights. */
-        .cal-rail-sec[data-drop-over]:not([data-section="overdue"]):not([data-section="scheduled"]) { background: var(--fc-highlight-color, color-mix(in srgb, var(--acc-lavender) 16%, transparent)); outline: 1px dashed var(--acc-lavender); outline-offset: 3px; border-radius: 4px; }
+        .cal-rail-sec[data-drop-over]:not([data-section="overdue"]):not([data-section="scheduled"]) { background: var(--fc-highlight-color, color-mix(in srgb, var(--acc-lavender) 16%, transparent)); outline: 1px dashed var(--acc-lavender); outline-offset: 3px; border-radius: 4px; /* ds-ok: the drop target's 4px as it was (Kai 2026-10-12); cal-wave only adds Scheduled to the no-drop list */ }
         /* Plan ▾ is the kit's B secondary (bone, no outline, 12px), sized for the one-line row. A hovered
            row is bone too, so there the button steps up to parchment to keep its edge. */
         .cal-head-nav.kf-button { width: 36px; padding: 9px 0; justify-content: center; }

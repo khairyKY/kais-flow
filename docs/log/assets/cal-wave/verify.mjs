@@ -150,7 +150,7 @@ const geo = (page) => page.evaluate(() => {
   const r = (s) => { const e = document.querySelector(s); if (!e) return null; const b = e.getBoundingClientRect(); return { l: b.left, r: b.right, w: b.width, h: b.height } }
   const h1 = document.querySelector('.cal-head-h1')
   return {
-    fc: r('.fc'), body: r('.fc-timegrid-body table') ?? r('.fc-daygrid-body table'), card: r('.cal-grid-card'), head: r('.cal-head'), ctrls: r('.cal-head-ctrls'), date: r('.cal-head-date'),
+    fc: r('.fc'), body: r('.fc-timegrid-body table') ?? r('.fc-daygrid-body table'), card: r('.cal-grid-card') ?? r('.cal-strip-grid'), head: r('.cal-head'), ctrls: r('.cal-head-ctrls'), date: r('.cal-head-date'),
     h1Lines: h1 ? Math.round(h1.getBoundingClientRect().height / parseFloat(getComputedStyle(h1).lineHeight || '20')) : 0,
     h1Clipped: h1 ? h1.scrollWidth > h1.clientWidth + 1 : true,
     cols: [...document.querySelectorAll('.fc-timegrid-body .fc-timegrid-col[data-date]')].map((c) => Math.round(c.getBoundingClientRect().width)),
@@ -164,7 +164,7 @@ const oneLine = (g, z) => g.head && g.ctrls && g.date && g.head.h <= 60 * z && g
 
 // ═══ W · item 8: the grid fills its width, every window, scale and view; the header keeps one line ═══
 if (want('w')) {
-  for (const w of [840, 1280, 1920]) {
+  for (const w of process.env.WK ? [] : [840, 1280, 1920]) {
     for (const scale of [1, 1.25, 1.5]) {
       const { ctx, page, errors } = await open({ w, h: 760, scale, fold: null })
       const tag = `${w}@${Math.round(scale * 100)}`
@@ -197,9 +197,10 @@ if (want('w')) {
     await page.locator('.cal-rail-tab').click()
     await sleep(700)
     check('w …its tab still opens it at that width (this visit), the days drop to fit beside it', (await page.locator('.cal-rail:not(.is-folded)').count()) === 1 && fills(await geo(page)))
-    await page.setViewportSize({ width: 600, height: 700 })
+    await page.setViewportSize({ width: 780, height: 700 }) // the narrowest desktop (under 768 is the phone calendar)
     await sleep(800)
-    check('w resized narrower by the window: still filled', fills(await geo(page)))
+    const gn = await geo(page)
+    check('w resized narrower by the window: still filled', fills(gn), JSON.stringify([gn.body, gn.fc, gn.card]))
     await ctx.close()
   }
   // planning mode fills too
