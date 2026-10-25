@@ -36,6 +36,13 @@ export function timeRange(from: Date, to: Date, zone: string = appZone(), h24?: 
   return clockRange(zoneTimeKey(from, zone), zoneTimeKey(to, zone), h24)
 }
 
+const zoneNameFmt = perZone((timeZone) => new Intl.DateTimeFormat('en-US', { timeZone, timeZoneName: 'short' }))
+
+/** A zone's short name now ("GMT+3", "PDT") — the calendar gutter's second-clock heading (cal-wave). */
+export function zoneShort(zone: string, at: Date = new Date()): string {
+  return zoneNameFmt(zone).formatToParts(at).find((p) => p.type === 'timeZoneName')?.value ?? zone
+}
+
 /** The hour on the user's clock (0–23) — what the daisy's stage reads, never the device's hour. */
 export function zoneHour(d: Date = new Date(), zone: string = appZone()): number {
   return Number(zoneTimeKey(d, zone).slice(0, 2))

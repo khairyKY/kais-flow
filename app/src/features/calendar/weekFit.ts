@@ -37,9 +37,12 @@ export function visibleDayCount(view: CalViewKind, dayCount: number, hiddenDays 
   return Math.max(1, dayCount)
 }
 
+/** cal-wave: the second clock's column in the gutter (CalendarGrid.css `.kf-cal-2z`). */
+export const ZONE2_W = 50
+
 /** CalendarGrid's wrapper min-width: below it the grid scrolls sideways. None for one day. */
-export function gridMinWidth(days: number): number | undefined {
-  return days > 1 ? TIME_AXIS_W + days * MIN_COL_W : undefined
+export function gridMinWidth(days: number, axis = TIME_AXIS_W): number | undefined {
+  return days > 1 ? axis + days * MIN_COL_W : undefined
 }
 
 /** One day column's width in a grid `gridWidth` wide (the time gutter comes off first). */
@@ -59,4 +62,70 @@ export function railYields(shellWidth: number, railWidth: number, days: number):
   if (shellWidth <= 0 || days <= 1) return false
   const grid = shellWidth - GRID_CHROME_W - RAIL_SPLIT_W - railWidth
   return columnWidth(grid, days) < MIN_COL_W
+}
+
+/** cal-wave (Akiflow's "Responsive" view, Kai 2026-10-25): a day column's comfortable width when the
+ * day count follows the window. Just under NARROW_COL_W, so a fitted week still reads at full size
+ * on a wide screen; ponytail: fixed, a Density-aware value if Kai wants it to track S/M/L. */
+export const RESPONSIVE_COL_W = 150
+
+/** How many day columns of at least `colW` fit in a grid `gridWidth` wide (the gutter `axis` off first),
+ * from 1 to `max`. An unmeasured grid (0) answers `max`. */
+export function fitDays(gridWidth: number, colW: number, max = 7, axis = TIME_AXIS_W): number {
+  if (gridWidth <= 0) return max
+  return Math.min(max, Math.max(1, Math.floor((gridWidth - axis) / colW)))
+}
+
+/** The fields fitHours reads from a block. */
+export interface HourSpan {
+  starts_at: string
+  ends_at: string
+  all_day: boolean
+}
+
+/** cal-wave (Akiflow's "Dynamic" view): the hour range that fits the shown days' timed blocks, on the
+ * user's clock — an hour of room either side, at least `minSpan` hours, inside 0–24. A block running
+ * past midnight opens the range to that edge. No block: `fallback`. `days` are the shown "YYYY-MM-DD"
+ * keys in order; `dayOf` / `hourOf` read an instant on the user's zone (eventTime / dateShortcuts). */
+export function fitHours(
+  blocks: readonly HourSpan[],
+  days: readonly string[],
+  dayOf: (d: Date) => string,
+  hourOf: (d: Date) => number,
+  { pad = 1, minSpan = 6, fallback = [8, 18] as [number, number] } = {},
+): [number, number] {
+  if (!days.length) return fallback
+  const first = days[0]
+  const last = days[days.length - 1]
+  let lo = 24
+  let hi = 0
+  for (const b of blocks) {
+    if (b.all_day) continue
+    const s = new Date(b.starts_at)
+    const e = new Date(b.ends_at)
+    const sd = dayOf(s)
+    const ed = dayOf(new Date(e.getTime() - 1)) // an end at midnight belongs to the day before
+    if (ed < first || sd > last) continue
+    const end = hourOf(e) || 24
+    const parts: [number, number][] =
+      sd === ed
+        ? [[hourOf(s), end]]
+        : [
+            ...(sd >= first ? [[hourOf(s), 24] as [number, number]] : []),
+            ...(ed <= last ? [[0, end] as [number, number]] : []),
+            ...(days.some((d) => d > sd && d < ed) ? [[0, 24] as [number, number]] : []),
+          ]
+    for (const [a, z] of parts) {
+      lo = Math.min(lo, Math.floor(a))
+      hi = Math.max(hi, Math.ceil(z))
+    }
+  }
+  if (lo >= hi) return fallback
+  lo = Math.max(0, lo - pad)
+  hi = Math.min(24, hi + pad)
+  while (hi - lo < minSpan) {
+    if (hi < 24) hi++
+    else lo--
+  }
+  return [lo, hi]
 }

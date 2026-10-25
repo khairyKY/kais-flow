@@ -74,7 +74,7 @@ export function deviceZone(): string {
 }
 
 // Every zone Intl knows (Settings → Timezone's search), plus UTC, which some engines leave out.
-const ALL_ZONES: readonly string[] = (() => {
+export const ALL_ZONES: readonly string[] = (() => {
   try {
     return [...new Set([...Intl.supportedValuesOf('timeZone'), 'UTC'])]
   } catch {

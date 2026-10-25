@@ -252,6 +252,10 @@ export interface AppSettings {
   paper_ready_on?: boolean
   birthday_on?: boolean
   sync_problem_on?: boolean
+  /** Paper capture ready · Birthday (off until turned on) · Sync problem (migration 0065). */
+  paper_ready_on?: boolean
+  birthday_on?: boolean
+  sync_problem_on?: boolean
   quiet_hours_on?: boolean
   quiet_from?: string
   quiet_to?: string

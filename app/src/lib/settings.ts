@@ -19,6 +19,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   slipping_default_days: 7,
   calendar_day_count: 7,
   birthday_on: false, // the one notice kind that starts off (Tray and Notifications 12i, 0065)
+  birthday_on: false, // the one notice kind that starts off (Tray and Notifications 12i, 0065)
   notifications_last_seen_at: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),

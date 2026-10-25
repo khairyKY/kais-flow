@@ -14,13 +14,13 @@ import { layoutOverlaps } from './overlapLayout'
 import { cairoDateKey, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
 import { addDays, durationLabel } from '../../components/pickerMath'
 import { bandSegments, isMultiDaySpan, spanDays } from './daySpans'
-import { timeRange, zoneHour } from './eventTime'
+import { timeRange, zoneHour, zoneShort, zoneTimeKey, zoneToIso } from './eventTime'
 import { appZone, useAppZone } from '../../lib/appZone'
 import { clockOptions, clockRange, clockText } from '../../lib/clock'
 import { useMinuteClock } from '../../lib/minuteClock'
 import { intlZonePlugin } from './zonePlugin'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
-import { gridMinWidth, isNarrow } from './weekFit'
+import { gridMinWidth, isNarrow, TIME_AXIS_W, ZONE2_W } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
 import { useDayRollover } from './useDayRollover'
 import { cardDragData } from './planningMode'
@@ -135,6 +135,13 @@ interface CalendarGridProps {
    * empty all-day band, and its free stretches drawn as dashed "2h free" boxes. */
   strip?: boolean
   freeGaps?: { start: string; end: string; label: string }[]
+  /** cal-wave (Akiflow's "Dynamic"): the first and last hour drawn ("HH:MM:SS"), the rows stretched to
+   * the grid's height. Absent = the whole day at the density's row height. */
+  slotMinTime?: string
+  slotMaxTime?: string
+  expandRows?: boolean
+  /** cal-wave: a second clock in the time gutter — its zone (IANA), or none. */
+  secondZone?: string | null
 }
 
 /** FullCalendar renders the day-column grid and the time-slot guide lines as separate DOM
@@ -416,6 +423,10 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     scrollLeadMinutes = SCROLL_LEAD_DESKTOP_MIN,
     strip = false,
     freeGaps,
+    slotMinTime = '00:00:00',
+    slotMaxTime = '24:00:00',
+    expandRows = false,
+    secondZone,
   } = props
   const customView = 'customDayCount'
   // Conductor review 2026-10-12: the grid lays out on the user's zone (lib/appZone) like every other
@@ -439,12 +450,22 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   useEffect(() => {
     const el = wrapRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
+    // cal-wave item 8 (Kai's 840px window: the columns stopped short, a blank strip to their right):
+    // FullCalendar sizes its tables to its box only on a WINDOW resize, so the rail folding, the
+    // splitter or the sidebar left them at the old width. Any change to the box re-measures it, once
+    // a frame.
+    let raf = 0
     const ro = new ResizeObserver(([entry]) => {
       widthRef.current = Math.round(entry.contentRect.width)
       setNarrowCols(isNarrow(widthRef.current, daysRef.current))
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => fcRef.current?.getApi().updateSize())
     })
     ro.observe(el)
-    return () => ro.disconnect()
+    return () => {
+      cancelAnimationFrame(raf)
+      ro.disconnect()
+    }
   }, [])
   useEffect(() => setNarrowCols(isNarrow(widthRef.current, visibleDays)), [visibleDays])
   const narrow = initialView !== 'dayGridMonth' && narrowCols
@@ -776,6 +797,23 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     return (a: { start: { hour: number; minute: number }; end?: { hour: number; minute: number } }) => (a.end ? clockRange(hm(a.start), hm(a.end), hour24) : clockText(hm(a.start), hour24))
   }, [hour24])
   const slotLabelFormat = useMemo(() => (hour24 ? { hour: '2-digit', minute: '2-digit', hour12: false } as const : { hour: 'numeric', hour12: true } as const), [hour24])
+  // cal-wave: the second clock beside each hour label — that hour on today's date in the user's zone, read
+  // on the other zone's clock (so a half-hour zone reads "1:30 PM"). FC hands the hour as a marker whose
+  // UTC fields are the user's wall clock (zonePlugin).
+  const slotLabelContent = useMemo(() => {
+    if (!secondZone) return undefined
+    return (arg: { date: Date; text: string }) => {
+      const hm = `${String(arg.date.getUTCHours()).padStart(2, '0')}:${String(arg.date.getUTCMinutes()).padStart(2, '0')}`
+      const other = zoneTimeKey(new Date(zoneToIso(zoneDateKey(new Date(), zone), hm, zone)), secondZone)
+      return (
+        <>
+          <span className="kf-cal-z2">{clockText(other, hour24)}</span>
+          <span>{arg.text}</span>
+        </>
+      )
+    }
+  }, [secondZone, zone, hour24])
+  const zoneVars = useMemo(() => (secondZone ? { ['--kf-z2' as string]: `"${zoneShort(secondZone)}"`, ['--kf-z1' as string]: `"${zoneShort(zone)}"` } : null), [secondZone, zone])
   const headerToolbar = useMemo(() => (hideToolbar ? false : { left: 'prev,next today', center: 'title', right: `timeGridDay,${customView},timeGridWeek,dayGridMonth` }), [hideToolbar])
   // J-15: land two hours above the now-line instead of a fixed 08:00. FC reads scrollTime once per
   // mount (each view switch remounts via `key`); prev/next keep the hour you're looking at, and Today
@@ -1185,8 +1223,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   const nowIndicatorContent = useCallback((arg: NowIndicatorContentArg) => (arg.isAxis ? null : <span className="cal-now-chip">{clockTime(Date.now())}</span>), [clockTime])
   const allDaySlot = useMemo(() => !strip || events.some((e) => e.allDay || isSpan(e)), [strip, events, isSpan])
   const wrapStyle = useMemo(
-    () => ({ height: '100%', minWidth: gridMinWidth(visibleDays), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1 }) as React.CSSProperties,
-    [visibleDays, density],
+    () => ({ height: '100%', minWidth: gridMinWidth(visibleDays, secondZone ? TIME_AXIS_W + ZONE2_W : undefined), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1, ...zoneVars }) as React.CSSProperties,
+    [visibleDays, density, secondZone, zoneVars],
   )
 
   return (
@@ -1200,14 +1238,14 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     <div
       ref={wrapRef}
       data-tour="calendar"
-      className={narrow ? 'kf-cal-narrow' : undefined}
+      className={[narrow && 'kf-cal-narrow', secondZone && 'kf-cal-2z'].filter(Boolean).join(' ') || undefined}
       onContextMenu={handleGridContextMenu}
       onClick={handleCtrlClick}
       onMouseDown={(e) => { downAt.current = { x: e.clientX, y: e.clientY } }}
       style={wrapStyle}
     >
     <FullCalendar
-      key={`${initialView}-${dayCount}-${density}`}
+      key={`${initialView}-${dayCount}-${density}-${secondZone ? 'z2' : ''}`}
       ref={fcRef}
       plugins={PLUGINS}
       timeZone={zone}
@@ -1221,6 +1259,10 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       dragRevertDuration={0}
       eventTimeFormat={eventTimeFormat}
       slotLabelFormat={slotLabelFormat}
+      slotLabelContent={slotLabelContent}
+      slotMinTime={slotMinTime}
+      slotMaxTime={slotMaxTime}
+      expandRows={expandRows}
       views={views}
       headerToolbar={headerToolbar}
       datesSet={cb.datesSet}

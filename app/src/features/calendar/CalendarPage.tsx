@@ -18,12 +18,12 @@ import { RowMenuButton } from '../tasks/SwipeRow'
 import { aiFiling, eventToRail, fileToCalendar, fileToTask, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { railDropAction, scopeTarget, SMART_LISTS, type RailSection } from './railDrop'
 import { dayWord } from '../inbox/inboxDisplay'
-import { dayTray, nextFreeSlot, railBuckets, railMinutes, type RailTask } from './replan'
+import { dayTray, nextFreeSlot, railBuckets, railMinutes, scheduledToday, type RailTask } from './replan'
 import { todayFor } from '../tasks/planMath'
 import { DatePicker } from '../../components/DatePicker'
 import { dayHint } from '../../components/pickerMath'
 import { cairoDateKey, scheduleToday, scheduleTomorrow, tomorrowHint } from '../../lib/dateShortcuts'
-import { appZone } from '../../lib/appZone'
+import { appZone, isZone } from '../../lib/appZone'
 import { clockOptions, hour24, setHour24, useHour24 } from '../../lib/clock'
 import { useOutboxMarks } from '../../lib/outbox'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
@@ -39,7 +39,7 @@ import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../
 import { daisyAsset } from '../../lib/gardenAssets'
 import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
-import { slotFields, timeText, zoneHour } from './eventTime'
+import { slotFields, timeRange, timeText, zoneHour, zoneTimeKey } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
 import { blockedOn, freeGaps, freeLeft, minutesLabel } from './planningMode'
 import { cardDraggable } from './cardDrag'
@@ -53,7 +53,8 @@ import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
-import { gridMinWidth, railYields, visibleDayCount } from './weekFit'
+import { fitDays, fitHours, gridMinWidth, MIN_COL_W, RAIL_SPLIT_W, RAIL_TAB_W, railYields, RESPONSIVE_COL_W, TIME_AXIS_W, visibleDayCount, ZONE2_W } from './weekFit'
+import { NowCard } from './NowCard'
 import { useDayRollover } from './useDayRollover'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { goalIdOf } from '../today/top3Order'
@@ -191,7 +192,7 @@ type PlanTarget = { kind: 'task'; r: RailTask } | { kind: 'inbox'; item: InboxIt
 
 /** Which sections the person folded (per device). Lists starts folded. */
 function readSections(): Record<RailSection, boolean> {
-  const base = { overdue: false, today: false, inbox: false, lists: true }
+  const base = { overdue: false, today: false, scheduled: false, inbox: false, lists: true }
   try {
     return { ...base, ...JSON.parse(localStorage.getItem(RAIL_SECTIONS_KEY) ?? '{}') }
   } catch {
@@ -303,7 +304,7 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects
   )
 }
 
-function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, children }: {
+function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, keep, children }: {
   name: RailSection
   label: string
   count: number
@@ -311,10 +312,14 @@ function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, ch
   folded: boolean
   onToggle: (name: RailSection) => void
   empty: string
+  /** Shown with nothing in it (Lists on a scope the person picked). */
+  keep?: boolean
   children: React.ReactNode
 }) {
+  // cal-wave item 18 (Kai 2026-10-25): an empty section steps aside — back only while a block is dragged
+  // (it is still a drop target: the CSS shows it while the drag ghost is up).
   return (
-    <section className="cal-rail-sec" data-section={name}>
+    <section className="cal-rail-sec" data-section={name} data-empty={count === 0 && !keep ? '' : undefined}>
       <button type="button" className="cal-rail-sec-head" aria-expanded={!folded} onClick={() => onToggle(name)}>
         <Icon name="chevdown" size={14} style={{ transform: folded ? 'rotate(-90deg)' : undefined, transition: 'transform var(--dur-quick)' }} />
         <span style={{ color: terra && count > 0 ? 'var(--acc-terra)' : undefined }}>{label}</span>
@@ -330,14 +335,35 @@ function RailSectionBox({ name, label, count, terra, folded, onToggle, empty, ch
   )
 }
 
-function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; domains: Domain[]; projects: Project[]; areas: Area[]; onPlan: (x: number, y: number) => void }) {
+function RailTaskCard({ r, domains, projects, areas, onPlan, onJump }: {
+  r: RailTask
+  domains: Domain[]
+  projects: Project[]
+  areas: Area[]
+  onPlan: (x: number, y: number) => void
+  /** cal-wave Scheduled: the card shows its block's time and a click goes to the block. */
+  onJump?: () => void
+}) {
   const { task: t, block } = r
   // Right-click: the one task menu (Pick date… / Tomorrow route through rescheduleDue, so a missed
   // block moves or comes off with the replan); a missed block can also just be unscheduled.
   const grammar = useRowGrammar(t, { projects, domains, canUnschedule: !!block, actions: block ? { unschedule: () => deleteEventWithUndo(block, 'Unscheduled') } : undefined })
   const tag = resolveTag(t, domains, projects, areas)
   const missed = block ? new Date(block.starts_at) : null
-  const open = useCardOpen(t.id)
+  const cardOpen = useCardOpen(t.id)
+  const open = onJump
+    ? {
+        ...cardOpen,
+        onClick: (e: React.MouseEvent<HTMLElement>) => {
+          if (e.currentTarget.contains(e.target as Node)) onJump()
+        },
+        onKeyDown: (e: React.KeyboardEvent<HTMLElement>) => {
+          if (e.key !== 'Enter' || e.target !== e.currentTarget) return
+          e.preventDefault()
+          onJump()
+        },
+      }
+    : cardOpen
   return (
     <div
       className="unscheduled-task"
@@ -356,7 +382,9 @@ function RailTaskCard({ r, domains, projects, areas, onPlan }: { r: RailTask; do
       </span>
       <span className="cal-row-title"><EmojiText text={t.title} /></span>
       <span className="cal-row-meta">
-        {r.late > 0 ? (
+        {onJump && block && !block.all_day ? (
+          <span className="cal-row-at">{timeRange(new Date(block.starts_at), new Date(block.ends_at))}</span>
+        ) : r.late > 0 ? (
           <span style={{ color: 'var(--acc-terra-ink)' }} title={missed ? `Missed block: ${missed.toLocaleString('en-US', { weekday: 'short', ...clockOptions(), timeZone: appZone() })}` : undefined}>
             Overdue {r.late}d
           </span>
@@ -484,6 +512,8 @@ function DesktopCalendar() {
   // earlier day) · Today (no time yet) · Inbox (un-triaged captures), then the old scoped Lists.
   const { data: inbox = [] } = usePendingInboxItems()
   const buckets = useMemo(() => railBuckets(tasks, events, new Date()), [tasks, events, today]) // eslint-disable-line react-hooks/exhaustive-deps
+  // cal-wave item 18: today's tasks already on the calendar, with their times.
+  const scheduled = useMemo(() => scheduledToday(tasks, events, new Date()), [tasks, events, today]) // eslint-disable-line react-hooks/exhaustive-deps
   const inRail = new Set([...buckets.overdue, ...buckets.today].map((r) => r.task.id))
   const listTasks = filterByScope(tasks, scope).filter((t) => !t.scheduled_start && !inRail.has(t.id))
   const toPlan = buckets.overdue.length + buckets.today.length + inbox.length
@@ -844,7 +874,21 @@ function DesktopCalendar() {
   })
   // Kai 2026-10-07: an overdue pile opens the rail by itself (that's what the calendar is for then);
   // the person's own fold still wins, and the folded tab shows the pile's count in terra.
-  const railFolded = railPref ? railPref === 'folded' : buckets.overdue.length === 0 && railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, hiddenWeekend.length))
+  // cal-wave items 8 + 13: "Days fit the width" (Akiflow's Responsive) turns the N-day and Week views into as
+  // many days as fit at RESPONSIVE_COL_W; a plain N-day view drops days before its columns would go under
+  // MIN_COL_W (Week keeps its seven and scrolls — Kai 2026-07-21). Narrowing, the rail folds first (unless the
+  // person opened or folded it themselves), then the days drop.
+  const timeGridView = viewKind === 'week' || viewKind === 'ndays'
+  const responsive = viewOpts.responsive && timeGridView
+  const secondZone = viewOpts.secondZone && isZone(viewOpts.secondZone) ? viewOpts.secondZone : null
+  const axisW = TIME_AXIS_W + (secondZone ? ZONE2_W : 0)
+  const railOpenGrid = shellWidth - RAIL_SPLIT_W - railWidth
+  const railFolded = railPref
+    ? railPref === 'folded'
+    : buckets.overdue.length === 0 && (responsive ? shellWidth > 0 && fitDays(railOpenGrid, RESPONSIVE_COL_W, 7, axisW) < 2 : railYields(shellWidth, railWidth, visibleDayCount(viewKind, dayCount, hiddenWeekend.length)))
+  const gridWidth = shellWidth > 0 ? (railFolded ? shellWidth - RAIL_TAB_W : railOpenGrid) : 0
+  const shownDays = responsive ? fitDays(gridWidth, RESPONSIVE_COL_W, 7, axisW) : viewKind === 'ndays' ? fitDays(gridWidth, MIN_COL_W, dayCount, axisW) : dayCount
+  const daysView = responsive || viewKind === 'ndays'
   function setRailFolded(folded: boolean) {
     setRailPref(folded ? 'folded' : 'open')
     try {

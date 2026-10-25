@@ -71,6 +71,8 @@
   gap: calc(7px * var(--s));
   padding: calc(6px * var(--s)) calc(10px * var(--s));
   text-align: left;
+  /* cal-wave: a narrow column clips its header ("Sun · To… 25") instead of writing over the next day's */
+  overflow: hidden;
 }
 /* Kai 2026-10-14 (Akiflow's "Fri 10"): the day's name and number on one line — less height above the grid. */
 .cal-day-header > div { display: flex; align-items: baseline; gap: calc(6px * var(--s)); min-width: 0; }
@@ -86,8 +88,12 @@
   white-space: nowrap;
   letter-spacing: var(--ls-meta);
   color: var(--ink-faint);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .cal-day-header-num {
+  flex: none;
   font-family: var(--font-display);
   font-size: calc(var(--fs-body-l) * var(--s));
   color: var(--ink-body);
@@ -117,6 +123,16 @@
   box-sizing: border-box;
   text-align: right;
 }
+/* cal-wave: a second clock (View options ▸ Second time zone) — its hour first, quieter, then the user's
+   own; the corner over the gutter names the two zones in the same order. */
+.kf-cal-2z .fc .fc-timegrid-axis-cushion,
+.kf-cal-2z .fc .fc-timegrid-slot-label-cushion { width: calc(108px * var(--s)); }
+.kf-cal-2z .fc .fc-timegrid-slot-label-cushion { display: flex; justify-content: space-between; gap: calc(6px * var(--s)); }
+.kf-cal-z2 { opacity: 0.7; }
+.kf-cal-2z .fc .fc-col-header .fc-timegrid-axis-frame { display: flex; align-items: flex-end; justify-content: space-between; height: 100%; padding: 0 calc(4px * var(--s)) calc(6px * var(--s)); box-sizing: border-box; font-family: var(--font-mono); font-size: calc(var(--fs-mono-s) * var(--s-text)); color: var(--ink-faint); }
+.kf-cal-2z .fc .fc-col-header .fc-timegrid-axis-frame::before { content: var(--kf-z2); opacity: 0.7; }
+.kf-cal-2z .fc .fc-col-header .fc-timegrid-axis-frame::after { content: var(--kf-z1); }
+
 /* 27px per 30-min slot -> 54px/hour, matching Calendar.dc.html 1a's hour-row rhythm.
    Punch 38: hour line rides --line-card per CALENDAR.md §1 (was --line-dashed). */
 .fc .fc-timegrid-slot { border-color: var(--line-card); height: calc(36px * var(--s)); }   /* Kai 2026-10-14 "too crammed": 72px an hour (was 54) */

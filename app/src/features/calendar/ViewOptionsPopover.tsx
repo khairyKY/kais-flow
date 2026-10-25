@@ -1,7 +1,8 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Segmented, Toggle as KitToggle } from '../../components/kit'
 import { uiZoom } from '../../lib/uiScale'
 import { useEscapeStack } from '../../lib/overlayStack'
+import { ALL_ZONES, isZone, searchZones } from '../../lib/appZone'
 
 // ── WA2-calendar-contracts.md "View options overlay" (Overlays §05), merged with Kai's
 // Akiflow ruling [K-26]: a 1–6/W/M view-selector row replaces the header's N-day cycler.
@@ -15,6 +16,14 @@ export interface CalViewOptions {
   showWeekends: boolean
   showCompleted: boolean
   hour24: boolean
+  /** cal-wave (Akiflow's "Responsive"): the N-day and Week views show as many days as fit the width. */
+  responsive: boolean
+  /** cal-wave (Akiflow's "Dynamic"): the hours fit the shown days' blocks, and the rows the screen. */
+  dynamic: boolean
+  /** cal-wave: a second clock in the time gutter (an IANA zone), or null. */
+  secondZone: string | null
+  /** cal-wave item 19: the Ongoing / Up next card at the bottom left (Kai's "now card A"). */
+  nowCard: boolean
 }
 
 export const DEFAULT_VIEW_OPTIONS: CalViewOptions = {
@@ -23,6 +32,10 @@ export const DEFAULT_VIEW_OPTIONS: CalViewOptions = {
   showWeekends: true,
   showCompleted: true,
   hour24: false,
+  responsive: false,
+  dynamic: false,
+  secondZone: null,
+  nowCard: true,
 }
 
 const VIEW_OPTIONS_KEY = 'kf.calViewOptions'
@@ -51,9 +64,9 @@ const rowStyle: React.CSSProperties = { display: 'flex', alignItems: 'center', j
 const labelStyle: React.CSSProperties = { fontSize: 13, color: 'var(--ink-body)' }
 // B (D12): the rows are the kit's Segmented — a visible edge, the pick ink-filled. The view row's eight
 // cells share the popover's width.
-const SEG_CSS = '.cal-vo-row.kf-seg { display: flex; flex-wrap: nowrap; } .cal-vo-row .kf-seg-btn { min-width: 0; padding: 0; }'
+const SEG_CSS = '.cal-vo-row.kf-seg { display: flex; flex-wrap: nowrap; } .cal-vo-row .kf-seg-btn { min-width: 0; padding: 0; } .cal-vo-dense .kf-seg-btn { padding: 0 8px; }'
 const VIEW_OPTS = VIEW_CELLS.map((c) => ({ value: c, label: c }))
-const DENSITY_OPTS = [{ value: 's' as const, label: 'S' }, { value: 'm' as const, label: 'M' }, { value: 'l' as const, label: 'L' }]
+const DENSITY_OPTS = [{ value: 's' as const, label: 'Small' }, { value: 'm' as const, label: 'Medium' }, { value: 'l' as const, label: 'Large' }]
 const WEEK_OPTS = [{ value: 'mon', label: 'Mon' }, { value: 'sun', label: 'Sun' }]
 
 /** A labelled row around the kit Toggle (UI pass: one switch look across the app). */
@@ -62,6 +75,29 @@ function Toggle({ on, label, onToggle }: { on: boolean; label: string; onToggle:
     <div style={{ ...rowStyle, padding: '8px 10px' }}>
       <span style={labelStyle}>{label}</span>
       <KitToggle on={on} label={label} onToggle={onToggle} />
+    </div>
+  )
+}
+
+/** The second clock's zone: a typed search over every zone Intl knows (the browser's own suggestions);
+ * it applies once the text is a real zone. '' = on, none picked yet. */
+function ZoneField({ value, onChange }: { value: string; onChange: (zone: string) => void }) {
+  const [text, setText] = useState(value)
+  return (
+    <div style={{ ...rowStyle, paddingTop: 0 }}>
+      <input
+        list="kf-vo-zones"
+        aria-label="Second time zone"
+        placeholder="City or zone, e.g. London"
+        value={text}
+        onChange={(e) => {
+          setText(e.target.value)
+          const hit = isZone(e.target.value) ? e.target.value : searchZones(e.target.value, 2).length === 1 ? searchZones(e.target.value, 1)[0] : null
+          if (hit) onChange(hit)
+        }}
+        style={{ flex: 1, minWidth: 0, height: 32, padding: '0 10px', border: '1px solid var(--line-control)', borderRadius: 'var(--radius-input)', background: 'var(--paper-bone)', color: 'var(--ink-body)', font: 'inherit', fontSize: 'var(--fs-meta-l)' }}
+      />
+      <datalist id="kf-vo-zones">{ALL_ZONES.map((z) => <option key={z} value={z} />)}</datalist>
     </div>
   )
 }
@@ -103,7 +139,7 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
   // (same correction ContextMenu applies, Kai's "way too far from where I right clicked").
   const z = uiZoom()
   const width = 256
-  const estHeight = 330
+  const estHeight = 470
   const left = Math.max(8, Math.min(anchor.x / z - width, window.innerWidth / z - width - 8))
   const top = Math.max(12, Math.min(anchor.y / z + 6, window.innerHeight / z - estHeight - 12))
 
@@ -141,7 +177,7 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
 
       <div style={rowStyle}>
         <span style={labelStyle}>Density</span>
-        <Segmented label="Density" value={value.density} onChange={(density) => onChange({ density })} options={DENSITY_OPTS} />
+        <Segmented className="cal-vo-dense" label="Density" value={value.density} onChange={(density) => onChange({ density })} options={DENSITY_OPTS} />
       </div>
 
       <div style={rowStyle}>
@@ -154,6 +190,11 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
       <Toggle on={value.showWeekends} label="Show weekends" onToggle={() => onChange({ showWeekends: !value.showWeekends })} />
       <Toggle on={value.showCompleted} label="Show completed" onToggle={() => onChange({ showCompleted: !value.showCompleted })} />
       <Toggle on={value.hour24} label="24-hour time" onToggle={() => onChange({ hour24: !value.hour24 })} />
+      <Toggle on={value.responsive} label="Days fit the width" onToggle={() => onChange({ responsive: !value.responsive })} />
+      <Toggle on={value.dynamic} label="Hours fit the day" onToggle={() => onChange({ dynamic: !value.dynamic })} />
+      <Toggle on={value.secondZone != null} label="Second time zone" onToggle={() => onChange({ secondZone: value.secondZone != null ? null : '' })} />
+      {value.secondZone != null && <ZoneField value={value.secondZone} onChange={(secondZone) => onChange({ secondZone })} />}
+      <Toggle on={value.nowCard} label="Now card" onToggle={() => onChange({ nowCard: !value.nowCard })} />
       {onPlanMode && (
         <>
           <div style={{ height: 1, background: 'var(--line-card)', margin: '5px 8px' }} />
