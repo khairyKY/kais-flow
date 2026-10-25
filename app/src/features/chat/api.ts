@@ -15,12 +15,18 @@ export interface ChatPlan {
   previews: Record<string, unknown>[]
 }
 
-/** One call's real result: the tool's answer or its refusal, and the call that takes it back, if any. */
+/** One call's real result: the tool's answer or its refusal. */
 export interface ChatOutcome extends ChatCall {
   ok: boolean
   output?: Record<string, unknown>
   error?: string
-  undo?: ChatCall | null
+}
+
+/** A confirmed batch's one Undo (supabase/functions/chat/plan.ts restorePlan): every row it changed,
+ * exactly as it was, and every row it made. */
+export interface ChatRestore {
+  put: { table: string; row: Record<string, unknown> & { id: string } }[]
+  drop: { table: string; id: string }[]
 }
 
 export interface StreamChatHandlers {
@@ -94,9 +100,9 @@ export async function streamChat(
   }
 }
 
-/** Runs confirmed calls (or an Undo's) as the user: every tool's own answer back, in order. Throws when
- * the request itself fails — then nothing can be said about what ran, and the panel says so. */
-export async function runChatCalls(calls: readonly ChatCall[]): Promise<ChatOutcome[]> {
+/** Runs confirmed calls as the user: every tool's own answer back, in order, and the batch's Undo.
+ * Throws when the request itself fails — then nothing can be said about what ran, and the panel says so. */
+export async function runChatCalls(calls: readonly ChatCall[]): Promise<{ results: ChatOutcome[]; restore: ChatRestore }> {
   const token = await bearer()
   const res = await fetch(CHAT_URL(), {
     method: 'POST',
@@ -104,7 +110,7 @@ export async function runChatCalls(calls: readonly ChatCall[]): Promise<ChatOutc
     body: JSON.stringify({ run: calls }),
   })
   if (!res.ok) throw new Error(`chat run failed: ${res.status}`)
-  const { results } = (await res.json()) as { results?: ChatOutcome[] }
+  const { results, restore } = (await res.json()) as { results?: ChatOutcome[]; restore?: ChatRestore }
   if (!Array.isArray(results)) throw new Error('chat run: no results')
-  return results
+  return { results, restore: restore ?? { put: [], drop: [] } }
 }

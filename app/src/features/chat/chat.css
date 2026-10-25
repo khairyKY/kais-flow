@@ -104,3 +104,4 @@
 .kf-chat-card-btn.is-primary { border-color: transparent; background: var(--acc-clover); color: var(--paper-parchment); font-weight: 600; }
 .kf-chat-card-btn.is-primary:hover { background: color-mix(in srgb, var(--acc-clover) 88%, var(--ink-body)); }
 .kf-chat-card-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.kf-chat-card-lines.is-undone li { text-decoration: line-through; color: var(--ink-muted); }

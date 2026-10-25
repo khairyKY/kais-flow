@@ -1,11 +1,11 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import { runChatCalls, streamChat, type ChatOutcome } from './api'
+import { runChatCalls, streamChat, type ChatOutcome, type ChatRestore } from './api'
 import { SEND, loadChat, saveChat, type DisplayMessage, type PlanState } from './history'
 import { historyText, outcomeHeader, outcomeLine, planHeader, planLines } from './planCard'
 import { inlineParts, parseMarkdown } from './markdown'
 import { queryClient } from '../../lib/queryClient'
 import { useHour24 } from '../../lib/clock'
-import { useToastStore } from '../../lib/toastStore'
+import { writeRow } from '../../lib/outbox'
 import { useAuth } from '../auth/AuthProvider'
 import { appendDictation } from '../capture/holdToTalk'
 import { toastUndo } from '../../lib/undo'
@@ -111,8 +111,9 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     if (!card || card.state !== 'pending') return
     setCard(index, 'running')
     let outcomes: ChatOutcome[]
+    let restore: ChatRestore
     try {
-      outcomes = await runChatCalls(card.calls)
+      ;({ results: outcomes, restore } = await runChatCalls(card.calls))
     } catch {
       // Honest: the request failed, so nothing can be said about what ran.
       setCard(index, 'done', { outcomes: [], content: "The app couldn't hear back, so it can't say what changed — check before trying again." })
@@ -120,19 +121,19 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     } finally {
       refreshData()
     }
-    setCard(index, 'done', { outcomes })
-    const undos = outcomes.flatMap((o) => (o.ok && o.undo ? [o.undo] : []))
-    if (undos.length) toastUndo(outcomeHeader(outcomes), () => undo(index, outcomes))
+    const undoable = restore.put.length + restore.drop.length > 0
+    setCard(index, 'done', { outcomes, restore: undoable ? restore : undefined })
+    if (undoable) toastUndo(outcomeHeader(outcomes), () => undo(index, outcomes, restore))
   }
 
-  /** Takes a run back where the app can (adds go to Trash, completions reopen) — once. */
-  async function undo(index: number, outcomes = messages[index]?.outcomes ?? []) {
-    const calls = outcomes.flatMap((o) => (o.ok && o.undo ? [o.undo] : []))
-    if (!calls.length || undone.current.has(index)) return
+  /** The whole confirmed batch back as it was — once (the toast's Undo and the card's share it): every
+   * row it changed written back, every row it made removed, through the outbox like every app Undo. */
+  function undo(index: number, outcomes = messages[index]?.outcomes ?? [], restore = messages[index]?.restore) {
+    if (!restore || undone.current.has(index)) return
     undone.current.add(index)
-    const back = await runChatCalls(calls).finally(refreshData)
-    setCard(index, 'done', { outcomes, undone: true })
-    if (back.some((o) => !o.ok)) throw new Error('undo refused') // the caller says it slipped away
+    for (const { table, row } of restore.put) writeRow(table, row)
+    for (const { table, id } of restore.drop) writeRow(table, { id }, 'delete')
+    setCard(index, 'done', { outcomes, restore: undefined, undone: true })
   }
 
   function cancel(index: number) {
@@ -296,11 +297,11 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           if (m.plan) {
             const { state, calls, previews } = m.plan
             const ran = state === 'done' ? m.outcomes : undefined
-            const undoable = !!ran && !m.undone && ran.some((o) => o.ok && o.undo)
+            const undoable = !!ran && !m.undone && !!m.restore
             return (
               <div key={i} className="kf-chat-card" data-state={state} aria-live="polite">
-                <div className="kf-chat-card-head">{ran ? (ran.length ? outcomeHeader(ran) : 'Not sure what changed') : planHeader(calls, previews)}</div>
-                <ul className="kf-chat-card-lines">
+                <div className="kf-chat-card-head">{m.undone ? 'Undone — back as it was' : ran ? (ran.length ? outcomeHeader(ran) : 'Not sure what changed') : planHeader(calls, previews)}</div>
+                <ul className={`kf-chat-card-lines${m.undone ? ' is-undone' : ''}`}>
                   {ran
                     ? ran.map((o, j) => <li key={j} className={o.ok ? undefined : 'is-refused'}>{outcomeLine(o, h24, previews[j])}</li>)
                     : planLines(calls, previews, h24).map((l, j) => <li key={j}>{l}</li>)}
@@ -318,12 +319,12 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
                 {state === 'editing' && <div className="kf-chat-card-note">Not done — tell me what to change.</div>}
                 {undoable && (
                   <div className="kf-chat-card-actions">
-                    <button type="button" className="kf-chat-card-btn" onClick={() => void undo(i).catch(() => useToastStore.getState().push({ message: 'That undo slipped away — check the item.' }))}>
+                    <button type="button" className="kf-chat-card-btn" onClick={() => undo(i)}>
                       Undo
                     </button>
                   </div>
                 )}
-                {m.undone && <div className="kf-chat-card-note">Undone.</div>}
+                {m.undone && <div className="kf-chat-card-note">Every change in this batch was put back.</div>}
               </div>
             )
           }

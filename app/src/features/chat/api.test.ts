@@ -69,10 +69,11 @@ describe('streamChat', () => {
 
 describe('runChatCalls', () => {
   it('posts the confirmed calls and returns what each tool said', async () => {
-    const results = [{ tool: 'add_event', args: {}, ok: true, output: { added: { id: 'e1' } }, undo: { tool: 'delete_event', args: { id: 'e1' } } }]
-    const fetch = vi.fn(async () => json(200, { results }))
+    const results = [{ tool: 'add_event', args: {}, ok: true, output: { added: { id: 'e1' } } }]
+    const restore = { put: [], drop: [{ table: 'calendar_events', id: 'e1' }] }
+    const fetch = vi.fn(async () => json(200, { results, restore }))
     vi.stubGlobal('fetch', fetch)
-    expect(await runChatCalls([{ tool: 'add_event', args: { title: 'Gym' } }])).toEqual(results)
+    expect(await runChatCalls([{ tool: 'add_event', args: { title: 'Gym' } }])).toEqual({ results, restore })
     expect(JSON.parse((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body as string)).toEqual({ run: [{ tool: 'add_event', args: { title: 'Gym' } }] })
   })
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { CHAT_TOOLS, RUNNABLE, claimsAction, looksLikeAction, relevantCitations, stepToCall, undoFor, type Refs } from '../../../../supabase/functions/chat/plan.ts'
+import { CHAT_TOOLS, RUNNABLE, claimsAction, looksLikeAction, relevantCitations, restorePlan, stepToCall, type Refs, type Snapshot } from '../../../../supabase/functions/chat/plan.ts'
 import { TOOLS } from '../../../../supabase/functions/mcp/server.ts'
 
 // Queue item 5: the chat's steps become the MCP server's own tool calls.
@@ -67,17 +67,29 @@ describe('the tools the chat may reach', () => {
   })
 })
 
-describe('undoFor', () => {
-  it('an add goes to Trash, a completion reopens, a trashed thing comes back; edits have none', () => {
-    expect(undoFor({ tool: 'add_event', args: {} }, { added: { id: 'e9' } })).toEqual({ tool: 'delete_event', args: { id: 'e9' } })
-    expect(undoFor({ tool: 'add_task', args: {} }, { added: { id: 't9' } })).toEqual({ tool: 'move_to_trash', args: { type: 'task', id: 't9' } })
-    expect(undoFor({ tool: 'add_to_inbox', args: {} }, { added_to_inbox: { id: 'i9' } })).toEqual({ tool: 'move_to_trash', args: { type: 'inbox_item', id: 'i9' } })
-    expect(undoFor({ tool: 'complete_task', args: { id: 't1' } }, {})).toEqual({ tool: 'reopen_task', args: { id: 't1' } })
-    expect(undoFor({ tool: 'move_to_trash', args: { type: 'task', id: 't1' } }, {})).toEqual({ tool: 'restore_from_trash', args: { type: 'task', id: 't1' } })
-    expect(undoFor({ tool: 'delete_event', args: { id: 'e1' } }, {})).toEqual({ tool: 'restore_from_trash', args: { type: 'calendar_event', id: 'e1' } })
-    expect(undoFor({ tool: 'delete_event', args: { id: 'e1', occurrence: '2026-10-26T07:00' } }, {})).toBeNull()
-    expect(undoFor({ tool: 'edit_task', args: { id: 't1' } }, {})).toBeNull()
-    for (const u of [undoFor({ tool: 'complete_task', args: { id: 't1' } }, {}), undoFor({ tool: 'move_to_trash', args: { type: 'task', id: 't1' } }, {})]) expect(RUNNABLE.has(u!.tool)).toBe(true)
+describe('restorePlan — one Undo for the whole batch', () => {
+  const snap = (tasks: Record<string, unknown>[], events: Record<string, unknown>[] = []): Snapshot => ({
+    tasks: new Map(tasks.map((r) => [r.id as string, r])),
+    calendar_events: new Map(events.map((r) => [r.id as string, r])),
+    inbox_items: new Map(),
+    notes: new Map(),
+  })
+  it('every row the batch changed or removed comes back exactly; every row it made goes, blocks before tasks', () => {
+    const dentist = { id: 'd', title: 'Dentist', due_at: '2026-10-26T13:00:00Z', project_id: null, status: 'todo' }
+    const bank = { id: 'b', title: 'Call the bank', status: 'todo' }
+    const old = { id: 'x', title: 'Old', status: 'todo' }
+    const before = snap([dentist, bank, old], [{ id: 'blk', task_id: 'd', starts_at: '2026-10-26T13:00:00Z' }])
+    const after = snap(
+      [{ ...dentist, due_at: '2026-10-30T13:00:00Z', project_id: 'p1' }, { ...bank, status: 'done' }, { id: 'n', title: 'New', status: 'todo' }],
+      [{ id: 'blk', task_id: 'd', starts_at: '2026-10-30T13:00:00Z' }, { id: 'blk2', task_id: 'n', starts_at: '2026-10-27T09:00:00Z' }],
+    )
+    const r = restorePlan(before, after)
+    expect(r.put).toEqual([{ table: 'tasks', row: dentist }, { table: 'tasks', row: bank }, { table: 'tasks', row: old }, { table: 'calendar_events', row: { id: 'blk', task_id: 'd', starts_at: '2026-10-26T13:00:00Z' } }])
+    expect(r.drop).toEqual([{ table: 'calendar_events', id: 'blk2' }, { table: 'tasks', id: 'n' }])
+  })
+  it('an untouched batch has nothing to undo', () => {
+    const rows = [{ id: 'a', title: 'A' }]
+    expect(restorePlan(snap(rows), snap(rows.map((r) => ({ ...r }))))).toEqual({ put: [], drop: [] })
   })
 })
 

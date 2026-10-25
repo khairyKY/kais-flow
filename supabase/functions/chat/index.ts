@@ -27,7 +27,7 @@ import { asUser, nextOccurrence, ruleBetween, sql, store } from '../mcp/store.ts
 import { TOOLS } from '../mcp/server.ts'
 import { runTool, type Scope, type ToolResult } from '../mcp/tools.ts'
 import { dayStart, snapshotText, systemPrompt } from './prompt.ts'
-import { CHAT_TOOLS, MAX_STEPS, READ_TOOLS, RUNNABLE, claimsAction, looksLikeAction, relevantCitations, stepToCall, undoFor, type Call, type Refs } from './plan.ts'
+import { CHAT_TOOLS, MAX_STEPS, READ_TOOLS, RUNNABLE, UNDO_TABLES, claimsAction, looksLikeAction, relevantCitations, restorePlan, stepToCall, type Call, type Refs, type Restore, type Snapshot } from './plan.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -53,14 +53,13 @@ interface ToolCall {
   function: { name: string; arguments: string }
 }
 
-/** One tool's outcome as the app shows it: what the tool said, honestly, and its Undo. */
+/** One tool's outcome as the app shows it: what the tool said, honestly. */
 interface Outcome {
   tool: string
   args: Record<string, unknown>
   ok: boolean
   output?: Record<string, unknown>
   error?: string
-  undo?: Call | null
 }
 
 class StepFailed extends Error {
@@ -80,12 +79,26 @@ class DryRun extends Error {
 
 const resultText = (r: ToolResult) => r.content.map((c) => c.text).join('\n')
 
+/** This user's rows (RLS) in the tables a batch can change, as stored. ponytail: whole tables, read
+ * twice per confirmed batch — exact and simple; narrow it to the touched ids if a big account makes
+ * Confirm slow. */
+async function snapshot(tx: Parameters<Parameters<typeof sql.begin>[0]>[0]): Promise<Snapshot> {
+  const out: Snapshot = {}
+  for (const table of UNDO_TABLES) {
+    const rows = await tx`select t.id::text as id, to_jsonb(t) - 'user_id' - 'embedding' - 'search_tsv' as r from ${tx.unsafe(table)} t`
+    out[table] = new Map(rows.map((x) => [x.id as string, x.r as Record<string, unknown>]))
+  }
+  return out
+}
+
 /** Runs `calls` in order as `userId` — each in its own savepoint, so one refused step doesn't undo
- * the rest. `dry`: everything is rolled back after (the plan's preview — the tools' real answers). */
-async function execute(userId: string, calls: readonly Call[], dry: boolean): Promise<Outcome[]> {
+ * the rest. `dry`: everything is rolled back after (the plan's preview — the tools' real answers).
+ * `undo`: the rows before and after the batch give its one Undo (restorePlan). */
+async function execute(userId: string, calls: readonly Call[], dry: boolean, undo?: { restore?: Restore }): Promise<Outcome[]> {
   try {
     return await sql.begin(async (tx) => {
       await asUser(tx, userId)
+      const before = undo ? await snapshot(tx) : null
       const zone = userZone(await store(tx, NO_SCOPES).timezone())
       const outcomes: Outcome[] = []
       for (const call of calls) {
@@ -100,14 +113,14 @@ async function execute(userId: string, calls: readonly Call[], dry: boolean): Pr
             if (res.isError) throw new StepFailed(res)
             return res
           })
-          const output = JSON.parse(resultText(r)) as Record<string, unknown>
-          outcomes.push({ ...call, ok: true, output, undo: tool.write ? undoFor(call, output) : null })
+          outcomes.push({ ...call, ok: true, output: JSON.parse(resultText(r)) as Record<string, unknown> })
         } catch (e) {
           if (!(e instanceof StepFailed)) throw e
           outcomes.push({ ...call, ok: false, error: resultText(e.result) })
         }
       }
       if (dry) throw new DryRun(outcomes)
+      if (undo && before) undo.restore = restorePlan(before, await snapshot(tx))
       return outcomes
     })
   } catch (e) {
@@ -157,7 +170,9 @@ async function run(req: Request, userId: string, raw: unknown[]): Promise<Respon
     }
     calls.push({ tool: call.tool, args: call.args as Record<string, unknown> })
   }
-  return jsonResponse(req, { results: await execute(userId, calls, false) })
+  const undo: { restore?: Restore } = {}
+  const results = await execute(userId, calls, false, undo)
+  return jsonResponse(req, { results, restore: undo.restore ?? { put: [], drop: [] } })
 }
 
 /** A question: retrieval + snapshot + up to MAX_ROUNDS model turns → an answer, or a plan to confirm. */
