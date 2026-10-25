@@ -32,7 +32,7 @@ const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then
 // The capture line's reader (chrono and the quick-add rules) — the heaviest part, loaded when it's used.
 const reader = () => Promise.all([import('../command-bar/parseCommand'), import('../command-bar/quickAdd')])
 
-// Popover B (Calendar extras options.html §5, "Today in a glance"; Kai's pick): a 340 × 460 borderless
+// Popover B (Calendar extras options.html §5, "Today in a glance"; Kai's pick): a 340 × 480 borderless
 // window above the K (src-tauri tray.rs) on tray.html. The date and Day N, the Now card (§4, card A) or
 // the running focus round, the Top 3 with the goal's gold star, a capture line, focus, Open and Settings.
 // The focus timer lives in the main window and is mirrored here (./focusMirror). Writes go through the
@@ -150,7 +150,9 @@ function NowCard({ n, taskById, projects, domains }: { n: TrayNow<CalendarEvent>
       </div>
       <div className="kf-tray-nc-t">
         {mark}
-        <bdi dir="auto" className="kf-tray-title">{e.title}</bdi>
+        <span className="kf-tray-title">
+          <bdi dir="auto">{e.title}</bdi>
+        </span>
       </div>
       <div className="kf-tray-nc-bar">
         <i style={{ width: `${n.kind === 'on' ? n.pct : 0}%` }} />

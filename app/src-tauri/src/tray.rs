@@ -26,7 +26,7 @@ use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 const TRAY_ID: &str = "kf";
 const FLYOUT: &str = "tray";
 const FLYOUT_W: f64 = 340.0;
-const FLYOUT_H: f64 = 460.0;
+const FLYOUT_H: f64 = 480.0; // popover B: the Now card is taller than 12b's Next row
 const MENU: &str = "traymenu";
 const MENU_W: f64 = 250.0;
 /// Until the menu page says how tall it is (`tray_menu_ready`): the signed-in list.
