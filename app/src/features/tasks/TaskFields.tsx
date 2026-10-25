@@ -30,6 +30,7 @@ import { dueChip, remindChip, repeatLabel } from './taskSheetMath'
 import { taskActions } from './useRowGrammar'
 import type { useTaskDraft } from './useTaskDraft'
 import './TaskRow.css'
+import { taskMinutes, taskWhen } from '../../../../supabase/functions/_shared/blockLength.ts'
 
 // ── One set of task controls (Kai 2026-10-12: the desktop editor lagged the phone sheet). The phone
 // task sheet, the desktop task popover (Overlays.dc.html "Task detail") and the editor page
@@ -108,6 +109,8 @@ const DASHED: CSSProperties = { ...PILL, border: '1px dashed var(--line-control)
  * adds or takes one off. `ringed`: the field whose write is still queued offline (4k). */
 export function TaskChips({ task, controls, ringed, now = new Date() }: { task: Task; controls: TaskControls; ringed?: string | null; now?: Date }) {
   const { open, place } = controls
+  const when = taskWhen(task)
+  const minutes = taskMinutes(task)
   const chip = (field: MenuSub, value: ReactNode, tone: 'date' | 'duration' | 'project' | 'priority', icon?: IconName) => (
     <Chip key={field} tone={tone} icon={icon && <Icon name={icon} size={16} />} selected={ringed === field} onClick={(e) => open(field, e)}>
       {value}
@@ -120,8 +123,9 @@ export function TaskChips({ task, controls, ringed, now = new Date() }: { task: 
   )
   return (
     <div className="ts-chips">
-      {task.due_at ? chip('date', dueChip(task.due_at, now), 'date') : unset('date', 'Date', 'calendar')}
-      {task.duration_min ? chip('duration', durationLabel(task.duration_min), 'duration') : unset('duration', 'Duration', 'clock')}
+      {/* bugs-1023: on the calendar, the block's start and length (the sheet read 5:30 PM for a 5:15–5:30 block). */}
+      {when ? chip('date', dueChip(when, now), 'date') : unset('date', 'Date', 'calendar')}
+      {minutes ? chip('duration', durationLabel(minutes), 'duration') : unset('duration', 'Duration', 'clock')}
       {place ? chip('project', <EmojiText text={place} />, 'project') : unset('project', 'Move to…', 'projects')}
       {task.priority ? chip('priority', `P${task.priority}`, 'priority') : unset('priority', 'Priority', 'priority')}
       {task.recurrence_rule ? chip('repeat', repeatLabel(task.recurrence_rule), 'date', 'repeat') : unset('repeat', 'Repeat', 'repeat')}
