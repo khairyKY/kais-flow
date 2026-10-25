@@ -63,5 +63,4 @@
 .kf-now-fold .kf-now-br { position: absolute; left: 12px; right: 12px; bottom: 5px; width: auto; height: 2px; margin: 0; }
 
 /* where it sits (CalendarPage / PhoneCalendar): the foot of the rail, the grid's corner, over the phone grid */
-.kf-now--float { width: min(280px, calc(100% - 32px)); }
 .kf-now--phone .kf-now-card { box-shadow: var(--shadow-sheet); }
