@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calendar extras options</title>
+<!-- Kai's Flow · calendar extras (25 Oct 2026, queue items 12, 14, 19, 20, 21): block colours, the block's
+     right-click menu, the calendar checkbox and the repeat glyph, the Ongoing / Up next card, the Windows
+     tray. Plain HTML, open it straight from disk. Tokens: ds-bound/styles.css (Bound Journal) plus the app's
+     own colours files, so a day picture stays day on the Night page. Blocks are drawn as the app builds them
+     since v1.4.1 (the options page's "Now" drawing, overlap B, goal A, selected B). Colour values change ONLY
+     in section 1, because Kai asked ("I don't like the colours of the blocks"). Looks only: nothing here is in
+     the app yet. -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.dark.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:40px 32px 120px}
+@media (max-width:767px){.wrap{padding:24px 16px 80px}}
+h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:13px;color:var(--ink-faint)}
+.lede{margin:12px 0 0;max-width:780px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg .btn{height:30px;border:none;background:none;padding:0 13px}
+.seg .btn[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.group{margin-top:64px}
+.group>h2{margin:0;font-family:var(--font-display);font-size:32px;font-weight:600;line-height:1.15}
+.group>.say{margin:6px 0 0;max-width:820px;color:var(--ink-muted)}
+.sub{margin-top:44px;font-family:var(--font-display);font-size:26px;font-weight:600;line-height:1.2}
+.look{margin-top:36px;padding-top:24px;border-top:1px solid var(--line-card)}
+.look h3{margin:0;font-family:var(--font-display);font-size:24px;font-weight:600;line-height:1.2}
+.look h3 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:34px;height:34px;margin-right:10px;padding:0 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 16px/1 var(--font-ui);vertical-align:3px}
+.look.picked h3::after{content:'Your pick';margin-left:12px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 12px/1.4 var(--font-ui);vertical-align:5px}
+.look .say{margin:6px 0 0;max-width:820px;font-size:15.5px;color:var(--ink-body)}
+.shots{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin-top:18px}
+figure{margin:0;flex:none}
+figcaption{margin-top:8px;max-width:680px;font-size:13px;color:var(--ink-muted)}
+.pick-row{margin-top:16px}
+.notes{margin-top:28px;max-width:900px}
+.notes ul{margin:6px 0 0;padding-left:20px;color:var(--ink-muted)}
+.notes li{margin:3px 0}
+.notes b{color:var(--ink-body);font-weight:600}
+.shell[data-theme]{color:var(--ink-body)}
+.pad{padding:16px;border-radius:18px;background:var(--paper-linen);border:1px solid var(--line-card)}
+.lbl{font:12px/1.3 var(--font-mono);letter-spacing:var(--ls-meta);color:var(--ink-faint)}
+bdi{unicode-bidi:isolate}
+.ic{flex:none;display:block}
+
+/* ── the calendar frame (CalendarGrid.css at 125%) ── */
+.frame{position:relative;overflow:hidden;border:1px solid var(--line-card);border-radius:16px;background:var(--paper-parchment);color:var(--ink-body);font-family:var(--font-ui);line-height:1.25}
+.frame.flat{border-radius:0;border-width:0 0 0 1px}
+[data-theme="night"] .frame{border-color:var(--line-solid)}
+.hd{position:absolute;left:0;right:0;top:0;height:40px;display:flex;background:var(--paper-bone);border-bottom:1.5px solid var(--line-solid)}
+.hd .g{flex:none}
+.hd .c{flex:none;display:flex;align-items:baseline;gap:7px;padding:10px 10px 0;border-left:1px solid var(--line-card);white-space:nowrap;overflow:hidden}
+.hd .nm{font-size:13px;color:var(--ink-faint)}
+.hd .num{font-family:var(--font-display);font-size:19px;line-height:1;color:var(--ink-body)}
+.hd .c.td{background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.hd .c.td .nm,.hd .c.td .num{color:var(--acc-lavender-text)}
+.hd .c.td .num{font-weight:600;padding:1px 7px;border-radius:var(--radius-pill);background:var(--block-lavender)}
+.hd .c.pa{opacity:.62}
+.bd{position:absolute;left:0;right:0;top:41.5px;bottom:0}
+.tdw{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.vl{position:absolute;top:0;bottom:0;border-left:1px solid var(--line-dashed)}
+.hl{position:absolute;right:0;border-top:1px solid var(--line-card)}
+.hl.half{border-top:1px dashed var(--line-dashed)}
+.hl b{position:absolute;right:100%;top:4px;padding-right:9px;text-align:right;font-weight:400;font-size:13px;color:var(--ink-faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+[data-theme="night"] .hl{border-top-color:var(--line-solid);box-shadow:var(--glow-hairline)}
+.nowl{position:absolute;height:0;border-top:2px solid var(--acc-lavender);z-index:4}
+.nowl::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--acc-lavender)}
+.nowl .chip{position:absolute;right:4px;top:-17px;padding:0 4px;background:var(--paper-parchment);font:10.5px/1.4 var(--font-mono);color:var(--acc-lavender-text)}
+.ptr{position:absolute;z-index:30;pointer-events:none}
+
+/* ── a block, as built in v1.4.1 ("Now" drawing): the accent at 24% fill, 45% edge, its ink for the time
+     row and the check; 12px corners; the check hidden at rest ── */
+.blk{position:absolute;z-index:2;overflow:hidden;display:flex;flex-direction:column;border-radius:var(--radius-block);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:linear-gradient(color-mix(in srgb,var(--c) var(--fill,24%),transparent),color-mix(in srgb,var(--c) var(--fill,24%),transparent)),var(--under,transparent);padding:7px 10px;line-height:1.25}
+.blk .r1{position:relative;display:flex;align-items:flex-start;gap:6px;min-width:0}
+.blk .tt{flex:1;min-width:0;font-size:15px;color:var(--ink-body);overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:var(--lines,2)}
+.blk .tm{position:relative;margin-top:2px;font-size:10.6px;color:var(--ct);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk .ck{flex:none;width:15px;height:15px;margin-top:2px;border:1.5px solid var(--ct);border-radius:4px;display:inline-flex;align-items:center;justify-content:center;font-size:10px;line-height:1;color:var(--paper-parchment);opacity:0}
+.blk.hov .ck,.blk.done .ck,.blk .row .ck,.blk.cb .ck{opacity:1}
+.blk .ck.on{background:var(--check-fill);border-color:transparent}
+.blk.done .tt{text-decoration:line-through;text-decoration-color:var(--ink-hairline)}
+.blk.one{flex-direction:row;align-items:center;padding:2px 8px}
+.blk.one .r1{align-items:center;flex:1}
+.blk.one .tt{display:block;white-space:nowrap;text-overflow:ellipsis}
+.blk.one .ck{margin-top:0}
+.blk.past{opacity:.62}
+.blk.ran{border-color:var(--acc-terra)}
+.blk.ran .tm{color:var(--acc-terra-ink)}
+.blk.goal{border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold)}
+.blk.goal .tt::before{content:'✶ ';color:var(--acc-gold)}
+.blk .wash{position:absolute;left:0;right:0;top:0;background:color-mix(in srgb,var(--ct) 14%,transparent);pointer-events:none}
+.blk .rows{display:flex;flex-direction:column;gap:3px;margin-top:4px;min-width:0}
+.blk .row{display:flex;align-items:center;gap:6px;min-width:0;padding:1px 4px;border:1px solid color-mix(in srgb,var(--ct) 35%,transparent);border-radius:8px;background:color-mix(in srgb,var(--c) var(--fill,24%),transparent);font-size:13px}
+.blk .row .ck{width:12px;height:12px;margin:0;font-size:9px}
+.blk .row .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.blk .row.done .t{text-decoration:line-through;text-decoration-color:var(--ink-hairline);color:var(--ink-faint)}
+.blk .fill{margin-top:4px;padding-top:3px;border-top:1px solid color-mix(in srgb,var(--c) 30%,transparent);font-size:10.6px;color:var(--ct)}
+.blk.ctx{outline:2px solid var(--sel-bg);outline-offset:2px;z-index:5}
+.blk.cb{position:relative;flex:none}
+.blk:not(.one)>*{flex-shrink:0}
+
+/* ── section 1: swatches ── */
+.swg{display:grid;gap:8px}
+.sw{width:26px;height:26px;border-radius:50%;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink-body) 14%,transparent)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:12px;font-size:13px;color:var(--ink-muted)}
+.legend i{display:inline-block;width:10px;height:10px;margin-right:6px;border-radius:50%;vertical-align:0}
+.cr{margin-top:10px;font-size:13.5px;color:var(--ink-body)}
+.cr .ok{color:var(--acc-sage-text);font-weight:600}
+.cr .no{color:var(--sig-overdue);font-weight:600}
+details{margin-top:10px;font-size:13px}
+summary{cursor:pointer;color:var(--ink-muted)}
+.vt{margin-top:8px;border-collapse:collapse;font:12px/1.3 var(--font-mono);font-variant-numeric:tabular-nums}
+.vt th,.vt td{padding:4px 10px 4px 0;text-align:left;border-bottom:1px dashed var(--line-dashed);white-space:nowrap}
+.vt th{font-family:var(--font-ui);font-weight:600;color:var(--ink-muted)}
+.vt i{display:inline-block;width:11px;height:11px;margin-right:5px;border-radius:3px;vertical-align:-1px}
+.vt .bad{color:var(--sig-overdue);font-weight:700}
+
+/* ── section 2: the block menu (kit ContextMenu: parchment, 16px corners, 6px inset, 13px rows) ── */
+.mn{flex:none;padding:6px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:var(--radius-card);box-shadow:var(--shadow-popover);font-family:var(--font-ui);color:var(--ink-body)}
+.mn .sep{margin:3px 9px;border-top:1px solid var(--line-dashed)}
+.mn .row{display:flex;align-items:center;gap:11px;padding:7px 10px;border-radius:var(--radius-input);font-size:13px;line-height:1.3}
+.mn .row.hi{background:var(--paper-bone)}
+.mn .row .ic{color:var(--ink-faint)}
+.mn .row .l{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mn .row .h{flex:none;display:inline-flex;align-items:center;gap:6px;font:var(--fs-meta)/1 var(--font-mono);color:var(--ink-faint)}
+.mn .row .s{flex:none;font-size:11px;color:var(--ink-faint)}
+.mn .row.unset .l{color:var(--ink-muted)}
+.mn .row.danger,.mn .row.danger .ic{color:var(--sig-overdue)}
+.mn .row.new .l::after{content:'new';margin-left:7px;padding:1px 6px;border-radius:var(--radius-pill);background:var(--wash-terra);color:var(--acc-terra-ink);font:600 10px/1.4 var(--font-ui);vertical-align:1px}
+.mn .cap{padding:4px 10px 2px;font:var(--fs-meta)/1.3 var(--font-mono);color:var(--ink-faint)}
+.mn .capt{padding:0 10px 6px;font-size:12px;line-height:1.45;color:var(--ink-muted)}
+.mn .title{display:flex;align-items:flex-start;gap:8px;padding:6px 9px 7px;font-size:13.5px;font-weight:500;line-height:1.35}
+.mn .title .dot{flex:none;width:7px;height:7px;margin:6px 0 0;border-radius:50%}
+.mn .lens{display:grid;grid-template-columns:repeat(3,max-content);gap:5px;padding:0 9px 8px}
+.mn .lens.line{grid-template-columns:repeat(6,max-content);gap:4px}
+.chip{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:var(--radius-pill);border:1px solid var(--line-control);font:12.5px/1 var(--font-ui);color:var(--ink-body);background:var(--paper-parchment)}
+.chip.on{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.lens.line .chip{height:24px;padding:0 8px;font-size:12px}
+.mn .sws{display:grid;gap:6px;padding:6px 9px 8px;justify-content:start}
+.mn .sws.tray{margin:0 9px 8px;padding:8px;border-radius:12px;background:var(--paper-bone)}
+.mn .sws .s0{position:relative;width:var(--z,22px);height:var(--z,22px);border-radius:50%;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ink-body) 14%,transparent)}
+.mn .sws .s0.on{box-shadow:0 0 0 2px var(--paper-parchment),0 0 0 3.5px var(--sel-bg)}
+.mn .sws .s0.on::after{content:'';position:absolute;left:50%;top:50%;width:5px;height:9px;margin:-6px 0 0 -3px;border:solid var(--ink-body);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.mn .sws .s0.none{background:var(--paper-parchment);box-shadow:inset 0 0 0 1px var(--line-control)}
+.mn .sws .s0.none::before{content:'';position:absolute;left:3px;right:3px;top:50%;border-top:1.5px solid var(--ink-faint);transform:rotate(-45deg)}
+.mn .sws .s0.add{background:none;box-shadow:inset 0 0 0 1px var(--line-control);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted)}
+.mn .sws .s0.add.wide{grid-column:span 3;justify-self:start;width:auto;padding:0 9px 0 6px;border-radius:var(--radius-pill);gap:3px;font-size:12px}
+kbd{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 4px;border-radius:5px;border:1px solid var(--line-solid);border-bottom-width:2px;background:var(--paper-bone);font:10.5px/1 var(--font-mono);color:var(--ink-muted)}
+.kbds{display:inline-flex;gap:3px}
+.cpk{width:216px;padding:12px}
+.cpk .hb{height:14px;border-radius:7px;background:linear-gradient(90deg,#d9534f,#e8a33d,#d8cc4a,#5bb36a,#3fb1b1,#4a7fd8,#8b62d9,#d35aa6,#d9534f);position:relative}
+.cpk .tb{height:14px;margin-top:10px;border-radius:7px;position:relative}
+.cpk .kn{position:absolute;top:-3px;width:20px;height:20px;margin-left:-10px;border-radius:50%;background:var(--paper-parchment);box-shadow:0 0 0 1.5px var(--ink-body),var(--shadow-panel)}
+.cpk .hx{display:flex;align-items:center;gap:8px;margin-top:12px}
+.cpk .hx span{flex:1;height:32px;display:flex;align-items:center;padding:0 10px;border-radius:var(--radius-input);border:1px solid var(--line-control);background:var(--paper-bone);font:13px var(--font-mono)}
+.cpk .pv{margin-top:10px;padding:6px 9px;border-radius:10px;font-size:13px}
+.cpk .pv small{display:block;font-size:10.6px}
+.cpk .ft{display:flex;justify-content:flex-end;margin-top:10px}
+.mnwrap{display:flex;align-items:flex-start;gap:6px}
+
+/* ── section 3: checks ── */
+.ckgrid{display:grid;gap:14px 18px;align-items:start;padding:18px;border-radius:16px;background:var(--paper-parchment);border:1px solid var(--line-card)}
+.ckgrid .hh{font:12px/1.3 var(--font-mono);color:var(--ink-faint);letter-spacing:var(--ls-meta)}
+.ckcell{display:flex;gap:10px;align-items:flex-start}
+.guide{position:absolute;left:-6px;right:-6px;border-top:1px dashed var(--acc-terra);opacity:.8;pointer-events:none;z-index:3}
+.spec{display:flex;gap:16px;align-items:center;padding:16px;border-radius:16px;background:var(--paper-parchment);border:1px solid var(--line-card)}
+.spec .one{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:var(--ink-faint)}
+.sq{--c:var(--acc-lavender);--ct:var(--acc-lavender-text);display:inline-flex;align-items:center;justify-content:center;border-style:solid;border-color:var(--ct);color:var(--paper-parchment)}
+.sq.on{background:var(--check-fill);border-color:transparent}
+.grid24{background-image:linear-gradient(var(--line-card) 1px,transparent 1px),linear-gradient(90deg,var(--line-card) 1px,transparent 1px);background-size:12px 12px;border:1px solid var(--line-card);border-radius:8px}
+
+/* ── section 4: the Now card ── */
+.nc{width:var(--w,256px);font-family:var(--font-ui);color:var(--ink-body);position:relative}
+.nc .rg{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid var(--c)}
+.nc .kc{flex:none;width:15px;height:15px;border-radius:5px;border:2px solid var(--check-border)}
+.nc .join{flex:none;display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:var(--radius-pill);border:1px solid var(--line-control);background:var(--paper-parchment);font:600 12px/1 var(--font-ui);color:var(--acc-hydrangea-deep)}
+.nc .chev{flex:none;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:6px;color:var(--ink-faint)}
+.nc .act{flex:none;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 8px;border-radius:var(--radius-pill);border:1px solid var(--line-card);background:var(--paper-bone);font:500 12px/1 var(--font-ui);color:var(--ink-body)}
+.nc .cd{flex:none;margin-left:auto;font:12px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink-muted);white-space:nowrap}
+.nc .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nc .quiet{display:flex;align-items:center;gap:7px;min-height:30px;padding:0 4px;font-size:13.5px;color:var(--ink-muted)}
+.nc .quiet .tm{font:12px var(--font-mono);color:var(--ink-faint)}
+/* A · card + strip */
+.nA .m{position:relative;z-index:1;padding:10px 12px 9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:14px;box-shadow:var(--shadow-panel)}
+[data-theme="night"] .nA .m{background:var(--paper-bone);border-color:var(--line-solid)}
+.nA .h{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;line-height:1.3}
+.nA .tl{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:15px;font-weight:500;line-height:1.3;min-width:0}
+.nA .br{height:4px;margin-top:9px;border-radius:2px;background:color-mix(in srgb,var(--ink-body) 9%,transparent);overflow:hidden}
+.nA .br i{display:block;height:100%;border-radius:2px;background:color-mix(in srgb,var(--c) 55%,var(--ct))}
+.nA .tms{display:flex;justify-content:space-between;margin-top:5px;font:11px/1.2 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink-faint)}
+.nA .more{margin:-2px 0 9px;padding-bottom:8px;border-bottom:1px dashed var(--line-dashed)}
+.nA .mr{display:flex;align-items:center;gap:8px;font-size:13.5px;line-height:1.3}
+.nA .mr .br{flex:none;width:44px;margin:0}
+.nA .nx{position:relative;display:flex;align-items:center;gap:8px;margin:-10px 8px 0;padding:16px 11px 8px;background:var(--paper-bone);border:1px solid var(--line-card);border-top:0;border-radius:0 0 12px 12px;font-size:13.5px}
+[data-theme="night"] .nA .nx{background:var(--paper-parchment);border-color:var(--line-solid)}
+.nA .nx+.nx{margin-top:0;padding-top:8px;border-radius:0 0 12px 12px}
+.nA .nx.mid{border-radius:0}
+.nA .nx .k{flex:none;width:34px;font:12px var(--font-mono);color:var(--ink-faint)}
+.nA .fold{display:flex;align-items:center;gap:7px;padding:8px 10px 10px 12px;font-size:13.5px;overflow:hidden}
+.nA .fold .br{position:absolute;left:12px;right:12px;bottom:5px;height:2px;margin:0}
+/* B · block slip: the card is drawn as the block it points at */
+.nB .m{position:relative;overflow:hidden;padding:8px 10px 8px;border-radius:12px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:linear-gradient(color-mix(in srgb,var(--c) 24%,transparent),color-mix(in srgb,var(--c) 24%,transparent)),var(--paper-parchment);box-shadow:var(--shadow-panel)}
+.nB .ws{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--ct) 14%,transparent);border-right:2px solid var(--acc-lavender)}
+.nB .tl{position:relative;display:flex;align-items:center;gap:7px;font-size:14.5px;line-height:1.3;min-width:0}
+.nB .tl .cd{color:var(--ct);font-size:11.5px}
+.nB .tm{position:relative;margin-top:3px;font-size:11px;color:var(--ct);display:flex;gap:6px}
+.nB .rg{border-color:var(--ct)}
+.nB .kc{border-color:var(--ct)}
+.nB .k{margin:8px 2px 3px;font:11px/1 var(--font-mono);color:var(--ink-faint)}
+.nB .rw{position:relative;overflow:hidden;display:flex;align-items:center;gap:7px;height:28px;padding:0 9px;margin-top:4px;border-radius:9px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:linear-gradient(color-mix(in srgb,var(--c) 24%,transparent),color-mix(in srgb,var(--c) 24%,transparent)),var(--paper-parchment);font-size:13px}
+.nB .rw .cd{color:var(--ct);font-size:11px}
+.nB .rw .ws{border-right-width:1.5px}
+.nB .dash{border:1px dashed var(--line-control);background:var(--paper-parchment);box-shadow:none}
+.nB .dash .cd{color:var(--ink-faint)}
+.nB .more{margin-bottom:4px}
+.nB .m>:not(.ws),.nB .rw>:not(.ws){position:relative}
+
+/* ── page frames (desktop rail open / folded, phone) ── */
+.pg{position:relative;display:flex;overflow:hidden;border:1px solid var(--line-card);border-radius:16px;background:var(--paper-linen);font-family:var(--font-ui);color:var(--ink-body)}
+[data-theme="night"] .pg,[data-theme="night"].pg{border-color:var(--line-solid)}
+.pg-side{flex:none;width:200px;display:flex;flex-direction:column;gap:2px;padding:16px 12px;background:var(--paper-sidebar);border-right:1px solid var(--line-sidebar);font-size:14px}
+.pg-side .brand{display:flex;align-items:center;gap:9px;margin:0 4px 16px;font:500 19px/1.1 var(--font-display)}
+.kmark{flex:none;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:var(--paper-parchment);border:1px solid var(--line-card);font:600 15px/1 var(--font-display);color:var(--ink-body)}
+.pg-side .nv{display:flex;align-items:center;gap:10px;height:34px;padding:0 10px;border-radius:10px;color:var(--ink-muted)}
+.pg-side .nv.on{background:var(--paper-parchment);color:var(--ink-body);font-weight:600}
+.pg-side .capb{margin-top:auto;display:flex;align-items:center;gap:8px;height:40px;padding:0 12px;border-radius:12px;background:var(--paper-parchment);border:1px solid var(--line-card);font-weight:600}
+.pg-rail{flex:none;position:relative;overflow:hidden;background:var(--paper-linen);border-right:1px solid var(--line-card)}
+.pg-rail.open{width:280px;padding:14px 12px}
+.pg-rail.fold{width:34px}
+.pg-rail .rh{display:flex;align-items:baseline;gap:8px;font:600 15px var(--font-ui)}
+.pg-rail .rh .n{font:12px var(--font-mono);color:var(--ink-faint)}
+.pg-rail .sec{display:flex;margin-top:14px;font:600 13px/1.2 var(--font-ui)}
+.pg-rail .sec .n{margin-left:auto;font:12px var(--font-mono);color:var(--ink-faint)}
+.pg-rail .crd{display:flex;align-items:center;gap:8px;margin-top:6px;padding:7px 9px;border-radius:10px;background:var(--paper-parchment);border:1px solid var(--line-card);font-size:13px}
+.pg-rail .crd .kc{flex:none;width:14px;height:14px;border-radius:5px;border:1.5px solid var(--check-border)}
+.pg-rail .crd .m{margin-left:auto;font:11px var(--font-mono);color:var(--ink-faint)}
+.pg-rail .fade{position:absolute;left:0;right:0;bottom:0;height:230px;background:linear-gradient(transparent,var(--paper-linen) 40%);pointer-events:none}
+.pg-rail .dock{position:absolute;left:12px;right:12px;bottom:12px;z-index:3}
+.pg-rail.fold .vt2{position:absolute;top:16px;left:50%;writing-mode:vertical-rl;transform:translateX(-50%) rotate(180deg);font-size:13px;color:var(--ink-faint);white-space:nowrap}
+.pg-cal{flex:1;min-width:0;position:relative;display:flex;flex-direction:column}
+.pg-tb{flex:none;height:56px;display:flex;align-items:center;gap:8px;padding:0 14px}
+.pg-tb .pill{display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:var(--radius-pill);background:var(--paper-parchment);border:1px solid var(--line-card);font-size:14px}
+.pg-tb .ttl{margin-left:auto;font:500 22px/1 var(--font-display)}
+.pg-cal .float{position:absolute;left:16px;bottom:16px;z-index:8}
+.ph{position:relative;width:360px;height:740px;overflow:hidden;border:1px solid var(--line-card);border-radius:28px;background:var(--paper-linen);font-family:var(--font-ui);color:var(--ink-body)}
+[data-theme="night"] .ph{border-color:var(--line-solid)}
+.ph-hd{display:flex;align-items:baseline;padding:18px 16px 8px}
+.ph-hd b{font:600 22px/1.1 var(--font-display)}
+.ph-hd span{margin-left:auto;font-size:14px;font-weight:600;color:var(--acc-terra-ink)}
+.ph-wk{display:grid;grid-template-columns:repeat(7,1fr);padding:0 8px 8px;text-align:center;font-size:11px;color:var(--ink-faint);border-bottom:1px solid var(--line-card)}
+.ph-wk em{display:block;margin:4px auto 0;width:34px;height:34px;line-height:34px;border-radius:50%;font:500 17px/34px var(--font-ui);font-style:normal;color:var(--ink-body)}
+.ph-wk em.on{background:var(--ink-body);color:var(--paper-linen)}
+.ph-grid{position:absolute;left:0;right:0;top:118px;bottom:64px;overflow:hidden}
+.ph-grid .frame{border:0;border-radius:0;background:var(--paper-linen)}
+.ph-grid .blk .tt{font-size:14px}
+.ph-tab{position:absolute;left:0;right:0;bottom:0;height:64px;display:flex;align-items:center;justify-content:space-around;background:var(--paper-parchment);border-top:1px solid var(--line-card);font-size:11px;color:var(--ink-faint)}
+.ph-tab span{display:flex;flex-direction:column;align-items:center;gap:3px}
+.ph-tab .on{color:var(--ink-body);font-weight:600}
+.ph-tab .plus{width:46px;height:46px;border-radius:50%;background:var(--acc-terra);color:var(--on-terra);display:flex;align-items:center;justify-content:center}
+.ph-dock{position:absolute;left:12px;right:12px;bottom:74px;z-index:6}
+
+/* ── section 5: Windows tray ── */
+.win{position:relative;overflow:hidden;border-radius:12px;background:linear-gradient(160deg,#C4D5E6,#E9DCCB);font-family:'Segoe UI',system-ui,sans-serif}
+[data-theme="night"] .win{background:linear-gradient(160deg,#1C2436,#3B2F40)}
+.win .tbar{position:absolute;left:0;right:0;bottom:0;height:48px;display:flex;align-items:center;padding:0 10px;background:rgba(243,243,243,.94);border-top:1px solid rgba(0,0,0,.07);color:#1b1b1b}
+[data-theme="night"] .win .tbar{background:rgba(32,32,32,.96);border-top-color:rgba(255,255,255,.07);color:#fff}
+.win .apps{position:absolute;left:50%;transform:translateX(-50%);display:flex;gap:8px}
+.win .apps i{width:28px;height:28px;border-radius:6px;background:rgba(0,0,0,.12)}
+[data-theme="night"] .win .apps i{background:rgba(255,255,255,.16)}
+.win .apps i:first-child{background:linear-gradient(135deg,#3a8ee6,#2266c4)}
+.win .tray{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:12px}
+.win .tray .k{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:6px;background:rgba(0,0,0,.07);font:600 15px/1 var(--font-display)}
+[data-theme="night"] .win .tray .k{background:rgba(255,255,255,.1)}
+.win .tray .clk{text-align:right;line-height:1.3}
+.win .fly{position:absolute;right:12px;bottom:60px;overflow:hidden;border-radius:8px;box-shadow:0 8px 32px rgba(0,0,0,.22),0 0 0 1px rgba(0,0,0,.08);background:var(--paper-parchment);color:var(--ink-body);font-family:var(--font-ui)}
+[data-theme="night"] .win .fly{box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.08)}
+.tf-h{display:flex;align-items:baseline;justify-content:space-between;padding:15px 16px 10px}
+.tf-h b{font:500 20px/1.1 var(--font-display);letter-spacing:-0.01em}
+.tf-cap{display:flex;align-items:center;gap:8px;margin:10px 12px 0;height:40px;padding:0 6px 0 12px;border-radius:var(--radius-input);border:1px solid var(--line-control);background:var(--paper-bone);font-size:14px;color:var(--ink-faint)}
+.tf-cap .ic{margin-left:auto;color:var(--ink-muted)}
+.tf-cap.big{height:48px;margin:12px 12px 0;font-size:16px}
+.tf-row{display:flex;align-items:center;gap:8px;padding:12px}
+.tf-cta{display:inline-flex;align-items:center;gap:8px;height:38px;padding:0 16px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 14px/1 var(--font-ui)}
+.tf-btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 13px;border-radius:var(--radius-pill);border:1px solid var(--line-control);background:var(--paper-parchment);font:600 13px/1 var(--font-ui);color:var(--ink-body)}
+.tf-lnk{display:inline-flex;align-items:center;gap:6px;margin-left:auto;font:600 13.5px/1 var(--font-ui);color:var(--ink-body)}
+.tf-lbl{padding:14px 16px 4px;font-size:14px;font-weight:600}
+.tf-t3{border-top:1px solid var(--line-card)}
+.tf-t3 div{display:flex;align-items:center;gap:10px;height:40px;padding:0 14px 0 16px;border-bottom:1px solid var(--line-dashed);font-size:14px}
+.tf-t3 .kc{flex:none;width:18px;height:18px;border-radius:7px;border:2px solid var(--check-border)}
+.tf-t3 .kc.on{background:var(--check-fill);border-color:transparent}
+.tf-t3 .done span{text-decoration:line-through;color:var(--ink-faint)}
+.tf-t3 .st{margin-left:auto;color:var(--acc-gold)}
+.tf-foot{display:flex;align-items:center;padding:10px 14px 12px;border-top:1px solid var(--line-dashed)}
+.tf-focus{display:flex;align-items:center;gap:12px;margin:0 12px;padding:10px 10px 10px 12px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-bone)}
+.ring{flex:none;width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+.ring>span{width:34px;height:34px;border-radius:50%;background:var(--paper-bone);display:flex;align-items:center;justify-content:center;color:var(--acc-sage-text)}
+.tf-line{display:flex;align-items:center;gap:8px;padding:10px 14px 0;font-size:13.5px;min-width:0}
+.tf-line .br{flex:none;width:56px;height:4px;border-radius:2px;background:color-mix(in srgb,var(--ink-body) 9%,transparent);overflow:hidden}
+.tf-line .br i{display:block;height:100%;background:color-mix(in srgb,var(--acc-sage) 55%,var(--acc-sage-text))}
+.wmenu{position:absolute;right:96px;bottom:56px;min-width:236px;padding:4px;border-radius:8px;background:#F9F9F9;border:1px solid rgba(0,0,0,.08);box-shadow:0 8px 24px rgba(0,0,0,.18);font:14px/1 'Segoe UI',system-ui,sans-serif;color:#1b1b1b}
+[data-theme="night"] .wmenu{background:#2C2C2C;border-color:rgba(255,255,255,.08);color:#fff;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.wmenu div{display:flex;align-items:center;gap:12px;height:32px;padding:0 12px;border-radius:4px}
+.wmenu div.hi{background:rgba(0,0,0,.05)}
+[data-theme="night"] .wmenu div.hi{background:rgba(255,255,255,.08)}
+.wmenu div .ic{opacity:.75}
+.wmenu div em{margin-left:auto;font-style:normal;opacity:.6;font-size:12px}
+.wmenu hr{margin:4px 0;border:0;border-top:1px solid rgba(0,0,0,.08)}
+[data-theme="night"] .wmenu hr{border-top-color:rgba(255,255,255,.1)}
+.wmenu.sub{right:336px;bottom:62px;min-width:170px}
+.omenu{position:absolute;right:96px;bottom:56px;width:250px}
+.omenu .bh{display:flex;align-items:center;gap:10px;padding:8px 9px 9px}
+.omenu .bh b{display:block;font:500 15px/1.15 var(--font-display)}
+.omenu .bh small{display:block;margin-top:2px;font:11.5px/1.3 var(--font-mono);color:var(--ink-faint)}
+.omenu.sub2{right:350px;bottom:60px;width:176px}
+.cost{margin-top:22px;border-collapse:collapse;max-width:1180px;font-size:13.5px}
+.cost th,.cost td{padding:9px 14px 9px 0;text-align:left;vertical-align:top;border-bottom:1px dashed var(--line-dashed)}
+.cost th{font-weight:600;color:var(--ink-body);white-space:nowrap}
+.cost td{color:var(--ink-muted)}
+.cost thead th{border-bottom:1.5px solid var(--line-solid)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · calendar extras · 25 Oct 2026 · queue items 12, 14, 19, 20, 21</div>
+  <h1>Colours, the block menu, the checkbox, the Now card, the tray</h1>
+  <p class="lede">Five things you asked about, each with options to pick by letter, for example <b>"palette B, menu A, check B, repeat A, now card A, tray B, tray menu B"</b>. Blocks are drawn as the app builds them today (your "Now" pick, cascade, gold-edge goal). Only section 1 changes colour values, because you asked for that; everything else uses the app's own colours.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your picks">
+  <span>Your picks: <b id="mine">none yet</b></span>
+  <span class="seg" role="group" aria-label="Page theme">
+    <button type="button" class="btn" data-th="day" aria-pressed="true">Day page</button>
+    <button type="button" class="btn" data-th="night" aria-pressed="false">Night page</button>
+  </span>
+  <button type="button" class="btn btn-p" id="copy">Copy my picks</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="group" id="colours">
+  <h2>1 · Block colours</h2>
+  <p class="say">You said: "I don't like the colours of the blocks". Each palette is drawn on the same calendar (task, event, Time slot, the goal, done, past, "Now" and "Ran over"), by day and in Night Garden, with its swatch grid. The block's look stays as built (the colour at 24% for the fill, 45% for the edge). Every text colour is worked out so it passes AA (4.5:1) on every fill it can sit on: the plain grid, today's lavender wash, and the "Now" wash.</p>
+  <div id="pals"></div>
+</section>
+
+<section class="group" id="menu">
+  <h2>2 · The block's right-click menu</h2>
+  <p class="say">Akiflow's menu opens with a colour grid (4 rows and a custom "+"), then Duplicate (Ctrl D, or Ctrl+drag), Work with AI ›, Copy Event ID and Delete (⌫). Ours keeps every row it has now and adds the swatch grid, Duplicate's keys, Work with AI ›, and Copy link (marked <i>new</i>). Drawn with your palette pick (B until you pick one):</p>
+  <div style="margin-top:14px"><span class="seg" role="group" aria-label="Drawn with palette">
+    <button type="button" class="btn" data-mpal="A">Palette A</button>
+    <button type="button" class="btn" data-mpal="B">Palette B</button>
+    <button type="button" class="btn" data-mpal="C">Palette C</button>
+  </span></div>
+  <div id="menus"></div>
+</section>
+
+<section class="group" id="checks">
+  <h2>3 · The calendar checkbox and the repeat glyph</h2>
+  <p class="say">You find the checkbox thin and square. Three thicker, rounder ones, open and ticked, on 15-minute, 30-minute and one-hour blocks at 100%, 125% (the app's default) and 150%. The check still sits on the title's first line (the dashed line in the 150% hour block marks that line's middle). In the app the box only shows when the pointer is over the block, or once it's ticked; that stays.</p>
+  <div id="ckv"></div>
+  <div class="sub">The repeat glyph</div>
+  <p class="say" style="margin:6px 0 0;max-width:820px;color:var(--ink-muted)">A repeating task's box becomes two arrows chasing each other (Akiflow's idea). Ticking it completes this occurrence; the next one comes as the repeat says. Its name for a screen reader: "Complete this occurrence (repeats weekly)". Drawn in the kf line style (24 grid, stroke 1.6, round caps); on a block the stroke matches your checkbox pick's weight.</p>
+  <div id="rpv"></div>
+</section>
+
+<section class="group" id="nowcard">
+  <h2>4 · The Ongoing / Up next card</h2>
+  <p class="say">At the bottom left of the calendar page: pinned to the foot of the "To plan" rail when it's open, floating 16px in from the grid's corner when the rail is folded, a one-line strip above the tab bar on the phone. Its rules come from the research: only things within the next hour count as "Up next"; when two run at once the one that <b>ends soonest</b> leads (a long block can't hide a prayer or a meeting inside it); clock times always sit under the bar, so the countdown is never the only thing it says.</p>
+  <div id="ncv"></div>
+</section>
+
+<section class="group" id="tray">
+  <h2>5 · The Windows tray</h2>
+  <p class="say">Left-click opens a small window of ours above the K (it's already a webview, so its whole look is ours; the cost there is the signed-out bug, item 14: it must share the main window's session). Right-click opens a menu. Each scene follows the page's Day/Night switch; Windows is drawn light by day and dark at night.</p>
+  <div class="sub">Left-click: the popover</div>
+  <div id="tfv"></div>
+  <div class="sub">Right-click: the menu</div>
+  <div id="tmv"></div>
+  <table class="cost" aria-label="Native menu vs our own window">
+    <thead><tr><th></th><th>A · Windows' own menu (what tray.rs uses now)</th><th>B · our own small window (a second webview)</th></tr></thead>
+    <tbody>
+      <tr><th>We can set</th><td>The words, the order, separators, ticks, rows switched off, submenus (Pause ▸), small one-colour icons (Tauri's IconMenuItem).</td><td>Everything: paper, type, kf icons, the K and a status line on top, terra for Stop, our day/night.</td></tr>
+      <tr><th>We can't set</th><td>The font (Segoe UI), colours, background, corners, row height, hover colour, a header or status line, our Night Garden. It is drawn by Windows and follows Windows' light or dark, not the app's.</td><td>Nothing on the look. It won't feel like a system menu, and it isn't one.</td></tr>
+      <tr><th>Build cost</th><td>Small: rename rows, add the Pause submenu and icons in <code>src-tauri/src/tray.rs</code>.</td><td>Medium: a borderless, always-on-top window on its own route (or a mode of the flyout window), placed at the pointer and kept on screen, closed by a click away or Esc, arrow keys and Enter, DPI. It needs the main window's session (the same fix as item 14). About 20–40 MB while it stays warm, or ~150 ms to open when made on demand.</td></tr>
+      <tr><th>Feels</th><td>Instant and native; still works if the web app is stuck.</td><td>Ours; a beat slower the first time.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+</div>
+
+<script>
+// ═══ helpers ═══
+const $ = (id) => document.getElementById(id)
+const fig = (theme, inner, cap) => `<figure><div class="shell"${theme ? ` data-theme="${theme}"` : ''}>${inner}</div><figcaption>${cap}</figcaption></figure>`
+const pickBtn = (grp, v) => `<div class="pick-row"><button type="button" class="btn pick" data-grp="${grp}" data-pick="${v}" aria-pressed="false">This one</button></div>`
+const look = (grp, v, name, say, shots, { tag = true, pick = true, attrs = '' } = {}) => `<div class="look" data-grp="${grp}" data-look="${v}"${attrs}><h3>${tag ? `<span class="tag">${v}</span>` : ''}${name}</h3><div class="say">${say}</div><div class="shots">${shots}</div>${pick ? pickBtn(grp, v) : ''}</div>`
+const clock = (h) => { const hh = Math.floor(h + 1e-9), mm = Math.round((h - hh) * 60); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 || hh === 24 ? 'AM' : 'PM'}` }
+const range = (a, b) => { const x = clock(a), z = clock(b); return x.slice(-2) === z.slice(-2) ? `${x.slice(0, -3)}–${z}` : `${x}–${z}` }
+const len = (a, b) => { const m = Math.round((b - a) * 60); return m >= 60 ? `${Math.floor(m / 60)}h${m % 60 ? ` ${m % 60}m` : ''}` : `${m}m` }
+const hourLbl = (t) => clock(t).replace(':00', '')
+// the kf line icons (app/src/components/icons/kf), 24 grid, stroke 1.6, round caps
+const IC = {
+  calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  clock: '<circle cx="12" cy="12" r="8"/><path d="M12 7.8V12l3 2"/>',
+  project: '<path d="M3.5 7.5a2 2 0 0 1 2-2h3.6l2 2h7.4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/><path d="M10 13.5h4.5M12.8 11.5l2 2-2 2"/>',
+  repeat: '<path d="M4 12a8 8 0 0 1 13-6l2 2M20 12a8 8 0 0 1-13 6l-2-2"/><path d="M19 4v4h-4M5 20v-4h4"/>',
+  remind: '<path d="M6 10a6 6 0 0 1 12 0c0 5 2 6.5 2 6.5H4S6 15 6 10z"/><path d="M10 19.5a2 2 0 0 0 4 0"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+  tasks: '<rect x="4.5" y="4.5" width="15" height="15" rx="3"/><path d="M8.5 12.2l2.4 2.4 4.6-4.9"/>',
+  duplicate: '<rect x="8.5" y="8.5" width="11" height="11" rx="3"/><path d="M15.5 5.6A2.5 2.5 0 0 0 13 4.5H7A2.5 2.5 0 0 0 4.5 7v6a2.5 2.5 0 0 0 1.1 2.1"/>',
+  link: '<path d="M10.2 13.8a3.6 3.6 0 0 0 5.1 0l3.1-3.1a3.6 3.6 0 0 0-5.1-5.1l-1 1"/><path d="M13.8 10.2a3.6 3.6 0 0 0-5.1 0l-3.1 3.1a3.6 3.6 0 0 0 5.1 5.1l1-1"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  delete: '<path d="M4 7h16M9.5 7V4.8h5V7M6 7l1 13h10l1-13"/><path d="M10 11v5M14 11v5"/>',
+  dots: '<circle cx="5.5" cy="12" r="1.1"/><circle cx="12" cy="12" r="1.1"/><circle cx="18.5" cy="12" r="1.1"/>',
+  // new: no kf glyph for AI yet — a four-point spark and a small plus, same line
+  ai: '<path d="M10.5 4.5c.7 4 2.2 5.5 6.2 6.2-4 .7-5.5 2.2-6.2 6.2-.7-4-2.2-5.5-6.2-6.2 4-.7 5.5-2.2 6.2-6.2z"/><path d="M18 15v4.5M15.75 17.25h4.5"/>',
+  focus: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12h.01"/>',
+  focusRing: '<path d="M12 4a8 8 0 1 1-8 8"/><path d="M12 4a8 8 0 0 0-8 8" stroke-dasharray="1.2 2.6"/><circle cx="12" cy="12" r="2"/>',
+  mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/>',
+  settings: '<path d="M4.5 7.5h8M17.5 7.5h2M4.5 16.5h2M11.5 16.5h8"/><circle cx="15" cy="7.5" r="2.3"/><circle cx="9" cy="16.5" r="2.3"/>',
+  bell: '<path d="M6.5 16.5V11a5.5 5.5 0 0 1 11 0v5.5l1.5 2h-14z"/><path d="M10 20.5a2 2 0 0 0 4 0"/>',
+  signout: '<path d="M10 4.5H6.5A1.5 1.5 0 0 0 5 6v12a1.5 1.5 0 0 0 1.5 1.5H10"/><path d="m15 8 4 4-4 4M19 12H9.5"/>',
+  stop: '<rect x="7" y="7" width="10" height="10" rx="1.5"/>',
+  chevdown: '<path d="M6 9.5l6 6 6-6"/>',
+  chevup: '<path d="M6 14.5l6-6 6 6"/>',
+  today: '<path d="M12 20.5v-8"/><path d="M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z"/><path d="M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z"/><path d="M7.5 20.5h9"/>',
+  inbox: '<path d="M4 13.5 6.2 6.3A1.8 1.8 0 0 1 7.9 5h8.2a1.8 1.8 0 0 1 1.7 1.3L20 13.5v4.7a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2z"/><path d="M4 13.5h4.4l1.3 2.3h4.6l1.3-2.3H20"/>',
+  open: '<path d="M14 5h5v5M19 5l-8 8M17 14v5H5V7h5"/>',
+  pen: '<path d="M5 19l1-4L16 5l3 3L9 18z"/><path d="M14 7l3 3"/>',
+  star: '<path d="M12 3.8l2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"/>',
+  moon: '<path d="M19 14.5A7.5 7.5 0 0 1 9.5 5a7.5 7.5 0 1 0 9.5 9.5z"/>',
+  more: '<rect x="4.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="4.5" width="6" height="6" rx="1.5"/><rect x="4.5" y="13.5" width="6" height="6" rx="1.5"/><rect x="13.5" y="13.5" width="6" height="6" rx="1.5"/>',
+}
+const ic = (n, s = 14, style = '') => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"${style ? ` style="${style}"` : ''}>${IC[n]}</svg>`
+const play = (s = 11) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z"/></svg>`
+const pointer = (x, y) => `<svg class="ptr" style="left:${x}px;top:${y}px" width="16" height="22" viewBox="0 0 18 24" aria-hidden="true"><path d="M1.5 1.5v18l4.6-4.4 3.2 7 3-1.4-3.2-6.8h6.4z" fill="#fff" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/></svg>`
+const TOK = { lav: ['var(--acc-lavender)', 'var(--acc-lavender-text)'], blo: ['var(--acc-blossom)', 'var(--acc-blossom-text)'], sag: ['var(--acc-sage)', 'var(--acc-sage-text)'], hyd: ['var(--acc-hydrangea)', 'var(--acc-hydrangea-deep)'], but: ['var(--acc-buttercream)', 'var(--acc-buttercream-text)'], clo: ['var(--acc-clover)', 'var(--acc-clover-text)'], ter: ['var(--acc-terra)', 'var(--acc-terra-ink)'] }
+const tokColor = (b) => TOK[b.c] ?? TOK.lav
+
+// ═══ the calendar frame and a block (CalendarGrid at 125%: 90px an hour) ═══
+function blk(b, g, color) {
+  const [c, ct] = color(b)
+  const mins = Math.round((b.b - b.a) * 60), one = mins <= 30 && b.k !== 'slot'
+  const st = b.st ?? [], done = st.includes('done')
+  let tm = b.tm ?? (mins >= 60 ? `${range(b.a, b.b)} · ${len(b.a, b.b)}` : range(b.a, b.b))
+  if (st.includes('ran')) tm = `Ran over · ${clock(b.b)}`
+  const isTask = b.k === 'task' || b.k === 'goal'
+  const ck = isTask ? `<span class="ck${done ? ' on' : ''}">${done ? '✓' : ''}</span>` : ''
+  const lines = Math.max(1, Math.floor((g.height - 14 - 15) / 18.75))
+  const title = `<span class="tt" style="--lines:${lines}"><bdi dir="auto">${b.t}</bdi></span>`
+  const cls = ['blk', one && 'one', b.k === 'goal' && 'goal', b.k === 'slot' && 'slot', ...st].filter(Boolean).join(' ')
+  const style = `--c:${c};--ct:${ct};${b.fill ? `--fill:${b.fill}%;` : ''}left:${g.left}px;width:${g.width}px;top:${g.top}px;height:${g.height}px`
+  if (b.k === 'slot') {
+    const rows = b.held.map(([t, d]) => `<div class="row${d ? ' done' : ''}"><span class="ck${d ? ' on' : ''}">${d ? '✓' : ''}</span><span class="t">${t}</span></div>`).join('')
+    return `<div class="${cls}" style="${style}"><div class="r1"><span class="tt" style="--lines:1">${b.t}</span></div><div class="tm">${clock(b.a)}</div><div class="fill">${b.held.length} tasks · 45m of ${len(b.a, b.b)}</div><div class="rows">${rows}</div></div>`
+  }
+  if (one) return `<div class="${cls}" style="${style}"><div class="r1">${ck}${title}</div></div>`
+  const wash = b.wash ? `<span class="wash" style="height:${b.wash}%"></span>` : ''
+  return `<div class="${cls}" style="${style}">${wash}<div class="r1">${ck}${title}</div><div class="tm">${tm}</div></div>`
+}
+function frame({ days, heads, col, from, to, hour = 90, blocks, color = tokColor, nowAt = null, gut = 60, extra = '', flat = false, noHead = false }) {
+  const W = gut + days.length * col, Y = (h) => (h - from) * hour, top = noHead ? 0 : 41.5
+  let h = `<div class="frame${flat ? ' flat' : ''}" style="width:${W}px;height:${top + (to - from) * hour + 4}px">`
+  if (!noHead) h += `<div class="hd"><span class="g" style="width:${gut}px"></span>${days.map((i) => { const D = heads[i]; return `<span class="c${D.today ? ' td' : ''}${D.past ? ' pa' : ''}" style="width:${col}px"><span class="nm">${D.nm}</span><span class="num">${D.n}</span></span>` }).join('')}</div>`
+  h += `<div class="bd" style="top:${top}px">`
+  days.forEach((i, k) => { if (heads[i].today && !noHead) h += `<span class="tdw" style="left:${gut + k * col}px;width:${col}px"></span>`; h += `<span class="vl" style="left:${gut + k * col}px"></span>` })
+  for (let t = from; t < to; t += 0.5) h += `<span class="hl${t % 1 ? ' half' : ''}" style="left:${gut}px;top:${Y(t)}px">${t % 1 ? '' : `<b>${hourLbl(t)}</b>`}</span>`
+  for (const b of blocks) {
+    const k = days.indexOf(b.d)
+    if (k < 0) continue
+    h += blk(b, { left: gut + k * col + 4, width: col - 8, top: Y(b.a) + 1, height: (b.b - b.a) * hour - 2 }, color)
+  }
+  if (nowAt != null) { const ti = days.findIndex((i) => heads[i].today); if (ti >= 0) h += `<span class="nowl" style="left:${gut + ti * col}px;width:${col}px;top:${Y(nowAt)}px"><span class="chip">${clock(nowAt)}</span></span>` }
+  return h + extra + '</div></div>'
+}
+
+// ═══ 1 · palettes ═══
+// WCAG 2.x contrast — the same formula as design-export/ds-bound/check_contrast.py.
+const hx = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16))
+const toHex = (c) => '#' + c.map((v) => Math.round(Math.min(255, Math.max(0, v))).toString(16).padStart(2, '0')).join('').toUpperCase()
+const over = (top, under, a) => top.map((v, i) => v * a + under[i] * (1 - a))
+const lum = (c) => { const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4 }); return 0.2126 * r + 0.7152 * g + 0.0722 * b }
+const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05) }
+// OKLCH (Björn Ottosson): only to move a colour's lightness while its hue stays put.
+function toOklch(c) {
+  const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4 })
+  const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b), m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b), s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
+  const L = 0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s, A = 1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s, B = 0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s
+  return [L, Math.hypot(A, B), ((Math.atan2(B, A) * 180) / Math.PI + 360) % 360]
+}
+function oklchRaw(L, C, h) {
+  const A = C * Math.cos((h * Math.PI) / 180), B = C * Math.sin((h * Math.PI) / 180)
+  const l = (L + 0.3963377774 * A + 0.2158037573 * B) ** 3, m = (L - 0.1055613458 * A - 0.0638541728 * B) ** 3, s = (L - 0.0894841775 * A - 1.291485548 * B) ** 3
+  return [4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s, -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s, -0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s].map((x) => 255 * (x <= 0.0031308 ? 12.92 * x : 1.055 * Math.sign(x) * Math.abs(x) ** (1 / 2.4) - 0.055))
+}
+// ponytail: gamut fit by stepping chroma down, fine for 50 swatches
+function fromOklch(L, C, h) { for (let k = C; k > 0; k -= 0.002) { const c = oklchRaw(L, k, h); if (c.every((v) => v >= -0.5 && v <= 255.5)) return c } return oklchRaw(L, 0, h) }
+
+// What a block's text sits on: the grid's parchment, or today's lavender wash; each with and without the
+// "Now" wash (the block's ink at 14%, from its top edge).
+const GR = {
+  day: { grounds: [hx('#FBF6E9'), over(hx('#A8A0BE'), hx('#FBF6E9'), 0.1)], body: hx('#2A2420'), terra: hx('#9C5139') },
+  night: { grounds: [hx('#262233'), over(hx('#C0B7E0'), hx('#262233'), 0.1)], body: hx('#F0EBDD'), terra: hx('#E29473') },
+}
+const fills = (c, ink, th, fill) => GR[th].grounds.flatMap((g) => { const f = over(c, g, fill / 100); return [f, over(ink, f, 0.14)] })
+const minR = (fg, fs) => Math.min(...fs.map((f) => ratio(fg, f)))
+// The time row's ink: the swatch's own hue, darker by day / lighter at night, one step at a time until it
+// clears 4.6:1 on every fill above (a hair over AA's 4.5, so rounding never lands under).
+function inkFor(c, th, fill) {
+  const [L, C, h] = toOklch(c)
+  for (let i = 0; i <= 95; i++) {
+    const ink = fromOklch(th === 'day' ? L - i / 100 : Math.min(0.99, L + i / 100), C * (th === 'day' ? 0.85 : 0.5), h)
+    if (minR(ink, fills(c, ink, th, fill)) >= 4.6) return ink
+  }
+  return GR[th].body
+}
+function ranFor(P, th) {
+  const [L, C, h] = toOklch(GR[th].terra)
+  for (let i = 0; i <= 60; i++) {
+    const ink = fromOklch(th === 'day' ? L - i / 100 : Math.min(0.99, L + i / 100), C * (th === 'day' ? 1 : 0.75), h)
+    if (Math.min(...P.sw.map((s) => minR(ink, th === 'day' ? s.fd : s.fn))) >= 4.6) return ink
+  }
+  return GR[th].body
+}
+const nightOf = (day) => { const [L, C, h] = toOklch(day); return fromOklch(Math.min(0.86, Math.max(L + 0.08, 0.76)), C * 0.8, h) }
+
+const C_HUES = [['Rose', 'Wine', 12], ['Clay', 'Rust', 45], ['Ochre', 'Honey', 85], ['Olive', 'Moss', 122], ['Fern', 'Pine', 155], ['Lagoon', 'Tide', 200], ['Cornflower', 'Indigo', 258], ['Iris', 'Heather', 300]]
+const PAL = {
+  N: {
+    name: 'Now (for comparison)', fill: { day: 24, night: 24 }, cols: 9,
+    say: "The app's colours today, with the text tones it uses now.",
+    // [name, day accent, night accent, day ink, night ink] — colors.css / colors.dark.css; Moss's ink is blockHue's mix
+    swatches: [['Lavender', '#A8A0BE', '#C0B7E0', '#5A5170', '#D8D2E8'], ['Sage', '#8A9A7E', '#A8C09A', '#4D6650', '#C6D8BA'], ['Moss', '#7A946E', '#8FB098', '#56624B', '#BBCBB7'], ['Terra', '#B5654A', '#E29473', '#9C5139', '#E29473'], ['Blossom', '#D4A8B0', '#E9BFC5', '#8A4A58', '#E9BFC5'], ['Hydrangea', '#9AB4BE', '#A9C5D3', '#4D6A75', '#C2D8E0'], ['Buttercream', '#D4C78A', '#E8DCA0', '#716431', '#DCCFA0'], ['Clover', '#C9A0A0', '#DDB3B3', '#8A5A5A', '#E4C4C4'], ['Gold', '#C9A55A', '#C9A55A', '#7F6428', '#E4C36B']],
+    roles: { task: 'Lavender', event: 'Blossom', Work: 'Hydrangea', Health: 'Sage', Personal: 'Clover', Shaheen: 'Buttercream' },
+  },
+  A: {
+    name: "B's hues, deeper", fill: { day: 24, night: 20 }, cols: 9,
+    say: 'The same nine flowers with more colour in them, so a block reads as lavender or sage rather than grey-brown. Nothing new to learn; the calendar just looks less muddy.',
+    swatches: [['Lavender', '#9A8CC4', '#B3A6EC'], ['Sage', '#7FA06E', '#9CCB86'], ['Moss', '#5E8C5A', '#7DB88C'], ['Terra', '#C2603E', '#EE8A63'], ['Blossom', '#D98C9C', '#EFA3B2'], ['Hydrangea', '#7AAAC2', '#8EC3DE'], ['Buttercream', '#D9BE5C', '#EBD27A'], ['Clover', '#C9817F', '#E59C9A'], ['Gold', '#CC9A3A', '#E9B850']],
+    roles: { task: 'Lavender', event: 'Blossom', Work: 'Hydrangea', Health: 'Sage', Personal: 'Clover', Shaheen: 'Buttercream' },
+  },
+  B: {
+    name: 'Clear, Akiflow-like (28 swatches)', fill: { day: 20, night: 18 }, cols: 7,
+    say: "A clearer, more saturated set in Akiflow's 4 × 7 grid, filled a little lighter (20%) as Akiflow's are. The bottom row keeps today's botanicals, so blocks you've already coloured don't lose theirs.",
+    swatches: [['Red', '#E5484D'], ['Coral', '#F2735A'], ['Orange', '#F28C28'], ['Amber', '#F2B630'], ['Lime', '#9CC43C'], ['Green', '#3FA66B'], ['Emerald', '#1E9E7E'], ['Teal', '#16A3A3'], ['Cyan', '#1FA6D4'], ['Sky', '#4A9DF0'], ['Blue', '#3E6FE8'], ['Indigo', '#5B5BD6'], ['Violet', '#8B5CF6'], ['Purple', '#B158D6'], ['Magenta', '#D9479B'], ['Pink', '#EE6FA8'], ['Rose', '#E8828C'], ['Brown', '#A0714F'], ['Sand', '#C9A86A'], ['Olive', '#8E9A3E'], ['Forest', '#2F7D5A'], ['Lavender', '#A8A0BE', '#C0B7E0'], ['Sage', '#8A9A7E', '#A8C09A'], ['Blossom', '#D4A8B0', '#E9BFC5'], ['Hydrangea', '#9AB4BE', '#A9C5D3'], ['Buttercream', '#D4C78A', '#E8DCA0'], ['Slate', '#6B7787'], ['Graphite', '#4E4F55']],
+    roles: { task: 'Violet', event: 'Pink', Work: 'Blue', Health: 'Green', Personal: 'Coral', Shaheen: 'Amber' },
+  },
+  C: {
+    name: 'Even garden (my idea)', fill: { day: 24, night: 20 }, cols: 8,
+    say: "Eight hues spaced evenly round the colour wheel, every one at the same lightness and strength (OKLCH), in a clear row and a deep row. Today's set looks muddy partly because its colours aren't equal: buttercream shouts, lavender greys out. Here no block is louder or dirtier than another.",
+    swatches: [...C_HUES.map(([a, , h]) => [a, toHex(fromOklch(0.74, 0.105, h)), toHex(fromOklch(0.8, 0.095, h))]), ...C_HUES.map(([, b, h]) => [b, toHex(fromOklch(0.6, 0.1, h)), toHex(fromOklch(0.71, 0.09, h))])],
+    roles: { task: 'Iris', event: 'Rose', Work: 'Cornflower', Health: 'Fern', Personal: 'Clay', Shaheen: 'Ochre' },
+  },
+}
+for (const P of Object.values(PAL)) {
+  P.sw = P.swatches.map(([name, d, n, di, ni]) => {
+    const day = hx(d), night = n ? hx(n) : nightOf(day)
+    const dInk = di ? hx(di) : inkFor(day, 'day', P.fill.day), nInk = ni ? hx(ni) : inkFor(night, 'night', P.fill.night)
+    const fd = fills(day, dInk, 'day', P.fill.day), fn = fills(night, nInk, 'night', P.fill.night)
+    return { name, day, night, dInk, nInk, fd, fn, time: [minR(dInk, fd), minR(nInk, fn)], title: [minR(GR.day.body, fd), minR(GR.night.body, fn)] }
+  })
+  // "Ran over · 10:30 AM" is terra text on the block's own fill: the app's terra reads ~3:1 by day and ~2.3:1 at
+  // night there, so each new palette gets its own terra, one step at a time until it clears every fill.
+  P.ran = P === PAL.N ? { day: GR.day.terra, night: GR.night.terra } : { day: ranFor(P, 'day'), night: ranFor(P, 'night') }
+  for (const s of P.sw) s.terra = [minR(P.ran.day, s.fd), minR(P.ran.night, s.fn)]
+  P.by = Object.fromEntries(P.sw.map((s) => [s.name, s]))
+  const all = (k) => Math.min(...P.sw.flatMap((s) => s[k]))
+  P.min = { time: all('time'), title: all('title'), terra: all('terra') }
+}
+const palColor = (P, th) => (b) => { const s = P.by[P.roles[b.role]]; return th === 'day' ? [toHex(s.day), toHex(s.dInk)] : [toHex(s.night), toHex(s.nInk)] }
+
+// One calendar for every palette: Tue (past), Wed (today, now 12:09), Thu — 9 AM to 2 PM.
+const PHEADS = [{ nm: 'Tue', n: 20, past: true }, { nm: 'Wed · Today', n: 21, today: true }, { nm: 'Thu', n: 22 }]
+const PBLOCKS = [
+  { d: 0, a: 9, b: 9.5, t: 'Send the tax papers', k: 'task', role: 'task', st: ['done', 'past'] },
+  { d: 0, a: 10, b: 11, t: 'Dentist', k: 'event', role: 'event', st: ['past'] },
+  { d: 0, a: 11.5, b: 13, t: 'Errands', k: 'slot', role: 'Health', st: ['past'], held: [['Buy stamps', 1], ['Return the parcel', 1]] },
+  { d: 1, a: 9.25, b: 10.25, t: 'Call the tyre supplier', k: 'task', role: 'Shaheen', st: ['ran'] },
+  { d: 1, a: 10.5, b: 11, t: 'Reply to Omar', k: 'task', role: 'Work', st: ['hov'] },
+  { d: 1, a: 11.25, b: 12.75, t: 'Crypto — heavy session', k: 'task', role: 'task', st: [], tm: 'Now · 36m left', wash: 60 },
+  { d: 1, a: 13, b: 13.5, t: 'Ship the calendar polish 🌸', k: 'goal', role: 'task', st: [] },
+  { d: 2, a: 9, b: 10, t: 'Standup', k: 'event', role: 'Work', st: [] },
+  { d: 2, a: 10.25, b: 11.25, t: 'Gym', k: 'task', role: 'Health', st: [] },
+  { d: 2, a: 11.5, b: 12.5, t: 'Lunch with Omar', k: 'event', role: 'Personal', st: [] },
+  { d: 2, a: 12.5, b: 14, t: 'Admin', k: 'slot', role: 'Work', st: [], held: [['Renew car insurance', 1], ['Book the vet', 0]] },
+]
+const palFrame = (P, th) => `<div style="--acc-terra-ink:${toHex(P.ran[th])}">${frame({ days: [0, 1, 2], heads: PHEADS, col: 150, from: 9, to: 14, blocks: PBLOCKS.map((b) => ({ ...b, fill: P.fill[th] })), color: palColor(P, th), nowAt: 12 + 9 / 60 })}</div>`
+const swGrid = (P, th) => `<div class="pad" style="width:max-content"><div class="lbl" style="margin-bottom:10px">${th === 'day' ? 'Day' : 'Night Garden'} · ${P.sw.length} swatches</div><div class="swg" style="grid-template-columns:repeat(${P.cols},26px)">${P.sw.map((s) => `<span class="sw" title="${s.name}" style="background:${toHex(th === 'day' ? s.day : s.night)}"></span>`).join('')}</div></div>`
+const r1 = (x) => (Math.floor(x * 10) / 10).toFixed(1)
+const verdict = (x) => `<span class="${x >= 4.5 ? 'ok' : 'no'}">${r1(x)}:1 ${x >= 4.5 ? '✓' : '✗'}</span>`
+function palLook(k) {
+  const P = PAL[k]
+  const legend = `<div class="legend">${[['Tasks (no area)', 'task'], ['Events', 'event'], ['Work', 'Work'], ['Health', 'Health'], ['Personal', 'Personal'], ['Shaheen', 'Shaheen']].map(([lab, r]) => `<span><i style="background:${toHex(P.by[P.roles[r]].day)}"></i>${lab}: ${P.roles[r]}</span>`).join('')}</div>`
+  const cr = `<div class="cr">Lowest contrast across ${P.sw.length} swatches, day and night: time row ${verdict(P.min.time)} · titles ${verdict(P.min.title)} · "Ran over" in terra ${verdict(P.min.terra)}${P === PAL.N ? '' : ` (its terra: ${toHex(P.ran.day)} by day, ${toHex(P.ran.night)} at night)`} · fill ${P.fill.day}% by day, ${P.fill.night}% at night</div>`
+  const row = (s) => { const bad = (x) => `<span${x < 4.5 ? ' class="bad"' : ''}>${r1(x)}</span>`; return `<tr><td>${s.name}</td><td><i style="background:${toHex(s.day)}"></i>${toHex(s.day)}</td><td><i style="background:${toHex(s.dInk)}"></i>${toHex(s.dInk)}</td><td><i style="background:${toHex(s.night)}"></i>${toHex(s.night)}</td><td><i style="background:${toHex(s.nInk)}"></i>${toHex(s.nInk)}</td><td>${bad(s.time[0])} / ${bad(s.time[1])}</td><td>${bad(s.title[0])} / ${bad(s.title[1])}</td><td>${bad(s.terra[0])} / ${bad(s.terra[1])}</td></tr>` }
+  const table = `<details><summary>Values and contrast, swatch by swatch (for the build)</summary><table class="vt"><thead><tr><th>Swatch</th><th>Day colour</th><th>Day text</th><th>Night colour</th><th>Night text</th><th>Time row d / n</th><th>Title d / n</th><th>Ran over d / n</th></tr></thead><tbody>${P.sw.map(row).join('')}</tbody></table></details>`
+  const shots = fig('day', palFrame(P, 'day'), 'Day') + fig('night', palFrame(P, 'night'), 'Night Garden') + `<div style="display:flex;flex-direction:column;gap:14px">${fig('day', swGrid(P, 'day'), '')}${fig('night', swGrid(P, 'night'), '')}</div>`
+  return look('palette', k, P.name, P.say + legend + cr + table, shots, { tag: k !== 'N', pick: k !== 'N', attrs: ` data-min-time="${P.min.time.toFixed(3)}" data-min-title="${P.min.title.toFixed(3)}" data-min-terra="${P.min.terra.toFixed(3)}"` })
+}
+$('pals').innerHTML = ['N', 'A', 'B', 'C'].map(palLook).join('')
+
+// ═══ 2 · the block menu ═══
+const row = (icon, label, { hint = '', keys = null, sub = false, cls = '' } = {}) => `<div class="row ${cls}">${ic(icon)}<span class="l">${label}</span>${hint ? `<span class="h">${hint}</span>` : ''}${keys ? `<span class="kbds">${keys.map((k) => `<kbd>${k}</kbd>`).join('')}</span>` : ''}${sub ? '<span class="s">▸</span>' : ''}</div>`
+const sep = '<div class="sep"></div>'
+function swatches(P, th, cur, tray) {
+  const col = P.cols >= 8 ? 8 : 7, z = col === 8 ? 20 : 22
+  const cells = ['<span class="s0 none" title="No colour"></span>', ...P.sw.map((s) => `<span class="s0${s.name === cur ? ' on' : ''}" title="${s.name}" style="background:${toHex(th === 'day' ? s.day : s.night)}"></span>`), tray ? `<span class="s0 add wide">${ic('plus', 12)}Custom</span>` : `<span class="s0 add" title="Custom colour">${ic('plus', 13)}</span>`]
+  return `<div class="sws${tray ? ' tray' : ''}" style="--z:${z}px;grid-template-columns:repeat(${col},${z}px)">${cells.join('')}</div>`
+}
+const lens = (line) => `<div class="lens${line ? ' line' : ''}">${(line ? ['15m', '30m', '45m', '1h', '1h30', '2h'] : ['15m', '30m', '45m', '1h', '1h 30m', '2h']).map((l) => `<span class="chip${l === '1h' ? ' on' : ''}">${l}</span>`).join('')}</div>`
+function menuHTML(layout, kind, P, th, hl = '') {
+  const cur = P.roles[kind === 'task' ? 'Work' : 'event']
+  const s = P.by[cur], dot = toHex(th === 'day' ? s.day : s.night)
+  const title = kind === 'task' ? 'Deep work on the quarterly forecast' : 'Lunch with Omar'
+  const titleRow = `<div class="title"><span class="dot" style="background:${dot}"></span><span>${title}</span></div>`
+  const H = (k) => (hl === k ? ' hi' : '')
+  const common = kind === 'task'
+    ? [row('calendar', 'Thu, Oct 22', { sub: true }), row('clock', '10:15 – 11:15 AM', { hint: '1h', sub: true }), row('project', 'Work', { hint: `<span style="width:7px;height:7px;border-radius:50%;background:${dot}"></span>`, sub: true }), sep,
+        `<div class="cap">From task</div><div class="capt">${title}</div>`, row('check', 'Complete'), row('tasks', 'Open task'), row('duplicate', 'Duplicate', { keys: ['Ctrl', 'D'] }), row('ai', 'Work with AI', { sub: true, cls: 'new' + H('ai') }), row('link', 'Copy link', { cls: 'new' }), sep,
+        row('plus', 'Unschedule', { keys: ['⌫'] }), row('delete', 'Delete', { cls: 'danger' })]
+    : [row('calendar', 'Thu, Oct 22', { sub: true }), row('clock', '11:30 AM – 12:30 PM', { hint: '1h', sub: true }), row('project', 'No project', { sub: true, cls: 'unset' }), row('repeat', 'Does not repeat', { sub: true, cls: 'unset' }), row('remind', 'No reminder', { sub: true, cls: 'unset' }), sep,
+        row('plus', 'Link a task…'), row('dots', 'More', { sub: true }), row('duplicate', 'Duplicate', { keys: ['Ctrl', 'D'] }), row('ai', 'Work with AI', { sub: true, cls: 'new' + H('ai') }), row('link', 'Copy link', { cls: 'new' }), sep,
+        row('delete', 'Delete', { keys: ['⌫'], cls: 'danger' })]
+  const head = layout === 'A' ? swatches(P, th, cur, false) + sep + titleRow + lens(false) : titleRow + swatches(P, th, cur, true) + lens(true)
+  return `<div class="mn" style="width:${layout === 'A' ? 252 : 272}px">${head}${sep}${common.join('')}</div>`
+}
+const aiSub = (kind) => `<div class="mn" style="width:236px;margin-top:${kind === 'task' ? 428 : 376}px"><div class="cap" style="padding:4px 10px 4px">Work with AI · needs the chat that can act (item 5)</div>${(kind === 'task' ? [['ai', 'Break into subtasks'], ['clock', 'Find a better time'], ['calendar', 'Move to a free slot tomorrow'], ['tasks', 'Estimate how long it takes']] : [['ai', 'Summarise the notes'], ['clock', 'Find a time to prepare'], ['calendar', 'Reschedule…']]).map(([i, l]) => row(i, l)).join('')}</div>`
+function customPicker(P, th) {
+  const s = P.by[P.roles.Work], c = toHex(th === 'day' ? s.day : s.night), ink = toHex(th === 'day' ? s.dInk : s.nInk)
+  return `<div class="mn cpk" style="margin-top:6px"><div class="cap" style="padding:0 0 8px">Custom colour</div><div class="hb"><span class="kn" style="left:62%"></span></div><div class="tb" style="background:linear-gradient(90deg,${toHex(fromOklch(0.86, 0.05, toOklch(s.day)[2]))},${toHex(s.day)},${toHex(fromOklch(0.42, 0.09, toOklch(s.day)[2]))})"><span class="kn" style="left:48%"></span></div><div class="hx"><span>${c}</span></div><div class="pv" style="background:color-mix(in srgb,${c} ${P.fill[th]}%,var(--paper-parchment));border:1px solid color-mix(in srgb,${c} 45%,transparent)">Deep work<small style="color:${ink}">10:15–11:15 AM · 1h</small></div><div class="lbl" style="margin-top:8px">Its text colour is worked out to pass AA</div><div class="ft"><span class="chip on">Done</span></div></div>`
+}
+const MHEADS = [{ nm: 'Thu', n: 22 }]
+function menuScene(layout, kind, P, th) {
+  const blocks = [
+    { d: 0, a: 9.5, b: 10, t: 'Standup', k: 'event', role: 'Work' },
+    { d: 0, a: 10.25, b: 11.25, t: 'Deep work on the quarterly forecast', k: 'task', role: 'Work', st: kind === 'task' ? ['ctx', 'hov'] : [] },
+    { d: 0, a: 11.5, b: 12.5, t: 'Lunch with Omar', k: 'event', role: 'event', st: kind === 'event' ? ['ctx'] : [] },
+  ].map((b) => ({ ...b, fill: P.fill[th] }))
+  const grid = frame({ days: [0], heads: MHEADS, col: 200, from: 9.25, to: 13, blocks, color: palColor(P, th), extra: pointer(150, (kind === 'task' ? 10.25 : 11.5) * 90 - 9.25 * 90 + 30) })
+  const top = (kind === 'task' ? 10.25 : 11.5 - 0.6) * 90 - 9.25 * 90 + 42
+  const side = layout === 'A' ? (kind === 'task' ? customPicker(P, th) : '') : (kind === 'task' ? aiSub('task') : aiSub('event'))
+  return `<div class="mnwrap" style="padding:14px;border-radius:18px;background:var(--paper-linen)">${grid}<div style="margin-top:${top}px">${menuHTML(layout, kind, P, th, layout === 'B' ? 'ai' : '')}</div>${side ? `<div style="margin-top:${top}px">${side}</div>` : ''}</div>`
+}
+let mPal = null
+const MENUS = [
+  ['A', 'Colours first (Akiflow\'s order)', 'The swatch grid opens the menu, with the custom "+" as its last swatch; the title and the length row come under it, then our rows. One right-click and one click recolours a block. The "+" opens a small picker (hue, tone, or a code).'],
+  ['B', 'Title first, colours in a tray', "The block's title stays on top, as now; the swatches sit just under it in a quiet tray with a labelled \"+ Custom\", and the length row fits on one line. Calmer when you mostly open the menu for other things. Drawn with Work with AI › open."],
+]
+function renderMenus() {
+  const k = mPal ?? picks.palette ?? 'B', P = PAL[k]
+  document.querySelectorAll('[data-mpal]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mpal === k)))
+  $('menus').innerHTML = MENUS.map(([L, name, say]) => look('menu', L, name, say, fig('day', menuScene(L, 'task', P, 'day'), `A task block · day · palette ${k}`) + fig('night', menuScene(L, 'event', P, 'night'), `An event · Night Garden · palette ${k}`))).join('')
+  document.querySelectorAll('#menus .pick').forEach(wirePick)
+  paint()
+}
+document.querySelectorAll('[data-mpal]').forEach((b) => b.addEventListener('click', () => { mPal = b.dataset.mpal; renderMenus() }))
+
+// ═══ 3 · checks and the repeat glyph ═══
+// size and border at 125% (the app's default); both scale with the interface as the title does
+const CKV = {
+  N: { name: 'Now', size: 12, bw: 1.5, fixed: true, r: () => 4 },
+  A: { name: 'Firmer', size: 12, bw: 2, r: (z) => z / 3 },
+  B: { name: 'Rounder', size: 13, bw: 2, r: (z) => z * 0.38 },
+  C: { name: 'Round', size: 13, bw: 2.2, r: (z) => z / 2 },
+}
+const tick = (sw) => `<svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6.5 12.5l3.8 3.8L17.5 8.6" stroke="currentColor" stroke-width="${sw.toFixed(2)}" stroke-linecap="round" stroke-linejoin="round"/></svg>`
+const geom = (vk, s) => { const v = CKV[vk]; const z = v.size * s; return { z, bw: v.fixed ? v.bw : (v.bw * s) / 1.25, r: v.r(z) } }
+function boxHTML(vk, s, done, mt = 0) {
+  const { z, bw, r } = geom(vk, s)
+  const inner = done ? (vk === 'N' ? `<span style="font-size:${(10 * s) / 1.25}px;line-height:1">✓</span>` : tick(((bw + 0.6) * 24) / z)) : ''
+  return `<span class="ck${done ? ' on' : ''}" style="width:${z}px;height:${z}px;border-width:${done ? 0 : bw}px;border-radius:${r}px;margin-top:${mt}px">${inner}</span>`
+}
+// the repeat glyphs: two arrows chasing round a circle (A), or round the box itself (B)
+const f1 = (n) => +n.toFixed(2)
+function arcArrow(a0, a1, r = 7.6, head = 2.9) {
+  const P = (a) => [12 + r * Math.cos((a * Math.PI) / 180), 12 + r * Math.sin((a * Math.PI) / 180)]
+  const [x0, y0] = P(a0), [x1, y1] = P(a1), t = (a1 * Math.PI) / 180, back = [Math.sin(t), -Math.cos(t)]
+  const rot = (v, d) => { const q = (d * Math.PI) / 180; return [v[0] * Math.cos(q) - v[1] * Math.sin(q), v[0] * Math.sin(q) + v[1] * Math.cos(q)] }
+  const [p, q] = [rot(back, 40), rot(back, -40)]
+  return { arc: `M${f1(x0)} ${f1(y0)}A${r} ${r} 0 0 1 ${f1(x1)} ${f1(y1)}`, head: `M${f1(x1 + p[0] * head)} ${f1(y1 + p[1] * head)}L${f1(x1)} ${f1(y1)}L${f1(x1 + q[0] * head)} ${f1(y1 + q[1] * head)}` }
+}
+const RA = [arcArrow(198, 342), arcArrow(18, 162)]
+const RB = [{ arc: 'M5 10.5V9a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2', head: 'M16.9 8.9L19 11l2.1-2.1' }, { arc: 'M19 13.5V15a4 4 0 0 1-4 4H9a4 4 0 0 1-4-4v-2', head: 'M7.1 15.1L5 13l-2.1 2.1' }]
+function repeatSVG(g, done, px, sw) {
+  const parts = g === 'A' ? RA : RB
+  const st = `fill="none" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round"`
+  if (!done) return `<svg width="${px}" height="${px}" viewBox="0 0 24 24" aria-hidden="true" style="flex:none;color:var(--ct);overflow:visible"><path d="${parts.map((p) => p.arc + p.head).join('')}" stroke="currentColor" ${st}/></svg>`
+  const body = g === 'A' ? '<circle cx="12" cy="12" r="8.4" fill="var(--check-fill)"/>' : '<rect x="4.2" y="4.2" width="15.6" height="15.6" rx="4.6" fill="var(--check-fill)"/>'
+  return `<svg width="${px}" height="${px}" viewBox="0 0 24 24" aria-hidden="true" style="flex:none;overflow:visible">${body}<path d="${parts.map((p) => p.head).join('')}" stroke="var(--check-fill)" ${st}/><path d="M8.4 12.4l2.5 2.5 4.9-5.1" stroke="var(--paper-parchment)" ${st}/></svg>`
+}
+const HUES = { 15: 'lav', 30: 'hyd', 60: 'but' }
+function ckBlock({ s, min, done, vk, rep = null, guide = false }) {
+  const d = s / 1.25, fs = 12 * s, hgt = (min / 60) * 72 * s - 2, one = min <= 30, w = 120 * s
+  const [c, ct] = TOK[HUES[min]]
+  const mt = one ? 0 : (1.25 * fs - geom(vk, s).z) / 2
+  let box = boxHTML(vk, s, done, mt)
+  if (rep) { const { z, bw } = geom(vk, s); box = `<span style="display:inline-flex;margin-top:${mt}px">${repeatSVG(rep, done, z, ((bw * 24) / z).toFixed(2))}</span>` }
+  const title = { 15: 'Water the plants', 30: 'Reply to Omar', 60: 'Deep work on the forecast' }[min]
+  const tm = one ? '' : `<div class="tm" style="font-size:${8.5 * s}px;margin-top:${2 * d}px">10:00–11:00 AM · 1h</div>`
+  const pad = one ? `${2 * d}px ${8 * d}px` : `${7 * d}px ${10 * d}px`
+  const gl = guide ? `<span class="guide" style="top:${(1.25 * fs) / 2}px"></span>` : ''
+  return `<div class="blk cb${one ? ' one' : ''}${done ? ' done' : ''}" style="--c:${c};--ct:${ct};width:${w}px;height:${hgt}px;padding:${pad}"><div class="r1" style="gap:${6 * d}px">${gl}${box}<span class="tt" style="font-size:${fs}px;--lines:${min >= 60 ? 2 : 1}">${title}</span></div>${tm}</div>`
+}
+function ckGrid(vk, rep = null, scales = [1, 1.25, 1.5]) {
+  let h = `<div class="ckgrid" style="grid-template-columns:52px repeat(3,max-content)"><span></span>${[15, 30, 60].map((m) => `<span class="hh">${m === 60 ? '1 hour' : `${m} min`} · open, ticked</span>`).join('')}`
+  for (const s of scales) {
+    h += `<span class="hh" style="padding-top:4px">${Math.round(s * 100)}%</span>`
+    for (const m of [15, 30, 60]) h += `<div class="ckcell">${ckBlock({ s, min: m, done: false, vk, rep, guide: s === 1.5 && m === 60 })}${ckBlock({ s, min: m, done: true, vk, rep })}</div>`
+  }
+  return h + '</div>'
+}
+const spec = (vk) => `<div class="spec">${[false, true].map((dn) => `<div class="one"><span class="sq${dn ? ' on' : ''}" style="${(() => { const { z, bw, r } = geom(vk, 4); return `width:${z}px;height:${z}px;border-width:${dn ? 0 : bw}px;border-radius:${r}px` })()}">${dn ? (vk === 'N' ? '<span style="font-size:32px">✓</span>' : tick(((geom(vk, 4).bw + 1.6) * 24) / geom(vk, 4).z)) : ''}</span>${dn ? 'ticked' : 'open'}</div>`).join('')}<div class="lbl" style="max-width:150px">${(() => { const g = geom(vk, 1.25); return `At 125%: ${f1(g.z)}px box, ${f1(g.bw)}px edge, ${f1(g.r)}px corners` })()}</div></div>`
+const CKS = [
+  ['N', 'Now', 'The check the app draws today: 1.5px edge, 4px corners.'],
+  ['A', 'Firmer', "A 2px edge and corners a third of the box: the same square, just not wispy. The smallest change."],
+  ['B', 'Rounder', 'A 2px edge, 1px bigger, corners at 38% (close to the kit\'s own checkbox in Tasks): a soft square that reads as "tap me" on a busy block.'],
+  ['C', 'Round', 'A 2.2px circle, as in Things or Amie. Clearly different from the square task box in lists, and it rhymes with the round repeat glyph A.'],
+]
+$('ckv').innerHTML = CKS.map(([k, name, say]) => look('check', k, name, say, fig('', ckGrid(k), 'Follows the page\'s Day/Night switch') + `<div style="display:flex;flex-direction:column;gap:12px">${fig('day', spec(k), 'Day, 4× (as on a 150% screen, zoomed)')}${fig('night', spec(k), 'Night Garden, 4×')}</div>`, { tag: k !== 'N', pick: k !== 'N' })).join('')
+
+function rpSpec(g, th) {
+  const svg = (done) => `<div class="grid24" style="width:96px;height:96px;--ct:var(--acc-lavender-text);display:flex;align-items:center;justify-content:center">${repeatSVG(g, done, 96, 1.6)}</div>`
+  return `<div class="spec">${svg(false)}${svg(true)}<div style="display:flex;gap:10px;align-items:center;--ct:var(--acc-lavender-text)">${[24, 18, 15].map((px) => repeatSVG(g, false, px, ((1.6 * 24) / 24).toFixed(2))).join('')}${[24, 18, 15].map((px) => repeatSVG(g, true, px, 1.6)).join('')}</div><div class="lbl" style="max-width:130px">${th === 'day' ? 'Day' : 'Night'} · 24 grid at 4×, then 24 / 18 / 15px, open and ticked</div></div>`
+}
+let rpCk = null
+const RPS = [
+  ['A', 'Chasing arcs', 'Two arcs round a circle, each with its arrowhead, as in Akiflow. Ticked: the circle fills, the tick shows, and the two heads stay on the rim, so a done repeat still reads as one. Pairs best with round checks (C).'],
+  ['B', 'Chasing box', 'The checkbox outline itself splits into two arrows that chase round it, so a repeating task keeps the same square footprint as every other task. Ticked: the box fills, the heads stay at its sides. Pairs best with A or B.'],
+]
+function renderRepeat() {
+  const vk = rpCk ?? (picks.check && picks.check !== 'N' ? picks.check : 'B')
+  $('rpv').innerHTML = RPS.map(([g, name, say]) => look('repeat', g, name, say, fig('', ckGrid(vk, g, [1.25, 1.5]), `On blocks with check ${vk} · follows the page's Day/Night switch`) + `<div style="display:flex;flex-direction:column;gap:12px">${fig('day', rpSpec(g, 'day'), '')}${fig('night', rpSpec(g, 'night'), '')}</div>`)).join('')
+  document.querySelectorAll('#rpv .pick').forEach(wirePick)
+  paint()
+}
+
+// ═══ 4 · the Ongoing / Up next card ═══
+const PR = { c: TOK.sag[0], ct: TOK.sag[1] } // Kai's prayer-times calendar (Google), drawn in sage
+const BL = { c: TOK.blo[0], ct: TOK.blo[1] }, HY = { c: TOK.hyd[0], ct: TOK.hyd[1] }, BU = { c: TOK.but[0], ct: TOK.but[1] }, SA = PR
+const ST = [
+  { key: 'none', cap: '1 · Nothing left today', none: true },
+  { key: 'far', cap: '2 · Next is more than an hour away (a clock time, no countdown)', far: { t: 'العشاء', at: '7:58 PM', ring: 1, ...PR } },
+  { key: 'soon', cap: '3 · Up next in 12 minutes (an empty bar)', main: { lbl: 'Up next', cd: 'in 12m', t: 'المغرب', a: '6:15 PM', b: '6:40 PM', pct: 0, ring: 1, ...PR } },
+  { key: 'on', cap: '4 · Ongoing, with Next under it', main: { lbl: 'Ongoing', cd: '15m left', t: 'المغرب', a: '6:15 PM', b: '6:40 PM', pct: 40, ring: 1, ...PR }, next: [{ t: 'Call Mom', cd: 'in 45m', task: 1, ...BL }] },
+  { key: 'two', cap: '5 · Two ongoing: the one ending soonest leads, the other behind ⌄', main: { lbl: 'Ongoing · 2', n: 2, cd: '10m left', t: 'Standup', a: '11:15 AM', b: '11:30 AM', pct: 33, join: 1, chev: 'down', ...HY } },
+  { key: 'twoX', cap: '5 · …opened: the other one above, the pointer on it (Focus, Open)', main: { lbl: 'Ongoing · 2', cd: '10m left', t: 'Standup', a: '11:15 AM', b: '11:30 AM', pct: 33, join: 1, chev: 'up', ...HY }, more: [{ t: 'Deep work on the forecast', cd: '1h 10m left', pct: 53, task: 1, hov: 1, ...BU }] },
+  { key: 'many', cap: '6 · Several upcoming within the hour (opened; two start at 2:00)', main: { lbl: 'Up next', cd: 'in 10m', t: 'Design review', a: '2:00 PM', b: '2:45 PM', pct: 0, join: 1, chev: 'up', ...HY }, next: [{ t: 'Pay the rent', cd: '2:00 PM', task: 1, ...BL }, { t: 'Gym', cd: 'in 40m', task: 1, ...SA }] },
+  { key: 'fold', cap: '7 · Collapsed to one line', fold: { lbl: 'Ongoing', t: 'المغرب', cd: '15m left', pct: 40, ring: 1, ...PR } },
+]
+const cv = (o) => `--c:${o.c};--ct:${o.ct}`
+const mark = (o) => (o.ring ? `<span class="rg" style="${cv(o)}"></span>` : o.task ? `<span class="kc" style="${cv(o)}"></span>` : '')
+const chev = (dir) => (dir ? `<span class="chev">${ic(dir === 'up' ? 'chevup' : 'chevdown', 15)}</span>` : '')
+const hoverActs = '<span class="act">' + play(10) + 'Focus</span><span class="act">' + ic('open', 11) + 'Open</span>'
+function ncA(s, w) {
+  if (s.none) return `<div class="nc nA" style="--w:${w}px"><div class="quiet">Nothing else today</div></div>`
+  if (s.far) return `<div class="nc nA" style="--w:${w}px"><div class="quiet">Next · ${mark(s.far)}<bdi dir="auto">${s.far.t}</bdi><span class="tm">· ${s.far.at}</span></div></div>`
+  if (s.fold) { const f = s.fold; return `<div class="nc nA" style="--w:${w}px"><div class="m fold" style="${cv(f)}"><b style="font-weight:600">${f.lbl}</b>·<span class="t"><bdi dir="auto">${f.t}</bdi></span><span class="cd">${f.cd}</span>${chev('up')}<span class="br"><i style="width:${f.pct}%"></i></span></div></div>` }
+  const m = s.main
+  const more = s.more ? `<div class="more">${s.more.map((o) => `<div class="mr" style="${cv(o)}">${mark(o)}<span class="t">${o.t}</span>${o.hov ? hoverActs : `<span class="br"><i style="width:${o.pct}%"></i></span><span class="cd">${o.cd}</span>`}</div>${o.hov ? `<div class="mr" style="${cv(o)};margin-top:6px;padding-left:23px"><span class="br" style="flex:1;width:auto"><i style="width:${o.pct}%"></i></span><span class="cd">${o.cd}</span></div>` : ''}`).join('')}</div>` : ''
+  const main = `<div class="m" style="${cv(m)}">${more}<div class="h">${m.lbl}${m.join ? '<span class="join" style="margin-left:auto">Join</span>' : ''}<span class="cd"${m.join ? ' style="margin-left:4px"' : ''}>${m.cd}</span>${chev(m.chev)}</div><div class="tl">${mark(m)}<span class="t"><bdi dir="auto">${m.t}</bdi></span></div><div class="br"><i style="width:${m.pct}%"></i></div><div class="tms"><span>${m.a}</span><span>${m.b}</span></div>${s.more ? pointer(w - 120, 22) : ''}</div>`
+  const next = (s.next ?? []).map((o, i, a) => `<div class="nx${i < a.length - 1 && a.length > 1 && i > 0 ? ' mid' : ''}"${i > 0 ? ' style="margin-top:0;padding-top:8px"' : ''}><span class="k">${i === 0 ? 'Next' : ''}</span>${mark(o)}<span class="t"><bdi dir="auto">${o.t}</bdi></span><span class="cd">${o.cd}</span></div>`).join('')
+  return `<div class="nc nA" style="--w:${w}px">${main}${next}</div>`
+}
+function ncB(s, w) {
+  if (s.none) return `<div class="nc nB" style="--w:${w}px"><div class="rw dash" style="justify-content:center;color:var(--ink-muted)">Nothing else today</div></div>`
+  if (s.far) return `<div class="nc nB" style="--w:${w}px"><div class="rw dash" style="${cv(s.far)}">Next · ${mark(s.far)}<span class="t"><bdi dir="auto">${s.far.t}</bdi></span><span class="cd">${s.far.at}</span></div></div>`
+  if (s.fold) { const f = s.fold; return `<div class="nc nB" style="--w:${w}px"><div class="rw" style="${cv(f)};box-shadow:var(--shadow-panel)"><span class="ws" style="width:${f.pct}%"></span>${mark(f)}<span class="t"><bdi dir="auto">${f.t}</bdi></span><span class="cd">${f.cd}</span>${chev('up')}</div></div>` }
+  const m = s.main
+  const more = s.more ? `<div class="more">${s.more.map((o) => `<div class="rw" style="${cv(o)};margin:0 0 4px"><span class="ws" style="width:${o.pct}%"></span>${mark(o)}<span class="t" style="position:relative">${o.t}</span>${o.hov ? `<span style="position:relative;display:inline-flex;gap:4px">${hoverActs}</span>` : `<span class="cd" style="position:relative">${o.cd}</span>`}</div>`).join('')}</div>` : ''
+  const lead = m.pct ? `Now · ${m.a.replace(' PM', '').replace(' AM', '')}–${m.b}` : `${m.a}–${m.b}`
+  const main = `<div class="m" style="${cv(m)}">${m.pct ? `<span class="ws" style="width:${m.pct}%"></span>` : ''}<div class="tl">${mark(m)}<span class="t"><bdi dir="auto">${m.t}</bdi></span>${m.join ? '<span class="join">Join</span>' : ''}<span class="cd"${m.join ? ' style="margin-left:2px"' : ''}>${m.cd}</span>${chev(m.chev)}</div><div class="tm"><span>${m.pct ? lead : `Up next · ${lead}`}${m.n ? ` · ${m.n - 1} more` : ''}</span></div></div>`
+  const next = s.next ? `<div class="k">Next</div>${s.next.map((o) => `<div class="rw" style="${cv(o)}">${mark(o)}<span class="t"><bdi dir="auto">${o.t}</bdi></span><span class="cd">${o.cd}</span></div>`).join('')}` : ''
+  return `<div class="nc nB" style="--w:${w}px">${more ? `<div style="position:relative">${more}${pointer(w - 110, 12)}</div>` : ''}${main}${next}</div>`
+}
+const nowCard = (o, s, w = 256) => (o === 'A' ? ncA(s, w) : ncB(s, w))
+const statesStrip = (o, th) => `<div class="pad" style="display:grid;grid-template-columns:repeat(4,256px);gap:22px 20px;align-items:start">${ST.map((s) => `<div><div class="lbl" style="margin-bottom:8px;min-height:32px">${s.cap}</div>${nowCard(o, s)}</div>`).join('')}</div>`
+
+// the evening calendar behind the card: Wed (today, now 6:25 PM), Thu, Fri
+const EHEADS = [{ nm: 'Wed · Today', n: 21, today: true }, { nm: 'Thu', n: 22 }, { nm: 'Fri', n: 23 }]
+const EBLOCKS = [
+  { d: 0, a: 15, b: 16.5, t: 'Deep work on the forecast', k: 'task', c: 'but', st: ['past', 'done'] },
+  { d: 0, a: 17, b: 18, t: 'Gym', k: 'task', c: 'sag', st: ['past'] },
+  { d: 0, a: 18.25, b: 18 + 40 / 60, t: 'المغرب', k: 'event', c: 'sag' },
+  { d: 0, a: 19 + 10 / 60, b: 19.5, t: 'Call Mom', k: 'task', c: 'blo' },
+  { d: 0, a: 19 + 58 / 60, b: 20 + 20 / 60, t: 'العشاء', k: 'event', c: 'sag' },
+  { d: 1, a: 16, b: 17, t: 'Review the hiring plan', k: 'task', c: 'hyd' },
+  { d: 1, a: 18 + 14 / 60, b: 18 + 39 / 60, t: 'المغرب', k: 'event', c: 'sag' },
+  { d: 1, a: 19, b: 20.5, t: 'Dinner with Omar', k: 'event', c: 'blo' },
+  { d: 2, a: 15.5, b: 16, t: 'Read 2 pages', k: 'task', c: 'lav' },
+  { d: 2, a: 18 + 13 / 60, b: 18 + 38 / 60, t: 'المغرب', k: 'event', c: 'sag' },
+  { d: 2, a: 19, b: 20.5, t: 'Family dinner', k: 'event', c: 'clo' },
+]
+const NOW_E = 18 + 25 / 60
+const evBlocks = (phone) => EBLOCKS.map((b) => (b.d === 0 && b.a === 18.25 ? { ...b, wash: 40, tm: phone ? 'Now · 15m left' : 'Now · 15m left' } : b))
+function deskPage(o, rail) {
+  const W = 1180, H = 640, side = 200, railW = rail === 'open' ? 280 : 34
+  const gridW = W - side - railW - 2, col = Math.floor((gridW - 60) / 3)
+  const grid = frame({ days: [0, 1, 2], heads: EHEADS, col, from: 15, to: 21, hour: 90, blocks: evBlocks(false), nowAt: NOW_E, flat: true })
+  const nav = [['today', 'Today'], ['inbox', 'Inbox'], ['calendar', 'Calendar', 1], ['tasks', 'Tasks'], ['project', 'Projects']]
+  const sidebar = `<aside class="pg-side"><div class="brand"><span class="kmark">K</span>Kai's Flow</div>${nav.map(([i, l, on]) => `<div class="nv${on ? ' on' : ''}">${ic(i, 18)}${l}</div>`).join('')}<div class="capb">${ic('plus', 16)}Capture<span class="kbds" style="margin-left:auto"><kbd>Ctrl</kbd><kbd>K</kbd></span></div></aside>`
+  const card = nowCard(o, ST[3], rail === 'open' ? 256 : 280)
+  const items = (lab, n, list) => `<div class="sec">${lab}<span class="n">${n}</span></div>${list.map(([t, m]) => `<div class="crd"><span class="kc"></span>${t}<span class="m">${m}</span></div>`).join('')}`
+  const railHTML = rail === 'open'
+    ? `<aside class="pg-rail open"><div class="rh">To plan<span class="n">7</span></div>${items('Overdue', 1, [['Renew car insurance', 'Mon']])}${items('Today', 3, [['Book the vet', '30m'], ['Reply to the landlord', '15m'], ['Read 2 pages', '15m']])}${items('Inbox', 3, [['Garden zones idea', ''], ['Call the bank', ''], ['Gift for Omar', '']])}<div class="fade"></div><div class="dock">${card}</div></aside>`
+    : `<aside class="pg-rail fold"><span class="vt2">To plan · 7</span></aside>`
+  const toolbar = `<div class="pg-tb"><span class="pill">3 days ${ic('chevdown', 13, 'margin-left:6px')}</span><span class="pill">‹</span><span class="pill">Today</span><span class="pill">›</span><span class="ttl">Oct 21 — 23</span></div>`
+  return `<div class="pg" style="width:${W}px;height:${H}px">${sidebar}${railHTML}<main class="pg-cal">${toolbar}<div style="flex:1;overflow:hidden">${grid}</div>${rail === 'fold' ? `<div class="float">${card}</div>` : ''}</main></div>`
+}
+function phone(o, state) {
+  const grid = frame({ days: [0], heads: EHEADS, col: 296, from: 15, to: 22, hour: 80, blocks: evBlocks(true), nowAt: NOW_E, gut: 52, noHead: true })
+  const wk = ['W', 'T', 'F', 'S', 'S', 'M', 'T'].map((d, i) => `<span>${d}<em${i === 0 ? ' class="on"' : ''}>${21 + i > 31 ? 21 + i - 31 : 21 + i}</em></span>`).join('')
+  const tabs = `<div class="ph-tab"><span>${ic('today', 20)}Today</span><span>${ic('inbox', 20)}Inbox</span><span class="plus">${ic('plus', 22)}</span><span class="on">${ic('calendar', 20)}Calendar</span><span>${ic('more', 20)}More</span></div>`
+  return `<div class="ph"><div class="ph-hd"><b>Wednesday, Oct 21</b><span>Today</span></div><div class="ph-wk">${wk}</div><div class="ph-grid">${grid}</div><div class="ph-dock">${nowCard(o, state, 334)}</div>${tabs}</div>`
+}
+const NCS = [
+  ['A', 'Card and strip', "Akiflow's shape in our kit: a paper card with \"Ongoing · 15m left\", the title with its mark, a 4px bar in the item's colour and the clock times under it; Next hangs under it as a lighter strip. Calm and familiar; it reads as a little panel, separate from the calendar."],
+  ['B', 'Block slip', 'The card is drawn as the block it points at: the same tint, edge and corners, and the time that has passed washes in from the left the way a block fills from its top (with the now line\'s lavender at the edge). Next and the extra rows are one-line blocks. It looks like a piece of the calendar, not a widget on it.'],
+]
+$('ncv').innerHTML = NCS.map(([o, name, say]) => look('nowcard', o, name, say,
+  fig('day', statesStrip(o, 'day'), 'Every state · day (المغرب is Maghrib, from your prayer-times calendar, in sage)') + fig('night', statesStrip(o, 'night'), 'Every state · Night Garden') +
+  fig('', deskPage(o, 'open'), 'Desktop, rail open: pinned to the foot of "To plan", the list scrolling behind it · follows the page\'s Day/Night switch') +
+  fig('', deskPage(o, 'fold'), 'Desktop, rail folded: floating 16px in from the grid\'s bottom-left corner') +
+  fig('', phone(o, ST[3]), 'Phone: opened (tap the strip)') + fig('', phone(o, ST[7]), 'Phone: the one-line strip above the tab bar'))).join('')
+
+// ═══ 5 · the tray ═══
+const taskbar = '<div class="tbar"><div class="apps"><i></i><i></i><i></i><i></i><i></i></div><div class="tray"><span>⌃</span><span class="k">K</span><span style="letter-spacing:6px">◠ ♪ ▭</span><span class="clk">6:25 PM<br>25/10/2026</span></div></div>'
+const scene = (w, h, inner) => `<div class="win" style="width:${w}px;height:${h}px">${inner}${taskbar}</div>`
+const head = '<div class="tf-h"><b>Sunday, 25 October</b><span class="lbl">Day 41</span></div>'
+const cap = (big) => `<div class="tf-cap${big ? ' big' : ''}">${big ? ic('pen', 16, 'margin-left:0;color:var(--ink-faint)') : ''}<span>Write it down…</span>${ic('mic', 18)}</div>`
+const focusBox = '<div class="tf-focus"><span class="ring" style="background:conic-gradient(var(--acc-sage-text) 0 25%,var(--line-card) 0 100%)"><span>' + ic('focusRing', 18) + '</span></span><div style="flex:1;min-width:0"><div class="lbl" style="color:var(--acc-sage-text)">Focus · 18:42 left</div><div style="margin-top:3px;font-size:14.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Deep work on the forecast</div></div></div>'
+const top3 = '<div class="tf-lbl">Top 3</div><div class="tf-t3"><div><span class="kc"></span><span>Ship the calendar polish 🌸</span><span class="st">' + ic('star', 16, 'fill:currentColor') + '</span></div><div class="done"><span class="kc on"></span><span>Call the tyre supplier</span></div><div><span class="kc"></span><span>Book the vet</span></div></div>'
+function flyout(o, running) {
+  if (o === 'A') return `<div class="fly" style="width:340px">${head}${running ? focusBox : `<div style="padding:0 12px">${nowCard('A', ST[3], 316)}</div>`}${cap(false)}<div class="tf-row">${running ? `<span class="tf-btn">${ic('stop', 14)}Stop</span><span class="tf-btn">Pause</span>` : `<span class="tf-cta">${ic('focusRing', 16)}Start focus · 25:00</span>`}<span class="tf-lnk">Open ${ic('open', 14)}</span></div></div>`
+  if (o === 'B') return `<div class="fly" style="width:340px">${head}${running ? focusBox : `<div style="padding:0 12px">${nowCard('A', ST[2], 316)}</div>`}${top3}${cap(false)}<div class="tf-row">${running ? `<span class="tf-btn">Pause</span><span class="tf-btn">${ic('stop', 14)}Stop</span>` : `<span class="tf-cta">${ic('focusRing', 16)}Start focus · 25:00</span>`}</div><div class="tf-foot"><span class="tf-lnk" style="margin-left:0">Open Kai's Flow ${ic('open', 14)}</span><span style="margin-left:auto;color:var(--ink-muted)">${ic('settings', 18)}</span></div></div>`
+  return `<div class="fly" style="width:380px">${cap(true)}<div class="tf-line">${running ? `<span class="lbl" style="color:var(--acc-sage-text)">Focus · 18:42 left</span><span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Deep work on the forecast</span>` : `<span class="lbl">Ongoing</span><span style="flex:1;min-width:0"><bdi dir="auto">المغرب</bdi></span><span class="br"><i style="width:40%"></i></span><span class="lbl">15m left</span>`}</div><div class="tf-row">${running ? `<span class="tf-btn">${ic('stop', 14)}Stop focus</span>` : `<span class="tf-btn">${ic('focusRing', 15)}Focus 25:00</span>`}<span class="tf-btn">${ic('today', 15)}Today</span><span class="tf-btn" style="margin-left:auto">${ic('open', 14)}Open</span></div></div>`
+}
+const TFS = [
+  ['A', 'Now and capture', 'Small and quick: what\'s on now (the Now card from section 4), a capture line, Start focus, Open. No lists, so it opens in a glance and closes as fast.', 520, 390],
+  ['B', 'Today in a glance', 'What it is today (340 × 460), tidied: the date and Day N, Now/Next, your Top 3 with the goal\'s gold star, capture, focus, Open and Settings. The most in one place; the tallest.', 520, 570],
+  ['C', 'Capture bar', 'A capture-first strip, like a search bar: type or speak straight away, with one line for what\'s on now and three small buttons (focus, Today, Open). The fastest way to write something down.', 520, 270],
+]
+$('tfv').innerHTML = TFS.map(([o, name, say, w, h]) => look('tray', o, name, say, fig('', scene(w, h, flyout(o, false)), 'Nothing running · follows the page\'s Day/Night switch') + fig('', scene(w, h, flyout(o, true)), 'A focus round running'))).join('')
+
+const wm = (items) => items.map((x) => (x === '-' ? '<hr>' : `<div class="${x[3] ?? ''}">${x[0] ? ic(x[0], 16) : '<span style="width:16px"></span>'}${x[1]}${x[2] ? `<em>${x[2]}</em>` : ''}</div>`)).join('')
+function trayMenu(o, running) {
+  if (o === 'A') {
+    const sub = running ? '' : `<div class="wmenu sub">${wm([[null, '30 minutes'], [null, '1 hour', '', 'hi'], [null, 'Until tomorrow']])}</div>`
+    return `<div class="wmenu">${wm([['open', "Open Kai's Flow"], ['pen', 'Quick capture…'], '-', running ? ['stop', 'Stop focus · 18:42 left'] : ['focusRing', 'Start focus · 25:00'], ['bell', 'Pause notifications', '›', running ? '' : 'hi'], '-', ['settings', 'Settings…'], ['signout', "Quit Kai's Flow"]])}</div>${sub}`
+  }
+  const status = running ? '<small style="color:var(--acc-sage-text)">Focus · 18:42 left</small>' : '<small>Next · <bdi dir="auto">المغرب</bdi> · 6:15 PM</small>'
+  const rows = [row('open', "Open Kai's Flow"), row('pen', 'Quick capture…'), sep, running ? row('stop', 'Stop focus', { hint: '18:42', cls: 'danger' }) : row('focusRing', 'Start focus', { hint: '25:00' }), row('bell', 'Pause notifications', { sub: true, cls: running ? '' : 'hi' }), sep, row('settings', 'Settings'), row('signout', "Quit Kai's Flow")]
+  const sub = running ? '' : `<div class="mn omenu sub2">${[row('clock', '30 minutes'), row('clock', '1 hour', { cls: 'hi' }), row('moon', 'Until tomorrow')].join('')}</div>`
+  return `<div class="mn omenu"><div class="bh"><span class="kmark">K</span><span><b>Kai's Flow</b>${status}</span></div>${sep}${rows.join('')}</div>${sub}`
+}
+const TMS = [
+  ['A', "Windows' own menu, cleaned up", 'Our words and order, a Pause submenu (30 minutes, 1 hour, until tomorrow), small one-colour icons. Windows draws it, so it stays in Segoe UI and Windows\' light or dark: it can\'t carry our paper, type or Night Garden.'],
+  ['B', 'Our own small menu window', 'The same rows drawn in our kit (as the block menu): the K and a status line on top ("Next · <bdi dir=\"auto\">المغرب</bdi> · 6:15 PM", or the focus time left), kf icons, Stop in terra. It matches the popover and the app; it costs a second small window (see the table).'],
+]
+$('tmv').innerHTML = TMS.map(([o, name, say]) => look('traymenu', o, name, say, fig('', scene(560, 420, trayMenu(o, false)), 'Nothing running, Pause ▸ open · follows the page\'s Day/Night switch') + fig('', scene(560, 420, trayMenu(o, true)), 'A focus round running'))).join('')
+
+// ═══ the page theme and the picks ═══
+document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.th
+  document.querySelectorAll('[data-th]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+}))
+const KEY = 'kf-calendar-extras-picks'
+let picks = {}
+try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
+const NAMES = { palette: 'palette', menu: 'menu', check: 'check', repeat: 'repeat', nowcard: 'now card', tray: 'tray', traymenu: 'tray menu' }
+const line = () => Object.keys(NAMES).filter((g) => picks[g]).map((g) => `${NAMES[g]} ${picks[g]}`).join(', ')
+function paint() {
+  $('mine').textContent = line() || 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(picks[b.dataset.grp] === b.dataset.pick)))
+  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', picks[s.dataset.grp] === s.dataset.look))
+}
+function wirePick(b) {
+  if (b.dataset.wired) return
+  b.dataset.wired = '1'
+  b.addEventListener('click', () => {
+    picks[b.dataset.grp] = b.dataset.pick
+    try { localStorage.setItem(KEY, JSON.stringify(picks)) } catch {}
+    if (b.dataset.grp === 'palette' && !mPal) renderMenus()
+    if (b.dataset.grp === 'check' && !rpCk) renderRepeat()
+    paint()
+  })
+}
+renderMenus()
+renderRepeat()
+document.querySelectorAll('.pick').forEach(wirePick)
+$('copy').addEventListener('click', async () => {
+  const text = line() ? `Calendar extras: ${line()}` : 'Calendar extras: nothing picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    try { ok = document.execCommand('copy') } catch {}
+    ta.remove()
+  }
+  $('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paint()
+</script>
+</body>
+</html>
