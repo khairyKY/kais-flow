@@ -315,6 +315,31 @@
     "detail": ""
   },
   {
+    "name": "r the AI read is out (claimed on the server, parsing)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r …and the capture is still waiting in the Inbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r filed by hand while the read was out → exactly ONE task",
+    "ok": true,
+    "detail": "[\"renew hosting\"]"
+  },
+  {
+    "name": "r …no capture.autofiled, and the capture stays filed",
+    "ok": true,
+    "detail": "[\"task.created\",\"inbox.filed\"]"
+  },
+  {
+    "name": "r no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
     "name": "p a typed task with no project lands where typed (no project)",
     "ok": true,
     "detail": "[\"Forecast chart tooltip\",null]"
