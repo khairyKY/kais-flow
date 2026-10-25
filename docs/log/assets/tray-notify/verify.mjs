@@ -148,7 +148,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 // ── 12b · the flyout, day, nothing running ──
 {
   const { ctx, state, errors, open } = await app({}, { tauri: true })
-  const page = await open('/tray', FLYOUT)
+  const page = await open('/tray.html', FLYOUT)
   const text = await page.locator('.kf-tray').innerText()
   check('12b date + Day N', /Saturday, 3 October/.test(text) && /DAY 84/i.test(text), text.split('\n').slice(0, 2).join(' | '))
   check('12b Next · 09:00 Judge test Kai’s Flow, with a check', (await page.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ').includes('Next · 09:00 Judge test Kai’s Flow') && (await page.locator('.kf-tray-check').count()) === 1)
@@ -183,7 +183,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 {
   const { ctx, errors, open } = await app({}, { theme: 'night', tauri: true })
   const main = await open('/today', DESKTOP)
-  const tray = await open('/tray', FLYOUT)
+  const tray = await open('/tray.html', FLYOUT)
   await tray.locator('.kf-tray-btn.is-cta').click()
   await sleep(300)
   const running = await main.evaluate(() => document.title !== undefined)
