@@ -69,6 +69,28 @@ export function useCalendarDefaultView(platformDefault: CalendarDefaultView): Ca
   return data ? (parseCalendarDefaultView(data.calendar_default_view) ?? platformDefault) : undefined
 }
 
+/** "File captures for me" (migration 0086): off unless turned on — an unmigrated row reads as off too,
+ * Kai's default (2026-10-23). Read at call time, from the synced settings row. */
+export function autoFileOn(): boolean {
+  return queryClient.getQueryData<AppSettings>(['app_settings'])?.auto_file_captures === true
+}
+
+/** What happens when a task or event is made without a project (migration 0086): a one-tap suggestion
+ * (the default), put there with Undo, or nothing. */
+export type AutoProjectMode = 'off' | 'suggest' | 'assign'
+export function autoProjectMode(): AutoProjectMode {
+  const v = queryClient.getQueryData<AppSettings>(['app_settings'])?.auto_project
+  return v === 'off' || v === 'assign' ? v : 'suggest'
+}
+
+/** The server's row already has this column (its migration is pushed). Settings added after the
+ * first are written only then — the whole row goes up with every write, and a column the server
+ * doesn't know would dead-letter it (the 0058 pattern). */
+export function settingSynced(key: keyof AppSettings): boolean {
+  const row = queryClient.getQueryData<AppSettings>(['app_settings'])
+  return !!row && key in row
+}
+
 export function updateAppSetting<K extends keyof AppSettings>(key: K, value: AppSettings[K]) {
   const settings = queryClient.getQueryData<AppSettings>(['app_settings']) ?? DEFAULT_SETTINGS
   writeRow('app_settings', { ...settings, [key]: value })

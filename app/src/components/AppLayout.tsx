@@ -59,6 +59,7 @@ import { splitKeyCombo } from '../lib/shortcuts'
 import { overlayCount } from '../lib/overlayStack'
 import { undoLatest } from '../lib/undo'
 import { DownloadBar } from '../features/download/DownloadBar'
+import { useAutoFileNotice } from '../features/capture/autoFileNotice'
 
 // ── Design source of truth: Editor.dc.html option 1a (expanded, Plan open) +
 // 1g (Plan folded / rail collapsed), refined against "Kai's Flow — Universal
@@ -638,6 +639,7 @@ const FULL_BLEED = ['/calendar']
 
 export function AppLayout() {
   useRealtimeSync()
+  useAutoFileNotice() // queue item 7: captures wait in the Inbox now — told once
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()

@@ -7,7 +7,8 @@
 //   curl -X POST <project>/functions/v1/capture -H "Authorization: Bearer kf_…" \
 //        -H "Content-Type: application/json" -d '{"text":"call the tyre supplier"}'
 //
-// Opt-in AI filing: POST …/capture?file=1 queues the item for the app's own parse (see below).
+// AI filing: POST …/capture?file=1 — or any capture while the owner's "File captures for me" is on
+// (app_settings.auto_file_captures, 0086) — queues the item for the app's own parse (see below).
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { z } from 'npm:zod@^4'
 
@@ -75,10 +76,13 @@ Deno.serve(async (req) => {
 
     const id = crypto.randomUUID()
     const now = new Date().toISOString()
-    // ?file=1: queue it for the AI instead (needs_parse). The app files it — a task with its date
-    // when the parse is confident, else it stays in the Inbox — once it reaches an open device
-    // (features/capture/api.ts processQueuedCaptures), on that user's own AI allowance.
-    const fileIt = new URL(req.url).searchParams.get('file') === '1'
+    // ?file=1, or "File captures for me" on: queue it for the AI instead (needs_parse). The app reads it
+    // once it reaches an open device (features/capture/api.ts processQueuedCaptures), on that user's
+    // own AI allowance, and files it — a task with its date — only while the setting is on and the
+    // parse is confident; otherwise the read waits in the Inbox as the card's suggestion. select('*'):
+    // a database without 0086 simply reads as off.
+    const { data: settings } = await db.from('app_settings').select('*').eq('user_id', owner.user_id).maybeSingle()
+    const fileIt = new URL(req.url).searchParams.get('file') === '1' || (settings as { auto_file_captures?: boolean } | null)?.auto_file_captures === true
     const rawText = body.url && !body.text.includes(body.url) ? `${body.text}\n${body.url}` : body.text
     const { error: insErr } = await db.from('inbox_items').insert({
       id,

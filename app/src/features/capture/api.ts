@@ -1,6 +1,8 @@
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
+import { autoFileOn, autoProjectMode } from '../../lib/settings'
+import { offerProject } from '../projects/autoProject'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
 import { useToastStore } from '../../lib/toastStore'
@@ -133,6 +135,8 @@ function overridesPayload(overrides: CaptureOverrides): Record<string, unknown> 
 }
 
 /** Text or transcript -> AI parse -> confidence-gated auto-file, else Inbox for triage.
+ * Auto-filing only while "File captures for me" is on (0086, off by default — Kai 2026-10-23): off,
+ * the capture waits in the Inbox with the AI's read, which the card offers as a one-tap suggestion.
  * `overrides` carries priority/duration already resolved client-side (e.g. the command bar's
  * local `!`/`30m` syntax) that the AI parse doesn't need to (and won't) infer on its own. */
 export async function captureWithAI(
@@ -162,7 +166,7 @@ export async function captureWithAI(
 
   // Only 'task' has an auto-file target so far (P1 scope); everything else always goes to Inbox,
   // regardless of confidence — there's nowhere else to file a note/event/routine_idea yet.
-  if (parse && parse.kind === 'task' && parse.confidence >= confidenceThreshold()) {
+  if (parse && parse.kind === 'task' && parse.confidence >= confidenceThreshold() && autoFileOn()) {
     // Everything it read — priority from the wording, the description as notes — with a typed
     // `!` / `30m` still beating its own reading.
     const task = taskFromCapture(parse, rawText, overrides)
@@ -202,12 +206,22 @@ async function readQuietly(rawText: string): Promise<ParseResult | null> {
  * a duration from "an hour", notes from the details — then says so: "✦ Filled by AI: … · Undo".
  * Fields the person changed meanwhile are theirs; Undo puts back only what the AI wrote.
  */
-export async function enrichTypedTask(created: Task, rawText: string): Promise<void> {
+export async function enrichTypedTask(created: Task, rawText: string, offered = false): Promise<void> {
   const ai = await readQuietly(rawText)
   if (!ai) return
   const current = queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === created.id) ?? created
   if (current.deleted_at) return
-  const { patch, filled } = aiFill(current, ai, knownPlaces(), created.title)
+  const { patch, filled: read } = aiFill(current, ai, knownPlaces(), created.title)
+  let filled = read
+  // Queue item 17: the AI PUTS a task in a project only on "Assign" (Settings → Capture & AI); else its
+  // pick is offered as the one-tap chip — when history (`offered`) had none to offer first.
+  if (patch.project_id && autoProjectMode() !== 'assign') {
+    const project = queryClient.getQueryData<Project[]>(['projects'])?.find((p) => p.id === patch.project_id)
+    delete patch.project_id
+    delete patch.domain_id
+    filled = filled.filter((f) => f !== 'project')
+    if (!offered && project) offerProject({ kind: 'task', row: current }, project)
+  }
   if (!filled.length) return
   const keys = Object.keys(patch) as (keyof AiFields)[]
   const before = Object.fromEntries(keys.map((k) => [k, current[k]])) as Partial<AiFields>
@@ -229,7 +243,8 @@ export async function enrichTypedTask(created: Task, rawText: string): Promise<v
 /**
  * A typed line with no structure was just put in the Inbox (instantly, as always). The AI then
  * decides, like a voice capture: a task it's sure of is filed for you ("✦ Filed by AI · Undo" puts
- * it back in the Inbox); anything else stays in the Inbox with the AI's read for triage.
+ * it back in the Inbox) while "File captures for me" is on; anything else — everything, while it's
+ * off — stays in the Inbox with the AI's read for triage.
  */
 export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Promise<void> {
   const ai = await readQuietly(rawText)
@@ -237,7 +252,7 @@ export async function enrichTypedInboxItem(item: InboxItem, rawText: string): Pr
   const current = queryClient.getQueryData<InboxItem[]>(['inbox_items'])?.find((i) => i.id === item.id) ?? item
   if (current.status !== 'pending' || current.deleted_at) return // triaged (or undone) meanwhile — the person's call stands
   const read = { ...current, ai_parse: ai as unknown as Record<string, unknown>, confidence: ai.confidence, updated_at: nowIso() }
-  if (ai.kind !== 'task' || ai.confidence < confidenceThreshold()) {
+  if (ai.kind !== 'task' || ai.confidence < confidenceThreshold() || !autoFileOn()) {
     writeRow('inbox_items', read)
     return
   }
@@ -290,10 +305,11 @@ async function parseQueued(): Promise<void> {
     const { needs_parse: _queued, ...rest } = item.payload as Record<string, unknown>
     const payload = Object.keys(rest).length ? rest : null
     try {
-      // An endpoint capture reaches every open device at once: claim it on the server first (a
-      // conditional update — no row back means another device has it). One that fails to parse
-      // after the claim simply stays in the Inbox, like any capture.
-      if (rest.source === 'capture') {
+      // An endpoint capture (or an assistant's / the chat's add_to_inbox — any server-made row has a
+      // source) reaches every open device at once: claim it on the server first (a conditional update
+      // — no row back means another device has it). One that fails to parse after the claim simply
+      // stays in the Inbox, like any capture.
+      if (typeof rest.source === 'string') {
         const { data: claimed, error } = await supabase
           .from('inbox_items')
           .update({ payload })
@@ -303,7 +319,8 @@ async function parseQueued(): Promise<void> {
         if (error || !claimed?.length) continue
       }
       const parse = await callParseCapture(item.raw_text, item.created_at)
-      if (parse.kind === 'task' && parse.confidence >= confidenceThreshold()) {
+      // Filed only while "File captures for me" is on (0086); off, the read rides along as the suggestion.
+      if (parse.kind === 'task' && parse.confidence >= confidenceThreshold() && autoFileOn()) {
         const over = rest as { priority_override?: number | null; duration_override?: number | null }
         const task = taskFromCapture(parse, item.raw_text, { priority: over.priority_override, durationMin: over.duration_override })
         blockIfTimed(task, parse.has_time === true)
@@ -315,7 +332,7 @@ async function parseQueued(): Promise<void> {
           confidence: parse.confidence,
           payload,
         })
-        logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence, source: rest.source === 'capture' ? 'capture' : 'reconnect' })
+        logActivity('capture.autofiled', 'task', task.id, { confidence: parse.confidence, source: typeof rest.source === 'string' ? rest.source : 'reconnect' })
       } else {
         writeRow('inbox_items', {
           ...item,

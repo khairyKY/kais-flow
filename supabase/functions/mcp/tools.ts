@@ -331,6 +331,9 @@ export interface ToolContext {
   ruleBetween: RuleBetween
   /** The personal areas this key may reach (mcp_keys.scopes). */
   scopes: ReadonlySet<Scope>
+  /** Who acts, in activity payloads and an Inbox capture's payload: 'mcp' (an assistant's key — the
+   * default) or 'chat' (the app's own chat, chat/index.ts, which runs these same tools as its user). */
+  source?: string
 }
 
 /** The events in [start, end): one-off rows as the store found them, each repeating row as its
@@ -460,7 +463,7 @@ export function whenOrNull(a: Args, k: string, zone: string): When | null | unde
  * ritual's day, a label's name) gets a fresh id and rides along as payload.entity_key, as activityRow does. */
 export async function logIt(ctx: ToolContext, eventType: string, entityType: string, key: string, payload: Row = {}): Promise<void> {
   const keyed = UUID.test(key)
-  await ctx.store.log(eventType, entityType, keyed ? key : crypto.randomUUID(), { ...payload, ...(keyed ? {} : { entity_key: key }), source: 'mcp' })
+  await ctx.store.log(eventType, entityType, keyed ? key : crypto.randomUUID(), { ...payload, ...(keyed ? {} : { entity_key: key }), source: ctx.source ?? 'mcp' })
 }
 
 /** The most rows one bulk call takes (the app's bulk bar has no cap; this keeps a call short). */
@@ -1740,9 +1743,14 @@ export const TOOLS: readonly ToolDef[] = [
       if (url !== undefined && !/^https?:\/\/\S+$/i.test(url)) return bad('"url" must be an http(s) link.')
       const rawText = url && !note.includes(url) ? `${note}\n${url}` : note
       const itemId = crypto.randomUUID()
-      await ctx.store.insertInbox({ id: itemId, raw_text: rawText, payload: { source: 'mcp', ...(url ? { url } : {}) } })
+      const source = ctx.source ?? 'mcp'
+      // "File captures for me" (0086): on, the app files it like any capture once a device sees it
+      // (needs_parse → features/capture/api.ts processQueuedCaptures); off — the default — it waits here.
+      const [settings] = await ctx.store.find('app_settings', {}, { limit: 1 })
+      const fileIt = settings?.auto_file_captures === true
+      await ctx.store.insertInbox({ id: itemId, raw_text: rawText, payload: { source, ...(url ? { url } : {}), ...(fileIt ? { needs_parse: true } : {}) } })
       // The trace a ⌘K capture leaves (lib/activity.ts), so streaks and Activity see it.
-      await ctx.store.log('inbox.captured', 'inbox_item', itemId, { kind: 'text', source: 'mcp' })
+      await ctx.store.log('inbox.captured', 'inbox_item', itemId, { kind: 'text', source })
       return { added_to_inbox: { id: itemId, text: rawText } }
     },
   },

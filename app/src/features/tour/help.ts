@@ -12,7 +12,8 @@ import type { AppSettings } from '../../lib/types'
 // Seen = the union of both. Until the column exists the server's row has no `help_seen` key and
 // nothing is sent (an unknown column would dead-letter every later settings write).
 
-export type HelpKey = 'tour' | 'hint:swipe' | 'hint:calendar' | 'hint:inbox'
+/** `notice:…` — a one-time notice about a change (features/capture/autoFileNotice.ts), not part of the tour. */
+export type HelpKey = 'tour' | 'hint:swipe' | 'hint:calendar' | 'hint:inbox' | 'notice:autofile'
 
 // ── the notes ──
 
@@ -213,7 +214,8 @@ export function markSeen(...keys: HelpKey[]): void {
 /** "Show me around again" (the Guide, Settings → App, the ? sheet): forget the tour and every
  * hint, and start the notes from the first one. */
 export function restartTour(): void {
-  save([])
+  // A change notice was about the change, not the tour: it stays told.
+  save([...mergeSeen(useHelp.getState().local, syncedSeen())].filter((k) => k.startsWith('notice:')))
   useHelp.setState({ note: 0 })
 }
 

@@ -385,8 +385,9 @@ const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
 
 /** Every move (⋯ / right-click "Move to…", the swipe, the `p` key, the task sheet, bulk): into a
  * project, an area, a domain, or out of all three (./move.ts placeTask), with one "Moved to X ·
- * Undo". Undo puts back each row's project, area, domain and milestone — only those. */
-export function moveTasksWithUndo(tasks: Task[], to: MoveTarget): void {
+ * Undo". Undo puts back each row's project, area, domain and milestone — only those. `said` replaces
+ * the toast's words and `onUndo` runs with its Undo (projects/autoProject: "→ Forecasting App"). */
+export function moveTasksWithUndo(tasks: Task[], to: MoveTarget, said?: string, onUndo?: () => void): void {
   const place = (t: Task) => ({ project_id: t.project_id, area_id: t.area_id ?? null, domain_id: t.domain_id })
   for (const t of tasks) {
     const moved = placeTask(cached(t), to)
@@ -394,7 +395,8 @@ export function moveTasksWithUndo(tasks: Task[], to: MoveTarget): void {
     logActivity('task.moved', 'task', t.id, place(moved))
   }
   const many = tasks.length === 1 ? '' : `${tasksLabel(tasks.length)} `
-  toastUndo(to.kind === 'none' ? `${many}${many ? 'unfiled' : 'Unfiled'}` : `${many}${many ? 'moved' : 'Moved'} to ${to.name}`, () => {
+  toastUndo(said ?? (to.kind === 'none' ? `${many}${many ? 'unfiled' : 'Unfiled'}` : `${many}${many ? 'moved' : 'Moved'} to ${to.name}`), () => {
+    onUndo?.()
     const now = queryClient.getQueryData<Task[]>(['tasks']) ?? []
     for (const t of tasks) {
       const current = now.find((c) => c.id === t.id) ?? t

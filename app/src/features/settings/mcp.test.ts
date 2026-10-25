@@ -602,6 +602,17 @@ describe('MCP: the tools', () => {
     expect((await call(deps(store), 'add_to_inbox', { text: 'x', url: 'javascript:alert(1)' })).text).toContain('http(s) link')
   })
 
+  // Queue item 7: with "File captures for me" on (0086) the app files it once a device sees it.
+  it('add_to_inbox: queued for the app to file while "File captures for me" is on; off, it just waits', async () => {
+    const store = fakeStore()
+    store.db.app_settings[0].auto_file_captures = true
+    const r = await call(deps(store), 'add_to_inbox', { text: 'dentist friday 3pm' })
+    expect(store.inbox[0]).toEqual({ id: r.data!.added_to_inbox.id, raw_text: 'dentist friday 3pm', payload: { source: 'mcp', needs_parse: true } })
+    store.db.app_settings[0].auto_file_captures = false
+    await call(deps(store), 'add_to_inbox', { text: 'x' })
+    expect(store.inbox[1].payload).toEqual({ source: 'mcp' })
+  })
+
   it('calendar: this week by default, inclusive days, at most 31 days', async () => {
     const d = deps(fakeStore())
     const week = await call(d, 'calendar')

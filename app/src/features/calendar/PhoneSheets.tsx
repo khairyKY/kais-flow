@@ -34,6 +34,7 @@ import { ColorDots } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { linkRef } from '../../lib/links'
 import { clockText } from '../../lib/clock'
+import { offerProject } from '../projects/autoProject'
 
 // ── The phone calendar's sheets (Calendar Phone.dc.html): 7c quick create, 7d the event sheet,
 // 7g / 7g2 Schedule. All on the kit BottomSheet; every write goes through calendar/api and
@@ -172,10 +173,12 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
       if (repeat) setRecurrence(task, repeat)
       if (top3) toggleTop3(task)
       scheduleTask(task, starts_at, ends_at)
+      offerProject({ kind: 'task', row: task }) // queue item 17: no place picked → its likely project
     } else if (kind === 'block' && holds) scheduleTask(holds, starts_at, ends_at)
     else {
       const event = createEvent(name || 'Time block', starts_at, ends_at, kind === 'block' ? 'time_block' : 'event')
       if (repeat) setEventRepeat(event, repeat) // p7e A13: repeat while creating, the block menu's own way
+      offerProject({ kind: 'event', row: event })
     }
     close()
   }
