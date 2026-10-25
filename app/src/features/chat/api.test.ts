@@ -5,7 +5,7 @@ vi.mock('../../lib/supabase', () => ({
   supabase: { auth: { getSession: async () => ({ data: { session: { access_token: 'user-token' } } }) } },
 }))
 
-const { streamChat } = await import('./api')
+const { runChatCalls, streamChat } = await import('./api')
 
 const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -44,7 +44,40 @@ describe('streamChat', () => {
     const h = handlers()
     await streamChat([{ role: 'user', content: 'hi' }], h)
     expect(h.onDelta.mock.calls.map((c) => c[0]).join('')).toBe('Hello')
-    expect(h.onDone).toHaveBeenCalledWith([{ entity_type: 'task', entity_id: 't1', title: 'T' }])
+    expect(h.onDone).toHaveBeenCalledWith([{ entity_type: 'task', entity_id: 't1', title: 'T' }], undefined)
     expect(h.onError).not.toHaveBeenCalled()
+  })
+
+  // Queue item 5: a plan arrives with the done event — nothing changed yet.
+  it('hands over a plan to confirm, and sends the clock style', async () => {
+    const plan = { calls: [{ tool: 'add_event', args: { title: 'Gym', start: '2026-10-26T07:00', end: '2026-10-26T08:15' } }], previews: [{ added: { title: 'Gym' } }] }
+    const fetch = vi.fn(async () => new Response(`event: done\ndata: ${JSON.stringify({ citations: [], plan })}\n\n`, { status: 200 }))
+    vi.stubGlobal('fetch', fetch)
+    const h = handlers()
+    await streamChat([{ role: 'user', content: 'gym monday 7' }], h)
+    expect(h.onDone).toHaveBeenCalledWith([], plan)
+    expect(JSON.parse((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body as string)).toMatchObject({ hour24: false })
+  })
+
+  it("says 'busy' when the shared plan is out of tokens this minute", async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json(503, { error: 'busy' })))
+    const h = handlers()
+    await streamChat([{ role: 'user', content: 'hi' }], h)
+    expect(h.onError).toHaveBeenCalledWith('busy', 'busy')
+  })
+})
+
+describe('runChatCalls', () => {
+  it('posts the confirmed calls and returns what each tool said', async () => {
+    const results = [{ tool: 'add_event', args: {}, ok: true, output: { added: { id: 'e1' } }, undo: { tool: 'delete_event', args: { id: 'e1' } } }]
+    const fetch = vi.fn(async () => json(200, { results }))
+    vi.stubGlobal('fetch', fetch)
+    expect(await runChatCalls([{ tool: 'add_event', args: { title: 'Gym' } }])).toEqual(results)
+    expect(JSON.parse((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body as string)).toEqual({ run: [{ tool: 'add_event', args: { title: 'Gym' } }] })
+  })
+
+  it("throws when the request fails — the panel then says it can't tell what ran", async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => json(500, {})))
+    await expect(runChatCalls([{ tool: 'add_event', args: {} }])).rejects.toThrow()
   })
 })

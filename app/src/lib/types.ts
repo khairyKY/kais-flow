@@ -272,6 +272,12 @@ export interface AppSettings {
   /** Checklist templates, [{ id, name, items: [{ title, type }] }] (migration 0079), read through
    * features/projects/templates.ts parseTemplates — absent before the push, null until the first is saved. */
   checklist_templates?: unknown
+  /** "File captures for me" (migration 0086, Kai 2026-10-23): off — the default, and what an absent key
+   * reads as — every capture waits in the Inbox with the AI's guess; on, a confident guess files itself. */
+  auto_file_captures?: boolean
+  /** A project for new tasks and events made without one (migration 0086): 'suggest' (the default) a
+   * one-tap chip, 'assign' puts it there with Undo, 'off'. Read through lib/settings autoProjectMode. */
+  auto_project?: string
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string

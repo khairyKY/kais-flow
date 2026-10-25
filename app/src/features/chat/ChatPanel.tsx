@@ -1,6 +1,11 @@
 import { Suspense, lazy, useEffect, useRef, useState } from 'react'
-import { streamChat } from './api'
-import { SEND, loadChat, saveChat, type DisplayMessage } from './history'
+import { runChatCalls, streamChat, type ChatOutcome } from './api'
+import { SEND, loadChat, saveChat, type DisplayMessage, type PlanState } from './history'
+import { historyText, outcomeHeader, outcomeLine, planHeader, planLines } from './planCard'
+import { inlineParts, parseMarkdown } from './markdown'
+import { queryClient } from '../../lib/queryClient'
+import { useHour24 } from '../../lib/clock'
+import { useToastStore } from '../../lib/toastStore'
 import { useAuth } from '../auth/AuthProvider'
 import { appendDictation } from '../capture/holdToTalk'
 import { toastUndo } from '../../lib/undo'
@@ -15,6 +20,46 @@ import './chat.css'
 
 // The voice sheet (and its recorder) loads only when the mic is used.
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
+
+/** **bold**, *italics*, `code` as elements (./markdown inlineParts) — text only, never HTML. */
+function Inline({ text }: { text: string }) {
+  return (
+    <>
+      {inlineParts(text).map((p, i) => (p.t === 'b' ? <strong key={i}>{p.s}</strong> : p.t === 'i' ? <em key={i}>{p.s}</em> : p.t === 'code' ? <code key={i}>{p.s}</code> : p.s))}
+    </>
+  )
+}
+
+/** A reply as real paragraphs, lists and tables (queue item 5: it printed raw pipes). */
+function Markdown({ text }: { text: string }) {
+  return (
+    <div className="kf-md">
+      {parseMarkdown(text).map((b, i) => {
+        if (b.type === 'h') return <p key={i} className="kf-md-h"><Inline text={b.text} /></p>
+        if (b.type === 'ul' || b.type === 'ol') {
+          const List = b.type
+          return <List key={i}>{b.items.map((x, j) => <li key={j}><Inline text={x} /></li>)}</List>
+        }
+        if (b.type === 'table') {
+          return (
+            <div key={i} className="kf-md-table">
+              <table>
+                <thead><tr>{b.head.map((c, j) => <th key={j}><Inline text={c} /></th>)}</tr></thead>
+                <tbody>{b.rows.map((r, j) => <tr key={j}>{r.map((c, k) => <td key={k}><Inline text={c} /></td>)}</tr>)}</tbody>
+              </table>
+            </div>
+          )
+        }
+        return <p key={i}>{b.lines.map((l, j) => <span key={j}>{j > 0 && <br />}<Inline text={l} /></span>)}</p>
+      })}
+    </div>
+  )
+}
+
+/** After a run or an Undo: the lists and the calendar read the server again (realtime may lag). */
+function refreshData() {
+  for (const key of ['tasks', 'calendar_events', 'inbox_items']) void queryClient.invalidateQueries({ queryKey: [key] })
+}
 
 function longPressMs(): number {
   return parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--dur-longpress')) || 400
@@ -37,11 +82,68 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
   /** The mic's voice sheet; `release` = the finger lifted after a hold, so the take ends and sends. */
   const [voice, setVoice] = useState<{ release: boolean } | null>(null)
   const pressedAt = useRef(0)
+  /** Cards whose Undo already ran (the toast's and the card's button share it). */
+  const undone = useRef(new Set<number>())
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [editing, setEditing] = useState(false)
+  const h24 = useHour24()
   useEffect(() => saveChat(uid, messages), [uid, messages])
   useBodyScrollLock(open)
   useEscapeStack(open, onClose) // F3 (punch 12): Esc closes the ⌘J drawer like every other overlay
 
   if (!open) return null
+
+  /** A card's next state, and what the model will read back about it. */
+  function setCard(index: number, state: PlanState, extra: Partial<DisplayMessage> = {}) {
+    setMessages((prev) =>
+      prev.map((m, i) => {
+        if (i !== index || !m.plan) return m
+        const previews = m.plan.previews
+        const lines = extra.outcomes ? extra.outcomes.map((o, j) => outcomeLine(o, h24, previews[j])) : planLines(m.plan.calls, previews, h24)
+        const said = state === 'done' ? (extra.undone ? 'undone' : 'done') : state === 'running' ? 'pending' : state
+        return { ...m, ...extra, plan: { ...m.plan, state }, content: extra.content ?? historyText(said, lines) }
+      }),
+    )
+  }
+
+  async function confirm(index: number) {
+    const card = messages[index]?.plan
+    if (!card || card.state !== 'pending') return
+    setCard(index, 'running')
+    let outcomes: ChatOutcome[]
+    try {
+      outcomes = await runChatCalls(card.calls)
+    } catch {
+      // Honest: the request failed, so nothing can be said about what ran.
+      setCard(index, 'done', { outcomes: [], content: "The app couldn't hear back, so it can't say what changed — check before trying again." })
+      return
+    } finally {
+      refreshData()
+    }
+    setCard(index, 'done', { outcomes })
+    const undos = outcomes.flatMap((o) => (o.ok && o.undo ? [o.undo] : []))
+    if (undos.length) toastUndo(outcomeHeader(outcomes), () => undo(index, outcomes))
+  }
+
+  /** Takes a run back where the app can (adds go to Trash, completions reopen) — once. */
+  async function undo(index: number, outcomes = messages[index]?.outcomes ?? []) {
+    const calls = outcomes.flatMap((o) => (o.ok && o.undo ? [o.undo] : []))
+    if (!calls.length || undone.current.has(index)) return
+    undone.current.add(index)
+    const back = await runChatCalls(calls).finally(refreshData)
+    setCard(index, 'done', { outcomes, undone: true })
+    if (back.some((o) => !o.ok)) throw new Error('undo refused') // the caller says it slipped away
+  }
+
+  function cancel(index: number) {
+    setCard(index, 'cancelled')
+  }
+
+  function edit(index: number) {
+    setCard(index, 'editing')
+    setEditing(true)
+    inputRef.current?.focus()
+  }
 
   function updateLast(patch: Partial<DisplayMessage>) {
     setMessages((prev) => {
@@ -56,9 +158,14 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     const text = (preset ?? input).trim()
     if (!text || busy) return
     if (preset == null) setInput('')
-    const history: DisplayMessage[] = [...messages, { role: 'user', content: text }]
+    // A card still waiting is superseded by whatever is said next: it can no longer be confirmed.
+    const prior = messages.map((m) =>
+      m.plan?.state === 'pending' ? { ...m, plan: { ...m.plan, state: 'editing' as const }, content: historyText('editing', planLines(m.plan.calls, m.plan.previews, h24)) } : m,
+    )
+    const history: DisplayMessage[] = [...prior, { role: 'user', content: text }]
     setMessages([...history, { role: 'assistant', content: '' }])
     setBusy(true)
+    setEditing(false)
 
     const controller = new AbortController()
     abortRef.current = controller
@@ -74,12 +181,21 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
               return copy
             })
           },
-          onDone: (citations) => updateLast({ citations }),
+          // A plan arrives as a card (queue item 5): nothing has changed until Confirm.
+          onDone: (citations, plan) =>
+            plan?.calls.length
+              ? updateLast({ citations: [], plan: { ...plan, state: 'pending' }, content: historyText('pending', planLines(plan.calls, plan.previews, h24)) })
+              : updateLast({ citations }),
           // X5 States rule — the word "error" never appears; calm copy, no raw message. SEC-2: a
           // used-up daily AI allowance says so plainly instead of inviting a retry.
           onError: (_message, reason) =>
             updateLast({
-              content: reason === 'daily_limit' ? AI_ALLOWANCE_USED_UP : 'That one got lost on the breeze — try asking again.',
+              content:
+                reason === 'daily_limit'
+                  ? AI_ALLOWANCE_USED_UP
+                  : reason === 'busy'
+                    ? 'The AI is catching its breath — try again in a minute.'
+                    : 'That one got lost on the breeze — try asking again.',
             }),
         },
         controller.signal,
@@ -177,9 +293,43 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
               </div>
             )
           }
+          if (m.plan) {
+            const { state, calls, previews } = m.plan
+            const ran = state === 'done' ? m.outcomes : undefined
+            const undoable = !!ran && !m.undone && ran.some((o) => o.ok && o.undo)
+            return (
+              <div key={i} className="kf-chat-card" data-state={state} aria-live="polite">
+                <div className="kf-chat-card-head">{ran ? (ran.length ? outcomeHeader(ran) : 'Not sure what changed') : planHeader(calls, previews)}</div>
+                <ul className="kf-chat-card-lines">
+                  {ran
+                    ? ran.map((o, j) => <li key={j} className={o.ok ? undefined : 'is-refused'}>{outcomeLine(o, h24, previews[j])}</li>)
+                    : planLines(calls, previews, h24).map((l, j) => <li key={j}>{l}</li>)}
+                </ul>
+                {ran && !ran.length && <div className="kf-chat-card-note">{m.content}</div>}
+                {state === 'pending' && (
+                  <div className="kf-chat-card-actions">
+                    <button type="button" className="kf-chat-card-btn is-primary" onClick={() => void confirm(i)}>Confirm</button>
+                    <button type="button" className="kf-chat-card-btn" onClick={() => edit(i)}>Edit</button>
+                    <button type="button" className="kf-chat-card-btn" onClick={() => cancel(i)}>Cancel</button>
+                  </div>
+                )}
+                {state === 'running' && <div className="kf-chat-card-note">Working on it…</div>}
+                {state === 'cancelled' && <div className="kf-chat-card-note">Cancelled — nothing changed.</div>}
+                {state === 'editing' && <div className="kf-chat-card-note">Not done — tell me what to change.</div>}
+                {undoable && (
+                  <div className="kf-chat-card-actions">
+                    <button type="button" className="kf-chat-card-btn" onClick={() => void undo(i).catch(() => useToastStore.getState().push({ message: 'That undo slipped away — check the item.' }))}>
+                      Undo
+                    </button>
+                  </div>
+                )}
+                {m.undone && <div className="kf-chat-card-note">Undone.</div>}
+              </div>
+            )
+          }
           return (
             <div key={i} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--ink-body)' }}>
-              <div>{m.content}</div>
+              <Markdown text={m.content} />
               {m.citations && m.citations.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
                   {m.citations.map((c) => (
@@ -217,9 +367,10 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         style={{ flex: 'none', padding: '12px 14px calc(12px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}
       >
         <input
+          ref={inputRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about your day…"
+          placeholder={editing ? 'What should change?' : 'Ask about your day…'}
           disabled={busy}
           style={{
             flex: 1,

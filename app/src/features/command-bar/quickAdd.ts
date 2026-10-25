@@ -10,6 +10,7 @@ import { playSound } from '../../lib/sounds'
 import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { formatDueChip } from './dueChip'
+import { offerProject } from '../projects/autoProject'
 import { hasStructure, parseCommand, quickAddTask, type ParsedCommand } from './parseCommand'
 import { timeText } from '../calendar/eventTime'
 import { dayWord } from '../tasks/taskSheetMath'
@@ -41,7 +42,9 @@ export function addTypedTask(parsed: ParsedCommand, typed: string, place: string
   const task = createTask({ ...input, dueAt: input.dueAt ?? fallbackDue })
   const slot = land(task, parsed)
   toastAdded(task, [slot?.title, place].filter(Boolean).join(' · ') || null)
-  void enrichTypedTask(task, typed)
+  // Queue item 17: no place typed → its likely project from history; the AI's read may offer one after.
+  const offered = offerProject({ kind: 'task', row: task })
+  void enrichTypedTask(task, typed, offered)
   return task
 }
 
@@ -109,5 +112,6 @@ export function addTypedEvent(parsed: ParsedCommand, typed: string, now: Date = 
     writeRow('calendar_events', event)
   }
   toastUndo(`Added to Calendar · ${formatDueChip(at, now, timed)}`, () => void deleteEvent(event))
+  offerProject({ kind: 'event', row: event }) // queue item 17 (nothing when a #project was typed)
   return event
 }

@@ -8,7 +8,7 @@ import {
 } from '../notifications/api'
 import { testThisDevice, useDeviceState } from '../notifications/device'
 import { blockers } from '../notifications/plan'
-import { useAppSettings, updateAppSetting, useCalendarDefaultView, type CalendarDefaultView } from '../../lib/settings'
+import { useAppSettings, updateAppSetting, useCalendarDefaultView, settingSynced, type AutoProjectMode, type CalendarDefaultView } from '../../lib/settings'
 import { appPlatform, buildStamp, installedVersion, reloadToUpdate } from '../../lib/appUpdate'
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
 import { checkForUpdates } from '../whats-new/check'
@@ -253,6 +253,34 @@ function CalendarViewSeg({ platformDefault }: { platformDefault: CalendarDefault
         { value: 'week', label: 'Week' },
       ]}
     />
+  )
+}
+
+// Queue items 7 + 17 (Kai 2026-10-23/25): what the AI may do on its own with what you capture and make,
+// synced on the settings row (migration 0086). Both default to the light touch: captures wait in the
+// Inbox; a project is suggested, never put. Until the server has the columns the rows are shown, off.
+function CaptureAiCard() {
+  const { data: s } = useAppSettings()
+  const ready = settingSynced('auto_file_captures')
+  const fileOn = s?.auto_file_captures === true
+  const project: AutoProjectMode = s?.auto_project === 'off' || s?.auto_project === 'assign' ? s.auto_project : 'suggest'
+  const later = 'Arrives with the next server update'
+  return (
+    <SCard id="settings-Capture" title="Capture & AI" sub="What the AI may do on its own with what you capture and make">
+      <Row label="File captures for me" help={!ready ? later : fileOn ? 'A capture the AI is sure of becomes a task, with Undo' : 'Everything waits in your Inbox; the AI’s guess is one tap away'}>
+        <Toggle on={fileOn} label="File captures for me" disabled={!ready} onToggle={() => updateAppSetting('auto_file_captures', !fileOn)} />
+      </Row>
+      <Row label="Pick a project for new things" help={!ready ? later : project === 'assign' ? 'Puts a new task or event in its likely project, with Undo' : project === 'suggest' ? 'Offers its likely project — one tap to accept' : 'Leaves new things where you put them'}>
+        {ready && (
+          <Segmented<AutoProjectMode>
+            label="Pick a project for new things"
+            value={project}
+            onChange={(v) => updateAppSetting('auto_project', v)}
+            options={[{ value: 'off', label: 'Off' }, { value: 'suggest', label: 'Suggest' }, { value: 'assign', label: 'Assign' }]}
+          />
+        )}
+      </Row>
+    </SCard>
   )
 }
 
@@ -1509,9 +1537,9 @@ function OrganizeCard() {
 // The capture endpoint's key card lives in Advanced, at the bottom of the page (Kai 2026-10-12).
 // 'Sound' returned when Kai un-cut it (2026-07-26); 'Resurfacing' is the cooldown card (punch 21);
 // 'Data' holds the importer and punch 50's Trash entry point. UI pass: in the order the page reads.
-const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Integrations', 'Organize', 'Data', 'Profile', 'App', 'Advanced'] as const
+const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Capture', 'Integrations', 'Organize', 'Data', 'Profile', 'App', 'Advanced'] as const
 type SubnavItem = (typeof SUBNAV_ITEMS)[number]
-const SUBNAV_LABEL: Partial<Record<SubnavItem, string>> = { Timezone: 'Time zone', Data: 'Your data' }
+const SUBNAV_LABEL: Partial<Record<SubnavItem, string>> = { Timezone: 'Time zone', Capture: 'Capture & AI', Data: 'Your data' }
 
 // Back from Google's consent page (?google=…): straight to Integrations, where the row says how it went.
 const fromGoogle = () => new URLSearchParams(window.location.search).has('google')
@@ -1567,6 +1595,7 @@ function DesktopSettings() {
             </div>
             <div className="st-col">
               <NotificationsCard />
+              <CaptureAiCard />
               <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
               <OrganizeCard />
               <DataCard />
@@ -1603,6 +1632,7 @@ function MobileSettings() {
       <ResurfacingCard />
       {/* The phone is where the pushes land, so the whole Notifications card lives here too (12i). */}
       <NotificationsCard />
+      <CaptureAiCard />
       {/* The phone has no Organize rail — its domains live here. */}
       <OrganizeCard />
       {/* P6: the phone has no Integrations page, so GitHub, Google, photos and AI sit here (the capture key: Advanced). */}

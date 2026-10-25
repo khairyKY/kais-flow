@@ -25,7 +25,11 @@ vi.mock('../../lib/supabase', () => ({
   },
 }))
 let cachedEvents: unknown[] = []
-vi.mock('../../lib/queryClient', () => ({ queryClient: { getQueryData: (key: string[]) => (key[0] === 'inbox_items' ? cachedInbox : key[0] === 'calendar_events' ? cachedEvents : []) } }))
+// "File captures for me" (0086): these suites describe filing, so it's on unless a test turns it off.
+let settingsRow: Record<string, unknown> | undefined = { auto_file_captures: true }
+vi.mock('../../lib/queryClient', () => ({
+  queryClient: { getQueryData: (key: string[]) => (key[0] === 'inbox_items' ? cachedInbox : key[0] === 'calendar_events' ? cachedEvents : key[0] === 'app_settings' ? settingsRow : []) },
+}))
 // calendar-rail's one way onto the calendar; its Undo is recorded so a capture's Undo can be checked.
 const placeTask = vi.fn()
 const unplace = vi.fn()
@@ -53,6 +57,7 @@ beforeEach(() => {
   cachedEvents = []
   placeTask.mockReset()
   unplace.mockReset()
+  settingsRow = { auto_file_captures: true }
 })
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -321,5 +326,52 @@ describe('a timed capture lands on the calendar', () => {
     createTask.mockReturnValue({ ...base, due_at: at4 })
     await captureWithAI('crypto session 4am tomorrow', 'voice', 'crypto session 4am tomorrow')
     expect(placeTask).toHaveBeenCalledTimes(1)
+  })
+})
+
+// Queue item 7 (Kai 2026-10-23): "File captures for me" is OFF by default — every capture waits in the
+// Inbox, the AI's read riding along as the card's one-tap suggestion; nothing becomes a task by itself.
+describe('File captures for me: off (the default)', () => {
+  const sure = { kind: 'task', cleaned_text: 'x', title: 'Call mum about Sunday', priority: 1, confidence: 0.95 }
+
+  it('reads an unmigrated row (no key) and a missing row as off', async () => {
+    for (const row of [{}, undefined]) {
+      settingsRow = row
+      writeRow.mockReset()
+      invoke.mockResolvedValue({ data: sure, error: null })
+      await captureWithAI('call mum about sunday, urgent', 'voice', 'call mum about sunday, urgent')
+      expect(createTask).not.toHaveBeenCalled()
+      expect(writeRow).toHaveBeenCalledTimes(1)
+      expect(writeRow.mock.calls[0][0]).toBe('inbox_items')
+    }
+  })
+
+  it('a confident voice capture waits in the Inbox with the read as its suggestion', async () => {
+    settingsRow = { auto_file_captures: false }
+    invoke.mockResolvedValue({ data: sure, error: null })
+    await captureWithAI('call mum about sunday, urgent', 'voice', 'call mum about sunday, urgent')
+    expect(createTask).not.toHaveBeenCalled()
+    expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ status: 'pending', confidence: 0.95, ai_parse: expect.objectContaining({ title: 'Call mum about Sunday' }) }))
+    expect(push).toHaveBeenCalledWith({ message: 'Added to Inbox for review' })
+  })
+
+  it('a typed line keeps the read and stays pending', async () => {
+    settingsRow = { auto_file_captures: false }
+    invoke.mockResolvedValue({ data: sure, error: null })
+    await enrichTypedInboxItem({ id: 'i9', status: 'pending', raw_text: 'x', payload: null } as never, 'call mum about sunday, urgent')
+    expect(createTask).not.toHaveBeenCalled()
+    expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ id: 'i9', status: 'pending', confidence: 0.95 }))
+    expect(push).not.toHaveBeenCalled()
+  })
+
+  it('a queued capture (the endpoint, an assistant, the chat) is claimed and read, never filed', async () => {
+    settingsRow = { auto_file_captures: false }
+    cachedInbox = [{ id: 'i2', status: 'pending', raw_text: 'dentist friday 3pm', created_at: '2026-10-01T20:00:00.000Z', payload: { source: 'mcp', needs_parse: true } }]
+    claimRows = [{ id: 'i2' }]
+    invoke.mockResolvedValue({ data: { ...sure, title: 'Dentist' }, error: null })
+    await processQueuedCaptures()
+    expect(claimCalls[1]).toEqual(['update', { payload: { source: 'mcp' } }])
+    expect(createTask).not.toHaveBeenCalled()
+    expect(writeRow).toHaveBeenCalledWith('inbox_items', expect.objectContaining({ id: 'i2', status: 'pending', confidence: 0.95, payload: { source: 'mcp' } }))
   })
 })

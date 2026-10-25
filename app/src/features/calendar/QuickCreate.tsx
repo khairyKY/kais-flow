@@ -22,6 +22,7 @@ import { useEscapeStack, useBodyScrollLock } from '../../lib/overlayStack'
 import { appZone } from '../../lib/appZone'
 import { linkRef } from '../../lib/links'
 import { clockOptions } from '../../lib/clock'
+import { offerProject } from '../projects/autoProject'
 import type { CalendarEvent } from '../../lib/types'
 
 // ── Editor.dc.html 2a/2b — the compact popover a click on the grid opens — and 1b/1c/1d, the full
@@ -291,17 +292,22 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
       if (fromSlot && date && startTime && endTime) {
         scheduleTask(task, cairoToIso(date, startTime), cairoToIso(date, endTime))
       }
+      offerProject({ kind: 'task', row: task }) // queue item 17: no place picked → its likely project
     } else if (kind === 'event') {
       const startsAt = allDay ? `${date}T00:00:00.000Z` : cairoToIso(date, startTime)
       const endsAt = allDay ? nextDayIso(date) : cairoToIso(date, endTime)
-      makeEvent(createEvent(title.trim() || 'New event', startsAt, endsAt, 'event', color, allDay))
+      const event = createEvent(title.trim() || 'New event', startsAt, endsAt, 'event', color, allDay)
+      makeEvent(event)
+      offerProject({ kind: 'event', row: event })
     } else {
       const startsAt = cairoToIso(date, startTime)
       const endsAt = cairoToIso(date, endTime)
       if (holdsTask) {
         scheduleTask(holdsTask, startsAt, endsAt)
       } else {
-        makeEvent(createEvent(title.trim() || 'Time block', startsAt, endsAt, 'time_block', color))
+        const block = createEvent(title.trim() || 'Time block', startsAt, endsAt, 'time_block', color)
+        makeEvent(block)
+        offerProject({ kind: 'event', row: block })
       }
     }
     onClose()

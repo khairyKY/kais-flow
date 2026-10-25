@@ -1,0 +1,297 @@
+[
+  {
+    "name": "g day a card arrives",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g day the request carries the words and the 12-hour clock",
+    "ok": true,
+    "detail": "false"
+  },
+  {
+    "name": "g day the server's tool-call rounds: a read, then propose",
+    "ok": true,
+    "detail": "[\"calendar\",\"propose\"]"
+  },
+  {
+    "name": "g day the card says what WILL happen: \"Add 3 events\"",
+    "ok": true,
+    "detail": "Add 3 events"
+  },
+  {
+    "name": "g day each session on its own day and time, in Kai's order (no swap)",
+    "ok": true,
+    "detail": "[\"Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7)\",\"Wed 28 Oct · 5:45–7:00 PM · Gym · HQ (Session 2, ID 10)\",\"Tue 27 Oct · 5:45–7:00 PM · Gym · West (Session 3, ID 18)\"]"
+  },
+  {
+    "name": "g day Confirm · Edit · Cancel",
+    "ok": true,
+    "detail": "[\"Confirm\",\"Edit\",\"Cancel\"]"
+  },
+  {
+    "name": "g day nothing written before Confirm",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g day no raw pipes, no stray ↗ chips, no \"I've added\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g Confirm runs exactly the 3 planned calls, once",
+    "ok": true,
+    "detail": "[3]"
+  },
+  {
+    "name": "g 3 event writes at the right instants (Mon 07:00–08:15, Wed 17:45–19:00, Tue 17:45–19:00 Cairo)",
+    "ok": true,
+    "detail": "[[\"Gym · HC (Session 1, ID 7)\",\"2026-10-26T04:00:00.000Z\"],[\"Gym · HQ (Session 2, ID 10)\",\"2026-10-28T14:45:00.000Z\"],[\"Gym · West (Session 3, ID 18)\",\"2026-10-27T14:45:00.000Z\"]]"
+  },
+  {
+    "name": "g the honest summary: \"Done — all 3\", each line what the tool said",
+    "ok": true,
+    "detail": "Done — all 3 | Added event · Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7) | Added event · Wed 28 Oct · 5:45–7:00 PM · Gym · HQ (Session 2, ID 10) | Added event · Tue 27 Oct · 5:45–7:00 PM · Gym · West (Session 3, ID 18) | Undo"
+  },
+  {
+    "name": "g …\"Added event · Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7)\" first",
+    "ok": true,
+    "detail": "[\"Added event · Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7)\",\"Added event · Wed 28 Oct · 5:45–7:00 PM · Gym · HQ (Session 2, ID 10)\",\"Added event · Tue 27 Oct · 5:45–7:00 PM · Gym · West (Session 3, ID 18)\"]"
+  },
+  {
+    "name": "g a toast \"Done — all 3\" with Undo",
+    "ok": true,
+    "detail": "[\"Captures now wait in your Inbox — the AI’s guess is one tap away.\",\"Done — all 3\"]"
+  },
+  {
+    "name": "g the calendar reads the server again after the run",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g what the model reads back next time: what the app really did",
+    "ok": true,
+    "detail": "The user confirmed. What the app did:\n- Added event · Mon 26 Oct · 7:00–8:15 AM "
+  },
+  {
+    "name": "g Undo sends the three events to Trash (delete_event × 3)",
+    "ok": true,
+    "detail": "[{\"tool\":\"delete_event\",\"args\":{\"id\":\"2b22cfe8-97b2-439b-bd6d-f626aaef11ed\"}},{\"tool\":\"delete_event\",\"args\":{\"id\":\"0b923634-0197-4fa7-9781-91f71da0228d\"}},{\"tool\":\"delete_event\",\"args\":{\"id\":\"aea1e5cc-b66b-486b-b636-4754d55a676b\"}}]"
+  },
+  {
+    "name": "g …and the card says so",
+    "ok": true,
+    "detail": "Done — all 3 | Added event · Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7) | Added event · Wed 28 Oct · 5:45–7:00 PM · Gym · HQ (Session 2, ID 10) | Added event · Tue 27 Oct · 5:45–7:00 PM · Gym · West (Session 3, ID 18) | Undone."
+  },
+  {
+    "name": "g Cancel: nothing runs, \"Cancelled — nothing changed.\"",
+    "ok": true,
+    "detail": "Add 3 events | Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7) | Wed 28 Oct · 5:45–7:00 PM · Gym · HQ (Session 2, ID 10) | Tue 27 Oct · 5:45–7:00 PM · Gym · West (Session 3, ID 18) | Cancelled — nothing changed."
+  },
+  {
+    "name": "g Edit: not done, the field asks what should change",
+    "ok": true,
+    "detail": "What should change?"
+  },
+  {
+    "name": "g no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g night a card arrives",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g night the request carries the words and the 12-hour clock",
+    "ok": true,
+    "detail": "false"
+  },
+  {
+    "name": "g night the server's tool-call rounds: a read, then propose",
+    "ok": true,
+    "detail": "[\"calendar\",\"propose\"]"
+  },
+  {
+    "name": "g night the card says what WILL happen: \"Add 3 events\"",
+    "ok": true,
+    "detail": "Add 3 events"
+  },
+  {
+    "name": "g night each session on its own day and time, in Kai's order (no swap)",
+    "ok": true,
+    "detail": "[\"Mon 26 Oct · 7:00–8:15 AM · Gym · HC (Session 1, ID 7)\",\"Wed 28 Oct · 5:45–7:00 PM · Gym · HQ (Session 2, ID 10)\",\"Tue 27 Oct · 5:45–7:00 PM · Gym · West (Session 3, ID 18)\"]"
+  },
+  {
+    "name": "g night Confirm · Edit · Cancel",
+    "ok": true,
+    "detail": "[\"Confirm\",\"Edit\",\"Cancel\"]"
+  },
+  {
+    "name": "g night nothing written before Confirm",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g night no raw pipes, no stray ↗ chips, no \"I've added\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g phone: the chat opens",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g phone: the same card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g phone: it fits 390px (no horizontal scroll)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f the card names each step with its verb",
+    "ok": true,
+    "detail": "[\"Move · due Fri 30 Oct 4:00 PM · Dentist\",\"Add event · Thu 29 Oct · 6:00–6:30 PM · Swim\"]"
+  },
+  {
+    "name": "f the report says 1 of 2 done",
+    "ok": true,
+    "detail": "1 of 2 done | Couldn't move “Dentist”: No task with id 10000000-0000-4000-8000-0000000000de (it may have been deleted). Use list_tasks or search to find it. | Added event · Thu 29 Oct · 6:00–6:30 PM · Swim | Undo"
+  },
+  {
+    "name": "f …and names the refusal word for word",
+    "ok": true,
+    "detail": "[\"Couldn't move “Dentist”: No task with id 10000000-0000-4000-8000-0000000000de (it may have been deleted). Use list_tasks or search to find it.\"]"
+  },
+  {
+    "name": "f …while the swim really was added",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f a plan the tools refused is said in words — no card, nothing run",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m the answer's table is a real table",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m two rows, bold kept as bold, no raw pipes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a an existing user is told once: \"Captures now wait in your Inbox\"",
+    "ok": true,
+    "detail": "[\"Captures now wait in your Inbox — the AI’s guess is one tap away.\"]"
+  },
+  {
+    "name": "a …and it is remembered (help_seen notice:autofile)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a off (the default): a confident capture waits in the Inbox with the AI read",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a …no task made by itself",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "a Settings → Capture & AI: the switch reads off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a turning it on writes auto_file_captures: true (synced row)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a on: the AI files it as a task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a …the capture marked filed, \"✦ Filed by AI\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a the notice is not shown twice",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p a typed task with no project lands where typed (no project)",
+    "ok": true,
+    "detail": "[\"Forecast chart tooltip\",null]"
+  },
+  {
+    "name": "p a quiet chip \"→ Forecasting App?\" offers its likely project",
+    "ok": true,
+    "detail": "[\"Added to Tomorrow\",\"→ Forecasting App?\"]"
+  },
+  {
+    "name": "p one tap puts it there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p …with \"→ Forecasting App\" and Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p Settings: \"Assign\" writes auto_project: assign",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p assign: a sure match is put there by itself",
+    "ok": true,
+    "detail": "[[\"Forecasting app: release notes\",\"f0000000-0000-4000-8000-0000000000fc\"]]"
+  },
+  {
+    "name": "p …with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p Undo takes it out again (and remembers \"not there\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
