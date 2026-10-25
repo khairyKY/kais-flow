@@ -407,7 +407,8 @@ for (const theme of ['day', 'night']) {
   await readNow(env)
   await waitFor(async () => (await sheet(page).count()) === 1, 9000)
   const row = (t) => sheet(page).locator('.pp-row', { hasText: t })
-  check(`11e-${theme} Assignment 2's chips as drawn: Task · Thu 8 Oct · 23:59 · OS · P1`, (await chips(row('Assignment 2'))) === 'Task Thu 8 Oct · 23:59 OS P1', await chips(row('Assignment 2')))
+  // 12h clock since v1.4.0 (one-clock change): "11:59 PM", not "23:59".
+  check(`11e-${theme} Assignment 2's chips as drawn: Task · Thu 8 Oct · 11:59 PM · OS · P1`, (await chips(row('Assignment 2'))) === 'Task Thu 8 Oct · 11:59 PM OS P1', await chips(row('Assignment 2')))
   check(`11e-${theme} the heading line: Note · OS · page title`, (await chips(row('OS lecture 3 — 4 Oct'))) === 'Note OS page title', await chips(row('OS lecture 3 — 4 Oct')))
   const editable = await sheet(page).locator('.pp-chips button').count()
   const all = await sheet(page).locator('.pp-chips > *').count()
