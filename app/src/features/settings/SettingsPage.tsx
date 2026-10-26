@@ -1829,11 +1829,11 @@ function NotificationSoundsCard() {
   }
   return (
     <SCard id="settings-NotificationSounds" title="Notification sounds">
-      <Row label="Pack" help={`${NOTIFY_PACK_LOOK[pack].blurb} · ${ready ? where : 'Choosing arrives with the next server update'}`} keys="notification sound pack felt glass mixed">
+      <Row label="Pack" find="Notification sound pack" help={`${NOTIFY_PACK_LOOK[pack].blurb} · ${ready ? where : 'Choosing arrives with the next server update'}`} keys="notification sound pack felt glass mixed">
         <Segmented<NotifyPack> label="Notification sound pack" value={pack} onChange={choose} options={NOTIFY_PACKS.map((p) => ({ value: p, label: NOTIFY_PACK_LOOK[p].label }))} />
       </Row>
       {NOTIFY_SOUNDS.map((id) => (
-        <Row key={id} attrs={{ 'data-notify-sound': id }} keys="notification sound" lead={<PlayButton label={`Hear ${NOTIFY_SOUND_LABEL[id]} (${NOTIFY_PACK_LOOK[pack].label})`} onClick={() => previewNotifySound(pack, id)} />} label={NOTIFY_SOUND_LABEL[id]} />
+        <Row key={id} attrs={{ 'data-notify-sound': id }} find={`${NOTIFY_SOUND_LABEL[id]} sound`} keys="notification sound" lead={<PlayButton label={`Hear ${NOTIFY_SOUND_LABEL[id]} (${NOTIFY_PACK_LOOK[pack].label})`} onClick={() => previewNotifySound(pack, id)} />} label={NOTIFY_SOUND_LABEL[id]} />
       ))}
     </SCard>
   )

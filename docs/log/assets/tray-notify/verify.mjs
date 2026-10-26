@@ -260,7 +260,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
 for (const [view, theme, tauri] of [[DESKTOP, 'day', true], [PHONE, 'night', false]]) {
   const tag = view === PHONE ? 'phone-night' : 'desktop-day'
   const { ctx, state, errors, open } = await app({ subs: [{ id: 's1', user_id: UID, endpoint: 'https://fcm.googleapis.com/x', keys: {}, device_label: 'Pixel', created_at: FIRST }] }, { theme, tauri })
-  const page = await open('/settings', view)
+  const page = await open('/settings/notify', view)
   const card = page.locator('#settings-Notifications, div:has(> div > div > div:text-is("Notifications"))').first()
   await page.getByRole('button', { name: 'Send a test notification' }).scrollIntoViewIfNeeded()
   const row = (label) => page.locator('div').filter({ has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last()
@@ -282,17 +282,21 @@ for (const [view, theme, tauri] of [[DESKTOP, 'day', true], [PHONE, 'night', fal
   if (tauri) {
     const t = (await calls(page, 'notify_local')).at(-1)?.args
     check(`12i ${tag} test (Windows) → a local toast`, t?.title === 'Kai’s Flow', JSON.stringify(t))
-    check(`12i ${tag} Windows rows: tray + start with Windows`, (await row('Show in the system tray').count()) === 1 && (await row('Start with Windows').count()) === 1)
-    await row('Start with Windows').locator('[role="switch"]').click()
-    await row('Show in the system tray').locator('[role="switch"]').click()
+    // settings-build: the Windows rows live in App & updates now.
+    const about = await open('/settings/about', view)
+    const arow = (label) => about.locator('div').filter({ has: about.getByText(label, { exact: true }) }).filter({ has: about.locator('[role="switch"]') }).last()
+    check(`12i ${tag} Windows rows: tray + start with Windows`, (await arow('Show in the system tray').count()) === 1 && (await arow('Start with Windows').count()) === 1)
+    await arow('Start with Windows').locator('[role="switch"]').click()
+    await arow('Show in the system tray').locator('[role="switch"]').click()
     await sleep(300)
-    const ipc = (await calls(page)).filter((c) => ['autostart_set', 'tray_shown'].includes(c.cmd)).map((c) => `${c.cmd} ${JSON.stringify(c.args)}`)
+    const ipc = (await calls(about)).filter((c) => ['autostart_set', 'tray_shown'].includes(c.cmd)).map((c) => `${c.cmd} ${JSON.stringify(c.args)}`)
     check(`12i ${tag} Start with Windows → autostart_set; tray off → tray_shown false`, ipc.includes('autostart_set {"on":true}') && ipc.includes('tray_shown {"shown":false}'), JSON.stringify(ipc))
+    await about.close()
   } else {
     check(`12i ${tag} test (web) → notify {kind:'test'}`, state.fn.some((f) => f.name === 'notify' && f.body?.kind === 'test') && (await page.getByText('Sent to 1 device.').count()) === 1)
     check(`12i ${tag} no Windows rows on the web`, (await page.getByText('Start with Windows').count()) === 0)
   }
-  await page.getByText('Calm by default.', { exact: false }).evaluate((el) => el.scrollIntoView({ block: 'start' }))
+  await page.getByText('Calm by default', { exact: false }).first().evaluate((el) => el.scrollIntoView({ block: 'start' }))
   await sleep(200)
   await shot(page, `12i-settings-${tag}`)
   check(`12i ${tag} no page errors`, errors.length === 0, errors.join(' | '))

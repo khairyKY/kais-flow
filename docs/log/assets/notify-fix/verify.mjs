@@ -180,7 +180,7 @@ for (const [label, settings] of [['paused', { notify_paused_until: iso('10:00') 
 // ── Windows: the test button goes through notify_local and says what's in the way ──
 {
   const { ctx, state, errors, open } = await app({ settings: { quiet_hours_on: false } }, { tauri: true })
-  const page = await open('/settings', cairo('10:00'))
+  const page = await open('/settings/notify', cairo('10:00'))
   await toTest(page)
   check('Test (Windows): nothing in the way', JSON.stringify(await status(page)) === JSON.stringify(['Nothing in the way on this device.']), JSON.stringify(await status(page)))
   await page.getByRole('button', { name: 'Send a test notification' }).click()
@@ -194,7 +194,7 @@ for (const [label, settings] of [['paused', { notify_paused_until: iso('10:00') 
 }
 {
   const { ctx, open } = await app({ settings: { notify_paused_until: iso('23:41'), task_reminder_on: false, evening_nudge_on: false } }, { tauri: true })
-  const page = await open('/settings', cairo('23:00'))
+  const page = await open('/settings/notify', cairo('23:00'))
   await toTest(page)
   const lines = await status(page)
   check('Test (Windows): paused · quiet hours · kinds off, in plain words', JSON.stringify(lines) === JSON.stringify(['Notifications are paused until 23:41.', 'Quiet hours are on — notifications come without a sound.', 'Turned off: Task reminder, Evening nudge.']), JSON.stringify(lines))
@@ -238,7 +238,7 @@ for (const [label, settings] of [['paused', { notify_paused_until: iso('10:00') 
 // ── Web: the test button = a push through notify; the status names what's in the way ──
 {
   const { ctx, state, errors, open } = await app({ subs: [SUB], settings: { quiet_hours_on: false } }, { grant: true })
-  const page = await open('/settings', cairo('10:00'))
+  const page = await open('/settings/notify', cairo('10:00'))
   await toTest(page)
   const lines = await status(page)
   check('Test (web, allowed, this browser not subscribed): says so', JSON.stringify(lines) === JSON.stringify(['This device isn’t subscribed — tap “Subscribe this device” first.']), JSON.stringify(lines))
@@ -251,7 +251,7 @@ for (const [label, settings] of [['paused', { notify_paused_until: iso('10:00') 
 }
 {
   const { ctx, state, open } = await app({ settings: { quiet_hours_on: false } })
-  const page = await open('/settings', cairo('10:00'))
+  const page = await open('/settings/notify', cairo('10:00'))
   await toTest(page)
   const lines = await status(page)
   check('Test (web, never asked, no devices): "the test will ask" + not subscribed', lines[0] === 'Notifications aren’t allowed yet — the test will ask.' && lines[1]?.startsWith('This device isn’t subscribed'), JSON.stringify(lines))
@@ -262,7 +262,7 @@ for (const [label, settings] of [['paused', { notify_paused_until: iso('10:00') 
 }
 {
   const { ctx, open } = await app({ settings: { quiet_hours_on: false } }, { deny: true })
-  const page = await open('/settings', cairo('10:00'))
+  const page = await open('/settings/notify', cairo('10:00'))
   await toTest(page)
   const lines = await status(page)
   check('Test (web, denied): "Permission denied"', lines[0] === 'Permission denied — allow notifications for this site in the browser’s site settings.', JSON.stringify(lines))
