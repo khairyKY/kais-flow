@@ -1,0 +1,967 @@
+[
+  {
+    "name": "1 /settings opens on Appearance (URL stays /settings)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 the list has 11 categories, each with a kf line icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 the list is in four groups (hairlines between)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 Account: opens at /settings/account, its page and list row lit (2 sections, 3 rows)",
+    "ok": true,
+    "detail": "/settings/account · Account"
+  },
+  {
+    "name": "1 Appearance: opens at /settings/appearance, its page and list row lit (1 sections, 4 rows)",
+    "ok": true,
+    "detail": "/settings/appearance · Appearance"
+  },
+  {
+    "name": "1 Calendar & time: opens at /settings/calendar, its page and list row lit (3 sections, 12 rows)",
+    "ok": true,
+    "detail": "/settings/calendar · Calendar & time"
+  },
+  {
+    "name": "1 Capture & AI: opens at /settings/capture, its page and list row lit (3 sections, 6 rows)",
+    "ok": true,
+    "detail": "/settings/capture · Capture & AI"
+  },
+  {
+    "name": "1 Notifications & sound: opens at /settings/notify, its page and list row lit (5 sections, 23 rows)",
+    "ok": true,
+    "detail": "/settings/notify · Notifications & sound"
+  },
+  {
+    "name": "1 Organize: opens at /settings/organize, its page and list row lit (3 sections, 3 rows)",
+    "ok": true,
+    "detail": "/settings/organize · Organize"
+  },
+  {
+    "name": "1 Integrations: opens at /settings/integrations, its page and list row lit (3 sections, 5 rows)",
+    "ok": true,
+    "detail": "/settings/integrations · Integrations"
+  },
+  {
+    "name": "1 Your data: opens at /settings/data, its page and list row lit (1 sections, 3 rows)",
+    "ok": true,
+    "detail": "/settings/data · Your data"
+  },
+  {
+    "name": "1 Privacy & terms: opens at /settings/privacy, its page and list row lit (1 sections, 4 rows)",
+    "ok": true,
+    "detail": "/settings/privacy · Privacy & terms"
+  },
+  {
+    "name": "1 Shortcuts: opens at /settings/shortcuts, its page and list row lit (3 sections, 29 rows)",
+    "ok": true,
+    "detail": "/settings/shortcuts · Shortcuts"
+  },
+  {
+    "name": "1 App & updates: opens at /settings/about, its page and list row lit (1 sections, 5 rows)",
+    "ok": true,
+    "detail": "/settings/about · App & updates"
+  },
+  {
+    "name": "1 the page never remounted between categories (search field kept, one Settings nav)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 account: every setting present, once (3)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 appearance: every setting present, once (4)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 calendar: every setting present, once (11)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 capture: every setting present, once (6)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 notify: every setting present, once (23)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 organize: every setting present, once (5)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 integrations: every setting present, once (4)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 data: every setting present, once (3)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 privacy: every setting present, once (4)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 about: every setting present, once (5)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 \"Google Calendar\" shows in its two places (Calendar & time, Integrations)",
+    "ok": true,
+    "detail": "[\"calendar\",\"integrations\"]"
+  },
+  {
+    "name": "2 no stray rows outside the inventory (Shortcuts is a reference)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 Shortcuts reads the cheatsheet: Keys, On the calendar, Typing a task",
+    "ok": true,
+    "detail": "Keys|On the calendar|Typing a task"
+  },
+  {
+    "name": "2 Interface size (five choices) is a picker",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 picking 150% scales the app",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 Account: the danger zone holds Delete account",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 Account: Sign out is a button there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 Integrations › Google Calendar: its own page (/settings/integrations/google) with its controls",
+    "ok": true,
+    "detail": "/settings/integrations/google"
+  },
+  {
+    "name": "2 Integrations › GitHub: its own page (/settings/integrations/github) with its controls",
+    "ok": true,
+    "detail": "/settings/integrations/github"
+  },
+  {
+    "name": "2 Integrations › AI assistants (MCP): its own page (/settings/integrations/mcp) with its controls",
+    "ok": true,
+    "detail": "/settings/integrations/mcp"
+  },
+  {
+    "name": "2 Integrations › Capture key & bookmarklet: its own page (/settings/integrations/capture-key) with its controls",
+    "ok": true,
+    "detail": "/settings/integrations/capture-key"
+  },
+  {
+    "name": "2 the capture key page keeps its title and old id",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 ‹ Integrations goes back",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1–2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 Windows app: App & updates › On this computer has the tray and Start with Windows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 Windows app: Notifications no longer carries the tray rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 Windows app: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 Ctrl F reaches the search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 typing writes ?q= (deep-linkable)",
+    "ok": true,
+    "detail": "/settings/calendar?q=dark"
+  },
+  {
+    "name": "3 \"dark\" finds Theme (by meaning), under Appearance",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 while searching, no category is lit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 \"delete\" finds Delete account and Trash",
+    "ok": true,
+    "detail": "Delete account, Page photos, Domains, Labels, Trash, What we keep, and where, Delete the open event"
+  },
+  {
+    "name": "3 \"AI\" finds the Capture & AI rows and AI assistants",
+    "ok": true,
+    "detail": "File captures for me, Pick a project for new things, Page photos, AI assistants (MCP), Groq, What we keep, and where, What AI assistants can see"
+  },
+  {
+    "name": "3 results are grouped: \"Category › Section\" crumbs",
+    "ok": true,
+    "detail": "Capture & AI › What the AI may do | Capture & AI › Photos of your pages | Integrations › AI | Privacy & terms"
+  },
+  {
+    "name": "3 the header counts them",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 a result keeps its real control: the switch writes auto_file_captures",
+    "ok": true,
+    "detail": "[{\"id\":\"a0000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"onboarded_at\":\"2026-01-02T00:00:00Z\",\"display_name\":\"Kai\",\"workspace_name\":\"Personal\",\"timezone\":\"Africa/Cairo\",\"auto_file_captures\":true,\"auto_project\":\"suggest\",\"quiet_hours_on\":true,\"quiet_from\":\"22:30\",\"quiet_to\":\"07:00\",\"help_seen\":[\"tour\",\"hint:swipe\",\"hint:calendar\",\"hint:inbox\",\"notice:autofile\"],\"created_at\":\"2026-09-01T09:00:00Z\",\"updated_at\":\"2026-09-01T09:00:00Z\"}]"
+  },
+  {
+    "name": "3 › opens its category (/settings/capture), search cleared",
+    "ok": true,
+    "detail": "/settings/capture"
+  },
+  {
+    "name": "3 …with the row lit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 \"time\" finds Time zone, Time format, Second time zone, the digest and nudge, Quiet hours",
+    "ok": true,
+    "detail": "Time zone, Time format, Second time zone, This device, Morning digest, Evening nudge, Quiet hours"
+  },
+  {
+    "name": "3 Esc clears the search",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 nothing found says so",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4 /settings/notify → /settings/notify (Notifications & sound)",
+    "ok": true,
+    "detail": "/settings/notify · Notifications & sound · "
+  },
+  {
+    "name": "4 /settings?q=quiet → /settings?q=quiet",
+    "ok": true,
+    "detail": "/settings?q=quiet ·  · "
+  },
+  {
+    "name": "4 /settings#settings-Sound → /settings/notify (Notifications & sound), #settings-Sound in view",
+    "ok": true,
+    "detail": "/settings/notify · Notifications & sound · "
+  },
+  {
+    "name": "4 /settings#settings-Data → /settings/data (Your data), #settings-Data in view",
+    "ok": true,
+    "detail": "/settings/data · Your data · "
+  },
+  {
+    "name": "4 /settings#settings-Legal → /settings/privacy (Privacy & terms), #settings-Legal in view",
+    "ok": true,
+    "detail": "/settings/privacy · Privacy & terms · "
+  },
+  {
+    "name": "4 /settings#settings-App → /settings/about (App & updates), #settings-App in view",
+    "ok": true,
+    "detail": "/settings/about · App & updates · "
+  },
+  {
+    "name": "4 /settings#settings-Advanced → /settings/integrations/capture-key, #settings-Advanced in view",
+    "ok": true,
+    "detail": "/settings/integrations/capture-key ·  · "
+  },
+  {
+    "name": "4 /settings/bogus → /settings (Appearance)",
+    "ok": true,
+    "detail": "/settings · Appearance · "
+  },
+  {
+    "name": "4 /settings/integrations/nope → /settings/integrations (Integrations)",
+    "ok": true,
+    "detail": "/settings/integrations · Integrations · "
+  },
+  {
+    "name": "4 ?google= (back from Google) lands on Integrations › Google with its word",
+    "ok": true,
+    "detail": "/settings/integrations/google"
+  },
+  {
+    "name": "5 day phone: the list — Account card on top, then 10 categories with icons",
+    "ok": true,
+    "detail": "10"
+  },
+  {
+    "name": "5 day phone: the rows say where things stand (Calendar & time · Cairo)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 day phone: a tap opens the category's own page, ‹ Settings above it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 day phone: no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 day phone: ‹ Settings goes back to the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 day phone: the Account card opens Account, danger zone and all",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 day phone: Integrations › GitHub opens its page, ‹ Integrations above it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 day phone: search shows the rows under the field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 day phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 night phone: the list — Account card on top, then 10 categories with icons",
+    "ok": true,
+    "detail": "10"
+  },
+  {
+    "name": "5 night phone: the rows say where things stand (Calendar & time · Cairo)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 night phone: a tap opens the category's own page, ‹ Settings above it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 night phone: no sideways scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 night phone: ‹ Settings goes back to the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 night phone: the Account card opens Account, danger zone and all",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 night phone: Integrations › GitHub opens its page, ‹ Integrations above it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 night phone: search shows the rows under the field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 night phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 day tab bar: each tab wears a kf line icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 day More sheet: every row a kf line icon (13), no watercolour images or dots",
+    "ok": true,
+    "detail": "13/13 icons, 0 images"
+  },
+  {
+    "name": "6 day More sheet: Search · Chat · Sign out wear icons too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 day More sheet: the page you're on (Settings) is lit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 day same icon per destination as the sidebar (11 shared)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 night tab bar: each tab wears a kf line icon",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 night More sheet: every row a kf line icon (13), no watercolour images or dots",
+    "ok": true,
+    "detail": "13/13 icons, 0 images"
+  },
+  {
+    "name": "6 night More sheet: Search · Chat · Sign out wear icons too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 night More sheet: the page you're on (Settings) is lit",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 night same icon per destination as the sidebar (11 shared)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-100 calendar: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":282,\"y\":72,\"width\":228,\"height\":1028.40625},\"main\":{\"x\":546,\"y\":100,\"width\":658,\"height\":960.40625}}"
+  },
+  {
+    "name": "7 day-100 calendar: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-100 calendar: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,0 → 364,0"
+  },
+  {
+    "name": "7 day-100 calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-100 notify: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":282,\"y\":72,\"width\":228,\"height\":1832.6875},\"main\":{\"x\":546,\"y\":100,\"width\":658,\"height\":1764.6875}}"
+  },
+  {
+    "name": "7 day-100 notify: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-100 notify: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,0 → 600,0"
+  },
+  {
+    "name": "7 day-100 notify: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-100 capture: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":282,\"y\":72,\"width\":228,\"height\":664},\"main\":{\"x\":546,\"y\":100,\"width\":658,\"height\":588.40625}}"
+  },
+  {
+    "name": "7 day-100 capture: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-100 capture: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,0 → 0,0"
+  },
+  {
+    "name": "7 day-100 capture: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-100 account: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":282,\"y\":72,\"width\":228,\"height\":664},\"main\":{\"x\":546,\"y\":100,\"width\":658,\"height\":311.53125}}"
+  },
+  {
+    "name": "7 day-100 account: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-100 account: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,0 → 0,0"
+  },
+  {
+    "name": "7 day-100 account: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-125 calendar: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":352.5,\"y\":90,\"width\":285,\"height\":1483.0625},\"main\":{\"x\":682.5,\"y\":125,\"width\":502.5,\"height\":1398.0625}}"
+  },
+  {
+    "name": "7 day-125 calendar: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-125 calendar: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,14.399999618530273 → 0,40"
+  },
+  {
+    "name": "7 day-125 calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-125 notify: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":352.5,\"y\":90,\"width\":285,\"height\":2660.3125},\"main\":{\"x\":682.5,\"y\":125,\"width\":502.5,\"height\":2575.3125}}"
+  },
+  {
+    "name": "7 day-125 notify: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-125 notify: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,14.399999618530273 → 0,40"
+  },
+  {
+    "name": "7 day-125 notify: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-125 capture: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":352.5,\"y\":90,\"width\":285,\"height\":1026.8125},\"main\":{\"x\":682.5,\"y\":125,\"width\":502.5,\"height\":941.8125}}"
+  },
+  {
+    "name": "7 day-125 capture: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-125 capture: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,14.399999618530273 → 0,40"
+  },
+  {
+    "name": "7 day-125 capture: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-125 account: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":352.5,\"y\":90,\"width\":285,\"height\":710},\"main\":{\"x\":682.5,\"y\":125,\"width\":502.5,\"height\":432.9375}}"
+  },
+  {
+    "name": "7 day-125 account: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-125 account: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,14.399999618530273 → 0,40"
+  },
+  {
+    "name": "7 day-125 account: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-150 calendar: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":423,\"y\":108,\"width\":342,\"height\":2475.03125},\"main\":{\"x\":819,\"y\":150,\"width\":347,\"height\":2373.03125}}"
+  },
+  {
+    "name": "7 day-150 calendar: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-150 calendar: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,143.3333282470703 → 400,143.3333282470703"
+  },
+  {
+    "name": "7 day-150 calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-150 notify: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":423,\"y\":108,\"width\":342,\"height\":5363.65625},\"main\":{\"x\":819,\"y\":150,\"width\":347,\"height\":5261.65625}}"
+  },
+  {
+    "name": "7 day-150 notify: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-150 notify: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,143.3333282470703 → 400,143.3333282470703"
+  },
+  {
+    "name": "7 day-150 notify: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-150 capture: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":423,\"y\":108,\"width\":342,\"height\":1493.40625},\"main\":{\"x\":819,\"y\":150,\"width\":347,\"height\":1391.40625}}"
+  },
+  {
+    "name": "7 day-150 capture: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-150 capture: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,143.3333282470703 → 400,143.3333282470703"
+  },
+  {
+    "name": "7 day-150 capture: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-150 account: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":423,\"y\":108,\"width\":342,\"height\":870.4375},\"main\":{\"x\":819,\"y\":150,\"width\":347,\"height\":768.4375}}"
+  },
+  {
+    "name": "7 day-150 account: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 day-150 account: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,143.3333282470703 → 182.6666717529297,143.3333282470703"
+  },
+  {
+    "name": "7 day-150 account: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-100 calendar: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":282,\"y\":72,\"width\":228,\"height\":1028.40625},\"main\":{\"x\":546,\"y\":100,\"width\":658,\"height\":960.40625}}"
+  },
+  {
+    "name": "7 night-100 calendar: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-100 calendar: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,0 → 364,0"
+  },
+  {
+    "name": "7 night-100 calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-100 notify: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":282,\"y\":72,\"width\":228,\"height\":1832.6875},\"main\":{\"x\":546,\"y\":100,\"width\":658,\"height\":1764.6875}}"
+  },
+  {
+    "name": "7 night-100 notify: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-100 notify: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,0 → 600,0"
+  },
+  {
+    "name": "7 night-100 notify: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-100 capture: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":282,\"y\":72,\"width\":228,\"height\":664},\"main\":{\"x\":546,\"y\":100,\"width\":658,\"height\":588.40625}}"
+  },
+  {
+    "name": "7 night-100 capture: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-100 capture: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,0 → 0,0"
+  },
+  {
+    "name": "7 night-100 capture: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-100 account: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":282,\"y\":72,\"width\":228,\"height\":664},\"main\":{\"x\":546,\"y\":100,\"width\":658,\"height\":311.53125}}"
+  },
+  {
+    "name": "7 night-100 account: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-100 account: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,0 → 0,0"
+  },
+  {
+    "name": "7 night-100 account: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-125 calendar: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":352.5,\"y\":90,\"width\":285,\"height\":1483.0625},\"main\":{\"x\":682.5,\"y\":125,\"width\":502.5,\"height\":1398.0625}}"
+  },
+  {
+    "name": "7 night-125 calendar: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-125 calendar: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,14.399999618530273 → 0,40"
+  },
+  {
+    "name": "7 night-125 calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-125 notify: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":352.5,\"y\":90,\"width\":285,\"height\":2660.3125},\"main\":{\"x\":682.5,\"y\":125,\"width\":502.5,\"height\":2575.3125}}"
+  },
+  {
+    "name": "7 night-125 notify: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-125 notify: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,14.399999618530273 → 0,40"
+  },
+  {
+    "name": "7 night-125 notify: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-125 capture: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":352.5,\"y\":90,\"width\":285,\"height\":1026.8125},\"main\":{\"x\":682.5,\"y\":125,\"width\":502.5,\"height\":941.8125}}"
+  },
+  {
+    "name": "7 night-125 capture: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-125 capture: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,14.399999618530273 → 0,40"
+  },
+  {
+    "name": "7 night-125 capture: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-125 account: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":352.5,\"y\":90,\"width\":285,\"height\":710},\"main\":{\"x\":682.5,\"y\":125,\"width\":502.5,\"height\":432.9375}}"
+  },
+  {
+    "name": "7 night-125 account: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-125 account: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,14.399999618530273 → 0,40"
+  },
+  {
+    "name": "7 night-125 account: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-150 calendar: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":423,\"y\":108,\"width\":342,\"height\":2475.03125},\"main\":{\"x\":819,\"y\":150,\"width\":347,\"height\":2373.03125}}"
+  },
+  {
+    "name": "7 night-150 calendar: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-150 calendar: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,143.3333282470703 → 400,143.3333282470703"
+  },
+  {
+    "name": "7 night-150 calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-150 notify: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":423,\"y\":108,\"width\":342,\"height\":5363.65625},\"main\":{\"x\":819,\"y\":150,\"width\":347,\"height\":5261.65625}}"
+  },
+  {
+    "name": "7 night-150 notify: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-150 notify: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,143.3333282470703 → 400,143.3333282470703"
+  },
+  {
+    "name": "7 night-150 notify: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-150 capture: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":423,\"y\":108,\"width\":342,\"height\":1493.40625},\"main\":{\"x\":819,\"y\":150,\"width\":347,\"height\":1391.40625}}"
+  },
+  {
+    "name": "7 night-150 capture: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-150 capture: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,143.3333282470703 → 400,143.3333282470703"
+  },
+  {
+    "name": "7 night-150 capture: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-150 account: two panes side by side, no sideways scroll",
+    "ok": true,
+    "detail": "{\"nav\":{\"x\":423,\"y\":108,\"width\":342,\"height\":870.4375},\"main\":{\"x\":819,\"y\":150,\"width\":347,\"height\":768.4375}}"
+  },
+  {
+    "name": "7 night-150 account: the list's last category is reachable",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "7 night-150 account: the wheel over the list scrolls (list or page)",
+    "ok": true,
+    "detail": "0,143.3333282470703 → 182.6666717529297,143.3333282470703"
+  },
+  {
+    "name": "7 night-150 account: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -5,6 +5,8 @@
 //       what 0083's trigger does with them (consent rows) — so the new account lands without the notice.
 //       The footer links (sign up + sign in) and the password eye (queue item 6).
 //   P · Settings → Privacy & terms: both links (to the site), "you agreed …", the short "where" line.
+//       (settings-build 2026-10-26: Privacy & terms is its own category page; Delete account lives in
+//       Account's danger zone.)
 //   N · an account whose agreement is older (or missing): the notice over Today, Esc / scrim don't close
 //       it, "I agree" writes the current versions through the outbox and it's gone, also after a reload.
 //   D · Delete account: Settings → Your data, and from the notice — DELETE typed, Google disconnected
@@ -187,24 +189,25 @@ for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
 for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
   const tag = `p-${view}-${theme}`
   const env = await open('/settings', { view, theme })
+  // The category list (computer) or the phone's list leads there.
+  await env.page.locator(view === 'desktop' ? '.st-nav-item' : '.st-list-row', { hasText: 'Privacy & terms' }).click()
+  await sleep(700)
   const card = env.page.locator('#settings-Legal')
-  check(`${tag} Settings has "Privacy & terms"`, (await card.count()) === 1 && (await card.locator('.st-title').innerText()) === 'Privacy & terms')
-  const links = await card.locator('a').evaluateAll((as) => as.map((a) => a.href))
+  check(`${tag} Settings has "Privacy & terms" (its own page, from the list)`, (await card.count()) === 1 && (await env.page.locator('.st-page-head h2').innerText()) === 'Privacy & terms' && new URL(env.page.url()).pathname === '/settings/privacy')
+  const links = await card.locator('a').evaluateAll((as) => as.map((a) => a.href).filter((h) => !h.startsWith(location.origin)))
   check(`${tag} Read → the Privacy Policy and the Terms of Use`, JSON.stringify(links) === JSON.stringify([PRIVACY_URL, TERMS_URL]), JSON.stringify(links))
   const text = await card.innerText()
   check(`${tag} says when it was updated and that you agreed`, /Updated \d+ \w+ \d{4} · you agreed 25 Oct 2026/.test(text), text.replace(/\n/g, ' | '))
   check(`${tag} the short "where": Supabase in the EU, Groq keeps nothing`, text.includes('Supabase, in the EU') && text.includes('Groq'))
   const url = await opened(env, () => card.locator('a').first().click())
   check(`${tag} Read opens the Privacy Policy`, url === PRIVACY_URL, url)
-  if (view === 'desktop') {
-    await env.page.getByRole('button', { name: 'Privacy & terms' }).click()
-    await sleep(700)
-    check(`${tag} the side nav has "Privacy & terms" and goes there`, Math.abs((await card.boundingBox()).y) < 400)
-  }
-  check(`${tag} Your data has Delete account`, (await env.page.locator('#settings-Data .st-row', { hasText: 'Delete account' }).count()) === 1)
+  check(`${tag} it's in view`, Math.abs((await card.boundingBox()).y) < 400)
   await card.scrollIntoViewIfNeeded()
   await sleep(200)
   await card.screenshot({ path: path.join(OUT, `${tag}-card.png`) })
+  await env.page.goto(`${BASE}/settings/account`, { waitUntil: 'networkidle' })
+  await sleep(500)
+  check(`${tag} Account's danger zone has Delete account`, (await env.page.locator('.st-sec.is-danger .st-row', { hasText: 'Delete account' }).count()) === 1)
   check(`${tag} no page errors`, env.errors.length === 0, env.errors.join(' | '))
   await env.ctx.close()
 }
@@ -254,9 +257,9 @@ for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
 // ── D · Delete account ──
 for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
   const tag = `d-${view}-${theme}`
-  const env = await open('/settings', { view, theme, google: true })
+  const env = await open('/settings/account', { view, theme, google: true })
   const { page } = env
-  await page.locator('#settings-Data .st-row', { hasText: 'Delete account' }).getByRole('button').click()
+  await page.locator('.st-sec.is-danger .st-row', { hasText: 'Delete account' }).getByRole('button').click()
   const dlg = page.getByRole('dialog', { name: 'Delete your account?' })
   const del = dlg.getByRole('button', { name: 'Delete account' })
   check(`${tag} the dialog asks, offers the export, Delete waits for the word`, (await dlg.count()) === 1 && (await dlg.getByRole('button', { name: 'Export everything first (.json)' }).count()) === 1 && (await del.isDisabled()))
@@ -273,7 +276,7 @@ for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
   await page.keyboard.press('Escape')
   await sleep(200)
   check(`${tag} Esc keeps the account (closes the dialog, nothing sent)`, (await dlg.count()) === 0 && fnCalls(env, 'delete-account').length === 0)
-  await page.locator('#settings-Data .st-row', { hasText: 'Delete account' }).getByRole('button').click()
+  await page.locator('.st-sec.is-danger .st-row', { hasText: 'Delete account' }).getByRole('button').click()
   await dlg.locator('input').fill('DELETE')
   await del.click()
   await page.waitForURL('**/sign-in', { timeout: 8000 }).catch(() => {})

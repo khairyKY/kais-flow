@@ -120,9 +120,9 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
         </div>
         {/* 48px rows and buttons (Kai's phone review: ~40 / ~20px tall before) */}
         <div style={{ display: 'flex', gap: 16, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line-dashed)' }}>
-          <button type="button" onClick={() => { onClose(); onSearch() }} style={footBtn}><Icon name="search" size={16} />Search</button>
-          <button type="button" onClick={() => { onClose(); onChat() }} style={footBtn}><Icon name="chat" size={16} />Chat</button>
-          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ ...footBtn, color: 'var(--ink-faint)' }}><Icon name="signout" size={16} />Sign out</button>
+          <button type="button" onClick={() => { onClose(); onSearch() }} style={footBtn}><Icon name="search" size={16} /><span>Search</span></button>
+          <button type="button" onClick={() => { onClose(); onChat() }} style={footBtn}><Icon name="chat" size={16} /><span>Chat</span></button>
+          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ ...footBtn, color: 'var(--ink-faint)' }}><Icon name="signout" size={16} /><span>Sign out</span></button>
         </div>
       </div>
     </div>

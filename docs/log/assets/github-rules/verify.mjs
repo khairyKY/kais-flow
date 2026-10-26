@@ -112,11 +112,16 @@ async function open(viewName, route, rows = {}, { theme = 'day', failSave = fals
 const bodyText = (page) => page.evaluate(() => document.body.textContent ?? '')
 const rulesSaves = (state) => state.fns.filter((f) => f.name === 'github-connect' && f.body?.action === 'rules').map((f) => f.body)
 const lastSave = (state) => rulesSaves(state).at(-1)
+// settings-build (2026-10-26): Integrations is a category; GitHub opens its own page from its row.
 const toIntegrations = async (page) => {
-  await page.locator('.st-nav-item', { hasText: /^Integrations$/ }).first().click()
+  if (!new URL(page.url()).pathname.startsWith('/settings/integrations')) {
+    await page.locator('.st-nav-item, .st-list-row', { hasText: /^Integrations/ }).first().click()
+    await sleep(600)
+  }
+  await page.locator('.st-row.is-link[data-st-key="GitHub"]').click()
   await sleep(700)
 }
-const ghCard = (page) => page.locator('section.st-card', { has: page.locator('.st-gh-rules') })
+const ghCard = (page) => page.locator('section.st-sec', { has: page.locator('.st-gh-rules') })
 const segBtn = (page, group, label) => page.getByRole('group', { name: group }).getByRole('button', { name: label, exact: true })
 
 // ── 1. Desktop: the panel as drawn, then every control ──
@@ -206,7 +211,7 @@ const segBtn = (page, group, label) => page.getByRole('group', { name: group }).
   await ctx.close()
 }
 {
-  const { ctx, page } = await open('desktop', '/settings', { integrations: [gh({ rules: { ...RULES, land: 'tasks', paused: true } })] })
+  const { ctx, page } = await open('desktop', '/settings/integrations', { integrations: [gh({ rules: { ...RULES, land: 'tasks', paused: true } })] })
   const summary = page.locator('#settings-Integrations')
   const t = (await summary.textContent()) ?? ''
   check('summary row: says where issues land and that it is paused', t.includes('Issues land straight in Tasks') && t.includes('Paused'), t)
@@ -224,10 +229,11 @@ for (const theme of ['day', 'night']) {
 }
 for (const theme of ['day', 'night']) {
   const { ctx, page, state, errors } = await open('phone', '/settings', { integrations: [gh()] }, { theme })
+  await toIntegrations(page)
   const card = ghCard(page)
   await card.scrollIntoViewIfNeeded()
   await sleep(300)
-  check(`phone ${theme}: the panel is in Settings → Connections`, (await card.count()) === 1 && ((await card.textContent()) ?? '').includes('Rules · how GitHub lands'))
+  check(`phone ${theme}: the panel is in Settings → Integrations › GitHub`, (await card.count()) === 1 && ((await card.textContent()) ?? '').includes('Rules · how GitHub lands'))
   const wide = await page.evaluate(() => document.documentElement.scrollWidth)
   check(`phone ${theme}: no sideways scroll at 390`, wide <= 390, wide)
   const segH = await segBtn(page, 'New issues land in', 'Straight to Tasks').evaluate((e) => e.getBoundingClientRect().height)

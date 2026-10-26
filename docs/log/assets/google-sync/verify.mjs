@@ -126,11 +126,16 @@ async function open(route, o = {}) {
 const shot = (page, name, full = true) => page.screenshot({ path: path.join(OUT, `${name}.png`), fullPage: full })
 const bodyText = (page) => page.evaluate(() => document.body.textContent ?? '')
 const calWrites = (state, from = 0) => state.writes.slice(from).filter((w) => w.table === 'calendar_events')
+// settings-build (2026-10-26): Integrations is a category; each provider opens its own page from its row.
 const openIntegrations = async (page) => {
-  await page.locator('.st-nav-item', { hasText: /^Integrations$/ }).first().click()
+  if (!new URL(page.url()).pathname.startsWith('/settings/integrations')) {
+    await page.locator('.st-nav-item, .st-list-row', { hasText: /^Integrations/ }).first().click()
+    await sleep(600)
+  }
+  await page.locator('.st-row.is-link[data-st-key="Google Calendar"]').click()
   await sleep(600)
 }
-const googleCard = (page) => page.locator('.st-card', { has: page.getByText('Google Calendar', { exact: true }) }).last()
+const googleCard = (page) => page.locator('.st-panel', { has: page.getByText('Google Calendar', { exact: true }) }).last()
 const status = (page) => googleCard(page).locator('[role="status"]').first()
 const center = (b) => ({ x: b.x + b.width / 2, y: b.y + b.height / 2 })
 const fc = (page, kfId) => page.locator(`.fc-event[data-kf-id="${kfId}"]`).first()
@@ -138,7 +143,7 @@ const menu = (page, label = 'Block details') => page.locator(`[role="menu"][aria
 
 // ── S1: the summary card and the Integrations page tell the truth — no "Coming soon" ──
 if (want('s1')) {
-  const { ctx, page, errors } = await open('/settings')
+  const { ctx, page, errors } = await open('/settings/integrations')
   const txt = await bodyText(page)
   check('s1 settings: no "Coming soon" anywhere', !/coming soon/i.test(txt))
   const row = page.locator('#settings-Integrations .st-row', { hasText: 'Google Calendar' })
@@ -197,7 +202,7 @@ if (want('s4')) {
     const { ctx, page, errors, state } = await open('/settings?google=connected', { theme, rows: { integrations: [GOOGLE.ok] }, fn: { 'google-sync': () => SYNCED } })
     await sleep(800)
     const said = (await status(page).textContent().catch(() => '')) ?? ''
-    check(`s4 ${theme}: the landing opens Integrations`, (await page.locator('.st-nav-item[aria-current="true"]').textContent()) === 'Integrations')
+    check(`s4 ${theme}: the landing opens Integrations › Google Calendar`, (await page.locator('.st-nav-item[aria-current="page"]').textContent()) === 'Integrations' && new URL(page.url()).pathname === '/settings/integrations/google')
     check(`s4 ${theme}: the first sync runs (google-sync {action:'sync'}) and says so`, state.calls.some((c) => c.name === 'google-sync' && c.body?.action === 'sync') && /Connected · Synced · 2 calendars · 335 events/.test(said), said)
     check(`s4 ${theme}: ?google= is gone from the address`, !page.url().includes('google='), page.url())
     const card = googleCard(page)
@@ -247,7 +252,7 @@ if (want('s6')) {
     await ctx.close()
   }
   {
-    const { ctx, page, errors } = await open('/settings', { rows: { integrations: [GOOGLE.failing] } })
+    const { ctx, page, errors } = await open('/settings/integrations', { rows: { integrations: [GOOGLE.failing] } })
     const row = page.locator('#settings-Integrations .st-row', { hasText: 'Google Calendar' })
     check('s6 failing: the summary row says "Access expired — reconnect"', /Access expired — reconnect/.test(await row.textContent()))
     await openIntegrations(page)
@@ -263,9 +268,10 @@ if (want('s6')) {
 if (want('s7')) {
   for (const theme of ['day', 'night']) {
     const { ctx, page, errors } = await open('/settings', { view: phone, theme, rows: { integrations: [GOOGLE.ok] } })
+    await openIntegrations(page)
     const card = googleCard(page)
     await card.scrollIntoViewIfNeeded()
-    check(`s7 ${theme}: phone Settings → Connections has Google Calendar with its switches`, (await card.getByRole('switch', { name: 'Show Prayer times' }).count()) === 1 && (await card.getByRole('button', { name: 'Sync now' }).count()) === 1)
+    check(`s7 ${theme}: phone Settings → Integrations › Google Calendar with its switches`, (await card.getByRole('switch', { name: 'Show Prayer times' }).count()) === 1 && (await card.getByRole('button', { name: 'Sync now' }).count()) === 1)
     check(`s7 ${theme}: …and "Show my plan in Google as busy"`, (await card.getByRole('switch', { name: 'Show my plan in Google as busy' }).count()) === 1)
     const wide = await page.evaluate(() => document.documentElement.scrollWidth)
     check(`s7 ${theme}: no horizontal scroll at 390`, wide <= 390, wide)
@@ -278,7 +284,7 @@ if (want('s7')) {
 // ── S8: "Show my plan in Google as busy" — on by default once the grant can write; off, then on + a sync ──
 if (want('s8')) {
   let st = null
-  const { ctx, page, errors, state } = await open('/settings', {
+  const { ctx, page, errors, state } = await open('/settings/integrations', {
     rows: { integrations: [GOOGLE.ok] },
     fn: {
       'google-connect': (b) => {
