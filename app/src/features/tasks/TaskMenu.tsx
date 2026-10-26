@@ -186,6 +186,7 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
         schedule: (iso, timed) => done(() => actions.schedule(iso, timed)),
         tomorrow: () => done(actions.tomorrow),
         slot: bulk || !actions.slot ? undefined : (s, e) => done(() => actions.slot!(s, e)),
+        duration: bulk || !actions.duration ? undefined : (m) => actions.duration!(m),
         someday: () => done(actions.someday),
         clearDate: clearDate && (() => done(clearDate)),
       }}
