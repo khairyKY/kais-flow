@@ -131,6 +131,9 @@ const router = createBrowserRouter([
           { path: 'weekly-review', element: <WeeklyReviewPage /> },
           { path: 'settings', element: <SettingsPage /> },
           { path: 'settings/import', element: <ImportPage /> },
+          // Settings, layout A (2026-10-26): one category a page, the Integrations providers one level down.
+          { path: 'settings/:cat', element: <SettingsPage /> },
+          { path: 'settings/:cat/:sub', element: <SettingsPage /> },
           // PWA share-target lands here (manifest share_target -> /share)
           { path: 'share', element: <SharePage /> },
           // New surfaces (Wave 2) — stubbed so the shell nav resolves; each wave swaps its element.

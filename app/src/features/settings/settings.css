@@ -1,45 +1,42 @@
-/* Settings — UI pass (Kai 2026-10-08: "This doesn't look good"). One card and one row pattern for
-   every setting: a card is a serif title (+ one short line) over rows; a row is a label (Inter Tight
-   14, phone 15) and one short help line (13, muted, sentence case) with its control right-aligned at
-   its natural width; the control drops under the label only when the two don't fit side by side.
-   Settings is a tool (Bound Journal): no tape, tilt or handwriting — its asides are the UI face, muted. Sizes are layout px: the desktop's interface size is root
-   zoom, and the two-column switch is a container query, so it follows the real width at 100–175%. */
+/* Settings — layout A, rows A (Settings options.html, Kai 2026-10-25 "layout A, rows A"). The categories
+   with their kf icons down the left (search at the top of the list), one category on the right; on a phone,
+   a list that drills into one page per category. Each section is a rounded panel of rows with hairlines
+   between: a label (14, phone 15) and one short help line (13, muted), the control on the right at its
+   natural width, dropping under the label only when the two don't fit. The danger zone is a terra-edged
+   panel. Settings is a tool (Bound Journal): no tape, tilt or handwriting. Sizes are layout px — the
+   desktop's interface size is root zoom. Colours are the app's tokens; none is changed. */
 
-/* ── card ── */
-.st-card {
-  position: relative;
-  box-sizing: border-box;
+/* ── a section: a title over a rounded panel ── */
+.st-sec {
+  margin-top: 22px;
   min-width: 0;
-  background: var(--paper-parchment);
-  border: 1px solid var(--line-card);
-  border-radius: var(--radius-sharp);
-  box-shadow: var(--shadow-card);
-  padding: 20px 24px 8px;
   scroll-margin-top: 24px;
-  container-type: inline-size;
 }
-.st-card.is-plain {
-  box-shadow: var(--shadow-crisp);
+.st-sec:first-child,
+.st-page-head + .st-sec {
+  margin-top: 0;
 }
-.st-card.is-padded {
-  padding-bottom: 20px;
-}
-.st-head {
+.st-sec-head {
   display: flex;
   align-items: baseline;
   flex-wrap: wrap;
   gap: 4px 12px;
-  padding-bottom: 8px;
+  margin: 0 4px 8px;
 }
 .st-title {
   margin: 0;
   flex: 1 1 auto;
-  font-family: var(--font-display);
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1.25;
-  letter-spacing: var(--ls-display);
+  font-family: var(--font-ui);
+  font-size: var(--fs-section);
+  font-weight: var(--fw-semibold);
+  line-height: 1.3;
   color: var(--ink-body);
+}
+.st-title small {
+  margin-left: 8px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--ink-faint);
 }
 .st-sub {
   flex-basis: 100%;
@@ -48,36 +45,84 @@
   line-height: 1.45;
   color: var(--ink-muted);
 }
+.st-panel {
+  position: relative;
+  min-width: 0;
+  background: var(--paper-parchment);
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-card);
+}
+.st-panel.is-padded {
+  padding: 16px;
+}
+.st-sec.is-danger .st-title {
+  color: var(--acc-terra-ink);
+}
+.st-sec.is-danger .st-panel {
+  border-color: color-mix(in srgb, var(--acc-terra-ink) 45%, var(--line-card));
+}
 
-/* ── row ── */
+/* ── the row ── */
 .st-row {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px 24px;
-  padding: 12px 0;
-  border-top: 1px solid var(--line-dashed);
+  gap: 8px 16px;
+  min-height: 54px;
+  box-sizing: border-box;
+  padding: 11px 16px;
+  border-radius: inherit;
+  color: inherit;
+  text-decoration: none;
+  scroll-margin-top: 24px;
 }
-.st-head + .st-row,
-.st-card > .st-row:first-child {
-  border-top: none;
+.st-row + .st-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 16px;
+  right: 0;
+  border-top: 1px solid var(--line-card);
+}
+.st-row.has-lead::before,
+.st-row.has-lead + .st-row::before {
+  left: 58px;
+}
+.st-panel.is-padded .st-row {
+  padding-inline: 0;
+}
+.st-panel.is-padded .st-row::before {
+  left: 0;
+}
+.st-row.is-link {
+  cursor: pointer;
+}
+@media (hover: hover) {
+  .st-row.is-link:hover {
+    background-color: var(--pressed-overlay);
+  }
+}
+.st-row.is-link:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+/* Opened from a search result: the row it came from, lit for a moment. */
+.st-row.is-lit {
+  background-color: color-mix(in srgb, var(--acc-buttercream) 40%, transparent);
+  transition: background-color var(--dur-press, 160ms) var(--ease-standard, ease);
 }
 .st-row-text {
-  flex: 1 1 180px;
+  flex: 1 1 200px;
   min-width: 0;
-}
-.st-row.has-lead .st-row-text {
-  flex-basis: 160px;
 }
 .st-lead {
   flex: none;
-  width: 30px;
+  width: 28px;
+  margin-right: -4px;
   display: flex;
   justify-content: center;
   color: var(--ink-muted);
-}
-.st-row.has-lead {
-  column-gap: 12px;
 }
 .st-label {
   font-family: var(--font-ui);
@@ -87,7 +132,7 @@
   color: var(--ink-body);
 }
 .st-help {
-  margin-top: 2px;
+  margin-top: 1px;
   font-size: 13px;
   line-height: 18px;
   color: var(--ink-muted);
@@ -102,22 +147,67 @@
   align-items: center;
   justify-content: flex-end;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 8px 10px;
 }
-/* A block under a row's text (the weekend days, the zone search, a key box) — full width. */
+/* A block under a row's text (the weekend days, a zone search, the notes) — full width. */
 .st-under {
   flex-basis: 100%;
   min-width: 0;
 }
+/* A block that isn't one row (domains, labels). */
+.st-block {
+  padding: 12px 16px;
+}
+.st-chev {
+  color: var(--ink-faint);
+}
+/* › on a search result: open its category. */
+.st-go {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink-faint);
+  cursor: pointer;
+}
+.st-go:hover {
+  color: var(--ink-body);
+}
+.st-go:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
 .st-note {
   margin: 0;
-  padding: 10px 0 12px;
   font-size: 13px;
   line-height: 1.45;
   color: var(--ink-muted);
 }
+.st-note.st-pad {
+  padding: 0 16px 12px;
+}
 
-/* A quiet text link that opens or goes somewhere (What do these mean? · Open trash). */
+/* The picker (a choice of more than three): Select's trigger or a button that opens a search. */
+.st-pick {
+  height: 32px;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0 10px 0 12px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.st-pick:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* A quiet text link that opens or goes somewhere (What do these mean? · Manage). */
 .st-link {
   display: inline-flex;
   align-items: center;
@@ -132,24 +222,13 @@
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
   text-underline-offset: 3px;
+  white-space: nowrap;
   cursor: pointer;
 }
 .st-link:focus-visible {
   outline: none;
   box-shadow: var(--focus-ring);
   border-radius: 2px;
-}
-
-/* A sub-heading inside a long card (Notifications: Kinds · Quiet · This device). */
-.st-sub-label {
-  padding: 16px 0 4px;
-  font-family: var(--font-mono);
-  font-size: var(--fs-meta-l);
-  letter-spacing: var(--ls-meta);
-  color: var(--ink-faint);
-}
-.st-sub-label + .st-row {
-  border-top: none;
 }
 
 .st-field {
@@ -183,7 +262,7 @@
 .st-chip {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   padding: 3px 9px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--line-control);
@@ -197,8 +276,49 @@
   flex: none;
   border-radius: 50%;
 }
+/* Integrations' row marks: the provider's glyph on a small tile. */
+.st-brand {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  background: var(--paper-bone);
+  border: 1px solid var(--line-card);
+  color: var(--ink-muted);
+}
+.st-brand.is-gh {
+  background: var(--ink-body);
+  border-color: var(--ink-body);
+  color: var(--paper-parchment);
+}
+/* Scans today: a meter and its count. */
+.st-meter {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.st-meter i {
+  display: block;
+  width: 110px;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--line-card);
+  overflow: hidden;
+}
+.st-meter b {
+  display: block;
+  height: 100%;
+  background: var(--acc-hydrangea-deep);
+}
 
-/* The ▶ on every sound row and pack card: 28 drawn, 48 hit on a phone. */
+/* The ▶ on every sound row: 28 drawn, 48 hit on a phone. */
 .st-play {
   position: relative;
   width: 28px;
@@ -219,48 +339,7 @@
   box-shadow: var(--focus-ring);
 }
 
-/* The sound packs — three radio cards. */
-.st-packs {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 8px;
-  padding: 12px 0;
-  border-top: 1px solid var(--line-dashed);
-}
-.st-pack {
-  position: relative;
-  border-radius: var(--radius-input);
-  border: 1px solid var(--line-card);
-}
-.st-pack.is-on {
-  border-color: var(--acc-sage-text);
-  background: var(--block-sage);
-}
-.st-pack > button[role='radio'] {
-  display: block;
-  width: 100%;
-  min-height: 56px;
-  box-sizing: border-box;
-  padding: 10px 44px 10px 12px;
-  border: none;
-  border-radius: inherit;
-  background: none;
-  text-align: left;
-  font: inherit;
-  cursor: pointer;
-}
-.st-pack > button[role='radio']:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-.st-pack .st-play {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-}
-
-/* Sliders (paper texture, resurfacing): the hairline track, made real by a native range on top. */
+/* Sliders (paper texture, "Not now"): the hairline track, made real by a native range on top. */
 .st-slider {
   position: relative;
   display: inline-block;
@@ -301,14 +380,15 @@
   box-shadow: var(--focus-ring);
 }
 .st-value {
-  min-width: 64px;
+  min-width: 52px;
   text-align: right;
   font-size: 13px;
   color: var(--ink-muted);
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-/* ── the glossary (Calendar → What do these mean?): the Plan menu's own popover on a computer, a sheet on a phone ── */
+/* ── the glossary (Calendar & time → What do these mean?): a popover on a computer, a sheet on a phone ── */
 .st-sheet-body {
   padding: 0 0 24px;
 }
@@ -332,114 +412,14 @@
   color: var(--ink-muted);
 }
 
-/* ── desktop layout: a sticky section list, then one or two columns of cards ── */
-.st-desk {
-  display: flex;
-  flex: 1;
-  min-height: 0;
-}
-.st-nav {
-  width: 184px;
-  flex: none;
-  border-right: 1px solid var(--line-solid);
-}
-.st-nav-in {
-  position: sticky;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 28px 16px 24px;
-}
-.st-nav-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
-}
-.st-nav-title h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 26px;
-  font-weight: 500;
-  color: var(--ink-body);
-}
-.st-nav-item {
-  display: block;
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid transparent;
-  border-radius: var(--radius-input);
-  background: none;
-  font: inherit;
-  font-size: 14px;
-  text-align: left;
-  color: var(--ink-muted);
-  cursor: pointer;
-}
-.st-nav-item:hover {
-  color: var(--ink-body);
-}
-.st-nav-item[aria-current='true'] {
-  background: var(--paper-parchment);
-  border-color: var(--line-card);
-  box-shadow: var(--shadow-crisp);
-  color: var(--ink-body);
-  font-weight: 600;
-}
-.st-nav-item:focus-visible {
-  outline: none;
-  box-shadow: var(--focus-ring);
-}
-.st-nav-hand {
-  margin-top: 20px;
-  padding: 0 4px;
-  font-size: var(--fs-caption);
-  color: var(--ink-muted);
-}
-.st-main {
-  flex: 1;
-  min-width: 0;
-  padding: 28px 32px 48px;
-  container-type: inline-size;
-  container-name: st-main;
-}
-.st-cols {
-  display: grid;
-  gap: 20px;
-  max-width: 720px;
-}
-.st-col {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  min-width: 0;
-}
-/* Wide enough for two readable columns (≈ 1920 at 125%, 1440+ at 100%): use them. */
-@container st-main (min-width: 900px) {
-  .st-cols {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-    max-width: 1240px;
-  }
-}
-.st-integrations {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  max-width: 780px;
-}
-/* Settings 2a: GitHub's "Rules · how GitHub lands" — bone, under a dashed rule, out to the card's
-   edges (the padded card's 24 / 20; phone 16 / 16). */
+/* Settings 2a: GitHub's "Rules · how GitHub lands" (and Google's calendars) — bone, under a dashed rule,
+   out to the padded panel's edges. */
 .st-gh-rules {
-  margin: 16px -24px -20px;
-  padding: 16px 24px 4px;
+  margin: 16px -16px -16px;
+  padding: 12px 16px 4px;
   background: var(--paper-bone);
   border-top: 1px solid var(--line-dashed);
-  border-radius: 0 0 var(--radius-sharp) var(--radius-sharp);
-}
-.st-gh-rules-label + .st-row {
-  border-top: none;
+  border-radius: 0 0 var(--radius-card) var(--radius-card);
 }
 .st-chip-x {
   padding: 0;
@@ -452,70 +432,370 @@
 .st-chip-x:hover {
   color: var(--ink-body);
 }
-/* D6: a section label is 14px semibold ink, sentence case, no rule after it. */
-.st-group-label {
-  margin-top: 12px;
-  font-size: var(--fs-section);
-  font-weight: var(--fw-semibold);
+
+/* ── search: the field heads the list; results are the rows themselves ── */
+.st-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  box-sizing: border-box;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--line-control);
+  border-radius: var(--radius-md);
+  background: var(--paper-bone);
+  color: var(--ink-faint);
+  font-size: 13px;
+}
+.st-search.is-on {
+  border-color: var(--ink-muted);
+}
+.st-search:focus-within {
+  box-shadow: var(--focus-ring);
+}
+.st-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font: inherit;
   color: var(--ink-body);
 }
-.st-pair {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 16px;
-  align-items: start;
+.st-search input::placeholder {
+  color: var(--ink-faint);
+}
+.st-search input::-webkit-search-cancel-button {
+  display: none;
+}
+.st-search kbd {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--line-control);
+  border-bottom-width: 2px;
+  border-radius: 5px;
+  background: var(--paper-parchment);
+  font: 500 11px/1 var(--font-ui);
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+.st-res-h {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.st-res-h b {
+  color: var(--ink-body);
+  font-weight: 600;
+}
+.st-res-foot {
+  margin: 18px 0 0;
+  font-size: 13px;
+  color: var(--ink-muted);
+}
+.st-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px 4px;
+  font-size: 12.5px;
+  color: var(--ink-muted);
+}
+.st-results .st-sec {
+  margin-top: 18px;
+}
+.st-results .st-sec:first-child {
+  margin-top: 0;
+}
+/* Only the rows that match: a section left with none goes, and so does whatever isn't a row. */
+.st-results .st-sec:not(:has(.st-row)) {
+  display: none;
+}
+.st-results .st-panel > :not(.st-row) {
+  display: none;
+}
+.st-results mark {
+  background: color-mix(in srgb, var(--acc-buttercream) 55%, transparent);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
 }
 
-/* ── phone ── */
+/* ── a category's page ── */
+.st-page-head {
+  margin: 0 0 18px;
+}
+.st-page-head h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 1.2;
+  letter-spacing: var(--ls-display);
+  color: var(--ink-body);
+}
+.st-page-head p {
+  margin: 4px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-muted);
+}
+.st-provider {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+}
+.st-provider > .kf-backlink {
+  align-self: flex-start;
+}
+
+/* ── computer: the category list (sticky), one category beside it ── */
+.st-desk {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+.st-nav {
+  width: 228px;
+  flex: none;
+  border-right: 1px solid var(--line-solid);
+}
+/* At 150% on a short window the list is taller than the screen: it scrolls on its own then (and the
+   wheel passes on to the page at its ends — no overscroll containment here). */
+.st-nav-in {
+  position: sticky;
+  top: 0;
+  max-height: calc(var(--kf-vh, 100vh) - 72px);
+  overflow-y: auto;
+  box-sizing: border-box;
+  padding: 26px 14px 20px;
+}
+.st-nav-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.st-nav-title h1 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--ink-body);
+}
+.st-nav .st-search {
+  margin-bottom: 12px;
+}
+.st-nav-grp {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line-card);
+}
+.st-nav .st-search + .st-nav-grp {
+  border-top: none;
+}
+.st-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-input);
+  font-size: 14px;
+  color: var(--ink-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.st-nav-item:hover {
+  color: var(--ink-body);
+}
+/* The category you're on: the sidebar's own active row (frosted at night). */
+.st-nav-item[aria-current='page'] {
+  background: var(--frost-bg, var(--paper-parchment));
+  border-color: var(--frost-line, var(--line-card));
+  color: var(--ink-body);
+  font-weight: 600;
+}
+.st-nav-item:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+.st-main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px 36px 40px;
+}
+.st-main-in {
+  max-width: 700px;
+}
+
+/* ── phone: the list, then one page per category ── */
 .st-phone {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+}
+.st-phone > .kf-backlink {
+  align-self: flex-start;
 }
 .st-phone-title {
   display: flex;
   align-items: center;
   gap: 11px;
-  margin-bottom: 4px;
 }
 .st-phone-title h1 {
   margin: 0;
   font-family: var(--font-display);
+  font-size: 30px;
   font-weight: 500;
+  line-height: 1.2;
   color: var(--ink-body);
 }
 .st-phone-foot {
-  margin-top: 4px;
   font-size: var(--fs-caption);
   color: var(--ink-muted);
 }
+.st-me {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-card);
+  background: var(--paper-parchment);
+  color: var(--ink-body);
+  text-decoration: none;
+}
+.st-me-av {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--paper-bone);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-muted);
+}
+.st-me-text {
+  flex: 1;
+  min-width: 0;
+}
+.st-me-text b {
+  display: block;
+  font-weight: 600;
+}
+.st-me-text span {
+  display: block;
+  font-size: 13px;
+  color: var(--ink-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-list {
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-card);
+  background: var(--paper-parchment);
+}
+.st-list-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 0 12px 0 14px;
+  color: var(--ink-body);
+  text-decoration: none;
+  border-radius: inherit;
+}
+.st-list-row + .st-list-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 48px;
+  right: 0;
+  border-top: 1px solid var(--line-card);
+}
+.st-list-row > svg:first-child {
+  color: var(--ink-muted);
+}
+.st-list-row .n {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.st-list-row .v {
+  font-size: 14px;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
 
 @media (max-width: 767px) {
-  .st-card {
-    padding: 16px 16px 4px;
-    box-shadow: var(--shadow-crisp);
-  }
-  .st-card.is-padded {
-    padding-bottom: 16px;
-  }
   .st-row {
-    min-height: var(--row-min);
-    box-sizing: border-box;
+    min-height: 56px;
+    padding: 10px 14px;
   }
-  .st-packs {
-    grid-template-columns: 1fr;
+  .st-row + .st-row::before {
+    left: 14px;
+  }
+  .st-row-text {
+    flex-basis: 120px;
   }
   .st-label {
     font-size: 15px;
+  }
+  /* A three-way choice spreads across the full width under its label. */
+  .st-ctrl:has(> .kf-seg > .kf-seg-btn:nth-child(3)) {
+    flex-basis: 100%;
+    justify-content: flex-start;
+    margin-left: 0;
+  }
+  .st-ctrl > .kf-seg:has(> .kf-seg-btn:nth-child(3)) {
+    display: flex;
+    width: 100%;
+  }
+  .st-ctrl > .kf-seg:has(> .kf-seg-btn:nth-child(3)) > .kf-seg-btn {
+    flex: 1;
+  }
+  .st-pick {
+    height: 44px;
+    font-size: 15px;
+  }
+  .st-search {
+    height: 44px;
+    font-size: 15px;
+  }
+  .st-search kbd {
+    display: none;
+  }
+  .st-page-head h2 {
+    font-size: 26px;
   }
   .st-link {
     min-height: var(--touch-min);
     font-size: 14px;
   }
-  .st-play::after {
+  .st-play::after,
+  .st-go::after {
     content: '';
     position: absolute;
     inset: -10px;
+  }
+  .st-go {
+    position: relative;
   }
   .st-field {
     min-height: var(--touch-min);
@@ -527,8 +807,7 @@
   .st-chip {
     font-size: 13px;
   }
-  .st-gh-rules {
-    margin: 16px -16px -16px;
-    padding: 12px 16px 0;
+  .st-block {
+    padding: 12px 14px;
   }
 }

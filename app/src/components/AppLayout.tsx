@@ -668,6 +668,9 @@ export function AppLayout() {
   const { pathname } = location
   const isMobile = useIsMobile()
   const bleed = !isMobile && FULL_BLEED.includes(pathname)
+  // Settings on a computer is one page with its category list beside it (layout A, 2026-10-26): switching
+  // category mustn't remount it (the list, its search and its scroll stay); the phone drills, so it does.
+  const routeKey = !isMobile && /^\/settings(\/(?!import)|$)/.test(pathname) ? '/settings' : pathname
   // Motion 2b/3a: the page scroller is the stack's sheet (lib/motion useStackTransition); Effects 2k
   // gives its edges their resistance on touch.
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -1086,7 +1089,7 @@ export function AppLayout() {
         {(isMobile || !NO_TOPBAR.includes(pathname)) && <TopBar sync={isMobile} />}
         <div ref={scrollerRef} className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: bleed ? 'hidden' : 'auto', padding: bleed ? 0 : '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
-            <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined} style={bleed ? { height: '100%' } : undefined}>
+            <div key={`${routeKey}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined} style={bleed ? { height: '100%' } : undefined}>
               <Outlet />
             </div>
           </Suspense>

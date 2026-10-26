@@ -30,8 +30,7 @@ export function useAutoFileNotice(): void {
     if (!uid || !owesAutoFileNotice(data, mergeSeen(local, data?.help_seen))) return
     markSeen(AUTOFILE_NOTICE)
     toastAction('Captures now wait in your Inbox — the AI’s guess is one tap away.', 'Settings', () => {
-      navigate('/settings')
-      requestAnimationFrame(() => requestAnimationFrame(() => document.getElementById('settings-Capture')?.scrollIntoView({ block: 'start' })))
+      navigate('/settings/capture')
     })
   }, [uid, local, data, navigate])
 }

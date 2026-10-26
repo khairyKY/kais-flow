@@ -157,7 +157,7 @@ export function WeeklyReviewPage() {
           <div style={{ marginTop: isMobile ? 16 : 26, display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 14 }}>
             {domains.length === 0 && (
               <p style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)' }}>
-                No domains yet — the sweep walks your domains one by one. <Link to="/settings" style={{ color: 'var(--acc-terra)' }}>Make one in Settings › Organize</Link>, or just close the week.
+                No domains yet — the sweep walks your domains one by one. <Link to="/settings/organize" style={{ color: 'var(--acc-terra)' }}>Make one in Settings › Organize</Link>, or just close the week.
               </p>
             )}
             {domains.map((d) => (

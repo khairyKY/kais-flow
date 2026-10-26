@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
 import {
   isPushSupported,
   useMyPushSubscriptions,
@@ -8,7 +8,7 @@ import {
 } from '../notifications/api'
 import { testThisDevice, useDeviceState } from '../notifications/device'
 import { blockers } from '../notifications/plan'
-import { useAppSettings, updateAppSetting, useCalendarDefaultView, settingSynced, type AutoProjectMode, type CalendarDefaultView } from '../../lib/settings'
+import { useAppSettings, updateAppSetting, useCalendarDefaultView, settingSynced, useOwner, type AutoProjectMode, type CalendarDefaultView } from '../../lib/settings'
 import { appPlatform, buildStamp, installedVersion, reloadToUpdate } from '../../lib/appUpdate'
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
 import { checkForUpdates } from '../whats-new/check'
@@ -17,7 +17,7 @@ import { UpdateButton, UpdateNotes } from '../whats-new/WhatsNew'
 import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme } from '../../lib/theme'
-import { setHour24, useHour24 } from '../../lib/clock'
+import { clockText, setHour24, useHour24 } from '../../lib/clock'
 import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, uiZoom, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
@@ -28,9 +28,11 @@ import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_sha
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { useMcpKey, createMcpKey, deleteMcpKey, setMcpPersonal, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
-import { PaperSettingsCard } from '../paper/PaperSettings'
+import { useScansToday } from '../paper/api'
+import { DAILY_PAGES, scansLeft } from '../paper/paperMath'
+import { usePaperStore } from '../paper/paperStore'
 import { useToastStore } from '../../lib/toastStore'
-import { Button, Chip, Segmented, Toggle } from '../../components/kit'
+import { BackLink, Button, Chip, KeyCombo, Segmented, Toggle } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Popover } from '../../components/DatePicker'
@@ -43,6 +45,12 @@ import { useHideTitles } from '../widgets/bridge'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
+import { readViewOptions, writeViewOptions, type CalViewOptions } from '../calendar/ViewOptionsPopover'
+import { CALENDAR_SHORTCUTS, COMMAND_BAR_SHORTCUTS, GLOBAL_SHORTCUTS } from '../../lib/shortcuts'
+import type { ShortcutEntry } from '../../lib/pageShortcutsStore'
+import { useSignOut } from '../auth/useSignOut'
+import { useDomains } from '../domains/api'
+import { CAT, CATS, DESKTOP_HOME, GROUPS, anchorTarget, isCat, isProvider, matches, type CatId, type ProviderId } from './categories'
 import { parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
 import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
@@ -56,40 +64,122 @@ import { PRIVACY_VERSION, TERMS_VERSION } from '../../../../supabase/functions/_
 import type { ExportKind } from '../export/files'
 import './settings.css'
 
-// Settings.dc.html t1 1a/1b, t2 2a, t3 3a — transcribed onto real data. UI pass (Kai 2026-10-08,
-// "This doesn't look good"): one card (serif title, no tape — see settings.css) and one row
-// (label + one short help line + its control) everywhere, on the computer and the phone alike;
-// long explanations moved out of the cards (the plan-shortcut glossary opens from a link).
+// Settings, layout A + rows A (Settings options.html, Kai 2026-10-25 "layout A, rows A"): eleven
+// categories down the left (a list that drills in on a phone), one on the right; each category is a few
+// sections, each section a rounded panel of rows — label + one short help line, the control on the right,
+// a choice of more than three as a picker, the danger zone a terra-edged panel. Search heads the list and
+// shows the matching rows themselves, real controls and all (the same components, filtered — so a row
+// can't drift from its search result). Earlier history: Settings.dc.html t1–t3, the UI pass of 2026-10-08.
 
-/** A settings card: a serif title (+ one short line, + something on its right), then its rows. */
-function SCard({ id, title, sub, aside, plain, padded, style, children }: { id?: string; title?: ReactNode; sub?: ReactNode; aside?: ReactNode; plain?: boolean; padded?: boolean; style?: CSSProperties; children: ReactNode }) {
+/** What a row needs to know: the search (if any) and the category it sits in. */
+interface Scope {
+  q: string
+  cat: CatId | null
+  /** › on a search result: its category, the row lit. */
+  open: (cat: CatId, key: string) => void
+}
+const ScopeCtx = createContext<Scope>({ q: '', cat: null, open: () => {} })
+
+/** One section: a title (+ a note, + something on its right, + one short line) over a rounded panel of
+ * rows. In search results the title becomes the crumb "Category › Section" and the panel keeps only the
+ * rows that match (settings.css hides the rest, and a section left with none). */
+function SCard({ id, title, note, sub, aside, danger, padded, children }: { id?: string; title?: string; note?: string; sub?: ReactNode; aside?: ReactNode; danger?: boolean; padded?: boolean; children: ReactNode }) {
+  const { q, cat } = useContext(ScopeCtx)
   return (
-    <section id={id} className={`st-card${plain ? ' is-plain' : ''}${padded ? ' is-padded' : ''}`} style={style}>
-      {title != null && (
-        <header className="st-head">
-          <h2 className="st-title">{title}</h2>
-          {aside}
-          {sub != null && <p className="st-sub">{sub}</p>}
-        </header>
+    <section id={id} className={`st-sec${danger ? ' is-danger' : ''}`}>
+      {q && cat ? (
+        <div className="st-crumb">
+          <Icon name={CAT[cat].icon} size={15} />
+          {CAT[cat].name}
+          {title ? ` › ${title}` : ''}
+        </div>
+      ) : (
+        (title != null || aside != null) && (
+          <header className="st-sec-head">
+            {title != null && (
+              <h3 className="st-title">
+                {title}
+                {note && <small>{note}</small>}
+              </h3>
+            )}
+            {aside}
+            {sub != null && <p className="st-sub">{sub}</p>}
+          </header>
+        )
       )}
-      {children}
+      <div className={`st-panel${padded ? ' is-padded' : ''}`}>{children}</div>
     </section>
   )
 }
 
-/** The one row pattern: label + one short help line, the control right-aligned at its natural width
- * (it drops under the label only when they don't fit side by side); `under` = a full-width block. */
-function Row({ label, help, lead, under, style, attrs, children }: { label: ReactNode; help?: ReactNode; lead?: ReactNode; under?: ReactNode; style?: CSSProperties; attrs?: Record<string, string>; children?: ReactNode }) {
-  return (
-    <div className={`st-row${lead ? ' has-lead' : ''}`} style={style} {...attrs}>
+/** A search hit inside a label, marked. */
+function marked(text: string, q: string): ReactNode {
+  const words = q.trim().split(/\s+/).filter(Boolean).map((w) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  if (!words.length) return text
+  return text.split(new RegExp(`\\b(${words.join('|')})`, 'i')).map((part, i) => (i % 2 ? <mark key={i}>{part}</mark> : part))
+}
+
+/** The one row: label + one short help line, the control right-aligned (it drops under the label only
+ * when they don't fit side by side); `under` = a full-width block. `find` names a row whose label isn't
+ * plain text, `keys` are the other words search should find it by ("dark" → Theme). `to` makes the whole
+ * row a link with a ›. Under a search, a row that doesn't match isn't drawn, and one that does gets a ›. */
+function Row({ label, help, lead, under, style, attrs, find, keys, to, children }: { label: ReactNode; help?: ReactNode; lead?: ReactNode; under?: ReactNode; style?: CSSProperties; attrs?: Record<string, string>; find?: string; keys?: string; to?: string; children?: ReactNode }) {
+  const { q, cat, open } = useContext(ScopeCtx)
+  const key = find ?? (typeof label === 'string' ? label : '')
+  if (q && !matches(q, key, typeof help === 'string' ? help : '', keys)) return null
+  const go = q && cat && !to ? (
+    <button type="button" className="st-go" aria-label={`Open ${CAT[cat].name}`} title={`Open ${CAT[cat].name}`} onClick={() => open(cat, key)}>
+      <Icon name="chevright" size={16} />
+    </button>
+  ) : null
+  const inner = (
+    <>
       {lead && <span className="st-lead">{lead}</span>}
       <div className="st-row-text">
-        <div className="st-label">{label}</div>
+        <div className="st-label">{q && typeof label === 'string' ? marked(label, q) : label}</div>
         {help != null && <div className="st-help">{help}</div>}
       </div>
-      {children != null && <div className="st-ctrl">{children}</div>}
+      {(children != null || go || to) && (
+        <div className="st-ctrl">
+          {children}
+          {go}
+          {to && <Icon name="chevright" size={16} className="st-chev" />}
+        </div>
+      )}
       {under != null && <div className="st-under">{under}</div>}
+    </>
+  )
+  const cls = `st-row${lead ? ' has-lead' : ''}${to ? ' is-link' : ''}`
+  return to ? (
+    <Link to={to} className={cls} style={style} data-st-key={key || undefined} {...attrs}>
+      {inner}
+    </Link>
+  ) : (
+    <div className={cls} style={style} data-st-key={key || undefined} {...attrs}>
+      {inner}
     </div>
+  )
+}
+
+/** A block that isn't one row (the domain list, the labels): itself on its page, a plain row in search. */
+function Find({ label, help, keys, children }: { label: string; help?: string; keys?: string; children: ReactNode }) {
+  const { q } = useContext(ScopeCtx)
+  return q ? <Row label={label} help={help} keys={keys} /> : <div className="st-block">{children}</div>
+}
+
+/** The picker look (a choice of more than three): our Select's trigger, or a button that opens a search. */
+const PICK: CSSProperties = { background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 'var(--radius-md)', color: 'var(--ink-body)' }
+const pickFace = (text: ReactNode) => (
+  <>
+    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{text}</span>
+    <Icon name="chevdown" size={14} style={{ color: 'var(--ink-faint)' }} />
+  </>
+)
+function PickButton({ text, open, label, onClick }: { text: ReactNode; open: boolean; label: string; onClick: () => void }) {
+  return (
+    <button type="button" className="st-pick" style={{ ...PICK, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontFamily: 'var(--font-ui)' }} aria-expanded={open} aria-label={label} onClick={onClick}>
+      {pickFace(text)}
+    </button>
   )
 }
 
@@ -201,31 +291,33 @@ function AppearanceCard() {
   const [animOn, setAnimOn] = useState(readEffectsOn)
   const osReduced = usePrefersReducedMotion()
   const grain = useGrain()
-  const h24 = useHour24()
 
   return (
-    <SCard id="settings-Appearance" title="Appearance">
-      <Row label="Theme" help="Auto follows your system">
+    <SCard id="settings-Appearance">
+      <Row label="Theme" help="Auto follows your system" keys="dark light night day mode colour color">
         <Segmented<ThemeMode> label="Theme" value={mode} onChange={setMode} options={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }, { value: 'auto', label: 'Auto' }]} />
       </Row>
       {/* R4 (Kai 2026-07-20): labelled in the percentages he used. Polish F2b: the default is per
           device (125% on a computer, 100% on a phone), so the help names this device's own normal. */}
-      <Row label="Interface size" help={`Scales the whole app · ${Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is this device’s normal`}>
-        <Segmented<UiScale> label="Interface size" value={scale} onChange={setScale} options={UI_SCALES.map((s) => ({ value: s, label: `${Math.round(s * 100)}%` }))} />
+      <Row label="Interface size" help={`Scales the whole app · ${Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is this device’s normal`} keys="zoom scale bigger smaller text font">
+        <Select
+          value={String(scale)}
+          onChange={(v) => setScale(Number(v) as UiScale)}
+          options={UI_SCALES.map((s) => ({ value: String(s), label: `${Math.round(s * 100)}%` }))}
+          ariaLabel="Interface size"
+          className="st-pick"
+          style={PICK}
+          display={pickFace(`${Math.round(scale * 100)}%`)}
+        />
       </Row>
-      {/* Kai 2026-10-22: one clock for every time the app shows — the calendar's View options switch, here
-          too (lib/clock; this device). */}
-      <Row label="Time format" help={h24 ? 'Every time reads 13:30' : 'Every time reads 1:30 PM'}>
-        <Segmented<'12' | '24'> label="Time format" value={h24 ? '24' : '12'} onChange={(v) => setHour24(v === '24')} options={[{ value: '12', label: '12-hour' }, { value: '24', label: '24-hour' }]} />
-      </Row>
-      <Row label="Paper texture" help={`The grain on paper pages · ${grain.pct}%`}>
+      <Row label="Paper texture" help={`The grain on paper pages · ${grain.pct}%`} keys="grain noise">
         <Slider ariaLabel="Paper texture" value={grain.pct} onChange={grain.set} width={140} />
         <span aria-hidden="true" style={{ width: 56, height: 36, flex: 'none', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', background: 'var(--paper-linen)', position: 'relative', overflow: 'hidden' }}>
           <span style={{ position: 'absolute', inset: 0, backgroundImage: 'var(--noise-url)', mixBlendMode: 'multiply', opacity: grain.pct / 100 }} />
           <img src="/ds/assets/clover/awake.png" alt="" style={{ position: 'absolute', bottom: 3, left: '50%', transform: 'translateX(-50%)', height: 20 }} />
         </span>
       </Row>
-      <Row label="Botanical animations" help={osReduced ? 'Your system asks for less motion, so the garden holds still' : 'Petals fall, leaves sway'}>
+      <Row label="Botanical animations" help={osReduced ? 'Your system asks for less motion, so the garden holds still' : 'Petals fall, leaves sway'} keys="motion effects petals reduce">
         <Toggle
           on={animOn}
           label="Botanical animations"
@@ -270,9 +362,10 @@ function CaptureAiCard() {
   const project: AutoProjectMode = s?.auto_project === 'off' || s?.auto_project === 'assign' ? s.auto_project : 'suggest'
   const later = 'Arrives with the next server update'
   return (
-    <SCard id="settings-Capture" title="Capture & AI" sub="What the AI may do on its own with what you capture and make">
+    <SCard id="settings-Capture" title="What the AI may do">
       <Row
         label="File captures for me"
+        keys="AI auto file inbox"
         help={
           !ready
             ? later
@@ -283,7 +376,7 @@ function CaptureAiCard() {
       >
         <Toggle on={fileOn} label="File captures for me" disabled={!ready} onToggle={() => updateAppSetting('auto_file_captures', !fileOn)} />
       </Row>
-      <Row label="Pick a project for new things" help={!ready ? later : project === 'assign' ? 'Puts a new task or event in its likely project, with Undo' : project === 'suggest' ? 'Offers its likely project — one tap to accept' : 'Leaves new things where you put them'}>
+      <Row label="Pick a project for new things" keys="AI project suggest assign" help={!ready ? later : project === 'assign' ? 'Puts a new task or event in its likely project, with Undo' : project === 'suggest' ? 'Offers its likely project — one tap to accept' : 'Leaves new things where you put them'}>
         {ready && (
           <Segmented<AutoProjectMode>
             label="Pick a project for new things"
@@ -297,23 +390,126 @@ function CaptureAiCard() {
   )
 }
 
-function CalendarCard({ phone = false }: { phone?: boolean }) {
+// The calendar's View options (per device, ViewOptionsPopover's localStorage) — the same switches, here too.
+function useViewOptions(): [CalViewOptions, (patch: Partial<CalViewOptions>) => void] {
+  const [v, setV] = useState(readViewOptions)
+  const set = (patch: Partial<CalViewOptions>) => {
+    const next = { ...readViewOptions(), ...patch }
+    writeViewOptions(next)
+    setV(next)
+  }
+  return [v, set]
+}
+
+// Photos of your pages · Sharing (Paper Capture.dc.html 11o, and the share target), out of the old
+// Integrations page into Capture & AI.
+function PhotosSections() {
+  const { data: settings } = useAppSettings()
+  const keep = settings?.capture_keep_photos !== false
+  const used = Math.min(DAILY_PAGES, useScansToday())
+  const waiting = usePaperStore((s) => s.waiting)
   return (
-    <SCard id="settings-Calendar" title="Calendar">
-      <Row label="Opens on" help="On every device · the toolbar still switches it">
-        <CalendarViewSeg platformDefault={phone ? 'day' : 'week'} />
-      </Row>
-      <WeekendSetting />
-      <Row label="Plan shortcuts" help="Today, Next free slot, This weekend…">
-        <PlanGlossaryLink />
-      </Row>
-    </SCard>
+    <>
+      <SCard title="Photos of your pages">
+        <Row label="Page photos" help={keep ? 'So you can look back at the page, then they’re deleted' : 'Deleted within the hour after you review them'} keys="paper scan camera photo AI">
+          <Segmented<'keep' | 'drop'> label="Photos of your pages" value={keep ? 'keep' : 'drop'} onChange={(v) => updateAppSetting('capture_keep_photos', v === 'keep')} options={[{ value: 'keep', label: 'Keep for 7 days' }, { value: 'drop', label: 'Delete after reading' }]} />
+        </Row>
+        <Row label="Scans today" help={`${DAILY_PAGES} pages a day`} keys="paper scan camera">
+          <span className="st-meter" aria-label={`${used} of ${DAILY_PAGES} pages, ${scansLeft(used)} left`}>
+            <i>
+              <b style={{ width: `${(used / DAILY_PAGES) * 100}%` }} />
+            </i>
+            {used} of {DAILY_PAGES}
+          </span>
+        </Row>
+        <Row label="Read when offline" help="Waiting on this device" keys="paper scan queue">
+          <span className="st-value">Queue · {waiting}</span>
+        </Row>
+      </SCard>
+      <SCard title="Sharing">
+        <Row label="Share to Kai’s Flow" help="In the phone’s share sheet once the app (or the installed web app) is on it · text and links, not images yet" keys="share target android phone" />
+      </SCard>
+    </>
+  )
+}
+
+function CalendarCat() {
+  const phone = useIsMobile()
+  const h24 = useHour24()
+  const [v, setV] = useViewOptions()
+  const [zoneOpen, setZoneOpen] = useState(false)
+  const gg = googleState(useIntegrations().data?.find((i) => i.provider === 'google'))
+  return (
+    <>
+      <SCard id="settings-Timezone" title="Time">
+        <TimezoneRow />
+        {/* Kai 2026-10-22: one clock for every time the app shows — the calendar's View options switch, here
+            too (lib/clock; this device). */}
+        <Row label="Time format" help={h24 ? 'Every time reads 13:30' : 'Every time reads 1:30 PM'} keys="12 24 hour clock">
+          <Segmented<'12' | '24'> label="Time format" value={h24 ? '24' : '12'} onChange={(x) => setHour24(x === '24')} options={[{ value: '12', label: '12-hour' }, { value: '24', label: '24-hour' }]} />
+        </Row>
+        <WeekendSetting />
+        <Row label="Week starts on" help="Also in the calendar’s View options" keys="monday sunday first day">
+          <Segmented<'mon' | 'sun'> label="Week starts on" value={v.weekStartsMon ? 'mon' : 'sun'} onChange={(x) => setV({ weekStartsMon: x === 'mon' })} options={[{ value: 'mon', label: 'Mon' }, { value: 'sun', label: 'Sun' }]} />
+        </Row>
+      </SCard>
+      <SCard id="settings-Calendar" title="Calendar">
+        <Row label="Opens on" help="On every device · the toolbar still switches it" keys="default view day week">
+          <CalendarViewSeg platformDefault={phone ? 'day' : 'week'} />
+        </Row>
+        <Row label="Fit days to the window" help="Responsive: as many days as the width fits" keys="responsive width">
+          <Toggle on={v.responsive} label="Fit days to the window" onToggle={() => setV({ responsive: !v.responsive })} />
+        </Row>
+        <Row label="Fit hours to my day" help="Dynamic: the grid starts and ends with your blocks" keys="dynamic">
+          <Toggle on={v.dynamic} label="Fit hours to my day" onToggle={() => setV({ dynamic: !v.dynamic })} />
+        </Row>
+        <Row label="Density" help="How tall an hour is" keys="compact height size">
+          <Segmented<CalViewOptions['density']> label="Density" value={v.density} onChange={(density) => setV({ density })} options={[{ value: 's', label: 'Small' }, { value: 'm', label: 'Medium' }, { value: 'l', label: 'Large' }]} />
+        </Row>
+        <Row
+          label="Second time zone"
+          help="A second hour column beside yours"
+          keys="clock zone"
+          under={
+            zoneOpen && (
+              <ZoneSearch
+                current={v.secondZone ?? ''}
+                lead={
+                  v.secondZone != null && (
+                    <button type="button" className="st-link" onClick={() => { setV({ secondZone: null }); setZoneOpen(false) }} style={{ marginBottom: 6 }}>
+                      Turn it off
+                    </button>
+                  )
+                }
+                onPick={(z) => { setV({ secondZone: z }); setZoneOpen(false) }}
+              />
+            )
+          }
+        >
+          <PickButton text={v.secondZone ? zoneCity(v.secondZone) : 'Off'} open={zoneOpen} label="Second time zone" onClick={() => setZoneOpen(!zoneOpen)} />
+        </Row>
+        <Row label="Now card" help="Bottom left of the calendar: what’s on now, or next" keys="ongoing up next">
+          <Toggle on={v.nowCard} label="Now card" onToggle={() => setV({ nowCard: !v.nowCard })} />
+        </Row>
+      </SCard>
+      <SCard title="Planning">
+        <Row label="Plan shortcuts" help="Today, Next free slot, This weekend…" keys="glossary">
+          <PlanGlossaryLink />
+        </Row>
+        {/* Shows in two places: its controls live in Integrations › Google Calendar. */}
+        <Row label="Google Calendar" help="Read-only on yours · your plan there as busy" keys="google sync">
+          <span className="st-chip"><span className="st-dot" style={{ background: TONE_DOT[gg.tone] }} />{gg.tone === 'off' ? 'Not connected' : gg.tone === 'bad' ? 'Reconnect' : 'Connected'}</span>
+          <Link to="/settings/integrations/google" className="st-link">Manage</Link>
+        </Row>
+      </SCard>
+    </>
   )
 }
 
 // Kai 2026-10-07: "My weekend is Friday and Saturday… Don't force people to be someone they're not."
 // app_settings.weekend_days (lib/weekend) — what the Plan menu's "This weekend" lands on.
 const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+const WEEKEND_OPTIONS = [...WEEKEND_PRESETS.map((p) => ({ value: p.key as string, label: p.label })), { value: 'custom', label: 'Custom' }]
 function WeekendSetting() {
   const { data } = useAppSettings()
   const days = parseWeekend(data?.weekend_days)
@@ -325,6 +521,7 @@ function WeekendSetting() {
     <Row
       label="Weekend"
       help={`${weekendLabel(days)} · “This weekend” lands on its first day`}
+      keys="days off friday saturday sunday"
       under={
         shown === 'custom' && (
           // One row of seven: on a 390 phone each day is ~44 wide and 48 tall (kf-seg-btn).
@@ -341,15 +538,18 @@ function WeekendSetting() {
         )
       }
     >
-      <Segmented<string>
-        label="Weekend"
+      <Select
         value={shown}
         onChange={(v) => {
           setCustomOpen(v === 'custom')
           const p = WEEKEND_PRESETS.find((x) => x.key === v)
           if (p) set([...p.days])
         }}
-        options={[...WEEKEND_PRESETS.map((p) => ({ value: p.key as string, label: p.label })), { value: 'custom', label: 'Custom' }]}
+        options={WEEKEND_OPTIONS}
+        ariaLabel="Weekend"
+        className="st-pick"
+        style={PICK}
+        display={pickFace(WEEKEND_OPTIONS.find((o) => o.value === shown)?.label)}
       />
     </Row>
   )
@@ -424,9 +624,6 @@ function AppUpdateCard() {
   useEffect(() => {
     if (platform !== 'web') void installedVersion(platform).then(setInstalled)
   }, [platform])
-  useEffect(() => {
-    void checkForUpdates(uid)
-  }, [uid])
   const built = stamp ? new Date(stamp.builtAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: appZone() }) : null
   const running = platform === 'web' || !installed ? BUNDLED_VERSION : `v${installed.replace(/^v/, '')}`
   const current = platform === 'web' ? `${BUNDLED_VERSION} · ${stamp ? `build ${stamp.commit.slice(0, 7)}` : 'development build'}` : installed ? running : 'version unknown'
@@ -442,10 +639,11 @@ function AppUpdateCard() {
     : r.kind === 'dev' ? 'This is a development build — nothing to compare it with'
     : 'Couldn’t reach the update check — look at the connection and try again'
   return (
-    <SCard id="settings-App" title="App">
+    <SCard id="settings-App">
       <Row
         label="Kai’s Flow"
         help={`${current}${built ? ` · built ${built}` : ''}`}
+        keys="version update check build"
         under={
           line && !checking && (
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
@@ -464,19 +662,20 @@ function AppUpdateCard() {
       {/* Kai 2026-10-14: the download bar's links for good, so dismissing it is never a dead end. Not in the
           Microsoft Store install: the Store updates it, and a Store app mustn't hand out its own .exe. */}
       {r?.kind !== 'store' && (
-        <Row label="Download the apps" help="Android and Windows · always the newest release">
+        <Row label="Download the apps" help="Android and Windows · always the newest release" keys="android windows apk installer">
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <DownloadLinks />
           </div>
         </Row>
       )}
       {/* Tour & help (Tour and Help Guide.dc.html, "Also in Settings → App"): the notes again. */}
-      <Row label="The tour" help="Replays the notes on Today and clears seen hints">
+      <Row label="What’s new" help="In your version, and what’s coming" keys="release notes changelog" under={<UpdateNotes running={running} />} />
+      <Row label="The tour" help="Replays the notes on Today and clears seen hints" keys="help onboarding show me around">
         <Button variant="secondary" onClick={restartTour}>Show me around again</Button>
       </Row>
-      <div style={{ paddingBottom: 12 }}>
-        <UpdateNotes running={running} />
-      </div>
+      <Row label="Guide" help="How the method and every page work" keys="help manual">
+        <Link to="/guide" className="st-link">Open the Guide</Link>
+      </Row>
     </SCard>
   )
 }
@@ -486,75 +685,97 @@ function AppUpdateCard() {
 // Intl knows, searched; this device's own zone offered first.
 const zoneOffset = (z: string) => new Date().toLocaleTimeString('en-GB', { timeZone: z, timeZoneName: 'shortOffset' }).split(' ').pop()
 
-function TimezoneCard() {
-  const { data: settings } = useAppSettings()
+/** The zone search (Time zone, Second time zone): this device's zone first, then a typed search. */
+function ZoneSearch({ current, onPick, lead }: { current: string; onPick: (zone: string) => void; lead?: ReactNode }) {
   const [q, setQ] = useState('')
+  const device = deviceZone()
+  const matches_ = searchZones(q)
+  const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', minHeight: 40, textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid var(--line-dashed)', padding: '9px 4px', fontFamily: 'inherit', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', cursor: 'pointer' }
+  return (
+    <>
+      {lead}
+      {device !== current && isZone(device) && (
+        <button type="button" className="st-link" onClick={() => onPick(device)} style={{ marginBottom: 6, display: 'flex' }}>
+          Use this device’s zone ({device})
+        </button>
+      )}
+      <input type="search" className="st-field" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search time zones" placeholder="Search a city or region — e.g. London" autoFocus />
+      {matches_.length > 0 && (
+        <div role="listbox" aria-label="Time zones" style={{ marginTop: 6 }}>
+          {matches_.map((z) => (
+            <button key={z} type="button" role="option" aria-selected={z === current} onClick={() => isZone(z) && onPick(z)} style={option}>
+              <span>{z.replace(/_/g, ' ')}</span>
+              <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{zoneOffset(z)}</span>
+            </button>
+          ))}
+        </div>
+      )}
+      {q.trim() && matches_.length === 0 && <div className="st-help" style={{ marginTop: 8 }}>No zone matches “{q.trim()}”</div>}
+    </>
+  )
+}
+
+function TimezoneRow() {
+  const { data: settings } = useAppSettings()
+  const [open, setOpen] = useState(false)
   if (!settings) return null
   const tz = settings.timezone
-  const device = deviceZone()
-  const matches = searchZones(q)
-  const option: CSSProperties = { display: 'flex', justifyContent: 'space-between', gap: 12, width: '100%', minHeight: 40, textAlign: 'left', background: 'none', border: 'none', borderBottom: '1px solid var(--line-dashed)', padding: '9px 4px', fontFamily: 'inherit', fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', cursor: 'pointer' }
-
-  function apply(next: string) {
-    if (!isZone(next)) return
-    updateAppSetting('timezone', next)
-    setQ('')
-  }
-
   return (
-    <SCard id="settings-Timezone" title="Time zone" padded>
-      <Row
-        label={`${tz} · ${zoneOffset(tz)}`}
-        help="What “today” and “tomorrow 09:00” mean, on every device"
-        under={
-          <>
-            {device !== tz && isZone(device) && (
-              <button type="button" className="st-link" onClick={() => apply(device)} style={{ marginBottom: 6 }}>
-                Use this device’s zone ({device})
-              </button>
-            )}
-            <input type="search" className="st-field" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Search time zones" placeholder="Search a city or region — e.g. London" />
-            {matches.length > 0 && (
-              <div role="listbox" aria-label="Time zones" style={{ marginTop: 6 }}>
-                {matches.map((z) => (
-                  <button key={z} type="button" role="option" aria-selected={z === tz} onClick={() => apply(z)} style={option}>
-                    <span>{z.replace(/_/g, ' ')}</span>
-                    <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{zoneOffset(z)}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-            {q.trim() && matches.length === 0 && <div className="st-help" style={{ marginTop: 8 }}>No zone matches “{q.trim()}”</div>}
-          </>
-        }
-      />
-    </SCard>
+    <Row
+      label="Time zone"
+      help="What “today” and “tomorrow 09:00” mean, on every device"
+      keys="timezone city zone"
+      under={open && <ZoneSearch current={tz} onPick={(z) => { updateAppSetting('timezone', z); setOpen(false) }} />}
+    >
+      <PickButton text={`${tz} · ${zoneOffset(tz)}`} open={open} label="Time zone" onClick={() => setOpen(!open)} />
+    </Row>
   )
 }
 
 const TONE_DOT = { ok: 'var(--check-fill)', bad: 'var(--acc-terra-ink)', off: 'var(--line-control)' } as const
 
-function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: () => void }) {
+const statusChip = (text: string, tone: keyof typeof TONE_DOT) => (
+  <span className="st-chip" style={tone === 'bad' ? { color: 'var(--acc-terra-ink)', borderColor: 'currentColor' } : undefined}>
+    <span className="st-dot" style={{ background: TONE_DOT[tone] }} />
+    {text}
+  </span>
+)
+const brand = (icon: ReactNode, gh = false) => <span className={`st-brand${gh ? ' is-gh' : ''}`}>{icon}</span>
+
+function IntegrationsCat() {
   const { data: integrations = [] } = useIntegrations()
+  const { data: mcp } = useMcpKey()
+  const { data: cap } = useCaptureKey()
   const github = integrations.find((i) => i.provider === 'github')
   const gh = githubState(github)
   const gg = googleState(integrations.find((i) => i.provider === 'google'))
-  const dot = (tone: keyof typeof TONE_DOT) => <span className="st-dot" style={{ background: TONE_DOT[tone] }} />
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
   return (
-    <SCard
-      id="settings-Integrations"
-      title="Integrations"
-      aside={<button type="button" className="st-link" onClick={onOpenIntegrations}>Open integrations</button>}
-    >
-      <Row lead={dot(gh.tone)} label="GitHub" help={githubRulesOf(github).rules.land === 'tasks' ? 'Issues land straight in Tasks' : 'Issues land in the Inbox'}>
-        <span className="st-chip" style={gh.tone === 'bad' ? { color: 'var(--acc-terra-ink)', borderColor: 'currentColor' } : undefined}>{gh.text}</span>
-      </Row>
-      {/* B1 (2026-10-13): built — read-only, under our own calendar; our plan out as busy (2026-10-14). */}
-      <Row lead={dot(gg.tone)} label="Google Calendar" help="Your calendars on ours, read-only; your plan there as busy">
-        <span className="st-chip" style={gg.tone === 'bad' ? { color: 'var(--acc-terra-ink)', borderColor: 'currentColor' } : undefined}>{gg.text}</span>
-      </Row>
-      <Row lead={dot('off')} label="Groq" help="Chat and capture parsing" />
-    </SCard>
+    <>
+      <SCard id="settings-Integrations" title="Connected apps">
+        {/* B1 (2026-10-13): read-only, under our own calendar; our plan out as busy (2026-10-14). */}
+        <Row to="/settings/integrations/google" lead={brand(<Icon name="calendar" size={17} />)} label="Google Calendar" help="Your calendars on ours, read-only · your plan there as busy" keys="google sync calendars busy">
+          {statusChip(gg.text, gg.tone)}
+        </Row>
+        <Row to="/settings/integrations/github" lead={brand(<GithubMark size={16} />, true)} label="GitHub" help={githubRulesOf(github).rules.land === 'tasks' ? 'Issues land straight in Tasks' : 'Issues land in the Inbox'} keys="github issues repos token pause">
+          {statusChip(gh.text, gh.tone)}
+        </Row>
+      </SCard>
+      <SCard title="AI">
+        <Row to="/settings/integrations/mcp" lead={brand(<Icon name="chat" size={17} />)} label="AI assistants (MCP)" help="Let Claude or another assistant read your garden, and change it if you allow" keys="mcp claude assistant key journal people">
+          {mcp ? statusChip(mcp.scope === 'read' ? 'Read only' : 'Read & write', 'ok') : statusChip('Not set up', 'off')}
+        </Row>
+        <Row lead={brand(<Icon name="sprout" size={17} />)} label="Groq" help="Chat and capture parsing · keeps nothing" keys="AI chat model">
+          <span className="st-value">Built in</span>
+        </Row>
+      </SCard>
+      <SCard title="Capture from anywhere">
+        {/* Kai 2026-10-12 moved the key to a quiet Advanced section; the grouping (2026-10-25) brings it here. */}
+        <Row to="/settings/integrations/capture-key" lead={brand(<Icon name="link" size={17} />)} label="Capture key & bookmarklet" help="Send anything to your Inbox from shortcuts, scripts or a bookmark" keys="external capture endpoint api bookmarklet shortcut key">
+          {cap ? statusChip(`Key made ${day(cap.updated_at)}`, 'ok') : statusChip('Not set up', 'off')}
+        </Row>
+      </SCard>
+    </>
   )
 }
 
@@ -564,9 +785,9 @@ function IntegrationsSummaryCard({ onOpenIntegrations }: { onOpenIntegrations: (
 // wall-clock in the user's zone (Settings → Timezone). The Windows rows are this device's own.
 const RITUAL_AT = { morning_digest: '08:00', evening_nudge: '21:00' } as const
 
-function NotificationRow({ glyph, label, help, children }: { glyph: ReactNode; label: string; help?: ReactNode; children: ReactNode }) {
+function NotificationRow({ glyph, label, help, keys, children }: { glyph: ReactNode; label: string; help?: ReactNode; keys?: string; children: ReactNode }) {
   return (
-    <Row lead={glyph} label={label} help={help}>
+    <Row lead={glyph} label={label} help={help} keys={`notification ${keys ?? ''}`}>
       {children}
     </Row>
   )
@@ -580,14 +801,6 @@ function NotificationsCard() {
   const [busy, setBusy] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const tauri = isTauri()
-  const [trayShown, setTrayShown] = useState(readTrayShown)
-  const widgets = widgetsAvailable() // the Android app's home-screen widgets
-  const hideTitles = useHideTitles((h) => h.on)
-  const setHideTitles = useHideTitles((h) => h.set)
-  const [autostart, setAutostart] = useState<boolean | null>(null)
-  useEffect(() => {
-    if (tauri) void native<boolean>('autostart_get').then((on) => setAutostart(!!on))
-  }, [tauri])
   const supported = isPushSupported()
   const thisDeviceLabel = typeof navigator !== 'undefined' ? navigator.userAgent.slice(0, 60) : ''
   const [device, recheck] = useDeviceState(subs)
@@ -631,34 +844,38 @@ function NotificationsCard() {
     }
   }
 
-  const sub = (text: string) => <div className="st-sub-label">{text}</div>
   const glyph = (name: 'moon' | 'lock') => <Icon name={name} size={18} />
 
   return (
-    <SCard
-      id="settings-Notifications"
-      title="Notifications"
-      sub={`Calm by default. Each kind can be turned off; silent ones never make a sound. Times are ${zoneCity(appZone())} time.`}
-      aside={
+    <>
+    <SCard id="settings-Notifications">
+      <Row
+        label="This device"
+        help={`Calm by default · each kind can be turned off, silent ones never make a sound · times are ${zoneCity(appZone())} time`}
+        keys="test notification push"
+        under={
+          device && (
+            <ul aria-label="What’s in the way on this device" data-kf-notify-status className="st-note" style={{ margin: 0, padding: '0 0 0 18px' }}>
+              {inTheWay.length ? inTheWay.map((line) => <li key={line}>{line}</li>) : <li>Nothing in the way on this device.</li>}
+            </ul>
+          )
+        }
+      >
         <Button variant="secondary" onClick={handleTest} disabled={busy} icon={<Icon name="bell" size={16} />}>
           Send a test notification
         </Button>
-      }
-    >
-      {device && (
-        <ul aria-label="What’s in the way on this device" data-kf-notify-status className="st-note" style={{ margin: '0 0 8px', paddingLeft: 18 }}>
-          {inTheWay.length ? inTheWay.map((line) => <li key={line}>{line}</li>) : <li>Nothing in the way on this device.</li>}
-        </ul>
-      )}
+      </Row>
+      {message && <p role="status" className="st-note st-pad">{message}</p>}
+    </SCard>
 
-      {sub('Kinds')}
+    <SCard title="Kinds">
       {KIND_IDS.map((kind) => {
         const k = KIND_LOOK[kind]
         const key = `${kind}_on` as const
         const on = s[key] !== false
         const ritual = kind === 'morning_digest' || kind === 'evening_nudge' ? kind : null
         return (
-          <NotificationRow key={kind} glyph={<KindGlyph kind={kind} />} label={k.label} help={`${k.channel} · ${k.silent ? 'silent' : 'with sound'}`}>
+          <NotificationRow key={kind} glyph={<KindGlyph kind={kind} size={28} />} label={k.label} help={`${k.channel} · ${k.silent ? 'silent' : 'with sound'}`} keys={ritual ? 'time ritual' : undefined}>
             {ritual && (
               <TimeField
                 value={(s[`${ritual}_at` as const] ?? RITUAL_AT[ritual]).slice(0, 5)}
@@ -672,27 +889,66 @@ function NotificationsCard() {
           </NotificationRow>
         )
       })}
+    </SCard>
 
-      {sub('Quiet')}
-      <NotificationRow glyph={glyph('moon')} label="Quiet hours" help="Nothing makes a sound; the tray shows a moon">
+    <SCard title="Quiet">
+      <NotificationRow glyph={glyph('moon')} label="Quiet hours" help="Nothing makes a sound; the tray shows a moon" keys="silent do not disturb night time">
         <TimeField value={(s.quiet_from ?? QUIET_FROM).slice(0, 5)} ariaLabel="Quiet from" onChange={(v) => v && updateAppSetting('quiet_from', v)} style={timeStyle(quietOn)} />
         <span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>to</span>
         <TimeField value={(s.quiet_to ?? QUIET_TO).slice(0, 5)} ariaLabel="Quiet until" onChange={(v) => v && updateAppSetting('quiet_to', v)} style={timeStyle(quietOn)} />
         <Toggle on={quietOn} label="Quiet hours" onToggle={() => updateAppSetting('quiet_hours_on', !quietOn)} />
       </NotificationRow>
-      <NotificationRow glyph={glyph('lock')} label="Show task names on the lock screen" help="Off: “Kai’s Flow · A reminder”">
+      <NotificationRow glyph={glyph('lock')} label="Show task names on the lock screen" help="Off: “Kai’s Flow · A reminder”" keys="privacy">
         <Toggle on={s.lock_screen_names === true} label="Show task names on the lock screen" onToggle={() => updateAppSetting('lock_screen_names', !s.lock_screen_names)} />
       </NotificationRow>
-      {widgets && (
-        <NotificationRow glyph={<span />} label="Hide titles on the home screen" help="Widgets say “Your goal” · “Pick 2” — this phone only">
-          <Toggle on={hideTitles} label="Hide titles on the home screen" onToggle={() => setHideTitles(!hideTitles)} />
-        </NotificationRow>
-      )}
+    </SCard>
 
-      {tauri ? (
-        <>
-          {sub('Windows')}
-          <NotificationRow glyph={<span />} label="Show in the system tray" help="The K by the clock, with a quick flyout">
+    {/* Sound sits with the notices it rides on (the grouping, 2026-10-25). */}
+    <SoundCatalogCard />
+
+    {/* Only where it applies, as before: the Windows app's rows live in App & updates. */}
+    {tauri ? null : device?.channel === 'android' ? (
+      <SCard title="This phone" note="Android app only">
+        <Row label="Reminders on this phone" help="Reminders, the digest, the nudge and focus rounds are set on the phone itself, from what it last synced — open the app now and then so new ones reach it" keys="android notification" />
+      </SCard>
+    ) : (
+      <SCard title="This browser" note="web only">
+        {!supported ? (
+          <Row label="Notifications in this browser" help="Not supported here. On iPhone, add the app to your home screen first (Share → Add to Home Screen)" keys="push notification" />
+        ) : (
+          <Row
+            label={`${subs.length} device${subs.length === 1 ? '' : 's'} subscribed`}
+            find="This browser: get notifications here"
+            keys="push notification subscribe unsubscribe device"
+            help={subs.length ? subs.map((d) => (d.device_label === thisDeviceLabel ? 'this device ✓' : (d.device_label ?? 'device').slice(0, 20))).join(' · ') : 'None yet'}
+          >
+            <Button variant="secondary" onClick={handleSubscribe} disabled={busy}>
+              {subscribed ? 'Unsubscribe this device' : 'Subscribe this device'}
+            </Button>
+          </Row>
+        )}
+      </SCard>
+    )}
+    </>
+  )
+}
+
+// On this computer (the Windows app) · On this phone (the Android app's widgets) — App & updates.
+function DeviceSections() {
+  const tauri = isTauri()
+  const [trayShown, setTrayShown] = useState(readTrayShown)
+  const widgets = widgetsAvailable() // the Android app's home-screen widgets
+  const hideTitles = useHideTitles((h) => h.on)
+  const setHideTitles = useHideTitles((h) => h.set)
+  const [autostart, setAutostart] = useState<boolean | null>(null)
+  useEffect(() => {
+    if (tauri) void native<boolean>('autostart_get').then((on) => setAutostart(!!on))
+  }, [tauri])
+  return (
+    <>
+      {tauri && (
+        <SCard title="On this computer" note="Windows app only">
+          <Row label="Show in the system tray" help="The K by the clock, with a quick flyout" keys="tray windows">
             <Toggle
               on={trayShown}
               label="Show in the system tray"
@@ -701,37 +957,20 @@ function NotificationsCard() {
                 setTrayShown(!trayShown)
               }}
             />
-          </NotificationRow>
-          <NotificationRow glyph={<span />} label="Start with Windows" help="Opens quietly to the tray">
+          </Row>
+          <Row label="Start with Windows" help="Opens quietly to the tray" keys="startup autostart login tray">
             <Toggle on={!!autostart} label="Start with Windows" onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
-          </NotificationRow>
-        </>
-      ) : device?.channel === 'android' ? (
-        <>
-          {sub('This phone')}
-          <p className="st-note">Reminders, the digest, the nudge and focus rounds are set on the phone itself, from what it last synced — open the app now and then so new ones reach it.</p>
-        </>
-      ) : (
-        <>
-          {sub('This device')}
-          {!supported ? (
-            <p className="st-note" style={{ color: 'var(--acc-terra-ink)' }}>
-              Not supported on this browser. On iPhone, add the app to your home screen first (Share → Add to Home Screen).
-            </p>
-          ) : (
-            <Row
-              label={`${subs.length} device${subs.length === 1 ? '' : 's'} subscribed`}
-              help={subs.length ? subs.map((d) => (d.device_label === thisDeviceLabel ? 'this device ✓' : (d.device_label ?? 'device').slice(0, 20))).join(' · ') : 'None yet'}
-            >
-              <Button variant="secondary" onClick={handleSubscribe} disabled={busy}>
-                {subscribed ? 'Unsubscribe this device' : 'Subscribe this device'}
-              </Button>
-            </Row>
-          )}
-        </>
+          </Row>
+        </SCard>
       )}
-      {message && <p role="status" className="st-note">{message}</p>}
-    </SCard>
+      {widgets && (
+        <SCard title="On this phone" note="Android app only">
+          <Row label="Hide titles on the home screen" help="Widgets say “Your goal” · “Pick 2”" keys="widgets privacy android">
+            <Toggle on={hideTitles} label="Hide titles on the home screen" onToggle={() => setHideTitles(!hideTitles)} />
+          </Row>
+        </SCard>
+      )}
+    </>
   )
 }
 
@@ -762,13 +1001,13 @@ function ResurfacingCard() {
     }
   }
   const row = (level: keyof typeof COOLDOWN_KEYS, label: string, help: string) => (
-    <Row label={label} help={help}>
+    <Row label={label} help={help} keys="not now resurfacing cooldown snooze">
       <Slider ariaLabel={`${label} cooldown in days`} value={days[level]} min={1} max={30} onChange={(v) => set(level, v)} width={140} />
       <span className="st-value">{days[level]} {days[level] === 1 ? 'day' : 'days'}</span>
     </Row>
   )
   return (
-    <SCard id="settings-Resurfacing" title="Resurfacing" sub="How long “Not now” rests before it wanders back">
+    <SCard id="settings-Resurfacing" title="“Not now” comes back after">
       {row('high', 'High priority', 'Comes back soonest')}
       {row('med', 'Medium priority', 'A working week, roughly')}
       {row('low', 'Low priority', 'The long shelf')}
@@ -781,15 +1020,14 @@ const linkBtn = 'kf-btn kf-press kf-button kf-button--secondary'
 function DataCard() {
   const { data: deletedItems = [] } = useDeletedItems()
   return (
-    <SCard id="settings-Data" title="Your data">
-      <Row label="Import" help="From Akiflow or a CSV file · re-importing never duplicates">
+    <SCard id="settings-Data">
+      <Row label="Import" help="From Akiflow or a CSV file · re-importing never duplicates" keys="akiflow csv">
         <Link to="/settings/import" className={linkBtn} style={{ textDecoration: 'none' }}>Open importer</Link>
       </Row>
       <ExportRow />
-      <Row label="Trash" help={`${deletedItems.length === 0 ? 'Nothing resting' : `${deletedItems.length} item${deletedItems.length === 1 ? '' : 's'} resting`} · composts after 30 days`}>
+      <Row label="Trash" help={`${deletedItems.length === 0 ? 'Nothing resting' : `${deletedItems.length} item${deletedItems.length === 1 ? '' : 's'} resting`} · composts after 30 days`} keys="delete deleted restore">
         <Link to="/trash" className={linkBtn} style={{ textDecoration: 'none' }}>Open trash</Link>
       </Row>
-      <DeleteAccountRow />
     </SCard>
   )
 }
@@ -799,7 +1037,7 @@ function DataCard() {
 function DeleteAccountRow() {
   const [open, setOpen] = useState(false)
   return (
-    <Row label="Delete account" help="Your account and everything in it, for good">
+    <Row label="Delete account" help="Your account and everything in it, for good · export first under Your data" keys="delete remove close leave">
       <Button variant="ghost" onClick={() => setOpen(true)}>Delete account…</Button>
       {open && <DeleteAccountDialog onClose={() => setOpen(false)} />}
     </Row>
@@ -816,17 +1054,22 @@ function LegalCard() {
     return row ? ` · you agreed ${dayOf(row.accepted_at)}` : ''
   }
   return (
-    <SCard id="settings-Legal" title="Privacy & terms">
-      <Row label="Privacy Policy" help={`Updated ${dayOf(PRIVACY_VERSION)}${agreed('privacy', PRIVACY_VERSION)}`}>
+    <SCard id="settings-Legal">
+      <Row label="Privacy Policy" keys="privacy legal" help={`Updated ${dayOf(PRIVACY_VERSION)}${agreed('privacy', PRIVACY_VERSION)}`}>
         <LegalLink href={PRIVACY_URL} className={linkBtn}>Read</LegalLink>
       </Row>
-      <Row label="Terms of Use" help={`Updated ${dayOf(TERMS_VERSION)}${agreed('terms', TERMS_VERSION)}`}>
+      <Row label="Terms of Use" keys="terms legal" help={`Updated ${dayOf(TERMS_VERSION)}${agreed('terms', TERMS_VERSION)}`}>
         <LegalLink href={TERMS_URL} className={linkBtn}>Read</LegalLink>
       </Row>
       <Row
         label="What we keep, and where"
-        help="Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export or delete it all under Your data"
+        help="Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export it under Your data, delete it under Account"
+        keys="privacy data storage"
       />
+      {/* Shows in two places: the same switches as Integrations › AI assistants. */}
+      <Row label="What AI assistants can see" help="Journal and People stay off unless you allow them" keys="privacy mcp journal people AI">
+        <Link to="/settings/integrations/mcp" className="st-link">Manage</Link>
+      </Row>
     </SCard>
   )
 }
@@ -855,7 +1098,7 @@ function ExportRow() {
     }
   }
   return (
-    <Row label="Export your data" help={<span role="status">{progress ?? 'A copy for you to keep · it can’t be imported back yet'}</span>}>
+    <Row label="Export your data" find="Export your data" help={<span role="status">{progress ?? 'A copy for you to keep · it can’t be imported back yet'}</span>} keys="backup download json csv ics copy">
       {EXPORTS.map((x) => (
         <Button key={x.kind} variant="secondary" loading={busy === x.kind} disabled={busy !== null} onClick={() => void run(x.kind)}>
           {x.label}
@@ -865,28 +1108,39 @@ function ExportRow() {
   )
 }
 
-function ProfileCard() {
+function AccountCat() {
+  const session = useAuth().session
   const email = (() => {
     try {
-      const raw = localStorage.getItem('kf.lastEmail')
-      return raw ?? ''
+      return session?.user.email ?? localStorage.getItem('kf.lastEmail') ?? ''
     } catch {
-      return ''
+      return session?.user.email ?? ''
     }
   })()
+  const { flow, workspace } = useOwner()
+  const signOut = useSignOut()
   return (
-    <SCard id="settings-Profile" title="Profile">
-      <Row label={email || 'Signed in'} help="One person, one garden — no team settings here">
-        {/* WA-1 punch 3: quiet re-entry to the first-run wizard (name / workspace / seed). */}
-        <Link to="/onboarding?replant=1" className="st-link">Rerun the welcome</Link>
-      </Row>
-    </SCard>
+    <>
+      <SCard id="settings-Profile">
+        <Row label={email || 'Signed in'} find="Email" help="Signed in · one person, one garden" keys="sign out log out account email">
+          <Button variant="secondary" onClick={signOut.request}>Sign out</Button>
+        </Row>
+        <Row label="Name and workspace" help={`${flow} · ${workspace} · the whole app wears it`} keys="rerun welcome onboarding">
+          {/* WA-1 punch 3: quiet re-entry to the first-run wizard (name / workspace / seed). */}
+          <Link to="/onboarding?replant=1" className="st-link">Rerun the welcome</Link>
+        </Row>
+      </SCard>
+      <SCard title="Danger zone" danger>
+        <DeleteAccountRow />
+      </SCard>
+      {signOut.prompt}
+    </>
   )
 }
 
 function ProviderRow({ icon, name, desc, status, children }: { icon: ReactNode; name: string; desc: string; status: ReactNode; children?: ReactNode }) {
   return (
-    <SCard plain padded>
+    <SCard padded>
       <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap' }}>
         {icon}
         <div style={{ flex: '1 1 200px', minWidth: 0 }}>
@@ -903,8 +1157,14 @@ function ProviderRow({ icon, name, desc, status, children }: { icon: ReactNode; 
 function GithubGlyph({ dim }: { dim?: boolean }) {
   return (
     <span style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--ink-body)', color: 'var(--paper-parchment)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', opacity: dim ? 0.75 : 1 }}>
-      <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.5 2 2 6.6 2 12.3c0 4.6 2.9 8.4 6.8 9.8.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.3-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5.1 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 4-2.4 4.8-4.6 5.1.4.3.7 1 .7 1.9v2.8c0 .3.2.6.7.5a10.2 10.2 0 0 0 6.8-9.8C22 6.6 17.5 2 12 2Z" /></svg>
+      <GithubMark size={17} />
     </span>
+  )
+}
+
+function GithubMark({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2C6.5 2 2 6.6 2 12.3c0 4.6 2.9 8.4 6.8 9.8.5.1.7-.2.7-.5v-1.8c-2.8.6-3.4-1.2-3.4-1.2-.5-1.2-1.1-1.5-1.1-1.5-.9-.6.1-.6.1-.6 1 .1 1.5 1 1.5 1 .9 1.6 2.4 1.1 3 .9.1-.7.3-1.1.6-1.4-2.2-.3-4.6-1.1-4.6-5.1 0-1.1.4-2 1-2.7-.1-.3-.4-1.3.1-2.7 0 0 .8-.3 2.8 1a9.4 9.4 0 0 1 5 0c1.9-1.3 2.8-1 2.8-1 .5 1.4.2 2.4.1 2.7.6.7 1 1.6 1 2.7 0 4-2.4 4.8-4.6 5.1.4.3.7 1 .7 1.9v2.8c0 .3.2.6.7.5a10.2 10.2 0 0 0 6.8-9.8C22 6.6 17.5 2 12 2Z" /></svg>
   )
 }
 
@@ -930,7 +1190,7 @@ function CaptureKeyCard() {
       () => setErr('Couldn’t reach the clipboard — select the text and copy it by hand.'),
     )
   return (
-    <SCard plain padded title="External capture endpoint" sub="Anything POSTed here lands in your Inbox · a new key stops the old one">
+    <SCard id="settings-Advanced" padded title="External capture endpoint" sub="Anything POSTed here lands in your Inbox · a new key stops the old one">
       {!row && !shown && <div className="st-help">Not set up yet</div>}
       {row && !shown && (
         <div className="st-help">
@@ -1027,7 +1287,7 @@ function McpCard() {
     { name: 'Other MCP clients', how: 'The address and the header, in the usual mcpServers shape.', text: genericConfig(key) },
   ]
   return (
-    <SCard plain padded title="AI assistants (MCP)" sub="Let Claude or another assistant read your garden — tasks, projects, calendar, Inbox, routines, Library — and, if you allow it, change things for you.">
+    <SCard padded title="AI assistants (MCP)" sub="Let Claude or another assistant read your garden — tasks, projects, calendar, Inbox, routines, Library — and, if you allow it, change things for you.">
       {!row && !shown && <div className="st-help">Not set up yet</div>}
       {row && !shown && (
         <div className="st-help">
@@ -1425,53 +1685,21 @@ function GoogleCalendars({ google, onReconnect }: { google: IntegrationStatus; o
   )
 }
 
-function GroupLabel({ children }: { children: ReactNode }) {
-  return (
-    <div className="st-group-label">
-      <span>{children}</span>
-    </div>
-  )
-}
-
-// Kai 2026-10-12 ("fix or cut" → fix, by moving it): the capture key is a power tool, so it leaves the
-// Integrations list for a quiet Advanced section at the bottom of Settings, desktop and phone, still
-// fully working. Its card keeps the title "External capture endpoint" — docs/CAPTURE.md and the
-// guides find it by that name.
-function AdvancedSection() {
-  return (
-    <div id="settings-Advanced" style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
-      <GroupLabel>Advanced</GroupLabel>
-      <CaptureKeyCard />
-    </div>
-  )
-}
-
-function IntegrationsPage() {
+// Integrations › a provider: its own page with today's controls (the grouping, 2026-10-25).
+function ProviderPage({ id }: { id: ProviderId }) {
   const { data: integrations = [] } = useIntegrations()
-  const github = integrations.find((i) => i.provider === 'github')
-  const google = integrations.find((i) => i.provider === 'google')
-
   return (
-    <div className="st-integrations">
-      <div>
-        <h2 className="st-title" style={{ fontSize: 26 }}>Integrations</h2>
-        <p className="st-sub" style={{ marginTop: 6 }}>Everything that feeds the inbox, and the rules it follows.</p>
-      </div>
-
-      <GithubProvider github={github} />
-
-      <GoogleProvider google={google} />
-
-      <GroupLabel>Capture from anywhere</GroupLabel>
-      {/* The capture key moved to Settings → Advanced (Kai 2026-10-12). */}
-      <SCard plain padded title="Share target" sub="Share to Kai’s Flow from any app on your phone — links, notes, half-thoughts.">
-        <div className="st-help">It’s in the share sheet once the app (or the installed web app) is on the phone · text and links, not images yet</div>
-      </SCard>
-      {/* Capture → photos (Paper capture): photo retention, today's scans, the offline queue. */}
-      <PaperSettingsCard />
-
-      <GroupLabel>AI assistants</GroupLabel>
-      <McpCard />
+    <div className="st-provider">
+      <BackLink to="/settings/integrations">Integrations</BackLink>
+      {id === 'google' ? (
+        <GoogleProvider google={integrations.find((i) => i.provider === 'google')} />
+      ) : id === 'github' ? (
+        <GithubProvider github={integrations.find((i) => i.provider === 'github')} />
+      ) : id === 'mcp' ? (
+        <McpCard />
+      ) : (
+        <CaptureKeyCard />
+      )}
     </div>
   )
 }
@@ -1521,7 +1749,7 @@ export function SoundCatalogCard() {
 
   return (
     <SCard id="settings-Sound" title="Sound">
-      <Row label="Sound" help="Soft, warm, a little musical">
+      <Row label="Sound" help="Soft, warm, a little musical" keys="volume mute whisper">
         <Segmented<number>
           label="Volume"
           value={step}
@@ -1533,30 +1761,18 @@ export function SoundCatalogCard() {
         />
         <Toggle on={masterOn} label="Sound" onToggle={() => setVol(masterOn ? 0 : DEFAULT_VOLUME)} />
       </Row>
-      <div role="radiogroup" aria-label="Sound pack" className="st-packs">
-        {SOUND_PACKS.map((p) => {
-          const on = p === pack
-          return (
-            // The whole card picks the pack; its ▶ only auditions it.
-            <div key={p} data-sound-pack={p} className={`st-pack${on ? ' is-on' : ''}`}>
-              <button type="button" role="radio" aria-checked={on} onClick={() => choosePack(p)}>
-                <div className="st-label">{PACKS[p].label}</div>
-                <div className="st-help">{PACKS[p].blurb.charAt(0).toUpperCase() + PACKS[p].blurb.slice(1)}</div>
-              </button>
-              <PlayButton label={`Hear ${PACKS[p].label}`} onClick={() => previewSound('complete_big', p)} />
-            </div>
-          )
-        })}
-      </div>
+      <Row label="Sound pack" help={`${PACKS[pack].label} · ${PACKS[pack].blurb}`} keys="sound kalimba felt glass" lead={<PlayButton label={`Hear ${PACKS[pack].label}`} onClick={() => previewSound('complete_big', pack)} />}>
+        <Segmented<SoundPack> label="Sound pack" value={pack} onChange={choosePack} options={SOUND_PACKS.map((p) => ({ value: p, label: PACKS[p].label }))} />
+      </Row>
       {SOUND_ROWS.map((s) => {
         const on = events[s.id]
         return (
-          <Row key={s.id} attrs={{ 'data-sound-event': s.id }} lead={<PlayButton label={`Preview ${s.label}`} onClick={() => previewSound(s.id)} />} label={s.label} help={s.help} style={{ opacity: masterOn && on ? 1 : 0.6 }}>
+          <Row key={s.id} attrs={{ 'data-sound-event': s.id }} keys="sound" lead={<PlayButton label={`Preview ${s.label}`} onClick={() => previewSound(s.id)} />} label={s.label} help={s.help} style={{ opacity: masterOn && on ? 1 : 0.6 }}>
             <Toggle on={on} label={s.label} onToggle={() => toggleEvent(s.id, !on)} />
           </Row>
         )
       })}
-      <Row label="Silent after Shut down" help="Until morning · quiet hours and paused notifications hush it too">
+      <Row label="Silent after Shut down" help="Until morning · quiet hours and paused notifications hush it too" keys="sound quiet night">
         <Toggle
           on={quiet}
           label="Silent after you close the garden"
@@ -1571,134 +1787,287 @@ export function SoundCatalogCard() {
 }
 
 /** Kai 2026-10-06: domains are made, renamed, recoloured, merged and deleted here (and on the Tasks
- * page's Organize card) — no longer only from Tasks, create-only. */
-function OrganizeCard() {
+ * page's Organize card). Overlays.dc.html "Labels · manage · settings": labels cut across every domain. */
+function OrganizeCat() {
   return (
     <>
-      <SCard id="settings-Organize" title="Organize" sub="Domains — the big buckets your projects, areas and tasks sit in" padded>
-        <DomainsSettings />
+      <SCard id="settings-Organize" title="Domains">
+        <Find label="Domains" help="The big buckets your projects, areas and tasks sit in · make, rename, recolour, merge, delete" keys="domain recolour merge organize">
+          <DomainsSettings />
+        </Find>
       </SCard>
-      {/* Overlays.dc.html "Labels · manage · settings": labels cut across every domain — rename,
-          recolour, delete (tasks/LabelManager), drawn as its own panel; Settings' card look. */}
-      <LabelManager id="settings-Labels" style={{ borderRadius: 'var(--radius-sharp)', boxShadow: 'var(--shadow-card)' }} />
+      <SCard id="settings-Labels" title="Labels">
+        <Find label="Labels" help="They cut across every domain · make, rename, recolour, delete" keys="label tag">
+          <LabelManager bare />
+        </Find>
+      </SCard>
+      <ResurfacingCard />
     </>
   )
 }
 
-// The capture endpoint's key card lives in Advanced, at the bottom of the page (Kai 2026-10-12).
-// 'Sound' returned when Kai un-cut it (2026-07-26); 'Resurfacing' is the cooldown card (punch 21);
-// 'Data' holds the importer and punch 50's Trash entry point. UI pass: in the order the page reads.
-const SUBNAV_ITEMS = ['Appearance', 'Sound', 'Calendar', 'Timezone', 'Resurfacing', 'Notifications', 'Capture', 'Integrations', 'Organize', 'Data', 'Legal', 'Profile', 'App', 'Advanced'] as const
-type SubnavItem = (typeof SUBNAV_ITEMS)[number]
-const SUBNAV_LABEL: Partial<Record<SubnavItem, string>> = { Timezone: 'Time zone', Capture: 'Capture & AI', Data: 'Your data', Legal: 'Privacy & terms' }
+// Shortcuts: the keys and the typing syntax as a reference — the cheatsheet's own tables (lib/shortcuts),
+// so this can't drift from the keys that really work. "?" opens the whole sheet anywhere.
+function ShortcutsCat() {
+  const rows = (list: ShortcutEntry[], keys: string) =>
+    list.map((e) => {
+      const sheet = e.keys[0] === '?'
+      return (
+        <Row key={e.label} label={sheet ? 'Every shortcut' : e.label} help={sheet ? 'The full list, anywhere in the app' : undefined} keys={`shortcut ${keys}`}>
+          <KeyCombo keys={e.keys} />
+        </Row>
+      )
+    })
+  return (
+    <>
+      <SCard title="Keys">{rows(GLOBAL_SHORTCUTS, '')}</SCard>
+      <SCard title="On the calendar">{rows(CALENDAR_SHORTCUTS, 'calendar')}</SCard>
+      <SCard title="Typing a task" sub="In the capture bar (⌘K) and every quick add">{rows(COMMAND_BAR_SHORTCUTS, 'typing syntax')}</SCard>
+    </>
+  )
+}
 
-// Back from Google's consent page (?google=…): straight to Integrations, where the row says how it went.
-const fromGoogle = () => new URLSearchParams(window.location.search).has('google')
+/** Each category's sections. */
+const BODY: Record<CatId, () => ReactNode> = {
+  account: () => <AccountCat />,
+  appearance: () => <AppearanceCard />,
+  calendar: () => <CalendarCat />,
+  capture: () => (
+    <>
+      <CaptureAiCard />
+      <PhotosSections />
+    </>
+  ),
+  notify: () => <NotificationsCard />,
+  organize: () => <OrganizeCat />,
+  integrations: () => <IntegrationsCat />,
+  data: () => <DataCard />,
+  privacy: () => <LegalCard />,
+  shortcuts: () => <ShortcutsCat />,
+  about: () => (
+    <>
+      <AppUpdateCard />
+      <DeviceSections />
+    </>
+  ),
+}
 
-function DesktopSettings() {
-  const [active, setActive] = useState<SubnavItem>(() => (fromGoogle() ? 'Integrations' : 'Appearance'))
-  const [page, setPage] = useState<'all' | 'integrations'>(() => (fromGoogle() ? 'integrations' : 'all'))
+/** One category's sections, scoped — and under a search, filtered to the rows that match. */
+function CategoryBody({ id, q = '' }: { id: CatId; q?: string }) {
+  const navigate = useNavigate()
+  const open = (cat: CatId, key: string) => navigate(`/settings/${cat}`, { state: { lit: key } })
+  return <ScopeCtx.Provider value={{ q, cat: id, open }}>{BODY[id]()}</ScopeCtx.Provider>
+}
 
-  function go(item: SubnavItem) {
-    setActive(item)
-    if (item === 'Integrations') return setPage('integrations')
-    setPage('all')
-    // After the cards render again (coming back from the Integrations page they weren't there).
-    requestAnimationFrame(() => document.getElementById(`settings-${item}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }))
+type Landing = { lit?: string; anchor?: string } | null
+
+/** A category's page: its name and line, then its sections. Arriving from a search result lights the
+ * row; arriving from an old anchor (#settings-Sound) scrolls to that section. */
+function CategoryPage({ id }: { id: CatId }) {
+  const state = useLocation().state as Landing
+  useEffect(() => {
+    if (!state?.lit && !state?.anchor) return
+    const t = setTimeout(() => {
+      const el = state.anchor ? document.getElementById(state.anchor) : document.querySelector(`[data-st-key="${CSS.escape(state.lit ?? '')}"]`)
+      if (!el) return
+      el.scrollIntoView({ block: state.anchor ? 'start' : 'center' })
+      if (state.lit) {
+        el.classList.add('is-lit')
+        setTimeout(() => el.classList.remove('is-lit'), 2000)
+      }
+    }, 80)
+    return () => clearTimeout(t)
+  }, [state, id])
+  return (
+    <div className="st-page">
+      <header className="st-page-head">
+        <h2>{CAT[id].name}</h2>
+        <p>{CAT[id].sum}</p>
+      </header>
+      <CategoryBody id={id} />
+    </div>
+  )
+}
+
+/** How many rows a block shows right now (search results fill in as their data lands). */
+function useRowCount(ref: React.RefObject<HTMLDivElement | null>): number {
+  const [n, setN] = useState(0)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const count = () => setN(el.querySelectorAll('.st-row').length)
+    count()
+    const mo = new MutationObserver(count)
+    mo.observe(el, { childList: true, subtree: true })
+    return () => mo.disconnect()
+  }, [ref])
+  return n
+}
+
+/** Search results: every category's matching rows, grouped by category › section, each with its own
+ * control and a › to its category. */
+function Results({ q }: { q: string }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const n = useRowCount(ref)
+  return (
+    <div className="st-results">
+      <p className="st-res-h" role="status">
+        <b>{n === 1 ? '1 setting' : `${n} settings`}</b> match “{q.trim()}”
+      </p>
+      <div ref={ref}>
+        {CATS.map((c) => (
+          <CategoryBody key={c.id} id={c.id} q={q} />
+        ))}
+      </div>
+      {n === 0 && <p className="st-res-foot">Nothing by that name — try another word, like “dark”, “quiet” or “export”.</p>}
+    </div>
+  )
+}
+
+const MAC = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
+
+function SearchField({ q, setQ, inputRef }: { q: string; setQ: (q: string) => void; inputRef: React.RefObject<HTMLInputElement | null> }) {
+  return (
+    <label className={`st-search${q ? ' is-on' : ''}`}>
+      <Icon name="search" size={16} />
+      <input
+        ref={inputRef}
+        type="search"
+        value={q}
+        placeholder="Search settings"
+        aria-label="Search settings"
+        onChange={(e) => setQ(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Escape' && q) {
+            e.stopPropagation()
+            setQ('')
+          }
+        }}
+      />
+      <kbd>{q ? 'Esc' : MAC ? '⌘ F' : 'Ctrl F'}</kbd>
+    </label>
+  )
+}
+
+const THEME_WORD: Record<ThemeMode, string> = { light: 'Light', dark: 'Dark', auto: 'Auto' }
+
+/** The phone list's right-hand words: where each category stands. */
+function useCatValues(): Partial<Record<CatId, string>> {
+  const { data: s } = useAppSettings()
+  const scale = useUiScale((x) => x.scale)
+  const { data: domains = [] } = useDomains()
+  const { data: integrations = [] } = useIntegrations()
+  let mode: ThemeMode = 'light'
+  try {
+    mode = (localStorage.getItem(THEME_MODE_KEY) as ThemeMode | null) ?? 'light'
+  } catch {
+    /* private mode */
   }
+  return {
+    appearance: `${THEME_WORD[mode] ?? 'Light'} · ${Math.round(scale * 100)}%`,
+    calendar: zoneCity(appZone()),
+    capture: s?.auto_file_captures ? 'Files for me' : 'Inbox first',
+    notify: s?.quiet_hours_on === false ? 'Quiet off' : `Quiet ${clockText((s?.quiet_from ?? QUIET_FROM).slice(0, 5))}`,
+    organize: `${domains.length} domain${domains.length === 1 ? '' : 's'}`,
+    integrations: `${integrations.length} connected`,
+    about: BUNDLED_VERSION,
+  }
+}
 
+const clover = (h: number) => <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: h, filter: 'var(--rim-clover, var(--shadow-drop-sm))' }} />
+
+/** The phone's Settings: Account on top (as iOS does), then the other categories in their groups. */
+function PhoneHome() {
+  const values = useCatValues()
+  const { flow } = useOwner()
+  const email = useAuth().session?.user.email ?? ''
+  return (
+    <>
+      <Link to="/settings/account" className="st-me">
+        <span className="st-me-av">
+          <Icon name="person" size={22} />
+        </span>
+        <span className="st-me-text">
+          <b>{flow}</b>
+          <span>{email ? `${email} · ` : ''}Account</span>
+        </span>
+        <Icon name="chevright" size={16} className="st-chev" />
+      </Link>
+      {GROUPS.slice(1).map((g) => (
+        <div key={g[0]} className="st-list">
+          {g.map((id) => (
+            <Link key={id} to={`/settings/${id}`} className="st-list-row">
+              <Icon name={CAT[id].icon} size={20} />
+              <span className="n">{CAT[id].name}</span>
+              {values[id] && <span className="v">{values[id]}</span>}
+              <Icon name="chevright" size={16} className="st-chev" />
+            </Link>
+          ))}
+        </div>
+      ))}
+    </>
+  )
+}
+
+interface ViewProps {
+  cat: CatId
+  sub?: ProviderId
+  q: string
+  setQ: (q: string) => void
+  searchRef: React.RefObject<HTMLInputElement | null>
+}
+
+// Layout A: the categories (with their icons) down the left, search at the top of the list, one category
+// on the right. Kai 2026-10-03: the page has no scroller of its own — .app-main-content scrolls.
+function DesktopSettings({ cat, sub, q, setQ, searchRef }: ViewProps) {
   return (
     <div className="st-desk">
-      <nav className="st-nav" aria-label="Settings sections">
+      <nav className="st-nav" aria-label="Settings categories">
         <div className="st-nav-in">
           <div className="st-nav-title">
             {/* Night 1e: the clover is a silhouette lit at the rim. */}
-            <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 26, filter: 'var(--rim-clover, var(--shadow-drop-sm))' }} />
+            {clover(26)}
             <h1>Settings</h1>
           </div>
-          {SUBNAV_ITEMS.map((item) => (
-            <button key={item} type="button" className="st-nav-item" aria-current={active === item || undefined} onClick={() => go(item)}>
-              {SUBNAV_LABEL[item] ?? item}
-            </button>
+          <SearchField q={q} setQ={setQ} inputRef={searchRef} />
+          {GROUPS.map((g) => (
+            <div key={g[0]} className="st-nav-grp">
+              {g.map((id) => (
+                <Link key={id} to={`/settings/${id}`} className="st-nav-item" aria-current={!q && id === cat ? 'page' : undefined}>
+                  <Icon name={CAT[id].icon} size={18} />
+                  <span>{CAT[id].name}</span>
+                </Link>
+              ))}
+            </div>
           ))}
-          <div className="st-nav-hand">{page === 'integrations' ? "The garden's irrigation ✿" : 'Everything saves as you touch it ✿'}</div>
         </div>
       </nav>
-
-      {/* Kai 2026-10-03: no scroller of its own. Its height was never bounded (the route grows with
-          the page — index.css .kf-route), so it never scrolled; it only swallowed the wheel (an
-          overflow-y:auto box gets overscroll-behavior: contain) and the page behind it, the one real
-          scroller (.app-main-content), stood still unless the pointer was over the left nav. */}
       <div className="st-main">
-        {page === 'integrations' ? (
-          <IntegrationsPage />
-        ) : (
-          // Two columns once there's room (settings.css): how the garden looks and keeps time on the
-          // left, what it connects to and keeps on the right; one column, in that order, below it.
-          <div className="st-cols">
-            <div className="st-col">
-              <AppearanceCard />
-              {/* Sounds un-cut by Kai 2026-07-26 — now a real synthesised layer (lib/sounds.ts). */}
-              <SoundCatalogCard />
-              <CalendarCard />
-              <TimezoneCard />
-              <ResurfacingCard />
-            </div>
-            <div className="st-col">
-              <NotificationsCard />
-              <CaptureAiCard />
-              <IntegrationsSummaryCard onOpenIntegrations={() => go('Integrations')} />
-              <OrganizeCard />
-              <DataCard />
-              <LegalCard />
-              <ProfileCard />
-              <AppUpdateCard />
-            </div>
-          </div>
-        )}
-        {page === 'all' && <AdvancedSection />}
+        <div className="st-main-in">{q ? <Results q={q} /> : sub ? <ProviderPage id={sub} /> : <CategoryPage id={cat} />}</div>
       </div>
     </div>
   )
 }
 
-function MobileSettings() {
-  const { data: integrations = [] } = useIntegrations()
-  const github = integrations.find((i) => i.provider === 'github')
-  const google = integrations.find((i) => i.provider === 'google')
-
+// The phone: a list that drills into one page per category (‹ Settings to go back); search under the title.
+function MobileSettings({ cat, sub, q, setQ, searchRef, home }: ViewProps & { home: boolean }) {
+  if (sub) return <div className="st-phone"><ProviderPage id={sub} /></div>
+  if (!home && !q) {
+    return (
+      <div className="st-phone">
+        <BackLink to="/settings">Settings</BackLink>
+        <CategoryPage id={cat} />
+      </div>
+    )
+  }
   return (
-    // Kai's phone review: the shell's 16px gutter is the page's (Today's), not 16 + 4 of its own.
-    // UI pass: the same cards and rows as the computer, one column.
     <div className="st-phone">
       <div className="st-phone-title">
-        <img src="/ds/assets/clover/seedling.png" alt="" style={{ height: 34, filter: 'var(--rim-clover, var(--shadow-drop-sm))' }} />
+        {clover(32)}
         <h1>Settings</h1>
       </div>
-      <AppearanceCard />
-      {/* Sounds v2: the phone plays them too, so it gets the same card. */}
-      <SoundCatalogCard />
-      <CalendarCard phone />
-      <TimezoneCard />
-      {/* Parity with the computer: the same cooldown card (its sliders are 44 tall on a phone). */}
-      <ResurfacingCard />
-      {/* The phone is where the pushes land, so the whole Notifications card lives here too (12i). */}
-      <NotificationsCard />
-      <CaptureAiCard />
-      {/* The phone has no Organize rail — its domains live here. */}
-      <OrganizeCard />
-      {/* P6: the phone has no Integrations page, so GitHub, Google, photos and AI sit here (the capture key: Advanced). */}
-      <GroupLabel>Connections</GroupLabel>
-      <GithubProvider github={github} />
-      <GoogleProvider google={google} />
-      <PaperSettingsCard />
-      <McpCard />
-      {/* Punch 50: the phone's way into Trash — and, like the computer, the importer and Profile. */}
-      <DataCard />
-      <LegalCard />
-      <ProfileCard />
-      <AppUpdateCard />
-      <AdvancedSection />
+      <SearchField q={q} setQ={setQ} inputRef={searchRef} />
+      {q ? <Results q={q} /> : <PhoneHome />}
       <div className="st-phone-foot">Everything saves as you touch it ✿</div>
     </div>
   )
@@ -1706,5 +2075,50 @@ function MobileSettings() {
 
 export function SettingsPage() {
   const isMobile = useIsMobile()
-  return isMobile ? <MobileSettings /> : <DesktopSettings />
+  const params = useParams()
+  const location = useLocation()
+  const [search, setSearch] = useSearchParams()
+  const uid = useAuth().session?.user.id
+  const searchRef = useRef<HTMLInputElement>(null)
+  const q = search.get('q') ?? ''
+  const setQ = (next: string) =>
+    setSearch(
+      (p) => {
+        if (next) p.set('q', next)
+        else p.delete('q')
+        return p
+      },
+      { replace: true },
+    )
+
+  // Kai 2026-10-07: opening Settings checks for updates too (App & updates shows the answer).
+  useEffect(() => {
+    void checkForUpdates(uid)
+  }, [uid])
+
+  // ⌘/Ctrl F reaches the search, as drawn.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && !e.altKey && e.key.toLowerCase() === 'f' && searchRef.current) {
+        e.preventDefault()
+        searchRef.current.focus()
+        searchRef.current.select()
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
+
+  // The old one-page links (#settings-Sound, the guides', the harnesses') land on their category, scrolled
+  // to the section; Google's consent page coming back (?google=…) lands on Integrations › Google.
+  const old = anchorTarget(location.hash)
+  if (old) return <Navigate to={`/settings/${old}${location.search}`} replace state={{ anchor: location.hash.slice(1) }} />
+  if (search.has('google') && !(params.cat === 'integrations' && params.sub === 'google')) return <Navigate to={`/settings/integrations/google${location.search}`} replace />
+  const cat = isCat(params.cat) ? params.cat : undefined
+  if (params.cat && !cat) return <Navigate to="/settings" replace />
+  const sub = cat === 'integrations' && isProvider(params.sub) ? params.sub : undefined
+  if (params.sub && !sub) return <Navigate to={`/settings/${cat}`} replace />
+
+  const view = { cat: cat ?? DESKTOP_HOME, sub, q, setQ, searchRef }
+  return isMobile ? <MobileSettings {...view} home={!cat} /> : <DesktopSettings {...view} />
 }
