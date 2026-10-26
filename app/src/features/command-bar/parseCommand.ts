@@ -36,8 +36,17 @@ export interface ParsedCommand {
 /** `*calls`, `*q3-review`: a `*` at a word start, then letters, digits, `_` or `-`. */
 const LABEL_RE = /(^|\s)\*([\p{L}\p{N}_-]+)/gu
 
-/** Matches `30m`, `1h`, or `1h30m` anywhere in the text. */
-const DURATION_RE = /\b(\d+)h(?:(\d+)m)?\b|\b(\d+)m\b/i
+/** Matches `30m`, `50min`, `1h`, `1h30m` or `1h20` (the app's own length label) anywhere in the text. */
+const DURATION_RE = /\b(\d+)h(?:(\d+)m?)?\b|\b(\d+)m(?:ins?)?\b/i
+
+/** The first length token in `text` — its minutes and where it sits — or null. The quick-add's reader,
+ * shared with the typed time fields (./typedTime). */
+export function readDuration(text: string): { minutes: number; index: number; length: number } | null {
+  const len = DURATION_RE.exec(text)
+  if (!len) return null
+  const minutes = len[1] ? parseInt(len[1], 10) * 60 + (len[2] ? parseInt(len[2], 10) : 0) : parseInt(len[3], 10)
+  return { minutes, index: len.index, length: len[0].length }
+}
 
 /** `!`/`!!`/`!!!` -> priority 3/2/1 (1 is most urgent) — matches `taskDisplay.ts`'s own
  * `priorityFlag`, which renders priority 1 back out as `!!!`: what you type is what you see. */
@@ -162,12 +171,9 @@ export function parseCommand(
   }
 
   // Duration before chrono: it reads a bare "30m"/"1h30m" as "in 30 minutes" and would take it as the date.
-  let durationMin: number | null = null
-  const len = DURATION_RE.exec(work)
-  if (len) {
-    durationMin = len[1] ? parseInt(len[1], 10) * 60 + (len[2] ? parseInt(len[2], 10) : 0) : parseInt(len[3], 10)
-    take(len.index, len.index + len[0].length)
-  }
+  const len = readDuration(work)
+  const durationMin = len?.minutes ?? null
+  if (len) take(len.index, len.index + len.length)
 
   // The repeat before chrono too, or "every monday" would be read as just next Monday.
   const repeat = REPEAT_RE.exec(work)
