@@ -126,7 +126,7 @@ for (const [size, view] of [['desktop', desktop], ['phone', phone]]) {
   await page.goto(`${BASE}/tasks`, { waitUntil: 'networkidle' })
   await sleep(1000)
   check(`${tag} and on another page`, (await bar(page).count()) === 0)
-  const s = await open('/settings', { ctx })
+  const s = await open('/settings/about', { ctx }) // settings-build: App & updates is its own page
   const card = s.page.locator('#settings-App')
   const row = card.locator('.st-row', { hasText: 'Download the apps' })
   check(`${tag} Settings → App has "Download the apps"`, (await row.count()) === 1)
@@ -140,7 +140,7 @@ for (const [size, view] of [['desktop', desktop], ['phone', phone]]) {
 
 // ── D · Settings → App night, on a computer ──
 {
-  const { ctx, page } = await open('/settings', { theme: 'night' })
+  const { ctx, page } = await open('/settings/about', { theme: 'night' })
   const card = page.locator('#settings-App')
   await card.scrollIntoViewIfNeeded()
   await card.screenshot({ path: path.join(OUT, 'd-desktop-settings-app-night.png') })
@@ -154,7 +154,7 @@ for (const [shell, view] of [['tauri', desktop], ['capacitor', phone], ['pwa', d
   const ready = await page.locator('main').count()
   check(`${tag} no download bar (the app shell rendered: ${ready === 1})`, ready === 1 && (await bar(page).count()) === 0)
   if (shell !== 'capacitor') {
-    await page.goto(`${BASE}/settings`, { waitUntil: 'networkidle' })
+    await page.goto(`${BASE}/settings/about`, { waitUntil: 'networkidle' })
     await sleep(1200)
     check(`${tag} Settings → App still has "Download the apps"`, (await page.locator('#settings-App .st-row', { hasText: 'Download the apps' }).count()) === 1)
   }

@@ -124,12 +124,18 @@ for (const theme of ['day', 'night']) {
     await page.mouse.move(content.x - 120, 400)
     await page.mouse.wheel(0, 400)
     await sleep(500)
-    check(`${N('settings')} @${scale * 100}% wheel over the left nav still scrolls it`, (await mainScroll(page)) > 0)
+    // settings-build (2026-10-26): the category list scrolls on its own once it's taller than the window
+    // (150% on 720), so the wheel over it moves the list or the page — never nothing.
+    const navScroll = await page.evaluate(() => document.querySelector('.st-nav-in')?.scrollTop ?? 0)
+    check(`${N('settings')} @${scale * 100}% wheel over the left nav still scrolls (the list or the page)`, (await mainScroll(page)) > 0 || navScroll > 0)
     check(`${N('settings')} @${scale * 100}% no sideways scroll`, await noHScroll(page))
     if (scale === 1.5) {
       await page.evaluate(() => { document.querySelector('.app-main-content').scrollTop = 0 })
       await shot(page, N('settings-150'))
       // 2 · default calendar view — the row shows Week until picked, a pick writes app_settings
+      // (settings-build: Calendar & time is its own page now — /settings/calendar).
+      await page.locator('.st-nav-item', { hasText: 'Calendar & time' }).click()
+      await sleep(400)
       const cal = page.locator('#settings-Calendar')
       await cal.scrollIntoViewIfNeeded()
       await sleep(300)
@@ -425,7 +431,7 @@ for (const theme of ['day', 'night']) {
   if (theme === 'day') {
     const MINE = 'aaaaaaa1111111111111111111111111111111111'
     const web = async (answer) => {
-      const env = await open('/settings', {}, { theme })
+      const env = await open('/settings/about', {}, { theme }) // settings-build: App & updates' own page
       await env.ctx.route('**/version.json*', (r) => (answer === 'offline' ? r.abort() : r.fulfill({ json: { commit: answer, builtAt: '2026-10-03T08:00:00Z' } })))
       await env.page.evaluate((c) => { const m = document.createElement('meta'); m.name = 'kf-build'; m.content = `${c} 2026-10-02T20:20:00Z`; document.head.appendChild(m) }, MINE)
       const card = env.page.locator('#settings-App')
@@ -453,7 +459,7 @@ for (const theme of ['day', 'night']) {
     }
     const native = async (tag) => {
       const requested = []
-      const env = await open('/settings', {}, { theme, tauriVersion: '1.0.14', before: (ctx) => Promise.all([ctx.route('https://api.github.com/**', (r) => {
+      const env = await open('/settings/about', {}, { theme, tauriVersion: '1.0.14', before: (ctx) => Promise.all([ctx.route('https://api.github.com/**', (r) => {
         requested.push(r.request().url())
         if (tag === 'offline') return r.abort()
         return r.fulfill({ json: { tag_name: tag, assets: [{ name: `kais-flow-${tag}.apk`, browser_download_url: `https://github.com/khairyKY/kais-flow/releases/download/${tag}/kais-flow-${tag}.apk` }, { name: `kais-flow-${tag}-windows-setup.exe`, browser_download_url: `https://github.com/khairyKY/kais-flow/releases/download/${tag}/kais-flow-${tag}-windows-setup.exe` }] } })

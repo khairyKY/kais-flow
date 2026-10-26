@@ -413,7 +413,7 @@ if (!ONLY || ONLY.has('more')) {
       }))
       const small = targets.filter((x) => x.h < 48 || x.w < 48)
       check(`${name} every row and button is ≥ 48px (${targets.length})`, targets.length >= 14 && small.length === 0, JSON.stringify(small))
-      const wrapped = await sheet.locator('a span:last-of-type, button').evaluateAll((els) => els.filter((e) => {
+      const wrapped = await sheet.locator('a span:last-of-type, button span:last-of-type').evaluateAll((els) => els.filter((e) => {
         const r = document.createRange()
         r.selectNodeContents(e)
         return new Set([...r.getClientRects()].filter((x) => x.width > 0).map((x) => Math.round(x.top))).size > 1

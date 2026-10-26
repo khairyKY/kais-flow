@@ -1,11 +1,10 @@
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { CaptureButton } from '../features/capture/CaptureButton'
 import { useEscapeStack } from '../lib/overlayStack'
 import { useMotionEnabled } from '../lib/motion'
 import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
-import { FlowerIcon, GuideGlyph, ProjectsGlyph } from './icons/NavGlyphs'
 import './kit.css'
 
 // Pixel contract: MK Tab Bar.dc.html + DS-CHANGELOG §3 "Tab bar" (2026-09-28 refresh — replaces the
@@ -13,8 +12,6 @@ import './kit.css'
 // Today · Inbox · capture · Calendar · More · kf icons 24 · labels Inter 12/16 · the page you're on
 // gets a 56×32 pill in its surface's block tint · badge 1 · 12 · 99+ · re-tap = scroll to top.
 // Plus its "More" sheet. The shell owns this; feature pages never render their own copy.
-
-const A = '/ds/assets'
 
 /** One tab. Exported so /design-system can show each state signed-out. */
 export function TabItem({ label, icon, tint, active, badge = 0, to, onClick, tour }: { label: string; icon: IconName; tint: string; active: boolean; badge?: number; to?: string; onClick?: () => void; tour?: string }) {
@@ -58,34 +55,32 @@ export function TabItem({ label, icon, tint, active, badge = 0, to, onClick, tou
   )
 }
 
-// [K-26] punch 65 parked the Library; fix-grammar (2026-10-12) brings its row back beside Journal,
-// with the icon it had before the park. Journal is back per D-1. Focus
-// (audit-A7 addition Kai kept) appends after the designed rows instead of splitting their order.
-// deviation(2026-09-26 audit): the export's sheet has no Tasks, Projects, Activity or Trash, so on
-// a phone those four pages had no way in at all. Each carries the icon the collapsed sidebar rail
-// already gives it (Tasks' blossom flower, Projects' trellis glyph, Activity's gold dot, Trash's
-// hairline dot). Order (polish-f1, conductor's call): Tasks and Projects lead — they're the pages a
-// phone user reaches for most and the tab bar has no slot for — then the designed rows in the
-// export's order, then Focus, Activity and Trash.
-const MORE_ITEMS: { to: string; label: string; img?: string; imgHeight?: number; dot?: string; glyph?: ReactNode; badge?: boolean }[] = [
-  { to: '/tasks', label: 'Tasks', glyph: <FlowerIcon fill="var(--acc-blossom)" center="#C98A4B" /> },
-  { to: '/projects', label: 'Projects', glyph: <ProjectsGlyph /> },
-  { to: '/routines', label: 'Routines', img: `${A}/vine/flowering.png`, imgHeight: 20 },
-  { to: '/inbox', label: 'Inbox', dot: '--acc-hydrangea', badge: true },
-  { to: '/weekly-review', label: 'Review', img: `${A}/fern/unfurl2.png`, imgHeight: 18 },
-  { to: '/journal', label: 'Journal', img: `${A}/fern/full.png`, imgHeight: 20 },
-  { to: '/library', label: 'Library', img: `${A}/tools/pen.png`, imgHeight: 16 },
-  { to: '/people', label: 'People', dot: '--acc-clover' },
+// The sheet's rows, in polish-f1's order (Tasks and Projects lead — the tab bar has no slot for them —
+// then the export's rows, then Focus, Activity and Trash). Settings build (Kai 2026-10-26, "the new icons
+// didn't land on the phone version"): each row wears the sidebar's own kf line icon (AppLayout NAV,
+// Sidebar options.html icons A) — no watercolour species, flower glyphs or dots left on the phone.
+const MORE_ITEMS: { to: string; label: string; icon: IconName; badge?: boolean }[] = [
+  { to: '/tasks', label: 'Tasks', icon: 'tasks' },
+  { to: '/projects', label: 'Projects', icon: 'projects' },
+  { to: '/routines', label: 'Routines', icon: 'routines' },
+  { to: '/inbox', label: 'Inbox', icon: 'inbox', badge: true },
+  { to: '/weekly-review', label: 'Review', icon: 'clipboard' },
+  { to: '/journal', label: 'Journal', icon: 'journal' },
+  { to: '/library', label: 'Library', icon: 'library' },
+  { to: '/people', label: 'People', icon: 'people' },
   // Tour & help 14i: the Guide waits in More, beside Settings.
-  { to: '/guide', label: 'Guide', glyph: <GuideGlyph size={18} /> },
-  { to: '/settings', label: 'Settings', dot: '--acc-sage' },
-  { to: '/focus', label: 'Focus', img: `${A}/daisy/midday.png`, imgHeight: 18 },
-  { to: '/activity', label: 'Activity', dot: '--acc-gold' },
-  { to: '/trash', label: 'Trash', dot: '--ink-hairline' },
+  { to: '/guide', label: 'Guide', icon: 'guide' },
+  { to: '/settings', label: 'Settings', icon: 'settings' },
+  { to: '/focus', label: 'Focus', icon: 'focus' },
+  { to: '/activity', label: 'Activity', icon: 'activity' },
+  { to: '/trash', label: 'Trash', icon: 'delete' },
 ]
+
+const footBtn = { flex: 1, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' } as const
 
 function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pendingInbox: number; onClose: () => void; onSearch: () => void; onChat: () => void; onSignOut: () => void }) {
   useEscapeStack(true, onClose)
+  const { pathname } = useLocation()
   return (
     <div className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end' }} onClick={onClose}>
       <div
@@ -103,29 +98,31 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
             joined (polish-c). 112px is the widest row's content (icon + "Projects"/"Routines");
             the ellipsis below is only a last resort for extreme zooms. */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))', gap: 10 }}>
-          {MORE_ITEMS.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              onClick={onClose}
-              style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, minHeight: 48, boxSizing: 'border-box', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '11px 13px', textDecoration: 'none' }}
-            >
-              {item.img && <img src={item.img} alt="" style={{ height: item.imgHeight }} />}
-              {item.dot && <span style={{ width: 9, height: 9, borderRadius: '50%', background: `var(${item.dot})`, flex: 'none' }} />}
-              {/* Line glyphs stroke currentColor — same muted ink as the rail's resting icons. */}
-              {item.glyph && <span style={{ display: 'flex', flex: 'none', color: 'var(--ink-muted)' }}>{item.glyph}</span>}
-              <span style={{ fontSize: 13, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
-              {item.badge && pendingInbox > 0 && (
-                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{pendingInbox}</span>
-              )}
-            </Link>
-          ))}
+          {MORE_ITEMS.map((item) => {
+            // The page you're on: the sidebar's active row (frosted at night, parchment by day), ink icon.
+            const on = pathname.startsWith(item.to)
+            return (
+              <Link
+                key={item.to}
+                to={item.to}
+                onClick={onClose}
+                aria-current={on ? 'page' : undefined}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, minHeight: 48, boxSizing: 'border-box', background: on ? 'var(--frost-bg, var(--paper-parchment))' : 'var(--paper-bone)', border: `1px solid ${on ? 'var(--frost-line, var(--line-control))' : 'var(--line-card)'}`, borderRadius: 'var(--radius-input)', padding: '11px 13px', textDecoration: 'none' }}
+              >
+                <Icon name={item.icon} size={18} style={{ color: on ? 'var(--ink-body)' : 'var(--ink-muted)' }} />
+                <span style={{ fontSize: 'var(--fs-caption)', fontWeight: on ? 600 : undefined, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
+                {item.badge && pendingInbox > 0 && (
+                  <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{pendingInbox}</span>
+                )}
+              </Link>
+            )
+          })}
         </div>
         {/* 48px rows and buttons (Kai's phone review: ~40 / ~20px tall before) */}
         <div style={{ display: 'flex', gap: 16, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line-dashed)' }}>
-          <button type="button" onClick={() => { onClose(); onSearch() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>⌕ Search</button>
-          <button type="button" onClick={() => { onClose(); onChat() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Chat</button>
-          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-faint)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' }}>Sign out</button>
+          <button type="button" onClick={() => { onClose(); onSearch() }} style={footBtn}><Icon name="search" size={16} /><span>Search</span></button>
+          <button type="button" onClick={() => { onClose(); onChat() }} style={footBtn}><Icon name="chat" size={16} /><span>Chat</span></button>
+          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ ...footBtn, color: 'var(--ink-faint)' }}><Icon name="signout" size={16} /><span>Sign out</span></button>
         </div>
       </div>
     </div>
