@@ -85,6 +85,40 @@ export async function showAndroid(n: Notice): Promise<void> {
   await LocalNotifications.schedule({ notifications: [toAndroid(n, notificationId(n.tag))] })
 }
 
+/** Exact alarms allowed ("Alarms & reminders"; USE_EXACT_ALARM grants it at install on Android 13+). */
+export function exactAlarms(): Promise<boolean> {
+  return LocalNotifications.checkExactNotificationSetting().then((s) => s.exact_alarm === 'granted', () => false)
+}
+
+/** Opens Android's "Alarms & reminders" page for the app (Settings → Notifications → This phone). */
+export function openExactAlarmSettings(): Promise<unknown> {
+  return LocalNotifications.changeExactNotificationSetting().catch(() => undefined)
+}
+
+interface BackgroundBridge {
+  backgroundAllowed?: () => boolean
+  openBackgroundSettings?: () => void
+}
+const shell = () => (window as unknown as { KaisFlowShell?: BackgroundBridge }).KaisFlowShell
+
+/** Battery optimisation off for the app (MainActivity Shell.backgroundAllowed). Undefined on an APK
+ * from before v1.5.1, which has no such check. Stock Android fires an exact alarm in Doze anyway;
+ * Samsung's "sleeping apps", Xiaomi's and others' battery savers don't. */
+export function backgroundAllowed(): boolean | undefined {
+  try {
+    return shell()?.backgroundAllowed?.()
+  } catch {
+    return undefined
+  }
+}
+
+export function openBackgroundSettings(): void {
+  shell()?.openBackgroundSettings?.()
+}
+
+/** Android keeps at most 500 alarms per app; the plan is sorted, so the farthest drop first. */
+const MAX_SCHEDULED = 400
+
 let queue: Promise<void> = Promise.resolve()
 /** Replaces everything this app has scheduled with `plan`. One at a time, in order. */
 export function scheduleAndroid(plan: readonly Planned[]): Promise<void> {
@@ -93,12 +127,19 @@ export function scheduleAndroid(plan: readonly Planned[]): Promise<void> {
     await prepare()
     // Without the exact-alarm permission, asking for exact makes the plugin open a Settings screen
     // on every schedule — so inexact then (Android may hold it a few minutes in Doze).
-    const exact = await LocalNotifications.checkExactNotificationSetting().then((s) => s.exact_alarm === 'granted', () => false)
+    const exact = await exactAlarms()
     const { notifications: pending } = await LocalNotifications.getPending()
-    if (pending.length) await LocalNotifications.cancel({ notifications: pending.map((p) => ({ id: p.id })) })
-    if (plan.length === 0) return
-    await registerTypes(plan.map((p) => p.notice))
-    await LocalNotifications.schedule({ notifications: plan.map((p) => toAndroid(p.notice, notificationId(p.key), p.at, exact)) })
+    const next = plan.slice(0, MAX_SCHEDULED).map((p) => toAndroid(p.notice, notificationId(p.key), p.at, exact))
+    // The new plan goes in first (a same id replaces its alarm), then whatever it no longer holds is
+    // cancelled. It used to cancel everything first: the app swiped away, or put to sleep, between the
+    // two steps left the phone with nothing scheduled at all until it was opened again (notif 2026-10-26).
+    if (next.length) {
+      await registerTypes(plan.map((p) => p.notice))
+      await LocalNotifications.schedule({ notifications: next })
+    }
+    const keep = new Set(next.map((n) => n.id))
+    const stale = pending.filter((p) => !keep.has(p.id))
+    if (stale.length) await LocalNotifications.cancel({ notifications: stale.map((p) => ({ id: p.id })) })
   }).catch(() => {
     /* the next change plans again */
   })

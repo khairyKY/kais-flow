@@ -90,9 +90,11 @@ function sweepDue(from: Date, now: Date): boolean {
   return true
 }
 
-/** The Android app: hands the next few days to the OS (notifications/android.ts) — and, while a
- * focus round runs with the app in the background, its "minutes tended" at the round's end. */
-const ANDROID_DAYS = 3
+/** The Android app: hands the next week to the OS (notifications/android.ts) — and, while a
+ * focus round runs with the app in the background, its "minutes tended" at the round's end. A week,
+ * not 3 days (notif 2026-10-26): the phone only re-plans when the app runs, so after 3 days unopened
+ * even the digest and the nudge stopped. */
+const ANDROID_DAYS = 7
 function scheduleOnAndroid(): void {
   const now = new Date()
   const plan = planFor(now, new Date(now.getTime() + ANDROID_DAYS * 86_400_000), now)

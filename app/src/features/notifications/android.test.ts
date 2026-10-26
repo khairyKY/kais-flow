@@ -102,6 +102,31 @@ describe('show now / schedule', () => {
     expect(ln.schedule.mock.calls[1][0].notifications[0].isExactNotification).toBe(false)
   })
 
+  it('the new plan goes in before anything is cancelled, and a still-planned one is never cancelled', async () => {
+    const order: string[] = []
+    ln.schedule.mockImplementationOnce(async () => (order.push('schedule'), { notifications: [] }))
+    ln.cancel.mockImplementationOnce(async () => void order.push('cancel'))
+    const keep = notificationId('t1@x')
+    ln.getPending.mockResolvedValueOnce({ notifications: [{ id: keep }, { id: 8 }] })
+    await scheduleAndroid([{ key: 't1@x', at: new Date('2026-10-03T05:40:00Z'), notice: reminder }])
+    expect(order).toEqual(['schedule', 'cancel'])
+    expect(ln.cancel).toHaveBeenCalledWith({ notifications: [{ id: 8 }] })
+  })
+
+  it('a schedule that fails cancels nothing (the old plan stays)', async () => {
+    ln.schedule.mockRejectedValueOnce(new Error('bridge gone'))
+    await scheduleAndroid([{ key: 't1@x', at: new Date('2026-10-03T05:40:00Z'), notice: reminder }])
+    expect(ln.cancel).not.toHaveBeenCalled()
+  })
+
+  it('at most 400 alarms (Android allows 500 an app), the soonest kept', async () => {
+    const plan = Array.from({ length: 450 }, (_, i) => ({ key: `k${i}`, at: new Date(now.getTime() + (i + 1) * 60_000), notice: reminder }))
+    await scheduleAndroid(plan)
+    const sent = ln.schedule.mock.calls[0][0].notifications
+    expect(sent).toHaveLength(400)
+    expect(sent[0].id).toBe(notificationId('k0'))
+  })
+
   it('an empty plan just clears', async () => {
     await scheduleAndroid([])
     expect(ln.cancel).toHaveBeenCalled()
