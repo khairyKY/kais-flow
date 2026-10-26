@@ -1,0 +1,77 @@
+[
+  {
+    "name": "section counts A10 B13 C12 D26",
+    "ok": true,
+    "detail": "{\"A\":10,\"B\":13,\"C\":12,\"D\":26}"
+  },
+  {
+    "name": "four Kai yes pre-marked",
+    "ok": true,
+    "detail": "CAL11,D15,D3,D4"
+  },
+  {
+    "name": "no page errors while every demo played",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no page errors in night + reduced",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "copy my picks lists C answers and Not this",
+    "ok": true,
+    "detail": "\"Motion fixes, my picks (2026-10-26)\\n\\nKai's call:\\n- D12 Seasonal drift + Seasons header layer: No\\n- D13 Time-of-day paper tint: (not answered)\\n- D14 Idle life: (not answered)\\n- D15 Parasol header: Yes\\n- D16 Sidebar streak plant: (not answered)\\n- D11 Amber drift across Projects: (not answered)\\n- D8 Toast petal-fall: (not answered)\\n- D9 Hover lean on more plants: (not answered)\\n- D10 Dusk veil on the evening close: (not answered)\\n- D3 Drag ghost tilts with speed: Yes\\n- CAL11 Selected block outline: Yes\\n- D4 Calendar snap flash: Yes\\n\\nNot this (skip these fixes):\\n- T1 Tasks entry stagger cap\""
+  },
+  {
+    "name": "video T1",
+    "ok": true,
+    "detail": "441 KB"
+  },
+  {
+    "name": "video T2T3",
+    "ok": true,
+    "detail": "274 KB"
+  },
+  {
+    "name": "video K1",
+    "ok": true,
+    "detail": "329 KB"
+  },
+  {
+    "name": "video O2O3",
+    "ok": true,
+    "detail": "357 KB"
+  },
+  {
+    "name": "video R6",
+    "ok": true,
+    "detail": "304 KB"
+  },
+  {
+    "name": "video R1",
+    "ok": true,
+    "detail": "219 KB"
+  },
+  {
+    "name": "video R3",
+    "ok": true,
+    "detail": "333 KB"
+  },
+  {
+    "name": "video R8",
+    "ok": true,
+    "detail": "312 KB"
+  },
+  {
+    "name": "video O1",
+    "ok": true,
+    "detail": "331 KB"
+  },
+  {
+    "name": "video T8",
+    "ok": true,
+    "detail": "297 KB"
+  }
+]
