@@ -1505,8 +1505,12 @@ function DesktopCalendar() {
           closing={blockExit.closing}
           onClose={() => setSelected(null)}
           onReplan={(x, y) => replanEvent(blockShown.event, x, y)}
-          // Menu B's Details: the details in its place, beside the block (a task's: its task popover).
-          onDetails={() => handleEventClick(blockShown.event.id)}
+          // Menu B's Details: the details in its place, beside the block (a task's: its task popover) — once the menu
+          // has closed (its row's click closes it after running).
+          onDetails={() => {
+            const id = blockShown.event.id
+            window.setTimeout(() => handleEventClick(id))
+          }}
         />
       )}
       {plan && <ContextMenu items={planFor(plan.target)} position={{ x: plan.x, y: plan.y }} onClose={() => setPlan(null)} />}

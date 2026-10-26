@@ -80,8 +80,9 @@ export async function moveBlock(
     opts.onCancel?.()
     return undefined
   }
-  const undoMove = opts.run()
+  // "This one": the round leaves its series BEFORE it moves, so the next round keeps the series' own time.
   const undoRound = scope === 'this' ? detachRound(round) : () => {}
+  const undoMove = opts.run()
   toastUndo(`${opts.said} · ${scopeSuffix('task', scope)}`, () => {
     undoRound()
     undoMove()

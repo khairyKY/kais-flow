@@ -378,7 +378,16 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         // Released without moving: it stays lifted, and the hold opens menu B (cal-clicks) — but not the release of
         // a lifted block's own second press, which is a nudge of its handles that didn't move.
         setLift({ ...l, draft: l.orig, mode: null })
-        if (e.type !== 'pointercancel' && ev && heldNow.current) onHoldBlock?.(ev)
+        if (e.type !== 'pointercancel' && ev && heldNow.current && onHoldBlock) {
+          // The click a lifted finger still sends would land on the sheet's scrim and close it: eat that one.
+          const eat = (c: Event) => {
+            c.stopPropagation()
+            c.preventDefault()
+          }
+          window.addEventListener('click', eat, { capture: true, once: true })
+          window.setTimeout(() => window.removeEventListener('click', eat, { capture: true }), 700)
+          onHoldBlock(ev)
+        }
       }
       heldNow.current = false
     } else if (kind === 'swipe') {
