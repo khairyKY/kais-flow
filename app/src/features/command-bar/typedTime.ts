@@ -65,7 +65,7 @@ function lengthOf(text: string, lengthOnly: boolean): number | null {
 }
 
 /** A single time: the clock digits, else chrono through the quick-add's reader ("half past 7"). */
-function timeOf(text: string, ctx: Required<Omit<TypedContext, 'accepts'>>): number | null {
+function timeOf(text: string, ctx: { now: Date; hour24: boolean; anchor: number }): number | null {
   const c = clock(text, ctx.hour24)
   if (c) return c.sure ? c.m : nearest(c.m, ctx.anchor)
   const p = parseCommand(text, [], [], { now: ctx.now, zone: 'cairo' })

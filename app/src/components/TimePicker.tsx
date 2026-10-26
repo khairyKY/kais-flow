@@ -6,6 +6,7 @@ import { queryClient } from '../lib/queryClient'
 import type { CalendarEvent } from '../lib/types'
 import { BottomSheet } from './BottomSheet'
 import { Button, Chip, SectionLabel } from './kit'
+import { TypedTime } from './TypedTime'
 import { DURATIONS, QUARTERS, busyAt, busyOnDay, dayTitle, durationLabel, freeSlots, fromMin, toMin } from './pickerMath'
 import './pickers.css'
 
@@ -40,15 +41,20 @@ export function LengthChips({ value, onPick, style }: { value: number | null | u
   )
 }
 
-export function TimePanel({ day, value, onValue, duration, onDuration, events }: {
+export function TimePanel({ day, value, onValue, duration, onDuration, lengthChips = true, onSubmit, events }: {
   /** Cairo day whose calendar gives the slots and busy rows; null = a time with no date (a routine). */
   day: string | null
   /** "HH:mm" — any minute; only a quarter shows as a selected row. */
   value: string | null
   onValue: (hhmm: string) => void
   duration?: number | null
-  /** Shows the duration chips. */
+  /** Takes a length: the duration chips, and a typed range or length ("7–8:30", "50m"). */
   onDuration?: (min: number) => void
+  /** false: the surface has its own length control (queue 15: one per surface) — the typed field
+   * still takes a range, without a second row of chips. */
+  lengthChips?: boolean
+  /** Enter in the typed field: what it set, for the caller's Done. */
+  onSubmit?: (hhmm: string, duration: number | null | undefined) => void
   events?: readonly CalendarEvent[]
 }) {
   const listRef = useRef<HTMLDivElement>(null)
@@ -71,6 +77,18 @@ export function TimePanel({ day, value, onValue, duration, onDuration, events }:
 
   return (
     <div className="kf-pk-tp">
+      {/* Queue 16: type it instead — "7:10 pm", "7–8:30", "50m", "noon", "in 2h". */}
+      <TypedTime
+        start={value ? toMin(value) : null}
+        minutes={onDuration ? (duration ?? null) : null}
+        accepts={onDuration ? 'both' : 'time'}
+        onApply={(r, typed) => {
+          const hhmm = r.start != null ? fromMin(r.start) : value || '09:00'
+          if (typed.start != null) onValue(hhmm)
+          if (typed.minutes != null) onDuration?.(typed.minutes)
+          onSubmit?.(hhmm, typed.minutes ?? duration)
+        }}
+      />
       {slots.length > 0 && (
         <>
           <div className="kf-pk-sl"><SectionLabel>Free on your calendar</SectionLabel></div>
@@ -98,7 +116,7 @@ export function TimePanel({ day, value, onValue, duration, onDuration, events }:
           )
         })}
       </div>
-      {onDuration && (
+      {onDuration && lengthChips && (
         <>
           <div className="kf-pk-sl"><SectionLabel>Duration</SectionLabel></div>
           <LengthChips value={duration} onPick={(m) => { tick(); onDuration(m) }} />
@@ -111,11 +129,13 @@ export function TimePanel({ day, value, onValue, duration, onDuration, events }:
 /** The phone time sheet. Done hands back "HH:mm" (09:00 if nothing was picked) and the duration
  * when the caller passed one and it changed. Dismissing it changes nothing. `onClear` adds the
  * footer's ghost "No time", like the date sheet's "No date" (SCREENS-2026-09-28 §Plan ruling 5). */
-export function TimePicker({ day, value, duration, onDone, onClose, onClear, events, title }: {
+export function TimePicker({ day, value, duration, lengthChips, onDone, onClose, onClear, events, title }: {
   day?: string | null
   value: string | null
-  /** Pass the current duration (null = none) to show the chips. */
+  /** Pass the current duration (null = none) to take a length (the chips, a typed range). */
   duration?: number | null
+  /** false: the length has its own control on the surface underneath — no chips here (queue 15). */
+  lengthChips?: boolean
   onDone: (hhmm: string, durationMin?: number) => void
   onClose: () => void
   onClear?: () => void
@@ -138,7 +158,19 @@ export function TimePicker({ day, value, duration, onDone, onClose, onClear, eve
         </>
       )}
     >
-      {() => <TimePanel day={day ?? null} value={time} onValue={setTime} duration={hasDuration ? dur : undefined} onDuration={hasDuration ? setDur : undefined} events={events} />}
+      {(close) => (
+        <TimePanel
+          day={day ?? null}
+          value={time}
+          onValue={setTime}
+          duration={hasDuration ? dur : undefined}
+          onDuration={hasDuration ? setDur : undefined}
+          lengthChips={lengthChips}
+          // Enter applies it, as Done would.
+          onSubmit={(t, d) => { onDone(t, d != null && d !== duration ? d : undefined); close() }}
+          events={events}
+        />
+      )}
     </BottomSheet>
   )
 }

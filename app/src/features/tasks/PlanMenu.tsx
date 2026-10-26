@@ -17,6 +17,7 @@ import { isOverdue, planOptions, slotText, spreadPlan, type PlanKey, type PlanOp
 import { tomorrowHint } from '../../lib/dateShortcuts'
 import { clockText } from '../../lib/clock'
 import '../../components/pickers.css'
+import { taskMinutes } from '../../../../supabase/functions/_shared/blockLength.ts'
 
 // ── The Plan menu (Kai 2026-10-07): one list wherever a task gets a date — the ⋯ / right-click
 // menu's Plan… (Replan… once it's overdue), the swipe's Plan, the task sheet's date chip, the bulk
@@ -97,7 +98,22 @@ export function PlanMenu({ task, bulkCount, spreadTasks, title: titleOverride, p
   const meta = bulk ? `${bulkCount} tasks` : task.title
 
   if (stage === 'pick') {
-    return <DatePicker title="Pick date & time" meta={meta} value={bulk ? null : task.due_at} withTime position={position} onPick={(iso, _min, timed) => actions.schedule(iso, timed)} onClose={onClose} />
+    // Queue 16: its time sheet takes a typed range ("7–8:30") for one task — the block at that start and
+    // length (Next free slot's own write); the length chips stay with the task's other controls.
+    const ranged = !bulk && !!actions.slot
+    return (
+      <DatePicker
+        title="Pick date & time"
+        meta={meta}
+        value={bulk ? null : task.due_at}
+        withTime
+        duration={ranged ? taskMinutes(task) : undefined}
+        lengthChips={false}
+        position={position}
+        onPick={(iso, min, timed) => (min && ranged ? actions.slot!(iso, new Date(Date.parse(iso) + min * 60_000).toISOString()) : actions.schedule(iso, timed))}
+        onClose={onClose}
+      />
+    )
   }
   if (stage === 'spread' && spread) {
     return <SpreadConfirm meta={meta} picks={spread} position={position} mobile={isMobile} onConfirm={() => actions.spread?.(spread)} onClose={onClose} />

@@ -49,6 +49,9 @@ export interface DatePickerProps {
   withTime?: boolean
   /** Shows the time sheet's duration chips; onPick's second argument when it changed. */
   duration?: number | null
+  /** false: the time sheet takes a typed range ("7–8:30") but draws no chips — the surface's own
+   * length control is elsewhere (queue 15). */
+  lengthChips?: boolean
   /** Last pickable day, "YYYY-MM-DD". */
   max?: string
   /** Desktop anchor, screen px (a menu position, or under a field). */
@@ -64,7 +67,7 @@ export interface DatePickerProps {
 }
 
 export function DatePicker(p: DatePickerProps) {
-  const { title, meta, mode = 'iso', value, onPick, onClose, quick, onSomeday, onClear, withTime, duration, max, position, trigger, tasks, events, browse } = p
+  const { title, meta, mode = 'iso', value, onPick, onClose, quick, onSomeday, onClear, withTime, duration, lengthChips, max, position, trigger, tasks, events, browse } = p
   const isMobile = useIsMobile()
   const monthId = useId()
   const now = new Date()
@@ -89,9 +92,9 @@ export function DatePicker(p: DatePickerProps) {
   )
 
   const disabled = (k: string) => !!max && k > max
-  const emit = (d: string, t: string | null) => {
+  const emit = (d: string, t: string | null, length: number | null | undefined = dur) => {
     const out = mode === 'day' ? d : atDay(d, t ?? '09:00')
-    const min = dur != null && dur !== duration ? dur : undefined
+    const min = length != null && length !== duration ? length : undefined
     const same = value != null && (mode === 'day' ? out === value : Date.parse(out) === Date.parse(value))
     if (!same || min !== undefined) onPick(out, min, mode === 'iso' && t != null) // Done on an unchanged value writes nothing
   }
@@ -152,7 +155,17 @@ export function DatePicker(p: DatePickerProps) {
 
   const content = (close: () => void) =>
     stage === 'time' ? (
-      <TimePanel day={day ?? today} value={time} onValue={setTime} duration={duration !== undefined ? dur : undefined} onDuration={duration !== undefined ? setDur : undefined} events={events} />
+      <TimePanel
+        day={day ?? today}
+        value={time}
+        onValue={setTime}
+        duration={duration !== undefined ? dur : undefined}
+        onDuration={duration !== undefined ? setDur : undefined}
+        lengthChips={lengthChips}
+        // Typed + Enter (queue 16): applied, as Done would.
+        onSubmit={(t, d) => { emit(day ?? today, t, d); close() }}
+        events={events}
+      />
     ) : (
       <>
         <style>{ACTION_ROW_CSS}</style>
