@@ -1,0 +1,217 @@
+{
+ "counts": {
+  "B-360": 5,
+  "B-390": 7,
+  "B-430": 9,
+  "Day-360": 7,
+  "Day-390": 9,
+  "Day-430": 9
+ },
+ "results": [
+  {
+   "name": "B renders at 360",
+   "ok": true,
+   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 3h 50m plannedAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"pressed\":\"Now\"}"
+  },
+  {
+   "name": "B at 360: no sideways page scroll",
+   "ok": true,
+   "detail": "overflow 0px"
+  },
+  {
+   "name": "B 360 day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B renders at 390",
+   "ok": true,
+   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 3h 50m plannedAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"pressed\":\"Now\"}"
+  },
+  {
+   "name": "B at 390: no sideways page scroll",
+   "ok": true,
+   "detail": "overflow 0px"
+  },
+  {
+   "name": "B 390 day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B renders at 430",
+   "ok": true,
+   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 3h 50m plannedAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"pressed\":\"Now\"}"
+  },
+  {
+   "name": "B at 430: no sideways page scroll",
+   "ok": true,
+   "detail": "overflow 0px"
+  },
+  {
+   "name": "B 430 day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B 360 night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B 390 night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B 430 night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B at 390: at least 7 tasks fully visible",
+   "ok": true,
+   "detail": "5 / 7 / 9 at 360 / 390 / 430"
+  },
+  {
+   "name": "the switch goes to Day and remembers it (kf-phone-today-view)",
+   "ok": true,
+   "detail": "{\"strip\":true,\"key\":\"day\"}"
+  },
+  {
+   "name": "Day survives a reload",
+   "ok": true,
+   "detail": "{\"strip\":true,\"pressed\":\"Day\",\"now\":false}"
+  },
+  {
+   "name": "…and back to Now",
+   "ok": true,
+   "detail": "{\"now\":true,\"key\":\"now\"}"
+  },
+  {
+   "name": "switching: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Day bar renders at 360",
+   "ok": true,
+   "detail": "{\"bar\":true,\"pills\":6,\"lane2\":0,\"goal\":1,\"now\":true,\"next\":\"Next11:00 AMLecture — Computer Visionin 20m\",\"nowCard\":false,\"restIsB\":true}"
+  },
+  {
+   "name": "Day at 360: no sideways page scroll",
+   "ok": true,
+   "detail": "overflow 0px"
+  },
+  {
+   "name": "Day 360 day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Day bar renders at 390",
+   "ok": true,
+   "detail": "{\"bar\":true,\"pills\":6,\"lane2\":0,\"goal\":1,\"now\":true,\"next\":\"Next11:00 AMLecture — Computer Visionin 20m\",\"nowCard\":false,\"restIsB\":true}"
+  },
+  {
+   "name": "Day at 390: no sideways page scroll",
+   "ok": true,
+   "detail": "overflow 0px"
+  },
+  {
+   "name": "Day 390 day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Day bar renders at 430",
+   "ok": true,
+   "detail": "{\"bar\":true,\"pills\":6,\"lane2\":0,\"goal\":1,\"now\":true,\"next\":\"Next11:00 AMLecture — Computer Visionin 20m\",\"nowCard\":false,\"restIsB\":true}"
+  },
+  {
+   "name": "Day at 430: no sideways page scroll",
+   "ok": true,
+   "detail": "overflow 0px"
+  },
+  {
+   "name": "Day 430 day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Day 360 night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Day 390 night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Day 430 night: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Day at 390: at least 9 tasks fully visible",
+   "ok": true,
+   "detail": "7 / 9 / 9 at 360 / 390 / 430"
+  },
+  {
+   "name": "the Now · Day switch is in the middle of the Yesterday / Tomorrow line, in the picker’s place",
+   "ok": true,
+   "detail": "{\"seg\":true,\"picker\":false}"
+  },
+  {
+   "name": "tapping the date title opens the date picker",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "tapping the bar opens the calendar’s own Day column for today (with Week as the default view)",
+   "ok": true,
+   "detail": "{\"url\":\"/calendar?date=2026-10-26&view=day\",\"title\":\"Monday, Oct 26\"}"
+  },
+  {
+   "name": "bar and title: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "complete in B (Now): \"Review lecture 7 slides\" is struck and written done",
+   "ok": true,
+   "detail": "struck=true write=POST "
+  },
+  {
+   "name": "complete in now: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "complete in the Day view: \"Pay the internet bill\" is struck and written done",
+   "ok": true,
+   "detail": "struck=true write=POST "
+  },
+  {
+   "name": "complete in day: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B: tapping a row opens the task",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "B: Morning · Begin opens Plan my day",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "opening: no page errors",
+   "ok": true,
+   "detail": ""
+  }
+ ]
+}

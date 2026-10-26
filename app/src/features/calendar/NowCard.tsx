@@ -30,7 +30,7 @@ function hueOf(e: CalendarEvent): Hue {
   if (e.color) return blockHue(e.color)
   return e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
 }
-const hueVars = (e: CalendarEvent) => {
+export const hueVars = (e: CalendarEvent) => {
   const h = hueOf(e)
   return { ['--c' as string]: h.c, ['--ct' as string]: h.ink } as CSSProperties
 }
@@ -87,7 +87,8 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
   tasks: readonly Task[]
   /** A click on an item: its block's details (desktop) or its sheet (phone). */
   onOpen: (e: CalendarEvent) => void
-  variant?: 'dock' | 'float' | 'phone'
+  /** 'today': the phone Today's Now panel (phone-today) — open by default, its own fold. */
+  variant?: 'dock' | 'float' | 'phone' | 'today'
 }) {
   const now = useMinuteNow()
   useHour24() // the times follow the app's one 12h/24h switch
@@ -98,7 +99,7 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
     () => pickNowNext(events, now, (e) => { const t = e.task_id ? taskById.get(e.task_id) : undefined; return !!t && (t.status === 'done' || !!t.completed_at) }),
     [events, now, taskById],
   )
-  const [folded, setFolded] = useFolded(variant === 'phone' ? 'kf.calNowFoldedPhone' : 'kf.calNowFolded', variant === 'phone')
+  const [folded, setFolded] = useFolded(variant === 'phone' ? 'kf.calNowFoldedPhone' : variant === 'today' ? 'kf.todayNowFolded' : 'kf.calNowFolded', variant === 'phone')
   const [open, setOpen] = useState(false)
   const tick = Math.floor(now.getTime() / 600_000)
 

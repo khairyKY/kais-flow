@@ -409,28 +409,24 @@ for (const theme of ['day', 'night']) for (const [name, at, s] of PH) {
   const tag = `${name}-${theme}`
   const { ctx, page, cdp, errors } = await open(at, s, { view: phone, theme })
   const cap = await text(slip(page).locator('.tp-caption'))
+  // phone-today (2026-10-26, B "Now + next"): the Plan my day card, the workload line and its hairline, and the
+  // Up next list are gone; what runs is the calendar's Now card; the slip stays for over / paused / just done.
   if (name === 'p1-plan-0800') {
-    check(`${tag} ritual card, no slip (Next/Free give way to Plan)`, (await page.locator('.tp-ritual').count()) === 1 && (await slip(page).count()) === 0)
+    check(`${tag} no slip; Rituals · Morning offers Begin (the Plan card's way in)`, /Begin/.test(await text(page.locator('section[aria-label="Rituals"] [data-ritual="morning"]'))) && (await slip(page).count()) === 0)
     check(`${tag} the notebook icon beside search`, (await page.locator('.tp-bar').getByRole('link', { name: 'Notebook page' }).count()) === 1)
-    check(`${tag} progress hairline "1 of 6 done"`, (await page.locator('.tp-progress[aria-label="Today · 1 of 6 done"]').count()) === 1)
-    // the event row grammar: ⋯ → Open in calendar · Delete
-    const row = page.locator(`#upnext-${eid(DEEP)}`)
-    await row.scrollIntoViewIfNeeded()
-    await tap(cdp, page, row.locator('.kf-row-more'))
-    const sheet = await text(page.locator('[role="dialog"]').last())
-    check(`${tag} an event row's ⋯ → Open in calendar · Delete`, /Open in calendar/.test(sheet) && /Delete/.test(sheet), sheet.replace(/\n/g, ' | '))
-    await shot(page, `${tag}-event-sheet`)
-    await page.locator('[role="dialog"]').last().getByRole('button', { name: 'Open in calendar' }).click()
+    check(`${tag} the workload line and hairline are gone (B)`, (await page.locator('.tp-sum, .tp-progress').count()) === 0)
+    // an event on the Now card opens on the calendar
+    await page.locator('section[aria-label="Now"] .kf-now-card').first().click()
     await sleep(800)
-    check(`${tag} …Open in calendar → /calendar?event=<id>`, page.url().includes(`/calendar?event=${eid(DEEP)}`), page.url())
+    check(`${tag} the Now card's event → /calendar?event=<id>`, page.url().includes(`/calendar?event=${eid(DEEP)}`), page.url())
   }
-  if (name === 'p2-running-0940') check(`${tag} Now · until 11:00, ring 1h 20m`, /now · until 11:00/i.test(cap) && /^1h\s20m$/.test(await text(slip(page).locator('.tp-ring'))), cap)
+  if (name === 'p2-running-0940') { const nowText = await page.locator('section[aria-label="Now"]').evaluate((e) => e.textContent); check(`${tag} the Now card: Ongoing · 1h 20m left`, /Ongoing/.test(nowText) && /1h\s?20m left/.test(nowText) && (await slip(page).count()) === 0, nowText) }
   if (name === 'p3-idle-1118') check(`${tag} nothing runs → no slip (Kai: only while something runs), no ritual card mid-day`, (await slip(page).count()) === 0 && (await page.locator('.tp-ritual').count()) === 0)
   if (name === 'p4-over-1220') check(`${tag} NOW · 20M OVER, amber ring +20`, /now · 20M over/i.test(cap) && /\+20/.test(await text(slip(page).locator('.tp-ring'))) && (await slip(page).locator('.tp-caption.is-over').count()) === 1, cap)
   if (name === 'p6-idle-1410') check(`${tag} a free gap → no slip`, (await slip(page).count()) === 0)
   if (name === 'p8-over-capacity-1600') {
-    const sum = page.locator('.tp-sum')
-    check(`${tag} the Today line turns amber with "… OVER"`, (await page.locator('.tp-sum.is-over').count()) === 1 && /over/i.test(await text(page.locator('.tp-over'))), await text(sum))
+    // phone-today: B drops the workload line and its over-capacity warning (Kai's B drawing).
+    check(`${tag} no workload line on the phone (B)`, (await page.locator('.tp-sum').count()) === 0)
   }
   await fitCheck(page, tag)
   await shot(page, tag)

@@ -179,8 +179,10 @@ if (want('s')) {
       await shot(page, `${tag}-0030-today`)
       await page.locator('.td-now').getByRole('button', { name: /^(Begin|Resume)$/ }).click()
     } else {
-      check(`${tag} 00:30: the ritual card reads Shut down the day`, /Shut down the day/.test(await text(page.locator('.tp-ritual'))), (await text(page.locator('.tp-ritual'))).replace(/\n/g, ' '))
-      await page.locator('.tp-ritual').getByRole('button', { name: /^(Shut down|Resume)$/ }).click()
+      // phone-today (2026-10-26): the ritual card is gone; Rituals · Evening offers it (still the evening at 00:30).
+      const ev = page.locator('section[aria-label="Rituals"] [data-ritual="evening"]')
+      check(`${tag} 00:30: Rituals · Evening offers Shut down (Begin)`, /Begin|Continue/.test(await text(ev)), (await text(ev)).replace(/\n/g, ' '))
+      await ev.click()
     }
     await sleep(900)
     const left = page.locator(`[id="rt-${id(LEFT)}"]`)

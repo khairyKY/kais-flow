@@ -348,7 +348,8 @@ for (const theme of ['day', 'night']) {
   const tag = `p-${theme}`
   const { ctx, page, cdp, errors, state } = await open('09:40', {}, { theme, view: phone })
   const strip = page.locator('.tp-daynav')
-  check(`${tag} Today: the title unchanged ("Monday, Oct 26"), the strip "‹ Yesterday · picker · Tomorrow ›"`, (await text(page.locator('.tp-bar-title'))) === 'Monday, Oct 26' && /Yesterday/.test(await text(strip)) && /Tomorrow/.test(await text(strip)) && (await strip.getByRole('button', { name: 'Pick a day' }).count()) === 1 && (await strip.getByRole('button', { name: 'Back to today' }).count()) === 0, (await text(strip)).replace(/\n/g, ' '))
+  // phone-today (2026-10-26, Day strip options 4): on Today the Now · Day switch takes the picker's place; the title opens the picker.
+  check(`${tag} Today: the title unchanged ("Monday, Oct 26"), the strip "‹ Yesterday · Now | Day · Tomorrow ›"`, (await text(page.locator('.tp-bar-title'))) === 'Monday, Oct 26' && /Yesterday/.test(await text(strip)) && /Tomorrow/.test(await text(strip)) && (await strip.locator('.tp-view').count()) === 1 && (await strip.getByRole('button', { name: 'Back to today' }).count()) === 0, (await text(strip)).replace(/\n/g, ' '))
   check(`${tag} …the Today menu (rituals) is still in the bar`, (await page.locator('.tp-bar').getByRole('button', { name: 'Today menu' }).count()) === 1)
   const fit = await page.evaluate(() => ({ sw: document.scrollingElement.scrollWidth, iw: innerWidth }))
   check(`${tag} …nothing runs sideways`, fit.sw <= fit.iw + 1, JSON.stringify(fit))

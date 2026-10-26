@@ -77,7 +77,7 @@ for (const theme of ['day', 'night']) {
       check(`${name} Next and Skip are 48px targets`, t.length === 2 && t.every((h) => h >= 48), JSON.stringify(t))
       check(`${name} the dim takes no taps (only the card does)`, (await page.locator('.kf-tour').evaluate((e) => getComputedStyle(e).pointerEvents)) === 'none')
     }
-    if (nid === 'row') check(`${name} the ghost finger swipes a copy of the row (looping)`, (await page.locator('.kf-tour-ghost .kf-tour-ghost-row').evaluate((e) => getComputedStyle(e).animationName)) === 'kfGhostRow' && (await page.locator('.kf-tour-ghost-copy .tp-title').count()) === 1)
+    if (nid === 'row') check(`${name} the ghost finger swipes a copy of the row (looping)`, (await page.locator('.kf-tour-ghost .kf-tour-ghost-row').evaluate((e) => getComputedStyle(e).animationName)) === 'kfGhostRow' && (await page.locator('.kf-tour-ghost-copy :is(.tp-title, .tp-slim-t)').count()) === 1) // phone-today: B's one-line row
     await page.locator('.kf-tour-next').click()
     await sleep(400)
   }
