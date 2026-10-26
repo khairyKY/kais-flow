@@ -44,6 +44,7 @@ import { QUIET_FROM, QUIET_TO } from '../../../../supabase/functions/notify/copy
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { widgetsAvailable } from '../widgets/native'
 import { useHideTitles } from '../widgets/bridge'
+import { readLock, writeLock } from '../lockscreen/native'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
@@ -928,6 +929,7 @@ function NotificationsCard() {
             </Button>
           </Row>
         )}
+        <LockScreenRows />
       </SCard>
     ) : (
       <SCard title="This browser" note="web only" device>
@@ -947,6 +949,43 @@ function NotificationsCard() {
         )}
       </SCard>
     )}
+    </>
+  )
+}
+
+/** Kai's Flow on the lock screen (lockscreen 2026-10-26; native/android/.../widgets/LockScreen.java). Kept
+ * per device, so each row says This device. Hidden on an APK from before it (no window.KaisFlowLock). */
+function LockScreenRows() {
+  const [lock, setLock] = useState(readLock)
+  if (!lock) return null
+  const set = (nowBar: boolean, dayStrip: boolean) => {
+    writeLock(nowBar, dayStrip)
+    setLock(readLock())
+  }
+  const names = 'Names show when “Show task names on the lock screen” is on'
+  return (
+    <>
+      {lock.nowBarSupported && (
+        <Row device label="Lock screen: Now Bar" help={`The block that’s on now, as a pill on the lock screen and the Always On Display, with today’s blocks and a countdown. ${names}`} keys="lock screen now bar live update notification android 16 aod">
+          <Toggle on={lock.nowBar} label="Lock screen: Now Bar" onToggle={() => set(!lock.nowBar, lock.dayStrip)} />
+        </Row>
+      )}
+      <Row device label="Lock screen: Day strip notification" help={`Today’s blocks across, with a now line and what’s next. It draws its own strip, so it can’t also sit in the Now Bar. ${names}`} keys="lock screen day strip notification ongoing">
+        <Toggle on={lock.dayStrip} label="Lock screen: Day strip notification" onToggle={() => set(lock.nowBar, !lock.dayStrip)} />
+      </Row>
+      <Row
+        device
+        label="How to add the Top 3 to your lock screen"
+        help="Samsung’s lock screen only offers Samsung’s own widgets. Good Lock › LockStar adds any app’s:"
+        keys="lock screen widget top 3 good lock lockstar samsung aod"
+        under={
+          <ol data-kf-lockstar-steps className="st-note" style={{ margin: 0, padding: '0 0 0 18px', listStyle: 'decimal' }}>
+            <li>Install Good Lock from the Galaxy Store, then LockStar inside it.</li>
+            <li>In LockStar, turn it on and tap the lock screen to edit it.</li>
+            <li>Tap Widgets › Kai’s Flow › Top 3 · lock screen, and place it under the clock.</li>
+          </ol>
+        }
+      />
     </>
   )
 }

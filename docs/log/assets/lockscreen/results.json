@@ -1,0 +1,92 @@
+[
+  {
+    "name": "1 mock Android 16: the This phone card is on Notifications & sound",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 \"Lock screen: Now Bar\" is there, marked This device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 \"Lock screen: Day strip notification\" is there, marked This device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 \"How to add the Top 3 to your lock screen\" is there, marked This device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 defaults: Now Bar on, Day strip off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 the Day strip says it can’t also sit in the Now Bar",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 the how-to is 3 short steps through Good Lock › LockStar",
+    "ok": true,
+    "detail": "Install Good Lock from the Galaxy Store, then LockStar inside it. / In LockStar, turn it on and tap the lock screen to edit it. / Tap Widgets › Kai’s Flow › Top 3 · lock screen, and place it under the clock."
+  },
+  {
+    "name": "1 Day strip on → set(nowBar=true, dayStrip=true); both can be on",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"set\",true,true]]"
+  },
+  {
+    "name": "1 Now Bar off → set(false, true)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 names off by default (Show task names on the lock screen) → setNames(false)",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"set\",true,true],[\"set\",false,true]]"
+  },
+  {
+    "name": "1/3 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 names on → setNames(true)",
+    "ok": true,
+    "detail": "[[\"setNames\",true]]"
+  },
+  {
+    "name": "2 mock Android 14: no Now Bar row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 … Day strip (off) and the how-to stay",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "4 older APK: This phone is there, without the lock rows",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "5 web: This browser instead of This phone, no lock rows anywhere",
+    "ok": true,
+    "detail": "phone, lock rows, how-to, browser = 0,0,0,1"
+  },
+  {
+    "name": "5 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
