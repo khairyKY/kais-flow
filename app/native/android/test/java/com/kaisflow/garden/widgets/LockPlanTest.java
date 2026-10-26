@@ -16,21 +16,16 @@ public class LockPlanTest {
         return h * 60 + m;
     }
 
-    private static final LockPlan.Block LECTURE = new LockPlan.Block(at(11, 0), at(12, 30), "Lecture — Computer Vision", "blossom", false);
-    private static final LockPlan.Block GOAL = new LockPlan.Block(at(13, 30), at(15, 0), "CNN notes", "goal", false);
-    private static final LockPlan.Block GYM = new LockPlan.Block(at(18, 0), at(19, 0), "Gym", "#72BF8E", false);
-    private static final List<LockPlan.Block> DAY = Arrays.asList(GYM, LECTURE, GOAL); // unsorted on purpose
+    // Palette C (res/values/kfw_palette.xml): Rose for an event, the goal's gold, Fern for the gym.
+    private static final int ROSE = 0xFFE58F99;
+    private static final int GOLD = 0xFFC9A55A;
+    private static final int FERN = 0xFF72BF8E;
+    private static final int IRIS = 0xFFB59CE3;
 
-    @Test
-    public void colours() {
-        assertEquals(0xFFE58F99, LockPlan.colorOf("blossom"));
-        assertEquals(0xFFB59CE3, LockPlan.colorOf("lavender"));
-        assertEquals(0xFFB59CE3, LockPlan.colorOf(""));
-        assertEquals(0xFFB59CE3, LockPlan.colorOf(null));
-        assertEquals(0xFFC9A658, LockPlan.colorOf("goal"));
-        assertEquals(0xFF72BF8E, LockPlan.colorOf("#72BF8E"));
-        assertEquals(0xFFB59CE3, LockPlan.colorOf("#nothex"));
-    }
+    private static final LockPlan.Block LECTURE = new LockPlan.Block(at(11, 0), at(12, 30), "Lecture — Computer Vision", ROSE, false);
+    private static final LockPlan.Block GOAL = new LockPlan.Block(at(13, 30), at(15, 0), "CNN notes", GOLD, true);
+    private static final LockPlan.Block GYM = new LockPlan.Block(at(18, 0), at(19, 0), "Gym", FERN, false);
+    private static final List<LockPlan.Block> DAY = Arrays.asList(GYM, LECTURE, GOAL); // unsorted on purpose
 
     @Test
     public void currentAndNext() {
@@ -58,13 +53,13 @@ public class LockPlanTest {
     }
 
     @Test
-    public void segmentsCoverTheWindowInPaletteC() {
+    public void segmentsCoverTheWindowInEachBlocksColour() {
         int[] w = LockPlan.window(DAY);
-        assertArrayEquals(new int[] {at(8, 0), at(22, 0)}, w);
+        assertArrayEquals(new int[] {at(7, 0), at(23, 0)}, w);
         List<int[]> s = LockPlan.segments(DAY, w[0], w[1]);
         int[][] want = {
-            {180, LockPlan.GAP}, {90, LockPlan.ROSE}, {60, LockPlan.GAP}, {90, LockPlan.GOLD},
-            {180, LockPlan.GAP}, {60, 0xFF72BF8E}, {180, LockPlan.GAP},
+            {240, LockPlan.GAP}, {90, ROSE}, {60, LockPlan.GAP}, {90, GOLD},
+            {180, LockPlan.GAP}, {60, FERN}, {240, LockPlan.GAP},
         };
         assertEquals(want.length, s.size());
         int total = 0;
@@ -78,29 +73,27 @@ public class LockPlanTest {
     @Test
     public void windowWidensAndOverlapsAreCut() {
         List<LockPlan.Block> early = Arrays.asList(
-            new LockPlan.Block(at(6, 45), at(8, 0), "Run", "", false),
-            new LockPlan.Block(at(7, 30), at(9, 0), "Overlap", "lavender", false),
-            new LockPlan.Block(at(22, 30), 24 * 60, "Late", "blossom", false));
+            new LockPlan.Block(at(5, 45), at(7, 0), "Run", IRIS, false),
+            new LockPlan.Block(at(6, 30), at(8, 0), "Overlap", IRIS, false),
+            new LockPlan.Block(at(23, 30), 24 * 60, "Late", ROSE, false));
         int[] w = LockPlan.window(early);
-        assertArrayEquals(new int[] {at(6, 0), 24 * 60}, w);
+        assertArrayEquals(new int[] {at(5, 0), 24 * 60}, w);
         List<int[]> s = LockPlan.segments(early, w[0], w[1]);
         assertArrayEquals(new int[] {45, LockPlan.GAP}, s.get(0));
-        assertArrayEquals(new int[] {75, LockPlan.IRIS}, s.get(1));
-        assertArrayEquals(new int[] {60, LockPlan.IRIS}, s.get(2)); // the overlap starts where Run ends
+        assertArrayEquals(new int[] {75, IRIS}, s.get(1));
+        assertArrayEquals(new int[] {60, IRIS}, s.get(2)); // the overlap starts where Run ends
         for (int[] seg : s) assertTrue(seg[0] >= 1); // a ProgressStyle segment can't be empty
     }
 
     @Test
     public void words() {
-        assertEquals("Lecture — Computer Vision", LockPlan.title(DAY, at(11, 10), true));
-        assertEquals("11:00–12:30 · then ✶ CNN notes 13:30", LockPlan.text(DAY, at(11, 10), true));
-        assertEquals("Next · ✶ CNN notes", LockPlan.title(DAY, at(12, 40), true));
-        assertEquals("13:30–15:00", LockPlan.text(DAY, at(12, 40), true));
-        assertEquals("Gym", LockPlan.title(DAY, at(18, 5), true));
-        assertEquals("18:00–19:00", LockPlan.text(DAY, at(18, 5), true));
-        // names off (Show task names on the lock screen)
-        assertEquals("A block", LockPlan.title(DAY, at(11, 10), false));
-        assertEquals("11:00–12:30 · then ✶ Goal of the day 13:30", LockPlan.text(DAY, at(11, 10), false));
+        assertEquals("Lecture — Computer Vision", LockPlan.title(DAY, at(11, 10)));
+        assertEquals("11:00–12:30 · then ✶ CNN notes 13:30", LockPlan.text(DAY, at(11, 10)));
+        assertEquals("Next · ✶ CNN notes", LockPlan.title(DAY, at(12, 40)));
+        assertEquals("13:30–15:00", LockPlan.text(DAY, at(12, 40)));
+        assertEquals("Gym", LockPlan.title(DAY, at(18, 5)));
+        assertEquals("18:00–19:00", LockPlan.text(DAY, at(18, 5)));
+        assertEquals("Nothing else today", LockPlan.title(DAY, at(20, 0)));
     }
 
     @Test

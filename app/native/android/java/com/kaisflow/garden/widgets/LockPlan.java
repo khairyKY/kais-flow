@@ -5,9 +5,10 @@ import java.util.List;
 
 /**
  * The lock screen's day, as plain numbers (lockscreen, 2026-10-26): which block is on, which is next,
- * the day as palette C segments, and the words. Minutes since the user's midnight in, no Android in
- * here, so it runs as a plain JUnit test (native/android/test/.../LockPlanTest.java). LockScreen
- * draws it as the Now Bar Live Update (B) and the Day strip notification (C).
+ * the day as coloured segments, and the words. Minutes since the user's midnight in, colours already
+ * resolved (palette C, by LockScreen from Render.swatch), no Android in here, so it runs as a plain JUnit
+ * test (native/android/test/.../LockPlanTest.java). LockScreen draws it as the Now Bar Live Update (B)
+ * and the Day strip notification's words (C).
  */
 public final class LockPlan {
     private LockPlan() {}
@@ -17,47 +18,25 @@ public final class LockPlan {
         final int start;
         final int end;
         final String title;
-        final String color;
-        final boolean done;
+        final int color;
+        final boolean goal;
 
-        public Block(int start, int end, String title, String color, boolean done) {
+        public Block(int start, int end, String title, int color, boolean goal) {
             this.start = start;
             this.end = end;
             this.title = title;
-            this.color = color == null ? "" : color;
-            this.done = done;
-        }
-
-        boolean goal() {
-            return color.equals("goal");
+            this.color = color;
+            this.goal = goal;
         }
     }
 
     /** How long before a block the notifications appear (none overnight for a 9:00 start). */
     static final int LEAD_MIN = 120;
-    /** The strip always shows at least 8:00–22:00 (the design's axis), wider if the day is. */
-    static final int DAY_FROM = 8 * 60;
-    static final int DAY_TO = 22 * 60;
-
-    // Palette C (src/styles/tokens/colors.css --blk-*): an event is Rose, a task Iris, the goal gold.
-    static final int ROSE = 0xFFE58F99;
-    static final int IRIS = 0xFFB59CE3;
-    static final int GOLD = 0xFFC9A658;
+    /** The day's span, as the Day bar draws it (DayBar FROM / TO), wider if the day is. */
+    static final int DAY_FROM = 7 * 60;
+    static final int DAY_TO = 23 * 60;
     /** Between blocks: a faint neutral track that reads on a light and a dark shade. */
     static final int GAP = 0x40888888;
-
-    /** A snapshot colour ('goal' | 'lavender' | 'blossom' | '#rrggbb', CALENDAR.md §3) as palette C. */
-    static int colorOf(String color) {
-        if (color == null) return IRIS;
-        switch (color) {
-            case "goal": return GOLD;
-            case "blossom": return ROSE;
-            case "lavender": case "": return IRIS;
-            default:
-                if (color.matches("#[0-9a-fA-F]{6}")) return 0xFF000000 | Integer.parseInt(color.substring(1), 16);
-                return IRIS;
-        }
-    }
 
     /** The block on at `now` (the first, if two overlap). */
     static Block current(List<Block> blocks, int now) {
@@ -89,7 +68,7 @@ public final class LockPlan {
         return best;
     }
 
-    /** The strip's span: 8:00–22:00, widened to whole hours around the day's first and last block. */
+    /** The span: 7:00–23:00, widened to whole hours around the day's first and last block. */
     static int[] window(List<Block> blocks) {
         int from = DAY_FROM;
         int to = DAY_TO;
@@ -112,7 +91,7 @@ public final class LockPlan {
             int e = Math.min(b.end, to);
             if (e <= s) continue;
             if (s > at) out.add(new int[] {s - at, GAP});
-            out.add(new int[] {e - s, colorOf(b.color)});
+            out.add(new int[] {e - s, b.color});
             at = e;
         }
         if (to > at) out.add(new int[] {to - at, GAP});
@@ -123,10 +102,9 @@ public final class LockPlan {
         return String.format(java.util.Locale.US, "%02d:%02d", min / 60 % 24, min % 60);
     }
 
-    /** A block's name, or (names off: Settings → Notifications → Show task names on the lock screen) what it is. */
-    static String label(Block b, boolean names) {
-        if (b.goal()) return "✶ " + (names ? b.title : "Goal of the day");
-        return names ? b.title : "A block";
+    /** A block's name, the goal's with its ✶. (Names off: the snapshot is masked first, LockScreen.masked.) */
+    static String label(Block b) {
+        return b.goal ? "✶ " + b.title : b.title;
     }
 
     static String range(Block b) {
@@ -134,22 +112,22 @@ public final class LockPlan {
     }
 
     /** The first line: the block that's on, else "Next · …". */
-    static String title(List<Block> blocks, int now, boolean names) {
+    static String title(List<Block> blocks, int now) {
         Block cur = current(blocks, now);
-        if (cur != null) return label(cur, names);
+        if (cur != null) return label(cur);
         Block n = next(blocks, now);
-        return n == null ? "Nothing else today" : "Next · " + label(n, names);
+        return n == null ? "Nothing else today" : "Next · " + label(n);
     }
 
     /** The second line: its times, then what follows ("11:00–12:30 · then ✶ CNN notes 13:30"). */
-    static String text(List<Block> blocks, int now, boolean names) {
+    static String text(List<Block> blocks, int now) {
         Block cur = current(blocks, now);
         if (cur == null) {
             Block n = next(blocks, now);
             return n == null ? "" : range(n);
         }
         Block then = next(blocks, Math.max(now, cur.end - 1));
-        return range(cur) + (then == null ? "" : " · then " + label(then, names) + " " + hm(then.start));
+        return range(cur) + (then == null ? "" : " · then " + label(then) + " " + hm(then.start));
     }
 
     /** The minute the countdown runs to: the end of the block that's on, else the next start; -1 if none. */

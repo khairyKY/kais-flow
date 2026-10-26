@@ -1,16 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A · Top 3 on the lock screen (LockWidget): home_screen|keyguard, for Good Lock › LockStar. -->
+<!-- A · Top 3 on the lock screen (LockWidget): the W04 Top 3 face in its own picker entry, home_screen|keyguard,
+     for Good Lock › LockStar (Samsung's own lock-screen picker takes only Samsung's widgets). -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="250dp"
     android:minHeight="110dp"
     android:targetCellWidth="4"
     android:targetCellHeight="2"
-    android:minResizeWidth="180dp"
-    android:minResizeHeight="90dp"
+    android:minResizeWidth="110dp"
+    android:minResizeHeight="110dp"
+    android:maxResizeWidth="368dp"
+    android:maxResizeHeight="368dp"
     android:resizeMode="horizontal|vertical"
     android:updatePeriodMillis="1800000"
-    android:initialLayout="@layout/kfl_top3"
-    android:initialKeyguardLayout="@layout/kfl_top3"
+    android:initialLayout="@layout/kfw_loading"
+    android:initialKeyguardLayout="@layout/kfw_loading"
     android:previewLayout="@layout/kfl_top3_preview"
+    android:previewImage="@drawable/kfw_preview_w04"
     android:description="@string/kfl_desc"
     android:widgetCategory="home_screen|keyguard" />

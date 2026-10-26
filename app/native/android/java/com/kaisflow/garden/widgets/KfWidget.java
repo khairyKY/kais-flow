@@ -153,6 +153,7 @@ public abstract class KfWidget extends AppWidgetProvider {
             AlarmManager alarms = c.getSystemService(AlarmManager.class);
             if (alarms != null) alarms.set(AlarmManager.RTC, s.boundary, refresh(c)); // inexact, never wakes the phone
         }
+        LockScreen.refresh(c); // the lock screen reads the same snapshot (the Top 3 lock widget, Now Bar, Day strip)
     }
 
     // ── taps ──

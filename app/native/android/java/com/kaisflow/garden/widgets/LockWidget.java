@@ -4,30 +4,28 @@ import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
 import android.content.ComponentName;
 import android.content.Context;
-import android.os.Build;
-import android.view.View;
+import android.os.Bundle;
+import android.util.Log;
 import android.widget.RemoteViews;
 import com.kaisflow.garden.R;
-import java.util.List;
-import org.json.JSONObject;
 
 /**
- * A · Top 3 on the lock screen (lockscreen, 2026-10-26): its own small widget, the goal first, for
- * Good Lock › LockStar (Samsung's own lock-screen picker takes only Samsung's widgets). Categories
- * home_screen|keyguard (res/xml/kfl_top3.xml). Ticks without opening the app: a real CheckBox from
- * Android 12 (res/layout-v31/kfl_top3.xml), a tappable box before. Night colours (values-night/
- * kfl_colors.xml) keep it readable on the AOD. Redrawn by LockScreen.refresh.
+ * A · Top 3 on the lock screen (lockscreen, 2026-10-26): the home-screen Top 3 face (Render "top": the goal
+ * first, real CheckBoxes from Android 12, night colours from values-night so it reads on the AOD) in its own
+ * picker entry with widgetCategory home_screen|keyguard (res/xml/kfl_top3.xml), for Good Lock › LockStar —
+ * Samsung's own lock-screen picker takes only Samsung's widgets. A tick is the home widgets' tick
+ * (KfWidget.tick → WidgetActions → KfWidget.updateAll, which redraws this through LockScreen.refresh).
+ * Names follow "Show task names on the lock screen" (LockScreen.masked).
  */
 public class LockWidget extends AppWidgetProvider {
-    private static final int[] ROWS = {R.id.kfl_row1, R.id.kfl_row2, R.id.kfl_row3};
-    private static final int[] BOXES = {R.id.kfl_box1, R.id.kfl_box2, R.id.kfl_box3};
-    private static final int[] TITLES = {R.id.kfl_title1, R.id.kfl_title2, R.id.kfl_title3};
-    /** What a row says with names off (the widgets' own mask words). */
-    private static final String[] HIDDEN = {"Your goal", "Pick 2", "Pick 3"};
-
     @Override
     public void onUpdate(Context c, AppWidgetManager m, int[] ids) {
         LockScreen.refresh(c); // draws this and sets the next-change alarm
+    }
+
+    @Override
+    public void onAppWidgetOptionsChanged(Context c, AppWidgetManager m, int id, Bundle options) {
+        updateAll(c);
     }
 
     static boolean placed(Context c) {
@@ -38,41 +36,22 @@ public class LockWidget extends AppWidgetProvider {
         AppWidgetManager m = AppWidgetManager.getInstance(c);
         int[] ids = m.getAppWidgetIds(new ComponentName(c, LockWidget.class));
         if (ids.length == 0) return;
-        m.updateAppWidget(ids, draw(c, Snap.load(c), System.currentTimeMillis(), LockScreen.names(c)));
-    }
-
-    static RemoteViews draw(Context c, Snap s, long now, boolean names) {
-        RemoteViews v = new RemoteViews(c.getPackageName(), R.layout.kfl_top3);
-        v.setOnClickPendingIntent(R.id.kfl_root, KfWidget.open(c, "/today"));
-        List<JSONObject> top = s == null || !s.signedIn() ? java.util.Collections.emptyList() : Render.top3(s, now);
-        int done = 0;
-        for (JSONObject o : top) if (o.optBoolean("done")) done++;
-        v.setTextViewText(R.id.kfl_count, top.isEmpty() ? "" : done + "/" + top.size());
-        String empty = s == null || !s.signedIn() ? "Open Kai's Flow" : "Nothing starred yet";
-        v.setViewVisibility(R.id.kfl_empty, top.isEmpty() ? View.VISIBLE : View.GONE);
-        v.setTextViewText(R.id.kfl_empty, empty);
-        boolean goalFirst = s != null && s.obj("goal") != null;
-        for (int i = 0; i < ROWS.length; i++) {
-            if (i >= top.size()) {
-                v.setViewVisibility(ROWS[i], View.GONE);
-                continue;
+        Snap s = LockScreen.masked(c, Snap.load(c));
+        long now = System.currentTimeMillis();
+        for (int id : ids) {
+            Bundle o = m.getAppWidgetOptions(id);
+            int w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
+            int h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT);
+            int cols = KfWidget.colsFor(w) > 0 ? KfWidget.colsFor(w) : 4;
+            int rows = KfWidget.rowsFor(h) > 0 ? KfWidget.rowsFor(h) : 2;
+            RemoteViews v;
+            try {
+                v = Render.build(c, "top", cols, rows, w > 0 ? w : 76 * cols + 16 * (cols - 1), h > 0 ? h : 96 * rows - 8, s, now);
+            } catch (RuntimeException e) {
+                Log.w("KfLock", "draw", e); // a bad snapshot never leaves a broken widget: first paint
+                v = new RemoteViews(c.getPackageName(), R.layout.kfw_loading);
             }
-            JSONObject o = top.get(i);
-            boolean isDone = o.optBoolean("done");
-            String id = o.optString("id");
-            String title = names ? o.optString("title") : HIDDEN[i];
-            v.setViewVisibility(ROWS[i], View.VISIBLE);
-            v.setTextViewText(TITLES[i], Render.struck((i == 0 && goalFirst ? "✶ " : "") + title, isDone));
-            if (Build.VERSION.SDK_INT >= 31) {
-                v.setCompoundButtonChecked(BOXES[i], isDone);
-                v.setBoolean(BOXES[i], "setEnabled", !isDone);
-                if (!isDone) v.setOnCheckedChangeResponse(BOXES[i], RemoteViews.RemoteResponse.fromPendingIntent(LockScreen.tick(c, id)));
-            } else {
-                v.setImageViewResource(BOXES[i], isDone ? R.drawable.kfl_box_done : R.drawable.kfl_box);
-                if (!isDone) v.setOnClickPendingIntent(BOXES[i], LockScreen.tick(c, id));
-            }
-            v.setContentDescription(BOXES[i], (isDone ? "Done: " : "Tick: ") + title);
+            m.updateAppWidget(id, v);
         }
-        return v;
     }
 }
