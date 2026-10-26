@@ -198,7 +198,8 @@ for (const theme of ['day', 'night']) {
     check(`${name} medium detent = 60% (506 of 844)`, box && Math.abs(box.height - 506) <= 2, box?.height)
     if (theme === 'day') {
       const chips = await chipTexts(page)
-      check(`${name} one chip per field, unset dashed (Repeat)`, JSON.stringify(chips) === JSON.stringify(['Today · 15:00', '30m', 'Shaheen Tasks', 'P2', 'Repeat', '10m before', 'calls']), JSON.stringify(chips))
+      // typing (queue 15): the task is on the calendar (a 15:00–15:30 block), so the row has no ⏱ chip — the card's Length row is its length.
+      check(`${name} one chip per field, unset dashed (Repeat); no ⏱ chip on the calendar`, JSON.stringify(chips) === JSON.stringify(['Today · 15:00', 'Shaheen Tasks', 'P2', 'Repeat', '10m before', 'calls']), JSON.stringify(chips))
       check(`${name} Repeat is a dashed pill`, (await sheetOf(page).locator('.ts-chips .kf-chip', { hasText: 'Repeat' }).evaluate((e) => getComputedStyle(e).borderTopStyle)) === 'dashed')
       check(`${name} notes, subtasks 0/2, the block card`, (await sheetOf(page).locator('.ts-notes').inputValue()) === 'They sent the wrong batch last time' && (await text(sheetOf(page).locator('.ts-sec'))) === 'Subtasks · 0/2')
       check(`${name} title row: check · serif title · star · ⋯ (48 targets)`, await sheetOf(page).locator('.ts-top').evaluate((r) => [...r.querySelectorAll('.ts-box, .kf-star, .ts-more')].every((b) => b.getBoundingClientRect().width >= 48) && getComputedStyle(r.querySelector('.ts-title')).fontFamily.includes('Source Serif')))

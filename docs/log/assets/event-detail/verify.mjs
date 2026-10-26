@@ -148,6 +148,13 @@ async function openBlock(page, kfId) {
   await menu(page).waitFor({ timeout: 4000 })
   await sleep(250)
 }
+// typing (queue 15): the popover's one length control is its Length chips (the Duration submenu is gone).
+async function pickLength(page, label) {
+  await menu(page).getByRole('group', { name: 'Length' }).getByRole('button', { name: label, exact: true }).click()
+  await sleep(300)
+  await page.keyboard.press('Escape')
+  await sleep(200)
+}
 async function pick(page, rowLabel, choice, subLabel) {
   await item(page, rowLabel).click()
   await sleep(250)
@@ -211,11 +218,11 @@ if (want('a2')) {
   await sleep(250)
   await menu(page, 'Colour').getByRole('button', { name: 'Sage' }).click()
   await settle(state)
-  // Duration: 1h → 30m Short.
+  // Duration: 1h → 30m (the Length chips — queue 15).
   w = state.writes.length
-  await pick(page, '10:30 – 11:30', 'Short', 'Duration')
+  await pickLength(page, '30m')
   await settle(state)
-  check('a2 duration: 30m Short ends it at 11:00', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.ends_at === iso('11:00')), JSON.stringify(posts(state, 'calendar_events', w).map((e) => e.ends_at)))
+  check('a2 duration: 30m ends it at 11:00', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.ends_at === iso('11:00')), JSON.stringify(posts(state, 'calendar_events', w).map((e) => e.ends_at)))
   check('a2 duration: toast with Undo', await toastSoon(page, 'Resized to 10:30–11:00'))
   // Project ▸ Site.
   await openBlock(page, eid(LUNCH))
@@ -382,7 +389,7 @@ if (want('b3')) {
   const h0 = (await sat().boundingBox()).height
   const thu0 = (await fc(page, occId(STANDUP, '08:00', 15)).boundingBox()).height
   await openBlock(page, occId(STANDUP, '08:00', 16))
-  await pick(page, '08:00 – 08:30', 'Standard', 'Duration')
+  await pickLength(page, '1h')
   await settle(state)
   const h1 = (await sat().boundingBox()).height
   const thu1 = (await fc(page, occId(STANDUP, '08:00', 15)).boundingBox()).height

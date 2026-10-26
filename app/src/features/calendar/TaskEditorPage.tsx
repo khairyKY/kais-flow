@@ -1,12 +1,14 @@
 import { useEffect, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { useTasks, planWithUndo, editWithUndo, setSomeday, toggleTop3, deleteTasksWithUndo, toggleTaskWithUndo } from '../tasks/api'
+import { TypedTime } from '../../components/TypedTime'
+import { taskMinutes } from '../../../../supabase/functions/_shared/blockLength.ts'
 import { useTaskDraft } from '../tasks/useTaskDraft'
 import { subtasksOf } from '../tasks/subtasks'
 import { PhotoSource, SubtaskList, TaskMoreMenu, anchorUnder, useTaskControls } from '../tasks/TaskFields'
 import { remindChip, repeatLabel, dayWord } from '../tasks/taskSheetMath'
 import { listState } from '../journal/journalDay'
-import { deleteEventWithUndo, useCalendarEvents } from './api'
+import { deleteEventWithUndo, scheduleTaskWithUndo, useCalendarEvents } from './api'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import { MiniFocus } from '../focus/MiniFocus'
@@ -16,7 +18,7 @@ import { timeRange, timeText, zoneTimeKey, zoneToIso } from './eventTime'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import { useAppZone } from '../../lib/appZone'
 import { useOnline } from '../../lib/useOnline'
-import { DURATIONS, dayShort, durationLabel } from '../../components/pickerMath'
+import { DURATIONS, dayShort, durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { priorityColor, priorityFlag } from '../tasks/taskDisplay'
 import { useIsMobile } from '../../components/BottomSheet'
 import { EmptyState, ErrorCard, OfflineChip, Skeleton } from '../../components/States'
@@ -287,6 +289,20 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
                 <TimeInput value={dueTime} onChange={(v) => handleDueChange(dueDate || zoneDateKey(now, zone), v, true)} />
               </div>
             </div>
+            {/* Queue 16: or type it — "7–8:30", "7:10 pm", "in 2h" put the block there (on its day, else the
+                due day, else today); "50m" is the length (the Duration chips' own write). */}
+            <TypedTime
+              dense
+              start={linkedEvent ? toMin(zoneTimeKey(new Date(linkedEvent.starts_at), zone)) : dueTime ? toMin(dueTime) : null}
+              minutes={taskMinutes(task)}
+              style={{ paddingTop: 8 }}
+              onApply={(r, typed) => {
+                if (typed.start == null) return void (r.minutes && actions.duration?.(r.minutes))
+                const day = linkedEvent ? zoneDateKey(new Date(linkedEvent.starts_at), zone) : dueDate || zoneDateKey(now, zone)
+                const startsAt = zoneToIso(day, fromMin(typed.start), zone)
+                scheduleTaskWithUndo(task, startsAt, new Date(Date.parse(startsAt) + (r.minutes ?? 30) * 60_000).toISOString())
+              }}
+            />
             <FLabel style={{ fontSize: 'var(--fs-meta)', marginTop: 12 }}>Priority</FLabel>
             <Segmented value={task.priority ?? 0} onChange={(p) => actions.priority(p || null)} options={PRIORITIES} label="Priority" />
             <FLabel style={{ fontSize: 'var(--fs-meta)', marginTop: 12 }}>Duration</FLabel>
