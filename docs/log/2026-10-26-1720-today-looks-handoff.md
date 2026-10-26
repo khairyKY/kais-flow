@@ -265,3 +265,64 @@ W02, W08, W09–W13, W16–W18, W21–W23, W25–W28, W31–W34.
 - system `serif` for the display moments.
 
 **Shots:** `docs/log/assets/today-looks/phone/widgets-existing-day.png` and `widgets-existing-night.png`.
+
+## Push 2: the Samsung lock screen is FINAL
+
+**Final:** the lock-screen section (`#lockscreen`). The widget grid is unchanged from push 1, except that lock option A now shows the modern W04.
+
+### Research verdict: what a third-party app can put on Samsung's lock screen
+
+Web search done 2026-10-26 (extended mode).
+
+| Surface | One UI 6.1 | One UI 7 | One UI 8 (Android 16) | How we'd build it |
+|---|---|---|---|---|
+| Lock screen / AOD widget picker (native) | Samsung's own only | Samsung's system widgets only; no third-party | Third-party not confirmed. Google's lock-screen "hub" with any app's widgets arrives in Android 16 QPR2 on Pixels; Samsung was *expected* to adopt it, but nothing confirms it ships | — |
+| Good Lock › LockStar | Any AppWidget on the lock screen and AOD | Any AppWidget (LockStar 7.0.00.14+, plugs into the native editor) | Works. In the 8.5 beta, LockStar is reported broken | Our existing AppWidgets; nothing new to build |
+| Now Bar / Live Notifications | Doesn't exist | Samsung's apps and a few partners only | Any app posting an Android 16 Live Update. In Beta 3 it was behind the developer switch "Live notifications for all apps", expected on in stable; Zomato ships it on 8.0 | Ongoing notification with ProgressStyle (or Standard / BigText), `setRequestPromotedOngoing(true)`, `POST_PROMOTED_NOTIFICATIONS`, `setShortCriticalText`. No custom RemoteViews, not colorized, not a group summary, channel above MIN |
+| Ongoing notification on the lock screen | Yes | Yes | Yes (and promotable) | NotificationCompat ongoing, actions, Chronometer. A custom layout is allowed but then can't be a Live Update |
+| AOD | Notification icons; FaceWidgets are Samsung's | Icons; the Now Bar if "Show Now bar" is on; LockStar widgets | Same | — |
+
+Samsung draws the Now Bar itself. We only control:
+- the icon, title and text;
+- the short chip text;
+- the ProgressStyle segments and points, and their colours.
+
+We can't control fonts, the paper look or layout.
+
+**The options drawn** (matching A/B/C):
+- **A · a lock-screen widget through LockStar.** One UI 6.1, 7, 8. It's the AppWidget we already have, so no new code. It is *not* in the native picker.
+- **B · a Now Bar Live Update.** One UI 8+ only. ProgressStyle, with today's blocks as palette C segments and "20m" in the chip. On One UI 6.1 / 7 it falls back to an ordinary notification.
+- **C · an ongoing notification with the day strip.** Every version. A custom layout, so it's not promotable. The AOD shows only its icon.
+
+To check on Kai's phone:
+- the One UI version (Settings › About phone › Software information);
+- whether Good Lock is offered in his region;
+- whether a widget tick works without unlocking. A tick is a broadcast, so it may run while locked; opening the app always asks to unlock.
+
+**Sources:**
+- [SamMobile: One UI 7 removes the lock-screen widget carousel](https://www.sammobile.com/news/one-ui-7-lock-screen-widgets-carousel-removed/)
+- [Android Authority: One UI 7's big lock-screen widget change](https://www.androidauthority.com/one-ui-7-widget-carousel-3507162/)
+- [Samsung support: widgets on the lock screen and AOD in One UI 7+](https://www.samsung.com/ae/support/mobile-devices/how-to-add-widgets-on-the-lock-screen-and-aod-in-one-ui-7-or-later/)
+- [9to5Google: Good Lock lets you use any widget on the lock screen](https://9to5google.com/2023/08/07/samsung-good-lock-lockscreen-widgets/)
+- [Android Police: any widget on the lock screen / AOD via Good Lock](https://www.androidpolice.com/good-lock-widgets-aod/)
+- [SammyGuru: LockStar on One UI 7](https://sammyguru.com/lockstar-hits-one-ui-7-heres-whats-new/)
+- [Samsung Community: LockStar on One UI 7.0 review](https://eu.community.samsung.com/t5/galaxy-s25-series/lockstar-on-one-ui-7-0-full-review/td-p/12118454)
+- [Android Police: One UI 8.5 beta breaks Good Lock tools](https://www.androidpolice.com/one-ui-85-beta-breaks-a-fan-favorite-customization-tool/)
+- [Android Authority: One UI 8 lets any app show a Live Notification in the Now Bar](https://www.androidauthority.com/one-ui-8-live-updates-support-3573794/)
+- [Android Police: One UI 8 Now Bar / Live Updates confirmed](https://www.androidpolice.com/one-ui-8-now-bar-live-updates-integrations-confirmed/)
+- [SamMobile: Now Bar on One UI 8 gains a food delivery app (Zomato)](https://www.sammobile.com/news/one-ui-8-now-bar-support-food-delivery-app/)
+- [Android Police: using the Now Bar on the lock screen and AOD](https://www.androidpolice.com/use-samsungs-now-bar-lock-screen-aod-tutorial/)
+- [Android Developers: Live Update notifications (requirements)](https://developer.android.com/develop/ui/compose/notifications/live-update)
+- [Android Authority: Android 16 QPR1 Live Updates](https://www.androidauthority.com/android-16-qpr1-live-updates-3573399/)
+- [9to5Google: Android 16 QPR2 lock-screen widgets / hub mode](https://9to5google.com/2025/08/20/android-qpr2-lock-screen-widgets/)
+- [Sammy Fans: One UI 8 expected to support third-party lock-screen widgets](https://www.sammyfans.com/2025/03/07/samsungs-one-ui-8-android-16-to-support-third-party-lock-screen-widgets/)
+
+**Shots** in `docs/log/assets/today-looks/phone/`:
+- `lockscreen-<A|B|C>-<lock|aod>-<day|night>.png`
+- `widgets-existing-<day|night>.png`
+- `page-*.png`
+
+**Checks:**
+- No page errors.
+- No broken images.
+- Copy my picks gives `Phone home: phone B; widgets B; lock B; widget verdicts OK: W03; NOT: W34`.

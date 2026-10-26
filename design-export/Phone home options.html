@@ -670,10 +670,10 @@ const lsStat = (aod) => `<div class="st"><span>${aod ? '' : '10:40'}</span><span
 const lsFrame = (aod, inner, o = {}) => `<div class="ls ${aod ? 'aod' : 'wall'}">${lsStat(aod)}${o.chip && !aod ? `<span class="chipsb">◷ ${o.chip}</span>` : ''}<div class="clk">10:40</div><div class="dt">Mon, October 26${aod ? '' : ' · ☀ 27°'}</div>${aod ? `<div class="icons">${(o.aodIcons ?? ['K']).map((x) => `<i>${x}</i>`).join('')}</div>` : ''}${inner}${aod ? '' : '<div class="fp"></div><span class="sc" style="left:26px">☏</span><span class="sc" style="right:26px">◉</span>'}</div>`
 const segs = () => { const tot = 22 - 8; return `<span class="nbseg">${EV.map((e, i) => `<i style="width:${((e.b - e.a) / tot) * 100}%;background:var(--blk-${e.c});opacity:${e.past ? .5 : 1}"></i>`).join('')}</span>` }
 const nowBar = () => `<div class="nowbar"><span class="ap">K</span><span class="ti">Lecture — Computer Vision<small>11:00–12:30 · then ✶ CNN notes 1:30</small>${segs()}</span><span class="crit">20m</span></div>`
-const lockWidget = (aod) => `<div class="slot" style="top:${aod ? 330 : 236}px;height:192px"><div class="cell" style="position:absolute;inset:0"><div class="wg" style="inset:0${aod ? ';opacity:.9' : ''}">${FAM.A.m()}</div></div></div>`
+const lockWidget = (aod) => `<div class="slot" style="top:${aod ? 330 : 236}px;height:192px"><div class="cell" style="position:absolute;inset:0"><div class="wg" style="inset:0${aod ? ';opacity:.9' : ''}">${EX.find((x) => x[0] === '04')[6]()}</div></div></div>`
 const stripNote = (aod) => `<div class="slot" style="top:${aod ? 300 : 238}px"><div class="nt"><div class="hd"><b>K</b>Kai's Flow · now</div><div class="t">Next · 11:00 Lecture — Computer Vision</div><div class="cust"><div class="wg" style="position:relative;inset:auto;padding:0;border:0;background:none;box-shadow:none">${(() => { const x = (h) => ((h - 8) / 14) * 100; return `<div class="wstrip" style="margin-top:2px">${EV.map((e) => `<span class="rb${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}" style="${B(e.c)};left:${x(e.a)}%;width:${x(e.b) - x(e.a)}%"></span>`).join('')}<span class="nw" style="left:${x(NOW)}%"></span><div class="ax"><span>8</span><span>12</span><span>16</span><span>20</span></div></div>` })()}</div></div><div class="acts"><span>Start focus</span><span>Snooze 10 min</span></div></div></div>`
 const LOCK = [
-  ['A', 'Top 3 widget on the lock screen and AOD', 'Matches direction A. The redone Checklist widget (medium, 4 × 2) sits under the clock, and the AOD shows it too. The ticks are the widget\'s own ticks. Anything that opens the app asks you to unlock first.',
+  ['A', 'Top 3 widget on the lock screen and AOD', 'Matches direction A. The modern W04 Today · Top 3 widget (4 × 2, from the grid below) sits under the clock, and the AOD shows it too. The ticks are the widget\'s own ticks. Anything that opens the app asks you to unlock first.',
     ['One UI 6.1, 7, 8: through Good Lock › LockStar', 'Built as: our existing AppWidget (no new code path)'], ['Not in the lock screen\'s own widget picker (Samsung widgets only)'],
     (aod) => lsFrame(aod, lockWidget(aod), { aodIcons: ['K'] })],
   ['B', 'Now Bar Live Update: the block that\'s on now', 'Matches direction B. The Now Bar shows the current or next block, with today\'s blocks as palette C segments and "20m" as the chip, and the status bar shows the same chip. Samsung draws the pill. We choose the words, the icon and the segment colours.',
@@ -683,14 +683,14 @@ const LOCK = [
     ['One UI 6.1, 7, 8', 'Built as: an ongoing notification with a custom RemoteViews layout (DecoratedCustomViewStyle) and actions; a Chronometer for the countdown'], ['Not a Live Update (custom layouts can\'t be promoted)'],
     (aod) => lsFrame(aod, aod ? '' : stripNote(aod), { aodIcons: ['K', '✉', '◷'] })],
 ]
-document.getElementById('lockopts').innerHTML = LOCK.map(([d, name, say, needs, nots, draw]) => `
+const renderLock = () => { document.getElementById('lockopts').innerHTML = LOCK.map(([d, name, say, needs, nots, draw]) => `
   <div class="look" style="margin-top:28px" data-grp="lock" data-look="${d}">
     <h2 style="font-size:24px"><span class="tag">${d}</span>${name}</h2>
     <div class="say"><p>${say}</p></div>
     <div class="need">${needs.map((n) => `<span>${n}</span>`).join('')}${nots.map((n) => `<span class="no">${n}</span>`).join('')}</div>
     <div class="shots"><figure data-lock="${d}-lock">${draw(false)}<figcaption>Lock screen (the widget follows the phone's day or dark mode)</figcaption></figure><figure data-lock="${d}-aod">${draw(true)}<figcaption>Always On Display</figcaption></figure></div>
     <div class="pick-row"><button type="button" class="btn pick" data-grp="lock" data-pick="${d}" aria-pressed="false">This one (lock ${d})</button></div>
-  </div>`).join('')
+  </div>`).join('') }
 
 // ════════ the 32 widgets: redo / restyle / merge — every one gets its modern face (Kai 26 Oct: build every widget,
 // nothing is cut). One family style, led by B (Now + next): the paper card at the system radius, a line icon + a
@@ -782,6 +782,7 @@ document.getElementById('exgrid').innerHTML = EX.map(([n, name, w, h, v, why, dr
     <div class="cf"><button type="button" class="btn pick" data-grp="w${n}" data-pick="ok" aria-pressed="false">Agree</button><button type="button" class="btn pick" data-grp="w${n}" data-pick="no" aria-pressed="false">Not this</button></div>
   </div>`).join('')
 
+renderLock()
 // ── density: task rows wholly on screen (the goal counts as one), counted in the drawing itself ──
 function count(frame) {
   const fb = frame.getBoundingClientRect().bottom
