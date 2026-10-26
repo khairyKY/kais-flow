@@ -6,6 +6,8 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.Window;
 import android.webkit.JavascriptInterface;
@@ -161,6 +163,33 @@ public class MainActivity extends BridgeActivity {
                 return;
             }
             getActivity().runOnUiThread(() -> ((MainActivity) getActivity()).setChrome(parsed, light));
+        }
+
+        /**
+         * Battery optimisation is off for the app (notif 2026-10-26). Stock Android fires an exact alarm
+         * in Doze regardless; Samsung's sleeping apps and other makers' battery savers hold or drop a
+         * closed app's reminders unless this is off. Settings → Notifications → This phone.
+         */
+        @JavascriptInterface
+        public boolean backgroundAllowed() {
+            PowerManager power = getContext().getSystemService(PowerManager.class);
+            return power == null || power.isIgnoringBatteryOptimizations(getContext().getPackageName());
+        }
+
+        /** Android's own "Allow to run in the background?" (REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, android-native.sh), else its list. */
+        @JavascriptInterface
+        public void openBackgroundSettings() {
+            getActivity().runOnUiThread(() -> {
+                try {
+                    getActivity().startActivity(new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:" + getContext().getPackageName())));
+                } catch (RuntimeException e) {
+                    try {
+                        getActivity().startActivity(new Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS));
+                    } catch (RuntimeException ignored) {
+                        // no such screen on this phone
+                    }
+                }
+            });
         }
     }
 }

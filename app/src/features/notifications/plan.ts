@@ -169,6 +169,10 @@ export interface DeviceState {
   permission: DevicePermission
   /** Web only: this browser's push subscription is stored for the account. */
   subscribed: boolean
+  /** Android: exact alarms allowed ("Alarms & reminders"). */
+  exact?: boolean
+  /** Android: battery optimisation off for the app; undefined = this APK can't tell. */
+  background?: boolean
 }
 
 /** Plain lines, worst first; empty = nothing in the way that this app can see. */
@@ -182,6 +186,10 @@ export function blockers(d: DeviceState, p: NoticePrefs | null | undefined, now:
         : 'Permission denied — allow notifications for this site in the browser’s site settings.',
     )
   else if (d.permission === 'prompt') out.push('Notifications aren’t allowed yet — the test will ask.')
+  if (d.channel === 'android' && d.permission === 'granted') {
+    if (d.exact === false) out.push('Alarms & reminders is off — reminders can come a few minutes late. Turn it on under This phone.')
+    if (d.background === false) out.push('Battery saving can hold reminders while the app is closed — let it run in the background under This phone.')
+  }
   if (d.channel === 'web' && d.permission !== 'unsupported' && !d.subscribed) out.push('This device isn’t subscribed — tap “Subscribe this device” first.')
   if (isPaused(p, now)) out.push(`Notifications are paused until ${clock(p!.notify_paused_until!, zone)}.`)
   if (inQuietHours(p, now, zone)) out.push('Quiet hours are on — notifications come without a sound.')

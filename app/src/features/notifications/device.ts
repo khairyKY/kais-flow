@@ -27,7 +27,10 @@ async function thisEndpoint(): Promise<string | null> {
 export async function readDeviceState(subs: readonly PushSubscriptionRow[]): Promise<DeviceState> {
   const channel = deviceChannel()
   if (channel === 'windows') return { channel, permission: 'granted', subscribed: false } // tray.rs toasts; Windows' own switch is out of sight
-  if (channel === 'android') return { channel, permission: await (await import('./android')).androidPermission(), subscribed: false }
+  if (channel === 'android') {
+    const a = await import('./android')
+    return { channel, permission: await a.androidPermission(), subscribed: false, exact: await a.exactAlarms(), background: a.backgroundAllowed() }
+  }
   if (!isPushSupported() || typeof Notification === 'undefined') return { channel, permission: 'unsupported', subscribed: false }
   const endpoint = await thisEndpoint()
   const permission = Notification.permission === 'default' ? 'prompt' : Notification.permission
@@ -47,6 +50,12 @@ export function useDeviceState(subs: readonly PushSubscriptionRow[]): [DeviceSta
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the endpoints, not the array
   }, [endpoints, n])
+  // Back from Android's or the browser's own settings page: read again.
+  useEffect(() => {
+    const back = () => document.visibilityState === 'visible' && setN((x) => x + 1)
+    document.addEventListener('visibilitychange', back)
+    return () => document.removeEventListener('visibilitychange', back)
+  }, [])
   return [state, () => setN((x) => x + 1)]
 }
 

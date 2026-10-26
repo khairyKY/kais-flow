@@ -1,0 +1,282 @@
+[
+  {
+    "id": "task_reminder_a",
+    "type": "task_reminder",
+    "letter": "A",
+    "pack": "felt",
+    "seconds": 0.946,
+    "lufs": -16,
+    "truePeak": -1.3,
+    "clipped": 0
+  },
+  {
+    "id": "task_reminder_b",
+    "type": "task_reminder",
+    "letter": "B",
+    "pack": "glass",
+    "seconds": 1.006,
+    "lufs": -16,
+    "truePeak": -1.75,
+    "clipped": 0
+  },
+  {
+    "id": "task_reminder_c",
+    "type": "task_reminder",
+    "letter": "C",
+    "pack": "felt",
+    "seconds": 0.906,
+    "lufs": -16,
+    "truePeak": -3.43,
+    "clipped": 0
+  },
+  {
+    "id": "event_reminder_a",
+    "type": "event_reminder",
+    "letter": "A",
+    "pack": "glass",
+    "seconds": 1.166,
+    "lufs": -16,
+    "truePeak": -1.72,
+    "clipped": 0
+  },
+  {
+    "id": "event_reminder_b",
+    "type": "event_reminder",
+    "letter": "B",
+    "pack": "felt",
+    "seconds": 1.046,
+    "lufs": -16,
+    "truePeak": -3.06,
+    "clipped": 0
+  },
+  {
+    "id": "event_reminder_c",
+    "type": "event_reminder",
+    "letter": "C",
+    "pack": "glass",
+    "seconds": 1.126,
+    "lufs": -16,
+    "truePeak": -2.98,
+    "clipped": 0
+  },
+  {
+    "id": "snoozed_again_a",
+    "type": "snoozed_again",
+    "letter": "A",
+    "pack": "felt",
+    "seconds": 1.116,
+    "lufs": -16,
+    "truePeak": -1.85,
+    "clipped": 0
+  },
+  {
+    "id": "snoozed_again_b",
+    "type": "snoozed_again",
+    "letter": "B",
+    "pack": "glass",
+    "seconds": 0.896,
+    "lufs": -16,
+    "truePeak": -2.21,
+    "clipped": 0
+  },
+  {
+    "id": "snoozed_again_c",
+    "type": "snoozed_again",
+    "letter": "C",
+    "pack": "felt",
+    "seconds": 0.946,
+    "lufs": -16,
+    "truePeak": -1.79,
+    "clipped": 0
+  },
+  {
+    "id": "focus_end_a",
+    "type": "focus_end",
+    "letter": "A",
+    "pack": "felt",
+    "seconds": 1.2,
+    "lufs": -16,
+    "truePeak": -2.2,
+    "clipped": 0
+  },
+  {
+    "id": "focus_end_b",
+    "type": "focus_end",
+    "letter": "B",
+    "pack": "glass",
+    "seconds": 1.2,
+    "lufs": -16,
+    "truePeak": -4.07,
+    "clipped": 0
+  },
+  {
+    "id": "focus_end_c",
+    "type": "focus_end",
+    "letter": "C",
+    "pack": "glass",
+    "seconds": 1.106,
+    "lufs": -17.84,
+    "truePeak": -1.1,
+    "clipped": 0
+  },
+  {
+    "id": "break_end_a",
+    "type": "break_end",
+    "letter": "A",
+    "pack": "felt",
+    "seconds": 0.826,
+    "lufs": -16,
+    "truePeak": -1.37,
+    "clipped": 0
+  },
+  {
+    "id": "break_end_b",
+    "type": "break_end",
+    "letter": "B",
+    "pack": "glass",
+    "seconds": 0.906,
+    "lufs": -16,
+    "truePeak": -2.87,
+    "clipped": 0
+  },
+  {
+    "id": "morning_digest_a",
+    "type": "morning_digest",
+    "letter": "A",
+    "pack": "glass",
+    "seconds": 1.2,
+    "lufs": -16,
+    "truePeak": -3.57,
+    "clipped": 0
+  },
+  {
+    "id": "morning_digest_b",
+    "type": "morning_digest",
+    "letter": "B",
+    "pack": "felt",
+    "seconds": 1.176,
+    "lufs": -16,
+    "truePeak": -3.68,
+    "clipped": 0
+  },
+  {
+    "id": "morning_digest_c",
+    "type": "morning_digest",
+    "letter": "C",
+    "pack": "glass",
+    "seconds": 1.116,
+    "lufs": -17.21,
+    "truePeak": -1.1,
+    "clipped": 0
+  },
+  {
+    "id": "evening_nudge_a",
+    "type": "evening_nudge",
+    "letter": "A",
+    "pack": "felt",
+    "seconds": 1.176,
+    "lufs": -16,
+    "truePeak": -3.75,
+    "clipped": 0
+  },
+  {
+    "id": "evening_nudge_b",
+    "type": "evening_nudge",
+    "letter": "B",
+    "pack": "glass",
+    "seconds": 1.156,
+    "lufs": -16,
+    "truePeak": -3.41,
+    "clipped": 0
+  },
+  {
+    "id": "evening_nudge_c",
+    "type": "evening_nudge",
+    "letter": "C",
+    "pack": "felt",
+    "seconds": 0.986,
+    "lufs": -16.8,
+    "truePeak": -1.1,
+    "clipped": 0
+  },
+  {
+    "id": "paper_ready_a",
+    "type": "paper_ready",
+    "letter": "A",
+    "pack": "glass",
+    "seconds": 0.526,
+    "lufs": -16.17,
+    "truePeak": -1.1,
+    "clipped": 0
+  },
+  {
+    "id": "paper_ready_b",
+    "type": "paper_ready",
+    "letter": "B",
+    "pack": "felt",
+    "seconds": 0.586,
+    "lufs": -16,
+    "truePeak": -2.18,
+    "clipped": 0
+  },
+  {
+    "id": "paper_ready_c",
+    "type": "paper_ready",
+    "letter": "C",
+    "pack": "glass",
+    "seconds": 0.676,
+    "lufs": -16,
+    "truePeak": -2.99,
+    "clipped": 0
+  },
+  {
+    "id": "terms_a",
+    "type": "terms",
+    "letter": "A",
+    "pack": "felt",
+    "seconds": 0.606,
+    "lufs": -17.6,
+    "truePeak": -1.1,
+    "clipped": 0
+  },
+  {
+    "id": "terms_b",
+    "type": "terms",
+    "letter": "B",
+    "pack": "glass",
+    "seconds": 0.706,
+    "lufs": -17.65,
+    "truePeak": -1.1,
+    "clipped": 0
+  },
+  {
+    "id": "sync_problem_a",
+    "type": "sync_problem",
+    "letter": "A",
+    "pack": "felt",
+    "seconds": 0.866,
+    "lufs": -16,
+    "truePeak": -3.34,
+    "clipped": 0
+  },
+  {
+    "id": "sync_problem_b",
+    "type": "sync_problem",
+    "letter": "B",
+    "pack": "glass",
+    "seconds": 0.836,
+    "lufs": -16,
+    "truePeak": -2.89,
+    "clipped": 0
+  },
+  {
+    "id": "sync_problem_c",
+    "type": "sync_problem",
+    "letter": "C",
+    "pack": "felt",
+    "seconds": 0.846,
+    "lufs": -16,
+    "truePeak": -3.37,
+    "clipped": 0
+  }
+]

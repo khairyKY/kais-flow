@@ -25,6 +25,10 @@ grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added 
 # falls back to inexact alarms without it. ic_stat_kf (res/drawable-nodpi) is the status-bar K.
 sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />#' "$manifest"
 grep -q USE_EXACT_ALARM "$manifest" || { echo "::error::USE_EXACT_ALARM was not added to the manifest"; exit 1; }
+# Settings → Notifications → This phone → Run in the background (notif 2026-10-26): Android's own
+# one-tap "stop optimising battery" prompt needs this; without it the app opens the list instead.
+sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />#' "$manifest"
+grep -q REQUEST_IGNORE_BATTERY_OPTIMIZATIONS "$manifest" || { echo "::error::REQUEST_IGNORE_BATTERY_OPTIMIZATIONS was not added to the manifest"; exit 1; }
 # The share sheet: shared text opens the app (MainActivity.onNewIntent → /share). text/*
 # covers text/plain. Images wait for Paper capture, so no image/* yet.
 sed -i 's#</activity>#    <intent-filter>\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="text/*" />\n            </intent-filter>\n\n        &#' "$manifest"

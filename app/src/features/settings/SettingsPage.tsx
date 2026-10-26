@@ -709,7 +709,21 @@ function NotificationsCard() {
       ) : device?.channel === 'android' ? (
         <>
           {sub('This phone')}
-          <p className="st-note">Reminders, the digest, the nudge and focus rounds are set on the phone itself, from what it last synced — open the app now and then so new ones reach it.</p>
+          <p className="st-note">Reminders, the digest, the nudge and focus rounds are set on the phone itself, a week ahead, from what it last synced. Something set on another device reaches the phone the next time the app opens.</p>
+          {device.exact === false && (
+            <Row label="Alarms & reminders" help="Off — reminders can come a few minutes late">
+              <Button variant="secondary" onClick={() => void import('../notifications/android').then((m) => m.openExactAlarmSettings())}>
+                Turn on
+              </Button>
+            </Row>
+          )}
+          {device.background === false && (
+            <Row label="Run in the background" help="Battery saving can hold reminders while the app is closed">
+              <Button variant="secondary" onClick={() => void import('../notifications/android').then((m) => m.openBackgroundSettings())}>
+                Allow
+              </Button>
+            </Row>
+          )}
         </>
       ) : (
         <>
