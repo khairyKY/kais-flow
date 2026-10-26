@@ -17,6 +17,7 @@
   }
  },
  "wide": [],
- "copied": "Copied: \"Phone home: phone B, widgets B\"",
+ "broken": [],
+ "copied": "Copied: \"Phone home: phone B; widgets B; lock B; widget verdicts OK: W03; NOT: W34\"",
  "errors": []
 }

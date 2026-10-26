@@ -305,6 +305,77 @@ figcaption{margin-top:8px;max-width:440px;font-size:13px;color:var(--ink-muted)}
 .wg .wstrip .ax{position:absolute;left:6px;right:6px;bottom:2px;display:flex;justify-content:space-between;font:9.5px var(--font-mono);color:var(--ink-faint)}
 .wlbl{position:absolute;left:0;right:0;bottom:-18px;text-align:center;font:500 11px 'Roboto',var(--font-ui);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45)}
 .hs.day .wlbl{color:#1d232b;text-shadow:none}
+
+/* ════════ Samsung lock screen + AOD (drawn as a stage, not a copy of Samsung's art) ════════ */
+.ls{position:relative;width:390px;height:844px;border-radius:34px;overflow:hidden;border:1px solid var(--line-card);font-family:'Roboto',var(--font-ui);color:#fff}
+.ls.wall{background:linear-gradient(170deg,#3b5a7a 0%,#7f8fa6 30%,#c9b79a 58%,#8a6f56 80%,#3e2f28 100%)}
+.ls.aod{background:#000}
+.ls .st{display:flex;justify-content:space-between;height:34px;align-items:center;padding:0 22px;font:500 13.5px 'Roboto',var(--font-ui)}
+.ls .clk{margin-top:44px;text-align:center;font:300 92px/0.95 'Roboto',var(--font-ui);letter-spacing:-2px;text-shadow:0 2px 10px rgba(0,0,0,.25)}
+.ls .dt{margin-top:10px;text-align:center;font:500 16px 'Roboto',var(--font-ui);text-shadow:0 1px 4px rgba(0,0,0,.35)}
+.ls.aod .clk{margin-top:150px;font-size:64px;color:#e8e8e8}
+.ls.aod .dt{color:#bbb;font-size:14px}
+.ls .icons{display:flex;justify-content:center;gap:10px;margin-top:14px;font-size:13px;color:#cfcfcf}
+.ls .icons i{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:#2a2a2a;font-style:normal;font-size:11px}
+.ls .slot{position:absolute;left:18px;right:18px}
+.ls .sc{position:absolute;bottom:30px;display:flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:50%;background:rgba(0,0,0,.25);font-size:20px}
+.ls .fp{position:absolute;bottom:92px;left:50%;margin-left:-16px;width:32px;height:32px;border-radius:50%;border:2px solid rgba(255,255,255,.55)}
+/* the Now Bar: Samsung draws it; we only supply the icon, title, text, chip text and progress segments */
+.nowbar{position:absolute;left:50%;bottom:148px;transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:52px;padding:0 16px 0 8px;border-radius:999px;background:rgba(20,20,22,.78);backdrop-filter:blur(10px);font:500 14px 'Roboto',var(--font-ui);color:#fff;white-space:nowrap}
+.nowbar .ap{width:36px;height:36px;border-radius:50%;background:#FBF6E9;color:#2A2420;display:flex;align-items:center;justify-content:center;font:500 17px var(--font-display)}
+.nowbar .ti small{display:block;font:400 12px 'Roboto',var(--font-ui);color:#c8c8c8}
+.nowbar .nbseg{display:flex;gap:2px;width:84px;height:5px;margin-top:5px}
+.nowbar .nbseg i{display:block;height:100%;border-radius:2px}
+.nowbar .crit{margin-left:6px;padding:3px 9px;border-radius:999px;background:#2f2f33;font-size:13px}
+.ls.aod .nowbar{background:#121214;bottom:110px}
+.chipsb{position:absolute;top:7px;left:76px;display:flex;align-items:center;gap:4px;height:20px;padding:0 8px;border-radius:999px;background:rgba(0,0,0,.45);font:500 11.5px 'Roboto',var(--font-ui)}
+/* an Android notification card on the lock screen (system-drawn; One UI's look approximated) */
+.nt{border-radius:22px;background:rgba(250,250,250,.92);color:#1b1b1b;padding:12px 14px;font:400 13.5px/1.3 'Roboto',var(--font-ui)}
+.nt .hd{display:flex;align-items:center;gap:6px;font-size:12px;color:#555}
+.nt .hd b{width:18px;height:18px;border-radius:50%;background:#2A2420;color:#FBF6E9;display:inline-flex;align-items:center;justify-content:center;font:500 10px var(--font-display)}
+.nt .t{margin-top:6px;font-weight:500;font-size:14.5px}
+.nt .acts{display:flex;gap:18px;margin-top:10px;font-weight:500;font-size:13px;color:#7a3d2a}
+.nt .cust{margin-top:8px}
+.ls.aod .nt,[data-theme="night"] .ls .nt{background:#1e1e22;color:#e4e4e4}
+.ls.aod .nt .hd,[data-theme="night"] .ls .nt .hd{color:#9a9a9a}
+.ls.aod .nt .acts,[data-theme="night"] .ls .nt .acts{color:#e8a58a}
+.need{display:inline-flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.need span{display:inline-flex;align-items:center;height:26px;padding:0 10px;border-radius:999px;font-size:12.5px;border:1px solid var(--line-control);background:var(--paper-bone)}
+.need .no{border-style:dashed;color:var(--ink-faint);text-decoration:line-through}
+.src{font-size:13px;color:var(--ink-muted)}
+.src a{color:var(--acc-terra-ink)}
+/* ════════ existing widgets grid ════════ */
+.exg{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:18px;margin-top:18px}
+.ex{padding:14px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment)}
+[data-theme="night"] .ex{border-color:var(--line-solid)}
+.ex.wide{grid-column:1/-1}
+.ex .hd{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600}
+.ex .hd .sz{font:12px var(--font-mono);color:var(--ink-faint);font-weight:400}
+.vd{margin-left:auto;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600}
+.vd.keep{background:color-mix(in srgb,var(--sig-done) 22%,transparent);color:var(--ink-body)}
+.vd.redo{background:color-mix(in srgb,var(--acc-gold-warm) 35%,transparent);color:var(--ink-body)}
+.vd.cut{background:color-mix(in srgb,var(--acc-terra) 25%,transparent);color:var(--acc-terra-ink)}
+.ex .why{margin:4px 0 10px;font-size:13px;color:var(--ink-muted)}
+.ex .pair{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start}
+.ex .pair figure{display:flex;flex-direction:column}
+.ex img.pv{display:block;border-radius:8px;background:#5f6b60}
+.ex .wbox{position:relative;background:#5f6b60;border-radius:8px}
+[data-theme="night"] .ex .wbox,[data-theme="night"] .ex img.pv{background:#22252b}
+.ex .wbox .wg{inset:5px}
+.ex .cf{display:flex;gap:6px;margin-top:10px}
+.ex .cf .btn{height:30px;padding:0 12px;font-size:13px}
+.leg{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;font-size:13px;color:var(--ink-muted)}
+
+.vd.restyle{background:color-mix(in srgb,var(--acc-lavender) 22%,transparent);color:var(--ink-body)}
+.vd.merge{background:color-mix(in srgb,var(--acc-sage) 28%,transparent);color:var(--ink-body)}
+.wg .pp{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 13px;border-radius:999px;background:var(--acc-terra-ink);color:var(--on-terra);font:600 12.5px var(--font-ui);white-space:nowrap}
+.wg .pp.sec{background:var(--paper-bone);color:var(--ink-body);border:1px solid var(--line-control)}
+.wg .ring{position:relative;display:inline-flex;align-items:center;justify-content:center;border-radius:50%;flex:none}
+.wg .ring::before{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--paper-parchment)}
+.wg .ring b{position:relative;font:600 13px var(--font-ui)}
+.wg .gw img.tp,.wg .paperbox img.tp{position:absolute;top:-6px;left:50%;width:40px;height:12px;margin-left:-20px;object-fit:cover;opacity:.9}
+.wg .paperbox{position:absolute;inset:0;display:flex;flex-direction:column;padding:14px 13px 12px;background:var(--paper-goal)}
+.wg .wh .ic{flex:none}
 </style>
 </head>
 <body>
@@ -313,7 +384,7 @@ figcaption{margin-top:8px;max-width:440px;font-size:13px;color:var(--ink-muted)}
 <header>
   <div class="meta">Kai's Flow · the phone home · 26 Oct 2026</div>
   <h1>The phone's home: Today and the widgets</h1>
-  <p class="lede">Three directions for the first screen of the phone app, each with a matching family of Android home-screen widgets. They're drawn on the same day (lectures, Deep Learning study, the gym, the goal of the day), on a 360, a 390 and a 430 wide phone, and the widgets sit on a real-looking home screen. Use the toggle for day and night (the widgets follow the phone's dark mode). Every direction keeps the paper goal card (smaller), the Yesterday / Tomorrow day stepper, Today's tasks apart from Also open, and the morning and evening rituals. The colours are the app's own, with the calendar's palette C for the blocks. Answer with letters, for example <b>"phone B, widgets B"</b>. The desktop version is in <i>Today options.html</i>.</p>
+  <p class="lede">Three directions for the first screen of the phone app, each with a matching family of Android home-screen widgets. They're drawn on the same day (lectures, Deep Learning study, the gym, the goal of the day), on a 360, a 390 and a 430 wide phone, and the widgets sit on a real-looking home screen. Use the toggle for day and night (the widgets follow the phone's dark mode). Every direction keeps the paper goal card (smaller), the Yesterday / Tomorrow day stepper, Today's tasks apart from Also open, and the morning and evening rituals. The colours are the app's own, with the calendar's palette C for the blocks. Answer with letters, for example <b>"phone B, widgets B, lock B"</b>. The desktop version is in <i>Today options.html</i>.</p>
 </header>
 
 <div class="bar" role="group" aria-label="Your picks">
@@ -338,6 +409,25 @@ figcaption{margin-top:8px;max-width:440px;font-size:13px;color:var(--ink-muted)}
 </section>
 
 <div id="looks"></div>
+
+<section class="look" id="lockscreen">
+  <h2>The Samsung lock screen</h2>
+  <div class="say"><p><b>What an app like ours can actually put there</b> (research, 26 Oct 2026; the sources are in the handoff):</p>
+  <ul style="margin:6px 0 0;padding-left:20px;color:var(--ink-muted);font-size:14.5px">
+    <li><b>Lock-screen widgets:</b> on One UI 6.1, 7 and 8.0, the lock screen's own widget picker (and the AOD's) only offers Samsung's system widgets. Any app's widget, ours included, only gets there through <b>Good Lock › LockStar</b> (a free Samsung app from the Galaxy Store, available in some regions only). LockStar puts any AppWidget on the lock screen and the AOD. On One UI 7 it needs LockStar 7.0.00.14 or later, and it's broken in the One UI 8.5 beta. Android 16 QPR2 brings Google's lock-screen "hub" with widgets from any app, but Samsung hasn't confirmed it.</li>
+    <li><b>Now Bar / Live Notifications:</b> on One UI 7 they're for Samsung's apps and a few partners only. On One UI 8 (Android 16), any app that posts an Android 16 <b>Live Update</b> (an ongoing, promoted notification such as a ProgressStyle one) can appear in the Now Bar, the status-bar chip and the lock screen. In the beta that was behind a developer switch, and it's expected on in the stable release (Zomato already uses it on 8.0). Samsung draws the Now Bar. We only give it an icon, a title, a line of text, the short chip text and the progress segments and their colours.</li>
+    <li><b>Ongoing notifications</b> show on the lock screen on every One UI version. A custom layout (our own day strip) is allowed, but a custom layout can't be promoted to a Live Update.</li>
+    <li><b>The AOD</b> shows notification icons and, if you switch it on, the Now Bar. It shows LockStar widgets too. Its FaceWidgets are Samsung's own.</li>
+  </ul></div>
+  <div id="lockopts"></div>
+</section>
+
+<section class="look" id="existing">
+  <h2>Existing widgets: every one, modernized</h2>
+  <div class="say"><p>All 32 widgets in the app's picker today, as they draw now (the picker previews come from the app's own widget gallery; night versions are in <a href="../docs/log/assets/widgets/family-today.jpg">docs/log/assets/widgets/family-*.jpg</a>). Nothing is cut (Kai, 26 Oct). Each one is marked <b>redo</b> (the layout changes), <b>restyle</b> (same content, in the new family style) or <b>merge</b> (a true duplicate becomes one entry that resizes), with a reason. Every one has its modern version next to it, in one family style led by B, Now + next: the paper card at the system corner radius, a line icon with a sentence-case label, palette C blocks, the Now card's ring, progress line and times, the straight paper goal strip, a terra pill for the main action, and the app's own drawings. This is the spec for the real widgets. Use <b>Agree</b> or <b>Not this</b> on each one. Your answers go into "Copy my picks".</p></div>
+  <div class="leg" id="exsum"></div>
+  <div class="exg" id="exgrid"></div>
+</section>
 
 <section class="notes">
   <h2>What stays in every direction</h2>
@@ -368,6 +458,9 @@ figcaption{margin-top:8px;max-width:440px;font-size:13px;color:var(--ink-muted)}
 
 <script>
 const ICONS = {"today":"<path d=\"M12 20.5v-8\"></path><path d=\"M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z\"></path><path d=\"M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z\"></path><path d=\"M7.5 20.5h9\"></path>","inbox":"<path d=\"M4 13.5 6.2 6.3A1.8 1.8 0 0 1 7.9 5h8.2a1.8 1.8 0 0 1 1.7 1.3L20 13.5v4.7a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2z\"></path><path d=\"M4 13.5h4.4l1.3 2.3h4.6l1.3-2.3H20\"></path>","calendar":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"14.5\" rx=\"2\"></rect><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"></path>","tasks":"<rect x=\"4.5\" y=\"4.5\" width=\"15\" height=\"15\" rx=\"3\"></rect><path d=\"M8.5 12.2l2.4 2.4 4.6-4.9\"></path>","projects":"<path d=\"M3.5 7.5a2 2 0 0 1 2-2h3.6l2 2h7.4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z\"></path>","routines":"<path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.8 4.2v4.3h-4.3\"></path><path d=\"M12 15.5v-3.2c0-1.6 1.2-2.8 2.8-2.8 0 1.6-1.2 2.8-2.8 2.8\"></path>","focus":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 12h.01\"></path>","review":"<path d=\"M12 20.5v-6\"></path><path d=\"M12 14.5a4.5 4.5 0 1 1 4.5-4.5 2.8 2.8 0 0 1-2.8 2.8 1.7 1.7 0 0 1-1.7-1.7\"></path>","journal":"<path d=\"M5.5 5.5A1.5 1.5 0 0 1 7 4h11.5v13.5H7a1.5 1.5 0 0 0-1.5 1.5z\"></path><path d=\"M5.5 19A1.5 1.5 0 0 0 7 20.5h11.5v-3\"></path><path d=\"M9.5 8h5.5\"></path>","library":"<rect x=\"4\" y=\"4.5\" width=\"4\" height=\"15\" rx=\"1\"/><rect x=\"9.5\" y=\"4.5\" width=\"4\" height=\"15\" rx=\"1\"/><path d=\"M14.4 6.6 17.8 5.7 21 18.9 17.6 19.8z\"/>","people":"<circle cx=\"9\" cy=\"8.5\" r=\"3.2\"></circle><path d=\"M3 19a6 6 0 0 1 12 0\"></path><path d=\"M16 5.8a3.2 3.2 0 0 1 0 6M17.2 14.3a6 6 0 0 1 3.8 4.7\"></path>","activity":"<path d=\"M3.5 12.5h3.6l2.4-6 4.2 11.5 2.6-5.5h4.2\"/>","delete":"<path d=\"M4 7h16M9.5 7V4.8h5V7M6 7l1 13h10l1-13\"></path><path d=\"M10 11v5M14 11v5\"></path>","plus":"<path d=\"M12 5v14M5 12h14\"></path>","search":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"></circle><path d=\"M16 16l4 4\"></path>","chat":"<path d=\"M5.5 5h13A1.5 1.5 0 0 1 20 6.5v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V17h-1A1.5 1.5 0 0 1 4 15.5v-9A1.5 1.5 0 0 1 5.5 5z\"/>","mic":"<rect x=\"9\" y=\"3.5\" width=\"6\" height=\"11\" rx=\"3\"></rect><path d=\"M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5\"></path>","plan":"<path d=\"M9.5 7h10M9.5 12h10M9.5 17h10\"/><circle cx=\"5.2\" cy=\"7\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"5.2\" cy=\"12\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"5.2\" cy=\"17\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/>","someday":"<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"4\" rx=\"1.2\"/><path d=\"M5 9v9a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18V9\"/><path d=\"M10 13h4\"/>","chevright":"<path d=\"M9.5 6l6 6-6 6\"></path>","dots":"<circle cx=\"5.5\" cy=\"12\" r=\"1.1\"></circle><circle cx=\"12\" cy=\"12\" r=\"1.1\"></circle><circle cx=\"18.5\" cy=\"12\" r=\"1.1\"></circle>","repeat":"<path d=\"M4 12a8 8 0 0 1 13-6l2 2M20 12a8 8 0 0 1-13 6l-2-2\"></path><path d=\"M19 4v4h-4M5 20v-4h4\"></path>","pickdate":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"14.5\" rx=\"2\"></rect><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"></path><rect x=\"10.2\" y=\"13\" width=\"3.6\" height=\"3.6\" rx=\"0.8\"></rect>","more":"<rect x=\"4.5\" y=\"4.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"13.5\" y=\"4.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"4.5\" y=\"13.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"13.5\" y=\"13.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect>"}
+
+ICONS.star = '<path d="M12 3.8l2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"></path>'
+ICONS.clock = '<circle cx="12" cy="12" r="8"></circle><path d="M12 7.8V12l3 2"></path>'
 const ic = (n, s = 18) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`
 const chev = (open) => `<span class="chev${open ? ' dn' : ''}">${ic('chevright', 14)}</span>`
 const CLOVER = 'ds/assets/clover/four_leaf.png'
@@ -571,6 +664,124 @@ document.getElementById('looks').innerHTML = DIRS.map(([d, name, ph, l1, l2]) =>
 </section>`
 }).join('')
 
+
+// ════════ Samsung lock screen options ════════
+const lsStat = (aod) => `<div class="st"><span>${aod ? '' : '10:40'}</span><span>${aod ? '' : '▾ ▴ ▮ 82%'}</span></div>`
+const lsFrame = (aod, inner, o = {}) => `<div class="ls ${aod ? 'aod' : 'wall'}">${lsStat(aod)}${o.chip && !aod ? `<span class="chipsb">◷ ${o.chip}</span>` : ''}<div class="clk">10:40</div><div class="dt">Mon, October 26${aod ? '' : ' · ☀ 27°'}</div>${aod ? `<div class="icons">${(o.aodIcons ?? ['K']).map((x) => `<i>${x}</i>`).join('')}</div>` : ''}${inner}${aod ? '' : '<div class="fp"></div><span class="sc" style="left:26px">☏</span><span class="sc" style="right:26px">◉</span>'}</div>`
+const segs = () => { const tot = 22 - 8; return `<span class="nbseg">${EV.map((e, i) => `<i style="width:${((e.b - e.a) / tot) * 100}%;background:var(--blk-${e.c});opacity:${e.past ? .5 : 1}"></i>`).join('')}</span>` }
+const nowBar = () => `<div class="nowbar"><span class="ap">K</span><span class="ti">Lecture — Computer Vision<small>11:00–12:30 · then ✶ CNN notes 1:30</small>${segs()}</span><span class="crit">20m</span></div>`
+const lockWidget = (aod) => `<div class="slot" style="top:${aod ? 330 : 236}px;height:192px"><div class="cell" style="position:absolute;inset:0"><div class="wg" style="inset:0${aod ? ';opacity:.9' : ''}">${FAM.A.m()}</div></div></div>`
+const stripNote = (aod) => `<div class="slot" style="top:${aod ? 300 : 238}px"><div class="nt"><div class="hd"><b>K</b>Kai's Flow · now</div><div class="t">Next · 11:00 Lecture — Computer Vision</div><div class="cust"><div class="wg" style="position:relative;inset:auto;padding:0;border:0;background:none;box-shadow:none">${(() => { const x = (h) => ((h - 8) / 14) * 100; return `<div class="wstrip" style="margin-top:2px">${EV.map((e) => `<span class="rb${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}" style="${B(e.c)};left:${x(e.a)}%;width:${x(e.b) - x(e.a)}%"></span>`).join('')}<span class="nw" style="left:${x(NOW)}%"></span><div class="ax"><span>8</span><span>12</span><span>16</span><span>20</span></div></div>` })()}</div></div><div class="acts"><span>Start focus</span><span>Snooze 10 min</span></div></div></div>`
+const LOCK = [
+  ['A', 'Top 3 widget on the lock screen and AOD', 'Matches direction A. The redone Checklist widget (medium, 4 × 2) sits under the clock, and the AOD shows it too. The ticks are the widget\'s own ticks. Anything that opens the app asks you to unlock first.',
+    ['One UI 6.1, 7, 8: through Good Lock › LockStar', 'Built as: our existing AppWidget (no new code path)'], ['Not in the lock screen\'s own widget picker (Samsung widgets only)'],
+    (aod) => lsFrame(aod, lockWidget(aod), { aodIcons: ['K'] })],
+  ['B', 'Now Bar Live Update: the block that\'s on now', 'Matches direction B. The Now Bar shows the current or next block, with today\'s blocks as palette C segments and "20m" as the chip, and the status bar shows the same chip. Samsung draws the pill. We choose the words, the icon and the segment colours.',
+    ['One UI 8+ (Android 16)', 'Built as: an ongoing notification with ProgressStyle, setRequestPromotedOngoing(true), POST_PROMOTED_NOTIFICATIONS, setShortCriticalText("20m")'], ['One UI 6.1 / 7: Now Bar is Samsung + partners only, so it falls back to a normal notification (C)'],
+    (aod) => lsFrame(aod, nowBar(), { chip: '20m', aodIcons: ['K'] })],
+  ['C', 'Ongoing notification with the day strip', 'Matches direction C. An ongoing "now / next" notification that draws the day strip in palette C, with Start focus and Snooze. It works on every One UI version. On the AOD it shows as the app\'s icon only. Because it uses its own layout, it can\'t also be a Now Bar Live Update.',
+    ['One UI 6.1, 7, 8', 'Built as: an ongoing notification with a custom RemoteViews layout (DecoratedCustomViewStyle) and actions; a Chronometer for the countdown'], ['Not a Live Update (custom layouts can\'t be promoted)'],
+    (aod) => lsFrame(aod, aod ? '' : stripNote(aod), { aodIcons: ['K', '✉', '◷'] })],
+]
+document.getElementById('lockopts').innerHTML = LOCK.map(([d, name, say, needs, nots, draw]) => `
+  <div class="look" style="margin-top:28px" data-grp="lock" data-look="${d}">
+    <h2 style="font-size:24px"><span class="tag">${d}</span>${name}</h2>
+    <div class="say"><p>${say}</p></div>
+    <div class="need">${needs.map((n) => `<span>${n}</span>`).join('')}${nots.map((n) => `<span class="no">${n}</span>`).join('')}</div>
+    <div class="shots"><figure data-lock="${d}-lock">${draw(false)}<figcaption>Lock screen (the widget follows the phone's day or dark mode)</figcaption></figure><figure data-lock="${d}-aod">${draw(true)}<figcaption>Always On Display</figcaption></figure></div>
+    <div class="pick-row"><button type="button" class="btn pick" data-grp="lock" data-pick="${d}" aria-pressed="false">This one (lock ${d})</button></div>
+  </div>`).join('')
+
+// ════════ the 32 widgets: redo / restyle / merge — every one gets its modern face (Kai 26 Oct: build every widget,
+// nothing is cut). One family style, led by B (Now + next): the paper card at the system radius, a line icon + a
+// sentence-case label (no spaced capitals), palette C blocks in the calendar's "Now" look, the Now card's ring /
+// progress line / times, the paper goal strip (straight, real tape), terra pill for the main action, bone outline for
+// the second. Illustrations are the app's own drawables (res/drawable-nodpi/kfw_art_*). ════════
+const ART = (n) => `../app/native/android/res/drawable-nodpi/kfw_art_${n}.webp`
+const TAPE = '../app/native/android/res/drawable-nodpi/kfw_tape.png'
+const hd = (icon, label, q = '', right = '') => `<div class="wh">${icon ? `<span style="display:inline-flex;color:var(--ink-muted)">${ic(icon, 15)}</span>` : ''}${label}${q ? ` <span class="q">· ${q}</span>` : ''}<span class="r">${right}</span></div>`
+const pp = (t, sec) => `<span class="pp${sec ? ' sec' : ''}">${t}</span>`
+const ring = (sz, pct, label) => `<span class="ring" style="width:${sz}px;height:${sz}px;background:conic-gradient(var(--blk-iris) 0 ${pct}%,color-mix(in srgb,var(--ink-body) 10%,transparent) ${pct}% 100%)"><b>${label}</b></span>`
+const goalStrip2 = (lines = 2) => `<div class="gw" style="margin-top:0"><img class="tp" src="${TAPE}" alt=""><span class="ck"></span><div style="flex:1;min-width:0"><div class="t" style="-webkit-line-clamp:${lines}">${GOAL.t}</div><span class="gtag">✶ Goal · ${GOAL.when}</span></div><img src="${CLOVER}" alt=""></div>`
+const upNext = (o = {}) => `${hd('', 'Up next', '11:00–12:30', o.right ?? '<span class="q">in 20m</span>')}<div style="display:flex;gap:8px;align-items:center;margin-top:7px"><span class="rg"></span><span class="big nowrap">Lecture — Computer Vision</span></div><div class="bar2"><i></i></div>`
+const EX = [
+  ['01', 'Goal of the day · slim', 4, 1, 'redo', 'Its title is cut at about 20 characters, because the time and the spaced stamp take the width. Now: a straight paper strip with a 2-line title.',
+    () => `<div style="display:flex;align-items:center;height:100%">${goalStrip2(2)}</div>`],
+  ['02', 'Goal of the day · card', 2, 2, 'restyle', 'The same taped card. It gets the system corner radius, the real tape image and a sentence-case stamp line.',
+    () => `<div class="paperbox"><img class="tp" src="${TAPE}" alt="" style="width:46px;left:50%;margin-left:-23px"><div style="display:flex;justify-content:space-between;align-items:flex-start"><span class="gtag" style="font-size:10px">✶ Goal of the day</span><img src="${CLOVER}" alt="" style="width:24px"></div><div class="t" style="font:600 16px/1.25 serif;margin-top:6px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden">${GOAL.t}</div><div style="display:flex;align-items:center;gap:8px;margin-top:auto"><span class="ck" style="border-color:var(--acc-gold);background:transparent"></span><span style="font-size:12px;color:var(--acc-gold)">1:30–3:30 · 2h</span></div></div>`],
+  ['03', 'Top 3 · small', 2, 2, 'redo', 'Its titles are cut to about 8 characters, and the goal isn\'t paper. Now: the paper goal on top, then two rows you can tick.',
+    () => `${hd('star', 'Top 3', '0/3')}<div style="margin-top:7px">${goalStrip2(2)}</div><div style="margin-top:2px">${TOP.map((x) => wr(x)).join('')}</div>`],
+  ['04', 'Today · Top 3', 4, 2, 'redo', 'Its header ("Day 83 · Top 3 · 0…") is clipped, and the rows only show start times. Now: the date header, the paper goal, Up next as a block, and two rows to tick.',
+    () => `${hd('today', 'Monday, Oct 26', '1 of 8 done', addBtn)}<div style="display:flex;gap:10px;margin-top:8px;min-height:0"><div style="flex:1;min-width:0">${goalStrip2(3)}</div><div style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px">${bk(EV[1], { time: '11:00' })}${TOP.map((x) => wr(x)).join('')}</div></div>`],
+  ['05', 'Today · full page', 4, 4, 'redo', 'A big empty gap above the capture bar, Up next is plain text, and there\'s no Today\'s tasks. Now: the Now card on top, then the blocks, the goal, Top 3 and capture (the same as widget family B, large).',
+    () => FAM.B.l()],
+  ['06', 'Now', 4, 2, 'redo', 'An old gold bar instead of the block\'s colour, and nothing about what comes next. Now: the Now card, then the next block, with Start focus and Done.',
+    () => `${upNext()}<div style="margin-top:7px">${bk(EV[2], { label: 'Then', time: '1:30' })}</div><div style="display:flex;gap:8px;margin-top:auto">${pp('Start focus')}${pp('Done', 1)}</div>`],
+  ['07', 'Up next · tiny', 2, 1, 'redo', 'The old sage rule (one of the five old colours), and the title is cut. Now: the next block in palette C, with a 2-line title.',
+    () => `<div style="display:flex;align-items:center;height:100%"><div class="bk" style="flex:1;min-height:56px;align-items:flex-start;padding:7px 9px;flex-direction:column;gap:2px;${B('rose')}"><span class="tm">Next · 11:00</span><span style="font-size:13px;line-height:1.2;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">Lecture — Computer Vision</span></div></div>`],
+  ['08', 'Day progress', 4, 1, 'restyle', 'Same content. The bar now takes each block\'s palette C colour, and the caption is sentence case.',
+    () => `<div style="display:flex;align-items:center;gap:12px;height:100%"><div style="flex:1;min-width:0"><div style="display:flex;align-items:baseline;gap:8px"><b style="font:600 16px serif">1 of 8 done</b><span class="q" style="font-size:12px;color:var(--ink-muted)">finish ~10 PM</span></div><div class="wstrip" style="height:10px;margin-top:6px;border-radius:5px">${(() => { const x = (h) => ((h - 8) / 14) * 100; return EV.map((e) => `<span class="rb" style="${B(e.c)};top:0;height:10px;border-radius:3px;left:${x(e.a)}%;width:${x(e.b) - x(e.a)}%"></span>`).join('') + `<span class="nw" style="top:-2px;height:14px;left:${x(NOW)}%"></span>` })()}</div></div><img src="${ART('wisteria_p40')}" alt="" style="height:52px"></div>`],
+  ['09', 'Capture seal', 1, 1, 'restyle', 'Same one-tap +. It only gets the system corner radius.',
+    () => `<div style="display:flex;align-items:center;justify-content:center;height:100%"><span class="add" style="width:46px;height:46px">${ic('plus', 22)}</span></div>`],
+  ['10', 'Capture pill', 2, 1, 'restyle', 'Same. "Tap to type" becomes "Type or talk", in sentence case.',
+    () => `<div style="display:flex;align-items:center;gap:10px;height:100%"><span class="add" style="width:40px;height:40px">${ic('plus', 20)}</span><div><div style="font:600 15px serif">Capture</div><div style="font-size:12px;color:var(--ink-muted)">Type or talk</div></div></div>`],
+  ['11', 'Capture bar', 4, 1, 'restyle', 'Same three ways in. Plain line icons for the mic and Paper.',
+    () => `<div style="display:flex;align-items:center;gap:8px;height:100%"><div class="capbar" style="flex:1;margin:0">${ic('plus', 15)}<span class="grow">What's on your mind?</span></div><span class="ibtn" style="width:36px;height:36px">${ic('mic', 16)}</span><span class="ibtn" style="width:36px;height:36px">${ic('journal', 16)}</span></div>`],
+  ['12', 'Paper capture', 1, 1, 'restyle', 'Same shortcut. The pen drawing gets a sentence-case label.',
+    () => `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:2px"><img src="${ART('tools_pen')}" alt="" style="height:36px"><span style="font-size:11.5px;color:var(--ink-muted)">Paper</span></div>`],
+  ['13', 'Ask', 4, 1, 'restyle', 'Same. The chat icon leads the field, and the starter is a chip.',
+    () => `<div style="display:flex;align-items:center;gap:8px;height:100%"><div class="capbar" style="flex:1;margin:0">${ic('chat', 15)}<span class="grow">Ask about your day…</span></div><span class="pp sec" style="flex:none">What should I drop?</span></div>`],
+  ['14', 'Agenda', 4, 3, 'redo', 'Its blocks use the old five tints (gold, sage, blossom) with a 4px rule, not palette C\'s calendar look. Now: the calendar\'s own blocks and the now line.',
+    () => `${hd('calendar', 'Today', '4 left · 2 free hours', addBtn)}<div style="margin:6px -6px 0 0;flex:1;min-height:0;overflow:hidden"><div style="margin-top:-${0.5 * 34}px">${cal({ from: 10, to: 20, ph: 34, gutter: 40, nowLabel: false })}</div></div>`],
+  ['15', 'Agenda + week', 4, 4, 'redo', 'The same old tints, and the week row\'s black disc is heavier than the calendar\'s lavender "today". Now: the calendar\'s header and blocks.',
+    () => `${hd('calendar', 'Monday, Oct 26', '', addBtn)}<div style="display:flex;justify-content:space-between;margin:8px 2px 4px;font-size:12px;color:var(--ink-muted)">${['M 26', 'T 27', 'W 28', 'T 29', 'F 30', 'S 31', 'S 1'].map((d, i) => `<span style="text-align:center;${i === 0 ? 'padding:1px 7px;border-radius:999px;background:var(--block-lavender);color:var(--acc-lavender-text);font-weight:600' : ''}">${d}</span>`).join('')}</div><div style="margin:4px -6px 0 0;flex:1;min-height:0;overflow:hidden"><div style="margin-top:-${0.5 * 30}px">${cal({ from: 10, to: 20, ph: 30, gutter: 40, nowLabel: false })}</div></div>`],
+  ['16', 'Week strip', 4, 1, 'restyle', 'Same. Today becomes the calendar\'s lavender chip.',
+    () => `<div style="display:flex;justify-content:space-between;align-items:center;height:100%;padding:0 2px">${['M 26', 'T 27', 'W 28', 'T 29', 'F 30', 'S 31', 'S 1'].map((d, i) => { const [w, n] = d.split(' '); return `<span style="display:flex;flex-direction:column;align-items:center;gap:1px;padding:4px 7px;border-radius:12px;${i === 0 ? 'background:var(--block-lavender);color:var(--acc-lavender-text)' : ''}"><span style="font-size:10.5px;color:${i === 0 ? 'inherit' : 'var(--ink-faint)'}">${w}</span><b style="font:600 15px serif">${n}</b><span style="font-size:8px;letter-spacing:1px;color:var(--ink-faint)">${'•'.repeat([3, 2, 1, 2, 0, 1, 0][i])}&nbsp;</span></span>` }).join('')}</div>`],
+  ['17', 'Countdown', 2, 1, 'restyle', 'Same. The caption is sentence case and the date is plain text.',
+    () => `<div style="display:flex;flex-direction:column;justify-content:center;height:100%"><span style="font-size:11.5px;color:var(--ink-muted)">DL midterm · Fri 6 Nov</span><b style="font:600 20px serif">in 11 days</b></div>`],
+  ['18', 'Focus', 2, 2, 'restyle', 'The same ring, time left, Stop and Done. The ring takes the task\'s block colour, and the label is sentence case.',
+    () => `${hd('focus', 'Focus')}<div style="display:flex;justify-content:center;margin-top:6px">${ring(70, 62, '19m')}</div><div style="text-align:center;font-size:12.5px;margin-top:5px" class="nowrap">✶ CNN backprop notes</div><div style="display:flex;gap:6px;justify-content:center;margin-top:auto">${pp('Stop', 1)}${pp('Done')}</div>`],
+  ['20', 'Focus · slim', 2, 1, 'redo', 'The task is cut to "Crypto — he…". Now: a smaller ring and a 2-line task.',
+    () => `<div style="display:flex;align-items:center;gap:10px;height:100%">${ring(42, 62, '19m')}<div style="min-width:0"><div style="font-size:11px;color:var(--ink-faint)">Focusing</div><div style="font-size:13px;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">✶ CNN backprop notes</div></div></div>`],
+  ['21', 'Routines', 2, 2, 'restyle', 'The same three rows to tick, under a line-icon header.',
+    () => `${hd('routines', 'Routines', '1/5')}<div style="margin-top:6px">${RTN.map(([n, d]) => wr({ t: n, done: d })).join('')}</div>`],
+  ['22', 'Routines · week', 4, 2, 'restyle', 'Same rows and week dots. The dots use the done green and a faint gap, and "best streak" moves into the header.',
+    () => `${hd('routines', 'Routines', '1/5 · best streak 12')}<div style="margin-top:6px">${RTN.map(([n, d], i) => `<div class="wr${d ? ' done' : ''}"><span class="ck">${d ? '✓' : ''}</span><span class="t">${n}</span><span style="display:flex;gap:3px">${[1, 1, 0, 1, 1, i ? 0 : 1, d ? 1 : 0].map((v) => `<i style="width:9px;height:9px;border-radius:3px;background:${v ? 'var(--sig-done)' : 'color-mix(in srgb,var(--ink-body) 10%,transparent)'}"></i>`).join('')}</span></div>`).join('')}</div>`],
+  ['23', 'Streak plant', 2, 2, 'restyle', 'The same plant and count, in sentence case. Resized to 1 × 1, it becomes W24\'s face.',
+    () => `${hd('routines', 'Gym streak')}<div style="display:flex;align-items:flex-end;gap:8px;flex:1;min-height:0;margin-top:4px"><img src="${ART('vine_flowering')}" alt="" style="height:96px"><div><b style="font:600 22px serif;display:block">12 days</b><span style="font-size:12px;color:var(--ink-muted)">goal 30</span></div></div>`],
+  ['24', 'Streak · tiny', 1, 1, 'merge', 'Merge with W23: this is the streak plant at 1 × 1. One picker entry that resizes, and the sprig gets drawn bigger so it reads.',
+    () => `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%"><img src="${ART('vine_sprouting')}" alt="" style="height:38px"><b style="font:600 16px serif">12</b></div>`],
+  ['25', 'Inbox', 2, 2, 'restyle', 'The same flower, count and Sort them, under a line-icon header.',
+    () => `${hd('inbox', 'Inbox')}<div style="display:flex;align-items:center;gap:8px;margin-top:4px"><img src="${ART('hydrangea_medium')}" alt="" style="height:66px"><div><b style="font:600 26px serif;display:block">3</b><span style="font-size:12px;color:var(--ink-muted)">to sort</span></div></div><div style="margin-top:auto">${pp('Sort them', 1)}</div>`],
+  ['26', 'Inbox · tiny', 1, 1, 'restyle', 'Same flower and badge.',
+    () => `<div style="position:relative;display:flex;align-items:center;justify-content:center;height:100%"><img src="${ART('hydrangea_light')}" alt="" style="height:46px"><span class="add" style="position:absolute;top:2px;right:2px;width:20px;height:20px;font:600 11px var(--font-ui)">3</span></div>`],
+  ['27', 'Overdue', 2, 2, 'restyle', 'The same count, oldest, two titles and Replan all. The label is sentence case, in terra.',
+    () => `${hd('clock', '<span class="terra">Overdue</span>', 'oldest 3 days')}<b style="font:600 26px serif;color:var(--acc-terra-ink);margin-top:2px">2</b><div style="font-size:12.5px;line-height:1.35;color:var(--ink-muted)"><div class="nowrap">Email the TA about the quiz</div><div class="nowrap">Back up the laptop</div></div><div style="margin-top:auto">${pp('Replan all')}</div>`],
+  ['28', 'Slipping', 2, 2, 'restyle', 'The same list. The days are in quiet ink, and the caption is sentence case.',
+    () => `${hd('activity', 'Slipping', 'quiet 5+ days')}<div style="margin-top:6px">${[['Garden club', '11d'], ['Guitar practice', '6d'], ['Email Dr. Hany', '5d']].map(([n, d]) => `<div class="wr"><span class="t">${n}</span><span class="m">${d}</span></div>`).join('')}</div>`],
+  ['29', 'Plan my day · Shut down', 4, 2, 'redo', '"Shut down the d…" is cut, the meta wraps under a spaced caption, and the lower half is empty. Now: one header line, the title with Plan, and the four steps as chips.',
+    () => `<div class="wh"><img src="${ART('daisy_morning')}" alt="" style="height:22px">Morning <span class="q">· not planned · ~5 min</span></div><div style="display:flex;align-items:center;gap:10px;margin-top:8px"><div style="flex:1;min-width:0"><div class="big" style="font-family:serif;font-weight:600">Plan my day</div><div style="font-size:12px;color:var(--ink-muted)">0 in inbox · 2 overdue · Top 3 3/3</div></div>${pp('Plan')}</div><div style="display:flex;flex-wrap:wrap;gap:5px;margin-top:auto">${['Carry-over', 'Inbox', 'Top 3', 'Times'].map((x) => `<span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 9px;border-radius:999px;border:1px solid var(--line-card);background:var(--paper-bone);font-size:11.5px"><span class="ck" style="width:12px;height:12px;border-radius:4px"></span>${x}</span>`).join('')}</div>`],
+  ['31', 'One line', 4, 2, 'restyle', 'The same handwriting line, mic and Write. The header is sentence case with the journal icon.',
+    () => `${hd('journal', 'One line about today')}<div style="font:22px var(--font-hand);color:var(--ink-hand);margin-top:8px;padding-bottom:6px;border-bottom:1px solid var(--line-card)">one line about today…</div><div style="display:flex;gap:8px;justify-content:flex-end;margin-top:auto"><span class="ibtn" style="width:32px;height:32px">${ic('mic', 15)}</span>${pp('Write')}</div>`],
+  ['32', 'From a while ago', 4, 2, 'restyle', 'The same quote. The caption is sentence case, and Open gets a chevron.',
+    () => `${hd('journal', 'From a while ago', '28 Sep')}<div style="font:italic 16px/1.3 serif;margin-top:8px">"Start the DL notes with the questions, not the answers."</div><div style="display:flex;margin-top:auto;font-size:12px;color:var(--ink-muted)">Journal · a month ago<span style="margin-left:auto">Open ›</span></div>`],
+  ['33', 'Pressed', 2, 2, 'restyle', 'The same herbarium page, with a sentence-case caption.',
+    () => `${hd('', 'Pressed', 'Oct 3')}<div style="flex:1;min-height:0;margin-top:6px;border-radius:10px;background:var(--paper-goal);display:flex;align-items:center;justify-content:center"><img src="${ART('wisteria_p80')}" alt="" style="height:78px"></div><div style="font:italic 12.5px serif;text-align:center;margin-top:4px">A week of mornings</div>`],
+  ['34', 'Season', 2, 1, 'restyle', 'Kept, since nothing is cut. Same daisy and season, in sentence case.',
+    () => `<div style="display:flex;align-items:center;gap:8px;height:100%"><img src="${ART('daisy_midday')}" alt="" style="height:40px"><div><div style="font-size:11.5px;color:var(--ink-muted)">Autumn</div><b style="font:600 17px serif">27° clear</b></div></div>`],
+]
+const CW = 88, RH = 96
+const box = (w, h, inner) => `<div class="wbox" style="width:${w * CW}px;height:${h * RH}px"><div class="wg" style="padding:${h === 1 ? '8px 11px' : '12px 13px'}">${inner}</div></div>`
+const counts = EX.reduce((a, x) => ((a[x[4]] = (a[x[4]] ?? 0) + 1), a), {})
+document.getElementById('exsum').innerHTML = `<span class="vd redo">redo ${counts.redo}</span><span class="vd restyle">restyle ${counts.restyle}</span><span class="vd merge">merge ${counts.merge}</span><span>Nothing is cut. W19 and W30 aren't picker entries: they're the idle face of W18 Focus and the evening face of W29.</span>`
+document.getElementById('exgrid').innerHTML = EX.map(([n, name, w, h, v, why, draw]) => `
+  <div class="ex${w === 4 && h >= 2 ? ' wide' : ''}" data-ex="W${n}" data-verdict="${v}">
+    <div class="hd">W${n} ${name} <span class="sz">${w} × ${h}</span><span class="vd ${v}">${v === 'merge' ? 'merge with W23' : v}</span></div>
+    <div class="why">${why}</div>
+    <div class="pair"><figure><img class="pv" src="../app/native/android/res/drawable-nodpi/kfw_preview_w${n}.webp" width="${w * CW}" alt="W${n} as it draws now"><figcaption>Now</figcaption></figure><figure>${box(w, h, draw())}<figcaption>Modern</figcaption></figure></div>
+    <div class="cf"><button type="button" class="btn pick" data-grp="w${n}" data-pick="ok" aria-pressed="false">Agree</button><button type="button" class="btn pick" data-grp="w${n}" data-pick="no" aria-pressed="false">Not this</button></div>
+  </div>`).join('')
+
 // ── density: task rows wholly on screen (the goal counts as one), counted in the drawing itself ──
 function count(frame) {
   const fb = frame.getBoundingClientRect().bottom
@@ -603,11 +814,11 @@ document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click'
 const KEY = 'kf-phone-home-picks'
 let picks = {}
 try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
-const line = () => ['phone', 'widgets'].filter((g) => picks[g]).map((g) => `${g} ${picks[g]}`).join(', ')
+const line = () => { const main = ['phone', 'widgets', 'lock'].filter((g) => picks[g]).map((g) => `${g} ${picks[g]}`); const ok = Object.keys(picks).filter((k) => /^w\d/.test(k) && picks[k] === 'ok').map((k) => k.toUpperCase()); const no = Object.keys(picks).filter((k) => /^w\d/.test(k) && picks[k] === 'no').map((k) => k.toUpperCase()); if (ok.length) main.push(`widget verdicts OK: ${ok.join(' ')}`); if (no.length) main.push(`NOT: ${no.join(' ')}`); return main.join('; ') }
 function paint() {
   document.getElementById('mine').textContent = line() || 'none yet'
   document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(picks[b.dataset.grp] === b.dataset.pick)))
-  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', picks.phone === s.dataset.look))
+  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', picks[s.dataset.grp] === s.dataset.look))
 }
 document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
   picks[b.dataset.grp] = b.dataset.pick

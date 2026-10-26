@@ -226,3 +226,42 @@ The page lists what Android widgets can and can't do:
 - No sideways overflow.
 - Copy works.
 - The mock server on :5317 was stopped.
+
+---
+
+# Widget modernization and the Samsung lock screen (follow-up 2)
+
+## Push 1: the widget spec is FINAL
+
+**Final: the "Existing widgets: every one, modernized" grid in `design-export/Phone home options.html` (`#existing`).** It's the spec for `claude/widgets-build`. Not final yet: the lock-screen section, which comes in push 2.
+
+The coordinator relayed Kai's decision: build every widget, nothing is cut, and true duplicates are marked "merge with X". Each of the 32 entries shows its gallery-rendered picker preview (`app/native/android/res/drawable-nodpi/kfw_preview_wNN.webp`; the night versions are in `docs/log/assets/widgets/family-*.jpg`) next to its modern face. Each has a verdict and a reason, plus Agree / Not this buttons that feed into "Copy my picks".
+
+**Redo (10): the layout changes**
+- W01 goal slim: the title was cut; now a 2-line strip.
+- W03 Top 3 small: paper goal plus 2 rows to tick.
+- W04 Today · Top 3: date header, paper goal, Up next as a palette C block, 2 rows to tick.
+- W05 full page: becomes family B large (Now card, then blocks, goal, Top 3, capture).
+- W06 Now: Now card, the Then block, Start focus / Done.
+- W07 Up next tiny: a palette C block with a 2-line title.
+- W14 Agenda: the calendar's blocks and now line instead of the old 5 tints.
+- W15 Agenda + week: the calendar's lavender "today" header plus its blocks.
+- W20 Focus slim: smaller ring, 2-line task.
+- W29 Plan / Shut down: one header line, the title with Plan, the 4 steps as chips.
+
+**Restyle (21): same content, the family style**
+W02, W08, W09–W13, W16–W18, W21–W23, W25–W28, W31–W34.
+
+**Merge (1):** W24 Streak · tiny merges with W23. It becomes W23's 1 × 1 face, so one picker entry resizes.
+
+**The family style (B-led, Now + next):**
+- the paper card at the system corner radius;
+- a line icon plus a sentence-case label (no spaced mono capitals);
+- palette C blocks in the calendar's "Now" look, with check B;
+- the Now card's ring, progress line and times;
+- the paper goal strip, standing straight, with the real `kfw_tape.png`;
+- a terra pill for the main action, a bone outline for the second;
+- the app's own `kfw_art_*` drawings;
+- system `serif` for the display moments.
+
+**Shots:** `docs/log/assets/today-looks/phone/widgets-existing-day.png` and `widgets-existing-night.png`.
