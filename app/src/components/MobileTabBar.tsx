@@ -76,7 +76,7 @@ const MORE_ITEMS: { to: string; label: string; icon: IconName; badge?: boolean }
   { to: '/trash', label: 'Trash', icon: 'delete' },
 ]
 
-const footBtn = { flex: 1, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' } as const
+const footBtn = { flex: 1, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' } as const
 
 function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pendingInbox: number; onClose: () => void; onSearch: () => void; onChat: () => void; onSignOut: () => void }) {
   useEscapeStack(true, onClose)
@@ -110,7 +110,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
                 style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, minHeight: 48, boxSizing: 'border-box', background: on ? 'var(--frost-bg, var(--paper-parchment))' : 'var(--paper-bone)', border: `1px solid ${on ? 'var(--frost-line, var(--line-control))' : 'var(--line-card)'}`, borderRadius: 'var(--radius-input)', padding: '11px 13px', textDecoration: 'none' }}
               >
                 <Icon name={item.icon} size={18} style={{ color: on ? 'var(--ink-body)' : 'var(--ink-muted)' }} />
-                <span style={{ fontSize: 13, fontWeight: on ? 600 : undefined, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
+                <span style={{ fontSize: 'var(--fs-caption)', fontWeight: on ? 600 : undefined, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
                 {item.badge && pendingInbox > 0 && (
                   <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{pendingInbox}</span>
                 )}
