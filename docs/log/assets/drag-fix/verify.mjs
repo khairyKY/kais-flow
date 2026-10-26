@@ -250,7 +250,7 @@ async function open(o = {}) {
   await page.clock.install({ time: cairo(NOW) })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
-  await page.goto(`${BASE}/calendar`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}${o.route ?? '/calendar'}`, { waitUntil: 'networkidle' })
   await sleep(1500)
   const cdp = view.hasTouch ? await ctx.newCDPSession(page) : null
   return { ctx, page, cdp, errors, state }
@@ -455,7 +455,12 @@ async function pickSeg(page, label) {
   await sleep(300)
 }
 async function phoneCase(name, o) {
-  const { ctx, page, cdp, errors, state } = await open({ view: phone })
+  const { ctx, page, cdp, errors, state } = await open({ view: phone, route: o.route })
+  if (o.route) {
+    // from a task list to the calendar by its tab, as Kai goes
+    await tap(cdp, page.locator('a[href="/calendar"]').last())
+    await sleep(1200)
+  }
   await pickSeg(page, o.seg)
   const c = chip(page, o.title)
   if (!(await c.count())) {
@@ -511,6 +516,7 @@ if (want('m')) {
     taskId: (state) => server(state, 'tasks', (t) => t.title === 'Buy printer ink').at(-1)?.id,
     undone: (back, t) => back.length === 0 && (!t || !!t.deleted_at),
   })
+  await phoneCase('m-route', { route: '/tasks', seg: 'Today', title: 'Send the invoice to Omar', task: EMAIL, end: '15:45', toast: 'Scheduled · Send the invoice to Omar', undone: unplanned })
   await phoneCase('m-lists', { seg: 'Lists', title: 'Book the dentist', task: DENTIST, end: '15:20', toast: 'Scheduled · Book the dentist', undone: unplanned })
 
   // A tap still opens the schedule sheet; a hold carried back over the strip schedules nothing; the tray still scrolls.
