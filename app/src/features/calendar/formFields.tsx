@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { DateField } from '../../components/DatePicker'
 import { TimeField } from './TimeField'
+import { BLOCK_SWATCHES, swatchValue } from './blockHue'
 
 // ── Small form atoms shared by QuickCreate / TaskEditorPage / the block menus —
 // Editor.dc.html's .flabel / .fhelp / .finput / .fsel / .seg classes, ported as
@@ -82,25 +83,14 @@ export function Seg<T extends string>({
 }
 
 // ── Accent color swatches — Editor 1c/1d + Overlays §02. Shared by every surface
-// that colors an event/block. ──
-export const ACCENT_COLORS: { name: string; value: string | null }[] = [
-  { name: 'None', value: null },
-  { name: 'Lavender', value: '#A8A0BE' },
-  { name: 'Sage', value: '#8A9A7E' },
-  { name: 'Moss', value: '#7A946E' },
-  { name: 'Terra', value: '#B5654A' },
-  { name: 'Blossom', value: '#D4A8B0' },
-  { name: 'Hydrangea', value: '#9AB4BE' },
-  { name: 'Buttercream', value: '#D4C78A' },
-  { name: 'Clover', value: '#C9A0A0' },
-  { name: 'Gold', value: '#C9A55A' },
-]
+// that colors an event/block. cal-blocks: palette C (./blockHue). ──
+export const ACCENT_COLORS: { name: string; value: string | null }[] = [{ name: 'None', value: null }, ...BLOCK_SWATCHES]
 
 export function ColorDots({ value, onChange, size = 22 }: { value: string | null; onChange: (v: string | null) => void; size?: number }) {
   return (
     <div style={{ display: 'flex', gap: 7, alignItems: 'center', flexWrap: 'wrap' }}>
       {ACCENT_COLORS.map((c) => {
-        const on = value === c.value
+        const on = swatchValue(value) === c.value // a colour saved before palette C shows as its new swatch
         return (
           <button
             key={c.name}

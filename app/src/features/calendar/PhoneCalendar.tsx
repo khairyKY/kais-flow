@@ -17,7 +17,7 @@ import { useMinuteNow } from '../today/useMinuteNow'
 import { goalIdOf } from '../today/top3Order'
 import { legacyGoalId } from '../today/goalStore'
 import { cachedStarEvents } from '../today/api'
-import { blockHue } from './blockHue'
+import { blockHue, KIND_HUE } from './blockHue'
 import { moveEventWithUndo, outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
 import { findBlock } from './series'
 import { heldDrop, slotFill, slotTasks } from './slots'
@@ -173,8 +173,8 @@ export function PhoneCalendar() {
     const hue = e.color ?? project?.color ?? (project && domains.find((d) => d.id === project.domain_id)?.color) ?? null
     // cal-looks ("Now" as drawn, as the desktop's): the accent at 24% for the fill, 45% for the edge, its text tone
     // for the time and the check — a swatch is its token (./blockHue), so Night Garden redraws it.
-    const hueOf = hue ? blockHue(hue) : e.type === 'event' && !e.task_id ? { c: 'var(--acc-blossom)', ink: 'var(--acc-blossom-text)' } : { c: 'var(--acc-lavender)', ink: 'var(--acc-lavender-text)' }
-    const tone = { fill: `color-mix(in srgb, ${hueOf.c} 24%, transparent)`, edge: `color-mix(in srgb, ${hueOf.c} 45%, transparent)`, ink: hueOf.ink }
+    const hueOf = hue ? blockHue(hue) : e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
+    const tone = { fill: `color-mix(in srgb, ${hueOf.c} var(--blk-fill), transparent)`, edge: `color-mix(in srgb, ${hueOf.c} 45%, transparent)`, ink: hueOf.ink }
     const done = task?.status === 'done'
     // Time Slots (0073): a Time block draws the tasks this occurrence holds, as the desktop's does.
     const held = e.type === 'time_block' ? slotTasks(e, tasks) : []

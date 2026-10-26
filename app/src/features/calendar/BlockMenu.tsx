@@ -19,6 +19,7 @@ import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayW
 import { BLOCK_MENU_WIDTH, EVENT_REMIND, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { ColorDots } from './formFields'
+import { blockSwatch } from './blockHue'
 import { eventSpan } from './phoneGridMath'
 import { duplicateBlockWithUndo } from './duplicate'
 
@@ -46,10 +47,6 @@ const LENGTHS: { min: number; label: string }[] = [
 const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }
 const check = <Icon name="check" size={13} style={{ color: 'var(--acc-terra)' }} />
 
-/** The swatch a block wears: its own colour, else its kind's (a meeting blossom, a task / block lavender). */
-function blockDot(e: CalendarEvent): string {
-  return e.color ?? (e.type === 'event' && !e.task_id ? 'var(--acc-blossom)' : 'var(--acc-lavender)')
-}
 
 /** The open, unplaced tasks Link a task… offers. */
 const linkable = (tasks: readonly Task[]) => tasks.filter((t) => t.status === 'todo' && !t.scheduled_start && !t.deleted_at)
@@ -81,7 +78,7 @@ function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; u
         }}
         style={{ flex: 'none', width: 15, height: 15, margin: '1px -4px 0', padding: 0, border: 'none', borderRadius: '50%', background: 'none', cursor: readOnly ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: blockDot(event) }} />
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: blockSwatch(event) }} />
       </button>
       <textarea
         className="kf-bm-title"

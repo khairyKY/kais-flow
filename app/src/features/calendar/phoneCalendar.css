@@ -119,7 +119,7 @@
 .pc-block.is-now { background: linear-gradient(color-mix(in srgb, var(--pc-ink) 14%, transparent) var(--pc-elapsed, 0%), transparent 0), linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); }
 /* ran over — the one terra exception: a terra edge, the time in terra ink */
 .pc-block.is-ranover { --pc-line: var(--acc-terra); }
-.pc-block.is-ranover .pc-time { color: var(--acc-terra-ink); }
+.pc-block.is-ranover .pc-time { color: var(--blk-ran-ink); } /* palette C's own terra (cal-blocks) */
 /* goal A: a gold edge down the left, the goal paper's edge, a gold ✶ before the title */
 .pc-block.is-goal { --pc-line: var(--line-goal); box-shadow: inset 3px 0 0 var(--acc-gold), inset 0 0 0 1px var(--pc-line); }
 .pc-star { color: var(--acc-gold); }

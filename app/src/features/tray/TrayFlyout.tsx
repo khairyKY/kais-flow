@@ -8,7 +8,7 @@ import { useAppZoneFromSettings } from '../../lib/settings'
 import { useTasks, completeTaskWithUndo } from '../tasks/api'
 import { todayListTasks } from '../tasks/grouping'
 import { useCalendarEvents } from '../calendar/api'
-import { blockHue } from '../calendar/blockHue'
+import { blockHue, KIND_HUE } from '../calendar/blockHue'
 import { timeText } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useRoutines } from '../routines/api'
@@ -122,7 +122,7 @@ function SignedOut() {
 function hueOf(e: CalendarEvent, task: Task | undefined, projects: Project[], domains: Domain[]): CSSProperties {
   const project = projects.find((p) => p.id === (task?.project_id ?? e.project_id))
   const color = e.color ?? project?.color ?? (project && domains.find((d) => d.id === project.domain_id)?.color) ?? null
-  const h = color ? blockHue(color) : e.task_id ? { c: 'var(--acc-lavender)', ink: 'var(--acc-lavender-text)' } : { c: 'var(--acc-blossom)', ink: 'var(--acc-blossom-text)' }
+  const h = color ? blockHue(color) : e.task_id ? KIND_HUE.task : KIND_HUE.event
   return { '--c': h.c, '--ct': h.ink } as CSSProperties
 }
 

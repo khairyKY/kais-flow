@@ -193,13 +193,17 @@
    cal-looks (Kai 2026-10-23, "blocks: Now" — design-export/Calendar blocks options.html, its "Now" as drawn):
    every hue reads one way — the fill its accent at 24%, the edge at 45%, the time row and the check in its
    text tone (--kf-ev-c / --kf-ev-accent; a coloured block's arrive from ./blockHue). Insets ride the scale. */
-.fc .fc-timegrid-event {
-  --kf-ev-c: var(--acc-lavender);
-  --kf-ev-accent: var(--acc-lavender-text);
-  --kf-ev-deep: var(--acc-lavender-deep);
-  --kf-ev-fill: color-mix(in srgb, var(--kf-ev-c) 24%, transparent);
+.fc .fc-event {
+  /* cal-blocks (palette C): a block with no colour of its own is Iris (a task, a Time block) or Rose (a plain
+     event, below); the fill its accent at --blk-fill (24% by day, 20% at night), the edge at 45%. */
+  --kf-ev-c: var(--blk-iris);
+  --kf-ev-accent: var(--blk-iris-ink);
+  --kf-ev-deep: var(--blk-iris-ink);
+  --kf-ev-fill: color-mix(in srgb, var(--kf-ev-c) var(--blk-fill), transparent);
   --kf-ev-edge: color-mix(in srgb, var(--kf-ev-c) 45%, transparent);
   --kf-ev-grip: color-mix(in srgb, var(--kf-ev-c) 65%, transparent);
+}
+.fc .fc-timegrid-event {
   border-radius: var(--radius-block);   /* Bound Journal (was 6px) */
   border: 1px solid var(--kf-ev-edge);
   /* --kf-ev-under: what the tint sits on — the grid, or paper where a cascaded block covers another */
@@ -336,8 +340,8 @@
    outlined rows: pick A is Kai's own call for exactly these cards (time-slots o1/o2). */
 .fc .fc-timegrid-event .kf-ev-slot-row {
   display: flex; align-items: center; min-width: 0; padding: calc(1px * var(--kf-d)) calc(4px * var(--kf-d)); border-radius: 8px;
-  border: 1px solid color-mix(in srgb, var(--kf-ev-accent, var(--acc-lavender-text)) 35%, transparent);
-  background: var(--kf-ev-fill, color-mix(in srgb, var(--acc-lavender) 24%, transparent));
+  border: 1px solid color-mix(in srgb, var(--kf-ev-accent) 35%, transparent);
+  background: var(--kf-ev-fill);
 }
 /* the drawn 6px after the check; the row's own × and ⋯ (not drawn) sit closer, so a week column's row keeps
    some title while they show */
@@ -377,15 +381,15 @@ body > .fc-event-dragging[data-title] {
   width: auto !important; height: auto !important; max-width: calc(200px * var(--u)); margin: 0;
   border-radius: 8px; color: var(--ink-body); font-family: var(--font-ui); font-size: calc(var(--fs-meta) * var(--u)); line-height: 1.4;
   white-space: nowrap; overflow: hidden; outline: none; opacity: 1; transform: none; cursor: grabbing;
-  border: 1px solid color-mix(in srgb, var(--acc-lavender-text) 35%, transparent);
-  background: linear-gradient(color-mix(in srgb, var(--acc-lavender) 24%, transparent), color-mix(in srgb, var(--acc-lavender) 24%, transparent)), var(--paper-parchment);
+  border: 1px solid color-mix(in srgb, var(--blk-iris-ink) 35%, transparent);
+  background: linear-gradient(color-mix(in srgb, var(--blk-iris) var(--blk-fill), transparent), color-mix(in srgb, var(--blk-iris) var(--blk-fill), transparent)), var(--paper-parchment);
   box-shadow: var(--shadow-popover);
 }
 body > .fc-event-dragging[data-title] > * { display: none !important; }
 @keyframes kfLiftCard { from { scale: 0.96; } }
 .kf-motion-on body > .fc-event-dragging[data-title] { animation: kfLiftCard 120ms var(--ease-out) backwards; }
 body > .fc-event-dragging[data-title]::before { content: attr(data-title); min-width: 0; overflow: hidden; text-overflow: ellipsis; }
-body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex: none; font-family: var(--font-mono); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--acc-lavender-text); }
+body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex: none; font-family: var(--font-mono); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--blk-iris-ink); }
 
 /* 4c's resize grip — the little bar the handle "commits" from. Hidden on blocks too short to
    seat it without colliding with the text. Kai 2026-10-22: the top edge resizes too, so it wears the
@@ -415,8 +419,8 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .fc .fc-daygrid-event {
   height: 20px;
   border-radius: 10px;
-  border: 1px solid color-mix(in srgb, var(--acc-lavender-deep) 35%, transparent);
-  background: color-mix(in srgb, var(--acc-lavender) 24%, transparent);
+  border: 1px solid var(--kf-ev-edge);
+  background: var(--kf-ev-fill);
   font-size: calc(10.5px * var(--s-text));
   line-height: 18px;
   padding: 0 8px;
@@ -563,10 +567,10 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
    Meeting → blossom (clover text per the table). Project-hued tasks arrive inline via --kf-ev-*
    from eventDidMount and win over these class values. Ritual/Focus/Admin/External kinds need
    source data the schema does not carry yet. */
-.fc .fc-timegrid-event.kf-kind-event {
-  --kf-ev-c: var(--acc-blossom);
-  --kf-ev-accent: var(--acc-blossom-text);
-  --kf-ev-deep: var(--acc-blossom-text);
+.fc .fc-event.kf-kind-event {
+  --kf-ev-c: var(--blk-rose);
+  --kf-ev-accent: var(--blk-rose-ink);
+  --kf-ev-deep: var(--blk-rose-ink);
 }
 
 /* Goal A (Kai 2026-10-23, the options page's "goal" section): today's block of the goal of the day keeps its
@@ -578,7 +582,7 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .fc .fc-timegrid-event.kf-past { opacity: 0.62; }
 /* ran over — the ONE terra exception on the grid: a terra edge, the time row in terra ink, the hue kept */
 .fc .fc-timegrid-event.kf-ranover { border-color: var(--acc-terra); }
-.fc .fc-timegrid-event.kf-ranover .fc-event-time { color: var(--acc-terra-ink); }
+.fc .fc-timegrid-event.kf-ranover .fc-event-time { color: var(--blk-ran-ink); } /* palette C's own terra: AA on every fill */
 /* overdue (Kai 2026-10-07) — ended before today, not done: past-muted, the time row says
    "Overdue · Replan" in terra; Replan opens the Plan menu. A short block keeps that row inline. */
 .fc .fc-timegrid-event.kf-overdue { opacity: 0.55; filter: saturate(0.6); }
