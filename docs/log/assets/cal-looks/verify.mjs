@@ -419,6 +419,7 @@ async function dragBy(page, from, dy) {
   }
   await sleep(300)
   await page.mouse.up()
+  await sleep(500) // the drop's write lands through IndexedDB first: give it its turn before settle() reads the quiet
 }
 if (want('o')) {
   for (const theme of ['day', 'night']) {
@@ -577,7 +578,8 @@ if (want('h')) {
   await fcBlock(page, 22).locator('.kf-ev-act', { hasText: '⋯' }).click()
   await sleep(400)
   const menu = await page.locator('[role="menu"]').last().innerText().catch(() => '')
-  check('h ⋯ opens the block\'s menu (Edit Task · Complete · Unschedule · Delete)', /Edit Task[\s\S]*Complete[\s\S]*Unschedule[\s\S]*Delete/.test(menu), menu.replace(/\n/g, ' | '))
+  // cal-clicks: the ⋯ is the right-click — menu B (the old quick menu's Edit Task is its Open task now).
+  check('h ⋯ opens the block\'s menu B (Complete · Open task · Duplicate · Work with AI · Copy link · Unschedule · Delete)', /Complete[\s\S]*Open task[\s\S]*Duplicate[\s\S]*Work with AI[\s\S]*Copy link[\s\S]*Unschedule[\s\S]*Delete/.test(menu), menu.replace(/\n/g, ' | '))
   await page.keyboard.press('Escape')
   await sleep(300)
   await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2)

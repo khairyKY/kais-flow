@@ -314,6 +314,8 @@ if (want('k')) {
       await o2.page.mouse.move(rb2.x + rb2.width / 2, rb2.y + rb2.height - 6)
       await sleep(300)
       await fcBlock(o2.page, 6).locator('.kf-ev-check').click()
+      // cal-clicks: a repeating task's round asks This one / Following / All first — "This one" is the old tick.
+      await o2.page.locator('[role="dialog"].kf-scope-ask').getByRole('button', { name: 'This one', exact: true }).click()
       await settle(o2.state)
       const done = posts(o2.state, 'tasks', w0).find((t) => t.id === id(WATER))
       check('k …ticking it completes this occurrence (the task row written done, as any repeat\'s tick)', done?.status === 'done' || !!done?.completed_at, JSON.stringify(posts(o2.state, 'tasks', w0).map((t) => [t.id === id(WATER) ? 'WATER' : t.title, t.status, t.due_at])))
@@ -348,9 +350,10 @@ if (want('m')) {
   for (const theme of ['day', 'night']) {
     const { ctx, page, errors, state } = await open('/calendar', { theme, scale: 1.25 })
     await threeDays(page)
-    await fcBlock(page, 20).click({ position: { x: 30, y: 30 } })
+    // cal-clicks: menu B is the right-click (a click opens the block's details — a task block's, its task).
+    await fcBlock(page, 20).click({ button: 'right', position: { x: 30, y: 30 } })
     await sleep(500)
-    const menu = page.locator('[role="menu"][aria-label="Block details"]')
+    const menu = page.locator('[role="menu"][aria-label="Block menu"]')
     const order = await menu.evaluate((m) => {
       const t = m.querySelector('textarea'), tray = m.querySelector('.kf-swatch-tray'), chips = m.querySelector('[role="menuitem"]')
       const y = (e) => e?.getBoundingClientRect().top ?? -1
@@ -381,11 +384,11 @@ if (want('m')) {
       check('m Ctrl+D duplicates the block: a new task, blocked at the same time; the menu closes', !!newTask && newBlock?.starts_at === iso('10:15', 23) && (await menu.count()) === 0, JSON.stringify([newTask?.id, newBlock?.starts_at]))
       check('m …with a toast and its Undo', await page.locator('.kf-toast', { hasText: /Duplicated/ }).getByRole('button', { name: 'Undo' }).first().isVisible().catch(() => false))
       // Copy link
-      await fcBlock(page, 21).click({ position: { x: 30, y: 30 } })
+      await fcBlock(page, 21).click({ button: 'right', position: { x: 30, y: 30 } })
       await sleep(500)
       const evRows = (await menuRows(page)).map((r) => r.replace(/\s+/g, ' ').trim())
-      const ei = ['Link a task…', 'More', 'Duplicate', 'Work with AI', 'Copy link', 'Delete'].map((w) => evRows.findIndex((r) => r.startsWith(w)))
-      check('m an event\'s rows: … Link a task… · More › · Duplicate Ctrl D · Work with AI › · Copy link · Delete ⌫', ei.every((v, i) => v >= 0 && (i === 0 || v > ei[i - 1])), JSON.stringify(evRows))
+      const ei = ['Details', 'Duplicate', 'Work with AI', 'Copy link', 'Delete'].map((w) => evRows.findIndex((r) => r.startsWith(w)))
+      check('m an event\'s menu B: Details · Duplicate Ctrl D · Work with AI › · Copy link · Delete ⌫ (cal-clicks: Link a task… and More are the details\')', ei.every((v, i) => v >= 0 && (i === 0 || v > ei[i - 1])), JSON.stringify(evRows))
       await page.locator('[role="menuitem"]', { hasText: 'Copy link' }).click()
       await sleep(400)
       const clip = await page.evaluate(() => navigator.clipboard.readText())
@@ -395,10 +398,10 @@ if (want('m')) {
       await o3.clock.install({ time: cairo(NOW) })
       await o3.goto(clip, { waitUntil: 'networkidle' })
       await sleep(1500)
-      check('m …and the link turns the calendar to it and opens its menu', (await o3.locator('[role="menu"][aria-label="Block details"] textarea').inputValue().catch(() => '')) === 'Design review')
+      check('m …and the link turns the calendar to it and opens its details (cal-clicks)', (await o3.locator('[role="menu"][aria-label="Block details"] textarea').inputValue().catch(() => '')) === 'Design review')
       await o3.close()
       // Work with AI › Find a better time → the chat, the request typed in
-      await fcBlock(page, 21).click({ position: { x: 30, y: 30 } })
+      await fcBlock(page, 21).click({ button: 'right', position: { x: 30, y: 30 } })
       await sleep(500)
       await page.locator('[role="menuitem"]', { hasText: 'Work with AI' }).hover()
       await sleep(500)
@@ -419,6 +422,9 @@ if (want('m')) {
   await scrollPhone(page, 10 * 60)
   await pcBlock(page, 3).click()
   await sleep(800)
+  // cal-clicks: a tap opens the details; their ⋯ (or a long-press) opens menu B's sheet.
+  await page.locator('.pc-bs-more').click()
+  await sleep(600)
   const sheet = await page.evaluate(() => {
     const tray = document.querySelector('.pc-bs-colors .kf-swatch-tray')
     return { swatches: tray?.querySelectorAll('.kf-sw').length, custom: !!tray?.querySelector('.kf-sw-custom input[type="color"]'), rows: [...document.querySelectorAll('.pc-bs-rows button')].map((b) => b.textContent.trim()) }
@@ -540,13 +546,15 @@ if (want('x')) {
   }).filter(Boolean)
   check('x mid-drag: all three picked blocks travel as ghosts under the pointer, each its offset from the grabbed one kept (one day on, 30 min later)', mid.ghosts.length === 3 && off.length === 0, off.join(' | ') || JSON.stringify(mid.ghosts))
   check('x …the wobble kept on every ghost; the two others stay faded where they were', mid.ghosts.every((x) => x.wobble.includes('calGridDragFloat')) && mid.faded.filter((f) => f?.[0]).length === 2, JSON.stringify(mid))
+  // (the landing writes after the ghosts settle — wait for its toast before reading them; the old 400 ms quiet raced it)
+  const landedToast = await toastSoon(page, '3 blocks moved')
   await settle(state)
   const moved = Object.fromEntries(posts(state, 'calendar_events').map((e) => [e.id, e.starts_at]))
   const was = { [eid(10)]: iso('09:00', 22), [eid(12)]: iso('11:00', 22), [eid(13)]: iso('12:30', 22) }
   const deltas = Object.entries(was).map(([k, v]) => (Date.parse(moved[k]) - Date.parse(v)) / 60_000)
   const mins = deltas[0] - 1440
   check(`x they land together: each one day on and ${mins} min later — the same move, snapped to the quarter hour`, deltas.every((d) => d === deltas[0]) && mins >= 15 && mins <= 45 && mins % 15 === 0, JSON.stringify({ moved, deltas }))
-  check('x …one toast "3 blocks moved" with Undo', await toastSoon(page, '3 blocks moved'))
+  check('x …one toast "3 blocks moved" with Undo', landedToast)
   await sleep(700)
   check('x …no ghost left behind', (await page.locator('.kf-ghost-host').count()) === 0)
   await shot(page, 'x-landed')

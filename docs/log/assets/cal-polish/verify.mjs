@@ -364,7 +364,8 @@ if (want('d9')) {
       await slotPoint(page, '16:00')
       await fcBlock(page, LONGB).click()
       await sleep(400)
-      check('d9 a plain click starts over: the selection clears, the popover opens', (await pickedIds(page)).length === 0 && (await page.locator('[role="menu"]').count()) === 1)
+      // cal-clicks: LONGB is a task's block — a click opens its task (the task popover)
+      check('d9 a plain click starts over: the selection clears, the popover opens', (await pickedIds(page)).length === 0 && (await page.locator('[role="dialog"][aria-label^="Task:"]').count()) === 1)
     }
     check(`d9-${theme} no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
@@ -428,40 +429,44 @@ if (want('d5')) {
   }
 }
 
-// D6 — the block popover's length row: a task block → 15m (its estimate follows, Undo); an event → 45m.
+// D6 — the block popover's length row: an event → 45m (Undo); a task block's length is its task's estimate — cal-clicks:
+// a click on a task block opens its task, whose Duration → 15m resizes the block from its start.
 if (want('d6')) {
   for (const theme of ['day', 'night']) {
     const { ctx, page, errors, state } = await open('/calendar', { theme })
-    await slotPoint(page, '16:00')
-    await fcBlock(page, LONGB).click()
+    await slotPoint(page, '12:00')
+    await fcBlock(page, STANDUP).click()
     await sleep(500)
     const labels = await chipLabels(lengthRow(page))
-    check(`d6-${theme} the block popover shows the length row, 30m picked`, labels === ROW && (await lenChip(page, '30m').getAttribute('aria-pressed')) === 'true', labels)
+    check(`d6-${theme} the block popover shows the length row, 1h picked`, labels === ROW && (await lenChip(page, '1h').getAttribute('aria-pressed')) === 'true', labels)
     await shot(page, `d6-blockmenu-${theme}`)
     if (theme === 'day') {
-      const w0 = state.writes.length
-      await lenChip(page, '15m').click()
-      await settle(state)
-      const b = posts(state, 'calendar_events', w0).find((e) => e.id === eid(LONGB))
-      const t = posts(state, 'tasks', w0).filter((x) => x.id === id(LONG)).at(-1)
-      check('d6 15m → the block 16:00–16:15 and the task\'s estimate 15', b && b.starts_at === iso('16:00') && mins(b) === 15 && t?.duration_min === 15, JSON.stringify([b && [b.starts_at, mins(b)], t?.duration_min]))
-      check('d6 …"Resized to 16:00–16:15" with Undo; the popover stays, 15m picked', (await toastSoon(page, 'Resized to 16:00–16:15')) && (await lenChip(page, '15m').getAttribute('aria-pressed')) === 'true')
-      const w1 = state.writes.length
-      await undo(page, 'Resized to 16:00–16:15')
-      await settle(state)
-      const b1 = posts(state, 'calendar_events', w1).find((e) => e.id === eid(LONGB))
-      const t1 = posts(state, 'tasks', w1).filter((x) => x.id === id(LONG)).at(-1)
-      check('d6 Undo → 16:00–16:30 and 30 again', b1 && mins(b1) === 30 && t1?.duration_min === 30, JSON.stringify([b1 && mins(b1), t1?.duration_min]))
-      await page.keyboard.press('Escape')
-      await sleep(300)
-      await slotPoint(page, '12:00')
-      await fcBlock(page, STANDUP).click()
-      await sleep(500)
       const w2 = state.writes.length
       await lenChip(page, '45m').click()
       await settle(state)
       const s = posts(state, 'calendar_events', w2).find((e) => e.id === eid(STANDUP))
       check('d6 an event: Standup 45m → 12:00–12:45', s && s.starts_at === iso('12:00') && mins(s) === 45, JSON.stringify(s && [s.starts_at, mins(s)]))
+      check('d6 …"Resized to 12:00–12:45" with Undo; the popover stays, 45m picked', (await toastSoon(page, 'Resized to 12:00–12:45')) && (await lenChip(page, '45m').getAttribute('aria-pressed')) === 'true')
+      const w1 = state.writes.length
+      await undo(page, 'Resized to 12:00–12:45')
+      await settle(state)
+      const b1 = posts(state, 'calendar_events', w1).find((e) => e.id === eid(STANDUP))
+      check('d6 Undo → 12:00–13:00 again', b1 && mins(b1) === 60, JSON.stringify(b1 && mins(b1)))
+      await page.keyboard.press('Escape')
+      await sleep(300)
+      // a task block: its task (the popover); Duration → 15m — the block keeps its start and takes the length
+      await slotPoint(page, '16:00')
+      await fcBlock(page, LONGB).click()
+      await sleep(700)
+      const pop = page.locator('[role="dialog"][aria-label^="Task:"]')
+      const w0 = state.writes.length
+      await pop.locator('.ts-chips button', { hasText: /^\s*30m\s*$/ }).click()
+      await sleep(400)
+      await page.locator('[role="menuitem"]', { hasText: /^\s*15m\s*$/ }).first().click()
+      await settle(state)
+      const b = posts(state, 'calendar_events', w0).find((e) => e.id === eid(LONGB))
+      const t = posts(state, 'tasks', w0).filter((x) => x.id === id(LONG)).at(-1)
+      check('d6 a task block: its task\'s Duration 15m → the block 16:00–16:15 and the estimate 15', b && b.starts_at === iso('16:00') && mins(b) === 15 && t?.duration_min === 15, JSON.stringify([b && [b.starts_at, mins(b)], t?.duration_min]))
     }
     check(`d6-${theme} no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
@@ -744,14 +749,16 @@ if (want('b1')) {
     // cal-looks: a week column's block reads its range ("12:00–1:00 PM · 1h", as drawn), no longer the start alone
     check('b1 calendar (12h): the gutter and block times read 12 PM / 12:00–1:00 PM', /12 PM/.test(await page.locator('.fc-timegrid-slot-label').allInnerTexts().then((x) => x.join(' '))) && /12:00(–1:00)? PM/.test(await fcBlock(page, STANDUP).innerText()), (await fcBlock(page, STANDUP).innerText()).replace(/\s+/g, ' '))
     check('b1 calendar (12h): no 24-hour time anywhere on the page', (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
-    await slotPoint(page, '16:00')
-    await fcBlock(page, LONGB).click()
+    // cal-clicks: an event's click opens its details (a task block's opens its task) — Standup's popover
+    await fcBlock(page, STANDUP).click()
     await sleep(500)
     const menu = await page.locator('[role="menu"]').last().innerText()
-    check('b1 the block popover: "4:00 – 4:30 PM" (its own spaced range)', /4:00 – 4:30 PM/.test(menu), menu.replace(/\n/g, ' | '))
+    check('b1 the block popover: "12:00 – 1:00 PM" (its own spaced range)', /12:00 – 1:00 PM/.test(menu), menu.replace(/\n/g, ' | '))
     check('b1 …and no 24-hour time in it', (await leaks(page)).length === 0, JSON.stringify(await leaks(page)))
     await lenChip(page, '15m').click()
-    check('b1 the resize toast: "Resized to 4:00–4:15 PM"', await toastSoon(page, 'Resized to 4:00–4:15 PM'))
+    check('b1 the resize toast: "Resized to 12:00–12:15 PM"', await toastSoon(page, 'Resized to 12:00–12:15 PM'))
+    await undo(page, 'Resized to 12:00–12:15 PM') // Standup back to its hour (a 15-minute block hides its time row)
+    await settle(state)
     await page.keyboard.press('Escape')
     await sleep(300)
     await page.locator('.cal-head button[aria-haspopup="dialog"]').click()
@@ -779,7 +786,8 @@ if (want('b1')) {
     await ctx.close()
   }
   {
-    const { ctx, page, errors } = await open('/settings', { clock12: true })
+    // settings-build: the clock lives on Settings ▸ Calendar & time's own page
+    const { ctx, page, errors } = await open('/settings/calendar', { clock12: true })
     const row = page.getByRole('group', { name: 'Time format' })
     check('b1 Settings ▸ Appearance has "Time format" 12-hour (picked) · 24-hour', (await row.getByRole('button', { name: '12-hour' }).getAttribute('aria-pressed')) === 'true')
     await row.getByRole('button', { name: '24-hour' }).click()
