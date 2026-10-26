@@ -23,7 +23,7 @@ import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
 import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
-import { isNativeShell, openExternal } from '../../lib/platform'
+import { isCapacitorShell, isNativeShell, openExternal } from '../../lib/platform'
 import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
@@ -38,6 +38,7 @@ import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { Popover } from '../../components/DatePicker'
 import { KindGlyph } from '../notifications/KindGlyph'
 import { KIND_IDS, KIND_LOOK } from '../notifications/kinds'
+import { NOTIFY_PACKS, NOTIFY_PACK_LOOK, NOTIFY_SOUNDS, NOTIFY_SOUND_LABEL, parseNotifyPack, previewNotifySound, type NotifyPack } from '../notifications/sounds'
 import { QUIET_FROM, QUIET_TO } from '../../../../supabase/functions/notify/copy.ts'
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { widgetsAvailable } from '../widgets/native'
@@ -911,6 +912,7 @@ function NotificationsCard() {
 
     {/* Sound sits with the notices it rides on (the grouping, 2026-10-25). */}
     <SoundCatalogCard />
+    <NotificationSoundsCard />
 
     {/* Only where it applies, as before: the Windows app's rows live in App & updates. */}
     {tauri ? null : device?.channel === 'android' ? (
@@ -1803,6 +1805,36 @@ export function SoundCatalogCard() {
           }}
         />
       </Row>
+    </SCard>
+  )
+}
+
+// Notification sound packs (Kai 2026-10-26: "include all of them and keep them separated, each in its
+// pack"). Chosen apart from the app's own sounds above: these are files, synced on the settings row
+// (0088) so every device rings the same; ▶ plays each kind in the shown pack. The switches stay in Kinds.
+function NotificationSoundsCard() {
+  const { data: s } = useAppSettings()
+  const [shown, setShown] = useState<NotifyPack | null>(null) // a pack being auditioned before the server has the column
+  const ready = settingSynced('notification_sound_pack')
+  const pack = shown ?? parseNotifyPack(s?.notification_sound_pack)
+  const where = isCapacitorShell()
+    ? 'On this phone each sound is its own channel — Android’s settings can change one'
+    : isTauri()
+      ? 'Played by the app with each notification'
+      : 'Played when the app is open; otherwise your browser’s own sound'
+  function choose(p: NotifyPack) {
+    if (ready) updateAppSetting('notification_sound_pack', p)
+    else setShown(p)
+    previewNotifySound(p, 'task_reminder')
+  }
+  return (
+    <SCard id="settings-NotificationSounds" title="Notification sounds">
+      <Row label="Pack" help={`${NOTIFY_PACK_LOOK[pack].blurb} · ${ready ? where : 'Choosing arrives with the next server update'}`} keys="notification sound pack felt glass mixed">
+        <Segmented<NotifyPack> label="Notification sound pack" value={pack} onChange={choose} options={NOTIFY_PACKS.map((p) => ({ value: p, label: NOTIFY_PACK_LOOK[p].label }))} />
+      </Row>
+      {NOTIFY_SOUNDS.map((id) => (
+        <Row key={id} attrs={{ 'data-notify-sound': id }} keys="notification sound" lead={<PlayButton label={`Hear ${NOTIFY_SOUND_LABEL[id]} (${NOTIFY_PACK_LOOK[pack].label})`} onClick={() => previewNotifySound(pack, id)} />} label={NOTIFY_SOUND_LABEL[id]} />
+      ))}
     </SCard>
   )
 }
