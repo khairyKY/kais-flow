@@ -38,6 +38,21 @@
   font-weight: 400;
   color: var(--ink-faint);
 }
+/* "This device": what stays on this device while the rest follows the person (settings-sync). */
+.st-device {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 0 7px;
+  border: 1px solid var(--line-card);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-ui);
+  font-size: var(--fs-caption);
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  vertical-align: 1px;
+}
 .st-sub {
   flex-basis: 100%;
   margin: 0;

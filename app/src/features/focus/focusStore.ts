@@ -3,6 +3,7 @@ import { create } from 'zustand'
 import { logTimeEntry } from '../projects/api'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
+import { onPrefApplied, prefWritten } from '../../lib/prefs'
 import { clockOptions } from '../../lib/clock'
 import { playSound } from '../../lib/sounds'
 
@@ -97,6 +98,14 @@ function loadSession(): { session: Partial<Session>; savedAt: number | null } {
 }
 const restored = loadSession()
 
+/** New settings, here or from another device: an idle pomodoro adopts a new round length at once; a
+ * running one isn't yanked. */
+function adopt(next: FocusSettings) {
+  const { isRunning, mode } = useFocusStore.getState()
+  useFocusStore.setState({ settings: next, ...(!isRunning && mode === 'pomodoro' ? { secondsLeft: next.focusRoundMin * 60 } : {}) })
+}
+onPrefApplied(SETTINGS_KEY, () => adopt(loadSettings()))
+
 export const useFocusStore = create<FocusState>((set, get) => ({
   settings: loadSettings(),
   mode: 'pomodoro',
@@ -116,15 +125,11 @@ export const useFocusStore = create<FocusState>((set, get) => ({
   saveSettings: (next) => {
     try {
       localStorage.setItem(SETTINGS_KEY, JSON.stringify(next))
+      prefWritten(SETTINGS_KEY) // they follow the person (lib/prefs)
     } catch {
       /* private mode */
     }
-    const { isRunning, mode } = get()
-    set({
-      settings: next,
-      // An idle pomodoro adopts a new round length immediately; a running one isn't yanked.
-      ...(!isRunning && mode === 'pomodoro' ? { secondsLeft: next.focusRoundMin * 60 } : {}),
-    })
+    adopt(next)
   },
 
   setMode: (mode) => {

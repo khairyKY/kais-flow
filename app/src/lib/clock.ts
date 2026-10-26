@@ -1,9 +1,10 @@
 import { create } from 'zustand'
+import { onPrefApplied, prefWritten } from './prefs'
 
 // Kai 2026-10-22: "some stuff shows up in 24 hour format although I have chosen the 12h format". One
 // clock for every time the app shows a person — the calendar's View options ▸ 24-hour time, and the same
-// switch in Settings. Per device, like the theme and the interface size (it lived in the calendar's view
-// options, so it stays in their storage). Machine strings — "HH:mm" keys, inputs, ISO values — never
+// switch in Settings. It lives in the calendar's view options' storage, which follows the person across
+// devices (lib/prefs). Machine strings — "HH:mm" keys, inputs, ISO values — never
 // pass through here.
 
 const KEY = 'kf.calViewOptions'
@@ -29,10 +30,12 @@ export function setHour24(on: boolean): void {
   try {
     const opts = (JSON.parse(localStorage.getItem(KEY) ?? '{}') as Record<string, unknown> | null) ?? {}
     localStorage.setItem(KEY, JSON.stringify({ ...opts, hour24: on }))
+    prefWritten(KEY)
   } catch {
     /* this session only */
   }
 }
+onPrefApplied(KEY, () => useClockStore.setState({ hour24: stored() }))
 
 /** A wall-clock "HH:mm" (00:00–24:00) as the person reads times: "1:05 PM", or "13:05" on the 24-hour
  * clock. Anything else comes back as it was. */

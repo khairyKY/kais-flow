@@ -29,6 +29,7 @@ import { Segmented } from '../rituals/RitualChrome'
 import { addMonths, allDayOn, dayBlocks, eventSpan, monthTitle, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneMonth } from './PhoneMonth'
 import { readViewOptions } from './ViewOptionsPopover'
+import { usePrefsVersion } from '../../lib/prefs'
 import { SMART_LISTS } from './railDrop'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { useAreas } from '../areas/api'
@@ -74,6 +75,7 @@ const VIEWS: { v: PhoneView; label: string }[] = [
 ]
 
 export function PhoneCalendar() {
+  usePrefsVersion() // the view options are read as it draws: redraw when another device changes them
   // Repeating events (migration 0061): `events` = the year around today (the strip's planning, the
   // Schedule sheet's free slots); `gridEvents` = what the week strip and the grid show (below).
   const { data: events = [], isPending: eventsPending } = useCalendarEvents()

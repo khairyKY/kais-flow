@@ -53,7 +53,8 @@ import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
-import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
+import { VIEW_OPTIONS_KEY, ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
+import { onPrefApplied } from '../../lib/prefs'
 import { fitDays, fitHours, gridMinWidth, MIN_COL_W, RAIL_SPLIT_W, RAIL_TAB_W, railYields, RESPONSIVE_COL_W, TIME_AXIS_W, visibleDayCount, ZONE2_W } from './weekFit'
 import { NowCard } from './NowCard'
 import { useDayRollover } from './useDayRollover'
@@ -503,6 +504,7 @@ function DesktopCalendar() {
   const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
   const [viewOpts, setViewOpts] = useState<CalViewOptions>(readViewOptions)
+  useEffect(() => onPrefApplied(VIEW_OPTIONS_KEY, () => setViewOpts(readViewOptions())), []) // changed on another device
   const [viewOptsOpen, setViewOptsOpen] = useState(false)
   // Anchor survives the close so the 140ms exit plays in place (useOverlayExit keeps it mounted).
   const [viewOptsAnchor, setViewOptsAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 0 })

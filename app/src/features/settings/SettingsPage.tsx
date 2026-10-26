@@ -16,9 +16,10 @@ import { DownloadLinks } from '../download/DownloadBar'
 import { UpdateButton, UpdateNotes } from '../whats-new/WhatsNew'
 import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
-import { useTheme } from '../../lib/theme'
+import { useTheme, THEME_MODE_KEY, readThemeMode, themeOfMode, GRAIN_KEY, readGrainPct, applyGrainPct, type ThemeMode } from '../../lib/theme'
+import { prefWritten, usePrefsVersion } from '../../lib/prefs'
 import { clockText, setHour24, useHour24 } from '../../lib/clock'
-import { useUiScale, UI_SCALES, defaultUiScale, readUiScaleEnv, uiZoom, type UiScale } from '../../lib/uiScale'
+import { useUiScale, UI_SCALES, TOUCH_UI_SCALE, defaultUiScale, readUiScaleEnv, uiZoom, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
@@ -83,7 +84,12 @@ const ScopeCtx = createContext<Scope>({ q: '', cat: null, open: () => {} })
 /** One section: a title (+ a note, + something on its right, + one short line) over a rounded panel of
  * rows. In search results the title becomes the crumb "Category › Section" and the panel keeps only the
  * rows that match (settings.css hides the rest, and a section left with none). */
-function SCard({ id, title, note, sub, aside, danger, padded, children }: { id?: string; title?: string; note?: string; sub?: ReactNode; aside?: ReactNode; danger?: boolean; padded?: boolean; children: ReactNode }) {
+/** Marks what stays on this device while everything else follows the person (settings-sync 2026-10-26):
+ * the push subscription, Android's alarm and battery rows, the Windows tray and start-up, the widgets,
+ * the updater. */
+const DeviceTag = () => <span className="st-device" title="Kept on this device — your other devices have their own">This device</span>
+
+function SCard({ id, title, note, sub, aside, danger, padded, device, children }: { id?: string; title?: string; note?: string; sub?: ReactNode; aside?: ReactNode; danger?: boolean; padded?: boolean; device?: boolean; children: ReactNode }) {
   const { q, cat } = useContext(ScopeCtx)
   return (
     <section id={id} className={`st-sec${danger ? ' is-danger' : ''}`}>
@@ -99,6 +105,7 @@ function SCard({ id, title, note, sub, aside, danger, padded, children }: { id?:
             {title != null && (
               <h3 className="st-title">
                 {title}
+                {device && <DeviceTag />}
                 {note && <small>{note}</small>}
               </h3>
             )}
@@ -123,7 +130,7 @@ function marked(text: string, q: string): ReactNode {
  * when they don't fit side by side); `under` = a full-width block. `find` names a row whose label isn't
  * plain text, `keys` are the other words search should find it by ("dark" → Theme). `to` makes the whole
  * row a link with a ›. Under a search, a row that doesn't match isn't drawn, and one that does gets a ›. */
-function Row({ label, help, lead, under, style, attrs, find, keys, to, children }: { label: ReactNode; help?: ReactNode; lead?: ReactNode; under?: ReactNode; style?: CSSProperties; attrs?: Record<string, string>; find?: string; keys?: string; to?: string; children?: ReactNode }) {
+function Row({ label, help, lead, under, style, attrs, find, keys, to, device, children }: { label: ReactNode; help?: ReactNode; lead?: ReactNode; under?: ReactNode; style?: CSSProperties; attrs?: Record<string, string>; find?: string; keys?: string; to?: string; device?: boolean; children?: ReactNode }) {
   const { q, cat, open } = useContext(ScopeCtx)
   const key = find ?? (typeof label === 'string' ? label : '')
   if (q && !matches(q, key, typeof help === 'string' ? help : '', keys)) return null
@@ -136,7 +143,10 @@ function Row({ label, help, lead, under, style, attrs, find, keys, to, children 
     <>
       {lead && <span className="st-lead">{lead}</span>}
       <div className="st-row-text">
-        <div className="st-label">{q && typeof label === 'string' ? marked(label, q) : label}</div>
+        <div className="st-label">
+          {q && typeof label === 'string' ? marked(label, q) : label}
+          {device && <DeviceTag />}
+        </div>
         {help != null && <div className="st-help">{help}</div>}
       </div>
       {(children != null || go || to) && (
@@ -200,26 +210,7 @@ function readEffectsOn(): boolean {
   }
 }
 
-// ── Paper texture (punch 53). Per-device visual pref like theme/uiScale → localStorage.
-// Writes --kf-grain-opacity on <html>; the pages' grain (.kf-page::after, features/projects/xfx.css)
-// reads it — Bound Journal keeps paper on pages only. ──
-const GRAIN_KEY = 'kf_grain'
-
-function readGrainPct(): number {
-  try {
-    const raw = localStorage.getItem(GRAIN_KEY)
-    const n = Number(raw)
-    if (raw !== null && Number.isFinite(n)) return Math.min(100, Math.max(0, Math.round(n)))
-  } catch {
-    /* private mode */
-  }
-  return 50 // matches the grain's shipped opacity 0.5
-}
-
-function applyGrainPct(pct: number) {
-  document.documentElement.style.setProperty('--kf-grain-opacity', String(pct / 100))
-}
-
+// ── Paper texture (punch 53): lib/theme keeps the value and puts it on <html>; it follows the person. ──
 function useGrain() {
   const [pct, setPct] = useState(readGrainPct)
   useEffect(() => {
@@ -229,6 +220,7 @@ function useGrain() {
     setPct(next)
     try {
       localStorage.setItem(GRAIN_KEY, String(next))
+      prefWritten(GRAIN_KEY)
     } catch {
       /* session-only is fine */
     }
@@ -249,13 +241,10 @@ function Slider({ value, min = 0, max = 100, onChange, width, ariaLabel }: { val
   )
 }
 
-const THEME_MODE_KEY = 'kf_theme_mode'
-type ThemeMode = 'light' | 'dark' | 'auto'
-
 function useThemeMode() {
   const theme = useTheme((s) => s.theme)
   const setTheme = useTheme((s) => s.setTheme)
-  const [mode, setMode] = useState<ThemeMode>(() => (localStorage.getItem(THEME_MODE_KEY) as ThemeMode | null) ?? 'light')
+  const [mode, setMode] = useState<ThemeMode>(readThemeMode)
 
   useEffect(() => {
     if (mode !== 'auto') return
@@ -268,10 +257,14 @@ function useThemeMode() {
   }, [mode])
 
   function setMode_(next: ThemeMode) {
-    localStorage.setItem(THEME_MODE_KEY, next)
+    try {
+      localStorage.setItem(THEME_MODE_KEY, next)
+      prefWritten(THEME_MODE_KEY) // every device wears it (Auto: each its own system's)
+    } catch {
+      /* this session only */
+    }
     setMode(next)
-    if (next === 'light') setTheme('day')
-    else if (next === 'dark') setTheme('night')
+    setTheme(themeOfMode(next))
   }
 
   return { mode, setMode: setMode_, theme }
@@ -304,8 +297,9 @@ function AppearanceCard() {
         <Segmented<ThemeMode> label="Theme" value={mode} onChange={setMode} options={[{ value: 'light', label: 'Light' }, { value: 'dark', label: 'Dark' }, { value: 'auto', label: 'Auto' }]} />
       </Row>
       {/* R4 (Kai 2026-07-20): labelled in the percentages he used. Polish F2b: the default is per
-          device (125% on a computer, 100% on a phone), so the help names this device's own normal. */}
-      <Row label="Interface size" help={`Scales the whole app · ${Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is this device’s normal`} keys="zoom scale bigger smaller text font">
+          device (125% on a computer, 100% on a phone), so the help names this device's own normal. Synced per
+          kind of device (settings-sync, 2026-10-26): a phone follows your phones, a computer your computers. */}
+      <Row label="Interface size" help={`Scales the whole app · same on all your ${defaultUiScale(readUiScaleEnv()) === TOUCH_UI_SCALE ? 'phones' : 'computers'} · ${Math.round(defaultUiScale(readUiScaleEnv()) * 100)}% is normal here`} keys="zoom scale bigger smaller text font">
         <Select
           value={String(scale)}
           onChange={(v) => setScale(Number(v) as UiScale)}
@@ -396,7 +390,7 @@ function CaptureAiCard() {
   )
 }
 
-// The calendar's View options (per device, ViewOptionsPopover's localStorage) — the same switches, here too.
+// The calendar's View options (ViewOptionsPopover's storage, following the person) — the same switches, here too.
 function useViewOptions(): [CalViewOptions, (patch: Partial<CalViewOptions>) => void] {
   const [v, setV] = useState(readViewOptions)
   const set = (patch: Partial<CalViewOptions>) => {
@@ -450,7 +444,7 @@ function CalendarCat() {
       <SCard id="settings-Timezone" title="Time">
         <TimezoneRow />
         {/* Kai 2026-10-22: one clock for every time the app shows — the calendar's View options switch, here
-            too (lib/clock; this device). */}
+            too (lib/clock; every device). */}
         <Row label="Time format" help={h24 ? 'Every time reads 13:30' : 'Every time reads 1:30 PM'} keys="12 24 hour clock">
           <Segmented<'12' | '24'> label="Time format" value={h24 ? '24' : '12'} onChange={(x) => setHour24(x === '24')} options={[{ value: '12', label: '12-hour' }, { value: '24', label: '24-hour' }]} />
         </Row>
@@ -647,6 +641,7 @@ function AppUpdateCard() {
   return (
     <SCard id="settings-App">
       <Row
+        device
         label="Kai’s Flow"
         help={`${current}${built ? ` · built ${built}` : ''}`}
         keys="version update check build"
@@ -914,7 +909,7 @@ function NotificationsCard() {
 
     {/* Only where it applies, as before: the Windows app's rows live in App & updates. */}
     {tauri ? null : device?.channel === 'android' ? (
-      <SCard title="This phone" note="Android app only">
+      <SCard title="This phone" note="Android app only" device>
         <Row label="Reminders on this phone" help="Reminders, the digest, the nudge and focus rounds are set on the phone itself, a week ahead, from what it last synced. Something set on another device reaches the phone the next time the app opens" keys="android notification" />
         {/* notif (2026-10-26): what can hold a reminder back on this phone, each with its Android screen. */}
         {device.exact === false && (
@@ -933,7 +928,7 @@ function NotificationsCard() {
         )}
       </SCard>
     ) : (
-      <SCard title="This browser" note="web only">
+      <SCard title="This browser" note="web only" device>
         {!supported ? (
           <Row label="Notifications in this browser" help="Not supported here. On iPhone, add the app to your home screen first (Share → Add to Home Screen)" keys="push notification" />
         ) : (
@@ -968,7 +963,7 @@ function DeviceSections() {
   return (
     <>
       {tauri && (
-        <SCard title="On this computer" note="Windows app only">
+        <SCard title="On this computer" note="Windows app only" device>
           <Row label="Show in the system tray" help="The K by the clock, with a quick flyout" keys="tray windows">
             <Toggle
               on={trayShown}
@@ -985,7 +980,7 @@ function DeviceSections() {
         </SCard>
       )}
       {widgets && (
-        <SCard title="On this phone" note="Android app only">
+        <SCard title="On this phone" note="Android app only" device>
           <Row label="Hide titles on the home screen" help="Widgets say “Your goal” · “Pick 2”" keys="widgets privacy android">
             <Toggle on={hideTitles} label="Hide titles on the home screen" onToggle={() => setHideTitles(!hideTitles)} />
           </Row>
@@ -996,8 +991,8 @@ function DeviceSections() {
 }
 
 // ── Resurfacing cooldowns (punch 21, Kai's spec: high ~2d / medium ~5d / low ~10d, tunable).
-// Today's resurfacing engine reads exactly these keys; the values are per-device prefs like
-// theme/scale, so localStorage is the right home until MIG-1 adds the server fields. ──
+// Today's resurfacing engine reads exactly these keys, from localStorage; they follow the person
+// across devices (lib/prefs). ──
 const COOLDOWN_KEYS = { high: 'kf.resurfaceCooldown.high', med: 'kf.resurfaceCooldown.med', low: 'kf.resurfaceCooldown.low' } as const
 const COOLDOWN_DEFAULTS = { high: 2, med: 5, low: 10 } as const
 
@@ -1017,6 +1012,7 @@ function ResurfacingCard() {
     setDays((prev) => ({ ...prev, [level]: value }))
     try {
       localStorage.setItem(COOLDOWN_KEYS[level], String(value))
+      prefWritten(COOLDOWN_KEYS[level])
     } catch {
       /* session-only is fine */
     }
@@ -1978,12 +1974,7 @@ function useCatValues(): Partial<Record<CatId, string>> {
   const scale = useUiScale((x) => x.scale)
   const { data: domains = [] } = useDomains()
   const { data: integrations = [] } = useIntegrations()
-  let mode: ThemeMode = 'light'
-  try {
-    mode = (localStorage.getItem(THEME_MODE_KEY) as ThemeMode | null) ?? 'light'
-  } catch {
-    /* private mode */
-  }
+  const mode = readThemeMode()
   return {
     appearance: `${THEME_WORD[mode] ?? 'Light'} · ${Math.round(scale * 100)}%`,
     calendar: zoneCity(appZone()),
@@ -2036,11 +2027,12 @@ interface ViewProps {
   q: string
   setQ: (q: string) => void
   searchRef: React.RefObject<HTMLInputElement | null>
+  prefsV: number
 }
 
 // Layout A: the categories (with their icons) down the left, search at the top of the list, one category
 // on the right. Kai 2026-10-03: the page has no scroller of its own — .app-main-content scrolls.
-function DesktopSettings({ cat, sub, q, setQ, searchRef }: ViewProps) {
+function DesktopSettings({ cat, sub, q, setQ, searchRef, prefsV }: ViewProps) {
   return (
     <div className="st-desk">
       <nav className="st-nav" aria-label="Settings categories">
@@ -2064,20 +2056,20 @@ function DesktopSettings({ cat, sub, q, setQ, searchRef }: ViewProps) {
         </div>
       </nav>
       <div className="st-main">
-        <div className="st-main-in">{q ? <Results q={q} /> : sub ? <ProviderPage id={sub} /> : <CategoryPage id={cat} />}</div>
+        <div className="st-main-in" key={prefsV}>{q ? <Results q={q} /> : sub ? <ProviderPage id={sub} /> : <CategoryPage id={cat} />}</div>
       </div>
     </div>
   )
 }
 
 // The phone: a list that drills into one page per category (‹ Settings to go back); search under the title.
-function MobileSettings({ cat, sub, q, setQ, searchRef, home }: ViewProps & { home: boolean }) {
+function MobileSettings({ cat, sub, q, setQ, searchRef, home, prefsV }: ViewProps & { home: boolean }) {
   if (sub) return <div className="st-phone"><ProviderPage id={sub} /></div>
   if (!home && !q) {
     return (
       <div className="st-phone">
         <BackLink to="/settings">Settings</BackLink>
-        <CategoryPage id={cat} />
+        <CategoryPage id={cat} key={prefsV} />
       </div>
     )
   }
@@ -2088,7 +2080,7 @@ function MobileSettings({ cat, sub, q, setQ, searchRef, home }: ViewProps & { ho
         <h1>Settings</h1>
       </div>
       <SearchField q={q} setQ={setQ} inputRef={searchRef} />
-      {q ? <Results q={q} /> : <PhoneHome />}
+      {q ? <Results q={q} key={prefsV} /> : <PhoneHome />}
       <div className="st-phone-foot">Everything saves as you touch it ✿</div>
     </div>
   )
@@ -2101,6 +2093,9 @@ export function SettingsPage() {
   const [search, setSearch] = useSearchParams()
   const uid = useAuth().session?.user.id
   const searchRef = useRef<HTMLInputElement>(null)
+  // A setting kept on the device changed on another one: the rows hold their own copies, so the open page
+  // redraws from scratch (everything else arrives through the settings row and re-renders by itself).
+  const prefsV = usePrefsVersion()
   // The search lives here, mirrored into ?q= (a deep link). The address follows the field, never the other
   // way while typing (a router update lands a keystroke late); any other move — a link, a result's ›,
   // Back — brings the field in line with the address.
@@ -2150,6 +2145,6 @@ export function SettingsPage() {
   const sub = cat === 'integrations' && isProvider(params.sub) ? params.sub : undefined
   if (params.sub && !sub) return <Navigate to={`/settings/${cat}`} replace />
 
-  const view = { cat: cat ?? DESKTOP_HOME, sub, q, setQ, searchRef }
+  const view = { cat: cat ?? DESKTOP_HOME, sub, q, setQ, searchRef, prefsV }
   return isMobile ? <MobileSettings {...view} home={!cat} /> : <DesktopSettings {...view} />
 }
