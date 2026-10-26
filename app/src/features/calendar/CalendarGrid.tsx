@@ -1163,7 +1163,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         landingRef.current?.stop()
         landingRef.current?.carried.forEach((c) => c.stop())
         const je = info.jsEvent as MouseEvent | null
-        stopGhostRef.current = startGhost(info.el, je, GHOST_ID, downAt.current).stop
+        const from = je instanceof MouseEvent ? downAt.current : null // a touch drag has no mouse press to measure from
+        stopGhostRef.current = startGhost(info.el, je, GHOST_ID, from).stop
         stopHoverRef.current = trackRailHover(L().props.railRef?.current)
         // Ctrl+drag (menu B): with the key down (from the press, or pressed meanwhile) the original stays drawn.
         const wrap = wrapRef.current
@@ -1188,7 +1189,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           if (pid === id) return []
           const el = wrapRef.current?.querySelector<HTMLElement>(`.fc-timegrid-event[data-kf-id="${CSS.escape(pid)}"]:not(.fc-event-mirror):not(.kf-synced)`)
           if (!el) return []
-          const g = startGhost(el, je, null, downAt.current)
+          const g = startGhost(el, je, null, from)
           el.setAttribute('data-carried', '')
           return [{ id: pid, host: g.host, stop: () => { el.removeAttribute('data-carried'); g.stop() } }]
         })

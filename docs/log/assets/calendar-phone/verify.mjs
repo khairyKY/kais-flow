@@ -220,9 +220,9 @@ for (const theme of ['day', 'night']) {
     const labels = await page.locator('.pc-hour > span').evaluateAll((els) => els.slice(11, 13).map((e) => e.getBoundingClientRect().top))
     check(`${name} hours are 64px`, labels[1] - labels[0] === 64, labels[1] - labels[0])
     check(`${name} four blocks today`, (await page.locator('.pc-pane .pc-block').count()) === 4)
-    check(`${name} Lunch reads "Now · 20m left", in blossom`, (await text(block(page, 2))).includes('Now · 20m left') && (await block(page, 2).evaluate((e) => e.style.getPropertyValue('--pc-fill'))) .includes('var(--acc-blossom) 24%'))
+    check(`${name} Lunch reads "Now · 20m left", in Rose (palette C, cal-blocks)`, (await text(block(page, 2))).includes('Now · 20m left') && (await block(page, 2).evaluate((e) => e.style.getPropertyValue('--pc-fill'))) .includes('var(--blk-rose) var(--blk-fill)'))
     check(`${name} the tyre block: 15:00–15:30, 32px, the project hue, an 18px checkbox`, (await text(block(page, 3))).includes('15:00–15:30') && (await block(page, 3).evaluate((e) => [e.getBoundingClientRect().height, getComputedStyle(e).getPropertyValue('--pc-fill').includes('#C9A961'), e.querySelector('.kf-checkbox').getBoundingClientRect().width].join())) === '32,true,18')
-    check(`${name} Gym (a time block) lavender, no checkbox`, (await block(page, 4).evaluate((e) => e.style.getPropertyValue('--pc-fill').includes('var(--acc-lavender) 24%') && !e.querySelector('.kf-checkbox'))))
+    check(`${name} Gym (a time block) Iris (palette C), no checkbox`, (await block(page, 4).evaluate((e) => e.style.getPropertyValue('--pc-fill').includes('var(--blk-iris) var(--blk-fill)') && !e.querySelector('.kf-checkbox'))))
     // cal-looks (Kai 2026-10-23, "blocks: Now" as drawn, as the desktop): a task block past its end today, not done, is
     // "Ran over" — a terra edge, never faded (a past event fades to .62, cal-looks c2).
     check(`${name} the past task block reads "Ran over", not faded`, (await text(block(page, 1))).includes('Ran over') && (await block(page, 1).evaluate((e) => e.classList.contains('is-ranover') && getComputedStyle(e).opacity === '1')), await text(block(page, 1)))

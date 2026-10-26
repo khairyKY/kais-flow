@@ -453,7 +453,8 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
               {!synced && <div className="pc-bs-colors">
                 <SwatchTray
                   value={event.color ?? null}
-                  size={28}
+                  size={26}
+                  columns={10}
                   onChange={(c) => {
                     if (c === (event.color ?? null)) return
                     updateEvent(event, { color: c })

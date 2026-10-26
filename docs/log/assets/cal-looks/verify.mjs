@@ -284,16 +284,18 @@ if (want('c1')) {
     await page.mouse.move(2, 400)
     const a = { now: await appLook(page, 4), ran: await appLook(page, 2), past: await appLook(page, 3), done: await appLook(page, 1), slot: await appLook(page, 30) }
     const t = `c1-${theme}`
-    let off = same(d.Crypto, a.now, [...BOX, ...TYPE, ...CHECK, ...HUE, 'ck.opacity', 'box.opacity'])
-    check(`${t} a task, in progress (lavender): edge, corners, insets, title, time row, check and hue as drawn`, off.length === 0, off.join(' | '))
-    off = same(d.tyre, a.ran, [...BOX, ...TYPE, ...HUE, 'box.opacity'])
-    check(`${t} "Ran over" (a buttercream task): the terra edge, the time in terra ink, its own tint kept`, off.length === 0, off.join(' | '))
-    off = same(d.Dentist, a.past, [...BOX, ...TYPE, ...HUE, 'box.opacity'])
-    check(`${t} a past event (blossom): its blossom tint and edge, the blossom ink, faded to .62`, off.length === 0, off.join(' | '))
-    off = same(d['Send the tax'], a.done, [...BOX, 'tt.fontSize', 'tt.color', 'tt.textDecorationLine', 'tm', 'ck.backgroundColor', 'ck.opacity', 'fill', 'box.borderTopColor', 'box.opacity'])
-    check(`${t} done and past, 30 minutes: one line (no time row), the check filled, the title struck, its hue kept`, off.length === 0, off.join(' | '))
-    off = same(d.Errands, a.slot, [...BOX, 'tt.fontSize', 'tm.fontSize', 'fillLine.fontSize', 'fillLine.paddingTop', 'fillLine.borderTopWidth', 'rowT.fontSize', 'row.borderTopLeftRadius', 'row.paddingLeft', 'row.borderTopWidth', 'rowCk.width', 'rowCk.height'])
-    check(`${t} a Time slot holding tasks: the fill line under a hairline, 13px rows with 12px checks`, off.length === 0, off.join(' | '))
+    // cal-blocks (Kai 2026-10-26): the hues are palette C's and the check is check B since — cal-blocks/verify.mjs checks
+    // those (palette, contrast, check geometry); here the drawing still holds the geometry and the type.
+    let off = same(d.Crypto, a.now, [...BOX, ...TYPE, 'ck.opacity', 'box.opacity'])
+    check(`${t} a task, in progress: edge, corners, insets, title and time row as drawn (hue: palette C, check: check B)`, off.length === 0, off.join(' | '))
+    off = same(d.tyre, a.ran, [...BOX, ...TYPE, 'box.borderTopColor', 'box.opacity'])
+    check(`${t} "Ran over": the terra edge as drawn (its time ink: palette C's own terra)`, off.length === 0, off.join(' | '))
+    off = same(d.Dentist, a.past, [...BOX, ...TYPE, 'box.opacity'])
+    check(`${t} a past event: faded to .62 as drawn (its hue: palette C's Rose)`, off.length === 0, off.join(' | '))
+    off = same(d['Send the tax'], a.done, [...BOX, 'tt.fontSize', 'tt.color', 'tt.textDecorationLine', 'tm', 'ck.backgroundColor', 'ck.opacity', 'box.opacity'])
+    check(`${t} done and past, 30 minutes: one line (no time row), the check filled, the title struck`, off.length === 0, off.join(' | '))
+    off = same(d.Errands, a.slot, [...BOX, 'tt.fontSize', 'tm.fontSize', 'fillLine.fontSize', 'fillLine.paddingTop', 'fillLine.borderTopWidth', 'rowT.fontSize', 'row.borderTopLeftRadius', 'row.paddingLeft', 'row.borderTopWidth'])
+    check(`${t} a Time slot holding tasks: the fill line under a hairline, 13px rows (their checks: check B's 13px)`, off.length === 0, off.join(' | '))
     const slotTime = await fcBlock(page, 30).locator('.fc-event-time').first().innerText()
     check(`${t} …the slot's time row is its start ("1:30 PM", as drawn)`, slotTime.trim() === '1:30 PM', slotTime)
     // hover: the check shows, the actions ▶ ⋯ sit at the end of the title's line
@@ -301,13 +303,13 @@ if (want('c1')) {
     await page.mouse.move(db.x + db.width * 0.5, db.y + db.height * 0.6)
     await sleep(450)
     const hov = await appLook(page, 22)
-    off = same(d['Deep work'], hov, [...BOX, ...TYPE, ...CHECK, ...HUE, 'ck.opacity'])
-    const acts = await fcBlock(page, 22).locator('.kf-ev-act').evaluateAll((els) => els.map((e) => [e.textContent.trim(), getComputedStyle(e).width, getComputedStyle(e).color]))
+    off = same(d['Deep work'], hov, [...BOX, ...TYPE, 'ck.opacity'])
+    const acts = await fcBlock(page, 22).locator('.kf-ev-act').evaluateAll((els) => els.map((e) => [e.textContent.trim(), getComputedStyle(e).width]))
     const drawnActs = await opt.page.evaluate((fr) => {
       const b = [...eval(fr).querySelectorAll('.blk')].find((e) => e.textContent.includes('Deep work'))
-      return [...b.querySelectorAll('.acts i')].map((e) => [e.textContent.trim(), getComputedStyle(e).width, getComputedStyle(e).color])
+      return [...b.querySelectorAll('.acts i')].map((e) => [e.textContent.trim(), getComputedStyle(e).width])
     }, nFrame(theme))
-    check(`${t} hover on a task (buttercream, 1h): the check shows; ▶ and ⋯ as drawn`, off.length === 0 && JSON.stringify(acts) === JSON.stringify(drawnActs), [off.join(' | '), JSON.stringify(acts), JSON.stringify(drawnActs)].join(' / '))
+    check(`${t} hover on a task (1h): the check shows; ▶ and ⋯ as drawn`, off.length === 0 && JSON.stringify(acts) === JSON.stringify(drawnActs), [off.join(' | '), JSON.stringify(acts), JSON.stringify(drawnActs)].join(' / '))
     check(`${t} no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
