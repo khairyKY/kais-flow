@@ -779,9 +779,10 @@ if (want('b1')) {
     await ctx.close()
   }
   {
-    const { ctx, page, errors } = await open('/settings', { clock12: true })
+    // settings-build (layout A): Time format lives on Settings ▸ Calendar, one category a page
+    const { ctx, page, errors } = await open('/settings/calendar', { clock12: true })
     const row = page.getByRole('group', { name: 'Time format' })
-    check('b1 Settings ▸ Appearance has "Time format" 12-hour (picked) · 24-hour', (await row.getByRole('button', { name: '12-hour' }).getAttribute('aria-pressed')) === 'true')
+    check('b1 Settings ▸ Calendar has "Time format" 12-hour (picked) · 24-hour', (await row.getByRole('button', { name: '12-hour' }).getAttribute('aria-pressed')) === 'true')
     await row.getByRole('button', { name: '24-hour' }).click()
     await sleep(300)
     await page.goto(`${BASE}/calendar`, { waitUntil: 'networkidle' })

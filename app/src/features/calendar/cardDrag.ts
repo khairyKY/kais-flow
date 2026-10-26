@@ -1,5 +1,6 @@
 import { Draggable } from '@fullcalendar/interaction'
 import { uiZoom } from '../../lib/uiScale'
+import { LONG_PRESS_MS } from '../tasks/swipe'
 import { cardDragData } from './planningMode'
 
 // Where the pointer holds the lifted copy, at most (CSS px at 100%): a short grab in from its left edge,
@@ -45,10 +46,14 @@ export function liftCards(drag: Draggable): void {
   })
 }
 
+/** On touch a card lifts after the grid's own long press (drag-fix 2026-10-26): FullCalendar's Draggable
+ * defaults to 1s, and a finger already travelling when that ends drops a quarter above where it lets go. */
+export const CARD_DRAG = { eventData: cardDragData, longPressDelay: LONG_PRESS_MS }
+
 /** One Draggable on a container of `.unscheduled-task` cards (the rail, the day tray, planning mode):
  * it delegates, so cards that come and go need no re-binding. */
 export function cardDraggable(el: HTMLElement): Draggable {
-  const drag = new Draggable(el, { itemSelector: '.unscheduled-task', eventData: cardDragData })
+  const drag = new Draggable(el, { itemSelector: '.unscheduled-task', ...CARD_DRAG })
   liftCards(drag)
   return drag
 }

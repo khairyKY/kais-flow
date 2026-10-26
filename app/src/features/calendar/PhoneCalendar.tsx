@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActionSheet } from '../../components/ActionSheet'
 import { Icon } from '../../components/Icon'
 import { Button } from '../../components/kit'
@@ -7,7 +7,10 @@ import { EmptyState, OfflineChip } from '../../components/States'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { useOutboxMarks } from '../../lib/outbox'
 import { useOnline } from '../../lib/useOnline'
-import type { CalendarEvent } from '../../lib/types'
+import type { CalendarEvent, InboxItem, Task } from '../../lib/types'
+import { longPress } from '../../lib/haptics'
+import { LONG_PRESS_MS } from '../tasks/swipe'
+import { dropOnGrid } from './gridDrop'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
@@ -34,7 +37,7 @@ import { SMART_LISTS } from './railDrop'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { useAreas } from '../areas/api'
 import { placeName } from '../tasks/move'
-import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
+import { PhoneGrid, type BlockLook, type Carry, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
 import './phoneCalendar.css'
 import { useLinkedEvent } from './linkedEvent'
@@ -226,6 +229,64 @@ export function PhoneCalendar() {
     else if (drop.kind === 'block') scheduleTaskWithUndo(task, drop.starts_at, drop.ends_at)
   }
 
+  // drag-fix (Kai 2026-10-26: "drag a task to schedule isn't working" — on the phone, where the tray's chips
+  // only opened their sheet): a hold on a chip (the long press, 400ms) lifts it, the grid carries it under the
+  // finger (PhoneGrid.carry) and lets it go on the quarter there — the desktop's drop (./gridDrop: into a Time
+  // block, else a block of its length; a capture is filed). A tap still opens the sheet; a sideways move before
+  // the hold still scrolls the tray; let go off the grid, nothing happens.
+  const press = useRef<{ pointerId: number; x: number; y: number; timer: number } | null>(null)
+  const carried = useRef(false) // a carry's release is no tap
+  // Only a non-passive touchmove, there from the touch's start, keeps the tray from scrolling under a carry.
+  const unsRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return
+    const stop = (e: TouchEvent) => {
+      if (carried.current) e.preventDefault()
+    }
+    el.addEventListener('touchmove', stop, { passive: false })
+    return () => el.removeEventListener('touchmove', stop)
+  }, [])
+  const letGo = () => {
+    window.clearTimeout(press.current?.timer)
+    press.current = null
+  }
+  function holdable(what: { task?: Task; item?: InboxItem; minutes: number }) {
+    const { task, item, minutes } = what
+    return {
+      onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+        carried.current = false
+        if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return
+        letGo()
+        const el = e.currentTarget
+        const p = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, timer: 0 }
+        p.timer = window.setTimeout(() => {
+          press.current = null
+          longPress()
+          carried.current = true
+          const c: Carry = {
+            id: task?.id ?? item!.id, title: task?.title ?? inboxTitle(item!), minutes, el, pointerId: p.pointerId, x: p.x, y: p.y,
+            fill: `color-mix(in srgb, ${KIND_HUE.task.c} var(--blk-fill), transparent)`, ink: KIND_HUE.task.ink,
+            onDrop: (at) => {
+              if (!at) return
+              const t = task && (taskById.get(task.id) ?? task)
+              dropOnGrid({ task: t, item }, spanIso({ ...at, end: at.start }).starts_at, minutes, gridEvents)
+            },
+          }
+          gridRef.current?.carry(c)
+        }, LONG_PRESS_MS)
+        press.current = p
+      },
+      onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+        const p = press.current
+        if (!p || e.pointerId !== p.pointerId) return
+        if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 8) letGo() // moving is not holding (the tray scrolls)
+      },
+      onPointerUp: letGo,
+      onPointerCancel: letGo,
+      onContextMenu: (e: React.MouseEvent) => e.preventDefault(), // Android's long press also fires contextmenu
+    }
+  }
+  const rowHold = (r: { task: Task; block: CalendarEvent | null }) => holdable({ task: r.task, minutes: railMinutes(r) })
+
   /** A task opens as itself — the Task sheet over the calendar (Kai 2026-10-03, one tap less); a plain
    * event (or a block whose task isn't here) opens the event sheet (7d). The block stays in view above. */
   function tapBlock(e: CalendarEvent) {
@@ -303,7 +364,17 @@ export function PhoneCalendar() {
               onChange={setSegPick}
             />
           </div>
-          <div className="pc-uns" data-seg={seg}>
+          <div
+            ref={unsRef}
+            className="pc-uns"
+            data-seg={seg}
+            onClickCapture={(e) => {
+              if (!carried.current) return
+              carried.current = false
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+          >
             {tasksPending
               ? [0, 1].map((i) => <span key={i} className="pc-chip is-skel" />)
               : seg === 'lists'
@@ -313,7 +384,7 @@ export function PhoneCalendar() {
                       <Icon name="chevdown" size={16} />
                     </button>,
                     ...listTasks.map((t) => (
-                      <button key={t.id} type="button" className="pc-chip" aria-expanded={scheduling?.id === t.id} onClick={() => setSheet({ k: 'schedule', id: t.id })}>
+                      <button key={t.id} type="button" className="pc-chip" {...rowHold({ task: t, block: null })} aria-expanded={scheduling?.id === t.id} onClick={() => setSheet({ k: 'schedule', id: t.id })}>
                         <span className="pc-chip-t">{t.title}</span>
                         {t.duration_min != null && <span className="pc-chip-d">{formatDuration(t.duration_min)}</span>}
                       </button>
@@ -321,19 +392,19 @@ export function PhoneCalendar() {
                   ]
               : seg === 'scheduled'
                 ? scheduled.map((r) => (
-                    <button key={r.task.id} type="button" className="pc-chip" onClick={() => r.block && tapBlock(r.block)}>
+                    <button key={r.task.id} type="button" className="pc-chip" {...rowHold(r)} onClick={() => r.block && tapBlock(r.block)}>
                       <span className="pc-chip-t">{r.task.title}</span>
                       {r.block && <span className="pc-chip-d">{timeRange(new Date(r.block.starts_at), new Date(r.block.ends_at))}</span>}
                     </button>
                   ))
               : seg === 'inbox'
                 ? inbox.map((item) => (
-                    <button key={item.id} type="button" className="pc-chip" aria-expanded={filing?.id === item.id} onClick={() => setSheet({ k: 'file', id: item.id })}>
+                    <button key={item.id} type="button" className="pc-chip" {...holdable({ item, minutes: inboxMinutes(item) })} aria-expanded={filing?.id === item.id} onClick={() => setSheet({ k: 'file', id: item.id })}>
                       <span className="pc-chip-t">{inboxTitle(item)}</span>
                     </button>
                   ))
                 : !seg ? null : buckets[seg].map((r) => (
-                    <button key={r.task.id} type="button" className="pc-chip" aria-expanded={scheduling?.id === r.task.id} onClick={() => setSheet({ k: 'schedule', id: r.task.id })}>
+                    <button key={r.task.id} type="button" className="pc-chip" {...rowHold(r)} aria-expanded={scheduling?.id === r.task.id} onClick={() => setSheet({ k: 'schedule', id: r.task.id })}>
                       <span className="pc-chip-t">{r.task.title}</span>
                       {r.late > 0 ? <span className="pc-chip-d is-late">{r.late}d</span> : r.task.duration_min != null && <span className="pc-chip-d">{formatDuration(r.task.duration_min)}</span>}
                     </button>
