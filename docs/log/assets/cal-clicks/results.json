@@ -1,0 +1,482 @@
+[
+  {
+    "name": "c-event left-click opens the details: when · project · Repeat · Remind · Link a task… · More · Delete — no tray, no menu-B rows",
+    "ok": true,
+    "detail": "[\"Wed, Oct 21 ▸\",\"10:30 – 11:15 45m ▸\",\"No project ▸\",\"Does not repeat ▸\",\"No reminder ▸\",\"Link a task… ▸\",\"More ▸\",\"Delete ⌫\"]"
+  },
+  {
+    "name": "c-event right-click opens menu B: the tray (17 + Custom) · Details · Duplicate Ctrl D · Work with AI › · Copy link · Delete",
+    "ok": true,
+    "detail": "17 [\"Details\",\"Duplicate Ctrl D\",\"Work with AI ▸\",\"Copy link\",\"Delete ⌫\"]"
+  },
+  {
+    "name": "c-event the old quick menu is gone (no Edit / Edit Task rows anywhere)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-event menu B's Details opens the details in its place",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-task left-click opens its task: the task popover (title, notes, chips — the full details, editable)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-task right-click: menu B with the tray, Complete · Open task · Replan… (it ran out) · Duplicate · Work with AI · Copy link · Unschedule · Delete",
+    "ok": true,
+    "detail": "[\"Complete\",\"Open task\",\"Replan…\",\"Duplicate Ctrl D\",\"Work with AI ▸\",\"Copy link\",\"Unschedule ⌫\",\"Delete\"]"
+  },
+  {
+    "name": "c-repeat-task left-click opens its task popover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-slot left-click opens the Time block's details (when, Repeat, Link a task…, More, Delete)",
+    "ok": true,
+    "detail": "[\"Fri, Oct 23 ▸\",\"13:30 – 15:00 1h30 ▸\",\"No project ▸\",\"Does not repeat ▸\",\"No reminder ▸\",\"Link a task… ▸\",\"More ▸\",\"Delete ⌫\"]"
+  },
+  {
+    "name": "c-slot right-click: menu B — Details · Work with AI · Copy link · Delete (a slot never duplicates)",
+    "ok": true,
+    "detail": "[\"Details\",\"Work with AI ▸\",\"Copy link\",\"Delete ⌫\"]"
+  },
+  {
+    "name": "c-google left-click: its details, read-only (when · From Google)",
+    "ok": true,
+    "detail": "[\"Thu, Oct 22\",\"16:00 – 16:30 30m\",\"From Google · Prayer times\"]"
+  },
+  {
+    "name": "c-google right-click: menu B — Details · Work with AI · Copy link; no tray, nothing to delete",
+    "ok": true,
+    "detail": "[\"Details\",\"Work with AI ▸\",\"Copy link\"]"
+  },
+  {
+    "name": "c-repeat left-click: the occurrence's details (Repeats daily, Delete)",
+    "ok": true,
+    "detail": "[\"Thu, Oct 22 ▸\",\"08:00 – 08:30 30m ▸\",\"No project ▸\",\"Repeats daily ▸\",\"No reminder ▸\",\"More ▸\",\"Delete\"]"
+  },
+  {
+    "name": "c the hover ⋯ opens menu B",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-keys Enter on a focused block opens its details",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-keys Shift+F10 opens menu B, by the block",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-keys the menu key opens menu B",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c nothing was written by looking",
+    "ok": true,
+    "detail": "[\"app_settings\"]"
+  },
+  {
+    "name": "c no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-event a tap opens the details sheet: when · Repeat · Link a task… · More; no tray; a ⋯ in its head",
+    "ok": true,
+    "detail": "[\"Wed, Oct 21\",\"10:30 – 11:15 45m\",\"No project\",\"Does not repeat\",\"No reminder\",\"Link a task…\",\"More\"]"
+  },
+  {
+    "name": "p-event the ⋯ turns it into menu B: the tray · Details · Duplicate · Work with AI · Copy link",
+    "ok": true,
+    "detail": "[\"Details\",\"Duplicate\",\"Work with AI\",\"Copy link\"]"
+  },
+  {
+    "name": "p-event menu B's Details goes back to the details",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-event a long-press opens menu B's sheet",
+    "ok": true,
+    "detail": "[\"Details\",\"Duplicate\",\"Work with AI\",\"Copy link\"]"
+  },
+  {
+    "name": "p-event …closed, the block is still lifted (its handles resize it, as before)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-task a tap opens the task's sheet (its details)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-task a long-press: menu B — Complete · Open task · Duplicate · Work with AI · Copy link · Unschedule",
+    "ok": true,
+    "detail": "[\"Complete\",\"Open task\",\"Duplicate\",\"Work with AI\",\"Copy link\",\"Unschedule\"]"
+  },
+  {
+    "name": "p-repeat a tap on an occurrence opens its details (Repeats daily)",
+    "ok": true,
+    "detail": "[\"Wed, Oct 21\",\"08:00 – 08:30 30m\",\"No project\",\"Repeats daily\",\"No reminder\",\"More\"]"
+  },
+  {
+    "name": "p-repeat Delete asks as an action sheet: This event · This and following events · All events",
+    "ok": true,
+    "detail": "[\"This event\",\"This and following events\",\"All events\"]"
+  },
+  {
+    "name": "p-repeat …\"This and following events\": the series ends before Wed 21 (UNTIL), nothing new",
+    "ok": true,
+    "detail": "FREQ=DAILY;UNTIL=20261021T045959Z"
+  },
+  {
+    "name": "p no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s the question: \"Edit repeating event\" — This event · This and following events · All events · Cancel, by the block; the first has the focus",
+    "ok": true,
+    "detail": "{\"head\":\"Edit repeating event\",\"words\":[\"This event\",\"This and following events\",\"All events\",\"Cancel\"],\"focused\":\"This event\"}"
+  },
+  {
+    "name": "s-rename this: This event → the stored series as Google leaves it",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[\"2026-10-22T05:00:00.000Z\"],\"c\":null,\"del\":null},{\"id\":\"5436\",\"t\":\"Sync\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:30:00.000Z\",\"rule\":null,\"ex\":[],\"sid\":\"0040\",\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-colour this: This event",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[\"2026-10-22T05:00:00.000Z\"],\"c\":null,\"del\":null},{\"id\":\"e49c\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:30:00.000Z\",\"rule\":null,\"ex\":[],\"sid\":\"0040\",\"c\":\"#72BF8E\",\"del\":null}]"
+  },
+  {
+    "name": "s-project this: This event",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[\"2026-10-22T05:00:00.000Z\"],\"c\":null,\"del\":null},{\"id\":\"b6ea\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:30:00.000Z\",\"rule\":null,\"ex\":[],\"sid\":\"0040\",\"c\":null,\"p\":\"0001\",\"del\":null}]"
+  },
+  {
+    "name": "s-move this: dragged to 09:00, \"Move repeating event\" → This event",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[\"2026-10-22T05:00:00.000Z\"],\"c\":null,\"del\":null},{\"id\":\"7b23\",\"t\":\"Standup\",\"s\":\"2026-10-22T06:00:00.000Z\",\"e\":\"2026-10-22T06:30:00.000Z\",\"rule\":null,\"ex\":[],\"sid\":\"0040\",\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-resize this: to 08:00–09:00, \"Resize repeating event\" → This event",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[\"2026-10-22T05:00:00.000Z\"],\"c\":null,\"del\":null},{\"id\":\"5c5f\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T06:00:00.000Z\",\"rule\":null,\"ex\":[],\"sid\":\"0040\",\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-length this: the 45m chip → This event",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[\"2026-10-22T05:00:00.000Z\"],\"c\":null,\"del\":null},{\"id\":\"2aec\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:45:00.000Z\",\"rule\":null,\"ex\":[],\"sid\":\"0040\",\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-delete this: This event → Thu 22 skipped",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[\"2026-10-22T05:00:00.000Z\"],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-duplicate this: This event → one one-off copy; the original untouched",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"c5d6\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:30:00.000Z\",\"rule\":null,\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-rename following: This and following events → the stored series as Google leaves it",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY;UNTIL=20261022T045959Z\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"5639\",\"t\":\"Sync\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-rename following: Undo puts the series back whole and removes the new row",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-colour following: This and following events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY;UNTIL=20261022T045959Z\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"95ac\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":\"#72BF8E\",\"del\":null}]"
+  },
+  {
+    "name": "s-project following: This and following events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY;UNTIL=20261022T045959Z\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"5899\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"p\":\"0001\",\"del\":null}]"
+  },
+  {
+    "name": "s-move following: dragged to 09:00, \"Move repeating event\" → This and following events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY;UNTIL=20261022T045959Z\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"b3bb\",\"t\":\"Standup\",\"s\":\"2026-10-22T06:00:00.000Z\",\"e\":\"2026-10-22T06:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-resize following: to 08:00–09:00, \"Resize repeating event\" → This and following events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY;UNTIL=20261022T045959Z\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"ffd9\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T06:00:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-length following: the 45m chip → This and following events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY;UNTIL=20261022T045959Z\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"97a4\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:45:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-delete following: This and following events → the series ends before Thu 22",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY;UNTIL=20261022T045959Z\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-duplicate following: This and following events → a series from Thu 22; the original untouched",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"22e5\",\"t\":\"Standup\",\"s\":\"2026-10-22T05:00:00.000Z\",\"e\":\"2026-10-22T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-rename all: All events → the stored series as Google leaves it",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Sync\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-colour all: All events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":\"#72BF8E\",\"del\":null}]"
+  },
+  {
+    "name": "s-project all: All events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"p\":\"0001\",\"del\":null}]"
+  },
+  {
+    "name": "s-move all: dragged to 09:00, \"Move repeating event\" → All events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T06:00:00.000Z\",\"e\":\"2026-10-19T06:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-resize all: to 08:00–09:00, \"Resize repeating event\" → All events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T06:00:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-length all: the 45m chip → All events",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:45:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-delete all: All events → the series in Trash",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":\"2026-10-21T09:09:05.930Z\"}]"
+  },
+  {
+    "name": "s-delete all: Undo brings the series back",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s-duplicate all: All events → the whole series copied; the original untouched",
+    "ok": true,
+    "detail": "[{\"id\":\"0040\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null},{\"id\":\"f595\",\"t\":\"Standup\",\"s\":\"2026-10-19T05:00:00.000Z\",\"e\":\"2026-10-19T05:30:00.000Z\",\"rule\":\"FREQ=DAILY\",\"ex\":[],\"c\":null,\"del\":null}]"
+  },
+  {
+    "name": "s a Google event offers no change at all, so nothing asks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t the question for a task: \"Complete repeating task\" — This one · This and following · All · Cancel",
+    "ok": true,
+    "detail": "{\"head\":\"Complete repeating task\",\"words\":[\"This one\",\"This and following\",\"All\",\"Cancel\"]}"
+  },
+  {
+    "name": "t-complete this: This one → done, next Wednesday's round spawned",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0f87\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-28T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-move this: \"Move repeating task\" → This one → this round an hour on, alone; the series goes on at 14:00 next week",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T12:15:00.000Z\",\"rule\":null,\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"e60b\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-28T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T12:15:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-title this: This one → this round renamed alone; the series goes on as \"Water the plants\"",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Hydrate\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":null,\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"e049\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-28T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-project this: This one → into Garden",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":null,\"p\":\"0001\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"f5c9\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-28T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-delete this: This one → this round skipped (next Wednesday), its block off",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-28T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":\"2026-10-21T09:09:05.954Z\"}]"
+  },
+  {
+    "name": "t-delete this: Undo — back on today, its block back",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-duplicate this: This one → a one-off copy, blocked at 14:00",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"bd84\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":null,\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-complete following: This and following → done, the series ends (no next round)",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":null,\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-complete following: Undo — open again, still repeating weekly",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-move following: \"Move repeating task\" → This and following → the round an hour on, the series with it",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T12:15:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T12:15:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-title following: This and following → this round on, last week's done round kept",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Hydrate\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-project following: This and following → into Garden",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"p\":\"0001\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-delete following: This and following → the open round to Trash, the done one kept",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":\"2026-10-21T09:09:06.127Z\"},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":\"2026-10-21T09:09:06.127Z\"}]"
+  },
+  {
+    "name": "t-duplicate following: This and following → a repeating copy, blocked at 14:00",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"8e24\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-complete all: All → done, the series ends (no next round)",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":null,\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-move all: \"Move repeating task\" → All → the round an hour on, the series with it",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T12:15:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T12:15:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-title all: All → every round, the done one too",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Hydrate\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Hydrate\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-project all: All → into Garden",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"p\":\"0001\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"p\":\"0001\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-delete all: All → every round to Trash",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":\"2026-10-21T09:09:07.299Z\"},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":\"2026-10-21T09:09:07.299Z\"},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":\"2026-10-21T09:09:07.300Z\"}]"
+  },
+  {
+    "name": "t-duplicate all: All → a repeating copy, blocked at 14:00",
+    "ok": true,
+    "detail": "[{\"id\":\"0005\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"0011\",\"t\":\"Water the plants\",\"st\":\"done\",\"due\":\"2026-10-14T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"id\":\"232f\",\"t\":\"Water the plants\",\"st\":\"todo\",\"due\":\"2026-10-21T11:00:00.000Z\",\"rule\":\"FREQ=WEEKLY\",\"del\":null},{\"blk\":\"2026-10-21T11:00:00.000Z\",\"del\":null}]"
+  },
+  {
+    "name": "t-colour a repeating task's block takes a colour without asking (the colour is the block's, not the series')",
+    "ok": true,
+    "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000006\",\"user_id\":\"00000000-0000-4000-8000-00000000cc11\",\"title\":\"Water the plants\",\"starts_at\":\"2026-10-21T11:00:00.000Z\",\"ends_at\":\"2026-10-21T12:00:00.000Z\",\"all_day\":false,\"task_id\":\"10000000-0000-4000-8000-000000000005\",\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"task\",\"color\":\"#72BF8E\",\"recurrence_rule\":null,\"recurrence_exdates\":[],\"series_id\":null,\"project_id\":null,\"deleted_at\":null,\"created_at\":\"2026-10-01T04:00:00.000Z\",\"updated_at\":\"2026-10-01T04:00:00.000Z\"}"
+  },
+  {
+    "name": "t no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x a drag of an occurrence asks before anything is written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x Esc: the dragged block goes back where it was; nothing written",
+    "ok": true,
+    "detail": "203.875 → 203.875"
+  },
+  {
+    "name": "x Cancel: the same",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x a resize, cancelled, goes back to its length",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x a repeating task's block, cancelled, goes back too",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x the rename's question, cancelled: nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v-800 125%: a task block's menu B stays inside the 800px window and Delete is on screen, clickable",
+    "ok": true,
+    "detail": "{\"ok\":true,\"box\":[189,785],\"del\":[735,777],\"scrolls\":false}"
+  },
+  {
+    "name": "v-800 125%: an event's details stay inside the window, Delete reachable",
+    "ok": true,
+    "detail": "{\"ok\":true,\"box\":[204,749],\"del\":[699,741],\"scrolls\":false}"
+  },
+  {
+    "name": "v-800 …pressing it deletes (Dentist to Trash)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v-800 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v-480 125%: a task block's menu B stays inside the 480px window and Delete is on screen, clickable (the menu scrolls inside itself)",
+    "ok": true,
+    "detail": "{\"ok\":true,\"box\":[15,465],\"del\":[414,456],\"scrolls\":true}"
+  },
+  {
+    "name": "v-480 …the menu is capped at the window and scrolls inside itself",
+    "ok": true,
+    "detail": "{\"ok\":true,\"box\":[15,465],\"del\":[414,456],\"scrolls\":true}"
+  },
+  {
+    "name": "v-480 125%: an event's details stay inside the window, Delete reachable",
+    "ok": true,
+    "detail": "{\"ok\":true,\"box\":[15,465],\"del\":[415,457],\"scrolls\":true}"
+  },
+  {
+    "name": "v-480 …pressing it deletes (Dentist to Trash)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v-480 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
