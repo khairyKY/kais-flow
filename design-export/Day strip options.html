@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Day view options</title>
+<!-- Kai's Flow · the phone Today's second view, "Day" (26 Oct 2026). Kai turned down the sideways day strip (direction C in
+     Phone home options.html) and asked for a different design; this page has four. Each sits beside B (Now + next, picked)
+     as its sibling: same top bar, same rounded panels, same type, same paper goal card. Plain HTML, open it from disk.
+     Colours: ds-bound/styles.css + the app's own colour files (palette C's --blk-*); no colour value is added (the
+     widget wallpaper is two app tokens). Looks only: nothing here is in the app.
+     Handoff: docs/log/2026-10-26-*-daystrip-looks-handoff.md -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.dark.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:16px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:40px 32px 128px}
+@media (max-width:767px){.wrap{padding:24px 16px 64px}}
+h1{margin:8px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:14px;color:var(--ink-faint)}
+.lede{margin:16px 0 0;max-width:800px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-top:24px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 16px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg .btn{height:32px;border:none;background:none;padding:0 12px}
+.seg .btn[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.look{margin-top:64px;padding-top:24px;border-top:1px solid var(--line-card)}
+.look h2{margin:0;font-family:var(--font-display);font-size:32px;font-weight:600;line-height:1.2}
+.look h2 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:40px;height:40px;margin-right:12px;padding:0 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 20px/1 var(--font-ui);vertical-align:4px}
+.look.picked h2::after{content:'Your pick';margin-left:12px;padding:4px 12px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 12px/1.4 var(--font-ui);vertical-align:6px}
+.look h3.sub{margin:32px 0 0;font-family:var(--font-display);font-size:24px;font-weight:600}
+.say{margin:8px 0 0;max-width:860px}
+.say p{margin:4px 0}
+.say b{font-weight:600}
+.facts{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;margin-top:16px;max-width:1240px}
+.fact{padding:12px 16px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);font-size:14px;color:var(--ink-muted)}
+[data-theme="night"] .fact{border-color:var(--line-solid)}
+.fact h4{margin:0 0 4px;font-size:14px;font-weight:600;color:var(--ink-body)}
+.fact b{color:var(--ink-body);font-weight:600}
+.fact ul{margin:0;padding-left:16px}
+.fact li{margin:2px 0}
+.dens b{font-size:16px}
+.shots{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin-top:24px}
+figure{margin:0;flex:none}
+figcaption{margin-top:8px;max-width:440px;font-size:14px;color:var(--ink-muted)}
+.pick-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:24px}
+.notes{margin-top:48px;max-width:940px}
+.notes h2{margin:0 0 8px;font-family:var(--font-display);font-size:24px;font-weight:600}
+.notes ul{margin:8px 0 0;padding-left:20px;color:var(--ink-muted)}
+.notes li{margin:4px 0}
+.notes b{color:var(--ink-body);font-weight:600}
+.ref{display:block;border:1px solid var(--line-card);border-radius:18px}
+
+/* ════════ the phone (shared with B in Phone home options.html) ════════ */
+.frame{position:relative;overflow:hidden;border:1px solid var(--line-card);background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);line-height:1.35;font-size:14px}
+[data-theme="night"] .frame{border-color:var(--line-solid)}
+.phone{border-radius:30px;display:flex;flex-direction:column}
+.ic{flex:none;display:block}
+.nowrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.tabs{flex:none;height:66px;display:flex;align-items:flex-start;justify-content:space-around;padding-top:8px;border-top:1px solid var(--line-card);background:var(--paper-bone);font-size:11px;color:var(--ink-muted)}
+.tabs span{display:flex;flex-direction:column;align-items:center;gap:3px;width:60px}
+.tabs .on{color:var(--ink-body);font-weight:600}
+.tabs .on i{display:flex;padding:3px 13px;border-radius:999px;background:var(--paper-parchment)}
+.tabs .fab{width:48px;height:48px;margin-top:-4px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:flex;align-items:center;justify-content:center}
+.ck{flex:none;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--check-border);background:var(--check-bg);font-size:11px;line-height:1;color:var(--check-mark)}
+.done .ck,.ck.on{background:var(--check-fill);border-color:transparent}
+.done .tt{text-decoration:line-through;text-decoration-color:var(--ink-hairline);color:var(--ink-faint)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.mt{display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--ink-muted);white-space:nowrap}
+.terra{color:var(--acc-terra-ink)}
+.dots{flex:none;display:inline-flex;color:var(--ink-faint)}
+.tape{position:absolute;height:14px;background:color-mix(in srgb,var(--acc-gold-warm) 42%,transparent);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:var(--shadow-crisp)}
+.gtag{font:10.5px/1.2 var(--font-stamp);letter-spacing:var(--ls-stamp);text-transform:uppercase;color:var(--acc-gold);white-space:nowrap}
+.clover{flex:none;filter:var(--shadow-drop-sm)}
+.chev{flex:none;display:inline-flex;color:var(--ink-faint)}
+.chev.dn svg{transform:rotate(90deg)}
+.chev.up svg{transform:rotate(-90deg)}
+.sun{color:var(--acc-gold)}
+.moon{color:var(--acc-lavender-text)}
+.ph-top{flex:none;display:flex;align-items:center;gap:8px;height:50px;padding:6px 16px 0}
+.ph-top h3{margin:0;font:500 24px/1 var(--font-display);white-space:nowrap}
+.ph-top .r{margin-left:auto;display:flex;gap:16px;color:var(--ink-muted)}
+.daystrip{flex:none;display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 16px;font-size:13.5px;color:var(--ink-muted)}
+.daystrip>span{display:inline-flex;align-items:center;gap:4px}
+.daystrip .l svg{transform:scaleX(-1)}
+/* the Now · Day switch (sits where the date icon was; tap the date for the picker) */
+.vsw{display:inline-flex;gap:2px;padding:2px;border:1px solid var(--line-control);border-radius:999px;background:var(--paper-bone)}
+.vsw i{font-style:normal;display:inline-flex;align-items:center;height:24px;padding:0 12px;border-radius:999px;font-size:12.5px;color:var(--ink-muted)}
+.vsw i.on{background:var(--sel-bg);color:var(--sel-ink);font-weight:600}
+.scr{flex:1;min-height:0;overflow:hidden;padding:0 16px}
+.ph .trow{display:flex;align-items:center;gap:11px;height:44px;font-size:15px}
+.ph .trow .tt{flex:1}
+.ph .trow .n{flex:none;width:10px;font:11.5px var(--font-mono);color:var(--ink-faint)}
+.ph .pnm{display:none}
+/* B's goal card, slim paper */
+.gs{position:relative;display:flex;align-items:flex-start;gap:11px;padding:11px 10px 10px 12px;margin-top:12px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:12px;box-shadow:var(--shadow-goal);transform:rotate(-.4deg)}
+.gs .tape{top:-7px;left:50%;width:50px;height:12px;margin-left:-25px}
+.gs .ck{margin-top:2px;border-color:var(--acc-gold);background:transparent}
+.gs .body{flex:1;min-width:0}
+.gs .tt{font:600 16px/1.25 var(--font-display);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gs .gtag{display:block;margin-top:4px}
+.gs .clover{width:22px}
+/* a block row in the calendar's "Now" look (palette C) */
+.bk{display:flex;align-items:center;gap:8px;min-height:36px;padding:0 10px;border-radius:var(--radius-block);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));font-size:13.5px}
+.bk .tm{flex:none;font:11px var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ct)}
+.bk .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk .k{flex:none;width:13px;height:13px;border:2px solid var(--ct);border-radius:38%}
+.bk.goal{border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold)}
+.bk.goal .t::before{content:'✶ ';color:var(--acc-gold)}
+.bk.past{opacity:.62}
+/* Settings-style rounded panels */
+.pn{border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);overflow:hidden}
+[data-theme="night"] .pn{border-color:var(--line-solid)}
+.pn>*+*{border-top:1px solid var(--line-card)}
+.pn .trow{padding:0 12px}
+.ptP{display:flex;align-items:baseline;gap:6px;margin:16px 4px 8px;font-size:13px;font-weight:600}
+.ptP .c{font-weight:500;color:var(--ink-faint)}
+.ptP .act{margin-left:auto;font-weight:500;font-size:12.5px;color:var(--ink-muted)}
+.prow{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;font-size:14.5px}
+.prow .sub{font-size:12px;color:var(--ink-muted)}
+.prow .x{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-muted)}
+.bt{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;background:var(--paper-bone);border:1px solid var(--line-control);font-size:12.5px;font-weight:600;color:var(--ink-body);white-space:nowrap}
+/* B's Now card head (Up next, ring, bar, times) */
+.nn{margin-top:4px;padding:12px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);box-shadow:var(--shadow-panel)}
+[data-theme="night"] .nn{background:var(--paper-bone);border-color:var(--line-solid)}
+.uh{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.uh .cd{margin-left:auto;font:12px/1 var(--font-mono);color:var(--ink-muted);font-weight:400}
+.utl{display:flex;align-items:flex-start;gap:8px;margin-top:8px;font-size:15px;font-weight:500;line-height:1.3}
+.rg{flex:none;width:14px;height:14px;margin-top:2px;border-radius:50%;border:2px solid var(--blk-rose)}
+.pbar{height:4px;margin-top:8px;border-radius:2px;background:color-mix(in srgb,var(--ink-body) 9%,transparent)}
+.tms{display:flex;justify-content:space-between;margin-top:4px;font:11px/1.2 var(--font-mono);color:var(--ink-faint)}
+.lbl{font:11px var(--font-mono);color:var(--ink-faint)}
+
+/* the calendar column, as the app draws it (used by 4's open bar) */
+.cal{position:relative}
+.cal .hl{position:absolute;right:0;border-top:1px solid var(--line-card)}
+.cal .hl b{position:absolute;right:100%;top:-8px;padding-right:8px;font-weight:400;font-size:11px;color:var(--ink-faint);white-space:nowrap}
+[data-theme="night"] .cal .hl{border-top-color:var(--line-solid)}
+.cb{position:absolute;overflow:hidden;border-radius:var(--radius-block);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));padding:4px 8px;line-height:1.25;z-index:2}
+.cb .tt{font-size:12.5px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.cb .tm{margin-top:2px;font:10px/1.2 var(--font-mono);color:var(--ct);white-space:nowrap}
+.cb.past{opacity:.62}
+.cb.goal{border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold)}
+.cb.goal .tt::before{content:'✶ ';color:var(--acc-gold)}
+.cb.one .tm{display:none}
+.cb.one .tt{-webkit-line-clamp:1}
+.cb .k{display:inline-block;width:11px;height:11px;margin-right:4px;border:2px solid var(--ct);border-radius:38%;vertical-align:-1px}
+.cb.rit{border:1px dashed var(--line-control);background:var(--paper-parchment)}
+.nowl{position:absolute;height:0;border-top:2px solid var(--acc-lavender);z-index:4}
+.nowl::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--acc-lavender)}
+
+/* ── 1 · Thread (Structured) ── */
+.thr{position:relative;padding:4px 12px 8px 0}
+.thr::before{content:'';position:absolute;top:0;bottom:0;left:var(--rail);width:2px;margin-left:-1px;background:color-mix(in srgb,var(--ink-body) 12%,transparent)}
+.th{position:relative;display:grid;grid-template-columns:52px 32px 1fr auto;column-gap:10px;align-items:start;padding:6px 0}
+.th .tm{padding-top:3px;text-align:right;font:11px var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink-faint)}
+.th .cap{position:relative;z-index:1;width:32px;border-radius:16px;display:flex;align-items:flex-start;justify-content:center;padding-top:7px;background:color-mix(in srgb,var(--c) 75%,var(--paper-parchment));color:var(--ct)}
+.th .cap .k{width:13px;height:13px;margin-top:1px;border:2px solid var(--ct);border-radius:38%}
+.th.past .cap,.th.past .bd{opacity:.6}
+.th .bd{min-width:0;padding-top:2px}
+.th .bd .t{font-size:14.5px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.th .bd .s{margin-top:2px;font-size:12px;color:var(--ink-muted)}
+.th .bd .s .ov{color:var(--acc-terra-ink)}
+.th .rt{padding-top:2px}
+.th.ov .cap{margin-left:10px;box-shadow:0 0 0 2px var(--paper-parchment)}
+.th.rit .cap{background:var(--paper-parchment);border:1.5px dashed var(--line-control);color:var(--ink-muted)}
+.th.pt .cap{width:16px;height:16px !important;margin:3px 8px 0;padding:0;border-radius:50%;border:2px solid var(--ct);background:var(--paper-parchment)}
+.th.goal .cap{box-shadow:0 0 0 2px var(--acc-gold-warm)}
+.th.goal .gs{margin-top:0}
+.th.free{padding:0;grid-template-columns:52px 32px 1fr}
+.th.free .bd{padding:4px 0;font-size:12px;color:var(--ink-faint)}
+.th.free .bd b{font-weight:500;color:var(--acc-terra-ink)}
+.th.now{padding:2px 0}
+.th.now .tm{color:var(--acc-lavender-text);font-weight:500;padding-top:0;margin-top:-1px}
+.th.now .nd{position:relative;z-index:1;width:12px;height:12px;margin:2px auto 0;border-radius:50%;background:var(--acc-lavender);box-shadow:0 0 0 3px var(--paper-parchment)}
+.th.now .bd{padding-top:0;font-size:12px;color:var(--acc-lavender-text);display:flex;align-items:center;gap:8px}
+.th.now .bd::after{content:'';flex:1;border-top:2px solid var(--acc-lavender)}
+.th.fold .bd{font-size:13px;color:var(--ink-muted);display:flex;align-items:center;gap:4px;padding-top:6px}
+
+/* ── 2 · Dial ── */
+.dial{display:flex;gap:12px;align-items:center}
+.dial .side{flex:1;min-width:0}
+.dial .then{display:flex;flex-direction:column;gap:4px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-dashed)}
+.dial .then .bk{min-height:32px;font-size:13px;padding:0 8px;gap:6px}
+svg.ring{flex:none;display:block;overflow:visible}
+svg.ring .trk{stroke:color-mix(in srgb,var(--ink-body) 8%,transparent)}
+svg.ring .slp{stroke:color-mix(in srgb,var(--ink-body) 16%,transparent)}
+svg.ring .tick{stroke:var(--ink-hairline)}
+svg.ring text{font-family:var(--font-mono);fill:var(--ink-faint)}
+svg.ring .cn{font-family:var(--font-display);fill:var(--ink-body)}
+
+/* ── 3 · Hours ── */
+.hrs{padding:4px 0}
+.hrs>*+*{border-top:0}
+.hr{display:grid;grid-template-columns:48px 1fr;column-gap:8px;padding:0 12px 0 8px}
+.hr .hl{padding-top:9px;text-align:right;font:11px var(--font-mono);color:var(--ink-faint);white-space:nowrap}
+.hr .its{min-width:0;display:flex;flex-direction:column;gap:4px;padding:4px 0;border-top:1px solid var(--line-card)}
+.hr.first .its{border-top:0}
+.hr .its .bk{min-height:34px}
+.hr .pair{display:flex;gap:4px}
+.hr .pair .bk{flex:1;min-width:0}
+.hr .cont{display:flex;align-items:center;gap:8px;min-height:26px;padding-left:8px;border-left:3px solid color-mix(in srgb,var(--c) 75%,var(--paper-parchment));font-size:12px;color:var(--ink-faint)}
+.hr .cont.goal{border-left-color:var(--acc-gold-warm)}
+.hr .empty{min-height:20px}
+.hr .slot{display:flex;align-items:center;gap:8px;min-height:32px;padding:0 4px 0 10px;border:1px dashed var(--line-control);border-radius:var(--radius-block);font-size:12.5px;color:var(--ink-muted)}
+.hr .slot .grow{flex:1;min-width:0}
+.hr .slot .bt{height:24px;padding:0 10px;font-size:12px}
+.hr .trow{height:38px;font-size:14.5px;gap:10px;padding:0 4px}
+.hr .trow .when{flex:none;font:11px var(--font-mono);color:var(--ink-faint)}
+.hr .nowr{position:relative;display:flex;align-items:center;gap:8px;min-height:20px;font:500 11px var(--font-mono);color:var(--acc-lavender-text)}
+.hr .nowr::before{content:'';width:9px;height:9px;margin-left:-4px;border-radius:50%;background:var(--acc-lavender)}
+.hr .nowr::after{content:'';flex:1;border-top:2px solid var(--acc-lavender)}
+.hr.now .hl{color:var(--acc-lavender-text)}
+.hr.fold .its{flex-direction:row;align-items:center;gap:8px;min-height:40px;font-size:13px;color:var(--ink-muted)}
+
+/* ── 4 · Day bar ── */
+.dbar{position:relative;height:44px;margin:0 2px}
+.dbar .rail{position:absolute;left:0;right:0;top:12px;height:12px;border-radius:6px;background:color-mix(in srgb,var(--ink-body) 7%,transparent)}
+.dbar .sg{position:absolute;height:12px;top:12px;border-radius:4px;background:color-mix(in srgb,var(--c) 75%,var(--paper-parchment))}
+.dbar .sg.l1{top:26px;height:7px;border-radius:3px}
+.dbar .sg.past{opacity:.5}
+.dbar .sg.goal{box-shadow:inset 0 -3px 0 var(--acc-gold-warm)}
+.dbar .rd{position:absolute;top:2px;font-size:10px;line-height:1;transform:translateX(-50%)}
+.dbar .nw{position:absolute;top:8px;width:2px;height:28px;margin-left:-1px;border-radius:1px;background:var(--acc-lavender)}
+.dbar .ax{position:absolute;left:0;right:0;bottom:-2px;height:12px;font:10px var(--font-mono);color:var(--ink-faint)}
+.dbar .ax span{position:absolute;transform:translateX(-50%)}
+.dnext{display:flex;align-items:center;gap:8px;margin-top:8px;padding-top:8px;border-top:1px dashed var(--line-dashed);font-size:13.5px}
+.dnext .k{flex:none;font-weight:600}
+.dnext .tm{flex:none;font:11px var(--font-mono);color:var(--blk-rose-ink)}
+.dnext .cd{flex:none;font:12px var(--font-mono);color:var(--ink-muted)}
+.grab{display:block;width:36px;height:4px;margin:8px auto 0;border-radius:2px;background:var(--line-control);opacity:.6}
+
+/* ════════ the widget (4 × 2) on a home-screen wallpaper made of two app tokens ════════ */
+.wall{position:relative;width:390px;padding:24px 16px 32px;border-radius:24px;background:linear-gradient(160deg,var(--acc-hydrangea),var(--acc-sage))}
+.wall .cap2{margin-top:8px;text-align:center;font-size:11px;color:var(--paper-parchment)}
+.wg{position:relative;height:192px;overflow:hidden;border-radius:24px;background:var(--paper-parchment);border:1px solid var(--line-card);color:var(--ink-body);font-family:var(--font-ui);line-height:1.3;padding:12px 14px;display:flex;flex-direction:column}
+[data-theme="night"] .wg{border-color:var(--line-solid)}
+.wg .wh{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600}
+.wg .wh .q{font-weight:500;color:var(--ink-faint)}
+.wg .wh .r{margin-left:auto;display:flex;align-items:center;gap:6px}
+.wg .add{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra)}
+.wg .bk{min-height:28px;font-size:12.5px;padding:0 8px}
+.wg .wr{display:flex;align-items:center;gap:8px;min-height:28px;font-size:13px}
+.wg .wr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wg .wr .m{flex:none;font:11px var(--font-mono);color:var(--ink-faint)}
+.wg .wr .ck{width:16px;height:16px}
+.wg .gw{position:relative;display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:10px;background:var(--paper-goal);border:1px solid var(--line-goal);font:600 13px/1.25 serif}
+.wg .gw .ck{width:16px;height:16px;border-color:var(--acc-gold);background:transparent}
+.wg .gw .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wg .gw img{width:16px;flex:none}
+.wg .thr{padding:0}
+.wg .th{grid-template-columns:40px 24px 1fr auto;column-gap:8px;padding:3px 0}
+.wg .th .cap{width:24px;border-radius:12px;padding-top:5px}
+.wg .th .cap svg{width:13px;height:13px}
+.wg .th .bd .t{font-size:13px}
+.wg .th.ov .cap{margin-left:0}
+.wg .th .bd .s{font-size:11px;margin-top:0}
+.wg .th.now .bd{font-size:11px}
+.wg .hr{grid-template-columns:40px 1fr;padding:0}
+.wg .hr .its{padding:2px 0;gap:3px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · the phone Today, Day view · 26 Oct 2026</div>
+  <h1>The Day view: four new ways to draw the day</h1>
+  <p class="lede">The phone's Today gets two views: <b>Now + next</b> (B, picked, being built) and <b>Day</b>. The sideways day strip didn't work, so here are four different Days. None of them scrolls sideways. Each one keeps B's top bar, rounded panels, type and paper goal card, so switching views feels like turning a page in the same book. They all show the same Monday at 10:40 AM: 8 blocks (two pairs overlap), the morning ritual not started yet, the Top 3 with the goal, and 2 overdue tasks. Each is drawn at 360, 390 and 430 wide. Use Day / Night to switch themes, pick one, and press <b>Copy my picks</b>. Answer with a number, for example <b>"Day view 3, widget 3"</b>.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your picks">
+  <span>Your picks: <b id="mine">none yet</b></span>
+  <span class="seg" role="group" aria-label="Page theme">
+    <button type="button" class="btn" data-th="day" aria-pressed="true">Day</button>
+    <button type="button" class="btn" data-th="night" aria-pressed="false">Night</button>
+  </span>
+  <button type="button" class="btn btn-p" id="copy">Copy my picks</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="look" id="before">
+  <h2>For reference: B, and the strip that was turned down</h2>
+  <div class="say"><p>Left: <b>B · Now + next</b>, the view these four sit beside. Right: the old <b>C · Day strip</b>. The day ran sideways in 92 px, so blocks were cut to one or two words, and anything after 3 PM was off screen until you scrolled. Its list was a plain list with a time column, so the day and the tasks never met. Every direction below fixes both: the whole day fits without scrolling sideways, and the tasks sit on the day itself.</p></div>
+  <div class="shots">
+    <figure><img class="ref" data-only="day" src="../docs/log/assets/daystrip-looks/ref/B-390-day.png" width="300" alt="B, Now + next, day"><img class="ref" data-only="night" src="../docs/log/assets/daystrip-looks/ref/B-390-night.png" width="300" alt="B, Now + next, night"><figcaption>B · Now + next (picked)</figcaption></figure>
+    <figure><img class="ref" data-only="day" src="../docs/log/assets/daystrip-looks/ref/C-390-day.png" width="300" alt="Old C, day strip, day"><img class="ref" data-only="night" src="../docs/log/assets/daystrip-looks/ref/C-390-night.png" width="300" alt="Old C, day strip, night"><figcaption>Old C · Day strip (turned down)</figcaption></figure>
+  </div>
+</section>
+
+<div id="looks"></div>
+
+<section class="notes">
+  <h2>What's the same in all four</h2>
+  <ul>
+    <li><b>B's frame</b>: the date, the journal, search and ⋯ icons, Yesterday / Tomorrow, the tab bar with the + in the middle, Settings-style rounded panels, and the slim paper goal card with its tape, clover and gold <b>✶ Goal of the day</b> stamp.</li>
+    <li><b>The Now · Day switch</b> sits in the middle of the Yesterday / Tomorrow line, where the date icon was. Tapping the date opens the date picker instead. The app remembers which view you used last.</li>
+    <li><b>Blocks</b> are drawn the way the calendar draws them: palette C (Rose for a lecture, Cornflower for office hours, Clay for coffee, Fern for the gym, Iris for a task), check B for a task block, the gold edge for the goal, and the lavender now line.</li>
+    <li><b>Rituals</b> are on the day at their own time (Morning at 7:30 AM, Evening from 5:00 PM), with Begin right there.</li>
+    <li><b>Overdue</b> shows its two tasks with Replan all, and Also open stays folded.</li>
+    <li><b>Spacing</b> keeps to the 4 and 8 px steps. The type is the app's own (display serif, UI sans, mono for times). The workspace defaults of Inter and an indigo accent don't apply here, because the app's tokens win.</li>
+  </ul>
+</section>
+
+<section class="notes">
+  <h2>What the four borrow</h2>
+  <ul>
+    <li><b>Structured</b>: one vertical line through the day, each item a rounded capsule as tall as it is long, free time shown as real gaps, and drag a capsule to move it.</li>
+    <li><b>Akiflow mobile</b>: the calendar is the main view, with Agenda and 1-day modes, and you drag tasks from a list onto it.</li>
+    <li><b>Sunsama</b>: a short "today" column of tasks beside the day, and timeboxing by dropping a task into a free slot.</li>
+    <li><b>Amie</b>: tasks live next to events, and dragging a task onto the timeline turns it into a block.</li>
+    <li><b>Fantastical</b>: the DayTicker, a short strip of coloured pills that shows roughly when each event is. You pull it down to get a bigger view.</li>
+    <li><b>Google Calendar's Schedule view</b>: an agenda grouped by time, with full-width coloured event chips and empty stretches folded.</li>
+    <li><b>The iOS Clock bedtime dial and Apple Watch's calendar complications</b>: a 24-hour ring with the day drawn as arcs.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+const ICONS = {"today":"<path d=\"M12 20.5v-8\"></path><path d=\"M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z\"></path><path d=\"M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z\"></path><path d=\"M7.5 20.5h9\"></path>","inbox":"<path d=\"M4 13.5 6.2 6.3A1.8 1.8 0 0 1 7.9 5h8.2a1.8 1.8 0 0 1 1.7 1.3L20 13.5v4.7a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2z\"></path><path d=\"M4 13.5h4.4l1.3 2.3h4.6l1.3-2.3H20\"></path>","calendar":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"14.5\" rx=\"2\"></rect><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"></path>","journal":"<path d=\"M5.5 5.5A1.5 1.5 0 0 1 7 4h11.5v13.5H7a1.5 1.5 0 0 0-1.5 1.5z\"></path><path d=\"M5.5 19A1.5 1.5 0 0 0 7 20.5h11.5v-3\"></path><path d=\"M9.5 8h5.5\"></path>","people":"<circle cx=\"9\" cy=\"8.5\" r=\"3.2\"></circle><path d=\"M3 19a6 6 0 0 1 12 0\"></path><path d=\"M16 5.8a3.2 3.2 0 0 1 0 6M17.2 14.3a6 6 0 0 1 3.8 4.7\"></path>","activity":"<path d=\"M3.5 12.5h3.6l2.4-6 4.2 11.5 2.6-5.5h4.2\"/>","plus":"<path d=\"M12 5v14M5 12h14\"></path>","search":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"></circle><path d=\"M16 16l4 4\"></path>","chat":"<path d=\"M5.5 5h13A1.5 1.5 0 0 1 20 6.5v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V17h-1A1.5 1.5 0 0 1 4 15.5v-9A1.5 1.5 0 0 1 5.5 5z\"/>","chevright":"<path d=\"M9.5 6l6 6-6 6\"></path>","dots":"<circle cx=\"5.5\" cy=\"12\" r=\"1.1\"></circle><circle cx=\"12\" cy=\"12\" r=\"1.1\"></circle><circle cx=\"18.5\" cy=\"12\" r=\"1.1\"></circle>","more":"<rect x=\"4.5\" y=\"4.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"13.5\" y=\"4.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"4.5\" y=\"13.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"13.5\" y=\"13.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect>"}
+const ic = (n, s = 18) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`
+const chev = (d) => `<span class="chev${d ? ' ' + d : ''}">${ic('chevright', 14)}</span>`
+const CLOVER = 'ds/assets/clover/four_leaf.png'
+
+// ── the demo day: Monday 26 Oct 2026, 10:40 AM ──
+const NOW = 10 + 40 / 60
+const B = (c) => `--c:var(--blk-${c});--ct:var(--blk-${c}-ink)`
+// 8 blocks; lane 1 = it overlaps the one before it
+const EV = [
+  { t: 'Lecture — Machine Learning', a: 8.5, b: 10, c: 'rose', icon: 'journal', past: true },
+  { t: 'Lecture — Computer Vision', a: 11, b: 12.5, c: 'rose', icon: 'journal' },
+  { t: 'Office hours — Dr. Hany', a: 12, b: 12.75, c: 'cornflower', icon: 'people', lane: 1 },
+  { t: 'CNN backprop notes', a: 13.5, b: 15.5, c: 'iris', task: true, goal: true },
+  { t: 'Coffee with Omar', a: 15, b: 15.75, c: 'clay', icon: 'chat', lane: 1 },
+  { t: 'Gym — push day', a: 17, b: 18.25, c: 'fern', icon: 'activity' },
+  { t: 'DL study group', a: 19, b: 20, c: 'lagoon', icon: 'people' },
+  { t: 'Watch Karpathy: makemore part 3', a: 21, b: 22, c: 'iris', task: true },
+]
+const RIT = { m: { t: 'Morning', a: 7.5, q: '0/4' }, e: { t: 'Evening', a: 17 } }
+const P = { dl: ['Deep Learning', 'var(--acc-sage)'], uni: ['University', 'var(--acc-blossom)'] }
+const GOAL = { t: 'Finish the CNN backprop notes for the DL midterm', when: '1:30–3:30 PM' }
+const TOP = [{ t: 'Deep Learning problem set 4 (Q1–Q3)', p: 'dl', len: '1h 30m' }, { t: 'Email Dr. Hany the project proposal', p: 'uni', len: '20m' }]
+const TODAY = [
+  { t: 'Review lecture 7 slides — Attention', p: 'dl', due: 'Due today' },
+  { t: 'Pay the internet bill', due: 'Due today', rep: true },
+  { t: 'Prepare the DL study group', p: 'dl', when: '6:30 PM', subs: '0/1' },
+  { t: 'Watch Karpathy: makemore part 3', p: 'dl', when: '9:00 PM' },
+  { t: 'Submit the CV lab report', p: 'uni', done: true },
+]
+const OVER = [{ t: 'Email the TA about the quiz grade', p: 'uni', od: 3 }, { t: 'Back up the laptop', od: 2 }]
+const ALSO = 6
+
+const clock = (h, ap = true) => { const hh = Math.floor(h + 1e-9), mm = Math.round((h - hh) * 60); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')}${ap ? (hh < 12 ? ' AM' : ' PM') : ''}` }
+const range = (a, b) => { const x = clock(a), z = clock(b); return x.slice(-2) === z.slice(-2) ? `${x.slice(0, -3)}–${z}` : `${x}–${z}` }
+const hr = (h) => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`
+const len = (d) => { const h = Math.floor(d), m = Math.round((d - h) * 60); return [h ? `${h}h` : '', m ? `${m}m` : ''].filter(Boolean).join(' ') }
+const proj = (k) => k ? `<span><span class="dot" style="background:${P[k][1]}"></span><span class="pnm">${P[k][0]}</span></span>` : ''
+
+// a task row (data-task: counted for the above-the-fold number)
+function row(x, o = {}) {
+  const meta = [proj(x.p), x.subs ? `<span>${x.subs} ⌄</span>` : '', x.when && o.when !== false ? `<span>${x.when}</span>` : '', x.due ? `<span>${x.due}${x.rep ? ' · ↻' : ''}</span>` : '', x.len ? `<span>${x.len}</span>` : '', x.od ? `<span class="terra">${x.od}d late</span>` : ''].filter(Boolean).join('')
+  return `<div class="trow${x.done ? ' done' : ''}" data-task>${o.n ? `<span class="n">${o.n}</span>` : ''}<span class="ck">${x.done ? '✓' : ''}</span><span class="tt nowrap">${x.t}</span><span class="mt">${meta}</span><span class="dots">${ic('dots', 16)}</span></div>`
+}
+const tabs = () => `<nav class="tabs"><span class="on"><i>${ic('today', 22)}</i>Today</span><span>${ic('inbox', 22)}Inbox</span><span><b class="fab">${ic('plus', 24)}</b></span><span>${ic('calendar', 22)}Calendar</span><span>${ic('more', 22)}More</span></nav>`
+const phTop = () => `<div class="ph-top"><h3>Monday, Oct 26</h3><span class="r">${ic('journal', 20)}${ic('search', 20)}${ic('dots', 20)}</span></div>`
+const dayStrip = () => `<div class="daystrip"><span class="l">${ic('chevright', 14)}Yesterday</span><span class="vsw" aria-label="View"><i>Now</i><i class="on">Day</i></span><span>Tomorrow${ic('chevright', 14)}</span></div>`
+const goalP = (o = {}) => `<div class="gs" data-task style="${o.style ?? ''}"><span class="tape"></span><span class="ck"></span><div class="body"><div class="tt">${GOAL.t}</div><span class="gtag">✶ Goal of the day${o.time === false ? '' : ` · ${GOAL.when}`}</span></div><img class="clover" src="${CLOVER}" alt=""></div>`
+const bk = (e, o = {}) => `<div class="bk${e.goal ? ' goal' : ''}${e.past ? ' past' : ''}"${e.task ? ' data-task' : ''} style="${B(e.c)}"><span class="tm">${o.time ?? clock(e.a, false)}</span>${e.task ? '<span class="k"></span>' : ''}<span class="t">${o.title ?? e.t}</span>${o.right ? `<span class="tm">${o.right}</span>` : ''}</div>`
+const topPanel = () => `<div class="ptP">Top 3 <span class="c">· 3h 50m planned</span></div><div class="pn">${TOP.map((x, i) => row(x, { n: i + 2 })).join('')}</div>`
+const todayPanel = (list = TODAY) => `<div class="ptP">Today's tasks <span class="c">· 4</span></div><div class="pn">${list.map((x) => row(x)).join('')}</div>`
+const overPanel = () => `<div class="ptP"><span class="terra">Overdue</span> <span class="c">· 2</span><span class="act">Replan all ⌄</span></div><div class="pn">${OVER.map((x) => row(x)).join('')}<div class="prow"><span style="font-weight:600">Also open</span><span class="sub">${ALSO}</span><span class="x">${chev()}</span></div></div>`
+const ritPanel = () => `<div class="ptP">Rituals</div><div class="pn"><div class="prow"><span class="sun">☀</span>Morning<span class="sub">0/4</span><span class="x"><span class="bt">Begin</span></span></div><div class="prow"><span class="moon">☾</span>Evening<span class="sub">from 5:00 PM</span></div></div>`
+
+// ═════ 1 · Thread ═════
+// one line down the day; each item a capsule as tall as it is long (30 px an hour, 32 to 64 px)
+const capH = (e) => Math.max(32, Math.min(64, (e.b - e.a) * 30))
+function thItem(e, o = {}) {
+  const cls = ['th', e.past && 'past', e.lane && 'ov', e.goal && 'goal'].filter(Boolean).join(' ')
+  const inner = e.task ? '<span class="k"></span>' : ic(e.icon, 16)
+  const ov = e.lane ? ` · <span class="ov">overlaps ${len(EV[EV.indexOf(e) - 1].b - e.a)}</span>` : ''
+  const body = e.goal ? goalP({ time: false }) : `<div class="t">${e.t}</div><div class="s">${range(e.a, e.b)} · ${len(e.b - e.a)}${ov}</div>`
+  const right = e.task && !e.goal ? '<span class="ck"></span>' : ''
+  return `<div class="${cls}"${e.task && !e.goal ? ' data-task' : ''}><span class="tm">${clock(e.a, false)}</span><span class="cap" style="${B(e.c)};height:${capH(e)}px">${inner}</span><div class="bd">${body}</div><span class="rt">${right}</span></div>`
+}
+const thFree = (d, hint = '') => `<div class="th free"><span></span><span></span><div class="bd">${len(d)} free${hint}</div></div>`
+const thNow = (txt) => `<div class="th now"><span class="tm">${clock(NOW, false)}</span><span class="nd"></span><div class="bd">${txt}</div></div>`
+const thRit = (r, sub, right) => `<div class="th rit"><span class="tm">${clock(r.a, false)}</span><span class="cap" style="height:32px;padding-top:6px"><span class="${r === RIT.m ? 'sun' : 'moon'}" style="font-size:13px;line-height:1">${r === RIT.m ? '☀' : '☾'}</span></span><div class="bd"><div class="t">${r.t} ritual</div><div class="s">${sub}</div></div><span class="rt">${right}</span></div>`
+const thPoint = (x, at) => `<div class="th pt" data-task style="${B('iris')}"><span class="tm">${clock(at, false)}</span><span class="cap"></span><div class="bd"><div class="t">${x.t}</div><div class="s">${proj(x.p)}due by ${x.when} · ${x.subs} steps</div></div><span class="rt"><span class="ck"></span></span></div>`
+const thread = (o = {}) => `<div class="thr" style="--rail:${(o.tm ?? 52) + 10 + (o.cap ?? 32) / 2}px">
+  <div class="th fold"><span></span><span></span><div class="bd">${chev()}<span class="nowrap">Earlier · ML lecture, 8:30</span></div></div>
+  ${thRit(RIT.m, '0/4 · not started', '<span class="bt">Begin</span>')}
+  ${thNow('lecture in 20m')}
+  ${thItem(EV[1])}${thItem(EV[2])}
+  ${thFree(0.75, ' · <b>fits Email Dr. Hany</b>')}
+  ${thItem(EV[3])}${thItem(EV[4])}
+  ${thFree(1.25)}
+  ${thRit(RIT.e, 'opens at 5:00 PM', '')}
+  ${thItem(EV[5])}
+  ${thPoint(TODAY[2], 18.5)}
+  ${thItem(EV[6])}
+  ${thFree(1)}
+  ${thItem(EV[7])}
+</div>`
+const phone1 = () => `<div class="ph" style="display:contents">${phTop()}${dayStrip()}<div class="scr">
+  <div class="pn" style="margin-top:4px">${thread()}</div>
+  <div class="ptP">Anytime today <span class="c">· 4 · drag onto the line to give a time</span></div>
+  <div class="pn">${TOP.map((x, i) => row(x, { n: i + 2 })).join('')}${row(TODAY[0])}${row(TODAY[1])}${row(TODAY[4])}</div>
+  ${overPanel()}
+</div>${tabs()}</div>`
+
+// ═════ 2 · Dial ═════
+function ring(S) {
+  const c = S / 2, r1 = c - 8, r2 = c - 21
+  const pt = (h, r) => { const t = (h / 24) * 2 * Math.PI - Math.PI / 2; return [(c + r * Math.cos(t)).toFixed(1), (c + r * Math.sin(t)).toFixed(1)] }
+  const arc = (h1, h2, r) => { const [x1, y1] = pt(h1, r), [x2, y2] = pt(h2, r); return `M${x1} ${y1}A${r} ${r} 0 ${h2 - h1 > 12 ? 1 : 0} 1 ${x2} ${y2}` }
+  let s = `<svg class="ring" width="${S}" height="${S}" viewBox="0 0 ${S} ${S}" role="img" aria-label="Today on a 24-hour dial">`
+  s += `<circle cx="${c}" cy="${c}" r="${r1}" fill="none" stroke-width="12" class="trk"/>`
+  s += `<path d="${arc(23, 31, r1)}" fill="none" stroke-width="12" class="slp" stroke-dasharray="2 3"/>`
+  for (let h = 0; h < 24; h++) { const [x1, y1] = pt(h, r2 - 8 + (h % 6 ? 3 : 0)), [x2, y2] = pt(h, r2 - 4); s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="tick" stroke-width="${h % 6 ? 1 : 1.5}"/>` }
+  for (const [h, l] of [[0, '12a'], [6, '6a'], [12, '12p'], [18, '6p']]) { const [x, y] = pt(h, r2 - 17); s += `<text x="${x}" y="${y}" font-size="9.5" text-anchor="middle" dominant-baseline="central">${l}</text>` }
+  for (const e of EV) {
+    const r = e.lane ? r2 : r1
+    s += `<path d="${arc(e.a + 0.04, e.b - 0.04, r)}" fill="none" stroke-width="${e.lane ? 8 : 12}" style="stroke:color-mix(in srgb,var(--blk-${e.c}) 75%,var(--paper-parchment))${e.past ? ';opacity:.5' : ''}"/>`
+    if (e.goal) s += `<path d="${arc(e.a, e.b, r1 + 9)}" fill="none" stroke-width="2.5" style="stroke:var(--acc-gold-warm)"/>`
+  }
+  const [mx, my] = pt(RIT.m.a, r1), [ex, ey] = pt(RIT.e.a, r1 + 0)
+  s += `<circle cx="${mx}" cy="${my}" r="5.5" style="fill:var(--paper-parchment);stroke:var(--acc-gold)" stroke-width="2"/><circle cx="${ex}" cy="${ey}" r="5.5" style="fill:var(--paper-parchment);stroke:var(--acc-lavender-text)" stroke-width="2"/>`
+  const [hx1, hy1] = pt(NOW, r2 - 24), [hx2, hy2] = pt(NOW, r1 + 9)
+  s += `<line x1="${hx1}" y1="${hy1}" x2="${hx2}" y2="${hy2}" stroke-width="2.5" stroke-linecap="round" style="stroke:var(--acc-lavender)"/><circle cx="${hx2}" cy="${hy2}" r="4" style="fill:var(--acc-lavender)"/>`
+  s += `<text x="${c}" y="${c - 4}" text-anchor="middle" class="cn" font-size="${Math.round(S / 7)}">10:40</text><text x="${c}" y="${c + S / 10}" text-anchor="middle" font-size="10">7 of 8 to go</text>`
+  return s + '</svg>'
+}
+const dialCard = (S) => `<div class="nn dial">${ring(S)}<div class="side">
+  <div class="uh">Up next<span class="cd">in 20m</span></div>
+  <div class="utl"><span class="rg"></span><span style="min-width:0">Lecture — Computer Vision</span></div>
+  <div class="tms" style="margin-top:4px"><span>11:00–12:30</span></div>
+  <div class="then"><span class="lbl">Then</span>${bk(EV[2], { title: 'Office hours' })}${bk(EV[3], { title: 'CNN notes' })}</div>
+</div></div>`
+const phone2 = (w) => () => `<div class="ph" style="display:contents">${phTop()}${dayStrip()}<div class="scr">
+  ${dialCard(Math.round(Math.min(168, w * 0.38)))}
+  ${goalP()}
+  ${topPanel()}
+  ${todayPanel()}
+  ${overPanel()}
+  ${ritPanel()}
+</div>${tabs()}</div>`
+
+// ═════ 3 · Hours ═════
+// one row per hour from now to bedtime; blocks and timed tasks sit in the hour they start, anytime tasks fill the gaps
+const hrRow = (h, inner, o = {}) => `<div class="hr${o.cls ? ' ' + o.cls : ''}"><span class="hl">${o.label ?? hr(h)}</span><div class="its">${inner}</div></div>`
+const cont = (e, txt) => `<div class="cont${e.goal ? ' goal' : ''}" style="${B(e.c)}">${txt ?? `${e.t} · until ${clock(e.b, false)}`}</div>`
+const hrTask = (x, when) => `<div class="trow" data-task><span class="ck"></span><span class="tt nowrap">${x.t}</span><span class="when">${when}</span></div>`
+const hours = () => `<div class="pn hrs">
+  ${hrRow(0, `${chev()}<span class="nowrap">1 block</span><span style="margin-left:auto" class="sun">☀</span><span class="nowrap">Morning 0/4</span><span class="bt">Begin</span>`, { cls: 'fold first', label: 'Earlier' })}
+  ${hrRow(10, `<div class="nowr">10:40 · lecture in 20m</div>`, { cls: 'now' })}
+  ${hrRow(11, bk(EV[1], { right: '–12:30' }))}
+  ${hrRow(12, `${bk(EV[2], { right: '–12:45' })}<div class="slot"><span class="grow nowrap">12:45 · 45m free · Email Dr. Hany (20m)</span><span class="bt">Put here</span></div>`)}
+  ${hrRow(13, `<div class="pair">${bk(EV[3], { time: '1:30', title: 'CNN notes' })}</div>`)}
+  ${hrRow(14, cont(EV[3], '✶ CNN backprop notes · until 3:30'))}
+  ${hrRow(15, `${bk(EV[4], { right: '–3:45' })}`)}
+  ${hrRow(16, `<div class="slot"><span class="grow nowrap">3:45 · 1h 15m free · DL problem set (1h 30m)</span><span class="bt">Put here</span></div>`)}
+  ${hrRow(17, `<div class="pair">${bk(EV[5], { right: '–6:15' })}</div><div class="cont" style="border-left-color:var(--acc-lavender);color:var(--ink-muted)"><span class="moon">☾</span> Evening ritual opens</div>`)}
+  ${hrRow(18, hrTask(TODAY[2], '6:30'))}
+  ${hrRow(19, bk(EV[6], { right: '–8:00' }))}
+  ${hrRow(20, '<div class="empty"></div>')}
+  ${hrRow(21, `${bk(EV[7], { time: '9:00', title: 'Watch Karpathy: makemore 3' })}`)}
+</div>`
+const phone3 = () => `<div class="ph" style="display:contents">${phTop()}${dayStrip()}<div class="scr">
+  ${goalP()}
+  <div class="ptP">The day <span class="c">· 8 blocks · 4h 50m free</span><span class="act">Fold empty hours</span></div>
+  ${hours()}
+  <div class="ptP">Anytime today <span class="c">· 4</span></div>
+  <div class="pn">${TOP.map((x, i) => row(x, { n: i + 2 })).join('')}${row(TODAY[0])}${row(TODAY[1])}</div>
+  ${overPanel()}
+</div>${tabs()}</div>`
+
+// ═════ 4 · Day bar ═════
+const dayBar = (from = 7, to = 23) => {
+  const x = (h) => ((h - from) / (to - from)) * 100
+  return `<div class="dbar"><span class="rail"></span>${EV.map((e) => `<span class="sg${e.lane ? ' l1' : ''}${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}" style="${B(e.c)};left:${x(e.a)}%;width:${x(e.b) - x(e.a)}%"></span>`).join('')}<span class="rd sun" style="left:${x(RIT.m.a)}%">☀</span><span class="rd moon" style="left:${x(RIT.e.a)}%">☾</span><span class="nw" style="left:${x(NOW)}%"></span><div class="ax">${[8, 12, 16, 20].map((h) => `<span style="left:${x(h)}%">${hr(h).replace(' ', '').toLowerCase()}</span>`).join('')}</div></div>`
+}
+const barCard = () => `<div class="nn" style="padding:12px 12px 8px">${dayBar()}<div class="dnext"><span class="k">Next</span><span class="tm">11:00</span><span class="nowrap" style="flex:1">Lecture — Computer Vision</span><span class="cd">in 20m</span>${chev('dn')}</div></div>`
+const phone4 = () => `<div class="ph" style="display:contents">${phTop()}${dayStrip()}<div class="scr">
+  ${barCard()}
+  ${goalP()}
+  ${topPanel()}
+  ${todayPanel()}
+  ${overPanel()}
+  ${ritPanel()}
+</div>${tabs()}</div>`
+// the bar tapped open: it grows down into the calendar's own column (9 AM to 10 PM), the list slides under it
+function calCol({ from, to, ph, gutter = 44 }) {
+  const y = (h) => (h - from) * ph
+  let s = `<div class="cal" style="height:${(to - from) * ph}px">`
+  for (let h = from; h <= to; h++) s += `<div class="hl" style="top:${y(h)}px;left:${gutter}px">${h < to ? `<b>${hr(h)}</b>` : ''}</div>`
+  const overl = (e) => EV.some((o) => o !== e && o.a < e.b && o.b > e.a)
+  for (const e of EV) {
+    if (e.b <= from || e.a >= to) continue
+    const top = y(Math.max(e.a, from)) + 1, hgt = (Math.min(e.b, to) - Math.max(e.a, from)) * ph - 3
+    const pos = !overl(e) ? `left:${gutter + 4}px;right:4px` : e.lane ? `left:calc(${gutter}px + (100% - ${gutter}px) * .5);right:4px` : `left:${gutter + 4}px;right:calc((100% - ${gutter}px) * .48)`
+    s += `<div class="cb${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}${hgt < 34 ? ' one' : ''}" style="${B(e.c)};top:${top}px;height:${hgt}px;${pos}"><div class="tt">${e.task ? '<span class="k"></span>' : ''}${e.t}</div><div class="tm">${range(e.a, e.b)}</div></div>`
+  }
+  s += `<div class="cb rit one" style="--ct:var(--ink-muted);top:${y(17) - 12}px;height:20px;left:auto;right:4px;width:auto;padding:1px 8px;font-size:11px"><span class="tt moon">☾ Evening</span></div>`
+  s += `<div class="nowl" style="top:${y(NOW)}px;left:${gutter}px;right:0"></div>`
+  return s + '</div>'
+}
+const phone4open = () => `<div class="ph" style="display:contents">${phTop()}${dayStrip()}<div class="scr">
+  <div class="nn" style="padding:12px 12px 4px"><div style="margin:-12px -12px 0;padding:12px 12px 0;max-height:520px;overflow:hidden">${calCol({ from: 10, to: 22, ph: 40 })}</div><span class="grab"></span></div>
+  ${goalP()}
+  ${topPanel()}
+</div>${tabs()}</div>`
+
+// ═════ the 4 × 2 widgets ═════
+const addBtn = `<span class="add">${ic('plus', 16)}</span>`
+const goalW = () => `<div class="gw"><span class="ck"></span><span class="t">${GOAL.t}</span><img src="${CLOVER}" alt=""></div>`
+const W1 = () => `<div class="wh">Today <span class="q">· 10:40</span><span class="r">${addBtn}</span></div><div class="thr" style="--rail:${40 + 8 + 12}px;margin-top:4px">
+  ${thNow('lecture in 20m')}${thItem(EV[1])}${thItem(EV[2])}<div class="th goal"><span class="tm">1:30</span><span class="cap" style="${B('iris')};height:32px"><span class="k"></span></span><div class="bd"><div class="t" style="font-family:serif;font-weight:600">✶ CNN backprop notes</div><div class="s">1:30–3:30 · goal of the day</div></div><span class="rt"><span class="ck"></span></span></div></div>`
+const W2 = () => `<div style="display:flex;gap:12px;align-items:center;height:100%">${ring(160)}<div style="flex:1;min-width:0"><div class="uh">Up next<span class="cd">11:00</span></div><div class="utl" style="font-size:14px"><span class="rg"></span><span>Lecture — Computer Vision</span></div><div class="dial"><div class="side"><div class="then" style="margin-top:6px;padding-top:6px">${bk(EV[2], { title: 'Office hours' })}${bk(EV[3], { title: 'CNN notes' })}</div></div></div></div></div>`
+const W3 = () => `<div class="wh">Today <span class="q">· 8 blocks · 4 anytime</span><span class="r">${addBtn}</span></div><div style="margin-top:6px">
+  ${hrRow(10, `<div class="nowr">10:40</div>`, { cls: 'now first' })}${hrRow(11, bk(EV[1], { right: '–12:30' }))}${hrRow(12, bk(EV[2], { right: '–12:45' }))}${hrRow(13, bk(EV[3], { time: '1:30', title: 'CNN notes' }))}</div>`
+const W4 = () => `<div class="wh">Mon 26 <span class="q">· 1 of 9 done</span><span class="r">${addBtn}</span></div><div style="margin-top:8px">${dayBar()}</div><div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">${bk(EV[1], { time: '11:00', right: 'in 20m' })}${goalW()}</div>`
+
+// ═════ the four directions ═════
+const DIRS = [
+  { n: 1, name: 'Thread', draw: phone1, widget: W1,
+    borrows: 'Structured (one line through the day, a capsule as tall as the block is long, free time as real gaps) and Akiflow mobile (drag a task from a list onto the day).',
+    say: 'One line runs down the day. Each block is a capsule on the line, as tall as it is long, with its time on the left and its title beside it. Free time shows up as gaps that say how much time is free, and what fits there. Where two blocks overlap, the second capsule moves right and says by how much. The goal isn\'t a separate card at the top: the paper goal card sits on the line at 1:30, where it happens. Rituals are dashed capsules with Begin. Anytime tasks, Overdue and Also open come after the line.',
+    tap: ['<b>Tap</b> a capsule: the block sheet (same as the calendar). Tap a task\'s box: done.', '<b>Drag</b> a capsule up or down: it moves in 15-minute steps, and its time on the left updates as you drag. Drag its bottom edge to change its length.', '<b>Drag</b> an Anytime task up onto the line: it drops into the gap under your finger and becomes a block. Tap "fits Email Dr. Hany" to put that task in the gap.', '<b>Long-press</b> the line: pick a block or a task to add at that time.'],
+    widgetSay: 'The thread from now on: the now dot, the next two capsules and the goal, with a box to tick. Built from fixed rows (a LinearLayout with rounded drawable capsules). Its height steps by length (S / M / L) rather than following it exactly.' },
+  { n: 2, name: 'Dial', draw: (w) => phone2(w)(), widget: W2,
+    borrows: 'The iOS Clock bedtime dial and Apple Watch\'s calendar complications (a 24-hour ring), with B\'s own Now card next to it.',
+    say: 'B\'s Now card turned into a clock. The whole 24 hours is one ring: blocks are arcs in palette C, overlapping blocks drop to an inner track, the goal has a gold arc on the outside, the night is dotted, and the rituals are a sun and a moon. A lavender hand points at now. Next to the ring is what\'s up next and the two after it. Under the ring, everything is exactly B: the goal card, Top 3, Today\'s tasks, Overdue and Rituals. So this is the Day view that changes the least from B.',
+    tap: ['<b>Tap</b> an arc: the block sheet. Tap the middle: Now + next.', '<b>Drag</b> the hand round the ring: the panel beside it shows what\'s on at that time, or "free 45m". Let go and it springs back to now.', '<b>Long-press</b> a task, then tap a free part of the ring: the task goes there, at the length it already has.', 'Moving a block in time happens in the calendar. On a ring, the drag would be too fiddly.'],
+    widgetSay: 'The ring with Up next and two Then rows. The ring is drawn into a bitmap (an ImageView in RemoteViews), and redrawn when a block starts or ends and every 30 minutes. The hand might be up to 30 minutes behind between redraws.' },
+  { n: 3, name: 'Hours', draw: phone3, widget: W3,
+    borrows: 'Google Calendar\'s Schedule view (an agenda with full-width coloured chips, empty stretches folded) and Sunsama (anytime tasks offered into free slots).',
+    say: 'An agenda, hour by hour, from now to bedtime. Each hour is one row with the hour on the left. Blocks are the calendar\'s chips, and a timed task is a row with a box. When a block runs past its hour, the next row shows a thin coloured line saying when it ends. Free stretches become dashed slots that offer one anytime task that fits, with Put here. Earlier hours fold into one line, which still has Begin for the morning ritual. Everything before 10 AM, and anything that runs past 10 PM, folds too.',
+    tap: ['<b>Tap</b> a chip: the block sheet. Tap <b>Put here</b>: that task takes the slot at its own length, with Undo.', '<b>Drag</b> a chip to another hour row: it keeps its minutes (12:00 to 3:00). Drag an anytime task up into any hour row to give it that time.', '<b>Long-press</b> an hour: add a block there.', 'Empty hours fold to a 20 px line, so the day fits on about 1.3 screens.'],
+    widgetSay: 'Four hour rows from now on, with the hour on the left and a chip in each. Built as a ListView, the only widget of the four that could scroll.' },
+  { n: 4, name: 'Day bar', draw: phone4, widget: W4, extra: true,
+    borrows: 'Fantastical\'s DayTicker (a short strip of coloured pills you pull down to make bigger) and Amie (tasks next to the day, dropped onto it to become blocks).',
+    say: 'The day squeezed into one bar at the top, 7 AM to 11 PM, with no scrolling. Blocks are pills, an overlapping block sits on a thin second lane under the first, the goal has a gold underline, the rituals are a sun and a moon, and a lavender tick marks now. Under the bar is one line, Next · 11:00 · in 20m. The rest is B. <b>Tap the bar</b> and it opens into the calendar\'s own column for today, with the blocks side by side where they overlap. Tap it again, or swipe up, to close it. This is the densest of the four.',
+    tap: ['<b>Tap</b> the bar: it opens into the day column (drawn below at 390). Tap a pill on the closed bar: that block\'s sheet.', '<b>Drag</b> a task up onto the bar: the bar opens on its own, and you drop the task on a time in the column (Amie\'s move).', 'In the open column, blocks drag and stretch exactly as they do in the calendar (same code).', '<b>Swipe</b> the bar sideways: Yesterday or Tomorrow.'],
+    widgetSay: 'The bar, the next block and the goal strip. Built as a bitmap for the bar plus two plain rows. This is the cheapest widget of the four to build.' },
+]
+
+const SIZES = [[360, 780], [390, 844], [430, 932]]
+const phoneF = (d, w, h, inner) => `<div class="frame phone" style="width:${w}px;height:${h}px" data-measure="${d}-${w}">${inner}</div>`
+document.getElementById('looks').innerHTML = DIRS.map((D) => `
+<section class="look" data-grp="day" data-look="${D.n}" id="look-${D.n}">
+  <h2><span class="tag">${D.n}</span>${D.name}</h2>
+  <div class="say"><p>${D.say}</p></div>
+  <div class="facts">
+    <div class="fact"><h4>Borrows</h4>${D.borrows}</div>
+    <div class="fact dens" data-dens="${D.n}"><h4>Above the fold at 390</h4>…</div>
+    <div class="fact"><h4>Tap and drag</h4><ul>${D.tap.map((t) => `<li>${t}</li>`).join('')}</ul></div>
+  </div>
+  <div class="shots">${SIZES.map(([w, h]) => `<figure>${phoneF(D.n, w, h, D.draw(w))}<figcaption>${w} × ${h}</figcaption></figure>`).join('')}
+  ${D.extra ? `<figure>${phoneF('4open', 390, 844, phone4open())}<figcaption>390, the bar tapped open</figcaption></figure>` : ''}</div>
+  <h3 class="sub">Widget ${D.n} · 4 × 2</h3>
+  <div class="say"><p>${D.widgetSay}</p></div>
+  <div class="shots"><figure><div class="wall" data-widget="${D.n}"><div class="wg">${D.widget()}</div><div class="cap2">Kai's Flow</div></div><figcaption>4 × 2 on a home screen (the widget follows the phone's dark mode)</figcaption></figure></div>
+  <div class="pick-row"><button type="button" class="btn pick" data-grp="day" data-pick="${D.n}" aria-pressed="false">This Day view (${D.n})</button><button type="button" class="btn pick" data-grp="widget" data-pick="${D.n}" aria-pressed="false">This widget (${D.n})</button></div>
+</section>`).join('')
+
+// ── above the fold: task rows wholly on screen (the goal card counts as one), measured in the drawing ──
+function count(frame) {
+  const fb = frame.querySelector('.scr').getBoundingClientRect().bottom
+  return [...frame.querySelectorAll('[data-task]')].filter((el) => { const r = el.getBoundingClientRect(); return r.height > 0 && r.bottom <= fb + 0.5 }).length
+}
+function density() {
+  for (const box of document.querySelectorAll('[data-dens]')) {
+    const d = box.dataset.dens
+    const c = Object.fromEntries(SIZES.map(([w]) => [w, count(document.querySelector(`[data-measure="${d}-${w}"]`))]))
+    box.dataset.counts = JSON.stringify(c)
+    box.innerHTML = `<h4>Above the fold at 390</h4><b>${c[390]} tasks</b> fully on screen (the goal counts as one), plus ${{ 1: 'the next 6 blocks on the line', 2: 'the whole day on the ring', 3: 'every hour until 4 PM', 4: 'the whole day on the bar' }[d]}. At 360: ${c[360]}, at 430: ${c[430]}. B has 7 at 390.`
+  }
+}
+
+// ── theme ──
+const setTheme = (t) => {
+  document.documentElement.dataset.theme = t
+  document.querySelectorAll('[data-th]').forEach((x) => x.setAttribute('aria-pressed', String(x.dataset.th === t)))
+  document.querySelectorAll('[data-only]').forEach((x) => { x.style.display = x.dataset.only === t ? '' : 'none' })
+}
+document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => setTheme(b.dataset.th)))
+setTheme('day')
+
+// ── picks ──
+const KEY = 'kf-daystrip-picks'
+let picks = {}
+try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
+const line = () => [picks.day && `Day view ${picks.day} (${DIRS[picks.day - 1].name})`, picks.widget && `widget ${picks.widget}`].filter(Boolean).join(', ')
+function paint() {
+  document.getElementById('mine').textContent = line() || 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(String(picks[b.dataset.grp]) === b.dataset.pick)))
+  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', String(picks.day) === s.dataset.look))
+}
+document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
+  picks[b.dataset.grp] = Number(b.dataset.pick)
+  try { localStorage.setItem(KEY, JSON.stringify(picks)) } catch {}
+  paint()
+}))
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = line() ? `Phone Today, Day view: ${line()}` : 'Phone Today, Day view: nothing picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { ok = document.execCommand('copy') } catch {} ; ta.remove() }
+  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paint()
+;(document.fonts?.ready ?? Promise.resolve()).then(density)
+</script>
+</body>
+</html>
