@@ -86,7 +86,7 @@ A widget still changes its face when resized.
 ## Verification
 
 - **No Android SDK on this machine.** `ANDROID_HOME` is empty, there's no `%LOCALAPPDATA%\Android\Sdk` and no `sdkmanager`. I didn't install one.
-  - Instead, I dispatched CI's Android build on this branch (`gh workflow run android.yml --ref claude/widgets-build`). It isn't a release. The result is under Notes.
+  - Instead, I dispatched CI's Android build on this branch (`gh workflow run android.yml --ref claude/widgets-build`). It isn't a release. It is green: the APK builds and the emulator smoke test passes (see Notes).
 - **`python docs/log/assets/widgets-build/check.py`: ok.** It checks:
   - every `R.*` in the Java and every `@type/name` in the XML exists;
   - each builder's ids are in the layouts it draws (includes expanded);
@@ -116,4 +116,4 @@ A widget still changes its face when resized.
 - **Other builders.** No notification files were touched. The only app/src changes are the three files in `features/widgets`.
 - **Generators.** `design-integration/render_widget_res.py` ICON_NAMES now lists the icons in use: today, calendar, clock, activity and chat were added; check, stop, review, pickdate and send were removed.
 - `app/node_modules` is a junction to `kai-bugs`' copy, which has the same lockfile. It is untracked.
-- **CI result:** see the line added below once the dispatched run finishes.
+- **CI:** the first dispatched build (run 40350922557) failed in `mergeReleaseResources`, because aapt refuses a `--` inside an XML comment (CSS token names in my comments). I fixed it, and `check.py` now parses every XML file. The second run, [40352350554](https://github.com/khairyKY/kais-flow/actions/runs/40352350554), is green: the release APK built with all 39 receivers (`android-native.sh`), and the emulator smoke test passed (API 34). Nothing was released or attached.
