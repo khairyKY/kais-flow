@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, beforeAll } from 'vitest'
 import { setHour24 } from '../../lib/clock'
 import { setAppZone } from '../../lib/appZone'
 import type { CalendarEvent } from '../../lib/types'
-import { besideBlock, blockMenuSpec, isSynced, isUntitled, remindLabel, repeatLabel } from './blockMenuSpec'
+import { aiPrompts, besideBlock, blockMenuSpec, isSynced, isUntitled, remindLabel, repeatCheckName, repeatLabel } from './blockMenuSpec'
 
 // These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
 beforeAll(() => setHour24(true))
@@ -20,13 +20,15 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('5a a task block: when · project, the task as a quiet group, Unschedule ⌫, Delete last — no Repeat', () => {
     const spec = blockMenuSpec(block({ task_id: 't1', type: 'task' }), { task: { title: 'Host all the AI in one place', status: 'todo' }, projectName: 'Forecasting', now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'duplicate', 'unschedule', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'duplicate', 'ai', 'copylink', 'unschedule', 'delete'])
     expect(spec[0]).toMatchObject({ label: 'Wed, Jul 29', sub: true })
     expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h', sub: true }) // Cairo, UTC+3
     expect(spec[2]).toMatchObject({ label: 'Forecasting', unset: false })
     expect(spec[3]).toMatchObject({ label: 'Complete', divider: true, caption: { label: 'From task', text: 'Host all the AI in one place' } })
-    expect(spec[5]).toMatchObject({ label: 'Duplicate' }) // Kai 2026-10-17: the task's copy, blocked at this time
-    expect(spec[6]).toMatchObject({ label: 'Unschedule', hint: '⌫', divider: true })
+    expect(spec[5]).toMatchObject({ label: 'Duplicate', hint: '⌃D' }) // Kai 2026-10-17: the task's copy, blocked at this time
+    expect(spec[6]).toMatchObject({ label: 'Work with AI', sub: true }) // menu B (cal-blocks)
+    expect(spec[7]).toMatchObject({ label: 'Copy link' })
+    expect(spec[8]).toMatchObject({ label: 'Unschedule', hint: '⌫', divider: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', label: 'Delete', destructive: true, sub: false })
     expect(spec.filter((r) => r.destructive)).toHaveLength(1)
   })
@@ -38,14 +40,14 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('5c a plain block: Repeat, Link a task…, More (kind + busy, the deviation), Delete', () => {
     const spec = blockMenuSpec(block(), { now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'link', 'more', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'link', 'more', 'ai', 'copylink', 'delete'])
     expect(spec.find((r) => r.key === 'project')).toMatchObject({ label: 'No project', unset: true })
     expect(spec.find((r) => r.key === 'repeat')).toMatchObject({ label: 'Does not repeat', unset: true, sub: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', hint: '⌫' }) // p7e A4: Backspace deletes it
   })
 
   it('Duplicate (Kai 2026-10-17): an event and a task block — never a Time block (a slot repeats), a Google event, or a block whose task is not loaded', () => {
-    expect(keys(block({ type: 'event' }), { now: NOW })).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'link', 'more', 'duplicate', 'delete'])
+    expect(keys(block({ type: 'event' }), { now: NOW })).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'link', 'more', 'duplicate', 'ai', 'copylink', 'delete'])
     expect(keys(block({ type: 'event', recurrence_rule: 'FREQ=WEEKLY' }))).toContain('duplicate')
     expect(keys(block())).not.toContain('duplicate')
     expect(keys(block({ type: 'event', source: 'gcal' }))).not.toContain('duplicate')
@@ -54,7 +56,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('a repeating block: no Link a task, and Delete asks This event / All events', () => {
     const spec = blockMenuSpec(block({ recurrence_rule: 'FREQ=WEEKLY' }))
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'more', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'more', 'ai', 'copylink', 'delete'])
     expect(spec.find((r) => r.key === 'repeat')?.label).toBe('Repeats weekly')
     expect(spec.at(-1)).toMatchObject({ key: 'delete', sub: true })
     expect(spec.at(-1)?.hint).toBeUndefined() // ⌫ never deletes a whole series
@@ -86,8 +88,17 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('the popover sits beside the block: right when it fits, else left, top-aligned (zoom-aware)', () => {
     expect(besideBlock({ left: 100, right: 300, top: 50 }, 1280)).toEqual({ x: 308, y: 50 })
-    expect(besideBlock({ left: 1000, right: 1200, top: 50 }, 1280)).toEqual({ x: 1000 - 8 - 238, y: 50 })
-    expect(besideBlock({ left: 1000, right: 1200, top: 50 }, 1280, 1.25)).toEqual({ x: 1000 - 10 - 297.5, y: 50 })
+    expect(besideBlock({ left: 1000, right: 1200, top: 50 }, 1280)).toEqual({ x: 1000 - 8 - 272, y: 50 })
+    expect(besideBlock({ left: 1000, right: 1200, top: 50 }, 1280, 1.25)).toEqual({ x: 1000 - 10 - 340, y: 50 })
+  })
+
+  it('menu B: Work with AI › offers requests about this block (subtasks only for a task); repeat B names the box', () => {
+    const ai = aiPrompts(block({ type: 'event', title: 'Lunch with Omar' }), false)
+    expect(ai.map((p) => p.label)).toEqual(['Find a better time', 'Reschedule…', 'Summarise'])
+    expect(ai[0].text).toBe('Find a better time for "Lunch with Omar" (Wed, Jul 29, 09:00–11:00) this week.')
+    expect(aiPrompts(block({ task_id: 't1' }), true)[0]).toMatchObject({ label: 'Break into subtasks' })
+    expect(repeatCheckName(false, 'FREQ=WEEKLY')).toBe('Complete this occurrence (repeats weekly)')
+    expect(repeatCheckName(true, 'FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR')).toBe('Reopen this occurrence (repeats every weekday)')
   })
 
   it('repeat labels follow the task menu’s words', () => {

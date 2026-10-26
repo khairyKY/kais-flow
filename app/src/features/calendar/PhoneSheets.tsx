@@ -27,10 +27,11 @@ import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRemindWithUndo, setEventRepeat, updateEvent, type BlockRef } from './api'
 import { duplicateBlockWithUndo } from './duplicate'
-import { EVENT_REMIND, blockMenuSpec, isSynced, isUntitled, type BlockMenuKey } from './blockMenuSpec'
+import { EVENT_REMIND, aiPrompts, blockMenuSpec, isSynced, isUntitled, type BlockMenuKey } from './blockMenuSpec'
+import { askChat, copyBlockLink } from './blockActions'
 import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
-import { ColorDots } from './formFields'
+import { SwatchTray } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { linkRef } from '../../lib/links'
 import { clockText } from '../../lib/clock'
@@ -98,7 +99,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', unschedule: 'plus', delete: 'delete', google: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
 
 /** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
@@ -348,7 +349,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const openTask = useOpenTask()
-  const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'delete'>(null)
+  const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'ai' | 'delete'>(null)
   const [linkAt, setLinkAt] = useState<{ x: number; y: number } | null>(null)
   const [untitled] = useState(() => isUntitled(event))
   const [title, setTitle] = useState(untitled ? '' : event.title)
@@ -397,6 +398,8 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     },
     open: () => leave(() => event.task_id && openTask(event.task_id)),
     duplicate: () => leave(() => duplicateBlockWithUndo(event, task)),
+    ai: () => setPicker('ai'),
+    copylink: () => copyBlockLink(event),
     unschedule: () => leave(() => deleteEventWithUndo(event, 'Unscheduled')),
     link: (el) => {
       const r = el.getBoundingClientRect()
@@ -445,10 +448,10 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                 </div>
                 <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
               </div>
-              {/* Kai 2026-10-12: the colour changes after creation — the desktop title dot's swatches,
-                  saved on tap, for every block (the grid draws a block's own colour first). */}
+              {/* Menu B (cal-blocks, Kai 2026-10-26): the desktop menu's tray under the title — None, palette C's 16
+                  swatches and "+ Custom", saved on tap, for every block (the grid draws a block's own colour first). */}
               {!synced && <div className="pc-bs-colors">
-                <ColorDots
+                <SwatchTray
                   value={event.color ?? null}
                   size={28}
                   onChange={(c) => {
@@ -484,7 +487,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                         <EmojiText text={e.caption.text} />
                       </div>
                     )}
-                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => !synced && run[e.key]?.(el)} />
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => !synced && run[e.key]?.(el)} />
                   </Fragment>
                 ))}
               </div>
@@ -585,6 +588,15 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
             choice('Busy', event.busy, () => updateEvent(event, { busy: true })),
             choice('Free', !event.busy, () => updateEvent(event, { busy: false })),
           ]}
+        />
+      )}
+      {picker === 'ai' && (
+        // Menu B's Work with AI ›: the chat opens with a request about this block typed in (the sheet leaves first).
+        <ActionSheet
+          title="Work with AI"
+          meta={event.title}
+          onClose={() => setPicker(null)}
+          items={aiPrompts(event, !!event.task_id).map((p) => ({ label: p.label, onSelect: () => leave(() => askChat(p.text)) }))}
         />
       )}
       {picker === 'delete' && (

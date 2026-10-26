@@ -10,12 +10,12 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'unschedule' | 'delete' | 'google'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google'
 
 export interface BlockMenuEntry {
   key: BlockMenuKey
   label: string
-  /** The value on the right: the length ("2h"), the Unschedule / Delete key (⌫). */
+  /** The value on the right: the length ("2h"), the Duplicate / Unschedule / Delete key (⌃D, ⌫). */
   hint?: string
   /** Opens a submenu / picker. */
   sub?: boolean
@@ -37,8 +37,8 @@ export interface BlockMenuContext {
   now?: Date
 }
 
-/** §5's popover width. */
-export const BLOCK_MENU_WIDTH = 238
+/** The popover's width: menu B's 272 (cal-blocks — the swatch tray's 8 columns fit; §5 drew 238). */
+export const BLOCK_MENU_WIDTH = 272
 
 /** Where the popover goes for a block's rect: beside it on the right, else on the left, top-aligned
  * (screen px, as ContextMenu takes them; `zoom` = lib/uiScale uiZoom()). */
@@ -82,6 +82,20 @@ export function repeatWords(rule: string): string {
 
 /** Repeat B (cal-blocks): a repeating task's box, named for a screen reader — "Complete this occurrence (repeats weekly)". */
 export const repeatCheckName = (done: boolean, rule: string): string => `${done ? 'Reopen' : 'Complete'} this occurrence (repeats ${repeatWords(rule)})`
+
+/** Work with AI › (Menu B): each row opens the chat with a request about this block typed in, not sent — the chat
+ * acts through its tools with a confirm card (ai-chat). The block named by its title and when it is. */
+export function aiPrompts(e: CalendarEvent, isTask: boolean): { label: string; text: string }[] {
+  const span = eventSpan(e)
+  const when = e.all_day ? blockDate(e) : `${blockDate(e)}, ${clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end))}`
+  const it = `"${e.title.trim() || 'this block'}" (${when})`
+  return [
+    ...(isTask ? [{ label: 'Break into subtasks', text: `Break ${it} into subtasks.` }] : []),
+    { label: 'Find a better time', text: `Find a better time for ${it} this week.` },
+    { label: 'Reschedule…', text: `Reschedule ${it} to ` },
+    { label: 'Summarise', text: `Summarise ${it}: what it is and what I need for it.` },
+  ]
+}
 
 /** The Remind row's choices (A12, 0077) — minutes before each start; tasks' Remind submenu's words. */
 export const EVENT_REMIND: readonly { min: number | null; label: string }[] = [
@@ -130,9 +144,11 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
     )
     if (ctx.missed) out.push({ key: 'replan', label: 'Replan…' }) // the calendar's Plan menu, in its place
     // Kai 2026-10-17: a copy of the task, blocked at this same time.
-    out.push({ key: 'duplicate', label: 'Duplicate' })
+    out.push({ key: 'duplicate', label: 'Duplicate', hint: '⌃D' })
   }
-  if (e.task_id) out.push({ key: 'unschedule', label: 'Unschedule', hint: '⌫', divider: true })
+  // Menu B (cal-blocks, Kai 2026-10-26): Work with AI › (the chat, with a request about this block) and Copy link.
+  const extras: BlockMenuEntry[] = [{ key: 'ai', label: 'Work with AI', sub: true }, { key: 'copylink', label: 'Copy link' }]
+  if (e.task_id) out.push(...extras, { key: 'unschedule', label: 'Unschedule', hint: '⌫', divider: true })
   else {
     // deviation(2026-10-12): §5 drops the Event / Time block kind and Busy / Free; they stay reachable
     // here, one quiet row, so creating a block is not the only place to set them.
@@ -140,9 +156,10 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
     out.push({ key: 'more', label: 'More', sub: true, divider: repeating })
     // Kai 2026-10-17: a copy at the same time (side by side) — an event, never a Time block (a slot
     // repeats instead); a repeat's copy is this one occurrence, on its own.
-    if (e.type !== 'time_block') out.push({ key: 'duplicate', label: 'Duplicate' })
+    if (e.type !== 'time_block') out.push({ key: 'duplicate', label: 'Duplicate', hint: '⌃D' })
+    out.push(...extras)
   }
   // p7e A4: ⌫ deletes a plain one-off (Akiflow's Backspace); a repeat asks This / All on the row instead.
-  out.push({ key: 'delete', label: isUntitled(e, ctx.now) ? 'Discard' : 'Delete', destructive: true, sub: repeating, ...(!e.task_id && !repeating ? { hint: '⌫' } : null) })
+  out.push({ key: 'delete', label: isUntitled(e, ctx.now) ? 'Discard' : 'Delete', destructive: true, sub: repeating, ...(!e.task_id ? { divider: true } : null), ...(!e.task_id && !repeating ? { hint: '⌫' } : null) })
   return out
 }
