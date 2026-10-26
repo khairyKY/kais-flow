@@ -4,7 +4,7 @@ import { DatePicker, Popover } from '../../components/DatePicker'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
-import { Button } from '../../components/kit'
+import { Button, KeyCombo } from '../../components/kit'
 import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { LengthChips, SheetTitle, TimePanel } from '../../components/TimePicker'
@@ -320,11 +320,12 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
     danger: e.destructive,
     labelColor: e.unset ? 'var(--ink-muted)' : undefined,
     divider: e.divider ?? false,
-    shortcut: e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? e.hint : undefined,
+    shortcut: e.key === 'unschedule' || e.key === 'delete' ? e.hint : undefined,
     hint:
-      e.key === 'project' && project ? (
+      // Menu B draws Duplicate's keys as "Ctrl D" (the cheatsheet's ⌘/Ctrl rows; ⌘D works on a Mac too).
+      e.key === 'duplicate' ? <KeyCombo keys={['Ctrl', 'D']} size="sm" /> : e.key === 'project' && project ? (
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: project.color || domains.find((d) => d.id === project.domain_id)?.color || 'var(--ink-hairline)' }} />
-      ) : e.key !== 'unschedule' && e.key !== 'delete' && e.key !== 'duplicate' ? e.hint : undefined,
+      ) : e.key !== 'unschedule' && e.key !== 'delete' ? e.hint : undefined,
     before: e.caption && (
       <>
         <div style={{ ...CAPTION, padding: '4px 9px 5px' }}>{e.caption.label}</div>

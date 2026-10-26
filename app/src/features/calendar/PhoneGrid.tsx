@@ -458,7 +458,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
               {lk.check.repeat ? (
                 // Repeat B (cal-blocks): the box outline is two chasing arrows; ticking completes this occurrence.
                 <button type="button" role="checkbox" aria-checked={lk.check.done} aria-label={repeatCheckName(lk.check.done, lk.check.repeat)} className="pc-rep" onClick={lk.check.toggle}>
-                  <RepeatGlyph done={lk.check.done} sw={2.67} />
+                  <RepeatGlyph done={lk.check.done} />
                 </button>
               ) : (
                 <Checkbox subtask size={18} checked={lk.check.done} onChange={lk.check.toggle} label={ev.title} />

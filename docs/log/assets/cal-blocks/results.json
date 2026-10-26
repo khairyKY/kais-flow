@@ -1,0 +1,97 @@
+[
+  {
+    "name": "m-day the title first, the tray of swatches under it, then the rows",
+    "ok": true,
+    "detail": "{\"title\":34.75,\"tray\":66.28125,\"rows\":281.03125,\"swatches\":17,\"custom\":\"Custom\",\"on\":\"Lagoon\",\"width\":340}"
+  },
+  {
+    "name": "m-day the tray: No colour + palette C's 16 swatches and \"+ Custom\"; the block's old hydrangea shows as Lagoon",
+    "ok": true,
+    "detail": "{\"title\":34.75,\"tray\":66.28125,\"rows\":281.03125,\"swatches\":17,\"custom\":\"Custom\",\"on\":\"Lagoon\",\"width\":340}"
+  },
+  {
+    "name": "m-day the rows: … Complete · Open task · Duplicate Ctrl D · Work with AI › · Copy link · Unschedule ⌫ · Delete",
+    "ok": true,
+    "detail": "[\"Fri, Oct 23 ▸\",\"10:15 – 11:15 AM 1h ▸\",\"No project ▸\",\"Complete\",\"Open task\",\"Duplicate Ctrl D\",\"Work with AI ▸\",\"Copy link\",\"Unschedule ⌫\",\"Delete\"]"
+  },
+  {
+    "name": "m a swatch saves its colour (Fern, #72BF8E) and the block wears it",
+    "ok": true,
+    "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000020\",\"user_id\":\"00000000-0000-4000-8000-00000000cb10\",\"title\":\"Deep work on the quarterly forecast\",\"starts_at\":\"2026-10-23T07:15:00.000Z\",\"ends_at\":\"2026-10-23T08:15:00.000Z\",\"all_day\":false,\"task_id\":\"10000000-0000-4000-8000-000000000009\",\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"task\",\"color\":\"#72BF8E\",\"deleted_at\":null,\"created_at\":\"2026-10-01T04:00:00.000Z\",\"updated_at\":\"2026-10-01T04:00:00.000Z\"}"
+  },
+  {
+    "name": "m Ctrl+D duplicates the block: a new task, blocked at the same time; the menu closes",
+    "ok": true,
+    "detail": "[\"0be5b8a5-a84f-4bf5-9afe-c881ca0ed3d5\",\"2026-10-23T07:15:00.000Z\"]"
+  },
+  {
+    "name": "m …with a toast and its Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m an event's rows: … Link a task… · More › · Duplicate Ctrl D · Work with AI › · Copy link · Delete ⌫",
+    "ok": true,
+    "detail": "[\"Fri, Oct 23 ▸\",\"11:30 AM – 12:30 PM 1h ▸\",\"No project ▸\",\"Does not repeat ▸\",\"No reminder ▸\",\"Link a task… ▸\",\"More ▸\",\"Duplicate Ctrl D\",\"Work with AI ▸\",\"Copy link\",\"Delete ⌫\"]"
+  },
+  {
+    "name": "m Copy link: /calendar?event=<the block> on the clipboard, \"Link copied\"",
+    "ok": true,
+    "detail": "http://localhost:5314/calendar?event=e0000000-0000-4000-8000-000000000021"
+  },
+  {
+    "name": "m …and the link turns the calendar to it and opens its menu",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m Work with AI ›: Find a better time · Reschedule… · Summarise (an event: no subtasks)",
+    "ok": true,
+    "detail": "[\"Find a better time\",\"Reschedule…\",\"Summarise\"]"
+  },
+  {
+    "name": "m …picking one opens the chat with the request typed in (not sent)",
+    "ok": true,
+    "detail": "Find a better time for \"Design review\" (Fri, Oct 23, 11:30 AM–12:30 PM) this week."
+  },
+  {
+    "name": "m-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m-night the title first, the tray of swatches under it, then the rows",
+    "ok": true,
+    "detail": "{\"title\":34.75,\"tray\":66.28125,\"rows\":281.03125,\"swatches\":17,\"custom\":\"Custom\",\"on\":\"Lagoon\",\"width\":340}"
+  },
+  {
+    "name": "m-night the tray: No colour + palette C's 16 swatches and \"+ Custom\"; the block's old hydrangea shows as Lagoon",
+    "ok": true,
+    "detail": "{\"title\":34.75,\"tray\":66.28125,\"rows\":281.03125,\"swatches\":17,\"custom\":\"Custom\",\"on\":\"Lagoon\",\"width\":340}"
+  },
+  {
+    "name": "m-night the rows: … Complete · Open task · Duplicate Ctrl D · Work with AI › · Copy link · Unschedule ⌫ · Delete",
+    "ok": true,
+    "detail": "[\"Fri, Oct 23 ▸\",\"10:15 – 11:15 AM 1h ▸\",\"No project ▸\",\"Complete\",\"Open task\",\"Duplicate Ctrl D\",\"Work with AI ▸\",\"Copy link\",\"Unschedule ⌫\",\"Delete\"]"
+  },
+  {
+    "name": "m-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone the event sheet: the tray (17 + Custom) under the title, and Duplicate · Work with AI · Copy link rows",
+    "ok": true,
+    "detail": "{\"swatches\":17,\"custom\":true,\"rows\":[\"Wed, Oct 21\",\"10:30 – 11:15 AM45m\",\"No project\",\"Does not repeat\",\"No reminder\",\"Link a task…\",\"More\",\"Duplicate\",\"Work with AI\",\"Copy link\"]}"
+  },
+  {
+    "name": "p-phone Work with AI › Summarise opens the chat with the request typed in",
+    "ok": true,
+    "detail": "Summarise \"Dentist\" (Wed, Oct 21, 10:30–11:15 AM): what it is and what I need for it."
+  },
+  {
+    "name": "p-phone no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

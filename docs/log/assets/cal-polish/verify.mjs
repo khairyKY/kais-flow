@@ -321,9 +321,9 @@ if (want('d9')) {
       const dSt = st && Date.parse(st.starts_at) - Date.parse(iso('12:00'))
       const dWa = wa && Date.parse(wa.starts_at) - Date.parse(iso('11:00'))
       check('d9 drag one picked block about an hour: both move by the same amount (Water the plants keeps its 15 minutes)', dSt >= 3_600_000 && dSt === dWa && mins(wa) === 15, JSON.stringify([st?.starts_at, wa?.starts_at]))
-      check('d9 …one toast "Moved · 2 blocks" with Undo', await toastSoon(page, 'Moved · 2 blocks'))
+      check('d9 …one toast "2 blocks moved" with Undo', await toastSoon(page, '2 blocks moved')) // cal-blocks item 10's words
       const w1 = state.writes.length
-      await page.locator('.kf-toast', { hasText: 'Moved · 2 blocks' }).getByRole('button', { name: 'Undo' }).click()
+      await page.locator('.kf-toast', { hasText: '2 blocks moved' }).getByRole('button', { name: 'Undo' }).click()
       await settle(state)
       const st1 = posts(state, 'calendar_events', w1).filter((e) => e.id === eid(STANDUP)).at(-1)
       const wa1 = posts(state, 'calendar_events', w1).filter((e) => e.id === eid(WATERB)).at(-1)

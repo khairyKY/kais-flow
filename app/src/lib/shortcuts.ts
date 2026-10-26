@@ -67,6 +67,8 @@ export const CALENDAR_SHORTCUTS: ShortcutEntry[] = [
   { keys: ['t'], label: 'Jump to today' },
   { keys: ['0'], label: 'Fold the planning rail' },
   { keys: ['⌘/Ctrl', 'click'], label: 'New task in that slot' },
+  { keys: ['⌘/Ctrl', 'drag'], label: 'Copy a block where you drop it' },
+  { keys: ['⌘/Ctrl', 'D'], label: 'Duplicate the open block' },
   { keys: ['⌫'], label: 'Delete the open event' },
 ]
 

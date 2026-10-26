@@ -229,7 +229,7 @@ const GHOST_ID = 'kf-cal-ghost'
 
 /** `id`: the grabbed block's ghost carries GHOST_ID; a multi-drag's other blocks (cal-blocks, item 10) get their
  * own, unnamed — each placed from its own block, so it keeps its offset from the grabbed one under the pointer. */
-function startGhost(source: HTMLElement, ev: MouseEvent | null, id: string | null = GHOST_ID): { stop: () => void; host: HTMLElement | null } {
+function startGhost(source: HTMLElement, ev: MouseEvent | null, id: string | null = GHOST_ID, from?: { x: number; y: number } | null): { stop: () => void; host: HTMLElement | null } {
   if (typeof document === 'undefined') return { stop: () => {}, host: null }
   const rect = source.getBoundingClientRect()
 
@@ -256,9 +256,11 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null, id: string | nul
   host.appendChild(ghost)
   document.body.appendChild(host)
 
-  // Grab offset keeps the ghost under the same spot on the block the pointer picked up.
-  const grabX = ev ? ev.clientX - rect.left : rect.width / 2
-  const grabY = ev ? ev.clientY - rect.top : rect.height / 2
+  // Grab offset keeps the ghost under the same spot on the block the pointer picked up — measured from the press
+  // (`from`), not from the move that crossed FullCalendar's drag threshold, so the ghost doesn't lag the pointer.
+  const at = from ?? (ev ? { x: ev.clientX, y: ev.clientY } : null)
+  const grabX = at ? at.x - rect.left : rect.width / 2
+  const grabY = at ? at.y - rect.top : rect.height / 2
   // The host carries the position so the ghost itself keeps the 2c wobble on its own transform.
   const move = (e: MouseEvent) => {
     host.style.transform = `translate(${e.clientX - grabX}px, ${e.clientY - grabY}px)`
@@ -814,6 +816,9 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   // `select` below reads the key. The slot's half hour, 30 minutes long (a whole day in the all-day band).
   function handleCtrlClick(e: React.MouseEvent) {
     if (!e.ctrlKey || e.metaKey || e.button !== 0 || (e.target as HTMLElement).closest('.fc-event, .fc-more-link, button, [role="button"]')) return
+    // The release of a Ctrl+drag (menu B's copy) is a click on whatever both ends share — not a Ctrl-click on a slot.
+    const from = downAt.current
+    if (from && Math.abs(e.clientX - from.x) + Math.abs(e.clientY - from.y) > 3) return
     const at = resolveGridDateTime(e.clientX, e.clientY)
     if (!at) return
     const end = new Date(Date.parse(at.iso) + (at.allDay ? 1440 : 30) * 60_000).toISOString()
@@ -1058,7 +1063,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                 aria-label={p.kfTaskRepeat ? repeatCheckName(done, p.kfTaskRepeat) : `${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
                 ref={dragGuard(() => L().props.onCompleteTask?.(p.kfTaskId!, done))}
               >
-                {p.kfTaskRepeat ? <RepeatGlyph done={done} sw={2.95} /> : done ? <Tick /> : null}
+                {p.kfTaskRepeat ? <RepeatGlyph done={done} /> : done ? <Tick /> : null}
               </span>
             )}
             <div className="kf-ev-text">
@@ -1158,7 +1163,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         landingRef.current?.stop()
         landingRef.current?.carried.forEach((c) => c.stop())
         const je = info.jsEvent as MouseEvent | null
-        stopGhostRef.current = startGhost(info.el, je).stop
+        stopGhostRef.current = startGhost(info.el, je, GHOST_ID, downAt.current).stop
         stopHoverRef.current = trackRailHover(L().props.railRef?.current)
         // Ctrl+drag (menu B): with the key down (from the press, or pressed meanwhile) the original stays drawn.
         const wrap = wrapRef.current
@@ -1183,7 +1188,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           if (pid === id) return []
           const el = wrapRef.current?.querySelector<HTMLElement>(`.fc-timegrid-event[data-kf-id="${CSS.escape(pid)}"]:not(.fc-event-mirror):not(.kf-synced)`)
           if (!el) return []
-          const g = startGhost(el, je, null)
+          const g = startGhost(el, je, null, downAt.current)
           el.setAttribute('data-carried', '')
           return [{ id: pid, host: g.host, stop: () => { el.removeAttribute('data-carried'); g.stop() } }]
         })
