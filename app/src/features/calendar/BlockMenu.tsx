@@ -5,9 +5,10 @@ import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { Button } from '../../components/kit'
-import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
+import { fromMin, toMin } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { LengthChips, SheetTitle, TimePanel } from '../../components/TimePicker'
+import { TypedTime } from '../../components/TypedTime'
 import { uiZoom } from '../../lib/uiScale'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
 import { useDomains } from '../domains/api'
@@ -33,14 +34,6 @@ const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
   link: 'plus', more: 'dots', duplicate: 'duplicate', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
-
-/** §5c's Duration submenu. */
-const LENGTHS: { min: number; label: string }[] = [
-  { min: 15, label: 'Quick' },
-  { min: 30, label: 'Short' },
-  { min: 60, label: 'Standard' },
-  { min: 120, label: 'Deep' },
-]
 
 // B (D5): a caption is metadata — sentence case, untracked, even digits.
 const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }
@@ -125,7 +118,15 @@ function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; u
   )
 }
 
-/** §5c Custom…: the MK Time Picker's panel (start · duration) in the date picker's popover. */
+/** The block to a new start and length, with Undo (a repeat from this occurrence on). */
+function retime(event: CalendarEvent, start: number, len: number) {
+  const span = eventSpan(event)
+  if (start !== span.start || start + len !== span.end) retimeEventWithUndo(event, span, { ...span, start, end: start + len })
+}
+
+/** Time ▸: the MK Time Picker's panel in the date picker's popover — the start (free slots, the
+ * 15-minute list, or typed). Queue 15: no Duration list or chips of its own — the length is the
+ * popover's one row of chips (a typed range still sets both). */
 function CustomTime({ event, position, onDone, onClose }: { event: CalendarEvent; position: { x: number; y: number }; onDone: () => void; onClose: () => void }) {
   const span = eventSpan(event)
   const [time, setTime] = useState(fromMin(span.start))
@@ -140,8 +141,7 @@ function CustomTime({ event, position, onDone, onClose }: { event: CalendarEvent
         <Button
           type="button"
           onClick={() => {
-            const start = toMin(time)
-            if (start !== span.start || start + len !== span.end) retimeEventWithUndo(event, span, { ...span, start, end: start + len })
+            retime(event, toMin(time), len)
             onDone()
           }}
         >
@@ -149,7 +149,7 @@ function CustomTime({ event, position, onDone, onClose }: { event: CalendarEvent
         </Button>
       }
     >
-      <TimePanel day={span.day} value={time} onValue={setTime} duration={len} onDuration={setLen} />
+      <TimePanel day={span.day} value={time} onValue={setTime} duration={len} onDuration={setLen} lengthChips={false} onSubmit={(t, d) => { retime(event, toMin(t), d ?? len); onDone() }} />
     </Popover>
   )
 }
@@ -220,27 +220,9 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
           <DatePicker mode="day" title="Date" meta={event.title} value={event.all_day ? event.starts_at.slice(0, 10) : span.day} quick position={at} onPick={(day) => { moveToDayWithUndo(event, day); closeAll() }} onClose={back} />
         )
       case 'time':
-        return event.all_day ? undefined : ({ position: at, onClose: back, closeAll }) => (
-          <ContextMenu
-            position={at}
-            onClose={back}
-            width={150}
-            label="Duration"
-            header={<div style={{ ...CAPTION, padding: '4px 9px 2px' }}>Duration</div>}
-            items={[
-              ...choices(
-                LENGTHS.map((l) => ({
-                  label: l.label,
-                  on: len === l.min,
-                  icon: <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-caption)', fontVariantNumeric: 'tabular-nums', width: 32, color: len === l.min ? 'var(--acc-lavender-deep)' : 'var(--ink-faint)' }}>{durationLabel(l.min)}</span>,
-                  run: () => { if (len !== l.min) retimeEventWithUndo(event, span, { ...span, end: span.start + l.min }) },
-                })),
-                closeAll,
-              ),
-              { label: 'Custom…', divider: true, submenu: ({ position: p, onClose: b }) => <CustomTime event={event} position={p} onDone={closeAll} onClose={b} /> },
-            ]}
-          />
-        )
+        // Queue 15: Time ▸ is the start; the Duration list (Quick · Short · Standard · Deep · Custom…) is
+        // gone — the length chips under the title are the popover's one length control.
+        return event.all_day ? undefined : ({ position: at, onClose: back, closeAll }) => <CustomTime event={event} position={at} onDone={closeAll} onClose={back} />
       case 'project':
         return ({ position: at, onClose: back, closeAll }) => (
           <ProjectPicker position={at} projects={projects} domains={domains} currentProjectId={event.project_id ?? null} onSelect={(id) => { if (id !== (event.project_id ?? null)) updateEvent(event, { project_id: id }); closeAll() }} onClose={back} />
@@ -360,9 +342,13 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
         <>
           <TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />
           {/* Kai 2026-10-21: the length in one tap — the block resizes from its start (a task's estimate
-              follows, calendar/api resizeEvent), with Undo; Time ▸ keeps Custom…. */}
+              follows, calendar/api resizeEvent), with Undo. Queue 15: the popover's ONE length control.
+              Queue 16: or type it — "7–8:30", "50m", "7:10 pm", "in 2h" (Time ▸ keeps the list). */}
           {!synced && !event.all_day && (
-            <LengthChips value={len} onPick={(m) => { if (m !== len) retimeEventWithUndo(event, span, { ...span, end: span.start + m }) }} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, max-content)', gap: 5, padding: '0 9px 8px' }} />
+            <>
+              <TypedTime dense start={span.start} minutes={len} onApply={(r) => retime(event, r.start ?? span.start, r.minutes ?? len)} style={{ padding: '0 9px 6px' }} />
+              <LengthChips value={len} onPick={(m) => retime(event, span.start, m)} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, max-content)', gap: 5, padding: '0 9px 8px' }} />
+            </>
           )}
         </>
       }
