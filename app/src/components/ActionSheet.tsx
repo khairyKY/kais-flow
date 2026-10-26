@@ -39,7 +39,14 @@ export const ACTION_ROW_CSS = `
   .kf-as-row.is-destructive .kf-as-hint { color: var(--acc-terra-ink); }
 `
 
-export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode; meta?: ReactNode; items: ActionSheetItem[]; onClose: () => void }) {
+export function ActionSheet({ title, meta, items, header, onClose }: {
+  title: ReactNode
+  meta?: ReactNode
+  items: ActionSheetItem[]
+  /** Above the rows (a typed field — queue 16's Duration). */
+  header?: ReactNode
+  onClose: () => void
+}) {
   const actions = items.filter((i) => !i.destructive)
   const destructive = items.filter((i) => i.destructive)
 
@@ -78,11 +85,14 @@ export function ActionSheet({ title, meta, items, onClose }: { title: ReactNode;
         )
         // Full-bleed rows: the sheet body has 20px gutters, the rows carry their own.
         return (
+          <>
+          {header}
           <div style={{ margin: '0 -20px', paddingTop: 4, borderTop: '1px solid var(--line-dashed)' }}>
             <style>{ACTION_ROW_CSS}</style>
             {actions.map(row)}
             {destructive.length > 0 && <div style={{ marginTop: 4, borderTop: '1px solid var(--line-dashed)' }}>{destructive.map(row)}</div>}
           </div>
+          </>
         )
       }}
     </BottomSheet>

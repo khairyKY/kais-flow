@@ -3,6 +3,7 @@ import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ContextMenu, type ContextMenuItem } from '../../components/ContextMenu'
 import { SnoozeMenu } from '../../components/SnoozeMenu'
+import { TypedTime } from '../../components/TypedTime'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { DURATIONS, durationLabel } from '../../components/pickerMath'
@@ -217,9 +218,14 @@ export function TaskMenu({ task, anchor, onClose, actions, ctx }: {
   if (sub) {
     const list = options[sub]
     const title = { priority: 'Priority', remind: 'Remind', duration: 'Duration', slot: 'Into a slot' }[sub]
+    // Queue 16: the Duration list takes a typed length too ("50m", "1h20", "1:45"); on the calendar it is
+    // the block's length (tasks/api setDuration), as the rows are.
+    const typed = sub === 'duration' && actions.duration && (
+      <TypedTime accepts="length" dense={!isMobile} start={null} minutes={taskMinutes(task)} label="Type a length" onApply={(r) => { if (r.minutes) actions.duration?.(r.minutes); onClose() }} style={isMobile ? undefined : { padding: '2px 4px 6px' }} />
+    )
     return isMobile
-      ? <ActionSheet key={sub} title={title} meta={task.title} items={list.map((o) => ({ label: o.label, hint: o.hint, selected: o.selected, onSelect: o.run }))} onClose={onClose} />
-      : <ContextMenu position={at} onClose={onClose} items={list.map((o) => ({ label: o.label, labelColor: o.color, hint: o.hint, onClick: o.run }))} />
+      ? <ActionSheet key={sub} title={title} meta={task.title} header={typed || undefined} items={list.map((o) => ({ label: o.label, hint: o.hint, selected: o.selected, onSelect: o.run }))} onClose={onClose} />
+      : <ContextMenu position={at} onClose={onClose} header={typed || undefined} items={list.map((o) => ({ label: o.label, labelColor: o.color, hint: o.hint, onClick: o.run }))} />
   }
 
   if (isMobile) {
