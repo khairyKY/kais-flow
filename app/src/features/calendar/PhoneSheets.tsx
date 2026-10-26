@@ -316,6 +316,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
           day={day}
           value={fromMin(notPast(day, start))}
           duration={dur}
+          lengthChips={false} // queue 15: the sheet's own chips are the length; a typed range still sets it
           title={name || undefined}
           onDone={(hhmm, d) => {
             setStart(toMin(hhmm))
@@ -519,6 +520,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           day={span.day}
           value={fromMin(span.start)}
           duration={len}
+          lengthChips={false} // queue 15: the sheet's length chips are its one length control
           title={event.title}
           onDone={(hhmm, d) => {
             const start = toMin(hhmm)

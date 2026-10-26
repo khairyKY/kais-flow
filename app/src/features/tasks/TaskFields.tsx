@@ -107,7 +107,14 @@ const DASHED: CSSProperties = { ...PILL, border: '1px dashed var(--line-control)
  * repeat · remind · labels (or a dashed Label). A set chip shows its value, an unset one is dashed;
  * each opens its picker — every label chip opens the Label picker (./LabelPicker), where a tap
  * adds or takes one off. `ringed`: the field whose write is still queued offline (4k). */
-export function TaskChips({ task, controls, ringed, now = new Date() }: { task: Task; controls: TaskControls; ringed?: string | null; now?: Date }) {
+export function TaskChips({ task, controls, ringed, now = new Date(), length = true }: {
+  task: Task
+  controls: TaskControls
+  ringed?: string | null
+  now?: Date
+  /** false: the surface shows the block's length itself (the phone sheet's card) — no ⏱ chip (queue 15). */
+  length?: boolean
+}) {
   const { open, place } = controls
   const when = taskWhen(task)
   const minutes = taskMinutes(task)
@@ -125,7 +132,7 @@ export function TaskChips({ task, controls, ringed, now = new Date() }: { task: 
     <div className="ts-chips">
       {/* bugs-1023: on the calendar, the block's start and length (the sheet read 5:30 PM for a 5:15–5:30 block). */}
       {when ? chip('date', dueChip(when, now), 'date') : unset('date', 'Date', 'calendar')}
-      {minutes ? chip('duration', durationLabel(minutes), 'duration') : unset('duration', 'Duration', 'clock')}
+      {length && (minutes ? chip('duration', durationLabel(minutes), 'duration') : unset('duration', 'Duration', 'clock'))}
       {place ? chip('project', <EmojiText text={place} />, 'project') : unset('project', 'Move to…', 'projects')}
       {task.priority ? chip('priority', `P${task.priority}`, 'priority') : unset('priority', 'Priority', 'priority')}
       {task.recurrence_rule ? chip('repeat', repeatLabel(task.recurrence_rule), 'date', 'repeat') : unset('repeat', 'Repeat', 'repeat')}
