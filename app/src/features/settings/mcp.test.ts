@@ -875,31 +875,31 @@ describe('MCP: planning the week', () => {
     expect((await call(deps(store), 'edit_event', { id: tid(900), kind: 'time_block', repeat: 'FREQ=WEEKLY' })).data!.changed).toEqual(['kind → time_block', 'repeats FREQ=WEEKLY'])
     // The same values change nothing and write nothing.
     const n = store.logs.length
-    expect((await call(deps(store), 'edit_event', { id: tid(900), title: 'Team standup' })).data!.changed).toEqual([])
+    expect((await call(deps(store), 'edit_event', { id: tid(900), title: 'Team standup', scope: 'all' })).data!.changed).toEqual([])
     expect(store.logs).toHaveLength(n)
   })
 
   it('edit_event: a whole series takes a new time of day on all its days, its skipped week still skipped', async () => {
     const store = fakeStore('Africa/Cairo')
     // Choir: Thursdays 18:00–19:30 from 1 Oct, the 15th skipped. 19:00 (any date's) → every Thursday at 19:00, still 90 minutes.
-    const r = await call(deps(store), 'edit_event', { id: tid(902), start: '2026-10-22T19:00' })
+    const r = await call(deps(store), 'edit_event', { id: tid(902), start: '2026-10-22T19:00', scope: 'all' })
     expect(r.data!.changed).toEqual(['time → 19:00–20:30, every occurrence'])
     expect(store.cal.find((e) => e.id === tid(902))).toMatchObject({ starts_at: '2026-10-01T16:00:00.000Z', ends_at: '2026-10-01T17:30:00.000Z', recurrence_exdates: ['2026-10-15T16:00:00.000Z'] })
     const month = await call(deps(store), 'calendar', { from: '2026-10-05', to: '2026-10-31' })
     expect(month.data!.events.filter((e: Ev) => e.title === 'Choir').map((e: Ev) => [e.start, e.end])).toEqual([
       ['2026-10-08 19:00', '2026-10-08 20:30'], ['2026-10-22 19:00', '2026-10-22 20:30'], ['2026-10-29 19:00', '2026-10-29 20:30'],
     ])
-    expect((await call(deps(store), 'edit_event', { id: tid(902), duration_min: 60 })).data!.changed).toEqual(['time → 19:00–20:00, every occurrence'])
-    expect((await call(deps(store), 'edit_event', { id: tid(902), end: '2026-10-08T21:00' })).data!.changed).toEqual(['time → 19:00–21:00, every occurrence'])
+    expect((await call(deps(store), 'edit_event', { id: tid(902), duration_min: 60, scope: 'all' })).data!.changed).toEqual(['time → 19:00–20:00, every occurrence'])
+    expect((await call(deps(store), 'edit_event', { id: tid(902), end: '2026-10-08T21:00', scope: 'all' })).data!.changed).toEqual(['time → 19:00–21:00, every occurrence'])
     for (const [args, msg] of [
-      [{ id: tid(902), start: '2026-10-22' }, 'keeps its days'],
-      [{ id: tid(902), repeat: 'FREQ=WEEKLY;BYDAY=TU' }, "doesn't fall on the start"],
+      [{ id: tid(902), start: '2026-10-22', scope: 'all' }, 'keeps its days'],
+      [{ id: tid(902), repeat: 'FREQ=WEEKLY;BYDAY=TU', scope: 'all' }, "doesn't fall on the start"],
     ] as const) {
       const bad = await call(deps(store), 'edit_event', args)
       expect([bad.isError, bad.text]).toEqual([true, expect.stringContaining(msg)])
     }
     // Ending it from a day on keeps what came before.
-    expect((await call(deps(store), 'edit_event', { id: tid(902), repeat: 'FREQ=WEEKLY;UNTIL=20261023T000000Z' })).data!.changed).toEqual(['repeats FREQ=WEEKLY;UNTIL=20261023T000000Z'])
+    expect((await call(deps(store), 'edit_event', { id: tid(902), repeat: 'FREQ=WEEKLY;UNTIL=20261023T000000Z', scope: 'all' })).data!.changed).toEqual(['repeats FREQ=WEEKLY;UNTIL=20261023T000000Z'])
     const after = await call(deps(store), 'calendar', { from: '2026-10-05', to: '2026-10-31' })
     expect(after.data!.events.filter((e: Ev) => e.title === 'Choir').map((e: Ev) => e.start)).toEqual(['2026-10-08 19:00', '2026-10-22 19:00'])
   })
@@ -925,6 +925,51 @@ describe('MCP: planning the week', () => {
     }
   })
 
+  it('cal-clicks: a series asks which occurrences — "this" by default (it needs the occurrence), "following" splits, "all" is the series', async () => {
+    const store = fakeStore('Africa/Cairo')
+    // No occurrence and no scope: the answer says what to give and to ask the user — nothing written.
+    for (const name of ['edit_event', 'delete_event', 'duplicate_event'] as const) {
+      const ask = await call(deps(store), name, { id: tid(902), ...(name === 'edit_event' ? { title: 'x' } : {}) })
+      expect([ask.isError, ask.text]).toEqual([true, expect.stringContaining('"scope": "this" (the default')])
+    }
+    expect(store.logs).toEqual([])
+    expect((await call(deps(store), 'edit_event', { id: tid(902), scope: 'sometimes', title: 'x' })).text).toContain('"scope" must be one of: this, following, all')
+    // "this" (left out): the occurrence alone, as before.
+    const one = await call(deps(store), 'edit_event', { id: tid(902), occurrence: '2026-10-08 18:00', title: 'Choir (one)' })
+    expect(one.data!.changed.at(-1)).toBe('only the 2026-10-08 18:00–19:30 occurrence: it is an event of its own now')
+    // "following" from the 22nd: the series ends before it, a new one starts there with the change.
+    const fol = await call(deps(store), 'edit_event', { id: tid(902), occurrence: '2026-10-22 18:00', scope: 'following', title: 'Choir (late)', start: '2026-10-22T19:00' })
+    expect(fol.data!.changed).toEqual(['title → "Choir (late)"', 'time → 19:00–20:30, every occurrence', 'from the 2026-10-22 18:00–19:30 occurrence on: a series of its own; the ones before it stay as they were'])
+    const head = store.cal.find((e) => e.id === tid(902))!
+    expect(head.recurrence_rule).toBe('FREQ=WEEKLY;UNTIL=20261022T145959Z')
+    const tail = store.cal.find((e) => e.title === 'Choir (late)')!
+    expect(tail).toMatchObject({ starts_at: '2026-10-22T16:00:00.000Z', recurrence_rule: 'FREQ=WEEKLY' })
+    const month = await call(deps(store), 'calendar', { from: '2026-10-01', to: '2026-10-31' })
+    expect(month.data!.events.filter((e: Ev) => e.title.startsWith('Choir')).map((e: Ev) => [e.title, e.start])).toEqual([
+      ['Choir', '2026-10-01 18:00'], ['Choir (one)', '2026-10-08 18:00'], ['Choir (late)', '2026-10-22 19:00'], ['Choir (late)', '2026-10-29 19:00'],
+    ])
+    // "all" on the tail: every one of its occurrences.
+    expect((await call(deps(store), 'edit_event', { id: tail.id, scope: 'all', title: 'Choir' })).data!.changed).toEqual(['title → "Choir"'])
+  })
+
+  it('cal-clicks: delete_event and duplicate_event take the scope too', async () => {
+    const store = fakeStore('Africa/Cairo')
+    // The 29th moved out on its own first; "following" from the 22nd ends the series before it and takes the 29th along.
+    await call(deps(store), 'edit_event', { id: tid(902), occurrence: '2026-10-29 18:00', start: '2026-10-30T18:00' })
+    const fol = await call(deps(store), 'delete_event', { id: tid(902), occurrence: '2026-10-22', scope: 'following' })
+    expect(fol.data!.changed).toEqual(['the series ends before the 2026-10-22 18:00–19:30 occurrence; the ones before it stay, and 1 occurrence moved out of it went too'])
+    expect(store.cal.find((e) => e.id === tid(902))!).toMatchObject({ recurrence_rule: 'FREQ=WEEKLY;UNTIL=20261022T145959Z' })
+    expect(store.cal.filter((e) => e.series_id === tid(902)).every((e) => !!e.deleted_at)).toBe(true)
+    // Duplicate: "following" makes a series from the occurrence on, "all" a copy of the whole; the original stays.
+    const s2 = fakeStore('Africa/Cairo')
+    const f = await call(deps(s2), 'duplicate_event', { id: tid(902), occurrence: '2026-10-22', scope: 'following' })
+    expect(f.data!.changed).toEqual(['a new series from the 2026-10-22 18:00–19:30 occurrence on'])
+    expect(s2.cal.find((e) => e.id === f.data!.duplicated.id)).toMatchObject({ starts_at: '2026-10-22T15:00:00.000Z', recurrence_rule: 'FREQ=WEEKLY' })
+    const all = await call(deps(s2), 'duplicate_event', { id: tid(902), scope: 'all' })
+    expect(s2.cal.find((e) => e.id === all.data!.duplicated.id)).toMatchObject({ starts_at: '2026-10-01T15:00:00Z', recurrence_rule: 'FREQ=WEEKLY', recurrence_exdates: ['2026-10-15T15:00:00.000Z'] }) // the row as stored
+    expect(s2.cal.find((e) => e.id === tid(902))).toMatchObject({ recurrence_rule: 'FREQ=WEEKLY' })
+  })
+
   it("edit_event and delete_event leave a task's block to its task", async () => {
     const store = fakeStore('Africa/Cairo', [task(40, 'Write')], [{ id: tid(540), task_id: tid(40), starts_at: '2026-10-05T07:00:00Z', ends_at: '2026-10-05T08:00:00Z', all_day: false }])
     for (const [name, args] of [['edit_event', { id: tid(540), title: 'x' }], ['delete_event', { id: tid(540) }]] as const) {
@@ -946,7 +991,7 @@ describe('MCP: planning the week', () => {
     expect(store.cal.find((e) => e.id === tid(902))!.recurrence_exdates).toEqual(['2026-10-15T15:00:00.000Z', '2026-10-22T15:00:00.000Z'])
     // The 29th moved out on its own, then the whole series deleted: the moved one goes too.
     await call(deps(store), 'edit_event', { id: tid(902), occurrence: '2026-10-29 18:00', start: '2026-10-30T18:00' })
-    const all = await call(deps(store), 'delete_event', { id: tid(902) })
+    const all = await call(deps(store), 'delete_event', { id: tid(902), scope: 'all' })
     expect(all.data!.changed).toEqual(['the whole series moved to Trash, with 1 occurrence moved out of it'])
     expect(store.cal.filter((e) => e.id === tid(902) || e.series_id === tid(902)).every((e) => !!e.deleted_at)).toBe(true)
     expect(store.logs.filter((l) => l.eventType === 'calendar_event.deleted').map((l) => l.payload)).toEqual([

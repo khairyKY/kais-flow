@@ -35,7 +35,7 @@ import { isTop3Today, todaysTop3 } from '../_shared/today.ts'
 // The user's clock is _shared/zone.ts (notify and chat read the same one); re-exported for the tests.
 export { DEFAULT_ZONE, userZone } from '../_shared/zone.ts'
 export { addDays, dateKey, dayWindow, wallTime, wallToInstant }
-import { expandSeries, type RuleBetween } from '../_shared/series.ts'
+import { expandSeries, splitSeries, withRuleParts, type RuleBetween } from '../_shared/series.ts'
 import { rollAfter, ruleAfterThis, stepOf } from '../_shared/repeat.ts'
 import { occurrenceOn } from '../_shared/slots.ts'
 import { spanMinutes, taskOnBlock, withLength } from '../_shared/blockLength.ts'
@@ -742,6 +742,21 @@ async function rehome(ctx: ToolContext, tasks: readonly TaskRow[], to: (t: TaskR
 // ── writing an event the way the app does ────────────────────────────────────────────────────────
 
 export const KINDS = ['event', 'time_block'] as const
+
+// ── cal-clicks (Kai 2026-10-26): every change to a repeating event — or a repeating task's round — says which
+// occurrences, as the app asks: "this" (the default when it's left out), "following" or "all". ──
+export const SERIES_SCOPES = ['this', 'following', 'all'] as const
+export type SeriesScope = (typeof SERIES_SCOPES)[number]
+/** `scope`, "this" when left out. */
+export const scopeArg = (a: Args): SeriesScope => choice(a, 'scope', SERIES_SCOPES, 'this')
+const scopeSchema = (what: string) => ({
+  type: 'string',
+  enum: SERIES_SCOPES,
+  description: `For a repeating ${what}: which occurrences — "this" (the default when left out: only the one given), "following" (that one and every later one) or "all" (the whole series, earlier ones too). Ask the user when it isn't clear.`,
+})
+/** The answer when a series change doesn't say where it starts. */
+const askScope = (row: { title: string }, scope: SeriesScope) =>
+  `"${row.title}" repeats: give "occurrence" — the start of the one meant, as the calendar tool lists it — and "scope": "this" (the default, just that one), "following" (it and every later one) or "all" (the whole series). Asked for scope "${scope}" with no occurrence: ask the user which they mean.`
 export type Span = Pick<EventRow, 'starts_at' | 'ends_at' | 'all_day'>
 /** A new event's length when nothing says (QuickCreate's 09:00–09:30). */
 const EVENT_MIN = 30
@@ -1025,11 +1040,10 @@ export async function subtasksOf(ctx: ToolContext, parentId: string): Promise<Ta
 /** Ticks an open task off (tasks/api completeTask → completion.ts planCompletion): a repeat's next
  * occurrence comes along — never a paused series', never a second open copy — and, like the app
  * (Kai 2026-10-16), a repeat's subtasks go with it to that copy, open again (`carried`). */
-export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done: TaskRow; next: TaskRow | null; carried: number }> {
+/** A repeating task's next round, as completing it would make it (null: not repeating, paused, the last of "N
+ * times", or that round is open already) — completeTask's, and edit_task's scope "this" (the series goes on). */
+async function nextRound(ctx: ToolContext, t: TaskRow): Promise<TaskRow | null> {
   const now = ctx.now.toISOString()
-  // Plan the next occurrence before writing anything: a rule rrule can't read must not leave
-  // the task done with its series silently ended.
-  let next: TaskRow | null = null
   // A paused series (Perennials ‖) doesn't come back until it's resumed (completion.ts).
   // "Ends after N times": the copy carries one fewer, and the last one (COUNT=1) spawns nothing.
   const nextRule = t.recurrence_rule ? ruleAfterThis(t.recurrence_rule) : null
@@ -1037,7 +1051,7 @@ export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done
     // Rolls from max(due, today) like the app (_shared/repeat.ts), not from the old due date.
     const at = ctx.nextOccurrence(stepOf(t.recurrence_rule), new Date(t.due_at), ctx.zone, rollAfter(t.due_at, ctx.now, ctx.zone))
     if (at && !(await ctx.store.openOccurrence(t.title, nextRule, at.toISOString(), t.id))) {
-      next = {
+      return {
         ...t,
         id: crypto.randomUUID(),
         recurrence_rule: nextRule,
@@ -1059,6 +1073,14 @@ export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done
       }
     }
   }
+  return null
+}
+
+export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done: TaskRow; next: TaskRow | null; carried: number }> {
+  const now = ctx.now.toISOString()
+  // Plan the next occurrence before writing anything: a rule rrule can't read must not leave
+  // the task done with its series silently ended.
+  const next = await nextRound(ctx, t)
   if (!(await ctx.store.markDone(t.id, now))) return bad(`"${t.title}" isn't open any more.`)
   await logIt(ctx, 'task.completed', 'task', t.id)
   let carried = 0
@@ -1161,10 +1183,24 @@ const ONE_TASK_FIELDS = ['goal', 'slot_id', 'slot_occurrence', 'place_before', '
 
 type Place = { id: string; name?: string | null; domain_id?: string | null }
 
+/** The fields a repeating task's later rounds inherit (the next round is a copy, completion.ts) — the ones `scope`
+ * is about (cal-clicks). Top 3, Someday, a slot or a place in a list belong to one round only. */
+const SERIES_FIELDS = ['title', 'notes', 'duration_min', 'labels', 'priority', 'project_id', 'area_id', 'domain_id'] as const
+
+/** The other live rounds of `t`'s series — same title and rule (COUNT / UNTIL wear down round by round), the app's
+ * tasks/taskScope taskSeries. */
+async function otherRounds(ctx: ToolContext, t: TaskRow): Promise<TaskRow[]> {
+  if (!t.recurrence_rule) return []
+  const key = (r: string) => withRuleParts(r, { COUNT: null, UNTIL: null })
+  const rows = (await ctx.store.find('tasks', { title: t.title, deleted_at: null })) as unknown as TaskRow[]
+  return rows.filter((r) => r.id !== t.id && !!r.recurrence_rule && key(r.recurrence_rule) === key(t.recurrence_rule!))
+}
+
 /** edit_task for one task: every argument read, then the row settled and written once. */
 async function editOne(a: Args, ctx: ToolContext, taskId: string): Promise<Row> {
   const t = await openTask(ctx, taskId)
   const z = ctx.zone
+  const scope = scopeArg(a)
   // Every argument is read before anything is written.
   const title = 'title' in a ? text(a, 'title', 500, true)! : t.title
   const notes = 'notes' in a ? (text(a, 'notes', 10000) ?? null) : t.notes
@@ -1322,6 +1358,25 @@ async function editOne(a: Args, ctx: ToolContext, taskId: string): Promise<Row> 
     changed.push(sortOrder.said)
   }
   const task = settle(t, next, ctx.now, z)
+  // cal-clicks: a repeating task's round, a field the later rounds inherit changed (and not its repeat) — "this"
+  // (the default) leaves the series with the change, which goes on unchanged from its next round (as completing
+  // it would make it); "following" takes the later open rounds along; "all" every round, done ones too.
+  let spawned: TaskRow | null = null
+  let rounds: { row: TaskRow; patch: Partial<TaskRow> }[] = []
+  // (A repeat set, or a pause, is the series' own: it never splits a round off.)
+  const seriesChange = t.recurrence_rule && rule === undefined && !('paused' in a) && changed.length > 0 && SERIES_FIELDS.some((k) => k in a)
+  if (seriesChange && scope === 'this' && !t.paused && t.due_at) {
+    spawned = await nextRound(ctx, t)
+    task.recurrence_rule = null
+    changed.push(spawned ? `only this round: it leaves the series, which goes on unchanged from ${wallTime(spawned.due_at!, z)}` : 'only this round (the last of the series)')
+  } else if (seriesChange && scope !== 'this') {
+    const patch: Partial<TaskRow> = {}
+    for (const k of SERIES_FIELDS) if (k in a) (patch as Row)[k] = (task as unknown as Row)[k]
+    if ('project_id' in a || 'area_id' in a || 'domain_id' in a) patch.milestone_id = null
+    const due = (r: TaskRow) => (r.due_at ? Date.parse(r.due_at) : Number.POSITIVE_INFINITY)
+    rounds = (await otherRounds(ctx, t)).filter((r) => scope === 'all' || (r.status === 'todo' && due(r) >= due(t))).map((row) => ({ row, patch }))
+    if (rounds.length) changed.push(`and ${rounds.length} other round${rounds.length === 1 ? '' : 's'} of the series (${scope === 'all' ? 'every round' : 'the later ones'})`)
+  }
   if (t.top3 && !task.top3 && top3 !== false) changed.push("left today's Top 3")
   if (remindAt === undefined && task.reminder_at && !sameInstant(task.reminder_at, t.reminder_at)) changed.push(`reminder → ${wallTime(task.reminder_at, z)}`)
   if (changed.length) {
@@ -1329,6 +1384,14 @@ async function editOne(a: Args, ctx: ToolContext, taskId: string): Promise<Row> 
     if (stretched) await ctx.store.updateEvent(stretched)
     for (const [type, payload] of logs) await logIt(ctx, type, 'task', t.id, payload)
     for (const { row, rank } of ranks) await ctx.store.patch('tasks', { id: row.id }, { top3_rank: rank })
+    if (spawned) {
+      await ctx.store.insertTask(spawned)
+      await logIt(ctx, 'task.created', 'task', spawned.id, { recurrence_parent: t.id, scope })
+    }
+    for (const { row, patch } of rounds) {
+      await ctx.store.patch('tasks', { id: row.id }, patch)
+      await logIt(ctx, 'task.updated', 'task', row.id, { scope })
+    }
     const gone = blocksOff.length ? await ctx.store.deleteEvents(blocksOff.map((b) => b.id)) : []
     for (const blockId of gone) await logIt(ctx, 'calendar_event.deleted', 'calendar_event', blockId)
   }
@@ -1545,7 +1608,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'edit_task',
     title: 'Edit task',
     description:
-      "Change open tasks — only when the user asks, and give only what changes; `ids` applies the same change to several (the app's bulk bar). Fields: title, notes, duration_min, labels (the whole list), priority, repeat, remind_at, someday, paused (a repeating task rests until resumed), top3 (today's Top 3, at most 3), goal (true: the goal of the day, first in the Top 3), where it lives (one of project_id, area_id, domain_id — null takes it out), a Time slot (slot_id of a Time block, + slot_occurrence for a repeating one; null takes it out), and its place in a list (place_before / place_after another task). null clears notes, duration_min, labels, priority, repeat and remind_at. To move it to another day or time, use reschedule_task.",
+      "Change open tasks — only when the user asks, and give only what changes; `ids` applies the same change to several (the app's bulk bar). A repeating task takes `scope` for what its later rounds inherit (title, notes, duration_min, labels, priority, where it lives): \"this\" (the DEFAULT when scope is left out — just this round: it leaves the series, which goes on unchanged from its next round), \"following\" (this round and the later ones) or \"all\" (every round of the series, done ones too); ask the user when it isn't clear. Fields: title, notes, duration_min, labels (the whole list), priority, repeat, remind_at, someday, paused (a repeating task rests until resumed), top3 (today's Top 3, at most 3), goal (true: the goal of the day, first in the Top 3), where it lives (one of project_id, area_id, domain_id — null takes it out), a Time slot (slot_id of a Time block, + slot_occurrence for a repeating one; null takes it out), and its place in a list (place_before / place_after another task). null clears notes, duration_min, labels, priority, repeat and remind_at. To move it to another day or time, use reschedule_task.",
     inputSchema: {
       type: 'object',
       properties: {
@@ -1569,6 +1632,7 @@ export const TOOLS: readonly ToolDef[] = [
         slot_occurrence: dateArg('For a repeating Time block: the start of the occurrence, as the calendar tool lists it'),
         place_before: { ...id, description: 'Put it just before this task in its lists.' },
         place_after: { ...id, description: 'Put it just after this task in its lists.' },
+        scope: scopeSchema('task'),
       },
       additionalProperties: false,
     },
@@ -1813,12 +1877,13 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'edit_event',
     title: 'Edit event',
     description:
-      "Change an event or Time block (only when the user asks) — give only what changes. `id` is the one the calendar tool shows; for a repeating event that's its series. Without `occurrence` the change is the event's — for a series, every occurrence's: `start` / `end` then give the new time of day (their dates aren't used; the series keeps its days). With `occurrence` (one occurrence's start, as the calendar tool lists it) only that one changes, to any day and time: it leaves the series as an event of its own. `repeat` (whole series only) must fall on the event's start; null leaves a series as one event, its first occurrence. To change a series from a day on, end it (add UNTIL=YYYYMMDDT235959Z to its rule) and add a new one. A task's calendar block moves with reschedule_task.",
+      "Change an event or Time block (only when the user asks) — give only what changes. `id` is the one the calendar tool shows; for a repeating event that's its series. A repeating event takes `scope` — which occurrences change: \"this\" (the DEFAULT when scope is left out: only the occurrence named by `occurrence`, which then leaves the series as an event of its own, to any day and time), \"following\" (that occurrence and every later one: the series ends just before it and a new series starts there with the change) or \"all\" (every occurrence: `start` / `end` then give the new time of day — their dates aren't used; the series keeps its days). \"this\" and \"following\" need `occurrence` (its start, as the calendar tool lists it); ask the user which they mean when it isn't clear. `repeat` goes with \"following\" or \"all\" and must fall on the event's start; null leaves a series as one event, its first occurrence. A task's calendar block moves with reschedule_task.",
     inputSchema: {
       type: 'object',
       properties: {
         id: { ...id, description: 'The event id (for a repeating event, its series).' },
-        occurrence: dateArg('Only this occurrence of a repeating event — its start'),
+        occurrence: dateArg('For a repeating event: the occurrence the change is about (scope "this" or "following") — its start'),
+        scope: scopeSchema('event'),
         title: { type: 'string', description: 'The new title.' },
         ...eventTimes,
         repeat: repeatSchema('How the series repeats'),
@@ -1830,6 +1895,7 @@ export const TOOLS: readonly ToolDef[] = [
     async run(a, ctx) {
       const row = await liveEvent(ctx, uuid(a, 'id', true)!)
       const occ = when(a, 'occurrence', ctx.zone)
+      const scope = scopeArg(a)
       const title = 'title' in a ? text(a, 'title', 500, true)! : row.title
       const kind = a.kind === undefined || a.kind === null ? (row.type ?? 'event') : choice(a, 'kind', KINDS, 'event')
       const rule = repeatArg(a, 'repeat')
@@ -1842,12 +1908,14 @@ export const TOOLS: readonly ToolDef[] = [
         ...((after.recurrence_rule ?? null) !== (before.recurrence_rule ?? null) ? [after.recurrence_rule ? `repeats ${after.recurrence_rule}` : 'no longer repeats'] : []),
         ...((after.remind_min ?? null) !== (before.remind_min ?? null) ? [after.remind_min == null ? 'no reminder' : `remind ${after.remind_min} min before`] : []),
       ]
-      if (occ) {
+      if (occ && !row.recurrence_rule) return bad(`"${row.title}" doesn't repeat: leave out "occurrence".`)
+      // cal-clicks: a series asks which occurrences — "this" (the default) and "following" start at `occurrence`.
+      if (row.recurrence_rule && scope !== 'all' && !occ) return bad(askScope(row, scope))
+      if (row.recurrence_rule && scope === 'this') {
         // One occurrence on its own (calendar/api detach): the series skips its start and a one-off
         // copy, linked back to the series, takes the change.
-        if (!row.recurrence_rule) return bad(`"${row.title}" doesn't repeat: leave out "occurrence".`)
-        if (rule !== undefined) return bad('"repeat" belongs to the whole series: leave out "occurrence" to change it.')
-        const o = occurrenceOf(row, occ, ctx)
+        if (rule !== undefined) return bad('"repeat" belongs to the series: give scope "following" (from this occurrence on) or "all" (the whole series).')
+        const o = occurrenceOf(row, occ!, ctx)
         const start = new Date(o.starts_at).toISOString()
         const span = spanArgs(a, ctx.zone, o) ?? { starts_at: o.starts_at, ends_at: o.ends_at, all_day: o.all_day }
         const remind = remindArg(a, span.all_day)
@@ -1861,40 +1929,53 @@ export const TOOLS: readonly ToolDef[] = [
         const held = row.type === 'time_block' ? await rehome(ctx, await heldBy(ctx, row.id, o), () => (copy.type !== 'time_block' || copy.all_day ? OUT_OF_SLOT : intoSlot(copy.id, copy, ctx.zone))) : []
         return { edited: eventOut(copy, ctx.zone), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`, ...held], timezone: ctx.zone }
       }
-      const span = row.recurrence_rule ? seriesSpan(a, ctx.zone, row) : spanArgs(a, ctx.zone, row)
-      const remind = remindArg(a, (span ?? row).all_day)
-      const next: EventRow = { ...row, title, type: kind, ...span, ...(remind !== undefined ? { remind_min: remind } : null) }
+      // "following" (the app's split, _shared/series.ts): the series ends just before the occurrence and a new one
+      // starts there, taking the change. From the series' first occurrence it is the whole series.
+      const o = row.recurrence_rule && scope === 'following' ? occurrenceOf(row, occ!, ctx) : null
+      const split = o ? splitSeries(row, o, crypto.randomUUID(), ctx.now.toISOString(), ctx.zone, ctx.ruleBetween) : null
+      const base = split?.tail ?? row
+      const span = base.recurrence_rule ? seriesSpan(a, ctx.zone, base) : spanArgs(a, ctx.zone, base)
+      const remind = remindArg(a, (span ?? base).all_day)
+      const next: EventRow = { ...base, title, type: kind, ...span, ...(remind !== undefined ? { remind_min: remind } : null) }
       // An all-day event has no start to remind before (0077): a move to all-day drops it.
       if (next.all_day) next.remind_min = null
       // A series moved to another time of day: each skipped start moves with it, so it still names the
       // same occurrence (calendar/series retimeSeries).
-      if (span && row.recurrence_rule) {
+      if (span && base.recurrence_rule) {
         const [h, mi] = wallTime(span.starts_at, ctx.zone).slice(11).split(':').map(Number)
-        next.recurrence_exdates = (row.recurrence_exdates ?? []).map((x) => wallToInstant(dateKey(new Date(x), ctx.zone), h, mi, ctx.zone).toISOString())
+        next.recurrence_exdates = (base.recurrence_exdates ?? []).map((x) => wallToInstant(dateKey(new Date(x), ctx.zone), h, mi, ctx.zone).toISOString())
       }
       if (rule !== undefined) Object.assign(next, { recurrence_rule: rule, recurrence_exdates: rule ? next.recurrence_exdates : [] })
       if (span || rule) checkSeries(next, ctx)
-      const changed = what(row, next)
-      if (!changed.length) return { edited: eventOut(row, ctx.zone), changed, timezone: ctx.zone }
-      await ctx.store.updateEvent(next)
-      await logIt(ctx, 'calendar_event.updated', 'calendar_event', row.id, { title, changed })
+      const changed = what(base, next)
+      if (!changed.length) return { edited: eventOut(base, ctx.zone), changed, timezone: ctx.zone }
+      if (split) {
+        await ctx.store.updateEvent(split.head)
+        await ctx.store.insertEvent(next)
+        await logIt(ctx, 'calendar_event.created', 'calendar_event', next.id, { title, type: next.type, split_from: row.id })
+        changed.push(`from the ${spanText(o!, ctx.zone)} occurrence on: a series of its own; the ones before it stay as they were`)
+      } else {
+        await ctx.store.updateEvent(next)
+        await logIt(ctx, 'calendar_event.updated', 'calendar_event', row.id, { title, changed })
+      }
       // Where a Time block's tasks go, the app's rule (calendar/api):
       let held: string[] = []
       if (row.type === 'time_block') {
-        const retimed = !!span && spanText(span, ctx.zone) !== spanText(row, ctx.zone)
-        const reruled = (next.recurrence_rule ?? null) !== (row.recurrence_rule ?? null)
+        const retimed = !!span && spanText(span, ctx.zone) !== spanText(base, ctx.zone)
+        const reruled = (next.recurrence_rule ?? null) !== (base.recurrence_rule ?? null)
         // made an event: it holds none, so every task comes out (updateEvent → releaseRow);
-        if (next.type !== 'time_block') held = await rehome(ctx, await heldBy(ctx, row.id, null), () => OUT_OF_SLOT)
+        if (next.type !== 'time_block' && !split) held = await rehome(ctx, await heldBy(ctx, row.id, null), () => OUT_OF_SLOT)
         // a one-off moved: they go with it, out of it in the all-day band (followSlot);
         else if (!row.recurrence_rule && retimed) {
           held = await rehome(ctx, await heldBy(ctx, row.id, row), () => (next.all_day ? OUT_OF_SLOT : intoSlot(row.id, next, ctx.zone)))
         }
-        // a series re-timed or its repeat set / changed / ended: each to its day's occurrence of what the
+        // a series re-timed, split, or its repeat set / changed / ended: each to its day's occurrence of what the
         // edit leaves, else out of the slot (reseat — the rule shared with the app, _shared/slots.ts).
-        else if (retimed || reruled) {
+        else if (retimed || reruled || split) {
+          const rows = split ? [split.head, next] : [next]
           held = await rehome(ctx, (await heldBy(ctx, row.id, null)).filter((t) => !!t.slot_date), (t) => {
-            const occ = occurrenceOn([next], t.slot_date!, ctx.zone, ctx.ruleBetween)
-            return occ ? intoSlot(row.id, occ, ctx.zone) : OUT_OF_SLOT
+            const at = occurrenceOn(rows, t.slot_date!, ctx.zone, ctx.ruleBetween)
+            return at ? intoSlot(at.seriesId ?? at.id, at, ctx.zone) : OUT_OF_SLOT
           })
         }
       }
@@ -1905,10 +1986,14 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'delete_event',
     title: 'Delete event',
     description:
-      "Take an event or Time block off the calendar (only when the user asks). It goes to Trash, where the app can bring it back. For a repeating event: with `occurrence` (one occurrence's start, as the calendar tool lists it) only that one is skipped; without it the whole series goes, with any occurrence moved out of it. A task's calendar block comes off with reschedule_task.",
+      "Take an event or Time block off the calendar (only when the user asks). It goes to Trash, where the app can bring it back. A repeating event takes `scope` — which occurrences go: \"this\" (the DEFAULT when scope is left out: only the occurrence named by `occurrence` is skipped; the rest of the series stays), \"following\" (that occurrence and every later one: the series ends just before it, and any occurrence moved out of it from there on goes too) or \"all\" (the whole series, with any occurrence moved out of it). \"this\" and \"following\" need `occurrence` (its start, as the calendar tool lists it); ask the user which they mean when it isn't clear. A task's calendar block comes off with reschedule_task.",
     inputSchema: {
       type: 'object',
-      properties: { id: { ...id, description: 'The event id (for a repeating event, its series).' }, occurrence: dateArg('Only this occurrence of a repeating event — its start') },
+      properties: {
+        id: { ...id, description: 'The event id (for a repeating event, its series).' },
+        occurrence: dateArg('For a repeating event: the occurrence the delete starts at (scope "this" or "following") — its start'),
+        scope: scopeSchema('event'),
+      },
       required: ['id'],
       additionalProperties: false,
     },
@@ -1916,16 +2001,38 @@ export const TOOLS: readonly ToolDef[] = [
     async run(a, ctx) {
       const row = await liveEvent(ctx, uuid(a, 'id', true)!)
       const occ = when(a, 'occurrence', ctx.zone)
-      if (occ) {
+      const scope = scopeArg(a)
+      if (occ && !row.recurrence_rule) return bad(`"${row.title}" doesn't repeat: leave out "occurrence" to delete it.`)
+      if (row.recurrence_rule && scope !== 'all' && !occ) return bad(askScope(row, scope))
+      if (row.recurrence_rule && scope === 'this') {
         // "This event" (calendar/api deleteEvent on an occurrence): the series skips that start.
-        if (!row.recurrence_rule) return bad(`"${row.title}" doesn't repeat: leave out "occurrence" to delete it.`)
-        const o = occurrenceOf(row, occ, ctx)
+        const o = occurrenceOf(row, occ!, ctx)
         const start = new Date(o.starts_at).toISOString()
         await ctx.store.updateEvent({ ...row, recurrence_exdates: [...(row.recurrence_exdates ?? []), start] })
         await logIt(ctx, 'calendar_event.deleted', 'calendar_event', row.id, { occurrence: start })
         // A Time slot lets go of its tasks: unscheduled, back in the rail (calendar/api releaseSlot).
         const freed = row.type === 'time_block' ? await restamp(ctx, await heldBy(ctx, row.id, o), () => OUT_OF_SLOT) : 0
         return { deleted: eventOut(o, ctx.zone), changed: [`skipped the ${spanText(o, ctx.zone)} occurrence; the rest of the series stays`, ...released(freed)], timezone: ctx.zone }
+      }
+      // "This and following" (the app's split, _shared/series.ts): the series ends just before the occurrence; the
+      // one-offs moved out of it from there on go to Trash; a slot's tasks on those days back to the rail. From
+      // the series' first occurrence it is the whole series.
+      const o = row.recurrence_rule && scope === 'following' ? occurrenceOf(row, occ!, ctx) : null
+      const split = o ? splitSeries(row, o, crypto.randomUUID(), ctx.now.toISOString(), ctx.zone, ctx.ruleBetween) : null
+      if (split && o) {
+        await ctx.store.updateEvent(split.head)
+        await logIt(ctx, 'calendar_event.updated', 'calendar_event', row.id, { ended_before: new Date(o.starts_at).toISOString() })
+        const later = (await ctx.store.find('calendar_events', { series_id: row.id, deleted_at: null })).filter((r) => Date.parse(r.starts_at as string) >= Date.parse(o.starts_at)).map((r) => r.id as string)
+        const gone = later.length ? await ctx.store.deleteEvents(later) : []
+        for (const deleted of gone) await logIt(ctx, 'calendar_event.deleted', 'calendar_event', deleted)
+        const day = dateKey(new Date(o.starts_at), ctx.zone)
+        const held = row.type === 'time_block' ? (await heldBy(ctx, row.id, null)).filter((t) => !!t.slot_date && t.slot_date >= day) : []
+        const freed = await restamp(ctx, [...held, ...(gone.length ? (await ctx.store.slotTasks(gone)).filter((t) => !!t.slot_id && gone.includes(t.slot_id)) : [])], () => OUT_OF_SLOT)
+        return {
+          deleted: eventOut(o, ctx.zone),
+          changed: [`the series ends before the ${spanText(o, ctx.zone)} occurrence; the ones before it stay${gone.length ? `, and ${gone.length} occurrence${gone.length === 1 ? '' : 's'} moved out of it went too` : ''}`, ...released(freed)],
+          timezone: ctx.zone,
+        }
       }
       // An event, or "All events" for a series (deleteSeriesWithUndo): the row and every one-off moved
       // out of it; every task in any of its slots back to the rail.
@@ -1945,10 +2052,14 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'duplicate_event',
     title: 'Duplicate event',
     description:
-      "Copy an event to the same time (only when the user asks) — the app's Duplicate: it shows side by side, and edit_event then moves or renames it. For a repeating event give `occurrence` (its start, as the calendar tool lists it): the copy is that one occurrence, on its own. A task's calendar block duplicates its task (its subtasks along) and blocks the copy at the same time. Not for a Time block (it holds tasks and repeats instead; add_event makes another) or a Google event (read-only).",
+      "Copy an event to the same time (only when the user asks) — the app's Duplicate: it shows side by side, and edit_event then moves or renames it. A repeating event takes `scope` — what is copied: \"this\" (the DEFAULT when scope is left out: just the occurrence named by `occurrence`, as an event of its own), \"following\" (a new series from that occurrence on) or \"all\" (a second copy of the whole series); the original stays as it is. \"this\" and \"following\" need `occurrence` (its start, as the calendar tool lists it). A task's calendar block duplicates its task (its subtasks along) and blocks the copy at the same time. Not for a Time block (it holds tasks and repeats instead; add_event makes another) or a Google event (read-only).",
     inputSchema: {
       type: 'object',
-      properties: { id: { ...id, description: 'The event id (for a repeating event, its series).' }, occurrence: dateArg('For a repeating event: the occurrence to copy — its start') },
+      properties: {
+        id: { ...id, description: 'The event id (for a repeating event, its series).' },
+        occurrence: dateArg('For a repeating event: the occurrence to copy (scope "this") or to copy from (scope "following") — its start'),
+        scope: scopeSchema('event'),
+      },
       required: ['id'],
       additionalProperties: false,
     },
@@ -1958,8 +2069,18 @@ export const TOOLS: readonly ToolDef[] = [
       const row = (await ctx.store.getEvent(eventId)) ?? bad(`No event with id ${eventId} (it may have been deleted, or it's a read-only Google event). Use calendar or search to find it.`)
       if (row.type === 'time_block') return bad(`"${row.title}" is a Time block: it holds tasks and repeats instead — add_event makes another.`)
       const occ = when(a, 'occurrence', ctx.zone)
+      const scope = scopeArg(a)
       if (occ && !row.recurrence_rule) return bad(`"${row.title}" doesn't repeat: leave out "occurrence".`)
-      if (!occ && row.recurrence_rule) return bad(`"${row.title}" repeats: give "occurrence" — the start of the one to copy, as the calendar tool lists it.`)
+      if (!occ && row.recurrence_rule && scope !== 'all') return bad(askScope(row, scope))
+      if (row.recurrence_rule && scope !== 'this' && !row.task_id) {
+        // A second series (the app's Duplicate "following" / "all"): from the occurrence on, or the whole of it.
+        const o = scope === 'following' ? occurrenceOf(row, occ!, ctx) : null
+        const from = (o && splitSeries(row, o, crypto.randomUUID(), ctx.now.toISOString(), ctx.zone, ctx.ruleBetween)?.tail) || row
+        const copy: EventRow = { ...from, id: crypto.randomUUID(), task_id: null, series_id: null }
+        await ctx.store.insertEvent(copy)
+        await logIt(ctx, 'calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, duplicate_of: row.id, scope })
+        return { duplicated: eventOut(copy, ctx.zone), changed: [o ? `a new series from the ${spanText(o, ctx.zone)} occurrence on` : 'a copy of the whole series'], timezone: ctx.zone }
+      }
       const src = occ ? occurrenceOf(row, occ, ctx) : row
       const span: Span = { starts_at: new Date(src.starts_at).toISOString(), ends_at: new Date(src.ends_at).toISOString(), all_day: src.all_day }
       if (row.task_id) {

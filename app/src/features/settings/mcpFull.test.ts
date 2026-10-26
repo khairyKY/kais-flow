@@ -96,6 +96,33 @@ describe('MCP full: the privacy gate (mcp_keys.scopes, 0080)', () => {
 })
 
 describe('MCP full: tasks', () => {
+  it('cal-clicks: edit_task on a repeating task — "this" (the default) splits the round off, "all" reaches every round', async () => {
+    // Water the plants, weekly: last week's round done, this week's open (Tue 6 Oct 09:00 Cairo).
+    const rounds = () => [
+      task(61, 'Water the plants', { status: 'done', due_at: '2026-09-29T06:00:00Z', completed_at: '2026-09-29T06:10:00Z', recurrence_rule: 'FREQ=WEEKLY' }),
+      task(62, 'Water the plants', { due_at: '2026-10-06T06:00:00Z', recurrence_rule: 'FREQ=WEEKLY' }),
+    ]
+    const store = fakeStore('Africa/Cairo', rounds())
+    const one = await call(deps(store), 'edit_task', { id: tid(62), title: 'Water the plants (and the herbs)' })
+    expect(one.data!.changed).toEqual(['title → "Water the plants (and the herbs)"', 'only this round: it leaves the series, which goes on unchanged from 2026-10-13 09:00'])
+    expect(store.tasks.find((t) => t.id === tid(62))).toMatchObject({ title: 'Water the plants (and the herbs)', recurrence_rule: null })
+    expect(store.tasks.filter((t) => t.title === 'Water the plants' && t.status === 'todo').map((t) => [t.due_at, t.recurrence_rule])).toEqual([['2026-10-13T06:00:00.000Z', 'FREQ=WEEKLY']])
+    // "following": this round on (the next copies inherit it); the done round keeps its name.
+    const s2 = fakeStore('Africa/Cairo', rounds())
+    const fol = await call(deps(s2), 'edit_task', { id: tid(62), notes: 'the balcony too', scope: 'following' })
+    expect(fol.data!.changed).toEqual(['notes'])
+    expect(s2.tasks.map((t) => [t.id, t.notes, t.recurrence_rule])).toEqual([[tid(61), null, 'FREQ=WEEKLY'], [tid(62), 'the balcony too', 'FREQ=WEEKLY']])
+    // "all": every round, the done one too.
+    const s3 = fakeStore('Africa/Cairo', rounds())
+    const all = await call(deps(s3), 'edit_task', { id: tid(62), priority: 2, scope: 'all' })
+    expect(all.data!.changed).toEqual(['priority → high', 'and 1 other round of the series (every round)'])
+    expect(s3.tasks.map((t) => t.priority)).toEqual([2, 2])
+    // A field one round keeps for itself (Top 3) never splits it off.
+    const s4 = fakeStore('Africa/Cairo', rounds())
+    expect((await call(deps(s4), 'edit_task', { id: tid(62), someday: true })).data!.changed).toEqual(['parked for Someday'])
+    expect(s4.tasks.find((t) => t.id === tid(62))!.recurrence_rule).toBe('FREQ=WEEKLY')
+  })
+
   it('edit_task: labels, priority, a reminder, Someday, pause — each logged as the app logs it', async () => {
     const store = fakeStore('Africa/Cairo', [task(1, 'Pay rent', { due_at: '2026-10-06T06:00:00Z', recurrence_rule: 'FREQ=MONTHLY' })])
     const r = await call(deps(store), 'edit_task', { id: tid(1), labels: ['money', ' home ', 'money'], priority: 2, remind_at: '2026-10-06T08:30', paused: true })
@@ -246,7 +273,7 @@ describe('MCP full: the calendar keeps Time slots whole', () => {
     // Code block: every day from Mon 5 Oct, 10:00–12:00 Cairo; one task held Mon, Tue and Wed.
     const store = fakeStore('Africa/Cairo', [held(1, 'Mon', 531, '2026-10-05', '07:00', '09:00'), held(2, 'Tue', 531, '2026-10-06', '07:00', '09:00'), held(3, 'Wed', 531, '2026-10-07', '07:00', '09:00')])
     store.cal.push({ id: tid(531), title: 'Code block', starts_at: '2026-10-05T07:00:00Z', ends_at: '2026-10-05T09:00:00Z', all_day: false, task_id: null, type: 'time_block', recurrence_rule: 'FREQ=DAILY', recurrence_exdates: [] })
-    const retimed = await call(deps(store), 'edit_event', { id: tid(531), start: '2026-10-05T13:00' })
+    const retimed = await call(deps(store), 'edit_event', { id: tid(531), start: '2026-10-05T13:00', scope: 'all' })
     expect(retimed.data!.changed).toEqual(['time → 13:00–15:00, every occurrence', '3 tasks in it moved with it'])
     expect(store.tasks.map((t) => [t.slot_date, t.scheduled_start, t.scheduled_end])).toEqual([
       ['2026-10-05', '2026-10-05T10:00:00.000Z', '2026-10-05T12:00:00.000Z'], ['2026-10-06', '2026-10-06T10:00:00.000Z', '2026-10-06T12:00:00.000Z'], ['2026-10-07', '2026-10-07T10:00:00.000Z', '2026-10-07T12:00:00.000Z'],
@@ -254,14 +281,14 @@ describe('MCP full: the calendar keeps Time slots whole', () => {
     expect(slotLogs(store)).toEqual([1, 2, 3].map((n) => ['task.scheduled', tid(n), { slot_id: tid(531), slot_date: `2026-10-0${n + 4}`, source: 'mcp' }]))
     // Mondays and Wednesdays now: Tuesday's task has no slot that day — out, unscheduled; the others stay, untouched.
     store.logs = []
-    const reruled = await call(deps(store), 'edit_event', { id: tid(531), repeat: 'FREQ=WEEKLY;BYDAY=MO,WE' })
+    const reruled = await call(deps(store), 'edit_event', { id: tid(531), repeat: 'FREQ=WEEKLY;BYDAY=MO,WE', scope: 'all' })
     expect(reruled.data!.changed).toEqual(['repeats FREQ=WEEKLY;BYDAY=MO,WE', '1 task it held is back unscheduled'])
     expect(store.tasks[1]).toMatchObject(OUT)
     expect(store.tasks[0]).toMatchObject({ slot_id: tid(531), slot_date: '2026-10-05', scheduled_start: '2026-10-05T10:00:00.000Z' })
     expect(store.tasks[2]).toMatchObject({ slot_id: tid(531), slot_date: '2026-10-07', scheduled_start: '2026-10-07T10:00:00.000Z' })
     expect(slotLogs(store)).toEqual([['task.unscheduled', tid(2), { slot_id: tid(531), source: 'mcp' }]])
     // Not repeating: it is its first occurrence (Mon 5) only — Wednesday's task comes out.
-    const once = await call(deps(store), 'edit_event', { id: tid(531), repeat: null })
+    const once = await call(deps(store), 'edit_event', { id: tid(531), repeat: null, scope: 'all' })
     expect(once.data!.changed).toEqual(['no longer repeats', '1 task it held is back unscheduled'])
     expect(store.tasks[2]).toMatchObject(OUT)
     expect(store.tasks[0]).toMatchObject({ slot_id: tid(531), slot_date: '2026-10-05', scheduled_start: '2026-10-05T10:00:00.000Z' })
