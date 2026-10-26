@@ -40,7 +40,8 @@ def attrs(tag):
 
 draw_dir = RES / 'drawable'
 draw_dir.mkdir(parents=True, exist_ok=True)
-ICON_NAMES = ['check', 'plus', 'mic', 'focus', 'star', 'stop', 'review', 'pickdate', 'routines', 'inbox', 'offline', 'journal', 'send']
+# widgets-build 2026-10-26: the icons the family style uses (check/stop/review/pickdate/send went with the old faces)
+ICON_NAMES = ['plus', 'mic', 'focus', 'star', 'routines', 'inbox', 'offline', 'journal', 'today', 'calendar', 'clock', 'activity', 'chat']
 for name in ICON_NAMES:
     svg = (ICONS / f'kf-{name}.svg').read_text()
     root = attrs(re.search(r'<svg[^>]*>', svg).group(0))

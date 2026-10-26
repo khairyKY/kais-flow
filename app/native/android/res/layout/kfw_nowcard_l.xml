@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W05 · Now card large (4×4, was Today · full page): the Now card with its times, the next two blocks, the paper
+     goal, the Top 3 to tick, and the capture bar. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body">
+        <include layout="@layout/kfw_nowhead" />
+        <LinearLayout android:id="@+id/slot" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="3dp" android:orientation="vertical" />
+        <include layout="@layout/kfw_goal_strip" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" />
+        <LinearLayout android:id="@+id/rows" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:orientation="vertical" />
+        <FrameLayout style="@style/KfW.Fill" />
+        <include layout="@layout/kfw_capbar" />
+    </LinearLayout>
+</FrameLayout>

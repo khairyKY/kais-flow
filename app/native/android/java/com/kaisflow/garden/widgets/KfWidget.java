@@ -14,10 +14,10 @@ import android.widget.RemoteViews;
 import com.kaisflow.garden.R;
 
 /**
- * Kai's Flow home-screen widgets (design-export/Phone Widgets.dc.html). Each picker entry is one of
- * the classes below: a kind (what it shows) and a default size. A widget picks its face from its
- * family by the size it is given (Top 3 2×2 → Today 4×2 → Today 4×4 as it is resized), and Render
- * draws it from the snapshot (Snap). Freshness without a background process: the app's pushes,
+ * Kai's Flow home-screen widgets (design-export/Phone Widgets.dc.html; the family style and the three families,
+ * widgets-build 2026-10-26: design-export/Phone home options.html). Each picker entry is one of the classes
+ * below: a kind (what it shows) and a default size. A widget picks its face by the size it is given (Checklist
+ * small → medium → large as it is resized), and Render draws it from the snapshot (Snap). Freshness without a background process: the app's pushes,
  * Android's own 30-minute update (res/xml/kfw_*.xml), and one inexact alarm at the next moment
  * something drawn changes (a block starts or ends, a focus round runs out, midnight).
  */
@@ -31,12 +31,13 @@ public abstract class KfWidget extends AppWidgetProvider {
     abstract int rows();
 
     // ── the picker entries (labels: res/values/kfw_strings.xml; sizes: res/xml/kfw_wNN.xml) ──
-    // Today
+    // Today. W03 is the Checklist's small size and W05 the Now card's large one (the families below), so those
+    // already on a home screen turn into them instead of standing beside a duplicate.
     public static class W01 extends KfWidget { String kind() { return "goal"; } int cols() { return 4; } int rows() { return 1; } }
     public static class W02 extends KfWidget { String kind() { return "goal"; } int cols() { return 2; } int rows() { return 2; } }
-    public static class W03 extends KfWidget { String kind() { return "top"; } int cols() { return 2; } int rows() { return 2; } }
+    public static class W03 extends KfWidget { String kind() { return "check"; } int cols() { return 2; } int rows() { return 2; } }
     public static class W04 extends KfWidget { String kind() { return "top"; } int cols() { return 4; } int rows() { return 2; } }
-    public static class W05 extends KfWidget { String kind() { return "top"; } int cols() { return 4; } int rows() { return 4; } }
+    public static class W05 extends KfWidget { String kind() { return "nowcard"; } int cols() { return 4; } int rows() { return 4; } }
     public static class W06 extends KfWidget { String kind() { return "now"; } int cols() { return 4; } int rows() { return 2; } }
     public static class W07 extends KfWidget { String kind() { return "next"; } int cols() { return 2; } int rows() { return 1; } }
     public static class W08 extends KfWidget { String kind() { return "progress"; } int cols() { return 4; } int rows() { return 1; } }
@@ -57,6 +58,7 @@ public abstract class KfWidget extends AppWidgetProvider {
     // Routines & streaks
     public static class W21 extends KfWidget { String kind() { return "routines"; } int cols() { return 2; } int rows() { return 2; } }
     public static class W22 extends KfWidget { String kind() { return "routines"; } int cols() { return 4; } int rows() { return 2; } }
+    // W24 merged into W23 (it is W23's 1×1 face): hidden from the picker (kfw_w24.xml), kept so placed ones stay.
     public static class W23 extends KfWidget { String kind() { return "streak"; } int cols() { return 2; } int rows() { return 2; } }
     public static class W24 extends KfWidget { String kind() { return "streak"; } int cols() { return 1; } int rows() { return 1; } }
     // Triage
@@ -70,6 +72,14 @@ public abstract class KfWidget extends AppWidgetProvider {
     public static class W32 extends KfWidget { String kind() { return "memory"; } int cols() { return 4; } int rows() { return 2; } }
     public static class W33 extends KfWidget { String kind() { return "pressed"; } int cols() { return 2; } int rows() { return 2; } }
     public static class W34 extends KfWidget { String kind() { return "season"; } int cols() { return 2; } int rows() { return 1; } }
+    // The families (Phone home options.html): A · Checklist (small is W03), B · Now card (large is W05), C · Day bar.
+    public static class W35 extends KfWidget { String kind() { return "check"; } int cols() { return 4; } int rows() { return 2; } }
+    public static class W36 extends KfWidget { String kind() { return "check"; } int cols() { return 4; } int rows() { return 4; } }
+    public static class W37 extends KfWidget { String kind() { return "nowcard"; } int cols() { return 2; } int rows() { return 2; } }
+    public static class W38 extends KfWidget { String kind() { return "nowcard"; } int cols() { return 4; } int rows() { return 2; } }
+    public static class W39 extends KfWidget { String kind() { return "daybar"; } int cols() { return 2; } int rows() { return 2; } }
+    public static class W40 extends KfWidget { String kind() { return "daybar"; } int cols() { return 4; } int rows() { return 2; } }
+    public static class W41 extends KfWidget { String kind() { return "daybar"; } int cols() { return 4; } int rows() { return 4; } }
 
     static final Class<?>[] ALL = {
         W01.class, W02.class, W03.class, W04.class, W05.class, W06.class, W07.class, W08.class,
@@ -79,6 +89,7 @@ public abstract class KfWidget extends AppWidgetProvider {
         W21.class, W22.class, W23.class, W24.class,
         W25.class, W26.class, W27.class, W28.class,
         W29.class, W31.class, W32.class, W33.class, W34.class,
+        W35.class, W36.class, W37.class, W38.class, W39.class, W40.class, W41.class,
     };
 
     // ── AppWidgetProvider ──
@@ -108,10 +119,13 @@ public abstract class KfWidget extends AppWidgetProvider {
 
     private RemoteViews draw(Context c, AppWidgetManager m, int id, Snap s, long now) {
         Bundle o = m.getAppWidgetOptions(id);
-        int cols = colsFor(o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH));
-        int rows = rowsFor(o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT));
+        int w = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH);
+        int h = o.getInt(AppWidgetManager.OPTION_APPWIDGET_MAX_HEIGHT);
+        int cols = colsFor(w) > 0 ? colsFor(w) : cols();
+        int rows = rowsFor(h) > 0 ? rowsFor(h) : rows();
         try {
-            return Render.build(c, kind(), cols > 0 ? cols : cols(), rows > 0 ? rows : rows(), s, now);
+            // Unknown sizes (before the launcher reports one): a typical phone cell, 76 × 96dp less the gaps.
+            return Render.build(c, kind(), cols, rows, w > 0 ? w : 76 * cols + 16 * (cols - 1), h > 0 ? h : 96 * rows - 8, s, now);
         } catch (RuntimeException e) {
             Log.w(TAG, "draw " + kind(), e); // a bad snapshot never leaves a broken widget: first paint
             return new RemoteViews(c.getPackageName(), R.layout.kfw_loading);

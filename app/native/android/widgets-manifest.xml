@@ -128,4 +128,32 @@
     <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
     <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w34" />
 </receiver>
+<receiver android:name="com.kaisflow.garden.widgets.KfWidget$W35" android:label="@string/kfw_label_35" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w35" />
+</receiver>
+<receiver android:name="com.kaisflow.garden.widgets.KfWidget$W36" android:label="@string/kfw_label_36" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w36" />
+</receiver>
+<receiver android:name="com.kaisflow.garden.widgets.KfWidget$W37" android:label="@string/kfw_label_37" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w37" />
+</receiver>
+<receiver android:name="com.kaisflow.garden.widgets.KfWidget$W38" android:label="@string/kfw_label_38" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w38" />
+</receiver>
+<receiver android:name="com.kaisflow.garden.widgets.KfWidget$W39" android:label="@string/kfw_label_39" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w39" />
+</receiver>
+<receiver android:name="com.kaisflow.garden.widgets.KfWidget$W40" android:label="@string/kfw_label_40" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w40" />
+</receiver>
+<receiver android:name="com.kaisflow.garden.widgets.KfWidget$W41" android:label="@string/kfw_label_41" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w41" />
+</receiver>
 <receiver android:name="com.kaisflow.garden.widgets.WidgetActions" android:exported="false" />

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W38 · Now card medium (4×2): the Now card, then the next two blocks in palette C. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body">
+        <include layout="@layout/kfw_nowhead" />
+        <LinearLayout android:id="@+id/rows" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:orientation="vertical" />
+    </LinearLayout>
+</FrameLayout>

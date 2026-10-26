@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W35 · Checklist medium (4×2): Today · 1 of 8 done and the +, the paper goal on the left, the picks and today's
+     tasks to tick on the right (as many as fit). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body">
+        <include layout="@layout/kfw_head" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:orientation="horizontal">
+            <include layout="@layout/kfw_goal_strip" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1.1" android:layout_marginTop="2dp" android:layout_marginEnd="10dp" />
+            <LinearLayout android:id="@+id/rows" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

@@ -1,15 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- W8 Day progress (4×1): done count, the finish estimate, and the wisteria growing with it -->
+<!-- W08 Day progress (4×1): 1 of 8 done and the finish estimate; the day's blocks as a strip in their palette C
+     colours with the now tick (DayBar, slim; the plain bar on a day without blocks), and the wisteria. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
-    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
-    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim" android:paddingStart="16dp" android:paddingEnd="16dp">
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim" android:paddingStart="14dp" android:paddingEnd="12dp">
         <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
             <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="bottom" android:orientation="horizontal">
-                <TextView android:id="@+id/title" style="@style/KfW.Serif.Bold" android:layout_width="0dp" android:layout_weight="1" android:textSize="16sp" />
-                <TextView android:id="@+id/time" style="@style/KfW.Meta" />
+                <TextView android:id="@+id/title" style="@style/KfW.Serif.Bold" android:textSize="16sp" />
+                <TextView android:id="@+id/time" style="@style/KfW.Meta" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="8dp" />
             </LinearLayout>
-            <ProgressBar android:id="@+id/bar" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="6dp" android:layout_marginTop="7dp" android:max="1000" android:progressDrawable="@drawable/kfw_bar_moss" />
+            <include layout="@layout/kfw_daybar" android:layout_width="match_parent" android:layout_height="10dp" android:layout_marginTop="7dp" />
+            <ProgressBar android:id="@+id/done_bar" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="6dp" android:layout_marginTop="8dp" android:max="1000" android:progressDrawable="@drawable/kfw_bar_moss" />
         </LinearLayout>
-        <ImageView android:id="@+id/art" android:layout_width="wrap_content" android:layout_height="40dp" android:layout_marginStart="12dp" android:adjustViewBounds="true" android:src="@drawable/kfw_art_wisteria_p40" android:importantForAccessibility="no" />
+        <ImageView android:id="@+id/art" android:layout_width="wrap_content" android:layout_height="46dp" android:layout_marginStart="12dp" android:adjustViewBounds="true" android:src="@drawable/kfw_art_wisteria_p40" android:importantForAccessibility="no" />
     </LinearLayout>
 </FrameLayout>

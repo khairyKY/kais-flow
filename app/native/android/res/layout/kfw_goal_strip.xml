@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The paper goal strip (straight, no tilt): the tape, the gold box, the title in the serif, the gold stamp, the
+     clover. Ids: goal_open (tap), box, goal_title (its lines set per widget), goal_tag. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/goal" android:layout_width="match_parent" android:layout_height="wrap_content" android:paddingTop="5dp">
+    <LinearLayout android:id="@+id/goal_open" android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/kfw_goal_inner" android:orientation="horizontal" android:paddingTop="2dp" android:paddingBottom="4dp" android:paddingStart="2dp" android:paddingEnd="8dp">
+        <include layout="@layout/kfw_box_gold" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="2dp" android:orientation="vertical" android:paddingTop="7dp">
+            <TextView android:id="@+id/goal_title" style="@style/KfW.Serif.Bold" android:layout_width="match_parent" android:textSize="14sp" android:lineSpacingMultiplier="1.1" android:maxLines="2" />
+            <TextView android:id="@+id/goal_tag" style="@style/KfW.Stamp" android:layout_width="match_parent" android:layout_marginTop="4dp" />
+        </LinearLayout>
+        <ImageView android:layout_width="wrap_content" android:layout_height="19dp" android:layout_marginTop="6dp" android:layout_marginStart="6dp" android:adjustViewBounds="true" android:src="@drawable/kfw_art_clover_four_leaf" android:importantForAccessibility="no" />
+    </LinearLayout>
+    <ImageView android:layout_width="44dp" android:layout_height="11dp" android:layout_gravity="top|center_horizontal" android:scaleType="fitXY" android:src="@drawable/kfw_tape" android:importantForAccessibility="no" />
+</FrameLayout>

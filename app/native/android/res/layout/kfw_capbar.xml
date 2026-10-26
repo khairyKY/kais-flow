@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The capture bar at a widget's foot: + Add a task… (type) and the terra mic (talk). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/capbar" android:layout_width="match_parent" android:layout_height="36dp" android:gravity="center_vertical" android:orientation="horizontal" android:background="@drawable/kfw_pill_bone" android:paddingStart="12dp" android:paddingEnd="4dp">
+    <ImageView style="@style/KfW.Icon" android:src="@drawable/kfw_ic_plus" android:tint="@color/kfw_ink_faint" />
+    <TextView android:id="@+id/capture" style="@style/KfW.Title" android:layout_width="0dp" android:layout_height="match_parent" android:layout_weight="1" android:layout_marginStart="8dp" android:gravity="center_vertical" android:text="Add a task…" android:textColor="@color/kfw_ink_faint" android:textSize="13sp" />
+    <ImageView android:id="@+id/mic" style="@style/KfW.Round.Cta" android:src="@drawable/kfw_ic_mic" android:contentDescription="Talk" />
+</LinearLayout>

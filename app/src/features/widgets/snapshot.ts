@@ -1,11 +1,12 @@
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { isOverdue } from '../tasks/planMath'
-import { todayListTasks } from '../tasks/grouping'
+import { isTodayTask, todayListTasks } from '../tasks/grouping'
+import { BLOCK_SWATCHES, nearestSwatch, swatchValue } from '../calendar/blockHue'
 import { remainingWork } from '../today/todayLayout'
 import { computeStreak, computeTrellisDays, routinesForToday, localDateKey } from '../routines/streaks'
 import { getSeason } from '../../lib/seasons'
 import type { DayPhase } from '../today/dayPhase'
-import type { CalendarEvent, Domain, Project, Routine, RoutineCompletion, SlippingRow, Task } from '../../lib/types'
+import type { CalendarEvent, Routine, RoutineCompletion, SlippingRow, Task } from '../../lib/types'
 
 // The home-screen widgets' snapshot (Phone Widgets.dc.html): everything they draw, in one small
 // JSON the Android shell keeps (native/android/java/.../widgets/Snap.java reads these exact keys).
@@ -24,7 +25,9 @@ export interface WidgetItem {
   done: boolean
 }
 
-/** A timed block today. `color`: 'goal' | 'lavender' | 'blossom' | a #hex hue (CALENDAR.md §3). */
+/** A timed block today. `color`: its palette C swatch, lower case ('iris', 'rose' …), as the calendar draws it
+ * (blockHue: its own colour, a pre-palette-C one as its new swatch, a custom one as the nearest swatch; none → the
+ * kind's, Iris for a task or Time block, Rose for an event). `goal`: the goal's block (the gold rule and ✶). */
 export interface WidgetBlock {
   id: string
   taskId: string
@@ -32,6 +35,7 @@ export interface WidgetBlock {
   start: number
   end: number
   color: string
+  goal: boolean
   done: boolean
 }
 
@@ -56,6 +60,12 @@ export interface WidgetSnapshot {
   dayN: number
   goal: WidgetItem | null
   picks: WidgetItem[]
+  /** Today's tasks (the Today page's own section, not the Top 3): open ones first, then the ones done today. */
+  tasks: WidgetItem[]
+  /** Open tasks in Also open (not today's, not overdue). */
+  alsoOpen: number
+  /** The app's clock (Settings / the calendar's View options ▸ 24-hour time). */
+  hour24: boolean
   plannedMin: number
   finishAt: number
   progress: { done: number; total: number }
@@ -93,10 +103,10 @@ export interface SnapshotInput {
   zone: string
   online: boolean
   hideTitles: boolean
+  /** lib/clock hour24(): the widgets show times the way the app does. */
+  hour24?: boolean
   tasks: readonly Task[]
   events: readonly CalendarEvent[]
-  projects: readonly Project[]
-  domains: readonly Domain[]
   /** Today's Top 3 in order, the goal first (today/top3Order dayTop3). */
   top3: readonly Task[]
   dayN: number
@@ -144,20 +154,17 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
   const doneIds = new Set(tasks.filter((x) => x.status === 'done').map((x) => x.id))
   const live = events.filter((e) => !e.deleted_at)
 
-  // ── Today's timed blocks (running, or starting today), in their calendar colours ──
+  // ── Today's timed blocks (running, or starting today), in palette C as the calendar draws them ──
   const goalId = i.top3[0]?.id ?? null
   const hue = (e: CalendarEvent): string => {
-    if (e.task_id && e.task_id === goalId) return 'goal'
-    const task = e.task_id ? taskById.get(e.task_id) : undefined
-    const project = task?.project_id ? i.projects.find((p) => p.id === task.project_id) : undefined
-    const own = e.color ?? project?.color ?? (project && i.domains.find((d) => d.id === project.domain_id)?.color) ?? null
-    if (isHex(own)) return own
-    return e.type === 'event' && !e.task_id ? 'blossom' : 'lavender'
+    const own = swatchValue(e.color)
+    if (!isHex(own)) return e.type === 'event' && !e.task_id ? 'rose' : 'iris' // blockHue KIND_HUE
+    return (BLOCK_SWATCHES.find((sw) => sw.value.toLowerCase() === own.toLowerCase()) ?? nearestSwatch(own)).name.toLowerCase()
   }
   const blocks: WidgetBlock[] = live
     .filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || (ms(e.starts_at)! <= t && t < ms(e.ends_at)!)))
     .sort((a, b) => ms(a.starts_at)! - ms(b.starts_at)!)
-    .map((e) => ({ id: e.id, taskId: e.task_id ?? '', title: e.title, start: ms(e.starts_at)!, end: ms(e.ends_at)!, color: hue(e), done: !!e.task_id && doneIds.has(e.task_id) }))
+    .map((e) => ({ id: e.id, taskId: e.task_id ?? '', title: e.title, start: ms(e.starts_at)!, end: ms(e.ends_at)!, color: hue(e), goal: !!e.task_id && e.task_id === goalId, done: !!e.task_id && doneIds.has(e.task_id) }))
 
   // ── The Top 3, each with its block's time today (else its own schedule) ──
   const item = (x: Task): WidgetItem => {
@@ -169,6 +176,12 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
   const work = remainingWork(i.top3.filter((x) => !x.completed_at), live, now, doneIds)
 
   const visible = todayListTasks([...tasks], now)
+  // Today's tasks and Also open, apart (TodayPage): the Top 3 aside, overdue ones in their own fold.
+  const top3Ids = new Set(i.top3.map((x) => x.id))
+  const rest = visible.filter((x) => !top3Ids.has(x.id) && (x.completed_at || !isOverdue(x, now)))
+  const todays = rest.filter((x) => isTodayTask(x, now) || (x.completed_at && cairoDateKey(new Date(x.completed_at)) === today))
+  const todayItems = [...todays.filter((x) => !x.completed_at), ...todays.filter((x) => x.completed_at)].slice(0, 8).map(item)
+  const alsoOpen = rest.filter((x) => !x.completed_at && !todays.includes(x)).length
   const doneToday = tasks.filter((x) => x.completed_at && cairoDateKey(new Date(x.completed_at)) === today).length
   const openToday = visible.filter((x) => !x.completed_at).length
 
@@ -242,6 +255,9 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
     dayN: i.dayN,
     goal,
     picks,
+    tasks: todayItems,
+    alsoOpen,
+    hour24: !!i.hour24,
     plannedMin: work.minutes,
     finishAt: work.finishAt.getTime(),
     progress: { done: doneToday, total: doneToday + openToday },
@@ -277,6 +293,7 @@ export function mask(s: WidgetSnapshot): WidgetSnapshot {
     ...s,
     goal: s.goal && { ...s.goal, title: 'Your goal' },
     picks: s.picks.map((p, n) => ({ ...p, title: `Pick ${n + 2}` })),
+    tasks: s.tasks.map((t) => ({ ...t, title: 'A task' })),
     blocks: s.blocks.map((b) => ({ ...b, title: b.taskId && b.taskId === goalId ? 'Your goal' : b.taskId ? 'A task' : 'Busy' })),
     countdown: s.countdown && { ...s.countdown, title: 'Countdown' },
     focus: { ...s.focus, title: s.focus.title ? 'Your focus' : '' },
