@@ -20,6 +20,7 @@ export const BLOCK_SWATCHES: readonly { name: string; value: string }[] = [
 export const LEGACY_SWATCHES: readonly string[] = ['#A8A0BE', '#8A9A7E', '#7A946E', '#B5654A', '#D4A8B0', '#9AB4BE', '#D4C78A', '#C9A0A0', '#C9A55A'] // ds-ok: colours saved before palette C
 
 type Hue = { c: string; ink: string }
+// ds-ok: --blk-<swatch> / --blk-<swatch>-ink are palette C's tokens (colors.css), named from the swatch
 const token = (name: string): Hue => ({ c: `var(--blk-${name.toLowerCase()})`, ink: `var(--blk-${name.toLowerCase()}-ink)` })
 
 /** A block with no colour of its own: a task or a Time block is Iris, a plain event Rose (palette C's roles). */
