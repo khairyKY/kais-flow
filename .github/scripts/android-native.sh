@@ -12,6 +12,19 @@ test -f "$main/java/com/kaisflow/garden/MainActivity.java" || { echo "::error::g
 cp native/android/MainActivity.java "$main/java/com/kaisflow/garden/MainActivity.java"
 cp -r native/android/java/. "$main/java/"
 cp -r native/android/res/. "$main/res/"
+# Notification sound packs (notif-sounds, 2026-10-26): a channel plays a res/raw sound, so every pack's
+# WAVs go in as res/raw/kf_<pack>_<sound>.wav — the names features/notifications/sounds.ts soundName and
+# android.ts channelsFor use. keep.xml stops a resource shrinker dropping them (only channels name them).
+mkdir -p "$main/res/raw"
+for f in public/notification-sounds/*/*.wav; do
+  pack="$(basename "$(dirname "$f")")"
+  cp "$f" "$main/res/raw/kf_${pack}_$(basename "$f")"
+done
+printf '<?xml version="1.0" encoding="utf-8"?>\n<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/kf_*" />\n' > "$main/res/raw/keep.xml"
+n=$(ls "$main/res/raw"/kf_*.wav | wc -l)
+want=$(ls public/notification-sounds/*/*.wav | wc -l)
+test "$n" -gt 0 -a "$n" -eq "$want" || { echo "::error::expected $want notification sounds in res/raw, found $n"; exit 1; }
+echo "notification sounds: $n in res/raw"
 # The widget gallery (renders every widget to PNGs for review) — the debug source set only; release builds never see it.
 mkdir -p android/app/src/debug
 cp -r native/android/debug/. android/app/src/debug/

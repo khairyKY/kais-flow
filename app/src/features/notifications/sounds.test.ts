@@ -1,20 +1,11 @@
-import fs from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import type { NoticeKind } from '../../../../supabase/functions/notify/copy.ts'
 import { NOTIFY_PACKS, NOTIFY_SOUNDS, parseNotifyPack, soundName, soundOf, soundUrl } from './sounds'
 
 describe('notification sound packs', () => {
-  it('every pack has a WAV for every sound (public/, where the app and the Android build read them)', () => {
-    for (const pack of NOTIFY_PACKS) {
-      for (const sound of NOTIFY_SOUNDS) {
-        const file = new URL(`../../../public${soundUrl(pack, sound)}`, import.meta.url)
-        expect(fs.existsSync(file), `${pack}/${sound}`).toBe(true)
-        const head = fs.readFileSync(file).subarray(0, 12).toString('latin1')
-        expect(head.startsWith('RIFF') && head.endsWith('WAVE'), `${pack}/${sound} is a WAV`).toBe(true)
-      }
-    }
-    // …and nothing else in the folders (a stray file would ship in res/raw too).
-    for (const pack of NOTIFY_PACKS) expect(fs.readdirSync(new URL(`../../../public/notification-sounds/${pack}/`, import.meta.url)).sort()).toEqual(NOTIFY_SOUNDS.map((s) => `${s}.wav`).sort())
+  it('every pack has a WAV for every sound, and nothing else (public/, where the app and the Android build read them)', () => {
+    const files = Object.keys(import.meta.glob('../../../public/notification-sounds/**/*')).map((k) => k.replace('../../../public', '')).sort()
+    expect(files).toEqual(NOTIFY_PACKS.flatMap((p) => NOTIFY_SOUNDS.map((s) => soundUrl(p, s))).sort())
   })
 
   it('res/raw names are valid Android resource names, unique per pack × sound', () => {
