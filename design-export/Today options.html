@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Today options</title>
+<!-- Kai's Flow · three directions for the home screen, Today (26 Oct 2026, Kai: "I want to redesign the homescreen,
+     it doesn't feel as faithful to the entire app and feels too spacious, let's see a couple directions"). Plain HTML,
+     open it straight from disk. Tokens: ds-bound/styles.css (the Bound Journal set) plus the app's own colours file for
+     the calendar's block palette C (--blk-*); no colour value is changed or added. Looks only: nothing here is in the app.
+     The audit of today's Today (screenshots + numbers) is docs/log/2026-10-26-*-today-looks-handoff.md. -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.dark.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:40px 32px 120px}
+@media (max-width:767px){.wrap{padding:24px 16px 80px}}
+h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:13px;color:var(--ink-faint)}
+.lede{margin:12px 0 0;max-width:780px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg .btn{height:30px;border:none;background:none;padding:0 13px}
+.seg .btn[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.look{margin-top:56px;padding-top:24px;border-top:1px solid var(--line-card)}
+.look h2{margin:0;font-family:var(--font-display);font-size:30px;font-weight:600;line-height:1.2}
+.look h2 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:38px;margin-right:12px;padding:0 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 17px/1 var(--font-ui);vertical-align:4px}
+.look.picked h2::after{content:'Your pick';margin-left:12px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 12px/1.4 var(--font-ui);vertical-align:6px}
+.look .say{margin:8px 0 0;max-width:820px;font-size:15.5px;color:var(--ink-body)}
+.look .say p{margin:2px 0}
+.dens{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:12px;background:var(--paper-bone);border:1px solid var(--line-card);font-size:13.5px;color:var(--ink-muted)}
+.dens b{color:var(--ink-body);font-weight:600}
+.shots{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start;margin-top:18px}
+figure{margin:0;flex:none}
+figcaption{margin-top:8px;max-width:680px;font-size:13px;color:var(--ink-muted)}
+.pick-row{margin-top:16px}
+.notes{margin-top:28px;max-width:900px}
+.notes h2{margin:0 0 6px;font-family:var(--font-display);font-size:22px;font-weight:600}
+.notes ul{margin:6px 0 0;padding-left:20px;color:var(--ink-muted)}
+.notes li{margin:3px 0}
+.notes b{color:var(--ink-body);font-weight:600}
+.now-shot{display:block;border:1px solid var(--line-card);border-radius:14px}
+[data-theme="night"] .only-day,:root:not([data-theme="night"]) .only-night{display:none}
+
+/* ════════ the app frame (drawn at the app's 100%; the 150% pictures zoom the same page as the app does) ════════ */
+.frame{position:relative;overflow:hidden;border:1px solid var(--line-card);border-radius:14px;background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);line-height:1.35;font-size:14px}
+[data-theme="night"] .frame{border-color:var(--line-solid)}
+.desk{width:1280px;height:800px}
+.z{display:flex;width:calc(1280px / var(--zm));height:calc(800px / var(--zm));zoom:var(--zm)}
+.phone{width:390px;height:844px;border-radius:30px;display:flex;flex-direction:column}
+.main{flex:1;min-width:0;position:relative;overflow:hidden;container-type:inline-size}
+.ic{flex:none;display:block}
+.nowrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* sidebar — line icons, the name menu at the top, Capture / Search / Chat at the foot (as the app is today) */
+.sb{width:240px;flex:none;display:flex;flex-direction:column;background:var(--bg-sidebar);border-right:1px solid var(--line-sidebar);overflow:hidden}
+.sb-top{padding:24px 14px 0}
+.sb-name{display:flex;align-items:center;gap:10px;padding-left:6px;font:600 23px/1 var(--font-display)}
+.sb-logo{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;background:var(--paper-parchment);border:1px solid var(--line-card);font:500 15px/1 var(--font-display)}
+.sb-name small{font:14px var(--font-ui);color:var(--ink-muted)}
+.sb-ws{margin:6px 0 0 46px;font-size:12px;color:var(--ink-muted)}
+.sb-plan{display:flex;align-items:center;gap:8px;height:34px;margin-top:16px;padding:0 12px;border:1px solid var(--line-control);border-radius:12px;font-size:12.5px;color:var(--ink-muted)}
+.sb-plan .p{margin-left:auto;font-size:16px}
+.sb-l{display:flex;justify-content:space-between;padding:7px 12px 7px 38px;font-size:12.5px;color:var(--ink-muted)}
+.sb-nav{flex:1;min-height:0;overflow:hidden;border-top:1px solid var(--line-sidebar);margin-top:8px}
+.sb-sec{padding:16px 26px 6px;font-size:12px;color:var(--ink-faint)}
+.sb-i{display:flex;align-items:center;gap:12px;height:40px;margin:0 14px;padding:0 12px;border-radius:12px;font-size:14px;color:var(--ink-body)}
+.sb-i .ic{color:var(--ink-muted)}
+.sb-i.on{background:var(--paper-parchment);border:1px solid var(--line-card);font-weight:600}
+.sb-foot{flex:none;display:flex;align-items:center;gap:6px;padding:10px 14px 12px;border-top:1px solid var(--line-sidebar)}
+.sb-cap{display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border-radius:12px;background:var(--paper-parchment);font:600 14px var(--font-ui)}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 3px;border-radius:4px;border:1px solid var(--line-control);font:500 10.5px/1 var(--font-ui);color:var(--ink-muted)}
+.sb-foot .ib{display:inline-flex;width:34px;height:34px;align-items:center;justify-content:center;color:var(--ink-muted)}
+
+/* phone tab bar (as the app is today) */
+.tabs{flex:none;height:66px;display:flex;align-items:flex-start;justify-content:space-around;padding-top:8px;border-top:1px solid var(--line-card);background:var(--paper-bone);font-size:11px;color:var(--ink-muted)}
+.tabs span{display:flex;flex-direction:column;align-items:center;gap:3px;width:60px}
+.tabs .on{color:var(--ink-body);font-weight:600}
+.tabs .on i{display:flex;padding:3px 13px;border-radius:999px;background:var(--paper-parchment)}
+.tabs .fab{width:48px;height:48px;margin-top:-4px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:flex;align-items:center;justify-content:center}
+
+/* shared bits */
+.ck{flex:none;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--check-border);background:var(--check-bg);font-size:11px;line-height:1;color:var(--check-mark)}
+.done .ck,.ck.on{background:var(--check-fill);border-color:transparent}
+.done .tt{text-decoration:line-through;text-decoration-color:var(--ink-hairline);color:var(--ink-faint)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.mt{display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--ink-muted);white-space:nowrap}
+.terra{color:var(--acc-terra-ink)}
+.dots{flex:none;display:inline-flex;color:var(--ink-faint)}
+.step{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--line-control);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);background:var(--paper-bone)}
+.step.l svg{transform:scaleX(-1)}
+.sum{font-size:13px;color:var(--ink-muted)}
+.sum b{font-weight:500;color:var(--ink-body)}
+.pill{display:flex;align-items:center;gap:8px;height:38px;padding:0 4px 0 14px;border:1px solid var(--line-control);border-radius:999px;background:var(--paper-parchment);font-size:14px;color:var(--ink-faint)}
+.pill .grow{flex:1}
+.pill .mic{width:30px;height:30px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:inline-flex;align-items:center;justify-content:center}
+.ibtn{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line-control);background:var(--paper-parchment);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted)}
+.tape{position:absolute;height:14px;background:color-mix(in srgb,var(--acc-gold-warm) 42%,transparent);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:var(--shadow-crisp)}
+.gtag{font:10.5px/1.2 var(--font-stamp);letter-spacing:var(--ls-stamp);text-transform:uppercase;color:var(--acc-gold);white-space:nowrap}
+.clover{flex:none;filter:var(--shadow-drop-sm)}
+.chev{flex:none;display:inline-flex;color:var(--ink-faint);transition:none}
+.chev.dn svg{transform:rotate(90deg)}
+
+/* the calendar's block, as the app draws it ("Now", palette C, check B, goal A) */
+.cal{position:relative}
+.cal .hl{position:absolute;right:0;border-top:1px solid var(--line-card)}
+.cal .hl b{position:absolute;right:100%;top:-8px;padding-right:8px;font-weight:400;font-size:11.5px;color:var(--ink-faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cal .hl.half{border-top:1px dashed var(--line-dashed)}
+[data-theme="night"] .cal .hl{border-top-color:var(--line-solid)}
+.cal .wash{position:absolute;top:0;bottom:0;right:0;background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.cb{position:absolute;overflow:hidden;border-radius:var(--radius-block);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));padding:5px 9px;line-height:1.25;z-index:2}
+.cb .r1{display:flex;align-items:flex-start;gap:6px;min-width:0}
+.cb .tt{flex:1;min-width:0;font-size:12.5px;color:var(--ink-body);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.cb .tm{margin-top:2px;font:10px/1.2 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ct);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb .k{flex:none;width:13px;height:13px;margin-top:1px;border:2px solid var(--ct);border-radius:38%}
+.cb.past{opacity:.62}
+.cb.goal{border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold)}
+.cb.goal .tt::before{content:'✶ ';color:var(--acc-gold)}
+.cb.one{padding:2px 8px}
+.cb.one .tt{-webkit-line-clamp:1}
+.cb.one .tm{display:none}
+.nowl{position:absolute;height:0;border-top:2px solid var(--acc-lavender);z-index:4}
+.nowl::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--acc-lavender)}
+.nowl b{position:absolute;right:4px;top:-17px;padding:0 5px;border-radius:6px;background:var(--paper-parchment);font:500 10px/14px var(--font-mono);color:var(--acc-lavender-text)}
+
+/* the calendar's Now card, option A (the one docked at the bottom of the calendar's rail) */
+.nca{font-family:var(--font-ui);color:var(--ink-body);position:relative}
+.nca .m{position:relative;z-index:1;padding:10px 12px 9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:14px;box-shadow:var(--shadow-panel)}
+[data-theme="night"] .nca .m{background:var(--paper-bone);border-color:var(--line-solid)}
+.nca .h{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;line-height:1.3}
+.nca .cd{flex:none;margin-left:auto;font:12px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink-muted);white-space:nowrap}
+.nca .tl{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:15px;font-weight:500;line-height:1.3;min-width:0}
+.nca .rg{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid var(--c)}
+.nca .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nca .br{height:4px;margin-top:9px;border-radius:2px;background:color-mix(in srgb,var(--ink-body) 9%,transparent);overflow:hidden}
+.nca .br i{display:block;height:100%;border-radius:2px;background:color-mix(in srgb,var(--c) 55%,var(--ct))}
+.nca .tms{display:flex;justify-content:space-between;margin-top:5px;font:11px/1.2 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink-faint)}
+.nca .nx{position:relative;display:flex;align-items:center;gap:8px;margin:-10px 8px 0;padding:16px 11px 8px;background:var(--paper-bone);border:1px solid var(--line-card);border-top:0;border-radius:0 0 12px 12px;font-size:13.5px}
+[data-theme="night"] .nca .nx{background:var(--paper-parchment);border-color:var(--line-solid)}
+.nca .nx .k{flex:none;width:34px;font:12px var(--font-mono);color:var(--ink-faint)}
+
+/* the day ribbon (today's ritual card timeline, kept in C) */
+.rib{position:relative;height:30px}
+.rib .rail{position:absolute;left:0;right:0;top:9px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--ink-body) 9%,transparent)}
+.rib .rb{position:absolute;top:5px;height:14px;border-radius:4px;background:color-mix(in srgb,var(--c) 75%,var(--paper-parchment))}
+.rib .rb.past{opacity:.55}
+.rib .rb.goal{box-shadow:inset 0 -2px 0 var(--acc-gold)}
+.rib .nw{position:absolute;top:1px;width:2px;height:22px;background:var(--acc-terra)}
+.rib .ax{position:absolute;left:0;right:0;top:23px;display:flex;justify-content:space-between;font:10px var(--font-mono);color:var(--ink-faint)}
+
+/* ═══════════ A · Command centre ═══════════ */
+.dA .main{padding:16px 24px 0}
+.hdA{display:flex;align-items:center;gap:10px;height:40px}
+.hdA h3{margin:0;font:500 26px/1 var(--font-display);letter-spacing:-.01em;white-space:nowrap}
+.hdA .sum{margin-left:6px}
+.hdA .pill{margin-left:auto;width:290px;height:36px;flex:none}
+.hdA .pill .mic{width:28px;height:28px}
+.chipsA{display:flex;gap:6px;margin-top:10px;overflow:hidden;white-space:nowrap}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;border:1px solid var(--line-card);background:var(--paper-bone);font-size:12.5px;color:var(--ink-body)}
+.chip .go{font-weight:600;color:var(--acc-terra-ink)}
+.chip .q{color:var(--ink-faint)}
+.chip .ck{width:13px;height:13px;border-radius:4px;font-size:8px}
+.chip.dn{color:var(--ink-faint)}
+.chip.dn .tx{text-decoration:line-through;text-decoration-color:var(--ink-hairline)}
+.chip .sun{color:var(--acc-gold)}
+.chip .moon{color:var(--acc-lavender-text)}
+.sep{flex:none;width:1px;height:18px;margin:5px 4px;background:var(--line-card)}
+.bodyA{display:grid;grid-template-columns:minmax(0,1fr) 290px;gap:22px;margin-top:14px}
+.gs{position:relative;display:flex;align-items:center;gap:11px;min-height:50px;padding:6px 10px 6px 13px;margin-top:6px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:12px;box-shadow:var(--shadow-goal);transform:rotate(-.3deg)}
+.gs .tape{top:-7px;left:26%;width:46px;height:12px}
+.gs .ck{border-color:var(--acc-gold);background:transparent}
+.gs .tt{flex:1;min-width:0;font:600 16px/1.25 var(--font-display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gs .mt{color:var(--acc-gold);font-size:12px}
+.gs .clover{width:22px}
+.slA{display:flex;align-items:center;gap:6px;height:30px;margin-top:8px;font-size:12.5px;font-weight:600;color:var(--ink-body)}
+.slA .c{font-weight:500;color:var(--ink-faint)}
+.slA .act{margin-left:auto;font-weight:500;color:var(--ink-muted)}
+.slA.fold{color:var(--ink-muted)}
+.dA .trow{display:flex;align-items:center;gap:10px;height:34px;padding:0 4px 0 6px;border-bottom:1px solid var(--line-card);font-size:14px}
+.dA .trow .ck{width:16px;height:16px;font-size:10px}
+.dA .trow .tt{flex:1}
+.dA .trow .n{flex:none;width:12px;font:11.5px var(--font-mono);color:var(--ink-faint)}
+.dA .trow .sub{padding-left:26px}
+.dA .trow.subrow{padding-left:32px;height:30px;font-size:13px}
+.tlA{border:1px solid var(--line-card);border-radius:14px;background:var(--paper-parchment);overflow:hidden;height:690px}
+[data-theme="night"] .tlA{border-color:var(--line-solid)}
+.tlA .hd{display:flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-bottom:1px solid var(--line-card);font-size:12.5px;font-weight:600}
+.tlA .hd span{font-weight:400;color:var(--ink-muted)}
+.tlA .hd a{margin-left:auto;font-weight:500;color:var(--ink-muted);text-decoration:none}
+.nextA{display:none;align-items:center;gap:8px;height:34px;margin-top:8px;padding:0 10px;border:1px solid var(--line-card);border-radius:12px;background:var(--paper-parchment);font-size:13px}
+.nextA .sq{width:8px;height:8px;border-radius:2px;background:var(--blk-rose)}
+.nextA .tm{font:11.5px var(--font-mono);color:var(--ink-muted)}
+@container (max-width:720px){.bodyA{grid-template-columns:minmax(0,1fr)}.tlA{display:none}.nextA{display:flex}.hdA .pill{width:200px}.hdA .sum{display:none}}
+.gs .body{flex:1;min-width:0;display:flex;flex-direction:column}
+.gs .g2{display:none}
+.phone .pnm{display:none}
+.phone .mt{gap:8px}
+@container (max-width:720px){.lB .nca .nx{display:none}}
+@container (max-width:760px){.hdC{flex-wrap:wrap}.hdC .r{order:3;width:100%;margin-left:0;margin-top:10px}.hdC .r .pill{flex:1;width:auto}}
+/* A phone */
+.pA{flex:1;min-height:0;overflow:hidden;padding:12px 16px 0}
+.pA .top{display:flex;align-items:center;gap:8px;height:36px}
+.pA .top h3{margin:0;font:500 23px/1 var(--font-display);white-space:nowrap}
+.pA .top .step{width:28px;height:28px}
+.pA .top .r{margin-left:auto;display:flex;gap:14px;color:var(--ink-muted)}
+.pA .sum{margin-top:2px}
+.pA .chipsA{margin:10px -16px 0;padding:0 16px}
+.pA .nextA{display:flex;height:40px}
+.pA .gs{align-items:flex-start;padding:10px 10px 9px 12px}
+.pA .gs .tt{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;font-size:16px}
+.pA .gs .g2{display:block;margin-top:3px}
+.pA .gs .mt{display:none}
+.pA .gs .ck{margin-top:2px}
+.pA .trow{height:44px;font-size:15px}
+.pA .trow .ck{width:18px;height:18px}
+
+/* ═══════════ B · Calendar-led ═══════════ */
+.dB .main{display:flex}
+.lB{flex:1;min-width:0;display:flex;flex-direction:column;padding:20px 24px 14px}
+.lB .scr{flex:1;min-height:0;overflow:hidden;padding:0 4px}
+.hdB{display:flex;align-items:center;gap:10px}
+.hdB h3{margin:0;font:500 28px/1.1 var(--font-display);letter-spacing:-.01em;white-space:nowrap}
+.hdB .r{margin-left:auto;display:flex;gap:8px}
+.lB .sum{margin-top:4px}
+.lB .pill{margin-top:12px}
+.gc{position:relative;display:flex;align-items:flex-start;gap:12px;padding:13px 14px 12px 14px;margin-top:20px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:var(--radius-page);box-shadow:var(--shadow-goal);transform:rotate(-.4deg)}
+.gc .tape{top:-8px;left:50%;width:62px;margin-left:-31px}
+.gc .ck{width:20px;height:20px;margin-top:2px;border-color:var(--acc-gold);background:transparent}
+.gc .tt{font:600 17px/1.25 var(--font-display)}
+.gc .mt{margin-top:5px;flex-wrap:wrap;gap:4px 10px;color:var(--acc-gold);font-size:12px}
+.gc .body{flex:1;min-width:0}
+.gc .clover{width:28px}
+.slB{display:flex;align-items:center;gap:6px;height:34px;margin-top:12px;font-size:13.5px;font-weight:600}
+.slB .c{font-weight:500;color:var(--ink-faint)}
+.slB .act{margin-left:auto;font-weight:500;font-size:12.5px;color:var(--ink-muted)}
+.slB.fold{margin-top:4px;border-top:1px dashed var(--line-dashed);color:var(--ink-muted)}
+.dB .trow{display:flex;align-items:center;gap:12px;height:38px;padding:0 2px;border-bottom:1px dashed var(--line-dashed);font-size:14.5px}
+.dB .trow .tt{flex:1}
+.dB .trow.subrow{padding-left:30px;height:32px;font-size:13.5px}
+.dB .trow.subrow .ck{width:15px;height:15px}
+.lB .nca{flex:none;margin-top:10px;max-width:330px}
+.cB{width:400px;flex:none;display:flex;flex-direction:column;border-left:1px solid var(--line-card);background:var(--paper-parchment)}
+[data-theme="night"] .cB{border-left-color:var(--line-solid)}
+.cB .hd{flex:none;display:flex;align-items:baseline;gap:8px;height:44px;padding:12px 14px 0 14px;background:var(--paper-bone);border-bottom:1.5px solid var(--line-solid)}
+.cB .hd .nm{font-size:13px;color:var(--acc-lavender-text)}
+.cB .hd .num{font:600 19px/1 var(--font-display);padding:1px 7px;border-radius:999px;background:var(--block-lavender);color:var(--acc-lavender-text)}
+.cB .hd a{margin-left:auto;font-size:12.5px;color:var(--ink-muted);text-decoration:none}
+.cB .ad{flex:none;display:flex;flex-wrap:wrap;gap:5px;padding:7px 8px 7px 56px;border-bottom:1px solid var(--line-card);background:var(--paper-bone)}
+.cB .ad .chip{height:24px;padding:0 9px;font-size:12px;background:var(--paper-parchment)}
+.cB .gr{flex:1;min-height:0;overflow:hidden;padding:12px 0 0 0}
+@container (max-width:720px){.cB{width:250px}.cB .ad{padding-left:8px}.lB .nca{max-width:none}.hdB .ibtn{display:none}}
+/* B phone */
+.pB{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.pB .top{flex:none;display:flex;align-items:center;height:48px;padding:6px 16px 0}
+.pB .top h3{margin:0;font:500 24px/1 var(--font-display);white-space:nowrap}
+.pB .top .r{margin-left:auto;display:flex;gap:16px;color:var(--ink-muted)}
+.daystrip{flex:none;display:flex;align-items:center;justify-content:space-between;height:34px;padding:0 16px;font-size:13.5px;color:var(--ink-muted)}
+.daystrip span{display:inline-flex;align-items:center;gap:4px}
+.daystrip .l svg{transform:scaleX(-1)}
+.pB .calw{flex:none;margin:4px 16px 0;border:1px solid var(--line-card);border-radius:14px;background:var(--paper-parchment);overflow:hidden}
+[data-theme="night"] .pB .calw{border-color:var(--line-solid)}
+.pB .calw .ad{display:flex;gap:5px;padding:6px 8px;border-bottom:1px solid var(--line-card);background:var(--paper-bone);overflow:hidden}
+.pB .calw .ad .chip{height:24px;padding:0 9px;font-size:12px;background:var(--paper-parchment)}
+.pB .calw .gr{height:150px;overflow:hidden;padding-top:10px}
+.pB .scr{flex:1;min-height:0;overflow:hidden;padding:0 16px}
+.pB .gc{margin-top:18px}
+.pB .trow{height:44px;font-size:15px}
+.pB .dock{flex:none;padding:8px 12px 8px}
+
+/* ═══════════ C · Focus first, in Settings' rounded panels ═══════════ */
+.dC .main{padding:20px 30px 0}
+.hdC{display:flex;align-items:flex-end;gap:12px}
+.hdC h3{margin:0;font:500 30px/1.1 var(--font-display);letter-spacing:-.01em;white-space:nowrap}
+.hdC .steps{display:flex;gap:6px;margin-bottom:2px}
+.hdC .r{margin-left:auto;display:flex;gap:8px;align-items:center}
+.hdC .pill{width:300px}
+.dC .sum{margin-top:4px}
+.r1C{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;margin-top:18px;align-items:stretch}
+.r2C{display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:18px;margin-top:4px;align-items:start}
+.gcC{position:relative;display:flex;align-items:flex-start;gap:14px;padding:20px 18px 16px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:var(--radius-page);box-shadow:var(--shadow-goal);transform:rotate(-.5deg)}
+.gcC .tape{top:-9px;left:50%;width:78px;height:18px;margin-left:-39px}
+.gcC .ck{width:22px;height:22px;margin-top:3px;border-color:var(--acc-gold);background:transparent}
+.gcC .body{flex:1;min-width:0}
+.gcC .tt{font:600 21px/1.25 var(--font-display)}
+.gcC .mt{margin-top:8px;flex-wrap:wrap;gap:4px 12px;color:var(--acc-gold);font-size:12.5px}
+.gcC .clover{width:34px}
+.gcC .foot{display:flex;gap:8px;margin-top:12px}
+.gcC .foot span{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 11px;border-radius:999px;border:1px solid color-mix(in srgb,var(--acc-gold) 35%,transparent);font-size:12.5px;color:var(--acc-gold)}
+.pnow{padding:12px 14px 10px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);display:flex;flex-direction:column}
+[data-theme="night"] .pnow,[data-theme="night"] .pn{border-color:var(--line-solid)}
+.pnow .nca .m{box-shadow:none;border:none;padding:0;background:none}
+.pnow .nca .nx{margin:10px 0 0;padding:9px 0 0;border:none;border-top:1px dashed var(--line-dashed);border-radius:0;background:none}
+.pnow .rib{margin-top:auto;padding-top:0}
+.pnow .ribw{margin-top:14px}
+.ptC{display:flex;align-items:baseline;gap:6px;margin:16px 4px 7px;font-size:13px;font-weight:600}
+.ptC .c{font-weight:500;color:var(--ink-faint)}
+.ptC .act{margin-left:auto;font-weight:500;font-size:12.5px;color:var(--ink-muted)}
+.pn{border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);overflow:hidden}
+.pn>*+*{border-top:1px solid var(--line-card)}
+[data-theme="night"] .pn>*+*{border-top-color:var(--line-solid)}
+.dC .trow{display:flex;align-items:center;gap:12px;min-height:42px;padding:0 14px;font-size:14px}
+.dC .trow .tt{flex:1}
+.dC .trow.subrow{min-height:34px;padding-left:44px;font-size:13px}
+.dC .trow.subrow .ck{width:15px;height:15px}
+.prow{display:flex;align-items:center;gap:10px;min-height:42px;padding:0 14px;font-size:14px}
+.prow .sub{font-size:12px;color:var(--ink-muted)}
+.prow .x{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink-muted)}
+.prow .bt{display:inline-flex;align-items:center;height:28px;padding:0 12px;border-radius:999px;background:var(--paper-bone);border:1px solid var(--line-control);font-size:12.5px;font-weight:600;color:var(--ink-body)}
+.prow .sun{color:var(--acc-gold)}
+.prow .moon{color:var(--acc-lavender-text)}
+.rtn{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px}
+.rtn .chip{height:28px}
+@container (max-width:760px){.r1C,.r2C{grid-template-columns:minmax(0,1fr)}.hdC .pill{width:200px}.hdC .ibtn{display:none}.r2C>div:last-child{display:none}}
+/* C phone */
+.pC{flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.pC .top{flex:none;display:flex;align-items:center;height:48px;padding:6px 16px 0}
+.pC .top h3{margin:0;font:500 24px/1 var(--font-display);white-space:nowrap}
+.pC .top .r{margin-left:auto;display:flex;gap:16px;color:var(--ink-muted)}
+.pC .scr{flex:1;min-height:0;overflow:hidden;padding:4px 16px 0}
+.pC .gcC{padding:16px 14px 12px;margin-top:14px}
+.pC .gcC .tt{font-size:18px}
+.pC .gcC .clover{width:28px}
+.pC .pnow{margin-top:12px}
+.pC .trow{min-height:44px;font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · Today · 26 Oct 2026</div>
+  <h1>Three directions for Today</h1>
+  <p class="lede">You said the home screen feels too spacious and not like the rest of the app. Here are three directions, each drawn on the same day (lectures, Deep Learning study, the gym, the goal of the day) at 1280 × 800 at 100% and 150%, and on the phone. Use the toggle for day and night. Every direction keeps the paper goal card (tape, clover, gold <b>✶ Goal of the day</b>), the ‹ › day stepper, Today's tasks apart from Also open, and the morning and evening rituals. The colours are the app's own, with the calendar's palette C for the blocks; none is changed. Answer with a letter, for example <b>"Today B"</b>.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your pick">
+  <span>Your pick: <b id="mine">none yet</b></span>
+  <span class="seg" role="group" aria-label="Page theme">
+    <button type="button" class="btn" data-th="day" aria-pressed="true">Day</button>
+    <button type="button" class="btn" data-th="night" aria-pressed="false">Night</button>
+  </span>
+  <button type="button" class="btn btn-p" id="copy">Copy my picks</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="look" id="now">
+  <h2>Today as it is now</h2>
+  <div class="say">
+    <p>The same day in the app now (mock data, 10:40 AM). The Plan your day card, with its timeline, and the big date take the top 360 px. At 1280 × 800, <b>4 tasks</b> are fully on screen at 100%, <b>1 at 125%</b> (the computer's default size) and <b>none at 150%</b>. On the phone it's <b>3</b>.</p>
+  </div>
+  <div class="shots">
+    <figure><img class="now-shot only-day" src="../docs/log/assets/today-looks/audit/now-1280-100-day.png" width="640" alt="Today now, 1280 at 100%, day"><img class="now-shot only-night" src="../docs/log/assets/today-looks/audit/now-1280-100-night.png" width="640" alt="Today now, 1280 at 100%, night"><figcaption>1280 × 800 at 100% (shown at half size)</figcaption></figure>
+    <figure><img class="now-shot only-day" src="../docs/log/assets/today-looks/audit/now-1280-150-day.png" width="640" alt="Today now, 1280 at 150%, day"><img class="now-shot only-night" src="../docs/log/assets/today-looks/audit/now-1280-150-night.png" width="640" alt="Today now, 1280 at 150%, night"><figcaption>1280 × 800 at 150% (half size)</figcaption></figure>
+    <figure><img class="now-shot only-day" src="../docs/log/assets/today-looks/audit/now-phone-day.png" width="195" alt="Today now, phone, day"><img class="now-shot only-night" src="../docs/log/assets/today-looks/audit/now-phone-night.png" width="195" alt="Today now, phone, night"><figcaption>Phone 390 (half size)</figcaption></figure>
+  </div>
+</section>
+
+<div id="looks"></div>
+
+<section class="notes">
+  <h2>What stays in every direction</h2>
+  <ul>
+    <li><b>The goal card</b>: still paper, with the tape, the clover and the gold stamp. Only its size changes (a strip in A, a smaller card in B, about today's size in C).</li>
+    <li><b>The ‹ › day stepper</b> sits beside the date, and the phone keeps its Yesterday · 📅 · Tomorrow strip (A puts ‹ › beside the date on the phone too).</li>
+    <li><b>Today's tasks and Also open stay apart</b>. Also open stays folded, Overdue keeps its own fold and its Replan all, and the done task stays listed and struck through.</li>
+    <li><b>The rituals stay</b>: Morning with Begin and 0/4, Evening from 5:00 PM, and the routines with their ticks. Only where they sit changes.</li>
+    <li><b>Blocks</b> are drawn exactly as the calendar draws them now: the "Now" look, palette C (Rose for an event, Iris for a task, Fern for the gym as a colour you picked), check B, and the gold edge for the goal.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+const ICONS = {"today":"<path d=\"M12 20.5v-8\"></path><path d=\"M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z\"></path><path d=\"M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z\"></path><path d=\"M7.5 20.5h9\"></path>","inbox":"<path d=\"M4 13.5 6.2 6.3A1.8 1.8 0 0 1 7.9 5h8.2a1.8 1.8 0 0 1 1.7 1.3L20 13.5v4.7a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2z\"></path><path d=\"M4 13.5h4.4l1.3 2.3h4.6l1.3-2.3H20\"></path>","calendar":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"14.5\" rx=\"2\"></rect><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"></path>","tasks":"<rect x=\"4.5\" y=\"4.5\" width=\"15\" height=\"15\" rx=\"3\"></rect><path d=\"M8.5 12.2l2.4 2.4 4.6-4.9\"></path>","projects":"<path d=\"M3.5 7.5a2 2 0 0 1 2-2h3.6l2 2h7.4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z\"></path>","routines":"<path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.8 4.2v4.3h-4.3\"></path><path d=\"M12 15.5v-3.2c0-1.6 1.2-2.8 2.8-2.8 0 1.6-1.2 2.8-2.8 2.8\"></path>","focus":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 12h.01\"></path>","review":"<path d=\"M12 20.5v-6\"></path><path d=\"M12 14.5a4.5 4.5 0 1 1 4.5-4.5 2.8 2.8 0 0 1-2.8 2.8 1.7 1.7 0 0 1-1.7-1.7\"></path>","journal":"<path d=\"M5.5 5.5A1.5 1.5 0 0 1 7 4h11.5v13.5H7a1.5 1.5 0 0 0-1.5 1.5z\"></path><path d=\"M5.5 19A1.5 1.5 0 0 0 7 20.5h11.5v-3\"></path><path d=\"M9.5 8h5.5\"></path>","library":"<rect x=\"4\" y=\"4.5\" width=\"4\" height=\"15\" rx=\"1\"/><rect x=\"9.5\" y=\"4.5\" width=\"4\" height=\"15\" rx=\"1\"/><path d=\"M14.4 6.6 17.8 5.7 21 18.9 17.6 19.8z\"/>","people":"<circle cx=\"9\" cy=\"8.5\" r=\"3.2\"></circle><path d=\"M3 19a6 6 0 0 1 12 0\"></path><path d=\"M16 5.8a3.2 3.2 0 0 1 0 6M17.2 14.3a6 6 0 0 1 3.8 4.7\"></path>","activity":"<path d=\"M3.5 12.5h3.6l2.4-6 4.2 11.5 2.6-5.5h4.2\"/>","delete":"<path d=\"M4 7h16M9.5 7V4.8h5V7M6 7l1 13h10l1-13\"></path><path d=\"M10 11v5M14 11v5\"></path>","plus":"<path d=\"M12 5v14M5 12h14\"></path>","search":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"></circle><path d=\"M16 16l4 4\"></path>","chat":"<path d=\"M5.5 5h13A1.5 1.5 0 0 1 20 6.5v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V17h-1A1.5 1.5 0 0 1 4 15.5v-9A1.5 1.5 0 0 1 5.5 5z\"/>","mic":"<rect x=\"9\" y=\"3.5\" width=\"6\" height=\"11\" rx=\"3\"></rect><path d=\"M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5\"></path>","plan":"<path d=\"M9.5 7h10M9.5 12h10M9.5 17h10\"/><circle cx=\"5.2\" cy=\"7\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"5.2\" cy=\"12\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"5.2\" cy=\"17\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/>","someday":"<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"4\" rx=\"1.2\"/><path d=\"M5 9v9a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18V9\"/><path d=\"M10 13h4\"/>","chevright":"<path d=\"M9.5 6l6 6-6 6\"></path>","dots":"<circle cx=\"5.5\" cy=\"12\" r=\"1.1\"></circle><circle cx=\"12\" cy=\"12\" r=\"1.1\"></circle><circle cx=\"18.5\" cy=\"12\" r=\"1.1\"></circle>","repeat":"<path d=\"M4 12a8 8 0 0 1 13-6l2 2M20 12a8 8 0 0 1-13 6l-2-2\"></path><path d=\"M19 4v4h-4M5 20v-4h4\"></path>","pickdate":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"14.5\" rx=\"2\"></rect><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"></path><rect x=\"10.2\" y=\"13\" width=\"3.6\" height=\"3.6\" rx=\"0.8\"></rect>","more":"<rect x=\"4.5\" y=\"4.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"13.5\" y=\"4.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"4.5\" y=\"13.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"13.5\" y=\"13.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect>"}
+const ic = (n, s = 18) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`
+const chev = (open) => `<span class="chev${open ? ' dn' : ''}">${ic('chevright', 14)}</span>`
+const CLOVER = 'ds/assets/clover/four_leaf.png'
+
+// ── the day: Monday 26 Oct 2026, 10:40 AM ──
+const NOW = 10 + 40 / 60
+const B = (c) => `--c:var(--blk-${c});--ct:var(--blk-${c}-ink)`
+const EV = [
+  { t: 'Lecture — Machine Learning', a: 8.5, b: 10, c: 'rose', past: true },
+  { t: 'Lecture — Computer Vision', a: 11, b: 12.5, c: 'rose' },
+  { t: 'CNN backprop notes', a: 13.5, b: 15.5, c: 'iris', task: true, goal: true },
+  { t: 'Gym — push day', a: 17, b: 18.25, c: 'fern' },
+  { t: 'DL study group', a: 19, b: 20, c: 'iris', task: true },
+  { t: 'Watch Karpathy: makemore part 3', a: 21, b: 22, c: 'iris', task: true },
+]
+const P = { dl: ['Deep Learning', 'var(--acc-sage)'], uni: ['University', 'var(--acc-blossom)'], flow: ["Kai's Flow", 'var(--acc-lavender)'], hl: ['Health', 'var(--acc-terra)'] }
+const GOAL = { t: 'Finish the CNN backprop notes for the DL midterm', p: 'dl', when: '1:30–3:30 PM', len: '2h' }
+const TOP = [{ t: 'Deep Learning problem set 4 (Q1–Q3)', p: 'dl', len: '1h 30m' }, { t: 'Email Dr. Hany the project proposal', p: 'uni', len: '20m' }]
+const TODAY = [
+  { t: 'Review lecture 7 slides — Attention', p: 'dl', due: 'Due today' },
+  { t: 'Pay the internet bill', due: 'Due today', rep: true },
+  { t: 'Prepare the DL study group', p: 'dl', when: '7:00 PM', subs: '0/1', kids: ['Pick three past-paper questions'] },
+  { t: 'Watch Karpathy: makemore part 3', p: 'dl', when: '9:00 PM' },
+  { t: 'Submit the CV lab report', p: 'uni', done: true },
+]
+const OVER = [{ t: 'Email the TA about the quiz grade', p: 'uni', od: 3 }, { t: 'Back up the laptop', od: 2 }]
+const ALSO = 6
+const RTN = [['Glass of water', true], ['Vitamins'], ['Read 10 pages']]
+
+const clock = (h) => { const hh = Math.floor(h + 1e-9), mm = Math.round((h - hh) * 60); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'AM' : 'PM'}` }
+const range = (a, b) => { const x = clock(a), z = clock(b); return x.slice(-2) === z.slice(-2) ? `${x.slice(0, -3)}–${z}` : `${x}–${z}` }
+const hr = (h) => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`
+const proj = (k) => k ? `<span><span class="dot" style="background:${P[k][1]}"></span><span class="pnm">${P[k][0]}</span></span>` : ''
+
+// a task row; every direction styles .trow its own way
+function row(x, o = {}) {
+  const meta = [proj(x.p), x.subs ? `<span>${x.subs} ⌄</span>` : '', x.when ? `<span>${x.when}</span>` : '', x.due ? `<span>${x.due}${x.rep ? ' · ↻' : ''}</span>` : '', x.len ? `<span>${x.len}</span>` : '', x.od ? `<span class="terra">Overdue ${x.od}d</span>` : ''].filter(Boolean).join('')
+  const kids = o.kids !== false && x.kids ? x.kids.map((k) => `<div class="trow subrow"><span class="ck"></span><span class="tt nowrap">${k}</span></div>`).join('') : ''
+  return `<div class="trow${x.done ? ' done' : ''}">${o.n ? `<span class="n">${o.n}</span>` : ''}<span class="ck">${x.done ? '✓' : ''}</span><span class="tt nowrap">${x.t}</span>${o.meta === false ? '' : `<span class="mt">${meta}</span>`}${o.dots === false ? '' : `<span class="dots">${ic('dots', 16)}</span>`}</div>${kids}`
+}
+
+// the calendar column: hour lines, the blocks in the app's "Now" drawing, the now line
+function cal({ from, to, ph, gutter = 48, wash = false, nowLabel = true }) {
+  const y = (h) => (h - from) * ph
+  let s = `<div class="cal" style="height:${(to - from) * ph}px">`
+  if (wash) s += `<div class="wash" style="left:${gutter}px"></div>`
+  for (let h = Math.ceil(from); h <= to; h++) s += `<div class="hl" style="top:${y(h)}px;left:${gutter}px">${h < to ? `<b>${hr(h)}</b>` : ''}</div>`
+  for (let h = Math.ceil(from) + 0.5; h < to; h++) s += `<div class="hl half" style="top:${y(h)}px;left:${gutter}px"></div>`
+  for (const e of EV) {
+    if (e.b <= from || e.a >= to) continue
+    const top = y(Math.max(e.a, from)) + 1, hgt = (Math.min(e.b, to) - Math.max(e.a, from)) * ph - 3
+    const one = hgt < 34
+    s += `<div class="cb${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}${one ? ' one' : ''}" style="${B(e.c)};top:${top}px;height:${hgt}px;left:${gutter + 4}px;right:6px"><div class="r1">${e.task ? '<span class="k"></span>' : ''}<span class="tt">${e.t}</span></div><div class="tm">${range(e.a, e.b)}</div></div>`
+  }
+  if (NOW > from && NOW < to) s += `<div class="nowl" style="top:${y(NOW)}px;left:${gutter}px;right:0">${nowLabel ? '<b>10:40 AM</b>' : ''}</div>`
+  return s + '</div>'
+}
+
+// the calendar's Now card A: Up next, then the one after it
+const nowCard = (o = {}) => `<div class="nca"><div class="m" style="${B('rose')}"><div class="h">Up next<span class="cd">in 20m</span></div><div class="tl"><span class="rg"></span><span class="t">Lecture — Computer Vision</span></div><div class="br"><i style="width:0%"></i></div><div class="tms"><span>11:00 AM</span><span>12:30 PM</span></div></div>${o.next === false ? '' : `<div class="nx" style="${B('iris')}"><span class="k">Next</span><span class="rg" style="border-color:var(--acc-gold)"></span><span class="t" style="flex:1;min-width:0" >CNN backprop notes</span><span class="cd" style="font:12px var(--font-mono);color:var(--ink-muted)">1:30 PM</span></div>`}</div>`
+
+// the day ribbon, 8 AM to 10 PM (today's ritual card timeline)
+const ribbon = () => {
+  const x = (h) => ((h - 8) / 14) * 100
+  return `<div class="rib"><span class="rail"></span>${EV.map((e) => `<span class="rb${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}" style="${B(e.c)};left:${x(e.a)}%;width:${x(e.b) - x(e.a)}%"></span>`).join('')}<span class="nw" style="left:${x(NOW)}%"></span><div class="ax"><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>20</span><span>22</span></div></div>`
+}
+
+const sidebar = () => `<aside class="sb"><div class="sb-top">
+  <div class="sb-name"><span class="sb-logo">K</span>Kai's Flow <small>⌄</small></div><div class="sb-ws">Personal · Cairo</div>
+  <div class="sb-plan">${ic('plan', 16)}Plan ⌄<span class="p">+</span></div>
+  <div class="sb-l"><span>Due Today</span><span>9</span></div><div class="sb-l"><span>This Week</span><span>7</span></div><div class="sb-l"><span>This Month</span><span>7</span></div><div class="sb-l"><span>Upcoming</span><span>0</span></div>
+  </div><div class="sb-nav"><div class="sb-sec">Tend</div>
+  ${[['today', 'Today', 1], ['inbox', 'Inbox'], ['calendar', 'Calendar'], ['tasks', 'Tasks'], ['projects', 'Projects']].map(([i, n, on]) => `<div class="sb-i${on ? ' on' : ''}">${ic(i)}${n}</div>`).join('')}
+  <div class="sb-sec">Cultivate</div>
+  ${[['routines', 'Routines'], ['focus', 'Focus'], ['review', 'Review'], ['journal', 'Journal'], ['library', 'Library'], ['people', 'People']].map(([i, n]) => `<div class="sb-i">${ic(i)}${n}</div>`).join('')}
+  </div><div class="sb-foot"><span class="sb-cap">${ic('plus', 16)}Capture <span class="kbd">⌘</span><span class="kbd">K</span></span><span class="ib">${ic('search')}</span><span class="ib">${ic('chat')}</span></div></aside>`
+
+const tabs = () => `<nav class="tabs"><span class="on"><i>${ic('today', 22)}</i>Today</span><span>${ic('inbox', 22)}Inbox</span><span><b class="fab">${ic('plus', 24)}</b></span><span>${ic('calendar', 22)}Calendar</span><span>${ic('more', 22)}More</span></nav>`
+const pill = (w) => `<div class="pill"${w ? ` style="width:${w}px"` : ''}>${ic('plus', 16)}<span class="grow">Add a task…</span><span class="kbd">N</span><span class="mic">${ic('mic', 16)}</span></div>`
+const steps = () => `<span class="step l">${ic('chevright', 14)}</span><span class="step">${ic('chevright', 14)}</span>`
+const SUM = `1 of 8 done · next up <b>Lecture — Computer Vision</b> at 11:00 AM`
+const goalMeta = () => `<span class="gtag">✶ Goal of the day</span><span><span class="dot" style="background:var(--acc-sage)"></span>Deep Learning</span><span>${GOAL.when}</span><span>${GOAL.len}</span>`
+
+// ═════ A · Command centre ═════
+const chipsA = () => `<div class="chipsA"><span class="chip"><span class="sun">☀</span>Morning ritual <span class="q">0/4</span><span class="go">Begin</span></span><span class="chip"><span class="moon">☾</span>Evening <span class="q">from 5:00 PM</span></span><span class="sep"></span>${RTN.map(([n, d]) => `<span class="chip${d ? ' dn' : ''}"><span class="ck${d ? ' on' : ''}">${d ? '✓' : ''}</span><span class="tx">${n}</span></span>`).join('')}<span class="chip"><span class="q">+2 tonight</span></span></div>`
+const goalStrip = () => `<div class="gs"><span class="tape"></span><span class="ck"></span><span class="body"><span class="tt">${GOAL.t}</span><span class="gtag g2">✶ Goal of the day · ${GOAL.when}</span></span><span class="mt"><span class="gtag">✶ Goal of the day</span></span><img class="clover" src="${CLOVER}" alt=""><span class="dots">${ic('dots', 16)}</span></div>`
+const listA = () => `
+  ${goalStrip()}
+  ${TOP.map((x, i) => row(x, { n: i + 2 })).join('')}
+  <div class="slA">${chev(true)}Today's tasks <span class="c">4</span></div>
+  ${TODAY.map((x) => row(x)).join('')}
+  <div class="slA">${chev(true)}<span class="terra">Overdue</span> <span class="c">2</span><span class="act">Replan all ⌄</span></div>
+  ${OVER.map((x) => row(x)).join('')}
+  <div class="slA fold">${chev(false)}Also open <span class="c">${ALSO}</span></div>`
+const nextA = () => `<div class="nextA"><span class="sq"></span><b style="font-weight:600">Next</b><span class="tm">11:00 AM</span><span class="nowrap" style="flex:1">Lecture — Computer Vision</span><span class="tm">in 20m</span></div>`
+const deskA = () => `<div class="main"><div class="hdA"><h3>Monday, Oct 26</h3>${steps()}<span class="sum nowrap">${SUM}</span><span class="ibtn" style="width:34px;height:34px">${ic('journal', 16)}</span>${pill()}</div>
+  ${chipsA()}
+  <div class="bodyA"><div style="min-width:0">${nextA()}${listA()}</div>
+  <div class="tlA"><div class="hd">Today <span>· 6 blocks · 3h 50m planned</span><a>Calendar →</a></div><div style="padding:12px 0 0">${cal({ from: 8, to: 22.5, ph: 44, gutter: 46 })}</div></div></div></div>`
+const phoneA = () => `<div class="pA dA"><div class="top"><h3>Mon, Oct 26</h3>${steps()}<span class="r">${ic('journal', 20)}${ic('search', 20)}${ic('dots', 20)}</span></div>
+  <div class="sum nowrap">1 of 8 done · next up <b>Lecture — CV</b> at 11:00 AM</div>
+  ${chipsA()}${nextA()}${listA()}</div>${tabs()}`
+
+// ═════ B · Calendar-led ═════
+const goalCard = (cls = 'gc') => `<div class="${cls}"><span class="tape"></span><span class="ck"></span><div class="body"><div class="tt">${GOAL.t}</div><div class="mt">${goalMeta()}</div></div><img class="clover" src="${CLOVER}" alt=""><span class="dots">${ic('dots', 16)}</span></div>`
+const listB = () => `
+  ${goalCard()}
+  <div class="slB">Today's three <span class="c">· 3h 50m planned</span></div>
+  ${TOP.map((x) => row(x)).join('')}
+  <div class="slB">Today's tasks <span class="c">· 4</span></div>
+  ${TODAY.map((x) => row(x)).join('')}
+  <div class="slB fold">${chev(false)}<span class="terra">Overdue</span> <span class="c">· 2</span><span class="act">Replan all ⌄</span></div>
+  <div class="slB fold">${chev(false)}Also open <span class="c">· ${ALSO}</span></div>`
+const allDay = () => `<span class="chip"><span class="sun" style="color:var(--acc-gold)">☀</span>Morning ritual <span class="q">0/4</span><span class="go">Begin</span></span><span class="chip"><span style="color:var(--acc-lavender-text)">☾</span>Evening <span class="q">5 PM</span></span><span class="chip">${ic('routines', 13)}Routines <span class="q">1/5</span></span>`
+const deskB = () => `<div class="main"><div class="lB"><div class="hdB"><h3>Monday, October 26</h3>${steps()}<span class="r"><span class="ibtn">${ic('journal', 17)}</span></span></div>
+  <div class="sum nowrap">${SUM}</div>${pill()}
+  <div class="scr">${listB()}</div>${nowCard()}</div>
+  <div class="cB"><div class="hd"><span class="nm">Mon</span><span class="num">26</span><span class="nm">Today</span><a>Calendar →</a></div><div class="ad">${allDay()}</div><div class="gr">${cal({ from: 8, to: 21, ph: 58, gutter: 52, wash: true })}</div></div></div>`
+const phoneB = () => `<div class="pB dB"><div class="top"><h3>Monday, Oct 26</h3><span class="r">${ic('journal', 20)}${ic('search', 20)}${ic('dots', 20)}</span></div>
+  <div class="daystrip"><span class="l">${ic('chevright', 14)}Yesterday</span>${ic('pickdate', 18)}<span>Tomorrow${ic('chevright', 14)}</span></div>
+  <div class="calw"><div class="ad">${allDay()}</div><div class="gr"><div style="margin-top:-${(10 - 8) * 50 - 8}px">${cal({ from: 8, to: 15, ph: 50, gutter: 48 })}</div></div></div>
+  <div class="scr">${listB()}</div><div class="dock">${nowCard({ next: false })}</div></div>${tabs()}`
+
+// ═════ C · Focus first ═════
+const nowPanel = () => `<div class="pnow">${nowCard()}<div class="ribw">${ribbon()}</div></div>`
+const ritualsC = () => `<div class="ptC">Rituals</div><div class="pn"><div class="prow"><span class="sun">☀</span><div><div>Morning · ~5 min</div><div class="sub">4 steps</div></div><span class="x">0/4<span class="bt">Begin</span></span></div><div class="prow"><span class="moon">☾</span><div><div>Evening</div><div class="sub">from 5:00 PM</div></div><span class="x">0/4</span></div></div>
+  <div class="ptC">Routines <span class="c">· 1/5</span></div><div class="pn"><div class="rtn">${RTN.map(([n, d]) => `<span class="chip${d ? ' dn' : ''}"><span class="ck${d ? ' on' : ''}">${d ? '✓' : ''}</span><span class="tx">${n}</span></span>`).join('')}<span class="chip"><span class="q">Tonight: Tidy the desk · Journal</span></span></div></div>`
+const listC = (o = {}) => `
+  <div class="ptC">Today's three <span class="c">· 3h 50m planned</span></div><div class="pn">${TOP.map((x, i) => row(x, { n: i + 2 })).join('')}</div>
+  <div class="ptC">Today's tasks <span class="c">· 4</span></div><div class="pn">${TODAY.map((x) => row(x, { kids: o.kids })).join('')}</div>
+  <div class="pn" style="margin-top:12px"><div class="prow"><span class="terra" style="font-weight:600">Overdue</span><span class="sub">2</span><span class="x">Replan all ⌄ ${chev(false)}</span></div><div class="prow"><span style="font-weight:600">Also open</span><span class="sub">${ALSO}</span><span class="x">${chev(false)}</span></div></div>`
+const deskC = () => `<div class="main"><div class="hdC"><div><h3>Monday, October 26</h3><div class="sum nowrap">${SUM}</div></div><span class="steps">${steps()}</span><span class="r"><span class="ibtn">${ic('journal', 17)}</span>${pill()}</span></div>
+  <div class="r1C">${goalCard('gcC').replace('</div><img', `<div class="foot"><span>${ic('focus', 14)}Focus on it</span><span>Subtask +</span></div></div><img`)}${nowPanel()}</div>
+  <div class="r2C"><div>${listC()}</div><div>${ritualsC()}</div></div></div>`
+const phoneC = () => `<div class="pC dC"><div class="top"><h3>Monday, Oct 26</h3><span class="r">${ic('journal', 20)}${ic('search', 20)}${ic('dots', 20)}</span></div>
+  <div class="daystrip"><span class="l">${ic('chevright', 14)}Yesterday</span>${ic('pickdate', 18)}<span>Tomorrow${ic('chevright', 14)}</span></div>
+  <div class="scr">${goalCard('gcC')}${nowPanel()}${listC({ kids: false })}${ritualsC()}</div></div>${tabs()}`
+
+const DIRS = [
+  ['A', 'Command centre', deskA, phoneA,
+    'Changes: one compact header row, the goal as a slim gold strip, Today\'s three as tight numbered rows, and one list where Today\'s tasks, Overdue and Also open are sections that fold. The day sits in a narrow column on the right, drawn in the calendar\'s own blocks, and the rituals and routines become one row of small chips under the header.',
+    'Removes: the big Plan your day card and its timeline (the chip says 0/4 · Begin, and the column shows the day), the Up next line, and the Rituals and Routines column. At 150% the day column steps aside for one "Next" line.'],
+  ['B', 'Calendar-led', deskB, phoneB,
+    'Changes: the list on the left, and on the right today\'s column exactly as the Calendar draws it (header, lavender today, hour lines, the blocks and the now line). The Now card docks at the bottom left, as it does on the Calendar. The rituals and routines become all-day chips at the top of that column, and the goal card stays paper, just a little smaller.',
+    'Removes: the Plan your day card (the column is the timeline now), the separate Up next row, and the Rituals column. Overdue and Also open stay folded lines until you open them. On the phone, a small window of the day sits above the list and the Now card docks above the tab bar.'],
+  ['C', 'Focus first, in Settings\' panels', deskC, phoneC,
+    'Changes: two rows. The top row is what matters right now: the goal card at full paper size (with Focus on it), and beside it the Calendar\'s Now card with the day ribbon under it. Below, everything sits in Settings\' rounded panels: Today\'s three, Today\'s tasks, and one panel with Overdue and Also open, with Rituals and Routines on the right.',
+    'Removes: the big date line\'s extra space, the Plan your day card (its timeline moves into the Now panel, and Begin into the Rituals panel), and the open Overdue list (it becomes one panel row that opens). At 150% it all becomes one column, and the rituals move below the lists.'],
+]
+
+const fig = (inner, cap, dataset) => `<figure>${inner}<figcaption>${cap}</figcaption></figure>`
+const desk = (d, render, zm) => `<div class="frame desk d${d}" data-measure="${d}-${zm}"><div class="z" style="--zm:${zm}">${sidebar()}${render()}</div></div>`
+const phoneF = (d, render) => `<div class="frame phone" data-measure="${d}-phone">${render()}</div>`
+
+document.getElementById('looks').innerHTML = DIRS.map(([d, name, dk, ph, l1, l2]) => `
+<section class="look" data-grp="today" data-look="${d}" id="look-${d}">
+  <h2><span class="tag">${d}</span>${name}</h2>
+  <div class="say"><p>${l1}</p><p>${l2}</p></div>
+  <div class="dens" data-dens="${d}"></div>
+  <div class="shots">
+    ${fig(desk(d, dk, 1), '1280 × 800 at 100%')}
+    ${fig(desk(d, dk, 1.5), '1280 × 800 at 150% (the same page, zoomed as the app zooms)')}
+    ${fig(phoneF(d, ph), 'Phone, 390 wide')}
+  </div>
+  <div class="pick-row"><button type="button" class="btn pick" data-grp="today" data-pick="${d}" aria-pressed="false">This one</button></div>
+</section>`).join('')
+
+// ── density: task rows wholly inside the frame (the goal counts as one), counted in the drawing itself ──
+function count(frame) {
+  const fb = frame.getBoundingClientRect().bottom
+  let n = 0
+  for (const el of frame.querySelectorAll('.trow:not(.subrow), .gs, .gc, .gcC')) {
+    const r = el.getBoundingClientRect()
+    if (r.height === 0) continue
+    let bottom = fb
+    for (let a = el.parentElement; a && a !== frame; a = a.parentElement) if (getComputedStyle(a).overflowY !== 'visible') bottom = Math.min(bottom, a.getBoundingClientRect().bottom)
+    if (r.bottom <= bottom + 0.5) n++
+  }
+  return n
+}
+const NOWCOUNT = { 1: 4, 1.5: 0, phone: 3 }
+function density() {
+  for (const box of document.querySelectorAll('[data-dens]')) {
+    const d = box.dataset.dens
+    const c = (k) => count(document.querySelector(`[data-measure="${d}-${k}"]`))
+    const a = c(1), b = c(1.5), p = c('phone')
+    box.dataset.counts = JSON.stringify({ d100: a, d150: b, phone: p })
+    box.innerHTML = `Density, tasks fully on screen above the fold at 1280 × 800: <b>${a}</b> at 100% (now 4) · <b>${b}</b> at 150% (now 0) · phone <b>${p}</b> (now 3)`
+  }
+}
+
+// ── the page theme ──
+document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.th
+  document.querySelectorAll('[data-th]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+}))
+
+// ── the pick ──
+const KEY = 'kf-today-looks-picks'
+let picks = {}
+try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
+const line = () => (picks.today ? `Today ${picks.today}` : '')
+function paint() {
+  document.getElementById('mine').textContent = line() || 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(picks[b.dataset.grp] === b.dataset.pick)))
+  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', picks[s.dataset.grp] === s.dataset.look))
+}
+document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
+  picks[b.dataset.grp] = b.dataset.pick
+  try { localStorage.setItem(KEY, JSON.stringify(picks)) } catch {}
+  paint()
+}))
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = line() ? `Today looks: ${line()}` : 'Today looks: nothing picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    try { ok = document.execCommand('copy') } catch {}
+    ta.remove()
+  }
+  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paint()
+;(document.fonts?.ready ?? Promise.resolve()).then(density)
+</script>
+</body>
+</html>

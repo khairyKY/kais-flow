@@ -1,0 +1,180 @@
+[
+ {
+  "tag": "now-1280-100-day",
+  "visibleRows": 4,
+  "drawnRows": 12,
+  "screens": 1.68,
+  "sections": [
+   "Your day@138",
+   "Today's tasks@713",
+   "Also open@1083",
+   "Rituals@389"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1280-125-day",
+  "visibleRows": 1,
+  "drawnRows": 12,
+  "screens": 1.95,
+  "sections": [
+   "Your day@210",
+   "Today's tasks@1004",
+   "Also open@1543",
+   "Rituals@523"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1280-150-day",
+  "visibleRows": 0,
+  "drawnRows": 12,
+  "screens": 2.54,
+  "sections": [
+   "Your day@375",
+   "Today's tasks@1305",
+   "Also open@1857",
+   "Rituals@2210"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1920-100-day",
+  "visibleRows": 9,
+  "drawnRows": 12,
+  "screens": 1.22,
+  "sections": [
+   "Your day@138",
+   "Today's tasks@690",
+   "Also open@1060",
+   "Rituals@389"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1920-125-day",
+  "visibleRows": 6,
+  "drawnRows": 12,
+  "screens": 1.22,
+  "sections": [
+   "Your day@173",
+   "Today's tasks@861",
+   "Also open@1322",
+   "Rituals@486"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1920-150-day",
+  "visibleRows": 3,
+  "drawnRows": 12,
+  "screens": 1.24,
+  "sections": [
+   "Your day@207",
+   "Today's tasks@1066",
+   "Also open@1619",
+   "Rituals@583"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-phone-day",
+  "visibleRows": 3,
+  "drawnRows": 6,
+  "screens": 2.14,
+  "sections": [
+   "Your day@142",
+   "Today's tasks@1015"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1280-100-night",
+  "visibleRows": 4,
+  "drawnRows": 12,
+  "screens": 1.68,
+  "sections": [
+   "Your day@138",
+   "Today's tasks@713",
+   "Also open@1083",
+   "Rituals@389"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1280-125-night",
+  "visibleRows": 1,
+  "drawnRows": 12,
+  "screens": 1.95,
+  "sections": [
+   "Your day@210",
+   "Today's tasks@1004",
+   "Also open@1543",
+   "Rituals@523"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1280-150-night",
+  "visibleRows": 0,
+  "drawnRows": 12,
+  "screens": 2.54,
+  "sections": [
+   "Your day@375",
+   "Today's tasks@1305",
+   "Also open@1857",
+   "Rituals@2210"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1920-100-night",
+  "visibleRows": 9,
+  "drawnRows": 12,
+  "screens": 1.22,
+  "sections": [
+   "Your day@138",
+   "Today's tasks@690",
+   "Also open@1060",
+   "Rituals@389"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1920-125-night",
+  "visibleRows": 6,
+  "drawnRows": 12,
+  "screens": 1.22,
+  "sections": [
+   "Your day@173",
+   "Today's tasks@861",
+   "Also open@1322",
+   "Rituals@486"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-1920-150-night",
+  "visibleRows": 3,
+  "drawnRows": 12,
+  "screens": 1.24,
+  "sections": [
+   "Your day@207",
+   "Today's tasks@1066",
+   "Also open@1619",
+   "Rituals@583"
+  ],
+  "errors": []
+ },
+ {
+  "tag": "now-phone-night",
+  "visibleRows": 3,
+  "drawnRows": 6,
+  "screens": 2.14,
+  "sections": [
+   "Your day@142",
+   "Today's tasks@1015"
+  ],
+  "errors": []
+ }
+]

@@ -1,0 +1,22 @@
+{
+ "counts": {
+  "A": {
+   "d100": 10,
+   "d150": 8,
+   "phone": 10
+  },
+  "B": {
+   "d100": 8,
+   "d150": 3,
+   "phone": 4
+  },
+  "C": {
+   "d100": 8,
+   "d150": 1,
+   "phone": 7
+  }
+ },
+ "wide": [],
+ "copied": "Copied: \"Today looks: Today B\"",
+ "errors": []
+}
