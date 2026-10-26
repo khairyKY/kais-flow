@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget corners (widgets-build 2026-10-26). Before Android 12: our own radius; from 12 (values-v31) the
+     launcher's own system radius, so the cards match every other widget on the home screen. -->
+<resources>
+    <dimen name="kfw_radius">20dp</dimen>
+    <dimen name="kfw_r_inner">12dp</dimen>
+    <!-- a calendar block on a widget: --radius-block (12px) at widget scale -->
+    <dimen name="kfw_r_block">10dp</dimen>
+</resources>

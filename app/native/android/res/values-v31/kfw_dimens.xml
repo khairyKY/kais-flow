@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: the system corner radius for the card and its inner papers (values/kfw_dimens.xml below 12). -->
+<resources>
+    <dimen name="kfw_radius">@android:dimen/system_app_widget_background_radius</dimen>
+    <dimen name="kfw_r_inner">@android:dimen/system_app_widget_inner_radius</dimen>
+</resources>

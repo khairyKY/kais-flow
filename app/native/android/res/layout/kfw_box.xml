@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The checkbox below Android 12: the paper box as an image; a tap is a PendingIntent tick (Render.box).
+     Android 12+ gets layout-v31/kfw_box.xml, a real CheckBox. Rows <include> this, so both stay in one place. -->
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/box" style="@style/KfW.Box" android:contentDescription="Tick" />

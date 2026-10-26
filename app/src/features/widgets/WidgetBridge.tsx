@@ -4,7 +4,6 @@ import { useTasks } from '../tasks/api'
 import { todayListTasks } from '../tasks/grouping'
 import { useCalendarEvents } from '../calendar/api'
 import { useProjects } from '../projects/api'
-import { useDomains } from '../domains/api'
 import { useRoutines, useRoutineCompletions } from '../routines/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { useSlipping } from '../slipping/api'
@@ -23,6 +22,7 @@ import { searchDestination } from '../search/api'
 import { useOnline } from '../../lib/useOnline'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone, useAppZone } from '../../lib/appZone'
+import { useHour24 } from '../../lib/clock'
 import { buildSnapshot } from './snapshot'
 import { appWrites, takeQueue, useHideTitles, useWidgetVoice } from './bridge'
 import { applyOps } from './queue'
@@ -47,7 +47,6 @@ export function WidgetBridge(): React.ReactNode {
   const { data: tasks = [] } = useTasks()
   const { data: events = [] } = useCalendarEvents()
   const { data: projects = [] } = useProjects()
-  const { data: domains = [] } = useDomains()
   const { data: routines = [] } = useRoutines()
   const { data: completions = [] } = useRoutineCompletions()
   const { data: inbox = [] } = usePendingInboxItems()
@@ -58,6 +57,7 @@ export function WidgetBridge(): React.ReactNode {
   const resurface = useResurfacePick()
   const online = useOnline()
   const hideTitles = useHideTitles((s) => s.on)
+  const hour24 = useHour24()
   const voiceOpen = useWidgetVoice((s) => s.open)
   // The timer's every-second tick is read at build time, not subscribed to (no re-render a second).
   const focusMode = useFocusStore((s) => s.mode)
@@ -85,10 +85,9 @@ export function WidgetBridge(): React.ReactNode {
     zone: appZone(),
     online,
     hideTitles,
+    hour24,
     tasks,
     events,
-    projects,
-    domains,
     top3,
     dayN: dayOfJourney(firstRecord, now),
     phase: day.state.phase,
