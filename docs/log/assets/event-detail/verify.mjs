@@ -148,6 +148,21 @@ async function openBlock(page, kfId) {
   await menu(page).waitFor({ timeout: 4000 })
   await sleep(250)
 }
+/** cal-clicks: menu B — the right-click (the tray, Duplicate, Work with AI, Copy link, Delete; a task block's rows). */
+async function openMenuB(page, kfId) {
+  await fc(page, kfId).scrollIntoViewIfNeeded()
+  await sleep(150)
+  await fc(page, kfId).click({ button: 'right' })
+  await menu(page, 'Block menu').waitFor({ timeout: 4000 })
+  await sleep(250)
+}
+/** cal-clicks: the scope question a change to a repeat asks — answered. */
+async function answer(page, label) {
+  const q = page.locator('[role="dialog"].kf-scope-ask')
+  await q.waitFor({ timeout: 4000 })
+  await q.getByRole('button', { name: label, exact: true }).click()
+  await sleep(200)
+}
 // typing (queue 15): the popover's one length control is its Length chips (the Duration submenu is gone).
 async function pickLength(page, label) {
   await menu(page).getByRole('group', { name: 'Length' }).getByRole('button', { name: label, exact: true }).click()
@@ -176,8 +191,8 @@ if (want('a1')) {
     check(`a1 ${theme}: ~272px wide at 125% (340px on screen; menu B, cal-blocks)`, Math.abs(m.width - 272 * 1.25) < 3, m.width)
     const labels = await menu(page).getByRole('menuitem').allInnerTexts()
     // event-reminders (A12, 2026-10-14): a Remind row after Repeat.
-    // dup-open (Kai 2026-10-17): Duplicate joins, after More.
-    check(`a1 ${theme}: the rows — date · time · project · repeat · remind · Link a task… · More · Duplicate · Work with AI · Copy link · Delete`, /Mon, Oct 12/.test(labels[0]) && /10:30 – 11:30/.test(labels[1]) && /No project/.test(labels[2]) && /Does not repeat/.test(labels[3]) && /No reminder/.test(labels[4]) && /Link a task/.test(labels[5]) && /More/.test(labels[6]) && /^Duplicate/.test(labels[7]) && /^Work with AI/.test(labels[8]) && /^Copy link/.test(labels[9]) && /Delete/.test(labels[10]), JSON.stringify(labels))
+    // cal-clicks: a click opens the details — Duplicate, Work with AI and Copy link are menu B's (the right-click).
+    check(`a1 ${theme}: the rows — date · time · project · repeat · remind · Link a task… · More · Delete`, labels.length === 8 && /Mon, Oct 12/.test(labels[0]) && /10:30 – 11:30/.test(labels[1]) && /No project/.test(labels[2]) && /Does not repeat/.test(labels[3]) && /No reminder/.test(labels[4]) && /Link a task/.test(labels[5]) && /More/.test(labels[6]) && /Delete/.test(labels[7]), JSON.stringify(labels))
     check(`a1 ${theme}: no Save button, no "Sure?"`, (await page.getByRole('button', { name: 'Save' }).count()) === 0 && (await page.getByText('Sure?').count()) === 0)
     await shot(page, `a1-popover-${theme}`)
     check(`a1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
@@ -196,8 +211,12 @@ if (want('a2')) {
   await settle(state)
   check('a2 title: edited in place, saved on Enter', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.title === 'Lunch with Omar & Sara'))
   // Colour (menu B, cal-blocks): the swatches sit in a tray under the title; the block repaints at once.
+  // cal-clicks: menu B is the right-click.
+  await page.keyboard.press('Escape')
+  await sleep(300)
+  await openMenuB(page, eid(LUNCH))
   w = state.writes.length
-  const tray = menu(page).getByRole('group', { name: 'Colour' })
+  const tray = menu(page, 'Block menu').getByRole('group', { name: 'Colour' })
   await shot(page, 'a2-colour-menu')
   await tray.getByRole('button', { name: 'Moss' }).click()
   await settle(state)
@@ -214,7 +233,10 @@ if (want('a2')) {
   // …and Moss again for the rest of the run.
   await tray.getByRole('button', { name: 'Moss' }).click()
   await settle(state)
-  // Duration: 1h → 30m (the Length chips — queue 15).
+  // Duration: 1h → 30m (the Length chips — queue 15), in the details.
+  await page.keyboard.press('Escape')
+  await sleep(300)
+  await openBlock(page, eid(LUNCH))
   w = state.writes.length
   await pickLength(page, '30m')
   await settle(state)
@@ -255,10 +277,16 @@ if (want('a2')) {
 // ── A3: a task block — From task, Complete / Open task, Unschedule ⌫; Link a task on a plain block ──
 if (want('a3')) {
   const { ctx, page, errors, state } = await open()
-  await openBlock(page, eid(TYREB))
-  const labels = await menu(page).getByRole('menuitem').allInnerTexts()
+  // cal-clicks: a task block's click opens its task (the task popover); its block rows are menu B's, the right-click.
+  await fc(page, eid(TYREB)).click()
+  await sleep(600)
+  check('a3 a click on a task block opens its task (the task popover)', (await page.locator('[role="dialog"][aria-label="Task: Call the tyre supplier"]').count()) === 1)
+  await page.keyboard.press('Escape')
+  await sleep(400)
+  await openMenuB(page, eid(TYREB))
+  const labels = await menu(page, 'Block menu').getByRole('menuitem').allInnerTexts()
   check('a3 task block: no Repeat; Complete · Open task · Unschedule · Delete', !labels.some((l) => /repeat/i.test(l)) && labels.some((l) => /Complete/.test(l)) && labels.some((l) => /Open task/.test(l)) && labels.some((l) => /Unschedule/.test(l)), JSON.stringify(labels))
-  check('a3 the quiet "From task" group names the task', (await menu(page).getByText('From task').count()) === 1 && (await menu(page).getByText('Call the tyre supplier').count()) >= 1)
+  check('a3 the quiet "From task" group names the task', (await menu(page, 'Block menu').getByText('From task').count()) === 1 && (await menu(page, 'Block menu').getByText('Call the tyre supplier').count()) >= 1)
   await shot(page, 'a3-task-block')
   let w = state.writes.length
   await page.keyboard.press('Backspace')
@@ -292,10 +320,10 @@ if (want('a3')) {
   const t = posts(state, 'tasks', w).filter((x) => x.id === id(REVIEW)).at(-1)
   check('a3 Link a task on an event: the block holds Review Kai, the task scheduled there', linked?.task_id === id(REVIEW) && linked?.type === 'task' && t?.scheduled_start === iso('10:30'))
   check('a3 Link a task: toast with Undo', await toastSoon(page, 'Linked · Review Kai'))
-  // Complete from the popover.
-  await openBlock(page, eid(LUNCH))
+  // Complete from menu B (Lunch is Review Kai's block now: its click opens the task).
+  await openMenuB(page, eid(LUNCH))
   w = state.writes.length
-  await item(page, 'Complete').click()
+  await item(page, 'Complete', 'Block menu').click()
   await settle(state)
   check('a3 Complete: the task done', posts(state, 'tasks', w).some((x) => x.id === id(REVIEW) && x.status === 'done'))
   check('a3 no page errors', errors.length === 0, errors.join(' | '))
@@ -342,6 +370,8 @@ if (want('b2')) {
   }
   await sleep(200)
   await page.mouse.up()
+  // cal-clicks: a repeat asks which occurrences — "This event" is the one that moved alone
+  await answer(page, 'This event')
   await settle(state)
   const series = row(state, STANDUP)
   const copy = state.rows.calendar_events.find((e) => e.series_id === eid(STANDUP))
@@ -365,18 +395,21 @@ if (want('b3')) {
   await item(page, 'Delete').click()
   await sleep(300)
   await shot(page, 'b3-delete-submenu')
-  check('b3 Delete opens This event / All events (a submenu, no modal)', (await menu(page, 'Delete').getByRole('menuitem').allInnerTexts()).join('|') === 'This event|All events')
-  await item(page, 'This event', 'Delete').click()
+  // cal-clicks: the one scope question (a small dialog by the block), for every change to a repeat
+  const q = page.locator('[role="dialog"].kf-scope-ask')
+  check('b3 Delete asks This event / This and following events / All events (a small dialog, Cancel)', (await q.getByRole('button').allInnerTexts()).join('|') === 'This event|This and following events|All events|Cancel')
+  await answer(page, 'This event')
   await settle(state)
   check('b3 This event: Wednesday skipped, the series still there', (row(state, STANDUP).recurrence_exdates ?? []).includes(iso('08:00', 14)) && !row(state, STANDUP).deleted_at && (await fc(page, wed).count()) === 0 && (await fc(page, occId(STANDUP, '08:00', 15)).count()) === 1)
   await undo(page, 'Deleted · Standup')
   await settle(state)
   check('b3 Undo: Wednesday back', (await fc(page, wed).count()) === 1)
   await openBlock(page, occId(STANDUP, '08:00', 15))
-  await pick(page, 'Delete', 'All events', 'Delete')
+  await item(page, 'Delete').click()
+  await answer(page, 'All events')
   await settle(state)
   check('b3 All events: the series to Trash, no Standup left on the grid', !!row(state, STANDUP).deleted_at && (await page.locator(`.fc-event[data-kf-id^="${eid(STANDUP)}"]`).count()) === 0)
-  await undo(page, 'Deleted all · Standup')
+  await undo(page, 'Deleted · Standup · all events')
   await settle(state)
   check('b3 Undo: the whole week back', !row(state, STANDUP).deleted_at && (await page.locator(`.fc-event[data-kf-id^="${eid(STANDUP)}::"]`).count()) === 7)
   // cal-wave2 (conductor decision 2026-10-12, which supersedes "every day" here): a new length from a
@@ -385,7 +418,9 @@ if (want('b3')) {
   const h0 = (await sat().boundingBox()).height
   const thu0 = (await fc(page, occId(STANDUP, '08:00', 15)).boundingBox()).height
   await openBlock(page, occId(STANDUP, '08:00', 16))
-  await pickLength(page, '1h')
+  await menu(page).getByRole('group', { name: 'Length' }).getByRole('button', { name: '1h', exact: true }).click()
+  await answer(page, 'This and following events') // cal-clicks: the split, now asked
+  await page.keyboard.press('Escape')
   await settle(state)
   const h1 = (await sat().boundingBox()).height
   const thu1 = (await fc(page, occId(STANDUP, '08:00', 15)).boundingBox()).height
@@ -412,9 +447,14 @@ if (want('p1')) {
     check(`p1 ${theme}: the phone grid draws the occurrence with ↻`, (await block.count()) === 1 && (await block.getByRole('img', { name: 'Repeats' }).count()) === 1)
     await tap(block)
     const rows = await page.locator('.pc-bs-rows .kf-as-row').allInnerTexts()
-    check(`p1 ${theme}: the sheet's rows — date · time · project · repeat · remind · More · Duplicate · Work with AI · Copy link`, rows.length === 9 && /Mon, Oct 12/.test(rows[0]) && /08:00 – 08:30/.test(rows[1]) && /No project/.test(rows[2]) && /Repeats daily/.test(rows[3]) && /No reminder/.test(rows[4]) && /More/.test(rows[5]) && /^Duplicate/.test(rows[6]) && /^Work with AI/.test(rows[7]) && /^Copy link/.test(rows[8]), JSON.stringify(rows))
-    check(`p1 ${theme}: the swatch tray (No colour + 16, menu B); Delete in the footer`, (await page.locator('.pc-bs-colors button.kf-sw').count()) === 17 && (await page.locator('.pc-bs-delete').count()) === 1)
+    // cal-clicks: a tap opens the details; menu B (the tray, Duplicate, Work with AI, Copy link) is the ⋯ / a long-press.
+    check(`p1 ${theme}: the details sheet's rows — date · time · project · repeat · remind · More`, rows.length === 6 && /Mon, Oct 12/.test(rows[0]) && /08:00 – 08:30/.test(rows[1]) && /No project/.test(rows[2]) && /Repeats daily/.test(rows[3]) && /No reminder/.test(rows[4]) && /More/.test(rows[5]), JSON.stringify(rows))
     await shot(page, `p1-phone-sheet-${theme}`)
+    await tap(page.locator('.pc-bs-more'))
+    const mrows = await page.locator('.pc-bs-rows .kf-as-row').allInnerTexts()
+    check(`p1 ${theme}: its ⋯ → menu B: the swatch tray (No colour + 16) · Details · Duplicate · Work with AI · Copy link; Delete in the footer`, (await page.locator('.pc-bs-colors button.kf-sw').count()) === 17 && (await page.locator('.pc-bs-delete').count()) === 1 && /^Details/.test(mrows[0]) && /^Duplicate/.test(mrows[1]) && /^Work with AI/.test(mrows[2]) && /^Copy link/.test(mrows[3]), JSON.stringify(mrows))
+    await shot(page, `p1-phone-menu-${theme}`)
+    await tap(page.locator('.pc-bs-rows .kf-as-row', { hasText: 'Details' }))
     if (theme === 'day') {
       const w = state.writes.length
       await tap(page.locator('.pc-bs-rows .kf-as-row', { hasText: 'Repeats daily' }))
@@ -423,7 +463,7 @@ if (want('p1')) {
       check('p1 Repeat ▸ Weekly from the phone sheet', posts(state, 'calendar_events', w).some((e) => e.id === eid(STANDUP) && e.recurrence_rule === 'FREQ=WEEKLY'))
       await tap(page.locator('.pc-bs-delete'))
       const choices = await page.locator('.kf-as-row').allInnerTexts()
-      check('p1 Delete on a repeat asks This event / All events', choices.some((c) => /This event/.test(c)) && choices.some((c) => /All events/.test(c)), JSON.stringify(choices))
+      check('p1 Delete on a repeat asks This event / This and following events / All events', choices.some((c) => /^This event/.test(c)) && choices.some((c) => /This and following events/.test(c)) && choices.some((c) => /All events/.test(c)), JSON.stringify(choices))
       await shot(page, 'p1-phone-delete')
     }
     check(`p1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))

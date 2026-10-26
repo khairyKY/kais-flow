@@ -21,7 +21,8 @@ import { goalIdOf } from '../today/top3Order'
 import { legacyGoalId } from '../today/goalStore'
 import { cachedStarEvents } from '../today/api'
 import { blockHue, KIND_HUE } from './blockHue'
-import { moveEventWithUndo, outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { completeBlockTask, moveSpan } from './scoped'
 import { findBlock } from './series'
 import { heldDrop, slotFill, slotTasks } from './slots'
 import { cairoToIso, timeRange } from './eventTime'
@@ -39,6 +40,7 @@ import { useAreas } from '../areas/api'
 import { placeName } from '../tasks/move'
 import { PhoneGrid, type BlockLook, type Carry, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
+import type { BlockMenuMode } from './blockMenuSpec'
 import './phoneCalendar.css'
 import { useLinkedEvent } from './linkedEvent'
 import { useCalendarDefaultView } from '../../lib/settings'
@@ -52,7 +54,7 @@ const MorningRitual = lazy(() => import('../rituals/MorningRitual').then((m) => 
 type Sheet =
   | { k: 'view' }
   | { k: 'create'; day: string; start: number }
-  | { k: 'block'; id: string; start: string }
+  | { k: 'block'; id: string; start: string; mode?: BlockMenuMode }
   | { k: 'more'; ids: string[] }
   /** 7g: a task from the rail strip — or, `replan`, an overdue block tapped on the grid. */
   | { k: 'schedule'; id: string; replan?: boolean }
@@ -197,7 +199,8 @@ export function PhoneCalendar() {
     // Subtasks C: a subtask's own block says whose it is.
     const parent = task?.parent_task_id ? taskById.get(task.parent_task_id)?.title : undefined
     const goal = !!task && task.id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === today
-    return { ...tone, check: task && { done, repeat: task.recurrence_rule, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
+    // cal-clicks: a repeating task's round asks This one / Following / All before it's ticked.
+    return { ...tone, check: task && { done, repeat: task.recurrence_rule, toggle: () => (done ? uncompleteTask(task) : void completeBlockTask(task, e.id)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
   }
 
   /** A task block that ended before today, not done — it reads "Overdue · Replan" and a tap replans it. */
@@ -217,7 +220,8 @@ export function PhoneCalendar() {
   function commit(e: CalendarEvent, from: Span, to: Span, mode: DragMode) {
     // Moved from its sheet (Time): keep it in view above the sheet, at its new time.
     if (sheet?.k === 'block' && sheet.id === e.id) gridRef.current?.scrollToMinute(to.start, SHEET_LEAD)
-    moveEventWithUndo(e, from, to, mode)
+    // cal-clicks: a repeat (or a repeating task's round) asks which occurrences; Cancel leaves it where it was.
+    void moveSpan(e, from, to, mode)
   }
 
   /** slot-outline: a held task's row dragged out of its slot (the desktop's rules, slots.heldDrop): off
@@ -296,6 +300,12 @@ export function PhoneCalendar() {
     if (e.task_id && overdueBlock(e)) setSheet({ k: 'schedule', id: e.task_id, replan: true })
     else if (e.task_id && taskById.has(e.task_id)) openTask(e.task_id)
     else setSheet({ k: 'block', id: e.id, start: e.starts_at })
+  }
+
+  /** cal-clicks: a long-press (released without moving) opens menu B's sheet — the tray, Duplicate, Work with
+   * AI ›, Copy link, Delete (a task block's Complete / Open task / Unschedule too). The block stays lifted. */
+  function holdBlock(e: CalendarEvent) {
+    setSheet({ k: 'block', id: e.id, start: e.starts_at, mode: 'menu' })
   }
 
   const slotRect = (day: string, start: number, end: number) => gridRef.current?.rectOf(day, start, end) ?? null
@@ -449,6 +459,7 @@ export function PhoneCalendar() {
           setSheet({ k: 'create', day, start })
         }}
         onTapBlock={tapBlock}
+        onHoldBlock={holdBlock}
         onTapMore={(hidden) => setSheet({ k: 'more', ids: hidden.map((e) => e.id) })}
         onCommit={commit}
         onDropHeld={dropHeld}
@@ -495,7 +506,18 @@ export function PhoneCalendar() {
         <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={slotRect} onClose={() => setSheet(null)} />
       )}
       {block && (
-        <BlockSheet event={block} look={look(block)} slotRect={slotRect} pending={marks.pending.has(block.id)} onMove={commit} onRebind={(ref) => setSheet({ k: 'block', id: ref.id, start: ref.start })} onClose={() => setSheet(null)} />
+        <BlockSheet
+          event={block}
+          mode={sheet?.k === 'block' ? sheet.mode : undefined}
+          // The details' ⋯ ↔ menu B's Details; a task block's details are its task (the task sheet).
+          onMode={(mode) => (mode === 'details' && block.task_id && taskById.has(block.task_id) ? openTask(block.task_id) : setSheet({ k: 'block', id: block.id, start: block.starts_at, mode }))}
+          look={look(block)}
+          slotRect={slotRect}
+          pending={marks.pending.has(block.id)}
+          onMove={commit}
+          onRebind={(ref) => setSheet({ k: 'block', id: ref.id, start: ref.start, mode: sheet?.k === 'block' ? sheet.mode : undefined })}
+          onClose={() => setSheet(null)}
+        />
       )}
       {sheet?.k === 'more' && (
         <ActionSheet

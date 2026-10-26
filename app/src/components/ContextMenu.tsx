@@ -170,6 +170,11 @@ export function ContextMenu({ items, position, onClose, header, width, label, cl
           padding: 6,
           minWidth: width ?? 180,
           width,
+          // cal-clicks (coordinator 2026-10-26): never taller than the window (12px clear above and below) — a long
+          // menu (the block menu at 125% in an 800px window) scrolls inside itself, so Delete is always reachable.
+          maxHeight: window.innerHeight / z - 24,
+          overflowY: 'auto',
+          overscrollBehavior: 'contain',
         }}
       >
         {header}

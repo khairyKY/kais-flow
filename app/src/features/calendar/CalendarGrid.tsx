@@ -86,9 +86,10 @@ interface CalendarGridProps {
   /** An empty slot clicked or dragged. `task`: with ⌘/Ctrl held — Akiflow's ⌘-click makes a task there (p7e A4).
    * `dragged`: the pointer moved between press and release (a click selects one quarter too). */
   onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) => void
-  /** allDay flips when a drag crosses the all-day band ↔ time grid boundary (CALENDAR.md §6). */
-  onMove: (id: string, start: string, end: string, allDay: boolean) => void
-  onResize: (id: string, start: string, end: string) => void
+  /** allDay flips when a drag crosses the all-day band ↔ time grid boundary (CALENDAR.md §6). `revert` puts the
+   * block back where it was (cal-clicks: the scope question's Cancel / Esc). */
+  onMove: (id: string, start: string, end: string, allDay: boolean, revert?: () => void) => void
+  onResize: (id: string, start: string, end: string, revert?: () => void) => void
   /** `add`: with Ctrl / ⌘ / Shift held — the block joins (or leaves) the multi-selection. */
   onEventClick: (id: string, add?: boolean) => void
   /** Multi-select (Kai 2026-10-22): the picked blocks, outlined; dragging one of them moves them all. */
@@ -1136,10 +1137,21 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         // Punch 34: double-click goes straight to the task editor (single click still opens
         // the details popover — the navigation unmounts it, so the two don't fight).
         info.el.addEventListener('dblclick', () => L().props.onEventDoubleClick?.(id))
+        // cal-clicks: a right-click opens menu B; from the keyboard (Shift+F10, the menu key — Enter opens the details,
+        // FullCalendar's own key handler) it hangs at the block's corner, not at 0,0.
+        const menuAt = (x: number, y: number) => {
+          const r = info.el.getBoundingClientRect()
+          L().props.onEventContextMenu?.(id, x || y ? x : r.left + 8, x || y ? y : r.bottom)
+        }
         info.el.addEventListener('contextmenu', (e: MouseEvent) => {
           if (!L().props.onEventContextMenu) return
           e.preventDefault()
-          L().props.onEventContextMenu?.(id, e.clientX, e.clientY)
+          menuAt(e.clientX, e.clientY)
+        })
+        info.el.addEventListener('keydown', (e: KeyboardEvent) => {
+          if (!L().props.onEventContextMenu || !(e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10'))) return
+          e.preventDefault()
+          menuAt(0, 0)
         })
       },
       select: (info: DateSelectArg) => {
@@ -1279,7 +1291,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           // a converted all-day block spans its day; a re-timed chip gets the default hour.
           const allDay = info.event.allDay
           const end = info.event.end ?? new Date(info.event.start.getTime() + (allDay ? 86_400_000 : 3_600_000))
-          L().props.onMove(id, info.event.start.toISOString(), end.toISOString(), allDay)
+          L().props.onMove(id, info.event.start.toISOString(), end.toISOString(), allDay, info.revert)
         }
         setPinnedId(id) // Polish F2b: where it landed stays in view
         if (landing) settleGhost(landing, id, motion)
@@ -1302,7 +1314,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
             else endMs = startMs + MIN
           }
           setPinnedId(info.event.id) // Polish F2b: a resize into a stack stays in view too
-          L().props.onResize(info.event.id, new Date(startMs).toISOString(), new Date(endMs).toISOString())
+          L().props.onResize(info.event.id, new Date(startMs).toISOString(), new Date(endMs).toISOString(), info.revert)
         }
       },
       drop: (info: DropArg) => {

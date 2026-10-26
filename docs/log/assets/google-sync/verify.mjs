@@ -422,7 +422,8 @@ if (want('g2')) {
       await fc(page, eid(DHUHR)).click({ button: 'right', position: { x: 10, y: 4 } })
       await sleep(400)
       const ctxItems = await page.locator('[role="menu"]').last().getByRole('menuitem').allInnerTexts()
-      check('g2 right-click: only "Details" — no Delete', ctxItems.length === 1 && /Details/.test(ctxItems[0]), JSON.stringify(ctxItems))
+      // cal-clicks: the right-click is menu B — for a Google event its read-only rows (Details, Work with AI, Copy link)
+      check('g2 right-click: menu B with only Details · Work with AI · Copy link — no tray, no Delete', ctxItems.length === 3 && /^Details/.test(ctxItems[0]) && /^Work with AI/.test(ctxItems[1]) && /^Copy link/.test(ctxItems[2]) && (await page.locator('[role="menu"]').last().locator('.kf-swatch-tray').count()) === 0, JSON.stringify(ctxItems))
       // A native event keeps its full menu.
       await page.keyboard.press('Escape')
       await sleep(200)

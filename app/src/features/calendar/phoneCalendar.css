@@ -233,7 +233,10 @@
 }
 .pc-held > * { line-height: 32px; }
 
-.pc-bs-head { margin: 0 0 var(--sp-3); }
+.pc-bs-head { margin: 0 0 var(--sp-3); position: relative; }
+/* cal-clicks: the details' ⋯ → menu B (a long-press on the block opens it too). 44px target. */
+.pc-bs-more { position: absolute; top: 4px; right: -8px; width: 44px; height: 44px; display: grid; place-items: center; border: none; background: none; color: var(--ink-muted); border-radius: var(--radius-md); }
+.pc-bs-head:has(.pc-bs-more) .pc-bs-title { padding-right: 40px; }
 .pc-bs-title { font-family: var(--font-display); font-size: 20px; line-height: 26px; color: var(--ink-body); padding-top: 10px; text-wrap: pretty; }
 /* The title is a field (Kai 2026-10-07: the sheet read as read-only) — the quick-create field's chrome. */
 .pc-bs-title-in { width: 100%; font-family: var(--font-display); font-size: 20px; }

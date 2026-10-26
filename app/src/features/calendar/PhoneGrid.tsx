@@ -114,6 +114,8 @@ interface Props {
   onPage: (dir: 1 | -1) => void
   onTapSlot: (day: string, start: number) => void
   onTapBlock: (e: CalendarEvent) => void
+  /** cal-clicks: a long-press released without moving — menu B's sheet (the block stays lifted). */
+  onHoldBlock?: (e: CalendarEvent) => void
   /** The "+N" chip on 4+ blocks at once: the blocks it stands for. */
   onTapMore: (hidden: CalendarEvent[]) => void
   onCommit: (e: CalendarEvent, from: Span, to: Span, mode: DragMode) => void
@@ -133,11 +135,13 @@ const COMPACT_PX = minToPx(25)
 const titleLines = (h: number) => Math.max(1, Math.min(3, Math.floor((h - 12 - 18) / 18)))
 const same = (a: Span, b: Span) => a.day === b.day && a.start === b.start && a.end === b.end
 
-export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onPage, onTapSlot, onTapBlock, onTapMore, onCommit, onDropHeld, overlay }, ref) {
+export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onPage, onTapSlot, onTapBlock, onHoldBlock, onTapMore, onCommit, onDropHeld, overlay }, ref) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const [lift, setLift] = useState<Lift | null>(null)
   const liftRef = useRef(lift)
+  // cal-clicks: this press lifted the block (a long-press) — its release without a move opens menu B.
+  const heldNow = useRef(false)
   liftRef.current = lift
   const [held, setHeld] = useState<HeldLift | null>(null)
   const heldRef = useRef(held)
@@ -286,6 +290,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       }
       const span = eventSpan(ev)
       setLift({ id: ev.id, orig: span, draft: span, mode: 'move' })
+      heldNow.current = true
       s.kind = 'drag'
       s.swallow = true
     }, LONG_PRESS_MS)
@@ -429,7 +434,22 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       if (e.type !== 'pointercancel' && ev && l.mode && !same(l.draft, l.orig)) {
         onCommit(ev, l.orig, l.draft, l.mode)
         setLift(null)
-      } else setLift({ ...l, draft: l.orig, mode: null }) // released without moving: it stays lifted
+      } else {
+        // Released without moving: it stays lifted, and the hold opens menu B (cal-clicks) — but not the release of
+        // a lifted block's own second press, which is a nudge of its handles that didn't move.
+        setLift({ ...l, draft: l.orig, mode: null })
+        if (e.type !== 'pointercancel' && ev && heldNow.current && onHoldBlock) {
+          // The click a lifted finger still sends would land on the sheet's scrim and close it: eat that one.
+          const eat = (c: Event) => {
+            c.stopPropagation()
+            c.preventDefault()
+          }
+          window.addEventListener('click', eat, { capture: true, once: true })
+          window.setTimeout(() => window.removeEventListener('click', eat, { capture: true }), 700)
+          onHoldBlock(ev)
+        }
+      }
+      heldNow.current = false
     } else if (kind === 'swipe') {
       // A finger that stopped before lifting (or a cancelled gesture) is not a fling.
       const v = e.type === 'pointercancel' || e.timeStamp - s.lastT > 100 ? 0 : s.v

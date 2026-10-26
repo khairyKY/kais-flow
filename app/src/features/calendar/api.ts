@@ -18,6 +18,7 @@ import { isSynced, remindLabel, repeatLabel } from './blockMenuSpec'
 import { timeText } from './eventTime'
 import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
 import { spanMinutes, taskOnBlock, withLength } from '../../../../supabase/functions/_shared/blockLength.ts'
+import { planScope, type Scope, type SeriesChange } from './scope'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -614,6 +615,48 @@ export function deleteSeriesWithUndo(event: CalendarEvent): void {
     all.forEach(restoreEvent)
     undoTasks()
   })
+}
+
+/** True for a block that is an occurrence of a repeating event of ours — the ones every change asks about (cal-clicks).
+ * A Google event never: google-sync owns it. */
+export const isSeriesBlock = (e: Pick<CalendarEvent, 'seriesId' | 'recurrence_rule' | 'source'>): boolean => !isSynced(e) && !!(e.seriesId || e.recurrence_rule)
+
+/** cal-clicks: a change to an occurrence of a repeating event, as the person answered the scope question —
+ * ./scope plans it (this = the exception, following = the split, all = the series row), it goes through the outbox,
+ * a Time block's tasks follow the occurrences the change leaves (reseat), and ONE Undo puts every row back.
+ * Returns where the block stands now (a sheet kept open over it follows it). */
+export function applySeriesChange(event: CalendarEvent, scope: Scope, change: SeriesChange, message: string): BlockRef | null {
+  const row = event.seriesId ? seriesOf(event) : event
+  if (!row || isSynced(row)) return null
+  const detached = cachedRows().filter((r) => r.series_id === row.id && !r.deleted_at)
+  const plan = planScope(row, event, scope, change, { newId: () => crypto.randomUUID(), now: nowIso(), detached })
+  if (!plan.write.length && !plan.trash.length) return plan.ref
+  const rows = cachedRows()
+  const prior = [...plan.write, ...plan.trash].flatMap((r) => rows.filter((x) => x.id === r.id).map((x) => ({ ...x })))
+  const trashed = new Set(plan.trash.map((r) => r.id))
+  // A slot's tasks: each to its day's occurrence among what the change leaves, else out (the series' own rule);
+  // a one-off moved out of it earlier that goes to Trash lets go of its tasks.
+  const undoTasks = [
+    ...(row.type === 'time_block' || plan.write.some((w) => w.type === 'time_block') ? [reseat(row.id, plan.write.filter((w) => !trashed.has(w.id)))] : []),
+    ...plan.trash.filter((r) => r.id !== row.id).map((r) => releaseRow(r.id)),
+  ]
+  for (const w of plan.write) writeEvent(w)
+  const at = nowIso()
+  for (const t of plan.trash) {
+    writeEvent({ ...t, deleted_at: at })
+    logActivity('calendar_event.deleted', 'calendar_event', t.id, {})
+  }
+  for (const w of plan.write.filter((x) => plan.created.includes(x.id))) logActivity('calendar_event.created', 'calendar_event', w.id, { title: w.title, type: w.type, series_id: row.id, scope })
+  if (change.kind === 'delete' && scope === 'this') logActivity('calendar_event.deleted', 'calendar_event', row.id, { occurrence: event.starts_at })
+  toastUndo(message, () => {
+    for (const id of plan.created) {
+      const made = plan.write.find((w) => w.id === id)
+      if (made) writeEvent(made, 'delete')
+    }
+    for (const p of prior) writeEvent(p)
+    undoTasks.reverse().forEach((u) => u())
+  })
+  return plan.ref
 }
 
 /** Deleting a task deletes its block too (called from the tasks feature after user confirms). */

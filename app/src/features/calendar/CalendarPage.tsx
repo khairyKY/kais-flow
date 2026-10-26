@@ -5,6 +5,7 @@ import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
+import { completeBlockTask, moveBlock } from './scoped'
 import { slotAt, slotFill, slotTasks } from './slots'
 import { dropOnGrid } from './gridDrop'
 import { TaskMenu } from '../tasks/TaskMenu'
@@ -49,7 +50,7 @@ import { parseWeekend } from '../../lib/weekend'
 import { addDays, durationLabel } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
 import { duplicateBlockWithUndo } from './duplicate'
-import { BLOCK_MENU_WIDTH, besideBlock, isSynced } from './blockMenuSpec'
+import { BLOCK_MENU_WIDTH, besideBlock, isSynced, type BlockMenuMode } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
@@ -137,6 +138,8 @@ interface Selected {
   id: string
   start: string
   at: { x: number; y: number }
+  /** cal-clicks: a click opens the details, a right-click (Shift+F10, the menu key) menu B. */
+  mode?: BlockMenuMode
 }
 
 /** besideBlock() of the block on screen, else (not drawn yet) the middle of the window. */
@@ -715,8 +718,8 @@ function DesktopCalendar() {
   }
 
   /** §5: the block's popover, beside it (or at the pointer, from a right-click's Edit). */
-  function openExisting(event: CalendarEvent, at?: { x: number; y: number }) {
-    setSelected({ id: event.id, start: event.starts_at, at: at ?? anchorOf(event.id) })
+  function openExisting(event: CalendarEvent, at?: { x: number; y: number }, mode: BlockMenuMode = 'details') {
+    setSelected({ id: event.id, start: event.starts_at, at: at ?? anchorOf(event.id), mode })
   }
 
   // Multi-select (Kai 2026-10-22, Google / Notion Calendar): Ctrl / ⌘ / Shift + click picks blocks; dragging one
@@ -731,33 +734,25 @@ function DesktopCalendar() {
     }
     setPicked([])
     const event = gridEvents.find((e) => e.id === id)
-    if (event) openExisting(event)
+    if (!event) return
+    // cal-clicks (Kai 2026-10-26, Akiflow / Google Calendar): a click opens the DETAILS — a task's block its task
+    // (the task popover, beside the block), any other block its own details (a Time block's: its slot).
+    const el = document.querySelector(`.fc-event[data-kf-id="${CSS.escape(id)}"]`)
+    if (event.task_id && !isSynced(event) && tasks.some((t) => t.id === event.task_id) && el) {
+      setSelected(null)
+      openTask(event.task_id, undefined, el)
+      return
+    }
+    openExisting(event)
   }
   const pickedLive = useMemo(() => picked.filter((id) => gridEvents.some((e) => e.id === id)), [picked, gridEvents])
 
-  // Punch 6 (calendar slice): every destructive calendar mutation undoes through the same api — never a bare toast.
-  const unscheduleWithUndo = (event: CalendarEvent) => deleteEventWithUndo(event, 'Unscheduled')
-  const deleteWithUndo = (event: CalendarEvent) => deleteEventWithUndo(event, 'Deleted')
-
+  /** cal-clicks: a right-click (the ⋯, Shift+F10, the menu key) opens menu B at the pointer. The old quick menu
+   * (Edit / Details · Complete · Replan… · Unschedule · Delete) is retired: its rows live in menu B. */
   function handleEventContextMenu(id: string, x: number, y: number) {
     setContextMenu(null)
     const event = gridEvents.find((e) => e.id === id)
-    if (!event) return
-    const items: ContextMenuItem[] = []
-    if (event.type === 'task') {
-      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
-      if (isMissed(event)) items.push({ label: 'Replan…', onClick: () => replanEvent(event, x, y) })
-      items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTaskWithUndo(t) } })
-      items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); unscheduleWithUndo(event) } })
-      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
-    } else if (isSynced(event)) {
-      // A Google event (B1) is read-only: its details, nothing to delete.
-      items.push({ label: 'Details', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
-    } else {
-      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
-      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
-    }
-    setContextMenu({ items, x, y })
+    if (event) openExisting(event, { x, y }, 'menu')
   }
 
   /** Punch 33 + Kai 2026-10-12: a block dragged onto the rail does what the section it lands on
@@ -826,12 +821,6 @@ function DesktopCalendar() {
 
   function openQuickAddTask(e: React.MouseEvent) {
     setQuickCreate({ kind: 'task', slot: null, anchor: { x: e.clientX, y: e.clientY } })
-  }
-
-  /** A ran-over task block that isn't done — the details panel and the right-click offer Replan. */
-  function isMissed(event: CalendarEvent): boolean {
-    const t = event.task_id ? tasks.find((x) => x.id === event.task_id) : undefined
-    return !!t && t.status === 'todo' && Date.parse(event.ends_at) < Date.now()
   }
 
   // A rail card dropped on the grid: a task's block goes there (its missed block moves — never a
@@ -1084,7 +1073,7 @@ function DesktopCalendar() {
       const t = tasks.find((x) => x.id === taskId)
       if (!t) return
       if (done) uncompleteTask(t)
-      else completeTaskWithUndo(t)
+      else void completeBlockTask(t) // cal-clicks: a repeating task's round asks first
     },
     // A task block's ▶ (hover, "Now" as drawn): Focus on its task, as Today's ▶ does.
     onFocusTask: (taskId: string) => {
@@ -1093,18 +1082,19 @@ function DesktopCalendar() {
     },
     onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) => handleGridCreate(info),
     // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.
-    onMove: (id: string, start: string, end: string, allDay: boolean) => {
+    // cal-clicks: a repeat (or a repeating task's round) asks This / Following / All; Cancel puts the block back.
+    onMove: (id: string, start: string, end: string, allDay: boolean, revert?: () => void) => {
       const event = gridEvents.find((e) => e.id === id)
       if (!event) return
       // A task's block dropped on a Time block: the task goes into the slot, its block comes off.
       const task = event.task_id && !allDay ? tasks.find((t) => t.id === event.task_id) : undefined
       const slot = task ? slotAt(gridEvents, start, id) : undefined
       if (task && slot) return putInSlotWithUndo(task, slot)
-      toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
+      void moveBlock(event, { starts_at: start, ends_at: end, all_day: allDay }, { verb: 'Move', said: `Moved · ${event.title}`, run: () => moveOrResizeEvent(event, start, end, allDay), onCancel: revert, task })
     },
-    onResize: (id: string, start: string, end: string) => {
+    onResize: (id: string, start: string, end: string, revert?: () => void) => {
       const event = gridEvents.find((e) => e.id === id)
-      if (event) toastUndo(`Resized · ${event.title}`, resizeEvent(event, start, end))
+      if (event) void moveBlock(event, { starts_at: start, ends_at: end }, { verb: 'Resize', said: `Resized · ${event.title}`, run: () => resizeEvent(event, start, end), onCancel: revert })
     },
     onEventClick: (id: string, add?: boolean) => handleEventClick(id, add),
     onMoveMany: (ids: readonly string[], delta: number) => {
@@ -1508,12 +1498,19 @@ function DesktopCalendar() {
       )}
       {blockShown && (
         <BlockMenu
-          key={blockShown.sel.id}
+          key={`${blockShown.sel.id}|${blockShown.sel.mode ?? 'details'}`}
           event={blockShown.event}
+          mode={blockShown.sel.mode}
           position={blockShown.sel.at}
           closing={blockExit.closing}
           onClose={() => setSelected(null)}
           onReplan={(x, y) => replanEvent(blockShown.event, x, y)}
+          // Menu B's Details: the details in its place, beside the block (a task's: its task popover) — once the menu
+          // has closed (its row's click closes it after running).
+          onDetails={() => {
+            const id = blockShown.event.id
+            window.setTimeout(() => handleEventClick(id))
+          }}
         />
       )}
       {plan && <ContextMenu items={planFor(plan.target)} position={{ x: plan.x, y: plan.y }} onClose={() => setPlan(null)} />}

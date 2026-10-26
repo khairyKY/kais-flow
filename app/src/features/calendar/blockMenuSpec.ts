@@ -10,7 +10,11 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details'
+
+/** cal-clicks (Kai 2026-10-26, Akiflow / Google Calendar): a click opens a block's DETAILS (when, project,
+ * repeat, remind…); a right-click opens MENU B (the swatch tray, Duplicate, Work with AI ›, Copy link, Delete). */
+export type BlockMenuMode = 'details' | 'menu'
 
 export interface BlockMenuEntry {
   key: BlockMenuKey
@@ -35,6 +39,8 @@ export interface BlockMenuContext {
   /** A task block that ran out unfinished: Replan… (the grid's own "Overdue · Replan" link). */
   missed?: boolean
   now?: Date
+  /** Which list: the details a click opens (default) or menu B a right-click opens. */
+  mode?: BlockMenuMode
 }
 
 /** The popover's width: menu B's 272 (cal-blocks — the swatch tray's 8 columns fit; §5 drew 238). */
@@ -116,6 +122,9 @@ export function remindLabel(min: number | null | undefined): string {
 
 export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): BlockMenuEntry[] {
   const span = eventSpan(e)
+  // Menu B (Kai 2026-10-26): Work with AI › (the chat, with a request about this block) and Copy link.
+  const extras: BlockMenuEntry[] = [{ key: 'ai', label: 'Work with AI', sub: true }, { key: 'copylink', label: 'Copy link' }]
+  if (ctx.mode === 'menu') return menuB(e, ctx, extras)
   // A Google event: when it is, and where it comes from — nothing to change, nothing to delete.
   if (isSynced(e)) {
     return [
@@ -143,23 +152,42 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
       { key: 'open', label: 'Open task' },
     )
     if (ctx.missed) out.push({ key: 'replan', label: 'Replan…' }) // the calendar's Plan menu, in its place
-    // Kai 2026-10-17: a copy of the task, blocked at this same time.
-    out.push({ key: 'duplicate', label: 'Duplicate', hint: '⌃D' })
   }
-  // Menu B (cal-blocks, Kai 2026-10-26): Work with AI › (the chat, with a request about this block) and Copy link.
-  const extras: BlockMenuEntry[] = [{ key: 'ai', label: 'Work with AI', sub: true }, { key: 'copylink', label: 'Copy link' }]
-  if (e.task_id) out.push(...extras, { key: 'unschedule', label: 'Unschedule', hint: '⌫', divider: true })
+  if (e.task_id) out.push({ key: 'unschedule', label: 'Unschedule', hint: '⌫', divider: true })
   else {
     // deviation(2026-10-12): §5 drops the Event / Time block kind and Busy / Free; they stay reachable
     // here, one quiet row, so creating a block is not the only place to set them.
     if (!repeating) out.push({ key: 'link', label: 'Link a task…', divider: true })
     out.push({ key: 'more', label: 'More', sub: true, divider: repeating })
-    // Kai 2026-10-17: a copy at the same time (side by side) — an event, never a Time block (a slot
-    // repeats instead); a repeat's copy is this one occurrence, on its own.
-    if (e.type !== 'time_block') out.push({ key: 'duplicate', label: 'Duplicate', hint: '⌃D' })
-    out.push(...extras)
   }
-  // p7e A4: ⌫ deletes a plain one-off (Akiflow's Backspace); a repeat asks This / All on the row instead.
-  out.push({ key: 'delete', label: isUntitled(e, ctx.now) ? 'Discard' : 'Delete', destructive: true, sub: repeating, ...(!e.task_id ? { divider: true } : null), ...(!e.task_id && !repeating ? { hint: '⌫' } : null) })
+  out.push(deleteRow(e, ctx, repeating))
+  return out
+}
+
+/** p7e A4: ⌫ deletes a plain one-off (Akiflow's Backspace); a repeat asks This / Following / All (cal-clicks). */
+function deleteRow(e: CalendarEvent, ctx: BlockMenuContext, repeating: boolean): BlockMenuEntry {
+  return { key: 'delete', label: isUntitled(e, ctx.now) ? 'Discard' : 'Delete', destructive: true, sub: false, ...(!e.task_id ? { divider: true } : null), ...(!e.task_id && !repeating ? { hint: '⌫' } : null) }
+}
+
+/** Menu B, the right-click (cal-clicks): what the details don't hold — Duplicate, Work with AI ›, Copy link, Delete
+ * (the tray sits in its header) — plus the old quick menu's rows it lacked: a task's Complete / Open task / Replan… /
+ * Unschedule, and Details (the old Edit / Details) for every other block. */
+function menuB(e: CalendarEvent, ctx: BlockMenuContext, extras: BlockMenuEntry[]): BlockMenuEntry[] {
+  const details: BlockMenuEntry = { key: 'details', label: 'Details' }
+  if (isSynced(e)) return [details, ...extras] // a Google event: nothing to change, nothing to delete
+  const out: BlockMenuEntry[] = []
+  if (e.task_id && ctx.task) {
+    out.push(
+      { key: 'complete', label: ctx.task.status === 'done' ? 'Reopen' : 'Complete', caption: { label: 'From task', text: ctx.task.title } },
+      { key: 'open', label: 'Open task' },
+    )
+    if (ctx.missed) out.push({ key: 'replan', label: 'Replan…' })
+  } else out.push(details)
+  // Kai 2026-10-17: a copy at the same time (side by side) — an event, or a task's copy blocked at this time;
+  // never a Time block (a slot repeats instead). A repeat asks what to copy (cal-clicks; "This" by default).
+  if (e.task_id ? !!ctx.task : e.type !== 'time_block') out.push({ key: 'duplicate', label: 'Duplicate', hint: '⌃D', divider: true })
+  out.push(...extras.map((x, i) => (i === 0 && !out.at(-1)?.divider ? { ...x, divider: true } : x)))
+  if (e.task_id) out.push({ key: 'unschedule', label: 'Unschedule', hint: '⌫', divider: true })
+  out.push(deleteRow(e, ctx, isRepeatingBlock(e)))
   return out
 }
