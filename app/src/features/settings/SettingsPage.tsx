@@ -851,7 +851,6 @@ function NotificationsCard() {
     <>
     <SCard id="settings-Notifications">
       <Row
-        device
         label="This device"
         help={`Calm by default · each kind can be turned off, silent ones never make a sound · times are ${zoneCity(appZone())} time`}
         keys="test notification push"

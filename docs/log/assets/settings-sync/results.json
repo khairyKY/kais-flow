@@ -1,0 +1,311 @@
+{
+  "passed": 61,
+  "total": 61,
+  "results": [
+    {
+      "name": "seed · the first device sends its own values",
+      "ok": true,
+      "detail": "[\"kf_theme_mode\",\"kf_ui_scale.computer\",\"kf.calViewOptions\",\"kf_sound_pack\"]"
+    },
+    {
+      "name": "seed · stamped 1970 so any real change beats them",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "seed · the computer’s size goes up under its class",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "seed · the second device adopts the first’s theme",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "seed · …and its sound pack",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "seed · …but keeps its own class’s size (phone 100%)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "seed · Settings on the phone shows Dark",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "seed · a second computer adopts the computers’ size (125%)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Theme · computer → phone (Light), the page and the picker",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Theme · phone → computer (Dark)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Theme · Auto reaches the phone, which follows its own system",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Interface size · computer → the other computer (150%)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Interface size · …not the phone (its own class, 100%)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Interface size · a phone’s pick stays with phones",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Paper texture · computer → phone (80%)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Botanical animations · phone → computer (off)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Botanical animations · computer → phone (on)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Time format · computer → phone (24-hour)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Week starts on · phone → computer (Sun)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Fit days to the window · computer → phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Fit hours to my day · phone → computer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Density · computer → phone (Large)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Second time zone · phone → computer (London)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Now card · computer → phone (off)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound pack · computer → phone (Kalimba)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound (volume) · phone → computer (Full)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound (off) · computer → phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound (on) · phone → computer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound · Task done · computer → phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound · Goal done · phone → computer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound · Captured · computer → phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound · Focus begins · phone → computer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound · Focus ends · computer → phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound · Ritual · phone → computer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Sound · Undo · computer → phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Silent after Shut down · phone → computer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Quiet hours (a row column) · computer → phone, no refocus",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "“Not now” · High priority · computer → phone (4 days)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "“Not now” · Medium priority · phone → computer (9 days)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "“Not now” · Low priority · computer → phone (21 days)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "File captures for me (a row column) · phone → computer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Focus round · computer → phone (45m)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Ritual pin · computer → phone (unpinned)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Phone list · Appearance reads Auto · 100%",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Tray (Windows app) · stays on its computer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Server keeps only synced keys (no tray, widgets, Day/Night, layout)",
+      "ok": true,
+      "detail": "kf_theme_mode, kf_ui_scale.computer, kf.calViewOptions, kf_sound_pack, kf_ui_scale.phone, kf_grain, kf_effects, kf_sound_volume, kf_sound_events, kf_sound_quiet, kf.resurfaceCooldown.high, kf.resurfaceCooldown.med, kf.resurfaceCooldown.low, kf_focus_settings, kf.ritualPins"
+    },
+    {
+      "name": "This device · \"On this computer\" (tray, Start with Windows)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "This device · the updater row",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "This device · desk: the notification test row is named so",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "This device · desk: \"This browser\" (push subscription)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "No tag on the synced rows · desk",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "This device · phone: the notification test row is named so",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "This device · phone: \"This browser\" (push subscription)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "No tag on the synced rows · phone",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "No tag on Appearance (all synced)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk · never reloaded",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "desk · no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone · never reloaded",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "phone · no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "win · never reloaded",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "win · no page errors",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}
