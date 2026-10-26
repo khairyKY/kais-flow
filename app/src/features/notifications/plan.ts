@@ -104,7 +104,9 @@ export function localPlan({ tasks, events = [], projects = [], routines = [], co
   }
   for (const [at, group] of groups) {
     const rows = group.map((t) => ({ id: t.id, title: t.title, due_at: t.due_at, project: projects.find((p) => p.id === t.project_id)?.name ?? null }))
-    add(group.map((t) => `${t.id}@${t.reminder_at}`).join(','), new Date(at), (said) => reminderNotice(rows, prefs, said, zone))
+    // All snoozed ones coming back: the pack's "snoozed again" sound (notifications/sounds.ts).
+    const snoozed = group.every((t) => t.reminder_at === t.remind_again_at)
+    add(group.map((t) => `${t.id}@${t.reminder_at}`).join(','), new Date(at), (said) => ({ ...reminderNotice(rows, prefs, said, zone), ...(snoozed ? { again: true } : {}) }))
   }
 
   // Event reminders (0077): every occurrence, at its start minus remind_min — notify's rule. Several at

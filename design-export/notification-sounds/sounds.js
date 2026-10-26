@@ -1,4 +1,4 @@
-// Written by make.mjs — the options page's list. Don't edit by hand.
+// Written by make.mjs — the packs page's list. Don't edit by hand.
 window.NOTIFICATION_SOUNDS = {
   "types": [
     {
@@ -52,12 +52,29 @@ window.NOTIFICATION_SOUNDS = {
       "say": "Changes couldn’t be saved. Distinct, but not an alarm."
     }
   ],
+  "packs": [
+    {
+      "id": "felt",
+      "label": "Felt",
+      "blurb": "muted felt piano, warm and low"
+    },
+    {
+      "id": "glass",
+      "label": "Glass",
+      "blurb": "soft glass bells, airy"
+    },
+    {
+      "id": "mixed",
+      "label": "Mixed",
+      "blurb": "felt and glass together, more chords"
+    }
+  ],
   "sounds": [
     {
-      "id": "task_reminder_a",
+      "id": "felt/task_reminder",
       "type": "task_reminder",
-      "letter": "A",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.08,
       "desc": "Two felt notes rising, E to A — a tap on the shoulder.",
       "seconds": 0.946,
@@ -66,10 +83,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "task_reminder_b",
+      "id": "glass/task_reminder",
       "type": "task_reminder",
-      "letter": "B",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.1,
       "desc": "One glass bell and its own quieter echo.",
       "seconds": 1.006,
@@ -78,10 +95,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "task_reminder_c",
+      "id": "mixed/task_reminder",
       "type": "task_reminder",
-      "letter": "C",
-      "pack": "felt",
+      "pack": "mixed",
+      "voice": "felt",
       "room": 0.08,
       "desc": "Three felt notes climbing C–E–G, a softer cousin of the Top 3 \"done\".",
       "seconds": 0.906,
@@ -90,10 +107,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "event_reminder_a",
+      "id": "glass/event_reminder",
       "type": "event_reminder",
-      "letter": "A",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.12,
       "desc": "Glass, an open fifth up, C to G — something is beginning.",
       "seconds": 1.166,
@@ -102,10 +119,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "event_reminder_b",
+      "id": "felt/event_reminder",
       "type": "event_reminder",
-      "letter": "B",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.1,
       "desc": "Felt, three notes up to the high C — a door opening.",
       "seconds": 1.046,
@@ -114,10 +131,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "event_reminder_c",
+      "id": "mixed/event_reminder",
       "type": "event_reminder",
-      "letter": "C",
-      "pack": "glass",
+      "pack": "mixed",
+      "voice": "glass",
       "room": 0.12,
       "desc": "A two-bell glass chime, high then low.",
       "seconds": 1.126,
@@ -126,10 +143,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "snoozed_again_a",
+      "id": "felt/snoozed_again",
       "type": "snoozed_again",
-      "letter": "A",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.08,
       "desc": "The task reminder’s tap, twice — \"still here\".",
       "seconds": 1.116,
@@ -138,10 +155,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "snoozed_again_b",
+      "id": "glass/snoozed_again",
       "type": "snoozed_again",
-      "letter": "B",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.1,
       "desc": "Two quick glass bells on the same note.",
       "seconds": 0.896,
@@ -150,10 +167,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "snoozed_again_c",
+      "id": "mixed/snoozed_again",
       "type": "snoozed_again",
-      "letter": "C",
-      "pack": "felt",
+      "pack": "mixed",
+      "voice": "felt",
       "room": 0.08,
       "desc": "The reminder’s two notes turned round, falling A to E — a gentle nudge back.",
       "seconds": 0.946,
@@ -162,10 +179,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "focus_end_a",
+      "id": "felt/focus_end",
       "type": "focus_end",
-      "letter": "A",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.14,
       "desc": "The app’s own \"round done\" phrase (E–G–C) in felt, shortened for a notification.",
       "seconds": 1.2,
@@ -174,10 +191,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "focus_end_b",
+      "id": "glass/focus_end",
       "type": "focus_end",
-      "letter": "B",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.14,
       "desc": "The same phrase in glass, brighter.",
       "seconds": 1.2,
@@ -186,10 +203,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "focus_end_c",
+      "id": "mixed/focus_end",
       "type": "focus_end",
-      "letter": "C",
-      "pack": "glass",
+      "pack": "mixed",
+      "voice": "glass",
       "room": 0.16,
       "desc": "One glass chord, E under C, left to ring.",
       "seconds": 1.106,
@@ -198,10 +215,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "break_end_a",
+      "id": "felt/break_end",
       "type": "break_end",
-      "letter": "A",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.1,
       "desc": "Felt, G up to C — back to it.",
       "seconds": 0.826,
@@ -210,10 +227,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "break_end_b",
+      "id": "glass/break_end",
       "type": "break_end",
-      "letter": "B",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.1,
       "desc": "Glass, three small steps up, C–D–E.",
       "seconds": 0.906,
@@ -222,10 +239,22 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "morning_digest_a",
+      "id": "mixed/break_end",
+      "type": "break_end",
+      "pack": "mixed",
+      "voice": "glass",
+      "room": 0.12,
+      "desc": "Glass, G up to the high C — Felt’s \"back to it\", an octave up.",
+      "seconds": 0.976,
+      "lufs": -16,
+      "truePeak": -3.15,
+      "clipped": 0
+    },
+    {
+      "id": "glass/morning_digest",
       "type": "morning_digest",
-      "letter": "A",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.14,
       "desc": "Glass, a slow climb C–D–E–G — sunrise.",
       "seconds": 1.2,
@@ -234,10 +263,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "morning_digest_b",
+      "id": "felt/morning_digest",
       "type": "morning_digest",
-      "letter": "B",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.12,
       "desc": "Felt, a low warm arpeggio C–E–G–C.",
       "seconds": 1.176,
@@ -246,10 +275,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "morning_digest_c",
+      "id": "mixed/morning_digest",
       "type": "morning_digest",
-      "letter": "C",
-      "pack": "glass",
+      "pack": "mixed",
+      "voice": "glass",
       "room": 0.16,
       "desc": "One high glass bell with a low C humming under it.",
       "seconds": 1.116,
@@ -258,10 +287,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "evening_nudge_a",
+      "id": "felt/evening_nudge",
       "type": "evening_nudge",
-      "letter": "A",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.12,
       "desc": "Felt, three notes down G–E–C — winding down.",
       "seconds": 1.176,
@@ -270,10 +299,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "evening_nudge_b",
+      "id": "glass/evening_nudge",
       "type": "evening_nudge",
-      "letter": "B",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.14,
       "desc": "Glass, a soft fall from E to C.",
       "seconds": 1.156,
@@ -282,10 +311,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "evening_nudge_c",
+      "id": "mixed/evening_nudge",
       "type": "evening_nudge",
-      "letter": "C",
-      "pack": "felt",
+      "pack": "mixed",
+      "voice": "felt",
       "room": 0.12,
       "desc": "One low felt chord, C and G together.",
       "seconds": 0.986,
@@ -294,10 +323,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "paper_ready_a",
+      "id": "glass/paper_ready",
       "type": "paper_ready",
-      "letter": "A",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.08,
       "desc": "Two quick high glass notes — a page turned.",
       "seconds": 0.526,
@@ -306,10 +335,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "paper_ready_b",
+      "id": "felt/paper_ready",
       "type": "paper_ready",
-      "letter": "B",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.06,
       "desc": "Two quick felt notes up, D to G.",
       "seconds": 0.586,
@@ -318,10 +347,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "paper_ready_c",
+      "id": "mixed/paper_ready",
       "type": "paper_ready",
-      "letter": "C",
-      "pack": "glass",
+      "pack": "mixed",
+      "voice": "glass",
       "room": 0.1,
       "desc": "A small glass sparkle, G–C–E.",
       "seconds": 0.676,
@@ -330,10 +359,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "terms_a",
+      "id": "felt/terms",
       "type": "terms",
-      "letter": "A",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.08,
       "desc": "One felt note — just so you know.",
       "seconds": 0.606,
@@ -342,10 +371,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "terms_b",
+      "id": "glass/terms",
       "type": "terms",
-      "letter": "B",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.1,
       "desc": "One soft glass bell.",
       "seconds": 0.706,
@@ -354,10 +383,22 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "sync_problem_a",
+      "id": "mixed/terms",
+      "type": "terms",
+      "pack": "mixed",
+      "voice": "felt",
+      "room": 0.1,
+      "desc": "Felt, two soft notes up, C to E — just so you know.",
+      "seconds": 0.796,
+      "lufs": -16,
+      "truePeak": -1.86,
+      "clipped": 0
+    },
+    {
+      "id": "felt/sync_problem",
       "type": "sync_problem",
-      "letter": "A",
       "pack": "felt",
+      "voice": "felt",
       "room": 0.08,
       "desc": "Felt, a low falling fourth, A to E — \"hm, something’s off\".",
       "seconds": 0.866,
@@ -366,10 +407,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "sync_problem_b",
+      "id": "glass/sync_problem",
       "type": "sync_problem",
-      "letter": "B",
       "pack": "glass",
+      "voice": "glass",
       "room": 0.08,
       "desc": "Glass, the same low note twice — knock, knock.",
       "seconds": 0.836,
@@ -378,10 +419,10 @@ window.NOTIFICATION_SOUNDS = {
       "clipped": 0
     },
     {
-      "id": "sync_problem_c",
+      "id": "mixed/sync_problem",
       "type": "sync_problem",
-      "letter": "C",
-      "pack": "felt",
+      "pack": "mixed",
+      "voice": "felt",
       "room": 0.08,
       "desc": "Felt, three notes stepping down A–G–E.",
       "seconds": 0.846,

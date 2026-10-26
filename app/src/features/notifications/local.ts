@@ -5,6 +5,7 @@ import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
 import { writeRow } from '../../lib/outbox'
 import { activityRow } from '../../lib/activity'
+import { playNotice } from './sounds'
 
 /** A notification from the app itself (focus done; the test; on Windows the reminders and rituals it
  * plans, plan.ts), in the same words and with the same buttons as a pushed one. Windows: a toast
@@ -12,25 +13,31 @@ import { activityRow } from '../../lib/activity'
  * PWA: through the service worker, so its buttons work like a push's (sw-push.js) — when
  * notifications are allowed and a worker is registered; otherwise nothing. */
 export async function showLocal(n: Notice): Promise<void> {
+  // The sound (notifications/sounds.ts): Android's channel plays the pack's; elsewhere the app plays it
+  // and the notification goes out silent — unless the app can't play (no gesture in this window yet),
+  // then the system's own sound, as before.
+  if (isCapacitorShell()) return (await import('./android')).showAndroid(n)
   if (isTauri()) {
+    const played = await playNotice(n)
     await native('notify_local', {
       title: n.title,
       body: n.body,
       actions: n.actions.map((a) => [a.action, a.title]),
-      silent: n.silent,
+      silent: n.silent || played,
       payload: JSON.stringify({ kind: n.kind, taskIds: n.taskIds, url: n.url }),
     })
     return
   }
-  if (isCapacitorShell()) return (await import('./android')).showAndroid(n)
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted' || !navigator.serviceWorker) return
   const registration = await navigator.serviceWorker.getRegistration()
-  await registration?.showNotification(n.title, {
+  if (!registration) return
+  const played = await playNotice(n)
+  await registration.showNotification(n.title, {
     body: n.body,
     icon: '/icon-192.png',
     badge: '/badge-96.png',
     tag: n.tag,
-    silent: n.silent,
+    silent: n.silent || played,
     actions: n.actions,
     data: { kind: n.kind, url: n.url, taskIds: n.taskIds },
   } as NotificationOptions)

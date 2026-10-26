@@ -101,6 +101,13 @@ export default defineConfig({
               expiration: { maxEntries: 500 },
             },
           },
+          // The notification sound packs (public/notification-sounds, 2.5 MB — not precached): each WAV
+          // is kept once it has played, so the pack still sounds offline.
+          {
+            urlPattern: /\/notification-sounds\/.*\.wav$/,
+            handler: 'CacheFirst',
+            options: { cacheName: 'notification-sounds', expiration: { maxEntries: 40 } },
+          },
         ],
       },
     }),

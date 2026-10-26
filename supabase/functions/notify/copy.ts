@@ -28,6 +28,9 @@ export interface Notice {
   silent: boolean
   /** The tasks Done / Tomorrow act on; for Review (paper ready), the capture. */
   taskIds: string[]
+  /** A snoozed reminder coming back (0082 remind_again_at): the app's planner marks it so it gets the
+   * pack's "snoozed again" sound (app features/notifications/sounds.ts). */
+  again?: boolean
 }
 
 /** The app_settings columns notify reads (0045 + 0048). Absent/null = the column default. */

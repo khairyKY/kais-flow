@@ -206,7 +206,7 @@ if (want('history')) for (const [view, theme] of [[DESKTOP, 'day'], [PHONE, 'nig
 if (want('settings')) for (const [view, theme, tauri] of [[DESKTOP, 'day', true], [PHONE, 'night', false]]) {
   const tag = view === PHONE ? 'phone-night' : 'desktop-day'
   const { ctx, state, errors, open } = await app({ settings: { paper_ready_on: true, birthday_on: false, sync_problem_on: true } }, { theme, tauri })
-  const page = await open('/settings', view)
+  const page = await open('/settings/notify', view)
   await page.getByRole('button', { name: 'Send a test notification' }).scrollIntoViewIfNeeded()
   const row = (label) => page.locator('div').filter({ has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last()
   const sw = (label) => row(label).locator('[role="switch"]')
@@ -221,7 +221,7 @@ if (want('settings')) for (const [view, theme, tauri] of [[DESKTOP, 'day', true]
     const at = (s) => t.indexOf(s)
     return at('Focus done') < at('Paper capture ready') && at('Paper capture ready') < at('Birthday') && at('Birthday') < at('Sync problem')
   }))
-  await page.getByText('Calm by default.', { exact: false }).evaluate((el) => el.scrollIntoView({ block: 'start' }))
+  await page.getByText('Calm by default', { exact: false }).first().evaluate((el) => el.scrollIntoView({ block: 'start' }))
   await sleep(200)
   await shot(page, `12i-settings-${tag}`)
   await page.getByText('Birthday', { exact: true }).evaluate((el) => el.scrollIntoView({ block: 'center' }))
@@ -243,7 +243,7 @@ if (want('settings')) for (const [view, theme, tauri] of [[DESKTOP, 'day', true]
 if (want('settings')) {
   const { ctx, errors, open } = await app({})
   ctx.route('http://127.0.0.1:9/rest/v1/app_settings**', (r) => r.fulfill({ json: [], headers: { 'content-range': '*/0' } }))
-  const page = await open('/settings', DESKTOP)
+  const page = await open('/settings/notify', DESKTOP)
   await page.getByRole('button', { name: 'Send a test notification' }).scrollIntoViewIfNeeded()
   const sw = (label) => page.locator('div').filter({ has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last().locator('[role="switch"]')
   check('12i no settings row: Birthday off, the other two on', (await sw('Birthday').getAttribute('aria-checked')) === 'false' && (await sw('Paper capture ready').getAttribute('aria-checked')) === 'true' && (await sw('Sync problem').getAttribute('aria-checked')) === 'true')

@@ -340,9 +340,7 @@ if (want('wiring')) {
 for (const [viewName, view] of want('settings') ? [['desktop', desktop], ['phone', phone]] : []) {
   for (const theme of ['day', 'night']) {
     const name = `settings-${viewName}-${theme}`
-    // settings-build moved Sound to /settings/notify and drew the pack as a three-way choice with one ▶ for the
-    // picked pack (settings-sync retarget, 2026-10-26).
-    const { ctx, page, errors } = await open('/settings/notify', { view, theme })
+    const { ctx, page, errors } = await open('/settings/notify', { view, theme }) // settings-build: Sound lives on Notifications & sound
     await stub(page)
     const card = page.locator('#settings-Sound:visible').first()
     // Tall enough that the whole card is on screen (and clear of the phone's tab bar) for its picture.
@@ -351,22 +349,23 @@ for (const [viewName, view] of want('settings') ? [['desktop', desktop], ['phone
     await sleep(400)
     await card.screenshot({ path: path.join(OUT, `${name}.png`) })
     await page.setViewportSize(view.viewport)
-    const packs = card.getByRole('group', { name: 'Sound pack' }).getByRole('button')
-    const pack = (label) => card.getByRole('group', { name: 'Sound pack' }).getByRole('button', { name: label })
-    check(`${name} three packs, Felt chosen`, (await packs.count()) === 3 && (await pack('Felt').getAttribute('aria-pressed')) === 'true')
-    check(`${name} a ▶ for the picked pack and one per event, seven event rows`, (await card.getByRole('button', { name: /^Hear / }).count()) === 1 && (await card.locator('[data-sound-event]').count()) === 7 && (await card.getByRole('button', { name: /^Preview / }).count()) === 7)
+    // settings-build: the pack is a three-way choice with one ▶ for the picked pack.
+    const seg = card.getByRole('group', { name: 'Sound pack' })
+    const felt = seg.getByRole('button', { name: 'Felt', exact: true })
+    check(`${name} three packs, Felt chosen`, (await seg.getByRole('button').count()) === 3 && (await felt.getAttribute('aria-pressed')) === 'true')
+    check(`${name} a ▶ for the pack and per event, seven event rows`, (await card.getByRole('button', { name: /^Hear / }).count()) === 1 && (await card.locator('[data-sound-event]').count()) === 7 && (await card.getByRole('button', { name: /^Preview / }).count()) === 7)
     const b = await card.boundingBox()
     const overflow = await page.evaluate(() => document.scrollingElement.scrollWidth - innerWidth)
     check(`${name} fits the width (no sideways scroll)`, b.x >= 0 && b.x + b.width <= view.viewport.width && overflow <= 0, `card ${Math.round(b.x)}–${Math.round(b.x + b.width)} · overflow ${overflow}`)
     if (viewName === 'desktop' && theme === 'day') {
-      await pack('Felt').click()
+      await felt.click()
       await sleep(200)
       const rec = await page.evaluate(() => window.__sounds.at(-1))
-      check(`${name} choosing Felt saves it and plays its phrase`, (await pack('Felt').getAttribute('aria-pressed')) === 'true' && (await page.evaluate(() => localStorage.getItem('kf_sound_pack'))) === 'felt' && rec?.event === 'complete_big' && rec?.pack === 'felt', JSON.stringify(rec))
+      check(`${name} choosing Felt saves it and plays its phrase`, (await felt.getAttribute('aria-pressed')) === 'true' && (await page.evaluate(() => localStorage.getItem('kf_sound_pack'))) === 'felt' && rec?.event === 'complete_big' && rec?.pack === 'felt', JSON.stringify(rec))
       await card.getByRole('button', { name: 'Hear Felt' }).click()
       await sleep(200)
-      const heard = await page.evaluate(() => window.__sounds.at(-1))
-      check(`${name} ▶ Felt auditions the picked pack`, heard?.pack === 'felt' && heard?.event === 'complete_big', JSON.stringify(heard))
+      const heardPack = await page.evaluate(() => window.__sounds.at(-1))
+      check(`${name} ▶ on the pack row plays the picked pack's phrase`, heardPack?.pack === 'felt' && heardPack?.event === 'complete_big', JSON.stringify(heardPack))
       await card.getByRole('switch', { name: 'Undo' }).click()
       await sleep(200)
       check(`${name} turning Undo on saves it and lets you hear it`, JSON.parse(await page.evaluate(() => localStorage.getItem('kf_sound_events'))).undo === true && (await page.evaluate(() => window.__sounds.at(-1).event)) === 'undo')
@@ -376,7 +375,7 @@ for (const [viewName, view] of want('settings') ? [['desktop', desktop], ['phone
       await page.reload({ waitUntil: 'networkidle' })
       await sleep(800)
       const after = page.locator('#settings-Sound:visible').first()
-      check(`${name} after a reload: Felt still chosen, Undo still on`, (await after.getByRole('group', { name: 'Sound pack' }).getByRole('button', { name: 'Felt' }).getAttribute('aria-pressed')) === 'true' && (await after.getByRole('switch', { name: 'Undo' }).getAttribute('aria-checked')) === 'true')
+      check(`${name} after a reload: Felt still chosen, Undo still on`, (await after.getByRole('group', { name: 'Sound pack' }).getByRole('button', { name: 'Felt', exact: true }).getAttribute('aria-pressed')) === 'true' && (await after.getByRole('switch', { name: 'Undo' }).getAttribute('aria-checked')) === 'true')
     }
     check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()

@@ -71,6 +71,33 @@ describe('sw-push.js', () => {
     expect(open.focus).not.toHaveBeenCalled()
   })
 
+  // Sound packs (2026-10-26): a window on screen plays the pack's sound and the push goes out silent;
+  // a window that can't play (or none on screen) leaves the system's sound.
+  it('a window on screen plays the pack’s sound: the notification is silent', async () => {
+    const answers = (played: boolean) => ({ ...win('visible'), postMessage: vi.fn((_m: unknown, [port]: MessagePort[]) => port.postMessage(played)) })
+    const yes = answers(true)
+    const a = worker([yes])
+    await a.fire('push', { data: { json: () => ({ ...reminder, again: true }) } })
+    expect(yes.postMessage.mock.calls[0][0]).toEqual({ type: 'kf-notification-sound', kind: 'task_reminder', again: true })
+    expect(a.self.registration.showNotification).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ silent: true, renotify: false }))
+    const no = answers(false)
+    const b = worker([no])
+    await b.fire('push', { data: { json: () => reminder } })
+    expect(b.self.registration.showNotification).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ silent: false, renotify: true }))
+  })
+
+  it('no window on screen, or a silent notice: nothing asked, the system decides', async () => {
+    const hidden = win('hidden')
+    const a = worker([hidden])
+    await a.fire('push', { data: { json: () => reminder } })
+    expect(hidden.postMessage).not.toHaveBeenCalled()
+    expect(a.self.registration.showNotification).toHaveBeenCalledWith(expect.any(String), expect.objectContaining({ silent: false }))
+    const shown = win('visible')
+    const b = worker([shown])
+    await b.fire('push', { data: { json: () => ({ ...reminder, silent: true }) } })
+    expect(shown.postMessage).not.toHaveBeenCalled()
+  })
+
   it('a silent notice (digest, quiet hours) never renotifies', async () => {
     const { self, fire } = worker([])
     await fire('push', { data: { json: () => ({ ...reminder, silent: true }) } })

@@ -250,10 +250,21 @@ if (want('windows')) {
   const { ctx, page, errors, state } = await open('/today', { tauri: true, at: '10:44:40', events: PLAN_EVENTS, settings: { lock_screen_names: true, quiet_hours_on: false } })
   check('w1 the calendar rows are read on Today (whatever page is open)', state.reads.includes('calendar_events'), JSON.stringify([...new Set(state.reads)]))
   check('w1 nothing before 10:45', (await toasts(page)).length === 0, JSON.stringify(await toasts(page)))
+  // Record what the app plays (notif-sounds: the pack's WAV, the toast silent then).
+  await page.evaluate(() => {
+    const play = HTMLMediaElement.prototype.play
+    window.__played = []
+    HTMLMediaElement.prototype.play = function () {
+      window.__played.push(new URL(this.src).pathname)
+      return play.call(this)
+    }
+  })
   await page.clock.runFor(31_000)
   await sleep(600)
   const gym = (await toasts(page)).filter((t) => /Gym|events/.test(t?.title ?? ''))
-  check('w1 10:45 → "Gym · in 15 min" / "11:00–12:00" · Open, with sound — alone (the Google event at 11:00 stays quiet)', gym.length === 1 && gym[0].title === 'Gym · in 15 min' && gym[0].body === '11:00–12:00' && JSON.stringify(gym[0].actions) === JSON.stringify([['open', 'Open']]) && gym[0].silent === false, JSON.stringify(gym))
+  // With sound: the toast's own, or (notif-sounds) the app plays the pack's event sound and the toast is silent.
+  const packSound = await page.evaluate(() => window.__played.includes('/notification-sounds/felt/event_reminder.wav'))
+  check('w1 10:45 → "Gym · in 15 min" / "11:00–12:00" · Open, with sound — alone (the Google event at 11:00 stays quiet)', gym.length === 1 && gym[0].title === 'Gym · in 15 min' && gym[0].body === '11:00–12:00' && JSON.stringify(gym[0].actions) === JSON.stringify([['open', 'Open']]) && (gym[0].silent === false || packSound), JSON.stringify(gym) + ` packSound=${packSound}`)
   await page.clock.runFor(15 * 60_000)
   await sleep(600)
   const all = await toasts(page)
@@ -274,7 +285,7 @@ if (want('windows')) {
 
 // ── S1: Settings → Notifications → Kinds: Event reminder, on by default, its own switch ──
 if (want('settings')) {
-  const { ctx, page, errors, state } = await open('/settings')
+  const { ctx, page, errors, state } = await open('/settings/notify')
   await page.getByRole('button', { name: 'Send a test notification' }).scrollIntoViewIfNeeded()
   const sw = page.locator('div').filter({ has: page.getByText('Event reminder', { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last().locator('[role="switch"]')
   check('s1 an "Event reminder" switch, on (no column in the row yet = its default)', (await sw.count()) === 1 && (await sw.getAttribute('aria-checked')) === 'true')
