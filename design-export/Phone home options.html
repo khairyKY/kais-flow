@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Phone home options</title>
+<!-- Kai's Flow · the PHONE home: the app's first screen (Today on the phone) and the Android home-screen widgets,
+     designed together (26 Oct 2026; Kai: "redesign the homescreen … too spacious", clarified: the phone). Plain HTML,
+     open it straight from disk. Tokens: ds-bound/styles.css + the app's colours file (palette C's --blk-*); no colour
+     value is changed or added (the home-screen wallpapers are pictures, not app colours). Looks only: nothing here is in
+     the app. The desktop take is "Today options.html" (kept for reference). Audit + notes:
+     docs/log/2026-10-26-1720-today-looks-handoff.md. -->
+<link rel="stylesheet" href="ds-bound/styles.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.css">
+<link rel="stylesheet" href="../app/src/styles/tokens/colors.dark.css">
+<style>
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1480px;margin:0 auto;padding:40px 32px 120px}
+@media (max-width:767px){.wrap{padding:24px 16px 80px}}
+h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px;line-height:1.1;letter-spacing:-0.015em}
+.meta{font-size:13px;color:var(--ink-faint)}
+.lede{margin:12px 0 0;max-width:800px;color:var(--ink-muted)}
+.bar{position:sticky;top:0;z-index:20;display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:20px;padding:12px 0;background:var(--paper-linen);border-bottom:1px solid var(--line-card)}
+.bar b{font-weight:600}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:38px;padding:0 16px;border-radius:var(--radius-pill);font:600 14px/1 var(--font-ui);border:1px solid var(--line-control);background:var(--paper-bone);color:var(--ink-body);cursor:pointer}
+.btn:focus-visible{outline:none;box-shadow:var(--focus-ring)}
+.btn[aria-pressed="true"]{background:var(--sel-bg);border-color:var(--sel-bg);color:var(--sel-ink)}
+.btn-p{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.seg{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line-control);border-radius:var(--radius-pill)}
+.seg .btn{height:30px;border:none;background:none;padding:0 13px}
+.seg .btn[aria-pressed="true"]{background:var(--sel-bg);color:var(--sel-ink)}
+.look{margin-top:56px;padding-top:24px;border-top:1px solid var(--line-card)}
+.look h2{margin:0;font-family:var(--font-display);font-size:30px;font-weight:600;line-height:1.2}
+.look h2 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:38px;margin-right:12px;padding:0 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 17px/1 var(--font-ui);vertical-align:4px}
+.look.picked h2::after{content:'Your pick';margin-left:12px;padding:3px 10px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 12px/1.4 var(--font-ui);vertical-align:6px}
+.look h3.sub{margin:30px 0 0;font-family:var(--font-display);font-size:22px;font-weight:600}
+.look .say{margin:8px 0 0;max-width:840px;font-size:15.5px;color:var(--ink-body)}
+.look .say p{margin:2px 0}
+.dens{display:inline-block;margin-top:10px;padding:6px 12px;border-radius:12px;background:var(--paper-bone);border:1px solid var(--line-card);font-size:13.5px;color:var(--ink-muted)}
+.dens b{color:var(--ink-body);font-weight:600}
+.shots{display:flex;flex-wrap:wrap;gap:26px;align-items:flex-start;margin-top:18px}
+figure{margin:0;flex:none}
+figcaption{margin-top:8px;max-width:440px;font-size:13px;color:var(--ink-muted)}
+.pick-row{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}
+.notes{margin-top:40px;max-width:940px}
+.notes h2{margin:0 0 6px;font-family:var(--font-display);font-size:24px;font-weight:600}
+.notes ul{margin:6px 0 0;padding-left:20px;color:var(--ink-muted)}
+.notes li{margin:4px 0}
+.notes b{color:var(--ink-body);font-weight:600}
+.now-shot{display:block;border:1px solid var(--line-card);border-radius:18px}
+[data-theme="night"] .only-day,:root:not([data-theme="night"]) .only-night{display:none}
+
+/* ════════ the app frame (drawn at the app's 100%; the 150% pictures zoom the same page as the app does) ════════ */
+.frame{position:relative;overflow:hidden;border:1px solid var(--line-card);border-radius:14px;background:var(--paper-linen);color:var(--ink-body);font-family:var(--font-ui);line-height:1.35;font-size:14px}
+[data-theme="night"] .frame{border-color:var(--line-solid)}
+.desk{width:1280px;height:800px}
+.z{display:flex;width:calc(1280px / var(--zm));height:calc(800px / var(--zm));zoom:var(--zm)}
+.phone{width:390px;height:844px;border-radius:30px;display:flex;flex-direction:column}
+.main{flex:1;min-width:0;position:relative;overflow:hidden;container-type:inline-size}
+.ic{flex:none;display:block}
+.nowrap{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+
+/* sidebar — line icons, the name menu at the top, Capture / Search / Chat at the foot (as the app is today) */
+.sb{width:240px;flex:none;display:flex;flex-direction:column;background:var(--bg-sidebar);border-right:1px solid var(--line-sidebar);overflow:hidden}
+.sb-top{padding:24px 14px 0}
+.sb-name{display:flex;align-items:center;gap:10px;padding-left:6px;font:600 23px/1 var(--font-display)}
+.sb-logo{width:26px;height:26px;border-radius:7px;display:inline-flex;align-items:center;justify-content:center;background:var(--paper-parchment);border:1px solid var(--line-card);font:500 15px/1 var(--font-display)}
+.sb-name small{font:14px var(--font-ui);color:var(--ink-muted)}
+.sb-ws{margin:6px 0 0 46px;font-size:12px;color:var(--ink-muted)}
+.sb-plan{display:flex;align-items:center;gap:8px;height:34px;margin-top:16px;padding:0 12px;border:1px solid var(--line-control);border-radius:12px;font-size:12.5px;color:var(--ink-muted)}
+.sb-plan .p{margin-left:auto;font-size:16px}
+.sb-l{display:flex;justify-content:space-between;padding:7px 12px 7px 38px;font-size:12.5px;color:var(--ink-muted)}
+.sb-nav{flex:1;min-height:0;overflow:hidden;border-top:1px solid var(--line-sidebar);margin-top:8px}
+.sb-sec{padding:16px 26px 6px;font-size:12px;color:var(--ink-faint)}
+.sb-i{display:flex;align-items:center;gap:12px;height:40px;margin:0 14px;padding:0 12px;border-radius:12px;font-size:14px;color:var(--ink-body)}
+.sb-i .ic{color:var(--ink-muted)}
+.sb-i.on{background:var(--paper-parchment);border:1px solid var(--line-card);font-weight:600}
+.sb-foot{flex:none;display:flex;align-items:center;gap:6px;padding:10px 14px 12px;border-top:1px solid var(--line-sidebar)}
+.sb-cap{display:flex;align-items:center;gap:8px;height:36px;padding:0 10px;border-radius:12px;background:var(--paper-parchment);font:600 14px var(--font-ui)}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:17px;height:17px;padding:0 3px;border-radius:4px;border:1px solid var(--line-control);font:500 10.5px/1 var(--font-ui);color:var(--ink-muted)}
+.sb-foot .ib{display:inline-flex;width:34px;height:34px;align-items:center;justify-content:center;color:var(--ink-muted)}
+
+/* phone tab bar (as the app is today) */
+.tabs{flex:none;height:66px;display:flex;align-items:flex-start;justify-content:space-around;padding-top:8px;border-top:1px solid var(--line-card);background:var(--paper-bone);font-size:11px;color:var(--ink-muted)}
+.tabs span{display:flex;flex-direction:column;align-items:center;gap:3px;width:60px}
+.tabs .on{color:var(--ink-body);font-weight:600}
+.tabs .on i{display:flex;padding:3px 13px;border-radius:999px;background:var(--paper-parchment)}
+.tabs .fab{width:48px;height:48px;margin-top:-4px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:flex;align-items:center;justify-content:center}
+
+/* shared bits */
+.ck{flex:none;display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;border:1.5px solid var(--check-border);background:var(--check-bg);font-size:11px;line-height:1;color:var(--check-mark)}
+.done .ck,.ck.on{background:var(--check-fill);border-color:transparent}
+.done .tt{text-decoration:line-through;text-decoration-color:var(--ink-hairline);color:var(--ink-faint)}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.mt{display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--ink-muted);white-space:nowrap}
+.terra{color:var(--acc-terra-ink)}
+.dots{flex:none;display:inline-flex;color:var(--ink-faint)}
+.step{flex:none;width:28px;height:28px;border-radius:50%;border:1px solid var(--line-control);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted);background:var(--paper-bone)}
+.step.l svg{transform:scaleX(-1)}
+.sum{font-size:13px;color:var(--ink-muted)}
+.sum b{font-weight:500;color:var(--ink-body)}
+.pill{display:flex;align-items:center;gap:8px;height:38px;padding:0 4px 0 14px;border:1px solid var(--line-control);border-radius:999px;background:var(--paper-parchment);font-size:14px;color:var(--ink-faint)}
+.pill .grow{flex:1}
+.pill .mic{width:30px;height:30px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:inline-flex;align-items:center;justify-content:center}
+.ibtn{flex:none;width:38px;height:38px;border-radius:50%;border:1px solid var(--line-control);background:var(--paper-parchment);display:inline-flex;align-items:center;justify-content:center;color:var(--ink-muted)}
+.tape{position:absolute;height:14px;background:color-mix(in srgb,var(--acc-gold-warm) 42%,transparent);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,0.32) 0 4px,transparent 4px 8px);transform:rotate(-1.5deg);border-radius:1px;box-shadow:var(--shadow-crisp)}
+.gtag{font:10.5px/1.2 var(--font-stamp);letter-spacing:var(--ls-stamp);text-transform:uppercase;color:var(--acc-gold);white-space:nowrap}
+.clover{flex:none;filter:var(--shadow-drop-sm)}
+.chev{flex:none;display:inline-flex;color:var(--ink-faint);transition:none}
+.chev.dn svg{transform:rotate(90deg)}
+
+/* the calendar's block, as the app draws it ("Now", palette C, check B, goal A) */
+.cal{position:relative}
+.cal .hl{position:absolute;right:0;border-top:1px solid var(--line-card)}
+.cal .hl b{position:absolute;right:100%;top:-8px;padding-right:8px;font-weight:400;font-size:11.5px;color:var(--ink-faint);white-space:nowrap;font-variant-numeric:tabular-nums}
+.cal .hl.half{border-top:1px dashed var(--line-dashed)}
+[data-theme="night"] .cal .hl{border-top-color:var(--line-solid)}
+.cal .wash{position:absolute;top:0;bottom:0;right:0;background:color-mix(in srgb,var(--acc-lavender) 10%,transparent)}
+.cb{position:absolute;overflow:hidden;border-radius:var(--radius-block);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));padding:5px 9px;line-height:1.25;z-index:2}
+.cb .r1{display:flex;align-items:flex-start;gap:6px;min-width:0}
+.cb .tt{flex:1;min-width:0;font-size:12.5px;color:var(--ink-body);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.cb .tm{margin-top:2px;font:10px/1.2 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ct);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cb .k{flex:none;width:13px;height:13px;margin-top:1px;border:2px solid var(--ct);border-radius:38%}
+.cb.past{opacity:.62}
+.cb.goal{border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold)}
+.cb.goal .tt::before{content:'✶ ';color:var(--acc-gold)}
+.cb.one{padding:2px 8px}
+.cb.one .tt{-webkit-line-clamp:1}
+.cb.one .tm{display:none}
+.nowl{position:absolute;height:0;border-top:2px solid var(--acc-lavender);z-index:4}
+.nowl::before{content:'';position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--acc-lavender)}
+.nowl b{position:absolute;right:4px;top:-17px;padding:0 5px;border-radius:6px;background:var(--paper-parchment);font:500 10px/14px var(--font-mono);color:var(--acc-lavender-text)}
+
+/* the calendar's Now card, option A (the one docked at the bottom of the calendar's rail) */
+.nca{font-family:var(--font-ui);color:var(--ink-body);position:relative}
+.nca .m{position:relative;z-index:1;padding:10px 12px 9px;background:var(--paper-parchment);border:1px solid var(--line-card);border-radius:14px;box-shadow:var(--shadow-panel)}
+[data-theme="night"] .nca .m{background:var(--paper-bone);border-color:var(--line-solid)}
+.nca .h{display:flex;align-items:center;gap:7px;font-size:13px;font-weight:600;line-height:1.3}
+.nca .cd{flex:none;margin-left:auto;font:12px/1 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink-muted);white-space:nowrap}
+.nca .tl{display:flex;align-items:center;gap:8px;margin-top:7px;font-size:15px;font-weight:500;line-height:1.3;min-width:0}
+.nca .rg{flex:none;width:14px;height:14px;border-radius:50%;border:2px solid var(--c)}
+.nca .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nca .br{height:4px;margin-top:9px;border-radius:2px;background:color-mix(in srgb,var(--ink-body) 9%,transparent);overflow:hidden}
+.nca .br i{display:block;height:100%;border-radius:2px;background:color-mix(in srgb,var(--c) 55%,var(--ct))}
+.nca .tms{display:flex;justify-content:space-between;margin-top:5px;font:11px/1.2 var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink-faint)}
+.nca .nx{position:relative;display:flex;align-items:center;gap:8px;margin:-10px 8px 0;padding:16px 11px 8px;background:var(--paper-bone);border:1px solid var(--line-card);border-top:0;border-radius:0 0 12px 12px;font-size:13.5px}
+[data-theme="night"] .nca .nx{background:var(--paper-parchment);border-color:var(--line-solid)}
+.nca .nx .k{flex:none;width:34px;font:12px var(--font-mono);color:var(--ink-faint)}
+
+/* the day ribbon (today's ritual card timeline, kept in C) */
+.rib{position:relative;height:30px}
+.rib .rail{position:absolute;left:0;right:0;top:9px;height:6px;border-radius:3px;background:color-mix(in srgb,var(--ink-body) 9%,transparent)}
+.rib .rb{position:absolute;top:5px;height:14px;border-radius:4px;background:color-mix(in srgb,var(--c) 75%,var(--paper-parchment))}
+.rib .rb.past{opacity:.55}
+.rib .rb.goal{box-shadow:inset 0 -2px 0 var(--acc-gold)}
+.rib .nw{position:absolute;top:1px;width:2px;height:22px;background:var(--acc-terra)}
+.rib .ax{position:absolute;left:0;right:0;top:23px;display:flex;justify-content:space-between;font:10px var(--font-mono);color:var(--ink-faint)}
+
+
+/* ════════ the phone app (shared) ════════ */
+.phone{border-radius:30px}
+.ph-top{flex:none;display:flex;align-items:center;gap:8px;height:50px;padding:6px 16px 0}
+.ph-top h3{margin:0;font:500 24px/1 var(--font-display);white-space:nowrap}
+.ph-top .r{margin-left:auto;display:flex;gap:16px;color:var(--ink-muted)}
+.ph-top .step{width:28px;height:28px}
+.daystrip{flex:none;display:flex;align-items:center;justify-content:space-between;height:32px;padding:0 16px;font-size:13.5px;color:var(--ink-muted)}
+.daystrip span{display:inline-flex;align-items:center;gap:4px}
+.daystrip .l svg{transform:scaleX(-1)}
+.scr{flex:1;min-height:0;overflow:hidden;padding:0 16px}
+.ph .trow{display:flex;align-items:center;gap:11px;height:44px;font-size:15px;border-bottom:1px solid var(--line-card)}
+.ph .trow .tt{flex:1}
+.ph .trow .n{flex:none;width:10px;font:11.5px var(--font-mono);color:var(--ink-faint)}
+.ph .trow.subrow{height:38px;padding-left:30px;font-size:14px}
+.ph .trow.subrow .ck{width:16px;height:16px}
+.ph .pnm{display:none}
+.ph .mt{gap:8px}
+.slP{display:flex;align-items:center;gap:6px;height:36px;margin-top:6px;font-size:13.5px;font-weight:600}
+.slP .c{font-weight:500;color:var(--ink-faint)}
+.slP .act{margin-left:auto;font-weight:500;font-size:13px;color:var(--ink-muted)}
+.slP.fold{color:var(--ink-muted)}
+.chipsP{display:flex;gap:6px;margin:8px -16px 0;padding:0 16px;overflow:hidden;white-space:nowrap}
+.chip{flex:none;display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--line-card);background:var(--paper-bone);font-size:13px;color:var(--ink-body)}
+.chip .go{font-weight:600;color:var(--acc-terra-ink)}
+.chip .q{color:var(--ink-faint)}
+.chip .ck{width:14px;height:14px;border-radius:4px;font-size:9px}
+.chip.dn{color:var(--ink-faint)}
+.chip.dn .tx{text-decoration:line-through;text-decoration-color:var(--ink-hairline)}
+.sun{color:var(--acc-gold)}
+.moon{color:var(--acc-lavender-text)}
+/* the slim paper goal (tape, clover, gold stamp — smaller than today's card) */
+.gs{position:relative;display:flex;align-items:flex-start;gap:11px;padding:11px 10px 10px 12px;margin-top:12px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:12px;box-shadow:var(--shadow-goal);transform:rotate(-.4deg)}
+.gs .tape{top:-7px;left:50%;width:50px;height:12px;margin-left:-25px}
+.gs .ck{margin-top:2px;border-color:var(--acc-gold);background:transparent}
+.gs .body{flex:1;min-width:0}
+.gs .tt{font:600 16px/1.25 var(--font-display);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.gs .gtag{display:block;margin-top:4px}
+.gs .clover{width:22px}
+/* a block row in the calendar's "Now" look (palette C), for Next / Then lines */
+.bk{display:flex;align-items:center;gap:8px;min-height:38px;padding:0 10px;border-radius:var(--radius-block);border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));font-size:14px}
+.bk .tm{flex:none;font:11px var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ct)}
+.bk .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bk .k{flex:none;width:13px;height:13px;border:2px solid var(--ct);border-radius:38%}
+.bk.goal{border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold)}
+.bk.goal .t::before{content:'✶ ';color:var(--acc-gold)}
+.bk.past{opacity:.62}
+.pn{border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);overflow:hidden}
+[data-theme="night"] .pn{border-color:var(--line-solid)}
+.pn>*+*{border-top:1px solid var(--line-card)}
+.pn .trow{border-bottom:0;padding:0 12px}
+.ptP{display:flex;align-items:baseline;gap:6px;margin:14px 4px 6px;font-size:13px;font-weight:600}
+.ptP .c{font-weight:500;color:var(--ink-faint)}
+.ptP .act{margin-left:auto;font-weight:500;font-size:12.5px;color:var(--ink-muted)}
+.prow{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;font-size:14.5px}
+.prow .sub{font-size:12px;color:var(--ink-muted)}
+.prow .x{margin-left:auto;display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-muted)}
+.prow .bt{display:inline-flex;align-items:center;height:30px;padding:0 13px;border-radius:999px;background:var(--paper-bone);border:1px solid var(--line-control);font-size:13px;font-weight:600;color:var(--ink-body)}
+
+/* ── A · List first ── */
+.pA .sum{padding:0 16px;margin-top:-2px}
+.pA .bk{margin-top:10px}
+/* ── B · Now + next ── */
+.nn{margin-top:6px;padding:12px 12px 10px;border:1px solid var(--line-card);border-radius:var(--radius-card);background:var(--paper-parchment);box-shadow:var(--shadow-panel)}
+[data-theme="night"] .nn{background:var(--paper-bone);border-color:var(--line-solid)}
+.nn .nca .m{box-shadow:none;border:none;padding:0;background:none}
+.nn .then{display:flex;flex-direction:column;gap:5px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--line-dashed)}
+.nn .then .bk{min-height:34px;font-size:13.5px}
+.nn .lbl{font:11px var(--font-mono);color:var(--ink-faint);margin-bottom:1px}
+.pB .gs{margin-top:16px}
+/* ── C · Day strip ── */
+.strip{position:relative;margin:4px -16px 0;height:92px;overflow:hidden;border-top:1px solid var(--line-card);border-bottom:1px solid var(--line-card);background:var(--paper-parchment)}
+[data-theme="night"] .strip{border-color:var(--line-solid)}
+.strip .hh{position:absolute;top:0;bottom:0;border-left:1px solid var(--line-card)}
+.strip .hh b{position:absolute;top:5px;left:5px;font:500 10.5px var(--font-mono);color:var(--ink-faint);white-space:nowrap}
+.strip .sb2{position:absolute;top:24px;height:58px;overflow:hidden;padding:5px 8px;border-radius:10px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));font-size:12.5px;line-height:1.25}
+.strip .sb2 .tm{margin-top:2px;font:10px var(--font-mono);color:var(--ct);white-space:nowrap}
+.strip .sb2 .tt{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.strip .sb2.past{opacity:.62}
+.strip .sb2.goal{border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold)}
+.strip .sb2.goal .tt::before{content:'✶ ';color:var(--acc-gold)}
+.strip .nv{position:absolute;top:18px;bottom:0;width:0;border-left:2px solid var(--acc-lavender);z-index:3}
+.strip .nv::before{content:'';position:absolute;left:-6px;top:-5px;width:10px;height:10px;border-radius:50%;background:var(--acc-lavender)}
+.strip .fade{position:absolute;top:0;bottom:0;right:0;width:36px;background:linear-gradient(90deg,transparent,var(--paper-parchment));z-index:4}
+.pC .agenda .trow .tg{flex:none;width:52px;font:11.5px var(--font-mono);font-variant-numeric:tabular-nums;color:var(--ink-faint)}
+.pC .agenda .trow .tg.on{color:var(--acc-lavender-text)}
+
+/* ════════ the Android home screen ════════ */
+.hs{position:relative;width:390px;height:844px;border-radius:34px;overflow:hidden;border:1px solid var(--line-card);font-family:'Roboto','Google Sans',var(--font-ui);--cw:89.5px;--rh:96px}
+.hs.day{background:linear-gradient(180deg,#9ec3dd 0%,#c9dbe2 34%,#e9dcc4 58%,#b9a37a 78%,#7d6b4c 100%)}
+.hs.dark{background:linear-gradient(180deg,#0f1424 0%,#1d2438 38%,#3a3346 62%,#231d2c 82%,#141019 100%)}
+.hs .hills{position:absolute;left:-40px;right:-40px;bottom:120px;height:260px;border-radius:50% 50% 0 0;background:radial-gradient(ellipse at 30% 0%,rgba(255,255,255,.18),transparent 60%);pointer-events:none}
+.hs .stat{display:flex;justify-content:space-between;align-items:center;height:34px;padding:0 22px;font:500 13.5px 'Roboto',var(--font-ui);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.25)}
+.hs.day .stat,.hs.day .glance,.hs.day .app span{color:#1d232b;text-shadow:0 1px 2px rgba(255,255,255,.35)}
+.hs .glance{padding:4px 22px 0;height:58px;color:#fff;font:400 20px/1.2 'Google Sans','Roboto',var(--font-ui);text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.hs .glance small{display:block;font-size:13px;opacity:.9}
+.hs .grid{position:absolute;left:16px;right:16px;top:96px}
+.hs .cell{position:absolute;padding:5px}
+.hs .app{display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:12px}
+.hs .app i{display:flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:50%;font:600 20px/1 'Roboto',var(--font-ui);color:#fff;font-style:normal}
+.hs .app span{font-size:11.5px;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4)}
+.hs .dock{position:absolute;left:16px;right:16px;bottom:20px}
+.hs .dock .apps{display:flex;justify-content:space-around}
+.hs .dock .apps i{display:flex;align-items:center;justify-content:center;width:54px;height:54px;border-radius:50%;font:600 19px/1 'Roboto',var(--font-ui);color:#fff;font-style:normal}
+.hs .gsearch{display:flex;align-items:center;gap:10px;height:50px;margin-top:14px;padding:0 18px;border-radius:999px;background:rgba(255,255,255,.88);color:#444;font-size:15px}
+.hs.dark .gsearch{background:rgba(40,40,52,.9);color:#ccc}
+
+/* a widget: the app's paper, opaque (readable on any wallpaper), Android 12's system corner radius */
+.wg{position:absolute;inset:5px;overflow:hidden;border-radius:24px;background:var(--paper-parchment);border:1px solid var(--line-card);color:var(--ink-body);font-family:var(--font-ui);line-height:1.3;padding:12px 13px;display:flex;flex-direction:column;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+[data-theme="night"] .wg{border-color:var(--line-solid)}
+.wg .wh{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink-body)}
+.wg .wh .q{font-weight:500;color:var(--ink-faint)}
+.wg .wh .r{margin-left:auto;display:flex;gap:6px;align-items:center}
+.wg .add{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra)}
+.wg .wr{display:flex;align-items:center;gap:9px;min-height:30px;font-size:13.5px;border-bottom:1px solid var(--line-card)}
+.wg .wr:last-child{border-bottom:0}
+.wg .wr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wg .wr .m{flex:none;font-size:11.5px;color:var(--ink-muted)}
+.wg .wr .ck{width:17px;height:17px}
+.wg .wr.done .t{text-decoration:line-through;color:var(--ink-faint)}
+.wg .gw{position:relative;display:flex;align-items:flex-start;gap:8px;padding:8px 9px;margin-top:8px;border-radius:12px;background:var(--paper-goal);border:1px solid var(--line-goal)}
+.wg .gw .tape{top:-6px;left:50%;width:40px;height:10px;margin-left:-20px}
+.wg .gw .ck{margin-top:1px;width:17px;height:17px;border-color:var(--acc-gold);background:transparent}
+.wg .gw .t{flex:1;min-width:0;font:600 14px/1.25 serif;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wg .gw .gtag{display:block;margin-top:3px;font-size:9.5px;overflow:hidden;text-overflow:ellipsis}
+.wg .gw img{width:18px;flex:none}
+.wg .bk{min-height:30px;font-size:12.5px;padding:0 8px}
+.wg .bar2{height:4px;border-radius:2px;background:color-mix(in srgb,var(--ink-body) 9%,transparent);overflow:hidden;margin-top:8px}
+.wg .bar2 i{display:block;height:100%;width:0;background:var(--blk-rose)}
+.wg .tms{display:flex;justify-content:space-between;margin-top:4px;font:10.5px var(--font-mono);color:var(--ink-faint)}
+.wg .big{font-size:16px;font-weight:500;line-height:1.25}
+.wg .rg{flex:none;width:13px;height:13px;border-radius:50%;border:2px solid var(--blk-rose)}
+.wg .capbar{display:flex;align-items:center;gap:8px;height:36px;margin-top:auto;padding:0 4px 0 12px;border-radius:999px;border:1px solid var(--line-control);background:var(--paper-bone);font-size:13px;color:var(--ink-faint)}
+.wg .capbar .grow{flex:1}
+.wg .capbar .mic{width:28px;height:28px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:inline-flex;align-items:center;justify-content:center}
+.wg .fold{display:flex;align-items:center;gap:6px;min-height:28px;font-size:12.5px;color:var(--ink-muted)}
+.wg .cal .hl b{font-size:10px}
+.wg .cal .cb{padding:3px 7px}
+.wg .cal .cb .tt{font-size:11.5px}
+.wg .wstrip{position:relative;height:46px;margin-top:8px;border-radius:10px;background:var(--paper-bone);overflow:hidden}
+.wg .wstrip .rb{position:absolute;top:8px;height:22px;border-radius:6px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment))}
+.wg .wstrip .rb.past{opacity:.6}
+.wg .wstrip .rb.goal{border-color:var(--line-goal);box-shadow:inset 3px 0 0 var(--acc-gold)}
+.wg .wstrip .nw{position:absolute;top:4px;height:30px;border-left:2px solid var(--acc-lavender)}
+.wg .wstrip .ax{position:absolute;left:6px;right:6px;bottom:2px;display:flex;justify-content:space-between;font:9.5px var(--font-mono);color:var(--ink-faint)}
+.wlbl{position:absolute;left:0;right:0;bottom:-18px;text-align:center;font:500 11px 'Roboto',var(--font-ui);color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.45)}
+.hs.day .wlbl{color:#1d232b;text-shadow:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="meta">Kai's Flow · the phone home · 26 Oct 2026</div>
+  <h1>The phone's home: Today and the widgets</h1>
+  <p class="lede">Three directions for the first screen of the phone app, each with a matching family of Android home-screen widgets. They're drawn on the same day (lectures, Deep Learning study, the gym, the goal of the day), on a 360, a 390 and a 430 wide phone, and the widgets sit on a real-looking home screen. Use the toggle for day and night (the widgets follow the phone's dark mode). Every direction keeps the paper goal card (smaller), the Yesterday / Tomorrow day stepper, Today's tasks apart from Also open, and the morning and evening rituals. The colours are the app's own, with the calendar's palette C for the blocks. Answer with letters, for example <b>"phone B, widgets B"</b>. The desktop version is in <i>Today options.html</i>.</p>
+</header>
+
+<div class="bar" role="group" aria-label="Your picks">
+  <span>Your picks: <b id="mine">none yet</b></span>
+  <span class="seg" role="group" aria-label="Page theme">
+    <button type="button" class="btn" data-th="day" aria-pressed="true">Day</button>
+    <button type="button" class="btn" data-th="night" aria-pressed="false">Night</button>
+  </span>
+  <button type="button" class="btn btn-p" id="copy">Copy my picks</button>
+  <span class="meta" id="copied" aria-live="polite"></span>
+</div>
+
+<section class="look" id="now">
+  <h2>The phone's Today as it is now</h2>
+  <div class="say">
+    <p>The same day in the app now (mock data, 10:40 AM, 390 wide). <b>Above the fold:</b> the date bar (50 px), the Yesterday · 📅 · Tomorrow strip and its "Day 26 · not planned yet" line (86 px), the Plan my day card (87 px), the "Top 3" heading, and the goal card (147 px; 171 px at 360). Then come Top 3 rows that are 78 to 98 px tall (the title wraps over a second meta line), and the tab bar (66 px, with the + in the middle). <b>3 tasks</b> are fully on screen at 360, 390 and 430 alike. Today's tasks starts about 1000 px down, and the whole page is 2.4 screens long at 360, 2.1 at 390 and 1.9 at 430.</p>
+  </div>
+  <div class="shots">
+    <figure><img class="now-shot only-day" src="../docs/log/assets/today-looks/phone/audit/phone-390-day.png" width="300" alt="Phone Today now, day"><img class="now-shot only-night" src="../docs/log/assets/today-looks/phone/audit/phone-390-night.png" width="300" alt="Phone Today now, night"><figcaption>390 × 844, the first screen</figcaption></figure>
+    <figure><img class="now-shot only-day" src="../docs/log/assets/today-looks/phone/audit/phone-390-day-full.png" width="300" alt="Phone Today now, whole page, day"><img class="now-shot only-night" src="../docs/log/assets/today-looks/phone/audit/phone-390-night-full.png" width="300" alt="Phone Today now, whole page, night"><figcaption>The whole page. The tab bar is fixed to the screen, so in this long picture it shows up halfway down.</figcaption></figure>
+  </div>
+</section>
+
+<div id="looks"></div>
+
+<section class="notes">
+  <h2>What stays in every direction</h2>
+  <ul>
+    <li><b>The goal card</b>: still paper, with the tape, the clover and the gold <b>✶ Goal of the day</b>, now at about half today's height. On a widget it keeps the paper and the stamp but stands straight (no tilt).</li>
+    <li><b>The day stepper</b>: B and C keep the Yesterday · 📅 · Tomorrow strip. A moves it to ‹ › beside the date, which saves a line.</li>
+    <li><b>Today's tasks and Also open stay apart</b>, Overdue keeps its fold and Replan all, and done tasks stay listed and struck through.</li>
+    <li><b>The rituals stay</b>: Morning with 0/4 and Begin, and Evening from 5:00 PM. A and C show them as chips, B as a panel row.</li>
+    <li><b>Blocks</b> look the way the calendar draws them now: the "Now" look, palette C (Rose for an event, Iris for a task, Fern for the gym), check B, and the gold edge for the goal.</li>
+  </ul>
+</section>
+
+<section class="notes" id="android">
+  <h2>What Android widgets can and can't do</h2>
+  <ul>
+    <li><b>They're built from RemoteViews, so only stock views are allowed.</b> That means Frame, Linear, Relative and Grid layouts, plus TextView, ImageView, Button, ProgressBar, Chronometer and the collection views (ListView, GridView, StackView). There are no custom views, no blur, no live animation, and no web content. The tape, the clover and the paper have to be drawable images. The tilt is dropped, so the paper card stands straight.</li>
+    <li><b>Fonts are limited.</b> The widgets use the system <i>serif</i> and <i>sans-serif-medium</i> today, not the app's display serif or its typewriter stamp. The ✶ Goal of the day stamp would be a small picture, or letter-spaced sans text.</li>
+    <li><b>Android 12 and later round the corners themselves.</b> The launcher clips the widget to its own radius (<code>system_app_widget_background_radius</code>, about 16–28 dp depending on the launcher). Our layouts should use <code>@android:id/background</code> and the matching inner radius, instead of the fixed 22 dp they draw now.</li>
+    <li><b>Material You colours (Android 12+)</b>, the <code>system_accent</code> and <code>system_neutral</code> palettes, could tint a widget to match the wallpaper. These designs keep the app's own paper and ink instead: an opaque card with AA text reads on any wallpaper, light or dark. Night Garden comes from <code>values-night</code>, so the widgets follow the phone's dark mode (they already do).</li>
+    <li><b>Updates are rationed.</b> <code>updatePeriodMillis</code> can't go below 30 minutes. Ours redraw when the app pushes a new snapshot, every 30 minutes, and with one inexact alarm when something changes (a block starts or ends, midnight). A per-minute "in 20m" goes stale between updates, so a widget shows clock times ("11:00") or uses a Chronometer, which counts down by itself.</li>
+    <li><b>Checkboxes.</b> On Android 12 and later, a real CheckBox in RemoteViews, with <code>setOnCheckedChangeResponse</code>, ticks at once without opening the app. Before 12 it's an image with a PendingIntent broadcast. That's how ours work today (WidgetActions TICK: drawn at once, then the app applies it the next time it runs).</li>
+    <li><b>Sizes.</b> <code>targetCellWidth</code> and <code>targetCellHeight</code> (Android 12+), the min and max resize sizes, and size-mapped RemoteViews let one widget change its face as it's resized (small, then medium, then large). Ours pick the face from the size the launcher reports. Lists that scroll need a collection view. The current widgets draw a fixed number of rows, and so do these.</li>
+    <li><b>The widget picker</b> shows a preview. On Android 12 and later that can be a live <code>previewLayout</code> instead of a picture.</li>
+  </ul>
+</section>
+
+</div>
+
+<script>
+const ICONS = {"today":"<path d=\"M12 20.5v-8\"></path><path d=\"M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z\"></path><path d=\"M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z\"></path><path d=\"M7.5 20.5h9\"></path>","inbox":"<path d=\"M4 13.5 6.2 6.3A1.8 1.8 0 0 1 7.9 5h8.2a1.8 1.8 0 0 1 1.7 1.3L20 13.5v4.7a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2z\"></path><path d=\"M4 13.5h4.4l1.3 2.3h4.6l1.3-2.3H20\"></path>","calendar":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"14.5\" rx=\"2\"></rect><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"></path>","tasks":"<rect x=\"4.5\" y=\"4.5\" width=\"15\" height=\"15\" rx=\"3\"></rect><path d=\"M8.5 12.2l2.4 2.4 4.6-4.9\"></path>","projects":"<path d=\"M3.5 7.5a2 2 0 0 1 2-2h3.6l2 2h7.4a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z\"></path>","routines":"<path d=\"M19.5 12a7.5 7.5 0 1 1-2.2-5.3\"></path><path d=\"M19.8 4.2v4.3h-4.3\"></path><path d=\"M12 15.5v-3.2c0-1.6 1.2-2.8 2.8-2.8 0 1.6-1.2 2.8-2.8 2.8\"></path>","focus":"<circle cx=\"12\" cy=\"12\" r=\"8\"></circle><circle cx=\"12\" cy=\"12\" r=\"4\"></circle><path d=\"M12 12h.01\"></path>","review":"<path d=\"M12 20.5v-6\"></path><path d=\"M12 14.5a4.5 4.5 0 1 1 4.5-4.5 2.8 2.8 0 0 1-2.8 2.8 1.7 1.7 0 0 1-1.7-1.7\"></path>","journal":"<path d=\"M5.5 5.5A1.5 1.5 0 0 1 7 4h11.5v13.5H7a1.5 1.5 0 0 0-1.5 1.5z\"></path><path d=\"M5.5 19A1.5 1.5 0 0 0 7 20.5h11.5v-3\"></path><path d=\"M9.5 8h5.5\"></path>","library":"<rect x=\"4\" y=\"4.5\" width=\"4\" height=\"15\" rx=\"1\"/><rect x=\"9.5\" y=\"4.5\" width=\"4\" height=\"15\" rx=\"1\"/><path d=\"M14.4 6.6 17.8 5.7 21 18.9 17.6 19.8z\"/>","people":"<circle cx=\"9\" cy=\"8.5\" r=\"3.2\"></circle><path d=\"M3 19a6 6 0 0 1 12 0\"></path><path d=\"M16 5.8a3.2 3.2 0 0 1 0 6M17.2 14.3a6 6 0 0 1 3.8 4.7\"></path>","activity":"<path d=\"M3.5 12.5h3.6l2.4-6 4.2 11.5 2.6-5.5h4.2\"/>","delete":"<path d=\"M4 7h16M9.5 7V4.8h5V7M6 7l1 13h10l1-13\"></path><path d=\"M10 11v5M14 11v5\"></path>","plus":"<path d=\"M12 5v14M5 12h14\"></path>","search":"<circle cx=\"11\" cy=\"11\" r=\"6.5\"></circle><path d=\"M16 16l4 4\"></path>","chat":"<path d=\"M5.5 5h13A1.5 1.5 0 0 1 20 6.5v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V17h-1A1.5 1.5 0 0 1 4 15.5v-9A1.5 1.5 0 0 1 5.5 5z\"/>","mic":"<rect x=\"9\" y=\"3.5\" width=\"6\" height=\"11\" rx=\"3\"></rect><path d=\"M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5\"></path>","plan":"<path d=\"M9.5 7h10M9.5 12h10M9.5 17h10\"/><circle cx=\"5.2\" cy=\"7\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"5.2\" cy=\"12\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"5.2\" cy=\"17\" r=\"1.1\" fill=\"currentColor\" stroke=\"none\"/>","someday":"<rect x=\"3.5\" y=\"5\" width=\"17\" height=\"4\" rx=\"1.2\"/><path d=\"M5 9v9a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 18V9\"/><path d=\"M10 13h4\"/>","chevright":"<path d=\"M9.5 6l6 6-6 6\"></path>","dots":"<circle cx=\"5.5\" cy=\"12\" r=\"1.1\"></circle><circle cx=\"12\" cy=\"12\" r=\"1.1\"></circle><circle cx=\"18.5\" cy=\"12\" r=\"1.1\"></circle>","repeat":"<path d=\"M4 12a8 8 0 0 1 13-6l2 2M20 12a8 8 0 0 1-13 6l-2-2\"></path><path d=\"M19 4v4h-4M5 20v-4h4\"></path>","pickdate":"<rect x=\"4\" y=\"5.5\" width=\"16\" height=\"14.5\" rx=\"2\"></rect><path d=\"M4 10h16M8.5 3.5v4M15.5 3.5v4\"></path><rect x=\"10.2\" y=\"13\" width=\"3.6\" height=\"3.6\" rx=\"0.8\"></rect>","more":"<rect x=\"4.5\" y=\"4.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"13.5\" y=\"4.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"4.5\" y=\"13.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect><rect x=\"13.5\" y=\"13.5\" width=\"6\" height=\"6\" rx=\"1.5\"></rect>"}
+const ic = (n, s = 18) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[n]}</svg>`
+const chev = (open) => `<span class="chev${open ? ' dn' : ''}">${ic('chevright', 14)}</span>`
+const CLOVER = 'ds/assets/clover/four_leaf.png'
+
+// ── the day: Monday 26 Oct 2026, 10:40 AM ──
+const NOW = 10 + 40 / 60
+const B = (c) => `--c:var(--blk-${c});--ct:var(--blk-${c}-ink)`
+const EV = [
+  { t: 'Lecture — Machine Learning', a: 8.5, b: 10, c: 'rose', past: true },
+  { t: 'Lecture — Computer Vision', a: 11, b: 12.5, c: 'rose' },
+  { t: 'CNN backprop notes', a: 13.5, b: 15.5, c: 'iris', task: true, goal: true },
+  { t: 'Gym — push day', a: 17, b: 18.25, c: 'fern' },
+  { t: 'DL study group', a: 19, b: 20, c: 'iris', task: true },
+  { t: 'Watch Karpathy: makemore part 3', a: 21, b: 22, c: 'iris', task: true },
+]
+const P = { dl: ['Deep Learning', 'var(--acc-sage)'], uni: ['University', 'var(--acc-blossom)'], flow: ["Kai's Flow", 'var(--acc-lavender)'], hl: ['Health', 'var(--acc-terra)'] }
+const GOAL = { t: 'Finish the CNN backprop notes for the DL midterm', p: 'dl', when: '1:30–3:30 PM', len: '2h' }
+const TOP = [{ t: 'Deep Learning problem set 4 (Q1–Q3)', p: 'dl', len: '1h 30m' }, { t: 'Email Dr. Hany the project proposal', p: 'uni', len: '20m' }]
+const TODAY = [
+  { t: 'Review lecture 7 slides — Attention', p: 'dl', due: 'Due today' },
+  { t: 'Pay the internet bill', due: 'Due today', rep: true },
+  { t: 'Prepare the DL study group', p: 'dl', when: '7:00 PM', subs: '0/1', kids: ['Pick three past-paper questions'] },
+  { t: 'Watch Karpathy: makemore part 3', p: 'dl', when: '9:00 PM' },
+  { t: 'Submit the CV lab report', p: 'uni', done: true },
+]
+const OVER = [{ t: 'Email the TA about the quiz grade', p: 'uni', od: 3 }, { t: 'Back up the laptop', od: 2 }]
+const ALSO = 6
+const RTN = [['Glass of water', true], ['Vitamins'], ['Read 10 pages']]
+
+const clock = (h) => { const hh = Math.floor(h + 1e-9), mm = Math.round((h - hh) * 60); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')} ${hh < 12 ? 'AM' : 'PM'}` }
+const range = (a, b) => { const x = clock(a), z = clock(b); return x.slice(-2) === z.slice(-2) ? `${x.slice(0, -3)}–${z}` : `${x}–${z}` }
+const hr = (h) => `${h % 12 || 12} ${h < 12 ? 'AM' : 'PM'}`
+const proj = (k) => k ? `<span><span class="dot" style="background:${P[k][1]}"></span><span class="pnm">${P[k][0]}</span></span>` : ''
+
+// a task row; every direction styles .trow its own way
+function row(x, o = {}) {
+  const meta = [proj(x.p), x.subs ? `<span>${x.subs} ⌄</span>` : '', x.when ? `<span>${x.when}</span>` : '', x.due ? `<span>${x.due}${x.rep ? ' · ↻' : ''}</span>` : '', x.len ? `<span>${x.len}</span>` : '', x.od ? `<span class="terra">Overdue ${x.od}d</span>` : ''].filter(Boolean).join('')
+  const kids = o.kids !== false && x.kids ? x.kids.map((k) => `<div class="trow subrow"><span class="ck"></span><span class="tt nowrap">${k}</span></div>`).join('') : ''
+  return `<div class="trow${x.done ? ' done' : ''}">${o.n ? `<span class="n">${o.n}</span>` : ''}<span class="ck">${x.done ? '✓' : ''}</span><span class="tt nowrap">${x.t}</span>${o.meta === false ? '' : `<span class="mt">${meta}</span>`}${o.dots === false ? '' : `<span class="dots">${ic('dots', 16)}</span>`}</div>${kids}`
+}
+
+// the calendar column: hour lines, the blocks in the app's "Now" drawing, the now line
+function cal({ from, to, ph, gutter = 48, wash = false, nowLabel = true }) {
+  const y = (h) => (h - from) * ph
+  let s = `<div class="cal" style="height:${(to - from) * ph}px">`
+  if (wash) s += `<div class="wash" style="left:${gutter}px"></div>`
+  for (let h = Math.ceil(from); h <= to; h++) s += `<div class="hl" style="top:${y(h)}px;left:${gutter}px">${h < to ? `<b>${hr(h)}</b>` : ''}</div>`
+  for (let h = Math.ceil(from) + 0.5; h < to; h++) s += `<div class="hl half" style="top:${y(h)}px;left:${gutter}px"></div>`
+  for (const e of EV) {
+    if (e.b <= from || e.a >= to) continue
+    const top = y(Math.max(e.a, from)) + 1, hgt = (Math.min(e.b, to) - Math.max(e.a, from)) * ph - 3
+    const one = hgt < 34
+    s += `<div class="cb${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}${one ? ' one' : ''}" style="${B(e.c)};top:${top}px;height:${hgt}px;left:${gutter + 4}px;right:6px"><div class="r1">${e.task ? '<span class="k"></span>' : ''}<span class="tt">${e.t}</span></div><div class="tm">${range(e.a, e.b)}</div></div>`
+  }
+  if (NOW > from && NOW < to) s += `<div class="nowl" style="top:${y(NOW)}px;left:${gutter}px;right:0">${nowLabel ? '<b>10:40 AM</b>' : ''}</div>`
+  return s + '</div>'
+}
+
+// the calendar's Now card A: Up next, then the one after it
+const nowCard = (o = {}) => `<div class="nca"><div class="m" style="${B('rose')}"><div class="h">Up next<span class="cd">in 20m</span></div><div class="tl"><span class="rg"></span><span class="t">Lecture — Computer Vision</span></div><div class="br"><i style="width:0%"></i></div><div class="tms"><span>11:00 AM</span><span>12:30 PM</span></div></div>${o.next === false ? '' : `<div class="nx" style="${B('iris')}"><span class="k">Next</span><span class="rg" style="border-color:var(--acc-gold)"></span><span class="t" style="flex:1;min-width:0" >CNN backprop notes</span><span class="cd" style="font:12px var(--font-mono);color:var(--ink-muted)">1:30 PM</span></div>`}</div>`
+
+// the day ribbon, 8 AM to 10 PM (today's ritual card timeline)
+const ribbon = () => {
+  const x = (h) => ((h - 8) / 14) * 100
+  return `<div class="rib"><span class="rail"></span>${EV.map((e) => `<span class="rb${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}" style="${B(e.c)};left:${x(e.a)}%;width:${x(e.b) - x(e.a)}%"></span>`).join('')}<span class="nw" style="left:${x(NOW)}%"></span><div class="ax"><span>8</span><span>10</span><span>12</span><span>14</span><span>16</span><span>18</span><span>20</span><span>22</span></div></div>`
+}
+
+const sidebar = () => `<aside class="sb"><div class="sb-top">
+  <div class="sb-name"><span class="sb-logo">K</span>Kai's Flow <small>⌄</small></div><div class="sb-ws">Personal · Cairo</div>
+  <div class="sb-plan">${ic('plan', 16)}Plan ⌄<span class="p">+</span></div>
+  <div class="sb-l"><span>Due Today</span><span>9</span></div><div class="sb-l"><span>This Week</span><span>7</span></div><div class="sb-l"><span>This Month</span><span>7</span></div><div class="sb-l"><span>Upcoming</span><span>0</span></div>
+  </div><div class="sb-nav"><div class="sb-sec">Tend</div>
+  ${[['today', 'Today', 1], ['inbox', 'Inbox'], ['calendar', 'Calendar'], ['tasks', 'Tasks'], ['projects', 'Projects']].map(([i, n, on]) => `<div class="sb-i${on ? ' on' : ''}">${ic(i)}${n}</div>`).join('')}
+  <div class="sb-sec">Cultivate</div>
+  ${[['routines', 'Routines'], ['focus', 'Focus'], ['review', 'Review'], ['journal', 'Journal'], ['library', 'Library'], ['people', 'People']].map(([i, n]) => `<div class="sb-i">${ic(i)}${n}</div>`).join('')}
+  </div><div class="sb-foot"><span class="sb-cap">${ic('plus', 16)}Capture <span class="kbd">⌘</span><span class="kbd">K</span></span><span class="ib">${ic('search')}</span><span class="ib">${ic('chat')}</span></div></aside>`
+
+const tabs = () => `<nav class="tabs"><span class="on"><i>${ic('today', 22)}</i>Today</span><span>${ic('inbox', 22)}Inbox</span><span><b class="fab">${ic('plus', 24)}</b></span><span>${ic('calendar', 22)}Calendar</span><span>${ic('more', 22)}More</span></nav>`
+const pill = (w) => `<div class="pill"${w ? ` style="width:${w}px"` : ''}>${ic('plus', 16)}<span class="grow">Add a task…</span><span class="kbd">N</span><span class="mic">${ic('mic', 16)}</span></div>`
+const steps = () => `<span class="step l">${ic('chevright', 14)}</span><span class="step">${ic('chevright', 14)}</span>`
+const SUM = `1 of 8 done · next up <b>Lecture — Computer Vision</b> at 11:00 AM`
+const goalMeta = () => `<span class="gtag">✶ Goal of the day</span><span><span class="dot" style="background:var(--acc-sage)"></span>Deep Learning</span><span>${GOAL.when}</span><span>${GOAL.len}</span>`
+
+
+// ── the phone app's shared parts ──
+const phTop = (o = {}) => `<div class="ph-top"><h3>${o.short ? 'Mon, Oct 26' : 'Monday, Oct 26'}</h3>${o.steps ? steps() : ''}<span class="r">${ic('journal', 20)}${ic('search', 20)}${ic('dots', 20)}</span></div>`
+const dayStrip = () => `<div class="daystrip"><span class="l">${ic('chevright', 14)}Yesterday</span>${ic('pickdate', 18)}<span>Tomorrow${ic('chevright', 14)}</span></div>`
+const chipsP = (o = {}) => `<div class="chipsP"><span class="chip"><span class="sun">☀</span>Morning <span class="q">0/4</span><span class="go">Begin</span></span><span class="chip"><span class="moon">☾</span>Evening <span class="q">5 PM</span></span>${o.routines === false ? '' : RTN.map(([n, d]) => `<span class="chip${d ? ' dn' : ''}"><span class="ck${d ? ' on' : ''}">${d ? '✓' : ''}</span><span class="tx">${n}</span></span>`).join('')}</div>`
+const goalP = () => `<div class="gs"><span class="tape"></span><span class="ck"></span><div class="body"><div class="tt">${GOAL.t}</div><span class="gtag">✶ Goal of the day · ${GOAL.when}</span></div><img class="clover" src="${CLOVER}" alt=""><span class="dots">${ic('dots', 16)}</span></div>`
+const bk = (e, o = {}) => `<div class="bk${e.goal ? ' goal' : ''}${e.past ? ' past' : ''}" style="${B(e.c)}">${o.label ? `<b style="font-weight:600;flex:none">${o.label}</b>` : ''}<span class="tm">${o.time ?? clock(e.a).replace(':00', '').replace(' AM', ' AM')}</span>${e.task ? '<span class="k"></span>' : ''}<span class="t">${e.t}</span>${o.right ? `<span class="tm">${o.right}</span>` : ''}</div>`
+
+// ═════ A · List first ═════
+const phoneA = () => `<div class="pA ph" style="display:contents">${phTop({ short: true, steps: true })}<div class="sum nowrap" style="font-size:13px;color:var(--ink-muted)">1 of 8 done · 4 left today</div><div class="scr">
+  ${chipsP()}
+  ${bk(EV[1], { label: 'Next', time: '11:00', right: 'in 20m' })}
+  ${goalP()}
+  ${TOP.map((x, i) => row(x, { n: i + 2 })).join('')}
+  <div class="slP">${chev(true)}Today's tasks <span class="c">4</span></div>
+  ${TODAY.map((x) => row(x)).join('')}
+  <div class="slP">${chev(true)}<span class="terra">Overdue</span> <span class="c">2</span><span class="act">Replan all ⌄</span></div>
+  ${OVER.map((x) => row(x)).join('')}
+  <div class="slP fold">${chev(false)}Also open <span class="c">${ALSO}</span></div>
+</div>${tabs()}</div>`
+
+// ═════ B · Now + next ═════
+const nowNext = () => `<div class="nn">${nowCard({ next: false })}<div class="then"><div class="lbl">Then</div>${bk(EV[2], { time: '1:30' })}${bk(EV[3], { time: '5:00' })}</div></div>`
+const phoneB = () => `<div class="pB ph" style="display:contents">${phTop()}${dayStrip()}<div class="scr">
+  ${nowNext()}
+  ${goalP()}
+  <div class="ptP">Top 3 <span class="c">· 3h 50m planned</span></div><div class="pn">${TOP.map((x, i) => row(x, { n: i + 2 })).join('')}</div>
+  <div class="ptP">Today's tasks <span class="c">· 4</span></div><div class="pn">${TODAY.map((x) => row(x, { kids: false })).join('')}</div>
+  <div class="pn" style="margin-top:12px"><div class="prow"><span class="terra" style="font-weight:600">Overdue</span><span class="sub">2</span><span class="x">Replan all ⌄ ${chev(false)}</span></div><div class="prow"><span style="font-weight:600">Also open</span><span class="sub">${ALSO}</span><span class="x">${chev(false)}</span></div></div>
+  <div class="ptP">Rituals</div><div class="pn"><div class="prow"><span class="sun">☀</span>Morning<span class="sub">0/4</span><span class="x"><span class="bt">Begin</span></span></div><div class="prow"><span class="moon">☾</span>Evening<span class="sub">from 5:00 PM</span></div></div>
+</div>${tabs()}</div>`
+
+// ═════ C · Day strip ═════
+// the day across: 8 AM on, 64 px an hour (scrolls sideways; opens at the hour before now)
+const dayAcross = (from = 9.5, px = 64) => {
+  const x = (h) => (h - from) * px
+  let s = '<div class="strip">'
+  for (let h = Math.ceil(from); h <= 22; h++) s += `<div class="hh" style="left:${x(h)}px"><b>${hr(h).replace(' ', '')}</b></div>`
+  for (const e of EV) if (e.b > from) s += `<div class="sb2${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}" style="${B(e.c)};left:${x(Math.max(e.a, from)) + 2}px;width:${(Math.min(e.b, 22) - Math.max(e.a, from)) * px - 4}px"><div class="tt">${e.t}</div><div class="tm">${range(e.a, e.b)}</div></div>`
+  return s + `<div class="nv" style="left:${x(NOW)}px"></div><div class="fade"></div></div>`
+}
+const agendaRow = (x, tg, on) => row(x).replace('<div class="trow', `<div class="trow`).replace('<span class="ck">', `<span class="tg${on ? ' on' : ''}">${tg}</span><span class="ck">`)
+const phoneC = () => `<div class="pC ph" style="display:contents">${phTop()}${dayStrip()}<div class="scr">
+  ${dayAcross()}
+  ${chipsP({ routines: false })}
+  ${goalP()}
+  <div class="agenda">
+  <div class="slP">Top 3 <span class="c">· 3h 50m planned</span></div>
+  ${TOP.map((x) => agendaRow({ ...x, len: undefined, when: undefined }, x.len, false)).join('')}
+  <div class="slP">Today's tasks <span class="c">· 4</span></div>
+  ${agendaRow({ ...TODAY[0], due: undefined }, 'today')}${agendaRow({ ...TODAY[1], due: undefined }, 'today ↻')}${agendaRow({ ...TODAY[2], when: undefined, kids: undefined }, '7:00 PM', true)}${agendaRow({ ...TODAY[3], when: undefined }, '9:00 PM', true)}${agendaRow(TODAY[4], 'done')}
+  <div class="slP fold">${chev(false)}<span class="terra">Overdue</span> <span class="c">· 2</span><span class="act">Replan all ⌄</span></div>
+  <div class="slP fold">${chev(false)}Also open <span class="c">· ${ALSO}</span></div>
+  </div>
+</div>${tabs()}</div>`
+
+// ═════ the widget families ═════
+const W = { s: [2, 2], m: [4, 2], l: [4, 4] }
+const wgHead = (left, right = '') => `<div class="wh">${left}<span class="r">${right}</span></div>`
+const goalW = (short) => `<div class="gw"><span class="tape"></span><span class="ck"></span><div style="flex:1;min-width:0"><div class="t">${GOAL.t}</div><span class="gtag">${short ? '✶ Goal' : `✶ Goal of the day · ${GOAL.when}`}</span></div><img src="${CLOVER}" alt=""></div>`
+const wr = (x, m) => `<div class="wr${x.done ? ' done' : ''}"><span class="ck">${x.done ? '✓' : ''}</span><span class="t">${x.t}</span>${m ? `<span class="m">${m}</span>` : ''}</div>`
+const addBtn = `<span class="add">${ic('plus', 16)}</span>`
+const capBar = `<div class="capbar">${ic('plus', 15)}<span class="grow">Add a task…</span><span class="mic">${ic('mic', 14)}</span></div>`
+const FAM = {
+  A: { name: 'Checklist', say: 'Tick from the home screen. The goal is a paper strip, the rows are the same rows as the app, and the large size adds Today\'s tasks and a capture bar.',
+    s: () => `${wgHead('Top 3', '<span class="q">0/3</span>')}${goalW(true)}<div style="margin-top:4px">${TOP.map((x) => wr(x)).join('')}</div>`,
+    m: () => `${wgHead('Today <span class="q">· 1 of 8 done</span>', addBtn)}<div style="display:flex;gap:10px;margin-top:2px"><div style="flex:1.1;min-width:0">${goalW(true)}</div><div style="flex:1;min-width:0;margin-top:6px">${TOP.map((x) => wr(x)).join('')}${wr(TODAY[0])}${wr(TODAY[1])}</div></div>`,
+    l: () => `${wgHead('Today <span class="q">· Mon 26 · 1 of 8 done</span>', addBtn)}<div style="margin-top:8px">${bk(EV[1], { label: 'Next', time: '11:00' })}</div>${goalW()}<div style="margin-top:4px">${TOP.map((x) => wr(x, x.len)).join('')}</div><div class="wh" style="margin-top:8px">Today's tasks <span class="q">4</span></div>${TODAY.slice(0, 2).map((x) => wr(x, x.when ?? '')).join('')}<div class="fold"><span class="terra">Overdue 2</span> · Also open ${ALSO} ›</div>${capBar}` },
+  B: { name: 'Now card', say: 'The calendar\'s Now card on the home screen. Small shows what\'s up next and when. Medium adds what comes after. Large adds the goal, the Top 3 you can tick, and a capture bar.',
+    s: () => `${wgHead('Up next', '<span class="q">11:00</span>')}<div style="display:flex;gap:8px;align-items:flex-start;margin-top:10px"><span class="rg" style="margin-top:3px"></span><span class="big">Lecture — Computer Vision</span></div><div class="bar2"><i></i></div><div class="tms"><span>11:00</span><span>12:30</span></div><div style="margin-top:auto;font-size:12px;color:var(--ink-muted)">Then ✶ CNN notes 1:30</div>`,
+    m: () => `${wgHead('Up next <span class="q">· 11:00–12:30</span>', addBtn)}<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="rg"></span><span class="big nowrap">Lecture — Computer Vision</span></div><div class="bar2"><i></i></div><div style="display:flex;flex-direction:column;gap:5px;margin-top:10px">${bk(EV[2], { time: '1:30' })}${bk(EV[3], { time: '5:00' })}</div>`,
+    l: () => `${wgHead('Up next <span class="q">· 11:00–12:30</span>', addBtn)}<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><span class="rg"></span><span class="big nowrap">Lecture — Computer Vision</span></div><div class="bar2"><i></i></div><div class="tms"><span>11:00 AM</span><span>12:30 PM</span></div><div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">${bk(EV[2], { time: '1:30' })}${bk(EV[3], { time: '5:00' })}</div>${goalW()}<div style="margin-top:2px">${TOP.map((x) => wr(x, x.len)).join('')}</div>${capBar}` },
+  C: { name: 'Day strip', say: 'The day the way the calendar draws it. Small is the next few hours as a calendar column, medium is the whole day across with the next block, and large is today\'s column with the goal on top.',
+    s: () => `${wgHead('Mon 26', '<span class="q">10:40</span>')}<div style="margin:6px -6px 0 0;height:140px;overflow:hidden"><div style="margin-top:-${0.7 * 46}px">${cal({ from: 10, to: 14, ph: 46, gutter: 42, nowLabel: false })}</div></div>`,
+    m: () => `${wgHead('Today <span class="q">· 6 blocks</span>', addBtn)}${(() => { const x = (h) => ((h - 8) / 14) * 100; return `<div class="wstrip">${EV.map((e) => `<span class="rb${e.past ? ' past' : ''}${e.goal ? ' goal' : ''}" style="${B(e.c)};left:${x(e.a)}%;width:${x(e.b) - x(e.a)}%"></span>`).join('')}<span class="nw" style="left:${x(NOW)}%"></span><div class="ax"><span>8</span><span>12</span><span>16</span><span>20</span></div></div>` })()}<div style="display:flex;flex-direction:column;gap:5px;margin-top:8px">${bk(EV[1], { label: 'Next', time: '11:00' })}${bk(EV[2], { time: '1:30' })}</div>`,
+    l: () => `${wgHead('Monday, Oct 26', addBtn)}${goalW()}<div style="margin:10px -6px 0 0;flex:1;min-height:0;overflow:hidden"><div style="margin-top:-${1.5 * 36}px">${cal({ from: 9, to: 20, ph: 36, gutter: 38, nowLabel: false })}</div></div>` },
+}
+// a home screen: wallpaper, status bar, At a glance, a 4-column grid, the dock
+const APPS = [['Phone', '#2e7d32', '☏'], ['Messages', '#1565c0', '✉'], ['Camera', '#455a64', '◉'], ['Photos', '#c2185b', '✿'], ['Clock', '#37474f', '◷'], ['Maps', '#00796b', '➤'], ['Files', '#5d4037', '▤'], ["Kai's Flow", 'var(--paper-parchment)', 'K']]
+const app = ([n, bg, g], col, row) => `<div class="cell app" style="left:calc(var(--cw) * ${col});top:calc(var(--rh) * ${row});width:var(--cw)"><i style="background:${bg}${n === "Kai's Flow" ? ';color:var(--ink-body);font-family:var(--font-display);border:1px solid var(--line-card)' : ''}">${g}</i><span>${n}</span></div>`
+const widget = (fam, size, col, row) => { const [w, h] = W[size]; return `<div class="cell" style="left:calc(var(--cw) * ${col});top:calc(var(--rh) * ${row});width:calc(var(--cw) * ${w});height:calc(var(--rh) * ${h})"><div class="wg" data-wg="${fam}-${size}">${FAM[fam][size]()}</div></div>` }
+const home = (dark, body) => `<div class="hs ${dark ? 'dark' : 'day'}"><div class="hills"></div><div class="stat"><span>10:40</span><span>▾ ▴ ▮ 82%</span></div><div class="glance">Monday, Oct 26<small>${dark ? '☾ 19°C' : '☀ 27°C'} · Cairo</small></div><div class="grid">${body}</div><div class="dock"><div class="apps">${APPS.slice(0, 4).map(([n, bg, g]) => `<i style="background:${bg}">${g}</i>`).join('')}</div><div class="gsearch">${ic('search', 18)}Search</div></div></div>`
+const screens = (f) => {
+  const s1 = (dk) => home(dk, `${widget(f, 's', 0, 0)}${app(APPS[7], 2, 0)}${app(APPS[4], 3, 0)}${app(APPS[5], 2, 1)}${app(APPS[6], 3, 1)}${widget(f, 'm', 0, 2)}`)
+  const s2 = (dk) => home(dk, `${widget(f, 'l', 0, 0)}${app(APPS[7], 0, 4)}${app(APPS[4], 1, 4)}${app(APPS[5], 2, 4)}${app(APPS[6], 3, 4)}`)
+  return [s1, s2]
+}
+
+const DIRS = [
+  ['A', 'List first', phoneA,
+    'Changes: ‹ › moves beside the date and the summary shrinks to one line. Morning, Evening and the routines become a row of chips, and the next block is one line drawn like a calendar block. The goal is a slim paper strip, and every task is a single 44 px row. Today\'s tasks, Overdue and Also open are sections that fold.',
+    'Removes: the Plan my day card, the "Day 26 · not planned yet" line, the separate Up next and Routines sections, and the second meta line under each title. The project name stays as a dot.'],
+  ['B', 'Now + next', phoneB,
+    'Changes: the top is one card, the calendar\'s Now card (Up next, its progress bar, then the next two blocks in the calendar\'s look). Under it is the smaller paper goal, then everything else in Settings\' rounded panels: Top 3, Today\'s tasks, one panel for Overdue and Also open, and Rituals as a panel row.',
+    'Removes: the Plan my day card (Begin moves to the Rituals panel), the separate Up next list, the progress line under the day stepper, and the routines list (Routines has its own page). This one is the calmest of the three, not the densest.'],
+  ['C', 'Day strip', phoneC,
+    'Changes: under the Yesterday / Tomorrow strip is the day drawn across, a strip of the calendar\'s own blocks with the now line that scrolls sideways. Below it, the rituals as chips and the slim paper goal, then a list with a time column on the left, like a little agenda (a block\'s time, "today", or the length).',
+    'Removes: the Plan my day card (the strip is the day), the Up next section (the strip shows it), the routines list, and the second meta line. Overdue and Also open fold to one line each.'],
+]
+
+const phoneF = (d, w, h, render) => `<div class="frame phone" style="width:${w}px;height:${h}px" data-measure="${d}-${w}">${render()}</div>`
+const SIZES = [[360, 780], [390, 844], [430, 932]]
+document.getElementById('looks').innerHTML = DIRS.map(([d, name, ph, l1, l2]) => {
+  const [s1, s2] = screens(d)
+  return `
+<section class="look" data-grp="phone" data-look="${d}" id="look-${d}">
+  <h2><span class="tag">${d}</span>${name}</h2>
+  <div class="say"><p>${l1}</p><p>${l2}</p></div>
+  <div class="dens" data-dens="${d}"></div>
+  <div class="shots">${SIZES.map(([w, h]) => `<figure>${phoneF(d, w, h, ph)}<figcaption>${w} × ${h}</figcaption></figure>`).join('')}</div>
+  <h3 class="sub">Widgets ${d} · ${FAM[d].name}</h3>
+  <div class="say"><p>${FAM[d].say}</p></div>
+  <div class="shots">
+    <figure><span class="only-day">${s1(false)}</span><span class="only-night">${s1(true)}</span><figcaption>Small 2 × 2 beside apps, and medium 4 × 2</figcaption></figure>
+    <figure><span class="only-day">${s2(false)}</span><span class="only-night">${s2(true)}</span><figcaption>Large 4 × 4</figcaption></figure>
+  </div>
+  <div class="pick-row"><button type="button" class="btn pick" data-grp="phone" data-pick="${d}" aria-pressed="false">This one (phone ${d})</button><button type="button" class="btn pick" data-grp="widgets" data-pick="${d}" aria-pressed="false">These widgets (${d})</button></div>
+</section>`
+}).join('')
+
+// ── density: task rows wholly on screen (the goal counts as one), counted in the drawing itself ──
+function count(frame) {
+  const fb = frame.getBoundingClientRect().bottom
+  let n = 0
+  for (const el of frame.querySelectorAll('.trow:not(.subrow), .gs')) {
+    const r = el.getBoundingClientRect()
+    if (r.height === 0) continue
+    let bottom = fb
+    for (let a = el.parentElement; a && a !== frame; a = a.parentElement) if (getComputedStyle(a).overflowY !== 'visible') bottom = Math.min(bottom, a.getBoundingClientRect().bottom)
+    if (r.bottom <= bottom + 0.5) n++
+  }
+  return n
+}
+function density() {
+  for (const box of document.querySelectorAll('[data-dens]')) {
+    const d = box.dataset.dens
+    const c = Object.fromEntries(SIZES.map(([w]) => [w, count(document.querySelector(`[data-measure="${d}-${w}"]`))]))
+    box.dataset.counts = JSON.stringify(c)
+    box.innerHTML = `Density, tasks fully on screen above the fold: <b>${c[360]}</b> at 360 · <b>${c[390]}</b> at 390 · <b>${c[430]}</b> at 430 (now 3 · 3 · 3)`
+  }
+}
+
+// ── the page theme ──
+document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click', () => {
+  document.documentElement.dataset.theme = b.dataset.th
+  document.querySelectorAll('[data-th]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
+}))
+
+// ── the picks ──
+const KEY = 'kf-phone-home-picks'
+let picks = {}
+try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
+const line = () => ['phone', 'widgets'].filter((g) => picks[g]).map((g) => `${g} ${picks[g]}`).join(', ')
+function paint() {
+  document.getElementById('mine').textContent = line() || 'none yet'
+  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(picks[b.dataset.grp] === b.dataset.pick)))
+  document.querySelectorAll('.look[data-grp]').forEach((s) => s.classList.toggle('picked', picks.phone === s.dataset.look))
+}
+document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
+  picks[b.dataset.grp] = b.dataset.pick
+  try { localStorage.setItem(KEY, JSON.stringify(picks)) } catch {}
+  paint()
+}))
+document.getElementById('copy').addEventListener('click', async () => {
+  const text = line() ? `Phone home: ${line()}` : 'Phone home: nothing picked yet'
+  let ok = false
+  try { await navigator.clipboard.writeText(text); ok = true } catch {}
+  if (!ok) {
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    try { ok = document.execCommand('copy') } catch {}
+    ta.remove()
+  }
+  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
+})
+paint()
+;(document.fonts?.ready ?? Promise.resolve()).then(density)
+</script>
+</body>
+</html>

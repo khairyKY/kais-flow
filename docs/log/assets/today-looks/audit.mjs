@@ -164,6 +164,31 @@ const measure = (page) => page.evaluate(() => {
   return { visibleRows: vis, drawnRows: rows.length, screens: +(sc.scrollHeight / innerHeight).toFixed(2), sections }
 })
 const report = []
+// PHONE=1: the phone Today only — 360 / 390 / 430 wide, day and night, the first screen and the whole page,
+// with every block's top and height (what sits above the fold, the spacing, the bar and the day strip).
+if (process.env.PHONE) {
+  const PH = [['360', 360, 780], ['390', 390, 844], ['430', 430, 932]]
+  const phoneOut = []
+  for (const theme of ['day', 'night']) for (const [tag, w, h] of PH) {
+    const { ctx, page, errors } = await open('10:40', { theme, view: { viewport: { width: w, height: h }, hasTouch: true, isMobile: true } })
+    const m = await measure(page)
+    const parts = await page.evaluate(() => {
+      const pick = (sel) => { const e = document.querySelector(sel); if (!e) return null; const r = e.getBoundingClientRect(); return { top: Math.round(r.top), h: Math.round(r.height) } }
+      return { header: pick('h1, .tp-head, header'), daynav: pick('.tp-daynav'), ritual: pick('section[aria-label="Your day"]'), goal: pick('.tp-goal'), tabbar: pick('nav[aria-label="Main"], .kf-tabbar, nav:last-of-type'), rows: [...document.querySelectorAll('[id^="task-"]')].slice(0, 4).map((e) => Math.round(e.getBoundingClientRect().height)) }
+    })
+    phoneOut.push({ tag: `phone-${tag}-${theme}`, ...m, parts, errors })
+    console.log(tag, theme, JSON.stringify({ visible: m.visibleRows, screens: m.screens, parts }))
+    await page.mouse.move(1, 1)
+    await page.screenshot({ path: path.join(OUT, `phone-${tag}-${theme}.png`) })
+    // the whole page: lift the scroller's height so one shot holds it all
+    await page.evaluate(() => { const sc = document.querySelector('.app-main-content'); if (sc) { sc.style.height = sc.scrollHeight + 'px'; sc.style.maxHeight = 'none'; sc.style.overflow = 'visible' } })
+    await page.screenshot({ path: path.join(OUT, `phone-${tag}-${theme}-full.png`), fullPage: true })
+    await ctx.close()
+  }
+  fs.writeFileSync(path.join(OUT, 'audit-phone.json'), JSON.stringify(phoneOut, null, 1))
+  await browser.close()
+  process.exit(0)
+}
 const SIZES = [['1280', { width: 1280, height: 800 }], ['1920', { width: 1920, height: 1080 }]]
 for (const theme of ['day', 'night']) {
   for (const [sz, viewport] of SIZES) for (const scale of [1, 1.25, 1.5]) {
