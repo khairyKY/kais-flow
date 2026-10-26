@@ -325,7 +325,8 @@ export function useBoundaryResistance(scrollerRef: RefObject<HTMLElement | null>
       startY = last = (e.touches[0]?.clientY ?? 0) / uiZoom()
     }
     const move = (e: TouchEvent) => {
-      if (!mine) return
+      // A gesture something under the finger has claimed (drag-fix: a tray chip carried onto the phone grid) is no pull.
+      if (!mine || e.defaultPrevented) return
       const x = e.touches[0].clientX / uiZoom()
       const y = e.touches[0].clientY / uiZoom()
       // A sideways gesture (a row's swipe) is not a pull on the page.

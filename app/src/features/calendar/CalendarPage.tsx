@@ -5,7 +5,8 @@ import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
-import { inSlot, slotAt, slotFill, slotTasks } from './slots'
+import { slotAt, slotFill, slotTasks } from './slots'
+import { dropOnGrid } from './gridDrop'
 import { TaskMenu } from '../tasks/TaskMenu'
 import { taskActions } from '../tasks/useRowGrammar'
 import { placeName } from '../tasks/move'
@@ -838,13 +839,9 @@ function DesktopCalendar() {
   function handleExternalDrop(from: { taskId?: string; inboxId?: string }, start: string, allDay: boolean) {
     const task = from.taskId ? tasks.find((t) => t.id === from.taskId) : undefined
     const item = from.inboxId ? inbox.find((i) => i.id === from.inboxId) : undefined
-    // Time Slots (0073): a task dropped on a Time block goes IN it — no block of its own. A held row
-    // dropped back on its own slot stays as it was.
-    const slot = task && !allDay ? slotAt(gridEvents, start) : undefined
-    if (task && slot) return inSlot(task, slot) ? undefined : putInSlotWithUndo(task, slot)
+    // Time Slots (0073): a task dropped on a Time block goes IN it — no block of its own (./gridDrop).
     const min = allDay ? 24 * 60 : task ? railMinutes(buckets.overdue.find((r) => r.task.id === task.id) ?? scheduled.find((r) => r.task.id === task.id) ?? { task, block: null }) : item ? inboxMinutes(item) : 30
-    const end = new Date(new Date(start).getTime() + min * 60000).toISOString()
-    const ev = task ? scheduleTaskWithUndo(task, start, end, allDay) : item ? fileToCalendar(item, start, end, allDay) : null
+    const ev = dropOnGrid({ task, item }, start, min, gridEvents, allDay)
     if (!ev) return
     // Always reported, motion or not: CalendarGrid keeps this block visible until the next
     // interaction (Polish F2b). The settle-in it also drives is gated in CSS by .cal-motion-on.
@@ -1232,6 +1229,7 @@ function DesktopCalendar() {
         /* cal-wave item 19: the Now card at the foot of the rail (the list scrolls behind it), or floating
            16px in from the grid's bottom-left corner when the rail is folded. */
         .cal-now-dock { position: sticky; bottom: -10px; z-index: 3; margin: auto -2px -10px; padding: 16px 2px 12px; background: linear-gradient(transparent, var(--bg-app) 22px); }
+        .cal-now-dock { pointer-events: none; } .cal-now-dock > * { pointer-events: auto; } /* drag-fix: its fade lets a press through to the card it covers */
         .cal-now-float .kf-now-quiet { display: inline-flex; max-width: 100%; box-sizing: border-box; padding: 0 10px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-block); box-shadow: var(--shadow-panel); }
         .cal-now-float { position: absolute; left: 16px; bottom: 16px; z-index: 8; width: min(280px, calc(100% - 32px)); }
         /* Kai 2026-10-14: the per-day tray under the grid (Akiflow). */
