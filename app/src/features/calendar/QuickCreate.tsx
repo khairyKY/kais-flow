@@ -6,6 +6,8 @@ import { Select } from '../../components/Select'
 import { BackLink, Button, Toggle } from '../../components/kit'
 import { DateInput, TimeInput, Seg, ColorDots, FLabel, FHelp } from './formFields'
 import { LengthChips } from '../../components/TimePicker'
+import { TypedTime } from '../../components/TypedTime'
+import { fromMin, toMin } from '../../components/pickerMath'
 import { createEvent, scheduleTask, setEventRepeat, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { cairoDateKey } from '../../lib/dateShortcuts'
@@ -315,6 +317,22 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
 
   const durationMin = diffMinutes(startTime, endTime)
   const durationText = durationMin > 0 ? lenLabel(durationMin) : null
+  // Queue 16: type the when — "7–8:30", "7:10 pm", "50m", "in 2h" — beside the time fields and chips.
+  const typed = (dense: boolean) =>
+    !allDay && (
+      <TypedTime
+        dense={dense}
+        start={/^\d{1,2}:\d{2}$/.test(startTime) ? toMin(startTime) : null}
+        minutes={durationMin > 0 ? durationMin : null}
+        style={{ paddingTop: 8, paddingBottom: 0 }}
+        onApply={(r) => {
+          const start = r.start ?? 9 * 60
+          setStartTime(fromMin(start))
+          setEndTime(fromMin(start + (r.minutes ?? 30)))
+          markDateTouched()
+        }}
+      />
+    )
 
   // ── Field blocks (shared by the popover and the page) ──
   const kindSwitcher = page ? (
@@ -408,6 +426,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
           </>
         )}
       </div>
+      {typed(true)}
       {/* Kai 2026-10-21: the length in one tap — it sets the end (and a task's estimate). */}
       {!allDay && <LengthChips value={durationMin} onPick={(m) => { setEndTime(plus(startTime, m)); markDateTouched() }} style={{ minHeight: 0, marginTop: 8 }} />}
     </div>
@@ -523,6 +542,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} />
         <TimeInput value={endTime} day={date} onChange={(v) => { setEndTime(v); markDateTouched() }} />
       </div>
+      {typed(false)}
     </div>
   )
   const chips = (list: number[], extra?: ReactNode) => (
@@ -582,6 +602,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
           <div>
             <FLabel>Duration</FLabel>
             {chips(DURATION_CHIPS, !DURATION_CHIPS.includes(durationMin) && durationText ? <span style={CHIP_ON}>{durationText}</span> : null)}
+            {typed(false)}
           </div>
           <div>
             <FLabel>Reminder</FLabel>
