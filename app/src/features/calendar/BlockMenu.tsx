@@ -4,12 +4,11 @@ import { DatePicker, Popover } from '../../components/DatePicker'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
-import { Button } from '../../components/kit'
+import { Button, KeyCombo } from '../../components/kit'
 import { fromMin, toMin } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { LengthChips, SheetTitle, TimePanel } from '../../components/TimePicker'
 import { TypedTime } from '../../components/TypedTime'
-import { uiZoom } from '../../lib/uiScale'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
 import { useDomains } from '../domains/api'
 import { TaskPicker } from '../focus/TaskPicker'
@@ -17,9 +16,11 @@ import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, setEventRemindWithUndo, setEventRepeat, updateEvent } from './api'
-import { BLOCK_MENU_WIDTH, EVENT_REMIND, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
+import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
-import { ColorDots } from './formFields'
+import { SwatchTray } from './formFields'
+import { blockSwatch } from './blockHue'
+import { askChat, copyBlockLink } from './blockActions'
 import { eventSpan } from './phoneGridMath'
 import { duplicateBlockWithUndo } from './duplicate'
 
@@ -32,24 +33,19 @@ import { duplicateBlockWithUndo } from './duplicate'
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', unschedule: 'plus', delete: 'delete', google: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar',
 }
 
 // B (D5): a caption is metadata — sentence case, untracked, even digits.
 const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }
 const check = <Icon name="check" size={13} style={{ color: 'var(--acc-terra)' }} />
 
-/** The swatch a block wears: its own colour, else its kind's (a meeting blossom, a task / block lavender). */
-function blockDot(e: CalendarEvent): string {
-  return e.color ?? (e.type === 'event' && !e.task_id ? 'var(--acc-blossom)' : 'var(--acc-lavender)')
-}
 
 /** The open, unplaced tasks Link a task… offers. */
 const linkable = (tasks: readonly Task[]) => tasks.filter((t) => t.status === 'todo' && !t.scheduled_start && !t.deleted_at)
 
 function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; untitled: boolean; gone: React.RefObject<boolean>; readOnly?: boolean }) {
   const [draft, setDraft] = useState(untitled ? '' : event.title)
-  const [colourAt, setColourAt] = useState<{ x: number; y: number } | null>(null)
   const latest = useRef({ draft, event })
   latest.current = { draft, event }
   const commit = () => {
@@ -59,23 +55,9 @@ function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; u
   useEffect(() => commit, []) // eslint-disable-line react-hooks/exhaustive-deps -- closing (Esc, a click outside) saves it
   return (
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 9px 7px' }}>
-      <style>{'.kf-bm-title::placeholder { color: var(--ink-faint); } .kf-bm-dot:focus-visible { outline: none; box-shadow: var(--focus-ring); }'}</style>
-      {/* Kai 2026-10-12: the colour changes after creation — the title's dot opens the swatches. */}
-      <button
-        type="button"
-        className="kf-bm-dot"
-        aria-label="Colour"
-        disabled={readOnly}
-        aria-haspopup="menu"
-        aria-expanded={!!colourAt}
-        onClick={(e) => {
-          const r = e.currentTarget.getBoundingClientRect()
-          setColourAt((at) => (at ? null : { x: r.left, y: r.bottom + 4 * uiZoom() }))
-        }}
-        style={{ flex: 'none', width: 15, height: 15, margin: '1px -4px 0', padding: 0, border: 'none', borderRadius: '50%', background: 'none', cursor: readOnly ? 'default' : 'pointer', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
-      >
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: blockDot(event) }} />
-      </button>
+      <style>{'.kf-bm-title::placeholder { color: var(--ink-faint); }'}</style>
+      {/* Menu B (cal-blocks): the block's colour as a dot before its title; the swatches sit in the tray under it. */}
+      <span aria-hidden="true" style={{ flex: 'none', width: 7, height: 7, margin: '6px 0 0', borderRadius: '50%', background: blockSwatch(event) }} />
       <textarea
         className="kf-bm-title"
         aria-label="Title"
@@ -93,27 +75,6 @@ function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; u
         }}
         style={{ flex: 1, minWidth: 0, resize: 'none', border: 'none', outline: 'none', background: 'none', padding: 0, margin: 0, fontFamily: 'var(--font-ui)', fontSize: 'var(--fs-body-s)', fontWeight: 500, lineHeight: 1.35, color: 'var(--ink-body)', fieldSizing: 'content' } as CSSProperties}
       />
-      {colourAt && (
-        <ContextMenu
-          position={colourAt}
-          onClose={() => setColourAt(null)}
-          items={[]}
-          label="Colour"
-          width={196}
-          header={
-            <div style={{ padding: 6 }}>
-              <ColorDots
-                value={event.color ?? null}
-                size={18}
-                onChange={(c) => {
-                  if (c !== (event.color ?? null)) updateEvent(event, { color: c })
-                  setColourAt(null)
-                }}
-              />
-            </div>
-          }
-        />
-      )}
     </div>
   )
 }
@@ -210,6 +171,19 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
     return () => window.removeEventListener('keydown', onKey)
   })
 
+  // Ctrl+D / ⌘D (Menu B, Akiflow's): Duplicate, where the menu offers it — with Undo, as its row.
+  useEffect(() => {
+    if (synced || !spec.some((e) => e.key === 'duplicate')) return
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || (e.key.toLowerCase() !== 'd' && e.code !== 'KeyD')) return
+      e.preventDefault() // the browser's bookmark
+      duplicateBlockWithUndo(event, task)
+      onClose()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
+
   const choices = (list: { label: string; on: boolean; run: () => void; icon?: ReactNode; divider?: boolean; danger?: boolean }[], closeAll: () => void): ContextMenuItem[] =>
     list.map((c) => ({ label: c.label, icon: c.icon, divider: c.divider, danger: c.danger, hint: c.on ? check : undefined, onClick: () => { c.run(); closeAll() } }))
 
@@ -278,6 +252,18 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
           />
         )
       }
+      case 'ai':
+        // Menu B: each row opens the chat with a request about this block typed in (the chat acts, with a confirm card).
+        return ({ position: at, onClose: back, closeAll }) => (
+          <ContextMenu
+            position={at}
+            onClose={back}
+            width={230}
+            label="Work with AI"
+            header={<div style={{ ...CAPTION, padding: '4px 9px 2px' }}>Work with AI · opens the chat</div>}
+            items={aiPrompts(event, !!event.task_id).map((p) => ({ label: p.label, onClick: () => { closeAll(); askChat(p.text) } }))}
+          />
+        )
       case 'delete':
         return event.seriesId || event.recurrence_rule
           ? ({ position: at, onClose: back, closeAll }) => (
@@ -305,6 +291,7 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
     open: () => event.task_id && openTask(event.task_id),
     replan: () => onReplan?.(position.x, position.y),
     duplicate: () => duplicateBlockWithUndo(event, task),
+    copylink: () => copyBlockLink(event),
     unschedule,
     delete: del,
   }
@@ -317,7 +304,8 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
     divider: e.divider ?? false,
     shortcut: e.key === 'unschedule' || e.key === 'delete' ? e.hint : undefined,
     hint:
-      e.key === 'project' && project ? (
+      // Menu B draws Duplicate's keys as "Ctrl D" (the cheatsheet's ⌘/Ctrl rows; ⌘D works on a Mac too).
+      e.key === 'duplicate' ? <KeyCombo keys={['Ctrl', 'D']} size="sm" /> : e.key === 'project' && project ? (
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: project.color || domains.find((d) => d.id === project.domain_id)?.color || 'var(--ink-hairline)' }} />
       ) : e.key !== 'unschedule' && e.key !== 'delete' ? e.hint : undefined,
     before: e.caption && (
@@ -341,6 +329,12 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
       header={
         <>
           <TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />
+          {/* Menu B (Kai 2026-10-26): the swatches in a quiet tray under the title, with "+ Custom". */}
+          {!synced && (
+            <div style={{ padding: '0 9px 8px' }}>
+              <SwatchTray value={event.color ?? null} onChange={(c) => { if (c !== (event.color ?? null)) updateEvent(event, { color: c }) }} />
+            </div>
+          )}
           {/* Kai 2026-10-21: the length in one tap — the block resizes from its start (a task's estimate
               follows, calendar/api resizeEvent), with Undo. Queue 15: the popover's ONE length control.
               Queue 16: or type it — "7–8:30", "50m", "7:10 pm", "in 2h" (Time ▸ keeps the list). */}

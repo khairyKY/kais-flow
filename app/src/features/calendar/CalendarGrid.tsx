@@ -26,6 +26,8 @@ import { useDayRollover } from './useDayRollover'
 import { cardDragData } from './planningMode'
 import { liftCards } from './cardDrag'
 import { blockHue } from './blockHue'
+import { repeatCheckName } from './blockMenuSpec'
+import { RepeatGlyph, Tick } from './checkGlyphs'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -41,6 +43,8 @@ export interface CalendarGridEvent {
   /** Set when the block came from a task — drives the in-block checkbox (R4, 2026-07-20). */
   taskId?: string | null
   taskDone?: boolean
+  /** The task's repeat rule (RRULE), when it repeats — repeat B draws its box as two chasing arrows (cal-blocks). */
+  taskRepeat?: string | null
   /** One occurrence of a repeating event (CALENDAR-BLOCK-STATES C10): the ↻ badge. */
   repeat?: boolean
   /** A Time block's tasks (Time Slots, 0073), drawn as rows inside it, and its "2 tasks · 45m of 2h". */
@@ -92,6 +96,9 @@ interface CalendarGridProps {
   pickedIds?: readonly string[]
   /** The picked blocks moved by the dragged one's delta — true when handled. */
   onMoveMany?: (ids: readonly string[], deltaMs: number) => boolean
+  /** Ctrl+drag (menu B, cal-blocks): a copy of the block lands here, the original stays — true when handled
+   * (false: it can't be copied, e.g. a Time block — the soft-no). */
+  onDuplicateAt?: (id: string, start: string, end: string, allDay: boolean) => boolean
   /** Punch 34: double-click a task-linked block → straight to the task editor. */
   onEventDoubleClick?: (id: string) => void
   /** A rail card dropped on the grid: a task (`data-task-id`) or an inbox item (`data-inbox-id`). */
@@ -220,8 +227,10 @@ function dayRange(first: string, last: string, max = 62): string[] {
 // .fc-event-mirror) into the stepped placeholder it's supposed to be.
 const GHOST_ID = 'kf-cal-ghost'
 
-function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
-  if (typeof document === 'undefined') return () => {}
+/** `id`: the grabbed block's ghost carries GHOST_ID; a multi-drag's other blocks (cal-blocks, item 10) get their
+ * own, unnamed — each placed from its own block, so it keeps its offset from the grabbed one under the pointer. */
+function startGhost(source: HTMLElement, ev: MouseEvent | null, id: string | null = GHOST_ID, from?: { x: number; y: number } | null): { stop: () => void; host: HTMLElement | null } {
+  if (typeof document === 'undefined') return { stop: () => {}, host: null }
   const rect = source.getBoundingClientRect()
 
   // The ghost lives on <body> so `position: fixed` is always viewport-relative (a transformed
@@ -231,8 +240,8 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
   // `.fc-v-event`, whose --fc-event-bg-color defaults to #3788d8 — Kai's "it turns all blue".
   // Wrapping the clone in a `.fc` host restores the scope without moving it off <body>.
   const host = document.createElement('div')
-  host.id = GHOST_ID
-  host.className = source.closest('.cal-motion-on') ? 'fc cal-motion-on' : 'fc'
+  if (id) host.id = id
+  host.className = source.closest('.cal-motion-on') ? 'fc cal-motion-on kf-ghost-host' : 'fc kf-ghost-host'
   host.style.cssText = 'position:fixed;left:0;top:0;pointer-events:none;z-index:70;'
 
   const ghost = source.cloneNode(true) as HTMLElement
@@ -247,9 +256,11 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
   host.appendChild(ghost)
   document.body.appendChild(host)
 
-  // Grab offset keeps the ghost under the same spot on the block the pointer picked up.
-  const grabX = ev ? ev.clientX - rect.left : rect.width / 2
-  const grabY = ev ? ev.clientY - rect.top : rect.height / 2
+  // Grab offset keeps the ghost under the same spot on the block the pointer picked up — measured from the press
+  // (`from`), not from the move that crossed FullCalendar's drag threshold, so the ghost doesn't lag the pointer.
+  const at = from ?? (ev ? { x: ev.clientX, y: ev.clientY } : null)
+  const grabX = at ? at.x - rect.left : rect.width / 2
+  const grabY = at ? at.y - rect.top : rect.height / 2
   // The host carries the position so the ghost itself keeps the 2c wobble on its own transform.
   const move = (e: MouseEvent) => {
     host.style.transform = `translate(${e.clientX - grabX}px, ${e.clientY - grabY}px)`
@@ -258,12 +269,18 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null): () => void {
   window.addEventListener('mousemove', move)
   window.addEventListener('dragover', move as EventListener)
 
-  return () => {
-    window.removeEventListener('mousemove', move)
-    window.removeEventListener('dragover', move as EventListener)
-    host.remove()
+  return {
+    host,
+    stop: () => {
+      window.removeEventListener('mousemove', move)
+      window.removeEventListener('dragover', move as EventListener)
+      host.remove()
+    },
   }
 }
+
+/** A multi-drag's other picked blocks (cal-blocks, item 10): each one's ghost, and its block left faded in place. */
+type Carried = { id: string; stop: () => void; host: HTMLElement | null }
 
 // ── Calendar smoothness S1 (2026-10-22 audit): FullCalendar's React adapter re-runs resetOptions on every
 // render and compares callbacks and formats by identity and `events` element by element — a new array
@@ -305,7 +322,7 @@ function clockFormatter(zone: string, h24: boolean): (ms: number) => string {
 
 type BlockProps = {
   kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number; kfTaskish: boolean
-  kfOverdue: boolean; kfConflict: boolean; kfGoal: boolean
+  kfOverdue: boolean; kfConflict: boolean; kfGoal: boolean; kfTaskRepeat: string | null
   kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
   kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null; kfParent: string | null
 }
@@ -374,6 +391,16 @@ function settleGhost(landing: { stop: () => void; host: HTMLElement | null }, id
       window.setTimeout(finish, 170)
     }),
   )
+}
+
+/** §7 the soft-no on a refused drop: the ghost (and a multi-drag's others) shakes and dims, then goes (340 ms). */
+function softNo(host: HTMLElement, carried: readonly Carried[], stop: () => void): void {
+  host.classList.add('kf-cal-softno')
+  for (const c of carried) c.host?.classList.add('kf-cal-softno')
+  window.setTimeout(() => {
+    stop()
+    carried.forEach((c) => c.stop())
+  }, 340)
 }
 
 /** M1 / M8: the just-landed ring (§7, 300 ms) on a block that arrived — dropped, created, restored. An
@@ -480,11 +507,43 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   const stopGhostRef = useRef<(() => void) | null>(null)
   const stopHoverRef = useRef<(() => void) | null>(null)
   // S2 + M1: a ghost handed from the drag's end to the drop, which settles it once the block has landed.
-  const landingRef = useRef<{ stop: () => void; host: HTMLElement | null; timer: number } | null>(null)
+  const landingRef = useRef<{ stop: () => void; host: HTMLElement | null; timer: number; carried: Carried[] } | null>(null)
+  // cal-blocks item 10: the other picked blocks' ghosts while one of them is dragged.
+  const carriedRef = useRef<Carried[]>([])
+  // Ctrl+drag (menu B): the press began with Ctrl held; `stopKeys` ends the live key watch (the wrapper's
+  // kf-cal-copying keeps the original drawn and the cursor a copy while the key is down).
+  const copyRef = useRef<{ start: boolean; stopKeys: (() => void) | null }>({ start: false, stopKeys: null })
   useEffect(() => () => {
     stopGhostRef.current?.() // never strand a ghost (or a lit rail section) on unmount
     stopHoverRef.current?.()
     landingRef.current?.stop()
+    landingRef.current?.carried.forEach((c) => c.stop())
+    carriedRef.current.forEach((c) => c.stop())
+    copyRef.current.stopKeys?.()
+  }, [])
+  // Ctrl+drag (menu B): FullCalendar starts no drag with Ctrl held (its isPrimaryMouseButton), so a Ctrl-press on a
+  // block is handed on without the key — the drag starts, and the drop reads the key to copy instead of move. A
+  // press on the block's own controls (its check, ▶ ⋯, a held row, a resize edge) is theirs; a Ctrl-click with no
+  // move still reaches eventClick (the multi-selection): only the press is re-sent.
+  useEffect(() => {
+    const wrap = wrapRef.current
+    if (!wrap) return
+    const onDown = (e: MouseEvent) => {
+      if (!e.isTrusted || e.button !== 0 || !e.ctrlKey) return
+      const t = e.target as HTMLElement | null
+      const block = t?.closest<HTMLElement>('.fc-timegrid-event')
+      if (!t || !block || block.matches('.fc-event-mirror, .kf-synced') || t.closest('[role="button"], [role="checkbox"], .kf-ev-slot-row, .fc-event-resizer')) return
+      e.stopImmediatePropagation()
+      copyRef.current.start = true
+      t.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, cancelable: true, view: window, clientX: e.clientX, clientY: e.clientY, screenX: e.screenX, screenY: e.screenY, button: 0, buttons: 1, shiftKey: e.shiftKey, altKey: e.altKey, metaKey: e.metaKey }))
+    }
+    const onUp = () => { copyRef.current.start = false }
+    wrap.addEventListener('mousedown', onDown, true)
+    window.addEventListener('mouseup', onUp)
+    return () => {
+      wrap.removeEventListener('mousedown', onDown, true)
+      window.removeEventListener('mouseup', onUp)
+    }
   }, [])
   // §6 stacked (3+): the "+N more" popover — the ids it lists and the label it hangs from.
   const [stackMore, setStackMore] = useState<{ ids: string[]; left: number; bottom: number } | null>(null)
@@ -683,6 +742,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         kfColor: e.color ?? null,
         kfTaskId: e.taskId ?? null,
         kfTaskDone: !!e.taskDone,
+        kfTaskRepeat: e.taskRepeat ?? null,
         kfTaskish: isTaskish,
         kfStart: startMs,
         kfEnd: endMs,
@@ -756,6 +816,9 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   // `select` below reads the key. The slot's half hour, 30 minutes long (a whole day in the all-day band).
   function handleCtrlClick(e: React.MouseEvent) {
     if (!e.ctrlKey || e.metaKey || e.button !== 0 || (e.target as HTMLElement).closest('.fc-event, .fc-more-link, button, [role="button"]')) return
+    // The release of a Ctrl+drag (menu B's copy) is a click on whatever both ends share — not a Ctrl-click on a slot.
+    const from = downAt.current
+    if (from && Math.abs(e.clientX - from.x) + Math.abs(e.clientY - from.y) > 3) return
     const at = resolveGridDateTime(e.clientX, e.clientY)
     if (!at) return
     const end = new Date(Date.parse(at.iso) + (at.allDay ? 1440 : 30) * 60_000).toISOString()
@@ -990,15 +1053,17 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
             {!arg.isMirror && <span className="kf-ev-pick" aria-hidden="true">✓</span>}
             {cutFrom && <span className="fc-event-time kf-ev-cut kf-ev-cut-from">{cutFrom}</span>}
             {cutInto && <span className="fc-event-time kf-ev-cut kf-ev-cut-into">{cutInto}</span>}
+            {/* Check B (cal-blocks): a 2px edge, 1px bigger, softer corners; a repeating task's is repeat B, the
+                chasing box — ticking it completes this occurrence, as any task's does. */}
             {p.kfTaskId && !arg.isMirror && (
               <span
-                className={`kf-ev-check${done ? ' kf-on' : ''}`}
+                className={`kf-ev-check${done ? ' kf-on' : ''}${p.kfTaskRepeat ? ' kf-rep' : ''}`}
                 role="checkbox"
                 aria-checked={done}
-                aria-label={`${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
+                aria-label={p.kfTaskRepeat ? repeatCheckName(done, p.kfTaskRepeat) : `${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
                 ref={dragGuard(() => L().props.onCompleteTask?.(p.kfTaskId!, done))}
               >
-                {done ? '✓' : ''}
+                {p.kfTaskRepeat ? <RepeatGlyph done={done} /> : done ? <Tick /> : null}
               </span>
             )}
             <div className="kf-ev-text">
@@ -1033,7 +1098,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                         aria-label={`${h.done ? 'Reopen' : 'Complete'} ${h.title}`}
                         ref={dragGuard(() => L().props.onCompleteTask?.(h.id, h.done))}
                       >
-                        {h.done ? '✓' : ''}
+                        {h.done ? <Tick /> : null}
                       </span>
                       <span className="fc-event-title kf-ev-slot-title"><EmojiText text={h.title} /></span>
                       <span className="kf-ev-slot-out" role="button" aria-label={`Out of the slot: ${h.title}`} title="Out of the slot" ref={dragGuard(() => L().props.onSlotTaskOut?.(h.id))}>
@@ -1096,14 +1161,47 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         // (it used to land 1.5 s after the first drag, over the block the next one reached for).
         markSeen('hint:calendar')
         landingRef.current?.stop()
-        stopGhostRef.current = startGhost(info.el, info.jsEvent as MouseEvent | null)
+        landingRef.current?.carried.forEach((c) => c.stop())
+        const je = info.jsEvent as MouseEvent | null
+        const from = je instanceof MouseEvent ? downAt.current : null // a touch drag has no mouse press to measure from
+        stopGhostRef.current = startGhost(info.el, je, GHOST_ID, from).stop
         stopHoverRef.current = trackRailHover(L().props.railRef?.current)
+        // Ctrl+drag (menu B): with the key down (from the press, or pressed meanwhile) the original stays drawn.
+        const wrap = wrapRef.current
+        const copying = (on: boolean) => wrap?.classList.toggle('kf-cal-copying', on)
+        copying(copyRef.current.start || !!je?.ctrlKey || !!je?.metaKey)
+        const key = (e: KeyboardEvent) => { if (e.key === 'Control' || e.key === 'Meta') copying(e.type === 'keydown') }
+        window.addEventListener('keydown', key)
+        window.addEventListener('keyup', key)
+        copyRef.current.stopKeys = () => {
+          window.removeEventListener('keydown', key)
+          window.removeEventListener('keyup', key)
+          copying(false)
+          copyRef.current.stopKeys = null
+        }
+        // cal-blocks item 10 (Kai: "I don't see the events moving together"): dragging one of several picked blocks
+        // carries every other picked block on screen as its own ghost under the pointer, its offset kept (the 2c
+        // wobble too); each one's block stays, faded, where it was until they all land together (eventDrop).
+        const id = blockIdOf(info.event)
+        const picked = L().pickedIds
+        if (copyRef.current.start || picked.length < 2 || !picked.includes(id) || info.event.allDay) return
+        carriedRef.current = picked.flatMap((pid): Carried[] => {
+          if (pid === id) return []
+          const el = wrapRef.current?.querySelector<HTMLElement>(`.fc-timegrid-event[data-kf-id="${CSS.escape(pid)}"]:not(.fc-event-mirror):not(.kf-synced)`)
+          if (!el) return []
+          const g = startGhost(el, je, null, from)
+          el.setAttribute('data-carried', '')
+          return [{ id: pid, host: g.host, stop: () => { el.removeAttribute('data-carried'); g.stop() } }]
+        })
       },
       eventDragStop: (info: EventDragStopArg) => {
         const stop = stopGhostRef.current
         stopGhostRef.current = null
         stopHoverRef.current?.()
         stopHoverRef.current = null
+        copyRef.current.stopKeys?.()
+        const carried = carriedRef.current
+        carriedRef.current = []
         const je = info.jsEvent as MouseEvent | null
         const contains = (el: Element | null | undefined) => {
           if (!el || !je) return false
@@ -1120,21 +1218,22 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           if (!handled) {
             const host = document.getElementById(GHOST_ID)
             if (host) {
-              host.classList.add('kf-cal-softno')
-              window.setTimeout(() => stop?.(), 340)
+              softNo(host, carried, () => stop?.())
               return
             }
           }
           stop?.()
+          carried.forEach((c) => c.stop())
           return
         }
         // S2 + M1: over the grid the ghost stays up for the drop to settle it where the block lands (an
         // unchanged drop fires no eventDrop — the timer lets it go).
-        if (!stop) return
-        const landing = { stop, host: document.getElementById(GHOST_ID), timer: 0 }
+        if (!stop) return carried.forEach((c) => c.stop())
+        const landing = { stop, host: document.getElementById(GHOST_ID), timer: 0, carried }
         landing.timer = window.setTimeout(() => {
           if (landingRef.current === landing) landingRef.current = null
           stop()
+          carried.forEach((c) => c.stop())
         }, 400)
         landingRef.current = landing
       },
@@ -1143,12 +1242,39 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         landingRef.current = null
         if (landing) window.clearTimeout(landing.timer)
         const id = info.event.id
-        // Multi-select: a picked block dragged carries the other picked blocks by the same amount.
+        const carried = landing?.carried ?? []
+        const motion = !!wrapRef.current?.closest('.cal-motion-on')
+        const je = info.jsEvent as MouseEvent | null
+        // Ctrl+drag (menu B): the original goes back where it was and a copy lands here, with one Undo.
+        if ((je?.ctrlKey || je?.metaKey) && info.event.start && L().props.onDuplicateAt) {
+          const allDay = info.event.allDay
+          const end = info.event.end ?? new Date(info.event.start.getTime() + (allDay ? 86_400_000 : 3_600_000))
+          const start = info.event.start.toISOString()
+          info.revert()
+          carried.forEach((c) => c.stop())
+          if (L().props.onDuplicateAt?.(id, start, end.toISOString(), allDay)) return landing?.stop()
+          if (landing?.host) softNo(landing.host, [], landing.stop)
+          else landing?.stop()
+          return
+        }
+        // Multi-select: a picked block dragged carries the other picked blocks by the same amount — all of them land
+        // together (cal-blocks item 10), or, if any would leave the days on screen, none moves (the soft-no).
         const picked = L().pickedIds
         let handled = false
         if (picked.length > 1 && picked.includes(id) && info.event.start && info.oldEvent.start && !info.event.allDay && !info.oldEvent.allDay) {
-          handled = !!L().props.onMoveMany?.(picked, info.event.start.getTime() - info.oldEvent.start.getTime())
+          const delta = info.event.start.getTime() - info.oldEvent.start.getTime()
+          const view = fcRef.current?.getApi().view
+          const out = !!view && L().props.events.some((e) => picked.includes(e.id) && (Date.parse(e.start) + delta < view.activeStart.getTime() || Date.parse(e.end) + delta > view.activeEnd.getTime()))
+          if (out) {
+            info.revert()
+            if (landing?.host) softNo(landing.host, carried, landing.stop)
+            else carried.forEach((c) => c.stop())
+            return
+          }
+          handled = !!L().props.onMoveMany?.(picked, delta)
+          if (handled) for (const c of carried) settleGhost(c, c.id, motion)
         }
+        if (!handled) carried.forEach((c) => c.stop())
         if (!handled && info.event.start) {
           // Crossing the all-day boundary nulls the end (FC convention) — restate a real one:
           // a converted all-day block spans its day; a re-timed chip gets the default hour.
@@ -1157,7 +1283,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           L().props.onMove(id, info.event.start.toISOString(), end.toISOString(), allDay)
         }
         setPinnedId(id) // Polish F2b: where it landed stays in view
-        if (landing) settleGhost(landing, id, !!wrapRef.current?.closest('.cal-motion-on'))
+        if (landing) settleGhost(landing, id, motion)
       },
       // While resizing, FC keeps the original chip visible under the mirror — with both drawn
       // the overlap reads as a dark doubled rectangle. Hide the original for the duration.

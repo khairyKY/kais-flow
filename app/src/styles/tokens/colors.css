@@ -107,4 +107,26 @@
   --bg-page: var(--page-paper);
   --border-page: var(--page-line);
 
+  /* cal-blocks (Kai 2026-10-26, palette C — design-export/Calendar extras options.html, values in
+     docs/log/assets/looks2/palettes.json): the block swatches, each with the text tone that passes AA on its fill;
+     the fill share, "Ran over"'s own terra, and --blk-night (0% day / 100% night) for a custom colour's tone. */
+  --blk-fill: 24%;
+  --blk-night: 0%;
+  --blk-ran-ink: #7C341D;
+  --blk-rose: #E58F99; --blk-rose-ink: #7F3F48;
+  --blk-clay: #E29572; --blk-clay-ink: #7D4328;
+  --blk-ochre: #C9A658; --blk-ochre-ink: #694E01;
+  --blk-olive: #A0B569; --blk-olive-ink: #4B5A1B;
+  --blk-fern: #72BF8E; --blk-fern-ink: #1D5E3A;
+  --blk-lagoon: #47BFC5; --blk-lagoon-ink: #065C5F;
+  --blk-cornflower: #81ADED; --blk-cornflower-ink: #325383;
+  --blk-iris: #B59CE3; --blk-iris-ink: #5D497F;
+  --blk-wine: #B36670; --blk-wine-ink: #743840;
+  --blk-rust: #B16C4C; --blk-rust-ink: #723C23;
+  --blk-honey: #9C7B31; --blk-honey-ink: #634902;
+  --blk-moss: #768A42; --blk-moss-ink: #435215;
+  --blk-pine: #4A9266; --blk-pine-ink: #1B5836;
+  --blk-tide: #0D9298; --blk-tide-ink: #035256;
+  --blk-indigo: #5A81BC; --blk-indigo-ink: #2F4D7B;
+  --blk-heather: #8972B3; --blk-heather-ink: #574477;
 }

@@ -235,10 +235,10 @@ export function createEvent(title: string, startsAt: string, endsAt: string, typ
 /** Duplicate (Kai 2026-10-17): a plain event copied to the same time — side by side on the grid. An
  * occurrence copies as a one-off of its own (the series stays as it is). Returns the copy and its
  * Undo, which removes it outright (it never should have existed). A task's block: ./duplicate. */
-export function copyEvent(event: CalendarEvent): { copy: CalendarEvent; undo: () => void } {
+export function copyEvent(event: CalendarEvent, when?: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'all_day'>): { copy: CalendarEvent; undo: () => void } {
   const { seriesId: _occurrenceOf, ...rest } = event
   const at = nowIso()
-  const copy: CalendarEvent = { ...rest, id: crypto.randomUUID(), recurrence_rule: null, recurrence_exdates: [], series_id: null, source: 'native', gcal_id: null, gcal_etag: null, external_ref: null, deleted_at: null, created_at: at, updated_at: at }
+  const copy: CalendarEvent = { ...rest, ...when, id: crypto.randomUUID(), recurrence_rule: null, recurrence_exdates: [], series_id: null, source: 'native', gcal_id: null, gcal_etag: null, external_ref: null, deleted_at: null, created_at: at, updated_at: at }
   writeEvent(copy)
   logActivity('calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, duplicate_of: event.seriesId ?? event.id })
   return { copy, undo: () => writeEvent(copy, 'delete') }
@@ -600,7 +600,7 @@ export function moveEventsByWithUndo(events: readonly CalendarEvent[], deltaMs: 
   if (!own.length || !deltaMs) return
   const at = (iso: string) => new Date(Date.parse(iso) + deltaMs).toISOString()
   const undos = own.map((e) => moveOrResizeEvent(e, at(e.starts_at), at(e.ends_at)))
-  toastUndo(`Moved · ${own.length} ${own.length === 1 ? 'block' : 'blocks'}`, () => undos.reverse().forEach((u) => u()))
+  toastUndo(`${own.length} ${own.length === 1 ? 'block' : 'blocks'} moved`, () => undos.reverse().forEach((u) => u()))
 }
 
 /** "All events": the series row and every occurrence dragged out of it go to Trash, one Undo. Every

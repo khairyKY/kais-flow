@@ -402,7 +402,8 @@ if (want('g2')) {
     const labels = await menu(page).getByRole('menuitem').allInnerTexts()
     check(`g2 ${theme}: rows — date · time · "From Google · Prayer times", nothing else`, labels.length === 3 && /Mon, Oct 12/.test(labels[0]) && /12:00 – 12:20/.test(labels[1]) && /From Google · Prayer times/.test(labels[2]), JSON.stringify(labels))
     const title = menu(page).getByRole('textbox', { name: 'Title' })
-    check(`g2 ${theme}: the title is read-only, the colour dot disabled`, (await title.getAttribute('readonly')) !== null && (await menu(page).getByRole('button', { name: 'Colour' }).isDisabled()))
+    // menu B (cal-blocks): a Google event shows no swatch tray at all (it was a disabled colour dot)
+    check(`g2 ${theme}: the title is read-only, no colour tray`, (await title.getAttribute('readonly')) !== null && (await menu(page).locator('.kf-swatch-tray').count()) === 0)
     await shot(page, `g2-menu-${theme}`, false)
     if (theme === 'day') {
       const w = state.writes.length

@@ -1,0 +1,467 @@
+[
+  {
+    "name": "p-day the 16 block tokens and their text tones are palette C's (day)",
+    "ok": true,
+    "detail": "rgb(124, 52, 29)"
+  },
+  {
+    "name": "p-day the fill is 24% (palette C's day share)",
+    "ok": true,
+    "detail": "24%"
+  },
+  {
+    "name": "p-day a task, ran over (no colour: Iris): its accent is --blk-iris, and its text passes AA on every fill (time 5.38, title 9.28, check 4.67)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(181, 156, 227)\",\"accent\":\"rgb(93, 73, 127)\",\"time\":\"rgb(124, 52, 29)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day a past event (no colour: Rose): its accent is --blk-rose, and its text passes AA on every fill (time 4.65, title 9.17, check 4.65)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(229, 143, 153)\",\"accent\":\"rgb(127, 63, 72)\",\"time\":\"rgb(127, 63, 72)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day a task in progress: its accent is --blk-iris, and its text passes AA on every fill (time 4.67, title 9.28, check 4.67)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(181, 156, 227)\",\"accent\":\"rgb(93, 73, 127)\",\"time\":\"rgb(93, 73, 127)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day the goal: its accent is --blk-iris, and its text passes AA on every fill (time —, title 9.28, check 4.67)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(181, 156, 227)\",\"accent\":\"rgb(93, 73, 127)\",\"time\":null,\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day a done task: its accent is --blk-iris, and its text passes AA on every fill (time —, title 9.28, check 4.67)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(181, 156, 227)\",\"accent\":\"rgb(93, 73, 127)\",\"time\":null,\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day a repeating task: its accent is --blk-iris, and its text passes AA on every fill (time 4.67, title 9.28, check 4.67)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(181, 156, 227)\",\"accent\":\"rgb(93, 73, 127)\",\"time\":\"rgb(93, 73, 127)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day Standup, saved in the old hydrangea: its accent is --blk-lagoon, and its text passes AA on every fill (time 4.67, title 9.21, check 4.67)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(71, 191, 197)\",\"accent\":\"rgb(6, 92, 95)\",\"time\":\"rgb(6, 92, 95)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day Gym, saved in the old sage: its accent is --blk-moss, and its text passes AA on every fill (time 4.73, title 8.47, check 4.73)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(118, 138, 66)\",\"accent\":\"rgb(67, 82, 21)\",\"time\":\"rgb(67, 82, 21)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day Read 2 pages in Fern: its accent is --blk-fern, and its text passes AA on every fill (time —, title 9.34, check 4.72)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(114, 191, 142)\",\"accent\":\"rgb(29, 94, 58)\",\"time\":null,\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day Deep work in the old hydrangea: its accent is --blk-lagoon, and its text passes AA on every fill (time 4.67, title 9.21, check 4.67)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(71, 191, 197)\",\"accent\":\"rgb(6, 92, 95)\",\"time\":\"rgb(6, 92, 95)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day Design review in Heather: its accent is --blk-heather, and its text passes AA on every fill (time 4.61, title 8.39, check 4.61)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(137, 114, 179)\",\"accent\":\"rgb(87, 68, 119)\",\"time\":\"rgb(87, 68, 119)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day a Time block (old hydrangea): its accent is --blk-lagoon, and its text passes AA on every fill (time 4.67, title 9.21, check 4.67)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(71, 191, 197)\",\"accent\":\"rgb(6, 92, 95)\",\"time\":\"rgb(6, 92, 95)\",\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day a custom colour (#123456): its accent keeps its hex, and its text passes AA on every fill (time —, title 6.75, check 5.61)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(18, 52, 86)\",\"accent\":\"color(srgb 0.0980392 0.203922 0.317647)\",\"time\":null,\"title\":\"rgb(42, 36, 32)\",\"paper\":\"rgb(251, 246, 233)\",\"lav\":\"rgb(168, 160, 190)\",\"fill\":0.24}"
+  },
+  {
+    "name": "p-day \"Ran over\" reads in palette C's own terra (#7C341D), AA on its fill (5.38)",
+    "ok": true,
+    "detail": "rgb(124, 52, 29)"
+  },
+  {
+    "name": "p-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night the 16 block tokens and their text tones are palette C's (night)",
+    "ok": true,
+    "detail": "rgb(255, 224, 211)"
+  },
+  {
+    "name": "p-night the fill is 20% (palette C's night share)",
+    "ok": true,
+    "detail": "20%"
+  },
+  {
+    "name": "p-night a task, ran over (no colour: Iris): its accent is --blk-iris, and its text passes AA on every fill (time 4.80, title 5.02, check 4.66)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(199, 176, 242)\",\"accent\":\"rgb(233, 222, 255)\",\"time\":\"rgb(255, 224, 211)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night a past event (no colour: Rose): its accent is --blk-rose, and its text passes AA on every fill (time 4.69, title 5.07, check 4.69)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(244, 164, 173)\",\"accent\":\"rgb(255, 218, 221)\",\"time\":\"rgb(255, 218, 221)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night a task in progress: its accent is --blk-iris, and its text passes AA on every fill (time 4.66, title 5.02, check 4.66)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(199, 176, 242)\",\"accent\":\"rgb(233, 222, 255)\",\"time\":\"rgb(233, 222, 255)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night the goal: its accent is --blk-iris, and its text passes AA on every fill (time —, title 5.02, check 4.66)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(199, 176, 242)\",\"accent\":\"rgb(233, 222, 255)\",\"time\":null,\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night a done task: its accent is --blk-iris, and its text passes AA on every fill (time —, title 5.02, check 4.66)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(199, 176, 242)\",\"accent\":\"rgb(233, 222, 255)\",\"time\":null,\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night a repeating task: its accent is --blk-iris, and its text passes AA on every fill (time 4.66, title 5.02, check 4.66)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(199, 176, 242)\",\"accent\":\"rgb(233, 222, 255)\",\"time\":\"rgb(233, 222, 255)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night Standup, saved in the old hydrangea: its accent is --blk-lagoon, and its text passes AA on every fill (time 4.62, title 5.00, check 4.62)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(107, 208, 214)\",\"accent\":\"rgb(189, 235, 238)\",\"time\":\"rgb(189, 235, 238)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night Gym, saved in the old sage: its accent is --blk-moss, and its text passes AA on every fill (time 4.61, title 5.49, check 4.61)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(152, 171, 106)\",\"accent\":\"rgb(210, 221, 188)\",\"time\":\"rgb(210, 221, 188)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night Read 2 pages in Fern: its accent is --blk-fern, and its text passes AA on every fill (time —, title 4.98, check 4.61)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(139, 208, 163)\",\"accent\":\"rgb(201, 235, 212)\",\"time\":null,\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night Deep work in the old hydrangea: its accent is --blk-lagoon, and its text passes AA on every fill (time 4.62, title 5.00, check 4.62)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(107, 208, 214)\",\"accent\":\"rgb(189, 235, 238)\",\"time\":\"rgb(189, 235, 238)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night Design review in Heather: its accent is --blk-heather, and its text passes AA on every fill (time 4.68, title 5.51, check 4.68)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(170, 149, 210)\",\"accent\":\"rgb(223, 213, 245)\",\"time\":\"rgb(223, 213, 245)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night a Time block (old hydrangea): its accent is --blk-lagoon, and its text passes AA on every fill (time 4.62, title 5.00, check 4.62)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(107, 208, 214)\",\"accent\":\"rgb(189, 235, 238)\",\"time\":\"rgb(189, 235, 238)\",\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night a custom colour (#123456): its accent keeps its hex, and its text passes AA on every fill (time —, title 8.06, check 4.63)",
+    "ok": true,
+    "detail": "{\"c\":\"rgb(18, 52, 86)\",\"accent\":\"color(srgb 0.643137 0.713726 0.796078)\",\"time\":null,\"title\":\"rgb(240, 235, 221)\",\"paper\":\"rgb(38, 34, 51)\",\"lav\":\"rgb(192, 183, 224)\",\"fill\":0.2}"
+  },
+  {
+    "name": "p-night \"Ran over\" reads in palette C's own terra (#FFE0D3), AA on its fill (4.80)",
+    "ok": true,
+    "detail": "rgb(255, 224, 211)"
+  },
+  {
+    "name": "p-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-day a task with no colour is Iris, an event Rose, the fill at --blk-fill",
+    "ok": true,
+    "detail": "[[\"color-mix(in srgb, var(--blk-iris) var(--blk-fill), transparent)\",\"var(--blk-iris-ink)\"],[\"color-mix(in srgb, var(--blk-rose) var(--blk-fill), transparent)\",\"var(--blk-rose-ink)\"]]"
+  },
+  {
+    "name": "p-phone-day \"Ran over\" in palette C's terra",
+    "ok": true,
+    "detail": "rgb(124, 52, 29)"
+  },
+  {
+    "name": "p-phone-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone-night a task with no colour is Iris, an event Rose, the fill at --blk-fill",
+    "ok": true,
+    "detail": "[[\"color-mix(in srgb, var(--blk-iris) var(--blk-fill), transparent)\",\"var(--blk-iris-ink)\"],[\"color-mix(in srgb, var(--blk-rose) var(--blk-fill), transparent)\",\"var(--blk-rose-ink)\"]]"
+  },
+  {
+    "name": "p-phone-night \"Ran over\" in palette C's terra",
+    "ok": true,
+    "detail": "rgb(255, 224, 211)"
+  },
+  {
+    "name": "p-phone-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k-100 check B: 13.00px box (13 × 1), a 2px edge, corners 38%",
+    "ok": true,
+    "detail": "{\"w\":13,\"bw\":2,\"radius\":4.94,\"mid\":275.6875,\"line\":275.6875,\"s\":1}"
+  },
+  {
+    "name": "k-100 …on the title's first line (centres 0.00px apart)",
+    "ok": true,
+    "detail": "{\"w\":13,\"bw\":2,\"radius\":4.94,\"mid\":275.6875,\"line\":275.6875,\"s\":1}"
+  },
+  {
+    "name": "k-100 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k-125 check B: 16.25px box (13 × 1.25), a 2px edge, corners 38%",
+    "ok": true,
+    "detail": "{\"w\":16.25,\"bw\":2,\"radius\":6.175,\"mid\":333.25,\"line\":332.375,\"s\":1.25}"
+  },
+  {
+    "name": "k-125 …on the title's first line (centres 0.88px apart)",
+    "ok": true,
+    "detail": "{\"w\":16.25,\"bw\":2,\"radius\":6.175,\"mid\":333.25,\"line\":332.375,\"s\":1.25}"
+  },
+  {
+    "name": "k repeat B: a repeating task's box is the chasing box (no border, the two-arrow glyph in the block's ink)",
+    "ok": true,
+    "detail": "{\"cls\":\"kf-ev-check kf-rep\",\"name\":\"Complete this occurrence (repeats weekly)\",\"border\":\"none\",\"svg\":true,\"op\":\"1\",\"color\":\"rgb(93, 73, 127)\",\"stroke\":\"2\"}"
+  },
+  {
+    "name": "k …its name: \"Complete this occurrence (repeats weekly)\"",
+    "ok": true,
+    "detail": "Complete this occurrence (repeats weekly)"
+  },
+  {
+    "name": "k …ticking it completes this occurrence (the task row written done, as any repeat's tick)",
+    "ok": true,
+    "detail": "[[\"WATER\",\"done\",\"2026-10-21T11:00:00.000Z\"],[\"Water the plants\",\"todo\",\"2026-10-28T11:00:00.000Z\"]]"
+  },
+  {
+    "name": "k …ticked: the box fills, the tick shows, the heads stay (\"Reopen this occurrence …\")",
+    "ok": true,
+    "detail": "{\"on\":true,\"rect\":true,\"name\":\"Reopen this occurrence (repeats weekly)\"}"
+  },
+  {
+    "name": "k-ticked no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k-150 check B: 19.50px box (13 × 1.5), a 2px edge, corners 38%",
+    "ok": true,
+    "detail": "{\"w\":19.5,\"bw\":2,\"radius\":7.41,\"mid\":384.140625,\"line\":383.390625,\"s\":1.5}"
+  },
+  {
+    "name": "k-150 …on the title's first line (centres 0.75px apart)",
+    "ok": true,
+    "detail": "{\"w\":19.5,\"bw\":2,\"radius\":7.41,\"mid\":384.140625,\"line\":383.390625,\"s\":1.5}"
+  },
+  {
+    "name": "k-150 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone check B: 18px, a 2px edge, 38% corners",
+    "ok": true,
+    "detail": "{\"w\":18,\"bw\":\"2px\",\"r\":6.84}"
+  },
+  {
+    "name": "p-phone repeat B: the chasing box, \"Complete this occurrence (repeats weekly)\"",
+    "ok": true,
+    "detail": "{\"name\":\"Complete this occurrence (repeats weekly)\",\"w\":18,\"svg\":true}"
+  },
+  {
+    "name": "k-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m-day the title first, the tray of swatches under it, then the rows",
+    "ok": true,
+    "detail": "{\"title\":34.75,\"tray\":66.28125,\"rows\":281.03125,\"swatches\":17,\"custom\":\"Custom\",\"on\":\"Lagoon\",\"width\":340}"
+  },
+  {
+    "name": "m-day the tray: No colour + palette C's 16 swatches and \"+ Custom\"; the block's old hydrangea shows as Lagoon",
+    "ok": true,
+    "detail": "{\"title\":34.75,\"tray\":66.28125,\"rows\":281.03125,\"swatches\":17,\"custom\":\"Custom\",\"on\":\"Lagoon\",\"width\":340}"
+  },
+  {
+    "name": "m-day the rows: … Complete · Open task · Duplicate Ctrl D · Work with AI › · Copy link · Unschedule ⌫ · Delete",
+    "ok": true,
+    "detail": "[\"Fri, Oct 23 ▸\",\"10:15 – 11:15 AM 1h ▸\",\"No project ▸\",\"Complete\",\"Open task\",\"Duplicate Ctrl D\",\"Work with AI ▸\",\"Copy link\",\"Unschedule ⌫\",\"Delete\"]"
+  },
+  {
+    "name": "m a swatch saves its colour (Fern, #72BF8E) and the block wears it",
+    "ok": true,
+    "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000020\",\"user_id\":\"00000000-0000-4000-8000-00000000cb10\",\"title\":\"Deep work on the quarterly forecast\",\"starts_at\":\"2026-10-23T07:15:00.000Z\",\"ends_at\":\"2026-10-23T08:15:00.000Z\",\"all_day\":false,\"task_id\":\"10000000-0000-4000-8000-000000000009\",\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"task\",\"color\":\"#72BF8E\",\"deleted_at\":null,\"created_at\":\"2026-10-01T04:00:00.000Z\",\"updated_at\":\"2026-10-01T04:00:00.000Z\"}"
+  },
+  {
+    "name": "m Ctrl+D duplicates the block: a new task, blocked at the same time; the menu closes",
+    "ok": true,
+    "detail": "[\"aa88f962-b09c-4299-aee5-f0e80599948e\",\"2026-10-23T07:15:00.000Z\"]"
+  },
+  {
+    "name": "m …with a toast and its Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m an event's rows: … Link a task… · More › · Duplicate Ctrl D · Work with AI › · Copy link · Delete ⌫",
+    "ok": true,
+    "detail": "[\"Fri, Oct 23 ▸\",\"11:30 AM – 12:30 PM 1h ▸\",\"No project ▸\",\"Does not repeat ▸\",\"No reminder ▸\",\"Link a task… ▸\",\"More ▸\",\"Duplicate Ctrl D\",\"Work with AI ▸\",\"Copy link\",\"Delete ⌫\"]"
+  },
+  {
+    "name": "m Copy link: /calendar?event=<the block> on the clipboard, \"Link copied\"",
+    "ok": true,
+    "detail": "http://localhost:5314/calendar?event=e0000000-0000-4000-8000-000000000021"
+  },
+  {
+    "name": "m …and the link turns the calendar to it and opens its menu",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m Work with AI ›: Find a better time · Reschedule… · Summarise (an event: no subtasks)",
+    "ok": true,
+    "detail": "[\"Find a better time\",\"Reschedule…\",\"Summarise\"]"
+  },
+  {
+    "name": "m …picking one opens the chat with the request typed in (not sent)",
+    "ok": true,
+    "detail": "Find a better time for \"Design review\" (Fri, Oct 23, 11:30 AM–12:30 PM) this week."
+  },
+  {
+    "name": "m-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m-night the title first, the tray of swatches under it, then the rows",
+    "ok": true,
+    "detail": "{\"title\":34.75,\"tray\":66.28125,\"rows\":281.03125,\"swatches\":17,\"custom\":\"Custom\",\"on\":\"Lagoon\",\"width\":340}"
+  },
+  {
+    "name": "m-night the tray: No colour + palette C's 16 swatches and \"+ Custom\"; the block's old hydrangea shows as Lagoon",
+    "ok": true,
+    "detail": "{\"title\":34.75,\"tray\":66.28125,\"rows\":281.03125,\"swatches\":17,\"custom\":\"Custom\",\"on\":\"Lagoon\",\"width\":340}"
+  },
+  {
+    "name": "m-night the rows: … Complete · Open task · Duplicate Ctrl D · Work with AI › · Copy link · Unschedule ⌫ · Delete",
+    "ok": true,
+    "detail": "[\"Fri, Oct 23 ▸\",\"10:15 – 11:15 AM 1h ▸\",\"No project ▸\",\"Complete\",\"Open task\",\"Duplicate Ctrl D\",\"Work with AI ▸\",\"Copy link\",\"Unschedule ⌫\",\"Delete\"]"
+  },
+  {
+    "name": "m-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-phone the event sheet: the tray (17 + Custom) under the title, and Duplicate · Work with AI · Copy link rows",
+    "ok": true,
+    "detail": "{\"swatches\":17,\"custom\":true,\"rows\":[\"Wed, Oct 21\",\"10:30 – 11:15 AM45m\",\"No project\",\"Does not repeat\",\"No reminder\",\"Link a task…\",\"More\",\"Duplicate\",\"Work with AI\",\"Copy link\"]}"
+  },
+  {
+    "name": "p-phone Work with AI › Summarise opens the chat with the request typed in",
+    "ok": true,
+    "detail": "Summarise \"Dentist\" (Wed, Oct 21, 10:30–11:15 AM): what it is and what I need for it."
+  },
+  {
+    "name": "p-phone no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d Ctrl+drag an event: mid-drag the original stays drawn (copy cursor)",
+    "ok": true,
+    "detail": "{\"copying\":true,\"origVisible\":\"visible\"}"
+  },
+  {
+    "name": "d …a copy lands where dropped (75 min later, on a quarter hour, its hour kept); the original is not written",
+    "ok": true,
+    "detail": "[[\"copy\",\"2026-10-22T10:45:00.000Z\"]]"
+  },
+  {
+    "name": "d …\"Duplicated · Lunch with Omar\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d …Undo takes the copy away, the original where it was",
+    "ok": true,
+    "detail": "[\"DELETE calendar_events\"]"
+  },
+  {
+    "name": "d Ctrl+drag a task block: a new task, its block where dropped (75 min later); Gym stays at 11:00",
+    "ok": true,
+    "detail": "[\"0707acca-52ec-4751-82f8-740c8e1bb646\",\"2026-10-22T09:15:00.000Z\"]"
+  },
+  {
+    "name": "d a Ctrl+click without a move still picks the block (multi-select)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x mid-drag: all three picked blocks travel as ghosts under the pointer, each its offset from the grabbed one kept (one day on, 30 min later)",
+    "ok": true,
+    "detail": "[{\"id\":\"e0000000-0000-4000-8000-000000000012\",\"x\":993.658935546875,\"y\":423.8409118652344,\"wobble\":\"kfLift, calGridDragFloat\"},{\"id\":\"e0000000-0000-4000-8000-000000000010\",\"x\":993.658935546875,\"y\":244.84091186523438,\"wobble\":\"kfLift, calGridDragFloat\"},{\"id\":\"e0000000-0000-4000-8000-000000000013\",\"x\":993.658935546875,\"y\":559.8408813476562,\"wobble\":\"kfLift, calGridDragFloat\"}]"
+  },
+  {
+    "name": "x …the wobble kept on every ghost; the two others stay faded where they were",
+    "ok": true,
+    "detail": "{\"ghosts\":[{\"id\":\"e0000000-0000-4000-8000-000000000012\",\"x\":993.658935546875,\"y\":423.8409118652344,\"wobble\":\"kfLift, calGridDragFloat\"},{\"id\":\"e0000000-0000-4000-8000-000000000010\",\"x\":993.658935546875,\"y\":244.84091186523438,\"wobble\":\"kfLift, calGridDragFloat\"},{\"id\":\"e0000000-0000-4000-8000-000000000013\",\"x\":993.658935546875,\"y\":559.8408813476562,\"wobble\":\"kfLift, calGridDragFloat\"}],\"mirror\":[\"Gym11:45 AM–12:45 PM · 1h\"],\"faded\":[[true,\"0.35\"],[false,\"1\"],[true,\"0.35\"]]}"
+  },
+  {
+    "name": "x they land together: each one day on and 45 min later — the same move, snapped to the quarter hour",
+    "ok": true,
+    "detail": "{\"moved\":{\"e0000000-0000-4000-8000-000000000010\":\"2026-10-23T06:45:00.000Z\",\"e0000000-0000-4000-8000-000000000012\":\"2026-10-23T08:45:00.000Z\",\"e0000000-0000-4000-8000-000000000013\":\"2026-10-23T10:15:00.000Z\"},\"deltas\":[1485,1485,1485]}"
+  },
+  {
+    "name": "x …one toast \"3 blocks moved\" with Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x …no ghost left behind",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x Undo puts all three back",
+    "ok": true,
+    "detail": "{\"e0000000-0000-4000-8000-000000000013\":\"2026-10-22T09:30:00.000Z\",\"e0000000-0000-4000-8000-000000000012\":\"2026-10-22T08:00:00.000Z\",\"e0000000-0000-4000-8000-000000000010\":\"2026-10-22T06:00:00.000Z\"}"
+  },
+  {
+    "name": "x no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x refused: dragging Standup back a day would put Dentist before Wednesday — no block moves, the ghosts shake (soft-no)",
+    "ok": true,
+    "detail": "{\"ghosts\":2,\"shaking\":2,\"writes\":[]}"
+  },
+  {
+    "name": "x …and every block is still where it was",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "x-refused no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v the drawings of palette C, menu B, check B and repeat B are on the options page",
+    "ok": true,
+    "detail": "{\"pd\":true,\"pn\":true,\"md\":true,\"mn\":true,\"ck\":true,\"rp\":true}"
+  }
+]

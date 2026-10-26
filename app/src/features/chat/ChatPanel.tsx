@@ -75,7 +75,13 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
   const uid = useAuth().session?.user.id
   // A28: the conversation stays (this device, this account) until Clear.
   const [messages, setMessages] = useState<DisplayMessage[]>(() => loadChat(uid))
-  const [input, setInput] = useState(() => takeChatStarter() ?? '') // the Ask widget's chip types its question
+  const [input, setInput] = useState('')
+  // The Ask widget's chip and the block menu's Work with AI › type a question in (not sent). Taken once the panel
+  // is on screen: a first render thrown away (the lazy chunk's Suspense) used to take it with it — an empty field.
+  useEffect(() => {
+    const starter = takeChatStarter()
+    if (starter) setInput(starter)
+  }, [])
   const [busy, setBusy] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
   const openHit = useOpenSearchHit()

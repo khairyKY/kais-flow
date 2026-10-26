@@ -173,11 +173,11 @@ if (want('a1')) {
     const top = Math.abs(m.y - b.y) < 2 || (m.y < b.y && Math.abs(m.y + m.height - (800 - 12 * 1.25)) < 2)
     const beside = top && (m.x >= b.x + b.width || m.x + m.width <= b.x)
     check(`a1 ${theme}: the popover sits beside the block (top-aligned, or clamped into the window)`, beside, JSON.stringify({ block: [b.x, b.y, b.width], menu: [m.x, m.y, m.width, m.height] }))
-    check(`a1 ${theme}: ~238px wide at 125% (297px on screen)`, Math.abs(m.width - 238 * 1.25) < 3, m.width)
+    check(`a1 ${theme}: ~272px wide at 125% (340px on screen; menu B, cal-blocks)`, Math.abs(m.width - 272 * 1.25) < 3, m.width)
     const labels = await menu(page).getByRole('menuitem').allInnerTexts()
     // event-reminders (A12, 2026-10-14): a Remind row after Repeat.
     // dup-open (Kai 2026-10-17): Duplicate joins, after More.
-    check(`a1 ${theme}: the rows — date · time · project · repeat · remind · Link a task… · More · Duplicate · Delete`, /Mon, Oct 12/.test(labels[0]) && /10:30 – 11:30/.test(labels[1]) && /No project/.test(labels[2]) && /Does not repeat/.test(labels[3]) && /No reminder/.test(labels[4]) && /Link a task/.test(labels[5]) && /More/.test(labels[6]) && /^Duplicate/.test(labels[7]) && /Delete/.test(labels[8]), JSON.stringify(labels))
+    check(`a1 ${theme}: the rows — date · time · project · repeat · remind · Link a task… · More · Duplicate · Work with AI · Copy link · Delete`, /Mon, Oct 12/.test(labels[0]) && /10:30 – 11:30/.test(labels[1]) && /No project/.test(labels[2]) && /Does not repeat/.test(labels[3]) && /No reminder/.test(labels[4]) && /Link a task/.test(labels[5]) && /More/.test(labels[6]) && /^Duplicate/.test(labels[7]) && /^Work with AI/.test(labels[8]) && /^Copy link/.test(labels[9]) && /Delete/.test(labels[10]), JSON.stringify(labels))
     check(`a1 ${theme}: no Save button, no "Sure?"`, (await page.getByRole('button', { name: 'Save' }).count()) === 0 && (await page.getByText('Sure?').count()) === 0)
     await shot(page, `a1-popover-${theme}`)
     check(`a1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))
@@ -195,28 +195,24 @@ if (want('a2')) {
   await title.press('Enter')
   await settle(state)
   check('a2 title: edited in place, saved on Enter', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.title === 'Lunch with Omar & Sara'))
-  // Colour: the title's dot opens the swatches; the block repaints at once.
+  // Colour (menu B, cal-blocks): the swatches sit in a tray under the title; the block repaints at once.
   w = state.writes.length
-  await menu(page).getByRole('button', { name: 'Colour' }).click()
-  await sleep(250)
+  const tray = menu(page).getByRole('group', { name: 'Colour' })
   await shot(page, 'a2-colour-menu')
-  await menu(page, 'Colour').getByRole('button', { name: 'Sage' }).click()
+  await tray.getByRole('button', { name: 'Moss' }).click()
   await settle(state)
   const accent = await fc(page, eid(LUNCH)).evaluate((el) => el.style.getPropertyValue('--kf-ev-accent'))
-  check('a2 colour: Sage saved and the block repaints (no reload)', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.color === '#8A9A7E') && (accent === '#8A9A7E' || accent === 'var(--acc-sage-text)'), accent) // cal-looks: a swatch draws as its token (calendar/blockHue)
-  // None clears it (the popover stays open; the swatch menu shows the pick).
-  await menu(page).getByRole('button', { name: 'Colour' }).click()
+  check('a2 colour: Moss saved and the block repaints (no reload)', posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.color === '#768A42') && accent === 'var(--blk-moss-ink)', accent) // a swatch draws as its token (calendar/blockHue)
+  // No colour clears it (the popover stays open; the tray shows the pick).
   await sleep(250)
-  const sagePicked = await menu(page, 'Colour').getByRole('button', { name: 'Sage' }).getAttribute('aria-pressed')
+  const sagePicked = await tray.getByRole('button', { name: 'Moss' }).getAttribute('aria-pressed')
   w = state.writes.length
-  await menu(page, 'Colour').getByRole('button', { name: 'None', exact: true }).click()
+  await tray.getByRole('button', { name: 'No colour', exact: true }).click()
   await settle(state)
   const cleared = await fc(page, eid(LUNCH)).evaluate((el) => el.style.getPropertyValue('--kf-ev-accent'))
-  check('a2 colour: the swatches show Sage picked; None clears the hue', sagePicked === 'true' && posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.color === null) && cleared === '', `${sagePicked} ${cleared}`)
-  // …and Sage again for the rest of the run.
-  await menu(page).getByRole('button', { name: 'Colour' }).click()
-  await sleep(250)
-  await menu(page, 'Colour').getByRole('button', { name: 'Sage' }).click()
+  check('a2 colour: the tray shows Moss picked; No colour clears the hue', sagePicked === 'true' && posts(state, 'calendar_events', w).some((e) => e.id === eid(LUNCH) && e.color === null) && cleared === '', `${sagePicked} ${cleared}`)
+  // …and Moss again for the rest of the run.
+  await tray.getByRole('button', { name: 'Moss' }).click()
   await settle(state)
   // Duration: 1h → 30m (the Length chips — queue 15).
   w = state.writes.length
@@ -403,6 +399,8 @@ if (want('p1')) {
   for (const theme of ['day', 'night']) {
     const { ctx, page, cdp, errors, state } = await open('/calendar', { view: phone, theme })
     const tap = async (loc) => {
+      await loc.scrollIntoViewIfNeeded().catch(() => {}) // menu B's tray (cal-blocks) puts the lower rows under the sheet's fold
+      await sleep(150)
       const p = center(await loc.boundingBox())
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [p] })
       await sleep(40)
@@ -414,8 +412,8 @@ if (want('p1')) {
     check(`p1 ${theme}: the phone grid draws the occurrence with ↻`, (await block.count()) === 1 && (await block.getByRole('img', { name: 'Repeats' }).count()) === 1)
     await tap(block)
     const rows = await page.locator('.pc-bs-rows .kf-as-row').allInnerTexts()
-    check(`p1 ${theme}: the sheet's rows — date · time · project · repeat · remind · More · Duplicate`, rows.length === 7 && /Mon, Oct 12/.test(rows[0]) && /08:00 – 08:30/.test(rows[1]) && /No project/.test(rows[2]) && /Repeats daily/.test(rows[3]) && /No reminder/.test(rows[4]) && /More/.test(rows[5]) && /^Duplicate/.test(rows[6]), JSON.stringify(rows))
-    check(`p1 ${theme}: swatches for colour; Delete in the footer`, (await page.locator('.pc-bs-colors button').count()) === 10 && (await page.locator('.pc-bs-delete').count()) === 1)
+    check(`p1 ${theme}: the sheet's rows — date · time · project · repeat · remind · More · Duplicate · Work with AI · Copy link`, rows.length === 9 && /Mon, Oct 12/.test(rows[0]) && /08:00 – 08:30/.test(rows[1]) && /No project/.test(rows[2]) && /Repeats daily/.test(rows[3]) && /No reminder/.test(rows[4]) && /More/.test(rows[5]) && /^Duplicate/.test(rows[6]) && /^Work with AI/.test(rows[7]) && /^Copy link/.test(rows[8]), JSON.stringify(rows))
+    check(`p1 ${theme}: the swatch tray (No colour + 16, menu B); Delete in the footer`, (await page.locator('.pc-bs-colors button.kf-sw').count()) === 17 && (await page.locator('.pc-bs-delete').count()) === 1)
     await shot(page, `p1-phone-sheet-${theme}`)
     if (theme === 'day') {
       const w = state.writes.length

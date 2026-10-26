@@ -47,6 +47,7 @@ import { conflictsOf } from './overlapLayout'
 import { parseWeekend } from '../../lib/weekend'
 import { addDays, durationLabel } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
+import { duplicateBlockWithUndo } from './duplicate'
 import { BLOCK_MENU_WIDTH, besideBlock, isSynced } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
@@ -609,11 +610,12 @@ function DesktopCalendar() {
   const gridBlocks = useMemo(
     () => {
       const todayKey = cairoDateKey(new Date())
+      const ruleOf = new Map(tasks.map((t) => [t.id, t.recurrence_rule]))
       return visibleEvents.map((e) => {
         // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
         const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
         return {
-          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
+          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
           goal: !!goalTaskId && e.task_id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === todayKey,
           ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held) } : null),
         }
@@ -1108,6 +1110,15 @@ function DesktopCalendar() {
     onEventClick: (id: string, add?: boolean) => handleEventClick(id, add),
     onMoveMany: (ids: readonly string[], delta: number) => {
       moveEventsByWithUndo(ids.flatMap((id) => gridEvents.filter((x) => x.id === id)), delta)
+      return true
+    },
+    // Ctrl+drag (menu B, cal-blocks): a copy where it was dropped, one Undo — what Duplicate copies (never a Time
+    // block or a Google event; a task block's copy is a new task).
+    onDuplicateAt: (id: string, start: string, end: string, allDay: boolean) => {
+      const event = gridEvents.find((e) => e.id === id)
+      const task = event?.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
+      if (!event || isSynced(event) || event.type === 'time_block' || (event.task_id && !task)) return false
+      duplicateBlockWithUndo(event, task, { starts_at: start, ends_at: end, all_day: allDay })
       return true
     },
     onEventDoubleClick: (id: string) => handleEventDoubleClick(id),

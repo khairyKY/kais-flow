@@ -18,6 +18,7 @@ import { SubtaskAddButton, SubtaskCount, SubtaskNest, hasOpenSubtasks, useNestOp
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotLabel, useCalendarEvents } from '../calendar/api'
 import { cairoTimeKey, timeRange, timeText } from '../calendar/eventTime'
+import { blockSwatch } from '../calendar/blockHue'
 import { clockText, useHour24 } from '../../lib/clock'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
@@ -1383,7 +1384,7 @@ function DayBlockItem({ event, task, phone }: { event: CalendarEvent; task?: Tas
   }
   return (
     <span id={`upnext-${event.id}`} className="td-next-item" role="link" tabIndex={0} title={task ? 'Open task' : 'Open in calendar'} onClick={open} onKeyDown={keys}>
-      <span className="td-next-sq" style={{ background: event.color ?? (event.type === 'event' && !event.task_id ? 'var(--acc-blossom)' : 'var(--acc-lavender)') }} aria-hidden />
+      <span className="td-next-sq" style={{ background: blockSwatch(event) }} aria-hidden />
       <span className="td-next-time">{timeText(start)}</span>
       <span className={`td-ink${done ? ' td-struck' : ''}`}><EmojiText text={event.title} /></span>
     </span>
@@ -1622,7 +1623,7 @@ function Ribbon({ events, now, head, taskById, day }: { events: CalendarEvent[];
           const end = new Date(e.ends_at).getTime()
           const isHead = e.id === head?.id
           const spent = isHead ? Math.min(100, Math.max(0, ((t - start) / Math.max(1, end - start)) * 100)) : 0
-          const color = e.color ?? (e.type === 'event' && !e.task_id ? 'var(--acc-blossom)' : 'var(--acc-lavender)')
+          const color = blockSwatch(e)
           return (
             <button
               key={e.id}
@@ -1675,7 +1676,7 @@ function NextEventItem({ event }: { event: CalendarEvent }) {
   return (
     <>
       <span id={`upnext-${event.id}`} className="td-next-item" role="link" tabIndex={0} title="Open in calendar" onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
-        <span className="td-next-sq" style={{ background: event.color ?? (event.task_id ? 'var(--acc-lavender)' : event.type === 'event' ? 'var(--acc-blossom)' : 'var(--acc-lavender)') }} aria-hidden />
+        <span className="td-next-sq" style={{ background: blockSwatch(event) }} aria-hidden />
         <span className="td-next-time">{timeText(new Date(event.starts_at))}</span>
         <span className="td-ink"><EmojiText text={event.title} /></span>
       </span>

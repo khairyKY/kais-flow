@@ -10,7 +10,7 @@ import type { CalendarEvent, Task } from '../../lib/types'
 import { completeTaskWithUndo } from '../tasks/api'
 import { useStartFocus } from '../today/startFocus'
 import { useMinuteNow } from '../today/useMinuteNow'
-import { blockHue } from './blockHue'
+import { blockHue, KIND_HUE } from './blockHue'
 import { timeText } from './eventTime'
 import { countdown, pickNowNext, progress } from './nowNext'
 import './nowCard.css'
@@ -28,7 +28,7 @@ type Hue = { c: string; ink: string }
 /** The grid's own colour rule: a colour set on the block, else a plain event's blossom, else lavender. */
 function hueOf(e: CalendarEvent): Hue {
   if (e.color) return blockHue(e.color)
-  return e.type === 'event' && !e.task_id ? { c: 'var(--acc-blossom)', ink: 'var(--acc-blossom-text)' } : { c: 'var(--acc-lavender)', ink: 'var(--acc-lavender-text)' }
+  return e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
 }
 const hueVars = (e: CalendarEvent) => {
   const h = hueOf(e)
