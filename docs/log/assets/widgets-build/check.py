@@ -3,6 +3,7 @@
     python docs/log/assets/widgets-build/check.py
 
 It reads app/native/android (java/, debug/, res/, widgets-manifest.xml) and fails on:
+  - an XML file that isn't well-formed (aapt refuses it);
   - an R.<type>.<name> in the Java, or an @<type>/<name> in the XML, that no resource defines;
   - an R.id.<x> in the Java that no layout declares;
   - a layout-v31/ or layout-night/ variant whose ids differ from its base layout;
@@ -13,6 +14,7 @@ The real build (gradle, CI's android job) still has the last word; this catches 
 import os
 import re
 import sys
+import xml.etree.ElementTree as ET
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../../app/native/android'))
 RES = os.path.join(ROOT, 'res')
@@ -46,6 +48,10 @@ for dp, _, fs in os.walk(RES):
             defined[kind].add(name)
         if ext == '.xml':
             text = read(p)
+            try:
+                ET.fromstring(text.encode('utf-8'))  # aapt refuses what isn't well-formed (a "--" in a comment …)
+            except ET.ParseError as e:
+                errors.append(f'{os.path.relpath(p, ROOT)}: not well-formed XML: {e}')
             xml_files[p] = text
             if kind == 'values':
                 for t, n in re.findall(r'<(color|dimen|string|style|integer|bool)\s+name="([^"]+)"', text):

@@ -27,11 +27,11 @@
     <color name="kfw_badge_bg">#E29473</color>
     <color name="kfw_badge_ink">#211D30</color>
     <color name="kfw_skeleton">#14F0EBDD</color>
-    <!-- widgets-build: --line-solid, --acc-lavender, the ink at 9% / 10% -->
+    <!-- widgets-build: line-solid, acc-lavender, the ink at 9% / 10% -->
     <color name="kfw_line_frame">#33F0EBDD</color>
     <color name="kfw_lavender">#C0B7E0</color>
     <color name="kfw_track">#17F0EBDD</color>
     <color name="kfw_gap">#1AF0EBDD</color>
-    <!-- --acc-gold-warm (the washi tape; the goal's underline on the Day bar) -->
+    <!-- acc-gold-warm (the washi tape; the goal's underline on the Day bar) -->
     <color name="kfw_gold_warm">#C9A55A</color>
 </resources>

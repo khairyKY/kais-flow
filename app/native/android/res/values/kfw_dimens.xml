@@ -4,6 +4,6 @@
 <resources>
     <dimen name="kfw_radius">20dp</dimen>
     <dimen name="kfw_r_inner">12dp</dimen>
-    <!-- a calendar block on a widget: --radius-block (12px) at widget scale -->
+    <!-- a calendar block on a widget: radius-block (12px) at widget scale -->
     <dimen name="kfw_r_block">10dp</dimen>
 </resources>

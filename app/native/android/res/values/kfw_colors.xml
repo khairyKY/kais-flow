@@ -33,6 +33,6 @@
     <color name="kfw_lavender">#A8A0BE</color>
     <color name="kfw_track">#172A2420</color>
     <color name="kfw_gap">#1A2A2420</color>
-    <!-- --acc-gold-warm (the washi tape; the goal's underline on the Day bar) -->
+    <!-- acc-gold-warm (the washi tape; the goal's underline on the Day bar) -->
     <color name="kfw_gold_warm">#C9A55A</color>
 </resources>
