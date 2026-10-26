@@ -1,0 +1,122 @@
+[
+  {
+    "name": "1 the Notification sounds card is on Notifications & sound",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 three packs, Felt picked (the synced value)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 a ▶ row for each of the ten kinds",
+    "ok": true,
+    "detail": "task_reminder,event_reminder,snoozed_again,focus_end,break_end,morning_digest,evening_nudge,paper_ready,terms,sync_problem"
+  },
+  {
+    "name": "1 the per-kind switches stay in Kinds (9 toggles there, none in this card)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 the pack line says what it is and where it plays (web: \"otherwise your browser’s own sound\")",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1 each ▶ plays its own sound from the Felt pack",
+    "ok": true,
+    "detail": "/notification-sounds/felt/task_reminder.wav /notification-sounds/felt/event_reminder.wav /notification-sounds/felt/snoozed_again.wav /notification-sounds/felt/focus_end.wav /notification-sounds/felt/break_end.wav /notification-sounds/felt/morning_digest.wav /notification-sounds/felt/evening_nudge.wav /notification-sounds/felt/paper_ready.wav /notification-sounds/felt/terms.wav /notification-sounds/felt/sync_problem.wav"
+  },
+  {
+    "name": "1 all 30 WAVs are served (3 packs × 10)",
+    "ok": true,
+    "detail": "[]"
+  },
+  {
+    "name": "2 Glass → the synced write notification_sound_pack = glass (the whole row, as every setting)",
+    "ok": true,
+    "detail": "{\"user_id\":\"00000000-0000-4000-8000-0000000005a1\",\"timezone\":\"Africa/Cairo\",\"onboarded_at\":\"2026-01-02T00:00:00Z\",\"display_name\":\"Kai\",\"workspace_name\":\"Personal\",\"quiet_hours_on\":false,\"lock_screen_names\":true,\"notification_sound_pack\":\"glass\",\"created_at\":\"2026-09-20T12:00:00.000Z\",\"updated_at\":\"2026-09-20T12:00:00.000Z\"}"
+  },
+  {
+    "name": "2 … and you hear the new pack straight away",
+    "ok": true,
+    "detail": "/notification-sounds/glass/task_reminder.wav"
+  },
+  {
+    "name": "2 the picker and the line follow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 the ▶ rows now play Glass",
+    "ok": true,
+    "detail": "/notification-sounds/glass/evening_nudge.wav"
+  },
+  {
+    "name": "2 Mixed → notification_sound_pack = mixed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "1/2 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 unmigrated row: reads as Felt, says the choice arrives with the next server update",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "2 … auditioning Mixed works, and no write would dead-letter",
+    "ok": true,
+    "detail": "/notification-sounds/mixed/terms.wav"
+  },
+  {
+    "name": "2 no page errors (unmigrated)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 Windows: a reminder due → its toast goes out silent",
+    "ok": true,
+    "detail": "{\"title\":\"Call the tyre supplier · in 8 min\",\"body\":\"08:50\",\"actions\":[[\"done\",\"Done\"],[\"snooze10\",\"In 10 min\"],[\"snooze60\",\"In 1 hour\"],[\"tomorrow\",\"Tomorrow\"]],\"silent\":true,\"payload\":\"{\\\"kind\\\":\\\"task_reminder\\\",\\\"taskIds\\\":[\\\"50000000-0000-4000-8000-000000000001\\\"],\\\"url\\\":\\\"/tasks?focus=50000000-0000-4000-8000-000000000001\\\"}\"}"
+  },
+  {
+    "name": "3 … and the app plays Glass’s task reminder",
+    "ok": true,
+    "detail": "/notification-sounds/glass/task_reminder.wav"
+  },
+  {
+    "name": "3 no page errors (Windows)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "3 Windows, the app can’t play yet (not clicked since it started): the toast keeps Windows’ sound",
+    "ok": true,
+    "detail": "{\"title\":\"Call the tyre supplier · in 8 min\",\"body\":\"08:50\",\"actions\":[[\"done\",\"Done\"],[\"snooze10\",\"In 10 min\"],[\"snooze60\",\"In 1 hour\"],[\"tomorrow\",\"Tomorrow\"]],\"silent\":false,\"payload\":\"{\\\"kind\\\":\\\"task_reminder\\\",\\\"taskIds\\\":[\\\"50000000-0000-4000-8000-000000000001\\\"],\\\"url\\\":\\\"/tasks?focus=50000000-0000-4000-8000-000000000001\\\"}\"}"
+  },
+  {
+    "name": "3 Windows: a snoozed reminder coming back plays Mixed’s \"snoozed again\"",
+    "ok": true,
+    "detail": "/notification-sounds/mixed/snoozed_again.wav"
+  },
+  {
+    "name": "3 web: a push for an event, window on screen → the app plays Mixed’s event sound and answers \"played\"",
+    "ok": true,
+    "detail": "true /notification-sounds/mixed/event_reminder.wav"
+  },
+  {
+    "name": "3 web: a window that can’t play answers false (the push keeps the browser’s sound)",
+    "ok": true,
+    "detail": "false"
+  },
+  {
+    "name": "3 no page errors (web)",
+    "ok": true,
+    "detail": ""
+  }
+]
