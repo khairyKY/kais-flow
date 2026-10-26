@@ -16,7 +16,7 @@ import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, setEventRemindWithUndo, setEventRepeat, updateEvent } from './api'
-import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, type BlockMenuEntry, type BlockMenuKey } from './blockMenuSpec'
+import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, type BlockMenuEntry, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { SwatchTray } from './formFields'
 import { blockSwatch } from './blockHue'
@@ -33,7 +33,7 @@ import { duplicateBlockWithUndo } from './duplicate'
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info',
 }
 
 // B (D5): a caption is metadata — sentence case, untracked, even digits.
@@ -115,8 +115,12 @@ function CustomTime({ event, position, onDone, onClose }: { event: CalendarEvent
   )
 }
 
-export function BlockMenu({ event, position, onClose, onReplan, closing }: {
+export function BlockMenu({ event, position, onClose, onReplan, onDetails, closing, mode = 'details' }: {
   event: CalendarEvent
+  /** cal-clicks: the details a click opens, or menu B a right-click opens. */
+  mode?: BlockMenuMode
+  /** Menu B's Details row: the block's details in its place. */
+  onDetails?: () => void
   /** Screen px — besideBlock() of the block. */
   position: { x: number; y: number }
   onClose: () => void
@@ -134,7 +138,8 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
   const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
   const project = event.project_id ? projects.find((p) => p.id === event.project_id) : undefined
   const missed = !!task && task.status === 'todo' && Date.parse(event.ends_at) < Date.now()
-  const spec = blockMenuSpec(event, { task, projectName: project?.name, missed })
+  const spec = blockMenuSpec(event, { task, projectName: project?.name, missed, mode })
+  const menu = mode === 'menu'
   // A Google event (B1): its rows say when and where from; nothing opens, nothing changes.
   const synced = isSynced(event)
   const span = eventSpan(event)
@@ -292,6 +297,7 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
     replan: () => onReplan?.(position.x, position.y),
     duplicate: () => duplicateBlockWithUndo(event, task),
     copylink: () => copyBlockLink(event),
+    details: () => onDetails?.(),
     unschedule,
     delete: del,
   }
@@ -314,8 +320,9 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
         <div style={{ padding: '0 9px 7px', fontSize: 'var(--fs-caption)', lineHeight: 1.45, color: 'var(--ink-muted)' }}><EmojiText text={e.caption.text} /></div>
       </>
     ),
-    onClick: synced ? undefined : run[e.key],
-    submenu: synced ? undefined : submenu(e.key),
+    // A Google event's menu B still opens its details, the chat and its link (nothing there changes it).
+    onClick: synced && !['details', 'copylink'].includes(e.key) ? undefined : run[e.key],
+    submenu: synced && e.key !== 'ai' ? undefined : submenu(e.key),
   })
 
   if (customAt) return <RepeatEditor {...repeat} position={customAt} onClose={onClose} onChange={setRepeat} />
@@ -325,12 +332,12 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
       onClose={onClose}
       closing={closing}
       width={BLOCK_MENU_WIDTH}
-      label="Block details"
+      label={menu ? 'Block menu' : 'Block details'}
       header={
         <>
           <TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />
           {/* Menu B (Kai 2026-10-26): the swatches in a quiet tray under the title, with "+ Custom". */}
-          {!synced && (
+          {menu && !synced && (
             <div style={{ padding: '0 9px 8px' }}>
               <SwatchTray value={event.color ?? null} onChange={(c) => { if (c !== (event.color ?? null)) updateEvent(event, { color: c }) }} />
             </div>
@@ -338,7 +345,7 @@ export function BlockMenu({ event, position, onClose, onReplan, closing }: {
           {/* Kai 2026-10-21: the length in one tap — the block resizes from its start (a task's estimate
               follows, calendar/api resizeEvent), with Undo. Queue 15: the popover's ONE length control.
               Queue 16: or type it — "7–8:30", "50m", "7:10 pm", "in 2h" (Time ▸ keeps the list). */}
-          {!synced && !event.all_day && (
+          {!menu && !synced && !event.all_day && (
             <>
               <TypedTime dense start={span.start} minutes={len} onApply={(r) => retime(event, r.start ?? span.start, r.minutes ?? len)} style={{ padding: '0 9px 6px' }} />
               <LengthChips value={len} onPick={(m) => retime(event, span.start, m)} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, max-content)', gap: 5, padding: '0 9px 8px' }} />

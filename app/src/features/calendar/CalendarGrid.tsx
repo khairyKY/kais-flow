@@ -1137,10 +1137,21 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         // Punch 34: double-click goes straight to the task editor (single click still opens
         // the details popover — the navigation unmounts it, so the two don't fight).
         info.el.addEventListener('dblclick', () => L().props.onEventDoubleClick?.(id))
+        // cal-clicks: a right-click opens menu B; from the keyboard (Shift+F10, the menu key — Enter opens the details,
+        // FullCalendar's own key handler) it hangs at the block's corner, not at 0,0.
+        const menuAt = (x: number, y: number) => {
+          const r = info.el.getBoundingClientRect()
+          L().props.onEventContextMenu?.(id, x || y ? x : r.left + 8, x || y ? y : r.bottom)
+        }
         info.el.addEventListener('contextmenu', (e: MouseEvent) => {
           if (!L().props.onEventContextMenu) return
           e.preventDefault()
-          L().props.onEventContextMenu?.(id, e.clientX, e.clientY)
+          menuAt(e.clientX, e.clientY)
+        })
+        info.el.addEventListener('keydown', (e: KeyboardEvent) => {
+          if (!L().props.onEventContextMenu || !(e.key === 'ContextMenu' || (e.shiftKey && e.key === 'F10'))) return
+          e.preventDefault()
+          menuAt(0, 0)
         })
       },
       select: (info: DateSelectArg) => {

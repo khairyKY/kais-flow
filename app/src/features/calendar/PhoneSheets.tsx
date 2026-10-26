@@ -27,7 +27,7 @@ import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRemindWithUndo, setEventRepeat, updateEvent, type BlockRef } from './api'
 import { duplicateBlockWithUndo } from './duplicate'
-import { EVENT_REMIND, aiPrompts, blockMenuSpec, isSynced, isUntitled, type BlockMenuKey } from './blockMenuSpec'
+import { EVENT_REMIND, aiPrompts, blockMenuSpec, isSynced, isUntitled, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { askChat, copyBlockLink } from './blockActions'
 import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
@@ -99,7 +99,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info',
 }
 
 /** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
@@ -336,8 +336,13 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
  * Done / leaving it). Kai 2026-10-12: date, length, project, repeat, colour, task link and More here
  * too, so the phone does all the desktop does. Delete / Discard sits in the footer; a repeat asks
  * This event / All events. */
-export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, onClose }: {
+export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, onClose, mode = 'details', onMode }: {
   event: CalendarEvent
+  /** cal-clicks: a tap opens the details; a long-press or the details' ⋯ opens menu B (the tray, Duplicate,
+   * Work with AI ›, Copy link, Delete). */
+  mode?: BlockMenuMode
+  /** The details' ⋯ (→ menu B) and menu B's Details (→ the details). */
+  onMode?: (mode: BlockMenuMode) => void
   look: { fill: string; ink: string }
   slotRect: SlotRect
   pending: boolean
@@ -379,7 +384,8 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const len = span.end - span.start
   const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
   const project = event.project_id ? projects.find((p) => p.id === event.project_id) : undefined
-  const spec = blockMenuSpec(event, { task, projectName: project?.name })
+  const menu = mode === 'menu'
+  const spec = blockMenuSpec(event, { task, projectName: project?.name, mode })
   const del = spec.at(-1)!
   // A Google event (B1): read-only — its rows only say when and from which calendar; no footer.
   const synced = isSynced(event)
@@ -401,6 +407,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     duplicate: () => leave(() => duplicateBlockWithUndo(event, task)),
     ai: () => setPicker('ai'),
     copylink: () => copyBlockLink(event),
+    details: () => onMode?.('details'),
     unschedule: () => leave(() => deleteEventWithUndo(event, 'Unscheduled')),
     link: (el) => {
       const r = el.getBoundingClientRect()
@@ -448,10 +455,16 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                   />
                 </div>
                 <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
+                {/* cal-clicks: the details' ⋯ opens menu B in its place (a long-press on the block does too). */}
+                {!menu && onMode && (
+                  <button type="button" className="pc-bs-more" aria-label={`More for ${event.title}`} onClick={() => onMode('menu')}>
+                    <Icon name="dots" size={22} />
+                  </button>
+                )}
               </div>
               {/* Menu B (cal-blocks, Kai 2026-10-26): the desktop menu's tray under the title — None, palette C's 16
                   swatches and "+ Custom", saved on tap, for every block (the grid draws a block's own colour first). */}
-              {!synced && <div className="pc-bs-colors">
+              {menu && !synced && <div className="pc-bs-colors">
                 <SwatchTray
                   value={event.color ?? null}
                   size={26}
@@ -464,7 +477,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                 />
               </div>}
               {/* Kai 2026-10-21: the length in one tap, from the start — as the Time sheet's chips do. */}
-              {!synced && !event.all_day && (
+              {!menu && !synced && !event.all_day && (
                 <LengthChips
                   value={len}
                   style={{ minHeight: 0, padding: '4px 0 8px' }}
@@ -489,7 +502,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                         <EmojiText text={e.caption.text} />
                       </div>
                     )}
-                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => !synced && run[e.key]?.(el)} />
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => (!synced || e.key === 'details' || e.key === 'ai' || e.key === 'copylink') && run[e.key]?.(el)} />
                   </Fragment>
                 ))}
               </div>

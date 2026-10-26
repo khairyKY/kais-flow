@@ -35,6 +35,7 @@ import { useAreas } from '../areas/api'
 import { placeName } from '../tasks/move'
 import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
+import type { BlockMenuMode } from './blockMenuSpec'
 import './phoneCalendar.css'
 import { useLinkedEvent } from './linkedEvent'
 import { useCalendarDefaultView } from '../../lib/settings'
@@ -48,7 +49,7 @@ const MorningRitual = lazy(() => import('../rituals/MorningRitual').then((m) => 
 type Sheet =
   | { k: 'view' }
   | { k: 'create'; day: string; start: number }
-  | { k: 'block'; id: string; start: string }
+  | { k: 'block'; id: string; start: string; mode?: BlockMenuMode }
   | { k: 'more'; ids: string[] }
   /** 7g: a task from the rail strip — or, `replan`, an overdue block tapped on the grid. */
   | { k: 'schedule'; id: string; replan?: boolean }
@@ -233,6 +234,12 @@ export function PhoneCalendar() {
     else setSheet({ k: 'block', id: e.id, start: e.starts_at })
   }
 
+  /** cal-clicks: a long-press (released without moving) opens menu B's sheet — the tray, Duplicate, Work with
+   * AI ›, Copy link, Delete (a task block's Complete / Open task / Unschedule too). The block stays lifted. */
+  function holdBlock(e: CalendarEvent) {
+    setSheet({ k: 'block', id: e.id, start: e.starts_at, mode: 'menu' })
+  }
+
   const slotRect = (day: string, start: number, end: number) => gridRef.current?.rectOf(day, start, end) ?? null
 
   function goToday() {
@@ -374,6 +381,7 @@ export function PhoneCalendar() {
           setSheet({ k: 'create', day, start })
         }}
         onTapBlock={tapBlock}
+        onHoldBlock={holdBlock}
         onTapMore={(hidden) => setSheet({ k: 'more', ids: hidden.map((e) => e.id) })}
         onCommit={commit}
         onDropHeld={dropHeld}
@@ -420,7 +428,18 @@ export function PhoneCalendar() {
         <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={slotRect} onClose={() => setSheet(null)} />
       )}
       {block && (
-        <BlockSheet event={block} look={look(block)} slotRect={slotRect} pending={marks.pending.has(block.id)} onMove={commit} onRebind={(ref) => setSheet({ k: 'block', id: ref.id, start: ref.start })} onClose={() => setSheet(null)} />
+        <BlockSheet
+          event={block}
+          mode={sheet?.k === 'block' ? sheet.mode : undefined}
+          // The details' ⋯ ↔ menu B's Details; a task block's details are its task (the task sheet).
+          onMode={(mode) => (mode === 'details' && block.task_id && taskById.has(block.task_id) ? openTask(block.task_id) : setSheet({ k: 'block', id: block.id, start: block.starts_at, mode }))}
+          look={look(block)}
+          slotRect={slotRect}
+          pending={marks.pending.has(block.id)}
+          onMove={commit}
+          onRebind={(ref) => setSheet({ k: 'block', id: ref.id, start: ref.start, mode: sheet?.k === 'block' ? sheet.mode : undefined })}
+          onClose={() => setSheet(null)}
+        />
       )}
       {sheet?.k === 'more' && (
         <ActionSheet
