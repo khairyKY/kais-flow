@@ -190,7 +190,7 @@ export function PhoneCalendar() {
     // Subtasks C: a subtask's own block says whose it is.
     const parent = task?.parent_task_id ? taskById.get(task.parent_task_id)?.title : undefined
     const goal = !!task && task.id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === today
-    return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
+    return { ...tone, check: task && { done, repeat: task.recurrence_rule, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
   }
 
   /** A task block that ended before today, not done — it reads "Overdue · Replan" and a tap replans it. */

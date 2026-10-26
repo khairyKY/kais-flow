@@ -26,6 +26,8 @@ import { useDayRollover } from './useDayRollover'
 import { cardDragData } from './planningMode'
 import { liftCards } from './cardDrag'
 import { blockHue } from './blockHue'
+import { repeatCheckName } from './blockMenuSpec'
+import { RepeatGlyph, Tick } from './checkGlyphs'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -41,6 +43,8 @@ export interface CalendarGridEvent {
   /** Set when the block came from a task — drives the in-block checkbox (R4, 2026-07-20). */
   taskId?: string | null
   taskDone?: boolean
+  /** The task's repeat rule (RRULE), when it repeats — repeat B draws its box as two chasing arrows (cal-blocks). */
+  taskRepeat?: string | null
   /** One occurrence of a repeating event (CALENDAR-BLOCK-STATES C10): the ↻ badge. */
   repeat?: boolean
   /** A Time block's tasks (Time Slots, 0073), drawn as rows inside it, and its "2 tasks · 45m of 2h". */
@@ -305,7 +309,7 @@ function clockFormatter(zone: string, h24: boolean): (ms: number) => string {
 
 type BlockProps = {
   kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number; kfTaskish: boolean
-  kfOverdue: boolean; kfConflict: boolean; kfGoal: boolean
+  kfOverdue: boolean; kfConflict: boolean; kfGoal: boolean; kfTaskRepeat: string | null
   kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
   kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null; kfParent: string | null
 }
@@ -683,6 +687,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         kfColor: e.color ?? null,
         kfTaskId: e.taskId ?? null,
         kfTaskDone: !!e.taskDone,
+        kfTaskRepeat: e.taskRepeat ?? null,
         kfTaskish: isTaskish,
         kfStart: startMs,
         kfEnd: endMs,
@@ -990,15 +995,17 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
             {!arg.isMirror && <span className="kf-ev-pick" aria-hidden="true">✓</span>}
             {cutFrom && <span className="fc-event-time kf-ev-cut kf-ev-cut-from">{cutFrom}</span>}
             {cutInto && <span className="fc-event-time kf-ev-cut kf-ev-cut-into">{cutInto}</span>}
+            {/* Check B (cal-blocks): a 2px edge, 1px bigger, softer corners; a repeating task's is repeat B, the
+                chasing box — ticking it completes this occurrence, as any task's does. */}
             {p.kfTaskId && !arg.isMirror && (
               <span
-                className={`kf-ev-check${done ? ' kf-on' : ''}`}
+                className={`kf-ev-check${done ? ' kf-on' : ''}${p.kfTaskRepeat ? ' kf-rep' : ''}`}
                 role="checkbox"
                 aria-checked={done}
-                aria-label={`${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
+                aria-label={p.kfTaskRepeat ? repeatCheckName(done, p.kfTaskRepeat) : `${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
                 ref={dragGuard(() => L().props.onCompleteTask?.(p.kfTaskId!, done))}
               >
-                {done ? '✓' : ''}
+                {p.kfTaskRepeat ? <RepeatGlyph done={done} sw={2.95} /> : done ? <Tick /> : null}
               </span>
             )}
             <div className="kf-ev-text">
@@ -1033,7 +1040,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                         aria-label={`${h.done ? 'Reopen' : 'Complete'} ${h.title}`}
                         ref={dragGuard(() => L().props.onCompleteTask?.(h.id, h.done))}
                       >
-                        {h.done ? '✓' : ''}
+                        {h.done ? <Tick /> : null}
                       </span>
                       <span className="fc-event-title kf-ev-slot-title"><EmojiText text={h.title} /></span>
                       <span className="kf-ev-slot-out" role="button" aria-label={`Out of the slot: ${h.title}`} title="Out of the slot" ref={dragGuard(() => L().props.onSlotTaskOut?.(h.id))}>

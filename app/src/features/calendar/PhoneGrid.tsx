@@ -14,6 +14,8 @@ import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
 import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, minToPx, pxToMin, rangeText, SNAP_MIN, spanIso, swipeStep, type DragMode, type Span } from './phoneGridMath'
 import { slotAt } from './slots'
+import { repeatCheckName } from './blockMenuSpec'
+import { RepeatGlyph } from './checkGlyphs'
 import '../tasks/TaskRow.css' // the long-press bloom (.kf-press-bloom)
 import { bandChipLabel, isMultiDaySpan, spanDays } from './daySpans'
 import { appZone } from '../../lib/appZone'
@@ -32,7 +34,7 @@ export interface BlockLook {
   /** Today's block of the goal of the day: the gold edge and ✶ (goal A, Kai 2026-10-23). */
   goal?: boolean
   /** Task blocks draw the 18px checkbox, always (never on hover only). */
-  check?: { done: boolean; toggle: () => void }
+  check?: { done: boolean; toggle: () => void; /** The task's repeat rule: repeat B's chasing box (cal-blocks). */ repeat?: string | null }
   /** Replaces the time line — an overdue block's "Overdue · Replan" (Kai 2026-10-07). */
   note?: string
   /** A Time block's tasks (Time Slots, 0073) as rows under its title, and its "2 tasks · 45m of 2h" —
@@ -453,7 +455,14 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
         <div className={`pc-block-body${stacked ? ' is-stacked' : ''}`} style={{ height: stacked ? undefined : Math.min(32, h) }}>
           {lk.check && (
             <span className="pc-check" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-              <Checkbox subtask checked={lk.check.done} onChange={lk.check.toggle} label={ev.title} />
+              {lk.check.repeat ? (
+                // Repeat B (cal-blocks): the box outline is two chasing arrows; ticking completes this occurrence.
+                <button type="button" role="checkbox" aria-checked={lk.check.done} aria-label={repeatCheckName(lk.check.done, lk.check.repeat)} className="pc-rep" onClick={lk.check.toggle}>
+                  <RepeatGlyph done={lk.check.done} sw={2.67} />
+                </button>
+              ) : (
+                <Checkbox subtask size={18} checked={lk.check.done} onChange={lk.check.toggle} label={ev.title} />
+              )}
             </span>
           )}
           <span className="pc-name">
@@ -484,7 +493,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
                   }}
                 >
                   <span className="pc-check" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
-                    <Checkbox subtask checked={t.done} onChange={t.toggle} label={t.title} />
+                    <Checkbox subtask size={18} checked={t.done} onChange={t.toggle} label={t.title} />
                   </span>
                   <span className="pc-name"><EmojiText text={t.title} /></span>
                   {bloom?.id === t.id && (
@@ -646,7 +655,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           aria-hidden
         >
           <span className="pc-check">
-            <Checkbox subtask checked={held.done} label={held.title} />
+            <Checkbox subtask size={18} checked={held.done} label={held.title} />
           </span>
           <span className="pc-name"><EmojiText text={held.title} /></span>
         </div>

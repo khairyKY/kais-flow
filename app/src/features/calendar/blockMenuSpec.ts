@@ -75,6 +75,14 @@ export function repeatLabel(rule: string | null | undefined): string {
   return REPEAT_LABELS[rule] ? `Repeats ${REPEAT_LABELS[rule].toLowerCase()}` : ruleWords(rule)
 }
 
+/** A repeat in the words a sentence takes: "weekly", "every weekday" (repeat B's name, below). */
+export function repeatWords(rule: string): string {
+  return (REPEAT_LABELS[rule] ?? ruleWords(rule)).toLowerCase()
+}
+
+/** Repeat B (cal-blocks): a repeating task's box, named for a screen reader — "Complete this occurrence (repeats weekly)". */
+export const repeatCheckName = (done: boolean, rule: string): string => `${done ? 'Reopen' : 'Complete'} this occurrence (repeats ${repeatWords(rule)})`
+
 /** The Remind row's choices (A12, 0077) — minutes before each start; tasks' Remind submenu's words. */
 export const EVENT_REMIND: readonly { min: number | null; label: string }[] = [
   { min: null, label: 'No reminder' },

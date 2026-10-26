@@ -300,22 +300,27 @@
      the title (12px × --s) scales with the interface — at 125% it sat 3px high, at 150% 5px. It scales
      with the title now and sits on its first line, whose height is stated above (cal-polish a1: within
      1px of the line's centre, 100–150%): the 1.25 line is 3px × --s taller than the box, half above it. */
-  width: calc(12px * var(--s));
-  height: calc(12px * var(--s));
-  margin-top: calc(1.5px * var(--s));
+  /* Check B (Kai 2026-10-26, design-export/Calendar extras options.html): a 2px edge (at 125%, riding the
+     scale), 1px bigger, corners at 38% of the box — still on the title's first line: the 1.25 line is 2px × --s
+     taller than the 13px box, half above it. */
+  width: calc(13px * var(--s));
+  height: calc(13px * var(--s));
+  margin-top: calc(1px * var(--s));
   /* §2/§9: never visible at rest — revealed on hover/focus, or when already checked */
   opacity: 0;
   transition: opacity 120ms var(--ease-out);
-  border: 1.5px solid var(--kf-ev-accent, var(--acc-lavender-text));
-  border-radius: 4px;
+  border: calc(2px * var(--kf-d)) solid var(--kf-ev-accent);
+  border-radius: 38%; /* ds-ok: check B's drawn corner (38% of the box) */
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: calc(10px * var(--kf-d)); /* ds-ok: the drawn check's glyph, scaled with the grid as the block type around it */
   line-height: 1;
   color: var(--paper-parchment);
   cursor: pointer;
 }
+.fc .fc-timegrid-event .kf-ev-check > svg { flex: none; }
+/* Repeat B: the box outline itself is the two chasing arrows, in the block's ink; ticked, the glyph fills itself. */
+.fc .fc-timegrid-event .kf-ev-check.kf-rep, .fc .fc-timegrid-event .kf-ev-check.kf-rep.kf-on { border: none; background: none; color: var(--kf-ev-accent); }
 .fc .fc-timegrid-event:hover .kf-ev-check,
 .fc .fc-timegrid-event:focus-within .kf-ev-check,
 .fc .fc-timegrid-event .kf-ev-check.kf-on { opacity: 1; }
@@ -350,7 +355,7 @@
 /* ds-ok: the drawn slot rows' type (13px at 125%), scaled with the grid as the block type around it */
 .fc .fc-timegrid-event .kf-ev-slot-row .fc-event-title.kf-ev-slot-title { font-size: calc(13px * var(--kf-d)); }
 /* ds-ok: the drawn row check (12px at 125%), its glyph scaled with it */
-.fc .fc-timegrid-event .kf-ev-slot-row .kf-ev-check { width: calc(12px * var(--kf-d)); height: calc(12px * var(--kf-d)); font-size: calc(9px * var(--kf-d)); }
+.fc .fc-timegrid-event .kf-ev-slot-row .kf-ev-check { width: calc(13px * var(--kf-d)); height: calc(13px * var(--kf-d)); }
 .fc .fc-timegrid-event .kf-ev-slot-row:hover { border-color: color-mix(in srgb, var(--kf-ev-accent, var(--acc-lavender-text)) 70%, transparent); }
 /* While its task is dragged out, the card's place stays as a dashed outline (CalendarGrid heldRow). */
 .fc .fc-timegrid-event .kf-ev-slot-row[data-lifted] { border-style: dashed; border-color: var(--ink-hairline); background: transparent; }
