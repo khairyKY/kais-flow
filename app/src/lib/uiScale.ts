@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { onPrefApplied, prefWritten } from './prefs'
 
 // R4 (Kai, 2026-07-20): "all of this audit was done while a 125 and 150% zoom was applied,
 // things look most natural [at] 110% but everything feels small."
@@ -19,8 +20,9 @@ import { create } from 'zustand'
 //   · media queries do NOT shift with root zoom, so scaling up can never flip the desktop
 //     layout into the mobile one.
 //
-// Like the theme, this is a per-device preference: localStorage, not the synced settings row,
-// so it works pre-auth and offline. index.html applies it before first paint.
+// Like the theme, it lives in localStorage, so it works pre-auth and offline; index.html applies it
+// before first paint. It follows the person per device class (lib/prefs remoteKey): one size for phones,
+// one for computers.
 
 export const UI_SCALES = [1, 1.1, 1.25, 1.5, 1.75] as const
 export type UiScale = (typeof UI_SCALES)[number]
@@ -123,6 +125,14 @@ export const useUiScale = create<UiScaleState>((set) => {
       }
       applyUiScale(s)
       set({ scale: s })
+      prefWritten(UI_SCALE_KEY)
     },
   }
+})
+
+// Another device of this class picked a size.
+onPrefApplied(UI_SCALE_KEY, () => {
+  const s = readUiScale()
+  applyUiScale(s)
+  useUiScale.setState({ scale: s })
 })

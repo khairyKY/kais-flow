@@ -90,7 +90,7 @@ jobs:
 
       - name: Build
         working-directory: app/android
-        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+        run: chmod +x gradlew && ./gradlew assembleRelease testReleaseUnitTest --no-daemon # + the lock screen's LockPlanTest
 
       - name: Sign
         env:

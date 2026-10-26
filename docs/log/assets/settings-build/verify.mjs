@@ -99,7 +99,7 @@ const EXPECT = {
   appearance: ['Theme', 'Interface size', 'Paper texture', 'Botanical animations'],
   calendar: ['Time zone', 'Time format', 'Weekend', 'Week starts on', 'Opens on', 'Fit days to the window', 'Fit hours to my day', 'Density', 'Second time zone', 'Now card', 'Plan shortcuts'],
   capture: ['File captures for me', 'Pick a project for new things', 'Page photos', 'Scans today', 'Read when offline', 'Share to Kai’s Flow'],
-  notify: ['This device', 'Task reminder', 'Event reminder', 'Routine reminder', 'Morning digest', 'Evening nudge', 'Focus done', 'Paper capture ready', 'Birthday', 'Sync problem', 'Quiet hours', 'Show task names on the lock screen', 'Sound', 'Sound pack', 'Task done', 'Goal done', 'Captured', 'Focus begins', 'Focus ends', 'Ritual', 'Undo', 'Silent after Shut down', 'This browser: get notifications here'],
+  notify: ['This device', 'Task reminder', 'Event reminder', 'Routine reminder', 'Morning digest', 'Evening nudge', 'Focus done', 'Paper capture ready', 'Birthday', 'Sync problem', 'Quiet hours', 'Show task names on the lock screen', 'Sound', 'Sound pack', 'Task done', 'Goal done', 'Captured', 'Focus begins', 'Focus ends', 'Ritual', 'Undo', 'Silent after Shut down', 'Notification sound pack', ...['Task reminder', 'Event starting', 'Snoozed reminder, again', 'Focus round end', 'Break end', 'Morning digest', 'Evening nudge', 'Page read', 'Terms changed', 'Sync problem'].map((l) => `${l} sound`), 'This browser: get notifications here'],
   organize: ['Domains', 'Labels', 'High priority', 'Medium priority', 'Low priority'],
   integrations: ['GitHub', 'AI assistants (MCP)', 'Groq', 'Capture key & bookmarklet'],
   data: ['Import', 'Export your data', 'Trash'],

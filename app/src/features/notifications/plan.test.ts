@@ -37,6 +37,8 @@ describe('localPlan — reminders', () => {
     const [p, ...rest] = localPlan(base({ tasks: [again], projects: [{ id: 'p1', name: 'Car' }] }))
     expect(rest).toEqual([])
     expect([p.key, p.at.toISOString(), p.notice.title]).toEqual([`t1@${again.remind_again_at}`, again.remind_again_at, 'Call the tyre supplier · in 25 min'])
+    expect(p.notice.again).toBe(true) // the pack's "snoozed again" sound (sounds.ts)
+    expect(localPlan(base({ tasks: [{ ...tyre, reminder_at: cairo('08:25').toISOString() }] }))[0].notice.again).toBeUndefined()
     expect(localPlan(base({ tasks: [{ ...again, status: 'done' }] }))).toEqual([])
   })
 

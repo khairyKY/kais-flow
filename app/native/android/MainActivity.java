@@ -18,6 +18,7 @@ import androidx.core.view.WindowInsetsControllerCompat;
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.annotation.CapacitorPlugin;
+import com.kaisflow.garden.widgets.LockScreen;
 import com.kaisflow.garden.widgets.WidgetActions;
 import com.kaisflow.garden.widgets.WidgetBridge;
 import org.json.JSONObject;
@@ -40,6 +41,7 @@ public class MainActivity extends BridgeActivity {
     protected void onCreate(Bundle savedInstanceState) {
         registerPlugin(Shell.class);
         registerPlugin(WidgetBridge.class); // window.KaisFlowWidgets: the home-screen widgets' snapshot and ticks
+        registerPlugin(LockScreen.LockBridge.class); // window.KaisFlowLock: the Now Bar, the Day strip, the Top 3 lock widget
         // A restored activity, or a launch from Recents after the process died, replays the intent
         // that first opened it: drop a share's text so it isn't captured a second time.
         Intent launch = getIntent();

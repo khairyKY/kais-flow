@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { uiZoom } from './uiScale'
+import { onPrefApplied, prefWritten } from './prefs'
 
 // ── Shared motion gate + helpers. Every animation in the app checks useMotionEnabled()
 // so it honors both the OS reduced-motion pref AND the app's Effects toggle (Routines 3b /
@@ -33,11 +34,14 @@ function readEffectsOn(): boolean {
 export function setEffectsEnabled(on: boolean) {
   try {
     localStorage.setItem(EFFECTS_KEY, on ? '1' : '0')
+    prefWritten(EFFECTS_KEY)
   } catch {
     /* private mode */
   }
   window.dispatchEvent(new Event('kf-effects-change'))
 }
+// Another device turned the animations on or off.
+onPrefApplied(EFFECTS_KEY, () => window.dispatchEvent(new Event('kf-effects-change')))
 
 /** useMotionEnabled() outside React (the router subscription, drag drops): read at call time. */
 export function motionOnNow(): boolean {
@@ -321,7 +325,8 @@ export function useBoundaryResistance(scrollerRef: RefObject<HTMLElement | null>
       startY = last = (e.touches[0]?.clientY ?? 0) / uiZoom()
     }
     const move = (e: TouchEvent) => {
-      if (!mine) return
+      // A gesture something under the finger has claimed (drag-fix: a tray chip carried onto the phone grid) is no pull.
+      if (!mine || e.defaultPrevented) return
       const x = e.touches[0].clientX / uiZoom()
       const y = e.touches[0].clientY / uiZoom()
       // A sideways gesture (a row's swipe) is not a pull on the page.

@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: the goal's real CheckBox, gold. -->
+<CheckBox xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/box" android:layout_width="32dp" android:layout_height="32dp" android:background="@drawable/kfw_check_gold" android:button="@null" android:contentDescription="Tick the goal" />

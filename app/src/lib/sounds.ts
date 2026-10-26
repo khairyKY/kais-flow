@@ -24,6 +24,7 @@ import { legacyGoalId } from '../features/today/goalStore'
 import { goalIdOf } from '../features/today/top3Order'
 import { loopDayKey } from '../features/rituals/loopDay'
 import { inQuietHours, isPaused, type NoticePrefs } from '../../../supabase/functions/notify/copy.ts'
+import { prefWritten } from './prefs'
 import type { Task } from './types'
 
 export const SOUND_EVENTS = ['complete', 'complete_big', 'capture', 'focus_start', 'focus_end', 'ritual_done', 'undo'] as const
@@ -72,6 +73,7 @@ function read<T>(key: string, fallback: T, parse: (raw: string) => T): T {
 function write(key: string, value: string) {
   try {
     localStorage.setItem(key, value)
+    prefWritten(key) // the choices follow the person (lib/prefs); the garden-closed day isn't one of them
   } catch {
     /* session-only is fine */
   }

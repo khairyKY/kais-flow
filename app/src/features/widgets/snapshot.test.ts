@@ -44,8 +44,6 @@ function input(over: Partial<SnapshotInput> = {}): SnapshotInput {
       event('b2', skim.title, '16:15', '16:55', { task_id: 'p1', color: '#8A9A7E' }),
       event('b3', 'Gym', '18:00', '19:00'),
     ],
-    projects: [],
-    domains: [],
     top3: [goal, skim, read],
     dayN: 83,
     phase: 'now',
@@ -70,8 +68,18 @@ describe('buildSnapshot', () => {
     expect(s.picks.map((p) => [p.id, p.done])).toEqual([['p1', false], ['p2', true]])
   })
 
-  it("draws today's blocks in order, in their calendar colours (goal gold, meeting blossom, own hue)", () => {
-    expect(s.blocks.map((b) => [b.id, b.color])).toEqual([['b0', 'blossom'], ['b1', 'goal'], ['b2', '#8A9A7E'], ['b3', 'lavender']])
+  it("draws today's blocks in order, in palette C as the calendar does (event Rose, task Iris, an old colour as its new swatch, the goal flagged)", () => {
+    expect(s.blocks.map((b) => [b.id, b.color, b.goal])).toEqual([['b0', 'rose', false], ['b1', 'iris', true], ['b2', 'moss', false], ['b3', 'iris', false]])
+    const own = buildSnapshot(input({ events: [event('c1', 'Own', '10:00', '11:00', { color: '#47BFC5' }), event('c2', 'Custom', '12:00', '13:00', { color: '#123456' })] }))
+    expect(own.blocks.map((b) => b.color)).toEqual(['lagoon', 'indigo'])
+  })
+
+  it("lists Today's tasks apart from the Top 3, overdue and Also open, and counts Also open", () => {
+    const x = buildSnapshot(input({ tasks: [goal, skim, read, task('t1', 'Due today', { top3: false }), task('a1', 'Someday soon', { top3: false, due_at: null })] }))
+    expect(x.tasks.map((t) => t.id)).toEqual(['t1'])
+    expect(x.alsoOpen).toBe(1)
+    expect(buildSnapshot(input({ hour24: true })).hour24).toBe(true)
+    expect(s.hour24).toBe(false)
   })
 
   it('writes the day on the user clock, the zone, and the week Monday first', () => {

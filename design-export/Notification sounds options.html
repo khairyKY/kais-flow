@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Notification sounds options</title>
-<!-- Kai's Flow · a sound for each kind of notification, picked by ear (26 Oct 2026, Kai: "design the
-     sounds for each"). Plain HTML, open it straight from disk. The WAVs are made by
-     notification-sounds/make.mjs (plain Node synthesis: the app's felt and glass voices from
-     app/src/lib/sounds.ts, one key, the same room) and listed in notification-sounds/sounds.js.
-     Tokens: ds-bound/styles.css and the app's own colours; no colour is changed. Nothing here is in
-     the app yet. -->
+<title>Notification sound packs</title>
+<!-- Kai's Flow · the notification sound packs, for reference (26 Oct 2026, Kai: "include all of them and
+     keep them separated, each in its pack"). Plain HTML, open it straight from disk. The WAVs live in
+     app/public/notification-sounds/<pack>/<kind>.wav, made by notification-sounds/make.mjs (plain Node
+     synthesis: the app's felt and glass voices from app/src/lib/sounds.ts, one key, the same room) and
+     listed in notification-sounds/sounds.js. The real picker is in the app: Settings → Notifications &
+     sound → Notification sounds. Tokens: ds-bound/styles.css and the app's own colours; no colour is changed. -->
 <link rel="stylesheet" href="ds-bound/styles.css">
 <link rel="stylesheet" href="../app/src/styles/tokens/colors.css">
 <link rel="stylesheet" href="../app/src/styles/tokens/colors.dark.css">
@@ -36,10 +36,8 @@ h1{margin:6px 0 0;font-family:var(--font-display);font-weight:500;font-size:40px
 .group>.say{margin:6px 0 0;max-width:760px;color:var(--ink-muted)}
 .cands{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:18px}
 .cand{padding:16px;border:1px solid var(--line-card);border-radius:16px;background:var(--paper-parchment)}
-.cand.picked{border-color:var(--acc-terra-ink);box-shadow:0 0 0 1px var(--acc-terra-ink)}
 .cand h3{margin:0;display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-size:20px;font-weight:600}
 .tag{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:32px;padding:0 8px;border-radius:var(--radius-pill);background:var(--sel-bg);color:var(--sel-ink);font:600 15px/1 var(--font-ui)}
-.cand.picked h3::after{content:'Your pick';margin-left:auto;padding:3px 10px;border-radius:var(--radius-pill);background:var(--acc-terra-ink);color:var(--on-terra);font:600 12px/1.4 var(--font-ui)}
 .cand p{margin:8px 0 0;font-size:15px}
 .cand .nums{margin-top:6px;font-size:12.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
 .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
@@ -57,18 +55,15 @@ svg.ic{width:14px;height:14px;flex:none}
 
 <header>
   <div class="meta">Kai's Flow · notification sounds · 26 Oct 2026</div>
-  <h1>Which sound for each notification?</h1>
-  <p class="lede">Two or three short sounds for each kind of notification, between a third of a second and 1.2 seconds, in the app's two voices: <b>felt</b> (the muted felt piano you picked for the app's sounds) and <b>glass</b> (soft glass bells). All in one key, so two notifications in a row sound related. Each is levelled to about the same loudness, so compare them at one volume. Answer with letters, for example <b>"task reminder A, event starting C, …"</b>, or pick below and copy.</p>
+  <h1>Notification sound packs</h1>
+  <p class="lede">Every sound from the options, kept, in three packs. Each pack has a sound for all ten kinds of notification, between half a second and 1.2 seconds, all in one key and levelled to about the same loudness. <b>Felt</b> and <b>Glass</b> are the A and B options in each voice; <b>Mixed</b> is every C option, both voices together, with a break end and a terms sound made for it. Pick a pack in the app: <b>Settings → Notifications &amp; sound → Notification sounds</b>, where ▶ plays each one.</p>
 </header>
 
-<div class="bar" role="group" aria-label="Your picks">
-  <span>Your picks: <b id="mine">none yet</b></span>
+<div class="bar" role="group" aria-label="Page">
   <span class="seg" role="group" aria-label="Page theme">
     <button type="button" class="btn" data-th="day" aria-pressed="true">Day page</button>
     <button type="button" class="btn" data-th="night" aria-pressed="false">Night page</button>
   </span>
-  <button type="button" class="btn btn-p" id="copy">Copy my picks</button>
-  <span class="meta" id="copied" aria-live="polite"></span>
 </div>
 
 <div id="groups"></div>
@@ -76,10 +71,10 @@ svg.ic{width:14px;height:14px;flex:none}
 <section class="notes">
   <h2>Where each sound can play</h2>
   <ul>
-    <li><b>Android app:</b> a notification's sound belongs to its <b>channel</b>, set once when the channel is made; the app can't change it afterwards (only you can, in Android Settings). So each kind with its own sound gets its own channel with a WAV from the app's <code>res/raw</code>, and the channels made before (Reminders, Rituals, Focus, Quiet) are replaced by new ones once. Android also lets you swap any channel's sound yourself.</li>
-    <li><b>Windows app:</b> a toast can only play Windows' own sounds (<code>ms-winsoundevent:…</code>) or a file inside an installed package (the Store install). For the installer build, the toast goes out silent and the app plays the WAV itself; it is running whenever it shows a toast, so that always works.</li>
-    <li><b>Web / installed web app:</b> browsers ignore a custom notification sound; a push plays the system's own sound. When a window of the app is open, it can play the chosen sound itself.</li>
-    <li><b>Quiet hours and Pause</b> still silence everything, whichever sounds you pick. The morning digest is silent today; pick one only if you want it heard.</li>
+    <li><b>Android app:</b> a notification's sound belongs to its <b>channel</b>, fixed once the channel is made. So each sound of your pack is its own channel ("Task reminder (Felt)") playing a WAV from the app's <code>res/raw</code>. Switching packs moves what's planned onto the new pack's channels and removes the old ones. Android also lets you swap any channel's sound yourself.</li>
+    <li><b>Windows app:</b> the toast goes out silent and the app plays the pack's WAV itself. If it can't (it hasn't been clicked since it started), the toast keeps Windows' own sound.</li>
+    <li><b>Web / installed web app:</b> browsers ignore a custom notification sound. When a window of the app is on screen it plays the pack's sound and the notification is silent; otherwise the browser's own sound plays.</li>
+    <li><b>Quiet hours and Pause</b> still silence everything, whichever pack. The morning digest is silent today. <b>Break end</b> is in every pack, but the app doesn't send a break-end notification yet.</li>
   </ul>
 </section>
 
@@ -87,26 +82,26 @@ svg.ic{width:14px;height:14px;flex:none}
 
 <script src="notification-sounds/sounds.js"></script>
 <script>
-const { types: TYPES, sounds: SOUNDS } = window.NOTIFICATION_SOUNDS
+const { types: TYPES, packs: PACKS, sounds: SOUNDS } = window.NOTIFICATION_SOUNDS
 const PLAY = '<svg class="ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"/></svg>'
 const esc = (s) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+const src = (s) => `../app/public/notification-sounds/${s.pack}/${s.type}.wav`
 
-document.getElementById('groups').innerHTML = TYPES.map((t) => {
-  const mine = SOUNDS.filter((s) => s.type === t.id)
-  return `<section class="group" id="${t.id}">
-    <h2>${esc(t.label)} <button type="button" class="btn all" data-type="${t.id}">${PLAY} Play ${mine.map((s) => s.letter).join(', ')}</button></h2>
-    <p class="say">${esc(t.say)}</p>
-    <div class="cands">${mine.map((s) => `<article class="cand" data-grp="${t.id}" data-look="${s.letter}">
-      <h3><span class="tag">${s.letter}</span>${s.pack === 'felt' ? 'Felt' : 'Glass'}</h3>
+document.getElementById('groups').innerHTML = PACKS.map((p) => `<section class="group" id="${p.id}">
+    <h2>${esc(p.label)} <button type="button" class="btn all" data-pack="${p.id}">${PLAY} Play all ten</button></h2>
+    <p class="say">${esc(p.blurb)}.</p>
+    <div class="cands">${TYPES.map((t) => {
+      const s = SOUNDS.find((x) => x.pack === p.id && x.type === t.id)
+      return `<article class="cand">
+      <h3>${esc(t.label)}</h3>
       <p>${esc(s.desc)}</p>
-      <div class="nums">${s.seconds.toFixed(2)} s · ${s.lufs.toFixed(1)} LUFS · peak ${s.truePeak.toFixed(1)} dBTP</div>
+      <div class="nums">${s.voice === 'felt' ? 'Felt' : 'Glass'} voice · ${s.seconds.toFixed(2)} s · ${s.lufs.toFixed(1)} LUFS · peak ${s.truePeak.toFixed(1)} dBTP</div>
       <div class="row">
-        <button type="button" class="btn play" data-src="notification-sounds/${s.id}.wav" aria-label="Play ${esc(t.label)} ${s.letter}">${PLAY} Play</button>
-        <button type="button" class="btn pick" data-grp="${t.id}" data-pick="${s.letter}" aria-pressed="false">This one</button>
+        <button type="button" class="btn play" data-src="${src(s)}" aria-label="Play ${esc(p.label)} ${esc(t.label)}">${PLAY} Play</button>
       </div>
-    </article>`).join('')}</div>
-  </section>`
-}).join('')
+    </article>`
+    }).join('')}</div>
+  </section>`).join('')
 
 // ── playback: one at a time ──
 let playing = null
@@ -124,7 +119,7 @@ function play(src, btn) {
 }
 document.querySelectorAll('.play').forEach((b) => b.addEventListener('click', () => play(b.dataset.src, b)))
 document.querySelectorAll('.all').forEach((b) => b.addEventListener('click', async () => {
-  for (const p of document.querySelectorAll(`#${b.dataset.type} .play`)) {
+  for (const p of document.querySelectorAll(`#${b.dataset.pack} .play`)) {
     await play(p.dataset.src, p)
     await new Promise((r) => setTimeout(r, 450))
   }
@@ -135,37 +130,6 @@ document.querySelectorAll('[data-th]').forEach((b) => b.addEventListener('click'
   document.documentElement.dataset.theme = b.dataset.th
   document.querySelectorAll('[data-th]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)))
 }))
-
-// ── the picks ──
-const KEY = 'kf-notification-sounds-picks'
-let picks = {}
-try { picks = JSON.parse(localStorage.getItem(KEY) ?? '{}') ?? {} } catch {}
-const line = () => TYPES.filter((t) => picks[t.id]).map((t) => `${t.label.toLowerCase()} ${picks[t.id]}`).join(', ')
-function paint() {
-  document.getElementById('mine').textContent = line() || 'none yet'
-  document.querySelectorAll('.pick').forEach((b) => b.setAttribute('aria-pressed', String(picks[b.dataset.grp] === b.dataset.pick)))
-  document.querySelectorAll('.cand').forEach((c) => c.classList.toggle('picked', picks[c.dataset.grp] === c.dataset.look))
-}
-document.querySelectorAll('.pick').forEach((b) => b.addEventListener('click', () => {
-  picks[b.dataset.grp] = b.dataset.pick
-  try { localStorage.setItem(KEY, JSON.stringify(picks)) } catch {}
-  paint()
-}))
-document.getElementById('copy').addEventListener('click', async () => {
-  const text = line() ? `Notification sounds: ${line()}` : 'Notification sounds: nothing picked yet'
-  let ok = false
-  try { await navigator.clipboard.writeText(text); ok = true } catch {}
-  if (!ok) {
-    const ta = document.createElement('textarea')
-    ta.value = text
-    document.body.appendChild(ta)
-    ta.select()
-    try { ok = document.execCommand('copy') } catch {}
-    ta.remove()
-  }
-  document.getElementById('copied').textContent = ok ? `Copied: "${text}"` : text
-})
-paint()
 </script>
 </body>
 </html>

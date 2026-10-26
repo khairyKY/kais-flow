@@ -1,22 +1,30 @@
-// Notification sounds, options for Kai to pick by ear (2026-10-26: "design the sounds for each").
+// Notification sound PACKS (2026-10-26). First made as options to pick by ear ("design the sounds for
+// each"); Kai heard them and said "include all of them and keep them separated, each in its pack". So
+// every candidate ships, in one of three packs that each have a sound for all ten kinds:
+//   Felt  — the A/B candidates in the felt voice (muted felt piano, warm and low)
+//   Glass — the A/B candidates in the glass voice (soft glass bells, airy)
+//   Mixed — the C candidates: both voices, more chords; break end and terms made for it here
 // Deterministic synthesis in plain Node — no dependencies, no network, no audio service: the same
 // felt and glass voices as app/src/lib/sounds.ts (Sounds v2), the same room (seeded impulse), the
-// same key (C major pentatonic). Each candidate → <id>.wav (44.1 kHz, 16-bit, mono), normalised to
-// about −16 LUFS (ITU-R BS.1770-4, integrated) with the true peak under −1 dBTP (4× oversampled).
-//   node make.mjs            → writes the WAVs, sounds.js (the options page's list) and measurements.json
-//   node make.mjs --check    → re-renders in memory and fails if a WAV on disk differs or breaks a limit
+// same key (C major pentatonic). Each sound → app/public/notification-sounds/<pack>/<kind>.wav (44.1 kHz,
+// 16-bit, mono), normalised to about −16 LUFS (ITU-R BS.1770-4, integrated) with the true peak under
+// −1 dBTP (4× oversampled). The app plays them from there; the Android build copies them into res/raw.
+//   node make.mjs            → writes the WAVs, sounds.js (the packs page's list) and measurements.json
+//   node make.mjs --check    → re-renders in memory and fails if a WAV on disk differs, breaks a limit,
+//                              or a pack is missing a kind
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
+const OUT = path.join(HERE, '../../app/public/notification-sounds')
 const RATE = 44100
 const TARGET_LUFS = -16
 const PEAK_CEILING_DB = -1
 const MIN_S = 0.3
 const MAX_S = 1.2
 
-// ── the candidates: [start s, MIDI note (before the pack's transpose), velocity, ring s to −60 dB] ──
+// ── the sounds: [start s, MIDI note (before the voice's transpose), velocity, ring s to −60 dB] ──
 // C D E G A only. Felt plays an octave down (as in the app); nothing goes below E3.
 const TYPES = [
   ['task_reminder', 'Task reminder', 'The one you hear most. Noticeable, never sharp.'],
@@ -31,7 +39,16 @@ const TYPES = [
   ['sync_problem', 'Sync problem', 'Changes couldn’t be saved. Distinct, but not an alarm.'],
 ]
 
-const C = (type, letter, pack, notes, room, desc) => ({ id: `${type}_${letter.toLowerCase()}`, type, letter, pack, notes, room, desc })
+export const PACK_LIST = [
+  ['felt', 'Felt', 'muted felt piano, warm and low'],
+  ['glass', 'Glass', 'soft glass bells, airy'],
+  ['mixed', 'Mixed', 'felt and glass together, more chords'],
+]
+// A and B were one felt and one glass option per kind, so they are the Felt and Glass packs; every C is Mixed.
+const C = (type, letter, voice, notes, room, desc) => {
+  const pack = letter === 'C' ? 'mixed' : voice
+  return { id: `${pack}/${type}`, type, letter, pack, voice, notes, room, desc }
+}
 export const CANDIDATES = [
   C('task_reminder', 'A', 'felt', [[0, 76, 0.85, 0.5], [0.14, 81, 1, 0.75]], 0.08, 'Two felt notes rising, E to A — a tap on the shoulder.'),
   C('task_reminder', 'B', 'glass', [[0, 79, 1, 0.9], [0.2, 79, 0.42, 0.75]], 0.1, 'One glass bell and its own quieter echo.'),
@@ -51,6 +68,7 @@ export const CANDIDATES = [
 
   C('break_end', 'A', 'felt', [[0, 67, 0.8, 0.35], [0.12, 72, 1, 0.65]], 0.1, 'Felt, G up to C — back to it.'),
   C('break_end', 'B', 'glass', [[0, 72, 0.7, 0.4], [0.1, 74, 0.8, 0.4], [0.2, 76, 1, 0.65]], 0.1, 'Glass, three small steps up, C–D–E.'),
+  C('break_end', 'C', 'glass', [[0, 79, 0.8, 0.4], [0.12, 84, 1, 0.8]], 0.12, 'Glass, G up to the high C — Felt’s "back to it", an octave up.'),
 
   C('morning_digest', 'A', 'glass', [[0, 72, 0.6, 0.6], [0.12, 74, 0.7, 0.6], [0.24, 76, 0.8, 0.6], [0.36, 79, 1, 0.8]], 0.14, 'Glass, a slow climb C–D–E–G — sunrise.'),
   C('morning_digest', 'B', 'felt', [[0, 60, 0.7, 0.55], [0.14, 64, 0.8, 0.55], [0.28, 67, 0.9, 0.55], [0.42, 72, 1, 0.7]], 0.12, 'Felt, a low warm arpeggio C–E–G–C.'),
@@ -66,13 +84,14 @@ export const CANDIDATES = [
 
   C('terms', 'A', 'felt', [[0, 72, 1, 0.55]], 0.08, 'One felt note — just so you know.'),
   C('terms', 'B', 'glass', [[0, 76, 1, 0.65]], 0.1, 'One soft glass bell.'),
+  C('terms', 'C', 'felt', [[0, 72, 0.8, 0.45], [0.14, 76, 1, 0.6]], 0.1, 'Felt, two soft notes up, C to E — just so you know.'),
 
   C('sync_problem', 'A', 'felt', [[0, 69, 0.9, 0.35], [0.16, 64, 1, 0.65]], 0.08, 'Felt, a low falling fourth, A to E — "hm, something’s off".'),
   C('sync_problem', 'B', 'glass', [[0, 74, 0.9, 0.35], [0.18, 74, 0.9, 0.6]], 0.08, 'Glass, the same low note twice — knock, knock.'),
   C('sync_problem', 'C', 'felt', [[0, 69, 0.8, 0.3], [0.12, 67, 0.9, 0.3], [0.24, 64, 1, 0.55]], 0.08, 'Felt, three notes stepping down A–G–E.'),
 ]
 
-// ── the voices (lib/sounds.ts PACKS, sample by sample) ──
+// ── the voices (lib/sounds.ts PACKS, sample by sample) — a sound's `voice`, not its pack ──
 const midi = (m) => 440 * 2 ** ((m - 69) / 12)
 const LEAD = 0.006
 const NYQUIST_GUARD = 6000
@@ -261,7 +280,7 @@ export function truePeakDb(x) {
 
 // ── render one candidate ──
 export function render(c) {
-  const p = PACKS[c.pack]
+  const p = PACKS[c.voice]
   const last = Math.max(...c.notes.map(([at, , , ring]) => at + ring))
   const seconds = Math.min(MAX_S, Math.max(MIN_S, LEAD + last + 0.05))
   const dry = new Float64Array(Math.ceil(seconds * RATE))
@@ -300,9 +319,16 @@ function wav(pcm) {
 const check = process.argv.includes('--check')
 const rows = []
 let bad = 0
+// Every pack has exactly one sound for every kind.
+for (const [pack] of PACK_LIST) {
+  for (const [type] of TYPES) {
+    const n = CANDIDATES.filter((c) => c.pack === pack && c.type === type).length
+    if (n !== 1) { bad++; console.log(`FAIL ${pack} has ${n} sounds for ${type}`) }
+  }
+}
 for (const c of CANDIDATES) {
   const r = render(c)
-  const file = path.join(HERE, `${c.id}.wav`)
+  const file = path.join(OUT, `${c.id}.wav`)
   const bytes = wav(r.pcm)
   const problems = []
   if (r.clipped) problems.push(`${r.clipped} clipped samples`)
@@ -310,15 +336,22 @@ for (const c of CANDIDATES) {
   if (r.seconds < MIN_S || r.seconds > MAX_S) problems.push(`${r.seconds} s`)
   if (Math.abs(r.lufs - TARGET_LUFS) > 2) problems.push(`${r.lufs} LUFS`)
   if (check && (!fs.existsSync(file) || !fs.readFileSync(file).equals(bytes))) problems.push('differs from the WAV on disk')
-  if (!check) fs.writeFileSync(file, bytes)
+  if (!check) {
+    fs.mkdirSync(path.dirname(file), { recursive: true })
+    fs.writeFileSync(file, bytes)
+  }
   bad += problems.length ? 1 : 0
-  rows.push({ id: c.id, type: c.type, letter: c.letter, pack: c.pack, seconds: r.seconds, lufs: r.lufs, truePeak: r.truePeak, clipped: r.clipped })
-  console.log(`${problems.length ? 'FAIL' : 'ok  '} ${c.id.padEnd(18)} ${c.pack.padEnd(5)} ${r.seconds.toFixed(2)} s  ${r.lufs.toFixed(1)} LUFS  ${r.truePeak.toFixed(1)} dBTP${problems.length ? '  ← ' + problems.join(', ') : ''}`)
+  rows.push({ id: c.id, type: c.type, pack: c.pack, voice: c.voice, seconds: r.seconds, lufs: r.lufs, truePeak: r.truePeak, clipped: r.clipped })
+  console.log(`${problems.length ? 'FAIL' : 'ok  '} ${c.id.padEnd(21)} ${c.voice.padEnd(5)} ${r.seconds.toFixed(2)} s  ${r.lufs.toFixed(1)} LUFS  ${r.truePeak.toFixed(1)} dBTP${problems.length ? '  ← ' + problems.join(', ') : ''}`)
 }
 if (!check) {
   fs.writeFileSync(path.join(HERE, 'measurements.json'), JSON.stringify(rows, null, 2) + '\n')
-  const list = { types: TYPES.map(([id, label, say]) => ({ id, label, say })), sounds: CANDIDATES.map((c) => ({ ...c, notes: undefined, ...rows.find((r) => r.id === c.id) })) }
-  fs.writeFileSync(path.join(HERE, 'sounds.js'), `// Written by make.mjs — the options page's list. Don't edit by hand.\nwindow.NOTIFICATION_SOUNDS = ${JSON.stringify(list, null, 2)}\n`)
+  const list = {
+    types: TYPES.map(([id, label, say]) => ({ id, label, say })),
+    packs: PACK_LIST.map(([id, label, blurb]) => ({ id, label, blurb })),
+    sounds: CANDIDATES.map((c) => ({ ...c, notes: undefined, letter: undefined, ...rows.find((r) => r.id === c.id) })),
+  }
+  fs.writeFileSync(path.join(HERE, 'sounds.js'), `// Written by make.mjs — the packs page's list. Don't edit by hand.\nwindow.NOTIFICATION_SOUNDS = ${JSON.stringify(list, null, 2)}\n`)
 }
-console.log(`${CANDIDATES.length} sounds, ${bad} with a problem`)
+console.log(`${CANDIDATES.length} sounds in ${PACK_LIST.length} packs, ${bad} with a problem`)
 process.exit(bad ? 1 : 0)

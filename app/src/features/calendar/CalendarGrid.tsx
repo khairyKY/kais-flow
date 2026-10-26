@@ -23,8 +23,7 @@ import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 import { gridMinWidth, isNarrow, TIME_AXIS_W, ZONE2_W } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
 import { useDayRollover } from './useDayRollover'
-import { cardDragData } from './planningMode'
-import { liftCards } from './cardDrag'
+import { CARD_DRAG, liftCards } from './cardDrag'
 import { blockHue } from './blockHue'
 import { repeatCheckName } from './blockMenuSpec'
 import { RepeatGlyph, Tick } from './checkGlyphs'
@@ -591,7 +590,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     const id = el.dataset.slotTask!
     let dragged = false
     let stopHover: (() => void) | null = null
-    const drag = new Draggable(el, { eventData: cardDragData })
+    const drag = new Draggable(el, CARD_DRAG)
     // slot-outline (Kai's pick A): the lifted card follows the pointer over the grid too; the card's
     // place stays dashed meanwhile (./cardDrag — every card dragged onto the grid lifts this way now).
     liftCards(drag)

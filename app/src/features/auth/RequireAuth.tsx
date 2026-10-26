@@ -2,10 +2,13 @@ import type { ReactNode } from 'react'
 import { Navigate } from 'react-router'
 import { useAuth } from './AuthProvider'
 import { useAppZoneFromSettings } from '../../lib/settings'
+import { usePrefsSync } from '../../lib/prefsSync'
 
-// Signed in, every surface (the shell, the tray flyout, onboarding) keeps the user's own zone.
+// Signed in, every surface (the shell, the tray flyout, onboarding) keeps the user's own zone, and the
+// settings kept on the device follow the ones chosen on the person's other devices (lib/prefs).
 function AppZoneSync() {
   useAppZoneFromSettings()
+  usePrefsSync()
   return null
 }
 

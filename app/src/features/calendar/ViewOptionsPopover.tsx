@@ -3,6 +3,7 @@ import { Segmented, Toggle as KitToggle } from '../../components/kit'
 import { uiZoom } from '../../lib/uiScale'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { ALL_ZONES, isZone, searchZones } from '../../lib/appZone'
+import { prefWritten } from '../../lib/prefs'
 
 // ── WA2-calendar-contracts.md "View options overlay" (Overlays §05), merged with Kai's
 // Akiflow ruling [K-26]: a 1–6/W/M view-selector row replaces the header's N-day cycler.
@@ -38,9 +39,9 @@ export const DEFAULT_VIEW_OPTIONS: CalViewOptions = {
   nowCard: true,
 }
 
-const VIEW_OPTIONS_KEY = 'kf.calViewOptions'
+export const VIEW_OPTIONS_KEY = 'kf.calViewOptions'
 
-/** Per-device view preferences, like rail width and UI scale — localStorage, not the synced settings row. */
+/** The view preferences: localStorage on each device, following the person across devices (lib/prefs). */
 export function readViewOptions(): CalViewOptions {
   try {
     return { ...DEFAULT_VIEW_OPTIONS, ...JSON.parse(localStorage.getItem(VIEW_OPTIONS_KEY) ?? '{}') }
@@ -52,6 +53,7 @@ export function readViewOptions(): CalViewOptions {
 export function writeViewOptions(opts: CalViewOptions): void {
   try {
     localStorage.setItem(VIEW_OPTIONS_KEY, JSON.stringify(opts))
+    prefWritten(VIEW_OPTIONS_KEY)
   } catch {
     /* private mode — session-only prefs are fine */
   }

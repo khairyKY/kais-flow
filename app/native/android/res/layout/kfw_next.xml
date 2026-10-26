@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- W7 Up next · tiny (2×1): the next block and its time, coloured by its calendar -->
+<!-- W07 Up next · tiny (2×1): the next block in its palette C colour — "Next · 11:00" in the block's own text tone,
+     the title on two lines. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
-    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
-    <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim">
-        <ImageView android:id="@+id/rule" android:layout_width="4dp" android:layout_height="40dp" android:scaleType="fitXY" android:src="@drawable/kfw_rule_sage" android:importantForAccessibility="no" />
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:orientation="vertical">
-            <TextView android:id="@+id/cap" style="@style/KfW.Cap" />
-            <TextView android:id="@+id/title" style="@style/KfW.Title" android:layout_width="match_parent" android:layout_marginTop="3dp" android:textSize="14sp" />
+    <FrameLayout android:layout_width="match_parent" android:layout_height="match_parent" android:padding="8dp">
+        <LinearLayout android:id="@+id/blk" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/kfw_blk_iris" android:gravity="center_vertical" android:orientation="vertical" android:paddingStart="10dp" android:paddingEnd="10dp">
+            <TextView android:id="@+id/cap" style="@style/KfW.Time" android:layout_width="match_parent" />
+            <TextView android:id="@+id/title" style="@style/KfW.Title" android:layout_width="match_parent" android:layout_marginTop="2dp" android:textSize="13sp" android:lineSpacingMultiplier="1.1" android:maxLines="2" />
         </LinearLayout>
-    </LinearLayout>
+        <ImageView android:id="@+id/blk_goal" android:layout_width="3dp" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/kfw_rule_gold" android:importantForAccessibility="no" android:visibility="gone" />
+    </FrameLayout>
 </FrameLayout>

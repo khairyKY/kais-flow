@@ -367,7 +367,10 @@ if (want('m')) {
     check(`m-${theme} the rows: … Complete · Open task · Duplicate Ctrl D · Work with AI › · Copy link · Unschedule ⌫ · Delete`, idx.every((v, i) => v >= 0 && (i === 0 || v > idx[i - 1])) && /Duplicate.*Ctrl.*D/.test(rows[idx[2]]) && /▸/.test(rows[idx[3]]), JSON.stringify(rows))
     await page.mouse.move(2, 790)
     await sleep(200)
-    await menu.screenshot({ path: path.join(OUT, `m-menu-${theme}.png`) })
+    // drag-fix (2026-10-26): with typing's length row the menu runs past an 800px window at 125%; an element shot that big
+    // resizes the viewport for the capture, and the menu closes on the resize — so the page's own view of it.
+    const mb = await menu.boundingBox()
+    await page.screenshot({ path: path.join(OUT, `m-menu-${theme}.png`), clip: { x: mb.x, y: Math.max(0, mb.y), width: mb.width, height: Math.min(mb.height, 800 - Math.max(0, mb.y)) } })
     if (theme === 'day') {
       // a swatch: one write, the block redrawn in Fern
       let w0 = state.writes.length

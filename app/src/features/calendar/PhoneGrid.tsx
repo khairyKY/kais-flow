@@ -51,7 +51,28 @@ export interface PhoneGridHandle {
   scrollToMinute(minute: number, offset: number): void
   /** Screen rect of a span in the visible columns (a sheet draws its slot or block over the scrim). */
   rectOf(day: string, start: number, end: number): { left: number; top: number; width: number; height: number } | null
+  /** drag-fix: a tray chip held past the long press — the grid carries it under the finger from here, as a
+   * slot's task (the same float, ghost, time bubble and edge scroll), and hands `onDrop` the quarter it's let
+   * go on (null off the grid). */
+  carry(c: Carry): void
 }
+
+export interface Carry {
+  id: string
+  title: string
+  minutes: number
+  fill: string
+  ink: string
+  /** The chip, for where the finger took it. */
+  el: HTMLElement
+  pointerId: number
+  x: number
+  y: number
+  onDrop: (at: { day: string; start: number } | null) => void
+}
+
+/** The pointer fields the gesture reads — a React event on the grid, or a window one while carrying a chip. */
+type Pointer = Pick<PointerEvent, 'pointerId' | 'clientX' | 'clientY' | 'timeStamp' | 'type'>
 
 interface Lift {
   id: string
@@ -126,6 +147,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const heldRef = useRef(held)
   heldRef.current = held
   const floatRef = useRef<HTMLDivElement>(null)
+  // drag-fix: a carried tray chip's drop, and the window listeners that follow its pointer (the chip keeps it).
+  const carryRef = useRef<{ onDrop: Carry['onDrop']; off: () => void } | null>(null)
   // Effects 2l's long-press bloom on a held task's row while the hold counts (SwipeRow's).
   const motionOn = useMotionEnabled()
   const [bloom, setBloom] = useState<{ id: string; x: number; y: number; n: number; out: boolean } | null>(null)
@@ -143,7 +166,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const [sliding, setSliding] = useState(false)
   const [settling, setSettling] = useState(false)
   // st0: the grid's scrollTop at the press, so a drag that scrolls the grid (its edges) still tracks the finger.
-  const g = useRef({ id: -1, kind: 'idle' as 'idle' | 'press' | 'swipe' | 'drag' | 'task', sx: 0, sy: 0, st0: 0, dx: 0, lastX: 0, lastY: 0, lastT: 0, v: 0, timer: 0, swallow: false, raf: 0, acc: 0 })
+  // armed: the edges scroll — off for a chip carried in from the tray above until the finger is past the top edge's
+  // band once (crossing it on the way in is no request to scroll).
+  const g = useRef({ id: -1, kind: 'idle' as 'idle' | 'press' | 'swipe' | 'drag' | 'task', sx: 0, sy: 0, st0: 0, dx: 0, lastX: 0, lastY: 0, lastT: 0, v: 0, timer: 0, swallow: false, raf: 0, acc: 0, armed: true })
   const multi = days.length > 1
   const h24 = useHour24() // the person's clock (lib/clock) for the gutter and the now tag
   const nowMin = toMin(cairoTimeKey(now))
@@ -154,6 +179,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     () => () => {
       window.clearTimeout(g.current.timer)
       cancelAnimationFrame(g.current.raf)
+      carryRef.current?.off()
     },
     [],
   )
@@ -188,7 +214,32 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       const pxPerMin = r.height / 1440
       return { left: r.left + i * w + (multi ? 2 : 4), top: r.top + start * pxPerMin, width: w - (multi ? 4 : 20), height: Math.max((MIN_BLOCK_PX * pxPerMin) / minToPx(1), (end - start) * pxPerMin) }
     },
+    carry,
   }))
+
+  function carry(c: Carry) {
+    const s = g.current
+    window.clearTimeout(s.timer)
+    carryRef.current?.off()
+    Object.assign(s, { id: c.pointerId, kind: 'task', sx: c.x, sy: c.y, st0: scrollRef.current?.scrollTop ?? 0, lastX: c.x, lastY: c.y, lastT: performance.now(), v: 0, swallow: false, armed: false })
+    const r = c.el.getBoundingClientRect()
+    heldRef.current = { taskId: c.id, slotId: '', title: c.title, done: false, minutes: c.minutes, fill: c.fill, ink: c.ink, ox: c.x - r.left, oy: c.y - r.top, w: r.width, x: c.x, y: c.y, at: heldAt(c.x, c.y, c.minutes) }
+    setHeld(heldRef.current)
+    // The chip keeps the pointer (a touch is captured by where it began), so its moves are heard on the window.
+    const end = (e: PointerEvent) => {
+      if (e.pointerId === c.pointerId) up(e)
+    }
+    const off = () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', end)
+      window.removeEventListener('pointercancel', end)
+      carryRef.current = null
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', end)
+    window.addEventListener('pointercancel', end)
+    carryRef.current = { onDrop: c.onDrop, off }
+  }
 
   const width = () => (trackRef.current?.getBoundingClientRect().width ?? 326) / uiZoom()
 
@@ -196,7 +247,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     if ((e.pointerType === 'mouse' && e.button !== 0) || !e.isPrimary || settling) return
     const s = g.current
     const target = e.target as Element
-    Object.assign(s, { id: e.pointerId, kind: 'idle', sx: e.clientX, sy: e.clientY, st0: scrollRef.current?.scrollTop ?? 0, dx: 0, lastX: e.clientX, lastY: e.clientY, lastT: e.timeStamp, v: 0, swallow: false })
+    Object.assign(s, { id: e.pointerId, kind: 'idle', sx: e.clientX, sy: e.clientY, st0: scrollRef.current?.scrollTop ?? 0, dx: 0, lastX: e.clientX, lastY: e.clientY, lastT: e.timeStamp, v: 0, swallow: false, armed: true })
     window.clearTimeout(s.timer)
     const handle = target.closest<HTMLElement>('[data-pc-handle]')?.dataset.pcHandle as DragMode | undefined
     const blockEl = target.closest<HTMLElement>('.pc-block')
@@ -245,7 +296,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     }, LONG_PRESS_MS)
   }
 
-  function move(e: ReactPointerEvent<HTMLDivElement>) {
+  function move(e: Pointer) {
     const s = g.current
     if (e.pointerId !== s.id) return
     const z = uiZoom()
@@ -337,7 +388,11 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const r = el?.getBoundingClientRect()
     // A lifted task scrolls the grid only while the finger is over it: above it is the strip.
     const on = s.kind === 'drag' ? !!liftRef.current?.mode : s.kind === 'task' && !!r && s.lastY >= r.top && s.lastY <= r.bottom
-    const v = el && r && on ? edgeScrollSpeed(s.lastY / z, r.top / z, r.bottom / z) : 0
+    let v = el && r && on ? edgeScrollSpeed(s.lastY / z, r.top / z, r.bottom / z) : 0
+    if (!s.armed) {
+      if (on && !v) s.armed = true
+      v = 0
+    }
     if (!el || !v) {
       s.raf = 0
       return
@@ -354,7 +409,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     s.raf = requestAnimationFrame((next) => edgeScroll(next, t))
   }
 
-  function up(e: ReactPointerEvent<HTMLDivElement>) {
+  function up(e: Pointer) {
     const s = g.current
     window.clearTimeout(s.timer)
     drain()
@@ -364,9 +419,14 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     s.kind = 'idle'
     if (kind === 'task') {
       const h = heldRef.current
+      const carried = carryRef.current
+      carried?.off()
       heldRef.current = null
       setHeld(null)
-      if (e.type !== 'pointercancel' && h) onDropHeld?.(h.taskId, h.at)
+      if (e.type !== 'pointercancel' && h) {
+        if (carried) carried.onDrop(h.at)
+        else onDropHeld?.(h.taskId, h.at)
+      }
     } else if (kind === 'drag') {
       const l = liftRef.current
       if (!l) return

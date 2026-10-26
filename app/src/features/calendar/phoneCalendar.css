@@ -61,6 +61,8 @@
   background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); box-shadow: var(--shadow-crisp);
   font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
 }
+/* drag-fix: a hold lifts a chip onto the grid — no text selection or link callout under the finger. */
+.pc-uns .pc-chip { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .pc-chip::after { content: ''; position: absolute; inset: calc(-1 * var(--sp-1)) 0; }
 .pc-chip[aria-expanded='true'] { border-color: var(--ink-body); box-shadow: inset 0 0 0 0.5px var(--ink-body); }
 .pc-chip.is-skel { width: 132px; border: none; box-shadow: none; background: var(--skeleton); animation: skeletonPulse 1.6s var(--ease-natural) infinite; }

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- W24 Streak · tiny: 1×1 (streak) -->
+<!-- W24 Streak · tiny: 1×1 (streak). Merged into W23 (its 1×1 face): hidden from the picker (Android 9+), and the
+     ones already on a home screen keep working. -->
 <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
     android:minWidth="40dp"
     android:minHeight="40dp"
@@ -14,4 +15,5 @@
     android:initialLayout="@layout/kfw_loading"
     android:previewImage="@drawable/kfw_preview_w24"
     android:description="@string/kfw_desc_24"
-    android:widgetCategory="home_screen" />
+    android:widgetCategory="home_screen"
+    android:widgetFeatures="hide_from_picker" />

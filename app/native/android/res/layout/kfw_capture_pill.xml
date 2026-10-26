@@ -1,12 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- W10 Capture pill (2×1): the seal with a word -->
+<!-- W10 Capture pill (2×1): the + with a word — Capture, type or talk. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
-    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
     <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Slim">
-        <ImageView android:id="@+id/seal" style="@style/KfW.Round.Cta" android:src="@drawable/kfw_ic_plus" android:contentDescription="Capture" />
-        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="12dp" android:orientation="vertical">
-            <TextView style="@style/KfW.Serif" android:textSize="16sp" android:text="Capture" />
-            <TextView android:id="@+id/meta" style="@style/KfW.Meta" android:layout_marginTop="2dp" android:letterSpacing="0" android:textSize="11sp" android:text="tap to type" />
+        <ImageView android:id="@+id/seal" style="@style/KfW.Round.Cta" android:layout_width="40dp" android:layout_height="40dp" android:padding="10dp" android:src="@drawable/kfw_ic_plus" android:contentDescription="Capture" />
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:layout_marginStart="10dp" android:orientation="vertical">
+            <TextView style="@style/KfW.Serif.Bold" android:textSize="15sp" android:text="Capture" />
+            <TextView style="@style/KfW.Meta" android:layout_marginTop="2dp" android:text="Type or talk" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

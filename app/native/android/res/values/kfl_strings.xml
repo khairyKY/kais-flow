@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="kfl_label">Top 3 · lock screen</string>
+    <string name="kfl_desc">Today\'s Top 3, the goal first, for the lock screen (Good Lock › LockStar). Tick without unlocking.</string>
+</resources>

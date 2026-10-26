@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A calendar block as a row, in its palette C colour (the calendar's "Now" look): an optional bold label (Next,
+     Then), its time in the block's own text tone, the check square for a task, the title, an end time or a live "in 20:00". A goal block
+     gets the gold rule and ✶. Render.blockRow fills it. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/blk" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:background="@drawable/kfw_blk_iris">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="30dp" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="9dp" android:paddingEnd="9dp">
+        <TextView android:id="@+id/blk_label" style="@style/KfW.Cap" android:layout_marginEnd="6dp" android:textSize="12.5sp" android:visibility="gone" />
+        <TextView android:id="@+id/blk_time" style="@style/KfW.Time" android:layout_marginEnd="7dp" />
+        <ImageView android:id="@+id/blk_k" android:layout_width="12dp" android:layout_height="12dp" android:layout_marginEnd="6dp" android:src="@drawable/kfw_k" android:importantForAccessibility="no" android:visibility="gone" />
+        <TextView android:id="@+id/blk_star" style="@style/KfW.Title" android:layout_marginEnd="3dp" android:text="✶" android:textColor="@color/kfw_gold" android:textSize="12.5sp" android:visibility="gone" />
+        <TextView android:id="@+id/blk_title" style="@style/KfW.Title" android:layout_width="0dp" android:layout_weight="1" android:textSize="12.5sp" />
+        <TextView android:id="@+id/blk_end" style="@style/KfW.Time" android:layout_marginStart="6dp" android:visibility="gone" />
+        <Chronometer android:id="@+id/blk_cd" style="@style/KfW.Time" android:layout_marginStart="6dp" android:textColor="@color/kfw_ink_muted" android:visibility="gone" />
+    </LinearLayout>
+    <ImageView android:id="@+id/blk_goal" android:layout_width="3dp" android:layout_height="match_parent" android:scaleType="fitXY" android:src="@drawable/kfw_rule_gold" android:importantForAccessibility="no" android:visibility="gone" />
+</FrameLayout>

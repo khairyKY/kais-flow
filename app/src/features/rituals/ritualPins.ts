@@ -1,10 +1,11 @@
 import { useSyncExternalStore } from 'react'
+import { onPrefApplied, prefWritten } from '../../lib/prefs'
 import type { RitualKind } from './api'
 
 // R4-5a (Kai's 2026-07-20 audit): "the rituals… shouldn't always be displayed there… the user
 // should be able to choose whether they stay pinned." Pinned rituals ride the Today page;
-// unpinned ones drop off it and are reached from Routines instead (R4-5b). A local preference,
-// same shape as the sidebar-collapsed / plan-open flags — no schema change for a view toggle.
+// unpinned ones drop off it and are reached from Routines instead (R4-5b). Kept in localStorage and
+// following the person across devices (lib/prefs, 2026-10-26).
 
 const KEY = 'kf.ritualPins'
 
@@ -25,11 +26,13 @@ function emit() {
   snapshot = read()
   listeners.forEach((l) => l())
 }
+onPrefApplied(KEY, emit) // pinned or unpinned on another device
 
 export function toggleRitualPin(kind: RitualKind): void {
   const next = { ...read(), [kind]: !read()[kind] }
   try {
     localStorage.setItem(KEY, JSON.stringify(next))
+    prefWritten(KEY)
   } catch {
     /* private mode — the toggle just won't persist */
   }
