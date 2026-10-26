@@ -98,10 +98,11 @@ const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
 
 // ── 1. Desktop Integrations: no key → a read-only key → the snippets → turn off ──
 {
-  const { ctx, page, errors, state } = await open('/settings', { view: desktop })
-  await page.getByText('Integrations', { exact: true }).first().click()
+  // settings-build: Integrations lists "AI assistants (MCP)", which opens its own page
+  const { ctx, page, errors, state } = await open('/settings/integrations', { view: desktop })
+  await page.getByText('AI assistants (MCP)', { exact: true }).first().click()
   await sleep(700)
-  check('desktop: "AI assistants" section on Integrations', await page.getByText('AI assistants', { exact: true }).isVisible())
+  check('desktop: "AI assistants" section on Integrations', /\/settings\/integrations\/mcp$/.test(new URL(page.url()).pathname) && (await card(page).count()) === 1, page.url())
   await card(page).scrollIntoViewIfNeeded()
   const before = await card(page).innerText()
   check('desktop: card says not set up yet', /not set up yet/i.test(before))
@@ -166,8 +167,7 @@ const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
 
 // ── 2. Desktop, an existing key: the status line on the user's clock (Tokyo) ──
 {
-  const { ctx, page, errors } = await open('/settings', { view: desktop, rows: { mcp_keys: [KEY_ROW] } })
-  await page.getByText('Integrations', { exact: true }).first().click()
+  const { ctx, page, errors } = await open('/settings/integrations/mcp', { view: desktop, rows: { mcp_keys: [KEY_ROW] } })
   await sleep(700)
   await card(page).scrollIntoViewIfNeeded()
   const text = await card(page).innerText()
@@ -184,8 +184,8 @@ const KEY_RE = /kf_ai_[A-Za-z0-9_-]{43}/
 
 // ── 3. Phone Settings at 390: the card, a fresh key, the longest snippet open ──
 for (const theme of ['day', 'night']) {
-  const { ctx, page, errors } = await open('/settings', { theme })
-  check(`phone ${theme}: card is on the Settings page`, await page.getByText('AI assistants (MCP)', { exact: true }).isVisible())
+  const { ctx, page, errors } = await open('/settings/integrations/mcp', { theme }) // settings-build: its own page
+  check(`phone ${theme}: card is on the Settings page`, await page.getByText('AI assistants (MCP)', { exact: true }).last().isVisible())
   await card(page).scrollIntoViewIfNeeded()
   await card(page).getByRole('button', { name: 'Create key' }).click()
   await sleep(900)
