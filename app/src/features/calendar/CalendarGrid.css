@@ -508,6 +508,12 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 /* Effects toggle off / reduced motion: no wobble, but the block still reads as picked up. */
 .kf-cal-ghost { transform: scale(1.04); }
 
+/* cal-blocks item 10: a multi-drag's other picked blocks stay where they were, faded, while their ghosts travel. */
+.fc .fc-event[data-carried] { opacity: 0.35; }
+/* Ctrl+drag (menu B): the original stays drawn where it is (FullCalendar hides it during a drag), the cursor a copy. */
+.kf-cal-copying .fc-timegrid-event-harness { visibility: visible !important; }
+.kf-cal-copying, .kf-cal-copying .fc-event { cursor: copy !important; }
+
 /* Punch 35 / §7 invalid drop — the "soft no": released off-grid, the ghost shakes ±4px
    decaying over ~320ms, dims to .6 and untilts (the shake replaces the float's rotation);
    nothing is created. Applied via .kf-cal-softno on the ghost host (CalendarGrid.tsx).

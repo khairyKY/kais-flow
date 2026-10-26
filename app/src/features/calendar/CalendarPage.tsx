@@ -47,6 +47,7 @@ import { conflictsOf } from './overlapLayout'
 import { parseWeekend } from '../../lib/weekend'
 import { addDays, durationLabel } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
+import { duplicateBlockWithUndo } from './duplicate'
 import { BLOCK_MENU_WIDTH, besideBlock, isSynced } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
@@ -1109,6 +1110,15 @@ function DesktopCalendar() {
     onEventClick: (id: string, add?: boolean) => handleEventClick(id, add),
     onMoveMany: (ids: readonly string[], delta: number) => {
       moveEventsByWithUndo(ids.flatMap((id) => gridEvents.filter((x) => x.id === id)), delta)
+      return true
+    },
+    // Ctrl+drag (menu B, cal-blocks): a copy where it was dropped, one Undo — what Duplicate copies (never a Time
+    // block or a Google event; a task block's copy is a new task).
+    onDuplicateAt: (id: string, start: string, end: string, allDay: boolean) => {
+      const event = gridEvents.find((e) => e.id === id)
+      const task = event?.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
+      if (!event || isSynced(event) || event.type === 'time_block' || (event.task_id && !task)) return false
+      duplicateBlockWithUndo(event, task, { starts_at: start, ends_at: end, all_day: allDay })
       return true
     },
     onEventDoubleClick: (id: string) => handleEventDoubleClick(id),
