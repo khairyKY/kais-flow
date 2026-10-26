@@ -224,7 +224,8 @@ if (ONLY.includes('3')) {
     await sleep(1200)
     check(`${name} Start → Today, the flag left for this account`, (await flag(page)) === '1')
     check(`${name} the hint, the drawing's copy, in the interface face`, (await text(hint(page))) === HINT && (await handFont(page)), await text(hint(page)))
-    check(`${name} it sits under the next-move card (the Plan my day ritual card)`, await below(page, '.tp-ritual'))
+    // phone-today (2026-10-26): the next-move card is B's Now panel (the Plan my day card is gone; Begin is on Rituals).
+    check(`${name} it sits under the next-move card (B's Now panel)`, await below(page, 'section[aria-label="Now"]'))
     await shot(page, name)
     await page.locator('.tp-bar-title').click()
     await sleep(300)
@@ -235,22 +236,22 @@ if (ONLY.includes('3')) {
     noErrors(name, errors)
     await ctx.close()
   }
-  // A block running: the hint sits under the NOW slip.
+  // A block running: phone-today draws it in B's Now panel (the slip is only for over / paused / just done).
   {
     const name = '3-first-today-phone-slip'
     const { ctx, page, errors } = await open('/today', { tasks: three, calendar_events: [block] }, { now: '09:40', init: { [FLAG]: '1' } })
-    check(`${name} under the NOW slip`, (await text(hint(page))) === HINT && (await below(page, '.tp-slip-wrap > *')))
+    check(`${name} under the Now panel`, (await text(hint(page))) === HINT && (await below(page, 'section[aria-label="Now"]')))
     await shot(page, name)
     noErrors(name, errors)
     await ctx.close()
   }
-  // Midday, nothing running: the phone shows no card (ruling 3), so no hint yet; the flag waits.
+  // Midday, nothing running: phone-today's B always has its Now panel, so the hint shows there and a tap spends it.
   {
     const name = '3-first-today-phone-nocard'
     const { ctx, page, errors } = await open('/today', { tasks: three }, { now: '13:10', init: { [FLAG]: '1' } })
     await page.locator('.tp-bar-title').click()
     await sleep(300)
-    check(`${name} no card → no hint, and a tap doesn't spend it`, (await hint(page).count()) === 0 && (await page.locator('.tp-ritual, .tp-slip-wrap').count()) === 0 && (await flag(page)) === '1')
+    check(`${name} B's Now panel is the card: the tap spent the hint`, (await hint(page).count()) === 0 && (await page.locator('section[aria-label="Now"]').count()) === 1 && (await flag(page)) === null)
     noErrors(name, errors)
     await ctx.close()
   }
@@ -258,7 +259,7 @@ if (ONLY.includes('3')) {
   {
     const name = '3-first-today-phone-existing'
     const { ctx, page, errors } = await open('/today', { tasks: three }, { now: '07:40' })
-    check(`${name} no flag → no hint`, (await hint(page).count()) === 0 && (await page.locator('.tp-ritual').count()) === 1)
+    check(`${name} no flag → no hint`, (await hint(page).count()) === 0 && (await page.locator('section[aria-label="Now"]').count()) === 1)
     noErrors(name, errors)
     await ctx.close()
   }

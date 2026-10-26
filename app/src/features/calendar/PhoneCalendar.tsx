@@ -92,13 +92,15 @@ export function PhoneCalendar() {
   const now = useMinuteNow()
   const today = cairoDateKey(now)
   const [view, setView] = useState<PhoneView>('day')
+  // /calendar?view=day (Today's Day bar, phone-today): today's own column, whatever the default view.
+  const [askedDay] = useState(() => new URLSearchParams(location.search).get('view') === 'day')
   // Settings → the calendar's default view (synced): applied once when settings load, then the
   // title's Day / 3 days / Week switch is the reader's own — same pattern as the desktop calendar.
   const defaultView = useCalendarDefaultView('day')
   const [openedOnDefault, setOpenedOnDefault] = useState(false)
   if (defaultView && !openedOnDefault) {
     setOpenedOnDefault(true)
-    if (defaultView !== view) setView(defaultView)
+    if (defaultView !== view && !askedDay) setView(defaultView)
   }
   // /calendar?date=YYYY-MM-DD (a day tapped on the week widgets) opens on that day.
   const [anchor, setAnchor] = useState(() => new URLSearchParams(location.search).get('date')?.match(/^\d{4}-\d{2}-\d{2}$/)?.[0] ?? today)

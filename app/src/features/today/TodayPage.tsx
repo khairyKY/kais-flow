@@ -17,7 +17,7 @@ import { nestOut } from '../tasks/subtasks'
 import { SubtaskAddButton, SubtaskCount, SubtaskNest, hasOpenSubtasks, useNestOpen } from '../tasks/SubtaskNest'
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotLabel, useCalendarEvents } from '../calendar/api'
-import { cairoTimeKey, timeRange, timeText } from '../calendar/eventTime'
+import { timeRange, timeText } from '../calendar/eventTime'
 import { blockSwatch } from '../calendar/blockHue'
 import { clockText, useHour24 } from '../../lib/clock'
 import { useProjects } from '../projects/api'
@@ -25,7 +25,7 @@ import { useDomains } from '../domains/api'
 import { useAreas } from '../areas/api'
 import { useRoutines, useRoutineCompletions, toggleCompletion } from '../routines/api'
 import { routinesForToday, todayTally } from '../routines/streaks'
-import { groupRoutinesByTime, splitByTimeOfDay } from '../routines/routineGrouping'
+import { groupRoutinesByTime } from '../routines/routineGrouping'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { usePendingInboxItems } from '../inbox/api'
 import { usePeople, getDaysUntilBirthday } from '../people/api'
@@ -38,7 +38,6 @@ import { MorningRitual } from '../rituals/MorningRitual'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { ResurfaceCard } from '../resurfacing/ResurfaceCard'
 import { useResurfacePick } from '../resurfacing/api'
-import { useTimeEntries } from '../focus/api'
 import { legacyGoalId } from './goalStore'
 import { dayTop3 } from './top3Order'
 import { CAPTURE_INPUT_ID, openTaskCapture } from '../command-bar/commandBarStore'
@@ -47,7 +46,6 @@ import { Icon } from '../../components/Icon'
 import { ActionSheet } from '../../components/ActionSheet'
 import { useIsMobile } from '../../components/BottomSheet'
 import { isTypingTarget, useListKeys } from '../../components/useListKeys'
-import { useLingering } from '../../components/syncQueue'
 import { BulkBar } from '../../components/BulkBar'
 import { EmptyState, ErrorCard, OfflineChip, Skeleton } from '../../components/States'
 import { MovePicker } from '../tasks/MovePicker'
@@ -70,7 +68,7 @@ import { LabelChips } from '../tasks/TaskRow'
 import { useRowGrammar, type RowGrammarOptions } from '../tasks/useRowGrammar'
 import type { BulkActions } from '../tasks/TaskMenu'
 import { useOpenTask } from '../tasks/openTask'
-import { DeskRitualHead, RitualCard, ReviewCard, type CardHead } from './DayCard'
+import { DeskRitualHead, ReviewCard, type CardHead } from './DayCard'
 import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
 import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
@@ -78,8 +76,7 @@ import { useStarEvents } from './api'
 import { useStartFocus } from './startFocus'
 import { useFocusNow } from './focusNow'
 import { JUST_DONE_MS, nowBlock, nowState, type NowState } from './nowCard'
-import { blockMeta, blockOf, dayCounts, eventMetas, focusedToday, foldOpen, overCapacity, projectTag, remainingWork, reviewDue, ribbonPct, ribbonSpan, span, top3Planned, topCard, upNextItems, workloadLine, RIBBON_FROM_MIN, RIBBON_TO_MIN, type WorkloadInput } from './todayLayout'
-import { dayOfJourney, firstCreatedAt } from './journey'
+import { blockMeta, blockOf, dayCounts, foldOpen, projectTag, reviewDue, ribbonPct, ribbonSpan, span, top3Planned, topCard, upNextItems, RIBBON_FROM_MIN, RIBBON_TO_MIN } from './todayLayout'
 import { filterByList, taskDayDiff } from '../tasks/grouping'
 import { flushOutbox, useOutboxMarks } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
@@ -98,6 +95,8 @@ import { MAX_SEEDS } from '../rituals/loopDay'
 import { useJournalEntries } from '../journal/api'
 import { useMinuteNow } from './useMinuteNow'
 import { captureFor, dayBlocks, dayBounds, dayHeading, dayName, dayNoon, dayWord, futureTasks, pastTasks, viewDay } from './dayView'
+import { NowPanel, RitualsPanel, usePhoneView, ViewSwitch } from './PhoneHome'
+import { DayStripView } from './DayStripView'
 
 // The 2a capture pill's mic: the voice sheet, loaded on first use (as the tray does).
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
@@ -148,9 +147,6 @@ function TodayView({ nav }: { nav: DayNav }) {
   // restored the query is pending but not fetching, so isLoading is false and the empty states lied.
   const tasksQuery = useTasks()
   const eventsQuery = useCalendarEvents()
-  // Kai 2026-10-07: the phone's "Syncing" dot blinked on with every refetch (each write's realtime
-  // echo refetches). The topbar's rule now: only a fetch that's still going after ~4s shows it.
-  const fetchingSlowly = useLingering(tasksQuery.isFetching || eventsQuery.isFetching)
   const { data: tasks = [], isPending: tasksPending } = tasksQuery
   const { data: events = [], isPending: eventsPending } = eventsQuery
   const { data: projects = [] } = useProjects()
@@ -184,6 +180,8 @@ function TodayView({ nav }: { nav: DayNav }) {
     return s
   })
   const isMobile = useIsMobile()
+  // phone-today: the phone's Now (B) / Day switch, per device.
+  const [phoneView, setPhoneView] = usePhoneView()
   // DS-CHANGELOG §3 Offline: a phone row not yet synced carries a pending ring while offline.
   const online = useOnline()
   const { pending: pendingIds } = useOutboxMarks('tasks')
@@ -261,14 +259,18 @@ function TodayView({ nav }: { nav: DayNav }) {
   // day — with no head while nothing runs ('idle', Kai's "no card during the day"). An empty day
   // keeps only the Plan / Shut down / Day closed moments, as the Day card always did.
   const deskCard = tasksPending ? null : card ?? (!empty ? 'idle' : day.state.phase === 'now' ? null : day.state.phase)
-  const topSlot = isMobile ? card : deskCard
-  const headBlock = topSlot === 'slip' ? nowBlock(nowS) : null
-  const headTask = topSlot === 'slip' && nowS && 'task' in nowS ? nowS.task : undefined
+  // phone-today (Kai 2026-10-26, B "Now + next"): on a phone the calendar's Now card stands for what runs
+  // (./PhoneHome NowPanel); the slip stays only for what that card can't draw — over, paused, just done.
+  const phoneSlip = isMobile && nowS && nowS.kind !== 'running' ? nowS : null
+  const slipOn = isMobile ? !!phoneSlip : deskCard === 'slip'
+  const headBlock = slipOn ? nowBlock(nowS) : null
+  const headTask = slipOn && nowS && 'task' in nowS ? nowS.task : undefined
   // Each item once (./todayLayout, rulings 3–4): Up next skips the card's block and the Top 3's.
   const upNext = upNextItems(events, now, headBlock, top3Ids)
   // Desktop lists the next two under the ribbon (2a); the rest are on the ribbon, and their tasks
-  // stay rows in Also open — every task shows as a row somewhere (DAILY-CYCLE).
-  const upNextShown = isMobile ? upNext : upNext.slice(0, 2)
+  // stay rows in Also open — every task shows as a row somewhere (DAILY-CYCLE). The phone has no Up next
+  // list now (B): a task with a block today is a row in its list, carrying the block's time.
+  const upNextShown = isMobile ? [] : upNext.slice(0, 2)
   const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
   // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
   // Snooze: one back today leads the list (its "Back from snooze" marker), ahead of the date order.
@@ -467,9 +469,6 @@ function TodayView({ nav }: { nav: DayNav }) {
   // both come from the Routines page's own definition of today (streaks.ts todayTally /
   // routinesForToday: scheduled today, or already checked off today), so the two pages agree.
   const routineGroups = groupRoutinesByTime(routinesForToday(routines, completions)).filter((g) => g.items.length > 0)
-  // Kai 2026-10-03: the phone shows the routines for now (+ Anytime); other times fold into one line each.
-  const routineSplit = splitByTimeOfDay(routineGroups, Number(cairoTimeKey(now).slice(0, 2)))
-  const [openRoutineGroups, setOpenRoutineGroups] = useState<string[]>([])
   // The user's day (lib/appZone), like the hour above — not the device's.
   const todayKey = zoneDateKey(now)
   const doneKeys = useMemo(() => new Set(completions.filter((c) => c.completed_on === todayKey).map((c) => c.routine_id)), [completions, todayKey])
@@ -499,11 +498,6 @@ function TodayView({ nav }: { nav: DayNav }) {
   const weekend = weekendDays()
   const { data: reviewEvents = [] } = useReviewEventsThisWeek(startOfWeek(loopNow(now), weekend).toISOString())
   const reviewToday = reviewDue(now, weekend, reviewEvents)
-
-  // Ported from the retired Terrarium.tsx — day count since the earliest record, for the phone
-  // header's "Day N" (Today Phone ruling 1). On a desktop it's the sidebar foot's "day N" (2a, AppLayout).
-  const firstRecord = useMemo(() => firstCreatedAt(tasks, pendingInbox, projects, routines), [tasks, pendingInbox, projects, routines])
-  const dayNumber = dayOfJourney(firstRecord, now)
 
   const upcomingBirthdays = useMemo(() => {
     return people
@@ -665,168 +659,109 @@ function TodayView({ nav }: { nav: DayNav }) {
     </>
   )
 
-  // ── Phone: Today Phone.dc.html 2a–2n. Header line → NOW slip or ritual card → Top 3 → Up next
-  // → Today's tasks → Routines → the quiet fold. Each item once. ──
+  // ── Phone (phone-today, Kai 2026-10-26: "phone B"): design-export/Phone home options.html B "Now + next"
+  // (today-looks worktree). The date bar and the day strip (with the Now / Day switch) → the calendar's Now
+  // card with the next two blocks → the smaller paper goal → Settings-style rounded panels: Top 3, Today's
+  // tasks, Overdue + Also open, Rituals. "Day" (Kai's Day view 4, "Day bar") swaps the Now card for ./DayStripView. ──
   if (isMobile) {
     const tended = day.tally.picked > 0 && day.tally.done >= day.tally.picked
-    const metas = eventMetas(upNext, now)
-    // The desktop's: a held task reads "in Code block · 10:00" here too (slots-ux).
-    const blockMetaOf = (t: Task) => blockMetaFor(t, events, now)
-    const row = (t: Task, extra: { pick?: boolean; block?: CalendarEvent; meta?: string[]; place?: RowGrammarOptions['place'] } = {}) => (
-      <TaskRow key={extra.block?.id ?? t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
-    )
-    // Snooze: what came back today leads Today's tasks, as on the desktop (each row wears its marker).
-    const todayPhoneRows = todayRows
-    const foldOpenRows = alsoRows
-    const foldCount = foldOpenRows.length + slipping.length + (resurfacing ? 1 : 0)
-    const workload: Omit<WorkloadInput, 'focusedMin'> = {
-      day: dayNumber,
-      phase: day.state.phase,
-      empty,
-      top3: day.tally,
-      top3DoneAt: top3.map((t) => t.completed_at ?? '').sort().pop() || null,
-      doneToday,
-      remaining: remainingWork(top3InOrder.filter((t) => !t.completed_at), events, now, doneTaskIds),
+    // One fact per row: its block's start ("Now" while it runs), else its Time slot (0073).
+    const slimMeta = (t: Task): string[] | undefined => {
+      const b = blockOf(t.id, events, now)
+      if (b) return [isInProgress(b.starts_at, b.ends_at, now) ? 'Now' : timeText(new Date(b.starts_at))]
+      const slot = slotLabel(t, now)
+      return slot ? [slot] : undefined
     }
-    // MK Workload: amber + "2H OVER" when the plan doesn't fit the working day (during the day only).
-    const over = day.state.phase === 'now' && !empty ? overCapacity(top3InOrder.filter((t) => !t.completed_at), events, now, doneTaskIds) : 0
+    const row = (t: Task, extra: { pick?: boolean; n?: number; noFact?: boolean; place?: RowGrammarOptions['place'] } = {}) => (
+      <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact slim meta={slimMeta(t)} pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
+    )
+    const openBlock = (e: CalendarEvent) => (e.task_id && taskById.has(e.task_id) ? openTask(e.task_id) : navigate(eventPath(e)))
+    const planned = top3Planned(top3InOrder, events, now)
+    const goalMeta = goal && (blockMetaFor(goal, events, now)?.[0] ?? (goal.duration_min != null ? formatDuration(goal.duration_min) : undefined))
+    const listsReady = !tasksPending && !(tasksQuery.isError && tasks.length === 0)
+    const goalNode = tasksPending ? (
+      <div className="tp-gs-wrap"><GoalCardLoading /></div>
+    ) : goal ? (
+      <div className="tp-gs-wrap">
+        <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact slim meta={goalMeta ? [goalMeta] : undefined} place={placeOf(goal)} {...rowSelection(goal)} />
+      </div>
+    ) : null
+    const foldCount = alsoRows.length + slipping.length + (resurfacing ? 1 : 0)
+    const folds = listsReady && (overdueOpen.length > 0 || foldCount > 0) && (
+      <PhoneFolds
+        overdue={overdueOpen.length > 0 ? { count: overdueOpen.length, action: replanAll, body: <>{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}{overdueOpen.length > ALL_OPEN_CAP && <Link to="/tasks?list=overdue" className="tp-link tp-pn-more">View all</Link>}</> } : undefined}
+        also={foldCount > 0 ? {
+          count: foldCount,
+          body: (
+            <>
+              {alsoRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}
+              {alsoRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="tp-link tp-pn-more">View all</Link>}
+              {slipping.length > 0 && <><div className="tp-sub">Slipping</div><div className="tp-pad">{slippingCards}</div></>}
+              {resurfacing && <><div className="tp-sub">From a while ago</div><div className="tp-pad"><ResurfaceCard /></div></>}
+            </>
+          ),
+        } : undefined}
+      />
+    )
+    const rituals = <RitualsPanel morning={day.morning} evening={day.evening} now={now} routines={{ done: routinesDone, total: routinesTotal }} onOpen={openRitual} />
     return (
-      <div className="tp">
+      <div className="tp tp-home">
         <Fireflies phone />
         <PhoneBar title={dateLabelShort} nav={nav} rituals={{ morning: day.morning, evening: day.evening, onOpen: openRitual }} />
-        <PhoneDayStrip nav={nav} />
-        {tasksPending ? (
-          <div style={{ padding: '4px 16px 12px' }}><span className="tp-sk" style={{ width: '64%' }} /></div>
-        ) : (
-          <PhoneSummary workload={workload} now={now} online={online} syncing={fetchingSlowly} over={over} counts={counts} />
-        )}
-
-        {card === 'slip' && nowS && <NowSlip state={nowS} sel={headTask ? rowSelection(headTask) : {}} />}
-        {card && card !== 'slip' && <RitualCard kind={card} day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} sweepCount={open.length} onOpenRitual={openRitual} />}
-        {card && <FirstTodayHint />}
-        {!tasksPending && reviewToday && <ReviewCard />}
-        {birthdayCards.length > 0 && <div style={{ padding: '8px 16px 0' }}>{birthdayCards}</div>}
+        <PhoneDayStrip nav={nav}><ViewSwitch view={phoneView} onChange={setPhoneView} /></PhoneDayStrip>
+        {!online && <div className="tp-home-in" style={{ paddingBottom: 8 }}><OfflineChip /></div>}
+        {phoneSlip && <NowSlip state={phoneSlip} sel={headTask ? rowSelection(headTask) : {}} />}
 
         {empty ? (
-          // Ruling 8: one secondary action that opens capture; the terra capture button stays the CTA.
-          <div style={{ paddingTop: 64 }}>
-            <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: () => openTaskCapture() }} variant="secondary" />
+          <div className="tp-home-in">
+            {/* Ruling 8: one secondary action that opens capture; the terra capture button stays the CTA. */}
+            <div style={{ paddingTop: 48 }}>
+              <EmptyState image={`${A}/clover/seedling.png`} line="Nothing here yet. A day starts with three things." action={{ label: 'Add your first three things', onClick: () => openTaskCapture() }} variant="secondary" />
+            </div>
+            {rituals}
           </div>
         ) : (
-          <>
-            <section data-tour="top3" style={{ position: 'relative' }}>
+          <div className="tp-home-in">
+            {eventsPending ? <div className="tp-nn"><Skeleton rows={2} /></div> : phoneView === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />}
+            {!tasksPending && <FirstTodayHint style={{ padding: '8px 8px 0' }} />}
+            {!tasksPending && reviewToday && <ReviewCard />}
+            {birthdayCards.length > 0 && <div style={{ paddingTop: 12 }}>{birthdayCards}</div>}
+
+            <section aria-label="Top 3" data-tour="top3" style={{ position: 'relative' }}>
               {celebrate && <DayCompleteBurst />}
-              <PhoneSection label="Top 3" link={tasksPending ? undefined : { to: '/tasks', label: 'All tasks' }} first />
-              {tasksPending ? (
+              {goalNode}
+              {tasksQuery.isError && tasks.length === 0 ? (
+                <div className="tp-pn-gap"><ErrorCard message="Couldn't load your tasks." onRetry={() => void tasksQuery.refetch()} /></div>
+              ) : tasksPending ? (
+                <div className="tp-pn tp-pn-gap"><Skeleton rows={2} /></div>
+              ) : (top3.length === 0 || restTop3.length > 0) && (
                 <>
-                  <div className="tp-goal-wrap"><GoalCardLoading /></div>
-                  <div className="tp-list"><Skeleton rows={2} /></div>
-                </>
-              ) : tasksQuery.isError && tasks.length === 0 ? (
-                <div className="tp-pad"><ErrorCard message="Couldn't load your tasks." onRetry={() => void tasksQuery.refetch()} /></div>
-              ) : top3.length === 0 ? (
-                <div className="tp-quiet">Nothing starred for today yet.</div>
-              ) : (
-                <>
-                  {goal && (
-                    <div className="tp-goal-wrap">
-                      <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact meta={blockMetaOf(goal)} place={placeOf(goal)} {...rowSelection(goal)} />
-                    </div>
-                  )}
-                  {restTop3.length > 0 && <div className="tp-list">{restTop3.map((t) => row(t, { pick: true, meta: blockMetaOf(t), place: placeOf(t) }))}</div>}
-                  {tended && (
-                    <div className="tp-tended">
-                      <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 36, height: 'auto', filter: 'var(--shadow-drop-sm)' }} />
-                      <span className="tp-note">{day.tally.picked === 3 ? 'All three tended.' : 'All tended.'} The rest is extra ✿</span>
-                    </div>
-                  )}
+                  <div className="tp-pt">Top 3{planned > 0 && <span className="tp-pt-note"> · {span(planned)} planned</span>}<Link to="/tasks" className="tp-pt-link">All tasks</Link></div>
+                  <div className="tp-pn">
+                    {top3.length === 0 ? <div className="tp-pn-quiet">Nothing starred for today yet.</div> : restTop3.map((t, i) => row(t, { pick: true, n: i + 2, place: placeOf(t) }))}
+                  </div>
                 </>
               )}
-            </section>
-
-            <section>
-              <PhoneSection label="Up next" link={tasksPending ? undefined : { to: '/calendar', label: 'Calendar' }} />
-              {eventsPending ? (
-                <div className="tp-list"><Skeleton rows={2} /></div>
-              ) : eventsQuery.isError && events.length === 0 ? (
-                <div className="tp-pad"><ErrorCard message="Couldn't load calendar events." onRetry={() => void eventsQuery.refetch()} /></div>
-              ) : upNext.length === 0 ? (
-                // Ruling 6: "what's next" is still answered.
-                <div className="tp-quiet">Nothing else on the calendar today</div>
-              ) : (
-                <div className="tp-list">
-                  {upNext.map((e, i) => {
-                    const t = e.task_id ? taskById.get(e.task_id) : undefined
-                    // A task's block is the task (a task row, carrying its time); an event is an event row.
-                    return t ? row(t, { block: e, meta: [blockMeta(e, now)[0], ...metas[i]] }) : <PhoneEventRow key={e.id} event={e} meta={metas[i]} />
-                  })}
+              {tended && (
+                <div className="tp-tended">
+                  <img src={`${A}/clover/four_leaf.png`} alt="" style={{ width: 36, height: 'auto', filter: 'var(--shadow-drop-sm)' }} />
+                  <span className="tp-note">{day.tally.picked === 3 ? 'All three tended.' : 'All tended.'} The rest is extra ✿</span>
                 </div>
               )}
             </section>
 
-            {!tasksPending && todayPhoneRows.length > 0 && (
+            {listsReady && todayRows.length > 0 && (
               <section aria-label="Today's tasks">
-                <PhoneSection label={`Today's tasks · ${todayPhoneRows.filter((t) => !t.completed_at).length}`} link={todayPhoneRows.length > ALL_OPEN_CAP ? { to: '/tasks?list=today', label: 'View all' } : undefined} />
-                <div className="tp-list">{todayPhoneRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
+                <div className="tp-pt">Today's tasks<span className="tp-pt-note"> · {todayCount}</span></div>
+                <div className="tp-pn">
+                  {todayRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}
+                  {todayRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=today" className="tp-link tp-pn-more">View all</Link>}
+                </div>
               </section>
             )}
-          </>
-        )}
-
-        {!tasksPending && !(empty && routinesTotal === 0) && (
-          <section>
-            <PhoneSection label={routinesTotal > 0 ? `Routines · ${routinesDone}/${routinesTotal}` : 'Routines'} link={{ to: '/routines', label: 'Routines' }} />
-            {routinesTotal === 0 ? (
-              // Polish D: routines exist but every one rests today — say so, don't invite planting.
-              <div className="tp-quiet">{hasActiveRoutines ? 'Nothing on repeat today' : 'Nothing on repeat yet — plant one on Routines'}</div>
-            ) : (
-              <>
-                {[...routineSplit.shown, ...routineSplit.folded.filter((g) => openRoutineGroups.includes(g.key))].map((g, i) => (
-                  <div key={g.key}>
-                    {routineGroups.length > 1 && <div className={`tp-sub${i === 0 ? ' is-first' : ''}`} style={{ paddingBottom: 6 }}>{g.label}</div>}
-                    <div className="tp-list">
-                      {g.items.map((r) => <RoutineRow key={r.id} routine={r} done={doneKeys.has(r.id)} compact />)}
-                    </div>
-                  </div>
-                ))}
-                {routineSplit.folded.filter((g) => !openRoutineGroups.includes(g.key)).map((g) => (
-                  <button key={g.key} type="button" className="tp-sub tp-fold-line" onClick={() => setOpenRoutineGroups((o) => [...o, g.key])}>
-                    {g.when} · {g.label} {g.items.filter((r) => doneKeys.has(r.id)).length}/{g.items.length}
-                  </button>
-                ))}
-              </>
-            )}
-          </section>
-        )}
-
-        {!tasksPending && overdueOpen.length > 0 && (
-          <MoreForToday phone label="Overdue" summary={String(overdueOpen.length)} storageKey={OVERDUE_OPEN_KEY} action={replanAll}>
-            <div className="tp-list">{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
-            {overdueOpen.length > ALL_OPEN_CAP && <Link to="/tasks?list=overdue" className="tp-link" style={{ marginLeft: 8 }}>View all</Link>}
-          </MoreForToday>
-        )}
-        {!tasksPending && foldCount > 0 && (
-          <MoreForToday phone summary={String(foldCount)}>
-            {foldOpenRows.length > 0 && (
-              <>
-                <div className="tp-sub is-first" style={{ paddingBottom: 6 }}>Open · {foldOpenRows.filter((t) => !t.completed_at).length}</div>
-                <div className="tp-list">{foldOpenRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}</div>
-                {foldOpenRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="tp-link" style={{ marginLeft: 8 }}>View all</Link>}
-              </>
-            )}
-            {slipping.length > 0 && (
-              <>
-                <div className="tp-sub">Slipping</div>
-                <div className="tp-pad">{slippingCards}</div>
-              </>
-            )}
-            {resurfacing && (
-              <>
-                <div className="tp-sub">From a while ago</div>
-                <div className="tp-pad"><ResurfaceCard /></div>
-              </>
-            )}
-          </MoreForToday>
+            {folds}
+            {listsReady && rituals}
+          </div>
         )}
         {overlays}
       </div>
@@ -1084,7 +1019,7 @@ function DayHead({ nav, label, children }: { nav: DayNav; label: string; childre
 
 /** Phone: the strip under the bar — ‹ yesterday · the picker (+ Back to today while away) · tomorrow ›.
  * No page swipe: the rows own the sideways swipe (SwipeRow), and the screen edge is Android's Back. */
-function PhoneDayStrip({ nav }: { nav: DayNav }) {
+function PhoneDayStrip({ nav, children }: { nav: DayNav; /** Today's Now / Day switch, in the picker's place. */ children?: React.ReactNode }) {
   const here = nav.day ?? nav.today
   const name = (k: string) => (k === nav.today ? 'Today' : dayName(k, nav.today))
   return (
@@ -1095,7 +1030,8 @@ function PhoneDayStrip({ nav }: { nav: DayNav }) {
       </button>
       <span className="tp-daynav-mid">
         {nav.day && <button type="button" className="tp-day-back" onClick={() => nav.go(null)}><span>Back to today</span></button>}
-        <DayPickButton nav={nav} className="tp-icon" label="Pick a day"><Icon name="pickdate" /></DayPickButton>
+        {/* Today: the Now / Day switch takes the picker's place (Day strip options 4); the date title opens the picker. */}
+        {children ?? <DayPickButton nav={nav} className="tp-icon" label="Pick a day"><Icon name="pickdate" /></DayPickButton>}
       </span>
       <button type="button" className="tp-day-step" aria-label="Next day" onClick={() => nav.step(1)}>
         <span>{name(addDays(here, 1))}</span>
@@ -1832,37 +1768,6 @@ function PhoneBar({ title, nav, rituals }: { title: string; nav: DayNav; /** Tod
   )
 }
 
-/** Ruling 1: the Workload line under the title ("Day 84 · …"), a Syncing dot while cached data
- * refreshes (2m), and the offline chip in its place while offline (2h). MK Workload: over capacity
- * it turns amber with an alert and "2H OVER"; the progress hairline under it is today's done share. */
-function PhoneSummary({ workload, now, online, syncing, over, counts }: { workload: Omit<WorkloadInput, 'focusedMin'>; now: Date; online: boolean; syncing: boolean; over: number; counts: { done: number; total: number } }) {
-  const { data: entries = [] } = useTimeEntries()
-  if (!online) {
-    return (
-      <div style={{ padding: '0 16px 8px' }}>
-        <OfflineChip />
-      </div>
-    )
-  }
-  const pct = counts.total > 0 ? Math.round((counts.done / counts.total) * 100) : 0
-  return (
-    <>
-      <div className={`tp-sum${over > 0 ? ' is-over' : ''}`}>
-        <Icon name={over > 0 ? 'alert' : 'clock'} size={20} />
-        <span style={{ flex: 1, minWidth: 0 }}>{workloadLine({ ...workload, focusedMin: focusedToday(entries, now) })}</span>
-        {syncing ? (
-          <span className="tp-syncing" style={{ fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)' }}>Syncing</span>
-        ) : over > 0 && <span className="tp-over">{span(over)} over</span>}
-      </div>
-      {counts.total > 0 && (
-        <div className="tp-hairline tp-progress" role="progressbar" aria-label={`Today · ${counts.done} of ${counts.total} done`} aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100}>
-          <span style={{ width: `${pct}%` }} />
-        </div>
-      )}
-    </>
-  )
-}
-
 function PhoneSection({ label, link, first }: { label: string; link?: { to: string; label: string }; first?: boolean }) {
   return (
     <div className={`tp-sec${first ? ' is-first' : ''}`}>
@@ -1989,31 +1894,6 @@ function EventMenu({ event, at, onClose }: { event: CalendarEvent; at: { x: numb
     <ActionSheet title={<EmojiText text={event.title} />} items={items.map((i) => ({ label: i.label, destructive: i.danger, onSelect: () => i.onClick?.() }))} onClose={onClose} />
   ) : (
     <ContextMenu items={items} position={at} onClose={onClose} />
-  )
-}
-
-/** Ruling 5: time on the left (mono), a 3px lavender rule, title and meta. Tap opens the event on
- * the calendar. Kai 2026-10-12: the same grammar as desktop Up next — a ⋯ (and right-click) with
- * Open in calendar · Delete. The menu is the row's sibling: it portals, but React events would
- * still bubble a menu tap into the row. */
-function PhoneEventRow({ event, meta }: { event: CalendarEvent; meta: string[] }) {
-  const navigate = useNavigate()
-  const h24 = useHour24()
-  const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
-  const open = () => navigate(eventPath(event))
-  return (
-    <>
-      <div id={`upnext-${event.id}`} className="tp-ev" role="link" tabIndex={0} onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
-        <span className={`tp-ev-time${h24 ? '' : ' tp-ev-time--12h'}`}>{timeText(new Date(event.starts_at))}</span>
-        <span className="tp-ev-rule" aria-hidden />
-        <div className="tp-ev-body">
-          <div className="tp-title"><EmojiText text={event.title} /></div>
-          <div className="tp-meta">{meta.map((m) => <span key={m} style={m === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{m}</span>)}</div>
-        </div>
-        <span style={{ alignSelf: 'center' }}><RowMenuButton title={event.title} onOpen={setMenu} /></span>
-      </div>
-      {menu && <EventMenu event={event} at={menu} onClose={() => setMenu(null)} />}
-    </>
   )
 }
 
@@ -2198,7 +2078,7 @@ function Top3Slot({ task, index, children }: { task: Task; index: number; childr
   )
 }
 
-function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, place, ...sel }: { task: Task; projectName?: string; dot: string; compact?: boolean; meta?: string[]; inProgress?: boolean; place?: RowGrammarOptions['place'] } & RowSelection) {
+function GoalCard({ task, projectName, dot, compact, slim, meta, inProgress = false, place, ...sel }: { task: Task; projectName?: string; dot: string; compact?: boolean; /** phone-today B: the smaller paper goal. */ slim?: boolean; meta?: string[]; inProgress?: boolean; place?: RowGrammarOptions['place'] } & RowSelection) {
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   const bloom = useBloomCheck(task)
   const openTask = useOpenTask()
@@ -2210,6 +2090,28 @@ function GoalCard({ task, projectName, dot, compact, meta, inProgress = false, p
   const nestOpen = useNestOpen(task) && !task.parent_task_id && (!done || hasOpenSubtasks(task))
   const subs = !task.parent_task_id && <SubtaskCount parent={task} />
   const card = { position: 'relative', backgroundColor: 'var(--paper-goal)', backgroundImage: sel.selected ? 'linear-gradient(var(--select-bg), var(--select-bg))' : undefined, border: '1px solid var(--line-goal)', boxShadow: 'var(--shadow-goal)', borderRadius: 'var(--radius-page)', display: 'flex', alignItems: 'flex-start', transform: 'rotate(-0.4deg)' } as const
+  if (slim) {
+    // phone-today B (Phone home options.html .gs): the same paper, tape and clover, smaller — a gold box,
+    // the serif title on up to two lines, and the gold stamp "✶ Goal of the day · 1:30–3:30 PM" under it.
+    const stamp = done ? doneAt(task) : meta?.[0]
+    return (
+      <>
+      <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="tp-goal tp-gs" contentClassName="kf-page tp-gs-in" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} contentStyle={card} {...g.swipeProps} overlay={g.menuNode}>
+        <span aria-hidden className="tp-gs-tape" />
+        <span className="tp-slim-hit">
+          {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom onChange={bloom.toggle} style={done || bloom.checking ? { background: 'var(--acc-gold)', color: 'var(--paper-parchment)' } : { borderColor: 'var(--acc-gold)' }} />}
+        </span>
+        <div onClick={openDetail} className="tp-gs-body">
+          <div className={`tp-gs-title${done ? ' is-done' : ''}`}><EmojiText text={task.title} /></div>
+          <div className="tp-gs-tag">✶ Goal of the day{stamp ? ` · ${stamp}` : ''}{subs && <> {subs}</>}</div>
+        </div>
+        <img className="tp-gs-clover" src={`${A}/clover/${done ? 'four_leaf' : 'awake'}.png`} alt="" />
+        {more}
+      </SwipeRow>
+      {nestOpen && <SubtaskNest parent={task} phone />}
+      </>
+    )
+  }
   if (compact) {
     // MK Goal card (Today Phone 2a–2e): gold tag, 22 gold box in a 48 hit, serif 18/600, gold meta,
     // clover (four-leaf once done). ⋯ stays, so every swipe has its tap path (DS-CHANGELOG §3).
@@ -2280,8 +2182,14 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted, pick, block, meta, pending, inProgress = false, place, star, ...sel }: {
+function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noFact, highlighted, pick, block, meta, pending, inProgress = false, place, star, ...sel }: {
   task: Task
+  /** phone-today B: one 44px line — [n][check][title][dot · one fact][⋯]. With `compact`. */
+  slim?: boolean
+  /** A Top 3 row's place number (2, 3). */
+  n?: number
+  /** The Day view's rows: the time column says it, so no fact on the row. */
+  noFact?: boolean
   /** Another day's star (today-days): plants the task as one of that day's 3 seeds, not today's Top 3. */
   star?: { on: boolean; label: string; onToggle: () => void }
   /** A Top 3 row: its place, for Move up / Move down in its menu. */
@@ -2342,6 +2250,40 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, highlighted,
     },
     ...g.swipeProps,
     overlay: g.menuNode,
+  }
+  if (slim) {
+    // phone-today B (Phone home options.html .trow): one line, the title ellipsed; the project as its dot;
+    // one fact on the right (back from snooze · overdue · its block or slot · due today · its length · ↻).
+    // The star is in ⋯ (and the swipe); the check, open, swipe, hold and ⋯ are the kit row's.
+    const fact = noFact || (done && !back) ? null
+      : back ? <span className="td-back">Back from snooze</span>
+      : dueDays !== null && dueDays > 0 ? <span style={{ color: 'var(--sig-overdue)' }}>Overdue {dueDays}d</span>
+      : meta?.[0] ? <span style={meta[0] === 'Now' ? { color: 'var(--acc-sage-text)' } : undefined}>{meta[0]}</span>
+      : held ? <span>{held}</span>
+      : dueDays === 0 ? <span>Due today{task.recurrence_rule ? ' · ↻' : ''}</span>
+      : task.duration_min != null ? <span>{formatDuration(task.duration_min)}</span>
+      : task.recurrence_rule ? <span>↻</span> : null
+    return (
+      <>
+      <SwipeRow {...rowProps} data-tour="task-row" className={`tp-row tp-slim${nestOpen ? ' has-nest' : ''}`} style={{ ...rowProps.style, borderBottom: undefined }} contentClassName="tp-slim-in">
+        {n != null && <span className="tp-slim-n" aria-hidden>{n}</span>}
+        <span className="tp-slim-hit">
+          {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom={task.top3} onChange={bloom.toggle} />}
+        </span>
+        <div onClick={open} className={`tp-slim-t${done ? ' is-done' : ''}`}><EmojiText text={task.title} /></div>
+        <span className="tp-slim-mt">
+          {ofParent}
+          {subs}
+          {projectName && <span className="tp-dot" style={{ background: dot }} title={projectName} />}
+          {fact}
+          {!done && !!task.labels?.length && <LabelChips labels={task.labels} />}
+          {pending && <span className="tp-pending">Pending</span>}
+        </span>
+        {!g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />}
+      </SwipeRow>
+      {nestOpen && <SubtaskNest parent={task} phone rule />}
+      </>
+    )
   }
   if (compact) {
     // MK task row (DS-CHANGELOG §3): [check 48][title 15/20 + mono meta][star 48][⋯ 48], min-h 56.
@@ -2518,15 +2460,43 @@ const MORE_OPEN_KEY = 'kf.today.more-open'
 // by default, its count and Replan all ▾ on the header (`action`, beside the toggle).
 const OVERDUE_OPEN_KEY = 'kf.today.overdue-open'
 
-function MoreForToday({ summary, phone, label = 'Also open', storageKey = MORE_OPEN_KEY, action, children }: { summary: string; phone?: boolean; label?: string; storageKey?: string; action?: React.ReactNode; children: React.ReactNode }) {
+/** A fold's open state, remembered per device under `key`. */
+function useFold(key: string): [boolean, () => void] {
   const [open, setOpen] = useState(() => {
-    try { return localStorage.getItem(storageKey) === '1' } catch { return false }
+    try { return localStorage.getItem(key) === '1' } catch { return false }
   })
-  function toggle() {
+  return [open, () => {
     const next = !open
     setOpen(next)
-    try { localStorage.setItem(storageKey, next ? '1' : '0') } catch { /* storage off: this visit only */ }
-  }
+    try { localStorage.setItem(key, next ? '1' : '0') } catch { /* storage off: this visit only */ }
+  }]
+}
+
+/** phone-today B: one rounded panel for the two folds — Overdue (with Replan all) and Also open — each a
+ * row that opens its rows in place, remembered as the folds always were. */
+function PhoneFolds({ overdue, also }: { overdue?: { count: number; action?: React.ReactNode; body: React.ReactNode }; also?: { count: number; body: React.ReactNode } }) {
+  const [oOpen, oToggle] = useFold(OVERDUE_OPEN_KEY)
+  const [aOpen, aToggle] = useFold(MORE_OPEN_KEY)
+  const head = (label: string, count: number, open: boolean, toggle: () => void, terra?: boolean, action?: React.ReactNode) => (
+    <div className="tp-prow tp-fold-row">
+      <button type="button" className="tp-fold-btn" aria-expanded={open} aria-label={`${label} · ${count}`} onClick={toggle}>
+        <span className={`tp-prow-name${terra ? ' is-terra' : ''}`}>{label}</span>
+        <span className="tp-prow-sub">{count}</span>
+        <Icon name="chevright" size={16} className="tp-fold-chev" style={{ transform: open ? 'rotate(90deg)' : undefined }} />
+      </button>
+      {action}
+    </div>
+  )
+  return (
+    <section aria-label="Overdue and Also open" className="tp-pn tp-pn-gap">
+      {overdue && <div aria-label="Overdue" role="group">{head('Overdue', overdue.count, oOpen, oToggle, true, overdue.action)}{oOpen && overdue.body}</div>}
+      {also && <div aria-label="Also open" role="group">{head('Also open', also.count, aOpen, aToggle)}{aOpen && also.body}</div>}
+    </section>
+  )
+}
+
+function MoreForToday({ summary, phone, label = 'Also open', storageKey = MORE_OPEN_KEY, action, children }: { summary: string; phone?: boolean; label?: string; storageKey?: string; action?: React.ReactNode; children: React.ReactNode }) {
+  const [open, toggle] = useFold(storageKey)
   if (phone) {
     return (
       <section>
