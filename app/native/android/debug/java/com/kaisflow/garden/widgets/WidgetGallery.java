@@ -77,7 +77,11 @@ public class WidgetGallery extends Activity {
             .put(block("b1", "g1", "Crypto — heavy session", t(14, 45), t(16, 15), "goal", false))
             .put(block("b2", "p1", "Skim OS lectures 1 + 2", t(16, 15), t(16, 55), "sage", false))
             .put(block("b3", "p2", "Read 2 pages", t(17, 0), t(17, 10), "blossom", false))
-            .put(block("b4", "", "Gym", t(18, 0), t(19, 0), "hydrangea", false)));
+            .put(block("b4", "", "Gym", t(18, 0), t(19, 0), "fern", false)));
+        // palette C (the old names still map: "goal" → Iris + the goal's rule, "sage" → Moss …)
+        s.getJSONArray("blocks").getJSONObject(1).put("goal", true);
+        s.put("tasks", new JSONArray().put(item("t1", "Review lecture 7 slides", 0, 0, false)).put(item("t2", "Pay the internet bill", t(18, 30), 0, false)).put(item("t3", "Water the basil", 0, 0, true)));
+        s.put("alsoOpen", 6);
         JSONArray days = new JSONArray();
         int[] counts = {2, 5, 3, 1, 0, 2, 0};
         for (int i = 0; i < 7; i++) days.put(new JSONObject().put("day", String.format("2026-10-%02d", 5 + i)).put("n", counts[i]));
@@ -179,9 +183,9 @@ public class WidgetGallery extends Activity {
             // Today
             w("W01", "goal", 4, 1),
             w("W02", "goal", 2, 2),
-            w("W03", "top", 2, 2, (s) -> doneAt(s, "picks", 1)),
+            w("W03", "check", 2, 2, (s) -> doneAt(s, "picks", 1)),
             w("W04", "top", 4, 2),
-            w("W05", "top", 4, 4),
+            w("W05", "nowcard", 4, 4),
             w("W06", "now", 4, 2),
             w("W06b", "now", 4, 2, t(14, 20), null),
             w("W07", "next", 2, 1),
@@ -218,22 +222,30 @@ public class WidgetGallery extends Activity {
             w("W32", "memory", 4, 2),
             w("W33", "pressed", 2, 2),
             w("W34", "season", 2, 1),
+            // The families: A · Checklist, B · Now card, C · Day bar
+            w("W35", "check", 4, 2),
+            w("W36", "check", 4, 4),
+            w("W37", "nowcard", 2, 2),
+            w("W38", "nowcard", 4, 2),
+            w("W39", "daybar", 2, 2),
+            w("W40", "daybar", 4, 2),
+            w("W41", "daybar", 4, 4),
             // States
-            w("S1", "top", 2, 2, (s) -> {
+            w("S1", "check", 2, 2, (s) -> {
                 s.getJSONObject("goal").put("done", true);
                 doneAt(s, "picks", 0);
                 doneAt(s, "picks", 1);
             }),
-            w("S2", "top", 2, 2, (s) -> {
+            w("S2", "check", 2, 2, (s) -> {
                 s.remove("goal");
                 s.put("picks", new JSONArray());
             }),
-            w("S3", "top", 2, 2, (s) -> {
+            w("S3", "check", 2, 2, (s) -> {
                 s.put("offline", true).put("at", t(9, 40));
                 s.getJSONArray("picks").remove(1);
             }),
-            w("S4", "top", 2, 2, (s) -> s.put("signedIn", false)),
-            w("S5", "top", 2, 2, (s) -> s.put("v", -1)),
+            w("S4", "check", 2, 2, (s) -> s.put("signedIn", false)),
+            w("S5", "check", 2, 2, (s) -> s.put("v", -1)),
             w("S6", "inbox", 2, 2, (s) -> s.put("inbox", 0)),
         };
     }
@@ -309,7 +321,7 @@ public class WidgetGallery extends Activity {
                     JSONObject j = sample();
                     if (spec.tweak != null) spec.tweak.apply(j);
                     Snap s = j.optInt("v") < 0 ? null : new Snap(j);
-                    RemoteViews rv = Render.build(ctx, spec.kind, spec.cols, spec.rows, s, spec.now);
+                    RemoteViews rv = Render.build(ctx, spec.kind, spec.cols, spec.rows, dp(spec.cols), dp(spec.rows), s, spec.now);
                     float d = getResources().getDisplayMetrics().density;
                     int wpx = Math.round(dp(spec.cols) * d);
                     int hpx = Math.round(dp(spec.rows) * d);

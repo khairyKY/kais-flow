@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W39 · Day bar small (2×2): the day in one bar, then Next (and Then when it fits). -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body">
+        <include layout="@layout/kfw_head" />
+        <include layout="@layout/kfw_daybar" android:layout_width="match_parent" android:layout_height="44dp" android:layout_marginTop="8dp" />
+        <LinearLayout android:id="@+id/slot" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="2dp" android:orientation="vertical" />
+    </LinearLayout>
+</FrameLayout>

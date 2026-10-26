@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The real checkbox's face (Android 12+, layout-v31/kfw_box.xml): the paper box, ticked when checked. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:drawable="@drawable/kfw_box_done" />
+    <item android:drawable="@drawable/kfw_box" />
+</selector>

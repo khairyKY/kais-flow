@@ -3,7 +3,6 @@
      line), S2 Nothing yet (seedling and the way in), S4 Signed out (the intact seal and one button),
      S6 Inbox zero (the empty hydrangea) — and the other widgets' empty faces in the same grammar. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
-    <ImageView android:id="@+id/grain" style="@style/KfW.Grain" />
     <LinearLayout android:id="@+id/body" style="@style/KfW.Body.Square">
         <TextView android:id="@+id/cap" style="@style/KfW.Cap" />
         <LinearLayout android:id="@+id/open" style="@style/KfW.Fill" android:gravity="center" android:orientation="vertical">

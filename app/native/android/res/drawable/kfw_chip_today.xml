@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Today in a week row: the calendar's lavender "today" (block-lavender). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/kfw_block_lavender" />
+    <corners android:radius="12dp" />
+</shape>

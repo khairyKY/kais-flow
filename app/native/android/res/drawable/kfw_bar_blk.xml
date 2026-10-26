@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Now card's progress line: the ink at 9%, the elapsed part tinted to the block's palette C colour (Android
+     12+, setProgressTintList); before 12 it stays the muted ink. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background"><shape><solid android:color="@color/kfw_track" /><corners android:radius="2dp" /></shape></item>
+    <item android:id="@android:id/progress"><clip><shape><solid android:color="@color/kfw_ink_muted" /><corners android:radius="2dp" /></shape></clip></item>
+</layer-list>
