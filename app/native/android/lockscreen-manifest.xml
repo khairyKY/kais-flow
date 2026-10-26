@@ -1,0 +1,13 @@
+<!-- Kai's Flow on the lock screen (java/.../widgets/LockScreen.java, LockWidget.java). Inserted before
+     </application> by .github/scripts/android-native.sh. Its own file: widgets-manifest.xml belongs to
+     the home-screen widgets. -->
+<receiver android:name="com.kaisflow.garden.widgets.LockWidget" android:label="@string/kfl_label" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfl_top3" />
+</receiver>
+<receiver android:name="com.kaisflow.garden.widgets.LockScreen$Receiver" android:exported="false">
+    <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED" />
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+    </intent-filter>
+</receiver>

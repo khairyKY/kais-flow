@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Android 12+ CheckBox's button (layout-v31/kfl_top3.xml). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true" android:drawable="@drawable/kfl_box_done" />
+    <item android:drawable="@drawable/kfl_box" />
+</selector>

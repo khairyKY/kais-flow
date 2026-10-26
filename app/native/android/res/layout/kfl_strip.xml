@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- C · the Day strip notification, collapsed (LockScreen.strip): the block that's on, the day across.
+     Text in the system's notification styles, so it follows the shade's light or dark. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+    <TextView android:id="@+id/kfl_title" style="@style/TextAppearance.Compat.Notification.Title" android:layout_width="match_parent" android:layout_height="wrap_content" android:ellipsize="end" android:maxLines="1" />
+    <ImageView android:id="@+id/kfl_strip" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:adjustViewBounds="true" android:scaleType="fitXY" android:contentDescription="Today's blocks" />
+</LinearLayout>

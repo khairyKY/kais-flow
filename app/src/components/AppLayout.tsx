@@ -26,6 +26,8 @@ import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
 import { ContextMenu } from './ContextMenu'
 import { widgetsAvailable } from '../features/widgets/native'
+import { LockScreenSync } from '../features/lockscreen/LockScreenSync'
+import { lockAvailable } from '../features/lockscreen/native'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open — except CommandBar, which mounts once the
 // first page is idle (capture-type, see captureWarm below). ⌘K's listener lives in the shell's
@@ -1120,6 +1122,7 @@ export function AppLayout() {
           <WidgetBridge />
         </Suspense>
       )}
+      {lockAvailable() && <LockScreenSync />}
       <Suspense fallback={null}>
         <TourHost />
       </Suspense>

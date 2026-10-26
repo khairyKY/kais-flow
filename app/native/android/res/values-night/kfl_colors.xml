@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Night Garden for the Top 3 lock-screen widget: light ink on night paper (the AOD is black). -->
+<resources>
+    <color name="kfl_paper">#262233</color>
+    <color name="kfl_line">#1FF0EBDD</color>
+    <color name="kfl_ink">#F0EBDD</color>
+    <color name="kfl_muted">#C9C0D8</color>
+    <color name="kfl_gold">#E4C36B</color>
+    <color name="kfl_box_line">#9A94AC</color>
+    <color name="kfl_box_fill">#8A9A7E</color>
+</resources>
