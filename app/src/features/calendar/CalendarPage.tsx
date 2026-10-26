@@ -5,6 +5,7 @@ import { useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
+import { completeBlockTask, moveBlock } from './scoped'
 import { inSlot, slotAt, slotFill, slotTasks } from './slots'
 import { TaskMenu } from '../tasks/TaskMenu'
 import { taskActions } from '../tasks/useRowGrammar'
@@ -1073,7 +1074,7 @@ function DesktopCalendar() {
       const t = tasks.find((x) => x.id === taskId)
       if (!t) return
       if (done) uncompleteTask(t)
-      else completeTaskWithUndo(t)
+      else void completeBlockTask(t) // cal-clicks: a repeating task's round asks first
     },
     // A task block's ▶ (hover, "Now" as drawn): Focus on its task, as Today's ▶ does.
     onFocusTask: (taskId: string) => {
@@ -1082,18 +1083,19 @@ function DesktopCalendar() {
     },
     onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) => handleGridCreate(info),
     // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.
-    onMove: (id: string, start: string, end: string, allDay: boolean) => {
+    // cal-clicks: a repeat (or a repeating task's round) asks This / Following / All; Cancel puts the block back.
+    onMove: (id: string, start: string, end: string, allDay: boolean, revert?: () => void) => {
       const event = gridEvents.find((e) => e.id === id)
       if (!event) return
       // A task's block dropped on a Time block: the task goes into the slot, its block comes off.
       const task = event.task_id && !allDay ? tasks.find((t) => t.id === event.task_id) : undefined
       const slot = task ? slotAt(gridEvents, start, id) : undefined
       if (task && slot) return putInSlotWithUndo(task, slot)
-      toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
+      void moveBlock(event, { starts_at: start, ends_at: end, all_day: allDay }, { verb: 'Move', said: `Moved · ${event.title}`, run: () => moveOrResizeEvent(event, start, end, allDay), onCancel: revert, task })
     },
-    onResize: (id: string, start: string, end: string) => {
+    onResize: (id: string, start: string, end: string, revert?: () => void) => {
       const event = gridEvents.find((e) => e.id === id)
-      if (event) toastUndo(`Resized · ${event.title}`, resizeEvent(event, start, end))
+      if (event) void moveBlock(event, { starts_at: start, ends_at: end }, { verb: 'Resize', said: `Resized · ${event.title}`, run: () => resizeEvent(event, start, end), onCancel: revert })
     },
     onEventClick: (id: string, add?: boolean) => handleEventClick(id, add),
     onMoveMany: (ids: readonly string[], delta: number) => {

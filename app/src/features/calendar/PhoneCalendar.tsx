@@ -18,7 +18,8 @@ import { goalIdOf } from '../today/top3Order'
 import { legacyGoalId } from '../today/goalStore'
 import { cachedStarEvents } from '../today/api'
 import { blockHue, KIND_HUE } from './blockHue'
-import { moveEventWithUndo, outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { completeBlockTask, moveSpan } from './scoped'
 import { findBlock } from './series'
 import { heldDrop, slotFill, slotTasks } from './slots'
 import { cairoToIso, timeRange } from './eventTime'
@@ -191,7 +192,8 @@ export function PhoneCalendar() {
     // Subtasks C: a subtask's own block says whose it is.
     const parent = task?.parent_task_id ? taskById.get(task.parent_task_id)?.title : undefined
     const goal = !!task && task.id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === today
-    return { ...tone, check: task && { done, repeat: task.recurrence_rule, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
+    // cal-clicks: a repeating task's round asks This one / Following / All before it's ticked.
+    return { ...tone, check: task && { done, repeat: task.recurrence_rule, toggle: () => (done ? uncompleteTask(task) : void completeBlockTask(task, e.id)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
   }
 
   /** A task block that ended before today, not done — it reads "Overdue · Replan" and a tap replans it. */
@@ -211,7 +213,8 @@ export function PhoneCalendar() {
   function commit(e: CalendarEvent, from: Span, to: Span, mode: DragMode) {
     // Moved from its sheet (Time): keep it in view above the sheet, at its new time.
     if (sheet?.k === 'block' && sheet.id === e.id) gridRef.current?.scrollToMinute(to.start, SHEET_LEAD)
-    moveEventWithUndo(e, from, to, mode)
+    // cal-clicks: a repeat (or a repeating task's round) asks which occurrences; Cancel leaves it where it was.
+    void moveSpan(e, from, to, mode)
   }
 
   /** slot-outline: a held task's row dragged out of its slot (the desktop's rules, slots.heldDrop): off

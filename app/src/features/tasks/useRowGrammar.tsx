@@ -5,7 +5,8 @@ import { toastUndo } from '../../lib/undo'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 import { deleteTasksWithUndo, duplicateTasksWithUndo, editWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, planWithUndo, prioritizeWithUndo, reopenTaskWithUndo, rescheduleDue, setDuration, setRecurrence, setReminder, snoozeTasksWithUndo, somedayTasksWithUndo, toggleTop3, unsnoozeTasksWithUndo } from './api'
 import { durationLabel } from '../../components/pickerMath'
-import { placeName } from './move'
+import { placeName, placeTask } from './move'
+import { editTask } from '../calendar/scoped'
 import type { SwipeActions } from './SwipeRow'
 import { remindChip, repeatLabel, slotChip } from './taskSheetMath'
 import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } from './TaskMenu'
@@ -26,7 +27,8 @@ export function taskActions(task: Task): TaskMenuActions {
     schedule: (iso, timed) => planWithUndo(task, iso, timed),
     clearDate: () => planWithUndo(task, null),
     someday: () => somedayTasksWithUndo([task]), // Undo like every other plan move
-    move: (to) => moveTasksWithUndo([task], to),
+    // cal-clicks: a repeating task asks This one / Following / All before it moves.
+    move: (to) => void editTask(task, (t) => placeTask(t, to), to.kind === 'none' ? 'Unfiled' : `Moved to ${to.name}`, () => moveTasksWithUndo([task], to)),
     priority: (p) => prioritizeWithUndo([task], p),
     repeat: (rule) => editWithUndo([task], rule ? `Repeats · ${repeatLabel(rule)}` : 'Repeat off', (t) => setRecurrence(t, rule)),
     remind: (iso) => editWithUndo([task], iso ? `Reminder · ${remindChip(iso, task.due_at)}` : 'Reminder off', (t) => setReminder(t, iso)),

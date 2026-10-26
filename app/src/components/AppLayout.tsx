@@ -47,6 +47,7 @@ const SmartListNav = lazy(() => import('../features/smart-lists/SmartListNav').t
 
 import { ToastHost } from './ToastHost'
 import { SubtaskAskHost } from '../features/tasks/SubtaskAsk'
+import { ScopeAskHost } from '../features/calendar/ScopeAsk'
 import { MobileTabBar } from './MobileTabBar'
 import { inSettings } from '../features/settings/categories'
 import { PaperHost } from '../features/paper/PaperHost'
@@ -1129,6 +1130,7 @@ export function AppLayout() {
       {/* docs/LEGAL.md: "We've updated our terms", until they agree (or leave). */}
       <TermsNoticeHost />
       <SubtaskAskHost />
+      <ScopeAskHost />
       <ToastHost />
       {signOutFlow.prompt}
     </div>
