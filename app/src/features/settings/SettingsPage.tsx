@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { Link, Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router'
+import { Link, Navigate, useLocation, useNavigate, useNavigationType, useParams, useSearchParams } from 'react-router'
 import {
   isPushSupported,
   useMyPushSubscriptions,
@@ -164,7 +164,13 @@ function Row({ label, help, lead, under, style, attrs, find, keys, to, children 
 /** A block that isn't one row (the domain list, the labels): itself on its page, a plain row in search. */
 function Find({ label, help, keys, children }: { label: string; help?: string; keys?: string; children: ReactNode }) {
   const { q } = useContext(ScopeCtx)
-  return q ? <Row label={label} help={help} keys={keys} /> : <div className="st-block">{children}</div>
+  return q ? (
+    <Row label={label} help={help} keys={keys} />
+  ) : (
+    <div className="st-block" data-st-key={label}>
+      {children}
+    </div>
+  )
 }
 
 /** The picker look (a choice of more than three): our Select's trigger, or a button that opens a search. */
@@ -2080,8 +2086,17 @@ export function SettingsPage() {
   const [search, setSearch] = useSearchParams()
   const uid = useAuth().session?.user.id
   const searchRef = useRef<HTMLInputElement>(null)
-  const q = search.get('q') ?? ''
-  const setQ = (next: string) =>
+  // The search lives here, mirrored into ?q= (a deep link). The address follows the field, never the other
+  // way while typing (a router update lands a keystroke late); any other move — a link, a result's ›,
+  // Back — brings the field in line with the address.
+  const urlQ = search.get('q') ?? ''
+  const [q, setQState] = useState(urlQ)
+  const navType = useNavigationType()
+  useEffect(() => {
+    if (navType !== 'REPLACE') setQState(urlQ)
+  }, [location.key]) // eslint-disable-line react-hooks/exhaustive-deps -- once per move, read as it lands
+  const setQ = (next: string) => {
+    setQState(next)
     setSearch(
       (p) => {
         if (next) p.set('q', next)
@@ -2090,6 +2105,7 @@ export function SettingsPage() {
       },
       { replace: true },
     )
+  }
 
   // Kai 2026-10-07: opening Settings checks for updates too (App & updates shows the answer).
   useEffect(() => {

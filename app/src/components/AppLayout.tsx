@@ -48,6 +48,7 @@ const SmartListNav = lazy(() => import('../features/smart-lists/SmartListNav').t
 import { ToastHost } from './ToastHost'
 import { SubtaskAskHost } from '../features/tasks/SubtaskAsk'
 import { MobileTabBar } from './MobileTabBar'
+import { inSettings } from '../features/settings/categories'
 import { PaperHost } from '../features/paper/PaperHost'
 import { useReadyPages } from '../features/paper/captures'
 import { WhatsNewHost } from '../features/whats-new/WhatsNew'
@@ -670,7 +671,7 @@ export function AppLayout() {
   const bleed = !isMobile && FULL_BLEED.includes(pathname)
   // Settings on a computer is one page with its category list beside it (layout A, 2026-10-26): switching
   // category mustn't remount it (the list, its search and its scroll stay); the phone drills, so it does.
-  const routeKey = !isMobile && /^\/settings(\/(?!import)|$)/.test(pathname) ? '/settings' : pathname
+  const routeKey = !isMobile && inSettings(pathname) ? '/settings' : pathname
   // Motion 2b/3a: the page scroller is the stack's sheet (lib/motion useStackTransition); Effects 2k
   // gives its edges their resistance on touch.
   const scrollerRef = useRef<HTMLDivElement>(null)

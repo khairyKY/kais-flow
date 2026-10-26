@@ -10,6 +10,7 @@ import { KitReference } from './components/KitReference'
 import { NotFoundPage, RouteErrorPage } from './components/RouteErrorPage'
 import { isCapacitorShell } from './lib/platform'
 import { captureStack, stackMove } from './lib/motion'
+import { inSettings } from './features/settings/categories'
 
 // Route-level code splitting — each page is its own chunk, loaded on demand.
 // Keeps the heavy pages (FullCalendar, rrule, chrono) out of the initial bundle.
@@ -180,7 +181,9 @@ function historyIdx(): number {
 router.subscribe((state) => {
   if (state.location.key === lastLocation.key) return // a loading flag, not a new page
   const idx = historyIdx()
-  captureStack(stackMove(lastLocation.pathname, state.location.pathname, state.historyAction, state.historyAction === 'POP' && idx < lastIdx), lastLocation.key)
+  // Settings on a computer is one page: changing category is no step deeper (the phone's list does drill).
+  const lateral = window.innerWidth > 767 && inSettings(lastLocation.pathname) && inSettings(state.location.pathname)
+  captureStack(lateral ? null : stackMove(lastLocation.pathname, state.location.pathname, state.historyAction, state.historyAction === 'POP' && idx < lastIdx), lastLocation.key)
   lastLocation = state.location
   lastIdx = idx
 })

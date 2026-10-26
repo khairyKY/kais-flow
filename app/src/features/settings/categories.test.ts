@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { anchorTarget, CATS, GROUPS, matches } from './categories'
+import { anchorTarget, CATS, GROUPS, inSettings, matches } from './categories'
 
 describe('settings categories', () => {
   it('the groups list every category once', () => {
@@ -12,6 +12,11 @@ describe('settings categories', () => {
     expect(anchorTarget('#settings-Legal')).toBe('privacy')
     expect(anchorTarget('#settings-Nope')).toBeNull()
     expect(anchorTarget('#elsewhere')).toBeNull()
+  })
+
+  it('the one-page Settings paths (not the importer)', () => {
+    expect(['/settings', '/settings/notify', '/settings/integrations/google'].every(inSettings)).toBe(true)
+    expect(['/settings/import', '/settingsx', '/today'].some(inSettings)).toBe(false)
   })
 
   it('search matches word starts across label, help and keywords', () => {

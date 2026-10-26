@@ -40,6 +40,9 @@ export const PROVIDERS = ['google', 'github', 'mcp', 'capture-key'] as const
 export type ProviderId = (typeof PROVIDERS)[number]
 export const isProvider = (s: string | undefined): s is ProviderId => !!s && (PROVIDERS as readonly string[]).includes(s)
 
+/** A path inside Settings' one page on a computer (its categories and providers; the importer is its own page). */
+export const inSettings = (path: string): boolean => /^\/settings(\/(?!import)|$)/.test(path)
+
 /** The computer opens on Appearance (today's first card); the phone opens on the list. */
 export const DESKTOP_HOME: CatId = 'appearance'
 
