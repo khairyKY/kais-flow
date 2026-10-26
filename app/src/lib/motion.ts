@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
 import { uiZoom } from './uiScale'
+import { onPrefApplied, prefWritten } from './prefs'
 
 // ── Shared motion gate + helpers. Every animation in the app checks useMotionEnabled()
 // so it honors both the OS reduced-motion pref AND the app's Effects toggle (Routines 3b /
@@ -33,11 +34,14 @@ function readEffectsOn(): boolean {
 export function setEffectsEnabled(on: boolean) {
   try {
     localStorage.setItem(EFFECTS_KEY, on ? '1' : '0')
+    prefWritten(EFFECTS_KEY)
   } catch {
     /* private mode */
   }
   window.dispatchEvent(new Event('kf-effects-change'))
 }
+// Another device turned the animations on or off.
+onPrefApplied(EFFECTS_KEY, () => window.dispatchEvent(new Event('kf-effects-change')))
 
 /** useMotionEnabled() outside React (the router subscription, drag drops): read at call time. */
 export function motionOnNow(): boolean {

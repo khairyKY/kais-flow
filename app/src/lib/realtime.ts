@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { supabase } from './supabase'
 import { queryClient } from './queryClient'
 import { useAuth } from '../features/auth/AuthProvider'
+import { useAppSettings } from './settings'
 
 const SYNCED_TABLES = [
   'domains',
@@ -28,13 +29,17 @@ const TRASHED_TABLES = new Set(['tasks', 'inbox_items', 'calendar_events', 'jour
  * connection while the tab is hidden — returning refetches on focus anyway (TanStack default). */
 export function useRealtimeSync() {
   const uid = useAuth().session?.user.id
+  // app_settings too once migration 0087 has put it in the publication (its row then carries `prefs`): a
+  // setting changed on one device shows on the others while they're open. Not before — a table outside
+  // the publication could fail the whole channel.
+  const settingsLive = useAppSettings().data?.prefs !== undefined
   useEffect(() => {
     if (!uid) return
     let channel: ReturnType<typeof supabase.channel> | null = null
     const open = () => {
       if (channel) return
       channel = supabase.channel('kf-realtime')
-      for (const table of SYNCED_TABLES) {
+      for (const table of settingsLive ? [...SYNCED_TABLES, 'app_settings'] : SYNCED_TABLES) {
         channel.on(
           'postgres_changes' as never,
           { event: '*', schema: 'public', table, filter: `user_id=eq.${uid}` },
@@ -57,5 +62,5 @@ export function useRealtimeSync() {
       document.removeEventListener('visibilitychange', onVisibility)
       close()
     }
-  }, [uid])
+  }, [uid, settingsLive])
 }
