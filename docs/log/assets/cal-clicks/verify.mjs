@@ -12,6 +12,7 @@
 //   T  a repeating task: complete · move · title · project · delete · duplicate × This one / Following / All; colour
 //      never asks (it lives on the block)
 //   X  Cancel / Esc: a drag goes back, a resize goes back, nothing is written
+//   V  the menus stay on screen at 125% (800px, and a squat 480px window): Delete always reachable
 import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -90,14 +91,15 @@ async function open(route = '/calendar', o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE })
-  await ctx.addInitScript(([sess, uid, now]) => {
+  await ctx.addInitScript(([sess, uid, now, scale]) => {
+    if (scale) localStorage.setItem('kf_ui_scale', scale)
     localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1')
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', '1')
     localStorage.setItem('kf.calPlanning', '0')
     localStorage.setItem('kf.calViewOptions', JSON.stringify({ hour24: true }))
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: now }))
-  }, [JSON.stringify(session), UID, cairo(NOW).getTime()])
+  }, [JSON.stringify(session), UID, cairo(NOW).getTime(), o.scale ? String(o.scale) : null])
   const state = { rows: tables(), writes: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -722,6 +724,52 @@ if (want('x')) {
   check('x the rename\'s question, cancelled: nothing written', state.writes.length === w0)
   check('x no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
+}
+
+// ═══ V · the block menus stay on screen at 125%: never taller than the window, their own scroll, Delete reachable ═══
+if (want('v')) {
+  for (const height of [800, 480]) {
+    const { ctx, page, errors, state } = await open('/calendar', { scale: 1.25, view: { viewport: { width: 1280, height } } })
+    await threeDays(page, '08:30')
+    const fits = async (label) => {
+      const m = page.locator(`[role="menu"][aria-label="${label}"]`)
+      await m.waitFor({ timeout: 4000 })
+      await sleep(300)
+      const box = await m.boundingBox()
+      const del = m.getByRole('menuitem', { name: /^Delete/ })
+      await del.scrollIntoViewIfNeeded()
+      await sleep(200)
+      const d = await del.boundingBox()
+      const scrolls = await m.evaluate((el) => el.scrollHeight > el.clientHeight + 1)
+      const hit = await page.evaluate(([x, y]) => document.elementFromPoint(x, y)?.closest('[role="menuitem"]')?.textContent ?? '', [d.x + d.width / 2, d.y + d.height / 2])
+      return { ok: box.y >= 0 && box.y + box.height <= height + 0.5 && d.y >= box.y - 0.5 && d.y + d.height <= box.y + box.height + 0.5 && /^Delete/.test(hit.trim()), box: [Math.round(box.y), Math.round(box.y + box.height)], del: [Math.round(d.y), Math.round(d.y + d.height)], scrolls }
+    }
+    // menu B of a task block low on the screen (the tray, then eight rows)
+    await scrollGrid(page, '08:00')
+    const tb = await fcBlock(page, TYRE_B).boundingBox()
+    await page.mouse.click(tb.x + 30, tb.y + tb.height - 6, { button: 'right' })
+    const a = await fits('Block menu')
+    check(`v-${height} 125%: a task block's menu B stays inside the ${height}px window and Delete is on screen, clickable${a.scrolls ? ' (the menu scrolls inside itself)' : ''}`, a.ok, JSON.stringify(a))
+    if (height === 480) {
+      await shot(page, 'v-menu-480')
+      check('v-480 …the menu is capped at the window and scrolls inside itself', a.scrolls, JSON.stringify(a))
+    }
+    await page.keyboard.press('Escape')
+    await sleep(300)
+    // the details of an event at the bottom edge of the window
+    await scrollGrid(page, '10:00')
+    const eb = await fcBlock(page, DENTIST).boundingBox()
+    await page.mouse.click(eb.x + 30, eb.y + 10)
+    const b = await fits('Block details')
+    check(`v-${height} 125%: an event's details stay inside the window, Delete reachable`, b.ok, JSON.stringify(b))
+    // and Delete really is pressable there
+    const w0 = state.writes.length
+    await page.locator('[role="menu"][aria-label="Block details"]').getByRole('menuitem', { name: /^Delete/ }).click()
+    await settle(state)
+    check(`v-${height} …pressing it deletes (Dentist to Trash)`, !!ev$(state, DENTIST).deleted_at && state.writes.length > w0)
+    check(`v-${height} no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
 }
 
 await browser.close()
