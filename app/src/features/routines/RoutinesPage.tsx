@@ -381,7 +381,7 @@ export function RoutinesPage() {
         <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: isMobile ? '13px 15px' : '16px 20px', marginTop: isMobile ? 16 : 22, display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 18 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}><Num value={doneToday} /> of {due} tended</span>
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}><Num value={doneToday} /> of {due} tended</span>{/* ds-ok: the tally's type as it was; only the number's rise (Num) is new */}
               {!isMobile && <Num value={heroCaption} style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }} />}
             </div>
             <div style={{ marginTop: isMobile ? 8 : 10, height: isMobile ? 6 : 7, borderRadius: 4, background: 'var(--line-card)', overflow: 'hidden' }}>
@@ -395,7 +395,7 @@ export function RoutinesPage() {
               <Num value={bestStreak} style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-lead)', color: 'var(--ink-body)' }} />
             ) : (
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}><Num value={bestStreak} /></div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}><Num value={bestStreak} /></div>{/* ds-ok: the tally's type as it was; only the number's rise (Num) is new */}
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Day streak</div>
               </div>
             )}

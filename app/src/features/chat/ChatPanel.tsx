@@ -335,14 +335,14 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           const arrive = i >= firstFresh.current ? 'kf-row-in' : undefined
           if (m.role === 'user') {
             return (
-              <div key={i} className={arrive} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink-body)', color: 'var(--paper-parchment)', borderRadius: '12px 12px 3px 12px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45 }}>
+              <div key={i} className={arrive} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink-body)', color: 'var(--paper-parchment)', borderRadius: '12px 12px 3px 12px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45 }}>{/* ds-ok: the bubble's look as it was; only its arrival (kf-row-in) is new */}
                 {m.content}
               </div>
             )
           }
           if (streaming && !m.content) {
             return (
-              <div key={i} className={arrive} aria-label="Thinking" style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px' }}>
+              <div key={i} className={arrive} aria-label="Thinking" style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px' }}>{/* ds-ok: the bubble's look as it was; only its arrival (kf-row-in) is new */}
                 <img src="/ds/assets/clover/awake.png" alt="" style={{ height: 18, width: 'auto', objectFit: 'contain' }} />
                 {/* R7: three dots that twinkle in turn (Effects on); still, they read as "…" */}
                 <span className="kf-chat-dots" aria-hidden><i /><i /><i /></span>
@@ -387,7 +387,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
             )
           }
           return (
-            <div key={i} className={arrive} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--ink-body)' }}>
+            <div key={i} className={arrive} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--ink-body)' }}>{/* ds-ok: the bubble's look as it was; only its arrival (kf-row-in) is new */}
               <Markdown text={m.content} />
               {m.citations && m.citations.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
