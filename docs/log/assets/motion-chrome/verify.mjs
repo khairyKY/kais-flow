@@ -457,6 +457,61 @@ if (want('o13')) {
   }
 }
 
+// ── O9 — toasts leave smoothly (buttons kept, the dim eases, the slot folds) and swipe away on a phone ──
+const pushToasts = (page) => page.evaluate(async () => {
+  const { useToastStore } = await import('/src/lib/toastStore.ts')
+  useToastStore.getState().push({ message: 'Moved to Friday', onUndo: () => {} })
+  await new Promise((r) => setTimeout(r, 250))
+  useToastStore.getState().push({ message: '3 blocks moved', onUndo: () => {} })
+})
+if (want('o9')) {
+  {
+    const env = await open('/today', { view: desktop })
+    const { page } = env
+    await pushToasts(page)
+    await sleep(400)
+    const newer = page.locator('.kf-toast', { hasText: '3 blocks moved' })
+    const w0 = await newer.evaluate((e) => e.getBoundingClientRect().width)
+    await newer.getByRole('button', { name: 'Undo' }).click()
+    await sleep(60)
+    const mid = await page.evaluate(() => {
+      const leaving = document.querySelector('.kf-toast.is-leaving')
+      const slot = leaving.closest('.kf-toast-slot')
+      const older = [...document.querySelectorAll('.kf-toast-slot')].find((s) => s !== slot)
+      const r = { acts: leaving.querySelectorAll('.kf-toast-act').length, w: leaving.getBoundingClientRect().width, slot: slot.getAnimations().map((a) => a.transitionProperty) }
+      // Once the leaver has gone (200ms), the older card becomes the newest: its 0.92 eases up to 1.
+      return new Promise((res) => setTimeout(() => res({ ...r, older: older.getAnimations().map((a) => a.transitionProperty) }), 190))
+    })
+    check('o9 leaving: the card keeps its Undo, so it fades at its own width', mid.acts === 1 && Math.abs(mid.w - w0) < 1, JSON.stringify({ w0, mid }))
+    check('o9 leaving: its slot folds (grid rows + margin) and the older card’s dim eases (opacity)', mid.slot.includes('grid-template-rows') && mid.older.includes('opacity'), JSON.stringify(mid))
+    await sleep(400)
+    check('o9 leaving: one card left, at full opacity', (await page.locator('.kf-toast').count()) === 1 && (await page.locator('.kf-toast-slot').evaluate((e) => getComputedStyle(e).opacity)) === '1')
+    basics(env, 'o9 desktop')
+    await env.ctx.close()
+  }
+  {
+    const env = await open('/today')
+    const { page } = env
+    await pushToasts(page)
+    await sleep(400)
+    const newer = page.locator('.kf-toast', { hasText: '3 blocks moved' })
+    const b = await newer.boundingBox()
+    const y = b.y + b.height / 2, x = b.x + 60
+    const mid = await touchDrag(env, x, y, 0, { dx: 40, n: 6, mid: () => newer.evaluate((e) => new DOMMatrixReadOnly(getComputedStyle(e).transform).e) })
+    await sleep(300)
+    check('o9 phone: a short sideways drag follows the finger, then settles back', Math.abs(mid - 40 / 1.25) < 4 || Math.abs(mid - 40) < 4, mid)
+    check('o9 phone: …and the toast stays', (await newer.count()) === 1 && (await newer.evaluate((e) => getComputedStyle(e).transform)) === 'none')
+    await touchDrag(env, x, y, 0, { dx: 160, n: 8 })
+    await sleep(40)
+    const flung = await newer.evaluate((e) => e.className).catch(() => '')
+    await sleep(400)
+    check('o9 phone: a swipe past 60px flings it off sideways and it goes; the older stays', flung.includes('is-flung') && (await newer.count()) === 0 && (await page.locator('.kf-toast').count()) === 1, flung)
+    await shot(page, 'o9-phone-after-swipe')
+    basics(env, 'o9 phone')
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
