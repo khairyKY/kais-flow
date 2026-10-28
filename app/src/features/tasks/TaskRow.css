@@ -109,7 +109,8 @@
 .kf-row-more:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
 /* Selection circle: 24 in a 48 hit — 1.5px --line-control; selected = --acc-hydrangea-deep + check. */
-.kf-select-circle { width: var(--touch-min); height: var(--touch-min); margin: -13px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+/* T16: entering selection mode, the circle fades in where the checkbox was (120ms). */
+.kf-select-circle { width: var(--touch-min); height: var(--touch-min); margin: -13px; flex: none; display: inline-flex; align-items: center; justify-content: center; animation: scrimIn var(--dur-instant) var(--ease-out); }
 .kf-select-dot { width: 24px; height: 24px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid var(--line-control); display: flex; align-items: center; justify-content: center; color: var(--paper-parchment); }
 .kf-select-circle[data-on] .kf-select-dot { border: none; background: var(--acc-hydrangea-deep); }
 

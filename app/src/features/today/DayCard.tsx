@@ -161,7 +161,7 @@ function RitualShell({ label, glyph, caption, title, meta, pct, action, children
         {children}
         {pct != null && (
           <div className="tp-hairline" style={{ marginTop: 'var(--sp-2)' }}>
-            <span style={{ width: `${pct}%` }} />
+            <span style={{ transform: `scaleX(${pct / 100})` }} />
           </div>
         )}
       </div>

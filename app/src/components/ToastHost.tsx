@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useToastStore, visibleToasts, lifeLeft, TOAST_LIFE_MS, type Toast } from '../lib/toastStore'
 import { uiZoom } from '../lib/uiScale'
+import { reducedMotionNow } from '../lib/motion'
 
 // ── MK Undo Toast (DS-CHANGELOG §3). Inverted snackbar: min-h 48, 12 from the screen edges,
 // bottom = tab bar + 8 on a phone (bottom-centre 16 on desktop, as before), radius 12 (B: a row),
@@ -101,8 +102,24 @@ export function ToastHost() {
       window.clearTimeout(settled)
     }
   }, [count])
+  // O9 (stack slide): when a toast arrives or leaves, the others glide to their new slots (FLIP,
+  // 200ms ease-standard) instead of jumping one.
+  const hostRef = useRef<HTMLDivElement>(null)
+  const tops = useRef(new Map<string, number>())
+  const ids = shown.map((t) => t.id).join()
+  useLayoutEffect(() => {
+    const next = new Map<string, number>()
+    for (const el of hostRef.current?.querySelectorAll<HTMLElement>(':scope > [data-toast]') ?? []) {
+      const id = el.dataset.toast ?? ''
+      const top = el.getBoundingClientRect().top
+      const was = tops.current.get(id)
+      next.set(id, top)
+      if (was !== undefined && Math.abs(was - top) >= 1 && !reducedMotionNow()) el.animate([{ transform: `translateY(${was - top}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
+    }
+    tops.current = next
+  }, [ids])
   return (
-    <div className="kf-toast-host" role="status" aria-live="polite" style={dock != null ? { top: 'auto', bottom: dock } : undefined}>
+    <div ref={hostRef} className="kf-toast-host" role="status" aria-live="polite" style={dock != null ? { top: 'auto', bottom: dock } : undefined}>
       <style>{CSS}</style>
       {shown.map((t, i) => (
         <ToastCard key={t.id} toast={t} older={i < shown.length - 1} />
@@ -141,7 +158,7 @@ function ToastCard({ toast, older }: { toast: Toast; older: boolean }) {
   )
 
   return (
-    <div style={{ opacity: older ? 0.92 : 1 }}>
+    <div data-toast={toast.id} style={{ opacity: older ? 0.92 : 1, transition: 'opacity var(--dur-toast) var(--ease-standard)' /* O9: the older toast dims, it doesn't snap */ }}>
       <div
         className={`kf-toast${leaving ? ' is-leaving' : ''}`}
         onPointerEnter={() => setHovered(true)}

@@ -42,8 +42,9 @@ import { Button, SectionLabel } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
-import { scrollBehavior, useCompletingRows, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { flipRows, scrollBehavior, useCompletingRows, useMotionEnabled, useWasLoading, staggerDelay } from '../../lib/motion'
 import { Collapse } from '../../components/Collapse'
+import { useListShows } from './rowExit'
 import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
 import { legacyGoalId } from '../today/goalStore'
@@ -451,6 +452,7 @@ export function TasksPage() {
   const { data: tasks = [] } = tasksQuery
   // MK States: rows while they come; offline and never loaded, say so; a failed load, Retry.
   const tasksState = listState(tasksQuery, useOnline())
+  const listFade = useWasLoading(tasksState === 'loading') ? 'kf-fade' : undefined // T15: rows after the skeleton fade in
   // J-18: an import that exploded a repeating task into copies buried Kai's real tasks for weeks;
   // the tidy tool existed but lived three clicks deep in Settings. Point at it when it's needed.
   const dupeClusters = useMemo(() => findDuplicateClusters(tasks), [tasks])
@@ -561,7 +563,10 @@ export function TasksPage() {
     setSearchParams(p, { replace: true })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [labelParam])
-  const filtered = filteredBase.filter((t) => (!domainChip || effectiveDomainId(t, projects, areas) === domainChip) && (!labelFilter || !!t.labels?.includes(labelFilter)))
+  const chipsKeep = (t: Task) => (!domainChip || effectiveDomainId(t, projects, areas) === domainChip) && (!labelFilter || !!t.labels?.includes(labelFilter))
+  const filtered = filteredBase.filter(chipsKeep)
+  // T6: what this list shows, so Tomorrow / Someday / Snooze / Move slide a row out only when it leaves.
+  useListShows((t) => t.status === 'todo' && chipsKeep(t) && (smart ? smartTasks([t], smart.filter, projects, areas, now) : filterByList([t], list, now)).length > 0)
   // A smart list that shows done tasks lists them last, newest first (groupTasks takes open ones only).
   const smartDone = smart?.filter.show_done ? filtered.filter((t) => t.status === 'done').sort((a, b) => (b.completed_at ?? '').localeCompare(a.completed_at ?? '')) : []
   const [editor, setEditor] = useState<SmartListRow | 'new' | null>(null)
@@ -753,7 +758,7 @@ export function TasksPage() {
     onSelectAll: isDone ? undefined : () => setSelected(new Set(flatTasks.map((t) => t.id))),
     selected: isDone ? undefined : selectedTasks,
     // ⌘/Ctrl+↑/↓ (p7e A22): within its group, while the list shows its own order (Sort · Smart).
-    reorder: isDone || sort !== 'smart' ? undefined : (rows, dir) => void moveInListWithUndo(groups.map((g) => g.tasks), rows, dir),
+    reorder: isDone || sort !== 'smart' ? undefined : (rows, dir) => flipRows(() => void moveInListWithUndo(groups.map((g) => g.tasks), rows, dir)), // T13
   })
 
   const isSomeday = activeTab === 'someday'
@@ -943,7 +948,7 @@ export function TasksPage() {
         ) : isDone ? (
           <DoneView tasks={displayTasks} motion={motion} justCompletedId={justCompletedId} expanded={doneExpanded} setExpanded={setDoneExpanded} focusedId={kbFocusedId} />
         ) : (
-        <div style={{ paddingTop: isSomeday ? 16 : 0 }}>
+        <div className={listFade} style={{ paddingTop: isSomeday ? 16 : 0 }}>
           {groups.length === 0 && smartDone.length === 0 ? (
             // States t1 rule — the surface's own flower as seed + one hand line (the quick-add above is the one action)
             <div style={{ margin: '28px 0 0', textAlign: 'center' }}>

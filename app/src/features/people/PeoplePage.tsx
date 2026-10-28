@@ -6,7 +6,7 @@ import { timeAgo } from './timeAgo'
 import type { Person, Interaction, Domain } from '../../lib/types'
 import { Button, SectionLabel } from '../../components/kit'
 import { toastUndo } from '../../lib/undo'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { exitAll, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { ActionSheet } from '../../components/ActionSheet'
 import { ContextMenu } from '../../components/ContextMenu'
@@ -134,7 +134,8 @@ export function PeoplePage() {
   }
 
   // The nudge's one-tap touch is logged with Undo, like the person page's chips.
-  const handleQuickAction = (p: Person, channel: TouchChannel) => logTouchWithUndo(p, channel)
+  // T6: the nudge card slides out first — logging the touch is what takes it off the list.
+  const handleQuickAction = (p: Person, channel: TouchChannel) => exitAll(`[data-nudge="${p.id}"]`, () => logTouchWithUndo(p, channel))
 
   // Punch 46: the export varies the nudge action (Mom → call, Tarek → text) but no field on
   // `people` carries a channel. The one real signal is how Kai last reached this person —
@@ -180,7 +181,7 @@ export function PeoplePage() {
     { label: 'Log a call', icon: 'people', run: () => logTouchWithUndo(p, 'call') },
     { label: 'Log a text', icon: 'send', run: () => logTouchWithUndo(p, 'text') },
     { label: 'Met in person', icon: 'check', run: () => logTouchWithUndo(p, 'meet') },
-    { label: 'Delete', icon: 'delete', danger: true, run: () => deletePersonWithUndo(p) },
+    { label: 'Delete', icon: 'delete', danger: true, run: () => exitAll(`[data-person="${p.id}"], [data-nudge="${p.id}"]`, () => deletePersonWithUndo(p)) }, // T6
   ]
   const menuLayer = menu && (isMobile ? (
     <ActionSheet
@@ -272,7 +273,7 @@ export function PeoplePage() {
               const lastTouchText = latest ? timeAgoShort(latest.occurred_at) : '—'
               const summaryShort = latest ? latest.summary.split('—')[0].split('·')[0].trim().slice(0, 30) : ''
               return (
-                <div key={p.id} {...rowMenu(p)} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 6, borderBottom: idx < groupPeople.length - 1 ? '1px solid var(--line-dashed)' : 'none', ...(motion ? staggerDelay(idx) : {}) }}>
+                <div key={p.id} data-person={p.id} {...rowMenu(p)} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 6, borderBottom: idx < groupPeople.length - 1 ? '1px solid var(--line-dashed)' : 'none', ...(motion ? staggerDelay(idx) : {}) }}>
                   <Link to={`/people/${p.id}`} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 12, padding: '10px 2px', textDecoration: 'none' }}>
                     <span style={{ width: 30, height: 30, borderRadius: '50%', background: getAvatarBgColor(p.name), display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'var(--font-display)', fontSize: 'var(--fs-caption)', fontWeight: 600, color: 'var(--ink-body)', flex: 'none' }}>{p.name.charAt(0)}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>
@@ -375,7 +376,7 @@ export function PeoplePage() {
               const nudgeBody = interestFact ? interestFact.value.split('—')[0].trim() : ''
               const nudgeHint = nudgeBody ? ` · ${nudgeBody}` : ''
               return (
-                <div key={p.id} className="kf-lift" style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div key={p.id} data-nudge={p.id} className="kf-lift" style={{ background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '13px 15px', display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span className="av" style={{ background: getAvatarBgColor(p.name) }}>{p.name.charAt(0)}</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 14, color: 'var(--ink-body)' }}>{p.name}</div>
@@ -409,7 +410,7 @@ export function PeoplePage() {
               const showBloom = bdayDays !== null && bdayDays <= 14
               const isLast = idx === groupPeople.length - 1
               return (
-                <div key={p.id} {...rowMenu(p)} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: isLast ? 'none' : '1px solid var(--line-dashed)', ...(motion ? staggerDelay(idx) : {}) }}>
+                <div key={p.id} data-person={p.id} {...rowMenu(p)} className={motion ? 'kf-lift kf-stagger-item' : 'kf-lift'} style={{ display: 'flex', alignItems: 'center', gap: 8, borderBottom: isLast ? 'none' : '1px solid var(--line-dashed)', ...(motion ? staggerDelay(idx) : {}) }}>
                 <Link to={`/people/${p.id}`} style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 13, padding: '11px 2px', textDecoration: 'none' }}>
                   <span className="av" style={{ background: getAvatarBgColor(p.name), position: 'relative' }}>
                     {p.name.charAt(0)}

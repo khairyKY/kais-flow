@@ -4,7 +4,7 @@ import { useOnline } from '../../lib/useOnline'
 import { useJournalEntries, upsertJournalEntry, deleteJournalEntry, restoreJournalEntry } from './api'
 import { entriesForDay, dayField, dayOrdinal, daysWrittenThisMonth, isWritten, entryTime, holdRow, withHeldRows, listState, daysLabel, PAST_AWAY, PAST_RESTING, addMedia, removeMedia, appendTranscript, type HeldRows, type ListState } from './journalDay'
 import { useNotes, useQuotes, useCommentaries, createCommentary } from '../library/api'
-import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
+import { animateRowRemoval, scrollBehavior, useMotionEnabled } from '../../lib/motion'
 import { seedPlant } from '../../lib/seedPlant'
 import { fernByLength } from '../../lib/growthStages'
 import { toastUndo } from '../../lib/undo'
@@ -178,7 +178,7 @@ export function JournalPage() {
     setSelectedDate(focusEntry.entry_date)
   }
   useEffect(() => {
-    if (turnedTo) document.getElementById(`journal-${turnedTo}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    if (turnedTo) document.getElementById(`journal-${turnedTo}`)?.scrollIntoView({ block: 'center', behavior: scrollBehavior() })
   }, [turnedTo, selectedDate])
   const [promptIndex, setPromptIndex] = useState(0)
   const [newCommentaryText, setNewCommentaryText] = useState('')

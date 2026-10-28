@@ -37,7 +37,7 @@ import {
 } from './api'
 import { useAreas, renameArea, reparentArea, recolorArea } from '../areas/api'
 import { formatDuration, parseDuration } from './duration'
-import type { TimeEntry } from '../../lib/types'
+import type { Task as TaskT, TimeEntry } from '../../lib/types'
 import { RenameField } from '../../components/RenameField'
 import { NumberField } from '../../components/NumberField'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -48,6 +48,7 @@ import {
   useTasks,
   completeTask,
   completeTaskWithUndo,
+  reopenTaskWithUndo,
   undoCompletion,
   reopenTask,
   undoReopen,
@@ -83,7 +84,8 @@ import { logActivity } from '../../lib/activity'
 import { toastUndo } from '../../lib/undo'
 import { BackLink, Button, SectionLabel, Segmented, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
-import { useMotionEnabled } from '../../lib/motion'
+import { flipRows, scrollBehavior, useCompletingRows, useMotionEnabled } from '../../lib/motion'
+import { useListShows } from '../tasks/rowExit'
 import { DateField } from '../../components/DatePicker'
 import { useChecklistTemplates, saveTemplateWithUndo, renameTemplateWithUndo, deleteTemplateWithUndo, applyTemplateWithUndo } from './templates'
 import './xfx.css'
@@ -117,10 +119,20 @@ export function ProjectDetailPage() {
   const focusTaskId = searchParams.get('focus')
   useEffect(() => {
     if (!focusTaskId) return
-    document.getElementById(`task-${focusTaskId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    document.getElementById(`task-${focusTaskId}`)?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })
   }, [focusTaskId])
   const motion = useMotionEnabled()
   const isMobile = useIsMobile()
+  // T2: a ticked row holds its place for the check, then slides out (the shared hold, as on Tasks).
+  const { rows: ticking, hold: holdRow, keep: keepRow } = useCompletingRows()
+  const completeRow = (t: TaskT) => {
+    if (motion) holdRow(t.id, true)
+    completeTaskWithUndo(t, () => keepRow(t.id))
+  }
+  const reopenRow = (t: TaskT) => {
+    keepRow(t.id)
+    reopenTaskWithUndo(t)
+  }
 
   // Queries
   const { data: domains = [] } = useDomains()
@@ -283,13 +295,15 @@ export function ProjectDetailPage() {
   // serves both pages.
   const pageOpen = useMemo(() => {
     // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
-    const here = tasks.filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id))
+    const here = tasks.map((t) => (ticking.has(t.id) ? { ...t, status: 'todo' as const } : t)).filter((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id))
     // Subtasks A: one listed under its parent here is drawn nested under it (tasks/SubtaskNest).
     const open = sortByOrder(nestOut(here, new Set(here.filter((t) => !t.parent_task_id).map((t) => t.id))))
     // An area lists its repeats apart, under "Keeps coming back" after its other open tasks — the
     // keys walk the rows in that same order, and no row is drawn twice.
     return areas.some((a) => a.id === id) ? [...open.filter((t) => !t.recurrence_rule), ...open.filter((t) => t.recurrence_rule)] : open
-  }, [tasks, id, areas])
+  }, [tasks, id, areas, ticking])
+  // T6: what this page lists, so a Move / Someday / Snooze that takes a row away slides it out.
+  useListShows((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id))
   // Kai 2026-10-07: Ctrl/Cmd+A (and the phone bar's Select all) selects this page's open tasks too.
   const selectAllOpen = () => setSelected(new Set(pageOpen.map((t) => t.id)))
   // Flow Audit §4: delete = Trash + Undo, no confirm (their calendar blocks go and come back too).
@@ -324,7 +338,7 @@ export function ProjectDetailPage() {
   const verbs = useListVerbs(bulkActions)
   const bindings = buildListBindings({
     ...verbs.actions,
-    complete: (t) => void completeTaskWithUndo(t),
+    complete: completeRow,
     open: (t) => openTask(t.id),
     today: (t) => planWithUndo(t, todayFor(t)),
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
@@ -349,7 +363,7 @@ export function ProjectDetailPage() {
     onSelectAll: selectAllOpen,
     selected: selectedTasks,
     // ⌘/Ctrl+↑/↓ (p7e A22): within the page's list — an area's repeats are their own group, under it.
-    reorder: (rows, dir) => void moveInListWithUndo(area ? [pageOpen.filter((t) => !t.recurrence_rule), pageOpen.filter((t) => t.recurrence_rule)] : [pageOpen], rows, dir),
+    reorder: (rows, dir) => flipRows(() => void moveInListWithUndo(area ? [pageOpen.filter((t) => !t.recurrence_rule), pageOpen.filter((t) => t.recurrence_rule)] : [pageOpen], rows, dir)), // T13
   })
 
   // Click-away deselects (TodayPage's rule): a click on empty page space clears the selection; one
@@ -377,6 +391,8 @@ export function ProjectDetailPage() {
       selecting={hasSelection}
       bulk={bulkActions}
       border={border}
+      onComplete={completeRow}
+      onReopen={reopenRow}
     />
   )
 

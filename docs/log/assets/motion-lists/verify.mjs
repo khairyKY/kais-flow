@@ -60,6 +60,8 @@ const TASKS = [
   ...Array.from({ length: 14 }, (_, i) => task(20 + i, `Someday idea ${i + 1}`, { someday: true })),
   ...Array.from({ length: 60 }, (_, i) => task(100 + i, `Backlog item ${i + 1}`)),
   ...Array.from({ length: 3 }, (_, i) => task(200 + i, `Finished on Saturday ${i + 1}`, { status: 'done', completed_at: iso('18:00', 10) })),
+  task(300, 'Buy the pots', { parent_task_id: id(BALCONY) }),
+  task(301, 'Mix the soil', { parent_task_id: id(BALCONY) }),
 ]
 const ib = (n, over) => ({
   id: iid(n), user_id: UID, kind: 'text', raw_text: '', transcript: null, ai_parse: null, confidence: null, status: 'pending', filed_task_id: null,
@@ -92,6 +94,7 @@ async function open(route, o = {}) {
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf_tour_done', '1')
+    localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['hint:swipe'])) // the one-time swipe hint sits over the rows
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: at }))
     if (effects === '0') localStorage.setItem('kf_effects', '0')
   }, [o.theme ?? 'day', JSON.stringify(session), UID, cairo('09:00').getTime(), o.effectsOff ? '0' : '1'])
@@ -218,7 +221,7 @@ if (want('h')) {
     await go(page, '/tasks?list=done')
     await sleep(900)
     const head = page.getByText('Earlier this week', { exact: true }).first()
-    const fold = page.locator('.kf-collapse').first()
+    const fold = page.locator('.app-main-content .kf-collapse').first()
     await head.click()
     await sleep(60)
     const midOpen = await fold.evaluate((el) => el.getBoundingClientRect().height)
@@ -238,6 +241,254 @@ if (want('h')) {
       check(`h4 [${mode}] T8 Collapse eases open (part-way at 60ms) and shut (children kept while it folds, then unmounted)`, midOpen > 0 && midOpen < fullOpen && midShut > 0 && midShut < fullOpen && stillMounted > 0 && shut === 0 && unmounted, `open ${midOpen}→${fullOpen}, shut ${midShut}→${shut}`)
     }
     check(`h [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+const sessions = new Map()
+async function touch(page, type, x, y) {
+  if (!sessions.has(page)) sessions.set(page, await page.context().newCDPSession(page))
+  await sessions.get(page).send('Input.dispatchTouchEvent', { type, touchPoints: type === 'touchEnd' ? [] : [{ x, y }] })
+}
+const top = (loc) => loc.evaluate((el) => Math.round(el.getBoundingClientRect().top)).catch(() => null)
+const height = (loc) => loc.evaluate((el) => el.getBoundingClientRect().height).catch(() => -1)
+
+// ── G: RM2 — one Effects gate: .motion-on on <html> (portals agree), the overlay card's scale decorative ──
+if (want('g')) {
+  for (const [mode, o] of MODES) {
+    const { ctx, page, errors } = await open('/today', o)
+    const html = await page.evaluate(() => [document.documentElement.classList.contains('motion-on'), document.documentElement.classList.contains('kf-motion-on')])
+    check(`g1 [${mode}] RM2 .motion-on (and its kf-motion-on alias) sit on <html> exactly when Effects are on`, html[0] === (mode === 'on') && html[1] === (mode === 'on'), JSON.stringify(html))
+    const name = await page.evaluate(() => {
+      const d = document.createElement('div')
+      d.className = 'kf-overlay-card'
+      document.body.append(d)
+      const n = getComputedStyle(d).animationName
+      d.remove()
+      return n
+    })
+    check(`g2 [${mode}] RM2 an overlay card rises and fades always; only Effects on adds the scale`, name === (mode === 'on' ? 'kfOverlayIn' : 'kfOverlayInFlat'), name)
+    check(`g [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── P: T2 — Project detail holds a ticked row for the check, then it slides out ──
+if (want('p')) {
+  for (const [mode, o] of MODES) {
+    const { ctx, page, errors } = await open(`/projects/${P1}`, o)
+    await row(page, FORE).locator('.kf-checkbox').first().click()
+    await sleep(250)
+    const held = await openRow(page, FORE)
+    await shot(page, `p1-project-tick-250ms-${mode}`)
+    await sleep(1400)
+    const gone = !(await exists(row(page, FORE)))
+    if (mode === 'on') check(`p1 [${mode}] T2 Project detail: the ticked row holds for the check, then leaves`, held && gone, `held=${held} gone=${gone}`)
+    else check(`p1 [${mode}] T2 Project detail: no hold without Effects (the row goes, as before)`, !held && gone, `held=${held} gone=${gone}`)
+    check(`p [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── T: T3 — Today keeps a ticked row in place for the check, then FLIPs it down to the done rows ──
+if (want('t')) {
+  for (const [mode, o] of MODES) {
+    const { ctx, page, errors } = await open('/today', o)
+    const r = row(page, TYRE)
+    const y0 = await top(r)
+    await r.locator('.kf-checkbox').first().click()
+    await sleep(300)
+    const y1 = await top(r)
+    await shot(page, `t1-today-tick-300ms-${mode}`)
+    let flipped = 0
+    for (let i = 0; i < 30 && !flipped; i++) {
+      flipped = await waapi(r)
+      if (flipped < 0) flipped = 0
+      await sleep(40)
+    }
+    await sleep(600)
+    const y2 = await top(r)
+    await shot(page, `t1-today-after-${mode}`)
+    if (mode === 'on') check(`t1 [${mode}] T3 the ticked row keeps its place for the check (300ms), then glides down (FLIP)`, y0 === y1 && y2 > y0 && flipped > 0, `y ${y0} → ${y1} → ${y2}, flip anims ${flipped}`)
+    else check(`t1 [${mode}] T3 no hold without Effects: the row drops to the done rows at once`, y1 > y0 && y2 > y0, `y ${y0} → ${y1} → ${y2}`)
+    check(`t [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── X: T6 — "leaves this list" exits: Tomorrow off the Today list slides out; Tomorrow on All keeps the row still ──
+if (want('x')) {
+  for (const [mode, o] of MODES) {
+    const { ctx, page, errors } = await open('/tasks?list=today', o)
+    const r = row(page, REVIEW)
+    await r.click({ button: 'right' })
+    await page.getByRole('menuitem', { name: /^Tomorrow/ }).first().click()
+    await sleep(90)
+    const exiting = await waapi(r)
+    await shot(page, `x1-tomorrow-exit-90ms-${mode}`)
+    await sleep(900)
+    const gone = !(await exists(r))
+    if (mode === 'reduced') check(`x1 [${mode}] T6 Tomorrow off the Today list: the row goes at once (reduced motion)`, exiting <= 0 && gone, `anims ${exiting}`)
+    else check(`x1 [${mode}] T6 Tomorrow off the Today list: the row slides out first (functional), then leaves`, exiting > 0 && gone, `anims ${exiting} gone=${gone}`)
+    await go(page, '/tasks?list=all')
+    await sleep(900)
+    const k = row(page, STRETCH)
+    await k.click({ button: 'right' })
+    await page.getByRole('menuitem', { name: /^Tomorrow/ }).first().click()
+    await sleep(90)
+    const still = await waapi(k)
+    await sleep(500)
+    check(`x2 [${mode}] T6 Tomorrow on All: the row stays, so nothing exits`, still === 0 && (await exists(k)) && (await height(k)) > 20, `anims ${still}`)
+    check(`x [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── W: T7 — a swipe commit flies the row off, then only its height folds shut (phone) ──
+if (want('w')) {
+  for (const [mode, o] of MODES) {
+    const { ctx, page, errors } = await open('/tasks?list=today', { ...o, view: phone })
+    const r = row(page, REVIEW)
+    const b = await r.boundingBox()
+    const h0 = b.height
+    const y = b.y + b.height / 2
+    await touch(page, 'touchStart', b.x + b.width - 40, y)
+    for (let i = 1; i <= 14; i++) {
+      await touch(page, 'touchMove', b.x + b.width - 40 - i * 22, y)
+      await sleep(16)
+    }
+    await touch(page, 'touchEnd', b.x + 20, y)
+    await sleep(200 + 90) // SETTLE_MS + into the fold
+    const mid = await height(r)
+    await shot(page, `w1-swipe-delete-fold-${mode}`)
+    await sleep(900)
+    const gone = !(await exists(r))
+    if (mode === 'reduced') check(`w1 [${mode}] T7 swipe delete: the row goes (reduced motion: no fold)`, gone, `h ${h0} → ${mid}`)
+    else check(`w1 [${mode}] T7 swipe delete: after the fly-off the height folds (no second slide), then the row is gone`, mid > 0 && mid < h0 - 4 && gone, `h ${h0} → ${mid} gone=${gone}`)
+    check(`w [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── C: T8 — Collapse on Today's Also open "Show N more" and the sidebar Plan drawer ──
+if (want('c')) {
+  for (const [mode, o] of MODES) {
+    const { ctx, page, errors } = await open('/today', o)
+    const more = page.getByRole('button', { name: /^Show \d+ more/ }).first()
+    let ok = false
+    let detail = 'no Show more'
+    if (await exists(more)) {
+      const fold = page.locator('section[aria-label="Also open"] .kf-collapse').first()
+      await more.click()
+      await sleep(70)
+      const mid = await height(fold)
+      await sleep(400)
+      const full = await height(fold)
+      await shot(page, `c1-also-open-more-${mode}`)
+      ok = mode === 'reduced' ? mid === full && full > 50 : mid > 0 && mid < full
+      detail = `${mid} → ${full}`
+    }
+    check(`c1 [${mode}] T8 Today "Show N more" ${mode === 'reduced' ? 'opens at once (reduced)' : 'eases open'}`, ok, detail)
+    const plan = page.locator('.app-sidebar .kf-collapse').first()
+    if (await exists(plan)) {
+      const btn = page.locator('.app-sidebar button', { has: page.locator('.kf-plan-chevron') }).first()
+      const was = await btn.getAttribute('aria-expanded')
+      await btn.click()
+      await sleep(70)
+      const mid = await height(plan)
+      await sleep(400)
+      const end = await height(plan)
+      await btn.click() // back as it was
+      await sleep(400)
+      check(`c2 [${mode}] T8 the sidebar Plan drawer ${mode === 'reduced' ? 'folds at once (reduced)' : 'folds through Collapse'}`, mode === 'reduced' ? true : mid > 0 && Math.abs(mid - end) > 4, `${was} · mid ${mid} → ${end}`)
+    }
+    check(`c [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── F: T13 — a reorder glides (Alt+↓ on a Top 3 pick) ──
+if (want('f')) {
+  for (const [mode, o] of MODES) {
+    const { ctx, page, errors } = await open('/today', o)
+    const r = row(page, FORE)
+    const y0 = await top(r)
+    await r.focus()
+    await page.keyboard.press('Alt+ArrowDown')
+    await sleep(30)
+    const anims = await waapi(r)
+    await sleep(500)
+    const y1 = await top(r)
+    if (mode === 'reduced') check(`f1 [${mode}] T13 Alt+↓ moves the pick at once (reduced)`, y1 > y0 && anims <= 0, `y ${y0} → ${y1}`)
+    else check(`f1 [${mode}] T13 Alt+↓: the pick glides down (FLIP, functional)`, y1 > y0 && anims > 0, `y ${y0} → ${y1}, anims ${anims}`)
+    check(`f [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+// ── L: T15 — the loader waits 300ms; content that replaces it fades in ──
+if (want('l')) {
+  const { ctx, page, errors } = await open('/today')
+  await page.route('http://127.0.0.1:9/rest/v1/**', async (r) => {
+    if (r.request().url().includes('activity_log')) await sleep(1500)
+    await r.fallback()
+  })
+  await go(page, '/activity')
+  await sleep(120)
+  const status = page.locator('[role="status"][aria-busy="true"]').first()
+  const early = await status.evaluate((el) => getComputedStyle(el).opacity).catch(() => 'none')
+  await sleep(600)
+  const later = await status.evaluate((el) => getComputedStyle(el).opacity).catch(() => 'none')
+  check('l1 T15 the skeleton is held back for 300ms, then fades in', early === '0' && later === '1', `${early} → ${later}`)
+  await status.waitFor({ state: 'detached', timeout: 10000 }).catch(() => {})
+  await sleep(100)
+  const fade = await page.locator('.kf-fade').count()
+  check('l2 T15 what replaces the skeleton fades in (kf-fade)', fade > 0, `${fade}`)
+  check('l no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── O: O9 — the toast stack glides; the older toast's dim eases ──
+if (want('o')) {
+  const { ctx, page, errors } = await open('/today')
+  const push = (m) => page.evaluate(async (msg) => {
+    const { useToastStore } = await import('/src/lib/toastStore.ts')
+    useToastStore.getState().push({ message: msg })
+  }, m)
+  await push('First toast')
+  await sleep(400)
+  const first = page.locator('[data-toast]').first()
+  await push('Second toast')
+  await sleep(30)
+  const slid = await waapi(first)
+  const tr = await first.evaluate((el) => getComputedStyle(el).transitionProperty).catch(() => '')
+  await shot(page, 'o1-toast-stack-slide')
+  check('o1 O9 a new toast arrives and the older one glides to its new slot (FLIP), its dim easing', slid > 0 && tr.includes('opacity'), `anims ${slid}, transition ${tr}`)
+  check('o no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── N: T8 — the subtask nest folds through Collapse (Tasks › All, "Water the balcony plants") ──
+if (want('n')) {
+  for (const [mode, o] of MODES) {
+    const { ctx, page, errors } = await open('/tasks?list=all', o)
+    const nest = page.locator(`[data-nest="${id(BALCONY)}"]`).locator('xpath=ancestor::div[contains(@class,"kf-collapse")][1]')
+    const toggle = row(page, BALCONY).locator('button[aria-expanded]').first()
+    const h0 = await height(nest)
+    await toggle.click() // fold
+    await sleep(70)
+    const midShut = await height(nest)
+    await sleep(400)
+    const shut = await exists(nest) ? await height(nest) : 0
+    await toggle.click() // unfold
+    await sleep(70)
+    const midOpen = await height(nest)
+    await sleep(400)
+    const h1 = await height(nest)
+    await shot(page, `n1-subtask-nest-${mode}`)
+    if (mode === 'reduced') check(`n1 [${mode}] T8 the subtask nest folds and unfolds at once (reduced)`, h0 > 30 && shut === 0 && h1 > 30, `${h0} → ${midShut} → ${shut} → ${midOpen} → ${h1}`)
+    else check(`n1 [${mode}] T8 the subtask nest eases shut and open again (Collapse)`, h0 > 30 && midShut > 0 && midShut < h0 && shut === 0 && midOpen > 0 && midOpen < h1 && h1 > 30, `${h0} → ${midShut} → ${shut} → ${midOpen} → ${h1}`)
+    check(`n [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
 }

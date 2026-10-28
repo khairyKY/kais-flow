@@ -1,5 +1,4 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
-import { flushSync } from 'react-dom'
 import { uiZoom } from './uiScale'
 import { onPrefApplied, prefWritten } from './prefs'
 
@@ -60,6 +59,18 @@ export function motionOnNow(): boolean {
   return readEffectsOn() && !reducedMotionNow()
 }
 
+/** T15 — a loader (skeleton, the route fallback) shows only once a load has taken 300ms, then fades
+ * in over 160ms, so a quick load never flashes it. Functional: the delay holds under reduced motion. */
+export const LOADER_DELAY: React.CSSProperties = { animation: 'scrimIn 160ms var(--ease-out) 300ms backwards' }
+
+/** T15 — true once `loading` has been true in this mount: content that replaces a skeleton gets the
+ * 160ms `kf-fade` instead of swapping in; content that was already there (cached) doesn't. */
+export function useWasLoading(loading: boolean): boolean {
+  const was = useRef(loading)
+  if (loading) was.current = true
+  return was.current
+}
+
 /** RM1 — a JS smooth scroll beats the CSS `scroll-behavior: auto` reduced motion sets, so ask first. */
 export function scrollBehavior(): ScrollBehavior {
   return motionOnNow() ? 'smooth' : 'auto'
@@ -92,6 +103,13 @@ let routeEnteredAt = -Infinity
 /** AppLayout calls this as a new page renders; staggerDelay counts its window from here. */
 export function markRouteEntry(now = performance.now()): void {
   routeEnteredAt = now
+}
+/** T11 — 'kf-row-in' for a row that mounts after its page's entry window (a capture, an Undo, a
+ * realtime insert, a reopened row), so it breathes in; rows there from the start ride the page's own
+ * entry instead. Decided once, at mount. */
+export function useArrivalClass(): string | undefined {
+  const [cls] = useState(() => (performance.now() - routeEnteredAt > STAGGER_WINDOW_MS ? 'kf-row-in' : undefined))
+  return cls
 }
 export function staggerDelay(index: number, step = 60, now = performance.now()): React.CSSProperties {
   if (now - routeEnteredAt > STAGGER_WINDOW_MS) return { animationDelay: '0ms' }
@@ -132,7 +150,8 @@ export function useOverlayExit(open: boolean, duration = 140): { mounted: boolea
 // data: slides the element out 200ms, collapses its height 180ms, then runs onDone
 // (which performs the actual mutation). Reduced-motion → immediate onDone.
 export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
-  if (!el || reducedMotionNow() || typeof el.animate !== 'function') {
+  // T7: a row that has already gone (collapseRow after a swipe's fly-off) doesn't slide a second time.
+  if (!el || el.dataset.exited !== undefined || reducedMotionNow() || typeof el.animate !== 'function') {
     onDone()
     return
   }
@@ -156,6 +175,21 @@ export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
   }
 }
 
+/** T6 — the shared exit on every element `selector` matches, then `onDone` once (at once when none is
+ * on screen). One the change didn't take away after all is eased back (cancelRowRemoval), so a wrong
+ * guess never leaves a row folded to nothing. */
+export function exitAll(selector: string, onDone: () => void): void {
+  const els = [...document.querySelectorAll<HTMLElement>(selector)]
+  if (!els.length) return onDone()
+  let left = els.length
+  for (const el of els)
+    animateRowRemoval(el, () => {
+      if (--left > 0) return
+      onDone()
+      window.setTimeout(() => els.forEach((e) => e.isConnected && cancelRowRemoval(e)), 300)
+    })
+}
+
 /** Puts back a row `animateRowRemoval` was taking away — an Undo that lands mid-exit (Polish D,
  * punch 6). Its slide/collapse run with `fill: forwards`, so once finished they'd hold the row at
  * opacity 0 / height 0 even after it's back in the list. They're cancelled (onDone never fires) and
@@ -164,6 +198,7 @@ export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
  * had got to (200ms, ease-standard): the exit, run in reverse. */
 export function cancelRowRemoval(el: HTMLElement | null) {
   if (!el) return
+  delete el.dataset.exited
   const exits = (el.getAnimations?.() ?? []).filter((a) => !('animationName' in a) && !('transitionProperty' in a))
   const cs = exits.length ? getComputedStyle(el) : null
   const from = cs ? { height: `${el.offsetHeight}px`, opacity: cs.opacity, transform: cs.transform } : null
@@ -178,6 +213,18 @@ export function cancelRowRemoval(el: HTMLElement | null) {
   }
 }
 
+/** T7 — the second half of a swipe commit: the row has already flown off sideways, so only its
+ * height folds shut (180ms, ease-natural, as iOS Mail's swipe-to-archive), then `onDone` runs the
+ * action. Marks the row as gone, so the action's own exit (deleteTask, a "leaves this list" exit)
+ * doesn't slide it again; cancelRowRemoval brings it back. */
+export function collapseRow(el: HTMLElement | null, onDone: () => void) {
+  if (!el || reducedMotionNow() || typeof el.animate !== 'function') return onDone()
+  el.dataset.exited = ''
+  el.style.pointerEvents = 'none'
+  el.style.overflow = 'hidden'
+  el.animate([{ height: `${el.offsetHeight}px` }, { height: '0px' }], { duration: 180, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }).onfinish = () => onDone()
+}
+
 /** T2 — how long a ticked row keeps its place while the four-beat check plays (Motion 3b). */
 export const COMPLETE_GRACE_MS = 650
 
@@ -189,7 +236,9 @@ export const COMPLETE_GRACE_MS = 650
  * the exit stops and the row eases back (cancelRowRemoval). Callers skip `hold` when motion is off,
  * so the row goes the moment it's done, as before. */
 export function useCompletingRows<V = true>(
-  leave: (id: string, drop: () => void) => void = (id, drop) => animateRowRemoval(document.getElementById(`task-${id}`), drop),
+  leave?: ((id: string, drop: () => void) => void) | null,
+  /** The element that leaves (and comes back on Undo); a task row by default. */
+  rowEl: (id: string) => HTMLElement | null = (id) => document.getElementById(`task-${id}`),
 ) {
   const [rows, setRows] = useState<ReadonlyMap<string, V>>(() => new Map())
   const timers = useRef(new Map<string, number>())
@@ -211,41 +260,58 @@ export function useCompletingRows<V = true>(
       id,
       window.setTimeout(() => {
         timers.current.delete(id)
-        leave(id, () => drop(id))
+        if (leave) leave(id, () => drop(id))
+        else animateRowRemoval(rowEl(id), () => drop(id))
       }, COMPLETE_GRACE_MS),
     )
   }
   const keep = (id: string) => {
     window.clearTimeout(timers.current.get(id))
     timers.current.delete(id)
-    cancelRowRemoval(document.getElementById(`task-${id}`))
+    cancelRowRemoval(rowEl(id))
     drop(id)
   }
   return { rows, hold, keep }
 }
 
-/** T13 — FLIP a reorder: measures `selector`'s matches under `container`, runs `change` (a state
- * update, flushed at once), then plays each element that moved from its old place to its new one,
- * 200ms on ease-standard. React keeps a keyed row's node through a reorder, so the node is the key.
- * Functional motion: it plays with Effects off and is a cut under reduced motion. Call it from an
- * event or a timer, never from render or an effect (flushSync). */
+/** T13 — flip() over the task rows of the page on screen (a nested subtask rides its parent). */
+export function flipRows(change: () => void): void {
+  flip(document.querySelector('.app-main-content > .kf-route'), change, '[id^="task-"]:not([id^="task-"] [id^="task-"])')
+}
+
+/** T13 — FLIP a reorder: measures `selector`'s matches under `container`, runs `change` (a state or
+ * cache update), and when the list next changes in the DOM — a MutationObserver, so it works whether
+ * React renders at once or a beat later (TanStack Query notifies on a timer) — plays each element
+ * that moved from its old place to its new one, 200ms on ease-standard, before that frame paints.
+ * React keeps a keyed row's node through a reorder, so the node is the key. Functional motion: it
+ * plays with Effects off and is a cut under reduced motion. */
 export function flip(container: Element | null | undefined, change: () => void, selector = ':scope > *'): void {
-  if (!container || reducedMotionNow()) {
+  if (!container || reducedMotionNow() || typeof MutationObserver === 'undefined') {
     change()
     return
   }
-  const first = new Map<Element, DOMRect>()
-  for (const el of container.querySelectorAll(selector)) first.set(el, el.getBoundingClientRect())
-  flushSync(change)
-  for (const el of container.querySelectorAll<HTMLElement>(selector)) {
-    const a = first.get(el)
-    if (!a || typeof el.animate !== 'function') continue
-    const b = el.getBoundingClientRect()
-    const dx = a.left - b.left
-    const dy = a.top - b.top
-    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue
-    el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
+  // Keyed by the element's id where it has one: a list keyed by slot (the Top 3) keeps the node and
+  // moves the id, a list keyed by task moves the node — the id follows the row either way.
+  const key = (el: Element) => el.id || el
+  const first = new Map<Element | string, DOMRect>()
+  for (const el of container.querySelectorAll(selector)) first.set(key(el), el.getBoundingClientRect())
+  const play = () => {
+    observer.disconnect()
+    window.clearTimeout(giveUp)
+    for (const el of container.querySelectorAll<HTMLElement>(selector)) {
+      const a = first.get(key(el))
+      if (!a || typeof el.animate !== 'function') continue
+      const b = el.getBoundingClientRect()
+      const dx = a.left - b.left
+      const dy = a.top - b.top
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue
+      el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
+    }
   }
+  const observer = new MutationObserver(play)
+  observer.observe(container, { childList: true, subtree: true, attributes: true, attributeFilter: ['id'] })
+  const giveUp = window.setTimeout(() => observer.disconnect(), 500) // nothing moved
+  change()
 }
 
 // Motion 5b "Drag lift" — R4-23 (Kai's 2026-07-20 audit). The export calls this "the one
