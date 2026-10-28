@@ -1,10 +1,13 @@
 {
   "name": "app",
   "private": true,
+  "license": "UNLICENSED",
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "predev": "node scripts/licenses.mjs",
     "dev": "vite",
+    "prebuild": "node scripts/licenses.mjs",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "ds:check": "node scripts/ds-check.mjs",

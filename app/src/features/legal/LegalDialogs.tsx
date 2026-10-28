@@ -1,4 +1,4 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Float } from '../../components/Float'
 import { Button } from '../../components/kit'
 import { useEscapeStack } from '../../lib/overlayStack'
@@ -15,11 +15,11 @@ import './legal.css'
 
 const toast = (message: string) => useToastStore.getState().push({ message })
 
-function Sheet({ labelledBy, onScrim, children }: { labelledBy: string; onScrim?: () => void; children: ReactNode }) {
+function Sheet({ labelledBy, onScrim, wide, children }: { labelledBy: string; onScrim?: () => void; wide?: boolean; children: ReactNode }) {
   return (
     <Float>
       <div className="lg-scrim kf-overlay-scrim" onClick={onScrim}>
-        <div className="lg-card kf-overlay-card" role="dialog" aria-modal="true" aria-labelledby={labelledBy} onClick={(e) => e.stopPropagation()}>
+        <div className={`lg-card kf-overlay-card${wide ? ' is-wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={labelledBy} onClick={(e) => e.stopPropagation()}>
           {children}
         </div>
       </div>
@@ -98,6 +98,41 @@ export function DeleteAccountDialog({ onClose }: { onClose: () => void }) {
         </Button>
         <Button disabled={!ready || busy === 'export'} loading={busy === 'delete'} onClick={() => void remove()}>
           Delete account
+        </Button>
+      </div>
+    </Sheet>
+  )
+}
+
+/** Settings › App & updates › Open-source licences: public/licenses.txt (scripts/licenses.mjs, made at
+ * build time), shown as it is. Fetched when opened — it's a few hundred KB and not in the PWA precache. */
+export function LicensesDialog({ onClose }: { onClose: () => void }) {
+  const titleId = useId()
+  const [text, setText] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  useEscapeStack(true, onClose)
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}licenses.txt`)
+      .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+      .then(setText, () => setFailed(true))
+  }, [])
+  return (
+    <Sheet labelledBy={titleId} onScrim={onClose} wide>
+      <h2 className="lg-title" id={titleId}>
+        Open-source licences
+      </h2>
+      {failed ? (
+        <p className="lg-error" role="alert">
+          {navigator.onLine ? 'Couldn’t load the licences — try again in a minute.' : 'No connection — the licences load when you’re online.'}
+        </p>
+      ) : (
+        <pre className="lg-pre" aria-busy={text === null}>
+          {text ?? 'Loading…'}
+        </pre>
+      )}
+      <div className="lg-actions">
+        <Button variant="secondary" autoFocus onClick={onClose}>
+          Close
         </Button>
       </div>
     </Sheet>
