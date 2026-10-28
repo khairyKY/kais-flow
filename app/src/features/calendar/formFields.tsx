@@ -132,8 +132,12 @@ export function ColorDots({ value, onChange, size = 22 }: { value: string | null
 // labelled "+ Custom" — the system colour picker; the block then reads its colour's own AA text tone (./blockHue).
 const TRAY_CSS = `
 .kf-swatch-tray { display: grid; grid-template-columns: repeat(var(--cols), var(--z)); gap: 6px; padding: 8px; border-radius: 8px; background: var(--paper-bone); justify-content: start; }
-.kf-sw { position: relative; width: var(--z); height: var(--z); padding: 0; border: none; border-radius: 50%; cursor: pointer; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-body) 14%, transparent); }
-.kf-sw[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--paper-parchment), 0 0 0 3.5px var(--sel-bg); }
+.kf-sw { position: relative; width: var(--z); height: var(--z); padding: 0; border: none; border-radius: 50%; cursor: pointer; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-body) 14%, transparent), 0 0 0 0 transparent, 0 0 0 0 transparent; }
+/* CAL8 (motion-cal): the picked ring fades in (150 ms) and a hover shows a quieter one first — three shadows each, so
+   they interpolate. ds-ok: a ring's colour, not a layout */
+.kf-sw, .kf-sw-custom { transition: box-shadow var(--dur-quick) var(--ease-out); } /* ds-ok: the swatch ring is a shadow */
+.kf-sw:not([data-none]):not([aria-pressed="true"]):hover { box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-body) 14%, transparent), 0 0 0 2px var(--paper-parchment), 0 0 0 3.5px var(--line-control); }
+.kf-sw[aria-pressed="true"] { box-shadow: inset 0 0 0 1px transparent, 0 0 0 2px var(--paper-parchment), 0 0 0 3.5px var(--sel-bg); }
 .kf-sw[aria-pressed="true"]::after { content: ''; position: absolute; left: 50%; top: 50%; width: 5px; height: 9px; margin: -6px 0 0 -3px; border: solid var(--ink-body); border-width: 0 2px 2px 0; transform: rotate(45deg); }
 .kf-sw[data-none] { background: var(--paper-parchment); box-shadow: inset 0 0 0 1px var(--line-control); }
 .kf-sw[data-none]::before { content: ''; position: absolute; left: 3px; right: 3px; top: 50%; border-top: 1.5px solid var(--ink-faint); transform: rotate(-45deg); }

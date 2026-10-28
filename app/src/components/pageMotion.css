@@ -1,0 +1,87 @@
+/* Lane A2 (motion build 2026-10-28) — page motion shared by Routines, Focus, Rituals, Weekly Review,
+   Projects, Chat and the first-run pages. Durations and curves are the token set (tokens/motion.css);
+   the OS reduced-motion rule there collapses all of it. Decorative pieces are additionally gated in JS
+   (useMotionEnabled) or under html.motion-on (the shell's Effects class, portals included). */
+
+/* R2 / R5 / R9 / R10 — a growth stage changing while you watch: the new stage rises from its base,
+   the old one fades out over it (components/PageMotion.tsx StageImg). */
+@keyframes kfStageIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: none; } }
+@keyframes kfStageOut { from { opacity: 1; } to { opacity: 0; } }
+.kf-stage-in { transform-origin: 50% 100%; animation: kfStageIn 400ms var(--ease-out) backwards; }
+.kf-stage-out { pointer-events: none; animation: kfStageOut 400ms var(--ease-out) forwards; }
+
+/* T12 — a number that changed rises in (PageMotion.tsx Num); Effects on only. */
+@keyframes kfNumIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+.motion-on .kf-num { display: inline-block; animation: kfNumIn 200ms var(--ease-out) backwards; }
+
+/* T12 — a progress fill that eases to its new length: a full-width fill scaled from the left, set
+   with `transform: scaleX(…)` inline. Functional (it says how far you are), so it always eases. */
+.kf-bar { display: block; width: 100%; height: 100%; transform-origin: left; transition: transform 300ms var(--ease-out); }
+
+/* A one-off fade in for content that swapped (an error card, a step's body). Functional. */
+@keyframes kfSwapIn { from { opacity: 0; } to { opacity: 1; } }
+.kf-swap-in { animation: kfSwapIn 160ms var(--ease-out) backwards; }
+
+/* D10 / Effects 1j — the dusk veil (Focus's garden scene, FocusPage.tsx) settling over a closing
+   evening: the wash over 1.2s, then it breathes. Effects on only (rendered only when motion is on). */
+@keyframes kfVeilIn { from { opacity: 0; } to { opacity: 0.75; } }
+@keyframes kfVeilBreathe { 0%, 100% { opacity: 0.75; } 50% { opacity: 0.9; } }
+.kf-dusk-veil {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* ds-ok: Focus's dusk wash (FocusPage.tsx garden veil), the same colours */
+  background: linear-gradient(180deg, rgba(46, 40, 62, 0.42), rgba(26, 22, 36, 0.66) 85%);
+  mix-blend-mode: multiply;
+  opacity: 0;
+  animation: kfVeilIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards, kfVeilBreathe 8s ease-in-out calc(var(--veil-delay, 0ms) + 1200ms) infinite;
+}
+@keyframes kfVignetteIn { from { opacity: 0; } to { opacity: 1; } }
+.kf-dusk-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  /* ds-ok: Effects 1j's 70px vignette (Motion fixes.html D10) */
+  box-shadow: inset 0 0 70px rgba(20, 16, 28, 0.55);
+  opacity: 0;
+  animation: kfVignetteIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards;
+}
+.kf-dusk-fly {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: var(--firefly, #F6E28C); /* ds-ok: --firefly is night-only; Effects 1j's firefly by day */
+  box-shadow: var(--glow-firefly);
+  opacity: 0;
+  animation: kfVignetteIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards, fireflyDrift 9s ease-in-out calc(var(--veil-delay, 0ms) + 1200ms) infinite;
+}
+
+/* O10 — the Library's phone list ↔ reader: the reader comes in from the right, the list back from the
+   left, on the stack's curve (Motion 3a's direction, shortened to 32px so nothing overflows the page).
+   Only after a switch (LibraryPage), never on the page's first paint. Effects off: a fade. */
+@keyframes kfLibIn { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes kfLibBack { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+.kf-lib-moved { animation: kfSwapIn 160ms var(--ease-out) backwards; }
+.motion-on .kf-lib-moved.kf-lib-reader { animation: kfLibIn 300ms var(--ease-stack) backwards; }
+.motion-on .kf-lib-moved.kf-lib-list { animation: kfLibBack 300ms var(--ease-stack) backwards; }
+
+/* R12 — onboarding's "planted" hand-off (OnboardingPage sets html[data-planted] for 3s): the Top 3
+   lines just written rise in one after another on Today, and the goal card blooms once. Hooks are
+   Today's own stable attributes (data-tour="top3", data-top3-slot), so Today's code is untouched. */
+@keyframes kfPlantedIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+html[data-planted].motion-on [data-top3-slot] { animation: kfPlantedIn 360ms var(--ease-out) backwards; }
+html[data-planted].motion-on [data-tour='top3'] > :nth-child(1 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 160ms; }
+html[data-planted].motion-on [data-tour='top3'] > :nth-child(2 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 280ms; }
+html[data-planted].motion-on [data-tour='top3'] > :nth-child(3 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 400ms; }
+html[data-planted].motion-on [data-top3-slot]:has(.kf-goal-row, .tp-goal)::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in oklch, var(--acc-gold-warm) 50%, transparent) 0%, transparent 70%);
+  opacity: 0;
+  animation: kfBloomGlow 1.2s ease-in-out 520ms 1 forwards;
+}

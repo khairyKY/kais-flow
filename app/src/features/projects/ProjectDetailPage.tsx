@@ -85,6 +85,7 @@ import { toastUndo } from '../../lib/undo'
 import { BackLink, Button, SectionLabel, Segmented, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { flipRows, scrollBehavior, useCompletingRows, useMotionEnabled } from '../../lib/motion'
+import { StageImg } from '../../components/PageMotion'
 import { DateField } from '../../components/DatePicker'
 import { useChecklistTemplates, saveTemplateWithUndo, renameTemplateWithUndo, deleteTemplateWithUndo, applyTemplateWithUndo } from './templates'
 import './xfx.css'
@@ -732,7 +733,8 @@ export function ProjectDetailPage() {
               {motion && milestonePct < 100 && milestoneBloom > 0 && (
                 <span key={milestoneBloom} className="kf-bloom kf-bloom-once" style={{ inset: -10 }} />
               )}
-              <img src={wisteriaImg} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 26, position: 'relative' }} title={`p${milestonePct}`} />
+              {/* R10: a new stage cross-fades in, rising 0.92 → 1 from its base (400ms) */}
+              <StageImg src={wisteriaImg} alt="" className={motion ? 'kf-sway' : undefined} style={{ height: 26, position: 'relative' }} title={`p${milestonePct}`} />
             </span>
             <span style={{ flex: 1, width: 0, borderLeft: '1px solid var(--line-dashed)', margin: '8px 0' }}></span>
             <img src="/ds/assets/wisteria/p100.png" alt="" style={{ height: 22, opacity: 0.45 }} title="p100" />

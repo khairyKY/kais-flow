@@ -17,7 +17,8 @@ import { toastAction, toastUndo } from '../../lib/undo'
 import { logRitualFinished, logRitualStep, setSeed, useDraft, useRitualStepsToday, useSeedsFor } from './api'
 import { loopDayKey, loopNow, seedTargetDate } from './loopDay'
 import { SHUT_STEPS, closeDay, daysBetween, headerDate, rolledMeta, seedDayName, span, swapIn, sweepRows, tomorrowSuggestions, withPick } from './ritualLogic'
-import { Collapsed, KitRow, Meta, RitualFoot, RitualSheet, Section } from './RitualChrome'
+import { Collapsed, FinishScreen, FoldSection, KitRow, Meta, RitualFoot, RitualSheet, Section, leaveMs } from './RitualChrome'
+import { Num } from '../../components/PageMotion'
 import type { Task } from '../../lib/types'
 
 // ── Shut down — design-export/Shutdown.dc.html 8a–8h (night first) + SCREENS-2026-09-28 §Shut down
@@ -57,6 +58,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   const [draft, setDraft, clearDraft] = useDraft<ShutDraft>('shutdown', day, () => ({ seen: [], rolled: {}, doneHere: [], line: '', saved: null, editing: false, stars: null }))
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [summary, setSummary] = useState<string[] | null>(null)
+  const [leaving, setLeaving] = useState(false)
   const closeRef = useRef<() => void>(onClose)
   const rollUndo = useRef(new Map<string, () => void>())
 
@@ -164,7 +166,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
   // Close the day: writes the line, plants Tomorrow's 3 as seeds (starred Sweep rows roll to
   // tomorrow 09:00), logs the ritual finished, quiets the garden, then the summary (ruling 5).
   function closeTheDay() {
-    if (summary) return
+    if (summary || leaving) return
     const wroteLine = (draft.line.trim() && !showSaved ? saveLine() : false) || !!draft.saved
     const plan = closeDay(stars, seeded.map((t) => t.id), new Set(open.map((t) => t.id)))
     plan.seed.forEach((id) => byId.get(id) && setSeed(byId.get(id)!, true))
@@ -176,8 +178,14 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     playSound('ritual_done') // before the garden closes: closing it is what silences it
     // Settings 3a: "The garden is silent after you close it." Quiet hours lift at the date turn.
     closeTheGarden(loopDayKey(new Date()))
-    setSummary([...stats, `${stars.length} seeded`])
-    clearDraft()
+    // R8: everything above is written now; the sheet's content fades (150ms), then the finish screen.
+    const done = [...stats, `${stars.length} seeded`]
+    setLeaving(true)
+    window.setTimeout(() => {
+      setSummary(done)
+      setLeaving(false)
+      clearDraft()
+    }, leaveMs())
   }
   useEffect(() => {
     if (!summary) return
@@ -192,9 +200,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
         sub=""
         onClose={onClose}
         left={
-          <div className="rt-summary">
-            <img src={`${A}/clover/resting.png`} alt="" />
-            <div className="rt-summary-title">The garden's closed.</div>
+          <FinishScreen img={`${A}/clover/resting.png`} title="The garden's closed." dusk>
             <span className="rt-note">See you in the morning ✿</span>
             <div className="rt-meta">{summary.map((s) => <span key={s}>{s}</span>)}</div>
             {/* The Notebook page, for people who set up their paper journal at night. Past midnight the
@@ -203,7 +209,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
               Write tomorrow’s page
               <Icon name="chevright" size={16} />
             </button>
-          </div>
+          </FinishScreen>
         }
         right={null}
         footer={(close) => {
@@ -220,12 +226,9 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     )
   }
 
-  const sweepSection =
-    rows.length === 0 ? (
-      <Collapsed label="Sweep" line="Everything tended ✿" />
-    ) : (
-      <>
-        <Section first label={`Sweep · ${touched.size > 0 ? `${open.length} of ${rows.length}` : open.length} left`} link={open.length > 0 ? { label: 'Roll all to tomorrow', onClick: () => roll(open) } : undefined} />
+  const sweepSection = (
+    <FoldSection empty={rows.length === 0} line={<Collapsed label="Sweep" line="Everything tended ✿" />}>
+        <Section first label={<>Sweep · <Num value={touched.size > 0 ? `${open.length} of ${rows.length}` : open.length} /> left</>} link={open.length > 0 ? { label: 'Roll all to tomorrow', onClick: () => roll(open) } : undefined} />
         {rows.map((t) => {
           const done = t.status === 'done'
           const rolled = isRolled(t)
@@ -265,8 +268,8 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
             />
           )
         })}
-      </>
-    )
+    </FoldSection>
+  )
 
   const lineSection = (
     <>
@@ -344,6 +347,7 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
       title="Shut down"
       sub={[headerDate(now), ...stats].join(' · ')}
       onClose={onClose}
+      leaving={leaving}
       left={
         <>
           {sweepSection}

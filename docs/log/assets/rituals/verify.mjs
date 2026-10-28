@@ -437,6 +437,7 @@ if (want('6m')) {
   await tap(cdp, row(page, REVIEW).getByRole('radio', { name: 'Today' }))
   await tap(cdp, row(page, UNTITLED).getByRole('radio', { name: 'Someday' }))
   await tap(cdp, page.locator('.rt-inbox').first().getByRole('button', { name: 'File' }))
+  await sleep(300) // motion-pages T6: a filed ritual inbox row slides out (~380ms) before the inbox drops it
   await tap(cdp, page.locator('.rt-inbox').first().getByRole('button', { name: 'Dismiss' }))
   await sleep(300)
   // Back (Esc) closes the sheet and keeps progress — the Undo toasts sit over the ✕ while a sheet is up.

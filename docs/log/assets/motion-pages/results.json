@@ -1,0 +1,797 @@
+[
+  {
+    "name": "r1 [on] R1 the routine check is the kit Checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 [on] R13 routine rows carry the entry stagger + hover lift",
+    "ok": true,
+    "detail": "2 rows"
+  },
+  {
+    "name": "r1 [on] R1 four beats: boxFill → checkPop, strikeGrow, rowDip",
+    "ok": false,
+    "detail": "tr-rowDip,checkPop,tr-strikeGrow,kfNumIn"
+  },
+  {
+    "name": "r1 [on] R1 the box ends ticked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 [on] R2 the plant crossing a stage cross-fades (+ bloom), Effects on only",
+    "ok": true,
+    "detail": "stage-in 1, bloom 1"
+  },
+  {
+    "name": "r3 [on] T12 the tally bar eases its scaleX (300ms)",
+    "ok": true,
+    "detail": "matrix(0, 0, 0, 1, 0, 0) → matrix(0.466128, 0, 0, 1, 0, 0), 0.3s"
+  },
+  {
+    "name": "r3 [on] T12 a changed counter rises in (Effects on only)",
+    "ok": true,
+    "detail": "tr-rowDip,checkPop,tr-strikeGrow,kfNumIn"
+  },
+  {
+    "name": "r2 [on] R2 the last routine of the day → one \"all tended\" bloom (Effects on only)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "r4 [on] T8 the steps fold eases open",
+    "ok": true,
+    "detail": "50.484375 → 69"
+  },
+  {
+    "name": "r5 [on] StreakTrellis enters (kfScrimIn) on the token scrim",
+    "ok": true,
+    "detail": "rgba(42, 36, 32, 0.36) · kfScrimIn,kfOverlayIn"
+  },
+  {
+    "name": "r [on] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 [off] R1 the routine check is the kit Checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 [off] R13 routine rows carry the entry stagger + hover lift",
+    "ok": true,
+    "detail": "2 rows"
+  },
+  {
+    "name": "r1 [off] R1 no decorative beats",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "r1 [off] R1 the box ends ticked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 [off] R2 the plant crossing a stage cross-fades (+ bloom), Effects on only",
+    "ok": true,
+    "detail": "stage-in 0, bloom 0"
+  },
+  {
+    "name": "r3 [off] T12 the tally bar eases its scaleX (300ms)",
+    "ok": true,
+    "detail": "matrix(0, 0, 0, 1, 0, 0) → matrix(0.436364, 0, 0, 1, 0, 0), 0.3s"
+  },
+  {
+    "name": "r3 [off] T12 a changed counter rises in (Effects on only)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "r2 [off] R2 the last routine of the day → one \"all tended\" bloom (Effects on only)",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "r4 [off] T8 the steps fold eases open",
+    "ok": true,
+    "detail": "56.390625 → 69"
+  },
+  {
+    "name": "r5 [off] StreakTrellis enters (kfScrimIn) on the token scrim",
+    "ok": true,
+    "detail": "rgba(42, 36, 32, 0.36) · kfScrimIn,kfOverlayInFlat"
+  },
+  {
+    "name": "r [off] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 [reduced] R1 the routine check is the kit Checkbox",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r1 [reduced] R13 routine rows carry the entry stagger + hover lift",
+    "ok": true,
+    "detail": "2 rows"
+  },
+  {
+    "name": "r1 [reduced] R1 no decorative beats",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "r1 [reduced] R1 the box ends ticked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r2 [reduced] R2 the plant crossing a stage cross-fades (+ bloom), Effects on only",
+    "ok": true,
+    "detail": "stage-in 0, bloom 0"
+  },
+  {
+    "name": "r3 [reduced] T12 the tally bar eases its scaleX (collapsed)",
+    "ok": true,
+    "detail": "matrix(0, 0, 0, 1, 0, 0) → matrix(0.5, 0, 0, 1, 0, 0), 1e-05s"
+  },
+  {
+    "name": "r3 [reduced] T12 a changed counter rises in (Effects on only)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "r2 [reduced] R2 the last routine of the day → one \"all tended\" bloom (Effects on only)",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "r4 [reduced] T8 the steps fold opens as a cut",
+    "ok": true,
+    "detail": "69 → 69"
+  },
+  {
+    "name": "r5 [reduced] StreakTrellis enters (kfScrimIn) on the token scrim",
+    "ok": true,
+    "detail": "rgba(42, 36, 32, 0.36) · "
+  },
+  {
+    "name": "r [reduced] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f1 [on] R4 the running ring sweeps continuously (Effects on only)",
+    "ok": true,
+    "detail": "stroke-dashoffset 1s linear"
+  },
+  {
+    "name": "f1 [on] T12 the round dots ease their fill",
+    "ok": true,
+    "detail": "background-color, box-shadow"
+  },
+  {
+    "name": "f2 [on] R3 round end: the bloom plays, then (~600ms later) the break view cross-fades in",
+    "ok": true,
+    "detail": "bloom 1078ms, break 1691ms, fpFadeIn"
+  },
+  {
+    "name": "f3 [on] R3 paused: the ring dims (~0.55) and breathes",
+    "ok": true,
+    "detail": "op 0.554902, fpRingBreathe"
+  },
+  {
+    "name": "f [on] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f4 [on] R5 the garden fades in (Effects on only)",
+    "ok": true,
+    "detail": "fpFadeIn"
+  },
+  {
+    "name": "f4 [on] R5 leaving the garden fades it (Effects on), then the timer is back",
+    "ok": true,
+    "detail": "fade anims 1, back true"
+  },
+  {
+    "name": "f1 [off] R4 the running ring sweeps continuously (Effects on only)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "f1 [off] T12 the round dots ease their fill",
+    "ok": true,
+    "detail": "background-color, box-shadow"
+  },
+  {
+    "name": "f2 [off] R3 round end goes straight to the break view (no bloom)",
+    "ok": true,
+    "detail": "bloom -1, break 2146"
+  },
+  {
+    "name": "f3 [off] R3 paused: the ring dims (~0.55)",
+    "ok": true,
+    "detail": "op 0.55, no anim"
+  },
+  {
+    "name": "f [off] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f4 [off] R5 the garden fades in (Effects on only)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "f4 [off] R5 leaving the garden fades it (Effects on), then the timer is back",
+    "ok": true,
+    "detail": "fade anims -1, back true"
+  },
+  {
+    "name": "f1 [reduced] R4 the running ring sweeps continuously (Effects on only)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "f1 [reduced] T12 the round dots ease their fill",
+    "ok": true,
+    "detail": "background-color, box-shadow"
+  },
+  {
+    "name": "f2 [reduced] R3 round end goes straight to the break view (no bloom)",
+    "ok": true,
+    "detail": "bloom -1, break 1111"
+  },
+  {
+    "name": "f3 [reduced] R3 paused: the ring dims (~0.55)",
+    "ok": true,
+    "detail": "op 0.55, no anim"
+  },
+  {
+    "name": "f [reduced] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f4 [reduced] R5 the garden fades in (Effects on only)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "f4 [reduced] R5 leaving the garden fades it (Effects on), then the timer is back",
+    "ok": true,
+    "detail": "fade anims -1, back true"
+  },
+  {
+    "name": "c1 [on] R6 the chat opens at the bottom of the history",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [on] T11 history bubbles don't replay an arrival",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "c2 [on] R6 a send pins the list to the bottom (smooth)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 [on] T11 the new bubbles breathe in (.kf-row-in)",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "c3 [on] R7 thinking shows three dots, twinkling with Effects on only",
+    "ok": true,
+    "detail": "twinkle,twinkle,twinkle"
+  },
+  {
+    "name": "c4 [on] R6 scrolled up when the reply lands → a \"↓ New\" pill, not a yank",
+    "ok": true,
+    "detail": "pill 1"
+  },
+  {
+    "name": "c4 [on] R6 the pill takes you to the bottom and goes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c [on] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [off] R6 the chat opens at the bottom of the history",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [off] T11 history bubbles don't replay an arrival",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "c2 [off] R6 a send pins the list to the bottom (instant)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 [off] T11 the new bubbles breathe in (.kf-row-in)",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "c3 [off] R7 thinking shows three dots, twinkling with Effects on only",
+    "ok": true,
+    "detail": "still"
+  },
+  {
+    "name": "c4 [off] R6 scrolled up when the reply lands → a \"↓ New\" pill, not a yank",
+    "ok": true,
+    "detail": "pill 1"
+  },
+  {
+    "name": "c4 [off] R6 the pill takes you to the bottom and goes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c [off] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [reduced] R6 the chat opens at the bottom of the history",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c1 [reduced] T11 history bubbles don't replay an arrival",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "c2 [reduced] R6 a send pins the list to the bottom (instant)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c2 [reduced] T11 the new bubbles breathe in (.kf-row-in)",
+    "ok": true,
+    "detail": "2"
+  },
+  {
+    "name": "c3 [reduced] R7 thinking shows three dots, twinkling with Effects on only",
+    "ok": true,
+    "detail": "still"
+  },
+  {
+    "name": "c4 [reduced] R6 scrolled up when the reply lands → a \"↓ New\" pill, not a yank",
+    "ok": true,
+    "detail": "pill 1"
+  },
+  {
+    "name": "c4 [reduced] R6 the pill takes you to the bottom and goes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c [reduced] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w1 [on] R8 the content fades out (.rt-leaving), then the finish screen",
+    "ok": true,
+    "detail": "leaving 1"
+  },
+  {
+    "name": "w1 [on] R8 the payoff: clover rises (rtSprout), title soaks in (rtInk)",
+    "ok": true,
+    "detail": "rtSprout | rtInk"
+  },
+  {
+    "name": "w2 [on] D10 the dusk veil settles over the evening close (Effects on only)",
+    "ok": true,
+    "detail": "veil opacity 0.756018"
+  },
+  {
+    "name": "w [on] evening: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w3 [on] T6 a dismissed ritual inbox row slides out and closes its gap",
+    "ok": true,
+    "detail": "2→1, exit anims 1"
+  },
+  {
+    "name": "w4 [on] T8 the emptied section folds to its quiet line",
+    "ok": true,
+    "detail": "58.515625 → 60"
+  },
+  {
+    "name": "w5 [on] R8 \"The day has a shape.\" with the payoff beat (sprout on Effects only)",
+    "ok": true,
+    "detail": "rtSprout"
+  },
+  {
+    "name": "w [on] morning: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w1 [off] R8 the content fades out (.rt-leaving), then the finish screen",
+    "ok": true,
+    "detail": "leaving 1"
+  },
+  {
+    "name": "w1 [off] R8 Effects off: a plain fade, no sprout/ink",
+    "ok": true,
+    "detail": "rtFadeIn | rtFadeIn"
+  },
+  {
+    "name": "w2 [off] D10 the dusk veil settles over the evening close (Effects on only)",
+    "ok": true,
+    "detail": "veil opacity 0"
+  },
+  {
+    "name": "w [off] evening: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w3 [off] T6 a dismissed ritual inbox row slides out and closes its gap",
+    "ok": true,
+    "detail": "2→1, exit anims 1"
+  },
+  {
+    "name": "w4 [off] T8 the emptied section folds to its quiet line",
+    "ok": true,
+    "detail": "59.859375 → 60"
+  },
+  {
+    "name": "w5 [off] R8 \"The day has a shape.\" with the payoff beat (sprout on Effects only)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "w [off] morning: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w1 [reduced] R8 the content fades out (.rt-leaving), then the finish screen",
+    "ok": true,
+    "detail": "leaving 0"
+  },
+  {
+    "name": "w2 [reduced] D10 the dusk veil settles over the evening close (Effects on only)",
+    "ok": true,
+    "detail": "veil opacity 0"
+  },
+  {
+    "name": "w [reduced] evening: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "w3 [reduced] T6 a dismissed ritual inbox row leaves (cut)",
+    "ok": true,
+    "detail": "2→1, exit anims 0"
+  },
+  {
+    "name": "w4 [reduced] T8 the emptied section folds to its quiet line",
+    "ok": true,
+    "detail": "60 → 60"
+  },
+  {
+    "name": "w5 [reduced] R8 \"The day has a shape.\" with the payoff beat (sprout on Effects only)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "w [reduced] morning: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v1 [on/desktop] R9 the flourish draws, dots 0.5s apart (the last lands with the 2.2s line)",
+    "ok": true,
+    "detail": "draw · 0s 0.5s 1s 1.5s 2s"
+  },
+  {
+    "name": "v2 [on/desktop] R9 once per week: a revisit shows it already drawn",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3 [on] T8 the season folds open",
+    "ok": true,
+    "detail": "749.4375 → 917.28125"
+  },
+  {
+    "name": "v4 [on] R9 closing the week blooms the fern once (Effects on only)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "v [on/desktop] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v1 [on/phone] R9 the flourish draws, dots 0.5s apart (the last lands with the 2.2s line)",
+    "ok": true,
+    "detail": "draw · 0s 0.5s 1s 1.5s 2s"
+  },
+  {
+    "name": "v2 [on/phone] R9 once per week: a revisit shows it already drawn",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v [on/phone] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v1 [off] R9 no flourish (decorative)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3 [off] T8 the season folds open",
+    "ok": true,
+    "detail": "749.578125 → 917.28125"
+  },
+  {
+    "name": "v4 [off] R9 closing the week blooms the fern once (Effects on only)",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "v [off/desktop] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v1 [reduced] R9 no flourish (decorative)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v3 [reduced] T8 the season opens as a cut",
+    "ok": true,
+    "detail": "917.28125 → 917.28125"
+  },
+  {
+    "name": "v4 [reduced] R9 closing the week blooms the fern once (Effects on only)",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "v [reduced/desktop] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 [on] O10 the Notebook page's first paint doesn't slide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 [on] O10 Tomorrow slides in from the right (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "nbDayNext"
+  },
+  {
+    "name": "o2 [on] O10 the Library list doesn't slide on first paint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o2 [on] O10 the reader comes in from the right (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "kfLibIn"
+  },
+  {
+    "name": "o2 [on] O10 back, the list returns from the left (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "kfLibBack"
+  },
+  {
+    "name": "o3 [on] O10 Import's step card is keyed for its fade",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o [on] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 [off] O10 the Notebook page's first paint doesn't slide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 [off] O10 Tomorrow slides in from the right (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "nbDayFade"
+  },
+  {
+    "name": "o2 [off] O10 the Library list doesn't slide on first paint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o2 [off] O10 the reader comes in from the right (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "kfSwapIn"
+  },
+  {
+    "name": "o2 [off] O10 back, the list returns from the left (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "kfSwapIn"
+  },
+  {
+    "name": "o3 [off] O10 Import's step card is keyed for its fade",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o [off] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 [reduced] O10 the Notebook page's first paint doesn't slide",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o1 [reduced] O10 Tomorrow slides in from the right (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "o2 [reduced] O10 the Library list doesn't slide on first paint",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o2 [reduced] O10 the reader comes in from the right (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "o2 [reduced] O10 back, the list returns from the left (Effects on) / fades (off)",
+    "ok": true,
+    "detail": "none"
+  },
+  {
+    "name": "o3 [reduced] O10 Import's step card is keyed for its fade",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o [reduced] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t1 [on] R11 the dim never blinks out between notes",
+    "ok": true,
+    "detail": "0 blank frames"
+  },
+  {
+    "name": "t1 [on] R11 the next note's spotlight glides (Effects on) instead of re-fading",
+    "ok": true,
+    "detail": "glide anims 1"
+  },
+  {
+    "name": "t [on] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t1 [off] R11 the dim never blinks out between notes",
+    "ok": true,
+    "detail": "0 blank frames"
+  },
+  {
+    "name": "t1 [off] R11 the next note's spotlight glides (Effects on) instead of re-fading",
+    "ok": true,
+    "detail": "glide anims 0"
+  },
+  {
+    "name": "t [off] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "t1 [reduced] R11 the dim never blinks out between notes",
+    "ok": true,
+    "detail": "0 blank frames"
+  },
+  {
+    "name": "t1 [reduced] R11 the next note's spotlight glides (Effects on) instead of re-fading",
+    "ok": true,
+    "detail": "glide anims 0"
+  },
+  {
+    "name": "t [reduced] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1 [on] R12 a wrong password shakes the field (Effects on only)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "a1 [on] R12 the error card fades in",
+    "ok": true,
+    "detail": "kfSwapIn"
+  },
+  {
+    "name": "a2 [on] R12 planted hand-off: the Top 3 lines rise in turn and the goal blooms (Effects on only)",
+    "ok": true,
+    "detail": "kfPlantedIn@0.16s kfPlantedIn@0.28s kfPlantedIn@0.4s · kfBloomGlow"
+  },
+  {
+    "name": "a [on] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1 [off] R12 a wrong password shakes the field (Effects on only)",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "a1 [off] R12 the error card fades in",
+    "ok": true,
+    "detail": "kfSwapIn"
+  },
+  {
+    "name": "a2 [off] R12 planted hand-off: the Top 3 lines rise in turn and the goal blooms (Effects on only)",
+    "ok": true,
+    "detail": "none@0s none@0s none@0s · none"
+  },
+  {
+    "name": "a [off] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a1 [reduced] R12 a wrong password shakes the field (Effects on only)",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "a1 [reduced] R12 the error card fades in",
+    "ok": true,
+    "detail": "kfSwapIn"
+  },
+  {
+    "name": "a2 [reduced] R12 planted hand-off: the Top 3 lines rise in turn and the goal blooms (Effects on only)",
+    "ok": true,
+    "detail": "none@0s none@0s none@0s · none"
+  },
+  {
+    "name": "a [reduced] no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -3,6 +3,7 @@ import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { computeGraceStreak, computeTrellisDays, rainHeld, routineStartKey, routineStreak, streakOfGoal, trellisCaption, type TrellisDay } from './streaks'
 import { PLANTS, plantOf, plantSrc } from './plant'
 import type { Routine, RoutineCompletion } from '../../lib/types'
+import '../projects/xfx.css' // .kf-overlay-scrim / .kf-overlay-card (Motion 3c)
 
 // ── Streak trellis — pixel contract Routines.dc.html #4a: "the vine becomes a real 14-day
 // trellis: pressed leaves, a hanging droplet, an honest snap." Reached by clicking a routine's
@@ -164,8 +165,10 @@ export function StreakTrellis({ routine, completions, onClose }: { routine: Rout
   if (isMobile) return <BottomSheet onClose={onClose}>{() => content}</BottomSheet>
 
   return (
-    <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    // Motion 3c: the shared overlay entrance (scrim + card, 210ms), on the token scrim (was a raw rgba).
+    <div className="kf-overlay-scrim" onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'var(--scrim)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div
+        className="kf-overlay-card"
         onClick={(e) => e.stopPropagation()}
         style={{ width: 860, maxWidth: '100%', maxHeight: '88vh', overflowY: 'auto', background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '30px 38px' }}
       >

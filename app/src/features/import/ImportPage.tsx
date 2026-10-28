@@ -19,6 +19,7 @@ import {
 } from './api'
 import { findDuplicateClusters, MIN_CLUSTER, type DupeCluster } from './dedupe'
 import { appZone } from '../../lib/appZone'
+import '../../components/pageMotion.css' // .kf-swap-in (O10)
 
 // P-IMPORT wizard: source → file(s) → (csv/notion mapping) → preview → import → summary (+ Undo).
 // Quiet, minimal, §04 kit + tokens only. States.dc.html rules: never the word "error".
@@ -260,6 +261,8 @@ export function ImportPage() {
           </p>
         </div>
 
+        {/* O10: a step change fades its card in (keyed on the step) instead of a hard swap */}
+        <div key={step.name} className="kf-swap-in" style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
         {step.name === 'pick' && (
           <div style={card}>
             <SectionLabel style={{ marginBottom: 14 }}>Source</SectionLabel>
@@ -497,6 +500,7 @@ export function ImportPage() {
             </div>
           )
         })()}
+        </div>
 
         <TidyDuplicates />
       </div>

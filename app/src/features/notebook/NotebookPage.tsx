@@ -174,7 +174,12 @@ export function NotebookPage() {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const which: Which = params.get('day') === 'tomorrow' ? 'tomorrow' : 'today'
-  const setWhich = (w: Which) => setParams((p) => (p.set('day', w), p), { replace: true })
+  // O10: switching the day slides the page the way you went (Tomorrow in from the right).
+  const [slide, setSlide] = useState<'next' | 'prev' | null>(null)
+  const setWhich = (w: Which) => {
+    if (w !== which) setSlide(w === 'tomorrow' ? 'next' : 'prev')
+    setParams((p) => (p.set('day', w), p), { replace: true })
+  }
   const now = useMinuteNow()
   const zone = useAppZone()
   const today = zoneDateKey(now, zone)
@@ -251,7 +256,11 @@ export function NotebookPage() {
       </button>
     </div>
   )
-  const page = loading ? <Skeleton variant="card" /> : <Paper blocks={blocks} dayN={dayN} onPaper={onPaper} />
+  const page = (
+    <div key={which} className={slide ? `nb-day-in is-${slide}` : undefined}>
+      {loading ? <Skeleton variant="card" /> : <Paper blocks={blocks} dayN={dayN} onPaper={onPaper} />}
+    </div>
+  )
   const editor = <LayoutEditor layout={layout} onChange={saveLayout} onDone={() => setEditing(false)} />
   const ticksButton = (
     <button type="button" className="nb-ticks" onClick={bringBackTicks}>
