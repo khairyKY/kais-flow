@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { Icon } from '../../components/Icon'
 import { useAuth } from '../auth/AuthProvider'
@@ -6,6 +6,7 @@ import { openCapture } from '../command-bar/commandBarStore'
 import { useToastStore } from '../../lib/toastStore'
 import { toastUndo } from '../../lib/undo'
 import { useEscapeStack } from '../../lib/overlayStack'
+import { reducedMotionNow } from '../../lib/motion'
 import { voiceLimitReachedToday } from './aiAllowance'
 import { LOCK_DISTANCE, clickIsTap, formatTake, holdStep, pickMimeType, type HoldEvent, type HoldState } from './holdToTalk'
 import './capture.css'
@@ -166,16 +167,31 @@ export function CaptureButton() {
 
   const recording = hold.phase === 'recording'
   const elapsed = formatTake(startedAt === null ? 0 : Date.now() - startedAt)
+  // K3: while held the button IS the finger (no transition, so it can't trail); let go, it springs
+  // home (--ease-spring, 320ms) from wherever the finger left it. Functional: a cut under reduced motion.
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const heldAt = useRef<string | null>(null)
+  const heldTransform = recording ? `translate(${hold.dx}px, ${hold.dy}px) scale(${GROWN})` : null
+  useLayoutEffect(() => {
+    const el = btnRef.current
+    const from = heldAt.current
+    heldAt.current = heldTransform
+    if (heldTransform || !from || !el || reducedMotionNow()) return
+    el.style.transition = 'none' // before style recalc, so the press transition never starts
+    const a = el.animate([{ transform: from }, { transform: 'none' }], { duration: 320, easing: 'cubic-bezier(0.34, 1.56, 0.64, 1)' })
+    a.onfinish = a.oncancel = () => (el.style.transition = '')
+  }, [heldTransform])
 
   return (
     <>
       <button
         type="button"
+        ref={btnRef}
         className="kf-capture kf-press"
         data-phase={hold.phase}
         data-tour="capture"
         aria-label={`Capture — tap to type, hold to talk${waiting ? ` · ${waiting} ${waiting === 1 ? 'page' : 'pages'} waiting` : ''}`}
-        style={recording ? { transform: `translate(${hold.dx}px, ${hold.dy}px) scale(${GROWN})` } : undefined}
+        style={heldTransform ? { transform: heldTransform } : undefined}
         onPointerDown={(e) => {
           if (e.button !== 0) return
           e.currentTarget.setPointerCapture(e.pointerId)

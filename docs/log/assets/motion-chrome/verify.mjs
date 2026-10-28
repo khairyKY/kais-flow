@@ -301,6 +301,39 @@ if (want('o5')) {
   }
 }
 
+// ── K3 — hold-to-talk: the held button follows the finger exactly, the pill and rail slide in, release springs home ──
+if (want('k3')) {
+  for (const [v, o] of [['on', {}], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', o)
+    const { page, cdp } = env
+    const btn = page.getByRole('button', { name: /^Capture — tap to type/ })
+    const b = await btn.boundingBox()
+    const at = { x: b.x + b.width / 2, y: b.y + b.height / 2 }
+    await touch(cdp, 'touchStart', [at])
+    await sleep(900)
+    const pill = await page.locator('.kf-rec-pill').evaluate((e) => getComputedStyle(e).animationName).catch(() => 'none')
+    const rail = await page.locator('.kf-rec-rail').evaluate((e) => getComputedStyle(e).animationName).catch(() => 'none')
+    check(`k3 ${v}: recording — the pill slides in (kfRecPillIn) and the rail rises (kfRecRailIn)`, pill === 'kfRecPillIn' && rail === 'kfRecRailIn', `${pill} / ${rail}`)
+    const tr = await btn.evaluate((e) => getComputedStyle(e).transitionProperty)
+    check(`k3 ${v}: held, the button has no transform transition (it can't trail the finger)`, !/transform|all/.test(tr), tr)
+    await touch(cdp, 'touchMove', [{ x: at.x, y: at.y - 30 }])
+    const follow = await btn.evaluate((e) => new Promise((r) => requestAnimationFrame(() => r(new DOMMatrixReadOnly(getComputedStyle(e).transform).f))))
+    check(`k3 ${v}: the button sits exactly under the finger 30px up, the same frame`, Math.abs(follow + 30) < 0.5, follow)
+    await touch(cdp, 'touchMove', [{ x: at.x, y: at.y - 40 }])
+    await sleep(50)
+    await touch(cdp, 'touchEnd', [])
+    await sleep(30)
+    const spring = await btn.evaluate((e) => e.getAnimations().filter((a) => !('animationName' in a) && !('transitionProperty' in a)).map((a) => ({ ms: a.effect.getTiming().duration, ease: a.effect.getTiming().easing })))
+    if (v === 'on') check('k3 on: released, it springs home (--ease-spring, 320ms)', spring.length === 1 && spring[0].ms === 320 && spring[0].ease.includes('1.56'), JSON.stringify(spring))
+    else check('k3 reduced: released, it is home at once (no spring)', spring.length === 0, JSON.stringify(spring))
+    await sleep(400)
+    const rest = await btn.evaluate((e) => getComputedStyle(e).transform)
+    check(`k3 ${v}: at rest the button is back in place`, rest === 'none' || rest === 'matrix(1, 0, 0, 1, 0, 0)', rest)
+    basics(env, `k3 ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
