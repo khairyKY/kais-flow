@@ -3,18 +3,13 @@
    amber, sway, ink) are additionally gated in JS via useMotionEnabled().
    ponytail: lives here instead of index.css (frozen to XA) — fold into the foundation later. */
 
-/* Motion 3b — overlay in: scrim + card arrive together, 210ms up-and-settle from 10px,
-   0.98 → 1. Exit is a cut (esc obeys immediately); the 140ms out is skipped. */
+/* Motion 3b — the overlay scrim fades in with its card (210ms). The card's own recipe, and both
+   exits, live in AppLayout's shell styles (RM3: the stale second copy that was here is gone). */
 @keyframes kfScrimIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
-@keyframes kfOverlayCardIn {
-  from { opacity: 0; transform: translateY(10px) scale(0.98); }
-  to   { opacity: 1; transform: none; }
-}
 .kf-overlay-scrim { animation: kfScrimIn 210ms var(--ease-out); }
-.kf-overlay-card  { animation: kfOverlayCardIn 210ms var(--ease-out); }
 
 /* Motion 4a — hover & press resting layer: hover lifts 1px under a soft shadow;
    press gives to 0.97 in 80ms. Buttons, rows, cards, chips alike. */

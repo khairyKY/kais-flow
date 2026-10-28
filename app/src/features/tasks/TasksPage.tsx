@@ -42,7 +42,8 @@ import { Button, SectionLabel } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
-import { animateRowRemoval, cancelRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { useCompletingRows, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { Collapse } from '../../components/Collapse'
 import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
 import { legacyGoalId } from '../today/goalStore'
@@ -423,11 +424,11 @@ function DoneView({ tasks, motion, justCompletedId, expanded, setExpanded, focus
               <span style={META}>{doneEarlier.length}</span>
               <img src={`${A}/cherry/fallen.png`} alt="" style={{ height: 22, opacity: 0.7, filter: 'var(--shadow-drop-sm)' }} />
             </div>
-            {expanded && doneEarlier.map((t, i) => (
-              <div key={t.id} className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(i) : undefined}>
-                <TaskRow task={t} border={i < doneEarlier.length - 1} highlighted={t.id === focusedId} />
-              </div>
-            ))}
+            <Collapse open={expanded}>
+              {doneEarlier.map((t, i) => (
+                <TaskRow key={t.id} task={t} border={i < doneEarlier.length - 1} highlighted={t.id === focusedId} />
+              ))}
+            </Collapse>
           </>
         )}
       </div>
@@ -503,25 +504,11 @@ export function TasksPage() {
   // moment it was checked: no Top-3 bloom or glow, ☆ instead of ★, no ✶ Goal, and the live petal
   // (`checking && task.top3`) never rendered. A Top-3 task not due today even left the Today tab
   // at once (its list keeps it by top3). The grace row now keeps the flag it had.
-  const [completing, setCompleting] = useState<Map<string, boolean>>(new Map())
+  // T2: the shared hold (lib/motion useCompletingRows) — the grace, the exit and the Undo's way back.
+  const { rows: completing, hold: holdRow, keep: keepRow } = useCompletingRows<boolean>()
   // Effects 4 "Day complete" — the last today task's check releases a 5-petal burst and a
   // hand banner. Fires once per calendar day, ever (localStorage gate).
   const [dayComplete, setDayComplete] = useState(false)
-  // Pending 650ms hand-offs to the row exit, per task — an Undo cancels its own.
-  const exitTimers = useRef(new Map<string, number>())
-  /** Undo landed: stop the row's exit (or undo a finished one) so it stands back in its group. */
-  function keepRow(id: string) {
-    const timer = exitTimers.current.get(id)
-    if (timer !== undefined) window.clearTimeout(timer)
-    exitTimers.current.delete(id)
-    cancelRowRemoval(document.getElementById(`task-${id}`))
-    setCompleting((prev) => {
-      if (!prev.has(id)) return prev
-      const next = new Map(prev)
-      next.delete(id)
-      return next
-    })
-  }
   // Punch 6 (Polish D): a single check toasts "Done" with Undo; `toast: false` is the bulk path,
   // which puts up one toast for the whole selection instead.
   function handleRowComplete(task: Task, { toast = true }: { toast?: boolean } = {}): CompletionUndo {
@@ -534,17 +521,9 @@ export function TasksPage() {
       setDayComplete(true)
       window.setTimeout(() => setDayComplete(false), 400 + DAY_DONE_DWELL_MS) // rises 400ms, dwells
     }
-    setCompleting((prev) => new Map(prev).set(task.id, task.top3))
-    const timer = window.setTimeout(() => {
-      exitTimers.current.delete(task.id)
-      // Motion 3e (WB-1) — the 650ms grace exists so the 3b check sequence can play; it used
-      // to end in the row blinking out. Now it hands off to the shared exit: slide, collapse,
-      // then the row leaves the list.
-      animateRowRemoval(document.getElementById(`task-${task.id}`), () => {
-        setCompleting((prev) => { const next = new Map(prev); next.delete(task.id); return next })
-      })
-    }, 650)
-    exitTimers.current.set(task.id, timer)
+    // Motion 3e (WB-1) — the 650ms grace exists so the 3b check sequence can play; then the shared
+    // exit: slide, collapse, and the row leaves the list.
+    holdRow(task.id, task.top3)
     return undo
   }
   // Polish F2a: a second click on a just-checked row (still in its grace window) reopens it —
