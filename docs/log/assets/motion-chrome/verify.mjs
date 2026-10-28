@@ -512,6 +512,29 @@ if (want('o9')) {
   }
 }
 
+// ── O11 — DatePicker: a month change slides the grid in from its side (160ms); date ⇄ time steps likewise ──
+if (want('dp')) {
+  for (const [v, o] of [['phone', {}], ['desktop', { view: desktop }], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', o)
+    const { page } = env
+    await page.locator(v === 'desktop' ? '.td-date-btn' : '.tp-title-btn').first().click()
+    const grid = page.locator('.kf-pk-cal [role="grid"]')
+    await grid.waitFor({ timeout: 5000 })
+    const first = await grid.evaluate((e) => getComputedStyle(e).animationName)
+    await page.getByRole('button', { name: 'Next month' }).click()
+    await sleep(30)
+    const next = await grid.evaluate((e) => ({ name: getComputedStyle(e).animationName, running: e.getAnimations().length }))
+    await sleep(250)
+    await page.getByRole('button', { name: 'Previous month' }).click()
+    await sleep(30)
+    const prev = await grid.evaluate((e) => ({ name: getComputedStyle(e).animationName, running: e.getAnimations().length }))
+    await shot(page, `dp-month-${v}`)
+    check(`dp ${v}: opening doesn't slide; Next slides in from the right (kfPkNavNext), Previous from the left`, first === 'none' && next.name === 'kfPkNavNext' && prev.name === 'kfPkNavPrev' && (v === 'reduced' || (next.running > 0 && prev.running > 0)), JSON.stringify({ first, next, prev }))
+    basics(env, `dp ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
