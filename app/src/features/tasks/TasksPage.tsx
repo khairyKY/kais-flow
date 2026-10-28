@@ -42,7 +42,7 @@ import { Button, SectionLabel } from '../../components/kit'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { cairoDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
 import { useEscapeStack } from '../../lib/overlayStack'
-import { useCompletingRows, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { scrollBehavior, useCompletingRows, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { Collapse } from '../../components/Collapse'
 import { toastUndo } from '../../lib/undo'
 import { seedPlant } from '../../lib/seedPlant'
@@ -83,7 +83,7 @@ function daysSince(iso: string): number {
 function useDeepLinkScroll(focusId: string | null, tasks: Task[]): void {
   useEffect(() => {
     if (!focusId) return
-    document.getElementById(`task-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    document.getElementById(`task-${focusId}`)?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })
   }, [focusId, tasks])
 }
 
