@@ -136,6 +136,17 @@ const anims = (loc) => loc.evaluate((el) => el.getAnimations().map((a) => a.anim
 const translateY = (loc) => loc.evaluate((el) => new DOMMatrixReadOnly(getComputedStyle(el).transform).m42)
 /** Phone: the tab bar's capture → "Talk instead" opens the voice sheet. */
 async function openVoice(env) {
+  // Record the sheet's animations the moment it mounts (a busy machine can be slower than its 300ms rise).
+  await env.page.evaluate(() => {
+    window.__sheetAnims = null
+    const mo = new MutationObserver(() => {
+      const d = document.querySelector('[role="dialog"][aria-label="Voice capture"]')
+      if (!d) return
+      window.__sheetAnims = d.getAnimations().map((a) => a.animationName)
+      mo.disconnect()
+    })
+    mo.observe(document.body, { childList: true, subtree: true })
+  })
   await tap(env, env.page.getByRole('button', { name: /^Capture — tap to type/ }), 700)
   await tap(env, env.page.getByRole('button', { name: 'Talk instead' }), 40)
 }
@@ -150,7 +161,7 @@ if (want('o2')) {
     const voice = page.locator('[role="dialog"][aria-label="Voice capture"]')
     await openVoice(env)
     await voice.waitFor({ timeout: 8000 })
-    const a = await anims(voice)
+    const a = await page.evaluate(() => window.__sheetAnims ?? [])
     // RM2: a sheet's rise is functional — it plays with Effects off too; reduced motion cross-fades.
     if (v !== 'reduced') check(`o2 ${v}: the voice sheet rises in (sheetIn)`, a.includes('sheetIn'), JSON.stringify(a))
     else check(`o2 ${v}: the voice sheet cross-fades in (scrimIn, no rise)`, a.includes('scrimIn') && !a.includes('sheetIn'), JSON.stringify(a))
@@ -404,9 +415,8 @@ if (want('o8')) {
     await sleep(400)
     await page.locator('.st-go').first().click()
     await page.locator('.st-row.is-lit').first().waitFor({ timeout: 4000 })
-    await page.locator('.st-row.is-unlit').first().waitFor({ timeout: 4000 })
-    await sleep(v === 'on' ? 150 : 40)
-    const fading = await page.locator('.st-row.is-unlit').first().evaluate((e) => ({ tr: e.getAnimations().map((a) => a.transitionProperty), bg: getComputedStyle(e).backgroundColor })).catch(() => null)
+    // Read in the frame the light goes out (is-unlit is on for its 600ms fade only).
+    const fading = await page.waitForFunction(() => { const e = document.querySelector('.st-row.is-unlit'); return e && { tr: e.getAnimations().map((a) => a.transitionProperty), bg: getComputedStyle(e).backgroundColor } }, null, { timeout: 5000, polling: 'raf' }).then((h) => h.jsonValue()).catch(() => null)
     if (v === 'on') check('o8 on: the lit row fades out (a running background-color transition)', fading?.tr.includes('background-color'), JSON.stringify(fading))
     await sleep(800)
     check(`o8 ${v}: after the fade the row is plain again`, (await page.locator('.st-row.is-lit, .st-row.is-unlit').count()) === 0)

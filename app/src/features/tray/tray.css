@@ -64,7 +64,7 @@
 @property --pct { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
 .kf-tray-ring {
   background: conic-gradient(var(--acc-sage-text) 0 var(--pct), var(--line-card) 0 100%);
-  transition: --pct 600ms var(--ease-standard);
+  transition: --pct 600ms var(--ease-standard); /* ds-ok: W1 the focus ring share eases (@property --pct) */
   width: 42px;
   height: 42px;
   flex: none;
@@ -357,7 +357,7 @@
 .kf-tray-row-title,
 .kf-tray-open,
 .kf-menu-row {
-  transition: background-color 150ms var(--ease-standard), color 150ms var(--ease-standard);
+  transition: background-color 150ms var(--ease-standard), color 150ms var(--ease-standard); /* ds-ok: W1 Windows 11 flyout hover feedback */
 }
 @media (hover: hover) {
   .kf-tray-btn:not(.is-cta):hover { background-color: var(--paper-bone); }

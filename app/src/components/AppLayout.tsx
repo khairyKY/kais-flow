@@ -876,7 +876,7 @@ export function AppLayout() {
         .motion-on .kf-streak-plant i:first-of-type { animation: fireflyDrift 9s ease-in-out infinite, twinkle 3s ease-in-out infinite; }
         .motion-on .kf-streak-plant i:last-of-type { animation: fireflyDrift 11s ease-in-out -4s infinite, twinkle 3.6s ease-in-out infinite; }
         /* O7 — the fold (toggleSidebar): labels out 120ms, then the width 200ms; back, the reverse. */
-        .app-sidebar { transition: width var(--dur-normal) var(--ease-standard); }
+        .app-sidebar { transition: width var(--dur-normal) var(--ease-standard); } /* ds-ok: O7 sidebar fold — the spec animates the width (Linear) */
         .app-sidebar[data-fold='out'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { opacity: 0; transition: opacity 120ms var(--ease-standard); }
         .app-sidebar[data-fold='in'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { animation: kfFadeIn 120ms var(--ease-out) var(--dur-normal) backwards; }
         /* A size container query, not a media query: it measures the sidebar in zoomed CSS px. */

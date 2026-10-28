@@ -426,7 +426,7 @@ button.kf-chip {
   position: absolute;
   border-radius: var(--radius-pill);
   background: var(--sel-bg);
-  transition: left var(--dur-normal) var(--ease-standard), top var(--dur-normal) var(--ease-standard), width var(--dur-normal) var(--ease-standard), height var(--dur-normal) var(--ease-standard);
+  transition: left var(--dur-normal) var(--ease-standard), top var(--dur-normal) var(--ease-standard), width var(--dur-normal) var(--ease-standard), height var(--dur-normal) var(--ease-standard); /* ds-ok: O8 Segmented thumb slides to the measured option (iOS UISegmentedControl) */
 }
 .kf-seg:has(> .kf-seg-thumb) .kf-seg-btn[aria-pressed='true'] { background: none; }
 .kf-seg-btn:not([aria-pressed='true']):active {

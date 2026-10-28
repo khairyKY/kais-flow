@@ -29,7 +29,7 @@ const CSS = `
   .kf-toast.is-leaving { animation: toastOut var(--dur-toast) var(--ease-standard) forwards; pointer-events: none; }
   /* O9: a card keeps its buttons (and width) until it unmounts; the older card's dim eases; a leaving
      card folds its slot (grid 1fr → 0fr, and its share of the gap) so the other slides instead of jumping. */
-  .kf-toast-slot { display: grid; grid-template-rows: 1fr; transition: opacity var(--dur-toast) var(--ease-standard),
+  .kf-toast-slot { display: grid; grid-template-rows: 1fr; transition: opacity var(--dur-toast) var(--ease-standard), /* ds-ok: O9 a leaving toast folds its slot (0fr), so the other slides instead of jumping */
     grid-template-rows var(--dur-toast) var(--ease-standard), margin var(--dur-toast) var(--ease-standard); }
   .kf-toast-slot > * { min-height: 0; }
   .kf-toast-slot.is-leaving { grid-template-rows: 0fr; margin-top: calc(-1 * var(--toast-gap)); }

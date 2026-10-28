@@ -63,7 +63,7 @@ const toast = (message: string) => useToastStore.getState().push({ message })
 /** K2 — the ⌘K card's height eases 150ms as rows come and go; chips fade up 120ms as they arrive
  * (functional, RM2: they play with Effects off; reduced motion's global rule cuts them). */
 const K2_CSS = `
-  .kf-cmd-grow { transition: height 150ms var(--ease-standard); overflow: clip; overflow-clip-margin: 4px; }
+  .kf-cmd-grow { transition: height 150ms var(--ease-standard); overflow: clip; overflow-clip-margin: 4px; } /* ds-ok: K2 the ⌘K card eases its height (cmdk list height) */
   .kf-cmd-chips > * { animation: itemFadeIn 120ms var(--ease-out) backwards; }
 `
 
@@ -489,7 +489,7 @@ export function CommandBar() {
                   background: jumpSelected ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent',
                   border: `1px solid ${jumpSelected ? 'var(--acc-lavender)' : 'var(--line-card)'}`,
                   // K2: the selection moves in ~80ms instead of snapping
-                  transition: 'background-color 80ms var(--ease-standard), border-color 80ms var(--ease-standard)',
+                  transition: 'background-color 80ms var(--ease-standard), border-color 80ms var(--ease-standard)', // ds-ok: K2 the Jump selection moves in 80ms
                 }}
               >
                 <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>Jump</span>
