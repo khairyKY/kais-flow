@@ -16,7 +16,10 @@ import { ContextMenu } from '../../components/ContextMenu'
 import { Icon } from '../../components/Icon'
 import { useIsMobile } from '../../components/BottomSheet'
 import { Skeleton, ErrorCard } from '../../components/States'
-import { Button, SectionLabel } from '../../components/kit'
+import { Button, Checkbox, SectionLabel } from '../../components/kit'
+import { Num, StageImg } from '../../components/PageMotion'
+import { staggerDelay, useMotionEnabled } from '../../lib/motion'
+import '../tasks/TaskRow.css' // R1: the four-beat check's strike + dip (tr-checking / tr-title-strike)
 import { useDayRollover } from '../calendar/useDayRollover'
 import type { Routine, RoutineCompletion, RoutinePlant } from '../../lib/types'
 
@@ -65,7 +68,7 @@ function DayDots({ routine, completions, onOpen }: { routine: Routine; completio
 // Phone rows (Kai 2026-10-07 review): the name gets the full width, its meta (clock · streak ·
 // last 7 days) a line under it — side by side at 360 the name wrapped one word per line. The check
 // and the ⋯ are 48px targets; the ⋯ replaced a bare 11px "archive" link (same grammar as task rows).
-function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, onEdit, onMenu }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; onOpenTrellis: () => void; onEdit: () => void; onMenu: (at: { x: number; y: number }) => void }) {
+function RoutineRow({ routine, completions, doneToday, isMobile, index, onOpenTrellis, onEdit, onMenu }: { routine: Routine; completions: RoutineCompletion[]; doneToday: boolean; isMobile: boolean; index: number; onOpenTrellis: () => void; onEdit: () => void; onMenu: (at: { x: number; y: number }) => void }) {
   const dates = completions.filter((c) => c.routine_id === routine.id).map((c) => c.completed_on)
   const { current, status } = routineStreak(dates, routine.cadence)
   // Flow Audit §5: a routine's steps were written and only ever read back into the edit form.
@@ -75,42 +78,23 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
   const total = stepsTotal(steps)
   const [showSteps, setShowSteps] = useState(false)
 
+  // R1: the four beats (kit box fill + pop, strike grows, row dips) only on a tick made here, never
+  // for a row that loads already done.
+  const [ticked, setTicked] = useState(false)
+  const checking = ticked && doneToday
   function toggle() {
     // Kai 2026-10-07: no confirmation pop-ups for things the row already shows (the box ticks, the dots fill).
+    setTicked(!doneToday)
     toggleCompletion(routine)
   }
 
-  const check = (
-    <button
-      type="button"
-      onClick={toggle}
-      aria-label={`${routine.name} done today`}
-      aria-pressed={doneToday}
-      // phone: a 48px hit around the 19px box, laid out at the box's own size
-      style={{ flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, border: 'none', background: 'none', cursor: 'pointer', ...(isMobile ? { width: 48, height: 48, margin: -14.5 } : null) }}
-    >
-      <span
-        style={{
-          width: 19,
-          height: 19,
-          borderRadius: 'var(--radius-check)',
-          display: 'inline-flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: 12,
-          color: 'var(--paper-parchment)',
-          background: doneToday ? 'var(--acc-moss)' : 'transparent',
-          border: doneToday ? 'none' : '1.5px solid var(--check-border)',
-        }}
-      >
-        {doneToday ? '✓' : ''}
-      </span>
-    </button>
-  )
+  // R1: the kit Checkbox (bloom off, R4-24) — its own 48px phone hit.
+  const check = <Checkbox checked={doneToday} size={19} label={routine.name} onChange={toggle} />
   // The name opens the edit form, like a task row's title opens the task (Kai 2026-10-12).
   const name = (
-    <button type="button" onClick={onEdit} title="Edit routine" style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', fontSize: 15, color: doneToday ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: doneToday ? 'line-through' : 'none' }}>
-      {routine.name}
+    <button type="button" onClick={onEdit} title="Edit routine" style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', fontSize: 15, color: doneToday ? 'var(--ink-hairline)' : 'var(--ink-body)', textDecoration: doneToday && !checking ? 'line-through' : 'none' }}>
+      {/* the strike draws itself on a live tick (TaskRow.css tr-strikeGrow) */}
+      {checking ? <span className="tr-title-strike">{routine.name}</span> : routine.name}
     </button>
   )
   const meta = (
@@ -122,7 +106,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
       ) : (
         <span aria-label={routine.goal_days ? `${current} of ${routine.goal_days} days` : `${current} day streak`} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--sig-streak)' }}>
           <FlameIcon />
-          {streakOfGoal(current, routine.goal_days)}
+          <Num value={streakOfGoal(current, routine.goal_days)} />
         </span>
       )}
       <DayDots routine={routine} completions={completions} onOpen={onOpenTrellis} />
@@ -174,9 +158,12 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
     onMenu({ x: e.clientX, y: e.clientY })
   }
 
+  // R2/R13: the standard list motion — the entry stagger (capped), the hover lift, the check's dip.
+  const rowClass = `kf-stagger-item kf-lift${checking ? ' tr-checking' : ''}`
+  const rowStyle = { borderBottom: '1px solid var(--line-dashed)', ...staggerDelay(Math.min(index, 8)) }
   if (isMobile) {
     return (
-      <div onContextMenu={onContextMenu} style={{ borderBottom: '1px solid var(--line-dashed)' }}>
+      <div onContextMenu={onContextMenu} className={rowClass} style={rowStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '8px 0' }}>
           {check}
           <div style={{ flex: 1, minWidth: 0 }}>
@@ -190,7 +177,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, onOpenTrellis, 
     )
   }
   return (
-    <div onContextMenu={onContextMenu} style={{ borderBottom: '1px solid var(--line-dashed)' }}>
+    <div onContextMenu={onContextMenu} className={rowClass} style={rowStyle}>
       {/* At 1280 with the sidebar open the column is ~370px: the meta wraps under the name instead
           of sliding over it (the clock used to cover the name's centre). */}
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 14px', padding: '11px 2px' }}>
@@ -220,10 +207,11 @@ function GardenCard({ routine, completions, compact }: { routine: Routine; compl
     <div style={{ flex: compact ? 'none' : undefined, width: compact ? 88 : undefined, background: 'var(--frost-bg, var(--paper-parchment))', border: '1px solid var(--frost-line, var(--line-card))', borderRadius: 'var(--radius-card)', boxShadow: compact ? 'var(--shadow-frost, var(--shadow-crisp))' : 'var(--shadow-frost, var(--shadow-card))', padding: compact ? 9 : 12, display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
       <div style={{ height: compact ? 52 : 74, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
         {/* its own species (0067) at the streak's stage */}
-        <img src={plantSrc(plant, current)} alt="" style={{ maxHeight: compact ? 52 : 74, filter: `var(${RIM[plant]}, var(--shadow-drop-sm))`, opacity: stage === 'bare' ? 0.85 : 1 }} />
+        {/* R2: a stage crossed while you watch cross-fades, with one Effects 2e bloom */}
+        <StageImg bloom src={plantSrc(plant, current)} alt="" style={{ maxHeight: compact ? 52 : 74, filter: `var(${RIM[plant]}, var(--shadow-drop-sm))`, opacity: stage === 'bare' ? 0.85 : 1 }} />
       </div>
       <div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>
-      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: stage === 'bare' ? 'var(--ink-faint)' : 'var(--acc-sage-text)', marginTop: 2 }}>{compact ? `${current}d` : sub}</div>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: stage === 'bare' ? 'var(--ink-faint)' : 'var(--acc-sage-text)', marginTop: 2 }}><Num value={compact ? `${current}d` : sub} /></div>
     </div>
   )
 }
@@ -249,6 +237,10 @@ export function RoutinesPage() {
   // Polish B: "N of M tended" counts only routines whose day it is (todayTally) — one resting
   // today (a Mon/Wed/Fri routine on a Saturday) is neither due nor "left before the day's done".
   const { due, done: doneToday, remaining } = todayTally(active, completions)
+  // R2: the last routine of the day ticked here → one small "all tended ✿" bloom behind the vine.
+  const motion = useMotionEnabled()
+  const [tended, setTended] = useState({ left: remaining, n: 0 })
+  if (tended.left !== remaining) setTended({ left: remaining, n: tended.n + (remaining === 0 && tended.left > 0 && due > 0 ? 1 : 0) })
 
   const bestStreak = useMemo(() => {
     let best = 0
@@ -330,7 +322,10 @@ export function RoutinesPage() {
       <div style={{ minWidth: 0, padding: isMobile ? 0 : '36px 44px 48px', maxWidth: isMobile ? undefined : 720 }}>
         <div style={{ display: 'flex', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? 0 : 20, flexWrap: 'wrap' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
-            <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--rim-moss-sm, var(--shadow-drop-sm))' }} />
+            <span style={{ position: 'relative', display: 'inline-flex', flex: 'none' }}>
+              {motion && tended.n > 0 && <span key={tended.n} className="kf-bloom kf-bloom-once" data-all-tended style={{ inset: -14 }} />}
+              <img src={`${A}/vine/lush.png`} alt="" style={{ height: isMobile ? 44 : 58, filter: 'var(--rim-moss-sm, var(--shadow-drop-sm))', position: 'relative' }} />
+            </span>
             <div>
               <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta-l)', color: 'var(--ink-faint)' }}>Routines</div>
               <h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>Daily rituals</h1>
@@ -382,20 +377,21 @@ export function RoutinesPage() {
         <div style={{ position: 'relative', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: isMobile ? '13px 15px' : '16px 20px', marginTop: isMobile ? 16 : 22, display: 'flex', alignItems: 'center', gap: isMobile ? 14 : 18 }}>
           <div style={{ flex: 1 }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 10, flexWrap: 'wrap' }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {due} tended</span>
-              {!isMobile && <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>{heroCaption}</span>}
+              <span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}><Num value={doneToday} /> of {due} tended</span>
+              {!isMobile && <Num value={heroCaption} style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }} />}
             </div>
             <div style={{ marginTop: isMobile ? 8 : 10, height: isMobile ? 6 : 7, borderRadius: 4, background: 'var(--line-card)', overflow: 'hidden' }}>
-              <span style={{ display: 'block', width: due ? `${Math.round((doneToday / due) * 100)}%` : '0%', height: '100%', background: 'var(--acc-moss)' }} />
+              {/* T12: the tally eases to its new length */}
+              <span className="kf-bar" style={{ transform: `scaleX(${due ? doneToday / due : 0})`, background: 'var(--acc-moss)' }} />
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 6 : 8, paddingLeft: isMobile ? 12 : 18, borderLeft: '1px solid var(--line-dashed)' }}>
             <FlameIcon size={isMobile ? 12 : 13} />
             {isMobile ? (
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-lead)', color: 'var(--ink-body)' }}>{bestStreak}</span>
+              <Num value={bestStreak} style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-lead)', color: 'var(--ink-body)' }} />
             ) : (
               <div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}>{bestStreak}</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}><Num value={bestStreak} /></div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Day streak</div>
               </div>
             )}
@@ -424,8 +420,8 @@ export function RoutinesPage() {
               {/* a group with nothing due today carries no "0/0" count — it's resting, not behind */}
               <span style={{ color: 'var(--acc-sage-text)' }}>{isMobile && g.tally.due > 0 ? `${g.label} · ${g.tally.done}/${g.tally.due}` : g.label}</span>
             </SectionLabel>
-            {g.items.map((r) => (
-              <RoutineRow key={r.id} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} onEdit={() => setFormOpen({ challenge: false, routine: r })} onMenu={(at) => setMenu({ routine: r, ...at })} />
+            {g.items.map((r, i) => (
+              <RoutineRow key={r.id} index={i} routine={r} completions={completions} doneToday={doneKeys.has(r.id)} isMobile={isMobile} onOpenTrellis={() => setTrellisRoutine(r)} onEdit={() => setFormOpen({ challenge: false, routine: r })} onMenu={(at) => setMenu({ routine: r, ...at })} />
             ))}
           </div>
         ))}

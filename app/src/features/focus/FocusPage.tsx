@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react'
+import React, { useEffect, useState, useMemo, useRef } from 'react'
 import { TaskPicker } from './TaskPicker'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
@@ -24,6 +24,7 @@ import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
 import { NumberField } from '../../components/NumberField'
 import { Button, Checkbox, Chip, Segmented, Toggle } from '../../components/kit'
 import { Skeleton, ErrorCard } from '../../components/States'
+import { StageImg } from '../../components/PageMotion'
 import './FocusPage.css'
 
 // R4-18 (2026-07-20 audit): the duration rows offered fixed presets only — Kai: "where are the
@@ -153,6 +154,29 @@ export function FocusPage() {
   const [taskPickerOpen, setTaskPickerOpen] = useState(false)
   const pickerAnchor = useRef<HTMLSpanElement>(null)
   const [eveningOpen, setEveningOpen] = useState(false)
+
+  // R3: a round that runs out while you watch finishes its sweep, blooms (--dur-bloom), and only
+  // then cross-fades to the break ring. The store flips to break at once; this holds the view.
+  const [seenMode, setSeenMode] = useState(mode)
+  const [ending, setEnding] = useState(false)
+  if (seenMode !== mode) {
+    setSeenMode(mode)
+    if (seenMode === 'pomodoro' && mode === 'break' && motionOn) setEnding(true)
+  }
+  useEffect(() => {
+    if (!ending) return
+    const t = window.setTimeout(() => setEnding(false), 600)
+    return () => window.clearTimeout(t)
+  }, [ending])
+  const view = ending ? 'pomodoro' : mode
+  // R5: leaving the garden fades it (300ms) before the timer comes back.
+  const gardenRef = useRef<HTMLDivElement>(null)
+  const leaveGarden = () => {
+    const el = gardenRef.current
+    if (!motionOn || !el || typeof el.animate !== 'function') return setMode('pomodoro')
+    el.style.pointerEvents = 'none'
+    el.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 300, easing: 'cubic-bezier(0.55, 0, 0.68, 0.53)', fill: 'forwards' }).onfinish = () => setMode('pomodoro')
+  }
 
   // Active task selection
   const activeTask = useMemo(() => {
@@ -450,7 +474,11 @@ export function FocusPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  const progressRatio = secondsLeft / (settings.focusRoundMin * 60)
+  const progressRatio = ending ? 0 : secondsLeft / (settings.focusRoundMin * 60)
+  // R3: paused mid-round, the ring dims to 55% and breathes (FocusPage.css .fp-ring)
+  const paused = view === 'pomodoro' && !ending && !isRunning && secondsLeft > 0 && secondsLeft < settings.focusRoundMin * 60
+  // R4: while it runs the ring sweeps continuously between the 1s ticks (Effects on)
+  const sweep: React.CSSProperties | undefined = motionOn && isRunning && !ending ? { transition: 'stroke-dashoffset 1s linear' } /* ds-ok: R4, the ring's own sweep */ : undefined
 
   // Dynamic coordinates for Break circle
   const breakTotalSeconds = (breakType === 'short' ? settings.shortBreakMin : settings.longBreakMin) * 60
@@ -479,7 +507,8 @@ export function FocusPage() {
   if (mode === 'garden') {
     const weekdayName = new Date().toLocaleDateString('en-US', { weekday: 'long', timeZone: zone })
     return (
-      <div style={{ position: 'absolute', inset: 0, background: 'var(--paper-linen)', zIndex: 30 }}>
+      // R5: the dusk scene fades in — the "lights down" moment.
+      <div ref={gardenRef} className="fp-garden-in" style={{ position: 'absolute', inset: 0, background: 'var(--paper-linen)', zIndex: 30 }}>
         {/* Ambient pollen motes */}
         {motionOn && (
           <>
@@ -504,7 +533,7 @@ export function FocusPage() {
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 120, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 min(90px, 6vw)', zIndex: 10, overflowX: 'auto' }}>
           {/* Bed 1: Tasks */}
           <div style={{ textAlign: 'center' }}>
-            <img className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 150, filter: 'var(--shadow-drop-sm)' }} />
+            <StageImg bloom className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 150, filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {cherryData.note}
             </div>
@@ -514,7 +543,7 @@ export function FocusPage() {
           {/* Bed 2: Inbox */}
           <div style={{ textAlign: 'center', position: 'relative' }}>
             <span className="focus-bloom-glow-slow" style={{ position: 'absolute', left: '50%', bottom: 40, width: 110, height: 110, transform: 'translateX(-50%)', borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,165,90,0.35), rgba(201,165,90,0) 70%)', pointerEvents: 'none' }}></span>
-            <img className="focus-sway" src={`/ds/assets/hydrangea/${hydrangeaData.stage}.png`} alt="" style={{ height: 120, animationDelay: '1.4s', filter: 'var(--shadow-drop-sm)', position: 'relative' }} />
+            <StageImg bloom className="focus-sway" src={`/ds/assets/hydrangea/${hydrangeaData.stage}.png`} alt="" style={{ height: 120, animationDelay: '1.4s', filter: 'var(--shadow-drop-sm)', position: 'relative' }} />
             <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {hydrangeaData.note}
             </div>
@@ -523,7 +552,7 @@ export function FocusPage() {
 
           {/* Bed 3: Calendar */}
           <div style={{ textAlign: 'center' }}>
-            <img className="focus-sway" src={`/ds/assets/daisy/${daisyData.stage}.png`} alt="" style={{ height: 118, animationDelay: '2.8s', filter: 'var(--shadow-drop-sm)' }} />
+            <StageImg bloom className="focus-sway" src={`/ds/assets/daisy/${daisyData.stage}.png`} alt="" style={{ height: 118, animationDelay: '2.8s', filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {daisyData.note}
             </div>
@@ -532,7 +561,7 @@ export function FocusPage() {
 
           {/* Bed 4: Routines */}
           <div style={{ textAlign: 'center', position: 'relative' }}>
-            <img className="focus-sway" src={`/ds/assets/vine/${vineData.stage}.png`} alt="" style={{ height: 140, animationDelay: '0.9s', filter: 'var(--shadow-drop-sm)' }} />
+            <StageImg bloom className="focus-sway" src={`/ds/assets/vine/${vineData.stage}.png`} alt="" style={{ height: 140, animationDelay: '0.9s', filter: 'var(--shadow-drop-sm)' }} />
             <span className="focus-dew-glint" style={{ position: 'absolute', right: 8, top: 26, width: 9, height: 9, background: 'radial-gradient(circle at 40% 40%, var(--star, #FDFBF4), transparent 65%)', borderRadius: '50%' }}></span>
             <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {vineData.note}
@@ -542,7 +571,7 @@ export function FocusPage() {
 
           {/* Bed 5: Journal */}
           <div style={{ textAlign: 'center' }}>
-            <img className="focus-sway" src={`/ds/assets/fern/${fernData.stage}.png`} alt="" style={{ height: 124, animationDelay: '3.6s', filter: 'var(--shadow-drop-sm)' }} />
+            <StageImg bloom className="focus-sway" src={`/ds/assets/fern/${fernData.stage}.png`} alt="" style={{ height: 124, animationDelay: '3.6s', filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {fernData.note}
             </div>
@@ -551,7 +580,7 @@ export function FocusPage() {
 
           {/* Bed 6: Projects */}
           <div style={{ textAlign: 'center' }}>
-            <img className="focus-sway" src={`/ds/assets/wisteria/${wisteriaData.stage}.png`} alt="" style={{ height: 136, animationDelay: '1.9s', filter: 'var(--shadow-drop-sm)' }} />
+            <StageImg bloom className="focus-sway" src={`/ds/assets/wisteria/${wisteriaData.stage}.png`} alt="" style={{ height: 136, animationDelay: '1.9s', filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {wisteriaData.note}
             </div>
@@ -560,7 +589,7 @@ export function FocusPage() {
 
           {/* Bed 7: People */}
           <div style={{ textAlign: 'center' }}>
-            <img className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 86, animationDelay: '4.4s', filter: 'var(--shadow-drop-sm)' }} />
+            <StageImg bloom className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 86, animationDelay: '4.4s', filter: 'var(--shadow-drop-sm)' }} />
             <div style={{ fontSize: 'var(--fs-body-s)', color: '#5f5a6e' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, marginTop: 10 }}>
               {cloverData.note}
             </div>
@@ -617,7 +646,7 @@ export function FocusPage() {
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
             <span
-              onClick={() => setMode('pomodoro')}
+              onClick={leaveGarden}
               style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: '#a89fc0' /* ds-ok: the dusk scene keeps its own palette (B D2: colour as it was) */, cursor: 'pointer' }}
             >
               Stay a while
@@ -699,7 +728,7 @@ export function FocusPage() {
         )}
 
         {/* Mode Switcher pill and settings button */}
-        {mode !== 'break' && (
+        {view !== 'break' && (
           <div className="fp-modes" style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 26, position: 'relative', zIndex: 10 }}>
             {/* B D12: the kit segmented control — a 3:1 edge, the chosen one ink-filled. */}
             <Segmented
@@ -715,7 +744,7 @@ export function FocusPage() {
             />
 
             <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              {mode === 'pomodoro' && (
+              {view === 'pomodoro' && (
                 <>
                   {Array.from({ length: settings.roundsBeforeLongBreak }).map((_, idx) => {
                     const isDone = idx + 1 < currentRound
@@ -731,6 +760,8 @@ export function FocusPage() {
                           border: isDone || isActive ? 'none' : '1.5px solid var(--line-sidebar)',
                           outline: isActive ? '2px solid var(--paper-linen)' : 'none',
                           boxShadow: isActive ? '0 0 0 3.5px color-mix(in srgb, var(--acc-terra) 35%, transparent)' : 'none',
+                          // T12: a dot fills as its round starts rather than snapping
+                          transition: 'background-color 300ms var(--ease-out), box-shadow 300ms var(--ease-out)', // ds-ok: T12, the round dots ease
                         }}
                       />
                     )
@@ -754,15 +785,15 @@ export function FocusPage() {
         )}
 
         {/* 1c: BREAK VIEW */}
-        {mode === 'break' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+        {view === 'break' && (
+          <div className="fp-break-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-sage-text)', position: 'relative', zIndex: 5 }}>
               {breakType === 'short' ? `Short break · round ${currentRound} done` : 'Long break · cycle complete'}
             </div>
             <div style={{ position: 'relative', width: 190, height: 190, marginTop: 18 }}>
               <svg width="190" height="190" viewBox="0 0 190 190" style={{ transform: 'rotate(-90deg)' }}>
                 <circle cx="95" cy="95" r="84" fill="none" stroke="var(--line-card)" strokeWidth="8"></circle>
-                <circle cx="95" cy="95" r="84" fill="none" stroke="var(--acc-sage)" strokeWidth="8" strokeLinecap="round" strokeDasharray="528" strokeDashoffset={breakDashoffset}></circle>
+                <circle cx="95" cy="95" r="84" fill="none" stroke="var(--acc-sage)" strokeWidth="8" strokeLinecap="round" strokeDasharray="528" strokeDashoffset={breakDashoffset} style={sweep}></circle>
               </svg>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>
@@ -808,22 +839,23 @@ export function FocusPage() {
         )}
 
         {/* 1a: POMODORO TIMER */}
-        {mode === 'pomodoro' && (
+        {view === 'pomodoro' && (
           <>
             <div style={{ position: 'relative', width: 320, height: 320 }}>
-              <svg width="320" height="320" viewBox="0 0 320 320" style={{ transform: 'rotate(-90deg)' }}>
+              {ending && <span className="fp-round-bloom" aria-hidden />}
+              <svg className={`fp-ring${paused ? ' is-paused' : ''}`} width="320" height="320" viewBox="0 0 320 320" style={{ transform: 'rotate(-90deg)' }}>
                 <circle cx="160" cy="160" r="146" fill="none" stroke="var(--line-card)" strokeWidth="10"></circle>
-                <circle cx="160" cy="160" r="146" fill="none" stroke="var(--acc-lavender)" strokeWidth="10" strokeLinecap="round" strokeDasharray="917" strokeDashoffset={917 * (1 - progressRatio)}></circle>
+                <circle cx="160" cy="160" r="146" fill="none" stroke="var(--acc-lavender)" strokeWidth="10" strokeLinecap="round" strokeDasharray="917" strokeDashoffset={917 * (1 - progressRatio)} style={sweep}></circle>
               </svg>
               {/* deviation(2026-07-20 R4): the bud marker that rode the progress tip is gone —
                   Kai: "there is a weird flower at the top of the timer". At a full timer it
                   parks dead-centre above the clock and reads as a stray graphic. */}
               <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                  Remaining
+                  {paused ? 'Paused' : 'Remaining'}
                 </div>
                 <div style={{ fontFamily: 'var(--font-display)', fontSize: 74, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--ink-body)', marginTop: 6 }}>
-                  {formatTime(secondsLeft)}
+                  {formatTime(ending ? 0 : secondsLeft)}
                 </div>
                 <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 8 }}>
                   {/* Punch 52: the export reads `of 25 min · 5-min break at 10:20` — the length
@@ -839,7 +871,7 @@ export function FocusPage() {
         )}
 
         {/* 1d: STOPWATCH TIMER */}
-        {mode === 'stopwatch' && (
+        {view === 'stopwatch' && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0 44px' }}>
             <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 26 }}>
               <span style={{ fontFamily: 'var(--font-display)', fontSize: 66, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>
@@ -855,7 +887,7 @@ export function FocusPage() {
         )}
 
         {/* Active Task display */}
-        {mode !== 'break' && (
+        {view !== 'break' && (
           <>
             {tasksQ.isPending ? (
               <div style={{ marginTop: 30, width: 320, maxWidth: '100%' }}><Skeleton rows={1} /></div>
@@ -898,7 +930,7 @@ export function FocusPage() {
         )}
 
         {/* 1d: STOPWATCH target project / logging panel */}
-        {mode === 'stopwatch' && (
+        {view === 'stopwatch' && (
           <div style={{ width: '420px', marginTop: 24, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '12px 16px' }}>
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>
               On stop, this lands automatically
@@ -937,13 +969,13 @@ export function FocusPage() {
         )}
 
         {/* Controls */}
-        {mode !== 'break' && (
+        {view !== 'break' && (
           <div className="fp-ctrls" style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 32 }}>
             {/* B D11: the kit's buttons — terra for the one action, bone for the rest, terra text. */}
             <Button type="button" variant="secondary" onClick={togglePlay}>
               {isRunning ? '❙❙ Pause' : '▶ Start'}
             </Button>
-            {mode === 'pomodoro' ? (
+            {view === 'pomodoro' ? (
               <>
                 <Button type="button" onClick={handleCheckOff}>
                   Done — check it off ✓
@@ -976,7 +1008,7 @@ export function FocusPage() {
           </div>
         )}
 
-        {mode !== 'break' && (
+        {view !== 'break' && (
           <div style={{ marginTop: 18, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>
             Nothing else exists for the next hour ✿
           </div>
@@ -1001,13 +1033,13 @@ export function FocusPage() {
             the task line above carries the skeleton / retry). */}
         {!gardenPending && !gardenFailed && (
         <div style={{ position: 'absolute', left: 0, right: 0, bottom: 24, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 min(130px, 7vw)', zIndex: 10 }}>
-          <img className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 120, filter: 'var(--shadow-drop-sm)' }} title={cherryData.note} />
-          <img className="focus-sway" src={`/ds/assets/hydrangea/${hydrangeaData.stage}.png`} alt="" style={{ height: 96, animationDelay: '1.2s', filter: 'var(--shadow-drop-sm)' }} title={hydrangeaData.note} />
-          <img className="focus-sway" src={`/ds/assets/daisy/${daisyData.stage}.png`} alt="" style={{ height: 100, animationDelay: '2.6s', filter: 'var(--shadow-drop-sm)' }} title={daisyData.note} />
-          <img className="focus-sway" src={`/ds/assets/vine/${vineData.stage}.png`} alt="" style={{ height: 110, animationDelay: '0.6s', filter: 'var(--shadow-drop-sm)' }} title={vineData.note} />
-          <img className="focus-sway" src={`/ds/assets/fern/${fernData.stage}.png`} alt="" style={{ height: 88, animationDelay: '3.4s', filter: 'var(--shadow-drop-sm)' }} title={fernData.note} />
-          <img className="focus-sway" src={`/ds/assets/wisteria/${wisteriaData.stage}.png`} alt="" style={{ height: 110, animationDelay: '1.8s', filter: 'var(--shadow-drop-sm)' }} title={wisteriaData.note} />
-          <img className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 78, animationDelay: '4.2s', filter: 'var(--shadow-drop-sm)' }} title={cloverData.note} />
+          <StageImg bloom className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 120, filter: 'var(--shadow-drop-sm)' }} title={cherryData.note} />
+          <StageImg bloom className="focus-sway" src={`/ds/assets/hydrangea/${hydrangeaData.stage}.png`} alt="" style={{ height: 96, animationDelay: '1.2s', filter: 'var(--shadow-drop-sm)' }} title={hydrangeaData.note} />
+          <StageImg bloom className="focus-sway" src={`/ds/assets/daisy/${daisyData.stage}.png`} alt="" style={{ height: 100, animationDelay: '2.6s', filter: 'var(--shadow-drop-sm)' }} title={daisyData.note} />
+          <StageImg bloom className="focus-sway" src={`/ds/assets/vine/${vineData.stage}.png`} alt="" style={{ height: 110, animationDelay: '0.6s', filter: 'var(--shadow-drop-sm)' }} title={vineData.note} />
+          <StageImg bloom className="focus-sway" src={`/ds/assets/fern/${fernData.stage}.png`} alt="" style={{ height: 88, animationDelay: '3.4s', filter: 'var(--shadow-drop-sm)' }} title={fernData.note} />
+          <StageImg bloom className="focus-sway" src={`/ds/assets/wisteria/${wisteriaData.stage}.png`} alt="" style={{ height: 110, animationDelay: '1.8s', filter: 'var(--shadow-drop-sm)' }} title={wisteriaData.note} />
+          <StageImg bloom className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 78, animationDelay: '4.2s', filter: 'var(--shadow-drop-sm)' }} title={cloverData.note} />
         </div>
         )}
         <span style={{ position: 'absolute', left: 0, right: 0, bottom: 24, borderBottom: '1px solid var(--line-dashed)' }}></span>

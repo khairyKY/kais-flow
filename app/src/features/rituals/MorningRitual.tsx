@@ -20,6 +20,7 @@ import { cairoDateKey, scheduleToday, scheduleTomorrow } from '../../lib/dateSho
 import { useEscapeStack } from '../../lib/overlayStack'
 import { toastAction } from '../../lib/undo'
 import { playSound } from '../../lib/sounds'
+import { animateRowRemoval } from '../../lib/motion'
 import { logRitualFinished, logRitualStep, useDraft, useRitualStepsToday, useSeedsFor } from './api'
 import { loopDayKey, morningPreselection, top3Diff } from './loopDay'
 import {
@@ -46,7 +47,7 @@ import {
   type PickIn,
   type Slot,
 } from './ritualLogic'
-import { Collapsed, KitRow, Meta, RitualFoot, RitualSheet, Section, Segmented, WorkloadLine } from './RitualChrome'
+import { Collapsed, KitRow, Meta, RitualFoot, RitualSheet, FinishScreen, leaveMs, Section, Segmented, WorkloadLine } from './RitualChrome'
 import type { InboxItem, Project, Domain, Task } from '../../lib/types'
 
 // ── Plan my day — design-export/Plan.dc.html 6a–6m + SCREENS-2026-09-28 §Plan my day rulings 1–8.
@@ -88,6 +89,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   const navigate = useNavigate()
   // After "Start the day": the success moment — Done, or the Notebook page to copy the plan by hand.
   const [started, setStarted] = useState<string[] | null>(null)
+  const [leaving, setLeaving] = useState(false)
 
   const byId = new Map(tasks.map((t) => [t.id, t]))
   const carry = carryRows(tasks, draft.carry, now)
@@ -217,6 +219,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   // every device — tasks.top3_rank), every pick with a time (suggested or set) goes on the calendar,
   // every section counts as walked, and the ritual is finished. Then the success moment (below).
   function start() {
+    if (leaving || started) return
     const { unstar, star } = top3Diff(selection, tasks)
     unstar.forEach(toggleTop3)
     star.forEach(toggleTop3)
@@ -232,7 +235,10 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
     logRitualFinished('morning', [...PLAN_STEPS])
     playSound('ritual_done')
     finished.current = true
-    setStarted([`${picks.length} picked`, `${placed.length} on the calendar`])
+    // R8: written above; the content fades (150ms), then the finish screen's payoff beat.
+    const done = [`${picks.length} picked`, `${placed.length} on the calendar`]
+    setLeaving(true)
+    window.setTimeout(() => setStarted(done), leaveMs())
   }
 
   // The first pick reads "✶ Goal"; every other pick offers "☆ Make goal" right there.
@@ -285,7 +291,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
               below={
                 <div className="rt-below">
                   <Segmented label={`When: ${t.title}`} options={CARRY_OPTIONS} value={e.choice ?? null} onChange={(c) => choose(e, t, c)} />
-                  <Button type="button" variant="ghost" className="rt-drop" icon={<Icon name="delete" size={20} />} onClick={() => drop(t)}>
+                  <Button type="button" variant="ghost" className="rt-drop" icon={<Icon name="delete" size={20} />} onClick={() => animateRowRemoval(document.getElementById(`rt-${t.id}`), () => drop(t))}>
                     Drop
                   </Button>
                 </div>
@@ -382,11 +388,9 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
         sub=""
         onClose={leave}
         left={
-          <div className="rt-summary">
-            <img src="/ds/assets/clover/awake.png" alt="" />
-            <div className="rt-summary-title">The day has a shape.</div>
+          <FinishScreen img="/ds/assets/clover/awake.png" title="The day has a shape.">
             <div className="rt-meta">{started.map((s) => <span key={s}>{s}</span>)}</div>
-          </div>
+          </FinishScreen>
         }
         right={null}
         footer={(close) => (
@@ -409,6 +413,7 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
         title="Plan my day"
         sub={`${headerDate(now)} · about 3 minutes`}
         onClose={leave}
+        leaving={leaving}
         left={
           <>
             {carrySection}
@@ -490,9 +495,12 @@ function InboxRow({ item, now, projects, domains }: { item: InboxItem; now: Date
   const [project, setProject] = useState<{ id: string | null; domain: string | null }>({ id: parsed, domain: projects.find((p) => p.id === parsed)?.domain_id ?? null })
   const [at, setAt] = useState<{ x: number; y: number } | null>(null)
   const slot = useRef<HTMLSpanElement>(null)
+  const self = useRef<HTMLDivElement>(null)
   const name = projects.find((p) => p.id === project.id)?.name
+  // T6: filed or dismissed, the row slides out and its gap closes before the inbox drops it.
+  const leave = (write: () => void) => animateRowRemoval(self.current, write)
   return (
-    <div className="rt-inbox">
+    <div className="rt-inbox" ref={self}>
       <div className="rt-title">{item.raw_text}</div>
       <div className="rt-meta">
         <span>{captureMeta(item, now)}</span>
@@ -509,10 +517,10 @@ function InboxRow({ item, now, projects, domains }: { item: InboxItem; now: Date
             {name ?? 'No project'}
           </Chip>
         </span>
-        <Button type="button" variant="ghost" onClick={() => dismissInboxItem(item)}>
+        <Button type="button" variant="ghost" onClick={() => leave(() => void dismissInboxItem(item))}>
           Dismiss
         </Button>
-        <Button type="button" variant="secondary" onClick={() => fileToTask(item, { projectId: project.id, domainId: project.domain })}>
+        <Button type="button" variant="secondary" onClick={() => leave(() => void fileToTask(item, { projectId: project.id, domainId: project.domain }))}>
           File
         </Button>
       </div>
@@ -569,7 +577,8 @@ function Timeline({ busy, slots, changing }: { busy: { start: number; end: numbe
           <span key={h} className="rt-tl-tick" style={{ left: x(h * 60) }} />
         ))}
         {blocks.map((b, i) => (
-          <span key={i} className={`rt-tl-b rt-k-${b.k}`} style={{ left: x(b.start), width: w(b.start, b.end) }} />
+          // T12: keyed by the pick, so a moved time slides to its new place
+          <span key={'id' in b ? String(b.id) : `e${i}`} className={`rt-tl-b rt-k-${b.k}`} style={{ left: x(b.start), width: w(b.start, b.end) }} />
         ))}
       </div>
       <div className="rt-tl-hours">

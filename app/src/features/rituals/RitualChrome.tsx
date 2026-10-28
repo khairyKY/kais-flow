@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { SheetTitle } from '../../components/TimePicker'
 import { EmojiText } from '../../components/EmojiText'
@@ -8,7 +8,10 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { SwipeRow } from '../tasks/SwipeRow'
 import type { Task } from '../../lib/types'
 import './rituals.css'
+import '../../components/pageMotion.css' // the dusk veil (D10)
 import { useOpenTask } from '../tasks/openTask'
+import { Num } from '../../components/PageMotion'
+import { useMotionEnabled } from '../../lib/motion'
 
 // ── The chrome both rituals share (SCREENS-2026-09-28 §Plan my day / §Shut down): on a phone a
 // full-height kit BottomSheet (✕, Back and a swipe down close it and keep progress); on desktop a
@@ -20,10 +23,12 @@ export function FieldLabel({ children, color = 'var(--ink-faint)' }: { children:
   return <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color }}>{children}</span>
 }
 
-export function RitualSheet({ title, sub, onClose, left, right, footer }: {
+export function RitualSheet({ title, sub, onClose, left, right, footer, leaving }: {
   title: string
   sub: string
   onClose: () => void
+  /** R8: the ritual is finishing — its content fades out (150ms) before the finish screen. */
+  leaving?: boolean
   /** Desktop's left column; on a phone the two columns stack. */
   left: ReactNode
   right: ReactNode
@@ -34,14 +39,14 @@ export function RitualSheet({ title, sub, onClose, left, right, footer }: {
   if (isMobile) {
     return (
       <BottomSheet detent="full" onClose={onClose} title={<SheetTitle title={title} meta={sub} />} footer={footer}>
-        {() => <div className="rt rt-phone">{left}{right}</div>}
+        {() => <div className={`rt rt-phone${leaving ? ' rt-leaving' : ''}`}>{left}{right}</div>}
       </BottomSheet>
     )
   }
-  return <DeskPanel title={title} sub={sub} onClose={onClose} left={left} right={right} footer={footer} />
+  return <DeskPanel title={title} sub={sub} onClose={onClose} left={left} right={right} footer={footer} leaving={leaving} />
 }
 
-function DeskPanel({ title, sub, onClose, left, right, footer }: { title: string; sub: string; onClose: () => void; left: ReactNode; right: ReactNode; footer: (close: () => void) => ReactNode }) {
+function DeskPanel({ title, sub, onClose, left, right, footer, leaving }: { title: string; sub: string; onClose: () => void; left: ReactNode; right: ReactNode; footer: (close: () => void) => ReactNode; leaving?: boolean }) {
   useEscapeStack(true, onClose)
   return (
     <div className="rt-desk-scrim" onClick={onClose}>
@@ -55,7 +60,7 @@ function DeskPanel({ title, sub, onClose, left, right, footer }: { title: string
             <Icon name="close" size={24} />
           </button>
         </div>
-        <div className="rt-desk-cols">
+        <div className={`rt-desk-cols${leaving ? ' rt-leaving' : ''}`}>
           <div>{left}</div>
           <div>{right}</div>
         </div>
@@ -94,14 +99,15 @@ export function WorkloadLine({ text, over }: { text: string; over?: string }) {
   return (
     <div className={`rt-wl${over ? ' is-over' : ''}`}>
       <Icon name={over ? 'alert' : 'clock'} size={20} />
-      <span style={{ flex: 1, minWidth: 0 }}>{text}</span>
+      {/* T12: the line rises in when the plan changes it */}
+      <Num value={text} style={{ flex: 1, minWidth: 0 }} />
       {over && <span className="rt-mono" style={{ color: 'inherit' }}>{over}</span>}
     </div>
   )
 }
 
 /** Kit section label (B D6): 14 semibold ink, no rule after it; optional link + chevron in a 48 hit. */
-export function Section({ label, link, first }: { label: string; link?: { label: string; onClick: () => void }; first?: boolean }) {
+export function Section({ label, link, first }: { label: ReactNode; link?: { label: string; onClick: () => void }; first?: boolean }) {
   return (
     <div className={`rt-sec${first ? ' is-first' : ''}`}>
       <span className="rt-label">{label}</span>
@@ -188,3 +194,27 @@ export function Meta({ children, tone, dot }: { children: ReactNode; tone?: stri
     </span>
   )
 }
+
+/** R8 — the finish screen's payoff beat (rituals.css): the clover rises from its base, the title soaks
+ * in, the chips follow 60ms apart. D10 — `dusk` (the evening close): after the beat, Focus's dusk veil
+ * settles over it (Effects 1j). Decorative parts need Effects on; without, it's a plain fade. */
+export function FinishScreen({ img, title, dusk, children }: { img: string; title: string; dusk?: boolean; children?: ReactNode }) {
+  const motion = useMotionEnabled()
+  return (
+    <div className="rt-summary">
+      <img src={img} alt="" />
+      <div className="rt-summary-title">{title}</div>
+      {children}
+      {dusk && motion && (
+        <>
+          <span className="kf-dusk-veil" aria-hidden data-dusk style={{ '--veil-delay': '700ms' } as CSSProperties} />
+          <span className="kf-dusk-vignette" aria-hidden style={{ '--veil-delay': '700ms' } as CSSProperties} />
+          <span className="kf-dusk-fly" aria-hidden style={{ left: '68%', top: '38%', '--veil-delay': '700ms' } as CSSProperties} />
+        </>
+      )}
+    </div>
+  )
+}
+
+/** R8: how long the ritual's content takes to fade before its finish screen (0 under reduced motion). */
+export const leaveMs = () => (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150)

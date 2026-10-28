@@ -228,3 +228,32 @@
 .rt-desk .kf-button--ghost { padding: 0 14px; }
 .rt-desk .kf-chip { display: inline-flex; align-items: center; gap: 6px; height: var(--sp-8); box-sizing: border-box; padding: 0 var(--sp-3); }
 .rt-desk .kf-checkbox { width: 22px !important; height: 22px !important; border-radius: var(--radius-check) !important; }
+
+/* ── Lane A2 motion (2026-10-28) ── */
+/* R8 — the finish screens' payoff beat. The ritual's content fades out (150ms, .rt-leaving), then the
+   summary fades in (functional, always); with Effects on the clover rises from its base (--dur-bloom),
+   the title soaks in (ink bleed, 480ms) and the chips stagger 60ms apart. */
+@keyframes rtFadeOut { from { opacity: 1; } to { opacity: 0; } }
+@keyframes rtFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rtSprout { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+@keyframes rtInk { from { opacity: 0; filter: blur(4px); } to { opacity: 1; filter: none; } }
+@keyframes rtChipIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+.rt-leaving { pointer-events: none; animation: rtFadeOut 150ms var(--ease-in) forwards; }
+.rt-summary { position: relative; overflow: hidden; }
+.rt-summary > * { animation: rtFadeIn 200ms var(--ease-out) backwards; }
+.kf-motion-on .rt-summary > img { transform-origin: 50% 100%; animation: rtSprout var(--dur-bloom) var(--ease-out) backwards; }
+.kf-motion-on .rt-summary > .rt-summary-title { animation: rtInk 480ms var(--ease-out) 220ms backwards; }
+.kf-motion-on .rt-summary > .rt-note { animation: rtInk 480ms var(--ease-out) 400ms backwards; }
+.kf-motion-on .rt-summary > .rt-meta { animation: none; }
+.kf-motion-on .rt-summary .rt-meta > span { animation: rtChipIn 240ms var(--ease-out) backwards; }
+.kf-motion-on .rt-summary .rt-meta > span:nth-child(1) { animation-delay: 560ms; }
+.kf-motion-on .rt-summary .rt-meta > span:nth-child(2) { animation-delay: 620ms; }
+.kf-motion-on .rt-summary .rt-meta > span:nth-child(3) { animation-delay: 680ms; }
+.kf-motion-on .rt-summary .rt-meta > span:nth-child(n+4) { animation-delay: 740ms; }
+.kf-motion-on .rt-summary > .rt-link { animation-delay: 800ms; }
+/* D10's veil layers are the summary's own (pageMotion.css): they keep their animation. */
+.rt-summary > .kf-dusk-veil { animation: kfVeilIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards, kfVeilBreathe 8s ease-in-out calc(var(--veil-delay, 0ms) + 1200ms) infinite; }
+.rt-summary > .kf-dusk-vignette { animation: kfVignetteIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards; }
+.rt-summary > .kf-dusk-fly { animation: kfVignetteIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards, fireflyDrift 9s ease-in-out calc(var(--veil-delay, 0ms) + 1200ms) infinite; }
+/* T12 — the suggested-times bar: a time that moved slides there; a new one fades in. */
+.rt-tl-b { animation: rtFadeIn 200ms var(--ease-out) backwards; transition: left 300ms var(--ease-out), width 300ms var(--ease-out); } /* ds-ok: T12, the timeline's blocks ease to their new times */
