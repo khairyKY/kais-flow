@@ -62,7 +62,7 @@ const CARDS = {
   'whats-new': { eb: `What’s new · ${r0.v} · ${shortDate(r0.date)}`, t: r0.title ?? `What’s new in ${r0.v}`, s: `${r0.highlights.length} change${r0.highlights.length === 1 ? '' : 's'}, on the web, Android and Windows`, a: art.img(r0.art, 300) },
   growing: { eb: 'What’s growing', t: 'The roadmap, as a garden', s: 'Now · Next · Later', a: art.img('cherry-bud', 160) },
   guides: { eb: 'Guides', t: 'How can we help?', s: 'Install, import, capture, gestures and more.', a: art.img('fern-unfurl1', 200) },
-  download: { eb: 'Download', t: 'Get Kai’s Flow', s: `Web, Android and Windows · ${LATEST.tag}`, a: art.wisteria },
+  download: { eb: 'Download', t: 'Get Kai’s Flow', s: `Web, Android, Windows and Mac · ${LATEST.tag}`, a: art.wisteria },
   privacy: { eb: 'Privacy policy', t: 'What happens to your days', s: 'No ads, no tracking, no selling data.', a: art.img('seal-intact', 260) },
   terms: { eb: 'Terms', t: 'The short terms', s: 'Five things, on one page.', a: art.img('vine-leaf-right', 220) },
   about: { eb: 'About', t: 'Why I built this', s: 'Built by one student, for himself first.', a: art.img('clover-seedling', 200) },

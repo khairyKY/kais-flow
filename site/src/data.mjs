@@ -30,11 +30,14 @@ export const RELEASES = JSON.parse(fs.readFileSync(new URL('./releases.json', im
 
 // The newest release at build time. The pages ask GitHub for the current one when they load
 // (site.js) and fall back to this if GitHub doesn't answer.
-export const LATEST = { tag: RELEASES[0].v, date: RELEASES[0].date, apkMB: 34, exeMB: 32 }
+export const LATEST = { tag: RELEASES[0].v, date: RELEASES[0].date, apkMB: 34, exeMB: 32, dmgMB: 20 }
 // The newest release's installers under fixed names (android.yml / desktop.yml upload a version-less copy
 // beside the versioned file): the download buttons. A release's own file (apkUrl) is for its notes.
 export const APK_LATEST = `${REPO}/releases/latest/download/kais-flow.apk`
 export const EXE_LATEST = `${REPO}/releases/latest/download/kais-flow-windows-setup.exe`
+// The Mac app (desktop.yml's macos job, 2026-10-29): one .dmg for Apple silicon and Intel. Live once a
+// release has built it; deploy the site after that release, or this button 404s.
+export const DMG_LATEST = `${REPO}/releases/latest/download/kais-flow-mac.dmg`
 export const apkUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag}.apk`
 
 // What's growing — Now / Next / Later. Now = what builders are working on this month (October 2026);

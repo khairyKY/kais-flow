@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { downloadOrder, inPlainBrowser, LATEST_DOWNLOADS } from '../../lib/appUpdate'
+import { downloadOrder, inPlainBrowser, LATEST_DOWNLOADS, type DownloadPlatform } from '../../lib/appUpdate'
 import { Collapse } from '../../components/Collapse'
 import './download.css'
 
@@ -9,14 +9,15 @@ import './download.css'
 // copies, so a plain <a> downloads and the page stays put (the shells hand it to the system).
 
 const DISMISSED = 'kf-download-bar-dismissed'
+const NAME: Record<DownloadPlatform, string> = { android: 'Android', windows: 'Windows', mac: 'Mac' }
 
-/** The two installers, the device's own first. */
+/** The installers, the device's own first. */
 export function DownloadLinks() {
   return (
     <>
       {downloadOrder().map((p) => (
         <a key={p} className="kf-btn kf-press kf-button kf-button--secondary kf-dl-link" href={LATEST_DOWNLOADS[p]} data-platform={p}>
-          {p === 'android' ? 'Android' : 'Windows'}
+          {NAME[p]}
         </a>
       ))}
     </>

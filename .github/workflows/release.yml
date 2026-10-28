@@ -2,7 +2,7 @@ name: Release
 
 # One click ships a tested release, in the order docs/DEPLOY-RUNBOOK-v1.md demands:
 #   gate + rehearsal → cron-key check → backup → database → edge functions → app (merge into master) → live check
-#   → GitHub Release (tag + notes) → Android APK + Windows installer (+ the Microsoft Store .msix) attached to it.
+#   → GitHub Release (tag + notes) → Android APK + Windows installer (+ the Microsoft Store .msix) + Mac .dmg attached to it.
 # Nothing touches production until the gate is green and the merge into master is proven to be
 # exactly the tested tree. Trigger: push a `v*` tag or a `claude/ship-v*` branch at the release's
 # tested commit, publish a GitHub Release targeting it, or (once on master) Actions → Run workflow.
@@ -279,7 +279,7 @@ jobs:
           case "$TAG" in v[0-9]*) ;; *) echo "::notice::'$TAG' is not a version tag, so no GitHub Release"; exit 0 ;; esac
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           if gh release view "$TAG" -R "$GITHUB_REPOSITORY" > /dev/null 2>&1; then exit 0; fi
-          live="Live at $APP_URL · Android APK and Windows installer attached below once built (docs/INSTALL.md)."
+          live="Live at $APP_URL · Android APK, Windows installer and Mac .dmg attached below once built (docs/INSTALL.md)."
           # The body = this tag's entry in releases.json (its highlights as "- " lines, which the app's
           # What's new reads); no entry → GitHub's generated notes, as before.
           notes="$RUNNER_TEMP/notes.md"
@@ -310,8 +310,10 @@ jobs:
     uses: ./.github/workflows/desktop.yml
     permissions:
       contents: write
+    # Windows and Mac (desktop.yml's windows + macos jobs, side by side; its updater job then adds the
+    # Mac's darwin entries to the latest.json the Windows job wrote).
     # The updater key (TAURI_SIGNING_PRIVATE_KEY/_PASSWORD) must reach the called workflow, or the
-    # release has no latest.json and the Windows app can't update in place.
+    # release has no latest.json and neither desktop app can update in place.
     secrets: inherit
     with:
       tag: ${{ needs.publish.outputs.tag }}

@@ -162,7 +162,7 @@ export function localPlan({ tasks, events = [], projects = [], routines = [], co
 
 // ── Settings → Notifications → Send a test notification: what stands between a notice and this screen ──
 
-export type DeviceChannel = 'windows' | 'android' | 'web'
+export type DeviceChannel = 'windows' | 'mac' | 'android' | 'web'
 /** The OS / browser permission here. 'unsupported' = no way to show one at all (a browser without push). */
 export type DevicePermission = 'granted' | 'denied' | 'prompt' | 'unsupported'
 

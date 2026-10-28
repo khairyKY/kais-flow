@@ -1,5 +1,6 @@
 import { App } from '@capacitor/app'
 import { Capacitor } from '@capacitor/core'
+import { openExternal } from './platform'
 
 // Settings → App → "Check for updates" (Kai 2026-10-03). One button, three platforms, $0:
 //   · web / PWA: /version.json (the live deploy, stamped by vite.config's buildStamp) against the
@@ -8,11 +9,15 @@ import { Capacitor } from '@capacitor/core'
 //     version (versionName / tauri.conf.json, both stamped from the release tag). Newer → open
 //     that release's own installer for this platform; the Windows app installs it in place
 //     (installUpdate: Tauri's updater, so no SmartScreen screen).
+//   · Mac (the same Tauri shell, 2026-10-29): as Windows — latest.json's darwin entries, then the app
+//     restarts itself (the updater swaps the .app but doesn't reopen it); the fallback is the .dmg.
 //   · Windows from the Microsoft Store (an MSIX, docs/MICROSOFT-STORE.md): the Store updates it, so
 //     nothing is fetched or offered (Kai 2026-10-14: a Store install must not nag about the .exe).
 // One request per click, nothing in the background.
 
-export type AppPlatform = 'web' | 'android' | 'windows'
+export type AppPlatform = 'web' | 'android' | 'windows' | 'mac'
+/** The two desktop apps (the Tauri shell). */
+export type DesktopPlatform = 'windows' | 'mac'
 export const RELEASES_LATEST = 'https://api.github.com/repos/khairyKY/kais-flow/releases/latest'
 
 export type UpdateResult =
@@ -43,8 +48,8 @@ export function compareVersions(a: string, b: string): number {
 }
 
 /** The release file a platform installs from (android.yml / desktop.yml name them from the tag). */
-export function releaseAssetName(tag: string, platform: 'android' | 'windows'): string {
-  return platform === 'android' ? `kais-flow-${tag}.apk` : `kais-flow-${tag}-windows-setup.exe`
+export function releaseAssetName(tag: string, platform: 'android' | DesktopPlatform): string {
+  return platform === 'android' ? `kais-flow-${tag}.apk` : platform === 'mac' ? `kais-flow-${tag}-mac.dmg` : `kais-flow-${tag}-windows-setup.exe`
 }
 
 /** The newest release's installers under fixed names: android.yml / desktop.yml upload a version-less
@@ -52,11 +57,18 @@ export function releaseAssetName(tag: string, platform: 'android' | 'windows'): 
 export const LATEST_DOWNLOADS = {
   android: 'https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk',
   windows: 'https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe',
+  mac: 'https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-mac.dmg',
 } as const
+export type DownloadPlatform = keyof typeof LATEST_DOWNLOADS
 
-/** The device's own app first: Windows on a Windows computer, Android everywhere else (phones). */
-export function downloadOrder(ua: string = navigator.userAgent): ('android' | 'windows')[] {
-  return /Windows/i.test(ua) && !/Android/i.test(ua) ? ['windows', 'android'] : ['android', 'windows']
+/** A Mac (not an iPhone; an iPad asking for the desktop site says Macintosh too, ponytail: it gets the .dmg first). */
+export const isMacUA = (ua: string) => /Macintosh|Mac OS X/i.test(ua) && !/iPhone|iPod/i.test(ua)
+
+/** The device's own app first: Windows on a Windows computer, the Mac app on a Mac, Android everywhere else (phones). */
+export function downloadOrder(ua: string = navigator.userAgent): DownloadPlatform[] {
+  if (/Windows/i.test(ua) && !/Android/i.test(ua)) return ['windows', 'mac', 'android']
+  if (isMacUA(ua)) return ['mac', 'windows', 'android']
+  return ['android', 'windows', 'mac']
 }
 
 /** A plain browser tab: not a native shell, not the installed PWA (display-mode standalone; iOS's own flag). */
@@ -72,7 +84,7 @@ interface Release {
 }
 
 /** What GitHub's latest release means for an installed `version` on `platform`. */
-export function nativeVerdict(release: Release, version: string, platform: 'android' | 'windows'): UpdateResult {
+export function nativeVerdict(release: Release, version: string, platform: 'android' | DesktopPlatform): UpdateResult {
   const tag = release.tag_name
   if (compareVersions(tag, version) <= 0) return { kind: 'current', version: `v${version.replace(/^v/i, '')}` }
   const asset = release.assets?.find((a) => a.name === releaseAssetName(tag, platform))
@@ -81,7 +93,8 @@ export function nativeVerdict(release: Release, version: string, platform: 'andr
 
 export function appPlatform(w: Window = window): AppPlatform {
   if (Capacitor.isNativePlatform()) return 'android'
-  return '__TAURI_INTERNALS__' in w ? 'windows' : 'web'
+  if (!('__TAURI_INTERNALS__' in w)) return 'web'
+  return isMacUA(w.navigator?.userAgent ?? '') ? 'mac' : 'windows'
 }
 
 /** This page's own build stamp (vite.config buildStamp: `<meta name="kf-build" content="sha iso">`);
@@ -98,7 +111,7 @@ const tauri = () => (window as unknown as { __TAURI_INTERNALS__?: { invoke(cmd: 
 export async function installedVersion(platform: AppPlatform = appPlatform()): Promise<string | null> {
   try {
     if (platform === 'android') return (await App.getInfo()).version
-    if (platform === 'windows') {
+    if (platform === 'windows' || platform === 'mac') {
       const v = await tauri()?.invoke('plugin:app|version')
       return typeof v === 'string' ? v : null
     }
@@ -159,8 +172,10 @@ export async function reloadToUpdate(): Promise<void> {
 
 /** Native: hand the installer to the system. Android's shell opens any off-app address in the
  * browser, which downloads the APK; on Windows the WebView turns the file response into a
- * download and the app stays where it is. */
-export function openDownload(url: string): void {
+ * download and the app stays where it is. The Mac app's WKWebView has no downloads (it would
+ * navigate away from the app), so the .dmg opens in the system browser. */
+export function openDownload(url: string, platform: AppPlatform = appPlatform()): void {
+  if (platform === 'mac') return void openExternal(url)
   window.location.assign(url)
 }
 
@@ -176,7 +191,7 @@ export function progressLine(done: number, total: number): string {
  * Mark-of-the-Web, so no SmartScreen screen. A release without latest.json (v1.2.0 and older), a bad
  * signature, offline: the browser download, as before. Everywhere else: the browser download. */
 export async function installUpdate(url: string, onProgress: (line: string) => void = () => {}, platform: AppPlatform = appPlatform()): Promise<void> {
-  if (platform === 'windows') {
+  if (platform === 'windows' || platform === 'mac') {
     try {
       onProgress('Downloading…')
       // Imported here so the web and Android bundles never carry it.
@@ -190,11 +205,12 @@ export async function installUpdate(url: string, onProgress: (line: string) => v
           else if (e.event === 'Progress') onProgress(progressLine((done += e.data.chunkLength), total))
           else onProgress('Installing… Kai’s Flow reopens in a moment')
         })
+        if (platform === 'mac') await tauri()?.invoke('app_restart') // tray.rs: the Windows installer reopens the app itself
         return
       }
     } catch (e) {
       console.warn('In-app update failed, downloading the installer instead', e)
     }
   }
-  openDownload(url)
+  openDownload(url, platform)
 }

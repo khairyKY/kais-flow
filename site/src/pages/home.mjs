@@ -10,7 +10,7 @@ const hero = () => `<section class="wrap hero">
     <h1>Your days, planned in one quiet place.</h1>
     <p class="sub">Tasks, time blocks, habits and your journal on one page of paper. Plan in the morning, tend it through the day, close it at night.</p>
     <div class="btns">${btn('Open the app', APP_URL, { size: 'lg' })}${btn('Download', '/download/', { kind: 'outline', size: 'lg', ic: 'download' })}</div>
-    <p class="hero-note">Free · Web, Android and Windows</p>
+    <p class="hero-note">Free · Web, Android, Windows and Mac</p>
   </div>
   <div class="hero-mock">
     ${shot('week-desk', 'The week calendar on a computer, with time blocks, a Study slot holding tasks, and events from Google Calendar', { eager: true })}
@@ -95,7 +95,7 @@ const CONTENTS = [
   ['Rituals & routines', 'Plan my day, Shut down, and routines with a streak that forgives a missed day.', '/features/rituals/'],
   ['Journal & herbarium', 'A line a day, and finished projects pressed like flowers.', '/features/journal/'],
   ['People', 'Birthdays, the last time you spoke, and notes on each person.', '/features/people/'],
-  ['Apps', 'Web, Android and Windows: widgets, a tray icon, offline, your own clock.', '/features/apps/'],
+  ['Apps', 'Web, Android, Windows and Mac: widgets, a tray icon, offline, your own clock.', '/features/apps/'],
   ['Bring your lists', 'Import from Akiflow, Todoist, TickTick, Notion, Obsidian, Kindle or Goodreads.', '/integrations/'],
   ['Your AI assistant', 'Connect Claude or any MCP app, and choose what it may read and change.', '/guides/connect-an-ai-assistant/'],
   ['Compared', 'How it sits next to the planners you might be using now.', '/compare/'],
@@ -120,7 +120,7 @@ export const faq = () => `<div class="faq">${FAQ.map(([q, a]) => `<details><summ
 export const home = {
   path: '/',
   title: 'Kai’s Flow — your days, planned in one quiet place',
-  description: 'A free planner that looks like a field journal: tasks, time blocks, habits and your journal on one page, with voice capture, Google Calendar and your AI assistant. Web, Android and Windows. No ads, no tracking.',
+  description: 'A free planner that looks like a field journal: tasks, time blocks, habits and your journal on one page, with voice capture, Google Calendar and your AI assistant. Web, Android, Windows and Mac. No ads, no tracking.',
   og: 'home',
   alternates: true,
   body: `${hero()}

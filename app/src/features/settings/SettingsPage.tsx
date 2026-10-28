@@ -665,7 +665,7 @@ function AppUpdateCard() {
       {/* Kai 2026-10-14: the download bar's links for good, so dismissing it is never a dead end. Not in the
           Microsoft Store install: the Store updates it, and a Store app mustn't hand out its own .exe. */}
       {r?.kind !== 'store' && (
-        <Row label="Download the apps" help="Android and Windows · always the newest release" keys="android windows apk installer">
+        <Row label="Download the apps" help="Android, Windows and Mac · always the newest release" keys="android windows mac apk installer dmg">
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <DownloadLinks />
           </div>
@@ -990,9 +990,10 @@ function LockScreenRows() {
   )
 }
 
-// On this computer (the Windows app) · On this phone (the Android app's widgets) — App & updates.
+// On this computer (the Windows or Mac app) · On this phone (the Android app's widgets) — App & updates.
 function DeviceSections() {
   const tauri = isTauri()
+  const mac = appPlatform() === 'mac' // the same rows, in the Mac's words
   const [trayShown, setTrayShown] = useState(readTrayShown)
   const widgets = widgetsAvailable() // the Android app's home-screen widgets
   const hideTitles = useHideTitles((h) => h.on)
@@ -1004,19 +1005,19 @@ function DeviceSections() {
   return (
     <>
       {tauri && (
-        <SCard title="On this computer" note="Windows app only" device>
-          <Row label="Show in the system tray" help="The K by the clock, with a quick flyout" keys="tray windows">
+        <SCard title="On this computer" note={mac ? 'Mac app only' : 'Windows app only'} device>
+          <Row label={mac ? 'Show in the menu bar' : 'Show in the system tray'} help={mac ? 'The K in the menu bar, with a quick flyout' : 'The K by the clock, with a quick flyout'} keys="tray windows mac menu bar">
             <Toggle
               on={trayShown}
-              label="Show in the system tray"
+              label={mac ? 'Show in the menu bar' : 'Show in the system tray'}
               onToggle={() => {
                 writeTrayShown(!trayShown)
                 setTrayShown(!trayShown)
               }}
             />
           </Row>
-          <Row label="Start with Windows" help="Opens quietly to the tray" keys="startup autostart login tray">
-            <Toggle on={!!autostart} label="Start with Windows" onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
+          <Row label={mac ? 'Open at login' : 'Start with Windows'} help={mac ? 'Opens quietly to the menu bar' : 'Opens quietly to the tray'} keys="startup autostart login tray">
+            <Toggle on={!!autostart} label={mac ? 'Open at login' : 'Start with Windows'} onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
           </Row>
         </SCard>
       )}

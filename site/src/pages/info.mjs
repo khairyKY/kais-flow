@@ -10,7 +10,7 @@ const istep = (n, title, text, picture) => `<div class="istep">${picture}<h3><sp
 const download = {
   path: '/download/',
   title: 'Download',
-  description: `Get Kai’s Flow free on the web, Android (APK) and Windows (installer). Latest version ${LATEST.tag}, with install steps.`,
+  description: `Get Kai’s Flow free on the web, Android (APK), Windows (installer) and Mac (.dmg). Latest version ${LATEST.tag}, with install steps.`,
   og: 'download',
   body: `<section class="sec first"><div class="wrap" data-release>
   ${head2({ eyebrow: 'Download', title: 'Get Kai’s Flow', lead: `Latest version <span data-release-tag>${LATEST.tag}</span>, released <span data-release-date>${longDate(LATEST.date)}</span>. Free on every platform.`, h: 'h1' })}
@@ -33,6 +33,15 @@ const download = {
     ${istep(3, 'Run it', 'It installs for you only — no admin password. Then open it from the Start menu.', mini('The Kai’s Flow installer running', '<span class="k">K</span><b style="display:inline">Installing Kai’s Flow…</b><div class="bar2"><i></i></div>', true))}
   </div>
   <p style="margin-top:20px"><a class="more" href="/guides/install-windows/">The full Windows guide</a></p>
+</div></section>
+<section class="sec" id="mac"><div class="wrap">
+  <div class="ihead">${icon('laptop', 28)}<h2>Installing on Mac</h2></div>
+  <div class="isteps">
+    ${istep(1, 'Drag it to Applications', `Open the .dmg (about ${LATEST.dmgMB} MB) and drag Kai’s Flow onto Applications. One file for Apple silicon and Intel.`, mini('The disk image: Kai’s Flow beside the Applications folder', '<div class="row"><span class="k">K</span><b style="display:inline">Kai’s Flow</b><span>→</span><b style="display:inline">Applications</b></div>'))}
+    ${istep(2, 'Open it once', 'Double-click it in Applications. The first time, macOS stops it with “Kai’s Flow Not Opened”, because it isn’t notarized by Apple (that costs money). Click Done.', mini('macOS: Kai’s Flow Not Opened, with Move to Trash and Done', '<b>“Kai’s Flow” Not Opened</b><div class="row" style="justify-content:flex-end;gap:14px;margin-top:8px"><span class="lnk">Move to Trash</span><span class="lnk">Done</span></div>'))}
+    ${istep(3, 'Open Anyway', 'System Settings → Privacy & Security, scroll down to Security: “Kai’s Flow was blocked”. Click Open Anyway, enter your password, then Open. Only this once: updates install themselves.', mini('Privacy and Security: Kai’s Flow was blocked, with Open Anyway', '<div class="row">“Kai’s Flow” was blocked to protect your Mac.</div><div class="row" style="justify-content:flex-end"><span style="border:1px solid currentColor;padding:2px 8px">Open Anyway</span></div>'))}
+  </div>
+  <p style="margin-top:20px"><a class="more" href="/guides/install-mac/">The full Mac guide</a></p>
 </div></section>
 <section class="sec"><div class="wrap dlfoot">
   <p>Older versions: <a href="${RELEASES_URL}">GitHub releases</a></p>
