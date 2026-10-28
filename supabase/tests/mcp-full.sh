@@ -411,17 +411,18 @@ export HW; HW=$(j .added.id)
 call "edit_task: Mon's into Monday's" "$KA" edit_task '{id: env.HM, slot_id: env.RS, slot_occurrence: "2028-01-17T10:00"}'
 call "edit_task: Tue's into Tuesday's" "$KA" edit_task '{id: env.HT, slot_id: env.RS, slot_occurrence: "2028-01-18T10:00"}'
 call "edit_task: Wed's into Wednesday's" "$KA" edit_task '{id: env.HW, slot_id: env.RS, slot_occurrence: "2028-01-19T10:00"}'
-call "edit_event: the series to 13:00" "$KA" edit_event '{id: env.RS, start: "2028-01-17T13:00"}'
+refused "edit_event: the series with no scope (cal-clicks asks)" "$KA" edit_event '{id: env.RS, start: "2028-01-17T13:00"}' 'repeats: give "occurrence"'
+call "edit_event: the series to 13:00" "$KA" edit_event '{id: env.RS, scope: "all", start: "2028-01-17T13:00"}'
 expect "changed" "time → 13:00–15:00, every occurrence | 3 tasks in it moved with it" "$(changed)"
 expect "logged" "calendar_event.updated/mcp task.scheduled/mcp task.scheduled/mcp task.scheduled/mcp" "$(logs)"
 expect "each kept its day, at the new time" "$RS 2028-01-17 2028-01-17 11:00:00+00 | $RS 2028-01-18 2028-01-18 11:00:00+00 | $RS 2028-01-19 2028-01-19 11:00:00+00" \
   "$(held "$HM") | $(held "$HT") | $(held "$HW")"
-call "edit_event: repeat Mondays and Wednesdays" "$KA" edit_event '{id: env.RS, repeat: "FREQ=WEEKLY;BYDAY=MO,WE"}'
+call "edit_event: repeat Mondays and Wednesdays" "$KA" edit_event '{id: env.RS, scope: "all", repeat: "FREQ=WEEKLY;BYDAY=MO,WE"}'
 expect "changed" "repeats FREQ=WEEKLY;BYDAY=MO,WE | 1 task it held is back unscheduled" "$(changed)"
 expect "logged" "calendar_event.updated/mcp task.unscheduled/mcp" "$(logs)"
 expect "Tuesday's out, unscheduled; Monday's and Wednesday's stay" "$RS 2028-01-17 2028-01-17 11:00:00+00 | - - - | $RS 2028-01-19 2028-01-19 11:00:00+00" \
   "$(held "$HM") | $(held "$HT") | $(held "$HW")"
-call "edit_event: repeat null (its first occurrence only)" "$KA" edit_event '{id: env.RS, repeat: null}'
+call "edit_event: repeat null (its first occurrence only)" "$KA" edit_event '{id: env.RS, scope: "all", repeat: null}'
 expect "changed" "no longer repeats | 1 task it held is back unscheduled" "$(changed)"
 expect "Wednesday's out; Monday's stays" "$RS 2028-01-17 2028-01-17 11:00:00+00 | - - -" "$(held "$HM") | $(held "$HW")"
 call "calendar 2028-01-17..19" "$KA" calendar '{from: "2028-01-17", to: "2028-01-19"}'
