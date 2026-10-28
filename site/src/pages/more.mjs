@@ -89,7 +89,7 @@ const whatsNew = {
   body: `<section class="sec first wn-hero"><div class="wrap">
   <div class="wn-top">
     <div class="wn-copy">${head2({ eyebrow: `What’s new · ${NEW.v} · ${longDate(NEW.date)}`, title: NEW.title ?? `What’s new in ${NEW.v}`, h: 'h1',
-      lead: `${COUNT[NEW.highlights.length] ?? NEW.highlights.length} ${NEW.highlights.length === 1 ? 'change' : 'changes'} in ${NEW.v}. The web app has them already; on Android and Windows, Settings → App → Check for updates brings them in.` })}
+      lead: `${COUNT[NEW.highlights.length] ?? NEW.highlights.length} ${NEW.highlights.length === 1 ? 'change' : 'changes'} in ${NEW.v}. The web app has them already; on Android, Windows and Mac, Settings → App → Check for updates brings them in.` })}
       <div class="btns" style="margin-top:28px">${btn('Open the app', APP_URL)}${btn(`Get ${NEW.v}`, '/download/', { kind: 'secondary', ic: 'download' })}</div>
     </div>
     ${img(NEW.art, '', { w: 240, cls: 'wn-art' })}

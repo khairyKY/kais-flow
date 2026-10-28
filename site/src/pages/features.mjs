@@ -10,7 +10,7 @@ const PILLARS = [
   ['rituals', 'routine', 't-sage', 'Rituals & routines', 'Plan my day, Shut down, routines that fold by time of day, streaks.', 'Rituals'],
   ['journal', 'journal', 't-butter', 'Journal & herbarium', 'A line a day, and finished projects pressed into a herbarium.', 'Journal'],
   ['people', 'people', 't-blossom', 'People', 'Birthdays, and notes on the people you care about.', 'People'],
-  ['apps', 'globe', 't-hyd', 'Apps', 'Web, Android and Windows: widgets, a tray icon, notifications, offline, updates that install themselves, and your own clock.', 'Apps'],
+  ['apps', 'globe', 't-hyd', 'Apps', 'Web, Android, Windows and Mac: widgets, a tray icon, notifications, offline, updates that install themselves, and your own clock.', 'Apps'],
 ]
 
 const hub = {

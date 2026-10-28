@@ -1,8 +1,9 @@
-name: Windows app
+name: Desktop apps
 
 # M1 step 5 (design-integration/PLAN.md SHIP P2.3): the same Tauri shell as the Android app, built
 # as a real Windows installer on GitHub's Windows runner (system WebView2, ~5 MB, no Electron).
 # Builds on the mobile branches for review; a release (release.yml) gets the installer attached.
+# 2026-10-29: and the Mac app (the macos job below), on a release or a manual run only.
 on:
   push:
     branches: ['claude/mobile-*']
@@ -218,3 +219,138 @@ jobs:
           msix="$(cygpath -u '${{ steps.pack.outputs.MSIX }}')"
           cp "$msix" "$RUNNER_TEMP/kais-flow.msix"
           gh release upload "$TAG" "$msix" "$RUNNER_TEMP/kais-flow.msix" --clobber
+
+  # The Mac app (docs/log/2026-10-29-*-mac-app-handoff.md): the same Tauri shell, one universal .app
+  # (Apple silicon + Intel) in a .dmg. $0: the repo is public, so GitHub's macOS runners are free. No
+  # Apple Developer account means no notarization: the app is ad-hoc signed (tauri.conf.json
+  # bundle.macOS.signingIdentity "-", without which Apple silicon calls a downloaded copy "damaged"), and
+  # the person allows it once (Privacy & Security → Open Anyway, the site's guides/install-mac). Updates
+  # use the Windows build's updater key: the updater job below adds the darwin entries to latest.json.
+  # Only on a release or a manual run (Actions → Desktop apps → Run workflow), not on the
+  # claude/mobile-* pushes that build Windows.
+  macos:
+    name: Build Mac app
+    if: inputs.tag != '' || github.event_name == 'workflow_dispatch'
+    runs-on: macos-latest
+    permissions:
+      contents: write # only used to attach the .dmg to a published Release
+    defaults:
+      run:
+        working-directory: app
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+
+      # Everything Mac lives in the script (build, the checks, the named files), so a Codemagic build
+      # can run the same thing once the repo goes private. universal-apple-darwin = both slices in one
+      # .app: one .dmg, one updater bundle and signature, which latest.json's darwin-aarch64 and
+      # darwin-x86_64 both point at. The checks: the .dmg mounts and holds the .app beside an Applications
+      # link; the .app is ad-hoc signed, universal, with this version and identifier; the copy dragged
+      # out of the .dmg starts and keeps running 25 s (a crash at launch fails the build).
+      - name: Build and check (mac-build.sh)
+        working-directory: .
+        env:
+          TAG: ${{ inputs.tag }}
+          OUT: ${{ runner.temp }}/mac
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          .github/scripts/mac-build.sh
+          tag='${{ inputs.tag }}'
+          echo "OUT=$OUT" >> "$GITHUB_ENV"
+          echo "LABEL=${tag:-${GITHUB_SHA::7}}" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kais-flow-mac
+          path: ${{ env.OUT }}
+          retention-days: 30
+
+      # Versioned, plus a version-less .dmg (releases/latest/download/kais-flow-mac.dmg: the web app's
+      # download bar, Settings → App, the site), the same pattern as the Windows installer.
+      - name: Attach to the Release
+        if: inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          cp "$OUT/kais-flow-$LABEL-mac.dmg" "$RUNNER_TEMP/kais-flow-mac.dmg"
+          gh release upload "$TAG" "$OUT"/* "$RUNNER_TEMP/kais-flow-mac.dmg" --clobber
+
+  # latest.json's darwin entries, once both builds are done: the Windows job writes latest.json, so this
+  # waits for it (success or not) and adds to whatever is there, never racing it. A failed Mac build
+  # leaves latest.json as Windows wrote it. A manual run (no tag) merges into the newest release's
+  # latest.json in the runner only, to prove the Windows entry survives; nothing is uploaded.
+  updater:
+    name: Updater manifest (Mac)
+    needs: [windows, macos]
+    if: always() && needs.macos.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # only used to replace latest.json on a published Release
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: kais-flow-mac
+          path: mac
+
+      - name: Add the darwin entries to latest.json
+        run: |
+          set -euo pipefail
+          sig="$(ls mac/*.app.tar.gz.sig 2>/dev/null | head -1 || true)"
+          if [ -z "$sig" ]; then
+            echo "::warning::No updater signature, so no darwin entries: Mac apps update through the .dmg this time."
+            exit 0
+          fi
+          file="$(basename "${sig%.sig}")"
+          if [ -n "$TAG" ]; then
+            gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p latest.json -O base.json || echo '{}' > base.json
+            url="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$file"
+          else
+            gh release download -R "$GITHUB_REPOSITORY" -p latest.json -O base.json || echo '{}' > base.json
+            url="https://github.com/$GITHUB_REPOSITORY/releases/download/manual-run/$file"
+          fi
+          SIG="$sig" URL="$url" node -e "
+            const fs = require('fs'), e = process.env
+            const base = JSON.parse(fs.readFileSync('base.json', 'utf8'))
+            const mac = { signature: fs.readFileSync(e.SIG, 'utf8').trim(), url: e.URL }
+            const tag = e.TAG || 'manual-run'
+            fs.writeFileSync('latest.json', JSON.stringify({
+              version: base.version || tag.replace(/^v/, ''),
+              notes: base.notes || 'Kai’s Flow ' + tag,
+              pub_date: base.pub_date || new Date().toISOString(),
+              // The universal .app runs on both, so both keys name the same bundle.
+              platforms: { ...base.platforms, 'darwin-aarch64': mac, 'darwin-x86_64': mac },
+            }, null, 2))
+            const out = JSON.parse(fs.readFileSync('latest.json', 'utf8')).platforms
+            const lost = Object.keys(base.platforms || {}).filter((k) => !out[k] || (!k.startsWith('darwin-') && out[k].url !== base.platforms[k].url))
+            if (lost.length) { console.error('::error::the merge changed ' + lost.join(', ')); process.exit(1) }
+            for (const k of ['darwin-aarch64', 'darwin-x86_64']) if (!out[k]?.signature || !out[k]?.url) { console.error('::error::no ' + k); process.exit(1) }
+            // A manual run proves the Windows entry survives; a release without one (no key, a failed build) only warns.
+            if (!out['windows-x86_64'] && !e.TAG) { console.error('::error::no windows-x86_64 entry'); process.exit(1) }
+            if (!out['windows-x86_64']) console.log('::warning::latest.json has no windows-x86_64 entry (the Windows build had no signature, or failed)')
+            console.log('latest.json platforms: ' + Object.keys(out).join(', '))
+          "
+          jq '.platforms | map_values(.url)' latest.json
+          echo "- Updater: latest.json → $(jq -r '.platforms | keys | join(", ")' latest.json)" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$TAG" ]; then
+            gh release upload "$TAG" latest.json -R "$GITHUB_REPOSITORY" --clobber
+          fi
