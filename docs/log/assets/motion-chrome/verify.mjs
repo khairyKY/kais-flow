@@ -559,6 +559,24 @@ if (want('d12')) {
   }
 }
 
+// ── D16 — the sidebar streak's vine idles and its pollen drifts (existing vine art), Effects-gated ──
+if (want('d16')) {
+  for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', { view: desktop, ...o })
+    const { page } = env
+    await page.locator('aside.app-sidebar button[aria-haspopup="menu"]').first().click()
+    const plant = page.locator('.kf-streak-plant')
+    await plant.waitFor({ timeout: 5000 })
+    await sleep(1200)
+    const r = await plant.evaluate((el) => ({ img: el.querySelector('img').complete && el.querySelector('img').naturalWidth > 0, names: el.getAnimations({ subtree: true }).map((a) => a.animationName).sort() }))
+    await page.locator('.kf-side-streak').screenshot({ path: path.join(OUT, `d16-streak-${v}.png`) })
+    if (v === 'on' || v === 'night') check(`d16 ${v}: the vine (existing sprouting art) sways and two motes drift + twinkle`, r.img && JSON.stringify(r.names) === JSON.stringify(['cloverSway', 'fireflyDrift', 'fireflyDrift', 'twinkle', 'twinkle']), JSON.stringify(r))
+    else check(`d16 ${v}: the vine stands still, no pollen`, r.img && r.names.length === 0, JSON.stringify(r))
+    basics(env, `d16 ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {

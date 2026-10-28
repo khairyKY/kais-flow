@@ -347,9 +347,19 @@ function SideStreak() {
   }, [routines, completions])
 
   return (
-    <div className="kf-side-streak" style={{ padding: '6px 10px 4px' }}>
-      <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
-      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
+    // D16 (Motion 1f / Effects 1b, Kai's yes 2026-10-28): the streak's vine is back beside the words —
+    // the existing sprouting-vine art, idling (cloverSway 7s) with two pollen motes drifting
+    // (fireflyDrift + twinkle). The motion is decorative: .motion-on only; Effects off, it stands still.
+    <div className="kf-side-streak" style={{ padding: '6px 10px 4px', display: 'flex', alignItems: 'flex-end', gap: 10 }}>
+      <span className="kf-streak-plant" aria-hidden="true">
+        <img src="/ds/assets/vine/sprouting.png" alt="" />
+        <i />
+        <i />
+      </span>
+      <div>
+        <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
+      </div>
     </div>
   )
 }
@@ -856,6 +866,15 @@ export function AppLayout() {
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* D16 — the streak's vine and its pollen (SideStreak). */
+        .kf-streak-plant { position: relative; flex: none; width: 28px; height: 40px; }
+        .kf-streak-plant img { position: absolute; left: 0; bottom: 0; height: 40px; transform-origin: 50% 100%; }
+        .kf-streak-plant i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: var(--acc-buttercream); opacity: 0; }
+        .kf-streak-plant i:first-of-type { left: 16px; top: 6px; }
+        .kf-streak-plant i:last-of-type { left: 4px; top: 16px; }
+        .motion-on .kf-streak-plant img { animation: cloverSway 7s ease-in-out infinite; }
+        .motion-on .kf-streak-plant i:first-of-type { animation: fireflyDrift 9s ease-in-out infinite, twinkle 3s ease-in-out infinite; }
+        .motion-on .kf-streak-plant i:last-of-type { animation: fireflyDrift 11s ease-in-out -4s infinite, twinkle 3.6s ease-in-out infinite; }
         /* O7 — the fold (toggleSidebar): labels out 120ms, then the width 200ms; back, the reverse. */
         .app-sidebar { transition: width var(--dur-normal) var(--ease-standard); }
         .app-sidebar[data-fold='out'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { opacity: 0; transition: opacity 120ms var(--ease-standard); }
