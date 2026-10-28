@@ -34,8 +34,10 @@ Also fixed on the way: the ghost clone carried the block's `data-kf-id`, so a se
 ## Checks
 - `docs/log/assets/motion-cal/verify.mjs` — **98/98** (every item with Effects on, Effects off and reduced motion, and its end state; shots beside it). The CAL10 sync case is `app/src/features/calendar/blockMotion.test.ts` (the mock has no refetch path).
 - drag-fix **176/176**. cal-clicks: every section green run alone (c 18, p 11, s 28, t 23, x 7, v 9); a full run once crashed late (a 30 s timeout opening a fresh page) — it doesn't repeat alone.
-- Other calendar harnesses: see the INDEX line.
-- Gate: vitest ×4 TZ, lint, build, ds:check (0 new); `birthday_on` 1/1.
+- After merging `claude/kai-bugs-1012` (95d07e78: motion-chrome, shot-bugs): shot-bugs **54/54**, motion-cal 98/98 and drag-fix 176/176 again.
+- Other calendar suites: cal-blocks 93/93, cal-polish 229/229, cal-looks 107/107, calendar-rail 101/101, time-slots 153/153, cal-wave 224/224, calendar-phone 180/180, event-detail 71/71. (A first run of cal-blocks / cal-polish / cal-looks caught a resting outline on picked blocks and the trail counted as a ghost — fixed; the re-runs above are after the fix.)
+- cal-rail-drop 28/29: `p1` taps a phone block and expects the swatch tray in its sheet — since cal-clicks a tap opens the details sheet and the tray lives in menu B (long-press). Not this lane's; the harness needs cal-clicks' new mapping.
+- Gate (`gate.ps1`): vitest ×4 TZ 2677/2677, lint 0, build, ds:check 0 new; `birthday_on` 1/1 in types.ts / settings.ts.
 
 ## Notes for Kai / the conductor
 - The phone pill moves when the slide lands (200 ms), not on the tap.
