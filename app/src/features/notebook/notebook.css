@@ -101,3 +101,12 @@
   .nb-print-root.is-A6 .nb-paper { font-size: var(--fs-body); }
   .nb-print-root.is-A6 .nb-date { font-size: var(--fs-display-m); }
 }
+
+/* O10 (motion build 2026-10-28) — the day switch: the page fades in (functional, 160ms); with Effects on
+   it also slides 24px from the side you went toward. */
+@keyframes nbDayFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes nbDayNext { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes nbDayPrev { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+.nb-day-in { animation: nbDayFade 160ms var(--ease-out) backwards; }
+.motion-on .nb-day-in.is-next { animation: nbDayNext 220ms var(--ease-out) backwards; }
+.motion-on .nb-day-in.is-prev { animation: nbDayPrev 220ms var(--ease-out) backwards; }
