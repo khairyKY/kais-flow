@@ -51,6 +51,8 @@ export interface CalendarGridEvent {
   /** A Time block's tasks (Time Slots, 0073), drawn as rows inside it, and its "2 tasks · 45m of 2h". */
   held?: { id: string; title: string; done: boolean; minutes: number }[]
   fill?: string
+  /** "45m over" when its tasks outrun it (./slots slotOver). */
+  over?: string | null
   /** A Google event (google-sync, B1): drawn like any event, never dragged or resized. */
   readOnly?: boolean
   /** A subtask's own block (Subtasks C, Kai 2026-10-16): its parent's title, "↳ parent" on the time row. */
@@ -390,7 +392,7 @@ type BlockProps = {
   kfTaskId: string | null; kfTaskDone: boolean; kfStart: number; kfEnd: number; kfTaskish: boolean
   kfOverdue: boolean; kfConflict: boolean; kfGoal: boolean; kfTaskRepeat: string | null
   kfMore: string[] | null; kfPinned: boolean; kfRepeat: boolean
-  kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null; kfParent: string | null
+  kfHeld: { id: string; title: string; done: boolean; minutes: number }[] | null; kfFill: string | null; kfOver: string | null; kfParent: string | null
 }
 
 /** §5 temporal state at `now`: ran over (a task not done, its end passed) outranks past; in progress
@@ -939,6 +941,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       classes.push(drawnPx < 27 ? 'kf-tier-micro' : drawnPx < 54 ? 'kf-tier-short' : drawnPx < 81 ? 'kf-tier-std' : 'kf-tier-full')
       // cal-looks ("Now" as drawn): 30 minutes or less is one line — the check, the title, nothing under it.
       if (endMs - startMs <= 30 * 60_000 && !e.held?.length) classes.push('kf-one')
+      // shot-bugs: a Time block whose tasks outrun it opens out under the pointer, so every row stays reachable.
+      if (e.over) classes.push('kf-slot-over')
       // Goal A (Kai 2026-10-23): today's block of the goal of the day wears the gold edge and ✶.
       if (e.goal) classes.push('kf-goal')
       // Temporal (§5) — the minute's (past / in progress / ran over) is eventClassNames' and LiveTime's.
@@ -981,6 +985,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         kfRepeat: !!e.repeat,
         kfHeld: e.held?.length ? e.held : null,
         kfFill: e.fill ?? null,
+        kfOver: e.over ?? null,
         kfParent: e.parent ?? null,
       }
       return ev
@@ -1314,7 +1319,10 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                   The row itself drags the task out (heldRow). */}
               {p.kfHeld && !arg.isMirror && (
                 <div className="kf-ev-slot">
-                  <div className="fc-event-time kf-ev-fill">{p.kfFill}</div>
+                  <div className="fc-event-time kf-ev-fill">
+                    {p.kfFill}
+                    {p.kfOver && <> · <span className="kf-ev-over">{p.kfOver}</span></>}
+                  </div>
                   {p.kfHeld.map((h) => (
                     <div key={h.id} ref={heldRow} className={`kf-ev-slot-row${h.done ? ' kf-done' : ''}`} data-slot-task={h.id} data-task-id={h.id} data-title={h.title} data-duration={h.minutes} data-length={durationLabel(h.minutes)}>
                       <span

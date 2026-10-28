@@ -7,6 +7,7 @@ import { LegalFooter, LegalLink, PRIVACY_URL, TERMS_URL, signupConsent } from '.
 import { useOnline } from '../../lib/useOnline'
 import { OfflineChip } from '../../components/States'
 import { useAuth } from './AuthProvider'
+import { shakeNo } from '../../components/PageMotion'
 import { CheckEmail, Cta, EmailConfirmed, Field, FirstRunPage, Hero, LinkButton, PasswordField, Plant, ProblemCard, ResetSent } from './AuthLayout'
 import { authProblem, passwordRule, signInView, signUpOutcome, type AuthProblem } from './authLogic'
 import { confirmRedirect, isRecovering, rememberEmail, rememberedEmail, requestReset, resendConfirmation } from './recovery'
@@ -47,6 +48,10 @@ export function SignInPage() {
   const formRef = useRef<HTMLFormElement>(null)
   const emailRef = useRef<HTMLInputElement>(null)
   const passwordRef = useRef<HTMLInputElement>(null)
+  // R12: a refused sign-in gives the password field the soft no (the iOS password shake), Effects on.
+  useEffect(() => {
+    if (problem?.kind === 'line' && mode === 'signin') shakeNo(passwordRef.current?.closest('.fr-box'))
+  }, [problem, mode])
 
   // 9c's "Waiting for the link…" is true twice over. A link opened in this browser signs this tab
   // in too (supabase-js broadcasts the session), and 9f plays. One opened where this tab can't

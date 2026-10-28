@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from 'react'
+import { Suspense, lazy, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { runChatCalls, streamChat, type ChatOutcome, type ChatRestore } from './api'
 import { SEND, loadChat, saveChat, type DisplayMessage, type PlanState } from './history'
 import { historyText, outcomeHeader, outcomeLine, planHeader, planLines } from './planCard'
@@ -16,6 +16,8 @@ import type { Citation } from '../../lib/types'
 import { Icon } from '../../components/Icon'
 import { takeChatStarter } from '../widgets/native'
 import type { IconName } from '../../components/icons/kf'
+import { scrollBehavior } from '../../lib/motion'
+import '../projects/xfx.css' // .kf-row-in (T11)
 import './chat.css'
 
 // The voice sheet (and its recorder) loads only when the mic is used.
@@ -94,6 +96,52 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
   const [editing, setEditing] = useState(false)
   const h24 = useHour24()
   useEffect(() => saveChat(uid, messages), [uid, messages])
+
+  // R6: the list follows the conversation. It opens at the bottom; a send pins it there (smooth with
+  // Effects on); a streaming reply is followed only while you're at the bottom — scrolled up to read,
+  // a "↓ new" pill says something arrived instead of yanking the page.
+  const listRef = useRef<HTMLDivElement>(null)
+  const pinned = useRef(true)
+  const gliding = useRef(false)
+  const [behind, setBehind] = useState(false)
+  const seenCount = useRef(messages.length)
+  // T11: only bubbles that arrive while the drawer is open breathe in (a reopened history doesn't).
+  const firstFresh = useRef(messages.length)
+  if (messages.length === 0) firstFresh.current = 0
+  const toBottom = (smooth: boolean) => {
+    const el = listRef.current
+    if (!el) return
+    pinned.current = true
+    setBehind(false)
+    if (smooth && scrollBehavior() === 'smooth') {
+      gliding.current = true
+      // From far up, jump to a screen above the end first: the glide is the last screen, not the history.
+      el.scrollTop = Math.max(el.scrollTop, el.scrollHeight - el.clientHeight * 2)
+      el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
+      window.setTimeout(() => (gliding.current = false), 900)
+    } else el.scrollTop = el.scrollHeight
+  }
+  useLayoutEffect(() => {
+    const el = listRef.current
+    const sent = messages.length > seenCount.current && messages.some((m, i) => i >= seenCount.current && m.role === 'user')
+    seenCount.current = messages.length
+    if (!el) return
+    if (sent) toBottom(true)
+    else if (pinned.current) {
+      if (!gliding.current) el.scrollTop = el.scrollHeight
+    } else if (el.scrollHeight > el.clientHeight) setBehind(true)
+  }, [messages])
+  const onListScroll = () => {
+    const el = listRef.current
+    if (!el) return
+    const atEnd = el.scrollTop + el.clientHeight >= el.scrollHeight - 8
+    if (gliding.current) {
+      if (atEnd) gliding.current = false
+      return
+    }
+    pinned.current = atEnd
+    if (atEnd) setBehind(false)
+  }
   useBodyScrollLock(open)
   useEscapeStack(open, onClose) // F3 (punch 12): Esc closes the ⌘J drawer like every other overlay
 
@@ -266,7 +314,8 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         </button>
       </div>
 
-      <div style={{ flex: 1, overflowY: 'auto', overscrollBehavior: 'contain', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div style={{ flex: 1, minHeight: 0, position: 'relative', display: 'flex', flexDirection: 'column' }}>
+      <div ref={listRef} onScroll={onListScroll} className="kf-chat-list" style={{ flex: 1, minHeight: 0, overflowY: 'auto', overscrollBehavior: 'contain', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
         {messages.length === 0 && (
           // Tour & help 14l: the empty chat offers three starters — two about the day, one about the
           // app. A tap sends it.
@@ -285,18 +334,20 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         )}
         {messages.map((m, i) => {
           const streaming = busy && i === messages.length - 1
+          const arrive = i >= firstFresh.current ? 'kf-row-in' : undefined
           if (m.role === 'user') {
             return (
-              <div key={i} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink-body)', color: 'var(--paper-parchment)', borderRadius: '12px 12px 3px 12px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45 }}>
+              <div key={i} className={arrive} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink-body)', color: 'var(--paper-parchment)', borderRadius: '12px 12px 3px 12px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45 }}>{/* ds-ok: the bubble's look as it was; only its arrival (kf-row-in) is new */}
                 {m.content}
               </div>
             )
           }
           if (streaming && !m.content) {
             return (
-              <div key={i} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px' }}>
+              <div key={i} className={arrive} aria-label="Thinking" style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px' }}>{/* ds-ok: the bubble's look as it was; only its arrival (kf-row-in) is new */}
                 <img src="/ds/assets/clover/awake.png" alt="" style={{ height: 18, width: 'auto', objectFit: 'contain' }} />
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-faint)', letterSpacing: '0.14em' }}>…</span>
+                {/* R7: three dots that twinkle in turn (Effects on); still, they read as "…" */}
+                <span className="kf-chat-dots" aria-hidden><i /><i /><i /></span>
               </div>
             )
           }
@@ -305,7 +356,9 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
             const ran = state === 'done' ? m.outcomes : undefined
             const undoable = !!ran && !m.undone && !!m.restore
             return (
-              <div key={i} className="kf-chat-card" data-state={state} aria-live="polite">
+              <div key={i} className={`kf-chat-card${arrive ? ` ${arrive}` : ''}`} data-state={state} aria-live="polite">
+                {/* R7: a state change cross-fades the card's contents (keyed on the state) */}
+                <div key={`${state}${m.undone ? '-undone' : ''}`} className="kf-chat-card-body">
                 <div className="kf-chat-card-head">{m.undone ? 'Undone — back as it was' : ran ? (ran.length ? outcomeHeader(ran) : 'Not sure what changed') : planHeader(calls, previews)}</div>
                 <ul className={`kf-chat-card-lines${m.undone ? ' is-undone' : ''}`}>
                   {ran
@@ -331,11 +384,12 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
                   </div>
                 )}
                 {m.undone && <div className="kf-chat-card-note">Every change in this batch was put back.</div>}
+                </div>
               </div>
             )
           }
           return (
-            <div key={i} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--ink-body)' }}>
+            <div key={i} className={arrive} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--ink-body)' }}>{/* ds-ok: the bubble's look as it was; only its arrival (kf-row-in) is new */}
               <Markdown text={m.content} />
               {m.citations && m.citations.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
@@ -364,6 +418,12 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
             </div>
           )
         })}
+      </div>
+      {behind && (
+        <button type="button" className="kf-chat-new" onClick={() => toBottom(true)}>
+          ↓ New
+        </button>
+      )}
       </div>
 
       <form
@@ -438,7 +498,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
       </form>
       {voice && (
         <Suspense fallback={null}>
-          <VoiceCaptureSheet open release={voice.release} onText={askHeard} stopLabel="Stop & send" onClose={() => setVoice(null)} />
+          <VoiceCaptureSheet release={voice.release} onText={askHeard} stopLabel="Stop & send" onClose={() => setVoice(null)} />
         </Suspense>
       )}
     </div>

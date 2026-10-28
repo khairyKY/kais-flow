@@ -383,6 +383,12 @@
 .fc .fc-timegrid-event .kf-ev-slot-row { cursor: grab; }
 .fc .fc-timegrid-event .kf-ev-slot-out { display: none; flex: none; padding: 0 2px; cursor: pointer; color: var(--kf-ev-accent, var(--acc-lavender-text)); }
 .fc .fc-timegrid-event .kf-ev-slot-row:hover .kf-ev-slot-out { display: inline; }
+/* shot-bugs (Kai 2026-10-27): a Time block whose tasks outrun it says by how much in "Ran over"'s terra, and
+   opens out to its rows under the pointer (or keyboard focus) — on paper, over what's below — instead of
+   cutting them off out of reach. */
+.fc .fc-timegrid-event .kf-ev-over { color: var(--blk-ran-ink); font-weight: var(--fw-semibold); }
+.fc .fc-timegrid-event.kf-slot-over:is(:hover, :focus-within):not(.fc-event-mirror, .fc-event-dragging) { bottom: auto; min-height: 100%; --kf-ev-under: var(--paper-parchment); box-shadow: var(--shadow-popover); }
+.fc .fc-timegrid-event-harness:has(> .kf-slot-over:is(:hover, :focus-within)) { z-index: 5 !important; }
 /* …and FullCalendar's copy of it (on <body>, out of the block's scope) is the same card, lifted: it
    follows the pointer everywhere (over the grid too, beside FullCalendar's placeholder where it lands).
    Kai 2026-10-21: every card dragged onto the grid lifts this one card (./cardDrag) — a rail, day-tray or

@@ -177,6 +177,7 @@
   display: flex; align-items: center; gap: var(--sp-2); min-width: 0; min-height: 24px; padding: 0 8px 0 2px; border-radius: 8px;
   border: 1px solid color-mix(in srgb, var(--pc-ink) 35%, transparent); background: var(--pc-fill);
 }
+.pc-slot-over { color: var(--blk-ran-ink); font-weight: var(--fw-semibold); } /* shot-bugs: the desktop's "45m over" */
 .pc-slot-fill { padding-top: 3px; border-top: 1px solid color-mix(in srgb, var(--pc-edge, var(--pc-ink)) 66%, transparent); }
 .pc-block-body .pc-slot .pc-time { flex-basis: auto; }
 .pc-block-body .pc-slot-row .pc-check { align-self: center; }

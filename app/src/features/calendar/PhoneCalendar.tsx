@@ -24,7 +24,7 @@ import { blockHue, KIND_HUE } from './blockHue'
 import { outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
 import { completeBlockTask, moveSpan } from './scoped'
 import { findBlock } from './series'
-import { heldDrop, slotFill, slotTasks } from './slots'
+import { heldDrop, slotFill, slotOver, slotTasks } from './slots'
 import { cairoToIso, timeRange } from './eventTime'
 import { blockLastDay, railBuckets, railMinutes, scheduledToday } from './replan'
 import { NowCard } from './NowCard'
@@ -190,6 +190,7 @@ export function PhoneCalendar() {
     const slot = held.length
       ? {
           fill: slotFill(e, held),
+          over: slotOver(e, held),
           held: held.map((t) => {
             const isDone = t.status === 'done'
             return { id: t.id, title: t.title, done: isDone, minutes: t.duration_min || 30, toggle: () => (isDone ? uncompleteTask(t) : completeTaskWithUndo(t)), open: () => openTask(t.id) }

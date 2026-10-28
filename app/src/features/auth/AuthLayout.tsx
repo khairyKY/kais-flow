@@ -9,6 +9,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { RESEND_WAIT_MS, calmAuthLine, inboxUrl, passwordRule, resendLabel, type AuthProblem } from './authLogic'
 import { requestReset, resendConfirmation } from './recovery'
 import './firstRun.css'
+import '../../components/pageMotion.css' // .kf-swap-in (R12)
 
 // ── First Run.dc.html — the frame every first-run screen shares: sign up (9a/9b), confirm your
 // email (9c–9f), sign in (9j),
@@ -125,9 +126,18 @@ export function Cta({ children, loading, disabled, onClick }: { children: ReactN
 
 /** A failed auth call as the DS Error card (9b-1 / 9b-3). */
 export function ProblemCard({ problem, email, onSignIn, onRetry }: { problem: AuthProblem; email?: string; onSignIn?: () => void; onRetry: () => void }) {
-  if (problem.kind === 'in-use') return <ErrorCard message={`${email || 'That email'} already has an account.`} onRetry={onSignIn} retryLabel="Sign in instead" />
-  if (problem.kind === 'offline') return <ErrorCard message="No connection. Your details are kept — try again when you're online." onRetry={onRetry} />
-  return <ErrorCard message={problem.text} />
+  // R12: the card fades in (160ms) rather than appearing in one frame.
+  return (
+    <div className="kf-swap-in">
+      {problem.kind === 'in-use' ? (
+        <ErrorCard message={`${email || 'That email'} already has an account.`} onRetry={onSignIn} retryLabel="Sign in instead" />
+      ) : problem.kind === 'offline' ? (
+        <ErrorCard message="No connection. Your details are kept — try again when you're online." onRetry={onRetry} />
+      ) : (
+        <ErrorCard message={problem.text} />
+      )}
+    </div>
+  )
 }
 
 /** The toast after a resend: what was sent, or why not. */
