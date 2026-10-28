@@ -218,7 +218,7 @@ if (want('r2')) {
 if (want('r3')) {
   const { ctx, page, errors, state } = await open()
   // cal-wave (item 18): Lists with nothing in it steps aside — "Lists…" brings it (and its scope picker) back.
-  if (await page.locator('.cal-rail-more', { hasText: 'Lists…' }).count()) await page.locator('.cal-rail-more').click()
+  if (await page.locator('.cal-rail-more', { hasText: 'Show lists' }).count()) await page.locator('.cal-rail-more').click()
   await page.getByRole('button', { name: 'Rail scope type' }).click()
   await page.locator('[role="option"]', { hasText: 'Project' }).first().click()
   await sleep(300)
