@@ -150,21 +150,13 @@ export function useOverlayExit(open: boolean, duration = 140): { mounted: boolea
 // data: slides the element out 200ms, collapses its height 180ms, then runs onDone
 // (which performs the actual mutation). Reduced-motion → immediate onDone.
 export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
-  // T7: a row that has already gone (collapseRow after a swipe's fly-off) doesn't slide a second time.
-  if (!el || el.dataset.exited !== undefined || reducedMotionNow() || typeof el.animate !== 'function') {
+  if (!el || reducedMotionNow() || typeof el.animate !== 'function') {
     onDone()
     return
   }
   const height = el.offsetHeight
   el.style.pointerEvents = 'none'
-  const slide = el.animate(
-    [
-      { opacity: 1, transform: 'none' },
-      { opacity: 0, transform: 'translateX(24px)' },
-    ],
-    { duration: 200, easing: 'cubic-bezier(0.55, 0, 0.68, 0.53)', fill: 'forwards' },
-  )
-  slide.onfinish = () => {
+  const fold = () => {
     el.style.overflow = 'hidden'
     const collapse = el.animate([{ height: `${height}px` }, { height: '0px' }], {
       duration: 180,
@@ -173,6 +165,17 @@ export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
     })
     collapse.onfinish = () => onDone()
   }
+  // T7: a row a swipe has already flown off sideways (SwipeRow marks it data-flown) only folds its
+  // height, as iOS Mail's swipe-to-archive does — no second slide.
+  if (el.dataset.flown !== undefined) return fold()
+  const slide = el.animate(
+    [
+      { opacity: 1, transform: 'none' },
+      { opacity: 0, transform: 'translateX(24px)' },
+    ],
+    { duration: 200, easing: 'cubic-bezier(0.55, 0, 0.68, 0.53)', fill: 'forwards' },
+  )
+  slide.onfinish = fold
 }
 
 /** T6 — "leaves this list" exits without holding the write back. Watches `els`; when the next render
@@ -223,7 +226,6 @@ export function exitAll(selector: string, write: () => void): void {
  * had got to (200ms, ease-standard): the exit, run in reverse. */
 export function cancelRowRemoval(el: HTMLElement | null) {
   if (!el) return
-  delete el.dataset.exited
   const exits = (el.getAnimations?.() ?? []).filter((a) => !('animationName' in a) && !('transitionProperty' in a))
   const cs = exits.length ? getComputedStyle(el) : null
   const from = cs ? { height: `${el.offsetHeight}px`, opacity: cs.opacity, transform: cs.transform } : null
@@ -236,18 +238,6 @@ export function cancelRowRemoval(el: HTMLElement | null) {
   back.onfinish = back.oncancel = () => {
     el.style.overflow = ''
   }
-}
-
-/** T7 — the second half of a swipe commit: the row has already flown off sideways, so only its
- * height folds shut (180ms, ease-natural, as iOS Mail's swipe-to-archive), then `onDone` runs the
- * action. Marks the row as gone, so the action's own exit (deleteTask, a "leaves this list" exit)
- * doesn't slide it again; cancelRowRemoval brings it back. */
-export function collapseRow(el: HTMLElement | null, onDone: () => void) {
-  if (!el || reducedMotionNow() || typeof el.animate !== 'function') return onDone()
-  el.dataset.exited = ''
-  el.style.pointerEvents = 'none'
-  el.style.overflow = 'hidden'
-  el.animate([{ height: `${el.offsetHeight}px` }, { height: '0px' }], { duration: 180, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' }).onfinish = () => onDone()
 }
 
 /** T2 — how long a ticked row keeps its place while the four-beat check plays (Motion 3b). */

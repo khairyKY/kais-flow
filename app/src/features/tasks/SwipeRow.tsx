@@ -5,7 +5,7 @@ import { uiZoom } from '../../lib/uiScale'
 import { LONG_PRESS_MS, lockAxis, pastCommit, REST_X, settleSwipe, SETTLE_MS, type Axis } from './swipe'
 import './TaskRow.css'
 import { longPress, tick } from '../../lib/haptics'
-import { cancelRowRemoval, collapseRow, useMotionEnabled } from '../../lib/motion'
+import { useMotionEnabled } from '../../lib/motion'
 
 // ── The task-row gesture layer (DS-CHANGELOG §3 "Swipe row" + "Selection mode", Flow Audit §4):
 // swipe right reveals Tomorrow · Plan · Project and, past --swipe-commit, commits Tomorrow;
@@ -151,19 +151,21 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       // Delete leaves it gone while the row collapses (tasks/api deleteTask).
       setX(end === 'tomorrow' ? s.width : -s.width)
       window.setTimeout(() => {
-        // T7: flown off, the row only folds its height shut, then the action runs — one exit, not a
-        // fly-off and then a second slide. A row the action keeps (Tomorrow on All) comes back.
+        // T7: flown off, the row is marked, so its exit — Delete's own, or the still copy a "leaves
+        // this list" write plays (lib/motion) — only folds its height: one exit, not a second slide.
         const el = rowRef.current
-        collapseRow(el, () => {
-          if (end === 'tomorrow') actions?.tomorrow?.()
-          else actions?.delete?.()
-          // After any exit the action plays on a wrapper (the Inbox's breatheOut: 380ms) has had its turn.
-          window.setTimeout(() => {
-            if (!el?.isConnected) return
-            cancelRowRemoval(el)
-            setX(0)
-          }, 600)
-        })
+        if (el) el.dataset.flown = ''
+        if (end === 'tomorrow') {
+          actions?.tomorrow?.()
+          // A row the list keeps (Tomorrow on All) springs back, as it always did.
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              if (!el?.isConnected) return
+              delete el.dataset.flown
+              setX(0)
+            }),
+          )
+        } else actions?.delete?.()
       }, SETTLE_MS)
     } else setX(end === 'open-right' && !actions?.pickDate ? 0 : REST_X[end])
   }

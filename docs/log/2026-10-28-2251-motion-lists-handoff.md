@@ -14,7 +14,7 @@ Brief: `D:\Coding\_claude-cloud\kais-flow-motion-build-brief-2026-10-28.md`. The
 | `useArrivalClass()` (T11) | Returns `kf-row-in` for a row that mounts after that window (capture, Undo, realtime, reopen). |
 | `useCompletingRows(leave?, rowEl?)` (T2/T3) | The grace hold Tasks already had (650ms), shared. `hold` / `keep` (Undo) / `rows`. The default exit is `animateRowRemoval`; Today passes a FLIP instead. |
 | `cancelRowRemoval` (T5) | An Undo mid-exit now eases the row back (200ms, the exit reversed) instead of snapping. TaskRow also resets `checking` when an Undo clears `completed_at`. |
-| `collapseRow` (T7) | After a swipe's fly-off, only the row's height folds (180ms ease-natural). The row is marked so the action's own exit doesn't slide it a second time. |
+| `data-flown` (T7) | SwipeRow marks a row it has flown off. `animateRowRemoval` then only folds the row's height (180ms ease-natural), with no second slide; that covers Delete's own exit and the still copy from a "leaves this list" write. The action still runs right after the fly-off, as before. |
 | `exitOnRemoval(els)` / `exitAll(selector, write)` (T6) | The write is **not** held back. A MutationObserver watches the rows. When the next render takes one off the page (its own node, or the group around it), a still copy (no ids, inert, aria-hidden) goes back where it stood and plays the shared exit, then is removed. Rows the change keeps are never touched, so no page has to say what its list shows. Gives up after 1s. tasks/api uses it for Tomorrow, Plan, bulk dates, Someday, Snooze and Move (menus, keys, bulk bar, drag to sidebar or rail); Inbox, People, facts, Library and Domains use it through `exitAll`. |
 | `flip(container, change, selector)` / `flipRows(change)` (T13) | FLIP driven by a MutationObserver: it works whether React renders at once or after TanStack's notify timer. Rows are keyed by `id`, so slot-keyed lists (the Top 3) also glide. |
 | `Collapse` (T8) | `grid-template-rows` 0fr↔1fr over `--dur-collapse` on `--ease-standard`. Children unmount once it's shut. `appear` makes a fold that only mounts when opening ease in; `onClosed` fires when it has finished shutting. |
@@ -31,7 +31,7 @@ Brief: `D:\Coding\_claude-cloud\kais-flow-motion-build-brief-2026-10-28.md`. The
 | T3 Today row jumps to the bottom | built: the ticked row keeps its place (list sort and Top 3 order), then FLIPs down | TodayPage.tsx |
 | T5 Undo mid-exit | built | lib/motion.ts, TaskRow.tsx |
 | T6 "leaves this list" exits | built for every task list (Tomorrow, Plan, Someday, Snooze, Move, bulk, drag to sidebar or rail), Inbox single snooze + every bulk action, People delete + nudge card, person facts ✕, Library remove, Domains delete. A first version held each write back until the exit had played (380ms, as Delete does); fix-inbox caught that as slower bulk actions, so writes now go out at once and the exit plays on a copy. **Not done:** rituals carry-over Drop/choose and inbox-in-ritual (A2's files). | lib/motion.ts, tasks/api.ts, InboxPage.tsx, PeoplePage.tsx, PersonDetailPage.tsx, LibraryPage.tsx, DomainList.tsx |
-| T7 swipe commit | built | SwipeRow.tsx |
+| T7 swipe commit | built | SwipeRow.tsx, lib/motion.ts |
 | T8 Collapse everywhere | built: Today (Also open "Show N more", More for today, both phone folds), SubtaskNest (incl. auto-fold), Tasks DoneView "Earlier this week", Inbox GitHub fold + open GitHub row, sidebar Plan drawer, Trash confirm cards. Today's routine fold-lines no longer exist in code. **Rituals and Weekly Review folds are in A2's files:** A2 wraps them in `Collapse` after merging. | Collapse.tsx/.css + the files listed |
 | T11 new rows breathe in | built: Today rows, nested subtasks, Slipping card on Undo, Tasks done rows, WorthALook "1 of 2" cross-fade. Chat bubbles are A2's (Chat). | TodayPage.tsx, TaskFields.tsx, TaskRow.tsx |
 | T12 progress hairline | built: Today's Day-card hairline and Projects card bars use scaleX over 300ms ease-out. The other T12 bars (Routines, rituals, Focus) are A2's. | DayCard.tsx, today.css, ProjectsPage.tsx |
@@ -46,7 +46,15 @@ Brief: `D:\Coding\_claude-cloud\kais-flow-motion-build-brief-2026-10-28.md`. The
 
 ## Evidence
 
-- **Gate** (`gate.ps1`): vitest ×4 TZ 190 files / 2677 tests green, lint 0, build, ds:check 0 new (the Collapse transition is marked `ds-ok`). `birthday_on` 1/1.
+- **Gate** (`gate.ps1`), run on the tree merged with kai-bugs-1012 @ 5b003ae7: vitest ×4 TZ, 190 files / 2677 tests green; lint 0; build; ds:check 0 new (the Collapse transition is marked `ds-ok`). `birthday_on` is 1/1. No file I touched has mixed line endings, and each keeps the base branch's style.
 - **New unit test:** `staggerDelay` cap and window (lib/motion.test.ts).
 - **Harness** `docs/log/assets/motion-lists/verify.mjs <out> http://localhost:5326`. Sections h, g, p, t, x, w, c, f, l, o, n; each item is run with Effects on, Effects off and reduced motion. The checks look at Web Animations and computed height or opacity mid-move, and at the end state.
-- **Existing harnesses** re-run against this branch: see the INDEX line.
+- **Harness `motion-lists`:** 82/82 on the merged tree.
+- **Existing harnesses, green on this branch:** motion 48, fix-inbox 69, fix-today 115, gestures*, manual-order 25, keys-undo 60, undo-verbs 88, snooze 74, small-gaps 154, today-shell 86, today-days 90, phone-today 41, smart-lists 41, github-rules 53, tasks-noise 202.
+- **Failing, but they fail the same way on the base branch** (each run alone, on a base worktree, same checks):
+  - fix-tasks 67/70 (p3 ×2, e4)
+  - subtasks 46/47 (p1)
+  - projects-fixes, sync-fix and labels time out at the same lines
+  - *gestures 96/100: "row now reads Tomorrow 09:00" and "bulk Delete" (day and night) fail identically on kai-bugs @ 5b003ae7. They started after the clock passed midnight (29 Oct); it looks like the harness depends on the real date.
+- **A real failure, fixed:** fix-inbox caught the first T6 version holding bulk writes back. Fixed by exitOnRemoval (above); it then passed 69/69.
+- **Flake, not a failure:** manual-order failed only under three parallel lanes; alone it is 25/25.
