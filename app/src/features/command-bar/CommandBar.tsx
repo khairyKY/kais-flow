@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
@@ -60,12 +60,29 @@ const toast = (message: string) => useToastStore.getState().push({ message })
 // parse chips, [camera · mic] … [send]; its mic is hold-to-talk's tap twin (the voice sheet). On
 // desktop it's the ⌘K overlay, whose mic dictates into the field for review. AppLayout keeps this
 // mounted (it renders nothing while closed) so openCapture() can render + focus it inside a tap.
+/** K2 — the ⌘K card's height eases 150ms as rows come and go; chips fade up 120ms as they arrive
+ * (functional, RM2: they play with Effects off; reduced motion's global rule cuts them). */
+const K2_CSS = `
+  .kf-cmd-grow { transition: height 150ms var(--ease-standard); overflow: clip; overflow-clip-margin: 4px; }
+  .kf-cmd-chips > * { animation: itemFadeIn 120ms var(--ease-out) backwards; }
+`
+
 export function CommandBar() {
   const open = useCommandBarStore((s) => s.open)
   const setOpen = useCommandBarStore((s) => s.setOpen)
   const mobile = useIsMobile()
   const [text, setText] = useState('')
   const [jumpSelected, setJumpSelected] = useState(false)
+  // K2: the ⌘K card's changing part eases to its content's height (measured; the outer box transitions).
+  const growRef = useRef<HTMLDivElement>(null)
+  const [growH, setGrowH] = useState<number>()
+  useLayoutEffect(() => {
+    const el = growRef.current
+    if (!el) return setGrowH(undefined)
+    const ro = new ResizeObserver(() => setGrowH(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [open, mobile])
   /** Token words Esc handed back to the title (P7e A10) — read as plain words until the line is gone. */
   const [ignored, setIgnored] = useState<string[]>([])
   /** P7e A11 (Akiflow's ⌘2 "New Event"): what Enter makes of the line — a task (and the Inbox), or an event. */
@@ -451,6 +468,11 @@ export function CommandBar() {
               {field(closeBar)}
               {camera(closeBar, 22)}
             </div>
+            {/* K2: everything that comes and goes as you type sits in one box whose height eases (150ms,
+                cmdk's list height), so the card doesn't jump on each key; chips fade up as they arrive. */}
+            <style>{K2_CSS}</style>
+            <div className="kf-cmd-grow" style={{ height: growH }}>
+            <div ref={growRef}>
             {jumpView && (
               <div
                 onClick={() => jumpTo(jumpView)}
@@ -466,6 +488,8 @@ export function CommandBar() {
                   cursor: 'pointer',
                   background: jumpSelected ? 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' : 'transparent',
                   border: `1px solid ${jumpSelected ? 'var(--acc-lavender)' : 'var(--line-card)'}`,
+                  // K2: the selection moves in ~80ms instead of snapping
+                  transition: 'background-color 80ms var(--ease-standard), border-color 80ms var(--ease-standard)',
                 }}
               >
                 <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>Jump</span>
@@ -486,7 +510,7 @@ export function CommandBar() {
               </div>
             )}
             {text.trim() && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
+              <div className="kf-cmd-chips" style={{ display: 'flex', alignItems: 'center', gap: 7, marginTop: 12, flexWrap: 'wrap' }}>
                 {parsed.dueAt && (
                   <span style={{ ...CHIP_BASE, color: 'var(--acc-lavender-text)', background: 'color-mix(in srgb, var(--acc-lavender) 22%, transparent)' }}>
                     {formatDueChip(parsed.dueAt, undefined, parsed.dueTimed)}
@@ -557,6 +581,8 @@ export function CommandBar() {
                   <KeyChip text="⌘2" size="sm" /> Event
                 </>
               )}
+            </div>
+            </div>
             </div>
           </div>
         </div>
