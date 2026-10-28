@@ -72,9 +72,10 @@ Source: `_claude-cloud/kais-flow-ios-pwa-integrations-research-2026-10-29.md`, P
   - Build Mac app: dmg 68.5 MiB, `Format=app bundle with Mach-O universal (x86_64 arm64)`, `Signature=adhoc`, valid on disk, the .dmg holds `Applications -> /Applications`, the smoke launch ran 25 s without a crash.
   - Build Windows installer: success. Microsoft Store package: success.
   - Updater manifest: `latest.json platforms: windows-x86_64, darwin-aarch64, darwin-x86_64`, with the v1.5.0 Windows URL unchanged.
-- **CI run 2** (`40781590271`, the same with the steps moved into `mac-build.sh`): result in the reply / below.
-- Local: `cargo check` (x86_64-pc-windows-msvc) clean, and Cargo.lock gains only `mac-notification-sys`.
-- Gate (`gate.ps1`): vitest ×4 TZ 2680/2680, lint 0, build, ds:check 0 new.
+- **CI run 2** (`40781590271`, the steps moved into `mac-build.sh`): all 4 jobs green.
+- **CI run 3** (`40782829663`, after merging `claude/kai-bugs-1012`@e39abf90 with the licence work): all 4 jobs green. The licences prebuild ran in both builds: Mac `licenses: 49 JS packages, 267 Rust crates`, Windows `… 240 Rust crates`. `app/scripts/licenses.mjs` maps Tauri's `universal-apple-darwin` (unknown to cargo) to both slices with a repeated `--filter-platform`, and the heading now reads "Rust crates (the desktop app)".
+- Local: `cargo check` (x86_64-pc-windows-msvc) clean before and after the merge, and Cargo.lock gains only `mac-notification-sys`.
+- Gate (`gate.ps1`), before and after the merge: vitest ×4 TZ 2680/2680, lint 0, build, ds:check 0 new.
 - Site: `node build.mjs` 32 pages; `check-links` all resolve.
 
 ## Only a real Mac can tell
