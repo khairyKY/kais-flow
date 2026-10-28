@@ -415,6 +415,24 @@ if (want('o8')) {
   }
 }
 
+// ── O12 — the theme switch cross-fades the page (a root view transition, 250ms), Effects-gated ──
+if (want('o12')) {
+  for (const [v, o] of [['on', {}], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
+    const env = await open('/settings', { view: desktop, ...o })
+    const { page } = env
+    await page.locator('.kf-seg[aria-label="Theme"]').getByRole('button', { name: 'Dark' }).click()
+    await sleep(60)
+    const vt = await page.evaluate(() => document.getAnimations().map((a) => [a.effect?.pseudoElement, a.effect?.getTiming().duration]).filter(([p]) => p?.startsWith('::view-transition')))
+    await sleep(400)
+    const theme = await page.evaluate(() => document.documentElement.dataset.theme)
+    if (v === 'on') check('o12 on: Light → Dark cross-fades the root (view transition, 250ms)', vt.length > 0 && vt.every(([, d]) => d === 250), JSON.stringify(vt))
+    else check(`o12 ${v}: no cross-fade — the theme flips at once`, vt.length === 0, JSON.stringify(vt))
+    check(`o12 ${v}: it ends in Night`, theme === 'night', theme)
+    basics(env, `o12 ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
