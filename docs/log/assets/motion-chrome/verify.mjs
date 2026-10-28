@@ -97,7 +97,7 @@ async function open(route, o = {}) {
     return r.fulfill({ json: rows, headers: { 'content-range': `0-${Math.max(0, rows.length - 1)}/${rows.length}` } }).catch(() => {})
   })
   const page = await ctx.newPage()
-  await page.clock.install({ time: cairo('10:00') })
+  await page.clock.install({ time: o.at ?? cairo('10:00') })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   await page.goto(`${BASE}${route}`, { waitUntil: 'networkidle', timeout: 90_000 })
@@ -531,6 +531,30 @@ if (want('dp')) {
     await shot(page, `dp-month-${v}`)
     check(`dp ${v}: opening doesn't slide; Next slides in from the right (kfPkNavNext), Previous from the left`, first === 'none' && next.name === 'kfPkNavNext' && prev.name === 'kfPkNavPrev' && (v === 'reduced' || (next.running > 0 && prev.running > 0)), JSON.stringify({ first, next, prev }))
     basics(env, `dp ${v}`)
+    await env.ctx.close()
+  }
+}
+
+// ── D12 — the seasonal drift behind the page header: one system, four skins by the real season, Effects-gated ──
+if (want('d12')) {
+  const SEASONS = [['spring', new Date(Date.UTC(2026, 3, 14, 7)), 'kfSeasonFall'], ['summer', new Date(Date.UTC(2026, 6, 14, 7)), 'kfSeasonShimmer'], ['autumn', cairo('10:00'), 'kfSeasonSide'], ['winter', new Date(Date.UTC(2026, 0, 14, 7)), 'kfSeasonRain']]
+  for (const [season, at, anim] of SEASONS) {
+    for (const view of ['desktop', 'phone']) {
+      const env = await open('/today', { at, view: view === 'desktop' ? desktop : phone })
+      const { page } = env
+      const layer = page.locator(view === 'desktop' ? '.td-head .kf-season-drift' : '.tp-bar .kf-season-drift')
+      const r = await layer.evaluate((el) => ({ season: el.dataset.season, display: getComputedStyle(el).display, bits: el.children.length, names: [...new Set(el.getAnimations({ subtree: true }).map((a) => a.animationName))], z: getComputedStyle(el).zIndex }))
+      await sleep(season === 'winter' ? 900 : 2500)
+      await page.locator(view === 'desktop' ? '.td-head' : '.tp-bar').screenshot({ path: path.join(OUT, `d12-${season}-${view}.png`) })
+      check(`d12 ${season} ${view}: the ${season} skin drifts behind the header (${anim})`, r.season === season && r.display === 'block' && r.bits > 0 && r.names.length === 1 && r.names[0] === anim && r.z === '-1', JSON.stringify(r))
+      basics(env, `d12 ${season} ${view}`)
+      await env.ctx.close()
+    }
+  }
+  for (const [v, o] of [['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', { view: desktop, ...o })
+    const d = await env.page.locator('.td-head .kf-season-drift').evaluate((el) => ({ display: getComputedStyle(el).display, running: el.getAnimations({ subtree: true }).length }))
+    check(`d12 ${v}: no drift (the layer is display:none, nothing runs)`, d.display === 'none' && d.running === 0, JSON.stringify(d))
     await env.ctx.close()
   }
 }
