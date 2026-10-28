@@ -44,7 +44,11 @@ function jsPackages() {
 
 function rustPackages() {
   const args = ['metadata', '--format-version', '1', '--manifest-path', join(APP, 'src-tauri', 'Cargo.toml')]
-  if (process.env.TAURI_ENV_TARGET_TRIPLE) args.push('--filter-platform', process.env.TAURI_ENV_TARGET_TRIPLE)
+  // The Mac build is one universal .app: Tauri names it `universal-apple-darwin`, which cargo doesn't know,
+  // so both of its slices count (--filter-platform repeats).
+  const triple = process.env.TAURI_ENV_TARGET_TRIPLE
+  const triples = triple === 'universal-apple-darwin' ? ['aarch64-apple-darwin', 'x86_64-apple-darwin'] : triple ? [triple] : []
+  for (const t of triples) args.push('--filter-platform', t)
   const meta = JSON.parse(execFileSync('cargo', args, { encoding: 'utf8', maxBuffer: 256 * 1024 * 1024 }))
   const byId = new Map(meta.packages.map((p) => [p.id, p]))
   const nodes = new Map(meta.resolve.nodes.map((n) => [n.id, n]))
@@ -115,10 +119,10 @@ writeFileSync(
     `Licensed under CC-BY 4.0: https://creativecommons.org/licenses/by/4.0/`,
     ``,
     rule,
-    withRust ? `Rust crates (the Windows app) — ${rust.length}` : `Rust crates`,
+    withRust ? `Rust crates (the desktop app) — ${rust.length}` : `Rust crates`,
     rule,
     ``,
-    withRust ? render(rust) : `This build carries no Rust code. The Windows app's copy of this page lists the crates it is built with.\n`,
+    withRust ? render(rust) : `This build carries no Rust code. The Windows and Mac apps' copy of this page lists the crates they are built with.\n`,
     rule,
     `Android`,
     rule,
