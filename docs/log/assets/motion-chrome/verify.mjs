@@ -354,6 +354,33 @@ if (want('o6')) {
   }
 }
 
+// ── O7 — sidebar fold: labels fade out (120ms), then the width eases (200ms); opening reverses it ──
+if (want('o7')) {
+  for (const [v, o] of [['on', {}], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', { view: desktop, ...o })
+    const { page } = env
+    const side = page.locator('aside.app-sidebar')
+    // Click and sample inside the page, so the timings are the page's own (sizes are zoomed: compare to the start).
+    const run = () => side.evaluate(async (el) => {
+      const read = () => ({ w: Math.round(el.getBoundingClientRect().width), label: Number(getComputedStyle(el.querySelector('.app-nav-label')).opacity), shown: getComputedStyle(el.querySelector('.app-nav-label')).display !== 'none' })
+      const at = (ms) => new Promise((r) => setTimeout(() => r(read()), ms))
+      const w0 = read().w
+      document.querySelector('.kf-collapse-btn').click()
+      const [a, b, c] = await Promise.all([at(60), at(220), at(700)])
+      return { w0, a, b, c }
+    })
+    const f = await run()
+    const full = f.w0, rail = f.c.w
+    if (v === 'reduced') check('o7 reduced: the fold is a cut (the rail at once)', f.a.w === rail && rail < full / 2, JSON.stringify(f))
+    else check(`o7 ${v}: folding — labels fade first at full width, then the width eases, ending on the rail`, f.a.w === full && f.a.label < 1 && f.b.w > rail && f.b.w < full && !f.c.shown && rail < full / 2, JSON.stringify(f))
+    const g = await run()
+    if (v === 'reduced') check('o7 reduced: opening is a cut too', g.a.w === full && g.c.label === 1, JSON.stringify(g))
+    else check(`o7 ${v}: opening — the width eases out with the labels still hidden, then they fade in`, g.a.w > rail && g.a.w < full && g.a.label === 0 && g.c.w === full && g.c.label === 1, JSON.stringify(g))
+    basics(env, `o7 ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {

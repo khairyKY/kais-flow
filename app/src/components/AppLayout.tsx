@@ -18,7 +18,7 @@ import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/
 import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
-import { markRouteEntry, useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
+import { markRouteEntry, reducedMotionNow, useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
@@ -705,6 +705,28 @@ export function AppLayout() {
   useEffect(() => {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
+  // O7: folding, the labels fade out first (120ms), then the width eases 242 → 64 (200ms, CSS);
+  // opening, the width eases out, then the labels fade back in. Functional: a cut under reduced motion.
+  const [fold, setFold] = useState<'out' | 'in' | null>(null)
+  const foldTimer = useRef(0)
+  const toggleSidebar = () => {
+    window.clearTimeout(foldTimer.current)
+    if (reducedMotionNow()) {
+      setFold(null)
+      return setCollapsed((v) => !v)
+    }
+    if (!collapsed) {
+      setFold('out')
+      foldTimer.current = window.setTimeout(() => {
+        setCollapsed(true)
+        setFold(null)
+      }, 120)
+    } else {
+      setCollapsed(false)
+      setFold('in')
+      foldTimer.current = window.setTimeout(() => setFold(null), 320)
+    }
+  }
 
   // User time zones: every date below reads the user's zone; a new zone remounts the page (key
   // below) so nothing memoised keeps the old day. Once per device, offer the device's own zone.
@@ -834,6 +856,10 @@ export function AppLayout() {
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* O7 — the fold (toggleSidebar): labels out 120ms, then the width 200ms; back, the reverse. */
+        .app-sidebar { transition: width var(--dur-normal) var(--ease-standard); }
+        .app-sidebar[data-fold='out'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { opacity: 0; transition: opacity 120ms var(--ease-standard); }
+        .app-sidebar[data-fold='in'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { animation: kfFadeIn 120ms var(--ease-out) var(--dur-normal) backwards; }
         /* A size container query, not a media query: it measures the sidebar in zoomed CSS px. */
         .app-sidebar { container: kf-sidebar / size; }
         /* Bottom B (Sidebar options.html, Kai 2026-10-22): the name is the menu's button, and the app
@@ -1049,11 +1075,12 @@ export function AppLayout() {
           overhang the divider at right:-12 un-clipped — scrolling lives on the inner column. */}
       <aside
         className={`app-sidebar${collapsed ? ' collapsed' : ''}`}
+        data-fold={fold ?? undefined}
         style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 5 }}
       >
         <button
           type="button"
-          onClick={() => setCollapsed((v) => !v)}
+          onClick={toggleSidebar}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="kf-collapse-btn"
           style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--line-card)', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', color: 'var(--ink-faint)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 45 }}
