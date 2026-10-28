@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useNavigate } from 'react-router'
-import { useOpenTask } from '../tasks/openTask'
+import { useLocation, useNavigate } from 'react-router'
+import { TASK_PARAM, taskAnchor, useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
@@ -39,7 +39,7 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../lib/settings'
 import { daisyAsset } from '../../lib/gardenAssets'
-import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
+import { playOnce, reducedMotionNow, useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { slotFields, timeRange, timeText, zoneHour, zoneTimeKey } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
@@ -1123,6 +1123,21 @@ function DesktopCalendar() {
   // M2: the block popover and quick create play their way out (100ms) after their state is cleared.
   const blockExit = useOverlayExit(!!(selected && selectedEvent), 100)
   const blockShown = useKept(selected && selectedEvent ? { sel: selected, event: selectedEvent } : null, blockExit.mounted)
+  // CAL11 (Kai's yes): the block whose popover is open is outlined — its details or menu B, or its task's popover
+  // (`?task=`, anchored to the block it was opened from). Off as the popover starts to close.
+  const taskOpen = new URLSearchParams(useLocation().search).get(TASK_PARAM)
+  const selectedId = (selected && selectedEvent && !blockExit.closing ? selected.id : null) ?? (taskOpen ? (taskAnchor(taskOpen)?.el.closest<HTMLElement>('[data-kf-id]')?.dataset.kfId ?? null) : null)
+  // CAL5: planning mode cross-fades in and out (160 ms), and the rail's content fades in as it unfolds (120 ms) — its
+  // width still snaps. Functional: off only under reduced motion.
+  const mainRef = useRef<HTMLDivElement>(null)
+  const seenLayout = useRef({ planning, railFolded })
+  useLayoutEffect(() => {
+    const was = seenLayout.current
+    seenLayout.current = { planning, railFolded }
+    if (reducedMotionNow()) return
+    if (was.planning !== planning) playOnce(mainRef.current, 'view', 220)
+    else if (was.railFolded && !railFolded && !planning) playOnce(railRef.current, 'unfold', 180)
+  }, [planning, railFolded])
   const qcExit = useOverlayExit(!!quickCreate, 100)
   const qcShown = useKept(quickCreate ? { ...quickCreate, key: JSON.stringify([quickCreate.kind, quickCreate.slot, quickCreate.anchor]) } : null, qcExit.mounted)
 
@@ -1382,7 +1397,7 @@ function DesktopCalendar() {
           </div>
         )}
 
-        <div className={planning ? 'cal-main cal-strip' : 'cal-main'}>
+        <div ref={mainRef} className={planning ? 'cal-main cal-strip' : 'cal-main'}>
           {planning ? stripHead : (
           <div className="cal-head" style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 0, minHeight: 52, padding: '6px 14px 6px 16px', borderBottom: '1px solid var(--line-card)', flex: 'none' }}>
             {/* Kai 2026-10-14: the date and its daisy sit at the far top right, out of the grid's height. */}
@@ -1460,6 +1475,7 @@ function DesktopCalendar() {
               conflictedIds={conflictedIds}
               pendingIds={pendingIds}
               failedIds={failedIds}
+              selectedId={selectedId}
             />
             </div>
             {!planning && viewKind !== 'month' && (

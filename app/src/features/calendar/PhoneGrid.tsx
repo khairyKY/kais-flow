@@ -4,7 +4,9 @@ import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import { addDays, durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { longPress, tick } from '../../lib/haptics'
-import { useMotionEnabled } from '../../lib/motion'
+import { playOnce, reducedMotionNow, useMotionEnabled } from '../../lib/motion'
+import { EASE_OUT, markTicked, ownArrival, takeTicked } from './blockMotion'
+import { flushSync } from 'react-dom'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { uiZoom } from '../../lib/uiScale'
 import { clockText, hourLabel, useHour24 } from '../../lib/clock'
@@ -55,6 +57,9 @@ export interface PhoneGridHandle {
    * slot's task (the same float, ghost, time bubble and edge scroll), and hands `onDrop` the quarter it's let
    * go on (null off the grid). */
   carry(c: Carry): void
+  /** CAL6: the grid slides to `next` (the days a strip tap or Today shows) by the swipe's own settle — the new days in
+   * from the side they're on — then `done` sets them. Reduced motion: `done` at once. */
+  slideTo(dir: 1 | -1, next: string[], done: () => void): void
 }
 
 export interface Carry {
@@ -148,7 +153,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   heldRef.current = held
   const floatRef = useRef<HTMLDivElement>(null)
   // drag-fix: a carried tray chip's drop, and the window listeners that follow its pointer (the chip keeps it).
-  const carryRef = useRef<{ onDrop: Carry['onDrop']; off: () => void } | null>(null)
+  const carryRef = useRef<{ onDrop: Carry['onDrop']; off: () => void; el: HTMLElement } | null>(null)
   // Effects 2l's long-press bloom on a held task's row while the hold counts (SwipeRow's).
   const motionOn = useMotionEnabled()
   const [bloom, setBloom] = useState<{ id: string; x: number; y: number; n: number; out: boolean } | null>(null)
@@ -165,6 +170,8 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const setSwipe = (x: number) => gridRef.current?.style.setProperty('--pc-swipe', `${x}px`)
   const [sliding, setSliding] = useState(false)
   const [settling, setSettling] = useState(false)
+  // CAL6: a slide asked for by a strip tap or Today — the pane on `dir`'s side shows `days` (not a swipe's next page).
+  const [jump, setJump] = useState<{ dir: 1 | -1; days: string[] } | null>(null)
   // st0: the grid's scrollTop at the press, so a drag that scrolls the grid (its edges) still tracks the finger.
   // armed: the edges scroll — off for a chip carried in from the tray above until the finger is past the top edge's
   // band once (crossing it on the way in is no request to scroll).
@@ -215,6 +222,24 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       return { left: r.left + i * w + (multi ? 2 : 4), top: r.top + start * pxPerMin, width: w - (multi ? 4 : 20), height: Math.max((MIN_BLOCK_PX * pxPerMin) / minToPx(1), (end - start) * pxPerMin) }
     },
     carry,
+    slideTo: (dir, next, done) => {
+      if (settling || g.current.kind !== 'idle' || reducedMotionNow()) return done()
+      flushSync(() => {
+        setJump({ dir, days: next })
+        setSliding(true)
+      })
+      setSwipe(0)
+      void gridRef.current?.offsetWidth
+      flushSync(() => setSettling(true))
+      setSwipe(-dir * width())
+      window.setTimeout(() => {
+        done()
+        setSwipe(0)
+        setSettling(false)
+        setSliding(false)
+        setJump(null)
+      }, SETTLE_MS)
+    },
   }))
 
   function carry(c: Carry) {
@@ -238,7 +263,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     window.addEventListener('pointermove', move)
     window.addEventListener('pointerup', end)
     window.addEventListener('pointercancel', end)
-    carryRef.current = { onDrop: c.onDrop, off }
+    carryRef.current = { onDrop: c.onDrop, off, el: c.el }
   }
 
   const width = () => (trackRef.current?.getBoundingClientRect().width ?? 326) / uiZoom()
@@ -369,8 +394,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     const el = floatRef.current
     const z = uiZoom()
     if (el) {
-      el.style.left = `${(s.lastX - h.ox) / z}px`
-      el.style.top = `${(s.lastY - h.oy) / z}px`
+      el.style.translate = `${(s.lastX - h.ox) / z}px ${(s.lastY - h.oy) / z}px`
     }
     const at = heldAt(s.lastX, s.lastY, h.minutes)
     if (at?.day === h.at?.day && at?.start === h.at?.start) return
@@ -420,6 +444,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     if (kind === 'task') {
       const h = heldRef.current
       const carried = carryRef.current
+      // CAL7: a chip carried in from the tray and let go off the grid (nothing happens), or a hold cancelled, glides back
+      // to where it came from — the chip, or its row in the slot — instead of vanishing.
+      if (h && (e.type === 'pointercancel' || (carried && !h.at))) glideBack(carried?.el ?? trackRef.current?.querySelector(`[data-slot-task="${CSS.escape(h.taskId)}"]`))
       carried?.off()
       heldRef.current = null
       setHeld(null)
@@ -465,6 +492,48 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     }
   }
 
+  /** CAL7: the lifted task's float, copied where it is, eases onto `to` and fades (200 ms) as the real one goes. */
+  function glideBack(to: Element | null | undefined) {
+    const el = floatRef.current
+    const grid = gridRef.current
+    if (!el || !grid || !to || reducedMotionNow()) return
+    const z = uiZoom()
+    const r = to.getBoundingClientRect()
+    const copy = el.cloneNode(true) as HTMLElement
+    copy.removeAttribute('data-held-task')
+    grid.appendChild(copy)
+    copy.animate([{ translate: el.style.translate, opacity: 1 }, { translate: `${r.left / z}px ${r.top / z}px`, opacity: 0, transform: 'none' }], { duration: 200, easing: EASE_OUT, fill: 'forwards' })
+    window.setTimeout(() => copy.remove(), 220)
+  }
+
+  // CAL6 + CAL10: blocks that arrive on the days shown wear the just-landed ring — only the person's own (a create, a
+  // copy, a restore; Google sync and another device land quietly) — and blocks that leave fade where they were.
+  const shown = useRef<{ key: string; ids: Set<string> } | null>(null)
+  const dayKey = days.join()
+  const idsNow = () => new Set(loading ? [] : days.flatMap((d) => dayBlocks(events, d).map((b) => b.event.id)))
+  // Read while rendering: React takes a child's node out before any effect of this component runs.
+  // ponytail: a DOM read in render — a render React throws away could fade a block that stays; a WeakSet keeps a
+  // double render from fading one twice.
+  const prevShown = shown.current
+  if (prevShown && prevShown.key === dayKey && gridRef.current && !reducedMotionNow()) {
+    const ids = idsNow()
+    for (const id of prevShown.ids) {
+      if (ids.has(id)) continue
+      trackRef.current?.querySelectorAll<HTMLElement>(`.pc-pane .pc-block[data-id="${CSS.escape(id)}"]`).forEach((el) => {
+        if (faded.has(el)) return
+        faded.add(el)
+        fadeOut(gridRef.current!, el)
+      })
+    }
+  }
+  useLayoutEffect(() => {
+    const prev = shown.current
+    const ids = idsNow()
+    shown.current = { key: dayKey, ids }
+    if (!prev || prev.key !== dayKey || !ownArrival()) return
+    for (const id of ids) if (!prev.ids.has(id)) trackRef.current?.querySelectorAll<HTMLElement>(`.pc-block[data-id="${CSS.escape(id)}"]`).forEach((el) => playOnce(el, 'landed', 340))
+  })
+
   function tapGrid(e: React.MouseEvent) {
     if ((e.target as Element).closest('.pc-block, .pc-more')) return
     const r = trackRef.current?.getBoundingClientRect()
@@ -473,7 +542,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     onTapSlot(days[col], Math.floor(((e.clientY - r.top) / r.height) * 1440))
   }
 
-  const panes = sliding ? [-1, 0, 1] : [0]
+  const panes = jump ? [0, jump.dir] : sliding ? [-1, 0, 1] : [0]
   const inset = multi ? { l: 2, r: 2 } : { l: 4, r: 16 }
 
   /** Calendar 3e "spans midnight": the open edge of a piece cut at 00:00 says where the block runs on. */
@@ -537,7 +606,21 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             <span className="pc-check" onPointerDown={(e) => e.stopPropagation()} onClick={(e) => e.stopPropagation()}>
               {lk.check.repeat ? (
                 // Repeat B (cal-blocks): the box outline is two chasing arrows; ticking completes this occurrence.
-                <button type="button" role="checkbox" aria-checked={lk.check.done} aria-label={repeatCheckName(lk.check.done, lk.check.repeat)} className="pc-rep" onClick={lk.check.toggle}>
+                <button
+                  type="button"
+                  role="checkbox"
+                  aria-checked={lk.check.done}
+                  aria-label={repeatCheckName(lk.check.done, lk.check.repeat)}
+                  className="pc-rep"
+                  // CAL4: a tick made here turns the arrows half round, then the tick pops (once, as it paints)
+                  ref={(el) => {
+                    if (el && lk.check?.done && ev.task_id && takeTicked(ev.task_id)) playOnce(el, 'tick', 700)
+                  }}
+                  onClick={() => {
+                    if (!lk.check?.done && ev.task_id) markTicked(ev.task_id)
+                    lk.check?.toggle()
+                  }}
+                >
                   <RepeatGlyph done={lk.check.done} />
                 </button>
               ) : (
@@ -703,7 +786,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           {/* The track stays put (it clips the slide to the columns); the panes move. */}
           <div ref={trackRef} className={`pc-track${sliding ? ' is-sliding' : ''}`}>
             {panes.map((p) => {
-              const pdays = p ? days.map((d) => addDays(d, p * step)) : days
+              const pdays = jump && p === jump.dir ? jump.days : p ? days.map((d) => addDays(d, p * step)) : days
               return (
                 <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}${days.length > 3 ? ' is-week' : ''}`} style={{ left: `${p * 100}%`, transform: sliding ? 'translateX(var(--pc-swipe, 0px))' : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
                   {pdays.map((d) => column(d, p === 0))}
@@ -731,7 +814,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           ref={floatRef}
           className="pc-held-task"
           data-held-task={held.taskId}
-          style={{ left: (held.x - held.ox) / uiZoom(), top: (held.y - held.oy) / uiZoom(), width: held.w / uiZoom(), '--pc-fill': held.fill, '--pc-ink': held.ink } as CSSProperties}
+          style={{ translate: `${(held.x - held.ox) / uiZoom()}px ${(held.y - held.oy) / uiZoom()}px`, width: held.w / uiZoom(), '--pc-fill': held.fill, '--pc-ink': held.ink } as CSSProperties}
           aria-hidden
         >
           <span className="pc-check">
@@ -743,3 +826,18 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     </div>
   )
 })
+
+const faded = new WeakSet<HTMLElement>()
+
+/** CAL6: a block that left fades where it was — a copy, fixed over the grid (as the lifted task's float), 120 ms. */
+function fadeOut(grid: HTMLElement, el: HTMLElement): void {
+  const r = el.getBoundingClientRect()
+  if (!r.width || !r.height) return
+  const z = uiZoom()
+  const copy = el.cloneNode(true) as HTMLElement
+  copy.removeAttribute('data-id')
+  copy.classList.add('pc-leaving')
+  Object.assign(copy.style, { position: 'fixed', left: '0px', top: '0px', translate: `${r.left / z}px ${r.top / z}px`, width: `${r.width / z}px`, height: `${r.height / z}px`, margin: '0', zIndex: '4', pointerEvents: 'none' })
+  grid.appendChild(copy)
+  window.setTimeout(() => copy.remove(), 160)
+}

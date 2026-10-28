@@ -27,6 +27,8 @@ import { CARD_DRAG, liftCards } from './cardDrag'
 import { blockHue } from './blockHue'
 import { repeatCheckName } from './blockMenuSpec'
 import { RepeatGlyph, Tick } from './checkGlyphs'
+import { EASE_OUT, markTicked, ownArrival, takeTicked } from './blockMotion'
+import { playOnce, reducedMotionNow } from '../../lib/motion'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -149,6 +151,8 @@ interface CalendarGridProps {
   expandRows?: boolean
   /** cal-wave: a second clock in the time gutter — its zone (IANA), or none. */
   secondZone?: string | null
+  /** CAL11: the block whose popover (its details, menu B, its task's popover) is open — outlined in its ink. */
+  selectedId?: string | null
 }
 
 /** FullCalendar renders the day-column grid and the time-slot guide lines as separate DOM
@@ -178,15 +182,26 @@ function trackRailHover(rail: HTMLElement | null | undefined): () => void {
   if (!rail) return () => {}
   rail.dataset.dragging = '' // cal-wave: the rail's empty sections come back as drop targets meanwhile
   let over: HTMLElement | null = null
-  const move = (e: MouseEvent) => {
-    const sec = railSectionAt(rail, e.clientX, e.clientY)
+  // CAL9 / S11: one look a frame, and a hit test only while the pointer is over the rail.
+  let raf = 0
+  let at = { x: 0, y: 0 }
+  const look = () => {
+    raf = 0
+    const r = rail.getBoundingClientRect()
+    const inside = at.x >= r.left && at.x <= r.right && at.y >= r.top && at.y <= r.bottom
+    const sec = inside ? railSectionAt(rail, at.x, at.y) : null
     if (sec === over) return
     over?.removeAttribute('data-drop-over')
     sec?.setAttribute('data-drop-over', '')
     over = sec
   }
+  const move = (e: MouseEvent) => {
+    at = { x: e.clientX, y: e.clientY }
+    if (!raf) raf = requestAnimationFrame(look)
+  }
   window.addEventListener('mousemove', move)
   return () => {
+    cancelAnimationFrame(raf)
     window.removeEventListener('mousemove', move)
     over?.removeAttribute('data-drop-over')
     // after the drop has read the section under the pointer (the callers hit-test right after this)
@@ -227,10 +242,16 @@ function dayRange(first: string, last: string, max = 62): string[] {
 // .fc-event-mirror) into the stepped placeholder it's supposed to be.
 const GHOST_ID = 'kf-cal-ghost'
 
+/** A ghost in hand. `release` lets go of the pointer (it stops following, tilting and trailing) and keeps the ghost up
+ * for its settle; `stop` takes it down. */
+type Ghost = { stop: () => void; release: () => void; host: HTMLElement | null }
+
 /** `id`: the grabbed block's ghost carries GHOST_ID; a multi-drag's other blocks (cal-blocks, item 10) get their
- * own, unnamed — each placed from its own block, so it keeps its offset from the grabbed one under the pointer. */
-function startGhost(source: HTMLElement, ev: MouseEvent | null, id: string | null = GHOST_ID, from?: { x: number; y: number } | null): { stop: () => void; host: HTMLElement | null } {
-  if (typeof document === 'undefined') return { stop: () => {}, host: null }
+ * own, unnamed — each placed from its own block, so it keeps its offset from the grabbed one under the pointer.
+ * `tilt` (D3, Kai's yes; Effects on): it leans with the pointer's sideways speed, up to ±6° and back upright the
+ * moment the hand stops, a faint copy trailing it — the wobble stays underneath. */
+function startGhost(source: HTMLElement, ev: MouseEvent | null, id: string | null = GHOST_ID, from?: { x: number; y: number } | null, tilt = false): Ghost {
+  if (typeof document === 'undefined') return { stop: () => {}, release: () => {}, host: null }
   const rect = source.getBoundingClientRect()
 
   // The ghost lives on <body> so `position: fixed` is always viewport-relative (a transformed
@@ -246,6 +267,8 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null, id: string | nul
 
   const ghost = source.cloneNode(true) as HTMLElement
   ghost.className = `${source.className} kf-cal-ghost`
+  // It keeps the block's data-kf-id (whose ghost it is); every lookup by id that changes a block is scoped to the grid.
+  for (const a of ['data-selected', 'data-landed', 'data-landing']) ghost.removeAttribute(a)
   // Size and neutralise the grid placement WITHOUT cssText, which would wipe the inline
   // --kf-ev-* custom properties eventDidMount sets for a coloured event.
   ghost.style.position = 'relative'
@@ -261,19 +284,62 @@ function startGhost(source: HTMLElement, ev: MouseEvent | null, id: string | nul
   const at = from ?? (ev ? { x: ev.clientX, y: ev.clientY } : null)
   const grabX = at ? at.x - rect.left : rect.width / 2
   const grabY = at ? at.y - rect.top : rect.height / 2
+  const pos = { x: rect.left, y: rect.top }
+  // D3: the lean, from the pointer's sideways speed (px/ms), eased toward upright every frame.
+  let lean = 0
+  let lastX = at?.x ?? 0
+  let lastT = performance.now()
   // The host carries the position so the ghost itself keeps the 2c wobble on its own transform.
   const move = (e: MouseEvent) => {
-    host.style.transform = `translate(${e.clientX - grabX}px, ${e.clientY - grabY}px)`
+    pos.x = e.clientX - grabX
+    pos.y = e.clientY - grabY
+    host.style.transform = `translate(${pos.x}px, ${pos.y}px)`
+    if (!tilt) return
+    const t = performance.now()
+    lean = Math.max(-6, Math.min(6, lean * 0.6 + ((e.clientX - lastX) / Math.max(8, t - lastT)) * 5))
+    lastX = e.clientX
+    lastT = t
   }
   if (ev) move(ev)
   window.addEventListener('mousemove', move)
   window.addEventListener('dragover', move as EventListener)
 
+  let raf = 0
+  let trail: HTMLElement | null = null
+  if (tilt) {
+    trail = host.cloneNode(true) as HTMLElement
+    trail.removeAttribute('id')
+    trail.className = host.className.replace('kf-ghost-host', 'kf-ghost-trail') // not a ghost: a copy, nothing counts it
+    trail.firstElementChild?.removeAttribute('data-kf-id')
+    trail.style.opacity = '0.22'
+    trail.style.zIndex = '69'
+    document.body.insertBefore(trail, host)
+    const copy = trail.firstElementChild as HTMLElement
+    const tp = { ...pos }
+    const frame = () => {
+      lean *= 0.86
+      ghost.style.rotate = `${lean.toFixed(2)}deg`
+      tp.x += (pos.x - tp.x) * 0.18
+      tp.y += (pos.y - tp.y) * 0.18
+      trail!.style.transform = `translate(${tp.x}px, ${tp.y}px)`
+      copy.style.rotate = `${(lean * 0.6).toFixed(2)}deg`
+      raf = requestAnimationFrame(frame)
+    }
+    raf = requestAnimationFrame(frame)
+  }
+
+  const release = () => {
+    window.removeEventListener('mousemove', move)
+    window.removeEventListener('dragover', move as EventListener)
+    cancelAnimationFrame(raf)
+    trail?.remove()
+    trail = null
+  }
   return {
     host,
+    release,
     stop: () => {
-      window.removeEventListener('mousemove', move)
-      window.removeEventListener('dragover', move as EventListener)
+      release()
       host.remove()
     },
   }
@@ -364,54 +430,187 @@ function LiveTime({ p, allDay, overdue, clock, children }: { p: BlockProps; allD
   )
 }
 
-/** S2 + M1 (2026-10-22 audit): a moved block used to show at its old slot for ~0.4 s after the drop,
- * then jump. The ghost now stays up until the block has painted in its new place (kept hidden meanwhile,
- * `data-landing`), settles onto it — 160 ms, --ease-out, transform only — and goes; the block then wears
- * the just-landed ring. With Effects off or reduced motion it just goes once the block is there. */
-function settleGhost(landing: { stop: () => void; host: HTMLElement | null }, id: string, motion: boolean): void {
-  const sel = `.fc-event[data-kf-id="${CSS.escape(id)}"]:not(.fc-event-mirror)`
-  const mark = (on: boolean) => document.querySelectorAll<HTMLElement>(sel).forEach((el) => el.toggleAttribute('data-landing', on))
+const blockSel = (id: string) => `.fc-event[data-kf-id="${CSS.escape(id)}"]:not(.fc-event-mirror)`
+type Landing = { stop: () => void; host: HTMLElement | null }
+
+/** M1 / M8: the just-landed ring (§7, 300 ms) on a block — or a Time slot's row — that arrived: dropped, created,
+ * restored. An attribute on its element, never FullCalendar's data (no repaint). */
+function ring(el: HTMLElement): void {
+  el.removeAttribute('data-landed')
+  void el.offsetWidth // restart the animation
+  el.setAttribute('data-landed', '')
+  window.setTimeout(() => el.removeAttribute('data-landed'), 340)
+}
+const landRing = (root: ParentNode, id: string): void => root.querySelectorAll<HTMLElement>(blockSel(id)).forEach(ring)
+
+/** CAL14: the ghost eases onto `r` — its place (the host) and its lift, lean, wobble, shadow and size (the ghost),
+ * from wherever they are this frame — over `ms` on --ease-out. `out`: it fades as it goes (folding into the rail). */
+function glide(host: HTMLElement, ghost: HTMLElement, r: DOMRect, ms: number, out = false): void {
+  const g = getComputedStyle(ghost)
+  const from = { transform: g.transform, scale: g.scale, rotate: g.rotate, boxShadow: g.boxShadow, width: g.width, height: g.height, opacity: g.opacity }
+  ghost.getAnimations().forEach((a) => a.cancel())
+  ghost.classList.add('kf-cal-ghost-settle')
+  ghost.animate([from, { transform: 'none', scale: '1', rotate: '0deg', boxShadow: 'none', width: `${r.width}px`, height: `${r.height}px`, opacity: out ? 0 : 1 }], { duration: ms, easing: EASE_OUT, fill: 'forwards' })
+  host.style.transition = `transform ${ms}ms ${EASE_OUT}`
+  host.style.transform = `translate(${r.left}px, ${r.top}px)`
+}
+
+/** S2 + M1 (2026-10-22 audit), CAL1, CAL2: the ghost stays up until what now stands for the block has painted (kept
+ * hidden meanwhile, `data-landing`) — the block where it was dropped, the copy a Ctrl+drag made, the row of the Time
+ * slot it went into, the block it rides home to — then settles onto it (160 ms) and goes; the arrival wears the
+ * just-landed ring. With Effects off or reduced motion it just goes once that's there. `hide`: a block to keep out
+ * of sight meanwhile when the target is something else (a task block going into a slot). */
+function settleGhost(root: ParentNode, landing: Landing, target: string | (() => HTMLElement | null), motion: boolean, o: { ms?: number; ring?: boolean; hide?: string } = {}): void {
+  const ms = o.ms ?? 160
+  const hide = o.hide ?? (typeof target === 'string' ? target : null)
+  const find = typeof target === 'string' ? () => root.querySelector<HTMLElement>(blockSel(target)) : target
+  const mark = (on: boolean) => {
+    if (hide) root.querySelectorAll<HTMLElement>(blockSel(hide)).forEach((el) => el.toggleAttribute('data-landing', on))
+  }
+  let el: HTMLElement | null = null
   const finish = () => {
     mark(false)
+    el?.removeAttribute('data-landing')
     landing.stop()
-    if (motion) landRing(id)
+    if (motion && el && o.ring !== false) ring(el)
   }
   mark(true)
+  let tries = 0
+  const look = () => {
+    mark(true) // FullCalendar may have drawn a new element meanwhile
+    el = find()
+    // A copy, a detached occurrence or a slot's row is drawn a render or two after the drop: a few frames for it.
+    if (!el && motion && ++tries < 12) return void requestAnimationFrame(look)
+    const host = landing.host
+    const ghost = host?.firstElementChild as HTMLElement | null
+    if (!el || !host || !ghost || !motion || reducedMotionNow()) return finish()
+    el.setAttribute('data-landing', '')
+    glide(host, ghost, el.getBoundingClientRect(), ms)
+    window.setTimeout(finish, ms + 10)
+  }
+  requestAnimationFrame(() => requestAnimationFrame(look))
+}
+
+/** §7 the soft-no on a refused drop — each ghost shakes and dims (320 ms) — then CAL2: it rides home to its block
+ * (--dur-ghost-home, 380 ms), which stays out of sight until it's there. Effects off: they go after the shake. */
+function refuse(root: ParentNode, ghosts: readonly (Landing & { id: string })[], motion: boolean): void {
+  for (const g of ghosts) {
+    g.host?.classList.add('kf-cal-softno')
+    if (motion) root.querySelectorAll<HTMLElement>(blockSel(g.id)).forEach((el) => el.setAttribute('data-landing', ''))
+  }
+  window.setTimeout(() => {
+    for (const g of ghosts) {
+      if (motion) settleGhost(root, g, g.id, true, { ms: 380, ring: false })
+      else g.stop()
+    }
+  }, 340)
+}
+
+/** CAL1 (a block dragged onto the rail): FullCalendar has put the block back at its old slot — never shown there.
+ * The ghost folds into its task's row in the rail (200 ms) and the row breathes in, as Akiflow folds a block back
+ * into its list; with no row in sight it folds away where it is. */
+function foldIntoRail(root: ParentNode, ghost: Ghost, id: string, rail: HTMLElement, taskId: string | null, motion: boolean): void {
+  root.querySelectorAll<HTMLElement>(blockSel(id)).forEach((el) => el.setAttribute('data-landing', ''))
+  const host = ghost.host
+  const g = host?.firstElementChild as HTMLElement | null
+  if (!motion || reducedMotionNow() || !host || !g) return ghost.stop()
+  let tries = 0
+  const look = () => {
+    const row = taskId ? rail.querySelector<HTMLElement>(`.unscheduled-task[data-task-id="${CSS.escape(taskId)}"]`) : null
+    if (!row && ++tries < 12) return void requestAnimationFrame(look)
+    glide(host, g, (row ?? g).getBoundingClientRect(), 200, true)
+    row?.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 240, delay: 80, easing: EASE_OUT, fill: 'backwards' })
+    window.setTimeout(ghost.stop, 210)
+  }
+  requestAnimationFrame(look)
+}
+
+/** D4 (Kai's yes, decorative): while a block is dragged, each step the placeholder takes flashes its top edge once —
+ * a 1.5 px lavender-deep line, 120 ms (Motion 4c's calSnapLine, rebuilt on the DOM). One look a frame, at most. */
+function watchSnaps(wrap: HTMLElement): () => void {
+  const line = getComputedStyle(wrap).getPropertyValue('--acc-lavender-deep').trim()
+  let at = ''
+  let raf = 0
+  const look = () => {
+    raf = 0
+    const m = wrap.querySelector<HTMLElement>('.fc-event-mirror')
+    if (!m) return void (at = '')
+    const r = m.getBoundingClientRect()
+    const here = `${Math.round(r.left)}|${Math.round(r.top)}`
+    if (at && here !== at) m.animate([{ boxShadow: '0 -1.5px 0 transparent' }, { boxShadow: `0 -1.5px 0 ${line}`, offset: 0.3 }, { boxShadow: '0 -1.5px 0 transparent' }], { duration: 120, easing: EASE_OUT })
+    at = here
+  }
+  const move = () => {
+    if (!raf) raf = requestAnimationFrame(look)
+  }
+  window.addEventListener('mousemove', move)
+  return () => {
+    window.removeEventListener('mousemove', move)
+    cancelAnimationFrame(raf)
+  }
+}
+
+/** D4: a resize's free stretch — FullCalendar's placeholder steps per quarter; its edge follows the pointer instead
+ * (a margin on its harness, at most once a frame), kept where it was grabbed. `onFree` hears the edge's place. */
+function stretchFreely(wrap: HTMLElement, block: HTMLElement, edge: 'start' | 'end', down: MouseEvent, onFree: (free: { top: number; bottom: number }) => void): () => void {
+  const b = block.getBoundingClientRect()
+  const grab = (edge === 'end' ? b.bottom : b.top) - down.clientY
+  let y = down.clientY
+  let raf = 0
+  const look = () => {
+    raf = 0
+    const h = wrap.querySelector<HTMLElement>('.fc-timegrid-event.fc-event-mirror')?.parentElement
+    if (!h) return
+    const r = h.getBoundingClientRect()
+    if (edge === 'end') {
+      const snapped = r.bottom + (parseFloat(h.style.marginBottom) || 0)
+      const want = Math.max(y + grab, r.top + 8)
+      h.style.marginBottom = `${snapped - want}px`
+      onFree({ top: r.top, bottom: want })
+    } else {
+      const snapped = r.top - (parseFloat(h.style.marginTop) || 0)
+      const want = Math.min(y + grab, r.bottom - 8)
+      h.style.marginTop = `${want - snapped}px`
+      onFree({ top: want, bottom: r.bottom })
+    }
+  }
+  const move = (e: MouseEvent) => {
+    y = e.clientY
+    if (!raf) raf = requestAnimationFrame(look)
+  }
+  window.addEventListener('mousemove', move)
+  return () => {
+    window.removeEventListener('mousemove', move)
+    cancelAnimationFrame(raf)
+  }
+}
+
+/** CAL3 + D4: a resize let go — the block, drawn at its new length (out of sight till then), eases from where the
+ * pointer left its edge onto the quarter (160 ms) and wears the just-landed ring. */
+function commitStretch(root: ParentNode, id: string, edge: 'start' | 'end', free: { top: number; bottom: number } | null, motion: boolean): void {
   requestAnimationFrame(() =>
     requestAnimationFrame(() => {
-      mark(true) // FullCalendar may have drawn a new element meanwhile
-      const el = document.querySelector<HTMLElement>(sel)
-      const host = landing.host
-      const ghost = host?.firstElementChild as HTMLElement | null
-      if (!el || !host || !ghost || !motion || matchMedia('(prefers-reduced-motion: reduce)').matches) return finish()
+      const els = root.querySelectorAll<HTMLElement>(blockSel(id))
+      els.forEach((el) => el.removeAttribute('data-landing'))
+      const el = els[0]
+      if (!el) return
       const r = el.getBoundingClientRect()
-      host.style.transition = 'transform 160ms var(--ease-out)'
-      host.style.transform = `translate(${r.left}px, ${r.top}px)`
-      ghost.classList.add('kf-cal-ghost-settle')
-      window.setTimeout(finish, 170)
+      const d = !free || !motion ? 0 : edge === 'end' ? free.bottom - r.bottom : r.top - free.top
+      if (Math.abs(d) >= 1) el.animate(edge === 'end' ? [{ bottom: `${-d}px` }, { bottom: '0px' }] : [{ top: `${-d}px` }, { top: '0px' }], { duration: 160, easing: EASE_OUT })
+      window.setTimeout(() => ring(el), Math.abs(d) >= 1 ? 160 : 0)
     }),
   )
 }
 
-/** §7 the soft-no on a refused drop: the ghost (and a multi-drag's others) shakes and dims, then goes (340 ms). */
-function softNo(host: HTMLElement, carried: readonly Carried[], stop: () => void): void {
-  host.classList.add('kf-cal-softno')
-  for (const c of carried) c.host?.classList.add('kf-cal-softno')
-  window.setTimeout(() => {
-    stop()
-    carried.forEach((c) => c.stop())
-  }, 340)
-}
-
-/** M1 / M8: the just-landed ring (§7, 300 ms) on a block that arrived — dropped, created, restored. An
- * attribute on its element, never FullCalendar's data (no repaint). */
-function landRing(id: string): void {
-  document.querySelectorAll<HTMLElement>(`.fc-event[data-kf-id="${CSS.escape(id)}"]:not(.fc-event-mirror)`).forEach((el) => {
-    el.removeAttribute('data-landed')
-    void el.offsetWidth // restart the animation
-    el.setAttribute('data-landed', '')
-    window.setTimeout(() => el.removeAttribute('data-landed'), 340)
-  })
+/** CAL4: a block's box (check B, repeat B, a slot's row). dragGuard'd as before; a tick made here plays once when the
+ * done state paints — boxFill 90 + checkPop 180, repeat B's arrows turning half round first (CalendarGrid.css) — and
+ * never on a box that arrives ticked. */
+const tickBox = (taskId: string, done: boolean, toggle: () => void) => (el: HTMLElement | null) => {
+  dragGuard(() => {
+    if (!done) markTicked(taskId)
+    toggle()
+  })(el)
+  if (el && done && takeTicked(taskId)) playOnce(el, 'tick', 700)
 }
 
 /** M8: a block that left (deleted, unscheduled, undone) fades out where it was — a copy over the grid,
@@ -457,6 +656,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     slotMaxTime = '24:00:00',
     expandRows = false,
     secondZone,
+    selectedId = null,
   } = props
   const customView = 'customDayCount'
   // Conductor review 2026-10-12: the grid lays out on the user's zone (lib/appZone) like every other
@@ -503,19 +703,25 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   // that show. Null until FullCalendar reports its first range.
   const [shownDays, setShownDays] = useState<string[] | null>(null)
   const clockTime = useMemo(() => clockFormatter(zone, hour24), [zone, hour24])
-  // Teardown for the Motion 4c free ghost; held across the drag lifecycle.
-  const stopGhostRef = useRef<(() => void) | null>(null)
+  // The Motion 4c free ghost; held across the drag lifecycle.
+  const ghostRef = useRef<Ghost | null>(null)
   const stopHoverRef = useRef<(() => void) | null>(null)
+  // D4: the placeholder's step watch while a block is dragged.
+  const stopSnapRef = useRef<(() => void) | null>(null)
   // S2 + M1: a ghost handed from the drag's end to the drop, which settles it once the block has landed.
   const landingRef = useRef<{ stop: () => void; host: HTMLElement | null; timer: number; carried: Carried[] } | null>(null)
+  // CAL3 + D4: a resize under way (its free stretch) and the one just let go (its stepped commit).
+  const resizeRef = useRef<{ id: string; edge: 'start' | 'end'; free: { top: number; bottom: number } | null; timer: number; stop: () => void } | null>(null)
   // cal-blocks item 10: the other picked blocks' ghosts while one of them is dragged.
   const carriedRef = useRef<Carried[]>([])
   // Ctrl+drag (menu B): the press began with Ctrl held; `stopKeys` ends the live key watch (the wrapper's
   // kf-cal-copying keeps the original drawn and the cursor a copy while the key is down).
   const copyRef = useRef<{ start: boolean; stopKeys: (() => void) | null }>({ start: false, stopKeys: null })
   useEffect(() => () => {
-    stopGhostRef.current?.() // never strand a ghost (or a lit rail section) on unmount
+    ghostRef.current?.stop() // never strand a ghost (or a lit rail section) on unmount
     stopHoverRef.current?.()
+    stopSnapRef.current?.()
+    resizeRef.current?.stop()
     landingRef.current?.stop()
     landingRef.current?.carried.forEach((c) => c.stop())
     carriedRef.current.forEach((c) => c.stop())
@@ -576,6 +782,9 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     }
   }, [pinnedId])
 
+  // RM2 (lib/motion): the calendar's DECORATIVE gate (CalendarPage's .cal-motion-on: Effects on, no reduced motion);
+  // functional motion (a settle, a fold, a stretch's commit) asks only reducedMotionNow().
+  const motionNow = () => !!wrapRef.current?.closest('.cal-motion-on') && !reducedMotionNow()
   // The latest props and derived values, for the stable callbacks below.
   const latest = useRef({ props, zone, narrow, clockTime, strip, pickedIds: pickedIds ?? [], pending: new Set<string>(), failed: new Set<string>() })
   latest.current = { props, zone, narrow, clockTime, strip, pickedIds: pickedIds ?? [], pending: new Set(pendingIds), failed: new Set(failedIds) }
@@ -641,6 +850,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       const id = el.dataset.kfId!
       if (colors.has(id)) paintColor(el, colors.get(id))
       el.toggleAttribute('data-picked', picked.includes(id))
+      el.toggleAttribute('data-selected', id === selectedId) // CAL11: the block whose popover is open
       el.classList.toggle('kf-pending', pending.has(id))
       el.classList.toggle('kf-failed', failed.has(id))
     })
@@ -650,20 +860,36 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   // ring; blocks that leave fade out where they were. Only while the same days are on screen — paging
   // brings whole weeks in and out, which is no arrival.
   const seen = useRef<{ ids: Set<string>; days: string[] | null } | null>(null)
+  // CAL1: the blocks that arrived last, and when — a Ctrl+drag's copy is settled onto the one that arrives after it.
+  const arrived = useRef<{ ids: string[]; at: number }>({ ids: [], at: 0 })
+  // CAL1: blocks a ghost is landing on or folding away from — they never fade where they were (FullCalendar may draw
+  // them anew, unmarked, before they go).
+  const quiet = useRef(new Set<string>())
+  const hush = useCallback((id: string) => {
+    quiet.current.add(id)
+    window.setTimeout(() => quiet.current.delete(id), 1000)
+  }, [])
   useInsertionEffect(() => {
-    // Before FullCalendar redraws: the blocks about to go are still on screen.
+    // Before FullCalendar redraws: the blocks about to go are still on screen. One a ghost is landing on or folding
+    // away from (data-landing) never fades where it was.
     const prev = seen.current
     const wrap = wrapRef.current
-    if (!prev || prev.days !== shownDays || !wrap?.closest('.cal-motion-on') || matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    if (!prev || prev.days !== shownDays || !wrap || reducedMotionNow()) return
     const ids = new Set(events.map((e) => e.id))
-    for (const id of prev.ids) if (!ids.has(id)) wrap.querySelectorAll<HTMLElement>(`.fc-event[data-kf-id="${CSS.escape(id)}"]`).forEach(fadeOut)
+    for (const id of prev.ids) if (!ids.has(id) && !quiet.current.has(id)) wrap.querySelectorAll<HTMLElement>(`.fc-event[data-kf-id="${CSS.escape(id)}"]:not([data-landing])`).forEach(fadeOut)
   }, [events, shownDays])
   useLayoutEffect(() => {
     const prev = seen.current
     const ids = new Set(events.map((e) => e.id))
     seen.current = { ids, days: shownDays }
-    if (!prev || prev.days !== shownDays || !wrapRef.current?.closest('.cal-motion-on')) return
-    for (const id of ids) if (!prev.ids.has(id)) landRing(id)
+    if (!prev || prev.days !== shownDays) return
+    const fresh = [...ids].filter((id) => !prev.ids.has(id))
+    if (!fresh.length) return
+    arrived.current = { ids: fresh, at: Date.now() }
+    // CAL10: only the person's own arrivals ring (a create, a copy, a restore) — Google sync, another device's
+    // writes and a cold load land quietly. A frame later: FullCalendar draws them after this render.
+    const wrap = wrapRef.current
+    if (wrap?.closest('.cal-motion-on') && ownArrival()) requestAnimationFrame(() => fresh.forEach((id) => landRing(wrap, id)))
   }, [events, shownDays])
 
   // J-13 — §6 overlap geometry, decided here and drawn by CalendarGrid.css (FC's own shingle
@@ -1061,7 +1287,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                 role="checkbox"
                 aria-checked={done}
                 aria-label={p.kfTaskRepeat ? repeatCheckName(done, p.kfTaskRepeat) : `${done ? 'Reopen' : 'Complete'} ${arg.event.title}`}
-                ref={dragGuard(() => L().props.onCompleteTask?.(p.kfTaskId!, done))}
+                ref={tickBox(p.kfTaskId, done, () => L().props.onCompleteTask?.(p.kfTaskId!, done))}
               >
                 {p.kfTaskRepeat ? <RepeatGlyph done={done} /> : done ? <Tick /> : null}
               </span>
@@ -1096,7 +1322,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                         role="checkbox"
                         aria-checked={h.done}
                         aria-label={`${h.done ? 'Reopen' : 'Complete'} ${h.title}`}
-                        ref={dragGuard(() => L().props.onCompleteTask?.(h.id, h.done))}
+                        ref={tickBox(h.id, h.done, () => L().props.onCompleteTask?.(h.id, h.done))}
                       >
                         {h.done ? <Tick /> : null}
                       </span>
@@ -1133,7 +1359,10 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         const id = blockIdOf(info.event)
         info.el.dataset.kfId = id
         info.el.toggleAttribute('data-picked', L().pickedIds.includes(id))
+        info.el.toggleAttribute('data-selected', id === L().props.selectedId)
         paintColor(info.el, (info.event.extendedProps as { kfColor?: string | null })?.kfColor)
+        // CAL8: a recolour eases (CalendarGrid.css) — from the next frame, so a block never fades in from the kind's hue.
+        requestAnimationFrame(() => info.el.setAttribute('data-kf-hue', ''))
         // Punch 34: double-click goes straight to the task editor (single click still opens
         // the details popover — the navigation unmounts it, so the two don't fight).
         info.el.addEventListener('dblclick', () => L().props.onEventDoubleClick?.(id))
@@ -1166,7 +1395,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         L().props.onEventClick(blockIdOf(info.event), e.ctrlKey || e.metaKey || e.shiftKey)
       },
       // Motion 4c: the free ghost lives for the duration of the drag; the snapping placeholder
-      // is FC's own mirror. eventDragStop fires before eventDrop.
+      // is FC's own mirror. eventDragStop fires before eventDrop, in the same task.
       eventDragStart: (info: EventDragStartArg) => {
         // Whoever drags a block knows it: the one-time "Drag a block to move it" hint never shows after
         // (it used to land 1.5 s after the first drag, over the block the next one reached for).
@@ -1175,10 +1404,12 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         landingRef.current?.carried.forEach((c) => c.stop())
         const je = info.jsEvent as MouseEvent | null
         const from = je instanceof MouseEvent ? downAt.current : null // a touch drag has no mouse press to measure from
-        stopGhostRef.current = startGhost(info.el, je, GHOST_ID, from).stop
-        stopHoverRef.current = trackRailHover(L().props.railRef?.current)
-        // Ctrl+drag (menu B): with the key down (from the press, or pressed meanwhile) the original stays drawn.
         const wrap = wrapRef.current
+        const motion = motionNow() // the lean, its trail and the snap flash are decorative: Effects on only
+        ghostRef.current = startGhost(info.el, je, GHOST_ID, from, motion)
+        stopHoverRef.current = trackRailHover(L().props.railRef?.current)
+        if (motion && wrap) stopSnapRef.current = watchSnaps(wrap)
+        // Ctrl+drag (menu B): with the key down (from the press, or pressed meanwhile) the original stays drawn.
         const copying = (on: boolean) => wrap?.classList.toggle('kf-cal-copying', on)
         copying(copyRef.current.start || !!je?.ctrlKey || !!je?.metaKey)
         const key = (e: KeyboardEvent) => { if (e.key === 'Control' || e.key === 'Meta') copying(e.type === 'keydown') }
@@ -1206,14 +1437,19 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         })
       },
       eventDragStop: (info: EventDragStopArg) => {
-        const stop = stopGhostRef.current
-        stopGhostRef.current = null
+        const ghost = ghostRef.current
+        ghostRef.current = null
+        ghost?.release() // the ghost stops following the pointer (and leaning); it's let go of below
         stopHoverRef.current?.()
         stopHoverRef.current = null
+        stopSnapRef.current?.()
+        stopSnapRef.current = null
         copyRef.current.stopKeys?.()
         const carried = carriedRef.current
         carriedRef.current = []
         const je = info.jsEvent as MouseEvent | null
+        const wrap = wrapRef.current
+        const motion = !reducedMotionNow() // RM2: a settle, a ride home, a fold are functional — they play with Effects off
         const contains = (el: Element | null | undefined) => {
           if (!el || !je) return false
           const r = el.getBoundingClientRect()
@@ -1221,31 +1457,29 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         }
         // The pointer left the grid, so FC reverts (instantly, dragRevertDuration 0).
         // Rail = the section under the pointer decides (punch 33, Kai 2026-10-12); anywhere else
-        // = §7 invalid drop → the soft-no: the ghost shakes ±4px decaying ~320ms, nothing changes.
-        if (je && wrapRef.current && !contains(wrapRef.current)) {
+        // = §7 invalid drop → the soft-no: the ghost shakes ±4px decaying ~320ms, then rides home (CAL2).
+        if (je && wrap && !contains(wrap)) {
           const rail = L().props.railRef?.current
           const section = rail && contains(rail) ? (railSectionAt(rail, je.clientX, je.clientY)?.dataset.section ?? null) : undefined
+          if (section !== undefined) hush(info.event.id) // its write may redraw the grid before this returns
           const handled = section !== undefined && (L().props.onDragToRail?.(info.event.id, section) ?? false)
-          if (!handled) {
-            const host = document.getElementById(GHOST_ID)
-            if (host) {
-              softNo(host, carried, () => stop?.())
-              return
-            }
-          }
-          stop?.()
           carried.forEach((c) => c.stop())
-          return
+          if (!ghost) return
+          if (handled && rail) return foldIntoRail(wrap, ghost, info.event.id, rail, (info.event.extendedProps as Partial<BlockProps>).kfTaskId ?? null, motion)
+          if (!handled && ghost.host) return refuse(wrap, [{ ...ghost, id: info.event.id }], motion)
+          return ghost.stop()
         }
-        // S2 + M1: over the grid the ghost stays up for the drop to settle it where the block lands (an
-        // unchanged drop fires no eventDrop — the timer lets it go).
-        if (!stop) return carried.forEach((c) => c.stop())
-        const landing = { stop, host: document.getElementById(GHOST_ID), timer: 0, carried }
+        // S2 + M1: over the grid the ghost stays up for the drop to settle it where the block lands. CAL1: an unchanged
+        // drop fires no eventDrop — the timer (the end of this same task) glides it home at once.
+        if (!ghost) return carried.forEach((c) => c.stop())
+        const landing = { stop: ghost.stop, host: ghost.host, timer: 0, carried }
         landing.timer = window.setTimeout(() => {
-          if (landingRef.current === landing) landingRef.current = null
-          stop()
-          carried.forEach((c) => c.stop())
-        }, 400)
+          if (landingRef.current !== landing) return
+          landingRef.current = null
+          if (!wrap) return landing.stop()
+          settleGhost(wrap, landing, info.event.id, motion, { ring: false })
+          for (const c of carried) settleGhost(wrap, c, c.id, motion, { ring: false })
+        })
         landingRef.current = landing
       },
       eventDrop: (info: EventDropArg) => {
@@ -1254,17 +1488,25 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         if (landing) window.clearTimeout(landing.timer)
         const id = info.event.id
         const carried = landing?.carried ?? []
-        const motion = !!wrapRef.current?.closest('.cal-motion-on')
+        const motion = !reducedMotionNow()
+        const wrap = wrapRef.current
         const je = info.jsEvent as MouseEvent | null
-        // Ctrl+drag (menu B): the original goes back where it was and a copy lands here, with one Undo.
+        // Ctrl+drag (menu B): the original goes back where it was and a copy lands here, with one Undo — CAL1: the
+        // ghost settles onto the copy (the first block to arrive after the drop).
         if ((je?.ctrlKey || je?.metaKey) && info.event.start && L().props.onDuplicateAt) {
           const allDay = info.event.allDay
           const end = info.event.end ?? new Date(info.event.start.getTime() + (allDay ? 86_400_000 : 3_600_000))
           const start = info.event.start.toISOString()
           info.revert()
           carried.forEach((c) => c.stop())
-          if (L().props.onDuplicateAt?.(id, start, end.toISOString(), allDay)) return landing?.stop()
-          if (landing?.host) softNo(landing.host, [], landing.stop)
+          const t0 = Date.now()
+          if (L().props.onDuplicateAt?.(id, start, end.toISOString(), allDay)) {
+            const copy = () => (wrap && arrived.current.at >= t0 && arrived.current.ids[0] ? wrap.querySelector<HTMLElement>(blockSel(arrived.current.ids[0])) : null)
+            if (landing && wrap) settleGhost(wrap, landing, copy, motion)
+            else landing?.stop()
+            return
+          }
+          if (landing?.host && wrap) refuse(wrap, [{ ...landing, id }], motion)
           else landing?.stop()
           return
         }
@@ -1278,29 +1520,74 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           const out = !!view && L().props.events.some((e) => picked.includes(e.id) && (Date.parse(e.start) + delta < view.activeStart.getTime() || Date.parse(e.end) + delta > view.activeEnd.getTime()))
           if (out) {
             info.revert()
-            if (landing?.host) softNo(landing.host, carried, landing.stop)
-            else carried.forEach((c) => c.stop())
+            if (landing?.host && wrap) refuse(wrap, [{ ...landing, id }, ...carried], motion)
+            else {
+              landing?.stop()
+              carried.forEach((c) => c.stop())
+            }
             return
           }
           handled = !!L().props.onMoveMany?.(picked, delta)
-          if (handled) for (const c of carried) settleGhost(c, c.id, motion)
+          if (handled && wrap) for (const c of carried) settleGhost(wrap, c, c.id, motion)
         }
         if (!handled) carried.forEach((c) => c.stop())
+        // CAL1: a task's block dropped on a Time block goes INTO it (CalendarPage, ./slots slotAt) — its block comes off
+        // and a row lands in the slot: the ghost settles onto that row.
+        let slotTask: string | null = null
         if (!handled && info.event.start) {
           // Crossing the all-day boundary nulls the end (FC convention) — restate a real one:
           // a converted all-day block spans its day; a re-timed chip gets the default hour.
           const allDay = info.event.allDay
           const end = info.event.end ?? new Date(info.event.start.getTime() + (allDay ? 86_400_000 : 3_600_000))
+          const t = info.event.start.getTime()
+          const taskId = (info.event.extendedProps as Partial<BlockProps>).kfTaskId
+          if (taskId && !allDay && L().props.events.some((e) => e.type === 'time_block' && !e.allDay && e.id !== id && Date.parse(e.start) <= t && t < Date.parse(e.end))) slotTask = taskId
+          if (landing) hush(id)
           L().props.onMove(id, info.event.start.toISOString(), end.toISOString(), allDay, info.revert)
         }
         setPinnedId(id) // Polish F2b: where it landed stays in view
-        if (landing) settleGhost(landing, id, motion)
+        if (!landing) return
+        if (!wrap) return landing.stop()
+        const row = slotTask
+        if (row) settleGhost(wrap, landing, () => wrap.querySelector<HTMLElement>(`.kf-ev-slot-row[data-slot-task="${CSS.escape(row)}"]`), motion, { hide: id })
+        else settleGhost(wrap, landing, id, motion)
       },
-      // While resizing, FC keeps the original chip visible under the mirror — with both drawn
-      // the overlap reads as a dark doubled rectangle. Hide the original for the duration.
-      eventResizeStart: (info: EventResizeStartArg) => { info.el.style.visibility = 'hidden' },
-      eventResizeStop: (info: EventResizeStopArg) => { info.el.style.visibility = '' },
+      // While resizing, FC keeps the original chip visible under the mirror — with both drawn the overlap reads as a
+      // dark doubled rectangle: the original is hidden for the duration. CAL3: the mirror is drawn as the solid block
+      // (.kf-cal-resizing); D4 (Kai's yes): it stretches freely under the pointer and commits to the quarter on release.
+      eventResizeStart: (info: EventResizeStartArg) => {
+        info.el.style.visibility = 'hidden'
+        const wrap = wrapRef.current
+        wrap?.classList.add('kf-cal-resizing')
+        const je = info.jsEvent as MouseEvent | null
+        const edge: 'start' | 'end' = (je?.target as Element | null)?.closest('.fc-event-resizer-start') ? 'start' : 'end'
+        resizeRef.current?.stop()
+        const rs: NonNullable<typeof resizeRef.current> = { id: blockIdOf(info.event), edge, free: null, timer: 0, stop: () => {} }
+        resizeRef.current = rs
+        if (!wrap || !je || reducedMotionNow() || !info.el.matches('.fc-timegrid-event')) return
+        rs.stop = stretchFreely(wrap, info.el, edge, je, (free) => {
+          rs.free = free
+        })
+      },
+      eventResizeStop: (info: EventResizeStopArg) => {
+        const wrap = wrapRef.current
+        wrap?.classList.remove('kf-cal-resizing')
+        const rs = resizeRef.current
+        rs?.stop()
+        info.el.style.visibility = ''
+        if (!rs || !wrap) return
+        // The block stays out of sight until it has painted at its new length (no frame of the old one), then (eventResize)
+        // eases from where the pointer let go onto its quarter. Nothing changed (or refused): it shows again at once.
+        wrap.querySelectorAll<HTMLElement>(blockSel(rs.id)).forEach((el) => el.setAttribute('data-landing', ''))
+        rs.timer = window.setTimeout(() => {
+          if (resizeRef.current === rs) resizeRef.current = null
+          wrap.querySelectorAll<HTMLElement>(blockSel(rs.id)).forEach((el) => el.removeAttribute('data-landing'))
+        })
+      },
       eventResize: (info: EventResizeDoneArg) => {
+        const rs = resizeRef.current
+        resizeRef.current = null
+        if (rs) window.clearTimeout(rs.timer)
         if (info.event.start && info.event.end) {
           // §7 resizing: min 15 min — one snap (Kai 2026-10-21: "we cant have a task of 15 mins", the
           // old 30 here pulled a 15-minute resize back). Clamp on the edge that moved — a top-edge
@@ -1316,6 +1603,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           setPinnedId(info.event.id) // Polish F2b: a resize into a stack stays in view too
           L().props.onResize(info.event.id, new Date(startMs).toISOString(), new Date(endMs).toISOString(), info.revert)
         }
+        if (rs && wrapRef.current) commitStretch(wrapRef.current, rs.id, rs.edge, rs.free, !reducedMotionNow())
       },
       drop: (info: DropArg) => {
         const { taskId, inboxId } = info.draggedEl.dataset
@@ -1323,7 +1611,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         L().props.onExternalDrop({ taskId, inboxId }, info.date.toISOString(), info.allDay)
       },
     }
-  }, [heldRow])
+  }, [heldRow, hush])
 
   // The day headers and the now chip change with the day and the clock, so they're rebuilt then only.
   const dayHeaderContent = useCallback((arg: DayHeaderContentArg) => {
@@ -1362,6 +1650,14 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   // wall-clock encoded AS UTC — so read the real clock instead of the marker.
   const nowIndicatorContent = useCallback((arg: NowIndicatorContentArg) => (arg.isAxis ? null : <span className="cal-now-chip">{clockTime(Date.now())}</span>), [clockTime])
   const allDaySlot = useMemo(() => !strip || events.some((e) => e.allDay || isSpan(e)), [strip, events, isSpan])
+  // CAL5: a view switch remounts FullCalendar (the key) — the new view cross-fades in (160 ms), not a cut.
+  const fcKey = `${initialView}-${dayCount}-${density}-${secondZone ? 'z2' : ''}`
+  const shownKey = useRef(fcKey)
+  useLayoutEffect(() => {
+    if (shownKey.current === fcKey) return
+    shownKey.current = fcKey
+    if (!reducedMotionNow()) playOnce(wrapRef.current, 'view', 220)
+  }, [fcKey])
   const wrapStyle = useMemo(
     () => ({ height: '100%', minWidth: gridMinWidth(visibleDays, secondZone ? TIME_AXIS_W + ZONE2_W : undefined), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1, ...zoneVars }) as React.CSSProperties,
     [visibleDays, density, secondZone, zoneVars],
@@ -1385,7 +1681,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       style={wrapStyle}
     >
     <FullCalendar
-      key={`${initialView}-${dayCount}-${density}-${secondZone ? 'z2' : ''}`}
+      key={fcKey}
       ref={fcRef}
       plugins={PLUGINS}
       timeZone={zone}

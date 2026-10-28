@@ -19,6 +19,7 @@ import { timeText } from './eventTime'
 import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
 import { spanMinutes, taskOnBlock, withLength } from '../../../../supabase/functions/_shared/blockLength.ts'
 import { planScope, type Scope, type SeriesChange } from './scope'
+import { noteLocalWrite } from './blockMotion'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -47,6 +48,7 @@ export function useCalendarEvents(range?: { start: Date; end: Date }) {
  * owns it, so nothing here can move, edit or trash one (the grid and the menus don't offer it either). */
 function writeEvent(row: CalendarEvent, op?: 'upsert' | 'delete'): void {
   if (isSynced(row)) return
+  noteLocalWrite() // CAL10: what lands next is the person's own
   writeRow('calendar_events', row, op)
 }
 

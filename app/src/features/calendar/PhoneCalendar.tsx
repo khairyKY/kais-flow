@@ -310,9 +310,20 @@ export function PhoneCalendar() {
 
   const slotRect = (day: string, start: number, end: number) => gridRef.current?.rectOf(day, start, end) ?? null
 
+  /** CAL6: a strip tap or Today shows its days by the swipe's settle — the grid slides them in from their side — not
+   * a cut; the selected-day pill fades across (phoneCalendar.css). Month view has no grid to slide. */
+  function goTo(day: string, then?: () => void) {
+    const next = visibleDays(view, day, today, mondayFirst)
+    const set = () => {
+      setAnchor(day)
+      then?.()
+    }
+    if (view === 'month' || next.join() === days.join() || !gridRef.current) return set()
+    gridRef.current.slideTo(day > anchor ? 1 : -1, next, set)
+  }
+
   function goToday() {
-    setAnchor(today)
-    gridRef.current?.centerNow()
+    goTo(today, () => gridRef.current?.centerNow())
   }
 
   // findBlock: an edit from the sheet can re-anchor a repeat under it (series.ts).
@@ -354,7 +365,7 @@ export function PhoneCalendar() {
               data-range={range}
               aria-current={d === anchor ? 'date' : undefined}
               aria-label={new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' })}
-              onClick={() => setAnchor(d)}
+              onClick={() => goTo(d)}
             >
               <span className="pc-day-l">{new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'narrow' })}</span>
               <span className="pc-day-n">{Number(d.slice(8))}</span>

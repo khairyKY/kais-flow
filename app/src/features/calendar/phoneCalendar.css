@@ -46,6 +46,8 @@
 .pc-day[data-today] .pc-day-n { box-shadow: inset 0 0 0 1.5px var(--acc-terra-ink); color: var(--acc-terra-ink); font-weight: var(--fw-semibold); }
 /* B (D2): the shown day is the selection, ink-filled with the selection pair. */
 .pc-day[aria-current] .pc-day-n { background: var(--sel-bg); color: var(--sel-ink); box-shadow: none; font-weight: var(--fw-semibold); }
+/* CAL6 (motion-cal): the selected-day pill fades across (120 ms), not a jump. ds-ok: the pill's fill and ring */
+.pc-day-n { transition: background-color var(--dur-instant) var(--ease-out), color var(--dur-instant) var(--ease-out), box-shadow var(--dur-instant) var(--ease-out); }
 .pc-day-dot { width: 4px; height: 4px; border-radius: 50%; }
 .pc-day-dot[data-on] { background: var(--ink-faint); }
 
@@ -113,7 +115,21 @@
   box-shadow: inset 0 0 0 1px var(--pc-line, var(--pc-edge, transparent));
   background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment);
   -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+  /* CAL7 (motion-cal): on the block itself, so the put-down eases back as the pick-up does — transform and shadow only
+     (top and height stay instant). ds-ok: the lift's shadow, as 7e draws it */
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
 }
+/* CAL6 + CAL10: a block that arrived here (its own create, copy or restore) wears the just-landed ring (§7, 300 ms,
+   Effects on); one that left fades where it was (PhoneGrid fadeOut, 120 ms). */
+@keyframes kfPcLanded { /* ds-ok: §7's ring, an outline that fades */ from { outline-color: color-mix(in srgb, var(--acc-lavender-deep) 18%, transparent); } }
+/* ds-ok: §7's ring, an outline that fades */
+.motion-on .pc-block[data-play="landed"] { outline: 3px solid transparent; animation: kfPcLanded 300ms var(--ease-out); }
+@keyframes kfPcLeave { to { opacity: 0; transform: scale(0.98); } }
+.pc-leaving { animation: kfPcLeave 120ms var(--ease-in) forwards; }
+/* CAL4: repeat B ticked here — the arrows turn half round (240 ms), then the tick pops (Effects on). */
+@keyframes kfPcRepTurn { from { rotate: -180deg; } }
+.motion-on .pc-rep[data-play="tick"] > svg { animation: kfPcRepTurn 240ms var(--ease-out) backwards; }
+.motion-on .pc-rep[data-play="tick"] > svg > path:last-child { transform-box: fill-box; transform-origin: center; animation: checkPop 180ms var(--ease-out) 240ms backwards; }
 .pc-block.is-past { opacity: 0.62; }
 /* overdue (ended before today, not done — "Overdue · Replan"): the app's own muting, as on the desktop (not drawn) */
 .pc-block.is-past.is-noted { opacity: 0.55; filter: saturate(0.6); }
@@ -173,11 +189,15 @@
 .pc-slot-row.is-gone > * { visibility: hidden; }
 .pc-block.is-drop { box-shadow: inset 0 0 0 1.5px var(--pc-ink); }
 .pc-held-task {
-  position: fixed; z-index: 5; display: flex; align-items: center; gap: var(--sp-2); min-height: 24px; padding: 0 8px 0 2px; pointer-events: none;
+  /* CAL7: placed by `translate` (PhoneGrid), from the corner */
+  position: fixed; left: 0; top: 0; z-index: 5; display: flex; align-items: center; gap: var(--sp-2); min-height: 24px; padding: 0 8px 0 2px; pointer-events: none;
   border-radius: 8px; border: 1px solid color-mix(in srgb, var(--pc-ink) 35%, transparent);
   background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); box-shadow: var(--shadow-popover);
   transform: scale(1.04) rotate(1.2deg);
 }
+/* CAL7: the lifted task rises into its tilt (120 ms, Motion 5b's kfLift) instead of appearing already tilted. */
+@keyframes kfPcHeldLift { /* ds-ok: the lift's shadow rises with it */ from { transform: none; box-shadow: none; } }
+.motion-on .pc-held-task { animation: kfPcHeldLift 120ms var(--ease-out) backwards; }
 .pc-pending { flex: none; width: 7px; height: 7px; margin-left: auto; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--sig-offline); }
 
 /* 4+ blocks at once: three drawn, the rest behind a "+N" chip (kit Chip, 24 tall, a 48 hit) at the stack's top-right. */
@@ -187,7 +207,6 @@
 .pc-block.is-lifted {
   z-index: 5; touch-action: none; box-shadow: inset 0 0 0 1px var(--pc-line, var(--pc-edge, transparent)), var(--shadow-popover);
   transform: translateX(var(--pc-shift, 0px)) scale(1.04) rotate(1.2deg);
-  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);
 }
 .pc-ghost { position: absolute; border: 1px dashed var(--ink-hairline); border-radius: var(--radius-block); pointer-events: none; }
 /* Resize handles sit outside the block's edges, each its own 48px target. */

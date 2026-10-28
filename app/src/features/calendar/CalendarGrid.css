@@ -228,8 +228,21 @@
 /* Kai 2026-10-22 ("yes, blocks lift slightly on hover"): 1px up and a soft shadow over 140ms —
    transform and shadow only; none with Effects off (.cal-motion-on) or reduced motion. */
 .fc .fc-timegrid-event {
-  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out); /* ds-ok: Kai asked for the hover shadow (2026-10-22) */
+  /* ds-ok: Kai asked for the hover shadow (2026-10-22); CAL12 the carried blocks' dim and CAL11 the selection's outline ease too */
+  transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out), opacity 120ms var(--ease-out), outline-color 120ms var(--ease-out);
 }
+/* CAL8 (motion-cal): a block's colour is a typed property, so a recolour eases over 150 ms instead of snapping —
+   only once the block has painted (data-kf-hue, a frame after it mounts), so nothing fades in from the kind's hue. */
+@property --kf-ev-c { syntax: '<color>'; inherits: true; initial-value: transparent; }
+@property --kf-ev-accent { syntax: '<color>'; inherits: true; initial-value: transparent; }
+/* ds-ok: CAL8 — the colour's own ease (150 ms), the block's other transitions kept */
+.fc .fc-timegrid-event[data-kf-hue] { transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out), opacity 120ms var(--ease-out), outline-color 120ms var(--ease-out), --kf-ev-c 150ms var(--ease-out), --kf-ev-accent 150ms var(--ease-out); }
+/* ds-ok: CAL8 — the colour's own ease (150 ms) */
+.fc .fc-daygrid-event[data-kf-hue] { transition: --kf-ev-c 150ms var(--ease-out), --kf-ev-accent 150ms var(--ease-out); }
+/* CAL11 (Kai's yes): the block whose popover is open — a 2px edge in its own ink, fading in over 120 ms and out with
+   the popover. The keyboard ring and the outbox marks (below) keep the outline when they're up. */
+.fc .fc-timegrid-event:not([data-picked]) { outline: 2px solid transparent; outline-offset: -2px; } /* a picked block draws no outline (selected B) */
+.fc .fc-timegrid-event[data-selected]:not(.kf-pending):not(.kf-failed):not(:focus-visible) { outline-color: var(--kf-ev-accent); }
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
   .cal-motion-on .fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-hover); }
   /* goal A keeps its gold edge while it lifts */
@@ -503,12 +516,14 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 }
 /* Motion 5b lift + the 2c wobble — on the ghost, which is the thing "in hand". */
 .cal-motion-on .kf-cal-ghost { animation: kfLift 120ms var(--ease-out) backwards, calGridDragFloat 2.1s ease-in-out infinite; will-change: transform; }
-/* M1: the settle — the float stops, the lift comes off, while the host glides onto the block (160ms). */
-.kf-cal-ghost.kf-cal-ghost-settle { animation: none; transform: none; box-shadow: none; transition: transform 160ms var(--ease-out); }
+/* M1 + CAL14: the settle — the float and the shake stop for good (they'd restart under the class swap); the ghost's
+   own lift, lean, shadow and size ease off in a Web Animation (CalendarGrid glide) while the host glides home. */
+.kf-ghost-host .kf-cal-ghost.kf-cal-ghost-settle { animation: none; }
 /* Effects toggle off / reduced motion: no wobble, but the block still reads as picked up. */
 .kf-cal-ghost { transform: scale(1.04); }
 
-/* cal-blocks item 10: a multi-drag's other picked blocks stay where they were, faded, while their ghosts travel. */
+/* cal-blocks item 10: a multi-drag's other picked blocks stay where they were, faded, while their ghosts travel —
+   CAL12: easing there and back (the block's 120 ms opacity transition, above). */
 .fc .fc-event[data-carried] { opacity: 0.35; }
 /* Ctrl+drag (menu B): the original stays drawn where it is (FullCalendar hides it during a drag), the cursor a copy. */
 .kf-cal-copying .fc-timegrid-event-harness { visibility: visible !important; }
@@ -552,11 +567,36 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
   from { box-shadow: 0 0 0 3px color-mix(in srgb, var(--acc-lavender-deep) 18%, transparent); }
   to   { box-shadow: 0 0 0 3px transparent; }
 }
-.cal-motion-on .fc .fc-timegrid-event[data-landed] {
+.cal-motion-on .fc :is(.fc-timegrid-event, .kf-ev-slot-row)[data-landed] {
   animation: calJustLanded 300ms var(--ease-out);
 }
-/* S2 + M1: a moved block stays hidden until the ghost has settled onto it (CalendarGrid settleGhost). */
-.fc .fc-event[data-landing] { visibility: hidden; }
+/* S2 + M1 + CAL1: what a ghost is settling onto (a block, a Time slot's row) stays hidden until it's there — and a
+   block FullCalendar put back where the ghost is folding away from (CalendarGrid settleGhost / foldIntoRail). */
+.fc [data-landing] { visibility: hidden; }
+
+/* CAL3 (motion-cal): a resize draws the real block stretching — the placeholder takes the block's own fill, edge and
+   text — not a dashed outline over a hidden one; D4 lets its edge run free under the pointer (CalendarGrid). */
+.kf-cal-resizing .fc .fc-timegrid-event.fc-event-mirror {
+  border: 1px solid var(--kf-ev-edge);
+  background: linear-gradient(var(--kf-ev-fill), var(--kf-ev-fill)), var(--paper-parchment);
+}
+.kf-cal-resizing .fc .fc-event-mirror :is(.fc-event-title, .fc-event-time) { opacity: 1; }
+
+/* CAL4 (motion-cal): a box ticked here — check B fills (boxFill 90) and its tick pops (checkPop 180, the kit's
+   checkTick); repeat B's arrows turn half round (240 ms), then the tick pops. One-shot (data-play), Effects on. */
+@keyframes kfRepTurn { from { rotate: -180deg; } }
+.cal-motion-on .fc .kf-ev-check[data-play="tick"]:not(.kf-rep) { animation: boxFill 90ms var(--ease-out) backwards; }
+.cal-motion-on .fc .kf-ev-check[data-play="tick"]:not(.kf-rep) > svg { animation: checkPop 180ms var(--ease-out) 90ms backwards; }
+.cal-motion-on .fc .kf-ev-check.kf-rep[data-play="tick"] > svg { animation: kfRepTurn 240ms var(--ease-out) backwards; }
+.cal-motion-on .fc .kf-ev-check.kf-rep[data-play="tick"] > svg > path:last-child { transform-box: fill-box; transform-origin: center; animation: checkPop 180ms var(--ease-out) 240ms backwards; }
+
+/* CAL5 (motion-cal): a view switch (Day ↔ days ↔ week ↔ month: FullCalendar remounts) and planning mode cross-fade in
+   160 ms; the rail's content fades in over 120 ms as it unfolds (its width still snaps). Functional: off only under
+   reduced motion (the global rule). */
+@keyframes kfCalViewIn { from { opacity: 0; } }
+[data-play="view"] > .fc, .cal-main[data-play="view"] { animation: kfCalViewIn 160ms var(--ease-out); }
+.cal-main[data-play="view"] [data-play="view"] > .fc { animation: none; }
+.cal-rail[data-play="unfold"] > * { animation: kfCalViewIn 120ms var(--ease-out); }
 /* M8: a block that left fades where it was — a copy over the grid (CalendarGrid fadeOut). */
 @keyframes kfCalLeave { to { opacity: 0; transform: scale(0.98); } }
 .kf-cal-leaving { animation: kfCalLeave 120ms var(--ease-in) forwards; }
