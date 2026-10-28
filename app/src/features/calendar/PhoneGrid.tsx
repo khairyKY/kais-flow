@@ -39,7 +39,7 @@ export interface BlockLook {
   note?: string
   /** A Time block's tasks (Time Slots, 0073) as rows under its title, and its "2 tasks · 45m of 2h" —
    * the desktop block's checklist: the box completes (with Undo), a tap opens the task. */
-  slot?: { fill: string; held: { id: string; title: string; done: boolean; minutes: number; toggle: () => void; open: () => void }[] }
+  slot?: { fill: string; over?: string | null; held: { id: string; title: string; done: boolean; minutes: number; toggle: () => void; open: () => void }[] }
   /** A subtask's own block (Subtasks C): its parent's title, "↳ parent" on the time line. */
   parent?: string
 }
@@ -561,7 +561,10 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
               and its place stays dashed while it's out; the box stops its own press, as the block's does. */}
           {lk.slot && stacked && !lifted && (
             <div className="pc-slot">
-              <span className="pc-time pc-slot-fill">{lk.slot.fill}</span>
+              <span className="pc-time pc-slot-fill">
+                {lk.slot.fill}
+                {lk.slot.over && <> · <span className="pc-slot-over">{lk.slot.over}</span></>}
+              </span>
               {lk.slot.held.map((t) => (
                 <div
                   key={t.id}
