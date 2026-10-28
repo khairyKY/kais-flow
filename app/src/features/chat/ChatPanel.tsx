@@ -115,8 +115,10 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     setBehind(false)
     if (smooth && scrollBehavior() === 'smooth') {
       gliding.current = true
+      // From far up, jump to a screen above the end first: the glide is the last screen, not the history.
+      el.scrollTop = Math.max(el.scrollTop, el.scrollHeight - el.clientHeight * 2)
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
-      window.setTimeout(() => (gliding.current = false), 700)
+      window.setTimeout(() => (gliding.current = false), 900)
     } else el.scrollTop = el.scrollHeight
   }
   useLayoutEffect(() => {

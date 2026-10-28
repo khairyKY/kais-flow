@@ -75,7 +75,7 @@ html[data-planted].motion-on [data-top3-slot] { animation: kfPlantedIn 360ms var
 html[data-planted].motion-on [data-tour='top3'] > :nth-child(1 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 160ms; }
 html[data-planted].motion-on [data-tour='top3'] > :nth-child(2 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 280ms; }
 html[data-planted].motion-on [data-tour='top3'] > :nth-child(3 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 400ms; }
-html[data-planted].motion-on [data-top3-slot]:has(.tp-goal)::after {
+html[data-planted].motion-on [data-top3-slot]:has(.kf-goal-row, .tp-goal)::after {
   content: '';
   position: absolute;
   inset: -12px;
