@@ -17,7 +17,7 @@ import { toastAction, toastUndo } from '../../lib/undo'
 import { logRitualFinished, logRitualStep, setSeed, useDraft, useRitualStepsToday, useSeedsFor } from './api'
 import { loopDayKey, loopNow, seedTargetDate } from './loopDay'
 import { SHUT_STEPS, closeDay, daysBetween, headerDate, rolledMeta, seedDayName, span, swapIn, sweepRows, tomorrowSuggestions, withPick } from './ritualLogic'
-import { Collapsed, FinishScreen, KitRow, Meta, RitualFoot, RitualSheet, Section, leaveMs } from './RitualChrome'
+import { Collapsed, FinishScreen, FoldSection, KitRow, Meta, RitualFoot, RitualSheet, Section, leaveMs } from './RitualChrome'
 import { Num } from '../../components/PageMotion'
 import type { Task } from '../../lib/types'
 
@@ -226,11 +226,8 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
     )
   }
 
-  const sweepSection =
-    rows.length === 0 ? (
-      <Collapsed label="Sweep" line="Everything tended ✿" />
-    ) : (
-      <>
+  const sweepSection = (
+    <FoldSection empty={rows.length === 0} line={<Collapsed label="Sweep" line="Everything tended ✿" />}>
         <Section first label={<>Sweep · <Num value={touched.size > 0 ? `${open.length} of ${rows.length}` : open.length} /> left</>} link={open.length > 0 ? { label: 'Roll all to tomorrow', onClick: () => roll(open) } : undefined} />
         {rows.map((t) => {
           const done = t.status === 'done'
@@ -271,8 +268,8 @@ export function EveningRitual({ onClose }: { onClose: () => void }) {
             />
           )
         })}
-      </>
-    )
+    </FoldSection>
+  )
 
   const lineSection = (
     <>

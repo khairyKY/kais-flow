@@ -18,6 +18,7 @@ import { useIsMobile } from '../../components/BottomSheet'
 import { Skeleton, ErrorCard } from '../../components/States'
 import { Button, Checkbox, SectionLabel } from '../../components/kit'
 import { Num, StageImg } from '../../components/PageMotion'
+import { Collapse } from '../../components/Collapse'
 import { staggerDelay, useMotionEnabled } from '../../lib/motion'
 import '../tasks/TaskRow.css' // R1: the four-beat check's strike + dip (tr-checking / tr-title-strike)
 import { useDayRollover } from '../calendar/useDayRollover'
@@ -124,7 +125,9 @@ function RoutineRow({ routine, completions, doneToday, isMobile, index, onOpenTr
       )}
     </>
   )
-  const stepsFold = showSteps && (
+  // T8: the steps fold eases open and shut (the shared Collapse) instead of mounting in one frame.
+  const stepsFold = steps.length > 0 && (
+    <Collapse open={showSteps}>
     <ol style={{ margin: isMobile ? '0 0 10px 34px' : '0 0 12px 35px', padding: '0 0 0 18px', listStyle: 'decimal', fontSize: 'var(--fs-body-s)', lineHeight: 1.6, color: 'var(--ink-muted)' }}>
       {steps.map((s, i) => (
         <li key={i}>
@@ -135,6 +138,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, index, onOpenTr
         </li>
       ))}
     </ol>
+    </Collapse>
   )
   const more = (
     <button
@@ -160,7 +164,7 @@ function RoutineRow({ routine, completions, doneToday, isMobile, index, onOpenTr
 
   // R2/R13: the standard list motion — the entry stagger (capped), the hover lift, the check's dip.
   const rowClass = `kf-stagger-item kf-lift${checking ? ' tr-checking' : ''}`
-  const rowStyle = { borderBottom: '1px solid var(--line-dashed)', ...staggerDelay(Math.min(index, 8)) }
+  const rowStyle = { borderBottom: '1px solid var(--line-dashed)', ...staggerDelay(index) }
   if (isMobile) {
     return (
       <div onContextMenu={onContextMenu} className={rowClass} style={rowStyle}>

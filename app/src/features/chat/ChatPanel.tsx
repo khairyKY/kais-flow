@@ -16,7 +16,7 @@ import type { Citation } from '../../lib/types'
 import { Icon } from '../../components/Icon'
 import { takeChatStarter } from '../widgets/native'
 import type { IconName } from '../../components/icons/kf'
-import { motionOnNow } from '../../lib/motion'
+import { scrollBehavior } from '../../lib/motion'
 import '../projects/xfx.css' // .kf-row-in (T11)
 import './chat.css'
 
@@ -113,7 +113,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
     if (!el) return
     pinned.current = true
     setBehind(false)
-    if (smooth && motionOnNow()) {
+    if (smooth && scrollBehavior() === 'smooth') {
       gliding.current = true
       el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' })
       window.setTimeout(() => (gliding.current = false), 700)

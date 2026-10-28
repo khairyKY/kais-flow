@@ -19,6 +19,7 @@ import { useSlipping, markReviewed } from '../slipping/api'
 import { useReviewEventsThisWeek, logReviewEvent } from './api'
 import { useMotionEnabled } from '../../lib/motion'
 import { StageImg } from '../../components/PageMotion'
+import { Collapse } from '../../components/Collapse'
 import { FieldLabel } from './RitualChrome'
 import { Button, SectionLabel } from '../../components/kit'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -221,9 +222,10 @@ export function WeeklyReviewPage() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{showSeason ? 'Close ↑' : 'Open →'}</span>
           </button>
 
-          {showSeason && (
+          {/* T8: the season folds open and shut */}
+          <Collapse open={showSeason}>
             <SeasonSoFar tasks={tasks} events={events} routines={routines} completions={completions} domains={domains} projects={projects} weekStart={weekStart} weekEnd={weekEnd} lastWeekStart={lastWeekStart} />
-          )}
+          </Collapse>
         </div>
 
         {/* Below the sweep on a phone: slipping, routines, blooms and hours were desktop-only. */}
@@ -507,7 +509,8 @@ function DomainCard({
             Swept{time ? ` ${time}` : ''} {reopened ? '▴' : '▾'}
           </span>
         </button>
-        {reopened && (
+        {/* T8: re-opening a swept domain eases its sweep list open (and folds it back) */}
+        <Collapse open={reopened}>
           <div style={{ padding: isMobile ? '0 14px 14px' : '0 18px 16px' }}>
             {sweepList()}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
@@ -516,7 +519,7 @@ function DomainCard({
               </Button>
             </div>
           </div>
-        )}
+        </Collapse>
       </div>
     )
   }

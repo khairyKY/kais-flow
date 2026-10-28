@@ -1,7 +1,7 @@
 /* Lane A2 (motion build 2026-10-28) — page motion shared by Routines, Focus, Rituals, Weekly Review,
    Projects, Chat and the first-run pages. Durations and curves are the token set (tokens/motion.css);
    the OS reduced-motion rule there collapses all of it. Decorative pieces are additionally gated in JS
-   (useMotionEnabled) or under html.kf-motion-on (the shell's Effects class, portals included). */
+   (useMotionEnabled) or under html.motion-on (the shell's Effects class, portals included). */
 
 /* R2 / R5 / R9 / R10 — a growth stage changing while you watch: the new stage rises from its base,
    the old one fades out over it (components/PageMotion.tsx StageImg). */
@@ -12,7 +12,7 @@
 
 /* T12 — a number that changed rises in (PageMotion.tsx Num); Effects on only. */
 @keyframes kfNumIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
-.kf-motion-on .kf-num { display: inline-block; animation: kfNumIn 200ms var(--ease-out) backwards; }
+.motion-on .kf-num { display: inline-block; animation: kfNumIn 200ms var(--ease-out) backwards; }
 
 /* T12 — a progress fill that eases to its new length: a full-width fill scaled from the left, set
    with `transform: scaleX(…)` inline. Functional (it says how far you are), so it always eases. */

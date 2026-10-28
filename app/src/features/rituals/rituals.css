@@ -218,7 +218,8 @@
 .rt-desk-head { display: flex; align-items: center; gap: var(--sp-1); padding: var(--sp-4) var(--sp-3) var(--sp-1) 28px; flex: none; }
 .rt-desk-title { font-family: var(--font-display); font-size: 26px; font-weight: var(--fw-medium); line-height: 1.15; color: var(--ink-body); }
 .rt-desk-cols { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 28px; padding: var(--sp-1) var(--sp-3) var(--sp-3); overflow-y: auto; align-items: start; }
-.rt-desk-cols > div > .rt-sec:first-child { padding-top: 0; }
+.rt-desk-cols > div > .rt-sec:first-child,
+.rt-desk-cols > div > .kf-collapse:nth-child(-n+2) > .kf-collapse-inner > .rt-sec:first-child { padding-top: 0; } /* a column's first section, folded (T8 FoldSection) */
 .rt-desk-foot { flex: none; display: flex; align-items: center; gap: var(--sp-6); padding: 14px var(--sp-5) var(--sp-4) 28px; border-top: 1px solid var(--line-dashed); }
 .rt-desk .rt-summary { grid-column: 1 / -1; min-height: 480px; }
 /* The kit's phone sizes (kit.css, max-width 767px) — Plan ruling 8 keeps them on desktop. */
@@ -241,16 +242,16 @@
 .rt-leaving { pointer-events: none; animation: rtFadeOut 150ms var(--ease-in) forwards; }
 .rt-summary { position: relative; overflow: hidden; }
 .rt-summary > * { animation: rtFadeIn 200ms var(--ease-out) backwards; }
-.kf-motion-on .rt-summary > img { transform-origin: 50% 100%; animation: rtSprout var(--dur-bloom) var(--ease-out) backwards; }
-.kf-motion-on .rt-summary > .rt-summary-title { animation: rtInk 480ms var(--ease-out) 220ms backwards; }
-.kf-motion-on .rt-summary > .rt-note { animation: rtInk 480ms var(--ease-out) 400ms backwards; }
-.kf-motion-on .rt-summary > .rt-meta { animation: none; }
-.kf-motion-on .rt-summary .rt-meta > span { animation: rtChipIn 240ms var(--ease-out) backwards; }
-.kf-motion-on .rt-summary .rt-meta > span:nth-child(1) { animation-delay: 560ms; }
-.kf-motion-on .rt-summary .rt-meta > span:nth-child(2) { animation-delay: 620ms; }
-.kf-motion-on .rt-summary .rt-meta > span:nth-child(3) { animation-delay: 680ms; }
-.kf-motion-on .rt-summary .rt-meta > span:nth-child(n+4) { animation-delay: 740ms; }
-.kf-motion-on .rt-summary > .rt-link { animation-delay: 800ms; }
+.motion-on .rt-summary > img { transform-origin: 50% 100%; animation: rtSprout var(--dur-bloom) var(--ease-out) backwards; }
+.motion-on .rt-summary > .rt-summary-title { animation: rtInk 480ms var(--ease-out) 220ms backwards; }
+.motion-on .rt-summary > .rt-note { animation: rtInk 480ms var(--ease-out) 400ms backwards; }
+.motion-on .rt-summary > .rt-meta { animation: none; }
+.motion-on .rt-summary .rt-meta > span { animation: rtChipIn 240ms var(--ease-out) backwards; }
+.motion-on .rt-summary .rt-meta > span:nth-child(1) { animation-delay: 560ms; }
+.motion-on .rt-summary .rt-meta > span:nth-child(2) { animation-delay: 620ms; }
+.motion-on .rt-summary .rt-meta > span:nth-child(3) { animation-delay: 680ms; }
+.motion-on .rt-summary .rt-meta > span:nth-child(n+4) { animation-delay: 740ms; }
+.motion-on .rt-summary > .rt-link { animation-delay: 800ms; }
 /* D10's veil layers are the summary's own (pageMotion.css): they keep their animation. */
 .rt-summary > .kf-dusk-veil { animation: kfVeilIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards, kfVeilBreathe 8s ease-in-out calc(var(--veil-delay, 0ms) + 1200ms) infinite; }
 .rt-summary > .kf-dusk-vignette { animation: kfVignetteIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards; }

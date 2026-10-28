@@ -11,7 +11,8 @@ import './rituals.css'
 import '../../components/pageMotion.css' // the dusk veil (D10)
 import { useOpenTask } from '../tasks/openTask'
 import { Num } from '../../components/PageMotion'
-import { useMotionEnabled } from '../../lib/motion'
+import { reducedMotionNow, useMotionEnabled } from '../../lib/motion'
+import { Collapse } from '../../components/Collapse'
 
 // ── The chrome both rituals share (SCREENS-2026-09-28 §Plan my day / §Shut down): on a phone a
 // full-height kit BottomSheet (✕, Back and a swipe down close it and keep progress); on desktop a
@@ -217,4 +218,15 @@ export function FinishScreen({ img, title, dusk, children }: { img: string; titl
 }
 
 /** R8: how long the ritual's content takes to fade before its finish screen (0 under reduced motion). */
-export const leaveMs = () => (typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 150)
+export const leaveMs = () => (reducedMotionNow() ? 0 : 150)
+
+/** T8 — a ritual section that empties folds shut while its quiet line ("Inbox zero ✿") folds open,
+ * instead of the rows swapping for the line in one frame. */
+export function FoldSection({ empty, line, children }: { empty: boolean; line: ReactNode; children: ReactNode }) {
+  return (
+    <>
+      <Collapse open={!empty}>{children}</Collapse>
+      <Collapse open={empty}>{line}</Collapse>
+    </>
+  )
+}

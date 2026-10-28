@@ -47,7 +47,7 @@ import {
   type PickIn,
   type Slot,
 } from './ritualLogic'
-import { Collapsed, KitRow, Meta, RitualFoot, RitualSheet, FinishScreen, leaveMs, Section, Segmented, WorkloadLine } from './RitualChrome'
+import { Collapsed, FoldSection, KitRow, Meta, RitualFoot, RitualSheet, FinishScreen, leaveMs, Section, Segmented, WorkloadLine } from './RitualChrome'
 import type { InboxItem, Project, Domain, Task } from '../../lib/types'
 
 // ── Plan my day — design-export/Plan.dc.html 6a–6m + SCREENS-2026-09-28 §Plan my day rulings 1–8.
@@ -264,11 +264,8 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   ]
   const pickIndex = (id: string) => selection.indexOf(id)
 
-  const carrySection =
-    carry.length === 0 ? (
-      <Collapsed label="Carry-over" line="Nothing carried over ✿" />
-    ) : (
-      <>
+  const carrySection = (
+    <FoldSection empty={carry.length === 0} line={<Collapsed label="Carry-over" line="Nothing carried over ✿" />}>
         <Section first label={`Carry-over · ${carry.length}`} link={{ label: 'Roll all to tomorrow', onClick: rollAll }} />
         {carry.map((e) => {
           const t = byId.get(e.id)!
@@ -299,20 +296,17 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
             />
           )
         })}
-      </>
-    )
+    </FoldSection>
+  )
 
-  const inboxSection =
-    inbox.length === 0 ? (
-      <Collapsed label="Inbox" line="Inbox zero ✿" />
-    ) : (
-      <>
+  const inboxSection = (
+    <FoldSection empty={inbox.length === 0} line={<Collapsed label="Inbox" line="Inbox zero ✿" />}>
         <Section label={`Inbox · ${inbox.length}`} />
         {inbox.map((item) => (
           <InboxRow key={item.id} item={item} now={now} projects={projects} domains={domains} />
         ))}
-      </>
-    )
+    </FoldSection>
+  )
 
   const picksSection = (
     <>
@@ -352,11 +346,8 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
   )
 
   const changingSlot = slots.find((s) => s.id === changing)
-  const timesSection =
-    slots.length === 0 ? (
-      <Collapsed label="Suggested times" line="Pick something first" />
-    ) : (
-      <>
+  const timesSection = (
+    <FoldSection empty={slots.length === 0} line={<Collapsed label="Suggested times" line="Pick something first" />}>
         <Section label="Suggested times" />
         {slots.every((s) => s.kind === 'noslot') && (
           <div className="rt-warn">
@@ -369,8 +360,8 @@ export function MorningRitual({ onClose }: { onClose: () => void }) {
         {slots.map((s) => (
           <TimeRow key={s.id} task={byId.get(s.id)!} slot={s} changing={changing === s.id} onChange={() => setChanging(s.id)} />
         ))}
-      </>
-    )
+    </FoldSection>
+  )
 
   const changingTask = changing ? byId.get(changing) : undefined
   const dur = changing ? (pickIns.find((p) => p.id === changing)?.dur ?? 30) : 30
