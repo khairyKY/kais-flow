@@ -20,7 +20,7 @@ import {
   createCommentary
 } from './api'
 import { useJournalEntries } from '../journal/api'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { exitAll, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
 import { LibraryEditForm } from './LibraryEditForm'
 import { bookFromForm, parseTags } from './edits'
@@ -335,9 +335,10 @@ export function LibraryPage() {
       {label}
     </button>
   )
-  const removeBook = (b: Book) => { removeBookWithUndo(b); setSearchParams({ tab: 'books' }) }
-  const removeNote = (n: Note) => { removeNoteWithUndo(n); setSearchParams({ tab: 'notes' }) }
-  const removeQuote = (q: Quote) => { removeQuoteWithUndo(q); setSearchParams({ tab: 'quotes' }) }
+  // T6: its row in the list slides out first (on a phone the reader closes to a list without it).
+  const removeBook = (b: Book) => exitAll(`[data-lib="${b.id}"]`, () => { removeBookWithUndo(b); setSearchParams({ tab: 'books' }) })
+  const removeNote = (n: Note) => exitAll(`[data-lib="${n.id}"]`, () => { removeNoteWithUndo(n); setSearchParams({ tab: 'notes' }) })
+  const removeQuote = (q: Quote) => exitAll(`[data-lib="${q.id}"]`, () => { removeQuoteWithUndo(q); setSearchParams({ tab: 'quotes' }) })
 
   if (isMobile) {
     return (
@@ -826,6 +827,7 @@ export function LibraryPage() {
                   return (
                     <div
                       key={b.id}
+                      data-lib={b.id}
                       onClick={() => setSearchParams({ tab: 'books', bookId: b.id })}
                       className={motion ? 'kf-stagger-item' : undefined}
                       style={{
@@ -854,6 +856,7 @@ export function LibraryPage() {
                   return (
                     <div
                       key={n.id}
+                      data-lib={n.id}
                       onClick={() => setSearchParams({ tab: 'notes', noteId: n.id })}
                       className={motion ? 'kf-stagger-item' : undefined}
                       style={{
@@ -886,6 +889,7 @@ export function LibraryPage() {
                   return (
                     <div
                       key={q.id}
+                      data-lib={q.id}
                       onClick={() => setSearchParams({ tab: 'quotes', quoteId: q.id })}
                       className={motion ? 'kf-stagger-item' : undefined}
                       style={{

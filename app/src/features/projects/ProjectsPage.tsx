@@ -748,7 +748,8 @@ export function ProjectsPage() {
                             </div>
 
                             <div style={{ marginTop: 11, height: 5, borderRadius: 'var(--radius-card)', background: 'color-mix(in oklch, var(--ink-body) 8%, transparent)', overflow: 'hidden' }}>
-                              <span style={{ display: 'block', width: `${stat.pct}%`, height: '100%', background: 'var(--acc-moss)' }} />
+                              {/* T12: the bar eases to its new length (scaleX, 300ms ease-out). */}
+                              <span style={{ display: 'block', width: '100%', height: '100%', background: 'var(--acc-moss)', transform: `scaleX(${stat.pct / 100})`, transformOrigin: 'left center', transition: 'transform var(--dur-slow) var(--ease-out)' }} />
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 9 }}>

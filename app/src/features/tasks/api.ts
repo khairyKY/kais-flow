@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
-import { animateRowRemoval } from '../../lib/motion'
+import { animateRowRemoval, exitOnRemoval } from '../../lib/motion'
 import { deleteEventsForTask, lengthenTaskBlock, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
 import { OUT_OF_SLOT } from '../calendar/slots'
 import { toastAction, toastUndo } from '../../lib/undo'
@@ -382,6 +382,11 @@ export function setSomeday(task: Task, someday: boolean): void {
   logActivity('task.someday_set', 'task', task.id, { someday })
 }
 
+/** T6: a row these writes take off the list on screen slides out (lib/motion exitOnRemoval); one the
+ * list keeps doesn't move. The writes themselves are not held back. */
+const rowExits = (tasks: readonly Task[]) =>
+  typeof document !== 'undefined' && exitOnRemoval(tasks.map((t) => document.getElementById(`task-${t.id}`)))
+
 const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
 
 /** Every move (⋯ / right-click "Move to…", the swipe, the `p` key, the task sheet, bulk): into a
@@ -389,6 +394,7 @@ const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
  * Undo". Undo puts back each row's project, area, domain and milestone — only those. `said` replaces
  * the toast's words and `onUndo` runs with its Undo (projects/autoProject: "→ Forecasting App"). */
 export function moveTasksWithUndo(tasks: Task[], to: MoveTarget, said?: string, onUndo?: () => void): void {
+  rowExits(tasks)
   const place = (t: Task) => ({ project_id: t.project_id, area_id: t.area_id ?? null, domain_id: t.domain_id })
   for (const t of tasks) {
     const moved = placeTask(cached(t), to)
@@ -431,6 +437,7 @@ export function carryTasksToDomain(field: 'project_id' | 'area_id', containerId:
  * rescheduleDue's own Undo) — the bulk bar's Pick date, Tomorrow, Overdue's "Reschedule all to
  * today". `timed`: the picker set a time, which puts the tasks on the calendar (calendar/replan). */
 export function rescheduleTasksWithUndo(tasks: Task[], dueAt: string, { timed = false, message = `${tasksLabel(tasks.length)} scheduled` }: { timed?: boolean; message?: string } = {}): void {
+  rowExits(tasks)
   const undos = tasks.map((t) => rescheduleDue(t, dueAt, timed))
   toastUndo(message, () => undos.forEach((undo) => undo()))
 }
@@ -438,6 +445,7 @@ export function rescheduleTasksWithUndo(tasks: Task[], dueAt: string, { timed = 
 /** Someday for one task or many — the row ⋯, the task sheet, the bulk bar — with one Undo, which
  * gives back each row's someday flag and the Top 3 place parking it took (top3Rule). */
 export function somedayTasksWithUndo(tasks: Task[]): void {
+  rowExits(tasks)
   const before = tasks.map(cached)
   before.forEach((t) => setSomeday(t, true))
   toastUndo(tasks.length === 1 ? 'Parked for someday' : `${tasksLabel(tasks.length)} parked for someday`, () =>
@@ -452,6 +460,7 @@ export function somedayTasksWithUndo(tasks: Task[]): void {
  * the lists and the calendar rail until `until`, then back on its own; the date and plan stay, a Top 3
  * pick gives its place up (top3Rule). Undo gives back each row's snooze and that place. */
 export function snoozeTasksWithUndo(tasks: readonly Task[], until: string): void {
+  rowExits(tasks)
   const before = tasks.map(cached)
   for (const t of before) {
     patchTask(t, { snoozed_until: until })
@@ -522,6 +531,7 @@ export function prioritizeWithUndo(tasks: readonly Task[], priority: number | nu
 /** One task to a day, or off its date, with "Planned · Mon 09:00" / "Date taken off" · Undo — the Plan
  * list, keys 1 and 3, Someday's → Today and the editor's date fields all land here (P7e A17). */
 export function planWithUndo(task: Task, dueAt: string | null, timed = false): void {
+  rowExits([task])
   toastUndo(dueAt ? `Planned · ${dueChip(dueAt, new Date())}` : 'Date taken off', rescheduleDue(task, dueAt, timed))
 }
 

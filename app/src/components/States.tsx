@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { Button } from './kit'
+import { LOADER_DELAY } from '../lib/motion'
 
 // ── MK States (DS-CHANGELOG §3): Loading, Empty, Error, Offline.
 // Loading = skeleton rows/cards, and ONLY when nothing is cached — a page with cached data shows
@@ -22,7 +23,10 @@ const ROW_WIDTHS: [string, string][] = [['78%', '40%'], ['64%', '30%'], ['82%', 
 /** Loading placeholder: task-row shapes (default) or one Goal-card shape. */
 export function Skeleton({ variant = 'rows', rows = 4 }: { variant?: 'rows' | 'card'; rows?: number }) {
   return (
-    <div role="status" aria-label="Loading" aria-busy="true" style={pulse}>
+    // T15: the loader waits 300ms before it fades in (Material's guidance), so a quick load never
+    // flashes it; the pulse rides an inner box (both animate opacity).
+    <div role="status" aria-label="Loading" aria-busy="true" style={LOADER_DELAY}>
+    <div style={pulse}>
       {variant === 'card' ? (
         <div style={{ height: 190, borderRadius: 'var(--radius-card)', background: 'var(--skeleton-hi)', border: '1px solid var(--line-card)', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, boxSizing: 'border-box' }}>
           <span style={bar('40%', 10)} />
@@ -49,6 +53,7 @@ export function Skeleton({ variant = 'rows', rows = 4 }: { variant?: 'rows' | 'c
           )
         })
       )}
+    </div>
     </div>
   )
 }
@@ -93,7 +98,8 @@ export function ErrorCard({ message, onRetry, retryLabel = 'Retry' }: { message:
  * A page with nothing to sync names what waits for the connection instead (First Run 9b-3). */
 export function OfflineChip({ children = 'Offline — changes will sync' }: { children?: ReactNode }) {
   return (
-    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 32, padding: '0 12px', border: '1px solid var(--sig-offline)', borderRadius: 999, fontSize: 13, color: 'var(--sig-offline)', boxSizing: 'border-box' }}>
+    // T14: fades in (150ms) rather than popping.
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, height: 32, padding: '0 12px', border: '1px solid var(--sig-offline)', borderRadius: 999, fontSize: 13, color: 'var(--sig-offline)', boxSizing: 'border-box', animation: 'scrimIn var(--dur-quick) var(--ease-out)' }}>
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden style={{ flex: 'none' }}>
         <path d="M7 18h9.5a3.8 3.8 0 0 0 .7-7.5A5.5 5.5 0 0 0 6.6 9.3 4.4 4.4 0 0 0 7 18z" />
         <path d="M4 4l16 16" />

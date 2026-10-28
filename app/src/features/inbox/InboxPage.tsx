@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'react-router'
 import { EmojiText } from '../../components/EmojiText'
+import { Collapse } from '../../components/Collapse'
 import {
   usePendingInboxItems,
   useAllInboxItems,
@@ -38,7 +39,7 @@ import { Button, Chip, Segmented } from '../../components/kit'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useOnline } from '../../lib/useOnline'
 import { rowAnchor } from '../../lib/rowAnchor'
-import { animateRowRemoval, useMotionEnabled } from '../../lib/motion'
+import { animateRowRemoval, exitAll, scrollBehavior, useMotionEnabled } from '../../lib/motion'
 import { scheduleToday } from '../../lib/dateShortcuts'
 import { DragRow, type DragLoad } from '../../components/drag'
 import { inboxVerdict, type FileSpot } from '../tasks/fileDrop'
@@ -61,6 +62,11 @@ const A = '/ds/assets'
 // collapse 180ms, *then* the mutation, so the gap heals instead of snapping shut.
 function breatheOut(itemId: string, mutate: () => void) {
   animateRowRemoval(document.getElementById(`inbox-${itemId}`), mutate)
+}
+// T6: a bulk action breathes every selected card out together, then makes its one write (one toast).
+function breatheMany(items: readonly InboxItem[], mutate: () => void) {
+  if (!items.length) return mutate()
+  exitAll(items.map((i) => `[id="inbox-${i.id}"]`).join(', '), mutate)
 }
 
 // Snoozed has no frame: the header's "· N snoozed" opens it, and the same toggle leads back.
@@ -167,15 +173,17 @@ export function InboxPage() {
 
   // Bulk = ONE toast with ONE Undo for the whole selection (api fileMany / dismissMany / …).
   function bulkFileTo(place: MoveTarget) {
-    fileMany(selectedItems.map((i) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: draftOf(i).dueAt, timed: draftOf(i).timed, place }] as const))
+    const sel = selectedItems
+    breatheMany(sel, () => fileMany(sel.map((i) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: draftOf(i).dueAt, timed: draftOf(i).timed, place }] as const)))
     clearSelection()
   }
   function bulkFileAsDrafted(sel: InboxItem[]) {
-    fileMany(sel.map((i) => [i, toFileTo(i, draftOf(i))] as const))
+    breatheMany(sel, () => fileMany(sel.map((i) => [i, toFileTo(i, draftOf(i))] as const)))
     clearSelection()
   }
   function bulkSnooze(until: string) {
-    snoozeMany(selectedItems, until)
+    const sel = selectedItems
+    breatheMany(sel, () => snoozeMany(sel, until))
     clearSelection()
   }
   // Someday = a someday task (Tasks › Someday, no date) with the card's title and place — it used to
@@ -186,7 +194,7 @@ export function InboxPage() {
   const asDone = (i: InboxItem) => [i, { to: 'task', title: draftText(i, { ...draftOf(i), to: 'task' }), dueAt: draftOf(i).dueAt, place: draftOf(i).place }] as const
   const doneOne = (item: InboxItem) => breatheOut(item.id, () => fileDone([asDone(item)]))
   function bulkDone(sel: InboxItem[]) {
-    fileDone(sel.map(asDone))
+    breatheMany(sel, () => fileDone(sel.map(asDone)))
     clearSelection()
   }
   // P7e A8: P opens the card's own date picker. A compact or unsure card opens full first, and a note
@@ -200,15 +208,16 @@ export function InboxPage() {
     requestAnimationFrame(() => document.querySelector<HTMLElement>(`#inbox-${item.id} [aria-label="Due date"]`)?.click())
   }
   function bulkSomeday() {
-    fileMany(selectedItems.map(asSomeday))
+    const sel = selectedItems
+    breatheMany(sel, () => fileMany(sel.map(asSomeday)))
     clearSelection()
   }
   function bulkDismiss(sel: InboxItem[] = selectedItems) {
-    dismissMany(sel)
+    breatheMany(sel, () => dismissMany(sel))
     clearSelection()
   }
   function bulkRestore(sel: InboxItem[] = selectedItems) {
-    restoreMany(sel)
+    breatheMany(sel, () => restoreMany(sel))
     clearSelection()
   }
 
@@ -291,7 +300,7 @@ export function InboxPage() {
 
   useEffect(() => {
     if (!focusId) return
-    document.getElementById(`inbox-${focusId}`)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    document.getElementById(`inbox-${focusId}`)?.scrollIntoView({ behavior: scrollBehavior(), block: 'center' })
   }, [focusId, items, allItems])
 
   // A read page waiting for review is one more thing in the Inbox (Paper Capture 11d, as the sidebar's
@@ -370,7 +379,7 @@ export function InboxPage() {
       onOpen={() => openCard(item.id)}
       onEditing={(on) => setEditId(on ? item.id : null)}
       onFile={(d) => fileOne(item, d)}
-      onSnooze={(until) => snoozeInboxItem(item, until)}
+      onSnooze={(until) => exitAll(`[id="inbox-${item.id}"]`, () => snoozeInboxItem(item, until))}
       onSomeday={() => somedayOne(item)}
       onDismiss={() => dismissOne(item)}
       onToggleSelect={() => toggleSelected(item.id)}
@@ -399,7 +408,9 @@ export function InboxPage() {
             !isMobile && <span className="ib-meta">Recently updated first</span>
           )}
         </div>
-        {!ghFolded && githubItems.map((item) => (
+        {/* T8: the GitHub fold eases open and shut (components/Collapse). */}
+        <Collapse open={!ghFolded}>
+        {githubItems.map((item) => (
           <DragRow key={item.id} id={item.id} load={dragLoad(item)} disabled={isMobile}>
           <GithubRow
             item={item}
@@ -417,6 +428,7 @@ export function InboxPage() {
           />
           </DragRow>
         ))}
+        </Collapse>
       </section>
     )
     list = (

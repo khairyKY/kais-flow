@@ -15,6 +15,7 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useTasks } from '../tasks/api'
 import { DOMAIN_COLORS } from './organize'
+import { animateRowRemoval, flip } from '../../lib/motion'
 import '../projects/xfx.css'
 
 // Kai 2026-10-06: "we can't create domains easily … you can't delete them, rename, no nothing".
@@ -43,7 +44,8 @@ export function useDomainMenu(domains: Domain[], onRename: (id: string) => void)
     const i = order.findIndex((x) => x.id === d.id)
     order.splice(i, 1)
     order.splice(i + by, 0, d)
-    reorderDomains(order)
+    // T13: the domain rows glide to their new places (FLIP) instead of snapping.
+    flip(document.querySelector('.app-main-content > .kf-route'), () => reorderDomains(order), '.kf-domain-row')
   }
 
   const colorOptions = (d: Domain) => DOMAIN_COLORS.map((c) => ({ label: c.label, icon: dot(c.value, 10), selected: d.color === c.value, run: () => recolorDomain(d, c.value) }))
@@ -57,7 +59,7 @@ export function useDomainMenu(domains: Domain[], onRename: (id: string) => void)
       ...(i < domains.length - 1 ? [{ key: 'down', label: 'Move down', icon: 'chevdown' as IconName, run: () => move(d, 1) }] : []),
       ...(domains.length > 1 ? [{ key: 'merge', label: 'Merge into…', icon: 'projects' as IconName, sub: 'merge' as Sub }] : []),
       { key: 'type', label: 'Make it an area…', icon: 'rotate', run: () => changeType.ask({ table: 'domains', row: d }, 'area') },
-      { key: 'delete', label: 'Delete', icon: 'delete', hint: 'Undo 6s', danger: true, run: () => deleteDomainWithUndo(d) },
+      { key: 'delete', label: 'Delete', icon: 'delete', hint: 'Undo 6s', danger: true, run: () => animateRowRemoval(document.querySelector<HTMLElement>(`.kf-domain-row[data-domain="${d.id}"]`), () => deleteDomainWithUndo(d)) }, // T6: it slides out first
     ]
   }
 
@@ -129,6 +131,7 @@ export function DomainList({ domains, meta, rowStyle }: { domains: Domain[]; met
           id={`domain:${d.id}`}
           spot={{ kind: 'place', label: d.name, to: { kind: 'domain', id: d.id, name: d.name } }}
           className="kf-domain-row"
+          data-domain={d.id}
           onContextMenu={(e) => {
             e.preventDefault()
             menu.open(d.id, { x: e.clientX, y: e.clientY })

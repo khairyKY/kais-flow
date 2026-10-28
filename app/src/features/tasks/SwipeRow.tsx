@@ -151,9 +151,20 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
       // Delete leaves it gone while the row collapses (tasks/api deleteTask).
       setX(end === 'tomorrow' ? s.width : -s.width)
       window.setTimeout(() => {
+        // T7: flown off, the row is marked, so its exit — Delete's own, or the still copy a "leaves
+        // this list" write plays (lib/motion) — only folds its height: one exit, not a second slide.
+        const el = rowRef.current
+        if (el) el.dataset.flown = ''
         if (end === 'tomorrow') {
           actions?.tomorrow?.()
-          setX(0)
+          // A row the list keeps (Tomorrow on All) springs back, as it always did.
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              if (!el?.isConnected) return
+              delete el.dataset.flown
+              setX(0)
+            }),
+          )
         } else actions?.delete?.()
       }, SETTLE_MS)
     } else setX(end === 'open-right' && !actions?.pickDate ? 0 : REST_X[end])

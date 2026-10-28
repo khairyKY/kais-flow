@@ -11,6 +11,7 @@ import { useDomains } from '../domains/api'
 import type { Fact } from '../../lib/types'
 import { BackLink, Button } from '../../components/kit'
 import { openCapture } from '../command-bar/commandBarStore'
+import { exitAll } from '../../lib/motion'
 
 const FACT_TYPES = ['Interest', 'Birthday', 'Note', 'Family']
 const LOG_CHANNELS = [{ value: 'in person', label: 'In person' }, { value: 'call', label: 'Call' }, { value: 'text', label: 'Text' }, { value: 'email', label: 'Email' }]
@@ -280,12 +281,12 @@ export function PersonDetailPage() {
       <div style={{ display: 'flex', flexDirection: 'column' }}>
         {(person.facts || []).map((f) => (
           // A phone row too narrow for value + recurs + nudge wraps them whole onto a second line.
-          <div key={f.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', padding: '9px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
+          <div key={f.id} data-fact={f.id} style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '6px 12px', padding: '9px 2px', borderBottom: '1px solid var(--line-dashed)' }}>
             <span className="flabel" style={{ width: 88, flex: 'none' }}>{f.label}</span>
             <span style={{ fontSize: '13.5px', color: 'var(--ink-body)', flex: '1 1 96px', minWidth: 0 }}>{f.value}</span>
             {f.recurs && <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-faint)' }}>↻ Recurs</span>}
             {f.label === 'Birthday' && f.date && <span className="fhelp" style={{ marginLeft: 'auto' }}>Nudges 2 weeks out</span>}
-            <button type="button" className="kf-hit" aria-label={`Remove ${f.label}`} onClick={() => removeFactWithUndo(person, f.id)} style={{ ...removeBtn, marginLeft: 4 }}>✕</button>
+            <button type="button" className="kf-hit" aria-label={`Remove ${f.label}`} onClick={() => exitAll(`[data-fact="${f.id}"]`, () => removeFactWithUndo(person, f.id))} style={{ ...removeBtn, marginLeft: 4 }}>✕</button>
           </div>
         ))}
         {/* Add fact row (also the editor for an existing fact — `edit` above) */}

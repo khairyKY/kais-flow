@@ -18,6 +18,7 @@ import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/
 import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
+import { Collapse } from './Collapse'
 import { markRouteEntry, reducedMotionNow, useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
@@ -223,8 +224,8 @@ function PlanDrawer() {
         </button>
       )}
       </div>
-      {open && (
-        <>
+      {/* T8: the Plan drawer folds through the shared Collapse. */}
+      <Collapse open={open}>
           {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length, undefined, list === 'today' ? TODAY_SPOT : null))}
           <div style={{ height: 1, borderTop: '1px solid var(--line-sidebar)', margin: '4px 11px' }} />
           {row('/tasks?list=someday', 'Someday', activeList === 'someday', filterByList(tasks, 'someday').length, (
@@ -237,8 +238,7 @@ function PlanDrawer() {
           {/* R4-27 (Kai's 2026-07-20 ruling): "planning board looks like shit, park it until I
               redesign it." Nav entry removed so it can't be reached by accident; the route and
               component stay in the codebase for when he redesigns it. */}
-        </>
-      )}
+      </Collapse>
     </div>
   )
 }

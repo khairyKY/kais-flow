@@ -1,11 +1,12 @@
 import { useState, useMemo } from 'react'
+import { Collapse } from '../../components/Collapse'
 import { useNavigate } from 'react-router'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDeletedItems, restoreItem, deleteItemForever, TRASH_TABLE, type DeletedItem } from './api'
 import { flushOutbox } from '../../lib/outbox'
 import { useToastStore } from '../../lib/toastStore'
 import { toastAction } from '../../lib/undo'
-import { animateRowRemoval, useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { animateRowRemoval, useMotionEnabled, useWasLoading, staggerDelay } from '../../lib/motion'
 import { useAppZone } from '../../lib/appZone'
 import { useIsMobile } from '../../components/BottomSheet'
 import { ActionSheet } from '../../components/ActionSheet'
@@ -20,6 +21,7 @@ export function TrashPage() {
   const zone = useAppZone()
   const queryClient = useQueryClient()
   const deletedQ = useDeletedItems()
+  const listFade = useWasLoading(deletedQ.isPending) ? 'kf-fade' : undefined // T15: rows after the skeleton fade in
   const { data: deletedItems = [] } = deletedQ
   const [showGlobalConfirm, setShowGlobalConfirm] = useState(false)
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
@@ -189,20 +191,22 @@ export function TrashPage() {
             </>
           )}
         </div>
-        {isConfirming && (
-          <div className="kf-overlay-card" style={{ margin: '8px 0 0 71px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-panel)', padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 14, maxWidth: 440 }}>
+        {/* T8: the inline confirm folds out under its row (components/Collapse). */}
+        <Collapse open={isConfirming}>
+          <div style={{ margin: '8px 0 0 71px', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-panel)', padding: '11px 15px', display: 'flex', alignItems: 'center', gap: 14, maxWidth: 440 }}>
             <span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>Gone for good — compost now?</span>
             <span style={{ flex: 1 }}></span>
             <span onClick={() => setConfirmDeleteId(null)} style={{ fontSize: 12, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
             <button onClick={() => handleDeleteForever(item)} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12, padding: '6px 13px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Delete forever</button>
           </div>
-        )}
+        </Collapse>
       </div>
     )
   })
 
+  // T15: the last item gone, the empty state fades in (160ms) instead of swapping in.
   const renderEmptyState = () => (
-    <div style={{ background: 'var(--paper-linen)', padding: '46px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
+    <div className="kf-fade" style={{ background: 'var(--paper-linen)', padding: '46px 40px 48px', display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
       <svg width="120" height="76" viewBox="0 0 120 76">
         <ellipse cx="60" cy="62" rx="46" ry="12" fill="var(--sky-horizon,#b9a98a)" opacity="0.55"></ellipse>
         <path d="M22 60c4-14 18-24 38-24s34 10 38 24" fill="var(--sky-panel-strong,#a3937a)" opacity="0.6"></path>
@@ -262,19 +266,19 @@ export function TrashPage() {
             </div>
             {hasItems && <span onClick={() => setShowGlobalConfirm(true)} style={{ fontSize: 12.5, color: 'var(--acc-terra)', textDecoration: 'underline', cursor: 'pointer', paddingBottom: 5 }}>Empty trash…</span>}
           </div>
-          {showGlobalConfirm && (
-            <div className="kf-overlay-card" style={{ marginTop: 16, marginBottom: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-panel)', padding: '13px 17px', display: 'flex', alignItems: 'center', gap: 14 }}>
+          <Collapse open={showGlobalConfirm}>
+            <div style={{ marginTop: 16, marginBottom: 16, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-panel)', padding: '13px 17px', display: 'flex', alignItems: 'center', gap: 14 }}>
               <span style={{ fontSize: 13.5, color: 'var(--ink-body)' }}>Empty everything? {deletedItems.length} items, no way back.</span>
               <span style={{ flex: 1 }}></span>
               <span onClick={() => setShowGlobalConfirm(false)} style={{ fontSize: 12.5, color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
               <button onClick={handleEmptyEverything} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--paper-parchment)', fontFamily: 'inherit', fontSize: 12.5, padding: '8px 16px', borderRadius: 'var(--radius-input)', cursor: 'pointer' }}>Empty</button>
             </div>
-          )}
+          </Collapse>
           {deletedQ.isPending ? <Skeleton />
           : deletedQ.isError && !deletedQ.data ? <ErrorCard message="Couldn't load the Trash." onRetry={() => void deletedQ.refetch()} />
           : !hasItems ? renderEmptyState()
           : (
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className={listFade} style={{ display: 'flex', flexDirection: 'column' }}>
               {renderAgeGroup('Today', ageGroupedItems.today)}
               {renderAgeGroup('This week', ageGroupedItems.thisWeek)}
               {renderAgeGroup('Older', ageGroupedItems.older)}

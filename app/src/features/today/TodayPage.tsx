@@ -56,7 +56,8 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { rowAnchor } from '../../lib/rowAnchor'
 import { toastUndo } from '../../lib/undo'
 import { useOnline } from '../../lib/useOnline'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { Collapse } from '../../components/Collapse'
+import { flipRows, useArrivalClass, useCompletingRows, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { Fireflies } from './NightGarden'
@@ -211,7 +212,19 @@ function TodayView({ nav }: { nav: DayNav }) {
 
   // A3 (2026-07-18 audit): tasks completed *today* stay visible struck-through in their
   // sections instead of vanishing; done rows sort after open ones within each section.
-  const doneAfterOpen = (a: Task, b: Task) => Number(!!a.completed_at) - Number(!!b.completed_at)
+  // T3 (2026-10-28): a ticked row keeps its place while its check plays (the shared hold,
+  // lib/motion useCompletingRows), then FLIPs down to the done rows, instead of jumping there at once.
+  const tickMotion = useMotionEnabled()
+  // The hold keeps the pick's Top 3 place (completing clears it), so the Top 3 keeps its order too.
+  const { rows: ticking, hold: holdTick, keep: keepTick } = useCompletingRows<Pick<Task, 'top3' | 'top3_rank'>>((_, drop) => flipRows(drop))
+  useEffect(() => {
+    todayTick = { hold: (t) => tickMotion && holdTick(t.id, { top3: t.top3, top3_rank: t.top3_rank }), keep: keepTick }
+    return () => {
+      todayTick = null
+    }
+  })
+  const doneNow = (t: Task) => !!t.completed_at && !ticking.has(t.id)
+  const doneAfterOpen = (a: Task, b: Task) => Number(doneNow(a)) - Number(doneNow(b))
   // One rule for this page and the sidebar badge (Polish F1): grouping.ts `todayListTasks`.
   const visible = todayListTasks(tasks)
   const open = visible.filter((t) => !t.completed_at)
@@ -223,7 +236,9 @@ function TodayView({ nav }: { nav: DayNav }) {
   // Kai 2026-10-07: the Top 3 in his order, the first one the goal of the day — the same on every
   // device (./top3Order, tasks.top3_rank). R4 (2026-07-20 audit): a finished goal stays the goal,
   // struck through; the other finished picks sit after the open ones (A3).
-  const top3InOrder = dayTop3(tasks, legacyGoalId(), starEvents, new Date())
+  // T3: a pick in its hold is ordered as still open, at its old place; the row drawn is the real one.
+  const orderTasks = ticking.size === 0 ? tasks : tasks.map((t) => { const h = ticking.get(t.id); return h ? { ...t, ...h, status: 'todo' as const, completed_at: null } : t })
+  const top3InOrder = ticking.size === 0 ? dayTop3(tasks, legacyGoalId(), starEvents, new Date()) : dayTop3(orderTasks, legacyGoalId(), starEvents, new Date()).map((p) => tasks.find((t) => t.id === p.id) ?? p)
   const top3Ids = new Set(top3InOrder.map((t) => t.id))
   const top3 = top3InOrder
   const goal = top3InOrder[0] as Task | undefined
@@ -284,7 +299,7 @@ function TodayView({ nav }: { nav: DayNav }) {
   const allOpen = nestOut(listed, drawnParents)
   // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue ones get their own fold with
   // Replan all ▾; More for today keeps the rest. Oldest first (Today's list order).
-  const overdueOpen = allOpen.filter((t) => !t.completed_at && isOverdue(t, now) && !backFromSnooze(t, now))
+  const overdueOpen = allOpen.filter((t) => !doneNow(t) && isOverdue(t, now) && !backFromSnooze(t, now))
   const overdueIds = new Set(overdueOpen.map((t) => t.id))
   const restOpen = allOpen.filter((t) => !overdueIds.has(t.id))
   // Kai 2026-10-22 ("the today tasks are combined with the also open tasks"): what's due or on the
@@ -393,7 +408,10 @@ function TodayView({ nav }: { nav: DayNav }) {
   const verbs = useListVerbs(bulk)
   const listBindings = [...buildListBindings({
     ...verbs.actions,
-    complete: (t) => completeTaskWithUndo(t),
+    complete: (t) => {
+      todayTick?.hold(t) // T3: the row holds its place for the check
+      completeTaskWithUndo(t, () => todayTick?.keep(t.id))
+    },
     open: (t) => openTask(t.id),
     today: (t) => planWithUndo(t, todayFor(t)), // the Plan menu's Today: keeps the task's time
     tomorrow: (t) => moveToTomorrowWithUndo([t]),
@@ -424,8 +442,9 @@ function TodayView({ nav }: { nav: DayNav }) {
     // fold, Today's tasks or Also open. Up next follows the calendar, so it has no order to change.
     reorder: (rows, dir) => {
       const pick = rows.length === 1 ? top3InOrder.find((t) => t.id === rows[0].id && !t.completed_at) : undefined
-      if (pick) moveInTop3Order(pick, top3InOrder.indexOf(pick) + dir)
-      else moveInListWithUndo([overdueOpen, todayRows.filter((t) => !t.completed_at), alsoRows.filter((t) => !t.completed_at)], rows, dir)
+      // T13: the rows glide to their new places (FLIP) instead of snapping.
+      if (pick) flipRows(() => void moveInTop3Order(pick, top3InOrder.indexOf(pick) + dir))
+      else flipRows(() => void moveInListWithUndo([overdueOpen, todayRows.filter((t) => !t.completed_at), alsoRows.filter((t) => !t.completed_at)], rows, dir))
     },
   })
 
@@ -440,7 +459,9 @@ function TodayView({ nav }: { nav: DayNav }) {
       const t = top3InOrder.find((x) => x.id === id)
       if (!t || t.completed_at) return
       e.preventDefault()
-      if (moveInTop3Order(t, top3InOrder.indexOf(t) + (e.key === 'ArrowUp' ? -1 : 1))) {
+      let moved = false
+      flipRows(() => (moved = moveInTop3Order(t, top3InOrder.indexOf(t) + (e.key === 'ArrowUp' ? -1 : 1)))) // T13
+      if (moved) {
         requestAnimationFrame(() => document.getElementById(`task-${t.id}`)?.focus({ preventScroll: true }))
       }
     }
@@ -1634,14 +1655,19 @@ function AlsoOpen({ count, rows, render, motion }: { count: number; rows: Task[]
     setOpen(next)
     try { localStorage.setItem(MORE_OPEN_KEY, next ? '1' : '0') } catch { /* storage off: this visit only */ }
   }
-  const shown = rows.slice(0, open ? ALL_OPEN_CAP : ALSO_OPEN_FIRST)
+  // T8: the first three always; the rest fold out under them through the shared Collapse.
+  const first = rows.slice(0, ALSO_OPEN_FIRST)
+  const more = rows.slice(ALSO_OPEN_FIRST, ALL_OPEN_CAP)
   // "Show N more" counts the open ones folded away (rows finished today sort last, struck — A3).
   const hidden = rows.slice(ALSO_OPEN_FIRST).filter((t) => !t.completed_at).length || rows.length - ALSO_OPEN_FIRST
   return (
     <section aria-label="Also open" className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
       <SectionLabel style={{ marginBottom: 6 }}>{`Also open · ${count}`}</SectionLabel>
       {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
-      <div className="kf-dim">{shown.map(render)}</div>
+      <div className="kf-dim">
+        {first.map(render)}
+        <Collapse open={open}>{more.map((t, i) => render(t, i + ALSO_OPEN_FIRST))}</Collapse>
+      </div>
       {hidden > 0 && (
         <button type="button" className="td-more" aria-expanded={open} onClick={toggle}>
           {open ? 'Show fewer' : `Show ${hidden} more →`}
@@ -1718,7 +1744,8 @@ function WorthALook({ rows, resurfacing, stageOf }: { rows: SlippingRow[]; resur
   return (
     <section aria-label="Worth a look">
       <SectionLabel action={count || undefined} style={{ marginBottom: 12 }}>Worth a look</SectionLabel>
-      {at < rows.length ? <SlippingCard row={rows[at]} stage={stageOf(rows[at])} /> : <ResurfaceCard />}
+      {/* T11: stepping "1 of 2" cross-fades the card (keyed, so the next one fades in). */}
+      <div key={at} className={i > 0 ? 'kf-fade' : undefined}>{at < rows.length ? <SlippingCard row={rows[at]} stage={stageOf(rows[at])} /> : <ResurfaceCard />}</div>
     </section>
   )
 }
@@ -2004,6 +2031,9 @@ function DoneTodayCard() {
   )
 }
 
+/** T3: the Today on screen's hold on just-ticked rows (one Today at a time). */
+let todayTick: { hold: (task: Task) => void; keep: (id: string) => void } | null = null
+
 // Holds a bloomed checkbox on screen for the length of Motion 5a before the row settles into
 // its done treatment. Without it the swap to DoneCheck is instant and nothing animates.
 // Polish F2a: the held box stays checked, so a second click on it used to run the completion
@@ -2025,7 +2055,8 @@ function useBloomCheck(task: Task) {
         return
       }
       setChecking(true)
-      completeTaskWithUndo(task) // punch 6: "Done" toast + Undo; the reopen effect above drops the bloom
+      todayTick?.hold(task) // T3: the row holds its place for the check
+      completeTaskWithUndo(task, () => todayTick?.keep(task.id)) // punch 6: "Done" toast + Undo; the reopen effect above drops the bloom
     },
   }
 }
@@ -2070,7 +2101,7 @@ function Top3Slot({ task, index, children }: { task: Task; index: number; childr
     ids: [task.id],
     label: task.title,
     verdict: (spot) => (spot.kind === 'top3' && (spot as Top3Spot).index !== index ? true : null),
-    drop: (spot) => void moveInTop3Order(task, (spot as Top3Spot).index),
+    drop: (spot) => flipRows(() => void moveInTop3Order(task, (spot as Top3Spot).index)), // T13: the others glide aside
   }
   return (
     <DragRow id={task.id} load={load} disabled={!!task.completed_at}>
@@ -2111,7 +2142,7 @@ function GoalCard({ task, projectName, dot, compact, slim, meta, inProgress = fa
         <img className="tp-gs-clover" src={`${A}/clover/${done ? 'four_leaf' : 'awake'}.png`} alt="" />
         {more}
       </SwipeRow>
-      {nestOpen && <SubtaskNest parent={task} phone />}
+      <SubtaskNest show={nestOpen} parent={task} phone />
       </>
     )
   }
@@ -2136,7 +2167,7 @@ function GoalCard({ task, projectName, dot, compact, slim, meta, inProgress = fa
           {more}
         </div>
       </SwipeRow>
-      {nestOpen && <SubtaskNest parent={task} phone />}
+      <SubtaskNest show={nestOpen} parent={task} phone />
       </>
     )
   }
@@ -2165,7 +2196,7 @@ function GoalCard({ task, projectName, dot, compact, slim, meta, inProgress = fa
       {!g.selecting && !done && !task.parent_task_id && <SubtaskAddButton parent={task} />}
       {more}
     </SwipeRow>
-    {nestOpen && <SubtaskNest parent={task} />}
+    <SubtaskNest show={nestOpen} parent={task} />
     </>
   )
 }
@@ -2240,6 +2271,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noF
   const ofParent = parentTitle && <span key="sub" className="td-sub-of" title={`Subtask of “${parentTitle}”`}>↳ <EmojiText text={parentTitle} /></span>
   const subs = parent && <SubtaskCount key="subs" parent={task} />
   const open = () => openTask(task.id)
+  const arrive = useArrivalClass() // T11: a row that arrives later (capture, Undo, realtime) breathes in
   const rowProps = {
     id: block ? `upnext-${block.id}` : `task-${task.id}`,
     tabIndex: highlighted ? 0 : -1,
@@ -2268,7 +2300,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noF
       : task.recurrence_rule ? <span>↻</span> : null
     return (
       <>
-      <SwipeRow {...rowProps} data-tour="task-row" className={`tp-row tp-slim${nestOpen ? ' has-nest' : ''}`} style={{ ...rowProps.style, borderBottom: undefined }} contentClassName="tp-slim-in">
+      <SwipeRow {...rowProps} data-tour="task-row" className={`tp-row tp-slim${nestOpen ? ' has-nest' : ''}${arrive ? ` ${arrive}` : ''}`} style={{ ...rowProps.style, borderBottom: undefined }} contentClassName="tp-slim-in">
         {n != null && <span className="tp-slim-n" aria-hidden>{n}</span>}
         <span className="tp-slim-hit">
           {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom={task.top3} onChange={bloom.toggle} />}
@@ -2284,7 +2316,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noF
         </span>
         {!g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />}
       </SwipeRow>
-      {nestOpen && <SubtaskNest parent={task} phone rule />}
+      <SubtaskNest show={nestOpen} parent={task} phone rule />
       </>
     )
   }
@@ -2308,7 +2340,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noF
           ].filter(Boolean)
     return (
       <>
-      <SwipeRow {...rowProps} data-tour="task-row" className={`tp-row${nestOpen ? ' has-nest' : ''}`} style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
+      <SwipeRow {...rowProps} data-tour="task-row" className={`tp-row${nestOpen ? ' has-nest' : ''}${arrive ? ` ${arrive}` : ''}`} style={{ ...rowProps.style, borderBottom: undefined }} contentStyle={{ display: 'flex', alignItems: 'flex-start', minHeight: 'var(--row-min)', padding: 'var(--sp-1)', boxSizing: 'border-box' }}>
         <span className="tp-hit">
           {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom={task.top3} onChange={bloom.toggle} />}
         </span>
@@ -2332,7 +2364,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noF
           </>
         )}
       </SwipeRow>
-      {nestOpen && <SubtaskNest parent={task} phone rule />}
+      <SubtaskNest show={nestOpen} parent={task} phone rule />
       </>
     )
   }
@@ -2366,20 +2398,20 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noF
       : task.recurrence_rule ? <span>↻</span> : null
     return (
       <>
-      <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'center', gap: 14, padding: '9px 2px' }}>
+      <SwipeRow {...rowProps} className={arrive ? `td-row ${arrive}` : 'td-row'} contentStyle={{ display: 'flex', alignItems: 'center', gap: 14, padding: '9px 2px' }}>
         {check}
         <div onClick={open} className="td-row-title">{title}</div>
         {subs && <span className="td-meta td-row-fact">{subs}</span>}
         {fact && <span className="td-meta td-row-fact">{fact}</span>}
         {tail}
       </SwipeRow>
-      {nestOpen && <SubtaskNest parent={task} rule={border} />}
+      <SubtaskNest show={nestOpen} parent={task} rule={border} />
       </>
     )
   }
   return (
     <>
-    <SwipeRow {...rowProps} className="td-row" contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 2px' }}>
+    <SwipeRow {...rowProps} className={arrive ? `td-row ${arrive}` : 'td-row'} contentStyle={{ display: 'flex', alignItems: 'flex-start', gap: 14, padding: '13px 2px' }}>
       <span style={{ marginTop: 1 }}>{check}</span>
       <div onClick={open} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
         <div className="td-row-title">{title}</div>
@@ -2387,7 +2419,7 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noF
       </div>
       {tail}
     </SwipeRow>
-    {nestOpen && <SubtaskNest parent={task} rule={border} />}
+    <SubtaskNest show={nestOpen} parent={task} rule={border} />
     </>
   )
 }
@@ -2398,6 +2430,7 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
   // areas both live at /projects/:id (ProjectDetailPage renders either); a domain has no
   // detail page, so it lands on the garden overview.
   const to = row.entity_type === 'domain' ? '/projects' : `/projects/${row.entity_id}`
+  const arrive = useArrivalClass() // T11: a card put back by Undo breathes in
   const { data: projects = [] } = useProjects()
   // 2a rule 9 (actions are verbs): "reviewed" became Plan a step and Snooze a week (the review mark —
   // the card stays away while it's untouched < 7 days). Plan a step writes the next step in place
@@ -2417,7 +2450,7 @@ function SlippingCard({ row, stage }: { row: SlippingRow; stage: string }) {
       // Motion 3e (WB-1): markReviewed() looks the card up by this id to play the exit
       // before the stack heals. Same scheme in the Weekly Review sweep.
       id={`slipping-${row.entity_type}:${row.entity_id}`}
-      className="kf-lift td-nudge"
+      className={`kf-lift td-nudge${arrive ? ` ${arrive}` : ''}`}
       onClick={() => navigate(to)}
       role="link"
     >
@@ -2492,8 +2525,8 @@ function PhoneFolds({ overdue, also }: { overdue?: { count: number; action?: Rea
   )
   return (
     <section aria-label="Overdue and Also open" className="tp-pn tp-pn-gap">
-      {overdue && <div aria-label="Overdue" role="group">{head('Overdue', overdue.count, oOpen, oToggle, true, overdue.action)}{oOpen && overdue.body}</div>}
-      {also && <div aria-label="Also open" role="group">{head('Also open', also.count, aOpen, aToggle)}{aOpen && also.body}</div>}
+      {overdue && <div aria-label="Overdue" role="group">{head('Overdue', overdue.count, oOpen, oToggle, true, overdue.action)}<Collapse open={oOpen}>{overdue.body}</Collapse></div>}
+      {also && <div aria-label="Also open" role="group">{head('Also open', also.count, aOpen, aToggle)}<Collapse open={aOpen}>{also.body}</Collapse></div>}
     </section>
   )
 }
@@ -2511,7 +2544,7 @@ function MoreForToday({ summary, phone, label = 'Also open', storageKey = MORE_O
           </button>
           {action && <span style={{ flex: 'none', marginTop: 'var(--sp-2)', paddingRight: 'var(--gutter-phone)' }}>{action}</span>}
         </div>
-        {open && <div style={{ paddingTop: 4 }}>{children}</div>}
+        <Collapse open={open}><div style={{ paddingTop: 4 }}>{children}</div></Collapse>
       </section>
     )
   }
@@ -2528,7 +2561,7 @@ function MoreForToday({ summary, phone, label = 'Also open', storageKey = MORE_O
         </button>
         {action}
       </div>
-      {open && <div style={{ display: 'flex', flexDirection: 'column', gap: 26, marginTop: 12 }}>{children}</div>}
+      <Collapse open={open}><div style={{ display: 'flex', flexDirection: 'column', gap: 26, marginTop: 12 }}>{children}</div></Collapse>
     </section>
   )
 }

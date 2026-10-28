@@ -244,7 +244,8 @@ export function SubtaskRow({ sub, edit, dense, plan, nested }: { sub: Task; edit
   return (
     <div
       id={nested ? `task-${sub.id}` : `sub-${sub.id}`}
-      className={`ts-sub${dense ? ' is-dense' : ''}${nested ? ' is-nested' : ''}`}
+      // T11: a nested subtask breathes in as it arrives (the add line's Enter, an Undo).
+      className={`ts-sub${dense ? ' is-dense' : ''}${nested ? ' is-nested kf-row-in' : ''}`}
       onContextMenu={(e) => {
         e.preventDefault()
         setMenu({ x: e.clientX, y: e.clientY })

@@ -1,5 +1,6 @@
 import { useState, type MouseEvent, type ReactNode } from 'react'
 import { ActionSheet } from '../../components/ActionSheet'
+import { Collapse } from '../../components/Collapse'
 import { ContextMenu } from '../../components/ContextMenu'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
@@ -433,14 +434,15 @@ export function GithubRow({ item, phone, open, showRepo, highlighted, selected, 
           <span className="ib-meta">{age}</span>
         </button>
       </div>
-      {open && (
+      {/* T8: the open row's actions ease out from under it (components/Collapse). */}
+      <Collapse open={open}>
         <div className="ib-gh-more">
           {url && <a className="ib-meta" href={url} target="_blank" rel="noopener noreferrer">Open on GitHub ↗</a>}
           <span style={{ flex: 1 }} />
           <Button type="button" variant="secondary" className="ib-btn ib-btn--sm" onClick={onFile}>File</Button>
           <Button type="button" variant="ghost" className="ib-btn ib-btn--sm" onClick={onDismiss}>Dismiss</Button>
         </div>
-      )}
+      </Collapse>
     </SwipeRow>
   )
 }

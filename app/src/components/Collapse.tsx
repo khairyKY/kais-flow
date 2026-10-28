@@ -10,19 +10,32 @@ import './Collapse.css'
  *
  * Closed, the children unmount once the fold has shut (as a plain `{open && …}` did), so nothing
  * hidden stays mounted. Padding and margins belong INSIDE the children — anything on the inner box
- * would stop it folding to zero. */
+ * would stop it folding to zero.
+ * - `appear`: mounted open, it still eases open from nothing (a fold that only mounts when it opens).
+ * - `onClosed`: the fold has finished shutting (a caller that unmounts the whole Collapse then). */
 const COLLAPSE_MS = 200
 
-export function Collapse({ open, children, className, ...rest }: { open: boolean; children: ReactNode } & HTMLAttributes<HTMLDivElement>) {
-  // Where the fold last came to rest; `open !== settled` = moving.
-  const [settled, setSettled] = useState(open)
+export function Collapse({ open, appear, onClosed, children, className, ...rest }: { open: boolean; appear?: boolean; onClosed?: () => void; children: ReactNode } & HTMLAttributes<HTMLDivElement>) {
+  // Where the fold last came to rest; `shown !== settled` = moving.
+  const [settled, setSettled] = useState(open && !appear)
+  // `appear`: the first frame draws it shut, the next opens it, so the track has something to ease from.
+  const [armed, setArmed] = useState(!appear)
   useEffect(() => {
-    if (open === settled) return
-    const t = window.setTimeout(() => setSettled(open), reducedMotionNow() ? 0 : COLLAPSE_MS)
+    if (armed) return
+    const f = requestAnimationFrame(() => setArmed(true))
+    return () => cancelAnimationFrame(f)
+  }, [armed])
+  const shown = open && armed
+  useEffect(() => {
+    if (shown === settled) return
+    const t = window.setTimeout(() => {
+      setSettled(shown)
+      if (!shown) onClosed?.()
+    }, reducedMotionNow() ? 0 : COLLAPSE_MS)
     return () => window.clearTimeout(t)
-  }, [open, settled])
+  }, [shown, settled, onClosed])
   return (
-    <div {...rest} className={className ? `kf-collapse ${className}` : 'kf-collapse'} data-open={open || undefined} data-moving={open !== settled || undefined} inert={!open || undefined}>
+    <div {...rest} className={className ? `kf-collapse ${className}` : 'kf-collapse'} data-open={shown || undefined} data-moving={shown !== settled || undefined} inert={!open || undefined}>
       <div className="kf-collapse-inner">{(open || settled) && children}</div>
     </div>
   )
