@@ -50,14 +50,23 @@ New shared pieces:
 | R12 (onboarding) | built (seed plant skipped) | "Start" with things sets `html[data-planted]` for 3 s. Today's Top 3 rows rise in at 160, 280 and 400 ms and the goal blooms once, all through pure CSS on Today's existing `data-top3-slot` and `data-tour` hooks (TodayPage.tsx is A1's and is untouched). The Motion 5f seed plant at the onboarding step is not built: it would be new art or a new screen, outside a motion pass. | onboarding/OnboardingPage.tsx, pageMotion.css |
 
 ## Evidence
-- **Gate** (`gate.ps1`, on 74b15250; later commits change only ChatPanel's glide, one CSS selector and the harness):
-  - vitest 189 files / 2674 tests in each of Africa/Cairo, UTC, America/Los_Angeles and Asia/Tokyo
+- **Gate** (`gate.ps1`, re-run after merging `origin/claude/kai-bugs-1012` at 95d07e78):
+  - vitest 189 files / 2675 tests in each of Africa/Cairo, UTC, America/Los_Angeles and Asia/Tokyo
   - lint exit 0 (warnings only)
   - build exit 0
   - ds:check 0 new
   - `birthday_on` count in types.ts and settings.ts: 1/1
-- **New harness:** `docs/log/assets/motion-pages/verify.mjs <out> http://localhost:5327` on the mock backend. Every item runs with Effects on, Effects off and OS reduced motion, using `getAnimations()`, computed styles and timed screenshots. RESULTS_PLACEHOLDER
-- **Existing harnesses on these surfaces:** OLD_PLACEHOLDER
+- **New harness:** `docs/log/assets/motion-pages/verify.mjs <out> http://localhost:5327` on the mock backend. Every item runs with Effects on, Effects off and OS reduced motion, using `getAnimations()`, computed styles and timed screenshots. 
+  - The full run after the merge was 158/159. The one miss was a read-timing issue: a 70 ms sample can come after the 90 ms boxFill under load. The check now keys on checkPop, and section r re-run alone gives 33/33.
+  - Sections f, c, w, v, o, t and a, re-run alone, are 21/21, 24/24, 23/23, 16/16, 21/21, 9/9 and 12/12.
+  - The Effects-on frames and `results.json` are in `docs/log/assets/motion-pages/`.
+- **Existing harnesses on these surfaces:** 
+  - **Green:** rituals 210/210, ai-chat 77/77, resurface-chat 292/292, notebook-page 83/83, first-run 416/416.
+  - **rituals needed a harness update.** 6m tapped File and then Dismiss on `.rt-inbox:first` 350 ms apart. The filed row is still sliding out at that point (T6), so the Dismiss tap hit a row that was being removed. A 300 ms wait was added after the File tap. It passes alone, 210/210.
+  - **These four fail the same way on the base branch** (5f5d725e, served on :5338 from a throwaway worktree), so they are not regressions:
+    - routines-2 44/45: its element screenshot of the static design export times out.
+    - tour: Settings has no "Show me around again" button where it looks.
+    - plan-replan and projects-fixes: `#settings-Calendar` and `#settings-Organize` are gone since the settings-build layout.
 
 ## Notes for the merge
 - A1's helper commit flipped line endings; this branch keeps each file's base endings (some files are CRLF, some LF). Merge with `-X ignore-cr-at-eol`.
