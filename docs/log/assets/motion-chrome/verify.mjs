@@ -80,6 +80,11 @@ async function open(route, o = {}) {
       state.transcribed += 1
       return r.fulfill({ json: { text: 'call mum' } })
     }
+    if (url.pathname.startsWith('/functions/v1/search')) {
+      const q = String(req.postDataJSON()?.query ?? '').toLowerCase()
+      const results = state.rows.tasks.filter((t) => t.title.toLowerCase().includes(q)).slice(0, 8).map((t) => ({ entity_type: 'task', entity_id: t.id, title: t.title, snippet: null, score: 1 }))
+      return r.fulfill({ json: { results } })
+    }
     if (url.pathname.startsWith('/functions/v1/')) return r.fulfill({ json: {} })
     if (req.method() !== 'GET' && req.method() !== 'HEAD') {
       state.writes.push({ method: req.method(), table })
@@ -234,6 +239,64 @@ if (want('o3')) {
     await tap(env, env.page.locator('.app-tabbar').getByRole('button', { name: 'More' }), 60)
     const a = await anims(more)
     check('o3 reduced: More cross-fades (scrimIn, no rise)', a.includes('scrimIn') && !a.includes('sheetIn'), JSON.stringify(a))
+    await env.ctx.close()
+  }
+}
+
+// ── K2 — ⌘K: the changing part eases its height (150ms), chips fade up (120ms), the Jump selection moves in 80ms ──
+if (want('k2')) {
+  for (const [v, o] of [['on', {}], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', { view: desktop, ...o })
+    const { page } = env
+    await page.keyboard.press('n')
+    const field = page.locator('#kf-capture-input')
+    await field.waitFor({ timeout: 8000 })
+    const grow = page.locator('.kf-cmd-grow')
+    const h0 = await grow.evaluate((el) => el.getBoundingClientRect().height)
+    await field.fill('call mum tomorrow 3pm') // one input event: the chips row mounts at once
+    await sleep(40)
+    const mid = await grow.evaluate((el) => ({ h: el.getBoundingClientRect().height, anims: el.getAnimations().map((a) => a.transitionProperty) }))
+    const chips = await page.locator('.kf-cmd-chips > *').evaluateAll((els) => els.map((e) => getComputedStyle(e).animationName))
+    await sleep(400)
+    const h1 = await grow.evaluate((el) => el.getBoundingClientRect().height)
+    const inner = await grow.evaluate((el) => el.firstElementChild.getBoundingClientRect().height)
+    const tr = await grow.evaluate((el) => getComputedStyle(el).transition)
+    await shot(page, `k2-chips-${v}`)
+    check(`k2 ${v}: the box's height transitions 150ms and comes to rest at its content's height`, tr.includes('height 0.15s') || (v === 'reduced' && tr.includes('height')), tr)
+    check(`k2 ${v}: chips arrived with itemFadeIn; the box grew to fit them (${Math.round(h0)} → ${Math.round(h1)})`, chips.length > 0 && chips.every((n) => n === 'itemFadeIn') && h1 > h0 && Math.abs(h1 - inner) < 1, JSON.stringify({ chips, h0, h1, inner }))
+    if (v === 'on') check('k2 on: as the chips mount, the height is easing (a running height transition)', mid.anims.includes('height'), JSON.stringify(mid))
+    const jumpTr = await page.evaluate(() => [...document.querySelectorAll('.kf-cmd-grow [style*="cursor: pointer"]')].map((e) => getComputedStyle(e).transitionDuration))
+    await field.fill('cal')
+    await sleep(300)
+    const jt = await page.locator('.kf-cmd-grow > div > div').first().evaluate((e) => getComputedStyle(e).transition)
+    check(`k2 ${v}: the Jump row's selection transitions its background (80ms)`, jt.includes('background-color 0.08s') || (v === 'reduced' && jt.includes('background-color')), jt + ' ' + JSON.stringify(jumpTr))
+    basics(env, `k2 ${v}`)
+    await env.ctx.close()
+  }
+}
+
+// ── O5 — Search on the ⌘K recipe; its rows stay mounted while you type ──
+if (want('o5')) {
+  for (const [v, o] of [['on', {}], ['effects-off', { effectsOff: true }]]) {
+    const env = await open('/today', { view: desktop, ...o })
+    const { page } = env
+    await page.evaluate(() => window.dispatchEvent(new Event('kf-open-search')))
+    const card = page.locator('.kf-overlay-card').filter({ has: page.getByPlaceholder('Search the garden…') })
+    await card.waitFor({ timeout: 5000 })
+    const a = await anims(card)
+    check(`o5 ${v}: the card arrives on the ⌘K recipe (${v === 'on' ? 'kfOverlayIn, with scale' : 'kfOverlayInFlat, rise + fade'})`, a.includes(v === 'on' ? 'kfOverlayIn' : 'kfOverlayInFlat'), JSON.stringify(a))
+    const input = page.getByPlaceholder('Search the garden…')
+    await input.pressSequentially('err', { delay: 40 })
+    await page.getByRole('button', { name: 'Errand 1', exact: true }).waitFor({ timeout: 5000 })
+    await page.getByRole('button', { name: 'Errand 1', exact: true }).evaluate((el) => (window.__row = el))
+    await input.press('ArrowDown')
+    await sleep(100)
+    await input.pressSequentially('and', { delay: 40 })
+    await sleep(600)
+    const same = await page.getByRole('button', { name: 'Errand 1', exact: true }).evaluate((el) => el === window.__row && el.isConnected)
+    check(`o5 ${v}: a row survives arrow keys and more typing (the same DOM node — no remount)`, same)
+    await shot(page, `o5-search-${v}`)
+    basics(env, `o5 ${v}`)
     await env.ctx.close()
   }
 }
