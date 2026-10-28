@@ -57,3 +57,31 @@
   opacity: 0;
   animation: kfVignetteIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards, fireflyDrift 9s ease-in-out calc(var(--veil-delay, 0ms) + 1200ms) infinite;
 }
+
+/* O10 — the Library's phone list ↔ reader: the reader comes in from the right, the list back from the
+   left, on the stack's curve (Motion 3a's direction, shortened to 32px so nothing overflows the page).
+   Only after a switch (LibraryPage), never on the page's first paint. Effects off: a fade. */
+@keyframes kfLibIn { from { opacity: 0; transform: translateX(32px); } to { opacity: 1; transform: none; } }
+@keyframes kfLibBack { from { opacity: 0; transform: translateX(-32px); } to { opacity: 1; transform: none; } }
+.kf-lib-moved { animation: kfSwapIn 160ms var(--ease-out) backwards; }
+.motion-on .kf-lib-moved.kf-lib-reader { animation: kfLibIn 300ms var(--ease-stack) backwards; }
+.motion-on .kf-lib-moved.kf-lib-list { animation: kfLibBack 300ms var(--ease-stack) backwards; }
+
+/* R12 — onboarding's "planted" hand-off (OnboardingPage sets html[data-planted] for 3s): the Top 3
+   lines just written rise in one after another on Today, and the goal card blooms once. Hooks are
+   Today's own stable attributes (data-tour="top3", data-top3-slot), so Today's code is untouched. */
+@keyframes kfPlantedIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+html[data-planted].motion-on [data-top3-slot] { animation: kfPlantedIn 360ms var(--ease-out) backwards; }
+html[data-planted].motion-on [data-tour='top3'] > :nth-child(1 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 160ms; }
+html[data-planted].motion-on [data-tour='top3'] > :nth-child(2 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 280ms; }
+html[data-planted].motion-on [data-tour='top3'] > :nth-child(3 of :has([data-top3-slot])) [data-top3-slot] { animation-delay: 400ms; }
+html[data-planted].motion-on [data-top3-slot]:has(.tp-goal)::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in oklch, var(--acc-gold-warm) 50%, transparent) 0%, transparent 70%);
+  opacity: 0;
+  animation: kfBloomGlow 1.2s ease-in-out 520ms 1 forwards;
+}

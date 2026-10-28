@@ -219,3 +219,12 @@
 }
 .kf-hint-x:active { background: var(--pressed-overlay); }
 .kf-hint-x:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* ── R11 (motion build 2026-10-28) ── a later note's spotlight glides from the last one (TourHost, 300ms
+   ease-standard) instead of fading the dim back in; the current dot grows into its pill; the closing
+   bloom rises from its base (Effects on). */
+.kf-tour-spot.is-glide { animation: none; }
+@keyframes kfTourDotNow { from { width: 8px; } to { width: 18px; } }
+.kf-tour-dots > span[data-state='now'] { animation: kfTourDotNow 200ms var(--ease-out) backwards; } /* ds-ok: R11, the dot widening into its pill */
+@keyframes kfTourBloom { from { opacity: 0; transform: scale(0.4); } to { opacity: 1; transform: none; } }
+.motion-on .kf-tour-bloom { transform-origin: 50% 100%; animation: kfTourBloom var(--dur-bloom) var(--ease-out) backwards; }
