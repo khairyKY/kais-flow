@@ -294,7 +294,7 @@ export function TrayFlyout() {
 
       {voiceOpen && (
         <Suspense fallback={null}>
-          <VoiceCaptureSheet open onClose={() => setVoiceOpen(false)} />
+          <VoiceCaptureSheet onClose={() => setVoiceOpen(false)} />
         </Suspense>
       )}
       <ToastHost />

@@ -241,7 +241,7 @@ export function CaptureButton() {
 
       {sheet && (
         <Suspense fallback={null}>
-          <VoiceCaptureSheet open recording={sheet.recording} onClose={() => setSheet(null)} />
+          <VoiceCaptureSheet recording={sheet.recording} onClose={() => setSheet(null)} />
         </Suspense>
       )}
     </>

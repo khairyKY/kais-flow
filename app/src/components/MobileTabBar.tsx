@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { CaptureButton } from '../features/capture/CaptureButton'
-import { useEscapeStack } from '../lib/overlayStack'
+import { BottomSheet } from './BottomSheet'
 import { useMotionEnabled } from '../lib/motion'
 import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
@@ -78,19 +78,14 @@ const MORE_ITEMS: { to: string; label: string; icon: IconName; badge?: boolean }
 
 const footBtn = { flex: 1, minHeight: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', background: 'none', border: 'none', cursor: 'pointer', font: 'inherit' } as const
 
+// O3: a real sheet (BottomSheet) — drags with the finger, swipes down to close, and a link plays the
+// exit while the page underneath already changes.
 function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pendingInbox: number; onClose: () => void; onSearch: () => void; onChat: () => void; onSignOut: () => void }) {
-  useEscapeStack(true, onClose)
   const { pathname } = useLocation()
   return (
-    <div className="kf-scrim" style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', alignItems: 'flex-end' }} onClick={onClose}>
-      <div
-        className="kf-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="More"
-        style={{ width: '100%', background: 'var(--paper-parchment)', borderTop: '1px solid var(--line-card)', borderRadius: 'var(--sheet-radius) var(--sheet-radius) 0 0', boxShadow: 'var(--shadow-sheet)', padding: '18px 16px calc(18px + env(safe-area-inset-bottom))' }}
-        onClick={(e) => e.stopPropagation()}
-      >
+    <BottomSheet onClose={onClose} handleGap={4} sheetProps={{ 'aria-label': 'More', style: { borderTop: '1px solid var(--line-card)' } }}>
+      {(close) => (
+      <>
         {/* Three columns where three fit, two where they don't (the export's caption for this
             sheet says "2-column grid"; its card draws three at 500px). A fixed repeat(3, 1fr)
             overflowed: at a 125% interface size (lib/uiScale.ts; the phone default was 125% until F2b) a 390px phone lays out
@@ -105,7 +100,7 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
               <Link
                 key={item.to}
                 to={item.to}
-                onClick={onClose}
+                onClick={close}
                 aria-current={on ? 'page' : undefined}
                 style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0, minHeight: 48, boxSizing: 'border-box', background: on ? 'var(--frost-bg, var(--paper-parchment))' : 'var(--paper-bone)', border: `1px solid ${on ? 'var(--frost-line, var(--line-control))' : 'var(--line-card)'}`, borderRadius: 'var(--radius-input)', padding: '11px 13px', textDecoration: 'none' }}
               >
@@ -120,12 +115,13 @@ function MoreSheet({ pendingInbox, onClose, onSearch, onChat, onSignOut }: { pen
         </div>
         {/* 48px rows and buttons (Kai's phone review: ~40 / ~20px tall before) */}
         <div style={{ display: 'flex', gap: 16, marginTop: 8, paddingTop: 8, borderTop: '1px solid var(--line-dashed)' }}>
-          <button type="button" onClick={() => { onClose(); onSearch() }} style={footBtn}><Icon name="search" size={16} /><span>Search</span></button>
-          <button type="button" onClick={() => { onClose(); onChat() }} style={footBtn}><Icon name="chat" size={16} /><span>Chat</span></button>
-          <button type="button" onClick={() => { onClose(); onSignOut() }} style={{ ...footBtn, color: 'var(--ink-faint)' }}><Icon name="signout" size={16} /><span>Sign out</span></button>
+          <button type="button" onClick={() => { close(); onSearch() }} style={footBtn}><Icon name="search" size={16} /><span>Search</span></button>
+          <button type="button" onClick={() => { close(); onChat() }} style={footBtn}><Icon name="chat" size={16} /><span>Chat</span></button>
+          <button type="button" onClick={() => { close(); onSignOut() }} style={{ ...footBtn, color: 'var(--ink-faint)' }}><Icon name="signout" size={16} /><span>Sign out</span></button>
         </div>
-      </div>
-    </div>
+      </>
+      )}
+    </BottomSheet>
   )
 }
 

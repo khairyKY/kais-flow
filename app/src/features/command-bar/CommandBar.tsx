@@ -342,7 +342,6 @@ export function CommandBar() {
 
   const voiceSheet = voice && (
     <VoiceCaptureSheet
-      open
       recording={voice.recording}
       onText={voice.dictated ? (heard) => setText((typed) => appendDictation(typed, heard)) : undefined}
       onClose={() => setVoice(null)}

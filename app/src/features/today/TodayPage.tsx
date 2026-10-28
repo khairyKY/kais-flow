@@ -1399,7 +1399,7 @@ function AddTaskPill({ prefill }: { /** Another day's pill: the capture bar open
       </button>
       {voice && (
         <Suspense fallback={null}>
-          <VoiceCaptureSheet open onClose={() => setVoice(false)} />
+          <VoiceCaptureSheet onClose={() => setVoice(false)} />
         </Suspense>
       )}
     </div>

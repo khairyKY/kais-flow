@@ -1,34 +1,5 @@
 /* capture.css - Local styles for Wave 8 (Voice capture & Quick capture) */
 
-/* Motion 3c Overlay Animations */
-@keyframes captureScrimFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes captureScrimFadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-@keyframes captureSheetSlideIn {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes captureSheetSlideOut {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(100%);
-  }
-}
-
 /* Simulated keyboard animations */
 @keyframes slideKeyboardUp {
   from { transform: translateY(100%); }
