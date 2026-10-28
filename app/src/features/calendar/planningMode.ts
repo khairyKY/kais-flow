@@ -136,8 +136,11 @@ export function dueWord(dueIso: string, now: Date, short = false): string {
   return `Due ${noon.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' })}`
 }
 
-/** What FullCalendar drops for a rail / planning card: its title and length (`data-*`). */
-export function cardDragData(el: HTMLElement): { title: string; duration: string } {
+/** What FullCalendar drops for a rail / planning card: its title and length (`data-*`). `create: false`:
+ * the drop only reports (CalendarGrid's `drop` → gridDrop writes the block); left at FullCalendar's default
+ * it also added its own copy of the card to the grid, which stayed drawn whenever the drop wrote nothing —
+ * a task let go inside the Time block already holding it showed twice (shot-bugs, Kai 2026-10-27). */
+export function cardDragData(el: HTMLElement): { title: string; duration: string; create: false } {
   const min = Number(el.dataset.duration) || 30
-  return { title: el.dataset.title ?? '', duration: `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}` }
+  return { create: false, title: el.dataset.title ?? '', duration: `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}` }
 }

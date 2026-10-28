@@ -19,7 +19,7 @@ import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
 import { Collapse } from './Collapse'
-import { markRouteEntry, useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
+import { markRouteEntry, reducedMotionNow, useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
@@ -347,9 +347,19 @@ function SideStreak() {
   }, [routines, completions])
 
   return (
-    <div className="kf-side-streak" style={{ padding: '6px 10px 4px' }}>
-      <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
-      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
+    // D16 (Motion 1f / Effects 1b, Kai's yes 2026-10-28): the streak's vine is back beside the words —
+    // the existing sprouting-vine art, idling (cloverSway 7s) with two pollen motes drifting
+    // (fireflyDrift + twinkle). The motion is decorative: .motion-on only; Effects off, it stands still.
+    <div className="kf-side-streak" style={{ padding: '6px 10px 4px', display: 'flex', alignItems: 'flex-end', gap: 10 }}>
+      <span className="kf-streak-plant" aria-hidden="true">
+        <img src="/ds/assets/vine/sprouting.png" alt="" />
+        <i />
+        <i />
+      </span>
+      <div>
+        <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
+      </div>
     </div>
   )
 }
@@ -705,6 +715,28 @@ export function AppLayout() {
   useEffect(() => {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
+  // O7: folding, the labels fade out first (120ms), then the width eases 242 → 64 (200ms, CSS);
+  // opening, the width eases out, then the labels fade back in. Functional: a cut under reduced motion.
+  const [fold, setFold] = useState<'out' | 'in' | null>(null)
+  const foldTimer = useRef(0)
+  const toggleSidebar = () => {
+    window.clearTimeout(foldTimer.current)
+    if (reducedMotionNow()) {
+      setFold(null)
+      return setCollapsed((v) => !v)
+    }
+    if (!collapsed) {
+      setFold('out')
+      foldTimer.current = window.setTimeout(() => {
+        setCollapsed(true)
+        setFold(null)
+      }, 120)
+    } else {
+      setCollapsed(false)
+      setFold('in')
+      foldTimer.current = window.setTimeout(() => setFold(null), 320)
+    }
+  }
 
   // User time zones: every date below reads the user's zone; a new zone remounts the page (key
   // below) so nothing memoised keeps the old day. Once per device, offer the device's own zone.
@@ -834,6 +866,19 @@ export function AppLayout() {
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* D16 — the streak's vine and its pollen (SideStreak). */
+        .kf-streak-plant { position: relative; flex: none; width: 28px; height: 40px; }
+        .kf-streak-plant img { position: absolute; left: 0; bottom: 0; height: 40px; transform-origin: 50% 100%; }
+        .kf-streak-plant i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: var(--acc-buttercream); opacity: 0; }
+        .kf-streak-plant i:first-of-type { left: 16px; top: 6px; }
+        .kf-streak-plant i:last-of-type { left: 4px; top: 16px; }
+        .motion-on .kf-streak-plant img { animation: cloverSway 7s ease-in-out infinite; }
+        .motion-on .kf-streak-plant i:first-of-type { animation: fireflyDrift 9s ease-in-out infinite, twinkle 3s ease-in-out infinite; }
+        .motion-on .kf-streak-plant i:last-of-type { animation: fireflyDrift 11s ease-in-out -4s infinite, twinkle 3.6s ease-in-out infinite; }
+        /* O7 — the fold (toggleSidebar): labels out 120ms, then the width 200ms; back, the reverse. */
+        .app-sidebar { transition: width var(--dur-normal) var(--ease-standard); } /* ds-ok: O7 sidebar fold — the spec animates the width (Linear) */
+        .app-sidebar[data-fold='out'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { opacity: 0; transition: opacity 120ms var(--ease-standard); }
+        .app-sidebar[data-fold='in'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { animation: kfFadeIn 120ms var(--ease-out) var(--dur-normal) backwards; }
         /* A size container query, not a media query: it measures the sidebar in zoomed CSS px. */
         .app-sidebar { container: kf-sidebar / size; }
         /* Bottom B (Sidebar options.html, Kai 2026-10-22): the name is the menu's button, and the app
@@ -865,7 +910,7 @@ export function AppLayout() {
         /* Short sidebar (1280×800 at the default 125% is 640 layout px): the column tightens a little to
            keep Tend's five rows in view with the Plan drawer open. */
         @container kf-sidebar (max-height: 799px) {
-          .app-sidebar:not(.collapsed) .app-sidebar-col { padding-top: 16px !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-top { padding-top: 16px !important; }
           .app-sidebar:not(.collapsed) .app-sidebar-header { padding-bottom: 12px !important; }
           .app-sidebar:not(.collapsed) nav > .app-nav-label { padding-top: 6px !important; }
           /* Bound Journal's 12px meta and rounded rows cost the column a few px: Projects ran 2px under the
@@ -1049,11 +1094,12 @@ export function AppLayout() {
           overhang the divider at right:-12 un-clipped — scrolling lives on the inner column. */}
       <aside
         className={`app-sidebar${collapsed ? ' collapsed' : ''}`}
+        data-fold={fold ?? undefined}
         style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 5 }}
       >
         <button
           type="button"
-          onClick={() => setCollapsed((v) => !v)}
+          onClick={toggleSidebar}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="kf-collapse-btn"
           style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--line-card)', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', color: 'var(--ink-faint)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 45 }}
@@ -1065,13 +1111,17 @@ export function AppLayout() {
             hover flyouts at the 64px edge — so at 125–150% the icon column ran under the pinned
             footer instead of scrolling (Kai 2026-10-03). The flyouts now draw on <body> (NavRow),
             so the column scrolls in both states. */}
-        <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
-
         {/* Today 2a: the app icon beside the wordmark; 2a drops the hand line ("a field journal of
             days ✿"). deviation(2026-10-13 today-shell): the workspace · city line stays — it is
             the only place the workspace answer shows, and with no top bar on Today / Inbox the
-            only place the user's zone does. Bottom B (2026-10-22): it is the menu's button. */}
-        <SideHeader collapsed={collapsed} sync={!isMobile} onSignOut={signOutFlow.request} />
+            only place the user's zone does. Bottom B (2026-10-22): it is the menu's button.
+            shot-bugs (Kai 2026-10-27): pinned above the scrolling column, as the foot is below it — a
+            scrolled sidebar slid it under the window's title bar, half cut. */}
+        <div className="app-sidebar-top" style={{ flex: 'none', paddingTop: 24 }}>
+          <SideHeader collapsed={collapsed} sync={!isMobile} onSignOut={signOutFlow.request} />
+        </div>
+
+        <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '0 0 8px' }}>
 
         <PlanDrawer />
 

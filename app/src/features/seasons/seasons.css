@@ -1,0 +1,16 @@
+/* D12 — the seasonal drift behind the page header (SeasonDrift.tsx). Shown only with Effects on and
+   no reduced motion (.motion-on on <html>). The host header is position:relative + isolation:isolate;
+   the layer sits under its content (z-index -1) and is clipped to it. */
+.kf-season-drift { display: none; position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
+.motion-on .kf-season-drift { display: block; }
+.kf-season-drift > span { position: absolute; top: -8px; animation: linear infinite backwards; }
+.kf-season-drift[data-season='spring'] > span { width: 9px; height: 7px; border-radius: 70% 30% 60% 40%; background: var(--acc-blossom); animation-name: kfSeasonFall; }
+.kf-season-drift[data-season='autumn'] > span { width: 11px; height: 8px; border-radius: 70% 30% 60% 40%; background: linear-gradient(135deg, var(--acc-gold-warm), var(--acc-gold)); animation-name: kfSeasonSide; }
+.kf-season-drift[data-season='winter'] > span { top: -20px; width: 1.2px; height: 16px; border-radius: 1px; background: color-mix(in srgb, var(--acc-hydrangea) 70%, transparent); animation-name: kfSeasonRain; }
+.kf-season-drift[data-season='summer'] > span { inset: 0; top: 0; background: radial-gradient(ellipse 70% 90% at 40% 0%, color-mix(in srgb, var(--acc-buttercream) 55%, transparent), transparent 70%); animation-name: kfSeasonShimmer; animation-timing-function: ease-in-out; }
+@keyframes kfSeasonFall { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 10% { opacity: 0.95; } 100% { transform: translate(24px, 130px) rotate(200deg); opacity: 0; } }
+@keyframes kfSeasonSide { 0% { transform: translate(0, 0) rotate(0); opacity: 0; } 10% { opacity: 0.95; } 100% { transform: translate(180px, 120px) rotate(260deg); opacity: 0; } }
+@keyframes kfSeasonRain { 0% { transform: translateY(0); opacity: 0; } 15% { opacity: 0.8; } 100% { transform: translateY(140px); opacity: 0; } }
+@keyframes kfSeasonShimmer { 0%, 100% { opacity: 0.35; transform: translateX(-6%); } 50% { opacity: 0.9; transform: translateX(6%); } }
+.td-head, .tp-bar { isolation: isolate; }
+.td-head { position: relative; }

@@ -114,7 +114,10 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
     if (t)
       return (
         <span className="kf-now-ck" onClick={(ev) => ev.stopPropagation()}>
-          <Checkbox checked={false} size={15} label={t.title} onChange={() => completeTaskWithUndo(t)} />
+          {/* As drawn (.kc): a rounded square with a 2px edge — the kit's 7px corners make a 15px box a circle,
+              which read as the same ring a Time block or an event wears, untickable (shot-bugs, Kai 2026-10-27).
+              ds-ok: the drawn .kc corners (Calendar extras options §4), as check B keeps its own */}
+          <Checkbox checked={false} size={15} label={t.title} onChange={() => completeTaskWithUndo(t)} style={{ borderRadius: 5, borderWidth: 2 }} />
         </span>
       )
     return <span className="kf-now-ring" aria-hidden="true" />

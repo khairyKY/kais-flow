@@ -63,6 +63,7 @@ import { flipRows, useArrivalClass, useCompletingRows, useMotionEnabled, stagger
 import { wisteriaStage } from '../../lib/growthStages'
 import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { Fireflies } from './NightGarden'
+import { SeasonDrift } from '../seasons/SeasonDrift'
 import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
 import { isInProgress, upNextEvents } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
@@ -816,6 +817,7 @@ function TodayView({ nav }: { nav: DayNav }) {
         <NotebookButton />
         <AddTaskPill />
       </div>
+      <SeasonDrift now={now} />
     </div>
   )
 
@@ -1424,7 +1426,7 @@ function AddTaskPill({ prefill }: { /** Another day's pill: the capture bar open
       </button>
       {voice && (
         <Suspense fallback={null}>
-          <VoiceCaptureSheet open onClose={() => setVoice(false)} />
+          <VoiceCaptureSheet onClose={() => setVoice(false)} />
         </Suspense>
       )}
     </div>
@@ -1795,6 +1797,7 @@ function PhoneBar({ title, nav, rituals }: { title: string; nav: DayNav; /** Tod
           onClose={() => setMenu(false)}
         />
       )}
+      <SeasonDrift />
     </div>
   )
 }

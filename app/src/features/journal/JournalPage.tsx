@@ -537,7 +537,7 @@ export function JournalPage() {
   // The overlays both layouts share: the voice sheet, the shell's photo choice.
   const overlays = (
     <>
-      {talking && <VoiceCaptureSheet open onText={talkedOut} onClose={() => setTalking(false)} />}
+      {talking && <VoiceCaptureSheet onText={talkedOut} onClose={() => setTalking(false)} />}
       {photoSheet && (
         <ActionSheet
           title="Add a photo"

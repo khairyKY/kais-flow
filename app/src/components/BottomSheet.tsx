@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useMemo, useRef, useState, type HTMLAttributes, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useEscapeStack } from '../lib/overlayStack'
 import { usePrefersReducedMotion } from '../lib/motion'
@@ -11,7 +11,8 @@ import { holdShellChrome } from '../lib/platform'
 // --scrim, tap = close; enter 300ms emphasized-decel / exit 200ms emphasized-accel, translateY
 // only (reduced motion: cross-fade); the sheet's bottom rides the IME top (visualViewport) so the
 // focused field stays visible; Esc/Back close it through overlayStack. Portalled to <body>, and
-// it locks the real scroller (.app-main-content), not <body>.
+// it locks the real scroller (.app-main-content), not <body>. O11: a touch drag down on the content
+// while it's scrolled to the top drags the sheet too (iOS).
 //
 // `children` is a render prop so a row can fire its action and *then* ask for the exit —
 // closing directly would unmount before the animation ran. ──
@@ -56,6 +57,12 @@ export interface BottomSheetProps {
    * Return null to hide it — e.g. while the keyboard is up (Task Sheet 4c). */
   footer?: (close: () => void, keyboardUp: boolean) => ReactNode
   children: (close: () => void) => ReactNode
+  /** false = the scrim, Esc and a swipe can't dismiss it (the voice sheet while it holds a take);
+   * a drag still follows the finger and settles back. Only the caller's own buttons close it. */
+  dismissible?: boolean
+  /** Extra attributes on the sheet surface (label, data-*, style overrides) — the voice sheet keeps
+   * its linen paper and 440 width. */
+  sheetProps?: HTMLAttributes<HTMLDivElement> & { [data: `data-${string}`]: string }
 }
 
 const EXIT_MS = 200 // --dur-sheet-exit
@@ -127,8 +134,9 @@ const CSS = `
   }
 `
 
-export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title, footer, children }: BottomSheetProps) {
-  const reduced = usePrefersReducedMotion()
+export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title, footer, children, dismissible = true, sheetProps }: BottomSheetProps) {
+  // RM2: a sheet's rise and drop are functional — they play with Effects off; reduced motion cross-fades.
+  const travel = !usePrefersReducedMotion()
   const titleId = useId()
   const sheetRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef(onClose)
@@ -137,7 +145,8 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
   const [atFull, setAtFull] = useState(detent === 'full')
   const [dragY, setDragY] = useState(0) // screen px, + = down
   const [dragH, setDragH] = useState(0) // sheet height when the drag began; 0 = not dragging
-  const track = useRef<{ startY: number; lastY: number; lastT: number; v: number; moved: boolean } | null>(null)
+  const track = useRef<{ startY: number; lastY: number; lastT: number; v: number; moved: boolean; h: number } | null>(null)
+  const bodyRef = useRef<HTMLDivElement>(null)
   const suppressClick = useRef(false)
   const kb = useKeyboardInset()
   const z = uiZoom() // screen px → layout px under the root UI zoom
@@ -151,7 +160,8 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
     if (focused instanceof HTMLElement && sheetRef.current?.contains(focused)) focused.blur() // commit, don't discard
     setClosing(true)
   }, [])
-  useEscapeStack(!closing, requestClose)
+  // Not dismissible: Esc is still swallowed here, so it can't fall through to what's underneath.
+  useEscapeStack(!closing, () => dismissible && requestClose())
   // A drag re-renders the sheet every pointermove; the caller's content only when the caller does.
   const body = useMemo(() => children(requestClose), [children, requestClose])
 
@@ -176,45 +186,119 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
     if (kb > 0 && a instanceof HTMLElement && sheetRef.current?.contains(a)) a.scrollIntoView({ block: 'nearest' })
   }, [kb])
 
-  function onHandleDown(e: ReactPointerEvent<HTMLButtonElement>) {
-    if (closing || (e.pointerType === 'mouse' && e.button !== 0)) return
-    e.currentTarget.setPointerCapture(e.pointerId)
-    track.current = { startY: e.clientY, lastY: e.clientY, lastT: e.timeStamp, v: 0, moved: false }
+  // One drag, fed by the handle (pointer) or the content at its scroll-top (touch).
+  function dragStart(y: number, t: number) {
+    const h = sheetRef.current?.getBoundingClientRect().height || 1
+    track.current = { startY: y, lastY: y, lastT: t, v: 0, moved: false, h }
     setDragY(0)
-    setDragH(sheetRef.current?.getBoundingClientRect().height || 1)
+    setDragH(h)
   }
-  function onHandleMove(e: ReactPointerEvent<HTMLButtonElement>) {
-    const t = track.current
-    if (!t) return
-    const dt = e.timeStamp - t.lastT
-    if (dt > 0) t.v = (e.clientY - t.lastY) / dt
-    t.lastY = e.clientY
-    t.lastT = e.timeStamp
-    const dy = e.clientY - t.startY
-    if (Math.abs(dy) > 4) t.moved = true
+  function dragMove(y: number, t: number) {
+    const d = track.current
+    if (!d) return
+    const dt = t - d.lastT
+    if (dt > 0) d.v = (y - d.lastY) / dt
+    d.lastY = y
+    d.lastT = t
+    const dy = y - d.startY
+    if (Math.abs(dy) > 4) d.moved = true
     setDragY(dy)
   }
-  function onHandleUp(e: ReactPointerEvent<HTMLButtonElement>) {
-    const t = track.current
+  /** false = it was a tap, not a drag. */
+  function dragEnd(y: number, t: number): boolean {
+    const d = track.current
     track.current = null
-    const h = dragH
     setDragH(0)
-    if (!t?.moved) return setDragY(0) // a tap — onClick toggles the detent
-    suppressClick.current = true
-    const dy = e.clientY - t.startY
-    const where = sheetRelease(dy, e.timeStamp - t.lastT > 100 ? 0 : t.v, h)
-    if (where === 'close') return requestClose() // leaves from where the finger let go
+    if (!d?.moved) {
+      setDragY(0)
+      return false
+    }
+    const where = sheetRelease(y - d.startY, t - d.lastT > 100 ? 0 : d.v, d.h)
+    if (where === 'close' && dismissible) {
+      requestClose() // leaves from where the finger let go
+      return true
+    }
     setDragY(0)
     if (where === 'up') setAtFull(true)
     else if (where === 'down') setAtFull(false)
+    return true
   }
-  function onHandleCancel() {
+  function dragCancel() {
     track.current = null
     setDragH(0)
     setDragY(0)
   }
 
-  const travel = !reduced
+  function onHandleDown(e: ReactPointerEvent<HTMLButtonElement>) {
+    if (closing || (e.pointerType === 'mouse' && e.button !== 0)) return
+    e.currentTarget.setPointerCapture(e.pointerId)
+    dragStart(e.clientY, e.timeStamp)
+  }
+  function onHandleUp(e: ReactPointerEvent<HTMLButtonElement>) {
+    if (dragEnd(e.clientY, e.timeStamp)) suppressClick.current = true // false = a tap: onClick toggles the detent
+  }
+
+  // O11 — content scrolled to the top drags the sheet on a downward touch. Native listeners: the
+  // move has to be non-passive to keep the browser from claiming the gesture. Latest closures via a ref.
+  const drag = useRef({ dragStart, dragMove, dragEnd, dragCancel, closing })
+  drag.current = { dragStart, dragMove, dragEnd, dragCancel, closing }
+  useEffect(() => {
+    const body = bodyRef.current
+    if (!body) return
+    let x0 = 0
+    let y0 = 0
+    let mode: 'pending' | 'drag' | 'off' = 'off'
+    // Something between the finger and the body that scrolls and isn't at its top keeps the gesture.
+    const innerScrolled = (target: EventTarget | null) => {
+      for (let n = target instanceof HTMLElement ? target : null; n && n !== body; n = n.parentElement) {
+        if (n.scrollTop > 0) return true
+      }
+      return false
+    }
+    const start = (e: TouchEvent) => {
+      const p = e.touches[0]
+      mode = e.touches.length === 1 && !drag.current.closing && !innerScrolled(e.target) ? 'pending' : 'off'
+      x0 = p?.clientX ?? 0
+      y0 = p?.clientY ?? 0
+    }
+    const move = (e: TouchEvent) => {
+      const p = e.touches[0]
+      if (mode === 'off' || !p) return
+      if (mode === 'pending') {
+        const dx = p.clientX - x0
+        const dy = p.clientY - y0
+        if (Math.max(Math.abs(dx), Math.abs(dy)) < 6) return
+        // Down, mostly vertical, at the top, and nothing inside claimed it (a row swipe, a wheel).
+        if (dy <= Math.abs(dx) || body.scrollTop > 0 || e.defaultPrevented || !e.cancelable) {
+          mode = 'off'
+          return
+        }
+        mode = 'drag'
+        drag.current.dragStart(y0, e.timeStamp)
+      }
+      e.preventDefault()
+      drag.current.dragMove(p.clientY, e.timeStamp)
+    }
+    const end = (e: TouchEvent) => {
+      if (mode === 'drag') drag.current.dragEnd(e.changedTouches[0]?.clientY ?? y0, e.timeStamp)
+      mode = 'off'
+    }
+    const cancel = () => {
+      if (mode === 'drag') drag.current.dragCancel()
+      mode = 'off'
+    }
+    body.addEventListener('touchstart', start, { passive: true })
+    body.addEventListener('touchmove', move, { passive: false })
+    body.addEventListener('touchend', end)
+    body.addEventListener('touchcancel', cancel)
+    return () => {
+      body.removeEventListener('touchstart', start)
+      body.removeEventListener('touchmove', move)
+      body.removeEventListener('touchend', end)
+      body.removeEventListener('touchcancel', cancel)
+    }
+  }, [])
+
   const dragging = dragH > 0
   const shownY = Math.max(0, dragY)
   // A medium sheet goes full while the keyboard is up (Task Sheet 4c): 60% of what's left above the
@@ -222,7 +306,7 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
   const full = atFull || (kb > 0 && detent === 'medium')
   const height = full ? 'var(--sheet-h-full)' : detent === 'content' ? undefined : 'var(--sheet-h-medium)'
   const header = title != null
-  const xInHandle = full && !header
+  const xInHandle = full && !header && dismissible
   const foot = footer?.(requestClose, kb > 0)
   const closeX = (
     <button type="button" className="kf-bs-icon" aria-label="Close" onClick={requestClose}>
@@ -243,7 +327,7 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
       <style>{CSS}</style>
       <div
         className="kf-bs-fade"
-        onClick={requestClose}
+        onClick={() => dismissible && requestClose()}
         style={{
           position: 'absolute',
           inset: `0 0 ${-kb / z}px`, // still under the keyboard; only the sheet rides above it
@@ -255,6 +339,7 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
         }}
       />
       <div
+        {...sheetProps}
         ref={sheetRef}
         className="kf-bs-fade"
         role="dialog"
@@ -284,6 +369,7 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
             : closing
               ? `${travel ? 'transform' : 'opacity'} var(--dur-sheet-exit) var(--ease-emphasized-accel)`
               : 'transform var(--dur-sheet-exit) var(--ease-standard), height var(--dur-sheet-enter) var(--ease-emphasized-decel)',
+          ...sheetProps?.style,
         }}
       >
         <div style={{ position: 'relative', height: xInHandle ? 48 : 24, flex: 'none', display: 'flex', alignItems: 'center', padding: '0 4px' }}>
@@ -293,9 +379,9 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
             className="kf-bs-handle"
             aria-label={full ? 'Shrink sheet' : 'Expand sheet'}
             onPointerDown={onHandleDown}
-            onPointerMove={onHandleMove}
+            onPointerMove={(e) => dragMove(e.clientY, e.timeStamp)}
             onPointerUp={onHandleUp}
-            onPointerCancel={onHandleCancel}
+            onPointerCancel={dragCancel}
             onClick={() => {
               if (suppressClick.current) suppressClick.current = false
               else setAtFull((v) => !v)
@@ -306,13 +392,14 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
         </div>
         {header && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 4, minHeight: 56, padding: full ? '0 4px' : '0 4px 0 20px', flex: 'none' }}>
-            {full && closeX}
+            {full && dismissible && closeX}
             <div id={titleId} style={{ flex: 1, minWidth: 0, fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 500, lineHeight: 1.2, color: 'var(--ink-body)' }}>
               {title}
             </div>
           </div>
         )}
         <div
+          ref={bodyRef}
           style={{
             flex: '1 1 auto',
             minHeight: 0,

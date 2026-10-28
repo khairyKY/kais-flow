@@ -58,9 +58,19 @@ const mins = (m: number) => formatDuration(m).toLowerCase()
 /** "2 tasks · 45m of 2h": how many it holds and their estimates (30 minutes when none, the rail's
  * default) against the slot's length. */
 export function slotFill(slot: Pick<CalendarEvent, 'starts_at' | 'ends_at'>, held: readonly Pick<Task, 'duration_min'>[]): string {
-  const used = held.reduce((n, t) => n + (t.duration_min || 30), 0)
-  const total = Math.round((Date.parse(slot.ends_at) - Date.parse(slot.starts_at)) / 60_000)
+  const { used, total } = slotUse(slot, held)
   return `${held.length} task${held.length === 1 ? '' : 's'} · ${mins(used)} of ${mins(total)}`
+}
+
+function slotUse(slot: Pick<CalendarEvent, 'starts_at' | 'ends_at'>, held: readonly Pick<Task, 'duration_min'>[]) {
+  return { used: held.reduce((n, t) => n + (t.duration_min || 30), 0), total: Math.round((Date.parse(slot.ends_at) - Date.parse(slot.starts_at)) / 60_000) }
+}
+
+/** "45m over" when the tasks it holds outrun the slot (shot-bugs, Kai 2026-10-27: a slot cut to 45m holding
+ * 1h 30m said so only in its fill), else null. */
+export function slotOver(slot: Pick<CalendarEvent, 'starts_at' | 'ends_at'>, held: readonly Pick<Task, 'duration_min'>[]): string | null {
+  const { used, total } = slotUse(slot, held)
+  return used > total ? `${mins(used - total)} over` : null
 }
 
 /** slot-outline (phone): where a task held in a slot lands when its row is dragged out — the desktop's

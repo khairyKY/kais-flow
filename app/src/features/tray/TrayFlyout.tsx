@@ -26,6 +26,7 @@ import { inRound, mmss, useFocusMirror } from './focusMirror'
 import { focusTarget, minutesText, trayNow, type TrayNow } from './trayState'
 import { native } from './native'
 import { appZone, useAppZone } from '../../lib/appZone'
+import { reducedMotionNow } from '../../lib/motion'
 import type { CalendarEvent, Domain, Project, Task } from '../../lib/types'
 
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
@@ -59,7 +60,12 @@ function Popover() {
   const { session, loading } = useAuth()
   // Shown again (it's hidden, not closed): what changed meanwhile, in the main window or elsewhere.
   useEffect(() => {
-    const fresh = () => void queryClient.refetchQueries({ type: 'active', stale: true })
+    const fresh = () => {
+      void queryClient.refetchQueries({ type: 'active', stale: true })
+      // W1: the flyout arrives — a 150ms fade and 6px rise (Windows 11 flyouts); Tauri can't animate
+      // the OS window itself. Functional: a cut under reduced motion.
+      if (!reducedMotionNow()) document.querySelector('.kf-tray')?.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 150, easing: 'cubic-bezier(0.22, 0.61, 0.36, 1)' })
+    }
     window.addEventListener('focus', fresh)
     return () => window.removeEventListener('focus', fresh)
   }, [])
@@ -222,7 +228,7 @@ export function TrayFlyout() {
 
       {running ? (
         <div className="kf-tray-now kf-tray-fb">
-          <span className="kf-tray-ring" style={{ background: `conic-gradient(var(--acc-sage-text) 0 ${Math.round(done * 100)}%, var(--line-card) 0 100%)` }}>
+          <span className="kf-tray-ring" style={{ '--pct': `${Math.round(done * 100)}%` } as CSSProperties}>
             <span>
               <Icon name="focus-ring" size={18} />
             </span>
@@ -294,7 +300,7 @@ export function TrayFlyout() {
 
       {voiceOpen && (
         <Suspense fallback={null}>
-          <VoiceCaptureSheet open onClose={() => setVoiceOpen(false)} />
+          <VoiceCaptureSheet onClose={() => setVoiceOpen(false)} />
         </Suspense>
       )}
       <ToastHost />

@@ -6,7 +6,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
 import { completeBlockTask, moveBlock } from './scoped'
-import { slotAt, slotFill, slotTasks } from './slots'
+import { slotAt, slotFill, slotOver, slotTasks } from './slots'
 import { dropOnGrid } from './gridDrop'
 import { TaskMenu } from '../tasks/TaskMenu'
 import { taskActions } from '../tasks/useRowGrammar'
@@ -623,7 +623,7 @@ function DesktopCalendar() {
         return {
           id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
           goal: !!goalTaskId && e.task_id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === todayKey,
-          ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held) } : null),
+          ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held), over: slotOver(e, held) } : null),
         }
       })
     },
