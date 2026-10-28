@@ -171,6 +171,9 @@
 }
 
 /* Keyframes from the 2026-09-28 design-system refresh (sheets, toasts, skeleton, recording). */
+/* O12 — the theme switch: the root view transition's cross-fade (lib/theme.ts applyEased), 250ms. */
+::view-transition-old(root),
+::view-transition-new(root) { animation-duration: 250ms; animation-timing-function: var(--ease-standard); }
 @keyframes sheetIn   { from { transform: translateY(100%); } to { transform: translateY(0); } }
 @keyframes sheetOut  { from { transform: translateY(0); } to { transform: translateY(100%); } }
 @keyframes scrimIn   { from { opacity: 0; } to { opacity: 1; } }

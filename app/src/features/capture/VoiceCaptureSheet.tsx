@@ -1,21 +1,19 @@
 import { useEffect, useRef, useState, type ButtonHTMLAttributes } from 'react'
 import { Button } from '../../components/kit'
-import { createPortal } from 'react-dom'
+import { BottomSheet } from '../../components/BottomSheet'
 import { transcribeAudio, captureWithAI, saveUntranscribedVoiceNote } from './api'
 import { isDailyLimitError, rememberVoiceLimitReached, voiceLimitReachedToday } from './aiAllowance'
 import { KEPT_ACTIONS, KEPT_AUDIO_NOTE, KEPT_HAND, KEPT_STATUS, RESTING, keptReasonLine, type KeptReason } from './voiceCopy'
 import { useAuth } from '../auth/AuthProvider'
 import { openCapture } from '../command-bar/commandBarStore'
 import { useToastStore } from '../../lib/toastStore'
-import { useEscapeStack } from '../../lib/overlayStack'
-import { useMotionEnabled } from '../../lib/motion'
 import { pickMimeType } from './holdToTalk'
 import { PoweredBySotto, SottoPill } from './SottoPill'
 import { SOTTO_DONE_MS, type SottoState } from './sotto'
 import './capture.css'
 
 interface VoiceCaptureSheetProps {
-  open: boolean
+  /** Fires once the sheet has left (O2: it lives in BottomSheet — drag, swipe down, exit). */
   onClose: () => void
   /** A take already recorded elsewhere (the tab bar's hold-to-talk): the sheet skips the mic and
    * goes straight to transcribing it — with every "never lose a recording" path below. */
@@ -52,7 +50,7 @@ const PILL: Record<Phase, SottoState | null> = {
   kept: 'error',
 }
 
-export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText, release, stopLabel = 'Stop & file' }: VoiceCaptureSheetProps) {
+export function VoiceCaptureSheet({ onClose, recording: handedOver, onText, release, stopLabel = 'Stop & file' }: VoiceCaptureSheetProps) {
   const [phase, setPhase] = useState<Phase>(handedOver ? 'transcribing' : 'recording')
   const [keptReason, setKeptReason] = useState<KeptReason>('other')
   const [recording, setRecording] = useState(false)
@@ -70,45 +68,35 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
   const sentRef = useRef<Blob | null>(null)
   /** Bumped whenever the sheet lets go of a recording, so a late getUserMedia can't revive it. */
   const generationRef = useRef(0)
-  const motion = useMotionEnabled()
   const { session } = useAuth()
   const uidRef = useRef(session?.user.id)
   uidRef.current = session?.user.id
 
-  // Track visual open/close state for exit transition
-  const [visible, setVisible] = useState(false)
+  /** BottomSheet's close: plays the exit, then `onClose`. Every way out of this sheet goes through it. */
+  const sheetClose = useRef<() => void>(onClose)
+  const close = () => sheetClose.current()
 
   const busy = phase === 'transcribing' || phase === 'polishing' || phase === 'done'
-  useEscapeStack(open && !busy, handleCancel)
 
   useEffect(() => {
-    if (open) {
-      setVisible(true)
-      keptRef.current = handedOver?.blob ?? null
-      if (handedOver) {
-        // Once per take: StrictMode's dev re-run of this effect sent it twice (two filings, or the
-        // dictated words twice in the field).
-        if (sentRef.current !== handedOver.blob) {
-          sentRef.current = handedOver.blob
-          void transcribeKept()
-        }
-      } else if (voiceLimitReachedToday(uidRef.current)) {
-        setPhase('resting')
-      } else {
-        setPhase('recording')
-        void startRecording()
+    keptRef.current = handedOver?.blob ?? null
+    if (handedOver) {
+      // Once per take: StrictMode's dev re-run of this effect sent it twice (two filings, or the
+      // dictated words twice in the field).
+      if (sentRef.current !== handedOver.blob) {
+        sentRef.current = handedOver.blob
+        void transcribeKept()
       }
-      return () => abandonRecorder()
+    } else if (voiceLimitReachedToday(uidRef.current)) {
+      setPhase('resting')
+    } else {
+      setPhase('recording')
+      void startRecording()
     }
-    // Delay unmount so captureSheetSlideOut/scrim fade (capture.css) has time to play
-    // instead of the sheet popping out the instant `open` flips false.
-    const timer = window.setTimeout(() => setVisible(false), 140)
-    return () => {
-      window.clearTimeout(timer)
-      abandonRecorder()
-    }
-    // Runs on open/close transitions only — re-running on a re-render would restart the mic.
-  }, [open]) // eslint-disable-line react-hooks/exhaustive-deps
+    // A swipe down or scrim tap unmounts the sheet after its exit: the mic stops here, unfiled.
+    return () => abandonRecorder()
+    // Mount only — re-running on a re-render would restart the mic.
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (release && recording) stopAndFile()
@@ -140,7 +128,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
     } catch {
       if (generation !== generationRef.current) return
       useToastStore.getState().push({ message: 'Microphone permission denied' })
-      onClose()
+      close()
       return
     }
     if (generation !== generationRef.current) {
@@ -173,7 +161,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
     chunksRef.current = []
     releaseMic()
     if (chunks.length === 0) {
-      onClose()
+      close()
       return
     }
     keptRef.current = new Blob(chunks, { type: mimeType })
@@ -199,7 +187,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
     keptRef.current = null
     if (!text) {
       useToastStore.getState().push({ message: "Didn't catch that — try again" })
-      return onClose()
+      return close()
     }
     if (onText) onText(text)
     else {
@@ -209,7 +197,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
     // Sotto's tick, then the sheet goes.
     setPhase('done')
     await new Promise((resolve) => window.setTimeout(resolve, SOTTO_DONE_MS))
-    onClose()
+    close()
   }
 
   function stopAndFile() {
@@ -222,16 +210,16 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
   function saveToInbox() {
     saveUntranscribedVoiceNote()
     keptRef.current = null
-    onClose()
+    close()
   }
 
   function discard() {
     keptRef.current = null
-    onClose()
+    close()
   }
 
   function typeInstead() {
-    onClose()
+    close()
     if (!onText) openCapture() // words wanted elsewhere (the chat): its own field is right there
   }
 
@@ -239,7 +227,7 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
   function handleCancel() {
     if (busy || phase === 'kept') return
     abandonRecorder()
-    onClose()
+    close()
   }
 
   function releaseMic() {
@@ -271,8 +259,6 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
     releaseMic()
   }
 
-  if (!open && !visible) return null
-
   const minutesStr = Math.floor(seconds / 60)
   const secondsStr = String(seconds % 60).padStart(2, '0')
   const timeFormatted = `${minutesStr}:${secondsStr}`
@@ -293,61 +279,21 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
     : phase === 'kept' ? KEPT_HAND
     : 'say what\'s on your mind…'
 
-  // Transition parameters
-  const scrimAnimation = open ? 'captureScrimFadeIn 210ms var(--ease-out) forwards' : 'captureScrimFadeOut 140ms var(--ease-in) forwards'
-  const sheetAnimation = open ? 'captureSheetSlideIn 210ms var(--ease-out) forwards' : 'captureSheetSlideOut 140ms var(--ease-in) forwards'
-
   // A daily-limit reply makes Try again a long shot today, so saving takes the filled style.
   const saveIsPrimary = keptReason === 'limit'
 
-  return createPortal(
-    <div
-      style={{
-        position: 'fixed',
-        inset: 0,
-        zIndex: 100,
-        display: 'flex',
-        alignItems: 'flex-end',
-        justifyContent: 'center',
-      }}
+  // Swipe, scrim and Esc dismiss only while nothing is in flight: a kept take leaves through its own buttons.
+  return (
+    <BottomSheet
+      onClose={onClose}
+      dismissible={!busy && phase !== 'kept'}
+      handleGap={8}
+      sheetProps={{ 'aria-label': 'Voice capture', 'data-voice-phase': phase, style: { maxWidth: 440, background: 'var(--paper-linen)' } }}
     >
-      {/* Backdrop scrim */}
-      <div
-        onClick={handleCancel}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(42, 36, 32, 0.42)',
-          animation: motion ? scrimAnimation : undefined,
-          opacity: motion ? undefined : (open ? 1 : 0),
-          transition: motion ? undefined : 'opacity 140ms ease',
-        }}
-      />
-
-      {/* Bottom Sheet Container */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Voice capture"
-        data-voice-phase={phase}
-        style={{
-          position: 'relative',
-          width: '100%',
-          maxWidth: 440,
-          background: 'var(--paper-linen)',
-          borderRadius: 'var(--sheet-radius) var(--sheet-radius) 0 0', // D3: a sheet's 20px
-          boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.2)',
-          padding: '22px 22px calc(30px + env(safe-area-inset-bottom))',
-          zIndex: 110,
-          textAlign: 'center',
-          animation: motion ? sheetAnimation : undefined,
-          transform: motion ? undefined : (open ? 'translateY(0)' : 'translateY(100%)'),
-          transition: motion ? undefined : 'transform 210ms ease-out',
-        }}
-      >
-        {/* Top drag handle */}
-        <div style={{ width: 38, height: 4, borderRadius: 2, background: 'var(--line-solid)', margin: '0 auto 22px' }} />
-
+      {(sheetCloseFn) => {
+        sheetClose.current = sheetCloseFn
+        return (
+      <div style={{ textAlign: 'center', paddingBottom: 8 }}>
         {/* Sotto's pill: listening (tap it to finish, ✕ to cancel), transcribing, polishing, done, kept. */}
         {pill && (
           <div style={{ display: 'flex', justifyContent: 'center', margin: '4px 0 2px' }}>
@@ -405,8 +351,9 @@ export function VoiceCaptureSheet({ open, onClose, recording: handedOver, onText
           <PoweredBySotto />
         </div>
       </div>
-    </div>,
-    document.body,
+        )
+      }}
+    </BottomSheet>
   )
 }
 

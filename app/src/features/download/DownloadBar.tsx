@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { downloadOrder, inPlainBrowser, LATEST_DOWNLOADS } from '../../lib/appUpdate'
+import { Collapse } from '../../components/Collapse'
 import './download.css'
 
 // Kai 2026-10-14: "why is there no download bar for both apps". A slim bar over the page in a plain
@@ -23,13 +24,14 @@ export function DownloadLinks() {
 }
 
 export function DownloadBar() {
-  const [shown, setShown] = useState(() => {
+  const [shown] = useState(() => {
     try {
       return inPlainBrowser() && localStorage.getItem(DISMISSED) !== '1'
     } catch {
       return inPlainBrowser()
     }
   })
+  const [dismissed, setDismissed] = useState(false)
   if (!shown) return null
   const dismiss = () => {
     try {
@@ -37,9 +39,11 @@ export function DownloadBar() {
     } catch {
       /* storage blocked: gone for this visit only */
     }
-    setShown(false)
+    setDismissed(true)
   }
+  // O13: dismissing folds the bar's height away (Collapse, 200ms) instead of jumping the page ~40px.
   return (
+    <Collapse open={!dismissed} style={{ flex: 'none' }}>
     <div className="kf-dl-bar" role="region" aria-label="Get the apps">
       <span className="kf-dl-text">Get Kai’s Flow for</span>
       <DownloadLinks />
@@ -47,5 +51,6 @@ export function DownloadBar() {
         ✕
       </button>
     </div>
+    </Collapse>
   )
 }

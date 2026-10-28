@@ -126,6 +126,10 @@
 .st-row.is-lit {
   background-color: color-mix(in srgb, var(--acc-buttercream) 40%, transparent);
 }
+/* O8: …then it fades out instead of switching off in one frame. */
+.st-row.is-unlit {
+  transition: background-color 600ms var(--ease-out); /* ds-ok: O8 the lit search row fades out */
+}
 .st-row-text {
   flex: 1 1 200px;
   min-width: 0;

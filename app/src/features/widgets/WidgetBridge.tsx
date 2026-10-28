@@ -169,7 +169,7 @@ export function WidgetBridge(): React.ReactNode {
 
   return voiceOpen ? (
     <Suspense fallback={null}>
-      <VoiceCaptureSheet open onClose={() => useWidgetVoice.setState({ open: false })} />
+      <VoiceCaptureSheet onClose={() => useWidgetVoice.setState({ open: false })} />
     </Suspense>
   ) : null
 }
