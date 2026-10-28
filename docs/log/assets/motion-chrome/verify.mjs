@@ -45,6 +45,7 @@ const TASKS = [
   task(2, 'Call the tyre supplier', { due_at: iso('09:00'), top3: true, top3_rank: 2 }),
   task(3, 'Review the week', { due_at: iso('11:00'), top3: true, top3_rank: 3 }),
   ...Array.from({ length: 22 }, (_, i) => task(10 + i, `Errand ${i + 1}`, { due_at: iso('18:00') })),
+  ...Array.from({ length: 22 }, (_, i) => task(40 + i, `Tomorrow errand ${i + 1}`, { due_at: iso('18:00', 13) })),
 ]
 const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Demo', timezone: 'Africa/Cairo', created_at: CREATED, updated_at: CREATED }
 const tables = () => structuredClone({ tasks: TASKS, calendar_events: [], inbox_items: [], projects: [], domains: [], areas: [], people: [], app_settings: [SETTINGS] })
@@ -224,6 +225,43 @@ if (want('o3')) {
     await tap(env, env.page.locator('.app-tabbar').getByRole('button', { name: 'More' }), 60)
     const a = await anims(more)
     check('o3 effects off: More cross-fades (scrimIn, no rise)', a.includes('scrimIn') && !a.includes('sheetIn'), JSON.stringify(a))
+    await env.ctx.close()
+  }
+}
+
+// ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
+if (want('d15')) {
+  for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', o)
+    const { page } = env
+    // Set the scroll, let the next frame paint, read: no transition or timed easing may sit between the two
+    // (two rAFs: the main thread samples a compositor-run scroll timeline a frame behind at most).
+    const at = (y) => page.evaluate(async (y) => {
+      const main = document.querySelector('.app-main-content')
+      main.scrollTop = y
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())))
+      const t = document.querySelector('.tp-bar h1.tp-bar-title')
+      const sum = document.querySelector('.tp-sum')
+      const m = new DOMMatrixReadOnly(getComputedStyle(t).transform)
+      return { y: main.scrollTop, scale: Math.round(m.a * 1000) / 1000, font: getComputedStyle(t).fontSize, family: getComputedStyle(t).fontFamily.split(',')[0], sum: sum ? Number(getComputedStyle(sum).opacity) : null, feather: Number(getComputedStyle(document.querySelector('.tp-bar'), '::after').opacity || 0) }
+    }, y)
+    const r = { 0: await at(0), 40: await at(40), 80: await at(80), 300: await at(300) }
+    await shot(page, `d15-scrolled-${v}`)
+    const back = await at(0)
+    if (v === 'on' || v === 'night') {
+      check(`d15 ${v}: title scale tracks the scroll exactly — 1 at 0, ~0.83 at 40, 0.654 at 80 and beyond, back to 1`, r[0].scale === 1 && Math.abs(r[40].scale - (1 - 0.5 * (1 - 17 / 26))) < 0.01 && Math.abs(r[80].scale - 17 / 26) < 0.005 && Math.abs(r[300].scale - 17 / 26) < 0.005 && back.scale === 1, JSON.stringify({ r, back }))
+      check(`d15 ${v}: the serif stays (no font swap) and the paper feather comes in over the first 24px`, r[300].family.includes('Serif') && r[0].feather === 0 && r[40].feather === 1, JSON.stringify(r[300]))
+    } else {
+      check(`d15 ${v}: no parasol — the title never scales; the small-title swap (18px) stands in`, Object.values(r).every((x) => x.scale === 1) && r[300].font === '18px', JSON.stringify(r))
+    }
+    if (v === 'on') {
+      // Another day's page carries the Workload line under the bar: it fades as it slides under.
+      await page.getByRole('button', { name: 'Next day' }).first().click()
+      await sleep(900)
+      const s0 = await at(0), s40 = await at(40)
+      check('d15 on: another day — the Workload line fades out over the first 40px', s0.sum === 1 && s40.y === 40 && s40.sum === 0, JSON.stringify({ s0, s40 }))
+    }
+    basics(env, `d15 ${v}`)
     await env.ctx.close()
   }
 }
