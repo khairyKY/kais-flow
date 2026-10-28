@@ -147,6 +147,7 @@ const MODES = [
 const go = (page, url) => page.evaluate((u) => { history.pushState({}, '', u); dispatchEvent(new PopStateEvent('popstate')) }, url)
 const row = (page, n) => page.locator(`#task-${id(n)}`)
 const exists = async (loc) => (await loc.count()) > 0
+const posts = (state, table, from = 0) => state.writes.slice(from).filter((w) => w.table === table && w.method === 'POST').flatMap((w) => (Array.isArray(w.body) ? w.body : [w.body]))
 /** The row is still drawn OPEN (its checkbox is there) — a done row has the filled ✓ instead. */
 const openRow = (page, n) => exists(row(page, n).locator('.kf-checkbox'))
 /** The running Web Animations (not CSS) on an element: name-less keyframe effects. */
@@ -316,29 +317,34 @@ if (want('t')) {
   }
 }
 
-// ── X: T6 — "leaves this list" exits: Tomorrow off the Today list slides out; Tomorrow on All keeps the row still ──
+// ── X: T6 — "leaves this list" exits: Tomorrow off the Today list slides out (a still copy of the row, the
+// write itself not held back); Tomorrow on All keeps the row, and nothing moves ──
+const ghosts = (page) => page.evaluate(() => [...document.querySelectorAll('.app-main-content [inert][aria-hidden="true"]')].filter((g) => g.getAnimations().some((a) => !('animationName' in a) && !('transitionProperty' in a))).length)
 if (want('x')) {
   for (const [mode, o] of MODES) {
-    const { ctx, page, errors } = await open('/tasks?list=today', o)
+    const { ctx, page, errors, state } = await open('/tasks?list=today', o)
     const r = row(page, REVIEW)
     await r.click({ button: 'right' })
+    const w0 = state.writes.length
     await page.getByRole('menuitem', { name: /^Tomorrow/ }).first().click()
     await sleep(90)
-    const exiting = await waapi(r)
+    const exiting = await ghosts(page)
+    const goneNow = !(await exists(r))
     await shot(page, `x1-tomorrow-exit-90ms-${mode}`)
-    await sleep(900)
-    const gone = !(await exists(r))
-    if (mode === 'reduced') check(`x1 [${mode}] T6 Tomorrow off the Today list: the row goes at once (reduced motion)`, exiting <= 0 && gone, `anims ${exiting}`)
-    else check(`x1 [${mode}] T6 Tomorrow off the Today list: the row slides out first (functional), then leaves`, exiting > 0 && gone, `anims ${exiting} gone=${gone}`)
+    await sleep(700)
+    const wrote = posts(state, 'tasks', w0).some((w) => w.id === id(REVIEW))
+    const left = await ghosts(page)
+    if (mode === 'reduced') check(`x1 [${mode}] T6 Tomorrow off the Today list: the row goes at once (reduced motion), written`, exiting === 0 && goneNow && wrote, `ghosts ${exiting}`)
+    else check(`x1 [${mode}] T6 Tomorrow off the Today list: the row slides out (functional) while the write lands at once, then the copy is gone`, exiting > 0 && goneNow && wrote && left === 0, `ghosts ${exiting} → ${left}, wrote=${wrote}`)
     await go(page, '/tasks?list=all')
     await sleep(900)
-    const k = row(page, STRETCH)
+    const k = row(page, INVOICE) // already due tomorrow 09:00: Tomorrow keeps it in its group
     await k.click({ button: 'right' })
     await page.getByRole('menuitem', { name: /^Tomorrow/ }).first().click()
     await sleep(90)
-    const still = await waapi(k)
+    const still = (await waapi(k)) + (await ghosts(page))
     await sleep(500)
-    check(`x2 [${mode}] T6 Tomorrow on All: the row stays, so nothing exits`, still === 0 && (await exists(k)) && (await height(k)) > 20, `anims ${still}`)
+    check(`x2 [${mode}] T6 Tomorrow on a row All keeps in its place: nothing exits`, still === 0 && (await exists(k)) && (await height(k)) > 20, `anims ${still}`)
     check(`x [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
@@ -474,16 +480,25 @@ if (want('n')) {
     const { ctx, page, errors } = await open('/tasks?list=all', o)
     const nest = page.locator(`[data-nest="${id(BALCONY)}"]`).locator('xpath=ancestor::div[contains(@class,"kf-collapse")][1]')
     const toggle = row(page, BALCONY).locator('button[aria-expanded]').first()
+    // The fold at 1/5 speed (DevTools' Animation.setPlaybackRate, transitions too): ease-standard
+    // closes most of the way in its first third, so a loaded machine read the 70ms frame as shut.
+    const cdp = await page.context().newCDPSession(page)
+    await cdp.send('Animation.enable')
+    await cdp.send('Animation.setPlaybackRate', { playbackRate: 0.2 })
     const h0 = await height(nest)
     await toggle.click() // fold
-    await sleep(70)
-    const midShut = await height(nest)
-    await sleep(400)
+    // Sampled through the move: any frame part-way shut is the fold easing (a cut is h0, then 0).
+    let midShut = 0
+    for (let i = 0; i < 20 && !(midShut > 0 && midShut < h0); i++) {
+      midShut = await height(nest)
+      await sleep(15)
+    }
+    await sleep(1400)
     const shut = await exists(nest) ? await height(nest) : 0
     await toggle.click() // unfold
-    await sleep(70)
+    await sleep(150)
     const midOpen = await height(nest)
-    await sleep(400)
+    await sleep(1400)
     const h1 = await height(nest)
     await shot(page, `n1-subtask-nest-${mode}`)
     if (mode === 'reduced') check(`n1 [${mode}] T8 the subtask nest folds and unfolds at once (reduced)`, h0 > 30 && shut === 0 && h1 > 30, `${h0} → ${midShut} → ${shut} → ${midOpen} → ${h1}`)

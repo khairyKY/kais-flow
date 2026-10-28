@@ -175,19 +175,44 @@ export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
   }
 }
 
-/** T6 — the shared exit on every element `selector` matches, then `onDone` once (at once when none is
- * on screen). One the change didn't take away after all is eased back (cancelRowRemoval), so a wrong
- * guess never leaves a row folded to nothing. */
-export function exitAll(selector: string, onDone: () => void): void {
-  const els = [...document.querySelectorAll<HTMLElement>(selector)]
-  if (!els.length) return onDone()
-  let left = els.length
-  for (const el of els)
-    animateRowRemoval(el, () => {
-      if (--left > 0) return
-      onDone()
-      window.setTimeout(() => els.forEach((e) => e.isConnected && cancelRowRemoval(e)), 300)
-    })
+/** T6 — "leaves this list" exits without holding the write back. Watches `els`; when the next render
+ * takes one off the page (its own node, or the group around it), a still copy of what was removed is
+ * put back where it stood and plays the shared exit (slide, then collapse) before it goes. A row the
+ * change keeps (Tomorrow on All) is never touched, so nothing has to guess which list shows what.
+ * The write happens at once, as before. Functional: cut under reduced motion. Gives up after 1s. */
+export function exitOnRemoval(els: readonly (Element | null | undefined)[]): void {
+  if (typeof document === 'undefined' || typeof MutationObserver === 'undefined' || reducedMotionNow()) return
+  const live = els.filter((e): e is Element => !!e?.isConnected)
+  if (!live.length) return
+  const observer = new MutationObserver((records) => {
+    for (const r of records)
+      for (const n of r.removedNodes) {
+        const i = live.findIndex((e) => n === e || n.contains(e))
+        if (i < 0 || !(n instanceof HTMLElement)) continue
+        live.splice(i, 1)
+        const ghost = n.cloneNode(true) as HTMLElement
+        for (const x of [ghost, ...ghost.querySelectorAll('[id]')]) x.removeAttribute('id')
+        ghost.setAttribute('aria-hidden', 'true')
+        ghost.inert = true
+        const after = r.previousSibling?.parentNode === r.target ? r.previousSibling : null
+        const before = r.nextSibling?.parentNode === r.target ? r.nextSibling : after ? after.nextSibling : r.target.firstChild
+        r.target.insertBefore(ghost, before)
+        animateRowRemoval(ghost, () => ghost.remove())
+      }
+    if (!live.length) stop()
+  })
+  const stop = () => {
+    observer.disconnect()
+    window.clearTimeout(giveUp)
+  }
+  observer.observe(document.body, { childList: true, subtree: true })
+  const giveUp = window.setTimeout(stop, 1000)
+}
+
+/** T6 — the exit for every element `selector` matches that `write` takes off the page; `write` runs at once. */
+export function exitAll(selector: string, write: () => void): void {
+  exitOnRemoval([...document.querySelectorAll(selector)])
+  write()
 }
 
 /** Puts back a row `animateRowRemoval` was taking away — an Undo that lands mid-exit (Polish D,

@@ -85,7 +85,6 @@ import { toastUndo } from '../../lib/undo'
 import { BackLink, Button, SectionLabel, Segmented, Checkbox } from '../../components/kit'
 import { getWisteriaImage } from './ProjectsPage'
 import { flipRows, scrollBehavior, useCompletingRows, useMotionEnabled } from '../../lib/motion'
-import { useListShows } from '../tasks/rowExit'
 import { DateField } from '../../components/DatePicker'
 import { useChecklistTemplates, saveTemplateWithUndo, renameTemplateWithUndo, deleteTemplateWithUndo, applyTemplateWithUndo } from './templates'
 import './xfx.css'
@@ -302,8 +301,7 @@ export function ProjectDetailPage() {
     // keys walk the rows in that same order, and no row is drawn twice.
     return areas.some((a) => a.id === id) ? [...open.filter((t) => !t.recurrence_rule), ...open.filter((t) => t.recurrence_rule)] : open
   }, [tasks, id, areas, ticking])
-  // T6: what this page lists, so a Move / Someday / Snooze that takes a row away slides it out.
-  useListShows((t) => t.status === 'todo' && (t.project_id === id || t.area_id === id))
+
   // Kai 2026-10-07: Ctrl/Cmd+A (and the phone bar's Select all) selects this page's open tasks too.
   const selectAllOpen = () => setSelected(new Set(pageOpen.map((t) => t.id)))
   // Flow Audit §4: delete = Trash + Undo, no confirm (their calendar blocks go and come back too).

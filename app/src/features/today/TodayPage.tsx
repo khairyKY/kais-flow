@@ -10,8 +10,6 @@ import { buildListBindings } from '../tasks/listShortcuts'
 import { useListVerbs } from '../tasks/useListVerbs'
 import { formatDuration } from '../tasks/taskDisplay'
 import { isTodayTask, todayListTasks } from '../tasks/grouping'
-import { useListShows } from '../tasks/rowExit'
-import { isTop3Today } from '../tasks/top3Rule'
 import { backFromSnooze } from '../tasks/snooze'
 import { sortByOrder } from '../tasks/manualOrder'
 import { cachedTask, moveInListWithUndo } from '../tasks/api'
@@ -226,8 +224,6 @@ function TodayView({ nav }: { nav: DayNav }) {
     }
   })
   const doneNow = (t: Task) => !!t.completed_at && !ticking.has(t.id)
-  // T6: what Today shows, so Tomorrow / Someday / Snooze / Plan slide a row out only when it leaves.
-  useListShows((t) => !t.completed_at && (isTop3Today(t, new Date()) || todayListTasks([t]).length > 0))
   const doneAfterOpen = (a: Task, b: Task) => Number(doneNow(a)) - Number(doneNow(b))
   // One rule for this page and the sidebar badge (Polish F1): grouping.ts `todayListTasks`.
   const visible = todayListTasks(tasks)

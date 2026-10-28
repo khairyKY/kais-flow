@@ -379,7 +379,7 @@ export function InboxPage() {
       onOpen={() => openCard(item.id)}
       onEditing={(on) => setEditId(on ? item.id : null)}
       onFile={(d) => fileOne(item, d)}
-      onSnooze={(until) => breatheOut(item.id, () => snoozeInboxItem(item, until))}
+      onSnooze={(until) => exitAll(`[id="inbox-${item.id}"]`, () => snoozeInboxItem(item, until))}
       onSomeday={() => somedayOne(item)}
       onDismiss={() => dismissOne(item)}
       onToggleSelect={() => toggleSelected(item.id)}
