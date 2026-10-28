@@ -1335,7 +1335,7 @@ function DesktopCalendar() {
                 {/* Lists with nothing in it steps aside too; its scope picker is one click away. */}
                 {listTasks.length === 0 && !listsKept && (
                   <button type="button" className="cal-rail-more" onClick={() => { setListsShown(true); if (sections.lists) toggleSection('lists') }}>
-                    Lists…
+                    Show lists
                   </button>
                 )}
               </>

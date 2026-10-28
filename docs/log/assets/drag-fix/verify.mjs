@@ -368,7 +368,7 @@ for (const scale of SCALES) {
     await dropCase(`r-lists ${pc}`, {
       scale, card: railCard('lists', 'Book the dentist'), task: DENTIST, end: '15:20', toast: 'Scheduled · Book the dentist', undone: unplanned,
       prep: async (page) => {
-        if (await page.locator('.cal-rail-more', { hasText: 'Lists…' }).count()) await page.locator('.cal-rail-more', { hasText: 'Lists…' }).click()
+        if (await page.locator('.cal-rail-more', { hasText: 'Show lists' }).count()) await page.locator('.cal-rail-more', { hasText: 'Show lists' }).click()
         await sleep(300)
       },
     })
