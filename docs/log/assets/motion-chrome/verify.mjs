@@ -146,7 +146,8 @@ if (want('o2')) {
     await openVoice(env)
     await voice.waitFor({ timeout: 8000 })
     const a = await anims(voice)
-    if (v === 'on') check(`o2 ${v}: the voice sheet rises in (sheetIn)`, a.includes('sheetIn'), JSON.stringify(a))
+    // RM2: a sheet's rise is functional — it plays with Effects off too; reduced motion cross-fades.
+    if (v !== 'reduced') check(`o2 ${v}: the voice sheet rises in (sheetIn)`, a.includes('sheetIn'), JSON.stringify(a))
     else check(`o2 ${v}: the voice sheet cross-fades in (scrimIn, no rise)`, a.includes('scrimIn') && !a.includes('sheetIn'), JSON.stringify(a))
     await sleep(600)
     check(`o2 ${v}: it's listening inside the shared sheet (handle present)`, (await voice.getAttribute('data-voice-phase')) === 'recording' && (await voice.locator('.kf-bs-handle').count()) === 1)
@@ -224,7 +225,15 @@ if (want('o3')) {
     const more = env.page.locator('[role="dialog"][aria-label="More"]')
     await tap(env, env.page.locator('.app-tabbar').getByRole('button', { name: 'More' }), 60)
     const a = await anims(more)
-    check('o3 effects off: More cross-fades (scrimIn, no rise)', a.includes('scrimIn') && !a.includes('sheetIn'), JSON.stringify(a))
+    check('o3 effects off: More still rises (functional, RM2)', a.includes('sheetIn'), JSON.stringify(a))
+    await env.ctx.close()
+  }
+  {
+    const env = await open('/today', { reduced: true })
+    const more = env.page.locator('[role="dialog"][aria-label="More"]')
+    await tap(env, env.page.locator('.app-tabbar').getByRole('button', { name: 'More' }), 60)
+    const a = await anims(more)
+    check('o3 reduced: More cross-fades (scrimIn, no rise)', a.includes('scrimIn') && !a.includes('sheetIn'), JSON.stringify(a))
     await env.ctx.close()
   }
 }

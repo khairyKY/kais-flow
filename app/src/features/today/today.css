@@ -47,7 +47,7 @@
 }
 /* Ruling 7: scrolled → the kit top bar's small-title variant. Out-ranks typography.css's phone h1 rule.
    With Effects on, D15's parasol (below) replaces this swap. */
-.app-shell:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
+html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
   font-family: var(--font-ui);
   font-weight: var(--fw-semibold);
   font-size: 18px !important;

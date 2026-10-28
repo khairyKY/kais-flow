@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState, type HTMLAttributes, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { useEscapeStack } from '../lib/overlayStack'
-import { useMotionEnabled } from '../lib/motion'
+import { usePrefersReducedMotion } from '../lib/motion'
 import { uiZoom } from '../lib/uiScale'
 import { holdShellChrome } from '../lib/platform'
 
@@ -9,7 +9,7 @@ import { holdShellChrome } from '../lib/platform'
 // handle 32×4 (--ink-hairline) in a 120×48 hit that drags; detents medium 60% / full 100% − 48
 // (header gains ✕), tapping the handle toggles; swipe down past 30% or a fling closes; scrim
 // --scrim, tap = close; enter 300ms emphasized-decel / exit 200ms emphasized-accel, translateY
-// only (reduced motion or Effects off: cross-fade); the sheet's bottom rides the IME top (visualViewport) so the
+// only (reduced motion: cross-fade); the sheet's bottom rides the IME top (visualViewport) so the
 // focused field stays visible; Esc/Back close it through overlayStack. Portalled to <body>, and
 // it locks the real scroller (.app-main-content), not <body>. O11: a touch drag down on the content
 // while it's scrolled to the top drags the sheet too (iOS).
@@ -135,7 +135,8 @@ const CSS = `
 `
 
 export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title, footer, children, dismissible = true, sheetProps }: BottomSheetProps) {
-  const travel = useMotionEnabled()
+  // RM2: a sheet's rise and drop are functional — they play with Effects off; reduced motion cross-fades.
+  const travel = !usePrefersReducedMotion()
   const titleId = useId()
   const sheetRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef(onClose)
