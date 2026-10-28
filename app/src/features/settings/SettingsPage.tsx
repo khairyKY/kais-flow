@@ -62,7 +62,7 @@ import { ConfirmCard } from '../projects/ConfirmCard'
 import { runExport } from '../export/api'
 import { useConsents } from '../legal/api'
 import { LegalLink, PRIVACY_URL, TERMS_URL } from '../legal/LegalLinks'
-import { DeleteAccountDialog } from '../legal/LegalDialogs'
+import { DeleteAccountDialog, LicensesDialog } from '../legal/LegalDialogs'
 import { PRIVACY_VERSION, TERMS_VERSION } from '../../../../supabase/functions/_shared/legal.ts'
 import type { ExportKind } from '../export/files'
 import './settings.css'
@@ -676,6 +676,7 @@ function AppUpdateCard() {
       <Row label="The tour" help="Replays the notes on Today and clears seen hints" keys="help onboarding show me around">
         <Button variant="secondary" onClick={restartTour}>Show me around again</Button>
       </Row>
+      <LicensesRow />
       <Row label="Guide" help="How the method and every page work" keys="help manual">
         <Link to="/guide" className="st-link">Open the Guide</Link>
       </Row>
@@ -1087,6 +1088,17 @@ function DataCard() {
         <Link to="/trash" className={linkBtn} style={{ textDecoration: 'none' }}>Open trash</Link>
       </Row>
     </SCard>
+  )
+}
+
+// The open-source software the app is built with, and its licences (LICENSE: the app itself is proprietary).
+function LicensesRow() {
+  const [open, setOpen] = useState(false)
+  return (
+    <Row label="Open-source licences" help="The free software Kai’s Flow is built with, and its licences" keys="licenses licences open source credits third party">
+      <Button variant="secondary" onClick={() => setOpen(true)}>Read</Button>
+      {open && <LicensesDialog onClose={() => setOpen(false)} />}
+    </Row>
   )
 }
 
