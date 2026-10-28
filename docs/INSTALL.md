@@ -39,6 +39,18 @@ The web app is at https://kais-flow.kaidagoat.workers.dev and needs no install. 
 
 **Uninstalling:** Settings → Apps → Kai's Flow → Uninstall.
 
+## Mac (.dmg)
+
+**Where to get it:** https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-mac.dmg (always the newest; one universal app for Apple silicon and Intel). Test builds: the **kais-flow-mac** artifact of a manual run of https://github.com/khairyKY/kais-flow/actions/workflows/desktop.yml.
+
+**Installing (macOS 15 Sequoia and 26 Tahoe):**
+1. Open the `.dmg` and drag **Kai's Flow** onto **Applications**.
+2. Double-click it in Applications. It isn't notarized (that needs Apple's $99/yr account), so macOS says *"Kai's Flow" Not Opened* with only Move to Trash / Done. Click **Done**. (Right-click → Open no longer gets past this since Sequoia.)
+3. **System Settings → Privacy & Security**, scroll to **Security**: *"Kai's Flow" was blocked to protect your Mac.* Click **Open Anyway** (it shows for about an hour after the attempt), enter your password, then **Open**.
+4. Only once: later versions install from inside the app (Settings → App → **Update**) and never ask again. Terminal alternative to steps 2–3: `xattr -cr "/Applications/Kai's Flow.app"`.
+
+**Uninstalling:** quit from the menu-bar K, then drag Kai's Flow from Applications to the Bin.
+
 ## Windows (Microsoft Store)
 
 Once Kai's Flow is listed (docs/MICROSOFT-STORE.md), install it from the Microsoft Store instead. There's no SmartScreen warning, and the Store keeps it up to date (Settings → App says so).
