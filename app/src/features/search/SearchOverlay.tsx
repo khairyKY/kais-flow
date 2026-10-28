@@ -48,60 +48,15 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
   // Flat list in render order so activeIndex maps 1:1 to visible rows.
   const ordered = groups.flatMap((g) => g.hits)
 
-  function ResultGroup({ label, dot, hits, offset }: { label: string; dot: string; hits: SearchHit[]; offset: number }) {
-    return (
-      <div style={{ marginTop: 12 }}>
-        <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
-          {label}
-        </div>
-        {hits.map((hit, i) => {
-          const active = offset + i === activeIndex
-          return (
-            <button
-              key={`${hit.entity_type}-${hit.entity_id}`}
-              type="button"
-              onClick={() => goTo(hit)}
-              onMouseEnter={() => setActiveIndex(offset + i)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 11,
-                width: '100%',
-                textAlign: 'left',
-                // Overlays.dc.html .mi selected = bone fill; deviation(2026-07-18 audit): plus a
-                // faint lavender outline ring — Kai's explicit "faint blue outline" ask.
-                background: active ? 'var(--paper-bone)' : 'none',
-                boxShadow: active ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none',
-                border: 'none',
-                borderRadius: 'var(--radius-input)',
-                padding: '8px 6px',
-                cursor: 'pointer',
-                font: 'inherit',
-              }}
-            >
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flex: 'none' }} />
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={hit.title} /></div>
-                {hit.snippet && (
-                  <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>{hit.snippet}</div>
-                )}
-              </div>
-            </button>
-          )
-        })}
-      </div>
-    )
-  }
-
   return (
     <div
       className="kf-scrim"
-      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 96, animation: 'seOverlayFade 210ms var(--ease-out)' }}
+      style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 96 }}
       onClick={onClose}
     >
-      {/* Motion 3c — scrim and card arrive together, 210ms up-and-settle */}
-      <style>{'@keyframes seOverlayFade{from{opacity:0}}'}</style>
+      {/* O5 — the ⌘K recipe (kf-scrim + kf-overlay-card): scrim and card arrive together, 210ms up-and-settle */}
       <div
+        className="kf-overlay-card"
         style={{
           width: '100%',
           maxWidth: 400,
@@ -113,7 +68,6 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           borderRadius: 'var(--radius-card)', // Bound Journal D3: a tool's 16px; it floats, so it keeps its shadow
           boxShadow: 'var(--shadow-popover)',
           padding: '14px 16px',
-          animation: 'entryFadeUp 210ms var(--ease-out)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -152,7 +106,7 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
         <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
           {groups.reduce<{ nodes: React.ReactNode[]; offset: number }>(
             (acc, g) => {
-              acc.nodes.push(<ResultGroup key={g.key} label={g.label} dot={g.dot} hits={g.hits} offset={acc.offset} />)
+              acc.nodes.push(<ResultGroup key={g.key} label={g.label} dot={g.dot} hits={g.hits} offset={acc.offset} activeIndex={activeIndex} onPick={goTo} onHover={setActiveIndex} />)
               acc.offset += g.hits.length
               return acc
             },
@@ -177,6 +131,53 @@ export function SearchOverlay({ open, onClose }: { open: boolean; onClose: () =>
           </button>
         )}
       </div>
+    </div>
+  )
+}
+
+/** O5: declared outside the overlay's render, so its rows stay mounted while you type and arrow
+ * (inside, every keystroke made a new component type and remounted every row). */
+function ResultGroup({ label, dot, hits, offset, activeIndex, onPick, onHover }: { label: string; dot: string; hits: SearchHit[]; offset: number; activeIndex: number; onPick: (hit: SearchHit) => void; onHover: (i: number) => void }) {
+  return (
+    <div style={{ marginTop: 12 }}>
+      <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
+        {label}
+      </div>
+      {hits.map((hit, i) => {
+        const active = offset + i === activeIndex
+        return (
+          <button
+            key={`${hit.entity_type}-${hit.entity_id}`}
+            type="button"
+            onClick={() => onPick(hit)}
+            onMouseEnter={() => onHover(offset + i)}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 11,
+              width: '100%',
+              textAlign: 'left',
+              // Overlays.dc.html .mi selected = bone fill; deviation(2026-07-18 audit): plus a
+              // faint lavender outline ring — Kai's explicit "faint blue outline" ask.
+              background: active ? 'var(--paper-bone)' : 'none',
+              boxShadow: active ? '0 0 0 1.5px color-mix(in oklch, var(--acc-lavender) 45%, transparent)' : 'none',
+              border: 'none',
+              borderRadius: 'var(--radius-input)',
+              padding: '8px 6px',
+              cursor: 'pointer',
+              font: 'inherit',
+            }}
+          >
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: dot, flex: 'none' }} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={hit.title} /></div>
+              {hit.snippet && (
+                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>{hit.snippet}</div>
+              )}
+            </div>
+          </button>
+        )
+      })}
     </div>
   )
 }

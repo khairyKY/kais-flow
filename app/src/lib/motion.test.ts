@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { idPhase, resist, RESIST_MAX, stackMove } from './motion'
+import { idPhase, markRouteEntry, resist, RESIST_MAX, stackMove, staggerDelay, STAGGER_WINDOW_MS } from './motion'
 
 describe('idPhase (J-22 per-card animation offset)', () => {
   const ids = [
@@ -68,5 +68,22 @@ describe('resist (Effects 2k — boundary resistance)', () => {
       expect(resist(d)).toBeGreaterThanOrEqual(prev)
       prev = resist(d)
     }
+  })
+})
+
+describe('staggerDelay (T1 — only the first screen cascades, only on route entry)', () => {
+  it('steps 60ms per row and caps at row 8, so every row is in within 2.5s', () => {
+    markRouteEntry(1000)
+    expect(staggerDelay(0, 60, 1000)).toEqual({ animationDelay: '0ms' })
+    expect(staggerDelay(3, 60, 1000)).toEqual({ animationDelay: '180ms' })
+    expect(staggerDelay(8, 60, 1000)).toEqual({ animationDelay: '480ms' })
+    expect(staggerDelay(49, 60, 1000)).toEqual({ animationDelay: '480ms' })
+  })
+
+  it('a row that mounts after the entry window (Show more, Undo, capture, realtime) waits for nothing', () => {
+    markRouteEntry(1000)
+    expect(staggerDelay(5, 60, 1000 + STAGGER_WINDOW_MS + 1)).toEqual({ animationDelay: '0ms' })
+    markRouteEntry(5000) // the next page opens its own window
+    expect(staggerDelay(5, 60, 5100)).toEqual({ animationDelay: '300ms' })
   })
 })

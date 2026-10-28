@@ -45,12 +45,46 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* Ruling 7: scrolled → the kit top bar's small-title variant. Out-ranks typography.css's phone h1 rule. */
-.app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
+/* Ruling 7: scrolled → the kit top bar's small-title variant. Out-ranks typography.css's phone h1 rule.
+   With Effects on, D15's parasol (below) replaces this swap. */
+html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
   font-family: var(--font-ui);
   font-weight: var(--fw-semibold);
   font-size: 18px !important;
   letter-spacing: 0;
+}
+/* D15 parasol (Effects 2h, Kai: "must be FAST"): the title eases 26 → 17px over the first 80px of
+   scroll, the Workload line fades as it slides under, and the bar's paper feathers the rows out instead
+   of clipping them. Scroll-driven (animation-timeline), so it IS the scroll position: no timing, no JS,
+   no lag behind the finger. Browsers without scroll timelines keep the still header. */
+@keyframes tpParasolTitle { to { transform: scale(calc(17 / 26)); } }
+@keyframes tpParasolFade { to { opacity: 0; } }
+@keyframes tpParasolFeather { to { opacity: 1; } }
+@supports (animation-timeline: scroll()) {
+  .motion-on .tp-bar h1.tp-bar-title,
+  .motion-on .tp-sum,
+  .motion-on .tp-bar::after {
+    animation-timing-function: linear;
+    animation-fill-mode: both;
+    animation-duration: auto;
+    animation-timeline: scroll(nearest);
+    animation-range: 0 80px;
+  }
+  .motion-on .tp-bar h1.tp-bar-title { transform-origin: 0 50%; animation-name: tpParasolTitle; }
+  .motion-on .tp-sum { animation-name: tpParasolFade; animation-range: 0 40px; }
+  .motion-on .tp-bar::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    height: var(--sp-3);
+    pointer-events: none;
+    background: linear-gradient(var(--paper-linen), transparent);
+    opacity: 0;
+    animation-name: tpParasolFeather;
+    animation-range: 0 24px;
+  }
 }
 .tp-icon {
   width: var(--touch-min);

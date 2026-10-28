@@ -9,6 +9,12 @@
 .kf-pk-label { flex: 1; min-width: 0; font-size: 15px; line-height: 20px; }
 .kf-pk-check { color: var(--acc-sage-text); }
 .kf-pk-cal { margin: 0 -8px; }
+/* O11 — a month change slides the new grid in from its side; date ⇄ time steps the same way (the
+   calendar's kfCalNavNext/Prev values, 160ms; its keyframes live in a chunk this may load without). */
+@keyframes kfPkNavNext { from { opacity: 0.4; transform: translateX(16px); } }
+@keyframes kfPkNavPrev { from { opacity: 0.4; transform: translateX(-16px); } }
+.kf-pk-slide[data-nav='next'] { animation: kfPkNavNext 160ms var(--ease-out); }
+.kf-pk-slide[data-nav='prev'] { animation: kfPkNavPrev 160ms var(--ease-out); }
 .kf-pk-month { display: flex; align-items: center; padding-left: 8px; }
 .kf-pk-month > span { flex: 1; font-family: var(--font-display); font-size: 18px; font-weight: 500; color: var(--ink-body); }
 .kf-pk-nav { width: 48px; height: 48px; flex: none; display: flex; align-items: center; justify-content: center; padding: 0;

@@ -1,0 +1,11 @@
+/* T8 — Collapse (components/Collapse.tsx). The row track eases between 0fr and 1fr; the inner box
+   clips only while it moves or is shut, so an open section's focus rings and popovers aren't cut. */
+.kf-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows var(--dur-collapse) var(--ease-standard); /* ds-ok: T8 Collapse — the one height fold, by design (0fr↔1fr) */
+}
+.kf-collapse[data-open] { grid-template-rows: 1fr; }
+.kf-collapse-inner { min-height: 0; min-width: 0; }
+.kf-collapse:not([data-open]) > .kf-collapse-inner,
+.kf-collapse[data-moving] > .kf-collapse-inner { overflow: hidden; }

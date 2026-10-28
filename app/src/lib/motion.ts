@@ -1,11 +1,18 @@
 import { useEffect, useLayoutEffect, useRef, useState, type RefObject } from 'react'
+import { flushSync } from 'react-dom'
 import { uiZoom } from './uiScale'
 import { onPrefApplied, prefWritten } from './prefs'
 
-// ── Shared motion gate + helpers. Every animation in the app checks useMotionEnabled()
-// so it honors both the OS reduced-motion pref AND the app's Effects toggle (Routines 3b /
-// Settings). Ambient loops (petals, fireflies) are decorative and gate on this; essential
-// affordance feedback still runs. Keyframes live in tokens/motion.css. ──
+// ── Shared motion gate + helpers. Keyframes live in tokens/motion.css. ──
+//
+// RM2 — THE ONE RULE (2026-10-28). Two tiers, one gate each:
+// - FUNCTIONAL motion — enter, exit, collapse, settle, reorder, 200ms or less — always plays. Under
+//   the OS reduced-motion setting it is a cross-fade or a cut: CSS gets that free from the global rule
+//   in tokens/motion.css; Web Animations check reducedMotionNow().
+// - DECORATIVE motion — scale, float, bloom, petals, ambient loops, entry stagger, lean — plays only
+//   with Effects on AND no reduced motion: useMotionEnabled() / motionOnNow() in JS, and in CSS the
+//   `.motion-on` class, which lives on <html> (AppLayout), so portals on <body> agree with the shell.
+//   (`html.kf-motion-on` is the same flag under its older name; `.cal-motion-on` is the calendar's.)
 
 const EFFECTS_KEY = 'kf_effects'
 
@@ -43,10 +50,19 @@ export function setEffectsEnabled(on: boolean) {
 // Another device turned the animations on or off.
 onPrefApplied(EFFECTS_KEY, () => window.dispatchEvent(new Event('kf-effects-change')))
 
+/** The OS reduced-motion setting, read at call time: the gate for FUNCTIONAL Web Animations (RM2). */
+export function reducedMotionNow(): boolean {
+  return typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
+}
+
 /** useMotionEnabled() outside React (the router subscription, drag drops): read at call time. */
 export function motionOnNow(): boolean {
-  const reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
-  return readEffectsOn() && !reduced
+  return readEffectsOn() && !reducedMotionNow()
+}
+
+/** RM1 — a JS smooth scroll beats the CSS `scroll-behavior: auto` reduced motion sets, so ask first. */
+export function scrollBehavior(): ScrollBehavior {
+  return motionOnNow() ? 'smooth' : 'auto'
 }
 
 // True when decorative motion should play: effects on AND not reduced-motion.
@@ -66,9 +82,20 @@ export function useMotionEnabled(): boolean {
 }
 
 // Entry stagger — content settles up in source order, 60ms apart (Motion 4b).
-// Spread onto each item: style={staggerDelay(i)}. Pairs with the .kf-stagger CSS.
-export function staggerDelay(index: number, step = 60): React.CSSProperties {
-  return { animationDelay: `${index * step}ms` }
+// Spread onto each item: style={staggerDelay(i)}. Pairs with the .kf-stagger-item CSS.
+// T1 (Kai 2026-10-28): only the first screen cascades — the index caps at STAGGER_CAP, so the last
+// row waits 480ms at most, never seconds — and only on route entry: a row that mounts after the
+// entry window (Show more, an Undo, a capture, a realtime insert) arrives with no delay at all.
+export const STAGGER_CAP = 8
+export const STAGGER_WINDOW_MS = 800
+let routeEnteredAt = -Infinity
+/** AppLayout calls this as a new page renders; staggerDelay counts its window from here. */
+export function markRouteEntry(now = performance.now()): void {
+  routeEnteredAt = now
+}
+export function staggerDelay(index: number, step = 60, now = performance.now()): React.CSSProperties {
+  if (now - routeEnteredAt > STAGGER_WINDOW_MS) return { animationDelay: '0ms' }
+  return { animationDelay: `${Math.min(index, STAGGER_CAP) * step}ms` }
 }
 
 // J-22 — a stable 0–1 phase per id (FNV-1a hash), so a per-item ambient loop can start at its
@@ -105,8 +132,7 @@ export function useOverlayExit(open: boolean, duration = 140): { mounted: boolea
 // data: slides the element out 200ms, collapses its height 180ms, then runs onDone
 // (which performs the actual mutation). Reduced-motion → immediate onDone.
 export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
-  const reduced = typeof matchMedia !== 'undefined' && matchMedia('(prefers-reduced-motion: reduce)').matches
-  if (!el || reduced || typeof el.animate !== 'function') {
+  if (!el || reducedMotionNow() || typeof el.animate !== 'function') {
     onDone()
     return
   }
@@ -132,16 +158,94 @@ export function animateRowRemoval(el: HTMLElement | null, onDone: () => void) {
 
 /** Puts back a row `animateRowRemoval` was taking away — an Undo that lands mid-exit (Polish D,
  * punch 6). Its slide/collapse run with `fill: forwards`, so once finished they'd hold the row at
- * opacity 0 / height 0 even after it's back in the list. Cancelling them (onDone never fires) and
- * clearing the inline styles it set restores the row as it was; CSS animations and transitions
- * on the row are left alone. */
+ * opacity 0 / height 0 even after it's back in the list. They're cancelled (onDone never fires) and
+ * the inline styles cleared; CSS animations and transitions on the row are left alone.
+ * T5 (2026-10-28): the row no longer snaps back to full size — it eases back from wherever the exit
+ * had got to (200ms, ease-standard): the exit, run in reverse. */
 export function cancelRowRemoval(el: HTMLElement | null) {
   if (!el) return
-  for (const a of el.getAnimations?.() ?? []) {
-    if (!('animationName' in a) && !('transitionProperty' in a)) a.cancel()
-  }
+  const exits = (el.getAnimations?.() ?? []).filter((a) => !('animationName' in a) && !('transitionProperty' in a))
+  const cs = exits.length ? getComputedStyle(el) : null
+  const from = cs ? { height: `${el.offsetHeight}px`, opacity: cs.opacity, transform: cs.transform } : null
+  for (const a of exits) a.cancel()
   el.style.pointerEvents = ''
   el.style.overflow = ''
+  if (!from || reducedMotionNow() || typeof el.animate !== 'function') return
+  el.style.overflow = 'hidden'
+  const back = el.animate([from, { height: `${el.offsetHeight}px`, opacity: 1, transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
+  back.onfinish = back.oncancel = () => {
+    el.style.overflow = ''
+  }
+}
+
+/** T2 — how long a ticked row keeps its place while the four-beat check plays (Motion 3b). */
+export const COMPLETE_GRACE_MS = 650
+
+/** T2/T3 — rows that were just ticked, shared by every list that drops done tasks (Tasks, Project
+ * detail, Perennials, Today). `hold(id, value)` on the tick: the list keeps drawing the row as open
+ * (`rows.get(id)` carries whatever it needs to draw it as it was — Tasks keeps its Top-3 flag). After
+ * the grace the row leaves through `leave(id, drop)` — by default animateRowRemoval on `#task-<id>`;
+ * Today FLIPs it down to its done rows instead — and `drop` ends the hold. `keep(id)` is the Undo:
+ * the exit stops and the row eases back (cancelRowRemoval). Callers skip `hold` when motion is off,
+ * so the row goes the moment it's done, as before. */
+export function useCompletingRows<V = true>(
+  leave: (id: string, drop: () => void) => void = (id, drop) => animateRowRemoval(document.getElementById(`task-${id}`), drop),
+) {
+  const [rows, setRows] = useState<ReadonlyMap<string, V>>(() => new Map())
+  const timers = useRef(new Map<string, number>())
+  useEffect(() => {
+    const pending = timers.current
+    return () => pending.forEach((t) => window.clearTimeout(t))
+  }, [])
+  const drop = (id: string) =>
+    setRows((prev) => {
+      if (!prev.has(id)) return prev
+      const next = new Map(prev)
+      next.delete(id)
+      return next
+    })
+  const hold = (id: string, value: V) => {
+    window.clearTimeout(timers.current.get(id))
+    setRows((prev) => new Map(prev).set(id, value))
+    timers.current.set(
+      id,
+      window.setTimeout(() => {
+        timers.current.delete(id)
+        leave(id, () => drop(id))
+      }, COMPLETE_GRACE_MS),
+    )
+  }
+  const keep = (id: string) => {
+    window.clearTimeout(timers.current.get(id))
+    timers.current.delete(id)
+    cancelRowRemoval(document.getElementById(`task-${id}`))
+    drop(id)
+  }
+  return { rows, hold, keep }
+}
+
+/** T13 — FLIP a reorder: measures `selector`'s matches under `container`, runs `change` (a state
+ * update, flushed at once), then plays each element that moved from its old place to its new one,
+ * 200ms on ease-standard. React keeps a keyed row's node through a reorder, so the node is the key.
+ * Functional motion: it plays with Effects off and is a cut under reduced motion. Call it from an
+ * event or a timer, never from render or an effect (flushSync). */
+export function flip(container: Element | null | undefined, change: () => void, selector = ':scope > *'): void {
+  if (!container || reducedMotionNow()) {
+    change()
+    return
+  }
+  const first = new Map<Element, DOMRect>()
+  for (const el of container.querySelectorAll(selector)) first.set(el, el.getBoundingClientRect())
+  flushSync(change)
+  for (const el of container.querySelectorAll<HTMLElement>(selector)) {
+    const a = first.get(el)
+    if (!a || typeof el.animate !== 'function') continue
+    const b = el.getBoundingClientRect()
+    const dx = a.left - b.left
+    const dy = a.top - b.top
+    if (Math.abs(dx) < 1 && Math.abs(dy) < 1) continue
+    el.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
+  }
 }
 
 // Motion 5b "Drag lift" — R4-23 (Kai's 2026-07-20 audit). The export calls this "the one

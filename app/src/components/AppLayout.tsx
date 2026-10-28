@@ -18,7 +18,7 @@ import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/
 import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
-import { useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
+import { markRouteEntry, reducedMotionNow, useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
@@ -347,9 +347,19 @@ function SideStreak() {
   }, [routines, completions])
 
   return (
-    <div className="kf-side-streak" style={{ padding: '6px 10px 4px' }}>
-      <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
-      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
+    // D16 (Motion 1f / Effects 1b, Kai's yes 2026-10-28): the streak's vine is back beside the words —
+    // the existing sprouting-vine art, idling (cloverSway 7s) with two pollen motes drifting
+    // (fireflyDrift + twinkle). The motion is decorative: .motion-on only; Effects off, it stands still.
+    <div className="kf-side-streak" style={{ padding: '6px 10px 4px', display: 'flex', alignItems: 'flex-end', gap: 10 }}>
+      <span className="kf-streak-plant" aria-hidden="true">
+        <img src="/ds/assets/vine/sprouting.png" alt="" />
+        <i />
+        <i />
+      </span>
+      <div>
+        <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
+      </div>
     </div>
   )
 }
@@ -664,8 +674,10 @@ export function AppLayout() {
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()
-  // M2: what lives on <body> (popovers, the drag's lifted card) reads the Effects setting from <html>.
+  // M2 / RM2: the one decorative-motion flag lives on <html>, so what lives on <body> (popovers, the
+  // drag's lifted card) agrees with the shell. `.motion-on` is the name; `kf-motion-on` its old alias.
   useEffect(() => {
+    document.documentElement.classList.toggle('motion-on', motionOn)
     document.documentElement.classList.toggle('kf-motion-on', motionOn)
   }, [motionOn])
   const location = useLocation()
@@ -675,6 +687,12 @@ export function AppLayout() {
   // Settings on a computer is one page with its category list beside it (layout A, 2026-10-26): switching
   // category mustn't remount it (the list, its search and its scroll stay); the phone drills, so it does.
   const routeKey = !isMobile && inSettings(pathname) ? '/settings' : pathname
+  // T1: a new page's rows may stagger in; rows that mount after its entry window arrive at once.
+  const enteredKey = useRef<string | null>(null)
+  if (enteredKey.current !== routeKey) {
+    enteredKey.current = routeKey
+    markRouteEntry()
+  }
   // Motion 2b/3a: the page scroller is the stack's sheet (lib/motion useStackTransition); Effects 2k
   // gives its edges their resistance on touch.
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -697,6 +715,28 @@ export function AppLayout() {
   useEffect(() => {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
+  // O7: folding, the labels fade out first (120ms), then the width eases 242 → 64 (200ms, CSS);
+  // opening, the width eases out, then the labels fade back in. Functional: a cut under reduced motion.
+  const [fold, setFold] = useState<'out' | 'in' | null>(null)
+  const foldTimer = useRef(0)
+  const toggleSidebar = () => {
+    window.clearTimeout(foldTimer.current)
+    if (reducedMotionNow()) {
+      setFold(null)
+      return setCollapsed((v) => !v)
+    }
+    if (!collapsed) {
+      setFold('out')
+      foldTimer.current = window.setTimeout(() => {
+        setCollapsed(true)
+        setFold(null)
+      }, 120)
+    } else {
+      setCollapsed(false)
+      setFold('in')
+      foldTimer.current = window.setTimeout(() => setFold(null), 320)
+    }
+  }
 
   // User time zones: every date below reads the user's zone; a new zone remounts the page (key
   // below) so nothing memoised keeps the old day. Once per device, offer the device's own zone.
@@ -803,6 +843,7 @@ export function AppLayout() {
   }, [pathname, navigate])
 
   return (
+    // The shell keeps `.motion-on` too, for the older `.app-shell.motion-on` selectors.
     <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: 'var(--kf-vh)', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
@@ -825,6 +866,19 @@ export function AppLayout() {
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* D16 — the streak's vine and its pollen (SideStreak). */
+        .kf-streak-plant { position: relative; flex: none; width: 28px; height: 40px; }
+        .kf-streak-plant img { position: absolute; left: 0; bottom: 0; height: 40px; transform-origin: 50% 100%; }
+        .kf-streak-plant i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: var(--acc-buttercream); opacity: 0; }
+        .kf-streak-plant i:first-of-type { left: 16px; top: 6px; }
+        .kf-streak-plant i:last-of-type { left: 4px; top: 16px; }
+        .motion-on .kf-streak-plant img { animation: cloverSway 7s ease-in-out infinite; }
+        .motion-on .kf-streak-plant i:first-of-type { animation: fireflyDrift 9s ease-in-out infinite, twinkle 3s ease-in-out infinite; }
+        .motion-on .kf-streak-plant i:last-of-type { animation: fireflyDrift 11s ease-in-out -4s infinite, twinkle 3.6s ease-in-out infinite; }
+        /* O7 — the fold (toggleSidebar): labels out 120ms, then the width 200ms; back, the reverse. */
+        .app-sidebar { transition: width var(--dur-normal) var(--ease-standard); } /* ds-ok: O7 sidebar fold — the spec animates the width (Linear) */
+        .app-sidebar[data-fold='out'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { opacity: 0; transition: opacity 120ms var(--ease-standard); }
+        .app-sidebar[data-fold='in'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { animation: kfFadeIn 120ms var(--ease-out) var(--dur-normal) backwards; }
         /* A size container query, not a media query: it measures the sidebar in zoomed CSS px. */
         .app-sidebar { container: kf-sidebar / size; }
         /* Bottom B (Sidebar options.html, Kai 2026-10-22): the name is the menu's button, and the app
@@ -932,10 +986,13 @@ export function AppLayout() {
         /* X2 Motion 3c — overlay in: card + scrim arrive together, 210ms up-and-settle.
            Keyframes end at transform:none (containing-block rule, tokens/motion.css). */
         @keyframes kfOverlayIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+        /* RM2: the rise and fade are functional and always play; the 0.98 scale is decorative (.motion-on). */
+        @keyframes kfOverlayInFlat { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         @keyframes kfFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes kfSheetIn { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
         @keyframes kfDrawerIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
-        .kf-overlay-card { animation: kfOverlayIn 210ms var(--ease-out); }
+        .kf-overlay-card { animation: kfOverlayInFlat 210ms var(--ease-out); }
+        .motion-on .kf-overlay-card:not(.kf-overlay-card--out) { animation-name: kfOverlayIn; }
         .kf-scrim { animation: kfFadeIn 210ms var(--ease-out); background: rgba(11, 10, 8, 0.2); }
         .kf-sheet { animation: kfSheetIn 210ms var(--ease-out); }
         .kf-drawer { animation: kfDrawerIn 210ms var(--ease-out); }
@@ -1037,11 +1094,12 @@ export function AppLayout() {
           overhang the divider at right:-12 un-clipped — scrolling lives on the inner column. */}
       <aside
         className={`app-sidebar${collapsed ? ' collapsed' : ''}`}
+        data-fold={fold ?? undefined}
         style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 5 }}
       >
         <button
           type="button"
-          onClick={() => setCollapsed((v) => !v)}
+          onClick={toggleSidebar}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="kf-collapse-btn"
           style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--line-card)', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', color: 'var(--ink-faint)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 45 }}

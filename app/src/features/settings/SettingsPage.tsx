@@ -1961,7 +1961,11 @@ function CategoryPage({ id }: { id: CatId }) {
       el.scrollIntoView({ block: state.anchor ? 'start' : 'center' })
       if (state.lit) {
         el.classList.add('is-lit')
-        setTimeout(() => el.classList.remove('is-lit'), 2000)
+        // O8: the light fades out over 600ms (is-unlit carries the transition only for that fade).
+        setTimeout(() => {
+          el.classList.replace('is-lit', 'is-unlit')
+          setTimeout(() => el.classList.remove('is-unlit'), 600)
+        }, 2000)
       }
     }, 80)
     return () => clearTimeout(t)

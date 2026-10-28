@@ -80,12 +80,25 @@ export function DatePicker(p: DatePickerProps) {
   const [focusKey, setFocusKey] = useState(opensOn)
   const [month, setMonth] = useState(() => monthOf(opensOn))
   const [stage, setStage] = useState<'date' | 'time'>('date')
+  // O11: which way the last month change or step went — the new grid / step slides in from that side.
+  const [nav, setNav] = useState<'next' | 'prev' | undefined>()
+  const [stepNav, setStepNav] = useState<'next' | 'prev' | undefined>()
+  const toMonth = (k: string) => {
+    const m = monthOf(k)
+    if (m.y !== month.y || m.m !== month.m) setNav(m.y * 12 + m.m > month.y * 12 + month.m ? 'next' : 'prev')
+    setMonth(m)
+  }
+  const toStage = (s: 'date' | 'time') => {
+    setStepNav(s === 'time' ? 'next' : 'prev')
+    setNav(undefined) // the grid comes back with the step, not with a month slide of its own
+    setStage(s)
+  }
   const [time, setTime] = useState<string | null>(null)
   const [dur, setDur] = useState(duration ?? null)
   const gridRef = useRef<HTMLDivElement>(null)
   const moved = useRef(false)
 
-  useEscapeStack(stage === 'time', () => setStage('date')) // Back: time sheet → month, then the sheet
+  useEscapeStack(stage === 'time', () => toStage('date')) // Back: time sheet → month, then the sheet
   const marks = useMemo(
     () => daysWithItems(tasks ?? queryClient.getQueryData<Task[]>(['tasks']) ?? [], events ?? queryClient.getQueryData<CalendarEvent[]>(['calendar_events']) ?? []),
     [tasks, events],
@@ -112,12 +125,12 @@ export function DatePicker(p: DatePickerProps) {
     setDay(d)
     // opens on the value's own time when it's that day's, else 09:00 (drawn selected)
     setTime((t) => t ?? (mode === 'iso' && value && d === initialDay ? cairoTimeKey(new Date(value)) : '09:00'))
-    setStage('time')
+    toStage('time')
   }
   const goMonth = (n: number) => {
     const k = shiftDay(focusKey, n)
     setFocusKey(k)
-    setMonth(monthOf(k))
+    toMonth(k)
   }
 
   // Keyboard moves focus with the roving cell.
@@ -142,7 +155,7 @@ export function DatePicker(p: DatePickerProps) {
     if (disabled(next)) return // past `max`: stay put (a disabled button can't hold focus)
     moved.current = true
     setFocusKey(next)
-    setMonth(monthOf(next))
+    toMonth(next)
   }
 
   const picks = quick ? quickPicks(now, mode === 'iso').filter((q) => !disabled(q.day)) : []
@@ -153,8 +166,9 @@ export function DatePicker(p: DatePickerProps) {
     ...(onClear ? [{ key: 'none' as const, label: 'No date', hint: undefined, run: onClear }] : []),
   ]
 
-  const content = (close: () => void) =>
-    stage === 'time' ? (
+  const content = (close: () => void) => (
+    <div key={stage} className="kf-pk-slide" data-nav={stepNav}>
+    {stage === 'time' ? (
       <TimePanel
         day={day ?? today}
         value={time}
@@ -191,7 +205,7 @@ export function DatePicker(p: DatePickerProps) {
               <Icon name="chevright" size={24} />
             </button>
           </div>
-          <div ref={gridRef} role="grid" aria-labelledby={monthId} onKeyDown={(e) => onGridKey(e, close)}>
+          <div ref={gridRef} key={`${month.y}-${month.m}`} className="kf-pk-slide" data-nav={nav} role="grid" aria-labelledby={monthId} onKeyDown={(e) => onGridKey(e, close)}>
             <div role="row" className="kf-pk-row kf-pk-wk">
               {WEEKDAYS.map((w) => <span key={w} role="columnheader" aria-label={w}>{w[0]}</span>)}
             </div>
@@ -229,7 +243,9 @@ export function DatePicker(p: DatePickerProps) {
           </div>
         </div>
       </>
-    )
+    )}
+    </div>
+  )
 
   const footer = (close: () => void) => (
     <>

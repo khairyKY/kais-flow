@@ -1,34 +1,5 @@
 /* capture.css - Local styles for Wave 8 (Voice capture & Quick capture) */
 
-/* Motion 3c Overlay Animations */
-@keyframes captureScrimFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes captureScrimFadeOut {
-  from { opacity: 1; }
-  to { opacity: 0; }
-}
-
-@keyframes captureSheetSlideIn {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-
-@keyframes captureSheetSlideOut {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(100%);
-  }
-}
-
 /* Simulated keyboard animations */
 @keyframes slideKeyboardUp {
   from { transform: translateY(100%); }
@@ -100,7 +71,20 @@ button.kf-capture.kf-press {
 }
 .kf-capture[data-phase='recording'] {
   box-shadow: 0 0 0 11px var(--block-terra), var(--shadow-capture);
+  /* K3: held, the button follows the finger with no transition (it trailed by 100ms); it grows to 72
+     over 200ms from the moment the hold turns into a recording, then the spring takes it home. */
+  animation: kfRecGrow 200ms var(--ease-out) backwards;
 }
+button.kf-capture.kf-press[data-phase='recording'] { transition: box-shadow var(--dur-press) var(--ease-standard); } /* ds-ok: K3 the held button keeps only its press ring easing (no transform transition) */
+@keyframes kfRecGrow { from { transform: none; } }
+/* K3: the pill slides in from the button, the rail rises from it, the hands-free bar comes up over
+   the tab bar — 200ms each (WhatsApp, Telegram). Functional: reduced motion's global rule cuts them. */
+@keyframes kfRecPillIn { from { opacity: 0; transform: translateX(20px); } }
+@keyframes kfRecRailIn { from { opacity: 0; transform: translateY(20px); } }
+@keyframes kfRecLockedIn { from { transform: translateY(100%); } }
+.kf-rec-pill { animation: kfRecPillIn 200ms var(--ease-out) backwards; }
+.kf-rec-rail { animation: kfRecRailIn 200ms var(--ease-out) backwards; }
+.kf-rec-locked { animation: kfRecLockedIn 200ms var(--ease-emphasized-decel) backwards; }
 .kf-capture[data-phase='recording']::before {
   opacity: 0 !important;
 }

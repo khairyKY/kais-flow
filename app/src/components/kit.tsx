@@ -1,4 +1,4 @@
-import { useState, type ButtonHTMLAttributes, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
+import { useLayoutEffect, useRef, useState, type ButtonHTMLAttributes, type CSSProperties, type MouseEvent, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { useMotionEnabled } from '../lib/motion'
 import { Icon } from './Icon'
@@ -334,8 +334,25 @@ export function Toggle({ on, onToggle, label, disabled }: { on: boolean; onToggl
 }
 
 export function Segmented<T extends string | number>({ value, onChange, options, label, className }: { value: T; onChange: (v: T) => void; options: { value: T; label: string }[]; label?: string; className?: string }) {
+  // O8 — a sliding thumb (iOS UISegmentedControl): one ink pill under the pressed option, measured
+  // to it and eased across on a change (200ms, kit.css). Re-measured when the control resizes or wraps.
+  const ref = useRef<HTMLDivElement>(null)
+  const [thumb, setThumb] = useState<CSSProperties | null>(null)
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!el) return
+    const place = () => {
+      const b = el.querySelector<HTMLElement>('.kf-seg-btn[aria-pressed="true"]')
+      setThumb(b ? { left: b.offsetLeft, top: b.offsetTop, width: b.offsetWidth, height: b.offsetHeight } : null)
+    }
+    place()
+    const ro = new ResizeObserver(place)
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [value])
   return (
-    <div className={`kf-seg${className ? ` ${className}` : ''}`} role="group" aria-label={label}>
+    <div ref={ref} className={`kf-seg${className ? ` ${className}` : ''}`} role="group" aria-label={label}>
+      {thumb && <span className="kf-seg-thumb" style={thumb} aria-hidden="true" />}
       {options.map((o) => (
         <button key={o.value} type="button" className="kf-seg-btn" aria-pressed={o.value === value} onClick={() => onChange(o.value)}>
           {o.label}

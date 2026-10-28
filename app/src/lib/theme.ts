@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { syncShellChrome } from './platform'
 import { onPrefApplied } from './prefs'
+import { motionOnNow } from './motion'
 
 // Day / Night — the two token themes (colors.css :root vs colors.dark.css
 // [data-theme="night"]). Appearance is a device preference, so it lives in
@@ -25,6 +26,15 @@ function apply(theme: Theme) {
   syncShellChrome(theme) // M1: the Android shell's bar strips follow Day/Night
 }
 
+/** O12 — a real change of theme (a pick, another device, Auto at sunset) cross-fades the whole page
+ * (~250ms, a root view transition; tokens/motion.css) instead of flipping in one frame. Decorative:
+ * Effects on and no reduced motion only, and only where the browser has view transitions. */
+function applyEased(theme: Theme) {
+  const root = typeof document !== 'undefined' ? document.documentElement : null
+  if (!root || root.dataset.theme === theme || !document.startViewTransition || !motionOnNow()) return apply(theme)
+  document.startViewTransition(() => apply(theme))
+}
+
 interface ThemeState {
   theme: Theme
   toggle: () => void
@@ -42,7 +52,7 @@ export const useTheme = create<ThemeState>((set, get) => {
       } catch {
         /* private mode — session-only theme is fine */
       }
-      apply(t)
+      applyEased(t)
       set({ theme: t })
     },
   }
