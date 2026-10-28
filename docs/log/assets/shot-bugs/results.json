@@ -1,0 +1,272 @@
+[
+  {
+    "name": "b1 100% within the slot: nothing written, no stray block, no placeholder, no lifted card left",
+    "ok": true,
+    "detail": "{\"noId\":0,\"mirrors\":0,\"lifted\":0,\"drawn\":1}"
+  },
+  {
+    "name": "b1 100% within the slot: the task drawn once (its row)",
+    "ok": true,
+    "detail": "{\"noId\":0,\"mirrors\":0,\"lifted\":0,\"drawn\":1}"
+  },
+  {
+    "name": "b1 100% out of the slot: one block made, the task out of the slot, drawn once",
+    "ok": true,
+    "detail": "{\"noId\":0,\"mirrors\":0,\"lifted\":0,\"drawn\":1,\"blocks\":1}"
+  },
+  {
+    "name": "b1 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b1 150% within the slot: nothing written, no stray block, no placeholder, no lifted card left",
+    "ok": true,
+    "detail": "{\"noId\":0,\"mirrors\":0,\"lifted\":0,\"drawn\":1}"
+  },
+  {
+    "name": "b1 150% within the slot: the task drawn once (its row)",
+    "ok": true,
+    "detail": "{\"noId\":0,\"mirrors\":0,\"lifted\":0,\"drawn\":1}"
+  },
+  {
+    "name": "b1 150% out of the slot: one block made, the task out of the slot, drawn once",
+    "ok": true,
+    "detail": "{\"noId\":0,\"mirrors\":0,\"lifted\":0,\"drawn\":1,\"blocks\":1}"
+  },
+  {
+    "name": "b1 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 desktop 100%: every hour label whole",
+    "ok": true,
+    "detail": "{\"n\":24,\"cut\":[]}"
+  },
+  {
+    "name": "b2 desktop 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 phone 100%: every hour label whole",
+    "ok": true,
+    "detail": "{\"n\":23,\"cut\":[]}"
+  },
+  {
+    "name": "b2 phone 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 desktop 150%: every hour label whole",
+    "ok": true,
+    "detail": "{\"n\":24,\"cut\":[]}"
+  },
+  {
+    "name": "b2 desktop 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b2 phone 150%: every hour label whole",
+    "ok": true,
+    "detail": "{\"n\":23,\"cut\":[]}"
+  },
+  {
+    "name": "b2 phone 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 100%: the column scrolled, the header still whole at the top, above the column",
+    "ok": true,
+    "detail": "{\"scrolled\":238,\"top\":16,\"bottom\":75,\"colTop\":87}"
+  },
+  {
+    "name": "b3 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b3 150%: the column scrolled, the header still whole at the top, above the column",
+    "ok": true,
+    "detail": "{\"scrolled\":457.3333435058594,\"top\":24,\"bottom\":112.5,\"colTop\":130.5}"
+  },
+  {
+    "name": "b3 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 100%: the fill says \"3 tasks · 1h 30m of 45m · 45m over\", the over part in --blk-ran-ink",
+    "ok": true,
+    "detail": "{\"fill\":\"3 tasks · 1h 30m of 45m · 45m over\",\"over\":{\"text\":\"45m over\",\"color\":\"rgb(124, 52, 29)\",\"want\":\"rgb(124, 52, 29)\"}}"
+  },
+  {
+    "name": "b4 100%: under the pointer the block opens out — all 3 rows inside it, each box the one hit there",
+    "ok": true,
+    "detail": "[{\"inBlock\":true,\"hit\":true},{\"inBlock\":true,\"hit\":true},{\"inBlock\":true,\"hit\":true}]"
+  },
+  {
+    "name": "b4 100%: the last row's box ticks its task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 100%: the pointer gone, it is its own 45 minutes again",
+    "ok": true,
+    "detail": "53 → 53"
+  },
+  {
+    "name": "b4 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 150%: the fill says \"3 tasks · 1h 30m of 45m · 45m over\", the over part in --blk-ran-ink",
+    "ok": true,
+    "detail": "{\"fill\":\"3 tasks · 1h 30m of 45m · 45m over\",\"over\":{\"text\":\"45m over\",\"color\":\"rgb(124, 52, 29)\",\"want\":\"rgb(124, 52, 29)\"}}"
+  },
+  {
+    "name": "b4 150%: under the pointer the block opens out — all 3 rows inside it, each box the one hit there",
+    "ok": true,
+    "detail": "[{\"inBlock\":true,\"hit\":true},{\"inBlock\":true,\"hit\":true},{\"inBlock\":true,\"hit\":true}]"
+  },
+  {
+    "name": "b4 150%: the last row's box ticks its task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 150%: the pointer gone, it is its own 45 minutes again",
+    "ok": true,
+    "detail": "80 → 80"
+  },
+  {
+    "name": "b4 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b4 100%: a full block (1h 30m of 1h 30m) has no \"over\"",
+    "ok": true,
+    "detail": "3 tasks · 1h 30m of 1h 30m"
+  },
+  {
+    "name": "b4 phone 100%: the phone's slot says \"30m over\" too",
+    "ok": true,
+    "detail": "30m over"
+  },
+  {
+    "name": "b4 150%: a full block (1h 30m of 1h 30m) has no \"over\"",
+    "ok": true,
+    "detail": "3 tasks · 1h 30m of 1h 30m"
+  },
+  {
+    "name": "b4 phone 150%: the phone's slot says \"30m over\" too",
+    "ok": true,
+    "detail": "30m over"
+  },
+  {
+    "name": "b6 100% Time block: the ring (decor, no role), no box, no Focus",
+    "ok": true,
+    "detail": "{\"title\":\"Study Session\",\"ring\":true,\"ringHidden\":true,\"ringRole\":null,\"box\":null,\"focus\":false,\"next\":null}"
+  },
+  {
+    "name": "b6 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b6 150% Time block: the ring (decor, no role), no box, no Focus",
+    "ok": true,
+    "detail": "{\"title\":\"Study Session\",\"ring\":true,\"ringHidden\":true,\"ringRole\":null,\"box\":null,\"focus\":false,\"next\":null}"
+  },
+  {
+    "name": "b6 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b6 100% task: a square box as drawn (15px, 5px corners, 2px edge — not a circle), a checkbox, ▶ Focus",
+    "ok": true,
+    "detail": "{\"title\":\"Study VLSI Lecture 1\",\"ring\":false,\"ringHidden\":false,\"ringRole\":null,\"box\":{\"w\":15,\"radius\":\"5px\",\"edge\":\"2px\",\"role\":\"checkbox\"},\"focus\":true,\"next\":{\"text\":\"NextStudy VLSI Lecture 2in 30m\",\"tuck\":10,\"below\":33}}"
+  },
+  {
+    "name": "b6 100% Next hangs under the card as drawn: 10px tucked behind, the rest below",
+    "ok": true,
+    "detail": "{\"text\":\"NextStudy VLSI Lecture 2in 30m\",\"tuck\":10,\"below\":33}"
+  },
+  {
+    "name": "b6 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b6 150% task: a square box as drawn (15px, 5px corners, 2px edge — not a circle), a checkbox, ▶ Focus",
+    "ok": true,
+    "detail": "{\"title\":\"Study VLSI Lecture 1\",\"ring\":false,\"ringHidden\":false,\"ringRole\":null,\"box\":{\"w\":22.5,\"radius\":\"5px\",\"edge\":\"2px\",\"role\":\"checkbox\"},\"focus\":true,\"next\":{\"text\":\"NextStudy VLSI Lecture 2in 30m\",\"tuck\":15,\"below\":48}}"
+  },
+  {
+    "name": "b6 150% Next hangs under the card as drawn: 10px tucked behind, the rest below",
+    "ok": true,
+    "detail": "{\"text\":\"NextStudy VLSI Lecture 2in 30m\",\"tuck\":15,\"below\":48}"
+  },
+  {
+    "name": "b6 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ph 100% B1: the held task is drawn once on the phone grid",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "ph 100% B3: no sidebar on the phone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ph 100% B6: the phone's Now card — Time block: the ring, no box",
+    "ok": true,
+    "detail": "{\"title\":\"Study Session\",\"ring\":true,\"ringHidden\":true,\"ringRole\":null,\"box\":null,\"focus\":false,\"next\":null}"
+  },
+  {
+    "name": "ph 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ph 150% B1: the held task is drawn once on the phone grid",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "ph 150% B3: no sidebar on the phone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "ph 150% B6: the phone's Now card — Time block: the ring, no box",
+    "ok": true,
+    "detail": "{\"title\":\"Study Session\",\"ring\":true,\"ringHidden\":true,\"ringRole\":null,\"box\":null,\"focus\":false,\"next\":null}"
+  },
+  {
+    "name": "ph 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "b7 \"Lists…\" is a button that brings back Lists and its scope picker",
+    "ok": true,
+    "detail": "1 1"
+  },
+  {
+    "name": "b7 no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

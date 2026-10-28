@@ -856,7 +856,7 @@ export function AppLayout() {
         /* Short sidebar (1280×800 at the default 125% is 640 layout px): the column tightens a little to
            keep Tend's five rows in view with the Plan drawer open. */
         @container kf-sidebar (max-height: 799px) {
-          .app-sidebar:not(.collapsed) .app-sidebar-col { padding-top: 16px !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-top { padding-top: 16px !important; }
           .app-sidebar:not(.collapsed) .app-sidebar-header { padding-bottom: 12px !important; }
           .app-sidebar:not(.collapsed) nav > .app-nav-label { padding-top: 6px !important; }
           /* Bound Journal's 12px meta and rounded rows cost the column a few px: Projects ran 2px under the
@@ -1053,13 +1053,17 @@ export function AppLayout() {
             hover flyouts at the 64px edge — so at 125–150% the icon column ran under the pinned
             footer instead of scrolling (Kai 2026-10-03). The flyouts now draw on <body> (NavRow),
             so the column scrolls in both states. */}
-        <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
-
         {/* Today 2a: the app icon beside the wordmark; 2a drops the hand line ("a field journal of
             days ✿"). deviation(2026-10-13 today-shell): the workspace · city line stays — it is
             the only place the workspace answer shows, and with no top bar on Today / Inbox the
-            only place the user's zone does. Bottom B (2026-10-22): it is the menu's button. */}
-        <SideHeader collapsed={collapsed} sync={!isMobile} onSignOut={signOutFlow.request} />
+            only place the user's zone does. Bottom B (2026-10-22): it is the menu's button.
+            shot-bugs (Kai 2026-10-27): pinned above the scrolling column, as the foot is below it — a
+            scrolled sidebar slid it under the window's title bar, half cut. */}
+        <div className="app-sidebar-top" style={{ flex: 'none', paddingTop: 24 }}>
+          <SideHeader collapsed={collapsed} sync={!isMobile} onSignOut={signOutFlow.request} />
+        </div>
+
+        <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '0 0 8px' }}>
 
         <PlanDrawer />
 

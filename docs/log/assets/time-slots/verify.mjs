@@ -748,7 +748,7 @@ if (want('f14')) {
   const m = await open('/today', { tables: pick, view: phone })
   await sleep(800)
   const mtop = await m.page.locator(`#task-${id(HELD)}`).first().innerText().catch(() => '')
-  check('f14 phone Today: the Top 3 pick reads "in Code block💻 · 10:00"', /in Code block💻 · 10:00/.test(mtop), mtop.replace(/\n/g, ' '))
+  check('f14 phone Today: the Top 3 pick reads "in Code block💻 · 10:00"', /in Code block💻 · 10:00/i.test(mtop) /* phone-today sets the goal row's meta in capitals (CSS) */, mtop.replace(/\n/g, ' '))
   await shot(m.page, 'f14-phone-today')
   await m.ctx.close()
 }
