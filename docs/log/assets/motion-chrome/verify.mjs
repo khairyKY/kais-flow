@@ -577,6 +577,35 @@ if (want('d16')) {
   }
 }
 
+// ── W1 — the tray flyout (tray.html): the motion gate, a 150ms arrival on focus, 150ms hovers, the ring eases ──
+if (want('w1')) {
+  for (const [v, o] of [['on', {}], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
+    const env = await open('/tray.html', { view: { viewport: { width: 360, height: 560 } }, ...o })
+    const { page } = env
+    await page.locator('.kf-tray').waitFor({ timeout: 10000 })
+    const gate = await page.evaluate(() => document.documentElement.classList.contains('motion-on'))
+    check(`w1 ${v}: the tray document carries the motion gate (${v === 'on' ? 'on' : 'off'})`, gate === (v === 'on'))
+    await page.evaluate(() => window.dispatchEvent(new Event('focus')))
+    const arr = await page.locator('.kf-tray').evaluate((e) => e.getAnimations().map((a) => a.effect.getTiming().duration))
+    if (v === 'reduced') check('w1 reduced: shown again, no arrival motion', arr.length === 0, JSON.stringify(arr))
+    else check(`w1 ${v}: shown again, the flyout arrives (150ms fade + rise)`, arr.length === 1 && arr[0] === 150, JSON.stringify(arr))
+    const hov = await page.locator('.kf-tray-btn').first().evaluate((e) => getComputedStyle(e).transition)
+    check(`w1 ${v}: the tray's buttons ease their hover (150ms)`, /background-color (0\.15s|1e-05s)/.test(hov), hov)
+    const ring = await page.evaluate(() => {
+      const r = document.createElement('span')
+      r.className = 'kf-tray-ring'
+      r.style.setProperty('--pct', '40%')
+      document.querySelector('.kf-tray').append(r)
+      const s = getComputedStyle(r)
+      return { tr: s.transition, bg: s.backgroundImage.slice(0, 40) }
+    })
+    check(`w1 ${v}: the focus ring's share is a registered --pct that transitions`, ring.tr.includes('--pct') && ring.bg.startsWith('conic-gradient'), JSON.stringify(ring))
+    await page.screenshot({ path: path.join(OUT, `w1-tray-${v}.png`) })
+    basics(env, `w1 ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {

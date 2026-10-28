@@ -60,7 +60,11 @@
   display: block;
   margin-top: 3px;
 }
+/* W1: the ring's share eases between ticks (a registered --pct can transition). */
+@property --pct { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
 .kf-tray-ring {
+  background: conic-gradient(var(--acc-sage-text) 0 var(--pct), var(--line-card) 0 100%);
+  transition: --pct 600ms var(--ease-standard);
   width: 42px;
   height: 42px;
   flex: none;
@@ -346,6 +350,19 @@
   font-weight: var(--fw-semibold);
   line-height: 1;
   color: var(--ink-body);
+}
+
+/* W1: 150ms hover feedback, as Windows 11's flyouts give it. */
+.kf-tray-btn,
+.kf-tray-row-title,
+.kf-tray-open,
+.kf-menu-row {
+  transition: background-color 150ms var(--ease-standard), color 150ms var(--ease-standard);
+}
+@media (hover: hover) {
+  .kf-tray-btn:not(.is-cta):hover { background-color: var(--paper-bone); }
+  .kf-tray-row-title:hover,
+  .kf-tray-open:hover { color: var(--ink-muted); }
 }
 
 .kf-tray button:focus-visible,
