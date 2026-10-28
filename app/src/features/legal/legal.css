@@ -22,6 +22,21 @@
   padding: 20px 22px;
   color: var(--ink-body);
 }
+.lg-card.is-wide {
+  width: min(720px, 100%);
+}
+/* Open-source licences: the generated text as it is, wrapped. */
+.lg-pre {
+  margin: 12px 0 0;
+  max-height: 60vh; /* the text scrolls, the title and Close stay put */
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--fs-body-s);
+  line-height: 1.45;
+  color: var(--ink-body);
+}
 .lg-title {
   margin: 0;
   font-family: var(--font-display);

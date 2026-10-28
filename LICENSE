@@ -1,0 +1,14 @@
+Copyright (c) 2026 Khairy Islam Shaheen. All rights reserved.
+
+Kai's Flow is proprietary software. It is not open source.
+
+The source code in this repository may be visible to you, but that is for
+reference only. No licence is granted: you may not copy, modify, distribute,
+sublicense, sell, host, or otherwise use this code or any part of it, in
+whole or in part, without written permission from the copyright holder.
+
+Third-party components included in or used by this software remain under
+their own licences. Their notices ship with the app (Settings > App & updates
+> Open-source licences, generated into app/public/licenses.txt at build time).
+
+For permission, contact the author.

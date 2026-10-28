@@ -4,9 +4,17 @@ dist/
 dist-ssr/
 *.local
 
-# Env secrets
-.env
+# Env secrets (.env, .env.production, .env.mock.local …) — only the example is tracked
+.env*
 !.env.example
+
+# Signing keys: Android keystores, Windows certs, the Tauri updater key (tauri signer generate → *.key)
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.key
+*.pem
 
 # Supabase CLI local state
 supabase/.branches/

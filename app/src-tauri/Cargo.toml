@@ -4,6 +4,8 @@ version = "1.0.0"
 description = "Kai's Flow — the whole day in one calm place"
 edition = "2021"
 publish = false
+# Proprietary — see the repo-root LICENSE (Cargo wants an SPDX id or a file; there is no SPDX id for "all rights reserved").
+license-file = "../../LICENSE"
 
 # The native shell (docs/phases/M1-android.md): the same built dist/ the web app serves, wrapped
 # in the system WebView. No app logic lives here — on Windows it also keeps the tray (src/tray.rs).
