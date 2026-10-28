@@ -419,6 +419,16 @@ button.kf-chip {
   color: var(--sel-ink);
   font-weight: 600;
 }
+.kf-seg { position: relative; }
+.kf-seg-btn { position: relative; z-index: 1; }
+/* O8: the sliding thumb draws the selection; the pressed button keeps only its ink and weight. */
+.kf-seg-thumb {
+  position: absolute;
+  border-radius: var(--radius-pill);
+  background: var(--sel-bg);
+  transition: left var(--dur-normal) var(--ease-standard), top var(--dur-normal) var(--ease-standard), width var(--dur-normal) var(--ease-standard), height var(--dur-normal) var(--ease-standard);
+}
+.kf-seg:has(> .kf-seg-thumb) .kf-seg-btn[aria-pressed='true'] { background: none; }
 .kf-seg-btn:not([aria-pressed='true']):active {
   background: var(--pressed-overlay);
 }

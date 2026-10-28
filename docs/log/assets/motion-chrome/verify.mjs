@@ -381,6 +381,40 @@ if (want('o7')) {
   }
 }
 
+// ── O8 — Segmented's sliding thumb (200ms); a Settings search hit's lit row fades out (600ms) ──
+if (want('o8')) {
+  for (const [v, o] of [['on', {}], ['reduced', { reduced: true }]]) {
+    const env = await open('/settings', { view: desktop, ...o })
+    const { page } = env
+    const seg = page.locator('.kf-seg[aria-label="Theme"]')
+    const thumbAt = () => seg.evaluate((el) => { const t = el.querySelector('.kf-seg-thumb'); const p = el.querySelector('[aria-pressed="true"]'); return { thumb: Math.round(parseFloat(getComputedStyle(t).left)), pressed: p.offsetLeft, label: p.textContent, pressedBg: getComputedStyle(p).backgroundColor, tr: getComputedStyle(t).transitionDuration } })
+    const before = await thumbAt()
+    await seg.getByRole('button', { name: 'Dark' }).click()
+    await sleep(60)
+    const mid = await thumbAt()
+    await sleep(400)
+    const after = await thumbAt()
+    if (v === 'on') check('o8 on: the thumb slides from Light toward Dark (mid-way at 60ms) and lands on it', mid.thumb > before.thumb + 2 && mid.thumb < after.pressed - 2 && Math.abs(after.thumb - after.pressed) <= 1.5 && after.label === 'Dark', JSON.stringify({ before, mid, after }))
+    else check('o8 reduced: the thumb lands on Dark at once', Math.abs(mid.thumb - mid.pressed) <= 1.5, JSON.stringify({ mid }))
+    check(`o8 ${v}: the pressed button's own fill steps aside for the thumb`, after.pressedBg === 'rgba(0, 0, 0, 0)', after.pressedBg)
+    await shot(page, `o8-seg-${v}`)
+    await seg.getByRole('button', { name: 'Light' }).click()
+    // The lit row: search, open the hit, the row lights, then fades.
+    await page.getByPlaceholder('Search settings').fill('sound')
+    await sleep(400)
+    await page.locator('.st-go').first().click()
+    await page.locator('.st-row.is-lit').first().waitFor({ timeout: 4000 })
+    await page.locator('.st-row.is-unlit').first().waitFor({ timeout: 4000 })
+    await sleep(v === 'on' ? 150 : 40)
+    const fading = await page.locator('.st-row.is-unlit').first().evaluate((e) => ({ tr: e.getAnimations().map((a) => a.transitionProperty), bg: getComputedStyle(e).backgroundColor })).catch(() => null)
+    if (v === 'on') check('o8 on: the lit row fades out (a running background-color transition)', fading?.tr.includes('background-color'), JSON.stringify(fading))
+    await sleep(800)
+    check(`o8 ${v}: after the fade the row is plain again`, (await page.locator('.st-row.is-lit, .st-row.is-unlit').count()) === 0)
+    basics(env, `o8 ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
