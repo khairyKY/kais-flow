@@ -430,6 +430,7 @@ if (want('o')) {
     await ctx.close()
     const l = await open('/library?tab=notes', { ...o, view: phone, tables: (t) => ({ ...t, notes: [{ id: NOTE, user_id: UID, title: 'Reading list', body: 'Dune, then the Left Hand of Darkness.', tags: [], domain_id: null, book_id: null, created_at: CREATED, updated_at: CREATED }] }) })
     check(`o2 [${mode}] O10 the Library list doesn't slide on first paint`, (await l.page.locator('.kf-lib-moved').count()) === 0)
+    await l.page.getByText('Reading list').first().waitFor({ timeout: 10000 }).catch(() => {})
     await l.page.getByText('Reading list').first().click()
     await sleep(40)
     const ra = await cssAnims(l.page.locator('.kf-lib-reader'))
