@@ -18,7 +18,8 @@ export function TabItem({ label, icon, tint, active, badge = 0, to, onClick, tou
   const motionOn = useMotionEnabled()
   const inner = (
     <>
-      <span className="kf-tab-ind" style={{ backgroundColor: active ? tint : undefined }}>
+      {/* O6: the tint is the indicator's ::before, which expands from the centre when the tab turns on (kit.css). */}
+      <span className="kf-tab-ind" style={{ '--tab-tint': tint } as React.CSSProperties}>
         <Icon name={icon} size={24} />
         {badge > 0 && <span className="kf-tab-badge">{badge > 99 ? '99+' : badge}</span>}
       </span>

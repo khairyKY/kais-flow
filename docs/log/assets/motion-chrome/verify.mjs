@@ -334,6 +334,26 @@ if (want('k3')) {
   }
 }
 
+// ── O6 — the tab bar's active pill expands from the centre (scaleX 0.4 → 1 + fade, 200ms emphasized-decel) ──
+if (want('o6')) {
+  for (const [v, o] of [['on', {}], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', o)
+    const { page } = env
+    const tab = (name) => page.locator('.app-tabbar .kf-tab').filter({ hasText: name }).first()
+    const pill = (name) => tab(name).locator('.kf-tab-ind').evaluate((e) => { const s = getComputedStyle(e, '::before'); return { opacity: Number(s.opacity), scaleX: Math.round(new DOMMatrixReadOnly(s.transform === 'none' ? undefined : s.transform).a * 100) / 100, tr: s.transition } })
+    await tab('Inbox').click()
+    await sleep(40)
+    const mid = await tab('Inbox').locator('.kf-tab-ind').evaluate((e) => e.getAnimations({ subtree: true }).map((a) => a.transitionProperty))
+    await sleep(400)
+    const on = await pill('Inbox'), off = await pill('Today')
+    if (v === 'on') check('o6 on: tapping a tab runs the indicator transition (transform + opacity)', mid.includes('transform') && mid.includes('opacity'), JSON.stringify(mid))
+    check(`o6 ${v}: at rest the new tab's pill is full (scaleX 1, opacity 1), the old one gone (0.4, 0)`, on.opacity === 1 && on.scaleX === 1 && off.opacity === 0 && off.scaleX === 0.4, JSON.stringify({ on, off }))
+    await shot(page, `o6-inbox-${v}`)
+    basics(env, `o6 ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {

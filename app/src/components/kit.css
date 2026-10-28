@@ -236,6 +236,24 @@ button.kf-chip {
   justify-content: center;
   transition: transform var(--dur-press) var(--ease-standard);
 }
+.kf-tab-ind { isolation: isolate; }
+/* O6 — the M3 navigation bar's active indicator: it expands from the centre (scaleX 0.4 → 1) and fades
+   in over 200ms on emphasized-decel; turning off it fades back the same way. */
+.kf-tab-ind::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--tab-tint);
+  opacity: 0;
+  transform: scaleX(0.4);
+  transition: transform var(--dur-normal) var(--ease-emphasized-decel), opacity var(--dur-normal) var(--ease-emphasized-decel);
+}
+.kf-tab[data-active] .kf-tab-ind::before {
+  opacity: 1;
+  transform: none;
+}
 .kf-tab:active .kf-tab-ind {
   transform: scale(0.95);
   background-image: linear-gradient(var(--pressed-overlay), var(--pressed-overlay));
