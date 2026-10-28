@@ -1,5 +1,5 @@
 import { head2, icon, btn, kmark, esc } from '../lib.mjs'
-import { APP_URL, REPO, RELEASES_URL, LATEST, APK_LATEST, EXE_LATEST, DMG_LATEST } from '../data.mjs'
+import { APP_URL, CONTACT_EMAIL, RELEASES_URL, LATEST, APK_LATEST, EXE_LATEST, DMG_LATEST } from '../data.mjs'
 
 const UPDATED = '17 Oct 2026'
 const pre = (t) => `<pre tabindex="0"><code>${esc(t)}</code></pre>`
@@ -191,7 +191,8 @@ const index = {
 </div></section>`,
 }
 
-const feedback = (t) => `${REPO}/issues/new?title=${encodeURIComponent(`Guide feedback: ${t}`)}`
+// An email, not a GitHub issue: the releases repo has no issues and the source repo is going private.
+const feedback = (t) => `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Guide feedback: ${t}`)}`
 const article = (g) => { let n = 0; const num = g.sections.map((s) => (s[3] ? ++n : 0)); return {
   path: `/guides/${g.slug}/`,
   title: g.title,

@@ -122,7 +122,7 @@ It brings tasks, time blocks, habits and a journal into one calm page, and works
 and Windows. It's made by one student, Kai, who built it for himself first.
 
 Web: https://kais-flow.kaidagoat.workers.dev
-Source and releases: https://github.com/khairyKY/kais-flow
+Releases: https://github.com/khairyKY/kais-flow-releases
 
 The mark: k-mark-light-1024.png and k-mark-dark-1024.png. Please don't recolour the K or the paper.
 Colours: Linen #EFE9DB · Parchment #FBF6E9 · Bark ink #2A2420 · Terra ink #9C5139 · Sage #8A9A7E ·

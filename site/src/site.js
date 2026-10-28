@@ -85,7 +85,7 @@
     let cached = null
     try { cached = JSON.parse(store.get('kf-release') || 'null') } catch { /* ignore */ }
     if (cached && Date.now() - cached.at < 36e5) apply(cached)
-    else fetch('https://api.github.com/repos/khairyKY/kais-flow/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+    else fetch('https://api.github.com/repos/khairyKY/kais-flow-releases/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
       .then((res) => (res.ok ? res.json() : Promise.reject(res.status)))
       .then((j) => {
         const r = { tag: j.tag_name, date: j.published_at, at: Date.now() }

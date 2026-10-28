@@ -2,7 +2,8 @@
 import fs from 'node:fs'
 
 export const APP_URL = 'https://kais-flow.kaidagoat.workers.dev'
-export const REPO = 'https://github.com/khairyKY/kais-flow'
+// Release files only (2026-10-29): the source repo goes private; downloads, notes and older builds live here.
+export const REPO = 'https://github.com/khairyKY/kais-flow-releases'
 export const RELEASES_URL = `${REPO}/releases`
 // Kai: put the address people should write to here; until then the pages show "[contact email]".
 export const CONTACT_EMAIL = 'khairyshhn1@gmail.com'

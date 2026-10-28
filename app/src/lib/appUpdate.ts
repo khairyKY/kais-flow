@@ -18,7 +18,10 @@ import { openExternal } from './platform'
 export type AppPlatform = 'web' | 'android' | 'windows' | 'mac'
 /** The two desktop apps (the Tauri shell). */
 export type DesktopPlatform = 'windows' | 'mac'
-export const RELEASES_LATEST = 'https://api.github.com/repos/khairyKY/kais-flow/releases/latest'
+/** Where releases live (2026-10-29): a public repo of release files only, so the source repo can go
+ * private and downloads + updates keep working (release.yml publishes there). */
+export const RELEASES_REPO = 'khairyKY/kais-flow-releases'
+export const RELEASES_LATEST = `https://api.github.com/repos/${RELEASES_REPO}/releases/latest`
 
 export type UpdateResult =
   | { kind: 'reload'; version?: string } // web: a newer deploy is live (its release, when version.json says)
@@ -55,9 +58,9 @@ export function releaseAssetName(tag: string, platform: 'android' | DesktopPlatf
 /** The newest release's installers under fixed names: android.yml / desktop.yml upload a version-less
  * copy beside the versioned file, so these links never go stale (the download bar, Settings → App). */
 export const LATEST_DOWNLOADS = {
-  android: 'https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow.apk',
-  windows: 'https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-windows-setup.exe',
-  mac: 'https://github.com/khairyKY/kais-flow/releases/latest/download/kais-flow-mac.dmg',
+  android: `https://github.com/${RELEASES_REPO}/releases/latest/download/kais-flow.apk`,
+  windows: `https://github.com/${RELEASES_REPO}/releases/latest/download/kais-flow-windows-setup.exe`,
+  mac: `https://github.com/${RELEASES_REPO}/releases/latest/download/kais-flow-mac.dmg`,
 } as const
 export type DownloadPlatform = keyof typeof LATEST_DOWNLOADS
 
