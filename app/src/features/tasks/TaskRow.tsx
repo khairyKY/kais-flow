@@ -124,11 +124,14 @@ export function TaskRow({
   const done = task.status === 'done'
   // `checking` never resets once set — reopening a done row (checkbox click or the
   // "Reopen" menu item) would otherwise render it with a stale strikethrough/checked look.
-  const wasDone = useRef(done)
+  // T5: a list holding a just-ticked row (useCompletingRows) draws it open while it's really done,
+  // so an Undo inside that window shows only as completed_at clearing — that resets it too.
+  const finished = done || !!task.completed_at
+  const wasDone = useRef(finished)
   useEffect(() => {
-    if (wasDone.current && !done) setChecking(false)
-    wasDone.current = done
-  }, [done])
+    if (wasDone.current && !finished) setChecking(false)
+    wasDone.current = finished
+  }, [finished])
   const someday = task.someday && !done
   const tag = resolveTag(task, domains, projects, areas)
   // ponytail: read from the cache, not a subscription per row — the list re-renders rows on any task change.

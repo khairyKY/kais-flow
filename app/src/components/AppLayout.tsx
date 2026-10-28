@@ -18,7 +18,7 @@ import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/
 import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
-import { useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
+import { markRouteEntry, useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
@@ -664,8 +664,10 @@ export function AppLayout() {
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()
-  // M2: what lives on <body> (popovers, the drag's lifted card) reads the Effects setting from <html>.
+  // M2 / RM2: the one decorative-motion flag lives on <html>, so what lives on <body> (popovers, the
+  // drag's lifted card) agrees with the shell. `.motion-on` is the name; `kf-motion-on` its old alias.
   useEffect(() => {
+    document.documentElement.classList.toggle('motion-on', motionOn)
     document.documentElement.classList.toggle('kf-motion-on', motionOn)
   }, [motionOn])
   const location = useLocation()
@@ -675,6 +677,12 @@ export function AppLayout() {
   // Settings on a computer is one page with its category list beside it (layout A, 2026-10-26): switching
   // category mustn't remount it (the list, its search and its scroll stay); the phone drills, so it does.
   const routeKey = !isMobile && inSettings(pathname) ? '/settings' : pathname
+  // T1: a new page's rows may stagger in; rows that mount after its entry window arrive at once.
+  const enteredKey = useRef<string | null>(null)
+  if (enteredKey.current !== routeKey) {
+    enteredKey.current = routeKey
+    markRouteEntry()
+  }
   // Motion 2b/3a: the page scroller is the stack's sheet (lib/motion useStackTransition); Effects 2k
   // gives its edges their resistance on touch.
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -803,6 +811,7 @@ export function AppLayout() {
   }, [pathname, navigate])
 
   return (
+    // The shell keeps `.motion-on` too, for the older `.app-shell.motion-on` selectors.
     <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: 'var(--kf-vh)', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
@@ -932,10 +941,13 @@ export function AppLayout() {
         /* X2 Motion 3c — overlay in: card + scrim arrive together, 210ms up-and-settle.
            Keyframes end at transform:none (containing-block rule, tokens/motion.css). */
         @keyframes kfOverlayIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+        /* RM2: the rise and fade are functional and always play; the 0.98 scale is decorative (.motion-on). */
+        @keyframes kfOverlayInFlat { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         @keyframes kfFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes kfSheetIn { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
         @keyframes kfDrawerIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
-        .kf-overlay-card { animation: kfOverlayIn 210ms var(--ease-out); }
+        .kf-overlay-card { animation: kfOverlayInFlat 210ms var(--ease-out); }
+        .motion-on .kf-overlay-card:not(.kf-overlay-card--out) { animation-name: kfOverlayIn; }
         .kf-scrim { animation: kfFadeIn 210ms var(--ease-out); background: rgba(11, 10, 8, 0.2); }
         .kf-sheet { animation: kfSheetIn 210ms var(--ease-out); }
         .kf-drawer { animation: kfDrawerIn 210ms var(--ease-out); }
