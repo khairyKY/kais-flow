@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useState } from 'react'
 import { splitEmojiSegments, emojiCandidates } from './emojiSegments'
 
 // Renders emoji in text with self-hosted Twemoji SVGs (public/emoji/, from
@@ -7,7 +7,8 @@ import { splitEmojiSegments, emojiCandidates } from './emojiSegments'
 // Windows/Android as it does on iOS. Falls back to the plain character if
 // the image fails (offline + never-seen-before emoji) — never worse than
 // native rendering, just not restyled.
-export function EmojiText({ text }: { text: string }) {
+// CAL9 / S7 (2026-10-22 audit): memoised — a calendar pass re-rendered ~100 of these with the same text.
+export const EmojiText = memo(function EmojiText({ text }: { text: string }) {
   const segments = splitEmojiSegments(text)
   return (
     <>
@@ -16,7 +17,7 @@ export function EmojiText({ text }: { text: string }) {
       )}
     </>
   )
-}
+})
 
 function EmojiGlyph({ char, file }: { char: string; file: string }) {
   // Walk the candidate filenames (base, then the -fe0f variant); if none resolve, fall back to

@@ -1,0 +1,492 @@
+[
+  {
+    "name": "d-on a plain drop lands where it was let go (about an hour later)",
+    "ok": true,
+    "detail": "2026-10-21T08:30:00.000Z"
+  },
+  {
+    "name": "d-on D3 the ghost leans with a sideways move and a faint copy trails it",
+    "ok": true,
+    "detail": "{\"rotate\":\"0.78deg\",\"trail\":1}"
+  },
+  {
+    "name": "d-on D4 the placeholder's step flashes its top edge (a 120 ms animation)",
+    "ok": true,
+    "detail": "waapi:120"
+  },
+  {
+    "name": "d-on M1/CAL14 the ghost settles in 160 ms (its lift, lean and shadow eased by one animation), then goes",
+    "ok": true,
+    "detail": "\"calGridDragFloat:2100,waapi:160\" gone@341"
+  },
+  {
+    "name": "d-on CAL1 a drop on the same spot settles at once (gone well inside the old 400 ms)",
+    "ok": true,
+    "detail": "gone@0 null"
+  },
+  {
+    "name": "d-on CAL2 a refused drop shakes, then rides home; nothing written, the block back in place",
+    "ok": true,
+    "detail": "softno true gone@825 hidden-while 1"
+  },
+  {
+    "name": "d-on CAL2 the ride home takes --dur-ghost-home (gone after ~720 ms, not at the shake's end)",
+    "ok": true,
+    "detail": "gone@825"
+  },
+  {
+    "name": "d-on CAL1 Ctrl+drag: a copy is written and the ghost settles onto it (no cut)",
+    "ok": true,
+    "detail": "copies 1 calGridDragFloat:2100,waapi:160 gone@274"
+  },
+  {
+    "name": "d-on CAL1 into a Time slot: the ghost settles onto the slot's row, the block never fades where it was",
+    "ok": true,
+    "detail": "slotted true calGridDragFloat:2100,waapi:160 leaving 0"
+  },
+  {
+    "name": "d-on no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-off a plain drop lands where it was let go (about an hour later)",
+    "ok": true,
+    "detail": "2026-10-21T08:30:00.000Z"
+  },
+  {
+    "name": "d-off D3 / D4 decorative: no lean, no trail, no snap flash",
+    "ok": true,
+    "detail": "{\"rotate\":\"\",\"trail\":0} "
+  },
+  {
+    "name": "d-off the settle is functional: it still glides (160 ms)",
+    "ok": true,
+    "detail": "waapi:160"
+  },
+  {
+    "name": "d-off CAL1 a drop on the same spot settles at once (gone well inside the old 400 ms)",
+    "ok": true,
+    "detail": "gone@0 null"
+  },
+  {
+    "name": "d-off CAL2 a refused drop shakes, then rides home; nothing written, the block back in place",
+    "ok": true,
+    "detail": "softno true gone@782 hidden-while 1"
+  },
+  {
+    "name": "d-off CAL2 the ride home takes --dur-ghost-home (gone after ~720 ms, not at the shake's end)",
+    "ok": true,
+    "detail": "gone@782"
+  },
+  {
+    "name": "d-off CAL1 Ctrl+drag: a copy is written and the ghost settles onto it (no cut)",
+    "ok": true,
+    "detail": "copies 1 waapi:160 gone@346"
+  },
+  {
+    "name": "d-off CAL1 into a Time slot: the ghost settles onto the slot's row, the block never fades where it was",
+    "ok": true,
+    "detail": "slotted true waapi:160 leaving 0"
+  },
+  {
+    "name": "d-off no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-rm a plain drop lands where it was let go (about an hour later)",
+    "ok": true,
+    "detail": "2026-10-21T08:30:00.000Z"
+  },
+  {
+    "name": "d-rm D3 / D4 decorative: no lean, no trail, no snap flash",
+    "ok": true,
+    "detail": "{\"rotate\":\"\",\"trail\":0} "
+  },
+  {
+    "name": "d-rm reduced motion: the ghost just goes once the block is there (no glide)",
+    "ok": true,
+    "detail": "null gone@133"
+  },
+  {
+    "name": "d-rm CAL1 a drop on the same spot settles at once (gone well inside the old 400 ms)",
+    "ok": true,
+    "detail": "gone@0 null"
+  },
+  {
+    "name": "d-rm CAL2 a refused drop shakes, then rides home; nothing written, the block back in place",
+    "ok": true,
+    "detail": "softno true gone@371 hidden-while 0"
+  },
+  {
+    "name": "d-rm CAL1 Ctrl+drag: a copy is written and the ghost settles onto it (no cut)",
+    "ok": true,
+    "detail": "copies 1 null gone@40"
+  },
+  {
+    "name": "d-rm CAL1 into a Time slot: the ghost settles onto the slot's row, the block never fades where it was",
+    "ok": true,
+    "detail": "slotted true null leaving 0"
+  },
+  {
+    "name": "d-rm no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-rail-on CAL1 a block onto the rail folds into its row (200 ms) — no fade at its old slot",
+    "ok": true,
+    "detail": "unscheduled true waapi:200 leaving 0 gone@214"
+  },
+  {
+    "name": "d-rail-on the task's row is in the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-rail-on no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-rail-rm CAL1 a block onto the rail folds into its row (200 ms) — no fade at its old slot",
+    "ok": true,
+    "detail": "unscheduled true null leaving 0 gone@0"
+  },
+  {
+    "name": "d-rail-rm the task's row is in the rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-rail-rm no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r-on CAL3 the resize draws the solid block (its border solid, its text full)",
+    "ok": true,
+    "detail": "{\"border\":\"solid\",\"title\":\"1\",\"free\":\"20px\"}"
+  },
+  {
+    "name": "r-on the resize lands on a quarter, later than it was",
+    "ok": true,
+    "detail": "2026-10-21T09:00:00.000Z"
+  },
+  {
+    "name": "r-on D4 the edge runs free under the pointer, then commits to the quarter in 160 ms",
+    "ok": true,
+    "detail": "{\"border\":\"solid\",\"title\":\"1\",\"free\":\"20px\"} box-shadow:140,transform:140,waapi:160"
+  },
+  {
+    "name": "r-on no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r-off CAL3 the resize draws the solid block (its border solid, its text full)",
+    "ok": true,
+    "detail": "{\"border\":\"solid\",\"title\":\"1\",\"free\":\"19px\"}"
+  },
+  {
+    "name": "r-off the resize lands on a quarter, later than it was",
+    "ok": true,
+    "detail": "2026-10-21T09:00:00.000Z"
+  },
+  {
+    "name": "r-off D4 the edge runs free under the pointer, then commits to the quarter in 160 ms",
+    "ok": true,
+    "detail": "{\"border\":\"solid\",\"title\":\"1\",\"free\":\"19px\"} outline-color:120,waapi:160"
+  },
+  {
+    "name": "r-off no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r-rm CAL3 the resize draws the solid block (its border solid, its text full)",
+    "ok": true,
+    "detail": "{\"border\":\"solid\",\"title\":\"1\",\"free\":\"\"}"
+  },
+  {
+    "name": "r-rm the resize lands on a quarter, later than it was",
+    "ok": true,
+    "detail": "2026-10-21T09:00:00.000Z"
+  },
+  {
+    "name": "r-rm reduced motion: the edge steps (no free stretch), no commit glide",
+    "ok": true,
+    "detail": "{\"border\":\"solid\",\"title\":\"1\",\"free\":\"\"} "
+  },
+  {
+    "name": "r-rm no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k-on CAL4 check B ticked here: boxFill 90 + checkPop 180",
+    "ok": true,
+    "detail": "{\"play\":\"tick\",\"box\":\"boxFill:0.09s\",\"tick\":\"checkPop:0.18s\"}"
+  },
+  {
+    "name": "k-on CAL4 repeat B ticked here: the arrows turn half round (240 ms), then the tick pops",
+    "ok": true,
+    "detail": "kfRepTurn:240,checkPop:180"
+  },
+  {
+    "name": "k-on a ticked box that arrives (paged back in) never replays",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "k-on no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k-off CAL4 Effects off: the box just fills",
+    "ok": true,
+    "detail": "{\"play\":\"tick\",\"box\":\"none:0s\",\"tick\":\"none:0s\"}"
+  },
+  {
+    "name": "k-off a ticked box that arrives (paged back in) never replays",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "k-off no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v-on CAL5 a view switch cross-fades the new view in (160 ms; functional, so Effects off too)",
+    "ok": true,
+    "detail": "kfCalViewIn:160"
+  },
+  {
+    "name": "v-on CAL5 the rail's content fades in as it unfolds (120 ms)",
+    "ok": true,
+    "detail": "kfCalViewIn:120,kfCalViewIn:120,kfCalViewIn:120,kfCalViewIn:120"
+  },
+  {
+    "name": "v-on CAL5 planning mode cross-fades in (160 ms)",
+    "ok": true,
+    "detail": "transform:100,kfCalViewIn:160"
+  },
+  {
+    "name": "v-on no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v-off CAL5 a view switch cross-fades the new view in (160 ms; functional, so Effects off too)",
+    "ok": true,
+    "detail": "kfCalViewIn:160"
+  },
+  {
+    "name": "v-off CAL5 the rail's content fades in as it unfolds (120 ms)",
+    "ok": true,
+    "detail": "kfCalViewIn:120,kfCalViewIn:120,kfCalViewIn:120,kfCalViewIn:120"
+  },
+  {
+    "name": "v-off CAL5 planning mode cross-fades in (160 ms)",
+    "ok": true,
+    "detail": "transform:100,kfCalViewIn:160"
+  },
+  {
+    "name": "v-off no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "v-rm reduced motion: the view switch is a cut",
+    "ok": true,
+    "detail": "visibility:0,visibility:0,visibility:0,visibility:0,visibility:0,visibility:0,visibility:0"
+  },
+  {
+    "name": "v-rm no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-on CAL11 the block whose details are open wears a 2px outline in its ink",
+    "ok": true,
+    "detail": "{\"sel\":true,\"oc\":\"rgb(127, 63, 72)\",\"ink\":\"rgb(127, 63, 72)\"}"
+  },
+  {
+    "name": "s-on CAL11 the outline fades in (120 ms)",
+    "ok": true,
+    "detail": "box-shadow:140,transform:140,outline-color:120"
+  },
+  {
+    "name": "s-on Esc: the outline goes with the popover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-on CAL8 a recolour eases (--kf-ev-c over 150 ms)",
+    "ok": true,
+    "detail": "box-shadow:140,transform:140,outline-color:120,--kf-ev-c:150,--kf-ev-accent:150"
+  },
+  {
+    "name": "c-on the picked swatch wears its ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-on no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-rm CAL11 the block whose details are open wears a 2px outline in its ink",
+    "ok": true,
+    "detail": "{\"sel\":true,\"oc\":\"rgb(127, 63, 72)\",\"ink\":\"rgb(127, 63, 72)\"}"
+  },
+  {
+    "name": "s-rm Esc: the outline goes with the popover",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c-rm reduced motion: the colour changes at once",
+    "ok": true,
+    "detail": "outline-color:0,--kf-ev-c:0,--kf-ev-accent:0"
+  },
+  {
+    "name": "c-rm the picked swatch wears its ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s-rm no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m CAL12 the carried block left behind fades (opacity, 120 ms) — not a blink",
+    "ok": true,
+    "detail": "calGridDragFloat:2100"
+  },
+  {
+    "name": "m no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a CAL10 a cold load rings nothing",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "a CAL10 the person's own copy wears the just-landed ring",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-on CAL6 a strip tap slides the day in (the swipe's 200 ms settle, functional), the pill fades across (120 ms)",
+    "ok": true,
+    "detail": "2 transform:200,transform:200 pill background-color:120,box-shadow:120,color:120,background-color:120,color:120 → 22"
+  },
+  {
+    "name": "p-on CAL6 Today slides back the same way",
+    "ok": true,
+    "detail": "transform:200,transform:200"
+  },
+  {
+    "name": "p-on CAL7 a lifted block's put-down eases back (transform, 140 ms)",
+    "ok": true,
+    "detail": "lifted 1 box-shadow:140,transform:140"
+  },
+  {
+    "name": "p-on no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-off CAL6 a strip tap slides the day in (the swipe's 200 ms settle, functional), the pill fades across (120 ms)",
+    "ok": true,
+    "detail": "2 transform:200,transform:200 pill background-color:120,box-shadow:120,color:120,background-color:120,color:120 → 22"
+  },
+  {
+    "name": "p-off CAL6 Today slides back the same way",
+    "ok": true,
+    "detail": "transform:200,transform:200"
+  },
+  {
+    "name": "p-off CAL7 a lifted block's put-down eases back (transform, 140 ms)",
+    "ok": true,
+    "detail": "lifted 1 box-shadow:140,transform:140"
+  },
+  {
+    "name": "p-off no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-rm reduced motion: the day changes at once (no slide)",
+    "ok": true,
+    "detail": "1 "
+  },
+  {
+    "name": "p-rm no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-on CAL7 the held task rises into its tilt (kfLift, 120 ms)",
+    "ok": true,
+    "detail": "kfPcHeldLift:120"
+  },
+  {
+    "name": "g-on CAL7 let go off the grid, it glides back to its chip (200 ms; functional) — nothing written",
+    "ok": true,
+    "detail": "[120,200]"
+  },
+  {
+    "name": "g-on CAL6 a deleted block fades where it was (functional)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-on CAL6 + CAL10 the block Undo brings back wears the just-landed ring",
+    "ok": true,
+    "detail": "kfPcLanded"
+  },
+  {
+    "name": "g-on no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-off CAL7 Effects off: no lift animation (decorative)",
+    "ok": true,
+    "detail": "none:0"
+  },
+  {
+    "name": "g-off CAL7 let go off the grid, it glides back to its chip (200 ms; functional) — nothing written",
+    "ok": true,
+    "detail": "[200]"
+  },
+  {
+    "name": "g-off CAL6 a deleted block fades where it was (functional)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "g-off the ring is decorative: no animation with Effects off",
+    "ok": true,
+    "detail": "attr"
+  },
+  {
+    "name": "g-off no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
