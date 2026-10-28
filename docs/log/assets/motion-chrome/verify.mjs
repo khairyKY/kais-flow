@@ -433,6 +433,30 @@ if (want('o12')) {
   }
 }
 
+// ── O13 — dismissing the download bar folds its height (Collapse, 200ms) instead of jumping the page ──
+if (want('o13')) {
+  for (const [v, o] of [['on', {}], ['reduced', { reduced: true }]]) {
+    const env = await open('/today', { view: desktop, downloadBar: true, ...o })
+    const { page } = env
+    const bar = page.getByRole('region', { name: 'Get the apps' })
+    await bar.waitFor({ timeout: 5000 })
+    const r = await bar.evaluate(async (el) => {
+      const box = el.closest('.kf-collapse')
+      const h = () => Math.round(box.getBoundingClientRect().height)
+      const h0 = h()
+      el.querySelector('button[aria-label="Dismiss"]').click()
+      const at = (ms) => new Promise((res) => setTimeout(() => res(h()), ms))
+      const [mid, end] = await Promise.all([at(90), at(500)])
+      return { h0, mid, end }
+    })
+    if (v === 'on') check('o13 on: the bar folds away — part-way at 90ms, 0 at the end', r.mid > 0 && r.mid < r.h0 && r.end === 0, JSON.stringify(r))
+    else check('o13 reduced: the bar is gone at once', r.mid === 0 && r.end === 0, JSON.stringify(r))
+    check(`o13 ${v}: the bar is unmounted and stays dismissed`, (await bar.count()) === 0 && (await page.evaluate(() => localStorage.getItem('kf-download-bar-dismissed'))) === '1')
+    basics(env, `o13 ${v}`)
+    await env.ctx.close()
+  }
+}
+
 // ── D15 — the parasol header: scroll-linked (scroll timeline), so the title's scale IS the scroll position ──
 if (want('d15')) {
   for (const [v, o] of [['on', {}], ['night', { theme: 'night' }], ['effects-off', { effectsOff: true }], ['reduced', { reduced: true }]]) {
