@@ -139,7 +139,13 @@ describe('which completion sound', () => {
 })
 
 describe('quiet', () => {
-  beforeEach(() => localStorage.clear())
+  // A fixed noon in Cairo: on the real clock these ran inside the night's quiet window (v1.6.0's CI at 03:12 Cairo).
+  beforeEach(() => {
+    localStorage.clear()
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(Date.parse('2026-10-07T10:00:00Z'))
+  })
+  afterEach(() => vi.useRealTimers())
 
   it('starts when the garden closes and lifts the next day', () => {
     expect(isQuiet()).toBe(false)
