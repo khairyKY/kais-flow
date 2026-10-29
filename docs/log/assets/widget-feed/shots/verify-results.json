@@ -1,0 +1,142 @@
+[
+  {
+    "name": "desktop: the Windows desktop card is in App & updates",
+    "ok": true,
+    "detail": "Windows desktop\n\nA Widget link lets Rainmeter widgets show today’s plan on your desktop — paste it into a Kai’s Flow skin. Anyone with the link can see today, s"
+  },
+  {
+    "name": "desktop: no links yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Allow ticking starts off",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Create → one insert",
+    "ok": true,
+    "detail": "[{\"method\":\"POST\",\"table\":\"widget_links\",\"query\":\"\",\"body\":{\"id\":\"1a88fc0a-130d-4bfc-9ad3-530235f5d202\",\"token_hash\":\"ec080b5f7522730b202a590638dfa2176a5edd69491d201f0bfc1248684d3807\",\"label\":\"Home PC\",\"can_tick\":false}}]"
+  },
+  {
+    "name": "desktop: …of id, token_hash, label, can_tick only",
+    "ok": true,
+    "detail": "{\"id\":\"1a88fc0a-130d-4bfc-9ad3-530235f5d202\",\"token_hash\":\"ec080b5f7522730b202a590638dfa2176a5edd69491d201f0bfc1248684d3807\",\"label\":\"Home PC\",\"can_tick\":false}"
+  },
+  {
+    "name": "desktop: …read only, named Home PC",
+    "ok": true,
+    "detail": "{\"id\":\"1a88fc0a-130d-4bfc-9ad3-530235f5d202\",\"token_hash\":\"ec080b5f7522730b202a590638dfa2176a5edd69491d201f0bfc1248684d3807\",\"label\":\"Home PC\",\"can_tick\":false}"
+  },
+  {
+    "name": "desktop: the link is shown once: …/functions/v1/widget?t=kf_w_<43>",
+    "ok": true,
+    "detail": "http://127.0.0.1:9/functions/v1/widget?t=kf_w_kw7RnwGdmJmgQ4UA4kH1S3F4ZWm8Ugb33WATUbjkV2k"
+  },
+  {
+    "name": "desktop: only the token’s SHA-256 was sent, never the token",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: Copy link puts the link on the clipboard",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: the new link is listed, read only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "list: label, last used, read only",
+    "ok": true,
+    "detail": "Windows desktop\n\nA Widget link lets Rainmeter widgets show today’s plan on your desktop — paste it into a Kai’s Flow skin. Anyone with the link can see today, so revoke one you no longer use.\n\nWork PC\nMade 20 Oct · last used 28 Oct · read only\nRevoke\nNew link\nName it after the computer it’s for\nAllo"
+  },
+  {
+    "name": "list: the switch → one update of can_tick on that link",
+    "ok": true,
+    "detail": "[{\"method\":\"PATCH\",\"table\":\"widget_links\",\"query\":\"?id=eq.c0000000-0000-4000-8000-0000000000b1\",\"body\":{\"can_tick\":true}}]"
+  },
+  {
+    "name": "list: it reads on after the refetch, “can tick tasks off”",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "create with Allow ticking on → can_tick true",
+    "ok": true,
+    "detail": "{\"id\":\"3370f192-d891-47fb-a49b-c818209e312b\",\"token_hash\":\"556a32233368eb053bdf294fe60674b66d253a1dc9dca151e2d941f386996d71\",\"label\":\"Desktop\",\"can_tick\":true}"
+  },
+  {
+    "name": "Revoke asks first",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…and has written nothing yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Revoke → revoked_at set on that link",
+    "ok": true,
+    "detail": "[{\"method\":\"PATCH\",\"table\":\"widget_links\",\"query\":\"?id=eq.c0000000-0000-4000-8000-0000000000b1\",\"body\":{\"revoked_at\":\"2026-10-29T21:22:25.590Z\"}}]"
+  },
+  {
+    "name": "…and the row is gone from the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "list: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "search “rainmeter” finds the Widget link rows",
+    "ok": true,
+    "detail": "Demo's Flow · Thu 29 Oct\n·\nCairo\nAfrica/Cairo\nSettings\nEsc\nAccount\nAppearance\nCalendar & time\nCapture & AI\nNotifications & sound\nOrganize\nIntegrations\nYour data\nPrivacy & terms\nShortcuts\nApp & updates\n\n2 settings match “rainmeter”\n\nApp & updates › Windows desktop\nWork PC\nMade 20 Oct · last used 28 O"
+  },
+  {
+    "name": "search: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: the link with ticking on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone day: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "phone day: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: the link with ticking on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone night: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "phone night: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

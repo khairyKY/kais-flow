@@ -1,0 +1,2 @@
+# Rainmeter reads Windows line endings
+*.ini text eol=crlf
