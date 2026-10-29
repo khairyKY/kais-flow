@@ -621,3 +621,16 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-load-why { margin: 0 var(--sp-1) 6px; font-size: var(--fs-caption); line-height: var(--lh-snug); color: var(--ink-muted); text-wrap: pretty; }
 .tp-slim .tp-tmrw { flex: none; margin: 0 var(--sp-1) 0 6px; cursor: pointer; font-family: inherit; }
 .tp-slim .tp-tmrw:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+
+/* v161 (Kai on v1.6.0: the Now / Day change animated one way only): PhoneHome ViewSwap. The old view fades out
+   over the new one fading in, each sliding the way the Settings control's thumb went (Now ← · → Day), the same
+   both ways. Only a box of its own while it plays; Effects off / reduced motion never draw the outgoing view. */
+.tp-swap { display: contents; }
+.tp-swap:has(> .tp-swap-out) { display: grid; }
+.tp-swap > * { grid-area: 1 / 1; min-width: 0; }
+.tp-swap[data-to='day'] { --swap-dx: var(--sp-3); }
+.tp-swap[data-to='now'] { --swap-dx: calc(-1 * var(--sp-3)); }
+.tp-swap-in { animation: tpSwapIn var(--dur-normal) var(--ease-standard) both; }
+.tp-swap-out { pointer-events: none; animation: tpSwapOut var(--dur-normal) var(--ease-standard) both; }
+@keyframes tpSwapIn { from { opacity: 0; transform: translateX(var(--swap-dx)); } }
+@keyframes tpSwapOut { to { opacity: 0; transform: translateX(calc(-1 * var(--swap-dx))); } }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
@@ -8,10 +8,11 @@ import { NowCard, hueVars } from '../calendar/NowCard'
 import { timeText } from '../calendar/eventTime'
 import type { RitualKind } from '../rituals/api'
 import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
-import { readPhoneView, thenBlocks, writePhoneView, type PhoneView } from './phoneView'
+import { PHONE_VIEW_EVENT, readPhoneView, thenBlocks, writePhoneView, type PhoneView } from './phoneView'
 import { span } from './todayLayout'
 import { DAY_FROM, DAY_TO } from '../rituals/ritualLogic'
 import { useMinuteNow } from './useMinuteNow'
+import { useMotionEnabled } from '../../lib/motion'
 
 // phone-today (Kai 2026-10-26): the phone Today's B · "Now + next" parts — the calendar's Now card with
 // the next two blocks under it, and the Rituals panel — plus the Now / Day preference (set in Settings). Spec: design-export/
@@ -21,7 +22,50 @@ import { useMinuteNow } from './useMinuteNow'
  * today-v2 (Kai 2026-10-29): the switch moved off Today into Settings → Appearance ("Phone home shows"). */
 export function usePhoneView(): [PhoneView, (v: PhoneView) => void] {
   const [v, setV] = useState(readPhoneView)
+  // v161: a change made elsewhere (Settings, another tab) reaches a Today that's still drawn.
+  useEffect(() => {
+    const on = () => setV(readPhoneView())
+    window.addEventListener(PHONE_VIEW_EVENT, on)
+    window.addEventListener('storage', on)
+    return () => {
+      window.removeEventListener(PHONE_VIEW_EVENT, on)
+      window.removeEventListener('storage', on)
+    }
+  }, [])
   return [v, (next) => { setV(next); writePhoneView(next) }]
+}
+
+/** The view Today last drew, this visit to the app (null until it has drawn one). */
+let drawnView: PhoneView | null = null
+
+/**
+ * v161 (Kai on v1.6.0: "the pill only animates from Now to Day, not from Day to Now"): the Now / Day change
+ * plays the same way both ways — the old view fades out and the new one fades in, sliding the way the
+ * Settings control's thumb went (Now ← · → Day; today.css .tp-swap). It plays when the view changes under a
+ * drawn Today, and when Today comes back drawing a different view than it last did (the switch is in
+ * Settings, so that's the usual case). Effects off or reduced motion: the new view, at once.
+ */
+export function ViewSwap({ view, render }: { view: PhoneView; render: (v: PhoneView) => ReactNode }) {
+  const motion = useMotionEnabled()
+  const [prev, setPrev] = useState<PhoneView | null>(() => (drawnView && drawnView !== view ? drawnView : null))
+  const [shown, setShown] = useState(view)
+  if (shown !== view) {
+    // Set while rendering (not in an effect), so the new view's first frame is already the fade's first.
+    setShown(view)
+    setPrev(shown)
+  }
+  useEffect(() => {
+    drawnView = view
+  }, [view])
+  const out = motion && prev && prev !== view ? prev : null
+  return (
+    <div className="tp-swap" data-to={view}>
+      {out && <div key={`out-${out}`} className="tp-swap-out" aria-hidden inert>{render(out)}</div>}
+      <div key={view} className={out ? 'tp-swap-in' : undefined} onAnimationEnd={(e) => e.target === e.currentTarget && setPrev(null)}>
+        {render(view)}
+      </div>
+    </div>
+  )
 }
 
 /** today-v2 (Kai 2026-10-29, over warning D, design-export/Over warning options.html): the Top 3 panel's title.

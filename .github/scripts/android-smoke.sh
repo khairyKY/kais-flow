@@ -74,11 +74,12 @@ adb logcat -d -v time | grep -iE 'AndroidRuntime|FATAL|has died|died|KaisFlowSha
 # The home-screen widgets: every picker entry is registered with the system (32, Phone Widgets.dc.html).
 adb shell dumpsys appwidget | grep -o "$pkg/com.kaisflow.garden.widgets.KfWidget\$W[0-9]*" | sort -u > shots/widgets.txt
 # The lock screen (lockscreen 2026-10-26): the Top 3 lock widget is registered, the Now Bar's permission is
-# declared, and the app made its silent "Lock screen" channel on launch (LockScreen.LockBridge.load). Signed
+# declared, and the app made its "Lock screen" channel on launch (LockScreen.LockBridge.load): v161's lock_screen at
+# default importance (3; it never sounds: no sound, setSilent), so a lock screen hiding silent ones shows it. Signed
 # out here, so nothing is posted — the notifications themselves are checked on Kai's phone (the handoff).
 { adb shell dumpsys appwidget | grep -o "$pkg/com.kaisflow.garden.widgets.LockWidget" | sort -u
   adb shell dumpsys package "$pkg" | grep -o 'android.permission.POST_PROMOTED_NOTIFICATIONS' | sort -u
-  adb shell dumpsys notification | grep -oE "mId='lockscreen'.{0,80}" | sort -u
+  adb shell dumpsys notification | grep -oE "mId='lock_?screen'.{0,600}" | sort -u
   adb logcat -d | grep -E 'KfLock|FATAL EXCEPTION' | tail -20; } > shots/lockscreen.txt 2>&1
 ls -la shots
 [ "${webview_top:-0}" -gt 0 ] || { echo 'FAIL: the WebView starts under the status bar'; exit 1; }
@@ -94,4 +95,6 @@ grep -q 'page /share?text=hello%20again&title=a%20page' shots/share.txt || { ech
 cat shots/lockscreen.txt
 grep -q 'widgets.LockWidget' shots/lockscreen.txt || { echo 'FAIL: the Top 3 lock-screen widget is not registered'; exit 1; }
 grep -q 'POST_PROMOTED_NOTIFICATIONS' shots/lockscreen.txt || { echo 'FAIL: POST_PROMOTED_NOTIFICATIONS is not declared'; exit 1; }
-grep -q "mId='lockscreen'" shots/lockscreen.txt || { echo 'FAIL: the Lock screen notification channel was not made'; exit 1; }
+grep -q "mId='lock_screen'.*mImportance=3" shots/lockscreen.txt || { echo 'FAIL: the Lock screen notification channel was not made at default importance'; exit 1; }
+grep -q "mId='lock_screen'.*mSound=null" shots/lockscreen.txt || { echo 'FAIL: the Lock screen notification channel has a sound'; exit 1; }
+grep -q "mId='lockscreen'" shots/lockscreen.txt && { echo "FAIL: v1.6.0's low lockscreen channel is still there"; exit 1; }
