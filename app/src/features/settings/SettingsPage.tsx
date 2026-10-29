@@ -1085,7 +1085,7 @@ function WidgetLinksCard() {
       {!links.length && !shown && <div className="st-help">No Widget links yet</div>}
       {shown && (
         <>
-          <div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 8 }}>Your Widget link — copy it now, it won’t be shown again:</div>
+          <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', marginTop: 8 }}>Your Widget link — copy it now, it won’t be shown again:</div>
           <div className="st-mono-box" style={{ color: 'var(--ink-body)', wordBreak: 'break-all' }}>{shown}</div>
           <div className="st-btns" style={{ marginTop: 8 }}>
             <Button variant="secondary" onClick={() => copy(shown)}>Copy link</Button>

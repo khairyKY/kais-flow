@@ -112,7 +112,7 @@ RA=$(new_link "$A_JWT" 'A read only' false) || exit 2
 TA=$(new_link "$A_JWT" 'A ticks' true) || exit 2
 RV=$(new_link "$A_JWT" 'A revoked' false) || exit 2
 TB=$(new_link "$(jq -r .access_token <<<"$B_JSON")" 'B ticks' true) || exit 2
-expect "links stored as their SHA-256 only, read-only by default" "A read only f $(printf '%s' "$RA" | sha256sum | cut -d' ' -f1)" \
+expect "links stored as their SHA-256 only, read-only by default" "A read only false $(printf '%s' "$RA" | sha256sum | cut -d' ' -f1)" \
   "$(sql -c "select label || ' ' || can_tick || ' ' || token_hash from widget_links where user_id = '$A_ID' and label = 'A read only'")"
 code=$(curl -sS -o "$TMP/sel.out" -w '%{http_code}' "$API_URL/rest/v1/widget_links?select=token_hash" -H "apikey: $ANON_KEY" -H "Authorization: Bearer $A_JWT")
 expect "the app can't read a hash back (column grants)" "401 or 403" "$(case "$code" in 401|403) echo '401 or 403' ;; *) echo "$code $(cat "$TMP/sel.out")" ;; esac)"
@@ -179,7 +179,7 @@ expect "the day bar holds both blocks (keys)" "2 color done end from_min is_goal
 expect "progress 0–1, done, total, plant" "0 0 4 opening" "$(j '"\(.progress) \(.done) \(.total) \(.plant)"')"
 expect "load's keys, numbers" "free_min over_min planned_min true" "$(j '"\(.load | keys | join(" ")) \([.load[]] | all(type == "number"))"')"
 expect "can_tick on a read-only link" "false" "$(j .can_tick)"
-expect "the call is counted and stamped" "1 t" "$(sql -c "select calls || ' ' || (last_used_at > now() - interval '1 minute') from widget_links where token_hash = encode(sha256('$RA'::bytea), 'hex')")"
+expect "the call is counted and stamped" "1 true" "$(sql -c "select calls || ' ' || (last_used_at > now() - interval '1 minute') from widget_links where token_hash = encode(sha256('$RA'::bytea), 'hex')")"
 
 section "names=0 hides every title"
 get "$RA" "&names=0"
