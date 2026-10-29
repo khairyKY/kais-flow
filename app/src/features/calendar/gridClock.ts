@@ -4,6 +4,9 @@ import { appZone } from '../../lib/appZone'
 import { cairoDateKey, cairoWallTimeToIso, zoneDateKey } from '../../lib/dateShortcuts'
 import { zoneTimeKey } from './eventTime'
 
+// cal-scroll: one formatter, not one per header (the glide draws three screens of days).
+const WEEKDAY = new Intl.DateTimeFormat('en-US', { weekday: 'short', timeZone: 'UTC' })
+
 /** A day column's header, read from the Date FullCalendar hands `dayHeaderContent`.
  *
  * That Date is a real instant (`dateEnv.toDate(marker)`) — the column's midnight on the grid's
@@ -16,7 +19,7 @@ export function headerDay(date: Date, now: Date, zone: string = appZone()): { de
   const delta = Math.round((Date.parse(key) - Date.parse(zoneDateKey(now, zone))) / 86_400_000)
   return {
     delta,
-    weekday: new Date(`${key}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', timeZone: 'UTC' }),
+    weekday: WEEKDAY.format(new Date(`${key}T12:00:00Z`)),
     day: key.slice(8),
   }
 }

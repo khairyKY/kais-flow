@@ -14,7 +14,7 @@ import type { CalendarEvent } from '../../lib/types'
 import { LONG_PRESS_MS, SETTLE_MS, lockAxis } from '../tasks/swipe'
 import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
-import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, minToPx, pxToMin, rangeText, SNAP_MIN, spanIso, swipeStep, type DragMode, type Span } from './phoneGridMath'
+import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, glideMs, glidePanes, glidePeek, glideTarget, minToPx, pxToMin, rangeText, SNAP_MIN, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { slotAt } from './slots'
 import { repeatCheckName } from './blockMenuSpec'
 import { RepeatGlyph } from './checkGlyphs'
@@ -108,7 +108,7 @@ interface HeldLift {
 
 interface Props {
   days: string[]
-  /** Days one swipe moves (1 · 3 · 7). */
+  /** The view's days (1 · 3 · 7): a swipe glides by days, a week's by weeks. */
   step: number
   today: string
   now: Date
@@ -116,7 +116,10 @@ interface Props {
   look: (e: CalendarEvent) => BlockLook
   pending: ReadonlySet<string>
   loading: boolean
-  onPage: (dir: 1 | -1) => void
+  /** cal-scroll: a swipe settled `days` days on (− back). */
+  onShift: (days: number) => void
+  /** The day offset a swipe in progress is showing (0 when it's done): the header and the strip follow it. */
+  onPeek?: (days: number) => void
   onTapSlot: (day: string, start: number) => void
   onTapBlock: (e: CalendarEvent) => void
   /** cal-clicks: a long-press released without moving — menu B's sheet (the block stays lifted). */
@@ -140,7 +143,7 @@ const COMPACT_PX = minToPx(25)
 const titleLines = (h: number) => Math.max(1, Math.min(3, Math.floor((h - 12 - 18) / 18)))
 const same = (a: Span, b: Span) => a.day === b.day && a.start === b.start && a.end === b.end
 
-export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onPage, onTapSlot, onTapBlock, onHoldBlock, onTapMore, onCommit, onDropHeld, overlay }, ref) {
+export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({ days, step, today, now, events, look, pending, loading, onShift, onPeek, onTapSlot, onTapBlock, onHoldBlock, onTapMore, onCommit, onDropHeld, overlay }, ref) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const trackRef = useRef<HTMLDivElement>(null)
   const [lift, setLift] = useState<Lift | null>(null)
@@ -170,6 +173,14 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   const setSwipe = (x: number) => gridRef.current?.style.setProperty('--pc-swipe', `${x}px`)
   const [sliding, setSliding] = useState(false)
   const [settling, setSettling] = useState(false)
+  // cal-scroll: the settle's length — a long fling glides further, so for longer (0: reduced motion, at once).
+  const [settleMs, setSettleMs] = useState(200)
+  const peekRef = useRef(0)
+  const peek = (n: number) => {
+    if (n === peekRef.current) return
+    peekRef.current = n
+    onPeek?.(n)
+  }
   // CAL6: a slide asked for by a strip tap or Today — the pane on `dir`'s side shows `days` (not a swipe's next page).
   const [jump, setJump] = useState<{ dir: 1 | -1; days: string[] } | null>(null)
   // st0: the grid's scrollTop at the press, so a drag that scrolls the grid (its edges) still tracks the finger.
@@ -230,7 +241,10 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       })
       setSwipe(0)
       void gridRef.current?.offsetWidth
-      flushSync(() => setSettling(true))
+      flushSync(() => {
+        setSettleMs(SETTLE_MS)
+        setSettling(true)
+      })
       setSwipe(-dir * width())
       window.setTimeout(() => {
         done()
@@ -356,6 +370,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     s.dx = dx
     if (!sliding) setSliding(true)
     setSwipe(dx)
+    peek(glidePeek(dx, width(), days.length, step))
   }
 
   /** The lifted block follows the finger on the 15-min grid — through any scroll since the press. */
@@ -480,15 +495,22 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     } else if (kind === 'swipe') {
       // A finger that stopped before lifting (or a cancelled gesture) is not a fling.
       const v = e.type === 'pointercancel' || e.timeStamp - s.lastT > 100 ? 0 : s.v
-      const dir = swipeStep(s.dx, v, width())
+      // cal-scroll: the fling carries on (its momentum) and settles on a day — a week in the week view.
+      const w = width()
+      const n = glideTarget(s.dx, v, w, days.length, step)
+      const to = step >= 7 ? -(n / 7) * w : -n * (w / days.length)
+      const ms = reducedMotionNow() ? 0 : glideMs(to - s.dx)
+      peek(n)
+      setSettleMs(ms)
       setSettling(true)
-      setSwipe(dir ? -dir * width() : 0)
+      setSwipe(to)
       window.setTimeout(() => {
-        if (dir) onPage(dir)
+        if (n) onShift(n)
         setSwipe(0)
         setSettling(false)
         setSliding(false)
-      }, SETTLE_MS)
+        peek(0)
+      }, ms)
     }
   }
 
@@ -542,7 +564,11 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
     onTapSlot(days[col], Math.floor(((e.clientY - r.top) / r.height) * 1440))
   }
 
-  const panes = jump ? [0, jump.dir] : sliding ? [-1, 0, 1] : [0]
+  const reach = glidePanes(step)
+  const panes = jump ? [0, jump.dir] : sliding ? Array.from({ length: 2 * reach + 1 }, (_, i) => i - reach) : [0]
+  const paneDays = (p: number) => (jump && p === jump.dir ? jump.days : p ? days.map((d) => addDays(d, p * step)) : days)
+  // ds-ok: a transform transition (its length is the fling's, a template the check can't read)
+  const glideStyle = { transform: sliding ? 'translateX(var(--pc-swipe, 0px))' : undefined, transition: settling ? `transform ${settleMs}ms ${jump ? 'var(--ease-standard)' : 'var(--ease-out)'}` : 'none' }
   const inset = multi ? { l: 2, r: 2 } : { l: 4, r: 16 }
 
   /** Calendar 3e "spans midnight": the open edge of a piece cut at 00:00 says where the block runs on. */
@@ -739,9 +765,17 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
   return (
     <div className="pc-grid" ref={gridRef}>
       {multi && (
-        <div className="pc-colhead" style={{ transform: sliding ? 'translateX(var(--pc-swipe, 0px))' : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
+        <div className="pc-colhead">
           {days.map((d) => (
-            <span key={d} className={d === today ? 'is-today' : undefined}>{columnLabel(d, days.length > 3)}</span>
+            <span key={d} className={d === today ? 'is-today' : undefined} style={glideStyle}>{columnLabel(d, days.length > 3)}</span>
+          ))}
+          {/* cal-scroll: the neighbours' day names glide in with their columns. */}
+          {panes.filter((p) => p !== 0).map((p) => (
+            <div key={p} className="pc-colhead-pane" style={{ left: `calc(60px + ${p} * (100% - 60px))`, ...glideStyle }}>
+              {paneDays(p).map((d) => (
+                <span key={d} className={d === today ? 'is-today' : undefined}>{columnLabel(d, days.length > 3)}</span>
+              ))}
+            </div>
           ))}
         </div>
       )}
@@ -789,9 +823,9 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
           {/* The track stays put (it clips the slide to the columns); the panes move. */}
           <div ref={trackRef} className={`pc-track${sliding ? ' is-sliding' : ''}`}>
             {panes.map((p) => {
-              const pdays = jump && p === jump.dir ? jump.days : p ? days.map((d) => addDays(d, p * step)) : days
+              const pdays = paneDays(p)
               return (
-                <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}${days.length > 3 ? ' is-week' : ''}`} style={{ left: `${p * 100}%`, transform: sliding ? 'translateX(var(--pc-swipe, 0px))' : undefined, transition: settling ? 'transform var(--dur-swipe-settle) var(--ease-standard)' : 'none' }}>
+                <div key={p} className={`pc-pane${multi ? ' is-multi' : ''}${days.length > 3 ? ' is-week' : ''}`} style={{ left: `${p * 100}%`, ...glideStyle }}>
                   {pdays.map((d) => column(d, p === 0))}
                   {pdays.includes(today) && <span className="pc-nowline" style={{ top: minToPx(nowMin) }} />}
                 </div>

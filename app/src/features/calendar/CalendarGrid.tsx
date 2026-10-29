@@ -1,4 +1,4 @@
-import { forwardRef, memo, useCallback, useEffect, useImperativeHandle, useInsertionEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { forwardRef, memo, startTransition, useCallback, useEffect, useImperativeHandle, useInsertionEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import FullCalendar from '@fullcalendar/react'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
@@ -29,6 +29,7 @@ import { repeatCheckName } from './blockMenuSpec'
 import { RepeatGlyph, Tick } from './checkGlyphs'
 import { EASE_OUT, markTicked, ownArrival, takeTicked } from './blockMotion'
 import { playOnce, reducedMotionNow } from '../../lib/motion'
+import { attachGlide, type Glide } from './gridGlide'
 import './CalendarGrid.css'
 
 export interface CalendarGridEvent {
@@ -155,6 +156,8 @@ interface CalendarGridProps {
   secondZone?: string | null
   /** CAL11: the block whose popover (its details, menu B, its task's popover) is open — outlined in its ink. */
   selectedId?: string | null
+  /** cal-scroll: the days' sideways offset (FullCalendar's px — the screen's), every frame they glide — the day tray follows it. */
+  onGlide?: (x: number) => void
 }
 
 /** FullCalendar renders the day-column grid and the time-slot guide lines as separate DOM
@@ -230,6 +233,12 @@ function paintColor(el: HTMLElement, color: string | null | undefined): void {
  * click, menu and lookup acts on the block itself. */
 const SEG = '§'
 const blockIdOf = (ev: { id: string; extendedProps: Record<string, unknown> }): string => (ev.extendedProps.kfSegOf as string | undefined) ?? ev.id
+
+/** The instant a date key's day starts on `zone`'s clock. */
+function zoneDayStart(key: string, zone: string): number {
+  const [y, m, d] = key.split('-').map(Number)
+  return Date.parse(zoneWallTimeToIso(zone, y, m, d))
+}
 
 /** Date keys from `first` to `last`, inclusive (at most `max`). */
 function dayRange(first: string, last: string, max = 62): string[] {
@@ -691,7 +700,10 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       widthRef.current = Math.round(entry.contentRect.width)
       setNarrowCols(isNarrow(widthRef.current, daysRef.current))
       cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => fcRef.current?.getApi().updateSize())
+      raf = requestAnimationFrame(() => {
+        fcRef.current?.getApi().updateSize()
+        glideRef.current?.restore() // cal-scroll: the columns' width follows the box; the same day stays at the left
+      })
     })
     ro.observe(el)
     return () => {
@@ -998,6 +1010,52 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     // `today` re-reads "overdue" when a new day starts.
   }, [events, isSpan, zone, shownDays, clockTime, conflictedIds, overlap, hour24, pinnedId, freeGaps, today]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ── cal-scroll (Kai 2026-10-29): glide through days (./gridGlide) — Day, N days and Week, not the planning strip
+  // or Month. FullCalendar draws the days on screen plus `buffer` days either side; the header, the strip of days
+  // and CalendarPage's range follow the leftmost day on screen. ──
+  const glideOn = initialView !== 'dayGridMonth' && !strip
+  const viewDays = initialView === 'timeGridDay' ? 1 : initialView === 'rollingWeek' ? 7 : dayCount
+  // A screen's worth either side (three days at least): room for a fling before the buffer re-centres.
+  const buffer = glideOn ? Math.max(3, viewDays) : 0
+  const glideRef = useRef<Glide | null>(null)
+  // A day to put at the left once FullCalendar has drawn a jump (Today far off, a search hit).
+  const jumpRef = useRef<string | null>(null)
+  // A button held anywhere (a block, a resize, a slot selection, a rail card): never re-centre under it.
+  const pressRef = useRef(false)
+  const glideCfg = useRef({ viewDays, buffer, hidden: hiddenDays ?? [] })
+  glideCfg.current = { viewDays, buffer, hidden: hiddenDays ?? [] }
+  /** Day columns on screen from `day`: the view's days less the hidden weekdays. */
+  const visibleFrom = (day: string): number => {
+    const { viewDays: n, hidden } = glideCfg.current
+    let v = 0
+    for (let i = 0; i < n; i++) if (!hidden.includes(new Date(`${addDays(day, i)}T12:00:00Z`).getUTCDay())) v++
+    return Math.max(1, v)
+  }
+  /** The leftmost day on screen changed: CalendarPage's header and range follow (a transition — never a glide's frame). */
+  const report = (day: string) => {
+    const z = latest.current.zone
+    setVisibleDays(visibleFrom(day))
+    const info = { title: day, start: new Date(zoneDayStart(day, z)), end: new Date(zoneDayStart(addDays(day, glideCfg.current.viewDays), z)) }
+    startTransition(() => latest.current.props.onRangeChange?.(info))
+  }
+  /** Show `day` at the left at once (Today or a search hit beyond the drawn days): the M7 slide, not a glide. */
+  const jumpTo = (day: string) => {
+    const api = fcRef.current?.getApi()
+    if (!api) return
+    const g = glideRef.current
+    const cur = g?.anchor()
+    if (cur && day !== cur) slide(day < cur ? 'prev' : 'next')
+    const from = addDays(day, -glideCfg.current.buffer)
+    if (zoneDateKey(api.view.activeStart, latest.current.zone) !== from) {
+      jumpRef.current = day
+      api.gotoDate(from)
+      return
+    }
+    g?.restore(day)
+    report(day)
+  }
+  const initialDate = useMemo(() => (glideOn ? addDays(zoneDateKey(new Date(), zone), -buffer) : undefined), [glideOn, buffer, initialView, dayCount]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // M7: paging slides the days in from the side they come from — 160 ms, opacity and translate, on the
   // day columns only (never the time axis or the scroller). Off with Effects off / reduced motion (CSS).
   const slide = (dir: 'next' | 'prev') => {
@@ -1013,16 +1071,28 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   useImperativeHandle(ref, () => ({
     unselect: () => fcRef.current?.getApi().unselect(),
     prev: () => {
+      const g = glideRef.current
+      if (g) return void (g.page(-1) || jumpTo(addDays(g.anchor(), -glideCfg.current.viewDays)))
       slide('prev')
       fcRef.current?.getApi().prev()
     },
     next: () => {
+      const g = glideRef.current
+      if (g) return void (g.page(1) || jumpTo(addDays(g.anchor(), glideCfg.current.viewDays)))
       slide('next')
       fcRef.current?.getApi().next()
     },
     gotoDate: (date) => {
       const api = fcRef.current?.getApi()
       if (!api) return
+      const g = glideRef.current
+      if (g) {
+        const key = zoneDateKey(date, latest.current.zone)
+        const left = g.anchor()
+        if (key < left || key >= addDays(left, glideCfg.current.viewDays)) jumpTo(key)
+        api.scrollToTime(scrollTimeNear(date, latest.current.props.scrollLeadMinutes ?? SCROLL_LEAD_DESKTOP_MIN))
+        return
+      }
       // Already on screen (a block just planned this week): only the hours scroll to it.
       if (date < api.view.activeStart || date >= api.view.activeEnd) api.gotoDate(date)
       api.scrollToTime(scrollTimeNear(date, latest.current.props.scrollLeadMinutes ?? SCROLL_LEAD_DESKTOP_MIN))
@@ -1033,6 +1103,13 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       const api = fcRef.current?.getApi()
       if (!api) return
       const now = new Date()
+      const g = glideRef.current
+      if (g) {
+        const key = zoneDateKey(now, latest.current.zone)
+        if (!g.glideTo(key)) jumpTo(key)
+        api.scrollToTime(scrollTimeNear(now, latest.current.props.scrollLeadMinutes ?? SCROLL_LEAD_DESKTOP_MIN))
+        return
+      }
       if (now < api.view.activeStart || now >= api.view.activeEnd) slide(now < api.view.activeStart ? 'prev' : 'next')
       api.today()
       api.scrollToTime(scrollTimeNear(new Date(), latest.current.props.scrollLeadMinutes ?? SCROLL_LEAD_DESKTOP_MIN))
@@ -1070,7 +1147,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   const views = useMemo(() => ({
     [customView]: {
       type: 'timeGrid',
-      duration: { days: dayCount },
+      duration: { days: dayCount + 2 * buffer },
       // Duration views start at the current date, so today leads instead of trailing.
       dateAlignment: 'day',
       dateIncrement: { days: dayCount },
@@ -1081,11 +1158,13 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     // 7 days starting today; prev/next steps a full week.
     rollingWeek: {
       type: 'timeGrid',
-      duration: { days: 7 },
+      duration: { days: 7 + 2 * buffer },
       dateAlignment: 'day',
       dateIncrement: { days: 7 },
     },
-  }), [dayCount])
+    // cal-scroll: one day on screen, its buffer either side (FullCalendar's own Day view draws exactly one).
+    ...(buffer ? { timeGridDay: { duration: { days: 1 + 2 * buffer }, dateAlignment: 'day' } } : null),
+  }), [dayCount, buffer])
   // Punch 32: 24-hour toggle drives both the block time rows and the gutter labels (lib/clock).
   // One range style (lib/clock clockRange): "10:00–10:30 AM", not FullCalendar's "10:00 AM - 10:30 AM".
   // FC hands the zoned wall clock (zonePlugin), so the hour and minute are the person's.
@@ -1121,9 +1200,18 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     const L = () => latest.current
     return {
       datesSet: (arg: DatesSetArg) => {
-        L().props.onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })
+        if (!glideCfg.current.buffer) L().props.onRangeChange?.({ title: arg.view.title, start: arg.view.currentStart, end: arg.view.currentEnd })
         const days = dayRange(zoneDateKey(arg.view.activeStart, L().zone), zoneDateKey(new Date(arg.view.activeEnd.getTime() - 1), L().zone))
         setShownDays((cur) => (cur && cur.join() === days.join() ? cur : days))
+        // cal-scroll: the days drawn changed (a re-centre, a jump) — the same day goes back to the left in this task,
+        // before anything paints; the header and range are the glide's (report), not the drawn range.
+        if (glideCfg.current.buffer) {
+          const jump = jumpRef.current
+          jumpRef.current = null
+          glideRef.current?.restore(jump ?? undefined)
+          if (jump) report(jump)
+          return
+        }
         if (arg.view.type !== 'dayGridMonth') setVisibleDays(Math.max(1, Math.round((arg.view.currentEnd.getTime() - arg.view.currentStart.getTime()) / 86_400_000)))
       },
       eventClassNames: (arg: EventContentArg): string[] => {
@@ -1525,7 +1613,10 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         if (picked.length > 1 && picked.includes(id) && info.event.start && info.oldEvent.start && !info.event.allDay && !info.oldEvent.allDay) {
           const delta = info.event.start.getTime() - info.oldEvent.start.getTime()
           const view = fcRef.current?.getApi().view
-          const out = !!view && L().props.events.some((e) => picked.includes(e.id) && (Date.parse(e.start) + delta < view.activeStart.getTime() || Date.parse(e.end) + delta > view.activeEnd.getTime()))
+          // cal-scroll: the days on screen are the glide's (FullCalendar draws a buffer either side), not its range.
+          const left = glideRef.current?.anchor()
+          const [from, to] = left ? [zoneDayStart(left, L().zone), zoneDayStart(addDays(left, glideCfg.current.viewDays), L().zone)] : [view?.activeStart.getTime() ?? 0, view?.activeEnd.getTime() ?? 0]
+          const out = !!view && L().props.events.some((e) => picked.includes(e.id) && (Date.parse(e.start) + delta < from || Date.parse(e.end) + delta > to))
           if (out) {
             info.revert()
             if (landing?.host && wrap) refuse(wrap, [{ ...landing, id }, ...carried], motion)
@@ -1659,13 +1750,66 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   const nowIndicatorContent = useCallback((arg: NowIndicatorContentArg) => (arg.isAxis ? null : <span className="cal-now-chip">{clockTime(Date.now())}</span>), [clockTime])
   const allDaySlot = useMemo(() => !strip || events.some((e) => e.allDay || isSpan(e)), [strip, events, isSpan])
   // CAL5: a view switch remounts FullCalendar (the key) — the new view cross-fades in (160 ms), not a cut.
-  const fcKey = `${initialView}-${dayCount}-${density}-${secondZone ? 'z2' : ''}`
+  const fcKey = `${initialView}-${dayCount}-${density}-${secondZone ? 'z2' : ''}${glideOn ? '-glide' : ''}`
   const shownKey = useRef(fcKey)
   useLayoutEffect(() => {
     if (shownKey.current === fcKey) return
     shownKey.current = fcKey
     if (!reducedMotionNow()) playOnce(wrapRef.current, 'view', 220)
   }, [fcKey])
+  // cal-scroll: the glide lives with this FullCalendar (a view switch remounts both); today sits at the left.
+  useLayoutEffect(() => {
+    const wrap = wrapRef.current
+    if (!glideOn || !wrap) return
+    const start = zoneDateKey(new Date(), latest.current.zone)
+    // FullCalendar's root undoes the interface zoom (CalendarGrid.css `zoom: calc(1 / var(--kf-ui-scale))`), and
+    // Chrome can leave a freshly mounted root at zoom 1 until its style is next recalculated: recalc it now, so the
+    // glide measures the real width (seen with reduced motion, where no view fade restyles it).
+    const fcRoot = wrap.querySelector<HTMLElement>('.fc')
+    fcRoot?.classList.add('kf-restyle')
+    void fcRoot?.offsetWidth
+    fcRoot?.classList.remove('kf-restyle')
+    const g: Glide = attachGlide(wrap, {
+      visible: () => visibleFrom(g.anchor()),
+      busy: () => pressRef.current,
+      onAnchor: report,
+      recenter: (day) => {
+        const api = fcRef.current?.getApi()
+        const from = addDays(day, -glideCfg.current.buffer)
+        if (api && zoneDateKey(api.view.activeStart, latest.current.zone) !== from) api.gotoDate(from)
+      },
+      onScroll: (x) => latest.current.props.onGlide?.(x),
+    }, start)
+    glideRef.current = g
+    g.restore(start)
+    report(start)
+    const down = () => { pressRef.current = true }
+    // After FullCalendar's own mouseup (a drop) has run: a drag's edge scroll may have left the days between two.
+    const up = () => {
+      if (!pressRef.current) return
+      pressRef.current = false
+      window.setTimeout(() => glideRef.current?.release())
+    }
+    window.addEventListener('pointerdown', down, true)
+    window.addEventListener('mouseup', up)
+    window.addEventListener('touchend', up)
+    window.addEventListener('pointercancel', up)
+    window.addEventListener('blur', up)
+    return () => {
+      g.destroy()
+      glideRef.current = null
+      wrap.style.removeProperty('--kf-glide-w')
+      latest.current.props.onGlide?.(0)
+      window.removeEventListener('pointerdown', down, true)
+      window.removeEventListener('mouseup', up)
+      window.removeEventListener('touchend', up)
+      window.removeEventListener('pointercancel', up)
+      window.removeEventListener('blur', up)
+    }
+  }, [glideOn, fcKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  // cal-scroll: a render can change the grid's geometry (the narrow tier, the second clock, the root zoom landing a
+  // style pass late): the glide re-measures when it did.
+  useLayoutEffect(() => glideRef.current?.check())
   const wrapStyle = useMemo(
     () => ({ height: '100%', minWidth: gridMinWidth(visibleDays, secondZone ? TIME_AXIS_W + ZONE2_W : undefined), ['--kf-cal-density' as string]: density === 's' ? 0.8 : density === 'l' ? 1.2 : 1, ...zoneVars }) as React.CSSProperties,
     [visibleDays, density, secondZone, zoneVars],
@@ -1682,7 +1826,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     <div
       ref={wrapRef}
       data-tour="calendar"
-      className={[narrow && 'kf-cal-narrow', secondZone && 'kf-cal-2z', expandRows && 'kf-cal-fit'].filter(Boolean).join(' ') || undefined}
+      className={[narrow && 'kf-cal-narrow', secondZone && 'kf-cal-2z', expandRows && 'kf-cal-fit', glideOn && 'kf-glide'].filter(Boolean).join(' ') || undefined}
       onContextMenu={handleGridContextMenu}
       onClick={handleCtrlClick}
       onMouseDown={(e) => { downAt.current = { x: e.clientX, y: e.clientY } }}
@@ -1694,6 +1838,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       plugins={PLUGINS}
       timeZone={zone}
       initialView={initialView}
+      initialDate={initialDate}
       firstDay={firstDay}
       hiddenDays={hiddenDays}
       // Punch 35: top-edge resize — start moves, end stays put. FC's own start handle.

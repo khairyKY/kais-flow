@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Segmented, Toggle as KitToggle } from '../../components/kit'
 import { uiZoom } from '../../lib/uiScale'
+import { isQuietScroll } from '../../lib/quietScroll'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { ALL_ZONES, isZone, searchZones } from '../../lib/appZone'
 import { prefWritten } from '../../lib/prefs'
@@ -128,11 +129,14 @@ export function ViewOptionsPopover({ anchor, closing, onClose, activeView, onPic
     }
     document.addEventListener('mousedown', handleClick)
     // A fixed popover over a scrolled page detaches from its trigger — close it (ContextMenu's rule).
-    window.addEventListener('scroll', onClose, true)
+    const onScroll = (e: Event) => {
+      if (!isQuietScroll(e)) onClose() // cal-scroll: the calendar re-centring its days moves nothing on screen
+    }
+    window.addEventListener('scroll', onScroll, true)
     window.addEventListener('resize', onClose)
     return () => {
       document.removeEventListener('mousedown', handleClick)
-      window.removeEventListener('scroll', onClose, true)
+      window.removeEventListener('scroll', onScroll, true)
       window.removeEventListener('resize', onClose)
     }
   }, [onClose])

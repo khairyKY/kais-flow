@@ -798,3 +798,17 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .fc .fc-timegrid-event .kf-ev-cut { position: absolute; left: 0; right: 0; margin: 0; text-align: center; color: var(--ink-faint); white-space: nowrap; pointer-events: none; }
 .fc .fc-timegrid-event .kf-ev-cut-into { bottom: 1px; }
 .fc .fc-timegrid-event .kf-ev-cut-from { top: 1px; }
+
+/* cal-scroll (Kai 2026-10-29): glide through days. FullCalendar draws a buffer of days either side, each column a
+   screen's share wide (gridGlide.ts sets --kf-glide-w), and its three scrollers move sideways together; the time
+   gutter (and the all-day label, the zone labels over it) stays at the left while the days pass under it. */
+.kf-glide .fc .fc-col-header,
+.kf-glide .fc .fc-daygrid-body,
+.kf-glide .fc .fc-daygrid-body > table,
+.kf-glide .fc .fc-timegrid-body,
+.kf-glide .fc .fc-timegrid-body table { width: var(--kf-glide-w, 100%) !important; }
+/* The hour labels rise over the blocks passing under them (their table was its own layer, under the columns). */
+.kf-glide .fc .fc-timegrid-slots { z-index: auto; }
+.kf-glide .fc .fc-col-header .fc-timegrid-axis,
+.kf-glide .fc .fc-daygrid-body .fc-timegrid-axis,
+.kf-glide .fc .fc-timegrid-slot-label { position: sticky; left: 0; z-index: 6; background: var(--paper-parchment); }
