@@ -14,6 +14,12 @@
 //    the action once it has loaded.
 const KF_BACKGROUND = ['done', 'tomorrow', 'snooze10', 'snooze60', 'break', 'keep']
 
+// iOS PWA (2026-10-29). Safari (iPhone, iPad, Mac) shows no notification buttons — `actions` is ignored — so a tap
+// is the only way in: a single reminder opens its own task sheet (Done · Tomorrow · the date) instead of the list.
+// Android and Chrome keep their buttons. (Also ignored there: `silent`, `renotify`; quiet hours are the server's.)
+const KF_UA = (self.navigator && self.navigator.userAgent) || ''
+const KF_NO_BUTTONS = /AppleWebKit/.test(KF_UA) && !/Chrome|Chromium|CriOS|Android|Edg|Firefox|FxiOS/.test(KF_UA)
+
 self.addEventListener('push', (event) => {
   let n = {}
   try {
@@ -39,9 +45,22 @@ function kfPlayedInApp(win, n) {
   })
 }
 
+/** Where a tap takes you: the notice's page; on Safari a single reminder's own task sheet (see KF_NO_BUTTONS). */
+function kfTapUrl(n) {
+  const ids = n.taskIds || []
+  return KF_NO_BUTTONS && n.kind === 'task_reminder' && ids.length === 1 ? `/today?task=${encodeURIComponent(ids[0])}` : n.url || '/today'
+}
+
 async function kfShow(n) {
   const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-  if (n.kind === 'paper_ready' && windows.some((w) => w.focused)) return
+  // "Your page is read" while the app is in front of you: nothing to say. But every push must show a
+  // notification — WebKit revokes a subscription whose pushes show none — so it shows, silently, and goes at once.
+  if (n.kind === 'paper_ready' && windows.some((w) => w.focused)) {
+    const tag = n.tag || 'kf-paper-ready'
+    await self.registration.showNotification(n.title || 'Kai’s Flow', { body: n.body || '', icon: '/icon-192.png', badge: '/badge-96.png', tag, silent: true, data: { kind: n.kind, url: kfTapUrl(n), taskIds: n.taskIds || [] } })
+    for (const shown of await self.registration.getNotifications({ tag })) shown.close()
+    return
+  }
   const onScreen = !n.silent && windows.find((w) => w.visibilityState === 'visible')
   const played = onScreen ? await kfPlayedInApp(onScreen, n) : false
   return self.registration.showNotification(n.title || 'Kai’s Flow', {
@@ -53,7 +72,7 @@ async function kfShow(n) {
     silent: !!n.silent || played,
     // As many buttons as this browser shows (Chrome: 2 — a reminder's Done · In 10 min), the likeliest first.
     actions: (n.actions || []).slice(0, (self.Notification && self.Notification.maxActions) || 2),
-    data: { kind: n.kind || null, url: n.url || '/today', taskIds: n.taskIds || [] },
+    data: { kind: n.kind || null, url: kfTapUrl(n), taskIds: n.taskIds || [] },
   })
 }
 
@@ -71,7 +90,13 @@ async function kfNotificationClick(data, action) {
   const msg = { type: 'kf-notification-action', action: action || 'open', kind: data.kind || null, taskIds: data.taskIds || [], url: data.url || '/today' }
   const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
   const win = windows.find((w) => w.visibilityState === 'visible') || windows[0]
-  if (!win) return self.clients.openWindow(kfActionUrl(msg))
+  if (!win) {
+    const url = kfActionUrl(msg)
+    // iOS: a tap that cold-starts the app can land on / instead of this address (WebKit bug 263687). The address
+    // waits in Cache Storage too; the app takes it once it starts (features/notifications/actions.ts takePendingLink).
+    if (KF_NO_BUTTONS) await caches.open('kf-pending').then((c) => c.put('/kf-pending-link', new Response(JSON.stringify({ url, at: Date.now() })))).catch(() => {})
+    return self.clients.openWindow(url)
+  }
   win.postMessage(msg)
   if (!KF_BACKGROUND.includes(msg.action) && win.focus) await win.focus()
 }

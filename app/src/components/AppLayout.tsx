@@ -15,6 +15,8 @@ import { useProjects } from '../features/projects/api'
 import { dayOfJourney, firstCreatedAt } from '../features/today/journey'
 import { useIsMobile } from './BottomSheet'
 import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/grouping'
+import { warmPages } from '../lib/pageWarm'
+import { persistStorage, setAppBadge } from '../lib/iosPwa'
 import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
@@ -646,6 +648,17 @@ function TopBar({ sync }: { sync: boolean }) {
   )
 }
 
+/** iOS PWA (2026-10-29): the Home Screen icon's number — what's due today, overdue included (the Tasks Today list,
+ * the sidebar's "Due Today"); cleared at 0. Where the browser has a badge (lib/iosPwa setAppBadge). */
+function AppBadge() {
+  const { data: tasks } = useTasks()
+  const due = tasks ? filterByList(tasks, 'today').length : null
+  useEffect(() => {
+    if (due != null) setAppBadge(due)
+  }, [due])
+  return null
+}
+
 function isTypingTarget(target: EventTarget | null): boolean {
   const el = target as HTMLElement | null
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
@@ -751,6 +764,19 @@ export function AppLayout() {
   // the first page is up, the bar's chunk loads and CommandBar stays mounted (it renders nothing
   // while closed): every later open renders synchronously, no lazy boundary on the tap path.
   const [captureWarm, setCaptureWarm] = useState(false)
+  // Signed in: the tab bar's pages load in the background once the shell is idle (lib/pageWarm); storage is
+  // asked to stay (lib/iosPwa — the outbox lives there); and a push subscription iOS dropped goes back, on every
+  // open and every return to the app (features/notifications/api keepPushSubscription).
+  useEffect(() => {
+    warmPages()
+    void persistStorage()
+    const keep = () => {
+      if (document.visibilityState === 'visible') void import('../features/notifications/api').then((m) => m.keepPushSubscription())
+    }
+    keep()
+    document.addEventListener('visibilitychange', keep)
+    return () => document.removeEventListener('visibilitychange', keep)
+  }, [])
   useEffect(() => {
     const warm = () => setCaptureWarm(true)
     if ('requestIdleCallback' in window) window.requestIdleCallback(warm, { timeout: 2000 })
@@ -862,10 +888,15 @@ export function AppLayout() {
           .app-topbar-echo, .app-topbar-zone { display: none; }
           .app-topbar-where { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
           .app-topbar-sync { flex: none; }
-          .app-main-content { padding: 20px 16px calc(64px + env(safe-area-inset-bottom) + 24px) !important; }
+          .app-main-content { padding: 20px 16px calc(var(--tabbar-h) + var(--tabbar-inset) + 24px) !important; }
+          /* iOS PWA: viewport-fit=cover lets the page run under the status bar / Dynamic Island; the whole
+             column (top bar, Today's and the calendar's own headers, every page) starts below it. 0 elsewhere. */
+          .app-shell > main { padding-top: var(--sat); }
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* iOS PWA: a phone on its side puts the notch at one edge (viewport-fit=cover); 0 everywhere else. */
+        .app-shell { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
         /* D16 — the streak's vine and its pollen (SideStreak). */
         .kf-streak-plant { position: relative; flex: none; width: 28px; height: 40px; }
         .kf-streak-plant img { position: absolute; left: 0; bottom: 0; height: 40px; transform-origin: 50% 100%; }
@@ -1080,13 +1111,13 @@ export function AppLayout() {
         @media (max-width: 767px) {
           /* The bar is ~540px of actions — wider than any phone, so both ends (Delete, ✕) used to
              clip off-screen. Cap it to the screen and let it scroll sideways. */
-          .kf-bulkbar, .app-sidebar.collapsed ~ main .kf-bulkbar { left: 50%; bottom: calc(74px + env(safe-area-inset-bottom)); max-width: calc(100% - 16px); overflow-x: auto; scrollbar-width: none; }
+          .kf-bulkbar, .app-sidebar.collapsed ~ main .kf-bulkbar { left: 50%; bottom: calc(74px + var(--sab)); max-width: calc(100% - 16px); overflow-x: auto; scrollbar-width: none; }
         }
 
         /* X5 States 2b — sync queue popover; bottom sheet on mobile. */
         .kf-sync-pop { position: absolute; top: 38px; left: 40px; z-index: 200; width: 300px; }
         @media (max-width: 767px) {
-          .kf-sync-pop { position: fixed; top: auto; left: 10px; right: 10px; bottom: calc(74px + env(safe-area-inset-bottom)); width: auto; }
+          .kf-sync-pop { position: fixed; top: auto; left: 10px; right: 10px; bottom: calc(74px + var(--sab)); width: auto; }
         }
       `}</style>
 
@@ -1197,6 +1228,7 @@ export function AppLayout() {
       <SubtaskAskHost />
       <ScopeAskHost />
       <ToastHost />
+      <AppBadge />
       {signOutFlow.prompt}
     </div>
   )

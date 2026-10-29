@@ -89,6 +89,37 @@ html,
 body {
   overscroll-behavior: none;
 }
+/* iOS PWA (2026-10-29): Safari zooms the whole page into a focused field under 16px, and stays zoomed after.
+   On a touch screen every field is 16px at least (--field-min, tokens/typography.css): the type tokens a field
+   uses read 16px inside it, a field that inherits its size gets max(16px, 1em), and a field with its own px
+   size floors it with max(var(--field-min), …) where it is set. A computer keeps every size. (No maximum-scale
+   in the viewport: that would block pinch-zoom too.) */
+@media (pointer: coarse) {
+  input,
+  textarea,
+  select,
+  [contenteditable='true'] {
+    --fs-body: var(--field-min);
+    --fs-body-s: var(--field-min);
+    --fs-caption: var(--field-min);
+    --fs-section: var(--field-min);
+    --fs-meta: var(--field-min);
+    --fs-meta-l: var(--field-min);
+    --fs-mono-l: var(--field-min);
+    --fs-mono: var(--field-min);
+    --fs-mono-s: var(--field-min);
+    --fs-mono-xs: var(--field-min);
+  }
+}
+/* In the base layer, after Tailwind's preflight (font: inherit): any field's own rule still wins. */
+@layer base {
+  input,
+  textarea,
+  select,
+  [contenteditable='true'] {
+    font-size: max(var(--field-min), 1em);
+  }
+}
 /* Vertical scrollers only: `contain` on a horizontal strip can swallow the page's vertical swipe. */
 .overflow-y-auto,
 [style*='overflow-y: auto'] {

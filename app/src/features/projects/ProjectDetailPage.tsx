@@ -857,7 +857,7 @@ export function ProjectDetailPage() {
                     value={newMilestoneTitle}
                     onChange={(e) => setNewMilestoneTitle(e.target.value)}
                     placeholder="Add milestone…"
-                    style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
+                    style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 'max(var(--field-min), 12.5px)', background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                   />
                   <NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel="Milestone weight" style={{ fontSize: 12.5 }} />
                   <button
@@ -943,7 +943,7 @@ export function ProjectDetailPage() {
                   value={newChecklistTitle}
                   onChange={(e) => setNewChecklistTitle(e.target.value)}
                   placeholder="Add a checklist item — sub-steps too small for a task…"
-                  style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
+                  style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 'max(var(--field-min), 12.5px)', background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}
                 />
                 <Select
                   value={newChecklistType}

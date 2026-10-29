@@ -117,7 +117,7 @@
   {
     "name": "phone-day toast 12 from edges, bottom = tab bar + 8",
     "ok": true,
-    "detail": "x 12, w 366, bottom gap 72"
+    "detail": "x 12, w 366, bottom gap 88"
   },
   {
     "name": "phone-day life paused while hovered",
@@ -257,7 +257,7 @@
   {
     "name": "phone-night toast 12 from edges, bottom = tab bar + 8",
     "ok": true,
-    "detail": "x 12, w 366, bottom gap 72"
+    "detail": "x 12, w 366, bottom gap 88"
   },
   {
     "name": "phone-night life paused while hovered",
@@ -582,6 +582,6 @@
   {
     "name": "reduced motion: exit fades in place",
     "ok": true,
-    "detail": "0.963256 none"
+    "detail": "0.973575 none"
   }
 ]

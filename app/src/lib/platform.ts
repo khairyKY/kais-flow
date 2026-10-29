@@ -37,6 +37,14 @@ export function syncShellChrome(theme: 'day' | 'night', w: Window | undefined = 
   if (hex) bridge.setChrome(hex, theme === 'day')
 }
 
+/** iOS PWA (2026-10-29): the status bar (and an installed app's title bar) wears the page's own background
+ * through index.html's theme-color metas, so it follows the app's Day/Night, not only the system's. */
+export function syncThemeColor(w: Window | undefined = typeof window === 'undefined' ? undefined : window): void {
+  if (!w?.document.body) return
+  const hex = rgbToHex(w.getComputedStyle(w.document.body).backgroundColor)
+  if (hex) w.document.querySelectorAll('meta[name="theme-color"]').forEach((m) => m.setAttribute('content', hex))
+}
+
 let sheetsUp = 0
 /** Android shell: while a bottom sheet is up, the strips take the sheet's colour, so the sheet runs
  * on into the gesture-bar strip under the page instead of stopping a page-coloured band short of the

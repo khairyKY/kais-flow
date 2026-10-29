@@ -601,3 +601,19 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-home .kf-nest.has-rule { border-bottom: none; }
 .tp-home .kf-nest.is-phone .ts-sub.is-nested { min-height: 36px; }
 .tp-home .kf-nest .ts-sub-title, .tp-home .kf-nest .ts-sub-open { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* iOS PWA (2026-10-29, audit F17): a 44px touch area for Today's small phone controls — the Now / Day switch,
+   the day arrows, "All tasks", the rows' ⋯ — drawn by an ::after that grows each side only as far as 44
+   (the X4 kf-hit-min rule), so nothing on the page moves and neighbours aren't reached. */
+@media (pointer: coarse) {
+  .tp-daynav .tp-view .kf-seg-btn,
+  .tp-home .tp-day-step,
+  .tp-pt-link,
+  .tp-slim .kf-row-more,
+  .tp-gs .kf-row-more { position: relative; }
+  .tp-daynav .tp-view .kf-seg-btn::after,
+  .tp-home .tp-day-step::after,
+  .tp-pt-link::after,
+  .tp-slim .kf-row-more::after,
+  .tp-gs .kf-row-more::after { content: ''; position: absolute; inset: min(0px, calc(50% - 22px)); }
+}

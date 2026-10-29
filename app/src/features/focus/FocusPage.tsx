@@ -683,7 +683,7 @@ export function FocusPage() {
           .focus-bleed {
             margin: -20px -16px 0 !important;
             height: auto !important;
-            min-height: calc(var(--kf-vh) - 42px - 88px - env(safe-area-inset-bottom));
+            min-height: calc(var(--kf-vh) - var(--sat) - 42px - var(--tabbar-h) - var(--tabbar-inset) - 24px);
           }
           .fp-strip { padding: 0 16px !important; }
           .fp-esc { display: none; }
@@ -959,7 +959,7 @@ export function FocusPage() {
                 border: '1px solid var(--line-card)',
                 borderRadius: 'var(--radius-md)',
                 padding: '6px 10px',
-                fontSize: 12.5,
+                fontSize: 'max(var(--field-min), 12.5px)',
                 color: 'var(--ink-body)',
                 fontFamily: 'inherit',
                 outline: 'none',

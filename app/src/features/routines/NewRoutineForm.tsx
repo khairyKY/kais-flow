@@ -166,7 +166,7 @@ export function NewRoutineForm({ onClose, initialChallenge = false, routine }: {
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
             placeholder="Evening stretch"
-            style={{ flex: 1, font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
+            style={{ flex: 1, font: 'inherit', fontSize: 'max(var(--field-min), 15px)', color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}
           />
         </div>
       </div>

@@ -138,6 +138,22 @@ export async function runNotificationAction(a: NotificationAction, navigate: (to
   }
 }
 
+/** iOS: the address a notification tap meant, when it cold-started the app (sw-push.js leaves it in Cache
+ * Storage: WebKit can open a fresh window at / instead). Taken once; a stale one (over two minutes) is dropped. */
+export async function takePendingLink(): Promise<string | null> {
+  try {
+    if (typeof caches === 'undefined') return null
+    const cache = await caches.open('kf-pending')
+    const hit = await cache.match('/kf-pending-link')
+    if (!hit) return null
+    await cache.delete('/kf-pending-link')
+    const { url, at } = (await hit.json()) as { url?: string; at?: number }
+    return typeof url === 'string' && url.startsWith('/') && Date.now() - (at ?? 0) < 120_000 ? url : null
+  } catch {
+    return null
+  }
+}
+
 /** Mounted once in the app shell: notification buttons reach this window from the service worker,
  * a Windows toast, an Android notification, or the address a fresh window was opened at. */
 export function installNotificationActions(navigate: (to: string) => void): () => void {
@@ -146,7 +162,10 @@ export function installNotificationActions(navigate: (to: string) => void): () =
   if (fromUrl) {
     history.replaceState(history.state, '', withoutAction(location.pathname, location.search))
     run(fromUrl)
-  }
+  } else
+    void takePendingLink().then((to) => {
+      if (to && to !== location.pathname + location.search) navigate(to)
+    })
   const onMessage = (e: MessageEvent) => {
     if (e.data?.type === 'kf-notification-action') run(e.data as NotificationAction)
     // A push arriving while this window is on screen (sw-push.js): play the pack's sound, say if it did.

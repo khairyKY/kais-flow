@@ -19,7 +19,8 @@ import '../../components/pageMotion.css' // .kf-swap-in (R12)
 export function FirstRunPage({ onSubmit, formRef, left, right, wide, children }: { onSubmit: (e: FormEvent) => void; formRef?: Ref<HTMLFormElement>; left?: ReactNode; right?: ReactNode; wide?: boolean; children: ReactNode }) {
   return (
     <div className="fr">
-      <img className="fr-fern" src="/ds/assets/fern/full.png" alt="" />
+      {/* lazy: a phone hides it (display: none), and a lazy image that is never shown is never fetched (321 KB, F19) */}
+      <img className="fr-fern" src="/ds/assets/fern/full.png" alt="" loading="lazy" decoding="async" />
       <div className={`fr-bar${left ? ' fr-bar--back' : ''}`}>
         {left ?? <span className="fr-mark">Kai's Flow</span>}
         {right}

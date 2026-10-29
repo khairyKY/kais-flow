@@ -141,20 +141,38 @@ export async function checkForUpdate(platform: AppPlatform = appPlatform()): Pro
 }
 
 let swRegistration: ServiceWorkerRegistration | undefined
+let swUpdate: ((reload?: boolean) => Promise<void>) | undefined
 /** main.tsx hands over the PWA's registration so "Reload" can fetch the new worker first. */
 export function setSwRegistration(r: ServiceWorkerRegistration | undefined): void {
   swRegistration = r
 }
+/** main.tsx hands over vite-plugin-pwa's updateSW: the waiting worker takes over, then the page reloads. */
+export function setSwUpdate(fn: (reload?: boolean) => Promise<void>): void {
+  swUpdate = fn
+}
 
-/** Web: look for the new service worker (registerType autoUpdate swaps it in and reloads on its
- * own once it takes over); reload anyway if that hasn't happened in a few seconds. */
+/** Nothing would be lost by a reload now: no sheet or dialog open, no field being typed in (iOS PWA 2026-10-29:
+ * a deploy used to reload the app mid-capture — registerType is 'prompt' now and main.tsx waits for this). */
+export function quietForUpdate(doc: Document = document): boolean {
+  const a = doc.activeElement as HTMLElement | null
+  const typing = !!a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)
+  return !typing && !doc.querySelector('[role="dialog"], [aria-modal="true"]')
+}
+
+/** Web, the person's own Reload / Update: look for the new service worker and let it take over (the page reloads
+ * when it does); reload anyway if none turns up in a few seconds. */
 export async function reloadToUpdate(): Promise<void> {
   try {
     await swRegistration?.update()
+    for (let i = 0; i < 20 && swRegistration && !swRegistration.waiting; i++) await new Promise((r) => setTimeout(r, 200))
+    if (swUpdate && swRegistration?.waiting) {
+      await swUpdate(true)
+      return
+    }
   } catch {
     /* offline between the check and the click: the reload below still runs */
   }
-  window.setTimeout(() => window.location.reload(), swRegistration ? 4000 : 0)
+  window.setTimeout(() => window.location.reload(), swRegistration ? 1000 : 0)
 }
 
 /** Native: hand the installer to the system. Android's shell opens any off-app address in the

@@ -4,12 +4,31 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- iOS PWA (2026-10-29): viewport-fit=cover hands the page the whole screen and the real safe-area insets
+         (the tokens --sat / --sab in src/styles/tokens/spacing.css read them). No maximum-scale: zoom stays. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- The status bar's colour: the page background, --paper-linen (tokens/colors.css, colors.dark.css). These two
+         follow the system until the script below (and lib/theme.ts on every change) sets both to the app's own theme. -->
+    <meta name="theme-color" content="#EFE9DB" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#211D30" media="(prefers-color-scheme: dark)" />
+    <!-- 'default' (not black-translucent): the bar takes theme-color and iOS picks dark or light text for it.
+         black-translucent always draws white text, which vanishes on the day paper. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Kai's Flow" />
     <meta name="description" content="Kai's Flow — tasks, calendar, routines, and journal in one place." />
     <title>Kai's Flow</title>
     <script>
       // Apply saved theme before first paint — no flash of day for night users.
       try { document.documentElement.dataset.theme = localStorage.getItem('kf_theme') === 'night' ? 'night' : 'day' } catch (e) {}
+      // The installed app (Home Screen / an installed PWA), for the tab bar's floor (tokens/spacing.css --tabbar-inset).
+      try {
+        if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) document.documentElement.classList.add('kf-standalone')
+      } catch (e) {}
+      // The status bar wears the app's theme, not the system's (the two metas above; values = --paper-linen).
+      try {
+        var bar = document.documentElement.dataset.theme === 'night' ? '#211D30' : '#EFE9DB'
+        document.querySelectorAll('meta[name="theme-color"]').forEach(function (m) { m.setAttribute('content', bar) })
+      } catch (e) {}
       // Same deal for UI scale — applied pre-paint so the app never flashes at the wrong size.
       // Keep the allowed values and the default rule in sync with src/lib/uiScale.ts
       // (UI_SCALES, defaultUiScale): a saved choice wins; otherwise 100% on a phone or a

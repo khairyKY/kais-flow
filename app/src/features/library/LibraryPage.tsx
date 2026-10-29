@@ -414,7 +414,7 @@ export function LibraryPage() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="search the shelf…"
-                  style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '12px', color: 'var(--ink-body)', outline: 'none', width: '100%', padding: 0 }}
+                  style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: 'max(var(--field-min), 12px)', color: 'var(--ink-body)', outline: 'none', width: '100%', padding: 0 }}
                 />
               </div>
 
@@ -569,7 +569,7 @@ export function LibraryPage() {
                   ))}
 
                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                    <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
+                    <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: 'max(var(--field-min), 12px)' }} />
                     <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-meta)', padding: '6px 12px', borderRadius: 'var(--radius-input)' }}>Add</button>
                   </div>
                   <div style={{ marginTop: 16 }}>{removeButton('Remove note', () => removeNote(activeNote))}</div>
@@ -602,7 +602,7 @@ export function LibraryPage() {
                   ))}
 
                   <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                    <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: '12px' }} />
+                    <input value={newThoughtText} onChange={(e) => setNewThoughtText(e.target.value)} placeholder="add a thought…" style={{ flex: 1, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '8px 10px', fontSize: 'max(var(--field-min), 12px)' }} />
                     <button onClick={handleAddThought} style={{ border: 'none', background: 'var(--acc-terra)', color: 'var(--text-on-accent)', fontSize: 'var(--fs-meta)', padding: '6px 12px', borderRadius: 'var(--radius-input)' }}>Add</button>
                   </div>
                   <div style={{ marginTop: 16 }}>{removeButton('Remove quote', () => removeQuote(activeQuote))}</div>
@@ -675,7 +675,7 @@ export function LibraryPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="search the shelf…"
-            style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '12px', color: 'var(--ink-body)', outline: 'none', width: '100%', padding: 0 }}
+            style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: 'max(var(--field-min), 12px)', color: 'var(--ink-body)', outline: 'none', width: '100%', padding: 0 }}
           />
         </div>
 
