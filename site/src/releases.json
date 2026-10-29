@@ -1,5 +1,29 @@
 [
   {
+    "v": "v1.6.1",
+    "date": "2026-10-30",
+    "title": "A calmer phone Today, a calendar that glides, and an iPhone app that fits",
+    "highlights": [
+      "On the phone, Today shows a Plan my day card while nothing is planned; the Now / Day choice moved to Settings → Appearance",
+      "The Top 3 header now says how much you've planned against the free time left, and warns when it's more than today can fit",
+      "The calendar glides sideways through days: a trackpad swipe or Shift + wheel on the computer, a swipe with momentum on the phone",
+      "Added to an iPhone's Home Screen, Kai's Flow now clears the notch and home bar, follows your theme in the status bar, no longer zooms when you type, and keeps Chat above the keyboard",
+      "First install is much lighter (about 2.6 MB instead of 10 MB), with a guide for adding it to an iPhone's Home Screen",
+      "Lock screen notifications on Android now show on Samsung lock screens, and Settings → This phone has a Lock screen status line saying what's on and what's in the way",
+      "Desktop widgets: Settings → App & updates → Windows desktop makes a private Widget link for desktop widgets"
+    ],
+    "icons": [
+      "sun",
+      "check",
+      "calendar",
+      "globe",
+      "download",
+      "lock",
+      "windows"
+    ],
+    "art": "cherry-bloom"
+  },
+  {
     "v": "v1.6.0",
     "date": "2026-10-29",
     "title": "A Mac app, a new phone Today, and the same settings everywhere",
