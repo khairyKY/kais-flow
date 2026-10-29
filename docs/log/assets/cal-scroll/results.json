@@ -1,0 +1,262 @@
+[
+  {
+    "name": "d-open Week opens on today at the left (Oct 21 — 27), the days drawn either side (21 columns), on a day boundary",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 21 — 27\",\"x\":860,\"scrollers\":[860,860,860],\"top\":901,\"colW\":122.84375,\"first\":\"2026-10-21\",\"aligned\":true,\"onScreen\":[\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-24\",\"2026-10-25\",\"2026-10-26\",\"2026-10-27\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-wheel mid-glide the days follow the wheel (off a day boundary) and the three scrollers move together",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 23 — 29\",\"x\":1124,\"scrollers\":[1124,1124,1124],\"top\":901,\"colW\":122.84375,\"first\":\"2026-10-23\",\"aligned\":false,\"onScreen\":[\"2026-10-23\",\"2026-10-24\",\"2026-10-25\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-wheel mid-glide the header already follows (not Oct 21 — 27)",
+    "ok": true,
+    "detail": "Oct 23 — 29"
+  },
+  {
+    "name": "d-wheel 2.5 days of trackpad swipe settle on a day boundary three days on (Oct 24 — 30)",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 24 — 30\",\"x\":1229,\"scrollers\":[1229,1229,1229],\"top\":901,\"colW\":122.84375,\"first\":\"2026-10-24\",\"aligned\":true,\"onScreen\":[\"2026-10-24\",\"2026-10-25\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-wheel a nudge back of 0.3 day settles one day back (Oct 23 — 29)",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 23 — 29\",\"x\":1106,\"scrollers\":[1106,1106,1106],\"top\":901,\"colW\":122.84375,\"first\":\"2026-10-23\",\"aligned\":true,\"onScreen\":[\"2026-10-23\",\"2026-10-24\",\"2026-10-25\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-shift Shift + mouse wheel glides the days forward and settles on a day",
+    "ok": true,
+    "detail": "2026-10-23 → 2026-10-25 (Oct 25 — 31)"
+  },
+  {
+    "name": "d-vertical a plain wheel still scrolls the hours (the days stay put)",
+    "ok": true,
+    "detail": "901 → 1201, 2026-10-25"
+  },
+  {
+    "name": "d-today Today glides back to Oct 21 — 27",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 21 — 27\",\"x\":860,\"scrollers\":[860,860,860],\"top\":901,\"colW\":122.84375,\"first\":\"2026-10-21\",\"aligned\":true,\"onScreen\":[\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-24\",\"2026-10-25\",\"2026-10-26\",\"2026-10-27\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-next › glides a week on (animated: part-way after 90ms), Oct 28 — Nov 3, on a boundary",
+    "ok": true,
+    "detail": "mid x 1472 aligned=false; {\"h1\":\"Oct 28 — Nov 3\",\"x\":860,\"scrollers\":[860,860,860],\"top\":901,\"colW\":122.84375,\"first\":\"2026-10-28\",\"aligned\":true,\"onScreen\":[\"2026-10-28\",\"2026-10-29\",\"2026-10-30\",\"2026-10-31\",\"2026-11-01\",\"2026-11-02\",\"2026-11-03\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-next › twice more → Nov 11 — 17 (past the drawn days: the buffer re-centred in between)",
+    "ok": true,
+    "detail": "{\"h1\":\"Nov 11 — 17\",\"x\":860,\"scrollers\":[860,860,860],\"top\":901,\"colW\":122.84375,\"first\":\"2026-11-11\",\"aligned\":true,\"onScreen\":[\"2026-11-11\",\"2026-11-12\",\"2026-11-13\",\"2026-11-14\",\"2026-11-15\",\"2026-11-16\",\"2026-11-17\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-prev ‹ glides a week back → Nov 4 — 10",
+    "ok": true,
+    "detail": "{\"h1\":\"Nov 4 — 10\",\"x\":860,\"scrollers\":[860,860,860],\"top\":901,\"colW\":122.84375,\"first\":\"2026-11-04\",\"aligned\":true,\"onScreen\":[\"2026-11-04\",\"2026-11-05\",\"2026-11-06\",\"2026-11-07\",\"2026-11-08\",\"2026-11-09\",\"2026-11-10\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-today Today from two weeks off comes back to Oct 21 — 27",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 21 — 27\",\"x\":860,\"scrollers\":[860,860,860],\"top\":901,\"colW\":122.84375,\"first\":\"2026-10-21\",\"aligned\":true,\"onScreen\":[\"2026-10-21\",\"2026-10-22\",\"2026-10-23\",\"2026-10-24\",\"2026-10-25\",\"2026-10-26\",\"2026-10-27\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "d-keys → (the › key) glides too",
+    "ok": true,
+    "detail": "2026-10-28"
+  },
+  {
+    "name": "d no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l-glide ten days back in one swipe: every day on screen had its block in 10 looks mid-glide (none blank)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "l-glide it settled ten days back (Oct 11 — 17), the buffer re-centred under the glide",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 11 — 17\",\"x\":491,\"scrollers\":[491,491,491],\"top\":901,\"colW\":122.84375,\"first\":\"2026-10-11\",\"aligned\":true,\"onScreen\":[\"2026-10-11\",\"2026-10-12\",\"2026-10-13\",\"2026-10-14\",\"2026-10-15\",\"2026-10-16\",\"2026-10-17\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "l-settled the seven days on screen each show their block",
+    "ok": true,
+    "detail": "[{\"date\":\"2026-10-11\",\"has\":true},{\"date\":\"2026-10-12\",\"has\":true},{\"date\":\"2026-10-13\",\"has\":true},{\"date\":\"2026-10-14\",\"has\":true},{\"date\":\"2026-10-15\",\"has\":true},{\"date\":\"2026-10-16\",\"has\":true},{\"date\":\"2026-10-17\",\"has\":true}]"
+  },
+  {
+    "name": "l-settled the blocks are those days' own (\"Block Oct 11\" … \"Block Oct 17\")",
+    "ok": true,
+    "detail": "Block Oct 7,Block Oct 8,Block Oct 9,Block Oct 10,Block Oct 11"
+  },
+  {
+    "name": "l no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m-setup one day on: Oct 22 — 28",
+    "ok": true,
+    "detail": "2026-10-22"
+  },
+  {
+    "name": "m-drag after a glide, a block dragged one column right lands on Sun Oct 25, same time (10:00–11:00)",
+    "ok": true,
+    "detail": "[[\"Block Oct 24\",\"2026-10-25T07:00:00.000Z\"]]"
+  },
+  {
+    "name": "m-drag the days didn't move under the drop (still Oct 22 at the left, on a boundary)",
+    "ok": true,
+    "detail": "2026-10-22"
+  },
+  {
+    "name": "m-edge held at the right edge, the days glide on under the block (the header and hours together)",
+    "ok": true,
+    "detail": "994 → 1499 1497,1497,1499"
+  },
+  {
+    "name": "m-edge it lands past Oct 28 (the last day shown before), at 10:00 Cairo",
+    "ok": true,
+    "detail": "2026-11-02 10:00"
+  },
+  {
+    "name": "m-edge after the drop the days settle on a day boundary",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 26 — Nov 1\",\"x\":860,\"scrollers\":[860,860,860],\"top\":651,\"colW\":122.84375,\"first\":\"2026-10-26\",\"aligned\":true,\"onScreen\":[\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\",\"2026-10-30\",\"2026-10-31\",\"2026-11-01\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "m-click a click on a block still opens its details",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "m no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f-perf a scripted three-day glide and its settle: no long task ≥ 50ms (0 long tasks)",
+    "ok": true,
+    "detail": " / 2026-10-24"
+  },
+  {
+    "name": "f no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f-reduced reduced motion: the settle is at once (on a boundary 200ms after the wheel stops)",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 23 — 29\",\"x\":1106,\"scrollers\":[1106,1106,1106],\"top\":1126,\"colW\":122.84375,\"first\":\"2026-10-23\",\"aligned\":true,\"onScreen\":[\"2026-10-23\",\"2026-10-24\",\"2026-10-25\",\"2026-10-26\",\"2026-10-27\",\"2026-10-28\",\"2026-10-29\"],\"cols\":21,\"zoom\":1.25}"
+  },
+  {
+    "name": "f-motion with motion on the settle eases (still between days 190ms after the wheel stops, then on a boundary)",
+    "ok": true,
+    "detail": "false → 2026-10-23"
+  },
+  {
+    "name": "f-scale Interface size 100%: two days of swipe settle on Oct 23, every day on screen with its block",
+    "ok": true,
+    "detail": "2026-10-23 zoom 1 [{\"date\":\"2026-10-23\",\"has\":true},{\"date\":\"2026-10-24\",\"has\":true},{\"date\":\"2026-10-25\",\"has\":true},{\"date\":\"2026-10-26\",\"has\":true},{\"date\":\"2026-10-27\",\"has\":true},{\"date\":\"2026-10-28\",\"has\":true},{\"date\":\"2026-10-29\",\"has\":true}]"
+  },
+  {
+    "name": "f-scale 100% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f-scale Interface size 150%: two days of swipe settle on Oct 23, every day on screen with its block",
+    "ok": true,
+    "detail": "2026-10-23 zoom 1.5 [{\"date\":\"2026-10-23\",\"has\":true},{\"date\":\"2026-10-24\",\"has\":true},{\"date\":\"2026-10-25\",\"has\":true},{\"date\":\"2026-10-26\",\"has\":true},{\"date\":\"2026-10-27\",\"has\":true},{\"date\":\"2026-10-28\",\"has\":true},{\"date\":\"2026-10-29\",\"has\":true}]"
+  },
+  {
+    "name": "f-scale 150% no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f-day Day view: one day on screen (Wed, Oct 21), three drawn either side",
+    "ok": true,
+    "detail": "{\"h1\":\"Wed, Oct 21\",\"x\":2391,\"scrollers\":[2391,2391,2391],\"top\":0,\"colW\":797,\"first\":\"2026-10-21\",\"aligned\":true,\"onScreen\":[\"2026-10-21\"],\"cols\":7,\"zoom\":1.25}"
+  },
+  {
+    "name": "f-day a 1.6-day swipe settles two days on (Fri, Oct 23)",
+    "ok": true,
+    "detail": "{\"h1\":\"Fri, Oct 23\",\"x\":3985,\"scrollers\":[3985,3985,3985],\"top\":0,\"colW\":797,\"first\":\"2026-10-23\",\"aligned\":true,\"onScreen\":[\"2026-10-23\"],\"cols\":7,\"zoom\":1.25}"
+  },
+  {
+    "name": "f-day the second clock column and fit hours still draw while gliding",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f-3day 3 days: Oct 21 — 23 on screen, a day boundary",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 21 — 23\",\"x\":797,\"scrollers\":[797,797,797],\"top\":0,\"colW\":265.65625,\"first\":\"2026-10-21\",\"aligned\":true,\"onScreen\":[\"2026-10-21\",\"2026-10-22\",\"2026-10-23\"],\"cols\":9,\"zoom\":1.25}"
+  },
+  {
+    "name": "f-3day one column of swipe settles one day on (Oct 22 — 24), not a page",
+    "ok": true,
+    "detail": "{\"h1\":\"Oct 22 — 24\",\"x\":1063,\"scrollers\":[1063,1063,1063],\"top\":0,\"colW\":265.65625,\"first\":\"2026-10-22\",\"aligned\":true,\"onScreen\":[\"2026-10-22\",\"2026-10-23\",\"2026-10-24\"],\"cols\":9,\"zoom\":1.25}"
+  },
+  {
+    "name": "f-views no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-open Day view on Wednesday, Oct 21",
+    "ok": true,
+    "detail": "Wednesday, Oct 21"
+  },
+  {
+    "name": "p-peek mid-swipe the title already shows the next day (Thursday, Oct 22)",
+    "ok": true,
+    "detail": "Thursday, Oct 22"
+  },
+  {
+    "name": "p-panes mid-swipe the days a fling can reach are drawn with their blocks (7 panes; Oct 22–24 blocks there)",
+    "ok": true,
+    "detail": "7 panes, 3"
+  },
+  {
+    "name": "p-slow a resting finger past half a day settles on one day (Thursday, Oct 22)",
+    "ok": true,
+    "detail": "Thursday, Oct 22"
+  },
+  {
+    "name": "p-fling a quick flick glides on with momentum and crosses 2+ days, settling on a day (Oct 24 or 25)",
+    "ok": true,
+    "detail": "Sunday, Oct 25 (sliding after release: 1)"
+  },
+  {
+    "name": "p-strip the week strip's selected day follows (the same day)",
+    "ok": true,
+    "detail": "Sunday, October 25"
+  },
+  {
+    "name": "p-fling-back a flick back crosses 2+ days back the same way",
+    "ok": true,
+    "detail": "Sunday, Oct 25 → Thursday, Oct 22"
+  },
+  {
+    "name": "p-tap after the swipes a tap on a block still opens its details",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-3day one column of slow swipe settles one day on (Oct 22 – 24), not a page",
+    "ok": true,
+    "detail": "Oct 22 – 24"
+  },
+  {
+    "name": "p-week the week view settles on the next week (seven narrow columns read as a page)",
+    "ok": true,
+    "detail": "Oct 21 – 27 → Oct 28 – Nov 3"
+  },
+  {
+    "name": "p no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
