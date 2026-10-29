@@ -248,7 +248,8 @@ export function SignInPage() {
           <div className="fr-consent" onClick={() => setAgreed((a) => !a)}>
             <Checkbox checked={agreed} size={20} labelledBy={agreeId} />
             <span id={agreeId}>
-              I agree to the <LegalLink href={TERMS_URL}>Terms of Use</LegalLink> and the <LegalLink href={PRIVACY_URL}>Privacy Policy</LegalLink>
+              {/* Explicit consent to the transfer (Egypt PDPL; docs/LEGAL.md) and the age line ride on the one box. */}
+              I agree to the <LegalLink href={TERMS_URL}>Terms of Use</LegalLink> and the <LegalLink href={PRIVACY_URL}>Privacy Policy</LegalLink>, including keeping sensitive things I choose to write and my data being kept in the EU and partly handled in the US. I’m 16 or older.
             </span>
           </div>
         )}

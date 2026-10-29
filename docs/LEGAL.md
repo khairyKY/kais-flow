@@ -69,9 +69,11 @@ builds (its "updated …" lines), the app and `notify` import the file, and a te
 
 ## For Kai to review
 
-- **Have the text reviewed** — this file's banner. Especially: the Terms have no age line (GDPR's
-  digital-consent age is 13–16 depending on the country), no governing law / jurisdiction, no limitation of
-  liability beyond "no warranty", and no named controller or address beyond the contact email.
+- **2026-10-29 review** (`docs/log/2026-10-29-*-legal-review-handoff.md`): both texts rewritten against the
+  code — named controller, age 16+, Egyptian law, liability cap, AI disclosure, processors and transfers,
+  retention list, rights, breach promise; sign-up's box now also carries the transfer consent and the age
+  line. Still not a lawyer's text: the handoff lists what one should look at, and what only Kai can do
+  (Egypt's PDPC licence before 1 Nov 2026, Google OAuth verification, Groq ZDR switch).
 - **Contact address.** The policies show `CONTACT_EMAIL` (`site/src/data.mjs`): `khairyshhn1@gmail.com`.
 - **Email notices** — skipped (above). Say if you want the Gmail SMTP route.
 - **The summary lines** in `legal.ts` are what every existing user reads first; adjust the wording if you like.
