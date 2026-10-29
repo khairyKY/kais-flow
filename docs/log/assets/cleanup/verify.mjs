@@ -101,13 +101,16 @@ const written = (state, table) => state.writes.filter((w) => w.table === table &
 // Retired 2026-10-13 (p7e audit A32): the GitHub row's states — Settings 2a's GitHub rules panel replaced
 // that row; docs/log/assets/github-rules owns them. The no-fake-sync / no-Pushover truth stays here.
 for (const state of [null]) {
-  const { ctx, page, errors } = await open('desktop', '/settings', { integrations: [] })
+  // settings-build (2026-10-26): one category per page — the connected apps on Integrations, reminders on Notifications.
+  const { ctx, page, errors } = await open('desktop', '/settings/integrations', { integrations: [] })
   const txt = await bodyText(page)
   if (!state) {
     check('desktop settings: no "Sync now" button (nothing is connected)', (await page.getByRole('button', { name: 'Sync now' }).count()) === 0)
     check('desktop settings: Google Calendar is a real row — "Not connected", no "Coming soon"', txt.includes('Google Calendar') && /Google Calendar.*Not connected/.test(txt) && !txt.includes('Coming soon') && !txt.includes('scopes: calendar.events'))
     check('desktop settings: no Pushover', !txt.includes('Pushover'))
     check('desktop settings: the old "configured" read-out is gone', !/configured/i.test(txt))
+    await page.goto(`${BASE}/settings/notify`, { waitUntil: 'networkidle' })
+    await sleep(900)
     await page.locator('#settings-Notifications').scrollIntoViewIfNeeded()
     await shot(page, 'desktop-settings')
     await page.locator('#settings-Notifications').screenshot({ path: path.join(OUT, 'desktop-ritual-reminders.png') })
@@ -117,7 +120,7 @@ for (const state of [null]) {
 }
 
 {
-  const { ctx, page, state, errors } = await open('desktop', '/settings', { integrations: [] })
+  const { ctx, page, state, errors } = await open('desktop', '/settings/notify', { integrations: [] })
   const morning = page.getByLabel('Morning digest time')
   const evening = page.getByLabel('Evening nudge time')
   check('reminders: two named time fields at the defaults (08:00, 21:00)', (await morning.inputValue()) === '8:00 AM' && (await evening.inputValue()) === '9:00 PM', `${await morning.inputValue()} / ${await evening.inputValue()}`)
@@ -141,10 +144,10 @@ for (const state of [null]) {
   await page.locator('#settings-Notifications').screenshot({ path: path.join(OUT, 'desktop-ritual-reminders-edited.png') })
 
   // The Integrations page
-  await page.locator('.st-nav-item', { hasText: /^Integrations$/ }).first().click() // UI pass: the section list is buttons
-  await sleep(600)
+  await page.goto(`${BASE}/settings/integrations/google`, { waitUntil: 'networkidle' }) // settings-build: each provider its own page
+  await sleep(900)
   const txt = await bodyText(page)
-  check('integrations page: Google Calendar is a real row with Connect (no "Coming soon", no "Not built yet")', txt.includes('Google Calendar') && !txt.includes('Coming soon') && !txt.includes('Not built yet') && (await page.locator('.st-card', { has: page.getByText('Google Calendar', { exact: true }) }).last().getByRole('button', { name: 'Connect' }).count()) === 1)
+  check('integrations page: Google Calendar is a real row with Connect (no "Coming soon", no "Not built yet")', txt.includes('Google Calendar') && !txt.includes('Coming soon') && !txt.includes('Not built yet') && (await page.getByRole('button', { name: 'Connect' }).count()) === 1)
   check('integrations page: no Pushover row', !txt.includes('Pushover'))
   await shot(page, 'desktop-integrations')
   check('desktop reminders + integrations: no page errors', errors.length === 0, errors.join(' | '))
@@ -153,13 +156,15 @@ for (const state of [null]) {
 
 // ── 2. Phone Settings ──
 {
-  const { ctx, page, state, errors } = await open('phone', '/settings', { integrations: [GH.failing] })
+  const { ctx, page, state, errors } = await open('phone', '/settings/integrations', { integrations: [GH.failing] })
   const txt = await bodyText(page)
   const row = async (label) => page.locator('a, div', { has: page.locator(`span:text-is("${label}")`) }).last().textContent()
   // UI pass (v1.0.27): the phone's summary rows are gone; the Integrations card says it directly.
   void row
   check('phone settings: Google Calendar is a real row (Connect), never "Coming soon"', txt.includes('Google Calendar') && !txt.includes('Coming soon'))
   check('phone settings: no Pushover, no fake sync', !txt.includes('Pushover') && !txt.includes('Sync now'))
+  await page.goto(`${BASE}/settings/notify`, { waitUntil: 'networkidle' })
+  await sleep(900)
   const swRow = (label) => page.locator('div', { has: page.getByText(label, { exact: true }) }).filter({ has: page.locator('[role="switch"]') }).last().locator('[role="switch"]')
   const sw = { count: async () => (await swRow('Morning digest').count()) + (await swRow('Evening nudge').count()), nth: (i) => swRow(i === 0 ? 'Morning digest' : 'Evening nudge') }
   check('phone settings: both reminders have a switch (Settings → Notifications)', (await sw.count()) === 2 && (await page.getByLabel('Morning digest time').count()) === 1 && (await page.getByLabel('Evening nudge time').count()) === 1)
