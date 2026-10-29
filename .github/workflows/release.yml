@@ -313,6 +313,9 @@ jobs:
   publish:
     name: GitHub Release
     needs: deploy
+    # Deploy can run with the gate skipped (a fresh preship record), and a skipped ancestor would skip this
+    # job under the implicit success() — so say what counts: Deploy itself succeeded.
+    if: ${{ !cancelled() && needs.deploy.result == 'success' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -389,7 +392,7 @@ jobs:
 
   android:
     needs: publish
-    if: needs.publish.outputs.tag != ''
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.publish.outputs.tag != '' }}
     uses: ./.github/workflows/android.yml
     permissions:
       contents: write
@@ -401,7 +404,7 @@ jobs:
 
   desktop:
     needs: publish
-    if: needs.publish.outputs.tag != ''
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.publish.outputs.tag != '' }}
     uses: ./.github/workflows/desktop.yml
     permissions:
       contents: write
