@@ -97,4 +97,4 @@ grep -q 'widgets.LockWidget' shots/lockscreen.txt || { echo 'FAIL: the Top 3 loc
 grep -q 'POST_PROMOTED_NOTIFICATIONS' shots/lockscreen.txt || { echo 'FAIL: POST_PROMOTED_NOTIFICATIONS is not declared'; exit 1; }
 grep -q "mId='lock_screen'.*mImportance=3" shots/lockscreen.txt || { echo 'FAIL: the Lock screen notification channel was not made at default importance'; exit 1; }
 grep -q "mId='lock_screen'.*mSound=null" shots/lockscreen.txt || { echo 'FAIL: the Lock screen notification channel has a sound'; exit 1; }
-grep -q "mId='lockscreen'" shots/lockscreen.txt && { echo "FAIL: v1.6.0's low lockscreen channel is still there"; exit 1; }
+if grep -q "mId='lockscreen'" shots/lockscreen.txt; then echo "FAIL: v1.6.0's low lockscreen channel is still there"; exit 1; fi

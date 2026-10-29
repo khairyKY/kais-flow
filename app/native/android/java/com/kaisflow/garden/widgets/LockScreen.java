@@ -176,7 +176,6 @@ public final class LockScreen {
         ch.enableVibration(false);
         ch.enableLights(false);
         ch.setShowBadge(false);
-        ch.setLockscreenVisibility(android.app.Notification.VISIBILITY_PUBLIC);
         nm.createNotificationChannel(ch);
     }
 
