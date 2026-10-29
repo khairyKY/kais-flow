@@ -38,15 +38,26 @@
   --row-min: 56px;
   --topbar-h: 56px;
   --tabbar-h: 64px;
-  --tabbar-inset: env(safe-area-inset-bottom, 16px);
+  /* iOS PWA (2026-10-29): the safe areas, read once here so every surface (and the ios-pwa harness, which
+     overrides these two on <html>) uses the same values. 0 on a computer and wherever the screen has none. */
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  /* The tab bar clears the home indicator. The old env(…, 16px) fallback only applied when the inset was undefined;
+     iOS defines it (0 with no home indicator), so the 16px floor is a max(), in the installed app (html.kf-standalone,
+     index.html): there the bar meets the screen's edge. In a browser tab the browser's own bar sits below it. */
+  --tabbar-inset: var(--sab);
   --capture-size: 56px; /* Kai 2026-10-15: stays 56, keeps its shadow */
   --sheet-radius: 20px;
   --sheet-handle-w: 32px;
   --sheet-handle-h: 4px;
   --sheet-handle-hit: 48px;
   --sheet-h-medium: 60%;
-  --sheet-h-full: calc(100% - 48px);
+  --sheet-h-full: calc(100% - max(48px, var(--sat) + 8px)); /* clears the status bar on a full-screen app */
   --toast-gap: 8px;
   --swipe-commit: 0.4;
 
+}
+
+html.kf-standalone {
+  --tabbar-inset: max(var(--sab), 16px);
 }

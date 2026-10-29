@@ -634,3 +634,18 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-swap-out { pointer-events: none; animation: tpSwapOut var(--dur-normal) var(--ease-standard) both; }
 @keyframes tpSwapIn { from { opacity: 0; transform: translateX(var(--swap-dx)); } }
 @keyframes tpSwapOut { to { opacity: 0; transform: translateX(calc(-1 * var(--swap-dx))); } }
+/* iOS PWA (2026-10-29, audit F17): a 44px touch area for Today's small phone controls — the day arrows, the
+   Top 3 header's load line, "All tasks", the rows' ⋯ — drawn by an ::after that grows each side only as far as 44
+   (the X4 kf-hit-min rule), so nothing on the page moves and neighbours aren't reached. */
+@media (pointer: coarse) {
+  .tp-home .tp-day-step,
+  .tp-pt-link,
+  .tp-load-btn,
+  .tp-slim .kf-row-more,
+  .tp-gs .kf-row-more { position: relative; }
+  .tp-home .tp-day-step::after,
+  .tp-pt-link::after,
+  .tp-load-btn::after,
+  .tp-slim .kf-row-more::after,
+  .tp-gs .kf-row-more::after { content: ''; position: absolute; inset: min(0px, calc(50% - 22px)); }
+}

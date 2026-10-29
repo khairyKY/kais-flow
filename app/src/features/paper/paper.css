@@ -7,7 +7,7 @@
 .pp-frame.is-wide { width: min(1000px, calc(var(--kf-vw) * 0.94)); height: min(840px, calc(var(--kf-vh) * 0.92)); } /* --kf-v*: the viewport under the UI zoom */
 @media (max-width: 767px) {
   .pp-scrim { background: var(--paper-linen); }
-  .pp-frame, .pp-frame.is-wide { width: 100%; height: 100%; border-radius: 0; box-shadow: none; padding-top: env(safe-area-inset-top); }
+  .pp-frame, .pp-frame.is-wide { width: 100%; height: 100%; border-radius: 0; box-shadow: none; padding-top: var(--sat); }
 }
 
 .pp-top { flex: none; display: flex; align-items: center; gap: 4px; min-height: 56px; padding: 4px; }
@@ -16,7 +16,7 @@
 .pp-icon:active { background: var(--pressed-overlay); }
 .pp-icon:focus-visible, .pp-link:focus-visible, .pp-thumb:focus-visible, .pp-type:focus-visible, .pp-row-text:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
 
-.pp-foot { flex: none; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px max(20px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line-card); background: var(--paper-parchment); }
+.pp-foot { flex: none; display: flex; flex-direction: column; gap: 10px; padding: 12px 16px max(20px, var(--sab)); border-top: 1px solid var(--line-card); background: var(--paper-parchment); }
 .pp-foot.is-row { flex-direction: row; align-items: center; }
 .pp-foot.is-row > .kf-button { flex: 1; }
 .pp-foot.is-row > .kf-button--cta { flex: 1.4; }
@@ -99,7 +99,7 @@
 .pp-foot.is-end .pp-selbtn { flex: none; min-width: 88px; }
 .pp-row-main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
 .pp-row-text { display: block; width: 100%; padding: 0; border: none; background: none; font: inherit; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--ink-body); text-align: start; cursor: text; overflow-wrap: anywhere; }
-.pp-row-input { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; line-height: 20px; color: var(--ink-body); background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-input); padding: 8px 10px; }
+.pp-row-input { width: 100%; box-sizing: border-box; font: inherit; font-size: max(var(--field-min), 15px); line-height: 20px; color: var(--ink-body); background: var(--bg-input); border: 1px solid var(--border-default); border-radius: var(--radius-input); padding: 8px 10px; }
 .pp-row-more { color: var(--ink-muted); margin-top: -8px; }
 .pp-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .pp-type { height: 28px; padding: 0 6px 0 10px; border: none; border-radius: 999px; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; position: relative; }

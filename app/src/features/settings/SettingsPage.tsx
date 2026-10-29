@@ -25,6 +25,8 @@ import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readV
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
 import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
 import { isCapacitorShell, isNativeShell, openExternal } from '../../lib/platform'
+import { isIOS, isIOSSafari, openInstallGuide, persistStorage, storageState, type StorageState } from '../../lib/iosPwa'
+import { inPlainBrowser } from '../../lib/appUpdate'
 import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
@@ -817,7 +819,17 @@ function NotificationRow({ glyph, label, help, keys, children }: { glyph: ReactN
   )
 }
 
-const timeStyle = (on: boolean): CSSProperties => ({ width: 84, boxSizing: 'border-box', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 'var(--radius-md)', padding: '8px 10px', opacity: on ? 1 : 0.5 })
+const timeStyle = (on: boolean): CSSProperties => ({ width: 84, boxSizing: 'border-box', fontFamily: 'var(--font-mono)', fontSize: 'max(var(--field-min), 12px)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 'var(--radius-md)', padding: '8px 10px', opacity: on ? 1 : 0.5 })
+
+/** iPhone notifications (F15, F29): no buttons — a tap opens the reminder's task; the iPhone's own sound, not the
+ * app's pack; quiet hours still hold (the server keeps them). */
+const IOS_NOTICE_NOTE = ' · On iPhone a notification has no buttons — tap it to open the task — and plays the iPhone’s own sound'
+
+/** A prompt that came back without a yes: where to change it, said for this device (F14). */
+function permissionLine(p: NotificationPermission): string {
+  if (p === 'denied') return isIOS() ? 'Notifications are off for Kai’s Flow — turn them on in the iPhone’s Settings → Notifications → Kai’s Flow, then try again.' : 'Notifications are blocked for this site — allow them in the browser’s site settings, then try again.'
+  return 'Notifications weren’t allowed — tap Subscribe this device again to answer.'
+}
 
 function NotificationsCard() {
   const { data: s } = useAppSettings()
@@ -842,6 +854,13 @@ function NotificationsCard() {
         await unsubscribeThisDevice()
         setMessage('This device won’t get notifications any more.')
       } else {
+        // iOS shows the permission prompt only for a request made inside the tap: it is this handler's first
+        // await (subscribeThisDevice's own awaits come after, once it's answered).
+        const permission = typeof Notification === 'undefined' ? 'default' : await Notification.requestPermission()
+        if (permission !== 'granted') {
+          setMessage(permissionLine(permission))
+          return
+        }
         await subscribeThisDevice()
         setMessage('This device gets notifications now.')
       }
@@ -955,13 +974,19 @@ function NotificationsCard() {
     ) : (
       <SCard title="This browser" note="web only" device>
         {!supported ? (
-          <Row label="Notifications in this browser" help="Not supported here. On iPhone, add the app to your home screen first (Share → Add to Home Screen)" keys="push notification" />
+          <Row label="Notifications in this browser" help="Not supported here. On iPhone, add the app to your home screen first (Share → Add to Home Screen)" keys="push notification">
+            {isIOSSafari() && inPlainBrowser() && (
+              <Button variant="secondary" onClick={openInstallGuide}>
+                Show me how
+              </Button>
+            )}
+          </Row>
         ) : (
           <Row
             label={`${subs.length} device${subs.length === 1 ? '' : 's'} subscribed`}
             find="This browser: get notifications here"
-            keys="push notification subscribe unsubscribe device"
-            help={subs.length ? subs.map((d) => (d.device_label === thisDeviceLabel ? 'this device ✓' : (d.device_label ?? 'device').slice(0, 20))).join(' · ') : 'None yet'}
+            keys="push notification subscribe unsubscribe device iphone"
+            help={`${subs.length ? subs.map((d) => (d.device_label === thisDeviceLabel ? 'this device ✓' : (d.device_label ?? 'device').slice(0, 20))).join(' · ') : 'None yet'}${isIOS() ? IOS_NOTICE_NOTE : ''}`}
           >
             <Button variant="secondary" onClick={handleSubscribe} disabled={busy}>
               {subscribed ? 'Unsubscribe this device' : 'Subscribe this device'}
@@ -1041,6 +1066,39 @@ function LockScreenRows() {
   )
 }
 
+/** Settings → About → This device, the web app (iOS PWA 2026-10-29): whether this device's storage is kept (the
+ * outbox of unsent changes lives there — lib/iosPwa persistStorage), and on iPhone Safari the way to the Home Screen. */
+function WebDeviceCard() {
+  const [storage, setStorage] = useState<StorageState | null>(null)
+  useEffect(() => {
+    void storageState().then(setStorage)
+  }, [])
+  const iosTab = isIOSSafari() && inPlainBrowser()
+  const help =
+    storage === 'persisted' ? 'Kept — this device won’t clear it to make room'
+    : storage === 'best-effort' ? (isIOS() ? 'Can be cleared when the phone runs low on space · on the Home Screen, iPhone keeps it' : 'Can be cleared when the device runs low on space')
+    : storage === 'unsupported' ? 'This browser doesn’t say'
+    : 'Checking…'
+  return (
+    <SCard title="This device" note="web only" device>
+      <Row label="Storage" help={help} keys="storage offline persist evict outbox">
+        {storage === 'best-effort' && (
+          <Button variant="secondary" onClick={() => void persistStorage().then(setStorage)}>
+            Keep it
+          </Button>
+        )}
+      </Row>
+      {iosTab && (
+        <Row label="Add to Home Screen" help="Reminders, the full screen and offline saving need it on iPhone" keys="install home screen iphone ios pwa">
+          <Button variant="secondary" onClick={openInstallGuide}>
+            Show me how
+          </Button>
+        </Row>
+      )}
+    </SCard>
+  )
+}
+
 // On this computer (the Windows or Mac app) · On this phone (the Android app's widgets) — App & updates.
 function DeviceSections() {
   const tauri = isTauri()
@@ -1072,6 +1130,7 @@ function DeviceSections() {
           </Row>
         </SCard>
       )}
+      {!isNativeShell() && <WebDeviceCard />}
       {widgets && (
         <SCard title="On this phone" note="Android app only" device>
           <Row label="Hide titles on the home screen" help="Widgets say “Your goal” · “Pick 2”" keys="widgets privacy android">

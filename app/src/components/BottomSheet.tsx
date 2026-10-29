@@ -94,15 +94,23 @@ function useMainScrollLock() {
   }, [])
 }
 
-/** Screen px the on-screen keyboard covers at the bottom of the layout viewport (0 when closed). */
-function useKeyboardInset(): number {
-  const [inset, setInset] = useState(0)
+/** The on-screen keyboard, in screen px: `bottom` = what it covers at the bottom of the layout viewport (0
+ * when closed); `top` = how far iOS has panned the layout viewport up to show a field (visualViewport.offsetTop),
+ * so a full-screen layer that sits at top: 0 would have its head above the visible area. Every sheet and the
+ * chat panel ride between the two. */
+export function useKeyboardInset(): { bottom: number; top: number } {
+  const [inset, setInset] = useState({ bottom: 0, top: 0 })
   useEffect(() => {
     const vv = window.visualViewport
     if (!vv) return
     // ponytail: a pinch-zoom also shrinks the visual viewport and reads as a keyboard here —
     // gate on vv.scale if pinching an open sheet ever matters.
-    const on = () => setInset(Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop)))
+    const on = () => {
+      const bottom = Math.max(0, Math.round(window.innerHeight - vv.height - vv.offsetTop))
+      // Only while the keyboard is up: a pinch-zoom pans the visual viewport too, and must not move a sheet.
+      const top = bottom > 0 ? Math.max(0, Math.round(vv.offsetTop)) : 0
+      setInset((p) => (p.bottom === bottom && p.top === top ? p : { bottom, top }))
+    }
     on()
     vv.addEventListener('resize', on)
     vv.addEventListener('scroll', on)
@@ -148,7 +156,7 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
   const track = useRef<{ startY: number; lastY: number; lastT: number; v: number; moved: boolean; h: number } | null>(null)
   const bodyRef = useRef<HTMLDivElement>(null)
   const suppressClick = useRef(false)
-  const kb = useKeyboardInset()
+  const { bottom: kb, top: kbTop } = useKeyboardInset()
   const z = uiZoom() // screen px → layout px under the root UI zoom
 
   useMainScrollLock()
@@ -322,7 +330,7 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
     <div
       onClick={(e) => e.stopPropagation()}
       onPointerDown={(e) => e.stopPropagation()}
-      style={{ position: 'fixed', left: 0, right: 0, top: 0, bottom: kb / z, zIndex: 1000 }}
+      style={{ position: 'fixed', left: 0, right: 0, top: kbTop / z, bottom: kb / z, zIndex: 1000 }}
     >
       <style>{CSS}</style>
       <div
@@ -405,13 +413,13 @@ export function BottomSheet({ onClose, handleGap = 14, detent = 'content', title
             minHeight: 0,
             overflowY: 'auto',
             overscrollBehavior: 'contain',
-            padding: `${header ? 4 : handleGap}px 20px ${foot != null ? '8px' : 'calc(22px + env(safe-area-inset-bottom))'}`,
+            padding: `${header ? 4 : handleGap}px 20px ${foot != null ? '8px' : 'calc(22px + var(--sab))'}`,
           }}
         >
           {body}
         </div>
         {foot != null && (
-          <div data-sheet-footer style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px max(28px, env(safe-area-inset-bottom))', borderTop: '1px solid var(--line-dashed)' }}>
+          <div data-sheet-footer style={{ flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, padding: '12px 16px max(28px, var(--sab))', borderTop: '1px solid var(--line-dashed)' }}>
             {foot}
           </div>
         )}

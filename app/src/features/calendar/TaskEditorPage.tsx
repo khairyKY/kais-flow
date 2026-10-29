@@ -198,7 +198,7 @@ function Editor({ task, tasks }: { task: Task; tasks: Task[] }) {
             onChange={(e) => draft.setNotes(e.target.value)}
             onBlur={saveNotes}
             placeholder="Anything worth remembering when you sit down to do it…"
-            style={{ marginTop: 8, width: '100%', minHeight: 150, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '14px 16px', fontSize: 13.5, lineHeight: 1.65, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', resize: 'vertical' }}
+            style={{ marginTop: 8, width: '100%', minHeight: 150, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '14px 16px', fontSize: 'max(var(--field-min), 13.5px)', lineHeight: 1.65, color: 'var(--ink-body)', fontFamily: 'var(--font-ui)', resize: 'vertical' }}
           />
           <FHelp>plain text · autosaves on blur</FHelp>
 

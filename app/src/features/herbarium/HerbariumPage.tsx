@@ -198,7 +198,7 @@ export function HerbariumPage() {
               <div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5 }}>
                 {isEditingLine ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 13, background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 4, padding: 8, resize: 'none', color: 'var(--ink-body)' }} />
+                    <textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 'max(var(--field-min), 13px)', background: 'var(--paper-linen)', border: '1px solid var(--line-card)', borderRadius: 4, padding: 8, resize: 'none', color: 'var(--ink-body)' }} />
                     <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                       <span onClick={() => setIsEditingLine(false)} style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer' }}>Cancel</span>
                       <span onClick={handleSaveLine} style={{ fontSize: 'var(--fs-caption)', color: 'var(--acc-terra)', fontWeight: 600, cursor: 'pointer' }}>Save</span>
@@ -253,7 +253,7 @@ export function HerbariumPage() {
       <div className="kf-overlay-scrim" style={{ position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--scrim)', backdropFilter: 'blur(3px)' }}>
         <style>{PRESS_CSS}</style>
         <div className="kf-overlay-card kf-page" style={isMobile
-          ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--bg-page)', padding: 'calc(24px + env(safe-area-inset-top)) 26px calc(24px + env(safe-area-inset-bottom))', display: 'flex', flexDirection: 'column' }
+          ? { width: '100%', height: 'var(--kf-vh)', background: 'var(--bg-page)', padding: 'calc(24px + var(--sat)) 26px calc(24px + var(--sab))', display: 'flex', flexDirection: 'column' }
           : { width: 360, background: 'var(--bg-page)', border: '1px solid var(--border-page)', borderRadius: 'var(--radius-page)', boxShadow: 'var(--shadow-popover)', padding: '24px 26px', display: 'flex', flexDirection: 'column', minHeight: 380 }}>
           {ceremonyBeat === 1 && (<>
             <div style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Ready for the press · 1 of 3</div>

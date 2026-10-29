@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { testNotice } from '../../../../supabase/functions/notify/copy.ts'
 import { isCapacitorShell } from '../../lib/platform'
 import { appPlatform } from '../../lib/appUpdate'
+import { isIOS } from '../../lib/iosPwa'
 import { isTauri } from '../tray/native'
 import { isPushSupported, sendTestNotification } from './api'
 import { showLocal } from './local'
@@ -35,7 +36,7 @@ export async function readDeviceState(subs: readonly PushSubscriptionRow[]): Pro
   if (!isPushSupported() || typeof Notification === 'undefined') return { channel, permission: 'unsupported', subscribed: false }
   const endpoint = await thisEndpoint()
   const permission = Notification.permission === 'default' ? 'prompt' : Notification.permission
-  return { channel, permission, subscribed: !!endpoint && subs.some((s) => s.endpoint === endpoint) }
+  return { channel, permission, subscribed: !!endpoint && subs.some((s) => s.endpoint === endpoint), ios: isIOS() }
 }
 
 /** Re-read on mount, whenever the stored devices change, and after `bump()` (a test or a subscribe). */

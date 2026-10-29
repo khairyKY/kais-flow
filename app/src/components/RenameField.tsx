@@ -27,7 +27,7 @@ export function RenameField({ value, onDone, style, ariaLabel = 'Name' }: { valu
         }
       }}
       onBlur={() => finish(text.trim() || null)}
-      style={{ font: 'inherit', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5, padding: '2px 6px', margin: '-3px -7px', minWidth: 0, width: '100%', ...style }}
+      style={{ font: 'inherit', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5, padding: '2px 6px', margin: '-3px -7px', minWidth: 0, width: '100%', ...style, fontSize: `max(var(--field-min), ${typeof style?.fontSize === 'number' ? `${style.fontSize}px` : (style?.fontSize ?? '1em')})` }}
     />
   )
 }

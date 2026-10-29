@@ -302,7 +302,9 @@ button.kf-chip {
     font-size: var(--fs-body);
     font-weight: var(--fw-medium);
   }
-  .kf-button::after { content: ''; position: absolute; inset: -2px 0; }
+  /* iOS PWA (audit F17): a button drawn shorter than 44 (Inbox's File, Today's Replan all) still gets a 44px
+     touch area; a 44 keeps its 48. */
+  .kf-button::after { content: ''; position: absolute; inset: min(-2px, calc(50% - 22px)) 0; }
   .kf-button--cta { padding: 0 22px; }
   .kf-button--secondary,
   .kf-button--tonal { padding: 0 18px; }

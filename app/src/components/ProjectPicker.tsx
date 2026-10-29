@@ -179,7 +179,7 @@ function ProjectPopover({ position, projects, domains, currentProjectId, onSelec
             flex: 1,
             width: '100%',
             fontFamily: 'var(--font-ui)',
-            fontSize: 12.5,
+            fontSize: 'max(var(--field-min), 12.5px)',
             background: 'none',
             border: 'none',
             color: 'var(--ink-body)',

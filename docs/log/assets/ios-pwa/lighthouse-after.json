@@ -1,0 +1,42 @@
+{
+  "today": {
+    "median": {
+      "finalUrl": "http://127.0.0.1:5336/today",
+      "performance": 52,
+      "accessibility": 100,
+      "bestPractices": 79,
+      "FCP": "5.8 s",
+      "LCP": "8.4 s",
+      "SI": "5.8 s",
+      "TBT": "270 ms",
+      "CLS": "0.115",
+      "TTI": "9.2 s",
+      "weightKiB": 1237
+    },
+    "runs": [
+      52,
+      52,
+      48
+    ]
+  },
+  "sign-in": {
+    "median": {
+      "finalUrl": "http://127.0.0.1:5336/sign-in",
+      "performance": 67,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "FCP": "5.0 s",
+      "LCP": "5.5 s",
+      "SI": "5.0 s",
+      "TBT": "40 ms",
+      "CLS": "0.001",
+      "TTI": "5.5 s",
+      "weightKiB": 598
+    },
+    "runs": [
+      67,
+      67,
+      67
+    ]
+  }
+}

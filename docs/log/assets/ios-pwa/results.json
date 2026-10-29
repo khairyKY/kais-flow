@@ -1,0 +1,852 @@
+[
+  {
+    "name": "wk-iphoneSE Today: the column starts below the status bar (20px)",
+    "ok": true,
+    "detail": "padding-top 20"
+  },
+  {
+    "name": "wk-iphoneSE Today: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphoneSE Today: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphoneSE Today: its header sits below the status bar",
+    "ok": true,
+    "detail": "20"
+  },
+  {
+    "name": "wk-iphoneSE Today: nothing on the page (Plan card, Top 3 header) reaches into the status bar",
+    "ok": true,
+    "detail": "{\"min\":20,\"el\":\"div.tp-bar\",\"top3\":344}"
+  },
+  {
+    "name": "wk-iphoneSE Today (installed): the tab bar pads 16px (max(home indicator, 16))",
+    "ok": true,
+    "detail": "16"
+  },
+  {
+    "name": "wk-iphoneSE Today: tabs and the capture button clear the home indicator",
+    "ok": true,
+    "detail": "tabs 651 capture 647 / band from 667"
+  },
+  {
+    "name": "wk-iphoneSE Today: day arrows ≥ 44",
+    "ok": true,
+    "detail": "Yesterday 90×44, Tomorrow 91×44"
+  },
+  {
+    "name": "wk-iphoneSE Today: “All tasks” ≥ 44",
+    "ok": true,
+    "detail": "All tasks 48×44"
+  },
+  {
+    "name": "wk-iphoneSE Today: the Top 3 load line ≥ 44",
+    "ok": true,
+    "detail": "Top 3 · 2h 30m plann 234×44"
+  },
+  {
+    "name": "wk-iphoneSE Today: row ⋯ ≥ 44",
+    "ok": true,
+    "detail": "More actions for \"Ca 44×44, More actions for \"Bu 44×44, More actions for \"Re 44×44, More actions for \"Wa 44×44"
+  },
+  {
+    "name": "wk-iphoneSE Today: Replan all ≥ 44",
+    "ok": true,
+    "detail": "Replan all ▾ 117×46"
+  },
+  {
+    "name": "wk-iphoneSE a full sheet starts below the status bar",
+    "ok": true,
+    "detail": "48"
+  },
+  {
+    "name": "wk-iphoneSE Chat: its header starts below the status bar",
+    "ok": true,
+    "detail": "{\"padTop\":20,\"headTop\":20}"
+  },
+  {
+    "name": "wk-iphoneSE Chat: mic and send ≥ 44",
+    "ok": true,
+    "detail": "Talk — tap, or hold  46×46, ↑ 44×44"
+  },
+  {
+    "name": "wk-iphoneSE Chat: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphoneSE Chat: the field stays above the keyboard",
+    "ok": true,
+    "detail": "{\"fieldBottom\":392,\"panelBottom\":407,\"visible\":407}"
+  },
+  {
+    "name": "wk-iphoneSE Today/Chat: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphoneSE Capture: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphoneSE Capture: the field stays above the keyboard",
+    "ok": true,
+    "detail": "{\"bottom\":279,\"visible\":407}"
+  },
+  {
+    "name": "wk-iphoneSE Calendar: the column starts below the status bar (20px)",
+    "ok": true,
+    "detail": "padding-top 20"
+  },
+  {
+    "name": "wk-iphoneSE Calendar: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphoneSE Calendar: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphoneSE Calendar: its header sits below the status bar",
+    "ok": true,
+    "detail": "20"
+  },
+  {
+    "name": "wk-iphoneSE Calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphoneSE Tasks: the column starts below the status bar (20px)",
+    "ok": true,
+    "detail": "padding-top 20"
+  },
+  {
+    "name": "wk-iphoneSE Tasks: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphoneSE Tasks: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphoneSE Tasks: the list tabs ≥ 44",
+    "ok": true,
+    "detail": "8 tabs"
+  },
+  {
+    "name": "wk-iphoneSE Tasks: “↻ Repeating” ≥ 44",
+    "ok": true,
+    "detail": "↻ Repeating 68×44"
+  },
+  {
+    "name": "wk-iphoneSE Tasks: “＋ Save as smart list” ≥ 44",
+    "ok": true,
+    "detail": "＋ Save as smart list 113×44"
+  },
+  {
+    "name": "wk-iphoneSE Tasks: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphoneSE Inbox: the column starts below the status bar (20px)",
+    "ok": true,
+    "detail": "padding-top 20"
+  },
+  {
+    "name": "wk-iphoneSE Inbox: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphoneSE Inbox: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphoneSE Inbox: File ≥ 44",
+    "ok": true,
+    "detail": "File 51×46, File 51×46"
+  },
+  {
+    "name": "wk-iphoneSE Inbox: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphoneSE Settings: the column starts below the status bar (20px)",
+    "ok": true,
+    "detail": "padding-top 20"
+  },
+  {
+    "name": "wk-iphoneSE Settings: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphoneSE Settings: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphoneSE Settings: the search field is 16px",
+    "ok": true,
+    "detail": "16"
+  },
+  {
+    "name": "wk-iphoneSE Settings: the top bar sits below the status bar",
+    "ok": true,
+    "detail": "20"
+  },
+  {
+    "name": "wk-iphoneSE Settings: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphoneSE Focus: the column starts below the status bar (20px)",
+    "ok": true,
+    "detail": "padding-top 20"
+  },
+  {
+    "name": "wk-iphoneSE Focus: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphoneSE Focus: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphoneSE Focus: the page starts below the status bar",
+    "ok": true,
+    "detail": "62"
+  },
+  {
+    "name": "wk-iphoneSE Focus: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15 Today: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15 Today: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15 Today: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphone15 Today: its header sits below the status bar",
+    "ok": true,
+    "detail": "59"
+  },
+  {
+    "name": "wk-iphone15 Today: nothing on the page (Plan card, Top 3 header) reaches into the status bar",
+    "ok": true,
+    "detail": "{\"min\":59,\"el\":\"div.tp-bar\",\"top3\":383}"
+  },
+  {
+    "name": "wk-iphone15 Today (installed): the tab bar pads 34px (max(home indicator, 16))",
+    "ok": true,
+    "detail": "34"
+  },
+  {
+    "name": "wk-iphone15 Today: tabs and the capture button clear the home indicator",
+    "ok": true,
+    "detail": "tabs 818 capture 814 / band from 818"
+  },
+  {
+    "name": "wk-iphone15 Today: day arrows ≥ 44",
+    "ok": true,
+    "detail": "Yesterday 90×44, Tomorrow 91×44"
+  },
+  {
+    "name": "wk-iphone15 Today: “All tasks” ≥ 44",
+    "ok": true,
+    "detail": "All tasks 48×44"
+  },
+  {
+    "name": "wk-iphone15 Today: the Top 3 load line ≥ 44",
+    "ok": true,
+    "detail": "Top 3 · 2h 30m plann 234×44"
+  },
+  {
+    "name": "wk-iphone15 Today: row ⋯ ≥ 44",
+    "ok": true,
+    "detail": "More actions for \"Ca 44×44, More actions for \"Bu 44×44, More actions for \"Re 44×44, More actions for \"Wa 44×44"
+  },
+  {
+    "name": "wk-iphone15 Today: Replan all ≥ 44",
+    "ok": true,
+    "detail": "Replan all ▾ 117×46"
+  },
+  {
+    "name": "wk-iphone15 a full sheet starts below the status bar",
+    "ok": true,
+    "detail": "67"
+  },
+  {
+    "name": "wk-iphone15 Chat: its header starts below the status bar",
+    "ok": true,
+    "detail": "{\"padTop\":59,\"headTop\":59}"
+  },
+  {
+    "name": "wk-iphone15 Chat: mic and send ≥ 44",
+    "ok": true,
+    "detail": "Talk — tap, or hold  46×46, ↑ 44×44"
+  },
+  {
+    "name": "wk-iphone15 Chat: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphone15 Chat: the field stays above the keyboard",
+    "ok": true,
+    "detail": "{\"fieldBottom\":467,\"panelBottom\":516,\"visible\":516}"
+  },
+  {
+    "name": "wk-iphone15 Today/Chat: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15 Capture: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphone15 Capture: the field stays above the keyboard",
+    "ok": true,
+    "detail": "{\"bottom\":382,\"visible\":516}"
+  },
+  {
+    "name": "wk-iphone15 Calendar: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15 Calendar: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15 Calendar: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphone15 Calendar: its header sits below the status bar",
+    "ok": true,
+    "detail": "59"
+  },
+  {
+    "name": "wk-iphone15 Calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15 Tasks: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15 Tasks: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15 Tasks: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphone15 Tasks: the list tabs ≥ 44",
+    "ok": true,
+    "detail": "8 tabs"
+  },
+  {
+    "name": "wk-iphone15 Tasks: “↻ Repeating” ≥ 44",
+    "ok": true,
+    "detail": "↻ Repeating 68×44"
+  },
+  {
+    "name": "wk-iphone15 Tasks: “＋ Save as smart list” ≥ 44",
+    "ok": true,
+    "detail": "＋ Save as smart list 113×44"
+  },
+  {
+    "name": "wk-iphone15 Tasks: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15 Inbox: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15 Inbox: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15 Inbox: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphone15 Inbox: File ≥ 44",
+    "ok": true,
+    "detail": "File 51×46, File 51×46"
+  },
+  {
+    "name": "wk-iphone15 Inbox: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15 Settings: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15 Settings: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15 Settings: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphone15 Settings: the search field is 16px",
+    "ok": true,
+    "detail": "16"
+  },
+  {
+    "name": "wk-iphone15 Settings: the top bar sits below the status bar",
+    "ok": true,
+    "detail": "59"
+  },
+  {
+    "name": "wk-iphone15 Settings: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15 Focus: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15 Focus: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15 Focus: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphone15 Focus: the page starts below the status bar",
+    "ok": true,
+    "detail": "101"
+  },
+  {
+    "name": "wk-iphone15 Focus: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15promax Today: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15promax Today: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15promax Today: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphone15promax Today: its header sits below the status bar",
+    "ok": true,
+    "detail": "59"
+  },
+  {
+    "name": "wk-iphone15promax Today: nothing on the page (Plan card, Top 3 header) reaches into the status bar",
+    "ok": true,
+    "detail": "{\"min\":59,\"el\":\"div.tp-bar\",\"top3\":383}"
+  },
+  {
+    "name": "wk-iphone15promax Today (installed): the tab bar pads 34px (max(home indicator, 16))",
+    "ok": true,
+    "detail": "34"
+  },
+  {
+    "name": "wk-iphone15promax Today: tabs and the capture button clear the home indicator",
+    "ok": true,
+    "detail": "tabs 898 capture 894 / band from 898"
+  },
+  {
+    "name": "wk-iphone15promax Today: day arrows ≥ 44",
+    "ok": true,
+    "detail": "Yesterday 90×44, Tomorrow 91×44"
+  },
+  {
+    "name": "wk-iphone15promax Today: “All tasks” ≥ 44",
+    "ok": true,
+    "detail": "All tasks 48×44"
+  },
+  {
+    "name": "wk-iphone15promax Today: the Top 3 load line ≥ 44",
+    "ok": true,
+    "detail": "Top 3 · 2h 30m plann 234×44"
+  },
+  {
+    "name": "wk-iphone15promax Today: row ⋯ ≥ 44",
+    "ok": true,
+    "detail": "More actions for \"Ca 44×44, More actions for \"Bu 44×44, More actions for \"Re 44×44, More actions for \"Wa 44×44"
+  },
+  {
+    "name": "wk-iphone15promax Today: Replan all ≥ 44",
+    "ok": true,
+    "detail": "Replan all ▾ 117×46"
+  },
+  {
+    "name": "wk-iphone15promax a full sheet starts below the status bar",
+    "ok": true,
+    "detail": "67"
+  },
+  {
+    "name": "wk-iphone15promax Chat: its header starts below the status bar",
+    "ok": true,
+    "detail": "{\"padTop\":59,\"headTop\":59}"
+  },
+  {
+    "name": "wk-iphone15promax Chat: mic and send ≥ 44",
+    "ok": true,
+    "detail": "Talk — tap, or hold  46×46, ↑ 44×44"
+  },
+  {
+    "name": "wk-iphone15promax Chat: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphone15promax Chat: the field stays above the keyboard",
+    "ok": true,
+    "detail": "{\"fieldBottom\":537,\"panelBottom\":586,\"visible\":586}"
+  },
+  {
+    "name": "wk-iphone15promax Today/Chat: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15promax Capture: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphone15promax Capture: the field stays above the keyboard",
+    "ok": true,
+    "detail": "{\"bottom\":452,\"visible\":586}"
+  },
+  {
+    "name": "wk-iphone15promax Calendar: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15promax Calendar: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15promax Calendar: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphone15promax Calendar: its header sits below the status bar",
+    "ok": true,
+    "detail": "59"
+  },
+  {
+    "name": "wk-iphone15promax Calendar: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15promax Tasks: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15promax Tasks: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15promax Tasks: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphone15promax Tasks: the list tabs ≥ 44",
+    "ok": true,
+    "detail": "8 tabs"
+  },
+  {
+    "name": "wk-iphone15promax Tasks: “↻ Repeating” ≥ 44",
+    "ok": true,
+    "detail": "↻ Repeating 68×44"
+  },
+  {
+    "name": "wk-iphone15promax Tasks: “＋ Save as smart list” ≥ 44",
+    "ok": true,
+    "detail": "＋ Save as smart list 113×44"
+  },
+  {
+    "name": "wk-iphone15promax Tasks: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15promax Inbox: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15promax Inbox: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15promax Inbox: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphone15promax Inbox: File ≥ 44",
+    "ok": true,
+    "detail": "File 51×46, File 51×46"
+  },
+  {
+    "name": "wk-iphone15promax Inbox: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15promax Settings: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15promax Settings: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15promax Settings: no field under 16px",
+    "ok": true,
+    "detail": "1 field(s)"
+  },
+  {
+    "name": "wk-iphone15promax Settings: the search field is 16px",
+    "ok": true,
+    "detail": "16"
+  },
+  {
+    "name": "wk-iphone15promax Settings: the top bar sits below the status bar",
+    "ok": true,
+    "detail": "59"
+  },
+  {
+    "name": "wk-iphone15promax Settings: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "wk-iphone15promax Focus: the column starts below the status bar (59px)",
+    "ok": true,
+    "detail": "padding-top 59"
+  },
+  {
+    "name": "wk-iphone15promax Focus: no sideways scroll",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "wk-iphone15promax Focus: no field under 16px",
+    "ok": true,
+    "detail": "0 field(s)"
+  },
+  {
+    "name": "wk-iphone15promax Focus: the page starts below the status bar",
+    "ok": true,
+    "detail": "101"
+  },
+  {
+    "name": "wk-iphone15promax Focus: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "install guide: shows in an iOS Safari tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "install guide: three steps, the Share icon",
+    "ok": true,
+    "detail": "Put Kai’s Flow on your Home Screen Tap Share in Safari’s bar. Choose “Add to Home Screen”. Tap Add, then open it from th"
+  },
+  {
+    "name": "install guide: Not now closes it and remembers",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "install guide: dismissed stays dismissed",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Settings → This device: the storage row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Settings → This device: “Add to Home Screen · Show me how” in an iOS Safari tab",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "install guide: Settings opens it again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "install guide: not in the installed app (standalone)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "install guide: not on a computer",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: no top inset, no sideways scroll",
+    "ok": true,
+    "detail": "{\"pad\":0,\"h\":0}"
+  },
+  {
+    "name": "theme-color: Day → --paper-linen #efe9db",
+    "ok": true,
+    "detail": "#efe9db #efe9db"
+  },
+  {
+    "name": "theme-color: Night (pre-paint) → #211d30",
+    "ok": true,
+    "detail": "#211d30 #211d30"
+  },
+  {
+    "name": "theme-color: a live switch to Light follows at once",
+    "ok": true,
+    "detail": "#efe9db #efe9db · body rgb(239, 233, 219)"
+  },
+  {
+    "name": "index.html: viewport-fit=cover, status-bar style, title, light/dark theme-color",
+    "ok": true,
+    "detail": "{\"vp\":\"width=device-width, initial-scale=1.0, viewport-fit=cover\",\"bar\":\"default\",\"title\":\"Kai's Flow\",\"media\":[\"(prefers-color-scheme: light)\",\"(prefers-color-scheme: dark)\"]}"
+  },
+  {
+    "name": "android Today: no sideways scroll, no field under 16px",
+    "ok": true,
+    "detail": "{\"h\":0,\"small\":[]}"
+  },
+  {
+    "name": "android Today (a browser tab): the tab bar pads what the browser reports, 0 as before",
+    "ok": true,
+    "detail": "0"
+  },
+  {
+    "name": "android: no install guide (iOS Safari only)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android Today: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android Tasks: no sideways scroll, no field under 16px",
+    "ok": true,
+    "detail": "{\"h\":0,\"small\":[]}"
+  },
+  {
+    "name": "android Tasks: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "android Settings: no sideways scroll, no field under 16px",
+    "ok": true,
+    "detail": "{\"h\":0,\"small\":[]}"
+  },
+  {
+    "name": "android Settings: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "precache: under 3 MB",
+    "ok": true,
+    "detail": "148 entries, 2592 KiB"
+  },
+  {
+    "name": "precache: no design-system art, no non-latin font subsets, no duplicates",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "precache: the tab pages are in it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "precache: other pages are not",
+    "ok": true,
+    "detail": ""
+  }
+]

@@ -14,14 +14,14 @@ const EXIT_MS = 200 // --dur-toast
 
 const CSS = `
   .kf-toast-host { position: fixed; z-index: 1100; display: flex; flex-direction: column; gap: var(--toast-gap);
-    bottom: calc(16px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%);
+    bottom: calc(16px + var(--sab)); left: 50%; transform: translateX(-50%);
     width: max-content; max-width: min(480px, calc(var(--kf-vw) - 24px)); pointer-events: none; }
   @media (max-width: 767px) {
     .kf-toast-host { left: 12px; right: 12px; transform: none; width: auto; max-width: none;
       bottom: calc(var(--tabbar-h) + var(--tabbar-inset) + var(--toast-gap)); }
     /* A sheet or modal is up: dock to the top edge so the toast never covers its rows (the ⋯ sheet's
        Select/Delete sat under a swipe's Undo for 6s). Full sheets leave 48px there. */
-    body:has([aria-modal="true"]) .kf-toast-host { top: calc(env(safe-area-inset-top) + 8px); bottom: auto; }
+    body:has([aria-modal="true"]) .kf-toast-host { top: calc(var(--sat) + 8px); bottom: auto; }
   }
   .kf-toast { position: relative; overflow: hidden; pointer-events: auto; display: flex; align-items: center; gap: 4px;
     min-height: 48px; padding: 0 4px 0 16px; box-sizing: border-box; border-radius: var(--radius-input);

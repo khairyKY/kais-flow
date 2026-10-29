@@ -69,7 +69,7 @@ export function NumberField({ value, onChange, min = 1, max = 999, step = 1, ari
             onChange(stepValue(value, e.key === 'ArrowUp' ? step : -step, b))
           }
         }}
-        style={{ width: `${Math.max(2, String(max).length) + 1.5}ch`, font: 'inherit', textAlign: 'center', color: 'var(--ink-body)', background: 'transparent', border: '1px solid var(--line-solid)', borderRadius: 4, padding: '2px 4px', outline: 'none', ...inputStyle }}
+        style={{ width: `${Math.max(2, String(max).length) + 1.5}ch`, font: 'inherit', fontSize: 'max(var(--field-min), 1em)', textAlign: 'center', color: 'var(--ink-body)', background: 'transparent', border: '1px solid var(--line-solid)', borderRadius: 4, padding: '2px 4px', outline: 'none', ...inputStyle }}
       />
       {stepper(step, 'More', '+')}
     </span>

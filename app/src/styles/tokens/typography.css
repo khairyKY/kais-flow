@@ -54,6 +54,12 @@
   --fs-badge: 12px;
   --ls-meta: 0;
 
+  /* iOS PWA: the smallest a form field may be. 0 = the field keeps its own size; 16px on a touch screen,
+     where Safari zooms into anything smaller (index.css applies it). */
+  --field-min: 0px;
+}
+@media (pointer: coarse) {
+  :root { --field-min: 16px; }
 }
 
 @media (max-width: 767px) {

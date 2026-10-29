@@ -17,6 +17,8 @@ import { Icon } from '../../components/Icon'
 import { takeChatStarter } from '../widgets/native'
 import type { IconName } from '../../components/icons/kf'
 import { scrollBehavior } from '../../lib/motion'
+import { uiZoom } from '../../lib/uiScale'
+import { useKeyboardInset } from '../../components/BottomSheet'
 import '../projects/xfx.css' // .kf-row-in (T11)
 import './chat.css'
 
@@ -78,6 +80,8 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
   // A28: the conversation stays (this device, this account) until Clear.
   const [messages, setMessages] = useState<DisplayMessage[]>(() => loadChat(uid))
   const [input, setInput] = useState('')
+  const kb = useKeyboardInset()
+  const zoom = uiZoom() // screen px → layout px under the root UI zoom
   // The Ask widget's chip and the block menu's Work with AI › type a question in (not sent). Taken once the panel
   // is on screen: a first render thrown away (the lazy chunk's Suspense) used to take it with it — an empty field.
   useEffect(() => {
@@ -286,8 +290,11 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
       className="kf-drawer"
       style={{
         position: 'fixed',
-        top: 0,
-        bottom: 0,
+        // iOS PWA: rides above the on-screen keyboard like the capture sheet (BottomSheet's useKeyboardInset),
+        // and starts below the status bar on a full-screen phone (--sat: 0 everywhere else).
+        top: kb.top / zoom,
+        bottom: kb.bottom / zoom,
+        paddingTop: kb.top ? 0 : 'var(--sat)',
         right: 0,
         zIndex: 50,
         width: '100%',
@@ -431,7 +438,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           e.preventDefault()
           void send()
         }}
-        style={{ flex: 'none', padding: '12px 14px calc(12px + env(safe-area-inset-bottom))', borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}
+        style={{ flex: 'none', padding: '12px 14px calc(12px + var(--sab))', borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 10 }}
       >
         <input
           ref={inputRef}
@@ -442,7 +449,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           style={{
             flex: 1,
             fontFamily: 'var(--font-ui)',
-            fontSize: 12.5,
+            fontSize: 'max(var(--field-min), 12.5px)',
             background: 'none',
             border: 'none',
             outline: 'none',
@@ -453,7 +460,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         {/* A28: the mic — tap to talk (the sheet's Stop & send), or hold while you speak and let go. */}
         <button
           type="button"
-          className="kf-chat-mic"
+          className="kf-chat-mic kf-hit kf-hit-min"
           aria-label="Talk — tap, or hold while you speak"
           title="Talk — tap, or hold while you speak"
           disabled={busy}
@@ -475,6 +482,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
         </button>
         <button
           type="submit"
+          className="kf-hit kf-hit-min" // 30px, a 44px touch area (X4)
           disabled={busy || !input.trim()}
           style={{
             width: 30,

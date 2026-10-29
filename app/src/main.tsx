@@ -25,24 +25,38 @@ import './features/projects/xfx.css'
 import { registerSW } from 'virtual:pwa-register'
 import App from './App.tsx'
 import { installExternalLinks, isNativeShell, syncShellChrome } from './lib/platform'
-import { setSwRegistration } from './lib/appUpdate'
+import { quietForUpdate, setSwRegistration, setSwUpdate } from './lib/appUpdate'
 import { installNativeMenuGuard } from './lib/nativeMenu'
 
-// Auto-refresh (Kai, 2026-09-24): a deploy used to leave open tabs on the old cached build
-// until a second reload. In autoUpdate mode this reloads the page as soon as the new version
-// takes over; queued writes survive in the outbox, a half-typed draft does not (accepted).
+// Auto-refresh (Kai, 2026-09-24): a deploy used to leave open tabs on the old cached build until a second
+// reload. iOS PWA (2026-10-29): it used to reload the moment the new version took over — on an iPhone, coming
+// back to the app is exactly when it looks, so a capture half-typed was lost. Now (registerType 'prompt') the new
+// version waits, and goes in when nothing would be lost: when the app is put away or opened again with no sheet
+// open and no field being typed in (lib/appUpdate quietForUpdate). A cold start takes it by itself; Settings →
+// Check for updates → Reload, and the "vX is out" toast's Update, apply it at once.
 // M1: not inside the native shell — the APK bundles dist/ itself and updates by a new APK, and
 // Android's WebView has no Push API, so a service worker would only duplicate what's installed.
-if (!isNativeShell()) registerSW({
-  immediate: true,
-  onRegisteredSW(_url, registration) {
-    setSwRegistration(registration) // Settings → Check for updates → Reload
-    // Browsers only look for a new build on navigation — also look whenever the tab comes back.
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') void registration?.update()
-    })
-  },
-})
+if (!isNativeShell()) {
+  let waiting = false
+  const updateSW = registerSW({
+    // Registered on `load` (not at once): the worker's install downloads the whole precache, which must not race the
+    // first page for a phone's bandwidth.
+    immediate: false,
+    onNeedRefresh() {
+      waiting = true
+      if (document.visibilityState === 'hidden' && quietForUpdate()) void updateSW(true)
+    },
+    onRegisteredSW(_url, registration) {
+      setSwRegistration(registration) // Settings → Check for updates → Reload
+      // Browsers only look for a new build on navigation — also look whenever the tab comes back.
+      document.addEventListener('visibilitychange', () => {
+        if (waiting && quietForUpdate()) void updateSW(true)
+        else if (document.visibilityState === 'visible') void registration?.update()
+      })
+    },
+  })
+  setSwUpdate(updateSW)
+}
 
 // Kai 2026-10-03: no WebView Back/Refresh/Print menu on a right-click — ours, or none (lib/nativeMenu).
 installNativeMenuGuard()

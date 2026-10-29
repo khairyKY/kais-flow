@@ -126,3 +126,13 @@
   .tasks-head-capture { display: none; }
 }
 .tr-mobile-only { display: none; }
+
+/* iOS PWA (audit F17): the Tasks tabs are 32px of text and underline; on a touch screen each reaches 44 upward —
+   12px of padding the strip takes back with its own -12px margin, so the tabs, their underline and the bar's
+   border stay exactly where they were. (The strip clips sideways scrolling, so an ::after can't do this.) */
+@media (pointer: coarse) {
+  .tr-tabstrip { margin-top: -12px; }
+  .tr-tabstrip > a { padding-top: 12px; }
+  /* a short one ("All") grows sideways to 44 too, into the 22px gap — never as far as its neighbour */
+  .tr-tabstrip > a::after { content: ''; position: absolute; inset: 0 min(0px, calc(50% - 22px)); }
+}

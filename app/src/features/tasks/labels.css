@@ -5,7 +5,7 @@
   background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-input); box-shadow: var(--shadow-popover); }
 .lp-find { display: flex; align-items: center; gap: 8px; margin: 2px 2px 6px; padding: 7px 10px; background: var(--paper-bone);
   border: 1px solid var(--line-card); border-radius: var(--radius-input); color: var(--ink-faint); font-size: var(--fs-caption); }
-.lp-find input { flex: 1; min-width: 0; padding: 0; border: none; background: none; outline: none; font: inherit; color: var(--ink-body); }
+.lp-find input { flex: 1; min-width: 0; padding: 0; border: none; background: none; outline: none; font: inherit; font-size: max(var(--field-min), 1em); color: var(--ink-body); }
 .lp-find input::placeholder { color: var(--ink-faint); }
 .lp-list { overflow-y: auto; min-height: 0; }
 .lp-mi { display: flex; align-items: center; gap: 11px; width: 100%; padding: 7px 10px; box-sizing: border-box; border: none; border-radius: var(--radius-input);
