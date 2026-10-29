@@ -152,10 +152,18 @@ export function ribbonSpan(b: UpNextEvent, now: Date): { left: number; width: nu
  * day — Plan my day's own window (rituals/ritualLogic DAY_FROM–DAY_TO, 09:00–18:00; an 18:00 gym
  * isn't workload), from now or its start, on the user's clock — 0 when it fits. */
 export function overCapacity(openTop3: readonly WorkItem[], events: readonly Block[], now: Date, doneTaskIds: ReadonlySet<string>): number {
+  return dayLoad(openTop3, events, now, doneTaskIds).over
+}
+
+/** today-v2 (Kai's over warning, option D on the phone's Top 3 header): the same count, its parts in whole
+ * minutes — `planned` = the open Top 3 and today's other blocks inside what's left of 09:00–18:00, `free` = what's
+ * left of that window, `over` = how much of the plan doesn't fit (0 when it does). */
+export function dayLoad(openTop3: readonly WorkItem[], events: readonly Block[], now: Date, doneTaskIds: ReadonlySet<string>): { planned: number; free: number; over: number } {
   const from = Math.max(now.getTime(), dayAt(now, DAY_FROM))
   const to = dayAt(now, DAY_TO)
-  const work = workLeft(openTop3, workBlocks(events, now, doneTaskIds), from, to)
-  return Math.max(0, Math.round(work - Math.max(0, (to - from) / 60_000)))
+  const planned = Math.round(workLeft(openTop3, workBlocks(events, now, doneTaskIds), from, to))
+  const free = Math.round(Math.max(0, (to - from) / 60_000))
+  return { planned, free, over: Math.max(0, planned - free) }
 }
 
 /** "2 of 6 done" (Today 2a's summary, MK Workload's hairline): today's own work — the Top 3, what's
