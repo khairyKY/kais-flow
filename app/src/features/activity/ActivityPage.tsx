@@ -12,7 +12,8 @@ import { useAllInboxItems } from '../inbox/api'
 import { useDomains } from '../domains/api'
 import { useCalendarRows } from '../calendar/api'
 import { describeActivity, plural, type ActivityIcon, type ActivityNames } from './describe'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { useMotionEnabled, useWasLoading, staggerDelay } from '../../lib/motion'
+import { Skeleton } from '../../components/States'
 import { appZone } from '../../lib/appZone'
 import { clockOptions } from '../../lib/clock'
 import { KindGlyph } from '../notifications/KindGlyph'
@@ -133,6 +134,7 @@ export function ActivityPage() {
   const range = RANGES[rangeIdx]
 
   const { data: rawEntries = [], isLoading } = useRecentActivity(limit)
+  const fadeIn = useWasLoading(isLoading) ? 'kf-fade' : undefined // T15: content after the skeleton fades in
   const { data: projects = [] } = useProjects()
   const { data: areas = [] } = useAreas()
   const { data: tasks = [] } = useTasks()
@@ -332,11 +334,11 @@ export function ActivityPage() {
             ))}
           </div>
           {isLoading ? (
-            <div style={{ padding: 40, textAlign: 'center', color: 'var(--ink-muted)' }}>Loading the ledger...</div>
+            <Skeleton />
           ) : groupedEntries.length === 0 ? (
-            <div className="ahand" style={{ padding: 40, textAlign: 'center' }}>Nothing is logged you didn't do — just a trail behind you ✿</div>
+            <div className={fadeIn ? 'ahand kf-fade' : 'ahand'} style={{ padding: 40, textAlign: 'center' }}>Nothing is logged you didn't do — just a trail behind you ✿</div>
           ) : (
-            groupedEntries.map(([dateKey, group]) => (
+            <div className={fadeIn}>{groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
                 <div className="slabel" style={{ margin: '16px 0 12px' }}>
                   <span>{formatShortDateHeader(dateKey)}</span>
@@ -344,7 +346,7 @@ export function ActivityPage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>{group.map((e, i) => renderItem(e, i, group.length))}</div>
               </div>
-            ))
+            ))}</div>
           )}
           {!isLoading && rawEntries.length >= limit && (
             <div style={{ margin: '8px 0 24px', padding: '14px 0', borderTop: '1px solid var(--line-dashed)', display: 'flex', justifyContent: 'center' }}>
@@ -395,11 +397,11 @@ export function ActivityPage() {
             ))}
           </div>
           {isLoading ? (
-            <div style={{ padding: '60px 0', textAlign: 'center', color: 'var(--ink-muted)' }}>Loading activity log...</div>
+            <Skeleton />
           ) : groupedEntries.length === 0 ? (
-            <div className="ahand" style={{ padding: '60px 0', textAlign: 'center' }}>Nothing is logged you didn't do — just a trail behind you ✿</div>
+            <div className={fadeIn ? 'ahand kf-fade' : 'ahand'} style={{ padding: '60px 0', textAlign: 'center' }}>Nothing is logged you didn't do — just a trail behind you ✿</div>
           ) : (
-            groupedEntries.map(([dateKey, group]) => (
+            <div className={fadeIn}>{groupedEntries.map(([dateKey, group]) => (
               <div key={dateKey}>
                 <div className="slabel" style={{ margin: '24px 0 16px' }}>
                   <span>{formatDateHeader(dateKey)}</span>
@@ -407,7 +409,7 @@ export function ActivityPage() {
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column' }}>{group.map((e, i) => renderItem(e, i, group.length))}</div>
               </div>
-            ))
+            ))}</div>
           )}
           {!isLoading && groupedEntries.length > 0 && (
             <div style={{ marginTop: 8, padding: '14px 0', borderTop: '1px solid var(--line-dashed)', display: 'flex', alignItems: 'center', gap: 12 }}>

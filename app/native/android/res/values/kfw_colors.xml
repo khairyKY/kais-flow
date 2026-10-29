@@ -8,7 +8,6 @@
     <color name="kfw_line_card">#E0D8C2</color>
     <color name="kfw_line_goal">#DCC48E</color>
     <color name="kfw_line_control">#88816E</color>
-    <color name="kfw_line_dashed">#D5CDB5</color>
     <color name="kfw_ink">#2A2420</color>
     <color name="kfw_ink_muted">#5F5849</color>
     <color name="kfw_ink_faint">#6A6354</color>
@@ -17,28 +16,23 @@
     <color name="kfw_terra">#B5654A</color>
     <color name="kfw_terra_ink">#9C5139</color>
     <color name="kfw_on_terra">#FBF6E9</color>
-    <color name="kfw_sage">#8A9A7E</color>
     <color name="kfw_sage_text">#4D6650</color>
     <color name="kfw_lavender_text">#5A5170</color>
-    <color name="kfw_lavender_deep">#6A5988</color>
-    <color name="kfw_buttercream_text">#716431</color>
-    <color name="kfw_blossom">#D4A8B0</color>
-    <color name="kfw_blossom_petal">#B3D4A8B0</color>
-    <color name="kfw_blossom_text">#8A4A58</color>
-    <color name="kfw_hydrangea_deep">#4D6A75</color>
     <color name="kfw_moss">#7A946E</color>
     <color name="kfw_block_lavender">#33A8A0BE</color>
-    <color name="kfw_block_sage">#338A9A7E</color>
-    <color name="kfw_block_blossom">#38D4A8B0</color>
-    <color name="kfw_block_hydrangea">#389AB4BE</color>
     <color name="kfw_check_border">#88816E</color>
     <color name="kfw_check_fill">#4D6650</color>
     <color name="kfw_check_bg">#F6F0E1</color>
     <color name="kfw_overdue">#9C5139</color>
-    <color name="kfw_streak">#B5654A</color>
     <color name="kfw_offline">#4D6A75</color>
     <color name="kfw_badge_bg">#9C5139</color>
     <color name="kfw_badge_ink">#FBF6E9</color>
     <color name="kfw_skeleton">#122A2420</color>
-    <color name="kfw_tape">#617F6428</color>
+    <!-- widgets-build: the card's line, the now line, the bars' track and the week dots' gap -->
+    <color name="kfw_line_frame">#E0D8C2</color>
+    <color name="kfw_lavender">#A8A0BE</color>
+    <color name="kfw_track">#172A2420</color>
+    <color name="kfw_gap">#1A2A2420</color>
+    <!-- acc-gold-warm (the washi tape; the goal's underline on the Day bar) -->
+    <color name="kfw_gold_warm">#C9A55A</color>
 </resources>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+: a real CheckBox (RemoteViews CompoundButton) that ticks on the home screen at once
+     (setOnCheckedChangeResponse, Render.box); the paper box is its background, by checked state. -->
+<CheckBox xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/box" android:layout_width="32dp" android:layout_height="32dp" android:background="@drawable/kfw_check" android:button="@null" android:contentDescription="Tick" />

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Day bar (DayBar): two bitmaps, one per theme; the night bitmap shows (layout/ has the day one), so the system dark mode
+     needs no redraw. Tapping it opens today's calendar. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/bar" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/bar_day" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:contentDescription="Today's blocks" android:visibility="gone" />
+    <ImageView android:id="@+id/bar_night" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:contentDescription="Today's blocks" android:visibility="visible" />
+</FrameLayout>

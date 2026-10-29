@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- W37 · Now card small (2×2): Up next and its start, the title on two lines, the progress line with its times,
+     and "Then" — what comes after. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
+    <LinearLayout android:id="@+id/body" style="@style/KfW.Body">
+        <include layout="@layout/kfw_nowhead" />
+        <FrameLayout style="@style/KfW.Fill" />
+        <LinearLayout android:id="@+id/then" android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:id="@+id/then_title" style="@style/KfW.Meta" android:layout_width="0dp" android:layout_weight="1" />
+            <TextView android:id="@+id/then_time" style="@style/KfW.Time" android:layout_marginStart="6dp" android:textColor="@color/kfw_ink_muted" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

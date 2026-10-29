@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Widgets build mocks</title>
+<!-- widgets-build (2026-10-26): HTML mocks of the Android home-screen widgets as built — each one mirrors its
+     res/layout/kfw_*.xml (dp → px, the same sizes, paddings and type) and what Render / Families / DayBarWidgets put
+     in it, filled with the design page's day (Mon 26 Oct, 10:40). Colours are the app's own tokens (palette C
+     included), so Day and Night are true; the Android stock fonts stand in as Roboto, Noto Serif, Roboto Mono and
+     Dancing Script. No SDK was on the build machine, so this is the preview, not a device render (the debug
+     WidgetGallery draws the real thing on a device). shoot.mjs screenshots it. -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&family=Roboto+Mono&family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Dancing+Script&display=block">
+<link rel="stylesheet" href="../../../../app/src/styles/tokens/colors.css">
+<link rel="stylesheet" href="../../../../app/src/styles/tokens/colors.dark.css">
+<style>
+:root{--sans:'Roboto',Arial,sans-serif;--serif:'Noto Serif',Georgia,serif;--mono:'Roboto Mono',Consolas,monospace;--hand:'Dancing Script','Segoe Script',cursive}
+*{box-sizing:border-box}
+body{margin:0;padding:24px;background:var(--paper-linen);color:var(--ink-body);font:14px/1.4 var(--sans)}
+h1{font:600 24px var(--serif);margin:0 0 4px}
+h2{font:600 18px var(--serif);margin:28px 0 10px}
+.note{color:var(--ink-muted);font-size:13px;max-width:900px}
+.grid{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.pair{display:flex;gap:12px;align-items:flex-start;padding:12px;border:1px solid var(--line-card);border-radius:14px;background:var(--paper-parchment)}
+.pair .cap{font:600 13px var(--sans);margin-bottom:6px}
+.pair .cap small{font-weight:400;color:var(--ink-faint);margin-left:6px}
+.pair figure{margin:0}
+.pair figcaption{font-size:11.5px;color:var(--ink-faint);margin-top:4px}
+.wall{padding:10px;border-radius:12px;background:linear-gradient(160deg,#9ec3dd,#e9dcc4 60%,#b9a37a)}
+.wall.dark{background:linear-gradient(160deg,#0f1424,#3a3346 60%,#231d2c)}
+img.before{display:block;border-radius:8px}
+
+/* ── a widget: the card (KfW.Root) ── */
+.w{position:relative;overflow:hidden;border-radius:20px;background:var(--paper-parchment);border:1px solid var(--line-card);color:var(--ink-body);font-family:var(--sans);line-height:1.2}
+[data-theme="night"] .w{border-color:var(--line-solid)}
+.w.goalcard{background:var(--paper-goal);border-color:var(--line-goal)}
+.b{display:flex;flex-direction:column;height:100%;padding:12px 13px}
+.b.slim{flex-direction:row;align-items:center;padding:8px 12px}
+.fill{flex:1;min-height:0}
+.nw{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.clamp{display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden}
+.ic{flex:none;display:block}
+/* the header (kfw_head) */
+.hd{display:flex;align-items:center;min-height:26px;flex:none}
+.hd .i{color:var(--ink-muted);margin-right:6px;display:flex}
+.hd .l{font-size:13px;font-weight:500;white-space:nowrap}
+.hd .q{flex:1;margin-left:4px;font-size:12.5px;color:var(--ink-faint)}
+.hd .r{margin-left:8px;font-size:12.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums;white-space:nowrap}
+.add{flex:none;margin-left:8px;width:28px;height:28px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:flex;align-items:center;justify-content:center}
+/* the box (kfw_box: 20 in a 32 hit) */
+.bx{flex:none;width:32px;height:32px;display:flex;align-items:center;justify-content:center}
+.bx i{width:20px;height:20px;border-radius:5px;border:1.5px solid var(--check-border);background:var(--check-bg);display:flex;align-items:center;justify-content:center;color:var(--paper-parchment);font-style:normal;font-size:12px}
+.bx.on i{background:var(--check-fill);border-color:var(--check-fill)}
+.bx.gold i{border-color:var(--acc-gold);background:var(--check-bg)}
+/* the goal strip (kfw_goal_strip) */
+.gs{position:relative;padding-top:5px;flex:none}
+.gs .in{display:flex;align-items:flex-start;padding:2px 8px 4px 2px;background:var(--paper-goal);border:1px solid var(--line-goal);border-radius:12px}
+.gs .tx{flex:1;min-width:0;margin-left:2px;padding-top:7px}
+.gs .t{font:700 14px/1.25 var(--serif)}
+.gs .tag{margin-top:4px;font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--acc-gold);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gs .clover{height:19px;margin:6px 0 0 6px;flex:none}
+.tape{position:absolute;top:0;left:50%;width:44px;height:11px;margin-left:-22px}
+/* rows (kfw_row_task) and the hairline */
+.row{display:flex;align-items:center;min-height:32px}
+.row .bx{margin-left:-6px}
+.row .t{flex:1;margin-left:2px;font-size:13.5px}
+.row .m{margin-left:8px;font-size:12px;color:var(--ink-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.row.done .t{text-decoration:line-through;color:var(--ink-faint)}
+.hair{height:1px;background:var(--line-card);flex:none}
+/* a palette C block (kfw_row_blk) */
+.blk{position:relative;display:flex;align-items:center;min-height:30px;margin-top:5px;padding:0 9px;border-radius:10px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));font-size:12.5px;flex:none;overflow:hidden}
+.blk .lb{font-weight:500;margin-right:6px}
+.blk .tm{margin-right:7px;font-size:11.5px;color:var(--ct);font-variant-numeric:tabular-nums}
+.blk .k{flex:none;width:12px;height:12px;margin-right:6px;border:2px solid var(--ct);border-radius:4px}
+.blk .st{color:var(--acc-gold);margin-right:3px}
+.blk .t{flex:1}
+.blk .cd{margin-left:6px;font-size:11.5px;color:var(--ink-muted);font-variant-numeric:tabular-nums}
+.blk .rule,.col .cb .rule{position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--acc-gold)}
+.blk.past{opacity:.62}
+/* the Now card (kfw_nowhead) */
+.nt{display:flex;align-items:flex-start;margin-top:5px}
+.nt .rg{flex:none;width:13px;height:13px;margin-top:3px;border-radius:50%;border:2px solid var(--c)}
+.nt .t{flex:1;margin-left:8px;font-size:15.5px;font-weight:500;line-height:1.25}
+.bar{height:4px;margin-top:8px;border-radius:2px;background:color-mix(in srgb,var(--ink-body) 9%,transparent);overflow:hidden;flex:none}
+.bar i{display:block;height:100%;background:var(--c)}
+.tms{display:flex;justify-content:space-between;margin-top:4px;font-size:11.5px;color:var(--ink-faint);font-variant-numeric:tabular-nums}
+/* the capture bar, buttons */
+.cbar{flex:none;display:flex;align-items:center;height:36px;padding:0 4px 0 12px;border-radius:999px;background:var(--paper-bone);border:1px solid var(--line-control);color:var(--ink-faint);font-size:13px}
+.cbar .x{flex:1;margin-left:8px}
+.cbar .mic{width:28px;height:28px;border-radius:50%;background:var(--acc-terra-ink);color:var(--on-terra);display:flex;align-items:center;justify-content:center}
+.btn{display:inline-flex;align-items:center;justify-content:center;height:30px;padding:0 13px;border-radius:999px;font:500 12.5px var(--sans);white-space:nowrap;background:var(--paper-bone);border:1px solid var(--line-control);color:var(--ink-body)}
+.btn.cta{background:var(--acc-terra-ink);border-color:var(--acc-terra-ink);color:var(--on-terra)}
+.round{flex:none;width:34px;height:34px;border-radius:50%;background:var(--paper-bone);border:1px solid var(--line-control);color:var(--ink-muted);display:flex;align-items:center;justify-content:center}
+.serif{font-family:var(--serif);font-weight:700}
+.meta{font-size:12px;color:var(--ink-muted)}
+/* the calendar column (Timeline.column) */
+.col{position:relative;flex:1;min-height:0;margin-top:6px;overflow:hidden}
+.col .hl{position:absolute;left:0;right:0;height:14px;display:flex;align-items:center}
+.col .hl b{width:38px;padding-right:6px;text-align:right;font:400 10px var(--sans);color:var(--ink-faint)}
+.col .hl i{flex:1;height:1px;background:var(--line-card)}
+.col .cb{position:absolute;right:4px;overflow:hidden;padding:4px 8px 0;border-radius:10px;border:1px solid color-mix(in srgb,var(--c) 45%,transparent);background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));font-size:12px;line-height:1.25}
+.col .cb .r1{display:flex}
+.col .cb .k{flex:none;width:11px;height:11px;margin:2px 5px 0 0;border:2px solid var(--ct);border-radius:4px}
+.col .cb .tm{margin-top:1px;font-size:10.5px;color:var(--ct)}
+.col .cb.past{opacity:.62}
+.col .now{position:absolute;right:0;height:10px;display:flex;align-items:center}
+.col .now::before{content:'';width:10px;height:10px;border-radius:50%;background:var(--acc-lavender)}
+.col .now i{flex:1;height:2px;background:var(--acc-lavender)}
+/* the Day bar (DayBar) */
+.db{position:relative;flex:none;height:44px;margin-top:8px}
+.db .rail{position:absolute;left:0;right:0;top:12px;height:12px;border-radius:6px;background:color-mix(in srgb,var(--ink-body) 9%,transparent)}
+.db .sg{position:absolute;top:12px;height:12px;border-radius:4px;background:color-mix(in srgb,var(--c) 75%,var(--paper-parchment));overflow:hidden}
+.db .sg.l1{top:26px;height:7px;border-radius:3px}
+.db .sg.past{opacity:.5}
+.db .sg.goal::after{content:'';position:absolute;left:0;right:0;bottom:0;height:3px;background:var(--acc-gold-warm)}
+.db .mk{position:absolute;top:1px;font-size:10px;line-height:1;transform:translateX(-50%)}
+.db .tick{position:absolute;top:8px;width:2px;height:28px;margin-left:-1px;border-radius:1px;background:var(--acc-lavender)}
+.db .ax span{position:absolute;bottom:0;transform:translateX(-50%);font-size:10px;color:var(--ink-faint)}
+.db.slim{height:10px;margin-top:7px}
+.db.slim .rail{top:0;height:10px;border-radius:5px}
+.db.slim .sg{top:0;height:10px;border-radius:3px;background:color-mix(in srgb,var(--c) var(--blk-fill),var(--paper-parchment));border:1px solid color-mix(in srgb,var(--c) 45%,transparent)}
+.db.slim .tick{top:0;height:10px}
+</style>
+</head>
+<body>
+<h1>Kai's Flow widgets, as built</h1>
+<p class="note">Mocks of every home-screen widget on <code>claude/widgets-build</code>, drawn from the Android layouts and the render code (see the comment at the top of this file). Each card: the old picker preview, then the new one by day and at night. Below them, the three families at small 2×2, medium 4×2 and large 4×4.</p>
+<div id="out"></div>
+<script>
+// ── the sample day (the design page's): Mon 26 Oct 2026, 10:40 in Cairo ──
+const NOW = 10 + 40 / 60
+const IC = {
+  plus: '<path d="M12 5v14M5 12h14"/>', mic: '<rect x="9" y="3.5" width="6" height="11" rx="3"/><path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v2.5"/>',
+  star: '<path d="M12 3.8l2.5 5.1 5.6.8-4 4 .9 5.6-5-2.7-5 2.7.9-5.6-4-4 5.6-.8z"/>',
+  today: '<path d="M12 20.5v-8"/><path d="M12 12.5C12 8.6 9.3 6 5 6c0 3.9 2.7 6.5 7 6.5z"/><path d="M12 15c0-3.3 2.4-5.6 6.5-5.6 0 3.3-2.4 5.6-6.5 5.6z"/><path d="M7.5 20.5h9"/>',
+  calendar: '<rect x="4" y="5.5" width="16" height="14.5" rx="2"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/>',
+  clock: '<circle cx="12" cy="12" r="8"/><path d="M12 7.8V12l3 2"/>', activity: '<path d="M3.5 12.5h3.6l2.4-6 4.2 11.5 2.6-5.5h4.2"/>',
+  chat: '<path d="M5.5 5h13A1.5 1.5 0 0 1 20 6.5v9a1.5 1.5 0 0 1-1.5 1.5H11l-4.5 3.5V17h-1A1.5 1.5 0 0 1 4 15.5v-9A1.5 1.5 0 0 1 5.5 5z"/>',
+  focus: '<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><path d="M12 12h.01"/>',
+  routines: '<path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3"/><path d="M19.8 4.2v4.3h-4.3"/><path d="M12 15.5v-3.2c0-1.6 1.2-2.8 2.8-2.8 0 1.6-1.2 2.8-2.8 2.8"/>',
+  inbox: '<path d="M4 13.5 6.2 6.3A1.8 1.8 0 0 1 7.9 5h8.2a1.8 1.8 0 0 1 1.7 1.3L20 13.5v4.7a1.8 1.8 0 0 1-1.8 1.8H5.8A1.8 1.8 0 0 1 4 18.2z"/><path d="M4 13.5h4.4l1.3 2.3h4.6l1.3-2.3H20"/>',
+  journal: '<path d="M5.5 5.5A1.5 1.5 0 0 1 7 4h11.5v13.5H7a1.5 1.5 0 0 0-1.5 1.5z"/><path d="M5.5 19A1.5 1.5 0 0 0 7 20.5h11.5v-3"/><path d="M9.5 8h5.5"/>',
+}
+const ic = (n, s = 15) => `<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${IC[n]}</svg>`
+const RES = '../../../../app/native/android/res/drawable-nodpi/'
+const ART = (n) => `${RES}kfw_art_${n}.webp`
+const TAPE = `${RES}kfw_tape.png`
+const B = (c) => `--c:var(--blk-${c});--ct:var(--blk-${c}-ink)`
+const BL = [
+  { t: 'Lecture — Machine Learning', a: 8.5, b: 10, c: 'rose' },
+  { t: 'Lecture — Computer Vision', a: 11, b: 12.5, c: 'rose' },
+  { t: 'Office hours — Dr. Hany', a: 12, b: 12.75, c: 'cornflower' },
+  { t: 'Finish the CNN backprop notes', a: 13.5, b: 15.5, c: 'iris', task: true, goal: true },
+  { t: 'Coffee with Omar', a: 15, b: 15.75, c: 'clay' },
+  { t: 'Gym — push day', a: 17, b: 18.25, c: 'fern' },
+  { t: 'DL study group', a: 19, b: 20, c: 'lagoon' },
+  { t: 'Watch Karpathy: makemore part 3', a: 21, b: 22, c: 'iris', task: true },
+]
+const GOAL = { t: 'Finish the CNN backprop notes for the DL midterm', a: 13.5, b: 15.5 }
+const PICKS = [{ t: 'Deep Learning problem set 4 (Q1–Q3)', len: '1h 30m' }, { t: 'Email Dr. Hany the project proposal', len: '20m' }]
+const TASKS = [{ t: 'Review lecture 7 slides — Attention' }, { t: 'Pay the internet bill', m: '6:30 PM' }, { t: 'Book the dentist' }, { t: 'Water the basil', done: true }]
+const clk = (h, ap = true) => { const hh = Math.floor(h + 1e-9), mm = Math.round((h - hh) * 60); return `${hh % 12 || 12}:${String(mm).padStart(2, '0')}${ap ? (hh < 12 ? ' AM' : ' PM') : ''}` }
+const rng = (a, b) => (a < 12) === (b < 12) ? `${clk(a, false)}–${clk(b)}` : `${clk(a)}–${clk(b)}`
+const upcoming = BL.filter((e) => e.a > NOW)
+
+// ── the shared pieces, as the layouts draw them ──
+const head = (icon, label, q = '', right = '') => `<div class="hd">${icon ? `<span class="i">${ic(icon)}</span>` : ''}<span class="l">${label}</span><span class="q nw">${q ? '· ' + q : ''}</span>${right}</div>`
+const R = (t) => `<span class="r">${t}</span>`
+const ADD = `<span class="add">${ic('plus', 14)}</span>`
+const box = (o = {}) => `<span class="bx${o.on ? ' on' : ''}${o.gold ? ' gold' : ''}"><i>${o.on ? '✓' : ''}</i></span>`
+const goal = (lines = 2, tag = 'short') => `<div class="gs"><div class="in">${box({ gold: true })}<div class="tx"><div class="t clamp" style="-webkit-line-clamp:${lines}">${GOAL.t}</div>${tag ? `<div class="tag">✶ ${tag === 'full' ? 'Goal of the day' : 'Goal'} · ${rng(GOAL.a, GOAL.b)}</div>` : ''}</div><img class="clover" src="${ART('clover_four_leaf')}" alt=""></div><img class="tape" src="${TAPE}" alt=""></div>`
+const row = (x, m) => `<div class="row${x.done ? ' done' : ''}">${box({ on: x.done })}<span class="t nw">${x.t}</span>${m ? `<span class="m">${m}</span>` : ''}</div>`
+const rows = (list) => list.join('<div class="hair"></div>')
+const blk = (e, o = {}) => `<div class="blk${e.b <= NOW ? ' past' : ''}" style="${B(e.c)}">${e.goal ? '<span class="rule"></span>' : ''}${o.label ? `<span class="lb">${o.label}</span>` : ''}<span class="tm">${clk(e.a, false)}</span>${e.task ? '<span class="k"></span>' : ''}${e.goal ? '<span class="st">✶</span>' : ''}<span class="t nw">${e.t}</span>${o.cd ? `<span class="cd">in ${o.cd}</span>` : ''}</div>`
+const nowCard = (o = {}) => { const e = upcoming[0]; return `${head('', 'Up next', o.small ? '' : rng(e.a, e.b), o.small ? R(clk(e.a, false)) : R('in 19:42') + (o.add ? ADD : ''))}<div class="nt" style="${B(e.c)}"><span class="rg"></span><span class="t clamp" style="-webkit-line-clamp:${o.lines ?? 1}">${e.t}</span></div><div class="bar" style="${B(e.c)}"><i style="width:0"></i></div>${o.times ? `<div class="tms"><span>${clk(e.a, !o.small)}</span><span>${clk(e.b, !o.small)}</span></div>` : ''}` }
+const capbar = (t = 'Add a task…') => `<div class="cbar">${ic('plus', 15)}<span class="x">${t}</span><span class="mic">${ic('mic', 14)}</span></div>`
+function column(ph, h) {
+  const from = Math.floor((NOW - 0.5) * 2) / 2, y = (t) => (t - from) * ph
+  let s = '<div class="col">'
+  for (let hr = Math.ceil(from); hr <= 24; hr++) s += `<div class="hl" style="top:${y(hr) - 7}px"><b>${hr < 24 ? `${hr % 12 || 12} ${hr < 12 ? 'AM' : 'PM'}` : ''}</b><i></i></div>`
+  for (const e of BL) {
+    if (e.b <= from) continue
+    const top = y(Math.max(e.a, from)) + 1, hh = Math.max(18, (Math.min(e.b, 24) - Math.max(e.a, from)) * ph - 3)
+    s += `<div class="cb${e.b <= NOW ? ' past' : ''}" style="${B(e.c)};top:${top}px;height:${hh}px;left:42px">${e.goal ? '<span class="rule"></span>' : ''}<div class="r1">${e.task ? '<span class="k"></span>' : ''}${e.goal ? '<span style="color:var(--acc-gold);margin-right:3px">✶</span>' : ''}<span class="clamp" style="-webkit-line-clamp:${hh >= 44 ? 2 : 1}">${e.t}</span></div>${hh >= 32 ? `<div class="tm">${rng(e.a, e.b)}</div>` : ''}</div>`
+  }
+  return s + `<div class="now" style="top:${y(NOW) - 5}px;left:33px"><i></i></div></div>`
+}
+function dayBar(slim) {
+  const x = (h) => ((h - 7) / 16) * 100
+  let s = `<div class="db${slim ? ' slim' : ''}"><span class="rail"></span>`
+  let end0 = 0
+  for (const e of BL) {
+    const l1 = !slim && e.a < end0
+    if (!l1) end0 = Math.max(end0, e.b)
+    s += `<span class="sg${l1 ? ' l1' : ''}${e.b <= NOW ? ' past' : ''}${e.goal && !l1 ? ' goal' : ''}" style="${B(e.c)};left:calc(${x(e.a)}% + 1px);width:calc(${x(e.b) - x(e.a)}% - 2px)"></span>`
+  }
+  s += `<span class="tick" style="left:${x(NOW)}%"></span>`
+  if (!slim) s += `<span class="mk" style="left:${x(7.5)}%;color:var(--acc-gold)">☀</span><span class="mk" style="left:${x(17)}%;color:var(--acc-lavender-text)">☾</span><div class="ax">${[8, 12, 16, 20].map((h) => `<span style="left:${x(h)}%">${h % 12 || 12}${h < 12 ? 'am' : 'pm'}</span>`).join('')}</div>`
+  return s + '</div>'
+}
+const body = (inner, cls = '') => `<div class="b ${cls}">${inner}</div>`
+
+// ── every widget's face (cols, rows, html) ──
+const F = {
+  W01: [4, 1, () => `<div style="display:flex;align-items:center;height:100%;padding:0 8px"><div style="flex:1">${goal(2)}</div></div>`],
+  W02: [2, 2, () => `<div class="b" style="padding-top:14px;padding-bottom:8px"><div style="display:flex"><span class="gs" style="flex:1;padding:2px 0 0"><span class="tag" style="display:block;margin:0;font:10px var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--acc-gold)">✶ Goal of the day</span></span><img src="${ART('clover_four_leaf')}" style="height:24px" alt=""></div><div class="serif clamp" style="-webkit-line-clamp:3;margin-top:6px;font-size:16px;line-height:1.3">${GOAL.t}</div><div class="fill"></div><div style="display:flex;align-items:center"><span style="margin-left:-6px">${box({ gold: true })}</span><span class="meta" style="margin-left:2px;color:var(--acc-gold)">${rng(GOAL.a, GOAL.b)} · 2h</span></div></div><img class="tape" src="${TAPE}" style="width:46px;height:12px;margin-left:-23px" alt="">`, 'goalcard'],
+  W03: [2, 2, () => body(`${head('star', 'Top 3', '0/3')}<div style="margin-top:4px">${goal(1)}</div><div style="margin-top:2px">${rows(PICKS.map((x) => row(x)))}</div>`)],
+  W04: [4, 2, () => body(`${head('today', 'Monday, Oct 26', '1 of 8 done', ADD)}<div style="display:flex;margin-top:4px"><div style="flex:1;min-width:0;margin-right:10px">${goal(3)}</div><div style="flex:1;min-width:0">${blk(upcoming[0])}<div style="margin-top:2px">${rows(PICKS.map((x) => row(x)))}</div></div></div>`)],
+  W05: [4, 4, () => body(`${nowCard({ add: true, times: true })}<div style="margin-top:3px">${blk(upcoming[1])}${blk(upcoming[2])}</div><div style="margin-top:8px">${goal(2, 'full')}</div><div style="margin-top:2px">${rows(PICKS.map((x) => row(x, x.len)))}</div><div class="fill"></div>${capbar()}`)],
+  W06: [4, 2, () => body(`${nowCard()}<div style="margin-top:3px">${blk(upcoming[1], { label: 'Then' })}</div><div class="fill"></div><div style="display:flex;gap:8px"><span class="btn cta">Start focus</span></div>`)],
+  W07: [2, 1, () => `<div style="height:100%;padding:8px"><div class="blk" style="${B('rose')};height:100%;margin:0;flex-direction:column;align-items:stretch;justify-content:center;padding:0 10px"><span class="tm" style="font-size:11.5px">Next · 11:00</span><span class="clamp" style="-webkit-line-clamp:2;font-size:13px;line-height:1.25;margin-top:2px">Lecture — Computer Vision</span></div></div>`],
+  W08: [4, 1, () => body(`<div style="flex:1;min-width:0"><div style="display:flex;align-items:flex-end"><span class="serif" style="font-size:16px">1 of 8 done</span><span class="meta nw" style="margin-left:8px">finish ~10:15 PM</span></div>${dayBar(true)}</div><img src="${ART('wisteria_p40')}" style="height:46px;margin-left:12px" alt="">`, 'slim')],
+  W09: [1, 1, () => `<div style="display:flex;align-items:center;justify-content:center;height:100%"><span class="add" style="width:46px;height:46px;margin:0">${ic('plus', 22)}</span></div>`],
+  W10: [2, 1, () => body(`<span class="add" style="width:40px;height:40px;margin:0">${ic('plus', 20)}</span><div style="margin-left:10px"><div class="serif" style="font-size:15px">Capture</div><div class="meta" style="margin-top:2px">Type or talk</div></div>`, 'slim')],
+  W11: [4, 1, () => body(`<div class="cbar" style="flex:1;height:38px;padding-right:12px">${ic('plus', 15)}<span class="x nw">What’s on your mind?</span></div><span class="round" style="margin-left:8px">${ic('mic', 16)}</span><span class="round" style="margin-left:8px">${ic('journal', 16)}</span>`, 'slim')],
+  W12: [1, 1, () => `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%"><img src="${ART('tools_pen')}" style="height:36px" alt=""><span class="meta" style="font-size:11.5px;margin-top:3px">Paper</span></div>`],
+  W13: [4, 1, () => body(`<div class="cbar" style="flex:1;height:38px;padding-right:12px">${ic('chat', 15)}<span class="x nw">Ask about your day…</span></div><span class="btn" style="margin-left:8px">What should I drop?</span>`, 'slim')],
+  W14: [4, 3, () => body(`${head('calendar', 'Today', '6 left · 2 free hours', ADD)}${column(34)}`)],
+  W15: [4, 4, () => body(`${head('calendar', 'Monday, Oct 26', '', ADD)}<div style="display:flex;margin-top:6px">${['M 26', 'T 27', 'W 28', 'T 29', 'F 30', 'S 31', 'S 1'].map((d, i) => `<span style="flex:1;text-align:center"><span class="meta" style="display:inline-block;padding:2px 7px;border-radius:12px;${i === 0 ? 'background:var(--block-lavender);color:var(--acc-lavender-text)' : ''}">${d}</span></span>`).join('')}</div>${column(30)}`)],
+  W16: [4, 1, () => `<div style="display:flex;height:100%;padding:0 6px">${['M 26', 'T 27', 'W 28', 'T 29', 'F 30', 'S 31', 'S 1'].map((d, i) => { const [w, n] = d.split(' '); return `<span style="flex:1;display:flex;align-items:center;justify-content:center"><span style="width:40px;height:54px;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;${i === 0 ? 'background:var(--block-lavender);color:var(--acc-lavender-text)' : ''}"><span style="font-size:10.5px;color:${i === 0 ? 'inherit' : 'var(--ink-faint)'}">${w}</span><b class="serif" style="font-size:15px;margin-top:1px">${n}</b><span style="font-size:8px;letter-spacing:.1em;color:var(--ink-faint)">${'•••'.slice(0, [3, 2, 1, 2, 0, 1, 0][i])}&nbsp;</span></span></span>` }).join('')}</div>`],
+  W17: [2, 1, () => body(`<div style="min-width:0"><div class="meta nw" style="font-size:11.5px">DL midterm · Fri 6 Nov</div><div class="serif" style="font-size:20px;margin-top:2px">in 11 days</div></div>`, 'slim')],
+  W18: [2, 2, () => body(`${head('focus', 'Focus')}<div class="fill" style="display:flex;align-items:center;justify-content:center"><span style="width:70px;height:70px;border-radius:50%;background:radial-gradient(var(--paper-parchment) 0 29px,transparent 30px),conic-gradient(var(--blk-iris) 0 38%,color-mix(in srgb,var(--ink-body) 9%,transparent) 38% 100%);display:flex;align-items:center;justify-content:center;font:500 15px var(--sans)">18:42</span></div><div class="nw" style="text-align:center;font-size:12.5px">Finish the CNN backprop notes</div><div style="display:flex;justify-content:center;gap:6px;margin-top:6px"><span class="btn">Stop</span><span class="btn cta">Done</span></div>`)],
+  W20: [2, 1, () => body(`<span style="flex:none;width:42px;height:42px;border-radius:50%;background:radial-gradient(var(--paper-parchment) 0 16px,transparent 17px),conic-gradient(var(--blk-iris) 0 38%,color-mix(in srgb,var(--ink-body) 9%,transparent) 38% 100%);display:flex;align-items:center;justify-content:center;font:500 11px var(--sans)">19m</span><div style="margin-left:10px;min-width:0"><div style="font-size:11px;color:var(--ink-faint)">Focusing</div><div class="clamp" style="-webkit-line-clamp:2;font-size:13px;line-height:1.25;margin-top:1px">Finish the CNN backprop notes</div></div>`, 'slim')],
+  W21: [2, 2, () => body(`${head('routines', 'Routines', '1/3')}<div style="margin-top:2px">${rows([row({ t: 'Glass of water', done: true }), row({ t: 'Vitamins' }), row({ t: 'Read 10 pages' })])}</div>`)],
+  W22: [4, 2, () => body(`${head('routines', 'Routines', '1/3 · best streak 12')}<div style="margin-top:2px">${rows([['Glass of water', 1, [1, 1, 0, 1, 1, 1, 1]], ['Vitamins', 0, [1, 1, 0, 1, 1, 0, 0]], ['Read 10 pages', 0, [1, 0, 1, 1, 0, 1, 0]]].map(([t, d, w]) => `<div class="row${d ? ' done' : ''}">${box({ on: d })}<span class="t nw">${t}</span>${w.map((v, k) => `<i style="flex:none;width:9px;height:9px;border-radius:3px;margin-left:${k ? 3 : 8}px;background:${v ? 'var(--check-fill)' : 'color-mix(in srgb,var(--ink-body) 10%,transparent)'}"></i>`).join('')}</div>`))}</div>`)],
+  W23: [2, 2, () => body(`${head('routines', 'Gym streak')}<div class="fill" style="display:flex;align-items:flex-end;margin-top:4px"><img src="${ART('vine_flowering')}" style="height:96px;max-height:100%" alt=""><div style="margin-left:8px"><div class="serif" style="font-size:22px">12 days</div><div class="meta" style="margin-top:2px">goal 30</div></div></div>`)],
+  W24: [1, 1, () => `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%"><img src="${ART('vine_sprouting')}" style="height:38px" alt=""><b class="serif" style="font-size:16px">12</b></div>`],
+  W25: [2, 2, () => body(`${head('inbox', 'Inbox')}<div style="display:flex;align-items:center;margin-top:4px"><img src="${ART('hydrangea_medium')}" style="height:66px" alt=""><div style="margin-left:8px"><div class="serif" style="font-size:26px">3</div><div class="meta">to sort</div></div></div><div class="fill"></div><span><span class="btn">Sort them</span></span>`)],
+  W26: [1, 1, () => `<div style="position:relative;height:100%;padding:6px;display:flex;align-items:center;justify-content:center"><img src="${ART('hydrangea_light')}" style="height:46px" alt=""><span style="position:absolute;top:6px;right:6px;min-width:20px;height:20px;padding:0 5px;border-radius:10px;background:var(--acc-terra-ink);color:var(--on-terra);font:500 11px/20px var(--sans);text-align:center">3</span></div>`],
+  W27: [2, 2, () => body(`${head('clock', '<span style="color:var(--acc-terra-ink)">Overdue</span>')}<div style="display:flex;align-items:baseline;margin-top:2px"><span class="serif" style="font-size:26px;color:var(--acc-terra-ink)">2</span><span class="meta" style="margin-left:8px">oldest 3 days</span></div><div class="meta nw" style="font-size:12.5px;line-height:1.5">Email the TA about the quiz grade</div><div class="meta nw" style="font-size:12.5px;line-height:1.5">Back up the laptop</div><div class="fill"></div><span><span class="btn cta">Replan all</span></span>`)],
+  W28: [2, 2, () => body(`${head('activity', 'Slipping')}<div style="margin-top:4px">${rows([['Garden club', '11d'], ['Guitar practice', '6d'], ['Email Dr. Hany', '5d']].map(([t, d]) => `<div class="row" style="min-height:30px"><span class="t nw" style="margin:0">${t}</span><span class="m">${d}</span></div>`))}</div><div class="fill"></div><div class="meta">Quiet 5+ days</div>`)],
+  W29: [4, 2, () => body(`<div class="hd"><img src="${ART('daisy_morning')}" style="height:22px" alt=""><span class="l" style="margin-left:6px">Morning</span><span class="q nw">· not planned · ~5 min</span></div><div style="display:flex;align-items:center;margin-top:6px"><div style="flex:1;min-width:0"><div class="serif" style="font-size:17px">Plan my day</div><div class="meta" style="margin-top:2px">0 in Inbox · 2 overdue</div></div><span class="btn cta" style="margin-left:10px">Plan</span></div><div class="fill"></div><div style="display:flex">${['Carry-over', 'Inbox', 'Top 3', 'Times'].map((x) => `<span style="height:24px;margin-right:5px;padding:0 9px;border-radius:999px;border:1px solid var(--line-card);background:var(--paper-bone);font-size:11.5px;display:flex;align-items:center">${x}</span>`).join('')}</div>`)],
+  W31: [4, 2, () => body(`${head('journal', 'One line about today')}<div style="font:22px var(--hand);color:var(--ink-faint);margin-top:6px;padding-bottom:4px">one line about today…</div><div class="hair"></div><div class="fill"></div><div style="display:flex;justify-content:flex-end;align-items:center"><span class="round" style="width:32px;height:32px">${ic('mic', 15)}</span><span class="btn cta" style="margin-left:8px">Write</span></div>`)],
+  W32: [4, 2, () => body(`${head('journal', 'From a while ago', '28 Sep')}<div class="clamp" style="-webkit-line-clamp:3;font:italic 16px/1.3 var(--serif);margin-top:6px">“Start the DL notes with the questions, not the answers.”</div><div class="fill"></div><div class="meta" style="display:flex"><span style="flex:1">Journal · a month ago</span>Open ›</div>`)],
+  W33: [2, 2, () => body(`${head('', 'Pressed', 'Oct 3')}<div class="fill" style="margin-top:6px;border-radius:10px;background:var(--paper-goal);border:1px solid var(--line-goal);display:flex;align-items:center;justify-content:center"><img src="${ART('wisteria_p80')}" style="height:70px" alt=""></div><div class="nw" style="font:italic 12.5px var(--serif);text-align:center;margin-top:4px">A week of mornings</div>`)],
+  W34: [2, 1, () => body(`<img src="${ART('daisy_midday')}" style="height:40px" alt=""><div style="margin-left:8px;min-width:0"><div class="meta" style="font-size:11.5px">Autumn</div><div class="serif nw" style="font-size:17px;margin-top:1px">Kai’s Flow</div></div>`, 'slim')],
+  // the families
+  W35: [4, 2, () => body(`${head('today', 'Today', '1 of 8 done', ADD)}<div style="display:flex;margin-top:2px"><div style="flex:1.1;min-width:0;margin:2px 10px 0 0">${goal(3)}</div><div style="flex:1;min-width:0">${rows([...PICKS.map((x) => row(x)), row(TASKS[0]), row(TASKS[1])].slice(0, 4))}</div></div>`)],
+  W36: [4, 4, () => body(`${head('today', 'Today', 'Mon 26 · 1 of 8 done', ADD)}${blk(upcoming[0], { label: 'Next' })}<div style="margin-top:6px">${goal(2, 'full')}</div><div style="margin-top:2px">${rows(PICKS.map((x) => row(x, x.len)))}</div><div class="hd" style="margin-top:6px;min-height:0"><span class="l">Today’s tasks</span><span class="q" style="flex:none;margin-left:6px">3</span></div>${rows([row(TASKS[0]), row(TASKS[1], TASKS[1].m)])}<div class="meta" style="height:28px;display:flex;align-items:center"><span style="color:var(--acc-terra-ink)">Overdue 2</span>&nbsp;· Also open 6 ›</div><div class="fill"></div>${capbar()}`)],
+  W37: [2, 2, () => body(`${nowCard({ small: true, lines: 2, times: true })}<div class="fill"></div><div style="display:flex"><span class="meta nw" style="flex:1">Then Office hours — Dr. Hany</span><span class="meta" style="margin-left:6px;font-size:11.5px">12:00</span></div>`)],
+  W38: [4, 2, () => body(`${nowCard({ add: true })}<div style="margin-top:5px">${blk(upcoming[1])}${blk(upcoming[2])}</div>`)],
+  W39: [2, 2, () => body(`${head('', 'Mon 26', '1 of 8 done')}${dayBar()}${blk(upcoming[0], { label: 'Next' })}${blk(upcoming[1], { label: 'Then' })}`)],
+  W40: [4, 2, () => body(`${head('', 'Mon 26', '1 of 8 done', ADD)}${dayBar()}${blk(upcoming[0], { label: 'Next', cd: '19:42' })}<div style="margin-top:6px">${goal(1, '')}</div>`)],
+  W41: [4, 4, () => body(`${head('', 'Mon 26', '1 of 8 done', ADD)}${dayBar()}${blk(upcoming[0], { label: 'Next', cd: '19:42' })}<div style="margin-top:6px">${goal(2, 'full')}</div><div style="margin-top:2px">${rows(PICKS.map((x) => row(x, x.len)))}</div><div class="fill"></div>${capbar()}`)],
+}
+const NAMES = { W01: 'Goal of the day · slim', W02: 'Goal of the day · card', W03: 'Checklist · small (was Top 3 · small)', W04: 'Today · Top 3', W05: 'Now card · large (was Today · full page)', W06: 'Now', W07: 'Up next · tiny', W08: 'Day progress', W09: 'Capture seal', W10: 'Capture pill', W11: 'Capture bar', W12: 'Paper capture', W13: 'Ask', W14: 'Agenda', W15: 'Agenda + week', W16: 'Week strip', W17: 'Countdown', W18: 'Focus', W20: 'Focus · slim', W21: 'Routines', W22: 'Routines · week', W23: 'Streak plant', W24: 'Streak · tiny (merged into W23)', W25: 'Inbox', W26: 'Inbox · tiny', W27: 'Overdue', W28: 'Slipping', W29: 'Plan my day · Shut down', W31: 'One line', W32: 'From a while ago', W33: 'Pressed', W34: 'Season', W35: 'Checklist · medium', W36: 'Checklist · large', W37: 'Now card · small', W38: 'Now card · medium', W39: 'Day bar · small', W40: 'Day bar · medium', W41: 'Day bar · large' }
+const dp = (n) => 76 * n + 16 * (n - 1)
+// a typical phone's portrait cell is taller than it is wide: 96dp a row, less the gaps (the Java fits rows to the reported height)
+const hp = (n) => 96 * n - 8
+const widget = (id, theme) => { const [c, r, f, cls] = F[id]; return `<div data-theme="${theme}" style="display:inline-block"><div class="w ${cls ?? ''}" data-w="${id}-${theme}" style="width:${dp(c)}px;height:${hp(r)}px">${f()}</div></div>` }
+const pair = (id) => {
+  const n = id.slice(1), old = +n <= 34
+  return `<div class="pair" data-pair="${id}"><div><div class="cap">${id} ${NAMES[id]}<small>${F[id][0]} × ${F[id][1]}</small></div><div style="display:flex;gap:10px;align-items:flex-start">${old ? `<figure><img class="before" src="before/kfw_preview_w${n}.webp" width="${dp(F[id][0])}" alt=""><figcaption>Before</figcaption></figure>` : ''}<figure><div class="wall">${widget(id, 'day')}</div><figcaption>After · day</figcaption></figure><figure><div class="wall dark">${widget(id, 'night')}</div><figcaption>After · night</figcaption></figure></div></div></div>`
+}
+const FAMS = [['A · Checklist', ['W03', 'W35', 'W36']], ['B · Now card', ['W37', 'W38', 'W05']], ['C · Day bar', ['W39', 'W40', 'W41']]]
+let html = '<h2>Every widget: before and after</h2><div class="grid">' + Object.keys(F).filter((k) => +k.slice(1) <= 34).map(pair).join('') + '</div>'
+html += '<h2>The three families at 2×2, 4×2 and 4×4</h2>'
+for (const theme of ['day', 'night']) html += `<div class="fams" data-fams="${theme}" style="display:flex;flex-direction:column;gap:14px;margin-top:14px">${FAMS.map(([name, ids]) => `<div><div class="cap" style="font:600 14px var(--sans);margin-bottom:6px">${name} · ${theme}</div><div class="wall${theme === 'night' ? ' dark' : ''}" style="display:inline-flex;gap:14px;align-items:flex-start">${ids.map((id) => widget(id, theme)).join('')}</div></div>`).join('')}</div>`
+document.getElementById('out').innerHTML = html
+</script>
+</body>
+</html>

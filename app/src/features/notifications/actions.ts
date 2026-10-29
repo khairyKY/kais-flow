@@ -8,6 +8,7 @@ import { native } from '../tray/native'
 import { isCapacitorShell } from '../../lib/platform'
 import { toastAction } from '../../lib/undo'
 import { usePaperStore } from '../paper/paperStore'
+import { playNotice } from './sounds'
 import type { Task } from '../../lib/types'
 
 // What a notification's buttons do (Tray and Notifications.dc.html 12k), wherever they were pressed:
@@ -148,6 +149,8 @@ export function installNotificationActions(navigate: (to: string) => void): () =
   }
   const onMessage = (e: MessageEvent) => {
     if (e.data?.type === 'kf-notification-action') run(e.data as NotificationAction)
+    // A push arriving while this window is on screen (sw-push.js): play the pack's sound, say if it did.
+    if (e.data?.type === 'kf-notification-sound') void playNotice({ kind: e.data.kind, again: e.data.again, silent: false }).then((ok) => e.ports[0]?.postMessage(ok))
   }
   navigator.serviceWorker?.addEventListener('message', onMessage)
   const w = window as unknown as { __kfNotifyAction?: (action: string, payload: Omit<NotificationAction, 'action'>) => void }

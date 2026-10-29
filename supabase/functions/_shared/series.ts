@@ -111,3 +111,78 @@ export function expandSeries<E extends SeriesRow>(rows: readonly E[], from: Date
   }
   return out.sort((a, b) => Date.parse(a.starts_at) - Date.parse(b.starts_at) || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
 }
+
+// ── "This and following" (conductor decision 2026-10-12; cal-clicks 2026-10-26 made it one of the three answers
+// every series change asks — app and MCP alike): the original row ends just before the occurrence (UNTIL) and a
+// new row starts the series there. Google's split. Shared so features/calendar and the MCP tools split alike. ──
+
+const ruleParts = (rule: string) => rule.split(';').map((p) => p.trim()).filter(Boolean)
+const partKey = (p: string) => p.split('=')[0].toUpperCase()
+
+/** The rule body with `set`'s parts replaced (null drops one), the rest in their order. */
+export function withRuleParts(rule: string, set: Record<string, string | null>): string {
+  const keys = new Set(Object.keys(set))
+  const out = ruleParts(rule).filter((p) => !keys.has(partKey(p)))
+  for (const [k, v] of Object.entries(set)) if (v != null) out.push(`${k}=${v}`)
+  return out.join(';')
+}
+
+const rulePart = (rule: string, key: string) => ruleParts(rule).find((p) => partKey(p) === key)?.split('=')[1]
+
+/** An instant of `row` on the clock its rule runs in (floating wall time; an all-day row's stored date already is). */
+const floatingOf = (row: Pick<SeriesRow, 'all_day'>, at: string, zone: string) => (row.all_day ? Date.parse(at) : toFloating(Date.parse(at), zone))
+
+/** The two rows a split leaves: the original, now ending before the occurrence, and the new series starting on it
+ * (same rule — COUNT carries what was left of it — and the skips from there on). */
+export interface SeriesSplit<E> {
+  head: E
+  tail: E
+}
+
+/**
+ * Splits `row` at its occurrence `occ`. Null when nothing of the series is left before `occ` (it is the first live
+ * occurrence): the caller edits the row in place then — no earlier block to keep.
+ */
+export function splitSeries<E extends SeriesRow>(row: E, occ: Pick<SeriesRow, 'starts_at' | 'ends_at'>, tailId: string, now: string, zone: string, between: RuleBetween): SeriesSplit<E> | null {
+  const rule = row.recurrence_rule
+  if (!rule) return null
+  const at = Date.parse(occ.starts_at)
+  const dtstart = new Date(floatingOf(row, row.starts_at, zone))
+  let earlier: Date[]
+  try {
+    earlier = between(floatingRule(rule, zone, row.all_day), dtstart, dtstart, new Date(floatingOf(row, occ.starts_at, zone) - 1))
+  } catch {
+    return null
+  }
+  const exdates = (row.recurrence_exdates ?? []).map((x) => new Date(x).toISOString())
+  const skip = new Set(exdates)
+  const real = (f: Date) => new Date(row.all_day ? f.getTime() : fromFloating(f.getTime(), zone)).toISOString()
+  if (!earlier.some((f) => !skip.has(real(f)))) return null
+  const count = Number(rulePart(rule, 'COUNT'))
+  const { seriesId: _occ, ...base } = row
+  return {
+    head: {
+      ...base,
+      // UNTIL is UTC (RFC 5545; floatingRule reads it on the wall clock): a second before.
+      recurrence_rule: withRuleParts(rule, { COUNT: null, UNTIL: ruleStamp(at - 1000) }),
+      recurrence_exdates: exdates.filter((x) => Date.parse(x) < at),
+      updated_at: now,
+    } as unknown as E,
+    tail: {
+      ...base,
+      id: tailId,
+      starts_at: occ.starts_at,
+      ends_at: occ.ends_at,
+      // COUNT counts every start the rule makes, skipped or not (RFC 5545) — what's left after the head's.
+      recurrence_rule: count > 0 ? withRuleParts(rule, { COUNT: String(Math.max(1, count - earlier.length)) }) : rule,
+      recurrence_exdates: exdates.filter((x) => Date.parse(x) >= at),
+      // A series of its own: "All events" on either half leaves the other; Google's id stays on the head.
+      series_id: null,
+      gcal_id: null,
+      gcal_etag: null,
+      source: 'native',
+      created_at: now,
+      updated_at: now,
+    } as unknown as E,
+  }
+}

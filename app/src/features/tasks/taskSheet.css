@@ -107,6 +107,9 @@
 .tp-ask-meta { margin-top: 4px; font-size: var(--fs-meta); color: var(--ink-faint); }
 .tp-ask-acts { display: flex; gap: 8px; margin-top: 14px; }
 .tp-ask-acts .kf-button { height: 36px; padding: 0 14px; font-size: var(--fs-body-s); }
+/* cal-clicks: the scope question — three answers, stacked, then Cancel. */
+.kf-scope-acts { display: flex; flex-direction: column; align-items: stretch; gap: 6px; margin-top: 14px; }
+.kf-scope-acts .kf-button { height: 36px; padding: 0 14px; font-size: var(--fs-body-s); justify-content: flex-start; }
 
 /* Subtasks C (Subtasks options.html): a subtask's own time, a lavender pill; an unplanned one in the
    sheet / popover / editor, a faint clock — both open its Plan list. The typed line's hint under it. */

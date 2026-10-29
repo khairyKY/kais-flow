@@ -22,6 +22,21 @@
   padding: 20px 22px;
   color: var(--ink-body);
 }
+.lg-card.is-wide {
+  width: min(720px, 100%);
+}
+/* Open-source licences: the generated text as it is, wrapped. */
+.lg-pre {
+  margin: 12px 0 0;
+  max-height: 60vh; /* the text scrolls, the title and Close stay put */
+  overflow-y: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--fs-body-s);
+  line-height: 1.45;
+  color: var(--ink-body);
+}
 .lg-title {
   margin: 0;
   font-family: var(--font-display);
@@ -119,4 +134,24 @@
   margin: 10px 0 0;
   font-size: var(--fs-body-s);
   color: var(--acc-terra-ink);
+}
+/* The notice's two required boxes (LegalLinks ConsentBox), the same line as sign-up's .fr-consent. */
+.lg-consent {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  margin-top: 8px;
+  font-size: var(--fs-body-s);
+  line-height: 1.4;
+  color: var(--ink-muted);
+  cursor: pointer;
+}
+.lg-consent a {
+  color: var(--acc-lavender-deep);
+  font-weight: 600;
+  text-decoration: none;
+}
+.lg-consent a:hover {
+  text-decoration: underline;
 }

@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Icon } from '../../components/Icon'
+import { Collapse } from '../../components/Collapse'
 import type { Task } from '../../lib/types'
 import { addTypedSubtask, subtaskHint } from '../command-bar/quickAdd'
 import { cachedSubtasks } from './api'
@@ -71,15 +72,27 @@ export function useNestOpen(parent: Task): boolean {
 
 /** The subtasks under a parent's row (unless folded), and the add line while it's open. `rule`: the
  * hairline the row would have drawn under itself. */
-export function SubtaskNest({ parent, phone, rule }: { parent: Task; phone?: boolean; rule?: boolean }) {
+export function SubtaskNest({ parent, phone, rule, show = true }: { parent: Task; phone?: boolean; rule?: boolean; /** The row's own say (a done row, a subtask, Someday draw none). */ show?: boolean }) {
   const folded = useSubtaskUi((s) => s.folded.includes(parent.id))
   const adding = useSubtaskUi((s) => s.adding === parent.id)
-  if (!useNestOpen(parent)) return null
+  const open = useNestOpen(parent) && show
+  // T8: the nest folds through the shared Collapse — it eases open as it mounts, and stays (its rows
+  // drawn) while it folds shut, then goes. Callers render it whatever the nest's state.
+  const [present, setPresent] = useState(open)
+  const [opened, setOpened] = useState(false) // opened after the row was drawn: it eases in (not on a page's first draw)
+  if (open && !present) {
+    setPresent(true)
+    setOpened(true)
+  }
+  const gone = useCallback(() => setPresent(false), [])
+  if (!present) return null
   return (
-    <div className={`kf-nest${phone ? ' is-phone' : ''}${rule ? ' has-rule' : ''}`} data-nest={parent.id}>
-      {!folded && cachedSubtasks(parent.id).map((s) => <SubtaskRow key={s.id} sub={s} edit={noEdit} dense={!phone} nested />)}
-      {adding && <AddLine parent={parent} phone={phone} />}
-    </div>
+    <Collapse open={open} appear={opened} onClosed={gone}>
+      <div className={`kf-nest${phone ? ' is-phone' : ''}${rule ? ' has-rule' : ''}`} data-nest={parent.id}>
+        {(!folded || !open) && cachedSubtasks(parent.id).map((s) => <SubtaskRow key={s.id} sub={s} edit={noEdit} dense={!phone} nested />)}
+        {adding && <AddLine parent={parent} phone={phone} />}
+      </div>
+    </Collapse>
   )
 }
 

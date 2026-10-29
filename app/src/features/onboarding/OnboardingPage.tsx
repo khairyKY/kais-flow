@@ -10,6 +10,7 @@ import { useAuth } from '../auth/AuthProvider'
 import { markFirstTodayHint } from '../today/firstTodayHint'
 import { markTourPending } from '../tour/help'
 import { readFirstThing, whenChip, withPicked, type PickedDate } from './firstThings'
+import '../../components/pageMotion.css' // the planted hand-off on Today (R12)
 
 // ── First Run.dc.html 9g (empty) / 9h (filled, a date parse chip) / 9l-g night / 9m-g desktop:
 // the one onboarding screen. An optional name and three lines that become today's Top 3; Start
@@ -58,7 +59,14 @@ export function OnboardingPage() {
   if (!replant && settings && !needsOnboarding(settings)) return <Navigate to="/today" replace />
 
   function finish(to: string, withThings: boolean) {
-    completeOnboarding(name, withThings ? things.filter((t) => t !== null) : [])
+    const planted = withThings ? things.filter((t) => t !== null) : []
+    completeOnboarding(name, planted)
+    // R12: the hand-off is "planted" — Today's Top 3 lines rise in one after another and the goal card
+    // blooms once (pageMotion.css html[data-planted]); the flag lifts once that has played.
+    if (planted.length > 0 && to === '/today') {
+      document.documentElement.dataset.planted = ''
+      window.setTimeout(() => delete document.documentElement.dataset.planted, 3000)
+    }
     if (!replant) markFirstTodayHint(session?.user.id) // 9i: the first Today explains its top card
     if (!replant) markTourPending(session?.user.id) // Tour & help: the garden notes, once, on that first Today
     navigate(to, { replace: true })

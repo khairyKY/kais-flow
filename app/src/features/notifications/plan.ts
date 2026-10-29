@@ -104,7 +104,9 @@ export function localPlan({ tasks, events = [], projects = [], routines = [], co
   }
   for (const [at, group] of groups) {
     const rows = group.map((t) => ({ id: t.id, title: t.title, due_at: t.due_at, project: projects.find((p) => p.id === t.project_id)?.name ?? null }))
-    add(group.map((t) => `${t.id}@${t.reminder_at}`).join(','), new Date(at), (said) => reminderNotice(rows, prefs, said, zone))
+    // All snoozed ones coming back: the pack's "snoozed again" sound (notifications/sounds.ts).
+    const snoozed = group.every((t) => t.reminder_at === t.remind_again_at)
+    add(group.map((t) => `${t.id}@${t.reminder_at}`).join(','), new Date(at), (said) => ({ ...reminderNotice(rows, prefs, said, zone), ...(snoozed ? { again: true } : {}) }))
   }
 
   // Event reminders (0077): every occurrence, at its start minus remind_min — notify's rule. Several at
@@ -160,7 +162,7 @@ export function localPlan({ tasks, events = [], projects = [], routines = [], co
 
 // ── Settings → Notifications → Send a test notification: what stands between a notice and this screen ──
 
-export type DeviceChannel = 'windows' | 'android' | 'web'
+export type DeviceChannel = 'windows' | 'mac' | 'android' | 'web'
 /** The OS / browser permission here. 'unsupported' = no way to show one at all (a browser without push). */
 export type DevicePermission = 'granted' | 'denied' | 'prompt' | 'unsupported'
 
@@ -169,6 +171,10 @@ export interface DeviceState {
   permission: DevicePermission
   /** Web only: this browser's push subscription is stored for the account. */
   subscribed: boolean
+  /** Android: exact alarms allowed ("Alarms & reminders"). */
+  exact?: boolean
+  /** Android: battery optimisation off for the app; undefined = this APK can't tell. */
+  background?: boolean
 }
 
 /** Plain lines, worst first; empty = nothing in the way that this app can see. */
@@ -182,6 +188,10 @@ export function blockers(d: DeviceState, p: NoticePrefs | null | undefined, now:
         : 'Permission denied — allow notifications for this site in the browser’s site settings.',
     )
   else if (d.permission === 'prompt') out.push('Notifications aren’t allowed yet — the test will ask.')
+  if (d.channel === 'android' && d.permission === 'granted') {
+    if (d.exact === false) out.push('Alarms & reminders is off — reminders can come a few minutes late. Turn it on under This phone.')
+    if (d.background === false) out.push('Battery saving can hold reminders while the app is closed — let it run in the background under This phone.')
+  }
   if (d.channel === 'web' && d.permission !== 'unsupported' && !d.subscribed) out.push('This device isn’t subscribed — tap “Subscribe this device” first.')
   if (isPaused(p, now)) out.push(`Notifications are paused until ${clock(p!.notify_paused_until!, zone)}.`)
   if (inQuietHours(p, now, zone)) out.push('Quiet hours are on — notifications come without a sound.')

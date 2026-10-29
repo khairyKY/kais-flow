@@ -12,6 +12,10 @@ export const ICON_NAMES = [
   'activity', 'chat', 'clipboard', 'guide', 'library', 'plan', 'signout', 'someday',
   // The password field's Show / Hide (queue item 6, 2026-10-25): drawn here, the export has no eye.
   'eye', 'eye-off',
+  // Settings options.html (layout A, Kai 2026-10-25): the five category glyphs the set had no word for.
+  'person', 'appearance', 'data', 'keyboard', 'info',
+  // Work with AI › in the block menu (cal-blocks, menu B): a spark with a small plus (looks2's note).
+  'ai',
 ] as const
 
 export type IconName = (typeof ICON_NAMES)[number]

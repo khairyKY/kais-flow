@@ -14,6 +14,9 @@
 // - Closing the main window hides it to the tray while the tray is shown (Settings → Notifications
 //   → Show in the system tray); otherwise it quits, as before.
 // - Toasts (12e) with up to four buttons (`notify_local`; Windows allows five); a button runs `window.__kfNotifyAction`.
+// - The Mac app (docs/log/2026-10-29-*-mac-app-handoff.md): the same K, in the menu bar; `anchor` already
+//   opens down from a top bar. Its notices are Notification Center banners without buttons, and
+//   "Start with Windows" is the plugin's LaunchAgent ("Open at login").
 use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
@@ -129,7 +132,7 @@ fn hide(app: &AppHandle, label: &str) {
     }
 }
 
-fn show_main(app: &AppHandle) {
+pub(crate) fn show_main(app: &AppHandle) {
     hide(app, FLYOUT);
     hide(app, MENU);
     if let Some(main) = app.get_webview_window("main") {
@@ -479,8 +482,28 @@ fn notify_local(app: AppHandle, title: String, body: String, actions: Vec<[Strin
             })
             .show();
     }
-    #[cfg(not(windows))]
+    // ponytail: a banner with no buttons (mac-notification-sys only reports a button press by blocking
+    // a thread per notice); a click on it brings the app forward. Buttons when someone misses them.
+    #[cfg(target_os = "macos")]
+    {
+        // Without this the banner comes from Finder: the crate's default app. Set once; later calls say AlreadySet.
+        let _ = mac_notification_sys::set_application(&app.config().identifier);
+        let mut n = mac_notification_sys::Notification::new();
+        if !silent {
+            n.default_sound();
+        }
+        let _ = mac_notification_sys::send_notification(&title, None, &body, Some(&n));
+        let _ = (actions, payload);
+    }
+    #[cfg(not(any(windows, target_os = "macos")))]
     let _ = (app, title, body, actions, silent, payload);
+}
+
+/// The Mac app after an in-place update (appUpdate.ts installUpdate): the updater has swapped the .app
+/// on disk but, unlike the Windows installer, doesn't reopen it.
+#[tauri::command]
+fn app_restart(app: AppHandle) {
+    app.restart()
 }
 
 pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
@@ -501,7 +524,8 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
             autostart_get,
             autostart_set,
             store_install,
-            notify_local
+            notify_local,
+            app_restart
         ])
         .setup(|app| {
             let h = app.handle();

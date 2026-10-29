@@ -3,7 +3,7 @@ import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { writeRow } from '../../lib/outbox'
 import { logActivity } from '../../lib/activity'
-import { animateRowRemoval } from '../../lib/motion'
+import { animateRowRemoval, exitOnRemoval } from '../../lib/motion'
 import { deleteEventsForTask, lengthenTaskBlock, replanTaskBlocks, restoreEventsForTask } from '../calendar/api'
 import { OUT_OF_SLOT } from '../calendar/slots'
 import { toastAction, toastUndo } from '../../lib/undo'
@@ -29,6 +29,7 @@ import { openSubtasks, subtasksOf } from './subtasks'
 import { duplicateMessage, duplicateRows } from './duplicate'
 import { askSubtasks } from './subtaskQuestion'
 import { snoozeLine } from './snooze'
+import { planTaskScope, scopeRows, type TaskScope } from './taskScope'
 import type { Task } from '../../lib/types'
 
 const MAX_TOP3 = 3
@@ -381,6 +382,11 @@ export function setSomeday(task: Task, someday: boolean): void {
   logActivity('task.someday_set', 'task', task.id, { someday })
 }
 
+/** T6: a row these writes take off the list on screen slides out (lib/motion exitOnRemoval); one the
+ * list keeps doesn't move. The writes themselves are not held back. */
+const rowExits = (tasks: readonly Task[]) =>
+  typeof document !== 'undefined' && exitOnRemoval(tasks.map((t) => document.getElementById(`task-${t.id}`)))
+
 const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
 
 /** Every move (⋯ / right-click "Move to…", the swipe, the `p` key, the task sheet, bulk): into a
@@ -388,6 +394,7 @@ const tasksLabel = (n: number) => `${n} task${n === 1 ? '' : 's'}`
  * Undo". Undo puts back each row's project, area, domain and milestone — only those. `said` replaces
  * the toast's words and `onUndo` runs with its Undo (projects/autoProject: "→ Forecasting App"). */
 export function moveTasksWithUndo(tasks: Task[], to: MoveTarget, said?: string, onUndo?: () => void): void {
+  rowExits(tasks)
   const place = (t: Task) => ({ project_id: t.project_id, area_id: t.area_id ?? null, domain_id: t.domain_id })
   for (const t of tasks) {
     const moved = placeTask(cached(t), to)
@@ -430,6 +437,7 @@ export function carryTasksToDomain(field: 'project_id' | 'area_id', containerId:
  * rescheduleDue's own Undo) — the bulk bar's Pick date, Tomorrow, Overdue's "Reschedule all to
  * today". `timed`: the picker set a time, which puts the tasks on the calendar (calendar/replan). */
 export function rescheduleTasksWithUndo(tasks: Task[], dueAt: string, { timed = false, message = `${tasksLabel(tasks.length)} scheduled` }: { timed?: boolean; message?: string } = {}): void {
+  rowExits(tasks)
   const undos = tasks.map((t) => rescheduleDue(t, dueAt, timed))
   toastUndo(message, () => undos.forEach((undo) => undo()))
 }
@@ -437,6 +445,7 @@ export function rescheduleTasksWithUndo(tasks: Task[], dueAt: string, { timed = 
 /** Someday for one task or many — the row ⋯, the task sheet, the bulk bar — with one Undo, which
  * gives back each row's someday flag and the Top 3 place parking it took (top3Rule). */
 export function somedayTasksWithUndo(tasks: Task[]): void {
+  rowExits(tasks)
   const before = tasks.map(cached)
   before.forEach((t) => setSomeday(t, true))
   toastUndo(tasks.length === 1 ? 'Parked for someday' : `${tasksLabel(tasks.length)} parked for someday`, () =>
@@ -451,6 +460,7 @@ export function somedayTasksWithUndo(tasks: Task[]): void {
  * the lists and the calendar rail until `until`, then back on its own; the date and plan stay, a Top 3
  * pick gives its place up (top3Rule). Undo gives back each row's snooze and that place. */
 export function snoozeTasksWithUndo(tasks: readonly Task[], until: string): void {
+  rowExits(tasks)
   const before = tasks.map(cached)
   for (const t of before) {
     patchTask(t, { snoozed_until: until })
@@ -521,6 +531,7 @@ export function prioritizeWithUndo(tasks: readonly Task[], priority: number | nu
 /** One task to a day, or off its date, with "Planned · Mon 09:00" / "Date taken off" · Undo — the Plan
  * list, keys 1 and 3, Someday's → Today and the editor's date fields all land here (P7e A17). */
 export function planWithUndo(task: Task, dueAt: string | null, timed = false): void {
+  rowExits([task])
   toastUndo(dueAt ? `Planned · ${dueChip(dueAt, new Date())}` : 'Date taken off', rescheduleDue(task, dueAt, timed))
 }
 
@@ -757,6 +768,87 @@ export function pauseTask(task: Task): void {
 export function resumeTask(task: Task): void {
   patchTask(task, { paused: false })
   logActivity('task.resumed', 'task', task.id, {})
+}
+
+// ── cal-clicks (Kai 2026-10-26): a repeating task's round changed as the person answered "This one · This and
+// following · All" (./taskScope plans it). Each writes through the outbox and returns or toasts ONE Undo. ──
+
+/** A field change (title, notes, where it lives) under `scope`, with Undo — "This one" detaches the round and
+ * spawns the next with the old values. */
+export function editTaskScopedWithUndo(task: Task, scope: TaskScope, patch: (t: Task) => Partial<Task>, message: string): void {
+  const all = cachedTasks()
+  const plan = planTaskScope(cached(task), all, scope, patch, nowIso(), () => crypto.randomUUID())
+  const prior = plan.write.map((w) => ({ ...(all.find((t) => t.id === w.id) ?? w) }))
+  for (const w of plan.write) {
+    writeRow('tasks', w)
+    logActivity('task.updated', 'task', w.id, { scope })
+  }
+  if (plan.spawned) {
+    writeRow('tasks', plan.spawned)
+    logActivity('task.created', 'task', plan.spawned.id, { recurrence_parent: task.id })
+  }
+  toastUndo(message, () => {
+    if (plan.spawned) writeRow('tasks', { id: plan.spawned.id }, 'delete')
+    for (const p of prior) writeRow('tasks', { ...cached(p), ...p, updated_at: nowIso() })
+  })
+}
+
+/** "This one" for a change made elsewhere (a block's drag): the round leaves its series, which goes on as the next
+ * round. Returns the Undo (a no-op for a one-off). */
+export function detachRound(task: Task): () => void {
+  const before = cached(task)
+  if (!before.recurrence_rule) return () => {}
+  const plan = planTaskScope(before, cachedTasks(), 'this', () => ({}), nowIso(), () => crypto.randomUUID())
+  writeRow('tasks', { ...cached(task), recurrence_rule: null })
+  if (plan.spawned) {
+    writeRow('tasks', plan.spawned)
+    logActivity('task.created', 'task', plan.spawned.id, { recurrence_parent: task.id })
+  }
+  return () => {
+    if (plan.spawned) writeRow('tasks', { id: plan.spawned.id }, 'delete')
+    writeRow('tasks', { ...cached(task), recurrence_rule: before.recurrence_rule })
+  }
+}
+
+/** Complete under `scope`: "This one" is the usual completion (the next round spawns); "following" / "All" end the
+ * series here — this round and every later (or every) open one done, no next round. One Undo. */
+export function completeTaskScopedWithUndo(task: Task, scope: TaskScope): void {
+  if (scope === 'this' || !task.recurrence_rule) {
+    completeTaskWithUndo(task)
+    return
+  }
+  const rows = scopeRows(cached(task), cachedTasks(), scope).filter((t) => t.status === 'todo')
+  const done = rows.map((t) => {
+    writeRow('tasks', { ...cached(t), recurrence_rule: null })
+    return { rule: t.recurrence_rule, undo: completeOne({ ...cached(t), recurrence_rule: null }, t.id !== task.id) }
+  })
+  toastUndo(rows.length === 1 ? 'Done · the series ends here' : `${rows.length} done · the series ends here`, () => {
+    for (const d of done.reverse()) {
+      undoCompletion(d.undo)
+      writeRow('tasks', { ...cached(d.undo.before), recurrence_rule: d.rule })
+    }
+  })
+}
+
+/** Delete a repeating task's round under `scope`: "This one" skips it — its block comes off and the task rolls to
+ * its next round (or, the last of "N times", goes to Trash); "following" / "All" send this and the later (or every)
+ * round to Trash. One Undo. */
+export function deleteTaskScopedWithUndo(task: Task, scope: TaskScope): void {
+  const t = cached(task)
+  const next = scope === 'this' && t.recurrence_rule && t.due_at ? nextDue(t.recurrence_rule, t.due_at, new Date()) : null
+  if (!next || !t.recurrence_rule || !t.due_at) {
+    deleteTasksWithUndo(scope === 'this' ? [t] : scopeRows(t, cachedTasks(), scope))
+    return
+  }
+  // The skip (skipNextOccurrence's writes): to the next round's date — a date alone, so this round's block, on
+  // another day, comes off (calendar/replan) — one of "N times" used up, the reminder moved along.
+  const undoBlocks = rescheduleDue(t, next.toISOString())
+  writeRow('tasks', { ...cached(t), recurrence_rule: ruleAfterThis(t.recurrence_rule), reminder_at: nextReminderAt(t.reminder_at, t.due_at, next), reminder_sent: false })
+  logActivity('task.skipped', 'task', t.id, { next_due_at: next.toISOString(), scope })
+  toastUndo(`Skipped · ${t.title}`, () => {
+    undoBlocks()
+    writeRow('tasks', { ...cached(t), recurrence_rule: t.recurrence_rule, reminder_at: t.reminder_at, reminder_sent: t.reminder_sent })
+  })
 }
 
 export function skipNextOccurrence(passed: Task): void {

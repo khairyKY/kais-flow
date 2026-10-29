@@ -1,0 +1,57 @@
+[
+  {
+    "name": "desktop: About has the Open-source licences row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: the dialog shows licenses.txt",
+    "ok": true,
+    "detail": "Kai's Flow — open-source licences\n\nKai's"
+  },
+  {
+    "name": "desktop: it lists the JS packages and their texts",
+    "ok": true,
+    "detail": "40364 chars"
+  },
+  {
+    "name": "desktop: Esc closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: About has the Open-source licences row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: the dialog shows licenses.txt",
+    "ok": true,
+    "detail": "Kai's Flow — open-source licences\n\nKai's"
+  },
+  {
+    "name": "phone: it lists the JS packages and their texts",
+    "ok": true,
+    "detail": "40364 chars"
+  },
+  {
+    "name": "phone: Esc closes it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a failed fetch says so",
+    "ok": true,
+    "detail": ""
+  }
+]

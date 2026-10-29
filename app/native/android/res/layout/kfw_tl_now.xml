@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Timeline (Android 12+): the now line across a calendar column — the calendar's lavender dot and line. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/tl" android:layout_width="match_parent" android:layout_height="10dp" android:layout_marginStart="37dp" android:gravity="center_vertical" android:orientation="horizontal">
+    <ImageView android:layout_width="10dp" android:layout_height="10dp" android:src="@drawable/kfw_dot_now" android:importantForAccessibility="no" />
+    <ImageView android:layout_width="0dp" android:layout_height="2dp" android:layout_weight="1" android:scaleType="fitXY" android:src="@drawable/kfw_line_now" android:importantForAccessibility="no" />
+</LinearLayout>

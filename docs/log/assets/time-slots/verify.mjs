@@ -699,6 +699,8 @@ if (want('f11')) {
   const g = center(await fcBlock(page, SHAHEEN, '2026-10-13').locator('.kf-ev-head > .fc-event-title').first().boundingBox())
   w0 = state.writes.length
   await mouseDrag(page, g, { x: g.x, y: g.y + (await laneY(page, '15:30')) - (await laneY(page, '13:00')) })
+  // cal-clicks: a repeat asks which occurrences — "This event" moves Tuesday's on its own
+  await page.locator('[role="dialog"].kf-scope-ask').getByRole('button', { name: 'This event', exact: true }).click({ timeout: 5000 })
   await settle(state)
   const copy = posts(state, 'calendar_events', w0).find((e) => e.series_id === eid(SHAHEEN))
   const u = lastOf(state, 'tasks', id(TUEHELD), w0)
@@ -746,7 +748,7 @@ if (want('f14')) {
   const m = await open('/today', { tables: pick, view: phone })
   await sleep(800)
   const mtop = await m.page.locator(`#task-${id(HELD)}`).first().innerText().catch(() => '')
-  check('f14 phone Today: the Top 3 pick reads "in Code block💻 · 10:00"', /in Code block💻 · 10:00/.test(mtop), mtop.replace(/\n/g, ' '))
+  check('f14 phone Today: the Top 3 pick reads "in Code block💻 · 10:00"', /in Code block💻 · 10:00/i.test(mtop) /* phone-today sets the goal row's meta in capitals (CSS) */, mtop.replace(/\n/g, ' '))
   await shot(m.page, 'f14-phone-today')
   await m.ctx.close()
 }
@@ -914,6 +916,11 @@ if (want('d4')) {
   await touch(cdp, 'touchEnd', [])
   await sleep(400)
   check('d5 phone: a hold on the slot\'s title lifts the slot, not a task', (await pcBlock(page, CODE).getAttribute('class'))?.includes('is-lifted') && (await page.locator('.pc-held-task').count()) === 0)
+  // cal-clicks: the hold also opens menu B's sheet over the lifted slot — Back closes it, then puts the slot down
+  for (let i = 0; i < 3 && (await page.locator('.pc-bs-colors').count()) > 0; i++) {
+    await page.keyboard.press('Escape')
+    await sleep(600)
+  }
   await page.keyboard.press('Escape')
   await sleep(400)
   await page.evaluate(() => (document.documentElement.dataset.theme = 'night'))

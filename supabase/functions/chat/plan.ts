@@ -49,8 +49,9 @@ export const CHAT_TOOLS = [
   fn(
     'propose',
     "Plan changes to the user's data. NOTHING changes until the user taps Confirm on the card the app shows, so never say it's done. Put every change the request needs in ONE call, one step per item, in the user's order. " +
-      'Steps: add_task (title, when?, duration_min?, project_id?, notes?, priority?, top3?) · edit_task (id + what changes: title, notes, duration_min, project_id, priority, top3) · reschedule_task (id, when) · complete_task (id) · move_to_tomorrow (id) · snooze_task (id, when) · ' +
-      'add_event (title, when, kind?, remind_min?, repeat?) · edit_event (id + title/when/kind/remind_min) · delete_event (id) · add_to_inbox (text) · file_inbox_item (id, as, title?, when?, project_id?) · move_to_trash (id of a task or inbox item).',
+      'Steps: add_task (title, when?, duration_min?, project_id?, notes?, priority?, top3?) · edit_task (id + what changes: title, notes, duration_min, project_id, priority, top3; scope? for a repeating task) · reschedule_task (id, when) · complete_task (id) · move_to_tomorrow (id) · snooze_task (id, when) · ' +
+      'add_event (title, when, kind?, remind_min?, repeat?) · edit_event (id + title/when/kind/remind_min) · delete_event (id) · add_to_inbox (text) · file_inbox_item (id, as, title?, when?, project_id?) · move_to_trash (id of a task or inbox item). ' +
+      'A repeating event (edit_event, delete_event) or task (edit_task) takes scope: "this" (the default — just the one, named for an event by occurrence, its day and time as listed), "following" (it and every later one, also from occurrence) or "all" (the whole series). Ask the user which when it is not clear.',
     {
       steps: {
         type: 'array',
@@ -69,6 +70,8 @@ export const CHAT_TOOLS = [
             notes: { ...str, description: 'Tasks only. Events have no notes: keep short details in the title.' },
             priority: { type: 'integer', enum: [1, 2, 3] },
             top3: { type: 'boolean' },
+            occurrence: { ...str, description: "A repeating event's occurrence the change is about: its day and time as listed, e.g. 'Thu 22 Oct 08:00'." },
+            scope: { type: 'string', enum: ['this', 'following', 'all'], description: 'Which occurrences of a repeat: this (default), following, all.' },
             text: str,
             as: { type: 'string', enum: ['task', 'event', 'note'] },
           },
@@ -90,7 +93,7 @@ const SNOOZE_WORDS = new Set(['later today', 'this evening', 'tomorrow', 'next w
 
 /** One planned step → the MCP call it is, or why it can't be one (the model reads that and fixes it). */
 export function stepToCall(step: Record<string, unknown>, refs: Refs, now: Date, zone: string): Call | { error: string } {
-  const { do: tool, id, when, ...rest } = step
+  const { do: tool, id, when, occurrence, ...rest } = step
   if (typeof tool !== 'string' || !(WRITE_TOOLS as readonly string[]).includes(tool)) return { error: `"${String(tool)}" isn't a step I can take.` }
   const args: Record<string, unknown> = { ...rest }
   let target: Refs[string] | null = null
@@ -99,6 +102,12 @@ export function stepToCall(step: Record<string, unknown>, refs: Refs, now: Date,
     target = refs[key] ?? (UUID.test(key) ? { id: key, type: tool.includes('event') ? 'calendar_event' : 'task' } : null)
     if (!target) return { error: `${tool}: I can't tell which item "${String(id)}" is — use a ref from the lists or find it first.` }
     args.id = target.id
+  }
+  // A repeating event's occurrence (cal-clicks' scope): the user's words for its start, read like "when".
+  if (occurrence !== undefined && occurrence !== null && occurrence !== '') {
+    const r = resolveWhen(String(occurrence), now, zone)
+    if (!r) return { error: `${tool}: I couldn't read the occurrence "${String(occurrence)}".` }
+    args.occurrence = r.start
   }
   let name = tool
   if (tool === 'move_to_trash') {

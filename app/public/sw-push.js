@@ -24,18 +24,33 @@ self.addEventListener('push', (event) => {
   event.waitUntil(kfShow(n))
 })
 
+// The notification sound pack (features/notifications/sounds.ts): a browser can't give a push its own
+// sound, so a window of the app on screen plays the pack's and the notification goes out silent. No
+// window on screen, or it can't play (no click in it yet) or doesn't answer in 600 ms: the system's sound.
+function kfPlayedInApp(win, n) {
+  return new Promise((done) => {
+    const ch = new MessageChannel()
+    const t = setTimeout(() => done(false), 600)
+    ch.port1.onmessage = (e) => {
+      clearTimeout(t)
+      done(e.data === true)
+    }
+    win.postMessage({ type: 'kf-notification-sound', kind: n.kind || null, again: !!n.again }, [ch.port2])
+  })
+}
+
 async function kfShow(n) {
-  if (n.kind === 'paper_ready') {
-    const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
-    if (windows.some((w) => w.focused)) return
-  }
+  const windows = await self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+  if (n.kind === 'paper_ready' && windows.some((w) => w.focused)) return
+  const onScreen = !n.silent && windows.find((w) => w.visibilityState === 'visible')
+  const played = onScreen ? await kfPlayedInApp(onScreen, n) : false
   return self.registration.showNotification(n.title || 'Kai’s Flow', {
     body: n.body || '',
     icon: '/icon-192.png',
     badge: '/badge-96.png',
     tag: n.tag || undefined,
-    renotify: !!n.tag && !n.silent,
-    silent: !!n.silent,
+    renotify: !!n.tag && !n.silent && !played,
+    silent: !!n.silent || played,
     // As many buttons as this browser shows (Chrome: 2 — a reminder's Done · In 10 min), the likeliest first.
     actions: (n.actions || []).slice(0, (self.Notification && self.Notification.maxActions) || 2),
     data: { kind: n.kind || null, url: n.url || '/today', taskIds: n.taskIds || [] },

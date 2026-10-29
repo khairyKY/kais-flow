@@ -157,10 +157,12 @@ async function basics(env, view, name) {
 }
 
 const fill = async (page, label, value) => page.getByLabel(label, { exact: true }).fill(value)
-// Sign up's "I agree to the Terms of Use and the Privacy Policy" (legal, 2026-10-25): Create account waits for it.
-const consentBox = (page) => page.getByRole('checkbox', { name: /I agree to the Terms of Use and the Privacy Policy/ })
+// Sign up's two boxes (legal 2026-10-25, split 2026-10-29): Create account waits for both.
+const consentBox = (page) => page.getByRole('checkbox', { name: /I agree to the Terms of Use/ })
+const privacyBox = (page) => page.getByRole('checkbox', { name: /I agree to the Privacy Policy and explicitly consent/ })
 async function agree(env) {
   if ((await consentBox(env.page).getAttribute('aria-checked')) !== 'true') await tap(env, consentBox(env.page))
+  if ((await privacyBox(env.page).getAttribute('aria-checked')) !== 'true') await tap(env, privacyBox(env.page))
 }
 
 for (const view of ['day', 'night', 'desktop']) {

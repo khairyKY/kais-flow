@@ -235,7 +235,7 @@ for (const theme of ['day', 'night']) {
     check(`${tag} the fold sits below Today's tasks`, below)
     if ((await fold.getAttribute('aria-expanded')) === 'false') await fold.click()
     await sleep(400)
-    const foldIds = await page.locator('section:has(> div > button[aria-expanded="true"])').locator('[id^="task-"]').evaluateAll((els) => els.map((e) => e.id.slice(5)))
+    const foldIds = await page.locator('section:has(> div > button[aria-expanded="true"]), [role="group"][aria-label="Also open"]').locator('[id^="task-"]') /* phone-today: B's folds panel */.evaluateAll((els) => els.map((e) => e.id.slice(5)))
     check(`${tag} the fold lists the rest, none of today's`, same(foldIds, ALSO_IDS.map(id)), foldIds.map((x) => +x.slice(-3)).join(','))
     await shot(page, tag)
     await today.scrollIntoViewIfNeeded()

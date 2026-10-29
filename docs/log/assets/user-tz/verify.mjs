@@ -178,11 +178,13 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
 // 4 — Settings → Timezone (desktop): the zone shows in the shell; search + tap writes; the shell follows.
 {
   const name = 'settings-ny'
-  const { ctx, page, errors, state } = await open('/settings', { view: desktop })
+  // settings-build moved Time zone to /settings/calendar, behind its picker (settings-sync retarget, 2026-10-26).
+  const { ctx, page, errors, state } = await open('/settings/calendar', { view: desktop })
   check(`${name} topbar zone is America/New_York`, (await zoneLabel(page)) === 'America/New_York', await zoneLabel(page))
   check(`${name} sidebar reads "Personal · New York"`, /personal · new york/i.test(await text(page.locator('.app-sidebar-header'))), await text(page.locator('.app-sidebar-header')))
   const card = page.locator('#settings-Timezone')
   await card.scrollIntoViewIfNeeded()
+  await card.getByRole('button', { name: 'Time zone', exact: true }).click()
   check(`${name} the card reads America/New_York · GMT-4 (UI pass: its row label, was “current · …”)`, /America\/New_York · GMT-4/.test(await text(card)), await text(card))
   check(`${name} no "Use this device's zone" when the device is already there`, (await card.getByRole('button', { name: /Use this device/ }).count()) === 0)
   await card.getByRole('searchbox', { name: 'Search time zones' }).fill('tokyo')
@@ -223,9 +225,10 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
   check(`${name} asked once per device — no toast on the next visit`, !(await again.page.locator('.kf-toast-msg').allInnerTexts()).some((m) => m.startsWith('Your device is in')))
   check(`${name} no page errors`, errors.length === 0 && again.errors.length === 0, [...errors, ...again.errors].join(' | '))
   await ctx.close()
-  const fresh = await open('/settings', { view: desktop, zone: 'Africa/Cairo' })
+  const fresh = await open('/settings/calendar', { view: desktop, zone: 'Africa/Cairo' })
   const card = fresh.page.locator('#settings-Timezone')
   await card.scrollIntoViewIfNeeded()
+  await card.getByRole('button', { name: 'Time zone', exact: true }).click()
   check(`${name} Settings offers "Use this device’s zone (America/New_York)" first`, (await card.getByRole('button', { name: 'Use this device’s zone (America/New_York)' }).count()) === 1)
   await shot(fresh.page, `${name}-settings`)
   const w1 = fresh.state.writes.length
@@ -238,7 +241,8 @@ const sheetOf = (page) => page.locator('[role="dialog"]').filter({ has: page.loc
 // 6 — the phone has the same picker (it was a read-out row).
 {
   const name = 'settings-phone'
-  const { ctx, page, errors } = await open('/settings')
+  const { ctx, page, errors } = await open('/settings/calendar')
+  await page.getByRole('button', { name: 'Time zone', exact: true }).click()
   const search = page.getByRole('searchbox', { name: 'Search time zones' })
   await search.scrollIntoViewIfNeeded()
   await shot(page, name)

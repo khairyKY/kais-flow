@@ -13,10 +13,12 @@ const ln = vi.hoisted(() => ({
   cancel: vi.fn(async () => {}),
   checkExactNotificationSetting: vi.fn(async () => ({ exact_alarm: 'granted' })),
   addListener: vi.fn(),
+  listChannels: vi.fn(async () => ({ channels: [] as { id: string }[] })),
+  deleteChannel: vi.fn(async (_a: { id: string }) => {}),
 }))
 vi.mock('@capacitor/local-notifications', () => ({ LocalNotifications: ln }))
 
-const { androidPermission, channelFor, notificationId, onAndroidAction, scheduleAndroid, showAndroid, toAndroid } = await import('./android')
+const { androidPermission, channelFor, channelsFor, notificationId, onAndroidAction, scheduleAndroid, showAndroid, staleChannels, toAndroid } = await import('./android')
 
 const now = new Date('2026-10-03T05:00:00Z')
 const reminder = reminderNotice([{ id: 't1', title: 'Call the tyre supplier', due_at: '2026-10-03T05:50:00Z' }], { lock_screen_names: true }, now, 'Africa/Cairo')
@@ -27,11 +29,22 @@ beforeEach(() => {
 })
 
 describe('the notice → an Android notification', () => {
-  it('channel by kind; silent ones go to Quiet', () => {
-    expect(channelFor(reminder)).toBe('reminders')
+  it('channel by the pack and the kind’s sound; silent ones go to Quiet', () => {
+    expect(channelFor(reminder)).toBe('kf_felt_task_reminder') // Felt until another pack is picked
+    expect(channelFor(reminder, 'glass')).toBe('kf_glass_task_reminder')
+    expect(channelFor({ ...reminder, again: true }, 'mixed')).toBe('kf_mixed_snoozed_again')
     expect(channelFor(digestNotice(['a'], {}))).toBe('quiet')
-    expect(channelFor({ ...reminder, silent: true })).toBe('quiet')
-    expect(channelFor(testNotice())).toBe('reminders')
+    expect(channelFor({ ...reminder, silent: true }, 'glass')).toBe('quiet')
+    expect(channelFor(testNotice())).toBe('kf_felt_task_reminder')
+  })
+
+  it('a pack’s channels: one per sound with its res/raw WAV and a readable name, plus Quiet', () => {
+    const cs = channelsFor('glass')
+    expect(cs).toHaveLength(11)
+    expect(cs[0]).toMatchObject({ id: 'kf_glass_task_reminder', name: 'Task reminder (Glass)', sound: 'kf_glass_task_reminder.wav', importance: 4 })
+    expect(cs.find((c) => c.id === 'kf_glass_morning_digest')).toMatchObject({ name: 'Morning digest (Glass)', importance: 3 })
+    expect(cs.at(-1)).toMatchObject({ id: 'quiet', importance: 2 })
+    expect(cs.at(-1)).not.toHaveProperty('sound')
   })
 
   it('stable positive ids', () => {
@@ -50,7 +63,8 @@ describe('the notice → an Android notification', () => {
       id: 42,
       title: 'Call the tyre supplier · in 50 min',
       body: '08:50',
-      channelId: 'reminders',
+      channelId: 'kf_felt_task_reminder',
+      sound: 'kf_felt_task_reminder.wav',
       smallIcon: 'ic_stat_kf',
       actionTypeId: 'done:Done|snooze10:In 10 min|snooze60:In 1 hour|tomorrow:Tomorrow',
       extra: { kind: 'task_reminder', url: '/tasks?focus=t1', taskIds: ['t1'] },
@@ -78,7 +92,7 @@ describe('permission', () => {
 describe('show now / schedule', () => {
   it('shows now: channels made, buttons registered, posted without a schedule', async () => {
     await showAndroid(reminder)
-    expect(ln.createChannel).toHaveBeenCalledWith(expect.objectContaining({ id: 'reminders', importance: 4 }))
+    expect(ln.createChannel).toHaveBeenCalledWith(expect.objectContaining({ id: 'kf_felt_task_reminder', importance: 4, sound: 'kf_felt_task_reminder.wav' }))
     expect(ln.createChannel).toHaveBeenCalledWith(expect.objectContaining({ id: 'quiet', importance: 2 }))
     expect(ln.registerActionTypes).toHaveBeenCalledWith({ types: [{ id: 'done:Done|snooze10:In 10 min|snooze60:In 1 hour|tomorrow:Tomorrow', actions: [{ id: 'done', title: 'Done' }, { id: 'snooze10', title: 'In 10 min' }, { id: 'snooze60', title: 'In 1 hour' }, { id: 'tomorrow', title: 'Tomorrow' }] }] })
     expect(ln.schedule.mock.calls[0][0].notifications[0]).toMatchObject({ id: notificationId(reminder.tag), title: reminder.title })
@@ -102,10 +116,61 @@ describe('show now / schedule', () => {
     expect(ln.schedule.mock.calls[1][0].notifications[0].isExactNotification).toBe(false)
   })
 
+  it('the new plan goes in before anything is cancelled, and a still-planned one is never cancelled', async () => {
+    const order: string[] = []
+    ln.schedule.mockImplementationOnce(async () => (order.push('schedule'), { notifications: [] }))
+    ln.cancel.mockImplementationOnce(async () => void order.push('cancel'))
+    const keep = notificationId('t1@x')
+    ln.getPending.mockResolvedValueOnce({ notifications: [{ id: keep }, { id: 8 }] })
+    await scheduleAndroid([{ key: 't1@x', at: new Date('2026-10-03T05:40:00Z'), notice: reminder }])
+    expect(order).toEqual(['schedule', 'cancel'])
+    expect(ln.cancel).toHaveBeenCalledWith({ notifications: [{ id: 8 }] })
+  })
+
+  it('a schedule that fails cancels nothing (the old plan stays)', async () => {
+    ln.schedule.mockRejectedValueOnce(new Error('bridge gone'))
+    await scheduleAndroid([{ key: 't1@x', at: new Date('2026-10-03T05:40:00Z'), notice: reminder }])
+    expect(ln.cancel).not.toHaveBeenCalled()
+  })
+
+  it('at most 400 alarms (Android allows 500 an app), the soonest kept', async () => {
+    const plan = Array.from({ length: 450 }, (_, i) => ({ key: `k${i}`, at: new Date(now.getTime() + (i + 1) * 60_000), notice: reminder }))
+    await scheduleAndroid(plan)
+    const sent = ln.schedule.mock.calls[0][0].notifications
+    expect(sent).toHaveLength(400)
+    expect(sent[0].id).toBe(notificationId('k0'))
+  })
+
   it('an empty plan just clears', async () => {
     await scheduleAndroid([])
     expect(ln.cancel).toHaveBeenCalled()
     expect(ln.schedule).not.toHaveBeenCalled()
+  })
+})
+
+describe('switching packs', () => {
+  it('the old packs’ channels and the pre-pack ones go; Quiet, the new pack’s and Android’s own stay', () => {
+    const existing = ['reminders', 'rituals', 'focus', 'quiet', 'default', 'kf_felt_task_reminder', 'kf_felt_terms', 'kf_glass_terms', 'kf_mixed_break_end']
+    expect(staleChannels(existing, 'glass')).toEqual(['reminders', 'rituals', 'focus', 'kf_felt_task_reminder', 'kf_felt_terms', 'kf_mixed_break_end'])
+    expect(staleChannels(['quiet', 'kf_felt_terms'], 'felt')).toEqual([])
+  })
+
+  it('re-plans onto the new pack’s channels first, then deletes the old ones', async () => {
+    const order: string[] = []
+    ln.listChannels.mockResolvedValueOnce({ channels: [{ id: 'reminders' }, { id: 'quiet' }, { id: 'kf_felt_task_reminder' }, { id: 'kf_glass_task_reminder' }] })
+    ln.schedule.mockImplementationOnce(async () => (order.push('schedule'), { notifications: [] }))
+    ln.deleteChannel.mockImplementation(async ({ id }: { id: string }) => void order.push(`delete ${id}`))
+    await scheduleAndroid([{ key: 't1@x', at: new Date('2026-10-03T05:40:00Z'), notice: reminder }], 'glass')
+    expect(ln.createChannel).toHaveBeenCalledWith(expect.objectContaining({ id: 'kf_glass_task_reminder', sound: 'kf_glass_task_reminder.wav' }))
+    expect(ln.schedule.mock.calls[0][0].notifications[0]).toMatchObject({ channelId: 'kf_glass_task_reminder', sound: 'kf_glass_task_reminder.wav' })
+    expect(order).toEqual(['schedule', 'delete reminders', 'delete kf_felt_task_reminder'])
+  })
+
+  it('a failed schedule deletes no channel (the pending ones still ride them)', async () => {
+    ln.schedule.mockRejectedValueOnce(new Error('bridge gone'))
+    ln.listChannels.mockResolvedValueOnce({ channels: [{ id: 'kf_felt_task_reminder' }] })
+    await scheduleAndroid([{ key: 't1@x', at: new Date('2026-10-03T05:40:00Z'), notice: reminder }], 'mixed')
+    expect(ln.deleteChannel).not.toHaveBeenCalled()
   })
 })
 

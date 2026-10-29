@@ -63,7 +63,7 @@ async function runCheck(uid: string | undefined): Promise<void> {
   const v = available.v
   useToastStore.getState().push({ message: `${v} is out`, action: { label: 'See what’s new', run: () => openWhatsNew(v) } })
   const prefs = queryClient.getQueryData<NoticePrefs>(['app_settings'])
-  if (platform === 'windows' && nativeNudgeAllowed(prefs, new Date(), appZone(), lookingHere())) {
+  if ((platform === 'windows' || platform === 'mac') && nativeNudgeAllowed(prefs, new Date(), appZone(), lookingHere())) {
     // tray.rs notify_local: the button runs window.__kfNotifyAction('whats-new', payload) (notifications/actions.ts).
     void native('notify_local', { title: `${v} is out`, body: 'See what’s new', actions: [['whats-new', 'See what’s new']], silent: false, payload: JSON.stringify({ kind: 'whats_new', version: v }) })
   }

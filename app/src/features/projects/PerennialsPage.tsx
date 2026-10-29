@@ -14,12 +14,14 @@ import {
   resumeTask,
   skipNextOccurrence,
   deleteTasksWithUndo,
+  completeTaskWithUndo,
+  reopenTaskWithUndo,
 } from '../tasks/api'
 import { TaskRow } from '../tasks/TaskRow'
 import { useOpenTask } from '../tasks/openTask'
 import { useDayRollover } from '../calendar/useDayRollover'
 import { Chip, SectionLabel } from '../../components/kit'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { useCompletingRows, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import { daysFromToday, formatLastCompleted, formatNextDue, formatRecurrenceRule, getCadenceType } from './perennials'
 import type { Task } from '../../lib/types'
 import './xfx.css'
@@ -41,9 +43,16 @@ export function PerennialsPage() {
 
   // Filter tasks to find repeating series
   // We represent each active repeating series by its currently active (status = todo) task with a recurrence_rule.
+  // T2: a ticked series row holds its place for the check, then slides out (the whole row, its rule
+  // line too) while the next occurrence takes its place.
+  const { rows: ticking, hold: holdRow, keep: keepRow } = useCompletingRows(null, (id) => document.getElementById(`per-${id}`))
+  const completeRow = (t: Task) => {
+    if (motion) holdRow(t.id, true)
+    completeTaskWithUndo(t, () => keepRow(t.id))
+  }
   const activeSeries = useMemo(() => {
-    return allTasks.filter((t) => t.recurrence_rule && t.status === 'todo')
-  }, [allTasks])
+    return allTasks.map((t) => (ticking.has(t.id) ? { ...t, status: 'todo' as const } : t)).filter((t) => t.recurrence_rule && t.status === 'todo')
+  }, [allTasks, ticking])
 
   // Get count of completed tasks to show last completed timestamp
   const completedTasks = useMemo(() => {
@@ -198,6 +207,7 @@ export function PerennialsPage() {
     return (
       <div
         key={t.id}
+        id={`per-${t.id}`}
         className={motion ? 'kf-stagger-item' : undefined}
         // Right-click beside the task (its chip, its rule line) opens the series menu; on the task
         // itself the TaskRow's own menu has already taken it.
@@ -210,7 +220,7 @@ export function PerennialsPage() {
         style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : undefined, alignItems: 'center', gap: isMobile ? '0 10px' : 10, paddingBottom: isMobile ? 6 : 0, borderBottom: '1px solid var(--line-dashed)', opacity: t.paused ? 0.62 : 1, ...(motion ? staggerDelay(rowIndex) : {}) }}
       >
         <div style={{ flex: isMobile ? '1 1 100%' : 1, minWidth: 0 }}>
-          <TaskRow task={t} border={false} />
+          <TaskRow task={t} border={false} onComplete={completeRow} onReopen={(r) => (keepRow(r.id), reopenTaskWithUndo(r))} />
           <div className="mono" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', color: 'var(--ink-faint)', margin: '-6px 0 0 34px', paddingBottom: 11 }}>
             {formatRecurrenceRule(t.recurrence_rule || '')} · {t.paused ? 'paused · ' : ''}{formatLastCompleted(lastDone)}
           </div>

@@ -2,7 +2,8 @@
 import fs from 'node:fs'
 
 export const APP_URL = 'https://kais-flow.kaidagoat.workers.dev'
-export const REPO = 'https://github.com/khairyKY/kais-flow'
+// Release files only (2026-10-29): the source repo goes private; downloads, notes and older builds live here.
+export const REPO = 'https://github.com/khairyKY/kais-flow-releases'
 export const RELEASES_URL = `${REPO}/releases`
 // Kai: put the address people should write to here; until then the pages show "[contact email]".
 export const CONTACT_EMAIL = 'khairyshhn1@gmail.com'
@@ -30,17 +31,20 @@ export const RELEASES = JSON.parse(fs.readFileSync(new URL('./releases.json', im
 
 // The newest release at build time. The pages ask GitHub for the current one when they load
 // (site.js) and fall back to this if GitHub doesn't answer.
-export const LATEST = { tag: RELEASES[0].v, date: RELEASES[0].date, apkMB: 34, exeMB: 32 }
+export const LATEST = { tag: RELEASES[0].v, date: RELEASES[0].date, apkMB: 34, exeMB: 32, dmgMB: 70 }
 // The newest release's installers under fixed names (android.yml / desktop.yml upload a version-less copy
 // beside the versioned file): the download buttons. A release's own file (apkUrl) is for its notes.
 export const APK_LATEST = `${REPO}/releases/latest/download/kais-flow.apk`
 export const EXE_LATEST = `${REPO}/releases/latest/download/kais-flow-windows-setup.exe`
+// The Mac app (desktop.yml's macos job, 2026-10-29): one .dmg for Apple silicon and Intel. Live once a
+// release has built it; deploy the site after that release, or this button 404s.
+export const DMG_LATEST = `${REPO}/releases/latest/download/kais-flow-mac.dmg`
 export const apkUrl = (tag) => `${REPO}/releases/download/${tag}/kais-flow-${tag}.apk`
 
 // What's growing — Now / Next / Later. Now = what builders are working on this month (October 2026);
 // Next / Later = the open items in docs/ROADMAP.md. Shipped things leave for Field notes.
 export const ROADMAP = {
-  now: ['Fixes from living with v1.5'],
+  now: ['Fixes from living with v1.6'],
   next: ['Being weighed: start dates, attachments on tasks, a quick-add key on Windows'],
   later: ['Email → Inbox', 'More themes', 'An iPhone app <i>(if it ever stops costing money)</i>'],
 }

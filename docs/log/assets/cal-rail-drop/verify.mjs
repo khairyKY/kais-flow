@@ -218,7 +218,7 @@ if (want('r2')) {
 if (want('r3')) {
   const { ctx, page, errors, state } = await open()
   // cal-wave (item 18): Lists with nothing in it steps aside — "Lists…" brings it (and its scope picker) back.
-  if (await page.locator('.cal-rail-more', { hasText: 'Lists…' }).count()) await page.locator('.cal-rail-more').click()
+  if (await page.locator('.cal-rail-more', { hasText: 'Show lists' }).count()) await page.locator('.cal-rail-more').click()
   await page.getByRole('button', { name: 'Rail scope type' }).click()
   await page.locator('[role="option"]', { hasText: 'Project' }).first().click()
   await sleep(300)
@@ -337,19 +337,20 @@ if (want('p1')) {
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await sleep(700)
   const fill0 = await block.evaluate((e) => e.style.getPropertyValue('--pc-fill'))
-  check('p1 the event sheet shows ten swatches, None picked', (await page.locator('.pc-bs-colors button').count()) === 10 && (await page.locator('.pc-bs-colors button[title="None"]').getAttribute('aria-pressed')) === 'true')
+  // cal-blocks (Kai 2026-10-26, palette C + menu B's tray): No colour + 16 swatches, Sage became Moss
+  check('p1 the event sheet shows the tray: No colour + 16 swatches, No colour picked', (await page.locator('.pc-bs-colors button.kf-sw').count()) === 17 && (await page.locator('.pc-bs-colors button[aria-label="No colour"]').getAttribute('aria-pressed')) === 'true')
   const w0 = state.writes.length
-  const sage = await page.locator('.pc-bs-colors button[title="Sage"]').boundingBox()
+  const sage = await page.locator('.pc-bs-colors button[title="Moss"]').boundingBox()
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [center(sage)] })
   await sleep(40)
   await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
   await sleep(700)
   await settle(state)
-  check('p1 a tap on Sage saves it', posts(state, 'calendar_events', w0).some((e) => e.id === eid(LUNCH) && e.color === '#8A9A7E'))
-  check('p1 …Sage reads as picked, "✓ Saved"', (await page.locator('.pc-bs-colors button[title="Sage"]').getAttribute('aria-pressed')) === 'true' && /saved/i.test(await text(page.locator('.pc-bs-save'))))
+  check('p1 a tap on Moss saves it', posts(state, 'calendar_events', w0).some((e) => e.id === eid(LUNCH) && e.color === '#768A42'))
+  check('p1 …Moss reads as picked, "✓ Saved"', (await page.locator('.pc-bs-colors button[title="Moss"]').getAttribute('aria-pressed')) === 'true' && /saved/i.test(await text(page.locator('.pc-bs-save'))))
   const fill1 = await block.evaluate((e) => e.style.getPropertyValue('--pc-fill'))
   // cal-looks (Kai 2026-10-23): a swatch colour draws as its token (calendar/blockHue), so Night Garden redraws it
-  check('p1 the grid block takes the new hue', fill1 !== fill0 && (fill1.includes('#8A9A7E') || fill1.includes('var(--acc-sage)')), `${fill0} → ${fill1}`)
+  check('p1 the grid block takes the new hue', fill1 !== fill0 && fill1.includes('var(--blk-moss)'), `${fill0} → ${fill1}`)
   await shot(page, 'p1-phone-sheet')
   check('p1 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()

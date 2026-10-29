@@ -14,7 +14,7 @@ import { dayShort } from '../../components/pickerMath'
 import { timeText } from '../calendar/eventTime'
 import { slotLabel } from '../calendar/api'
 import { Button, Checkbox, Chip } from '../../components/kit'
-import { softNo, useMotionEnabled } from '../../lib/motion'
+import { softNo, useArrivalClass, useMotionEnabled } from '../../lib/motion'
 import { RowMenuButton, SelectCircle, SwipeRow } from './SwipeRow'
 import type { BulkActions } from './TaskMenu'
 import { useRowGrammar } from './useRowGrammar'
@@ -120,15 +120,19 @@ export function TaskRow({
   const openTask = useOpenTask()
   const [checking, setChecking] = useState(false)
   const motionOn = useMotionEnabled()
+  const arrive = useArrivalClass() // T11: a done row that lands later (a check, a reopen's way back) breathes in
 
   const done = task.status === 'done'
   // `checking` never resets once set — reopening a done row (checkbox click or the
   // "Reopen" menu item) would otherwise render it with a stale strikethrough/checked look.
-  const wasDone = useRef(done)
+  // T5: a list holding a just-ticked row (useCompletingRows) draws it open while it's really done,
+  // so an Undo inside that window shows only as completed_at clearing — that resets it too.
+  const finished = done || !!task.completed_at
+  const wasDone = useRef(finished)
   useEffect(() => {
-    if (wasDone.current && !done) setChecking(false)
-    wasDone.current = done
-  }, [done])
+    if (wasDone.current && !finished) setChecking(false)
+    wasDone.current = finished
+  }, [finished])
   const someday = task.someday && !done
   const tag = resolveTag(task, domains, projects, areas)
   // ponytail: read from the cache, not a subscription per row — the list re-renders rows on any task change.
@@ -165,6 +169,13 @@ export function TaskRow({
   const parent = !task.parent_task_id
   const nestOpen = useNestOpen(task) && parent && !done && !someday
   const grammar = useRowGrammar(task, { projects, domains, areas, selected, onToggleSelect, selecting, bulk, nest: parent, actions: { reopen: handleReopen } })
+  // T16: leaving selection mode, the checkbox fades back in where the select circle was (120ms; the
+  // circle's own fade-in is TaskRow.css). Read on the render where `selecting` turns off.
+  const wasSelecting = useRef(false)
+  useEffect(() => {
+    wasSelecting.current = !!grammar.selecting
+  })
+  const swapIn: React.CSSProperties | undefined = wasSelecting.current && !grammar.selecting ? { animation: 'scrimIn var(--dur-instant) var(--ease-out)' } : undefined
 
   // Ctrl/Cmd+click toggles selection — the mouse path on surfaces with no checkbox (Planning
   // board). Capture phase so it never also completes/stars; DOM-contains check skips clicks
@@ -192,7 +203,7 @@ export function TaskRow({
     return (
       <div
         id={`task-${task.id}`}
-        className="task-row kf-lift"
+        className={arrive ? `task-row kf-lift ${arrive}` : 'task-row kf-lift'}
         tabIndex={highlighted ? 0 : -1}
         onContextMenu={grammar.onContextMenu}
         style={{ ...rowStyle, position: 'relative', display: 'flex', alignItems: 'center', gap: 14, padding: '11px 2px', opacity: justCompleted ? 0.55 : 1 }}
@@ -244,7 +255,7 @@ export function TaskRow({
         {...grammar.swipeProps}
         overlay={grammar.menuNode}
       >
-        {grammar.selecting ? <SelectCircle on={!!selected} title={task.title} /> : <Checkbox checked={false} size={18} onChange={handleCheck} label={task.title} />}
+        {grammar.selecting ? <SelectCircle on={!!selected} title={task.title} /> : <Checkbox checked={false} size={18} onChange={handleCheck} label={task.title} style={swapIn} />}
         <div onClick={openDetail} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
           <div style={{ fontSize: 15, color: 'var(--ink-body)' }}><EmojiText text={task.title} /></div>
           {tag && (
@@ -303,7 +314,7 @@ export function TaskRow({
             size={18}
             bloom={task.top3}
             onChange={handleCheck}
-            style={checking ? { background: 'var(--sig-done)', boxShadow: 'none' } : overdue ? { borderColor: 'var(--acc-terra)' } : undefined}
+            style={{ ...swapIn, ...(checking ? { background: 'var(--sig-done)', boxShadow: 'none' } : overdue ? { borderColor: 'var(--acc-terra)' } : null) }}
           />
         )}
         {checking && motionOn && task.top3 && <span className="tr-petal tr-petal-live" style={{ right: -5, bottom: -3, transform: 'rotate(40deg)' }} />}
@@ -371,7 +382,7 @@ export function TaskRow({
       )}
       {more}
     </SwipeRow>
-    {nestOpen && <SubtaskNest parent={task} rule={border} />}
+    <SubtaskNest show={nestOpen} parent={task} rule={border} />
     </>
   )
 }

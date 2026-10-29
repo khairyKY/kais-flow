@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { checkForUpdate, compareVersions, downloadOrder, inPlainBrowser, installUpdate, nativeVerdict, progressLine, releaseAssetName } from './appUpdate'
+import { appPlatform, checkForUpdate, compareVersions, downloadOrder, inPlainBrowser, installUpdate, nativeVerdict, progressLine, releaseAssetName } from './appUpdate'
 
 const updater = vi.hoisted(() => ({ check: vi.fn() }))
 vi.mock('@tauri-apps/plugin-updater', () => updater)
@@ -13,9 +13,10 @@ describe('the download bar', () => {
     expect(inPlainBrowser(win(false, { navigator: { standalone: true } }))).toBe(false) // iOS home screen
   })
   it("puts the device's own app first", () => {
-    expect(downloadOrder('Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129 Mobile')).toEqual(['android', 'windows'])
-    expect(downloadOrder('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129')).toEqual(['windows', 'android'])
-    expect(downloadOrder('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Safari/605')).toEqual(['android', 'windows'])
+    expect(downloadOrder('Mozilla/5.0 (Linux; Android 14; Pixel 8) Chrome/129 Mobile')).toEqual(['android', 'windows', 'mac'])
+    expect(downloadOrder('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/129')).toEqual(['windows', 'mac', 'android'])
+    expect(downloadOrder('Mozilla/5.0 (Macintosh; Intel Mac OS X 14_0) Safari/605')).toEqual(['mac', 'windows', 'android'])
+    expect(downloadOrder('Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Safari/604')).toEqual(['android', 'windows', 'mac'])
   })
 })
 
@@ -59,6 +60,12 @@ describe('nativeVerdict', () => {
   it('names the files the release workflows attach', () => {
     expect(releaseAssetName('v1.0.15', 'android')).toBe('kais-flow-v1.0.15.apk')
     expect(releaseAssetName('v1.0.15', 'windows')).toBe('kais-flow-v1.0.15-windows-setup.exe')
+    expect(releaseAssetName('v1.0.15', 'mac')).toBe('kais-flow-v1.0.15-mac.dmg')
+  })
+  it('tells the Mac app from the Windows app (the same Tauri shell)', () => {
+    const shell = (ua: string) => ({ __TAURI_INTERNALS__: {}, navigator: { userAgent: ua } }) as unknown as Window
+    expect(appPlatform(shell('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15'))).toBe('mac')
+    expect(appPlatform(shell('Mozilla/5.0 (Windows NT 10.0; Win64; x64) Edg/130'))).toBe('windows')
   })
 })
 
@@ -120,6 +127,23 @@ describe('updating the Windows app in place', () => {
       await installUpdate(url, () => {}, 'windows')
       expect(assign).toHaveBeenCalledWith(url)
     }
+  })
+  it('restarts the Mac app after the updater swaps it (the Windows installer reopens it itself)', async () => {
+    const invoke = vi.fn(async () => undefined)
+    vi.stubGlobal('window', { location: { assign: vi.fn() }, __TAURI_INTERNALS__: { invoke } })
+    updater.check.mockResolvedValue({ downloadAndInstall: vi.fn(async () => {}) })
+    await installUpdate('https://x/kais-flow-v1.2.1-mac.dmg', () => {}, 'mac')
+    expect(invoke).toHaveBeenCalledWith('app_restart')
+  })
+  it('opens the .dmg in the system browser when the Mac app can’t update in place (its web view has no downloads)', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const invoke = vi.fn(async () => undefined)
+    const assign = vi.fn()
+    vi.stubGlobal('window', { location: { assign }, __TAURI_INTERNALS__: { invoke } })
+    updater.check.mockRejectedValue(new Error('no darwin entry'))
+    await installUpdate('https://x/kais-flow-v1.2.1-mac.dmg', () => {}, 'mac')
+    expect(invoke).toHaveBeenCalledWith('plugin:opener|open_url', { url: 'https://x/kais-flow-v1.2.1-mac.dmg' })
+    expect(assign).not.toHaveBeenCalled()
   })
   it('leaves Android to the browser download', async () => {
     const assign = page()

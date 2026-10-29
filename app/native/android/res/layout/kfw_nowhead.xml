@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Now card's top (the calendar's Now card A): the header (Up next / Now · its times · in 20m), the ring and
+     the title, the progress line in the block's colour, and the start and end times under it. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/now_card" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical">
+    <include layout="@layout/kfw_head" />
+    <LinearLayout android:id="@+id/now_open" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="5dp" android:orientation="horizontal">
+        <ImageView android:id="@+id/now_ring" android:layout_width="13dp" android:layout_height="13dp" android:layout_marginTop="3dp" android:src="@drawable/kfw_ring_dot" android:importantForAccessibility="no" />
+        <TextView android:id="@+id/now_title" style="@style/KfW.Title" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="8dp" android:fontFamily="sans-serif-medium" android:textSize="15.5sp" android:lineSpacingMultiplier="1.1" />
+    </LinearLayout>
+    <ProgressBar android:id="@+id/bar" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="4dp" android:layout_marginTop="8dp" android:max="1000" android:progressDrawable="@drawable/kfw_bar_blk" />
+    <LinearLayout android:id="@+id/now_times" android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:orientation="horizontal" android:visibility="gone">
+        <TextView android:id="@+id/now_a" style="@style/KfW.Time" android:layout_width="0dp" android:layout_weight="1" />
+        <TextView android:id="@+id/now_b" style="@style/KfW.Time" />
+    </LinearLayout>
+</LinearLayout>

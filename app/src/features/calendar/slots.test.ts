@@ -23,7 +23,7 @@ vi.mock('../../lib/motion', () => ({ animateRowRemoval: (_el: unknown, run: () =
 const toasts: { message: string; undo: () => void }[] = []
 vi.mock('../../lib/undo', () => ({ toastUndo: (message: string, undo: () => void) => toasts.push({ message, undo }) }))
 
-const { heldDrop, inSlot, intoSlot, occurrenceOn, slotAt, slotFill, slotTasks, upcomingSlots } = await import('./slots')
+const { heldDrop, inSlot, intoSlot, occurrenceOn, slotAt, slotFill, slotOver, slotTasks, upcomingSlots } = await import('./slots')
 const { deleteEventWithUndo, linkTaskWithUndo, moveOrResizeEvent, outOfSlotWithUndo, putInSlotWithUndo, resizeEvent, retimeEventWithUndo, setEventRepeat, slotLabel, updateEvent } = await import('./api')
 const { rescheduleDue } = await import('../tasks/api')
 const { railBuckets } = await import('./replan')
@@ -100,6 +100,13 @@ describe('slots: the pure rules', () => {
   it('fill: "N tasks · Xm of Ym", 30 minutes for a task with no estimate', () => {
     expect(slotFill(CODE, [{ duration_min: 15 }, { duration_min: null }])).toBe('2 tasks · 45m of 2h')
     expect(slotFill(CODE, [{ duration_min: 90 }])).toBe('1 task · 1h\u00a030m of 2h')
+  })
+
+  it('over: how far the tasks outrun the slot, null while they fit', () => {
+    expect(slotOver(CODE, [{ duration_min: 90 }, { duration_min: 30 }])).toBeNull() // 2h of 2h: full, not over
+    expect(slotOver(CODE, [{ duration_min: 90 }, { duration_min: 60 }, { duration_min: null }])).toBe('1h over')
+    const short = { starts_at: CODE.starts_at, ends_at: new Date(Date.parse(CODE.starts_at) + 45 * 60_000).toISOString() }
+    expect(slotOver(short, [{ duration_min: 30 }, { duration_min: 30 }, { duration_min: null }])).toBe('45m over')
   })
 
   it('occurrenceOn: the Time block occurrence on a day — a series expanded, a one-off on its own day only, never an event', () => {

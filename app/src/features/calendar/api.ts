@@ -18,6 +18,8 @@ import { isSynced, remindLabel, repeatLabel } from './blockMenuSpec'
 import { timeText } from './eventTime'
 import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from './slots'
 import { spanMinutes, taskOnBlock, withLength } from '../../../../supabase/functions/_shared/blockLength.ts'
+import { planScope, type Scope, type SeriesChange } from './scope'
+import { noteLocalWrite } from './blockMotion'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -46,6 +48,7 @@ export function useCalendarEvents(range?: { start: Date; end: Date }) {
  * owns it, so nothing here can move, edit or trash one (the grid and the menus don't offer it either). */
 function writeEvent(row: CalendarEvent, op?: 'upsert' | 'delete'): void {
   if (isSynced(row)) return
+  noteLocalWrite() // CAL10: what lands next is the person's own
   writeRow('calendar_events', row, op)
 }
 
@@ -235,10 +238,10 @@ export function createEvent(title: string, startsAt: string, endsAt: string, typ
 /** Duplicate (Kai 2026-10-17): a plain event copied to the same time — side by side on the grid. An
  * occurrence copies as a one-off of its own (the series stays as it is). Returns the copy and its
  * Undo, which removes it outright (it never should have existed). A task's block: ./duplicate. */
-export function copyEvent(event: CalendarEvent): { copy: CalendarEvent; undo: () => void } {
+export function copyEvent(event: CalendarEvent, when?: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'all_day'>): { copy: CalendarEvent; undo: () => void } {
   const { seriesId: _occurrenceOf, ...rest } = event
   const at = nowIso()
-  const copy: CalendarEvent = { ...rest, id: crypto.randomUUID(), recurrence_rule: null, recurrence_exdates: [], series_id: null, source: 'native', gcal_id: null, gcal_etag: null, external_ref: null, deleted_at: null, created_at: at, updated_at: at }
+  const copy: CalendarEvent = { ...rest, ...when, id: crypto.randomUUID(), recurrence_rule: null, recurrence_exdates: [], series_id: null, source: 'native', gcal_id: null, gcal_etag: null, external_ref: null, deleted_at: null, created_at: at, updated_at: at }
   writeEvent(copy)
   logActivity('calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, duplicate_of: event.seriesId ?? event.id })
   return { copy, undo: () => writeEvent(copy, 'delete') }
@@ -600,7 +603,7 @@ export function moveEventsByWithUndo(events: readonly CalendarEvent[], deltaMs: 
   if (!own.length || !deltaMs) return
   const at = (iso: string) => new Date(Date.parse(iso) + deltaMs).toISOString()
   const undos = own.map((e) => moveOrResizeEvent(e, at(e.starts_at), at(e.ends_at)))
-  toastUndo(`Moved · ${own.length} ${own.length === 1 ? 'block' : 'blocks'}`, () => undos.reverse().forEach((u) => u()))
+  toastUndo(`${own.length} ${own.length === 1 ? 'block' : 'blocks'} moved`, () => undos.reverse().forEach((u) => u()))
 }
 
 /** "All events": the series row and every occurrence dragged out of it go to Trash, one Undo. Every
@@ -614,6 +617,48 @@ export function deleteSeriesWithUndo(event: CalendarEvent): void {
     all.forEach(restoreEvent)
     undoTasks()
   })
+}
+
+/** True for a block that is an occurrence of a repeating event of ours — the ones every change asks about (cal-clicks).
+ * A Google event never: google-sync owns it. */
+export const isSeriesBlock = (e: Pick<CalendarEvent, 'seriesId' | 'recurrence_rule' | 'source'>): boolean => !isSynced(e) && !!(e.seriesId || e.recurrence_rule)
+
+/** cal-clicks: a change to an occurrence of a repeating event, as the person answered the scope question —
+ * ./scope plans it (this = the exception, following = the split, all = the series row), it goes through the outbox,
+ * a Time block's tasks follow the occurrences the change leaves (reseat), and ONE Undo puts every row back.
+ * Returns where the block stands now (a sheet kept open over it follows it). */
+export function applySeriesChange(event: CalendarEvent, scope: Scope, change: SeriesChange, message: string): BlockRef | null {
+  const row = event.seriesId ? seriesOf(event) : event
+  if (!row || isSynced(row)) return null
+  const detached = cachedRows().filter((r) => r.series_id === row.id && !r.deleted_at)
+  const plan = planScope(row, event, scope, change, { newId: () => crypto.randomUUID(), now: nowIso(), detached })
+  if (!plan.write.length && !plan.trash.length) return plan.ref
+  const rows = cachedRows()
+  const prior = [...plan.write, ...plan.trash].flatMap((r) => rows.filter((x) => x.id === r.id).map((x) => ({ ...x })))
+  const trashed = new Set(plan.trash.map((r) => r.id))
+  // A slot's tasks: each to its day's occurrence among what the change leaves, else out (the series' own rule);
+  // a one-off moved out of it earlier that goes to Trash lets go of its tasks.
+  const undoTasks = [
+    ...(row.type === 'time_block' || plan.write.some((w) => w.type === 'time_block') ? [reseat(row.id, plan.write.filter((w) => !trashed.has(w.id)))] : []),
+    ...plan.trash.filter((r) => r.id !== row.id).map((r) => releaseRow(r.id)),
+  ]
+  for (const w of plan.write) writeEvent(w)
+  const at = nowIso()
+  for (const t of plan.trash) {
+    writeEvent({ ...t, deleted_at: at })
+    logActivity('calendar_event.deleted', 'calendar_event', t.id, {})
+  }
+  for (const w of plan.write.filter((x) => plan.created.includes(x.id))) logActivity('calendar_event.created', 'calendar_event', w.id, { title: w.title, type: w.type, series_id: row.id, scope })
+  if (change.kind === 'delete' && scope === 'this') logActivity('calendar_event.deleted', 'calendar_event', row.id, { occurrence: event.starts_at })
+  toastUndo(message, () => {
+    for (const id of plan.created) {
+      const made = plan.write.find((w) => w.id === id)
+      if (made) writeEvent(made, 'delete')
+    }
+    for (const p of prior) writeEvent(p)
+    undoTasks.reverse().forEach((u) => u())
+  })
+  return plan.ref
 }
 
 /** Deleting a task deletes its block too (called from the tasks feature after user confirms). */

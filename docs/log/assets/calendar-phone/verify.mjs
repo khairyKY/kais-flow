@@ -153,6 +153,20 @@ async function drag(cdp, from, { dx = 0, dy = 0, hold = 0, steps = 10, stepMs = 
     await sleep(500)
   }
 }
+/** cal-clicks: a hold released without moving lifts the block AND opens menu B's sheet over it (Kai 2026-10-26: "a
+ * long-press opens the menu-B sheet"); Back (Esc) closes the sheet and the block stays lifted, its handles live.
+ * Returns whether menu B's sheet (its swatch tray) opened. */
+async function holdLift(cdp, page, p) {
+  await drag(cdp, p, { hold: 550, steps: 0 })
+  await sleep(300)
+  const menuB = (await page.locator('.pc-bs-colors .kf-swatch-tray').count()) > 0
+  // Back until the sheet is gone (a "What's new" toast up first takes a Back of its own)
+  for (let i = 0; i < 3 && (await page.locator('.pc-bs-colors').count()) > 0; i++) {
+    await page.keyboard.press('Escape')
+    await sleep(700)
+  }
+  return menuB
+}
 const shot = (page, name) => page.screenshot({ path: path.join(OUT, `${name}.png`) })
 const text = (loc) => loc.first().innerText().catch(() => '')
 const toasts = (page) => page.locator('.kf-toast-msg').allInnerTexts()
@@ -220,9 +234,9 @@ for (const theme of ['day', 'night']) {
     const labels = await page.locator('.pc-hour > span').evaluateAll((els) => els.slice(11, 13).map((e) => e.getBoundingClientRect().top))
     check(`${name} hours are 64px`, labels[1] - labels[0] === 64, labels[1] - labels[0])
     check(`${name} four blocks today`, (await page.locator('.pc-pane .pc-block').count()) === 4)
-    check(`${name} Lunch reads "Now · 20m left", in blossom`, (await text(block(page, 2))).includes('Now · 20m left') && (await block(page, 2).evaluate((e) => e.style.getPropertyValue('--pc-fill'))) .includes('var(--acc-blossom) 24%'))
+    check(`${name} Lunch reads "Now · 20m left", in Rose (palette C, cal-blocks)`, (await text(block(page, 2))).includes('Now · 20m left') && (await block(page, 2).evaluate((e) => e.style.getPropertyValue('--pc-fill'))) .includes('var(--blk-rose) var(--blk-fill)'))
     check(`${name} the tyre block: 15:00–15:30, 32px, the project hue, an 18px checkbox`, (await text(block(page, 3))).includes('15:00–15:30') && (await block(page, 3).evaluate((e) => [e.getBoundingClientRect().height, getComputedStyle(e).getPropertyValue('--pc-fill').includes('#C9A961'), e.querySelector('.kf-checkbox').getBoundingClientRect().width].join())) === '32,true,18')
-    check(`${name} Gym (a time block) lavender, no checkbox`, (await block(page, 4).evaluate((e) => e.style.getPropertyValue('--pc-fill').includes('var(--acc-lavender) 24%') && !e.querySelector('.kf-checkbox'))))
+    check(`${name} Gym (a time block) Iris (palette C), no checkbox`, (await block(page, 4).evaluate((e) => e.style.getPropertyValue('--pc-fill').includes('var(--blk-iris) var(--blk-fill)') && !e.querySelector('.kf-checkbox'))))
     // cal-looks (Kai 2026-10-23, "blocks: Now" as drawn, as the desktop): a task block past its end today, not done, is
     // "Ran over" — a terra edge, never faded (a past event fades to .62, cal-looks c2).
     check(`${name} the past task block reads "Ran over", not faded`, (await text(block(page, 1))).includes('Ran over') && (await block(page, 1).evaluate((e) => e.classList.contains('is-ranover') && getComputedStyle(e).opacity === '1')), await text(block(page, 1)))
@@ -546,15 +560,15 @@ for (const theme of ['day', 'night']) {
     const w1 = state.writes.length
     await tap(cdp, page.locator('.kf-toast', { hasText: 'Moved to 16:15' }).getByRole('button', { name: 'Undo' }))
     check('7m-day Undo → back to 15:00', writesOf(state, 'calendar_events', w1).some((x) => x.starts_at === iso('15:00')))
-    // A hold released without moving stays lifted — until a tap elsewhere, or Back.
+    // A hold released without moving stays lifted — until a tap elsewhere, or Back. cal-clicks: and it opens menu B's
+    // sheet over the lifted block; Back closes the sheet first.
     const b3 = await block(page, 3).boundingBox()
-    await drag(cdp, { x: b3.x + 120, y: b3.y + 16 }, { hold: 550, steps: 0 })
-    await sleep(700)
-    check('lift: released without moving, it stays lifted', (await page.locator('.pc-block.is-lifted').count()) === 1 && (await dialog(page).count()) === 0)
+    const sheetB = await holdLift(cdp, page, { x: b3.x + 120, y: b3.y + 16 })
+    check('lift: released without moving, it opens menu B\'s sheet; closed, the block stays lifted', sheetB && (await page.locator('.pc-block.is-lifted').count()) === 1 && (await dialog(page).count()) === 0)
     const w2 = state.writes.length
     await tapAt(cdp, { x: 200, y: (await yOf(page, '11:00')) + 8 })
     check('lift: a tap elsewhere puts it down — and only that (no sheet, no write)', (await page.locator('.pc-block.is-lifted').count()) === 0 && (await dialog(page).count()) === 0 && state.writes.length === w2)
-    await drag(cdp, { x: b3.x + 120, y: b3.y + 16 }, { hold: 550, steps: 0 })
+    await holdLift(cdp, page, { x: b3.x + 120, y: b3.y + 16 }) // (its first Back closed menu B's sheet)
     await page.keyboard.press('Escape') // lib/overlayStack — what Android Back calls
     await sleep(300)
     check('lift: Back (Esc) puts it down first', (await page.locator('.pc-block.is-lifted').count()) === 0)
@@ -568,8 +582,7 @@ for (const theme of ['day', 'night']) {
     const name = '7f-day'
     const { ctx, page, cdp, errors, state } = await open()
     const b = await block(page, 3).boundingBox()
-    await drag(cdp, { x: b.x + 120, y: b.y + 16 }, { hold: 550, steps: 0 })
-    await sleep(300)
+    await holdLift(cdp, page, { x: b.x + 120, y: b.y + 16 })
     const lb = await block(page, 3).boundingBox()
     const top = await page.locator('.pc-handle.is-top').boundingBox()
     const bot = await page.locator('.pc-handle.is-bottom').boundingBox()
@@ -585,8 +598,7 @@ for (const theme of ['day', 'night']) {
     const e = writesOf(state, 'calendar_events', w0)
     check(`${name} release → 15:00–16:15, the task's estimate 75 min, "Resized to 15:00–16:15"`, e.length === 1 && e[0].starts_at === iso('15:00') && e[0].ends_at === iso('16:15') && writesOf(state, 'tasks', w0).some((t) => t.duration_min === 75) && (await toasts(page)).includes('Resized to 15:00–16:15'), JSON.stringify(e))
     const b2 = await block(page, 3).boundingBox()
-    await drag(cdp, { x: b2.x + 120, y: b2.y + 16 }, { hold: 550, steps: 0 })
-    await sleep(300)
+    await holdLift(cdp, page, { x: b2.x + 120, y: b2.y + 16 })
     const w1 = state.writes.length
     await drag(cdp, center(await page.locator('.pc-handle.is-top').boundingBox()), { dy: -32, steps: 6, stepMs: 40 })
     const e2 = writesOf(state, 'calendar_events', w1)
@@ -700,8 +712,7 @@ for (const theme of ['day', 'night']) {
     const bottom = Math.round(g.y + g.height)
     const mid = Math.round(g.y + g.height / 2) + 40
     const b = await block(page, 3).boundingBox()
-    await drag(cdp, { x: b.x + 120, y: b.y + 16 }, { hold: 550, steps: 0 })
-    await sleep(300)
+    await holdLift(cdp, page, { x: b.x + 120, y: b.y + 16 })
     const hb = await page.locator('.pc-handle.is-bottom').boundingBox()
     const h = { x: Math.round(hb.x + hb.width / 2), y: Math.round(hb.y + hb.height / 2) }
     const st0 = await scrollTop(page)

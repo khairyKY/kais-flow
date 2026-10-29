@@ -90,12 +90,17 @@ export function TourHost() {
   }, [uid, settings, onToday, seen, note])
 
   if (!uid) return null
+  if (note == null) lastSpot = null
   const notes = mobile ? PHONE_NOTES : DESKTOP_NOTES
   if (note != null) return <Tour key={`${mobile}-${note}`} notes={notes} at={Math.min(note, notes.length - 1)} mobile={mobile} />
   return <Hints seen={seen} mobile={mobile} />
 }
 
 // ── the tour ──
+
+/** R11: where the last note's spotlight stood as it went, so the next note's glides from there (300ms)
+ * instead of the dim blinking out and fading back in on every step. */
+let lastSpot: { x: number; y: number; w: number; h: number; r: string } | null = null
 
 function Tour({ notes, at, mobile }: { notes: TourNote[]; at: number; mobile: boolean }) {
   const n = notes[at]
@@ -178,20 +183,58 @@ function Tour({ notes, at, mobile }: { notes: TourNote[]; at: number; mobile: bo
     if (shown) next.current?.focus({ preventScroll: true })
   }, [shown])
 
-  if (!drawn) return null
+  // R11: the spotlight glides from the previous note's (it was remounting and fading in each step).
+  const pad = n.round ? 10 : 4
+  const spotRef = useRef<HTMLSpanElement>(null)
+  const [from] = useState(() => lastSpot) // cleared when the tour ends (TourHost)
+  // Until this note's anchor is found, the last spotlight holds where it was (no blink), briefly.
+  const [holding, setHolding] = useState(!!from)
+  useEffect(() => {
+    if (!holding) return
+    const t = window.setTimeout(() => setHolding(false), 600)
+    return () => window.clearTimeout(t)
+  }, [holding])
+  const glided = useRef(false)
+  const spot = box ? { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2, r: n.round ? '50%' : mobile ? '4px' : '8px' } : null
+  useLayoutEffect(() => {
+    const el = spotRef.current
+    if (!spot || !el) return
+    lastSpot = spot
+    if (glided.current || !from) return
+    glided.current = true
+    if (motion && typeof el.animate === 'function') {
+      el.animate(
+        [
+          { left: `${from.x}px`, top: `${from.y}px`, width: `${from.w}px`, height: `${from.h}px`, borderRadius: from.r },
+          { left: `${spot.x}px`, top: `${spot.y}px`, width: `${spot.w}px`, height: `${spot.h}px`, borderRadius: spot.r },
+        ],
+        { duration: 300, easing: 'cubic-bezier(0.2, 0, 0, 1)' },
+      )
+    }
+  })
+  if (!drawn) {
+    if (!holding || !from) return null
+    return (
+      <Float>
+        <div className="kf-tour" data-tour-ui>
+          <span className="kf-tour-spot is-glide" aria-hidden style={{ left: from.x, top: from.y, width: from.w, height: from.h, borderRadius: from.r }} />
+        </div>
+      </Float>
+    )
+  }
   const vp = viewport()
   const place = placeNote(box, cardH, vp, mobile, n)
   const dots = dotCount(notes)
-  const pad = n.round ? 10 : 4
 
   return (
     <Float>
       <div className="kf-tour" data-tour-ui>
         {box ? (
           <span
-            className="kf-tour-spot"
+            ref={spotRef}
+            className={`kf-tour-spot${from ? ' is-glide' : ''}`}
             aria-hidden
-            style={{ left: box.x - pad, top: box.y - pad, width: box.w + pad * 2, height: box.h + pad * 2, borderRadius: n.round ? '50%' : mobile ? 4 : 8 }}
+            style={{ left: spot!.x, top: spot!.y, width: spot!.w, height: spot!.h, borderRadius: spot!.r }}
           />
         ) : (
           <span className="kf-tour-dim" aria-hidden />

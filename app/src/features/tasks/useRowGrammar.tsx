@@ -5,12 +5,14 @@ import { toastUndo } from '../../lib/undo'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 import { deleteTasksWithUndo, duplicateTasksWithUndo, editWithUndo, makeGoalWithUndo, moveInTop3Order, moveTasksWithUndo, moveToTomorrowWithUndo, planWithUndo, prioritizeWithUndo, reopenTaskWithUndo, rescheduleDue, setDuration, setRecurrence, setReminder, snoozeTasksWithUndo, somedayTasksWithUndo, toggleTop3, unsnoozeTasksWithUndo } from './api'
 import { durationLabel } from '../../components/pickerMath'
-import { placeName } from './move'
+import { placeName, placeTask } from './move'
+import { editTask } from '../calendar/scoped'
 import type { SwipeActions } from './SwipeRow'
 import { remindChip, repeatLabel, slotChip } from './taskSheetMath'
 import { TaskMenu, type BulkActions, type MenuAnchor, type TaskMenuActions } from './TaskMenu'
 import { outOfSlotWithUndo } from '../calendar/api'
 import { useSubtaskUi } from './subtaskStore'
+import { flipRows } from '../../lib/motion'
 
 // ── The one task-row grammar (Flow Audit §4), as a hook: every row that shows a task (Tasks, Today's
 // Top 3 + goal card, task-backed Up next) gets its SwipeRow props, its ⋯ / right-click opener and the
@@ -26,7 +28,8 @@ export function taskActions(task: Task): TaskMenuActions {
     schedule: (iso, timed) => planWithUndo(task, iso, timed),
     clearDate: () => planWithUndo(task, null),
     someday: () => somedayTasksWithUndo([task]), // Undo like every other plan move
-    move: (to) => moveTasksWithUndo([task], to),
+    // cal-clicks: a repeating task asks This one / Following / All before it moves.
+    move: (to) => void editTask(task, (t) => placeTask(t, to), to.kind === 'none' ? 'Unfiled' : `Moved to ${to.name}`, () => moveTasksWithUndo([task], to)),
     priority: (p) => prioritizeWithUndo([task], p),
     repeat: (rule) => editWithUndo([task], rule ? `Repeats · ${repeatLabel(rule)}` : 'Repeat off', (t) => setRecurrence(t, rule)),
     remind: (iso) => editWithUndo([task], iso ? `Reminder · ${remindChip(iso, task.due_at)}` : 'Reminder off', (t) => setReminder(t, iso)),
@@ -78,7 +81,7 @@ export function useRowGrammar(task: Task, o: RowGrammarOptions) {
   const actions: TaskMenuActions = {
     ...taskActions(task),
     ...(bulk ? { tomorrow: bulk.onTomorrow, schedule: bulk.onSchedule, someday: bulk.onSomeday, move: bulk.onMove, delete: bulk.onDelete, duplicate: bulk.onDuplicate, snooze: bulk.onSnooze, ...(bulk.onTop3 ? { top3: bulk.onTop3 } : null) } : null),
-    ...(o.place ? { reorder: (d: -1 | 1) => void moveInTop3Order(task, o.place!.index + d) } : null),
+    ...(o.place ? { reorder: (d: -1 | 1) => flipRows(() => void moveInTop3Order(task, o.place!.index + d)) } : null), // T13
     ...(o.nest && !task.parent_task_id && !done ? { addSubtask: () => useSubtaskUi.getState().setAdding(task.id) } : null),
     ...o.actions,
     select: o.onToggleSelect,

@@ -190,3 +190,29 @@
 }
 .app-shell.motion-on .fp-scrim-in { animation: fpFadeIn 210ms var(--ease-out); }
 .app-shell.motion-on .fp-card-in { animation: entryFadeUp 210ms var(--ease-out); }
+
+/* ── Lane A2 motion (2026-10-28) ── */
+/* R3 — round end: one gold bloom behind the ring as it closes (--dur-bloom), then the break view
+   cross-fades in (functional 200ms; 300ms with Effects on). */
+@keyframes fpRoundBloom {
+  0%   { opacity: 0; transform: scale(0.8); }
+  50%  { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.05); }
+}
+.fp-round-bloom {
+  position: absolute;
+  inset: -30px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(circle, color-mix(in oklch, var(--acc-gold-warm) 50%, transparent) 0%, transparent 70%);
+  animation: fpRoundBloom var(--dur-bloom) var(--ease-out) forwards;
+}
+.fp-break-in { animation: fpFadeIn 200ms var(--ease-out) backwards; }
+.app-shell.motion-on .fp-break-in { animation-duration: 300ms; }
+/* R3 — paused: the ring dims to 55% (always) and, Effects on, breathes slowly. */
+@keyframes fpRingBreathe { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.72; } }
+.fp-ring { transition: opacity 300ms var(--ease-out); }
+.fp-ring.is-paused { opacity: 0.55; }
+.app-shell.motion-on .fp-ring.is-paused { animation: fpRingBreathe 3.6s ease-in-out 300ms infinite; }
+/* R5 — the garden scene fades in, the dusk "lights down" (leaving fades it out in JS). */
+.app-shell.motion-on .fp-garden-in { animation: fpFadeIn 300ms var(--ease-out) backwards; }

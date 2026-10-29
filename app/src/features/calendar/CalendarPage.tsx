@@ -1,11 +1,13 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useNavigate } from 'react-router'
-import { useOpenTask } from '../tasks/openTask'
+import { useLocation, useNavigate } from 'react-router'
+import { TASK_PARAM, taskAnchor, useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
-import { inSlot, slotAt, slotFill, slotTasks } from './slots'
+import { completeBlockTask, moveBlock } from './scoped'
+import { slotAt, slotFill, slotOver, slotTasks } from './slots'
+import { dropOnGrid } from './gridDrop'
 import { TaskMenu } from '../tasks/TaskMenu'
 import { taskActions } from '../tasks/useRowGrammar'
 import { placeName } from '../tasks/move'
@@ -37,7 +39,7 @@ import { useProjects } from '../projects/api'
 import { useAreas } from '../areas/api'
 import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../lib/settings'
 import { daisyAsset } from '../../lib/gardenAssets'
-import { useMotionEnabled, useOverlayExit } from '../../lib/motion'
+import { playOnce, reducedMotionNow, useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
 import { slotFields, timeRange, timeText, zoneHour, zoneTimeKey } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
@@ -47,12 +49,14 @@ import { conflictsOf } from './overlapLayout'
 import { parseWeekend } from '../../lib/weekend'
 import { addDays, durationLabel } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
-import { BLOCK_MENU_WIDTH, besideBlock, isSynced } from './blockMenuSpec'
+import { duplicateBlockWithUndo } from './duplicate'
+import { BLOCK_MENU_WIDTH, besideBlock, isSynced, type BlockMenuMode } from './blockMenuSpec'
 import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
 import { QuickCreate, type QuickCreateKind } from './QuickCreate'
-import { ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
+import { VIEW_OPTIONS_KEY, ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
+import { onPrefApplied } from '../../lib/prefs'
 import { fitDays, fitHours, gridMinWidth, MIN_COL_W, RAIL_SPLIT_W, RAIL_TAB_W, railYields, RESPONSIVE_COL_W, TIME_AXIS_W, visibleDayCount, ZONE2_W } from './weekFit'
 import { NowCard } from './NowCard'
 import { useDayRollover } from './useDayRollover'
@@ -134,6 +138,8 @@ interface Selected {
   id: string
   start: string
   at: { x: number; y: number }
+  /** cal-clicks: a click opens the details, a right-click (Shift+F10, the menu key) menu B. */
+  mode?: BlockMenuMode
 }
 
 /** besideBlock() of the block on screen, else (not drawn yet) the middle of the window. */
@@ -502,6 +508,7 @@ function DesktopCalendar() {
   const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
   const [viewOpts, setViewOpts] = useState<CalViewOptions>(readViewOptions)
+  useEffect(() => onPrefApplied(VIEW_OPTIONS_KEY, () => setViewOpts(readViewOptions())), []) // changed on another device
   const [viewOptsOpen, setViewOptsOpen] = useState(false)
   // Anchor survives the close so the 140ms exit plays in place (useOverlayExit keeps it mounted).
   const [viewOptsAnchor, setViewOptsAnchor] = useState<{ x: number; y: number }>({ x: 0, y: 0 })
@@ -609,13 +616,14 @@ function DesktopCalendar() {
   const gridBlocks = useMemo(
     () => {
       const todayKey = cairoDateKey(new Date())
+      const ruleOf = new Map(tasks.map((t) => [t.id, t.recurrence_rule]))
       return visibleEvents.map((e) => {
         // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
         const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
         return {
-          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
+          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
           goal: !!goalTaskId && e.task_id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === todayKey,
-          ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held) } : null),
+          ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held), over: slotOver(e, held) } : null),
         }
       })
     },
@@ -710,8 +718,8 @@ function DesktopCalendar() {
   }
 
   /** §5: the block's popover, beside it (or at the pointer, from a right-click's Edit). */
-  function openExisting(event: CalendarEvent, at?: { x: number; y: number }) {
-    setSelected({ id: event.id, start: event.starts_at, at: at ?? anchorOf(event.id) })
+  function openExisting(event: CalendarEvent, at?: { x: number; y: number }, mode: BlockMenuMode = 'details') {
+    setSelected({ id: event.id, start: event.starts_at, at: at ?? anchorOf(event.id), mode })
   }
 
   // Multi-select (Kai 2026-10-22, Google / Notion Calendar): Ctrl / ⌘ / Shift + click picks blocks; dragging one
@@ -726,33 +734,25 @@ function DesktopCalendar() {
     }
     setPicked([])
     const event = gridEvents.find((e) => e.id === id)
-    if (event) openExisting(event)
+    if (!event) return
+    // cal-clicks (Kai 2026-10-26, Akiflow / Google Calendar): a click opens the DETAILS — a task's block its task
+    // (the task popover, beside the block), any other block its own details (a Time block's: its slot).
+    const el = document.querySelector(`.fc-event[data-kf-id="${CSS.escape(id)}"]`)
+    if (event.task_id && !isSynced(event) && tasks.some((t) => t.id === event.task_id) && el) {
+      setSelected(null)
+      openTask(event.task_id, undefined, el)
+      return
+    }
+    openExisting(event)
   }
   const pickedLive = useMemo(() => picked.filter((id) => gridEvents.some((e) => e.id === id)), [picked, gridEvents])
 
-  // Punch 6 (calendar slice): every destructive calendar mutation undoes through the same api — never a bare toast.
-  const unscheduleWithUndo = (event: CalendarEvent) => deleteEventWithUndo(event, 'Unscheduled')
-  const deleteWithUndo = (event: CalendarEvent) => deleteEventWithUndo(event, 'Deleted')
-
+  /** cal-clicks: a right-click (the ⋯, Shift+F10, the menu key) opens menu B at the pointer. The old quick menu
+   * (Edit / Details · Complete · Replan… · Unschedule · Delete) is retired: its rows live in menu B. */
   function handleEventContextMenu(id: string, x: number, y: number) {
     setContextMenu(null)
     const event = gridEvents.find((e) => e.id === id)
-    if (!event) return
-    const items: ContextMenuItem[] = []
-    if (event.type === 'task') {
-      items.push({ label: 'Edit Task', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
-      if (isMissed(event)) items.push({ label: 'Replan…', onClick: () => replanEvent(event, x, y) })
-      items.push({ label: 'Complete', onClick: () => { setContextMenu(null); const t = tasks.find((t) => t.id === event.task_id); if (t) completeTaskWithUndo(t) } })
-      items.push({ label: 'Unschedule', onClick: () => { setContextMenu(null); unscheduleWithUndo(event) } })
-      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
-    } else if (isSynced(event)) {
-      // A Google event (B1) is read-only: its details, nothing to delete.
-      items.push({ label: 'Details', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
-    } else {
-      items.push({ label: 'Edit', onClick: () => { setContextMenu(null); openExisting(event, { x, y }) } })
-      items.push({ label: 'Delete', danger: true, onClick: () => { setContextMenu(null); deleteWithUndo(event) } })
-    }
-    setContextMenu({ items, x, y })
+    if (event) openExisting(event, { x, y }, 'menu')
   }
 
   /** Punch 33 + Kai 2026-10-12: a block dragged onto the rail does what the section it lands on
@@ -823,24 +823,14 @@ function DesktopCalendar() {
     setQuickCreate({ kind: 'task', slot: null, anchor: { x: e.clientX, y: e.clientY } })
   }
 
-  /** A ran-over task block that isn't done — the details panel and the right-click offer Replan. */
-  function isMissed(event: CalendarEvent): boolean {
-    const t = event.task_id ? tasks.find((x) => x.id === event.task_id) : undefined
-    return !!t && t.status === 'todo' && Date.parse(event.ends_at) < Date.now()
-  }
-
   // A rail card dropped on the grid: a task's block goes there (its missed block moves — never a
   // second one); an inbox item is filed and blocked there. Each with one Undo.
   function handleExternalDrop(from: { taskId?: string; inboxId?: string }, start: string, allDay: boolean) {
     const task = from.taskId ? tasks.find((t) => t.id === from.taskId) : undefined
     const item = from.inboxId ? inbox.find((i) => i.id === from.inboxId) : undefined
-    // Time Slots (0073): a task dropped on a Time block goes IN it — no block of its own. A held row
-    // dropped back on its own slot stays as it was.
-    const slot = task && !allDay ? slotAt(gridEvents, start) : undefined
-    if (task && slot) return inSlot(task, slot) ? undefined : putInSlotWithUndo(task, slot)
+    // Time Slots (0073): a task dropped on a Time block goes IN it — no block of its own (./gridDrop).
     const min = allDay ? 24 * 60 : task ? railMinutes(buckets.overdue.find((r) => r.task.id === task.id) ?? scheduled.find((r) => r.task.id === task.id) ?? { task, block: null }) : item ? inboxMinutes(item) : 30
-    const end = new Date(new Date(start).getTime() + min * 60000).toISOString()
-    const ev = task ? scheduleTaskWithUndo(task, start, end, allDay) : item ? fileToCalendar(item, start, end, allDay) : null
+    const ev = dropOnGrid({ task, item }, start, min, gridEvents, allDay)
     if (!ev) return
     // Always reported, motion or not: CalendarGrid keeps this block visible until the next
     // interaction (Polish F2b). The settle-in it also drives is gated in CSS by .cal-motion-on.
@@ -1083,7 +1073,7 @@ function DesktopCalendar() {
       const t = tasks.find((x) => x.id === taskId)
       if (!t) return
       if (done) uncompleteTask(t)
-      else completeTaskWithUndo(t)
+      else void completeBlockTask(t) // cal-clicks: a repeating task's round asks first
     },
     // A task block's ▶ (hover, "Now" as drawn): Focus on its task, as Today's ▶ does.
     onFocusTask: (taskId: string) => {
@@ -1092,22 +1082,32 @@ function DesktopCalendar() {
     },
     onCreate: (info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) => handleGridCreate(info),
     // One occurrence of a repeat moves on its own (calendar/api detach); the Undo comes back from the write.
-    onMove: (id: string, start: string, end: string, allDay: boolean) => {
+    // cal-clicks: a repeat (or a repeating task's round) asks This / Following / All; Cancel puts the block back.
+    onMove: (id: string, start: string, end: string, allDay: boolean, revert?: () => void) => {
       const event = gridEvents.find((e) => e.id === id)
       if (!event) return
       // A task's block dropped on a Time block: the task goes into the slot, its block comes off.
       const task = event.task_id && !allDay ? tasks.find((t) => t.id === event.task_id) : undefined
       const slot = task ? slotAt(gridEvents, start, id) : undefined
       if (task && slot) return putInSlotWithUndo(task, slot)
-      toastUndo(`Moved · ${event.title}`, moveOrResizeEvent(event, start, end, allDay))
+      void moveBlock(event, { starts_at: start, ends_at: end, all_day: allDay }, { verb: 'Move', said: `Moved · ${event.title}`, run: () => moveOrResizeEvent(event, start, end, allDay), onCancel: revert, task })
     },
-    onResize: (id: string, start: string, end: string) => {
+    onResize: (id: string, start: string, end: string, revert?: () => void) => {
       const event = gridEvents.find((e) => e.id === id)
-      if (event) toastUndo(`Resized · ${event.title}`, resizeEvent(event, start, end))
+      if (event) void moveBlock(event, { starts_at: start, ends_at: end }, { verb: 'Resize', said: `Resized · ${event.title}`, run: () => resizeEvent(event, start, end), onCancel: revert })
     },
     onEventClick: (id: string, add?: boolean) => handleEventClick(id, add),
     onMoveMany: (ids: readonly string[], delta: number) => {
       moveEventsByWithUndo(ids.flatMap((id) => gridEvents.filter((x) => x.id === id)), delta)
+      return true
+    },
+    // Ctrl+drag (menu B, cal-blocks): a copy where it was dropped, one Undo — what Duplicate copies (never a Time
+    // block or a Google event; a task block's copy is a new task).
+    onDuplicateAt: (id: string, start: string, end: string, allDay: boolean) => {
+      const event = gridEvents.find((e) => e.id === id)
+      const task = event?.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
+      if (!event || isSynced(event) || event.type === 'time_block' || (event.task_id && !task)) return false
+      duplicateBlockWithUndo(event, task, { starts_at: start, ends_at: end, all_day: allDay })
       return true
     },
     onEventDoubleClick: (id: string) => handleEventDoubleClick(id),
@@ -1123,6 +1123,21 @@ function DesktopCalendar() {
   // M2: the block popover and quick create play their way out (100ms) after their state is cleared.
   const blockExit = useOverlayExit(!!(selected && selectedEvent), 100)
   const blockShown = useKept(selected && selectedEvent ? { sel: selected, event: selectedEvent } : null, blockExit.mounted)
+  // CAL11 (Kai's yes): the block whose popover is open is outlined — its details or menu B, or its task's popover
+  // (`?task=`, anchored to the block it was opened from). Off as the popover starts to close.
+  const taskOpen = new URLSearchParams(useLocation().search).get(TASK_PARAM)
+  const selectedId = (selected && selectedEvent && !blockExit.closing ? selected.id : null) ?? (taskOpen ? (taskAnchor(taskOpen)?.el.closest<HTMLElement>('[data-kf-id]')?.dataset.kfId ?? null) : null)
+  // CAL5: planning mode cross-fades in and out (160 ms), and the rail's content fades in as it unfolds (120 ms) — its
+  // width still snaps. Functional: off only under reduced motion.
+  const mainRef = useRef<HTMLDivElement>(null)
+  const seenLayout = useRef({ planning, railFolded })
+  useLayoutEffect(() => {
+    const was = seenLayout.current
+    seenLayout.current = { planning, railFolded }
+    if (reducedMotionNow()) return
+    if (was.planning !== planning) playOnce(mainRef.current, 'view', 220)
+    else if (was.railFolded && !railFolded && !planning) playOnce(railRef.current, 'unfold', 180)
+  }, [planning, railFolded])
   const qcExit = useOverlayExit(!!quickCreate, 100)
   const qcShown = useKept(quickCreate ? { ...quickCreate, key: JSON.stringify([quickCreate.kind, quickCreate.slot, quickCreate.anchor]) } : null, qcExit.mounted)
 
@@ -1219,6 +1234,7 @@ function DesktopCalendar() {
         /* cal-wave item 19: the Now card at the foot of the rail (the list scrolls behind it), or floating
            16px in from the grid's bottom-left corner when the rail is folded. */
         .cal-now-dock { position: sticky; bottom: -10px; z-index: 3; margin: auto -2px -10px; padding: 16px 2px 12px; background: linear-gradient(transparent, var(--bg-app) 22px); }
+        .cal-now-dock { pointer-events: none; } .cal-now-dock > * { pointer-events: auto; } /* drag-fix: its fade lets a press through to the card it covers */
         .cal-now-float .kf-now-quiet { display: inline-flex; max-width: 100%; box-sizing: border-box; padding: 0 10px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-block); box-shadow: var(--shadow-panel); }
         .cal-now-float { position: absolute; left: 16px; bottom: 16px; z-index: 8; width: min(280px, calc(100% - 32px)); }
         /* Kai 2026-10-14: the per-day tray under the grid (Akiflow). */
@@ -1319,7 +1335,7 @@ function DesktopCalendar() {
                 {/* Lists with nothing in it steps aside too; its scope picker is one click away. */}
                 {listTasks.length === 0 && !listsKept && (
                   <button type="button" className="cal-rail-more" onClick={() => { setListsShown(true); if (sections.lists) toggleSection('lists') }}>
-                    Lists…
+                    Show lists
                   </button>
                 )}
               </>
@@ -1381,7 +1397,7 @@ function DesktopCalendar() {
           </div>
         )}
 
-        <div className={planning ? 'cal-main cal-strip' : 'cal-main'}>
+        <div ref={mainRef} className={planning ? 'cal-main cal-strip' : 'cal-main'}>
           {planning ? stripHead : (
           <div className="cal-head" style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 0, minHeight: 52, padding: '6px 14px 6px 16px', borderBottom: '1px solid var(--line-card)', flex: 'none' }}>
             {/* Kai 2026-10-14: the date and its daisy sit at the far top right, out of the grid's height. */}
@@ -1459,6 +1475,7 @@ function DesktopCalendar() {
               conflictedIds={conflictedIds}
               pendingIds={pendingIds}
               failedIds={failedIds}
+              selectedId={selectedId}
             />
             </div>
             {!planning && viewKind !== 'month' && (
@@ -1497,12 +1514,19 @@ function DesktopCalendar() {
       )}
       {blockShown && (
         <BlockMenu
-          key={blockShown.sel.id}
+          key={`${blockShown.sel.id}|${blockShown.sel.mode ?? 'details'}`}
           event={blockShown.event}
+          mode={blockShown.sel.mode}
           position={blockShown.sel.at}
           closing={blockExit.closing}
           onClose={() => setSelected(null)}
           onReplan={(x, y) => replanEvent(blockShown.event, x, y)}
+          // Menu B's Details: the details in its place, beside the block (a task's: its task popover) — once the menu
+          // has closed (its row's click closes it after running).
+          onDetails={() => {
+            const id = blockShown.event.id
+            window.setTimeout(() => handleEventClick(id))
+          }}
         />
       )}
       {plan && <ContextMenu items={planFor(plan.target)} position={{ x: plan.x, y: plan.y }} onClose={() => setPlan(null)} />}

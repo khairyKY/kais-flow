@@ -1,0 +1,484 @@
+{
+  "N": {
+    "fill": {
+      "day": 24,
+      "night": 24
+    },
+    "ran": {
+      "day": "#9C5139",
+      "night": "#E29473"
+    },
+    "sw": [
+      {
+        "name": "Lavender",
+        "day": "#A8A0BE",
+        "dayInk": "#5A5170",
+        "night": "#C0B7E0",
+        "nightInk": "#D8D2E8"
+      },
+      {
+        "name": "Sage",
+        "day": "#8A9A7E",
+        "dayInk": "#4D6650",
+        "night": "#A8C09A",
+        "nightInk": "#C6D8BA"
+      },
+      {
+        "name": "Moss",
+        "day": "#7A946E",
+        "dayInk": "#56624B",
+        "night": "#8FB098",
+        "nightInk": "#BBCBB7"
+      },
+      {
+        "name": "Terra",
+        "day": "#B5654A",
+        "dayInk": "#9C5139",
+        "night": "#E29473",
+        "nightInk": "#E29473"
+      },
+      {
+        "name": "Blossom",
+        "day": "#D4A8B0",
+        "dayInk": "#8A4A58",
+        "night": "#E9BFC5",
+        "nightInk": "#E9BFC5"
+      },
+      {
+        "name": "Hydrangea",
+        "day": "#9AB4BE",
+        "dayInk": "#4D6A75",
+        "night": "#A9C5D3",
+        "nightInk": "#C2D8E0"
+      },
+      {
+        "name": "Buttercream",
+        "day": "#D4C78A",
+        "dayInk": "#716431",
+        "night": "#E8DCA0",
+        "nightInk": "#DCCFA0"
+      },
+      {
+        "name": "Clover",
+        "day": "#C9A0A0",
+        "dayInk": "#8A5A5A",
+        "night": "#DDB3B3",
+        "nightInk": "#E4C4C4"
+      },
+      {
+        "name": "Gold",
+        "day": "#C9A55A",
+        "dayInk": "#7F6428",
+        "night": "#C9A55A",
+        "nightInk": "#E4C36B"
+      }
+    ]
+  },
+  "A": {
+    "fill": {
+      "day": 24,
+      "night": 20
+    },
+    "ran": {
+      "day": "#7C341D",
+      "night": "#FFE4D9"
+    },
+    "sw": [
+      {
+        "name": "Lavender",
+        "day": "#9A8CC4",
+        "dayInk": "#544873",
+        "night": "#B3A6EC",
+        "nightInk": "#DFD9FE"
+      },
+      {
+        "name": "Sage",
+        "day": "#7FA06E",
+        "dayInk": "#3E5831",
+        "night": "#9CCB86",
+        "nightInk": "#D2EBC8"
+      },
+      {
+        "name": "Moss",
+        "day": "#5E8C5A",
+        "dayInk": "#31562E",
+        "night": "#7DB88C",
+        "nightInk": "#C6E4CD"
+      },
+      {
+        "name": "Terra",
+        "day": "#C2603E",
+        "dayInk": "#7F3215",
+        "night": "#EE8A63",
+        "nightInk": "#FFD0BE"
+      },
+      {
+        "name": "Blossom",
+        "day": "#D98C9C",
+        "dayInk": "#783F4C",
+        "night": "#EFA3B2",
+        "nightInk": "#FFD6DD"
+      },
+      {
+        "name": "Hydrangea",
+        "day": "#7AAAC2",
+        "dayInk": "#305668",
+        "night": "#8EC3DE",
+        "nightInk": "#CCE6F4"
+      },
+      {
+        "name": "Buttercream",
+        "day": "#D9BE5C",
+        "dayInk": "#685500",
+        "night": "#EBD27A",
+        "nightInk": "#F6EAC0"
+      },
+      {
+        "name": "Clover",
+        "day": "#C9817F",
+        "dayInk": "#76403F",
+        "night": "#E59C9A",
+        "nightInk": "#FBD4D3"
+      },
+      {
+        "name": "Gold",
+        "day": "#CC9A3A",
+        "dayInk": "#6B4B00",
+        "night": "#E9B850",
+        "nightInk": "#F9E1B2"
+      }
+    ]
+  },
+  "B": {
+    "fill": {
+      "day": 20,
+      "night": 18
+    },
+    "ran": {
+      "day": "#7C341D",
+      "night": "#FFE4D9"
+    },
+    "sw": [
+      {
+        "name": "Red",
+        "day": "#E5484D",
+        "dayInk": "#971221",
+        "night": "#FF8A86",
+        "nightInk": "#FFCDC9"
+      },
+      {
+        "name": "Coral",
+        "day": "#F2735A",
+        "dayInk": "#922F1C",
+        "night": "#FF9782",
+        "nightInk": "#FFCEC3"
+      },
+      {
+        "name": "Orange",
+        "day": "#F28C28",
+        "dayInk": "#7D4301",
+        "night": "#FFAD6B",
+        "nightInk": "#FFD7B9"
+      },
+      {
+        "name": "Amber",
+        "day": "#F2B630",
+        "dayInk": "#725200",
+        "night": "#F9C96D",
+        "nightInk": "#F9E1B7"
+      },
+      {
+        "name": "Lime",
+        "day": "#9CC43C",
+        "dayInk": "#475E01",
+        "night": "#B9DB77",
+        "nightInk": "#D9EBBB"
+      },
+      {
+        "name": "Green",
+        "day": "#3FA66B",
+        "dayInk": "#035D33",
+        "night": "#78C594",
+        "nightInk": "#C1E6CC"
+      },
+      {
+        "name": "Emerald",
+        "day": "#1E9E7E",
+        "dayInk": "#035A46",
+        "night": "#6FC4A9",
+        "nightInk": "#BDE5D6"
+      },
+      {
+        "name": "Teal",
+        "day": "#16A3A3",
+        "dayInk": "#015959",
+        "night": "#69C2C2",
+        "nightInk": "#BBE4E3"
+      },
+      {
+        "name": "Cyan",
+        "day": "#1FA6D4",
+        "dayInk": "#025873",
+        "night": "#65BEE3",
+        "nightInk": "#B9E2F5"
+      },
+      {
+        "name": "Sky",
+        "day": "#4A9DF0",
+        "dayInk": "#005292",
+        "night": "#77B7FA",
+        "nightInk": "#C1DFFF"
+      },
+      {
+        "name": "Blue",
+        "day": "#3E6FE8",
+        "dayInk": "#1F45A6",
+        "night": "#8AAFFF",
+        "nightInk": "#C9DBFF"
+      },
+      {
+        "name": "Indigo",
+        "day": "#5B5BD6",
+        "dayInk": "#413FA3",
+        "night": "#9FA9FE",
+        "nightInk": "#D2D8FF"
+      },
+      {
+        "name": "Violet",
+        "day": "#8B5CF6",
+        "dayInk": "#5C32AF",
+        "night": "#B4A0FF",
+        "nightInk": "#DBD4FE"
+      },
+      {
+        "name": "Purple",
+        "day": "#B158D6",
+        "dayInk": "#732A90",
+        "night": "#D690F6",
+        "nightInk": "#EFCCFF"
+      },
+      {
+        "name": "Magenta",
+        "day": "#D9479B",
+        "dayInk": "#8E1360",
+        "night": "#F983C1",
+        "nightInk": "#FFC9E2"
+      },
+      {
+        "name": "Pink",
+        "day": "#EE6FA8",
+        "dayInk": "#8C295A",
+        "night": "#FC94C0",
+        "nightInk": "#FFCEE0"
+      },
+      {
+        "name": "Rose",
+        "day": "#E8828C",
+        "dayInk": "#863843",
+        "night": "#F7A3AA",
+        "nightInk": "#FED1D4"
+      },
+      {
+        "name": "Brown",
+        "day": "#A0714F",
+        "dayInk": "#6B462A",
+        "night": "#D0A88C",
+        "nightInk": "#EBD6C8"
+      },
+      {
+        "name": "Sand",
+        "day": "#C9A86A",
+        "dayInk": "#69501D",
+        "night": "#DDC392",
+        "nightInk": "#ECDFC6"
+      },
+      {
+        "name": "Olive",
+        "day": "#8E9A3E",
+        "dayInk": "#4D5500",
+        "night": "#AEB972",
+        "nightInk": "#D9DFBC"
+      },
+      {
+        "name": "Forest",
+        "day": "#2F7D5A",
+        "dayInk": "#16583C",
+        "night": "#85C1A1",
+        "nightInk": "#C6E3D3"
+      },
+      {
+        "name": "Lavender",
+        "day": "#A8A0BE",
+        "dayInk": "#585268",
+        "night": "#C0B7E0",
+        "nightInk": "#DFDBF0"
+      },
+      {
+        "name": "Sage",
+        "day": "#8A9A7E",
+        "dayInk": "#4A5640",
+        "night": "#A8C09A",
+        "nightInk": "#D6E2CF"
+      },
+      {
+        "name": "Blossom",
+        "day": "#D4A8B0",
+        "dayInk": "#6C4C52",
+        "night": "#E9BFC5",
+        "nightInk": "#F2DCDF"
+      },
+      {
+        "name": "Hydrangea",
+        "day": "#9AB4BE",
+        "dayInk": "#465A61",
+        "night": "#A9C5D3",
+        "nightInk": "#D5E3EA"
+      },
+      {
+        "name": "Buttercream",
+        "day": "#D4C78A",
+        "dayInk": "#615727",
+        "night": "#E8DCA0",
+        "nightInk": "#EEE9CB"
+      },
+      {
+        "name": "Slate",
+        "day": "#6B7787",
+        "dayInk": "#464F5C",
+        "night": "#A8B2C0",
+        "nightInk": "#D6DBE2"
+      },
+      {
+        "name": "Graphite",
+        "day": "#4E4F55",
+        "dayInk": "#494A4F",
+        "night": "#B0B1B6",
+        "nightInk": "#DADADD"
+      }
+    ]
+  },
+  "C": {
+    "fill": {
+      "day": 24,
+      "night": 20
+    },
+    "ran": {
+      "day": "#7C341D",
+      "night": "#FFE0D3"
+    },
+    "sw": [
+      {
+        "name": "Rose",
+        "day": "#E58F99",
+        "dayInk": "#7F3F48",
+        "night": "#F4A4AD",
+        "nightInk": "#FFDADD"
+      },
+      {
+        "name": "Clay",
+        "day": "#E29572",
+        "dayInk": "#7D4328",
+        "night": "#F2AA8B",
+        "nightInk": "#FFDCCD"
+      },
+      {
+        "name": "Ochre",
+        "day": "#C9A658",
+        "dayInk": "#694E01",
+        "night": "#DAB975",
+        "nightInk": "#F3E3C1"
+      },
+      {
+        "name": "Olive",
+        "day": "#A0B569",
+        "dayInk": "#4B5A1B",
+        "night": "#B3C882",
+        "nightInk": "#DCE7C4"
+      },
+      {
+        "name": "Fern",
+        "day": "#72BF8E",
+        "dayInk": "#1D5E3A",
+        "night": "#8BD0A3",
+        "nightInk": "#C9EBD4"
+      },
+      {
+        "name": "Lagoon",
+        "day": "#47BFC5",
+        "dayInk": "#065C5F",
+        "night": "#6BD0D6",
+        "nightInk": "#BDEBEE"
+      },
+      {
+        "name": "Cornflower",
+        "day": "#81ADED",
+        "dayInk": "#325383",
+        "night": "#98C0FB",
+        "nightInk": "#D6E6FE"
+      },
+      {
+        "name": "Iris",
+        "day": "#B59CE3",
+        "dayInk": "#5D497F",
+        "night": "#C7B0F2",
+        "nightInk": "#E9DEFF"
+      },
+      {
+        "name": "Wine",
+        "day": "#B36670",
+        "dayInk": "#743840",
+        "night": "#D38A92",
+        "nightInk": "#F7CFD2"
+      },
+      {
+        "name": "Rust",
+        "day": "#B16C4C",
+        "dayInk": "#723C23",
+        "night": "#D19072",
+        "nightInk": "#F6D3C3"
+      },
+      {
+        "name": "Honey",
+        "day": "#9C7B31",
+        "dayInk": "#634902",
+        "night": "#BB9D5D",
+        "nightInk": "#E8D9B9"
+      },
+      {
+        "name": "Moss",
+        "day": "#768A42",
+        "dayInk": "#435215",
+        "night": "#98AB6A",
+        "nightInk": "#D2DDBC"
+      },
+      {
+        "name": "Pine",
+        "day": "#4A9266",
+        "dayInk": "#1B5836",
+        "night": "#72B289",
+        "nightInk": "#C1E0CB"
+      },
+      {
+        "name": "Tide",
+        "day": "#0D9298",
+        "dayInk": "#035256",
+        "night": "#53B3B8",
+        "nightInk": "#B6E1E4"
+      },
+      {
+        "name": "Indigo",
+        "day": "#5A81BC",
+        "dayInk": "#2F4D7B",
+        "night": "#7EA3DA",
+        "nightInk": "#C9DCF9"
+      },
+      {
+        "name": "Heather",
+        "day": "#8972B3",
+        "dayInk": "#574477",
+        "night": "#AA95D2",
+        "nightInk": "#DFD5F5"
+      }
+    ]
+  }
+}

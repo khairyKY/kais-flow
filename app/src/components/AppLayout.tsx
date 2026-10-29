@@ -18,7 +18,8 @@ import { filterByList, todayOpenCount, type SmartList } from '../features/tasks/
 import { TASK_PARAM } from '../features/tasks/openTask'
 import { useRoutines, useRoutineCompletions } from '../features/routines/api'
 import { computeStreak } from '../features/routines/streaks'
-import { useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
+import { Collapse } from './Collapse'
+import { markRouteEntry, reducedMotionNow, useBoundaryResistance, useMotionEnabled, useStackTransition } from '../lib/motion'
 import { useOfferDeviceZone, useOwner } from '../lib/settings'
 import { useAppZone, zoneCity } from '../lib/appZone'
 import { useAuth } from '../features/auth/AuthProvider'
@@ -26,6 +27,8 @@ import { Icon } from './Icon'
 import type { IconName } from './icons/kf'
 import { ContextMenu } from './ContextMenu'
 import { widgetsAvailable } from '../features/widgets/native'
+import { LockScreenSync } from '../features/lockscreen/LockScreenSync'
+import { lockAvailable } from '../features/lockscreen/native'
 // Punch 5 (bundle): these four render only after a keypress, so they have no business in
 // the initial chunk. Lazy + mounted-only-when-open — except CommandBar, which mounts once the
 // first page is idle (capture-type, see captureWarm below). ⌘K's listener lives in the shell's
@@ -47,7 +50,9 @@ const SmartListNav = lazy(() => import('../features/smart-lists/SmartListNav').t
 
 import { ToastHost } from './ToastHost'
 import { SubtaskAskHost } from '../features/tasks/SubtaskAsk'
+import { ScopeAskHost } from '../features/calendar/ScopeAsk'
 import { MobileTabBar } from './MobileTabBar'
+import { inSettings } from '../features/settings/categories'
 import { PaperHost } from '../features/paper/PaperHost'
 import { useReadyPages } from '../features/paper/captures'
 import { WhatsNewHost } from '../features/whats-new/WhatsNew'
@@ -219,8 +224,8 @@ function PlanDrawer() {
         </button>
       )}
       </div>
-      {open && (
-        <>
+      {/* T8: the Plan drawer folds through the shared Collapse. */}
+      <Collapse open={open}>
           {smartLists.map(({ list, label }) => row(`/tasks?list=${list}`, label, activeList === list, filterByList(tasks, list).length, undefined, list === 'today' ? TODAY_SPOT : null))}
           <div style={{ height: 1, borderTop: '1px solid var(--line-sidebar)', margin: '4px 11px' }} />
           {row('/tasks?list=someday', 'Someday', activeList === 'someday', filterByList(tasks, 'someday').length, (
@@ -233,8 +238,7 @@ function PlanDrawer() {
           {/* R4-27 (Kai's 2026-07-20 ruling): "planning board looks like shit, park it until I
               redesign it." Nav entry removed so it can't be reached by accident; the route and
               component stay in the codebase for when he redesigns it. */}
-        </>
-      )}
+      </Collapse>
     </div>
   )
 }
@@ -343,9 +347,19 @@ function SideStreak() {
   }, [routines, completions])
 
   return (
-    <div className="kf-side-streak" style={{ padding: '6px 10px 4px' }}>
-      <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
-      <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
+    // D16 (Motion 1f / Effects 1b, Kai's yes 2026-10-28): the streak's vine is back beside the words —
+    // the existing sprouting-vine art, idling (cloverSway 7s) with two pollen motes drifting
+    // (fireflyDrift + twinkle). The motion is decorative: .motion-on only; Effects off, it stands still.
+    <div className="kf-side-streak" style={{ padding: '6px 10px 4px', display: 'flex', alignItems: 'flex-end', gap: 10 }}>
+      <span className="kf-streak-plant" aria-hidden="true">
+        <img src="/ds/assets/vine/sprouting.png" alt="" />
+        <i />
+        <i />
+      </span>
+      <div>
+        <div style={{ fontSize: 'var(--fs-body-s)', fontWeight: 'var(--fw-medium)', color: 'var(--ink-body)' }}>{current}-day streak</div>
+        <div style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)', marginTop: 1 }}>best {best} · day {day}</div>
+      </div>
     </div>
   )
 }
@@ -660,14 +674,25 @@ export function AppLayout() {
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
   const motionOn = useMotionEnabled()
-  // M2: what lives on <body> (popovers, the drag's lifted card) reads the Effects setting from <html>.
+  // M2 / RM2: the one decorative-motion flag lives on <html>, so what lives on <body> (popovers, the
+  // drag's lifted card) agrees with the shell. `.motion-on` is the name; `kf-motion-on` its old alias.
   useEffect(() => {
+    document.documentElement.classList.toggle('motion-on', motionOn)
     document.documentElement.classList.toggle('kf-motion-on', motionOn)
   }, [motionOn])
   const location = useLocation()
   const { pathname } = location
   const isMobile = useIsMobile()
   const bleed = !isMobile && FULL_BLEED.includes(pathname)
+  // Settings on a computer is one page with its category list beside it (layout A, 2026-10-26): switching
+  // category mustn't remount it (the list, its search and its scroll stay); the phone drills, so it does.
+  const routeKey = !isMobile && inSettings(pathname) ? '/settings' : pathname
+  // T1: a new page's rows may stagger in; rows that mount after its entry window arrive at once.
+  const enteredKey = useRef<string | null>(null)
+  if (enteredKey.current !== routeKey) {
+    enteredKey.current = routeKey
+    markRouteEntry()
+  }
   // Motion 2b/3a: the page scroller is the stack's sheet (lib/motion useStackTransition); Effects 2k
   // gives its edges their resistance on touch.
   const scrollerRef = useRef<HTMLDivElement>(null)
@@ -690,6 +715,28 @@ export function AppLayout() {
   useEffect(() => {
     localStorage.setItem('kf.sidebarCollapsed', collapsed ? '1' : '0')
   }, [collapsed])
+  // O7: folding, the labels fade out first (120ms), then the width eases 242 → 64 (200ms, CSS);
+  // opening, the width eases out, then the labels fade back in. Functional: a cut under reduced motion.
+  const [fold, setFold] = useState<'out' | 'in' | null>(null)
+  const foldTimer = useRef(0)
+  const toggleSidebar = () => {
+    window.clearTimeout(foldTimer.current)
+    if (reducedMotionNow()) {
+      setFold(null)
+      return setCollapsed((v) => !v)
+    }
+    if (!collapsed) {
+      setFold('out')
+      foldTimer.current = window.setTimeout(() => {
+        setCollapsed(true)
+        setFold(null)
+      }, 120)
+    } else {
+      setCollapsed(false)
+      setFold('in')
+      foldTimer.current = window.setTimeout(() => setFold(null), 320)
+    }
+  }
 
   // User time zones: every date below reads the user's zone; a new zone remounts the page (key
   // below) so nothing memoised keeps the old day. Once per device, offer the device's own zone.
@@ -796,6 +843,7 @@ export function AppLayout() {
   }, [pathname, navigate])
 
   return (
+    // The shell keeps `.motion-on` too, for the older `.app-shell.motion-on` selectors.
     <div className={`app-shell${motionOn ? ' motion-on' : ''}`} style={{ height: 'var(--kf-vh)', display: 'flex', background: 'var(--paper-linen)', position: 'relative' }}>
       <style>{`
         .app-tabbar { display: none; }
@@ -818,6 +866,19 @@ export function AppLayout() {
           .app-tabbar { display: flex !important; }
         }
         .app-sidebar.collapsed { width: 64px !important; }
+        /* D16 — the streak's vine and its pollen (SideStreak). */
+        .kf-streak-plant { position: relative; flex: none; width: 28px; height: 40px; }
+        .kf-streak-plant img { position: absolute; left: 0; bottom: 0; height: 40px; transform-origin: 50% 100%; }
+        .kf-streak-plant i { position: absolute; width: 3px; height: 3px; border-radius: 50%; background: var(--acc-buttercream); opacity: 0; }
+        .kf-streak-plant i:first-of-type { left: 16px; top: 6px; }
+        .kf-streak-plant i:last-of-type { left: 4px; top: 16px; }
+        .motion-on .kf-streak-plant img { animation: cloverSway 7s ease-in-out infinite; }
+        .motion-on .kf-streak-plant i:first-of-type { animation: fireflyDrift 9s ease-in-out infinite, twinkle 3s ease-in-out infinite; }
+        .motion-on .kf-streak-plant i:last-of-type { animation: fireflyDrift 11s ease-in-out -4s infinite, twinkle 3.6s ease-in-out infinite; }
+        /* O7 — the fold (toggleSidebar): labels out 120ms, then the width 200ms; back, the reverse. */
+        .app-sidebar { transition: width var(--dur-normal) var(--ease-standard); } /* ds-ok: O7 sidebar fold — the spec animates the width (Linear) */
+        .app-sidebar[data-fold='out'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { opacity: 0; transition: opacity 120ms var(--ease-standard); }
+        .app-sidebar[data-fold='in'] :is(.kf-side-me-text, .app-nav-label, .app-footer-label, .app-smartlist) { animation: kfFadeIn 120ms var(--ease-out) var(--dur-normal) backwards; }
         /* A size container query, not a media query: it measures the sidebar in zoomed CSS px. */
         .app-sidebar { container: kf-sidebar / size; }
         /* Bottom B (Sidebar options.html, Kai 2026-10-22): the name is the menu's button, and the app
@@ -849,7 +910,7 @@ export function AppLayout() {
         /* Short sidebar (1280×800 at the default 125% is 640 layout px): the column tightens a little to
            keep Tend's five rows in view with the Plan drawer open. */
         @container kf-sidebar (max-height: 799px) {
-          .app-sidebar:not(.collapsed) .app-sidebar-col { padding-top: 16px !important; }
+          .app-sidebar:not(.collapsed) .app-sidebar-top { padding-top: 16px !important; }
           .app-sidebar:not(.collapsed) .app-sidebar-header { padding-bottom: 12px !important; }
           .app-sidebar:not(.collapsed) nav > .app-nav-label { padding-top: 6px !important; }
           /* Bound Journal's 12px meta and rounded rows cost the column a few px: Projects ran 2px under the
@@ -925,10 +986,13 @@ export function AppLayout() {
         /* X2 Motion 3c — overlay in: card + scrim arrive together, 210ms up-and-settle.
            Keyframes end at transform:none (containing-block rule, tokens/motion.css). */
         @keyframes kfOverlayIn { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+        /* RM2: the rise and fade are functional and always play; the 0.98 scale is decorative (.motion-on). */
+        @keyframes kfOverlayInFlat { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
         @keyframes kfFadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes kfSheetIn { from { opacity: 0; transform: translateY(28px); } to { opacity: 1; transform: none; } }
         @keyframes kfDrawerIn { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
-        .kf-overlay-card { animation: kfOverlayIn 210ms var(--ease-out); }
+        .kf-overlay-card { animation: kfOverlayInFlat 210ms var(--ease-out); }
+        .motion-on .kf-overlay-card:not(.kf-overlay-card--out) { animation-name: kfOverlayIn; }
         .kf-scrim { animation: kfFadeIn 210ms var(--ease-out); background: rgba(11, 10, 8, 0.2); }
         .kf-sheet { animation: kfSheetIn 210ms var(--ease-out); }
         .kf-drawer { animation: kfDrawerIn 210ms var(--ease-out); }
@@ -1030,11 +1094,12 @@ export function AppLayout() {
           overhang the divider at right:-12 un-clipped — scrolling lives on the inner column. */}
       <aside
         className={`app-sidebar${collapsed ? ' collapsed' : ''}`}
+        data-fold={fold ?? undefined}
         style={{ width: 242, flex: 'none', background: 'var(--paper-sidebar)', borderRight: '1px solid var(--line-sidebar)', display: 'flex', flexDirection: 'column', position: 'relative', zIndex: 5 }}
       >
         <button
           type="button"
-          onClick={() => setCollapsed((v) => !v)}
+          onClick={toggleSidebar}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className="kf-collapse-btn"
           style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--line-card)', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-crisp)', color: 'var(--ink-faint)', fontSize: 12, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 45 }}
@@ -1046,13 +1111,17 @@ export function AppLayout() {
             hover flyouts at the 64px edge — so at 125–150% the icon column ran under the pinned
             footer instead of scrolling (Kai 2026-10-03). The flyouts now draw on <body> (NavRow),
             so the column scrolls in both states. */}
-        <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '24px 0 8px' }}>
-
         {/* Today 2a: the app icon beside the wordmark; 2a drops the hand line ("a field journal of
             days ✿"). deviation(2026-10-13 today-shell): the workspace · city line stays — it is
             the only place the workspace answer shows, and with no top bar on Today / Inbox the
-            only place the user's zone does. Bottom B (2026-10-22): it is the menu's button. */}
-        <SideHeader collapsed={collapsed} sync={!isMobile} onSignOut={signOutFlow.request} />
+            only place the user's zone does. Bottom B (2026-10-22): it is the menu's button.
+            shot-bugs (Kai 2026-10-27): pinned above the scrolling column, as the foot is below it — a
+            scrolled sidebar slid it under the window's title bar, half cut. */}
+        <div className="app-sidebar-top" style={{ flex: 'none', paddingTop: 24 }}>
+          <SideHeader collapsed={collapsed} sync={!isMobile} onSignOut={signOutFlow.request} />
+        </div>
+
+        <div className="app-sidebar-col" style={{ flex: 1, minHeight: 0, overflowY: 'auto', display: 'flex', flexDirection: 'column', padding: '0 0 8px' }}>
 
         <PlanDrawer />
 
@@ -1086,7 +1155,7 @@ export function AppLayout() {
         {(isMobile || !NO_TOPBAR.includes(pathname)) && <TopBar sync={isMobile} />}
         <div ref={scrollerRef} className="app-main-content" style={{ flex: 1, minWidth: 0, minHeight: 0, overflowY: bleed ? 'hidden' : 'auto', padding: bleed ? 0 : '30px 40px 64px' }}>
           <Suspense fallback={<PageFallback />}>
-            <div key={`${pathname}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined} style={bleed ? { height: '100%' } : undefined}>
+            <div key={`${routeKey}|${zone}`} className="kf-route" data-initial={isFirstMount.current ? '' : undefined} style={bleed ? { height: '100%' } : undefined}>
               <Outlet />
             </div>
           </Suspense>
@@ -1116,6 +1185,7 @@ export function AppLayout() {
           <WidgetBridge />
         </Suspense>
       )}
+      {lockAvailable() && <LockScreenSync />}
       <Suspense fallback={null}>
         <TourHost />
       </Suspense>
@@ -1125,6 +1195,7 @@ export function AppLayout() {
       {/* docs/LEGAL.md: "We've updated our terms", until they agree (or leave). */}
       <TermsNoticeHost />
       <SubtaskAskHost />
+      <ScopeAskHost />
       <ToastHost />
       {signOutFlow.prompt}
     </div>

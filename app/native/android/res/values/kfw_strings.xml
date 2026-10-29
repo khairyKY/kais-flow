@@ -5,16 +5,16 @@
     <string name="kfw_desc_01">The one gold strip. Tick it from the home screen; tap the title to open the task.</string>
     <string name="kfw_label_02">Goal of the day · card</string>
     <string name="kfw_desc_02">Taped gold card with the four-leaf clover. Its time, and the box.</string>
-    <string name="kfw_label_03">Top 3 · small</string>
-    <string name="kfw_desc_03">Goal first, then the picks. Done rows strike through and stay until midnight.</string>
+    <string name="kfw_label_03">Checklist · small</string>
+    <string name="kfw_desc_03">Top 3 to tick, the goal on its paper strip first.</string>
     <string name="kfw_label_04">Today · Top 3</string>
-    <string name="kfw_desc_04">The everyday widget: date, the goal card, the two other picks with their start times.</string>
-    <string name="kfw_label_05">Today · full page</string>
-    <string name="kfw_desc_05">The whole Today in one paper page: goal, picks, up next, and a capture bar at the foot.</string>
+    <string name="kfw_desc_04">The date and the day’s progress, the paper goal, Up next as a block, the picks to tick.</string>
+    <string name="kfw_label_05">Now card · large</string>
+    <string name="kfw_desc_05">The Now card, the next blocks, the paper goal, the Top 3 to tick, and a capture bar.</string>
     <string name="kfw_label_06">Now</string>
-    <string name="kfw_desc_06">What’s running: block, time left, a thin progress line. Start focus or Done. Shows Next when nothing is running.</string>
+    <string name="kfw_desc_06">What’s running or up next in its colour, its progress, what comes after; Start focus or Done.</string>
     <string name="kfw_label_07">Up next · tiny</string>
-    <string name="kfw_desc_07">One line: the next block and its time, coloured by its calendar.</string>
+    <string name="kfw_desc_07">The next block in its calendar colour, its title on two lines.</string>
     <string name="kfw_label_08">Day progress</string>
     <string name="kfw_desc_08">Done count, the finish estimate, and the wisteria growing with it.</string>
     <string name="kfw_label_09">Capture seal</string>
@@ -28,11 +28,11 @@
     <string name="kfw_label_13">Ask</string>
     <string name="kfw_desc_13">Opens the chat with the question typed; the chip sends a starter.</string>
     <string name="kfw_label_14">Agenda</string>
-    <string name="kfw_desc_14">Today’s blocks from the next one on, with the now line. Tap a block to open it.</string>
+    <string name="kfw_desc_14">Today’s column as the calendar draws it, from now on, with the now line. Tap a block to open it.</string>
     <string name="kfw_label_15">Agenda + week</string>
-    <string name="kfw_desc_15">The week strip on top, the day below. Tap a day to open the calendar there.</string>
+    <string name="kfw_desc_15">The week with today in lavender, then the day’s column. Tap a day to open the calendar there.</string>
     <string name="kfw_label_16">Week strip</string>
-    <string name="kfw_desc_16">Seven days; up to three dots each. Today is the inked chip.</string>
+    <string name="kfw_desc_16">Seven days; up to three dots each. Today is the lavender chip.</string>
     <string name="kfw_label_17">Countdown</string>
     <string name="kfw_desc_17">Days until the next deadline or event you’re counting to.</string>
     <string name="kfw_label_18">Focus</string>
@@ -46,7 +46,7 @@
     <string name="kfw_label_23">Streak plant</string>
     <string name="kfw_desc_23">One routine’s vine, at its real stage, with the goal.</string>
     <string name="kfw_label_24">Streak · tiny</string>
-    <string name="kfw_desc_24">The sprout and the count.</string>
+    <string name="kfw_desc_24">The streak plant at 1 × 1 (resize the Streak plant to get it).</string>
     <string name="kfw_label_25">Inbox</string>
     <string name="kfw_desc_25">The hydrangea fills with the count. Sort them opens triage.</string>
     <string name="kfw_label_26">Inbox · tiny</string>
@@ -54,7 +54,7 @@
     <string name="kfw_label_27">Overdue</string>
     <string name="kfw_desc_27">The count, the oldest, and Replan all.</string>
     <string name="kfw_label_28">Slipping</string>
-    <string name="kfw_desc_28">What hasn’t been touched in a while, in the gold of “needs attention”.</string>
+    <string name="kfw_desc_28">What hasn’t been touched in a while, and for how long.</string>
     <string name="kfw_label_29">Plan my day · Shut down</string>
     <string name="kfw_desc_29">Mornings until the day is planned; evenings until it’s closed. One widget, two faces.</string>
     <string name="kfw_label_31">One line</string>
@@ -65,4 +65,19 @@
     <string name="kfw_desc_33">The latest herbarium specimen.</string>
     <string name="kfw_label_34">Season</string>
     <string name="kfw_desc_34">The season, read from your clock.</string>
+    <!-- The three families (widgets-build 2026-10-26): A · Checklist (small is W03), B · Now card (large is W05), C · Day bar. -->
+    <string name="kfw_label_35">Checklist · medium</string>
+    <string name="kfw_desc_35">Today to tick: the paper goal, then the picks and today’s tasks. The + captures.</string>
+    <string name="kfw_label_36">Checklist · large</string>
+    <string name="kfw_desc_36">The whole Today: Next, the goal, the Top 3, Today’s tasks, Overdue and Also open, and a capture bar.</string>
+    <string name="kfw_label_37">Now card · small</string>
+    <string name="kfw_desc_37">Up next with its progress line and times, and what comes after.</string>
+    <string name="kfw_label_38">Now card · medium</string>
+    <string name="kfw_desc_38">The calendar’s Now card, then the next two blocks in their colours.</string>
+    <string name="kfw_label_39">Day bar · small</string>
+    <string name="kfw_desc_39">The whole day in one bar, 7 AM to 11 PM, and Next. Tap the bar for today’s calendar.</string>
+    <string name="kfw_label_40">Day bar · medium</string>
+    <string name="kfw_desc_40">The day bar, Next with its countdown, and the goal.</string>
+    <string name="kfw_label_41">Day bar · large</string>
+    <string name="kfw_desc_41">The day bar, Next, the goal, the Top 3 to tick, and a capture bar.</string>
 </resources>

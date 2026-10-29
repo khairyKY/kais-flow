@@ -1,4 +1,4 @@
-import { useMotionEnabled } from '../lib/motion'
+import { LOADER_DELAY, useMotionEnabled } from '../lib/motion'
 
 // Suspense fallback while a lazily-loaded route chunk arrives. Split out of
 // Stub.tsx so AppLayout's static import doesn't drag Stub into the eager
@@ -8,7 +8,8 @@ export function PageFallback() {
   // Reduced-motion was already neutralized in CSS; the app toggle was not.
   const motion = useMotionEnabled()
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh' }}>
+    // T15: held back 300ms, so a chunk that loads fast never flashes the dot.
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '50vh', ...LOADER_DELAY }}>
       <span
         style={{ width: 10, height: 10, borderRadius: '50%', background: 'var(--acc-sage)', opacity: 0.6, animation: motion ? 'twinkle 1.1s var(--ease-natural) infinite' : undefined }}
       />

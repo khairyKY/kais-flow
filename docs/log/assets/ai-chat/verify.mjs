@@ -464,7 +464,7 @@ if (want('a')) {
   await bar(page).press('Enter')
   const ferns = await until(() => posts(state, 'tasks', w).some((t) => t.title === 'Water the ferns'))
   check("a Today's \"Add a task…\" row is a task field: the task at once, nothing held", ferns && !posts(state, 'inbox_items', w).some((i) => /ferns/.test(i.raw_text ?? '')), JSON.stringify([posts(state, 'tasks', w).map((t) => t.title), posts(state, 'inbox_items', w).map((i) => [i.raw_text, i.status])]))
-  await page.goto(`${BASE}/settings`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/settings/capture`, { waitUntil: 'networkidle' }) // settings-build: Capture & AI's own page
   await sleep(700)
   const sw = page.getByRole('switch', { name: 'File captures for me' })
   await sw.scrollIntoViewIfNeeded()
@@ -530,7 +530,7 @@ if (want('p')) {
   await chip.getByRole('button', { name: 'Apply' }).click()
   check('p one tap puts it there', await until(() => posts(state, 'tasks', w).some((t) => t.id === made?.id && t.project_id === P_FC)))
   check('p …with "→ Forecasting App" and Undo', await toastSoon(page, '→ Forecasting App'))
-  await page.goto(`${BASE}/settings`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/settings/capture`, { waitUntil: 'networkidle' })
   await sleep(700)
   const assign = page.getByRole('group', { name: 'Pick a project for new things' }).getByRole('button', { name: 'Assign' })
   await assign.scrollIntoViewIfNeeded()

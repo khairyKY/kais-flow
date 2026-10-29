@@ -218,7 +218,9 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
             </div>
           )}
 
-          <TaskChips task={t} controls={controls} ringed={pendingOffline ? saved?.field : null} now={now} />
+          {/* Queue 15: on the calendar the length lives with the block (the card's chips below), so the
+              chip row drops its ⏱ — off the calendar it stays, as the estimate. */}
+          <TaskChips task={t} controls={controls} ringed={pendingOffline ? saved?.field : null} now={now} length={!block || block.all_day} />
           {slot && (
             // slots-ux (Kai 2026-10-16, "how do I remove a task from the time slot"): opened from a held
             // row, the sheet says first where it is, and the way out — back to the rail, with Undo.
@@ -312,6 +314,7 @@ function LoadedSheet({ task: t, tasks }: { task: Task; tasks: Task[] }) {
               day={span.day}
               value={fromMin(span.start)}
               duration={span.end - span.start}
+              lengthChips={false} // queue 15: the card's chips are the length
               title={t.title}
               onDone={(hhmm, d) => {
                 const start = toMin(hhmm)

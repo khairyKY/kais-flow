@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The goal's checkbox below Android 12 (the gold box); layout-v31 has the real CheckBox. -->
+<ImageView xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/box" style="@style/KfW.Box" android:src="@drawable/kfw_box_gold" android:contentDescription="Tick the goal" />

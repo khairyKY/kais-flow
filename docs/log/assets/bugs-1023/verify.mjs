@@ -352,7 +352,11 @@ if (want('d5')) {
     await sleep(500)
     await shot(page, `d5-blockmenu-${theme}`)
     if (theme === 'day') {
-      await lenChip(page, '30m').click()
+      // cal-clicks (2026-10-26): a click on a task block opens its task popover (no block length row);
+      // its Duration chip is the length there, and the block follows.
+      await page.locator('[role="dialog"][aria-label^="Task:"] .ts-chips .kf-chip', { hasText: chipRe('15m') }).click()
+      await sleep(300)
+      await page.getByRole('menuitem', { name: '30m' }).click()
       await settle(state)
       check('d5 task block 30m → 5:15–5:45 PM, the estimate 30', inStep(state, '17:15', '17:45', 30, PRE, PREB), show(state, PRE, PREB))
       await page.keyboard.press('Escape')
@@ -438,17 +442,16 @@ if (want('p1')) {
     const { ctx, page, cdp, errors, state } = await open(`/tasks?list=all&task=${id(PRE)}`, { view: phone, theme })
     const sheet = page.locator('[role="dialog"]').last()
     const chips = (await sheet.locator('.ts-chips .kf-chip').allInnerTexts()).map(flat)
-    check(`p1-${theme} the sheet's chips: Today · 5:15 PM (the block's start, not the 5:30 due) · 15m`, chips[0] === 'Today · 5:15 PM' && chips[1] === '15m', JSON.stringify(chips))
+    // typing (queue 15): on the calendar the chip row has no ⏱ chip — the card's Length row is the length.
+    check(`p1-${theme} the sheet's chips: Today · 5:15 PM (the block's start, not the 5:30 due), no ⏱ chip (queue 15)`, chips[0] === 'Today · 5:15 PM' && !chips.includes('15m'), JSON.stringify(chips))
     await shot(page, `p1-sheet-${theme}`)
     if (theme === 'day') {
-      await tap(cdp, sheet.locator('.ts-chips .kf-chip', { hasText: chipRe('15m') }))
-      await sleep(400)
-      await tap(cdp, page.locator('[role="dialog"]').last().locator('.kf-as-row', { hasText: chipRe('1h') }).first())
+      await tap(cdp, sheet.locator('[aria-label="Length"] button', { hasText: chipRe('1h') }))
       await settle(state)
-      check('p1 Duration chip 1h → the block 5:15–6:15 PM, schedule and estimate in step', inStep(state, '17:15', '18:15', 60, PRE, PREB), show(state, PRE, PREB))
+      check('p1 the card length row 1h → the block 5:15–6:15 PM, schedule and estimate in step', inStep(state, '17:15', '18:15', 60, PRE, PREB), show(state, PRE, PREB))
       const card = flat(await text(page.locator('.ts-block small')))
       const after = (await page.locator('[role="dialog"]').last().locator('.ts-chips .kf-chip').allInnerTexts()).map(flat)
-      check('p1 …the block card reads 5:15–6:15 PM · 1h and the chips Today · 5:15 PM · 1h', /5:15\s*–\s*6:15\s*PM/.test(card) && /1h/.test(card) && after[0] === 'Today · 5:15 PM' && after[1] === '1h', `${card} | ${JSON.stringify(after)}`)
+      check('p1 …the block card reads 5:15–6:15 PM · 1h and the date chip Today · 5:15 PM', /5:15\s*–\s*6:15\s*PM/.test(card) && /1h/.test(card) && after[0] === 'Today · 5:15 PM', `${card} | ${JSON.stringify(after)}`)
       await shot(page, 'p1-sheet-1h')
     }
     check(`p1-${theme} no page errors`, errors.length === 0, errors.join(' | '))
@@ -463,8 +466,9 @@ if (want('p2')) {
   await tap(cdp, lr.locator('button', { hasText: chipRe('45m') }))
   await settle(state)
   check('p2 the sheet\'s length chip 45m → 2:00–2:45 PM, estimate 45', inStep(state, '14:00', '14:45', 45, LONG, LONGB), show(state, LONG, LONGB))
-  const after = (await page.locator('[role="dialog"]').last().locator('.ts-chips .kf-chip').allInnerTexts()).map(flat)
-  check('p2 …the Duration chip reads 45m', after[1] === '45m', JSON.stringify(after))
+  // typing (queue 15): no ⏱ chip on the calendar — the card says the length.
+  const card = flat(await text(page.locator('.ts-block small')))
+  check('p2 …the block card reads 45m', /45m/.test(card), card)
   check('p2 no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }

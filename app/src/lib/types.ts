@@ -278,6 +278,12 @@ export interface AppSettings {
   /** A project for new tasks and events made without one (migration 0086): 'suggest' (the default) a
    * one-tap chip, 'assign' puts it there with Undo, 'off'. Read through lib/settings autoProjectMode. */
   auto_project?: string
+  /** Settings that follow the person but live in each device's localStorage (migration 0087), as
+   * { key: { v, at } } — written and read only through lib/prefsSync; absent before the push. */
+  prefs?: unknown
+  /** Notification sound pack (migration 0088, Kai 2026-10-26): 'felt' (the default, and what an absent
+   * key reads as), 'glass' or 'mixed' — read through features/notifications/sounds.ts notifyPack. */
+  notification_sound_pack?: string
   notifications_last_seen_at: string | null
   created_at: string
   updated_at: string

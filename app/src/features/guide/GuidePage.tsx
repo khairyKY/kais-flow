@@ -3,6 +3,7 @@ import { Link, Navigate, useNavigate, useParams } from 'react-router'
 import { Icon } from '../../components/Icon'
 import { useIsMobile } from '../../components/BottomSheet'
 import { MOD, restartTour } from '../tour/help'
+import { scrollBehavior } from '../../lib/motion'
 import { ARTICLES, SECTIONS, cropOf, searchArticles, type Article } from './articles'
 import './guide.css'
 
@@ -182,7 +183,7 @@ function ArticleView({ a }: { a: Article }) {
         <nav className="gd-toc" aria-label="On this page">
           <div className="gd-eyebrow is-faint">On this page</div>
           {a.steps.map((s, n) => (
-            <a key={n} href={`#step-${n + 1}`} onClick={(e) => { e.preventDefault(); document.getElementById(`step-${n + 1}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' }) }}>
+            <a key={n} href={`#step-${n + 1}`} onClick={(e) => { e.preventDefault(); document.getElementById(`step-${n + 1}`)?.scrollIntoView({ block: 'start', behavior: scrollBehavior() }) }}>
               {n + 1} · {s.name}
             </a>
           ))}

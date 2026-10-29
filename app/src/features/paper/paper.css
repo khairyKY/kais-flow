@@ -179,18 +179,6 @@ button.pp-chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus)
 /* the task sheet's "From a photo of your page" */
 .ts-photo { border: none; background: none; padding: 0; font: inherit; text-align: left; cursor: pointer; }
 
-/* Settings → Capture → photos (11o) */
-.pp-settings { background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: 8px; box-shadow: var(--shadow-crisp); padding: 16px 18px 6px; }
-.pp-set-row { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 0; border-bottom: 1px solid var(--line-dashed); font-size: var(--fs-section); color: var(--ink-body); }
-.pp-set-row:last-child { border-bottom: none; }
-.pp-set-row > span:first-child { flex: 1; }
-.pp-set-row.is-stack { flex-direction: column; align-items: stretch; gap: 8px; }
-.pp-set-help { font-size: 12.5px; color: var(--ink-muted); }
-.pp-seg { display: flex; padding: 3px; border-radius: 999px; background: var(--paper-bone); border: 1px solid var(--line-card); }
-.pp-seg-btn { flex: 1; min-height: 44px; border: none; border-radius: 999px; background: none; font: inherit; font-size: 13.5px; color: var(--ink-muted); cursor: pointer; }
-.pp-seg-btn[aria-pressed='true'] { background: var(--ink-body); color: var(--paper-parchment); font-weight: 600; }
-.pp-seg-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--focus); }
-
 /* 11e: a drawing the read skipped — a quiet row under the lines; "Add as image" sends it to the Inbox. */
 .pp-drawing { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 16px; font-size: var(--fs-body-s); color: var(--ink-faint); }
 .pp-drawing > svg { flex: none; }

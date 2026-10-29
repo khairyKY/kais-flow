@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActionSheet } from '../../components/ActionSheet'
 import { Icon } from '../../components/Icon'
 import { Button } from '../../components/kit'
@@ -7,7 +7,10 @@ import { EmptyState, OfflineChip } from '../../components/States'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { useOutboxMarks } from '../../lib/outbox'
 import { useOnline } from '../../lib/useOnline'
-import type { CalendarEvent } from '../../lib/types'
+import type { CalendarEvent, InboxItem, Task } from '../../lib/types'
+import { longPress } from '../../lib/haptics'
+import { LONG_PRESS_MS } from '../tasks/swipe'
+import { dropOnGrid } from './gridDrop'
 import { useDomains } from '../domains/api'
 import { useProjects } from '../projects/api'
 import { completeTaskWithUndo, uncompleteTask, useTasks } from '../tasks/api'
@@ -17,10 +20,11 @@ import { useMinuteNow } from '../today/useMinuteNow'
 import { goalIdOf } from '../today/top3Order'
 import { legacyGoalId } from '../today/goalStore'
 import { cachedStarEvents } from '../today/api'
-import { blockHue } from './blockHue'
-import { moveEventWithUndo, outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { blockHue, KIND_HUE } from './blockHue'
+import { outOfSlotWithUndo, putInSlotWithUndo, scheduleTaskWithUndo, useCalendarEvents, useCalendarRows } from './api'
+import { completeBlockTask, moveSpan } from './scoped'
 import { findBlock } from './series'
-import { heldDrop, slotFill, slotTasks } from './slots'
+import { heldDrop, slotFill, slotOver, slotTasks } from './slots'
 import { cairoToIso, timeRange } from './eventTime'
 import { blockLastDay, railBuckets, railMinutes, scheduledToday } from './replan'
 import { NowCard } from './NowCard'
@@ -29,12 +33,14 @@ import { Segmented } from '../rituals/RitualChrome'
 import { addMonths, allDayOn, dayBlocks, eventSpan, monthTitle, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneMonth } from './PhoneMonth'
 import { readViewOptions } from './ViewOptionsPopover'
+import { usePrefsVersion } from '../../lib/prefs'
 import { SMART_LISTS } from './railDrop'
 import { filterByScope, type RailScope, type RailScopeKind } from '../tasks/grouping'
 import { useAreas } from '../areas/api'
 import { placeName } from '../tasks/move'
-import { PhoneGrid, type BlockLook, type PhoneGridHandle } from './PhoneGrid'
+import { PhoneGrid, type BlockLook, type Carry, type PhoneGridHandle } from './PhoneGrid'
 import { BlockSheet, QuickCreateSheet, ScheduleSheet } from './PhoneSheets'
+import type { BlockMenuMode } from './blockMenuSpec'
 import './phoneCalendar.css'
 import { useLinkedEvent } from './linkedEvent'
 import { useCalendarDefaultView } from '../../lib/settings'
@@ -48,7 +54,7 @@ const MorningRitual = lazy(() => import('../rituals/MorningRitual').then((m) => 
 type Sheet =
   | { k: 'view' }
   | { k: 'create'; day: string; start: number }
-  | { k: 'block'; id: string; start: string }
+  | { k: 'block'; id: string; start: string; mode?: BlockMenuMode }
   | { k: 'more'; ids: string[] }
   /** 7g: a task from the rail strip — or, `replan`, an overdue block tapped on the grid. */
   | { k: 'schedule'; id: string; replan?: boolean }
@@ -74,6 +80,7 @@ const VIEWS: { v: PhoneView; label: string }[] = [
 ]
 
 export function PhoneCalendar() {
+  usePrefsVersion() // the view options are read as it draws: redraw when another device changes them
   // Repeating events (migration 0061): `events` = the year around today (the strip's planning, the
   // Schedule sheet's free slots); `gridEvents` = what the week strip and the grid show (below).
   const { data: events = [], isPending: eventsPending } = useCalendarEvents()
@@ -87,13 +94,15 @@ export function PhoneCalendar() {
   const now = useMinuteNow()
   const today = cairoDateKey(now)
   const [view, setView] = useState<PhoneView>('day')
+  // /calendar?view=day (Today's Day bar, phone-today): today's own column, whatever the default view.
+  const [askedDay] = useState(() => new URLSearchParams(location.search).get('view') === 'day')
   // Settings → the calendar's default view (synced): applied once when settings load, then the
   // title's Day / 3 days / Week switch is the reader's own — same pattern as the desktop calendar.
   const defaultView = useCalendarDefaultView('day')
   const [openedOnDefault, setOpenedOnDefault] = useState(false)
   if (defaultView && !openedOnDefault) {
     setOpenedOnDefault(true)
-    if (defaultView !== view) setView(defaultView)
+    if (defaultView !== view && !askedDay) setView(defaultView)
   }
   // /calendar?date=YYYY-MM-DD (a day tapped on the week widgets) opens on that day.
   const [anchor, setAnchor] = useState(() => new URLSearchParams(location.search).get('date')?.match(/^\d{4}-\d{2}-\d{2}$/)?.[0] ?? today)
@@ -173,14 +182,15 @@ export function PhoneCalendar() {
     const hue = e.color ?? project?.color ?? (project && domains.find((d) => d.id === project.domain_id)?.color) ?? null
     // cal-looks ("Now" as drawn, as the desktop's): the accent at 24% for the fill, 45% for the edge, its text tone
     // for the time and the check — a swatch is its token (./blockHue), so Night Garden redraws it.
-    const hueOf = hue ? blockHue(hue) : e.type === 'event' && !e.task_id ? { c: 'var(--acc-blossom)', ink: 'var(--acc-blossom-text)' } : { c: 'var(--acc-lavender)', ink: 'var(--acc-lavender-text)' }
-    const tone = { fill: `color-mix(in srgb, ${hueOf.c} 24%, transparent)`, edge: `color-mix(in srgb, ${hueOf.c} 45%, transparent)`, ink: hueOf.ink }
+    const hueOf = hue ? blockHue(hue) : e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
+    const tone = { fill: `color-mix(in srgb, ${hueOf.c} var(--blk-fill), transparent)`, edge: `color-mix(in srgb, ${hueOf.c} 45%, transparent)`, ink: hueOf.ink }
     const done = task?.status === 'done'
     // Time Slots (0073): a Time block draws the tasks this occurrence holds, as the desktop's does.
     const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
     const slot = held.length
       ? {
           fill: slotFill(e, held),
+          over: slotOver(e, held),
           held: held.map((t) => {
             const isDone = t.status === 'done'
             return { id: t.id, title: t.title, done: isDone, minutes: t.duration_min || 30, toggle: () => (isDone ? uncompleteTask(t) : completeTaskWithUndo(t)), open: () => openTask(t.id) }
@@ -190,7 +200,8 @@ export function PhoneCalendar() {
     // Subtasks C: a subtask's own block says whose it is.
     const parent = task?.parent_task_id ? taskById.get(task.parent_task_id)?.title : undefined
     const goal = !!task && task.id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === today
-    return { ...tone, check: task && { done, toggle: () => (done ? uncompleteTask(task) : completeTaskWithUndo(task)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
+    // cal-clicks: a repeating task's round asks This one / Following / All before it's ticked.
+    return { ...tone, check: task && { done, repeat: task.recurrence_rule, toggle: () => (done ? uncompleteTask(task) : void completeBlockTask(task, e.id)) }, note: overdueBlock(e) ? 'Overdue · Replan' : undefined, slot, parent, goal }
   }
 
   /** A task block that ended before today, not done — it reads "Overdue · Replan" and a tap replans it. */
@@ -210,7 +221,8 @@ export function PhoneCalendar() {
   function commit(e: CalendarEvent, from: Span, to: Span, mode: DragMode) {
     // Moved from its sheet (Time): keep it in view above the sheet, at its new time.
     if (sheet?.k === 'block' && sheet.id === e.id) gridRef.current?.scrollToMinute(to.start, SHEET_LEAD)
-    moveEventWithUndo(e, from, to, mode)
+    // cal-clicks: a repeat (or a repeating task's round) asks which occurrences; Cancel leaves it where it was.
+    void moveSpan(e, from, to, mode)
   }
 
   /** slot-outline: a held task's row dragged out of its slot (the desktop's rules, slots.heldDrop): off
@@ -224,6 +236,64 @@ export function PhoneCalendar() {
     else if (drop.kind === 'block') scheduleTaskWithUndo(task, drop.starts_at, drop.ends_at)
   }
 
+  // drag-fix (Kai 2026-10-26: "drag a task to schedule isn't working" — on the phone, where the tray's chips
+  // only opened their sheet): a hold on a chip (the long press, 400ms) lifts it, the grid carries it under the
+  // finger (PhoneGrid.carry) and lets it go on the quarter there — the desktop's drop (./gridDrop: into a Time
+  // block, else a block of its length; a capture is filed). A tap still opens the sheet; a sideways move before
+  // the hold still scrolls the tray; let go off the grid, nothing happens.
+  const press = useRef<{ pointerId: number; x: number; y: number; timer: number } | null>(null)
+  const carried = useRef(false) // a carry's release is no tap
+  // Only a non-passive touchmove, there from the touch's start, keeps the tray from scrolling under a carry.
+  const unsRef = useCallback((el: HTMLDivElement | null) => {
+    if (!el) return
+    const stop = (e: TouchEvent) => {
+      if (carried.current) e.preventDefault()
+    }
+    el.addEventListener('touchmove', stop, { passive: false })
+    return () => el.removeEventListener('touchmove', stop)
+  }, [])
+  const letGo = () => {
+    window.clearTimeout(press.current?.timer)
+    press.current = null
+  }
+  function holdable(what: { task?: Task; item?: InboxItem; minutes: number }) {
+    const { task, item, minutes } = what
+    return {
+      onPointerDown: (e: React.PointerEvent<HTMLElement>) => {
+        carried.current = false
+        if (!e.isPrimary || (e.pointerType === 'mouse' && e.button !== 0)) return
+        letGo()
+        const el = e.currentTarget
+        const p = { pointerId: e.pointerId, x: e.clientX, y: e.clientY, timer: 0 }
+        p.timer = window.setTimeout(() => {
+          press.current = null
+          longPress()
+          carried.current = true
+          const c: Carry = {
+            id: task?.id ?? item!.id, title: task?.title ?? inboxTitle(item!), minutes, el, pointerId: p.pointerId, x: p.x, y: p.y,
+            fill: `color-mix(in srgb, ${KIND_HUE.task.c} var(--blk-fill), transparent)`, ink: KIND_HUE.task.ink,
+            onDrop: (at) => {
+              if (!at) return
+              const t = task && (taskById.get(task.id) ?? task)
+              dropOnGrid({ task: t, item }, spanIso({ ...at, end: at.start }).starts_at, minutes, gridEvents)
+            },
+          }
+          gridRef.current?.carry(c)
+        }, LONG_PRESS_MS)
+        press.current = p
+      },
+      onPointerMove: (e: React.PointerEvent<HTMLElement>) => {
+        const p = press.current
+        if (!p || e.pointerId !== p.pointerId) return
+        if (Math.hypot(e.clientX - p.x, e.clientY - p.y) > 8) letGo() // moving is not holding (the tray scrolls)
+      },
+      onPointerUp: letGo,
+      onPointerCancel: letGo,
+      onContextMenu: (e: React.MouseEvent) => e.preventDefault(), // Android's long press also fires contextmenu
+    }
+  }
+  const rowHold = (r: { task: Task; block: CalendarEvent | null }) => holdable({ task: r.task, minutes: railMinutes(r) })
+
   /** A task opens as itself — the Task sheet over the calendar (Kai 2026-10-03, one tap less); a plain
    * event (or a block whose task isn't here) opens the event sheet (7d). The block stays in view above. */
   function tapBlock(e: CalendarEvent) {
@@ -233,11 +303,28 @@ export function PhoneCalendar() {
     else setSheet({ k: 'block', id: e.id, start: e.starts_at })
   }
 
+  /** cal-clicks: a long-press (released without moving) opens menu B's sheet — the tray, Duplicate, Work with
+   * AI ›, Copy link, Delete (a task block's Complete / Open task / Unschedule too). The block stays lifted. */
+  function holdBlock(e: CalendarEvent) {
+    setSheet({ k: 'block', id: e.id, start: e.starts_at, mode: 'menu' })
+  }
+
   const slotRect = (day: string, start: number, end: number) => gridRef.current?.rectOf(day, start, end) ?? null
 
+  /** CAL6: a strip tap or Today shows its days by the swipe's settle — the grid slides them in from their side — not
+   * a cut; the selected-day pill fades across (phoneCalendar.css). Month view has no grid to slide. */
+  function goTo(day: string, then?: () => void) {
+    const next = visibleDays(view, day, today, mondayFirst)
+    const set = () => {
+      setAnchor(day)
+      then?.()
+    }
+    if (view === 'month' || next.join() === days.join() || !gridRef.current) return set()
+    gridRef.current.slideTo(day > anchor ? 1 : -1, next, set)
+  }
+
   function goToday() {
-    setAnchor(today)
-    gridRef.current?.centerNow()
+    goTo(today, () => gridRef.current?.centerNow())
   }
 
   // findBlock: an edit from the sheet can re-anchor a repeat under it (series.ts).
@@ -279,7 +366,7 @@ export function PhoneCalendar() {
               data-range={range}
               aria-current={d === anchor ? 'date' : undefined}
               aria-label={new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' })}
-              onClick={() => setAnchor(d)}
+              onClick={() => goTo(d)}
             >
               <span className="pc-day-l">{new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'narrow' })}</span>
               <span className="pc-day-n">{Number(d.slice(8))}</span>
@@ -301,7 +388,17 @@ export function PhoneCalendar() {
               onChange={setSegPick}
             />
           </div>
-          <div className="pc-uns" data-seg={seg}>
+          <div
+            ref={unsRef}
+            className="pc-uns"
+            data-seg={seg}
+            onClickCapture={(e) => {
+              if (!carried.current) return
+              carried.current = false
+              e.preventDefault()
+              e.stopPropagation()
+            }}
+          >
             {tasksPending
               ? [0, 1].map((i) => <span key={i} className="pc-chip is-skel" />)
               : seg === 'lists'
@@ -311,7 +408,7 @@ export function PhoneCalendar() {
                       <Icon name="chevdown" size={16} />
                     </button>,
                     ...listTasks.map((t) => (
-                      <button key={t.id} type="button" className="pc-chip" aria-expanded={scheduling?.id === t.id} onClick={() => setSheet({ k: 'schedule', id: t.id })}>
+                      <button key={t.id} type="button" className="pc-chip" {...rowHold({ task: t, block: null })} aria-expanded={scheduling?.id === t.id} onClick={() => setSheet({ k: 'schedule', id: t.id })}>
                         <span className="pc-chip-t">{t.title}</span>
                         {t.duration_min != null && <span className="pc-chip-d">{formatDuration(t.duration_min)}</span>}
                       </button>
@@ -319,19 +416,19 @@ export function PhoneCalendar() {
                   ]
               : seg === 'scheduled'
                 ? scheduled.map((r) => (
-                    <button key={r.task.id} type="button" className="pc-chip" onClick={() => r.block && tapBlock(r.block)}>
+                    <button key={r.task.id} type="button" className="pc-chip" {...rowHold(r)} onClick={() => r.block && tapBlock(r.block)}>
                       <span className="pc-chip-t">{r.task.title}</span>
                       {r.block && <span className="pc-chip-d">{timeRange(new Date(r.block.starts_at), new Date(r.block.ends_at))}</span>}
                     </button>
                   ))
               : seg === 'inbox'
                 ? inbox.map((item) => (
-                    <button key={item.id} type="button" className="pc-chip" aria-expanded={filing?.id === item.id} onClick={() => setSheet({ k: 'file', id: item.id })}>
+                    <button key={item.id} type="button" className="pc-chip" {...holdable({ item, minutes: inboxMinutes(item) })} aria-expanded={filing?.id === item.id} onClick={() => setSheet({ k: 'file', id: item.id })}>
                       <span className="pc-chip-t">{inboxTitle(item)}</span>
                     </button>
                   ))
                 : !seg ? null : buckets[seg].map((r) => (
-                    <button key={r.task.id} type="button" className="pc-chip" aria-expanded={scheduling?.id === r.task.id} onClick={() => setSheet({ k: 'schedule', id: r.task.id })}>
+                    <button key={r.task.id} type="button" className="pc-chip" {...rowHold(r)} aria-expanded={scheduling?.id === r.task.id} onClick={() => setSheet({ k: 'schedule', id: r.task.id })}>
                       <span className="pc-chip-t">{r.task.title}</span>
                       {r.late > 0 ? <span className="pc-chip-d is-late">{r.late}d</span> : r.task.duration_min != null && <span className="pc-chip-d">{formatDuration(r.task.duration_min)}</span>}
                     </button>
@@ -374,6 +471,7 @@ export function PhoneCalendar() {
           setSheet({ k: 'create', day, start })
         }}
         onTapBlock={tapBlock}
+        onHoldBlock={holdBlock}
         onTapMore={(hidden) => setSheet({ k: 'more', ids: hidden.map((e) => e.id) })}
         onCommit={commit}
         onDropHeld={dropHeld}
@@ -420,7 +518,18 @@ export function PhoneCalendar() {
         <QuickCreateSheet day={sheet.day} start={sheet.start} slotRect={slotRect} onClose={() => setSheet(null)} />
       )}
       {block && (
-        <BlockSheet event={block} look={look(block)} slotRect={slotRect} pending={marks.pending.has(block.id)} onMove={commit} onRebind={(ref) => setSheet({ k: 'block', id: ref.id, start: ref.start })} onClose={() => setSheet(null)} />
+        <BlockSheet
+          event={block}
+          mode={sheet?.k === 'block' ? sheet.mode : undefined}
+          // The details' ⋯ ↔ menu B's Details; a task block's details are its task (the task sheet).
+          onMode={(mode) => (mode === 'details' && block.task_id && taskById.has(block.task_id) ? openTask(block.task_id) : setSheet({ k: 'block', id: block.id, start: block.starts_at, mode }))}
+          look={look(block)}
+          slotRect={slotRect}
+          pending={marks.pending.has(block.id)}
+          onMove={commit}
+          onRebind={(ref) => setSheet({ k: 'block', id: ref.id, start: ref.start, mode: sheet?.k === 'block' ? sheet.mode : undefined })}
+          onClose={() => setSheet(null)}
+        />
       )}
       {sheet?.k === 'more' && (
         <ActionSheet

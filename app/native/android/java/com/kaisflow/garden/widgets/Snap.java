@@ -104,6 +104,7 @@ public final class Snap {
         if (t.equals("task")) {
             boolean flipped = done(s.optJSONObject("goal"), "id", id);
             flipped |= doneAll(s.optJSONArray("picks"), "id", id);
+            flipped |= doneAll(s.optJSONArray("tasks"), "id", id);
             flipped |= doneAll(s.optJSONArray("blocks"), "taskId", id);
             JSONObject p = s.optJSONObject("progress");
             if (flipped && p != null) p.put("done", Math.min(p.optInt("total"), p.optInt("done") + 1));
@@ -158,14 +159,47 @@ public final class Snap {
         return f.format(new Date(t));
     }
 
+    private boolean h24() {
+        return j.optBoolean("hour24");
+    }
+
+    /** A time as the app shows it: "1:30 PM", or "13:30" on the 24-hour clock (snapshot.hour24). */
     String hm(long t) {
-        return fmt("HH:mm", t);
+        return fmt(h24() ? "HH:mm" : "h:mm a", t);
+    }
+
+    /** The same without AM / PM, for a block's time on a row ("1:30"). */
+    String hmc(long t) {
+        return fmt(h24() ? "HH:mm" : "h:mm", t);
+    }
+
+    /** "1:30–3:30 PM": the AM / PM once when both ends share it (the calendar's ranges). */
+    String range(long a, long b) {
+        if (b <= a) return hm(a);
+        boolean same = h24() || fmt("a", a).equals(fmt("a", b));
+        return (same ? hmc(a) : hm(a)) + "–" + hm(b);
     }
 
     /** Minutes since midnight on the user's clock. */
     int minutes(long t) {
-        String hm = hm(t);
+        String hm = fmt("HH:mm", t);
         return Integer.parseInt(hm.substring(0, 2)) * 60 + Integer.parseInt(hm.substring(3));
+    }
+
+    /** An hour line's label: "11 AM", or "11:00" on the 24-hour clock. */
+    String hourLabel(long t) {
+        return fmt(h24() ? "HH:mm" : "h a", t);
+    }
+
+    /** The local midnight that starts t's day. */
+    long midnight(long t) {
+        java.util.Calendar cal = java.util.Calendar.getInstance(zone);
+        cal.setTimeInMillis(t);
+        cal.set(java.util.Calendar.HOUR_OF_DAY, 0);
+        cal.set(java.util.Calendar.MINUTE, 0);
+        cal.set(java.util.Calendar.SECOND, 0);
+        cal.set(java.util.Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis();
     }
 
     /** The next local midnight after t (the day rollover). */

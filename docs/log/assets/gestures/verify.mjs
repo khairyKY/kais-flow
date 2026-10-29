@@ -27,13 +27,16 @@ const SPEC = ['Replan…', 'Snooze…', 'Move to…', 'Priority', 'Repeat', 'Rem
 const DESK_SPEC = ['Tomorrow', 'Replan…', 'Snooze…', 'Move to…', 'Priority', 'Labels', 'Repeat', 'Remind', 'Add to Top 3', 'Make goal of the day', 'Start focus', 'Duplicate', 'Select', 'Delete']
 
 async function open(view, theme) {
-  const ctx = await browser.newContext({ viewport: view.viewport, hasTouch: view.touch, deviceScaleFactor: 1 })
+  const ctx = await browser.newContext({ viewport: view.viewport, hasTouch: view.touch, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript((t) => {
     localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
     window.__buzz = 0
     Object.defineProperty(navigator, 'vibrate', { value: () => { window.__buzz++; return true }, configurable: true })
   }, theme)
   const page = await ctx.newPage()
+  // A fixed clock (v1.6.0 verify): the demo rows' "Tomorrow" is real-date math, and the night Cairo left
+  // summer time (29→30 Oct) "now + 24h" was still today, so the run depended on when it ran.
+  await page.clock.install({ time: new Date('2026-10-12T10:00:00+03:00') })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   await page.goto(`${BASE}/design-system`, { waitUntil: 'networkidle' })

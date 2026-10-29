@@ -46,11 +46,15 @@ jobs:
           cache: npm
           cache-dependency-path: app/package-lock.json
 
-      # Capacitor 8's Android library compiles for Java 21.
+      # Capacitor 8's Android library compiles for Java 21. The Gradle cache (~/.gradle caches + wrapper)
+      # is keyed on the lockfile: android/ is generated each build, so there's no build.gradle to hash
+      # yet, and its dependencies come from the Capacitor packages in the lockfile.
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: 21
+          cache: gradle
+          cache-dependency-path: app/package-lock.json
 
       - run: npm ci
 
@@ -90,7 +94,7 @@ jobs:
 
       - name: Build
         working-directory: app/android
-        run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+        run: chmod +x gradlew && ./gradlew assembleRelease testReleaseUnitTest --no-daemon # + the lock screen's LockPlanTest
 
       - name: Sign
         env:
@@ -129,13 +133,17 @@ jobs:
         if: inputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
           TAG: ${{ inputs.tag }}
         # A version-less copy beside the versioned file, so releases/latest/download/kais-flow.apk
         # always serves the newest one (the web app's download bar, Settings → App, docs/INSTALL.md).
-        # The versioned file stays: the apps' update check and the site read it.
+        # The versioned file stays: the apps' update check and the site read it. To every repo in
+        # releases.sh (the public releases repo first).
         run: |
+          set -euo pipefail
+          . ../.github/scripts/releases.sh
           cp "$APK" "$RUNNER_TEMP/kais-flow.apk"
-          gh release upload "$TAG" "$APK" "$RUNNER_TEMP/kais-flow.apk" --clobber
+          release_upload "$APK" "$RUNNER_TEMP/kais-flow.apk"
 
   smoke:
     name: Emulator smoke test

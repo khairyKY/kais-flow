@@ -1,0 +1,13 @@
+a task, ran over (no colour: Iris): time 4.80 · title 5.02 · check 4.66
+a past event (no colour: Rose): time 4.69 · title 5.07 · check 4.69
+a task in progress: time 4.66 · title 5.02 · check 4.66
+the goal: time — · title 5.02 · check 4.66
+a done task: time — · title 5.02 · check 4.66
+a repeating task: time 4.66 · title 5.02 · check 4.66
+Standup, saved in the old hydrangea: time 4.62 · title 5.00 · check 4.62
+Gym, saved in the old sage: time 4.61 · title 5.49 · check 4.61
+Read 2 pages in Fern: time — · title 4.98 · check 4.61
+Deep work in the old hydrangea: time 4.62 · title 5.00 · check 4.62
+Design review in Heather: time 4.68 · title 5.51 · check 4.68
+a Time block (old hydrangea): time 4.62 · title 5.00 · check 4.62
+a custom colour (#123456): time — · title 8.06 · check 4.63

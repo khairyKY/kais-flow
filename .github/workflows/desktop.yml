@@ -1,8 +1,9 @@
-name: Windows app
+name: Desktop apps
 
 # M1 step 5 (design-integration/PLAN.md SHIP P2.3): the same Tauri shell as the Android app, built
 # as a real Windows installer on GitHub's Windows runner (system WebView2, ~5 MB, no Electron).
 # Builds on the mobile branches for review; a release (release.yml) gets the installer attached.
+# 2026-10-29: and the Mac app (the macos job below), on a release or a manual run only.
 on:
   push:
     branches: ['claude/mobile-*']
@@ -102,6 +103,7 @@ jobs:
 
       # The app itself (not its installer), for the msix job below: the Store package is this same build.
       - uses: actions/upload-artifact@v4
+        if: vars.STORE_IDENTITY_NAME != ''
         with:
           name: kais-flow-app-exe
           path: app/src-tauri/target/release/kais-flow.exe
@@ -111,40 +113,40 @@ jobs:
         if: inputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
           TAG: ${{ inputs.tag }}
         # A version-less copy beside the versioned file, so releases/latest/download/kais-flow-windows-setup.exe
         # always serves the newest one (the web app's download bar, Settings → App, docs/INSTALL.md).
         # The versioned file stays: the apps' update check and the site read it. With a signature, also
         # latest.json (releases/latest/download/latest.json, tauri.conf.json plugins.updater): the
-        # versioned file's URL and its signature, which the Windows app updates in place from.
+        # versioned file's URL in the releases repo and its signature, which the Windows app updates in
+        # place from, merged into any latest.json the release has (a Mac build that finished first).
+        # Every repo in releases.sh gets the same files.
         run: |
           set -euo pipefail
+          . ../.github/scripts/releases.sh
           cp "$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe"
           files=("$EXE" "$RUNNER_TEMP/kais-flow-windows-setup.exe")
           if [ -f "$EXE.sig" ]; then
-            NOTES="$(gh release view "$TAG" --json body -q .body || true)" \
-            URL="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/$EXE_NAME" \
-            node -e "
-              const fs = require('fs'), e = process.env
-              fs.writeFileSync(e.RUNNER_TEMP + '/latest.json', JSON.stringify({
-                version: e.TAG.replace(/^v/, ''),
-                notes: e.NOTES || 'Kai’s Flow ' + e.TAG,
-                pub_date: new Date().toISOString(),
-                platforms: { 'windows-x86_64': { signature: fs.readFileSync(e.EXE + '.sig', 'utf8').trim(), url: e.URL } },
-              }, null, 2))"
+            rgh "$PRIMARY_REPO" release download "$TAG" -p latest.json -O "$RUNNER_TEMP/base.json" 2>/dev/null || true
+            NOTES="$(rgh "$PRIMARY_REPO" release view "$TAG" --json body -q .body || true)" \
+              node ../.github/scripts/latest-json.mjs "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/latest.json" \
+              windows-x86_64 "$EXE.sig" "https://github.com/$PRIMARY_REPO/releases/download/$TAG/$EXE_NAME"
             files+=("$EXE.sig" "$RUNNER_TEMP/latest.json")
           else
             echo "::warning::No updater signature, so no latest.json: Windows apps update through the browser download this time."
           fi
-          gh release upload "$TAG" "${files[@]}" --clobber
+          release_upload "${files[@]}"
 
   # The Microsoft Store package (docs/MICROSOFT-STORE.md): the build above as an UNSIGNED MSIX, which
   # Kai uploads in Partner Center; the Store signs what it ships, so no certificate is needed ($0).
   # Its identity is Partner Center's (Product management → Product identity), kept in three repo
-  # VARIABLES: not secrets, every Store app's manifest shows them. Without them this skips, green.
+  # VARIABLES: not secrets, every Store app's manifest shows them. Without them the job doesn't start
+  # (2026-10-29: a Windows runner billed ×2 just to say "skipped" each release).
   msix:
     name: Microsoft Store package
     needs: windows
+    if: vars.STORE_IDENTITY_NAME != ''
     runs-on: windows-latest
     permissions:
       contents: write # only used to attach the package to a published Release
@@ -156,7 +158,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          sparse-checkout: app/src-tauri
+          sparse-checkout: |
+            app/src-tauri
+            .github/scripts
 
       - uses: actions/download-artifact@v4
         with:
@@ -211,10 +215,150 @@ jobs:
         if: steps.pack.outputs.MSIX && inputs.tag != ''
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
         shell: bash
         # Versioned for Partner Center, plus a version-less copy (releases/latest/download/kais-flow.msix),
         # the same pattern as the installer above.
         run: |
+          set -euo pipefail
+          . .github/scripts/releases.sh
           msix="$(cygpath -u '${{ steps.pack.outputs.MSIX }}')"
           cp "$msix" "$RUNNER_TEMP/kais-flow.msix"
-          gh release upload "$TAG" "$msix" "$RUNNER_TEMP/kais-flow.msix" --clobber
+          release_upload "$msix" "$RUNNER_TEMP/kais-flow.msix"
+
+  # The Mac app (docs/log/2026-10-29-*-mac-app-handoff.md): the same Tauri shell, one universal .app
+  # (Apple silicon + Intel) in a .dmg. $0: the repo is public, so GitHub's macOS runners are free. No
+  # Apple Developer account means no notarization: the app is ad-hoc signed (tauri.conf.json
+  # bundle.macOS.signingIdentity "-", without which Apple silicon calls a downloaded copy "damaged"), and
+  # the person allows it once (Privacy & Security → Open Anyway, the site's guides/install-mac). Updates
+  # use the Windows build's updater key: the updater job below adds the darwin entries to latest.json.
+  # Only on a release or a manual run (Actions → Desktop apps → Run workflow), not on the
+  # claude/mobile-* pushes that build Windows. The repo variable MAC_BUILD_ON (github, the default, or
+  # codemagic) picks who builds it: a private repo's macOS minutes bill ×10, so once private,
+  # codemagic.yaml builds the same script on Codemagic's free Mac minutes and this job never starts.
+  macos:
+    name: Build Mac app
+    if: (inputs.tag != '' || github.event_name == 'workflow_dispatch') && vars.MAC_BUILD_ON != 'codemagic'
+    runs-on: macos-latest
+    permissions:
+      contents: write # only used to attach the .dmg to a published Release
+    defaults:
+      run:
+        working-directory: app
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: app/src-tauri -> target
+
+      # Everything Mac lives in the script (build, the checks, the named files), so a Codemagic build
+      # can run the same thing once the repo goes private. universal-apple-darwin = both slices in one
+      # .app: one .dmg, one updater bundle and signature, which latest.json's darwin-aarch64 and
+      # darwin-x86_64 both point at. The checks: the .dmg mounts and holds the .app beside an Applications
+      # link; the .app is ad-hoc signed, universal, with this version and identifier; the copy dragged
+      # out of the .dmg starts and keeps running 25 s (a crash at launch fails the build).
+      - name: Build and check (mac-build.sh)
+        working-directory: .
+        env:
+          TAG: ${{ inputs.tag }}
+          OUT: ${{ runner.temp }}/mac
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        run: |
+          .github/scripts/mac-build.sh
+          tag='${{ inputs.tag }}'
+          echo "OUT=$OUT" >> "$GITHUB_ENV"
+          echo "LABEL=${tag:-${GITHUB_SHA::7}}" >> "$GITHUB_ENV"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kais-flow-mac
+          path: ${{ env.OUT }}
+          retention-days: 30
+
+      # Versioned, plus a version-less .dmg (releases/latest/download/kais-flow-mac.dmg: the web app's
+      # download bar, Settings → App, the site), the same pattern as the Windows installer.
+      - name: Attach to the Release
+        if: inputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          . ../.github/scripts/releases.sh
+          cp "$OUT/kais-flow-$LABEL-mac.dmg" "$RUNNER_TEMP/kais-flow-mac.dmg"
+          release_upload "$OUT"/* "$RUNNER_TEMP/kais-flow-mac.dmg"
+
+  # latest.json's darwin entries, once both builds are done: the Windows job writes latest.json, so this
+  # waits for it (success or not) and adds to whatever is there (latest-json.mjs), never racing it. A
+  # failed Mac build leaves latest.json as Windows wrote it. A manual run (no tag) merges into the newest
+  # release's latest.json in the runner only, to prove the Windows entry survives; nothing is uploaded.
+  # The URLs point into the releases repo (releases.sh PRIMARY_REPO); every repo gets the same file.
+  updater:
+    name: Updater manifest (Mac)
+    needs: [windows, macos]
+    if: always() && needs.macos.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # only used to replace latest.json on a published Release
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+      TAG: ${{ inputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: kais-flow-mac
+          path: mac
+
+      - name: Add the darwin entries to latest.json
+        run: |
+          set -euo pipefail
+          . .github/scripts/releases.sh
+          sig="$(ls mac/*.app.tar.gz.sig 2>/dev/null | head -1 || true)"
+          if [ -z "$sig" ]; then
+            echo "::warning::No updater signature, so no darwin entries: Mac apps update through the .dmg this time."
+            exit 0
+          fi
+          file="$(basename "${sig%.sig}")"
+          if [ -n "$TAG" ]; then
+            rgh "$PRIMARY_REPO" release download "$TAG" -p latest.json -O base.json || true
+            url="https://github.com/$PRIMARY_REPO/releases/download/$TAG/$file"
+          else
+            rgh "$PRIMARY_REPO" release download -p latest.json -O base.json || gh release download -R "$GITHUB_REPOSITORY" -p latest.json -O base.json || true
+            url="https://github.com/$PRIMARY_REPO/releases/download/manual-run/$file"
+          fi
+          # The universal .app runs on both, so both keys name the same bundle.
+          node .github/scripts/latest-json.mjs base.json latest.json darwin-aarch64 "$sig" "$url" darwin-x86_64 "$sig" "$url"
+          if [ -f base.json ]; then
+            # Every entry the base had (same version) is still there with its URL, the Windows one above all.
+            lost="$(jq -r --slurpfile o latest.json 'select(.version == $o[0].version) | .platforms // {} | to_entries[] | select(.key | startswith("darwin-") | not) | select($o[0].platforms[.key].url != .value.url) | .key' base.json)"
+            if [ -n "$lost" ]; then echo "::error::the merge changed $lost"; exit 1; fi
+          fi
+          if ! jq -e '.platforms["windows-x86_64"]' latest.json > /dev/null; then
+            # A manual run proves the Windows entry survives; a release without one (no key, a failed build) only warns.
+            if [ -z "$TAG" ]; then echo "::error::no windows-x86_64 entry"; exit 1; fi
+            echo "::warning::latest.json has no windows-x86_64 entry (the Windows build had no signature, or failed)"
+          fi
+          jq '.platforms | map_values(.url)' latest.json
+          echo "- Updater: latest.json → $(jq -r '.platforms | keys | join(", ")' latest.json)" >> "$GITHUB_STEP_SUMMARY"
+          if [ -n "$TAG" ]; then
+            release_upload latest.json
+          fi

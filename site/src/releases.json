@@ -1,5 +1,37 @@
 [
   {
+    "v": "v1.6.0",
+    "date": "2026-10-29",
+    "title": "A Mac app, a new phone Today, and the same settings everywhere",
+    "highlights": [
+      "Kai's Flow now has a Mac app (Apple silicon and Intel), with a menu bar icon, Open at login and its own updates",
+      "On the phone, Today opens on Now + next: what's on now, the next two blocks, your Top 3 and today's tasks; switch to Day to see the whole day in one bar",
+      "On the phone's calendar, hold a task in the tray and drag it onto a time to schedule it",
+      "Every Android home-screen widget is redrawn in the new colours, plus three new kinds: a checklist, a Now card and a Day bar",
+      "On Samsung phones, your Top 3 can sit on the lock screen (with Good Lock), Android 16 shows what's on now in the Now Bar, and there's an optional Day strip",
+      "Your settings are the same on every device: change the theme, the clock, the calendar or the sounds on one and the others follow",
+      "Notification sounds come in three packs, Felt, Glass and Mixed, with a sound for each kind of reminder",
+      "Calendar: a click opens a block's details, a right-click (a long press on the phone) opens its menu, and changing a repeating event asks This one, This and following, or All",
+      "Smoother everywhere: lists, sheets, the calendar, routines, focus and the rituals move gently now",
+      "Fixed: a dragged task could show twice on the calendar, and the app's name slid under the title bar; a Time block that's too full now says how much it runs over",
+      "Updated Terms and Privacy, the open-source licences in Settings › App & updates, and downloads and updates now come from a new public home"
+    ],
+    "icons": [
+      "laptop",
+      "sun",
+      "calendar",
+      "android",
+      "lock",
+      "sync",
+      "clock",
+      "calendar",
+      "sprout",
+      "check",
+      "download"
+    ],
+    "art": "cherry-bloom"
+  },
+  {
     "v": "v1.5.0",
     "date": "2026-10-26",
     "title": "A chat that does things, and any day on Today",

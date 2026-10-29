@@ -16,6 +16,7 @@
 //   - One AI allowance per question (SEC-2); `run` calls no model and takes none.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { requireUser } from '../_shared/auth.ts'
+import { errorKind, groqFailure } from '../_shared/groqLog.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { hybridSearch } from '../_shared/retrieval.ts'
@@ -153,7 +154,7 @@ async function groq(messages: GroqMessage[]): Promise<{ message: GroqMessage } |
   })
   if (!res.ok) {
     // Upstream detail stays in the function log; the caller only needs to know it failed.
-    console.error('chat: groq', res.status, await res.text())
+    console.error('chat: groq', await groqFailure(res))
     return { status: res.status }
   }
   const json = await res.json()
@@ -308,7 +309,7 @@ Deno.serve(async (req) => {
     return await ask(req, auth, messages, body.hour24 !== false)
   } catch (e) {
     // Details stay in the function log; callers get a stable code, never upstream or stack text.
-    console.error('chat:', e)
+    console.error('chat:', errorKind(e))
     return jsonResponse(req, { error: 'bad_request' }, 400)
   }
 })

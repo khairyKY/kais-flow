@@ -20,11 +20,12 @@ import {
   createCommentary
 } from './api'
 import { useJournalEntries } from '../journal/api'
-import { useMotionEnabled, staggerDelay } from '../../lib/motion'
+import { exitAll, useMotionEnabled, staggerDelay } from '../../lib/motion'
 import '../projects/xfx.css'
 import { LibraryEditForm } from './LibraryEditForm'
 import { bookFromForm, parseTags } from './edits'
 import type { Book, Note, Quote } from '../../lib/types'
+import '../../components/pageMotion.css' // O10 list ↔ reader
 
 /** The three desktop panes (shelf 230 + list 220 + a readable reader) need this much of the page.
  * At 150% interface size a 1280px window leaves the page ~611 CSS px (the root zoom shrinks it,
@@ -311,6 +312,10 @@ export function LibraryPage() {
   const isMobile = useIsMobile()
   const motion = useMotionEnabled()
   const hasSelection = !!(selectedNoteId || selectedQuoteId || selectedBookId)
+  // O10: list ↔ reader moved (not the page's first paint) → the phone's slide (pageMotion.css).
+  const [sel, setSel] = useState({ has: hasSelection, moved: false })
+  if (sel.has !== hasSelection) setSel({ has: hasSelection, moved: true })
+  const moved = sel.moved ? ' kf-lib-moved' : ''
 
   // Never "No books found" / "The shelf is bare" while the shelf is still loading or didn't load:
   // a skeleton until all three lists are in, a Retry card when one failed with nothing cached.
@@ -330,9 +335,10 @@ export function LibraryPage() {
       {label}
     </button>
   )
-  const removeBook = (b: Book) => { removeBookWithUndo(b); setSearchParams({ tab: 'books' }) }
-  const removeNote = (n: Note) => { removeNoteWithUndo(n); setSearchParams({ tab: 'notes' }) }
-  const removeQuote = (q: Quote) => { removeQuoteWithUndo(q); setSearchParams({ tab: 'quotes' }) }
+  // T6: its row in the list slides out first (on a phone the reader closes to a list without it).
+  const removeBook = (b: Book) => exitAll(`[data-lib="${b.id}"]`, () => { removeBookWithUndo(b); setSearchParams({ tab: 'books' }) })
+  const removeNote = (n: Note) => exitAll(`[data-lib="${n.id}"]`, () => { removeNoteWithUndo(n); setSearchParams({ tab: 'notes' }) })
+  const removeQuote = (q: Quote) => exitAll(`[data-lib="${q.id}"]`, () => { removeQuoteWithUndo(q); setSearchParams({ tab: 'quotes' }) })
 
   if (isMobile) {
     return (
@@ -383,8 +389,10 @@ export function LibraryPage() {
           </div>
 
           {/* Segmented Tab */}
+          {/* O10: the phone's list ↔ reader is a search-param swap, so it never rode the stack; it gets
+              the stack's phone grammar (Motion 3a) here — the reader in from the right, the list back. */}
           {!hasSelection && (
-            <>
+            <div className={`kf-lib-list${moved}`}>
               <div style={{ marginBottom: 16 }}>
                 <Segmented
                   value={activeTab}
@@ -464,12 +472,12 @@ export function LibraryPage() {
                   {filteredBooks.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No books found.</div>}
                 </div>
               )}
-            </>
+            </div>
           )}
 
           {/* Details / Reader view on mobile */}
           {hasSelection && (
-            <div style={{ position: 'relative' }}>
+            <div className={`kf-lib-reader${moved}`} style={{ position: 'relative' }}>
               {/* Back button */}
               <BackLink onClick={() => setSearchParams({ tab: activeTab })} style={{ marginBottom: 16 }}>Back to list</BackLink>
 
@@ -819,6 +827,7 @@ export function LibraryPage() {
                   return (
                     <div
                       key={b.id}
+                      data-lib={b.id}
                       onClick={() => setSearchParams({ tab: 'books', bookId: b.id })}
                       className={motion ? 'kf-stagger-item' : undefined}
                       style={{
@@ -847,6 +856,7 @@ export function LibraryPage() {
                   return (
                     <div
                       key={n.id}
+                      data-lib={n.id}
                       onClick={() => setSearchParams({ tab: 'notes', noteId: n.id })}
                       className={motion ? 'kf-stagger-item' : undefined}
                       style={{
@@ -879,6 +889,7 @@ export function LibraryPage() {
                   return (
                     <div
                       key={q.id}
+                      data-lib={q.id}
                       onClick={() => setSearchParams({ tab: 'quotes', quoteId: q.id })}
                       className={motion ? 'kf-stagger-item' : undefined}
                       style={{

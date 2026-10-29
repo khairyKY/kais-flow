@@ -12,6 +12,25 @@ test -f "$main/java/com/kaisflow/garden/MainActivity.java" || { echo "::error::g
 cp native/android/MainActivity.java "$main/java/com/kaisflow/garden/MainActivity.java"
 cp -r native/android/java/. "$main/java/"
 cp -r native/android/res/. "$main/res/"
+# The lock screen's pure logic has a plain JUnit test (LockPlanTest), run by android.yml's Build step.
+mkdir -p android/app/src/test
+cp -r native/android/test/. android/app/src/test/
+# NotificationCompat.ProgressStyle / setRequestPromotedOngoing (the Now Bar, lockscreen 2026-10-26) are
+# androidx.core 1.17; the app module only sees appcompat's older core unless it asks for it.
+printf '\ndependencies {\n    implementation "androidx.core:core:$androidxCoreVersion"\n}\n' >> android/app/build.gradle
+# Notification sound packs (notif-sounds, 2026-10-26): a channel plays a res/raw sound, so every pack's
+# WAVs go in as res/raw/kf_<pack>_<sound>.wav — the names features/notifications/sounds.ts soundName and
+# android.ts channelsFor use. keep.xml stops a resource shrinker dropping them (only channels name them).
+mkdir -p "$main/res/raw"
+for f in public/notification-sounds/*/*.wav; do
+  pack="$(basename "$(dirname "$f")")"
+  cp "$f" "$main/res/raw/kf_${pack}_$(basename "$f")"
+done
+printf '<?xml version="1.0" encoding="utf-8"?>\n<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/kf_*" />\n' > "$main/res/raw/keep.xml"
+n=$(ls "$main/res/raw"/kf_*.wav | wc -l)
+want=$(ls public/notification-sounds/*/*.wav | wc -l)
+test "$n" -gt 0 -a "$n" -eq "$want" || { echo "::error::expected $want notification sounds in res/raw, found $n"; exit 1; }
+echo "notification sounds: $n in res/raw"
 # The widget gallery (renders every widget to PNGs for review) — the debug source set only; release builds never see it.
 mkdir -p android/app/src/debug
 cp -r native/android/debug/. android/app/src/debug/
@@ -25,15 +44,25 @@ grep -q RECORD_AUDIO "$manifest" || { echo "::error::RECORD_AUDIO was not added 
 # falls back to inexact alarms without it. ic_stat_kf (res/drawable-nodpi) is the status-bar K.
 sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />#' "$manifest"
 grep -q USE_EXACT_ALARM "$manifest" || { echo "::error::USE_EXACT_ALARM was not added to the manifest"; exit 1; }
+# Settings → Notifications → This phone → Run in the background (notif 2026-10-26): Android's own
+# one-tap "stop optimising battery" prompt needs this; without it the app opens the list instead.
+sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />#' "$manifest"
+grep -q REQUEST_IGNORE_BATTERY_OPTIMIZATIONS "$manifest" || { echo "::error::REQUEST_IGNORE_BATTERY_OPTIMIZATIONS was not added to the manifest"; exit 1; }
+# The lock screen (lockscreen 2026-10-26): the Now Bar is an Android 16 Live Update, which needs
+# POST_PROMOTED_NOTIFICATIONS (install-time); the Now Bar / Day strip come back after a reboot.
+sed -i 's#<uses-permission android:name="android.permission.INTERNET" />#&\n    <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />\n    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />#' "$manifest"
+grep -q POST_PROMOTED_NOTIFICATIONS "$manifest" || { echo "::error::POST_PROMOTED_NOTIFICATIONS was not added to the manifest"; exit 1; }
 # The share sheet: shared text opens the app (MainActivity.onNewIntent → /share). text/*
 # covers text/plain. Images wait for Paper capture, so no image/* yet.
 sed -i 's#</activity>#    <intent-filter>\n                <action android:name="android.intent.action.SEND" />\n                <category android:name="android.intent.category.DEFAULT" />\n                <data android:mimeType="text/*" />\n            </intent-filter>\n\n        &#' "$manifest"
 grep -q 'android.intent.action.SEND' "$manifest" || { echo "::error::the SEND intent filter was not added to the manifest"; exit 1; }
 
-# The widgets' receivers (native/android/widgets-manifest.xml) go in just before </application>.
-"$py" - "$manifest" native/android/widgets-manifest.xml <<'PY'
+# The widgets' receivers (native/android/widgets-manifest.xml) and the lock screen's (lockscreen-manifest.xml)
+# go in just before </application>.
+"$py" - "$manifest" native/android/widgets-manifest.xml native/android/lockscreen-manifest.xml <<'PY'
 import io, sys
-path, extra = sys.argv[1], io.open(sys.argv[2], encoding='utf-8').read()
+path = sys.argv[1]
+extra = ''.join(io.open(p, encoding='utf-8').read() for p in sys.argv[2:])
 xml = io.open(path, encoding='utf-8').read()
 assert xml.count('</application>') == 1, 'expected one </application>'
 indented = ''.join('        ' + line if line.strip() else line for line in extra.splitlines(True))
@@ -42,6 +71,7 @@ PY
 n=$(grep -c 'android.appwidget.provider' "$manifest")
 test "$n" -ge 30 || { echo "::error::expected the widget receivers in the manifest, found $n"; exit 1; }
 echo "widgets: $n receivers"
+grep -q 'widgets.LockWidget' "$manifest" || { echo "::error::the lock-screen widget was not added to the manifest"; exit 1; }
 grep -n 'uses-permission' "$manifest"
 sed -n '/<activity/,/<\/activity>/p' "$manifest"
 grep -n 'app_name' "$main/res/values/strings.xml"

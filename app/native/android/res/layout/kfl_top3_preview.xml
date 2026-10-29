@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The picker's preview of the Top 3 lock-screen widget (LockWidget, Android 12+ previewLayout), in the widgets'
+     own family style. The widget itself draws Render's Top 3 face from the snapshot. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" style="@style/KfW.Root">
+    <LinearLayout style="@style/KfW.Body">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="26dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView style="@style/KfW.Cap" android:text="Top 3" />
+            <TextView style="@style/KfW.Q" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="4dp" android:text="· 0/3" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="32dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView style="@style/KfW.Box" android:src="@drawable/kfw_box_gold" android:contentDescription="Tick the goal" />
+            <TextView style="@style/KfW.Serif" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="2dp" android:text="✶ Finish the CNN notes" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="32dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView style="@style/KfW.Box" android:src="@drawable/kfw_box" android:contentDescription="Tick" />
+            <TextView style="@style/KfW.Title" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="2dp" android:text="Gym · legs" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="32dp" android:gravity="center_vertical" android:orientation="horizontal">
+            <ImageView style="@style/KfW.Box" android:src="@drawable/kfw_box" android:contentDescription="Tick" />
+            <TextView style="@style/KfW.Title" android:layout_width="0dp" android:layout_weight="1" android:layout_marginStart="2dp" android:text="Call Mum" />
+        </LinearLayout>
+    </LinearLayout>
+</FrameLayout>

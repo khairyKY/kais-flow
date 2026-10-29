@@ -245,13 +245,18 @@ async function phoneBasics(page, name, errors) {
   check(`${name} no page errors`, errors.length === 0, errors.join(' | '))
 }
 async function openPlan(page, cdp) {
-  const b = page.locator('.tp-ritual').getByRole('button', { name: /^(Plan|Resume)$/ })
+  // phone-today (2026-10-26): the Plan my day card is gone; the Rituals panel's Morning row is the way in.
+  const b = page.locator('section[aria-label="Rituals"] [data-ritual="morning"]')
+  await b.evaluate((e) => e.scrollIntoView({ block: 'center' })) // the panel sits low, where Undo toasts float: let them go
+  for (let i = 0; i < 50 && (await page.getByRole('button', { name: 'Undo' }).count()) > 0; i++) await sleep(150)
   if (cdp) await tap(cdp, b)
   else await b.click()
   await sleep(600)
 }
 async function openShut(page, cdp) {
-  const b = page.locator('.tp-ritual').getByRole('button', { name: /^(Shut down|Resume)$/ })
+  const b = page.locator('section[aria-label="Rituals"] [data-ritual="evening"]')
+  await b.evaluate((e) => e.scrollIntoView({ block: 'center' }))
+  await sleep(200)
   if (cdp) await tap(cdp, b)
   else await b.click()
   await sleep(600)
@@ -264,8 +269,8 @@ for (const theme of ['day', 'night']) {
   if (!want(theme === 'day' ? '6a' : '6i')) continue
   const name = theme === 'day' ? '6a-day' : '6i-night'
   const { ctx, page, cdp, errors } = await open({ kind: 'plan', at: '07:40' }, theme)
-  const card = page.locator('.tp-ritual')
-  check(`${name} Today at 07:40 offers Plan`, (await text(card)).includes('Plan my day'), await text(card))
+  const card = page.locator('section[aria-label="Rituals"] [data-ritual="morning"]')
+  check(`${name} Today at 07:40 offers Plan (Rituals · Morning · Begin)`, /Morning/.test(await text(card)) && /Begin/.test(await text(card)), await text(card))
   await openPlan(page, cdp)
   await shot(page, name)
   const dlg = sheet(page)
@@ -367,7 +372,7 @@ if (want('6c')) {
   await tap(cdp, page.getByRole('button', { name: 'Done', exact: true }))
   for (let i = 0; i < 20 && (await page.locator('.rt').count()) > 0; i++) await sleep(150)
   check('Start the day: Done closes the sheet', (await page.locator('.rt').count()) === 0)
-  check('Start the day: Today no longer offers Plan', (await page.locator('.tp-ritual').count()) === 0 || !(await text(page.locator('.tp-ritual'))).includes('Plan my day'), await text(page.locator('.tp-ritual')))
+  { const m = page.locator('section[aria-label="Rituals"] [data-ritual="morning"]'); check('Start the day: Today no longer offers Plan (Rituals · Morning ✓)', !/Begin|Continue/.test(await text(m)) && (await text(m)).includes('✓'), await text(m)) }
   // plan-replan (0055): the goal is synced on the rows (top3_rank, 1 = goal), no longer this device's localStorage.
   const ranks = Object.fromEntries((state.rows.tasks ?? []).filter((t) => t.top3).map((t) => [t.id, t.top3_rank]))
   check('Start the day: the goal is the first pick (ranked 1, the picks in pick order)', ranks[id(AUDIT)] === 1 && ranks[id(TYRE)] === 2 && ranks[id(PLANTS)] === 3, JSON.stringify(ranks))
@@ -432,6 +437,7 @@ if (want('6m')) {
   await tap(cdp, row(page, REVIEW).getByRole('radio', { name: 'Today' }))
   await tap(cdp, row(page, UNTITLED).getByRole('radio', { name: 'Someday' }))
   await tap(cdp, page.locator('.rt-inbox').first().getByRole('button', { name: 'File' }))
+  await sleep(300) // motion-pages T6: a filed ritual inbox row slides out (~380ms) before the inbox drops it
   await tap(cdp, page.locator('.rt-inbox').first().getByRole('button', { name: 'Dismiss' }))
   await sleep(300)
   // Back (Esc) closes the sheet and keeps progress — the Undo toasts sit over the ✕ while a sheet is up.
@@ -439,9 +445,9 @@ if (want('6m')) {
   await sleep(900)
   check('6m Back closes the sheet', (await page.locator('.rt').count()) === 0)
   await shot(page, '6m-day')
-  const card = page.locator('.tp-ritual')
+  const card = page.locator('section[aria-label="Rituals"] [data-ritual="morning"]')
   const t = await text(card)
-  check('6m Today card: "Morning · 2 of 4 done", "~1 min left · Pick your 3 next", Resume + hairline', /MORNING · 2 OF 4 DONE/i.test(t) && /~1 MIN LEFT/i.test(t) && /PICK YOUR 3 NEXT/i.test(t) && (await card.getByRole('button', { name: 'Resume' }).count()) === 1 && (await card.locator('.tp-hairline').count()) === 1, t.replace(/\n/g, ' '))
+  check('6m Today: Rituals · Morning 2/4 · Continue', /Morning/.test(t) && /2\/4/.test(t) && /Continue/.test(t), t.replace(/\n/g, ' '))
   await openPlan(page, cdp)
   await shot(page, '6m-day-resumed')
   check('6m Resume keeps the choices (Today / Someday still selected)', (await row(page, REVIEW).getByRole('radio', { name: 'Today' }).getAttribute('aria-checked')) === 'true' && (await row(page, UNTITLED).getByRole('radio', { name: 'Someday' }).getAttribute('aria-checked')) === 'true')
@@ -577,8 +583,8 @@ for (const theme of ['night', 'day']) {
   if (!want(theme === 'night' ? '8a' : '8g')) continue
   const name = theme === 'night' ? '8a-night' : '8g-day'
   const { ctx, page, cdp, errors } = await open({ kind: 'shut', at: '21:40' }, theme)
-  const card = page.locator('.tp-ritual')
-  check(`${name} Today at 21:40 offers Shut down`, (await card.getByRole('button', { name: 'Shut down' }).count()) === 1, await text(card))
+  const card = page.locator('section[aria-label="Rituals"] [data-ritual="evening"]')
+  check(`${name} Today at 21:40 offers Shut down (Rituals · Evening · Begin)`, /Evening/.test(await text(card)) && /Begin|Continue/.test(await text(card)), await text(card))
   await openShut(page, cdp)
   await shot(page, name)
   const t = await text(sheet(page))
@@ -671,8 +677,9 @@ if (want('8d')) {
   await sleep(3600)
   check('8e ritual.finished (evening) logged', state.writes.some((w) => w.row.event_type === 'ritual.finished' && w.row.payload?.ritual === 'evening'))
   await shot(page, '8e-night-today')
-  const card = page.locator('.tp-ritual')
-  check('8e closes by itself (~3s) → Today shows "Day closed ✿" + 3 seeds for Mon', (await page.locator('.rt').count()) === 0 && (await text(card)).includes('Day closed ✿') && /3 SEEDS PLANTED FOR MON/i.test(await text(card)), (await text(card)).replace(/\n/g, ' '))
+  // phone-today: the "Day closed ✿ · seeds" card is gone with the ritual card; Rituals · Evening reads ✓.
+  const card = page.locator('section[aria-label="Rituals"] [data-ritual="evening"]')
+  check('8e closes by itself (~3s) → Today: Rituals · Evening ✓', (await page.locator('.rt').count()) === 0 && (await text(card)).includes('✓'), (await text(card)).replace(/\n/g, ' '))
   await phoneBasics(page, '8d-8e-night', errors)
   await ctx.close()
 }

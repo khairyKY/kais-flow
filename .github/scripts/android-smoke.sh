@@ -73,6 +73,13 @@ adb logcat -d -s KaisFlowShare:I > shots/share.txt
 adb logcat -d -v time | grep -iE 'AndroidRuntime|FATAL|has died|died|KaisFlowShare|kaisflow|chromium|Console|Capacitor|ActivityTaskManager' | tail -150 > shots/share-logcat.txt
 # The home-screen widgets: every picker entry is registered with the system (32, Phone Widgets.dc.html).
 adb shell dumpsys appwidget | grep -o "$pkg/com.kaisflow.garden.widgets.KfWidget\$W[0-9]*" | sort -u > shots/widgets.txt
+# The lock screen (lockscreen 2026-10-26): the Top 3 lock widget is registered, the Now Bar's permission is
+# declared, and the app made its silent "Lock screen" channel on launch (LockScreen.LockBridge.load). Signed
+# out here, so nothing is posted — the notifications themselves are checked on Kai's phone (the handoff).
+{ adb shell dumpsys appwidget | grep -o "$pkg/com.kaisflow.garden.widgets.LockWidget" | sort -u
+  adb shell dumpsys package "$pkg" | grep -o 'android.permission.POST_PROMOTED_NOTIFICATIONS' | sort -u
+  adb shell dumpsys notification | grep -oE "mId='lockscreen'.{0,80}" | sort -u
+  adb logcat -d | grep -E 'KfLock|FATAL EXCEPTION' | tail -20; } > shots/lockscreen.txt 2>&1
 ls -la shots
 [ "${webview_top:-0}" -gt 0 ] || { echo 'FAIL: the WebView starts under the status bar'; exit 1; }
 if [ -n "$bar" ] && [ "$bar" -gt 0 ] && [ "$webview_top" -ge $((bar * 2)) ]; then
@@ -84,3 +91,7 @@ grep -q "$pkg/" shots/share-targets.txt || { echo 'FAIL: the app is not offered 
 grep -q 'load /share?text=hello[[:space:]]*$' shots/share.txt || { echo 'FAIL: a share into the closed app did not load /share'; exit 1; }
 grep -q 'page /share?text=hello%20again&title=a%20page' shots/share.txt || { echo 'FAIL: a share into the open app did not navigate the page'; exit 1; }
 [ "$(wc -l < shots/widgets.txt)" -ge 32 ] || { echo "FAIL: expected 32 widget providers, found $(wc -l < shots/widgets.txt)"; cat shots/widgets.txt; exit 1; }
+cat shots/lockscreen.txt
+grep -q 'widgets.LockWidget' shots/lockscreen.txt || { echo 'FAIL: the Top 3 lock-screen widget is not registered'; exit 1; }
+grep -q 'POST_PROMOTED_NOTIFICATIONS' shots/lockscreen.txt || { echo 'FAIL: POST_PROMOTED_NOTIFICATIONS is not declared'; exit 1; }
+grep -q "mId='lockscreen'" shots/lockscreen.txt || { echo 'FAIL: the Lock screen notification channel was not made'; exit 1; }

@@ -62,7 +62,7 @@ const CARDS = {
   'whats-new': { eb: `What’s new · ${r0.v} · ${shortDate(r0.date)}`, t: r0.title ?? `What’s new in ${r0.v}`, s: `${r0.highlights.length} change${r0.highlights.length === 1 ? '' : 's'}, on the web, Android and Windows`, a: art.img(r0.art, 300) },
   growing: { eb: 'What’s growing', t: 'The roadmap, as a garden', s: 'Now · Next · Later', a: art.img('cherry-bud', 160) },
   guides: { eb: 'Guides', t: 'How can we help?', s: 'Install, import, capture, gestures and more.', a: art.img('fern-unfurl1', 200) },
-  download: { eb: 'Download', t: 'Get Kai’s Flow', s: `Web, Android and Windows · ${LATEST.tag}`, a: art.wisteria },
+  download: { eb: 'Download', t: 'Get Kai’s Flow', s: `Web, Android, Windows and Mac · ${LATEST.tag}`, a: art.wisteria },
   privacy: { eb: 'Privacy policy', t: 'What happens to your days', s: 'No ads, no tracking, no selling data.', a: art.img('seal-intact', 260) },
   terms: { eb: 'Terms', t: 'The short terms', s: 'Five things, on one page.', a: art.img('vine-leaf-right', 220) },
   about: { eb: 'About', t: 'Why I built this', s: 'Built by one student, for himself first.', a: art.img('clover-seedling', 200) },
@@ -122,7 +122,7 @@ It brings tasks, time blocks, habits and a journal into one calm page, and works
 and Windows. It's made by one student, Kai, who built it for himself first.
 
 Web: https://kais-flow.kaidagoat.workers.dev
-Source and releases: https://github.com/khairyKY/kais-flow
+Releases: https://github.com/khairyKY/kais-flow-releases
 
 The mark: k-mark-light-1024.png and k-mark-dark-1024.png. Please don't recolour the K or the paper.
 Colours: Linen #EFE9DB · Parchment #FBF6E9 · Bark ink #2A2420 · Terra ink #9C5139 · Sage #8A9A7E ·

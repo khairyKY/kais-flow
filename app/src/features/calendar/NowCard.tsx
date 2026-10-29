@@ -10,7 +10,7 @@ import type { CalendarEvent, Task } from '../../lib/types'
 import { completeTaskWithUndo } from '../tasks/api'
 import { useStartFocus } from '../today/startFocus'
 import { useMinuteNow } from '../today/useMinuteNow'
-import { blockHue } from './blockHue'
+import { blockHue, KIND_HUE } from './blockHue'
 import { timeText } from './eventTime'
 import { countdown, pickNowNext, progress } from './nowNext'
 import './nowCard.css'
@@ -28,9 +28,9 @@ type Hue = { c: string; ink: string }
 /** The grid's own colour rule: a colour set on the block, else a plain event's blossom, else lavender. */
 function hueOf(e: CalendarEvent): Hue {
   if (e.color) return blockHue(e.color)
-  return e.type === 'event' && !e.task_id ? { c: 'var(--acc-blossom)', ink: 'var(--acc-blossom-text)' } : { c: 'var(--acc-lavender)', ink: 'var(--acc-lavender-text)' }
+  return e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
 }
-const hueVars = (e: CalendarEvent) => {
+export const hueVars = (e: CalendarEvent) => {
   const h = hueOf(e)
   return { ['--c' as string]: h.c, ['--ct' as string]: h.ink } as CSSProperties
 }
@@ -87,7 +87,8 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
   tasks: readonly Task[]
   /** A click on an item: its block's details (desktop) or its sheet (phone). */
   onOpen: (e: CalendarEvent) => void
-  variant?: 'dock' | 'float' | 'phone'
+  /** 'today': the phone Today's Now panel (phone-today) — open by default, its own fold. */
+  variant?: 'dock' | 'float' | 'phone' | 'today'
 }) {
   const now = useMinuteNow()
   useHour24() // the times follow the app's one 12h/24h switch
@@ -98,7 +99,7 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
     () => pickNowNext(events, now, (e) => { const t = e.task_id ? taskById.get(e.task_id) : undefined; return !!t && (t.status === 'done' || !!t.completed_at) }),
     [events, now, taskById],
   )
-  const [folded, setFolded] = useFolded(variant === 'phone' ? 'kf.calNowFoldedPhone' : 'kf.calNowFolded', variant === 'phone')
+  const [folded, setFolded] = useFolded(variant === 'phone' ? 'kf.calNowFoldedPhone' : variant === 'today' ? 'kf.todayNowFolded' : 'kf.calNowFolded', variant === 'phone')
   const [open, setOpen] = useState(false)
   const tick = Math.floor(now.getTime() / 600_000)
 
@@ -113,7 +114,10 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
     if (t)
       return (
         <span className="kf-now-ck" onClick={(ev) => ev.stopPropagation()}>
-          <Checkbox checked={false} size={15} label={t.title} onChange={() => completeTaskWithUndo(t)} />
+          {/* As drawn (.kc): a rounded square with a 2px edge — the kit's 7px corners make a 15px box a circle,
+              which read as the same ring a Time block or an event wears, untickable (shot-bugs, Kai 2026-10-27).
+              ds-ok: the drawn .kc corners (Calendar extras options §4), as check B keeps its own */}
+          <Checkbox checked={false} size={15} label={t.title} onChange={() => completeTaskWithUndo(t)} style={{ borderRadius: 5, borderWidth: 2 }} />
         </span>
       )
     return <span className="kf-now-ring" aria-hidden="true" />

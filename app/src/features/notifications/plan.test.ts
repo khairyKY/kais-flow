@@ -37,6 +37,8 @@ describe('localPlan — reminders', () => {
     const [p, ...rest] = localPlan(base({ tasks: [again], projects: [{ id: 'p1', name: 'Car' }] }))
     expect(rest).toEqual([])
     expect([p.key, p.at.toISOString(), p.notice.title]).toEqual([`t1@${again.remind_again_at}`, again.remind_again_at, 'Call the tyre supplier · in 25 min'])
+    expect(p.notice.again).toBe(true) // the pack's "snoozed again" sound (sounds.ts)
+    expect(localPlan(base({ tasks: [{ ...tyre, reminder_at: cairo('08:25').toISOString() }] }))[0].notice.again).toBeUndefined()
     expect(localPlan(base({ tasks: [{ ...again, status: 'done' }] }))).toEqual([])
   })
 
@@ -241,5 +243,16 @@ describe('blockers (the test button)', () => {
     expect(blockers({ channel: 'web', permission: 'unsupported', subscribed: false }, { quiet_hours_on: false }, now, zone)[0]).toMatch(/^No delivery channel/)
     expect(blockers({ channel: 'android', permission: 'denied', subscribed: false }, { quiet_hours_on: false }, now, zone)[0]).toMatch(/Android Settings/)
     expect(blockers({ channel: 'android', permission: 'prompt', subscribed: false }, { quiet_hours_on: false }, now, zone)).toEqual(['Notifications aren’t allowed yet — the test will ask.'])
+  })
+  it('Android: exact alarms off and battery saving on are named; an older APK that can’t tell says nothing', () => {
+    const off = { quiet_hours_on: false }
+    const lines = blockers({ channel: 'android', permission: 'granted', subscribed: false, exact: false, background: false }, off, now, zone)
+    expect(lines).toHaveLength(2)
+    expect(lines[0]).toMatch(/^Alarms & reminders is off/)
+    expect(lines[1]).toMatch(/^Battery saving can hold reminders/)
+    expect(blockers({ channel: 'android', permission: 'granted', subscribed: false, exact: true, background: true }, off, now, zone)).toEqual([])
+    expect(blockers({ channel: 'android', permission: 'granted', subscribed: false, exact: true }, off, now, zone)).toEqual([])
+    // Denied: that line alone — the rest can't matter yet.
+    expect(blockers({ channel: 'android', permission: 'denied', subscribed: false, exact: false, background: false }, off, now, zone)).toHaveLength(1)
   })
 })

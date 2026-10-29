@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { Link } from 'react-router'
 import { EmojiText } from '../../components/EmojiText'
 import { useDomains } from '../domains/api'
@@ -18,6 +18,8 @@ import { toastUndo } from '../../lib/undo'
 import { useSlipping, markReviewed } from '../slipping/api'
 import { useReviewEventsThisWeek, logReviewEvent } from './api'
 import { useMotionEnabled } from '../../lib/motion'
+import { StageImg } from '../../components/PageMotion'
+import { Collapse } from '../../components/Collapse'
 import { FieldLabel } from './RitualChrome'
 import { Button, SectionLabel } from '../../components/kit'
 import { useIsMobile } from '../../components/BottomSheet'
@@ -152,12 +154,12 @@ export function WeeklyReviewPage() {
       `}</style>
       <div className="wr-grid" style={{ display: isMobile ? 'block' : 'grid', gridTemplateColumns: isMobile ? undefined : 'minmax(0,1fr) 280px', gap: isMobile ? 0 : 40 }}>
         <div style={{ minWidth: 0 }}>
-          <SweepHeader domainsSwept={sweptAt.size} domainsTotal={domains.length} allSwept={allSwept} closed={!!closedAt} isMobile={isMobile} />
+          <SweepHeader domainsSwept={sweptAt.size} domainsTotal={domains.length} allSwept={allSwept} closed={!!closedAt} isMobile={isMobile} weekKey={weekKey} />
 
           <div style={{ marginTop: isMobile ? 16 : 26, display: 'flex', flexDirection: 'column', gap: isMobile ? 10 : 14 }}>
             {domains.length === 0 && (
               <p style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)' }}>
-                No domains yet — the sweep walks your domains one by one. <Link to="/settings" style={{ color: 'var(--acc-terra)' }}>Make one in Settings › Organize</Link>, or just close the week.
+                No domains yet — the sweep walks your domains one by one. <Link to="/settings/organize" style={{ color: 'var(--acc-terra)' }}>Make one in Settings › Organize</Link>, or just close the week.
               </p>
             )}
             {domains.map((d) => (
@@ -183,7 +185,7 @@ export function WeeklyReviewPage() {
             {/* The design's "sweep all three" was its sample count — say the real one. */}
             {!isMobile && domains.length > 0 && !closedAt && <span style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>{domains.length === 1 ? 'Sweep it' : `Sweep all ${domains.length}`} and the frond unfurls flat ✿</span>}
             {closedAt ? (
-              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', minHeight: isMobile ? 44 : undefined, display: 'inline-flex', alignItems: 'center' }}>
+              <span className="kf-swap-in" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-muted)', minHeight: isMobile ? 44 : undefined, display: 'inline-flex', alignItems: 'center' }}>
                 Week closed ✿ · {new Date(closedAt).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', timeZone: appZone() })}
               </span>
             ) : (
@@ -220,9 +222,10 @@ export function WeeklyReviewPage() {
             <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-terra)' }}>{showSeason ? 'Close ↑' : 'Open →'}</span>
           </button>
 
-          {showSeason && (
+          {/* T8: the season folds open and shut */}
+          <Collapse open={showSeason}>
             <SeasonSoFar tasks={tasks} events={events} routines={routines} completions={completions} domains={domains} projects={projects} weekStart={weekStart} weekEnd={weekEnd} lastWeekStart={lastWeekStart} />
-          )}
+          </Collapse>
         </div>
 
         {/* Below the sweep on a phone: slipping, routines, blooms and hours were desktop-only. */}
@@ -247,10 +250,32 @@ const WEEK_DOTS: [number, number, string][] = [
   [254, 16, 'var(--acc-moss)'],
 ]
 
-function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile }: { domainsSwept: number; domainsTotal: number; allSwept: boolean; closed: boolean; isMobile: boolean }) {
+const FLOURISH_KEY = 'kf_week_flourish'
+const readFlourish = () => {
+  try {
+    return localStorage.getItem(FLOURISH_KEY)
+  } catch {
+    return null
+  }
+}
+
+function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile, weekKey }: { domainsSwept: number; domainsTotal: number; allSwept: boolean; closed: boolean; isMobile: boolean; weekKey: string }) {
   // The frond unfurls as the sweep goes (it was fixed at unfurl2); flat once the week is closed.
   const fern = closed ? 'full' : fernByFraction(domainsTotal ? domainsSwept / domainsTotal : 0)
   const motion = useMotionEnabled()
+  // R9: the flourish draws once per week (phones too); a later visit shows it already drawn.
+  const [playedFor] = useState(readFlourish)
+  const drawNow = motion && allSwept && playedFor !== weekKey
+  useEffect(() => {
+    if (!drawNow) return
+    try {
+      localStorage.setItem(FLOURISH_KEY, weekKey)
+    } catch {
+      /* private mode */
+    }
+  }, [drawNow, weekKey])
+  const [closes, setCloses] = useState({ was: closed, n: 0 })
+  if (closes.was !== closed) setCloses({ was: closed, n: closes.n + (closed ? 1 : 0) })
   const weekNumber = Math.ceil((Date.now() - new Date(new Date().getFullYear(), 0, 1).getTime()) / 604_800_000)
   return (
     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: isMobile ? 'center' : 'flex-end', justifyContent: 'space-between', gap: isMobile ? '8px 20px' : 20 }}>
@@ -262,17 +287,22 @@ function SweepHeader({ domainsSwept, domainsTotal, allSwept, closed, isMobile }:
         .motion-on .kf-ink { animation: kfInkBleed 480ms var(--ease-out) both; }
       `}</style>
       <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 11 : 14 }}>
-        <img src={`${A}/fern/${fern}.png`} alt="" style={{ height: isMobile ? 38 : 54, filter: 'var(--shadow-drop-sm)' }} />
+        {/* R9: the frond cross-fades as it unfurls, and blooms once when the week closes */}
+        <span style={{ position: 'relative', display: 'inline-flex', flex: 'none' }}>
+          {motion && closes.n > 0 && closed && <span key={closes.n} className="kf-bloom kf-bloom-once" data-week-bloom style={{ inset: -12 }} />}
+          <StageImg src={`${A}/fern/${fern}.png`} alt="" style={{ height: isMobile ? 38 : 54, filter: 'var(--shadow-drop-sm)' }} />
+        </span>
         <div>
           <FieldLabel>Weekly Review · week {weekNumber}</FieldLabel>
           <h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>The sweep</h1>
         </div>
       </div>
-      {!isMobile && motion && allSwept && (
-        <svg viewBox="0 0 260 96" style={{ width: 130, height: 48, overflow: 'visible' }}>
-          <path d="M6,74 C36,70 48,40 76,44 C104,48 112,66 138,60 C164,54 172,26 200,30 C222,33 236,20 254,16" fill="none" stroke="var(--acc-moss)" strokeWidth="1.5" strokeDasharray="220" style={{ animation: 'weekLine 2.2s ease-in-out' }} />
+      {motion && allSwept && (
+        <svg data-flourish={drawNow ? 'draw' : 'still'} viewBox="0 0 260 96" style={{ width: isMobile ? 104 : 130, height: isMobile ? 38 : 48, overflow: 'visible' }}>
+          <path d="M6,74 C36,70 48,40 76,44 C104,48 112,66 138,60 C164,54 172,26 200,30 C222,33 236,20 254,16" fill="none" stroke="var(--acc-moss)" strokeWidth="1.5" strokeDasharray="220" style={drawNow ? { animation: 'weekLine 2.2s ease-in-out' } : undefined} />
+          {/* R9: a dot every 0.5s, so the last lands with the line (it popped at 3.6s at 0.9s apart) */}
           {WEEK_DOTS.map(([cx, cy, fill], i) => (
-            <circle key={i} cx={cx} cy={cy} r="3.5" fill={fill} style={{ transformOrigin: `${cx}px ${cy}px`, animation: `weekDot 200ms ease-out ${i * 0.9}s both` }} />
+            <circle key={i} cx={cx} cy={cy} r="3.5" fill={fill} style={{ transformOrigin: `${cx}px ${cy}px`, animation: drawNow ? `weekDot 200ms ease-out ${i * 0.5}s both` : undefined }} />
           ))}
         </svg>
       )}
@@ -479,7 +509,8 @@ function DomainCard({
             Swept{time ? ` ${time}` : ''} {reopened ? '▴' : '▾'}
           </span>
         </button>
-        {reopened && (
+        {/* T8: re-opening a swept domain eases its sweep list open (and folds it back) */}
+        <Collapse open={reopened}>
           <div style={{ padding: isMobile ? '0 14px 14px' : '0 18px 16px' }}>
             {sweepList()}
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 10 }}>
@@ -488,7 +519,7 @@ function DomainCard({
               </Button>
             </div>
           </div>
-        )}
+        </Collapse>
       </div>
     )
   }

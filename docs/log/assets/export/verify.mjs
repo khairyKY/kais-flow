@@ -86,7 +86,7 @@ const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google
 const desktop = { viewport: { width: 1280, height: 800 }, userAgent: WINDOWS_UA }
 const phone = { viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true, userAgent: ANDROID_UA }
 
-/** A fresh device on /settings. `shell`: 'tauri' | 'android' (fake bridge answering Filesystem + Share). */
+/** A fresh device on /settings/data. `shell`: 'tauri' | 'android' (fake bridge answering Filesystem + Share). */
 async function open(o = {}) {
   const ctx = await browser.newContext({ ...(o.view ?? desktop), deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', acceptDownloads: true })
   await ctx.addInitScript(([t, sess, uid, shell, shareCancels]) => {
@@ -134,7 +134,7 @@ async function open(o = {}) {
   const page = await ctx.newPage()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
-  await page.goto(`${BASE}/settings`, { waitUntil: 'networkidle' })
+  await page.goto(`${BASE}/settings/data`, { waitUntil: 'networkidle' }) // settings-build: Your data is its own page
   await sleep(1500)
   return { ctx, page, errors, asked }
 }

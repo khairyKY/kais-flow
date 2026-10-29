@@ -22,15 +22,16 @@ import '../tasks/taskSheet.css'
 import { TaskPicker } from '../focus/TaskPicker'
 import { useProjects } from '../projects/api'
 import { Segmented } from '../rituals/RitualChrome'
-import { completeTaskWithUndo, createTask, setRecurrence, toggleTop3, uncompleteTask, useTasks } from '../tasks/api'
+import { createTask, setRecurrence, toggleTop3, uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
-import { createEvent, deleteEventWithUndo, deleteSeriesWithUndo, linkTaskWithUndo, moveToDayWithUndo, retimeEventWithUndo, scheduleTask, setEventRemindWithUndo, setEventRepeat, updateEvent, type BlockRef } from './api'
-import { duplicateBlockWithUndo } from './duplicate'
-import { EVENT_REMIND, blockMenuSpec, isSynced, isUntitled, type BlockMenuKey } from './blockMenuSpec'
+import { createEvent, deleteEventWithUndo, linkTaskWithUndo, scheduleTask, setEventRepeat, type BlockRef } from './api'
+import { EVENT_REMIND, aiPrompts, blockMenuSpec, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
+import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock } from './scoped'
+import { askChat, copyBlockLink } from './blockActions'
 import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
-import { ColorDots } from './formFields'
+import { SwatchTray } from './formFields'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { linkRef } from '../../lib/links'
 import { clockText } from '../../lib/clock'
@@ -98,7 +99,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', unschedule: 'plus', delete: 'delete', google: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info',
 }
 
 /** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
@@ -316,6 +317,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
           day={day}
           value={fromMin(notPast(day, start))}
           duration={dur}
+          lengthChips={false} // queue 15: the sheet's own chips are the length; a typed range still sets it
           title={name || undefined}
           onDone={(hhmm, d) => {
             setStart(toMin(hhmm))
@@ -334,8 +336,13 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
  * Done / leaving it). Kai 2026-10-12: date, length, project, repeat, colour, task link and More here
  * too, so the phone does all the desktop does. Delete / Discard sits in the footer; a repeat asks
  * This event / All events. */
-export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, onClose }: {
+export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, onClose, mode = 'details', onMode }: {
   event: CalendarEvent
+  /** cal-clicks: a tap opens the details; a long-press or the details' ⋯ opens menu B (the tray, Duplicate,
+   * Work with AI ›, Copy link, Delete). */
+  mode?: BlockMenuMode
+  /** The details' ⋯ (→ menu B) and menu B's Details (→ the details). */
+  onMode?: (mode: BlockMenuMode) => void
   look: { fill: string; ink: string }
   slotRect: SlotRect
   pending: boolean
@@ -348,7 +355,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const openTask = useOpenTask()
-  const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'delete'>(null)
+  const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'ai'>(null)
   const [linkAt, setLinkAt] = useState<{ x: number; y: number } | null>(null)
   const [untitled] = useState(() => isUntitled(event))
   const [title, setTitle] = useState(untitled ? '' : event.title)
@@ -357,8 +364,14 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const rename = () => {
     const name = title.trim()
     if (!name || name === event.title) return setTitle(untitled && !name ? '' : event.title)
-    updateEvent(event, { title: name })
-    saved()
+    // cal-clicks: a repeat asks This / Following / All; cancelled, the title goes back.
+    void editEvent(event, { title: name }, `Renamed · ${name}`).then((ref) => {
+      if (ref === undefined) setTitle(event.title)
+      else {
+        if (ref) onRebind?.(ref)
+        saved()
+      }
+    })
   }
   // Delete / Unschedule / Open task: the sheet leaves first, then the block goes and the Undo toast
   // lands on the page (or the task opens over it).
@@ -377,7 +390,8 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const len = span.end - span.start
   const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
   const project = event.project_id ? projects.find((p) => p.id === event.project_id) : undefined
-  const spec = blockMenuSpec(event, { task, projectName: project?.name })
+  const menu = mode === 'menu'
+  const spec = blockMenuSpec(event, { task, projectName: project?.name, mode })
   const del = spec.at(-1)!
   // A Google event (B1): read-only — its rows only say when and from which calendar; no footer.
   const synced = isSynced(event)
@@ -393,17 +407,21 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     complete: () => {
       if (!task) return
       if (task.status === 'done') uncompleteTask(task)
-      else completeTaskWithUndo(task)
+      else void completeBlockTask(task, event.id)
     },
     open: () => leave(() => event.task_id && openTask(event.task_id)),
-    duplicate: () => leave(() => duplicateBlockWithUndo(event, task)),
+    duplicate: () => leave(() => void duplicateBlock(event, task)),
+    ai: () => setPicker('ai'),
+    copylink: () => copyBlockLink(event),
+    details: () => onMode?.('details'),
     unschedule: () => leave(() => deleteEventWithUndo(event, 'Unscheduled')),
     link: (el) => {
       const r = el.getBoundingClientRect()
       setLinkAt({ x: r.left + 16, y: r.top })
     },
   }
-  const remove = del.sub ? () => setPicker('delete') : () => leave(() => deleteEventWithUndo(event, untitled ? 'Discarded' : 'Deleted'))
+  // cal-clicks: a repeat (or a repeating task's round) asks This / Following / All — the sheet leaves first.
+  const remove = () => leave(() => void deleteBlock(event, untitled ? 'Discarded' : 'Deleted'))
   const choice = (label: string, on: boolean, act: () => void) => ({ label, selected: on, onSelect: () => { if (!on) { act(); saved() } } })
   return (
     <>
@@ -444,32 +462,40 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                   />
                 </div>
                 <div className="pc-bs-meta" style={{ '--pc-ink': look.ink } as CSSProperties}>{meta}</div>
+                {/* cal-clicks: the details' ⋯ opens menu B in its place (a long-press on the block does too). */}
+                {!menu && onMode && (
+                  <button type="button" className="pc-bs-more" aria-label={`More for ${event.title}`} onClick={() => onMode('menu')}>
+                    <Icon name="dots" size={22} />
+                  </button>
+                )}
               </div>
-              {/* Kai 2026-10-12: the colour changes after creation — the desktop title dot's swatches,
-                  saved on tap, for every block (the grid draws a block's own colour first). */}
-              {!synced && <div className="pc-bs-colors">
-                <ColorDots
+              {/* Menu B (cal-blocks, Kai 2026-10-26): the desktop menu's tray under the title — None, palette C's 16
+                  swatches and "+ Custom", saved on tap, for every block (the grid draws a block's own colour first). */}
+              {menu && !synced && <div className="pc-bs-colors">
+                <SwatchTray
                   value={event.color ?? null}
-                  size={28}
+                  size={26}
+                  columns={10}
                   onChange={(c) => {
                     if (c === (event.color ?? null)) return
-                    updateEvent(event, { color: c })
+                    void editEvent(event, { color: c }, `Colour changed · ${event.title}`).then((ref) => {
+                      if (ref) onRebind?.(ref)
+                    })
                     saved()
                   }}
                 />
               </div>}
               {/* Kai 2026-10-21: the length in one tap, from the start — as the Time sheet's chips do. */}
-              {!synced && !event.all_day && (
+              {!menu && !synced && !event.all_day && (
                 <LengthChips
                   value={len}
                   style={{ minHeight: 0, padding: '4px 0 8px' }}
                   onPick={(m) => {
                     if (m === len) return
                     const to = { ...span, end: span.start + m }
-                    if (event.seriesId) {
-                      const ref = retimeEventWithUndo(event, span, to)
-                      if (ref) onRebind?.(ref)
-                    } else onMove(event, span, to, 'bottom')
+                    // A repeat (or a repeating task's round) asks which occurrences (cal-clicks).
+                    if (event.seriesId) void retimeBlock(event, span, to).then((ref) => ref && onRebind?.(ref))
+                    else onMove(event, span, to, 'bottom')
                     saved()
                   }}
                 />
@@ -484,7 +510,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                         <EmojiText text={e.caption.text} />
                       </div>
                     )}
-                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => !synced && run[e.key]?.(el)} />
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => (!synced || e.key === 'details' || e.key === 'ai' || e.key === 'copylink') && run[e.key]?.(el)} />
                   </Fragment>
                 ))}
               </div>
@@ -503,11 +529,10 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           quick
           onPick={(day) => {
             if (event.seriesId) {
-              // One occurrence leaves its series for another day: this sheet's block is gone.
-              moveToDayWithUndo(event, day)
-              return leave(() => {})
+              // A repeat asks which occurrences move (cal-clicks); the sheet leaves first.
+              return leave(() => void moveToDay(event, day))
             }
-            if (event.all_day) moveToDayWithUndo(event, day)
+            if (event.all_day) void moveToDay(event, day)
             else if (day !== span.day) onMove(event, span, { ...span, day }, 'move')
             saved()
           }}
@@ -519,16 +544,14 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           day={span.day}
           value={fromMin(span.start)}
           duration={len}
+          lengthChips={false} // queue 15: the sheet's length chips are its one length control
           title={event.title}
           onDone={(hhmm, d) => {
             const start = toMin(hhmm)
             const to = { day: span.day, start, end: start + (d ?? len) }
             if (to.start === span.start && to.end === span.end) return
-            // A repeat moves as a whole series (decision 2026-10-12); a one-off like a drag.
-            if (event.seriesId) {
-              const ref = retimeEventWithUndo(event, span, to)
-              if (ref) onRebind?.(ref)
-            }
+            // A repeat asks which occurrences (cal-clicks); a one-off moves like a drag.
+            if (event.seriesId) void retimeBlock(event, span, to).then((ref) => ref && onRebind?.(ref))
             else onMove(event, span, to, d ? 'bottom' : 'move')
             saved()
           }}
@@ -544,7 +567,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           meta={event.title}
           onSelect={(id) => {
             if (id === (event.project_id ?? null)) return
-            updateEvent(event, { project_id: id })
+            void editEvent(event, { project_id: id }, `Project changed · ${event.title}`).then((ref) => ref && onRebind?.(ref))
             saved()
           }}
           onClose={() => setPicker(null)}
@@ -571,7 +594,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           title="Remind"
           meta={event.title}
           onClose={() => setPicker(null)}
-          items={EVENT_REMIND.map((o) => choice(o.label, (event.remind_min ?? null) === o.min, () => setEventRemindWithUndo(event, o.min)))}
+          items={EVENT_REMIND.map((o) => choice(o.label, (event.remind_min ?? null) === o.min, () => void remindEvent(event, o.min, `${remindLabel(o.min)} · ${event.title}`).then((ref) => ref && onRebind?.(ref))))}
         />
       )}
       {picker === 'more' && (
@@ -580,22 +603,20 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           meta={event.title}
           onClose={() => setPicker(null)}
           items={[
-            choice('Event', event.type === 'event', () => updateEvent(event, { type: 'event' })),
-            choice('Time block', event.type === 'time_block', () => updateEvent(event, { type: 'time_block' })),
-            choice('Busy', event.busy, () => updateEvent(event, { busy: true })),
-            choice('Free', !event.busy, () => updateEvent(event, { busy: false })),
+            choice('Event', event.type === 'event', () => void editEvent(event, { type: 'event' }, `Event · ${event.title}`)),
+            choice('Time block', event.type === 'time_block', () => void editEvent(event, { type: 'time_block' }, `Time block · ${event.title}`)),
+            choice('Busy', event.busy, () => void editEvent(event, { busy: true }, `Busy · ${event.title}`)),
+            choice('Free', !event.busy, () => void editEvent(event, { busy: false }, `Free · ${event.title}`)),
           ]}
         />
       )}
-      {picker === 'delete' && (
+      {picker === 'ai' && (
+        // Menu B's Work with AI ›: the chat opens with a request about this block typed in (the sheet leaves first).
         <ActionSheet
-          title="Delete"
+          title="Work with AI"
           meta={event.title}
           onClose={() => setPicker(null)}
-          items={[
-            { label: 'This event', destructive: true, onSelect: () => leave(() => deleteEventWithUndo(event, 'Deleted')) },
-            { label: 'All events', destructive: true, onSelect: () => leave(() => deleteSeriesWithUndo(event)) },
-          ]}
+          items={aiPrompts(event, !!event.task_id).map((p) => ({ label: p.label, onSelect: () => leave(() => askChat(p.text)) }))}
         />
       )}
       {linkAt && (

@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useToastStore, visibleToasts, lifeLeft, TOAST_LIFE_MS, type Toast } from '../lib/toastStore'
 import { uiZoom } from '../lib/uiScale'
+import { reducedMotionNow } from '../lib/motion'
 
 // ── MK Undo Toast (DS-CHANGELOG §3). Inverted snackbar: min-h 48, 12 from the screen edges,
 // bottom = tab bar + 8 on a phone (bottom-centre 16 on desktop, as before), radius 12 (B: a row),
@@ -26,7 +27,18 @@ const CSS = `
     min-height: 48px; padding: 0 4px 0 16px; box-sizing: border-box; border-radius: var(--radius-input);
     background: var(--toast-bg); color: var(--toast-ink); box-shadow: var(--shadow-toast);
     animation: toastIn var(--dur-toast) var(--ease-standard) backwards; }
-  .kf-toast.is-leaving { animation: toastOut var(--dur-toast) var(--ease-standard) forwards; }
+  .kf-toast.is-leaving { animation: toastOut var(--dur-toast) var(--ease-standard) forwards; pointer-events: none; }
+  /* O9: a card keeps its buttons (and width) until it unmounts; the older card's dim eases; a leaving
+     card folds its slot (grid 1fr → 0fr, and its share of the gap) so the other slides instead of jumping. */
+  .kf-toast-slot { display: grid; grid-template-rows: 1fr; transition: opacity var(--dur-toast) var(--ease-standard), /* ds-ok: O9 a leaving toast folds its slot (0fr), so the other slides instead of jumping */
+    grid-template-rows var(--dur-toast) var(--ease-standard), margin var(--dur-toast) var(--ease-standard); }
+  .kf-toast-slot > * { min-height: 0; }
+  .kf-toast-slot.is-leaving { grid-template-rows: 0fr; margin-top: calc(-1 * var(--toast-gap)); }
+  .kf-toast-slot.is-leaving > * { overflow: hidden; }
+  /* …and on a phone a sideways swipe sends it off (M3 snackbar); vertical moves still scroll the page. */
+  .kf-toast { touch-action: pan-y; transition: transform var(--dur-toast) var(--ease-standard); }
+  .kf-toast.is-dragging { transition: none; }
+  .kf-toast.is-flung { transition: transform var(--dur-toast) var(--ease-emphasized-accel); }
   .kf-toast-msg { flex: 1; min-width: 0; padding: 14px 0; font-size: 14px; line-height: 20px; text-wrap: pretty;
     display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
   .kf-toast-act { flex: none; height: 48px; padding: 0 12px; border: none; background: none; cursor: pointer;
@@ -101,8 +113,24 @@ export function ToastHost() {
       window.clearTimeout(settled)
     }
   }, [count])
+  // O9 (stack slide): when a toast arrives or leaves, the others glide to their new slots (FLIP,
+  // 200ms ease-standard) instead of jumping one.
+  const hostRef = useRef<HTMLDivElement>(null)
+  const tops = useRef(new Map<string, number>())
+  const ids = shown.map((t) => t.id).join()
+  useLayoutEffect(() => {
+    const next = new Map<string, number>()
+    for (const el of hostRef.current?.querySelectorAll<HTMLElement>(':scope > [data-toast]') ?? []) {
+      const id = el.dataset.toast ?? ''
+      const top = el.getBoundingClientRect().top
+      const was = tops.current.get(id)
+      next.set(id, top)
+      if (was !== undefined && Math.abs(was - top) >= 1 && !reducedMotionNow()) el.animate([{ transform: `translateY(${was - top}px)` }, { transform: 'none' }], { duration: 200, easing: 'cubic-bezier(0.2, 0, 0, 1)' })
+    }
+    tops.current = next
+  }, [ids])
   return (
-    <div className="kf-toast-host" role="status" aria-live="polite" style={dock != null ? { top: 'auto', bottom: dock } : undefined}>
+    <div ref={hostRef} className="kf-toast-host" role="status" aria-live="polite" style={dock != null ? { top: 'auto', bottom: dock } : undefined}>
       <style>{CSS}</style>
       {shown.map((t, i) => (
         <ToastCard key={t.id} toast={t} older={i < shown.length - 1} />
@@ -117,6 +145,11 @@ function ToastCard({ toast, older }: { toast: Toast; older: boolean }) {
   const [focused, setFocused] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const left = useRef(TOAST_LIFE_MS)
+  // O9 swipe: the finger's sideways travel (layout px) while dragging; ±1 once flung off.
+  const swipe = useRef<number | null>(null)
+  const [dx, setDx] = useState(0)
+  const [dragging, setDragging] = useState(false)
+  const [flung, setFlung] = useState(0)
   const paused = hovered || focused
 
   // The 6s clock only runs while this card is on screen and untouched.
@@ -140,18 +173,46 @@ function ToastCard({ toast, older }: { toast: Toast; older: boolean }) {
     (a): a is { label: string; run: () => void } => !!a,
   )
 
+  const endSwipe = () => {
+    swipe.current = null
+    setDragging(false)
+    if (Math.abs(dx) > 60) {
+      setFlung(Math.sign(dx))
+      setLeaving(true)
+    } else setDx(0)
+  }
+
   return (
-    <div style={{ opacity: older ? 0.92 : 1 }}>
+    <div data-toast={toast.id} className={`kf-toast-slot${leaving ? ' is-leaving' : ''}`} style={{ opacity: older ? 0.92 : 1 }}>
       <div
-        className={`kf-toast${leaving ? ' is-leaving' : ''}`}
+        className={`kf-toast${leaving ? ' is-leaving' : ''}${dragging ? ' is-dragging' : ''}${flung ? ' is-flung' : ''}`}
+        style={dx || flung ? { transform: flung ? `translateX(${flung * 110}%)` : `translateX(${dx}px)` } : undefined}
+        onPointerDown={(e) => {
+          if (e.pointerType === 'touch' && !leaving) swipe.current = e.clientX
+        }}
+        onPointerMove={(e) => {
+          if (swipe.current == null) return
+          const d = (e.clientX - swipe.current) / uiZoom()
+          if (!dragging && Math.abs(d) < 8) return
+          if (!dragging) {
+            e.currentTarget.setPointerCapture(e.pointerId)
+            setDragging(true)
+          }
+          setDx(d)
+        }}
+        onPointerUp={endSwipe}
+        onPointerCancel={() => {
+          swipe.current = null
+          setDragging(false)
+          setDx(0)
+        }}
         onPointerEnter={() => setHovered(true)}
         onPointerLeave={() => setHovered(false)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
       >
         <span className="kf-toast-msg">{toast.message}</span>
-        {!leaving &&
-          actions.map((a) => (
+        {actions.map((a) => (
             <button
               key={a.label}
               type="button"

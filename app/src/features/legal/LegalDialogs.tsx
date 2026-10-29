@@ -1,11 +1,11 @@
-import { useId, useState, type ReactNode } from 'react'
+import { useEffect, useId, useState, type ReactNode } from 'react'
 import { Float } from '../../components/Float'
 import { Button } from '../../components/kit'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useSignOut } from '../auth/useSignOut'
 import { agreeToCurrent, deleteAccount, useOutdated } from './api'
-import { LegalLink, PRIVACY_URL, TERMS_URL } from './LegalLinks'
+import { ConsentBox, LegalLink, PRIVACY_URL, TERMS_URL } from './LegalLinks'
 import { LEGAL_SUMMARY, type LegalDoc } from '../../../../supabase/functions/_shared/legal.ts'
 import './legal.css'
 
@@ -15,11 +15,11 @@ import './legal.css'
 
 const toast = (message: string) => useToastStore.getState().push({ message })
 
-function Sheet({ labelledBy, onScrim, children }: { labelledBy: string; onScrim?: () => void; children: ReactNode }) {
+function Sheet({ labelledBy, onScrim, wide, children }: { labelledBy: string; onScrim?: () => void; wide?: boolean; children: ReactNode }) {
   return (
     <Float>
       <div className="lg-scrim kf-overlay-scrim" onClick={onScrim}>
-        <div className="lg-card kf-overlay-card" role="dialog" aria-modal="true" aria-labelledby={labelledBy} onClick={(e) => e.stopPropagation()}>
+        <div className={`lg-card kf-overlay-card${wide ? ' is-wide' : ''}`} role="dialog" aria-modal="true" aria-labelledby={labelledBy} onClick={(e) => e.stopPropagation()}>
           {children}
         </div>
       </div>
@@ -104,6 +104,41 @@ export function DeleteAccountDialog({ onClose }: { onClose: () => void }) {
   )
 }
 
+/** Settings › App & updates › Open-source licences: public/licenses.txt (scripts/licenses.mjs, made at
+ * build time), shown as it is. Fetched when opened — it's a few hundred KB and not in the PWA precache. */
+export function LicensesDialog({ onClose }: { onClose: () => void }) {
+  const titleId = useId()
+  const [text, setText] = useState<string | null>(null)
+  const [failed, setFailed] = useState(false)
+  useEscapeStack(true, onClose)
+  useEffect(() => {
+    fetch(`${import.meta.env.BASE_URL}licenses.txt`)
+      .then((r) => (r.ok ? r.text() : Promise.reject(new Error(String(r.status)))))
+      .then(setText, () => setFailed(true))
+  }, [])
+  return (
+    <Sheet labelledBy={titleId} onScrim={onClose} wide>
+      <h2 className="lg-title" id={titleId}>
+        Open-source licences
+      </h2>
+      {failed ? (
+        <p className="lg-error" role="alert">
+          {navigator.onLine ? 'Couldn’t load the licences — try again in a minute.' : 'No connection — the licences load when you’re online.'}
+        </p>
+      ) : (
+        <pre className="lg-pre" aria-busy={text === null}>
+          {text ?? 'Loading…'}
+        </pre>
+      )}
+      <div className="lg-actions">
+        <Button variant="secondary" autoFocus onClick={onClose}>
+          Close
+        </Button>
+      </div>
+    </Sheet>
+  )
+}
+
 const NAMES: Record<LegalDoc, string> = { terms: 'Terms of Use', privacy: 'Privacy Policy' }
 
 /** Shown once a signed-in person's latest agreement is older than the current version (or there is none —
@@ -112,6 +147,8 @@ export function TermsNoticeHost() {
   const docs = useOutdated()
   const titleId = useId()
   const [deleting, setDeleting] = useState(false)
+  // One box per outdated document, the same two as sign-up; I agree waits for every one.
+  const [ticked, setTicked] = useState<ReadonlySet<LegalDoc>>(() => new Set())
   const signOutFlow = useSignOut()
   // Esc doesn't close it (nor whatever is under it): it waits for an answer.
   useEscapeStack(!!docs?.length && !deleting, () => undefined)
@@ -133,9 +170,24 @@ export function TermsNoticeHost() {
           <LegalLink href={TERMS_URL}>Read the Terms of Use</LegalLink>
           <LegalLink href={PRIVACY_URL}>Read the Privacy Policy</LegalLink>
         </div>
+        {docs.map((doc) => (
+          <ConsentBox
+            key={doc}
+            doc={doc}
+            className="lg-consent"
+            checked={ticked.has(doc)}
+            onToggle={() =>
+              setTicked((t) => {
+                const next = new Set(t)
+                if (!next.delete(doc)) next.add(doc)
+                return next
+              })
+            }
+          />
+        ))}
         <div className="lg-actions">
           {/* ds-ok: the one answer that closes it, so it's the one focused */}
-          <Button autoFocus onClick={() => agreeToCurrent(docs)}>
+          <Button autoFocus disabled={!docs.every((d) => ticked.has(d))} onClick={() => agreeToCurrent(docs)}>
             I agree
           </Button>
         </div>
