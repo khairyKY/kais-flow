@@ -29,6 +29,7 @@ import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_sha
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { useMcpKey, createMcpKey, deleteMcpKey, setMcpPersonal, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
+import { useWidgetLinks, createWidgetLink, setWidgetTicking, revokeWidgetLink, type WidgetLinkRow } from './widgetLinks'
 import { useScansToday } from '../paper/api'
 import { DAILY_PAGES, scansLeft } from '../paper/paperMath'
 import { usePaperStore } from '../paper/paperStore'
@@ -1046,7 +1047,77 @@ function DeviceSections() {
           </Row>
         </SCard>
       )}
+      <WidgetLinksCard />
     </>
+  )
+}
+
+// Windows desktop (features/settings/widgetLinks.ts, function `widget`, migration 0090): Widget links for
+// Rainmeter skins — the AI key's shown-once flow, one link per computer, each revoked on its own. Shown
+// everywhere: the links are the account's, not this device's.
+function WidgetLinksCard() {
+  const { data: links = [] } = useWidgetLinks()
+  const [label, setLabel] = useState('Desktop')
+  const [canTick, setCanTick] = useState(false)
+  const [shown, setShown] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [revoking, setRevoking] = useState<WidgetLinkRow | null>(null)
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
+    setErr(null)
+    try { await fn() } catch { setErr('That didn’t save — check the connection and try again.') } finally { setBusy(false) }
+  }
+  const copy = (text: string) =>
+    void navigator.clipboard.writeText(text).then(
+      () => useToastStore.getState().push({ message: 'Link copied' }),
+      () => setErr('Couldn’t reach the clipboard — select the link and copy it by hand.'),
+    )
+  return (
+    <SCard id="settings-WindowsDesktop" padded title="Windows desktop" sub="A Widget link lets Rainmeter widgets show today’s plan on your desktop — paste it into a Kai’s Flow skin. Anyone with the link can see today, so revoke one you no longer use.">
+      {links.map((l, n) => (
+        <Row key={l.id} label={l.label} help={`Made ${day(l.created_at)} · ${l.last_used_at ? `last used ${day(l.last_used_at)}` : 'not used yet'} · ${l.can_tick ? 'can tick tasks off' : 'read only'}`} keys="widget link rainmeter desktop" style={n === 0 ? { borderTop: 'none' } : undefined}>
+          <Toggle on={l.can_tick} label={`Allow ticking with ${l.label}`} disabled={busy} onToggle={() => void run(() => setWidgetTicking(l.id, !l.can_tick))} />
+          <Button variant="ghost" disabled={busy} onClick={() => setRevoking(l)}>Revoke</Button>
+        </Row>
+      ))}
+      {!links.length && !shown && <div className="st-help">No Widget links yet</div>}
+      {shown && (
+        <>
+          <div style={{ fontSize: 13, color: 'var(--ink-body)', marginTop: 8 }}>Your Widget link — copy it now, it won’t be shown again:</div>
+          <div className="st-mono-box" style={{ color: 'var(--ink-body)', wordBreak: 'break-all' }}>{shown}</div>
+          <div className="st-btns" style={{ marginTop: 8 }}>
+            <Button variant="secondary" onClick={() => copy(shown)}>Copy link</Button>
+          </div>
+        </>
+      )}
+      <Row label="New link" help="Name it after the computer it’s for" keys="widget link rainmeter desktop create">
+        <input className="st-field" value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} aria-label="Widget link name" />
+      </Row>
+      <Row label="Allow ticking" help={canTick ? 'The widgets can also tick tasks off' : 'Read only: the widgets can look, never change anything'} keys="widget tick complete">
+        <Toggle on={canTick} label="Allow ticking for the new link" onToggle={() => setCanTick(!canTick)} />
+      </Row>
+      <div className="st-btns">
+        <Button variant="secondary" disabled={busy || !label.trim()} onClick={() => void run(async () => setShown(await createWidgetLink(label, canTick)))}>Create link</Button>
+      </div>
+      {/* Revoking can't be undone (only the hash is stored) — a short confirm, as Turn off for the AI key. */}
+      {revoking && (
+        // ds-ok: revoking a link can't be undone (only its hash is stored), so it asks first
+        <ConfirmCard
+          title={`Revoke “${revoking.label}”?`}
+          body="Widgets using it stop updating. A new link can be made any time, but this one can't come back."
+          confirmLabel="Revoke"
+          onCancel={() => setRevoking(null)}
+          onConfirm={() => {
+            const l = revoking
+            setRevoking(null)
+            void run(async () => { await revokeWidgetLink(l.id); setShown(null) })
+          }}
+        />
+      )}
+      {err && <div className="st-help" style={{ color: 'var(--acc-terra-ink)', marginTop: 8 }}>{err}</div>}
+    </SCard>
   )
 }
 
