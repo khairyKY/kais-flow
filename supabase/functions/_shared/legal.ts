@@ -3,14 +3,15 @@
 // for its "updated" lines). How to bump them: docs/LEGAL.md.
 // A version is the day the text changed, YYYY-MM-DD, so versions compare as plain text.
 
-export const TERMS_VERSION = '2026-10-25'
-export const PRIVACY_VERSION = '2026-10-25'
+export const TERMS_VERSION = '2026-10-29'
+export const PRIVACY_VERSION = '2026-10-29'
 
 /** What changed, 2–4 short lines: the "We've updated our terms" notice shows them. Rewrite on every bump. */
 export const LEGAL_SUMMARY: readonly string[] = [
-  'You can now export everything and delete your account yourself, in Settings → Your data.',
-  'New accounts agree to these terms when they sign up, and we note which version and when.',
-  'The privacy policy now names every service that sees a little of your data: push services, GitHub and the emails we send.',
+  'Both now say who runs Kai’s Flow (Kai, in Egypt), that it’s for people 16 and over, and that Egyptian law applies.',
+  'Your data is kept in the EU and partly handled in the US. Agreeing includes your consent to that, and to keeping sensitive things you choose to write.',
+  'Chat can send the AI (Groq, US) lines from your journal and notes about people that match your question. Account emails go through Gmail.',
+  'Also new: how long each thing stays, your rights, how you may use the app, and the limits of our responsibility.',
 ]
 
 export type LegalDoc = 'terms' | 'privacy'

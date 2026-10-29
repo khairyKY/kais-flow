@@ -1134,7 +1134,7 @@ function LegalCard() {
       </Row>
       <Row
         label="What we keep, and where"
-        help="Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export it under Your data, delete it under Account"
+        help="Your account and what you write: Supabase, in the EU · the AI: Groq (US and elsewhere), set to keep nothing · no ads, no tracking · export it under Your data, delete it under Account"
         keys="privacy data storage"
       />
       {/* Shows in two places: the same switches as Integrations › AI assistants. */}
