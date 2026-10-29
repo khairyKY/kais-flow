@@ -14,7 +14,8 @@
 // while nothing is planned (and the Now card once planned); completing a task in both views; no label chips on the
 // rows; the over warning (option D) on the Top 3 header — a normal day, an over day, the tap (how it's counted,
 // Tomorrow on each pick), hidden while nothing is planned, and its one line at 360 / 390 / 430; no sideways page
-// scroll; no page errors. Shots: B and Day at 3 widths, day and night; Plan; Over; Settings.
+// scroll; no page errors; v161: the change animates the same both ways (the Settings thumb, and Today's views fading
+// out / in, live or on coming back), and not with Effects off or reduced motion. Shots: B and Day at 3 widths, day and night; Plan; Over; Settings.
 import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -254,6 +255,85 @@ check('B at 390: at least 7 tasks fully visible', counts['B-390'] >= 7, `${count
   const back = await page.evaluate(() => ({ now: !!document.querySelector('section[aria-label="Now"]'), strip: !!document.querySelector('.tp-dbar'), key: localStorage.getItem('kf-phone-today-view') }))
   check('…the row reads Day, and Now takes Today back to the Now card', r1 === 'Day' && back.now && !back.strip && back.key === 'now', JSON.stringify({ r1, ...back }))
   check('the setting: no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+// ── v161 (Kai on v1.6.0: "only animates going from Now to Day, not from Day to Now"): the change plays both ways ──
+// In-app navigation (as on the phone), so Today's memory of the view it last drew survives the trip to Settings.
+{
+  const { ctx, page, errors } = await open({ w: 390, h: 844 })
+  const go = async (to, ready) => {
+    await page.evaluate((u) => { history.pushState({}, '', u); dispatchEvent(new PopStateEvent('popstate')) }, to)
+    await page.waitForSelector(ready, { timeout: 10000 })
+  }
+  const row = page.locator('[data-st-key="Phone home shows"]')
+  /** Click an option and sample the thumb's left every ~25ms (in-page, real time). */
+  const thumbRun = (label) => row.evaluate(async (e, l) => {
+    const btn = [...e.querySelectorAll('.kf-seg-btn')].find((b) => b.textContent === l)
+    const t = () => e.querySelector('.kf-seg-thumb')
+    const from = t().getBoundingClientRect().left
+    btn.click()
+    const xs = []
+    for (let i = 0; i < 14; i++) { await new Promise((r) => requestAnimationFrame(() => setTimeout(r, 25))); xs.push(Math.round(t().getBoundingClientRect().left)) }
+    const to = btn.getBoundingClientRect().left
+    return { from: Math.round(from), to: Math.round(to), xs, mid: xs.filter((x) => Math.abs(x - from) > 2 && Math.abs(x - to) > 2).length }
+  }, label)
+  /** Right after Today draws: the outgoing and incoming views and their animations. */
+  const swapNow = () => page.evaluate(() => {
+    const out = document.querySelector('.tp-swap-out')
+    const inn = document.querySelector('.tp-swap-in')
+    const names = (el) => (el ? el.getAnimations().map((a) => a.animationName) : [])
+    return { to: document.querySelector('.tp-swap')?.dataset.to ?? null, out: out ? (out.querySelector('.tp-dbar') ? 'day' : out.querySelector('section[aria-label="Now"]') ? 'now' : '?') : null, outAnim: names(out), inAnim: names(inn), outInert: !!out?.inert }
+  })
+  const settled = () => page.evaluate(() => ({ out: !!document.querySelector('.tp-swap-out'), inCls: !!document.querySelector('.tp-swap-in'), now: document.querySelectorAll('section[aria-label="Now"]').length, day: document.querySelectorAll('.tp-dbar').length }))
+
+  await go('/settings/appearance', '[data-st-key="Phone home shows"] .kf-seg-thumb')
+  await sleep(400)
+  const toDay = await thumbRun('Day')
+  check('Settings thumb slides Now → Day (in-between positions)', toDay.mid >= 2 && toDay.xs.at(-1) === toDay.to, JSON.stringify(toDay))
+  await go('/today', '.tp-home')
+  const s1 = await swapNow()
+  check('back on Today: Now fades out as Day fades in (tpSwapOut / tpSwapIn, the old view inert)', s1.to === 'day' && s1.out === 'now' && s1.outAnim.includes('tpSwapOut') && s1.inAnim.includes('tpSwapIn') && s1.outInert, JSON.stringify(s1))
+  await sleep(700)
+  const e1 = await settled()
+  check('…then only the Day bar is left', !e1.out && !e1.inCls && e1.day === 1 && e1.now === 0, JSON.stringify(e1))
+
+  await go('/settings/appearance', '[data-st-key="Phone home shows"] .kf-seg-thumb')
+  await sleep(400)
+  const toNow = await thumbRun('Now')
+  check('Settings thumb slides Day → Now too (in-between positions)', toNow.mid >= 2 && toNow.xs.at(-1) === toNow.to, JSON.stringify(toNow))
+  await go('/today', '.tp-home')
+  const s2 = await swapNow()
+  check('back on Today: Day fades out as Now fades in — the same animation the other way', s2.to === 'now' && s2.out === 'day' && s2.outAnim.includes('tpSwapOut') && s2.inAnim.includes('tpSwapIn'), JSON.stringify(s2))
+  await sleep(700)
+  const e2 = await settled()
+  check('…then only the Now card is left', !e2.out && e2.now === 1 && e2.day === 0, JSON.stringify(e2))
+
+  // A change while Today is drawn (another tab, or a Settings that keeps Today underneath) plays the same.
+  const live = async (v) => {
+    await page.evaluate((x) => { localStorage.setItem('kf-phone-today-view', x); dispatchEvent(new Event('kf-phone-view-change')) }, v)
+    await sleep(30)
+    return swapNow()
+  }
+  const l1 = await live('day')
+  check('a change under a drawn Today: Now → Day plays', l1.to === 'day' && l1.out === 'now' && l1.inAnim.includes('tpSwapIn'), JSON.stringify(l1))
+  await sleep(700)
+  const l2 = await live('now')
+  check('…and Day → Now plays', l2.to === 'now' && l2.out === 'day' && l2.inAnim.includes('tpSwapIn'), JSON.stringify(l2))
+  await sleep(700)
+
+  // Effects off, then reduced motion: the new view at once, nothing fading out.
+  await page.evaluate(() => { localStorage.setItem('kf_effects', '0'); dispatchEvent(new Event('kf-effects-change')) })
+  await sleep(100)
+  const o1 = await live('day')
+  const o1e = await settled()
+  check('Effects off: no fade, the Day bar at once', !o1.out && o1.inAnim.length === 0 && o1e.day === 1 && o1e.now === 0, JSON.stringify({ o1, o1e }))
+  await page.evaluate(() => { localStorage.setItem('kf_effects', '1'); dispatchEvent(new Event('kf-effects-change')) })
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await sleep(100)
+  const r1 = await live('now')
+  const r1e = await settled()
+  check('reduced motion: no fade, the Now card at once', !r1.out && r1.inAnim.length === 0 && r1e.now === 1 && r1e.day === 0, JSON.stringify({ r1, r1e }))
+  check('the change both ways: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
 // Desktop has no such row (it sets the phone home only).

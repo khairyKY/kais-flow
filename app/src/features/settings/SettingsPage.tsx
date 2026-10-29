@@ -45,7 +45,9 @@ import { QUIET_FROM, QUIET_TO } from '../../../../supabase/functions/notify/copy
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { widgetsAvailable } from '../widgets/native'
 import { useHideTitles } from '../widgets/bridge'
-import { readLock, writeLock } from '../lockscreen/native'
+import { openLockSettings, readLock, writeLock } from '../lockscreen/native'
+import { hasStatus, lockStatus } from '../lockscreen/status'
+import { timeText } from '../calendar/eventTime'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
@@ -976,6 +978,12 @@ function NotificationsCard() {
  * per device, so each row says This device. Hidden on an APK from before it (no window.KaisFlowLock). */
 function LockScreenRows() {
   const [lock, setLock] = useState(readLock)
+  // v161: back from a system screen (Open settings), the status says what changed.
+  useEffect(() => {
+    const on = () => document.visibilityState === 'visible' && setLock(readLock())
+    document.addEventListener('visibilitychange', on)
+    return () => document.removeEventListener('visibilitychange', on)
+  }, [])
   if (!lock) return null
   const set = (nowBar: boolean, dayStrip: boolean) => {
     writeLock(nowBar, dayStrip)
@@ -1000,11 +1008,35 @@ function LockScreenRows() {
         under={
           <ol data-kf-lockstar-steps className="st-note" style={{ margin: 0, padding: '0 0 0 18px', listStyle: 'decimal' }}>
             <li>Install Good Lock from the Galaxy Store, then LockStar inside it.</li>
-            <li>In LockStar, turn it on and tap the lock screen to edit it.</li>
+            <li>In LockStar, turn it on and tap the lock screen to edit it (on One UI 7 and later: long-press the lock screen, then LockStar).</li>
             <li>Tap Widgets › Kai’s Flow › Top 3 · lock screen, and place it under the clock.</li>
           </ol>
         }
       />
+      {hasStatus(lock) && (
+        <Row
+          device
+          label="Lock screen status"
+          help="Whether each is on your lock screen now, and if not, what’s in the way"
+          keys="lock screen status now bar day strip widget live notifications not working samsung"
+          under={
+            <ul data-kf-lock-status className="st-note" style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 'var(--sp-2)' }}>
+              {lockStatus(lock, (ms) => timeText(new Date(ms))).map((l) => (
+                <li key={l.id} data-lock={l.id} data-ok={l.ok} style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
+                  <span style={{ flex: '1 1 200px' }}>
+                    <b>{l.name}:</b> {l.ok ? 'Active. ' : ''}{l.text}
+                  </span>
+                  {l.open && (
+                    <Button variant="secondary" onClick={() => openLockSettings(l.open!)}>
+                      Open settings
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          }
+        />
+      )}
     </>
   )
 }

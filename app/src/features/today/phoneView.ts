@@ -17,12 +17,16 @@ export function readPhoneView(): PhoneView {
   }
 }
 
+/** Fired on this page when the view is written (a drawn Today follows it: ./PhoneHome usePhoneView). */
+export const PHONE_VIEW_EVENT = 'kf-phone-view-change'
+
 export function writePhoneView(v: PhoneView): void {
   try {
     localStorage.setItem(PHONE_VIEW_KEY, v)
   } catch {
     /* private mode: this visit only */
   }
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event(PHONE_VIEW_EVENT))
 }
 
 const ms = (iso: string) => Date.parse(iso)

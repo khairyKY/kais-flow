@@ -104,6 +104,61 @@
    "detail": ""
   },
   {
+   "name": "Settings thumb slides Now → Day (in-between positions)",
+   "ok": true,
+   "detail": "{\"from\":34,\"to\":196,\"xs\":[132,166,176,188,194,196,196,196,196,196,196,196,196,196],\"mid\":4}"
+  },
+  {
+   "name": "back on Today: Now fades out as Day fades in (tpSwapOut / tpSwapIn, the old view inert)",
+   "ok": true,
+   "detail": "{\"to\":\"day\",\"out\":\"now\",\"outAnim\":[\"tpSwapOut\"],\"inAnim\":[\"tpSwapIn\"],\"outInert\":true}"
+  },
+  {
+   "name": "…then only the Day bar is left",
+   "ok": true,
+   "detail": "{\"out\":false,\"inCls\":false,\"now\":0,\"day\":1}"
+  },
+  {
+   "name": "Settings thumb slides Day → Now too (in-between positions)",
+   "ok": true,
+   "detail": "{\"from\":196,\"to\":34,\"xs\":[131,78,54,42,36,34,34,34,34,34,34,34,34,34],\"mid\":4}"
+  },
+  {
+   "name": "back on Today: Day fades out as Now fades in — the same animation the other way",
+   "ok": true,
+   "detail": "{\"to\":\"now\",\"out\":\"day\",\"outAnim\":[\"tpSwapOut\"],\"inAnim\":[\"tpSwapIn\"],\"outInert\":true}"
+  },
+  {
+   "name": "…then only the Now card is left",
+   "ok": true,
+   "detail": "{\"out\":false,\"inCls\":false,\"now\":1,\"day\":0}"
+  },
+  {
+   "name": "a change under a drawn Today: Now → Day plays",
+   "ok": true,
+   "detail": "{\"to\":\"day\",\"out\":\"now\",\"outAnim\":[\"tpSwapOut\"],\"inAnim\":[\"tpSwapIn\"],\"outInert\":true}"
+  },
+  {
+   "name": "…and Day → Now plays",
+   "ok": true,
+   "detail": "{\"to\":\"now\",\"out\":\"day\",\"outAnim\":[\"tpSwapOut\"],\"inAnim\":[\"tpSwapIn\"],\"outInert\":true}"
+  },
+  {
+   "name": "Effects off: no fade, the Day bar at once",
+   "ok": true,
+   "detail": "{\"o1\":{\"to\":\"day\",\"out\":null,\"outAnim\":[],\"inAnim\":[],\"outInert\":false},\"o1e\":{\"out\":false,\"inCls\":false,\"now\":0,\"day\":1}}"
+  },
+  {
+   "name": "reduced motion: no fade, the Now card at once",
+   "ok": true,
+   "detail": "{\"r1\":{\"to\":\"now\",\"out\":null,\"outAnim\":[],\"inAnim\":[],\"outInert\":false},\"r1e\":{\"out\":false,\"inCls\":false,\"now\":1,\"day\":0}}"
+  },
+  {
+   "name": "the change both ways: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
    "name": "no \"Phone home shows\" row at 1280",
    "ok": true,
    "detail": ""

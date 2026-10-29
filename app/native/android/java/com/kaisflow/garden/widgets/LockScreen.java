@@ -9,7 +9,10 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Build;
+import android.provider.Settings;
+import android.service.notification.StatusBarNotification;
 import android.util.Log;
 import android.webkit.JavascriptInterface;
 import android.widget.RemoteViews;
@@ -41,9 +44,15 @@ public final class LockScreen {
 
     private static final String TAG = "KfLock";
     private static final String PREFS = "kf_lock";
-    /** Silent, low: never a sound, never heads-up; above MIN so a Live Update may be promoted. No kf_ prefix:
-     *  the sound packs' channel clean-up (features/notifications/android.ts staleChannels) leaves it alone. */
-    static final String CHANNEL = "lockscreen";
+    /** v161: DEFAULT importance, with no sound, no vibration, and each post setSilent (it never alerts). v1.6.0's
+     *  channel was LOW, which Android counts as a "silent" notification: a lock screen set to hide silent
+     *  notifications (Pixel's "Hide silent conversations and notifications", Samsung's lock screen filter) hid
+     *  the Day strip. An app can't raise a channel it made, so this is a new id and the old one is deleted.
+     *  Above MIN, so a Live Update may still be promoted. No kf_ prefix: the sound packs' clean-up
+     *  (features/notifications/android.ts staleChannels) leaves it alone. */
+    static final String CHANNEL = "lock_screen";
+    /** v1.6.0's low "Lock screen" channel. */
+    private static final String OLD_CHANNEL = "lockscreen";
     private static final int ID_NOW_BAR = 7101;
     private static final int ID_STRIP = 7102;
     static final String REFRESH = "com.kaisflow.garden.lock.REFRESH";
@@ -97,15 +106,30 @@ public final class LockScreen {
     // ── redraw ──
 
     /** Everything on the lock screen, from the snapshot as it is now; then the alarm for the next change. */
+    /** Today as the lock screen sees it: the (masked) snapshot, its blocks in minutes, now. */
+    private static final class Day {
+        final Snap s;
+        final long now = System.currentTimeMillis();
+        final List<LockPlan.Block> blocks;
+        final int min;
+
+        Day(Context c) {
+            s = masked(c, Snap.load(c));
+            blocks = s == null || !s.signedIn() || s.newDay(now) ? new ArrayList<>() : blocks(c, s, now);
+            min = s == null ? 0 : s.minutes(now);
+        }
+    }
+
     @SuppressLint("MissingPermission") // areNotificationsEnabled() is checked; a revoke mid-way is caught
     static void refresh(Context c) {
         channel(c); // made up front, so Android's settings list it before the first block
         LockWidget.updateAll(c);
         NotificationManagerCompat nm = NotificationManagerCompat.from(c);
-        Snap s = masked(c, Snap.load(c));
-        long now = System.currentTimeMillis();
-        List<LockPlan.Block> blocks = s == null || !s.signedIn() || s.newDay(now) ? new ArrayList<>() : blocks(c, s, now);
-        int min = s == null ? 0 : s.minutes(now);
+        Day d = new Day(c);
+        Snap s = d.s;
+        List<LockPlan.Block> blocks = d.blocks;
+        long now = d.now;
+        int min = d.min;
         boolean show = LockPlan.showing(blocks, min) && nm.areNotificationsEnabled();
         try {
             if (show && nowBarOn(c)) nm.notify(ID_NOW_BAR, nowBar(c, blocks, min, now));
@@ -143,16 +167,19 @@ public final class LockScreen {
 
     private static void channel(Context c) {
         NotificationManager nm = c.getSystemService(NotificationManager.class);
-        if (nm == null || nm.getNotificationChannel(CHANNEL) != null) return;
-        NotificationChannel ch = new NotificationChannel(CHANNEL, "Lock screen", NotificationManager.IMPORTANCE_LOW);
-        ch.setDescription("The block that's on now (Now Bar) and the Day strip. Silent.");
+        if (nm == null) return;
+        if (nm.getNotificationChannel(OLD_CHANNEL) != null) nm.deleteNotificationChannel(OLD_CHANNEL);
+        if (nm.getNotificationChannel(CHANNEL) != null) return;
+        NotificationChannel ch = new NotificationChannel(CHANNEL, "Lock screen", NotificationManager.IMPORTANCE_DEFAULT);
+        ch.setDescription("The block that's on now (Now Bar) and the Day strip. Never makes a sound.");
         ch.setSound(null, null);
         ch.enableVibration(false);
+        ch.enableLights(false);
         ch.setShowBadge(false);
         nm.createNotificationChannel(ch);
     }
 
-    private static NotificationCompat.Builder base(Context c, List<LockPlan.Block> blocks, int min, long now) {
+    private static NotificationCompat.Builder base(Context c, List<LockPlan.Block> blocks, int min, long now, String group) {
         int target = LockPlan.target(blocks, min);
         NotificationCompat.Builder b = new NotificationCompat.Builder(c, CHANNEL)
             .setSmallIcon(R.drawable.ic_stat_kf)
@@ -161,6 +188,10 @@ public final class LockScreen {
             .setContentText(LockPlan.text(blocks, min))
             .setOngoing(true)
             .setOnlyAlertOnce(true)
+            // Never alerts (no sound, no buzz, no screen wake) on the default-importance channel. setSilent puts
+            // a post in a group whose summary alone may alert; each gets its own group, so the two don't stack.
+            .setSilent(true)
+            .setGroup(group)
             .setShowWhen(target >= 0)
             .setCategory(NotificationCompat.CATEGORY_EVENT)
             .setVisibility(NotificationCompat.VISIBILITY_PUBLIC) // names already follow the app's own switch
@@ -171,7 +202,7 @@ public final class LockScreen {
 
     /** B · the Now Bar. Android 16: a Live Update (ProgressStyle, promoted); before: an ordinary ongoing one. */
     private static android.app.Notification nowBar(Context c, List<LockPlan.Block> blocks, int min, long now) {
-        NotificationCompat.Builder b = base(c, blocks, min, now);
+        NotificationCompat.Builder b = base(c, blocks, min, now, "kf.lock.nowbar");
         int[] w = LockPlan.window(blocks);
         int pos = Math.max(0, Math.min(w[1] - w[0], min - w[0]));
         if (nowBarSupported()) {
@@ -196,7 +227,7 @@ public final class LockScreen {
         big.setTextViewText(R.id.kfl_title, LockPlan.title(blocks, min));
         big.setTextViewText(R.id.kfl_text, LockPlan.text(blocks, min));
         DayBar.draw(c, big, s, now, 300, false);
-        return base(c, blocks, min, now)
+        return base(c, blocks, min, now, "kf.lock.strip")
             .setUsesChronometer(true)
             .setChronometerCountDown(true)
             .setStyle(new NotificationCompat.DecoratedCustomViewStyle())
@@ -239,21 +270,86 @@ public final class LockScreen {
             refresh(getContext());
         }
 
-        /** {sdk, nowBarSupported, nowBar, dayStrip, names}. */
+        /** {sdk, nowBarSupported, nowBar, dayStrip, names} and (v161) what Settings → Lock screen status reads:
+         *  release, notifications, channel (its importance), promote (Live notifications allowed, 16+), lock /
+         *  lockSilent (the lock screen shows notifications / silent ones; null if the phone won't say), widget
+         *  (the Top 3 lock widget is placed), showing, showFrom (epoch ms it next shows today, 0 none), nowBarPosted /
+         *  stripPosted, promoted (the posted Now Bar is a Live Update). The words are the page's (lockscreen/status.ts). */
         @JavascriptInterface
         public String state() {
             Context c = getContext();
             try {
-                return new JSONObject()
+                channel(c);
+                NotificationManager nm = c.getSystemService(NotificationManager.class);
+                NotificationChannel ch = nm == null ? null : nm.getNotificationChannel(CHANNEL);
+                Day d = new Day(c);
+                int from = LockPlan.showFrom(d.blocks, d.min);
+                JSONObject o = new JSONObject()
                     .put("sdk", Build.VERSION.SDK_INT)
+                    .put("release", Build.VERSION.RELEASE)
                     .put("nowBarSupported", nowBarSupported())
                     .put("nowBar", nowBarOn(c))
                     .put("dayStrip", stripOn(c))
                     .put("names", names(c))
-                    .toString();
-            } catch (JSONException e) {
+                    .put("notifications", NotificationManagerCompat.from(c).areNotificationsEnabled())
+                    .put("channel", ch == null ? -1 : ch.getImportance())
+                    .put("lock", secure(c, "lock_screen_show_notifications"))
+                    .put("lockSilent", secure(c, "lock_screen_show_silent_notifications"))
+                    .put("widget", LockWidget.placed(c))
+                    .put("showing", LockPlan.showing(d.blocks, d.min))
+                    .put("showFrom", from < 0 ? 0 : atMinute(d.now, d.min, from));
+                if (Build.VERSION.SDK_INT >= 36 && nm != null) o.put("promote", nm.canPostPromotedNotifications());
+                boolean bar = false;
+                boolean strip = false;
+                Object promoted = JSONObject.NULL;
+                if (nm != null) {
+                    for (StatusBarNotification n : nm.getActiveNotifications()) {
+                        if (n.getId() == ID_STRIP) strip = true;
+                        if (n.getId() != ID_NOW_BAR) continue;
+                        bar = true;
+                        if (Build.VERSION.SDK_INT >= 36) promoted = (n.getNotification().flags & android.app.Notification.FLAG_PROMOTED_ONGOING) != 0;
+                    }
+                }
+                return o.put("nowBarPosted", bar).put("stripPosted", strip).put("promoted", promoted).toString();
+            } catch (JSONException | RuntimeException e) {
+                Log.w(TAG, "state", e);
                 return "{}";
             }
+        }
+
+        /** A system setting, 1/0 as true/false; null when this phone won't say (unset, or not readable). */
+        private static Object secure(Context c, String key) {
+            try {
+                int v = Settings.Secure.getInt(c.getContentResolver(), key, -1);
+                return v < 0 ? JSONObject.NULL : (Object) (v != 0);
+            } catch (RuntimeException e) {
+                return JSONObject.NULL; // targetSdk 31+: a setting outside the readable set throws
+            }
+        }
+
+        /** The system screen for a fix (Settings → Lock screen status): "promotion" (Live notifications),
+         *  "notifications" (the app's), "channel" (the Lock screen channel), "lockscreen" (the phone's
+         *  notification settings, where lock screen notifications are). Falls back to the app's page. */
+        @JavascriptInterface
+        public void open(String which) {
+            Context c = getContext();
+            String pkg = c.getPackageName();
+            List<Intent> tries = new ArrayList<>();
+            if ("promotion".equals(which)) tries.add(new Intent("android.settings.APP_NOTIFICATION_PROMOTION_SETTINGS").putExtra(Settings.EXTRA_APP_PACKAGE, pkg));
+            if ("channel".equals(which)) tries.add(new Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, pkg).putExtra(Settings.EXTRA_CHANNEL_ID, CHANNEL));
+            if ("lockscreen".equals(which)) tries.add(new Intent("android.settings.NOTIFICATION_SETTINGS"));
+            tries.add(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, pkg));
+            tries.add(new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:" + pkg)));
+            getActivity().runOnUiThread(() -> {
+                for (Intent i : tries) {
+                    try {
+                        getActivity().startActivity(i);
+                        return;
+                    } catch (RuntimeException e) {
+                        // no such screen on this phone: the next one
+                    }
+                }
+            });
         }
 
         @JavascriptInterface

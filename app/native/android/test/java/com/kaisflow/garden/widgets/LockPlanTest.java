@@ -102,4 +102,12 @@ public class LockPlanTest {
         assertEquals(at(13, 30), LockPlan.target(DAY, at(12, 40)));
         assertEquals(-1, LockPlan.target(DAY, at(19, 30)));
     }
+
+    @Test
+    public void showFromIsTheNextLeadInForTheStatusRow() {
+        assertEquals(at(9, 0), LockPlan.showFrom(DAY, at(3, 0))); // the lecture's 2-hour lead-in
+        assertEquals(at(11, 30), LockPlan.showFrom(DAY, at(11, 30))); // showing: now
+        assertEquals(at(16, 0), LockPlan.showFrom(DAY, at(15, 30))); // after the goal: the gym's lead-in
+        assertEquals(-1, LockPlan.showFrom(DAY, at(19, 0))); // nothing else today
+    }
 }

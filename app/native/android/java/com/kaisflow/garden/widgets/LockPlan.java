@@ -57,6 +57,14 @@ public final class LockPlan {
         return current(blocks, now) != null || (n != null && n.start - now <= LEAD_MIN);
     }
 
+    /** v161: the minute today the notifications next appear (the next block's 2-hour lead-in, or now if they're
+     * showing); -1 if nothing else today. Settings → Lock screen status. */
+    static int showFrom(List<Block> blocks, int now) {
+        if (showing(blocks, now)) return now;
+        Block n = next(blocks, now);
+        return n == null ? -1 : n.start - LEAD_MIN;
+    }
+
     /** The next minute after `now` when what's shown changes (a start, an end, a lead-in); -1 if none today. */
     static int nextChange(List<Block> blocks, int now) {
         int best = -1;

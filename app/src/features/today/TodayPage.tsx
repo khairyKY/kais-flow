@@ -97,7 +97,7 @@ import { MAX_SEEDS } from '../rituals/loopDay'
 import { useJournalEntries } from '../journal/api'
 import { useMinuteNow } from './useMinuteNow'
 import { captureFor, dayBlocks, dayBounds, dayHeading, dayName, dayNoon, dayWord, futureTasks, pastTasks, viewDay } from './dayView'
-import { NowPanel, RitualsPanel, Top3Head, usePhoneView } from './PhoneHome'
+import { NowPanel, RitualsPanel, Top3Head, usePhoneView, ViewSwap } from './PhoneHome'
 import { DayStripView } from './DayStripView'
 
 // The 2a capture pill's mic: the voice sheet, loaded on first use (as the tray does).
@@ -758,7 +758,7 @@ function TodayView({ nav }: { nav: DayNav }) {
           <div className="tp-home-in">
             {eventsPending ? <div className="tp-nn"><Skeleton rows={2} /></div> : planFirst ? (
               <RitualCard kind="plan" panel day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} sweepCount={open.length} onOpenRitual={openRitual} />
-            ) : phoneView === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />}
+            ) : <ViewSwap view={phoneView} render={(v) => (v === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />)} />}
             {!tasksPending && <FirstTodayHint style={{ padding: '8px 8px 0' }} />}
             {!tasksPending && reviewToday && <ReviewCard />}
             {birthdayCards.length > 0 && <div style={{ paddingTop: 12 }}>{birthdayCards}</div>}
