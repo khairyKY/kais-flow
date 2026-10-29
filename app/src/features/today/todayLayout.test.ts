@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi, beforeAll } from 'vitest'
 import { setHour24 } from '../../lib/clock'
-import { blockMeta, blockOf, dayCounts, dayOfJourney, eventMetas, focusedToday, foldOpen, overCapacity, projectTag, remainingWork, reviewDue, ribbonPct, ribbonSpan, runningBlock, top3Planned, topCard, upNextItems, workloadLine, type Block, type WorkloadInput } from './todayLayout'
+import { blockMeta, blockOf, dayCounts, dayLoad, dayOfJourney, eventMetas, focusedToday, foldOpen, overCapacity, projectTag, remainingWork, reviewDue, ribbonPct, ribbonSpan, runningBlock, top3Planned, topCard, upNextItems, workloadLine, type Block, type WorkloadInput } from './todayLayout'
 import { firstCreatedAt } from './journey'
 import { claimDayComplete, DAY_DONE_KEY } from './dayComplete'
 import { setAppZone } from '../../lib/appZone'
@@ -148,6 +148,22 @@ describe('overCapacity — MK Workload amber', () => {
   it('before 09:00 the day is measured from 09:00', () => {
     // 9h of capacity; the goal's block 90 (not its 60m estimate) + x 420 + deep 90 + call 30 = 630 → 90 over
     expect(overCapacity([{ id: 'goal', duration_min: 60 }, { id: 'x', duration_min: 420 }], DAY, at('07:00'), none)).toBe(90)
+  })
+})
+
+describe('dayLoad — the phone Top 3 header (today-v2, over warning D)', () => {
+  it('planned, free and over, in whole minutes', () => {
+    // 07:00: free = 09:00–18:00 = 540; planned = goal's block 90 + x 420 + deep 90 + call 30 = 630 → 90 over
+    expect(dayLoad([{ id: 'goal', duration_min: 60 }, { id: 'x', duration_min: 420 }], DAY, at('07:00'), none)).toEqual({ planned: 630, free: 540, over: 90 })
+  })
+  it('a day that fits: over 0, free from now', () => {
+    const l = dayLoad([{ id: 'goal', duration_min: 120 }], DAY, at('09:40'), none)
+    expect(l.free).toBe(500)
+    expect(l.over).toBe(0)
+    expect(l.planned).toBeLessThanOrEqual(l.free)
+  })
+  it('after 18:00 nothing is free', () => {
+    expect(dayLoad([], DAY, at('19:00'), none)).toEqual({ planned: 0, free: 0, over: 0 })
   })
 })
 

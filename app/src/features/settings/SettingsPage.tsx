@@ -49,6 +49,7 @@ import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
 import { readViewOptions, writeViewOptions, type CalViewOptions } from '../calendar/ViewOptionsPopover'
+import { readPhoneView, writePhoneView, type PhoneView } from '../today/phoneView'
 import { CALENDAR_SHORTCUTS, COMMAND_BAR_SHORTCUTS, GLOBAL_SHORTCUTS } from '../../lib/shortcuts'
 import type { ShortcutEntry } from '../../lib/pageShortcutsStore'
 import { useSignOut } from '../auth/useSignOut'
@@ -292,6 +293,9 @@ function AppearanceCard() {
   const [animOn, setAnimOn] = useState(readEffectsOn)
   const osReduced = usePrefersReducedMotion()
   const grain = useGrain()
+  const phone = useIsMobile()
+  // today-v2 (Kai 2026-10-29): the phone home's Now / Day switch, moved off Today. Kept per device.
+  const [homeView, setHomeView] = useState(readPhoneView)
 
   return (
     <SCard id="settings-Appearance">
@@ -330,6 +334,19 @@ function AppearanceCard() {
           }}
         />
       </Row>
+      {phone && (
+        <Row label="Phone home shows" help={homeView === 'day' ? 'Today opens on the whole day in one bar' : 'Today opens on what’s on now and the next two'} keys="today home now day view bar" device>
+          <Segmented<PhoneView>
+            label="Phone home shows"
+            value={homeView}
+            onChange={(v) => {
+              setHomeView(v)
+              writePhoneView(v)
+            }}
+            options={[{ value: 'now', label: 'Now' }, { value: 'day', label: 'Day' }]}
+          />
+        </Row>
+      )}
       {/* Punch 55 (D-3, Kai 2026-07-26): the Accent row was four decorative swatches with no
           handler — removed for v1; a real accent picker ships in v2. */}
     </SCard>

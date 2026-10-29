@@ -492,9 +492,10 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 /* inside the padded body, the cards that brought their own phone gutter drop it */
 .tp-home-in .tp-ritual { margin: var(--sp-3) 0 0; }
 .tp-home-in .tp-tended { padding-left: var(--sp-1); padding-right: 0; }
-/* The switch rides the day strip in the picker's place (Day strip options 4): no row of its own. */
-.tp-daynav .tp-view { flex-wrap: nowrap; background: var(--paper-bone); }
-.tp-daynav .tp-view .kf-seg-btn { min-height: 30px; padding: 0 var(--sp-3); font-size: var(--fs-caption); }
+/* today-v2 (Kai 2026-10-29): the Plan my day card in the Now card's place while nothing is planned — the
+   ritual card's anatomy in B's top panel (.tp-nn's paper, line, radius and shadow). */
+.tp-home-in .tp-ritual.is-panel { margin: var(--sp-1) 0 0; padding: var(--sp-3) var(--sp-3) var(--sp-3) var(--sp-2); box-shadow: var(--shadow-panel); }
+[data-theme='night'] .tp-home-in .tp-ritual.is-panel { background: var(--paper-bone); border-color: var(--line-solid); box-shadow: var(--shadow-panel); }
 .tp-home .tp-daynav { min-height: 40px; }
 .tp-home .tp-day-step, .tp-home .tp-daynav .tp-icon { min-height: 40px; height: 40px; }
 .tp-daynav .tp-icon { width: 40px; }
@@ -601,3 +602,22 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-home .kf-nest.has-rule { border-bottom: none; }
 .tp-home .kf-nest.is-phone .ts-sub.is-nested { min-height: 36px; }
 .tp-home .kf-nest .ts-sub-title, .tp-home .kf-nest .ts-sub-open { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── today-v2 (Kai 2026-10-29): the over warning, option D (design-export/Over warning options.html) — on the Top 3
+   panel's title. One line: "Top 3 · 4h 10m planned · 3h free"; when that line is too narrow the free part wraps
+   onto a second line the box clips, so it is the first to go. Over: the planned figure in terra ink and a chip in
+   "Ran over"'s look (palette C's terra edge and fill, --blk-ran-ink text). Tokens only; no colour added. ── */
+.tp-pt.tp-load { display: flex; align-items: center; gap: var(--sp-2); }
+.tp-load .tp-pt-link { float: none; flex: none; margin-left: auto; }
+.tp-load-btn { flex: 0 1 auto; min-width: 0; display: inline-flex; align-items: center; gap: var(--sp-1); min-height: 24px; padding: 0; border: none; background: none; font: inherit; color: inherit; text-align: left; cursor: pointer; border-radius: var(--radius-input); }
+.tp-load-btn:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.tp-load-l { min-width: 0; display: flex; flex-wrap: wrap; height: 1.4em; line-height: 1.4em; overflow: hidden; font-variant-numeric: tabular-nums; }
+.tp-load-l > span { white-space: pre; }
+.tp-load-chev { flex: none; color: var(--ink-faint); transition: transform var(--dur-quick) var(--ease-out); }
+.tp-load-btn[aria-expanded='true'] .tp-load-chev { transform: rotate(180deg); }
+.tp-load.is-over .tp-load-n { font-weight: var(--fw-semibold); color: var(--acc-terra-ink); }
+.tp-over { margin: 0 var(--sp-1) 6px; }
+.tp-over-chip { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: var(--radius-pill); border: 1px solid color-mix(in srgb, var(--acc-terra) 45%, transparent); background: color-mix(in srgb, var(--acc-terra) var(--blk-fill), var(--paper-parchment)); color: var(--blk-ran-ink); font-size: var(--fs-meta); font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.tp-load-why { margin: 0 var(--sp-1) 6px; font-size: var(--fs-caption); line-height: var(--lh-snug); color: var(--ink-muted); text-wrap: pretty; }
+.tp-slim .tp-tmrw { flex: none; margin: 0 var(--sp-1) 0 6px; cursor: pointer; font-family: inherit; }
+.tp-slim .tp-tmrw:focus-visible { outline: none; box-shadow: var(--focus-ring); }
