@@ -11,6 +11,9 @@ export const OUTBOX_KEY = 'kf-outbox'
 /** Rows the server permanently rejected. Kept (not silently dropped) so a failure is
  * inspectable, but out of the live queue so it can't block anything behind it. */
 export const DEAD_KEY = 'kf-outbox-dead'
+/** Tables the app may add to but never edit (0089: consents has no UPDATE). Written ON CONFLICT DO
+ * NOTHING, so a retry of a row that already landed is a no-op instead of a rejection. */
+const INSERT_ONLY: ReadonlySet<string> = new Set(['consents'])
 
 export interface OutboxEntry {
   id: string
@@ -157,7 +160,9 @@ async function drain(): Promise<void> {
       const { error } =
         entry.op === 'delete'
           ? await supabase.from(entry.table).delete().eq('id', entry.id)
-          : await supabase.from(entry.table).upsert(entry.payload)
+          : INSERT_ONLY.has(entry.table)
+            ? await supabase.from(entry.table).upsert(entry.payload, { ignoreDuplicates: true })
+            : await supabase.from(entry.table).upsert(entry.payload)
       if (error) throw error
       await removeEntry(entry)
       toastedEntries.delete(`${entry.table}:${entry.id}`)

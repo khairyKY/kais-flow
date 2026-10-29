@@ -5,7 +5,7 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useSignOut } from '../auth/useSignOut'
 import { agreeToCurrent, deleteAccount, useOutdated } from './api'
-import { LegalLink, PRIVACY_URL, TERMS_URL } from './LegalLinks'
+import { ConsentBox, LegalLink, PRIVACY_URL, TERMS_URL } from './LegalLinks'
 import { LEGAL_SUMMARY, type LegalDoc } from '../../../../supabase/functions/_shared/legal.ts'
 import './legal.css'
 
@@ -147,6 +147,8 @@ export function TermsNoticeHost() {
   const docs = useOutdated()
   const titleId = useId()
   const [deleting, setDeleting] = useState(false)
+  // One box per outdated document, the same two as sign-up; I agree waits for every one.
+  const [ticked, setTicked] = useState<ReadonlySet<LegalDoc>>(() => new Set())
   const signOutFlow = useSignOut()
   // Esc doesn't close it (nor whatever is under it): it waits for an answer.
   useEscapeStack(!!docs?.length && !deleting, () => undefined)
@@ -168,9 +170,24 @@ export function TermsNoticeHost() {
           <LegalLink href={TERMS_URL}>Read the Terms of Use</LegalLink>
           <LegalLink href={PRIVACY_URL}>Read the Privacy Policy</LegalLink>
         </div>
+        {docs.map((doc) => (
+          <ConsentBox
+            key={doc}
+            doc={doc}
+            className="lg-consent"
+            checked={ticked.has(doc)}
+            onToggle={() =>
+              setTicked((t) => {
+                const next = new Set(t)
+                if (!next.delete(doc)) next.add(doc)
+                return next
+              })
+            }
+          />
+        ))}
         <div className="lg-actions">
           {/* ds-ok: the one answer that closes it, so it's the one focused */}
-          <Button autoFocus onClick={() => agreeToCurrent(docs)}>
+          <Button autoFocus disabled={!docs.every((d) => ticked.has(d))} onClick={() => agreeToCurrent(docs)}>
             I agree
           </Button>
         </div>

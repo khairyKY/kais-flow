@@ -1,6 +1,7 @@
 // P2 AI capture: text -> structured parse (Groq, JSON-schema-constrained via prompt + Zod validation).
 import { z } from 'npm:zod@^4'
 import { requireUser } from '../_shared/auth.ts'
+import { errorKind, groqFailure } from '../_shared/groqLog.ts'
 import { corsHeadersFor } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { buildSystemPrompt } from './prompt.ts'
@@ -62,7 +63,7 @@ async function callGroq(rawText: string, systemPrompt: string): Promise<unknown>
     }),
   })
   if (!res.ok) {
-    console.error('parse-capture: groq', res.status, await res.text())
+    console.error('parse-capture: groq', await groqFailure(res))
     throw new Error(res.status === 429 ? 'rate_limited' : 'upstream_failed')
   }
   const data = await res.json()
@@ -132,7 +133,7 @@ Deno.serve(async (req) => {
     })
   } catch (e) {
     // Details stay in the function log; callers get a stable code, never upstream or stack text.
-    console.error('parse-capture:', e)
+    console.error('parse-capture:', errorKind(e))
     return new Response(JSON.stringify({ error: 'bad_request' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
