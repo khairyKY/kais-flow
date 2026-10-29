@@ -95,8 +95,10 @@ const MoonIcon = () =>
 // title, meta · one secondary action on the right — flat (no tape, no tilt), so the slip keeps its
 // "running" look. Plan · Shut down · Resume (a ritual walked part-way, with its hairline); Day closed
 // has no action. Shown only for the ritual moments, never beside the slip (./todayLayout topCard). ──
-export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, onOpenRitual }: {
+export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, onOpenRitual, panel }: {
   kind: 'plan' | 'shutdown' | 'closed'
+  /** today-v2: drawn as the phone home's top panel, in the Now card's place (today.css .tp-ritual.is-panel). */
+  panel?: boolean
   day: Day
   inboxCount: number
   overdueCount: number
@@ -122,6 +124,7 @@ export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, on
   const when = resume ? `${r.done} of ${r.total} done` : kind === 'plan' ? 'not planned' : clock
   return (
     <RitualShell
+      panel={panel}
       glyph={kind === 'plan' ? <SunIcon /> : <MoonIcon />}
       caption={`${kind === 'plan' ? 'Morning' : 'Evening'} · ${when}`}
       title={kind === 'plan' ? 'Plan my day' : 'Shut down the day'}
@@ -149,10 +152,10 @@ export function ReviewCard() {
   )
 }
 
-function RitualShell({ label, glyph, caption, title, meta, pct, action, children }: { label?: string; glyph: ReactNode; caption: string; title: string; meta: string[]; pct?: number; action?: ReactNode; children?: ReactNode }) {
+function RitualShell({ label, glyph, caption, title, meta, pct, action, panel, children }: { label?: string; glyph: ReactNode; caption: string; title: string; meta: string[]; pct?: number; action?: ReactNode; panel?: boolean; children?: ReactNode }) {
   // A `label`led card isn't the day's next move — no Day card hooks (data-day-card, the tour's "plan").
   return (
-    <section aria-label={label ?? 'Your day'} data-day-card={label ? undefined : true} data-tour={label ? undefined : 'plan'} className="tp-ritual">
+    <section aria-label={label ?? 'Your day'} data-day-card={label ? undefined : true} data-tour={label ? undefined : 'plan'} className={`tp-ritual${panel ? ' is-panel' : ''}`}>
       <span className="tp-glyph">{glyph}</span>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="tp-caption">{caption}</div>

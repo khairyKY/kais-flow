@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { syncShellChrome } from './platform'
+import { syncShellChrome, syncThemeColor } from './platform'
 import { onPrefApplied } from './prefs'
 import { motionOnNow } from './motion'
 
@@ -24,6 +24,9 @@ function read(): Theme {
 function apply(theme: Theme) {
   if (typeof document !== 'undefined') document.documentElement.dataset.theme = theme
   syncShellChrome(theme) // M1: the Android shell's bar strips follow Day/Night
+  // The iOS status bar, too — a task later, so reading the new page colour never forces a style pass inside a
+  // theme cross-fade's update (O12's view transition).
+  if (typeof window !== 'undefined') window.setTimeout(() => syncThemeColor(), 0)
 }
 
 /** O12 — a real change of theme (a pick, another device, Auto at sunset) cross-fades the whole page

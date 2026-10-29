@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useLocation, useNavigate } from 'react-router'
 import { TASK_PARAM, taskAnchor, useOpenTask } from '../tasks/openTask'
@@ -220,8 +220,10 @@ const TRAY_FOLD_KEY = 'kf.calTrayFolded'
 const TRAY_ROW = 34
 const TRAY_MAX_ROWS = 4
 
-function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects, areas, onPlan }: {
+function DayTray({ wrapRef, trackRef, rangeKey, minWidth, tasks, events, domains, projects, areas, onPlan }: {
   wrapRef: React.RefObject<HTMLDivElement | null>
+  /** cal-scroll: the days' layer, moved sideways with the grid's glide (CalendarGrid onGlide). */
+  trackRef: React.RefObject<HTMLDivElement | null>
   /** Changes when the grid shows other days: re-measure its columns. */
   rangeKey: string
   minWidth?: number
@@ -235,6 +237,8 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects
   const trayRef = useRef<HTMLElement>(null)
   const now = useMinuteNow() // S9: the tray's own minute, not the page's
   const [cols, setCols] = useState<{ date: string; left: number; width: number }[]>([])
+  // cal-scroll: where the days start (right of the time gutter) — the days' layer is clipped there as they glide.
+  const [gutter, setGutter] = useState(0)
   const [folded, setFolded] = useState(() => {
     try {
       return localStorage.getItem(TRAY_FOLD_KEY) === '1'
@@ -252,10 +256,20 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects
         // Rects are visual pixels (the root zoom); the tray is laid out in layout pixels.
         const z = uiZoom()
         const base = wrap.getBoundingClientRect().left
-        const next = [...wrap.querySelectorAll<HTMLElement>('.fc-timegrid-body .fc-timegrid-col[data-date]')].map((el) => {
+        // cal-scroll: the grid draws days off screen either side and glides them sideways (its hours' scrollLeft):
+        // the tray lays its days out where they sit in the grid's content, keeps the ones on screen and one either
+        // side, and its track follows the glide.
+        // (FullCalendar's px are the screen's — its root undoes the interface zoom — so its scroll comes in at 1 / z.)
+        const glide = (wrap.querySelector<HTMLElement>('.fc-scroller-liquid-absolute')?.scrollLeft ?? 0) / z
+        const all = [...wrap.querySelectorAll<HTMLElement>('.fc-timegrid-body .fc-timegrid-col[data-date]')].map((el) => {
           const r = el.getBoundingClientRect()
-          return { date: el.dataset.date ?? '', left: (r.left - base) / z + wrap.scrollLeft, width: r.width / z }
+          return { date: el.dataset.date ?? '', left: (r.left - base) / z + wrap.scrollLeft + glide, width: r.width / z }
         })
+        const start = all.length ? Math.min(...all.map((c) => c.left)) : 0
+        const w = wrap.clientWidth
+        const next = all.filter((c) => c.left + c.width >= glide + start - c.width && c.left <= glide + w + c.width)
+        setGutter(start)
+        if (trackRef.current) trackRef.current.style.transform = glide ? `translateX(${-glide}px)` : ''
         setCols((prev) => (JSON.stringify(prev) === JSON.stringify(next) ? prev : next))
       })
     }
@@ -264,11 +278,14 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects
     ro.observe(wrap)
     const fc = wrap.querySelector('.fc')
     if (fc) ro.observe(fc)
+    // cal-scroll: the glide sets the days' width itself (--kf-glide-w) — the hours' body resizes with it.
+    const days = wrap.querySelector('.fc-timegrid-body')
+    if (days) ro.observe(days)
     return () => {
       cancelAnimationFrame(raf)
       ro.disconnect()
     }
-  }, [wrapRef, rangeKey])
+  }, [wrapRef, trackRef, rangeKey])
   const dayKeys = cols.map((c) => c.date).join()
   const byDay = useMemo(() => dayTray(tasks, events, dayKeys ? dayKeys.split(',') : [], now), [tasks, events, dayKeys, now])
   const most = Math.max(0, ...[...byDay.values()].map((rows) => rows.length))
@@ -293,7 +310,7 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects
       <button
         type="button"
         className="cal-tray-fold"
-        style={{ width: cols[0]?.left ?? 0 }}
+        style={{ width: gutter }}
         onClick={toggle}
         aria-expanded={!folded}
         aria-label={folded ? "Show each day's tasks" : "Hide each day's tasks"}
@@ -301,16 +318,20 @@ function DayTray({ wrapRef, rangeKey, minWidth, tasks, events, domains, projects
       >
         <Icon name="chevdown" size={14} style={{ transform: folded ? 'rotate(-90deg)' : undefined, transition: 'transform var(--dur-quick)' }} />
       </button>
-      {cols.map((c) => {
-        const rows = byDay.get(c.date) ?? []
-        return (
-          <div key={c.date} className="cal-tray-day" data-date={c.date} style={{ left: c.left, width: c.width }}>
-            {folded
-              ? rows.length > 0 && <span className="cal-tray-count">{rows.length} {rows.length === 1 ? 'task' : 'tasks'}</span>
-              : rows.map((r) => <RailTaskCard key={r.task.id} r={r} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => onPlan(r, x, y)} />)}
-          </div>
-        )
-      })}
+      <div className="cal-tray-days" style={{ left: gutter }}>
+        <div ref={trackRef} className="cal-tray-track">
+          {cols.map((c) => {
+            const rows = byDay.get(c.date) ?? []
+            return (
+              <div key={c.date} className="cal-tray-day" data-date={c.date} style={{ left: c.left - gutter, width: c.width }}>
+                {folded
+                  ? rows.length > 0 && <span className="cal-tray-count">{rows.length} {rows.length === 1 ? 'task' : 'tasks'}</span>
+                  : rows.map((r) => <RailTaskCard key={r.task.id} r={r} domains={domains} projects={projects} areas={areas} onPlan={(x, y) => onPlan(r, x, y)} />)}
+              </div>
+            )
+          })}
+        </div>
+      </div>
     </section>
   )
 }
@@ -465,6 +486,11 @@ function DesktopCalendar() {
   const railRef = useRef<HTMLElement>(null)
   const gridRef = useRef<CalendarGridHandle>(null)
   const gridWrapRef = useRef<HTMLDivElement>(null)
+  // cal-scroll: the day tray's days follow the grid's glide, every frame (a transform, no render).
+  const trayTrackRef = useRef<HTMLDivElement>(null)
+  const onGlide = useCallback((x: number) => {
+    if (trayTrackRef.current) trayTrackRef.current.style.transform = x ? `translateX(${-x / uiZoom()}px)` : ''
+  }, [])
   // CALENDAR.md §7 pending / sync-failed block states, straight from the outbox.
   const outboxMarks = useOutboxMarks('calendar_events')
   const [selected, setSelected] = useState<Selected | null>(null)
@@ -1242,6 +1268,8 @@ function DesktopCalendar() {
         .cal-tray-fold { position: absolute; left: 0; top: 0; bottom: 0; display: flex; align-items: flex-start; justify-content: center; padding: 8px 0 0; border: none; background: none; color: var(--ink-faint); cursor: pointer; }
         .cal-tray-fold:hover { color: var(--ink-body); }
         .cal-tray-fold:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+        .cal-tray-days { position: absolute; top: 0; bottom: 0; right: 0; overflow: hidden; }
+        .cal-tray-track { position: absolute; inset: 0; }
         .cal-tray-day { position: absolute; top: 0; bottom: 0; box-sizing: border-box; overflow-y: auto; padding: 4px 9px; border-left: 1px solid var(--line-card); }
         .cal-tray-day { container-type: inline-size; }
         /* a Week column is narrow: the title gets the room, the length and project dot go — and Plan ▾ / ⋯
@@ -1476,11 +1504,13 @@ function DesktopCalendar() {
               pendingIds={pendingIds}
               failedIds={failedIds}
               selectedId={selectedId}
+              onGlide={onGlide}
             />
             </div>
             {!planning && viewKind !== 'month' && (
               <DayTray
                 wrapRef={gridWrapRef}
+                trackRef={trayTrackRef}
                 rangeKey={`${viewKind}|${shownDays}|${rangeInfo?.start.getTime() ?? 0}|${hiddenWeekend.join()}|${secondZone ?? ''}`}
                 minWidth={gridMinWidth(visibleDayCount(daysView ? 'ndays' : viewKind, shownDays, hiddenWeekend.length), axisW)}
                 tasks={tasks}

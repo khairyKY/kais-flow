@@ -120,7 +120,7 @@
   border-radius: var(--radius-md);
   background: var(--paper-bone);
   font: inherit;
-  font-size: 15px;
+  font-size: max(var(--field-min), 15px);
   color: var(--ink-body);
   caret-color: var(--acc-terra-ink);
 }
@@ -259,3 +259,9 @@
 .rt-summary > .kf-dusk-fly { animation: kfVignetteIn 1200ms var(--ease-out) var(--veil-delay, 0ms) forwards, fireflyDrift 9s ease-in-out calc(var(--veil-delay, 0ms) + 1200ms) infinite; }
 /* T12 — the suggested-times bar: a time that moved slides there; a new one fades in. */
 .rt-tl-b { animation: rtFadeIn 200ms var(--ease-out) backwards; transition: left 300ms var(--ease-out), width 300ms var(--ease-out); } /* ds-ok: T12, the timeline's blocks ease to their new times */
+
+/* iOS PWA (audit F17): the 40px options reach the row's full 48 on a touch screen; the look stays. */
+@media (pointer: coarse) {
+  .rt-seg-opt { position: relative; }
+  .rt-seg-opt::after { content: ''; position: absolute; inset: -4px 0; }
+}

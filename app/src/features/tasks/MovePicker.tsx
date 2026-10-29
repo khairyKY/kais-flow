@@ -190,7 +190,7 @@ function MovePopover({ position, current, onPick, onClose }: MovePickerProps) {
             onKeyDown={(e) => { if (e.key === 'Enter' && first) { e.preventDefault(); choose(first) } }}
             placeholder="Move to…"
             aria-label="Search places"
-            style={{ flex: 1, width: '100%', fontFamily: 'var(--font-ui)', fontSize: 12.5, background: 'none', border: 'none', color: 'var(--ink-body)', outline: 'none' }}
+            style={{ flex: 1, width: '100%', fontFamily: 'var(--font-ui)', fontSize: 'max(var(--field-min), 12.5px)', background: 'none', border: 'none', color: 'var(--ink-body)', outline: 'none' }}
           />
         </div>
         <div style={{ overflowY: 'auto' }}>

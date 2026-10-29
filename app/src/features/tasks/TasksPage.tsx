@@ -173,7 +173,7 @@ function TabBar({ active, smart, todayCount, weekCount, monthCount, overdueCount
     <div style={{ display: 'flex', flexWrap: 'wrap-reverse', alignItems: 'center', columnGap: 22, marginTop: 24, borderBottom: '1px solid var(--line-card)' }}>
       {/* paddingBottom 1 + marginBottom -1: the active underline (bottom -1) stays inside the
           scroller's clip box and still lands on the bar's border, exactly as before. */}
-      <div ref={stripRef} style={{ display: 'flex', alignItems: 'flex-end', gap: 22, flex: '1 1 auto', minWidth: 0, overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none', paddingBottom: 1, marginBottom: -1 }}>
+      <div ref={stripRef} className="tr-tabstrip" style={{ display: 'flex', alignItems: 'flex-end', gap: 22, flex: '1 1 auto', minWidth: 0, overflowX: 'auto', overflowY: 'hidden', scrollbarWidth: 'none', paddingBottom: 1, marginBottom: -1 }}>
         {tab('today', 'Today', todayCount, 'var(--acc-blossom)')}
         {/* Kai 2026-10-12: This Week / This Month lived only in the desktop sidebar's Plan drawer — a
             phone had no way in. They join the phone's strip (it scrolls sideways); desktop keeps the drawer. */}
@@ -193,7 +193,7 @@ function TabBar({ active, smart, todayCount, weekCount, monthCount, overdueCount
         {smart.map((l) => tab(l.id, <EmojiText text={l.name} />, l.count, 'var(--acc-blossom)', 'tr-mobile-only'))}
       </div>
       <span style={{ marginLeft: 'auto', display: 'flex', gap: 16, paddingBottom: 11, whiteSpace: 'nowrap' }}>
-        <Link to="/perennials" style={{ ...META, textDecoration: 'none' }}>↻ Repeating</Link>
+        <Link to="/perennials" className="kf-hit kf-hit-min" style={{ ...META, textDecoration: 'none' }}>↻ Repeating</Link>
         {/* Kai 2026-10-03: a Label filter beside Sort, the same popover — only once a label exists. */}
         {(labels.length > 0 || label) && (
           <Select
@@ -888,7 +888,7 @@ export function TasksPage() {
           {/* Smart lists (0081): this view's filters, saved under a name in the sidebar (and the phone's strip). */}
           <button
             type="button"
-            className="kf-link-terra"
+            className="kf-link-terra kf-hit kf-hit-min"
             onClick={() => setEditor(smart ?? 'new')}
             style={{ flex: 'none', marginLeft: 'auto', background: 'none', border: 'none', padding: 0, font: 'inherit', fontSize: 'var(--fs-caption)', cursor: 'pointer', whiteSpace: 'nowrap' }}
           >
@@ -920,7 +920,7 @@ export function TasksPage() {
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder='Quick add task… try "submit the report tomorrow 3pm #forecasting"'
-              style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
+              style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 'max(var(--field-min), 14px)', color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}
             />
           </form>
         )}

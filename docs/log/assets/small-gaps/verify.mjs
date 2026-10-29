@@ -224,8 +224,8 @@ if (ONLY.includes('3')) {
     await sleep(1200)
     check(`${name} Start → Today, the flag left for this account`, (await flag(page)) === '1')
     check(`${name} the hint, the drawing's copy, in the interface face`, (await text(hint(page))) === HINT && (await handFont(page)), await text(hint(page)))
-    // phone-today (2026-10-26): the next-move card is B's Now panel (the Plan my day card is gone; Begin is on Rituals).
-    check(`${name} it sits under the next-move card (B's Now panel)`, await below(page, 'section[aria-label="Now"]'))
+    // today-v2 (2026-10-29): 07:40 and nothing planned yet, so the next-move card is Plan my day, in B's Now panel's place.
+    check(`${name} it sits under the next-move card (Plan my day, in the Now panel's place)`, await below(page, '.tp-ritual.is-panel'))
     await shot(page, name)
     await page.locator('.tp-bar-title').click()
     await sleep(300)
@@ -255,11 +255,11 @@ if (ONLY.includes('3')) {
     noErrors(name, errors)
     await ctx.close()
   }
-  // An account that never had the flag (everyone before this) never sees it.
+  // An account that never had the flag (everyone before this) never sees it. (07:40, not planned: the Plan card.)
   {
     const name = '3-first-today-phone-existing'
     const { ctx, page, errors } = await open('/today', { tasks: three }, { now: '07:40' })
-    check(`${name} no flag → no hint`, (await hint(page).count()) === 0 && (await page.locator('section[aria-label="Now"]').count()) === 1)
+    check(`${name} no flag → no hint`, (await hint(page).count()) === 0 && (await page.locator('.tp-ritual.is-panel').count()) === 1)
     noErrors(name, errors)
     await ctx.close()
   }
@@ -352,13 +352,15 @@ if (ONLY.includes('4')) {
     noErrors(name, errors)
     await ctx.close()
   }
-  // Today's rows carry them too (phone compact rows + desktop rows).
+  // Today's desktop rows carry them too. today-v2 (Kai 2026-10-29): the phone Today's rows don't — one fact per row,
+  // as phone home B drew it.
   for (const [view, vname] of [[phone, 'phone'], [desktop, 'desktop']]) {
     const name = `4-labels-today-${vname}`
     const today = [task(1, 'Call the tyre supplier', { top3: true, due_at: iso('15:00') }), task(2, 'Send the Q3 numbers', { top3: true, labels: ['calls', 'admin', 'q3'], due_at: iso('17:00') }), task(3, 'Water the plants', { top3: true, labels: ['home'], due_at: iso('18:00') })]
     const { ctx, page, errors } = await open('/today', { tasks: today }, { view })
     const all = await page.locator('.kf-chip--bordered').allTextContents()
-    check(`${name} Today's rows show labels (two, then +1)`, JSON.stringify(all) === '["calls","admin","home"]' && (await page.getByLabel('1 more label').count()) === 1, JSON.stringify(all))
+    if (vname === 'phone') check(`${name} the phone Today's rows show no label chips`, all.length === 0 && (await page.getByLabel('1 more label').count()) === 0 && (await page.locator(`[id="task-${id(2)}"]`).count()) === 1, JSON.stringify(all))
+    else check(`${name} Today's rows show labels (two, then +1)`, JSON.stringify(all) === '["calls","admin","home"]' && (await page.getByLabel('1 more label').count()) === 1, JSON.stringify(all))
     await shot(page, name)
     noErrors(name, errors)
     await ctx.close()

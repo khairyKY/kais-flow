@@ -38,7 +38,7 @@ permissions:
 env:
   PROJECT_REF: eqbbkitofgyxxrfggpbu
   APP_URL: https://kais-flow.kaidagoat.workers.dev
-  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync google-connect google-sync capture-image mcp delete-account
+  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync google-connect google-sync capture-image mcp delete-account widget
 
 jobs:
   # scripts/preship.ps1 runs the gate locally (×4 timezones, lint, build, ds:check, site, deno check)

@@ -30,7 +30,7 @@ import { blockLastDay, railBuckets, railMinutes, scheduledToday } from './replan
 import { NowCard } from './NowCard'
 import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { Segmented } from '../rituals/RitualChrome'
-import { addMonths, allDayOn, dayBlocks, eventSpan, monthTitle, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
+import { addMonths, allDayOn, dayBlocks, eventSpan, glidePanes, monthTitle, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
 import { PhoneMonth } from './PhoneMonth'
 import { readViewOptions } from './ViewOptionsPopover'
 import { usePrefsVersion } from '../../lib/prefs'
@@ -129,11 +129,17 @@ export function PhoneCalendar() {
 
   const mondayFirst = readViewOptions().weekStartsMon
   const days = visibleDays(view, anchor, today, mondayFirst)
-  const strip = weekPage(anchor, today)
-  // The days on screen and the strip's week, a day either side (a block over midnight).
-  const shown = [...strip, ...days].sort()
-  const gridFrom = cairoToIso(addDays(shown[0], -1), '00:00')
-  const gridTo = cairoToIso(addDays(shown[shown.length - 1], 2), '00:00')
+  // cal-scroll: while a swipe glides, the title and the strip follow the day it's showing (its offset in days).
+  const [peek, setPeek] = useState(0)
+  const seen = peek ? addDays(anchor, peek) : anchor
+  const seenDays = peek ? visibleDays(view, seen, today, mondayFirst) : days
+  const strip = weekPage(seen, today)
+  // The days on screen and the strip's week, a day either side (a block over midnight) — and, cal-scroll, as far as a
+  // swipe can glide (its neighbour screens are drawn while it moves: never a blank one).
+  const reach = view === 'month' ? 0 : glidePanes(viewStep(view)) * viewStep(view)
+  const shown = [...weekPage(anchor, today), ...days].sort()
+  const gridFrom = cairoToIso(addDays(shown[0], -1 - reach), '00:00')
+  const gridTo = cairoToIso(addDays(shown[shown.length - 1], 2 + reach), '00:00')
   const gridRange = useMemo(() => ({ start: new Date(gridFrom), end: new Date(gridTo) }), [gridFrom, gridTo])
   const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   const taskById = useMemo(() => new Map(tasks.map((t) => [t.id, t])), [tasks])
@@ -339,7 +345,7 @@ export function PhoneCalendar() {
       <header className="pc-head">
         <h1 className="pc-h1">
           <button type="button" className="pc-title" aria-haspopup="dialog" aria-expanded={sheet?.k === 'view'} onClick={() => setSheet({ k: 'view' })}>
-            {view === 'month' ? monthTitle(anchor) : viewTitle(days)}
+            {view === 'month' ? monthTitle(anchor) : viewTitle(seenDays)}
             <Icon name="chevdown" size={20} className="pc-chev" />
           </button>
         </h1>
@@ -355,8 +361,8 @@ export function PhoneCalendar() {
       {view !== 'month' && (
       <div className="pc-week" role="group" aria-label="Week">
         {strip.map((d) => {
-          const i = days.indexOf(d)
-          const range = view === '3day' && i >= 0 ? (i === 0 ? 'start' : i === days.length - 1 ? 'end' : 'mid') : undefined
+          const i = seenDays.indexOf(d)
+          const range = view === '3day' && i >= 0 ? (i === 0 ? 'start' : i === seenDays.length - 1 ? 'end' : 'mid') : undefined
           return (
             <button
               key={d}
@@ -364,7 +370,7 @@ export function PhoneCalendar() {
               className="pc-day"
               data-today={d === today || undefined}
               data-range={range}
-              aria-current={d === anchor ? 'date' : undefined}
+              aria-current={d === seen ? 'date' : undefined}
               aria-label={new Date(`${d}T12:00:00Z`).toLocaleDateString('en-US', { timeZone: 'UTC', weekday: 'long', month: 'long', day: 'numeric' })}
               onClick={() => goTo(d)}
             >
@@ -463,7 +469,11 @@ export function PhoneCalendar() {
         look={look}
         pending={marks.pending}
         loading={eventsPending}
-        onPage={(dir) => setAnchor((a) => addDays(a, dir * viewStep(view)))}
+        onShift={(n) => {
+          setAnchor((a) => addDays(a, n))
+          setPeek(0)
+        }}
+        onPeek={setPeek}
         onTapSlot={(day, minute) => {
           const start = tapStart(minute)
           // The slot stays in view above the sheet and the keyboard (7c).

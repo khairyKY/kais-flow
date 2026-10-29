@@ -109,6 +109,9 @@ jobs:
       - name: mcp-full.sh (every MCP tool against Postgres, the journal / people scope gate)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/mcp-full.sh 2>&1 | tee "$RUNNER_TEMP/suite-mcp-full.log"
+      - name: widget.sh (desktop widget feed — 401s, the JSON, RLS per link, tick)
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: bash supabase/tests/widget.sh 2>&1 | tee "$RUNNER_TEMP/suite-widget.log"
       - name: fix5-search.sh (search_hybrid ranking + isolation)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/fix5-search.sh 2>&1 | tee "$RUNNER_TEMP/suite-fix5-search.log"
@@ -120,7 +123,7 @@ jobs:
         if: always()
         run: |
           echo "### Suites" >> "$GITHUB_STEP_SUMMARY"
-          for s in fix0-auth sec2 notify-prune mcp-week mcp-full fix5-search retainer-reload; do
+          for s in fix0-auth sec2 notify-prune mcp-week mcp-full widget fix5-search retainer-reload; do
             log="$RUNNER_TEMP/suite-$s.log"
             if [ ! -f "$log" ]; then echo "- $s: did not run"; continue; fi
             result=$(grep -oE '^[0-9]+ passed.*|retainer-reload: all checks passed' "$log" | tail -1 || true)

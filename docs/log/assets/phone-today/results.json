@@ -9,9 +9,9 @@
  },
  "results": [
   {
-   "name": "B renders at 360",
+   "name": "B renders at 360 (planned: the Now card, no Plan card)",
    "ok": true,
-   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 3h 50m plannedAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"pressed\":\"Now\"}"
+   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 6h 20m planned · 7h 20m freeAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"plan\":false}"
   },
   {
    "name": "B at 360: no sideways page scroll",
@@ -24,9 +24,9 @@
    "detail": ""
   },
   {
-   "name": "B renders at 390",
+   "name": "B renders at 390 (planned: the Now card, no Plan card)",
    "ok": true,
-   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 3h 50m plannedAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"pressed\":\"Now\"}"
+   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 6h 20m planned · 7h 20m freeAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"plan\":false}"
   },
   {
    "name": "B at 390: no sideways page scroll",
@@ -39,9 +39,9 @@
    "detail": ""
   },
   {
-   "name": "B renders at 430",
+   "name": "B renders at 430 (planned: the Now card, no Plan card)",
    "ok": true,
-   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 3h 50m plannedAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"pressed\":\"Now\"}"
+   "detail": "{\"now\":true,\"then\":2,\"goal\":true,\"panels\":[\"Top 3 · 6h 20m planned · 7h 20m freeAll tasks\",\"Today's tasks · 4\",\"Rituals\"],\"rituals\":true,\"plan\":false}"
   },
   {
    "name": "B at 430: no sideways page scroll",
@@ -74,22 +74,182 @@
    "detail": "5 / 7 / 9 at 360 / 390 / 430"
   },
   {
-   "name": "the switch goes to Day and remembers it (kf-phone-today-view)",
+   "name": "Today has no Now · Day switch; the strip’s middle is the date picker again",
    "ok": true,
-   "detail": "{\"strip\":true,\"key\":\"day\"}"
+   "detail": "{\"seg\":false,\"picker\":true}"
+  },
+  {
+   "name": "Settings → Appearance has \"Phone home shows: Now / Day\", labelled This device, on Now",
+   "ok": true,
+   "detail": "{\"device\":\"This device\",\"pressed\":\"Now\"}"
+  },
+  {
+   "name": "Day in Settings → Today opens on the Day bar (kf-phone-today-view = day)",
+   "ok": true,
+   "detail": "{\"key\":\"day\",\"strip\":true,\"now\":false}"
   },
   {
    "name": "Day survives a reload",
    "ok": true,
-   "detail": "{\"strip\":true,\"pressed\":\"Day\",\"now\":false}"
+   "detail": "{\"strip\":true,\"now\":false}"
   },
   {
-   "name": "…and back to Now",
+   "name": "…the row reads Day, and Now takes Today back to the Now card",
    "ok": true,
-   "detail": "{\"now\":true,\"key\":\"now\"}"
+   "detail": "{\"r1\":\"Day\",\"now\":true,\"strip\":false,\"key\":\"now\"}"
   },
   {
-   "name": "switching: no page errors",
+   "name": "the setting: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Settings thumb slides Now → Day (in-between positions)",
+   "ok": true,
+   "detail": "{\"from\":34,\"to\":196,\"xs\":[132,166,176,188,194,196,196,196,196,196,196,196,196,196],\"mid\":4}"
+  },
+  {
+   "name": "back on Today: Now fades out as Day fades in (tpSwapOut / tpSwapIn, the old view inert)",
+   "ok": true,
+   "detail": "{\"to\":\"day\",\"out\":\"now\",\"outAnim\":[\"tpSwapOut\"],\"inAnim\":[\"tpSwapIn\"],\"outInert\":true}"
+  },
+  {
+   "name": "…then only the Day bar is left",
+   "ok": true,
+   "detail": "{\"out\":false,\"inCls\":false,\"now\":0,\"day\":1}"
+  },
+  {
+   "name": "Settings thumb slides Day → Now too (in-between positions)",
+   "ok": true,
+   "detail": "{\"from\":196,\"to\":34,\"xs\":[131,78,54,42,36,34,34,34,34,34,34,34,34,34],\"mid\":4}"
+  },
+  {
+   "name": "back on Today: Day fades out as Now fades in — the same animation the other way",
+   "ok": true,
+   "detail": "{\"to\":\"now\",\"out\":\"day\",\"outAnim\":[\"tpSwapOut\"],\"inAnim\":[\"tpSwapIn\"],\"outInert\":true}"
+  },
+  {
+   "name": "…then only the Now card is left",
+   "ok": true,
+   "detail": "{\"out\":false,\"inCls\":false,\"now\":1,\"day\":0}"
+  },
+  {
+   "name": "a change under a drawn Today: Now → Day plays",
+   "ok": true,
+   "detail": "{\"to\":\"day\",\"out\":\"now\",\"outAnim\":[\"tpSwapOut\"],\"inAnim\":[\"tpSwapIn\"],\"outInert\":true}"
+  },
+  {
+   "name": "…and Day → Now plays",
+   "ok": true,
+   "detail": "{\"to\":\"now\",\"out\":\"day\",\"outAnim\":[\"tpSwapOut\"],\"inAnim\":[\"tpSwapIn\"],\"outInert\":true}"
+  },
+  {
+   "name": "Effects off: no fade, the Day bar at once",
+   "ok": true,
+   "detail": "{\"o1\":{\"to\":\"day\",\"out\":null,\"outAnim\":[],\"inAnim\":[],\"outInert\":false},\"o1e\":{\"out\":false,\"inCls\":false,\"now\":0,\"day\":1}}"
+  },
+  {
+   "name": "reduced motion: no fade, the Now card at once",
+   "ok": true,
+   "detail": "{\"r1\":{\"to\":\"now\",\"out\":null,\"outAnim\":[],\"inAnim\":[],\"outInert\":false},\"r1e\":{\"out\":false,\"inCls\":false,\"now\":1,\"day\":0}}"
+  },
+  {
+   "name": "the change both ways: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "no \"Phone home shows\" row at 1280",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "desktop settings: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "Plan 360 day: nothing planned → Plan my day in the Now card's place (no Now card), Rituals · Begin stays",
+   "ok": true,
+   "detail": "{\"card\":true,\"first\":true,\"title\":\"Plan my day\",\"caption\":\"Morning · not planned\",\"btn\":\"Plan\",\"now\":false,\"begin\":\"Begin\"}"
+  },
+  {
+   "name": "Plan 360 day: no sideways scroll, no page errors",
+   "ok": true,
+   "detail": "0 "
+  },
+  {
+   "name": "Plan 390 day: nothing planned → Plan my day in the Now card's place (no Now card), Rituals · Begin stays",
+   "ok": true,
+   "detail": "{\"card\":true,\"first\":true,\"title\":\"Plan my day\",\"caption\":\"Morning · not planned\",\"btn\":\"Plan\",\"now\":false,\"begin\":\"Begin\"}"
+  },
+  {
+   "name": "Plan 390 day: no sideways scroll, no page errors",
+   "ok": true,
+   "detail": "0 "
+  },
+  {
+   "name": "Plan opens the morning ritual (Plan my day)",
+   "ok": true,
+   "detail": "Plan my dayMon 26 Oct · about 3 minutesCarry-over · 2Roll all to tomorrowEmail t"
+  },
+  {
+   "name": "Plan 430 day: nothing planned → Plan my day in the Now card's place (no Now card), Rituals · Begin stays",
+   "ok": true,
+   "detail": "{\"card\":true,\"first\":true,\"title\":\"Plan my day\",\"caption\":\"Morning · not planned\",\"btn\":\"Plan\",\"now\":false,\"begin\":\"Begin\"}"
+  },
+  {
+   "name": "Plan 430 day: no sideways scroll, no page errors",
+   "ok": true,
+   "detail": "0 "
+  },
+  {
+   "name": "Plan 390 night: nothing planned → Plan my day in the Now card's place (no Now card), Rituals · Begin stays",
+   "ok": true,
+   "detail": "{\"card\":true,\"first\":true,\"title\":\"Plan my day\",\"caption\":\"Morning · not planned\",\"btn\":\"Plan\",\"now\":false,\"begin\":\"Begin\"}"
+  },
+  {
+   "name": "Plan 390 night: no sideways scroll, no page errors",
+   "ok": true,
+   "detail": "0 "
+  },
+  {
+   "name": "Plan with Day chosen: the Plan card in the Day bar’s place",
+   "ok": true,
+   "detail": "{\"card\":true,\"bar\":false}"
+  },
+  {
+   "name": "Plan (Day): no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "planned by the Top 3 at 12:10 → the Now card, no Plan card",
+   "ok": true,
+   "detail": "{\"card\":false,\"now\":true}"
+  },
+  {
+   "name": "12:10: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "unplanned but a block running (11:10, the CV lecture) → the Now card, not Plan",
+   "ok": true,
+   "detail": "{\"card\":false,\"now\":true}"
+  },
+  {
+   "name": "11:10: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "a labelled task’s phone row shows no label chips",
+   "ok": true,
+   "detail": "{\"row\":true,\"chips\":0}"
+  },
+  {
+   "name": "labels: no page errors",
    "ok": true,
    "detail": ""
   },
@@ -159,9 +319,114 @@
    "detail": "7 / 9 / 9 at 360 / 390 / 430"
   },
   {
-   "name": "the Now · Day switch is in the middle of the Yesterday / Tomorrow line, in the picker’s place",
+   "name": "over D normal 360: \"Top 3 · 6h 20m planned · 7h 20m free\" (free dropped first if narrow), one line, no chip",
    "ok": true,
-   "detail": "{\"seg\":true,\"picker\":false}"
+   "detail": "{\"head\":true,\"over\":false,\"shown\":\"Top 3 · 6h 20m planned · 7h 20m free\",\"all\":\"Top 3 · 6h 20m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"\",\"chipInk\":\"\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(106, 99, 84)\",\"expanded\":\"false\",\"why\":\"\",\"tomorrow\":0}"
+  },
+  {
+   "name": "over D normal 360: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "over D normal, squeezed to 250px: the free part is dropped, \"Top 3 · 6h 20m planned\" stays on one line",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":false,\"shown\":\"Top 3 · 6h 20m planned\",\"all\":\"Top 3 · 6h 20m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"\",\"chipInk\":\"\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(106, 99, 84)\",\"expanded\":\"false\",\"why\":\"\",\"tomorrow\":0}"
+  },
+  {
+   "name": "over D normal 390: \"Top 3 · 6h 20m planned · 7h 20m free\" (free dropped first if narrow), one line, no chip",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":false,\"shown\":\"Top 3 · 6h 20m planned · 7h 20m free\",\"all\":\"Top 3 · 6h 20m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"\",\"chipInk\":\"\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(106, 99, 84)\",\"expanded\":\"false\",\"why\":\"\",\"tomorrow\":0}"
+  },
+  {
+   "name": "over D normal 390: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "over D normal 430: \"Top 3 · 6h 20m planned · 7h 20m free\" (free dropped first if narrow), one line, no chip",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":false,\"shown\":\"Top 3 · 6h 20m planned · 7h 20m free\",\"all\":\"Top 3 · 6h 20m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"\",\"chipInk\":\"\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(106, 99, 84)\",\"expanded\":\"false\",\"why\":\"\",\"tomorrow\":0}"
+  },
+  {
+   "name": "over D normal 430: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "over D over 360 day: \"Top 3 · 9h 10m planned · 7h 20m free\" + the chip \"1h 50m more than today can fit\" in Ran over's ink",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":true,\"shown\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"all\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"1h 50m more than today can fit\",\"chipInk\":\"rgb(124, 52, 29)\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(156, 81, 57)\",\"expanded\":\"false\",\"why\":\"\",\"tomorrow\":0}"
+  },
+  {
+   "name": "over D over 360 day: no sideways scroll, no page errors",
+   "ok": true,
+   "detail": "0 "
+  },
+  {
+   "name": "over D over 390 day: \"Top 3 · 9h 10m planned · 7h 20m free\" + the chip \"1h 50m more than today can fit\" in Ran over's ink",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":true,\"shown\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"all\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"1h 50m more than today can fit\",\"chipInk\":\"rgb(124, 52, 29)\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(156, 81, 57)\",\"expanded\":\"false\",\"why\":\"\",\"tomorrow\":0}"
+  },
+  {
+   "name": "over D over 390 day: no sideways scroll, no page errors",
+   "ok": true,
+   "detail": "0 "
+  },
+  {
+   "name": "over D over 430 day: \"Top 3 · 9h 10m planned · 7h 20m free\" + the chip \"1h 50m more than today can fit\" in Ran over's ink",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":true,\"shown\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"all\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"1h 50m more than today can fit\",\"chipInk\":\"rgb(124, 52, 29)\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(156, 81, 57)\",\"expanded\":\"false\",\"why\":\"\",\"tomorrow\":0}"
+  },
+  {
+   "name": "over D over 430 day: no sideways scroll, no page errors",
+   "ok": true,
+   "detail": "0 "
+  },
+  {
+   "name": "over D over 390 night: \"Top 3 · 9h 10m planned · 7h 20m free\" + the chip \"1h 50m more than today can fit\" in Ran over's ink",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":true,\"shown\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"all\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"1h 50m more than today can fit\",\"chipInk\":\"rgb(255, 224, 211)\",\"ranInk\":\"rgb(255, 224, 211)\",\"nInk\":\"rgb(226, 148, 115)\",\"expanded\":\"false\",\"why\":\"\",\"tomorrow\":0}"
+  },
+  {
+   "name": "over D over 390 night: no sideways scroll, no page errors",
+   "ok": true,
+   "detail": "0 "
+  },
+  {
+   "name": "over D tap: the header opens (aria-expanded), says how it’s counted, and both Top 3 rows offer Tomorrow",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":true,\"shown\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"all\":\"Top 3 · 9h 10m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"1h 50m more than today can fit\",\"chipInk\":\"rgb(124, 52, 29)\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(156, 81, 57)\",\"expanded\":\"true\",\"why\":\"Top 3 and today’s blocks, against the free time left today (9:00 AM–6:00 PM). Move a pick to tomorrow to make room.\",\"tomorrow\":2}"
+  },
+  {
+   "name": "over D tap: Tomorrow moves \"Deep Learning problem set 4\" to tomorrow and off the Top 3",
+   "ok": true,
+   "detail": "{\"id\":\"10000000-0000-4000-8000-000000000002\",\"title\":\"Deep Learning problem set 4 (Q1–Q3)\",\"user_id\":\"00000000-0000-4000-8000-00000000d3e0\",\"project_id\":\"b0000000-0000-4000-8000-000000000001\",\"domain_id\":null,\"area_id\":null,\"notes\":null,\"status\":\"todo\",\"due_at\":\"2026-10-27T06:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"top3_rank\":null,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":240,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":null,\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"created_at\":\"2026-10-01T06:00:00.000Z\",\"updated_at\":\"2026-10-01T06:00:00.000Z\"}"
+  },
+  {
+   "name": "over D tap: after the move it fits (no chip)",
+   "ok": true,
+   "detail": "{\"head\":true,\"over\":false,\"shown\":\"Top 3 · 5h 10m planned · 7h 20m free\",\"all\":\"Top 3 · 5h 10m planned · 7h 20m free\",\"oneLine\":true,\"headW\":true,\"chip\":\"\",\"chipInk\":\"\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"rgb(106, 99, 84)\",\"expanded\":\"true\",\"why\":\"Top 3 and today’s blocks, against the free time left today (9:00 AM–6:00 PM). Move a pick to tomorrow to make room.\",\"tomorrow\":1}"
+  },
+  {
+   "name": "over D tap again: closed, the rows get their ⋯ back",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "over D tap: no page errors",
+   "ok": true,
+   "detail": ""
+  },
+  {
+   "name": "over D hidden while nothing is planned (Plan card showing): no load line, no chip",
+   "ok": true,
+   "detail": "{\"head\":false,\"over\":false,\"shown\":\"\",\"all\":\"\",\"oneLine\":false,\"headW\":false,\"chip\":\"\",\"chipInk\":\"\",\"ranInk\":\"rgb(124, 52, 29)\",\"nInk\":\"\",\"why\":\"\",\"tomorrow\":0,\"pt\":\"Top 3 · 6h 40m plannedAll tasks\"}"
+  },
+  {
+   "name": "over D hidden: no page errors",
+   "ok": true,
+   "detail": ""
   },
   {
    "name": "tapping the date title opens the date picker",

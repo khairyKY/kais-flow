@@ -171,6 +171,8 @@ export interface DeviceState {
   permission: DevicePermission
   /** Web only: this browser's push subscription is stored for the account. */
   subscribed: boolean
+  /** Web on an iPhone/iPad: permission lives in the system's Settings, not the browser's. */
+  ios?: boolean
   /** Android: exact alarms allowed ("Alarms & reminders"). */
   exact?: boolean
   /** Android: battery optimisation off for the app; undefined = this APK can't tell. */
@@ -185,7 +187,9 @@ export function blockers(d: DeviceState, p: NoticePrefs | null | undefined, now:
     out.push(
       d.channel === 'android'
         ? 'Permission denied — turn notifications on for Kai’s Flow in Android Settings → Apps → Kai’s Flow → Notifications.'
-        : 'Permission denied — allow notifications for this site in the browser’s site settings.',
+        : d.ios
+          ? 'Permission denied — turn notifications on in the iPhone’s Settings → Notifications → Kai’s Flow.'
+          : 'Permission denied — allow notifications for this site in the browser’s site settings.',
     )
   else if (d.permission === 'prompt') out.push('Notifications aren’t allowed yet — the test will ask.')
   if (d.channel === 'android' && d.permission === 'granted') {

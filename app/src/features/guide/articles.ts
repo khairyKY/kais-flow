@@ -190,7 +190,7 @@ export const ARTICLES: Article[] = [
     intro: 'The garden gate is never far: share to it, send to it, or photograph a page.',
     steps: [
       { name: 'Share', text: '**Share** any text or link to Kai’s Flow; it lands in your Inbox.' },
-      { name: 'A capture key', text: 'Settings → Advanced → **External capture endpoint**: make a key for iPhone Shortcuts, Tasker or a bookmarklet.' },
+      { name: 'A capture key', text: 'Settings → Advanced → **External capture endpoint**: make a key for iPhone Shortcuts, Tasker or a bookmarklet. On iPhone the share sheet can’t list Kai’s Flow itself: a Shortcut with **Show in Share Sheet** on, sending to your capture link, is the way in.' },
       { name: 'Recipes', text: '**How to send things here** has the recipes, ready to copy.' },
       { name: 'Windows', text: 'On Windows, click the **K** by the clock and write it down.' },
       { name: 'Paper', text: '**Scan paper**: photograph a list, and each line becomes a task, event or note.' },

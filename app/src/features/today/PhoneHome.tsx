@@ -1,6 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { Link } from 'react-router'
-import { Segmented } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import { clockText, useHour24 } from '../../lib/clock'
@@ -9,30 +8,111 @@ import { NowCard, hueVars } from '../calendar/NowCard'
 import { timeText } from '../calendar/eventTime'
 import type { RitualKind } from '../rituals/api'
 import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
-import { readPhoneView, thenBlocks, writePhoneView, type PhoneView } from './phoneView'
+import { PHONE_VIEW_EVENT, readPhoneView, thenBlocks, writePhoneView, type PhoneView } from './phoneView'
+import { span } from './todayLayout'
+import { DAY_FROM, DAY_TO } from '../rituals/ritualLogic'
 import { useMinuteNow } from './useMinuteNow'
+import { useMotionEnabled } from '../../lib/motion'
 
 // phone-today (Kai 2026-10-26): the phone Today's B · "Now + next" parts — the calendar's Now card with
-// the next two blocks under it, and the Rituals panel — plus the Now / Day switch. Spec: design-export/
+// the next two blocks under it, and the Rituals panel — plus the Now / Day preference (set in Settings). Spec: design-export/
 // Phone home options.html (today-looks worktree), direction B. Settings' rounded panels (.tp-pn, today.css).
 
-/** The Now / Day switch, remembered per device (./phoneView PHONE_VIEW_KEY). */
+/** The phone home's view (Now = B, Day = the Day bar), remembered per device (./phoneView PHONE_VIEW_KEY).
+ * today-v2 (Kai 2026-10-29): the switch moved off Today into Settings → Appearance ("Phone home shows"). */
 export function usePhoneView(): [PhoneView, (v: PhoneView) => void] {
   const [v, setV] = useState(readPhoneView)
+  // v161: a change made elsewhere (Settings, another tab) reaches a Today that's still drawn.
+  useEffect(() => {
+    const on = () => setV(readPhoneView())
+    window.addEventListener(PHONE_VIEW_EVENT, on)
+    window.addEventListener('storage', on)
+    return () => {
+      window.removeEventListener(PHONE_VIEW_EVENT, on)
+      window.removeEventListener('storage', on)
+    }
+  }, [])
   return [v, (next) => { setV(next); writePhoneView(next) }]
 }
 
-export function ViewSwitch({ view, onChange }: { view: PhoneView; onChange: (v: PhoneView) => void }) {
+/** The view Today last drew, this visit to the app (null until it has drawn one). */
+let drawnView: PhoneView | null = null
+
+/**
+ * v161 (Kai on v1.6.0: "the pill only animates from Now to Day, not from Day to Now"): the Now / Day change
+ * plays the same way both ways — the old view fades out and the new one fades in, sliding the way the
+ * Settings control's thumb went (Now ← · → Day; today.css .tp-swap). It plays when the view changes under a
+ * drawn Today, and when Today comes back drawing a different view than it last did (the switch is in
+ * Settings, so that's the usual case). Effects off or reduced motion: the new view, at once.
+ */
+export function ViewSwap({ view, render }: { view: PhoneView; render: (v: PhoneView) => ReactNode }) {
+  const motion = useMotionEnabled()
+  const [prev, setPrev] = useState<PhoneView | null>(() => (drawnView && drawnView !== view ? drawnView : null))
+  const [shown, setShown] = useState(view)
+  if (shown !== view) {
+    // Set while rendering (not in an effect), so the new view's first frame is already the fade's first.
+    setShown(view)
+    setPrev(shown)
+  }
+  useEffect(() => {
+    drawnView = view
+  }, [view])
+  const out = motion && prev && prev !== view ? prev : null
   return (
-    <Segmented
-      className="tp-view"
-      label="Today view"
-      value={view}
-      onChange={onChange}
-      options={[{ value: 'now', label: 'Now' }, { value: 'day', label: 'Day' }]}
-    />
+    <div className="tp-swap" data-to={view}>
+      {out && <div key={`out-${out}`} className="tp-swap-out" aria-hidden inert>{render(out)}</div>}
+      <div key={view} className={out ? 'tp-swap-in' : undefined} onAnimationEnd={(e) => e.target === e.currentTarget && setPrev(null)}>
+        {render(view)}
+      </div>
+    </div>
   )
 }
+
+/** today-v2 (Kai 2026-10-29, over warning D, design-export/Over warning options.html): the Top 3 panel's title.
+ * During the day it says what's planned against what's free — "Top 3 · 4h 10m planned · 3h free", the free part
+ * the first to go when the line is too narrow (today.css .tp-load-l) — and, when the plan doesn't fit, a chip in
+ * "Ran over"'s look under it: "1h 50m more than today can fit". A tap opens how it's counted, and the Top 3 rows
+ * offer Tomorrow (TodayPage). `load` null (nothing planned yet, or the evening): the plain "· 3h 50m planned". */
+export function Top3Head({ load, planned, open, onToggle }: {
+  load: { planned: number; free: number; over: number } | null
+  /** The picks' own length (./todayLayout top3Planned), the title's note when `load` is null. */
+  planned: number
+  open: boolean
+  onToggle: () => void
+}) {
+  useHour24()
+  if (!load) {
+    return <div className="tp-pt">Top 3{planned > 0 && <span className="tp-pt-note"> · {span(planned)} planned</span>}<Link to="/tasks" className="tp-pt-link">All tasks</Link></div>
+  }
+  const over = load.over > 0
+  const from = clockText(hhmm(DAY_FROM))
+  const to = clockText(hhmm(DAY_TO))
+  return (
+    <>
+      <div className={`tp-pt tp-load${over ? ' is-over' : ''}`}>
+        <button
+          type="button"
+          className="tp-load-btn"
+          aria-expanded={open}
+          aria-label={`Top 3: ${load.planned > 0 ? `${span(load.planned)} planned, ` : ''}${span(load.free)} free${over ? `, ${span(load.over)} more than today can fit` : ''}. ${open ? 'Hide' : 'Show'} how it’s counted and Tomorrow on each pick`}
+          onClick={onToggle}
+        >
+          <span className="tp-load-l">
+            <span>Top 3</span>
+            {load.planned > 0 && <span className="tp-pt-note"> · <span className="tp-load-n">{span(load.planned)}</span> planned</span>}
+            <span className="tp-pt-note tp-load-free"> · {span(load.free)} free</span>
+          </span>
+          <Icon name="chevdown" size={14} className="tp-load-chev" />
+        </button>
+        <Link to="/tasks" className="tp-pt-link">All tasks</Link>
+      </div>
+      {over && <div className="tp-over"><span className="tp-over-chip">{span(load.over)} more than today can fit</span></div>}
+      {open && <p className="tp-load-why">Top 3 and today’s blocks, against the free time left today ({from}–{to}). Move a pick to tomorrow to make room.</p>}
+    </>
+  )
+}
+
+const hhmm = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
 
 /** The clock time without its AM / PM ("1:30"), as the design's "Then" rows read; 24h stays as it is. */
 const shortTime = (iso: string) => timeText(new Date(iso)).replace(/\s?[AP]M$/i, '')
@@ -78,7 +158,7 @@ export function RitualsPanel({ morning, evening, now, routines, onOpen }: {
   onOpen: (kind: RitualKind) => void
 }) {
   const late = isEvening(now)
-  const from = clockText(`${String(Math.floor(SHUTDOWN_FROM / 60)).padStart(2, '0')}:${String(SHUTDOWN_FROM % 60).padStart(2, '0')}`)
+  const from = clockText(hhmm(SHUTDOWN_FROM))
   const row = (kind: RitualKind, name: string, r: RitualState, on: boolean, sub: string) => {
     const go = on && !ritualFinished(r) && (r.done > 0 ? 'Continue' : 'Begin')
     return (

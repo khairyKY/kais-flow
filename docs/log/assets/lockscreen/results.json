@@ -32,7 +32,7 @@
   {
     "name": "1 the how-to is 3 short steps through Good Lock › LockStar",
     "ok": true,
-    "detail": "Install Good Lock from the Galaxy Store, then LockStar inside it. / In LockStar, turn it on and tap the lock screen to edit it. / Tap Widgets › Kai’s Flow › Top 3 · lock screen, and place it under the clock."
+    "detail": "Install Good Lock from the Galaxy Store, then LockStar inside it. / In LockStar, turn it on and tap the lock screen to edit it (on One UI 7 and later: long-press the lock screen, then LockStar). / Tap Widgets › Kai’s Flow › Top 3 · lock screen, and place it under the clock."
   },
   {
     "name": "1 Day strip on → set(nowBar=true, dayStrip=true); both can be on",
@@ -86,6 +86,111 @@
   },
   {
     "name": "5 no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Android 16, all fine: three lines, all active",
+    "ok": true,
+    "detail": "{\"top3\":[true,\"Top 3 widget: Active. On your lock screen\",false],\"nowbar\":[true,\"Now Bar: Active. In the Now Bar now\",false],\"strip\":[false,\"Day strip: Off: turn on “Lock screen: Day strip notification” above\",false]}"
+  },
+  {
+    "name": "6 Android 16, all fine: three lines, all active: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Android 16, Live notifications off for the app",
+    "ok": true,
+    "detail": "{\"top3\":[true,\"Top 3 widget: Active. On your lock screen\",false],\"nowbar\":[false,\"Now Bar: Live notifications are turned off for Kai’s Flow\",true],\"strip\":[false,\"Day strip: Off: turn on “Lock screen: Day strip notification” above\",false]}"
+  },
+  {
+    "name": "6 Android 16, Live notifications off for the app: Open settings → the promotion screen",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"open\",\"promotion\"]]"
+  },
+  {
+    "name": "6 Android 16, Live notifications off for the app: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Android 16, posted but not promoted: points at the Galaxy developer option",
+    "ok": true,
+    "detail": "{\"top3\":[true,\"Top 3 widget: Active. On your lock screen\",false],\"nowbar\":[false,\"Now Bar: Showing in the notifications, but not as a Live notification. On a Galaxy, also turn on Developer options › Live notifications for all apps\",true],\"strip\":[false,\"Day strip: Off: turn on “Lock screen: Day strip notification” above\",false]}"
+  },
+  {
+    "name": "6 Android 16, posted but not promoted: points at the Galaxy developer option: Open settings → the promotion screen",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"open\",\"promotion\"]]"
+  },
+  {
+    "name": "6 Android 16, posted but not promoted: points at the Galaxy developer option: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Android 16, nothing within 2 h, the widget not placed",
+    "ok": true,
+    "detail": "{\"top3\":[false,\"Top 3 widget: Not added in LockStar yet (the steps are above)\",false],\"nowbar\":[false,\"Now Bar: Nothing to show until 2h before your next block (from 2:30 PM)\",false],\"strip\":[false,\"Day strip: Nothing to show until 2h before your next block (from 2:30 PM)\",false]}"
+  },
+  {
+    "name": "6 Android 16, nothing within 2 h, the widget not placed: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Android 16, notifications off for the app (first in the way)",
+    "ok": true,
+    "detail": "{\"top3\":[true,\"Top 3 widget: Active. On your lock screen\",false],\"nowbar\":[false,\"Now Bar: Notifications are turned off for Kai’s Flow\",true],\"strip\":[false,\"Day strip: Off: turn on “Lock screen: Day strip notification” above\",false]}"
+  },
+  {
+    "name": "6 Android 16, notifications off for the app (first in the way): Open settings → the notifications screen",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"open\",\"notifications\"]]"
+  },
+  {
+    "name": "6 Android 16, notifications off for the app (first in the way): no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Android 15: \"Android 16 needed (this phone: 15)\", the Day strip off",
+    "ok": true,
+    "detail": "{\"top3\":[true,\"Top 3 widget: Active. On your lock screen\",false],\"nowbar\":[false,\"Now Bar: Android 16 needed (this phone: 15)\",false],\"strip\":[false,\"Day strip: Off: turn on “Lock screen: Day strip notification” above\",false]}"
+  },
+  {
+    "name": "6 Android 15: \"Android 16 needed (this phone: 15)\", the Day strip off: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Android 15: no Open settings for the Now Bar (nothing to fix)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 Android 15: Day strip on → its line turns Active",
+    "ok": true,
+    "detail": "[true,\"Day strip: Active. On the lock screen now. Only an icon there? Set Lock screen notifications to Cards\",true]"
+  },
+  {
+    "name": "6 Android 15, a lowered (silent) channel on a lock screen that hides silent ones",
+    "ok": true,
+    "detail": "{\"top3\":[true,\"Top 3 widget: Active. On your lock screen\",false],\"nowbar\":[false,\"Now Bar: Android 16 needed (this phone: 15)\",false],\"strip\":[false,\"Day strip: Lock screen hides silent notifications\",true]}"
+  },
+  {
+    "name": "6 Android 15, a lowered (silent) channel on a lock screen that hides silent ones: Open settings → the lockscreen screen",
+    "ok": true,
+    "detail": "[[\"setNames\",false],[\"open\",\"lockscreen\"]]"
+  },
+  {
+    "name": "6 Android 15, a lowered (silent) channel on a lock screen that hides silent ones: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "6 v1.6.0's shell (switches only): the rows, no status row",
     "ok": true,
     "detail": ""
   }

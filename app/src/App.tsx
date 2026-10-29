@@ -1,4 +1,4 @@
-import { lazy, type ComponentType } from 'react'
+import { Suspense, lazy, type ComponentType } from 'react'
 import { createBrowserRouter, RouterProvider, useMatches, type RouteObject } from 'react-router'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { queryClient, idbPersister } from './lib/queryClient'
@@ -11,22 +11,24 @@ import { NotFoundPage, RouteErrorPage } from './components/RouteErrorPage'
 import { isCapacitorShell } from './lib/platform'
 import { captureStack, stackMove } from './lib/motion'
 import { inSettings } from './features/settings/categories'
+import { warmLater } from './lib/pageWarm'
+import { offerInstallNow, openInstallGuide, useInstallGuide } from './lib/iosPwa'
 
 // Route-level code splitting — each page is its own chunk, loaded on demand.
 // Keeps the heavy pages (FullCalendar, rrule, chrono) out of the initial bundle.
 // AppLayout + SignInPage stay eager: the shell and entry are needed immediately.
-// M1b: every page chunk is then fetched in the background once the first screen is up (below), so
-// switching tabs never shows the blank fallback while a chunk downloads and parses.
-const pageLoaders: (() => Promise<unknown>)[] = []
-function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) {
-  pageLoaders.push(load)
+// M1b: the tab bar's pages (Today, Inbox, Calendar, Tasks) are then fetched in the background once the signed-in
+// shell is idle (lib/pageWarm, AppLayout), so switching tabs never shows the blank fallback. iOS PWA (2026-10-29):
+// only those — every other page loads when it's opened (from the service worker's cache once it has been).
+function page<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K, warm = false) {
+  if (warm) warmLater(load)
   return lazy(() => load().then((m) => ({ default: m[name] })))
 }
 // Motion 2c/2d: a page that drags holds the drag world (components/drag + @dnd-kit), loaded with it —
 // not with the shell; the sidebar's filing spots join it through components/dragSpots.
-function dragPage<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K) {
+function dragPage<K extends string>(load: () => Promise<Record<K, ComponentType>>, name: K, warm = false) {
   const loadBoth = () => Promise.all([load(), import('./components/drag')])
-  pageLoaders.push(loadBoth)
+  if (warm) warmLater(loadBoth)
   return lazy(() =>
     loadBoth().then(([m, { DragShell }]) => {
       const Page: ComponentType = m[name]
@@ -39,10 +41,10 @@ function dragPage<K extends string>(load: () => Promise<Record<K, ComponentType>
     }),
   )
 }
-const TodayPage = dragPage(() => import('./features/today/TodayPage'), 'TodayPage')
-const InboxPage = dragPage(() => import('./features/inbox/InboxPage'), 'InboxPage')
-const TasksPage = dragPage(() => import('./features/tasks/TasksPage'), 'TasksPage')
-const CalendarPage = page(() => import('./features/calendar/CalendarPage'), 'CalendarPage')
+const TodayPage = dragPage(() => import('./features/today/TodayPage'), 'TodayPage', true)
+const InboxPage = dragPage(() => import('./features/inbox/InboxPage'), 'InboxPage', true)
+const TasksPage = dragPage(() => import('./features/tasks/TasksPage'), 'TasksPage', true)
+const CalendarPage = page(() => import('./features/calendar/CalendarPage'), 'CalendarPage', true)
 const TaskEditorPage = page(() => import('./features/calendar/TaskEditorPage'), 'TaskEditorPage')
 const CreatePage = page(() => import('./features/calendar/CreatePage'), 'CreatePage')
 const RoutinesPage = page(() => import('./features/routines/RoutinesPage'), 'RoutinesPage')
@@ -71,8 +73,10 @@ const GuidePage = page(() => import('./features/guide/GuidePage'), 'GuidePage')
 const NotebookPage = page(() => import('./features/notebook/NotebookPage'), 'NotebookPage')
 // J-11: public, outside RequireAuth/OnboardingGate so a recovery session isn't bounced to /today.
 const ResetPage = page(() => import('./features/auth/ResetPage'), 'ResetPage')
-// Not a page: the phone task sheet AppLayout lazy-loads. Warmed with the pages so the first tap opens it at once.
-pageLoaders.push(() => import('./features/tasks/TaskSheet'))
+// Not a page: the phone task sheet AppLayout lazy-loads. Warmed with the tab pages so the first tap on a row opens it at once.
+warmLater(() => import('./features/tasks/TaskSheet'))
+// iOS PWA: the Add to Home Screen guide (iOS Safari only; components/InstallGuide).
+const InstallGuide = lazy(() => import('./components/InstallGuide').then((m) => ({ default: m.InstallGuide })))
 // The Windows tray's windows (src-tauri tray.rs) aren't routes here: they're tray.html, their own small
 // entry (features/tray/entry.tsx), so they never load the shell or warm these pages.
 
@@ -188,11 +192,15 @@ router.subscribe((state) => {
   lastIdx = idx
 })
 
-if (typeof window !== 'undefined') {
-  const idle = window.requestIdleCallback ?? ((run: () => void) => window.setTimeout(run, 1000))
-  const preload = () => idle(() => pageLoaders.forEach((load) => void load().catch(() => {}))) // offline or a stale deploy: the page loads on demand later
-  if (document.readyState === 'complete') preload()
-  else window.addEventListener('load', preload, { once: true })
+// iOS Safari, not yet on the Home Screen: the guide comes up once the first page has settled (gently, not at load).
+if (typeof window !== 'undefined' && offerInstallNow()) window.setTimeout(openInstallGuide, 2500)
+function InstallGuideHost() {
+  const open = useInstallGuide((s) => s.open)
+  return open ? (
+    <Suspense fallback={null}>
+      <InstallGuide />
+    </Suspense>
+  ) : null
 }
 
 // M1b: Android Back (lib/androidBack.ts) — only the Capacitor shell has one.
@@ -213,6 +221,7 @@ function App() {
     <PersistQueryClientProvider client={queryClient} persistOptions={{ persister: idbPersister }}>
       <AuthProvider>
         <RouterProvider router={router} />
+        <InstallGuideHost />
       </AuthProvider>
     </PersistQueryClientProvider>
   )

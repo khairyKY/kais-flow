@@ -70,7 +70,7 @@ import { LabelChips } from '../tasks/TaskRow'
 import { useRowGrammar, type RowGrammarOptions } from '../tasks/useRowGrammar'
 import type { BulkActions } from '../tasks/TaskMenu'
 import { useOpenTask } from '../tasks/openTask'
-import { DeskRitualHead, ReviewCard, type CardHead } from './DayCard'
+import { DeskRitualHead, RitualCard, ReviewCard, type CardHead } from './DayCard'
 import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
 import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
@@ -78,7 +78,7 @@ import { useStarEvents } from './api'
 import { useStartFocus } from './startFocus'
 import { useFocusNow } from './focusNow'
 import { JUST_DONE_MS, nowBlock, nowState, type NowState } from './nowCard'
-import { blockMeta, blockOf, dayCounts, foldOpen, projectTag, reviewDue, ribbonPct, ribbonSpan, span, top3Planned, topCard, upNextItems, RIBBON_FROM_MIN, RIBBON_TO_MIN } from './todayLayout'
+import { blockMeta, blockOf, dayCounts, dayLoad, foldOpen, projectTag, reviewDue, ribbonPct, ribbonSpan, span, top3Planned, topCard, upNextItems, RIBBON_FROM_MIN, RIBBON_TO_MIN } from './todayLayout'
 import { filterByList, taskDayDiff } from '../tasks/grouping'
 import { flushOutbox, useOutboxMarks } from '../../lib/outbox'
 import { queryClient } from '../../lib/queryClient'
@@ -97,7 +97,7 @@ import { MAX_SEEDS } from '../rituals/loopDay'
 import { useJournalEntries } from '../journal/api'
 import { useMinuteNow } from './useMinuteNow'
 import { captureFor, dayBlocks, dayBounds, dayHeading, dayName, dayNoon, dayWord, futureTasks, pastTasks, viewDay } from './dayView'
-import { NowPanel, RitualsPanel, usePhoneView, ViewSwitch } from './PhoneHome'
+import { NowPanel, RitualsPanel, Top3Head, usePhoneView, ViewSwap } from './PhoneHome'
 import { DayStripView } from './DayStripView'
 
 // The 2a capture pill's mic: the voice sheet, loaded on first use (as the tray does).
@@ -182,8 +182,10 @@ function TodayView({ nav }: { nav: DayNav }) {
     return s
   })
   const isMobile = useIsMobile()
-  // phone-today: the phone's Now (B) / Day switch, per device.
-  const [phoneView, setPhoneView] = usePhoneView()
+  // phone-today: the phone's Now (B) / Day view, per device — set in Settings → Appearance (today-v2).
+  const [phoneView] = usePhoneView()
+  // today-v2 (over warning D): the Top 3 header tapped open — how it's counted, and Tomorrow on each pick.
+  const [loadOpen, setLoadOpen] = useState(false)
   // DS-CHANGELOG §3 Offline: a phone row not yet synced carries a pending ring while offline.
   const online = useOnline()
   const { pending: pendingIds } = useOutboxMarks('tasks')
@@ -694,11 +696,16 @@ function TodayView({ nav }: { nav: DayNav }) {
       const slot = slotLabel(t, now)
       return slot ? [slot] : undefined
     }
-    const row = (t: Task, extra: { pick?: boolean; n?: number; noFact?: boolean; place?: RowGrammarOptions['place'] } = {}) => (
+    const row = (t: Task, extra: { pick?: boolean; n?: number; noFact?: boolean; place?: RowGrammarOptions['place']; tomorrow?: () => void } = {}) => (
       <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact slim meta={slimMeta(t)} pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
     const openBlock = (e: CalendarEvent) => (e.task_id && taskById.has(e.task_id) ? openTask(e.task_id) : navigate(eventPath(e)))
     const planned = top3Planned(top3InOrder, events, now)
+    // today-v2 (Kai 2026-10-29, over warning D): during the day (planned, not the evening), the Top 3 header
+    // weighs the plan against the free time left — v1.5.0's workload count (./todayLayout dayLoad). Nothing
+    // planned (the Plan my day card) or the evening: the plain note, as before.
+    const load = day.state.phase === 'now' && !empty ? dayLoad(top3InOrder.filter((t) => !t.completed_at), events, now, doneTaskIds) : null
+    const moveOn = !!load && loadOpen
     const goalMeta = goal && (blockMetaFor(goal, events, now)?.[0] ?? (goal.duration_min != null ? formatDuration(goal.duration_min) : undefined))
     const listsReady = !tasksPending && !(tasksQuery.isError && tasks.length === 0)
     const goalNode = tasksPending ? (
@@ -725,12 +732,17 @@ function TodayView({ nav }: { nav: DayNav }) {
         } : undefined}
       />
     )
+    // today-v2 (Kai 2026-10-29): the Plan my day card is back, in the top panel's place, while nothing is
+    // planned — v1.5.0's rule (./todayLayout topCard → 'plan'): the morning ritual not finished and the Top 3
+    // not yet counting as planned (./dayPhase isPlanned), before 17:00, and nothing running, over, paused or
+    // just done. Once planned, the Now card (or the Day bar) is back. Rituals · Begin stays as well.
+    const planFirst = card === 'plan'
     const rituals = <RitualsPanel morning={day.morning} evening={day.evening} now={now} routines={{ done: routinesDone, total: routinesTotal }} onOpen={openRitual} />
     return (
       <div className="tp tp-home">
         <Fireflies phone />
         <PhoneBar title={dateLabelShort} nav={nav} rituals={{ morning: day.morning, evening: day.evening, onOpen: openRitual }} />
-        <PhoneDayStrip nav={nav}><ViewSwitch view={phoneView} onChange={setPhoneView} /></PhoneDayStrip>
+        <PhoneDayStrip nav={nav} />
         {!online && <div className="tp-home-in" style={{ paddingBottom: 8 }}><OfflineChip /></div>}
         {phoneSlip && <NowSlip state={phoneSlip} sel={headTask ? rowSelection(headTask) : {}} />}
 
@@ -744,7 +756,9 @@ function TodayView({ nav }: { nav: DayNav }) {
           </div>
         ) : (
           <div className="tp-home-in">
-            {eventsPending ? <div className="tp-nn"><Skeleton rows={2} /></div> : phoneView === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />}
+            {eventsPending ? <div className="tp-nn"><Skeleton rows={2} /></div> : planFirst ? (
+              <RitualCard kind="plan" panel day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} sweepCount={open.length} onOpenRitual={openRitual} />
+            ) : <ViewSwap view={phoneView} render={(v) => (v === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />)} />}
             {!tasksPending && <FirstTodayHint style={{ padding: '8px 8px 0' }} />}
             {!tasksPending && reviewToday && <ReviewCard />}
             {birthdayCards.length > 0 && <div style={{ paddingTop: 12 }}>{birthdayCards}</div>}
@@ -756,12 +770,14 @@ function TodayView({ nav }: { nav: DayNav }) {
                 <div className="tp-pn-gap"><ErrorCard message="Couldn't load your tasks." onRetry={() => void tasksQuery.refetch()} /></div>
               ) : tasksPending ? (
                 <div className="tp-pn tp-pn-gap"><Skeleton rows={2} /></div>
-              ) : (top3.length === 0 || restTop3.length > 0) && (
+              ) : (top3.length === 0 || restTop3.length > 0 || (load?.over ?? 0) > 0) && (
                 <>
-                  <div className="tp-pt">Top 3{planned > 0 && <span className="tp-pt-note"> · {span(planned)} planned</span>}<Link to="/tasks" className="tp-pt-link">All tasks</Link></div>
-                  <div className="tp-pn">
-                    {top3.length === 0 ? <div className="tp-pn-quiet">Nothing starred for today yet.</div> : restTop3.map((t, i) => row(t, { pick: true, n: i + 2, place: placeOf(t) }))}
-                  </div>
+                  <Top3Head load={load} planned={planned} open={moveOn} onToggle={() => setLoadOpen((o) => !o)} />
+                  {(top3.length === 0 || restTop3.length > 0) && (
+                    <div className="tp-pn">
+                      {top3.length === 0 ? <div className="tp-pn-quiet">Nothing starred for today yet.</div> : restTop3.map((t, i) => row(t, { pick: true, n: i + 2, place: placeOf(t), tomorrow: moveOn && !t.completed_at ? () => moveToTomorrowWithUndo([t]) : undefined }))}
+                    </div>
+                  )}
                 </>
               )}
               {tended && (
@@ -1042,7 +1058,7 @@ function DayHead({ nav, label, children }: { nav: DayNav; label: string; childre
 
 /** Phone: the strip under the bar — ‹ yesterday · the picker (+ Back to today while away) · tomorrow ›.
  * No page swipe: the rows own the sideways swipe (SwipeRow), and the screen edge is Android's Back. */
-function PhoneDayStrip({ nav, children }: { nav: DayNav; /** Today's Now / Day switch, in the picker's place. */ children?: React.ReactNode }) {
+function PhoneDayStrip({ nav }: { nav: DayNav }) {
   const here = nav.day ?? nav.today
   const name = (k: string) => (k === nav.today ? 'Today' : dayName(k, nav.today))
   return (
@@ -1053,8 +1069,8 @@ function PhoneDayStrip({ nav, children }: { nav: DayNav; /** Today's Now / Day s
       </button>
       <span className="tp-daynav-mid">
         {nav.day && <button type="button" className="tp-day-back" onClick={() => nav.go(null)}><span>Back to today</span></button>}
-        {/* Today: the Now / Day switch takes the picker's place (Day strip options 4); the date title opens the picker. */}
-        {children ?? <DayPickButton nav={nav} className="tp-icon" label="Pick a day"><Icon name="pickdate" /></DayPickButton>}
+        {/* today-v2 (Kai 2026-10-29): the picker is back in the middle; the Now / Day switch lives in Settings → Appearance. */}
+        <DayPickButton nav={nav} className="tp-icon" label="Pick a day"><Icon name="pickdate" /></DayPickButton>
       </span>
       <button type="button" className="tp-day-step" aria-label="Next day" onClick={() => nav.step(1)}>
         <span>{name(addDays(here, 1))}</span>
@@ -2216,8 +2232,10 @@ function DoneCheck({ task, size }: { task: Task; size: number }) {
   )
 }
 
-function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noFact, highlighted, pick, block, meta, pending, inProgress = false, place, star, ...sel }: {
+function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noFact, highlighted, pick, block, meta, pending, inProgress = false, place, star, tomorrow, ...sel }: {
   task: Task
+  /** today-v2 (over warning D): the Top 3 header is open — a slim row offers Tomorrow in its ⋯'s place. */
+  tomorrow?: () => void
   /** phone-today B: one 44px line — [n][check][title][dot · one fact][⋯]. With `compact`. */
   slim?: boolean
   /** A Top 3 row's place number (2, 3). */
@@ -2311,10 +2329,12 @@ function TaskRow({ task, projectName, dot, border, hollow, compact, slim, n, noF
           {subs}
           {projectName && <span className="tp-dot" style={{ background: dot }} title={projectName} />}
           {fact}
-          {!done && !!task.labels?.length && <LabelChips labels={task.labels} />}
+          {/* today-v2 (Kai 2026-10-29): no label chips on the phone home's rows — one fact per row, as B drew it. */}
           {pending && <span className="tp-pending">Pending</span>}
         </span>
-        {!g.selecting && <RowMenuButton title={task.title} onOpen={g.openMenu} />}
+        {!g.selecting && (tomorrow ? (
+          <button type="button" className="tp-pbtn tp-tmrw" aria-label={`Move “${task.title}” to tomorrow`} onClick={tomorrow}>Tomorrow</button>
+        ) : <RowMenuButton title={task.title} onOpen={g.openMenu} />)}
       </SwipeRow>
       <SubtaskNest show={nestOpen} parent={task} phone rule />
       </>

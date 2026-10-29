@@ -25,10 +25,13 @@ import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readV
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
 import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
 import { isCapacitorShell, isNativeShell, openExternal } from '../../lib/platform'
+import { isIOS, isIOSSafari, openInstallGuide, persistStorage, storageState, type StorageState } from '../../lib/iosPwa'
+import { inPlainBrowser } from '../../lib/appUpdate'
 import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_shared/github.ts'
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { useMcpKey, createMcpKey, deleteMcpKey, setMcpPersonal, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
+import { useWidgetLinks, createWidgetLink, setWidgetTicking, revokeWidgetLink, type WidgetLinkRow } from './widgetLinks'
 import { useScansToday } from '../paper/api'
 import { DAILY_PAGES, scansLeft } from '../paper/paperMath'
 import { usePaperStore } from '../paper/paperStore'
@@ -44,11 +47,14 @@ import { QUIET_FROM, QUIET_TO } from '../../../../supabase/functions/notify/copy
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { widgetsAvailable } from '../widgets/native'
 import { useHideTitles } from '../widgets/bridge'
-import { readLock, writeLock } from '../lockscreen/native'
+import { openLockSettings, readLock, writeLock } from '../lockscreen/native'
+import { hasStatus, lockStatus } from '../lockscreen/status'
+import { timeText } from '../calendar/eventTime'
 import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
 import { readViewOptions, writeViewOptions, type CalViewOptions } from '../calendar/ViewOptionsPopover'
+import { readPhoneView, writePhoneView, type PhoneView } from '../today/phoneView'
 import { CALENDAR_SHORTCUTS, COMMAND_BAR_SHORTCUTS, GLOBAL_SHORTCUTS } from '../../lib/shortcuts'
 import type { ShortcutEntry } from '../../lib/pageShortcutsStore'
 import { useSignOut } from '../auth/useSignOut'
@@ -292,6 +298,9 @@ function AppearanceCard() {
   const [animOn, setAnimOn] = useState(readEffectsOn)
   const osReduced = usePrefersReducedMotion()
   const grain = useGrain()
+  const phone = useIsMobile()
+  // today-v2 (Kai 2026-10-29): the phone home's Now / Day switch, moved off Today. Kept per device.
+  const [homeView, setHomeView] = useState(readPhoneView)
 
   return (
     <SCard id="settings-Appearance">
@@ -330,6 +339,19 @@ function AppearanceCard() {
           }}
         />
       </Row>
+      {phone && (
+        <Row label="Phone home shows" help={homeView === 'day' ? 'Today opens on the whole day in one bar' : 'Today opens on what’s on now and the next two'} keys="today home now day view bar" device>
+          <Segmented<PhoneView>
+            label="Phone home shows"
+            value={homeView}
+            onChange={(v) => {
+              setHomeView(v)
+              writePhoneView(v)
+            }}
+            options={[{ value: 'now', label: 'Now' }, { value: 'day', label: 'Day' }]}
+          />
+        </Row>
+      )}
       {/* Punch 55 (D-3, Kai 2026-07-26): the Accent row was four decorative swatches with no
           handler — removed for v1; a real accent picker ships in v2. */}
     </SCard>
@@ -797,7 +819,17 @@ function NotificationRow({ glyph, label, help, keys, children }: { glyph: ReactN
   )
 }
 
-const timeStyle = (on: boolean): CSSProperties => ({ width: 84, boxSizing: 'border-box', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 'var(--radius-md)', padding: '8px 10px', opacity: on ? 1 : 0.5 })
+const timeStyle = (on: boolean): CSSProperties => ({ width: 84, boxSizing: 'border-box', fontFamily: 'var(--font-mono)', fontSize: 'max(var(--field-min), 12px)', color: 'var(--ink-body)', background: 'var(--paper-bone)', border: '1px solid var(--line-control)', borderRadius: 'var(--radius-md)', padding: '8px 10px', opacity: on ? 1 : 0.5 })
+
+/** iPhone notifications (F15, F29): no buttons — a tap opens the reminder's task; the iPhone's own sound, not the
+ * app's pack; quiet hours still hold (the server keeps them). */
+const IOS_NOTICE_NOTE = ' · On iPhone a notification has no buttons — tap it to open the task — and plays the iPhone’s own sound'
+
+/** A prompt that came back without a yes: where to change it, said for this device (F14). */
+function permissionLine(p: NotificationPermission): string {
+  if (p === 'denied') return isIOS() ? 'Notifications are off for Kai’s Flow — turn them on in the iPhone’s Settings → Notifications → Kai’s Flow, then try again.' : 'Notifications are blocked for this site — allow them in the browser’s site settings, then try again.'
+  return 'Notifications weren’t allowed — tap Subscribe this device again to answer.'
+}
 
 function NotificationsCard() {
   const { data: s } = useAppSettings()
@@ -822,6 +854,13 @@ function NotificationsCard() {
         await unsubscribeThisDevice()
         setMessage('This device won’t get notifications any more.')
       } else {
+        // iOS shows the permission prompt only for a request made inside the tap: it is this handler's first
+        // await (subscribeThisDevice's own awaits come after, once it's answered).
+        const permission = typeof Notification === 'undefined' ? 'default' : await Notification.requestPermission()
+        if (permission !== 'granted') {
+          setMessage(permissionLine(permission))
+          return
+        }
         await subscribeThisDevice()
         setMessage('This device gets notifications now.')
       }
@@ -935,13 +974,19 @@ function NotificationsCard() {
     ) : (
       <SCard title="This browser" note="web only" device>
         {!supported ? (
-          <Row label="Notifications in this browser" help="Not supported here. On iPhone, add the app to your home screen first (Share → Add to Home Screen)" keys="push notification" />
+          <Row label="Notifications in this browser" help="Not supported here. On iPhone, add the app to your home screen first (Share → Add to Home Screen)" keys="push notification">
+            {isIOSSafari() && inPlainBrowser() && (
+              <Button variant="secondary" onClick={openInstallGuide}>
+                Show me how
+              </Button>
+            )}
+          </Row>
         ) : (
           <Row
             label={`${subs.length} device${subs.length === 1 ? '' : 's'} subscribed`}
             find="This browser: get notifications here"
-            keys="push notification subscribe unsubscribe device"
-            help={subs.length ? subs.map((d) => (d.device_label === thisDeviceLabel ? 'this device ✓' : (d.device_label ?? 'device').slice(0, 20))).join(' · ') : 'None yet'}
+            keys="push notification subscribe unsubscribe device iphone"
+            help={`${subs.length ? subs.map((d) => (d.device_label === thisDeviceLabel ? 'this device ✓' : (d.device_label ?? 'device').slice(0, 20))).join(' · ') : 'None yet'}${isIOS() ? IOS_NOTICE_NOTE : ''}`}
           >
             <Button variant="secondary" onClick={handleSubscribe} disabled={busy}>
               {subscribed ? 'Unsubscribe this device' : 'Subscribe this device'}
@@ -958,6 +1003,12 @@ function NotificationsCard() {
  * per device, so each row says This device. Hidden on an APK from before it (no window.KaisFlowLock). */
 function LockScreenRows() {
   const [lock, setLock] = useState(readLock)
+  // v161: back from a system screen (Open settings), the status says what changed.
+  useEffect(() => {
+    const on = () => document.visibilityState === 'visible' && setLock(readLock())
+    document.addEventListener('visibilitychange', on)
+    return () => document.removeEventListener('visibilitychange', on)
+  }, [])
   if (!lock) return null
   const set = (nowBar: boolean, dayStrip: boolean) => {
     writeLock(nowBar, dayStrip)
@@ -982,12 +1033,69 @@ function LockScreenRows() {
         under={
           <ol data-kf-lockstar-steps className="st-note" style={{ margin: 0, padding: '0 0 0 18px', listStyle: 'decimal' }}>
             <li>Install Good Lock from the Galaxy Store, then LockStar inside it.</li>
-            <li>In LockStar, turn it on and tap the lock screen to edit it.</li>
+            <li>In LockStar, turn it on and tap the lock screen to edit it (on One UI 7 and later: long-press the lock screen, then LockStar).</li>
             <li>Tap Widgets › Kai’s Flow › Top 3 · lock screen, and place it under the clock.</li>
           </ol>
         }
       />
+      {hasStatus(lock) && (
+        <Row
+          device
+          label="Lock screen status"
+          help="Whether each is on your lock screen now, and if not, what’s in the way"
+          keys="lock screen status now bar day strip widget live notifications not working samsung"
+          under={
+            <ul data-kf-lock-status className="st-note" style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 'var(--sp-2)' }}>
+              {lockStatus(lock, (ms) => timeText(new Date(ms))).map((l) => (
+                <li key={l.id} data-lock={l.id} data-ok={l.ok} style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
+                  <span style={{ flex: '1 1 200px' }}>
+                    <b>{l.name}:</b> {l.ok ? 'Active. ' : ''}{l.text}
+                  </span>
+                  {l.open && (
+                    <Button variant="secondary" onClick={() => openLockSettings(l.open!)}>
+                      Open settings
+                    </Button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          }
+        />
+      )}
     </>
+  )
+}
+
+/** Settings → About → This device, the web app (iOS PWA 2026-10-29): whether this device's storage is kept (the
+ * outbox of unsent changes lives there — lib/iosPwa persistStorage), and on iPhone Safari the way to the Home Screen. */
+function WebDeviceCard() {
+  const [storage, setStorage] = useState<StorageState | null>(null)
+  useEffect(() => {
+    void storageState().then(setStorage)
+  }, [])
+  const iosTab = isIOSSafari() && inPlainBrowser()
+  const help =
+    storage === 'persisted' ? 'Kept — this device won’t clear it to make room'
+    : storage === 'best-effort' ? (isIOS() ? 'Can be cleared when the phone runs low on space · on the Home Screen, iPhone keeps it' : 'Can be cleared when the device runs low on space')
+    : storage === 'unsupported' ? 'This browser doesn’t say'
+    : 'Checking…'
+  return (
+    <SCard title="This device" note="web only" device>
+      <Row label="Storage" help={help} keys="storage offline persist evict outbox">
+        {storage === 'best-effort' && (
+          <Button variant="secondary" onClick={() => void persistStorage().then(setStorage)}>
+            Keep it
+          </Button>
+        )}
+      </Row>
+      {iosTab && (
+        <Row label="Add to Home Screen" help="Reminders, the full screen and offline saving need it on iPhone" keys="install home screen iphone ios pwa">
+          <Button variant="secondary" onClick={openInstallGuide}>
+            Show me how
+          </Button>
+        </Row>
+      )}
+    </SCard>
   )
 }
 
@@ -1022,6 +1130,7 @@ function DeviceSections() {
           </Row>
         </SCard>
       )}
+      {!isNativeShell() && <WebDeviceCard />}
       {widgets && (
         <SCard title="On this phone" note="Android app only" device>
           <Row label="Hide titles on the home screen" help="Widgets say “Your goal” · “Pick 2”" keys="widgets privacy android">
@@ -1029,7 +1138,77 @@ function DeviceSections() {
           </Row>
         </SCard>
       )}
+      <WidgetLinksCard />
     </>
+  )
+}
+
+// Windows desktop (features/settings/widgetLinks.ts, function `widget`, migration 0090): Widget links for
+// Rainmeter skins — the AI key's shown-once flow, one link per computer, each revoked on its own. Shown
+// everywhere: the links are the account's, not this device's.
+function WidgetLinksCard() {
+  const { data: links = [] } = useWidgetLinks()
+  const [label, setLabel] = useState('Desktop')
+  const [canTick, setCanTick] = useState(false)
+  const [shown, setShown] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [revoking, setRevoking] = useState<WidgetLinkRow | null>(null)
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
+    setErr(null)
+    try { await fn() } catch { setErr('That didn’t save — check the connection and try again.') } finally { setBusy(false) }
+  }
+  const copy = (text: string) =>
+    void navigator.clipboard.writeText(text).then(
+      () => useToastStore.getState().push({ message: 'Link copied' }),
+      () => setErr('Couldn’t reach the clipboard — select the link and copy it by hand.'),
+    )
+  return (
+    <SCard id="settings-WindowsDesktop" padded title="Windows desktop" sub="A Widget link lets Rainmeter widgets show today’s plan on your desktop — paste it into a Kai’s Flow skin. Anyone with the link can see today, so revoke one you no longer use.">
+      {links.map((l, n) => (
+        <Row key={l.id} label={l.label} help={`Made ${day(l.created_at)} · ${l.last_used_at ? `last used ${day(l.last_used_at)}` : 'not used yet'} · ${l.can_tick ? 'can tick tasks off' : 'read only'}`} keys="widget link rainmeter desktop" style={n === 0 ? { borderTop: 'none' } : undefined}>
+          <Toggle on={l.can_tick} label={`Allow ticking with ${l.label}`} disabled={busy} onToggle={() => void run(() => setWidgetTicking(l.id, !l.can_tick))} />
+          <Button variant="ghost" disabled={busy} onClick={() => setRevoking(l)}>Revoke</Button>
+        </Row>
+      ))}
+      {!links.length && !shown && <div className="st-help">No Widget links yet</div>}
+      {shown && (
+        <>
+          <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', marginTop: 8 }}>Your Widget link — copy it now, it won’t be shown again:</div>
+          <div className="st-mono-box" style={{ color: 'var(--ink-body)', wordBreak: 'break-all' }}>{shown}</div>
+          <div className="st-btns" style={{ marginTop: 8 }}>
+            <Button variant="secondary" onClick={() => copy(shown)}>Copy link</Button>
+          </div>
+        </>
+      )}
+      <Row label="New link" help="Name it after the computer it’s for" keys="widget link rainmeter desktop create">
+        <input className="st-field" value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} aria-label="Widget link name" />
+      </Row>
+      <Row label="Allow ticking" help={canTick ? 'The widgets can also tick tasks off' : 'Read only: the widgets can look, never change anything'} keys="widget tick complete">
+        <Toggle on={canTick} label="Allow ticking for the new link" onToggle={() => setCanTick(!canTick)} />
+      </Row>
+      <div className="st-btns">
+        <Button variant="secondary" disabled={busy || !label.trim()} onClick={() => void run(async () => setShown(await createWidgetLink(label, canTick)))}>Create link</Button>
+      </div>
+      {/* Revoking can't be undone (only the hash is stored) — a short confirm, as Turn off for the AI key. */}
+      {revoking && (
+        // ds-ok: revoking a link can't be undone (only its hash is stored), so it asks first
+        <ConfirmCard
+          title={`Revoke “${revoking.label}”?`}
+          body="Widgets using it stop updating. A new link can be made any time, but this one can't come back."
+          confirmLabel="Revoke"
+          onCancel={() => setRevoking(null)}
+          onConfirm={() => {
+            const l = revoking
+            setRevoking(null)
+            void run(async () => { await revokeWidgetLink(l.id); setShown(null) })
+          }}
+        />
+      )}
+      {err && <div className="st-help" style={{ color: 'var(--acc-terra-ink)', marginTop: 8 }}>{err}</div>}
+    </SCard>
   )
 }
 
