@@ -88,8 +88,11 @@
 /* ── The grid: 64px hours, a 60px hour gutter, solid hour lines (B, D8). ── */
 .pc-grid { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--paper-parchment); border-top: 1px solid var(--line-card); }
 .pc-colhead { flex: none; height: 32px; display: flex; padding-left: 60px; border-bottom: 1px solid var(--line-card); }
-.pc-colhead > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
-.pc-colhead > span.is-today { color: var(--acc-terra-ink); }
+/* cal-scroll: the neighbours' day names ride their own panes as the columns do. */
+.pc-colhead { position: relative; overflow-x: clip; }
+.pc-colhead-pane { position: absolute; top: 0; bottom: 0; width: calc(100% - 60px); display: flex; }
+.pc-colhead > span, .pc-colhead-pane > span { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); white-space: nowrap; }
+.pc-colhead span.is-today { color: var(--acc-terra-ink); }
 .pc-allday { flex: none; display: flex; gap: var(--sp-1); padding: var(--sp-1) var(--sp-1) var(--sp-1) 60px; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--line-card); }
 .pc-allday-chip {
   position: relative; flex: none; max-width: 100%; height: 32px; padding: 0 10px; border: none; border-radius: var(--radius-block); cursor: pointer;

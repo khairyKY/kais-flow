@@ -313,7 +313,11 @@ expect "the series skips that start" "{2028-01-19T07:30:00.000Z}" "$(sql -c "sel
 expect "a one-off copy linked to the series takes the change" "1 MCP standup 2028-01-20 14:00:00+00 2028-01-20 14:15:00+00 - event" \
   "$(sql -c "select concat_ws(' ', count(*), min(title), min(starts_at), min(ends_at), coalesce(min(recurrence_rule), '-'), min(type)) from calendar_events where series_id = '$S1' and deleted_at is null")"
 export C1; C1=$(sql -c "select id from calendar_events where series_id = '$S1'")
-call "the whole series: 10:00 and a new title" "$KA" edit_event '{id: env.S1, start: "2028-01-17T10:00", title: "MCP standup v2"}'
+# cal-clicks: a series change without "occurrence" asks which occurrences are meant — scope "all" is the whole series.
+refused "the series with no occurrence and no scope" "$KA" edit_event '{id: env.S1, title: "MCP standup v2"}' 'repeats: give "occurrence"'
+expect "nothing written" "MCP standup " "$(sql -c "select title from calendar_events where id = '$S1'") $(logs)"
+refused "repeat on one occurrence (scope this)" "$KA" edit_event '{id: env.S1, occurrence: "2028-01-17T09:30", repeat: "FREQ=DAILY"}' '"repeat" belongs to the series'
+call "the whole series: 10:00 and a new title" "$KA" edit_event '{id: env.S1, scope: "all", start: "2028-01-17T10:00", title: "MCP standup v2"}'
 expect "changed" 'title → "MCP standup v2" | time → 10:00–10:15, every occurrence' "$(changed)"
 expect "logged" "calendar_event.updated/mcp" "$(logs)"
 expect "row: new time, same first day; its skipped start moved with it" "MCP standup v2 2028-01-17 08:00:00+00 2028-01-17 08:15:00+00 {2028-01-19T08:00:00.000Z}" \
@@ -331,7 +335,9 @@ expect "row: live, two skips" "live {2028-01-19T08:00:00.000Z,2028-01-24T08:00:0
   "$(sql -c "select concat_ws(' ', case when deleted_at is null then 'live' else 'deleted' end, recurrence_exdates) from calendar_events where id = '$S1'")"
 call "calendar 2028-01-24..30" "$KA" calendar '{from: "2028-01-24", to: "2028-01-30"}'
 expect "the series: Wed only" "2028-01-26 10:00" "$(j '[.events[] | select(.id == env.S1) | .start] | join(",")')"
-call "the whole series" "$KA" delete_event '{id: env.S1}'
+refused "the series with no occurrence and no scope" "$KA" delete_event '{id: env.S1}' 'repeats: give "occurrence"'
+expect "nothing written" "live " "$(sql -c "select case when deleted_at is null then 'live' else 'deleted' end from calendar_events where id = '$S1'") $(logs)"
+call "the whole series" "$KA" delete_event '{id: env.S1, scope: "all"}'
 expect "changed" "the whole series moved to Trash, with 1 occurrence moved out of it" "$(changed)"
 expect "logged: the series and its moved-out one" "calendar_event.deleted/mcp calendar_event.deleted/mcp" "$(logs)"
 expect "both in Trash" "2" "$(sql -c "select count(*) from calendar_events where (id = '$S1' or series_id = '$S1') and deleted_at is not null")"

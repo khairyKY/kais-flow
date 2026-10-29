@@ -51,6 +51,7 @@ import { TimeField } from '../calendar/TimeField'
 import { useDeletedItems } from '../trash/api'
 import { appZone, deviceZone, isZone, searchZones, zoneCity } from '../../lib/appZone'
 import { readViewOptions, writeViewOptions, type CalViewOptions } from '../calendar/ViewOptionsPopover'
+import { readPhoneView, writePhoneView, type PhoneView } from '../today/phoneView'
 import { CALENDAR_SHORTCUTS, COMMAND_BAR_SHORTCUTS, GLOBAL_SHORTCUTS } from '../../lib/shortcuts'
 import type { ShortcutEntry } from '../../lib/pageShortcutsStore'
 import { useSignOut } from '../auth/useSignOut'
@@ -294,6 +295,9 @@ function AppearanceCard() {
   const [animOn, setAnimOn] = useState(readEffectsOn)
   const osReduced = usePrefersReducedMotion()
   const grain = useGrain()
+  const phone = useIsMobile()
+  // today-v2 (Kai 2026-10-29): the phone home's Now / Day switch, moved off Today. Kept per device.
+  const [homeView, setHomeView] = useState(readPhoneView)
 
   return (
     <SCard id="settings-Appearance">
@@ -332,6 +336,19 @@ function AppearanceCard() {
           }}
         />
       </Row>
+      {phone && (
+        <Row label="Phone home shows" help={homeView === 'day' ? 'Today opens on the whole day in one bar' : 'Today opens on what’s on now and the next two'} keys="today home now day view bar" device>
+          <Segmented<PhoneView>
+            label="Phone home shows"
+            value={homeView}
+            onChange={(v) => {
+              setHomeView(v)
+              writePhoneView(v)
+            }}
+            options={[{ value: 'now', label: 'Now' }, { value: 'day', label: 'Day' }]}
+          />
+        </Row>
+      )}
       {/* Punch 55 (D-3, Kai 2026-07-26): the Accent row was four decorative swatches with no
           handler — removed for v1; a real accent picker ships in v2. */}
     </SCard>
@@ -667,7 +684,7 @@ function AppUpdateCard() {
       {/* Kai 2026-10-14: the download bar's links for good, so dismissing it is never a dead end. Not in the
           Microsoft Store install: the Store updates it, and a Store app mustn't hand out its own .exe. */}
       {r?.kind !== 'store' && (
-        <Row label="Download the apps" help="Android and Windows · always the newest release" keys="android windows apk installer">
+        <Row label="Download the apps" help="Android, Windows and Mac · always the newest release" keys="android windows mac apk installer dmg">
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             <DownloadLinks />
           </div>
@@ -1016,7 +1033,6 @@ function LockScreenRows() {
   )
 }
 
-// On this computer (the Windows app) · On this phone (the Android app's widgets) — App & updates.
 /** Settings → About → This device, the web app (iOS PWA 2026-10-29): whether this device's storage is kept (the
  * outbox of unsent changes lives there — lib/iosPwa persistStorage), and on iPhone Safari the way to the Home Screen. */
 function WebDeviceCard() {
@@ -1050,8 +1066,10 @@ function WebDeviceCard() {
   )
 }
 
+// On this computer (the Windows or Mac app) · On this phone (the Android app's widgets) — App & updates.
 function DeviceSections() {
   const tauri = isTauri()
+  const mac = appPlatform() === 'mac' // the same rows, in the Mac's words
   const [trayShown, setTrayShown] = useState(readTrayShown)
   const widgets = widgetsAvailable() // the Android app's home-screen widgets
   const hideTitles = useHideTitles((h) => h.on)
@@ -1063,19 +1081,19 @@ function DeviceSections() {
   return (
     <>
       {tauri && (
-        <SCard title="On this computer" note="Windows app only" device>
-          <Row label="Show in the system tray" help="The K by the clock, with a quick flyout" keys="tray windows">
+        <SCard title="On this computer" note={mac ? 'Mac app only' : 'Windows app only'} device>
+          <Row label={mac ? 'Show in the menu bar' : 'Show in the system tray'} help={mac ? 'The K in the menu bar, with a quick flyout' : 'The K by the clock, with a quick flyout'} keys="tray windows mac menu bar">
             <Toggle
               on={trayShown}
-              label="Show in the system tray"
+              label={mac ? 'Show in the menu bar' : 'Show in the system tray'}
               onToggle={() => {
                 writeTrayShown(!trayShown)
                 setTrayShown(!trayShown)
               }}
             />
           </Row>
-          <Row label="Start with Windows" help="Opens quietly to the tray" keys="startup autostart login tray">
-            <Toggle on={!!autostart} label="Start with Windows" onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
+          <Row label={mac ? 'Open at login' : 'Start with Windows'} help={mac ? 'Opens quietly to the menu bar' : 'Opens quietly to the tray'} keys="startup autostart login tray">
+            <Toggle on={!!autostart} label={mac ? 'Open at login' : 'Start with Windows'} onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
           </Row>
         </SCard>
       )}
@@ -1192,7 +1210,7 @@ function LegalCard() {
       </Row>
       <Row
         label="What we keep, and where"
-        help="Your account and what you write: Supabase, in the EU · the AI (Groq) keeps nothing · no ads, no tracking · export it under Your data, delete it under Account"
+        help="Your account and what you write: Supabase, in the EU · the AI: Groq (US and elsewhere), set to keep nothing · no ads, no tracking · export it under Your data, delete it under Account"
         keys="privacy data storage"
       />
       {/* Shows in two places: the same switches as Integrations › AI assistants. */}

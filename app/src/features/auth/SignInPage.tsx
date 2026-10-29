@@ -1,9 +1,8 @@
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Navigate, useSearchParams } from 'react-router'
 import { supabase } from '../../lib/supabase'
 import { useToastStore } from '../../lib/toastStore'
-import { Checkbox } from '../../components/kit'
-import { LegalFooter, LegalLink, PRIVACY_URL, TERMS_URL, signupConsent } from '../legal/LegalLinks'
+import { ConsentBox, LegalFooter, signupConsent } from '../legal/LegalLinks'
 import { useOnline } from '../../lib/useOnline'
 import { OfflineChip } from '../../components/States'
 import { useAuth } from './AuthProvider'
@@ -35,10 +34,11 @@ export function SignInPage() {
   const [email, setEmail] = useState(rememberedEmail)
   const [mode, setMode] = useState<Mode>(searchParams.has('forgot') ? 'forgot' : email ? 'signin' : 'signup')
   const [password, setPassword] = useState('')
-  // Sign up asks for the Terms of Use and the Privacy Policy, ticked (docs/LEGAL.md): Create account
-  // waits for it, and the versions ride along as metadata for 0083's trigger to record.
-  const [agreed, setAgreed] = useState(false)
-  const agreeId = useId()
+  // Sign up asks for the Terms of Use and the Privacy Policy, one box each (docs/LEGAL.md): Create
+  // account waits for both, and the versions ride along as metadata for 0083's trigger to record.
+  const [terms, setTerms] = useState(false)
+  const [privacy, setPrivacy] = useState(false)
+  const agreed = terms && privacy
   const [problem, setProblem] = useState<AuthProblem | null>(null)
   const [submitting, setSubmitting] = useState(false)
   const [sentTo, setSentTo] = useState<string | null>(null)
@@ -243,14 +243,10 @@ export function SignInPage() {
           </div>
         )}
         {mode === 'signup' && (
-          // The box's own click bubbles up here, so the line is one target: a tap anywhere on it ticks
-          // (keyboard: Space on the box); its two links open the pages instead (LegalLink stops it).
-          <div className="fr-consent" onClick={() => setAgreed((a) => !a)}>
-            <Checkbox checked={agreed} size={20} labelledBy={agreeId} />
-            <span id={agreeId}>
-              I agree to the <LegalLink href={TERMS_URL}>Terms of Use</LegalLink> and the <LegalLink href={PRIVACY_URL}>Privacy Policy</LegalLink>
-            </span>
-          </div>
+          <>
+            <ConsentBox doc="terms" checked={terms} onToggle={() => setTerms((t) => !t)} className="fr-consent" />
+            <ConsentBox doc="privacy" checked={privacy} onToggle={() => setPrivacy((v) => !v)} className="fr-consent" />
+          </>
         )}
         {card}
         <Cta loading={submitting} disabled={mode === 'signup' && !agreed}>

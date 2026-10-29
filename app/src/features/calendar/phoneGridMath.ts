@@ -186,6 +186,40 @@ export function swipeStep(dx: number, velocity: number, width: number): -1 | 0 |
   return 0
 }
 
+// ── cal-scroll (Kai 2026-10-29): a swipe glides freely through days, with momentum ──
+
+/** Neighbour screens drawn either side while a swipe glides: a day's view reaches 3 days, 3 days reaches 6, a week 1 week. */
+export const glidePanes = (step: number): number => (step <= 1 ? 3 : step <= 3 ? 2 : 1)
+
+/** How quickly a fling slows (px/ms²): it carries v² / 2a further than the finger left it. */
+export const GLIDE_DECEL = 0.0025
+
+/** Where a swipe lets go to, in days: the finger's offset `dx` (px, + = towards earlier days) plus the fling's
+ * momentum (`v` px/ms), settled on a day — on a week in the week view (seven narrow columns read as its page, the
+ * strip's own) — and never past the screens drawn. A short flick that wouldn't reach the next day still moves one. */
+export function glideTarget(dx: number, v: number, width: number, cols: number, step: number): number {
+  const week = step >= 7
+  const unit = week ? width : width / Math.max(1, cols)
+  if (!(unit > 0)) return 0
+  const reach = week ? 1 : glidePanes(step) * step
+  let n = -Math.round((dx + (v * Math.abs(v)) / (2 * GLIDE_DECEL)) / unit)
+  if (!n) n = swipeStep(dx, v, unit)
+  n = Math.max(-reach, Math.min(reach, n))
+  return n * (week ? 7 : 1)
+}
+
+/** The day offset a swipe at `dx` is showing (the header and the strip follow it while the finger moves). */
+export function glidePeek(dx: number, width: number, cols: number, step: number): number {
+  const week = step >= 7
+  const unit = week ? width : width / Math.max(1, cols)
+  if (!(unit > 0)) return 0
+  const n = -Math.round(dx / unit)
+  return (n || 0) * (week ? 7 : 1)
+}
+
+/** The settle's length for `px` still to travel: a nudge is quick, a long fling glides in (ms). */
+export const glideMs = (px: number): number => Math.round(Math.min(480, Math.max(200, 160 + Math.abs(px) * 0.35)))
+
 // ── Schedule sheet (7g / 7g2) ──
 
 export interface PlaceSlot {

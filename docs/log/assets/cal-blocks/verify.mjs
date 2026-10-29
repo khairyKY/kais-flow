@@ -151,6 +151,11 @@ async function settle(state) {
     await sleep(400)
   }
 }
+/** settle(), but first wait (≤ 4 s) for a write past w0: a drop's write can trail its settle motion (motion-cal). */
+async function settleAfter(state, w0) {
+  for (let i = 0; i < 20 && state.writes.length === w0; i++) await sleep(200)
+  await settle(state)
+}
 const toastSoon = (page, msg) => page.locator('.kf-toast-msg', { hasText: msg }).first().waitFor({ timeout: 8000 }).then(() => true, () => false)
 const undo = (page, msg) => page.locator('.kf-toast', { hasText: msg }).getByRole('button', { name: 'Undo' }).first().click()
 const fcBlock = (page, n) => page.locator(`.fc-event[data-kf-id="${eid(n)}"]:not(.fc-event-mirror)`).first()
@@ -476,7 +481,7 @@ if (want('d')) {
     mid: async () => ({ copying: await page.evaluate(() => !!document.querySelector('.kf-cal-copying')), origVisible: await fcBlock(page, 13).evaluate((e) => getComputedStyle(e.closest('.fc-timegrid-event-harness')).visibility) }),
   })
   await page.keyboard.up('Control')
-  await settle(state)
+  await settleAfter(state, w0)
   const copies = posts(state, 'calendar_events', w0)
   const copy = copies.find((e) => e.id !== eid(13) && e.title === 'Lunch with Omar')
   check('d Ctrl+drag an event: mid-drag the original stays drawn (copy cursor)', mid.copying && mid.origVisible === 'visible', JSON.stringify(mid))
@@ -496,7 +501,7 @@ if (want('d')) {
   await page.keyboard.down('Control')
   await drag(page, { x: b.x + b.width / 2, y: b.y + 12 }, { x: b.x + b.width / 2, y: b.y + 12 + hp })
   await page.keyboard.up('Control')
-  await settle(state)
+  await settleAfter(state, w0)
   const t = posts(state, 'tasks', w0).find((x) => x.id !== id(GYM) && x.title === 'Gym')
   const tb = posts(state, 'calendar_events', w0).find((e) => e.task_id === t?.id)
   const lagT = tb && (Date.parse(tb.starts_at) - Date.parse(iso('11:00', 22))) / 60_000

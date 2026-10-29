@@ -366,7 +366,7 @@ if (want('ph')) {
 
 if (want('b7')) {
   const { ctx, page, errors } = await open('/calendar', { scale: 1 })
-  const more = page.locator('.cal-rail-more', { hasText: 'Lists…' })
+  const more = page.locator('.cal-rail-more', { hasText: 'Show lists' })
   const was = await more.count()
   await more.click()
   await sleep(400)

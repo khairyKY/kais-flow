@@ -25,7 +25,7 @@ export const CATS: Cat[] = [
   { id: 'data', name: 'Your data', icon: 'data', sum: 'Import from Akiflow or a CSV, export everything, Trash' },
   { id: 'privacy', name: 'Privacy & terms', icon: 'lock', sum: 'The Privacy Policy and Terms, what we keep and where' },
   { id: 'shortcuts', name: 'Shortcuts', icon: 'keyboard', sum: 'Keyboard keys, and what you can type in a task' },
-  { id: 'about', name: 'App & updates', icon: 'info', sum: 'Version, updates, what’s new, the Windows and Android apps' },
+  { id: 'about', name: 'App & updates', icon: 'info', sum: 'Version, updates, what’s new, the Windows, Mac and Android apps' },
 ]
 
 export const CAT: Record<CatId, Cat> = Object.fromEntries(CATS.map((c) => [c.id, c])) as Record<CatId, Cat>

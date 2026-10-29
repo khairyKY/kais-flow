@@ -1,5 +1,5 @@
 import { head2, icon, btn, kmark, esc } from '../lib.mjs'
-import { APP_URL, REPO, RELEASES_URL, LATEST, APK_LATEST, EXE_LATEST } from '../data.mjs'
+import { APP_URL, CONTACT_EMAIL, RELEASES_URL, LATEST, APK_LATEST, EXE_LATEST, DMG_LATEST } from '../data.mjs'
 
 const UPDATED = '17 Oct 2026'
 const pre = (t) => `<pre tabindex="0"><code>${esc(t)}</code></pre>`
@@ -34,6 +34,9 @@ const pic = {
   install: `<div class="mini" role="img" aria-label="Android asking whether to install Kai’s Flow, with Cancel and Install"><div class="mini-d"><div class="row" style="justify-content:flex-start"><span class="k">K</span><b>Kai’s Flow</b></div><div class="row" style="justify-content:flex-end;gap:14px"><span class="lnk">Cancel</span><span class="lnk">Install</span></div></div></div>`,
   exe: `<div class="mini" role="img" aria-label="The installer file in Downloads"><div class="mini-d dark"><b>kais-flow-<span data-release-tag>${LATEST.tag}</span>-windows-setup.exe</b>Downloads · ${LATEST.exeMB} MB</div></div>`,
   smart: `<div class="mini" role="img" aria-label="Windows SmartScreen: Windows protected your PC, with More info and Run anyway"><div class="mini-d" style="background:#2b5797;color:#fff"><b>Windows protected your PC</b><span style="text-decoration:underline">More info</span><div class="row" style="justify-content:flex-end;margin-top:8px"><span style="border:1px solid #fff;padding:2px 8px">Run anyway</span></div></div></div>`,
+  dmg: `<div class="mini" role="img" aria-label="The disk image: drag Kai’s Flow onto Applications"><div class="mini-d"><div class="row"><span class="k">K</span><b style="display:inline">Kai’s Flow</b><span>→</span><b style="display:inline">Applications</b></div></div></div>`,
+  blocked: `<div class="mini" role="img" aria-label="macOS: Kai’s Flow Not Opened, with Move to Trash and Done"><div class="mini-d"><b>“Kai’s Flow” Not Opened</b>Apple could not verify it is free of malware.<div class="row" style="justify-content:flex-end;gap:14px;margin-top:8px"><span class="lnk">Move to Trash</span><span class="lnk">Done</span></div></div></div>`,
+  anyway: `<div class="mini" role="img" aria-label="System Settings, Privacy and Security: Kai’s Flow was blocked, with Open Anyway"><div class="mini-d"><div class="row">“Kai’s Flow” was blocked to protect your Mac.</div><div class="row" style="justify-content:flex-end"><span style="border:1px solid currentColor;padding:2px 8px">Open Anyway</span></div></div></div>`,
   running: `<div class="mini" role="img" aria-label="The Kai’s Flow installer running"><div class="mini-d dark"><span class="k">K</span><b style="display:inline">Installing Kai’s Flow…</b><div class="bar2"><i></i></div></div></div>`,
 }
 const kbd = (k) => k.split(' ').map((x) => `<kbd>${x}</kbd>`).join(' ')
@@ -50,7 +53,7 @@ const GUIDES = [
       ['shut-down', 'Shut down in the evening', '<p>From five in the evening, Shut down offers to close the day: tick what’s done, move what isn’t, and choose tomorrow’s three.</p>'],
       ['tour', 'A short tour, and the Guide', '<p>On your first day, a few garden notes point out the main things: capture, the Top 3, your tasks and Plan my day. Skip them any time. After that, the <b>Guide</b> inside the app has the how-to for everything, with search: <b>More → Guide</b> on a phone, <b>Guide</b> at the foot of the sidebar on a computer.</p>'],
       ['clock', 'Your own clock', '<p>Today, reminders and the morning digest follow your time zone. The app offers your device’s zone once; change it any time in <b>Settings → Time zone</b>.</p>'],
-      ['next', 'Where to go next', '<ul><li><a href="/guides/install-android/">Install on Android</a> or <a href="/guides/install-windows/">on Windows</a>.</li><li><a href="/guides/import/">Bring your old app’s tasks with you</a>.</li><li><a href="/guides/gestures/">Gestures</a> and <a href="/guides/keyboard-shortcuts/">keyboard shortcuts</a>.</li><li><a href="/guides/connect-an-ai-assistant/">Connect an AI assistant</a>.</li></ul>'],
+      ['next', 'Where to go next', '<ul><li><a href="/guides/install-android/">Install on Android</a>, <a href="/guides/install-windows/">on Windows</a> or <a href="/guides/install-mac/">on a Mac</a>.</li><li><a href="/guides/import/">Bring your old app’s tasks with you</a>.</li><li><a href="/guides/gestures/">Gestures</a> and <a href="/guides/keyboard-shortcuts/">keyboard shortcuts</a>.</li><li><a href="/guides/connect-an-ai-assistant/">Connect an AI assistant</a>.</li></ul>'],
     ] },
   { slug: 'import', group: 'Start here', ic: 'download', title: 'Import your old app', blurb: 'Akiflow, Todoist, TickTick, Notion, Obsidian, Kindle, Goodreads.', min: 4,
     intro: 'Bring your tasks, projects and books with you. The file is read on your own device, and importing the same file twice doesn’t make doubles.',
@@ -154,6 +157,15 @@ const GUIDES = [
       ['tray', 'The K by the clock', '<p>Kai’s Flow keeps a K in the tray by the clock. Click it for a little flyout: what’s on now and next, your Top 3, quick capture and focus. Right-click it for a menu. Close the window and it waits there. Reminders arrive as Windows notifications with <b>Done</b> and <b>Tomorrow</b>.</p><p>All of it is in <b>Settings → Notifications</b>: <b>Show in the system tray</b>, <b>Start with Windows</b> (it opens quietly to the tray), quiet hours, and <b>Send a test notification</b>.</p>'],
       ['updating', 'Updating and removing', '<p class="tip"><b>Updating:</b> Settings → App → Check for updates tells you when there’s a new version. Press <b>Update</b>: a progress line shows, and Kai’s Flow reopens on the new version.</p><p>To remove it: Windows Settings → Apps → Kai’s Flow → Uninstall. Your data stays in your account.</p>'],
     ] },
+  { slug: 'install-mac', group: 'Installing', ic: 'laptop', title: 'Install on Mac', blurb: 'The .dmg, and Open Anyway once.', min: 3,
+    intro: 'The Mac app is the same Kai’s Flow in its own window, with a K in the menu bar. One .dmg runs on Apple silicon and Intel Macs.',
+    sections: [
+      ['download', 'Download and drag to Applications', `<p>Get it from <a href="/download/">the download page</a>, or <a href="${DMG_LATEST}">kais-flow-mac.dmg</a> from GitHub (always the newest). It’s about ${LATEST.dmgMB} MB. Open it and drag <b>Kai’s Flow</b> onto <b>Applications</b>.</p>`, pic.dmg],
+      ['first-open', 'The first time you open it', '<p>Double-click <b>Kai’s Flow</b> in Applications. The app isn’t notarized by Apple (that costs money), so macOS stops it: <b>“Kai’s Flow” Not Opened</b>, with only <b>Move to Trash</b> and <b>Done</b>. Click <b>Done</b>. Since macOS 15 Sequoia, right-click → Open no longer gets past this.</p>', pic.blocked],
+      ['open-anyway', 'Open Anyway', '<ol><li>Open <b>System Settings → Privacy &amp; Security</b> and scroll down to <b>Security</b>. It says <b>“Kai’s Flow” was blocked to protect your Mac.</b></li><li>Click <b>Open Anyway</b>. The button only shows for about an hour after you tried to open the app; if it’s gone, double-click the app again first.</li><li>Enter your Mac’s password (or use Touch ID), then click <b>Open</b>.</li></ol><p class="tip">You do this <b>once</b>. Updates install themselves from inside the app and never ask again.</p><p>Comfortable in Terminal? <code>xattr -cr "/Applications/Kai\'s Flow.app"</code> does the same.</p>', pic.anyway],
+      ['menu-bar', 'The K in the menu bar', '<p>Kai’s Flow keeps a K in the menu bar at the top of the screen. Click it for a little flyout: what’s on now and next, your Top 3, quick capture and focus. Right-click it for a menu. Close the window and it waits there; click the Dock icon to bring it back. Reminders arrive in Notification Center; if macOS asks whether Kai’s Flow may send notifications, say <b>Allow</b>.</p><p>All of it is in <b>Settings</b>: <b>Show in the menu bar</b>, <b>Open at login</b> (it opens quietly to the menu bar), quiet hours, and <b>Send a test notification</b>. Shortcuts use <kbd>⌘</kbd> where Windows uses Ctrl.</p>'],
+      ['updating', 'Updating and removing', '<p class="tip"><b>Updating:</b> Settings → App → Check for updates tells you when there’s a new version. Press <b>Update</b>: a progress line shows, and Kai’s Flow reopens on the new version.</p><p>To remove it: quit it from the K in the menu bar, then drag Kai’s Flow from Applications to the Bin. Your data stays in your account.</p>'],
+    ] },
   { slug: 'your-data', group: 'Your data', ic: 'lock', title: 'Your data & privacy', blurb: 'Export, delete, and what the AI sees.', min: 3,
     intro: 'The short version of the privacy policy, with the practical bits: where your days live, what the AI sees, and how to take it all back.',
     sections: [
@@ -169,7 +181,7 @@ const GROUPS = ['Start here', 'Using it', 'Installing', 'Your data']
 const index = {
   path: '/guides/',
   title: 'Guides',
-  description: 'Help for Kai’s Flow: getting started, installing on Android and Windows, capture from anywhere, connecting an AI assistant, importing your old app, gestures, keyboard shortcuts and your data.',
+  description: 'Help for Kai’s Flow: getting started, installing on Android, Windows and Mac, capture from anywhere, connecting an AI assistant, importing your old app, gestures, keyboard shortcuts and your data.',
   og: 'guides',
   body: `<section class="sec first"><div class="wrap">
   <div class="head" style="margin-inline:auto;text-align:center;align-items:center"><span class="eyebrow">Guides</span><h1>How can we help?</h1></div>
@@ -179,7 +191,8 @@ const index = {
 </div></section>`,
 }
 
-const feedback = (t) => `${REPO}/issues/new?title=${encodeURIComponent(`Guide feedback: ${t}`)}`
+// An email, not a GitHub issue: the releases repo has no issues and the source repo is going private.
+const feedback = (t) => `mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(`Guide feedback: ${t}`)}`
 const article = (g) => { let n = 0; const num = g.sections.map((s) => (s[3] ? ++n : 0)); return {
   path: `/guides/${g.slug}/`,
   title: g.title,

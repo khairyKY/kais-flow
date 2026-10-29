@@ -13,6 +13,7 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { z } from 'npm:zod@^4'
 import { isServiceRole, requireUser } from '../_shared/auth.ts'
+import { errorKind, groqFailure } from '../_shared/groqLog.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 import { afterPage, buildPrompt, MAX_PAGES, normaliseRead, ownsPath, retryDelayMs, type PageDrawing, type PageLine } from './read.ts'
@@ -62,10 +63,14 @@ async function callGroq(model: string, imageUrl: string, projects: string[]): Pr
     if (res.ok) {
       const content = (await res.json()).choices?.[0]?.message?.content
       if (!content) throw new Error('empty answer')
-      return JSON.parse(content)
+      try {
+        return JSON.parse(content)
+      } catch {
+        throw new Error('answer not JSON') // the parse error would quote the page's words into the log
+      }
     }
-    const detail = await res.text()
-    if (res.status !== 429 && res.status < 500) throw new Error(`groq ${res.status}: ${detail.slice(0, 200)}`)
+    const failure = await groqFailure(res) // status + Groq's error code only, never the body (C7)
+    if (res.status !== 429 && res.status < 500) throw new Error(`groq ${failure}`)
     const wait = retryDelayMs(attempt, res.headers.get('retry-after'))
     if (wait === null) {
       if (res.status === 429) throw new RateLimited()
@@ -137,7 +142,7 @@ async function read(req: Request, userId: string): Promise<Response> {
     raw = await readPage(signed.signedUrl, projects)
   } catch (e) {
     const limited = e instanceof RateLimited
-    console.error('capture-image: read failed', limited ? 'rate limited' : e)
+    console.error('capture-image: read failed', limited ? 'rate limited' : e instanceof Error ? e.message : errorKind(e))
     // Rate-limited: queued, the app tries again in a while. Anything else: failed, with Try again.
     await update({ status: limited ? 'queued' : 'failed', error: limited ? 'rate_limited' : 'upstream' })
     return jsonResponse(req, { error: limited ? 'rate_limited' : 'upstream_failed' }, limited ? 503 : 502)
@@ -247,7 +252,7 @@ Deno.serve(async (req) => {
     return await work
   } catch (e) {
     // Details stay in the function log; callers get a stable code, never upstream or stack text.
-    console.error('capture-image:', e)
+    console.error('capture-image:', errorKind(e))
     return jsonResponse(req, { error: 'server_error' }, 500)
   }
 })

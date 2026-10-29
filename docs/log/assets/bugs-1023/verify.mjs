@@ -352,7 +352,11 @@ if (want('d5')) {
     await sleep(500)
     await shot(page, `d5-blockmenu-${theme}`)
     if (theme === 'day') {
-      await lenChip(page, '30m').click()
+      // cal-clicks (2026-10-26): a click on a task block opens its task popover (no block length row);
+      // its Duration chip is the length there, and the block follows.
+      await page.locator('[role="dialog"][aria-label^="Task:"] .ts-chips .kf-chip', { hasText: chipRe('15m') }).click()
+      await sleep(300)
+      await page.getByRole('menuitem', { name: '30m' }).click()
       await settle(state)
       check('d5 task block 30m → 5:15–5:45 PM, the estimate 30', inStep(state, '17:15', '17:45', 30, PRE, PREB), show(state, PRE, PREB))
       await page.keyboard.press('Escape')

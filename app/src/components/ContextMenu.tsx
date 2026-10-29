@@ -1,4 +1,5 @@
 import { uiZoom } from '../lib/uiScale'
+import { isQuietScroll } from '../lib/quietScroll'
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useEscapeStack } from '../lib/overlayStack'
 import { Float } from './Float'
@@ -74,7 +75,7 @@ export function ContextMenu({ items, position, onClose, header, width, label, cl
     // events arrive a frame late, so one from BEFORE the menu opened (a wheel flick, or the row
     // scrolled into view by the click itself) can land just after it — not a reason to close.
     function handleScroll(e: Event) {
-      if (performance.now() - openedAt.current < 120) return
+      if (performance.now() - openedAt.current < 120 || isQuietScroll(e)) return // cal-scroll: a re-centre moves nothing
       if (!ref.current?.contains(e.target as Node)) onClose()
     }
     document.addEventListener('mousedown', handleClick)

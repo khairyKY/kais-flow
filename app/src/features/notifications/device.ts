@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { testNotice } from '../../../../supabase/functions/notify/copy.ts'
 import { isCapacitorShell } from '../../lib/platform'
+import { appPlatform } from '../../lib/appUpdate'
 import { isIOS } from '../../lib/iosPwa'
 import { isTauri } from '../tray/native'
 import { isPushSupported, sendTestNotification } from './api'
@@ -12,7 +13,7 @@ import type { PushSubscriptionRow } from '../../lib/types'
 // notification reaches this device, what could stop it, and a test through that same way.
 
 export function deviceChannel(): DeviceChannel {
-  return isTauri() ? 'windows' : isCapacitorShell() ? 'android' : 'web'
+  return isTauri() ? (appPlatform() === 'mac' ? 'mac' : 'windows') : isCapacitorShell() ? 'android' : 'web'
 }
 
 /** This browser's own push endpoint (getRegistration, not .ready — that never settles without a worker). */
@@ -27,7 +28,7 @@ async function thisEndpoint(): Promise<string | null> {
 
 export async function readDeviceState(subs: readonly PushSubscriptionRow[]): Promise<DeviceState> {
   const channel = deviceChannel()
-  if (channel === 'windows') return { channel, permission: 'granted', subscribed: false } // tray.rs toasts; Windows' own switch is out of sight
+  if (channel === 'windows' || channel === 'mac') return { channel, permission: 'granted', subscribed: false } // tray.rs toasts / banners; the OS's own switch is out of sight
   if (channel === 'android') {
     const a = await import('./android')
     return { channel, permission: await a.androidPermission(), subscribed: false, exact: await a.exactAlarms(), background: a.backgroundAllowed() }
@@ -66,6 +67,10 @@ export async function testThisDevice(subs: readonly PushSubscriptionRow[]): Prom
   if (channel === 'windows') {
     await showLocal(testNotice())
     return 'Sent — it should be in the corner of the screen. Nothing there? Check Windows Settings → System → Notifications → Kai’s Flow, and Do not disturb.'
+  }
+  if (channel === 'mac') {
+    await showLocal(testNotice())
+    return 'Sent — it should be at the top right of the screen. Nothing there? Check System Settings → Notifications → Kai’s Flow, and Focus.'
   }
   if (channel === 'android') {
     const permission = await (await import('./android')).androidPermission(true)

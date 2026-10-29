@@ -1,13 +1,20 @@
 // phone-today (Kai 2026-10-26, "phone B"): the phone's Today home — B "Now + next" by default, the Now / Day
-// switch (remembered per device under kf-phone-today-view), on the real /today page against a MOCKED backend
+// view (remembered per device under kf-phone-today-view; since today-v2, 2026-10-29, set in Settings → Appearance
+// "Phone home shows", not on Today), on the real /today page against a MOCKED backend
 // (the dev server runs with VITE_SUPABASE_URL=http://127.0.0.1:9; Playwright answers every REST call). The day
 // is today-looks' (audit.mjs): Monday 26 Oct 2026, 10:40 Cairo (UTC+3, DST until 29 Oct), two lectures, the CNN
 // goal block, the gym, a study group, a Karpathy block; Top 3, Today's tasks, 2 overdue, 6 also open, 5 routines.
+// The morning ritual was finished at 07:55 (planned), except in today-v2's "nothing planned" scenes, where the
+// Plan my day card takes the Now card's place.
 //   node verify.mjs <outDir> [baseUrl] [playwright-core path]
 // Checks: B at 360 / 390 / 430; the task rows wholly on screen (inside the scroller, above the tab bar: B >= 7,
-// Day >= 9 at 390); the switch to Day (Day strip options 4, "Day bar") and that it survives a reload; the switch in
-// the picker's place, the title opening the picker, the bar opening the calendar's own Day column for today;
-// completing a task in both views; no sideways page scroll; no page errors. Shots: B and Day at 3 widths, day and night.
+// Day >= 9 at 390); Settings → Appearance "Phone home shows" (This device) going to Day (Day strip options 4, "Day
+// bar"), surviving a reload, and back; no switch on Today, the picker back in the strip's middle, the title opening
+// the picker, the bar opening the calendar's own Day column for today; the Plan my day card in the Now card's place
+// while nothing is planned (and the Now card once planned); completing a task in both views; no label chips on the
+// rows; the over warning (option D) on the Top 3 header — a normal day, an over day, the tap (how it's counted,
+// Tomorrow on each pick), hidden while nothing is planned, and its one line at 360 / 390 / 430; no sideways page
+// scroll; no page errors. Shots: B and Day at 3 widths, day and night; Plan; Over; Settings.
 import fs from 'node:fs'
 import path from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -84,10 +91,11 @@ const ROUTINES = [['Glass of water', 'morning'], ['Vitamins', 'morning'], ['Read
 }))
 const act = (n, event_type, entity_type, entity_id, payload, at) => ({ id: `a1000000-0000-4000-8000-${String(n).padStart(12, '0')}`, user_id: UID, event_type, entity_type, entity_id, payload, created_at: iso(at) })
 const SETTINGS = { id: 'a0000000-0000-4000-8000-000000000001', user_id: UID, onboarded_at: '2026-01-02T00:00:00Z', display_name: 'Kai', timezone: 'Africa/Cairo', created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z' }
-const tables = () => ({
+const PLANNED = [act(30, 'ritual.finished', 'ritual', `morning-${TODAY}`, { ritual: 'morning', date: TODAY, steps: ['overdue', 'inbox', 'top3', 'block'] }, '07:55')]
+const tables = (planned = true) => ({
   tasks: structuredClone(TASKS), calendar_events: structuredClone(EVENTS), projects: PROJECTS, app_settings: [{ ...SETTINGS }], routines: ROUTINES,
   routine_completions: [{ id: 'c2000000-0000-4000-8000-000000000001', user_id: UID, routine_id: ROUTINES[0].id, completed_on: TODAY, created_at: iso('07:10') }],
-  inbox_items: [], activity_log: [1, 2, 3].map((n, i) => act(20 + i, 'task.starred', 'task', id(n), {}, '07:50')), time_entries: [], domains: [], areas: [], people: [], books: [], journal_entries: [], slipping: [], resurfaced_log: [],
+  inbox_items: [], activity_log: [...[1, 2, 3].map((n, i) => act(20 + i, 'task.starred', 'task', id(n), {}, '07:50')), ...(planned ? PLANNED : [])], time_entries: [], domains: [], areas: [], people: [], books: [], journal_entries: [], slipping: [], resurfaced_log: [],
 })
 
 /** PostgREST filters the app sends (eq / neq / in / gte / gt / lte / lt / is), enough for the mock. */
@@ -117,8 +125,8 @@ const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google
 const SIZES = [[360, 780], [390, 844], [430, 932]]
 
 /** A fresh device (empty storage unless `view` is set) at 10:40 on the sample day. */
-async function open({ w, h, theme = 'day', view = null, settings = null } = {}) {
-  const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: true, isMobile: true, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
+async function open({ w, h, theme = 'day', view = null, settings = null, planned = true, at = '10:40', labels = false, over = false, ready = '.tp-home' } = {}) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: h }, hasTouch: w < 768, isMobile: w < 768, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
   await ctx.addInitScript(([t, sess, uid, v]) => {
     if (sessionStorage.getItem('kf-pt-seeded')) return // a reload keeps what the page wrote
     sessionStorage.setItem('kf-pt-seeded', '1')
@@ -128,7 +136,9 @@ async function open({ w, h, theme = 'day', view = null, settings = null } = {}) 
     localStorage.setItem('kf-whats-new:' + uid, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: Date.parse('2026-10-12T00:00:00Z') }))
     if (v) localStorage.setItem('kf-phone-today-view', v)
   }, [theme, JSON.stringify(session), UID, view])
-  const state = { rows: tables(), writes: [] }
+  const state = { rows: tables(planned), writes: [] }
+  if (labels) state.rows.tasks.find((t) => t.id === id(4)).labels = ['uni', 'exam', 'reading']
+  if (over) Object.assign(state.rows.tasks.find((t) => t.id === id(2)), { duration_min: 240 }), Object.assign(state.rows.tasks.find((t) => t.id === id(3)), { duration_min: 40 })
   if (settings) Object.assign(state.rows.app_settings[0], settings)
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -147,11 +157,11 @@ async function open({ w, h, theme = 'day', view = null, settings = null } = {}) 
     return r.fulfill({ json: rows, headers: { 'content-range': `0-${Math.max(0, rows.length - 1)}/${rows.length}` } }).catch(() => {})
   })
   const page = await ctx.newPage()
-  await page.clock.install({ time: cairo('10:40') })
+  await page.clock.install({ time: cairo(at) })
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
   await page.goto(`${BASE}/today`, { waitUntil: 'networkidle' })
-  await page.waitForSelector('.tp-home', { timeout: 15000 })
+  await page.waitForSelector(ready, { timeout: 15000 })
   await sleep(1500)
   return { ctx, page, errors, state }
 }
@@ -190,12 +200,12 @@ for (const theme of ['day', 'night']) for (const [w, h] of SIZES) {
     goal: !!document.querySelector('.tp-gs'),
     panels: [...document.querySelectorAll('.tp-pt')].map((e) => e.textContent.trim()),
     rituals: !!document.querySelector('section[aria-label="Rituals"] [data-ritual="morning"]'),
-    pressed: document.querySelector('.tp-view [aria-pressed="true"]')?.textContent,
+    plan: !!document.querySelector('.tp-ritual'),
   }))
   const m = await measure(page)
   if (theme === 'day') {
     counts[`B-${w}`] = m.fully
-    check(`B renders at ${w}`, b.now && b.goal && b.rituals && b.pressed === 'Now' && b.then === 2, JSON.stringify(b))
+    check(`B renders at ${w} (planned: the Now card, no Plan card)`, b.now && b.goal && b.rituals && !b.plan && b.then === 2, JSON.stringify(b))
     check(`B at ${w}: no sideways page scroll`, m.hScroll <= 0, `overflow ${m.hScroll}px`)
     console.log(`  B ${w}: ${m.fully} rows fully on screen (${m.titles.join(' | ')}) rows ${m.rowH}`)
   }
@@ -205,25 +215,119 @@ for (const theme of ['day', 'night']) for (const [w, h] of SIZES) {
 }
 check('B at 390: at least 7 tasks fully visible', counts['B-390'] >= 7, `${counts['B-360']} / ${counts['B-390']} / ${counts['B-430']} at 360 / 390 / 430`)
 
-// ── the switch: Day, kept over a reload; C at three widths ──
+// ── today-v2: the Now / Day setting lives in Settings → Appearance ("Phone home shows", This device) ──
 {
   const { ctx, page, errors } = await open({ w: 390, h: 844 })
-  await page.click('.tp-view button:has-text("Day")')
-  await sleep(600)
-  const before = await page.evaluate(() => ({ strip: !!document.querySelector('.tp-dbar'), key: localStorage.getItem('kf-phone-today-view') }))
+  const onToday = await page.evaluate(() => ({ seg: !!document.querySelector('.tp-home .kf-seg, .tp-home [role="radiogroup"], .tp-view'), picker: !!document.querySelector('.tp-daynav .tp-daynav-mid [aria-label="Pick a day"]') }))
+  check('Today has no Now · Day switch; the strip’s middle is the date picker again', !onToday.seg && onToday.picker, JSON.stringify(onToday))
+  await page.goto(`${BASE}/settings/appearance`, { waitUntil: 'networkidle' })
+  const row = page.locator('[data-st-key="Phone home shows"]')
+  await row.waitFor({ timeout: 10000 })
+  await sleep(500)
+  const pressedOf = () => row.evaluate((e) => e.querySelector('[aria-pressed="true"], [aria-checked="true"]')?.textContent ?? '')
+  const r0 = { device: await row.evaluate((e) => e.querySelector('.st-device')?.textContent ?? ''), pressed: await pressedOf() }
+  check('Settings → Appearance has "Phone home shows: Now / Day", labelled This device, on Now', r0.device === 'This device' && r0.pressed === 'Now', JSON.stringify(r0))
+  await page.screenshot({ path: path.join(OUT, 'Settings-390-day.png') })
+  await row.locator('button:has-text("Day")').click()
+  await sleep(400)
+  const key = await page.evaluate(() => localStorage.getItem('kf-phone-today-view'))
+  // In-app back to Today (no reload): Today reads the setting when it mounts.
+  await page.evaluate(() => { history.pushState({}, '', '/today'); dispatchEvent(new PopStateEvent('popstate')) })
+  await page.waitForSelector('.tp-home')
+  await sleep(1200)
+  const before = await page.evaluate(() => ({ strip: !!document.querySelector('.tp-dbar'), now: !!document.querySelector('section[aria-label="Now"]') }))
+  check('Day in Settings → Today opens on the Day bar (kf-phone-today-view = day)', key === 'day' && before.strip && !before.now, JSON.stringify({ key, ...before }))
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForSelector('.tp-home')
   await sleep(1200)
-  const after = await page.evaluate(() => ({ strip: !!document.querySelector('.tp-dbar'), pressed: document.querySelector('.tp-view [aria-pressed="true"]')?.textContent, now: !!document.querySelector('section[aria-label="Now"]') }))
-  check('the switch goes to Day and remembers it (kf-phone-today-view)', before.strip && before.key === 'day', JSON.stringify(before))
-  check('Day survives a reload', after.strip && after.pressed === 'Day' && !after.now, JSON.stringify(after))
-  await page.click('.tp-view button:has-text("Now")')
-  await sleep(500)
-  const back = await page.evaluate(() => ({ now: !!document.querySelector('section[aria-label="Now"]'), key: localStorage.getItem('kf-phone-today-view') }))
-  check('…and back to Now', back.now && back.key === 'now', JSON.stringify(back))
-  check('switching: no page errors', errors.length === 0, errors.join(' | '))
+  const after = await page.evaluate(() => ({ strip: !!document.querySelector('.tp-dbar'), now: !!document.querySelector('section[aria-label="Now"]') }))
+  check('Day survives a reload', after.strip && !after.now, JSON.stringify(after))
+  await page.goto(`${BASE}/settings/appearance`, { waitUntil: 'networkidle' })
+  await row.waitFor({ timeout: 10000 })
+  await sleep(400)
+  const r1 = await pressedOf()
+  await row.locator('button:has-text("Now")').click()
+  await sleep(400)
+  await page.goto(`${BASE}/today`, { waitUntil: 'networkidle' })
+  await page.waitForSelector('.tp-home')
+  await sleep(1200)
+  const back = await page.evaluate(() => ({ now: !!document.querySelector('section[aria-label="Now"]'), strip: !!document.querySelector('.tp-dbar'), key: localStorage.getItem('kf-phone-today-view') }))
+  check('…the row reads Day, and Now takes Today back to the Now card', r1 === 'Day' && back.now && !back.strip && back.key === 'now', JSON.stringify({ r1, ...back }))
+  check('the setting: no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }
+// Desktop has no such row (it sets the phone home only).
+{
+  const { ctx, page, errors } = await open({ w: 1280, h: 800, ready: 'main' })
+  await page.goto(`${BASE}/settings/appearance`, { waitUntil: 'networkidle' })
+  await page.waitForSelector('[data-st-key="Theme"]', { timeout: 10000 })
+  check('no "Phone home shows" row at 1280', (await page.locator('[data-st-key="Phone home shows"]').count()) === 0)
+  check('desktop settings: no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── today-v2: Plan my day in the Now card's place while nothing is planned ──
+for (const theme of ['day', 'night']) for (const [w, h] of theme === 'day' ? SIZES : [[390, 844]]) {
+  const { ctx, page, errors } = await open({ w, h, theme, planned: false })
+  const p = await page.evaluate(() => {
+    const card = document.querySelector('.tp-home-in > .tp-ritual.is-panel')
+    const first = document.querySelector('.tp-home-in')?.firstElementChild
+    return {
+      card: !!card,
+      first: first === card,
+      title: card?.querySelector('.tp-ritual-title')?.textContent ?? '',
+      caption: card?.querySelector('.tp-caption')?.textContent ?? '',
+      btn: card?.querySelector('button')?.textContent ?? '',
+      now: !!document.querySelector('section[aria-label="Now"]'),
+      begin: document.querySelector('section[aria-label="Rituals"] [data-ritual="morning"] .tp-pbtn')?.textContent ?? '',
+    }
+  })
+  const m = await measure(page)
+  check(`Plan ${w} ${theme}: nothing planned → Plan my day in the Now card's place (no Now card), Rituals · Begin stays`, p.card && p.first && p.title === 'Plan my day' && /Morning · not planned/.test(p.caption) && p.btn === 'Plan' && !p.now && p.begin === 'Begin', JSON.stringify(p))
+  check(`Plan ${w} ${theme}: no sideways scroll, no page errors`, m.hScroll <= 0 && errors.length === 0, `${m.hScroll} ${errors.join(' | ')}`)
+  await shot(page, `Plan-${w}-${theme}`)
+  if (theme === 'day' && w === 390) {
+    await page.click('.tp-ritual.is-panel button:has-text("Plan")')
+    await sleep(900)
+    const dlg = await page.evaluate(() => document.querySelector('[role="dialog"]')?.textContent?.slice(0, 80) ?? '')
+    check('Plan opens the morning ritual (Plan my day)', !!dlg, dlg)
+  }
+  await ctx.close()
+}
+// The same unplanned morning with Day chosen: the Plan card stands in for the Day bar too.
+{
+  const { ctx, page, errors } = await open({ w: 390, h: 844, planned: false, view: 'day' })
+  const p = await page.evaluate(() => ({ card: !!document.querySelector('.tp-ritual.is-panel'), bar: !!document.querySelector('.tp-dbar') }))
+  check('Plan with Day chosen: the Plan card in the Day bar’s place', p.card && !p.bar, JSON.stringify(p))
+  check('Plan (Day): no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+// Planned by the Top 3 alone (three picked, past 12:00): the Now card is back, no Plan card.
+{
+  const { ctx, page, errors } = await open({ w: 390, h: 844, planned: false, at: '12:10' })
+  const p = await page.evaluate(() => ({ card: !!document.querySelector('.tp-ritual'), now: !!document.querySelector('section[aria-label="Now"] .kf-now') }))
+  check('planned by the Top 3 at 12:10 → the Now card, no Plan card', !p.card && p.now, JSON.stringify(p))
+  check('12:10: no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+// Unplanned, but a block is running (11:10, the CV lecture): something is on, so the Now card shows.
+{
+  const { ctx, page, errors } = await open({ w: 390, h: 844, planned: false, at: '11:10' })
+  const p = await page.evaluate(() => ({ card: !!document.querySelector('.tp-ritual'), now: !!document.querySelector('section[aria-label="Now"] .kf-now') }))
+  check('unplanned but a block running (11:10, the CV lecture) → the Now card, not Plan', !p.card && p.now, JSON.stringify(p))
+  check('11:10: no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── today-v2 (Kai 2026-10-29): no label chips on the phone home's rows (one fact per row) ──
+{
+  const { ctx, page, errors } = await open({ w: 390, h: 844, labels: true })
+  const n = await page.evaluate((i) => ({ row: !!document.querySelector(`#task-${i}`), chips: document.querySelectorAll('.tp-home .kf-chip--bordered').length }), id(4))
+  check('a labelled task’s phone row shows no label chips', n.row && n.chips === 0, JSON.stringify(n))
+  check('labels: no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
 for (const theme of ['day', 'night']) for (const [w, h] of SIZES) {
   const { ctx, page, errors } = await open({ w, h, theme, view: 'day' })
   const c = await page.evaluate(() => ({
@@ -249,11 +353,92 @@ for (const theme of ['day', 'night']) for (const [w, h] of SIZES) {
 }
 check('Day at 390: at least 9 tasks fully visible', counts['Day-390'] >= 9, `${counts['Day-360']} / ${counts['Day-390']} / ${counts['Day-430']} at 360 / 390 / 430`)
 
-// ── the switch sits in the picker's place; the title opens the picker; the bar opens today's Day column ──
+// ── today-v2 (Kai 2026-10-29): the over warning, option D — on the Top 3 header ──
+// The sample day at 10:40: free 10:40–6:00 PM = 7h 20m. Planned = the goal's block 2h + DL set 1h 30m + email 20m +
+// the CV lecture 1h 30m + the gym's 1h before 6 PM = 6h 20m. Over: DL set 4h and the email 40m → 9h 10m, 1h 50m over.
+const loadOf = (page) => page.evaluate(() => {
+  const head = document.querySelector('.tp-load')
+  const l = head?.querySelector('.tp-load-l')
+  const parts = l ? [...l.children].map((e) => ({ text: e.textContent, shown: e.getBoundingClientRect().top - l.getBoundingClientRect().top < 2 })) : []
+  const chip = document.querySelector('.tp-over-chip')
+  const z = Number(document.documentElement.style.zoom) || 1
+  return {
+    head: !!head,
+    over: head?.classList.contains('is-over') ?? false,
+    shown: parts.filter((p) => p.shown).map((p) => p.text).join(''),
+    all: parts.map((p) => p.text).join(''),
+    oneLine: head ? head.getBoundingClientRect().height / z <= 30 : false,
+    headW: head ? Math.round(head.getBoundingClientRect().right) <= innerWidth : false,
+    chip: chip?.textContent ?? '',
+    chipInk: chip ? getComputedStyle(chip).color : '',
+    ranInk: (() => { const p = document.createElement('i'); p.style.color = 'var(--blk-ran-ink)'; document.body.append(p); const c = getComputedStyle(p).color; p.remove(); return c })(),
+    nInk: head?.querySelector('.tp-load-n') ? getComputedStyle(head.querySelector('.tp-load-n')).color : '',
+    expanded: head?.querySelector('.tp-load-btn')?.getAttribute('aria-expanded'),
+    why: document.querySelector('.tp-load-why')?.textContent ?? '',
+    tomorrow: document.querySelectorAll('section[aria-label="Top 3"] .tp-tmrw').length,
+  }
+})
+for (const [w, h] of SIZES) {
+  const { ctx, page, errors } = await open({ w, h })
+  const l = await loadOf(page)
+  check(`over D normal ${w}: "Top 3 · 6h 20m planned · 7h 20m free" (free dropped first if narrow), one line, no chip`, l.head && !l.over && l.all === 'Top 3 · 6h 20m planned · 7h 20m free' && l.shown.startsWith('Top 3 · 6h 20m planned') && l.oneLine && l.headW && !l.chip, JSON.stringify(l))
+  console.log(`  normal ${w}: shows "${l.shown}"`)
+  check(`over D normal ${w}: no page errors`, errors.length === 0, errors.join(' | '))
+  if (w === 390) await shot(page, 'Over-normal-390-day')
+  if (w === 360) {
+    // Narrower than any phone here (a bigger interface size, a longer figure): the free part goes first.
+    await page.evaluate(() => { document.querySelector('.tp-load').style.width = '250px' })
+    await sleep(200)
+    const n = await loadOf(page)
+    check('over D normal, squeezed to 250px: the free part is dropped, "Top 3 · 6h 20m planned" stays on one line', n.shown === 'Top 3 · 6h 20m planned' && n.oneLine, JSON.stringify(n))
+  }
+  await ctx.close()
+}
+for (const theme of ['day', 'night']) for (const [w, h] of theme === 'day' ? SIZES : [[390, 844]]) {
+  const { ctx, page, errors } = await open({ w, h, theme, over: true })
+  const l = await loadOf(page)
+  check(`over D over ${w} ${theme}: "Top 3 · 9h 10m planned · 7h 20m free" + the chip "1h 50m more than today can fit" in Ran over's ink`, l.head && l.over && l.all === 'Top 3 · 9h 10m planned · 7h 20m free' && l.shown.startsWith('Top 3 · 9h 10m planned') && l.oneLine && l.headW && l.chip === '1h 50m more than today can fit' && l.chipInk === l.ranInk, JSON.stringify(l))
+  console.log(`  over ${w} ${theme}: shows "${l.shown}"`)
+  const m = await measure(page)
+  check(`over D over ${w} ${theme}: no sideways scroll, no page errors`, m.hScroll <= 0 && errors.length === 0, `${m.hScroll} ${errors.join(' | ')}`)
+  await shot(page, `Over-${w}-${theme}`)
+  await ctx.close()
+}
+// The tap: how it's counted, and Tomorrow on each Top 3 row; Tomorrow moves the pick (due tomorrow, off the Top 3).
+{
+  const { ctx, page, errors, state } = await open({ w: 390, h: 844, over: true })
+  await page.click('.tp-load-btn')
+  await sleep(500)
+  const l = await loadOf(page)
+  check('over D tap: the header opens (aria-expanded), says how it’s counted, and both Top 3 rows offer Tomorrow', l.expanded === 'true' && /^Top 3 and today’s blocks, against the free time left today \(9:00 AM–6:00 PM\)/.test(l.why) && l.tomorrow === 2, JSON.stringify(l))
+  await shot(page, 'Over-tap-390-day')
+  const w0 = state.writes.length
+  await page.click(`#task-${id(2)} .tp-tmrw`)
+  await sleep(1200)
+  const wr = state.writes.slice(w0).find((x) => x.table === 'tasks' && [].concat(x.body).some((b) => b?.id === id(2)))
+  const body = wr && [].concat(wr.body).find((b) => b?.id === id(2))
+  check('over D tap: Tomorrow moves "Deep Learning problem set 4" to tomorrow and off the Top 3', !!body && String(body.due_at).startsWith('2026-10-27') && body.top3 === false, JSON.stringify(body ?? state.writes.slice(w0).map((x) => x.table)))
+  const after = await loadOf(page)
+  check('over D tap: after the move it fits (no chip)', !after.chip && !after.over, JSON.stringify(after))
+  await page.click('.tp-load-btn')
+  await sleep(400)
+  check('over D tap again: closed, the rows get their ⋯ back', (await loadOf(page)).tomorrow === 0 && (await page.locator(`#task-${id(3)} .kf-row-more`).count()) === 1)
+  check('over D tap: no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+// Nothing planned: none of it (the Plan my day card shows); the title keeps its plain note.
+{
+  const { ctx, page, errors } = await open({ w: 390, h: 844, planned: false, over: true })
+  const l = await loadOf(page)
+  const pt = await page.evaluate(() => [...document.querySelectorAll('.tp-pt')].map((e) => e.textContent)[0] ?? '')
+  check('over D hidden while nothing is planned (Plan card showing): no load line, no chip', !l.head && !l.chip && !!(await page.locator('.tp-ritual.is-panel').count()) && pt.startsWith('Top 3 · '), JSON.stringify({ ...l, pt }))
+  check('over D hidden: no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
+}
+
+// ── the title opens the picker; the bar opens today's Day column ──
 {
   const { ctx, page, errors } = await open({ w: 390, h: 844, view: 'day', settings: { calendar_default_view: 'week' } })
-  const strip = await page.evaluate(() => ({ seg: !!document.querySelector('.tp-daynav .tp-daynav-mid .tp-view'), picker: !!document.querySelector('.tp-daynav [aria-label="Pick a day"]') }))
-  check('the Now · Day switch is in the middle of the Yesterday / Tomorrow line, in the picker’s place', strip.seg && !strip.picker, JSON.stringify(strip))
   await page.click('.tp-bar-title button')
   await sleep(700)
   const picker = await page.evaluate(() => !!document.querySelector('[role="dialog"]'))
@@ -284,7 +469,7 @@ for (const [view, n, title] of [['now', 4, 'Review lecture 7 slides'], ['day', 6
 
 // ── opening a task and a ritual from B ──
 {
-  const { ctx, page, errors } = await open({ w: 390, h: 844 })
+  const { ctx, page, errors } = await open({ w: 390, h: 844, planned: false })
   await page.click(`#task-${id(2)} .tp-slim-t`)
   await sleep(900)
   const sheet = await page.evaluate(() => !!document.querySelector('[role="dialog"]'))

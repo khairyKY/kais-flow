@@ -401,7 +401,9 @@ for (const theme of ['day', 'night']) {
     const g = await page.locator('.pc-scroll').boundingBox()
     await drag(cdp, { x: 300, y: g.y + 200 }, { dx: -200, steps: 10 })
     await sleep(300)
-    check('7h-day a swipe pages three days (Sep 30 – Oct 2)', (await title(page)) === 'Sep 30 – Oct 2')
+    // cal-scroll (Kai 2026-10-29): a swipe glides by days with its fling's momentum, settling on a day — no longer a page.
+    const t7 = await title(page)
+    check('7h-day a 200px swipe (~1.8 columns) glides on by the day: 2–4 days on (Sep 29 – Oct 1 … Oct 1 – 3)', ['Sep 29 – Oct 1', 'Sep 30 – Oct 2', 'Oct 1 – 3'].includes(t7), t7)
     await tap(cdp, page.locator('.pc-title'))
     await tap(cdp, dialog(page).locator('.kf-as-row', { hasText: 'Week' }))
     await sleep(300)

@@ -37,6 +37,9 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "macOS": {
+      "signingIdentity": "-"
+    },
     "windows": {
       "nsis": {
         "template": "installer/installer.nsi",
@@ -50,7 +53,7 @@
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZDNzBERDM5M0JCQ0RENkQKUldSdDNidzdPZDF3YkhvVGYvOHNURmNPZklwYStna1h3SG9OdEE0KzlDWFdxVU01MURodkZLZEcK",
-      "endpoints": ["https://github.com/khairyKY/kais-flow/releases/latest/download/latest.json"],
+      "endpoints": ["https://github.com/khairyKY/kais-flow-releases/releases/latest/download/latest.json"],
       "windows": {
         "installMode": "passive"
       }

@@ -1,0 +1,74 @@
+# The Mac app on Codemagic's free Mac minutes (500 a month on a mac_mini_m2), for when the source repo is
+# private and GitHub's macOS runners bill ×10. Not active until Kai adds the app on codemagic.io and flips
+# the repo variable MAC_BUILD_ON to codemagic (docs/log/2026-10-29-0300-release-move-handoff.md); until
+# then desktop.yml's macos job builds it.
+#
+# The same build as desktop.yml's macos job: .github/scripts/mac-build.sh (build + checks + named files).
+# Triggered by a v* tag (release.yml's publish job makes it once the release exists) or a manual start
+# (a test build: no tag, nothing uploaded, the files are this build's artifacts).
+# On a tag: the .dmg (+ a version-less kais-flow-mac.dmg), the .app.tar.gz and its .sig go to the release in
+# khairyKY/kais-flow-releases, and the darwin entries are merged into its latest.json beside Windows'.
+#
+# Env group `kais-flow` (Codemagic → the app → Environment variables), all Secret:
+#   TAURI_SIGNING_PRIVATE_KEY, TAURI_SIGNING_PRIVATE_KEY_PASSWORD   the updater key, as in GitHub's secrets
+#   RELEASES_TOKEN                                                   the fine-grained token for kais-flow-releases
+workflows:
+  mac:
+    name: Mac app
+    instance_type: mac_mini_m2
+    max_build_duration: 60
+    environment:
+      groups:
+        - kais-flow
+      vars:
+        RELEASES_REPO: khairyKY/kais-flow-releases
+      node: 22
+      xcode: latest
+    cache:
+      cache_paths:
+        - $HOME/.npm
+        - $HOME/.cargo/registry
+    triggering:
+      events:
+        - tag
+      tag_patterns:
+        - pattern: 'v*'
+          include: true
+      cancel_previous_builds: false
+    scripts:
+      # Codemagic's Mac images have no Rust: rustup first (mac-build.sh then adds the two Apple targets).
+      - name: Build and check (mac-build.sh)
+        script: |
+          set -euo pipefail
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          . "$HOME/.cargo/env"
+          export TAG="${CM_TAG:-}" OUT="$CM_BUILD_DIR/mac-out"
+          .github/scripts/mac-build.sh
+      # Waits for the release (release.yml makes it before the tag, so normally it's there) and for the
+      # Windows entry in latest.json (the Windows build runs at the same time), so the merge keeps it.
+      - name: Attach to the release + latest.json
+        script: |
+          set -euo pipefail
+          if [ -z "${CM_TAG:-}" ]; then echo "A manual build: nothing to attach (the files are this build's artifacts)."; exit 0; fi
+          if [ -z "${RELEASES_TOKEN:-}" ]; then echo "No RELEASES_TOKEN in the kais-flow env group: nothing can be published to $RELEASES_REPO."; exit 1; fi
+          export GH_TOKEN="$RELEASES_TOKEN" TAG="$CM_TAG"
+          out="$CM_BUILD_DIR/mac-out"
+          for i in $(seq 1 60); do gh release view "$TAG" -R "$RELEASES_REPO" > /dev/null 2>&1 && break; [ "$i" = 60 ] && { echo "No $TAG release in $RELEASES_REPO after 30 min."; exit 1; }; sleep 30; done
+          cp "$out/kais-flow-$TAG-mac.dmg" "$out/../kais-flow-mac.dmg"
+          gh release upload "$TAG" "$out"/* "$out/../kais-flow-mac.dmg" -R "$RELEASES_REPO" --clobber
+          sig="$out/kais-flow-$TAG-mac.app.tar.gz.sig"
+          if [ ! -f "$sig" ]; then echo "No updater signature, so no darwin entries: Mac apps update through the .dmg this time."; exit 0; fi
+          for i in $(seq 1 40); do
+            rm -f base.json
+            gh release download "$TAG" -R "$RELEASES_REPO" -p latest.json -O base.json 2>/dev/null || true
+            [ -f base.json ] && jq -e '.platforms["windows-x86_64"]' base.json > /dev/null && break
+            [ "$i" = 40 ] && echo "No Windows entry in latest.json after 20 min: writing the darwin entries alone (a later Windows upload keeps them)."
+            sleep 30
+          done
+          url="https://github.com/$RELEASES_REPO/releases/download/$TAG/$(basename "${sig%.sig}")"
+          NOTES="$(gh release view "$TAG" -R "$RELEASES_REPO" --json body -q .body || true)" \
+            node .github/scripts/latest-json.mjs base.json latest.json darwin-aarch64 "$sig" "$url" darwin-x86_64 "$sig" "$url"
+          gh release upload "$TAG" latest.json -R "$RELEASES_REPO" --clobber
+          jq '.platforms | map_values(.url)' latest.json
+    artifacts:
+      - mac-out/*

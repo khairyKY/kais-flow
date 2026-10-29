@@ -1,6 +1,6 @@
 // legal (2026-10-25, Kai: "where are the privacy policies and all the policies, and the people accepting our
 // terms during the account creation, and send a notice telling people that we changed our terms"):
-//   S · sign up: Create account waits for "I agree to the Terms of Use and the Privacy Policy"; the box's
+//   S · sign up: Create account waits for both boxes ("I agree to the Terms of Use…", "…Privacy Policy and explicitly consent…"); the boxes'
 //       links open the pages and don't tick it; the versions ride along as metadata, and the mock does
 //       what 0083's trigger does with them (consent rows) — so the new account lands without the notice.
 //       The footer links (sign up + sign in) and the password eye (queue item 6).
@@ -141,9 +141,11 @@ for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
   const tag = `s-${view}-${theme}`
   const env = await open('/sign-in', { view, theme, signedIn: false, consents: [] })
   const { page } = env
-  const box = page.getByRole('checkbox', { name: /I agree to the Terms of Use and the Privacy Policy/ })
+  // Two required boxes since 2026-10-29 (legal-fix): the Terms, and the Privacy Policy + explicit consent.
+  const box = page.getByRole('checkbox', { name: /I agree to the Terms of Use/ })
+  const box2 = page.getByRole('checkbox', { name: /I agree to the Privacy Policy and explicitly consent/ })
   const cta = page.getByRole('button', { name: 'Create account' })
-  check(`${tag} sign up has the terms box, unticked, and Create account waits for it`, (await page.locator('h1').first().innerText()) === 'Create your account' && (await box.getAttribute('aria-checked')) === 'false' && (await cta.isDisabled()))
+  check(`${tag} sign up has the terms box, unticked, and Create account waits for it`, (await page.locator('h1').first().innerText()) === 'Create your account' && (await box.getAttribute('aria-checked')) === 'false' && (await box2.getAttribute('aria-checked')) === 'false' && (await cta.isDisabled()))
   await page.getByLabel('Email', { exact: true }).fill(EMAIL)
   await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
   await cta.click({ force: true }).catch(() => {})
@@ -163,8 +165,10 @@ for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
   check(`${tag} a tap shows it and the eye is "Hide password"`, (await page.getByLabel('Password', { exact: true }).getAttribute('type')) === 'text' && (await eye.getAttribute('aria-label')) === 'Hide password')
   await eye.click()
   await shot(page, `${tag}-unticked`)
-  await page.locator('.fr-consent span').first().click({ position: { x: 4, y: 6 } })
-  check(`${tag} a tap on the line ticks it; Create account is ready`, (await box.getAttribute('aria-checked')) === 'true' && (await cta.isEnabled()))
+  await page.locator('.fr-consent > span').first().click({ position: { x: 4, y: 6 } })
+  check(`${tag} a tap on the Terms line ticks it; Create account still waits for the second`, (await box.getAttribute('aria-checked')) === 'true' && (await cta.isDisabled()))
+  await page.locator('.fr-consent > span').nth(1).click({ position: { x: 4, y: 6 } })
+  check(`${tag} both ticked → Create account is ready`, (await box2.getAttribute('aria-checked')) === 'true' && (await cta.isEnabled()))
   await shot(page, `${tag}-ticked`)
   await cta.click()
   await page.waitForURL('**/today', { timeout: 6000 }).catch(() => {})
@@ -229,6 +233,8 @@ for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
   await page.mouse.click(5, 5)
   await sleep(300)
   check(`${tag} Esc and a tap outside don't close it`, (await dlg.count()) === 1)
+  check(`${tag} I agree waits for both boxes`, (await dlg.locator('.lg-consent').count()) === 2 && (await dlg.getByRole('button', { name: 'I agree' }).isDisabled()))
+  for (const line of await dlg.locator('.lg-consent > span').all()) await line.click({ position: { x: 4, y: 6 } })
   await dlg.getByRole('button', { name: 'I agree' }).click()
   await sleep(1500)
   const w = writes(env, 'consents')
@@ -247,6 +253,8 @@ for (const view of ['desktop', 'phone']) for (const theme of ['day', 'night']) {
   await none.ctx.close()
   const one = await open('/today', { consents: [CURRENT_ROWS[0], OLD_ROWS[1]] })
   check('n-one only the Privacy Policy older → only it is named', (await notice(one.page).locator('h2').innerText().catch(() => '')) === 'We’ve updated our Privacy Policy')
+  check('n-one only the Privacy Policy box is asked for', (await notice(one.page).locator('.lg-consent').count()) === 1)
+  await notice(one.page).locator('.lg-consent > span').first().click({ position: { x: 4, y: 6 } })
   await one.page.getByRole('button', { name: 'I agree' }).click()
   await sleep(1200)
   const w = writes(one, 'consents')

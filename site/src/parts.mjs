@@ -1,8 +1,8 @@
 // Sections that appear on more than one page.
 import { icon, img, btn, soon } from './lib.mjs'
-import { APP_URL, LATEST, APK_LATEST, EXE_LATEST, longDate } from './data.mjs'
+import { APP_URL, LATEST, APK_LATEST, EXE_LATEST, DMG_LATEST, longDate } from './data.mjs'
 
-// ── "Get it": web / Android / Windows ── the version is filled in live by site.js
+// ── "Get it": web / Android / Windows / Mac ── the version is filled in live by site.js
 const ver = () => `<span class="ver"><span data-release-tag>${LATEST.tag}</span> · <span data-release-date>${longDate(LATEST.date)}</span></span>`
 const getRow = (ic, name, text, small, action) => `<li class="get"><span class="get-ic">${icon(ic, 24)}</span>
     <div class="get-t"><h3>${name}</h3><p>${text}</p>${small ? `<p class="small">${small}</p>` : ''}</div>
@@ -11,6 +11,7 @@ export const getIt = ({ big = false } = {}) => `<ul class="getit${big ? ' big' :
   ${getRow('globe', 'Web', 'Open it in any browser. Install it from the address bar to get its own window and offline use.', '', btn('Open in browser', APP_URL))}
   ${getRow('android', 'Android', `An APK from our GitHub releases, about ${LATEST.apkMB} MB. Updates install over the top.`, 'Your phone asks once to allow installs from your browser. Say yes, then install.', btn('Download APK', APK_LATEST, { kind: 'tonal' }))}
   ${getRow('windows', 'Windows', `An installer for Windows 10 and 11, about ${LATEST.exeMB} MB. It installs just for you, no admin password, and updates itself.`, '', btn('Download for Windows', EXE_LATEST, { kind: 'tonal' }))}
+  ${getRow('laptop', 'Mac', `A .dmg for Apple silicon and Intel Macs, about ${LATEST.dmgMB} MB. It updates itself.`, 'It isn’t notarized by Apple, so the first time you open it, allow it once in System Settings. <a href="/download/#mac">How</a>', btn('Download for Mac', DMG_LATEST, { kind: 'tonal' }))}
 </ul>`
 
 // ── the eight things inside ──
