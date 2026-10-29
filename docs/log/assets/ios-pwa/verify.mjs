@@ -228,10 +228,19 @@ async function walk(browser, phone, tag) {
   insetOk(f, 'Today')
   const bar = await s.page.evaluate(() => document.querySelector('.tp-bar')?.getBoundingClientRect().top ?? null)
   check(`${tag} Today: its header sits below the status bar`, bar != null && bar >= phone.sat - 0.5, bar)
+  // today-v2: the Plan card and the Top 3 header (with its load line) — everything on the page, really — start below it.
+  const tops = await s.page.evaluate(() => {
+    // decoration that drifts in from above (the season's falling leaves, aria-hidden) isn't content
+    const els = [...document.querySelectorAll('.tp *')].filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(e).visibility !== 'hidden' && !e.closest('[aria-hidden="true"]') })
+    const first = els.reduce((m, e) => (e.getBoundingClientRect().top < m.getBoundingClientRect().top ? e : m), els[0])
+    return { min: Math.round(first.getBoundingClientRect().top), el: first.tagName.toLowerCase() + (first.className ? '.' + String(first.className).trim().split(' ').join('.') : ''), top3: document.querySelector('.tp-pt')?.getBoundingClientRect().top ?? null }
+  })
+  check(`${tag} Today: nothing on the page (Plan card, Top 3 header) reaches into the status bar`, tops.min >= phone.sat - 0.5 && tops.top3 != null && tops.top3 >= phone.sat, JSON.stringify(tops))
   check(`${tag} Today (installed): the tab bar pads ${tabbarWant}px (max(home indicator, 16))`, f.tabbarPadBottom === tabbarWant, f.tabbarPadBottom)
   check(`${tag} Today: tabs and the capture button clear the home indicator`, f.tabsBottom != null && f.tabsBottom <= f.vh - phone.sab + 0.5 && f.captureBottom != null && f.captureBottom <= f.vh - phone.sab + 0.5, `tabs ${f.tabsBottom} capture ${f.captureBottom} / band from ${f.vh - phone.sab}`)
-  for (const [what, sel] of [['Now / Day switch', '.tp-daynav .tp-view .kf-seg-btn'], ['day arrows', '.tp-home .tp-day-step'], ['“All tasks”', '.tp-pt-link'], ['row ⋯', '.tp-slim .kf-row-more, .tp-gs .kf-row-more']]) {
+  for (const [what, sel, optional] of [['day arrows', '.tp-home .tp-day-step', true], ['“All tasks”', '.tp-pt-link'], ['the Top 3 load line', '.tp-load-btn', true], ['row ⋯', '.tp-slim .kf-row-more, .tp-gs .kf-row-more']]) {
     const h = await hits(s.page, sel)
+    if (optional && h.length === 0) continue // not on screen in this day's view
     check(`${tag} Today: ${what} ≥ 44`, allAtLeast44(h), fmt(h))
   }
   const replan = await hitsByText(s.page, 'button', 'Replan all')
@@ -248,6 +257,7 @@ async function walk(browser, phone, tag) {
   // Chat: More → Chat
   await s.page.locator('[role=dialog] button', { hasText: 'Chat' }).first().tap()
   await sleep(1500)
+  await s.page.locator('.kf-drawer form input').first().waitFor({ timeout: 10000 }).catch(() => {}) // a cold chat chunk
   const chat = await s.page.evaluate(() => {
     const p = document.querySelector('.kf-drawer')
     const head = p?.firstElementChild?.nextElementSibling?.getBoundingClientRect() // after the <style>
@@ -291,6 +301,7 @@ async function walk(browser, phone, tag) {
     f = await facts(s.page)
     insetOk(f, key)
     if (key === 'Calendar') {
+      await s.page.locator('.pc').first().waitFor({ timeout: 10000 }).catch(() => {}) // a cold calendar chunk
       const head = await s.page.evaluate(() => document.querySelector('.pc')?.getBoundingClientRect().top ?? null)
       check(`${tag} Calendar: its header sits below the status bar`, head != null && head >= phone.sat, head)
     }

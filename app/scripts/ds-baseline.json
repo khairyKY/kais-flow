@@ -4,26 +4,17 @@
   "src/components/ActionSheet.tsx": {
    "motion-property": {
     "transition: background var(--dur-press) var(--ease-standard); }": 1
-   },
-   "font-size-literal": {
-    "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}</span>": 1
-   },
-   "line-height-literal": {
-    "<span style={{ flex: 1, minWidth: 0, fontSize: 15, lineHeight: '20px' }}>{item.label}</span>": 1
    }
   },
   "src/components/AppLayout.tsx": {
    "font-size-literal": {
     "<span style={{ fontSize: 13, color: active ? 'var(--ink-body)' : 'var(--ink-muted)' }}>{label}</span>": 1,
     "<span className=\"app-nav-label\" style={{ fontSize: 14, fontWeight: isActive ? 600 : 400, color: isActive ? 'var(--ink-body)' : 'var(--ink-muted)' }}>": 1,
-    "<span className=\"app-footer-label\" style={{ fontSize: faint ? 12.5 : 13.5, color: faint ? 'var(--ink-faint)' : 'var(--ink-muted)' }}>{label}</span>": 1,
     "<div key={r.key} style={{ display: 'flex', alignItems: 'baseline', gap: 8, fontFamily: 'var(--font-ui)', fontSize: 12.5, color: 'var(--ink-body)' }}>": 1,
     "<div style={{ fontFamily: 'var(--font-ui)', fontSize: 13, color: 'var(--ink-body)' }}>All caught up.</div>": 1,
     "font-size: 14px; color: var(--ink-body); z-index: 60;": 1,
     ".app-sidebar.collapsed .app-nav-badge { position: absolute; top: 1px; right: 3px; margin: 0 !important; font-size: 9px !important; line-height: 1; }": 1,
-    "style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--line-card)', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-cri": 1,
-    "<span className=\"app-footer-label\" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Guide</span>": 1,
-    "<span className=\"app-footer-label\" style={{ fontSize: 13.5, color: 'var(--ink-muted)' }}>Settings</span>": 1
+    "style={{ position: 'absolute', top: 20, right: -12, width: 24, height: 24, borderRadius: '50%', border: '1px solid var(--line-card)', background: 'var(--paper-parchment)', boxShadow: 'var(--shadow-cri": 1
    },
    "colour-literal": {
     "<span style={{ color: 'var(--acc-sage)', animation: motionOn ? 'twinkle 300ms var(--ease-out)' : undefined, textShadow: motionOn ? '0 0 6px rgba(232,217,160,0.9)' : undefined }}>●</span>": 1,
@@ -132,23 +123,12 @@
     "style={{ height: 48, padding: '0 14px', borderRadius: 8, border: '1px solid var(--line-control)', background: 'var(--paper-bone)', font: 'inherit', fontSize: 15, color: 'var(--ink-body)' }}": 1
    }
   },
-  "src/components/MobileTabBar.tsx": {
-   "colour-literal": {
-    "{ to: '/tasks', label: 'Tasks', glyph: <FlowerIcon fill=\"var(--acc-blossom)\" center=\"#C98A4B\" /> },": 1
-   },
-   "font-size-literal": {
-    "<span style={{ fontSize: 13, color: 'var(--ink-body)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>": 1,
-    "<button type=\"button\" onClick={() => { onClose(); onSearch() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', cur": 1,
-    "<button type=\"button\" onClick={() => { onClose(); onChat() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', curso": 1,
-    "<button type=\"button\" onClick={() => { onClose(); onSignOut() }} style={{ flex: 1, minHeight: 48, textAlign: 'center', fontSize: 12.5, color: 'var(--ink-faint)', background: 'none', border: 'none', cu": 1
-   }
-  },
   "src/components/NumberField.tsx": {
    "font-size-literal": {
     "style={{ width: 22, height: 22, flex: 'none', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: 0, border: 'none', borderRadius: 999, background: 'none', font: 'inherit'": 1
    },
    "radius-off-scale": {
-    "style={{ width: `${Math.max(2, String(max).length) + 1.5}ch`, font: 'inherit', textAlign: 'center', color: 'var(--ink-body)', background: 'transparent', border: '1px solid var(--line-solid)', borderRa": 1
+    "style={{ width: `${Math.max(2, String(max).length) + 1.5}ch`, font: 'inherit', fontSize: 'max(var(--field-min), 1em)', textAlign: 'center', color: 'var(--ink-body)', background: 'transparent', border:": 1
    }
   },
   "src/components/pickers.css": {
@@ -181,7 +161,7 @@
     ".kf-pp-search input { flex: 1; min-width: 0; border: none; background: none; outline: none; font: inherit; font-size: 15px; color: var(--ink-body); }": 1,
     "fontSize: 13,": 1,
     "<span style={{ color: 'var(--ink-faint)', fontSize: 12, flex: 'none' }}>⌕</span>": 1,
-    "fontSize: 12.5,": 1,
+    "fontSize: 'max(var(--field-min), 12.5px)',": 1,
     "<div style={{ padding: '8px 16px', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No matching projects</div>": 1
    },
    "line-height-literal": {
@@ -247,9 +227,10 @@
    "font-size-literal": {
     "font-size: 18px;": 1,
     "font-size: 26px;": 1,
-    "font-size: 15px;": 4,
-    "font-size: 14px;": 5,
+    "font-size: 15px;": 3,
+    "font-size: 14px;": 4,
     "font-size: 13px;": 3,
+    "font-size: max(var(--field-min), 15px);": 1,
     "font-size: 12px;": 1,
     "font-size: 22px;": 1,
     "font-size: 20px;": 1,
@@ -269,37 +250,27 @@
     "font-size: calc(12.5px * var(--s));": 1,
     "font-size: calc(8.5px * var(--s-text));": 2,
     "font-size: calc(12px * var(--s));": 1,
-    "font-size: calc(9px * var(--s-text));": 2,
     "font-size: calc(10.5px * var(--s-text));": 1,
-    ".fc .fc-timegrid-event.kf-tier-micro .fc-event-title { font-size: calc(8px * var(--s-text)); font-family: var(--font-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }": 1,
-    ".fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }": 1,
-    ".fc .fc-timegrid-event.kf-ov:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s-text)); }": 1,
-    ".kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-title { font-size: calc(11px * var(--s)); }": 1,
-    ".kf-cal-narrow .fc .fc-timegrid-event:not(.kf-tier-micro) .fc-event-time { font-size: calc(8px * var(--s-text)); }": 1
-   },
-   "colour-literal": {
-    "border: 1px solid var(--kf-ev-edge, rgba(124, 106, 154, 0.35));": 1,
-    "background: var(--kf-ev-grip, rgba(124, 106, 154, 0.5));": 1
-   },
-   "motion-property": {
-    "transition: transform var(--dur-quick) var(--ease-out), box-shadow var(--dur-quick) var(--ease-out);": 1,
-    "@keyframes calGridSnapFlash {": 1,
-    "@keyframes calJustLanded {": 1,
-    ".fc .fc-timegrid-event:hover { transform: translateY(-1px); box-shadow: var(--shadow-card); transition: transform 120ms var(--ease-out), box-shadow 120ms var(--ease-out); }": 1
-   },
-   "radius-off-scale": {
-    "border-radius: 4px;": 1,
-    "border-radius: 10px;": 1
+    "font-size: calc(9px * var(--s-text));": 1
    },
    "hover-only-reveal": {
     ".fc .fc-timegrid-event:hover .kf-ev-check,": 1,
     ".fc .fc-timegrid-event:hover .fc-event-resizer-end::after,": 1
+   },
+   "colour-literal": {
+    "background: var(--kf-ev-grip, rgba(124, 106, 154, 0.5));": 1
+   },
+   "radius-off-scale": {
+    "border-radius: 10px;": 1
    },
    "line-height-literal": {
     "line-height: 18px;": 1
    },
    "shadow-literal": {
     "box-shadow: 0 14px 30px rgba(var(--kf-shadow-rgb, 60,52,38), 0.26);": 1
+   },
+   "motion-property": {
+    "@keyframes calJustLanded {": 1
    }
   },
   "src/features/calendar/CalendarPage.tsx": {
@@ -309,32 +280,11 @@
     "<span style={{ fontSize: 13, color: 'var(--ink-faint)' }}>Quick add task…</span>": 1
    },
    "motion-property": {
-    ".cal-railsplit::after { content: \"\"; position: absolute; inset: 0 3px; background: transparent; transition: background var(--dur-quick); }": 1,
-    "transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);": 1
+    ".cal-railsplit::after { content: \"\"; position: absolute; inset: 0 3px; background: transparent; transition: background var(--dur-quick); }": 1
    },
    "radius-off-scale": {
     ".cal-rail-sec-head:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: 4px; }": 1,
-    ".cal-rail-sec[data-drop-over]:not([data-section=\"overdue\"]) { background: var(--fc-highlight-color, color-mix(in srgb, var(--acc-lavender) 16%, transparent)); outline: 1px dashed var(--acc-lavender); ": 1,
     "<span style={{ width: 14, height: 14, border: '1.5px solid var(--ink-hairline)', borderRadius: 4, flex: 'none' }} />": 1
-   },
-   "colour-literal": {
-    "box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);": 1
-   },
-   "shadow-literal": {
-    "box-shadow: 0 14px 30px rgba(60, 52, 38, 0.26);": 1
-   }
-  },
-  "src/features/calendar/formFields.tsx": {
-   "colour-literal": {
-    "{ name: 'Lavender', value: '#A8A0BE' },": 1,
-    "{ name: 'Sage', value: '#8A9A7E' },": 1,
-    "{ name: 'Moss', value: '#7A946E' },": 1,
-    "{ name: 'Terra', value: '#B5654A' },": 1,
-    "{ name: 'Blossom', value: '#D4A8B0' },": 1,
-    "{ name: 'Hydrangea', value: '#9AB4BE' },": 1,
-    "{ name: 'Buttercream', value: '#D4C78A' },": 1,
-    "{ name: 'Clover', value: '#C9A0A0' },": 1,
-    "{ name: 'Gold', value: '#C9A55A' },": 1
    }
   },
   "src/features/calendar/phoneCalendar.css": {
@@ -349,7 +299,6 @@
     ".pc-day-n { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; font-weight: var(--fw-medium); color: var(--ink-body); }": 1,
     ".pc-chip-t { font-size: 14px; color: var(--ink-body); }": 1,
     "background: linear-gradient(var(--pc-fill), var(--pc-fill)), var(--paper-parchment); font: inherit; font-size: 14px; font-weight: var(--fw-medium);": 1,
-    ".pc-name { min-width: 0; font-size: 14px; font-weight: var(--fw-medium); color: var(--ink-body); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }": 1,
     "font: inherit; font-size: 16px; color: var(--ink-body); outline: none;": 1,
     ".pc-bs-title { font-family: var(--font-display); font-size: 20px; line-height: 26px; color: var(--ink-body); padding-top: 10px; text-wrap: pretty; }": 1,
     ".pc-bs-title-in { width: 100%; font-family: var(--font-display); font-size: 20px; }": 1,
@@ -360,9 +309,6 @@
     ".pc-block.is-compact .pc-name { line-height: 18px; }": 1,
     ".pc-held > * { line-height: 32px; }": 1,
     ".pc-bs-title { font-family: var(--font-display); font-size: 20px; line-height: 26px; color: var(--ink-body); padding-top: 10px; text-wrap: pretty; }": 1
-   },
-   "motion-property": {
-    "transition: transform 140ms var(--ease-out), box-shadow 140ms var(--ease-out);": 1
    }
   },
   "src/features/calendar/PhoneSheets.tsx": {
@@ -383,7 +329,7 @@
    "font-size-literal": {
     "style={{ width: '100%', margin: 0, fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 34, lineHeight: 1.15, letterSpacing: '-0.01em', color: 'var(--ink-body)', background: 'none', border: '": 1,
     "style={{ color: 'var(--acc-terra)', fontSize: 22, flex: 'none', marginTop: 6, background: 'none', border: 'none', cursor: 'pointer', opacity: task.top3 ? 1 : 0.3 }}": 1,
-    "style={{ marginTop: 8, width: '100%', minHeight: 150, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '14px 16px', fontSize: 13.5, lineHeight: 1.65, co": 1,
+    "style={{ marginTop: 8, width: '100%', minHeight: 150, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 6, padding: '14px 16px', fontSize: 'max(var(--field-min), 13.": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Someday</div>": 1
    },
    "letter-spacing-literal": {
@@ -414,11 +360,6 @@
    }
   },
   "src/features/capture/capture.css": {
-   "motion-property": {
-    "@keyframes micPulse {": 1,
-    "transition: transform var(--dur-press) var(--ease-standard), box-shadow var(--dur-press) var(--ease-standard);": 1,
-    "transition: background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard);": 1
-   },
    "colour-literal": {
     "background: #211d18;": 1,
     "background: #0d0b09;": 1
@@ -430,6 +371,10 @@
    },
    "shadow-literal": {
     "box-shadow: 0 2px 6px rgba(var(--kf-shadow-rgb, 60,52,38),0.2), 0 30px 60px rgba(var(--kf-shadow-rgb, 60,52,38),0.28);": 1
+   },
+   "motion-property": {
+    "transition: transform var(--dur-press) var(--ease-standard), box-shadow var(--dur-press) var(--ease-standard);": 1,
+    "transition: background-color var(--dur-press) var(--ease-standard), color var(--dur-press) var(--ease-standard);": 1
    }
   },
   "src/features/capture/CaptureButton.tsx": {
@@ -438,20 +383,7 @@
    }
   },
   "src/features/capture/VoiceCaptureSheet.tsx": {
-   "kit-duplicate": {
-    "return createPortal(": 1
-   },
-   "colour-literal": {
-    "background: 'rgba(42, 36, 32, 0.42)',": 1
-   },
-   "shadow-literal": {
-    "boxShadow: '0 -10px 30px rgba(var(--kf-shadow-rgb, 60,52,38),0.2)',": 1
-   },
-   "motion-property": {
-    "transition: 'box-shadow var(--dur-normal) var(--ease-natural)',": 1
-   },
    "font-size-literal": {
-    "<span style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>—</span>": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.4 }}>{keptReasonLine(keptReason)}</div>": 1,
     "<div style={{ fontSize: 12, color: 'var(--ink-muted)', lineHeight: 1.4 }}>{KEPT_AUDIO_NOTE}</div>": 1,
     "<div style={{ marginTop: 12, fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.4 }}>{RESTING.line}</div>": 1
@@ -470,19 +402,8 @@
    "font-size-literal": {
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 17, fontWeight: 600, color: 'var(--ink-body)' }}>Chat</span>": 1,
     "<button type=\"button\" onClick={onClose} className=\"kf-hit\" style={{ marginLeft: 'auto', border: 'none', background: 'none', color: 'var(--ink-faint)', fontSize: 16, cursor: 'pointer', padding: 4, line": 1,
-    "<div key={i} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink-body)', color: 'var(--paper-parchment)', borderRadius: '12px 12px 3px 12px', padding: '9px 13px', fontSize: 13, lin": 1,
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-faint)', letterSpacing: '0.14em' }}>…</span>": 1,
-    "<div key={i} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--": 1,
-    "fontSize: 12.5,": 1,
+    "fontSize: 'max(var(--field-min), 12.5px)',": 1,
     "fontSize: 15,": 1
-   },
-   "radius-off-scale": {
-    "<div key={i} style={{ alignSelf: 'flex-end', maxWidth: '80%', background: 'var(--ink-body)', color: 'var(--paper-parchment)', borderRadius: '12px 12px 3px 12px', padding: '9px 13px', fontSize: 13, lin": 1,
-    "<div key={i} style={{ alignSelf: 'flex-start', display: 'flex', alignItems: 'center', gap: 9, background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px' }}>": 1,
-    "<div key={i} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--": 1
-   },
-   "letter-spacing-literal": {
-    "<span style={{ fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--ink-faint)', letterSpacing: '0.14em' }}>…</span>": 1
    }
   },
   "src/features/command-bar/CommandBar.tsx": {
@@ -538,7 +459,7 @@
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 66, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>": 1,
     "{activeTask?.top3 && <span style={{ color: 'var(--acc-terra)', fontSize: 17 }}>★</span>}": 1,
     "<span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>": 1,
-    "fontSize: 12.5,": 1,
+    "fontSize: 'max(var(--field-min), 12.5px)',": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Rounds before a long break</div>": 1,
     "style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSi": 2,
     "<span style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: 'var(--ink-body)', width: 18, textAlign: 'center' }}>": 1,
@@ -568,7 +489,7 @@
   "src/features/guide/guide.css": {
    "font-size-literal": {
     ".gd-h1 { margin: 6px 0 0; font-family: var(--font-display); font-weight: 500; font-size: 44px; line-height: 1.05; letter-spacing: -0.015em; color: var(--ink-body); }": 1,
-    ".gd-search input { flex: 1; min-width: 0; height: 100%; border: none; outline: none; background: none; font: inherit; font-size: 15px; color: var(--ink-body); }": 1,
+    ".gd-search input { flex: 1; min-width: 0; height: 100%; border: none; outline: none; background: none; font: inherit; font-size: max(var(--field-min), 15px); color: var(--ink-body); }": 1,
     ".gd-tour-title { font-size: 16px; font-weight: 600; }": 1,
     ".gd-tour-sub { font-size: 13px; color: var(--ink-muted); }": 1,
     ".gd-keys-btn { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0; border: none; background: none; font: inherit; font-size: 15px; color: var(--ink-body); cursor: point": 1,
@@ -605,7 +526,7 @@
    },
    "font-size-literal": {
     "<div style={{ marginTop: 8, fontFamily: 'var(--font-hand)', fontSize: 30, color: 'var(--ink-body)' }}>{p.name}</div>": 1,
-    "<textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 13, background: 'var(--paper-linen)', border: '1p": 1,
+    "<textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 'max(var(--field-min), 13px)', background: 'var(-": 1,
     ") : <div style={{ fontSize: 13.5, fontStyle: 'italic', color: 'var(--ink-muted)', lineHeight: '1.6' }}>\"{p.completion_summary || 'No summary line written.'}\"</div>}": 1,
     "<div style={{ marginTop: 16, fontFamily: 'var(--font-hand)', fontSize: 15, color: 'var(--ink-muted)' }}>the press closes, gently</div>": 1,
     "<div style={{ fontFamily: 'var(--font-hand)', fontSize: 24, color: 'var(--ink-body)', textAlign: 'center' }}>{p.name}</div>": 1,
@@ -617,7 +538,7 @@
    },
    "radius-off-scale": {
     "<div style={{ marginTop: 16, padding: '12px 14px', background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 5 }}>": 1,
-    "<textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 13, background: 'var(--paper-linen)', border: '1p": 1
+    "<textarea value={editedLineText} onChange={(e) => setEditedLineText(e.target.value)} style={{ width: '100%', minHeight: 60, font: 'inherit', fontSize: 'max(var(--field-min), 13px)', background: 'var(-": 1
    },
    "motion-property": {
     "@keyframes hbClose { from { height: 150px } to { height: 104px } }": 1,
@@ -721,7 +642,7 @@
    "font-size-literal": {
     "font-size: 13.5px;": 1,
     "<h1 style={{ margin: 0, fontFamily: 'var(--font-display)', fontSize: 20, fontWeight: 600, color: 'var(--ink-body)' }}>Library</h1>": 1,
-    "style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: '12px', color: 'var(--ink-body)', outline: 'none', width: '100%', padding: 0 }}": 2,
+    "style={{ border: 'none', background: 'transparent', font: 'inherit', fontSize: 'max(var(--field-min), 12px)', color: 'var(--ink-body)', outline: 'none', width: '100%', padding: 0 }}": 2,
     "<div style={{ fontSize: 14, fontWeight: 600, color: 'var(--ink-body)' }}>{n.title || 'Untitled Note'}</div>": 1,
     "<div style={{ fontSize: 12, color: 'var(--ink-muted)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{n.body}</div>": 1,
     "{filteredNotes.length === 0 && <div style={{ fontSize: 13, color: 'var(--ink-faint)', fontStyle: 'italic' }}>No notes found.</div>}": 1,
@@ -785,12 +706,10 @@
     ".pp-rtitle { font-family: var(--font-display); font-size: 21px; font-weight: 500; line-height: 1.2; }": 1,
     ".pp-banner { padding: 8px 16px; font-size: 13px; line-height: 1.45; color: var(--ink-muted); background: var(--paper-bone); border-bottom: 1px solid var(--line-card); }": 1,
     ".pp-row-text { display: block; width: 100%; padding: 0; border: none; background: none; font: inherit; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--ink-body); text-align: start; ": 1,
-    ".pp-row-input { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; line-height: 20px; color: var(--ink-body); background: var(--bg-input); border: 1px solid var(--border-default); bo": 1,
+    ".pp-row-input { width: 100%; box-sizing: border-box; font: inherit; font-size: max(var(--field-min), 15px); line-height: 20px; color: var(--ink-body); background: var(--bg-input); border: 1px solid va": 1,
     ".pp-type { height: 28px; padding: 0 6px 0 10px; border: none; border-radius: 999px; display: inline-flex; align-items: center; gap: 2px; font: inherit; font-size: 12px; font-weight: 600; cursor: point": 1,
     ".pp-chip { height: 28px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; background: var(--paper-bone); border: 1px solid var(--line-card); font-family: var": 1,
-    ".pp-waiting { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 999px; background: var(--block-hydrangea); color: var(--acc-hydrangea-deep); font-size:": 1,
-    ".pp-set-help { font-size: 12.5px; color: var(--ink-muted); }": 1,
-    ".pp-seg-btn { flex: 1; min-height: 44px; border: none; border-radius: 999px; background: none; font: inherit; font-size: 13.5px; color: var(--ink-muted); cursor: pointer; }": 1
+    ".pp-waiting { display: inline-flex; align-items: center; gap: 8px; height: 32px; padding: 0 12px; border-radius: 999px; background: var(--block-hydrangea); color: var(--acc-hydrangea-deep); font-size:": 1
    },
    "pure-black-white": {
     ".pp-photo { display: block; max-width: 100cqw; max-height: 100cqh; object-fit: contain; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.18), 0 12px 28px rgba(0, 0, 0, 0.22); transition: transform var(--dur-norm": 2,
@@ -823,7 +742,7 @@
    },
    "line-height-literal": {
     ".pp-row-text { display: block; width: 100%; padding: 0; border: none; background: none; font: inherit; font-size: 15px; line-height: 20px; font-weight: 500; color: var(--ink-body); text-align: start; ": 1,
-    ".pp-row-input { width: 100%; box-sizing: border-box; font: inherit; font-size: 15px; line-height: 20px; color: var(--ink-body); background: var(--bg-input); border: 1px solid var(--border-default); bo": 1
+    ".pp-row-input { width: 100%; box-sizing: border-box; font: inherit; font-size: max(var(--field-min), 15px); line-height: 20px; color: var(--ink-body); background: var(--bg-input); border: 1px solid va": 1
    }
   },
   "src/features/paper/PaperFlow.tsx": {
@@ -910,7 +829,7 @@
     "style={{ fontSize: 12.5, padding: '8px 10px', width: '100%', minHeight: isMobile ? 48 : undefined }}": 2,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 46, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>{totalHours}</div>": 1,
     "<NumberField value={m.weight} onChange={(n) => reweighProjectMilestone(project, m.id, n)} min={1} max={100} ariaLabel={`Weight of ${m.title}`} style={{ fontSize: 12.5 }} />": 1,
-    "style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 12.5, background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}": 2,
+    "style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 'max(var(--field-min), 12.5px)', background: 'transparent', border: 'none', outline: 'none', color: 'var(--ink-body)' }}": 2,
     "<NumberField value={newMilestoneWeight} onChange={setNewMilestoneWeight} min={1} max={100} ariaLabel=\"Milestone weight\" style={{ fontSize: 12.5 }} />": 1,
     "<span className=\"fhelp\" style={{ width: 76, flex: 'none', paddingTop: 3, color: 'var(--ink-faint)', fontSize: 11 }}>{dateLabel}</span>": 2,
     "<span style={{ fontSize: 13, color: 'var(--ink-body)', lineHeight: 1.5, flex: 1 }}>": 2,
@@ -982,7 +901,7 @@
     "font-size: 14px;": 2,
     ".rt-clear-title { font-family: var(--font-display); font-size: 20px; line-height: 1.25; color: var(--ink-body); }": 1,
     ".rt-clear-sub { margin-top: 6px; font-size: 14px; line-height: 20px; color: var(--ink-muted); }": 1,
-    "font-size: 15px;": 1,
+    "font-size: max(var(--field-min), 15px);": 1,
     ".rt-hint { padding: var(--sp-1) var(--gutter-phone) var(--sp-2); font-size: 14px; line-height: 20px; color: var(--ink-muted); }": 1,
     ".rt-warn { display: flex; align-items: center; gap: var(--sp-2); padding: 0 var(--gutter-phone) var(--sp-1); font-size: 14px; line-height: 20px; color: var(--sig-amber); }": 1,
     ".rt-wl { display: flex; align-items: center; gap: var(--sp-2); font-size: 14px; line-height: 20px; color: var(--ink-muted); }": 1,
@@ -1028,7 +947,7 @@
   "src/features/routines/NewRoutineForm.tsx": {
    "font-size-literal": {
     "<h1 style={{ margin: '2px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isMobile ? 22 : 26, lineHeight: 1, color: 'var(--ink-body)' }}>{routine ? 'Edit routine' : 'New routine'}<": 1,
-    "style={{ flex: 1, font: 'inherit', fontSize: 15, color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}": 1,
+    "style={{ flex: 1, font: 'inherit', fontSize: 'max(var(--field-min), 15px)', color: 'var(--ink-body)', background: 'none', border: 'none', outline: 'none' }}": 1,
     "fontSize: 11,": 1,
     "<div style={{ fontSize: 14, color: 'var(--ink-body)' }}>Reminder</div>": 1,
     "<NumberField value={challengeDays} onChange={setChallengeDays} min={1} max={3650} ariaLabel=\"Challenge days\" style={{ fontSize: 14 }} inputStyle={{ border: 'none' }} />": 1,
@@ -1041,13 +960,10 @@
   },
   "src/features/routines/RoutinesPage.tsx": {
    "font-size-literal": {
-    "fontSize: 12,": 1,
     "<button type=\"button\" onClick={onEdit} title=\"Edit routine\" style={{ padding: 0, border: 'none', background: 'none', font: 'inherit', textAlign: 'left', cursor: 'pointer', fontSize: 15, color: doneTod": 1,
     "<div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>": 1,
     "<h1 style={{ margin: isMobile ? '2px 0 0' : '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>": 1,
     "style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: isMobile ? '8px 0' : 0, font: 'inherit', fontSize: 13.5, color: 'var(--ink-body)', cursor: 'pointer' }}": 1,
-    "<span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {due} tended</span>": 1,
-    "<div style={{ fontFamily: 'var(--font-display)', fontSize: 20, color: 'var(--ink-body)', lineHeight: 1 }}>{bestStreak}</div>": 1,
     "<div style={{ fontSize: 14, color: '#4a3a1e', fontWeight: 500 }}>{routine.name}</div>": 1
    },
    "hairline-text": {
@@ -1056,9 +972,6 @@
    },
    "phone-tiny-text": {
     "<div style={{ fontSize: compact ? 11 : 12.5, color: 'var(--ink-body)', marginTop: compact ? 5 : 8 }}>{routine.name}</div>": 1
-   },
-   "bold-huge": {
-    "<span style={{ fontFamily: 'var(--font-display)', fontSize: isMobile ? 18 : 24, fontWeight: 600, color: 'var(--ink-body)' }}>{doneToday} of {due} tended</span>": 1
    },
    "radius-off-scale": {
     "<div style={{ marginTop: isMobile ? 8 : 10, height: isMobile ? 6 : 7, borderRadius: 4, background: 'var(--line-card)', overflow: 'hidden' }}>": 1,
@@ -1076,19 +989,16 @@
     "<path d=\"M8 1C10.6 7 15 9.5 15 14a7 7 0 0 1-14 0C1 9.5 5.4 7 8 1Z\" fill=\"none\" stroke=\"#7d99a3\" strokeWidth={0.8} />": 1,
     "<circle cx={5.4} cy={13.2} r={2} fill=\"var(--star, #FDFBF4)\" opacity={0.65} />": 1,
     "<circle cx={4.6} cy={9.4} r={1.3} fill=\"var(--star, #FDFBF4)\" opacity={0.7} />": 1
-   },
-   "colour-literal": {
-    "<div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(42,36,32,0.3)', zIndex: 998, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>": 1
    }
   },
   "src/features/search/SearchOverlay.tsx": {
    "font-size-literal": {
-    "<div style={{ fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={hit.title} /></div>": 1,
-    "style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 15, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}": 1,
+    "style={{ flex: 1, fontFamily: 'var(--font-ui)', fontSize: 'max(var(--field-min), 15px)', color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}": 1,
     "{loading && <p style={{ marginTop: 12, fontSize: 12, color: 'var(--ink-faint)' }}>Searching…</p>}": 1,
     "<button type=\"button\" onClick={search.retry} className=\"kf-hit\" style={{ font: 'inherit', flex: 'none', fontSize: 12.5, color: 'var(--ink-muted)', background: 'none', border: 'none', padding: 0, curso": 1,
     "<span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>Open selected</span>": 1,
-    "<span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>View all results</span>": 1
+    "<span style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>View all results</span>": 1,
+    "<div style={{ fontSize: 14, color: 'var(--ink-body)' }}><EmojiText text={hit.title} /></div>": 1
    }
   },
   "src/features/search/SearchPage.tsx": {
@@ -1102,12 +1012,11 @@
   },
   "src/features/settings/settings.css": {
    "font-size-literal": {
-    "font-size: 20px;": 1,
-    "font-size: 13px;": 8,
-    "font-size: 14px;": 4,
+    "font-size: 13px;": 7,
+    "font-size: 14px;": 3,
+    "font-size: max(var(--field-min), 13px);": 1,
     "font-size: 12px;": 2,
-    "font-size: 26px;": 1,
-    "font-size: 15px;": 2
+    "font-size: max(var(--field-min), 15px);": 1
    },
    "line-height-literal": {
     "line-height: 20px;": 1,
@@ -1118,7 +1027,7 @@
    "font-size-literal": {
     "<span role=\"status\" style={{ fontSize: 13, color: r?.kind === 'offline' ? 'var(--ink-muted)' : 'var(--ink-body)' }}>{line}</span>": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{zoneOffset(z)}</span>": 1,
-    "const timeStyle = (on: boolean): CSSProperties => ({ width: 84, boxSizing: 'border-box', fontFamily: 'var(--font-mono)', fontSize: 12, color: 'var(--ink-body)', background: 'var(--paper-bone)', border": 1,
+    "const timeStyle = (on: boolean): CSSProperties => ({ width: 84, boxSizing: 'border-box', fontFamily: 'var(--font-mono)', fontSize: 'max(var(--field-min), 12px)', color: 'var(--ink-body)', background: ": 1,
     "<span style={{ fontSize: 13, color: 'var(--ink-muted)' }}>to</span>": 1,
     "<div className=\"st-title\" style={{ fontSize: 18 }}>{name}</div>": 1,
     "const how: CSSProperties = { margin: '8px 0 0', fontSize: 13, lineHeight: 1.55, color: 'var(--ink-muted)' }": 1,
@@ -1126,8 +1035,7 @@
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Your capture key — copy it now, it won’t be shown again:</div>": 1,
     "<div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Your AI access key — copy it now, it won’t be shown again:</div>": 1,
     "<div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink-body)' }}>{c.name}</div>": 1,
-    "<span style={{ fontSize: 13, color: failing ? 'var(--acc-terra-ink)' : 'var(--ink-muted)', textAlign: 'right' }}>": 1,
-    "<h2 className=\"st-title\" style={{ fontSize: 26 }}>Integrations</h2>": 1
+    "<span style={{ fontSize: 13, color: failing ? 'var(--acc-terra-ink)' : 'var(--ink-muted)', textAlign: 'right' }}>": 1
    }
   },
   "src/features/tasks/MovePicker.tsx": {
@@ -1138,7 +1046,7 @@
     "<span style={{ flex: 1, minWidth: 0, fontSize: 15 }}>None</span>": 1,
     "display: 'flex', alignItems: 'center', gap: 10, width: '100%', textAlign: 'left', fontFamily: 'var(--font-ui)', fontSize: 13,": 1,
     "<span style={{ color: 'var(--ink-faint)', fontSize: 12, flex: 'none' }}>⌕</span>": 1,
-    "style={{ flex: 1, width: '100%', fontFamily: 'var(--font-ui)', fontSize: 12.5, background: 'none', border: 'none', color: 'var(--ink-body)', outline: 'none' }}": 1,
+    "style={{ flex: 1, width: '100%', fontFamily: 'var(--font-ui)', fontSize: 'max(var(--field-min), 12.5px)', background: 'none', border: 'none', color: 'var(--ink-body)', outline: 'none' }}": 1,
     "{groups.length === 0 && <div style={{ padding: '8px 16px', fontSize: 12, color: 'var(--ink-faint)', fontStyle: 'italic' }}>Nothing by that name</div>}": 1
    },
    "line-height-literal": {
@@ -1207,7 +1115,7 @@
     "<h1 style={{ margin: '3px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: isDone ? 34 : 40, lineHeight: 1, letterSpacing: 'var(--ls-display)', color: 'var(--ink-body)' }}>{h1}</h1>": 1,
     "<div style={{ fontFamily: 'var(--font-display)', fontSize: 30, color: 'var(--acc-blossom)', lineHeight: 1 }}>{doneTodayCount}</div>": 1,
     "<Link to=\"/settings/import\" className=\"kf-link-terra\" style={{ display: 'inline-block', marginTop: 8, fontSize: 13 }}>": 1,
-    "style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 14, color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}": 1,
+    "style={{ flex: 1, minWidth: 0, font: 'inherit', fontSize: 'max(var(--field-min), 14px)', color: 'var(--ink-body)', background: 'transparent', border: 'none', outline: 'none' }}": 1,
     "style={{ background: 'none', border: 'none', padding: '10px 0 4px', font: 'inherit', fontSize: 13, cursor: 'pointer' }}": 1
    },
    "letter-spacing-literal": {
@@ -1285,11 +1193,6 @@
     "box-shadow: 0 0 0 2px rgba(251, 246, 233, 0.85), 0 2px 6px rgba(42, 36, 32, 0.2);": 1
    }
   },
-  "src/features/tour/TourHost.tsx": {
-   "radius-off-scale": {
-    "style={{ left: box.x - pad, top: box.y - pad, width: box.w + pad * 2, height: box.h + pad * 2, borderRadius: n.round ? '50%' : mobile ? 4 : 8 }}": 1
-   }
-  },
   "src/features/trash/TrashPage.tsx": {
    "font-size-literal": {
     "<span style={{ flex: 1, minWidth: 0, fontSize: 14, color: 'var(--ink-faint)', textDecoration: 'line-through', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.title}</span>": 1,
@@ -1311,18 +1214,6 @@
    },
    "letter-spacing-literal": {
     "<h1 style={{ margin: '4px 0 0', fontFamily: 'var(--font-display)', fontWeight: 500, fontSize: 38, lineHeight: 1, letterSpacing: '-0.015em', color: 'var(--ink-body)' }}>Trash</h1>": 1
-   }
-  },
-  "src/features/tray/tray.css": {
-   "font-size-literal": {
-    "font-size: 21px;": 1,
-    "font-size: 12px;": 1,
-    "font-size: 14.5px;": 1,
-    "font-size: 14px;": 3,
-    "font-size: 13.5px;": 1
-   },
-   "letter-spacing-literal": {
-    "letter-spacing: -0.01em;": 1
    }
   },
   "src/features/whats-new/WhatsNew.tsx": {
