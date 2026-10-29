@@ -1,5 +1,6 @@
 // P2 AI capture: audio blob -> text (Groq Whisper).
 import { requireUser } from '../_shared/auth.ts'
+import { errorKind, groqFailure } from '../_shared/groqLog.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
 import { dailyLimitResponse, takeAiAllowance } from '../_shared/quota.ts'
 
@@ -53,7 +54,7 @@ Deno.serve(async (req) => {
     })
     if (!res.ok) {
       // Upstream detail stays in the function log; the caller only needs to know it failed.
-      console.error('transcribe: groq', res.status, await res.text())
+      console.error('transcribe: groq', await groqFailure(res))
       return new Response(JSON.stringify({ error: 'upstream_failed' }), {
         status: 502,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
     })
   } catch (e) {
     // Details stay in the function log; callers get a stable code, never upstream or stack text.
-    console.error('transcribe:', e)
+    console.error('transcribe:', errorKind(e))
     return new Response(JSON.stringify({ error: 'bad_request' }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

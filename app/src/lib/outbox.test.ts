@@ -26,7 +26,7 @@ function switchAccount(session: typeof auth.session) {
 vi.mock('./supabase', () => ({
   supabase: {
     from: (table: string) => ({
-      upsert: (payload: unknown) => upsertMock(table, payload),
+      upsert: (payload: unknown, opts?: unknown) => (opts ? upsertMock(table, payload, opts) : upsertMock(table, payload)),
       delete: () => ({ eq: (col: string, val: unknown) => deleteEqMock(table, col, val) }),
       select: () => ({ in: (col: string, ids: string[]) => selectInMock(table, col, ids) }),
     }),
@@ -93,6 +93,15 @@ describe('outbox', () => {
     await flushOutbox()
     expect(upsertMock).toHaveBeenCalledWith('tasks', expect.objectContaining({ id: 't1' }))
     expect(store.get('kf-outbox')).toEqual([])
+  })
+
+  it('writes consents insert-only (0089): a retry that already landed is a no-op, never an update', async () => {
+    upsertMock.mockResolvedValue({ error: null })
+    const { writeRow, flushOutbox } = await import('./outbox')
+    writeRow('consents', { id: 'c1', document: 'terms', version: '2026-10-29' })
+    await flushMicrotasks()
+    await flushOutbox()
+    expect(upsertMock).toHaveBeenCalledWith('consents', expect.objectContaining({ id: 'c1' }), { ignoreDuplicates: true })
   })
 
   it('stops on the first failure and keeps the item queued for retry', async () => {

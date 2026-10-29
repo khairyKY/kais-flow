@@ -29,13 +29,13 @@ builds (its "updated …" lines), the app and `notify` import the file, and a te
 
 ## How it behaves
 
-- **Sign up.** A required box: "I agree to the Terms of Use and the Privacy Policy" (both linked).
-  Create account stays disabled until it's ticked. The ticked versions ride along as sign-up metadata;
+- **Sign up.** Two required boxes (split 2026-10-29, GDPR Art 7(2) / Egypt PDPL): "I agree to the Terms of Use. I’m 16 or older." and "I agree to the Privacy Policy and explicitly consent to keeping sensitive things I choose to write, and to my data being kept in the EU and partly handled in the US." (`ConsentBox` in `features/legal/LegalLinks.tsx`, shared with the notice).
+  Create account stays disabled until both are ticked. The ticked versions ride along as sign-up metadata;
   the moment the account is created, the database records them in `consents` (server-side, server time —
   this works with "Confirm email" on, before there's any session).
 - **A version bump.** Anyone whose newest agreement is older than the current version (or who has none —
   every account from before 0083) sees a calm card over the app the next time they open it: what changed
-  (`LEGAL_SUMMARY`), links to read both, **I agree** (writes the new `consents` rows through the outbox),
+  (`LEGAL_SUMMARY`), links to read both, the same box for each document that changed, **I agree** once every box is ticked (writes the new `consents` rows through the outbox; insert-only since 0089),
   and the ways out — Export my data, Delete my account, Sign out. Esc and a tap outside don't close it.
   Offline with nothing cached, it waits rather than block.
 - **Outside the app, once per version.** The hourly sweep finds the people who haven't agreed and haven't
