@@ -9,7 +9,7 @@ let cache: Task[] = []
 
 vi.mock('../../lib/supabase', () => ({ supabase: {} }))
 vi.mock('../../lib/queryClient', () => ({
-  queryClient: { getQueryData: () => cache },
+  queryClient: { getQueryData: () => cache, getQueriesData: () => [] },
 }))
 vi.mock('../../lib/outbox', () => ({
   writeRow: (table: string, row: Record<string, unknown>, op = 'upsert') => {
@@ -52,6 +52,43 @@ beforeEach(() => {
   vi.setSystemTime(new Date('2026-09-26T06:45:00.000Z'))
 })
 afterEach(() => void vi.useRealTimers())
+
+describe('completing the goal of the day (P1 2026-10-31)', () => {
+  it('an unranked goal stays the goal once done — its place goes onto the rows, no star log needed', async () => {
+    const { dayTop3 } = await import('../today/top3Order')
+    const goal = task({ title: 'Finish the study guide', recurrence_rule: null })
+    const second = task({ title: 'Gym', recurrence_rule: null })
+    cache = [goal, second]
+    expect(dayTop3(cache, null, []).map((t) => t.id)).toEqual([goal.id, second.id])
+    completeTask(goal)
+    const after = dayTop3(cache, null, [])
+    expect(after.map((t) => t.id)).toEqual([goal.id, second.id])
+    expect(after[0]).toMatchObject({ status: 'done', top3: false, top3_rank: 1 })
+    expect(after[1]).toMatchObject({ status: 'todo', top3: true, top3_rank: 2 })
+  })
+
+  it("Undo gives the Top 3 back exactly — every rank the tick wrote; a repeat's next round isn't a pick", async () => {
+    const { dayTop3 } = await import('../today/top3Order')
+    const goal = task({ title: 'Read 2 pages', top3_rank: null })
+    const second = task({ title: 'Gym', recurrence_rule: null, top3_rank: null })
+    cache = [goal, second]
+    const undo = completeTask(goal)
+    expect(undo.spawned).toMatchObject({ top3: false, top3_rank: null })
+    expect(cache.find((t) => t.id === goal.id)).toMatchObject({ status: 'done', top3_rank: 1 })
+    const { undoCompletion } = await import('./api')
+    undoCompletion(undo)
+    const byId = (x: Task) => cache.find((t) => t.id === x.id)
+    expect([byId(goal), byId(second)]).toEqual([goal, second])
+    expect(dayTop3(cache, null, [])[0].id).toBe(goal.id) // still the goal
+  })
+
+  it('a task that is not a pick writes no ranks', () => {
+    const t = task({ top3: false, recurrence_rule: null })
+    cache = [t]
+    completeTask(t)
+    expect(writes.filter((w) => 'top3_rank' in w.row && w.row.top3_rank != null)).toEqual([])
+  })
+})
 
 describe('completeTaskWithUndo — punch 6 on a single check', () => {
   it('toasts "Done" with an Undo', () => {

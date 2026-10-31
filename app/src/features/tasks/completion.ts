@@ -10,7 +10,7 @@ import type { Task } from '../../lib/types'
 import { nextDue, nextReminderAt, ruleAfterThis } from './recurrence'
 
 /** What completing changes on the task itself — exactly what an undo puts back. */
-export type CompletionFields = Pick<Task, 'status' | 'completed_at' | 'top3'>
+export type CompletionFields = Pick<Task, 'status' | 'completed_at' | 'top3' | 'top3_rank'>
 
 export interface CompletionPlan {
   /** The completed row. */
@@ -84,7 +84,8 @@ export interface UndoPlan {
  * occurrence goes only while it's still exactly as spawned — `spawnedNow` undefined (not in the
  * list) or still open and unedited; a copy the user has since edited or ticked stays. */
 export function planUndo(current: Task, before: Task, spawned: Task | null, spawnedNow: Task | undefined): UndoPlan {
-  const restore: Task = { ...current, status: before.status, completed_at: before.completed_at, top3: before.top3 }
+  // The place completing wrote (tasks/api completeOne: a pick's top3_rank) goes back too.
+  const restore: Task = { ...current, status: before.status, completed_at: before.completed_at, top3: before.top3, top3_rank: before.top3_rank }
   if (!spawned) return { restore, removeId: null }
   const untouched =
     !spawnedNow ||
@@ -117,7 +118,7 @@ export interface UndoReopenPlan {
 /** What undoing a Reopen writes. `current` is the task as it is now, `before` the (done) row as it
  * was just before the Reopen, `removed` the spawned occurrence the Reopen took away. */
 export function planUndoReopen(current: Task, before: Task, removed: Task | null, existing: readonly Task[]): UndoReopenPlan {
-  const restore: Task = { ...current, status: before.status, completed_at: before.completed_at, top3: before.top3 }
+  const restore: Task = { ...current, status: before.status, completed_at: before.completed_at, top3: before.top3, top3_rank: before.top3_rank }
   if (!removed?.due_at) return { restore, reinsert: null }
   const back = existing.some((t) => t.id === removed.id) || openOccurrence(existing, removed, new Date(removed.due_at), removed.id)
   return { restore, reinsert: back ? null : removed }

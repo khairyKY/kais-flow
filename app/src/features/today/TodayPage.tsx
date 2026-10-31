@@ -560,17 +560,6 @@ function TodayView({ nav }: { nav: DayNav }) {
   const counts = dayCounts(tasks, now)
 
   const resurfacing = !!resurfacePick
-  const slippingCards = (
-    // Punch 20: multiple slipping items stack as multiple cards (TODAY_BEHAVIOR §A).
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      {slipping.map((row) => {
-        const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
-        // Non-project rows (domain/area) have no milestone % — p0 is the least-claiming stage.
-        const stage = wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
-        return <SlippingCard key={`${row.entity_type}:${row.entity_id}`} row={row} stage={stage} />
-      })}
-    </div>
-  )
   const birthdayCards = upcomingBirthdays.map(({ person, days }) => {
     const text = days === 0
       ? `${person.name}'s birthday is today!`
@@ -687,6 +676,14 @@ function TodayView({ nav }: { nav: DayNav }) {
   // (today-looks worktree). The date bar and the day strip (with the Now / Day switch) → the calendar's Now
   // card with the next two blocks → the smaller paper goal → Settings-style rounded panels: Top 3, Today's
   // tasks, Overdue + Also open, Rituals. "Day" (Kai's Day view 4, "Day bar") swaps the Now card for ./DayStripView. ──
+  // 2a rule 7: a nudge never flags what the screen already treats as a priority — no slipping card
+  // for a project one of today's open picks belongs to.
+  const pickProjects = new Set(top3InOrder.filter((t) => !t.completed_at && t.project_id).map((t) => t.project_id))
+  const nudges = slipping.filter((r) => !(r.entity_type === 'project' && pickProjects.has(r.entity_id)))
+  const stageOf = (row: SlippingRow) => {
+    const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
+    return wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
+  }
   if (isMobile) {
     const tended = day.tally.picked > 0 && day.tally.done >= day.tally.picked
     // One fact per row: its block's start ("Now" while it runs), else its Time slot (0073).
@@ -715,7 +712,7 @@ function TodayView({ nav }: { nav: DayNav }) {
         <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact slim meta={goalMeta ? [goalMeta] : undefined} place={placeOf(goal)} {...rowSelection(goal)} />
       </div>
     ) : null
-    const foldCount = alsoRows.length + slipping.length + (resurfacing ? 1 : 0)
+    const foldCount = alsoRows.length
     const folds = listsReady && (overdueOpen.length > 0 || foldCount > 0) && (
       <PhoneFolds
         overdue={overdueOpen.length > 0 ? { count: overdueOpen.length, action: replanAll, body: <>{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}{overdueOpen.length > ALL_OPEN_CAP && <Link to="/tasks?list=overdue" className="tp-link tp-pn-more">View all</Link>}</> } : undefined}
@@ -725,8 +722,6 @@ function TodayView({ nav }: { nav: DayNav }) {
             <>
               {alsoRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}
               {alsoRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="tp-link tp-pn-more">View all</Link>}
-              {slipping.length > 0 && <><div className="tp-sub">Slipping</div><div className="tp-pad">{slippingCards}</div></>}
-              {resurfacing && <><div className="tp-sub">From a while ago</div><div className="tp-pad"><ResurfaceCard /></div></>}
             </>
           ),
         } : undefined}
@@ -798,6 +793,7 @@ function TodayView({ nav }: { nav: DayNav }) {
               </section>
             )}
             {folds}
+            {listsReady && <WorthALook rows={nudges} resurfacing={resurfacing} stageOf={stageOf} phone />}
             {listsReady && rituals}
           </div>
         )}
@@ -859,14 +855,6 @@ function TodayView({ nav }: { nav: DayNav }) {
       ))}
     </section>
   )
-  // 2a rule 7: a nudge never flags what the screen already treats as a priority — no slipping card
-  // for a project one of today's open picks belongs to.
-  const pickProjects = new Set(top3InOrder.filter((t) => !t.completed_at && t.project_id).map((t) => t.project_id))
-  const nudges = slipping.filter((r) => !(r.entity_type === 'project' && pickProjects.has(r.entity_id)))
-  const stageOf = (row: SlippingRow) => {
-    const project = row.entity_type === 'project' ? projects.find((p) => p.id === row.entity_id) : undefined
-    return wisteriaStage(project ? weightedMilestonePct(project, tasks) : 0)
-  }
   const inProgressIds = new Set([...(nowS?.kind === 'running' && nowS.task ? [nowS.task.id] : []), ...(focus?.running ? [focus.taskId] : [])])
 
   return (
@@ -1746,22 +1734,82 @@ function RitualGroup({ kind, label, r, steps, logged, open, onOpen, split }: { k
   )
 }
 
-/** 2a "Worth a look · 1 of 2": one nudge at a time — the slipping cards (Kai's A4/punch-20 card:
- * the real wisteria stage, the body opens it) and the resurfaced memory share the slot; "1 of 2"
- * steps through them. Nothing to nudge → no section. */
-function WorthALook({ rows, resurfacing, stageOf }: { rows: SlippingRow[]; resurfacing: boolean; stageOf: (row: SlippingRow) => string }) {
+/** Worth a look — B · "A deck" (Kai 2026-10-31, design-export/Worth a look and fireworks.html): one nudge at a
+ * time — the slipping cards (Kai's A4/punch-20 card: the real wisteria stage, the body opens it) and the
+ * resurfaced memory — with real ‹ › arrows, "1 of 11" and the dots. Desktop: sheets stacked behind the card;
+ * phone: the next card peeks in from the right and a swipe steps. ←/→ step while it has focus. Nothing to
+ * nudge → the empty line, as drawn. */
+function WorthALook({ rows, resurfacing, stageOf, phone }: { rows: SlippingRow[]; resurfacing: boolean; stageOf: (row: SlippingRow) => string; phone?: boolean }) {
   const [i, setI] = useState(0)
+  const swipe = useRef<{ x: number; y: number; moved: boolean } | null>(null)
   const total = rows.length + (resurfacing ? 1 : 0)
-  if (total === 0) return null
-  const at = i % total
-  const count = total > 1 && (
-    <button type="button" className="td-label-note td-label-link" aria-label={`Nudge ${at + 1} of ${total} — next`} onClick={() => setI(at + 1)}>{at + 1} of {total}</button>
+  // A snoozed card leaves the list: stay on the same place (the next one slides in), or the last.
+  const at = Math.min(i, Math.max(0, total - 1))
+  const go = (to: number) => to >= 0 && to < total && setI(to)
+  const arrows = total > 1 && (
+    <span className="td-deck-arr">
+      <button type="button" aria-label="Previous" disabled={at === 0} onClick={() => go(at - 1)}><Icon name="chevright" size={16} style={{ transform: 'scaleX(-1)' }} /></button>
+      <span className="td-deck-count" aria-live="polite">{at + 1} of {total}</span>
+      <button type="button" aria-label="Next" disabled={at === total - 1} onClick={() => go(at + 1)}><Icon name="chevright" size={16} /></button>
+    </span>
   )
+  const head = <SectionLabel action={arrows || undefined} style={{ marginBottom: 12, minHeight: 30 }}>Worth a look</SectionLabel>
+  if (total === 0) {
+    return (
+      <section aria-label="Worth a look" className={`td-worth${phone ? ' is-phone' : ''}`}>
+        {head}
+        <div className="td-worth-empty"><img src={`${A}/wisteria/p100.png`} alt="" />Nothing slipping. Everything was touched this week.</div>
+      </section>
+    )
+  }
+  const card = at < rows.length ? <SlippingCard row={rows[at]} stage={stageOf(rows[at])} /> : <ResurfaceCard />
+  // T11: a step cross-fades the card. Keyed by the item, never its place: a snoozed card's exit leaves its element
+  // faded out, so the one sliding into that place (or one Undo puts back) must be a fresh element.
+  const shown = <div key={at < rows.length ? `${rows[at].entity_type}:${rows[at].entity_id}` : 'resurface'} className={`td-deck-card${i > 0 ? ' kf-fade' : ''}`}>{card}</div>
+  const left = total - at - 1
+  const dots = total > 1 && (
+    <div className="td-deck-dots" aria-hidden>{Array.from({ length: total }, (_, n) => <i key={n} className={n === at ? 'is-on' : undefined} />)}</div>
+  )
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if ((e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') || e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || isTypingTarget(e.target)) return
+    e.preventDefault()
+    e.stopPropagation()
+    go(at + (e.key === 'ArrowLeft' ? -1 : 1))
+  }
+  // Phone: a sideways swipe steps (a vertical one scrolls the page); the click a swipe ends with never opens the card.
+  const swipeProps = phone && total > 1 ? {
+    onPointerDown: (e: React.PointerEvent) => void (swipe.current = { x: e.clientX, y: e.clientY, moved: false }),
+    onPointerUp: (e: React.PointerEvent) => {
+      const s0 = swipe.current
+      if (!s0) return
+      const dx = e.clientX - s0.x, dy = e.clientY - s0.y
+      if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) {
+        s0.moved = true
+        go(at + (dx < 0 ? 1 : -1))
+      }
+    },
+    onClickCapture: (e: React.MouseEvent) => {
+      if (swipe.current?.moved) { e.preventDefault(); e.stopPropagation() }
+      swipe.current = null
+    },
+  } : {}
   return (
-    <section aria-label="Worth a look">
-      <SectionLabel action={count || undefined} style={{ marginBottom: 12 }}>Worth a look</SectionLabel>
-      {/* T11: stepping "1 of 2" cross-fades the card (keyed, so the next one fades in). */}
-      <div key={at} className={i > 0 ? 'kf-fade' : undefined}>{at < rows.length ? <SlippingCard row={rows[at]} stage={stageOf(rows[at])} /> : <ResurfaceCard />}</div>
+    <section aria-label="Worth a look" aria-roledescription="carousel" className={`td-worth${phone ? ' is-phone' : ''}`} tabIndex={total > 1 ? 0 : undefined} onKeyDown={total > 1 ? onKeyDown : undefined}>
+      {head}
+      {phone ? (
+        <div className="td-car" {...swipeProps}>
+          {shown}
+          {left > 0 && <div className="td-nudge td-car-peek" aria-hidden />}
+        </div>
+      ) : (
+        <div className="td-deck">
+          {left > 1 && <div className="td-deck-sh is-2" aria-hidden />}
+          {left > 0 && <div className="td-deck-sh is-1" aria-hidden />}
+          {shown}
+        </div>
+      )}
+      {dots}
+      {phone && total > 1 && <div className="td-swipe" aria-hidden>swipe for the next</div>}
     </section>
   )
 }

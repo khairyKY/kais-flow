@@ -9,6 +9,7 @@ import { OUT_OF_SLOT } from '../calendar/slots'
 import { toastAction, toastUndo } from '../../lib/undo'
 import { useToastStore } from '../../lib/toastStore'
 import { playCompletion } from '../../lib/sounds'
+import { goalFireworks } from '../../components/goalFireworks'
 import { nextDue, nextReminderAt, ruleAfterThis } from './recurrence'
 import { planCompletion, planUndo, planUndoReopen } from './completion'
 import { TASK_COLUMNS } from '../../lib/columns'
@@ -142,6 +143,8 @@ export interface CompletionUndo {
   spawned: Task | null
   /** A repeating parent's subtasks as they were before they went to `spawned` (./subtasks). */
   carried?: Task[]
+  /** The other picks as they were before completing ranked the Top 3 (completeOne) — Undo puts their place back. */
+  ranked?: Task[]
 }
 
 /** A repeating parent's subtasks are its checklist: ticked, they go with the series to its next copy,
@@ -168,8 +171,18 @@ function completeOne(passed: Task, quiet: boolean): CompletionUndo {
   // Sounds v2: every way of checking a task off (box, swipe, menu, key) sounds once, here — a parent's
   // subtasks ticked along with it (4 C) are quiet: one check, one sound.
   if (!quiet) playCompletion(task)
+  // P1 (2026-10-31, "ticking the goal makes it lose its goal status"): completing clears `top3`, and an
+  // unranked pick's place lived only in the star log — which this device may not have read yet (starred
+  // this session, offline) and the widget and MCP never read. So a pick's place goes onto the rows first
+  // (tasks.top3_rank, the order as drawn): the finished goal stays rank 1, the goal, everywhere.
+  const picks = currentTop3()
+  const isPick = picks.some((p) => p.id === task.id)
+  const ranks = isPick ? rankWrites(picks.map(cached)) : []
+  for (const { row, rank } of ranks) writeRow('tasks', { ...row, top3_rank: rank })
+  // The goal of the day's fireworks (C4) — a real tick by the user, never a quiet subtask tick.
+  if (isPick && !quiet && picks[0].id === task.id) goalFireworks(task.id)
   const all = cachedTasks()
-  const plan = planCompletion(task, all, nowIso(), () => crypto.randomUUID())
+  const plan = planCompletion(cached(passed), all, nowIso(), () => crypto.randomUUID())
   writeRow('tasks', plan.done)
   logActivity('task.completed', 'task', task.id, {})
   const carried = plan.next ? subtasksOf(all, task.id) : []
@@ -178,7 +191,7 @@ function completeOne(passed: Task, quiet: boolean): CompletionUndo {
     logActivity('task.created', 'task', plan.next.id, { recurrence_parent: task.id })
     carry(carried, plan.next.id)
   }
-  const undo: CompletionUndo = { before: task, spawned: plan.next, carried }
+  const undo: CompletionUndo = { before: task, spawned: plan.next, carried, ranked: ranks.map((r) => r.row).filter((r) => r.id !== task.id) }
   recentCompletions.set(task.id, undo)
   return undo
 }
@@ -198,6 +211,8 @@ function takeBackCompletion(undo: CompletionUndo): string | null {
   const spawnedNow = undo.spawned ? tasks.find((t) => t.id === undo.spawned!.id) : undefined
   const { restore, removeId } = planUndo(current, undo.before, undo.spawned, spawnedNow)
   writeRow('tasks', restore)
+  // The places completing gave the other picks go back too — the Top 3 exactly as before the check.
+  for (const b of undo.ranked ?? []) writeRow('tasks', { ...cached(b), top3_rank: b.top3_rank ?? null })
   logActivity('task.reopened', 'task', restore.id, {})
   if (removeId) {
     // The subtasks a repeat carried to that copy come home first (before its delete reaches the server).

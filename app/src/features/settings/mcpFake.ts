@@ -157,6 +157,8 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
         const sched = t.scheduled_start ? Date.parse(t.scheduled_start) : NaN
         return (!!dated && Date.parse(dated) < Date.parse(end)) || (sched >= Date.parse(start) && sched < Date.parse(end)) || (t.top3 && !dated)
       }).map((t) => ({ ...t })),
+    doneTasks: async (start, end) =>
+      s.tasks.filter((t) => t.status === 'done' && !t.deleted_at && !!t.completed_at && Date.parse(t.completed_at) >= Date.parse(start) && Date.parse(t.completed_at) < Date.parse(end)).map((t) => ({ ...t })),
     listTasks: async (f) => {
       s.filters.push(f)
       return s.tasks

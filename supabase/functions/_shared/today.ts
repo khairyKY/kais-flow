@@ -51,6 +51,17 @@ export function todaysTop3<T extends Top3Row>(rows: readonly T[], now: Date, zon
     .sort((a, b) => (rank(a) === rank(b) ? (a.created_at ?? '').localeCompare(b.created_at ?? '') : rank(a) < rank(b) ? -1 : 1))
 }
 
+/** Today's Top 3 as the app draws it (today/top3Order top3Display): the open picks and the ones finished
+ * today that kept a place (top3_rank — completing a pick writes it, tasks/api completeOne), by rank; the
+ * first is the goal of the day, done or not, then the open picks, then the finished ones. */
+export function dayPicks<T extends Top3Row>(open: readonly T[], doneToday: readonly T[], now: Date, zone: string): T[] {
+  const rank = (t: T) => t.top3_rank ?? Infinity
+  const all = [...todaysTop3(open, now, zone), ...doneToday.filter((t) => t.status === 'done' && t.top3_rank != null)]
+    .sort((a, b) => (rank(a) === rank(b) ? 0 : rank(a) < rank(b) ? -1 : 1))
+  const [goal, ...rest] = all
+  return goal ? [goal, ...rest.filter((t) => t.status === 'todo'), ...rest.filter((t) => t.status !== 'todo')] : []
+}
+
 /** Tasks' Overdue list (grouping.ts filterByList('overdue')): open, not someday or paused, dated before today. */
 export function isOverdue(t: DayRow, now: Date, zone: string): boolean {
   const day = dayOf(t, zone)

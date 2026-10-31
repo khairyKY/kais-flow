@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isOverdue, isTop3Today, todaysTop3, type Top3Row } from '../../../../supabase/functions/_shared/today.ts'
+import { dayPicks, isOverdue, isTop3Today, todaysTop3, type Top3Row } from '../../../../supabase/functions/_shared/today.ts'
 import { isTop3Today as appIsTop3Today } from '../tasks/top3Rule'
 import type { Task } from '../../lib/types'
 
@@ -71,5 +71,19 @@ describe('overdue on the server (the digest\'s "N overdue")', () => {
     expect(isOverdue(row({ due_at: '2026-10-01T06:00:00Z', deleted_at: '2026-10-02T00:00:00Z' }), NOW, CAIRO)).toBe(false)
     expect(isOverdue(row({ due_at: '2026-10-01T06:00:00Z', status: 'done' }), NOW, CAIRO)).toBe(false)
     expect(isOverdue(row(), NOW, CAIRO)).toBe(false) // undated
+  })
+})
+
+describe('dayPicks — the Top 3 as drawn (P1 2026-10-31)', () => {
+  it('a goal finished today stays first; open picks, then the finished ones', () => {
+    const goal = row({ title: 'goal', status: 'done', top3: false, top3_rank: 1 })
+    const b = row({ title: 'b', top3_rank: 2 })
+    const c = row({ title: 'c', status: 'done', top3: false, top3_rank: 3 })
+    const d = row({ title: 'd' }) // starred later, unranked
+    expect(dayPicks([b, d], [c, goal], NOW, CAIRO).map((t) => t.title)).toEqual(['goal', 'b', 'd', 'c'])
+  })
+
+  it('a finished task with no place is not a pick', () => {
+    expect(dayPicks([row({ title: 'open' })], [row({ title: 'plain', status: 'done', top3: false })], NOW, CAIRO).map((t) => t.title)).toEqual(['open'])
   })
 })
