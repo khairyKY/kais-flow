@@ -53,6 +53,10 @@ struct TrayLook {
     dark: bool,
     /// Settings → Show in the system tray. Off = no K, and closing the window quits.
     shown: bool,
+    /// Focus D3: while a round runs, the block's colour — the K becomes a small square in it.
+    color: Option<[u8; 3]>,
+    /// The hover tip while a round runs ("Deep work · bud 2 of 4 · 18 min left"); else the app's name.
+    tip: Option<String>,
 }
 
 struct Tray {
@@ -112,10 +116,35 @@ fn tray_px(app: &AppHandle) -> u32 {
     [16, 20, 24, 32].into_iter().find(|&p| p as f64 >= 16.0 * scale - 0.5).unwrap_or(32)
 }
 
+/// Focus D3: a rounded square in the block's colour, filling the slot less a margin, its edge anti-aliased.
+fn square(px: u32, [r, g, b]: [u8; 3]) -> Image<'static> {
+    let n = px as f32;
+    let (m, rad) = (n * 0.19, n * 0.2);
+    let (lo, hi) = (m, n - m);
+    let mut rgba = Vec::with_capacity((px * px * 4) as usize);
+    for y in 0..px {
+        for x in 0..px {
+            let (cx, cy) = (x as f32 + 0.5, y as f32 + 0.5);
+            // distance outside the rounded rect (≤ 0 inside), one pixel of soft edge
+            let dx = (lo + rad - cx).max(cx - (hi - rad)).max(0.0);
+            let dy = (lo + rad - cy).max(cy - (hi - rad)).max(0.0);
+            let d = (dx * dx + dy * dy).sqrt() - rad;
+            let a = (0.5 - d).clamp(0.0, 1.0);
+            rgba.extend_from_slice(&[r, g, b, (a * 255.0) as u8]);
+        }
+    }
+    Image::new_owned(rgba, px, px)
+}
+
 fn redraw(app: &AppHandle) {
     let (Some(tray), Some(t)) = (app.tray_by_id(TRAY_ID), app.try_state::<Tray>()) else { return };
     let look = t.look.lock().unwrap();
-    let _ = tray.set_icon(Some(frame(look.dark, tray_px(app), &look.state)));
+    let icon = match look.color {
+        Some(c) if look.state.starts_with("focus") => square(tray_px(app), c),
+        _ => frame(look.dark, tray_px(app), &look.state),
+    };
+    let _ = tray.set_icon(Some(icon));
+    let _ = tray.set_tooltip(Some(look.tip.clone().unwrap_or_else(|| "Kai’s Flow".into())));
     let _ = tray.set_visible(look.shown);
 }
 
@@ -307,15 +336,27 @@ fn tray_event(tray: &TrayIcon, event: TrayIconEvent) {
 /// ("Start focus · 25:00" / "Stop focus — 18:42 left", "Pause notifications for 1 hour" /
 /// "Resume notifications — paused until 10:41").
 #[tauri::command]
-fn tray_set(app: AppHandle, state: String, dark: bool, focus_label: String, pause_label: String) {
+fn tray_set(app: AppHandle, state: String, dark: bool, focus_label: String, pause_label: String, focus_color: Option<String>, focus_tip: Option<String>) {
     if let Some(t) = app.try_state::<Tray>() {
         let _ = t.focus.set_text(focus_label);
         let _ = t.pause.set_text(pause_label);
         let mut look = t.look.lock().unwrap();
         look.state = if STATES.contains(&state.as_str()) { state } else { "normal".into() };
         look.dark = dark;
+        look.color = focus_color.as_deref().and_then(hex_rgb);
+        look.tip = focus_tip;
     }
     redraw(&app);
+}
+
+/// "#b59ce3" → [181, 156, 227]; anything else → None (the K stays).
+fn hex_rgb(h: &str) -> Option<[u8; 3]> {
+    let h = h.strip_prefix('#')?;
+    if h.len() != 6 {
+        return None;
+    }
+    let c = |i: usize| u8::from_str_radix(&h[i..i + 2], 16).ok();
+    Some([c(0)?, c(2)?, c(4)?])
 }
 
 /// Settings → Show in the system tray.
@@ -558,7 +599,7 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
             app.manage(Tray {
                 focus,
                 pause,
-                look: Mutex::new(TrayLook { state: "normal".into(), dark: false, shown: true }),
+                look: Mutex::new(TrayLook { state: "normal".into(), dark: false, shown: true, color: None, tip: None }),
                 hidden_at: Mutex::new(None),
                 menu: Mutex::new(MenuWin { custom, ready: false, height: MENU_H, pending: None, hidden_at: None, state: SIGNED_OUT.into() }),
             });
@@ -595,7 +636,17 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
 
 #[cfg(test)]
 mod tests {
-    use super::anchor;
+    use super::{anchor, hex_rgb, square};
+
+    #[test]
+    fn focus_square_is_the_block_colour_with_a_clear_margin() {
+        assert_eq!(hex_rgb("#B59CE3"), Some([181, 156, 227]));
+        assert_eq!(hex_rgb("var(--blk-iris)"), None);
+        let img = square(16, [181, 156, 227]);
+        let px = |x: usize, y: usize| img.rgba()[(y * 16 + x) * 4..(y * 16 + x) * 4 + 4].to_vec();
+        assert_eq!(px(8, 8), vec![181, 156, 227, 255]); // the middle: solid colour
+        assert_eq!(px(0, 0)[3], 0); // the corner: clear
+    }
 
     const FHD: (f64, f64, f64, f64) = (0.0, 0.0, 1920.0, 1032.0); // 1920×1080, a 48 px taskbar at the bottom
 

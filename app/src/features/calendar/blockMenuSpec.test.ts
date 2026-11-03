@@ -56,9 +56,9 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
   it('cal-clicks: menu B (the right-click) holds what the details lack, plus the old quick menu’s rows', () => {
     const menu = { mode: 'menu' as const, now: NOW }
     // A Time block: Details (the old Edit), Work with AI ›, Copy link, Delete.
-    expect(keys(block(), menu)).toEqual(['details', 'ai', 'copylink', 'delete'])
+    expect(keys(block(), menu)).toEqual(['details', 'focus', 'ai', 'copylink', 'delete'])
     // A task block: Complete · Open task (the old Edit Task) · Replan… when missed · Duplicate · AI · link · Unschedule · Delete.
-    expect(keys(block({ task_id: 't1', type: 'task' }), { ...menu, task: { title: 'x', status: 'todo' }, missed: true })).toEqual(['complete', 'open', 'replan', 'duplicate', 'ai', 'copylink', 'unschedule', 'delete'])
+    expect(keys(block({ task_id: 't1', type: 'task' }), { ...menu, task: { title: 'x', status: 'todo' }, missed: true })).toEqual(['complete', 'open', 'replan', 'focus', 'duplicate', 'ai', 'copylink', 'unschedule', 'delete'])
     // A Google event: its details, the chat and its link — nothing to change or delete.
     expect(keys(block({ source: 'gcal', type: 'event' }), menu)).toEqual(['details', 'ai', 'copylink'])
     // A repeat's Delete is one row: the scope question asks This / Following / All.

@@ -13,7 +13,7 @@ import { pathToFileURL } from 'node:url'
 
 const OUT = process.argv[2]
 const BASE = process.argv[3] ?? 'http://localhost:5310'
-const PW = 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs'
+const PW = process.env.PW ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs' // that copy is gone: PW=<playwright-core/index.mjs>
 const { chromium } = await import(pathToFileURL(PW).href)
 fs.mkdirSync(OUT, { recursive: true })
 const results = []

@@ -474,3 +474,10 @@
   font-size: var(--fs-mono-l);
   color: var(--ink-faint);
 }
+
+/* Focus D3: the running round as C's flyout card, the block's timeline only (no flowers). */
+.kf-tray-fb--tl { display: block; }
+.kf-tray-fb-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.kf-tray-fb-time { font-weight: var(--fw-semibold); font-variant-numeric: tabular-nums; }
+.kf-tray-fb--tl .kf-tray-title { margin: 2px 0 6px; }
+.kf-tray-tl { --ftl-h: 12px; margin-bottom: 6px; }

@@ -9,8 +9,16 @@ import { computeStreak } from '../routines/streaks'
 import { useJournalEntries } from '../journal/api'
 import { usePeople, useInteractions } from '../people/api'
 import { useCalendarEvents } from '../calendar/api'
+import { blockHue, KIND_HUE } from '../calendar/blockHue'
+import { upNextEvents } from '../today/upNext'
+import { beginFocus } from '../today/startFocus'
+import { useMinuteNow } from '../today/useMinuteNow'
+import { mmss } from '../tray/focusMirror'
+import { FocusTimeline } from './FocusTimeline'
+import { blockFor, blockMinutes, bloomsWord, fillBlock, fitRounds, hm, keptMinutes, oneRound, planSegs, timelineOf, type FocusBlock, type Timeline } from './focusPlan'
+import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import { useDayRollover } from '../calendar/useDayRollover'
-import { timeRange, zoneTimeKey } from '../calendar/eventTime'
+import { timeRange, timeText, zoneTimeKey } from '../calendar/eventTime'
 import { EveningRitual } from '../rituals/EveningRitual'
 import { readSoundEvents, writeSoundEvents, previewSound } from '../../lib/sounds'
 import { useMotionEnabled } from '../../lib/motion'
@@ -18,14 +26,17 @@ import { hydrangeaAsset, daisyAsset } from '../../lib/gardenAssets'
 import { cherryStage, vineStage, fernByLength, wisteriaStage } from '../../lib/growthStages'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import { useAppZone } from '../../lib/appZone'
-import { clockOptions } from '../../lib/clock'
-import type { ActivityLogEntry } from '../../lib/types'
+import { hourLabel } from '../../lib/clock'
+import type { ActivityLogEntry, CalendarEvent } from '../../lib/types'
 import { useFocusStore, DEFAULT_SETTINGS } from './focusStore'
+import { checkOffFocus } from './checkOff'
 import { NumberField } from '../../components/NumberField'
-import { Button, Checkbox, Chip, Segmented, Toggle } from '../../components/kit'
+import { Button, Checkbox, Chip, Toggle } from '../../components/kit'
 import { Skeleton, ErrorCard } from '../../components/States'
 import { StageImg } from '../../components/PageMotion'
+import { Icon } from '../../components/Icon'
 import './FocusPage.css'
+import './focusD3.css'
 
 // R4-18 (2026-07-20 audit): the duration rows offered fixed presets only — Kai: "where are the
 // custom times in the pomodoro setting". This is the any-value escape hatch beside each row.
@@ -122,15 +133,17 @@ export function FocusPage() {
   // 2. Settings — persisted in focusStore (shared with MiniFocus)
   const settings = useFocusStore((s) => s.settings)
   const saveSettings = useFocusStore((s) => s.saveSettings)
-  // The chime row is a view onto the shared sound catalog (see the popover row below).
-  const [chimeOn, setChimeOn] = useState(() => readSoundEvents().focus_end)
+  // The Sounds row is a view onto the shared sound catalog (Settings → Sounds' own switches).
+  const [sounds, setSounds] = useState(() => readSoundEvents())
+  const isMobile = useIsMobile()
 
   // 3. Focus session state — R4-D3: owned by focusStore so a running session survives
   // navigation and is shared with the MiniFocus widget on a task's detail page.
   const {
     mode, isRunning, secondsLeft, stopwatchSeconds, stopwatchStartIso, stopwatchStartStr,
-    currentRound, breakType, pomodoroStartIso,
+    currentRound, breakType, pomodoroStartIso, block: storeBlock, kept,
   } = useFocusStore()
+  const setBlock = useFocusStore((s) => s.setBlock)
   const setStore = useFocusStore.setState
   const setMode = useFocusStore((s) => s.setMode)
   const storeActiveTask = useFocusStore((s) => s.activeTask)
@@ -168,7 +181,6 @@ export function FocusPage() {
     const t = window.setTimeout(() => setEnding(false), 600)
     return () => window.clearTimeout(t)
   }, [ending])
-  const view = ending ? 'pomodoro' : mode
   // R5: leaving the garden fades it (300ms) before the timer comes back.
   const gardenRef = useRef<HTMLDivElement>(null)
   const leaveGarden = () => {
@@ -208,35 +220,7 @@ export function FocusPage() {
 
   // Handle Check Off
   const handleCheckOff = () => {
-    if (!activeTask) return
-
-    // If pomodoro timer is active, compute elapsed minutes and log them as partial work
-    if (mode === 'pomodoro' && isRunning) {
-      const elapsedSec = settings.focusRoundMin * 60 - secondsLeft
-      const elapsedMin = Math.ceil(elapsedSec / 60)
-      if (elapsedMin > 0) {
-        logTimeEntry(
-          activeTask.project_id,
-          activeTask.id,
-          'Focused block (task completed)',
-          elapsedMin,
-          pomodoroStartIso || new Date().toISOString()
-        )
-      }
-    }
-
-    // Polish F2a: "Done" toast + Undo, like every other check. Undo reopens the task (it comes
-    // back as the active task); the focused minutes logged above stay — that time was spent.
-    completeTaskWithUndo(activeTask)
-    setIsRunning(false)
-    setPomodoroStartIso(null)
-    if (mode === 'pomodoro') {
-      setSecondsLeft(settings.focusRoundMin * 60)
-    }
-
-    queryClient.invalidateQueries({ queryKey: ['tasks'] })
-    queryClient.invalidateQueries({ queryKey: ['time_entries'] })
-    queryClient.invalidateQueries({ queryKey: ['projects'] })
+    if (activeTask) checkOffFocus(activeTask)
   }
 
   // Handle Stop & Log in Stopwatch mode
@@ -403,48 +387,26 @@ export function FocusPage() {
     }
   }, [tasks, timeEntries, activityLogs, todayStr, zone])
 
-  // ── Punch 52 / item 9: the top strip used to read `Deep work block · 9:00 – 11:00` and
-  // `session 2 of 3 today` — both design samples. Both now come from real state, and both
-  // disappear when there is nothing true to say (there is no "planned sessions" number
-  // anywhere in the data, so the `of 3` half is gone rather than guessed).
-
-  // The block: the calendar block this task is actually sitting in today — that's where the
-  // design's "Deep work block" name comes from. Falls back to the task's own scheduled window
-  // (times, no name, because nothing in the data names it), then to nothing.
-  const blockLabel = useMemo(() => {
-    if (!activeTask) return null
-    const span = (a: Date, b: Date) => timeRange(a, b, zone).replace('–', ' – ')
-
-    const block = events.find(
-      (e) => e.task_id === activeTask.id && !e.all_day && zoneDateKey(new Date(e.starts_at), zone) === todayStr
-    )
-    if (block) return `${block.title} · ${span(new Date(block.starts_at), new Date(block.ends_at))}`
-
-    if (!activeTask.scheduled_start || !activeTask.scheduled_end) return null
-    const start = new Date(activeTask.scheduled_start)
-    if (zoneDateKey(start, zone) !== todayStr) return null
-    return span(start, new Date(activeTask.scheduled_end))
-  }, [activeTask, events, todayStr, zone])
-
-  // Sessions today: work already logged today, plus the one in progress.
-  const sessionsToday = useMemo(() => {
-    const logged = timeEntries.filter((e) => zoneDateKey(new Date(e.started_at), zone) === todayStr).length
-    const inProgress = pomodoroStartIso !== null || stopwatchSeconds > 0 ? 1 : 0
-    return logged + inProgress
-  }, [timeEntries, pomodoroStartIso, stopwatchSeconds, todayStr, zone])
-
-  // Subtask progress: real children (migration 0029, one level deep). Falls back to the task's
-  // own notes, and to nothing at all — never to the export's "draft the cohort model".
-  const subtaskLabel = useMemo(() => {
-    if (!activeTask) return null
-    const children = tasks.filter((t) => t.parent_task_id === activeTask.id)
-    if (children.length > 0) {
-      const done = children.filter((t) => t.status === 'done').length
-      const next = children.find((t) => t.status !== 'done')
-      return `Subtask ${Math.min(done + 1, children.length)} of ${children.length}${next ? ` · ${next.title}` : ''}`
-    }
-    return activeTask.notes?.trim() || null
-  }, [activeTask, tasks])
+  // Focus D3: the block the session runs in (the store's, set by every Start focus); a session restored from
+  // before D3, or none yet, shows the active task's block, made the store's on Start.
+  const minuteNow = useMinuteNow()
+  const block: FocusBlock = useMemo(
+    () => {
+      if (storeBlock) return storeBlock
+      const b = blockFor(activeTask, events, settings, minuteNow)
+      return { ...b, rounds: Math.max(b.rounds, kept + 1) } // rounds already kept outside a block never end its day
+    },
+    [storeBlock, activeTask, events, settings, minuteNow, kept],
+  )
+  // Up next: today's Top 3 first, then today's other open tasks — never the one in focus.
+  const upNext = useMemo(() => {
+    const today = (iso: string | null) => !!iso && zoneDateKey(new Date(iso), zone) === todayStr
+    return tasks
+      .filter((t) => t.status === 'todo' && !t.parent_task_id && t.id !== activeTask?.id && (t.top3 || today(t.due_at) || today(t.scheduled_start)))
+      .sort((a, b) => (a.top3 === b.top3 ? (a.top3_rank ?? 9) - (b.top3_rank ?? 9) : a.top3 ? -1 : 1))
+      .slice(0, 3)
+  }, [tasks, activeTask, zone, todayStr])
+  const nextEvent = useMemo(() => upNextEvents(events, minuteNow).find((e) => e.id !== block.eventId && Date.parse(e.starts_at) > minuteNow.getTime()) ?? null, [events, minuteNow, block.eventId])
 
   // Rhythm preview calculation for Settings
   const rhythmPreviewData = useMemo(() => {
@@ -460,13 +422,6 @@ export function FocusPage() {
     }
   }, [settings])
 
-  // Format MM:SS for countdown timers
-  const formatTime = (totalSeconds: number) => {
-    const mins = Math.floor(totalSeconds / 60)
-    const secs = totalSeconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-
   // Format Stopwatch time
   const formatStopwatch = (totalSeconds: number) => {
     const mins = Math.floor(totalSeconds / 60)
@@ -474,16 +429,8 @@ export function FocusPage() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
-  const progressRatio = ending ? 0 : secondsLeft / (settings.focusRoundMin * 60)
-  // R3: paused mid-round, the ring dims to 55% and breathes (FocusPage.css .fp-ring)
-  const paused = view === 'pomodoro' && !ending && !isRunning && secondsLeft > 0 && secondsLeft < settings.focusRoundMin * 60
-  // R4: while it runs the ring sweeps continuously between the 1s ticks (Effects on)
+  // R4: while it runs the phone's ring sweeps continuously between the 1s ticks (Effects on)
   const sweep: React.CSSProperties | undefined = motionOn && isRunning && !ending ? { transition: 'stroke-dashoffset 1s linear' } /* ds-ok: R4, the ring's own sweep */ : undefined
-
-  // Dynamic coordinates for Break circle
-  const breakTotalSeconds = (breakType === 'short' ? settings.shortBreakMin : settings.longBreakMin) * 60
-  const breakRatio = secondsLeft / breakTotalSeconds
-  const breakDashoffset = 528 * (1 - breakRatio)
 
   // Stopwatch live hours projection calculation
   const stopwatchProjectedHours = useMemo(() => {
@@ -665,551 +612,554 @@ export function FocusPage() {
     )
   }
 
-  // 6. Base Timer layout (Pomodoro / Break / Stopwatch)
-  return (
-    <div className="focus-bleed" style={{ position: 'relative', width: '100%', height: 'calc(var(--kf-vh) - 100px)', display: 'flex', flexDirection: 'column', background: 'var(--paper-linen)', margin: '-30px -40px -64px' }}>
-      {/* WB-3 punch 64: the negative margins cancel `.app-main-content`'s DESKTOP padding
-          (30/40/64). At ≤767px that padding is 20/16/tab-bar, so -40px bled 24px past each
-          edge and gave /focus a horizontal scrollbar. Re-state the bleed against the phone
-          padding, and stop short of the tab bar instead of under it. */}
-      {/* Kai's phone review (2026-10-07): at a fixed height the timer view ran under the tab bar
-          (the garden strip and the controls' last row sat behind it), the controls ran off the right
-          edge and the mode row wrapped a word per line. On a phone it grows with its content (the
-          page scrolls), the rows wrap whole, and the desktop-only "esc leaves quietly" steps aside. */}
-      <style>{`
-        /* today-scale (Kai 2026-10-22, 125-150%): a title as wide as the page put its checkbox on the edge. */
-        .fp-task { padding: 0 16px; max-width: 100%; box-sizing: border-box; }
-        @media (max-width: 767px) {
-          .focus-bleed {
-            margin: -20px -16px 0 !important;
-            height: auto !important;
-            min-height: calc(var(--kf-vh) - var(--sat) - 42px - var(--tabbar-h) - var(--tabbar-inset) - 24px);
-          }
-          .fp-strip { padding: 0 16px !important; }
-          .fp-esc { display: none; }
-          .fp-modes, .fp-ctrls { flex-wrap: wrap; justify-content: center; row-gap: 12px !important; padding: 0 16px; }
-          .fp-strip .chip { white-space: nowrap; }
-          .fp-modes > * { max-width: 100%; }
-          .fp-round { min-width: 0; }
-          .fp-ctrls > button { min-height: 48px; white-space: nowrap; }
-          .fp-ctrls > span { padding: 14px 4px; }
-          .fp-garden-note { left: 16px !important; }
-          .fp-garden-link { right: 16px !important; bottom: auto !important; top: 10px; }
-          /* width:100% + the negative margins left the page 32px short of the right edge, so the
-             settings card sat off-centre; and the two break columns don't fit side by side. */
-          .focus-bleed { width: auto !important; }
-          .fp-breaks { grid-template-columns: 1fr !important; }
-        }
-      `}</style>
+  // 6. Focus D3 (design-export/Focus redesign.html §D3, Kai's pick: the timer in the middle, flower (i), break
+  // option 1). Desktop: the hour column (the block's segments, no flowers), the segmented timeline with blooms
+  // across the top, the timer centred with a small cherry beside it that grows through the round, Up next, the
+  // buttons; no ring. Phone: D's running screen (the flower in the ring). The stopwatch keeps its own view.
+  const session = { mode, isRunning, secondsLeft, pomodoroStartIso, breakType, block, kept }
+  const timeline = timelineOf(session, settings)!
+  // R3: while the round-end bloom plays the store is already on the break; the page still shows the round's end.
+  const tl: Timeline = ending ? { ...timeline, cur: -1, phase: 'end' } : timeline
+  const phase = tl.phase
+  const fresh = phase === 'idle' && kept === 0
+  const budN = Math.min(kept + 1, block.rounds)
+  const breakMin = breakType === 'long' ? settings.longBreakMin : settings.shortBreakMin
+  const at = (secs: number) => timeText(new Date(Date.now() + secs * 1000), zone)
+  const span = timeRange(new Date(block.start), new Date(block.end), zone).replace('–', ' – ')
+  const lastFocusEnd = new Date(Date.parse(block.start) + planSegs(block.rounds, blockMinutes(block), settings).filter((s) => s.k !== 'x').reduce((n, s) => n + s.min, 0) * 60_000)
+  const breakText = `Break · ${mmss(ending ? breakMin * 60 : secondsLeft)}`
+  const mid = new Date((Date.parse(block.start) + Date.parse(block.end)) / 2)
+  const tlLabels = [timeText(new Date(block.start), zone), timeText(mid, zone), timeText(new Date(block.end), zone)] as const
+  const ensureBlock = () => {
+    if (!storeBlock) setBlock(block)
+  }
+  const startRound = () => {
+    ensureBlock()
+    if (mode !== 'pomodoro') setMode('pomodoro')
+    togglePlay()
+  }
+  const endEarly = () => {
+    setIsRunning(false)
+    setSecondsLeft(settings.focusRoundMin * 60)
+    setPomodoroStartIso(null)
+  }
+  const nextRound = (run: boolean) => {
+    setMode('pomodoro')
+    setSecondsLeft(settings.focusRoundMin * 60)
+    setCurrentRound((r) => (r >= settings.roundsBeforeLongBreak ? 1 : r + 1))
+    if (run) togglePlay()
+  }
 
-      {/* Quiet top strip */}
-      <div className="fp-strip" style={{ height: 46, flex: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 36px', borderBottom: '1px solid var(--line-solid)', position: 'relative', zIndex: 10 }}>
-        <span className="flabel" style={{ fontSize: 'var(--fs-meta)' }}>Focus{blockLabel ? ` · ${blockLabel}` : ''}</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          {sessionsToday > 0 && (
-            <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '4px 9px', borderRadius: 'var(--radius-pill)' }}>
-              Session {sessionsToday} today
-            </span>
-          )}
-          <span className="fp-esc" style={{ fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Esc leaves quietly</span>
+  const head = (
+    <div className="fd-tlhead">
+      <span className="fd-tlname">
+        <span className="fd-swatch" style={{ background: block.color }} aria-hidden />
+        {block.title} · {span}
+      </span>
+      <span className="fd-tlkept">{phase === 'idle' && fresh ? `planned ${hm(blockMinutes(block))}` : `kept ${hm(keptMinutes(session, settings))} of ${hm(blockMinutes(block))}`}</span>
+    </div>
+  )
+  const topTimeline = (
+    <div className="fd-tl">
+      {head}
+      <FocusTimeline tl={tl} color={block.color} flowers labels={tlLabels} breakLabel={breakText} />
+    </div>
+  )
+
+  // The small flower (i): a bud that opens as the round runs, a bloom at its end; on a break it closes to a
+  // bud and a sage glow breathes behind it (break option 1). Paused, it waits at 55%.
+  const stage = phase === 'end' || phase === 'done' ? 'bloom' : phase === 'break' || (phase === 'idle' && fresh) ? 'bud' : tl.frac < 0.2 ? 'bud' : 'opening'
+  const flower = (size: number, inRing = false) => (
+    <span className={`fd-flower is-${phase}${inRing ? ' in-ring' : ''}`} style={{ '--fd-flower': `${size}px` } as React.CSSProperties}>
+      {phase === 'end' && <span className="fp-round-bloom" aria-hidden />}
+      {phase === 'break' && <span className="fd-breath" aria-hidden />}
+      <StageImg bloom src={`/ds/assets/cherry/${stage}.png`} alt="" className="fd-flower-img" />
+    </span>
+  )
+
+  const big = (phone: boolean) => {
+    if (phase === 'end')
+      return (
+        <div className="fd-bigwrap">
+          <div className="fd-big fd-big--end">Bud {kept} bloomed ✿</div>
+          <div className="fd-meta">
+            {settings.focusRoundMin} min {activeTask ? `logged${activeProject ? ` to ${activeProject.name}` : ''}` : 'kept'}
+          </div>
+        </div>
+      )
+    if (phase === 'break')
+      return (
+        <div className="fd-bigwrap fp-break-in">
+          <div className="fd-big fd-big--break">{breakText}</div>
+          <div className="fd-meta">{phone ? 'The bud rests · stand up, water something real ✿' : `The bud rests · bud ${budN} at ${at(secondsLeft)}`}</div>
+        </div>
+      )
+    const paused = phase === 'paused'
+    return (
+      <div className="fd-bigwrap">
+        <div className={`fd-big fd-dim${paused ? ' is-paused' : ''}`}>{mmss(secondsLeft)}</div>
+        <div className="fd-meta">
+          {paused ? 'Paused · the bud waits' : phase === 'idle' ? `Bud ${budN} of ${block.rounds} · ready` : `Bud ${budN} of ${block.rounds} · ${budN >= block.rounds ? 'ends' : `${currentRound >= settings.roundsBeforeLongBreak ? 'long ' : ''}break`} at ${at(secondsLeft)}`}
         </div>
       </div>
+    )
+  }
 
-      {/* Center content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', zIndex: 10, paddingBottom: 20 }}>
-        {/* Ambient pollen motes */}
-        {motionOn && (
-          <>
-            <span className="mote" style={{ left: '16%', animationDelay: '0s' }}></span>
-            <span className="mote" style={{ left: '29%', animationDelay: '3.4s', width: 3, height: 3 }}></span>
-            <span className="mote" style={{ left: '72%', animationDelay: '1.6s' }}></span>
-            <span className="mote" style={{ left: '86%', animationDelay: '5.2s', width: 3, height: 3 }}></span>
-          </>
+  const taskLine = (phone: boolean) => (
+    <div className={`fd-task${phone ? ' fd-task--phone' : ''}`}>
+      <Checkbox checked={false} size={phone ? 17 : 19} label={activeTask?.title} disabled={!activeTask} onChange={handleCheckOff} />
+      <span ref={pickerAnchor} className="fd-task-t" onClick={() => setTaskPickerOpen(!taskPickerOpen)} title="Click to select another task">
+        {activeTask ? activeTask.title : 'No task — a plain round'}
+      </span>
+      {activeTask?.top3 && <span className="fd-star">★</span>}
+      {taskPickerOpen && <TaskPicker tasks={tasks} anchorRef={pickerAnchor} onPick={handleSelectTask} onClose={() => setTaskPickerOpen(false)} />}
+    </div>
+  )
+
+  const lengths = [25, 45, 50]
+  const idle = (phone: boolean) => (
+    <div className="fd-idle">
+      {block.fromCalendar && <div className="fd-meta">From your calendar</div>}
+      {tasksQ.isPending ? (
+        <Skeleton rows={1} />
+      ) : tasksQ.isError && !tasksQ.data ? (
+        <ErrorCard message="Couldn't load your tasks." onRetry={() => void tasksQ.refetch()} />
+      ) : (
+        <div className="fd-pick">
+          <span ref={pickerAnchor} className="fd-pick-t" onClick={() => setTaskPickerOpen(!taskPickerOpen)} title="Click to select another task">
+            {activeTask ? activeTask.title : 'Choose a task'}
+          </span>
+          <Icon name="chevdown" size={20} className="fd-chev" />
+          {taskPickerOpen && <TaskPicker tasks={tasks} anchorRef={pickerAnchor} onPick={handleSelectTask} onClose={() => setTaskPickerOpen(false)} />}
+        </div>
+      )}
+      <div className="fd-chips">
+        {Date.parse(block.srcEnd) - Date.parse(block.srcStart) > settings.focusRoundMin * 60_000 && (
+          <Chip tone="filter" selected={block.fill} onClick={() => setBlock(fillBlock(block, settings, new Date()))}>
+            Fill the block · {block.fill ? block.rounds : fitRounds(Math.round((Date.parse(block.srcEnd) - Math.max(Date.now(), Date.parse(block.srcStart))) / 60_000), settings)} buds
+          </Chip>
         )}
-
-        {/* Mode Switcher pill and settings button */}
-        {view !== 'break' && (
-          <div className="fp-modes" style={{ display: 'flex', alignItems: 'center', gap: 18, marginBottom: 26, position: 'relative', zIndex: 10 }}>
-            {/* B D12: the kit segmented control — a 3:1 edge, the chosen one ink-filled. */}
-            <Segmented
-              label="Timer"
-              value={mode === 'stopwatch' ? 'stopwatch' : 'pomodoro'}
-              options={[{ value: 'pomodoro', label: 'Pomodoro' }, { value: 'stopwatch', label: 'Stopwatch' }]}
-              onChange={(m) => {
-                setMode(m)
-                setIsRunning(false)
-                if (m === 'pomodoro') setSecondsLeft(settings.focusRoundMin * 60)
-                else setStopwatchSeconds(0)
-              }}
-            />
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-              {view === 'pomodoro' && (
-                <>
-                  {Array.from({ length: settings.roundsBeforeLongBreak }).map((_, idx) => {
-                    const isDone = idx + 1 < currentRound
-                    const isActive = idx + 1 === currentRound
-                    return (
-                      <span
-                        key={idx}
-                        style={{
-                          width: 9,
-                          height: 9,
-                          borderRadius: '50%',
-                          background: isDone || isActive ? 'var(--acc-terra)' : 'none',
-                          border: isDone || isActive ? 'none' : '1.5px solid var(--line-sidebar)',
-                          outline: isActive ? '2px solid var(--paper-linen)' : 'none',
-                          boxShadow: isActive ? '0 0 0 3.5px color-mix(in srgb, var(--acc-terra) 35%, transparent)' : 'none',
-                          // T12: a dot fills as its round starts rather than snapping
-                          transition: 'background-color 300ms var(--ease-out), box-shadow 300ms var(--ease-out)', // ds-ok: T12, the round dots ease
-                        }}
-                      />
-                    )
-                  })}
-                  <span className="fp-round" style={{ marginLeft: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                    Round {currentRound} of {settings.roundsBeforeLongBreak} · long break after
-                  </span>
-                </>
-              )}
-
-              <span
-                className="kf-hit"
-                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
-                style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', color: 'var(--ink-muted)', cursor: 'pointer' }}
-                title="pomodoro settings"
-              >
-                <GearIcon />
-              </span>
-            </div>
-          </div>
-        )}
-
-        {/* 1c: BREAK VIEW */}
-        {view === 'break' && (
-          <div className="fp-break-in" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--acc-sage-text)', position: 'relative', zIndex: 5 }}>
-              {breakType === 'short' ? `Short break · round ${currentRound} done` : 'Long break · cycle complete'}
-            </div>
-            <div style={{ position: 'relative', width: 190, height: 190, marginTop: 18 }}>
-              <svg width="190" height="190" viewBox="0 0 190 190" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="95" cy="95" r="84" fill="none" stroke="var(--line-card)" strokeWidth="8"></circle>
-                <circle cx="95" cy="95" r="84" fill="none" stroke="var(--acc-sage)" strokeWidth="8" strokeLinecap="round" strokeDasharray="528" strokeDashoffset={breakDashoffset} style={sweep}></circle>
-              </svg>
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 44, fontWeight: 500, lineHeight: 1, color: 'var(--ink-body)' }}>
-                  {formatTime(secondsLeft)}
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 6 }}>
-                  of {breakType === 'short' ? settings.shortBreakMin : settings.longBreakMin} min
-                </div>
-              </div>
-            </div>
-            <div style={{ marginTop: 16, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>
-              Stand up — go water something real ✿
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18 }}>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => {
-                  setIsRunning(false)
-                  setMode('pomodoro')
-                  setSecondsLeft(settings.focusRoundMin * 60)
-                  setCurrentRound((r) => (r >= settings.roundsBeforeLongBreak ? 1 : r + 1))
-                }}
-              >
-                Skip break
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  setMode('pomodoro')
-                  setSecondsLeft(settings.focusRoundMin * 60)
-                  setCurrentRound((r) => (r >= settings.roundsBeforeLongBreak ? 1 : r + 1))
-                  setIsRunning(true)
-                }}
-              >
-                Back to work →
-              </Button>
-            </div>
-            <div style={{ marginTop: 14, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-              After round {settings.roundsBeforeLongBreak} · a {settings.longBreakMin}-min long break, garden view opens on its own
-            </div>
-          </div>
-        )}
-
-        {/* 1a: POMODORO TIMER */}
-        {view === 'pomodoro' && (
-          <>
-            <div style={{ position: 'relative', width: 320, height: 320 }}>
-              {ending && <span className="fp-round-bloom" aria-hidden />}
-              <svg className={`fp-ring${paused ? ' is-paused' : ''}`} width="320" height="320" viewBox="0 0 320 320" style={{ transform: 'rotate(-90deg)' }}>
-                <circle cx="160" cy="160" r="146" fill="none" stroke="var(--line-card)" strokeWidth="10"></circle>
-                <circle cx="160" cy="160" r="146" fill="none" stroke="var(--acc-lavender)" strokeWidth="10" strokeLinecap="round" strokeDasharray="917" strokeDashoffset={917 * (1 - progressRatio)} style={sweep}></circle>
-              </svg>
-              {/* deviation(2026-07-20 R4): the bud marker that rode the progress tip is gone —
-                  Kai: "there is a weird flower at the top of the timer". At a full timer it
-                  parks dead-centre above the clock and reads as a stray graphic. */}
-              <div style={{ position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                  {paused ? 'Paused' : 'Remaining'}
-                </div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: 74, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.02em', color: 'var(--ink-body)', marginTop: 6 }}>
-                  {formatTime(ending ? 0 : secondsLeft)}
-                </div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 8 }}>
-                  {/* Punch 52: the export reads `of 25 min · 5-min break at 10:20` — the length
-                      qualifier had been dropped. It's the *next* break, so it's the long one on
-                      the last round of the cycle. */}
-                  of {settings.focusRoundMin} min ·{' '}
-                  {currentRound >= settings.roundsBeforeLongBreak ? settings.longBreakMin : settings.shortBreakMin}-min break at{' '}
-                  {new Date(Date.now() + secondsLeft * 1000).toLocaleTimeString('en-US', { ...clockOptions(), timeZone: zone })}
-                </div>
-              </div>
-            </div>
-          </>
-        )}
-
-        {/* 1d: STOPWATCH TIMER */}
-        {view === 'stopwatch' && (
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', padding: '0 44px' }}>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: 8, marginTop: 26 }}>
-              <span style={{ fontFamily: 'var(--font-display)', fontSize: 66, fontWeight: 500, lineHeight: 1, letterSpacing: '-0.01em', color: 'var(--ink-body)' }}>
-                {formatStopwatch(stopwatchSeconds)}
-              </span>
-              <span className="focus-bloom-glow" style={{ width: 9, height: 9, borderRadius: '50%', background: 'var(--acc-terra)' }} />
-            </div>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 8 }}>
-              {isRunning ? 'Recording' : 'Paused'}
-              {stopwatchStartStr ? ` · started ${stopwatchStartStr}` : ''}
-            </div>
-          </div>
-        )}
-
-        {/* Active Task display */}
-        {view !== 'break' && (
-          <>
-            {tasksQ.isPending ? (
-              <div style={{ marginTop: 30, width: 320, maxWidth: '100%' }}><Skeleton rows={1} /></div>
-            ) : tasksQ.isError && !tasksQ.data ? (
-              <div style={{ marginTop: 30, width: 360, maxWidth: '100%' }}><ErrorCard message="Couldn't load your tasks." onRetry={() => void tasksQ.refetch()} /></div>
-            ) : (
-            <div className="fp-task" style={{ display: 'flex', alignItems: 'center', gap: 11, marginTop: 30, position: 'relative' }}>
-              {/* The kit box (44+ hit on touch via .kf-checkbox); completing = completeTaskWithUndo's toast + Undo. */}
-              <Checkbox checked={false} size={19} label={activeTask?.title} disabled={!activeTask} onChange={handleCheckOff} />
-              <span
-                ref={pickerAnchor}
-                onClick={() => setTaskPickerOpen(!taskPickerOpen)}
-                style={{ fontFamily: 'var(--font-display)', fontSize: 'var(--fs-display-m)', fontWeight: 500, color: 'var(--ink-body)', cursor: 'pointer', borderBottom: '1px solid var(--line-dashed)' }}
-                title="Click to select another task"
-              >
-                {activeTask ? activeTask.title : 'No active task selected'}
-              </span>
-              {activeTask?.top3 && <span style={{ color: 'var(--acc-terra)', fontSize: 17 }}>★</span>}
-
-              {/* Task Picker — searchable, kept inside the window (Kai 2026-10-03) */}
-              {taskPickerOpen && (
-                <TaskPicker tasks={tasks} anchorRef={pickerAnchor} onPick={handleSelectTask} onClose={() => setTaskPickerOpen(false)} />
-              )}
-            </div>
-            )}
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-              {activeProject && (
-                <span className="chip" style={{ background: 'color-mix(in srgb, var(--acc-moss) 20%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }}>
-                  {activeProject.name}
-                </span>
-              )}
-              {subtaskLabel && (
-                <span className="chip" style={{ border: '1px solid var(--line-solid)', color: 'var(--ink-muted)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '5px 9px', borderRadius: 'var(--radius-pill)' }}>
-                  {subtaskLabel}
-                </span>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* 1d: STOPWATCH target project / logging panel */}
-        {view === 'stopwatch' && (
-          <div style={{ width: '420px', marginTop: 24, background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', padding: '12px 16px' }}>
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>
-              On stop, this lands automatically
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
-              <span className="chip" style={{ background: 'color-mix(in srgb, var(--acc-moss) 18%, transparent)', color: 'var(--acc-sage-text)', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', padding: '5px 10px', borderRadius: 'var(--radius-pill)' }}>
-                Work · {Math.round(stopwatchSeconds / 60)}m
-              </span>
-              <span style={{ fontSize: 12.5, color: 'var(--ink-body)' }}>
-                Projects → {activeProject ? activeProject.name : 'Unlinked'} → Activity
-              </span>
-              {stopwatchProjectedHours && (
-                <span style={{ marginLeft: 'auto', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                  Hours {stopwatchProjectedHours.before} → <b style={{ color: 'var(--ink-body)', fontWeight: 600 }}>{stopwatchProjectedHours.after}</b>
-                </span>
-              )}
-            </div>
-            <input
-              type="text"
-              placeholder="What are you working on? (Optional note)"
-              value={noteText}
-              onChange={(e) => setNoteText(e.target.value)}
-              style={{
-                width: '100%',
-                background: 'var(--paper-bone)',
-                border: '1px solid var(--line-card)',
-                borderRadius: 'var(--radius-md)',
-                padding: '6px 10px',
-                fontSize: 'max(var(--field-min), 12.5px)',
-                color: 'var(--ink-body)',
-                fontFamily: 'inherit',
-                outline: 'none',
-              }}
-            />
-          </div>
-        )}
-
-        {/* Controls */}
-        {view !== 'break' && (
-          <div className="fp-ctrls" style={{ display: 'flex', alignItems: 'center', gap: 14, marginTop: 32 }}>
-            {/* B D11: the kit's buttons — terra for the one action, bone for the rest, terra text. */}
-            <Button type="button" variant="secondary" onClick={togglePlay}>
-              {isRunning ? '❙❙ Pause' : '▶ Start'}
-            </Button>
-            {view === 'pomodoro' ? (
-              <>
-                <Button type="button" onClick={handleCheckOff}>
-                  Done — check it off ✓
-                </Button>
-                <Button type="button" variant="secondary" onClick={addFiveMinutes}>
-                  +5 min
-                </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setIsRunning(false)
-                    setSecondsLeft(settings.focusRoundMin * 60)
-                    setPomodoroStartIso(null)
-                  }}
-                >
-                  End early…
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button type="button" onClick={handleStopAndLog} disabled={stopwatchSeconds === 0}>
-                  Stop &amp; log ✓
-                </Button>
-                <Button type="button" variant="ghost" onClick={handleDiscardStopwatch}>
-                  Discard
-                </Button>
-              </>
-            )}
-          </div>
-        )}
-
-        {view !== 'break' && (
-          <div style={{ marginTop: 18, fontSize: 'var(--fs-body-s)', color: 'var(--ink-muted)' }}>
-            Nothing else exists for the next hour ✿
-          </div>
+        {lengths.map((m) => (
+          <Chip key={m} tone="filter" selected={!block.fill && settings.focusRoundMin === m} onClick={() => { saveSettings({ ...settings, focusRoundMin: m }); setBlock(oneRound(block, m, new Date())) }}>
+            {m}m
+          </Chip>
+        ))}
+      </div>
+      <div className="fd-meta">
+        {block.rounds} {block.rounds === 1 ? 'round' : 'rounds'} of {settings.focusRoundMin}
+        {block.rounds > 1 ? ` · ${block.rounds - 1} ${block.rounds - 1 === 1 ? 'break' : 'breaks'}` : ''} · ends {timeText(lastFocusEnd, zone)}
+        {!phone && ' · '}
+        {!phone && (
+          <button type="button" className="fd-link" onClick={() => setMode('stopwatch')}>
+            Stopwatch instead
+          </button>
         )}
       </div>
+    </div>
+  )
 
-      {/* Garden Strip at the bottom */}
-      <div style={{ flex: 'none', position: 'relative', height: 190, borderTop: '1px solid var(--line-solid)', overflow: 'hidden' }}>
-        {motionOn && (
-          <>
-            <span className="petal" style={{ left: '12%', animationDelay: '1s', animationDuration: '8.4s' }}></span>
-            <span className="petal" style={{ left: '22%', animationDelay: '4.8s', width: 9, height: 7 }}></span>
-          </>
-        )}
+  const buttons = (phone: boolean): React.ReactNode[] => {
+    if (phase === 'idle')
+      return [
+        <Button key="start" type="button" className={fresh ? 'fd-start' : undefined} onClick={startRound}>
+          ▶ {fresh ? 'Start the first bud' : `Start bud ${budN}`}
+        </Button>,
+      ]
+    if (phase === 'end')
+      return [
+        <Button key="break" type="button" onClick={() => { if (!isRunning) setIsRunning(true) }}>
+          Break · {breakMin} min
+        </Button>,
+        <Button key="skip" type="button" variant="secondary" onClick={() => nextRound(true)}>
+          Skip to bud {budN}
+        </Button>,
+      ]
+    if (phase === 'break')
+      return [
+        <Button key="skip" type="button" variant="secondary" onClick={() => nextRound(false)}>
+          Skip break
+        </Button>,
+        <Button key="back" type="button" onClick={() => nextRound(true)}>
+          Back to work →
+        </Button>,
+      ]
+    const paused = phase === 'paused'
+    return [
+      <Button key="toggle" type="button" variant={paused ? 'cta' : 'secondary'} onClick={togglePlay}>
+        {paused ? '▶ Resume' : '❙❙ Pause'}
+      </Button>,
+      <Button key="done" type="button" variant={paused ? 'secondary' : 'cta'} onClick={handleCheckOff} disabled={!activeTask}>
+        ✓ Done
+      </Button>,
+      <Button key="five" type="button" variant="secondary" onClick={addFiveMinutes}>
+        +5 min
+      </Button>,
+      ...(phone ? [] : [
+        <Button key="end" type="button" variant="ghost" onClick={endEarly}>
+          End early
+        </Button>,
+      ]),
+    ]
+  }
 
-        {/* Glow behind the active working plant */}
-        {activeProject && (
-          <span className="focus-bloom-glow" style={{ position: 'absolute', left: 158 + projects.indexOf(activeProject) * 150, bottom: 16, width: 120, height: 120, borderRadius: '50%', background: 'radial-gradient(circle, rgba(201,165,90,0.4), rgba(201,165,90,0) 70%)', pointerEvents: 'none' }}></span>
-        )}
-
-        {/* The 7 small beds — only once their data is in (an empty bed while loading would be a lie;
-            the task line above carries the skeleton / retry). */}
-        {!gardenPending && !gardenFailed && (
-        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 24, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', padding: '0 min(130px, 7vw)', zIndex: 10 }}>
-          <StageImg bloom className="focus-sway" src={`/ds/assets/cherry/${cherryData.stage}.png`} alt="" style={{ height: 120, filter: 'var(--shadow-drop-sm)' }} title={cherryData.note} />
-          <StageImg bloom className="focus-sway" src={`/ds/assets/hydrangea/${hydrangeaData.stage}.png`} alt="" style={{ height: 96, animationDelay: '1.2s', filter: 'var(--shadow-drop-sm)' }} title={hydrangeaData.note} />
-          <StageImg bloom className="focus-sway" src={`/ds/assets/daisy/${daisyData.stage}.png`} alt="" style={{ height: 100, animationDelay: '2.6s', filter: 'var(--shadow-drop-sm)' }} title={daisyData.note} />
-          <StageImg bloom className="focus-sway" src={`/ds/assets/vine/${vineData.stage}.png`} alt="" style={{ height: 110, animationDelay: '0.6s', filter: 'var(--shadow-drop-sm)' }} title={vineData.note} />
-          <StageImg bloom className="focus-sway" src={`/ds/assets/fern/${fernData.stage}.png`} alt="" style={{ height: 88, animationDelay: '3.4s', filter: 'var(--shadow-drop-sm)' }} title={fernData.note} />
-          <StageImg bloom className="focus-sway" src={`/ds/assets/wisteria/${wisteriaData.stage}.png`} alt="" style={{ height: 110, animationDelay: '1.8s', filter: 'var(--shadow-drop-sm)' }} title={wisteriaData.note} />
-          <StageImg bloom className="focus-sway" src={`/ds/assets/clover/${cloverData.stage}.png`} alt="" style={{ height: 78, animationDelay: '4.2s', filter: 'var(--shadow-drop-sm)' }} title={cloverData.note} />
-        </div>
-        )}
-        <span style={{ position: 'absolute', left: 0, right: 0, bottom: 24, borderBottom: '1px solid var(--line-dashed)' }}></span>
-        <div className="fp-garden-note" style={{ position: 'absolute', left: 36, bottom: 4, fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
-          The garden grows while you work
-        </div>
-        <Button type="button" variant="ghost" className="fp-garden-link" onClick={() => setMode('garden')} style={{ position: 'absolute', right: 30, bottom: 0 }}>
-          Open the garden →
+  const nextTask = upNext[0] ?? null
+  const done = (phone: boolean) => (
+    <div className={`fd-done${phone ? ' fd-done--phone' : ''}`}>
+      <div className="fd-meta">{block.title} · {span}</div>
+      <div className="fd-done-t">{bloomsWord(kept)} on the block ✿</div>
+      <div className="fd-tl fd-tl--done">
+        {head}
+        <FocusTimeline tl={tl} color={block.color} flowers labels={tlLabels} />
+      </div>
+      <div className="fd-ledger">
+        <span className="fd-meta">Task</span>
+        <span className="fd-meta">Planned</span>
+        <span className="fd-meta">Kept</span>
+        <span>{activeTask?.title ?? 'A plain round'}</span>
+        <span className="fd-num">{hm(blockMinutes(block))}</span>
+        <b className="fd-num">{hm(kept * settings.focusRoundMin)}</b>
+      </div>
+      <div className="fd-done-btns">
+        {nextTask && <Button type="button" onClick={() => beginFocus(nextTask)}>Next: {nextTask.title} ▶</Button>}
+        <Button type="button" variant="secondary" onClick={() => setBlock(null)}>
+          Close the block
         </Button>
       </div>
+      {nextEvent && <div className="fd-meta fd-done-note">Next block · {nextEvent.title} at {timeText(new Date(nextEvent.starts_at), zone)}</div>}
+    </div>
+  )
 
-      {/* 1e: SETTINGS POPOVER (Modal Overlay) */}
+  const stopwatch = (
+    <div className="fd-stopwatch">
+      <div className="fd-sw-time">
+        <span className="fd-big fd-big--sw">{formatStopwatch(stopwatchSeconds)}</span>
+        <span className="focus-bloom-glow fd-sw-dot" />
+      </div>
+      <div className="fd-meta">
+        {isRunning ? 'Recording' : 'Paused'}
+        {stopwatchStartStr ? ` · started ${stopwatchStartStr}` : ''}
+      </div>
+      {taskLine(isMobile)}
+      <div className="fd-sw-panel">
+        <div className="fd-meta">On stop, this lands automatically</div>
+        <div className="fd-sw-row">
+          <span className="chip fd-sw-chip">Work · {Math.round(stopwatchSeconds / 60)}m</span>
+          <span className="fd-sw-dest">Projects → {activeProject ? activeProject.name : 'Unlinked'} → Activity</span>
+          {stopwatchProjectedHours && (
+            <span className="fd-meta fd-sw-hours">
+              Hours {stopwatchProjectedHours.before} → <b>{stopwatchProjectedHours.after}</b>
+            </span>
+          )}
+        </div>
+        <input type="text" className="fd-sw-note" placeholder="What are you working on? (Optional note)" value={noteText} onChange={(e) => setNoteText(e.target.value)} />
+      </div>
+      <div className="fd-btns">
+        <Button type="button" variant="secondary" onClick={togglePlay}>
+          {isRunning ? '❙❙ Pause' : '▶ Start'}
+        </Button>
+        <Button type="button" onClick={handleStopAndLog} disabled={stopwatchSeconds === 0}>
+          Stop &amp; log ✓
+        </Button>
+        <Button type="button" variant="ghost" onClick={handleDiscardStopwatch}>
+          Discard
+        </Button>
+        <Button type="button" variant="ghost" onClick={() => setMode('pomodoro')}>
+          Rounds instead
+        </Button>
+      </div>
+    </div>
+  )
+
+  const gear = (
+    <button type="button" className="fd-gear kf-hit" aria-label="Focus settings" title="Focus settings" onClick={() => setIsSettingsOpen(true)}>
+      <GearIcon />
+    </button>
+  )
+
+  const settingsBody = (
+    <div className="fd-settings">
+      <div className="fd-slabel">Focus round</div>
+      <div className="fd-chips fd-chips--left">
+        {[15, 25, 45, 50].map((t) => (
+          <Chip key={t} tone="filter" selected={settings.focusRoundMin === t} onClick={() => saveSettings({ ...settings, focusRoundMin: t })}>
+            {t}m
+          </Chip>
+        ))}
+        <CustomMin value={settings.focusRoundMin} presets={[15, 25, 45, 50]} onChange={(v) => saveSettings({ ...settings, focusRoundMin: v })} />
+      </div>
+      <div className="fp-breaks fd-breaks">
+        <div>
+          <div className="fd-slabel">Short break</div>
+          <div className="fd-chips fd-chips--left">
+            {[3, 5, 10].map((t) => (
+              <Chip key={t} tone="filter" selected={settings.shortBreakMin === t} onClick={() => saveSettings({ ...settings, shortBreakMin: t })}>
+                {t}m
+              </Chip>
+            ))}
+            <CustomMin value={settings.shortBreakMin} presets={[3, 5, 10]} onChange={(v) => saveSettings({ ...settings, shortBreakMin: v })} />
+          </div>
+        </div>
+        <div>
+          <div className="fd-slabel">Long break</div>
+          <div className="fd-chips fd-chips--left">
+            {[15, 20, 30].map((t) => (
+              <Chip key={t} tone="filter" selected={settings.longBreakMin === t} onClick={() => saveSettings({ ...settings, longBreakMin: t })}>
+                {t}m
+              </Chip>
+            ))}
+            <CustomMin value={settings.longBreakMin} presets={[15, 20, 30]} onChange={(v) => saveSettings({ ...settings, longBreakMin: v })} />
+          </div>
+        </div>
+      </div>
+      <div className="fd-srow">
+        <div>Rounds before a long break</div>
+        <div className="fd-stepper">
+          <button type="button" aria-label="One fewer" onClick={() => saveSettings({ ...settings, roundsBeforeLongBreak: Math.max(1, settings.roundsBeforeLongBreak - 1) })}>−</button>
+          <b>{settings.roundsBeforeLongBreak}</b>
+          <button type="button" aria-label="One more" onClick={() => saveSettings({ ...settings, roundsBeforeLongBreak: Math.min(10, settings.roundsBeforeLongBreak + 1) })}>+</button>
+        </div>
+      </div>
+      <div className="fd-rhythm-wrap">
+        <div className="fd-meta">Your rhythm · {rhythmPreviewData.text}</div>
+        <div className="fd-rhythm">
+          {Array.from({ length: settings.roundsBeforeLongBreak }).map((_, idx) => (
+            <React.Fragment key={idx}>
+              <span style={{ flex: settings.focusRoundMin, background: 'var(--acc-terra)' }} />
+              <span style={{ flex: idx < settings.roundsBeforeLongBreak - 1 ? settings.shortBreakMin : settings.longBreakMin, background: idx < settings.roundsBeforeLongBreak - 1 ? 'var(--acc-sage)' : 'var(--acc-lavender)' }} />
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+      {(
+        [
+          ['Fit rounds to the block', 'A 2h block becomes 4 buds', 'fitBlock'],
+          ['Focus pill on other pages', isMobile ? 'Above the tab bar' : 'Rides at the bottom while you work elsewhere', 'pill'],
+          ['Start the next round by itself', '', 'autoStartNextRound'],
+          ['Start breaks by itself', '', 'autoStartBreaks'],
+          ['Garden view on long breaks', 'The dusk scene opens by itself', 'gardenViewOnLongBreaks'],
+        ] as const
+      ).map(([label, sub, key]) => (
+        <div key={key} className="fd-srow">
+          <div>
+            {label}
+            {sub && <div className="fd-meta">{sub}</div>}
+          </div>
+          <Toggle on={settings[key]} label={label} onToggle={() => saveSettings({ ...settings, [key]: !settings[key] })} />
+        </div>
+      ))}
+      {/* Punch 52 + 8: the same switches as Settings → Sounds (the shared catalog), one per end of a round. */}
+      <div className="fd-srow">
+        <div>
+          Sounds
+          <div className="fd-meta">A chime when a round starts and ends</div>
+        </div>
+        <div className="fd-chips fd-chips--left">
+          {(['focus_start', 'focus_end'] as const).map((k) => (
+            <Chip key={k} tone="filter" selected={sounds[k]} onClick={() => {
+              const next = { ...readSoundEvents(), [k]: !sounds[k] }
+              writeSoundEvents(next)
+              setSounds(next)
+              if (next[k]) previewSound(k)
+            }}>
+              {k === 'focus_start' ? 'Start' : 'End'}
+            </Chip>
+          ))}
+        </div>
+      </div>
+      <div className="fd-srow">
+        <span className="fd-meta">Saves quietly, per you ✿</span>
+        <Button type="button" variant="ghost" onClick={() => saveSettings(DEFAULT_SETTINGS)}>
+          Reset to classic
+        </Button>
+      </div>
+    </div>
+  )
+
+  if (isMobile) {
+    const ringPct = phase === 'break' ? tl.frac : phase === 'end' ? 1 : tl.frac
+    const R = 210
+    const r = (R - 3) / 2
+    const c = 2 * Math.PI * r
+    const plant = (
+      <div className={`fd-plant is-${phase}`}>
+        <svg className={`fp-ring${phase === 'paused' ? ' is-paused' : ''}`} width={R} height={R} viewBox={`0 0 ${R} ${R}`} aria-hidden>
+          <circle cx={R / 2} cy={R / 2} r={r} fill="none" stroke="var(--line-card)" strokeWidth="3" />
+          {ringPct > 0 && <circle cx={R / 2} cy={R / 2} r={r} fill="none" stroke="var(--acc-sage)" strokeWidth="3" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - ringPct)} style={sweep} />}
+        </svg>
+        {flower(phase === 'break' || stage === 'bud' ? 105 : 130, true)}
+      </div>
+    )
+    return (
+      <div className="focus-bleed fd-phone">
+        <div className="fd-phead">
+          <span className="fd-ptitle">Focus</span>
+          {gear}
+        </div>
+        {mode === 'stopwatch' ? (
+          stopwatch
+        ) : phase === 'done' ? (
+          done(true)
+        ) : (
+          <>
+            {fresh && idle(true)}
+            <div className="fd-tl">
+              {head}
+              <FocusTimeline tl={tl} color={block.color} flowers labels={tlLabels} breakLabel={breakText} />
+            </div>
+            {plant}
+            {!fresh && (
+              <div className="fd-pbig">
+                {big(true)}
+                {(phase === 'running' || phase === 'paused' || phase === 'idle') && taskLine(true)}
+              </div>
+            )}
+            <div className="fd-btns fd-btns--phone">{buttons(true)}</div>
+            {fresh && (
+              <button type="button" className="fd-link fd-link--center" onClick={() => setMode('stopwatch')}>
+                Stopwatch instead
+              </button>
+            )}
+            {(phase === 'running' || phase === 'paused') && (upNext[0] || nextEvent) && (
+              <div className="fd-pnext">
+                <span>{upNext[0] ? `Up next · ${upNext[0].title}` : 'Up next'}</span>
+                {nextEvent && <span className="fd-meta">{nextEvent.title} {timeText(new Date(nextEvent.starts_at), zone)}</span>}
+              </div>
+            )}
+          </>
+        )}
+        {isSettingsOpen && (
+          <BottomSheet onClose={() => setIsSettingsOpen(false)} title="Focus settings">
+            {() => settingsBody}
+          </BottomSheet>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="focus-bleed fd-wrap">
+    <div className="fd">
+      <div className="fd-top">
+        <span className="fd-crumb">Focus{phase === 'idle' && fresh ? '' : ` · ${block.title} · ${span}`}</span>
+        <span className="fd-topr">
+          <span className="fp-esc fd-meta">Esc leaves quietly</span>
+          {gear}
+        </span>
+      </div>
+      <aside className="fd-hours" aria-label="Today around the block">
+        <HourColumn block={block} tl={tl} events={events} zone={zone} />
+      </aside>
+      <main className="fd-centre">
+        {mode === 'stopwatch' ? (
+          stopwatch
+        ) : phase === 'done' ? (
+          done(false)
+        ) : (
+          <>
+            {topTimeline}
+            {!fresh && taskLine(false)}
+            <div className="fd-row">
+              {fresh ? idle(false) : big(false)}
+              {flower(fresh ? 90 : 120)}
+            </div>
+            <div className="fd-btns">{buttons(false)}</div>
+          </>
+        )}
+      </main>
+      <aside className="fd-next" aria-label="Up next">
+        <div className="fd-next-h">Up next</div>
+        {upNext.length === 0 && <div className="fd-meta">Nothing else on today ✿</div>}
+        {upNext.map((t) => (
+          <div key={t.id} className="fd-next-row">
+            <Checkbox checked={false} size={16} label={t.title} onChange={() => completeTaskWithUndo(t)} />
+            <button type="button" className="fd-next-t" onClick={() => handleSelectTask(t.id)} title="Focus on this next">
+              {t.title}
+            </button>
+            {t.top3 && <span className="fd-star">★</span>}
+            {t.duration_min ? <span className="fd-meta">{hm(t.duration_min)}</span> : null}
+          </div>
+        ))}
+        {nextEvent && (
+          <div className="fd-next-block" style={{ background: `color-mix(in srgb, ${hueOfEvent(nextEvent).c} var(--blk-fill), transparent)`, color: hueOfEvent(nextEvent).ink }}>
+            Next block · {nextEvent.title} · {timeText(new Date(nextEvent.starts_at), zone)}
+          </div>
+        )}
+      </aside>
       {isSettingsOpen && (
-        <div className="fp-scrim-in" style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(var(--kf-shadow-rgb, 60,52,38), 0.05)', zIndex: 100 }}>
-          {/* deviation(2026-07-18 audit): no rotate() on the settings card — text containers stay
-              transform-free for crisp rendering (same ruling as C4). B D7: a tool, so no washi tape either;
-              a floating layer keeps its shadow (D4). */}
-          <div className="fp-card-in" style={{ position: 'relative', width: 420, maxWidth: 'calc(var(--kf-vw) - 32px)', background: 'var(--paper-parchment)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-card)', boxShadow: 'var(--shadow-popover)', padding: '18px 20px 20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
-              <span style={{ fontSize: 'var(--fs-section)', fontWeight: 'var(--fw-semibold)', color: 'var(--ink-body)' }}>
-                Pomodoro settings
-              </span>
-              <span
-                onClick={() => setIsSettingsOpen(false)}
-                style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', cursor: 'pointer' }}
-              >
+        <div className="fp-scrim-in fd-scrim" onClick={(e) => e.target === e.currentTarget && setIsSettingsOpen(false)}>
+          <div className="fp-card-in fd-sheet" role="dialog" aria-label="Focus settings">
+            <div className="fd-sheet-h">
+              <b>Focus settings</b>
+              <button type="button" className="fd-x kf-hit" aria-label="Close" onClick={() => setIsSettingsOpen(false)}>
                 ✕
-              </span>
+              </button>
             </div>
-
-            {/* Focus round */}
-            <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
-              Focus round
-            </div>
-            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-              {/* B D12: kit filter chips — a 3:1 edge, the chosen length ink-filled. */}
-              {[15, 25, 45, 50].map((t) => (
-                <Chip key={t} tone="filter" selected={settings.focusRoundMin === t} onClick={() => saveSettings({ ...settings, focusRoundMin: t })}>
-                  {t}m
-                </Chip>
-              ))}
-              <CustomMin value={settings.focusRoundMin} presets={[15, 25, 45, 50]} onChange={(v) => saveSettings({ ...settings, focusRoundMin: v })} />
-            </div>
-
-            <div className="fp-breaks" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-              {/* Short break */}
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
-                  Short break
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {[3, 5, 10].map((t) => (
-                    <Chip key={t} tone="filter" selected={settings.shortBreakMin === t} onClick={() => saveSettings({ ...settings, shortBreakMin: t })}>
-                      {t}m
-                    </Chip>
-                  ))}
-                  <CustomMin value={settings.shortBreakMin} presets={[3, 5, 10]} onChange={(v) => saveSettings({ ...settings, shortBreakMin: v })} />
-                </div>
-              </div>
-
-              {/* Long break */}
-              <div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 6 }}>
-                  Long break
-                </div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {[15, 20, 30].map((t) => (
-                    <Chip key={t} tone="filter" selected={settings.longBreakMin === t} onClick={() => saveSettings({ ...settings, longBreakMin: t })}>
-                      {t}m
-                    </Chip>
-                  ))}
-                  <CustomMin value={settings.longBreakMin} presets={[15, 20, 30]} onChange={(v) => saveSettings({ ...settings, longBreakMin: v })} />
-                </div>
-              </div>
-            </div>
-
-            {/* Rounds count */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px solid var(--line-dashed)' }}>
-              <div>
-                <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Rounds before a long break</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 3 }}>
-                  The classic is 4
-                </div>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <span
-                  onClick={() => saveSettings({ ...settings, roundsBeforeLongBreak: Math.max(1, settings.roundsBeforeLongBreak - 1) })}
-                  style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: 'var(--ink-muted)', cursor: 'pointer' }}
-                >
-                  −
-                </span>
-                <span style={{ fontFamily: 'var(--font-display)', fontSize: 19, fontWeight: 600, color: 'var(--ink-body)', width: 18, textAlign: 'center' }}>
-                  {settings.roundsBeforeLongBreak}
-                </span>
-                <span
-                  onClick={() => saveSettings({ ...settings, roundsBeforeLongBreak: Math.min(10, settings.roundsBeforeLongBreak + 1) })}
-                  style={{ width: 26, height: 26, borderRadius: 999, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: 'var(--ink-muted)', cursor: 'pointer' }}
-                >
-                  +
-                </span>
-              </div>
-            </div>
-
-            {/* Rhythm preview */}
-            <div style={{ marginTop: 14, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', borderRadius: 'var(--radius-input)', padding: '11px 13px' }}>
-              <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>
-                Your rhythm · {rhythmPreviewData.text}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-                {Array.from({ length: settings.roundsBeforeLongBreak }).map((_, idx) => (
-                  <React.Fragment key={idx}>
-                    <span style={{ flex: settings.focusRoundMin, height: 8, borderRadius: 2, background: 'var(--acc-terra)', opacity: 0.85 }} />
-                    {idx < settings.roundsBeforeLongBreak - 1 ? (
-                      <span style={{ flex: settings.shortBreakMin, height: 8, borderRadius: 2, background: 'var(--acc-sage)' }} />
-                    ) : (
-                      <span style={{ flex: settings.longBreakMin, height: 8, borderRadius: 2, background: 'var(--acc-lavender)' }} />
-                    )}
-                  </React.Fragment>
-                ))}
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>
-                <span><span style={{ color: 'var(--acc-terra)' }}>■</span> Focus {settings.focusRoundMin}</span>
-                <span><span style={{ color: 'var(--acc-sage)' }}>■</span> Break {settings.shortBreakMin}</span>
-                <span><span style={{ color: 'var(--acc-lavender-deep)' }}>■</span> Long {settings.longBreakMin}</span>
-              </div>
-            </div>
-
-            {/* Toggles */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 14, paddingTop: 12, borderTop: '1px solid var(--line-dashed)' }}>
-              <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Auto-start the next round</div>
-              <Toggle on={settings.autoStartNextRound} label="Auto-start the next round" onToggle={() => saveSettings({ ...settings, autoStartNextRound: !settings.autoStartNextRound })} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-              <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Auto-start breaks</div>
-              <Toggle on={settings.autoStartBreaks} label="Auto-start breaks" onToggle={() => saveSettings({ ...settings, autoStartBreaks: !settings.autoStartBreaks })} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-              <div>
-                <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Garden view on long breaks</div>
-                <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginTop: 2 }}>
-                  The dusk scene opens by itself
-                </div>
-              </div>
-              <Toggle on={settings.gardenViewOnLongBreaks} label="Garden view on long breaks" onToggle={() => saveSettings({ ...settings, gardenViewOnLongBreaks: !settings.gardenViewOnLongBreaks })} />
-            </div>
-            {/* Punch 52 + 8 (orchestrator patch): the chime is real again (synthesised, not the
-                missing chime.mp3), and this row is now the SAME switch as Settings' "Focus round
-                ends" — it writes the shared sound catalog rather than a private flag that
-                decided nothing. One sound, one setting, wherever you toggle it. */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 10 }}>
-              <div style={{ fontSize: 13, color: 'var(--ink-body)' }}>Gentle chime at round's end</div>
-              <Toggle on={chimeOn} label="Gentle chime at round's end" onToggle={() => {
-                const next = !chimeOn
-                setChimeOn(next)
-                writeSoundEvents({ ...readSoundEvents(), focus_end: next })
-                if (next) previewSound('focus_end')
-              }} />
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16, paddingTop: 13, borderTop: '1px solid var(--line-dashed)' }}>
-              <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>
-                Saves quietly, per you ✿
-              </span>
-              <Button type="button" variant="ghost" onClick={() => saveSettings(DEFAULT_SETTINGS)}>
-                Reset to classic
-              </Button>
-            </div>
+            {settingsBody}
           </div>
         </div>
       )}
+    </div>
+    </div>
+  )
+}
+
+/** A block's accent and text tone: its own colour, else its kind's (calendar/blockHue). */
+function hueOfEvent(e: Pick<CalendarEvent, 'color' | 'type' | 'task_id'>) {
+  return e.color ? blockHue(e.color) : e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
+}
+
+const minOfDay = (d: Date, zone: string) => {
+  const [h, m] = zoneTimeKey(d, zone).split(':').map(Number)
+  return h * 60 + m
+}
+
+/** D3's hour column: six hours around the block, today's other blocks as they are, the focus block split into
+ * its segments in its own colour — no flowers here — and the now line. */
+function HourColumn({ block, tl, events, zone }: { block: FocusBlock; tl: Timeline; events: readonly CalendarEvent[]; zone: string }) {
+  const now = useMinuteNow()
+  const day = zoneDateKey(new Date(block.srcStart), zone)
+  const startMin = minOfDay(new Date(block.srcStart), zone)
+  const from = Math.max(0, Math.min(18 * 60, Math.floor(startMin / 60) * 60 - 60))
+  const SPAN = 6 * 60
+  const pct = (m: number) => `${(((m - from) / SPAN) * 100).toFixed(2)}%`
+  const placed = (s: Date, e: Date) => {
+    const a = Math.max(from, minOfDay(s, zone))
+    const b = Math.min(from + SPAN, zoneDateKey(e, zone) === day ? minOfDay(e, zone) : 24 * 60)
+    return b > a ? { top: pct(a), height: `${(((b - a) / SPAN) * 100).toFixed(2)}%` } : null
+  }
+  const others = events.filter((e) => !e.all_day && e.id !== block.eventId && zoneDateKey(new Date(e.starts_at), zone) === day)
+  const own = placed(new Date(block.srcStart), new Date(block.srcEnd))
+  const srcLen = Date.parse(block.srcEnd) - Date.parse(block.srcStart)
+  const planTop = srcLen > 0 ? Math.max(0, (Date.parse(block.start) - Date.parse(block.srcStart)) / srcLen) : 0
+  const planH = srcLen > 0 ? Math.min(1 - planTop, (Date.parse(block.end) - Date.parse(block.start)) / srcLen) : 1
+  const nowMin = zoneDateKey(now, zone) === day ? minOfDay(now, zone) : -1
+  return (
+    <div className="fd-hcol">
+      {Array.from({ length: 6 }, (_, i) => (
+        <div key={i} className="fd-hline" style={{ top: pct(from + i * 60) }}>
+          {hourLabel(Math.floor(from / 60) + i)}
+        </div>
+      ))}
+      {others.map((e) => {
+        const p = placed(new Date(e.starts_at), new Date(e.ends_at))
+        if (!p) return null
+        const h = hueOfEvent(e)
+        return (
+          <div key={e.id} className="fd-hblk" style={{ ...p, background: `color-mix(in srgb, ${h.c} var(--blk-fill), transparent)`, color: h.ink }}>
+            <b>{e.title}</b>
+          </div>
+        )
+      })}
+      {own && (
+        <div className="fd-hblk fd-hblk--focus" style={{ ...own, background: `color-mix(in srgb, ${block.color} var(--blk-fill), transparent)`, color: block.ink }} data-focus-block>
+          <b>{block.title}</b>
+          <div className="fd-hblk-span">{timeRange(new Date(block.srcStart), new Date(block.srcEnd), zone).replace('–', ' – ')}</div>
+          <div className="fd-hsegs">
+            <FocusTimeline vertical tl={tl} color={block.color} style={{ position: 'absolute', left: 0, right: 0, top: `${planTop * 100}%`, height: `${planH * 100}%` }} />
+          </div>
+        </div>
+      )}
+      {nowMin >= from && nowMin <= from + SPAN && <div className="fd-nowline" style={{ top: pct(nowMin) }} />}
     </div>
   )
 }

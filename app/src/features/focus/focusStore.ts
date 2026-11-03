@@ -6,6 +6,7 @@ import { appZone } from '../../lib/appZone'
 import { onPrefApplied, prefWritten } from '../../lib/prefs'
 import { clockOptions } from '../../lib/clock'
 import { playSound } from '../../lib/sounds'
+import type { FocusBlock } from './focusPlan'
 
 // R4-D3 (Kai's 2026-07-20 ruling): Focus needs "multiple ways to enter it" — a Focus action on
 // a task's full-page detail, and a *mini* pomodoro that rides next to the task so he can stay on
@@ -24,6 +25,9 @@ export interface FocusSettings {
   autoStartBreaks: boolean
   gentleChime: boolean
   gardenViewOnLongBreaks: boolean
+  // Focus D3: a block's rounds fill it (else one round from now), and the pill rides other pages.
+  fitBlock: boolean
+  pill: boolean
 }
 
 export const DEFAULT_SETTINGS: FocusSettings = {
@@ -35,6 +39,8 @@ export const DEFAULT_SETTINGS: FocusSettings = {
   autoStartBreaks: true,
   gentleChime: false,
   gardenViewOnLongBreaks: true,
+  fitBlock: true,
+  pill: true,
 }
 
 const SETTINGS_KEY = 'kf_focus_settings'
@@ -68,10 +74,15 @@ interface FocusState {
   breakType: 'short' | 'long'
   activeTask: FocusTask | null
   pomodoroStartIso: string | null
+  /** Focus D3: the block the session runs in, split into rounds (./focusPlan), and the rounds kept in it. */
+  block: FocusBlock | null
+  kept: number
 
   saveSettings: (s: FocusSettings) => void
   setMode: (m: FocusMode) => void
   setActiveTask: (t: FocusTask | null) => void
+  /** A new block: its rounds start from the first, none kept. */
+  setBlock: (b: FocusBlock | null) => void
   togglePlay: () => void
   addFiveMinutes: () => void
   resetRound: () => void
@@ -84,7 +95,7 @@ interface FocusState {
 // (resumeAway). Settings keep their own key above.
 const SESSION_KEY = 'kf_focus_session'
 const MODES: readonly FocusMode[] = ['pomodoro', 'break', 'stopwatch', 'garden']
-type Session = Pick<FocusState, 'mode' | 'isRunning' | 'secondsLeft' | 'stopwatchSeconds' | 'stopwatchStartIso' | 'stopwatchStartStr' | 'currentRound' | 'breakType' | 'activeTask' | 'pomodoroStartIso'>
+type Session = Pick<FocusState, 'mode' | 'isRunning' | 'secondsLeft' | 'stopwatchSeconds' | 'stopwatchStartIso' | 'stopwatchStartStr' | 'currentRound' | 'breakType' | 'activeTask' | 'pomodoroStartIso' | 'block' | 'kept'>
 
 function loadSession(): { session: Partial<Session>; savedAt: number | null } {
   try {
@@ -120,6 +131,8 @@ export const useFocusStore = create<FocusState>((set, get) => ({
   breakType: 'short',
   activeTask: null,
   pomodoroStartIso: null,
+  block: null,
+  kept: 0,
   ...restored.session,
 
   saveSettings: (next) => {
@@ -143,11 +156,19 @@ export const useFocusStore = create<FocusState>((set, get) => ({
 
   setActiveTask: (activeTask) => set({ activeTask }),
 
+  setBlock: (block) => set({ block, kept: 0, currentRound: 1 }),
+
   togglePlay: () => {
     const { isRunning, mode, pomodoroStartIso, stopwatchSeconds } = get()
     if (!isRunning) {
       const now = new Date()
       if (mode === 'pomodoro' && !pomodoroStartIso) {
+        // D3: a round past the block's plan ("Keep going" after the last) grows the block by a round.
+        const { block, kept, settings } = get()
+        if (block && kept >= block.rounds) {
+          const end = new Date(Math.max(Date.parse(block.end), now.getTime() + settings.focusRoundMin * 60_000)).toISOString()
+          set({ block: { ...block, rounds: kept + 1, end } })
+        }
         set({ pomodoroStartIso: now.toISOString() })
         playSound('focus_start') // a fresh round, not a resume
       }
@@ -200,12 +221,20 @@ export const useFocusStore = create<FocusState>((set, get) => ({
       // toggle, the per-sound toggle, volume and quiet hours, so a check here would double-gate.
       playSound('focus_end')
 
+      // D3: the block's last round kept — done for the day (no break after it).
+      const kept = s.kept + 1
+      if (s.block && kept >= s.block.rounds) {
+        set({ isRunning: false, pomodoroStartIso: null, kept, secondsLeft: s.settings.focusRoundMin * 60 })
+        return
+      }
+
       const long = s.currentRound >= s.settings.roundsBeforeLongBreak
       const toGarden = long && s.settings.gardenViewOnLongBreaks
       set({
         // The garden view is a place to rest, not a countdown — never auto-run into it.
         isRunning: s.settings.autoStartBreaks && !toGarden,
         pomodoroStartIso: null,
+        kept,
         breakType: long ? 'long' : 'short',
         mode: toGarden ? 'garden' : 'break',
         secondsLeft: (long ? s.settings.longBreakMin : s.settings.shortBreakMin) * 60,
@@ -224,8 +253,8 @@ export const useFocusStore = create<FocusState>((set, get) => ({
 }))
 
 useFocusStore.subscribe((s) => {
-  const { mode, isRunning, secondsLeft, stopwatchSeconds, stopwatchStartIso, stopwatchStartStr, currentRound, breakType, activeTask, pomodoroStartIso } = s
-  const session: Session & { savedAt: number } = { mode, isRunning, secondsLeft, stopwatchSeconds, stopwatchStartIso, stopwatchStartStr, currentRound, breakType, activeTask, pomodoroStartIso, savedAt: Date.now() }
+  const { mode, isRunning, secondsLeft, stopwatchSeconds, stopwatchStartIso, stopwatchStartStr, currentRound, breakType, activeTask, pomodoroStartIso, block, kept } = s
+  const session: Session & { savedAt: number } = { mode, isRunning, secondsLeft, stopwatchSeconds, stopwatchStartIso, stopwatchStartStr, currentRound, breakType, activeTask, pomodoroStartIso, block, kept, savedAt: Date.now() }
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify(session))
   } catch {
