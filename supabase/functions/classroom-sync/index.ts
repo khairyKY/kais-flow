@@ -125,7 +125,7 @@ async function syncCourse(db: SupabaseClient, userId: string, course: CourseRef,
   const plan = planCourse({ courseId: course.id, projectId, domainId, work, submissions, stored: await storedTasks(db, userId, course.id), zone, now: new Date(startedAt), newId: () => crypto.randomUUID() })
 
   // user_id explicitly: the service role has no auth.uid() for the column's default.
-  const landed = await insertNew(db, plan.insert.map((r) => ({ ...r, user_id: userId })) as { id: string; title: string }[])
+  const landed = await insertNew(db, plan.insert.map((r) => ({ ...r, user_id: userId })) as unknown as { id: string; title: string }[])
   counts.new += landed.length
   if (landed.length) {
     must(await db.from('activity_log').insert(landed.map((r) => ({ user_id: userId, event_type: 'task.created', entity_type: 'task', entity_id: r.id, payload: { source: 'classroom' } }))))
