@@ -59,8 +59,8 @@ Anything else (`kaisflow://settings`, a bad id, a path like `task/../x`) just op
 - `cargo check --tests` and `cargo test --lib` on Windows locally: 12/12 (5 new: popup placement ×3, link reading ×2).
 - vitest: new `deepLink.test.ts`, `captureShortcut.test.ts`.
 - Harness `docs/log/assets/desktop-shell/verify.mjs` (Playwright, mock backend, fake Tauri bridge): **35/35** — Settings row (default, 4 choices, accelerator sent, saved, refused-by-another-app keeps the old one, Mac wording, sent at start), popup page (ready once, opens on `__kfCapture`, cursor in field, window told its height, chips grow it, no camera, Enter files through the outbox and hides, Esc hides, blur resets, Jump opens the main window), deep links (today, calendar, focus, task/<id>, trailing slash, unknown link ignored, link arriving while running).
-- CI: `desktop.yml` run on `claude/desktop-shell` — see the result line in INDEX / the reply. New steps: a Windows installer check (registry key + open link + single copy) and a Mac Info.plist scheme check.
-- Gate: see the reply.
+- CI: `gh workflow run desktop.yml --ref claude/desktop-shell` = run 41669363360, **green on Windows and Mac** (Windows installer, Mac .dmg + universal checks + updater manifest). The new Windows step passed on the runner: the silent install wrote `kaisflow:// -> "C:\Users\runneradmin\AppData\Local\Kai’s Flow\kais-flow.exe" "%1"`, `kaisflow://today` started the app (up 20 s) and a second link did not start a second copy. The Mac step checks Info.plist `CFBundleURLSchemes`.
+- Gate: vitest 2736/2736 ×4 TZ, lint 0, build ok, ds 0 new; `birthday_on` 1/1.
 
 ## Not done / for Kai
 - The real first run on Kai's PC (shortcut over a game or an elevated app: Windows blocks hot keys over elevated windows from a normal process).
