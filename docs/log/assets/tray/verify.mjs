@@ -13,7 +13,7 @@ import { pathToFileURL } from 'node:url'
 
 const OUT = process.argv[2]
 const BASE = process.argv[3] ?? 'http://localhost:5310'
-const PW = 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs'
+const PW = process.env.PW ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs' // that copy is gone: PW=<playwright-core/index.mjs>
 const { chromium } = await import(pathToFileURL(PW).href)
 fs.mkdirSync(OUT, { recursive: true })
 const results = []
@@ -197,7 +197,7 @@ if (want('focus')) {
   await main.clock.runFor(6 * 60_000 + 18_000)
   await sleep(600)
   const fb = await txt(tray.locator('.kf-tray-fb'))
-  check('Start focus (popover) starts the main timer on the goal: Focus · 18:42 left', /^Focus · 18:4[12] left Ship the calendar polish$/.test(fb), fb)
+  check('Start focus (popover) starts the main timer on the goal: bud 1 of 1 · 18:42 (focus D3 card)', /bud 1 of 1 18:4[12] Ship the calendar polish kept/.test(fb), fb)
   check('running: Pause · Stop', JSON.stringify(await tray.locator('.kf-tray-btn').allInnerTexts()) === JSON.stringify(['Pause', 'Stop']))
   check('running popover fits', await fits(tray), await layout(tray))
   await shot(tray, 'popover-b-focus-night')

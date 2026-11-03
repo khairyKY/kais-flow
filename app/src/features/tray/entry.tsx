@@ -7,7 +7,8 @@ import './tray-entry.css'
 import { installNativeMenuGuard } from '../../lib/nativeMenu'
 import { motionOnNow } from '../../lib/motion'
 
-// tray.html: the flyout (popover B) or, with ?menu, the right-click menu (menu B). Each loads only its
+// tray.html: the flyout (popover B) or, with ?menu, the right-click menu (menu B), or, with ?capture,
+// the quick-capture popup (./CapturePopup). Each loads only its
 // own half: the menu is a few rows and never touches the account; the flyout reads the day.
 
 installNativeMenuGuard() // no WebView Back/Refresh menu on a right-click here either
@@ -28,5 +29,7 @@ window.addEventListener('storage', (e) => e.key === 'kf_effects' && gate())
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', gate)
 
 const root = createRoot(document.getElementById('root')!)
-if (new URLSearchParams(location.search).has('menu')) void import('./TrayMenu').then(({ TrayMenu }) => root.render(<TrayMenu />))
+const q = new URLSearchParams(location.search)
+if (q.has('menu')) void import('./TrayMenu').then(({ TrayMenu }) => root.render(<TrayMenu />))
+else if (q.has('capture')) void import('./CapturePopup').then(({ mountCapture }) => mountCapture(root))
 else void import('./TrayFlyout').then(({ mountPopover }) => mountPopover(root))

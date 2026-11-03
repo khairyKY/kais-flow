@@ -70,6 +70,10 @@ v="$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$plist")"
 id="$(/usr/libexec/PlistBuddy -c 'Print CFBundleIdentifier' "$plist")"
 [ "$v" = "$want_v" ] || fail "Info.plist version $v, expected $want_v"
 [ "$id" = "$want_id" ] || fail "Info.plist identifier $id, expected $want_id"
+# kaisflow:// links (tauri.conf.json plugins.deep-link): the bundler writes the scheme into Info.plist, which is
+# how macOS knows to open this app for it (and how a script outside can find it: lsregister / the app path).
+scheme="$(/usr/libexec/PlistBuddy -c 'Print CFBundleURLTypes:0:CFBundleURLSchemes:0' "$plist" 2>/dev/null || true)"
+[ "$scheme" = "kaisflow" ] || fail "Info.plist doesn't register kaisflow:// (CFBundleURLSchemes: '$scheme')"
 codesign -dv "$mnt/$name" > "$TMP/codesign-dmg.txt" 2>&1
 grep -q '^Signature=adhoc' "$TMP/codesign-dmg.txt" || fail "the .dmg's copy isn't ad-hoc signed"
 smoke="$TMP/kf-smoke"

@@ -3,7 +3,7 @@ import { Link, Outlet, useLocation, useNavigate, useSearchParams, type LinkProps
 import { useShellSpot } from './dragSpots'
 import type { FileSpot } from '../features/tasks/fileDrop'
 import { PageFallback } from './PageFallback'
-import { useFocusTicker } from '../features/focus/focusStore'
+import { useFocusStore, useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
 import { syncHeader, syncLabel, syncRows, useSyncStatus, type SyncRow, type SyncView } from './syncQueue'
 import { discardParked, retryParked } from '../lib/outbox'
@@ -41,6 +41,8 @@ const SearchOverlay = lazy(() => import('../features/search/SearchOverlay').then
 const ShortcutOverlay = lazy(() => import('./ShortcutOverlay').then((m) => ({ default: m.ShortcutOverlay })))
 // Wave N: a phone opens a task as this sheet over the current page (`?task=<id>`, features/tasks/openTask).
 const TaskSheet = lazy(() => import('../features/tasks/TaskSheet').then((m) => ({ default: m.TaskSheet })))
+// Focus D3: the pill that follows a round under way to the other pages (loaded once one is).
+const FocusPill = lazy(() => import('../features/focus/FocusPill').then((m) => ({ default: m.FocusPill })))
 // Notification buttons, focus-done notices, the tray flyout's focus mirror and (Windows) the tray.
 const TrayBridge = lazy(() => import('../features/tray/TrayBridge').then((m) => ({ default: m.TrayBridge })))
 // The Android app's home-screen widgets (features/widgets): their snapshot, ticks and taps.
@@ -676,16 +678,17 @@ const OPEN_SEARCH_EVENT = 'kf-open-search'
 
 /** Pages whose desktop frame has no top bar: Today 2a and Inbox 3a (both "reviewed pass"), and the
  * calendar (Kai 2026-10-14: "I don't want any wasted spaces" — its own header row carries the date). */
-const NO_TOPBAR = ['/today', '/inbox', '/calendar']
+const NO_TOPBAR = ['/today', '/inbox', '/calendar', '/focus'] // focus D3 draws its own top bar
 /** Desktop pages that fill the window edge to edge: no page padding, no page scroll (Akiflow's
  * calendar beside its list). Phones keep the padded column. */
-const FULL_BLEED = ['/calendar']
+const FULL_BLEED = ['/calendar', '/focus']
 
 export function AppLayout() {
   useRealtimeSync()
   useAutoFileNotice() // queue item 7: captures wait in the Inbox now — told once
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()
+  const focusUnderWay = useFocusStore((s) => s.isRunning || s.mode === 'break' || !!s.pomodoroStartIso)
   const motionOn = useMotionEnabled()
   // M2 / RM2: the one decorative-motion flag lives on <html>, so what lives on <body> (popovers, the
   // drag's lifted card) agrees with the shell. `.motion-on` is the name; `kf-motion-on` its old alias.
@@ -1211,6 +1214,11 @@ export function AppLayout() {
       <Suspense fallback={null}>
         <TrayBridge />
       </Suspense>
+      {focusUnderWay && pathname !== '/focus' && (
+        <Suspense fallback={null}>
+          <FocusPill />
+        </Suspense>
+      )}
       {widgetsAvailable() && (
         <Suspense fallback={null}>
           <WidgetBridge />

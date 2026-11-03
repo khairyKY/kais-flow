@@ -1,0 +1,14 @@
+{
+  "link": "PASTE YOUR WIDGET LINK HERE",
+  "theme": "auto",
+  "appUrl": "https://kais-flow.kaidagoat.workers.dev",
+  "nightFrom": 19,
+  "nightTo": 6,
+  "positions": {
+    "today": { "x": 20, "y": 44 },
+    "nownext": { "x": 20, "y": 424 },
+    "daybar": { "x": 20, "y": 614 },
+    "goal": { "x": 20, "y": 804 },
+    "next": { "x": 210, "y": 804 }
+  }
+}

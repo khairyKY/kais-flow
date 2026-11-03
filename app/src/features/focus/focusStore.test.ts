@@ -19,11 +19,23 @@ const reset = (over: Partial<ReturnType<typeof useFocusStore.getState>> = {}) =>
     breakType: 'short',
     activeTask: null,
     pomodoroStartIso: null,
+    block: null,
+    kept: 0,
     ...over,
   })
 
 describe('focusStore tick', () => {
   beforeEach(() => reset())
+
+  it('focus D3: a round kept in a block counts, and the last round of the block ends the day (no break)', () => {
+    const block = { title: 'Deep work', start: 'a', end: 'b', srcStart: 'a', srcEnd: 'b', color: 'var(--blk-iris)', ink: 'var(--blk-iris-ink)', rounds: 2, fill: true, fromCalendar: true, eventId: 'e1' }
+    reset({ secondsLeft: 1, block, kept: 0 })
+    useFocusStore.getState().tick()
+    expect(useFocusStore.getState()).toMatchObject({ mode: 'break', kept: 1 })
+    reset({ secondsLeft: 1, block, kept: 1, pomodoroStartIso: 'x' })
+    useFocusStore.getState().tick()
+    expect(useFocusStore.getState()).toMatchObject({ mode: 'pomodoro', isRunning: false, kept: 2, pomodoroStartIso: null })
+  })
 
   it('counts down while time remains', () => {
     useFocusStore.getState().tick()

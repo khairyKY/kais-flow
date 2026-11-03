@@ -7,6 +7,7 @@ import { appZone } from '../../lib/appZone'
 import { useSyncStatus } from '../../components/syncQueue'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useFocusStore } from '../focus/focusStore'
+import { KIND_HUE } from '../calendar/blockHue'
 import { legacyGoalId } from '../today/goalStore'
 import { goalIdOf } from '../today/top3Order'
 import { cachedStarEvents } from '../today/api'
@@ -24,6 +25,8 @@ import { localPlan, type Planned } from '../notifications/plan'
 import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
+import { applyCaptureShortcut } from './captureShortcut'
+import { deepLinkRoute } from './deepLink'
 import { focusMenuLabel, focusTarget, pauseMenuLabel, pauseUntil, trayIconState, trayMenuState, trayNow } from './trayState'
 import { SIGNED_OUT } from './menuRows'
 import type { ActivityLogEntry, AppSettings, CalendarEvent, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
@@ -113,14 +116,27 @@ function scheduleOnAndroid(): void {
 /** "25 minutes tended ✿" when a round runs out — unless someone is looking at the app. */
 function watchFocusDone(): () => void {
   return useFocusStore.subscribe((s, prev) => {
-    // Only tick() moves a running round at its last second into a break or the garden.
-    if (!(prev.mode === 'pomodoro' && prev.isRunning && prev.secondsLeft <= 1 && s.mode !== 'pomodoro') || lookingHere()) return
+    // Only tick() moves a running round at its last second into a break or the garden — or, a block's
+    // last round (focus D3), into done for the day (kept goes up, no break).
+    if (!(prev.mode === 'pomodoro' && prev.isRunning && prev.secondsLeft <= 1 && (s.mode !== 'pomodoro' || s.kept > prev.kept)) || lookingHere()) return
     const task = prev.activeTask ? queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === prev.activeTask!.id)?.title ?? null : null
     const breakMin = s.breakType === 'long' ? s.settings.longBreakMin : s.settings.shortBreakMin
     const now = new Date()
     const notice = deliver(focusDoneNotice(prev.settings.focusRoundMin, task, breakMin, prefs()), prefs(), now, appZone())
     if (notice) void showLocal(notice)
   })
+}
+
+/** A CSS colour (a --blk-* token or a hex) as #rrggbb, read off the page; `dark` re-reads it when the theme flips. */
+function hexOf(color: string, dark: boolean): string | null {
+  void dark
+  if (typeof document === 'undefined') return null
+  const probe = document.createElement('span')
+  probe.style.color = color
+  document.body.append(probe)
+  const rgb = getComputedStyle(probe).color.match(/\d+(\.\d+)?/g)
+  probe.remove()
+  return rgb && rgb.length >= 3 ? `#${rgb.slice(0, 3).map((n) => Math.round(+n).toString(16).padStart(2, '0')).join('')}` : null
 }
 
 function startOrStopFocus(): void {
@@ -204,7 +220,16 @@ export function TrayBridge() {
   useEffect(() => {
     if (!tauri) return
     void native('tray_shown', { shown: readTrayShown() })
-    const w = window as unknown as { __kfTray?: (arg: string | { open: string }) => void }
+    applyCaptureShortcut() // this device's quick-capture shortcut (the popup itself is its own window)
+    // kaisflow:// links (src-tauri capture.rs): the link waits in Rust until this signed-in shell can run it.
+    const w = window as unknown as { __kfTray?: (arg: string | { open: string }) => void; __kfDeepLink?: () => void }
+    const takeLink = () =>
+      void native<string | null>('deep_link_take').then((url) => {
+        const route = url ? deepLinkRoute(url) : null
+        if (route) navigate(route)
+      })
+    w.__kfDeepLink = takeLink
+    takeLink()
     w.__kfTray = (arg) => {
       if (typeof arg === 'object') return navigate(arg.open)
       if (arg === 'seen') useNeedsYou.setState({ on: false })
@@ -225,6 +250,7 @@ export function TrayBridge() {
     const id = window.setInterval(sweep, 30_000)
     return () => {
       delete w.__kfTray
+      delete w.__kfDeepLink
       window.removeEventListener('focus', seen)
       window.clearInterval(id)
     }
@@ -286,9 +312,15 @@ export function TrayBridge() {
   const dark = useSystemDark()
   const focusLabel = focusMenuLabel(focus)
   const pauseLabel = pauseMenuLabel(settings?.notify_paused_until, now)
+  // Focus D3: while a round runs the K becomes a small square in the block's colour, its tip the block and the bud.
+  const block = useFocusStore((s) => s.block)
+  const kept = useFocusStore((s) => s.kept)
+  const focusing = state.startsWith('focus')
+  const focusColor = focusing ? hexOf(block?.color ?? KIND_HUE.task.c, dark) : null
+  const focusTip = focusing && block ? `${block.title} · bud ${Math.min(kept + 1, block.rounds)} of ${block.rounds} · ${Math.max(1, Math.ceil(focus.secondsLeft / 60))} min left` : null
   useEffect(() => {
-    if (tauri) void native('tray_set', { state, dark, focusLabel, pauseLabel })
-  }, [tauri, state, dark, focusLabel, pauseLabel])
+    if (tauri) void native('tray_set', { state, dark, focusLabel, pauseLabel, focusColor, focusTip })
+  }, [tauri, state, dark, focusLabel, pauseLabel, focusColor, focusTip])
   if (!tauri && !android) return null
   return createElement(Fragment, null, createElement(ShutDownForNudge), createElement(EventsForReminders), settings?.birthday_on ? createElement(PeopleForBirthdays) : null, tauri ? createElement(MenuForTray) : null)
 }

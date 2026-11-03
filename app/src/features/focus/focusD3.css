@@ -1,0 +1,164 @@
+/* Focus D3 (design-export/Focus redesign.html §D3: the timer in the middle, flower (i), break option 1).
+   Sizes are the spec's (1440 desktop, 390 phone); the ones off the type scale say so. */
+.fd-wrap { container: fd / inline-size; position: relative; height: 100%; background: var(--paper-linen); } /* a full-bleed page with no shell top bar (AppLayout FULL_BLEED / NO_TOPBAR) */
+.fd { position: relative; display: grid; grid-template-columns: 230px minmax(0, 1fr) 320px; grid-template-rows: 56px minmax(0, 1fr); height: 100%; }
+.fd-top { grid-column: 1 / -1; display: flex; align-items: center; justify-content: space-between; padding: 0 var(--sp-8); border-bottom: 1px solid var(--line-solid); font-size: var(--fs-section); color: var(--ink-body); }
+.fd-crumb { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-topr { display: flex; align-items: center; gap: var(--sp-4); flex: none; }
+.fd-gear { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; background: none; color: var(--ink-muted); cursor: pointer; border-radius: var(--radius-pill); }
+.fd-gear svg { width: 20px; height: 20px; }
+.fd-meta { font-size: var(--fs-meta); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.fd-hours { border-right: 1px solid var(--line-card); padding: 10px 12px; min-height: 0; }
+.fd-next { border-left: 1px solid var(--line-card); padding: var(--sp-7) 26px; min-height: 0; overflow: auto; }
+.fd-centre { display: flex; flex-direction: column; align-items: center; padding: 36px var(--sp-8) 0; min-width: 0; min-height: 0; overflow: auto; }
+
+/* the timeline head and the top timeline (spec: 560 wide, 20px bars, 46px blooms) */
+.fd-tl { width: min(560px, 100%); flex: none; }
+.fd-tlhead { display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-3); margin-bottom: 6px; font-size: var(--fs-body-s); color: var(--ink-body); }
+.fd-tlname { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 6px; }
+.fd-tlkept { flex: none; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+
+/* the task line, the timer and the small flower beside it */
+.fd-task { display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 60px; max-width: 100%; position: relative; padding: 0 var(--sp-4); box-sizing: border-box; }
+.fd-task-t { font-family: var(--font-display); font-size: var(--fs-display-l); color: var(--ink-body); cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+.fd-star { color: var(--acc-terra); }
+.fd-row { display: flex; align-items: flex-end; justify-content: center; gap: var(--sp-7); margin: 26px 0 var(--sp-8); max-width: 100%; }
+.fd-bigwrap { text-align: center; }
+.fd-big { font-family: var(--font-display); font-size: 112px; /* ds-ok: D3's timer (spec d3Big 112px) */ line-height: 1; font-weight: 400; color: var(--ink-body); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fd-big--break { font-size: 74px; /* ds-ok: D3's break line, 0.66 × the timer */ color: var(--acc-sage-text); }
+.fd-big--end { font-size: 56px; /* ds-ok: D3's round end line, half the timer */ line-height: 1.1; white-space: normal; }
+.fd-big--sw { font-size: 66px; /* ds-ok: the stopwatch as it was */ }
+.fd-bigwrap .fd-meta { margin-top: var(--sp-2); }
+.fd-dim { transition: opacity 300ms var(--ease-out); }
+.fd-dim.is-paused { opacity: 0.55; }
+.app-shell.motion-on .fd-dim.is-paused { animation: fpRingBreathe 3.6s ease-in-out 300ms infinite; }
+.fd-flower { --fd-flower: 120px; position: relative; display: inline-flex; align-items: flex-end; justify-content: center; flex: none; height: var(--fd-flower); width: calc(var(--fd-flower) * 0.8); }
+.fd-flower-img { height: var(--fd-flower); filter: var(--shadow-drop-sm); transition: opacity 300ms var(--ease-out); }
+.fd-flower.is-idle .fd-flower-img, .fd-flower.is-break .fd-flower-img { height: calc(var(--fd-flower) * 0.8); }
+.fd-flower.is-paused .fd-flower-img { opacity: 0.55; filter: var(--shadow-drop-sm) saturate(0.6); }
+.fd-flower.is-break .fd-flower-img { opacity: 0.7; filter: var(--shadow-drop-sm) saturate(0.6); }
+.fd-flower .fp-round-bloom { inset: -20%; }
+/* break option 1: the flower closes to a bud and a sage glow breathes behind it (spec .breath, 10s) */
+.fd-breath { position: absolute; left: 50%; top: 45%; width: calc(var(--fd-flower) * 0.95); height: calc(var(--fd-flower) * 0.95); translate: -50% -50%; border-radius: 50%; border: 1.5px solid var(--acc-sage); background: var(--block-sage); }
+@keyframes fdBreath { 0%, 100% { transform: scale(0.82); opacity: 0.55; } 40% { transform: scale(1); opacity: 1; } }
+.app-shell.motion-on .fd-breath { animation: fdBreath 10s ease-in-out infinite; }
+
+/* idle: the task to pick, the length, the plan */
+.fd-idle { text-align: center; max-width: 100%; }
+.fd-pick { display: inline-flex; align-items: center; gap: 10px; margin-top: 6px; position: relative; max-width: 100%; }
+.fd-pick-t { font-family: var(--font-display); font-size: 32px; /* ds-ok: D3's idle task (spec d2Idle 32px) */ color: var(--ink-body); border-bottom: 1px dashed var(--line-dashed); cursor: pointer; overflow-wrap: anywhere; }
+.fd-chev { color: var(--ink-muted); font-size: var(--fs-lead); }
+.fd-chips { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: center; margin: var(--sp-4) 0 var(--sp-2); }
+.fd-chips--left { justify-content: flex-start; margin: 0; align-items: center; }
+.fd-link { border: 0; background: none; padding: 0; color: var(--acc-terra-ink); font: inherit; cursor: pointer; text-decoration: underline; text-underline-offset: 2px; }
+.fd-link--center { display: block; margin: var(--sp-3) auto 0; font-size: var(--fs-meta); }
+
+/* the buttons along the floor */
+.fd-btns { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center; width: min(530px, 100%); margin-top: auto; padding: var(--sp-6) 0 40px; border-top: 1px solid var(--line-card); }
+.fd-start { min-height: 52px; padding: 0 var(--sp-7); }
+
+/* Done for the day (as D's, on the new timeline) */
+.fd-done { width: min(560px, 100%); padding-top: 44px; text-align: center; }
+.fd-done-t { font-family: var(--font-display); font-size: 46px; /* ds-ok: D's done title (spec d2Done 46px) */ line-height: 1.1; margin-top: 6px; color: var(--ink-body); }
+.fd-tl--done { margin-top: var(--sp-7); width: 100%; text-align: left; }
+.fd-ledger { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--sp-2) 18px; margin-top: 26px; font-size: var(--fs-body); text-align: left; color: var(--ink-body); }
+.fd-num { font-variant-numeric: tabular-nums; }
+.fd-ledger b { font-weight: var(--fw-semibold); }
+.fd-done-btns { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-top: var(--sp-7); }
+.fd-done-note { margin-top: 10px; }
+
+/* the hour column: the block's segments, no flowers */
+.fd-hcol { position: relative; height: 100%; }
+.fd-hline { position: absolute; left: 0; right: 0; font-size: var(--fs-meta); color: var(--ink-faint); border-top: 1px dashed var(--line-dashed); padding: 2px 0 0 4px; }
+.fd-hblk { position: absolute; left: 46px; right: 10px; border-radius: var(--radius-block); padding: 6px 10px; font-size: var(--fs-body-s); overflow: hidden; box-sizing: border-box; }
+.fd-hblk b { font-weight: var(--fw-semibold); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fd-hblk-span { opacity: 0.85; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fd-hsegs { position: absolute; left: 10px; right: 14px; top: 52px; bottom: 10px; }
+.fd-hblk--focus { z-index: 1; }
+.fd-nowline { position: absolute; left: 40px; right: 4px; height: 0; border-top: 2px solid var(--acc-terra); z-index: 2; }
+.fd-nowline::before { content: ''; position: absolute; left: -5px; top: -6px; width: 10px; height: 10px; border-radius: 50%; background: var(--acc-terra); }
+
+/* Up next */
+.fd-next-h { font-size: var(--fs-section); font-weight: var(--fw-semibold); margin-bottom: 6px; color: var(--ink-body); }
+.fd-next-row { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line-card); font-size: var(--fs-body); }
+.fd-next-t { flex: 1; min-width: 0; text-align: left; border: 0; background: none; padding: 0; font: inherit; color: var(--ink-body); cursor: pointer; }
+.fd-next-block { margin-top: var(--sp-4); padding: var(--sp-3); border-radius: var(--radius-md); font-size: var(--fs-section); }
+
+/* the settings sheet: D's side sheet on a desktop */
+.fd-scrim { position: absolute; inset: 0; z-index: 100; background: var(--scrim); }
+.fd-sheet { position: absolute; right: var(--sp-4); top: var(--sp-4); bottom: var(--sp-4); width: min(440px, calc(100% - 32px)); overflow: auto; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); box-shadow: var(--shadow-popover); padding: 22px 26px; box-sizing: border-box; }
+.fd-sheet-h { display: flex; justify-content: space-between; align-items: center; font-size: var(--fs-body); }
+.fd-x { border: 0; background: none; color: var(--ink-muted); cursor: pointer; font-size: var(--fs-body); }
+.fd-settings { font-size: var(--fs-body); color: var(--ink-body); }
+.fd-slabel { font-size: var(--fs-caption); color: var(--ink-faint); margin: 14px 0 7px; }
+.fd-breaks { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); }
+.fd-srow { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); padding: 11px 0; border-top: 1px solid var(--line-card); }
+.fd-srow .fd-meta { margin-top: 2px; }
+.fd-stepper { display: flex; align-items: center; gap: var(--sp-3); }
+.fd-stepper button { width: 34px; height: 30px; border-radius: var(--radius-pill); border: 1px solid var(--line-control); background: none; color: var(--ink-body); cursor: pointer; }
+.fd-rhythm-wrap { padding: var(--sp-2) 0 var(--sp-3); }
+.fd-rhythm { display: flex; gap: 3px; height: 10px; margin: var(--sp-2) 0 4px; }
+.fd-rhythm span { border-radius: 3px; }
+
+/* the stopwatch, as it was */
+.fd-stopwatch { display: flex; flex-direction: column; align-items: center; width: 100%; flex: 1; padding-top: var(--sp-8); }
+.fd-sw-time { display: flex; align-items: baseline; gap: var(--sp-2); }
+.fd-sw-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--acc-terra); }
+.fd-sw-panel { width: min(420px, 100%); margin-top: var(--sp-6); background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); padding: 12px 16px; box-sizing: border-box; }
+.fd-sw-row { display: flex; align-items: center; gap: 10px; margin: var(--sp-2) 0; flex-wrap: wrap; }
+.fd-sw-chip { background: color-mix(in srgb, var(--acc-moss) 18%, transparent); color: var(--acc-sage-text); font-size: var(--fs-meta); padding: 5px 10px; border-radius: var(--radius-pill); }
+.fd-sw-dest { font-size: var(--fs-caption); color: var(--ink-body); }
+.fd-sw-hours { margin-left: auto; }
+.fd-sw-hours b { color: var(--ink-body); font-weight: var(--fw-semibold); }
+.fd-sw-note { width: 100%; box-sizing: border-box; background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: var(--radius-md); padding: 6px 10px; font-size: max(var(--field-min), var(--fs-caption)); color: var(--ink-body); font-family: inherit; outline: none; }
+.fd-stopwatch .fd-task { margin-top: var(--sp-6); }
+.fd-stopwatch .fd-btns { margin-top: var(--sp-8); border-top: 0; }
+
+/* The spec is 1440 at 100%; the desktop's default interface size (125%) leaves the page ~910px. The columns
+   narrow first, then the hour column steps aside, before the timer is squeezed. */
+@container fd (max-width: 1100px) {
+  .fd { grid-template-columns: 190px minmax(0, 1fr) 250px; }
+  .fd-next { padding: var(--sp-6) var(--sp-5); }
+  .fd-big { font-size: 88px; /* ds-ok: D3's timer, a narrower desktop */ }
+  .fd-big--break { font-size: 58px; /* ds-ok: 0.66 × the narrower timer */ }
+  .fd-big--end { font-size: 44px; /* ds-ok: half the narrower timer */ }
+  .fd-flower { --fd-flower: 100px; }
+  .fd-task { margin-top: 44px; }
+  .fd-centre { padding: var(--sp-7) var(--sp-5) 0; }
+}
+@container fd (max-width: 820px) {
+  .fd { grid-template-columns: 0 minmax(0, 1fr) 230px; }
+  .fd-hours { display: none; }
+}
+
+/* ── phone: D's running screen (the flower in the ring), break option 1, done with 24px margins ── */
+.fd-phone { display: flex; flex-direction: column; background: var(--paper-linen); margin: -20px -16px 0; padding: 0 0 var(--sp-6); min-height: calc(var(--kf-vh) - var(--sat) - 42px - var(--tabbar-h) - var(--tabbar-inset) - 24px); }
+.fd-phead { display: flex; justify-content: space-between; align-items: center; padding: var(--sp-1) var(--sp-5) 0; }
+.fd-ptitle { font-family: var(--font-display); font-size: var(--fs-display-l); color: var(--ink-body); }
+.fd-phone .fd-tl { width: auto; margin: 14px var(--sp-6) 0; --ftl-h: 16px; --ftl-bloom: 36px; }
+.fd-phone .fd-tl .ftl { --ftl-h: 16px; --ftl-bloom: 36px; }
+.fd-phone .fd-idle { padding: 0 var(--sp-4); margin-top: var(--sp-2); }
+.fd-phone .fd-pick-t { font-size: var(--fs-display-m); }
+.fd-plant { position: relative; width: 210px; height: 210px; margin: var(--sp-3) auto 0; display: flex; align-items: center; justify-content: center; flex: none; }
+.fd-plant svg { position: absolute; inset: 0; transform: rotate(-90deg); }
+.fd-plant::before { content: ''; position: absolute; inset: 12%; border-radius: 50%; background: radial-gradient(circle, var(--paper-parchment) 0%, transparent 70%); }
+.fd-plant.is-break::before { display: none; }
+.fd-plant .fd-flower { align-items: center; }
+.fd-pbig { text-align: center; margin-top: 10px; padding: 0 var(--sp-4); }
+.fd-phone .fd-big { font-size: 44px; /* ds-ok: D's phone timer (spec d2Phone 44px) */ }
+.fd-phone .fd-big--break { font-size: 40px; /* ds-ok: D's phone break line */ }
+.fd-phone .fd-big--end { font-size: 30px; /* ds-ok: D's phone round end */ }
+.fd-task--phone { margin-top: 10px; }
+.fd-task--phone .fd-task-t { font-family: var(--font-ui); font-size: var(--fs-body-l); }
+.fd-btns--phone { border-top: 0; width: auto; padding: 14px var(--sp-4) 0; margin-top: 0; }
+.fd-btns--phone > button { min-height: 48px; }
+.fd-pnext { display: flex; justify-content: space-between; gap: var(--sp-3); margin: var(--sp-5) var(--sp-5) 0; padding: 10px 14px; border-radius: var(--radius-input); background: var(--paper-parchment); border: 1px solid var(--line-card); font-size: var(--fs-body-s); }
+.fd-pnext > span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fd-pnext .fd-meta { flex: none; white-space: nowrap; }
+.fd-done--phone { width: auto; padding: var(--sp-6) var(--sp-6) 0; }
+.fd-done--phone .fd-done-t { font-size: 28px; /* ds-ok: D's phone done title */ }
+.fd-done--phone .fd-tl { margin: 22px 0 0; }
+.fd-done--phone .fd-done-btns { flex-direction: column; }
+.fd-phone .fd-stopwatch { padding: var(--sp-6) var(--sp-4) 0; }
+.fd-phone .fd-breaks { grid-template-columns: 1fr; gap: 0; }

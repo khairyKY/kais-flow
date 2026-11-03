@@ -2,8 +2,10 @@
 // footer: the zip's size as int64 LE, a flags byte, "RMSKIN\0" -- what Rainmeter's own Skin Packager writes).
 //   node build-rmskin.mjs <out.rmskin>
 // MergeSkins=1: the installer adds these files to Kai's Glass folder instead of backing it up and replacing it.
-// It ships only Glass\KaisFlow\ and Glass\@Resources\KaisFlow\, so GlassVars.inc, his skins and his saved
-// Widget link (link.txt, never packed) are left alone.
+// It ships only Glass\KaisFlow\ and Glass\@Resources\KaisFlow\, so GlassVars.inc and his other skins are left alone.
+// Upgrading 1.0 -> 1.1 in place: these files overwrite the 1.0 copies. His settings are never in the package:
+//   the Widget link and the Theme choice live in %APPDATA%\Rainmeter\ (KaisFlow-link.txt, KaisFlow-theme.txt);
+//   1.0's link (@Resources\KaisFlow\link.txt) is never packed either, and 1.1 copies it across on first run.
 import fs from 'node:fs'
 import path from 'node:path'
 import zlib from 'node:zlib'
@@ -12,7 +14,7 @@ import { fileURLToPath } from 'node:url'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, '..')
 const out = path.resolve(process.argv[2] ?? path.join(root, 'KaisFlow.rmskin'))
-const VERSION = '1.0'
+const VERSION = '1.1'
 
 const RMSKIN = [
   '[rmskin]',
@@ -29,7 +31,7 @@ const RMSKIN = [
 
 const walk = (d) => fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))
   .flatMap((e) => (e.isDirectory() ? [path.join(d, e.name) + path.sep, ...walk(path.join(d, e.name))] : [path.join(d, e.name)]))
-const SKIP = /(^|[\\/])(link\.txt|\.gitkeep)$/
+const SKIP = /(^|[\\/])(link\.txt|theme\.txt|KaisFlow-link\.txt|KaisFlow-theme\.txt|\.gitkeep)$/
 const entries = [{ name: 'RMSKIN.ini', data: Buffer.from(RMSKIN, 'ascii') }]
 for (const top of ['KaisFlow', '@Resources' + path.sep + 'KaisFlow']) {
   const base = path.join(root, 'Glass', top)

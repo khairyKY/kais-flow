@@ -8,9 +8,12 @@
 ; sample = the sample feed in @Resources\KaisFlow, to try the widgets before the feed is live.
 ; Anything else is used as it is (an https:// link, or file:///C:/path/to/feed.json).
 FeedURL=
-; what "Open" and the + button open
+; A click opens the desktop app through its kaisflow:// link when Windows has that link registered (the app is
+; installed), else the website at AppURL. The Registry measure below is the check.
+AppScheme=kaisflow
 AppURL=https://kais-flow.kaidagoat.workers.dev
-; Night Garden colours from NightFrom:00 to NightTo:00 on this PC's clock
+; The Day / Night choice is in the right-click menu (Theme) and is remembered in Rainmeter's settings folder.
+; Auto = Night Garden colours from NightFrom:00 to NightTo:00 on this PC's clock.
 NightFrom=19
 NightTo=6
 Serif=Source Serif 4
@@ -64,6 +67,24 @@ Measure=Script
 ScriptFile=#@#KaisFlow\widget.lua
 UpdateDivider=30
 
+; is the desktop app installed? Its installer registers the kaisflow:// link under HKEY_CLASSES_ROOT\kaisflow (the
+; merged view of HKCU\Software\Classes and HKLM\Software\Classes). The key has subkeys (shell\open\command...)
+; when it's there and the list is empty when it isn't. widget.lua asks (!UpdateMeasure) at each click.
+[MeasureApp]
+Measure=Registry
+RegHKey=HKEY_CLASSES_ROOT
+RegKey=#AppScheme#
+OutputType=SubKeyList
+UpdateDivider=-1
+
+; the same key's default value ("URL:Kai's Flow" or so): a second way to see it, for a registration without subkeys
+[MeasureAppValue]
+Measure=Registry
+RegHKey=HKEY_CLASSES_ROOT
+RegKey=#AppScheme#
+OutputType=Value
+UpdateDivider=-1
+
 ; "Add my link": paste the Widget link from Settings > App & updates > Windows desktop and press Enter
 [MeasureInput]
 Measure=Plugin
@@ -102,7 +123,7 @@ H=30
 Shape=Rectangle 0,0,340,30,10 | StrokeWidth 0 | Fill Color #KfBone#,1
 MouseOverAction=[!CommandMeasure MeasureKF "Over('#CURRENTSECTION#')"]
 MouseLeaveAction=[!CommandMeasure MeasureKF "Out('#CURRENTSECTION#')"]
-LeftMouseUpAction=["#AppURL#"]
+LeftMouseUpAction=[!CommandMeasure MeasureKF "Open('#CURRENTSECTION#')"]
 MouseActionCursor=1
 DynamicVariables=1
 Group=Content

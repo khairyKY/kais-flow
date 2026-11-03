@@ -37,6 +37,13 @@
         <uap:DefaultTile Square71x71Logo="Assets\Square71x71Logo.png" />
       </uap:VisualElements>
       <Extensions>
+        <!-- kaisflow:// links (src/capture.rs): the desktop widgets and other tools open the app with them. A
+             packaged app gets the link as its argument, like the .exe install, so one code path reads both. -->
+        <uap:Extension Category="windows.protocol">
+          <uap:Protocol Name="kaisflow">
+            <uap:DisplayName>Kai's Flow</uap:DisplayName>
+          </uap:Protocol>
+        </uap:Extension>
         <!-- Settings → Start with Windows (src/tray.rs store_autostart). Off until the person turns it
              on; it opens quietly to the tray, like the .exe install's Run entry. -->
         <desktop:Extension Category="windows.startupTask" Executable="kais-flow.exe" EntryPoint="Windows.FullTrustApplication" uap10:Parameters="--minimized">
