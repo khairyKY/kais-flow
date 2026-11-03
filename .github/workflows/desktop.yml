@@ -267,7 +267,9 @@ jobs:
   # codemagic.yaml builds the same script on Codemagic's free Mac minutes and this job never starts.
   macos:
     name: Build Mac app
-    if: (inputs.tag != '' || github.event_name == 'workflow_dispatch') && vars.MAC_BUILD_ON != 'codemagic'
+    # Kai 2026-11-03: not on every release (it's the slowest job). A release builds the Mac app only when the repo
+    # variable MAC_ON_RELEASE is 'true' (gh variable set MAC_ON_RELEASE --body true); a manual run always builds it.
+    if: (github.event_name == 'workflow_dispatch' || (inputs.tag != '' && vars.MAC_ON_RELEASE == 'true')) && vars.MAC_BUILD_ON != 'codemagic'
     runs-on: macos-latest
     permissions:
       contents: write # only used to attach the .dmg to a published Release
