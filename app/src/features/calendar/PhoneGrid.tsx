@@ -17,6 +17,7 @@ import { layoutOverlaps } from './overlapLayout'
 import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, glideMs, glidePanes, glidePeek, glideTarget, minToPx, pxToMin, rangeText, SNAP_MIN, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { slotAt } from './slots'
 import { repeatCheckName } from './blockMenuSpec'
+import { gcalEditable } from './gcal'
 import { RepeatGlyph } from './checkGlyphs'
 import '../tasks/TaskRow.css' // the long-press bloom (.kf-press-bloom)
 import { bandChipLabel, isMultiDaySpan, spanDays } from './daySpans'
@@ -304,7 +305,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       return
     }
     const ev = blockEl && events.find((x) => x.id === blockEl.dataset.id)
-    if (!ev || ev.source === 'gcal') return // a Google event (B1) never lifts — a tap still opens it
+    if (!ev || (ev.source === 'gcal' && !gcalEditable(ev))) return // a read-only Google event (B1) never lifts — a tap still opens it
     s.kind = 'press'
     // slot-outline: a hold on a task row inside a slot lifts THAT task; the slot's header or empty
     // area still lifts the slot.

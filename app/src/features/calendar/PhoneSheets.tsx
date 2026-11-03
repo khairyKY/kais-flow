@@ -28,7 +28,8 @@ import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, linkTaskWithUndo, scheduleTask, setEventRepeat, type BlockRef } from './api'
 import { EVENT_REMIND, aiPrompts, blockMenuSpec, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock } from './scoped'
-import { askChat, copyBlockLink } from './blockActions'
+import { askChat, copyBlockLink, joinMeeting, openInGoogle } from './blockActions'
+import { gcalEditable, gcalRepeats } from './gcal'
 import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { SwatchTray } from './formFields'
@@ -99,7 +100,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', join: 'link', gopen: 'calendar',
 }
 
 /** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
@@ -393,8 +394,12 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const menu = mode === 'menu'
   const spec = blockMenuSpec(event, { task, projectName: project?.name, mode })
   const del = spec.at(-1)!
-  // A Google event (B1): read-only — its rows only say when and from which calendar; no footer.
+  // A Google event (B1): its rows say when and from which calendar, Join, Open in Google Calendar, Duplicate as my own event.
+  // One that's ours to change (gcal-events: `mine`) also renames, moves, resizes and deletes — in Google (the footer's Delete).
   const synced = isSynced(event)
+  const mine = gcalEditable(event)
+  const readOnly = synced && !mine
+  const repeats = !!event.seriesId || gcalRepeats(event)
   const kind = synced ? 'Google event' : event.task_id ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
   const meta = `${kind} · ${event.all_day ? 'All day' : durationLabel(len)}`
   const run: Partial<Record<BlockMenuKey, (el: HTMLElement) => void>> = {
@@ -413,6 +418,8 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     duplicate: () => leave(() => void duplicateBlock(event, task)),
     ai: () => setPicker('ai'),
     copylink: () => copyBlockLink(event),
+    join: () => joinMeeting(event),
+    gopen: () => openInGoogle(event),
     details: () => onMode?.('details'),
     unschedule: () => leave(() => deleteEventWithUndo(event, 'Unscheduled')),
     link: (el) => {
@@ -432,7 +439,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           after.current?.()
         }}
         handleGap={8}
-        footer={synced ? undefined : (close) => {
+        footer={readOnly ? undefined : (close) => {
           closeRef.current = close
           return (
             <Button variant="ghost" className="pc-bs-delete" icon={<Icon name="delete" size={20} />} onClick={remove}>
@@ -450,7 +457,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                   <input
                     className="pc-qc-title pc-bs-title-in"
                     aria-label="Title"
-                    readOnly={synced}
+                    readOnly={readOnly}
                     enterKeyHint="done"
                     placeholder="Add title"
                     value={title}
@@ -486,7 +493,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                 />
               </div>}
               {/* Kai 2026-10-21: the length in one tap, from the start — as the Time sheet's chips do. */}
-              {!menu && !synced && !event.all_day && (
+              {!menu && !readOnly && !event.all_day && (
                 <LengthChips
                   value={len}
                   style={{ minHeight: 0, padding: '4px 0 8px' }}
@@ -494,7 +501,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                     if (m === len) return
                     const to = { ...span, end: span.start + m }
                     // A repeat (or a repeating task's round) asks which occurrences (cal-clicks).
-                    if (event.seriesId) void retimeBlock(event, span, to).then((ref) => ref && onRebind?.(ref))
+                    if (repeats) void retimeBlock(event, span, to).then((ref) => ref && onRebind?.(ref))
                     else onMove(event, span, to, 'bottom')
                     saved()
                   }}
@@ -502,7 +509,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
               )}
               <div className="pc-bs-rows">
                 <style>{ACTION_ROW_CSS}</style>
-                {(synced ? spec : spec.slice(0, -1)).map((e) => (
+                {(readOnly ? spec : spec.slice(0, -1)).map((e) => (
                   <Fragment key={e.key}>
                     {e.caption && (
                       <div className="pc-bs-caption">
@@ -510,7 +517,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                         <EmojiText text={e.caption.text} />
                       </div>
                     )}
-                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => (!synced || e.key === 'details' || e.key === 'ai' || e.key === 'copylink') && run[e.key]?.(el)} />
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => (!readOnly || ['details', 'ai', 'copylink', 'join', 'gopen', 'duplicate'].includes(e.key)) && run[e.key]?.(el)} />
                   </Fragment>
                 ))}
               </div>
@@ -528,7 +535,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           value={event.all_day ? event.starts_at.slice(0, 10) : span.day}
           quick
           onPick={(day) => {
-            if (event.seriesId) {
+            if (repeats) {
               // A repeat asks which occurrences move (cal-clicks); the sheet leaves first.
               return leave(() => void moveToDay(event, day))
             }
@@ -551,7 +558,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
             const to = { day: span.day, start, end: start + (d ?? len) }
             if (to.start === span.start && to.end === span.end) return
             // A repeat asks which occurrences (cal-clicks); a one-off moves like a drag.
-            if (event.seriesId) void retimeBlock(event, span, to).then((ref) => ref && onRebind?.(ref))
+            if (repeats) void retimeBlock(event, span, to).then((ref) => ref && onRebind?.(ref))
             else onMove(event, span, to, d ? 'bottom' : 'move')
             saved()
           }}

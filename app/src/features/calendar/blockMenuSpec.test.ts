@@ -43,12 +43,12 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
     expect(spec.at(-1)).toMatchObject({ key: 'delete', hint: '⌫' }) // p7e A4: Backspace deletes it
   })
 
-  it('Duplicate (Kai 2026-10-17, menu B): an event and a task block — never a Time block (a slot repeats), a Google event, or a block whose task is not loaded', () => {
+  it('Duplicate (Kai 2026-10-17, menu B): an event and a task block — never a Time block (a slot repeats) or a block whose task is not loaded; a Google event duplicates as an event of our own', () => {
     const menu = { mode: 'menu' as const, now: NOW }
     expect(keys(block({ type: 'event' }), menu)).toEqual(['details', 'duplicate', 'ai', 'copylink', 'delete'])
     expect(keys(block({ type: 'event', recurrence_rule: 'FREQ=WEEKLY' }), menu)).toContain('duplicate')
     expect(keys(block(), menu)).not.toContain('duplicate')
-    expect(keys(block({ type: 'event', source: 'gcal' }), menu)).not.toContain('duplicate')
+    expect(keys(block({ type: 'event', source: 'gcal' }), menu)).toContain('duplicate')
     expect(keys(block({ task_id: 't1', type: 'task' }), menu)).not.toContain('duplicate')
     expect(keys(block({ type: 'event' }), { now: NOW })).not.toContain('duplicate') // the details hold none of menu B's rows
   })
@@ -59,8 +59,8 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
     expect(keys(block(), menu)).toEqual(['details', 'ai', 'copylink', 'delete'])
     // A task block: Complete · Open task (the old Edit Task) · Replan… when missed · Duplicate · AI · link · Unschedule · Delete.
     expect(keys(block({ task_id: 't1', type: 'task' }), { ...menu, task: { title: 'x', status: 'todo' }, missed: true })).toEqual(['complete', 'open', 'replan', 'duplicate', 'ai', 'copylink', 'unschedule', 'delete'])
-    // A Google event: its details, the chat and its link — nothing to change or delete.
-    expect(keys(block({ source: 'gcal', type: 'event' }), menu)).toEqual(['details', 'ai', 'copylink'])
+    // A read-only Google event: its details, Google Calendar, a copy of our own, the chat and its link — nothing to change or delete.
+    expect(keys(block({ source: 'gcal', type: 'event' }), menu)).toEqual(['details', 'gopen', 'duplicate', 'ai', 'copylink'])
     // A repeat's Delete is one row: the scope question asks This / Following / All.
     expect(blockMenuSpec(block({ type: 'event', recurrence_rule: 'FREQ=WEEKLY' }), menu).at(-1)).toMatchObject({ key: 'delete', sub: false })
     expect(blockMenuSpec(block({ type: 'event', recurrence_rule: 'FREQ=WEEKLY' }), menu).at(-1)?.hint).toBeUndefined()
@@ -127,15 +127,34 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 describe('a Google event (B1): read-only', () => {
   beforeEach(() => setAppZone('Africa/Cairo'))
 
-  it('says when and from which calendar — nothing opens, nothing to delete', () => {
+  it('says when and from which calendar, Open in Google Calendar, Duplicate as my event — nothing opens, nothing to delete', () => {
     const e = block({ source: 'gcal', type: 'event', title: 'Fajr', external_ref: { source: 'gcal', id: 'p/e1', calendar: 'Prayer times', calendar_id: 'p' } })
     const spec = blockMenuSpec(e, { now: NOW })
     expect(isSynced(e)).toBe(true)
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google', 'gopen', 'duplicate'])
     expect(spec.every((r) => !r.sub && !r.destructive)).toBe(true)
+    expect(spec.at(-1)).toMatchObject({ label: 'Duplicate as my event' })
     expect(spec[1]).toMatchObject({ label: '09:00 – 11:00', hint: '2h' })
     expect(spec[2]).toMatchObject({ label: 'From Google · Prayer times', divider: true })
     expect(blockMenuSpec(block({ source: 'gcal', all_day: true }))[1]).toMatchObject({ label: 'All day' })
     expect(isSynced(block())).toBe(false)
+  })
+
+  it('gcal-events: Join when Google gave a link; one that is ours to change edits its date and time and deletes', () => {
+    const ref = { source: 'gcal', id: 'p/e1', calendar: 'Kai', calendar_id: 'p' }
+    const mine = block({ source: 'gcal', type: 'event', external_ref: { ...ref, edit: true, url: 'https://meet.google.com/abc-defg-hij' } })
+    const spec = blockMenuSpec(mine, { now: NOW })
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google', 'join', 'gopen', 'delete'])
+    expect(spec[0]).toMatchObject({ sub: true })
+    expect(spec[1]).toMatchObject({ sub: true })
+    expect(spec.at(-1)).toMatchObject({ key: 'delete', destructive: true })
+    expect(keys(mine, { mode: 'menu', now: NOW })).toEqual(['details', 'join', 'gopen', 'duplicate', 'ai', 'copylink', 'delete'])
+    // A repeating one's Delete is the scope question: no ⌫ hint.
+    const weekly = block({ source: 'gcal', type: 'event', external_ref: { ...ref, edit: true, master: 'series' } })
+    expect(blockMenuSpec(weekly, { now: NOW }).at(-1)?.hint).toBeUndefined()
+    // Not ours: no Join without a link, no Delete, nothing that opens.
+    const theirs = block({ source: 'gcal', type: 'event', external_ref: ref })
+    expect(keys(theirs, { now: NOW })).not.toContain('join')
+    expect(keys(theirs, { now: NOW })).not.toContain('delete')
   })
 })

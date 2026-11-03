@@ -51,6 +51,7 @@ import { addDays, durationLabel } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
 import { duplicateBlockWithUndo } from './duplicate'
 import { BLOCK_MENU_WIDTH, besideBlock, isSynced, type BlockMenuMode } from './blockMenuSpec'
+import { gcalEditable } from './gcal'
 import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
@@ -647,7 +648,7 @@ function DesktopCalendar() {
         // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
         const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
         return {
-          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
+          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e) && !gcalEditable(e), parent: parentTitleOf(e.task_id),
           goal: !!goalTaskId && e.task_id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === todayKey,
           ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held), over: slotOver(e, held) } : null),
         }

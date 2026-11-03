@@ -20,6 +20,7 @@ import { intoSlot, occurrenceOn, OUT_OF_SLOT, slotTasks, upcomingSlots } from '.
 import { spanMinutes, taskOnBlock, withLength } from '../../../../supabase/functions/_shared/blockLength.ts'
 import { planScope, type Scope, type SeriesChange } from './scope'
 import { noteLocalWrite } from './blockMotion'
+import { gcalApply, gcalDelete, gcalEditable, gcalRepeats, gcalRestore, gcalUndo, gcalWrite, type GcalChange } from './gcal'
 
 const fetchEvents = () =>
   fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
@@ -31,8 +32,29 @@ export function useCalendarRows() {
   return useQuery({ queryKey: ['calendar_events'], queryFn: fetchEvents, select: live })
 }
 
+/** One expansion per (stored rows, window, zone), shared by every reader that asks for it: a dozen screens and bridges
+ * read the same window, and each used to expand and sort every stored row (a Google calendar adds thousands) on every
+ * landing. Keyed by the rows array itself, so a refetch that changed nothing (TanStack keeps the old array) costs none. */
+const expansions = new WeakMap<CalendarEvent[], Map<string, CalendarEvent[]>>()
+
+/** `ranged`: only what touches [from, to) — a grid never needs the one-offs of other months, and each one it is handed
+ * is work for the overlap layout, the conflict badges and FullCalendar (gcal-events: a sync landing a hundred rows far
+ * from the screen cost a full redraw). Unranged readers keep every one-off, as before. */
+export function expanded(events: CalendarEvent[], from: number, to: number, zone: string, ranged: boolean): CalendarEvent[] {
+  let byKey = expansions.get(events)
+  if (!byKey) expansions.set(events, (byKey = new Map()))
+  const key = `${from}|${to}|${zone}|${ranged}`
+  let out = byKey.get(key)
+  if (!out) {
+    out = expandEvents(live(events), new Date(from), new Date(to), zone)
+    if (ranged) out = out.filter((e) => Date.parse(e.starts_at) < to && (Date.parse(e.ends_at) > from || Date.parse(e.starts_at) >= from))
+    byKey.set(key, out)
+  }
+  return out
+}
+
 /** What the calendar shows: one-off rows as stored, each repeating series as its occurrences
- * (features/calendar/series) — over `range` (a grid's visible days), else eventWindow(), the year
+ * (features/calendar/series) — over `range` (a grid's visible days: only what touches them), else eventWindow(), the year
  * around today every other reader (Today, Plan, the tray, the widgets, Weekly Review) looks at.
  * An occurrence carries `seriesId`; the writes below resolve it to its series row. */
 export function useCalendarEvents(range?: { start: Date; end: Date }) {
@@ -40,14 +62,16 @@ export function useCalendarEvents(range?: { start: Date; end: Date }) {
   const w = range ? { from: range.start, to: range.end } : eventWindow()
   const from = w.from.getTime()
   const to = w.to.getTime()
-  const select = useCallback((events: CalendarEvent[]) => expandEvents(live(events), new Date(from), new Date(to), zone), [from, to, zone])
+  const ranged = !!range
+  const select = useCallback((events: CalendarEvent[]) => expanded(events, from, to, zone, ranged), [from, to, zone, ranged])
   return useQuery({ queryKey: ['calendar_events'], queryFn: fetchEvents, select })
 }
 
-/** Every calendar_events write in the app. A Google event (source 'gcal') is read-only: google-sync
- * owns it, so nothing here can move, edit or trash one (the grid and the menus don't offer it either). */
+/** Every calendar_events write in the app. A Google event (source 'gcal') is google-sync's: one on a calendar we
+ * own goes to Google (./gcal — Google says yes, then the calendar is re-read), any other is read-only and nothing
+ * here can move, edit or trash it (the grid and the menus don't offer it either). */
 function writeEvent(row: CalendarEvent, op?: 'upsert' | 'delete'): void {
-  if (isSynced(row)) return
+  if (isSynced(row)) return gcalWrite(row, op)
   noteLocalWrite() // CAL10: what lands next is the person's own
   writeRow('calendar_events', row, op)
 }
@@ -372,6 +396,7 @@ export function moveOrResizeEvent(event: CalendarEvent, startsAt: string, endsAt
 /** Undo half of deleteEvent: the block comes back and re-links its task's schedule. An occurrence:
  * its series stops skipping it. */
 export function restoreEvent(event: CalendarEvent): void {
+  if (isSynced(event)) return gcalRestore(event) // a Google event: confirmed again in Google
   if (event.seriesId) {
     const row = seriesOf(event)
     if (!row) return
@@ -555,6 +580,10 @@ export function linkTaskWithUndo(event: CalendarEvent, task: Task): void {
  * skips it ("This event"). A Time slot lets go of its tasks (unscheduled); the returned Undo takes
  * them back (restoreEvent brings only the block). */
 export function deleteEvent(event: CalendarEvent): () => void {
+  if (isSynced(event)) {
+    if (gcalEditable(event)) void gcalDelete(event)
+    return () => {}
+  }
   const undoTasks = releaseSlot(event)
   if (event.seriesId) {
     const row = seriesOf(event)
@@ -582,9 +611,9 @@ export function deleteEventWithUndo(event: CalendarEvent, verb: 'Unscheduled' | 
 
 /** Multi-select (Kai 2026-10-22, Google / Notion Calendar): the picked blocks off the calendar at once — a
  * task's block is unscheduled (the task stays), an event goes to Trash — with one Undo. A Google event is
- * never touched. */
+ * deleted in Google when it's ours to change, else never touched. */
 export function deleteEventsWithUndo(events: readonly CalendarEvent[]): void {
-  const own = events.filter((e) => !isSynced(e))
+  const own = events.filter((e) => !isSynced(e) || gcalEditable(e))
   if (!own.length) return
   const undos = own.map((e) => {
     const prior = { ...e }
@@ -599,7 +628,7 @@ export function deleteEventsWithUndo(events: readonly CalendarEvent[]): void {
 
 /** Multi-select: the picked blocks moved by the same amount as the one dragged, one Undo. */
 export function moveEventsByWithUndo(events: readonly CalendarEvent[], deltaMs: number): void {
-  const own = events.filter((e) => !isSynced(e) && !e.all_day)
+  const own = events.filter((e) => (!isSynced(e) || gcalEditable(e)) && !e.all_day)
   if (!own.length || !deltaMs) return
   const at = (iso: string) => new Date(Date.parse(iso) + deltaMs).toISOString()
   const undos = own.map((e) => moveOrResizeEvent(e, at(e.starts_at), at(e.ends_at)))
@@ -619,15 +648,30 @@ export function deleteSeriesWithUndo(event: CalendarEvent): void {
   })
 }
 
-/** True for a block that is an occurrence of a repeating event of ours — the ones every change asks about (cal-clicks).
- * A Google event never: google-sync owns it. */
-export const isSeriesBlock = (e: Pick<CalendarEvent, 'seriesId' | 'recurrence_rule' | 'source'>): boolean => !isSynced(e) && !!(e.seriesId || e.recurrence_rule)
+/** True for a block that is an occurrence of a repeating event — the ones every change asks about (cal-clicks). A Google
+ * event only when it repeats and is ours to change (gcal-events: the same three answers, planned by google-sync);
+ * a read-only one never. */
+export const isSeriesBlock = (e: Pick<CalendarEvent, 'seriesId' | 'recurrence_rule' | 'source' | 'external_ref'>): boolean => (!isSynced(e) && !!(e.seriesId || e.recurrence_rule)) || gcalRepeats(e)
+
+/** A series change on a Google occurrence, as the person answered: the same questions, a Google call at the end. */
+function applyGcalSeries(event: CalendarEvent, scope: Scope, change: SeriesChange, message: string): null {
+  const c: GcalChange | null =
+    change.kind === 'delete' ? { delete: true } : change.kind === 'time' ? { starts_at: change.starts_at, ends_at: change.ends_at } : change.kind === 'patch' && change.patch.title?.trim() ? { title: change.patch.title } : null
+  if (!c || !gcalEditable(event)) return null
+  const done = gcalApply(event, scope, c)
+  toastUndo(message, async () => {
+    const undo = await done
+    if (undo) await gcalUndo(undo)
+  })
+  return null
+}
 
 /** cal-clicks: a change to an occurrence of a repeating event, as the person answered the scope question —
  * ./scope plans it (this = the exception, following = the split, all = the series row), it goes through the outbox,
  * a Time block's tasks follow the occurrences the change leaves (reseat), and ONE Undo puts every row back.
  * Returns where the block stands now (a sheet kept open over it follows it). */
 export function applySeriesChange(event: CalendarEvent, scope: Scope, change: SeriesChange, message: string): BlockRef | null {
+  if (isSynced(event)) return applyGcalSeries(event, scope, change, message)
   const row = event.seriesId ? seriesOf(event) : event
   if (!row || isSynced(row)) return null
   const detached = cachedRows().filter((r) => r.series_id === row.id && !r.deleted_at)

@@ -1860,7 +1860,7 @@ function GoogleProvider({ google }: { google?: IntegrationStatus }) {
     <ProviderRow
       icon={<GoogleGlyph dim={!google} />}
       name="Google Calendar"
-      desc="Your Google calendars on ours, read-only — prayer times, work, holidays. Your own blocks show in your main Google calendar as busy."
+      desc="Your Google calendars on ours — prayer times, work, holidays. Events on calendars you own change here too (it goes to Google); the rest are read-only. Your own blocks show in your main Google calendar as busy."
       status={
         google ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
@@ -1920,7 +1920,7 @@ function GoogleCalendars({ google, onReconnect }: { google: IntegrationStatus; o
           <Toggle on={google.mirror !== false} label="Show my plan in Google as busy" onToggle={() => { setErr(null); setGoogleMirror(google.mirror === false).catch((e: Error) => setErr(e.message)) }} />
         </Row>
       ) : (
-        <Row label="Allow Kai’s Flow to show your blocks in Google" help="Reconnect once and allow it. Your calendars keep syncing until then">
+        <Row label="Allow Kai’s Flow to show your blocks in Google" help="Reconnect once and allow it — it also lets you edit your own Google events here. Your calendars keep syncing until then">
           <Button type="button" variant="secondary" onClick={onReconnect}>Reconnect</Button>
         </Row>
       )}

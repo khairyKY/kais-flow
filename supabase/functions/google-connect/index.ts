@@ -27,7 +27,7 @@
 import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { requireUser } from '../_shared/auth.ts'
 import { corsHeadersFor, isAllowedOrigin, jsonResponse } from '../_shared/cors.ts'
-import { authUrl, gGet, googleToken, GoogleError, GOOGLE_SCOPE, GOOGLE_WRITE_SCOPE, hasScope, listMirrored, planMirror, readCalendars, readChosen, readState, returnTo, signState, writeMirror, type GCalendarListEntry, type GoogleData } from '../_shared/google.ts'
+import { authUrl, CALENDAR_LIST_FIELDS, gGet, googleToken, GoogleError, GOOGLE_SCOPE, GOOGLE_WRITE_SCOPE, hasScope, listMirrored, planMirror, readCalendars, readChosen, readState, returnTo, signState, writeMirror, type GCalendarListEntry, type GoogleData } from '../_shared/google.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -48,7 +48,7 @@ async function readRow(db: SupabaseClient, userId: string): Promise<Row | null> 
 
 /** The account's calendars, read with a fresh access token. */
 async function listCalendars(accessToken: string) {
-  const res = await gGet<{ items?: GCalendarListEntry[] }>('/users/me/calendarList?maxResults=250&fields=items(id,summary,summaryOverride,backgroundColor,primary,selected,deleted)', accessToken)
+  const res = await gGet<{ items?: GCalendarListEntry[] }>(`/users/me/calendarList?maxResults=250&fields=${CALENDAR_LIST_FIELDS}`, accessToken)
   return readCalendars(res.items ?? [])
 }
 

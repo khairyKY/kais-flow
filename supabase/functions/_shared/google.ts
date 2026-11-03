@@ -42,6 +42,9 @@ export interface GCalendar {
   name: string
   /** Google's background colour for it ("#9fe1e7"); null = the grid's own event hue. */
   color: string | null
+  /** The account's role on it (calendarList accessRole): only 'owner' calendars take our edits — the write scope
+   * (calendar.events.owned) reaches no other. Absent on a list read before gcal-events; the next sync fills it. */
+  role?: 'owner' | 'writer' | 'reader' | 'freeBusyReader'
 }
 
 export interface GoogleData {
@@ -156,6 +159,25 @@ export async function gSend(method: 'POST' | 'PATCH' | 'DELETE', path: string, a
   if (!res.ok) throw new GoogleError(res.status)
 }
 
+/** A call to the Calendar API that answers JSON (an edit of one of the person's own events). `sendUpdates=none`:
+ * a drag or a rename here never mails the guests. A DELETE answers no body. */
+export async function gCall<T = GEvent>(method: 'GET' | 'POST' | 'PATCH' | 'DELETE', path: string, accessToken: string, body?: unknown): Promise<T | null> {
+  const res = await fetch(`${GOOGLE_API}${path}${method === 'GET' ? '' : `${path.includes('?') ? '&' : '?'}sendUpdates=none`}`, {
+    method,
+    headers: { Authorization: `Bearer ${accessToken}`, ...(body ? { 'Content-Type': 'application/json' } : {}) },
+    body: body ? JSON.stringify(body) : undefined,
+  })
+  if (!res.ok) {
+    await res.body?.cancel()
+    throw new GoogleError(res.status)
+  }
+  if (method === 'DELETE') {
+    await res.body?.cancel()
+    return null
+  }
+  return (await res.json()) as T
+}
+
 // ── calendars ───────────────────────────────────────────────────────────────────────────────────
 
 export interface GCalendarListEntry {
@@ -163,6 +185,7 @@ export interface GCalendarListEntry {
   summary?: string
   summaryOverride?: string
   backgroundColor?: string
+  accessRole?: string
   primary?: boolean
   selected?: boolean
   deleted?: boolean
@@ -170,12 +193,15 @@ export interface GCalendarListEntry {
 
 /** calendarList → our list (primary first, then as Google orders them), the account, and the
  * calendars shown by default — the ones ticked in Google Calendar itself. */
+const ROLES: readonly string[] = ['owner', 'writer', 'reader', 'freeBusyReader']
+export const CALENDAR_LIST_FIELDS = 'items(id,summary,summaryOverride,backgroundColor,accessRole,primary,selected,deleted)'
+
 export function readCalendars(items: readonly GCalendarListEntry[]): { calendars: GCalendar[]; login: string | null; selected: string[] } {
   const live = items.filter((c) => c.id && !c.deleted)
   const sorted = [...live.filter((c) => c.primary), ...live.filter((c) => !c.primary)].slice(0, MAX_CALENDARS)
   const color = (c: string | undefined) => (c && /^#[0-9a-f]{6}$/i.test(c) ? c.toLowerCase() : null)
   return {
-    calendars: sorted.map((c) => ({ id: c.id!, name: c.summaryOverride || c.summary || c.id!, color: color(c.backgroundColor) })),
+    calendars: sorted.map((c) => ({ id: c.id!, name: c.summaryOverride || c.summary || c.id!, color: color(c.backgroundColor), ...(c.accessRole && ROLES.includes(c.accessRole) ? { role: c.accessRole as GCalendar['role'] } : null) })),
     login: live.find((c) => c.primary)?.id ?? null,
     selected: sorted.filter((c) => c.selected || c.primary).map((c) => c.id!),
   }
@@ -201,6 +227,7 @@ export function syncWindow(now: Date, zone: string): { start: Date; end: Date } 
 export interface GEventTime {
   date?: string
   dateTime?: string
+  timeZone?: string
 }
 
 /** events.list's item (singleEvents=true: a repeat arrives as its instances). */
@@ -212,6 +239,18 @@ export interface GEvent {
   start?: GEventTime
   end?: GEventTime
   extendedProperties?: { private?: Record<string, string> }
+  htmlLink?: string
+  /** The Meet link; conferenceData carries it (and other providers' joins) as entry points. */
+  hangoutLink?: string
+  conferenceData?: { entryPoints?: { entryPointType?: string; uri?: string }[] }
+  recurringEventId?: string
+  originalStartTime?: GEventTime
+  recurrence?: string[]
+  organizer?: { self?: boolean }
+  guestsCanModify?: boolean
+  locked?: boolean
+  /** 'default' (or absent) is a plain event; birthday, fromGmail, focusTime, outOfOffice, workingLocation aren't ours to change. */
+  eventType?: string
 }
 
 export interface GcalRef {
@@ -219,6 +258,14 @@ export interface GcalRef {
   id: string
   calendar: string
   calendar_id: string
+  /** gcal-events: the grant can write and this event is ours to change (owned calendar, organised here or open to guests). */
+  edit?: true
+  /** A join link: Meet's hangoutLink, else a conference entry point (NowCard's Join reads `url`). */
+  url?: string
+  /** The event in Google Calendar's own web page. */
+  link?: string
+  /** A repeating event's master id: the This / Following / All questions need it. */
+  master?: string
 }
 
 /** The columns a synced event writes. */
@@ -247,7 +294,7 @@ function instant(t: GEventTime | undefined): string | null {
 /** One Google event → our row; null for a cancelled one (or one without a usable start).
  * All-day: the dates in no zone at T00:00Z, end exclusive — the app's own all-day convention
  * (QuickCreate, daySpans.spanDays). Timed: the instant, stored UTC. */
-export function mapEvent(ev: GEvent, cal: GCalendar): GcalRow | null {
+export function mapEvent(ev: GEvent, cal: GCalendar, canWrite = false): GcalRow | null {
   if (!ev.id || ev.status === 'cancelled') return null
   // One of our own blocks, written out to the primary calendar: it's already on the grid (no loop).
   if (ev.extendedProperties?.private?.[MIRROR_KEY]) return null
@@ -280,13 +327,36 @@ export function mapEvent(ev: GEvent, cal: GCalendar): GcalRow | null {
     busy: true,
     type: 'event',
     color: cal.color,
-    external_ref: { source: 'gcal', id: `${cal.id}/${ev.id}`, calendar: cal.name, calendar_id: cal.id },
+    external_ref: {
+      source: 'gcal', id: `${cal.id}/${ev.id}`, calendar: cal.name, calendar_id: cal.id,
+      ...(canWrite && editable(ev, cal) ? { edit: true as const } : null),
+      ...(joinUrl(ev) ? { url: joinUrl(ev)! } : null),
+      ...(ev.htmlLink ? { link: ev.htmlLink } : null),
+      ...(ev.recurringEventId ? { master: ev.recurringEventId } : null),
+    },
   }
+}
+
+/** Whether an event is ours to change: an owned calendar (the only kind the write scope reaches), a plain event
+ * (not a birthday, a Gmail booking, a focus block…), not locked, and organised on this calendar — or open to
+ * guests' changes. The grant itself is the caller's (`canWrite`). */
+export function editable(ev: GEvent, cal: GCalendar): boolean {
+  if (cal.role !== 'owner' || ev.locked) return false
+  if (ev.eventType && ev.eventType !== 'default') return false
+  return ev.organizer?.self === false ? !!ev.guestsCanModify : true
+}
+
+/** A join link: Meet's, else the first video entry point (Zoom, Teams… added by their Calendar add-ons). */
+export function joinUrl(ev: GEvent): string | null {
+  const url = ev.hangoutLink || ev.conferenceData?.entryPoints?.find((p) => p.entryPointType === 'video' && p.uri)?.uri
+  return url && /^https:\/\//i.test(url) ? url : null
 }
 
 /** A stored synced row, as much of it as the plan reads. */
 export interface StoredGcal {
   id: string
+  /** Read since gcal-events: an edit that Google answered without a new etag (a series' master changed) still lands. */
+  title?: string
   starts_at: string
   ends_at: string
   gcal_etag: string | null
@@ -294,6 +364,14 @@ export interface StoredGcal {
   deleted_at: string | null
   external_ref: Partial<GcalRef> | null
 }
+
+/** What a stored row's external_ref says that can change without the event's etag changing: the calendar's name
+ * and (gcal-events) whether it's editable now — a Reconnect that adds the write scope flips it. */
+const refSig = (r: Partial<GcalRef> | null | undefined): string => [r?.calendar, r?.edit, r?.url, r?.link, r?.master].join('|')
+
+/** The row's own fields, when they no longer say what Google does — whatever its etag says. */
+const drifted = (s: StoredGcal, r: GcalRow): boolean =>
+  (s.title !== undefined && s.title !== r.title) || Date.parse(s.starts_at) !== Date.parse(r.starts_at) || Date.parse(s.ends_at) !== Date.parse(r.ends_at)
 
 export interface GcalPlan {
   insert: GcalRow[]
@@ -323,7 +401,7 @@ export function planGcalSync(stored: readonly StoredGcal[], fetched: ReadonlyMap
     const row = want.get(key)
     if (row && !seen.has(key)) {
       seen.add(key)
-      if (s.gcal_etag !== row.gcal_etag || s.color !== row.color || s.deleted_at || s.external_ref?.calendar !== row.external_ref.calendar) plan.update.push({ id: s.id, row })
+      if (s.gcal_etag !== row.gcal_etag || s.color !== row.color || s.deleted_at || refSig(s.external_ref) !== refSig(row.external_ref) || drifted(s, row)) plan.update.push({ id: s.id, row })
       continue
     }
     const inWindow = Date.parse(s.ends_at) > ws && Date.parse(s.starts_at) < we

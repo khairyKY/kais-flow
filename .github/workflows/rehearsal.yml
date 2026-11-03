@@ -68,6 +68,12 @@ jobs:
           done
           exit $fail
 
+      # gcal-edit (2026-11-03): editing a Google event through the real google-sync, on a fake Calendar API and a fake
+      # PostgREST — no stack needed, so it runs before one starts.
+      - name: gcal-edit.test.ts (edit, delete, This / Following / All and Undo of a Google event)
+        if: ${{ !cancelled() }}
+        run: deno test --no-lock --allow-env --allow-net=127.0.0.1,localhost --allow-read supabase/tests/gcal-edit.test.ts 2>&1 | tee "$RUNNER_TEMP/suite-gcal-edit.log"
+
       # config.toml carries production's email setup: Gmail SMTP from env secrets + Confirm email on.
       # The runner has neither secret, so a local sign-up would wait on a mail that never goes out.
       # This edits the runner's copy only; the suites' test accounts then sign up and in directly.
@@ -123,10 +129,10 @@ jobs:
         if: always()
         run: |
           echo "### Suites" >> "$GITHUB_STEP_SUMMARY"
-          for s in fix0-auth sec2 notify-prune mcp-week mcp-full widget fix5-search retainer-reload; do
+          for s in gcal-edit fix0-auth sec2 notify-prune mcp-week mcp-full widget fix5-search retainer-reload; do
             log="$RUNNER_TEMP/suite-$s.log"
             if [ ! -f "$log" ]; then echo "- $s: did not run"; continue; fi
-            result=$(grep -oE '^[0-9]+ passed.*|retainer-reload: all checks passed' "$log" | tail -1 || true)
+            result=$(grep -oE '^[0-9]+ passed.*|^(ok|FAILED) [|] [0-9]+ passed.*|retainer-reload: all checks passed' "$log" | tail -1 || true)
             echo "- $s: ${result:-no result line — see the step log}"
             grep -E '^  FAIL ' "$log" | head -30 | sed 's/^  FAIL /    - FAIL /' || true
           done >> "$GITHUB_STEP_SUMMARY"
