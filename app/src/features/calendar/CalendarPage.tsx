@@ -528,9 +528,11 @@ function DesktopCalendar() {
   // A week either side: month view draws its neighbours' days too.
   // S4 (2026-10-22 audit): snapped to whole weeks (from the Unix epoch's Thursday — any fixed week works), so
   // paging inside the window keeps the same query and its events array: one grid pass a page, not two.
-  const WEEK_MS = 7 * DAY_MS
-  const gridFrom = rangeInfo ? Math.floor((rangeInfo.start.getTime() - 7 * DAY_MS) / WEEK_MS) * WEEK_MS : null
-  const gridTo = rangeInfo ? Math.ceil((rangeInfo.end.getTime() + 7 * DAY_MS) / WEEK_MS) * WEEK_MS : null
+  // gcal-events: the grid is handed only the blocks touching this window, so it snaps to FOUR weeks (a glide of a few days
+  // almost never crosses a snap, and a crossing redraws the grid), and a sync landing further away costs it nothing.
+  const WEEK_MS = 28 * DAY_MS
+  const gridFrom = rangeInfo ? Math.floor((rangeInfo.start.getTime() - 14 * DAY_MS) / WEEK_MS) * WEEK_MS : null
+  const gridTo = rangeInfo ? Math.ceil((rangeInfo.end.getTime() + 14 * DAY_MS) / WEEK_MS) * WEEK_MS : null
   const gridRange = useMemo(() => (gridFrom != null && gridTo != null ? { start: new Date(gridFrom), end: new Date(gridTo) } : undefined), [gridFrom, gridTo])
   const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
@@ -63,7 +63,14 @@ export function useCalendarEvents(range?: { start: Date; end: Date }) {
   const from = w.from.getTime()
   const to = w.to.getTime()
   const ranged = !!range
-  const select = useCallback((events: CalendarEvent[]) => expanded(events, from, to, zone, ranged), [from, to, zone, ranged])
+  // Paging inside the week-snapped window changes the key but, for rows that don't repeat, not what's in it: the same blocks
+  // keep the same array (a glide must not redraw the grid mid-way — cal-scroll f-perf).
+  const last = useRef<CalendarEvent[]>([])
+  const select = useCallback((events: CalendarEvent[]) => {
+    const out = expanded(events, from, to, zone, ranged)
+    if (out.length === last.current.length && out.every((e, i) => e === last.current[i])) return last.current
+    return (last.current = out)
+  }, [from, to, zone, ranged])
   return useQuery({ queryKey: ['calendar_events'], queryFn: fetchEvents, select })
 }
 
