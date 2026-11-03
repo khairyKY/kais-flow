@@ -35,7 +35,7 @@ The snapshot gives each listed item a ref (`[t1]` task, `[e1]` event, `[i1]` Inb
 - New harness `docs/log/assets/small-fixes/verify.mjs`: **20/20** (chat chips and the dropped tags and the chip opening a task; the device planner's words under both clock settings; the empty-day Day bar; the Settings row writing `review_day` / `review_time`; Today's prompt on five day/time cases). Shots in the same folder.
 - Existing harnesses, one at a time against the mock server on :5347: ai-chat 77/77, today-shell 86/86, phone-today 94/94, notify-fix 26/26 (two expectations retargeted to 12-hour: the reminder body "8:50 AM · Car" and "paused until 11:41 PM"; the harness file's own PW path is the old dead one, so it was run from a temporary copy that is not committed), settings-sync 58/61.
   - settings-sync's 3 failures are `no page errors` ("Transition was skipped. New ViewTransition started"), the same on base `eb114114` and when run alone.
-- Rehearsal: see below.
+- Rehearsal (`gh workflow run rehearsal.yml --ref claude/small-fixes`, run 41674525013): green, fresh chain and production rehearsal both (0091 applies on a copy of production's schema).
 
 ## Notes
 
