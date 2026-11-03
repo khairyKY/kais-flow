@@ -14,7 +14,7 @@
 //   - Never journal or people: the chat's Store has neither scope (mcp/store.ts refuses the tables),
 //     and no step can name them. Search hits may still quote them as context, as before.
 //   - One AI allowance per question (SEC-2); `run` calls no model and takes none.
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from 'npm:@supabase/supabase-js@2'
 import { requireUser } from '../_shared/auth.ts'
 import { errorKind, groqFailure } from '../_shared/groqLog.ts'
 import { corsHeadersFor, jsonResponse } from '../_shared/cors.ts'
@@ -177,6 +177,19 @@ async function run(req: Request, userId: string, raw: unknown[]): Promise<Respon
   return jsonResponse(req, { results, restore: undo.restore ?? { put: [], drop: [] } })
 }
 
+/** The ids among search `hits` that are Google Classroom tasks or course projects (never sent to the AI). If the
+ * look-up fails, every task and project hit goes. */
+async function classroomAmong(supabase: SupabaseClient, hits: readonly { entity_type: string; entity_id: string }[]): Promise<Set<string>> {
+  const out = new Set<string>()
+  for (const [type, table] of [['task', 'tasks'], ['project', 'projects']] as const) {
+    const ids = hits.filter((h) => h.entity_type === type).map((h) => h.entity_id)
+    if (!ids.length) continue
+    const { data, error } = await supabase.from(table).select('id').eq('external_ref->>source', 'classroom').in('id', ids)
+    for (const id of error ? ids : ((data ?? []) as { id: string }[]).map((r) => r.id)) out.add(id)
+  }
+  return out
+}
+
 /** A question: retrieval + snapshot + up to MAX_ROUNDS model turns → an answer, or a plan to confirm. */
 async function ask(req: Request, auth: { token: string; user: { id: string } }, messages: ChatMessage[], h24: boolean): Promise<Response> {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { global: { headers: { Authorization: `Bearer ${auth.token}` } } })
@@ -191,7 +204,9 @@ async function ask(req: Request, auth: { token: string; user: { id: string } }, 
   const { data: synced, error: syncedError } = eventIds.length
     ? await supabase.from('calendar_events').select('id').eq('source', 'gcal').in('id', eventIds)
     : { data: [], error: null }
-  const hits = dropSynced(found, new Set(syncedError ? eventIds : ((synced ?? []) as { id: string }[]).map((r) => r.id)))
+  // …and Google Classroom's tasks and course projects (0091, site info §5) — the same promise.
+  const classroomIds = await classroomAmong(supabase, found)
+  const hits = dropSynced(found, new Set(syncedError ? eventIds : ((synced ?? []) as { id: string }[]).map((r) => r.id))).filter((h) => !classroomIds.has(h.entity_id))
   const { data: slipping } = await supabase.from('slipping').select('entity_name, days_since')
   // A live snapshot of today + tomorrow, so "what's on today?" works without a lucky search hit —
   // the user's today, on their own clock (app_settings.timezone; RLS returns only their row).
@@ -199,14 +214,14 @@ async function ask(req: Request, auth: { token: string; user: { id: string } }, 
   const tz = userZone((settings as { timezone?: string | null } | null)?.timezone)
   const now = new Date()
   // Today's Top 3 as Today draws it (_shared/today.ts): a pick moved to a later day isn't one; goal first.
-  const { data: picks } = await supabase.from('tasks').select('id, title, status, someday, paused, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at')
+  const { data: picks } = await supabase.from('tasks').select('id, title, status, someday, paused, deleted_at, due_at, scheduled_start, top3, top3_rank, created_at, src:external_ref->>source')
     .eq('top3', true).eq('status', 'todo').eq('someday', false).is('deleted_at', null)
-  const top3 = todaysTop3((picks ?? []) as (Top3Row & { id: string; title: string })[], now, tz)
+  const top3 = todaysTop3(((picks ?? []) as (Top3Row & { id: string; title: string; src: string | null })[]).filter((t) => t.src !== 'classroom'), now, tz)
   const top3Ids = new Set(top3.map((t) => t.id))
   const until = dayStart(now, tz, 2).toISOString()
   const from = dayStart(now, tz).toISOString()
   const [{ data: openTasks }, { data: rows }, { data: inbox, count: inboxPending }] = await Promise.all([
-    supabase.from('tasks').select('id, title, due_at, scheduled_start')
+    supabase.from('tasks').select('id, title, due_at, scheduled_start, src:external_ref->>source')
       .eq('status', 'todo').eq('paused', false).is('deleted_at', null)
       .or(`due_at.lt.${until},scheduled_start.lt.${until}`).limit(60),
     // A repeating event is one row anchored at its first occurrence: it comes along whenever it
@@ -217,7 +232,7 @@ async function ask(req: Request, auth: { token: string; user: { id: string } }, 
   ])
   const events = expandSeries(rows ?? [], new Date(from), new Date(until), tz, ruleBetween)
   const refs: Refs = {}
-  const snapshot = snapshotText(now, (openTasks ?? []).map((t) => ({ ...t, top3: top3Ids.has(t.id) })), events, inboxPending ?? 0, tz, { h24, inbox: inbox ?? [], refs })
+  const snapshot = snapshotText(now, (openTasks ?? []).filter((t) => t.src !== 'classroom').map(({ src: _src, ...t }) => ({ ...t, top3: top3Ids.has(t.id) })), events, inboxPending ?? 0, tz, { h24, inbox: inbox ?? [], refs })
   const prompt = systemPrompt({ now, hits, top3, slipping: slipping ?? [], snapshot, tz, h24, action })
 
   const convo: GroqMessage[] = [{ role: 'system', content: prompt }, ...messages]
