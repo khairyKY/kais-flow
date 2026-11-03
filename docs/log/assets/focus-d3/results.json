@@ -1,0 +1,687 @@
+[
+  {
+    "name": "s [desk idle] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk idle] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk idle] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk idle] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk idle] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk running] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk running] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk running] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk running] D3: the timer sits in the middle, the small flower beside it",
+    "ok": true,
+    "detail": "timer centre off by 62px, flower at 897.40625, timer 598.578125 in 472"
+  },
+  {
+    "name": "s [desk running] D2-b base: the hour column on the left, Up next on the right",
+    "ok": true,
+    "detail": "zoom 1: hours 230, up next 320"
+  },
+  {
+    "name": "s [desk running] the flower grows with the round (opening, mid-round)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk running] nothing in the centre runs past its column",
+    "ok": true,
+    "detail": "0 elements"
+  },
+  {
+    "name": "s [desk running] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk running] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk settings] the settings sheet as in D (+ Fit rounds, the pill)",
+    "ok": true,
+    "detail": "all rows"
+  },
+  {
+    "name": "s [desk paused] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk paused] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk paused] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk paused] the timer waits at 55%",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk paused] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk paused] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk end] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk end] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk end] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk end] the round ends in a bloom, the kept segment glowing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk end] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk end] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk break] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk break] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk break] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk break] option 1: the break segment pulses with \"Break · 4:12\" above it",
+    "ok": true,
+    "detail": "Break · 4:08"
+  },
+  {
+    "name": "s [desk break] option 1: the flower closes to a bud and a sage glow breathes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk break] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk break] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk done] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk done] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk done] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk done] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk done] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk125 idle] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk125 idle] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk125 idle] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk125 idle] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk125 idle] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk125 running] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk125 running] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk125 running] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk125 running] D3: the timer sits in the middle, the small flower beside it",
+    "ok": true,
+    "detail": "timer centre off by 78px, flower at 924.234375, timer 623.25 in 540"
+  },
+  {
+    "name": "s [desk125 running] D2-b base: the hour column on the left, Up next on the right",
+    "ok": true,
+    "detail": "zoom 1.25: hours 237.5, up next 312.5"
+  },
+  {
+    "name": "s [desk125 running] the flower grows with the round (opening, mid-round)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk125 running] nothing in the centre runs past its column",
+    "ok": true,
+    "detail": "0 elements"
+  },
+  {
+    "name": "s [desk125 running] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk125 running] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk125 settings] the settings sheet as in D (+ Fit rounds, the pill)",
+    "ok": true,
+    "detail": "all rows"
+  },
+  {
+    "name": "s [desk125 break] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk125 break] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk125 break] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk125 break] option 1: the break segment pulses with \"Break · 4:12\" above it",
+    "ok": true,
+    "detail": "Break · 4:08"
+  },
+  {
+    "name": "s [desk125 break] option 1: the flower closes to a bud and a sage glow breathes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk125 break] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk125 break] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [desk125 done] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [desk125 done] no ring on the desktop",
+    "ok": true,
+    "detail": "0 circles"
+  },
+  {
+    "name": "s [desk125 done] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [desk125 done] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [desk125 done] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [phone idle] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [phone idle] the flower sits in the ring",
+    "ok": true,
+    "detail": "ring 1"
+  },
+  {
+    "name": "s [phone idle] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [phone idle] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [phone idle] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [phone running] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [phone running] the flower sits in the ring",
+    "ok": true,
+    "detail": "ring 1"
+  },
+  {
+    "name": "s [phone running] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [phone running] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [phone running] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [phone settings] the settings sheet as in D (+ Fit rounds, the pill)",
+    "ok": true,
+    "detail": "all rows"
+  },
+  {
+    "name": "s [phone paused] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [phone paused] the flower sits in the ring",
+    "ok": true,
+    "detail": "ring 1"
+  },
+  {
+    "name": "s [phone paused] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [phone paused] the timer waits at 55%",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [phone paused] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [phone paused] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [phone end] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [phone end] the flower sits in the ring",
+    "ok": true,
+    "detail": "ring 1"
+  },
+  {
+    "name": "s [phone end] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [phone end] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [phone end] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [phone break] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [phone break] the flower sits in the ring",
+    "ok": true,
+    "detail": "ring 1"
+  },
+  {
+    "name": "s [phone break] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [phone break] option 1: the break segment pulses with \"Break · 4:12\" above it",
+    "ok": true,
+    "detail": "Break · 4:09"
+  },
+  {
+    "name": "s [phone break] option 1: the flower closes to a bud and a sage glow breathes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [phone break] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [phone break] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s [phone done] the top timeline: 4 focus + 3 breaks + the 5 minutes left",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "s [phone done] the words as drawn",
+    "ok": true,
+    "detail": "all there"
+  },
+  {
+    "name": "s [phone done] Done for the day has its 24px margins",
+    "ok": true,
+    "detail": "title 24–366 in 390"
+  },
+  {
+    "name": "s [phone done] no sideways scroll",
+    "ok": true,
+    "detail": "0px"
+  },
+  {
+    "name": "s [phone done] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c the kept focus segments wear the block's colour (Iris here)",
+    "ok": true,
+    "detail": "rgb(181, 156, 227) vs rgb(181, 156, 227)"
+  },
+  {
+    "name": "c the segment under way fills with the block's colour",
+    "ok": true,
+    "detail": "linear-gradient(90deg, rgb(181, 156, 227) 27.6%, color(srgb 0.709804 0.611765 0.890196 / 0"
+  },
+  {
+    "name": "c breaks are always sage",
+    "ok": true,
+    "detail": "color(srgb 0.541176 0.603922 0.494118 / 0.75)"
+  },
+  {
+    "name": "t blooms sit above the kept focus segments on the top timeline",
+    "ok": true,
+    "detail": "2 blooms"
+  },
+  {
+    "name": "t the hour column shows the block's segments in its colour, no flowers",
+    "ok": true,
+    "detail": "8 segments, 0 images"
+  },
+  {
+    "name": "t the hour column keeps the day around it (Lunch, Gym) and the now line",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "c a Fern block's segments are Fern",
+    "ok": true,
+    "detail": "rgb(114, 191, 142)"
+  },
+  {
+    "name": "p [desk] no pill on the Focus page itself",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [desk] the pill follows to Tasks with the timer and the task",
+    "ok": true,
+    "detail": "18:05\nWrite the chapter 3 outline\n❙❙\n✓"
+  },
+  {
+    "name": "p [desk] the pill: the segmented timeline only, no flowers",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [desk] …and to Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [desk] tap → back to Focus",
+    "ok": true,
+    "detail": "http://localhost:5345/focus"
+  },
+  {
+    "name": "p [desk] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [phone] no pill on the Focus page itself",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [phone] the pill follows to Tasks with the timer and the task",
+    "ok": true,
+    "detail": "18:06\nWrite the chapter 3 outline\n❙❙\n✓"
+  },
+  {
+    "name": "p [phone] the pill: the segmented timeline only, no flowers",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [phone] …and to Today",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p [phone] tap → back to Focus",
+    "ok": true,
+    "detail": "http://localhost:5345/focus"
+  },
+  {
+    "name": "p [phone] no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p no pill with nothing under way",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k the tray flyout shows the segmented timeline",
+    "ok": true,
+    "detail": "8 segments"
+  },
+  {
+    "name": "k …and no flowers",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k …with the block, the bud and the time",
+    "ok": true,
+    "detail": "Deep work · bud 3 of 4\n18:02\nWrite the chapter 3 outline\nkept 56m of 2h · next: Gym 5:00 PM"
+  },
+  {
+    "name": "k the tray's segments are the block's colour",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "k the tray icon: a small square in the block's colour while focusing (tray_set focusColor → tray.rs square())",
+    "ok": true,
+    "detail": "{\"state\":\"focus2\",\"dark\":false,\"focusLabel\":\"Stop focus · 19 min left\",\"pauseLabel\":\"Pause notifications for 1 hour\",\"focusColor\":\"#b59ce3\",\"focusTip\":\"Deep work · bud 3 of 4 · 19 min left\"}"
+  },
+  {
+    "name": "k the tray icon's tip: the block, the bud, the minutes left",
+    "ok": true,
+    "detail": "Deep work · bud 3 of 4 · 19 min left"
+  },
+  {
+    "name": "k no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e the calendar has no focus split (no segments, no flowers on blocks)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e the block menu offers ▶ Focus on this",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e block menu → Focus, on the block split into rounds (Writing, 4 buds, Fern)",
+    "ok": true,
+    "detail": "{\"title\":\"Writing\",\"start\":\"2026-10-31T16:30:00.000Z\",\"end\":\"2026-10-31T18:30:00.000Z\",\"srcStart\":\"2026-10-31T16:30:00.000Z\",\"srcEnd\":\"2026-10-31T18:30:00.000Z\",\"color\":\"var(--blk-fern)\",\"ink\":\"var(--blk-fern-ink)\",\"rounds\":4,\"fill\":true,\"fromCalendar\":true,\"eventId\":\"e0000000-0000-4000-8000-000000000004\"}"
+  },
+  {
+    "name": "e [desk] the Now card has ▶ Focus on the block under way",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e [desk] Now card ▶ Focus → Deep work from now (2:16), split into rounds: 3 buds",
+    "ok": true,
+    "detail": "Deep work · 3 buds"
+  },
+  {
+    "name": "e [phone] the Now card has ▶ Focus on the block under way",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e [phone] Now card ▶ Focus → Deep work from now (2:16), split into rounds: 3 buds",
+    "ok": true,
+    "detail": "Deep work · 3 buds"
+  },
+  {
+    "name": "e a task's Focus (no block) → its estimate from now: 60m = 2 buds, Iris by default",
+    "ok": true,
+    "detail": "{\"title\":\"Edit the essay\",\"start\":\"2026-10-31T12:16:04.781Z\",\"end\":\"2026-10-31T13:16:04.781Z\",\"srcStart\":\"2026-10-31T12:16:04.781Z\",\"srcEnd\":\"2026-10-31T13:16:04.781Z\",\"color\":\"var(--blk-iris)\",\"ink\":\"var(--blk-iris-ink)\",\"rounds\":2,\"fill\":true,\"fromCalendar\":false,\"eventId\":null}"
+  },
+  {
+    "name": "e …the pill rides along on the task page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "e …and Focus shows it: 2 buds of 25 in Iris",
+    "ok": true,
+    "detail": "Focus · Edit the essay · 2:16 – 3:16 PM\nEsc leaves quietly"
+  }
+]

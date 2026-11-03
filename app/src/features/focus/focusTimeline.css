@@ -1,0 +1,29 @@
+/* Focus D3's timeline (FocusTimeline.tsx). Sizes from the spec's htl(): the Focus page 20px bars under 46px
+   blooms, the tray 12px, the pill 10px; set per use with --ftl-h / --ftl-bloom. */
+.ftl { --ftl-h: 20px; --ftl-bloom: 46px; display: flex; flex-direction: column; min-width: 0; }
+.ftl-segs, .ftl-tops { display: flex; gap: 3px; }
+.ftl-seg { height: var(--ftl-h); border-radius: 5px; /* ds-ok: D3's segment corner (spec htl 5px) */ min-width: 2px; }
+.ftl-seg.is-now[data-k='f'] { box-shadow: 0 0 0 2px var(--ink-body); }
+.ftl-seg.is-now[data-k='b'] { box-shadow: 0 0 0 2px var(--acc-sage-text); }
+.ftl-tops { height: calc(var(--ftl-bloom) + 2px); align-items: flex-end; }
+.ftl-top { position: relative; display: flex; justify-content: center; align-items: flex-end; min-width: 2px; }
+.ftl-flower { height: var(--ftl-bloom); filter: var(--shadow-drop-sm); flex: none; margin-bottom: 2px; }
+.ftl-flower.is-opening, .ftl-flower.is-bud { height: calc(var(--ftl-bloom) * 0.85); }
+.ftl-flower.is-faint { opacity: 0.5; }
+.ftl-glow {
+  position: absolute; left: 50%; bottom: calc(var(--ftl-bloom) * -0.5); width: calc(var(--ftl-bloom) * 2); height: calc(var(--ftl-bloom) * 2);
+  translate: -50% 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, color-mix(in oklch, var(--acc-gold-warm) 50%, transparent) 0%, transparent 70%);
+}
+.ftl-break {
+  position: absolute; left: 50%; bottom: 6px; translate: -50% 0; white-space: nowrap;
+  font-size: var(--fs-meta); font-weight: var(--fw-semibold); color: var(--acc-sage-text); font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--acc-sage) 22%, var(--paper-parchment)); padding: 2px 8px; border-radius: var(--radius-pill);
+}
+.ftl-labels { display: flex; justify-content: space-between; margin-top: 4px; font-size: var(--fs-meta); color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+/* vertical: the block in the hour column — the same segments, top to bottom, no flowers */
+.ftl--v, .ftl--v .ftl-segs { flex-direction: column; height: 100%; }
+.ftl--v .ftl-seg { height: auto; min-height: 2px; width: 100%; }
+/* the break under way breathes (spec .pulse: 4s, 55% ↔ 100%) — Effects on */
+@keyframes ftlPulse { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+.app-shell.motion-on .ftl-seg.is-pulse { animation: ftlPulse 4s ease-in-out infinite; }

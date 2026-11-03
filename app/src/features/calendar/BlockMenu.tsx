@@ -17,10 +17,11 @@ import { uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, linkTaskWithUndo, setEventRepeat } from './api'
 import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock } from './scoped'
-import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, isRepeatingBlock, isSynced, isUntitled, remindLabel, type BlockMenuEntry, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
+import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, focusTaskOf, isRepeatingBlock, isSynced, isUntitled, remindLabel, type BlockMenuEntry, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { SwatchTray } from './formFields'
 import { blockSwatch } from './blockHue'
+import { useStartFocus } from '../today/startFocus'
 import { askChat, copyBlockLink } from './blockActions'
 import { eventSpan } from './phoneGridMath'
 
@@ -33,7 +34,7 @@ import { eventSpan } from './phoneGridMath'
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus',
 }
 
 // B (D5): a caption is metadata — sentence case, untracked, even digits.
@@ -134,6 +135,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const openTask = useOpenTask()
+  const startFocus = useStartFocus()
   const gone = useRef(false)
   const [untitled] = useState(() => isUntitled(event))
   const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
@@ -283,6 +285,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
     duplicate: () => void duplicateBlock(event, task),
     copylink: () => copyBlockLink(event),
     details: () => onDetails?.(),
+    focus: () => { onClose(); startFocus(focusTaskOf(event, tasks), event) },
     unschedule,
     delete: del,
   }

@@ -224,12 +224,16 @@ if (want('r')) {
 if (want('f')) {
   const sess = (over) => JSON.stringify({ mode: 'pomodoro', isRunning: true, secondsLeft: 5, stopwatchSeconds: 0, stopwatchStartIso: '', stopwatchStartStr: '', currentRound: 1, breakType: 'short', activeTask: null, pomodoroStartIso: null, savedAt: cairo('10:00').getTime(), ...over })
   for (const [mode, o] of MODES) {
+    // focus-d3 (2026-10-31): the desktop has no ring now — the round fills its segment on the timeline; the phone
+    // keeps D's ring (sage) round the flower, and that ring still sweeps (R4). The round dots are gone (T12 → the segment).
+    const ph = await open('/focus', { ...o, view: phone, seeds: { kf_focus_session: sess({ secondsLeft: 900 }) } })
+    const tr = await ph.page.locator('.fd-plant circle[stroke="var(--acc-sage)"]').first().evaluate((el) => el.style.transition).catch(() => 'missing')
+    check(`f1 [${mode}] R4 the phone's running ring sweeps continuously (Effects on only)`, decoOk(mode, /stroke-dashoffset 1s linear/.test(tr)), tr || 'none')
+    await ph.ctx.close()
+    const dk = await open('/focus', { ...o, seeds: { kf_focus_session: sess({ secondsLeft: 900 }) } }) // a round with time left (the 5 s one can end before the check)
+    check(`f1 [${mode}] D3: the round under way is its outlined segment on the timeline`, (await dk.page.locator('.fd-tl .ftl-seg.is-now[data-k="f"]').count()) === 1)
+    await dk.ctx.close()
     const { ctx, page, errors } = await open('/focus', { ...o, seeds: { kf_focus_session: sess({}) } })
-    const lav = page.locator('circle[stroke="var(--acc-lavender)"]')
-    const tr = await lav.first().evaluate((el) => el.style.transition).catch(() => 'missing')
-    check(`f1 [${mode}] R4 the running ring sweeps continuously (Effects on only)`, decoOk(mode, /stroke-dashoffset 1s linear/.test(tr)), tr || 'none')
-    const dots = await css(page.locator('.fp-modes span[style*="border-radius: 50%"]'), 'transitionProperty')
-    check(`f1 [${mode}] T12 the round dots ease their fill`, /background-color/.test(dots ?? ''), dots)
     let bloomAt = -1
     let breakAt = -1
     const t0 = Date.now()
@@ -252,11 +256,11 @@ if (want('f')) {
     await sleep(1500)
     await page.getByRole('button', { name: /Pause/ }).first().click()
     await sleep(500)
-    const ring = page.locator('svg.fp-ring')
+    const ring = page.locator('.fd-dim') // focus-d3: the timer dims and breathes where the ring did
     const pausedCls = await ring.first().evaluate((el) => el.classList.contains('is-paused')).catch(() => false)
     const op = parseFloat((await css(ring, 'opacity')) ?? '1')
     const breathe = await cssAnims(ring)
-    check(`f3 [${mode}] R3 paused: the ring dims (~0.55)${mode === 'on' ? ' and breathes' : ''}`, pausedCls && op < 0.8 && decoOk(mode, breathe.includes('fpRingBreathe')), `op ${op}, ${breathe.join(',') || 'no anim'}`)
+    check(`f3 [${mode}] R3 paused: the timer dims (~0.55)${mode === 'on' ? ' and breathes' : ''}`, pausedCls && op < 0.8 && decoOk(mode, breathe.includes('fpRingBreathe')), `op ${op}, ${breathe.join(',') || 'no anim'}`)
     await shot(page, `f3-paused-${mode}`)
     check(`f [${mode}] no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
@@ -267,7 +271,7 @@ if (want('f')) {
     await sleep(120)
     const leaving = await waapi(g.page.locator('.fp-garden-in'))
     await sleep(500)
-    const back = (await g.page.locator('.fp-garden-in').count()) === 0 && (await g.page.locator('svg.fp-ring').count()) === 1
+    const back = (await g.page.locator('.fp-garden-in').count()) === 0 && (await g.page.locator('.fd .fd-row').count()) === 1 // focus-d3: the page's timer row (idle after the garden)
     check(`f4 [${mode}] R5 leaving the garden fades it (Effects on), then the timer is back`, decoOk(mode, leaving > 0) && back, `fade anims ${leaving}, back ${back}`)
     await g.ctx.close()
   }
