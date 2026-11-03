@@ -36,7 +36,7 @@ describe('menu rows (12d)', () => {
   it('pause: until when, on the Cairo clock', () => {
     const now = new Date('2026-10-03T06:41:00Z') // 09:41 Cairo
     expect(pauseMenuLabel(null, now)).toBe('Pause notifications for 1 hour')
-    expect(pauseMenuLabel('2026-10-03T07:41:00Z', now)).toBe('Resume notifications · paused until 10:41')
+    expect(pauseMenuLabel('2026-10-03T07:41:00Z', now)).toBe('Resume notifications · paused until 10:41 AM')
     expect(pauseMenuLabel('2026-10-03T06:00:00Z', now)).toBe('Pause notifications for 1 hour')
   })
 })

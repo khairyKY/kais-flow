@@ -4,7 +4,10 @@
 // it already reads. Every clock rule reads Cairo's wall clock, whatever the device zone (B2).
 
 import { cairoDateKey, cairoWallTimeToIso } from '../../lib/dateShortcuts'
-import { daysToWeekend } from '../../lib/weekend'
+import { appZone } from '../../lib/appZone'
+import { daysToWeekend, type ReviewWhen } from '../../lib/weekend'
+import { LOOP_DAY_ROLLOVER_HOUR } from '../../../../supabase/functions/_shared/zone.ts'
+import { minutesOf, wallMinutes } from '../../../../supabase/functions/notify/ritual.ts'
 import { timeRange, timeText } from '../calendar/eventTime'
 import { DAY_FROM, DAY_TO } from '../rituals/ritualLogic'
 import { loopNow } from '../rituals/loopDay'
@@ -176,15 +179,24 @@ export function dayCounts(tasks: Task[], now: Date): { done: number; total: numb
   return { done, total: done + open }
 }
 
-/** The weekly review's day is the first day of the user's weekend (lib/weekend: Fri + Sat → Friday;
- * Sat + Sun by default). Today prompts it that day until this review week is closed — the Weekly
+/** The weekly review's day is the one the user picked (Settings → Calendar & time, review_day), else the
+ * first day of their weekend (lib/weekend: Fri + Sat → Friday; Sat + Sun by default). With a time
+ * (review_time) the prompt waits for it that day; without, it is up all day. Today prompts it that day until this review week is closed — the Weekly
  * review's own rule (rituals/reviewWeek weekClosedAt): closing it earlier in the week counts, its Undo
  * brings the prompt back, and a close that belongs to last week never hides this one. The day is the
  * loop day (04:00 rollover): at 00:30 after the review day it is still that day. No weekend, no review day. */
-export function reviewDue(now: Date, weekend: readonly number[], events: readonly ReviewEvent[]): boolean {
+export function reviewDue(now: Date, weekend: readonly number[], events: readonly ReviewEvent[], when: Partial<ReviewWhen> = {}): boolean {
   const at = loopNow(now)
   const key = cairoDateKey(at)
-  if (daysToWeekend(new Date(`${key}T12:00:00Z`).getUTCDay(), weekend) !== 0) return false
+  const weekday = new Date(`${key}T12:00:00Z`).getUTCDay()
+  if (when.day != null ? weekday !== when.day : daysToWeekend(weekday, weekend) !== 0) return false
+  // The time, on the loop day's own clock (it turns over at 04:00): 01:00 after a 18:00 review day is
+  // still that day, and after the time. ponytail: a time before 04:00 belongs to the loop day's tail.
+  const from = minutesOf(when.time)
+  if (from !== null) {
+    const sinceRollover = (m: number) => (m - LOOP_DAY_ROLLOVER_HOUR * 60 + 1440) % 1440
+    if (sinceRollover(wallMinutes(now, appZone())) < sinceRollover(from)) return false
+  }
   return weekClosedAt(events, cairoDateKey(startOfWeek(at, weekend)), weekend) === null
 }
 

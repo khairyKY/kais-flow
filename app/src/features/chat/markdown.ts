@@ -55,17 +55,18 @@ export function parseMarkdown(text: string): Block[] {
   return blocks
 }
 
-export type Inline = { t: 'text' | 'b' | 'i' | 'code'; s: string }
+/** `ref`: a tag the answer carries after an item — "t1" for [t1] — that ChatPanel draws as a chip. */
+export type Inline = { t: 'text' | 'b' | 'i' | 'code' | 'ref'; s: string }
 
-/** **bold**, *italics* / _italics_, `code`; the rest as text. */
+/** **bold**, *italics* / _italics_, `code`, [t1] tags; the rest as text. */
 export function inlineParts(text: string): Inline[] {
   const out: Inline[] = []
-  const re = /(\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*|(?<![\p{L}\p{N}])_[^_\s][^_]*_(?![\p{L}\p{N}]))/gu
+  const re = /(\[[teiTEI]\d+\]|\*\*[^*]+\*\*|`[^`]+`|\*[^*\s][^*]*\*|(?<![\p{L}\p{N}])_[^_\s][^_]*_(?![\p{L}\p{N}]))/gu
   let last = 0
   for (let m = re.exec(text); m; m = re.exec(text)) {
     if (m.index > last) out.push({ t: 'text', s: text.slice(last, m.index) })
     const tok = m[0]
-    out.push(tok.startsWith('**') ? { t: 'b', s: tok.slice(2, -2) } : tok.startsWith('`') ? { t: 'code', s: tok.slice(1, -1) } : { t: 'i', s: tok.slice(1, -1) })
+    out.push(tok.startsWith('[') ? { t: 'ref', s: tok.slice(1, -1).toLowerCase() } : tok.startsWith('**') ? { t: 'b', s: tok.slice(2, -2) } : tok.startsWith('`') ? { t: 'code', s: tok.slice(1, -1) } : { t: 'i', s: tok.slice(1, -1) })
     last = m.index + tok.length
   }
   if (last < text.length) out.push({ t: 'text', s: text.slice(last) })

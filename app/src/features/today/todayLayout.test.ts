@@ -247,6 +247,37 @@ describe('reviewDue — the weekly review on the first day of the weekend', () =
   })
 })
 
+describe('reviewDue — the day and time the user picked (Settings › Calendar & time)', () => {
+  // Cairo is UTC+3 in September 2026. Wed 23 Sep; Fri 25 Sep; Sat 26 Sep.
+  const cairo = (day: number, hhmm: string) => {
+    const [h, m] = hhmm.split(':').map(Number)
+    return new Date(Date.UTC(2026, 8, day, h - 3, m))
+  }
+  it('any weekday: Wednesday is the day, the weekend start no longer is', () => {
+    expect(reviewDue(cairo(23, '10:00'), [5, 6], [], { day: 3 })).toBe(true)
+    expect(reviewDue(cairo(25, '10:00'), [5, 6], [], { day: 3 })).toBe(false)
+    expect(reviewDue(cairo(25, '10:00'), [5, 6], [], { day: null })).toBe(true) // unset = how it was
+    expect(reviewDue(cairo(25, '10:00'), [5, 6], [], {})).toBe(true)
+    expect(reviewDue(cairo(23, '10:00'), [], [], { day: 3 })).toBe(true) // no weekend needed once a day is chosen
+  })
+  it('the time: not before it, then all day (a null time is all day)', () => {
+    const when = { day: 5, time: '18:00' }
+    expect(reviewDue(cairo(25, '17:59'), [5, 6], [], when)).toBe(false)
+    expect(reviewDue(cairo(25, '18:00'), [5, 6], [], when)).toBe(true)
+    expect(reviewDue(cairo(25, '23:30'), [5, 6], [], when)).toBe(true)
+    expect(reviewDue(cairo(25, '07:00'), [5, 6], [], { day: 5, time: null })).toBe(true)
+  })
+  it("the loop day's tail: 00:30 after the review day is still that day, and after the time", () => {
+    const when = { day: 5, time: '18:00' }
+    expect(reviewDue(cairo(26, '00:30'), [5, 6], [], when)).toBe(true) // Sat 00:30 - Friday's loop day
+    expect(reviewDue(cairo(26, '05:00'), [5, 6], [], when)).toBe(false) // Saturday proper
+    expect(reviewDue(cairo(25, '03:30'), [5, 6], [], when)).toBe(false) // Fri 03:30 - still Thursday's loop day
+  })
+  it('a chosen day still hides once the week is closed', () => {
+    expect(reviewDue(cairo(23, '10:00'), [5, 6], [{ event_type: 'review.week_closed', created_at: cairo(23, '09:00').toISOString(), payload: { week: '2026-09-20' } }], { day: 3 })).toBe(false)
+  })
+})
+
 describe('top3Planned — "1h 30m planned"', () => {
   it("each pick's block length today, else its duration", () => {
     expect(top3Planned([{ id: 'goal', duration_min: 30 }, { id: 'b', duration_min: 30 }, { id: 'c', duration_min: null }], DAY, at('09:40'))).toBe(90 + 30)

@@ -30,7 +30,7 @@ import { dateKey, dayWindow, userZone } from '../_shared/zone.ts'
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
 import { eventRemindersDue, reminderKey, type RemindRow } from '../_shared/eventReminder.ts'
 import type { RuleBetween } from '../_shared/series.ts'
-import { birthdayNotice, deliver, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, termsNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+import { birthdayNotice, deliver, is24h, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, termsNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
 import { LEGAL_KEY, PRIVACY_VERSION, TERMS_VERSION } from '../_shared/legal.ts'
 // rrule is CommonJS: Deno takes its default export only (see mcp/index.ts).
 import rrulePkg from 'npm:rrule@2'
@@ -108,7 +108,8 @@ async function logNotice(supabase: SupabaseClient, userId: string, n: Notice, re
   return error // `terms` needs it (the row is its "told" mark); the others carry on without
 }
 
-const NAMES: NoticePrefs = { lock_screen_names: true }
+/** The history keeps names (it's behind the lock) but still the person's own clock. */
+const NAMES = (p: NoticePrefs | undefined): NoticePrefs => ({ lock_screen_names: true, hour24: is24h(p) })
 
 /** One user's notice (birthday: one per group), built only from that user's rows; `prefs` = their own settings. */
 async function buildPayload(
@@ -147,7 +148,7 @@ async function buildPayload(
     if (picks.error || late.error) throw picks.error ?? late.error
     const top3 = todaysTop3((picks.data ?? []) as (Top3Row & { title: string })[], clock.now, zone).map((t) => t.title)
     const n = digestNotice(top3, prefs, late.count ?? 0)
-    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, digestNotice(top3, NAMES, late.count ?? 0))
+    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, digestNotice(top3, NAMES(prefs), late.count ?? 0))
     return n
   }
 
@@ -189,7 +190,7 @@ async function buildPayload(
       return { id: t.id as string, title: t.title as string, due_at: t.due_at as string | null, reminder_at: t.reminder_at as string | null, project: (Array.isArray(project) ? project[0] : project)?.name ?? null }
     })
     for (const task of tasks) {
-      const said = reminderNotice([task], NAMES, clock.now, zone)
+      const said = reminderNotice([task], NAMES(prefs), clock.now, zone)
       // A snoozed reminder (0082 remind_again_at) is sent once: cleared here. `reminder_sent` only when the
       // task's own reminder was the due one — a snooze before it mustn't swallow it.
       const own = !!task.reminder_at && Date.parse(task.reminder_at) <= clock.now.getTime()
@@ -224,7 +225,7 @@ async function buildPayload(
     // sweep over the same window (or an overlapping run) into a 23505 here, and that one is skipped.
     const fresh: (RemindRow & { title: string })[] = []
     for (const { event } of due) {
-      const said = eventReminderNotice([event], NAMES, clock.now, zone)
+      const said = eventReminderNotice([event], NAMES(prefs), clock.now, zone)
       const { eventId, startsAt } = reminderKey(event)
       const { error: claimError } = await supabase.from('activity_log').insert({
         id: crypto.randomUUID(),
@@ -261,7 +262,7 @@ async function buildPayload(
     const notices: Notice[] = []
     for (const g of birthdayGroups(all, spoke ?? [], today, zone)) {
       const n = birthdayNotice(g.people, prefs, g.inDays)
-      if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, birthdayNotice(g.people, NAMES, g.inDays), g.people.length === 1 ? { person_id: g.people[0].id } : {})
+      if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, birthdayNotice(g.people, NAMES(prefs), g.inDays), g.people.length === 1 ? { person_id: g.people[0].id } : {})
       notices.push(n)
     }
     return notices
@@ -290,7 +291,7 @@ async function buildPayload(
   const due = routinesDueAt(onTick, done ?? [], clock.now, zone) as (ReminderRoutine & { clock_time: string })[]
   if (due.length === 0) return null
   const n = routineNotice(due, prefs)
-  if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, routineNotice(due, NAMES))
+  if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, routineNotice(due, NAMES(prefs)))
   return n
 }
 
@@ -489,7 +490,7 @@ async function runPaperReady(req: Request, captureId: string): Promise<Response>
   const capture = { id: c.id as string, title: c.title as string | null, items: (c.items ?? []) as { confidence: number }[] }
   const payload = deliver(paperReadyNotice(capture, prefs), prefs, clock.now, userZone(prefs?.timezone))
   if (!payload) return jsonResponse(req, { sent: 0, skipped: true })
-  await logNotice(supabase, userId, paperReadyNotice(capture, NAMES), { capture_id: capture.id })
+  await logNotice(supabase, userId, paperReadyNotice(capture, NAMES(prefs)), { capture_id: capture.id })
   const result = await sendToSubscriptions(supabase, userId, (subs.data ?? []) as Subscription[], payload)
   return jsonResponse(req, { ...result, skipped: false })
 }

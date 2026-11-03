@@ -4,6 +4,7 @@ import { create } from 'zustand'
 import { deliver, focusDoneNotice, inQuietHours, isPaused, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
+import { useClockStore } from '../../lib/clock'
 import { useSyncStatus } from '../../components/syncQueue'
 import { useAppSettings, updateAppSetting } from '../../lib/settings'
 import { useFocusStore } from '../focus/focusStore'
@@ -18,7 +19,7 @@ import { useRitualFinishedRows } from '../rituals/api'
 import { useCalendarEvents, useCalendarRows } from '../calendar/api'
 import { useTasks } from '../tasks/api'
 import { installNotificationActions } from '../notifications/actions'
-import { lookingHere, showLocal, tellSyncProblem } from '../notifications/local'
+import { lookingHere, noticePrefs, showLocal, tellSyncProblem } from '../notifications/local'
 import { NO_INCIDENT, syncIncidentStep } from '../notifications/syncIncident'
 import { localPlan, type Planned } from '../notifications/plan'
 import { isCapacitorShell } from '../../lib/platform'
@@ -26,7 +27,7 @@ import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
 import { focusMenuLabel, focusTarget, pauseMenuLabel, pauseUntil, trayIconState, trayMenuState, trayNow } from './trayState'
 import { SIGNED_OUT } from './menuRows'
-import type { ActivityLogEntry, AppSettings, CalendarEvent, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
+import type { ActivityLogEntry, CalendarEvent, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
 
 // The app's half of the tray and of local notifications, mounted once in the main window's shell
 // (AppLayout). Everywhere: notification buttons land here (actions.ts), a finished focus round
@@ -37,7 +38,7 @@ import type { ActivityLogEntry, AppSettings, CalendarEvent, Interaction, Person,
 /** "Something needs you": a reminder fired here and nobody has looked since. */
 const useNeedsYou = create<{ on: boolean }>(() => ({ on: false }))
 
-const prefs = () => queryClient.getQueryData<AppSettings>(['app_settings']) as NoticePrefs | undefined
+const prefs = (): NoticePrefs => noticePrefs()
 
 const REMINDED_KEY = 'kf_reminded'
 function reminded(): string[] {
@@ -248,12 +249,17 @@ export function TrayBridge() {
     const offFocus = useFocusStore.subscribe((s, prev) => {
       if (s.isRunning !== prev.isRunning || s.mode !== prev.mode) soon()
     })
+    // The wording of every scheduled notice follows the clock switch: replan when it flips.
+    const offClock = useClockStore.subscribe((s, prev) => {
+      if (s.hour24 !== prev.hour24) soon()
+    })
     // Straight away: going to the background is the moment a running round's end gets scheduled.
     document.addEventListener('visibilitychange', scheduleOnAndroid)
     return () => {
       window.clearTimeout(timer)
       offCache()
       offFocus()
+      offClock()
       document.removeEventListener('visibilitychange', scheduleOnAndroid)
     }
   }, [android])

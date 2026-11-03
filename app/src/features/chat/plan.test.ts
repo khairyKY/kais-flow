@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { CHAT_TOOLS, RUNNABLE, claimsAction, looksLikeAction, relevantCitations, restorePlan, stepToCall, type Refs, type Snapshot } from '../../../../supabase/functions/chat/plan.ts'
+import { CHAT_TOOLS, RUNNABLE, claimsAction, looksLikeAction, relevantCitations, resolveTags, restorePlan, stepToCall, stripTags, type Refs, type Snapshot } from '../../../../supabase/functions/chat/plan.ts'
+import { inlineParts } from './markdown'
 import { TOOLS } from '../../../../supabase/functions/mcp/server.ts'
 
 // Queue item 5: the chat's steps become the MCP server's own tool calls.
@@ -120,5 +121,29 @@ describe('honesty and noise', () => {
     ]
     expect(relevantCitations('Your quarterly report is due Friday — want me to block time?', hits)).toEqual([{ title: 'Quarterly report' }])
     expect(relevantCitations("Here's the plan for the week.", hits)).toEqual([])
+  })
+})
+
+// Kai 2026-11-03: answers showed raw "[t1]" / "[e1]" tags. They resolve to chips, or vanish.
+describe('reference tags in an answer', () => {
+  const known: Refs = { t1: { id: 'task-1', type: 'task', title: 'Pay rent' }, e1: { id: 'ev-1', type: 'calendar_event', title: 'Gym' }, i1: { id: 'in-1', type: 'inbox_item', title: 'idea' } }
+  it('keeps the ones it can open, with what they open', () => {
+    const r = resolveTags('- Pay rent (9:00 AM) [t1]\n- Gym [e1]', known)
+    expect(r.text).toBe('- Pay rent (9:00 AM) [t1]\n- Gym [e1]')
+    expect(r.chips).toEqual({ t1: { entity_type: 'task', entity_id: 'task-1', title: 'Pay rent' }, e1: { entity_type: 'calendar_event', entity_id: 'ev-1', title: 'Gym' } })
+  })
+  it('drops the ones it cannot (unknown, or an Inbox capture), with the space before them', () => {
+    const r = resolveTags('Call Omar [t9] and file the idea [i1].', known)
+    expect(r.text).toBe('Call Omar and file the idea.')
+    expect(r.chips).toEqual({})
+  })
+  it('earlier turns lose their tags before the model reads them', () => {
+    expect(stripTags('Pay rent [t1] then Gym [e2]')).toBe('Pay rent then Gym')
+  })
+  it('the app reads a tag as its own piece, inside bold too', () => {
+    expect(inlineParts('Pay rent [t1] and *Gym* [E2]')).toEqual([
+      { t: 'text', s: 'Pay rent ' }, { t: 'ref', s: 't1' }, { t: 'text', s: ' and ' }, { t: 'i', s: 'Gym' }, { t: 'text', s: ' ' }, { t: 'ref', s: 'e2' },
+    ])
+    expect(inlineParts('**Pay [t1]**')).toEqual([{ t: 'b', s: 'Pay [t1]' }])
   })
 })

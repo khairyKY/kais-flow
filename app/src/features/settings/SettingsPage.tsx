@@ -18,7 +18,7 @@ import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme, THEME_MODE_KEY, readThemeMode, themeOfMode, GRAIN_KEY, readGrainPct, applyGrainPct, type ThemeMode } from '../../lib/theme'
 import { prefWritten, usePrefsVersion } from '../../lib/prefs'
-import { clockText, setHour24, useHour24 } from '../../lib/clock'
+import { clockText, hour24, setHour24, useHour24 } from '../../lib/clock'
 import { useUiScale, UI_SCALES, TOUCH_UI_SCALE, defaultUiScale, readUiScaleEnv, uiZoom, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
@@ -60,7 +60,7 @@ import type { ShortcutEntry } from '../../lib/pageShortcutsStore'
 import { useSignOut } from '../auth/useSignOut'
 import { useDomains } from '../domains/api'
 import { CAT, CATS, DESKTOP_HOME, GROUPS, anchorTarget, isCat, isProvider, matches, type CatId, type ProviderId } from './categories'
-import { parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
+import { parseReviewWhen, parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
 import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
 import { LabelManager } from '../tasks/LabelManager'
@@ -473,6 +473,7 @@ function CalendarCat() {
           <Segmented<'12' | '24'> label="Time format" value={h24 ? '24' : '12'} onChange={(x) => setHour24(x === '24')} options={[{ value: '12', label: '12-hour' }, { value: '24', label: '24-hour' }]} />
         </Row>
         <WeekendSetting />
+        <ReviewSetting />
         <Row label="Week starts on" help="Also in the calendar’s View options" keys="monday sunday first day">
           <Segmented<'mon' | 'sun'> label="Week starts on" value={v.weekStartsMon ? 'mon' : 'sun'} onChange={(x) => setV({ weekStartsMon: x === 'mon' })} options={[{ value: 'mon', label: 'Mon' }, { value: 'sun', label: 'Sun' }]} />
         </Row>
@@ -575,6 +576,36 @@ function WeekendSetting() {
         style={PICK}
         display={pickFace(WEEKEND_OPTIONS.find((o) => o.value === shown)?.label)}
       />
+    </Row>
+  )
+}
+
+// Kai 2026-11-03: the weekly review's day and time. app_settings.review_day / review_time (migration 0091, synced
+// like the rest); unset = the first day of the weekend, all day - how it was. Drives Today's prompt (todayLayout reviewDue).
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const REVIEW_AT = '18:00'
+function ReviewSetting() {
+  const { data } = useAppSettings()
+  const ready = settingSynced('review_day') // an unmigrated row has no such column: show nothing to save into
+  const when = parseReviewWhen(data)
+  const weekend = parseWeekend(data?.weekend_days)
+  const first = weekend.find((d) => !weekend.includes((d + 6) % 7))
+  const options = [{ value: 'default', label: first === undefined ? 'No day' : `Weekend start · ${DAY_NAMES[first]}` }, ...DAY_NAMES.map((label, d) => ({ value: String(d), label }))]
+  const shown = when.day === null ? 'default' : String(when.day)
+  if (!ready) return null
+  return (
+    <Row label="Weekly review" help={`${when.day === null ? 'On the first day of your weekend' : `Every ${DAY_NAMES[when.day]}`} · ${when.time ? `from ${clockText(when.time)}` : 'all day'} · Today asks until the week is closed`} keys="weekly review day time sweep close the week">
+      <Select
+        value={shown}
+        onChange={(v) => updateAppSetting('review_day', v === 'default' ? null : Number(v))}
+        options={options}
+        ariaLabel="Weekly review day"
+        className="st-pick"
+        style={PICK}
+        display={pickFace(options.find((o) => o.value === shown)?.label)}
+      />
+      {when.time && <TimeField value={when.time} ariaLabel="Weekly review from" onChange={(v) => v && updateAppSetting('review_time', v)} style={timeStyle(true)} />}
+      <Toggle on={!!when.time} label="Weekly review at a set time" onToggle={() => updateAppSetting('review_time', when.time ? null : REVIEW_AT)} />
     </Row>
   )
 }
@@ -843,7 +874,7 @@ function NotificationsCard() {
   // This browser's own endpoint when it has one (a browser update changes the label, not the endpoint).
   const subscribed = device?.subscribed || subs.some((d) => d.device_label === thisDeviceLabel)
   if (!s) return null
-  const inTheWay = device ? blockers(device, s, new Date(), appZone()) : []
+  const inTheWay = device ? blockers(device, { ...s, hour24: hour24() }, new Date(), appZone()) : []
   const quietOn = s.quiet_hours_on !== false
 
   async function handleSubscribe() {

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 
 vi.mock('./queryClient', () => ({ queryClient: { getQueryData: () => undefined } }))
-const { daysToWeekend, parseWeekend, weekendDays, weekendLabel, weekendPreset, WEEKEND_PRESETS } = await import('./weekend')
+const { daysToWeekend, parseReviewWhen, parseWeekend, weekendDays, weekendLabel, weekendPreset, WEEKEND_PRESETS } = await import('./weekend')
 
 const days = (key: string) => WEEKEND_PRESETS.find((p) => p.key === key)!.days
 /** Where "this weekend" lands from each weekday, Sunday first: days ahead. */
@@ -44,5 +44,16 @@ describe('weekend — the user’s own weekend (Kai 2026-10-07)', () => {
     expect(weekendPreset([0, 6])).toBe('sat-sun')
     expect(weekendPreset([0])).toBe('sun')
     expect(weekendPreset([4, 5])).toBe('custom')
+  })
+})
+
+describe('parseReviewWhen (migration 0091)', () => {
+  it('reads a day 0-6 and a clock time; anything else is unset', () => {
+    expect(parseReviewWhen({ review_day: 3, review_time: '18:00:00' })).toEqual({ day: 3, time: '18:00' })
+    expect(parseReviewWhen({ review_day: 0, review_time: '07:05' })).toEqual({ day: 0, time: '07:05' })
+    expect(parseReviewWhen({ review_day: null, review_time: null })).toEqual({ day: null, time: null })
+    expect(parseReviewWhen({ review_day: 7, review_time: '25:00' })).toEqual({ day: null, time: null })
+    expect(parseReviewWhen({ review_day: '3', review_time: 18 })).toEqual({ day: null, time: null })
+    expect(parseReviewWhen(undefined)).toEqual({ day: null, time: null })
   })
 })
