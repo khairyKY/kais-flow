@@ -10,6 +10,7 @@
 //   E  edit        rename, drag, resize, delete + Undo of an editable Google event go to google-sync; a "no" puts the block back;
 //                  a read-only one never moves, renames or deletes
 //   R  repeating   a repeating Google event asks This · This and following · All, and sends the answer
+//   N  now card    the Now card's Join opens a running event's Meet link
 //   P  phone       the tap sheet: editable title and Delete footer for ours, read-only for the rest; a hold lifts ours only
 //   L  lag         the numbers (200+ Google events, recurring ones too): load, a sync landing, a realtime burst, click latency
 //   node verify.mjs <outDir> [baseUrl=http://localhost:5346] [playwright-core path]      (ONLY=c,e runs some; LAG_ONLY=1 = L only)
@@ -164,7 +165,7 @@ function googleSyncFake(state, o) {
   }
 }
 
-/** o.rows: calendar_events (default the week's); o.view: desktop | phone; o.failEdit: google-sync answers "read_only". */
+/** o.rows: calendar_events (default the week's); o.view: desktop | phone; o.failEdit: google-sync answers "read_only"; o.now: the clock. */
 async function open(route, o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
@@ -211,7 +212,7 @@ async function open(route, o = {}) {
     return r.fulfill({ json: rows.slice(from, from + 1000), headers: { 'content-range': `0-${Math.max(0, rows.length - 1)}/${rows.length}` } }).catch(() => {})
   })
   const page = await ctx.newPage()
-  await page.clock.install({ time: cairo('10:00') })
+  await page.clock.install({ time: o.now ?? cairo('10:00') })
   await page.clock.resume()
   const errors = []
   page.on('pageerror', (e) => errors.push(e.message))
@@ -551,6 +552,20 @@ if (want('r')) {
     check('r12 no page errors', errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
+}
+
+// ── N: the Now card ──
+if (want('n')) {
+  // Wed 14 Oct, 13:15: the Dentist (13:00–14:00, a Meet link) is on.
+  const { ctx, page, errors } = await open('/calendar', { now: cairo('13:15', 14) })
+  const join = page.locator('.kf-now-join').first()
+  check('n1 the Now card shows Join for a running Google event with a Meet link', (await join.count()) === 1 && /Dentist/.test((await page.locator('.kf-now-main').first().textContent()) ?? ''), await page.locator('.kf-now-main').first().textContent().catch(() => ''))
+  await join.click()
+  await sleep(300)
+  check('n2 …and Join opens the Meet link', (await opened(page)).includes(MEET), JSON.stringify(await opened(page)))
+  await shot(page, 'n-now-join')
+  check('n3 no page errors', errors.length === 0, errors.join(' | '))
+  await ctx.close()
 }
 
 // ── P: phone ──
