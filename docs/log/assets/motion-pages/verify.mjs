@@ -230,8 +230,10 @@ if (want('f')) {
     const tr = await ph.page.locator('.fd-plant circle[stroke="var(--acc-sage)"]').first().evaluate((el) => el.style.transition).catch(() => 'missing')
     check(`f1 [${mode}] R4 the phone's running ring sweeps continuously (Effects on only)`, decoOk(mode, /stroke-dashoffset 1s linear/.test(tr)), tr || 'none')
     await ph.ctx.close()
+    const dk = await open('/focus', { ...o, seeds: { kf_focus_session: sess({ secondsLeft: 900 }) } }) // a round with time left (the 5 s one can end before the check)
+    check(`f1 [${mode}] D3: the round under way is its outlined segment on the timeline`, (await dk.page.locator('.fd-tl .ftl-seg.is-now[data-k="f"]').count()) === 1)
+    await dk.ctx.close()
     const { ctx, page, errors } = await open('/focus', { ...o, seeds: { kf_focus_session: sess({}) } })
-    check(`f1 [${mode}] D3: the round under way is its outlined segment on the timeline`, (await page.locator('.fd-tl .ftl-seg.is-now[data-k="f"]').count()) === 1)
     let bloomAt = -1
     let breakAt = -1
     const t0 = Date.now()
