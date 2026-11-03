@@ -135,7 +135,7 @@ const segBtn = (page, group, label) => page.getByRole('group', { name: group }).
   check('desktop: the watched repos are chips (name only), each with its own ✕', txt.includes('kais-flow') && txt.includes('shaheen_website') && (await page.getByRole('button', { name: 'Stop watching khairyKY/kais-flow' }).count()) === 1)
   check('desktop: saved rules → the help names the scope', txt.includes('Every open issue in these repos, and nothing else'))
   check('desktop: Inbox · Normal selected, Pause off', (await segBtn(page, 'New issues land in', 'Inbox').getAttribute('aria-pressed')) === 'true' && (await segBtn(page, 'Priority in inbox ordering', 'Normal').getAttribute('aria-pressed')) === 'true' && (await page.getByRole('switch', { name: 'Pause GitHub' }).getAttribute('aria-checked')) === 'false')
-  check('desktop: the client reads repos/rules as JSON paths, never `data`', state.selects.every((s) => s.includes('repos:data->repos') && s.includes('rules:data->rules') && !/(^|,)data(,|$)/.test(s)), state.selects[0])
+  check('desktop: the client reads repos/rules as JSON paths, never `data`', state.selects.every((s) => (s.includes('courses:data->courses') || (s.includes('repos:data->repos') && s.includes('rules:data->rules'))) && !/(^|,)data(,|$)/.test(s)), state.selects[0])
   await card.screenshot({ path: path.join(OUT, 'desktop-github-card-day.png') })
 
   // + add repo: the server's list, minus what's watched
