@@ -36,7 +36,7 @@ export const GROUPS: CatId[][] = [['account'], ['appearance', 'calendar', 'captu
 export const isCat = (s: string | undefined): s is CatId => !!s && s in CAT
 
 /** The providers under Integrations, each its own page. */
-export const PROVIDERS = ['google', 'github', 'mcp', 'capture-key'] as const
+export const PROVIDERS = ['google', 'classroom', 'github', 'mcp', 'capture-key'] as const
 export type ProviderId = (typeof PROVIDERS)[number]
 export const isProvider = (s: string | undefined): s is ProviderId => !!s && (PROVIDERS as readonly string[]).includes(s)
 

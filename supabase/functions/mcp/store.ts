@@ -135,9 +135,9 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
     async weekStats(fromIso, toIso, fromDay, toDay) {
       const [r] = await tx`
         select
-          (select count(*)::int from tasks where status = 'done' and deleted_at is null and completed_at >= ${fromIso}::timestamptz and completed_at < ${toIso}::timestamptz) as done,
+          (select count(*)::int from tasks where coalesce(external_ref->>'source', '') <> 'classroom' and status = 'done' and deleted_at is null and completed_at >= ${fromIso}::timestamptz and completed_at < ${toIso}::timestamptz) as done,
           (select coalesce(jsonb_agg(title order by completed_at desc), '[]'::jsonb) from (
-            select title, completed_at from tasks where status = 'done' and deleted_at is null and completed_at >= ${fromIso}::timestamptz and completed_at < ${toIso}::timestamptz
+            select title, completed_at from tasks where coalesce(external_ref->>'source', '') <> 'classroom' and status = 'done' and deleted_at is null and completed_at >= ${fromIso}::timestamptz and completed_at < ${toIso}::timestamptz
             order by completed_at desc limit 20) d) as done_titles,
           (select count(*)::int from tasks where deleted_at is null and created_at >= ${fromIso}::timestamptz and created_at < ${toIso}::timestamptz) as added,
           (select coalesce(sum(duration_min), 0)::int from time_entries where started_at >= ${fromIso}::timestamptz and started_at < ${toIso}::timestamptz) as focus_min,
@@ -153,7 +153,7 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
       return tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
         from tasks t left join projects p on p.id = t.project_id
-        where t.status = 'todo' and t.deleted_at is null and not t.someday and not t.paused
+        where t.status = 'todo' and t.deleted_at is null and not t.someday and not t.paused and coalesce(t.external_ref->>'source', '') <> 'classroom'
           and (coalesce(t.due_at, t.scheduled_start) < ${end}::timestamptz
             or (t.scheduled_start >= ${start}::timestamptz and t.scheduled_start < ${end}::timestamptz)
             or (t.top3 and t.due_at is null and t.scheduled_start is null))
@@ -161,11 +161,18 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
         order by t.top3 desc, coalesce(t.due_at, t.scheduled_start) nulls last, t.id
         limit 500`)
     },
+    async doneTasks(start, end) {
+      return tasks(await tx`
+        select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
+        from tasks t left join projects p on p.id = t.project_id
+        where t.status = 'done' and t.deleted_at is null and t.completed_at >= ${start}::timestamptz and t.completed_at < ${end}::timestamptz and coalesce(t.external_ref->>'source', '') <> 'classroom'
+        limit 500`)
+    },
     async listTasks(f: TaskFilter) {
       return tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
         from tasks t left join projects p on p.id = t.project_id
-        where t.deleted_at is null
+        where t.deleted_at is null and coalesce(t.external_ref->>'source', '') <> 'classroom'
           and (${f.status}::text = 'all' or (${f.status}::text = 'open' and t.status = 'todo') or (${f.status}::text = 'done' and t.status = 'done'))
           and (${f.projectId}::uuid is null or t.project_id = ${f.projectId}::uuid)
           and (${f.label}::text is null or ${f.label}::text = any(t.labels))
@@ -180,11 +187,11 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
       const [row] = tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name, 'link', t.external_ref->>'url') as r
         from tasks t left join projects p on p.id = t.project_id
-        where t.id = ${id}::uuid and t.deleted_at is null`)
+        where t.id = ${id}::uuid and t.deleted_at is null and coalesce(t.external_ref->>'source', '') <> 'classroom'`)
       return row ?? null
     },
     async projects() {
-      const rows = await tx`select id, name, status, type, domain_id, target_date from projects where deleted_at is null order by name, id`
+      const rows = await tx`select id, name, status, type, domain_id, target_date from projects where deleted_at is null and coalesce(external_ref->>'source', '') <> 'classroom' order by name, id`
       return rows.map((p) => ({ ...p, target_date: iso(p.target_date) }) as ProjectRow)
     },
     async events(from, to) {
@@ -202,7 +209,7 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
       return tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
         from tasks t left join projects p on p.id = t.project_id
-        where t.deleted_at is null and t.slot_id in (select jsonb_array_elements_text(${textArray(ids)}::text::jsonb)::uuid)
+        where t.deleted_at is null and coalesce(t.external_ref->>'source', '') <> 'classroom' and t.slot_id in (select jsonb_array_elements_text(${textArray(ids)}::text::jsonb)::uuid)
         order by t.scheduled_start nulls last, t.id
         limit 500`)
     },
@@ -210,11 +217,15 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
       // _shared/retrieval.ts's embedding (the runtime's gte-small) + the same search_hybrid the app's
       // search and chat use; security invoker, so RLS scopes it to this user.
       const embedding = JSON.stringify(await embedText(query))
-      // …minus Google-synced events (0074): never sent to an AI (privacy promise, site info §3).
+      // …minus Google-synced events (0074) and Google Classroom tasks and courses (0091): never sent to an AI (privacy promise, site info §3, §5).
       const rows = await tx`
         select s.entity_type, s.entity_id, s.title, s.snippet, s.score from search_hybrid(${query}, ${embedding}, ${limit}) s
         where not (s.entity_type = 'calendar_event'
-          and exists (select 1 from calendar_events e where e.id::text = s.entity_id::text and e.source = 'gcal'))`
+          and exists (select 1 from calendar_events e where e.id::text = s.entity_id::text and e.source = 'gcal'))
+          and not (s.entity_type = 'task'
+          and exists (select 1 from tasks k where k.id::text = s.entity_id::text and k.external_ref->>'source' = 'classroom'))
+          and not (s.entity_type = 'project'
+          and exists (select 1 from projects k where k.id::text = s.entity_id::text and k.external_ref->>'source' = 'classroom'))`
       // Journal entries and people only for a key granted them (0080); tools.ts filters again.
       return (rows as unknown as SearchHit[]).filter((h) => !(h.entity_type in PERSONAL_HITS) || scopes.has(PERSONAL_HITS[h.entity_type]))
     },

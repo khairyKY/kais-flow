@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { FocusableTask } from '../today/startFocus'
+import type { FocusBlock, PlanSettings } from '../focus/focusPlan'
 
 // The tray's own windows (the flyout, the right-click menu) show the main window's one focus timer and
 // drive it over this channel; ./focusChannel is the main window's side. Kept apart from it so neither
@@ -13,6 +14,12 @@ export interface FocusSnapshot {
   secondsLeft: number
   roundMin: number
   taskId: string | null
+  /** Focus D3: the block's rounds, so the flyout draws the same timeline (focus/focusPlan timelineOf). */
+  block?: FocusBlock | null
+  kept?: number
+  breakType?: 'short' | 'long'
+  pomodoroStartIso?: string | null
+  plan?: PlanSettings
 }
 
 export type FocusCommand = { type: 'start'; task: FocusableTask | null } | { type: 'toggle' } | { type: 'stop' }

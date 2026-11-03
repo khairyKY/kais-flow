@@ -10,7 +10,7 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus'
 
 /** cal-clicks (Kai 2026-10-26, Akiflow / Google Calendar): a click opens a block's DETAILS (when, project,
  * repeat, remind…); a right-click opens MENU B (the swatch tray, Duplicate, Work with AI ›, Copy link, Delete). */
@@ -164,6 +164,13 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
   return out
 }
 
+/** "▶ Focus on this" (focus D3): a task block's task, a Time block's first open task, else a plain round. */
+export function focusTaskOf<T extends Pick<Task, 'id' | 'status'> & { slot_id?: string | null }>(e: Pick<CalendarEvent, 'id' | 'task_id' | 'seriesId'>, tasks: readonly T[]): T | null {
+  if (e.task_id) return tasks.find((t) => t.id === e.task_id) ?? null
+  const slot = e.seriesId ?? e.id
+  return tasks.find((t) => t.slot_id === slot && t.status === 'todo') ?? null
+}
+
 /** p7e A4: ⌫ deletes a plain one-off (Akiflow's Backspace); a repeat asks This / Following / All (cal-clicks). */
 function deleteRow(e: CalendarEvent, ctx: BlockMenuContext, repeating: boolean): BlockMenuEntry {
   return { key: 'delete', label: isUntitled(e, ctx.now) ? 'Discard' : 'Delete', destructive: true, sub: false, ...(!e.task_id ? { divider: true } : null), ...(!e.task_id && !repeating ? { hint: '⌫' } : null) }
@@ -183,6 +190,8 @@ function menuB(e: CalendarEvent, ctx: BlockMenuContext, extras: BlockMenuEntry[]
     )
     if (ctx.missed) out.push({ key: 'replan', label: 'Replan…' })
   } else out.push(details)
+  // Focus D3: "▶ Focus on this" — a Time block or an open task's block lands on Focus, split into rounds.
+  if (!e.all_day && (e.type === 'time_block' || (e.task_id && ctx.task && ctx.task.status !== 'done'))) out.push({ key: 'focus', label: '▶ Focus on this' })
   // Kai 2026-10-17: a copy at the same time (side by side) — an event, or a task's copy blocked at this time;
   // never a Time block (a slot repeats instead). A repeat asks what to copy (cal-clicks; "This" by default).
   if (e.task_id ? !!ctx.task : e.type !== 'time_block') out.push({ key: 'duplicate', label: 'Duplicate', hint: '⌃D', divider: true })

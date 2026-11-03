@@ -82,6 +82,35 @@ jobs:
             npx tauri build --bundles nsis --config '{"bundle":{"createUpdaterArtifacts":false}}'
           fi
 
+      # kaisflow:// links (src-tauri/src/capture.rs): the installer registers the scheme (tauri.conf.json
+      # plugins.deep-link -> the NSIS template's deep_link_protocols). Install it silently on the runner and read
+      # the key back the way a widget would (HKCU\Software\Classes\kaisflow\shell\open\command), then open a link
+      # and see the app start and stay up 20 s with the new plugins. Manual runs only: it costs a minute.
+      - name: Check the installer registers kaisflow://
+        if: github.event_name == 'workflow_dispatch'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = (Get-ChildItem src-tauri/target/release/bundle/nsis/*.exe | Select-Object -First 1).FullName
+          Start-Process $setup -ArgumentList '/S' -Wait
+          $key = 'HKCU:\Software\Classes\kaisflow'
+          if ($null -eq (Get-ItemProperty $key -Name 'URL Protocol' -ErrorAction SilentlyContinue)) { throw "$key has no 'URL Protocol' value" }
+          $cmd = (Get-ItemProperty "$key\shell\open\command").'(default)'
+          echo "kaisflow:// -> $cmd"
+          if ($cmd -notmatch '^"(?<exe>[^"]+kais-flow\.exe)" "%1"$') { throw "unexpected open command: $cmd" }
+          $exe = $Matches.exe
+          if (-not (Test-Path $exe)) { throw "$exe does not exist" }
+          Start-Process 'kaisflow://today'
+          Start-Sleep -Seconds 20
+          $p = Get-Process -Name 'kais-flow' -ErrorAction SilentlyContinue
+          if (-not $p) { throw 'the app did not start from kaisflow://today, or exited' }
+          # a second link goes to the running copy (single-instance), not to a second one
+          Start-Process 'kaisflow://calendar'
+          Start-Sleep -Seconds 5
+          if ((Get-Process -Name 'kais-flow').Count -ne $p.Count) { throw 'a second link started a second copy' }
+          echo "- kaisflow:// registered ($exe), opens the app, one copy" >> $env:GITHUB_STEP_SUMMARY
+          Stop-Process -Name 'kais-flow' -Force
+
       - name: Collect
         run: |
           set -euo pipefail

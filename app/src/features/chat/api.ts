@@ -32,7 +32,7 @@ export interface ChatRestore {
 export interface StreamChatHandlers {
   onDelta: (delta: string) => void
   /** `plan`: the answer is a card to confirm (queue item 5) — nothing has changed yet. */
-  onDone: (citations: Citation[], plan?: ChatPlan) => void
+  onDone: (citations: Citation[], plan?: ChatPlan, refs?: Record<string, Citation>) => void
   /** `reason` is 'daily_limit' when today's AI allowance is used up (SEC-2) — a known state with
    * its own calm copy, not a failure; 'busy' when the shared Groq plan is out of tokens this minute. */
   onError: (message: string, reason?: 'daily_limit' | 'busy') => void
@@ -88,7 +88,7 @@ export async function streamChat(
       try {
         const json = JSON.parse(raw)
         if (currentEvent === 'done') {
-          handlers.onDone((json.citations ?? []) as Citation[], json.plan as ChatPlan | undefined)
+          handlers.onDone((json.citations ?? []) as Citation[], json.plan as ChatPlan | undefined, json.refs as Record<string, Citation> | undefined)
         } else if (json.delta) {
           handlers.onDelta(json.delta as string)
         }

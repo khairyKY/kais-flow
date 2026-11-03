@@ -1,6 +1,7 @@
 import { Link } from 'react-router'
 import { Button } from '../../components/kit'
 import { useFocusStore } from './focusStore'
+import { beginFocus } from '../today/startFocus'
 import type { Task } from '../../lib/types'
 
 // R4-D3 (Kai's 2026-07-20 ruling): "a mini version of the focus feature so that the user can
@@ -14,14 +15,12 @@ function mmss(total: number): string {
 }
 
 export function MiniFocus({ task }: { task: Task }) {
-  const { mode, isRunning, secondsLeft, stopwatchSeconds, currentRound, settings, activeTask, togglePlay, setActiveTask } =
+  const { mode, isRunning, secondsLeft, stopwatchSeconds, currentRound, settings, activeTask, togglePlay } =
     useFocusStore()
   const isThisTask = activeTask?.id === task.id
 
-  function start() {
-    if (!isThisTask) setActiveTask({ id: task.id, project_id: task.project_id })
-    if (!isRunning) togglePlay()
-  }
+  // Focus D3: the one Start focus path, so a round started here lands on the task's block in rounds too.
+  const start = () => beginFocus(task)
 
   const label = mode === 'break' ? 'Break' : mode === 'stopwatch' ? 'Stopwatch' : 'Focus'
 

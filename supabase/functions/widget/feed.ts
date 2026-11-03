@@ -17,6 +17,7 @@
 //   names=0       widgets/snapshot.ts mask: "Your goal" · "Pick 2" · "A task" · "Busy"
 import { dateKey, dayWindow, wallTime, wallToInstant } from '../_shared/zone.ts'
 import { splitToday, type EventRow, type TaskRow } from '../mcp/tools.ts'
+import { dayPicks } from '../_shared/today.ts'
 
 /** Palette C (calendar/blockHue.ts BLOCK_SWATCHES), the day hex a block stores. */
 export const PALETTE_C: readonly string[] = [
@@ -91,11 +92,8 @@ export function buildFeed(i: FeedInput) {
   const split = splitToday(i.open, now, zone)
 
   // ── Top 3: open picks + today's finished ones that kept a place, the goal first (top3Display) ──
-  const rank = (x: TaskRow) => x.top3_rank ?? Infinity
-  const donePicks = i.doneToday.filter((x) => x.top3_rank != null)
-  const all = [...split.top3, ...donePicks].sort((a, b) => (rank(a) === rank(b) ? 0 : rank(a) < rank(b) ? -1 : 1))
-  const [goalRow, ...rest] = all
-  const top3Rows = goalRow ? [goalRow, ...rest.filter((x) => x.status === 'todo'), ...rest.filter((x) => x.status !== 'todo')].slice(0, 3) : []
+  const top3Rows = dayPicks(i.open, i.doneToday, now, zone).slice(0, 3)
+  const goalRow = top3Rows[0]
   const goalId = goalRow?.id ?? null
 
   // ── Blocks: timed, today's (or running now) ──

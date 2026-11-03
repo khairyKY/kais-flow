@@ -129,6 +129,22 @@ Kai's Flow also writes your own plan (time blocks, task blocks and your own even
 
 **Turning "Show my plan in Google as busy" off** deletes Kai's Flow's events from Google at once. **Disconnect** deletes them too, before it revokes access.
 
+## 9. Google Classroom (a second, separate consent) `[KAI]`
+
+Kai's Flow can bring the deadlines of your Google Classroom courses in as tasks. It is its own connection (Settings → Integrations → Google Classroom) with its own Google consent page: the Calendar connection above is never widened to carry it.
+
+1. In the same Google Cloud project: **APIs & Services → Library → Google Classroom API → Enable.**
+2. **Credentials → your OAuth client → Authorized redirect URIs → add** `https://eqbbkitofgyxxrfggpbu.supabase.co/functions/v1/classroom-connect` (the Calendar one stays). Save.
+3. **OAuth consent screen → Data access → Add or remove scopes:** `.../auth/classroom.courses.readonly`, `.../auth/classroom.coursework.me.readonly`, `.../auth/classroom.student-submissions.me.readonly`. In **Testing** mode (up to 100 test users) no verification is needed — but the refresh token then lasts only 7 days, so Settings says "Access expired — reconnect" about weekly; **In production** needs Google's verification if the scopes are sensitive (the Cloud Console flags it on this screen; Google's public scope list does not).
+4. Deploy: the release deploys `classroom-connect` and `classroom-sync` and applies migration 0092 (the cron). Nothing else to set: the same two secrets are used.
+5. In the app: Settings → Integrations → Google Classroom → **Connect**, leave all three boxes ticked.
+
+**A university or school account.** A Google Workspace administrator can block outside apps (Admin console → Security → Access and data control → API controls). Then Google refuses the consent page for that account (Google's own "Access blocked: your institution's administrator needs to review …" page, or it comes back with `admin_policy_enforced`, which Settings words as "Your school's Google administrator has blocked outside apps…"), or later refuses the Classroom API (Settings: "Google Classroom refused access…"). Fix: ask the administrator to allow Kai's Flow (its OAuth client id), or connect a personal Google account that is in the courses.
+
+What comes in: each chosen course becomes a project in a **Classroom** domain; each assignment with a due date becomes a task with that due date and time (a date with no time = 23:59 your time) and a link back to Classroom; assignments with no due date wait in **Someday**. Handing one in on Classroom (turned in or returned) ticks the task; if the teacher deletes it, the open task moves to Trash; a changed due date updates it. Work already handed in, drafts, and work due more than 30 days ago are not imported. Unticking a course stops syncing it and keeps what came in. Disconnect asks whether to keep the imported tasks or move them to Trash.
+
+---
+
 ## If something goes wrong
 
 | You see | Why | Fix |

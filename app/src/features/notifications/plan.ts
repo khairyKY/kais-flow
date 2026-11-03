@@ -1,4 +1,4 @@
-import { birthdayNotice, clock, deliver, digestNotice, eventReminderNotice, inQuietHours, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { birthdayNotice, clock, deliver, digestNotice, eventReminderNotice, inQuietHours, is24h, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { DEFAULT_AT, dayBounds, minutesOf, ritualOn, shutDownOn, type RitualSettings } from '../../../../supabase/functions/notify/ritual.ts'
 import { routineDueOn, type ReminderRoutine, type RoutineDone } from '../../../../supabase/functions/notify/routine.ts'
 import { BIRTHDAY_AT, birthdayGroups, type PersonFacts, type Spoke } from '../../../../supabase/functions/notify/birthday.ts'
@@ -197,7 +197,7 @@ export function blockers(d: DeviceState, p: NoticePrefs | null | undefined, now:
     if (d.background === false) out.push('Battery saving can hold reminders while the app is closed — let it run in the background under This phone.')
   }
   if (d.channel === 'web' && d.permission !== 'unsupported' && !d.subscribed) out.push('This device isn’t subscribed — tap “Subscribe this device” first.')
-  if (isPaused(p, now)) out.push(`Notifications are paused until ${clock(p!.notify_paused_until!, zone)}.`)
+  if (isPaused(p, now)) out.push(`Notifications are paused until ${clock(p!.notify_paused_until!, zone, is24h(p))}.`)
   if (inQuietHours(p, now, zone)) out.push('Quiet hours are on — notifications come without a sound.')
   // Kinds turned off that start on — Birthday starting off (12i) isn't something in the way.
   const off = KIND_IDS.filter((k) => !kindOn(k, p) && kindOn(k, null)).map((k) => KIND_LOOK[k].label)

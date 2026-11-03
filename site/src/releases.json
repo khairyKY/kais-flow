@@ -1,5 +1,29 @@
 [
   {
+    "v": "v1.6.2",
+    "date": "2026-11-03",
+    "title": "A calmer Focus, fireworks for your goal, and Google Classroom",
+    "highlights": [
+      "Focus is redrawn: the timer sits in the middle with a small flower that grows through each round, and the round's timeline takes your block's colour",
+      "Ticking the goal of the day sets off a few small fireworks, in different colours every time, and the goal now stays the goal once it's done",
+      "Worth a look is now a deck you can page through with arrows, dots, or a swipe on the phone",
+      "Quick capture from anywhere on Windows and Mac: Ctrl+Shift+K (⌘⇧K) opens a small capture window over any app",
+      "Google Classroom: connect it in Settings to bring each course's deadlines in as tasks, ticked when you hand the work in",
+      "Choose the day and time of your weekly review in Settings → Calendar & time",
+      "Notifications follow your 12/24-hour setting, chat links its references, and the phone hides the Day bar on empty days"
+    ],
+    "icons": [
+      "clock",
+      "sprout",
+      "star",
+      "keyboard",
+      "book",
+      "calendar",
+      "check"
+    ],
+    "art": "cherry-bloom"
+  },
+  {
     "v": "v1.6.1",
     "date": "2026-10-30",
     "title": "A calmer phone Today, a calendar that glides, and an iPhone app that fits",

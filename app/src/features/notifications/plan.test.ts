@@ -26,7 +26,7 @@ describe('localPlan — reminders', () => {
     expect(p.key).toBe(`t1@${tyre.reminder_at}`)
     expect(p.at.toISOString()).toBe(tyre.reminder_at)
     expect(p.notice.title).toBe('Call the tyre supplier · in 30 min')
-    expect(p.notice.body).toBe('08:50 · Car')
+    expect(p.notice.body).toBe('8:50 AM · Car')
     expect(p.notice.actions.map((a) => a.action)).toEqual(['done', 'snooze10', 'snooze60', 'tomorrow'])
   })
 
@@ -149,7 +149,7 @@ describe('localPlan — routine reminders', () => {
     const [p] = routines({ routines: [stretch] })
     expect(p.at.toISOString()).toBe(cairo('07:30').toISOString())
     expect(p.key).toBe(`routine:r1@${cairo('07:30').toISOString()}`)
-    expect(p.notice).toMatchObject({ title: 'Stretch — 07:30', url: '/routines' })
+    expect(p.notice).toMatchObject({ title: 'Stretch — 7:30 AM', url: '/routines' })
     expect(routines({ routines: [{ ...stretch, cadence: { weekdays: [1, 2, 3, 4, 5] } }] })).toEqual([]) // the 3rd is a Saturday
     expect(routines({ routines: [{ ...stretch, active: false }] })).toEqual([])
     expect(routines({ routines: [{ ...stretch, clock_time: null }] })).toEqual([])
@@ -164,7 +164,7 @@ describe('localPlan — routine reminders', () => {
   it('same moment → one notice; its switch, pause and quiet hours apply', () => {
     const both = routines({ routines: [stretch, { ...stretch, id: 'r2', name: 'Journal' }] })
     expect(both).toHaveLength(1)
-    expect(both[0].notice).toMatchObject({ title: '2 routines — 07:30', body: 'Stretch · Journal' })
+    expect(both[0].notice).toMatchObject({ title: '2 routines — 7:30 AM', body: 'Stretch · Journal' })
     expect(routines({ routines: [stretch], prefs: { ...day.prefs, routine_on: false } })).toEqual([])
     expect(routines({ routines: [{ ...stretch, clock_time: '06:30' }] })[0].notice.silent).toBe(true) // before 07:00
   })
@@ -231,7 +231,7 @@ describe('blockers (the test button)', () => {
     expect(lines).toEqual([
       'Permission denied — allow notifications for this site in the browser’s site settings.',
       'This device isn’t subscribed — tap “Subscribe this device” first.',
-      'Notifications are paused until 23:41.',
+      'Notifications are paused until 11:41 PM.',
       'Quiet hours are on — notifications come without a sound.',
       'Turned off: Task reminder, Focus done.',
     ])

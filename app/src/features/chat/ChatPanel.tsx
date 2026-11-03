@@ -26,35 +26,48 @@ import './chat.css'
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
 
 /** **bold**, *italics*, `code` as elements (./markdown inlineParts) — text only, never HTML. */
-function Inline({ text }: { text: string }) {
+function Inline({ text, refs, open }: { text: string; refs?: Record<string, Citation>; open: (c: Citation) => void }) {
   return (
     <>
-      {inlineParts(text).map((p, i) => (p.t === 'b' ? <strong key={i}>{p.s}</strong> : p.t === 'i' ? <em key={i}>{p.s}</em> : p.t === 'code' ? <code key={i}>{p.s}</code> : p.s))}
+      {inlineParts(text).map((p, i) => {
+        if (p.t === 'b') return <strong key={i}><Inline text={p.s} refs={refs} open={open} /></strong>
+        if (p.t === 'i') return <em key={i}><Inline text={p.s} refs={refs} open={open} /></em>
+        if (p.t === 'code') return <code key={i}>{p.s}</code>
+        if (p.t !== 'ref') return p.s
+        // [t1] / [e1]: a chip that opens the item when the answer's refs know it; nothing when not.
+        const c = refs?.[p.s]
+        return c ? (
+          <button key={i} type="button" className="kf-chat-ref" aria-label={`Open ${c.title}`} title={c.title} onClick={() => open(c)}>
+            {c.entity_type === 'calendar_event' ? '↗ event' : '↗ task'}
+          </button>
+        ) : null
+      })}
     </>
   )
 }
 
 /** A reply as real paragraphs, lists and tables (queue item 5: it printed raw pipes). */
-function Markdown({ text }: { text: string }) {
+function Markdown({ text, refs, open }: { text: string; refs?: Record<string, Citation>; open: (c: Citation) => void }) {
+  const I = ({ text }: { text: string }) => <Inline text={text} refs={refs} open={open} />
   return (
     <div className="kf-md">
       {parseMarkdown(text).map((b, i) => {
-        if (b.type === 'h') return <p key={i} className="kf-md-h"><Inline text={b.text} /></p>
+        if (b.type === 'h') return <p key={i} className="kf-md-h"><I text={b.text} /></p>
         if (b.type === 'ul' || b.type === 'ol') {
           const List = b.type
-          return <List key={i}>{b.items.map((x, j) => <li key={j}><Inline text={x} /></li>)}</List>
+          return <List key={i}>{b.items.map((x, j) => <li key={j}><I text={x} /></li>)}</List>
         }
         if (b.type === 'table') {
           return (
             <div key={i} className="kf-md-table">
               <table>
-                <thead><tr>{b.head.map((c, j) => <th key={j}><Inline text={c} /></th>)}</tr></thead>
-                <tbody>{b.rows.map((r, j) => <tr key={j}>{r.map((c, k) => <td key={k}><Inline text={c} /></td>)}</tr>)}</tbody>
+                <thead><tr>{b.head.map((c, j) => <th key={j}><I text={c} /></th>)}</tr></thead>
+                <tbody>{b.rows.map((r, j) => <tr key={j}>{r.map((c, k) => <td key={k}><I text={c} /></td>)}</tr>)}</tbody>
               </table>
             </div>
           )
         }
-        return <p key={i}>{b.lines.map((l, j) => <span key={j}>{j > 0 && <br />}<Inline text={l} /></span>)}</p>
+        return <p key={i}>{b.lines.map((l, j) => <span key={j}>{j > 0 && <br />}<I text={l} /></span>)}</p>
       })}
     </div>
   )
@@ -241,10 +254,10 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
             })
           },
           // A plan arrives as a card (queue item 5): nothing has changed until Confirm.
-          onDone: (citations, plan) =>
+          onDone: (citations, plan, refs) =>
             plan?.calls.length
               ? updateLast({ citations: [], plan: { ...plan, state: 'pending' }, content: historyText('pending', planLines(plan.calls, plan.previews, h24)) })
-              : updateLast({ citations }),
+              : updateLast({ citations, refs }),
           // X5 States rule — the word "error" never appears; calm copy, no raw message. SEC-2: a
           // used-up daily AI allowance says so plainly instead of inviting a retry.
           onError: (_message, reason) =>
@@ -397,7 +410,7 @@ export function ChatPanel({ open, onClose }: { open: boolean; onClose: () => voi
           }
           return (
             <div key={i} className={arrive} style={{ alignSelf: 'flex-start', maxWidth: '85%', background: 'var(--paper-bone)', borderRadius: '12px 12px 12px 3px', padding: '9px 13px', fontSize: 13, lineHeight: 1.45, color: 'var(--ink-body)' }}>{/* ds-ok: the bubble's look as it was; only its arrival (kf-row-in) is new */}
-              <Markdown text={m.content} />
+              <Markdown text={m.content} refs={m.refs} open={goToCitation} />
               {m.citations && m.citations.length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 7 }}>
                   {m.citations.map((c) => (

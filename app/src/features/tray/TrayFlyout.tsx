@@ -22,7 +22,10 @@ import { dayOfJourney } from '../today/todayLayout'
 import { Checkbox } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { ToastHost } from '../../components/ToastHost'
-import { inRound, mmss, useFocusMirror } from './focusMirror'
+import { inRound, mmss, useFocusMirror, type FocusSnapshot } from './focusMirror'
+import { FocusTimeline } from '../focus/FocusTimeline'
+import { upNextEvents } from '../today/upNext'
+import { hm, keptMinutes, blockMinutes, timelineOf } from '../focus/focusPlan'
 import { focusTarget, minutesText, trayNow, type TrayNow } from './trayState'
 import { native } from './native'
 import { appZone, useAppZone } from '../../lib/appZone'
@@ -132,6 +135,32 @@ function hueOf(e: CalendarEvent, task: Task | undefined, projects: Project[], do
   return { '--c': h.c, '--ct': h.ink } as CSSProperties
 }
 
+/** Focus D3 (C's flyout, the timeline only — no flowers): the block and the bud, the time, the task, the block's
+ * segments in its colour, what's kept and what's next. */
+function FocusCard({ f, title, next }: { f: FocusSnapshot; title: string; next: CalendarEvent | null }) {
+  const session = { mode: f.mode, isRunning: f.isRunning, secondsLeft: f.secondsLeft, pomodoroStartIso: f.pomodoroStartIso ?? null, breakType: f.breakType ?? 'short', block: f.block ?? null, kept: f.kept ?? 0 }
+  const tl = timelineOf(session, f.plan!)
+  const b = f.block!
+  const onBreak = f.mode === 'break' || f.mode === 'garden'
+  return (
+    <div className="kf-tray-now kf-tray-fb kf-tray-fb--tl">
+      <div className="kf-tray-fb-head">
+        <span className="kf-tray-meta">
+          {b.title} · {onBreak ? 'break' : `bud ${Math.min(session.kept + 1, b.rounds)} of ${b.rounds}`}
+          {f.isRunning ? '' : ' · paused'}
+        </span>
+        <b className="kf-tray-fb-time">{mmss(f.secondsLeft)}</b>
+      </div>
+      <div className="kf-tray-title">{title}</div>
+      {tl && <FocusTimeline tl={tl} color={b.color} className="kf-tray-tl" />}
+      <div className="kf-tray-meta">
+        kept {hm(keptMinutes(session, f.plan!))} of {hm(blockMinutes(b))}
+        {next ? ` · next: ${next.title} ${timeText(new Date(next.starts_at), appZone())}` : ''}
+      </div>
+    </div>
+  )
+}
+
 /** §4 card A: Up next / Ongoing, the block's mark (its check for a task, a ring for an event), a bar, the times. */
 function NowCard({ n, taskById, projects, domains }: { n: TrayNow<CalendarEvent>; taskById: Map<string, Task>; projects: Project[]; domains: Domain[] }) {
   if (n.kind === 'none') return <div className="kf-tray-quiet">Nothing else today</div>
@@ -226,7 +255,9 @@ export function TrayFlyout() {
         <span className="kf-tray-meta">Day {day}</span>
       </header>
 
-      {running ? (
+      {running && focus?.block && focus.plan ? (
+        <FocusCard f={focus} title={onBreak ? 'Rest your eyes' : (focusTask?.title ?? 'A round of focus')} next={upNextEvents(events, now).find((e) => e.id !== focus.block!.eventId && Date.parse(e.starts_at) > now.getTime()) ?? null} />
+      ) : running ? (
         <div className="kf-tray-now kf-tray-fb">
           <span className="kf-tray-ring" style={{ '--pct': `${Math.round(done * 100)}%` } as CSSProperties}>
             <span>

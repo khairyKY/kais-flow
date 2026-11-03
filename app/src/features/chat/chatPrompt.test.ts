@@ -91,6 +91,6 @@ describe('chat prompt (the "not in your data" fix)', () => {
     expect(text).toContain('- ★ GCI homework (13:00) [t1]')
     expect(text).toContain('- 18:00–19:00 Gym [e1]')
     expect(text).toContain('Inbox: 2 waiting to be sorted.\n- renew hosting before the 15th [i1]')
-    expect(refs).toEqual({ t1: { id: 'task-1', type: 'task' }, e1: { id: 'row-9', type: 'calendar_event' }, i1: { id: 'inbox-1', type: 'inbox_item' } })
+    expect(refs).toEqual({ t1: { id: 'task-1', type: 'task', title: 'GCI homework' }, e1: { id: 'row-9', type: 'calendar_event', title: 'Gym' }, i1: { id: 'inbox-1', type: 'inbox_item', title: 'renew hosting   before the 15th' } })
   })
 })

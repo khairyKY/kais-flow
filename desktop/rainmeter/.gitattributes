@@ -1,0 +1,4 @@
+# Rainmeter: .ini/.inc as Windows text; widget.lua is UTF-16 LE (Rainmeter then hands Lua UTF-8), so git keeps its bytes
+*.ini text eol=crlf
+*.inc text eol=crlf
+Glass/@Resources/KaisFlow/widget.lua -text

@@ -456,6 +456,31 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .td-nudge-name { padding-right: var(--sp-10); font-size: var(--fs-body); font-weight: var(--fw-medium); color: var(--ink-body); }
 .td-nudge-why { margin-top: 3px; font-size: var(--fs-caption); color: var(--acc-gold); }
 .td-nudge-actions { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-3); }
+/* Worth a look — B · the deck (Kai 2026-10-31, design-export/Worth a look and fireworks.html): ‹ 1 of 11 ›, the
+   dots, sheets behind the card (desktop) / the next card peeking in (phone). */
+.td-worth:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-card); }
+.td-worth.is-phone { padding-top: var(--sp-6); }
+.td-deck-arr { display: inline-flex; align-items: center; gap: 2px; }
+.td-deck-arr button { position: relative; width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--line-solid); background: var(--paper-parchment); color: var(--ink-body); cursor: pointer; }
+.td-deck-arr button:disabled { color: var(--ink-faint); border-color: var(--line-card); cursor: default; }
+.td-deck-arr button:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.td-worth.is-phone .td-deck-arr button { width: 36px; height: 36px; }
+.td-worth.is-phone .td-deck-arr button::after { content: ''; position: absolute; inset: -4px; } /* a 44 target */
+.td-deck-count { min-width: 52px; text-align: center; font-size: var(--fs-caption); color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.td-deck { position: relative; margin-bottom: 10px; }
+.td-deck-sh { position: absolute; inset: 0; border: 1px solid var(--line-goal); border-radius: var(--radius-card); background: var(--paper-goal); }
+.td-deck-sh.is-1 { transform: translateY(5px) scale(0.965); opacity: 0.75; }
+.td-deck-sh.is-2 { transform: translateY(10px) scale(0.93); opacity: 0.45; }
+.td-deck-card { position: relative; z-index: 1; }
+.td-deck-dots { display: flex; justify-content: center; gap: 5px; margin-top: 14px; }
+.td-deck-dots i { width: 6px; height: 6px; border-radius: 3px; background: var(--line-solid); }
+.td-deck-dots i.is-on { width: 16px; background: var(--acc-gold); }
+.td-car { display: flex; gap: var(--sp-2); margin-right: calc(-1 * var(--gutter-phone)); overflow: hidden; touch-action: pan-y; }
+.td-car .td-deck-card { flex: 0 0 calc(100% - 36px); min-width: 0; }
+.td-car-peek { flex: 0 0 40px; padding: 0; overflow: hidden; opacity: 0.85; cursor: default; }
+.td-swipe { display: flex; justify-content: center; margin-top: 6px; font-size: var(--fs-caption); color: var(--ink-faint); }
+.td-worth-empty { display: flex; align-items: center; gap: var(--sp-3); padding: 12px 14px; border: 1px dashed var(--line-dashed); border-radius: var(--radius-card); color: var(--ink-muted); font-size: var(--fs-body-s); }
+.td-worth-empty img { height: 34px; opacity: 0.7; }
 .td-btn-sm.kf-button { height: 30px; padding: 0 var(--sp-3); font-size: var(--fs-caption); }
 
 /* Subtasks (Kai 2026-10-16): a subtask drawn by itself says whose it is — "↳ parent", quiet, one line. */

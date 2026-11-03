@@ -27,6 +27,21 @@ export function weekendDays(): number[] {
   return parseWeekend(queryClient.getQueryData<AppSettings>(['app_settings'])?.weekend_days)
 }
 
+/** The weekly review's day and time (migration 0091; Settings → Calendar & time). `day` null = the first
+ * day of the weekend, `time` null = all day. A value outside 0–6 / not a clock time reads as unset. */
+export interface ReviewWhen {
+  day: number | null
+  time: string | null
+}
+export function parseReviewWhen(raw: { review_day?: unknown; review_time?: unknown } | null | undefined): ReviewWhen {
+  const day = typeof raw?.review_day === 'number' && Number.isInteger(raw.review_day) && raw.review_day >= 0 && raw.review_day <= 6 ? raw.review_day : null
+  const time = typeof raw?.review_time === 'string' && /^([01]\d|2[0-3]):[0-5]\d/.test(raw.review_time) ? raw.review_time.slice(0, 5) : null
+  return { day, time }
+}
+export function reviewWhen(): ReviewWhen {
+  return parseReviewWhen(queryClient.getQueryData<AppSettings>(['app_settings']))
+}
+
 /** Days from a day whose weekday is `weekday` to the first day of the coming weekend (0 = that day):
  * the next weekend day whose day before isn't one — so Sat + Sun starts on Saturday, Fri + Sat on
  * Friday, and on a Sunday "this weekend" is next Saturday. Null with no weekend, or all seven days. */

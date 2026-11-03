@@ -12,6 +12,8 @@ export interface DisplayMessage {
   /** What the model reads back (for a card: what was proposed, and what really happened). */
   content: string
   citations?: Citation[]
+  /** The [t1] / [e1] tags the answer carries → what each opens. A tag not in here shows as nothing. */
+  refs?: Record<string, Citation>
   plan?: ChatPlan & { state: PlanState }
   /** What each confirmed call really did. */
   outcomes?: ChatOutcome[]

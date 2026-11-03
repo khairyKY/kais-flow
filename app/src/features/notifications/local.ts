@@ -3,6 +3,7 @@ import { isTauri, native } from '../tray/native'
 import { isCapacitorShell } from '../../lib/platform'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
+import { hour24 } from '../../lib/clock'
 import { writeRow } from '../../lib/outbox'
 import { activityRow } from '../../lib/activity'
 import { playNotice } from './sounds'
@@ -48,8 +49,9 @@ export function lookingHere(): boolean {
   return document.visibilityState === 'visible' && document.hasFocus()
 }
 
-/** This account's Settings → Notifications, as last read. */
-export const noticePrefs = () => queryClient.getQueryData(['app_settings']) as NoticePrefs | undefined
+/** This account's Settings → Notifications, as last read — with this device's own clock switch, so the
+ * words of a notice built here (the Windows/Mac sweep, the phone's schedule) read the way the app does. */
+export const noticePrefs = (): NoticePrefs => ({ ...(queryClient.getQueryData(['app_settings']) as NoticePrefs | undefined), hour24: hour24() })
 
 /** A local notice for something that happened while nobody was looking — its kind's switch, pause and
  * quiet hours apply (copy.ts deliver). The notice shown, or null. */

@@ -85,7 +85,27 @@ export const CHAT_TOOLS = [
 ]
 
 /** Short refs the prompt's lists give items ([t2] a task, [e1] an event, [i3] an Inbox item) → ids. */
-export type Refs = Record<string, { id: string; type: 'task' | 'calendar_event' | 'inbox_item' }>
+export type Refs = Record<string, { id: string; type: 'task' | 'calendar_event' | 'inbox_item'; title?: string }>
+
+/** The tags themselves, with the space before them: " [t1]". */
+export const REF_TAG = /[ \t]*\[([tei]\d+)\]/gi
+
+/** An answer's tags: the ones the snapshot gave out stay (the app draws them as chips that open the
+ * item, with `chips` carrying what they open); any other is dropped, so no raw "[t1]" ever shows. */
+export function resolveTags(text: string, refs: Refs): { text: string; chips: Record<string, { entity_type: string; entity_id: string; title: string }> } {
+  const chips: Record<string, { entity_type: string; entity_id: string; title: string }> = {}
+  const out = text.replace(REF_TAG, (all, key: string) => {
+    const r = refs[key.toLowerCase()]
+    if (!r || r.type === 'inbox_item') return '' // an Inbox capture has no page of its own to open
+    chips[key.toLowerCase()] = { entity_type: r.type, entity_id: r.id, title: r.title ?? '' }
+    return all
+  })
+  return { text: out, chips }
+}
+
+/** Earlier turns carry the tags of an earlier snapshot — numbered afresh each time, so stale ones would
+ * point at the wrong item. The model never sees them again. */
+export const stripTags = (text: string): string => text.replace(REF_TAG, '')
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const EVENT_WHEN = new Set(['add_event', 'edit_event'])

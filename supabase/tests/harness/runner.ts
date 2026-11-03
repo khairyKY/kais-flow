@@ -11,6 +11,9 @@
 //   - https requests to a real Web Push host go to the mock push service at HARNESS_PUSH_MOCK
 //     (`<mock>/<last path segment>`) instead. Since migration 0036 push_subscriptions only admits
 //     those hosts, so this is how seeded test devices get their pushes delivered and decrypted;
+//   - with HARNESS_CLASSROOM_MOCK set, https requests to oauth2.googleapis.com and classroom.googleapis.com go
+//     to that mock (`<mock><path><query>`, tests/harness/classroom-mock.ts) instead — Google's token endpoint
+//     and the Classroom API;
 //   - with HARNESS_GROQ_STUB=1, api.groq.com answers with a fixed canned reply (parse JSON, a
 //     one-chunk chat stream, a transcript) so the paths after the Groq call can be exercised.
 //     Without it, Groq is simply unreachable (--allow-net doesn't include it).
@@ -36,6 +39,7 @@ const SUPABASE_HOST = new URL(Deno.env.get('SUPABASE_URL')!).host
 const PUSH_MOCK = Deno.env.get('HARNESS_PUSH_MOCK') ?? ''
 const FETCH_LOG = Deno.env.get('HARNESS_FETCH_LOG') ?? ''
 const GROQ_STUB = Deno.env.get('HARNESS_GROQ_STUB') === '1'
+const CLASSROOM_MOCK = Deno.env.get('HARNESS_CLASSROOM_MOCK') ?? ''
 // The harness's own idea of a push host — deliberately not imported from notify, so a bug in
 // notify's allowlist can't be hidden by the harness agreeing with it.
 const PUSH_HOST = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/
@@ -68,6 +72,9 @@ globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise
   if (FETCH_LOG) await Deno.writeTextFile(FETCH_LOG, JSON.stringify({ method, url: url.href }) + '\n', { append: true })
   if (PUSH_MOCK && url.protocol === 'https:' && PUSH_HOST.test(url.hostname)) {
     return realFetch(`${PUSH_MOCK}/${url.pathname.split('/').pop()}`, init)
+  }
+  if (CLASSROOM_MOCK && url.protocol === 'https:' && (url.hostname === 'oauth2.googleapis.com' || url.hostname === 'classroom.googleapis.com')) {
+    return realFetch(`${CLASSROOM_MOCK}${url.pathname}${url.search}`, init)
   }
   if (GROQ_STUB && url.hostname === 'api.groq.com') return groqStub(url, init)
   return realFetch(input, init)

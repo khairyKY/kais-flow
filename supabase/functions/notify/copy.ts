@@ -54,6 +54,31 @@ export interface NoticePrefs {
   lock_screen_names?: boolean | null
   /** The tray's "Pause notifications for 1 hour". */
   notify_paused_until?: string | null
+  /** The 24-hour clock (a device sets it from its own switch). Absent: read from `prefs`, else 12-hour. */
+  hour24?: boolean | null
+  /** app_settings.prefs (0087): the synced device settings, { key: { v: <stored string>, at } }. notify
+   * reads the clock switch from `kf.calViewOptions` here. */
+  prefs?: unknown
+}
+
+/** Does this person read the 24-hour clock? Their switch (Settings › Calendar & time › Time format,
+ * synced in app_settings.prefs); 12-hour when it was never set — the app's own default (lib/clock). */
+export function is24h(p: NoticePrefs | null | undefined): boolean {
+  if (typeof p?.hour24 === 'boolean') return p.hour24
+  try {
+    const v = (p?.prefs as Record<string, { v?: unknown } | null> | null | undefined)?.['kf.calViewOptions']?.v
+    return typeof v === 'string' && (JSON.parse(v) as { hour24?: unknown } | null)?.hour24 === true
+  } catch {
+    return false
+  }
+}
+
+/** "H:MM" wall time as the person reads it: "1:05 PM", or "13:05" on the 24-hour clock. */
+export function hhmm(t: string, h24: boolean): string {
+  const m = /^(\d{1,2}):(\d{2})/.exec(t)
+  if (!m) return t
+  const h = Number(m[1]) % 24
+  return h24 ? `${String(h).padStart(2, '0')}:${m[2]}` : `${h % 12 || 12}:${m[2]} ${h < 12 ? 'AM' : 'PM'}`
 }
 
 export const QUIET_FROM = '22:30'
@@ -107,9 +132,16 @@ export function deliver(n: Notice, p: NoticePrefs | null | undefined, now: Date,
 
 const showNames = (p: NoticePrefs | null | undefined) => p?.lock_screen_names === true
 
-/** "09:50" on `zone`'s wall clock. */
-export function clock(iso: string, zone: string = RITUAL_ZONE): string {
-  return new Intl.DateTimeFormat('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso))
+/** "9:50 AM" on `zone`'s wall clock, or "09:50" when `h24`. */
+export function clock(iso: string, zone: string = RITUAL_ZONE, h24 = false): string {
+  return hhmm(new Intl.DateTimeFormat('en-GB', { timeZone: zone, hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(iso)), h24)
+}
+
+/** "6:00–7:30 PM" (the meridiem once when both ends share it), "18:00–19:30". */
+function span(from: string, to: string, zone: string, h24: boolean): string {
+  const a = clock(from, zone, h24)
+  const b = clock(to, zone, h24)
+  return !h24 && a.slice(-2) === b.slice(-2) ? `${a.slice(0, -3)}–${b}` : `${a}–${b}`
 }
 
 export interface ReminderTask {
@@ -120,11 +152,11 @@ export interface ReminderTask {
   project?: string | null
 }
 
-/** "in 10 min" before the time, "now" at it, "at 14:00" more than an hour off. */
-function lead(dueAt: string, now: Date, zone: string): string {
+/** "in 10 min" before the time, "now" at it, "at 2:00 PM" more than an hour off. */
+function lead(dueAt: string, now: Date, zone: string, h24: boolean): string {
   const min = Math.round((new Date(dueAt).getTime() - now.getTime()) / 60_000)
   if (min <= 0) return 'now'
-  return min < 60 ? `in ${min} min` : `at ${clock(dueAt, zone)}`
+  return min < 60 ? `in ${min} min` : `at ${clock(dueAt, zone, h24)}`
 }
 
 /** Task reminder: "Call the tyre supplier · in 10 min" / "09:50 · Car" · Done · In 10 min · In 1 hour ·
@@ -132,13 +164,14 @@ function lead(dueAt: string, now: Date, zone: string): string {
  * Several at once are one grouped notice ("3 reminders"). Private (lock-screen names off): "A reminder". */
 export function reminderNotice(tasks: readonly ReminderTask[], p: NoticePrefs | null | undefined, now: Date, zone: string = RITUAL_ZONE): Notice {
   const names = showNames(p)
+  const h24 = is24h(p)
   const taskIds = tasks.map((t) => t.id)
   if (tasks.length === 1) {
     const t = tasks[0]
-    const body = [t.due_at ? clock(t.due_at, zone) : '', t.project ?? ''].filter(Boolean).join(' · ')
+    const body = [t.due_at ? clock(t.due_at, zone, h24) : '', t.project ?? ''].filter(Boolean).join(' · ')
     return {
       kind: 'task_reminder',
-      title: names ? (t.due_at ? `${t.title} · ${lead(t.due_at, now, zone)}` : t.title) : 'A reminder',
+      title: names ? (t.due_at ? `${t.title} · ${lead(t.due_at, now, zone, h24)}` : t.title) : 'A reminder',
       body: names ? body : 'Unlock to see it',
       tag: `reminder-${t.id}`,
       actions: [
@@ -177,17 +210,18 @@ export interface ReminderEvent {
   ends_at: string
 }
 
-/** Event reminder (0077, A12): "Gym · in 15 min" / "18:00–19:30" · Open (the calendar on that day).
+/** Event reminder (0077, A12): "Gym · in 15 min" / "6:00–7:30 PM" · Open (the calendar on that day).
  * Several at once are one notice ("2 events"). Private (lock-screen names off): "An event · in 15 min". */
 export function eventReminderNotice(events: readonly ReminderEvent[], p: NoticePrefs | null | undefined, now: Date, zone: string = RITUAL_ZONE): Notice {
   const names = showNames(p)
+  const h24 = is24h(p)
   const day = `/calendar?date=${dateKey(new Date(events[0].starts_at), zone)}`
   if (events.length === 1) {
     const [e] = events
     return {
       kind: 'event_reminder',
-      title: `${names ? e.title : 'An event'} · ${lead(e.starts_at, now, zone)}`,
-      body: names ? `${clock(e.starts_at, zone)}–${clock(e.ends_at, zone)}` : 'Unlock to see it',
+      title: `${names ? e.title : 'An event'} · ${lead(e.starts_at, now, zone, h24)}`,
+      body: names ? span(e.starts_at, e.ends_at, zone, h24) : 'Unlock to see it',
       tag: `event-${e.id}`,
       actions: [{ action: 'open', title: 'Open' }],
       url: day,
@@ -273,11 +307,11 @@ export interface ReminderRoutineCopy {
   clock_time: string
 }
 
-/** Routine reminder (0062): "Stretch — 07:30" · Open. Several at once are one notice ("2 routines —
- * 07:30" / "Stretch · Journal"). Private (lock-screen names off): "A routine — 07:30". */
+/** Routine reminder (0062): "Stretch — 7:30 AM" · Open. Several at once are one notice ("2 routines —
+ * 07:30" / "Stretch · Journal"). Private (lock-screen names off): "A routine — 7:30 AM". */
 export function routineNotice(routines: readonly ReminderRoutineCopy[], p: NoticePrefs | null | undefined): Notice {
   const names = showNames(p)
-  const at = routines[0].clock_time.slice(0, 5)
+  const at = hhmm(routines[0].clock_time, is24h(p))
   const one = routines.length === 1
   const shown = routines.slice(0, 3).map((r) => r.name).join(' · ') + (routines.length > 3 ? ` · +${routines.length - 3} more` : '')
   return {

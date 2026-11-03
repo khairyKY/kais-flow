@@ -4,6 +4,8 @@ import {
   CHECK_BELOW,
   deliver,
   digestNotice,
+  eventReminderNotice,
+  is24h,
   focusDoneNotice,
   inQuietHours,
   isPaused,
@@ -30,7 +32,7 @@ describe('task reminder', () => {
   // Snooze (Kai 2026-10-17): In 10 min / In 1 hour after Done — Chrome shows two, Android three, Windows four.
   it('says the drawn copy, with Done · In 10 min · In 1 hour · Tomorrow', () => {
     const n = reminderNotice([tyre], NAMES, cairo('09:40'))
-    expect(n).toMatchObject({ title: 'Call the tyre supplier · in 10 min', body: '09:50 · Car', taskIds: ['t1'], url: '/tasks?focus=t1', silent: false })
+    expect(n).toMatchObject({ title: 'Call the tyre supplier · in 10 min', body: '9:50 AM · Car', taskIds: ['t1'], url: '/tasks?focus=t1', silent: false })
     expect(n.actions.map((a) => a.title)).toEqual(['Done', 'In 10 min', 'In 1 hour', 'Tomorrow'])
   })
 
@@ -41,9 +43,9 @@ describe('task reminder', () => {
     expect(n.actions.map((a) => a.action)).toEqual(['done', 'snooze10', 'snooze60', 'tomorrow']) // the buttons still work
   })
 
-  it('reads "now" at the time and "at 14:00" further off; no time, no lead', () => {
+  it('reads "now" at the time and "at 2:00 PM" further off; no time, no lead', () => {
     expect(reminderNotice([tyre], NAMES, cairo('09:50')).title).toBe('Call the tyre supplier · now')
-    expect(reminderNotice([{ ...tyre, due_at: cairo('14:00').toISOString() }], NAMES, cairo('09:40')).title).toBe('Call the tyre supplier · at 14:00')
+    expect(reminderNotice([{ ...tyre, due_at: cairo('14:00').toISOString() }], NAMES, cairo('09:40')).title).toBe('Call the tyre supplier · at 2:00 PM')
     expect(reminderNotice([{ id: 'x', title: 'Water the plants' }], NAMES, cairo('09:40'))).toMatchObject({ title: 'Water the plants', body: '' })
   })
 
@@ -73,14 +75,14 @@ describe('the other kinds', () => {
     expect(digestNotice(['a'], NAMES, 0).body).toBe('✶ a.')
   })
 
-  it('routine reminder: "Stretch — 07:30" · Open; several at once are one; private without names', () => {
+  it('routine reminder: "Stretch — 7:30 AM" · Open; several at once are one; private without names', () => {
     const stretch = { id: 'r1', name: 'Stretch', clock_time: '07:30:00' }
     const n = routineNotice([stretch], NAMES)
-    expect(n).toMatchObject({ kind: 'routine', title: 'Stretch — 07:30', body: '', tag: 'routine-r1', url: '/routines', silent: false })
+    expect(n).toMatchObject({ kind: 'routine', title: 'Stretch — 7:30 AM', body: '', tag: 'routine-r1', url: '/routines', silent: false })
     expect(n.actions).toEqual([{ action: 'open', title: 'Open' }])
-    expect(routineNotice([stretch], {})).toMatchObject({ title: 'A routine — 07:30', body: 'Unlock to see it' })
+    expect(routineNotice([stretch], {})).toMatchObject({ title: 'A routine — 7:30 AM', body: 'Unlock to see it' })
     const two = [stretch, { id: 'r2', name: 'Journal', clock_time: '07:30' }]
-    expect(routineNotice(two, NAMES)).toMatchObject({ title: '2 routines — 07:30', body: 'Stretch · Journal', tag: 'routines' })
+    expect(routineNotice(two, NAMES)).toMatchObject({ title: '2 routines — 7:30 AM', body: 'Stretch · Journal', tag: 'routines' })
     expect(routineNotice(two, {}).body).toBe('Unlock to see them')
     expect(JSON.stringify(routineNotice(two, {}))).not.toContain('Stretch')
   })
@@ -207,5 +209,37 @@ describe('the three 12k drew last (2026-10-12): paper ready, birthday, sync prob
     expect(deliver(bday, {}, cairo('08:00'))).toBeNull()
     expect(deliver(bday, { birthday_on: true }, cairo('08:00'))).toMatchObject({ silent: true })
     expect(deliver(paperReadyNotice(lecture, {}), { notify_paused_until: cairo('10:00').toISOString() }, cairo('09:00'))).toBeNull()
+  })
+})
+
+// Kai 2026-11-03: notification text always showed 24-hour times; it follows the clock switch now.
+describe('the 12h / 24h clock in notification text', () => {
+  const synced = (v: unknown) => ({ prefs: { 'kf.calViewOptions': { v: JSON.stringify(v), at: '2026-11-01T00:00:00Z' } } })
+  it('reads the synced switch from app_settings.prefs; 12-hour when absent or unreadable', () => {
+    expect(is24h(null)).toBe(false)
+    expect(is24h({})).toBe(false)
+    expect(is24h(synced({}))).toBe(false)
+    expect(is24h(synced({ hour24: true }))).toBe(true)
+    expect(is24h(synced({ hour24: false }))).toBe(false)
+    expect(is24h({ prefs: { 'kf.calViewOptions': { v: '{not json' } } })).toBe(false)
+    expect(is24h({ prefs: 'nonsense' })).toBe(false)
+  })
+  it('a device own hour24 beats the synced copy', () => {
+    expect(is24h({ hour24: false, ...synced({ hour24: true }) })).toBe(false)
+    expect(is24h({ hour24: true })).toBe(true)
+  })
+  it('every time in a reminder, event reminder and routine follows it', () => {
+    const p24 = { lock_screen_names: true, ...synced({ hour24: true }) }
+    const tyre = { id: 't1', title: 'Call the tyre supplier', due_at: cairo('09:50').toISOString(), project: 'Car' }
+    expect(reminderNotice([tyre], p24, cairo('09:40')).body).toBe('09:50 · Car')
+    expect(reminderNotice([{ ...tyre, due_at: cairo('14:00').toISOString() }], p24, cairo('09:40')).title).toBe('Call the tyre supplier · at 14:00')
+    expect(reminderNotice([{ ...tyre, due_at: cairo('14:00').toISOString() }], NAMES, cairo('09:40')).title).toBe('Call the tyre supplier · at 2:00 PM')
+    const gym = { id: 'a', title: 'Gym', starts_at: cairo('18:00').toISOString(), ends_at: cairo('19:30').toISOString() }
+    expect(eventReminderNotice([gym], p24, cairo('17:45'), 'Africa/Cairo').body).toBe('18:00–19:30')
+    expect(eventReminderNotice([gym], NAMES, cairo('17:45'), 'Africa/Cairo').body).toBe('6:00–7:30 PM')
+    expect(eventReminderNotice([{ ...gym, ends_at: cairo('20:30').toISOString(), starts_at: cairo('11:30').toISOString() }], NAMES, cairo('11:15'), 'Africa/Cairo').body).toBe('11:30 AM–8:30 PM')
+    const r = [{ id: 'r', name: 'Stretch', clock_time: '07:30:00' }]
+    expect(routineNotice(r, p24).title).toBe('Stretch — 07:30')
+    expect(routineNotice(r, NAMES).title).toBe('Stretch — 7:30 AM')
   })
 })
