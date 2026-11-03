@@ -1,5 +1,5 @@
 // Google Classroom → projects and tasks, read-only (Kai 2026-11-03). Two callers, as google-sync:
-//  - pg_cron every 3 hours (service-role key from Vault, migration 0091): every user whose Classroom
+//  - pg_cron every 3 hours (service-role key from Vault, migration 0092): every user whose Classroom
 //    integration is connected and not failing.
 //  - a signed-in user's "Sync now" (Settings › Integrations › Google Classroom): only that user.
 // Anyone else gets 401.

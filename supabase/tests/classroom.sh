@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Google Classroom deadlines (functions classroom-connect + classroom-sync, migration 0091; handoff
+# Google Classroom deadlines (functions classroom-connect + classroom-sync, migration 0092; handoff
 # 2026-11-03-*-classroom-handoff) against real Postgres, with Google mocked: the OAuth token endpoint and the
 # Classroom API are supabase/tests/harness/classroom-mock.ts (the runner sends oauth2.googleapis.com and
 # classroom.googleapis.com there, HARNESS_CLASSROOM_MOCK). Proves: the consent asks for the three read-only
