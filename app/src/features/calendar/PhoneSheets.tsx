@@ -26,7 +26,8 @@ import { createTask, setRecurrence, toggleTop3, uncompleteTask, useTasks } from 
 import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, linkTaskWithUndo, scheduleTask, setEventRepeat, type BlockRef } from './api'
-import { EVENT_REMIND, aiPrompts, blockMenuSpec, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
+import { useStartFocus } from '../today/startFocus'
+import { EVENT_REMIND, aiPrompts, blockMenuSpec, focusTaskOf, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock } from './scoped'
 import { askChat, copyBlockLink, joinMeeting, openInGoogle } from './blockActions'
 import { gcalEditable, gcalRepeats } from './gcal'
@@ -100,7 +101,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', join: 'link', gopen: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar',
 }
 
 /** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
@@ -356,6 +357,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const { data: projects = [] } = useProjects()
   const { data: domains = [] } = useDomains()
   const openTask = useOpenTask()
+  const startFocus = useStartFocus()
   const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'ai'>(null)
   const [linkAt, setLinkAt] = useState<{ x: number; y: number } | null>(null)
   const [untitled] = useState(() => isUntitled(event))
@@ -421,6 +423,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
     join: () => joinMeeting(event),
     gopen: () => openInGoogle(event),
     details: () => onMode?.('details'),
+    focus: () => leave(() => startFocus(focusTaskOf(event, tasks), event)),
     unschedule: () => leave(() => deleteEventWithUndo(event, 'Unscheduled')),
     link: (el) => {
       const r = el.getBoundingClientRect()

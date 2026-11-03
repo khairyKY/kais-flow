@@ -1,0 +1,102 @@
+[
+ {
+  "name": "chat: no raw [t1] / [e1] tag shows",
+  "ok": true,
+  "detail": "Today: Finish the CNN backprop notes ↗ task, and Gym — push day ↗ event. Also a ghost and an old one ."
+ },
+ {
+  "name": "chat: the two known tags are chips (task, event) named for their item",
+  "ok": true,
+  "detail": "[[\"↗ task\",\"Open Finish the CNN backprop notes for the DL midterm\"],[\"↗ event\",\"Open Gym — push day\"]]"
+ },
+ {
+  "name": "chat: an unresolved tag (t9, i2) is dropped, not left raw",
+  "ok": true,
+  "detail": "Today: Finish the CNN backprop notes ↗ task, and Gym — push day ↗ event. Also a ghost and an old one ."
+ },
+ {
+  "name": "chat: a task chip opens that task (the panel closes, the task is on screen)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "chat: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "notifications, 12-hour setting: routine, event and reminder words",
+  "ok": true,
+  "detail": "routine: Stretch — 7:30 AM |  // task_reminder: Pay rent · at 3:00 PM | 3:00 PM // event_reminder: Gym · in 15 min | 6:00–7:30 PM"
+ },
+ {
+  "name": "notifications, 24-hour setting: routine, event and reminder words",
+  "ok": true,
+  "detail": "routine: Stretch — 07:30 |  // task_reminder: Pay rent · at 15:00 | 15:00 // event_reminder: Gym · in 15 min | 18:00–19:30"
+ },
+ {
+  "name": "phone Day view, a day with blocks: the Day bar shows",
+  "ok": true,
+  "detail": "{\"bar\":true,\"card\":true,\"empty\":false}"
+ },
+ {
+  "name": "phone Day view, a day with blocks: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "phone Day view, an empty day: the Day bar is gone (no bar, no \"Nothing else today\")",
+  "ok": true,
+  "detail": "{\"bar\":false,\"card\":false,\"empty\":false}"
+ },
+ {
+  "name": "phone Day view, an empty day: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "settings: a Weekly review row; default is the first day of the weekend, all day",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "settings: choosing Monday writes review_day 1 to app_settings",
+  "ok": true,
+  "detail": "{\"review_day\":1,\"review_time\":null}"
+ },
+ {
+  "name": "settings: the time switch writes review_time 18:00 (and keeps the day)",
+  "ok": true,
+  "detail": "{\"review_day\":1,\"review_time\":\"18:00\"}"
+ },
+ {
+  "name": "settings: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Today's review prompt, default (Fri + Sat weekend, a Monday): not shown",
+  "ok": true,
+  "detail": "false"
+ },
+ {
+  "name": "Today's review prompt, Monday picked, all day: shown",
+  "ok": true,
+  "detail": "true"
+ },
+ {
+  "name": "Today's review prompt, Monday picked, from 18:00, at 10:40: not shown",
+  "ok": true,
+  "detail": "false"
+ },
+ {
+  "name": "Today's review prompt, Monday picked, from 18:00, at 18:05: shown",
+  "ok": true,
+  "detail": "true"
+ },
+ {
+  "name": "Today's review prompt, Tuesday picked, on Monday: not shown",
+  "ok": true,
+  "detail": "false"
+ }
+]

@@ -32,6 +32,10 @@ tauri-plugin-single-instance = "2"
 # Updates (docs/MICROSOFT-STORE.md "Updates"): the app fetches the signed installer itself and runs it,
 # so it never carries a browser download's Mark-of-the-Web and SmartScreen stays quiet.
 tauri-plugin-updater = "2"
+# Quick capture's system-wide shortcut, and the kaisflow:// links (src/capture.rs). The deep-link
+# plugin also writes the scheme into the Mac app's Info.plist from tauri.conf.json.
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-deep-link = "2"
 
 # Windows toasts with action buttons (Done · Tomorrow, Break 5 min · Keep going). Tauri's own crate —
 # tauri-plugin-notification wraps it but drops the buttons on desktop.

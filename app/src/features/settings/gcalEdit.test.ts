@@ -91,6 +91,7 @@ const master = (over: GEvent = {}): GEvent => ev({ id: 'series', start: { dateTi
 const inst = (over: GEvent = {}): GEvent => ev({ id: 'series_20261012T070000Z', recurringEventId: 'series', originalStartTime: { dateTime: '2026-10-12T10:00:00+03:00' }, start: { dateTime: '2026-10-12T10:00:00+03:00', timeZone: ZONE }, end: { dateTime: '2026-10-12T10:30:00+03:00', timeZone: ZONE }, ...over })
 const plan = (over: Partial<PlanInput> & Pick<PlanInput, 'change'>): GcalOp[] | { error: string } =>
   planGcalChange({ scope: 'this', inst: inst(), master: master(), zone: ZONE, between: ruleBetween, now: NOW, ...over })
+const bodyOf = (o: GcalOp): Record<string, unknown> => (o as unknown as { body: Record<string, unknown> }).body
 const ops = (p: ReturnType<typeof plan>): GcalOp[] => {
   if (!Array.isArray(p)) throw new Error(`planned an error: ${p.error}`)
   return p
@@ -127,7 +128,7 @@ describe('planGcalChange — All events', () => {
     // Mon 12 Oct 10:00 → Tue 13 Oct 11:00, an hour long.
     const [o] = ops(plan({ scope: 'all', change: { starts_at: '2026-10-13T08:00:00.000Z', ends_at: '2026-10-13T09:00:00.000Z' } }))
     expect(o).toMatchObject({ op: 'patch', id: 'series' })
-    const body = (o as { body: Record<string, unknown> }).body
+    const body = bodyOf(o)
     expect(body.start).toEqual({ dateTime: '2026-10-06T08:00:00.000Z', timeZone: ZONE, date: null }) // Tue 6 Oct 11:00 Cairo
     expect(body.end).toEqual({ dateTime: '2026-10-06T09:00:00.000Z', timeZone: ZONE, date: null })
     expect(body.recurrence).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=TU'])
@@ -135,7 +136,7 @@ describe('planGcalChange — All events', () => {
 
   it('a same-day resize keeps the days and BYDAY, and changes the length', () => {
     const [o] = ops(plan({ scope: 'all', change: { starts_at: '2026-10-12T07:00:00.000Z', ends_at: '2026-10-12T08:00:00.000Z' } }))
-    const body = (o as { body: Record<string, unknown> }).body
+    const body = bodyOf(o)
     expect(body.start).toMatchObject({ dateTime: '2026-10-05T07:00:00.000Z' })
     expect(body.end).toMatchObject({ dateTime: '2026-10-05T08:00:00.000Z' })
     expect(body.recurrence).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=MO'])
@@ -168,7 +169,7 @@ describe('planGcalChange — This and following events', () => {
   })
 
   it('a rename ends the old series and starts a new one on the occurrence, with the master’s details', () => {
-    const m = master({ description: 'Daily sync', location: 'Room 4', colorId: '5', attendees: [{ email: 'a@x.io', responseStatus: 'accepted' } as never] })
+    const m = master({ description: 'Daily sync', location: 'Room 4', colorId: '5', attendees: [{ email: 'a@x.io', responseStatus: 'accepted' }] } as GEvent)
     const [head, tail] = ops(plan({ scope: 'following', inst: later(), master: m, change: { title: 'Retro' } }))
     expect(head).toMatchObject({ op: 'patch', id: 'series', body: { recurrence: ['RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20261019T065959Z'] } })
     expect(tail).toEqual({
@@ -185,14 +186,14 @@ describe('planGcalChange — This and following events', () => {
     const m = master({ recurrence: ['RRULE:FREQ=WEEKLY;COUNT=4;BYDAY=MO'] })
     const third = inst({ id: 'series_20261019T070000Z', originalStartTime: { dateTime: '2026-10-19T10:00:00+03:00' }, start: { dateTime: '2026-10-19T10:00:00+03:00' }, end: { dateTime: '2026-10-19T10:30:00+03:00' } })
     const [head, tail] = ops(plan({ scope: 'following', inst: third, master: m, change: { title: 'x' } }))
-    expect((head as { body: { recurrence: string[] } }).body.recurrence).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20261019T065959Z'])
-    expect((tail as { body: { recurrence: string[] } }).body.recurrence).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=2'])
+    expect((bodyOf(head).recurrence as string[])).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20261019T065959Z'])
+    expect((bodyOf(tail).recurrence as string[])).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=MO;COUNT=2'])
   })
 
   it('a move takes the new series to the new time, BYDAY with the days', () => {
     // The 19th, Mon 10:00 → Wed 21st 09:00.
     const [, tail] = ops(plan({ scope: 'following', inst: later(), change: { starts_at: '2026-10-21T06:00:00.000Z', ends_at: '2026-10-21T06:30:00.000Z' } }))
-    const body = (tail as { body: Record<string, unknown> }).body
+    const body = bodyOf(tail)
     expect(body.start).toMatchObject({ dateTime: '2026-10-21T06:00:00.000Z' })
     expect(body.recurrence).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=WE'])
   })
@@ -201,7 +202,7 @@ describe('planGcalChange — This and following events', () => {
     const m = ev({ id: 'hol', start: { date: '2026-10-05' }, end: { date: '2026-10-06' }, recurrence: ['RRULE:FREQ=WEEKLY;BYDAY=MO'] })
     const i = ev({ id: 'hol_20261019', recurringEventId: 'hol', originalStartTime: { date: '2026-10-19' }, start: { date: '2026-10-19' }, end: { date: '2026-10-20' } })
     const [head] = ops(plan({ scope: 'following', inst: i, master: m, change: { delete: true } }))
-    expect((head as { body: { recurrence: string[] } }).body.recurrence).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20261018'])
+    expect((bodyOf(head).recurrence as string[])).toEqual(['RRULE:FREQ=WEEKLY;BYDAY=MO;UNTIL=20261018'])
   })
 })
 

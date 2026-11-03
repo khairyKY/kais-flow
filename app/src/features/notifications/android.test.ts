@@ -62,7 +62,7 @@ describe('the notice → an Android notification', () => {
     expect(n).toMatchObject({
       id: 42,
       title: 'Call the tyre supplier · in 50 min',
-      body: '08:50',
+      body: '8:50 AM',
       channelId: 'kf_felt_task_reminder',
       sound: 'kf_felt_task_reminder.wav',
       smallIcon: 'ic_stat_kf',

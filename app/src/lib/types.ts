@@ -263,6 +263,10 @@ export interface AppSettings {
   capture_keep_photos?: boolean
   /** The user's weekend, weekdays 0 = Sunday … 6 = Saturday (migration 0055; read via lib/weekend.ts). */
   weekend_days?: number[]
+  /** The weekly review's weekday (0 = Sunday) and time ('HH:MM' or Postgres 'HH:MM:SS') — migration 0091; read via
+   * lib/weekend.ts reviewWhen. Absent before the push; null = how it was (first day of the weekend, all day). */
+  review_day?: number | null
+  review_time?: string | null
   /** Tour & help (migration 0058): the tour and hints this person has been shown — absent until it's pushed. */
   help_seen?: string[] | null
   /** The Notebook page's layout (migration 0063), read through features/notebook/page.ts parseLayout —

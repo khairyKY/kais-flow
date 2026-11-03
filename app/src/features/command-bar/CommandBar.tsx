@@ -67,10 +67,14 @@ const K2_CSS = `
   .kf-cmd-chips > * { animation: itemFadeIn 120ms var(--ease-out) backwards; }
 `
 
-export function CommandBar() {
+/** `floating`: the quick-capture popup (features/tray/CapturePopup) — the same bar as the desktop ⌘K card,
+ * but the window is the card: no scrim, no corner or shadow of its own, never the phone sheet, and no
+ * camera (Paper capture's quick look lives in the main window). */
+export function CommandBar({ floating = false }: { floating?: boolean } = {}) {
   const open = useCommandBarStore((s) => s.open)
   const setOpen = useCommandBarStore((s) => s.setOpen)
-  const mobile = useIsMobile()
+  const narrow = useIsMobile()
+  const mobile = narrow && !floating
   const [text, setText] = useState('')
   const [jumpSelected, setJumpSelected] = useState(false)
   // K2: the ⌘K card's changing part eases to its content's height (measured; the outer box transitions).
@@ -295,6 +299,7 @@ export function CommandBar() {
       }}
       // Paper capture: a pasted photo of notes opens the quick look instead of landing as text.
       onPaste={(e) => {
+        if (floating) return
         const files = imageFiles(e.clipboardData.files)
         if (!files.length) return
         e.preventDefault()
@@ -334,7 +339,8 @@ export function CommandBar() {
     />
   )
 
-  const camera = (close: () => void, size: number) => (
+  const camera = (close: () => void, size: number) =>
+    floating ? null : (
     // Paper capture 11a: the camera beside the mic — a photo of your notes becomes tasks.
     <button
       type="button"
@@ -348,7 +354,7 @@ export function CommandBar() {
     >
       <Icon name="camera" size={size} />
     </button>
-  )
+    )
 
   const waitingChip = waiting > 0 && (
     <div className="pp-waiting" style={{ marginBottom: 10 }}>
@@ -427,8 +433,8 @@ export function CommandBar() {
       {open && (
         <div
           className="kf-scrim kf-cmd-scrim"
-          style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: 96 }}
-          onClick={closeBar}
+          style={{ position: 'fixed', inset: 0, zIndex: 50, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', paddingTop: floating ? 0 : 96 }}
+          onClick={floating ? undefined : closeBar}
         >
           {/* X2 Motion 3c — overlay card arrives with the scrim (kf classes, AppLayout shell CSS).
               X3 — translucent parchment via color-mix so the night paper-parchment shows through. */}
@@ -437,13 +443,13 @@ export function CommandBar() {
             style={{
               position: 'relative',
               width: '100%',
-              maxWidth: 440,
-              margin: '0 16px',
-              background: 'color-mix(in srgb, var(--paper-parchment) 82%, transparent)',
-              backdropFilter: 'blur(8px)',
-              border: '1px solid var(--line-card)',
-              borderRadius: 'var(--radius-card)', // Bound Journal D3: a tool's 16px corner; it floats, so it keeps its shadow (D4)
-              boxShadow: 'var(--shadow-popover)',
+              maxWidth: floating ? 'none' : 440,
+              margin: floating ? 0 : '0 16px',
+              background: floating ? 'var(--paper-parchment)' : 'color-mix(in srgb, var(--paper-parchment) 82%, transparent)',
+              backdropFilter: floating ? undefined : 'blur(8px)',
+              border: floating ? 'none' : '1px solid var(--line-card)',
+              borderRadius: floating ? 0 : 'var(--radius-card)', // Bound Journal D3: a tool's 16px corner; it floats, so it keeps its shadow (D4)
+              boxShadow: floating ? 'none' : 'var(--shadow-popover)',
               padding: '16px 18px',
               overflow: 'hidden',
             }}

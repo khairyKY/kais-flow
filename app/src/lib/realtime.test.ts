@@ -9,7 +9,7 @@ vi.mock('./settings', () => ({ useAppSettings: () => ({ data: null }) }))
 
 // gcal-events: google-sync lands a hundred rows at a time and Realtime sends a message per row. One refetch, not a hundred.
 describe('invalidateSoon — a burst of realtime messages is one refetch', () => {
-  let spy: ReturnType<typeof vi.spyOn>
+  let spy: { mockRestore: () => void; mock: { calls: unknown[][] } }
   beforeEach(() => {
     vi.useFakeTimers()
     spy = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue()

@@ -48,24 +48,24 @@ export function snapshotText(now: Date, tasks: SnapshotTask[], events: SnapshotE
   const tomorrow = dayStart(now, tz, 1).getTime()
   const dayAfter = dayStart(now, tz, 2).getTime()
   const counts = { t: 0, e: 0, i: 0 }
-  const ref = (kind: 't' | 'e' | 'i', id: string | undefined, type: Refs[string]['type']) => {
+  const ref = (kind: 't' | 'e' | 'i', id: string | undefined, type: Refs[string]['type'], title: string) => {
     if (!o.refs || !id) return ''
     const key = `${kind}${++counts[kind]}`
-    o.refs[key] = { id, type }
+    o.refs[key] = { id, type, title }
     return ` [${key}]`
   }
   const at = (t: SnapshotTask) => t.scheduled_start ?? t.due_at
   const inDay = (iso: string | null, from: number, to: number) => !!iso && Date.parse(iso) >= from && Date.parse(iso) < to
-  const line = (t: SnapshotTask) => `- ${t.top3 ? '★ ' : ''}${t.title}${at(t) ? ` (${clock(at(t)!, tz, h24)})` : ''}${ref('t', t.id, 'task')}`
+  const line = (t: SnapshotTask) => `- ${t.top3 ? '★ ' : ''}${t.title}${at(t) ? ` (${clock(at(t)!, tz, h24)})` : ''}${ref('t', t.id, 'task', t.title)}`
   const todays = tasks.filter((t) => inDay(at(t), today, tomorrow))
   const overdue = tasks.filter((t) => t.due_at && Date.parse(t.due_at) < today)
   const tomorrows = tasks.filter((t) => inDay(at(t), tomorrow, dayAfter))
   const ev = (from: number, to: number) =>
     events
       .filter((e) => inDay(e.starts_at, from, to))
-      .map((e) => `- ${e.all_day ? 'all day' : `${clock(e.starts_at, tz, h24)}${e.ends_at ? `–${clock(e.ends_at, tz, h24)}` : ''}`} ${e.title}${ref('e', e.seriesId ?? e.id, 'calendar_event')}`)
+      .map((e) => `- ${e.all_day ? 'all day' : `${clock(e.starts_at, tz, h24)}${e.ends_at ? `–${clock(e.ends_at, tz, h24)}` : ''}`} ${e.title}${ref('e', e.seriesId ?? e.id, 'calendar_event', e.title)}`)
   const date = new Intl.DateTimeFormat('en-GB', { timeZone: tz, weekday: 'long', day: 'numeric', month: 'long' }).format(now)
-  const inbox = (o.inbox ?? []).map((i) => `- ${i.raw_text.replace(/\s+/g, ' ').slice(0, 80)}${ref('i', i.id, 'inbox_item')}`)
+  const inbox = (o.inbox ?? []).map((i) => `- ${i.raw_text.replace(/\s+/g, ' ').slice(0, 80)}${ref('i', i.id, 'inbox_item', i.raw_text)}`)
   return [
     `Now: ${date}, ${clock(now.toISOString(), tz, h24)} (${tz}).`,
     `Today's tasks:\n${todays.map(line).join('\n') || '(none)'}`,

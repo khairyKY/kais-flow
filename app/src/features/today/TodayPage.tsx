@@ -86,7 +86,7 @@ import type { Task, CalendarEvent, Project, Routine, SlippingRow } from '../../l
 import type { ContextMenuItem } from '../../components/ContextMenu'
 import './today.css'
 import { appZone, useAppZone } from '../../lib/appZone'
-import { weekendDays } from '../../lib/weekend'
+import { reviewWhen, weekendDays } from '../../lib/weekend'
 import { uiZoom } from '../../lib/uiScale'
 import { useToastStore } from '../../lib/toastStore'
 import { usePageShortcutsStore } from '../../lib/pageShortcutsStore'
@@ -521,7 +521,7 @@ function TodayView({ nav }: { nav: DayNav }) {
   // read of the week, so its Close and Undo reach this prompt without a refetch.
   const weekend = weekendDays()
   const { data: reviewEvents = [] } = useReviewEventsThisWeek(startOfWeek(loopNow(now), weekend).toISOString())
-  const reviewToday = reviewDue(now, weekend, reviewEvents)
+  const reviewToday = reviewDue(now, weekend, reviewEvents, reviewWhen()) // its day and time: Settings › Calendar & time
 
   const upcomingBirthdays = useMemo(() => {
     return people

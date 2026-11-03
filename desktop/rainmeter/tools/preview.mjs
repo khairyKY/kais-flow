@@ -2,7 +2,7 @@
 // widget.lua on the sample feed, and this page draws every visible meter at its X/Y/W/H with its fonts, shapes
 // and images (String / Shape / Image, containers, InlineSettings, ClipString), on a wallpaper whose blurred copy
 // is made the way make-backdrop.ps1 makes Kai's. Text heights the Lua asks for (GetH) are measured in a first pass.
-//   FENGARI=<fengari> node preview.mjs <outDir> [walls dir] [playwright-core index.mjs] [design html]
+//   FENGARI=<fengari> node preview.mjs <outDir> [walls dir] [playwright-core index.mjs]
 import fs from 'node:fs'
 import path from 'node:path'
 import { execFileSync } from 'node:child_process'
@@ -12,7 +12,6 @@ import { RES, KAI_RES, WIDGETS, runSkin, finalMeters, readSkin } from './skin.mj
 const out = path.resolve(process.argv[2] ?? 'preview')
 const walls = process.argv[3] ?? 'D:/Coding/kais-flow/design-export/desktop-widgets/walls'
 const PW = process.argv[4] ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/openclaw/node_modules/playwright-core/index.mjs'
-const DESIGN = process.argv[5] ?? 'D:/Coding/kais-flow/design-export/Desktop widgets.html'
 const work = path.join(out, '.work')
 fs.mkdirSync(work, { recursive: true })
 const sample = fs.readFileSync(path.join(RES, 'KaisFlow', 'sample-feed.json'), 'utf8')
@@ -29,16 +28,16 @@ for (const w of ['bloom-light', 'bloom-dark']) {
 
 const SCENES = {
   day: { wall: 'bloom-light', say: 'Day, 2:00 pm, the sample feed' },
-  night: { wall: 'bloom-dark', vars: { NightFrom: '0', NightTo: '0' }, say: 'Night Garden colours (same data)' },
-  ticked: { wall: 'bloom-light', steps: ["Tick('GoalCb')", "Tick('Row1Cb')"], goalSteps: ["Tick('GoalCb')"], say: 'Goal + Call Omar ticked: the bud blooms' },
+  night: { wall: 'bloom-dark', theme: 'night', say: 'Theme > Night (Night Garden colours, same data)' },
+  ticked: { wall: 'bloom-light', steps: ["Tick('GoalCb')", "Tick('Row1Cb')"], goalSteps: ["Tick('GoalCb')"], say: 'Goal + Call Omar ticked: filled check and Done' },
   hover: { wall: 'bloom-light', steps: ["Over('Row3Bg')"], goalSteps: ["Over('GoalCard')"], say: 'Hovering a task row (and the 1x1 goal)' },
   setup: { wall: 'bloom-light', body: null, say: 'Before a link is added' },
 }
 
 function run(widget, scene, heights) {
   const steps = widget === 'Goal' && scene.goalSteps ? scene.goalSteps : widget === 'Today' ? scene.steps ?? [] : []
-  if (scene.body === null) return runSkin(widget, { vars: scene.vars, heights })
-  return runSkin(widget, { body: sample, feedURL: 'sample', vars: scene.vars, heights, steps: ['Parse()', ...steps] })
+  if (scene.body === null) return runSkin(widget, { theme: scene.theme, heights })
+  return runSkin(widget, { body: sample, feedURL: 'sample', theme: scene.theme, heights, steps: ['Parse()', ...steps] })
 }
 
 // ---------------------------------------------------------------- one widget's meters as HTML
@@ -244,26 +243,5 @@ for (const [name, scene] of Object.entries(SCENES)) {
   console.log(`${name}.png  ${scene.say}  GetH: ${JSON.stringify(heights)}`)
 }
 
-// the design's own direction B at real size, cropped the same, beside ours
-if (fs.existsSync(DESIGN)) {
-  for (const t of ['day', 'night']) {
-    await tab.goto(url(DESIGN))
-    await tab.evaluate(async (t) => {
-      if (t === 'night') document.querySelector('[data-theme="night"]').click()
-      const desk = document.querySelector('.desk[data-k="B"]')
-      document.body.innerHTML = ''
-      const wall = document.body.style.getPropertyValue('--wall')
-      document.body.style.cssText = 'margin:0;background:none'
-      document.body.style.setProperty('--wall', wall)
-      desk.style.cssText += ';transform:none;position:absolute;left:0;top:0'
-      document.body.appendChild(desk)
-      await document.fonts.ready
-    }, t)
-    await tab.waitForTimeout(300)
-    await tab.screenshot({ path: path.join(work, `design-${t}.png`), clip: CLIP })
-    execFileSync('magick', [path.join(work, `design-${t}.png`), path.join(out, `${t}.png`), '-background', '#1b1b1b', '-splice', '0x0', '+append', path.join(out, `compare-${t}.png`)])
-    console.log(`compare-${t}.png  the design (left) beside the skins (right)`)
-  }
-}
 await browser.close()
 fs.rmSync(work, { recursive: true, force: true })

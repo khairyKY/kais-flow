@@ -18,12 +18,13 @@ import { restartTour } from '../tour/help'
 import { useAuth } from '../auth/AuthProvider'
 import { useTheme, THEME_MODE_KEY, readThemeMode, themeOfMode, GRAIN_KEY, readGrainPct, applyGrainPct, type ThemeMode } from '../../lib/theme'
 import { prefWritten, usePrefsVersion } from '../../lib/prefs'
-import { clockText, setHour24, useHour24 } from '../../lib/clock'
+import { clockText, hour24, setHour24, useHour24 } from '../../lib/clock'
 import { useUiScale, UI_SCALES, TOUCH_UI_SCALE, defaultUiScale, readUiScaleEnv, uiZoom, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
 import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
+import { chooseClassroomCourses, CLASSROOM_RETURN, classroomState, classroomSyncLine, disconnectClassroom, refreshClassroomCourses, startClassroom, syncClassroom, useClassroom, type ClassroomStatus } from './classroomApi'
 import { isCapacitorShell, isNativeShell, openExternal } from '../../lib/platform'
 import { isIOS, isIOSSafari, openInstallGuide, persistStorage, storageState, type StorageState } from '../../lib/iosPwa'
 import { inPlainBrowser } from '../../lib/appUpdate'
@@ -45,6 +46,7 @@ import { KIND_IDS, KIND_LOOK } from '../notifications/kinds'
 import { NOTIFY_PACKS, NOTIFY_PACK_LOOK, NOTIFY_SOUNDS, NOTIFY_SOUND_LABEL, parseNotifyPack, previewNotifySound, type NotifyPack } from '../notifications/sounds'
 import { QUIET_FROM, QUIET_TO } from '../../../../supabase/functions/notify/copy.ts'
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
+import { readCaptureShortcut, shortcutLabel, writeCaptureShortcut, type CaptureShortcut } from '../tray/captureShortcut'
 import { widgetsAvailable } from '../widgets/native'
 import { useHideTitles } from '../widgets/bridge'
 import { openLockSettings, readLock, writeLock } from '../lockscreen/native'
@@ -60,7 +62,7 @@ import type { ShortcutEntry } from '../../lib/pageShortcutsStore'
 import { useSignOut } from '../auth/useSignOut'
 import { useDomains } from '../domains/api'
 import { CAT, CATS, DESKTOP_HOME, GROUPS, anchorTarget, isCat, isProvider, matches, type CatId, type ProviderId } from './categories'
-import { parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
+import { parseReviewWhen, parseWeekend, weekendLabel, weekendPreset, WEEKEND_PRESETS } from '../../lib/weekend'
 import { planGlossary } from '../tasks/planMath'
 import { DomainsSettings } from '../domains/DomainList'
 import { LabelManager } from '../tasks/LabelManager'
@@ -473,6 +475,7 @@ function CalendarCat() {
           <Segmented<'12' | '24'> label="Time format" value={h24 ? '24' : '12'} onChange={(x) => setHour24(x === '24')} options={[{ value: '12', label: '12-hour' }, { value: '24', label: '24-hour' }]} />
         </Row>
         <WeekendSetting />
+        <ReviewSetting />
         <Row label="Week starts on" help="Also in the calendar’s View options" keys="monday sunday first day">
           <Segmented<'mon' | 'sun'> label="Week starts on" value={v.weekStartsMon ? 'mon' : 'sun'} onChange={(x) => setV({ weekStartsMon: x === 'mon' })} options={[{ value: 'mon', label: 'Mon' }, { value: 'sun', label: 'Sun' }]} />
         </Row>
@@ -575,6 +578,36 @@ function WeekendSetting() {
         style={PICK}
         display={pickFace(WEEKEND_OPTIONS.find((o) => o.value === shown)?.label)}
       />
+    </Row>
+  )
+}
+
+// Kai 2026-11-03: the weekly review's day and time. app_settings.review_day / review_time (migration 0091, synced
+// like the rest); unset = the first day of the weekend, all day - how it was. Drives Today's prompt (todayLayout reviewDue).
+const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
+const REVIEW_AT = '18:00'
+function ReviewSetting() {
+  const { data } = useAppSettings()
+  const ready = settingSynced('review_day') // an unmigrated row has no such column: show nothing to save into
+  const when = parseReviewWhen(data)
+  const weekend = parseWeekend(data?.weekend_days)
+  const first = weekend.find((d) => !weekend.includes((d + 6) % 7))
+  const options = [{ value: 'default', label: first === undefined ? 'No day' : `Weekend start · ${DAY_NAMES[first]}` }, ...DAY_NAMES.map((label, d) => ({ value: String(d), label }))]
+  const shown = when.day === null ? 'default' : String(when.day)
+  if (!ready) return null
+  return (
+    <Row label="Weekly review" help={`${when.day === null ? 'On the first day of your weekend' : `Every ${DAY_NAMES[when.day]}`} · ${when.time ? `from ${clockText(when.time)}` : 'all day'} · Today asks until the week is closed`} keys="weekly review day time sweep close the week">
+      <Select
+        value={shown}
+        onChange={(v) => updateAppSetting('review_day', v === 'default' ? null : Number(v))}
+        options={options}
+        ariaLabel="Weekly review day"
+        className="st-pick"
+        style={PICK}
+        display={pickFace(options.find((o) => o.value === shown)?.label)}
+      />
+      {when.time && <TimeField value={when.time} ariaLabel="Weekly review from" onChange={(v) => v && updateAppSetting('review_time', v)} style={timeStyle(true)} />}
+      <Toggle on={!!when.time} label="Weekly review at a set time" onToggle={() => updateAppSetting('review_time', when.time ? null : REVIEW_AT)} />
     </Row>
   )
 }
@@ -775,6 +808,7 @@ function IntegrationsCat() {
   const github = integrations.find((i) => i.provider === 'github')
   const gh = githubState(github)
   const gg = googleState(integrations.find((i) => i.provider === 'google'))
+  const cr = classroomState(useClassroom().data)
   const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
   return (
     <>
@@ -782,6 +816,10 @@ function IntegrationsCat() {
         {/* B1 (2026-10-13): read-only, under our own calendar; our plan out as busy (2026-10-14). */}
         <Row to="/settings/integrations/google" lead={brand(<Icon name="calendar" size={17} />)} label="Google Calendar" help="Your calendars on ours, read-only · your plan there as busy" keys="google sync calendars busy">
           {statusChip(gg.text, gg.tone)}
+        </Row>
+        {/* Kai 2026-11-03: his deadlines from Google Classroom, read-only, as tasks. */}
+        <Row to="/settings/integrations/classroom" lead={brand(<Icon name="library" size={17} />)} label="Google Classroom" help="Your courses’ deadlines as tasks · read-only" keys="google classroom school university courses deadlines assignments homework">
+          {statusChip(cr.text, cr.tone)}
         </Row>
         <Row to="/settings/integrations/github" lead={brand(<GithubMark size={16} />, true)} label="GitHub" help={githubRulesOf(github).rules.land === 'tasks' ? 'Issues land straight in Tasks' : 'Issues land in the Inbox'} keys="github issues repos token pause">
           {statusChip(gh.text, gh.tone)}
@@ -802,6 +840,150 @@ function IntegrationsCat() {
         </Row>
       </SCard>
     </>
+  )
+}
+
+// Kai 2026-11-03: Google Classroom — the deadlines of the courses you pick, as tasks (classroom-sync, every
+// 3 hours and on Sync now). Its own Google consent, read-only, apart from Calendar's. Each course is a project
+// in a "Classroom" domain; dated work is a task with its due date and time, undated work waits in Someday;
+// handing it in on Classroom ticks the task, deleting it there moves the task to Trash. None of it goes to an
+// AI. Connect goes through Google's consent page (classroom-connect); the client only ever sees the course list,
+// the chosen ids, status and synced_at — never the refresh token.
+function ClassroomProvider() {
+  const { data: row } = useClassroom()
+  const [busy, setBusy] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [asking, setAsking] = useState(false)
+  const failing = row?.status === 'failing'
+  const state = classroomState(row)
+
+  async function run(action: () => Promise<string | null>) {
+    setBusy(true)
+    setMessage(null)
+    try {
+      const m = await action()
+      if (m) setMessage(m)
+    } catch (e) {
+      setMessage(e instanceof Error ? e.message : 'Something went wrong — try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  // Back from Google's consent page: classroom-connect sent the browser to /settings?classroom=<code>.
+  const [params, setParams] = useSearchParams()
+  const landed = useRef(false)
+  useEffect(() => {
+    const code = params.get('classroom')
+    if (!code || landed.current) return
+    landed.current = true
+    const said = CLASSROOM_RETURN[code === 'connected' ? code : (params.get('reason') ?? '')] ?? CLASSROOM_RETURN.google_unavailable
+    setParams((p) => {
+      p.delete('classroom')
+      p.delete('reason')
+      return p
+    }, { replace: true })
+    if (code !== 'connected') return setMessage(said)
+    void run(async () => `Connected · ${classroomSyncLine(await syncClassroom())}`)
+  }, [params, setParams]) // eslint-disable-line react-hooks/exhaustive-deps -- once per landing
+  const said = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (landed.current && message) said.current?.scrollIntoView({ block: 'center' })
+  }, [message])
+
+  const connect = () =>
+    run(async () => {
+      const r = await startClassroom()
+      if ('missing' in r) return `Not set up yet: ${r.missing.join(' and ')} ${r.missing.length > 1 ? 'aren’t' : 'isn’t'} set on the server. docs/GOOGLE-SETUP.md has the steps (free, about 10 minutes).`
+      if (isNativeShell()) {
+        await openExternal(r.url)
+        return 'Finish on Google’s page in your browser. Back here, Sync now brings your deadlines in.'
+      }
+      window.location.assign(r.url)
+      return null
+    })
+  const sync = () => run(async () => classroomSyncLine(await syncClassroom()))
+  const disconnect = (remove: boolean) =>
+    run(async () => {
+      const { removed } = await disconnectClassroom(remove)
+      setAsking(false)
+      return remove ? `Disconnected. ${removed} imported ${removed === 1 ? 'task' : 'tasks'} moved to Trash (restorable for 30 days).` : 'Disconnected. Your imported tasks stay; connect again later and they pick up where they left off.'
+    })
+
+  return (
+    <ProviderRow
+      icon={<span style={{ width: 34, height: 34, borderRadius: 8, background: 'var(--paper-bone)', border: '1px solid var(--line-card)', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none', color: 'var(--ink-muted)', opacity: row ? 1 : 0.75 }}><Icon name="library" size={18} /></span>}
+      name="Google Classroom"
+      desc="The deadlines of your Classroom courses, as tasks with their due date and time. Read-only: nothing is ever changed in Classroom, and none of it goes to an AI."
+      status={
+        row ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7, justifyContent: 'flex-end', flex: 'none', maxWidth: '45%' }}>
+            <span className="st-dot" style={{ background: TONE_DOT[state.tone] }} />
+            <span style={{ fontSize: 'var(--fs-caption)', color: failing ? 'var(--acc-terra-ink)' : 'var(--ink-muted)', textAlign: 'right', overflowWrap: 'anywhere' }}>{state.text}</span>
+          </div>
+        ) : (
+          <Button type="button" variant="secondary" onClick={() => void connect()} disabled={busy}>{busy ? 'Opening…' : 'Connect'}</Button>
+        )
+      }
+    >
+      {row && (
+        <div className="st-btns" style={{ marginTop: 12 }}>
+          {failing ? (
+            <Button type="button" variant="secondary" onClick={() => void connect()} disabled={busy}>Reconnect</Button>
+          ) : (
+            <Button type="button" variant="secondary" onClick={() => void sync()} disabled={busy}>{busy ? 'Syncing…' : 'Sync now'}</Button>
+          )}
+          <Button type="button" variant="ghost" onClick={() => setAsking(true)} disabled={busy || asking}>Disconnect</Button>
+        </div>
+      )}
+      {asking && (
+        <div role="group" aria-label="Disconnect Google Classroom" className="st-gh-rules" style={{ marginTop: 12 }}>
+          <div className="st-help" style={{ paddingBottom: 10 }}>What should happen to the tasks and course projects it brought in?</div>
+          <div className="st-btns">
+            <Button type="button" variant="secondary" onClick={() => void disconnect(false)} disabled={busy}>Keep them</Button>
+            <Button type="button" variant="secondary" onClick={() => void disconnect(true)} disabled={busy}>Move them to Trash</Button>
+            <Button type="button" variant="ghost" onClick={() => setAsking(false)} disabled={busy}>Cancel</Button>
+          </div>
+        </div>
+      )}
+      {message && <div ref={said} role="status" className="st-help" style={{ marginTop: 10 }}>{message}</div>}
+      {row && !failing && <ClassroomCourses row={row} />}
+    </ProviderRow>
+  )
+}
+
+// Which courses sync, one switch each (saved at once): a newly ticked one syncs now. Unticking only stops it —
+// what already came in stays. A class joined later shows up unticked after "Look for new courses".
+function ClassroomCourses({ row }: { row: ClassroomStatus }) {
+  const chosen = row.chosen ?? []
+  const [err, setErr] = useState<string | null>(null)
+  const [looking, setLooking] = useState(false)
+  const toggle = (id: string) => {
+    setErr(null)
+    chooseClassroomCourses(chosen.includes(id) ? chosen.filter((x) => x !== id) : [...chosen, id], chosen).catch((e: Error) => setErr(e.message))
+  }
+  const lookAgain = () => {
+    setErr(null)
+    setLooking(true)
+    refreshClassroomCourses().catch((e: Error) => setErr(e.message)).finally(() => setLooking(false))
+  }
+  return (
+    <div className="st-gh-rules">
+      <div className="st-gh-rules-label" style={flabel}>Courses · synced as projects in a “Classroom” domain</div>
+      {(row.courses ?? []).map((c) => (
+        <Row key={c.id} label={c.name}>
+          <Toggle on={chosen.includes(c.id)} label={`Sync ${c.name}`} onToggle={() => toggle(c.id)} />
+        </Row>
+      ))}
+      {!row.courses?.length && <Row label="No courses yet" help="Look again once you’re in a class" />}
+      <Row label="Last synced" help="Every 3 hours, and on Sync now. Work with no due date waits in Someday; handing it in on Classroom ticks the task">
+        <span style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-muted)' }}>{syncedLabel(row.synced_at)}</span>
+      </Row>
+      <div style={{ padding: '4px 0 14px' }}>
+        <button type="button" className="st-link" onClick={lookAgain} disabled={looking}>{looking ? 'Looking…' : 'Look for new courses'}</button>
+      </div>
+      {err && <div role="alert" className="st-help" style={{ color: 'var(--acc-terra-ink)', paddingBottom: 12 }}>{err}</div>}
+    </div>
   )
 }
 
@@ -843,7 +1025,7 @@ function NotificationsCard() {
   // This browser's own endpoint when it has one (a browser update changes the label, not the endpoint).
   const subscribed = device?.subscribed || subs.some((d) => d.device_label === thisDeviceLabel)
   if (!s) return null
-  const inTheWay = device ? blockers(device, s, new Date(), appZone()) : []
+  const inTheWay = device ? blockers(device, { ...s, hour24: hour24() }, new Date(), appZone()) : []
   const quietOn = s.quiet_hours_on !== false
 
   async function handleSubscribe() {
@@ -1128,6 +1310,7 @@ function DeviceSections() {
           <Row label={mac ? 'Open at login' : 'Start with Windows'} help={mac ? 'Opens quietly to the menu bar' : 'Opens quietly to the tray'} keys="startup autostart login tray">
             <Toggle on={!!autostart} label={mac ? 'Open at login' : 'Start with Windows'} onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
           </Row>
+          <CaptureShortcutRow mac={mac} />
         </SCard>
       )}
       {!isNativeShell() && <WebDeviceCard />}
@@ -1140,6 +1323,36 @@ function DeviceSections() {
       )}
       <WidgetLinksCard />
     </>
+  )
+}
+
+// The global quick-capture popup's key (src-tauri capture.rs). Ctrl+Shift+K by default: a global Ctrl+K would
+// take Ctrl+K from every other app; it is offered for anyone who wants it. Inside Kai's Flow Ctrl+K works anyway.
+const SHORTCUTS: CaptureShortcut[] = ['ctrl-shift-k', 'ctrl-alt-k', 'ctrl-k', 'off']
+function CaptureShortcutRow({ mac }: { mac: boolean }) {
+  const [choice, setChoice] = useState(readCaptureShortcut)
+  const [taken, setTaken] = useState(false)
+  return (
+    <Row
+      label="Quick capture shortcut"
+      help={taken ? 'Another app already uses that shortcut — pick a different one' : `Opens a small capture bar over any app, even when Kai’s Flow is closed to the ${mac ? 'menu bar' : 'tray'} · Ctrl+K works inside the app as always`}
+      keys="quick capture global shortcut hotkey keyboard ctrl k popup"
+    >
+      <Select
+        value={choice}
+        onChange={(v) =>
+          void writeCaptureShortcut(v as CaptureShortcut).then((ok) => {
+            setTaken(!ok)
+            if (ok) setChoice(v as CaptureShortcut)
+          })
+        }
+        options={SHORTCUTS.map((s) => ({ value: s, label: shortcutLabel(s, mac) }))}
+        ariaLabel="Quick capture shortcut"
+        className="st-pick"
+        style={PICK}
+        display={pickFace(shortcutLabel(choice, mac))}
+      />
+    </Row>
   )
 }
 
@@ -1943,6 +2156,8 @@ function ProviderPage({ id }: { id: ProviderId }) {
       <BackLink to="/settings/integrations">Integrations</BackLink>
       {id === 'google' ? (
         <GoogleProvider google={integrations.find((i) => i.provider === 'google')} />
+      ) : id === 'classroom' ? (
+        <ClassroomProvider />
       ) : id === 'github' ? (
         <GithubProvider github={integrations.find((i) => i.provider === 'github')} />
       ) : id === 'mcp' ? (
@@ -2407,6 +2622,7 @@ export function SettingsPage() {
   const old = anchorTarget(location.hash)
   if (old) return <Navigate to={`/settings/${old}${location.search}`} replace state={{ anchor: location.hash.slice(1) }} />
   if (search.has('google') && !(params.cat === 'integrations' && params.sub === 'google')) return <Navigate to={`/settings/integrations/google${location.search}`} replace />
+  if (search.has('classroom') && !(params.cat === 'integrations' && params.sub === 'classroom')) return <Navigate to={`/settings/integrations/classroom${location.search}`} replace />
   const cat = isCat(params.cat) ? params.cat : undefined
   if (params.cat && !cat) return <Navigate to="/settings" replace />
   const sub = cat === 'integrations' && isProvider(params.sub) ? params.sub : undefined

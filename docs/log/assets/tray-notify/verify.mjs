@@ -14,7 +14,7 @@ import { pathToFileURL } from 'node:url'
 const OUT = process.argv[2]
 const BASE = process.argv[3] ?? 'http://localhost:5253'
 const DESIGN = process.argv[4]
-const PW = 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs'
+const PW = process.env.PW ?? 'D:/INSTALLATIONS/Dev-Environment/npm-global/node_modules/omniroute/node_modules/playwright-core/index.mjs' // that copy is gone: PW=<playwright-core/index.mjs>
 const { chromium } = await import(pathToFileURL(PW).href)
 fs.mkdirSync(OUT, { recursive: true })
 const results = []
@@ -192,7 +192,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
   await main.clock.runFor(6 * 60_000 + 18_000) // 25:00 → 18:42
   await sleep(500)
   const now = (await tray.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ')
-  check('12c Start focus in the flyout starts the main window’s timer, on the goal', running && /Focus · 18:4[12] left GCI homework 1 — NumPy/.test(now), now)
+  check('12c Start focus in the flyout starts the main window’s timer, on the goal', running && /bud 1 of 1 18:4[12] GCI homework 1 — NumPy kept \d+m of 25m/.test(now), now) // focus-d3: C's card with the block's timeline
   check('12c the button becomes Pause · Stop', JSON.stringify(await tray.locator('.kf-tray-btn').allInnerTexts()) === JSON.stringify(['Pause', 'Stop']), JSON.stringify(await tray.locator('.kf-tray-btn').allInnerTexts()))
   check('12c night theme', (await tray.evaluate(() => document.documentElement.dataset.theme)) === 'night')
   check('12c fits 340 × 460', await noOverflow(tray))
@@ -219,7 +219,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
   // its button runs in the main window: Keep going = a fresh round
   await main.evaluate(() => window.__kfNotifyAction('keep', { kind: 'focus_done', taskIds: [] }))
   await sleep(300)
-  check('12e Keep going starts a new round', /Focus · 2[45]:\d\d left/.test((await tray.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ')), await tray.locator('.kf-tray-now').innerText())
+  check('12e Keep going starts a new round', /bud 2 of 2 2[45]:\d\d/.test((await tray.locator('.kf-tray-now').innerText()).replace(/\s+/g, ' ')), await tray.locator('.kf-tray-now').innerText())
   check('12c no page errors', errors.length === 0, errors.join(' | '))
   await ctx.close()
 }

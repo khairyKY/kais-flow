@@ -1,13 +1,28 @@
 // Kai's Flow native shell: the bundled web app in the system WebView. Everything the app does happens
 // in the web code; on the desktop this also keeps the tray, its flyout and the toasts (tray.rs).
 #[cfg(desktop)]
+mod capture;
+#[cfg(desktop)]
 mod tray;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default().plugin(tauri_plugin_opener::init());
     #[cfg(desktop)]
-    let builder = tray::install(builder).plugin(tauri_plugin_updater::Builder::new().build());
+    let builder = tray::install(builder)
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        // Quick capture (capture.rs): the shortcut opens the popup. Pressed only: a held key repeats.
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _shortcut, event| {
+                    if event.state() == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                        capture::open(app, true);
+                    }
+                })
+                .build(),
+        )
+        // kaisflow:// links (capture.rs); single-instance (tray::install) hands a second launch's link to it.
+        .plugin(tauri_plugin_deep_link::init());
     let app = builder.build(tauri::generate_context!()).expect("error while running Kai's Flow");
     app.run(|_app, _event| {
         // The Mac app: a click on the Dock icon brings back a window that was closed to the menu bar.

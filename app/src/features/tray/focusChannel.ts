@@ -10,7 +10,11 @@ export type { FocusCommand, FocusSnapshot } from './focusMirror'
 
 export function focusSnapshot(): FocusSnapshot {
   const s = useFocusStore.getState()
-  return { mode: s.mode, isRunning: s.isRunning, secondsLeft: s.secondsLeft, roundMin: s.settings.focusRoundMin, taskId: s.activeTask?.id ?? null }
+  const { focusRoundMin, shortBreakMin, longBreakMin, roundsBeforeLongBreak } = s.settings
+  return {
+    mode: s.mode, isRunning: s.isRunning, secondsLeft: s.secondsLeft, roundMin: focusRoundMin, taskId: s.activeTask?.id ?? null,
+    block: s.block, kept: s.kept, breakType: s.breakType, pomodoroStartIso: s.pomodoroStartIso, plan: { focusRoundMin, shortBreakMin, longBreakMin, roundsBeforeLongBreak },
+  }
 }
 
 /** Start (on a task, or a plain round), pause/resume, stop — the tray's three focus moves. */
@@ -22,9 +26,8 @@ export function applyFocusCommand(c: FocusCommand): void {
     else s.setMode('pomodoro') // a break or the garden: back to a fresh, idle round
     return
   }
-  if (c.task) return beginFocus(c.task)
-  if (s.mode !== 'pomodoro') s.setMode('pomodoro')
-  if (!useFocusStore.getState().isRunning) useFocusStore.getState().togglePlay()
+  // A task, or a plain round (focus D3: a block of one round from now) — the one Start focus path either way.
+  beginFocus(c.task)
 }
 
 /** Main window: publish the timer, take commands. */

@@ -1,4 +1,5 @@
 import { clock } from '../../../../supabase/functions/notify/copy.ts'
+import { hour24 } from '../../lib/clock'
 import { appZone } from '../../lib/appZone'
 import { scheduleTomorrow } from '../../lib/dateShortcuts'
 import { timeText } from '../calendar/eventTime'
@@ -53,7 +54,7 @@ export function focusMenuLabel(f: TrayFocus): string {
 /** The menu's pause row: "Pause notifications for 1 hour", or "Resume notifications · paused until 10:41". */
 export function pauseMenuLabel(pausedUntil: string | null | undefined, now: Date): string {
   return pausedUntil && new Date(pausedUntil).getTime() > now.getTime()
-    ? `Resume notifications · paused until ${clock(pausedUntil, appZone())}`
+    ? `Resume notifications · paused until ${clock(pausedUntil, appZone(), hour24())}`
     : 'Pause notifications for 1 hour'
 }
 
