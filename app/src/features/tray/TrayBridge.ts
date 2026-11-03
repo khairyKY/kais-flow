@@ -24,6 +24,8 @@ import { localPlan, type Planned } from '../notifications/plan'
 import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
+import { applyCaptureShortcut } from './captureShortcut'
+import { deepLinkRoute } from './deepLink'
 import { focusMenuLabel, focusTarget, pauseMenuLabel, pauseUntil, trayIconState, trayMenuState, trayNow } from './trayState'
 import { SIGNED_OUT } from './menuRows'
 import type { ActivityLogEntry, AppSettings, CalendarEvent, Interaction, Person, Project, Routine, RoutineCompletion, Task } from '../../lib/types'
@@ -204,7 +206,16 @@ export function TrayBridge() {
   useEffect(() => {
     if (!tauri) return
     void native('tray_shown', { shown: readTrayShown() })
-    const w = window as unknown as { __kfTray?: (arg: string | { open: string }) => void }
+    applyCaptureShortcut() // this device's quick-capture shortcut (the popup itself is its own window)
+    // kaisflow:// links (src-tauri capture.rs): the link waits in Rust until this signed-in shell can run it.
+    const w = window as unknown as { __kfTray?: (arg: string | { open: string }) => void; __kfDeepLink?: () => void }
+    const takeLink = () =>
+      void native<string | null>('deep_link_take').then((url) => {
+        const route = url ? deepLinkRoute(url) : null
+        if (route) navigate(route)
+      })
+    w.__kfDeepLink = takeLink
+    takeLink()
     w.__kfTray = (arg) => {
       if (typeof arg === 'object') return navigate(arg.open)
       if (arg === 'seen') useNeedsYou.setState({ on: false })
@@ -225,6 +236,7 @@ export function TrayBridge() {
     const id = window.setInterval(sweep, 30_000)
     return () => {
       delete w.__kfTray
+      delete w.__kfDeepLink
       window.removeEventListener('focus', seen)
       window.clearInterval(id)
     }

@@ -11,6 +11,8 @@
 //   tray. Both windows hide on blur or Esc (`tray_hide`) and are kept warm once made.
 // - Both windows load on the main window's scheme (`https`): on the other one they were another origin,
 //   with their own storage and so no session (queue item 14a, "a signed-out window").
+// - Quick capture (capture.rs): "Quick capture…" in either menu opens its popup, a third window on `tray.html?capture`,
+//   the same one the global shortcut opens; kaisflow:// links and the single-instance hand-off route there too.
 // - Closing the main window hides it to the tray while the tray is shown (Settings → Notifications
 //   → Show in the system tray); otherwise it quits, as before.
 // - Toasts (12e) with up to four buttons (`notify_local`; Windows allows five); a button runs `window.__kfNotifyAction`.
@@ -27,10 +29,10 @@ use tauri::{include_image, AppHandle, Builder, Manager, PhysicalPosition, Physic
 use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
 
 const TRAY_ID: &str = "kf";
-const FLYOUT: &str = "tray";
+pub(crate) const FLYOUT: &str = "tray";
 const FLYOUT_W: f64 = 340.0;
 const FLYOUT_H: f64 = 480.0; // popover B: the Now card is taller than 12b's Next row
-const MENU: &str = "traymenu";
+pub(crate) const MENU: &str = "traymenu";
 const MENU_W: f64 = 250.0;
 /// Until the menu page says how tall it is (`tray_menu_ready`): the signed-in list.
 const MENU_H: f64 = 300.0;
@@ -120,13 +122,13 @@ fn redraw(app: &AppHandle) {
 }
 
 /// Runs `window.<f>(<arg>)` in the main window, if the app has installed it.
-fn call_main(app: &AppHandle, f: &str, arg: &str) {
+pub(crate) fn call_main(app: &AppHandle, f: &str, arg: &str) {
     if let Some(main) = app.get_webview_window("main") {
         let _ = main.eval(format!("window.{f}&&window.{f}({arg})"));
     }
 }
 
-fn hide(app: &AppHandle, label: &str) {
+pub(crate) fn hide(app: &AppHandle, label: &str) {
     if let Some(w) = app.get_webview_window(label) {
         let _ = w.hide();
     }
@@ -150,7 +152,7 @@ fn https(app: &AppHandle) -> bool {
 }
 
 /// A tray window: borderless, on top, off the taskbar, hidden until placed; `tray.html` + `query`.
-fn tray_window(app: &AppHandle, label: &str, query: &str, w: f64, h: f64) -> tauri::Result<WebviewWindow> {
+pub(crate) fn tray_window(app: &AppHandle, label: &str, query: &str, w: f64, h: f64) -> tauri::Result<WebviewWindow> {
     WebviewWindowBuilder::new(app, label, WebviewUrl::App(format!("tray.html{query}").into()))
         .use_https_scheme(https(app))
         .title("Kai’s Flow")
@@ -276,6 +278,8 @@ fn menu_event(app: &AppHandle, id: &str) {
     match id {
         "open" => show_main(app),
         "quit" => app.exit(0),
+        // Quick capture… is the popup (capture.rs), whatever the main window is doing.
+        "capture" => crate::capture::open(app, false),
         // Start/stop focus and pause run where they are; capture and settings need the window.
         "focus" | "pause" | "resume" => call_main(app, "__kfTray", &format!("{id:?}")),
         _ if id.starts_with("pause:") => call_main(app, "__kfTray", &format!("{id:?}")),
@@ -509,7 +513,12 @@ fn app_restart(app: AppHandle) {
 pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
     builder
         // First: a second launch (Start menu, a shortcut) brings this one forward instead.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| show_main(app)))
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            // A kaisflow:// link on that launch (Windows hands it over as an argument) goes to capture.rs.
+            if !crate::capture::open_links_in(app, &args) {
+                show_main(app)
+            }
+        }))
         .plugin(tauri_plugin_autostart::init(MacosLauncher::LaunchAgent, Some(vec![MINIMIZED])))
         .invoke_handler(tauri::generate_handler![
             tray_set,
@@ -525,7 +534,12 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
             autostart_set,
             store_install,
             notify_local,
-            app_restart
+            app_restart,
+            crate::capture::capture_ready,
+            crate::capture::capture_size,
+            crate::capture::capture_hide,
+            crate::capture::capture_shortcut,
+            crate::capture::deep_link_take
         ])
         .setup(|app| {
             let h = app.handle();
@@ -562,6 +576,7 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
                 hidden_at: Mutex::new(None),
                 menu: Mutex::new(MenuWin { custom, ready: false, height: MENU_H, pending: None, hidden_at: None, state: SIGNED_OUT.into() }),
             });
+            crate::capture::init(app)?;
             // tauri.conf.json starts the window hidden, so a start-up launch stays in the tray.
             if !std::env::args().any(|a| a == MINIMIZED) {
                 show_main(h);
@@ -582,6 +597,7 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
                 }
                 let _ = window.hide();
             }
+            (crate::capture::CAPTURE, WindowEvent::Focused(false)) => crate::capture::blurred(window),
             (MENU, WindowEvent::Focused(false)) => {
                 if let Some(t) = window.app_handle().try_state::<Tray>() {
                     t.menu.lock().unwrap().hidden_at = Some(Instant::now());
