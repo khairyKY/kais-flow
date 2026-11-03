@@ -3,8 +3,9 @@ import { toastUndo } from '../../lib/undo'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { dayHint } from '../../components/pickerMath'
 import { cachedTask, completeTaskScopedWithUndo, completeTaskWithUndo, deleteTaskScopedWithUndo, detachRound, editTaskScopedWithUndo } from '../tasks/api'
+import { isSynced } from './blockMenuSpec'
 import {
-  applySeriesChange, deleteEventWithUndo, isSeriesBlock, moveOrResizeEvent, moveToDayWithUndo, resizeEvent, retimeEventWithUndo, setEventRemindWithUndo, updateEvent, type BlockRef,
+  applySeriesChange, copyEvent, deleteEventWithUndo, isSeriesBlock, moveOrResizeEvent, moveToDayWithUndo, resizeEvent, retimeEventWithUndo, setEventRemindWithUndo, updateEvent, type BlockRef,
 } from './api'
 import { duplicateBlockWithUndo } from './duplicate'
 import { eventSpan, movedText, rangeText, spanIso, type DragMode, type Span } from './phoneGridMath'
@@ -143,6 +144,13 @@ export async function deleteBlock(e: CalendarEvent, verb: 'Deleted' | 'Discarded
  * "Following" / "All" copy the series from here, or all of it. A repeating task's round: "This one" copies it as a
  * one-off, the others as a repeating task of its own. */
 export async function duplicateBlock(e: CalendarEvent, task?: Task): Promise<void> {
+  // A Google event (gcal-events): "Duplicate as my event" — a plain event of our own at the same time, which Google never
+  // sees. Just this occurrence, so no question.
+  if (isSynced(e)) {
+    const { copy, undo } = copyEvent(e)
+    toastUndo(`Duplicated · ${copy.title}`, undo)
+    return
+  }
   if (isSeriesBlock(e)) {
     await seriesChange(e, 'Duplicate', { kind: 'duplicate' }, `Duplicated · ${e.title}`)
     return

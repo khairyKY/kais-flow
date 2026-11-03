@@ -51,6 +51,7 @@ import { addDays, durationLabel } from '../../components/pickerMath'
 import { BlockMenu } from './BlockMenu'
 import { duplicateBlockWithUndo } from './duplicate'
 import { BLOCK_MENU_WIDTH, besideBlock, isSynced, type BlockMenuMode } from './blockMenuSpec'
+import { gcalEditable } from './gcal'
 import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
@@ -527,9 +528,11 @@ function DesktopCalendar() {
   // A week either side: month view draws its neighbours' days too.
   // S4 (2026-10-22 audit): snapped to whole weeks (from the Unix epoch's Thursday — any fixed week works), so
   // paging inside the window keeps the same query and its events array: one grid pass a page, not two.
-  const WEEK_MS = 7 * DAY_MS
-  const gridFrom = rangeInfo ? Math.floor((rangeInfo.start.getTime() - 7 * DAY_MS) / WEEK_MS) * WEEK_MS : null
-  const gridTo = rangeInfo ? Math.ceil((rangeInfo.end.getTime() + 7 * DAY_MS) / WEEK_MS) * WEEK_MS : null
+  // gcal-events: the grid is handed only the blocks touching this window, so it snaps to FOUR weeks (a glide of a few days
+  // almost never crosses a snap, and a crossing redraws the grid), and a sync landing further away costs it nothing.
+  const WEEK_MS = 28 * DAY_MS
+  const gridFrom = rangeInfo ? Math.floor((rangeInfo.start.getTime() - 14 * DAY_MS) / WEEK_MS) * WEEK_MS : null
+  const gridTo = rangeInfo ? Math.ceil((rangeInfo.end.getTime() + 14 * DAY_MS) / WEEK_MS) * WEEK_MS : null
   const gridRange = useMemo(() => (gridFrom != null && gridTo != null ? { start: new Date(gridFrom), end: new Date(gridTo) } : undefined), [gridFrom, gridTo])
   const { data: gridEvents = [] } = useCalendarEvents(gridRange)
   // Punch 32 — view-options popover (⚟ trigger) + its per-device preferences.
@@ -647,7 +650,7 @@ function DesktopCalendar() {
         // Time Slots (0073): a Time block draws the tasks it holds (this occurrence's) and its fill.
         const held = e.type === 'time_block' ? slotTasks(e, tasks) : []
         return {
-          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e), parent: parentTitleOf(e.task_id),
+          id: e.id, title: e.title, start: e.starts_at, end: e.ends_at, allDay: e.all_day, type: e.type ?? 'event', color: e.color, linked: Boolean(e.task_id), taskId: e.task_id, taskDone: e.task_id ? doneTaskIds.has(e.task_id) : false, taskRepeat: (e.task_id && ruleOf.get(e.task_id)) || null, repeat: !!e.recurrence_rule, readOnly: isSynced(e) && !gcalEditable(e), parent: parentTitleOf(e.task_id),
           goal: !!goalTaskId && e.task_id === goalTaskId && !e.all_day && cairoDateKey(new Date(e.starts_at)) === todayKey,
           ...(held.length ? { held: held.map((t) => ({ id: t.id, title: t.title, done: t.status === 'done', minutes: t.duration_min || 30 })), fill: slotFill(e, held), over: slotOver(e, held) } : null),
         }

@@ -140,8 +140,10 @@ export interface CalendarEvent {
   project_id?: string | null
   /** A detached occurrence: the series it was dragged out of. */
   series_id?: string | null
-  /** A Google event (source 'gcal', google-sync — migration 0074): which calendar it mirrors. Read-only. */
-  external_ref?: { source: string; id: string; calendar?: string; calendar_id?: string } | null
+  /** A Google event (source 'gcal', google-sync — migration 0074): which calendar it mirrors. `edit`: the grant can
+   * write and it's ours to change (gcal-events — else read-only); `url`: its join link (Meet…); `link`: its page in
+   * Google Calendar; `master`: a repeating event's series id in Google. */
+  external_ref?: { source: string; id: string; calendar?: string; calendar_id?: string; edit?: boolean; url?: string; link?: string; master?: string } | null
   /** Migration 0077: remind this many minutes before each start (null/absent = none) — an offset, so it
    * follows a move and every occurrence of a series. Never on a Google event. */
   remind_min?: number | null

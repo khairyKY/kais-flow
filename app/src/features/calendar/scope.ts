@@ -1,7 +1,7 @@
 import { appZone } from '../../lib/appZone'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import type { CalendarEvent } from '../../lib/types'
-import { occurrenceId, withRuleParts, type RuleBetween } from '../../../../supabase/functions/_shared/series.ts'
+import { occurrenceId, shiftByDay, type RuleBetween } from '../../../../supabase/functions/_shared/series.ts'
 import { zoneTimeKey, zoneToIso } from './eventTime'
 import { alignToRule, detachedCopy, ruleBetween, splitSeries, withExdate } from './series'
 
@@ -47,20 +47,7 @@ const DAY = 86_400_000
 const addDays = (key: string, n: number) => new Date(Date.parse(`${key}T00:00:00.000Z`) + n * DAY).toISOString().slice(0, 10)
 const dayGap = (from: string, to: string) => Math.round((Date.parse(`${to}T00:00:00.000Z`) - Date.parse(`${from}T00:00:00.000Z`)) / DAY)
 const iso = (s: string) => new Date(s).toISOString()
-const WEEKDAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']
-
-/** BYDAY's weekdays moved `days` along (a weekly series dragged Mon → Tue becomes "every Tuesday", as Google's). */
-export function shiftByDay(rule: string, days: number): string {
-  const by = /(?:^|;)BYDAY=([^;]+)/i.exec(rule)?.[1]
-  if (!by || days % 7 === 0) return rule
-  const moved = by.split(',').map((d) => {
-    const m = /^([+-]?\d*)([A-Z]{2})$/i.exec(d.trim())
-    if (!m) return d
-    const i = WEEKDAYS.indexOf(m[2].toUpperCase())
-    return i < 0 ? d : `${m[1]}${WEEKDAYS[(((i + days) % 7) + 7) % 7]}`
-  })
-  return withRuleParts(rule, { BYDAY: moved.join(',') })
-}
+export { shiftByDay }
 
 /**
  * The whole series moved the way one occurrence moved from `from` to `to` (both that occurrence's start/end): by

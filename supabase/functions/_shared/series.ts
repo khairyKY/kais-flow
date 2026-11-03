@@ -127,6 +127,21 @@ export function withRuleParts(rule: string, set: Record<string, string | null>):
   return out.join(';')
 }
 
+const WEEKDAYS = ['SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA']
+
+/** BYDAY's weekdays moved `days` along (a weekly series dragged Mon → Tue becomes "every Tuesday", as Google's). */
+export function shiftByDay(rule: string, days: number): string {
+  const by = /(?:^|;)BYDAY=([^;]+)/i.exec(rule)?.[1]
+  if (!by || days % 7 === 0) return rule
+  const moved = by.split(',').map((d) => {
+    const m = /^([+-]?\d*)([A-Z]{2})$/i.exec(d.trim())
+    if (!m) return d
+    const i = WEEKDAYS.indexOf(m[2].toUpperCase())
+    return i < 0 ? d : `${m[1]}${WEEKDAYS[(((i + days) % 7) + 7) % 7]}`
+  })
+  return withRuleParts(rule, { BYDAY: moved.join(',') })
+}
+
 const rulePart = (rule: string, key: string) => ruleParts(rule).find((p) => partKey(p) === key)?.split('=')[1]
 
 /** An instant of `row` on the clock its rule runs in (floating wall time; an all-day row's stored date already is). */
