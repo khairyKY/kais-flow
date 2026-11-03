@@ -215,7 +215,7 @@ SUBS_C1='[{"courseWorkId":"w1","state":"TURNED_IN"},{"courseWorkId":"w2","state"
 mock "$(state_json)"
 call classroom-sync '{"action":"sync"}' "$A_JWT"
 expect "2 done" "2" "$(j .done)"
-expect "w1 (TURNED_IN) and w2 (RETURNED) are done, with a completion time" "done done true true" "$(t c1/w1 status) $(t c1/w2 status) $(t c1/w1 "completed_at is not null") $(t c1/w2 "completed_at is not null")"
+expect "w1 (TURNED_IN) and w2 (RETURNED) are done, with a completion time" "done done t t" "$(t c1/w1 status) $(t c1/w2 status) $(t c1/w1 "completed_at is not null") $(t c1/w2 "completed_at is not null")"
 expect "w7 (RECLAIMED_BY_STUDENT) is still open" "todo" "$(t c1/w7 status)"
 expect "task.completed logged" "2" "$(sql -c "select count(*) from activity_log where user_id = '$A_ID' and event_type = 'task.completed' and payload->>'source' = 'classroom'")"
 
@@ -226,7 +226,7 @@ H2=$(COURSE=c2 work h2 'Optional reading' 20 9)
 mock "$(state_json)"
 call classroom-sync '{"action":"sync"}' "$A_JWT"
 expect "w7 moved two days later" "$(day 12)T18:00" "$(t c1/w7 "to_char(due_at at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI')")"
-expect "h2 got a date: out of Someday" "false $(cairo_end 20 | cut -c1-10)" "$(t c2/h2 "someday") $(t c2/h2 "to_char(due_at at time zone 'UTC', 'YYYY-MM-DD')")"
+expect "h2 got a date: out of Someday" "f $(cairo_end 20 | cut -c1-10)" "$(t c2/h2 "someday") $(t c2/h2 "to_char(due_at at time zone 'UTC', 'YYYY-MM-DD')")"
 expect "h1's date, edited here and unchanged on Classroom, is left alone" "2031-01-01T08:00" "$(t c2/h1 "to_char(due_at at time zone 'UTC', 'YYYY-MM-DD\"T\"HH24:MI')")"
 
 # ---------------------------------------------------------------------------------------------
