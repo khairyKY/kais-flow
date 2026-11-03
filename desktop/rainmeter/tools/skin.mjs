@@ -14,6 +14,8 @@ export const RES = path.join(PKG, '@Resources') + path.sep
 export const GLASS = process.env.KF_GLASS ?? path.join(process.env.USERPROFILE ?? '', 'OneDrive', 'Documents', 'Rainmeter', 'Skins', 'Glass')
 export const KAI_RES = path.join(GLASS, '@Resources') + path.sep
 export const WIDGETS = ['Today', 'NowNext', 'DayBar', 'Goal', 'Next']
+// Rainmeter's settings folder (#SETTINGSPATH#): where the Widget link and the Theme choice are kept
+export const SETTINGS = 'C:\\Users\\kai\\AppData\\Roaming\\Rainmeter\\'
 
 // '#@#x' -> the package's @Resources\x, else Kai's (the Glass set's own files)
 export function resolveRes(p) {
@@ -134,7 +136,15 @@ SKIN = {}
 function SKIN:GetVariable(k) return V[k] end
 function SKIN:GetX() return POS[1] end
 function SKIN:GetY() return POS[2] end
-function SKIN:GetMeasure(m) return { GetStringValue = function() if m == 'MeasureTick' then return TICKOUT end return BODY end } end
+function SKIN:ReplaceVariables(s) return (s:gsub('#SETTINGSPATH#', SETTINGS)) end
+function SKIN:GetMeasure(m)
+  return { GetStringValue = function()
+    if m == 'MeasureTick' then return TICKOUT end
+    if m == 'MeasureApp' then return APPKEYS end
+    if m == 'MeasureAppValue' then return APPVALUE end
+    return BODY
+  end }
+end
 function SKIN:GetMeter(m) return { GetH = function() return HEIGHTS[m] or 18 end } end
 function SKIN:Bang(b, ...)
   local a = { ... }
@@ -184,7 +194,9 @@ export function runSkin(widget, opts = {}) {
   const vars = { ...skin.vars, FeedURL: opts.feedURL ?? skin.vars.FeedURL ?? '', ...(opts.vars ?? {}) }
   const groups = Object.fromEntries(skin.meters.map((m) => [m.name, Object.fromEntries(String(m.opts.Group ?? '').split('|').map((g) => [g.trim(), true]))]))
   const files = {}
-  if (opts.link != null) files[RES + 'KaisFlow\\link.txt'] = opts.link
+  if (opts.link != null) files[SETTINGS + 'KaisFlow-link.txt'] = opts.link
+  if (opts.legacyLink != null) files[RES + 'KaisFlow\\link.txt'] = opts.legacyLink // where 1.0 kept it
+  if (opts.theme != null) files[SETTINGS + 'KaisFlow-theme.txt'] = opts.theme
   const L = lauxlib.luaL_newstate()
   lualib.luaL_openlibs(L)
   const run = (code, name) => {
@@ -197,12 +209,14 @@ export function runSkin(widget, opts = {}) {
   }
   run(`V = ${luaLit(vars)}; GROUPS = ${luaLit(groups)}; FILES = ${luaLit(files)}; HEIGHTS = ${luaLit(opts.heights ?? {})};
     POS = ${luaLit(opts.pos ?? [0, 0])}; NOW = ${opts.now ?? 1793271600}; OFFSET = ${opts.offset ?? 10800};
-    BODY = ${luaLit(opts.body ?? '')}; TICKOUT = ''`, 'setup')
+    BODY = ${luaLit(opts.body ?? '')}; TICKOUT = ''; SETTINGS = ${luaLit(SETTINGS)};
+    APPKEYS = ${luaLit(opts.app === true ? 'shell\nDefaultIcon' : '')}; APPVALUE = ${luaLit(opts.appValue ?? '')}`, 'setup')
   run(FAKE, 'fake-skin')
   // V['@'] ends in a backslash; fengari's dofile reads it through node's fs, which takes it on Windows
   run(readText(path.join(RES, 'KaisFlow', 'widget.lua')), 'widget.lua')
   run('Initialize()', 'Initialize')
   for (const s of opts.steps ?? []) {
+    if (typeof s === 'object' && s.files) { for (const [f, v] of Object.entries(s.files)) run(`FILES[${luaLit(f)}] = ${luaLit(v)}`, 'file'); continue }
     if (typeof s === 'object') { run(`TICKOUT = ${luaLit(s.tickOut ?? '')} ${s.body != null ? `BODY = ${luaLit(s.body)}` : ''}`, 'step'); continue }
     run(s, s)
   }

@@ -1,9 +1,9 @@
 // Checks the widgets without Rainmeter: every .ini/.inc parses and points at files that exist, and widget.lua
-// (run in fengari against a fake SKIN, see skin.mjs) shows the sample feed's rows, ticks, night palette,
-// bud/bloom and its error states.   FENGARI=<path to fengari> node check.mjs
+// (run in fengari against a fake SKIN, see skin.mjs) shows the sample feed's rows, ticks, the Day / Night choice,
+// the app-or-website clicks, where it keeps the link, and its error states. No flowers anywhere.   FENGARI=<path to fengari> node check.mjs
 import fs from 'node:fs'
 import path from 'node:path'
-import { PKG, RES, WIDGETS, readSkin, resolveRes, runSkin, finalMeters, readText, subst } from './skin.mjs'
+import { PKG, RES, SETTINGS, WIDGETS, readSkin, resolveRes, runSkin, finalMeters, readText, subst } from './skin.mjs'
 
 let failed = 0, passed = 0
 const check = (name, got, want) => {
@@ -35,7 +35,7 @@ check('kaisflow.lua is plain ASCII (dofile reads bytes)', [...kl].every((c) => c
 check('kaisflow.lua is the widget-feed handoff\'s parser, unchanged',
   kl.equals(fs.readFileSync(path.join(PKG, '..', '..', '..', 'docs', 'log', 'assets', 'widget-feed', 'rainmeter-test', 'KaisFlowTest', 'kaisflow.lua'))), true)
 
-const METERS = new Set(['String', 'Shape', 'Image']), MEASURES = new Set(['WebParser', 'Plugin', 'Script'])
+const METERS = new Set(['String', 'Shape', 'Image']), MEASURES = new Set(['WebParser', 'Plugin', 'Script', 'Registry'])
 for (const w of WIDGETS) {
   const s = readSkin(w)
   check(`${w}: every @Include found (package or Kai's Glass)`, s.includes.filter((i) => i.from === 'missing').map((i) => i.path), [])
@@ -58,11 +58,17 @@ for (const w of WIDGETS) {
   const imgs = Object.values(r.opt).map((o) => o.ImageName).filter(Boolean)
   check(`${w}: the images widget.lua picks exist`, imgs.filter((p) => !fs.existsSync(p)), [])
 }
-// every plant name widget.lua can ask for, day and night
-// (the header flowers are named whole in its PLANT table; the cherries are put together from these parts)
-const names = [...lua.matchAll(/'((?:hydrangea|daisy)-[a-z0-9-]+)'/g)].map((m) => m[1])
-  .concat(['cherry-bloom-54', 'cherry-opening-54', 'cherry-bloom-bud', 'cherry-bud-bud'].flatMap((p) => [p, `${p}-night`]))
-check('every plant image widget.lua can show exists (day and night)', names.filter((n) => !fs.existsSync(path.join(RES, 'KaisFlow', 'Plants', `${n}.png`))), [])
+// no flowers: no plant art, no plant meters, nothing in the Lua or the skins that draws one
+check('no Plants folder or plant images in the package', walk(PKG).filter((f) => /plants|\.png$/i.test(f) && !/(grain|tape)\.png$/.test(f)), [])
+const all = [...walk(PKG).filter((f) => /\.(ini|inc|lua)$/.test(f)), path.join(PKG, '..', 'tools', 'gen-skins.py')]
+check('nothing mentions a plant, flower, bud or bloom (KFPlant, GoalBud, cherry...)',
+  all.filter((f) => /KFPlant|GoalBud|PlantX|PlantY|Plants\\|cherry|hydrangea|daisy|bloom/i.test(readText(f))).map((f) => path.basename(f)), [])
+check('the grain and the tape are the only images', walk(path.join(PKG)).filter((f) => /\.png$/.test(f)).map((f) => path.basename(f)).sort(), ['grain.png', 'tape.png'])
+for (const [w, icon] of [['Today', 'sun'], ['NowNext', 'clock'], ['DayBar', 'calendar'], ['Next', 'calendar'], ['Goal', null]]) {
+  const m = readSkin(w).meters.find((x) => x.name === 'KFIcon')
+  check(`${w}: ${icon ? `a ${icon} line icon in the header, in the muted ink` : 'no header icon (its stamp has the star)'}`,
+    m ? [Object.keys(m.opts).filter((k) => /^Shape\d*$/.test(k)).length > 1, m.opts.Shape.includes('Stroke Color #KfMuted#')] : null, icon ? [true, true] : null)
+}
 
 // ---------------------------------------------------------------- Today: rows, ticks, counts
 {
@@ -74,7 +80,6 @@ check('every plant image widget.lua can show exists (day and night)', names.filt
     [['2', 'Call Omar', ''], ['3', 'Gym', 'Strikethrough'], ['', 'Pay rent', ''], ['', 'Water the plants', ''], null, null])
   check('Today: the label and the rows under it', [text(r, 'TodayLabel'), r.opt.TodayLabel.Y, r.opt.Row3Bg.Y], ["Today's tasks  2", '204', '214'])
   check('Today: Gym\'s box is filled sage, the others empty', [r.opt.Row2Cb.Shape.includes('Fill Color 77,102,80'), r.opt.Row1Cb.Shape.includes('Fill Color 246,240,225')], [true, true])
-  check('Today: the bud is a bud', path.basename(r.opt.GoalBud.ImageName), 'cherry-bud-bud.png')
   check('Today: a two-line goal makes the card taller and moves the rows down',
     [live('Today', { heights: { GoalTitle: 36 } }).opt.Row1Bg.Y, r.opt.Row1Bg.Y], ['146', '128'])
   const many = JSON.parse(sample)
@@ -87,8 +92,8 @@ check('every plant image widget.lua can show exists (day and night)', names.filt
 
   // tick the goal on a live link: shows at once, then curl posts it
   const t = live('Today', { steps: ["Tick('GoalCb')"] })
-  check('tick: the goal shows done at once', [text(t, 'GoalStamp').startsWith('✶ DONE'), t.opt.GoalTitle.InlineSetting, path.basename(t.opt.GoalBud.ImageName), text(t, 'TodaySub')],
-    [true, 'Strikethrough', 'cherry-bloom-bud.png', 'Today · 2 of 5 done'])
+  check('tick: the goal shows done at once (filled check, "Done", struck through)', [text(t, 'GoalStamp').startsWith('✶ DONE'), t.opt.GoalCb.Shape.includes('Fill Color 77,102,80'), t.opt.GoalTitle.InlineSetting, text(t, 'TodaySub')],
+    [true, true, 'Strikethrough', 'Today · 2 of 5 done'])
   check('tick: curl.exe gets the POST', [t.opt.MeasureTick.Parameter, t.log.includes('!CommandMeasure MeasureTick | Run')],
     [`-s -f -X POST "${LINK}&tick=${feed.goal.id}"`, true])
   const at = (b) => t.log.findIndex((l) => l.startsWith(b))
@@ -126,16 +131,14 @@ check('every plant image widget.lua can show exists (day and night)', names.filt
   check('hover: leaving it settles it', text(h3, 'Row1Meta'), '')
 }
 
-// ---------------------------------------------------------------- Goal (1x1): bud to bloom
+// ---------------------------------------------------------------- Goal (1x1): a ticked goal is a filled check and "Done"
 {
   const g = live('Goal')
-  check('Goal: the cherry is opening', path.basename(g.opt.KFPlant.ImageName), 'cherry-opening-54.png')
   check('Goal: stamp, title, when', [text(g, 'GoalStamp'), text(g, 'GoalTitle'), text(g, 'GoalWhen')], ['✶ GOAL OF THE DAY', feed.goal.title, '1:30–3:00 PM'])
+  check('Goal: an empty box before the tick', [g.opt.GoalCb.Shape.includes('Fill Color 246,240,225'), g.opt.GoalCb.Shape2.includes('Stroke Color 0,0,0,0')], [true, true])
   const t = live('Goal', { steps: ["Tick('GoalCb')"] })
-  check('Goal: ticked, it blooms', [path.basename(t.opt.KFPlant.ImageName), text(t, 'GoalStamp'), t.opt.GoalCb.Shape.includes('Fill Color 77,102,80')],
-    ['cherry-bloom-54.png', '✶ DONE', true])
-  const n = live('Goal', { now: 1793271600 + 7 * 3600 + 40 * 60, steps: ["Tick('GoalCb')"] })
-  check('Goal: at night it blooms in the Night Garden', path.basename(n.opt.KFPlant.ImageName), 'cherry-bloom-54-night.png')
+  check('Goal: ticked, it shows a filled check and Done', [text(t, 'GoalStamp'), t.opt.GoalCb.Shape.includes('Fill Color 77,102,80'), t.opt.GoalCb.Shape2.includes('Stroke Color 251,246,233'), t.opt.GoalTitle.InlineSetting],
+    ['✶ DONE', true, true, 'Strikethrough'])
   const none = JSON.parse(sample)
   none.goal = null
   none.top3 = []
@@ -175,8 +178,6 @@ check('every plant image widget.lua can show exists (day and night)', names.filt
   check('day at 15:40: paper and ink', [r.vars.KfPaper, r.vars.KfInk, r.vars.KfGrain], ['251,246,233,194', '42,36,32', '255'])
   const n = live('Today', { now: night })
   check('night at 21:40: Night Garden paper, ink, no grain', [n.vars.KfPaper, n.vars.KfInk, n.vars.KfGrain, n.vars.KfTerra], ['38,34,51,194', '240,235,221', '0', '226,148,115'])
-  check('night: the hydrangea and the bud are the night copies', [path.basename(n.opt.KFPlant.ImageName), path.basename(n.opt.GoalBud.ImageName)],
-    ['hydrangea-light-132-night.png', 'cherry-bud-bud-night.png'])
   check('night: a check box takes the night sage', live('Today', { now: night }).opt.Row2Cb.Shape.includes('Fill Color 168,192,154'), true)
   const d = live('DayBar', { now: night })
   check('night: blocks take palette C\'s night accents (Cornflower 98C0FB at 55% into the night paper)', d.opt.DBBar.Shape4, 'Rectangle 174.3,14,10.3,14,4 | StrokeWidth 0 | Fill Color 101,121,161,115')
@@ -193,9 +194,10 @@ check('every plant image widget.lua can show exists (day and night)', names.filt
   const r = runSkin('Today', { link: `pasted: ${LINK} ` })
   check('a saved link turns the feed on', [r.opt.MeasureFeed.URL, r.log.includes('!EnableMeasure MeasureFeed')], [LINK, true])
   const save = runSkin('Today', { steps: [`V.KfPasted = [==[  ${LINK}\n]==] SaveLink()`] })
-  check('Add my link: saves the link and refreshes the widgets', [save.files[`${RES}KaisFlow\\link.txt`], save.log.includes('!RefreshGroup KaisFlow')], [LINK, true])
+  check('Add my link: saves the link in Rainmeter\'s settings folder (not beside the skins) and refreshes the widgets',
+    [save.files[`${SETTINGS}KaisFlow-link.txt`], save.files[`${RES}KaisFlow\\link.txt`], save.log.includes('!RefreshGroup KaisFlow')], [LINK, undefined, true])
   const junk = runSkin('Today', { steps: ["V.KfPasted = [==[hello]==] SaveLink()"] })
-  check('Add my link: junk is refused', [junk.files[`${RES}KaisFlow\\link.txt`], text(junk, 'KFNote')], [undefined, "That isn't a Widget link. Copy it again from Kai's Flow."])
+  check('Add my link: junk is refused', [junk.files[`${SETTINGS}KaisFlow-link.txt`], text(junk, 'KFNote')], [undefined, "That isn't a Widget link. Copy it again from Kai's Flow."])
   const cases = [['{"error":"unauthorized"}', 'This link was turned off or mistyped'], ['<html>404</html>', "Can't read Kai's Flow right now"],
     ['{"error":"rate_limited"}', 'Too many refreshes. Back in a bit'], ['{"v":2}', "Can't read Kai's Flow right now"]]
   for (const [body, want] of cases) check(`feed answers ${body}`, text(live('Goal', { body }), 'KFMsg'), want)
@@ -205,6 +207,81 @@ check('every plant image widget.lua can show exists (day and night)', names.filt
   check('a bad fetch after a good one keeps the last day on screen', [visible(keep, 'KFMsg'), text(keep, 'GoalTitle')], [false, feed.goal.title])
   const revoked = live('Today', { steps: [{ body: '{"error":"unauthorized"}' }, 'Parse()'] })
   check('a revoked link clears the day', [visible(revoked, 'KFMsg'), visible(revoked, 'GoalTitle')], [true, false])
+}
+
+// ---------------------------------------------------------------- upgrading from 1.0: the link is kept
+{
+  const up = runSkin('Today', { legacyLink: `https://abc.supabase.co/functions/v1/widget?t=kf_w_OLD1`, steps: ['Parse()'] })
+  check('1.0 link (in @Resources\\KaisFlow\\link.txt) is still used', up.opt.MeasureFeed.URL, 'https://abc.supabase.co/functions/v1/widget?t=kf_w_OLD1')
+  check('...and is copied once to the settings folder', up.files[`${SETTINGS}KaisFlow-link.txt`], 'https://abc.supabase.co/functions/v1/widget?t=kf_w_OLD1')
+  const both = runSkin('Today', { link: LINK, legacyLink: 'https://abc.supabase.co/functions/v1/widget?t=kf_w_OLD1' })
+  check('a link in the settings folder wins over the old one', both.opt.MeasureFeed.URL, LINK)
+  const nowhere = runSkin('Today', { link: 'junk', legacyLink: 'junk' })
+  check('no usable link anywhere: asks for one', text(nowhere, 'KFMsg'), "Add your Kai's Flow Widget link")
+  const pkg = fs.readdirSync(path.join(RES, 'KaisFlow'))
+  check('the package never ships a link or a theme file (so an install can\'t overwrite them)', pkg.filter((f) => /link|theme/i.test(f)), [])
+}
+
+// ---------------------------------------------------------------- Theme: Auto / Day / Night, remembered
+{
+  const day = 1793271600 + 3 * 3600      // 14:00 on the clock
+  const night = 1793271600 + 10 * 3600   // 21:00
+  const paper = (o) => runSkin('Today', { body: sample, link: LINK, steps: ['Parse()'], ...o }).vars.KfPaper
+  const DAY = '251,246,233,194', NIGHT = '38,34,51,194'
+  check('Auto (no file) follows the clock: day at 14:00, night at 21:00', [paper({ now: day }), paper({ now: night })], [DAY, NIGHT])
+  check('Auto written out is the same', [paper({ now: day, theme: 'auto' }), paper({ now: night, theme: 'auto\n' })], [DAY, NIGHT])
+  check('Day stays day at 21:00', paper({ now: night, theme: 'day' }), DAY)
+  check('Night stays night at 14:00', paper({ now: day, theme: 'night' }), NIGHT)
+  check('a garbled file is Auto', [paper({ now: day, theme: 'purple' }), paper({ now: night, theme: '' })], [DAY, NIGHT])
+  const set = runSkin('Today', { body: sample, link: LINK, now: day, steps: ['Parse()', "SetTheme('night')"] })
+  check('Theme > Night: remembered in the settings folder, not beside the skins', [set.files[`${SETTINGS}KaisFlow-theme.txt`], Object.keys(set.files).filter((f) => f.startsWith(RES))], ['night', []])
+  check('Theme: every Kai\'s Flow widget is told to read it again',
+    WIDGETS.every((w) => set.log.includes(`!CommandMeasure MeasureKF | LoadTheme() | Glass\\KaisFlow\\${w}`)), true)
+  check('Theme: the widget says which one was picked', text(set, 'KFNote'), 'Theme: Night')
+  // another widget gets the order: it reads the file and redraws
+  const other = runSkin('NowNext', { body: sample, link: LINK, now: day, steps: ['Parse()', { files: { [`${SETTINGS}KaisFlow-theme.txt`]: 'night' } }, 'LoadTheme()'] })
+  check('LoadTheme(): the other widget switches to night at once', other.vars.KfPaper, NIGHT)
+  const back = runSkin('NowNext', { body: sample, link: LINK, now: night, theme: 'night', steps: ['Parse()', { files: { [`${SETTINGS}KaisFlow-theme.txt`]: 'auto' } }, 'LoadTheme()'] })
+  check('Theme > Auto at 21:00 stays night; at 14:00 it goes back to day', [back.vars.KfPaper, runSkin('NowNext', { body: sample, link: LINK, now: day, theme: 'night', steps: ['Parse()', { files: { [`${SETTINGS}KaisFlow-theme.txt`]: 'auto' } }, 'LoadTheme()'] }).vars.KfPaper], [NIGHT, DAY])
+  const menu = readSkin('Today').sections.get('Rainmeter').opts
+  const titles = [...menu].filter(([k]) => /^ContextTitle\d*$/.test(k)).map(([, v]) => v)
+  check('the right-click menu has Theme: Auto, Day, Night', titles.filter((t) => t.startsWith('Theme')), ['Theme: Auto (7 PM - 6 AM)', 'Theme: Day', 'Theme: Night'])
+  check('...each calls SetTheme', ['4', '5', '6'].map((n) => menu.get(`ContextAction${n}`)), ['auto', 'day', 'night'].map((c) => `[!CommandMeasure MeasureKF "SetTheme('${c}')"]`))
+  check('...and a menu title is 30 characters at most (Rainmeter cuts longer ones)', titles.filter((t) => t.length > 30), [])
+}
+
+// ---------------------------------------------------------------- clicks open the desktop app, or the website when it isn't there
+{
+  const url = (r) => r.log.filter((l) => l.startsWith('"')).map((l) => l.slice(1, -1))
+  const web = 'https://kais-flow.kaidagoat.workers.dev'
+  const go = (what, o = {}) => url(live('Today', { steps: [`Go('${what}')`], ...o }))
+  const id = feed.top3[1].id
+  check('app installed (the kaisflow key has subkeys): today opens kaisflow://today', go('today', { app: true }), ['kaisflow://today'])
+  check('app installed (only the default value is set): still the app', go('today', { appValue: 'URL:Kai\'s Flow' }), ['kaisflow://today'])
+  check('app not installed: the website', go('today'), [`${web}/today`])
+  check('calendar, focus', [go('calendar', { app: true }), go('focus', { app: true })], [['kaisflow://calendar'], ['kaisflow://focus']])
+  check('a task: kaisflow://task/<id>, or the website\'s /tasks/<id>', [go(`task/${id}`, { app: true }), go(`task/${id}`)], [[`kaisflow://task/${id}`], [`${web}/tasks/${id}`]])
+  check('capture: kaisflow://capture, or the website\'s /new', [go('capture', { app: true }), go('capture')], [['kaisflow://capture'], [`${web}/new`]])
+  check('both registry measures are refreshed at each click (the app may be installed later)', live('Today', { steps: ["Go('today')"] }).log.filter((l) => l.startsWith('!UpdateMeasure MeasureApp')).length, 2)
+  const row = (sec, o) => url(live('Today', { steps: [`Open('${sec}')`], ...o }))
+  check('a Top 3 row opens its task; the goal card opens the goal', [row('Row1Bg', { app: true }), row('GoalCard', { app: true })], [[`kaisflow://task/${feed.top3[1].id}`], [`kaisflow://task/${feed.goal.id}`]])
+  check('a task row on the website', row('Row3Bg'), [`${web}/tasks/${feed.tasks[0].id}`])
+  check('the + button opens capture', readSkin('Today').sections.get('TodayAdd').opts.get('LeftMouseUpAction'), `[!CommandMeasure MeasureKF "Go('capture')"]`)
+  check('the menu\'s Open Kai\'s Flow opens today', readSkin('Today').sections.get('Rainmeter').opts.get('ContextAction'), `[!CommandMeasure MeasureKF "Go('today')"]`)
+  const nb = (w, what, o = {}) => url(live(w, { steps: [`Go('${what}')`], ...o }))
+  const block = feed.now_block
+  check('Now: the running block\'s task, or the calendar when the block has no task',
+    [nb('NowNext', 'now', { app: true }), nb('NowNext', 'next1', { app: true })],
+    [[block.task_id ? `kaisflow://task/${block.task_id}` : 'kaisflow://calendar'], [feed.next_blocks[0].task_id ? `kaisflow://task/${feed.next_blocks[0].task_id}` : 'kaisflow://calendar']])
+  const empty = JSON.parse(sample)
+  empty.now_block = null
+  empty.next_blocks = []
+  check('Now / Next with nothing on: the calendar', [nb('NowNext', 'now', { body: JSON.stringify(empty), app: true }), nb('Next', 'next1', { body: JSON.stringify(empty) })],
+    [['kaisflow://calendar'], [`${web}/calendar`]])
+  const clicks = (w) => readSkin(w).meters.filter((m) => /Go\(|Open\(/.test(m.opts.LeftMouseUpAction ?? '')).map((m) => m.name)
+  check('Now + next, Day bar, Next, Goal have something to click', [clicks('NowNext'), clicks('DayBar'), clicks('Next'), clicks('Goal')],
+    [['NNHit', 'Blk1Box', 'Blk2Box'], ['DBBar', 'Blk1Box'], ['SNHit'], ['GoalCard', 'GoalCb']].map((a) => a.filter((n) => n !== 'GoalCb')))
+  check('no click action still opens the old AppURL directly', ['Today', 'NowNext', 'DayBar', 'Goal', 'Next'].flatMap((w) => readSkin(w).meters.filter((m) => /AppURL/.test(m.opts.LeftMouseUpAction ?? '')).map((m) => `${w}.${m.name}`)), [])
 }
 
 console.log(`\n${passed} passed, ${failed} failed`)
