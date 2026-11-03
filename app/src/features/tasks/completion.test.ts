@@ -116,6 +116,12 @@ describe('planUndo', () => {
     expect(restore).toMatchObject({ status: 'todo', completed_at: null, top3: true, notes: 'edited meanwhile' })
   })
 
+  it('puts the Top 3 place back as it was before the check (completing ranks a pick, P1 2026-10-31)', () => {
+    const before = task({ top3: true, top3_rank: null })
+    const current = { ...planCompletion(before, [], NOW, newId).done, top3_rank: 1 }
+    expect(planUndo(current, before, null, undefined).restore).toMatchObject({ top3: true, top3_rank: null })
+  })
+
   it('removes the spawned occurrence while it is untouched (or not in the list yet)', () => {
     const before = task()
     const { next } = planCompletion(before, [], NOW, newId)

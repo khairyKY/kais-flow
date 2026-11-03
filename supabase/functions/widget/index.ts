@@ -37,10 +37,7 @@ async function feed(tx: Tx, canTick: boolean, names: boolean, now: Date) {
   const zone = userZone(await s.timezone())
   const { start, end } = dayWindow(now, zone)
   const open = await s.dayTasks(start.toISOString(), end.toISOString())
-  const doneToday = (await tx`
-    select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' as r from tasks t
-    where t.status = 'done' and t.deleted_at is null and t.completed_at >= ${start.toISOString()}::timestamptz and t.completed_at < ${end.toISOString()}::timestamptz
-    limit 500`).map((x) => x.r as TaskRow)
+  const doneToday = await s.doneTasks(start.toISOString(), end.toISOString())
   // The calendar as the app draws it (Google-synced events too: this is the owner's own desktop), repeats expanded.
   const rows = await tx`
     select id, title, starts_at, ends_at, all_day, task_id, type, color, recurrence_rule, recurrence_exdates from calendar_events

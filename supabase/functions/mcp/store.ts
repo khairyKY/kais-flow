@@ -161,6 +161,13 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
         order by t.top3 desc, coalesce(t.due_at, t.scheduled_start) nulls last, t.id
         limit 500`)
     },
+    async doneTasks(start, end) {
+      return tasks(await tx`
+        select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r
+        from tasks t left join projects p on p.id = t.project_id
+        where t.status = 'done' and t.deleted_at is null and t.completed_at >= ${start}::timestamptz and t.completed_at < ${end}::timestamptz
+        limit 500`)
+    },
     async listTasks(f: TaskFilter) {
       return tasks(await tx`
         select to_jsonb(t) - 'embedding' - 'search_tsv' - 'external_ref' - 'user_id' || jsonb_build_object('project_name', p.name) as r

@@ -283,7 +283,7 @@ describe('MCP: the tools', () => {
   it('today: Top 3, due today, overdue and events, in the user\'s zone', async () => {
     const r = await call(deps(fakeStore('Africa/Cairo', seed())), 'today')
     expect(r.data).toMatchObject({ date: '2026-10-04', now: '2026-10-04 14:00', timezone: 'Africa/Cairo' })
-    expect(r.data!.top3).toEqual([{ id: tid(1), title: 'Call the tyre supplier', due: '2026-10-04 15:00', project: 'Shaheen Website', labels: ['calls'], top3: true }])
+    expect(r.data!.top3).toEqual([{ id: tid(1), title: 'Call the tyre supplier', due: '2026-10-04 15:00', project: 'Shaheen Website', labels: ['calls'], top3: true, goal: true }])
     expect(r.data!.today.map((t: { title: string }) => t.title)).toEqual(['Send the invoice'])
     expect(r.data!.overdue.map((t: { title: string }) => t.title)).toEqual(['Renew the domain', 'Water the plants'])
     expect(r.data!.events).toEqual([{ id: tid(900), title: 'Standup', start: '2026-10-04 10:00', end: '2026-10-04 10:15' }])
@@ -374,6 +374,21 @@ describe('MCP: the tools', () => {
       task(4, 'pick today', { top3: true, due_at: '2026-10-04T06:00:00Z' }),
     ])
     expect((await call(deps(stale), 'add_task', { title: 'one more', top3: true })).isError).toBe(false)
+  })
+
+  it('complete_task on the goal of the day: it stays the goal, done, in today (P1 2026-10-31)', async () => {
+    // Two unranked picks: the goal is the older one. Ticking it puts the order on the rows first.
+    const store = fakeStore('Africa/Cairo', [...seed(), task(11, 'Second pick', { top3: true, due_at: '2026-10-04T13:00:00Z', created_at: '2026-10-03T00:00:00Z' })])
+    expect((await call(deps(store), 'today')).data!.top3.map((t: { title: string }) => t.title)).toEqual(['Call the tyre supplier', 'Second pick'])
+    const r = await call(deps(store), 'complete_task', { id: tid(1) })
+    expect(r.isError).toBe(false)
+    const after = (await call(deps(store), 'today')).data!.top3
+    expect(after.map((t: { title: string; status?: string; goal?: boolean }) => [t.title, t.status ?? 'todo', !!t.goal])).toEqual([
+      ['Call the tyre supplier', 'done', true],
+      ['Second pick', 'todo', false],
+    ])
+    expect(store.tasks.find((t) => t.id === tid(1))).toMatchObject({ status: 'done', top3: false, top3_rank: 1 })
+    expect(store.tasks.find((t) => t.id === tid(11))).toMatchObject({ top3: true, top3_rank: 2 })
   })
 
   it("complete_task: done and logged; a repeat's next occurrence is created once, reminder kept", async () => {

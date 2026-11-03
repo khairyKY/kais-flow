@@ -1,0 +1,227 @@
+[
+  {
+    "name": "d the deck: \"1 of 7\", Previous off, Next on",
+    "ok": true,
+    "detail": "1 of 7"
+  },
+  {
+    "name": "d …7 dots, the first on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d …two sheets stacked behind the card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d …the oldest first: Sotto, 19 days",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d Next → \"2 of 7\", Sukoon, the second dot on, Previous on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d ←/→ with the deck focused step it (→ 3 of 7, ←← 1 of 7); the day stays",
+    "ok": true,
+    "detail": "3 of 7 / 1 of 7"
+  },
+  {
+    "name": "d …at the last card Next is off, no sheets behind",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d accessible: a labelled region, arrows named, the count live",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d Plan a step (Sotto) → the Add bar opens on \"#Sotto \", caret after it",
+    "ok": true,
+    "detail": "{\"value\":\"#Sotto \",\"caret\":7,\"focused\":true}"
+  },
+  {
+    "name": "d Snooze a week → \"Snoozed a week\" toast",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d …Sotto slid out: \"1 of 6\", Sukoon now",
+    "ok": true,
+    "detail": "1 of 6 Sukoon"
+  },
+  {
+    "name": "d …Undo brings it back: \"1 of 7\", Sotto",
+    "ok": true,
+    "detail": "1 of 7 Sotto"
+  },
+  {
+    "name": "d …and no review is written after an Undo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d a Snooze left alone writes the review (it returns after a week while untouched)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d an area's Plan a step (Learning up) opens its page",
+    "ok": true,
+    "detail": "http://localhost:5344/projects/b0000000-0000-4000-8000-000000000011"
+  },
+  {
+    "name": "d no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o one item: the card, no arrows, no dots, no sheets",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o none: \"Nothing slipping. Everything was touched this week.\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o none: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p the phone deck: \"1 of 7\", the next card peeking, \"swipe for the next\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p …the peek sits right of the card, cut off at the screen edge",
+    "ok": true,
+    "detail": "{\"card\":{\"x\":16,\"y\":641.25,\"width\":338,\"height\":131},\"peek\":{\"x\":362,\"y\":641.25,\"width\":40,\"height\":131},\"car\":{\"x\":16,\"y\":641.25,\"width\":374,\"height\":131}}"
+  },
+  {
+    "name": "p …phone arrows are 36 px",
+    "ok": true,
+    "detail": "{\"x\":338,\"y\":593.25,\"width\":36,\"height\":36}"
+  },
+  {
+    "name": "p a swipe left → \"2 of 7\" (and the card did not open)",
+    "ok": true,
+    "detail": "2 of 7 http://localhost:5344/today"
+  },
+  {
+    "name": "p no sideways page scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f nothing plays on load (or the first sync)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f the goal card shows the first pick (no ranks, no star log)",
+    "ok": true,
+    "detail": "Finish the OS study guide, chapters 1–3"
+  },
+  {
+    "name": "f a goal tick puts the layer up",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f …on the body, fixed over the whole window (never clipped by the card)",
+    "ok": true,
+    "detail": "{\"parent\":\"BODY\",\"pos\":\"fixed\",\"w\":1280,\"clip\":\"none\"}"
+  },
+  {
+    "name": "f …bursts of sparks above the card (~0.9 s in)",
+    "ok": true,
+    "detail": "sparks=17 highest=338 cardTop=413"
+  },
+  {
+    "name": "f …and it is gone by 2 s",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f the tick ranks the picks first: goal 1, then 2, 3",
+    "ok": true,
+    "detail": "[[\"Finish the OS study guide, chapters 1–3\",\"todo\",true,1],[\"Study VLSI lecture 4\",\"todo\",true,2],[\"Gym — pull day\",\"todo\",true,3],[\"Finish the OS study guide, chapters 1–3\",\"done\",false,1]]"
+  },
+  {
+    "name": "f …the done goal keeps rank 1",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000001\",\"title\":\"Finish the OS study guide, chapters 1–3\",\"user_id\":\"00000000-0000-4000-8000-00000000f1e0\",\"project_id\":null,\"domain_id\":null,\"area_id\":null,\"notes\":null,\"status\":\"done\",\"due_at\":\"2026-10-31T06:00:00.000Z\",\"scheduled_start\":null,\"scheduled_end\":null,\"top3\":false,\"top3_rank\":1,\"snoozed_until\":null,\"recurrence_rule\":null,\"labels\":[],\"priority\":null,\"duration_min\":120,\"someday\":false,\"reminder_at\":null,\"reminder_sent\":false,\"completed_at\":\"2026-10-31T07:00:05.398Z\",\"paused\":false,\"milestone_id\":null,\"deleted_at\":null,\"parent_task_id\":null,\"slot_id\":null,\"slot_date\":null,\"created_at\":\"2026-10-20T04:00:00.000Z\",\"updated_at\":\"2026-10-01T06:00:00.000Z\"}"
+  },
+  {
+    "name": "f the goal card still holds the goal, struck through",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f Undo plays nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "f after a reload the done goal is still the goal (no star log needed)",
+    "ok": true,
+    "detail": "Finish the OS study guide, chapters 1–3"
+  },
+  {
+    "name": "f no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r reduced motion: the layer holds the glow only — no shells, no sparks",
+    "ok": true,
+    "detail": "{\"stage\":1,\"inStage\":1,\"glow\":true}"
+  },
+  {
+    "name": "r …gone once the glow fades",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "q phone: nothing on load",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "q a goal tick plays; the layer is clipped at the top bar's bottom edge",
+    "ok": true,
+    "detail": "inset(56px 0px 0px) bar=56"
+  },
+  {
+    "name": "q …gone by 2 s; the goal stays the goal, done",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "q no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

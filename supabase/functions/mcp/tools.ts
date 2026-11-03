@@ -30,7 +30,7 @@
 // server.ts lists them all.
 
 import { addDays, dateKey, dayWindow, loopDay, wallTime, wallToInstant } from '../_shared/zone.ts'
-import { isTop3Today, todaysTop3 } from '../_shared/today.ts'
+import { dayPicks, isTop3Today, todaysTop3 } from '../_shared/today.ts'
 
 // The user's clock is _shared/zone.ts (notify and chat read the same one); re-exported for the tests.
 export { DEFAULT_ZONE, userZone } from '../_shared/zone.ts'
@@ -288,6 +288,8 @@ export interface Store {
   timezone(): Promise<string | null>
   /** Open, not in Trash, not someday, not paused: dated before `end`, scheduled in [start, end), or an undated pick. */
   dayTasks(startIso: string, endIso: string): Promise<TaskRow[]>
+  /** Done in [start, end), not in Trash. */
+  doneTasks(startIso: string, endIso: string): Promise<TaskRow[]>
   listTasks(f: TaskFilter): Promise<TaskRow[]>
   getTask(id: string): Promise<TaskRow | null>
   /** Not in Trash, by name. */
@@ -1081,6 +1083,16 @@ export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done
   // Plan the next occurrence before writing anything: a rule rrule can't read must not leave
   // the task done with its series silently ended.
   const next = await nextRound(ctx, t)
+  // A pick keeps its place once done (the app's tasks/api completeOne): the order goes onto the rows
+  // (top3_rank) first, so a finished goal stays rank 1 — the goal — in the app, here and on the widget.
+  let rank = t.top3_rank ?? null
+  if (isTop3Today(t, ctx.now, ctx.zone)) {
+    const picks = await picksToday(ctx)
+    for (const [i, p] of picks.entries()) {
+      if (p.id === t.id) rank = i + 1
+      if (p.top3_rank !== i + 1) await ctx.store.patch('tasks', { id: p.id }, { top3_rank: i + 1 })
+    }
+  }
   if (!(await ctx.store.markDone(t.id, now))) return bad(`"${t.title}" isn't open any more.`)
   await logIt(ctx, 'task.completed', 'task', t.id)
   let carried = 0
@@ -1093,7 +1105,7 @@ export async function completeTask(ctx: ToolContext, t: TaskRow): Promise<{ done
       carried++
     }
   }
-  return { done: { ...t, status: 'done', completed_at: now, top3: false }, next, carried }
+  return { done: { ...t, status: 'done', completed_at: now, top3: false, top3_rank: rank }, next, carried }
 }
 
 /** A task as Duplicate copies it (the app's tasks/duplicate.ts duplicateRows): open, off the calendar,
@@ -1445,14 +1457,16 @@ export const TOOLS: readonly ToolDef[] = [
       const { date, start, end } = dayWindow(ctx.now, ctx.zone)
       const rows = await ctx.store.dayTasks(start.toISOString(), end.toISOString())
       const events = await eventsIn(ctx, start, end)
-      const { top3, today, overdue } = splitToday(rows, ctx.now, ctx.zone)
+      const { today, overdue } = splitToday(rows, ctx.now, ctx.zone)
+      // The Top 3 as the app draws it: a pick finished today keeps its place, the first is the goal (done or not).
+      const top3 = dayPicks(rows, await ctx.store.doneTasks(start.toISOString(), end.toISOString()), ctx.now, ctx.zone)
       const trace = await ritualTrace(ctx)
       const seeds = seededTaskIds(trace.rows, trace.day)
       return {
         date,
         now: wallTime(ctx.now.toISOString(), ctx.zone),
         timezone: ctx.zone,
-        top3: top3.map((t) => taskOut(t, ctx.zone)),
+        top3: top3.map((t, n) => ({ ...taskOut(t, ctx.zone), top3: true, ...(n === 0 ? { goal: true } : {}) })),
         today: today.map((t) => taskOut(t, ctx.zone)),
         overdue: overdue.slice(0, OVERDUE_SHOWN).map((t) => taskOut(t, ctx.zone)),
         ...(overdue.length > OVERDUE_SHOWN ? { overdue_not_shown: overdue.length - OVERDUE_SHOWN } : {}),
