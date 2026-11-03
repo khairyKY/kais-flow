@@ -1,0 +1,227 @@
+[
+  {
+    "name": "s1 Integrations lists Google Classroom, not connected",
+    "ok": true,
+    "detail": "Google ClassroomYour courses’ deadlines as tasks · read-onlyNot connected"
+  },
+  {
+    "name": "s1 its row opens its own page",
+    "ok": true,
+    "detail": "http://localhost:5350/settings/integrations/classroom"
+  },
+  {
+    "name": "s1 Connect is offered, no Sync/Disconnect yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1 the page says read-only and not for an AI",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s1: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s2 Connect said which secrets are missing",
+    "ok": true,
+    "detail": "Not set up yet: GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET aren’t set on the server. docs/GOOGLE-SETUP.md has the steps (free, about 10 minutes)."
+  },
+  {
+    "name": "s2 it asked classroom-connect to start (and nothing else)",
+    "ok": true,
+    "detail": "[{\"name\":\"classroom-connect\",\"body\":{\"action\":\"start\",\"origin\":\"http://localhost:5350\"}}]"
+  },
+  {
+    "name": "s2: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s3 Connect goes to Google’s consent page",
+    "ok": true,
+    "detail": "https://accounts.google.com/o/oauth2/v2/auth?stub=classroom"
+  },
+  {
+    "name": "s3 the request carries the origin to come back to",
+    "ok": true,
+    "detail": "{\"action\":\"start\",\"origin\":\"http://localhost:5350\"}"
+  },
+  {
+    "name": "s3: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 the landing redirects to the Classroom page",
+    "ok": true,
+    "detail": "http://localhost:5350/settings/integrations/classroom"
+  },
+  {
+    "name": "s4 the landing params are cleared",
+    "ok": true,
+    "detail": "http://localhost:5350/settings/integrations/classroom"
+  },
+  {
+    "name": "s4 the first sync ran",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 it says what came in",
+    "ok": true,
+    "detail": "Connected · Synced · 2 courses · 6 new · 0 changed · 0 handed in · 0 gone"
+  },
+  {
+    "name": "s4 one switch per course, the chosen ones on",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4 the section is named: projects in a Classroom domain",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s4: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 ticking a course saves at once",
+    "ok": true,
+    "detail": "[{\"action\":\"choose\",\"ids\":[\"c1\",\"c2\",\"c3\"]}]"
+  },
+  {
+    "name": "s5 a newly ticked course syncs now",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s5 unticking saves too, and syncs nothing",
+    "ok": true,
+    "detail": "{\"action\":\"choose\",\"ids\":[\"c1\"]}"
+  },
+  {
+    "name": "s5: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s6 Sync now says what moved",
+    "ok": true,
+    "detail": "Synced · 2 courses · 0 new · 1 changed · 2 handed in · 1 gone"
+  },
+  {
+    "name": "s6 Look for new courses re-reads the list",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s6: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s7 Disconnect asks before it does anything",
+    "ok": true,
+    "detail": "[object Promise]"
+  },
+  {
+    "name": "s7 the choice: keep / Trash / cancel",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s7 Cancel changes nothing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s7 \"Move them to Trash\" sends remove:true",
+    "ok": true,
+    "detail": "[{\"name\":\"classroom-connect\",\"body\":{\"action\":\"disconnect\",\"remove\":true}}]"
+  },
+  {
+    "name": "s7 …and says how many went to Trash",
+    "ok": true,
+    "detail": "Disconnected. 5 imported tasks moved to Trash (restorable for 30 days)."
+  },
+  {
+    "name": "s7: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s7 \"Keep them\" sends remove:false",
+    "ok": true,
+    "detail": "[{\"name\":\"classroom-connect\",\"body\":{\"action\":\"disconnect\",\"remove\":false}}]"
+  },
+  {
+    "name": "s7 …and says they stay",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8 an expired grant says reconnect",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8 Reconnect replaces Sync now, and the course list is hidden",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s8: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 admin_blocked: said in words",
+    "ok": true,
+    "detail": "Your school’s Google administrator has blocked outside apps from Classroom. Ask them to allow Kai’s Flow, or use a personal Google account."
+  },
+  {
+    "name": "s9 admin_blocked: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 denied: said in words",
+    "ok": true,
+    "detail": "Google Classroom wasn’t connected — the consent page was cancelled."
+  },
+  {
+    "name": "s9 denied: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s9 scope_missing: said in words",
+    "ok": true,
+    "detail": "Google Classroom wasn’t connected — leave all three Classroom boxes ticked on Google’s page."
+  },
+  {
+    "name": "s9 scope_missing: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s10 phone: the page fits (no sideways scroll)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s10 phone: switches are tappable (44px)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "s10: no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
