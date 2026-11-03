@@ -64,10 +64,10 @@ describe('eventRemindersDue', () => {
 describe('eventReminderNotice + the device planner', () => {
   const base = { tasks: [], from: cairo('17:40'), to: cairo('17:50'), now: cairo('17:40'), zone: 'Africa/Cairo' }
 
-  it('"Gym · in 15 min" / "18:00–19:30" · Open on that day; its own switch, on by default', () => {
+  it('"Gym · in 15 min" / "6:00–7:30 PM" · Open on that day; its own switch, on by default', () => {
     const [p] = localPlan({ ...base, events: [ev('a')], prefs: { lock_screen_names: true } })
     expect(p.key).toBe(`event:a@${cairo('17:45').toISOString()}`)
-    expect(p.notice).toMatchObject({ kind: 'event_reminder', title: 'Gym · in 15 min', body: '18:00–19:30', url: '/calendar?date=2026-10-03', tag: 'event-a', taskIds: [] })
+    expect(p.notice).toMatchObject({ kind: 'event_reminder', title: 'Gym · in 15 min', body: '6:00–7:30 PM', url: '/calendar?date=2026-10-03', tag: 'event-a', taskIds: [] })
     expect(p.notice.actions).toEqual([{ action: 'open', title: 'Open' }])
     expect(kindOn('event_reminder', null)).toBe(true)
     expect(localPlan({ ...base, events: [ev('a')], prefs: { event_reminder_on: false } })).toEqual([])

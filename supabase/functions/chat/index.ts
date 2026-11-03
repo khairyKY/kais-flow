@@ -28,7 +28,7 @@ import { asUser, nextOccurrence, ruleBetween, sql, store, type Tx } from '../mcp
 import { TOOLS } from '../mcp/server.ts'
 import { runTool, type Scope, type ToolResult } from '../mcp/tools.ts'
 import { dayStart, snapshotText, systemPrompt } from './prompt.ts'
-import { CHAT_TOOLS, MAX_STEPS, READ_TOOLS, RUNNABLE, UNDO_TABLES, claimsAction, looksLikeAction, relevantCitations, restorePlan, stepToCall, type Call, type Refs, type Restore, type Snapshot } from './plan.ts'
+import { CHAT_TOOLS, MAX_STEPS, READ_TOOLS, RUNNABLE, UNDO_TABLES, claimsAction, looksLikeAction, relevantCitations, resolveTags, restorePlan, stepToCall, stripTags, type Call, type Refs, type Restore, type Snapshot } from './plan.ts'
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!
@@ -240,7 +240,9 @@ async function ask(req: Request, auth: { token: string; user: { id: string } }, 
         }
         return sse(req, "I haven't changed anything yet. Tell me once more what to add and I'll show it to you to confirm.", { citations: [] })
       }
-      return sse(req, text || 'Sorry — I lost my words there. Ask me again?', { citations: action ? [] : relevantCitations(text, hits).map((h) => ({ entity_type: h.entity_type, entity_id: h.entity_id, title: h.title })) })
+      // The [t1] / [e1] tags the lists gave items: kept (with what they open) when they resolve, dropped when not.
+      const said = resolveTags(text || 'Sorry — I lost my words there. Ask me again?', refs)
+      return sse(req, said.text, { citations: action ? [] : relevantCitations(said.text, hits).map((h) => ({ entity_type: h.entity_type, entity_id: h.entity_id, title: h.title })), refs: said.chips })
     }
     convo.push({ role: 'assistant', content: String(msg.content ?? ''), tool_calls: calls })
     for (const c of calls) {
@@ -295,7 +297,7 @@ Deno.serve(async (req) => {
     const messages = (Array.isArray(body.messages) ? body.messages : [])
       .filter((m): m is ChatMessage => (m?.role === 'user' || m?.role === 'assistant') && typeof m.content === 'string' && m.content.trim() !== '')
       .slice(-20)
-      .map((m) => ({ role: m.role, content: m.content.slice(0, 4000) }))
+      .map((m) => ({ role: m.role, content: stripTags(m.content.slice(0, 4000)) }))
     if (!messages.some((m) => m.role === 'user')) return jsonResponse(req, { error: 'no user message' }, 400)
 
     // SEC-2: today's AI allowance, before retrieval runs or Groq is called. Fails CLOSED: if the

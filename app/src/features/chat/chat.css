@@ -135,3 +135,18 @@
 .motion-on .kf-chat-dots > i:nth-child(3) { animation-delay: 400ms; }
 /* R7 — a plan card's state change cross-fades its contents. */
 .kf-chat-card-body { animation: kfFadeIn 200ms var(--ease-out) backwards; } /* kfFadeIn: the shell's (AppLayout) */
+
+/* A [t1] / [e1] tag in an answer: a small chip that opens the task or event it points at. */
+.kf-chat-ref {
+  display: inline-block;
+  margin-inline-start: 6px;
+  padding: 1px 8px;
+  border: none;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-meta);
+  color: var(--acc-clover-text);
+  background: color-mix(in srgb, var(--acc-clover) 22%, transparent);
+  cursor: pointer;
+}
+.kf-chat-ref:focus-visible { outline: none; box-shadow: var(--focus-ring); }

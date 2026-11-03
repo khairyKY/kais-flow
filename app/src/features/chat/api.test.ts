@@ -44,7 +44,7 @@ describe('streamChat', () => {
     const h = handlers()
     await streamChat([{ role: 'user', content: 'hi' }], h)
     expect(h.onDelta.mock.calls.map((c) => c[0]).join('')).toBe('Hello')
-    expect(h.onDone).toHaveBeenCalledWith([{ entity_type: 'task', entity_id: 't1', title: 'T' }], undefined)
+    expect(h.onDone).toHaveBeenCalledWith([{ entity_type: 'task', entity_id: 't1', title: 'T' }], undefined, undefined)
     expect(h.onError).not.toHaveBeenCalled()
   })
 
@@ -55,7 +55,7 @@ describe('streamChat', () => {
     vi.stubGlobal('fetch', fetch)
     const h = handlers()
     await streamChat([{ role: 'user', content: 'gym monday 7' }], h)
-    expect(h.onDone).toHaveBeenCalledWith([], plan)
+    expect(h.onDone).toHaveBeenCalledWith([], plan, undefined)
     expect(JSON.parse((fetch.mock.calls[0] as unknown as [string, RequestInit])[1].body as string)).toMatchObject({ hour24: false })
   })
 

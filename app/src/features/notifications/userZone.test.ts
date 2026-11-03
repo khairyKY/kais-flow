@@ -54,8 +54,8 @@ describe('notify on a New York user’s clock', () => {
   })
   it('a reminder prints the time on the user’s clock', () => {
     const task = { id: 't', title: 'Call the tyre supplier', due_at: '2026-10-04T14:00:00Z' }
-    expect(reminderNotice([task], { lock_screen_names: true }, new Date('2026-10-04T13:50:00Z'), NY).body).toBe('10:00')
-    expect(reminderNotice([task], { lock_screen_names: true }, new Date('2026-10-04T13:50:00Z'), TOKYO).body).toBe('23:00')
+    expect(reminderNotice([task], { lock_screen_names: true }, new Date('2026-10-04T13:50:00Z'), NY).body).toBe('10:00 AM')
+    expect(reminderNotice([task], { lock_screen_names: true }, new Date('2026-10-04T13:50:00Z'), TOKYO).body).toBe('11:00 PM')
   })
 })
 

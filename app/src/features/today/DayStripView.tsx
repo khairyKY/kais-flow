@@ -53,6 +53,8 @@ export function DayStripView({ events, tasks, goalId, onOpen }: {
   const sun = hm(settings?.morning_digest_at) ?? 7.5
   const label = (h: number) => (h24 ? `${h}:00` : `${h % 12 || 12}${h < 12 ? 'am' : 'pm'}`)
   const openColumn = () => navigate(`/calendar?date=${key}&view=day`)
+  // Kai 2026-11-03: an empty bar and "Nothing else today" on a day with nothing scheduled is noise - no bar then.
+  if (lanes.length === 0 && !item) return null
   return (
     <section aria-label="The day" className="tp-nn tp-dbar-card">
       <div className="tp-dbar" role="button" tabIndex={0} aria-label="Open today on the calendar" onClick={openColumn} onKeyDown={(ev) => (ev.key === 'Enter' || ev.key === ' ') && (ev.preventDefault(), openColumn())}>
