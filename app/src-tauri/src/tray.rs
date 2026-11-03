@@ -11,6 +11,8 @@
 //   tray. Both windows hide on blur or Esc (`tray_hide`) and are kept warm once made.
 // - Both windows load on the main window's scheme (`https`): on the other one they were another origin,
 //   with their own storage and so no session (queue item 14a, "a signed-out window").
+// - Quick capture (capture.rs): "Quick capture…" in either menu opens its popup, a third window on `tray.html?capture`,
+//   the same one the global shortcut opens; kaisflow:// links and the single-instance hand-off route there too.
 // - Closing the main window hides it to the tray while the tray is shown (Settings → Notifications
 //   → Show in the system tray); otherwise it quits, as before.
 // - Toasts (12e) with up to four buttons (`notify_local`; Windows allows five); a button runs `window.__kfNotifyAction`.

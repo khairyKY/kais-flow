@@ -1,0 +1,177 @@
+[
+  {
+    "name": "settings: the row is on About > On this computer",
+    "ok": true,
+    "detail": "Quick capture shortcut Opens a small capture bar over any app, even when Kai’s Flow is closed to the tray · Ctrl+K works inside the app as always [Ctrl+Shift+K]"
+  },
+  {
+    "name": "settings: it starts on Ctrl+Shift+K, not plain Ctrl+K",
+    "ok": true,
+    "detail": "Quick capture shortcut Opens a small capture bar over any app, even when Kai’s Flow is closed to the tray · Ctrl+K works inside the app as always [Ctrl+Shift+K]"
+  },
+  {
+    "name": "settings: the app tells Rust this device's choice when it starts",
+    "ok": true,
+    "detail": "[{\"accel\":\"CommandOrControl+Shift+K\"},{\"accel\":\"CommandOrControl+Shift+K\"}]"
+  },
+  {
+    "name": "settings: the help says Ctrl+K stays in the app",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings: choices are Ctrl+Shift+K, Ctrl+Alt+K, Ctrl+K, Off",
+    "ok": true,
+    "detail": "Ctrl+Shift+K | Ctrl+Alt+K | Ctrl+K | Off"
+  },
+  {
+    "name": "settings: choosing Ctrl+K registers CommandOrControl+K",
+    "ok": true,
+    "detail": "{\"accel\":\"CommandOrControl+K\"}"
+  },
+  {
+    "name": "settings: the choice is kept for this device",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings: Off sends an empty accelerator (unregisters)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings: a saved choice is shown again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings: and sent to Rust at start",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings: a key another app owns is refused, with a reason",
+    "ok": true,
+    "detail": "Quick capture shortcut Another app already uses that shortcut — pick a different one [Ctrl+K]"
+  },
+  {
+    "name": "settings: and the working one stays chosen",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "settings (Mac): reads Cmd+Shift+K and says menu bar",
+    "ok": true,
+    "detail": "Quick capture shortcut Opens a small capture bar over any app, even when Kai’s Flow is closed to the menu bar · Ctrl+K works inside the app as always [⌘⇧K]"
+  },
+  {
+    "name": "popup: tells Rust it is ready, once",
+    "ok": true,
+    "detail": "[{\"height\":0}]"
+  },
+  {
+    "name": "popup: closed until Rust opens it (no bar yet)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popup: the bar opens with the cursor in the field",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popup: the window is told the bar's height",
+    "ok": true,
+    "detail": "{\"height\":151}"
+  },
+  {
+    "name": "popup: no camera (Paper capture is the main window's)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popup: the card is the window (edge to edge)",
+    "ok": true,
+    "detail": "{\"x\":0,\"y\":0,\"width\":520,\"height\":151}"
+  },
+  {
+    "name": "popup: chips grow the window",
+    "ok": true,
+    "detail": "151 -> 178"
+  },
+  {
+    "name": "popup: Enter files the line through the outbox",
+    "ok": true,
+    "detail": "inbox_items"
+  },
+  {
+    "name": "popup: and hides the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popup: the bar is gone for the next opening",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popup: Esc hides the window",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popup: after a click away the next opening starts fresh",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "popup: a Jump opens the main window there",
+    "ok": true,
+    "detail": "[{\"route\":\"/today\"}]"
+  },
+  {
+    "name": "popup: no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "deep link kaisflow://today navigates",
+    "ok": true,
+    "detail": "/today"
+  },
+  {
+    "name": "deep link kaisflow://calendar navigates",
+    "ok": true,
+    "detail": "/calendar"
+  },
+  {
+    "name": "deep link kaisflow://focus navigates",
+    "ok": true,
+    "detail": "/focus"
+  },
+  {
+    "name": "deep link kaisflow://task/10000000-0000-4000-8000-000000000001 navigates",
+    "ok": true,
+    "detail": "/tasks/10000000-0000-4000-8000-000000000001"
+  },
+  {
+    "name": "deep link kaisflow://today/ navigates",
+    "ok": true,
+    "detail": "/today"
+  },
+  {
+    "name": "deep link: an unknown one leaves the page where it is",
+    "ok": true,
+    "detail": "/inbox"
+  },
+  {
+    "name": "deep link: one that arrives while the app runs navigates",
+    "ok": true,
+    "detail": "/calendar"
+  }
+]

@@ -45,6 +45,7 @@ import { KIND_IDS, KIND_LOOK } from '../notifications/kinds'
 import { NOTIFY_PACKS, NOTIFY_PACK_LOOK, NOTIFY_SOUNDS, NOTIFY_SOUND_LABEL, parseNotifyPack, previewNotifySound, type NotifyPack } from '../notifications/sounds'
 import { QUIET_FROM, QUIET_TO } from '../../../../supabase/functions/notify/copy.ts'
 import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
+import { readCaptureShortcut, shortcutLabel, writeCaptureShortcut, type CaptureShortcut } from '../tray/captureShortcut'
 import { widgetsAvailable } from '../widgets/native'
 import { useHideTitles } from '../widgets/bridge'
 import { openLockSettings, readLock, writeLock } from '../lockscreen/native'
@@ -1128,6 +1129,7 @@ function DeviceSections() {
           <Row label={mac ? 'Open at login' : 'Start with Windows'} help={mac ? 'Opens quietly to the menu bar' : 'Opens quietly to the tray'} keys="startup autostart login tray">
             <Toggle on={!!autostart} label={mac ? 'Open at login' : 'Start with Windows'} onToggle={autostart === null ? undefined : () => void native<boolean>('autostart_set', { on: !autostart }).then((on) => setAutostart(!!on))} />
           </Row>
+          <CaptureShortcutRow mac={mac} />
         </SCard>
       )}
       {!isNativeShell() && <WebDeviceCard />}
@@ -1140,6 +1142,36 @@ function DeviceSections() {
       )}
       <WidgetLinksCard />
     </>
+  )
+}
+
+// The global quick-capture popup's key (src-tauri capture.rs). Ctrl+Shift+K by default: a global Ctrl+K would
+// take Ctrl+K from every other app; it is offered for anyone who wants it. Inside Kai's Flow Ctrl+K works anyway.
+const SHORTCUTS: CaptureShortcut[] = ['ctrl-shift-k', 'ctrl-alt-k', 'ctrl-k', 'off']
+function CaptureShortcutRow({ mac }: { mac: boolean }) {
+  const [choice, setChoice] = useState(readCaptureShortcut)
+  const [taken, setTaken] = useState(false)
+  return (
+    <Row
+      label="Quick capture shortcut"
+      help={taken ? 'Another app already uses that shortcut — pick a different one' : `Opens a small capture bar over any app, even when Kai’s Flow is closed to the ${mac ? 'menu bar' : 'tray'} · Ctrl+K works inside the app as always`}
+      keys="quick capture global shortcut hotkey keyboard ctrl k popup"
+    >
+      <Select
+        value={choice}
+        onChange={(v) =>
+          void writeCaptureShortcut(v as CaptureShortcut).then((ok) => {
+            setTaken(!ok)
+            if (ok) setChoice(v as CaptureShortcut)
+          })
+        }
+        options={SHORTCUTS.map((s) => ({ value: s, label: shortcutLabel(s, mac) }))}
+        ariaLabel="Quick capture shortcut"
+        className="st-pick"
+        style={PICK}
+        display={pickFace(shortcutLabel(choice, mac))}
+      />
+    </Row>
   )
 }
 
