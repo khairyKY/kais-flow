@@ -529,6 +529,8 @@ jobs:
     needs: plan
     if: ${{ !cancelled() && !inputs.dry_run && needs.plan.result == 'success' && needs.plan.outputs.tag != '' }}
     uses: ./.github/workflows/desktop.yml
+    permissions:
+      contents: write # desktop.yml's manual-run updater job declares it; a release run skips that job
     # Windows, the Microsoft Store .msix and (with the repo variable MAC_ON_RELEASE=true) the Mac app, side by
     # side. The updater key (TAURI_SIGNING_PRIVATE_KEY/_PASSWORD) must reach the called workflow, or the
     # release has no latest.json and neither desktop app can update in place.
