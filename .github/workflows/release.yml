@@ -39,7 +39,7 @@ on:
       build_tag:
         description: 'The version the build_only builds are stamped with'
         type: string
-        default: v0.0.0-ci-test
+        default: v0.0.1-ci-test
 
 concurrency:
   # A build_only run publishes nothing, so it never queues behind (or blocks) a real release.

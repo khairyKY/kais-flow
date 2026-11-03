@@ -36,15 +36,8 @@ jobs:
         working-directory: app
         shell: bash
     steps:
-      # Only what the build reads (vite imports supabase/functions/_shared and site/src/releases.json).
+      # Full checkout on purpose: cargo lists a package's files through git, which a sparse checkout breaks.
       - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            app
-            .github
-            supabase
-            site/src/releases.json
-          sparse-checkout-cone-mode: false
 
       - uses: actions/setup-node@v4
         with:
@@ -237,15 +230,8 @@ jobs:
         working-directory: app
         shell: bash
     steps:
-      # Only what the build reads (vite imports supabase/functions/_shared and site/src/releases.json).
+      # Full checkout on purpose: cargo lists a package's files through git, which a sparse checkout breaks.
       - uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            app
-            .github
-            supabase
-            site/src/releases.json
-          sparse-checkout-cone-mode: false
 
       - uses: actions/setup-node@v4
         with:
