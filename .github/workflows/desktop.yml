@@ -93,7 +93,7 @@ jobs:
       # the key back the way a widget would (HKCU\Software\Classes\kaisflow\shell\open\command), then open a link
       # and see the app start and stay up 20 s with the new plugins. Manual runs only: it costs a minute.
       - name: Check the installer registers kaisflow://
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name == 'workflow_dispatch' && inputs.tag == ''
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
