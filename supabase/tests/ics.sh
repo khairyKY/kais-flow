@@ -214,7 +214,7 @@ expect "…and so is its https spelling" "409 duplicate" "$CODE $(j .error)"
 section "reminders switch, rename, recolour"
 call "$(jq -cn --arg id "$SUBP" '{action: "update", id: $id, use_alarms: false}')" "$A_JWT"
 expect "reminders off: every row rewritten" "200 644" "$CODE $(j .updated)"
-expect "…no remind_min left" "0 false" "$(sql -c "select count(*) from calendar_events where user_id = '$A_ID' and source = 'ics' and remind_min is not null") $(sub_field "$SUBP" use_alarms)"
+expect "…no remind_min left" "0 f" "$(sql -c "select count(*) from calendar_events where user_id = '$A_ID' and source = 'ics' and remind_min is not null") $(sub_field "$SUBP" use_alarms)"
 call "$(jq -cn --arg id "$SUBP" '{action: "update", id: $id, use_alarms: true}')" "$A_JWT"
 expect "reminders on: they come back" "644" "$(sql -c "select count(*) from calendar_events where user_id = '$A_ID' and source = 'ics' and remind_min = 5")"
 call "$(jq -cn --arg id "$SUBP" '{action: "update", id: $id, name: "الصلاة", color: "#B59CE3"}')" "$A_JWT"
@@ -326,7 +326,7 @@ feed "$(jq -cn --arg t "$(feed_text 0 'All day (renamed)' 1)" '{text: $t}')"
 call "$(jq -cn --arg id "$SUBF" '{action: "refresh", id: $id}')" "$A_JWT"
 expect "the feed was edited (one removed, one renamed, one new): refresh lands exactly that" "200 6 1 1 1" "$CODE $(j .fetched) $(j .new) $(j .updated) $(j .removed)"
 expect "…the rows say so: the renamed one, the new one, the weekly's three plain and one moved" "1 1 3 1" "$(FR "(count(*) filter (where title = 'All day (renamed)')) || ' ' || (count(*) filter (where title = 'Brand new')) || ' ' || (count(*) filter (where title = 'Weekly')) || ' ' || (count(*) filter (where title = 'Weekly (moved)'))" "")"
-expect "…the removed one is gone" "0" "$(FR count "and title = 'One-off in Berlin'")"
+expect "…the removed one is gone" "0" "$(FR "count(*)" "and title = 'One-off in Berlin'")"
 H2=$(ids_hash "$SUBF")
 
 feed '{"down":true}'
