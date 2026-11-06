@@ -126,8 +126,10 @@ jobs:
   # pushes older backups out.
   backup:
     name: Backup
-    needs: plan
-    if: ${{ !cancelled() && !inputs.dry_run && !inputs.build_only && github.actor == github.repository_owner }}
+    # After the rehearsal, not beside it: both log in to production through the CLI's temporary login role, and
+    # two at once broke v1.6.3's first run ("failed to connect as temp role"). The app builds still run alongside.
+    needs: [plan, rehearse]
+    if: ${{ !cancelled() && needs.rehearse.result == 'success' && !inputs.dry_run && !inputs.build_only && github.actor == github.repository_owner }}
     runs-on: ubuntu-latest
     env:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

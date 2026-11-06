@@ -59,8 +59,8 @@ trap cleanup EXIT
 # ---------------------------------------------------------------------------------------------
 # Google's stand-in, then the two functions under the harness on the stack's database.
 # ---------------------------------------------------------------------------------------------
-MOCK_PORT=${MOCK_PORT:-54396}
-FN_PORT=${FN_PORT:-54397}
+MOCK_PORT=${MOCK_PORT:-54410}
+FN_PORT=${FN_PORT:-54411}
 MOCK_PAGE=2 "$DENO" run --no-lock --no-prompt --quiet --allow-net=127.0.0.1 --allow-env \
   "$ROOT/supabase/tests/harness/classroom-mock.ts" "$MOCK_PORT" > "$TMP/mock.log" 2>&1 &
 PIDS+=($!)

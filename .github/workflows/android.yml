@@ -173,7 +173,7 @@ jobs:
       - name: Screens to the log
         if: always()
         run: |
-          sudo apt-get install -y -qq python3-pil > /dev/null
+          sudo apt-get update -qq > /dev/null && sudo apt-get install -y -qq python3-pil > /dev/null
           python3 - <<'PY'
           import base64, glob, io
           from PIL import Image

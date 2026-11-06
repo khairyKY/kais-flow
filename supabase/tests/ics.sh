@@ -75,8 +75,8 @@ fi
 # ---------------------------------------------------------------------------------------------
 # The feeds' stand-in, then the function under the harness on the stack's database.
 # ---------------------------------------------------------------------------------------------
-MOCK_PORT=${MOCK_PORT:-54398}
-FN_PORT=${FN_PORT:-54399}
+MOCK_PORT=${MOCK_PORT:-54412}
+FN_PORT=${FN_PORT:-54413}
 "$DENO" run --no-lock --no-prompt --quiet --allow-net=127.0.0.1 --allow-env --allow-read \
   "$ROOT/supabase/tests/harness/ics-mock.ts" "$MOCK_PORT" > "$TMP/mock.log" 2>&1 &
 PIDS+=($!)
