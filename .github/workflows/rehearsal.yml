@@ -76,7 +76,7 @@ jobs:
 
       # ics-subscribe (2026-11-06): the pure half of ics-sync — parser, repeats, zones, VALARM, the real prayer feed, the link
       # guard — on fixtures; no stack needed either.
-      - name: ics.test.ts (calendar subscriptions: parser, repeats, time zones, VALARM, SSRF guard)
+      - name: ics.test.ts (calendar subscriptions - parser, repeats, time zones, VALARM, SSRF guard)
         if: ${{ !cancelled() }}
         run: deno test --no-lock --allow-env --allow-read supabase/tests/ics.test.ts 2>&1 | tee "$RUNNER_TEMP/suite-ics-unit.log"
 
