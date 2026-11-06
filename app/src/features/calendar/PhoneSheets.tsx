@@ -402,7 +402,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const mine = gcalEditable(event)
   const readOnly = synced && !mine
   const repeats = !!event.seriesId || gcalRepeats(event)
-  const kind = synced ? 'Google event' : event.task_id ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
+  const kind = synced ? (event.source === 'ics' ? 'Subscribed event' : 'Google event') : event.task_id ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
   const meta = `${kind} · ${event.all_day ? 'All day' : durationLabel(len)}`
   const run: Partial<Record<BlockMenuKey, (el: HTMLElement) => void>> = {
     date: () => setPicker('date'),

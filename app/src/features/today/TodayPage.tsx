@@ -815,7 +815,7 @@ function TodayView({ nav }: { nav: DayNav }) {
             <div className="td-sum">
               {counts.total > 0 && `${counts.done} of ${counts.total} done`}
               {counts.total > 0 && nextUp && ' · '}
-              {nextUp && <>next up <span className="td-ink"><EmojiText text={nextUp.title} /> at {timeText(new Date(nextUp.starts_at))}</span></>}
+              {nextUp && <>next up <span className="td-ink"><bdi dir="auto"><EmojiText text={nextUp.title} /></bdi> at {timeText(new Date(nextUp.starts_at))}</span></>}
               {counts.total === 0 && !nextUp && 'A fresh page'}
             </div>
           )}

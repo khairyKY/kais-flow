@@ -14,6 +14,9 @@
 //   - with HARNESS_CLASSROOM_MOCK set, https requests to oauth2.googleapis.com and classroom.googleapis.com go
 //     to that mock (`<mock><path><query>`, tests/harness/classroom-mock.ts) instead — Google's token endpoint
 //     and the Classroom API;
+//   - with HARNESS_ICS_MOCK set, requests to any host under feeds.test go to that mock (`<mock><path><query>`,
+//     tests/harness/ics-mock.ts) — calendar feeds for ics-sync — and Deno.resolveDns answers for those names (a public
+//     address; rebind.feeds.test a private one; nxdomain.feeds.test nothing), as the runtime's own resolver would;
 //   - with HARNESS_GROQ_STUB=1, api.groq.com answers with a fixed canned reply (parse JSON, a
 //     one-chunk chat stream, a transcript) so the paths after the Groq call can be exercised.
 //     Without it, Groq is simply unreachable (--allow-net doesn't include it).
@@ -40,6 +43,7 @@ const PUSH_MOCK = Deno.env.get('HARNESS_PUSH_MOCK') ?? ''
 const FETCH_LOG = Deno.env.get('HARNESS_FETCH_LOG') ?? ''
 const GROQ_STUB = Deno.env.get('HARNESS_GROQ_STUB') === '1'
 const CLASSROOM_MOCK = Deno.env.get('HARNESS_CLASSROOM_MOCK') ?? ''
+const ICS_MOCK = Deno.env.get('HARNESS_ICS_MOCK') ?? ''
 // The harness's own idea of a push host — deliberately not imported from notify, so a bug in
 // notify's allowlist can't be hidden by the harness agreeing with it.
 const PUSH_HOST = /^(fcm\.googleapis\.com|updates\.push\.services\.mozilla\.com|[a-z0-9.-]+\.push\.apple\.com|[a-z0-9.-]+\.notify\.windows\.com)$/
@@ -76,8 +80,18 @@ globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise
   if (CLASSROOM_MOCK && url.protocol === 'https:' && (url.hostname === 'oauth2.googleapis.com' || url.hostname === 'classroom.googleapis.com')) {
     return realFetch(`${CLASSROOM_MOCK}${url.pathname}${url.search}`, init)
   }
+  if (ICS_MOCK && url.hostname.endsWith('.feeds.test')) return realFetch(`${ICS_MOCK}${url.pathname}${url.search}`, init)
   if (GROQ_STUB && url.hostname === 'api.groq.com') return groqStub(url, init)
   return realFetch(input, init)
+}
+
+if (ICS_MOCK) {
+  // deno-lint-ignore no-explicit-any
+  ;(Deno as any).resolveDns = (host: string, type: string) => {
+    if (host === 'nxdomain.feeds.test' || !host.endsWith('.feeds.test')) return Promise.reject(new Deno.errors.NotFound(`no ${type} for ${host}`))
+    if (type === 'AAAA') return Promise.reject(new Deno.errors.NotFound('no AAAA'))
+    return Promise.resolve([host === 'rebind.feeds.test' ? '10.0.0.7' : '93.184.216.34'])
+  }
 }
 
 const [root, port, ...names] = Deno.args

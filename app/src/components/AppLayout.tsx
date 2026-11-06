@@ -60,7 +60,7 @@ import { inSettings } from '../features/settings/categories'
 import { PaperHost } from '../features/paper/PaperHost'
 import { useReadyPages } from '../features/paper/captures'
 import { WhatsNewHost } from '../features/whats-new/WhatsNew'
-import { TermsNoticeHost } from '../features/legal/LegalDialogs'
+import { LegalNoteHost, TermsNoticeHost } from '../features/legal/LegalDialogs'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
 import { Float } from './Float'
@@ -1235,6 +1235,7 @@ export function AppLayout() {
       <WhatsNewHost uid={user?.id} createdAt={user?.created_at} />
       {/* docs/LEGAL.md: "We've updated our terms", until they agree (or leave). */}
       <TermsNoticeHost />
+      <LegalNoteHost />
       <SubtaskAskHost />
       <ScopeAskHost />
       <ToastHost />

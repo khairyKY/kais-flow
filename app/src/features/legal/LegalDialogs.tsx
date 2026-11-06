@@ -4,7 +4,7 @@ import { Button } from '../../components/kit'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useToastStore } from '../../lib/toastStore'
 import { useSignOut } from '../auth/useSignOut'
-import { agreeToCurrent, deleteAccount, useOutdated } from './api'
+import { agreeToCurrent, deleteAccount, dismissNote, useOutdated, useUnseenNotes } from './api'
 import { ConsentBox, LegalLink, PRIVACY_URL, TERMS_URL } from './LegalLinks'
 import { LEGAL_SUMMARY, type LegalDoc } from '../../../../supabase/functions/_shared/legal.ts'
 import './legal.css'
@@ -206,5 +206,32 @@ export function TermsNoticeHost() {
       {deleting && <DeleteAccountDialog onClose={() => setDeleting(false)} />}
       {signOutFlow.prompt}
     </>
+  )
+}
+
+const UPDATED: Record<LegalDoc, string> = { terms: 'Terms of Use updated', privacy: 'Privacy policy updated' }
+
+/** An informational update (legal.ts LEGAL_NOTES): one line saying what changed, a link to read it and Got it.
+ * Nothing is asked and nothing blocks; once dismissed, no device of the account shows it again. */
+export function LegalNoteHost() {
+  const note = useUnseenNotes()?.[0]
+  const [gone, setGone] = useState<ReadonlySet<string>>(() => new Set())
+  if (!note || gone.has(note.id)) return null
+  const label = UPDATED[note.doc]
+  return (
+    <div className="lg-note" role="status" aria-label={label}>
+      <p className="lg-note-text">
+        <strong>{label}.</strong> {note.line} <LegalLink href={note.doc === 'terms' ? TERMS_URL : PRIVACY_URL}>Read it</LegalLink>
+      </p>
+      <Button
+        variant="secondary"
+        onClick={() => {
+          dismissNote(note)
+          setGone((g) => new Set(g).add(note.id))
+        }}
+      >
+        Got it
+      </Button>
+    </div>
   )
 }

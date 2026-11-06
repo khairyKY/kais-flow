@@ -38,6 +38,11 @@ builds (its "updated …" lines), the app and `notify` import the file, and a te
   (`LEGAL_SUMMARY`), links to read both, the same box for each document that changed, **I agree** once every box is ticked (writes the new `consents` rows through the outbox; insert-only since 0089),
   and the ways out — Export my data, Delete my account, Sign out. Esc and a tap outside don't close it.
   Offline with nothing cached, it waits rather than block.
+- **An informational update** (the text changed, nothing to agree to again). Add it to `LEGAL_NOTES` in `legal.ts`
+  (day, document, one line) and leave the versions alone. Accounts made before that day see a small card —
+  "Privacy policy updated", the line, **Read it**, **Got it** — never while an agreement is owed. **Got it** writes
+  one `consents` row (`<doc>_notice`, version = the day; 0093), so no other device of the account shows it again.
+  Material changes (new versions) ask for agreement; informational ones only notify.
 - **Outside the app, once per version.** The hourly sweep finds the people who haven't agreed and haven't
   been told under this version, writes one `notify.terms` Activity row each (the "told" mark — written
   before the push, so it never sends twice) and pushes "Our terms changed · Tap to review" to their
@@ -54,6 +59,8 @@ builds (its "updated …" lines), the app and `notify` import the file, and a te
   shares on Android).
 
 ## Bumping a version (for Kai)
+
+(For a change that needs no new agreement, add a `LEGAL_NOTES` line instead — see "An informational update" above.)
 
 1. Edit the text in `site/src/pages/info.mjs` (privacy, terms, or both).
 2. In `supabase/functions/_shared/legal.ts`, set the changed one(s) to today, `YYYY-MM-DD`:
