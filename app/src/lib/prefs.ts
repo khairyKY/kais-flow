@@ -17,6 +17,7 @@ export const SYNCED_PREFS = [
   'kf_sound_events', // Notifications & sound › the seven sounds
   'kf_sound_pack', // › Sound pack
   'kf_sound_volume', // › Sound
+  'kf_undo_toasts', // › Undo toasts: Fewer / All
   'kf_sound_quiet', // › Silent after Shut down
   'kf.resurfaceCooldown.high', // Organize › "Not now" comes back after
   'kf.resurfaceCooldown.med',

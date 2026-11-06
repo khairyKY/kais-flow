@@ -91,7 +91,7 @@ async function open(route, o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', reducedMotion: o.reduced ? 'reduce' : 'no-preference' })
   await ctx.addInitScript(([t, sess, uid, at, effects]) => {
-    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1') // the download bar has its own harness
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1'); localStorage.setItem('kf_undo_toasts', 'all') // these assert the toast wording (Settings → Undo toasts: All); quiet-undo has its own // the download bar has its own harness
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf_tour_done', '1')
     localStorage.setItem(`kf-help:${uid}`, JSON.stringify(['hint:swipe'])) // the one-time swipe hint sits over the rows

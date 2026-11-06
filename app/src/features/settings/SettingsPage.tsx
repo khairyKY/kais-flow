@@ -21,6 +21,7 @@ import { prefWritten, usePrefsVersion } from '../../lib/prefs'
 import { clockText, hour24, setHour24, useHour24 } from '../../lib/clock'
 import { useUiScale, UI_SCALES, TOUCH_UI_SCALE, defaultUiScale, readUiScaleEnv, uiZoom, type UiScale } from '../../lib/uiScale'
 import { usePrefersReducedMotion, setEffectsEnabled } from '../../lib/motion'
+import { readUndoToasts, writeUndoToasts, type UndoToasts } from '../../lib/undo'
 import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readVolume, writeVolume, readQuietHours, writeQuietHours, previewSound, DEFAULT_VOLUME, PACKS, SOUND_PACKS, type SoundEvent, type SoundPack } from '../../lib/sounds'
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
 import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
@@ -2366,6 +2367,7 @@ export function SoundCatalogCard() {
   const [pack, setPack] = useState(readSoundPack)
   const [volume, setVolume] = useState(readVolume)
   const [quiet, setQuiet] = useState(readQuietHours)
+  const [undoToasts, setUndoToasts] = useState(readUndoToasts)
   const masterOn = volume > 0
   // The step nearest the stored volume (the default 0.35 reads as Whisper); none while it's off.
   const step = masterOn ? VOLUME_STEPS.reduce((a, b) => (Math.abs(b.value - volume) < Math.abs(a.value - volume) ? b : a)).value : -1
@@ -2411,6 +2413,9 @@ export function SoundCatalogCard() {
           </Row>
         )
       })}
+      <Row label="Undo toasts" help={undoToasts === 'all' ? 'Every change says so, with Undo' : 'Only deletes and bulk changes · Ctrl+Z undoes the rest'} keys="undo toast notification quiet ctrl z">
+        <Segmented<UndoToasts> label="Undo toasts" value={undoToasts} onChange={(v) => { setUndoToasts(v); writeUndoToasts(v) }} options={[{ value: 'fewer', label: 'Fewer' }, { value: 'all', label: 'All' }]} />
+      </Row>
       <Row label="Silent after Shut down" help="Until morning · quiet hours and paused notifications hush it too" keys="sound quiet night">
         <Toggle
           on={quiet}

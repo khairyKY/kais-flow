@@ -25,6 +25,7 @@ const task = (id: string, due: string): Task => ({ id, title: id, status: 'todo'
 const drawn = () => sortByOrder(cache.tasks).map((t) => t.id)
 
 beforeEach(() => {
+  vi.stubGlobal('localStorage', { getItem: (k: string) => (k === 'kf_undo_toasts' ? 'all' : null), setItem: () => {} }) // these assert the toast itself (Settings → Undo toasts: All)
   useToastStore.setState({ toasts: [] })
   cache.tasks = [task('a', '2026-10-14T06:00:00Z'), task('b', '2026-10-14T07:00:00Z'), task('c', '2026-10-14T08:00:00Z')]
 })

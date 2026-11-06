@@ -9,6 +9,7 @@ import { dropThisDevicePush } from '../notifications/api'
 // Imported here (eagerly) so recovery.ts reads a password-reset link at boot — see that file.
 import { forgetRecovery, rememberRecovery } from './recovery'
 import { forgetChats } from '../chat/history'
+import { clearUndoHistory } from '../../lib/undo'
 
 interface AuthContextValue {
   session: Session | null
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         forgetRecovery()
         widgetsSignedOut() // the home-screen widgets forget the day (S4)
         forgetChats() // and the chat its conversations (A28)
+        clearUndoHistory() // and the undo history: ⌘Z never reaches across accounts
       }
       // J-11: /reset only offers the new-password form to a session that arrived this way.
       if (event === 'PASSWORD_RECOVERY') rememberRecovery()

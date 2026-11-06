@@ -189,7 +189,7 @@ async function open(o = {}) {
   await ctx.addInitScript(([sess, uid, now, scale, planning]) => {
     if (sessionStorage.getItem('kf-verify-booted')) return
     sessionStorage.setItem('kf-verify-booted', '1')
-    localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1')
+    localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1'); localStorage.setItem('kf_undo_toasts', 'all') // these assert the toast wording (Settings → Undo toasts: All); quiet-undo has its own
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf-app-zone', 'Africa/Cairo')
     localStorage.setItem('kf_tour_done', '1')
