@@ -52,7 +52,7 @@ permissions:
 env:
   PROJECT_REF: eqbbkitofgyxxrfggpbu
   APP_URL: https://kais-flow.kaidagoat.workers.dev
-  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync google-connect google-sync classroom-connect classroom-sync capture-image mcp delete-account widget
+  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync google-connect google-sync classroom-connect classroom-sync ics-sync capture-image mcp delete-account widget
 
 jobs:
   # The release's label and version tag, worked out once so the builds (which start now, not after publish)

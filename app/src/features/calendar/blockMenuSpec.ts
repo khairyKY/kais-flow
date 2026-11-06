@@ -67,7 +67,7 @@ export function isUntitled(e: Pick<CalendarEvent, 'title' | 'created_at'>, now: 
 /** A Google event (google-sync, B1): Google is its truth. Shown read-only, unless it's ours to change (gcal-events —
  * ./gcal gcalEditable: the grant can write and it's on a calendar we own), when its title and time edit in place and the
  * change goes to Google. */
-export const isSynced = (e: Pick<CalendarEvent, 'source'>): boolean => e.source === 'gcal'
+export const isSynced = (e: Pick<CalendarEvent, 'source'>): boolean => e.source === 'gcal' || e.source === 'ics' // ics-subscribe: a subscribed link's event is read-only the same way
 
 export const isRepeatingBlock = (e: Pick<CalendarEvent, 'recurrence_rule' | 'seriesId'> & { external_ref?: { master?: string } | null }): boolean => !!(e.seriesId || e.recurrence_rule || e.external_ref?.master)
 
@@ -78,7 +78,7 @@ export const DUPLICATE_AS_MINE = 'Duplicate as my event'
 function googleRows(e: CalendarEvent): BlockMenuEntry[] {
   return [
     ...(typeof e.external_ref?.url === 'string' ? [{ key: 'join' as const, label: 'Join meeting' }] : []),
-    { key: 'gopen' as const, label: 'Open in Google Calendar' },
+    ...(e.source === 'gcal' ? [{ key: 'gopen' as const, label: 'Open in Google Calendar' }] : []),
   ]
 }
 
@@ -146,7 +146,7 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
     return [
       { key: 'date', label: blockDate(e), sub: edit },
       e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: edit },
-      { key: 'google', label: `From Google · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
+      { key: 'google', label: `From ${e.source === 'ics' ? 'subscription' : 'Google'} · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
       ...googleRows(e),
       ...(edit ? [deleteRow(e, ctx, isRepeatingBlock(e))] : [{ key: 'duplicate' as const, label: DUPLICATE_AS_MINE }]),
     ]

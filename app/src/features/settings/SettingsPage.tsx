@@ -25,6 +25,9 @@ import { readSoundEvents, writeSoundEvents, readSoundPack, writeSoundPack, readV
 import { useIntegrations, connectGithub, syncGithub, disconnectGithub, githubState, githubRulesOf, watchingHelp, useGithubRepos, saveGithubRules, type IntegrationStatus } from './api'
 import { chooseGoogleCalendars, disconnectGoogle, GOOGLE_RETURN, googleState, refreshGoogleCalendars, setGoogleMirror, startGoogle, syncedLabel, syncGoogle, type GoogleSyncResult } from './api'
 import { chooseClassroomCourses, CLASSROOM_RETURN, classroomState, classroomSyncLine, disconnectClassroom, refreshClassroomCourses, startClassroom, syncClassroom, useClassroom, type ClassroomStatus } from './classroomApi'
+import { addIcs, previewIcs, refreshIcs, removeIcs, subscriptionLine, updateIcs, useSubscriptions, type IcsPreview, type Subscription } from './icsApi'
+import { SwatchTray } from '../calendar/formFields'
+import { BLOCK_SWATCHES } from '../calendar/blockHue'
 import { isCapacitorShell, isNativeShell, openExternal } from '../../lib/platform'
 import { isIOS, isIOSSafari, openInstallGuide, persistStorage, storageState, type StorageState } from '../../lib/iosPwa'
 import { inPlainBrowser } from '../../lib/appUpdate'
@@ -519,6 +522,7 @@ function CalendarCat() {
           <Toggle on={v.nowCard} label="Now card" onToggle={() => setV({ nowCard: !v.nowCard })} />
         </Row>
       </SCard>
+      <SubscribedCalendars />
       <SCard title="Planning">
         <Row label="Plan shortcuts" help="Today, Next free slot, This weekend…" keys="glossary">
           <PlanGlossaryLink />
@@ -530,6 +534,176 @@ function CalendarCat() {
         </Row>
       </SCard>
     </>
+  )
+}
+
+// Kai 2026-11-06: a calendar by link, the way Google Calendar's "From URL" works — a webcal:// or https:// .ics, no Google
+// account (ics-sync, every 3 hours and on Refresh). Read-only on the calendar; the link is private and lives server-side
+// (the client only ever sees the name, host, colour and status). The colour is the feed's own, else a palette C swatch.
+type Pending = IcsPreview & { link: string; pickedColor: string | null; alarms: boolean }
+
+function SubscribedCalendars() {
+  const { data: subs = [] } = useSubscriptions()
+  const [link, setLink] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [said, setSaid] = useState<string | null>(null)
+  const [pending, setPending] = useState<Pending | null>(null)
+
+  // The first palette C swatch no subscription wears yet, for a feed that brings no colour of its own.
+  const freeSwatch = () => BLOCK_SWATCHES.find((w) => !subs.some((x) => x.color?.toUpperCase() === w.value))?.value ?? BLOCK_SWATCHES[0].value
+
+  const look = async () => {
+    setBusy(true)
+    setErr(null)
+    setSaid(null)
+    try {
+      const p = await previewIcs(link.trim())
+      setPending({ ...p, link: link.trim(), pickedColor: p.color ?? freeSwatch(), alarms: true })
+    } catch (e) {
+      setPending(null)
+      setErr(e instanceof Error ? e.message : 'Something went wrong. Try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  const subscribe = async () => {
+    if (!pending) return
+    setBusy(true)
+    setErr(null)
+    try {
+      const r = await addIcs({ url: pending.link, name: pending.name.trim() || pending.host, color: pending.pickedColor, use_alarms: pending.alarms })
+      setSaid(`Subscribed · ${r.fetched} ${r.fetched === 1 ? 'event' : 'events'} on your calendar`)
+      setPending(null)
+      setLink('')
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Something went wrong. Try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <SCard id="settings-Subscriptions" title="Subscribed calendars" sub="Any calendar link on yours, read-only: prayer times, a team, a sports fixture list. No Google account needed. Read again every 3 hours.">
+      {subs.map((s) => <SubscriptionRow key={s.id} s={s} />)}
+      {subs.length === 0 && <Row label="None yet" help="Paste a link below to add one" />}
+      <Row
+        label="Add by link"
+        help="webcal:// or https:// · the .ics address your calendar gives you"
+        keys="subscribe ics webcal url feed prayer times subscription"
+        under={
+          <div style={{ display: 'grid', gap: 12 }}>
+            <form onSubmit={(e) => { e.preventDefault(); if (link.trim() && !busy) void look() }} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              <input
+                className="st-field"
+                type="text"
+                inputMode="url"
+                dir="ltr"
+                autoComplete="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                value={link}
+                onChange={(e) => { setLink(e.target.value); setPending(null) }}
+                placeholder="webcal://… or https://…"
+                aria-label="Calendar link"
+                style={{ flex: '1 1 260px', minWidth: 0 }}
+              />
+              <Button type="submit" variant="secondary" disabled={busy || !link.trim()}>{busy && !pending ? 'Looking…' : 'Preview'}</Button>
+            </form>
+            {pending && (
+              <div role="group" aria-label="Preview" style={{ display: 'grid', gap: 10 }}>
+                <div className="st-help" role="status">
+                  Found {pending.events} {pending.events === 1 ? 'event' : 'events'} in the next 400 days and the last 60{pending.reminders ? ', with reminders' : ''}.
+                </div>
+                <label>
+                  <div style={{ ...flabel, marginBottom: 6 }}>Name</div>
+                  <input className="st-field" type="text" dir="auto" maxLength={200} value={pending.name} onChange={(e) => setPending({ ...pending, name: e.target.value })} aria-label="Subscription name" />
+                </label>
+                <div>
+                  <div style={{ ...flabel, marginBottom: 6 }}>Colour{pending.color ? ' · from the calendar' : ''}</div>
+                  <SwatchTray value={pending.pickedColor} onChange={(c) => setPending({ ...pending, pickedColor: c })} />
+                </div>
+                {pending.reminders && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <Toggle on={pending.alarms} label="Use the calendar’s reminders" onToggle={() => setPending({ ...pending, alarms: !pending.alarms })} />
+                    <span className="st-help">Use the calendar’s reminders</span>
+                  </div>
+                )}
+                <div className="st-btns">
+                  <Button type="button" variant="cta" onClick={() => void subscribe()} disabled={busy}>{busy ? 'Subscribing…' : 'Subscribe'}</Button>
+                  <Button type="button" variant="ghost" onClick={() => setPending(null)} disabled={busy}>Cancel</Button>
+                </div>
+              </div>
+            )}
+            {err && <div role="alert" className="st-help">{err}</div>}
+            {said && <div role="status" className="st-help">{said}</div>}
+          </div>
+        }
+      />
+    </SCard>
+  )
+}
+
+function SubscriptionRow({ s }: { s: Subscription }) {
+  const [open, setOpen] = useState(false)
+  const [name, setName] = useState(s.name)
+  const [busy, setBusy] = useState(false)
+  const [sure, setSure] = useState(false)
+  const [msg, setMsg] = useState<string | null>(null)
+  const run = async (what: () => Promise<unknown>, ok?: string) => {
+    setBusy(true)
+    setMsg(null)
+    try {
+      await what()
+      if (ok) setMsg(ok)
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Something went wrong. Try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  const rename = () => {
+    const n = name.trim()
+    if (!n) return setName(s.name)
+    if (n !== s.name) void run(() => updateIcs(s.id, { name: n }))
+  }
+  return (
+    <Row
+      lead={<span className="st-dot" style={{ background: s.color ?? 'var(--acc-blossom)' }} />}
+      label={<bdi dir="auto">{s.name}</bdi>}
+      find={s.name}
+      help={<span role={s.status === 'failing' ? 'alert' : undefined}>{subscriptionLine(s)}</span>}
+      under={open && (
+        <div style={{ display: 'grid', gap: 12 }}>
+          <label>
+            <div style={{ ...flabel, marginBottom: 6 }}>Name</div>
+            <input className="st-field" type="text" dir="auto" maxLength={200} value={name} onChange={(e) => setName(e.target.value)} onBlur={rename} onKeyDown={(e) => { if (e.key === 'Enter') e.currentTarget.blur() }} aria-label={`Name of ${s.name}`} />
+          </label>
+          <div>
+            <div style={{ ...flabel, marginBottom: 6 }}>Colour</div>
+            <SwatchTray value={s.color} onChange={(c) => void run(() => updateIcs(s.id, { color: c }))} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <Toggle on={s.use_alarms} label="Use the calendar’s reminders" onToggle={() => void run(() => updateIcs(s.id, { use_alarms: !s.use_alarms }))} />
+            <span className="st-help">Use the calendar’s reminders</span>
+          </div>
+          <div className="st-btns">
+            {sure ? (
+              <>
+                <Button type="button" variant="secondary" disabled={busy} onClick={() => void run(() => removeIcs(s.id))}>Remove it and its {s.event_count} events</Button>
+                <Button type="button" variant="ghost" onClick={() => setSure(false)}>Keep</Button>
+              </>
+            ) : (
+              <Button type="button" variant="ghost" disabled={busy} onClick={() => setSure(true)}>Remove</Button>
+            )}
+          </div>
+        </div>
+      )}
+    >
+      {msg && <span className="st-help" role="status">{msg}</span>}
+      <Button type="button" variant="ghost" disabled={busy} onClick={() => void run(() => refreshIcs(s.id), 'Updated')}>{busy ? 'Working…' : 'Refresh'}</Button>
+      <Button type="button" variant="ghost" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Done' : 'Edit'}</Button>
+    </Row>
   )
 }
 

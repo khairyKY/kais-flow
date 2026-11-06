@@ -1237,7 +1237,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         if (arg.event.extendedProps.kfSegOf) {
           return (
             <div className="kf-ev-row" title={String(arg.event.extendedProps.kfTitle ?? '')}>
-              <div className="kf-ev-text"><div className="fc-event-title"><EmojiText text={arg.event.title} /></div></div>
+              <div className="kf-ev-text"><div className="fc-event-title" dir="auto"><EmojiText text={arg.event.title} /></div></div>
             </div>
           )
         }
@@ -1248,7 +1248,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         if (arg.view.type === 'dayGridMonth') {
           return (
             <div className={`kf-ev-row${done ? ' kf-done' : ''}`}>
-              <div className="kf-ev-text"><div className="fc-event-title"><EmojiText text={arg.event.title} /></div></div>
+              <div className="kf-ev-text"><div className="fc-event-title" dir="auto"><EmojiText text={arg.event.title} /></div></div>
             </div>
           )
         }
@@ -1390,7 +1390,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                 {more && !pinnedMore ? (
                   <div className="fc-event-title" title={title}>{moreLink}</div>
                 ) : (
-                  <div className="fc-event-title" style={{ WebkitLineClamp: lines }}>
+                  <div className="fc-event-title" dir="auto" style={{ WebkitLineClamp: lines }}>
                     {p.kfGoal && <span className="kf-ev-star" aria-label="Goal of the day: ">✶ </span>}
                     <EmojiText text={title} />
                   </div>

@@ -217,11 +217,11 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
       // _shared/retrieval.ts's embedding (the runtime's gte-small) + the same search_hybrid the app's
       // search and chat use; security invoker, so RLS scopes it to this user.
       const embedding = JSON.stringify(await embedText(query))
-      // …minus Google-synced events (0074) and Google Classroom tasks and courses (0091): never sent to an AI (privacy promise, site info §3, §5).
+      // …minus Google-synced events (0074) and calendar subscriptions (0094) and Google Classroom tasks and courses (0091): never sent to an AI (privacy promise, site info §3, §5).
       const rows = await tx`
         select s.entity_type, s.entity_id, s.title, s.snippet, s.score from search_hybrid(${query}, ${embedding}, ${limit}) s
         where not (s.entity_type = 'calendar_event'
-          and exists (select 1 from calendar_events e where e.id::text = s.entity_id::text and e.source = 'gcal'))
+          and exists (select 1 from calendar_events e where e.id::text = s.entity_id::text and e.source in ('gcal', 'ics')))
           and not (s.entity_type = 'task'
           and exists (select 1 from tasks k where k.id::text = s.entity_id::text and k.external_ref->>'source' = 'classroom'))
           and not (s.entity_type = 'project'

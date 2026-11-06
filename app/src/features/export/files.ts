@@ -147,10 +147,10 @@ function vevent(e: CalendarEvent, zone: string, stamp: string): string[] {
 }
 
 /** The whole .ics: the user's own events, Time blocks and task blocks, not in Trash. Google's
- * (source 'gcal') are left out — they already live in Google. */
+ * (source 'gcal') and a subscribed link's (source 'ics') are left out — they already live at their source. */
 export function calendarIcs(events: readonly CalendarEvent[], zone: string, now: Date): string {
   const stamp = ruleStamp(now.getTime())
-  const own = events.filter((e) => e.source !== 'gcal' && !e.deleted_at)
+  const own = events.filter((e) => e.source !== 'gcal' && e.source !== 'ics' && !e.deleted_at)
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', "PRODID:-//Kai's Flow//Export//EN", 'CALSCALE:GREGORIAN', `X-WR-CALNAME:${icsText("Kai's Flow")}`, ...own.flatMap((e) => vevent(e, zone, stamp)), 'END:VCALENDAR']
   return lines.map(icsFold).join('\r\n') + '\r\n'
 }
