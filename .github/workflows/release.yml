@@ -155,9 +155,10 @@ jobs:
           set -euo pipefail
           dir="$RUNNER_TEMP/backup"; mkdir -p "$dir"
           # Both dumps at once: the schema and the data are two independent reads.
-          supabase db dump --linked -f "$dir/schema.sql" & p1=$!
-          supabase db dump --linked --data-only -f "$dir/data.sql" & p2=$!
-          wait $p1; wait $p2
+          # One after the other: each dump logs in with the CLI's temporary role, and a second login resets its
+          # password under the first ("password authentication failed", v1.6.3).
+          supabase db dump --linked -f "$dir/schema.sql"
+          supabase db dump --linked --data-only -f "$dir/data.sql"
           test -s "$dir/schema.sql" && test -s "$dir/data.sql"
           name="kais-flow-$(date -u +%Y-%m-%dT%H%MZ)-$LABEL.tar.gz"; name="${name//\//-}"
           tar -czf "$RUNNER_TEMP/$name" -C "$dir" schema.sql data.sql
