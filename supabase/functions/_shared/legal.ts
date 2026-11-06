@@ -41,7 +41,7 @@ export interface LegalNote {
 
 /** Oldest first. A note stays once added: accounts that haven't dismissed it still see it. */
 export const LEGAL_NOTES: readonly LegalNote[] = [
-  { id: '2026-11-03', doc: 'privacy', line: 'Google Calendar events you change here are now written back to Google.' },
+  { id: '2026-11-03', doc: 'privacy', line: 'Google Calendar events you change here are now written back to Google, and calendars you subscribe to by link are kept on our server and never shown to the AI.' },
 ]
 
 /** A dismissed note is one `consents` row: document `<doc>_notice`, version = the note's id (0093). */
