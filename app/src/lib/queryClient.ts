@@ -20,6 +20,9 @@ export const UNPERSISTED_QUERY_ROOTS: ReadonlySet<string> = new Set([
   'captures', // Paper capture: what your handwriting said (lecture notes, journal lines)
   'capture', // one capture, opened from a task's photo link
   'capture_urls', // signed photo URLs (an hour's life — no use on the next load)
+  // Not personal content, but they gate a blocking card: an old saved copy saying "not agreed" (taken
+  // before another device agreed) must never open it — it waits for this session's answer (consent-fix).
+  'consents',
 ])
 
 export function isUnpersistedQueryKey(queryKey: readonly unknown[]): boolean {
