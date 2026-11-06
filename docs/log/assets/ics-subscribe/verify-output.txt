@@ -1,0 +1,89 @@
+PASS s1 the card is there, with "Add by link" and an honest empty line
+PASS s1 Preview is off until a link is typed
+PASS s1 no page errors
+PASS s2 day: Preview posts the pasted webcal:// link untouched (the server makes it https) — {"action":"preview","url":"webcal://pray.ahmedelywa.com/api/prayer-times.ics?latitude=30.7952538&longitude=30.9785009&method=5&alarm=5&duration=25&jumuah=true&jumuahDuration=60&color=%23E91E63&lang=ar"}
+PASS s2 day: it shows the number of events, "with reminders" — Found 644 events in the next 400 days and the last 60, with reminders.NameColour · from the calendar
+.kf-swatch-tray { display: grid; grid-template-columns: repeat(var(--cols), var(--z)); gap: 6px; padding: 8px; border-radius: 8px; backgrou
+PASS s2 day: the name defaults to the feed's (Arabic), dir=auto, resolved right-to-left
+PASS s2 day: the colour is the feed's (shown as Custom, selected)
+PASS s2 day: "Use the calendar’s reminders" is on
+PASS s2 day: Subscribe posts {url, name, color, use_alarms} — {"action":"add","url":"webcal://pray.ahmedelywa.com/api/prayer-times.ics?latitude=30.7952538&longitude=30.9785009&method=5&alarm=5&duration=25&jumuah=true&jumuahDuration=60&color=%23E91E63&lang=ar","name":"الصلاة","color":"#E91E63","use_ala
+PASS s2 day: it says "Subscribed · 644 events", the list has the row with host and count, the link field is empty — Subscribed calendarsAny calendar link on yours, read-only: prayer times, a team, a sports fixture list. No Google account needed. Read again every 3 hours.الصلاةpray.ahmedelywa.com · 644 events · updated 6 Nov, 9:30 AMRefreshEditAdd by link
+PASS s2 day: nothing was written to calendar_events or calendar_subscriptions by the client (the function does it) — []
+PASS s2 day: the list query asks for name, host, colour… and never for the link (url) — [["id","host","name","color","use_alarms","status","error","synced_at","event_count","created_at"],["id","host","name","color","use_alarms","status","error","synced_at","event_count","created_at"],["id","host","name","color","use_alarms","s
+PASS s2 day: no page errors
+PASS s2 night: Preview posts the pasted webcal:// link untouched (the server makes it https) — {"action":"preview","url":"webcal://pray.ahmedelywa.com/api/prayer-times.ics?latitude=30.7952538&longitude=30.9785009&method=5&alarm=5&duration=25&jumuah=true&jumuahDuration=60&color=%23E91E63&lang=ar"}
+PASS s2 night: it shows the number of events, "with reminders" — Found 644 events in the next 400 days and the last 60, with reminders.NameColour · from the calendar
+.kf-swatch-tray { display: grid; grid-template-columns: repeat(var(--cols), var(--z)); gap: 6px; padding: 8px; border-radius: 8px; backgrou
+PASS s2 night: the name defaults to the feed's (Arabic), dir=auto, resolved right-to-left
+PASS s2 night: the colour is the feed's (shown as Custom, selected)
+PASS s2 night: "Use the calendar’s reminders" is on
+PASS s2 night: Subscribe posts {url, name, color, use_alarms} — {"action":"add","url":"webcal://pray.ahmedelywa.com/api/prayer-times.ics?latitude=30.7952538&longitude=30.9785009&method=5&alarm=5&duration=25&jumuah=true&jumuahDuration=60&color=%23E91E63&lang=ar","name":"الصلاة","color":"#E91E63","use_ala
+PASS s2 night: it says "Subscribed · 644 events", the list has the row with host and count, the link field is empty — Subscribed calendarsAny calendar link on yours, read-only: prayer times, a team, a sports fixture list. No Google account needed. Read again every 3 hours.الصلاةpray.ahmedelywa.com · 644 events · updated 6 Nov, 9:30 AMRefreshEditAdd by link
+PASS s2 night: nothing was written to calendar_events or calendar_subscriptions by the client (the function does it) — []
+PASS s2 night: the list query asks for name, host, colour… and never for the link (url) — [["id","host","name","color","use_alarms","status","error","synced_at","event_count","created_at"],["id","host","name","color","use_alarms","status","error","synced_at","event_count","created_at"],["id","host","name","color","use_alarms","s
+PASS s2 night: no page errors
+PASS s3 one event reads "1 event", no reminders line, no reminders switch — Found 1 event in the next 400 days and the last 60.NameColour
+.kf-swatch-tray { display: grid; grid-template-columns: repeat(var(--cols), var(--z)); gap: 6px; padding: 8px; border-radius: 8px; background: var(--paper-bone); justify-content:
+PASS s3 the colour defaults to the first palette C swatch no subscription wears (Rose is taken: Clay)
+PASS s3 Cancel closes the preview and adds nothing
+PASS s3 no page errors
+PASS s4 two rows: each with its host, count and when it was read; the dot is the subscription’s colour
+PASS s4 Refresh posts {action:"refresh", id} and says "Updated" — [{"name":"ics-sync","body":{"action":"refresh","id":"b0000000-0000-4000-8000-000000000002"}}]
+PASS s4 renaming posts {action:"update", id, name} — [{"name":"ics-sync","body":{"action":"update","id":"b0000000-0000-4000-8000-000000000002","name":"Work"}}]
+PASS s4 a palette C swatch posts {color:"#B59CE3"} — [{"name":"ics-sync","body":{"action":"update","id":"b0000000-0000-4000-8000-000000000002","name":"Work"}},{"name":"ics-sync","body":{"action":"update","id":"b0000000-0000-4000-8000-000000000002","color":"#B59CE3"}}]
+PASS s4 "Use the calendar’s reminders" reads off for this one…
+PASS s4 …and turning it on posts {use_alarms:true} — [{"name":"ics-sync","body":{"action":"update","id":"b0000000-0000-4000-8000-000000000002","name":"Work"}},{"name":"ics-sync","body":{"action":"update","id":"b0000000-0000-4000-8000-000000000002","color":"#B59CE3"}},{"name":"ics-sync","body"
+PASS s4 Remove asks first, naming the events that go
+PASS s4 confirmed: posts {action:"remove", id}; the row is gone, the other stays
+PASS s4 no page errors
+PASS s5 blocked: says why in a sentence, no preview, no page error
+PASS s5 bad_url: says why in a sentence, no preview, no page error
+PASS s5 not_ics: says why in a sentence, no preview, no page error
+PASS s5 timeout: says why in a sentence, no preview, no page error
+PASS s5 too_large: says why in a sentence, no preview, no page error
+PASS s5 http_error: says why in a sentence, no preview, no page error
+PASS s5 duplicate: "already subscribed", and the preview stays so the link can be fixed
+PASS s5 not deployed: "aren’t on the server yet … needs deploying" — Calendar subscriptions aren’t on the server yet (ics-sync needs deploying).
+PASS s6 a failing feed shows why and when it last worked
+PASS s6 no page errors
+PASS s7 day: phone Settings has the card with Add by link and no sideways scroll at 390 — 390
+PASS s7 day: no page errors
+PASS s7 night: phone Settings has the card with Add by link and no sideways scroll at 390 — 390
+PASS s7 night: no page errors
+PASS g1 day: the subscribed events are on the grid with their Arabic titles
+PASS g1 day: the title carries dir=auto and resolves right-to-left
+PASS g1 day: an English title stays left-to-right
+PASS g2 day: the details are read-only: date · time · From subscription · <name> · Duplicate as my event — ["Fri, Nov 6","11:40 AM – 12:05 PM25m","From subscription · مواقيت الصلاة","Duplicate as my eventCtrlD"]
+PASS g2 day: no "Open in Google Calendar", no Delete, the title is read-only, no colour tray
+PASS g2 day: the title field is dir=auto too
+PASS g3 Duplicate as my event writes a native copy: same title and time, no source link, no reminder from the feed — [{"id":"222d5677-151e-4e2a-b67f-dec2e8f7bab3","user_id":"00000000-0000-4000-8000-0000000060c1","title":"الظهر","starts_at":"2026-11-06T09:40:00.000Z","ends_at":"2026-11-06T10:05:00.000Z","all_day":false,"task_id":null,"source":"native","gca
+PASS g3 …and tells ics-sync nothing
+PASS g4 day: menu B: Details · Duplicate as my event · Work with AI · Copy link — no Google row, no Delete — ["Details","Duplicate as my eventCtrlD","Work with AI▸","Copy link"]
+PASS g5 day: an event with its own https link offers Join meeting, which opens it
+PASS g5 …the link opens — ["https://tickets.example.org/match"]
+PASS g6 day: no page errors
+PASS g1 night: the subscribed events are on the grid with their Arabic titles
+PASS g1 night: the title carries dir=auto and resolves right-to-left
+PASS g1 night: an English title stays left-to-right
+PASS g2 night: the details are read-only: date · time · From subscription · <name> · Duplicate as my event — ["Fri, Nov 6","11:40 AM – 12:05 PM25m","From subscription · مواقيت الصلاة","Duplicate as my eventCtrlD"]
+PASS g2 night: no "Open in Google Calendar", no Delete, the title is read-only, no colour tray
+PASS g2 night: the title field is dir=auto too
+PASS g4 night: menu B: Details · Duplicate as my event · Work with AI · Copy link — no Google row, no Delete — ["Details","Duplicate as my eventCtrlD","Work with AI▸","Copy link"]
+PASS g5 night: an event with its own https link offers Join meeting, which opens it
+PASS g6 night: no page errors
+PASS g7 a subscribed event can’t be dragged: no write, no call, the block is where it was — 758.125 -> 758.125
+PASS g7 …nor deleted with the keyboard
+PASS g7 no page errors
+PASS g8 Today shows a subscribed event (Up next: الظهر) with the title dir=auto
+PASS g8 no page errors
+PASS p1 day: the phone grid draws the subscribed event with its Arabic title
+PASS p1 day: its tap sheet says "Subscribed event", read-only (no Delete)
+PASS p1 day: nothing was written or sent to ics-sync by opening it
+PASS p1 day: no page errors
+PASS p1 night: the phone grid draws the subscribed event with its Arabic title
+PASS p1 night: its tap sheet says "Subscribed event", read-only (no Delete)
+PASS p1 night: nothing was written or sent to ics-sync by opening it
+PASS p1 night: no page errors
+
+84/84 passed

@@ -67,6 +67,7 @@ function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; u
       <textarea
         className="kf-bm-title"
         aria-label="Title"
+        dir="auto"
         readOnly={readOnly}
         rows={1}
         autoFocus={untitled}

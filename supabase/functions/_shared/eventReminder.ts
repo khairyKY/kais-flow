@@ -5,7 +5,7 @@
 //
 // `remind_min` is an offset (minutes before the start), so it follows a moved event and holds for
 // every occurrence of a repeating series. Never a Google event (source 'gcal': read-only, and Kai
-// didn't ask), never an all-day one (its start is a date in no zone, not a moment).
+// didn't ask; a subscribed feed's event, source 'ics' (0094), does remind: its VALARM is its remind_min), never an all-day one (its start is a date in no zone, not a moment).
 import { expandSeries, type RuleBetween, type SeriesRow } from './series.ts'
 
 export interface RemindRow extends SeriesRow {

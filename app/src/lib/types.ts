@@ -112,7 +112,8 @@ export interface ActivityLogEntry {
   created_at: string
 }
 
-export type CalendarEventSource = 'native' | 'gcal'
+/** 'gcal': a Google event (google-sync, 0074); 'ics': an event of a subscribed calendar link (ics-sync, 0094). Both are read-only mirrors. */
+export type CalendarEventSource = 'native' | 'gcal' | 'ics'
 export type CalendarEventType = 'time_block' | 'event' | 'task'
 
 export interface CalendarEvent {
@@ -140,10 +141,10 @@ export interface CalendarEvent {
   project_id?: string | null
   /** A detached occurrence: the series it was dragged out of. */
   series_id?: string | null
-  /** A Google event (source 'gcal', google-sync — migration 0074): which calendar it mirrors. `edit`: the grant can
+  /** A Google event (source 'gcal', google-sync — migration 0074): which calendar it mirrors; a subscribed one (source 'ics', 0094) has `calendar` = the subscription's name, `calendar_id` = its id, `url` = the event's own https link. `edit`: the grant can
    * write and it's ours to change (gcal-events — else read-only); `url`: its join link (Meet…); `link`: its page in
    * Google Calendar; `master`: a repeating event's series id in Google. */
-  external_ref?: { source: string; id: string; calendar?: string; calendar_id?: string; edit?: boolean; url?: string; link?: string; master?: string } | null
+  external_ref?: { source: string; id: string; calendar?: string; calendar_id?: string; edit?: boolean; url?: string; link?: string; master?: string; sub_id?: string; uid?: string } | null
   /** Migration 0077: remind this many minutes before each start (null/absent = none) — an offset, so it
    * follows a move and every occurrence of a series. Never on a Google event. */
   remind_min?: number | null

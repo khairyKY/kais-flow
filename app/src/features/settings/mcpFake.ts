@@ -127,7 +127,7 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
       const add = (type: string, rows: Row[], title: (r: Row) => unknown) => rows.filter((r) => r.deleted_at).forEach((r) => out.push({ type, id: r.id as string, title: title(r) as string, deleted_at: r.deleted_at as string }))
       add('task', s.tasks as unknown as Row[], (r) => r.title)
       add('inbox_item', s.inbox, (r) => r.raw_text)
-      add('calendar_event', (s.cal as unknown as Row[]).filter((e) => e.source !== 'gcal'), (r) => r.title)
+      add('calendar_event', (s.cal as unknown as Row[]).filter((e) => e.source !== 'gcal' && e.source !== 'ics'), (r) => r.title)
       for (const t of ['project', 'area', 'domain'] as const) add(t, s.db[`${t}s`] ?? [], (r) => r.name)
       add('journal_entry', s.db.journal_entries ?? [], (r) => String(r.body).slice(0, 80))
       return out.sort((a, b) => b.deleted_at.localeCompare(a.deleted_at)).slice(0, limit)
@@ -174,7 +174,7 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
       return t ? { ...t } : null
     },
     projects: async () => (s.db.projects as unknown as (ProjectRow & { deleted_at?: string | null })[]).filter((p) => !p.deleted_at).map((p) => ({ id: p.id, name: p.name, status: p.status, type: p.type, domain_id: p.domain_id, target_date: p.target_date })),
-    events: async (from, to) => s.cal.filter((e) => !e.deleted_at && e.source !== 'gcal' && Date.parse(e.starts_at) < Date.parse(to) && (Date.parse(e.ends_at) > Date.parse(from) || !!e.recurrence_rule)),
+    events: async (from, to) => s.cal.filter((e) => !e.deleted_at && e.source !== 'gcal' && e.source !== 'ics' && Date.parse(e.starts_at) < Date.parse(to) && (Date.parse(e.ends_at) > Date.parse(from) || !!e.recurrence_rule)),
     search: async (_q, limit) => hits.slice(0, limit),
     top3Count: async (end) =>
       s.tasks.filter((t) => {
@@ -206,7 +206,7 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
     slotTasks: async (ids) => s.tasks.filter((t) => !t.deleted_at && !!t.slot_id && ids.includes(t.slot_id)).map((t) => ({ ...t })),
     taskBlocks: async (taskId) => s.cal.filter((e) => e.task_id === taskId && !e.deleted_at).map((e) => ({ ...e })),
     getEvent: async (id) => {
-      const e = s.cal.find((x) => x.id === id && !x.deleted_at && x.source !== 'gcal')
+      const e = s.cal.find((x) => x.id === id && !x.deleted_at && x.source !== 'gcal' && x.source !== 'ics')
       return e ? { ...e } : null
     },
     insertEvent: async (e) => void s.cal.push({ ...e, source: 'native', deleted_at: null }),

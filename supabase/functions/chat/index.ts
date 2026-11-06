@@ -196,13 +196,13 @@ async function ask(req: Request, auth: { token: string; user: { id: string } }, 
   const lastUser = [...messages].reverse().find((m) => m.role === 'user')!
   const action = looksLikeAction(lastUser.content)
 
-  // Privacy (site info §3, B1): Google-synced events never reach the model — not as hits (here),
+  // Privacy (site info §3, B1): Google-synced events and calendar subscriptions (source 'ics', 0094) never reach the model — not as hits (here),
   // not in the snapshot (source = 'native' below). If the look-up fails, every event hit goes.
   // An action request gets no hits: they'd only be noise in its prompt and chips under its card.
   const found = action ? [] : (await hybridSearch(supabase, lastUser.content, 12)).slice(0, 8)
   const eventIds = found.filter((h) => h.entity_type === 'calendar_event').map((h) => h.entity_id)
   const { data: synced, error: syncedError } = eventIds.length
-    ? await supabase.from('calendar_events').select('id').eq('source', 'gcal').in('id', eventIds)
+    ? await supabase.from('calendar_events').select('id').in('source', ['gcal', 'ics']).in('id', eventIds)
     : { data: [], error: null }
   // …and Google Classroom's tasks and course projects (0091, site info §5) — the same promise.
   const classroomIds = await classroomAmong(supabase, found)

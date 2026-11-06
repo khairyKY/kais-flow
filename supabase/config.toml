@@ -505,3 +505,7 @@ verify_jwt = false
 
 [functions.classroom-sync]
 verify_jwt = true
+
+# Calendar subscriptions by link (ics-subscribe, 0094): signed-in calls and the pg_cron caller (service-role key) both carry a JWT.
+[functions.ics-sync]
+verify_jwt = true

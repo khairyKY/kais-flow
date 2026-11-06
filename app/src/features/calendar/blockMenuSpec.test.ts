@@ -158,3 +158,18 @@ describe('a Google event (B1): read-only', () => {
     expect(keys(theirs, { now: NOW })).not.toContain('delete')
   })
 })
+
+describe('a subscribed-calendar event (ics-subscribe): read-only, from a link', () => {
+  beforeEach(() => setAppZone('Africa/Cairo'))
+
+  it('says it comes from the subscription, offers no Google Calendar page, and duplicates as my event', () => {
+    const e = block({ source: 'ics', type: 'event', title: 'الفجر', external_ref: { source: 'ics', id: 's/u/', calendar: 'مواقيت الصلاة', calendar_id: 's' } })
+    const spec = blockMenuSpec(e, { now: NOW })
+    expect(isSynced(e)).toBe(true)
+    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google', 'duplicate'])
+    expect(spec[2]).toMatchObject({ label: 'From subscription · مواقيت الصلاة' })
+    expect(spec.every((r) => !r.sub && !r.destructive)).toBe(true)
+    expect(keys(e, { now: NOW, mode: 'menu' })).toEqual(['details', 'duplicate', 'ai', 'copylink'])
+    expect(keys({ ...e, external_ref: { ...e.external_ref!, url: 'https://meet.example.test/x' } }, { now: NOW })).toContain('join')
+  })
+})
