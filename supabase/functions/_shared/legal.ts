@@ -24,3 +24,30 @@ export const LEGAL_KEY = `${TERMS_VERSION}|${PRIVACY_VERSION}`
 export function outdated(rows: readonly { document: string; version: string }[]): LegalDoc[] {
   return (['terms', 'privacy'] as const).filter((d) => !rows.some((r) => r.document === d && r.version >= CURRENT[d]))
 }
+
+// ── Two kinds of change ──
+// MATERIAL (a version above): people must agree again — the card over the app, `consents` rows, the hourly sweep.
+// INFORMATIONAL (here): the text changed but nothing is asked of anyone — a one-line "updated" notice, dismissed
+// once per account (docs/LEGAL.md). Add one when a policy changes without needing a new agreement; it never
+// touches the versions above, so nobody is asked to agree again.
+
+export interface LegalNote {
+  /** The day the text changed, YYYY-MM-DD: names the note, and accounts made on or after it never see it. */
+  id: string
+  doc: LegalDoc
+  /** One plain line saying what changed. */
+  line: string
+}
+
+/** Oldest first. A note stays once added: accounts that haven't dismissed it still see it. */
+export const LEGAL_NOTES: readonly LegalNote[] = [
+  { id: '2026-11-03', doc: 'privacy', line: 'Google Calendar events you change here are now written back to Google.' },
+]
+
+/** A dismissed note is one `consents` row: document `<doc>_notice`, version = the note's id (0093). */
+export const noticeDoc = (n: LegalNote) => `${n.doc}_notice`
+
+/** The notes this account hasn't dismissed (per its consent rows) and was around for. */
+export function unseenNotes(rows: readonly { document: string; version: string }[], accountCreatedAt: string): LegalNote[] {
+  return LEGAL_NOTES.filter((n) => accountCreatedAt.slice(0, 10) < n.id && !rows.some((r) => r.document === noticeDoc(n) && r.version === n.id))
+}
