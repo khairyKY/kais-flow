@@ -2176,6 +2176,11 @@ function Top3Slot({ task, index, children }: { task: Task; index: number; childr
   )
 }
 
+// The goal's gold box: ticked = solid gold fill + parchment tick (the bloom hold and the done card alike).
+// The bloom's 'checking' stays true after completion, and the old desktop box kept its pale 50% fill
+// while checked, so the ticked goal read as an empty white square.
+const goalBox = (ticked: boolean) => ticked ? { background: 'var(--acc-gold)', color: 'var(--paper-parchment)' } : { borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }
+
 function GoalCard({ task, projectName, dot, compact, slim, meta, inProgress = false, place, ...sel }: { task: Task; projectName?: string; dot: string; compact?: boolean; /** phone-today B: the smaller paper goal. */ slim?: boolean; meta?: string[]; inProgress?: boolean; place?: RowGrammarOptions['place'] } & RowSelection) {
   const done = !!task.completed_at // A3 — a completed goal stays on its card, struck through
   const bloom = useBloomCheck(task)
@@ -2197,7 +2202,7 @@ function GoalCard({ task, projectName, dot, compact, slim, meta, inProgress = fa
       <SwipeRow id={`task-${task.id}`} tabIndex={-1} className="tp-goal tp-gs" contentClassName="kf-page tp-gs-in" onClickCapture={ctrlSelect(sel, done)} onContextMenu={g.onContextMenu} contentStyle={card} {...g.swipeProps} overlay={g.menuNode}>
         <span aria-hidden className="tp-gs-tape" />
         <span className="tp-slim-hit">
-          {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom onChange={bloom.toggle} style={done || bloom.checking ? { background: 'var(--acc-gold)', color: 'var(--paper-parchment)' } : { borderColor: 'var(--acc-gold)' }} />}
+          {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom onChange={bloom.toggle} style={goalBox(done || bloom.checking)} />}
         </span>
         <div onClick={openDetail} className="tp-gs-body">
           <div className={`tp-gs-title${done ? ' is-done' : ''}`}><EmojiText text={task.title} /></div>
@@ -2221,7 +2226,7 @@ function GoalCard({ task, projectName, dot, compact, slim, meta, inProgress = fa
         <div style={{ paddingLeft: 12 }}><span className="tp-goal-tag">✶ Goal of the day</span></div>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4, marginTop: 6 }}>
           <span className="tp-hit">
-            {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom onChange={bloom.toggle} style={done || bloom.checking ? { background: 'var(--acc-gold)', color: 'var(--paper-parchment)' } : { borderColor: 'var(--acc-gold)' }} />}
+            {g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} bloom onChange={bloom.toggle} style={goalBox(done || bloom.checking)} />}
           </span>
           <div onClick={openDetail} style={{ flex: 1, minWidth: 0, paddingTop: 12, cursor: 'pointer' }}>
             <div className={`tp-goal-title${done ? ' is-done' : ''}`}><EmojiText text={task.title} /></div>
@@ -2238,8 +2243,7 @@ function GoalCard({ task, projectName, dot, compact, slim, meta, inProgress = fa
   // Today 2a: 20 gold box · serif 20/600 title · one meta line led by the mono "✶ Goal of the day",
   // then project, block time and its real due state · the four-leaf clover. The one taped, tilted
   // card on the page (2a rule 3).
-  const box = { borderColor: 'var(--acc-gold)', background: 'color-mix(in srgb, var(--paper-parchment) 50%, transparent)' }
-  const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : done && !bloom.checking ? <DoneCheck task={task} size={20} /> : <Checkbox label={task.title} checked={bloom.checking} size={20} bloom onChange={bloom.toggle} style={box} />
+  const check = g.selecting ? <SelectCircle on={!!sel.selected} title={task.title} /> : <Checkbox label={task.title} checked={done || bloom.checking} size={20} bloom onChange={bloom.toggle} style={goalBox(done || bloom.checking)} />
   const due = overdueDays(task)
   return (
     <>
