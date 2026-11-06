@@ -4,7 +4,7 @@ name: Android APK
 # Capacitor shell around Android's system WebView, built with Gradle on GitHub's runners (the
 # Android SDK is preinstalled; nothing on Kai's laptop). The android/ project is generated fresh
 # each build (`cap add android`) and app/native/android/ is copied over it. Builds on the mobile
-# branches for review; a release (release.yml) gets the APK attached.
+# branches for review; a release (release.yml) builds it here and attaches the APK itself, after publish.
 on:
   push:
     branches: ['claude/mobile-*', 'claude/native-shell']
@@ -16,6 +16,11 @@ on:
       tag:
         type: string
         required: true
+      # release.yml builds first (mode build, in parallel with the deploy), attaches after publish, and runs
+      # the emulator smoke test as its own call (mode smoke) so it never holds the attach back. '' = both.
+      mode:
+        type: string
+        default: ''
   workflow_dispatch:
 
 permissions:
@@ -31,14 +36,21 @@ env:
 jobs:
   apk:
     name: Build APK
+    if: ${{ inputs.mode != 'smoke' }}
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # only used to attach the APK to a published Release
     defaults:
       run:
         working-directory: app
     steps:
+      # Only what the build reads (vite imports supabase/functions/_shared and site/src/releases.json).
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            app
+            .github
+            supabase
+            site/src/releases.json
+          sparse-checkout-cone-mode: false
 
       - uses: actions/setup-node@v4
         with:
@@ -129,25 +141,10 @@ jobs:
           path: ${{ env.APK }}
           retention-days: 30
 
-      - name: Attach to the Release
-        if: inputs.tag != ''
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
-          TAG: ${{ inputs.tag }}
-        # A version-less copy beside the versioned file, so releases/latest/download/kais-flow.apk
-        # always serves the newest one (the web app's download bar, Settings → App, docs/INSTALL.md).
-        # The versioned file stays: the apps' update check and the site read it. To every repo in
-        # releases.sh (the public releases repo first).
-        run: |
-          set -euo pipefail
-          . ../.github/scripts/releases.sh
-          cp "$APK" "$RUNNER_TEMP/kais-flow.apk"
-          release_upload "$APK" "$RUNNER_TEMP/kais-flow.apk"
-
   smoke:
     name: Emulator smoke test
     needs: apk
+    if: ${{ !cancelled() && inputs.mode != 'build' && (needs.apk.result == 'success' || inputs.mode == 'smoke') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -155,6 +152,7 @@ jobs:
           sparse-checkout: .github
       - uses: actions/download-artifact@v4
         with:
+          pattern: kais-flow-*.apk
           path: apk
           merge-multiple: true
       - name: Enable KVM
@@ -175,7 +173,7 @@ jobs:
       - name: Screens to the log
         if: always()
         run: |
-          sudo apt-get install -y -qq python3-pil > /dev/null
+          sudo apt-get update -qq > /dev/null && sudo apt-get install -y -qq python3-pil > /dev/null
           python3 - <<'PY'
           import base64, glob, io
           from PIL import Image

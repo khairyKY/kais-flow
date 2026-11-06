@@ -93,7 +93,7 @@ async function open(route = '/calendar', o = {}) {
   await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: BASE })
   await ctx.addInitScript(([sess, uid, now, scale]) => {
     if (scale) localStorage.setItem('kf_ui_scale', scale)
-    localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1')
+    localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1'); localStorage.setItem('kf_undo_toasts', 'all') // these assert the toast wording (Settings → Undo toasts: All); quiet-undo has its own
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', '1')
     localStorage.setItem('kf.calPlanning', '0')
@@ -305,7 +305,7 @@ if (want('c')) {
   await fcBlock(page, ADMIN).click({ button: 'right', position: { x: 30, y: 12 } })
   await sleep(500)
   rows = await rowsOf(menuB(page))
-  check('c-slot right-click: menu B — Details · Work with AI · Copy link · Delete (a slot never duplicates)', JSON.stringify(rows.map((r) => r.split(' ')[0])) === JSON.stringify(['Details', 'Work', 'Copy', 'Delete']), JSON.stringify(rows))
+  check('c-slot right-click: menu B — Details · Focus · Work with AI · Copy link · Delete (a slot never duplicates; Focus from focus-d3)', JSON.stringify(rows.map((r) => r.split(' ')[0])) === JSON.stringify(['Details', '▶', 'Work', 'Copy', 'Delete']), JSON.stringify(rows))
   await page.keyboard.press('Escape')
   await sleep(300)
   // a Google event: read-only both ways
@@ -318,7 +318,7 @@ if (want('c')) {
   await fcBlock(page, GOOGLE).click({ button: 'right', position: { x: 30, y: 8 } })
   await sleep(500)
   rows = await rowsOf(menuB(page))
-  check('c-google right-click: menu B — Details · Work with AI · Copy link; no tray, nothing to delete', JSON.stringify(rows.map((r) => r.split(' ')[0])) === JSON.stringify(['Details', 'Work', 'Copy']) && !(await hasTray(page, menuB(page))), JSON.stringify(rows))
+  check('c-google right-click: menu B — Details · Open in Google Calendar · Duplicate as my event · Work with AI · Copy link (gcal-events); no tray, nothing to delete', JSON.stringify(rows.map((r) => r.split(' ')[0])) === JSON.stringify(['Details', 'Open', 'Duplicate', 'Work', 'Copy']) && !(await hasTray(page, menuB(page))), JSON.stringify(rows))
   await page.keyboard.press('Escape')
   await sleep(300)
   // a repeat's occurrence

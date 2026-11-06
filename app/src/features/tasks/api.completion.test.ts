@@ -43,6 +43,7 @@ const lastToast = () => useToastStore.getState().toasts.at(-1)!
 const flush = () => new Promise((r) => setTimeout(r, 0))
 
 beforeEach(() => {
+  vi.stubGlobal('localStorage', { getItem: (k: string) => (k === 'kf_undo_toasts' ? 'all' : null), setItem: () => {} }) // these assert the toast itself (Settings → Undo toasts: All)
   writes.length = 0
   activity.length = 0
   cache = []

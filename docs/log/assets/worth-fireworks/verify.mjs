@@ -108,7 +108,7 @@ async function open(s = {}, o = {}) {
   const view = o.view ?? desktop
   const ctx = await browser.newContext({ ...view, deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US', reducedMotion: o.reduced ? 'reduce' : 'no-preference' })
   await ctx.addInitScript(([t, sess, uid]) => {
-    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1')
+    localStorage.setItem('kf_theme', t); localStorage.setItem('kf-download-bar-dismissed', '1'); localStorage.setItem('kf_undo_toasts', 'all') // these assert the toast wording (Settings → Undo toasts: All); quiet-undo has its own
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf-app-zone', 'Africa/Cairo')
     localStorage.setItem('kf-whats-new:' + uid, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: Date.parse('2026-10-31T00:00:00Z') }))

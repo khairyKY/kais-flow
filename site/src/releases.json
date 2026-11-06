@@ -1,5 +1,27 @@
 [
   {
+    "v": "v1.6.3",
+    "date": "2026-11-06",
+    "title": "Edit Google events, subscribe to any calendar, and undo from anywhere",
+    "highlights": [
+      "Google Calendar events on your own calendars can be renamed, moved, resized and deleted here, and the change goes back to Google",
+      "Events you can't edit open with Open in Google, Duplicate as my event and Copy link; Meet links get a Join button",
+      "Subscribe to any calendar by link (webcal or .ics), like a prayer-times feed, with its reminders, in Settings → Calendar & time",
+      "Ctrl+Z undoes your last change from anywhere and Ctrl+Y redoes it; everyday edits no longer pop a message on the computer",
+      "The calendar stays smooth while Google syncs, and you're no longer asked to accept the Terms again on another device",
+      "Releases are faster to build and ship"
+    ],
+    "icons": [
+      "calendar",
+      "link",
+      "rss",
+      "keyboard",
+      "sync",
+      "download"
+    ],
+    "art": "cherry-bloom"
+  },
+  {
     "v": "v1.6.2",
     "date": "2026-11-03",
     "title": "A calmer Focus, fireworks for your goal, and Google Classroom",

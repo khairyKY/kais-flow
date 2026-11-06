@@ -3,6 +3,11 @@ name: Release
 # One click ships a tested release, in the order docs/DEPLOY-RUNBOOK-v1.md demands:
 #   gate + rehearsal → cron-key check → backup → database → edge functions → app (merge into master) → live check
 #   → GitHub Release (tag + notes) → Android APK + Windows installer (+ the Microsoft Store .msix) + Mac .dmg attached to it.
+# Speed (2026-11-03): the app builds (android.yml, desktop.yml) start at the very beginning, beside the
+# rehearsal and the deploy, from the same commit and the version the tag will carry (the plan job reads it
+# from releases.json the way deploy does). They only upload workflow artifacts. The attach-* jobs at the end
+# need [publish, build], so nothing reaches a release unless the rehearsal, the deploy and publish all passed.
+# The backup runs beside the rehearsal; the emulator smoke test runs beside the attach, not before it.
 # Nothing touches production until the gate is green and the merge into master is proven to be
 # exactly the tested tree. Trigger: push the release's tested commit to `claude/ship` (the version is
 # site/src/releases.json's newest), or to a `claude/ship-v*` branch, or push a `v*` tag, publish a
@@ -27,9 +32,18 @@ on:
         description: 'Only test publishing: a draft release test-dry-run in the releases repo, deleted again'
         type: boolean
         default: false
+      build_only:
+        description: 'Only prove the pipeline: plan + the app builds in parallel under build_tag. No rehearsal, deploy, publish or attach'
+        type: boolean
+        default: false
+      build_tag:
+        description: 'The version the build_only builds are stamped with'
+        type: string
+        default: v0.0.1-ci-test
 
 concurrency:
-  group: release
+  # A build_only run publishes nothing, so it never queues behind (or blocks) a real release.
+  group: ${{ inputs.build_only && format('release-build-{0}', github.run_id) || 'release' }}
   cancel-in-progress: false
 
 permissions:
@@ -38,15 +52,43 @@ permissions:
 env:
   PROJECT_REF: eqbbkitofgyxxrfggpbu
   APP_URL: https://kais-flow.kaidagoat.workers.dev
-  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync google-connect google-sync classroom-connect classroom-sync capture-image mcp delete-account widget
+  FUNCTIONS: notify embed transcribe parse-capture chat search capture github-connect github-sync google-connect google-sync classroom-connect classroom-sync ics-sync capture-image mcp delete-account widget
 
 jobs:
+  # The release's label and version tag, worked out once so the builds (which start now, not after publish)
+  # are stamped exactly as deploy and publish will name the release. Same rule as deploy's "Prepare the merge".
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    outputs:
+      label: ${{ steps.plan.outputs.label }}
+      tag: ${{ steps.plan.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: site/src/releases.json
+          sparse-checkout-cone-mode: false
+      - id: plan
+        env:
+          REF: ${{ github.event.release.tag_name || github.ref_name }}
+          BUILD_ONLY: ${{ inputs.build_only }}
+          BUILD_TAG: ${{ inputs.build_tag }}
+        run: |
+          set -euo pipefail
+          LABEL="${REF#claude/ship-}"
+          if [ "$BUILD_ONLY" = true ]; then LABEL="$BUILD_TAG"; fi
+          if [ "$LABEL" = claude/ship ]; then LABEL="$(jq -r '.[0].v' site/src/releases.json)"; fi
+          case "$LABEL" in v[0-9]*) tag="$LABEL" ;; *) tag="" ;; esac
+          echo "label=$LABEL" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "- Plan: $LABEL, builds stamped ${tag:-none}" >> "$GITHUB_STEP_SUMMARY"
+
   # scripts/preship.ps1 runs the gate locally (×4 timezones, lint, build, ds:check, site, deno check)
   # and writes .github/preship.txt: the commit it tested and the result. Committed on top of that commit
   # and nothing else changed since → the CI gate (~10 billed minutes) is skipped. Anything else → it runs.
   preship:
     name: Local gate record
-    if: ${{ !inputs.dry_run }}
+    if: ${{ !inputs.dry_run && !inputs.build_only }}
     runs-on: ubuntu-latest
     outputs:
       fresh: ${{ steps.check.outputs.fresh }}
@@ -78,21 +120,80 @@ jobs:
     if: needs.preship.outputs.fresh != 'true'
     uses: ./.github/workflows/ci.yml
 
+  # The backup used to run inside deploy (2.5 min on the critical path). It only reads production, so it
+  # runs beside the rehearsal and deploy waits for it: the database is still backed up before db push, a few
+  # minutes earlier. Pruning to the newest 14 stays in deploy, so a release that fails its rehearsal never
+  # pushes older backups out.
+  backup:
+    name: Backup
+    # After the rehearsal, not beside it: both log in to production through the CLI's temporary login role, and
+    # two at once broke v1.6.3's first run ("failed to connect as temp role"). The app builds still run alongside.
+    needs: [plan, rehearse]
+    if: ${{ !cancelled() && needs.rehearse.result == 'success' && !inputs.dry_run && !inputs.build_only && github.actor == github.repository_owner }}
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      LABEL: ${{ needs.plan.outputs.label }}
+    steps:
+      - name: Token present
+        run: |
+          if [ -z "$SUPABASE_ACCESS_TOKEN" ]; then
+            echo "::error::Add the SUPABASE_ACCESS_TOKEN repository secret first (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: supabase
+          sparse-checkout-cone-mode: false
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.118.0
+      - name: Link the project
+        run: supabase link --project-ref "$PROJECT_REF"
+      - name: Backup → private Storage bucket "backups"
+        run: |
+          set -euo pipefail
+          dir="$RUNNER_TEMP/backup"; mkdir -p "$dir"
+          # Both dumps at once: the schema and the data are two independent reads.
+          # One after the other: each dump logs in with the CLI's temporary role, and a second login resets its
+          # password under the first ("password authentication failed", v1.6.3).
+          supabase db dump --linked -f "$dir/schema.sql"
+          supabase db dump --linked --data-only -f "$dir/data.sql"
+          test -s "$dir/schema.sql" && test -s "$dir/data.sql"
+          name="kais-flow-$(date -u +%Y-%m-%dT%H%MZ)-$LABEL.tar.gz"; name="${name//\//-}"
+          tar -czf "$RUNNER_TEMP/$name" -C "$dir" schema.sql data.sql
+
+          key="$(curl -fsS "https://api.supabase.com/v1/projects/$PROJECT_REF/api-keys?reveal=true" \
+            -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | jq -r '[.[] | select(.name == "service_role")][0].api_key // empty')"
+          if [ -z "$key" ]; then echo "::error::No legacy service_role key on the project."; exit 1; fi
+          echo "::add-mask::$key"
+          storage="https://$PROJECT_REF.supabase.co/storage/v1"
+          auth=(-H "Authorization: Bearer $key" -H "apikey: $key")
+
+          # A missing bucket answers 400 here, not 404. Created private with no policies: only the service role reads it.
+          if [ "$(curl -sS -o /dev/null -w '%{http_code}' "${auth[@]}" "$storage/bucket/backups")" != 200 ]; then
+            curl -fsS "${auth[@]}" -H 'Content-Type: application/json' -X POST "$storage/bucket" \
+              -d '{"id":"backups","name":"backups","public":false}' > /dev/null
+          fi
+          curl -sS --fail-with-body "${auth[@]}" -H 'Content-Type: application/gzip' -X POST \
+            --data-binary @"$RUNNER_TEMP/$name" "$storage/object/backups/$name" > /dev/null
+          echo "- Backup: Storage → \`backups/$name\` ($(du -h "$RUNNER_TEMP/$name" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
+
   # rehearsal.yml: every migration from scratch + the harness suites + deno check, and the pending
   # migrations applied to a copy of production's schema. A migration that fails there never reaches
   # `db push` (the 2026-09-26 release stopped half-applied at 0034).
   rehearse:
-    if: ${{ !inputs.dry_run }}
+    if: ${{ !inputs.dry_run && !inputs.build_only }}
     uses: ./.github/workflows/rehearsal.yml
     secrets:
       SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
   deploy:
     name: Deploy
-    needs: [preship, gate, rehearse]
+    needs: [plan, preship, gate, rehearse, backup]
     # The gate counts as passed only when it ran green, or was skipped for a fresh preship record.
     if: >-
-      ${{ !cancelled() && github.actor == github.repository_owner && needs.rehearse.result == 'success'
+      ${{ !cancelled() && github.actor == github.repository_owner && needs.rehearse.result == 'success' && needs.backup.result == 'success'
       && (needs.gate.result == 'success' || (needs.gate.result == 'skipped' && needs.preship.outputs.fresh == 'true')) }}
     runs-on: ubuntu-latest
     permissions:
@@ -158,31 +259,23 @@ jobs:
           fi
           echo "- Cron key: legacy JWT ✓" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Backup → private Storage bucket "backups"
+      - name: Database migrations
         run: |
           set -euo pipefail
-          dir="$RUNNER_TEMP/backup"; mkdir -p "$dir"
-          supabase db dump --linked -f "$dir/schema.sql"
-          supabase db dump --linked --data-only -f "$dir/data.sql"
-          test -s "$dir/schema.sql" && test -s "$dir/data.sql"
-          name="kais-flow-$(date -u +%Y-%m-%dT%H%MZ)-$LABEL.tar.gz"; name="${name//\//-}"
-          tar -czf "$RUNNER_TEMP/$name" -C "$dir" schema.sql data.sql
+          supabase migration list --linked
+          supabase db push --linked --include-all --skip-vault --yes
+          supabase migration list --linked
+          echo "- Database: migrations pushed ✓" >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Prune old backups (newest 14 stay)
+        run: |
+          set -euo pipefail
           key="$(curl -fsS "https://api.supabase.com/v1/projects/$PROJECT_REF/api-keys?reveal=true" \
             -H "Authorization: Bearer $SUPABASE_ACCESS_TOKEN" | jq -r '[.[] | select(.name == "service_role")][0].api_key // empty')"
           if [ -z "$key" ]; then echo "::error::No legacy service_role key on the project."; exit 1; fi
           echo "::add-mask::$key"
           storage="https://$PROJECT_REF.supabase.co/storage/v1"
           auth=(-H "Authorization: Bearer $key" -H "apikey: $key")
-
-          # A missing bucket answers 400 here, not 404. Created private with no policies: only the service role reads it.
-          if [ "$(curl -sS -o /dev/null -w '%{http_code}' "${auth[@]}" "$storage/bucket/backups")" != 200 ]; then
-            curl -fsS "${auth[@]}" -H 'Content-Type: application/json' -X POST "$storage/bucket" \
-              -d '{"id":"backups","name":"backups","public":false}' > /dev/null
-          fi
-          curl -sS --fail-with-body "${auth[@]}" -H 'Content-Type: application/gzip' -X POST \
-            --data-binary @"$RUNNER_TEMP/$name" "$storage/object/backups/$name" > /dev/null
-          echo "- Backup: Storage → \`backups/$name\` ($(du -h "$RUNNER_TEMP/$name" | cut -f1))" >> "$GITHUB_STEP_SUMMARY"
 
           # Keep the newest 14 (the site's privacy page states it). Names start with the UTC timestamp, so a
           # descending name sort is newest-first. Before 2026-10-04 nothing pruned, so free Storage (1 GB) filled.
@@ -194,21 +287,36 @@ jobs:
           fi
           echo "- Backups kept: newest $keep (removed $(jq 'length' <<<"$old"))" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Database migrations
-        run: |
-          set -euo pipefail
-          supabase migration list --linked
-          supabase db push --linked --include-all --skip-vault --yes
-          supabase migration list --linked
-          echo "- Database: migrations pushed ✓" >> "$GITHUB_STEP_SUMMARY"
-
+      # Only the functions that changed since the last released tag (2.7 s each, 15 of them). Anything that
+      # could touch them all, or no tag to compare with, deploys all of them: _shared, config.toml (verify_jwt),
+      # files beside the function folders, a changed FUNCTIONS list. A function also counts as changed when a
+      # function folder it imports from (chat and widget import mcp) changed.
       - name: Edge functions
         run: |
           set -euo pipefail
-          for f in $FUNCTIONS; do
+          prev="$(git tag --list 'v*' --sort=-v:refname --merged HEAD | grep -vxF "$LABEL" | head -1 || true)"
+          todo="$FUNCTIONS"; why="all, no earlier release tag to compare with"
+          if [ -n "$prev" ]; then
+            changed="$(git diff --name-only "$prev" HEAD -- supabase)"
+            if [ -n "$(git diff -U0 "$prev" HEAD -- .github/workflows/release.yml | grep -E '^[+-]  FUNCTIONS:' || true)" ]; then
+              why="all, the FUNCTIONS list changed since $prev"
+            elif [ -n "$(grep -E '^supabase/(config\.toml|functions/(_[^/]*/|[^/]*$))' <<<"$changed" || true)" ]; then
+              why="all, shared code or config changed since $prev"
+            else
+              todo=""
+              for f in $FUNCTIONS; do
+                deps="$f $(grep -rhoE "from '\.\./[^_'/][^'/]*/" "supabase/functions/$f" 2>/dev/null | sed -E "s#from '\.\./##; s#/##" | sort -u | tr '\n' ' ')"
+                for d in $deps; do
+                  if grep -q "^supabase/functions/$d/" <<<"$changed"; then todo="$todo $f"; break; fi
+                done
+              done
+              why="changed since $prev"
+            fi
+          fi
+          for f in $todo; do
             supabase functions deploy "$f" --project-ref "$PROJECT_REF" --use-api
           done
-          echo "- Functions: $FUNCTIONS ✓" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Functions ($why): ${todo:-none} ✓" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Ship the app (push the merge to master)
         id: ship
@@ -216,20 +324,6 @@ jobs:
           git push origin master
           echo "label=$LABEL" >> "$GITHUB_OUTPUT"
           echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-
-      - name: Wait until the live site serves this commit
-        run: |
-          want="$(git rev-parse HEAD)"
-          for i in $(seq 1 40); do
-            live="$(curl -fsS -A "Mozilla/5.0 (X11; Linux x86_64) kais-flow-ci" "$APP_URL/version.json?t=$(date +%s)" 2>/dev/null | jq -r '.commit // empty' 2>/dev/null || true)"
-            if [ "$live" = "$want" ]; then
-              echo "- App: live at \`${want:0:7}\` → $APP_URL/version.json ✓" >> "$GITHUB_STEP_SUMMARY"
-              exit 0
-            fi
-            sleep 15
-          done
-          echo "::error::The live site still serves '${live:-nothing}' after 10 minutes, expected ${want:0:7}. Check Cloudflare → Workers Builds."
-          exit 1
 
       # Auth links + email (docs/EMAIL.md). Kai 2026-10-04: a new account's confirmation link went to
       # http://localhost:3000 — the hosted project still had Supabase's factory Site URL, and the app's
@@ -305,6 +399,20 @@ jobs:
             echo "- Auth: links → $APP_URL ✓, branded templates sent; no sender yet, so Confirm email is OFF until SMTP_USER / SMTP_PASS exist (docs/EMAIL.md)" >> "$GITHUB_STEP_SUMMARY"
           fi
 
+      - name: Wait until the live site serves this commit
+        run: |
+          want="$(git rev-parse HEAD)"
+          for i in $(seq 1 40); do
+            live="$(curl -fsS -A "Mozilla/5.0 (X11; Linux x86_64) kais-flow-ci" "$APP_URL/version.json?t=$(date +%s)" 2>/dev/null | jq -r '.commit // empty' 2>/dev/null || true)"
+            if [ "$live" = "$want" ]; then
+              echo "- App: live at \`${want:0:7}\` → $APP_URL/version.json ✓" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+            sleep 15
+          done
+          echo "::error::The live site still serves '${live:-nothing}' after 10 minutes, expected ${want:0:7}. Check Cloudflare → Workers Builds."
+          exit 1
+
   # A GitHub Release per version (tag at the live master commit, generated notes), then the Android
   # APK and Windows installer built from the same tree and attached to it. desktop.yml's msix job adds
   # kais-flow-<tag>.msix for Partner Center once the STORE_* repo variables exist (docs/MICROSOFT-STORE.md);
@@ -312,7 +420,7 @@ jobs:
   # GITHUB_TOKEN can't start other workflows, so the builds are called from here.
   publish:
     name: GitHub Release
-    needs: deploy
+    needs: [plan, deploy]
     # Deploy can run with the gate skipped (a fresh preship record), and a skipped ancestor would skip this
     # job under the implicit success() — so say what counts: Deploy itself succeeded.
     if: ${{ !cancelled() && needs.deploy.result == 'success' }}
@@ -339,11 +447,14 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
           TAG: ${{ needs.deploy.outputs.label }}
+          PLAN_TAG: ${{ needs.plan.outputs.tag }}
           SHA: ${{ needs.deploy.outputs.sha }}
         run: |
           set -euo pipefail
           . .github/scripts/releases.sh
           case "$TAG" in v[0-9]*) ;; *) echo "::notice::'$TAG' is not a version tag, so no GitHub Release"; exit 0 ;; esac
+          # The builds were stamped from the plan job's tag before the deploy; it must be the release's tag.
+          if [ "$TAG" != "$PLAN_TAG" ]; then echo "::error::Release tag '$TAG' differs from the builds' '$PLAN_TAG'; nothing is published."; exit 1; fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           live="Live at $APP_URL · Android APK, Windows installer and Mac .dmg attached below once built. Install help: https://kais-flow-site.khairyshhn1.workers.dev/download/"
           # The body = this tag's entry in releases.json (its highlights as "- " lines, which the app's
@@ -390,29 +501,181 @@ jobs:
           rgh "$PRIMARY_REPO" release view "$TAG" --json isDraft,tagName,assets --jq '{isDraft, tagName, assets: [.assets[].name]}'
           echo "- Dry run: draft $TAG created in $PRIMARY_REPO, a file uploaded and replaced, then deleted ✓" >> "$GITHUB_STEP_SUMMARY"
 
+  # The app builds start with the run (needs only the plan), not after publish: they build the commit under
+  # test, stamped with the tag the release will get, and only upload workflow artifacts. Attaching to the
+  # release happens in the attach-* jobs, which also need publish. Explicit `!cancelled() && ... result`
+  # conditions: a skipped gate upstream must not skip these (the 2026-10-29 lesson).
   android:
-    needs: publish
-    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.publish.outputs.tag != '' }}
+    name: android
+    needs: plan
+    if: ${{ !cancelled() && !inputs.dry_run && needs.plan.result == 'success' && needs.plan.outputs.tag != '' }}
     uses: ./.github/workflows/android.yml
-    permissions:
-      contents: write
     # The keystore secrets (ANDROID_KEYSTORE_B64/_PASSWORD) must reach the called workflow, or every
     # release APK gets a one-off key and Android refuses to update over the previous install.
     secrets: inherit
     with:
-      tag: ${{ needs.publish.outputs.tag }}
+      tag: ${{ needs.plan.outputs.tag }}
+      mode: build
+
+  # The emulator smoke test runs on the built APK beside the attach, never before it.
+  android-smoke:
+    name: android smoke
+    needs: [plan, android]
+    if: ${{ !cancelled() && needs.android.result == 'success' }}
+    uses: ./.github/workflows/android.yml
+    with:
+      tag: ${{ needs.plan.outputs.tag }}
+      mode: smoke
 
   desktop:
-    needs: publish
-    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.publish.outputs.tag != '' }}
+    name: desktop
+    needs: plan
+    if: ${{ !cancelled() && !inputs.dry_run && needs.plan.result == 'success' && needs.plan.outputs.tag != '' }}
     uses: ./.github/workflows/desktop.yml
     permissions:
-      contents: write
-    # Windows and Mac (desktop.yml's windows + macos jobs, side by side; its updater job then adds the
-    # Mac's darwin entries to the latest.json the Windows job wrote). With the repo variable
-    # MAC_BUILD_ON=codemagic the Mac app is built by codemagic.yaml instead, on the tag publish makes.
-    # The updater key (TAURI_SIGNING_PRIVATE_KEY/_PASSWORD) must reach the called workflow, or the
+      contents: write # desktop.yml's manual-run updater job declares it; a release run skips that job
+    # Windows, the Microsoft Store .msix and (with the repo variable MAC_ON_RELEASE=true) the Mac app, side by
+    # side. The updater key (TAURI_SIGNING_PRIVATE_KEY/_PASSWORD) must reach the called workflow, or the
     # release has no latest.json and neither desktop app can update in place.
     secrets: inherit
     with:
-      tag: ${{ needs.publish.outputs.tag }}
+      tag: ${{ needs.plan.outputs.tag }}
+
+  attach-android:
+    name: Attach Android
+    needs: [publish, android]
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.publish.outputs.tag != '' && needs.android.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+      TAG: ${{ needs.publish.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: kais-flow-*.apk
+          path: apk
+          merge-multiple: true
+      # A version-less copy beside the versioned file, so releases/latest/download/kais-flow.apk always serves
+      # the newest one (the web app's download bar, Settings → App, docs/INSTALL.md). The versioned file stays:
+      # the apps' update check and the site read it. To every repo in releases.sh (the public releases repo first).
+      - run: |
+          set -euo pipefail
+          . .github/scripts/releases.sh
+          apk="apk/kais-flow-$TAG.apk"
+          test -f "$apk" || { echo "::error::$apk was not built"; ls apk; exit 1; }
+          cp "$apk" "$RUNNER_TEMP/kais-flow.apk"
+          release_upload "$apk" "$RUNNER_TEMP/kais-flow.apk"
+
+  # Windows installer (+ its updater signature, latest.json), the Store .msix and the Mac .dmg: what the
+  # per-platform jobs used to do at the end of their builds. One job, in this order, so latest.json is
+  # written by Windows first and the Mac's darwin entries are merged into it after (latest-json.mjs), never
+  # raced. A platform that wasn't built (Mac off, a failed build) is skipped, and the job then fails at the
+  # end if the build did not succeed, as before.
+  attach-desktop:
+    name: Attach desktop
+    needs: [publish, desktop]
+    if: ${{ !cancelled() && needs.publish.result == 'success' && needs.publish.outputs.tag != '' && (needs.desktop.result == 'success' || needs.desktop.result == 'failure') }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASES_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+      TAG: ${{ needs.publish.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          pattern: kais-flow-*-windows-setup.exe
+          path: win
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: kais-flow-mac
+          path: mac
+      - uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: kais-flow-msix
+          path: msix
+      - name: Attach to the Release
+        run: |
+          set -euo pipefail
+          . .github/scripts/releases.sh
+
+          # Windows. A version-less copy beside the versioned file (releases/latest/download/kais-flow-windows-setup.exe).
+          # With a signature, also latest.json (tauri.conf.json plugins.updater): the versioned file's URL in
+          # the releases repo and its signature, merged into any latest.json the release has.
+          exe="$(ls win/*-windows-setup.exe 2>/dev/null | head -1 || true)"
+          if [ -n "$exe" ]; then
+            EXE_NAME="$(basename "$exe")"
+            cp "$exe" "$RUNNER_TEMP/kais-flow-windows-setup.exe"
+            files=("$exe" "$RUNNER_TEMP/kais-flow-windows-setup.exe")
+            if [ -f "$exe.sig" ]; then
+              rgh "$PRIMARY_REPO" release download "$TAG" -p latest.json -O "$RUNNER_TEMP/base.json" 2>/dev/null || true
+              NOTES="$(rgh "$PRIMARY_REPO" release view "$TAG" --json body -q .body || true)" \
+                node .github/scripts/latest-json.mjs "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/latest.json" \
+                windows-x86_64 "$exe.sig" "https://github.com/$PRIMARY_REPO/releases/download/$TAG/$EXE_NAME"
+              files+=("$exe.sig" "$RUNNER_TEMP/latest.json")
+            else
+              echo "::warning::No updater signature, so no latest.json: Windows apps update through the browser download this time."
+            fi
+            release_upload "${files[@]}"
+            echo "- Attached: $EXE_NAME" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::No Windows installer was built."
+          fi
+
+          # The Microsoft Store package: versioned for Partner Center, plus a version-less copy.
+          msix="$(ls msix/*.msix 2>/dev/null | head -1 || true)"
+          if [ -n "$msix" ]; then
+            cp "$msix" "$RUNNER_TEMP/kais-flow.msix"
+            release_upload "$msix" "$RUNNER_TEMP/kais-flow.msix"
+            echo "- Attached: $(basename "$msix")" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+          # The Mac app: every file the build made, plus a version-less .dmg, then the darwin entries in latest.json.
+          dmg="$(ls mac/*-mac.dmg 2>/dev/null | head -1 || true)"
+          if [ -n "$dmg" ]; then
+            cp "$dmg" "$RUNNER_TEMP/kais-flow-mac.dmg"
+            release_upload mac/* "$RUNNER_TEMP/kais-flow-mac.dmg"
+            echo "- Attached: $(basename "$dmg")" >> "$GITHUB_STEP_SUMMARY"
+            sig="$(ls mac/*.app.tar.gz.sig 2>/dev/null | head -1 || true)"
+            if [ -z "$sig" ]; then
+              echo "::warning::No updater signature, so no darwin entries: Mac apps update through the .dmg this time."
+            else
+              file="$(basename "${sig%.sig}")"
+              rgh "$PRIMARY_REPO" release download "$TAG" -p latest.json -O base.json || true
+              url="https://github.com/$PRIMARY_REPO/releases/download/$TAG/$file"
+              # The universal .app runs on both, so both keys name the same bundle.
+              node .github/scripts/latest-json.mjs base.json latest.json darwin-aarch64 "$sig" "$url" darwin-x86_64 "$sig" "$url"
+              if [ -f base.json ]; then
+                # Every entry the base had (same version) is still there with its URL, the Windows one above all.
+                lost="$(jq -r --slurpfile o latest.json 'select(.version == $o[0].version) | .platforms // {} | to_entries[] | select(.key | startswith("darwin-") | not) | select($o[0].platforms[.key].url != .value.url) | .key' base.json)"
+                if [ -n "$lost" ]; then echo "::error::the merge changed $lost"; exit 1; fi
+              fi
+              if ! jq -e '.platforms["windows-x86_64"]' latest.json > /dev/null; then
+                echo "::warning::latest.json has no windows-x86_64 entry (the Windows build had no signature, or failed)"
+              fi
+              jq '.platforms | map_values(.url)' latest.json
+              release_upload latest.json
+              echo "- Updater: latest.json → $(jq -r '.platforms | keys | join(", ")' latest.json)" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          fi
+      - name: The desktop build must have succeeded
+        if: ${{ needs.desktop.result != 'success' }}
+        run: |
+          echo "::error::A desktop build failed; whatever was built is attached (see above)."
+          exit 1

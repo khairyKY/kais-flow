@@ -60,14 +60,14 @@ import { inSettings } from '../features/settings/categories'
 import { PaperHost } from '../features/paper/PaperHost'
 import { useReadyPages } from '../features/paper/captures'
 import { WhatsNewHost } from '../features/whats-new/WhatsNew'
-import { TermsNoticeHost } from '../features/legal/LegalDialogs'
+import { LegalNoteHost, TermsNoticeHost } from '../features/legal/LegalDialogs'
 import { SeasonTopbarEcho } from '../features/seasons/TopbarEcho'
 import { KeyCombo } from './kit'
 import { Float } from './Float'
 import { uiZoom } from '../lib/uiScale'
 import { splitKeyCombo } from '../lib/shortcuts'
 import { overlayCount } from '../lib/overlayStack'
-import { undoLatest } from '../lib/undo'
+import { redoLatest, undoLatest } from '../lib/undo'
 import { DownloadBar } from '../features/download/DownloadBar'
 import { useAutoFileNotice } from '../features/capture/autoFileNotice'
 
@@ -818,8 +818,10 @@ export function AppLayout() {
         e.preventDefault()
         toggleCommandBar()
       }
-      // ⌘Z / Ctrl+Z (P7e A3): the newest toast's Undo. Inside a field the browser's own undo runs.
-      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && pressed(e, 'z', 'KeyZ') && !keysResting(e) && undoLatest()) e.preventDefault()
+      // ⌘Z / Ctrl+Z: the app-wide history's newest action (lib/undo); ⌘⇧Z / Ctrl+⇧Z / Ctrl+Y redo it.
+      // Inside a field the browser's own undo runs.
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && pressed(e, 'z', 'KeyZ') && !keysResting(e) && (e.shiftKey ? redoLatest() : undoLatest())) e.preventDefault()
+      if (e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && pressed(e, 'y', 'KeyY') && !keysResting(e) && redoLatest()) e.preventDefault()
       // ⌘, / Ctrl+, (P7e A7): Settings.
       if ((e.ctrlKey || e.metaKey) && !e.altKey && pressed(e, ',', 'Comma') && !keysResting(e)) {
         e.preventDefault()
@@ -1233,6 +1235,7 @@ export function AppLayout() {
       <WhatsNewHost uid={user?.id} createdAt={user?.created_at} />
       {/* docs/LEGAL.md: "We've updated our terms", until they agree (or leave). */}
       <TermsNoticeHost />
+      <LegalNoteHost />
       <SubtaskAskHost />
       <ScopeAskHost />
       <ToastHost />

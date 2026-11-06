@@ -46,6 +46,7 @@ const json = (status: number, body: unknown) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
 
 beforeEach(() => {
+  vi.stubGlobal('localStorage', { getItem: (k: string) => (k === 'kf_undo_toasts' ? 'all' : null), setItem: () => {} }) // these assert the toast itself (Settings → Undo toasts: All)
   vi.stubGlobal('navigator', { onLine: true })
   invoke.mockReset()
   push.mockReset()

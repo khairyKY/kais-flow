@@ -209,16 +209,19 @@ async function buildPayload(
 
   if (kind === 'event_reminder') {
     // A12 / 0077: every occurrence whose start minus remind_min fell in the last 10 minutes
-    // (_shared/eventReminder.ts — the device planner's rule too). Never a Google event.
-    const { data: rows, error } = await supabase
-      .from('calendar_events')
-      .select('id, title, starts_at, ends_at, all_day, source, remind_min, recurrence_rule, recurrence_exdates, deleted_at')
-      .eq('user_id', userId)
-      .not('remind_min', 'is', null)
-      .eq('source', 'native')
-      .is('deleted_at', null)
-    if (error) throw error
-    const due = eventRemindersDue((rows ?? []) as (RemindRow & { title: string })[], new Date(clock.reminderWindowStart), clock.now, zone, ruleBetween)
+    // (_shared/eventReminder.ts — the device planner's rule too). Never a Google event; a subscribed one (0094, a feed's
+    // VALARM) does, read apart: it never repeats (the feed arrives expanded) and a feed holds thousands of rows against
+    // PostgREST's 1000, so only what starts within a day of the window.
+    const cols = 'id, title, starts_at, ends_at, all_day, source, remind_min, recurrence_rule, recurrence_exdates, deleted_at'
+    const [own, subscribed] = await Promise.all([
+      supabase.from('calendar_events').select(cols).eq('user_id', userId).not('remind_min', 'is', null).eq('source', 'native').is('deleted_at', null),
+      supabase.from('calendar_events').select(cols).eq('user_id', userId).not('remind_min', 'is', null).eq('source', 'ics').is('deleted_at', null)
+        .gte('starts_at', clock.reminderWindowStart).lte('starts_at', new Date(clock.now.getTime() + 1441 * 60_000).toISOString()),
+    ])
+    if (own.error) throw own.error
+    if (subscribed.error) throw subscribed.error
+    const rows = [...(own.data ?? []), ...(subscribed.data ?? [])]
+    const due = eventRemindersDue(rows as (RemindRow & { title: string })[], new Date(clock.reminderWindowStart), clock.now, zone, ruleBetween)
     // Off or paused: nothing goes out and nothing is claimed.
     if (due.length === 0 || !deliver(eventReminderNotice(due.map((d) => d.event), prefs, clock.now, zone), prefs, clock.now, zone)) return null
     // Claim each occurrence with its history row BEFORE the push: 0077's unique index turns a second
@@ -396,9 +399,15 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
   // event_reminder: only the push users with an event that reminds (0077). ponytail: the same one
   // read as routine's above, capped at 1000 rows by PostgREST — a window query past that.
   if (kind === 'event_reminder') {
-    const { data: owners, error } = await supabase.from('calendar_events').select('user_id').not('remind_min', 'is', null).eq('source', 'native').is('deleted_at', null)
-    if (error) throw error
-    const reminding = new Set((owners ?? []).map((r) => r.user_id as string))
+    const [own, subscribed] = await Promise.all([
+      supabase.from('calendar_events').select('user_id').not('remind_min', 'is', null).eq('source', 'native').is('deleted_at', null),
+      // 0094: a subscribed event reminds too — only the next day's, as the read above
+      supabase.from('calendar_events').select('user_id').not('remind_min', 'is', null).eq('source', 'ics').is('deleted_at', null)
+        .gte('starts_at', clock.reminderWindowStart).lte('starts_at', new Date(clock.now.getTime() + 1441 * 60_000).toISOString()),
+    ])
+    if (own.error) throw own.error
+    if (subscribed.error) throw subscribed.error
+    const reminding = new Set([...(own.data ?? []), ...(subscribed.data ?? [])].map((r) => r.user_id as string))
     for (const id of userIds) if (!reminding.has(id)) userIds.delete(id)
   }
 

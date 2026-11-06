@@ -23,6 +23,27 @@ const SYNCED_TABLES = [
 // any change to them can move rows in/out of the trash list.
 const TRASHED_TABLES = new Set(['tasks', 'inbox_items', 'calendar_events', 'journal_entries', 'projects', 'areas', 'domains'])
 
+/** A burst of changes is ONE refetch (gcal-events). google-sync lands a hundred rows at a time (a first sync, a calendar
+ * ticked on), Realtime sends a message per row, and each used to cancel the refetch before it and start another — a hundred
+ * reads of every row, the screen redrawn on the last. Now a table's invalidation waits for a quiet moment (DEBOUNCE_MS),
+ * and for no longer than MAX_WAIT_MS however steady the stream: the screen stays within a second or two of the data. */
+export const DEBOUNCE_MS = 300
+export const MAX_WAIT_MS = 2000
+const waiting = new Map<string, { timer: ReturnType<typeof setTimeout>; since: number }>()
+
+export function invalidateSoon(table: string): void {
+  const now = Date.now()
+  const w = waiting.get(table)
+  if (w) clearTimeout(w.timer)
+  const since = w?.since ?? now
+  const timer = setTimeout(() => {
+    waiting.delete(table)
+    void queryClient.invalidateQueries({ queryKey: [table] })
+    if (TRASHED_TABLES.has(table)) void queryClient.invalidateQueries({ queryKey: ['deleted_items'] })
+  }, Math.max(0, Math.min(DEBOUNCE_MS, since + MAX_WAIT_MS - now)))
+  waiting.set(table, { timer, since })
+}
+
 /** Subscribes to realtime changes on every synced table and invalidates the matching query cache.
  * Scale (free tier: 200 concurrent connections, 2M messages/month): only this user's rows
  * (`filter`, so Realtime doesn't RLS-check every user's change against every subscriber), and no
@@ -43,10 +64,7 @@ export function useRealtimeSync() {
         channel.on(
           'postgres_changes' as never,
           { event: '*', schema: 'public', table, filter: `user_id=eq.${uid}` },
-          () => {
-            void queryClient.invalidateQueries({ queryKey: [table] })
-            if (TRASHED_TABLES.has(table)) void queryClient.invalidateQueries({ queryKey: ['deleted_items'] })
-          },
+          () => invalidateSoon(table),
         )
       }
       channel.subscribe()

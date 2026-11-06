@@ -5,6 +5,7 @@ import { queryClient } from './queryClient'
 import { useToastStore } from './toastStore'
 import { carryReminder } from './carryReminder'
 import { releaseTop3 } from '../features/tasks/top3Rule'
+import { noteWrite, registerWriter } from './writeTape'
 import type { Task } from './types'
 
 export const OUTBOX_KEY = 'kf-outbox'
@@ -404,6 +405,11 @@ export function writeRow<T extends { id: string }>(
   row: T,
   op: 'upsert' | 'delete' = 'upsert',
 ): void {
+  // Redo's tape (./writeTape): what this row was just before, noted only while an undo function runs.
+  {
+    const cached = queryClient.getQueryData<T[] | T>([table])
+    noteWrite(table, row, op, Array.isArray(cached) ? cached.find((r) => r.id === row.id) : cached && (cached as T).id === row.id ? (cached as T) : undefined)
+  }
   // Every task write lands here (swipe, picker, drag, bulk…), so this is where a moved task's
   // reminder keeps its lead time — once, for all of them (./carryReminder) — and a Top 3 pick taken
   // off today gives its place up (features/tasks/top3Rule).
@@ -442,6 +448,8 @@ export function writeRow<T extends { id: string }>(
     ...(account ? { uid: account } : {}),
   }).then(() => void flushOutbox())
 }
+
+registerWriter((table, row, op) => writeRow(table, row, op))
 
 if (typeof window !== 'undefined') {
   window.addEventListener('online', () => void flushOutbox())

@@ -16,7 +16,8 @@ import { cairoTimeKey } from './eventTime'
 import { layoutOverlaps } from './overlapLayout'
 import { allDayOn, bubbleText, columnLabel, DAY_MIN, dayBlocks, dragSpan, edgeScrollSpeed, eventSpan, glideMs, glidePanes, glidePeek, glideTarget, minToPx, pxToMin, rangeText, SNAP_MIN, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { slotAt } from './slots'
-import { repeatCheckName } from './blockMenuSpec'
+import { isSynced, repeatCheckName } from './blockMenuSpec'
+import { gcalEditable } from './gcal'
 import { RepeatGlyph } from './checkGlyphs'
 import '../tasks/TaskRow.css' // the long-press bloom (.kf-press-bloom)
 import { bandChipLabel, isMultiDaySpan, spanDays } from './daySpans'
@@ -304,7 +305,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
       return
     }
     const ev = blockEl && events.find((x) => x.id === blockEl.dataset.id)
-    if (!ev || ev.source === 'gcal') return // a Google event (B1) never lifts — a tap still opens it
+    if (!ev || (isSynced(ev) && !gcalEditable(ev))) return // a read-only Google event (B1) never lifts — a tap still opens it
     s.kind = 'press'
     // slot-outline: a hold on a task row inside a slot lifts THAT task; the slot's header or empty
     // area still lifts the slot.
@@ -654,7 +655,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
               )}
             </span>
           )}
-          <span className="pc-name">
+          <span className="pc-name" dir="auto">
             {lk.goal && <span className="pc-star" aria-label="Goal of the day: ">✶ </span>}
             <EmojiText text={ev.title} />
           </span>
@@ -786,7 +787,7 @@ export const PhoneGrid = forwardRef<PhoneGridHandle, Props>(function PhoneGrid({
             const span = isMultiDaySpan(e, zone) ? spanDays(e, zone) : null
             const cls = `pc-allday-chip${span && span.first < days[0] ? ' is-from' : ''}${span && span.last > days[days.length - 1] ? ' is-into' : ''}`
             return (
-              <button key={e.id} type="button" className={cls} style={{ '--pc-fill': look(e).fill } as CSSProperties} onClick={() => onTapBlock(e)}>
+              <button key={e.id} type="button" dir="auto" className={cls} style={{ '--pc-fill': look(e).fill } as CSSProperties} onClick={() => onTapBlock(e)}>
                 <EmojiText text={span ? bandChipLabel(e, days, zone, clock) : e.title} />
               </button>
             )

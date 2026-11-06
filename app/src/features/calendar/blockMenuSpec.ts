@@ -10,7 +10,7 @@ import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus' | 'join' | 'gopen'
 
 /** cal-clicks (Kai 2026-10-26, Akiflow / Google Calendar): a click opens a block's DETAILS (when, project,
  * repeat, remind…); a right-click opens MENU B (the swatch tray, Duplicate, Work with AI ›, Copy link, Delete). */
@@ -64,10 +64,23 @@ export function isUntitled(e: Pick<CalendarEvent, 'title' | 'created_at'>, now: 
   return fresh && (!e.title.trim() || DEFAULT_TITLES.includes(e.title))
 }
 
-/** A Google event (google-sync, B1): shown, never edited here — Google is its truth. */
-export const isSynced = (e: Pick<CalendarEvent, 'source'>): boolean => e.source === 'gcal'
+/** A Google event (google-sync, B1): Google is its truth. Shown read-only, unless it's ours to change (gcal-events —
+ * ./gcal gcalEditable: the grant can write and it's on a calendar we own), when its title and time edit in place and the
+ * change goes to Google. */
+export const isSynced = (e: Pick<CalendarEvent, 'source'>): boolean => e.source === 'gcal' || e.source === 'ics' // ics-subscribe: a subscribed link's event is read-only the same way
 
-export const isRepeatingBlock = (e: Pick<CalendarEvent, 'recurrence_rule' | 'seriesId'>): boolean => !!(e.seriesId || e.recurrence_rule)
+export const isRepeatingBlock = (e: Pick<CalendarEvent, 'recurrence_rule' | 'seriesId'> & { external_ref?: { master?: string } | null }): boolean => !!(e.seriesId || e.recurrence_rule || e.external_ref?.master)
+
+/** The Duplicate row of a Google event: the copy is an event of our own, which Google never sees. */
+export const DUPLICATE_AS_MINE = 'Duplicate as my event'
+
+/** A Google event's own rows: Join (when Google gave a link) and Open in Google Calendar. */
+function googleRows(e: CalendarEvent): BlockMenuEntry[] {
+  return [
+    ...(typeof e.external_ref?.url === 'string' ? [{ key: 'join' as const, label: 'Join meeting' }] : []),
+    ...(e.source === 'gcal' ? [{ key: 'gopen' as const, label: 'Open in Google Calendar' }] : []),
+  ]
+}
 
 /** "Wed, Jul 29" — an all-day block's date is in no zone. */
 export function blockDate(e: Pick<CalendarEvent, 'starts_at' | 'all_day'>): string {
@@ -125,12 +138,17 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
   // Menu B (Kai 2026-10-26): Work with AI › (the chat, with a request about this block) and Copy link.
   const extras: BlockMenuEntry[] = [{ key: 'ai', label: 'Work with AI', sub: true }, { key: 'copylink', label: 'Copy link' }]
   if (ctx.mode === 'menu') return menuB(e, ctx, extras)
-  // A Google event: when it is, and where it comes from — nothing to change, nothing to delete.
+  // A Google event: when it is, where it comes from, Join / Open in Google Calendar; ours to change, the date, time and
+  // Delete too. A read-only one (another calendar, someone else's event, a grant without the write scope) Duplicates
+  // as an event of our own.
   if (isSynced(e)) {
+    const edit = !!e.external_ref?.edit
     return [
-      { key: 'date', label: blockDate(e) },
-      e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start) },
-      { key: 'google', label: `From Google · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
+      { key: 'date', label: blockDate(e), sub: edit },
+      e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: edit },
+      { key: 'google', label: `From ${e.source === 'ics' ? 'subscription' : 'Google'} · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
+      ...googleRows(e),
+      ...(edit ? [deleteRow(e, ctx, isRepeatingBlock(e))] : [{ key: 'duplicate' as const, label: DUPLICATE_AS_MINE }]),
     ]
   }
   const repeating = isRepeatingBlock(e)
@@ -181,7 +199,16 @@ function deleteRow(e: CalendarEvent, ctx: BlockMenuContext, repeating: boolean):
  * Unschedule, and Details (the old Edit / Details) for every other block. */
 function menuB(e: CalendarEvent, ctx: BlockMenuContext, extras: BlockMenuEntry[]): BlockMenuEntry[] {
   const details: BlockMenuEntry = { key: 'details', label: 'Details' }
-  if (isSynced(e)) return [details, ...extras] // a Google event: nothing to change, nothing to delete
+  if (isSynced(e)) {
+    // A Google event: Join, Open in Google Calendar, Duplicate as my own event — and Delete when it's ours to change.
+    return [
+      details,
+      ...googleRows(e).map((r, i) => (i === 0 ? { ...r, divider: true } : r)),
+      { key: 'duplicate', label: DUPLICATE_AS_MINE, hint: '⌃D', divider: true },
+      ...extras.map((x, i) => (i === 0 ? { ...x, divider: true } : x)),
+      ...(e.external_ref?.edit ? [deleteRow(e, ctx, isRepeatingBlock(e))] : []),
+    ]
+  }
   const out: BlockMenuEntry[] = []
   if (e.task_id && ctx.task) {
     out.push(

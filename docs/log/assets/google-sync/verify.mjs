@@ -400,7 +400,8 @@ if (want('g2')) {
     await menu(page).waitFor({ timeout: 4000 }).catch(() => {})
     await sleep(300)
     const labels = await menu(page).getByRole('menuitem').allInnerTexts()
-    check(`g2 ${theme}: rows — date · time · "From Google · Prayer times", nothing else`, labels.length === 3 && /Mon, Oct 12/.test(labels[0]) && /12:00 – 12:20/.test(labels[1]) && /From Google · Prayer times/.test(labels[2]), JSON.stringify(labels))
+    // gcal-events (2026-11-03): a read-only Google event also offers Open in Google Calendar and Duplicate as my event.
+    check(`g2 ${theme}: rows — date · time · "From Google · Prayer times" · Open in Google Calendar · Duplicate as my event`, labels.length === 5 && /Mon, Oct 12/.test(labels[0]) && /12:00 – 12:20/.test(labels[1]) && /From Google · Prayer times/.test(labels[2]) && /^Open in Google Calendar/.test(labels[3]) && /^Duplicate as my event/.test(labels[4]), JSON.stringify(labels))
     const title = menu(page).getByRole('textbox', { name: 'Title' })
     // menu B (cal-blocks): a Google event shows no swatch tray at all (it was a disabled colour dot)
     check(`g2 ${theme}: the title is read-only, no colour tray`, (await title.getAttribute('readonly')) !== null && (await menu(page).locator('.kf-swatch-tray').count()) === 0)
@@ -423,7 +424,7 @@ if (want('g2')) {
       await sleep(400)
       const ctxItems = await page.locator('[role="menu"]').last().getByRole('menuitem').allInnerTexts()
       // cal-clicks: the right-click is menu B — for a Google event its read-only rows (Details, Work with AI, Copy link)
-      check('g2 right-click: menu B with only Details · Work with AI · Copy link — no tray, no Delete', ctxItems.length === 3 && /^Details/.test(ctxItems[0]) && /^Work with AI/.test(ctxItems[1]) && /^Copy link/.test(ctxItems[2]) && (await page.locator('[role="menu"]').last().locator('.kf-swatch-tray').count()) === 0, JSON.stringify(ctxItems))
+      check('g2 right-click: menu B with Details · Open in Google Calendar · Duplicate as my event · Work with AI · Copy link — no tray, no Delete', ctxItems.length === 5 && /^Details/.test(ctxItems[0]) && /^Open in Google Calendar/.test(ctxItems[1]) && /^Duplicate as my event/.test(ctxItems[2]) && /^Work with AI/.test(ctxItems[3]) && /^Copy link/.test(ctxItems[4]) && (await page.locator('[role="menu"]').last().locator('.kf-swatch-tray').count()) === 0, JSON.stringify(ctxItems))
       // A native event keeps its full menu.
       await page.keyboard.press('Escape')
       await sleep(200)
@@ -466,7 +467,7 @@ if (want('p1')) {
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
     await sleep(900)
     const rows = await page.locator('.pc-bs-rows .kf-as-row').allInnerTexts()
-    check(`p1 ${theme}: the sheet — date · time · "From Google · Prayer times"`, rows.length === 3 && /Mon, Oct 12/.test(rows[0]) && /12:00 – 12:20/.test(rows[1]) && /From Google · Prayer times/.test(rows[2]), JSON.stringify(rows))
+    check(`p1 ${theme}: the sheet — date · time · "From Google · Prayer times" · Open in Google Calendar · Duplicate as my event`, rows.length === 5 && /Mon, Oct 12/.test(rows[0]) && /12:00 – 12:20/.test(rows[1]) && /From Google · Prayer times/.test(rows[2]) && /^Open in Google Calendar/.test(rows[3]) && /^Duplicate as my event/.test(rows[4]), JSON.stringify(rows))
     check(`p1 ${theme}: no swatches, no Delete footer, the title read-only`, (await page.locator('.pc-bs-colors').count()) === 0 && (await page.locator('.pc-bs-delete').count()) === 0 && (await page.locator('.pc-bs-title-in').getAttribute('readonly')) !== null)
     await shot(page, `p1-phone-sheet-${theme}`, false)
     check(`p1 ${theme}: no page errors`, errors.length === 0, errors.join(' | '))

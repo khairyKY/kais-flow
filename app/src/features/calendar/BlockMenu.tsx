@@ -22,7 +22,8 @@ import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { SwatchTray } from './formFields'
 import { blockSwatch } from './blockHue'
 import { useStartFocus } from '../today/startFocus'
-import { askChat, copyBlockLink } from './blockActions'
+import { askChat, copyBlockLink, joinMeeting, openInGoogle } from './blockActions'
+import { gcalEditable } from './gcal'
 import { eventSpan } from './phoneGridMath'
 
 // ── design-export/Calendar.dc.html §5 "Block detail — a menu, not a form" (desktop): a 238px popover
@@ -34,8 +35,11 @@ import { eventSpan } from './phoneGridMath'
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar',
 }
+
+/** What a read-only Google event's rows can do. */
+const GOOGLE_ROWS: BlockMenuKey[] = ['details', 'copylink', 'join', 'gopen', 'duplicate']
 
 // B (D5): a caption is metadata — sentence case, untracked, even digits.
 const CAPTION: CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', letterSpacing: 'var(--ls-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-faint)' }
@@ -63,6 +67,7 @@ function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; u
       <textarea
         className="kf-bm-title"
         aria-label="Title"
+        dir="auto"
         readOnly={readOnly}
         rows={1}
         autoFocus={untitled}
@@ -143,8 +148,11 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
   const missed = !!task && task.status === 'todo' && Date.parse(event.ends_at) < Date.now()
   const spec = blockMenuSpec(event, { task, projectName: project?.name, missed, mode })
   const menu = mode === 'menu'
-  // A Google event (B1): its rows say when and where from; nothing opens, nothing changes.
+  // A Google event (B1): its rows say when and where from, Join, Open in Google Calendar, Duplicate as my own event. One
+  // that's ours to change (gcal-events: `mine`) also renames, moves, resizes and deletes — in Google.
   const synced = isSynced(event)
+  const mine = gcalEditable(event)
+  const readOnly = synced && !mine
   const span = eventSpan(event)
   const len = span.end - span.start
 
@@ -167,7 +175,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
   // one-off's Delete (p7e A4, Akiflow's Backspace) — each with Undo. A repeat asks This / All on its
   // Delete row instead, so the key leaves it alone.
   useEffect(() => {
-    const act = synced ? null : event.task_id ? unschedule : isRepeatingBlock(event) ? null : del
+    const act = readOnly ? null : event.task_id ? unschedule : isRepeatingBlock(event) ? null : del
     if (!act) return
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Backspace' && e.key !== 'Delete') return
@@ -182,7 +190,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
 
   // Ctrl+D / ⌘D (Menu B, Akiflow's): Duplicate, where the menu offers it — with Undo, as its row.
   useEffect(() => {
-    if (synced || !spec.some((e) => e.key === 'duplicate')) return
+    if (!spec.some((e) => e.key === 'duplicate')) return
     const onKey = (e: KeyboardEvent) => {
       if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey || (e.key.toLowerCase() !== 'd' && e.code !== 'KeyD')) return
       e.preventDefault() // the browser's bookmark
@@ -284,6 +292,8 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
     replan: () => onReplan?.(position.x, position.y),
     duplicate: () => void duplicateBlock(event, task),
     copylink: () => copyBlockLink(event),
+    join: () => joinMeeting(event),
+    gopen: () => openInGoogle(event),
     details: () => onDetails?.(),
     focus: () => { onClose(); startFocus(focusTaskOf(event, tasks), event) },
     unschedule,
@@ -308,9 +318,10 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
         <div style={{ padding: '0 9px 7px', fontSize: 'var(--fs-caption)', lineHeight: 1.45, color: 'var(--ink-muted)' }}><EmojiText text={e.caption.text} /></div>
       </>
     ),
-    // A Google event's menu B still opens its details, the chat and its link (nothing there changes it).
-    onClick: synced && !['details', 'copylink'].includes(e.key) ? undefined : run[e.key],
-    submenu: synced && e.key !== 'ai' ? undefined : submenu(e.key),
+    // A Google event's rows open its details, Google Calendar, its meeting, the chat and its link; ours to change, also its
+    // date, time and Delete; read-only, nothing there changes it.
+    onClick: readOnly && !GOOGLE_ROWS.includes(e.key) ? undefined : run[e.key],
+    submenu: readOnly && e.key !== 'ai' ? undefined : submenu(e.key),
   })
 
   if (customAt) return <RepeatEditor {...repeat} position={customAt} onClose={onClose} onChange={setRepeat} />
@@ -323,7 +334,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
       label={menu ? 'Block menu' : 'Block details'}
       header={
         <>
-          <TitleRow event={event} untitled={untitled} gone={gone} readOnly={synced} />
+          <TitleRow event={event} untitled={untitled} gone={gone} readOnly={readOnly} />
           {/* Menu B (Kai 2026-10-26): the swatches in a quiet tray under the title, with "+ Custom". */}
           {menu && !synced && (
             <div style={{ padding: '0 9px 8px' }}>
@@ -333,7 +344,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
           {/* Kai 2026-10-21: the length in one tap — the block resizes from its start (a task's estimate
               follows, calendar/api resizeEvent), with Undo. Queue 15: the popover's ONE length control.
               Queue 16: or type it — "7–8:30", "50m", "7:10 pm", "in 2h" (Time ▸ keeps the list). */}
-          {!menu && !synced && !event.all_day && (
+          {!menu && !readOnly && !event.all_day && (
             <>
               <TypedTime dense start={span.start} minutes={len} onApply={(r) => retime(event, r.start ?? span.start, r.minutes ?? len)} style={{ padding: '0 9px 6px' }} />
               <LengthChips value={len} onPick={(m) => retime(event, span.start, m)} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, max-content)', gap: 5, padding: '0 9px 8px' }} />

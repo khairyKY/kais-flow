@@ -68,6 +68,18 @@ jobs:
           done
           exit $fail
 
+      # gcal-edit (2026-11-03): editing a Google event through the real google-sync, on a fake Calendar API and a fake
+      # PostgREST — no stack needed, so it runs before one starts.
+      - name: gcal-edit.test.ts (edit, delete, This / Following / All and Undo of a Google event)
+        if: ${{ !cancelled() }}
+        run: deno test --no-lock --allow-env --allow-net=127.0.0.1,localhost --allow-read supabase/tests/gcal-edit.test.ts 2>&1 | tee "$RUNNER_TEMP/suite-gcal-edit.log"
+
+      # ics-subscribe (2026-11-06): the pure half of ics-sync — parser, repeats, zones, VALARM, the real prayer feed, the link
+      # guard — on fixtures; no stack needed either.
+      - name: ics.test.ts (calendar subscriptions - parser, repeats, time zones, VALARM, SSRF guard)
+        if: ${{ !cancelled() }}
+        run: deno test --no-lock --allow-env --allow-read supabase/tests/ics.test.ts 2>&1 | tee "$RUNNER_TEMP/suite-ics-unit.log"
+
       # config.toml carries production's email setup: Gmail SMTP from env secrets + Confirm email on.
       # The runner has neither secret, so a local sign-up would wait on a mail that never goes out.
       # This edits the runner's copy only; the suites' test accounts then sign up and in directly.
@@ -115,6 +127,9 @@ jobs:
       - name: classroom.sh (Google Classroom deadlines — consent, sync plan, hand-in, Trash, disconnect; Google mocked)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/classroom.sh 2>&1 | tee "$RUNNER_TEMP/suite-classroom.log"
+      - name: ics.sh (calendar subscriptions by link — the real prayer feed, repeats and zones, SSRF refusals, privacy, cron; feeds mocked)
+        if: ${{ !cancelled() && steps.start.outcome == 'success' }}
+        run: bash supabase/tests/ics.sh 2>&1 | tee "$RUNNER_TEMP/suite-ics.log"
       - name: fix5-search.sh (search_hybrid ranking + isolation)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/fix5-search.sh 2>&1 | tee "$RUNNER_TEMP/suite-fix5-search.log"
@@ -126,10 +141,10 @@ jobs:
         if: always()
         run: |
           echo "### Suites" >> "$GITHUB_STEP_SUMMARY"
-          for s in fix0-auth sec2 notify-prune mcp-week mcp-full widget classroom fix5-search retainer-reload; do
+          for s in gcal-edit ics-unit fix0-auth sec2 notify-prune mcp-week mcp-full widget classroom ics fix5-search retainer-reload; do
             log="$RUNNER_TEMP/suite-$s.log"
             if [ ! -f "$log" ]; then echo "- $s: did not run"; continue; fi
-            result=$(grep -oE '^[0-9]+ passed.*|retainer-reload: all checks passed' "$log" | tail -1 || true)
+            result=$(grep -oE '^[0-9]+ passed.*|^(ok|FAILED) [|] [0-9]+ passed.*|retainer-reload: all checks passed' "$log" | tail -1 || true)
             echo "- $s: ${result:-no result line — see the step log}"
             grep -E '^  FAIL ' "$log" | head -30 | sed 's/^  FAIL /    - FAIL /' || true
           done >> "$GITHUB_STEP_SUMMARY"
