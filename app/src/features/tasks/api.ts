@@ -38,9 +38,11 @@ const MAX_TOP3 = 3
 export function useTasks() {
   return useQuery({
     queryKey: ['tasks'],
-    queryFn: async () => {
-      return fetchAll<Task>((from, to) =>
-        supabase.from('tasks').select(TASK_COLUMNS).order('due_at', { nullsFirst: false }).order('id').range(from, to),
+    queryFn: async ({ signal }) => {
+      return fetchAll<Task>(
+        (from, to) => supabase.from('tasks').select(TASK_COLUMNS).order('due_at', { nullsFirst: false }).order('id').range(from, to).abortSignal(signal),
+        undefined,
+        signal,
       )
     },
     select: (tasks) => tasks.filter((t) => !t.deleted_at),

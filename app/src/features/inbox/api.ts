@@ -20,9 +20,11 @@ import { INBOX_COLUMNS } from '../../lib/columns'
 import { fetchAll } from '../../lib/fetchAll'
 import type { CalendarEvent, InboxItem, Person, Task } from '../../lib/types'
 
-async function fetchInboxItems(): Promise<InboxItem[]> {
-  return fetchAll<InboxItem>((from, to) =>
-    supabase.from('inbox_items').select(INBOX_COLUMNS).order('created_at', { ascending: false }).order('id').range(from, to),
+async function fetchInboxItems({ signal }: { signal: AbortSignal }): Promise<InboxItem[]> {
+  return fetchAll<InboxItem>(
+    (from, to) => supabase.from('inbox_items').select(INBOX_COLUMNS).order('created_at', { ascending: false }).order('id').range(from, to).abortSignal(signal),
+    undefined,
+    signal,
   )
 }
 
