@@ -199,7 +199,7 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
       // started before `to`, and tools.ts expands it.
       // source = 'native': Google-synced events (0074) are never sent to an AI (privacy promise, site info §3).
       const rows = await tx`
-        select id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, remind_min from calendar_events
+        select id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, remind_min, color from calendar_events
         where deleted_at is null and source = 'native' and starts_at < ${to}::timestamptz and (ends_at > ${from}::timestamptz or recurrence_rule is not null)
         order by starts_at, id
         limit 300`
