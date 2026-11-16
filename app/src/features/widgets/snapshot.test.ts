@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildSnapshot, mask, type SnapshotInput } from './snapshot'
+import { buildFocus, buildSnapshot, mask, type FocusInput, type SnapshotInput } from './snapshot'
 import { applyOps, parseQueue, type OpWrites } from './queue'
 import type { CalendarEvent, Routine, RoutineCompletion, Task } from '../../lib/types'
 
@@ -103,7 +103,8 @@ describe('buildSnapshot', () => {
   it('reads the focus timer: a running round ends secondsLeft from the real clock', () => {
     const clock = NOW.getTime() + 30_000
     const f = buildSnapshot(input({ clock, focus: { mode: 'pomodoro', isRunning: true, secondsLeft: 600, roundMin: 25, taskId: 'g1' } })).focus
-    expect(f).toEqual({ state: 'running', endsAt: clock + 600_000, left: 600, roundMin: 25, taskId: 'g1', title: 'Crypto — heavy session' })
+    expect(f).toMatchObject({ state: 'running', mode: 'focus', endsAt: clock + 600_000, breakEndsAt: 0, left: 600, roundMin: 25, taskId: 'g1', title: 'Crypto — heavy session', color: 'iris' })
+    expect(f.segments).toEqual([{ kind: 'focus', min: 25, state: 'now' }]) // no block: the one round
     expect(buildSnapshot(input({ focus: { mode: 'pomodoro', isRunning: false, secondsLeft: 600, roundMin: 25, taskId: null } })).focus.state).toBe('paused')
     expect(s.focus.state).toBe('idle')
   })
@@ -114,6 +115,62 @@ describe('buildSnapshot', () => {
 
   it('says offline when the app is', () => {
     expect(buildSnapshot(input({ online: false })).offline).toBe(true)
+  })
+})
+
+// Focus D3 on the home screen: the same segments the page draws, as kept / now / todo.
+describe('the focus widget', () => {
+  const plan = { focusRoundMin: 25, shortBreakMin: 5, longBreakMin: 20, roundsBeforeLongBreak: 4 }
+  const block = { title: 'CNN notes', start: '2026-01-01T00:00:00.000Z', end: '2026-01-01T02:10:00.000Z', srcStart: '', srcEnd: '', color: 'var(--blk-rose)', ink: '', rounds: 4, fill: true, fromCalendar: true, eventId: null }
+  const clock = 1_000_000
+  const run = (over: Partial<FocusInput>) => buildFocus({ mode: 'pomodoro', isRunning: true, secondsLeft: 600, roundMin: 25, taskId: 't', block, kept: 0, plan, pomodoroStartIso: 'x', ...over }, 'CNN notes', clock)
+  const states = (f: ReturnType<typeof run>) => f.segments.map((g) => (g.state === 'kept' ? 'K' : g.state === 'now' ? 'N' : 't')).join('')
+
+  it('a running round: the bar is the rounds, the leftover block is not drawn', () => {
+    const f = run({ kept: 1 })
+    expect(f).toMatchObject({ mode: 'focus', state: 'running', round: 2, rounds: 4, endsAt: clock + 600_000, color: 'rose' })
+    expect(f.segments.map((g) => g.kind[0] + g.min).join(' ')).toBe('f25 b5 f25 b5 f25 b5 f25')
+    expect(states(f)).toBe('KKNtttt')
+  })
+
+  it('a break: the break segment is under way, the next round is still to come', () => {
+    const f = run({ mode: 'break', kept: 2, secondsLeft: 200, pomodoroStartIso: null, breakType: 'short' })
+    expect(f).toMatchObject({ mode: 'break', state: 'running', endsAt: 0, breakEndsAt: clock + 200_000, round: 2, left: 200 })
+    expect(states(f)).toBe('KKKNttt')
+  })
+
+  it('a break waiting to start holds at its full length', () => {
+    const f = run({ mode: 'break', isRunning: false, kept: 1, secondsLeft: 300, pomodoroStartIso: null })
+    expect(f).toMatchObject({ mode: 'break', state: 'paused', breakEndsAt: 0, left: 300 })
+    expect(states(f)).toBe('KNttttt')
+  })
+
+  it('a held round is paused with the seconds left; idle has no bar', () => {
+    expect(run({ isRunning: false })).toMatchObject({ mode: 'focus', state: 'paused', endsAt: 0, left: 600 })
+    const idle = run({ isRunning: false, secondsLeft: 25 * 60, pomodoroStartIso: null })
+    expect(idle).toMatchObject({ mode: 'idle', state: 'idle', segments: [] })
+  })
+
+  it('a long plan shows 16 segments around the one under way', () => {
+    const long = { ...block, rounds: 12, end: '2026-01-01T07:00:00.000Z' }
+    const early = run({ block: long })
+    expect(early.segments).toHaveLength(16)
+    expect(early.segments[0].state).toBe('now')
+    const late = run({ block: long, kept: 9 })
+    expect(late.segments).toHaveLength(16)
+    expect(late.segments.filter((g) => g.state === 'now')).toHaveLength(1)
+    expect(late.segments.at(-1)?.state).toBe('todo')
+  })
+
+  it('a custom colour is its nearest swatch; none is Iris', () => {
+    expect(run({ block: { ...block, color: '#E58F99' } }).color).toBe('rose')
+    expect(run({ block: null }).color).toBe('iris')
+  })
+
+  it('hide titles clears the name and nothing else carries one', () => {
+    const m = mask(buildSnapshot(input({ focus: { mode: 'pomodoro', isRunning: true, secondsLeft: 600, roundMin: 25, taskId: 'g1', block, kept: 0, plan } }))).focus
+    expect(m.title).toBe('Your focus')
+    expect(JSON.stringify(m.segments)).not.toMatch(/[A-Za-z]{6,}/)
   })
 })
 

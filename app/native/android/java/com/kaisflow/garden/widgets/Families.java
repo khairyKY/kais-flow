@@ -23,7 +23,7 @@ final class Families {
             case "agenda": return agenda(c, rows, s, now);
             case "week": return week(c, s, now);
             case "countdown": return countdown(c, s, now);
-            case "focus": return focus(c, rows, s, now);
+            case "focus": return focus(c, rows, w, s, now);
             case "routines": return routines(c, cols, h, s, now);
             case "streak": return streak(c, cols, rows, s);
             case "inbox": return inbox(c, cols, rows, s);
@@ -188,41 +188,40 @@ final class Families {
         return v;
     }
 
-    // ── Focus: the timer lives in the app; the widget shows it and can stop or finish it ──
+    // ── Focus (Focus D3): the timer lives in the app; the widget shows it and can stop or finish it ──
 
-    /** The focus task's block colour (its block today), else a task's Iris. */
-    private static String focusSwatch(Snap s, long now, String taskId) {
-        if (!taskId.isEmpty()) for (JSONObject b : Render.blocks(s, now)) if (taskId.equals(b.optString("taskId"))) return Render.swatch(b);
-        return "iris";
-    }
-
-    private static RemoteViews focus(Context c, int rows, Snap s, long now) {
+    private static RemoteViews focus(Context c, int rows, int w, Snap s, long now) {
         JSONObject f = s.obj("focus");
         String state = f == null ? "idle" : f.optString("state", "idle");
-        long ends = f == null ? 0 : f.optLong("endsAt");
+        boolean brk = f != null && "break".equals(f.optString("mode"));
+        long ends = f == null ? 0 : f.optLong(brk ? "breakEndsAt" : "endsAt");
         long leftMs = f == null ? 0 : state.equals("paused") ? f.optLong("left") * 1000 : ends - now;
         boolean on = (state.equals("running") && ends > now) || (state.equals("paused") && leftMs > 0);
         int roundMin = f == null ? 25 : Math.max(1, f.optInt("roundMin", 25));
         String title = f == null ? "" : f.optString("title");
         String task = f == null ? "" : f.optString("taskId");
-        int ring = on ? (int) Math.max(0, Math.min(1000, 1000 - leftMs * 1000 / (roundMin * 60_000L))) : 0;
-        int tone = Render.blkAccent(c, focusSwatch(s, now, task));
+        int round = f == null ? 0 : f.optInt("round");
+        int rounds = f == null ? 1 : f.optInt("rounds", 1);
+        String sw = f == null ? "iris" : Render.swatch(f); // the block's colour (a snapshot from before D3 has none: Iris)
         if (on && state.equals("running")) {
-            s.at(ends, now); // the round runs out: redraw idle
-            s.at(now + 60_000, now); // the ring and the minutes, once a minute while it runs
+            s.at(ends, now); // the round (or break) runs out: redraw idle
+            s.at(now + 60_000, now); // the bar and the minutes, once a minute while it runs
         }
+        String of = rounds > 1 && round > 0 ? (brk ? "After round " : "Round ") + round + " of " + rounds : "";
+        // A break names what is next (the block goes on with the same task).
+        String line = brk ? (title.isEmpty() ? "Take a breather" : "Next: " + title) : title.isEmpty() ? "A round of focus" : title;
         if (rows <= 1) {
             RemoteViews v = Render.views(c, R.layout.kfw_focus_slim);
-            v.setProgressBar(R.id.ring, 1000, ring, false);
-            Render.barTint(v, R.id.ring, tone);
             v.setTextViewText(R.id.mins, (on ? Math.max(1, (leftMs + 59_999) / 60_000) : roundMin) + "m");
             if (on) {
-                v.setTextViewText(R.id.cap, state.equals("paused") ? "Paused" : "Focusing");
-                v.setTextViewText(R.id.title, title.isEmpty() ? "A round of focus" : title);
+                v.setTextViewText(R.id.cap, (brk ? "Break" : state.equals("paused") ? "Paused" : "Focusing") + (rounds > 1 && round > 0 ? " · " + round + " of " + rounds : ""));
+                v.setTextViewText(R.id.title, line);
+                FocusBar.draw(c, v, FocusBar.parse(f.optJSONArray("segments"), brk, brk ? 5 : roundMin), sw, leftMs, w - 24, 10);
                 v.setOnClickPendingIntent(R.id.root, open(c, "/focus"));
             } else {
                 v.setTextViewText(R.id.cap, "Focus");
                 v.setTextViewText(R.id.title, "Start on your goal");
+                v.setViewVisibility(R.id.fbar, View.GONE);
                 v.setOnClickPendingIntent(R.id.root, open(c, "/focus?kfAction=focus-start"));
             }
             return v;
@@ -237,14 +236,17 @@ final class Families {
             return v;
         }
         RemoteViews v = Render.views(c, R.layout.kfw_focus_run);
-        Render.head(v, R.drawable.kfw_ic_focus, "Focus", state.equals("paused") ? "paused" : "");
-        v.setProgressBar(R.id.ring, 1000, ring, false);
-        Render.barTint(v, R.id.ring, tone);
+        Render.head(v, R.drawable.kfw_ic_focus, brk ? "Break" : "Focus", state.equals("paused") ? "paused" : "");
         v.setChronometer(R.id.left, SystemClock.elapsedRealtime() + leftMs, "%s", state.equals("running"));
         v.setChronometerCountDown(R.id.left, true);
-        v.setTextViewText(R.id.title, title.isEmpty() ? "A round of focus" : title);
+        if (brk) Render.textColor(c, v, R.id.left, R.color.kfw_sage_text);
+        v.setTextViewText(R.id.title, line);
+        v.setTextViewText(R.id.round, of);
+        v.setViewVisibility(R.id.round, of.isEmpty() ? View.GONE : View.VISIBLE);
+        FocusBar.draw(c, v, FocusBar.parse(f.optJSONArray("segments"), brk, brk ? 5 : roundMin), sw, leftMs, w - 26, 14); // less the body's padding
         v.setOnClickPendingIntent(R.id.stop, KfWidget.tick(c, "focus-stop", "round"));
-        if (task.isEmpty()) v.setOnClickPendingIntent(R.id.done, KfWidget.tick(c, "focus-stop", "round"));
+        if (brk) v.setViewVisibility(R.id.done, View.GONE);
+        else if (task.isEmpty()) v.setOnClickPendingIntent(R.id.done, KfWidget.tick(c, "focus-stop", "round"));
         else v.setOnClickPendingIntent(R.id.done, KfWidget.tick(c, "focus-done", task));
         v.setOnClickPendingIntent(R.id.root, open(c, "/focus"));
         return v;
