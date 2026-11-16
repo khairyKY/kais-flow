@@ -45,7 +45,8 @@ describe('informational updates (legal.ts LEGAL_NOTES, 0093)', () => {
 
   it('show once per account: an older account sees it until its dismissal row exists', () => {
     expect(unseenNotes([], before)).toEqual(LEGAL_NOTES)
-    expect(unseenNotes([{ document: noticeDoc(note), version: note.id }], before)).toEqual([])
+    expect(unseenNotes(LEGAL_NOTES.map((n) => ({ document: noticeDoc(n), version: n.id })), before)).toEqual([])
+    expect(unseenNotes([{ document: noticeDoc(note), version: note.id }], before)).toEqual(LEGAL_NOTES.slice(1))
   })
 
   it('a dismissal is per note and per document', () => {
@@ -54,7 +55,7 @@ describe('informational updates (legal.ts LEGAL_NOTES, 0093)', () => {
   })
 
   it('an account made on or after the change never sees it', () => {
-    expect(unseenNotes([], `${note.id}T08:00:00Z`)).toEqual([])
+    expect(unseenNotes([], `${LEGAL_NOTES[LEGAL_NOTES.length - 1].id}T08:00:00Z`)).toEqual([])
     expect(unseenNotes([], '2999-01-01T00:00:00Z')).toEqual([])
   })
 })
