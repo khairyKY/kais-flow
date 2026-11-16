@@ -22,8 +22,12 @@ import { planScope, type Scope, type SeriesChange } from './scope'
 import { noteLocalWrite } from './blockMotion'
 import { gcalApply, gcalDelete, gcalEditable, gcalRepeats, gcalRestore, gcalUndo, gcalWrite, type GcalChange } from './gcal'
 
-const fetchEvents = () =>
-  fetchAll<CalendarEvent>((from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to))
+const fetchEvents = ({ signal }: { signal: AbortSignal }) =>
+  fetchAll<CalendarEvent>(
+    (from, to) => supabase.from('calendar_events').select('*').order('starts_at').order('id').range(from, to).abortSignal(signal),
+    undefined,
+    signal,
+  )
 const live = (events: CalendarEvent[]) => events.filter((e) => !e.deleted_at)
 
 /** The stored rows — a repeating event is ONE row here. For look-ups by a stored id (Activity, a

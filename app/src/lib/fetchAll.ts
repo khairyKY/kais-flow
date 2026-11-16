@@ -7,10 +7,13 @@ export async function fetchAll<T>(
   page: (from: number, to: number) => PromiseLike<{ data: T[] | null; error: unknown }>,
   /** Called with the running total after each page (an export's "tasks 1,200"). */
   onPage?: (rows: number) => void,
+  signal?: AbortSignal,
 ): Promise<T[]> {
   const rows: T[] = []
   for (let from = 0; ; from += PAGE_SIZE) {
+    if (signal?.aborted) throw signal.reason
     const { data, error } = await page(from, from + PAGE_SIZE - 1)
+    if (signal?.aborted) throw signal.reason
     if (error) throw error
     rows.push(...(data ?? []))
     onPage?.(rows.length)
