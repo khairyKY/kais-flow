@@ -1,0 +1,437 @@
+[
+ {
+  "name": "1 phone: no \"Also open\" text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 phone: no Also open section / fold",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 phone: an undated task (Buy milk) is not drawn on Today",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 phone: Today's tasks still list what is due today",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 phone: Overdue is still there",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 phone: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 desktop: no \"Also open\" text",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 desktop: no Also open section / fold",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 desktop: an undated task (Buy milk) is not drawn on Today",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 desktop: Today's tasks still list what is due today",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 desktop: Overdue is still there",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "1 desktop: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: the Plan menu lists \"Pick date & time…\" first",
+  "ok": true,
+  "detail": "[\"Pick date & time…\",\"Today\",\"Next free slot\",\"Tomorrow, first thing\",\"This weekend\",\"Next week\",\"Someday\"]"
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → Today: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000004"
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → Today: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → Today: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: a second action (Priority) and it is still open",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000004"
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → Today: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → Someday: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000004"
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → Someday: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → Someday: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → Someday: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → No date: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000004"
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → No date: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → No date: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Buy milk · Plan → No date: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Dentist forms · Plan → Someday: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000007"
+ },
+ {
+  "name": "2 phone: Dentist forms · Plan → Someday: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 phone: Dentist forms · Plan → Someday: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Dentist forms · Plan → Someday: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Dentist forms · Plan → No date: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000007"
+ },
+ {
+  "name": "2 phone: Dentist forms · Plan → No date: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 phone: Dentist forms · Plan → No date: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Dentist forms · Plan → No date: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Reply to Omar · Plan → Tomorrow: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000002"
+ },
+ {
+  "name": "2 phone: Reply to Omar · Plan → Tomorrow: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 phone: Reply to Omar · Plan → Tomorrow: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 phone: Reply to Omar · Plan → Tomorrow: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: the Plan menu lists \"Pick date & time…\" first",
+  "ok": true,
+  "detail": "[\"Pick date & time…\",\"Today\",\"Next free slot\",\"Tomorrow, first thing\",\"This weekend\",\"Next week\",\"Someday\"]"
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → Today: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000004"
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → Today: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → Today: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: a second action (Priority) and it is still open",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000004"
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → Today: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → Someday: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000004"
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → Someday: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → Someday: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → Someday: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → No date: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000004"
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → No date: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → No date: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Buy milk · Plan → No date: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Dentist forms · Plan → Someday: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000007"
+ },
+ {
+  "name": "2 desktop: Dentist forms · Plan → Someday: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 desktop: Dentist forms · Plan → Someday: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Dentist forms · Plan → Someday: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Dentist forms · Plan → No date: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000007"
+ },
+ {
+  "name": "2 desktop: Dentist forms · Plan → No date: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 desktop: Dentist forms · Plan → No date: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Dentist forms · Plan → No date: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Reply to Omar · Plan → Tomorrow: the editor is still open (task param kept)",
+  "ok": true,
+  "detail": "http://localhost:5257/tasks?task=10000000-0000-4000-8000-000000000002"
+ },
+ {
+  "name": "2 desktop: Reply to Omar · Plan → Tomorrow: …on the same page, not sent home",
+  "ok": true,
+  "detail": "/tasks → /tasks"
+ },
+ {
+  "name": "2 desktop: Reply to Omar · Plan → Tomorrow: …and on screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "2 desktop: Reply to Omar · Plan → Tomorrow: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "3 phone: there is no \"Scheduled on calendar\" group",
+  "ok": true,
+  "detail": "[\"Overdue\",\"Today\",\"Tomorrow\",\"This week\",\"No date\"]"
+ },
+ {
+  "name": "3 phone: \"Prepare the slides\" (blocked on today's calendar) is under Today",
+  "ok": true,
+  "detail": "Today"
+ },
+ {
+  "name": "3 phone: …beside the tasks due today (Book the vet, Reply to Omar)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "3 phone: tomorrow's block (Dentist forms) is still under Tomorrow",
+  "ok": true,
+  "detail": "Tomorrow"
+ },
+ {
+  "name": "3 phone: Today's header counts all four (4 · 2h)",
+  "ok": true,
+  "detail": "4 · 2h"
+ },
+ {
+  "name": "3 phone: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "3 desktop: there is no \"Scheduled on calendar\" group",
+  "ok": true,
+  "detail": "[\"Overdue\",\"Today\",\"Tomorrow\",\"This week\",\"No date\"]"
+ },
+ {
+  "name": "3 desktop: \"Prepare the slides\" (blocked on today's calendar) is under Today",
+  "ok": true,
+  "detail": "Today"
+ },
+ {
+  "name": "3 desktop: …beside the tasks due today (Book the vet, Reply to Omar)",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "3 desktop: tomorrow's block (Dentist forms) is still under Tomorrow",
+  "ok": true,
+  "detail": "Tomorrow"
+ },
+ {
+  "name": "3 desktop: Today's header counts all four (4 · 2h)",
+  "ok": true,
+  "detail": "4 · 2h"
+ },
+ {
+  "name": "3 desktop: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "4 phone: the Now card is up",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "4 phone: scrolled to the end, the whole day (to 24:00) ends above the card",
+  "ok": true,
+  "detail": "day ends 718, card starts 730"
+ },
+ {
+  "name": "4 phone: …so the late block (22:30–23:45) is not under the card",
+  "ok": true,
+  "detail": "block title 628–646, card 730–768"
+ },
+ {
+  "name": "4 phone: …its time line is readable",
+  "ok": true,
+  "detail": "time line 646–665"
+ },
+ {
+  "name": "4 phone: the card toggled (taller or shorter), the day still ends above it",
+  "ok": true,
+  "detail": "day ends 657, card starts 669"
+ },
+ {
+  "name": "4 phone: no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "4 desktop: the Now card is up",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "4 desktop: scrolled to the end, the whole day (to 24:00) ends above the card",
+  "ok": true,
+  "detail": "day ends 651, card starts 661"
+ },
+ {
+  "name": "4 desktop: …so the late block (22:30–23:45) is not under the card",
+  "ok": true,
+  "detail": "block title 524–543, card 661–780"
+ },
+ {
+  "name": "4 desktop: …its time line is readable",
+  "ok": true,
+  "detail": "time line 545–558"
+ },
+ {
+  "name": "4 desktop: no page errors",
+  "ok": true,
+  "detail": ""
+ }
+]

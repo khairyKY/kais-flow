@@ -59,7 +59,7 @@ import { QuickCreate, type QuickCreateKind } from './QuickCreate'
 import { VIEW_OPTIONS_KEY, ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { onPrefApplied } from '../../lib/prefs'
 import { fitDays, fitHours, gridMinWidth, MIN_COL_W, RAIL_SPLIT_W, RAIL_TAB_W, railYields, RESPONSIVE_COL_W, TIME_AXIS_W, visibleDayCount, ZONE2_W } from './weekFit'
-import { NowCard } from './NowCard'
+import { NowCard, useNowReserve } from './NowCard'
 import { useDayRollover } from './useDayRollover'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { goalIdOf } from '../today/top3Order'
@@ -1018,6 +1018,10 @@ function DesktopCalendar() {
   }
   const nowCardOn = viewOpts.nowCard && !planning
   const nowCard = nowCardOn && <NowCard events={events} tasks={tasks} onOpen={openFromNow} variant={railFolded ? 'float' : 'dock'} />
+  // Folded rail: the card floats over the grid's foot, so the grid scrolls past it (.has-now-float below).
+  const floatRef = useRef<HTMLDivElement>(null)
+  const nowFloats = railFolded && !!nowCard
+  useNowReserve(floatRef, nowFloats)
   // The rail footer (p7e A15): busy blocks today, and the free time left inside 08:00–20:00 from now —
   // Free events, past time and off-hours aren't free time (the planning strip's own footer rule).
   function startRailDrag(e: React.PointerEvent<HTMLDivElement>) {
@@ -1266,6 +1270,7 @@ function DesktopCalendar() {
         .cal-now-dock { pointer-events: none; } .cal-now-dock > * { pointer-events: auto; } /* drag-fix: its fade lets a press through to the card it covers */
         .cal-now-float .kf-now-quiet { display: inline-flex; max-width: 100%; box-sizing: border-box; padding: 0 10px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-block); box-shadow: var(--shadow-panel); }
         .cal-now-float { position: absolute; left: 16px; bottom: 16px; z-index: 8; width: min(280px, calc(100% - 32px)); }
+        .cal-main.has-now-float .fc-scroller-liquid-absolute { padding-bottom: calc(var(--kf-now-h, 0px) + var(--sp-4)); } /* v164-kai-issues: the last hours scroll up clear of the card */
         /* Kai 2026-10-14: the per-day tray under the grid (Akiflow). */
         .cal-tray { position: relative; flex: none; border-top: 1px solid var(--line-card); background: var(--paper-parchment); overflow: hidden; }
         .cal-tray-fold { position: absolute; left: 0; top: 0; bottom: 0; display: flex; align-items: flex-start; justify-content: center; padding: 8px 0 0; border: none; background: none; color: var(--ink-faint); cursor: pointer; }
@@ -1428,7 +1433,7 @@ function DesktopCalendar() {
           </div>
         )}
 
-        <div ref={mainRef} className={planning ? 'cal-main cal-strip' : 'cal-main'}>
+        <div ref={mainRef} className={['cal-main', planning && 'cal-strip', nowFloats && 'has-now-float'].filter(Boolean).join(' ')}>
           {planning ? stripHead : (
           <div className="cal-head" style={{ display: 'flex', flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 0, minHeight: 52, padding: '6px 14px 6px 16px', borderBottom: '1px solid var(--line-card)', flex: 'none' }}>
             {/* Kai 2026-10-14: the date and its daisy sit at the far top right, out of the grid's height. */}
@@ -1526,7 +1531,7 @@ function DesktopCalendar() {
             )}
             </div>
           </div>
-          {railFolded && nowCard && <div className="cal-now-float">{nowCard}</div>}
+          {railFolded && nowCard && <div className="cal-now-float" ref={floatRef}>{nowCard}</div>}
         </div>
       </div>
 

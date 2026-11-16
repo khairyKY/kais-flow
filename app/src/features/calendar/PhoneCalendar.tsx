@@ -27,7 +27,7 @@ import { findBlock } from './series'
 import { heldDrop, slotFill, slotOver, slotTasks } from './slots'
 import { cairoToIso, timeRange } from './eventTime'
 import { blockLastDay, railBuckets, railMinutes, scheduledToday } from './replan'
-import { NowCard } from './NowCard'
+import { NowCard, useNowReserve } from './NowCard'
 import { fileToCalendar, inboxMinutes, inboxTitle, usePendingInboxItems } from '../inbox/api'
 import { Segmented } from '../rituals/RitualChrome'
 import { addMonths, allDayOn, dayBlocks, eventSpan, glidePanes, monthTitle, rangeText, spanIso, tapStart, viewStep, viewTitle, visibleDays, weekdayRange, weekPage, type DragMode, type PhoneView, type Span } from './phoneGridMath'
@@ -340,8 +340,12 @@ export function PhoneCalendar() {
   const filing = sheet?.k === 'file' ? inbox.find((i) => i.id === sheet.id) : undefined
   const emptyDay = view === 'day' && !eventsPending && dayBlocks(gridEvents, anchor).length === 0 && allDayOn(gridEvents, days).length === 0
 
+  const nowOn = readViewOptions().nowCard && view !== 'month'
+  const nowRef = useRef<HTMLDivElement>(null)
+  useNowReserve(nowRef, nowOn)
+
   return (
-    <div className="pc cal-shell">
+    <div className={`pc cal-shell${nowOn ? ' has-now' : ''}`}>
       <header className="pc-head">
         <h1 className="pc-h1">
           <button type="button" className="pc-title" aria-haspopup="dialog" aria-expanded={sheet?.k === 'view'} onClick={() => setSheet({ k: 'view' })}>
@@ -496,8 +500,8 @@ export function PhoneCalendar() {
       )}
 
       {/* cal-wave item 19: the Now card, a one-line strip over the grid's foot (tap it to open the card). */}
-      {readViewOptions().nowCard && view !== 'month' && (
-        <div className="pc-now">
+      {nowOn && (
+        <div className="pc-now" ref={nowRef}>
           <NowCard
             events={events}
             tasks={tasks}

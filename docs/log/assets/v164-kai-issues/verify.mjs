@@ -79,14 +79,15 @@ const VIEWS = {
 
 async function open(view, route, o = {}) {
   const ctx = await browser.newContext({ ...VIEWS[view], deviceScaleFactor: 1, timezoneId: 'Africa/Cairo', locale: 'en-US' })
-  await ctx.addInitScript(([sess, uid, now, fold]) => {
+  await ctx.addInitScript(([sess, uid, now, fold, tray]) => {
     localStorage.setItem('kf_theme', 'day'); localStorage.setItem('kf-download-bar-dismissed', '1')
     localStorage.setItem('sb-127-auth-token', sess)
     localStorage.setItem('kf.calRailFolded', fold)
     localStorage.setItem('kf.calPlanning', '0')
+    localStorage.setItem('kf.calTrayFolded', tray)
     localStorage.setItem('kf.calViewOptions', JSON.stringify({ hour24: true }))
     localStorage.setItem(`kf-whats-new:${uid}`, JSON.stringify({ seen: '99.0.0', notified: '99.0.0', checkedAt: now }))
-  }, [JSON.stringify(session), UID, cairo('13:10').getTime(), o.fold ?? '0'])
+  }, [JSON.stringify(session), UID, cairo('13:10').getTime(), o.fold ?? '0', o.tray ?? '0'])
   const state = { rows: tables(), writes: [] }
   await ctx.route('http://127.0.0.1:9/**', async (r) => {
     const req = r.request()
@@ -215,6 +216,45 @@ for (const view of ['phone', 'desktop']) {
     const todayHead = lines[lines.indexOf('Today', lines.indexOf('Overdue')) + 1]
     check(`3 ${view}: Today's header counts all four (4 · 2h)`, /^4 · 2h$/.test(todayHead ?? ''), String(todayHead))
     check(`3 ${view}: no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
+
+for (const view of ['phone', 'desktop']) {
+  // ═══ 4 · the Now / Next card never covers the grid's last hours ═══
+  if (want('4')) {
+    // desktop: the rail folded so the card floats over the grid, the day tray folded so it is the grid's foot
+    const { ctx, page, errors } = await open(view, '/calendar', { fold: '1', tray: '1' })
+    if (view === 'desktop') await page.keyboard.press('d') // one wide day: the card is over the day's column
+    await sleep(900)
+    const card = view === 'phone' ? page.locator('.pc-now') : page.locator('.cal-now-float')
+    check(`4 ${view}: the Now card is up`, (await card.count()) === 1 && (await card.isVisible()))
+    const scroller = view === 'phone' ? '.pc-scroll' : '.fc-scroller-liquid-absolute'
+    const content = view === 'phone' ? '.pc-canvas' : '.fc-timegrid-body'
+    await page.evaluate((sel) => document.querySelectorAll(sel).forEach((e) => { e.scrollTop = e.scrollHeight }), scroller)
+    await sleep(500)
+    await shot(page, `4-${view}-scrolled-to-end`)
+    const c = await rect(card)
+    const body = await rect(page.locator(content).first())
+    const lateTitle = page.getByText('Late call with Sam').first()
+    const late = await rect(lateTitle)
+    check(`4 ${view}: scrolled to the end, the whole day (to 24:00) ends above the card`, body.b <= c.t + 1, `day ends ${Math.round(body.b)}, card starts ${Math.round(c.t)}`)
+    check(`4 ${view}: …so the late block (22:30–23:45) is not under the card`, !overlaps(late, c) && late.b <= c.t, `block title ${Math.round(late.t)}–${Math.round(late.b)}, card ${Math.round(c.t)}–${Math.round(c.b)}`)
+    const metaLine = page.getByText(/22:30–23:45/).first()
+    const meta = await rect(metaLine)
+    check(`4 ${view}: …its time line is readable`, !overlaps(meta, c), `time line ${Math.round(meta.t)}–${Math.round(meta.b)}`)
+    // the reserve follows the card: folded to one line (phone) or opened, it still clears
+    if (view === 'phone') {
+      await card.locator('button, [role="button"]').first().tap().catch(() => {})
+      await sleep(600)
+      await page.evaluate((sel) => document.querySelectorAll(sel).forEach((e) => { e.scrollTop = e.scrollHeight }), scroller)
+      await sleep(400)
+      const c2 = await rect(card)
+      const body2 = await rect(page.locator(content).first())
+      await shot(page, `4-${view}-card-toggled`)
+      check(`4 ${view}: the card toggled (taller or shorter), the day still ends above it`, body2.b <= c2.t + 1, `day ends ${Math.round(body2.b)}, card starts ${Math.round(c2.t)}`)
+    }
+    check(`4 ${view}: no page errors`, errors.length === 0, errors.join(' | '))
     await ctx.close()
   }
 }

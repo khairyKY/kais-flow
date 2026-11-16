@@ -323,3 +323,6 @@
 .pc-none { flex: none; padding: var(--sp-2) var(--gutter-phone); font-size: var(--fs-body-s); color: var(--ink-faint); }
 /* cal-wave item 19: the Now card over the foot of the grid, inside the gutters, above the tab bar. */
 .pc-now { position: absolute; left: var(--sp-3); right: var(--sp-3); bottom: var(--sp-3); z-index: 6; }
+/* v164-kai-issues (Kai 2026-11-07: it hid the late evening): the grid scrolls past the card — its height
+   (useNowReserve) and the gap under and over it. */
+.pc.has-now .pc-scroll { padding-bottom: calc(var(--kf-now-h, 0px) + var(--sp-3) * 2); }
