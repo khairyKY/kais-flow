@@ -323,7 +323,7 @@ if (want('c')) {
   // Ours to change: Dentist (a Meet link, a page) — details and menu B.
   await page.mouse.click(...Object.values(await ownPoint(page, eid(N.DENTIST))))
   await details(page).waitFor({ timeout: 3000 }).catch(() => {})
-  check('c5 ours to change: the details rows — date ▸ · time ▸ · From Google · Join meeting · Open in Google Calendar · Delete', JSON.stringify(await labels(details(page))) === JSON.stringify(['Wed, Oct 14', '1:00 – 2:00 PM', 'From Google · Kai', 'Join meeting', 'Open in Google Calendar', 'Delete']), JSON.stringify(await labels(details(page))))
+  check('c5 ours to change: the details rows — starts ▸ · ends ▸ · time ▸ · From Google · Join meeting · Open in Google Calendar · Delete (F7 added Ends)', JSON.stringify(await labels(details(page))) === JSON.stringify(['Wed, Oct 14', 'Wed, Oct 14 · 2:00 PM', '1:00 – 2:00 PM', 'From Google · Kai', 'Join meeting', 'Open in Google Calendar', 'Delete']), JSON.stringify(await labels(details(page))))
   check('c6 …the title is editable, the length chips are there', (await details(page).getByRole('textbox', { name: 'Title' }).getAttribute('readonly')) === null && (await details(page).locator('.kf-len-chip, [data-len]').count()) >= 0)
   await shot(page, 'c-mine-details')
   await page.keyboard.press('Escape')
@@ -601,7 +601,7 @@ if (want('p')) {
     await sleep(900)
     return p2.page.locator('.pc-bs-rows .kf-as-row').allInnerTexts()
   })()
-  check('p1 phone: ours to change — the sheet has date · time · From Google · Join meeting · Open in Google Calendar', JSON.stringify(mine.map((t) => t.split('\n')[0])) === JSON.stringify(['Mon, Oct 12', '1:00 – 2:00 PM', 'From Google · Kai', 'Join meeting', 'Open in Google Calendar']), JSON.stringify(mine))
+  check('p1 phone: ours to change — the sheet has starts · ends · time · From Google · Join meeting · Open in Google Calendar (F7 added Ends)', JSON.stringify(mine.map((t) => t.split('\n')[0])) === JSON.stringify(['Mon, Oct 12', 'Mon, Oct 12 · 2:00 PM', '1:00 – 2:00 PM', 'From Google · Kai', 'Join meeting', 'Open in Google Calendar']), JSON.stringify(mine))
   check('p2 …a Delete footer and an editable title', (await p2.page.locator('.pc-bs-delete').count()) === 1 && (await p2.page.locator('.pc-bs-title-in').getAttribute('readonly')) === null)
   await shot(p2.page, 'p-mine-sheet')
   await p2.page.locator('.pc-bs-delete').click()

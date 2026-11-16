@@ -13,6 +13,7 @@
 // Pure: the page feeds it the calendar, its tasks, the focus store and the clock. Every day rule is
 // the user's zone (cairoDateKey reads lib/appZone; the name is historical).
 import { cairoDateKey } from '../../lib/dateShortcuts'
+import { runsToday } from './upNext'
 import { runningBlock, type Block } from './todayLayout'
 
 /** A block that ran over stops being "now" after this long (it then reads as a missed block on the
@@ -65,7 +66,7 @@ export function nowState<E extends Block, T extends NowTask>(i: NowInput<E, T>):
   const clock = i.clockMs ?? t
   const today = cairoDateKey(i.now)
   // Today's timed blocks, and one that began before today but still runs.
-  const timed = i.events.filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || (ms(e.starts_at) <= t && t < ms(e.ends_at))))
+  const timed = i.events.filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || (ms(e.starts_at) <= t && t < ms(e.ends_at) && runsToday(e, i.now))))
   const taskOf = (e: E) => (e.task_id ? i.taskOf(e.task_id) : undefined)
   const doneIds = new Set(timed.flatMap((e) => { const k = taskOf(e); return k && isDone(k) ? [k.id] : [] }))
 

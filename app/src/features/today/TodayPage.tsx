@@ -63,7 +63,7 @@ import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { Fireflies } from './NightGarden'
 import { SeasonDrift } from '../seasons/SeasonDrift'
 import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
-import { isInProgress, upNextEvents } from './upNext'
+import { isInProgress, runsToday, upNextEvents } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
 import { LabelChips } from '../tasks/TaskRow'
@@ -1572,9 +1572,8 @@ function Ribbon({ events, now, head, taskById, day }: { events: CalendarEvent[];
   const navigate = useNavigate()
   const openTask = useOpenTask()
   const at = day ?? now
-  const today = cairoDateKey(at)
   const t = now.getTime()
-  const blocks = day ? events : events.filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || isInProgress(e.starts_at, e.ends_at, now)))
+  const blocks = day ? events : events.filter((e) => !e.all_day && runsToday(e, now))
   const nowPct = day ? 0 : ribbonPct(t, now)
   const hours = Array.from({ length: (RIBBON_TO_MIN - RIBBON_FROM_MIN) / 120 + 1 }, (_, i) => RIBBON_FROM_MIN / 60 + i * 2)
   return (

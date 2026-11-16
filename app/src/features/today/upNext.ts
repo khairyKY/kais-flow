@@ -32,6 +32,14 @@ export function upNextLabel(startsAt: string, endsAt: string, now: Date): UpNext
   return isInProgress(startsAt, endsAt, now) ? { text: 'Now', tone: 'now' } : { text: upNextClock(startsAt), tone: 'time' }
 }
 
+/** A timed event that belongs to today's Now / Up next / ribbon: it starts today, or it is running and ends today or is
+ * under a day long. F7: a span of a day or more (a conference) running through is the day's all-day line, not the thing to
+ * do right now — it counts again on the day it ends. */
+export function runsToday(e: Pick<UpNextEvent, 'starts_at' | 'ends_at' | 'all_day'>, now: Date): boolean {
+  if (cairoDateKey(new Date(e.starts_at)) === cairoDateKey(now)) return true
+  return isInProgress(e.starts_at, e.ends_at, now) && (!isMultiDaySpan(e, appZone()) || spanDays(e, appZone()).last === cairoDateKey(now))
+}
+
 /** The fields "Up next" reads from a calendar event. */
 export interface UpNextEvent {
   starts_at: string
@@ -47,8 +55,7 @@ export interface UpNextEvent {
  * between it is the day's all-day line (./spanLines), not the thing to do right now. */
 export function upNextEvents<E extends UpNextEvent>(events: readonly E[], now: Date): E[] {
   const t = now.getTime()
-  const today = cairoDateKey(now)
   return events
-    .filter((e) => !e.all_day && new Date(e.ends_at).getTime() > t && (cairoDateKey(new Date(e.starts_at)) === today || (isInProgress(e.starts_at, e.ends_at, now) && (!isMultiDaySpan(e, appZone()) || spanDays(e, appZone()).last === today))))
+    .filter((e) => !e.all_day && new Date(e.ends_at).getTime() > t && runsToday(e, now))
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
 }

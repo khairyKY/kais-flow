@@ -1471,16 +1471,16 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         // F7: a multi-day bar's real ends take a resize grip (the pieces are one day each; FullCalendar can't resize them).
         const sp = info.event.extendedProps as { kfSegOf?: string; kfSegFirst?: boolean; kfSegLast?: boolean }
         if (sp.kfSegOf && (sp.kfSegFirst || sp.kfSegLast) && L().props.onSpanChange) {
-          const block = L().props.events.find((x) => x.id === id)
-          if (block) {
-            const r = rangeOf({ starts_at: block.start, ends_at: block.end, all_day: !!block.allDay }, L().zone)
-            addSpanGrips(info.el, {
-              first: !!sp.kfSegFirst,
-              last: !!sp.kfSegLast,
-              label: (edge, days) => rangeLabel(resizeEdge(r, edge, days, L().zone)),
-              commit: (edge, days) => L().props.onSpanChange?.(id, { edge, days }),
-            })
-          }
+          addSpanGrips(info.el, {
+            first: !!sp.kfSegFirst,
+            last: !!sp.kfSegLast,
+            // read at drag time: the block may have been edited since this piece was drawn
+            label: (edge, days) => {
+              const block = L().props.events.find((x) => x.id === id)
+              return block ? rangeLabel(resizeEdge(rangeOf({ starts_at: block.start, ends_at: block.end, all_day: !!block.allDay }, L().zone), edge, days, L().zone)) : ''
+            },
+            commit: (edge, days) => L().props.onSpanChange?.(id, { edge, days }),
+          })
         }
         // cal-clicks: a right-click opens menu B; from the keyboard (Shift+F10, the menu key — Enter opens the details,
         // FullCalendar's own key handler) it hangs at the block's corner, not at 0,0.
