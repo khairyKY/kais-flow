@@ -96,6 +96,33 @@
       .catch(() => { /* keep the baked-in version */ })
   }
 
+  // ── hero: the product view's tabs (they turn by themselves until you touch them) and the download button for your system ──
+  const hero = document.querySelector('.ha-stage')
+  if (hero) {
+    const order = ['today', 'cal', 'inbox', 'widgets']
+    const tabs = $$('[data-tab]', hero)
+    const setTab = (k) => { hero.dataset.on = k; tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === k))) }
+    setTab(matchMedia('(max-width: 760px)').matches ? 'today' : 'cal')
+    let touched = false
+    tabs.forEach((b) => b.addEventListener('click', () => { touched = true; setTab(b.dataset.tab) }))
+    if (!matchMedia('(prefers-reduced-motion: reduce)').matches) setInterval(() => { if (!touched && !document.hidden) setTab(order[(order.indexOf(hero.dataset.on) + 1) % order.length]) }, 5200)
+  }
+  const dl = document.querySelector('[data-dl]')
+  if (dl) {
+    const u = navigator.userAgent
+    const os = /iPhone|iPad|iPod/.test(u) ? 'ios' : /Android/.test(u) ? 'android' : /Mac/.test(u) ? 'mac' : /Windows/.test(u) ? 'win' : 'web'
+    const NAME = { win: 'Windows', mac: 'Mac', android: 'Android', ios: 'iPhone', web: 'Web' }
+    const MAIN = { win: 'Download for Windows', mac: 'Download for Mac', android: 'Download for Android', ios: 'Add to your iPhone', web: 'Open the app' }
+    const main = dl.querySelector('[data-main]')
+    main.href = dl.dataset[os]; main.querySelector('span').textContent = MAIN[os]
+    const others = dl.querySelector('[data-others]')
+    others.textContent = 'Also for '
+    Object.keys(NAME).filter((k) => k !== os).forEach((k, i) => {
+      if (i) others.append(' · ')
+      const a = document.createElement('a'); a.href = dl.dataset[k]; a.textContent = NAME[k]; others.append(a)
+    })
+  }
+
   // ── guides: filter as you type ──
   const q = document.getElementById('guide-q')
   if (q) {

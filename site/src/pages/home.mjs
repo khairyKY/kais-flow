@@ -1,21 +1,46 @@
-import { img, shot, btn, icon } from '../lib.mjs'
+import { img, shot, icon } from '../lib.mjs'
 import { getIt, papers, promises } from '../parts.mjs'
-import { APP_URL, RELEASES } from '../data.mjs'
+import { APP_URL, RELEASES, EXE_LATEST, DMG_LATEST, APK_LATEST } from '../data.mjs'
 
-// ── the hero: kept as Kai liked it before v2 (wisteria above, the week behind, Today in front), now with real screens ──
-const hero = () => `<section class="wrap hero">
-  ${img('wisteria-p100', 'A hanging spray of pale wisteria', { w: 150, cls: 'hero-wisteria', eager: true })}
-  <div class="hero-copy">
-    <span class="hero-eyebrow">A field journal of days</span>
-    <h1>Your days, planned in one quiet place.</h1>
-    <p class="sub">Tasks, time blocks, habits and your journal on one page of paper. Plan in the morning, tend it through the day, close it at night.</p>
-    <div class="btns">${btn('Open the app', APP_URL, { size: 'lg' })}${btn('Download', '/download/', { kind: 'outline', size: 'lg', ic: 'download' })}</div>
-    <p class="hero-note">Free · Web, Android, Windows and Mac</p>
+// ── the hero: A · "Title page" (Kai 2026-11-16, design-export/Site and mark.html) ──
+// A version pill, a two-line promise, one download button for the visitor's system (site.js swaps it in;
+// without JS it's "Download" → /download/), and a live product view with four tabs. Centred and calm.
+const TABS = [
+  ['today', 'Today', '<path d="M12 21v-8"/><path d="M12 13c0-4 3-6 7-6 0 4-3 6-7 6z"/><path d="M12 15c0-3-2-5-6-5 0 3 2 5 6 5z"/>'],
+  ['cal', 'Calendar', '<rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/>'],
+  ['inbox', 'Inbox', '<path d="M4 13l2.5-7h11L20 13v5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z"/><path d="M4 13h4.5l1 2h5l1-2H20"/>'],
+  ['widgets', 'Widgets', '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>'],
+]
+// both themes in the page; CSS shows the one that matches (the hidden one never loads: display:none + lazy)
+const hshot = (n, w, h, alt, eager = false) => ['day', 'night'].map((t) =>
+  `<img class="${t}" src="/shots/hero-${n}-${t}.webp" alt="${t === 'day' ? alt : ''}"${t === 'night' ? ' aria-hidden="true"' : ''} width="${w}" height="${h}"${eager && t === 'day' ? ' fetchpriority="high"' : ' loading="lazy"'} decoding="async">`).join('')
+const OSES = [['win', 'Windows', EXE_LATEST], ['mac', 'Mac', DMG_LATEST], ['android', 'Android', APK_LATEST], ['ios', 'iPhone', '/download/'], ['web', 'Web', APP_URL]]
+const hero = () => `<section class="ha" aria-labelledby="ha-h">
+  ${img('wisteria-p100', 'A hanging spray of pale wisteria', { w: 150, cls: 'ha-art ha-wis', eager: true })}
+  ${img('daisy-morning', '', { w: 120, cls: 'ha-art ha-dsy', eager: true })}
+  <div class="ha-in">
+    <a class="ha-vp" href="/whats-new/"><b>${RELEASES[0].v}</b><span>${RELEASES[0].title}</span>${icon('arrow', 14)}</a>
+    <h1 id="ha-h" class="ha-pr">Plan the day in three minutes.<span>Tend it quietly, close it at night.</span></h1>
+    <p class="ha-sub">Tasks, time blocks, habits and a journal on one page of paper. Free, on the web, Windows, Mac and Android.</p>
+    <div class="ha-dl" data-dl ${OSES.map(([k, , href]) => `data-${k}="${href}"`).join(' ')}>
+      <a class="btn primary lg" data-main href="/download/">${icon('download', 20)}<span>Download</span></a>
+      <p class="ha-others" data-others>Also for ${OSES.map(([, n, href]) => `<a href="${href}">${n}</a>`).join(' · ')}</p>
+    </div>
   </div>
-  <div class="hero-mock">
-    ${shot('week-desk', 'The week calendar on a computer, with time blocks, a Study slot holding tasks, and events from Google Calendar', { eager: true })}
-    ${shot('today-phone', 'Today on a phone: the goal of the day, the Top 3 and what’s up next', { eager: true, cls: 'hero-phone' })}
-    <span class="hero-hand" aria-hidden="true">← what now, what’s next</span>
+  <div class="ha-stage" data-stage>
+    <div class="ha-view">
+      <figure class="ha-pane" data-pane="today" role="tabpanel" aria-label="Today">
+        ${img('daisy-midday', '', { w: 150, cls: 'ha-bt l' })}${img('hydrangea-medium', '', { w: 150, cls: 'ha-bt r' })}
+        <div class="ha-ph">${hshot('today', 390, 844, 'Today on a phone: the goal of the day, the Top 3 and what is up next')}</div>
+      </figure>
+      <figure class="ha-pane" data-pane="cal" role="tabpanel" aria-label="Calendar"><div class="ha-shotw">${hshot('cal', 1280, 800, 'The calendar on a computer, with colour blocks and a task running over', true)}</div></figure>
+      <figure class="ha-pane" data-pane="inbox" role="tabpanel" aria-label="Inbox"><div class="ha-shotw">${hshot('inbox', 1280, 800, 'The Inbox on a computer: a voice note suggested as a task')}</div></figure>
+      <figure class="ha-pane" data-pane="widgets" role="tabpanel" aria-label="Widgets">
+        ${img('fern-unfurl2', '', { w: 90, cls: 'ha-bt l' })}${img('cherry-half-right', '', { w: 170, cls: 'ha-bt r' })}
+        <div class="ha-wg">${hshot('widgets', 800, 970, 'Five Windows desktop widgets: Today, Now and next, Day bar, Goal and Next')}</div>
+      </figure>
+    </div>
+    <div class="ha-tabs" role="tablist" aria-label="A look inside">${TABS.map(([k, label, p]) => `<button type="button" role="tab" data-tab="${k}"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg><span>${label}</span><i></i></button>`).join('')}</div>
   </div>
 </section>`
 
