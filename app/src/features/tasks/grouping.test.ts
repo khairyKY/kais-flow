@@ -61,9 +61,23 @@ describe('groupTasks', () => {
     expect(groups[0].tasks.map((t) => t.id)).toEqual(['oldest', 'recent'])
   })
 
-  it('a task blocked on today\'s calendar goes to Scheduled, not its due bucket', () => {
+  it('a task blocked on today\'s calendar goes to Today, not its due bucket (Kai 2026-11-07: there is no Scheduled on calendar group)', () => {
     const groups = groupTasks([task({ due_at: at(3), scheduled_start: at(0, 14) })], NOW)
-    expect(groups.map((g) => g.key)).toEqual(['scheduled'])
+    expect(groups.map((g) => [g.key, g.label])).toEqual([['today', 'Today']])
+    // …whatever its due date was: overdue, today, or none at all
+    for (const due of [at(-3), at(0, 9), null]) {
+      expect(groupTasks([task({ due_at: due, scheduled_start: at(0, 14) })], NOW).map((g) => g.key)).toEqual(['today'])
+    }
+  })
+
+  it('Today holds what is due today and what is on the calendar today, in one group, with the group time total', () => {
+    const groups = groupTasks(
+      [task({ id: 'due', due_at: at(0, 20), duration_min: 10 }), task({ id: 'blocked', scheduled_start: at(0, 14), scheduled_end: at(0, 15), duration_min: 60 }), task({ id: 'later', scheduled_start: at(1, 10) })],
+      NOW,
+    )
+    expect(groups.map((g) => g.key)).toEqual(['today', 'tomorrow'])
+    expect(groups[0].tasks.map((t) => t.id).sort()).toEqual(['blocked', 'due'])
+    expect(groups[0].totalMinutes).toBe(70)
   })
 
   it('undated non-someday tasks get their own No date group (punch 27)', () => {

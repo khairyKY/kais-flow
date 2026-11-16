@@ -138,7 +138,7 @@ export function filterByScope(tasks: Task[], scope: RailScope, now: Date = new D
   }
 }
 
-export type GroupKey = 'overdue' | 'today' | 'scheduled' | 'tomorrow' | 'week' | 'later' | 'unplanned' | 'someday' | 'snoozed'
+export type GroupKey = 'overdue' | 'today' | 'tomorrow' | 'week' | 'later' | 'unplanned' | 'someday' | 'snoozed'
 
 export interface TaskGroup {
   key: GroupKey
@@ -151,7 +151,6 @@ export interface TaskGroup {
 const GROUP_ORDER: { key: GroupKey; label: string }[] = [
   { key: 'overdue', label: 'Overdue' },
   { key: 'today', label: 'Today' },
-  { key: 'scheduled', label: 'Scheduled on calendar' },
   { key: 'tomorrow', label: 'Tomorrow' },
   { key: 'week', label: 'This week' },
   { key: 'later', label: 'Later' },
@@ -165,7 +164,8 @@ const GROUP_ORDER: { key: GroupKey; label: string }[] = [
 function bucketOf(task: Task, now: Date): GroupKey {
   if (isSnoozed(task, now)) return 'snoozed'
   if (task.someday) return 'someday'
-  if (isScheduledToday(task, now)) return 'scheduled'
+  // Kai 2026-11-07: what is on the calendar today is Today's (it was its own "Scheduled on calendar" group).
+  if (isScheduledToday(task, now)) return 'today'
   const diff = taskDayDiff(task, now)
   if (diff === null) return 'unplanned'
   if (diff < 0) return 'overdue'

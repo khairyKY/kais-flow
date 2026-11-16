@@ -199,6 +199,25 @@ for (const view of ['phone', 'desktop']) {
   }
 }
 
+
+for (const view of ['phone', 'desktop']) {
+  // ═══ 3 · Tasks: what is on the calendar today is under Today ═══
+  if (want('3')) {
+    const { ctx, page, errors } = await open(view, '/tasks?list=all')
+    const lines = (await page.locator('.app-main-content').innerText()).split('\n').map((l) => l.trim()).filter(Boolean)
+    const HEADERS = ['Overdue', 'Today', 'Scheduled on calendar', 'Tomorrow', 'This week', 'Later', 'No date', 'Someday']
+    const groupOf = (title) => { const at = lines.indexOf(title); return at < 0 ? null : [...lines.slice(0, at)].reverse().find((l) => HEADERS.includes(l)) ?? null }
+    await shot(page, `3-tasks-${view}`)
+    check(`3 ${view}: there is no "Scheduled on calendar" group`, !lines.includes('Scheduled on calendar'), JSON.stringify(lines.filter((l) => HEADERS.includes(l))))
+    check(`3 ${view}: "Prepare the slides" (blocked on today's calendar) is under Today`, groupOf('Prepare the slides') === 'Today', String(groupOf('Prepare the slides')))
+    check(`3 ${view}: …beside the tasks due today (Book the vet, Reply to Omar)`, groupOf('Book the vet') === 'Today' && groupOf('Reply to Omar') === 'Today')
+    check(`3 ${view}: tomorrow's block (Dentist forms) is still under Tomorrow`, groupOf('Dentist forms') === 'Tomorrow', String(groupOf('Dentist forms')))
+    const todayHead = lines[lines.indexOf('Today', lines.indexOf('Overdue')) + 1]
+    check(`3 ${view}: Today's header counts all four (4 · 2h)`, /^4 · 2h$/.test(todayHead ?? ''), String(todayHead))
+    check(`3 ${view}: no page errors`, errors.length === 0, errors.join(' | '))
+    await ctx.close()
+  }
+}
 await browser.close()
 const bad = results.filter((r) => !r.ok)
 fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 1))
