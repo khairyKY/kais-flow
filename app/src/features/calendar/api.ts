@@ -34,7 +34,8 @@ export function useCalendarRows() {
 
 /** One expansion per (stored rows, window, zone), shared by every reader that asks for it: a dozen screens and bridges
  * read the same window, and each used to expand and sort every stored row (a Google calendar adds thousands) on every
- * landing. Keyed by the rows array itself, so a refetch that changed nothing (TanStack keeps the old array) costs none. */
+ * landing. Keep only the most recently used windows per rows array so browsing dates doesn't grow the cache indefinitely. */
+const MAX_EXPANSION_WINDOWS = 16
 const expansions = new WeakMap<CalendarEvent[], Map<string, CalendarEvent[]>>()
 
 /** `ranged`: only what touches [from, to) — a grid never needs the one-offs of other months, and each one it is handed
@@ -44,12 +45,16 @@ export function expanded(events: CalendarEvent[], from: number, to: number, zone
   let byKey = expansions.get(events)
   if (!byKey) expansions.set(events, (byKey = new Map()))
   const key = `${from}|${to}|${zone}|${ranged}`
-  let out = byKey.get(key)
-  if (!out) {
-    out = expandEvents(live(events), new Date(from), new Date(to), zone)
-    if (ranged) out = out.filter((e) => Date.parse(e.starts_at) < to && (Date.parse(e.ends_at) > from || Date.parse(e.starts_at) >= from))
-    byKey.set(key, out)
+  const cached = byKey.get(key)
+  if (cached) {
+    byKey.delete(key)
+    byKey.set(key, cached)
+    return cached
   }
+  let out = expandEvents(live(events), new Date(from), new Date(to), zone)
+  if (ranged) out = out.filter((e) => Date.parse(e.starts_at) < to && (Date.parse(e.ends_at) > from || Date.parse(e.starts_at) >= from))
+  byKey.set(key, out)
+  if (byKey.size > MAX_EXPANSION_WINDOWS) byKey.delete(byKey.keys().next().value!)
   return out
 }
 

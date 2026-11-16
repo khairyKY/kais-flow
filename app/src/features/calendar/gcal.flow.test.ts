@@ -167,6 +167,22 @@ describe('useCalendarEvents’ windowing and sharing', () => {
     expect(api.expanded([...data], from, to, 'Africa/Cairo', true)).not.toBe(a) // new rows, new answer
   })
 
+  it('keeps the most recently used windows while paging through a long event', () => {
+    const data = [g('long', '2026-10-01T07:00:00.000Z', { ends_at: '2027-03-01T07:00:00.000Z' })]
+    const day = 86_400_000
+    const read = (offset: number) => api.expanded(data, from + offset * day, to + offset * day, 'Africa/Cairo', true)
+    const windows = Array.from({ length: 99 }, (_, offset) => read(offset))
+    const hot = windows[83] // oldest of the last 16 until it is read again
+    const evicted = windows[84]
+    expect(read(83)).toBe(hot)
+    read(99)
+    expect(read(83)).toBe(hot)
+    const recomputed = read(84)
+    expect(recomputed).toEqual(data)
+    expect(recomputed).toEqual(evicted)
+    expect(recomputed).not.toBe(evicted)
+  })
+
   it('trashed rows never show, series expand inside the window', () => {
     const series: CalendarEvent = { ...g('daily', '2026-10-05T07:00:00.000Z', { source: 'native', external_ref: null, recurrence_rule: 'FREQ=DAILY', recurrence_exdates: [] }) }
     const data = [series, g('gone', MON, { deleted_at: '2026-10-12T00:00:00.000Z' })]
