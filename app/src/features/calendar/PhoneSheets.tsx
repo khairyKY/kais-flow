@@ -7,7 +7,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { Button, Chip, SectionLabel, Star } from '../../components/kit'
-import { DURATIONS, dayHint, durationLabel, fromMin, toMin } from '../../components/pickerMath'
+import { DURATIONS, addDays, dayHint, durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { LengthChips, SheetTitle, TimePicker } from '../../components/TimePicker'
 import { cairoDateKey, tomorrowHint } from '../../lib/dateShortcuts'
@@ -27,13 +27,14 @@ import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
 import { createEvent, deleteEventWithUndo, linkTaskWithUndo, scheduleTask, setEventRepeat, type BlockRef } from './api'
 import { useStartFocus } from '../today/startFocus'
-import { EVENT_REMIND, aiPrompts, blockMenuSpec, focusTaskOf, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
-import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock } from './scoped'
+import { EVENT_REMIND, aiPrompts, blockMenuSpec, crossesDays, focusTaskOf, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
+import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock, setEventRange } from './scoped'
 import { askChat, copyBlockLink, joinMeeting, openInGoogle } from './blockActions'
 import { gcalEditable, gcalRepeats } from './gcal'
 import { RepeatMenu } from '../tasks/RepeatMenu'
 import { cairoTimeKey, cairoToIso } from './eventTime'
 import { SwatchTray } from './formFields'
+import { pickRange, rangeLabel, rangeOf, storeRange, toggleAllDay, type Range } from './rangeEdit'
 import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
 import { linkRef } from '../../lib/links'
 import { clockText } from '../../lib/clock'
@@ -101,7 +102,7 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 /** The block rows' glyphs — the desktop popover's (./BlockMenu), at the sheet's 24px. */
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'pickdate', allday: 'clock',
 }
 
 /** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
@@ -120,6 +121,11 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   const [start, setStart] = useState(at)
   const [dur, setDur] = useState(30)
   const [timeOpen, setTimeOpen] = useState(false)
+  // F7: an event can end on another date, or be all-day over several: "Ends" (default: the start's day) and All day.
+  const [allDay, setAllDay] = useState(false)
+  const [endOn, setEndOn] = useState<string | null>(null)
+  const [endMin, setEndMin] = useState(0)
+  const [endsOpen, setEndsOpen] = useState(false)
   // undefined / null: what the title says, if it says (a pick wins).
   const [priority, setPriority] = useState<number | null | undefined>(undefined)
   const [placeTo, setPlaceTo] = useState<MoveTarget | null>(null)
@@ -135,6 +141,11 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
   const parsed = useMemo(() => (kind === 'task' ? parseCommand(title, domains, projects, { zone: 'cairo' }) : null), [kind, title, domains, projects])
   const name = ((kind === 'task' ? parsed?.title : null) ?? title).trim()
   const { starts_at, ends_at } = spanIso({ day, start, end: start + dur })
+  const range: Range = allDay
+    ? { all_day: true, startDay: day, startTime: '00:00', endDay: endOn ?? day, endTime: '00:00' }
+    : { all_day: false, startDay: day, startTime: fromMin(start), endDay: endOn ?? addDays(day, Math.floor((start + dur) / 1440)), endTime: endOn ? fromMin(endMin) : fromMin((start + dur) % 1440) }
+  const today = cairoDateKey(new Date())
+  const wide = kind === 'event' && (allDay || endOn != null)
   const pri = priority === undefined ? (parsed?.priority ?? null) : priority
   const repeat = repeatPick === undefined ? (parsed?.recurrence ?? null) : repeatPick // "every week" in the title (P7e A5)
   const parsedProject = parsed?.projectId ? projects.find((p) => p.id === parsed.projectId) : undefined
@@ -179,7 +190,8 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
       offerProject({ kind: 'task', row: task }) // queue item 17: no place picked → its likely project
     } else if (kind === 'block' && holds) scheduleTask(holds, starts_at, ends_at)
     else {
-      const event = createEvent(name || 'Time block', starts_at, ends_at, kind === 'block' ? 'time_block' : 'event')
+      const when = kind === 'event' ? storeRange(range) : { starts_at, ends_at, all_day: false }
+      const event = createEvent(name || (kind === 'block' ? 'Time block' : 'New event'), when.starts_at, when.ends_at, kind === 'block' ? 'time_block' : 'event', null, when.all_day)
       if (repeat) setEventRepeat(event, repeat) // p7e A13: repeat while creating, the block menu's own way
       offerProject({ kind: 'event', row: event })
     }
@@ -226,15 +238,41 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
               }}
             />
             <div className="pc-qc-chips">
-              <Chip tone="date" onClick={() => setTimeOpen(true)}>
-                {dayHint(day, cairoDateKey(new Date()))} · {clockText(fromMin(start))}
+              <Chip tone="date" onClick={() => !allDay && setTimeOpen(true)}>
+                {dayHint(day, today)}{allDay ? '' : ` · ${clockText(fromMin(start))}`}
               </Chip>
-              {DURATIONS.map((m) => (
-                <Chip key={m} tone="duration" icon={false} selected={dur === m} onClick={() => setDur(m)}>
-                  {durationLabel(m)}
-                </Chip>
-              ))}
+              {!allDay &&
+                DURATIONS.map((m) => (
+                  <Chip key={m} tone="duration" icon={false} selected={!endOn && dur === m} onClick={() => { setEndOn(null); setDur(m) }}>
+                    {durationLabel(m)}
+                  </Chip>
+                ))}
             </div>
+            {/* F7: the Ends row — a date, and a time unless the event is all-day; it starts on the start's day. */}
+            {kind === 'event' && (
+              <div className="pc-qc-chips">
+                <Chip tone="date" onClick={() => setEndsOpen(true)}>
+                  Ends · {dayHint(range.endDay, today)}{allDay ? '' : ` · ${clockText(range.endTime)}`}
+                </Chip>
+                <Chip
+                  tone="duration"
+                  icon={false}
+                  selected={allDay}
+                  onClick={() => {
+                    // dates kept; off gives 09:00-10:00 on the first day (rangeEdit.toggleAllDay)
+                    const next = toggleAllDay(range, !allDay, { startTime: fromMin(start), endTime: fromMin((start + dur) % 1440) })
+                    setAllDay(next.all_day)
+                    setEndOn(next.endDay > day ? next.endDay : null)
+                    if (!next.all_day) {
+                      setStart(toMin(next.startTime))
+                      setDur(Math.max(15, toMin(next.endTime) - toMin(next.startTime)))
+                    }
+                  }}
+                >
+                  All day
+                </Chip>
+              </div>
+            )}
             {kind === 'task' && (
               <>
                 {/* The task sheet's own chips (4a), each opening its picker. */}
@@ -291,7 +329,7 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
           </div>
         )}
       </BottomSheet>
-      {!timeOpen && !picker && !holdsAt && (
+      {!timeOpen && !picker && !holdsAt && !endsOpen && !wide && (
         <Held rect={slotRect(day, start, start + dur)} fill="var(--block-lavender)" ink="var(--acc-lavender-text)" edge="var(--acc-lavender-deep)" title={name || placeholder} time={rangeText(start, start + dur)} />
       )}
       {picker && (
@@ -312,6 +350,26 @@ export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: s
             setHoldsAt(null)
           }}
           onClose={() => setHoldsAt(null)}
+        />
+      )}
+      {endsOpen && (
+        <DatePicker
+          mode={allDay ? 'day' : 'iso'}
+          withTime={!allDay}
+          title="Ends"
+          meta={name || undefined}
+          value={allDay ? range.endDay : storeRange(range).ends_at}
+          onPick={(picked, _d, timed) => {
+            const next = pickRange(range, 'end', picked, timed)
+            if (!allDay && next.endDay === day) {
+              setEndOn(null)
+              setDur(Math.max(15, toMin(next.endTime) - start))
+            } else {
+              setEndOn(next.endDay > day ? next.endDay : null)
+              setEndMin(toMin(next.endTime))
+            }
+          }}
+          onClose={() => setEndsOpen(false)}
         />
       )}
       {timeOpen && (
@@ -358,7 +416,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const { data: domains = [] } = useDomains()
   const openTask = useOpenTask()
   const startFocus = useStartFocus()
-  const [picker, setPicker] = useState<null | 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'ai'>(null)
+  const [picker, setPicker] = useState<null | 'date' | 'ends' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'ai'>(null)
   const [linkAt, setLinkAt] = useState<{ x: number; y: number } | null>(null)
   const [untitled] = useState(() => isUntitled(event))
   const [title, setTitle] = useState(untitled ? '' : event.title)
@@ -403,9 +461,11 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const readOnly = synced && !mine
   const repeats = !!event.seriesId || gcalRepeats(event)
   const kind = synced ? (event.source === 'ics' ? 'Subscribed event' : 'Google event') : event.task_id ? 'Task block' : event.type === 'time_block' ? 'Time block' : 'Event'
-  const meta = `${kind} · ${event.all_day ? 'All day' : durationLabel(len)}`
+  const meta = `${kind} · ${event.all_day ? `All day${rangeOf(event).endDay > rangeOf(event).startDay ? ` · ${rangeLabel(rangeOf(event))}` : ''}` : crossesDays(event) ? rangeLabel(rangeOf(event)) : durationLabel(len)}`
   const run: Partial<Record<BlockMenuKey, (el: HTMLElement) => void>> = {
     date: () => setPicker('date'),
+    ends: () => setPicker('ends'),
+    allday: () => setRange(toggleAllDay(rangeOf(event), !event.all_day)),
     time: () => setPicker('time'),
     project: () => setPicker('project'),
     repeat: () => setPicker('repeat'),
@@ -429,6 +489,15 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
       const r = el.getBoundingClientRect()
       setLinkAt({ x: r.left + 16, y: r.top })
     },
+  }
+  // F7: the event's new range (Starts / Ends / All day) — a repeat asks which occurrences (the sheet leaves first), one Undo.
+  const setRange = (next: ReturnType<typeof rangeOf>) => {
+    const write = () => void setEventRange(event, storeRange(next), `${rangeLabel(next)} · ${event.title}`)
+    if (repeats) leave(write)
+    else {
+      write()
+      saved()
+    }
   }
   // cal-clicks: a repeat (or a repeating task's round) asks This / Following / All — the sheet leaves first.
   const remove = () => leave(() => void deleteBlock(event, untitled ? 'Discarded' : 'Deleted'))
@@ -496,7 +565,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                 />
               </div>}
               {/* Kai 2026-10-21: the length in one tap, from the start — as the Time sheet's chips do. */}
-              {!menu && !readOnly && !event.all_day && (
+              {!menu && !readOnly && !event.all_day && !crossesDays(event) && (
                 <LengthChips
                   value={len}
                   style={{ minHeight: 0, padding: '4px 0 8px' }}
@@ -520,7 +589,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
                         <EmojiText text={e.caption.text} />
                       </div>
                     )}
-                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => (!readOnly || ['details', 'ai', 'copylink', 'join', 'gopen', 'duplicate'].includes(e.key)) && run[e.key]?.(el)} />
+                    <Row icon={ROW_ICONS[e.key]} label={e.label} hint={e.key === 'unschedule' || e.key === 'delete' || e.key === 'duplicate' ? undefined : e.key === 'allday' ? (e.on ? 'On' : 'Off') : e.hint} quiet={e.unset} chevron={!!e.sub} onClick={(el) => (!readOnly || ['details', 'ai', 'copylink', 'join', 'gopen', 'duplicate'].includes(e.key)) && run[e.key]?.(el)} />
                   </Fragment>
                 ))}
               </div>
@@ -529,8 +598,21 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
           )
         }}
       </BottomSheet>
-      <Held rect={event.all_day || picker === 'date' || picker === 'time' ? null : slotRect(span.day, span.start, span.end)} fill={look.fill} ink={look.ink} edge="var(--ink-body)" title={event.title} time={rangeText(span.start, span.end)} />
-      {picker === 'date' && (
+      <Held rect={event.all_day || crossesDays(event) || picker === 'date' || picker === 'ends' || picker === 'time' ? null : slotRect(span.day, span.start, span.end)} fill={look.fill} ink={look.ink} edge="var(--ink-body)" title={event.title} time={rangeText(span.start, span.end)} />
+      {(picker === 'ends' || (picker === 'date' && !event.task_id)) && (
+        // F7: Starts / Ends — a date, and Set time unless all-day; the end is never before the start.
+        <DatePicker
+          mode={event.all_day ? 'day' : 'iso'}
+          withTime={!event.all_day}
+          title={picker === 'ends' ? 'Ends' : 'Starts'}
+          meta={event.title}
+          value={event.all_day ? (picker === 'ends' ? rangeOf(event).endDay : event.starts_at.slice(0, 10)) : picker === 'ends' ? event.ends_at : event.starts_at}
+          quick={picker === 'date'}
+          onPick={(picked, _d, timed) => setRange(pickRange(rangeOf(event), picker === 'ends' ? 'end' : 'start', picked, timed))}
+          onClose={() => setPicker(null)}
+        />
+      )}
+      {picker === 'date' && !!event.task_id && (
         <DatePicker
           mode="day"
           title="Date"

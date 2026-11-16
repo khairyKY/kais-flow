@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, beforeAll } from 'vitest'
 import { setHour24 } from '../../lib/clock'
 import { setAppZone } from '../../lib/appZone'
 import type { CalendarEvent } from '../../lib/types'
-import { aiPrompts, besideBlock, blockMenuSpec, isSynced, isUntitled, remindLabel, repeatCheckName, repeatLabel } from './blockMenuSpec'
+import { aiPrompts, besideBlock, blockMenuSpec, crossesDays, isSynced, isUntitled, remindLabel, repeatCheckName, repeatLabel } from './blockMenuSpec'
 
 // These read times on the 24-hour clock (lib/clock, Kai 2026-10-22); the 12-hour one is lib/clock.test's.
 beforeAll(() => setHour24(true))
@@ -37,7 +37,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('5c a plain block: Repeat, Link a task…, More (kind + busy, the deviation), Delete', () => {
     const spec = blockMenuSpec(block(), { now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'link', 'more', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'allday', 'project', 'repeat', 'remind', 'link', 'more', 'delete'])
     expect(spec.find((r) => r.key === 'project')).toMatchObject({ label: 'No project', unset: true })
     expect(spec.find((r) => r.key === 'repeat')).toMatchObject({ label: 'Does not repeat', unset: true, sub: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', hint: '⌫' }) // p7e A4: Backspace deletes it
@@ -70,7 +70,7 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
 
   it('a repeating block: no Link a task, and Delete asks the scope (This / Following / All)', () => {
     const spec = blockMenuSpec(block({ recurrence_rule: 'FREQ=WEEKLY' }))
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'project', 'repeat', 'remind', 'more', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'allday', 'project', 'repeat', 'remind', 'more', 'delete'])
     expect(spec.find((r) => r.key === 'repeat')?.label).toBe('Repeats weekly')
     expect(spec.at(-1)).toMatchObject({ key: 'delete', sub: false }) // cal-clicks: the scope question asks
     expect(spec.at(-1)?.hint).toBeUndefined() // ⌫ never deletes a series' occurrence unasked
@@ -80,7 +80,9 @@ describe('blockMenuSpec — Calendar.dc.html §5, a menu not a form', () => {
   it('an all-day block reads "All day" with no length picker, its date in no zone', () => {
     const spec = blockMenuSpec(block({ all_day: true, starts_at: '2026-07-29T00:00:00.000Z', ends_at: '2026-07-30T00:00:00.000Z' }))
     expect(spec[0].label).toBe('Wed, Jul 29')
-    expect(spec[1]).toEqual({ key: 'time', label: 'All day' })
+    expect(spec[1]).toMatchObject({ key: 'ends', label: 'Wed, Jul 29' }) // F7: one day — it ends the day it starts
+    expect(spec.find((r) => r.key === 'allday')).toMatchObject({ on: true })
+    expect(spec.map((r) => r.key)).not.toContain('time')
     expect(spec.map((r) => r.key)).not.toContain('remind') // no start time to count back from
   })
 
@@ -144,9 +146,10 @@ describe('a Google event (B1): read-only', () => {
     const ref = { source: 'gcal', id: 'p/e1', calendar: 'Kai', calendar_id: 'p' }
     const mine = block({ source: 'gcal', type: 'event', external_ref: { ...ref, edit: true, url: 'https://meet.google.com/abc-defg-hij' } })
     const spec = blockMenuSpec(mine, { now: NOW })
-    expect(spec.map((r) => r.key)).toEqual(['date', 'time', 'google', 'join', 'gopen', 'delete'])
+    expect(spec.map((r) => r.key)).toEqual(['date', 'ends', 'time', 'google', 'join', 'gopen', 'delete'])
     expect(spec[0]).toMatchObject({ sub: true })
-    expect(spec[1]).toMatchObject({ sub: true })
+    expect(spec[1]).toMatchObject({ key: 'ends', sub: true })
+    expect(spec[2]).toMatchObject({ key: 'time', sub: true })
     expect(spec.at(-1)).toMatchObject({ key: 'delete', destructive: true })
     expect(keys(mine, { mode: 'menu', now: NOW })).toEqual(['details', 'join', 'gopen', 'duplicate', 'ai', 'copylink', 'delete'])
     // A repeating one's Delete is the scope question: no ⌫ hint.
@@ -171,5 +174,28 @@ describe('a subscribed-calendar event (ics-subscribe): read-only, from a link', 
     expect(spec.every((r) => !r.sub && !r.destructive)).toBe(true)
     expect(keys(e, { now: NOW, mode: 'menu' })).toEqual(['details', 'duplicate', 'ai', 'copylink'])
     expect(keys({ ...e, external_ref: { ...e.external_ref!, url: 'https://meet.example.test/x' } }, { now: NOW })).toContain('join')
+  })
+})
+
+describe('F7 multi-day rows', () => {
+  const trip = block({ all_day: true, starts_at: '2026-07-06T00:00:00.000Z', ends_at: '2026-07-10T00:00:00.000Z' }) // Mon 6 – Thu 9
+  const night = block({ starts_at: '2026-07-06T19:00:00.000Z', ends_at: '2026-07-06T23:00:00.000Z' }) // Mon 22:00 – Tue 02:00 Cairo
+
+  it('an all-day trip: Starts the first day, Ends the last day (inclusive), All day ticked', () => {
+    const spec = blockMenuSpec(trip)
+    expect(spec[0]).toMatchObject({ key: 'date', label: 'Mon, Jul 6', hint: 'Starts' })
+    expect(spec[1]).toMatchObject({ key: 'ends', label: 'Thu, Jul 9', hint: 'Ends', sub: true })
+  })
+
+  it('a night event crossing midnight: Starts and Ends carry the times, the one-day Time row steps aside', () => {
+    const spec = blockMenuSpec(night)
+    expect(spec.map((r) => r.key).slice(0, 3)).toEqual(['date', 'ends', 'allday'])
+    expect(spec[0].label).toMatch(/^Mon, Jul 6 · /)
+    expect(spec[1].label).toMatch(/^Tue, Jul 7 · /)
+    expect(crossesDays(night)).toBe(true)
+  })
+
+  it('a task block keeps its single Date row', () => {
+    expect(blockMenuSpec(block({ task_id: 't1' }), { task: { title: 'x', status: 'todo' } }).map((r) => r.key)).toEqual(['date', 'time', 'project', 'complete', 'open', 'unschedule', 'delete'])
   })
 })

@@ -1,4 +1,6 @@
+import { addDays } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
+import { spanDays } from '../calendar/daySpans'
 import { isOverdue } from '../tasks/planMath'
 import { isTodayTask, todayListTasks } from '../tasks/grouping'
 import { BLOCK_SWATCHES, nearestSwatch, swatchValue } from '../calendar/blockHue'
@@ -283,7 +285,11 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
   // ── The week, Monday first, two weeks of counts (the strip may roll over before the next push) ──
   const counts = new Map<string, number>()
   const bump = (key: string) => counts.set(key, (counts.get(key) ?? 0) + 1)
-  for (const e of live) bump(cairoDateKey(new Date(e.starts_at)))
+  // F7: a multi-day event counts on every day it covers, not only the one it starts on.
+  for (const e of live) {
+    const { first, last } = spanDays(e, i.zone)
+    for (let k = first, n = 0; k <= last && n < 31; k = addDays(k, 1), n++) bump(k)
+  }
   for (const x of tasks) if (x.status === 'todo' && !x.deleted_at && x.due_at && !live.some((e) => e.task_id === x.id)) bump(cairoDateKey(new Date(x.due_at)))
   const [y, m, d] = today.split('-').map(Number)
   const todayUtc = Date.UTC(y, m - 1, d)

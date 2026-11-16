@@ -5,7 +5,8 @@ import { TASK_PARAM, taskAnchor, useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
 import { useCalendarEvents, useCalendarRows, moveOrResizeEvent, resizeEvent, scheduleTaskWithUndo, deleteEventWithUndo, deleteEventsWithUndo, moveEventsByWithUndo, putInSlotWithUndo, outOfSlotWithUndo } from './api'
-import { completeBlockTask, moveBlock } from './scoped'
+import { completeBlockTask, moveBlock, setEventRange } from './scoped'
+import { rangeOf, resizeEdge, shiftDays, storeRange } from './rangeEdit'
 import { slotAt, slotFill, slotOver, slotTasks } from './slots'
 import { dropOnGrid } from './gridDrop'
 import { TaskMenu } from '../tasks/TaskMenu'
@@ -1128,6 +1129,16 @@ function DesktopCalendar() {
     onResize: (id: string, start: string, end: string, revert?: () => void) => {
       const event = gridEvents.find((e) => e.id === id)
       if (event) void moveBlock(event, { starts_at: start, ends_at: end }, { verb: 'Resize', said: `Resized · ${event.title}`, run: () => resizeEvent(event, start, end), onCancel: revert })
+    },
+    // F7: a multi-day bar in the all-day band — moved by days (the times kept), or one end grown / shrunk by days. A repeat
+    // asks This / Following / All; a Google event only when it is ours to change (the band doesn't offer it otherwise).
+    onSpanChange: (id: string, change: { move: number } | { edge: 'start' | 'end'; days: number }, revert?: () => void) => {
+      const event = gridEvents.find((e) => e.id === id)
+      if (!event || (isSynced(event) && !gcalEditable(event))) return revert?.()
+      if ('move' in change) {
+        const to = { starts_at: shiftDays(event.starts_at, change.move, event.all_day), ends_at: shiftDays(event.ends_at, change.move, event.all_day) }
+        void setEventRange(event, to, `Moved · ${event.title}`, revert)
+      } else void setEventRange(event, storeRange(resizeEdge(rangeOf(event), change.edge, change.days)), `Resized · ${event.title}`, revert)
     },
     onEventClick: (id: string, add?: boolean) => handleEventClick(id, add),
     onMoveMany: (ids: readonly string[], delta: number) => {

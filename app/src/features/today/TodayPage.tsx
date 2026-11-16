@@ -63,7 +63,7 @@ import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { Fireflies } from './NightGarden'
 import { SeasonDrift } from '../seasons/SeasonDrift'
 import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
-import { isInProgress, upNextEvents } from './upNext'
+import { isInProgress, runsToday, upNextEvents } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
 import { LabelChips } from '../tasks/TaskRow'
@@ -74,6 +74,7 @@ import { DeskRitualHead, RitualCard, ReviewCard, type CardHead } from './DayCard
 import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
 import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
+import { SpansToday } from './SpansToday'
 import { useStarEvents } from './api'
 import { useStartFocus } from './startFocus'
 import { useFocusNow } from './focusNow'
@@ -745,6 +746,7 @@ function TodayView({ nav }: { nav: DayNav }) {
             {!tasksPending && <FirstTodayHint style={{ padding: '8px 8px 0' }} />}
             {!tasksPending && reviewToday && <ReviewCard />}
             {birthdayCards.length > 0 && <div style={{ paddingTop: 12 }}>{birthdayCards}</div>}
+            <SpansToday events={events} now={now} />
 
             <section aria-label="Top 3" data-tour="top3" style={{ position: 'relative' }}>
               {celebrate && <DayCompleteBurst />}
@@ -873,6 +875,7 @@ function TodayView({ nav }: { nav: DayNav }) {
       <div className="td-grid">
         <div className="kf-bulk-anchor td-main">
           {birthdayCards}
+          <SpansToday events={events} now={now} />
           <section data-tour="top3" className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
             {celebrate && <DayCompleteBurst />}
             {(() => {
@@ -1564,9 +1567,8 @@ function Ribbon({ events, now, head, taskById, day }: { events: CalendarEvent[];
   const navigate = useNavigate()
   const openTask = useOpenTask()
   const at = day ?? now
-  const today = cairoDateKey(at)
   const t = now.getTime()
-  const blocks = day ? events : events.filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || isInProgress(e.starts_at, e.ends_at, now)))
+  const blocks = day ? events : events.filter((e) => !e.all_day && runsToday(e, now))
   const nowPct = day ? 0 : ribbonPct(t, now)
   const hours = Array.from({ length: (RIBBON_TO_MIN - RIBBON_FROM_MIN) / 120 + 1 }, (_, i) => RIBBON_FROM_MIN / 60 + i * 2)
   return (
