@@ -10,6 +10,8 @@ import { TypedTime } from '../../components/TypedTime'
 import { fromMin, toMin } from '../../components/pickerMath'
 import { createEvent, scheduleTask, setEventRepeat, updateEvent } from './api'
 import { cairoTimeKey, cairoToIso } from './eventTime'
+import { dayGap, rangeLabel, toggleAllDay, type Range } from './rangeEdit'
+import { addDays } from '../../components/pickerMath'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { createTask, setRecurrence, toggleTop3, setSomeday, useTasks } from '../tasks/api'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
@@ -40,6 +42,8 @@ export interface CreateDraft {
   title: string
   notes: string
   date: string
+  /** F7: the last day of an event that runs past one date (its Ends); the start's when unset. */
+  endDate?: string
   startTime: string
   endTime: string
   allDay: boolean
@@ -63,7 +67,7 @@ export interface CreateDraft {
 export interface QuickCreateProps {
   initialKind: QuickCreateKind
   /** The grid slot that was clicked/dragged — null when opened from the rail's bare "quick add". */
-  slot: { date: string; start: string; end: string; allDay: boolean } | null
+  slot: { date: string; endDate?: string; start: string; end: string; allDay: boolean } | null
   /** Screen position to anchor the compact popover near. */
   anchor: { x: number; y: number } | null
   onClose: () => void
@@ -159,6 +163,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   const [title, setTitle] = useState(draft?.title ?? '')
   const [notes, setNotes] = useState(draft?.notes ?? '')
   const [date, setDate] = useState(draft?.date ?? slot?.date ?? todayKey())
+  const [endDate, setEndDate] = useState(draft?.endDate ?? slot?.endDate ?? draft?.date ?? slot?.date ?? todayKey())
   const [startTime, setStartTime] = useState(draft?.startTime ?? slot?.start ?? '09:00')
   const [endTime, setEndTime] = useState(draft?.endTime ?? slot?.end ?? '09:30')
   const [allDay, setAllDay] = useState(draft?.allDay ?? slot?.allDay ?? false)
@@ -182,6 +187,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   // title parse) has taken it over — a click on the grid should not get silently
   // repositioned by whatever the title happens to parse to.
   const [dateTouched, setDateTouched] = useState(draft?.dateTouched ?? Boolean(slot))
+  // F7: the Ends row opens by itself for an event that already runs past a date (dragged across days); else a chip offers it.
+  const [endOpen, setEndOpen] = useState(false)
   const [priorityTouched, setPriorityTouched] = useState(false)
   const [projectTouched, setProjectTouched] = useState(false)
 
@@ -219,6 +226,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   function applyParsedTime(d: Date) {
     const newStart = cairoTimeKey(d)
     setDate(cairoDateKey(d))
+    setEndDate(cairoDateKey(d))
     setStartTime(newStart)
     if (diffMinutes(newStart, endTime) <= 0) setEndTime(plus(newStart, 30))
   }
@@ -241,6 +249,35 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
 
   function markDateTouched() { setDateTouched(true) }
 
+  // F7: only an event runs past a date here (a task is due once, a block is one stretch of a day).
+  const endDay = kind === 'event' && endDate > date ? endDate : date
+  const daysOver = dayGap(date, endDay)
+  /** The start date moved: an event keeps its length in days (Mon–Thu moved to Wed is Wed–Sat). */
+  function changeDate(v: string) {
+    setEndDate(addDays(v, dayGap(date, endDate < date ? date : endDate)))
+    setDate(v)
+    markDateTouched()
+  }
+  /** The end `min` minutes after the start, on its own date (a night event ends the next morning). */
+  function endAfter(min: number) {
+    const total = (/^\d{1,2}:\d{2}$/.test(startTime) ? toMin(startTime) : 9 * 60) + min
+    setEndDate(addDays(date, Math.floor(total / 1440)))
+    setEndTime(fromMin(total % 1440))
+  }
+  /** The All day switch: dates kept; off gives 09:00-10:00 on the first day, or the times the form still holds. */
+  function switchAllDay() {
+    const r: Range = { all_day: allDay, startDay: date, startTime: startTime || '00:00', endDay: endDay, endTime: endTime || '00:00' }
+    const next = toggleAllDay(r, !allDay, { startTime, endTime })
+    setAllDay(next.all_day)
+    setDate(next.startDay)
+    setEndDate(next.endDay)
+    if (!next.all_day) {
+      setStartTime(next.startTime)
+      setEndTime(next.endTime)
+    }
+    markDateTouched()
+  }
+
   const holdsMatches = holdsQuery.trim()
     ? tasks.filter((t) => !t.scheduled_start && t.status === 'todo' && t.title.toLowerCase().includes(holdsQuery.trim().toLowerCase())).slice(0, 5)
     : []
@@ -251,7 +288,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   const allLabels = [...new Set([...labels, ...(parsed?.labels ?? [])])]
 
   const snapshot = (): CreateDraft => ({
-    kind, title, notes, date, startTime, endTime, allDay, busy, color, priority, projectId, areaId, holdsTaskId, reminderOffset, repeat, labels: allLabels, top3, someday, slot: fromSlot, dateTouched,
+    kind, title, notes, date, endDate: endDay, startTime, endTime, allDay, busy, color, priority, projectId, areaId, holdsTaskId, reminderOffset, repeat, labels: allLabels, top3, someday, slot: fromSlot, dateTouched,
   })
 
   /** An event or plain block just created: Free, and its repeat (p7e A13: set while creating, not only
@@ -297,7 +334,9 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
       offerProject({ kind: 'task', row: task }) // queue item 17: no place picked → its likely project
     } else if (kind === 'event') {
       const startsAt = allDay ? `${date}T00:00:00.000Z` : cairoToIso(date, startTime)
-      const endsAt = allDay ? nextDayIso(date) : cairoToIso(date, endTime)
+      // F7: Ends — an all-day event's last day (the stored end is the day after), a timed one's own end date. Never before the start.
+      let endsAt = allDay ? nextDayIso(endDay) : cairoToIso(endDay, endTime)
+      if (!allDay && Date.parse(endsAt) <= Date.parse(startsAt)) endsAt = new Date(Date.parse(startsAt) + 30 * 60_000).toISOString()
       const event = createEvent(title.trim() || 'New event', startsAt, endsAt, 'event', color, allDay)
       makeEvent(event)
       offerProject({ kind: 'event', row: event })
@@ -315,7 +354,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     onClose()
   }
 
-  const durationMin = diffMinutes(startTime, endTime)
+  const durationMin = diffMinutes(startTime, endTime) + daysOver * 1440
   const durationText = durationMin > 0 ? lenLabel(durationMin) : null
   // Queue 16: type the when — "7–8:30", "7:10 pm", "50m", "in 2h" — beside the time fields and chips.
   const typed = (dense: boolean) =>
@@ -328,7 +367,8 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
         onApply={(r) => {
           const start = r.start ?? 9 * 60
           setStartTime(fromMin(start))
-          setEndTime(fromMin(start + (r.minutes ?? 30)))
+          setEndTime(fromMin((start + (r.minutes ?? 30)) % 1440))
+          setEndDate(addDays(date, Math.floor((start + (r.minutes ?? 30)) / 1440)))
           markDateTouched()
         }}
       />
@@ -416,7 +456,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     <div>
       <FLabel>{kind === 'task' ? 'Due · block' : 'When'}</FLabel>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <DateInput value={date} title={kind === 'task' ? 'Due date' : 'Date'} onChange={(v) => { setDate(v); markDateTouched() }} style={{ flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }} />
+        <DateInput value={date} title={kind === 'task' ? 'Due date' : 'Date'} onChange={changeDate} style={{ flex: '1 1 auto', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }} />
         {!allDay && (
           <>
             <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} style={{ flex: '0 0 78px' }} />
@@ -428,7 +468,26 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
       </div>
       {typed(true)}
       {/* Kai 2026-10-21: the length in one tap — it sets the end (and a task's estimate). */}
-      {!allDay && <LengthChips value={durationMin} onPick={(m) => { setEndTime(plus(startTime, m)); markDateTouched() }} style={{ minHeight: 0, marginTop: 8 }} />}
+      {!allDay && <LengthChips value={durationMin} onPick={(m) => { endAfter(m); markDateTouched() }} style={{ minHeight: 0, marginTop: 8 }} />}
+      {/* F7: an event can end on another date — a night, a trip. The range reads under it ("Mon 3 – Thu 6"). */}
+      {kind === 'event' && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 8 }}>
+          {endOpen || daysOver > 0 ? (
+            <>
+              <span style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }}>Ends</span>
+              <DateInput value={endDay} title="Ends" onChange={(v) => { setEndDate(v < date ? date : v); markDateTouched() }} style={{ flex: '1 1 auto', minWidth: 0 }} />
+            </>
+          ) : (
+            <button type="button" onClick={() => setEndOpen(true)} style={CHIP_ADD}>+ Ends another day</button>
+          )}
+          <button type="button" aria-pressed={allDay} onClick={switchAllDay} style={allDay ? CHIP_ON : CHIP_OFF}>All day</button>
+          {daysOver > 0 && (
+            <span style={{ width: '100%', fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', fontVariantNumeric: 'tabular-nums', color: 'var(--ink-muted)' }}>
+              {rangeLabel({ all_day: allDay, startDay: date, startTime: startTime || '00:00', endDay, endTime: endTime || '00:00' })}
+            </span>
+          )}
+        </div>
+      )}
     </div>
   )
 
@@ -530,7 +589,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
     <div>
       <FLabel>{label}</FLabel>
       <div style={{ display: 'grid', gridTemplateColumns: kind === 'task' && !allDay ? '1.5fr 1fr' : '1fr', gap: 8 }}>
-        <DateInput value={date} title={label} onChange={(v) => { setDate(v); markDateTouched() }} />
+        <DateInput value={date} title={label} onChange={changeDate} />
         {kind === 'task' && !allDay && <TimeInput value={startTime} day={date} onChange={(v) => { setStartTime(v); markDateTouched() }} />}
       </div>
     </div>
@@ -548,7 +607,7 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   const chips = (list: number[], extra?: ReactNode) => (
     <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
       {list.map((m) => (
-        <button key={m} type="button" aria-pressed={durationMin === m} onClick={() => setEndTime(plus(startTime, m))} style={durationMin === m ? CHIP_ON : CHIP_OFF}>
+        <button key={m} type="button" aria-pressed={durationMin === m} onClick={() => endAfter(m)} style={durationMin === m ? CHIP_ON : CHIP_OFF}>
           {lenLabel(m)}
         </button>
       ))}
@@ -648,19 +707,24 @@ export function QuickCreate({ initialKind, slot, anchor, onClose, page = false, 
   )
   const pageEvent = grid(
     <>
-      {dateField('Date')}
+      {dateField('Starts')}
       {!allDay ? fromTo : <div />}
+      {/* F7: Ends — an event can run past one date (a night, a trip). */}
+      <div>
+        <FLabel>Ends</FLabel>
+        <DateInput value={endDay} title="Ends" onChange={(v) => { setEndDate(v < date ? date : v); markDateTouched() }} />
+        {daysOver > 0 && <FHelp>{rangeLabel({ all_day: allDay, startDay: date, startTime: startTime || '00:00', endDay, endTime: endTime || '00:00' })}</FHelp>}
+      </div>
       <div>
         <FLabel>All day</FLabel>
         <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '4px 2px', fontSize: 'var(--fs-caption)', color: 'var(--ink-faint)', cursor: 'pointer' }}>
-          <Toggle on={allDay} label="All day" onToggle={() => setAllDay((v) => !v)} />
+          <Toggle on={allDay} label="All day" onToggle={switchAllDay} />
           {allDay ? 'on — the whole day' : 'off — times shown'}
         </label>
       </div>
       {showsAs}
       {/* p7e A13: Repeat while creating — Editor 1b's field, no 1c drawing for it (flagged for Phase C). */}
       {repeatField}
-      <div />
       {colorField()}
       {/* deviation(2026-10-13 p7e A16): 1c's "mirrors quietly to Google Calendar" line is gone —
           nothing syncs (Settings: Google Calendar "Coming soon"). Back when the sync is built. */}

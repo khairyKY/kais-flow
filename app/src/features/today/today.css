@@ -674,3 +674,10 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
   .tp-slim .kf-row-more::after,
   .tp-gs .kf-row-more::after { content: ''; position: absolute; inset: min(0px, calc(50% - 22px)); }
 }
+
+/* F7 — the multi-day events covering today (./SpansToday): plain lines, "Trip · day 2 of 4". */
+.td-spans { display: flex; flex-direction: column; gap: 6px; margin: 0 0 16px; }
+.td-span { display: flex; align-items: baseline; gap: 8px; padding: 7px 12px; border: 1px solid var(--line-card); border-left: 3px solid var(--acc-lavender); border-radius: var(--radius-input); background: var(--paper-bone); }
+.td-span-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-body-s); color: var(--ink-body); }
+.td-span-meta { margin-left: auto; flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--ink-faint); }
+.tp-home-in .td-spans { margin-top: 12px; }

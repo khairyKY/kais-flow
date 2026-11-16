@@ -14,6 +14,8 @@ import { layoutOverlaps } from './overlapLayout'
 import { cairoDateKey, zoneDateKey, zoneWallTimeToIso } from '../../lib/dateShortcuts'
 import { addDays, durationLabel } from '../../components/pickerMath'
 import { bandSegments, isMultiDaySpan, spanDays } from './daySpans'
+import { rangeLabel, rangeOf, resizeEdge } from './rangeEdit'
+import { addSpanGrips } from './spanGrip'
 import { timeRange, zoneHour, zoneShort, zoneTimeKey, zoneToIso } from './eventTime'
 import { appZone, useAppZone } from '../../lib/appZone'
 import { clockOptions, clockRange, clockText } from '../../lib/clock'
@@ -95,6 +97,9 @@ interface CalendarGridProps {
    * block back where it was (cal-clicks: the scope question's Cancel / Esc). */
   onMove: (id: string, start: string, end: string, allDay: boolean, revert?: () => void) => void
   onResize: (id: string, start: string, end: string, revert?: () => void) => void
+  /** F7: a multi-day bar in the all-day band moved by whole days (`move`), or one of its ends grown / shrunk (`edge`, `days`).
+   * `revert` puts the bar back (the scope question's Cancel). */
+  onSpanChange?: (id: string, change: { move: number } | { edge: 'start' | 'end'; days: number }, revert?: () => void) => void
   /** `add`: with Ctrl / ⌘ / Shift held — the block joins (or leaves) the multi-selection. */
   onEventClick: (id: string, add?: boolean) => void
   /** Multi-select (Kai 2026-10-22): the picked blocks, outlined; dragging one of them moves them all. */
@@ -921,8 +926,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
     const conflicted = new Set(conflictedIds)
     const next = events.flatMap<Record<string, unknown>>((e) => {
       // Calendar 3e "multi-day span": in the all-day band, one piece per day on screen — only the
-      // outer corners round, the open edges read « / », the title on the first piece. A piece is
-      // not dragged or resized (the block menu moves it); clicks act on the block.
+      // outer corners round, the open edges read « / », the title on the first piece. F7: a piece drags the
+      // whole span by days, and the first / last grow a grip on their outer edge (./spanGrip); clicks act on the block.
       if (isSpan(e)) {
         const span = { starts_at: e.start, ends_at: e.end, all_day: !!e.allDay }
         const { first, last } = spanDays(span, zone)
@@ -933,9 +938,10 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
           start: seg.day,
           end: addDays(seg.day, 1),
           allDay: true,
-          editable: false,
+          startEditable: !e.readOnly,
+          durationEditable: false,
           classNames: ['fc-event-type-' + e.type, kind, 'kf-seg', `kf-seg-${seg.shape}`, ...(i === 0 ? ['kf-seg-titled'] : []), ...(e.taskDone ? ['kf-done'] : [])],
-          extendedProps: { kfColor: e.color ?? null, kfSegOf: e.id, kfTitle: e.title },
+          extendedProps: { kfColor: e.color ?? null, kfSegOf: e.id, kfTitle: e.title, kfSegFirst: !e.readOnly && seg.day === first, kfSegLast: !e.readOnly && seg.day === last },
         }))
       }
       // ── CALENDAR.md §0: one block, five independent axes, composed as classes. ──
@@ -1462,6 +1468,20 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         // Punch 34: double-click goes straight to the task editor (single click still opens
         // the details popover — the navigation unmounts it, so the two don't fight).
         info.el.addEventListener('dblclick', () => L().props.onEventDoubleClick?.(id))
+        // F7: a multi-day bar's real ends take a resize grip (the pieces are one day each; FullCalendar can't resize them).
+        const sp = info.event.extendedProps as { kfSegOf?: string; kfSegFirst?: boolean; kfSegLast?: boolean }
+        if (sp.kfSegOf && (sp.kfSegFirst || sp.kfSegLast) && L().props.onSpanChange) {
+          const block = L().props.events.find((x) => x.id === id)
+          if (block) {
+            const r = rangeOf({ starts_at: block.start, ends_at: block.end, all_day: !!block.allDay }, L().zone)
+            addSpanGrips(info.el, {
+              first: !!sp.kfSegFirst,
+              last: !!sp.kfSegLast,
+              label: (edge, days) => rangeLabel(resizeEdge(r, edge, days, L().zone)),
+              commit: (edge, days) => L().props.onSpanChange?.(id, { edge, days }),
+            })
+          }
+        }
         // cal-clicks: a right-click opens menu B; from the keyboard (Shift+F10, the menu key — Enter opens the details,
         // FullCalendar's own key handler) it hangs at the block's corner, not at 0,0.
         const menuAt = (x: number, y: number) => {
@@ -1582,6 +1602,16 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         const landing = landingRef.current
         landingRef.current = null
         if (landing) window.clearTimeout(landing.timer)
+        // F7: a multi-day bar's piece dropped on another day moves the whole span by that many days (its times kept);
+        // dropped on the time grid it goes back: a span is not one block of an hour.
+        const segOf = (info.event.extendedProps as { kfSegOf?: string }).kfSegOf
+        if (segOf) {
+          landing?.carried.forEach((c) => c.stop())
+          landing?.stop()
+          if (!info.event.allDay || !info.delta.days) return info.revert()
+          L().props.onSpanChange?.(segOf, { move: info.delta.days }, info.revert)
+          return
+        }
         const id = info.event.id
         const carried = landing?.carried ?? []
         const motion = !reducedMotionNow()

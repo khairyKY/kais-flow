@@ -118,6 +118,26 @@ describe('planGcalChange — This event', () => {
   })
 })
 
+describe('planGcalChange: F7 multi-day events round-trip to Google', () => {
+  it('an all-day trip Mon 12 – Thu 15 Oct: dates in place of times, the end the day after the last (exclusive)', () => {
+    const trip = ev({ id: 't1', start: { date: '2026-10-12' }, end: { date: '2026-10-16' } })
+    expect(timesOf(trip)).toEqual({ start: '2026-10-12T00:00:00.000Z', end: '2026-10-16T00:00:00.000Z', allDay: true })
+    // resized to Fri 16: the app's end is the 17th
+    const [o] = ops(plan({ change: { starts_at: '2026-10-12T00:00:00.000Z', ends_at: '2026-10-17T00:00:00.000Z', all_day: true }, inst: trip, master: null }))
+    expect(o).toEqual({ op: 'patch', id: 't1', body: { start: { date: '2026-10-12', dateTime: null, timeZone: null }, end: { date: '2026-10-17', dateTime: null, timeZone: null } } })
+  })
+
+  it('a timed span over several days keeps both instants and its own zone; the end moves to a later date', () => {
+    const conf = ev({ id: 'c1', start: { dateTime: '2026-10-12T09:00:00+03:00' }, end: { dateTime: '2026-10-14T17:00:00+03:00' } })
+    const [o] = ops(plan({ change: { starts_at: '2026-10-12T06:00:00.000Z', ends_at: '2026-10-15T14:00:00.000Z' }, inst: conf, master: null }))
+    expect(o).toEqual({ op: 'patch', id: 'c1', body: { start: { dateTime: '2026-10-12T06:00:00.000Z', timeZone: ZONE, date: null }, end: { dateTime: '2026-10-15T14:00:00.000Z', timeZone: ZONE, date: null } } })
+  })
+
+  it('an end before the start is refused (the app never sends one)', () => {
+    expect(readChange({ starts_at: '2026-10-14T06:00:00.000Z', ends_at: '2026-10-12T06:00:00.000Z' })).toBeNull()
+  })
+})
+
 describe('planGcalChange — All events', () => {
   it('a rename patches the master; a delete deletes it', () => {
     expect(ops(plan({ scope: 'all', change: { title: 'Retro' } }))).toEqual([{ op: 'patch', id: 'series', body: { summary: 'Retro' } }])

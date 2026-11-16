@@ -287,6 +287,11 @@ export E3; E3=$(j .added.id)
 expect "answer: its days" "2028-01-19 2028-01-21 true" "$(j '"\(.added.start) \(.added.end) \(.added.all_day)"')"
 expect "row: UTC midnights, end exclusive" "2028-01-19 00:00:00+00 2028-01-22 00:00:00+00 t" \
   "$(sql -c "select concat_ws(' ', starts_at, ends_at, all_day) from calendar_events where id = '$E3'")"
+# F7 · multi-day: a timed span over three dates (Cairo is UTC+2 in January), listed once, its end changeable to a later date
+call "timed span Mon 2028-01-17 22:00 – Wed 2028-01-19 17:00" "$KA" add_event '{title: "MCP conference", start: "2028-01-17T22:00", end: "2028-01-19T17:00"}'
+export E4; E4=$(j .added.id)
+expect "answer: both dates" "2028-01-17 22:00 2028-01-19 17:00" "$(j '"\(.added.start) \(.added.end)"')"
+expect "row: two instants" "2028-01-17 20:00:00+00 2028-01-19 15:00:00+00 f"   "$(sql -c "select concat_ws(' ', starts_at, ends_at, all_day) from calendar_events where id = '$E4'")"
 call "series Mon+Wed 09:30, 15 min" "$KA" add_event '{title: "MCP standup", start: "2028-01-17T09:30", duration_min: 15, repeat: "FREQ=WEEKLY;BYDAY=MO,WE"}'
 export S1; S1=$(j .added.id)
 expect "row: one row, the rule, no skips" "FREQ=WEEKLY;BYDAY=MO,WE 2028-01-17 07:30:00+00 2028-01-17 07:45:00+00 {}" \
@@ -294,6 +299,10 @@ expect "row: one row, the rule, no skips" "FREQ=WEEKLY;BYDAY=MO,WE 2028-01-17 07
 call "calendar 2028-01-17..23" "$KA" calendar '{from: "2028-01-17", to: "2028-01-23"}'
 expect "the series' occurrences" "2028-01-17 09:30,2028-01-19 09:30" "$(j '[.events[] | select(.id == env.S1) | .start] | join(",")')"
 expect "the all-day event as its days" "2028-01-19–2028-01-21" "$(j '[.events[] | select(.id == env.E3) | "\(.start)–\(.end)"] | join(",")')"
+expect "F7: the three-day timed span is listed once, with both its dates" "2028-01-17 22:00–2028-01-19 17:00" "$(j '[.events[] | select(.id == env.E4) | "\(.start)–\(.end)"] | join(",")')"
+call "F7: edit_event: the span's end moved to a later date" "$KA" edit_event '{id: "'"$E4"'", end: "2028-01-20T17:00"}'
+expect "row: the start kept, the end on the 20th" "2028-01-17 20:00:00+00 2028-01-20 15:00:00+00"   "$(sql -c "select concat_ws(' ', starts_at, ends_at) from calendar_events where id = '$E4'")"
+refused "F7: an end before the start" "$KA" edit_event '{id: "'"$E4"'", end: "2028-01-16T09:00"}' "must be after"
 refused "a series that doesn't start on its rule (a Tuesday, MO,WE)" "$KA" add_event \
   '{title: "MCP misaligned", start: "2028-01-18T09:00", repeat: "FREQ=WEEKLY;BYDAY=MO,WE"}' "its first one would be 2028-01-19 09:00"
 expect "nothing written" "0 " "$(sql -c "select count(*) from calendar_events where title = 'MCP misaligned'") $(logs)"

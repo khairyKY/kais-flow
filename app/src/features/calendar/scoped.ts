@@ -109,6 +109,15 @@ export function retimeBlock(e: CalendarEvent, from: Span, to: Span): Promise<Out
   return moveSpan(e, from, to, to.start === from.start && to.day === from.day ? 'bottom' : 'move')
 }
 
+/** F7 — an event's whole when changed at once: the Starts / Ends rows, the all-day switch, the band's drag and resize.
+ * One question for a repeat (This / Following / All), one Undo; `to` can flip all-day (the occurrence leaves its series,
+ * as a drag across the band's line always has). Nothing to write when nothing changed. */
+export function setEventRange(e: CalendarEvent, to: { starts_at: string; ends_at: string; all_day?: boolean }, said: string, onCancel?: () => void): Promise<Outcome> {
+  const same = (a: string, b: string) => Date.parse(a) === Date.parse(b)
+  if (same(to.starts_at, e.starts_at) && same(to.ends_at, e.ends_at) && (to.all_day ?? e.all_day) === e.all_day) return Promise.resolve(null)
+  return moveBlock(e, to, { verb: 'Resize', said, run: () => moveOrResizeEvent(e, to.starts_at, to.ends_at, to.all_day), onCancel })
+}
+
 /** The Date row: the block to `day`, same time. */
 export function moveToDay(e: CalendarEvent, day: string): Promise<Outcome> {
   if (!isSeriesBlock(e) && !roundOf(e)) {

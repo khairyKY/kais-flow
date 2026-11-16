@@ -7,6 +7,7 @@
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
 import { clockOptions } from '../../lib/clock'
+import { isMultiDaySpan, spanDays } from '../calendar/daySpans'
 
 export type UpNextTone = 'now' | 'time'
 
@@ -41,11 +42,13 @@ export interface UpNextEvent {
 /** Polish F2a (2026-09-26 decision "Up next = running + upcoming"): the timed events still worth a
  * glance — running now, or starting later today (Cairo). An event drops off the minute it ends
  * (end-exclusive, like isInProgress); one that began before today but is still running stays, as
- * "Now". All-day events aren't "next" (they have no time), so they never show. Sorted by start. */
+ * "Now". All-day events aren't "next" (they have no time), so they never show. Sorted by start.
+ * F7: a timed span of a day or more (a conference) is Now / Next only on the day it starts or ends — in
+ * between it is the day's all-day line (./spanLines), not the thing to do right now. */
 export function upNextEvents<E extends UpNextEvent>(events: readonly E[], now: Date): E[] {
   const t = now.getTime()
   const today = cairoDateKey(now)
   return events
-    .filter((e) => !e.all_day && new Date(e.ends_at).getTime() > t && (cairoDateKey(new Date(e.starts_at)) === today || isInProgress(e.starts_at, e.ends_at, now)))
+    .filter((e) => !e.all_day && new Date(e.ends_at).getTime() > t && (cairoDateKey(new Date(e.starts_at)) === today || (isInProgress(e.starts_at, e.ends_at, now) && (!isMultiDaySpan(e, appZone()) || spanDays(e, appZone()).last === today))))
     .sort((a, b) => new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime())
 }

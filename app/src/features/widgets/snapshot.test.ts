@@ -93,6 +93,15 @@ describe('buildSnapshot', () => {
     expect(s.overdue).toEqual({ count: 1, oldestDays: 6, titles: ['Call the tyre supplier'] })
   })
 
+  it('F7: a multi-day event counts on every day it covers in the week strip', () => {
+    // Mon 5 Oct 00:00Z → Thu 8 Oct 00:00Z all-day = Mon, Tue, Wed
+    const base = buildSnapshot(input())
+    const trip = { ...event('trip', 'Trip', '08:00', '09:00'), all_day: true, starts_at: '2026-10-05T00:00:00.000Z', ends_at: '2026-10-08T00:00:00.000Z' }
+    const s = buildSnapshot(input({ events: [...input().events, trip] }))
+    const grew = s.week.filter((d, k) => d.n === base.week[k].n + 1).map((d) => d.day)
+    expect(grew).toEqual(['2026-10-05', '2026-10-06', '2026-10-07'])
+  })
+
   it('gives routines their week and the longest streak', () => {
     expect(s.routines).toHaveLength(1)
     expect(s.routines[0]).toMatchObject({ id: 'r1', done: true })

@@ -74,7 +74,7 @@ describe('slotFields (a grid slot → the QuickCreate form)', () => {
   it('a timed slot shows Cairo wall-clock and saves back to the same instant', () => {
     // FullCalendar's startStr for a timed select carries the device offset; any offset works.
     const f = slotFields('2026-09-26T14:00:00+03:00', '2026-09-26T14:30:00+03:00', false)
-    expect(f).toEqual({ date: '2026-09-26', start: '14:00', end: '14:30', allDay: false })
+    expect(f).toEqual({ date: '2026-09-26', endDate: '2026-09-26', start: '14:00', end: '14:30', allDay: false })
     expect(cairoToIso(f.date, f.start)).toBe('2026-09-26T11:00:00.000Z')
     expect(cairoToIso(f.date, f.end)).toBe('2026-09-26T11:30:00.000Z')
     // the same instant clicked on a device in Los Angeles
@@ -82,8 +82,14 @@ describe('slotFields (a grid slot → the QuickCreate form)', () => {
   })
 
   it('an all-day slot keeps the date the grid drew, in any zone', () => {
-    expect(slotFields('2026-09-26', '2026-09-27', true)).toEqual({ date: '2026-09-26', start: '', end: '', allDay: true })
+    expect(slotFields('2026-09-26', '2026-09-27', true)).toEqual({ date: '2026-09-26', endDate: '2026-09-26', start: '', end: '', allDay: true })
     // the right-click resolver's local midnight of that day
     expect(slotFields(new Date(2026, 8, 26).toISOString(), '', true).date).toBe('2026-09-26')
+  })
+
+  it('F7: a drag across the all-day band ends on the last day dragged (FullCalendar’s end is the day after); a timed one across midnight on its own end date', () => {
+    expect(slotFields('2026-09-28', '2026-10-02', true)).toMatchObject({ date: '2026-09-28', endDate: '2026-10-01', allDay: true })
+    const night = slotFields('2026-09-26T22:00:00+03:00', '2026-09-27T02:00:00+03:00', false)
+    expect(night).toMatchObject({ date: '2026-09-26', start: '22:00', endDate: '2026-09-27', end: '02:00' })
   })
 })

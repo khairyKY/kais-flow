@@ -74,6 +74,7 @@ import { DeskRitualHead, RitualCard, ReviewCard, type CardHead } from './DayCard
 import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
 import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
+import { SpansToday } from './SpansToday'
 import { useStarEvents } from './api'
 import { useStartFocus } from './startFocus'
 import { useFocusNow } from './focusNow'
@@ -757,6 +758,7 @@ function TodayView({ nav }: { nav: DayNav }) {
             {!tasksPending && <FirstTodayHint style={{ padding: '8px 8px 0' }} />}
             {!tasksPending && reviewToday && <ReviewCard />}
             {birthdayCards.length > 0 && <div style={{ paddingTop: 12 }}>{birthdayCards}</div>}
+            <SpansToday events={events} now={now} />
 
             <section aria-label="Top 3" data-tour="top3" style={{ position: 'relative' }}>
               {celebrate && <DayCompleteBurst />}
@@ -885,6 +887,7 @@ function TodayView({ nav }: { nav: DayNav }) {
       <div className="td-grid">
         <div className="kf-bulk-anchor td-main">
           {birthdayCards}
+          <SpansToday events={events} now={now} />
           <section data-tour="top3" className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
             {celebrate && <DayCompleteBurst />}
             {(() => {
