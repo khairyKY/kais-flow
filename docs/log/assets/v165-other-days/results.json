@@ -1,0 +1,642 @@
+[
+  {
+    "name": "p-day Today is Today's own page: \"Monday, Oct 26\", the Now panel, the rituals panel",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day › → Tomorrow (?day=2026-10-27): title \"Tomorrow\", the date beside it \"Tue, Oct 27\"",
+    "ok": true,
+    "detail": "Tomorrow Tue, Oct 27"
+  },
+  {
+    "name": "p-day …‹ Today · the picker · Wed, Oct 28 ›, and no Today pill one day out",
+    "ok": true,
+    "detail": "Today Wed, Oct 28"
+  },
+  {
+    "name": "p-day …the day panel: \"2 blocks · first at 10:00 AM\", the Day bar with its 2 blocks and no now tick, 2 block lines",
+    "ok": true,
+    "detail": "2 blocks first at 10:00 AM ☀ ☾ 8am 12pm 4pm 8pm 10:00 Dentist 1:00 Team sync"
+  },
+  {
+    "name": "p-day …Plan tomorrow: \"Tomorrow · not planned\", 5 tasks waiting, 2 blocks, Plan",
+    "ok": true,
+    "detail": "Tomorrow · not planned Plan tomorrow ~3 min 5 tasks waiting 2 blocks Plan"
+  },
+  {
+    "name": "p-day …Top 3 · nothing planted, no goal card; Tomorrow's tasks · 5 in time order with the Dentist's block time",
+    "ok": true,
+    "detail": "Tomorrow's tasks · 5 Draft the quarterly letter Dentist 10:00 AM Pay the rent Water the plants Call Mum"
+  },
+  {
+    "name": "p-day …Routines · 3 daily: one row \"Morning · Evening\" to the Routines page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day nothing runs sideways",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p-day ☆ (tap) on \"Pay the rent\" → ritual.seeded for 2026-10-27, through the outbox",
+    "ok": true,
+    "detail": "[{\"id\":\"484ab27d-61e1-47de-aa37-7aa20ed0a414\",\"event_type\":\"ritual.seeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000013\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "p-day …it is the goal card with a star, Top 3 · 1 of 3 planted, Plan tomorrow gone, the row left the list",
+    "ok": true,
+    "detail": "Pay the rent ✶ GOAL OF THE DAY Top 3 · 1 of 3 planted All tasks Plant a second · ☆ a task below Tonight's Shut down starts from these three."
+  },
+  {
+    "name": "p-day …Undo → ritual.unseeded, the row is back and Plan tomorrow with it",
+    "ok": true,
+    "detail": "[{\"id\":\"8ddf9659-e94e-4b91-aa4e-4d91a71c807a\",\"event_type\":\"ritual.unseeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000013\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "p-day three planted → the goal (the first) and two numbered rows 2, 3 with a filled star; \"3 of 3 planted\"; the hint \"Tonight's Shut down starts from these three.\"",
+    "ok": true,
+    "detail": "Draft the quarterly letter ✶ GOAL OF THE DAY Top 3 · 3 of 3 planted All tasks 2 Pay the rent 3 Water the plants Tonight's Shut down starts from these three."
+  },
+  {
+    "name": "p-day …a fourth is refused, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day reload keeps ?day and the three planted",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day the title opens the date sheet; Nov 3 → ?day=2026-11-03, title \"Tue, Nov 3\" and \"in 8 days\"",
+    "ok": true,
+    "detail": "Tue, Nov 3 in 8 days"
+  },
+  {
+    "name": "p-day …the Today pill shows (two days out), the neighbours stay Mon, Nov 2 · Wed, Nov 4",
+    "ok": true,
+    "detail": "Mon, Nov 2 Today Wed, Nov 4"
+  },
+  {
+    "name": "p-day …1 block, first at 9:00 AM; Top 3 · nothing planted (\"Plant picks any time…\"); The day's tasks · 1 with the passport; no Plan tomorrow",
+    "ok": true,
+    "detail": "Top 3 · nothing planted All tasks Plant picks any time, or leave it to that evening"
+  },
+  {
+    "name": "p-day nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day the Today pill → Today (no ?day), its own page again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day ‹ → Yesterday: title \"Yesterday\", \"Sun, Oct 25\" beside it; no Today pill; ‹ Sat, Oct 24 · Today ›",
+    "ok": true,
+    "detail": "Sat, Oct 24 Today"
+  },
+  {
+    "name": "p-day …the day panel: 3 blocks, \"1 of 3 done\", the bar, no Add a block; no Plan tomorrow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day …the goal card, done: struck, \"Goal of the day · Done 11:00 AM\"",
+    "ok": true,
+    "detail": "Write up the lecture 6 summary ✶ GOAL OF THE DAY · DONE 11:00 AM"
+  },
+  {
+    "name": "p-day …Top 3 · 2 of 3 done: the CV report (2, ticked, 4:20 PM) and the slipped paper question (3, Slipped, Move ▾)",
+    "ok": true,
+    "detail": "Write up the lecture 6 summary ✶ GOAL OF THE DAY · DONE 11:00 AM Top 3 · 2 of 3 done All tasks 2 Submit the CV lab report 4:20 PM 3 Pick three past-paper questions Slipped Move ▾"
+  },
+  {
+    "name": "p-day …Also done · 2 (Reply to Dr. Hany, Laundry); Left open · 1 (Book the dentist) with Move ▾",
+    "ok": true,
+    "detail": "Also done · 2 Reply to Dr. Hany 9:15 AM Laundry 6:30 PM"
+  },
+  {
+    "name": "p-day …read-only: no stars, an open row's check can't be ticked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day …the day's line (stamp, the sentence in italics) with Open journal; Routines · 2/3",
+    "ok": true,
+    "detail": "The day's line Open journal SUN OCT 25 · 9:40 PM A slow, good Sunday. Optimisation finally clicked, and the dentist can wait."
+  },
+  {
+    "name": "p-day nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-day nothing runs sideways",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p-day …✓ on a finished row reopens it (status todo) with Undo",
+    "ok": true,
+    "detail": "Submit the CV lab report:todo"
+  },
+  {
+    "name": "p-day …Move ▾ → Today moves the slipped pick to today",
+    "ok": true,
+    "detail": "2026-10-26T06:00:00.000Z"
+  },
+  {
+    "name": "p-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night Today is Today's own page: \"Monday, Oct 26\", the Now panel, the rituals panel",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night › → Tomorrow (?day=2026-10-27): title \"Tomorrow\", the date beside it \"Tue, Oct 27\"",
+    "ok": true,
+    "detail": "Tomorrow Tue, Oct 27"
+  },
+  {
+    "name": "p-night …‹ Today · the picker · Wed, Oct 28 ›, and no Today pill one day out",
+    "ok": true,
+    "detail": "Today Wed, Oct 28"
+  },
+  {
+    "name": "p-night …the day panel: \"2 blocks · first at 10:00 AM\", the Day bar with its 2 blocks and no now tick, 2 block lines",
+    "ok": true,
+    "detail": "2 blocks first at 10:00 AM ☀ ☾ 8am 12pm 4pm 8pm 10:00 Dentist 1:00 Team sync"
+  },
+  {
+    "name": "p-night …Plan tomorrow: \"Tomorrow · not planned\", 5 tasks waiting, 2 blocks, Plan",
+    "ok": true,
+    "detail": "Tomorrow · not planned Plan tomorrow ~3 min 5 tasks waiting 2 blocks Plan"
+  },
+  {
+    "name": "p-night …Top 3 · nothing planted, no goal card; Tomorrow's tasks · 5 in time order with the Dentist's block time",
+    "ok": true,
+    "detail": "Tomorrow's tasks · 5 Draft the quarterly letter Dentist 10:00 AM Pay the rent Water the plants Call Mum"
+  },
+  {
+    "name": "p-night …Routines · 3 daily: one row \"Morning · Evening\" to the Routines page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night nothing runs sideways",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p-night ☆ (tap) on \"Pay the rent\" → ritual.seeded for 2026-10-27, through the outbox",
+    "ok": true,
+    "detail": "[{\"id\":\"d00626e7-e5ac-4232-8977-324567de18a2\",\"event_type\":\"ritual.seeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000013\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "p-night …it is the goal card with a star, Top 3 · 1 of 3 planted, Plan tomorrow gone, the row left the list",
+    "ok": true,
+    "detail": "Pay the rent ✶ GOAL OF THE DAY Top 3 · 1 of 3 planted All tasks Plant a second · ☆ a task below Tonight's Shut down starts from these three."
+  },
+  {
+    "name": "p-night …Undo → ritual.unseeded, the row is back and Plan tomorrow with it",
+    "ok": true,
+    "detail": "[{\"id\":\"d6df051c-4fb3-480a-a6c9-d2e3a5e3b3c3\",\"event_type\":\"ritual.unseeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000013\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "p-night three planted → the goal (the first) and two numbered rows 2, 3 with a filled star; \"3 of 3 planted\"; the hint \"Tonight's Shut down starts from these three.\"",
+    "ok": true,
+    "detail": "Draft the quarterly letter ✶ GOAL OF THE DAY Top 3 · 3 of 3 planted All tasks 2 Pay the rent 3 Water the plants Tonight's Shut down starts from these three."
+  },
+  {
+    "name": "p-night …a fourth is refused, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night reload keeps ?day and the three planted",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night the title opens the date sheet; Nov 3 → ?day=2026-11-03, title \"Tue, Nov 3\" and \"in 8 days\"",
+    "ok": true,
+    "detail": "Tue, Nov 3 in 8 days"
+  },
+  {
+    "name": "p-night …the Today pill shows (two days out), the neighbours stay Mon, Nov 2 · Wed, Nov 4",
+    "ok": true,
+    "detail": "Mon, Nov 2 Today Wed, Nov 4"
+  },
+  {
+    "name": "p-night …1 block, first at 9:00 AM; Top 3 · nothing planted (\"Plant picks any time…\"); The day's tasks · 1 with the passport; no Plan tomorrow",
+    "ok": true,
+    "detail": "Top 3 · nothing planted All tasks Plant picks any time, or leave it to that evening"
+  },
+  {
+    "name": "p-night nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night the Today pill → Today (no ?day), its own page again",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night ‹ → Yesterday: title \"Yesterday\", \"Sun, Oct 25\" beside it; no Today pill; ‹ Sat, Oct 24 · Today ›",
+    "ok": true,
+    "detail": "Sat, Oct 24 Today"
+  },
+  {
+    "name": "p-night …the day panel: 3 blocks, \"1 of 3 done\", the bar, no Add a block; no Plan tomorrow",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night …the goal card, done: struck, \"Goal of the day · Done 11:00 AM\"",
+    "ok": true,
+    "detail": "Write up the lecture 6 summary ✶ GOAL OF THE DAY · DONE 11:00 AM"
+  },
+  {
+    "name": "p-night …Top 3 · 2 of 3 done: the CV report (2, ticked, 4:20 PM) and the slipped paper question (3, Slipped, Move ▾)",
+    "ok": true,
+    "detail": "Write up the lecture 6 summary ✶ GOAL OF THE DAY · DONE 11:00 AM Top 3 · 2 of 3 done All tasks 2 Submit the CV lab report 4:20 PM 3 Pick three past-paper questions Slipped Move ▾"
+  },
+  {
+    "name": "p-night …Also done · 2 (Reply to Dr. Hany, Laundry); Left open · 1 (Book the dentist) with Move ▾",
+    "ok": true,
+    "detail": "Also done · 2 Reply to Dr. Hany 9:15 AM Laundry 6:30 PM"
+  },
+  {
+    "name": "p-night …read-only: no stars, an open row's check can't be ticked",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night …the day's line (stamp, the sentence in italics) with Open journal; Routines · 2/3",
+    "ok": true,
+    "detail": "The day's line Open journal SUN OCT 25 · 9:40 PM A slow, good Sunday. Optimisation finally clicked, and the dentist can wait."
+  },
+  {
+    "name": "p-night nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-night nothing runs sideways",
+    "ok": true,
+    "detail": "{\"sw\":390,\"iw\":390}"
+  },
+  {
+    "name": "p-night …✓ on a finished row reopens it (status todo) with Undo",
+    "ok": true,
+    "detail": "Submit the CV lab report:todo"
+  },
+  {
+    "name": "p-night …Move ▾ → Today moves the slipped pick to today",
+    "ok": true,
+    "detail": "2026-10-26T06:00:00.000Z"
+  },
+  {
+    "name": "p-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-empty Wed 28: \"Wednesday\"-less title \"Wed, Oct 28 · in 2 days\", the panel says On the calendar · Nothing yet, Free all day + Add a block",
+    "ok": true,
+    "detail": "On the calendar Nothing yet ☀ ☾ 8am 12pm 4pm 8pm Free all day Add a block"
+  },
+  {
+    "name": "p-empty …Wednesday's tasks · 0: \"Nothing else on this day yet\" and an add row that opens capture",
+    "ok": true,
+    "detail": "Wednesday's tasks · 0 Nothing else on this day yet Add a task for Wednesday"
+  },
+  {
+    "name": "p-empty no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-seeded last night's seed is Tomorrow's goal card, 1 of 3 planted; no Plan tomorrow card",
+    "ok": true,
+    "detail": "Pay the rent ✶ GOAL OF THE DAY Top 3 · 1 of 3 planted All tasks Plant a second · ☆ a task below Tonight's Shut down starts from these three."
+  },
+  {
+    "name": "p-seeded no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-plan Plan → the evening ritual (Shut down) opens over Tomorrow",
+    "ok": true,
+    "detail": "Shut down Mon 26 Oct · 0 done Sweep · 5 left Roll all to tomorrow Deliver the MVP of the forecasting app Top 3 Tomorrow "
+  },
+  {
+    "name": "p-plan no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day Today is Today's own page: \"Monday, October 26\", the Now card, the rituals rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day › → Tomorrow (?day=2026-10-27): title \"Tomorrow\" with \"Tuesday, October 27\" beside it",
+    "ok": true,
+    "detail": "Tomorrow Tuesday, October 27"
+  },
+  {
+    "name": "d-day …no Today chip one day out; the summary \"5 tasks · 2 blocks · not planned\"; the add pill for the day",
+    "ok": true,
+    "detail": "5 tasks · 2 blocks · not planned"
+  },
+  {
+    "name": "d-day …the Now card's ribbon is the day's: 2 blocks, no now line; the list has Dentist and Team sync, Calendar → on that date",
+    "ok": true,
+    "detail": "10:00 AM Dentist 1:00 PM Team sync Calendar →"
+  },
+  {
+    "name": "d-day …Tomorrow's three · 0 of 3 planted (no goal card); Tomorrow's tasks · 5 in time order",
+    "ok": true,
+    "detail": "Tomorrow's three 0 of 3 planted Plan tomorrow picks the three · or ☆ below."
+  },
+  {
+    "name": "d-day …the rail: Rituals (the Shut down line + Plan tomorrow), Routines · 0/3 read-only",
+    "ok": true,
+    "detail": "Rituals Tonight's Shut down starts from these three. Plan tomorrow Routines · 0/3 Glass of water Vitamins Tidy the desk"
+  },
+  {
+    "name": "d-day nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day ☆ on \"Pay the rent\" → ritual.seeded for 2026-10-27",
+    "ok": true,
+    "detail": "[{\"id\":\"fb23c8f2-4386-4721-bb81-3e72ee526c30\",\"event_type\":\"ritual.seeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000013\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "d-day …it is the goal card (taped, \"Goal of the day\"), 1 of 3 planted, the Plan tomorrow button gone",
+    "ok": true,
+    "detail": "{\"goal\":1,\"goalTxt\":\"Pay the rent ✶ GOAL OF THE DAY\",\"three\":\"Tomorrow's three 1 of 3 planted Pay the rent ✶ GOAL OF THE DAY Tonight's Shut down starts from these three.\",\"planBtn\":0}"
+  },
+  {
+    "name": "d-day …Ctrl+Z (the global undo) → ritual.unseeded, the row goes back",
+    "ok": true,
+    "detail": "[{\"id\":\"253693d0-2f22-46d1-a516-40d271441620\",\"event_type\":\"ritual.unseeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000013\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "d-day three planted → the goal and two rows, \"3 of 3 planted\", the hint",
+    "ok": true,
+    "detail": "Tomorrow's three 3 of 3 planted Draft the quarterly letter ✶ GOAL OF THE DAY Pay the rent ★ Water the plants ★ Tonight's Shut down starts from these three."
+  },
+  {
+    "name": "d-day …a fourth is refused, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day reload keeps ?day and the three planted",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day Shift+→ → Wednesday 28",
+    "ok": true,
+    "detail": "http://localhost:5263/today?day=2026-10-28"
+  },
+  {
+    "name": "d-day Shift+← twice → Today: the param is gone, Today's own page",
+    "ok": true,
+    "detail": "http://localhost:5263/today"
+  },
+  {
+    "name": "d-day the date opens the picker; Nov 3 → ?day=2026-11-03: \"Tue, Nov 3\" with \"in 8 days\", the Today chip, the picker closed",
+    "ok": true,
+    "detail": "Tue, Nov 3 in 8 days"
+  },
+  {
+    "name": "d-day …the passport's block on the ribbon; The day's tasks · 1; Top 3 asks to plant",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day yesterday: \"Yesterday\" with \"Sunday, October 25\"; the Today chip; summary \"4 done · 2 slipped · routines 2/3\"; no add pill",
+    "ok": true,
+    "detail": "4 done · 2 slipped · routines 2/3"
+  },
+  {
+    "name": "d-day …the ribbon has the day's 3 blocks; the goal card done (\"Done 11:00 AM\", struck); Top 3 · 2 of 3 done",
+    "ok": true,
+    "detail": "Top 3 2 of 3 done Write up the lecture 6 summary ✶ GOAL OF THE DAY Done 11:00 AM ✓ Submit the CV lab report 4:20 PM Pick three past-paper questions Slipped Move ▾"
+  },
+  {
+    "name": "d-day …the CV row ticked (4:20 PM), the paper question Slipped with Move ▾ and no tickable box; Also done · 2; Left open · 1 with Move ▾",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …the rail: the day's line (italic, stamp, Open journal), Routines · 2/3; no rituals, no stars",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-day …✓ reopens a finished row (status todo)",
+    "ok": true,
+    "detail": "Submit the CV lab report:todo"
+  },
+  {
+    "name": "d-day …Move ▾ → Today moves \"Book the dentist\" to today",
+    "ok": true,
+    "detail": "2026-10-26T06:00:00.000Z"
+  },
+  {
+    "name": "d-day the Today chip → Today's page",
+    "ok": true,
+    "detail": "http://localhost:5263/today"
+  },
+  {
+    "name": "d-day no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night Today is Today's own page: \"Monday, October 26\", the Now card, the rituals rail",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night › → Tomorrow (?day=2026-10-27): title \"Tomorrow\" with \"Tuesday, October 27\" beside it",
+    "ok": true,
+    "detail": "Tomorrow Tuesday, October 27"
+  },
+  {
+    "name": "d-night …no Today chip one day out; the summary \"5 tasks · 2 blocks · not planned\"; the add pill for the day",
+    "ok": true,
+    "detail": "5 tasks · 2 blocks · not planned"
+  },
+  {
+    "name": "d-night …the Now card's ribbon is the day's: 2 blocks, no now line; the list has Dentist and Team sync, Calendar → on that date",
+    "ok": true,
+    "detail": "10:00 AM Dentist 1:00 PM Team sync Calendar →"
+  },
+  {
+    "name": "d-night …Tomorrow's three · 0 of 3 planted (no goal card); Tomorrow's tasks · 5 in time order",
+    "ok": true,
+    "detail": "Tomorrow's three 0 of 3 planted Plan tomorrow picks the three · or ☆ below."
+  },
+  {
+    "name": "d-night …the rail: Rituals (the Shut down line + Plan tomorrow), Routines · 0/3 read-only",
+    "ok": true,
+    "detail": "Rituals Tonight's Shut down starts from these three. Plan tomorrow Routines · 0/3 Glass of water Vitamins Tidy the desk"
+  },
+  {
+    "name": "d-night nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night ☆ on \"Pay the rent\" → ritual.seeded for 2026-10-27",
+    "ok": true,
+    "detail": "[{\"id\":\"6420db63-c845-4d90-ad92-96f4a16b2ab3\",\"event_type\":\"ritual.seeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000013\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "d-night …it is the goal card (taped, \"Goal of the day\"), 1 of 3 planted, the Plan tomorrow button gone",
+    "ok": true,
+    "detail": "{\"goal\":1,\"goalTxt\":\"Pay the rent ✶ GOAL OF THE DAY\",\"three\":\"Tomorrow's three 1 of 3 planted Pay the rent ✶ GOAL OF THE DAY Tonight's Shut down starts from these three.\",\"planBtn\":0}"
+  },
+  {
+    "name": "d-night …Ctrl+Z (the global undo) → ritual.unseeded, the row goes back",
+    "ok": true,
+    "detail": "[{\"id\":\"5afbc3f1-7cae-4eb9-af6e-3abfe9232717\",\"event_type\":\"ritual.unseeded\",\"entity_type\":\"task\",\"entity_id\":\"10000000-0000-4000-8000-000000000013\",\"payload\":{\"ritual\":\"evening\",\"step\":\"seeds\",\"for_date\":\"2026-10-27\",\"date\":\"2026-10-26\"}}]"
+  },
+  {
+    "name": "d-night three planted → the goal and two rows, \"3 of 3 planted\", the hint",
+    "ok": true,
+    "detail": "Tomorrow's three 3 of 3 planted Draft the quarterly letter ✶ GOAL OF THE DAY Pay the rent ★ Water the plants ★ Tonight's Shut down starts from these three."
+  },
+  {
+    "name": "d-night …a fourth is refused, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night reload keeps ?day and the three planted",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night Shift+→ → Wednesday 28",
+    "ok": true,
+    "detail": "http://localhost:5263/today?day=2026-10-28"
+  },
+  {
+    "name": "d-night Shift+← twice → Today: the param is gone, Today's own page",
+    "ok": true,
+    "detail": "http://localhost:5263/today"
+  },
+  {
+    "name": "d-night the date opens the picker; Nov 3 → ?day=2026-11-03: \"Tue, Nov 3\" with \"in 8 days\", the Today chip, the picker closed",
+    "ok": true,
+    "detail": "Tue, Nov 3 in 8 days"
+  },
+  {
+    "name": "d-night …the passport's block on the ribbon; The day's tasks · 1; Top 3 asks to plant",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night yesterday: \"Yesterday\" with \"Sunday, October 25\"; the Today chip; summary \"4 done · 2 slipped · routines 2/3\"; no add pill",
+    "ok": true,
+    "detail": "4 done · 2 slipped · routines 2/3"
+  },
+  {
+    "name": "d-night …the ribbon has the day's 3 blocks; the goal card done (\"Done 11:00 AM\", struck); Top 3 · 2 of 3 done",
+    "ok": true,
+    "detail": "Top 3 2 of 3 done Write up the lecture 6 summary ✶ GOAL OF THE DAY Done 11:00 AM ✓ Submit the CV lab report 4:20 PM Pick three past-paper questions Slipped Move ▾"
+  },
+  {
+    "name": "d-night …the CV row ticked (4:20 PM), the paper question Slipped with Move ▾ and no tickable box; Also done · 2; Left open · 1 with Move ▾",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …the rail: the day's line (italic, stamp, Open journal), Routines · 2/3; no rituals, no stars",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night nothing only Today has: no Now card, no ritual card or panel, no Overdue, no Worth a look",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-night …✓ reopens a finished row (status todo)",
+    "ok": true,
+    "detail": "Submit the CV lab report:todo"
+  },
+  {
+    "name": "d-night …Move ▾ → Today moves \"Book the dentist\" to today",
+    "ok": true,
+    "detail": "2026-10-26T06:00:00.000Z"
+  },
+  {
+    "name": "d-night the Today chip → Today's page",
+    "ok": true,
+    "detail": "http://localhost:5263/today"
+  },
+  {
+    "name": "d-night no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-seeded last night's seed is Tomorrow's goal card, 1 of 3 planted, no Plan tomorrow button",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-seeded no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-empty Wed 28: \"Wed, Oct 28 · in 2 days\", \"Nothing on the calendar\", Wednesday's tasks · 0, \"Nothing planned yet\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-empty no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "design look A drawn from the design page: 6 phones, 4 desktops",
+    "ok": true,
+    "detail": ""
+  }
+]
