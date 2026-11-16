@@ -81,6 +81,13 @@ adb shell dumpsys appwidget | grep -o "$pkg/com.kaisflow.garden.widgets.KfWidget
   adb shell dumpsys package "$pkg" | grep -o 'android.permission.POST_PROMOTED_NOTIFICATIONS' | sort -u
   adb shell dumpsys notification | grep -oE "mId='lock_?screen'.{0,600}" | sort -u
   adb logcat -d | grep -E 'KfLock|FATAL EXCEPTION' | tail -20; } > shots/lockscreen.txt 2>&1
+# The Focus widget redrawn to Focus D3 (v1.6.4 F6: segment bar bitmap, no ring). A widget only draws once it is placed on a
+# home screen, and none is here (signed out, nothing placed), so this run can't show running / break / idle: it proves
+# the build (the layouts, FocusBar, its unit test) and that nothing in the widget code threw while the app ran. The three
+# states are drawn in docs/log/assets/v164-focus-widget/ and checked on a phone (the handoff's manual list).
+adb logcat -d | grep -E 'KfWidget|FocusBar|FATAL EXCEPTION' | tail -20 > shots/focus-widget.txt
+cat shots/focus-widget.txt
+if grep -qE 'KfWidget: draw focus|FocusBar' shots/focus-widget.txt; then echo 'FAIL: the Focus widget threw while drawing'; exit 1; fi
 ls -la shots
 [ "${webview_top:-0}" -gt 0 ] || { echo 'FAIL: the WebView starts under the status bar'; exit 1; }
 if [ -n "$bar" ] && [ "$bar" -gt 0 ] && [ "$webview_top" -ge $((bar * 2)) ]; then

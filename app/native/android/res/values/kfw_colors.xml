@@ -19,6 +19,8 @@
     <color name="kfw_sage_text">#4D6650</color>
     <color name="kfw_lavender_text">#5A5170</color>
     <color name="kfw_moss">#7A946E</color>
+    <!-- acc-sage: the breaks on the Focus bar -->
+    <color name="kfw_sage">#8A9A7E</color>
     <color name="kfw_block_lavender">#33A8A0BE</color>
     <color name="kfw_check_border">#88816E</color>
     <color name="kfw_check_fill">#4D6650</color>
