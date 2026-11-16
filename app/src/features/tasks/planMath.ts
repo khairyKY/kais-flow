@@ -76,6 +76,7 @@ export function planGlossary(weekend: readonly number[]): { label: string; means
   const first = daysToWeekend(0, weekend)
   const nine = clockText(DEFAULT_TIME)
   return [
+    { label: 'Pick date & time…', means: 'any day, and a time if you want one.' },
     { label: 'Today', means: `today, at the task’s own time if it has one, else ${nine}.` },
     { label: 'Next free slot', means: `ASAP: the first gap on your calendar (${clockRange('08:00', '20:00')}) that fits the task’s length — today if there is one, else the next day that has one. You see it and confirm; Another time offers the next gap.` },
     { label: 'Tomorrow, first thing', means: `tomorrow at ${nine}, the start of your day. Swipe right and the 2 key do the same.` },
@@ -84,7 +85,6 @@ export function planGlossary(weekend: readonly number[]): { label: string; means
       means: first == null ? 'not offered — you have no weekend set.' : `the first day of your weekend (${weekendLabel(weekend)}) at ${nine} — later in the weekend, the next one. Not offered when that is today or tomorrow (Today and Tomorrow cover it).`,
     },
     { label: 'Next week', means: `Monday of next week at ${nine} (on a Sunday, the Monday after tomorrow).` },
-    { label: 'Pick date & time…', means: 'any day, and a time if you want one.' },
     { label: 'Replan', means: 'what Plan says once a task is overdue. A calendar block of it that is already over comes off the calendar.' },
   ]
 }
@@ -102,8 +102,8 @@ export interface PlanContext {
   clear?: boolean
 }
 
-/** The Plan list, in order: Today · Next free slot · Tomorrow, first thing · This weekend · Next week
- * · Pick date & time… (· Someday · No date where the caller has them). The dated ones are the date
+/** The Plan list, in order: Pick date & time… (Kai 2026-11-07: first) · Today · Next free slot · Tomorrow,
+ * first thing · This weekend · Next week (· Someday · No date where the caller has them). The dated ones are the date
  * picker's quick picks, so no two land on one day (with a Sat + Sun weekend, on a Saturday This
  * weekend is today and drops out; on a Friday it is tomorrow and drops out). */
 export function planOptions(now: Date, c: PlanContext): PlanOption[] {
@@ -112,7 +112,7 @@ export function planOptions(now: Date, c: PlanContext): PlanOption[] {
   const ownTime = c.task?.due_at ? cairoTimeKey(new Date(c.task.due_at)) : DEFAULT_TIME
   const own = clockText(ownTime)
   const nine = clockText(DEFAULT_TIME)
-  const out: PlanOption[] = []
+  const out: PlanOption[] = [{ key: 'pick', label: 'Pick date & time…', hint: '', means: 'any day — and a time, if you want one' }]
   for (const q of quickPicks(now, true, c.weekend)) {
     const at = `${dayHint(q.day, today)} · `
     const base = { current: q.day === current }
@@ -128,7 +128,6 @@ export function planOptions(now: Date, c: PlanContext): PlanOption[] {
     else if (q.key === 'weekend') out.push({ key: 'weekend', label: 'This weekend', hint: at + nine, means: `the first day of your weekend (${weekendLabel(c.weekend)})`, iso: q.iso, ...base })
     else out.push({ key: 'nextweek', label: 'Next week', hint: at + nine, means: 'Monday of next week', iso: q.iso, ...base })
   }
-  out.push({ key: 'pick', label: 'Pick date & time…', hint: '', means: 'any day — and a time, if you want one' })
   if (c.someday) out.push({ key: 'someday', label: 'Someday', hint: '', means: 'no date — parked until you pull it up' })
   if (c.clear) out.push({ key: 'none', label: 'No date', hint: '', means: 'takes the date off' })
   return out

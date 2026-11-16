@@ -142,6 +142,63 @@ for (const view of ['phone', 'desktop']) {
     await ctx.close()
   }
 }
+
+// the address' task param: the editor (sheet / popover) is open while it is there
+const taskParam = (page) => new URL(page.url()).searchParams.get('task')
+const pathOf = (page) => new URL(page.url()).pathname
+// the page's own scroller, pushed to its very end: a long list, scrolled, is Kai's usual state
+const scrollToEnd = (page) => page.evaluate(() => { const e = document.querySelector('.app-main-content'); if (e) e.scrollTop = e.scrollHeight })
+
+for (const view of ['phone', 'desktop']) {
+  // ═══ 2 · the task editor stays open through an action; Plan lists "Pick date & time…" first ═══
+  if (want('2')) {
+    const phone = view === 'phone'
+    const click = (loc) => (phone ? loc.tap() : loc.click())
+    const editor = (page) => (phone ? page.locator('.kf-bs-fade[role="dialog"]') : page.locator('.tp-pop'))
+    const chips = phone ? '.ts-chips button' : '.tp-pop .ts-chips button'
+    // opens a task from its row on /tasks: a tap on a phone, a click on the title on desktop
+    async function openEditor(page, n) {
+      const row = page.locator(`#task-${id(n)}`)
+      await row.scrollIntoViewIfNeeded()
+      if (phone) await row.tap()
+      else { const b = await row.boundingBox(); await page.mouse.click(b.x + 120, b.y + 20) }
+      await sleep(800)
+    }
+    // [task, the plan choice]: the ones that move a row out from under a scrolled list are the ones that closed it
+    const CASES = [[T.MILK, 'Today'], [T.MILK, 'Someday'], [T.MILK, 'No date'], [T.TOMORROW, 'Someday'], [T.TOMORROW, 'No date'], [T.OMAR, 'Tomorrow']]
+    for (const [n, choice] of CASES) {
+      const { ctx, page, errors } = await open(view, '/tasks')
+      const name = TASKS.find((t) => t.id === id(n)).title
+      const tag = `2 ${view}: ${name} · Plan → ${choice}`
+      await scrollToEnd(page)
+      await sleep(300)
+      await openEditor(page, n)
+      const startPath = pathOf(page)
+      if (taskParam(page) !== id(n)) { check(`${tag}: the task opens in its editor`, false, page.url()); await ctx.close(); continue }
+      await click(page.locator(chips).first())
+      await sleep(600)
+      const items = await page.locator('.kf-plan .kf-as-row').allInnerTexts()
+      if (choice === 'Today' && n === T.MILK) check(`2 ${view}: the Plan menu lists "Pick date & time…" first`, /^Pick date & time/.test((items[0] ?? '').trim()), JSON.stringify(items.map((x) => x.split('\n')[0])))
+      await click(page.locator('.kf-plan .kf-as-row', { hasText: choice }).first())
+      await sleep(1200)
+      check(`${tag}: the editor is still open (task param kept)`, taskParam(page) === id(n), page.url())
+      check(`${tag}: …on the same page, not sent home`, pathOf(page) === startPath, `${startPath} → ${pathOf(page)}`)
+      check(`${tag}: …and on screen`, (await editor(page).count()) >= 1 && (await editor(page).first().isVisible()))
+      if (choice === 'Today' && n === T.MILK && taskParam(page) === id(n)) {
+        await shot(page, `2-${view}-after-plan`)
+        // a second action in the same editor: Priority → P1
+        await click(page.locator(chips, { hasText: 'Priority' }).first())
+        await sleep(500)
+        await click(page.locator('[role="menuitem"], .kf-as-row').filter({ hasText: /Critical|P1|!!!/ }).first())
+        await sleep(1000)
+        check(`2 ${view}: a second action (Priority) and it is still open`, taskParam(page) === id(n) && (await editor(page).count()) >= 1, page.url())
+      }
+      check(`${tag}: no page errors`, errors.length === 0, errors.join(' | '))
+      await ctx.close()
+    }
+  }
+}
+
 await browser.close()
 const bad = results.filter((r) => !r.ok)
 fs.writeFileSync(path.join(OUT, 'results.json'), JSON.stringify(results, null, 1))
