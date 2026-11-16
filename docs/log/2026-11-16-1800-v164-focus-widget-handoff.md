@@ -46,3 +46,8 @@ The home-screen Focus widget (W18 2x2, W20 slim 2x1) no longer draws the ring. I
 5. Let the round end: a break shows "Break", a sage countdown, "After round 1 of N", "Next: <task>", Stop only.
 6. Stop: back to "Start focus". Turn on Hide titles on the home screen: the task reads "Your focus".
 7. Switch the phone to dark mode: the bar and the sage move to the night values without a redraw.
+
+## Run results
+
+- Gate: vitest 206 files / 2874 tests in each of Africa/Cairo, UTC, America/Los_Angeles, Asia/Tokyo; lint 0; build 0; ds:check 0 new.
+- android.yml on this branch: run 43904170183 green (Build APK incl. FocusBarTest, Emulator smoke test). An earlier run, 43903900386, was cancelled by me after I amended the commit message.
