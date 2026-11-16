@@ -578,7 +578,7 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-gs-clover { flex: none; width: 22px; height: auto; margin-top: 8px; filter: var(--shadow-drop-sm); }
 .tp-gs .kf-row-more { width: 36px; height: 36px; margin: 0; }
 
-/* panel rows: Rituals, Overdue / Also open */
+/* panel rows: Rituals, Overdue */
 .tp-prow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 44px; box-sizing: border-box; padding: 0 var(--sp-3); border: none; background: none; font: inherit; font-size: var(--fs-body); color: var(--ink-body); text-align: left; text-decoration: none; cursor: pointer; }
 .tp-pn > .tp-prow + .tp-prow, .tp-pn > * + .tp-prow { border-top: 1px solid var(--line-card); }
 .tp-prow:focus-visible, .tp-fold-btn:focus-visible { outline: none; box-shadow: inset var(--focus-ring); }

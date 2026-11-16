@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { useEffect, useLayoutEffect, useReducer, useRef, useState, type CSSProperties } from 'react'
 import { useNavigate } from 'react-router'
 import { Float } from '../../components/Float'
 import { Checkbox, Star } from '../../components/kit'
@@ -14,8 +14,10 @@ import './taskSheet.css'
 
 // ── The desktop task detail popover (Overlays.dc.html "Task detail · Enter · expands"): a click on a
 // task row opens it under the row — box, title, star; notes; the chips; its subtasks; Delete · Open full ↗. Every
-// edit writes at once (the same controls as the phone sheet, ./TaskFields); Esc, a click outside or a
-// scroll behind closes it; Enter (or Open full ↗) expands to the editor page, /tasks/:id. ──
+// edit writes at once (the same controls as the phone sheet, ./TaskFields); Esc or a click outside closes
+// it, and nothing else does (Kai 2026-11-07: an action in it sent him back to the page — the list
+// re-flowing under a write made the page scroller scroll, and a scroll closed the popover; it now
+// follows its row instead); Enter (or Open full ↗) expands to the editor page, /tasks/:id. ──
 
 const WIDTH = 300
 const GAP = 6
@@ -41,6 +43,10 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
   const ref = useRef<HTMLDivElement>(null)
   const [pos, setPos] = useState<{ left: number; top: number; maxHeight: number } | null>(null)
   const commit = useRef<() => void>(() => {})
+  // The row's last place: a write can move the row to another group, or take it off the page — the
+  // popover then stays where it was.
+  const rowRect = useRef(anchor.rect)
+  const [, onMoved] = useReducer((n: number) => n + 1, 0)
 
   /** Leaves `?task=` (replace: openTask didn't push) — after the typed fields have written. */
   const close = () => {
@@ -63,18 +69,17 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
     const onDown = (e: MouseEvent) => {
       if (!inside(e.target)) closeRef.current()
     }
-    // A scroll behind moves the row away from the popover hanging off it (the menus close the same way).
+    // A scroll behind (or a resize) moves the row the popover hangs off: it follows, it doesn't close.
     const onScroll = (e: Event) => {
-      if (!(e.target instanceof Node && ref.current?.contains(e.target))) closeRef.current()
+      if (!(e.target instanceof Node && ref.current?.contains(e.target))) onMoved()
     }
-    const onResize = () => closeRef.current()
     document.addEventListener('mousedown', onDown)
     window.addEventListener('scroll', onScroll, true)
-    window.addEventListener('resize', onResize)
+    window.addEventListener('resize', onMoved)
     return () => {
       document.removeEventListener('mousedown', onDown)
       window.removeEventListener('scroll', onScroll, true)
-      window.removeEventListener('resize', onResize)
+      window.removeEventListener('resize', onMoved)
     }
   }, [anchor.el])
 
@@ -84,7 +89,8 @@ export function TaskPopover({ id, anchor }: { id: string; anchor: TaskAnchor }) 
     const el = ref.current
     if (!el) return
     const z = uiZoom()
-    const row = { left: anchor.rect.left / z, top: anchor.rect.top / z, bottom: anchor.rect.bottom / z }
+    if (anchor.el.isConnected) rowRect.current = anchor.el.getBoundingClientRect()
+    const row = { left: rowRect.current.left / z, top: rowRect.current.top / z, bottom: rowRect.current.bottom / z }
     // offsetWidth, not the rect: kf-pop's entrance scales the rect while it plays
     const next = placeUnderRow(row, { width: el.offsetWidth, height: el.scrollHeight + 2 }, { width: window.innerWidth / z, height: window.innerHeight / z })
     setPos((p) => (p && p.left === next.left && p.top === next.top && p.maxHeight === next.maxHeight ? p : next))

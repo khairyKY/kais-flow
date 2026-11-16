@@ -1,4 +1,4 @@
-import { useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useLayoutEffect, useMemo, useState, type CSSProperties, type ReactNode, type RefObject } from 'react'
 import { Checkbox } from '../../components/kit'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
@@ -33,6 +33,25 @@ function hueOf(e: CalendarEvent): Hue {
 export const hueVars = (e: CalendarEvent) => {
   const h = hueOf(e)
   return { ['--c' as string]: h.c, ['--ct' as string]: h.ink } as CSSProperties
+}
+
+/** The room a Now card takes over the grid (Kai 2026-11-07: it covered the last hours, unreadable): its
+ * height as `--kf-now-h` on the page root while `on`, for the grid to scroll past (phoneCalendar.css
+ * `.pc.has-now`, CalendarPage `.cal-main.has-now-float`). `ref` is the element the card sits in. */
+export function useNowReserve(ref: RefObject<HTMLElement | null>, on: boolean): void {
+  useLayoutEffect(() => {
+    const el = ref.current
+    if (!on || !el) return
+    const root = document.documentElement.style
+    const set = () => root.setProperty('--kf-now-h', `${el.offsetHeight}px`)
+    set()
+    const watch = new ResizeObserver(set)
+    watch.observe(el)
+    return () => {
+      watch.disconnect()
+      root.removeProperty('--kf-now-h')
+    }
+  }, [ref, on])
 }
 
 /** A meeting link on the event: a captured link (external_ref.url) or the first link in its title. */

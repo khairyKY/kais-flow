@@ -3,7 +3,7 @@
 // "Phone home shows", not on Today), on the real /today page against a MOCKED backend
 // (the dev server runs with VITE_SUPABASE_URL=http://127.0.0.1:9; Playwright answers every REST call). The day
 // is today-looks' (audit.mjs): Monday 26 Oct 2026, 10:40 Cairo (UTC+3, DST until 29 Oct), two lectures, the CNN
-// goal block, the gym, a study group, a Karpathy block; Top 3, Today's tasks, 2 overdue, 6 also open, 5 routines.
+// goal block, the gym, a study group, a Karpathy block; Top 3, Today's tasks, 2 overdue, 6 more open (not drawn on Today since 2026-11-07), 5 routines.
 // The morning ritual was finished at 07:55 (planned), except in today-v2's "nothing planned" scenes, where the
 // Plan my day card takes the Now card's place.
 //   node verify.mjs <outDir> [baseUrl] [playwright-core path]
