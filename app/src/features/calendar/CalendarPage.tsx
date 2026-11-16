@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
-import { useLocation, useNavigate } from 'react-router'
+import { useLocation } from 'react-router'
 import { TASK_PARAM, taskAnchor, useOpenTask } from '../tasks/openTask'
 import { EmojiText } from '../../components/EmojiText'
 import { CalendarGrid, type CalendarGridHandle, type CalendarGridView } from './CalendarGrid'
@@ -42,7 +42,7 @@ import { useAppSettings, updateAppSetting, useCalendarDefaultView } from '../../
 import { daisyAsset } from '../../lib/gardenAssets'
 import { playOnce, reducedMotionNow, useMotionEnabled, useOverlayExit } from '../../lib/motion'
 import { toastUndo } from '../../lib/undo'
-import { slotFields, timeRange, timeText, zoneHour, zoneTimeKey } from './eventTime'
+import { timeRange, timeText, zoneHour, zoneTimeKey } from './eventTime'
 import { PlanningPanel } from './PlanningPanel'
 import { blockedOn, freeGaps, freeLeft, minutesLabel } from './planningMode'
 import { cardDraggable } from './cardDrag'
@@ -56,7 +56,8 @@ import { gcalEditable } from './gcal'
 import { useLinkedEvent } from './linkedEvent'
 import { findBlock } from './series'
 import { uiZoom } from '../../lib/uiScale'
-import { QuickCreate, type QuickCreateKind } from './QuickCreate'
+import { takeOutsidePress, tapSpan, useDraft, type DraftKind } from './createDraft'
+import { openTaskCapture } from '../command-bar/commandBarStore'
 import { VIEW_OPTIONS_KEY, ViewOptionsPopover, readViewOptions, writeViewOptions, type CalViewOptions, type ViewCell } from './ViewOptionsPopover'
 import { onPrefApplied } from '../../lib/prefs'
 import { fitDays, fitHours, gridMinWidth, MIN_COL_W, RAIL_SPLIT_W, RAIL_TAB_W, railYields, RESPONSIVE_COL_W, TIME_AXIS_W, visibleDayCount, ZONE2_W } from './weekFit'
@@ -126,12 +127,6 @@ function rangeLabel(start: Date, end: Date, viewKind: ViewKind, short = false): 
   if (viewKind === 'day') return fmt(first, { weekday: 'short', month: 'short', day: 'numeric' })
   const endStr = first.getUTCMonth() === last.getUTCMonth() ? String(last.getUTCDate()) : fmt(last, { month: 'short', day: 'numeric' })
   return `${fmt(first, { month: 'short', day: 'numeric' })} — ${endStr}`
-}
-
-interface QuickCreateState {
-  kind: QuickCreateKind
-  slot: { date: string; start: string; end: string; allDay: boolean } | null
-  anchor: { x: number; y: number } | null
 }
 
 /** The block a click opened in the §5 popover: what it was (an edit can re-anchor a repeat under it —
@@ -472,7 +467,6 @@ export function CalendarPage() {
 
 function DesktopCalendar() {
   const openTask = useOpenTask()
-  const navigate = useNavigate()
   const startFocus = useStartFocus()
   // Repeating events (migration 0061) are expanded twice over: `events` covers the year around
   // today (the rail, Plan's free slots, the footer); `gridEvents` the range the grid shows, wherever
@@ -518,7 +512,6 @@ function DesktopCalendar() {
   // Time Slots (0073): ⋯ on a task row inside a slot — that task's own menu (Out of the slot…).
   const [slotMenu, setSlotMenu] = useState<{ taskId: string; x: number; y: number } | null>(null)
   const slotMenuTask = slotMenu ? tasks.find((t) => t.id === slotMenu.taskId) : undefined
-  const [quickCreate, setQuickCreate] = useState<QuickCreateState | null>(null)
   // The Lists section (folded by default): any smart list / project / area / domain, minus what
   // Overdue and Today already hold. This Week by default — Today has its own section now.
   const [scope, setScope] = useState<RailScope>({ kind: 'smart', id: 'week' })
@@ -810,34 +803,36 @@ function DesktopCalendar() {
     if (event?.task_id) openTask(event.task_id)
   }
 
-  // Empty-slot click/drag → Editor 2a's quick-create popover, kind defaults to Event.
-  // T-4 (Polish F2b): QuickCreate's fields are Cairo wall-clock; slotFields converts the slot so
-  // the form shows the clicked time on Cairo's clock and saves that exact instant back.
+  // Empty-slot click/drag → a draft block right there, its title typed in place (createDraft; Kai 2026-11-16).
+  // A plain click is an hour from the quarter it landed in; a drag keeps exactly what was dragged.
   // p7e A4: with ⌘/Ctrl held it's a Task there (Akiflow's ⌘-click), its block on that slot.
   function handleGridCreate(info: { start: string; end: string; allDay: boolean; x: number; y: number; task?: boolean; dragged?: boolean }) {
-    // The grid snaps to 15 min (Kai 2026-10-03), so a plain click selects one quarter; it still
-    // makes the half-hour it always did. A drag keeps exactly what was dragged — one quarter too
-    // (Kai 2026-10-21: a 15-minute drag used to come out 30).
     setPicked([])
-    const startMs = new Date(info.start).getTime()
-    const end = !info.allDay && !info.dragged && new Date(info.end).getTime() - startMs <= 15 * 60000 ? new Date(startMs + 30 * 60000).toISOString() : info.end
-    setQuickCreate({
-      kind: info.task ? 'task' : 'event',
-      slot: slotFields(info.start, end, info.allDay),
-      anchor: { x: info.x, y: info.y },
-    })
+    // The press that just settled a draft was this click: it only closed it.
+    const closedOne = takeOutsidePress()
+    if (closedOne && !info.dragged) return gridRef.current?.unselect()
+    const span = info.allDay || info.dragged ? { start: info.start, end: info.end, allDay: info.allDay } : tapSpan(info.start)
+    if (selfSelect.current) return // our own select() below, coming back
+    const open = useDraft.getState().draft
+    if (open && Date.parse(open.start) === Date.parse(span.start) && Date.parse(open.end) === Date.parse(span.end)) return
+    useDraft.getState().open({ ...span, kind: info.task ? 'task' : 'event' })
+    // the click's quarter is selected: select the hour instead, so the mirror is the block the draft is
+    if (!info.dragged) selectDraft(span)
+  }
+  /** The grid's selection (its mirror carries the draft's title) set to the draft's own span. */
+  const selfSelect = useRef(false)
+  function selectDraft(span: { start: string; end: string; allDay: boolean }) {
+    selfSelect.current = true
+    try { gridRef.current?.select(span.start, span.end, span.allDay) } finally { selfSelect.current = false }
   }
 
-  // Right-click empty grid space → Editor 2a/2b, kind pre-picked from the menu.
+  // Right-click empty grid space → a draft there, its kind pre-picked from the menu.
   function handleGridContextMenu(iso: string, allDay: boolean, x: number, y: number) {
-    function openKind(kind: QuickCreateKind) {
+    function openKind(kind: DraftKind) {
       setContextMenu(null)
-      const end = new Date(new Date(iso).getTime() + (allDay ? 24 * 60 : 30) * 60000)
-      setQuickCreate({
-        kind,
-        slot: slotFields(iso, end.toISOString(), allDay),
-        anchor: { x, y },
-      })
+      const span = allDay ? { start: iso, end: new Date(Date.parse(iso) + 24 * 60 * 60000).toISOString(), allDay } : tapSpan(iso)
+      useDraft.getState().open({ ...span, kind })
+      selectDraft(span)
     }
     setContextMenu({
       items: [
@@ -849,9 +844,8 @@ function DesktopCalendar() {
     })
   }
 
-  function openQuickAddTask(e: React.MouseEvent) {
-    setQuickCreate({ kind: 'task', slot: null, anchor: { x: e.clientX, y: e.clientY } })
-  }
+  // "Quick add task": the capture bar, as every other add-a-task field opens it.
+  const openQuickAddTask = () => openTaskCapture()
 
   // A rail card dropped on the grid: a task's block goes there (its missed block moves — never a
   // second one); an inbox item is filed and blocked there. Each with one Undo.
@@ -1182,8 +1176,8 @@ function DesktopCalendar() {
     if (was.planning !== planning) playOnce(mainRef.current, 'view', 220)
     else if (was.railFolded && !railFolded && !planning) playOnce(railRef.current, 'unfold', 180)
   }, [planning, railFolded])
-  const qcExit = useOverlayExit(!!quickCreate, 100)
-  const qcShown = useKept(quickCreate ? { ...quickCreate, key: JSON.stringify([quickCreate.kind, quickCreate.slot, quickCreate.anchor]) } : null, qcExit.mounted)
+  // The draft's selection mirror goes when the draft is saved or discarded (FullCalendar keeps a selection till told).
+  useEffect(() => useDraft.subscribe((s, prev) => { if (prev.draft && !s.draft) gridRef.current?.unselect() }), [])
 
   return (
     <>
@@ -1579,25 +1573,6 @@ function DesktopCalendar() {
         />
       )}
       {plan && <ContextMenu items={planFor(plan.target)} position={{ x: plan.x, y: plan.y }} onClose={() => setPlan(null)} />}
-      {qcShown && (
-        <QuickCreate
-          key={qcShown.key}
-          initialKind={qcShown.kind}
-          slot={qcShown.slot}
-          anchor={qcShown.anchor}
-          closing={qcExit.closing}
-          onClose={() => {
-            setQuickCreate(null)
-            gridRef.current?.unselect()
-          }}
-          // Editor 1b–1d: "More options ↗" is the full create page, with what was typed.
-          onExpand={(draft) => {
-            setQuickCreate(null)
-            gridRef.current?.unselect()
-            void navigate('/new', { state: { draft } })
-          }}
-        />
-      )}
       {slotMenu && slotMenuTask && (
         <TaskMenu
           task={slotMenuTask}

@@ -1,0 +1,272 @@
+[
+  {
+    "name": "d-open the week opens with the day's \"Standup\" and no draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-click a click on an empty slot opens a draft block with the title focused (the caret blinks there)",
+    "ok": true,
+    "detail": "{\"value\":\"\",\"focused\":true,\"top\":461,\"bottom\":479.75,\"h\":89,\"fs\":15,\"time\":\"14:00–15:00 · Event\"}"
+  },
+  {
+    "name": "d-click the draft is an hour tall (two 30-minute lanes) and reads its time and kind",
+    "ok": true,
+    "detail": "89 vs 90 · 14:00–15:00 · Event"
+  },
+  {
+    "name": "d-enter 1 click + type + Enter saves a 1-hour event right there (14:00–15:00), default colour",
+    "ok": true,
+    "detail": "{\"id\":\"d512f38b-1d23-45a1-b8d4-43813343547d\",\"title\":\"Dinner with family\",\"starts_at\":\"2026-11-16T12:00:00.000Z\",\"ends_at\":\"2026-11-16T13:00:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:06.167Z\",\"updated_at\":\"2026-11-16T10:09:06.167Z\"}"
+  },
+  {
+    "name": "d-enter the count: 1 tap, Enter, no other control",
+    "ok": true,
+    "detail": "1 tap, keys Enter"
+  },
+  {
+    "name": "d-enter the draft is gone and the saved block is drawn where it was",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-enter no popover, no sheet, no \"More options\"",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-undo Undo takes the new event back (toast button, else Ctrl+Z)",
+    "ok": true,
+    "detail": "toast · {\"id\":\"d512f38b-1d23-45a1-b8d4-43813343547d\",\"title\":\"Dinner with family\",\"starts_at\":\"2026-11-16T12:00:00.000Z\",\"ends_at\":\"2026-11-16T13:00:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:06.167Z\",\"updated_at\":\"2026-11-16T10:09:06.167Z\",\"deleted_at\":\"2026-11-16T10:09:07.302Z\"}"
+  },
+  {
+    "name": "d-undo and the block leaves the grid",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-drag a drag over 15:00–17:00 opens a draft there, focused",
+    "ok": true,
+    "detail": "{\"value\":\"\",\"focused\":true,\"top\":461.0510559082031,\"bottom\":479.801025390625,\"h\":178.99996948242188,\"fs\":15,\"time\":\"15:00–17:00 · Event\"}"
+  },
+  {
+    "name": "d-drag Enter saves exactly the dragged range",
+    "ok": true,
+    "detail": "{\"id\":\"4b736fcb-6f82-4e8d-b337-c1643d88500e\",\"title\":\"Workshop\",\"starts_at\":\"2026-11-16T13:00:00.000Z\",\"ends_at\":\"2026-11-16T15:00:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:09.383Z\",\"updated_at\":\"2026-11-16T10:09:09.383Z\"}"
+  },
+  {
+    "name": "d-drag a drag of one quarter stays a quarter (no widening to an hour)",
+    "ok": true,
+    "detail": "{\"id\":\"846af37b-c55a-480a-a4fc-3dd03335309a\",\"title\":\"Quick sync\",\"starts_at\":\"2026-11-16T16:00:00.000Z\",\"ends_at\":\"2026-11-16T16:15:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:10.782Z\",\"updated_at\":\"2026-11-16T10:09:10.782Z\"}"
+  },
+  {
+    "name": "d-esc Esc discards the draft, nothing is written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-esc and the selection mirror is gone from the grid",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-empty-outside (draft open)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-empty-outside a press outside an empty draft discards it, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-titled-outside a press on another empty slot saves the titled draft there (10:00–11:00)",
+    "ok": true,
+    "detail": "{\"id\":\"9331b772-d64f-4304-a0f1-6b121daed93c\",\"title\":\"Saved by a press\",\"starts_at\":\"2026-11-16T08:00:00.000Z\",\"ends_at\":\"2026-11-16T09:00:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:14.090Z\",\"updated_at\":\"2026-11-16T10:09:14.090Z\"}"
+  },
+  {
+    "name": "d-titled-outside …and does not open the next draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-enter-empty Enter on an empty title does nothing: the draft stays, focused",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-task the draft reads \"Task\" beside the time once the title says so",
+    "ok": true,
+    "detail": "12:00–13:00 · Task"
+  },
+  {
+    "name": "d-task \"Study Crypto task\" makes a task (marker off its title) due and blocked on that hour",
+    "ok": true,
+    "detail": "{\"tk\":{\"title\":\"Study Crypto\",\"due\":\"2026-11-16T10:00:00.000Z\"},\"blk\":[\"2026-11-16T10:00:00.000Z\",\"2026-11-16T11:00:00.000Z\"]}"
+  },
+  {
+    "name": "d-task a leading \"t \" makes a task too, and its !! is read",
+    "ok": true,
+    "detail": "{\"title\":\"Buy milk\",\"priority\":2}"
+  },
+  {
+    "name": "d-block \"… block\" makes a Time block",
+    "ok": true,
+    "detail": "\"time_block\""
+  },
+  {
+    "name": "d-menu right-click → New Time Block opens a draft that reads \"Time block\"",
+    "ok": true,
+    "detail": "21:00–22:00 · Time block"
+  },
+  {
+    "name": "d-menu …and saves a Time block",
+    "ok": true,
+    "detail": "\"time_block\""
+  },
+  {
+    "name": "d-allday a drag over two days of the all-day band opens a draft there, focused",
+    "ok": true,
+    "detail": "{\"value\":\"\",\"focused\":true,\"top\":119.75,\"bottom\":144.75,\"h\":0,\"fs\":16,\"time\":\"Event\"}"
+  },
+  {
+    "name": "d-allday …and Enter saves an all-day event over both days (Tue 17 – Wed 18)",
+    "ok": true,
+    "detail": "{\"id\":\"d5017f6b-15ef-4dbb-a20d-71a8eeb80c98\",\"title\":\"Offsite\",\"starts_at\":\"2026-11-17T00:00:00.000Z\",\"ends_at\":\"2026-11-19T00:00:00.000Z\",\"all_day\":true,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:23.198Z\",\"updated_at\":\"2026-11-16T10:09:23.198Z\"}"
+  },
+  {
+    "name": "d-ctrl Ctrl-click opens a draft that reads \"Task\"",
+    "ok": true,
+    "detail": "{\"value\":\"\",\"focused\":true,\"top\":461,\"bottom\":479.75,\"h\":89,\"fs\":15,\"time\":\"13:00–14:00 · Task\"}"
+  },
+  {
+    "name": "d-ctrl …and saves a task blocked there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-details a click on the saved block opens its details (the existing popover: an editable title), not a create form",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "d-gone /new is no create page any more",
+    "ok": true,
+    "detail": "http://localhost:5262/new"
+  },
+  {
+    "name": "d-errors no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "r-rail \"Quick add task…\" opens the capture bar with its field focused (no create popover)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-open the day opens with its Standup and no draft",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-tap a tap on an empty slot opens a draft with its title field focused",
+    "ok": true,
+    "detail": "{\"value\":\"\",\"focused\":true,\"top\":206,\"bottom\":228,\"h\":64,\"fs\":16,\"time\":\"15:00–16:00 · Event\"}"
+  },
+  {
+    "name": "p-tap the field was focused inside the tap's own click task, with user activation (iOS raises the keyboard for that and nothing later)",
+    "ok": true,
+    "detail": "[{\"cls\":\"kf-draft-input\",\"inClick\":true,\"active\":true}]"
+  },
+  {
+    "name": "p-tap an hour tall (64px) and reads its time and kind",
+    "ok": true,
+    "detail": "64 · 15:00–16:00 · Event"
+  },
+  {
+    "name": "p-tap the field is 16px (iOS does not zoom the page on focus)",
+    "ok": true,
+    "detail": "16px"
+  },
+  {
+    "name": "p-tap the field sits above a 300px keyboard (kept in view)",
+    "ok": true,
+    "detail": "206–228"
+  },
+  {
+    "name": "p-tap no sheet opened",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-enter 1 tap + type + Enter saves a 1-hour event there (15:00–16:00)",
+    "ok": true,
+    "detail": "{\"id\":\"012f9c2f-6d3b-4b27-95a4-b968e511d534\",\"title\":\"Dinner with family\",\"starts_at\":\"2026-11-16T13:00:00.000Z\",\"ends_at\":\"2026-11-16T14:00:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:06.363Z\",\"updated_at\":\"2026-11-16T10:09:06.363Z\"}"
+  },
+  {
+    "name": "p-enter the count: 1 tap, Enter, no button",
+    "ok": true,
+    "detail": "1 tap, keys Enter"
+  },
+  {
+    "name": "p-enter the saved block is drawn where the draft was",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-undo Undo takes it back",
+    "ok": true,
+    "detail": "\"2026-11-16T10:09:07.444Z\""
+  },
+  {
+    "name": "p-esc Esc (and Android Back) discards the draft, nothing written",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-empty-outside a tap elsewhere on an empty draft discards it and opens no new one",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-titled-outside a tap elsewhere saves a titled draft (11:00–12:00) and opens no new one",
+    "ok": true,
+    "detail": "{\"id\":\"7ca140bb-4151-49d1-8ea5-e5dc8f5b40ff\",\"title\":\"Saved by a tap\",\"starts_at\":\"2026-11-16T09:00:00.000Z\",\"ends_at\":\"2026-11-16T10:00:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:10.987Z\",\"updated_at\":\"2026-11-16T10:09:10.987Z\"}"
+  },
+  {
+    "name": "p-task \"Study Crypto task\" makes a task blocked on that hour",
+    "ok": true,
+    "detail": "{\"tk\":\"Study Crypto\",\"blk\":[\"2026-11-16T11:00:00.000Z\",\"2026-11-16T12:00:00.000Z\"]}"
+  },
+  {
+    "name": "p-late a tap at 23:20 gets a full hour: the draft slides up to 23:00–24:00",
+    "ok": true,
+    "detail": "{\"value\":\"\",\"focused\":true,\"top\":658,\"bottom\":680,\"h\":64,\"fs\":16,\"time\":\"23:00–24:00 · Event\"}"
+  },
+  {
+    "name": "p-details a tap on a saved block opens its sheet (the existing one)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "p-errors no page errors",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o-block the block shows at once, offline",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o-queue nothing reached the server yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "o-flush back online the outbox sends it, whole (14:00–15:00)",
+    "ok": true,
+    "detail": "{\"id\":\"1eb2d6d7-97ac-4c66-9af6-3c88c97d626f\",\"title\":\"Written offline\",\"starts_at\":\"2026-11-16T12:00:00.000Z\",\"ends_at\":\"2026-11-16T13:00:00.000Z\",\"all_day\":false,\"task_id\":null,\"source\":\"native\",\"gcal_id\":null,\"gcal_etag\":null,\"busy\":true,\"type\":\"event\",\"color\":null,\"created_at\":\"2026-11-16T10:09:05.752Z\",\"updated_at\":\"2026-11-16T10:09:05.752Z\"}"
+  }
+]

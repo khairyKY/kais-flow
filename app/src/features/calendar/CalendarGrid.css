@@ -824,3 +824,19 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .fc .kf-seg-grip-end::after { right: 3px; }
 .fc .fc-daygrid-event.kf-seg:hover .kf-seg-grip::after, .fc .kf-seg-grip:hover::after { opacity: 0.45; }
 .kf-seg-tip { position: fixed; z-index: 1000; pointer-events: none; padding: 2px 9px; border-radius: var(--radius-pill); background: var(--ink-body); color: var(--paper-bone); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); white-space: nowrap; }
+
+
+/* Adding a block (createDraft, Kai 2026-11-16): the selection's mirror holds the title as an input — typed where the
+   block will sit — and, under it, the time and the kind the title names. */
+.kf-draft { display: flex; flex-direction: column; min-width: 0; width: 100%; }
+.kf-draft-input {
+  width: 100%; min-width: 0; padding: 0; border: 0; border-radius: 0; background: none; outline: none; box-shadow: none;
+  font: inherit; font-size: calc(12px * var(--s)); /* ds-ok: the block title's own size (.fc-event-title) */ line-height: 1.25; color: var(--ink-body); caret-color: var(--acc-terra-ink);
+  -webkit-user-select: text; user-select: text;
+}
+.kf-draft-input::placeholder { color: var(--ink-faint); }
+.fc .fc-event-mirror .kf-draft-time { opacity: 1; }
+.fc .fc-event-mirror:has(.kf-draft) { pointer-events: auto; border-style: solid; }
+.kf-draft-band { position: fixed; z-index: 60; box-sizing: border-box; display: flex; align-items: center; padding: 0 8px; overflow: hidden; border-radius: var(--radius-block); border: 1.5px solid var(--acc-lavender-deep); background: var(--paper-parchment); }
+.kf-draft-band .kf-draft { flex-direction: row; align-items: center; gap: 8px; }
+.kf-draft-band .kf-draft-time { flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-muted); }

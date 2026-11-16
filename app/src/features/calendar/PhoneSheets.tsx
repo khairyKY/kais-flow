@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Fragment, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { createPortal } from 'react-dom'
 import { ACTION_ROW_CSS, ActionSheet } from '../../components/ActionSheet'
 import { BottomSheet } from '../../components/BottomSheet'
@@ -6,41 +6,32 @@ import { DatePicker } from '../../components/DatePicker'
 import { EmojiText } from '../../components/EmojiText'
 import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
-import { Button, Chip, SectionLabel, Star } from '../../components/kit'
-import { DURATIONS, addDays, dayHint, durationLabel, fromMin, toMin } from '../../components/pickerMath'
+import { Button, SectionLabel } from '../../components/kit'
+import { durationLabel, fromMin, toMin } from '../../components/pickerMath'
 import { ProjectPicker } from '../../components/ProjectPicker'
 import { LengthChips, SheetTitle, TimePicker } from '../../components/TimePicker'
-import { cairoDateKey, tomorrowHint } from '../../lib/dateShortcuts'
-import type { CalendarEvent, Task } from '../../lib/types'
-import { useAreas } from '../areas/api'
-import { parseCommand } from '../command-bar/parseCommand'
+import { cairoDateKey } from '../../lib/dateShortcuts'
+import type { CalendarEvent } from '../../lib/types'
 import { useDomains } from '../domains/api'
-import { NO_PLACE, placeName, placeTask, type MoveTarget } from '../tasks/move'
-import { TaskMenu, type MenuSub, type TaskMenuActions } from '../tasks/TaskMenu'
-import { remindChip, repeatLabel } from '../tasks/taskSheetMath'
 import '../tasks/taskSheet.css'
 import { TaskPicker } from '../focus/TaskPicker'
 import { useProjects } from '../projects/api'
-import { Segmented } from '../rituals/RitualChrome'
-import { createTask, setRecurrence, toggleTop3, uncompleteTask, useTasks } from '../tasks/api'
+import { uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { SAVED_MS } from '../tasks/taskSheetMath'
-import { createEvent, deleteEventWithUndo, linkTaskWithUndo, scheduleTask, setEventRepeat, type BlockRef } from './api'
+import { deleteEventWithUndo, linkTaskWithUndo, setEventRepeat, type BlockRef } from './api'
 import { useStartFocus } from '../today/startFocus'
 import { EVENT_REMIND, aiPrompts, blockMenuSpec, crossesDays, focusTaskOf, isSynced, isUntitled, remindLabel, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock, setEventRange } from './scoped'
 import { askChat, copyBlockLink, joinMeeting, openInGoogle } from './blockActions'
 import { gcalEditable, gcalRepeats } from './gcal'
 import { RepeatMenu } from '../tasks/RepeatMenu'
-import { cairoTimeKey, cairoToIso } from './eventTime'
+import { cairoToIso } from './eventTime'
 import { SwatchTray } from './formFields'
-import { pickRange, rangeLabel, rangeOf, storeRange, toggleAllDay, type Range } from './rangeEdit'
-import { DAY_MIN, eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
-import { linkRef } from '../../lib/links'
-import { clockText } from '../../lib/clock'
-import { offerProject } from '../projects/autoProject'
+import { pickRange, rangeLabel, rangeOf, storeRange, toggleAllDay } from './rangeEdit'
+import { eventSpan, rangeText, scheduleSlots, slotLabel, spanIso, type DragMode, type Span } from './phoneGridMath'
 
-// ── The phone calendar's sheets (Calendar Phone.dc.html): 7c quick create, 7d the event sheet,
+// ── The phone calendar's sheets (Calendar Phone.dc.html): 7d the event sheet,
 // 7g / 7g2 Schedule. All on the kit BottomSheet; every write goes through calendar/api and
 // tasks/api (the outbox), and every removal carries Undo. ──
 
@@ -80,13 +71,6 @@ function Held({ rect, fill, ink, edge, title, time }: { rect: Rect | null; fill:
   )
 }
 
-/** A slot tapped earlier today opens its time list on the next quarter from now, not in the past
- * (Kai 2026-10-07: at 14:40 the 14:00 draft's list opened on 14:00). */
-function notPast(day: string, start: number): number {
-  if (day !== cairoDateKey(new Date())) return start
-  return Math.max(start, Math.min(DAY_MIN - 15, Math.ceil(toMin(cairoTimeKey(new Date())) / 15) * 15))
-}
-
 /** A kit action row (ActionSheet's look): icon · label · hint · chevron. `quiet`: nothing set yet. */
 function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: IconName; label: string; hint?: string; quiet?: boolean; chevron?: boolean; onClick: (el: HTMLElement) => void }) {
   return (
@@ -103,291 +87,6 @@ function Row({ icon, label, hint, quiet, chevron = true, onClick }: { icon: Icon
 const ROW_ICONS: Record<BlockMenuKey, IconName> = {
   date: 'pickdate', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
   link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'pickdate', allday: 'clock',
-}
-
-/** 7c / Editor 1e — tap an empty slot: Task (default), Event or Time block, 30 minutes, the keyboard up
- * at once; the slot is drawn over the scrim with the title as you type. A task takes the task sheet's
- * own chips and pickers (TaskMenu: priority, project, reminder, repeat; labels; Top 3; notes) — the
- * title's "!!" / "#project" / "*label" are caught too. A time block can hold a task (it becomes that
- * task's block). Save waits for a title (or the held task). */
-export function QuickCreateSheet({ day, start: at, slotRect, onClose }: { day: string; start: number; slotRect: SlotRect; onClose: () => void }) {
-  const { data: tasks = [] } = useTasks()
-  const { data: projects = [] } = useProjects()
-  const { data: domains = [] } = useDomains()
-  const { data: areas = [] } = useAreas()
-  const [kind, setKind] = useState<'task' | 'event' | 'block'>('task')
-  const [title, setTitle] = useState('')
-  const [notes, setNotes] = useState('')
-  const [start, setStart] = useState(at)
-  const [dur, setDur] = useState(30)
-  const [timeOpen, setTimeOpen] = useState(false)
-  // F7: an event can end on another date, or be all-day over several: "Ends" (default: the start's day) and All day.
-  const [allDay, setAllDay] = useState(false)
-  const [endOn, setEndOn] = useState<string | null>(null)
-  const [endMin, setEndMin] = useState(0)
-  const [endsOpen, setEndsOpen] = useState(false)
-  // undefined / null: what the title says, if it says (a pick wins).
-  const [priority, setPriority] = useState<number | null | undefined>(undefined)
-  const [placeTo, setPlaceTo] = useState<MoveTarget | null>(null)
-  const [remindMin, setRemindMin] = useState<number | null>(null)
-  const [repeatPick, setRepeat] = useState<string | null | undefined>(undefined)
-  const [labels, setLabels] = useState<string[]>([])
-  const [label, setLabel] = useState('')
-  const [top3, setTop3] = useState(false)
-  const [picker, setPicker] = useState<MenuSub | null>(null)
-  const [holds, setHolds] = useState<Task | null>(null)
-  const [holdsAt, setHoldsAt] = useState<{ x: number; y: number } | null>(null)
-
-  const parsed = useMemo(() => (kind === 'task' ? parseCommand(title, domains, projects, { zone: 'cairo' }) : null), [kind, title, domains, projects])
-  const name = ((kind === 'task' ? parsed?.title : null) ?? title).trim()
-  const { starts_at, ends_at } = spanIso({ day, start, end: start + dur })
-  const range: Range = allDay
-    ? { all_day: true, startDay: day, startTime: '00:00', endDay: endOn ?? day, endTime: '00:00' }
-    : { all_day: false, startDay: day, startTime: fromMin(start), endDay: endOn ?? addDays(day, Math.floor((start + dur) / 1440)), endTime: endOn ? fromMin(endMin) : fromMin((start + dur) % 1440) }
-  const today = cairoDateKey(new Date())
-  const wide = kind === 'event' && (allDay || endOn != null)
-  const pri = priority === undefined ? (parsed?.priority ?? null) : priority
-  const repeat = repeatPick === undefined ? (parsed?.recurrence ?? null) : repeatPick // "every week" in the title (P7e A5)
-  const parsedProject = parsed?.projectId ? projects.find((p) => p.id === parsed.projectId) : undefined
-  const to: MoveTarget = placeTo ?? (parsedProject ? { kind: 'project', id: parsedProject.id, domainId: parsedProject.domain_id ?? null, name: parsedProject.name } : NO_PLACE)
-  const allLabels = [...new Set([...labels, ...(parsed?.labels ?? [])])]
-  const place = placeTask({ project_id: null, area_id: null, domain_id: null, milestone_id: null }, to)
-  // The draft as a task, for the task sheet's chips and pickers — nothing is written until Save.
-  const draft = {
-    id: 'new', title: name || 'New task', status: 'todo', someday: false, top3, due_at: starts_at, scheduled_start: null, scheduled_end: null,
-    priority: pri, recurrence_rule: repeat, reminder_at: remindMin == null ? null : new Date(Date.parse(starts_at) - remindMin * 60_000).toISOString(),
-    labels: allLabels, duration_min: dur, ...place,
-  } as Task
-  const nop = () => {}
-  const actions: TaskMenuActions = {
-    tomorrow: nop, schedule: nop, someday: nop, top3: nop, goal: nop, reopen: nop, delete: nop, snooze: nop, unsnooze: nop,
-    move: setPlaceTo,
-    priority: (p) => setPriority(p),
-    repeat: setRepeat,
-    remind: (iso) => setRemindMin(iso ? Math.round((Date.parse(starts_at) - Date.parse(iso)) / 60_000) : null),
-  }
-  const ready = kind === 'block' ? !!(name || holds) : !!name
-  const save = (close: () => void) => {
-    if (!ready) return
-    if (kind === 'task') {
-      const task = createTask({
-        title: name,
-        // The title's `// notes` and link leave it (the shared parse, P7e A6/A19): they land here, not nowhere.
-        notes: notes.trim() || parsed?.notes || null,
-        ...(parsed?.url ? { externalRef: linkRef(parsed.url) } : null),
-        dueAt: starts_at,
-        durationMin: dur,
-        priority: pri,
-        projectId: place.project_id,
-        areaId: place.area_id ?? null,
-        domainId: place.domain_id,
-        labels: allLabels,
-        reminderOffsetMin: remindMin,
-      })
-      if (repeat) setRecurrence(task, repeat)
-      if (top3) toggleTop3(task)
-      scheduleTask(task, starts_at, ends_at)
-      offerProject({ kind: 'task', row: task }) // queue item 17: no place picked → its likely project
-    } else if (kind === 'block' && holds) scheduleTask(holds, starts_at, ends_at)
-    else {
-      const when = kind === 'event' ? storeRange(range) : { starts_at, ends_at, all_day: false }
-      const event = createEvent(name || (kind === 'block' ? 'Time block' : 'New event'), when.starts_at, when.ends_at, kind === 'block' ? 'time_block' : 'event', null, when.all_day)
-      if (repeat) setEventRepeat(event, repeat) // p7e A13: repeat while creating, the block menu's own way
-      offerProject({ kind: 'event', row: event })
-    }
-    close()
-  }
-  const placeLabel = placeName(draft, projects, areas, domains)
-  const chip = (field: MenuSub, value: ReactNode, tone: 'date' | 'priority' | 'project', icon?: IconName) => (
-    <Chip key={field} tone={tone} icon={icon && <Icon name={icon} size={16} />} onClick={() => setPicker(field)}>
-      {value}
-    </Chip>
-  )
-  const DASHED: CSSProperties = { borderRadius: 'var(--radius-pill)', border: '1px dashed var(--line-control)' }
-  const unset = (field: MenuSub, text: string, icon: IconName) => (
-    <Chip key={field} tone="bordered" icon={<Icon name={icon} size={16} />} style={DASHED} onClick={() => setPicker(field)}>
-      {text}
-    </Chip>
-  )
-  const repeatChip = repeat ? chip('repeat', repeatLabel(repeat), 'date', 'repeat') : unset('repeat', 'Repeat', 'repeat')
-  const addLabel = () => {
-    const l = label.trim().replace(/^\*/, '')
-    setLabel('')
-    if (l && !allLabels.includes(l)) setLabels((x) => [...x, l])
-  }
-  const placeholder = kind === 'task' ? 'New task' : kind === 'event' ? 'New event' : holds ? holds.title : 'Time block'
-  return (
-    <>
-      <BottomSheet onClose={onClose} handleGap={8}>
-        {(close) => (
-          <div className="pc-qc">
-            <div className="pc-qc-top">
-              <Segmented label="New" options={[{ value: 'task', label: 'Task' }, { value: 'event', label: 'Event' }, { value: 'block', label: 'Block' }]} value={kind} onChange={setKind} />
-              <Button disabled={!ready} onClick={() => save(close)}>Save</Button>
-            </div>
-            <input
-              className="pc-qc-title"
-              autoFocus
-              aria-label="Title"
-              placeholder={placeholder}
-              enterKeyHint="done"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') save(close)
-              }}
-            />
-            <div className="pc-qc-chips">
-              <Chip tone="date" onClick={() => !allDay && setTimeOpen(true)}>
-                {dayHint(day, today)}{allDay ? '' : ` · ${clockText(fromMin(start))}`}
-              </Chip>
-              {!allDay &&
-                DURATIONS.map((m) => (
-                  <Chip key={m} tone="duration" icon={false} selected={!endOn && dur === m} onClick={() => { setEndOn(null); setDur(m) }}>
-                    {durationLabel(m)}
-                  </Chip>
-                ))}
-            </div>
-            {/* F7: the Ends row — a date, and a time unless the event is all-day; it starts on the start's day. */}
-            {kind === 'event' && (
-              <div className="pc-qc-chips">
-                <Chip tone="date" onClick={() => setEndsOpen(true)}>
-                  Ends · {dayHint(range.endDay, today)}{allDay ? '' : ` · ${clockText(range.endTime)}`}
-                </Chip>
-                <Chip
-                  tone="duration"
-                  icon={false}
-                  selected={allDay}
-                  onClick={() => {
-                    // dates kept; off gives 09:00-10:00 on the first day (rangeEdit.toggleAllDay)
-                    const next = toggleAllDay(range, !allDay, { startTime: fromMin(start), endTime: fromMin((start + dur) % 1440) })
-                    setAllDay(next.all_day)
-                    setEndOn(next.endDay > day ? next.endDay : null)
-                    if (!next.all_day) {
-                      setStart(toMin(next.startTime))
-                      setDur(Math.max(15, toMin(next.endTime) - toMin(next.startTime)))
-                    }
-                  }}
-                >
-                  All day
-                </Chip>
-              </div>
-            )}
-            {kind === 'task' && (
-              <>
-                {/* The task sheet's own chips (4a), each opening its picker. */}
-                <div className="ts-chips">
-                  {pri ? chip('priority', `P${pri}`, 'priority') : unset('priority', 'Priority', 'priority')}
-                  {placeLabel ? chip('project', <EmojiText text={placeLabel} />, 'project') : unset('project', 'Project', 'projects')}
-                  {draft.reminder_at ? chip('remind', remindChip(draft.reminder_at, starts_at), 'date', 'remind') : unset('remind', 'Remind', 'remind')}
-                  {repeatChip}
-                  {allLabels.map((l) => (
-                    <Chip key={`label-${l}`} tone="bordered" icon={<Icon name="label" size={16} />} style={{ borderRadius: 'var(--radius-pill)' }} onClick={() => setLabels((x) => x.filter((y) => y !== l))}>
-                      {l} ✕
-                    </Chip>
-                  ))}
-                  <input
-                    className="kf-chip kf-chip--bordered ts-label-add"
-                    value={label}
-                    placeholder="+ Label"
-                    aria-label="Add a label"
-                    enterKeyHint="done"
-                    onChange={(e) => setLabel(e.target.value)}
-                    onBlur={addLabel}
-                    onKeyDown={(e) => {
-                      if (e.key !== 'Enter') return
-                      e.preventDefault()
-                      e.currentTarget.blur()
-                    }}
-                  />
-                  <span className="pc-qc-star">
-                    <Star on={top3} label={name || 'New task'} onChange={() => setTop3((v) => !v)} />
-                    Top-3
-                  </span>
-                </div>
-                <textarea className="ts-notes" value={notes} placeholder="Add notes…" aria-label="Notes" onChange={(e) => setNotes(e.target.value)} />
-              </>
-            )}
-            {/* p7e A13: an event or a plain block can repeat from the start; a held task repeats through its task. */}
-            {kind === 'event' && <div className="pc-qc-chips">{repeatChip}</div>}
-            {kind === 'block' && (
-              <div className="pc-qc-chips">
-                {holds ? (
-                  <Chip tone="bordered" icon={<Icon name="tasks" size={16} />} style={{ borderRadius: 'var(--radius-pill)' }} onClick={() => setHolds(null)}>
-                    <EmojiText text={holds.title} /> ✕
-                  </Chip>
-                ) : (
-                  <>
-                    <Chip tone="bordered" icon={<Icon name="plus" size={16} />} style={DASHED} onClick={() => setHoldsAt({ x: 16, y: Math.round(window.innerHeight / 3) })}>
-                      Holds a task…
-                    </Chip>
-                    {repeatChip}
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        )}
-      </BottomSheet>
-      {!timeOpen && !picker && !holdsAt && !endsOpen && !wide && (
-        <Held rect={slotRect(day, start, start + dur)} fill="var(--block-lavender)" ink="var(--acc-lavender-text)" edge="var(--acc-lavender-deep)" title={name || placeholder} time={rangeText(start, start + dur)} />
-      )}
-      {picker && (
-        <TaskMenu key={picker} task={draft} anchor={{ at: { x: 0, y: 0 }, sub: picker }} onClose={() => setPicker(null)} actions={actions} ctx={{ tomorrowHint: tomorrowHint(), projectName: placeLabel }} />
-      )}
-      {holdsAt && (
-        <TaskPicker
-          tasks={tasks.filter((t) => t.status === 'todo' && !t.scheduled_start && !t.deleted_at)}
-          position={holdsAt}
-          placeholder="Hold a task…"
-          label="Search tasks to hold"
-          onPick={(id) => {
-            const t = tasks.find((x) => x.id === id)
-            if (t) {
-              setHolds(t)
-              if (t.duration_min) setDur(t.duration_min) // Editor 1d: pre-filled from the task's duration
-            }
-            setHoldsAt(null)
-          }}
-          onClose={() => setHoldsAt(null)}
-        />
-      )}
-      {endsOpen && (
-        <DatePicker
-          mode={allDay ? 'day' : 'iso'}
-          withTime={!allDay}
-          title="Ends"
-          meta={name || undefined}
-          value={allDay ? range.endDay : storeRange(range).ends_at}
-          onPick={(picked, _d, timed) => {
-            const next = pickRange(range, 'end', picked, timed)
-            if (!allDay && next.endDay === day) {
-              setEndOn(null)
-              setDur(Math.max(15, toMin(next.endTime) - start))
-            } else {
-              setEndOn(next.endDay > day ? next.endDay : null)
-              setEndMin(toMin(next.endTime))
-            }
-          }}
-          onClose={() => setEndsOpen(false)}
-        />
-      )}
-      {timeOpen && (
-        <TimePicker
-          day={day}
-          value={fromMin(notPast(day, start))}
-          duration={dur}
-          lengthChips={false} // queue 15: the sheet's own chips are the length; a typed range still sets it
-          title={name || undefined}
-          onDone={(hhmm, d) => {
-            setStart(toMin(hhmm))
-            if (d) setDur(d)
-          }}
-          onClose={() => setTimeOpen(false)}
-        />
-      )}
-    </>
-  )
 }
 
 /** 7d — tap a plain event (a task block opens as its task, the Task sheet): the same rows as the
