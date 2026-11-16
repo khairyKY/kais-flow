@@ -58,11 +58,9 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
    of clipping them. Scroll-driven (animation-timeline), so it IS the scroll position: no timing, no JS,
    no lag behind the finger. Browsers without scroll timelines keep the still header. */
 @keyframes tpParasolTitle { to { transform: scale(calc(17 / 26)); } }
-@keyframes tpParasolFade { to { opacity: 0; } }
 @keyframes tpParasolFeather { to { opacity: 1; } }
 @supports (animation-timeline: scroll()) {
   .motion-on .tp-bar h1.tp-bar-title,
-  .motion-on .tp-sum,
   .motion-on .tp-bar::after {
     animation-timing-function: linear;
     animation-fill-mode: both;
@@ -71,7 +69,6 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
     animation-range: 0 80px;
   }
   .motion-on .tp-bar h1.tp-bar-title { transform-origin: 0 50%; animation-name: tpParasolTitle; }
-  .motion-on .tp-sum { animation-name: tpParasolFade; animation-range: 0 40px; }
   .motion-on .tp-bar::after {
     content: '';
     position: absolute;
@@ -104,23 +101,12 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-icon:active { background: var(--pressed-overlay); }
 .tp-icon:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
-/* Ruling 1: the Workload line carries the day. */
-.tp-sum {
-  display: flex;
-  align-items: center;
-  gap: var(--sp-2);
-  padding: 0 var(--gutter-phone) 6px;
-  font-size: var(--fs-body-s);
-  line-height: 20px;
-  color: var(--ink-muted);
-}
-.tp-sum > svg { color: var(--ink-faint); }
 .tp-syncing { display: inline-flex; align-items: center; gap: 6px; color: var(--sig-offline); white-space: nowrap; }
 .tp-syncing::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .tp-sk { display: block; height: 12px; border-radius: 2px; background: var(--skeleton); }
 
 /* Mono type: captions, meta, labels. */
-.tp-caption, .tp-meta, .tp-label, .tp-sub, .tp-link, .tp-syncing, .tp-pending, .tp-ev-time {
+.tp-caption, .tp-meta, .tp-label, .tp-sub, .tp-link, .tp-syncing, .tp-pending {
   font-family: var(--font-mono);
 }
 .tp-caption { font-size: var(--fs-meta); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
@@ -211,8 +197,6 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-slip-done:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 
 /* Section labels (kit): mono 12.5, dashed rule, optional link in a 48 hit. ≤ 4 per screen. */
-.tp-sec { display: flex; align-items: center; gap: var(--sp-3); min-height: var(--touch-min); padding: var(--sp-2) var(--gutter-phone) 0; }
-.tp-sec.is-first { padding-top: var(--sp-1); }
 /* Bound Journal: section labels are sentence case, 14px semibold ink; no dashed rule. */
 .tp-label { font-family: var(--font-ui); font-size: var(--fs-section); font-weight: var(--fw-semibold); color: var(--ink-body); white-space: nowrap; }
 .tp-rule { flex: 1; }
@@ -259,27 +243,9 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-title { font-size: var(--fs-body); line-height: 20px; color: var(--ink-body); text-wrap: pretty; }
 /* The task popover's own .tp-title (tasks/taskSheet.css: serif 17/600, offset for its textarea) loads
    later and won the shared name, so phone rows read serif. A row title is the body face (B type). */
-.tp-body > .tp-title, .tp-ev-body > .tp-title { margin: 0; padding: 0; font-family: var(--font-ui); font-size: var(--fs-body); font-weight: var(--fw-regular); line-height: 1.34; }
+.tp-body > .tp-title { margin: 0; padding: 0; font-family: var(--font-ui); font-size: var(--fs-body); font-weight: var(--fw-regular); line-height: 1.34; }
 .tp-title.is-done { color: var(--ink-faint); text-decoration: line-through; text-decoration-color: var(--ink-hairline); }
 .tp .kf-row-more { margin: 0; }
-
-/* Ruling 5: event row — time · lavender rule · title + meta. No checkbox, no ⋯. */
-.tp-ev {
-  display: flex;
-  align-items: stretch;
-  min-height: var(--row-min);
-  padding: var(--sp-1) var(--gutter-phone) var(--sp-1) var(--sp-1);
-  box-sizing: border-box;
-  border-bottom: 1px solid var(--line-dashed);
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-}
-.tp-ev:active { background: var(--pressed-overlay); }
-.tp-ev-time { width: 56px; flex: none; display: flex; align-items: center; padding-left: var(--sp-3); font-size: var(--fs-meta-l); letter-spacing: var(--ls-meta); color: var(--ink-body); white-space: nowrap; }
-/* The 12-hour clock's "10:30 PM" is ~66px with the padding: one column wide enough for every row, so the rules line up. */
-.tp-ev-time--12h { width: 70px; }
-.tp-ev-rule { width: 3px; flex: none; margin: var(--sp-3) var(--sp-3) var(--sp-3) 0; border-radius: 2px; background: var(--acc-lavender); }
-.tp-ev-body { flex: 1; min-width: 0; padding: 10px 0 var(--sp-2); }
 
 /* Goal card (kit): gold tag, 22 gold box, serif 18/600 title, gold meta, clover. */
 /* Kai 2026-10-22 ("the right side of the card's outline is overlapped"): rows clip sideways at their edge
@@ -334,7 +300,6 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-fold[aria-expanded='true'] > svg { transform: rotate(180deg); }
 
 /* MK Workload: over capacity — amber line, alert glyph, mono "2H OVER"; the progress hairline. */
-.tp-sum.is-over, .tp-sum.is-over > svg { color: var(--sig-amber); }
 .tp-over { font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); white-space: nowrap; }
 .tp-progress { margin: 2px var(--gutter-phone) 8px; }
 
@@ -506,7 +471,6 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 /* A 48px target around a slimmer pill, so it doesn't crowd the summary line under the strip. */
 .tp-day-back { min-height: var(--touch-min); padding: 0; border: none; background: none; font: inherit; cursor: pointer; }
 .tp-day-back > span { display: inline-flex; align-items: center; height: 32px; padding: 0 var(--sp-3); border: 1px solid var(--line-card); border-radius: var(--radius-pill); background: var(--paper-parchment); font-size: var(--fs-body-s); color: var(--ink-body); }
-.tp-day-rituals { margin-top: var(--sp-4); }
 
 /* ── phone-today (Kai 2026-10-26, "phone B"): Today's phone home — design-export/Phone home options.html
    (today-looks worktree) B "Now + next", and the Now / Day switch. Settings' rounded panels (settings.css
@@ -560,6 +524,7 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .tp-then-lbl { font-family: var(--font-mono); font-size: var(--fs-mono-s); color: var(--ink-faint); }
 .tp-bk { display: flex; align-items: center; gap: var(--sp-2); min-height: 34px; padding: 0 10px; border-radius: var(--radius-block); border: 1px solid color-mix(in srgb, var(--c) 45%, transparent); background: color-mix(in srgb, var(--c) var(--blk-fill), var(--paper-parchment)); font: inherit; font-size: var(--fs-body-s); color: var(--ink-body); text-align: left; cursor: pointer; }
 .tp-bk:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.tp-bk.is-done { opacity: 0.6; }
 .tp-bk.is-goal { border-color: var(--line-goal); box-shadow: inset 3px 0 0 var(--acc-gold); }
 .tp-bk-tm { flex: none; font-family: var(--font-mono); font-size: var(--fs-mono-s); font-variant-numeric: tabular-nums; color: var(--ct); }
 .tp-bk-k { flex: none; width: 13px; height: 13px; box-sizing: border-box; border: 2px solid var(--ct); border-radius: var(--radius-page); }
@@ -697,3 +662,23 @@ html:not(.motion-on) .app-main-content .tp-bar[data-scrolled] h1.tp-bar-title {
 .td-span-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--fs-body-s); color: var(--ink-body); }
 .td-span-meta { margin-left: auto; flex: none; font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); font-variant-numeric: tabular-nums; color: var(--ink-faint); }
 .tp-home-in .td-spans { margin-top: 12px; }
+
+/* ── other days (other-days look A, Kai 2026-11-16): Tomorrow, Yesterday and any picked day on Today's own page —
+   design-export/Other days.html, A. Tokens only. ── */
+.tp-bar-cap, .td-date-cap { margin-left: var(--sp-2); font-family: var(--font-ui); font-size: var(--fs-body-s); font-weight: var(--fw-medium); letter-spacing: 0; color: var(--ink-muted); }
+.td-date-cap { font-size: var(--fs-body); }
+/* the day panel's title line, above its bar */
+.tp-dh { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-2); margin-bottom: var(--sp-2); font-size: var(--fs-caption); }
+.tp-dh-t { font-weight: var(--fw-semibold); color: var(--ink-body); }
+.tp-dh-r { font-weight: var(--fw-medium); color: var(--ink-muted); }
+.tp-then.tp-free { flex-direction: row; align-items: center; gap: var(--sp-2); font-size: var(--fs-body-s); color: var(--ink-muted); }
+a.tp-then-lbl { text-decoration: none; }
+.tp-three-hint { margin: var(--sp-2) var(--sp-1) 0; font-size: var(--fs-caption); }
+/* the day's line: a stamp and the sentence, in the journal's own voice */
+.tp-jl { padding: var(--sp-3); }
+.tp-jl-stamp { font-family: var(--font-mono); font-size: var(--fs-mono-s); letter-spacing: var(--ls-meta); color: var(--ink-faint); }
+.tp-jl-body { margin-top: 6px; font-family: var(--font-display); font-style: italic; font-size: var(--fs-body-l); line-height: 1.4; color: var(--ink-body); }
+/* a routines row's dots: one per routine, filled once ticked */
+.tp-rdots { display: inline-flex; gap: 5px; margin-right: var(--sp-1); }
+.tp-rdots i { width: 9px; height: 9px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid var(--ink-hairline); }
+.tp-rdots i.on { background: var(--sig-done); border-color: var(--sig-done); }

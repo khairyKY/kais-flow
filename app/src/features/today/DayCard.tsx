@@ -135,6 +135,23 @@ export function RitualCard({ kind, day, inboxCount, overdueCount, sweepCount, on
   )
 }
 
+/** Another day's version of Plan my day (other-days look A): Tomorrow, nothing planted, tasks waiting. Plan opens the
+ * evening ritual, whose seeds step plants a day's three. */
+export function PlanTomorrowCard({ tasks, blocks, onPlan }: { tasks: number; blocks: number; onPlan: () => void }) {
+  const n = (c: number, w: string) => `${c} ${w}${c === 1 ? '' : 's'}`
+  return (
+    <RitualShell
+      panel
+      label="Plan tomorrow"
+      glyph={<MoonIcon />}
+      caption="Tomorrow · not planned"
+      title="Plan tomorrow"
+      meta={['~3 min', `${n(tasks, 'task')} waiting`, n(blocks, 'block')]}
+      action={<Button type="button" variant="secondary" onClick={onPlan}>Plan</Button>}
+    />
+  )
+}
+
 /** DAILY-CYCLE step 5 on a phone: the weekly review on its day (./todayLayout reviewDue — the first
  * day of the user's weekend) until the week is closed. The ritual card's anatomy, flat; Review opens
  * the Weekly review. */
