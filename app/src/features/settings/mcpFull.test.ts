@@ -522,8 +522,13 @@ describe('MCP full: routines, focus, rituals', () => {
     expect(store.logs.filter((l) => l.eventType === 'ritual.unseeded').map((l) => l.entityId)).toEqual([tid(2)])
     const line = await call(deps(store), 'shut_down', { line: 'good day' }, JOURNAL_KEY)
     expect(line.data!.line_saved).toMatchObject({ date: '2026-10-04' })
-    expect(store.db.journal_entries[0]).toMatchObject({ body: 'good day', entry_date: '2026-10-04' })
+    expect(store.db.journal_entries[0]).toMatchObject({ body: 'Shut down\ngood day', entry_date: '2026-10-04' })
     expect(store.logs.find((l) => l.eventType === 'journal.line_added')!.payload).toEqual({ date: '2026-10-04', entity_key: '2026-10-04', source: 'mcp' })
+    // Saying it again the same day replaces the block in the same entry — no second entry, no second copy.
+    await call(deps(store), 'shut_down', { line: 'good day' }, JOURNAL_KEY)
+    await call(deps(store), 'shut_down', { line: 'better day' }, JOURNAL_KEY)
+    expect(store.db.journal_entries).toHaveLength(1)
+    expect(store.db.journal_entries[0].body).toBe('Shut down\nbetter day')
   })
 })
 
