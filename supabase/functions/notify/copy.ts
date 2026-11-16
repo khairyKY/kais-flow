@@ -6,7 +6,7 @@
 import { minutesOf, RITUAL_ZONE, wallMinutes } from './ritual.ts'
 import { dateKey } from '../_shared/zone.ts'
 
-export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'break_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'terms' | 'test'
+export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'weekly_review' | 'focus_done' | 'break_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'terms' | 'test'
 
 export interface NoticeAction {
   action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep' | 'focus_start' | 'focus_stop' | 'review' | 'snooze10' | 'snooze60'
@@ -42,6 +42,8 @@ export interface NoticePrefs {
   routine_on?: boolean | null
   morning_digest_on?: boolean | null
   evening_nudge_on?: boolean | null
+  /** The weekly review's reminder (0095). */
+  review_reminder_on?: boolean | null
   focus_done_on?: boolean | null
   /** Paper capture ready, Birthday, Sync problem (0065). Birthday is off until turned on (12i). */
   paper_ready_on?: boolean | null
@@ -90,6 +92,7 @@ const TOGGLE: Partial<Record<NoticeKind, keyof NoticePrefs>> = {
   routine: 'routine_on',
   morning_digest: 'morning_digest_on',
   evening_nudge: 'evening_nudge_on',
+  weekly_review: 'review_reminder_on',
   focus_done: 'focus_done_on',
   break_done: 'focus_done_on', // a break's end shares the Focus switch
   paper_ready: 'paper_ready_on',
@@ -279,6 +282,20 @@ export function nudgeNotice(done: number, left: number): Notice {
     tag: 'evening-nudge',
     actions: [{ action: 'shutdown', title: 'Shut down' }],
     url: '/today?ritual=evening',
+    silent: false,
+    taskIds: [],
+  }
+}
+
+/** Weekly review (0095): "Ten quiet minutes to close the week" · Start review. The tag names the review week, so it never repeats within one. */
+export function reviewNotice(weekKey: string): Notice {
+  return {
+    kind: 'weekly_review',
+    title: 'Weekly review',
+    body: 'Ten quiet minutes to close the week.',
+    tag: `weekly-review-${weekKey}`,
+    actions: [{ action: 'open', title: 'Start review' }],
+    url: '/weekly-review',
     silent: false,
     taskIds: [],
   }

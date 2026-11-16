@@ -16,7 +16,7 @@ import { useMinuteNow } from '../today/useMinuteNow'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { useProjects } from '../projects/api'
 import { useInteractions, usePeople } from '../people/api'
-import { useRitualFinishedRows } from '../rituals/api'
+import { useRitualFinishedRows, useReviewClosedRows } from '../rituals/api'
 import { useCalendarEvents, useCalendarRows } from '../calendar/api'
 import { useTasks } from '../tasks/api'
 import { installNotificationActions } from '../notifications/actions'
@@ -59,7 +59,8 @@ function reminded(): string[] {
 function planFor(from: Date, to: Date, now: Date): Planned[] | null {
   const tasks = queryClient.getQueryData<Task[]>(['tasks'])
   // Projects still loading: wait one sweep, so "09:50 · Car" doesn't go out as "09:50".
-  if (!tasks || queryClient.getQueryState(['projects'])?.status === 'pending') return null
+  // Review closes still loading: wait too, or a closed week's reminder goes out once on start-up.
+  if (!tasks || queryClient.getQueryState(['projects'])?.status === 'pending' || queryClient.getQueryState(['activity_log', 'review_closed'])?.status === 'pending') return null
   const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
   return localPlan({
     tasks,
@@ -70,6 +71,8 @@ function planFor(from: Date, to: Date, now: Date): Planned[] | null {
     people: queryClient.getQueryData<Person[]>(['people']),
     interactions: queryClient.getQueryData<Interaction[]>(['interactions']),
     finished: queryClient.getQueryData<ActivityLogEntry[]>(['activity_log', 'ritual_finished']), // Shut down quiets that evening's nudge
+    // A closed review week sends no reminder: this query's rows, and any this device's Weekly review / Today folded in since.
+    reviewRows: [...(queryClient.getQueryData<ActivityLogEntry[]>(['activity_log', 'review_closed']) ?? []), ...queryClient.getQueriesData<ActivityLogEntry[]>({ queryKey: ['activity_log', 'review_week'] }).flatMap(([, rows]) => rows ?? [])],
     prefs: prefs(),
     from,
     to,
@@ -200,6 +203,7 @@ function PeopleForBirthdays(): null {
  * rows from the cache, so they're loaded whatever page is open. */
 function ShutDownForNudge(): null {
   useRitualFinishedRows()
+  useReviewClosedRows()
   return null
 }
 
@@ -287,7 +291,7 @@ export function TrayBridge() {
     const watched = new Set(['tasks', 'calendar_events', 'projects', 'app_settings', 'routines', 'routine_completions', 'people', 'interactions'])
     const offCache = queryClient.getQueryCache().subscribe((e) => {
       const [table, sub] = e.query.queryKey
-      if (e.type === 'updated' && (watched.has(String(table)) || (table === 'activity_log' && sub === 'ritual_finished'))) soon()
+      if (e.type === 'updated' && (watched.has(String(table)) || (table === 'activity_log' && (sub === 'ritual_finished' || sub === 'review_closed' || sub === 'review_week')))) soon()
     })
     const offFocus = useFocusStore.subscribe((s, prev) => {
       if (s.isRunning !== prev.isRunning || s.mode !== prev.mode) soon()

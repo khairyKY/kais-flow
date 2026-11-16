@@ -180,6 +180,25 @@ export function useRitualFinishedRows() {
   })
 }
 
+/** `review.week_closed` / `review.week_reopened` rows from the last 9 days, oldest first — what the review
+ * reminder asks (notifications/plan.ts), on a screen that never opened the Weekly review. */
+export const REVIEW_CLOSED_KEY = ['activity_log', 'review_closed'] as const
+export function useReviewClosedRows() {
+  return useQuery({
+    queryKey: REVIEW_CLOSED_KEY,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('activity_log')
+        .select('*')
+        .in('event_type', ['review.week_closed', 'review.week_reopened'])
+        .gte('created_at', new Date(Date.now() - 9 * 86_400_000).toISOString())
+        .order('created_at', { ascending: true })
+      if (error) throw error
+      return data as ActivityLogEntry[]
+    },
+  })
+}
+
 /** { morning, evening }: was each ritual finished on the loop day `now` falls in. */
 export function useRitualsFinishedToday(now: Date = new Date()): Record<RitualKind, boolean> {
   const { data: rows } = useRitualFinishedRows()

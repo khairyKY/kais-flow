@@ -1,4 +1,5 @@
-import { birthdayNotice, clock, deliver, digestNotice, eventReminderNotice, inQuietHours, is24h, isPaused, kindOn, nudgeNotice, reminderNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { birthdayNotice, clock, deliver, digestNotice, eventReminderNotice, inQuietHours, is24h, isPaused, kindOn, nudgeNotice, reminderNotice, reviewNotice, routineNotice, type Notice, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { REVIEW_AT, reviewClosed, reviewWeekOn, type ReviewRow, type ReviewSettings } from '../../../../supabase/functions/notify/review.ts'
 import { DEFAULT_AT, dayBounds, minutesOf, ritualOn, shutDownOn, type RitualSettings } from '../../../../supabase/functions/notify/ritual.ts'
 import { routineDueOn, type ReminderRoutine, type RoutineDone } from '../../../../supabase/functions/notify/routine.ts'
 import { BIRTHDAY_AT, birthdayGroups, type PersonFacts, type Spoke } from '../../../../supabase/functions/notify/birthday.ts'
@@ -39,7 +40,7 @@ export interface PlanTask {
   created_at?: string
 }
 
-export type PlanPrefs = NoticePrefs & RitualSettings
+export type PlanPrefs = NoticePrefs & RitualSettings & ReviewSettings
 
 export interface Planned {
   /** Stable per notice and moment: a device shows each key once (Windows) / schedules it once (Android). */
@@ -65,6 +66,8 @@ export interface PlanInput {
   /** The `ritual.finished` rows this device holds (rituals/api useRitualFinishedRows): once Shut down
    * is done on a loop day, that day's evening nudge stays quiet, as notify's does (ritual.ts shutDownOn). */
   finished?: readonly { payload: unknown }[]
+  /** The `review.week_closed` / `review.week_reopened` rows this device holds: a closed week sends no review reminder. */
+  reviewRows?: readonly ReviewRow[]
   prefs: PlanPrefs | null | undefined
   /** The window: notices whose moment falls in (from, to]. */
   from: Date
@@ -84,7 +87,7 @@ function wallTimes(min: number, from: Date, to: Date, zone: string): Date[] {
   return out
 }
 
-export function localPlan({ tasks, events = [], projects = [], routines = [], completions = [], people = [], interactions = [], finished = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
+export function localPlan({ tasks, events = [], projects = [], routines = [], completions = [], people = [], interactions = [], finished = [], reviewRows = [], prefs, from, to, now, zone }: PlanInput): Planned[] {
   const out: Planned[] = []
   const add = (key: string, at: Date, build: (said: Date) => Notice | null) => {
     const said = new Date(Math.max(at.getTime(), now.getTime()))
@@ -156,6 +159,12 @@ export function localPlan({ tasks, events = [], projects = [], routines = [], co
         return done + left === 0 ? null : nudgeNotice(done, left)
       })
     }
+  }
+  // The weekly review's reminder (0095), on its day at its time (18:00 when none) unless that week is closed.
+  // Keyed by notify's tag, so a device that gets the push and the plan shows it once.
+  for (const at of wallTimes(minutesOf(prefs?.review_time) ?? REVIEW_AT, from, to, zone)) {
+    const week = prefs?.review_reminder_on === false ? null : reviewWeekOn(prefs, at, zone)
+    if (week && !reviewClosed(reviewRows, week, prefs, zone)) add(reviewNotice(week).tag, at, () => reviewNotice(week))
   }
   return out.sort((a, b) => a.at.getTime() - b.at.getTime())
 }

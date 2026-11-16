@@ -54,6 +54,8 @@ export function soundOf(n: Pick<Notice, 'kind' | 'again'>): NotifySound {
       return 'focus_end'
     case 'break_done':
       return 'break_end'
+    case 'weekly_review': // a ritual: the evening nudge's sound
+      return 'evening_nudge'
     case 'morning_digest':
     case 'evening_nudge':
     case 'paper_ready':
