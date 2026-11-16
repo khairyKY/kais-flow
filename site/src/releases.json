@@ -1,5 +1,27 @@
 [
   {
+    "v": "v1.6.4",
+    "date": "2026-11-17",
+    "title": "Multi-day events, a Day bar you can drag onto, and quiet updates",
+    "highlights": [
+      "Events can span several days, like a trip or an exam week: drag across days to make one, and change its start and end anytime",
+      "On the phone's Day view, hold a task and drag it onto the Day bar to schedule it; swipe the bar to see yesterday or tomorrow",
+      "Your own calendar as a private link, so Apple Calendar, Outlook or Google can show your plan (Settings → Calendar & time)",
+      "A weekly review reminder on your review day, a heads-up when a focus break ends, and Done / Tomorrow buttons on Mac notifications",
+      "The phone Focus widget is redrawn with the new round timeline, and the computer app now updates itself quietly in the background",
+      "Calmer Today without the Also open list; the task editor stays open while you edit; today's planned items sit under Today; renamed tasks rename their calendar block"
+    ],
+    "icons": [
+      "calendar",
+      "android",
+      "link",
+      "clock",
+      "download",
+      "check"
+    ],
+    "art": "daisy-evening"
+  },
+  {
     "v": "v1.6.3",
     "date": "2026-11-06",
     "title": "Edit Google events, subscribe to any calendar, and undo from anywhere",
