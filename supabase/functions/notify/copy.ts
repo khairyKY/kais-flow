@@ -6,10 +6,10 @@
 import { minutesOf, RITUAL_ZONE, wallMinutes } from './ritual.ts'
 import { dateKey } from '../_shared/zone.ts'
 
-export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'terms' | 'test'
+export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'break_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'terms' | 'test'
 
 export interface NoticeAction {
-  action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep' | 'review' | 'snooze10' | 'snooze60'
+  action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep' | 'focus_start' | 'focus_stop' | 'review' | 'snooze10' | 'snooze60'
   title: string
 }
 
@@ -91,6 +91,7 @@ const TOGGLE: Partial<Record<NoticeKind, keyof NoticePrefs>> = {
   morning_digest: 'morning_digest_on',
   evening_nudge: 'evening_nudge_on',
   focus_done: 'focus_done_on',
+  break_done: 'focus_done_on', // a break's end shares the Focus switch
   paper_ready: 'paper_ready_on',
   birthday: 'birthday_on',
   sync_problem: 'sync_problem_on',
@@ -294,6 +295,27 @@ export function focusDoneNotice(minutes: number, task: string | null, breakMin: 
       { action: 'break', title: `Break ${breakMin} min` },
       { action: 'keep', title: 'Keep going' },
     ],
+    url: '/focus',
+    silent: false,
+    taskIds: [],
+  }
+}
+
+/** A focus break ran out: "Back to it" when the next round started by itself (just opens the app), else
+ * "Break’s over" with Start / Stop. Local, from the timer (TrayBridge). Private: no task name. */
+export function breakDoneNotice(nextRound: number, totalRounds: number, task: string | null, autoStarted: boolean, p: NoticePrefs | null | undefined): Notice {
+  const name = task && showNames(p) ? ` · ${task}` : ''
+  return {
+    kind: 'break_done',
+    title: autoStarted ? 'Back to it' : 'Break’s over',
+    body: autoStarted ? `Round ${nextRound} of ${totalRounds}${name}` : `Ready for round ${nextRound}?${name}`,
+    tag: 'focus-break',
+    actions: autoStarted
+      ? []
+      : [
+          { action: 'focus_start', title: 'Start' },
+          { action: 'focus_stop', title: 'Stop' },
+        ],
     url: '/focus',
     silent: false,
     taskIds: [],

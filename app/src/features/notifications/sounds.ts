@@ -42,8 +42,7 @@ export const NOTIFY_SOUND_LABEL: Record<NotifySound, string> = {
 }
 
 /** Which of the pack's sounds a notice gets. Routines ring like a task reminder, a birthday like an
- * event, the test like a reminder. ponytail: break_end has no notice of its own yet — the sound is in
- * every pack for when the focus timer sends one. */
+ * event, the test like a reminder. */
 export function soundOf(n: Pick<Notice, 'kind' | 'again'>): NotifySound {
   switch (n.kind) {
     case 'task_reminder':
@@ -53,6 +52,8 @@ export function soundOf(n: Pick<Notice, 'kind' | 'again'>): NotifySound {
       return 'event_reminder'
     case 'focus_done':
       return 'focus_end'
+    case 'break_done':
+      return 'break_end'
     case 'morning_digest':
     case 'evening_nudge':
     case 'paper_ready':

@@ -1,7 +1,7 @@
 import { Fragment, createElement, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { create } from 'zustand'
-import { deliver, focusDoneNotice, inQuietHours, isPaused, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { breakDoneNotice, deliver, focusDoneNotice, inQuietHours, isPaused, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
 import { useClockStore } from '../../lib/clock'
@@ -23,6 +23,8 @@ import { installNotificationActions } from '../notifications/actions'
 import { lookingHere, noticePrefs, showLocal, tellSyncProblem } from '../notifications/local'
 import { NO_INCIDENT, syncIncidentStep } from '../notifications/syncIncident'
 import { localPlan, type Planned } from '../notifications/plan'
+import { breakEnded } from '../notifications/breakEnd'
+import { playNotice } from '../notifications/sounds'
 import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
@@ -94,6 +96,8 @@ function sweepDue(from: Date, now: Date): boolean {
   return true
 }
 
+const activeTaskTitle = (t: { id: string } | null): string | null => (t ? queryClient.getQueryData<Task[]>(['tasks'])?.find((x) => x.id === t.id)?.title ?? null : null)
+
 /** The Android app: hands the next week to the OS (notifications/android.ts) — and, while a
  * focus round runs with the app in the background, its "minutes tended" at the round's end. A week,
  * not 3 days (notif 2026-10-26): the phone only re-plans when the app runs, so after 3 days unopened
@@ -104,9 +108,16 @@ function scheduleOnAndroid(): void {
   const plan = planFor(now, new Date(now.getTime() + ANDROID_DAYS * 86_400_000), now)
   if (!plan) return
   const f = useFocusStore.getState()
+  if (document.visibilityState === 'hidden' && f.isRunning && f.mode === 'break') {
+    // The break's end, timed like the round's: "Back to it" / "Break’s over" (copy.ts breakDoneNotice).
+    const at = new Date(now.getTime() + f.secondsLeft * 1000)
+    const next = f.currentRound >= f.settings.roundsBeforeLongBreak ? 1 : f.currentRound + 1
+    const notice = deliver(breakDoneNotice(next, f.block?.rounds ?? f.settings.roundsBeforeLongBreak, activeTaskTitle(f.activeTask), f.settings.autoStartNextRound, prefs()), prefs(), at, appZone())
+    if (notice) plan.push({ key: notice.tag, at, notice })
+  }
   if (document.visibilityState === 'hidden' && f.isRunning && f.mode === 'pomodoro') {
     const at = new Date(now.getTime() + f.secondsLeft * 1000)
-    const task = f.activeTask ? queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === f.activeTask!.id)?.title ?? null : null
+    const task = activeTaskTitle(f.activeTask)
     const breakMin = f.currentRound >= f.settings.roundsBeforeLongBreak ? f.settings.longBreakMin : f.settings.shortBreakMin
     const notice = deliver(focusDoneNotice(f.settings.focusRoundMin, task, breakMin, prefs()), prefs(), at, appZone())
     if (notice) plan.push({ key: notice.tag, at, notice })
@@ -114,13 +125,19 @@ function scheduleOnAndroid(): void {
   void import('../notifications/android').then((m) => m.scheduleAndroid(plan))
 }
 
-/** "25 minutes tended ✿" when a round runs out — unless someone is looking at the app. */
+/** "25 minutes tended ✿" when a round runs out, "Break’s over" when a break does — unless someone is
+ * looking at the app (then, for the break, just its sound: the pack's break_end). */
 function watchFocusDone(): () => void {
   return useFocusStore.subscribe((s, prev) => {
+    if (breakEnded(prev, s)) {
+      const notice = deliver(breakDoneNotice(s.currentRound, s.block?.rounds ?? s.settings.roundsBeforeLongBreak, activeTaskTitle(prev.activeTask), s.isRunning, prefs()), prefs(), new Date(), appZone())
+      if (notice) void (lookingHere() ? playNotice(notice) : showLocal(notice))
+      return
+    }
     // Only tick() moves a running round at its last second into a break or the garden — or, a block's
     // last round (focus D3), into done for the day (kept goes up, no break).
     if (!(prev.mode === 'pomodoro' && prev.isRunning && prev.secondsLeft <= 1 && (s.mode !== 'pomodoro' || s.kept > prev.kept)) || lookingHere()) return
-    const task = prev.activeTask ? queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === prev.activeTask!.id)?.title ?? null : null
+    const task = activeTaskTitle(prev.activeTask)
     const breakMin = s.breakType === 'long' ? s.settings.longBreakMin : s.settings.shortBreakMin
     const now = new Date()
     const notice = deliver(focusDoneNotice(prev.settings.focusRoundMin, task, breakMin, prefs()), prefs(), now, appZone())
