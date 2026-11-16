@@ -23,9 +23,11 @@ export function useRoutines() {
 export function useRoutineCompletions() {
   return useQuery({
     queryKey: ['routine_completions'],
-    queryFn: async () => {
-      return fetchAll<RoutineCompletion>((from, to) =>
-        supabase.from('routine_completions').select('*').order('id').range(from, to),
+    queryFn: async ({ signal }) => {
+      return fetchAll<RoutineCompletion>(
+        (from, to) => supabase.from('routine_completions').select('*').order('id').range(from, to).abortSignal(signal),
+        undefined,
+        signal,
       )
     },
   })

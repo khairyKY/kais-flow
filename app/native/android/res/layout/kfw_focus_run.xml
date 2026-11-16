@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- W18 Focus (2×2): the ring in the task's block colour, the time left, the task, Stop and Done. -->
+<!-- W18 Focus (2×2), Focus D3: the task, the time left, "Round 2 of 4", the segment bar (FocusBar; no ring, no flowers), Stop and Done.
+     In a break: "Break", the time to the end of it, what comes next, Stop. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/root" style="@style/KfW.Root">
     <LinearLayout android:id="@+id/body" style="@style/KfW.Body">
         <include layout="@layout/kfw_head" />
-        <FrameLayout style="@style/KfW.Fill">
-            <FrameLayout android:layout_width="70dp" android:layout_height="70dp" android:layout_gravity="center">
-                <ProgressBar android:id="@+id/ring" style="?android:attr/progressBarStyleHorizontal" android:layout_width="match_parent" android:layout_height="match_parent" android:max="1000" android:progressDrawable="@drawable/kfw_ring_big" />
-                <Chronometer android:id="@+id/left" style="@style/KfW.Text" android:layout_gravity="center" android:fontFamily="sans-serif-medium" android:fontFeatureSettings="tnum" android:textSize="15sp" />
-            </FrameLayout>
-        </FrameLayout>
         <TextView android:id="@+id/title" style="@style/KfW.Title" android:layout_width="match_parent" android:gravity="center" android:textSize="12.5sp" />
-        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="6dp" android:gravity="center" android:orientation="horizontal">
+        <LinearLayout style="@style/KfW.Fill" android:gravity="center" android:orientation="vertical">
+            <Chronometer android:id="@+id/left" style="@style/KfW.Text" android:fontFamily="sans-serif-medium" android:fontFeatureSettings="tnum" android:textSize="30sp" />
+            <TextView android:id="@+id/round" style="@style/KfW.Meta" android:layout_marginTop="2dp" android:textSize="11.5sp" />
+        </LinearLayout>
+        <include layout="@layout/kfw_focusbar" android:layout_width="match_parent" android:layout_height="14dp" android:layout_marginTop="4dp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:gravity="center" android:orientation="horizontal">
             <TextView android:id="@+id/stop" style="@style/KfW.Btn" android:text="Stop" />
             <TextView android:id="@+id/done" style="@style/KfW.Btn.Cta" android:layout_marginStart="6dp" android:text="Done" />
         </LinearLayout>

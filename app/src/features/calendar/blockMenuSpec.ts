@@ -3,14 +3,15 @@
 // Pure, so the order is tested. Every row commits on selection; there is no Save.
 
 import { appZone } from '../../lib/appZone'
-import { clockRange } from '../../lib/clock'
+import { clockRange, clockText } from '../../lib/clock'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { durationLabel, fromMin } from '../../components/pickerMath'
 import { REPEAT_LABELS } from '../tasks/taskMenuSpec'
 import { repeatLabel as ruleWords } from '../tasks/taskSheetMath'
 import { eventSpan } from './phoneGridMath'
+import { rangeOf, spansDays } from './rangeEdit'
 
-export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus' | 'join' | 'gopen'
+export type BlockMenuKey = 'date' | 'time' | 'project' | 'repeat' | 'remind' | 'complete' | 'open' | 'replan' | 'link' | 'more' | 'duplicate' | 'ai' | 'copylink' | 'unschedule' | 'delete' | 'google' | 'details' | 'focus' | 'join' | 'gopen' | 'ends' | 'allday'
 
 /** cal-clicks (Kai 2026-10-26, Akiflow / Google Calendar): a click opens a block's DETAILS (when, project,
  * repeat, remind…); a right-click opens MENU B (the swatch tray, Duplicate, Work with AI ›, Copy link, Delete). */
@@ -30,6 +31,8 @@ export interface BlockMenuEntry {
   /** "From task" + the task's title, quiet, above the row (5a). */
   caption?: { label: string; text: string }
   destructive?: boolean
+  /** A switch row (All day): drawn ticked when on. */
+  on?: boolean
 }
 
 export interface BlockMenuContext {
@@ -85,6 +88,24 @@ function googleRows(e: CalendarEvent): BlockMenuEntry[] {
 /** "Wed, Jul 29" — an all-day block's date is in no zone. */
 export function blockDate(e: Pick<CalendarEvent, 'starts_at' | 'all_day'>): string {
   return new Date(e.starts_at).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: e.all_day ? 'UTC' : appZone() })
+}
+
+/** F7: a timed event that ends on another date than it starts (a night, a conference): its times are Starts / Ends'
+ * own — the Time row's start-and-length can't say them. */
+export const crossesDays = (e: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'all_day'>): boolean => !e.all_day && spansDays(rangeOf(e))
+
+/** "Wed, Jul 29" for a date key. */
+const keyDate = (key: string) => new Date(`${key}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', timeZone: 'UTC' })
+
+/** The Ends row: the last day, and for a timed event the time — "Thu, Jul 9" · "Wed, Jul 8 · 5:00 PM". */
+export function endsLabel(e: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'all_day'>): string {
+  const r = rangeOf(e)
+  return r.all_day ? keyDate(r.endDay) : `${keyDate(r.endDay)} · ${clockText(r.endTime)}`
+}
+
+/** The Starts row: its date — with the time for an event whose times the Time row doesn't hold (crossesDays). */
+export function startsLabel(e: Pick<CalendarEvent, 'starts_at' | 'ends_at' | 'all_day'>): string {
+  return crossesDays(e) ? `${blockDate(e)} · ${clockText(rangeOf(e).startTime)}` : blockDate(e)
 }
 
 /** The Repeat row: "Repeats weekly" for the presets, the rule in words for a custom one ("Every
@@ -144,19 +165,30 @@ export function blockMenuSpec(e: CalendarEvent, ctx: BlockMenuContext = {}): Blo
   if (isSynced(e)) {
     const edit = !!e.external_ref?.edit
     return [
-      { key: 'date', label: blockDate(e), sub: edit },
-      e.all_day ? { key: 'time', label: 'All day' } : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: edit },
+      { key: 'date', label: startsLabel(e), hint: edit ? 'Starts' : undefined, sub: edit },
+      // F7: the Ends row — ours to change, or whenever the event runs past one day (a read-only one just says so).
+      ...(edit || spansDays(rangeOf(e)) ? [{ key: 'ends' as const, label: endsLabel(e), hint: 'Ends', sub: edit }] : []),
+      ...(e.all_day ? [{ key: 'time' as const, label: 'All day' }] : crossesDays(e) ? [] : [{ key: 'time' as const, label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: edit }]),
       { key: 'google', label: `From ${e.source === 'ics' ? 'subscription' : 'Google'} · ${e.external_ref?.calendar ?? 'Calendar'}`, divider: true },
       ...googleRows(e),
       ...(edit ? [deleteRow(e, ctx, isRepeatingBlock(e))] : [{ key: 'duplicate' as const, label: DUPLICATE_AS_MINE }]),
     ]
   }
   const repeating = isRepeatingBlock(e)
+  // F7: an event's date row is Starts, with an Ends row (a date, and a time unless all-day) and an All day switch beside the
+  // Time row; a task's block is one day and keeps its single Date row.
+  const plain = !e.task_id
   const out: BlockMenuEntry[] = [
-    { key: 'date', label: blockDate(e), sub: true },
-    e.all_day
-      ? { key: 'time', label: 'All day' }
-      : { key: 'time', label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: true },
+    { key: 'date', label: plain ? startsLabel(e) : blockDate(e), hint: plain ? 'Starts' : undefined, sub: true },
+    ...(plain ? [{ key: 'ends' as const, label: endsLabel(e), hint: 'Ends', sub: true }] : []),
+    ...(e.all_day && plain
+      ? []
+      : e.all_day
+        ? [{ key: 'time' as const, label: 'All day' }]
+        : plain && crossesDays(e)
+          ? []
+          : [{ key: 'time' as const, label: clockRange(fromMin(span.start), span.end >= 1440 ? '24:00' : fromMin(span.end)).replace('–', ' – '), hint: durationLabel(span.end - span.start), sub: true }]),
+    ...(plain ? [{ key: 'allday' as const, label: 'All day', on: e.all_day }] : []),
     { key: 'project', label: ctx.projectName ?? 'No project', unset: !ctx.projectName, sub: true },
   ]
   // A task block repeats through its task's own rule, never on the calendar.

@@ -812,3 +812,15 @@ body > .fc-event-dragging[data-title]::after { content: attr(data-length); flex:
 .kf-glide .fc .fc-col-header .fc-timegrid-axis,
 .kf-glide .fc .fc-daygrid-body .fc-timegrid-axis,
 .kf-glide .fc .fc-timegrid-slot-label { position: sticky; left: 0; z-index: 6; background: var(--paper-parchment); }
+
+/* F7 — a multi-day bar's resize grips (./spanGrip): the first piece's left edge, the last one's right. Quiet until the bar is
+   hovered; the tip names the range a drag would leave. */
+.fc .fc-daygrid-event.kf-seg { position: relative; cursor: grab; }
+.fc .kf-seg-grip { position: absolute; top: 0; bottom: 0; width: 9px; cursor: ew-resize; z-index: 2; touch-action: none; }
+.fc .kf-seg-grip-start { left: 0; }
+.fc .kf-seg-grip-end { right: 0; }
+.fc .kf-seg-grip::after { content: ''; position: absolute; top: 26%; bottom: 26%; width: 2px; border-radius: 1px; background: currentColor; opacity: 0; transition: opacity 120ms; }
+.fc .kf-seg-grip-start::after { left: 3px; }
+.fc .kf-seg-grip-end::after { right: 3px; }
+.fc .fc-daygrid-event.kf-seg:hover .kf-seg-grip::after, .fc .kf-seg-grip:hover::after { opacity: 0.45; }
+.kf-seg-tip { position: fixed; z-index: 1000; pointer-events: none; padding: 2px 9px; border-radius: var(--radius-pill); background: var(--ink-body); color: var(--paper-bone); font-family: var(--font-mono); font-size: var(--fs-meta); letter-spacing: var(--ls-meta); white-space: nowrap; }

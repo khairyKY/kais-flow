@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CalendarEvent } from '../../lib/types'
-import { bandChipLabel, bandSegments, isMultiDaySpan, midnightCut, spanDays } from './daySpans'
+import { bandChipLabel, bandSegments, dayNumber, isMultiDaySpan, midnightCut, spanDays } from './daySpans'
 
 // Calendar.dc.html 3e. Exact UTC instants and explicit zones, so these hold under every TZ the
 // suite runs in (UTC, Africa/Cairo, America/Los_Angeles, Asia/Tokyo).
@@ -40,25 +40,25 @@ describe('spanDays / isMultiDaySpan', () => {
 })
 
 describe('bandSegments — "one logical pill in three segment shapes"', () => {
-  it('Fri 9 AM → Sun 3 PM: start, middle, end; title on the first, « » on the open edges, the end time last', () => {
+  it('Fri 9 AM → Sun 3 PM: start, middle, end; title and its start on the first, « n/N » on the open edges, the end time last', () => {
     // 06:00Z Fri = 9 AM Cairo; 12:00Z Sun = 3 PM Cairo
     const e = ev('2026-07-10T06:00:00.000Z', '2026-07-12T12:00:00.000Z')
     expect(bandSegments(e, DAYS, CAIRO, clock(CAIRO))).toEqual([
-      { day: '2026-07-10', shape: 'start', label: 'Offsite »' },
-      { day: '2026-07-11', shape: 'middle', label: '« »' },
-      { day: '2026-07-12', shape: 'end', label: '« ends 3 PM' },
+      { day: '2026-07-10', shape: 'start', label: 'Offsite · from 9 AM »' },
+      { day: '2026-07-11', shape: 'middle', label: '« 2/3 »' },
+      { day: '2026-07-12', shape: 'end', label: '« 3/3 · until 3 PM' },
     ])
   })
 
   it('an all-day span ends with a bare «', () => {
     const e = ev('2026-07-10T00:00:00.000Z', '2026-07-12T00:00:00.000Z', true)
-    expect(bandSegments(e, DAYS, LA, clock(LA)).map((s) => s.label)).toEqual(['Offsite »', '«'])
+    expect(bandSegments(e, DAYS, LA, clock(LA)).map((s) => s.label)).toEqual(['Offsite »', '« 2/2'])
   })
 
   it('clipped by the view: the first piece in view carries the title, whatever its shape', () => {
     const e = ev('2026-07-08T06:00:00.000Z', '2026-07-12T12:00:00.000Z')
-    expect(bandSegments(e, ['2026-07-11', '2026-07-12'], CAIRO, clock(CAIRO)).map((s) => s.label)).toEqual(['« Offsite »', '« ends 3 PM'])
-    expect(bandSegments(e, ['2026-07-12'], CAIRO, clock(CAIRO)).map((s) => s.label)).toEqual(['« Offsite · ends 3 PM'])
+    expect(bandSegments(e, ['2026-07-11', '2026-07-12'], CAIRO, clock(CAIRO)).map((s) => s.label)).toEqual(['« Offsite · 4/5 »', '« 5/5 · until 3 PM'])
+    expect(bandSegments(e, ['2026-07-12'], CAIRO, clock(CAIRO)).map((s) => s.label)).toEqual(['« Offsite · 5/5 · until 3 PM'])
     expect(bandSegments(e, ['2026-07-20'], CAIRO, clock(CAIRO))).toEqual([])
   })
 
@@ -70,10 +70,32 @@ describe('bandSegments — "one logical pill in three segment shapes"', () => {
 
   it('bandChipLabel: one chip for the shown stretch', () => {
     const e = ev('2026-07-08T06:00:00.000Z', '2026-07-12T12:00:00.000Z')
-    expect(bandChipLabel(e, ['2026-07-10'], CAIRO, clock(CAIRO))).toBe('« Offsite »')
-    expect(bandChipLabel(e, ['2026-07-10', '2026-07-11', '2026-07-12'], CAIRO, clock(CAIRO))).toBe('« Offsite · ends 3 PM')
-    expect(bandChipLabel(e, ['2026-07-06', '2026-07-07', '2026-07-08'], CAIRO, clock(CAIRO))).toBe('Offsite »')
+    expect(bandChipLabel(e, ['2026-07-10'], CAIRO, clock(CAIRO))).toBe('« Offsite · day 3 of 5 · all day (Wed 9 AM – Sun 3 PM) »')
+    expect(bandChipLabel(e, ['2026-07-10', '2026-07-11', '2026-07-12'], CAIRO, clock(CAIRO))).toBe('« Offsite · day 3 of 5 · until 3 PM')
+    expect(bandChipLabel(e, ['2026-07-06', '2026-07-07', '2026-07-08'], CAIRO, clock(CAIRO))).toBe('Offsite · day 1 of 5 · from 9 AM »')
     expect(bandChipLabel(e, ['2026-08-01'], CAIRO, clock(CAIRO))).toBe('Offsite')
+  })
+})
+
+describe('dayNumber — "day 2 of 4"', () => {
+  it('counts the days a span covers on the user’s zone, an all-day one by its dates', () => {
+    expect(dayNumber(ev('2026-07-10T00:00:00.000Z', '2026-07-14T00:00:00.000Z', true), '2026-07-11', CAIRO)).toEqual({ n: 2, of: 4 })
+    // Mon 09:00 → Wed 17:00 Cairo (UTC+3): three days
+    const conf = ev('2026-07-06T06:00:00.000Z', '2026-07-08T14:00:00.000Z')
+    expect(dayNumber(conf, '2026-07-07', CAIRO)).toEqual({ n: 2, of: 3 })
+    expect(dayNumber(conf, '2026-07-08', CAIRO)).toEqual({ n: 3, of: 3 })
+  })
+
+  it('the exactly-24-hour boundary: 09:00 → 09:00 next day is two days, 09:00 → 08:59 is one (not a span)', () => {
+    expect(isMultiDaySpan(ev('2026-07-10T06:00:00.000Z', '2026-07-11T06:00:00.000Z'), CAIRO)).toBe(true)
+    expect(isMultiDaySpan(ev('2026-07-10T06:00:00.000Z', '2026-07-11T05:59:00.000Z'), CAIRO)).toBe(false)
+  })
+
+  it('across Cairo’s DST change (the last Friday of April 2026: UTC+2 → UTC+3) a span still counts calendar days', () => {
+    // Thu 23 Apr 22:00 → Mon 27 Apr 01:00 Cairo: the Friday the 24th is a 23-hour day
+    const e = ev('2026-04-23T20:00:00.000Z', '2026-04-26T22:00:00.000Z')
+    expect(spanDays(e, CAIRO)).toEqual({ first: '2026-04-23', last: '2026-04-27' })
+    expect(dayNumber(e, '2026-04-25', CAIRO)).toEqual({ n: 3, of: 5 })
   })
 })
 

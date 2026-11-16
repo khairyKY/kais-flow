@@ -18,13 +18,19 @@ export interface Consent {
 }
 
 export function useConsents() {
+  const signedIn = !!useAuth().session
   return useQuery({
     queryKey: ['consents'],
+    // Only once the session is here: a read made before it (a cold start from a kaisflow:// link, Kai
+    // 2026-11-16) goes out anonymous, RLS answers "no rows", and that empty answer opened the card.
+    enabled: signedIn,
     // Always asked again on mount and on focus, and never kept on disk (queryClient UNPERSISTED roots):
     // another device may have agreed since, and an old copy saying "not agreed" must not open the card
     // (consent-fix 2026-11-06: Kai agreed on the desktop, then three times on the web).
     staleTime: 0,
     queryFn: async () => {
+      // No session on the client yet → unknown, not "nothing agreed" (useOutdated stays null on an error).
+      if (!(await supabase.auth.getSession()).data.session) throw new Error('consents: no session yet')
       const { data, error } = await supabase.from('consents').select('id, document, version, accepted_at')
       if (error) throw error
       return data as Consent[]

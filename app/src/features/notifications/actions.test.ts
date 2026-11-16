@@ -30,7 +30,7 @@ vi.mock('../tasks/api', () => ({
   moveToTomorrowWithUndo: (t: unknown) => moveToTomorrowWithUndo(t),
   remindAgainWithUndo: (t: unknown, min: number) => remindAgainWithUndo(t, min),
 }))
-const focus = { mode: 'break', isRunning: true, setMode: vi.fn(), togglePlay: vi.fn() }
+const focus = { mode: 'break', isRunning: true, setMode: vi.fn(), togglePlay: vi.fn(), resetRound: vi.fn() }
 vi.mock('../focus/focusStore', () => ({ useFocusStore: { getState: () => focus } }))
 
 const show = vi.fn()
@@ -103,6 +103,21 @@ describe('notification actions', () => {
     await runNotificationAction({ action: 'keep' }, nav)
     expect(focus.setMode).toHaveBeenCalledWith('pomodoro')
     expect(focus.togglePlay).toHaveBeenCalledTimes(1)
+  })
+
+  it('Break’s over: Start runs the next round, Stop leaves it stopped', async () => {
+    const nav = vi.fn()
+    focus.mode = 'pomodoro'
+    focus.isRunning = false
+    focus.setMode.mockClear()
+    focus.togglePlay.mockClear()
+    await runNotificationAction({ action: 'focus_start' }, nav)
+    expect(focus.setMode).not.toHaveBeenCalled()
+    expect(focus.togglePlay).toHaveBeenCalledTimes(1)
+    focus.isRunning = true
+    await runNotificationAction({ action: 'focus_stop' }, nav)
+    expect(focus.togglePlay).toHaveBeenCalledTimes(2)
+    expect(focus.resetRound).toHaveBeenCalledTimes(1)
   })
 })
 

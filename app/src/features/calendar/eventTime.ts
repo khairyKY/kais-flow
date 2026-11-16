@@ -66,14 +66,19 @@ export function cairoToIso(dateStr: string, timeStr: string): string {
  * (cairoToIso gives the same instant back). An all-day slot is a calendar date the grid drew:
  * FullCalendar hands it over as "YYYY-MM-DD" (select) or as that day's local midnight (the
  * right-click resolver), and either way it is that date, in no zone. */
-export function slotFields(start: string, end: string, allDay: boolean): { date: string; start: string; end: string; allDay: boolean } {
+export function slotFields(start: string, end: string, allDay: boolean): { date: string; endDate: string; start: string; end: string; allDay: boolean } {
   if (allDay) {
     const d = new Date(start)
     const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-    return { date: /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : local, start: '', end: '', allDay: true }
+    const date = /^\d{4}-\d{2}-\d{2}$/.test(start) ? start : local
+    // F7: a drag across several days of the all-day band — FullCalendar's end is the day AFTER the last one. The form's
+    // endDate is the last day itself; a click (one day, or no end) ends where it starts.
+    const last = /^\d{4}-\d{2}-\d{2}$/.test(end) ? new Date(Date.parse(`${end}T00:00:00Z`) - 86_400_000).toISOString().slice(0, 10) : date
+    return { date, endDate: last > date ? last : date, start: '', end: '', allDay: true }
   }
   const s = new Date(start)
-  return { date: cairoDateKey(s), start: cairoTimeKey(s), end: cairoTimeKey(new Date(end)), allDay: false }
+  const e = new Date(end)
+  return { date: cairoDateKey(s), endDate: cairoDateKey(e), start: cairoTimeKey(s), end: cairoTimeKey(e), allDay: false }
 }
 
 /** HH:MM in local time, for <input type="time">. */

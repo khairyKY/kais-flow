@@ -63,7 +63,12 @@ export function WidgetBridge(): React.ReactNode {
   const focusMode = useFocusStore((s) => s.mode)
   const focusRunning = useFocusStore((s) => s.isRunning)
   const focusTaskId = useFocusStore((s) => s.activeTask?.id ?? null)
-  const roundMin = useFocusStore((s) => s.settings.focusRoundMin)
+  const plan = useFocusStore((s) => s.settings)
+  const roundMin = plan.focusRoundMin
+  // The plan moves with these: a kept round, a new block, a long break (the segments are built from them).
+  useFocusStore((s) => s.kept)
+  useFocusStore((s) => s.block)
+  useFocusStore((s) => s.breakType)
   const inRound = useFocusStore((s) => s.mode === 'pomodoro' && s.secondsLeft < s.settings.focusRoundMin * 60)
 
   const visible = todayListTasks(tasks)
@@ -91,7 +96,7 @@ export function WidgetBridge(): React.ReactNode {
     top3,
     dayN: dayOfJourney(firstRecord, now),
     phase: day.state.phase,
-    focus: { mode: focusMode, isRunning: focusRunning, secondsLeft: focus.secondsLeft, roundMin, taskId: focusTaskId },
+    focus: { mode: focusMode, isRunning: focusRunning, secondsLeft: focus.secondsLeft, roundMin, taskId: focusTaskId, block: focus.block, kept: focus.kept, breakType: focus.breakType, pomodoroStartIso: focus.pomodoroStartIso, plan },
     routines,
     completions,
     inbox: inbox.length,
@@ -117,7 +122,7 @@ export function WidgetBridge(): React.ReactNode {
 
   // Push on change (debounced), and at least every KEEPALIVE_MS. The key ignores the write time and
   // the few seconds a running round's end drifts between builds.
-  const key = JSON.stringify({ ...snapshot, at: 0, focus: { ...snapshot.focus, endsAt: Math.round(snapshot.focus.endsAt / 5000) } })
+  const key = JSON.stringify({ ...snapshot, at: 0, focus: { ...snapshot.focus, endsAt: Math.round(snapshot.focus.endsAt / 5000), breakEndsAt: Math.round(snapshot.focus.breakEndsAt / 5000) } })
   const pushed = useRef<{ key: string; at: number }>({ key: '', at: 0 })
   const latest = useRef(snapshot)
   latest.current = snapshot

@@ -1,5 +1,5 @@
 import type { ActivityLogEntry } from '../../lib/types'
-import { birthdayNotice, digestNotice, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, syncNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
+import { birthdayNotice, digestNotice, nudgeNotice, paperReadyNotice, reminderNotice, reviewNotice, routineNotice, syncNotice, type NoticeAction } from '../../../../supabase/functions/notify/copy.ts'
 import { appZone } from '../../lib/appZone'
 import { zoneDateKey } from '../../lib/dateShortcuts'
 import type { KindId } from '../notifications/kinds'
@@ -615,6 +615,11 @@ export function describeActivity(e: ActivityLogEntry, names: ActivityNames = NO_
         const at = str(e.payload, 'starts_at')
         const href = at ? `/calendar?date=${zoneDateKey(new Date(at))}` : '/calendar'
         return { ...said, text: said.text || 'An event', href, notice: { kind: 'event_reminder', actions: [{ action: 'open', title: 'Open' }], taskIds: [] } }
+      }
+      if (type === 'notify.weekly_review') {
+        // The review reminder (0095): Start review opens the Weekly review.
+        const sent = reviewNotice('')
+        return { ...said, text: said.text || sent.title, details: said.details || sent.body, href: sent.url, notice: { kind: 'weekly_review', actions: sent.actions, taskIds: [] } }
       }
       if (type === 'notify.terms') {
         // A changed Terms of Use / Privacy Policy (0083): the app itself asks to agree; this row opens

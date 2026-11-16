@@ -376,25 +376,10 @@ if (want('w')) {
   }
 }
 
-// ── C: T8 — Collapse on Today's Also open "Show N more" and the sidebar Plan drawer ──
+// ── C: T8 — Collapse on the sidebar Plan drawer (Today's "Also open · Show N more" went 2026-11-07, v164-kai-issues) ──
 if (want('c')) {
   for (const [mode, o] of MODES) {
     const { ctx, page, errors } = await open('/today', o)
-    const more = page.getByRole('button', { name: /^Show \d+ more/ }).first()
-    let ok = false
-    let detail = 'no Show more'
-    if (await exists(more)) {
-      const fold = page.locator('section[aria-label="Also open"] .kf-collapse').first()
-      await more.click()
-      await sleep(70)
-      const mid = await height(fold)
-      await sleep(400)
-      const full = await height(fold)
-      await shot(page, `c1-also-open-more-${mode}`)
-      ok = mode === 'reduced' ? mid === full && full > 50 : mid > 0 && mid < full
-      detail = `${mid} → ${full}`
-    }
-    check(`c1 [${mode}] T8 Today "Show N more" ${mode === 'reduced' ? 'opens at once (reduced)' : 'eases open'}`, ok, detail)
     const plan = page.locator('.app-sidebar .kf-collapse').first()
     if (await exists(plan)) {
       const btn = page.locator('.app-sidebar button', { has: page.locator('.kf-plan-chevron') }).first()

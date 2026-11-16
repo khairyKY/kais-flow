@@ -1,3 +1,4 @@
+import { autoUpdateActive, downloadUpdateNow } from '../../lib/autoUpdate'
 import { appPlatform, checkForUpdate, compareVersions, installedVersion, RELEASES_LATEST, type AppPlatform, type UpdateResult } from '../../lib/appUpdate'
 import { appZone } from '../../lib/appZone'
 import { queryClient } from '../../lib/queryClient'
@@ -54,10 +55,13 @@ async function runCheck(uid: string | undefined): Promise<void> {
   const current = await runningVersion(platform)
   const available = await availableFrom(result, current)
   useWhatsNew.setState({ checking: false, result, available })
+  // The desktop apps fetch the update themselves (lib/autoUpdate): Settings → App then offers "Restart to update", and no "is out" toast.
+  const silent = !!available && autoUpdateActive()
+  if (silent) void downloadUpdateNow()
   const mem = uid ? readMemory(uid) : null
   if (!uid || !mem || result.kind === 'offline') return // offline: try again next time
   // Only a version you can update to now: a release whose installer is still building waits.
-  const nudge = !!available && result.kind !== 'pending' && shouldNudge(available.v, current, mem.notified ?? null)
+  const nudge = !silent && !!available && result.kind !== 'pending' && shouldNudge(available.v, current, mem.notified ?? null)
   remember(uid, { checkedAt: checkedStamp(!!available && result.kind === 'pending', Date.now()), ...(nudge && available ? { notified: available.v } : null) })
   if (!nudge || !available) return
   const v = available.v

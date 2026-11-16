@@ -69,8 +69,9 @@ export async function testThisDevice(subs: readonly PushSubscriptionRow[]): Prom
     return 'Sent — it should be in the corner of the screen. Nothing there? Check Windows Settings → System → Notifications → Kai’s Flow, and Do not disturb.'
   }
   if (channel === 'mac') {
-    await showLocal(testNotice())
-    return 'Sent — it should be at the top right of the screen. Nothing there? Check System Settings → Notifications → Kai’s Flow, and Focus.'
+    await showLocal({ ...testNotice(), actions: [{ action: 'open', title: 'Open' }] }) // one button, so there is something to look for
+    // ponytail: the notice style (banner / alert) isn't readable from the app, so this line is always shown on a Mac.
+    return 'Sent — it should be at the top right of the screen. Buttons show on hover; set Kai’s Flow to Alerts in System Settings › Notifications to keep them on screen. Nothing there? Check that screen, and Focus.'
   }
   if (channel === 'android') {
     const permission = await (await import('./android')).androidPermission(true)

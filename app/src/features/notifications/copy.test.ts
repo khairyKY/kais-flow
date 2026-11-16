@@ -6,6 +6,7 @@ import {
   digestNotice,
   eventReminderNotice,
   is24h,
+  breakDoneNotice,
   focusDoneNotice,
   inQuietHours,
   isPaused,
@@ -93,6 +94,21 @@ describe('the other kinds', () => {
     expect(f).toMatchObject({ title: '25 minutes tended ✿', body: 'GCI homework 1 — NumPy' })
     expect(f.actions.map((a) => a.title)).toEqual(['Break 5 min', 'Keep going'])
     expect(focusDoneNotice(25, 'GCI homework 1 — NumPy', 5, {}).body).toBe('A focus timer')
+  })
+
+  it('break done: Back to it when the round started itself, else Start / Stop; the Focus switch', () => {
+    const auto = breakDoneNotice(2, 4, 'NumPy', true, NAMES)
+    expect(auto).toMatchObject({ kind: 'break_done', title: 'Back to it', body: 'Round 2 of 4 · NumPy', tag: 'focus-break', url: '/focus' })
+    expect(auto.actions).toEqual([])
+    const wait = breakDoneNotice(2, 4, 'NumPy', false, NAMES)
+    expect(wait).toMatchObject({ title: 'Break’s over', body: 'Ready for round 2? · NumPy' })
+    expect(wait.actions).toEqual([
+      { action: 'focus_start', title: 'Start' },
+      { action: 'focus_stop', title: 'Stop' },
+    ])
+    expect(breakDoneNotice(2, 4, 'NumPy', false, {}).body).toBe('Ready for round 2?')
+    expect(deliver(wait, { focus_done_on: false }, new Date('2026-11-16T10:00:00Z'))).toBeNull()
+    expect(deliver(wait, null, new Date('2026-11-16T10:00:00Z'))).toEqual(wait)
   })
 })
 

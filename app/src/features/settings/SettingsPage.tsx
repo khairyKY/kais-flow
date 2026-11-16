@@ -10,6 +10,7 @@ import { testThisDevice, useDeviceState } from '../notifications/device'
 import { blockers } from '../notifications/plan'
 import { useAppSettings, updateAppSetting, useCalendarDefaultView, settingSynced, useOwner, type AutoProjectMode, type CalendarDefaultView } from '../../lib/settings'
 import { appPlatform, buildStamp, installedVersion, reloadToUpdate } from '../../lib/appUpdate'
+import { useAutoUpdate } from '../../lib/autoUpdate'
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
 import { checkForUpdates } from '../whats-new/check'
 import { DownloadLinks } from '../download/DownloadBar'
@@ -36,6 +37,7 @@ import { MAX_REPOS, type GithubRules } from '../../../../supabase/functions/_sha
 import { Select } from '../../components/Select'
 import { useCaptureKey, createCaptureKey, deleteCaptureKey, bookmarklet, curlRecipe, CAPTURE_URL } from './captureKey'
 import { useMcpKey, createMcpKey, deleteMcpKey, setMcpPersonal, claudeCodeCommand, claudeDesktopConfig, genericConfig, MCP_URL, type McpScope } from './mcpKey'
+import { useCalendarFeedLinks, createCalendarFeedLink, revokeCalendarFeedLink, type CalendarFeedLinkRow } from './calendarFeedLinks'
 import { useWidgetLinks, createWidgetLink, setWidgetTicking, revokeWidgetLink, type WidgetLinkRow } from './widgetLinks'
 import { useScansToday } from '../paper/api'
 import { DAILY_PAGES, scansLeft } from '../paper/paperMath'
@@ -524,6 +526,7 @@ function CalendarCat() {
         </Row>
       </SCard>
       <SubscribedCalendars />
+      <CalendarFeedCard />
       <SCard title="Planning">
         <Row label="Plan shortcuts" help="Today, Next free slot, This weekend…" keys="glossary">
           <PlanGlossaryLink />
@@ -771,7 +774,7 @@ function ReviewSetting() {
   const shown = when.day === null ? 'default' : String(when.day)
   if (!ready) return null
   return (
-    <Row label="Weekly review" help={`${when.day === null ? 'On the first day of your weekend' : `Every ${DAY_NAMES[when.day]}`} · ${when.time ? `from ${clockText(when.time)}` : 'all day'} · Today asks until the week is closed`} keys="weekly review day time sweep close the week">
+    <Row label="Weekly review" help={`${when.day === null ? 'On the first day of your weekend' : `Every ${DAY_NAMES[when.day]}`} · ${when.time ? `from ${clockText(when.time)}` : 'all day'} · Today asks until the week is closed${data?.review_reminder_on === false ? '' : ` · You’ll get a reminder at ${clockText(when.time ?? REVIEW_AT)}`}`} keys="weekly review day time sweep close the week reminder">
       <Select
         value={shown}
         onChange={(v) => updateAppSetting('review_day', v === 'default' ? null : Number(v))}
@@ -853,6 +856,8 @@ function AppUpdateCard() {
   const checking = useWhatsNew((s) => s.checking)
   const r = useWhatsNew((s) => s.result)
   const available = useWhatsNew((s) => s.available)
+  const auto = useAutoUpdate()
+  const v = (x: string | null) => `v${(x ?? '').replace(/^v/i, '')}`
   useEffect(() => {
     if (platform !== 'web') void installedVersion(platform).then(setInstalled)
   }, [platform])
@@ -861,7 +866,8 @@ function AppUpdateCard() {
   const current = platform === 'web' ? `${BUNDLED_VERSION} · ${stamp ? `build ${stamp.commit.slice(0, 7)}` : 'development build'}` : installed ? running : 'version unknown'
   const file = platform === 'android' ? 'APK' : 'installer'
   const line =
-    !r ? null
+    auto.phase === 'ready' ? `${v(auto.version)} is ready — restart to update`
+    : !r ? null
     : available ? `${available.v} is out`
     : r.kind === 'reload' ? 'A new version is ready'
     : r.kind === 'download' ? `${r.version} is out`
@@ -883,7 +889,7 @@ function AppUpdateCard() {
               <span role="status" style={{ fontSize: 13, color: r?.kind === 'offline' ? 'var(--ink-muted)' : 'var(--ink-body)' }}>{line}</span>
               {/* A newer release has its Update beside its notes below; this is a newer deploy of the same version. */}
               {!available && r?.kind === 'reload' && <Button variant="cta" onClick={() => void reloadToUpdate()}>Reload</Button>}
-              {!available && r?.kind === 'download' && <UpdateButton result={r} />}
+              {!available && (r?.kind === 'download' || auto.phase === 'ready') && <UpdateButton result={r} />}
             </div>
           )
         }
@@ -1271,7 +1277,7 @@ function NotificationsCard() {
     <SCard title="Kinds">
       {KIND_IDS.map((kind) => {
         const k = KIND_LOOK[kind]
-        const key = `${kind}_on` as const
+        const key = kind === 'weekly_review' ? ('review_reminder_on' as const) : (`${kind}_on` as const) // the review's switch is 0095's, not <kind>_on
         const on = s[key] !== false
         const ritual = kind === 'morning_digest' || kind === 'evening_nudge' ? kind : null
         return (
@@ -1528,6 +1534,88 @@ function CaptureShortcutRow({ mac }: { mac: boolean }) {
         display={pickFace(shortcutLabel(choice, mac))}
       />
     </Row>
+  )
+}
+
+// Your own calendar link (features/settings/calendarFeedLinks.ts, function `calendar-feed`, migration 0096): a private
+// read-only ICS link for Apple Calendar, Outlook or Google Calendar — the Widget links' shown-once flow, one link per
+// calendar app, each revoked on its own. The links are the account's, so shown on every device.
+function CalendarFeedCard() {
+  const { data: links = [] } = useCalendarFeedLinks()
+  const [label, setLabel] = useState('Phone calendar')
+  const [includeTasks, setIncludeTasks] = useState(true)
+  const [titles, setTitles] = useState(true)
+  const [shown, setShown] = useState<{ https: string; webcal: string } | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const [revoking, setRevoking] = useState<CalendarFeedLinkRow | null>(null)
+  const day = (iso: string) => new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: appZone() })
+  async function run(fn: () => Promise<void>) {
+    setBusy(true)
+    setErr(null)
+    try { await fn() } catch { setErr('That didn’t save — check the connection and try again.') } finally { setBusy(false) }
+  }
+  const copy = (text: string) =>
+    void navigator.clipboard.writeText(text).then(
+      () => useToastStore.getState().push({ message: 'Link copied' }),
+      () => setErr('Couldn’t reach the clipboard — select the link and copy it by hand.'),
+    )
+  return (
+    <SCard id="settings-CalendarFeed" padded title="Your calendar link" sub="Your events, Time blocks and scheduled tasks in another calendar app, read-only. Anyone with the link can read them, so revoke one you no longer use.">
+      {links.map((l, n) => (
+        <Row key={l.id} label={l.label} help={`Made ${day(l.created_at)} · ${l.last_used_at ? `last used ${day(l.last_used_at)}` : 'not used yet'} · ${l.titles ? 'with titles' : 'busy only'}${l.include_tasks ? ' · with tasks' : ''}`} keys="calendar link ics feed webcal apple outlook google subscribe" style={n === 0 ? { borderTop: 'none' } : undefined}>
+          <Button variant="ghost" disabled={busy} onClick={() => setRevoking(l)}>Revoke</Button>
+        </Row>
+      ))}
+      {!links.length && !shown && <div className="st-help">No calendar links yet</div>}
+      {shown && (
+        <>
+          <div style={{ fontSize: 'var(--fs-body-s)', color: 'var(--ink-body)', marginTop: 8 }}>Your calendar link — copy it now, it won’t be shown again:</div>
+          <div className="st-mono-box" dir="ltr" style={{ color: 'var(--ink-body)', wordBreak: 'break-all' }}>{shown.webcal}</div>
+          <div className="st-btns" style={{ marginTop: 8 }}>
+            <Button variant="secondary" onClick={() => copy(shown.webcal)}>Copy webcal:// link</Button>
+            <Button variant="secondary" onClick={() => copy(shown.https)}>Copy https:// link</Button>
+          </div>
+          <div className="st-help" style={{ marginTop: 8 }}>The webcal:// link is for Apple Calendar; Google and Outlook want the https:// one.</div>
+        </>
+      )}
+      <Row label="New link" help="Name it after the app it’s for" keys="calendar link ics feed create">
+        <input className="st-field" value={label} maxLength={60} onChange={(e) => setLabel(e.target.value)} aria-label="Calendar link name" />
+      </Row>
+      <Row label="Include scheduled tasks" help={includeTasks ? 'Tasks with a time, and the tasks in a Time block' : 'Only your events and Time blocks'} keys="calendar link tasks">
+        <Toggle on={includeTasks} label="Include scheduled tasks in the new link" onToggle={() => setIncludeTasks(!includeTasks)} />
+      </Row>
+      <Row label="Show titles" help={titles ? 'Each entry shows its name' : 'Off: every entry reads “Busy”'} keys="calendar link titles busy private">
+        <Toggle on={titles} label="Show titles in the new link" onToggle={() => setTitles(!titles)} />
+      </Row>
+      <div className="st-btns">
+        <Button variant="secondary" disabled={busy || !label.trim()} onClick={() => void run(async () => setShown(await createCalendarFeedLink(label, includeTasks, titles)))}>Create link</Button>
+      </div>
+      <details style={{ marginTop: 12 }}>
+        <summary className="st-help" style={{ cursor: 'pointer' }}>How to add it</summary>
+        <div className="st-help" style={{ display: 'grid', gap: 6, marginTop: 6 }}>
+          <div><strong>Apple Calendar:</strong> File › New Calendar Subscription, paste the link.</div>
+          <div><strong>Outlook:</strong> Add calendar › From internet, paste the https:// link.</div>
+          <div><strong>Google Calendar:</strong> Other calendars › From URL, paste the https:// link. Google can take hours to show changes.</div>
+        </div>
+      </details>
+      {/* Revoking can't be undone (only the hash is stored) — a short confirm, as for a Widget link. */}
+      {revoking && (
+        // ds-ok: revoking a link can't be undone (only its hash is stored), so it asks first
+        <ConfirmCard
+          title={`Revoke “${revoking.label}”?`}
+          body="The calendar app using it stops updating. A new link can be made any time, but this one can't come back."
+          confirmLabel="Revoke"
+          onCancel={() => setRevoking(null)}
+          onConfirm={() => {
+            const l = revoking
+            setRevoking(null)
+            void run(async () => { await revokeCalendarFeedLink(l.id); setShown(null) })
+          }}
+        />
+      )}
+      {err && <div className="st-help" style={{ color: 'var(--acc-terra-ink)', marginTop: 8 }}>{err}</div>}
+    </SCard>
   )
 }
 

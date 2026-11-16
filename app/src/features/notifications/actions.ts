@@ -105,6 +105,14 @@ export async function runNotificationAction(a: NotificationAction, navigate: (to
       focus.setMode('pomodoro') // a fresh round on the same task
       useFocusStore.getState().togglePlay()
       return
+    case 'focus_start': // the next round, after a break that didn't start it ("Break’s over")
+      if (focus.mode !== 'pomodoro') focus.setMode('pomodoro')
+      if (!useFocusStore.getState().isRunning) useFocusStore.getState().togglePlay()
+      return
+    case 'focus_stop':
+      if (focus.isRunning) focus.togglePlay()
+      useFocusStore.getState().resetRound()
+      return
     case 'plan':
       navigate('/today?ritual=morning')
       return

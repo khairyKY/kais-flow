@@ -301,13 +301,13 @@ for (const theme of ['day', 'night']) {
       const e = dialog(page)
       // The sheet grew Project · Repeat · Reminder rows (time-slots, event-reminders); Date and Time lead.
       const evRows = (await e.locator('.kf-as-row').allInnerTexts()).map((t) => t.replace(/\s+/g, ' ').trim())
-      check(`${name} a plain event → the event sheet: "Event · 1h", Date + Time, Delete (no Unschedule, no checkbox)`, (await text(e.locator('.pc-bs-meta'))) === 'Event · 1h' && evRows[0] === 'Sun, Sep 27' && evRows[1]?.startsWith('13:00 – 14:00') && (await e.getByRole('button', { name: 'Delete' }).count()) === 1 && (await e.getByRole('button', { name: 'Unschedule' }).count()) === 0 && (await e.getByRole('checkbox').count()) === 0 && !new URL(page.url()).searchParams.has('task'), JSON.stringify(evRows))
+      check(`${name} a plain event → the event sheet: "Event · 1h", Starts + Ends + Time (F7), Delete (no Unschedule, no checkbox)`, (await text(e.locator('.pc-bs-meta'))) === 'Event · 1h' && evRows[0] === 'Sun, Sep 27 Starts' && evRows[1]?.endsWith('Ends') && evRows[2]?.startsWith('13:00 – 14:00') && (await e.getByRole('button', { name: 'Delete' }).count()) === 1 && (await e.getByRole('button', { name: 'Unschedule' }).count()) === 0 && (await e.getByRole('checkbox').count()) === 0 && !new URL(page.url()).searchParams.has('task'), JSON.stringify(evRows))
       const held = await page.locator('.pc-held').boundingBox()
       check(`${name} …the event stays in view above its sheet, drawn over the scrim`, (await text(page.locator('.pc-held'))).startsWith('Lunch with Omar') && held.y >= (await page.locator('.pc-scroll').boundingBox()).y && held.y + held.height <= (await e.boundingBox()).y, JSON.stringify(held))
       check(`${name} …its title sits on the sheet's gutter`, Math.abs((await e.locator('.pc-bs-title').boundingBox()).x - 20) <= 1, (await e.locator('.pc-bs-title').boundingBox()).x)
       await shot(page, '7d-event-day')
       const w3 = state.writes.length
-      await tap(cdp, e.locator('.kf-as-row').nth(1)) // the Time row
+      await tap(cdp, e.locator('.kf-as-row').nth(2)) // the Time row (Starts · Ends · Time since F7)
       await page.locator('.kf-pk-time', { hasText: '14:30' }).scrollIntoViewIfNeeded()
       await tap(cdp, page.locator('.kf-pk-time', { hasText: '14:30' }))
       await tap(cdp, page.getByRole('button', { name: 'Done' }))

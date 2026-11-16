@@ -45,7 +45,8 @@ tauri-winrt-notification = "0.8"
 # crate tauri-winrt-notification already pulls in, with two more namespaces.
 windows = { version = "0.62", features = ["ApplicationModel", "Win32_Storage_Packaging_Appx"] }
 
-# The Mac app's notices (tray.rs notify_local): Notification Center, from the app's own bundle id.
+# The Mac app's notices (tray.rs notify_local): Notification Center, from the app's own bundle id — with
+# Done / Tomorrow / Snooze buttons, through the crate's blocking response API (one thread per waiting notice).
 [target.'cfg(target_os = "macos")'.dependencies]
 mac-notification-sys = "0.6"
 

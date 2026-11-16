@@ -6,6 +6,7 @@ import { LONG_PRESS_MS, lockAxis, pastCommit, REST_X, settleSwipe, SETTLE_MS, ty
 import './TaskRow.css'
 import { longPress, tick } from '../../lib/haptics'
 import { useMotionEnabled } from '../../lib/motion'
+import type { RowHold } from './rowLift'
 
 // ── The task-row gesture layer (DS-CHANGELOG §3 "Swipe row" + "Selection mode", Flow Audit §4):
 // swipe right reveals Tomorrow · Plan · Project and, past --swipe-commit, commits Tomorrow;
@@ -40,8 +41,8 @@ interface SwipeRowProps extends HTMLAttributes<HTMLDivElement> {
   actions?: SwipeActions
   /** "Mon 09:00" — shown once a right swipe passes the commit line. */
   tomorrowHint: string
-  /** Hold 400ms (touch): enter selection mode with this row selected. */
-  onLongPress?: () => void
+  /** Hold 400ms (touch): enter selection mode with this row selected. Told where the finger took the row, for a hold that lifts it (./rowLift). */
+  onLongPress?: (hold: RowHold) => void
   /** Phone selection mode: no swipes, and every tap on the row toggles it (onSelectTap). */
   selecting?: boolean
   onSelectTap?: () => void
@@ -96,10 +97,11 @@ export function SwipeRow({ actions, tomorrowHint, onLongPress, selecting, onSele
         setBloom({ x: (e.clientX - r.left) / uiZoom(), y: (e.clientY - r.top) / uiZoom(), n: e.timeStamp, out: false })
       }
       s.timer = window.setTimeout(() => {
+        const hold = { pointerId: s.id, x: s.sx, y: s.sy, el: rowRef.current! }
         s.id = -1
         s.swallow = true // the hold was the action; its release is not a tap
         longPress()
-        onLongPress()
+        onLongPress(hold)
         drain()
       }, LONG_PRESS_MS)
     }

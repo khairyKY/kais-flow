@@ -19,12 +19,12 @@ describe('planOptions — one Plan list, each option saying where it lands', () 
   it('in order, with the resolved day and time and a plain line each', () => {
     const o = planOptions(WED, { task: task(), weekend: SAT_SUN, slot: { day: '2026-10-07', start: 14 * 60 + 30 }, dur: 30, someday: true })
     expect(o.map((x) => [x.label, x.hint])).toEqual([
+      ['Pick date & time…', ''],
       ['Today', 'Wed 7 · 09:00'],
       ['Next free slot', 'Today 14:30–15:00'],
       ['Tomorrow, first thing', 'Thu 8 · 09:00'],
       ['This weekend', 'Sat 10 · 09:00'],
       ['Next week', 'Mon 12 · 09:00'],
-      ['Pick date & time…', ''],
       ['Someday', ''],
     ])
     expect(o.find((x) => x.key === 'slot')!.means).toMatch(/^ASAP: /)
@@ -42,14 +42,14 @@ describe('planOptions — one Plan list, each option saying where it lands', () 
 
   it('never two on one day (quickPicks’ rule): the weekend drops when it is today or tomorrow', () => {
     // Fri + Sat, on a Thursday: the weekend is tomorrow → only Tomorrow.
-    expect(keys(planOptions(at('2026-10-08T10:00:00'), { weekend: FRI_SAT }))).toEqual(['today', 'tomorrow', 'nextweek', 'pick'])
+    expect(keys(planOptions(at('2026-10-08T10:00:00'), { weekend: FRI_SAT }))).toEqual(['pick', 'today', 'tomorrow', 'nextweek'])
     // …on a Friday: it is today.
-    expect(keys(planOptions(at('2026-10-09T10:00:00'), { weekend: FRI_SAT }))).toEqual(['today', 'tomorrow', 'nextweek', 'pick'])
+    expect(keys(planOptions(at('2026-10-09T10:00:00'), { weekend: FRI_SAT }))).toEqual(['pick', 'today', 'tomorrow', 'nextweek'])
     // …on a Saturday (inside the weekend): the next Friday.
     expect(planOptions(at('2026-10-10T10:00:00'), { weekend: FRI_SAT }).find((x) => x.key === 'weekend')?.hint).toBe('Fri 16 · 09:00')
     // Sun only, on a Sunday: Today covers it; Next week skips tomorrow's Monday.
     const sun = planOptions(at('2026-10-11T10:00:00'), { weekend: [0] })
-    expect(keys(sun)).toEqual(['today', 'tomorrow', 'nextweek', 'pick'])
+    expect(keys(sun)).toEqual(['pick', 'today', 'tomorrow', 'nextweek'])
     expect(sun.find((x) => x.key === 'nextweek')?.hint).toBe('Mon 19 · 09:00')
     // …and on the Monday after, the coming Sunday.
     expect(planOptions(at('2026-10-12T10:00:00'), { weekend: [0] }).find((x) => x.key === 'weekend')?.hint).toBe('Sun 18 · 09:00')
@@ -67,23 +67,23 @@ describe('planOptions — one Plan list, each option saying where it lands', () 
   it('Today keeps the task’s own time; with none (or the 09:00 default) it is 09:00', () => {
     const late = task({ due_at: at('2026-10-05T15:30:00').toISOString() })
     expect(todayFor(late, WED)).toBe(at('2026-10-07T15:30:00').toISOString())
-    expect(planOptions(WED, { task: late, weekend: SAT_SUN })[0]).toMatchObject({ hint: 'Wed 7 · 15:30', means: 'today, keeps its 15:30' })
+    expect(planOptions(WED, { task: late, weekend: SAT_SUN }).find((x) => x.key === 'today')).toMatchObject({ hint: 'Wed 7 · 15:30', means: 'today, keeps its 15:30' })
     setHour24(false) // Kai 2026-10-22: the Replan list said "keeps its 15:00 · Thu 8 · 09:00" on the 12-hour clock
     try {
       const o = planOptions(WED, { task: late, weekend: SAT_SUN })
-      expect(o[0]).toMatchObject({ hint: 'Wed 7 · 3:30 PM', means: 'today, keeps its 3:30 PM' })
+      expect(o.find((x) => x.key === 'today')).toMatchObject({ hint: 'Wed 7 · 3:30 PM', means: 'today, keeps its 3:30 PM' })
       expect(o.find((x) => x.key === 'tomorrow')?.hint).toBe('Thu 8 · 9:00 AM')
     } finally {
       setHour24(true)
     }
     expect(todayFor(task(), WED)).toBe(scheduleToday(WED))
-    expect(planOptions(WED, { task: task({ due_at: at('2026-10-05T09:00:00').toISOString() }), weekend: SAT_SUN })[0].means).toBe('today, no set time')
+    expect(planOptions(WED, { task: task({ due_at: at('2026-10-05T09:00:00').toISOString() }), weekend: SAT_SUN }).find((x) => x.key === 'today')?.means).toBe('today, no set time')
   })
 
   it('a selection: no free-slot finder, Today at 09:00', () => {
     const o = planOptions(WED, { weekend: SAT_SUN })
     expect(keys(o)).not.toContain('slot')
-    expect(o[0].hint).toBe('Wed 7 · 09:00')
+    expect(o.find((x) => x.key === 'today')?.hint).toBe('Wed 7 · 09:00')
   })
 
   it('no free gap: the finder still shows, saying so', () => {
@@ -142,9 +142,9 @@ describe('isOverdue — Plan… reads Replan…', () => {
 describe('planGlossary — Settings → Calendar', () => {
   it('explains every option, in the Plan menu’s words', () => {
     const g = planGlossary(FRI_SAT)
-    expect(g.map((x) => x.label)).toEqual(['Today', 'Next free slot', 'Tomorrow, first thing', 'This weekend', 'Next week', 'Pick date & time…', 'Replan'])
-    expect(g[1].means).toMatch(/^ASAP/)
-    expect(g[3].means).toMatch(/Fri \+ Sat/)
-    expect(planGlossary([])[3].means).toMatch(/no weekend/)
+    expect(g.map((x) => x.label)).toEqual(['Pick date & time…', 'Today', 'Next free slot', 'Tomorrow, first thing', 'This weekend', 'Next week', 'Replan'])
+    expect(g[2].means).toMatch(/^ASAP/)
+    expect(g[4].means).toMatch(/Fri \+ Sat/)
+    expect(planGlossary([])[4].means).toMatch(/no weekend/)
   })
 })

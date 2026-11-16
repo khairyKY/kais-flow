@@ -63,7 +63,7 @@ import { claimDayComplete, DAY_DONE_DWELL_MS } from './dayComplete'
 import { Fireflies } from './NightGarden'
 import { SeasonDrift } from '../seasons/SeasonDrift'
 import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
-import { isInProgress, upNextEvents } from './upNext'
+import { isInProgress, runsToday, upNextEvents } from './upNext'
 import { blockTomorrowHint, eventMenuItems, moveBlockToTomorrow, unscheduleWithUndo } from './rowMenus'
 import { RowMenuButton, SelectCircle, SwipeRow } from '../tasks/SwipeRow'
 import { LabelChips } from '../tasks/TaskRow'
@@ -74,6 +74,7 @@ import { DeskRitualHead, RitualCard, ReviewCard, type CardHead } from './DayCard
 import { clearFirstTodayHint, firstTodayHintPending, FIRST_TODAY_HINT } from './firstTodayHint'
 import { useAuth } from '../auth/AuthProvider'
 import { useDay } from './useDay'
+import { SpansToday } from './SpansToday'
 import { useStarEvents } from './api'
 import { useStartFocus } from './startFocus'
 import { useFocusNow } from './focusNow'
@@ -99,6 +100,7 @@ import { useMinuteNow } from './useMinuteNow'
 import { captureFor, dayBlocks, dayBounds, dayHeading, dayName, dayNoon, dayWord, futureTasks, pastTasks, viewDay } from './dayView'
 import { NowPanel, RitualsPanel, Top3Head, usePhoneView, ViewSwap } from './PhoneHome'
 import { DayStripView } from './DayStripView'
+import { DayBarDrag } from './DayBarDrag'
 
 // The 2a capture pill's mic: the voice sheet, loaded on first use (as the tray does).
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
@@ -286,8 +288,8 @@ function TodayView({ nav }: { nav: DayNav }) {
   // Each item once (./todayLayout, rulings 3–4): Up next skips the card's block and the Top 3's.
   const upNext = upNextItems(events, now, headBlock, top3Ids)
   // Desktop lists the next two under the ribbon (2a); the rest are on the ribbon, and their tasks
-  // stay rows in Also open — every task shows as a row somewhere (DAILY-CYCLE). The phone has no Up next
-  // list now (B): a task with a block today is a row in its list, carrying the block's time.
+  // stay rows in Today's tasks. The phone has no Up next list now (B): a task with a block today is a
+  // row in its list, carrying the block's time.
   const upNextShown = isMobile ? [] : upNext.slice(0, 2)
   const upNextTasks = upNextShown.flatMap((e) => (e.task_id && taskById.has(e.task_id) ? [taskById.get(e.task_id)!] : []))
   // By date, or the manual order ⌘/Ctrl+↑/↓ gave a row (p7e A22, ../tasks/manualOrder).
@@ -304,14 +306,12 @@ function TodayView({ nav }: { nav: DayNav }) {
   const overdueOpen = allOpen.filter((t) => !doneNow(t) && isOverdue(t, now) && !backFromSnooze(t, now))
   const overdueIds = new Set(overdueOpen.map((t) => t.id))
   const restOpen = allOpen.filter((t) => !overdueIds.has(t.id))
-  // Kai 2026-10-22 ("the today tasks are combined with the also open tasks"): what's due or on the
-  // calendar today (../tasks/grouping isTodayTask, the Tasks "Today" list's rule) is its own
-  // section, Today's tasks; Also open is the rest. Same order rules in both.
+  // What's due or on the calendar today (../tasks/grouping isTodayTask, the Tasks "Today" list's rule) is
+  // Today's tasks. Kai 2026-11-07: Today is a glance, so the rest (the old "Also open" fold) is gone —
+  // it lives on the Tasks page.
   // One back from snooze came back today: it leads Today's tasks (the list's order puts it first), whatever its date.
   const todayRows = restOpen.filter((t) => isTodayTask(t, now) || backFromSnooze(t, now))
-  const alsoRows = restOpen.filter((t) => !isTodayTask(t, now) && !backFromSnooze(t, now))
   const todayCount = todayRows.filter((t) => !t.completed_at).length
-  const openCount = alsoRows.filter((t) => !t.completed_at).length
   const allDone = !tasksPending && open.length === 0 && doneToday > 0
 
   // X1 Effects 2d (+ Motion 1b) — the last check of the day earns a 5-petal fall and a
@@ -334,7 +334,7 @@ function TodayView({ nav }: { nav: DayNav }) {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   // Every task row on the page, in screen order, once (a Top 3 task that is also the slip's block
   // shows twice by design — Open question 1 — but is one selection).
-  const selectable = [...new Map([...top3InOrder, ...(headTask ? [headTask] : []), ...upNextTasks, ...allOpen].map((t) => [t.id, t] as const)).values()].filter((t) => !t.completed_at)
+  const selectable = [...new Map([...top3InOrder, ...(headTask ? [headTask] : []), ...upNextTasks, ...todayRows, ...overdueOpen].map((t) => [t.id, t] as const)).values()].filter((t) => !t.completed_at)
   const selectedTasks = selectable.filter((t) => selected.has(t.id))
   // Kai 2026-07-21 (clarified): the visible per-row select SQUARES go, but selectability
   // stays — Ctrl/Cmd+click toggles a row, Ctrl+A still selects all, the BulkBar still rides
@@ -441,12 +441,12 @@ function TodayView({ nav }: { nav: DayNav }) {
     onSelectAll: () => setSelected(new Set(selectable.map((t) => t.id))),
     selected: selectedTasks,
     // ⌘/Ctrl+↑/↓ (p7e A22): a Top 3 row moves in the Top 3 (as Alt+↑/↓); the rest within the overdue
-    // fold, Today's tasks or Also open. Up next follows the calendar, so it has no order to change.
+    // fold or Today's tasks. Up next follows the calendar, so it has no order to change.
     reorder: (rows, dir) => {
       const pick = rows.length === 1 ? top3InOrder.find((t) => t.id === rows[0].id && !t.completed_at) : undefined
       // T13: the rows glide to their new places (FLIP) instead of snapping.
       if (pick) flipRows(() => void moveInTop3Order(pick, top3InOrder.indexOf(pick) + dir))
-      else flipRows(() => void moveInListWithUndo([overdueOpen, todayRows.filter((t) => !t.completed_at), alsoRows.filter((t) => !t.completed_at)], rows, dir))
+      else flipRows(() => void moveInListWithUndo([overdueOpen, todayRows.filter((t) => !t.completed_at)], rows, dir))
     },
   })
 
@@ -712,20 +712,8 @@ function TodayView({ nav }: { nav: DayNav }) {
         <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact slim meta={goalMeta ? [goalMeta] : undefined} place={placeOf(goal)} {...rowSelection(goal)} />
       </div>
     ) : null
-    const foldCount = alsoRows.length
-    const folds = listsReady && (overdueOpen.length > 0 || foldCount > 0) && (
-      <PhoneFolds
-        overdue={overdueOpen.length > 0 ? { count: overdueOpen.length, action: replanAll, body: <>{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}{overdueOpen.length > ALL_OPEN_CAP && <Link to="/tasks?list=overdue" className="tp-link tp-pn-more">View all</Link>}</> } : undefined}
-        also={foldCount > 0 ? {
-          count: foldCount,
-          body: (
-            <>
-              {alsoRows.slice(0, ALL_OPEN_CAP).map((t) => row(t))}
-              {alsoRows.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="tp-link tp-pn-more">View all</Link>}
-            </>
-          ),
-        } : undefined}
-      />
+    const folds = listsReady && overdueOpen.length > 0 && (
+      <PhoneFold count={overdueOpen.length} action={replanAll} body={<>{overdueOpen.slice(0, ALL_OPEN_CAP).map((t) => row(t))}{overdueOpen.length > ALL_OPEN_CAP && <Link to="/tasks?list=overdue" className="tp-link tp-pn-more">View all</Link>}</>} />
     )
     // today-v2 (Kai 2026-10-29): the Plan my day card is back, in the top panel's place, while nothing is
     // planned — v1.5.0's rule (./todayLayout topCard → 'plan'): the morning ritual not finished and the Top 3
@@ -734,6 +722,7 @@ function TodayView({ nav }: { nav: DayNav }) {
     const planFirst = card === 'plan'
     const rituals = <RitualsPanel morning={day.morning} evening={day.evening} now={now} routines={{ done: routinesDone, total: routinesTotal }} onOpen={openRitual} />
     return (
+      <DayBarDrag enabled={phoneView === 'day' && !planFirst} day={nav.today} events={events}>
       <div className="tp tp-home">
         <Fireflies phone />
         <PhoneBar title={dateLabelShort} nav={nav} rituals={{ morning: day.morning, evening: day.evening, onOpen: openRitual }} />
@@ -753,10 +742,11 @@ function TodayView({ nav }: { nav: DayNav }) {
           <div className="tp-home-in">
             {eventsPending ? <div className="tp-nn"><Skeleton rows={2} /></div> : planFirst ? (
               <RitualCard kind="plan" panel day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} sweepCount={open.length} onOpenRitual={openRitual} />
-            ) : <ViewSwap view={phoneView} render={(v) => (v === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />)} />}
+            ) : <ViewSwap view={phoneView} render={(v) => (v === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} onStep={nav.step} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />)} />}
             {!tasksPending && <FirstTodayHint style={{ padding: '8px 8px 0' }} />}
             {!tasksPending && reviewToday && <ReviewCard />}
             {birthdayCards.length > 0 && <div style={{ paddingTop: 12 }}>{birthdayCards}</div>}
+            <SpansToday events={events} now={now} />
 
             <section aria-label="Top 3" data-tour="top3" style={{ position: 'relative' }}>
               {celebrate && <DayCompleteBurst />}
@@ -799,6 +789,7 @@ function TodayView({ nav }: { nav: DayNav }) {
         )}
         {overlays}
       </div>
+      </DayBarDrag>
     )
   }
 
@@ -830,8 +821,7 @@ function TodayView({ nav }: { nav: DayNav }) {
   )
 
   // Loop A (2026-09-26 daily cycle, DAILY-CYCLE.md §Today): the next move leads; the lists that don't
-  // drive it stay quiet — 2a's "Also open · N" shows three rows and folds the rest behind "Show N
-  // more" (the old "More for today" fold, remembered per device), the overdue pile its own fold.
+  // drive it stay quiet — the overdue pile is its own fold.
   const showLists = !tasksPending && !nothingPlanned && !allDone
   const openRow = (t: Task, i: number) => <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} {...rowSelection(t)} highlighted={t.id === focusedId} />
   // Punch 2: with no routines this was a heading reading "· 0/0" above nothing.
@@ -885,6 +875,7 @@ function TodayView({ nav }: { nav: DayNav }) {
       <div className="td-grid">
         <div className="kf-bulk-anchor td-main">
           {birthdayCards}
+          <SpansToday events={events} now={now} />
           <section data-tour="top3" className={motion ? 'kf-stagger-item' : undefined} style={{ position: 'relative', ...(motion ? staggerDelay(0) : null) }}>
             {celebrate && <DayCompleteBurst />}
             {(() => {
@@ -934,7 +925,6 @@ function TodayView({ nav }: { nav: DayNav }) {
               </section>
             </MoreForToday>
           )}
-          {showLists && alsoRows.length > 0 && <AlsoOpen count={openCount} rows={alsoRows} render={openRow} motion={motion} />}
         </div>
 
         <div className="td-rail">
@@ -1084,6 +1074,9 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
   const { data: completions = [] } = useRoutineCompletions()
   const { data: journal = [] } = useJournalEntries(past)
   const seeds = useSeedsFor(key)
+  const [phoneView] = usePhoneView()
+  const openTask = useOpenTask()
+  const navigate = useNavigate()
   const word = dayWord(key, nav.today)
   const taskById = new Map(tasks.map((t) => [t.id, t] as const))
   const projectName = (id: string | null) => projects.find((p) => p.id === id)?.name
@@ -1134,11 +1127,15 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
   if (isMobile) {
     const row = (t: Task, pick?: boolean) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t.project_id)} compact pick={pick} meta={timeOf(t)} star={starOf(t)} />
     const pastRow = (t: Task) => <PastRow key={t.id} task={t} projectName={projectName(t.project_id)} meta={timeOf(t)} compact />
+    // F1: the Day bar follows the day shown — swipe it to change day, and (a day still to come) drop a task on it.
+    const openBlock = (e: CalendarEvent) => (e.task_id && taskById.has(e.task_id) ? openTask(e.task_id) : navigate(eventPath(e)))
     return (
+      <DayBarDrag enabled={phoneView === 'day' && !past} day={key} events={events}>
       <div className="tp" data-day={key} data-day-kind={kind}>
         <Fireflies phone />
         <PhoneBar title={heading} nav={nav} />
         <PhoneDayStrip nav={nav} />
+        {phoneView === 'day' && <div className="tp-home-in" style={{ paddingBottom: 'var(--sp-2)' }}><DayStripView events={events} tasks={tasks} day={key} always onOpen={openBlock} onStep={nav.step} /></div>}
         <div className="tp-sum">
           <Icon name={past ? 'check' : 'calendar'} size={20} />
           <span style={{ flex: 1, minWidth: 0 }}>{isPending ? '' : summary}</span>
@@ -1190,6 +1187,7 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
         </section>
         {!past && <div className="tp-quiet tp-day-rituals">{ritualLine}</div>}
       </div>
+      </DayBarDrag>
     )
   }
 
@@ -1569,9 +1567,8 @@ function Ribbon({ events, now, head, taskById, day }: { events: CalendarEvent[];
   const navigate = useNavigate()
   const openTask = useOpenTask()
   const at = day ?? now
-  const today = cairoDateKey(at)
   const t = now.getTime()
-  const blocks = day ? events : events.filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || isInProgress(e.starts_at, e.ends_at, now)))
+  const blocks = day ? events : events.filter((e) => !e.all_day && runsToday(e, now))
   const nowPct = day ? 0 : ribbonPct(t, now)
   const hours = Array.from({ length: (RIBBON_TO_MIN - RIBBON_FROM_MIN) / 120 + 1 }, (_, i) => RIBBON_FROM_MIN / 60 + i * 2)
   return (
@@ -1647,42 +1644,6 @@ function NextEventItem({ event }: { event: CalendarEvent }) {
     </>
   )
 }
-
-/** "Also open · N" (2a #13): three rows, then "Show N more →" — the old "More for today" fold,
- * remembered per device. Open, it lists up to ALL_OPEN_CAP and links the rest to Tasks. */
-function AlsoOpen({ count, rows, render, motion }: { count: number; rows: Task[]; render: (t: Task, i: number) => React.ReactNode; motion: boolean }) {
-  const [open, setOpen] = useState(() => {
-    try { return localStorage.getItem(MORE_OPEN_KEY) === '1' } catch { return false }
-  })
-  function toggle() {
-    const next = !open
-    setOpen(next)
-    try { localStorage.setItem(MORE_OPEN_KEY, next ? '1' : '0') } catch { /* storage off: this visit only */ }
-  }
-  // T8: the first three always; the rest fold out under them through the shared Collapse.
-  const first = rows.slice(0, ALSO_OPEN_FIRST)
-  const more = rows.slice(ALSO_OPEN_FIRST, ALL_OPEN_CAP)
-  // "Show N more" counts the open ones folded away (rows finished today sort last, struck — A3).
-  const hidden = rows.slice(ALSO_OPEN_FIRST).filter((t) => !t.completed_at).length || rows.length - ALSO_OPEN_FIRST
-  return (
-    <section aria-label="Also open" className={motion ? 'kf-stagger-item' : undefined} style={motion ? staggerDelay(2) : undefined}>
-      <SectionLabel style={{ marginBottom: 6 }}>{`Also open · ${count}`}</SectionLabel>
-      {/* X1 Effects 2g — focus dim on the resting list (kf-dim, AppLayout shell CSS). */}
-      <div className="kf-dim">
-        {first.map(render)}
-        <Collapse open={open}>{more.map((t, i) => render(t, i + ALSO_OPEN_FIRST))}</Collapse>
-      </div>
-      {hidden > 0 && (
-        <button type="button" className="td-more" aria-expanded={open} onClick={toggle}>
-          {open ? 'Show fewer' : `Show ${hidden} more →`}
-        </button>
-      )}
-      {/* Punch 17: Today is a glance — the rest lives on the Tasks "All" tab. */}
-      {open && rows.length > ALL_OPEN_CAP && <Link to="/tasks?list=all" className="td-more">View all {rows.length} →</Link>}
-    </section>
-  )
-}
-const ALSO_OPEN_FIRST = 3
 
 // The ritual step names — rituals/ritualLogic STEP_NAME's words (not exported there).
 const STEP_LABEL: Record<string, string> = { overdue: 'Carry-over', inbox: 'Inbox', top3: 'Pick your 3', block: 'Suggested times', sweep: 'Sweep', line: 'One line', seeds: "Tomorrow's 3", goodnight: 'Close the day' }
@@ -2558,12 +2519,6 @@ function RoutineRow({ routine, done, compact, readOnly }: { routine: Routine; do
   )
 }
 
-// Loop A — the quiet fold (DAILY-CYCLE.md: "still there, not competing"). Collapsed by default,
-// remembered per device; SectionLabel's look, as a button. On a phone (Today Phone 2n): "Also open ·
-// N" (it was "More for today" until Kai 2026-10-22 split Today's tasks out) and a chevron; its lists
-// sit under quiet sub-headers (ruling 7).
-const MORE_OPEN_KEY = 'kf.today.more-open'
-
 // Kai 2026-10-07 ("More for today · 320", mostly overdue): the overdue pile is its own fold, folded
 // by default, its count and Replan all ▾ on the header (`action`, beside the toggle).
 const OVERDUE_OPEN_KEY = 'kf.today.overdue-open'
@@ -2580,30 +2535,28 @@ function useFold(key: string): [boolean, () => void] {
   }]
 }
 
-/** phone-today B: one rounded panel for the two folds — Overdue (with Replan all) and Also open — each a
- * row that opens its rows in place, remembered as the folds always were. */
-function PhoneFolds({ overdue, also }: { overdue?: { count: number; action?: React.ReactNode; body: React.ReactNode }; also?: { count: number; body: React.ReactNode } }) {
-  const [oOpen, oToggle] = useFold(OVERDUE_OPEN_KEY)
-  const [aOpen, aToggle] = useFold(MORE_OPEN_KEY)
-  const head = (label: string, count: number, open: boolean, toggle: () => void, terra?: boolean, action?: React.ReactNode) => (
-    <div className="tp-prow tp-fold-row">
-      <button type="button" className="tp-fold-btn" aria-expanded={open} aria-label={`${label} · ${count}`} onClick={toggle}>
-        <span className={`tp-prow-name${terra ? ' is-terra' : ''}`}>{label}</span>
-        <span className="tp-prow-sub">{count}</span>
-        <Icon name="chevright" size={16} className="tp-fold-chev" style={{ transform: open ? 'rotate(90deg)' : undefined }} />
-      </button>
-      {action}
-    </div>
-  )
+/** phone-today B: the Overdue fold (with Replan all) in one rounded panel: a row that opens its rows in
+ * place, remembered as the fold always was. */
+function PhoneFold({ count, action, body }: { count: number; action?: React.ReactNode; body: React.ReactNode }) {
+  const [open, toggle] = useFold(OVERDUE_OPEN_KEY)
   return (
-    <section aria-label="Overdue and Also open" className="tp-pn tp-pn-gap">
-      {overdue && <div aria-label="Overdue" role="group">{head('Overdue', overdue.count, oOpen, oToggle, true, overdue.action)}<Collapse open={oOpen}>{overdue.body}</Collapse></div>}
-      {also && <div aria-label="Also open" role="group">{head('Also open', also.count, aOpen, aToggle)}<Collapse open={aOpen}>{also.body}</Collapse></div>}
+    <section className="tp-pn tp-pn-gap">
+      <div aria-label="Overdue" role="group">
+        <div className="tp-prow tp-fold-row">
+          <button type="button" className="tp-fold-btn" aria-expanded={open} aria-label={`Overdue · ${count}`} onClick={toggle}>
+            <span className="tp-prow-name is-terra">Overdue</span>
+            <span className="tp-prow-sub">{count}</span>
+            <Icon name="chevright" size={16} className="tp-fold-chev" style={{ transform: open ? 'rotate(90deg)' : undefined }} />
+          </button>
+          {action}
+        </div>
+        <Collapse open={open}>{body}</Collapse>
+      </div>
     </section>
   )
 }
 
-function MoreForToday({ summary, phone, label = 'Also open', storageKey = MORE_OPEN_KEY, action, children }: { summary: string; phone?: boolean; label?: string; storageKey?: string; action?: React.ReactNode; children: React.ReactNode }) {
+function MoreForToday({ summary, phone, label, storageKey, action, children }: { summary: string; phone?: boolean; label: string; storageKey: string; action?: React.ReactNode; children: React.ReactNode }) {
   const [open, toggle] = useFold(storageKey)
   if (phone) {
     return (

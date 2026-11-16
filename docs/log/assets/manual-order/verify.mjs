@@ -197,11 +197,11 @@ const names = (ns) => ns.map((n) => NAME[n]).join(',')
   await ctx.close()
 }
 
-// ── Y: Today — Also open, and a Top 3 row (⌘↑ = Alt+↑ there) ──
+// ── Y: Today — Today's tasks, and a Top 3 row (⌘↑ = Alt+↑ there) ──
 {
   const { ctx, page, errors, state } = await open('/today')
   const also = [P, A, B]
-  check('y1 Also open draws the manual order first, then by date', names(await drawn(page, also)) === 'P,A,B', names(await drawn(page, also)))
+  check('y1 Today\'s tasks draws the manual order first, then by date', names(await drawn(page, also)) === 'P,A,B', names(await drawn(page, also)))
   for (let i = 0; i < 12; i++) {
     await keys(page, 'j')
     if (await page.evaluate((x) => document.activeElement?.closest('[id^="task-"]')?.id === x, `task-${id(A)}`)) break

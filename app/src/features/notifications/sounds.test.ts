@@ -22,6 +22,7 @@ describe('notification sound packs', () => {
     expect(of('event_reminder')).toBe('event_reminder')
     expect(of('birthday')).toBe('event_reminder')
     expect(of('focus_done')).toBe('focus_end')
+    expect(of('break_done')).toBe('break_end')
     for (const k of ['morning_digest', 'evening_nudge', 'paper_ready', 'terms', 'sync_problem'] as const) expect(of(k)).toBe(k)
     expect(of('test')).toBe('task_reminder')
   })

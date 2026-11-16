@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { BLOCK_SWATCHES, KIND_HUE, LEGACY_SWATCHES, blockFills, blockHue, contrast, nearestSwatch, rgbOf, swatchValue } from './blockHue'
 import { ACCENT_COLORS } from './formFields'
+import * as mirror from '../../../../supabase/functions/_shared/blockColors'
 
 // The tokens' own values and their contrast on the page are docs/log/assets/cal-blocks/verify.mjs's (vitest loads no CSS).
 describe('blockHue (palette C)', () => {
@@ -36,5 +37,23 @@ describe('blockHue (palette C)', () => {
   it('a block with no colour: a task Iris, an event Rose', () => {
     expect(KIND_HUE.task.c).toBe('var(--blk-iris)')
     expect(KIND_HUE.event.c).toBe('var(--blk-rose)')
+  })
+})
+
+// The MCP's colour names (supabase/functions/_shared/blockColors.ts) mirror this file: they must never drift.
+describe('the MCP colour names mirror blockHue', () => {
+  it('the same 16 swatches, the same nine older hexes, the same nearest swatch for each', () => {
+    expect(mirror.BLOCK_SWATCHES).toEqual(BLOCK_SWATCHES)
+    expect(mirror.LEGACY_SWATCHES.map((s) => s.value)).toEqual([...LEGACY_SWATCHES])
+    for (const s of mirror.LEGACY_SWATCHES) expect(mirror.swatchByName(s.name.toLowerCase())).toEqual(s.name === 'Moss' ? BLOCK_SWATCHES.find((x) => x.name === 'Moss') : nearestSwatch(s.value))
+    for (const v of LEGACY_SWATCHES) expect(mirror.swatchOfHex(v)).toEqual(nearestSwatch(v))
+  })
+  it('a name is any case, a palette name wins over an older one ("Moss"), anything else is nothing', () => {
+    expect(mirror.swatchByName(' IRIS ')?.value).toBe('#B59CE3')
+    expect(mirror.swatchByName('moss')?.value).toBe('#768A42')
+    expect(mirror.swatchByName('Gold')?.name).toBe('Ochre')
+    expect(mirror.swatchByName('Chartreuse')).toBeUndefined()
+    expect(mirror.swatchOfHex('#123456')).toBeNull()
+    expect(mirror.swatchOfHex(null)).toBeNull()
   })
 })

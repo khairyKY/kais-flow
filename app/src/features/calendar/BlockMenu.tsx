@@ -16,8 +16,8 @@ import { useProjects } from '../projects/api'
 import { uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, linkTaskWithUndo, setEventRepeat } from './api'
-import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock } from './scoped'
-import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, focusTaskOf, isRepeatingBlock, isSynced, isUntitled, remindLabel, type BlockMenuEntry, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
+import { completeBlockTask, deleteBlock, duplicateBlock, editEvent, moveToDay, remindEvent, retimeBlock, setEventRange } from './scoped'
+import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, crossesDays, focusTaskOf, isRepeatingBlock, isSynced, isUntitled, remindLabel, type BlockMenuEntry, type BlockMenuKey, type BlockMenuMode } from './blockMenuSpec'
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { SwatchTray } from './formFields'
 import { blockSwatch } from './blockHue'
@@ -25,6 +25,7 @@ import { useStartFocus } from '../today/startFocus'
 import { askChat, copyBlockLink, joinMeeting, openInGoogle } from './blockActions'
 import { gcalEditable } from './gcal'
 import { eventSpan } from './phoneGridMath'
+import { pickRange, rangeLabel, rangeOf, storeRange, toggleAllDay, type Range } from './rangeEdit'
 
 // ── design-export/Calendar.dc.html §5 "Block detail — a menu, not a form" (desktop): a 238px popover
 // beside the clicked block in the Tasks context menu's own language — it IS the kit ContextMenu,
@@ -35,7 +36,7 @@ import { eventSpan } from './phoneGridMath'
 
 const ICONS: Record<BlockMenuKey, IconName> = {
   date: 'calendar', time: 'clock', project: 'project', repeat: 'repeat', remind: 'remind', complete: 'check', open: 'tasks', replan: 'pickdate',
-  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar',
+  link: 'plus', more: 'dots', duplicate: 'duplicate', ai: 'ai', copylink: 'link', unschedule: 'plus', delete: 'delete', google: 'calendar', details: 'info', focus: 'focus', join: 'link', gopen: 'calendar', ends: 'calendar', allday: 'clock',
 }
 
 /** What a read-only Google event's rows can do. */
@@ -163,6 +164,9 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
   }
   const [customAt, setCustomAt] = useState<{ x: number; y: number } | null>(null)
 
+  /** F7: the event's new range, through the scope question and one Undo. */
+  const applyRange = (next: Range) => void setEventRange(event, storeRange(next), `${rangeLabel(next)} · ${event.title}`)
+
   const remove = (run: () => void) => {
     gone.current = true
     run()
@@ -204,12 +208,31 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
   const choices = (list: { label: string; on: boolean; run: () => void; icon?: ReactNode; divider?: boolean; danger?: boolean }[], closeAll: () => void): ContextMenuItem[] =>
     list.map((c) => ({ label: c.label, icon: c.icon, divider: c.divider, danger: c.danger, hint: c.on ? check : undefined, onClick: () => { c.run(); closeAll() } }))
 
+  /** F7: the Starts / Ends rows' picker — a date, and Set time unless all-day; the range clamps (the end is never before the start). */
+  const rangeSub = (edge: 'start' | 'end'): ContextMenuItem['submenu'] => ({ position: at, onClose: back, closeAll }) => (
+    <DatePicker
+      mode={event.all_day ? 'day' : 'iso'}
+      withTime={!event.all_day}
+      title={edge === 'start' ? 'Starts' : 'Ends'}
+      meta={event.title}
+      value={event.all_day ? (edge === 'start' ? event.starts_at.slice(0, 10) : rangeOf(event).endDay) : edge === 'start' ? event.starts_at : event.ends_at}
+      quick={edge === 'start'}
+      position={at}
+      onPick={(picked, _d, timed) => { applyRange(pickRange(rangeOf(event), edge, picked, timed)); closeAll() }}
+      onClose={back}
+    />
+  )
+
   const submenu = (key: BlockMenuKey): ContextMenuItem['submenu'] => {
     switch (key) {
       case 'date':
+        // F7: an event's Starts — the date (and, via Set time, the time); the event keeps its length. A task's block keeps the Date row.
+        if (!event.task_id) return rangeSub('start')
         return ({ position: at, onClose: back, closeAll }) => (
           <DatePicker mode="day" title="Date" meta={event.title} value={event.all_day ? event.starts_at.slice(0, 10) : span.day} quick position={at} onPick={(day) => { void moveToDay(event, day); closeAll() }} onClose={back} />
         )
+      case 'ends':
+        return rangeSub('end')
       case 'time':
         // Queue 15: Time ▸ is the start; the Duration list (Quick · Short · Standard · Deep · Custom…) is
         // gone — the length chips under the title are the popover's one length control.
@@ -294,6 +317,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
     copylink: () => copyBlockLink(event),
     join: () => joinMeeting(event),
     gopen: () => openInGoogle(event),
+    allday: () => applyRange(toggleAllDay(rangeOf(event), !event.all_day)),
     details: () => onDetails?.(),
     focus: () => { onClose(); startFocus(focusTaskOf(event, tasks), event) },
     unschedule,
@@ -311,7 +335,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
       // Menu B draws Duplicate's keys as "Ctrl D" (the cheatsheet's ⌘/Ctrl rows; ⌘D works on a Mac too).
       e.key === 'duplicate' ? <KeyCombo keys={['Ctrl', 'D']} size="sm" /> : e.key === 'project' && project ? (
         <span style={{ width: 7, height: 7, borderRadius: '50%', background: project.color || domains.find((d) => d.id === project.domain_id)?.color || 'var(--ink-hairline)' }} />
-      ) : e.key !== 'unschedule' && e.key !== 'delete' ? e.hint : undefined,
+      ) : e.key === 'allday' ? (e.on ? check : undefined) : e.key !== 'unschedule' && e.key !== 'delete' ? e.hint : undefined,
     before: e.caption && (
       <>
         <div style={{ ...CAPTION, padding: '4px 9px 5px' }}>{e.caption.label}</div>
@@ -344,7 +368,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
           {/* Kai 2026-10-21: the length in one tap — the block resizes from its start (a task's estimate
               follows, calendar/api resizeEvent), with Undo. Queue 15: the popover's ONE length control.
               Queue 16: or type it — "7–8:30", "50m", "7:10 pm", "in 2h" (Time ▸ keeps the list). */}
-          {!menu && !readOnly && !event.all_day && (
+          {!menu && !readOnly && !event.all_day && !crossesDays(event) && (
             <>
               <TypedTime dense start={span.start} minutes={len} onApply={(r) => retime(event, r.start ?? span.start, r.minutes ?? len)} style={{ padding: '0 9px 6px' }} />
               <LengthChips value={len} onPick={(m) => retime(event, span.start, m)} style={{ minHeight: 0, display: 'grid', gridTemplateColumns: 'repeat(3, max-content)', gap: 5, padding: '0 9px 8px' }} />

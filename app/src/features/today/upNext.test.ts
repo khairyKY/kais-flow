@@ -88,3 +88,13 @@ describe('upNextEvents — running and upcoming only (Polish F2a)', () => {
     expect(upNextEvents([shifted('early', '01:00', '02:00', 1)], at('22:00'))).toEqual([])
   })
 })
+
+describe('F7: a multi-day timed span is Now / Next only on the day it starts or ends', () => {
+  const conf = { starts_at: '2026-07-06T06:00:00.000Z', ends_at: '2026-07-08T14:00:00.000Z', all_day: false } // Mon 09:00 – Wed 17:00 Cairo
+  it('Monday (starts) and Wednesday (ends, still running) show it; Tuesday does not', () => {
+    expect(upNextEvents([conf], new Date('2026-07-06T07:00:00.000Z'))).toHaveLength(1)
+    expect(upNextEvents([conf], new Date('2026-07-07T08:00:00.000Z'))).toHaveLength(0)
+    expect(upNextEvents([conf], new Date('2026-07-08T08:00:00.000Z'))).toHaveLength(1)
+    expect(upNextEvents([conf], new Date('2026-07-08T14:30:00.000Z'))).toHaveLength(0) // over
+  })
+})

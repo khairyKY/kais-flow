@@ -1,7 +1,7 @@
 import { Fragment, createElement, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router'
 import { create } from 'zustand'
-import { deliver, focusDoneNotice, inQuietHours, isPaused, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
+import { breakDoneNotice, deliver, focusDoneNotice, inQuietHours, isPaused, type NoticePrefs } from '../../../../supabase/functions/notify/copy.ts'
 import { queryClient } from '../../lib/queryClient'
 import { appZone } from '../../lib/appZone'
 import { useClockStore } from '../../lib/clock'
@@ -16,13 +16,15 @@ import { useMinuteNow } from '../today/useMinuteNow'
 import { useCommandBarStore } from '../command-bar/commandBarStore'
 import { useProjects } from '../projects/api'
 import { useInteractions, usePeople } from '../people/api'
-import { useRitualFinishedRows } from '../rituals/api'
+import { useRitualFinishedRows, useReviewClosedRows } from '../rituals/api'
 import { useCalendarEvents, useCalendarRows } from '../calendar/api'
 import { useTasks } from '../tasks/api'
 import { installNotificationActions } from '../notifications/actions'
 import { lookingHere, noticePrefs, showLocal, tellSyncProblem } from '../notifications/local'
 import { NO_INCIDENT, syncIncidentStep } from '../notifications/syncIncident'
 import { localPlan, type Planned } from '../notifications/plan'
+import { breakEnded } from '../notifications/breakEnd'
+import { playNotice } from '../notifications/sounds'
 import { isCapacitorShell } from '../../lib/platform'
 import { applyFocusCommand, serveFocus } from './focusChannel'
 import { isTauri, native, readTrayShown } from './native'
@@ -57,7 +59,8 @@ function reminded(): string[] {
 function planFor(from: Date, to: Date, now: Date): Planned[] | null {
   const tasks = queryClient.getQueryData<Task[]>(['tasks'])
   // Projects still loading: wait one sweep, so "09:50 · Car" doesn't go out as "09:50".
-  if (!tasks || queryClient.getQueryState(['projects'])?.status === 'pending') return null
+  // Review closes still loading: wait too, or a closed week's reminder goes out once on start-up.
+  if (!tasks || queryClient.getQueryState(['projects'])?.status === 'pending' || queryClient.getQueryState(['activity_log', 'review_closed'])?.status === 'pending') return null
   const projects = queryClient.getQueryData<Project[]>(['projects']) ?? []
   return localPlan({
     tasks,
@@ -68,6 +71,8 @@ function planFor(from: Date, to: Date, now: Date): Planned[] | null {
     people: queryClient.getQueryData<Person[]>(['people']),
     interactions: queryClient.getQueryData<Interaction[]>(['interactions']),
     finished: queryClient.getQueryData<ActivityLogEntry[]>(['activity_log', 'ritual_finished']), // Shut down quiets that evening's nudge
+    // A closed review week sends no reminder: this query's rows, and any this device's Weekly review / Today folded in since.
+    reviewRows: [...(queryClient.getQueryData<ActivityLogEntry[]>(['activity_log', 'review_closed']) ?? []), ...queryClient.getQueriesData<ActivityLogEntry[]>({ queryKey: ['activity_log', 'review_week'] }).flatMap(([, rows]) => rows ?? [])],
     prefs: prefs(),
     from,
     to,
@@ -94,6 +99,8 @@ function sweepDue(from: Date, now: Date): boolean {
   return true
 }
 
+const activeTaskTitle = (t: { id: string } | null): string | null => (t ? queryClient.getQueryData<Task[]>(['tasks'])?.find((x) => x.id === t.id)?.title ?? null : null)
+
 /** The Android app: hands the next week to the OS (notifications/android.ts) — and, while a
  * focus round runs with the app in the background, its "minutes tended" at the round's end. A week,
  * not 3 days (notif 2026-10-26): the phone only re-plans when the app runs, so after 3 days unopened
@@ -104,9 +111,16 @@ function scheduleOnAndroid(): void {
   const plan = planFor(now, new Date(now.getTime() + ANDROID_DAYS * 86_400_000), now)
   if (!plan) return
   const f = useFocusStore.getState()
+  if (document.visibilityState === 'hidden' && f.isRunning && f.mode === 'break') {
+    // The break's end, timed like the round's: "Back to it" / "Break’s over" (copy.ts breakDoneNotice).
+    const at = new Date(now.getTime() + f.secondsLeft * 1000)
+    const next = f.currentRound >= f.settings.roundsBeforeLongBreak ? 1 : f.currentRound + 1
+    const notice = deliver(breakDoneNotice(next, f.block?.rounds ?? f.settings.roundsBeforeLongBreak, activeTaskTitle(f.activeTask), f.settings.autoStartNextRound, prefs()), prefs(), at, appZone())
+    if (notice) plan.push({ key: notice.tag, at, notice })
+  }
   if (document.visibilityState === 'hidden' && f.isRunning && f.mode === 'pomodoro') {
     const at = new Date(now.getTime() + f.secondsLeft * 1000)
-    const task = f.activeTask ? queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === f.activeTask!.id)?.title ?? null : null
+    const task = activeTaskTitle(f.activeTask)
     const breakMin = f.currentRound >= f.settings.roundsBeforeLongBreak ? f.settings.longBreakMin : f.settings.shortBreakMin
     const notice = deliver(focusDoneNotice(f.settings.focusRoundMin, task, breakMin, prefs()), prefs(), at, appZone())
     if (notice) plan.push({ key: notice.tag, at, notice })
@@ -114,13 +128,19 @@ function scheduleOnAndroid(): void {
   void import('../notifications/android').then((m) => m.scheduleAndroid(plan))
 }
 
-/** "25 minutes tended ✿" when a round runs out — unless someone is looking at the app. */
+/** "25 minutes tended ✿" when a round runs out, "Break’s over" when a break does — unless someone is
+ * looking at the app (then, for the break, just its sound: the pack's break_end). */
 function watchFocusDone(): () => void {
   return useFocusStore.subscribe((s, prev) => {
+    if (breakEnded(prev, s)) {
+      const notice = deliver(breakDoneNotice(s.currentRound, s.block?.rounds ?? s.settings.roundsBeforeLongBreak, activeTaskTitle(prev.activeTask), s.isRunning, prefs()), prefs(), new Date(), appZone())
+      if (notice) void (lookingHere() ? playNotice(notice) : showLocal(notice))
+      return
+    }
     // Only tick() moves a running round at its last second into a break or the garden — or, a block's
     // last round (focus D3), into done for the day (kept goes up, no break).
     if (!(prev.mode === 'pomodoro' && prev.isRunning && prev.secondsLeft <= 1 && (s.mode !== 'pomodoro' || s.kept > prev.kept)) || lookingHere()) return
-    const task = prev.activeTask ? queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === prev.activeTask!.id)?.title ?? null : null
+    const task = activeTaskTitle(prev.activeTask)
     const breakMin = s.breakType === 'long' ? s.settings.longBreakMin : s.settings.shortBreakMin
     const now = new Date()
     const notice = deliver(focusDoneNotice(prev.settings.focusRoundMin, task, breakMin, prefs()), prefs(), now, appZone())
@@ -183,6 +203,7 @@ function PeopleForBirthdays(): null {
  * rows from the cache, so they're loaded whatever page is open. */
 function ShutDownForNudge(): null {
   useRitualFinishedRows()
+  useReviewClosedRows()
   return null
 }
 
@@ -270,7 +291,7 @@ export function TrayBridge() {
     const watched = new Set(['tasks', 'calendar_events', 'projects', 'app_settings', 'routines', 'routine_completions', 'people', 'interactions'])
     const offCache = queryClient.getQueryCache().subscribe((e) => {
       const [table, sub] = e.query.queryKey
-      if (e.type === 'updated' && (watched.has(String(table)) || (table === 'activity_log' && sub === 'ritual_finished'))) soon()
+      if (e.type === 'updated' && (watched.has(String(table)) || (table === 'activity_log' && (sub === 'ritual_finished' || sub === 'review_closed' || sub === 'review_week')))) soon()
     })
     const offFocus = useFocusStore.subscribe((s, prev) => {
       if (s.isRunning !== prev.isRunning || s.mode !== prev.mode) soon()
