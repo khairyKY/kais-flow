@@ -87,7 +87,7 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
     const rows = await tx`delete from ${tx.unsafe(table(name))} t where ${where(match)} returning ${tx.unsafe(ROW)} as r`
     return rows.map((x) => x.r as Row)
   }
-  const EVENT_COLS = tx.unsafe('id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, series_id, remind_min')
+  const EVENT_COLS = tx.unsafe('id, title, starts_at, ends_at, all_day, task_id, type, recurrence_rule, recurrence_exdates, series_id, remind_min, color')
   return {
     find,
     insert,
@@ -273,14 +273,14 @@ export function store(tx: Tx, scopes: ReadonlySet<Scope>): Store {
       // source 'native', busy true, colour and project none: the column defaults, as calendar/api createEvent writes them.
       await insert('calendar_events', {
         id: e.id, title: e.title, starts_at: e.starts_at, ends_at: e.ends_at, all_day: e.all_day, task_id: e.task_id, type: e.type ?? 'event',
-        recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [], series_id: e.series_id ?? null, remind_min: e.remind_min ?? null,
+        recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [], series_id: e.series_id ?? null, remind_min: e.remind_min ?? null, color: e.color ?? null,
       })
     },
     async updateEvent(e) {
       // A Google event (0074) is read-only: only a live native row matches.
       await patch('calendar_events', { id: e.id, deleted_at: null, source: 'native' }, {
         title: e.title, starts_at: e.starts_at, ends_at: e.ends_at, all_day: e.all_day, type: e.type ?? 'event',
-        recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [], remind_min: e.remind_min ?? null,
+        recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [], remind_min: e.remind_min ?? null, color: e.color ?? null,
       })
     },
     async deleteEvents(ids) {

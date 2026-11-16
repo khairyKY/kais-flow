@@ -1081,3 +1081,92 @@ describe('MCP: client config snippets', () => {
     expect(wallTime('2026-10-04T21:30:00Z', 'Africa/Cairo')).toBe('2026-10-05 00:30')
   })
 })
+
+// mcp-colors: calendar blocks take a colour by name — palette C's 16, or the nine older names as their nearest swatch.
+describe('MCP: block colours', () => {
+  const hexOf = (store: ReturnType<typeof fakeStore>, id: string) => store.cal.find((e) => e.id === id)!.color
+
+  it('add_event: a palette name (any case) is stored as its hex, and the calendar answers with the name and the hex', async () => {
+    const store = fakeStore('Africa/Cairo')
+    const r = await call(deps(store), 'add_event', { title: 'Pink', start: '2026-10-07T09:00', color: 'rOsE' })
+    expect(r.data!.added).toMatchObject({ color: 'Rose', color_hex: '#E58F99' })
+    expect(hexOf(store, r.data!.added.id)).toBe('#E58F99')
+    const cal = await call(deps(store), 'calendar', { from: '2026-10-07', to: '2026-10-07' })
+    expect(cal.data!.events.find((e: { title: string }) => e.title === 'Pink')).toMatchObject({ color: 'Rose', color_hex: '#E58F99' })
+    // No colour given: no colour keys.
+    const plain = await call(deps(store), 'add_event', { title: 'Plain', start: '2026-10-07T10:00' })
+    expect(plain.data!.added).not.toHaveProperty('color')
+    expect(hexOf(store, plain.data!.added.id)).toBeNull()
+  })
+
+  it('an older name is its nearest palette colour; null and "none" clear; anything else is refused with the names', async () => {
+    const store = fakeStore('Africa/Cairo')
+    const want: Record<string, string> = { Lavender: 'Iris', Sage: 'Moss', Terra: 'Rust', Blossom: 'Rose', Hydrangea: 'Lagoon', Buttercream: 'Ochre', Clover: 'Rose', Gold: 'Ochre', Moss: 'Moss' }
+    for (const [old, now] of Object.entries(want)) {
+      const r = await call(deps(store), 'add_event', { title: old, start: '2026-10-07T09:00', color: old.toLowerCase() })
+      expect(r.data!.added.color, old).toBe(now)
+    }
+    const e = (await call(deps(store), 'add_event', { title: 'Tinted', start: '2026-10-08T09:00', color: 'Tide' })).data!.added
+    expect((await call(deps(store), 'edit_event', { id: e.id, color: 'none' })).data!.changed).toEqual(['colour cleared'])
+    expect(hexOf(store, e.id)).toBeNull()
+    await call(deps(store), 'edit_event', { id: e.id, color: 'Wine' })
+    expect((await call(deps(store), 'edit_event', { id: e.id, color: null })).data!.changed).toEqual(['colour cleared'])
+    const n = store.cal.length
+    const bad = await call(deps(store), 'add_event', { title: 'x', start: '2026-10-08T09:00', color: 'Chartreuse' })
+    expect(bad.isError).toBe(true)
+    expect(bad.text).toContain('Rose, Clay, Ochre, Olive, Fern, Lagoon, Cornflower, Iris, Wine, Rust, Honey, Moss, Pine, Tide, Indigo, Heather')
+    expect(bad.text).toContain('Lavender, Sage, Terra, Blossom, Hydrangea, Buttercream, Clover, Gold')
+    expect(store.cal).toHaveLength(n)
+    expect((await call(deps(store), 'edit_event', { id: e.id, color: '#123456' })).isError).toBe(true)
+  })
+
+  it('edit_event: a one-off and a series; scope this / following / all', async () => {
+    const store = fakeStore('Africa/Cairo')
+    expect((await call(deps(store), 'edit_event', { id: tid(900), color: 'Indigo' })).data!.changed).toEqual(['colour → Indigo'])
+    expect(hexOf(store, tid(900))).toBe('#5A81BC')
+    expect((await call(deps(store), 'edit_event', { id: tid(900), color: 'Indigo' })).data!.changed).toEqual([]) // nothing to change
+    // Choir: Thursdays from 1 Oct. "all" colours the series row; "this" leaves one occurrence as an event of its own.
+    expect((await call(deps(store), 'edit_event', { id: tid(902), color: 'Honey', scope: 'all' })).data!.changed).toEqual(['colour → Honey'])
+    expect(hexOf(store, tid(902))).toBe('#9C7B31')
+    const one = await call(deps(store), 'edit_event', { id: tid(902), color: 'Fern', scope: 'this', occurrence: '2026-10-08T18:00' })
+    expect(one.data!.edited).toMatchObject({ color: 'Fern' })
+    expect(hexOf(store, tid(902))).toBe('#9C7B31') // the series itself keeps Honey
+    const from = await call(deps(store), 'edit_event', { id: tid(902), color: 'Pine', scope: 'following', occurrence: '2026-10-22T18:00' })
+    expect(from.data!.edited).toMatchObject({ color: 'Pine' })
+    expect(hexOf(store, tid(902))).toBe('#9C7B31') // the earlier rounds stay Honey
+    const month = await call(deps(store), 'calendar', { from: '2026-10-05', to: '2026-10-31' })
+    expect(month.data!.events.filter((e: { title: string }) => e.title === 'Choir').map((e: { start: string; color?: string }) => [e.start.slice(0, 10), e.color])).toEqual([
+      ['2026-10-08', 'Fern'], ['2026-10-22', 'Pine'], ['2026-10-29', 'Pine'],
+    ])
+  })
+
+  it('add_task and reschedule_task colour the task’s block; edit_event recolours it, and only that', async () => {
+    const store = fakeStore('Africa/Cairo')
+    const t = (await call(deps(store), 'add_task', { title: 'Study OS', due: '2026-10-07T10:00', color: 'Fern' })).data!
+    const block = store.cal.find((e) => e.task_id === t.added.id)!
+    expect(block.color).toBe('#72BF8E')
+    expect((await call(deps(store), 'add_task', { title: 'No time', due: '2026-10-07', color: 'Fern' })).text).toContain('date-time')
+    expect((await call(deps(store), 'add_task', { title: 'No time either', color: 'Fern' })).isError).toBe(true)
+    // Moving a coloured block keeps its colour; a colour on the move changes it.
+    await call(deps(store), 'reschedule_task', { id: t.added.id, when: '2026-10-08T11:00' })
+    expect(block.color).toBe('#72BF8E')
+    const r = await call(deps(store), 'reschedule_task', { id: t.added.id, when: '2026-10-08T12:00', color: 'Wine' })
+    expect(r.data!.changed).toContain('colour → Wine')
+    expect(block.color).toBe('#B36670')
+    // A date alone takes the block off: nothing to colour, said so.
+    const flat = (await call(deps(store), 'add_task', { title: 'Flat' })).data!.added
+    expect((await call(deps(store), 'reschedule_task', { id: flat.id, when: '2026-10-09', color: 'Rose' })).data!.changed).toContain('no calendar block to colour (give a date-time in "when")')
+    // edit_event: the block's colour only.
+    expect((await call(deps(store), 'edit_event', { id: block.id, color: null })).data!.changed).toEqual(['colour cleared'])
+    expect(block.color).toBeNull()
+    expect((await call(deps(store), 'edit_event', { id: block.id, color: 'Iris', title: 'x' })).isError).toBe(true)
+    expect((await call(deps(store), 'edit_event', { id: block.id, title: 'x' })).isError).toBe(true) // no colour: still reschedule_task's
+  })
+
+  it('duplicate_event keeps the colour', async () => {
+    const store = fakeStore('Africa/Cairo')
+    const e = (await call(deps(store), 'add_event', { title: 'Tinted', start: '2026-10-08T09:00', color: 'Olive' })).data!.added
+    const d = await call(deps(store), 'duplicate_event', { id: e.id })
+    expect(d.data!.duplicated).toMatchObject({ color: 'Olive' })
+  })
+})

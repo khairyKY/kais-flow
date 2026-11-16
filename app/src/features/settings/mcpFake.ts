@@ -213,7 +213,7 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
     updateEvent: async (e) => {
       const { title, starts_at, ends_at, all_day } = e
       const row = s.cal.find((x) => x.id === e.id && !x.deleted_at)
-      if (row) Object.assign(row, { title, starts_at, ends_at, all_day, type: e.type ?? 'event', recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [], remind_min: e.remind_min ?? null })
+      if (row) Object.assign(row, { title, starts_at, ends_at, all_day, type: e.type ?? 'event', recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [], remind_min: e.remind_min ?? null, color: e.color ?? null })
     },
     deleteEvents: async (ids) => {
       const gone = s.cal.filter((e) => !e.deleted_at && (ids.includes(e.id) || (!!e.series_id && ids.includes(e.series_id))))

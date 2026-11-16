@@ -44,6 +44,15 @@ export function invalidateSoon(table: string): void {
   waiting.set(table, { timer, since })
 }
 
+/** Everything the realtime channel would have told us: every synced table goes stale and its open screens refetch
+ * (one debounced refetch per table). Realtime never replays what it missed — a window hidden in the tray, a machine
+ * asleep, a dropped socket — so whenever the channel may have been down (the window shown or focused again, the network
+ * back, the channel rejoined) the data is read again. Without it a block the MCP wrote meanwhile stayed missing until a
+ * full quit and reopen. */
+export function resyncAll(tables: readonly string[] = SYNCED_TABLES): void {
+  for (const t of tables) invalidateSoon(t)
+}
+
 /** Subscribes to realtime changes on every synced table and invalidates the matching query cache.
  * Scale (free tier: 200 concurrent connections, 2M messages/month): only this user's rows
  * (`filter`, so Realtime doesn't RLS-check every user's change against every subscriber), and no
@@ -67,17 +76,35 @@ export function useRealtimeSync() {
           () => invalidateSoon(table),
         )
       }
-      channel.subscribe()
+      let joined = false
+      channel.subscribe((status) => {
+        // A rejoin (socket dropped, machine woke) — not the first join — has missed changes.
+        if (status === 'SUBSCRIBED') {
+          if (joined) resyncAll()
+          joined = true
+        }
+      })
     }
     const close = () => {
       if (channel) void supabase.removeChannel(channel)
       channel = null
     }
-    const onVisibility = () => (document.hidden ? close() : open())
+    const onVisibility = () => {
+      if (document.hidden) return close()
+      open()
+      resyncAll()
+    }
+    // A tray window that is hidden and shown again may never flip document.hidden (the shells hide the OS window, not
+    // the page), so focus and the network coming back resync too. A burst is cheap: invalidateSoon debounces.
+    const onWake = () => !document.hidden && resyncAll()
     if (!document.hidden) open()
     document.addEventListener('visibilitychange', onVisibility)
+    window.addEventListener('focus', onWake)
+    window.addEventListener('online', onWake)
     return () => {
       document.removeEventListener('visibilitychange', onVisibility)
+      window.removeEventListener('focus', onWake)
+      window.removeEventListener('online', onWake)
       close()
     }
   }, [uid, settingsLive])
