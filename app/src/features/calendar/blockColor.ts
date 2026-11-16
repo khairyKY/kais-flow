@@ -5,8 +5,6 @@
 // the queries this reads, so every inheritor redraws with it.
 import { useMemo } from 'react'
 import { makeColorResolver, type Colored, type Resolved } from '../../../../supabase/functions/_shared/colorFollows.ts'
-import { queryClient } from '../../lib/queryClient'
-import type { Area, Project, Task } from '../../lib/types'
 import { useAreas } from '../areas/api'
 import { useProjects } from '../projects/api'
 import { useTasks } from '../tasks/api'
@@ -19,12 +17,6 @@ export function useBlockColor(): (item: Colored) => Resolved {
   const { data: areas = [] } = useAreas()
   const { data: tasks = [] } = useTasks()
   return useMemo(() => makeColorResolver(projects, areas, tasks), [projects, areas, tasks])
-}
-
-/** The same resolver outside a component (a Start focus press): from what the queries hold right now. */
-export function colorOfNow(): (item: Colored) => Resolved {
-  const live = <T extends { deleted_at?: string | null }>(key: string) => (queryClient.getQueryData<T[]>([key]) ?? []).filter((r) => !r.deleted_at)
-  return makeColorResolver(live<Project>('projects'), live<Area>('areas'), live<Task>('tasks'))
 }
 
 /** The colour picker's reset line for a hand-coloured item: "Reset to Pricing colour" (what it would follow), else the default. */

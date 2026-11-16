@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { useFocusStore } from '../focus/focusStore'
 import { blockFor } from '../focus/focusPlan'
-import { colorOfNow } from '../calendar/blockColor'
+import { colorOfNow } from '../calendar/colorNow'
 import { queryClient } from '../../lib/queryClient'
 import type { CalendarEvent, Task } from '../../lib/types'
 
