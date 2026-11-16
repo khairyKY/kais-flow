@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { createAutoUpdater, FLUSH_MS, useAutoUpdate, type Deps, type Found } from './autoUpdate'
+import { createAutoUpdater, FLUSH_MS, IDLE_INSTALL_MS, idleStep, useAutoUpdate, type Deps, type Found } from './autoUpdate'
 import { CHECK_EVERY_MS } from './whatsNew'
 
 const noop = () => {}
@@ -31,6 +31,8 @@ function setup(first: Found | null | Error = null) {
     flush: vi.fn(async () => {}),
     setReady: vi.fn(),
     exit: vi.fn(),
+    shellIdle: vi.fn(async () => true),
+    relaunchHidden: vi.fn(async () => {}),
   } satisfies Deps
   return { d, u: createAutoUpdater(d), queue, advance: (ms: number) => (clock += ms) }
 }
@@ -221,5 +223,99 @@ describe('quitting with an update waiting', () => {
     expect(d.exit).not.toHaveBeenCalled()
     release()
     await restart
+  })
+})
+
+describe('idleStep', () => {
+  it('starts the clock the first time the app is seen idle, and fires after 10 minutes', () => {
+    expect(idleStep(null, true, 1000)).toEqual({ since: 1000, fire: false })
+    expect(idleStep(1000, true, 1000 + IDLE_INSTALL_MS - 1)).toEqual({ since: 1000, fire: false })
+    expect(idleStep(1000, true, 1000 + IDLE_INSTALL_MS)).toEqual({ since: 1000, fire: true })
+  })
+  it('any use resets it', () => {
+    expect(idleStep(1000, false, 1000 + IDLE_INSTALL_MS)).toEqual({ since: null, fire: false })
+  })
+  it('a clock set back starts over instead of waiting for it to catch up', () => {
+    expect(idleStep(5000, true, 1000)).toEqual({ since: 1000, fire: false })
+  })
+})
+
+describe('installing while idle in the tray', () => {
+  async function ready() {
+    const f = found('1.7.0')
+    const s = setup(f)
+    await s.u.tick()
+    return { f, ...s }
+  }
+
+  it('waits ten minutes of idleness, then installs and relaunches hidden', async () => {
+    const { f, d, u, advance } = await ready()
+    await u.idleTick()
+    advance(IDLE_INSTALL_MS - 1)
+    await u.idleTick()
+    expect(f.calls).not.toContain('install:true')
+    advance(1)
+    await u.idleTick()
+    expect(d.relaunchHidden).toHaveBeenCalledWith(true)
+    expect(d.flush).toHaveBeenCalled() // the same safe path: outbox first
+    expect(f.calls).toContain('install:true')
+  })
+
+  it('never installs while the window is in use, and use resets the clock', async () => {
+    const { f, d, u, advance } = await ready()
+    await u.idleTick()
+    advance(IDLE_INSTALL_MS - 1)
+    d.shellIdle.mockResolvedValueOnce(false) // the window was shown
+    await u.idleTick()
+    advance(IDLE_INSTALL_MS - 1) // idle again, but only just
+    await u.idleTick()
+    advance(IDLE_INSTALL_MS - 2)
+    await u.idleTick()
+    expect(f.calls).not.toContain('install:true')
+  })
+
+  it('the window being shown (active) starts the clock over', async () => {
+    const { f, u, advance } = await ready()
+    await u.idleTick()
+    advance(IDLE_INSTALL_MS - 1)
+    u.active()
+    advance(1)
+    await u.idleTick()
+    expect(f.calls).not.toContain('install:true')
+  })
+
+  it('does nothing until an update is downloaded', async () => {
+    const { d, u, advance } = setup(null)
+    await u.idleTick()
+    advance(IDLE_INSTALL_MS * 2)
+    await u.idleTick()
+    expect(d.shellIdle).not.toHaveBeenCalled()
+    expect(d.relaunchHidden).not.toHaveBeenCalled()
+  })
+
+  it('backs out if the window came back while the outbox flushed', async () => {
+    const { f, d, u, advance } = await ready()
+    await u.idleTick()
+    advance(IDLE_INSTALL_MS)
+    d.shellIdle.mockResolvedValueOnce(true).mockResolvedValueOnce(false)
+    await u.idleTick()
+    expect(f.calls).not.toContain('install:true')
+    expect(d.relaunchHidden).toHaveBeenLastCalledWith(false)
+    expect(useAutoUpdate.getState().phase).toBe('ready')
+  })
+
+  it('a failed install clears the hidden marker and waits a fresh ten minutes', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    const bad = found('1.7.0', { install: async () => Promise.reject(new Error('blocked')) })
+    const { d, u, advance } = setup(bad)
+    await u.tick()
+    await u.idleTick()
+    advance(IDLE_INSTALL_MS)
+    await u.idleTick()
+    expect(d.relaunchHidden).toHaveBeenLastCalledWith(false)
+    d.relaunchHidden.mockClear()
+    await u.idleTick() // idle clock restarted, so no second try yet
+    expect(d.relaunchHidden).not.toHaveBeenCalled()
+    warn.mockRestore()
   })
 })

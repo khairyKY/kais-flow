@@ -9,6 +9,10 @@ import { dueForCheck } from './whatsNew'
 // Cmd+Q, closing the window with no tray icon: src-tauri update.rs holds the quit and calls __kfQuit
 // here) — or taps "Restart to update" in Settings → App. Nothing here ever quits or restarts the app by
 // itself, so nobody is cut off mid-typing. The next launch says "Updated to vX" (features/whats-new).
+// An app that lives in the tray is almost never quit, so a downloaded update also installs once the main
+// window has been hidden or minimised for IDLE_INSTALL_MS with no tray window open: the same path, and the
+// app comes back hidden in the tray (src-tauri update.rs relaunch_hidden); the next time the window is
+// shown it says "Updated to vX". (Installing on lock / suspend: skipped, Tauri has no cheap hook for it.)
 // The outbox is flushed first (a few seconds at most); what is still unsent stays in storage and goes
 // out after the restart, as after any quit.
 
@@ -38,6 +42,20 @@ export interface Deps {
   setReady(ready: boolean): void
   /** Quit right now (update.rs app_exit). */
   exit(): void
+  /** Is the app idle in the tray: main window hidden or minimised, no flyout / menu / capture window up (update.rs shell_idle). */
+  shellIdle(): Promise<boolean>
+  /** The next start is an update relaunch of an idle app: stay hidden (update.rs relaunch_hidden). */
+  relaunchHidden(on: boolean): Promise<void>
+}
+
+/** How long the window must stay away before a ready update installs without a Quit. */
+export const IDLE_INSTALL_MS = 10 * 60_000
+
+/** One idle poll: `since` is when the app was first seen idle (null = in use); `fire` once that is IDLE_INSTALL_MS ago. */
+export function idleStep(since: number | null, idleNow: boolean, now: number): { since: number | null; fire: boolean } {
+  if (!idleNow) return { since: null, fire: false }
+  const from = since === null || now < since ? now : since
+  return { since: from, fire: now - from >= IDLE_INSTALL_MS }
 }
 
 /** The longest a quit or restart waits for the outbox before installing anyway. */
@@ -47,6 +65,7 @@ export function createAutoUpdater(d: Deps) {
   let held: Found | null = null
   let lastAt: number | null = null
   let busy = false
+  let idleSince: number | null = null
   const set = (p: Partial<AutoState>) => useAutoUpdate.setState(p)
   const settle = () => (held ? set({ phase: 'ready', version: held.version, line: null }) : set({ phase: 'idle', version: null, line: null }))
 
@@ -80,13 +99,17 @@ export function createAutoUpdater(d: Deps) {
   }
 
   /** Install the held update: flush the outbox first. True = it went in (on Windows the app is already gone). */
-  async function install(restart: boolean): Promise<boolean> {
+  async function install(restart: boolean, stillIdle?: () => Promise<boolean>): Promise<boolean> {
     const u = held
     if (!u || useAutoUpdate.getState().phase === 'installing') return false
     set({ phase: 'installing', line: restart ? 'Installing… Kai’s Flow reopens in a moment' : 'Installing…' })
     let giveUp: ReturnType<typeof setTimeout> | undefined
     await Promise.race([d.flush().catch(() => {}), new Promise<void>((r) => (giveUp = setTimeout(r, FLUSH_MS)))])
     clearTimeout(giveUp)
+    if (stillIdle && !(await stillIdle().catch(() => false))) {
+      settle() // the window came back while the outbox flushed
+      return false
+    }
     try {
       await u.install(restart)
       return true
@@ -103,7 +126,23 @@ export function createAutoUpdater(d: Deps) {
     if (!(await install(false))) d.exit()
   }
 
-  return { tick, install, quit }
+  /** Every minute while an update is ready: install it once the app has sat idle in the tray long enough. */
+  async function idleTick(): Promise<void> {
+    if (useAutoUpdate.getState().phase !== 'ready') {
+      idleSince = null
+      return
+    }
+    const step = idleStep(idleSince, await d.shellIdle().catch(() => false), d.now())
+    idleSince = step.fire ? null : step.since // a try that does not go through waits a fresh 10 minutes
+    if (!step.fire) return
+    await d.relaunchHidden(true)
+    if (!(await install(true, d.shellIdle))) await d.relaunchHidden(false)
+  }
+
+  /** The window was shown or focused: the idle clock starts over (a visit shorter than one poll would otherwise be missed). */
+  const active = () => void (idleSince = null)
+
+  return { tick, install, quit, idleTick, active }
 }
 
 // ── the real thing, desktop only ──
@@ -149,6 +188,7 @@ export async function restartToUpdate(): Promise<boolean> {
 
 const POLL_MS = 30 * 60_000
 const LAUNCH_DELAY_MS = 20_000
+const IDLE_POLL_MS = 60_000
 
 let started = false
 
@@ -166,11 +206,15 @@ export function startAutoUpdate(): void {
       flush: async () => (await import('./outbox')).flushOutbox(),
       setReady: (ready) => void native('update_ready', { ready }),
       exit: () => void native('app_exit'),
+      shellIdle: async () => (await native<boolean>('shell_idle')) === true,
+      relaunchHidden: async (on) => void (await native('relaunch_hidden', { on })),
     }))
     void native('update_ready', { ready: false })
     ;(window as unknown as { __kfQuit?: () => void }).__kfQuit = () => void u.quit()
     window.setTimeout(() => void u.tick(), LAUNCH_DELAY_MS)
     window.setInterval(() => void u.tick(), POLL_MS)
-    document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && void u.tick())
+    window.setInterval(() => void u.idleTick(), IDLE_POLL_MS)
+    document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && (u.active(), void u.tick()))
+    window.addEventListener('focus', u.active)
   })
 }
