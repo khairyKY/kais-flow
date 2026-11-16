@@ -212,7 +212,7 @@ describe('todayListTasks / todayOpenCount (the Today page and its sidebar badge)
   })
 })
 
-describe("isTodayTask (Today's tasks vs Also open, Kai 2026-10-22)", () => {
+describe("isTodayTask (Today's tasks, Kai 2026-10-22)", () => {
   it('due today or on the calendar today is today; overdue, later and undated are not', () => {
     expect(isTodayTask(task({ due_at: at(0, 23) }), NOW)).toBe(true)
     expect(isTodayTask(task({ scheduled_start: at(0, 18) }), NOW)).toBe(true)
