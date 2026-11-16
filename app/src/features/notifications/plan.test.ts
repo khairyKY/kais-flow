@@ -9,7 +9,7 @@ const cairo = (hhmm: string, day = 3) => {
 const task = (id: string, over: Partial<PlanTask> = {}): PlanTask => ({ id, title: `Task ${id}`, status: 'todo', due_at: null, reminder_at: null, ...over })
 const base = (over: Partial<PlanInput> = {}): PlanInput => ({
   tasks: [],
-  prefs: { lock_screen_names: true },
+  prefs: { lock_screen_names: true, review_reminder_on: false }, // Saturday is the default review day; its own tests are review.test.ts
   from: cairo('08:00'),
   to: cairo('08:30'),
   now: cairo('08:00'),
@@ -129,7 +129,7 @@ describe('localPlan — rituals', () => {
   })
 
   it('own times, own zone, off switches; several days ahead', () => {
-    const prefs = { morning_digest_at: '07:30:00', evening_nudge_on: false, timezone: 'Asia/Kolkata' }
+    const prefs = { morning_digest_at: '07:30:00', evening_nudge_on: false, review_reminder_on: false, timezone: 'Asia/Kolkata' }
     const plan = localPlan(base({ ...day, to: cairo('00:00', 6), prefs, zone: 'Asia/Kolkata' }))
     // 07:30 Kolkata = 05:00 Cairo (UTC+5:30 vs +3), on the 3rd, 4th and 5th
     expect(plan.map((p) => p.at.toISOString())).toEqual(['2026-10-03T02:00:00.000Z', '2026-10-04T02:00:00.000Z', '2026-10-05T02:00:00.000Z'])

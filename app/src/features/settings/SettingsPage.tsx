@@ -10,6 +10,7 @@ import { testThisDevice, useDeviceState } from '../notifications/device'
 import { blockers } from '../notifications/plan'
 import { useAppSettings, updateAppSetting, useCalendarDefaultView, settingSynced, useOwner, type AutoProjectMode, type CalendarDefaultView } from '../../lib/settings'
 import { appPlatform, buildStamp, installedVersion, reloadToUpdate } from '../../lib/appUpdate'
+import { useAutoUpdate } from '../../lib/autoUpdate'
 import { BUNDLED_VERSION, useWhatsNew } from '../../lib/whatsNew'
 import { checkForUpdates } from '../whats-new/check'
 import { DownloadLinks } from '../download/DownloadBar'
@@ -773,7 +774,7 @@ function ReviewSetting() {
   const shown = when.day === null ? 'default' : String(when.day)
   if (!ready) return null
   return (
-    <Row label="Weekly review" help={`${when.day === null ? 'On the first day of your weekend' : `Every ${DAY_NAMES[when.day]}`} · ${when.time ? `from ${clockText(when.time)}` : 'all day'} · Today asks until the week is closed`} keys="weekly review day time sweep close the week">
+    <Row label="Weekly review" help={`${when.day === null ? 'On the first day of your weekend' : `Every ${DAY_NAMES[when.day]}`} · ${when.time ? `from ${clockText(when.time)}` : 'all day'} · Today asks until the week is closed${data?.review_reminder_on === false ? '' : ` · You’ll get a reminder at ${clockText(when.time ?? REVIEW_AT)}`}`} keys="weekly review day time sweep close the week reminder">
       <Select
         value={shown}
         onChange={(v) => updateAppSetting('review_day', v === 'default' ? null : Number(v))}
@@ -855,6 +856,8 @@ function AppUpdateCard() {
   const checking = useWhatsNew((s) => s.checking)
   const r = useWhatsNew((s) => s.result)
   const available = useWhatsNew((s) => s.available)
+  const auto = useAutoUpdate()
+  const v = (x: string | null) => `v${(x ?? '').replace(/^v/i, '')}`
   useEffect(() => {
     if (platform !== 'web') void installedVersion(platform).then(setInstalled)
   }, [platform])
@@ -863,7 +866,8 @@ function AppUpdateCard() {
   const current = platform === 'web' ? `${BUNDLED_VERSION} · ${stamp ? `build ${stamp.commit.slice(0, 7)}` : 'development build'}` : installed ? running : 'version unknown'
   const file = platform === 'android' ? 'APK' : 'installer'
   const line =
-    !r ? null
+    auto.phase === 'ready' ? `${v(auto.version)} is ready — restart to update`
+    : !r ? null
     : available ? `${available.v} is out`
     : r.kind === 'reload' ? 'A new version is ready'
     : r.kind === 'download' ? `${r.version} is out`
@@ -885,7 +889,7 @@ function AppUpdateCard() {
               <span role="status" style={{ fontSize: 13, color: r?.kind === 'offline' ? 'var(--ink-muted)' : 'var(--ink-body)' }}>{line}</span>
               {/* A newer release has its Update beside its notes below; this is a newer deploy of the same version. */}
               {!available && r?.kind === 'reload' && <Button variant="cta" onClick={() => void reloadToUpdate()}>Reload</Button>}
-              {!available && r?.kind === 'download' && <UpdateButton result={r} />}
+              {!available && (r?.kind === 'download' || auto.phase === 'ready') && <UpdateButton result={r} />}
             </div>
           )
         }
@@ -1273,7 +1277,7 @@ function NotificationsCard() {
     <SCard title="Kinds">
       {KIND_IDS.map((kind) => {
         const k = KIND_LOOK[kind]
-        const key = `${kind}_on` as const
+        const key = kind === 'weekly_review' ? ('review_reminder_on' as const) : (`${kind}_on` as const) // the review's switch is 0095's, not <kind>_on
         const on = s[key] !== false
         const ritual = kind === 'morning_digest' || kind === 'evening_nudge' ? kind : null
         return (

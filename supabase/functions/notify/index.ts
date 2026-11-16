@@ -27,10 +27,11 @@ import { dayBounds, ritualDue, ritualOn, shutDownOn, type RitualSettings } from 
 import { routinesDueAt, type ReminderRoutine } from './routine.ts'
 import { birthdayDue, birthdayGroups, type PersonFacts } from './birthday.ts'
 import { dateKey, dayWindow, userZone } from '../_shared/zone.ts'
+import { reviewClosed, reviewWeekOn, weeklyReviewDue, type ReviewSettings } from './review.ts'
 import { todaysTop3, type Top3Row } from '../_shared/today.ts'
 import { eventRemindersDue, reminderKey, type RemindRow } from '../_shared/eventReminder.ts'
 import type { RuleBetween } from '../_shared/series.ts'
-import { birthdayNotice, deliver, is24h, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, routineNotice, termsNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
+import { birthdayNotice, deliver, is24h, digestNotice, eventReminderNotice, kindOn, nudgeNotice, paperReadyNotice, reminderNotice, reviewNotice, routineNotice, termsNotice, testNotice, type Notice, type NoticePrefs } from './copy.ts'
 import { LEGAL_KEY, PRIVACY_VERSION, TERMS_VERSION } from '../_shared/legal.ts'
 // rrule is CommonJS: Deno takes its default export only (see mcp/index.ts).
 import rrulePkg from 'npm:rrule@2'
@@ -47,12 +48,12 @@ const CONTACT_EMAIL = Deno.env.get('VAPID_CONTACT_EMAIL') ?? 'mailto:example@exa
 
 // 'overdue' is gone (2026-10-12): an hourly push nobody could turn off. Migration 0062 unschedules its
 // cron job; the morning digest says "N overdue" instead.
-type NotifyKind = 'morning_digest' | 'evening_nudge' | 'task_reminder' | 'event_reminder' | 'routine' | 'birthday' | 'test'
-const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'task_reminder', 'event_reminder', 'routine', 'birthday', 'test']
+type NotifyKind = 'morning_digest' | 'evening_nudge' | 'weekly_review' | 'task_reminder' | 'event_reminder' | 'routine' | 'birthday' | 'test'
+const KINDS: readonly string[] = ['morning_digest', 'evening_nudge', 'weekly_review', 'task_reminder', 'event_reminder', 'routine', 'birthday', 'test']
 
 /** One user's app_settings row as notify reads it (select('*'), so a function deployed before
  * migration 0048 still runs: the missing columns read as their defaults). */
-type UserPrefs = RitualSettings & NoticePrefs & { user_id: string }
+type UserPrefs = RitualSettings & NoticePrefs & ReviewSettings & { user_id: string }
 
 interface Subscription {
   id: string
@@ -171,6 +172,24 @@ async function buildPayload(
     if (shutDownOn(shut.data ?? [], clock.now, zone)) return null // Shut down is done: the day is closed
     if ((done.count ?? 0) + (left.count ?? 0) === 0) return null // an empty day has nothing to close
     const n = nudgeNotice(done.count ?? 0, left.count ?? 0)
+    if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, n)
+    return n
+  }
+
+  if (kind === 'weekly_review') {
+    // The review week "now" is in; a close (or a reopen) in the last 9 days says whether it is done.
+    const week = reviewWeekOn(prefs, clock.now, zone)
+    if (!week) return null // a manual (unscheduled) run off the review day
+    const { data: rows, error } = await supabase
+      .from('activity_log')
+      .select('event_type, payload, created_at')
+      .eq('user_id', userId)
+      .in('event_type', ['review.week_closed', 'review.week_reopened'])
+      .gte('created_at', new Date(clock.now.getTime() - 9 * 86_400_000).toISOString())
+      .order('created_at', { ascending: true })
+    if (error) throw error
+    if (reviewClosed(rows ?? [], week, prefs, zone)) return null
+    const n = reviewNotice(week)
     if (deliver(n, prefs, clock.now, zone)) await logNotice(supabase, userId, n)
     return n
   }
@@ -427,6 +446,13 @@ async function runForAllUsers(req: Request, kind: NotifyKind, scheduled: boolean
     for (const id of userIds) {
       const s = prefsByUser.get(id)
       if (!(scheduled ? ritualDue(kind, s, clock.now, userZone(s?.timezone)) : ritualOn(kind, s))) userIds.delete(id)
+    }
+  }
+  // weekly_review (0095): on the review day at its time (18:00 when it has none), unless switched off.
+  if (kind === 'weekly_review') {
+    for (const id of userIds) {
+      const s = prefsByUser.get(id)
+      if (!(scheduled ? weeklyReviewDue(s, clock.now, userZone(s?.timezone)) : kindOn('weekly_review', s))) userIds.delete(id)
     }
   }
   // birthday: off until the user turns it on (12i), then on the tick that is 08:00 on their clock.

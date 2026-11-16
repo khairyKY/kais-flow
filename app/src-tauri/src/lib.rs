@@ -4,12 +4,15 @@
 mod capture;
 #[cfg(desktop)]
 mod tray;
+#[cfg(desktop)]
+mod update;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let builder = tauri::Builder::default().plugin(tauri_plugin_opener::init());
     #[cfg(desktop)]
     let builder = tray::install(builder)
+        .manage(update::Gate::default())
         .plugin(tauri_plugin_updater::Builder::new().build())
         // Quick capture (capture.rs): the shortcut opens the popup. Pressed only: a held key repeats.
         .plugin(
@@ -25,6 +28,11 @@ pub fn run() {
         .plugin(tauri_plugin_deep_link::init());
     let app = builder.build(tauri::generate_context!()).expect("error while running Kai's Flow");
     app.run(|_app, _event| {
+        // An update is waiting: a quit is held while the page installs it (update.rs).
+        #[cfg(desktop)]
+        if let tauri::RunEvent::ExitRequested { api, code, .. } = &_event {
+            update::on_exit_requested(_app, api, *code);
+        }
         // The Mac app: a click on the Dock icon brings back a window that was closed to the menu bar.
         #[cfg(target_os = "macos")]
         if let tauri::RunEvent::Reopen { .. } = _event {

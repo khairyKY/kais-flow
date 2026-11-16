@@ -13,7 +13,7 @@ import { openExternal } from './platform'
 //     restarts itself (the updater swaps the .app but doesn't reopen it); the fallback is the .dmg.
 //   · Windows from the Microsoft Store (an MSIX, docs/MICROSOFT-STORE.md): the Store updates it, so
 //     nothing is fetched or offered (Kai 2026-10-14: a Store install must not nag about the .exe).
-// One request per click, nothing in the background.
+// One request per click. The desktop apps also fetch updates by themselves and install them at the next quit (lib/autoUpdate.ts, 2026-11-16).
 
 export type AppPlatform = 'web' | 'android' | 'windows' | 'mac'
 /** The two desktop apps (the Tauri shell). */

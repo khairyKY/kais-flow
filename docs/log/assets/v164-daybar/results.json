@@ -1,0 +1,236 @@
+{
+  "passed": 46,
+  "failed": 0,
+  "results": [
+    {
+      "name": "A bar is on the Day view",
+      "ok": true,
+      "detail": "328px wide"
+    },
+    {
+      "name": "A hold lifts the row: ghost + dimmed row",
+      "ok": true,
+      "detail": "{\"ghost\":true,\"ghostText\":\"Email Dr. Hany the project proposal\",\"line\":true,\"bubble\":\"2:15 PM\",\"dimmed\":true,\"pulled\":\"\"}"
+    },
+    {
+      "name": "A over the bar: line + bubble \"2:15 PM\" (snapped down from 2:20)",
+      "ok": true,
+      "detail": "2:15 PM"
+    },
+    {
+      "name": "A the page is not pulled by the finger (boundary resistance stands down)",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A release: a block at 14:15 Cairo, 20 minutes (the task's own length)",
+      "ok": true,
+      "detail": "2026-10-26T11:15:00.000Z → 2026-10-26T11:35:00.000Z"
+    },
+    {
+      "name": "A ghost gone, row restored",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A the drop is no tap (the calendar did not open)",
+      "ok": true,
+      "detail": "http://localhost:5251/today"
+    },
+    {
+      "name": "A toast \"Scheduled · …\" with Undo",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "A Undo removes the block",
+      "ok": true,
+      "detail": "3 writes after"
+    },
+    {
+      "name": "A no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B over a Time block: its pill is ringed",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "B release: the task is in the Time block (slot_id)",
+      "ok": true,
+      "detail": "slot 03"
+    },
+    {
+      "name": "C ghost follows the finger, no bubble off the bar",
+      "ok": true,
+      "detail": "{\"ghost\":true,\"bubble\":false}"
+    },
+    {
+      "name": "C released off the bar: no write, ghost and dim gone",
+      "ok": true,
+      "detail": "0 writes, {\"ghost\":false,\"lifted\":false}"
+    },
+    {
+      "name": "C the bar is where it was",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D vertical drag over the bar scrolls the page",
+      "ok": true,
+      "detail": "0 → 173"
+    },
+    {
+      "name": "D …and does not change the day or open anything",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "D a tap on the bar opens the calendar column",
+      "ok": true,
+      "detail": "http://localhost:5251/calendar?date=2026-10-26&view=day"
+    },
+    {
+      "name": "E swipe left: tomorrow's page (?day=2026-10-27)",
+      "ok": true,
+      "detail": "2026-10-27"
+    },
+    {
+      "name": "E tomorrow shows its own bar (a day to plan)",
+      "ok": true,
+      "detail": "{\"page\":\"2026-10-27\",\"bar\":true,\"hdr\":\"Tuesday, Oct 27\"}"
+    },
+    {
+      "name": "E the new day bar has settled into place",
+      "ok": true,
+      "detail": "31"
+    },
+    {
+      "name": "E swipe right: back to today",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "E swipe right again: yesterday, still with a bar",
+      "ok": true,
+      "detail": "2026-10-25"
+    },
+    {
+      "name": "E a flick (60px, fast) turns the day too",
+      "ok": true,
+      "detail": "2026-10-27"
+    },
+    {
+      "name": "E a slow short drag (30px) springs back, no change",
+      "ok": true,
+      "detail": "2026-10-27"
+    },
+    {
+      "name": "E the Next day button still steps",
+      "ok": true,
+      "detail": "2026-10-28"
+    },
+    {
+      "name": "E no page errors",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "F on tomorrow",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "F tomorrow's own task is on the page",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "F bubble reads 2:15 PM",
+      "ok": true,
+      "detail": "2:15 PM"
+    },
+    {
+      "name": "F a block tomorrow at 14:15, 45 minutes",
+      "ok": true,
+      "detail": "2026-10-27T11:15:00.000Z → 2026-10-27T12:00:00.000Z"
+    },
+    {
+      "name": "F Undo takes it back",
+      "ok": true,
+      "detail": "3 writes after"
+    },
+    {
+      "name": "G 24-hour clock: bubble reads 14:15",
+      "ok": true,
+      "detail": "14:15"
+    },
+    {
+      "name": "G reduced motion: the day changes at once",
+      "ok": true,
+      "detail": "2026-10-27"
+    },
+    {
+      "name": "G 360 day: drop at 14:20 → 14:15, bubble 2:15 PM",
+      "ok": true,
+      "detail": "2026-10-26T11:15:00.000Z"
+    },
+    {
+      "name": "G 360 day: no sideways page scroll, no page errors",
+      "ok": true,
+      "detail": "0 "
+    },
+    {
+      "name": "G 390 day: drop at 14:20 → 14:15, bubble 2:15 PM",
+      "ok": true,
+      "detail": "2026-10-26T11:15:00.000Z"
+    },
+    {
+      "name": "G 390 day: no sideways page scroll, no page errors",
+      "ok": true,
+      "detail": "0 "
+    },
+    {
+      "name": "G 430 day: drop at 14:20 → 14:15, bubble 2:15 PM",
+      "ok": true,
+      "detail": "2026-10-26T11:15:00.000Z"
+    },
+    {
+      "name": "G 430 day: no sideways page scroll, no page errors",
+      "ok": true,
+      "detail": "0 "
+    },
+    {
+      "name": "G 360 night: drop at 14:20 → 14:15, bubble 2:15 PM",
+      "ok": true,
+      "detail": "2026-10-26T11:15:00.000Z"
+    },
+    {
+      "name": "G 360 night: no sideways page scroll, no page errors",
+      "ok": true,
+      "detail": "0 "
+    },
+    {
+      "name": "G 390 night: drop at 14:20 → 14:15, bubble 2:15 PM",
+      "ok": true,
+      "detail": "2026-10-26T11:15:00.000Z"
+    },
+    {
+      "name": "G 390 night: no sideways page scroll, no page errors",
+      "ok": true,
+      "detail": "0 "
+    },
+    {
+      "name": "G 430 night: drop at 14:20 → 14:15, bubble 2:15 PM",
+      "ok": true,
+      "detail": "2026-10-26T11:15:00.000Z"
+    },
+    {
+      "name": "G 430 night: no sideways page scroll, no page errors",
+      "ok": true,
+      "detail": "0 "
+    }
+  ]
+}

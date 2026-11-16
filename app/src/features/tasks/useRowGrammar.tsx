@@ -1,4 +1,5 @@
-import { useState, type MouseEvent as ReactMouseEvent } from 'react'
+import { useContext, useState, type MouseEvent as ReactMouseEvent } from 'react'
+import { RowLiftContext, type RowHold } from './rowLift'
 import { useIsMobile } from '../../components/BottomSheet'
 import { tomorrowHint as defaultTomorrowHint } from '../../lib/dateShortcuts'
 import { toastUndo } from '../../lib/undo'
@@ -76,6 +77,7 @@ export interface RowGrammarOptions {
 export function useRowGrammar(task: Task, o: RowGrammarOptions) {
   const isMobile = useIsMobile()
   const [menu, setMenu] = useState<MenuAnchor | null>(null)
+  const lift = useContext(RowLiftContext)
   const done = task.status === 'done' || !!task.completed_at
   const bulk = o.bulk && o.selected && o.bulk.count > 1 ? o.bulk : undefined
   const actions: TaskMenuActions = {
@@ -107,7 +109,8 @@ export function useRowGrammar(task: Task, o: RowGrammarOptions) {
     swipeProps: {
       actions: done ? undefined : swipeActions,
       tomorrowHint: hint,
-      onLongPress: done ? undefined : o.onToggleSelect,
+      // F1: where a page lifts rows (the Day bar), a hold lifts this one — unless a selection is under way, where it selects.
+      onLongPress: done ? undefined : lift && !o.selecting ? (hold: RowHold) => lift(task, hold) : o.onToggleSelect,
       selecting: isMobile && !!o.selecting,
       onSelectTap: o.onToggleSelect,
     },

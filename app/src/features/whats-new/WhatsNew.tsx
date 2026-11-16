@@ -4,6 +4,7 @@ import { Float } from '../../components/Float'
 import { Button } from '../../components/kit'
 import { Icon } from '../../components/Icon'
 import { appPlatform, compareVersions, installUpdate, reloadToUpdate, type UpdateResult } from '../../lib/appUpdate'
+import { restartToUpdate, startAutoUpdate, useAutoUpdate } from '../../lib/autoUpdate'
 import { useEscapeStack } from '../../lib/overlayStack'
 import { useAppSettings } from '../../lib/settings'
 import { useToastStore } from '../../lib/toastStore'
@@ -23,19 +24,43 @@ export function WhatsNewHost({ uid, createdAt }: { uid: string | undefined; crea
   useEffect(() => {
     if (!uid) return
     let alive = true
-    void runningVersion(appPlatform()).then((v) => {
+    let stopWaiting = () => {}
+    const platform = appPlatform()
+    void runningVersion(platform).then((v) => {
       const mem = alive ? readMemory(uid) : null
       if (!mem) return // unmounted (StrictMode's first pass), or no storage to keep "once" with
       if (mem.seen && compareVersions(v, mem.seen) <= 0) return
-      remember(uid, { seen: v })
-      if (shouldShowUpdated(mem.seen ?? null, v, isNewAccount(createdAt, Date.now()))) {
-        useToastStore.getState().push({ message: `Updated to ${v}`, action: { label: 'What’s new', run: () => openWhatsNew(v) } })
+      const show = shouldShowUpdated(mem.seen ?? null, v, isNewAccount(createdAt, Date.now()))
+      const done = () => {
+        remember(uid, { seen: v })
+        // Quiet: the link only when these notes exist (a silent update can land before its notes are written).
+        if (show) useToastStore.getState().push({ message: `Updated to ${v}`, action: noteFor(v) ? { label: 'What’s new', run: () => openWhatsNew(v) } : undefined })
       }
+      // A silent update relaunches the desktop app hidden in the tray (lib/autoUpdate): the toast waits for the window.
+      const away = () => (platform === 'windows' || platform === 'mac') && !(document.visibilityState === 'visible' && document.hasFocus())
+      if (!away()) return done()
+      const onShown = () => {
+        if (away()) return
+        stopWaiting()
+        done()
+      }
+      stopWaiting = () => {
+        document.removeEventListener('visibilitychange', onShown)
+        window.removeEventListener('focus', onShown)
+      }
+      document.addEventListener('visibilitychange', onShown)
+      window.addEventListener('focus', onShown)
     })
     return () => {
       alive = false
+      stopWaiting()
     }
   }, [uid, createdAt])
+
+  // The desktop apps download updates by themselves and install them at the next quit (lib/autoUpdate).
+  useEffect(() => {
+    startAutoUpdate()
+  }, [])
 
   // Once a day at most: on start, and when the app comes back (the Windows app can run for days).
   // After app_settings, so quiet hours / pause are known for the Windows toast.
@@ -88,11 +113,20 @@ function startUpdate(url: string) {
   void installUpdate(url, (line) => useWhatsNew.setState({ installing: line })).finally(() => useWhatsNew.setState({ installing: null }))
 }
 
+/** "Restart to update": installs the downloaded update now (the outbox is flushed first). */
+async function restartNow() {
+  if (!(await restartToUpdate())) useToastStore.getState().push({ message: 'Couldn’t install the update just now. It will install when you quit.' })
+}
+
 /** Update, the way this platform does it (lib/appUpdate): reload the web app, install in place
  * (Windows), or download the installer (Android). */
 export function UpdateButton({ result }: { result: UpdateResult | null }) {
   const installing = useWhatsNew((s) => s.installing)
+  const auto = useAutoUpdate()
   if (result?.kind === 'reload') return <Button variant="cta" onClick={() => void reloadToUpdate()}>Update</Button>
+  // Desktop: the update downloads by itself (lib/autoUpdate); it installs at the next quit, or now.
+  if (auto.phase === 'ready') return <Button variant="cta" onClick={() => void restartNow()}>Restart to update</Button>
+  if (auto.phase === 'downloading' || auto.phase === 'installing') return <span role="status" style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-body)' }}>{auto.line}</span>
   if (installing) return <span role="status" style={{ fontSize: 'var(--fs-caption)', color: 'var(--ink-body)' }}>{installing}</span>
   if (result?.kind === 'download') return <Button variant="cta" onClick={() => startUpdate(result.url)}>Update</Button>
   return <Button variant="cta" disabled title="Its installer is still on its way — try again in a few minutes">Update</Button>
