@@ -395,6 +395,46 @@ expect "A logged nothing about B's rows" "0" "$(sql -c "select count(*) from act
 expect "every activity row of A's and B's says source mcp" "0"\
   "$(sql -c "select count(*) from activity_log where user_id in ('$A_ID', '$B_ID') and payload->>'source' is distinct from 'mcp'")"
 
+# ---------------------------------------------------------------------------------------------
+section "block colours: palette C names, the older names as their nearest swatch, scopes, a task's block"
+call "add_event colour 'rOsE'" "$KA" add_event '{title: "MCP tinted", start: "2028-01-17T15:00", duration_min: 30, color: "rOsE"}'
+export C1; C1=$(j .added.id)
+expect "answer: the name and the hex" "Rose #E58F99" "$(j '"\(.added.color) \(.added.color_hex)"')"
+expect "row: calendar_events.color is the hex" "#E58F99" "$(sql -c "select color from calendar_events where id = '$C1'")"
+expect "row: owned by the user, so a realtime user_id filter matches it (the desktop app's channel)" "t" "$(sql -c "select user_id = '$A_ID' from calendar_events where id = '$C1'")"
+call "add_event: an older name ('Hydrangea')" "$KA" add_event '{title: "MCP older", start: "2028-01-17T16:00", duration_min: 30, color: "Hydrangea"}'
+export C2; C2=$(j .added.id)
+expect "answer: its nearest palette colour" "Lagoon" "$(j .added.color)"
+refused "add_event: an unknown name" "$KA" add_event '{title: "MCP nope", start: "2028-01-17T17:00", color: "Chartreuse"}' "Rose, Clay, Ochre, Olive, Fern, Lagoon"
+expect "nothing written" "0" "$(sql -c "select count(*) from calendar_events where title = 'MCP nope'")"
+call "calendar names the colour" "$KA" calendar '{from: "2028-01-17", to: "2028-01-17"}'
+expect "calendar: colour and hex" "Rose #E58F99" "$(j '.events[] | select(.id == env.C1) | "\(.color) \(.color_hex)"')"
+call "edit_event: 'none' clears" "$KA" edit_event '{id: env.C1, color: "none"}'
+expect "changed" "colour cleared" "$(changed)"
+expect "row: null" "" "$(sql -c "select color from calendar_events where id = '$C1'")"
+call "add_event: a series, coloured" "$KA" add_event '{title: "MCP coloured series", start: "2028-02-07T09:30", duration_min: 15, repeat: "FREQ=WEEKLY;BYDAY=MO,WE", color: "Clay"}'
+export CS; CS=$(j .added.id)
+call "edit_event: the series, scope all" "$KA" edit_event '{id: env.CS, color: "Fern", scope: "all"}'
+expect "series row" "#72BF8E" "$(sql -c "select color from calendar_events where id = '$CS'")"
+call "edit_event: one occurrence, scope this" "$KA" edit_event '{id: env.CS, color: "Wine", scope: "this", occurrence: "2028-02-09T09:30"}'
+expect "a one-off row of its own is Wine; the series stays Fern" "#B36670 #72BF8E" \
+  "$(sql -c "select (select color from calendar_events where series_id = '$CS' and deleted_at is null) || ' ' || (select color from calendar_events where id = '$CS')")"
+call "add_task with a time and a colour" "$KA" add_task '{title: "MCP coloured task", due: "2028-01-18T10:00", duration_min: 45, color: "Pine"}'
+export CT; CT=$(j .added.id)
+expect "its block's colour" "#4A9266" "$(sql -c "select color from calendar_events where task_id = '$CT' and deleted_at is null")"
+refused "add_task: a colour without a time" "$KA" add_task '{title: "MCP no block", due: "2028-01-18", color: "Pine"}' "date-time"
+call "reschedule_task moves it and recolours the block" "$KA" reschedule_task '{id: env.CT, when: "2028-01-18T12:00", color: "Honey"}'
+expect "block: moved, Honey" "2028-01-18 10:00:00+00 #9C7B31" "$(sql -c "select concat_ws(' ', starts_at, color) from calendar_events where task_id = '$CT' and deleted_at is null")"
+call "reschedule_task moves it only: the colour stays" "$KA" reschedule_task '{id: env.CT, when: "2028-01-18T13:00"}'
+expect "block: Honey" "#9C7B31" "$(sql -c "select color from calendar_events where task_id = '$CT' and deleted_at is null")"
+
+export CTB; CTB=$(sql -c "select id from calendar_events where task_id = '$CT' and deleted_at is null")
+call "edit_event recolours a task's block" "$KA" edit_event '{id: env.CTB, color: "Iris"}'
+expect "block: Iris" "#B59CE3" "$(sql -c "select color from calendar_events where id = '$CTB'")"
+refused "edit_event: a task's block can't move" "$KA" edit_event '{id: env.CTB, color: "Iris", start: "2028-01-18T15:00"}' "reschedule_task"
+call "edit_event: a task's block, colour cleared" "$KA" edit_event '{id: env.CTB, color: null}'
+expect "block: none" "" "$(sql -c "select color from calendar_events where id = '$CTB'")"
+
 section "the function's own log"
 expect "no database error behind any call" "0" "$(grep -c -E '^mcp( tool [a-z_]+)?:' "$TMP/harness.log")"
 

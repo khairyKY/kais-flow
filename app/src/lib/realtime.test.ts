@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { queryClient } from './queryClient'
-import { DEBOUNCE_MS, invalidateSoon, MAX_WAIT_MS } from './realtime'
+import { DEBOUNCE_MS, invalidateSoon, MAX_WAIT_MS, resyncAll } from './realtime'
 
 // realtime.ts reaches for the Supabase client and the auth provider; invalidateSoon needs neither.
 vi.mock('./supabase', () => ({ supabase: {} }))
@@ -58,5 +58,20 @@ describe('invalidateSoon — a burst of realtime messages is one refetch', () =>
     invalidateSoon('projects')
     vi.advanceTimersByTime(DEBOUNCE_MS)
     expect(keys().filter((k) => k === 'projects')).toHaveLength(2)
+  })
+})
+
+describe('resyncAll — what a hidden or sleeping window missed is read again', () => {
+  it('invalidates the calendar and the tasks, once each, after the burst', () => {
+    vi.useFakeTimers()
+    const spy = vi.spyOn(queryClient, 'invalidateQueries').mockResolvedValue()
+    resyncAll()
+    resyncAll()
+    vi.advanceTimersByTime(DEBOUNCE_MS)
+    const keys = spy.mock.calls.map((c) => (c[0] as { queryKey: string[] }).queryKey[0])
+    expect(keys.filter((k) => k === 'calendar_events')).toHaveLength(1)
+    expect(keys.filter((k) => k === 'tasks')).toHaveLength(1)
+    spy.mockRestore()
+    vi.useRealTimers()
   })
 })
