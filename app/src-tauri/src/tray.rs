@@ -500,6 +500,43 @@ async fn autostart_set(app: AppHandle, on: bool) -> bool {
     manager.is_enabled().unwrap_or(false)
 }
 
+/// The buttons a Mac notice shows: the web app's labels, in its order, at most the four a Windows toast has.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn button_labels(actions: &[[String; 2]]) -> Vec<&str> {
+    actions.iter().take(4).map(|[_, label]| label.as_str()).collect()
+}
+
+/// The action id behind the Mac button that was pressed — the crate reports the label, not the id.
+#[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+fn action_for_label<'a>(actions: &'a [[String; 2]], label: &str) -> Option<&'a str> {
+    actions.iter().find(|[_, l]| l == label).map(|[id, _]| id.as_str())
+}
+
+/// Mac notices waiting on a button press (each holds a thread), and their ceiling. ponytail: 6 at once
+/// — the 7th and later go out as plain banners. mac-notification-sys has no timeout on that wait: a
+/// thread frees when its notice is pressed, dismissed or cleared, so notices left sitting in Notification
+/// Center hold their thread until then; swap to a UNUserNotificationCenter delegate (objc2) to lift both.
+#[cfg(target_os = "macos")]
+const MAX_WAITING: usize = 6;
+#[cfg(target_os = "macos")]
+static WAITING: std::sync::atomic::AtomicUsize = std::sync::atomic::AtomicUsize::new(0);
+/// One of the waiting places; given back on drop.
+#[cfg(target_os = "macos")]
+struct Slot;
+#[cfg(target_os = "macos")]
+impl Slot {
+    fn take() -> Option<Slot> {
+        use std::sync::atomic::Ordering::SeqCst;
+        WAITING.fetch_update(SeqCst, SeqCst, |n| (n < MAX_WAITING).then_some(n + 1)).ok().map(|_| Slot)
+    }
+}
+#[cfg(target_os = "macos")]
+impl Drop for Slot {
+    fn drop(&mut self) {
+        WAITING.fetch_sub(1, std::sync::atomic::Ordering::SeqCst);
+    }
+}
+
 /// A Windows toast in the app's voice (12e): title, one body line, up to four buttons (a reminder:
 /// Done · In 10 min · In 1 hour · Tomorrow)
 /// (`actions` = [[id, label]…]). A button calls `window.__kfNotifyAction(id, payload)` in the main
@@ -527,18 +564,50 @@ fn notify_local(app: AppHandle, title: String, body: String, actions: Vec<[Strin
             })
             .show();
     }
-    // ponytail: a banner with no buttons (mac-notification-sys only reports a button press by blocking
-    // a thread per notice); a click on it brings the app forward. Buttons when someone misses them.
+    // The Mac: the same buttons (a single one, or a dropdown of them) with a Dismiss. The crate reports a
+    // press only by blocking, so a notice with buttons waits on its own thread (at most MAX_WAITING of them
+    // — Slot); the press goes to the web app exactly as a Windows toast's does. A click on the notice
+    // itself opens the app on its url.
     #[cfg(target_os = "macos")]
     {
+        use mac_notification_sys::{MainButton, Notification, NotificationResponse};
         // Without this the banner comes from Finder: the crate's default app. Set once; later calls say AlreadySet.
         let _ = mac_notification_sys::set_application(&app.config().identifier);
-        let mut n = mac_notification_sys::Notification::new();
+        if !actions.is_empty() {
+            if let Some(slot) = Slot::take() {
+                let handle = app.clone();
+                std::thread::spawn(move || {
+                    let _slot = slot;
+                    let labels = button_labels(&actions);
+                    let mut n = Notification::new();
+                    if !silent {
+                        n.default_sound();
+                    }
+                    n.main_button(if labels.len() == 1 { MainButton::SingleAction(labels[0]) } else { MainButton::DropdownActions("Actions", &labels) })
+                        .close_button("Dismiss")
+                        .wait_for_click(true);
+                    match mac_notification_sys::send_notification(&title, None, &body, Some(&n)) {
+                        Ok(NotificationResponse::ActionButton(label)) => {
+                            if let Some(action) = action_for_label(&actions, &label) {
+                                call_main(&handle, "__kfNotifyAction", &format!("{action:?},{payload}"));
+                            }
+                        }
+                        Ok(NotificationResponse::Click) => {
+                            show_main(&handle);
+                            call_main(&handle, "__kfNotifyAction", &format!("\"open\",{payload}"));
+                        }
+                        _ => {}
+                    }
+                });
+                return;
+            }
+        }
+        // No buttons, or all the waiting places are taken: a plain banner; a click on it brings the app forward.
+        let mut n = Notification::new();
         if !silent {
             n.default_sound();
         }
         let _ = mac_notification_sys::send_notification(&title, None, &body, Some(&n));
-        let _ = (actions, payload);
     }
     #[cfg(not(any(windows, target_os = "macos")))]
     let _ = (app, title, body, actions, silent, payload);
@@ -652,7 +721,26 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
 
 #[cfg(test)]
 mod tests {
-    use super::{anchor, hex_rgb, square};
+    use super::{action_for_label, anchor, button_labels, hex_rgb, square};
+
+    fn buttons() -> Vec<[String; 2]> {
+        [["done", "Done"], ["snooze10", "In 10 min"], ["snooze60", "In 1 hour"], ["tomorrow", "Tomorrow"], ["open", "Open"]].map(|[a, l]| [a.to_string(), l.to_string()]).to_vec()
+    }
+
+    #[test]
+    fn mac_buttons_keep_the_apps_order_and_the_windows_cap() {
+        assert_eq!(button_labels(&buttons()), vec!["Done", "In 10 min", "In 1 hour", "Tomorrow"]);
+        assert!(button_labels(&[]).is_empty());
+    }
+
+    #[test]
+    fn a_pressed_mac_label_is_its_action_id() {
+        let b = buttons();
+        assert_eq!(action_for_label(&b, "Done"), Some("done"));
+        assert_eq!(action_for_label(&b, "Tomorrow"), Some("tomorrow"));
+        assert_eq!(action_for_label(&b, "Dismiss"), None);
+        assert_eq!(action_for_label(&[], "Done"), None);
+    }
 
     #[test]
     fn focus_square_is_the_block_colour_with_a_clear_margin() {
