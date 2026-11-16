@@ -24,6 +24,7 @@ import { intlZonePlugin } from './zonePlugin'
 import { headerDay, scrollTimeNear, SCROLL_LEAD_DESKTOP_MIN } from './gridClock'
 import { gridMinWidth, isNarrow, TIME_AXIS_W, ZONE2_W } from './weekFit'
 import { StackMorePopover } from './StackMorePopover'
+import { AllDayDraft, MirrorBody } from './DraftTitle'
 import { useDayRollover } from './useDayRollover'
 import { CARD_DRAG, liftCards } from './cardDrag'
 import { blockHue } from './blockHue'
@@ -78,6 +79,9 @@ export interface CalendarGridHandle {
   /** Drops the slot highlight (quick-create closed) — FullCalendar keeps it, and a click on a
    * still-selected slot never selects again, so the same slot couldn't be reopened. */
   unselect(): void
+  /** Selects `start`–`end` (instants, or dates when `allDay`): a click's quarter becomes the hour the draft is, and a
+   * right-click's slot gets one, so the mirror draws the draft. */
+  select(start: string, end: string, allDay?: boolean): void
 }
 
 // This wrapper is the contract: callers never touch FullCalendar directly, so the underlying
@@ -1076,6 +1080,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
   }
   useImperativeHandle(ref, () => ({
     unselect: () => fcRef.current?.getApi().unselect(),
+    select: (start, end, allDay) => fcRef.current?.getApi().select({ start, end, allDay }),
     prev: () => {
       const g = glideRef.current
       if (g) return void (g.page(-1) || jumpTo(addDays(g.anchor(), -glideCfg.current.viewDays)))
@@ -1238,6 +1243,9 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       // structure outright — that also gives task-linked blocks their checkbox (R4, 2026-07-20)
       // and finally puts real emoji in event titles (the last EmojiText gap from R4-4).
       eventContent: (arg: EventContentArg) => {
+        // A select's mirror (it has no event id) is the block being added: while one is open its title is typed in
+        // place (createDraft), else it previews as it always did.
+        const body = ((): ReactNode => {
         if (arg.event.display === 'background') return <span className="kf-free-label">{arg.event.title}</span>
         // Calendar 3e: a span's day piece reads its own label ("Offsite »", "« »", "« ends 3 PM").
         if (arg.event.extendedProps.kfSegOf) {
@@ -1453,6 +1461,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
             </div>
           </div>
         )
+        })()
+        return arg.isMirror && !arg.event.id ? <MirrorBody time={arg.timeText} body={body} /> : body
       },
       eventDidMount: (info: EventMountArg) => {
         if (info.event.display === 'background') return // §4's free stretches: not a block
@@ -1917,10 +1927,8 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       selectLongPressDelay={400}
       selectable
       selectMirror
-      // Kai 2026-07-21: "when I change the type the ghost highlight dissapears" — clicking
-      // anything in our own popover counts as a click outside the grid, so FC unselectAuto
-      // wiped the slot highlight. Exempt the popover from it.
-      unselectCancel=".kf-quickcreate"
+      // The draft (createDraft) is typed into the selection's mirror: a press inside it is no click away from the selection.
+      unselectCancel=".kf-draft"
       editable
       droppable
       events={fcEvents}
@@ -1937,6 +1945,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       eventResize={cb.eventResize}
       drop={cb.drop}
     />
+    <AllDayDraft wrap={wrapRef} />
     {stackMore && (
       <StackMorePopover
         anchor={stackMore}

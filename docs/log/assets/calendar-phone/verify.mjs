@@ -421,7 +421,8 @@ for (const theme of ['day', 'night']) {
     await ctx.close()
   }
 
-  // 7c — tap an empty slot: quick create, keyboard up, the slot over the scrim, Save waits for a title.
+  // 7c — tap an empty slot: a draft hour right there with its title typed in place (v165-cal-add, Kai 2026-11-16: it was
+  // a sheet with a Task / Event toggle and a 30m default). Enter saves an event; "… task" a task; no sheet either way.
   s7c: {
     if (!want('7c')) break s7c
     const name = '7c-day'
@@ -430,40 +431,30 @@ for (const theme of ['day', 'night']) {
     await tapAt(cdp, { x: 200, y: y16 + 8 })
     await keyboard(page, 300)
     await sleep(400)
-    const d = dialog(page)
-    check(`${name} the sheet: Task (chosen) | Event, Save disabled, the title focused`, (await d.getByRole('radio', { name: 'Task' }).getAttribute('aria-checked')) === 'true' && (await d.getByRole('button', { name: 'Save' }).isDisabled()) && (await d.locator('.pc-qc-title').evaluate((e) => document.activeElement === e)))
-    const qc = [await text(d.locator('.kf-chip').first()), await d.locator('.kf-chip[aria-pressed="true"]').innerText().catch(() => '')]
-    check(`${name} the date chip "Sun 27 · 16:00"; 30m chosen`, qc[0] === 'Sun 27 · 16:00' && qc[1] === '30m', JSON.stringify(qc))
-    const kb = await d.boundingBox()
-    check(`${name} keyboard up → the sheet sits on it`, Math.abs(kb.y + kb.height - (844 - 300)) <= 2, JSON.stringify(kb))
-    // The sheet (it carries the task sheet's chips now) stands taller than the room a 300px keyboard
-    // leaves, so the slot hides rather than draw over it; with the keyboard down it sits above the sheet.
-    const held = page.locator('.pc-held')
-    check(`${name} keyboard up → the slot never draws over the sheet`, (await held.count()) === 0 || (await held.boundingBox()).y + (await held.boundingBox()).height <= kb.y, JSON.stringify(await held.boundingBox().catch(() => null)))
-    await keyboard(page, 0)
-    await sleep(400)
-    const box = await d.boundingBox()
-    await d.locator('.pc-qc-title').pressSequentially('Pick up the new tyres')
-    const slot = await held.boundingBox()
-    check(`${name} the slot 16:00–16:30, over the scrim and above the sheet, with the live title`, (await text(page.locator('.pc-held'))).replace(/\s+/g, ' ') === 'Pick up the new tyres 16:00–16:30' && slot.y + slot.height <= box.y && Math.abs(slot.height - 32) <= 1 && (await page.locator('.pc-held').evaluate((e) => getComputedStyle(e).zIndex)) === '1001')
+    const draft = page.locator('.pc-draft')
+    check(`${name} no sheet: a draft block with the title field focused (the keyboard is up for it)`, (await dialog(page).count()) === 0 && (await draft.count()) === 1 && (await draft.locator('.kf-draft-input').evaluate((e) => document.activeElement === e)))
+    const db = await draft.boundingBox()
+    check(`${name} the draft is an hour (64px) on 16:00, reading "16:00–17:00 · Event"`, Math.abs(db.height - 64) <= 1 && (await text(draft.locator('.kf-draft-time'))) === '16:00–17:00 · Event', JSON.stringify(db))
+    check(`${name} the draft stays clear above a 300px keyboard`, db.y + db.height <= 844 - 300, JSON.stringify(db))
+    await draft.locator('.kf-draft-input').pressSequentially('Pick up the new tyres')
     await shot(page, name)
-    await tap(cdp, d.locator('.kf-chip', { hasText: '45m' }))
-    check(`${name} 45m → the slot grows to 16:00–16:45`, (await text(page.locator('.pc-held'))).includes('16:00–16:45'))
     const w0 = state.writes.length
-    await tap(cdp, d.getByRole('button', { name: 'Save' }))
+    await draft.locator('.kf-draft-input').press('Enter')
     await keyboard(page, 0)
-    await sleep(400)
-    const t = writesOf(state, 'tasks', w0).find((r) => r.title === 'Pick up the new tyres')
+    await sleep(500)
     const e = writesOf(state, 'calendar_events', w0).find((r) => r.title === 'Pick up the new tyres')
-    check(`${name} Save → a task + its block 16:00–16:45`, t && e && e.task_id === t.id && e.starts_at === iso('16:00') && e.ends_at === iso('16:45') && t.duration_min === 45 && (await dialog(page).count()) === 0, JSON.stringify(e))
-    await tapAt(cdp, { x: 200, y: (await yOf(page, '17:00')) + 8 })
-    await tap(cdp, dialog(page).getByRole('radio', { name: 'Event' }))
-    await dialog(page).locator('.pc-qc-title').fill('Coffee with Hana')
+    check(`${name} Enter → a plain event 16:00–17:00, no task`, e && e.type === 'event' && e.task_id === null && e.starts_at === iso('16:00') && e.ends_at === iso('17:00') && writesOf(state, 'tasks', w0).length === 0 && (await draft.count()) === 0, JSON.stringify(e))
+    await page.locator('.pc-scroll').evaluate((e) => (e.scrollTop = 20 * 64 - 260))
+    await sleep(200)
+    await tapAt(cdp, { x: 200, y: (await yOf(page, '20:00')) + 8 })
+    await sleep(300)
+    await page.locator('.pc-draft .kf-draft-input').fill('Coffee with Hana task')
     const w1 = state.writes.length
-    await dialog(page).locator('.pc-qc-title').press('Enter')
-    await sleep(400)
-    const c = writesOf(state, 'calendar_events', w1)
-    check(`${name} Event + Enter → a plain event 17:00–17:30, no task`, c.length === 1 && c[0].type === 'event' && c[0].task_id === null && c[0].starts_at === iso('17:00') && writesOf(state, 'tasks', w1).length === 0, JSON.stringify(c))
+    await page.locator('.pc-draft .kf-draft-input').press('Enter')
+    await sleep(500)
+    const t = writesOf(state, 'tasks', w1).find((r) => r.title === 'Coffee with Hana')
+    const b = writesOf(state, 'calendar_events', w1).find((r) => t && r.task_id === t.id)
+    check(`${name} "… task" + Enter → a task and its block 20:00–21:00`, t && b && b.starts_at === iso('20:00') && b.ends_at === iso('21:00'), JSON.stringify(b))
     await basics(page, name, errors)
     await ctx.close()
   }
@@ -749,7 +740,7 @@ for (const theme of ['day', 'night']) {
     check(`${name} Thursday, Oct 1: daisy/future.png + "A clear day — tap any time to plan"`, (await title(page)) === 'Thursday, Oct 1' && (await page.locator('.pc-empty img').getAttribute('src')) === '/ds/assets/daisy/future.png' && (await text(page.locator('.pc-empty'))).includes('A clear day — tap any time to plan'))
     check(`${name} the strip: 1 selected, 27 ringed as today`, (await page.locator('.pc-day[aria-current]').innerText()).replace(/\s+/g, ' ') === 'T 1' && (await page.locator('.pc-day[data-today] .pc-day-n').evaluate((e) => getComputedStyle(e).boxShadow.includes('inset'))))
     await tapAt(cdp, { x: 200, y: (await yOf(page, '12:00')) + 8 })
-    check(`${name} the hours around it stay tappable (quick create)`, (await dialog(page).locator('.pc-qc-title').count()) === 1)
+    check(`${name} the hours around it stay tappable (a draft opens there)`, (await page.locator('.pc-draft .kf-draft-input').count()) === 1)
     await page.keyboard.press('Escape')
     await sleep(400)
     // An all-day event (none are drawn on the grid): a chip row over the hours on its day only.
