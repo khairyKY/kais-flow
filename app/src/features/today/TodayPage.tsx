@@ -99,6 +99,7 @@ import { useMinuteNow } from './useMinuteNow'
 import { captureFor, dayBlocks, dayBounds, dayHeading, dayName, dayNoon, dayWord, futureTasks, pastTasks, viewDay } from './dayView'
 import { NowPanel, RitualsPanel, Top3Head, usePhoneView, ViewSwap } from './PhoneHome'
 import { DayStripView } from './DayStripView'
+import { DayBarDrag } from './DayBarDrag'
 
 // The 2a capture pill's mic: the voice sheet, loaded on first use (as the tray does).
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
@@ -734,6 +735,7 @@ function TodayView({ nav }: { nav: DayNav }) {
     const planFirst = card === 'plan'
     const rituals = <RitualsPanel morning={day.morning} evening={day.evening} now={now} routines={{ done: routinesDone, total: routinesTotal }} onOpen={openRitual} />
     return (
+      <DayBarDrag enabled={phoneView === 'day' && !planFirst} day={nav.today} events={events}>
       <div className="tp tp-home">
         <Fireflies phone />
         <PhoneBar title={dateLabelShort} nav={nav} rituals={{ morning: day.morning, evening: day.evening, onOpen: openRitual }} />
@@ -753,7 +755,7 @@ function TodayView({ nav }: { nav: DayNav }) {
           <div className="tp-home-in">
             {eventsPending ? <div className="tp-nn"><Skeleton rows={2} /></div> : planFirst ? (
               <RitualCard kind="plan" panel day={day} inboxCount={pendingInbox.length} overdueCount={overdueCount} sweepCount={open.length} onOpenRitual={openRitual} />
-            ) : <ViewSwap view={phoneView} render={(v) => (v === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />)} />}
+            ) : <ViewSwap view={phoneView} render={(v) => (v === 'day' ? <DayStripView events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} onStep={nav.step} /> : <NowPanel events={events} tasks={tasks} goalId={goal?.id} onOpen={openBlock} />)} />}
             {!tasksPending && <FirstTodayHint style={{ padding: '8px 8px 0' }} />}
             {!tasksPending && reviewToday && <ReviewCard />}
             {birthdayCards.length > 0 && <div style={{ paddingTop: 12 }}>{birthdayCards}</div>}
@@ -799,6 +801,7 @@ function TodayView({ nav }: { nav: DayNav }) {
         )}
         {overlays}
       </div>
+      </DayBarDrag>
     )
   }
 
@@ -1084,6 +1087,9 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
   const { data: completions = [] } = useRoutineCompletions()
   const { data: journal = [] } = useJournalEntries(past)
   const seeds = useSeedsFor(key)
+  const [phoneView] = usePhoneView()
+  const openTask = useOpenTask()
+  const navigate = useNavigate()
   const word = dayWord(key, nav.today)
   const taskById = new Map(tasks.map((t) => [t.id, t] as const))
   const projectName = (id: string | null) => projects.find((p) => p.id === id)?.name
@@ -1134,11 +1140,15 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
   if (isMobile) {
     const row = (t: Task, pick?: boolean) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t.project_id)} compact pick={pick} meta={timeOf(t)} star={starOf(t)} />
     const pastRow = (t: Task) => <PastRow key={t.id} task={t} projectName={projectName(t.project_id)} meta={timeOf(t)} compact />
+    // F1: the Day bar follows the day shown — swipe it to change day, and (a day still to come) drop a task on it.
+    const openBlock = (e: CalendarEvent) => (e.task_id && taskById.has(e.task_id) ? openTask(e.task_id) : navigate(eventPath(e)))
     return (
+      <DayBarDrag enabled={phoneView === 'day' && !past} day={key} events={events}>
       <div className="tp" data-day={key} data-day-kind={kind}>
         <Fireflies phone />
         <PhoneBar title={heading} nav={nav} />
         <PhoneDayStrip nav={nav} />
+        {phoneView === 'day' && <div className="tp-home-in" style={{ paddingBottom: 'var(--sp-2)' }}><DayStripView events={events} tasks={tasks} day={key} always onOpen={openBlock} onStep={nav.step} /></div>}
         <div className="tp-sum">
           <Icon name={past ? 'check' : 'calendar'} size={20} />
           <span style={{ flex: 1, minWidth: 0 }}>{isPending ? '' : summary}</span>
@@ -1190,6 +1200,7 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
         </section>
         {!past && <div className="tp-quiet tp-day-rituals">{ritualLine}</div>}
       </div>
+      </DayBarDrag>
     )
   }
 
