@@ -141,7 +141,7 @@ const titleOf = (r: Row) => ((r.title ?? r.name ?? r.raw_text ?? (typeof r.body 
 
 const WEEKDAYS = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
 const SWITCHES = [
-  'morning_digest_on', 'evening_nudge_on', 'task_reminder_on', 'event_reminder_on', 'routine_on', 'focus_done_on', 'paper_ready_on', 'birthday_on',
+  'morning_digest_on', 'evening_nudge_on', 'review_reminder_on', 'task_reminder_on', 'event_reminder_on', 'routine_on', 'focus_done_on', 'paper_ready_on', 'birthday_on',
   'sync_problem_on', 'quiet_hours_on', 'lock_screen_names', 'capture_keep_photos',
 ] as const
 const TIMES = ['morning_digest_at', 'evening_nudge_at', 'quiet_from', 'quiet_to'] as const

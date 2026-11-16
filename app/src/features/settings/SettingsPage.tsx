@@ -774,7 +774,7 @@ function ReviewSetting() {
   const shown = when.day === null ? 'default' : String(when.day)
   if (!ready) return null
   return (
-    <Row label="Weekly review" help={`${when.day === null ? 'On the first day of your weekend' : `Every ${DAY_NAMES[when.day]}`} · ${when.time ? `from ${clockText(when.time)}` : 'all day'} · Today asks until the week is closed`} keys="weekly review day time sweep close the week">
+    <Row label="Weekly review" help={`${when.day === null ? 'On the first day of your weekend' : `Every ${DAY_NAMES[when.day]}`} · ${when.time ? `from ${clockText(when.time)}` : 'all day'} · Today asks until the week is closed${data?.review_reminder_on === false ? '' : ` · You’ll get a reminder at ${clockText(when.time ?? REVIEW_AT)}`}`} keys="weekly review day time sweep close the week reminder">
       <Select
         value={shown}
         onChange={(v) => updateAppSetting('review_day', v === 'default' ? null : Number(v))}
@@ -1277,7 +1277,7 @@ function NotificationsCard() {
     <SCard title="Kinds">
       {KIND_IDS.map((kind) => {
         const k = KIND_LOOK[kind]
-        const key = `${kind}_on` as const
+        const key = kind === 'weekly_review' ? ('review_reminder_on' as const) : (`${kind}_on` as const) // the review's switch is 0095's, not <kind>_on
         const on = s[key] !== false
         const ritual = kind === 'morning_digest' || kind === 'evening_nudge' ? kind : null
         return (

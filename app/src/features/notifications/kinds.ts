@@ -3,7 +3,7 @@ import type { IconName } from '../../components/icons/kf'
 // How each notification kind looks inside the app — Settings → Notifications (12i) and the history
 // on Activity (12j) — so a missed one looks like the one that arrived. The words are notify/copy.ts.
 
-export type KindId = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'focus_done' | 'paper_ready' | 'birthday' | 'sync_problem'
+export type KindId = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'weekly_review' | 'focus_done' | 'paper_ready' | 'birthday' | 'sync_problem'
 
 export interface KindLook {
   label: string
@@ -24,6 +24,8 @@ export const KIND_LOOK: Record<KindId, KindLook> = {
   routine: { label: 'Routine reminder', channel: 'Reminders', silent: false, icon: 'routines', tint: 'color-mix(in oklch, var(--acc-clover) 30%, transparent)', ink: 'var(--acc-clover-text)' },
   morning_digest: { label: 'Morning digest', channel: 'Rituals', silent: true, icon: 'sprout', tint: 'color-mix(in oklch, var(--acc-sage) 30%, transparent)', ink: 'var(--acc-sage-text)' },
   evening_nudge: { label: 'Evening nudge', channel: 'Rituals', silent: false, icon: 'moon', tint: 'color-mix(in oklch, var(--acc-lavender) 30%, transparent)', ink: 'var(--acc-lavender-deep)' },
+  // The weekly review's reminder (0095): its day and time are Settings → Calendar & time → Weekly review.
+  weekly_review: { label: 'Weekly review', channel: 'Rituals', silent: false, icon: 'clipboard', tint: 'color-mix(in oklch, var(--acc-lavender) 30%, transparent)', ink: 'var(--acc-lavender-deep)' },
   focus_done: { label: 'Focus done', channel: 'Focus', silent: false, icon: 'focus-ring', tint: 'color-mix(in oklch, var(--acc-sage) 22%, transparent)', ink: 'var(--acc-sage-text)' },
   // The three 12k drew and nobody built until 2026-10-12 — glyph and disc as drawn (12i/12j/12k).
   paper_ready: { label: 'Paper capture ready', channel: 'Captures', silent: true, icon: 'camera', tint: 'var(--block-hydrangea)', ink: 'var(--acc-hydrangea-deep)' },

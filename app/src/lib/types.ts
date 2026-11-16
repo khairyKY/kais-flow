@@ -268,6 +268,8 @@ export interface AppSettings {
    * lib/weekend.ts reviewWhen. Absent before the push; null = how it was (first day of the weekend, all day). */
   review_day?: number | null
   review_time?: string | null
+  /** The weekly review's reminder (migration 0095). */
+  review_reminder_on?: boolean
   /** Tour & help (migration 0058): the tour and hints this person has been shown — absent until it's pushed. */
   help_seen?: string[] | null
   /** The Notebook page's layout (migration 0063), read through features/notebook/page.ts parseLayout —
