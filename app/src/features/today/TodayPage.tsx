@@ -18,7 +18,8 @@ import { SubtaskAddButton, SubtaskCount, SubtaskNest, hasOpenSubtasks, useNestOp
 import { cairoDateKey, scheduleNextWeek, scheduleToday, zoneDateKey } from '../../lib/dateShortcuts'
 import { slotLabel, useCalendarEvents } from '../calendar/api'
 import { timeRange, timeText } from '../calendar/eventTime'
-import { blockSwatch } from '../calendar/blockHue'
+import { blockHue, blockSwatch } from '../calendar/blockHue'
+import { useBlockColor } from '../calendar/blockColor'
 import { clockText, useHour24 } from '../../lib/clock'
 import { useProjects } from '../projects/api'
 import { useDomains } from '../domains/api'
@@ -208,9 +209,13 @@ function TodayView({ nav }: { nav: DayNav }) {
   const [celebrate, setCelebrate] = useState(false)
 
   const projectName = useMemo(() => new Map(projects.map((p) => [p.id, p.name] as const)), [projects])
-  const projectDot = (id: string | null) => {
-    if (!id) return 'var(--acc-moss)'
-    const idx = projects.findIndex((p) => p.id === id)
+  // The dot is the colour the task follows (project, else area: calendar/blockColor); a task in neither keeps the old cycle.
+  const colorOf = useBlockColor()
+  const projectDot = (t: Task) => {
+    const followed = colorOf(t).color
+    if (followed) return blockHue(followed).c
+    if (!t.project_id) return 'var(--acc-moss)'
+    const idx = projects.findIndex((p) => p.id === t.project_id)
     return `var(${PROJECT_DOTS[idx >= 0 ? idx % PROJECT_DOTS.length : 0]})`
   }
 
@@ -694,7 +699,7 @@ function TodayView({ nav }: { nav: DayNav }) {
       return slot ? [slot] : undefined
     }
     const row = (t: Task, extra: { pick?: boolean; n?: number; noFact?: boolean; place?: RowGrammarOptions['place']; tomorrow?: () => void } = {}) => (
-      <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} compact slim meta={slimMeta(t)} pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
+      <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t)} compact slim meta={slimMeta(t)} pending={!online && pendingIds.has(t.id)} {...rowSelection(t)} highlighted={t.id === focusedId} {...extra} />
     )
     const openBlock = (e: CalendarEvent) => (e.task_id && taskById.has(e.task_id) ? openTask(e.task_id) : navigate(eventPath(e)))
     const planned = top3Planned(top3InOrder, events, now)
@@ -709,7 +714,7 @@ function TodayView({ nav }: { nav: DayNav }) {
       <div className="tp-gs-wrap"><GoalCardLoading /></div>
     ) : goal ? (
       <div className="tp-gs-wrap">
-        <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} compact slim meta={goalMeta ? [goalMeta] : undefined} place={placeOf(goal)} {...rowSelection(goal)} />
+        <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal)} compact slim meta={goalMeta ? [goalMeta] : undefined} place={placeOf(goal)} {...rowSelection(goal)} />
       </div>
     ) : null
     const folds = listsReady && overdueOpen.length > 0 && (
@@ -823,7 +828,7 @@ function TodayView({ nav }: { nav: DayNav }) {
   // Loop A (2026-09-26 daily cycle, DAILY-CYCLE.md §Today): the next move leads; the lists that don't
   // drive it stay quiet — the overdue pile is its own fold.
   const showLists = !tasksPending && !nothingPlanned && !allDone
-  const openRow = (t: Task, i: number) => <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} hollow border={i > 0} {...rowSelection(t)} highlighted={t.id === focusedId} />
+  const openRow = (t: Task, i: number) => <TaskRow key={t.id} task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t)} hollow border={i > 0} {...rowSelection(t)} highlighted={t.id === focusedId} />
   // Punch 2: with no routines this was a heading reading "· 0/0" above nothing.
   // The section now either carries content or offers the one designed way in.
   const routinesSection = (
@@ -895,12 +900,12 @@ function TodayView({ nav }: { nav: DayNav }) {
               <>
                 {goal && (
                   <Top3Slot key={goal.id} task={goal} index={0}>
-                    <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal.project_id)} meta={blockMetaFor(goal, events, now)} inProgress={inProgressIds.has(goal.id)} place={placeOf(goal)} {...rowSelection(goal)} />
+                    <GoalCard task={goal} projectName={projectName.get(goal.project_id ?? '')} dot={projectDot(goal)} meta={blockMetaFor(goal, events, now)} inProgress={inProgressIds.has(goal.id)} place={placeOf(goal)} {...rowSelection(goal)} />
                   </Top3Slot>
                 )}
                 {restTop3.map((t, i) => (
                   <Top3Slot key={t.id} task={t} index={i + 1}>
-                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t.project_id)} border={i < restTop3.length - 1} pick meta={blockMetaFor(t, events, now)} inProgress={inProgressIds.has(t.id)} place={placeOf(t)} {...rowSelection(t)} highlighted={t.id === focusedId} />
+                    <TaskRow task={t} projectName={projectName.get(t.project_id ?? '')} dot={projectDot(t)} border={i < restTop3.length - 1} pick meta={blockMetaFor(t, events, now)} inProgress={inProgressIds.has(t.id)} place={placeOf(t)} {...rowSelection(t)} highlighted={t.id === focusedId} />
                   </Top3Slot>
                 ))}
                 {top3.length === 0 && <Empty line="Nothing starred for today yet." />}
@@ -1080,8 +1085,11 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
   const word = dayWord(key, nav.today)
   const taskById = new Map(tasks.map((t) => [t.id, t] as const))
   const projectName = (id: string | null) => projects.find((p) => p.id === id)?.name
-  const projectDot = (id: string | null) => {
-    const idx = id ? projects.findIndex((p) => p.id === id) : 0
+  const colorOf = useBlockColor()
+  const projectDot = (t: Task) => {
+    const followed = colorOf(t).color
+    if (followed) return blockHue(followed).c
+    const idx = t.project_id ? projects.findIndex((p) => p.id === t.project_id) : 0
     return `var(${PROJECT_DOTS[idx >= 0 ? idx % PROJECT_DOTS.length : 0]})`
   }
   const blocks = dayBlocks(events, key, zone)
@@ -1125,7 +1133,7 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
   const kind = past ? 'past' : 'future'
 
   if (isMobile) {
-    const row = (t: Task, pick?: boolean) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t.project_id)} compact pick={pick} meta={timeOf(t)} star={starOf(t)} />
+    const row = (t: Task, pick?: boolean) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t)} compact pick={pick} meta={timeOf(t)} star={starOf(t)} />
     const pastRow = (t: Task) => <PastRow key={t.id} task={t} projectName={projectName(t.project_id)} meta={timeOf(t)} compact />
     // F1: the Day bar follows the day shown — swipe it to change day, and (a day still to come) drop a task on it.
     const openBlock = (e: CalendarEvent) => (e.task_id && taskById.has(e.task_id) ? openTask(e.task_id) : navigate(eventPath(e)))
@@ -1232,7 +1240,7 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
               <section aria-label={`${word}'s three`}>
                 <SectionLabel action={<span className="td-label-note">{`${seeds.length} of ${MAX_SEEDS} planted`}</span>} style={{ marginBottom: 6 }}>{`${word}'s three`}</SectionLabel>
                 {seeds.length ? (
-                  seeds.map((t, i) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t.project_id)} border={i < seeds.length - 1} pick meta={timeOf(t)} star={starOf(t)} />)
+                  seeds.map((t, i) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t)} border={i < seeds.length - 1} pick meta={timeOf(t)} star={starOf(t)} />)
                 ) : (
                   <Empty line="Nothing planted yet — ☆ a task to plant it." />
                 )}
@@ -1240,7 +1248,7 @@ function OtherDay({ nav }: { nav: DayNav & { day: string } }) {
               <section aria-label={`${word}'s tasks`}>
                 <SectionLabel style={{ marginBottom: 6 }}>{`${word}'s tasks · ${dayRows.length}`}</SectionLabel>
                 {dayRows.length ? (
-                  dayRows.map((t, i) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t.project_id)} border={i < dayRows.length - 1} meta={timeOf(t)} star={starOf(t)} />)
+                  dayRows.map((t, i) => <TaskRow key={t.id} task={t} projectName={projectName(t.project_id)} dot={projectDot(t)} border={i < dayRows.length - 1} meta={timeOf(t)} star={starOf(t)} />)
                 ) : (
                   <Empty line="Nothing else on this day yet." />
                 )}
@@ -1324,6 +1332,7 @@ function PastRow({ task, projectName, meta, compact, border }: { task: Task; pro
 
 /** One of another day's calendar blocks — its time and title; a tap opens the task or the event. */
 function DayBlockItem({ event, task, phone }: { event: CalendarEvent; task?: Task; phone?: boolean }) {
+  const colorOf = useBlockColor()
   const navigate = useNavigate()
   const openTask = useOpenTask()
   const h24 = useHour24()
@@ -1345,7 +1354,7 @@ function DayBlockItem({ event, task, phone }: { event: CalendarEvent; task?: Tas
   }
   return (
     <span id={`upnext-${event.id}`} className="td-next-item" role="link" tabIndex={0} title={task ? 'Open task' : 'Open in calendar'} onClick={open} onKeyDown={keys}>
-      <span className="td-next-sq" style={{ background: blockSwatch(event) }} aria-hidden />
+      <span className="td-next-sq" style={{ background: blockSwatch(event, colorOf) }} aria-hidden />
       <span className="td-next-time">{timeText(start)}</span>
       <span className={`td-ink${done ? ' td-struck' : ''}`}><EmojiText text={event.title} /></span>
     </span>
@@ -1566,6 +1575,7 @@ function NowHeadTask({ task, block, head, check, sel }: { task: Task; block?: Ca
 function Ribbon({ events, now, head, taskById, day }: { events: CalendarEvent[]; now: Date; head: CalendarEvent | null; taskById: Map<string, Task>; /** Another day's ribbon (noon on it): its blocks, no now line. */ day?: Date }) {
   const navigate = useNavigate()
   const openTask = useOpenTask()
+  const colorOf = useBlockColor()
   const at = day ?? now
   const t = now.getTime()
   const blocks = day ? events : events.filter((e) => !e.all_day && runsToday(e, now))
@@ -1583,7 +1593,7 @@ function Ribbon({ events, now, head, taskById, day }: { events: CalendarEvent[];
           const end = new Date(e.ends_at).getTime()
           const isHead = e.id === head?.id
           const spent = isHead ? Math.min(100, Math.max(0, ((t - start) / Math.max(1, end - start)) * 100)) : 0
-          const color = blockSwatch(e)
+          const color = blockSwatch(e, colorOf)
           return (
             <button
               key={e.id}
@@ -1630,13 +1640,14 @@ function NextTaskItem({ event, task, sel }: { event: CalendarEvent; task: Task; 
 
 /** …and a plain event: its colour, time and title; opens on the calendar; right-click = its menu. */
 function NextEventItem({ event }: { event: CalendarEvent }) {
+  const colorOf = useBlockColor()
   const navigate = useNavigate()
   const [menu, setMenu] = useState<{ x: number; y: number } | null>(null)
   const open = () => navigate(eventPath(event))
   return (
     <>
       <span id={`upnext-${event.id}`} className="td-next-item" role="link" tabIndex={0} title="Open in calendar" onClick={open} onKeyDown={(e) => e.key === 'Enter' && open()} onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY }) }}>
-        <span className="td-next-sq" style={{ background: blockSwatch(event) }} aria-hidden />
+        <span className="td-next-sq" style={{ background: blockSwatch(event, colorOf) }} aria-hidden />
         <span className="td-next-time">{timeText(new Date(event.starts_at))}</span>
         <span className="td-ink"><EmojiText text={event.title} /></span>
       </span>

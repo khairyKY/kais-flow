@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { useNavigate } from 'react-router'
 import { useFocusStore } from '../focus/focusStore'
 import { blockFor } from '../focus/focusPlan'
+import { colorOfNow } from '../calendar/blockColor'
 import { queryClient } from '../../lib/queryClient'
 import type { CalendarEvent, Task } from '../../lib/types'
 
@@ -28,7 +29,7 @@ export function beginFocus(task: FocusableTask | null, event?: CalendarEvent | n
   if (s.mode !== 'stopwatch' && (!inRound || s.mode === 'break' || s.mode === 'garden' || event)) {
     const full = task ? (queryClient.getQueryData<Task[]>(['tasks'])?.find((t) => t.id === task.id) ?? null) : null
     const events = queryClient.getQueryData<CalendarEvent[]>(['calendar_events']) ?? []
-    s.setBlock(blockFor(full ?? (task && { id: task.id, title: 'Focus', scheduled_start: null, scheduled_end: null, duration_min: null }), events, s.settings, new Date(), event))
+    s.setBlock(blockFor(full ?? (task && { id: task.id, title: 'Focus', scheduled_start: null, scheduled_end: null, duration_min: null, project_id: task.project_id }), events, s.settings, new Date(), event, colorOfNow()))
     s.setMode('pomodoro') // a fresh round of the new block
   }
   if (task && s.activeTask?.id !== task.id) s.setActiveTask({ id: task.id, project_id: task.project_id })

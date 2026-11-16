@@ -136,11 +136,17 @@ insert into tasks (user_id, title, due_at) values
   (:'a', 'Widget overdue', now() - interval '3 days'),
   (:'b', 'Widget B secret task', now());
 insert into tasks (user_id, title, due_at, recurrence_rule) values (:'a', 'Widget daily', now(), 'FREQ=DAILY');
+-- colour follows where it lives (0099): the goal lives in a Fern project, so its block (no colour of its own) draws Fern; the
+-- later event is filed under a Rose area but keeps its own colour (own wins).
+insert into projects (user_id, name, color) values (:'a', 'Widget Fern project', '#72BF8E');
+insert into areas (user_id, name, color, sort_order) values (:'a', 'Widget Rose area', '#E58F99', 0);
+update tasks set project_id = (select id from projects where user_id = :'a' and name = 'Widget Fern project') where user_id = :'a' and title = 'Widget goal';
 insert into calendar_events (user_id, title, starts_at, ends_at, type, task_id)
   select :'a', 'Widget goal', now() - interval '10 minutes', now() + interval '50 minutes', 'task', id from tasks where user_id = :'a' and title = 'Widget goal';
 insert into calendar_events (user_id, title, starts_at, ends_at, color) values
   (:'a', 'Widget later', now() + interval '15 minutes', now() + interval '25 minutes', '#a8a0be'),
   (:'b', 'Widget B secret event', now() - interval '5 minutes', now() + interval '1 hour', null);
+update calendar_events set area_id = (select id from areas where user_id = :'a' and name = 'Widget Rose area') where user_id = :'a' and title = 'Widget later';
 SQL
 GOAL=$(sql -c "select id from tasks where user_id = '$A_ID' and title = 'Widget goal'")
 DAILY=$(sql -c "select id from tasks where user_id = '$A_ID' and title = 'Widget daily'")
@@ -171,9 +177,9 @@ expect "the Top 3, the goal first" "Widget goal|Widget pick two" "$(j '[.top3[].
 expect "an item's keys" "done id priority title" "$(j '.top3[0] | keys | join(" ")')"
 expect "today's open tasks (not the picks, not the overdue one)" "Widget daily|Widget today task" "$(j '[.tasks[].title] | sort | join("|")')"
 expect "overdue counted" "1" "$(j .overdue)"
-expect "now: the goal's block, Iris, its kind" "Widget goal true #B59CE3 task $GOAL" "$(j '"\(.now_block.title) \(.now_block.is_goal) \(.now_block.color) \(.now_block.kind) \(.now_block.task_id)"')"
+expect "now: the goal's block, no colour of its own: its project's Fern; its kind" "Widget goal true #72BF8E task $GOAL" "$(j '"\(.now_block.title) \(.now_block.is_goal) \(.now_block.color) \(.now_block.kind) \(.now_block.task_id)"')"
 expect "a block's keys" "color end end_hm is_goal kind start start_hm task_id title" "$(j '.now_block | keys | join(" ")')"
-expect "next: the later block, its pre-palette-C lavender drawn as Iris" "Widget later #B59CE3" "$(j '[.next_blocks[] | "\(.title) \(.color)"] | join("|")')"
+expect "next: the later block — filed under a Rose area, but its own pre-palette-C lavender wins, drawn as Iris" "Widget later #B59CE3" "$(j '[.next_blocks[] | "\(.title) \(.color)"] | join("|")')"
 expect "start/end are epoch seconds around now" "true" "$(j "(.now - $(date +%s)) as \$d | (.now_block.start < .now) and (.now_block.end > .now) and \$d < 120 and \$d > -120")"
 expect "the day bar holds both blocks (keys)" "2 color done end from_min is_goal start to_min" "$(j '"\(.day | length) \(.day[0] | keys | join(" "))"')"
 expect "progress 0–1, done, total, plant" "0 0 4 opening" "$(j '"\(.progress) \(.done) \(.total) \(.plant)"')"

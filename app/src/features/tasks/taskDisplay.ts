@@ -1,3 +1,4 @@
+import { makeColorResolver } from '../../../../supabase/functions/_shared/colorFollows.ts'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import type { Area, Domain, Project, Task } from '../../lib/types'
 
@@ -39,8 +40,16 @@ export interface TaskTag {
   color: string | null
 }
 
-/** One tag chip per row: area > project > domain, whichever is set first. */
+/** One tag chip per row: area > project > domain, whichever is set first. The dot is the colour the task follows (project, else
+ * area — calendar/blockColor, as its calendar block is drawn); a task with neither keeps its tag's own. */
 export function resolveTag(task: Task, domains: Domain[], projects: Project[], areas: Area[]): TaskTag | null {
+  const tag = placeTag(task, domains, projects, areas)
+  if (!tag) return tag
+  const followed = makeColorResolver(projects.filter((p) => p.id === task.project_id), areas.filter((a) => a.id === task.area_id), [])(task).color
+  return followed ? { ...tag, color: followed } : tag
+}
+
+function placeTag(task: Task, domains: Domain[], projects: Project[], areas: Area[]): TaskTag | null {
   if (task.area_id) {
     const area = areas.find((a) => a.id === task.area_id)
     if (area) return { label: area.name, color: area.color }

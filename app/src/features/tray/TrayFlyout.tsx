@@ -9,6 +9,7 @@ import { useTasks, completeTaskWithUndo } from '../tasks/api'
 import { todayListTasks } from '../tasks/grouping'
 import { useCalendarEvents } from '../calendar/api'
 import { blockHue, KIND_HUE } from '../calendar/blockHue'
+import { useBlockColor } from '../calendar/blockColor'
 import { timeText } from '../calendar/eventTime'
 import { useProjects } from '../projects/api'
 import { useRoutines } from '../routines/api'
@@ -30,7 +31,7 @@ import { focusTarget, minutesText, trayNow, type TrayNow } from './trayState'
 import { native } from './native'
 import { appZone, useAppZone } from '../../lib/appZone'
 import { reducedMotionNow } from '../../lib/motion'
-import type { CalendarEvent, Domain, Project, Task } from '../../lib/types'
+import type { CalendarEvent, Task } from '../../lib/types'
 
 const VoiceCaptureSheet = lazy(() => import('../capture/VoiceCaptureSheet').then((m) => ({ default: m.VoiceCaptureSheet })))
 // The capture line's reader (chrono and the quick-add rules) — the heaviest part, loaded when it's used.
@@ -127,10 +128,9 @@ function SignedOut() {
   )
 }
 
-/** The block's accent, as the calendar draws it (its colour, else its project's or domain's). */
-function hueOf(e: CalendarEvent, task: Task | undefined, projects: Project[], domains: Domain[]): CSSProperties {
-  const project = projects.find((p) => p.id === (task?.project_id ?? e.project_id))
-  const color = e.color ?? project?.color ?? (project && domains.find((d) => d.id === project.domain_id)?.color) ?? null
+/** The block's accent, as the calendar draws it (its colour, else its project's or area's: calendar/blockColor). */
+function hueOf(e: CalendarEvent, colorOf: (e: CalendarEvent) => { color: string | null }): CSSProperties {
+  const color = colorOf(e).color
   const h = color ? blockHue(color) : e.task_id ? KIND_HUE.task : KIND_HUE.event
   return { '--c': h.c, '--ct': h.ink } as CSSProperties
 }
@@ -162,14 +162,15 @@ function FocusCard({ f, title, next }: { f: FocusSnapshot; title: string; next: 
 }
 
 /** §4 card A: Up next / Ongoing, the block's mark (its check for a task, a ring for an event), a bar, the times. */
-function NowCard({ n, taskById, projects, domains }: { n: TrayNow<CalendarEvent>; taskById: Map<string, Task>; projects: Project[]; domains: Domain[] }) {
+function NowCard({ n, taskById }: { n: TrayNow<CalendarEvent>; taskById: Map<string, Task> }) {
+  const colorOf = useBlockColor()
   if (n.kind === 'none') return <div className="kf-tray-quiet">Nothing else today</div>
   const e = n.event
   const task = e.task_id ? taskById.get(e.task_id) : undefined
   const mark = task ? <Checkbox checked={false} label={task.title} size={16} onChange={(on) => on && completeTaskWithUndo(task)} /> : <span className="kf-tray-ring-mark" aria-hidden="true" />
   if (n.kind === 'far')
     return (
-      <div className="kf-tray-quiet" style={hueOf(e, task, projects, domains)}>
+      <div className="kf-tray-quiet" style={hueOf(e, colorOf)}>
         Next ·{mark}
         <bdi dir="auto" className="kf-tray-quiet-t">{e.title}</bdi>
         <span className="kf-tray-quiet-tm">· {timeText(new Date(e.starts_at))}</span>
@@ -178,7 +179,7 @@ function NowCard({ n, taskById, projects, domains }: { n: TrayNow<CalendarEvent>
   const label = n.kind === 'on' ? `Ongoing${n.others ? ` · ${n.others + 1}` : ''}` : 'Up next'
   const countdown = n.kind === 'on' ? `${minutesText(n.leftMin)} left` : `in ${minutesText(n.inMin)}`
   return (
-    <div className="kf-tray-now kf-tray-nc" style={hueOf(e, task, projects, domains)}>
+    <div className="kf-tray-now kf-tray-nc" style={hueOf(e, colorOf)}>
       <div className="kf-tray-nc-h">
         {label}
         <span className="kf-tray-nc-cd">{countdown}</span>
@@ -272,7 +273,7 @@ export function TrayFlyout() {
           </div>
         </div>
       ) : (
-        <NowCard n={nowCard} taskById={taskById} projects={projects} domains={domains} />
+        <NowCard n={nowCard} taskById={taskById} />
       )}
 
       <div className="kf-tray-label">Top 3</div>

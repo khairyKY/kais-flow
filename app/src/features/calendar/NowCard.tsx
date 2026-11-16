@@ -10,6 +10,7 @@ import type { CalendarEvent, Task } from '../../lib/types'
 import { completeTaskWithUndo } from '../tasks/api'
 import { useStartFocus } from '../today/startFocus'
 import { useMinuteNow } from '../today/useMinuteNow'
+import { useBlockColor } from './blockColor'
 import { blockHue, KIND_HUE } from './blockHue'
 import { timeText } from './eventTime'
 import { countdown, pickNowNext, progress } from './nowNext'
@@ -26,12 +27,13 @@ const MAX_ROWS = 3
 
 type Hue = { c: string; ink: string }
 /** The grid's own colour rule: a colour set on the block, else a plain event's blossom, else lavender. */
-function hueOf(e: CalendarEvent): Hue {
-  if (e.color) return blockHue(e.color)
+function hueOf(e: CalendarEvent, colorOf?: (e: CalendarEvent) => { color: string | null }): Hue {
+  const color = colorOf ? colorOf(e).color : e.color // colour follows where it lives (./blockColor)
+  if (color) return blockHue(color)
   return e.type === 'event' && !e.task_id ? KIND_HUE.event : KIND_HUE.task
 }
-export const hueVars = (e: CalendarEvent) => {
-  const h = hueOf(e)
+export const hueVars = (e: CalendarEvent, colorOf?: (e: CalendarEvent) => { color: string | null }) => {
+  const h = hueOf(e, colorOf)
   return { ['--c' as string]: h.c, ['--ct' as string]: h.ink } as CSSProperties
 }
 
@@ -110,6 +112,7 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
   variant?: 'dock' | 'float' | 'phone' | 'today'
 }) {
   const now = useMinuteNow()
+  const colorOf = useBlockColor()
   useHour24() // the times follow the app's one 12h/24h switch
   const startFocus = useStartFocus()
   const taskById = useMemo(() => new Map(tasks.map((t) => [t.id, t] as const)), [tasks])
@@ -170,7 +173,7 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
     const e = pick.next
     return (
       <div className={cls} data-state="far">
-        <div className="kf-now-quiet" style={hueVars(e)} {...openProps(e)} aria-label={`Next: ${e.title} at ${timeText(new Date(e.starts_at))}`}>
+        <div className="kf-now-quiet" style={hueVars(e, colorOf)} {...openProps(e)} aria-label={`Next: ${e.title} at ${timeText(new Date(e.starts_at))}`}>
           Next ·{mark(e)}
           {title(e)}
           <span className="kf-now-tm">· {timeText(new Date(e.starts_at))}</span>
@@ -189,7 +192,7 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
   if (folded)
     return (
       <div className={cls} data-state={running ? 'on' : 'soon'} data-folded="">
-        <button type="button" className="kf-now-card kf-now-fold" style={hueVars(main)} onClick={() => setFolded(false)} aria-expanded={false} aria-label={`${label}: ${main.title}, ${cd}. Open the card`}>
+        <button type="button" className="kf-now-card kf-now-fold" style={hueVars(main, colorOf)} onClick={() => setFolded(false)} aria-expanded={false} aria-label={`${label}: ${main.title}, ${cd}. Open the card`}>
           <b>{label}</b>·{title(main)}
           <span className="kf-now-cd">{cd}</span>
           <Icon name="chevdown" size={15} className="kf-now-chev" style={{ transform: 'rotate(180deg)' }} />
@@ -205,11 +208,11 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
   const link = meetingLink(main)
   return (
     <div className={cls} data-state={running ? (others.length ? 'many-on' : 'on') : next.length ? 'many-soon' : 'soon'}>
-      <div className="kf-now-card kf-now-main" style={hueVars(main)} {...openProps(main)} aria-label={`${label}: ${main.title}, ${cd}`}>
+      <div className="kf-now-card kf-now-main" style={hueVars(main, colorOf)} {...openProps(main)} aria-label={`${label}: ${main.title}, ${cd}`}>
         {open && others.length > 0 && (
           <div className="kf-now-more">
             {others.slice(0, MAX_ROWS).map((o) => (
-              <div key={o.id} className="kf-now-row" style={hueVars(o)} {...openProps(o)} onClick={(ev) => { ev.stopPropagation(); onOpen(o) }} aria-label={`${o.title}, ${countdown(o, now)}`}>
+              <div key={o.id} className="kf-now-row" style={hueVars(o, colorOf)} {...openProps(o)} onClick={(ev) => { ev.stopPropagation(); onOpen(o) }} aria-label={`${o.title}, ${countdown(o, now)}`}>
                 {mark(o)}
                 {title(o)}
                 {focusBtn(o)}
@@ -248,7 +251,7 @@ export function NowCard({ events, tasks, onOpen, variant = 'dock' }: {
         </div>
       </div>
       {nextShown.map((n, i) => (
-        <div key={n.id} className={`kf-now-nx${i < nextShown.length - 1 || nextHidden ? ' is-mid' : ''}`} style={hueVars(n)} {...openProps(n)} aria-label={`Next: ${n.title}, ${countdown(n, now)}`}>
+        <div key={n.id} className={`kf-now-nx${i < nextShown.length - 1 || nextHidden ? ' is-mid' : ''}`} style={hueVars(n, colorOf)} {...openProps(n)} aria-label={`Next: ${n.title}, ${countdown(n, now)}`}>
           <span className="kf-now-k">{i === 0 ? 'Next' : ''}</span>
           {mark(n)}
           {title(n)}

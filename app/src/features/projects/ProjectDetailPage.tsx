@@ -9,6 +9,7 @@ import { EmojiText } from '../../components/EmojiText'
 import { zoneDateKey, scheduleNextWeek, scheduleToday } from '../../lib/dateShortcuts'
 import { appZone } from '../../lib/appZone'
 import { zoneTimeKey, zoneToIso } from '../calendar/eventTime'
+import { PlaceSwatches } from '../calendar/formFields'
 import { Select } from '../../components/Select'
 import { ErrorCard, Skeleton } from '../../components/States'
 import {
@@ -652,37 +653,12 @@ export function ProjectDetailPage() {
     })
   }
 
-  const colorPalette = [
-    'var(--acc-terra)',
-    'var(--acc-moss)',
-    'var(--acc-lavender-deep)',
-    'var(--acc-gold)',
-    'var(--acc-hydrangea)',
-    'var(--acc-sage)',
-    '#7a4a52',
-    '#8b8471',
-  ]
-  // The project page's colour swatches — the area page uses the same row (Kai 2026-10-12).
+  // The project page's colour swatches — the area page uses the same row (Kai 2026-10-12). Kai 2026-11-16: palette C's 16, and
+  // what inherits the colour (tasks, their blocks, events) follows it.
   const colorRow = (current: string | null | undefined, pick: (c: string) => void) => (
     <>
       <div className="flabel" style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', margin: '20px 0 8px' }}>Color</div>
-      <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
-        {colorPalette.map((c) => (
-          <span
-            key={c}
-            onClick={() => pick(c)}
-            style={{
-              width: 20,
-              height: 20,
-              borderRadius: '50%',
-              background: c,
-              cursor: 'pointer',
-              outline: current === c ? '1.5px solid var(--paper-linen)' : 'none',
-              boxShadow: current === c ? `0 0 0 3px ${c}` : 'none',
-            }}
-          />
-        ))}
-      </div>
+      <PlaceSwatches value={current} onPick={pick} label="Colour" />
     </>
   )
 

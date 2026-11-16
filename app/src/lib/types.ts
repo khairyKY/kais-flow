@@ -139,6 +139,8 @@ export interface CalendarEvent {
   /** Occurrence starts (ISO, UTC) the series skips. */
   recurrence_exdates?: string[] | null
   project_id?: string | null
+  /** Migration 0099: the area it is filed under; with `project_id` its colour follows that place when it has none of its own (calendar/blockColor). */
+  area_id?: string | null
   /** A detached occurrence: the series it was dragged out of. */
   series_id?: string | null
   /** A Google event (source 'gcal', google-sync — migration 0074): which calendar it mirrors; a subscribed one (source 'ics', 0094) has `calendar` = the subscription's name, `calendar_id` = its id, `url` = the event's own https link. `edit`: the grant can

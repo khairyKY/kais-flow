@@ -144,18 +144,23 @@ const WORDS = ['No', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eig
 /** "Four blooms", "One bloom". */
 export const bloomsWord = (n: number) => `${WORDS[n] ?? n} bloom${n === 1 ? '' : 's'}`
 
-type EventLike = Pick<CalendarEvent, 'id' | 'title' | 'starts_at' | 'ends_at' | 'all_day' | 'task_id' | 'type' | 'color'> & { deleted_at?: string | null }
-type TaskLike = Pick<Task, 'id' | 'title' | 'scheduled_start' | 'scheduled_end' | 'duration_min'> & { slot_id?: string | null }
+type EventLike = Pick<CalendarEvent, 'id' | 'title' | 'starts_at' | 'ends_at' | 'all_day' | 'task_id' | 'type' | 'color'> & { deleted_at?: string | null; project_id?: string | null; area_id?: string | null; source?: string | null }
+type TaskLike = Pick<Task, 'id' | 'title' | 'scheduled_start' | 'scheduled_end' | 'duration_min'> & { slot_id?: string | null; project_id?: string | null; area_id?: string | null }
 
-const hueOf = (e: Pick<CalendarEvent, 'color'> | null) => (e?.color ? blockHue(e.color) : KIND_HUE.task)
+/** Colour follows where it lives (calendar/blockColor): the block's, else its project's or area's; `colorOf` is that resolver. */
+export type ColorOf = (item: { color?: string | null; project_id?: string | null; area_id?: string | null; task_id?: string | null; source?: string | null }) => { color: string | null }
+const hueOf = (e: EventLike | null, colorOf?: ColorOf) => {
+  const c = e ? (colorOf ? colorOf(e).color : e.color) : null
+  return c ? blockHue(c) : KIND_HUE.task
+}
 
 /** The block a session on `task` (or on `event`, a block's own "Focus on this") runs in. The plan starts
  * now when now is inside the block (the rounds fill what's left), else at the block's start. */
-export function blockFor(task: TaskLike | null, events: readonly EventLike[], s: PlanSettings, now: Date, event?: EventLike | null): FocusBlock {
+export function blockFor(task: TaskLike | null, events: readonly EventLike[], s: PlanSettings, now: Date, event?: EventLike | null, colorOf?: ColorOf): FocusBlock {
   const t = now.getTime()
   const ofSpan = (title: string, start: string, end: string, e: EventLike | null, fromCalendar: boolean): FocusBlock => {
     const from = Date.parse(start) <= t && t < Date.parse(end) ? new Date(t).toISOString() : start
-    const h = hueOf(e)
+    const h = hueOf(e, colorOf)
     return { title, start: from, end, srcStart: from, srcEnd: end, color: h.c, ink: h.ink, rounds: fitRounds(minutes(from, end), s), fill: true, fromCalendar, eventId: e?.id ?? null }
   }
   if (event && !event.all_day) return ofSpan(event.title, event.starts_at, event.ends_at, event, true)
@@ -174,7 +179,8 @@ export function blockFor(task: TaskLike | null, events: readonly EventLike[], s:
   const len = task?.duration_min && task.duration_min > s.focusRoundMin ? task.duration_min : s.focusRoundMin
   const start = new Date(t).toISOString()
   const end = new Date(t + len * 60_000).toISOString()
-  const h = KIND_HUE.task
+  const own = task && colorOf ? colorOf({ project_id: task.project_id, area_id: task.area_id }).color : null
+  const h = own ? blockHue(own) : KIND_HUE.task
   return { title: task?.title ?? 'Focus', start, end, srcStart: start, srcEnd: end, color: h.c, ink: h.ink, rounds: fitRounds(len, s), fill: true, fromCalendar: false, eventId: null }
 }
 

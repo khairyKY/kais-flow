@@ -5,6 +5,7 @@ import { Icon } from '../../components/Icon'
 import { clockText, useHour24 } from '../../lib/clock'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { NowCard, hueVars } from '../calendar/NowCard'
+import { useBlockColor } from '../calendar/blockColor'
 import { timeText } from '../calendar/eventTime'
 import type { RitualKind } from '../rituals/api'
 import { isEvening, ritualFinished, ritualProgress, SHUTDOWN_FROM, type RitualState } from './dayPhase'
@@ -119,8 +120,9 @@ const shortTime = (iso: string) => timeText(new Date(iso)).replace(/\s?[AP]M$/i,
 
 /** One block in the calendar's own look (palette C: its accent mixed into the paper, the time in its ink). */
 export function BlockLine({ event, task, goal, onOpen }: { event: CalendarEvent; task?: Task; goal?: boolean; onOpen: (e: CalendarEvent) => void }) {
+  const colorOf = useBlockColor()
   return (
-    <button type="button" className={`tp-bk${goal ? ' is-goal' : ''}`} style={hueVars(event)} onClick={() => onOpen(event)} aria-label={`${event.title}, ${timeText(new Date(event.starts_at))}`}>
+    <button type="button" className={`tp-bk${goal ? ' is-goal' : ''}`} style={hueVars(event, colorOf)} onClick={() => onOpen(event)} aria-label={`${event.title}, ${timeText(new Date(event.starts_at))}`}>
       <span className="tp-bk-tm">{shortTime(event.starts_at)}</span>
       {task && <span className="tp-bk-k" aria-hidden />}
       <span className="tp-bk-t" dir="auto">{goal && <span className="tp-bk-star" aria-hidden>✶ </span>}<EmojiText text={event.title} /></span>

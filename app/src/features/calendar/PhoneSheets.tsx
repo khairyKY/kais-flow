@@ -8,7 +8,6 @@ import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { Button, Chip, SectionLabel, Star } from '../../components/kit'
 import { DURATIONS, addDays, dayHint, durationLabel, fromMin, toMin } from '../../components/pickerMath'
-import { ProjectPicker } from '../../components/ProjectPicker'
 import { LengthChips, SheetTitle, TimePicker } from '../../components/TimePicker'
 import { cairoDateKey, tomorrowHint } from '../../lib/dateShortcuts'
 import type { CalendarEvent, Task } from '../../lib/types'
@@ -16,6 +15,9 @@ import { useAreas } from '../areas/api'
 import { parseCommand } from '../command-bar/parseCommand'
 import { useDomains } from '../domains/api'
 import { NO_PLACE, placeName, placeTask, type MoveTarget } from '../tasks/move'
+import { MovePicker } from '../tasks/MovePicker'
+import { resetLabel, useBlockColor } from './blockColor'
+import { eventPlaceKey, eventPlaceName, eventPlacePatch } from './eventPlace'
 import { TaskMenu, type MenuSub, type TaskMenuActions } from '../tasks/TaskMenu'
 import { remindChip, repeatLabel } from '../tasks/taskSheetMath'
 import '../tasks/taskSheet.css'
@@ -413,7 +415,8 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
 }) {
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
-  const { data: domains = [] } = useDomains()
+  const { data: areas = [] } = useAreas()
+  const colorOf = useBlockColor()
   const openTask = useOpenTask()
   const startFocus = useStartFocus()
   const [picker, setPicker] = useState<null | 'date' | 'ends' | 'time' | 'project' | 'repeat' | 'remind' | 'more' | 'ai'>(null)
@@ -450,9 +453,9 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
   const span = eventSpan(event)
   const len = span.end - span.start
   const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
-  const project = event.project_id ? projects.find((p) => p.id === event.project_id) : undefined
+  const place = eventPlaceName(event, projects, areas)
   const menu = mode === 'menu'
-  const spec = blockMenuSpec(event, { task, projectName: project?.name, mode })
+  const spec = blockMenuSpec(event, { task, placeName: place, mode })
   const del = spec.at(-1)!
   // A Google event (B1): its rows say when and from which calendar, Join, Open in Google Calendar, Duplicate as my own event.
   // One that's ours to change (gcal-events: `mine`) also renames, moves, resizes and deletes — in Google (the footer's Delete).
@@ -553,6 +556,7 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
               {menu && !synced && <div className="pc-bs-colors">
                 <SwatchTray
                   value={event.color ?? null}
+                  reset={resetLabel(colorOf({ ...event, color: null }), projects, areas)}
                   size={26}
                   columns={10}
                   onChange={(c) => {
@@ -651,15 +655,16 @@ export function BlockSheet({ event, look, slotRect, pending, onMove, onRebind, o
         />
       )}
       {picker === 'project' && (
-        <ProjectPicker
+        // An area or a project, like a task's (tasks/MovePicker): the event's colour follows it unless it has its own.
+        <MovePicker
+          noDomain
           position={{ x: 0, y: 0 }}
-          projects={projects}
-          domains={domains}
-          currentProjectId={event.project_id ?? null}
+          current={eventPlaceKey(event)}
           meta={event.title}
-          onSelect={(id) => {
-            if (id === (event.project_id ?? null)) return
-            void editEvent(event, { project_id: id }, `Project changed · ${event.title}`).then((ref) => ref && onRebind?.(ref))
+          onPick={(to) => {
+            const patch = eventPlacePatch(to)
+            if (eventPlaceKey({ ...event, ...patch }) === eventPlaceKey(event)) return
+            void editEvent(event, patch, `${to.kind === 'none' ? 'Taken out of its project or area' : `Filed under ${to.name}`} · ${event.title}`).then((ref) => ref && onRebind?.(ref))
             saved()
           }}
           onClose={() => setPicker(null)}

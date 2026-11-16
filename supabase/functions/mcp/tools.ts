@@ -40,6 +40,7 @@ import { rollAfter, ruleAfterThis, stepOf } from '../_shared/repeat.ts'
 import { occurrenceOn } from '../_shared/slots.ts'
 import { spanMinutes, taskOnBlock, withLength } from '../_shared/blockLength.ts'
 import { COLOR_NAMES, LEGACY_COLOR_NAMES, swatchByName, swatchOfHex } from '../_shared/blockColors.ts'
+import { makeColorResolver, type Resolved } from '../_shared/colorFollows.ts'
 import { readFilter, smartMatch, type SmartFilter, type SmartTask } from '../_shared/smartList.ts'
 
 // ── the user's clock ─────────────────────────────────────────────────────────────────────────
@@ -197,6 +198,9 @@ export interface EventRow {
   remind_min?: number | null
   /** The block's colour (0014): a hex — palette C's, or a custom one; null = none (the kind's own). */
   color?: string | null
+  /** Where it is filed (0061 / 0099): a project or an area (one or the other), whose colour it follows when it has none of its own. */
+  project_id?: string | null
+  area_id?: string | null
   /** Set on an occurrence expandSeries made: the row's id. */
   seriesId?: string
 }
@@ -317,6 +321,8 @@ export interface Store {
   /** A live event by its stored id — a series' row for a repeating one. */
   getEvent(id: string): Promise<EventRow | null>
   insertEvent(e: EventRow): Promise<void>
+  /** Where these tasks live (project, area): what a task's block's colour follows (_shared/colorFollows.ts). */
+  taskPlaces(ids: readonly string[]): Promise<{ id: string; project_id: string | null; area_id: string | null }[]>
   /** Writes the event's title, times, all-day, kind and repeat (rule + skipped starts) as `e` has them. */
   updateEvent(e: EventRow): Promise<void>
   /** Soft-deletes these events and every one-off moved out of them (deleted_at, so Trash can bring
@@ -564,7 +570,7 @@ export function spanText(e: Pick<EventRow, 'starts_at' | 'ends_at' | 'all_day'>,
   return `${s}–${en.slice(0, 10) === s.slice(0, 10) ? en.slice(11) : en}`
 }
 
-export function eventOut(e: EventRow, zone: string): Record<string, unknown> {
+export function eventOut(e: EventRow, zone: string, colour?: Resolved): Record<string, unknown> {
   // An occurrence answers with its series' id — the one stored, the one search returns. An all-day
   // event is its days (the last one included), not a time on anyone's clock.
   const o: Record<string, unknown> = e.all_day
@@ -576,11 +582,24 @@ export function eventOut(e: EventRow, zone: string): Record<string, unknown> {
   if (e.remind_min !== null && e.remind_min !== undefined) o.remind_min = e.remind_min
   // The colour as the app draws it: its palette C name and hex (a colour saved before palette C as its nearest swatch);
   // a custom colour has no name, so its hex.
-  if (e.color) {
-    const s = swatchOfHex(e.color)
-    Object.assign(o, s ? { color: s.name, color_hex: s.value } : { color: e.color, color_hex: e.color })
+  // Colour follows where it lives (_shared/colorFollows.ts): `colour`, when the caller worked it out, is the one drawn — its own,
+  // else its project's or area's — and `color_source` says which.
+  const shown = colour ? colour.color : e.color
+  if (shown) {
+    const s = swatchOfHex(shown)
+    Object.assign(o, s ? { color: s.name, color_hex: s.value } : { color: shown, color_hex: shown })
   }
+  if (colour) o.color_source = colour.source
+  if (e.project_id) o.project_id = e.project_id
+  if (e.area_id) o.area_id = e.area_id
   return o
+}
+
+/** The colour rule over this user's projects, areas and the tasks these events' blocks belong to. */
+export async function colorResolver(ctx: ToolContext, events: readonly EventRow[]): Promise<(e: EventRow) => Resolved> {
+  const taskIds = [...new Set(events.map((e) => e.task_id).filter((x): x is string => !!x))]
+  const [projects, areas, tasks] = await Promise.all([ctx.store.find('projects', { deleted_at: null }), ctx.store.find('areas', { deleted_at: null }), taskIds.length ? ctx.store.taskPlaces(taskIds) : []])
+  return makeColorResolver(projects as { id: string; color?: string | null }[], areas as { id: string; color?: string | null }[], tasks)
 }
 
 /** The events as the tools answer them; a Time block lists the tasks this occurrence holds (Time
@@ -589,8 +608,9 @@ export async function eventsOut(ctx: ToolContext, events: readonly EventRow[]): 
   const row = (e: EventRow) => e.seriesId ?? e.id
   const ids = [...new Set(events.filter((e) => e.type === 'time_block').map(row))]
   const held = ids.length ? await ctx.store.slotTasks(ids) : []
+  const colour = await colorResolver(ctx, events)
   return events.map((e) => {
-    const o = eventOut(e, ctx.zone)
+    const o = eventOut(e, ctx.zone, colour(e))
     if (e.type !== 'time_block') return o
     const day = dateKey(new Date(e.starts_at), ctx.zone)
     const mine = held.filter((t) => t.slot_id === row(e) && t.slot_date === day)
@@ -903,6 +923,21 @@ export function blockColorArg(a: Args, k: string): string | null | undefined {
 /** What a colour change reads as in `changed`. */
 const colorText = (c: string | null | undefined) => (c ? `colour → ${swatchOfHex(c)?.name ?? c}` : 'colour cleared')
 const colorSchema = (what: string) => ({ type: ['string', 'null'], description: `${what}: A block colour: one of the app's 16 palette names (Rose, Clay, Ochre, Olive, Fern, Lagoon, Cornflower, Iris, Wine, Rust, Honey, Moss, Pine, Tide, Indigo, Heather) or an older name (Lavender, Sage, Terra, Blossom, Hydrangea, Buttercream, Clover, Gold — each its nearest palette colour; "Moss" is the palette's Moss), any case. null or "none" clears it.` })
+/** add_event / edit_event: where the event is filed — a project or an area (one or the other, as a task's is); it takes that
+ * place's colour unless it has one of its own (the calendar tool says which: color_source). */
+const eventPlace = {
+  project_id: { type: ['string', 'null'], format: 'uuid', description: "File it under this project (the projects tool lists the ids); it takes the project's colour unless it has its own. null takes it out of its project." },
+  area_id: { type: ['string', 'null'], format: 'uuid', description: "File it under this area instead (an event is in a project or an area, not both); it takes the area's colour unless it has its own. null takes it out of its area." },
+}
+/** The `project_id` / `area_id` a call names: a project clears the area and an area the project; null clears just that one. */
+async function placeArgs(a: Args, ctx: ToolContext): Promise<{ project_id?: string | null; area_id?: string | null }> {
+  const pid = 'project_id' in a ? (uuid(a, 'project_id') ?? null) : undefined
+  const aid = 'area_id' in a ? (uuid(a, 'area_id') ?? null) : undefined
+  if (pid && aid) return bad('An event is in a project or an area, not both: give project_id or area_id.')
+  if (pid) await liveRow(ctx, 'projects', pid, 'project')
+  if (aid) await liveRow(ctx, 'areas', aid, 'area')
+  return { ...(pid !== undefined ? { project_id: pid, ...(pid ? { area_id: null } : {}) } : {}), ...(aid !== undefined ? { area_id: aid, ...(aid ? { project_id: null } : {}) } : {}) }
+}
 const eventTimes = {
   start: dateArg('When it starts — a date alone makes it all-day'),
   end: dateArg('When it ends (all-day: its last day). Or give duration_min'),
@@ -1887,7 +1922,7 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'calendar',
     title: 'Calendar',
     description:
-      "Calendar events between two dates (both included), on the user's clock: events, Time blocks (`kind: time_block`, with the `tasks` that slot holds) and tasks' blocks (`kind: task`, with its task_id). A repeating event appears once per occurrence, each with the series' id. A coloured block carries `color` (its palette name) and `color_hex`. Defaults to today and the next 6 days; at most 31 days at once.",
+      "Calendar events between two dates (both included), on the user's clock: events, Time blocks (`kind: time_block`, with the `tasks` that slot holds) and tasks' blocks (`kind: task`, with its task_id). A repeating event appears once per occurrence, each with the series' id. A coloured block carries `color` (its palette name) and `color_hex`, and every event says where that colour comes from in `color_source`: own (set by hand), project or area (it follows the one it is filed under, `project_id` / `area_id`) or none (the kind's default). Defaults to today and the next 6 days; at most 31 days at once.",
     inputSchema: {
       type: 'object',
       properties: { from: dateArg('First day (default today)'), to: dateArg('Last day, included (default from + 6 days)') },
@@ -1911,24 +1946,24 @@ export const TOOLS: readonly ToolDef[] = [
     name: 'add_event',
     title: 'Add event',
     description:
-      "Put an event or a Time block on the user's calendar (only when they ask). `start`: a date-time on the user's clock, or a date for an all-day event; then `end` or `duration_min` (30 minutes when neither). `repeat` makes it a series that must fall on `start` (its first occurrence). `color` sets its colour (palette names or the older ones; null / \"none\" = the default). For a task at a time use add_task or reschedule_task — those block the calendar for the task.",
+      "Put an event or a Time block on the user's calendar (only when they ask). `start`: a date-time on the user's clock, or a date for an all-day event; then `end` or `duration_min` (30 minutes when neither). `repeat` makes it a series that must fall on `start` (its first occurrence). `color` sets its colour (palette names or the older ones; null / \"none\" = the default, or its project's or area's colour). `project_id` / `area_id` file it under a project or an area (one or the other): without a colour of its own it takes that place's. For a task at a time use add_task or reschedule_task — those block the calendar for the task.",
     inputSchema: {
       type: 'object',
-      properties: { title: { type: 'string', description: 'What it is, short.' }, ...eventTimes, repeat: repeatSchema('How it repeats'), color: colorSchema('Its colour on the calendar') },
+      properties: { title: { type: 'string', description: 'What it is, short.' }, ...eventTimes, repeat: repeatSchema('How it repeats'), color: colorSchema('Its colour on the calendar'), ...eventPlace },
       required: ['title', 'start'],
       additionalProperties: false,
     },
     write: true,
     async run(a, ctx) {
       const { event } = await addEvent(a, ctx)
-      return { added: eventOut(event, ctx.zone), timezone: ctx.zone }
+      return { added: eventOut(event, ctx.zone, (await colorResolver(ctx, [event]))(event)), timezone: ctx.zone }
     },
   },
   {
     name: 'edit_event',
     title: 'Edit event',
     description:
-      "Change an event or Time block (only when the user asks) — give only what changes. `id` is the one the calendar tool shows; for a repeating event that's its series. A repeating event takes `scope` — which occurrences change: \"this\" (the DEFAULT when scope is left out: only the occurrence named by `occurrence`, which then leaves the series as an event of its own, to any day and time), \"following\" (that occurrence and every later one: the series ends just before it and a new series starts there with the change) or \"all\" (every occurrence: `start` / `end` then give the new time of day — their dates aren't used; the series keeps its days). \"this\" and \"following\" need `occurrence` (its start, as the calendar tool lists it); ask the user which they mean when it isn't clear. `repeat` goes with \"following\" or \"all\" and must fall on the event's start; null leaves a series as one event, its first occurrence. `color` recolours it (palette names or the older ones; null / \"none\" clears it) and follows the same `scope`. A task's calendar block moves with reschedule_task — edit_event can still recolour it (give only `id` and `color`).",
+      "Change an event or Time block (only when the user asks) — give only what changes. `id` is the one the calendar tool shows; for a repeating event that's its series. A repeating event takes `scope` — which occurrences change: \"this\" (the DEFAULT when scope is left out: only the occurrence named by `occurrence`, which then leaves the series as an event of its own, to any day and time), \"following\" (that occurrence and every later one: the series ends just before it and a new series starts there with the change) or \"all\" (every occurrence: `start` / `end` then give the new time of day — their dates aren't used; the series keeps its days). \"this\" and \"following\" need `occurrence` (its start, as the calendar tool lists it); ask the user which they mean when it isn't clear. `repeat` goes with \"following\" or \"all\" and must fall on the event's start; null leaves a series as one event, its first occurrence. `color` recolours it (palette names or the older ones; null / \"none\" clears it: it then follows its project's or area's colour) and, like `project_id` / `area_id` (where it is filed), follows the same `scope`. A task's calendar block moves with reschedule_task — edit_event can still recolour it (give only `id` and `color`).",
     inputSchema: {
       type: 'object',
       properties: {
@@ -1939,6 +1974,7 @@ export const TOOLS: readonly ToolDef[] = [
         ...eventTimes,
         repeat: repeatSchema('How the series repeats'),
         color: colorSchema('Its colour on the calendar'),
+        ...eventPlace,
       },
       required: ['id'],
       additionalProperties: false,
@@ -1947,16 +1983,18 @@ export const TOOLS: readonly ToolDef[] = [
     async run(a, ctx) {
       const eventId = uuid(a, 'id', true)!
       const color = blockColorArg(a, 'color')
+      const place = await placeArgs(a, ctx)
+      const out = async (e: EventRow) => eventOut(e, ctx.zone, (await colorResolver(ctx, [e]))(e))
       // A task's block is its task's to move, but its colour is its own.
       const blockOf = await ctx.store.getEvent(eventId)
       if (blockOf && (blockOf.task_id || blockOf.type === 'task') && color !== undefined) {
         const other = Object.keys(a).filter((k) => k !== 'id' && k !== 'color')
         if (other.length) return bad(`"${blockOf.title}" is a task's calendar block: edit_event only recolours it (give "id" and "color"); reschedule_task moves the task and its block together.`)
-        if ((blockOf.color ?? null) === color) return { edited: eventOut(blockOf, ctx.zone), changed: [], timezone: ctx.zone }
+        if ((blockOf.color ?? null) === color) return { edited: await out(blockOf), changed: [], timezone: ctx.zone }
         const next = { ...blockOf, color }
         await ctx.store.updateEvent(next)
         await logIt(ctx, 'calendar_event.updated', 'calendar_event', next.id, { title: next.title, changed: [colorText(color)] })
-        return { edited: eventOut(next, ctx.zone), changed: [colorText(color)], timezone: ctx.zone }
+        return { edited: await out(next), changed: [colorText(color)], timezone: ctx.zone }
       }
       const row = await liveEvent(ctx, eventId)
       const occ = when(a, 'occurrence', ctx.zone)
@@ -1973,6 +2011,7 @@ export const TOOLS: readonly ToolDef[] = [
         ...((after.recurrence_rule ?? null) !== (before.recurrence_rule ?? null) ? [after.recurrence_rule ? `repeats ${after.recurrence_rule}` : 'no longer repeats'] : []),
         ...((after.remind_min ?? null) !== (before.remind_min ?? null) ? [after.remind_min == null ? 'no reminder' : `remind ${after.remind_min} min before`] : []),
         ...((after.color ?? null) !== (before.color ?? null) ? [colorText(after.color)] : []),
+        ...((after.project_id ?? null) !== (before.project_id ?? null) || (after.area_id ?? null) !== (before.area_id ?? null) ? [after.project_id ? 'filed under a project' : after.area_id ? 'filed under an area' : 'taken out of its project or area'] : []),
       ]
       if (occ && !row.recurrence_rule) return bad(`"${row.title}" doesn't repeat: leave out "occurrence".`)
       // cal-clicks: a series asks which occurrences — "this" (the default) and "following" start at `occurrence`.
@@ -1985,15 +2024,15 @@ export const TOOLS: readonly ToolDef[] = [
         const start = new Date(o.starts_at).toISOString()
         const span = spanArgs(a, ctx.zone, o) ?? { starts_at: o.starts_at, ends_at: o.ends_at, all_day: o.all_day }
         const remind = remindArg(a, span.all_day)
-        const copy: EventRow = { ...row, id: crypto.randomUUID(), title, type: kind, ...span, recurrence_rule: null, recurrence_exdates: [], series_id: row.id, ...(remind !== undefined ? { remind_min: remind } : null), ...(color !== undefined ? { color } : null) }
+        const copy: EventRow = { ...row, id: crypto.randomUUID(), title, type: kind, ...span, recurrence_rule: null, recurrence_exdates: [], series_id: row.id, ...(remind !== undefined ? { remind_min: remind } : null), ...(color !== undefined ? { color } : null), ...place }
         const changed = what({ ...o, recurrence_rule: null }, copy)
-        if (!changed.length) return { edited: eventOut(o, ctx.zone), changed, timezone: ctx.zone }
+        if (!changed.length) return { edited: await out(o), changed, timezone: ctx.zone }
         await ctx.store.updateEvent({ ...row, recurrence_exdates: [...(row.recurrence_exdates ?? []), start] })
         await ctx.store.insertEvent(copy)
         await logIt(ctx, 'calendar_event.created', 'calendar_event', copy.id, { title, type: kind, series_id: row.id })
         // Its tasks go with it — out of it as an event or in the all-day band (calendar/api followSlot).
         const held = row.type === 'time_block' ? await rehome(ctx, await heldBy(ctx, row.id, o), () => (copy.type !== 'time_block' || copy.all_day ? OUT_OF_SLOT : intoSlot(copy.id, copy, ctx.zone))) : []
-        return { edited: eventOut(copy, ctx.zone), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`, ...held], timezone: ctx.zone }
+        return { edited: await out(copy), changed: [...changed, `only the ${spanText(o, ctx.zone)} occurrence: it is an event of its own now`, ...held], timezone: ctx.zone }
       }
       // "following" (the app's split, _shared/series.ts): the series ends just before the occurrence and a new one
       // starts there, taking the change. From the series' first occurrence it is the whole series.
@@ -2002,7 +2041,7 @@ export const TOOLS: readonly ToolDef[] = [
       const base = split?.tail ?? row
       const span = base.recurrence_rule ? seriesSpan(a, ctx.zone, base) : spanArgs(a, ctx.zone, base)
       const remind = remindArg(a, (span ?? base).all_day)
-      const next: EventRow = { ...base, title, type: kind, ...span, ...(remind !== undefined ? { remind_min: remind } : null), ...(color !== undefined ? { color } : null) }
+      const next: EventRow = { ...base, title, type: kind, ...span, ...(remind !== undefined ? { remind_min: remind } : null), ...(color !== undefined ? { color } : null), ...place }
       // An all-day event has no start to remind before (0077): a move to all-day drops it.
       if (next.all_day) next.remind_min = null
       // A series moved to another time of day: each skipped start moves with it, so it still names the
@@ -2014,7 +2053,7 @@ export const TOOLS: readonly ToolDef[] = [
       if (rule !== undefined) Object.assign(next, { recurrence_rule: rule, recurrence_exdates: rule ? next.recurrence_exdates : [] })
       if (span || rule) checkSeries(next, ctx)
       const changed = what(base, next)
-      if (!changed.length) return { edited: eventOut(base, ctx.zone), changed, timezone: ctx.zone }
+      if (!changed.length) return { edited: await out(base), changed, timezone: ctx.zone }
       if (split) {
         await ctx.store.updateEvent(split.head)
         await ctx.store.insertEvent(next)
@@ -2045,7 +2084,7 @@ export const TOOLS: readonly ToolDef[] = [
           })
         }
       }
-      return { edited: eventOut(next, ctx.zone), changed: [...changed, ...held], timezone: ctx.zone }
+      return { edited: await out(next), changed: [...changed, ...held], timezone: ctx.zone }
     },
   },
   {
@@ -2158,7 +2197,7 @@ export const TOOLS: readonly ToolDef[] = [
         await logIt(ctx, 'task.scheduled', 'task', copy.id, { calendar_event_id: block.id })
         return { duplicated: eventOut(block, ctx.zone), task: taskOut({ ...copy, project_name: t.project_name ?? null }, ctx.zone), ...(subtasks.length ? { subtasks: subtasks.map((s) => s.title) } : {}), timezone: ctx.zone }
       }
-      const copy: EventRow = { id: crypto.randomUUID(), title: row.title, ...span, task_id: null, type: row.type ?? 'event', recurrence_rule: null, recurrence_exdates: [], remind_min: row.remind_min ?? null, color: row.color ?? null }
+      const copy: EventRow = { id: crypto.randomUUID(), title: row.title, ...span, task_id: null, type: row.type ?? 'event', recurrence_rule: null, recurrence_exdates: [], remind_min: row.remind_min ?? null, color: row.color ?? null, project_id: row.project_id ?? null, area_id: row.area_id ?? null }
       await ctx.store.insertEvent(copy)
       await logIt(ctx, 'calendar_event.created', 'calendar_event', copy.id, { title: copy.title, type: copy.type, duplicate_of: row.id })
       return { duplicated: eventOut(copy, ctx.zone), timezone: ctx.zone }
@@ -2204,6 +2243,7 @@ const released = (n: number) => (n ? [`${n} task${n === 1 ? '' : 's'} it held ${
 export async function addEvent(a: Args, ctx: ToolContext, fallbackTitle?: string): Promise<{ event: EventRow }> {
   const title = fallbackTitle !== undefined ? (text(a, 'title', 500) ?? fallbackTitle) : text(a, 'title', 500, true)!
   const span = spanArgs(a, ctx.zone)!
+  const place = await placeArgs(a, ctx)
   const event: EventRow = {
     id: crypto.randomUUID(),
     title,
@@ -2214,6 +2254,8 @@ export async function addEvent(a: Args, ctx: ToolContext, fallbackTitle?: string
     recurrence_exdates: [],
     remind_min: remindArg(a, span.all_day) ?? null,
     color: blockColorArg(a, 'color') ?? null,
+    project_id: place.project_id ?? null,
+    area_id: place.area_id ?? null,
   }
   checkSeries(event, ctx)
   await ctx.store.insertEvent(event)

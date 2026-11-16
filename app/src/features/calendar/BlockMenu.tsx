@@ -6,13 +6,13 @@ import { Icon } from '../../components/Icon'
 import type { IconName } from '../../components/icons/kf'
 import { Button, KeyCombo } from '../../components/kit'
 import { fromMin, toMin } from '../../components/pickerMath'
-import { ProjectPicker } from '../../components/ProjectPicker'
 import { LengthChips, SheetTitle, TimePanel } from '../../components/TimePicker'
 import { TypedTime } from '../../components/TypedTime'
 import type { CalendarEvent, CalendarEventType, Task } from '../../lib/types'
-import { useDomains } from '../domains/api'
+import { useAreas } from '../areas/api'
 import { TaskPicker } from '../focus/TaskPicker'
 import { useProjects } from '../projects/api'
+import { MovePicker } from '../tasks/MovePicker'
 import { uncompleteTask, useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { deleteEventWithUndo, linkTaskWithUndo, setEventRepeat } from './api'
@@ -21,6 +21,8 @@ import { BLOCK_MENU_WIDTH, EVENT_REMIND, aiPrompts, blockMenuSpec, crossesDays, 
 import { RepeatEditor, RepeatMenu } from '../tasks/RepeatMenu'
 import { SwatchTray } from './formFields'
 import { blockSwatch } from './blockHue'
+import { resetLabel, useBlockColor } from './blockColor'
+import { eventPlaceKey, eventPlaceName, eventPlacePatch } from './eventPlace'
 import { useStartFocus } from '../today/startFocus'
 import { askChat, copyBlockLink, joinMeeting, openInGoogle } from './blockActions'
 import { gcalEditable } from './gcal'
@@ -51,6 +53,7 @@ const check = <Icon name="check" size={13} style={{ color: 'var(--acc-terra)' }}
 const linkable = (tasks: readonly Task[]) => tasks.filter((t) => t.status === 'todo' && !t.scheduled_start && !t.deleted_at)
 
 function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; untitled: boolean; gone: React.RefObject<boolean>; readOnly?: boolean }) {
+  const colorOf = useBlockColor()
   const [draft, setDraft] = useState(untitled ? '' : event.title)
   const latest = useRef({ draft, event })
   latest.current = { draft, event }
@@ -64,7 +67,7 @@ function TitleRow({ event, untitled, gone, readOnly }: { event: CalendarEvent; u
     <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '6px 9px 7px' }}>
       <style>{'.kf-bm-title::placeholder { color: var(--ink-faint); }'}</style>
       {/* Menu B (cal-blocks): the block's colour as a dot before its title; the swatches sit in the tray under it. */}
-      <span aria-hidden="true" style={{ flex: 'none', width: 7, height: 7, margin: '6px 0 0', borderRadius: '50%', background: blockSwatch(event) }} />
+      <span aria-hidden="true" style={{ flex: 'none', width: 7, height: 7, margin: '6px 0 0', borderRadius: '50%', background: blockSwatch(event, colorOf) }} />
       <textarea
         className="kf-bm-title"
         aria-label="Title"
@@ -139,15 +142,16 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
 }) {
   const { data: tasks = [] } = useTasks()
   const { data: projects = [] } = useProjects()
-  const { data: domains = [] } = useDomains()
+  const { data: areas = [] } = useAreas()
+  const colorOf = useBlockColor()
   const openTask = useOpenTask()
   const startFocus = useStartFocus()
   const gone = useRef(false)
   const [untitled] = useState(() => isUntitled(event))
   const task = event.task_id ? tasks.find((t) => t.id === event.task_id) : undefined
-  const project = event.project_id ? projects.find((p) => p.id === event.project_id) : undefined
+  const place = eventPlaceName(event, projects, areas)
   const missed = !!task && task.status === 'todo' && Date.parse(event.ends_at) < Date.now()
-  const spec = blockMenuSpec(event, { task, projectName: project?.name, missed, mode })
+  const spec = blockMenuSpec(event, { task, placeName: place, missed, mode })
   const menu = mode === 'menu'
   // A Google event (B1): its rows say when and where from, Join, Open in Google Calendar, Duplicate as my own event. One
   // that's ours to change (gcal-events: `mine`) also renames, moves, resizes and deletes — in Google.
@@ -238,8 +242,16 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
         // gone — the length chips under the title are the popover's one length control.
         return event.all_day ? undefined : ({ position: at, onClose: back, closeAll }) => <CustomTime event={event} position={at} onDone={closeAll} onClose={back} />
       case 'project':
+        // An area or a project, like a task's (tasks/MovePicker): the event's colour follows it unless it has its own.
         return ({ position: at, onClose: back, closeAll }) => (
-          <ProjectPicker position={at} projects={projects} domains={domains} currentProjectId={event.project_id ?? null} onSelect={(id) => { if (id !== (event.project_id ?? null)) void editEvent(event, { project_id: id }, `Project changed · ${event.title}`); closeAll() }} onClose={back} />
+          <MovePicker
+            noDomain
+            position={at}
+            current={eventPlaceKey(event)}
+            meta={event.title}
+            onPick={(to) => { if (eventPlaceKey({ ...event, ...eventPlacePatch(to) }) !== eventPlaceKey(event)) void editEvent(event, eventPlacePatch(to), `${to.kind === 'none' ? 'Taken out of its project or area' : `Filed under ${to.name}`} · ${event.title}`); closeAll() }}
+            onClose={back}
+          />
         )
       case 'repeat':
         // The one Repeat picker (tasks/RepeatMenu): the presets, and Custom… — the rule editor, which
@@ -333,8 +345,8 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
     shortcut: e.key === 'unschedule' || e.key === 'delete' ? e.hint : undefined,
     hint:
       // Menu B draws Duplicate's keys as "Ctrl D" (the cheatsheet's ⌘/Ctrl rows; ⌘D works on a Mac too).
-      e.key === 'duplicate' ? <KeyCombo keys={['Ctrl', 'D']} size="sm" /> : e.key === 'project' && project ? (
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: project.color || domains.find((d) => d.id === project.domain_id)?.color || 'var(--ink-hairline)' }} />
+      e.key === 'duplicate' ? <KeyCombo keys={['Ctrl', 'D']} size="sm" /> : e.key === 'project' && place ? (
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: colorOf({ project_id: event.project_id, area_id: event.area_id }).color ?? 'var(--ink-hairline)' }} />
       ) : e.key === 'allday' ? (e.on ? check : undefined) : e.key !== 'unschedule' && e.key !== 'delete' ? e.hint : undefined,
     before: e.caption && (
       <>
@@ -362,7 +374,7 @@ export function BlockMenu({ event, position, onClose, onReplan, onDetails, closi
           {/* Menu B (Kai 2026-10-26): the swatches in a quiet tray under the title, with "+ Custom". */}
           {menu && !synced && (
             <div style={{ padding: '0 9px 8px' }}>
-              <SwatchTray value={event.color ?? null} onChange={(c) => { if (c !== (event.color ?? null)) void editEvent(event, { color: c }, `Colour changed · ${event.title}`) }} />
+              <SwatchTray value={event.color ?? null} reset={resetLabel(colorOf({ ...event, color: null }), projects, areas)} onChange={(c) => { if (c !== (event.color ?? null)) void editEvent(event, { color: c }, `Colour changed · ${event.title}`) }} />
             </div>
           )}
           {/* Kai 2026-10-21: the length in one tap — the block resizes from its start (a task's estimate

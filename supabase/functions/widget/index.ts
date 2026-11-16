@@ -18,6 +18,7 @@ import { userZone } from '../_shared/zone.ts'
 import { expandSeries } from '../_shared/series.ts'
 import { asUser, nextOccurrence, ruleBetween, sql, store, type Tx } from '../mcp/store.ts'
 import { completeTask, dayWindow, isUuid, openTask, ToolInputError, type TaskRow, type ToolContext } from '../mcp/tools.ts'
+import { makeColorResolver } from '../_shared/colorFollows.ts'
 import { buildFeed, HOURLY_LIMIT, type FeedEvent } from './feed.ts'
 
 const TOKEN = /^kf_w_[A-Za-z0-9_-]{43}$/
@@ -40,11 +41,20 @@ async function feed(tx: Tx, canTick: boolean, names: boolean, now: Date) {
   const doneToday = await s.doneTasks(start.toISOString(), end.toISOString())
   // The calendar as the app draws it (Google-synced events too: this is the owner's own desktop), repeats expanded.
   const rows = await tx`
-    select id, title, starts_at, ends_at, all_day, task_id, type, color, recurrence_rule, recurrence_exdates from calendar_events
+    select id, title, starts_at, ends_at, all_day, task_id, type, color, source, project_id, area_id, recurrence_rule, recurrence_exdates from calendar_events
     where deleted_at is null and starts_at < ${end.toISOString()}::timestamptz and (ends_at > ${start.toISOString()}::timestamptz or recurrence_rule is not null)
     order by starts_at, id
     limit 300`
-  const events = expandSeries(rows.map((e) => ({ ...e, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as FeedEvent & { recurrence_rule: string | null }), start, end, zone, ruleBetween)
+  // Colour follows where it lives (_shared/colorFollows.ts, the app's rule): a block's own colour, else its task's / its own project's
+  // or area's; a Google / ICS event keeps its calendar's unless it is filed. Resolved here, so the feed draws one colour per block.
+  const taskIds = [...new Set(rows.map((e) => e.task_id as string | null).filter((x): x is string => !!x))]
+  const [projects, areas, tasks] = await Promise.all([
+    tx`select id, color from projects where deleted_at is null`,
+    tx`select id, color from areas where deleted_at is null`,
+    taskIds.length ? tx`select id, project_id, area_id from tasks where id in (select jsonb_array_elements_text(${JSON.stringify(taskIds)}::text::jsonb)::uuid)` : [],
+  ])
+  const colorOf = makeColorResolver(projects as unknown as { id: string; color: string | null }[], areas as unknown as { id: string; color: string | null }[], tasks as unknown as { id: string; project_id: string | null; area_id: string | null }[])
+  const events = expandSeries(rows.map((e) => ({ ...e, color: colorOf(e as never).color, starts_at: iso(e.starts_at), ends_at: iso(e.ends_at) }) as FeedEvent & { recurrence_rule: string | null }), start, end, zone, ruleBetween)
   return buildFeed({ now, zone, open, doneToday, events, names, canTick })
 }
 

@@ -203,6 +203,7 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
       Object.assign(t, { status: 'done', completed_at: at, top3: false })
       return true
     },
+    taskPlaces: async (ids) => s.tasks.filter((t) => ids.includes(t.id)).map((t) => ({ id: t.id, project_id: t.project_id ?? null, area_id: t.area_id ?? null })),
     slotTasks: async (ids) => s.tasks.filter((t) => !t.deleted_at && !!t.slot_id && ids.includes(t.slot_id)).map((t) => ({ ...t })),
     taskBlocks: async (taskId) => s.cal.filter((e) => e.task_id === taskId && !e.deleted_at).map((e) => ({ ...e })),
     getEvent: async (id) => {
@@ -213,7 +214,7 @@ export function fakeStore(zone: string | null = 'Africa/Cairo', seed: TaskRow[] 
     updateEvent: async (e) => {
       const { title, starts_at, ends_at, all_day } = e
       const row = s.cal.find((x) => x.id === e.id && !x.deleted_at)
-      if (row) Object.assign(row, { title, starts_at, ends_at, all_day, type: e.type ?? 'event', recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [], remind_min: e.remind_min ?? null, color: e.color ?? null })
+      if (row) Object.assign(row, { title, starts_at, ends_at, all_day, type: e.type ?? 'event', recurrence_rule: e.recurrence_rule ?? null, recurrence_exdates: e.recurrence_exdates ?? [], remind_min: e.remind_min ?? null, color: e.color ?? null, project_id: e.project_id ?? null, area_id: e.area_id ?? null })
     },
     deleteEvents: async (ids) => {
       const gone = s.cal.filter((e) => !e.deleted_at && (ids.includes(e.id) || (!!e.series_id && ids.includes(e.series_id))))

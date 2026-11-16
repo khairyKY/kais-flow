@@ -9,6 +9,7 @@ import { useAppSettings } from '../../lib/settings'
 import { uiZoom } from '../../lib/uiScale'
 import type { CalendarEvent, Task } from '../../lib/types'
 import { hueVars } from '../calendar/NowCard'
+import { useBlockColor } from '../calendar/blockColor'
 import { timeText } from '../calendar/eventTime'
 import { countdown, pickNowNext } from '../calendar/nowNext'
 import { lockAxis, SETTLE_MS } from '../tasks/swipe'
@@ -58,6 +59,7 @@ export function DayStripView({ events, tasks, goalId, onOpen, day, always, onSte
   const today = zoneDateKey(now)
   const key = day ?? today
   const isToday = key === today
+  const colorOf = useBlockColor()
   const drop = useContext(BarDropContext)
   const start = dayBounds(key).start.getTime()
   const hour = (ms: number) => (ms - start) / 3_600_000
@@ -81,7 +83,7 @@ export function DayStripView({ events, tasks, goalId, onOpen, day, always, onSte
         {lanes.map(({ e, lane }) => {
           const a = hour(Date.parse(e.starts_at))
           const b = hour(Date.parse(e.ends_at))
-          const style = { ...hueVars(e), left: pct(a), width: `calc(${pct(b)} - ${pct(a)})` } as CSSProperties
+          const style = { ...hueVars(e, colorOf), left: pct(a), width: `calc(${pct(b)} - ${pct(a)})` } as CSSProperties
           const cls = `tp-dbar-sg${lane ? ' is-l1' : ''}${Date.parse(e.ends_at) <= now.getTime() ? ' is-past' : ''}${goalId && e.task_id === goalId ? ' is-goal' : ''}${at?.slotId === e.id ? ' is-drop' : ''}`
           return <span key={e.id} className={cls} style={style} title={e.title} onClick={(ev) => { ev.stopPropagation(); onOpen(e) }} />
         })}
@@ -100,7 +102,7 @@ export function DayStripView({ events, tasks, goalId, onOpen, day, always, onSte
       </div>
       {isToday && <div className="tp-dnext">
         {item ? (
-          <button type="button" className="tp-dnext-btn" style={hueVars(item)} onClick={() => onOpen(item)}>
+          <button type="button" className="tp-dnext-btn" style={hueVars(item, colorOf)} onClick={() => onOpen(item)}>
             <span className="tp-dnext-k">{pick.state === 'on' ? 'Now' : 'Next'}</span>
             <span className="tp-dnext-tm">{timeText(new Date(item.starts_at))}</span>
             <span className="tp-dnext-t" dir="auto"><EmojiText text={item.title} /></span>

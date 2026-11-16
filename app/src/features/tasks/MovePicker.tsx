@@ -26,11 +26,13 @@ export interface MovePickerProps {
   meta?: string
   /** Phone: the search doubles as create — "+ Create project “x”" when nothing matches. */
   onCreate?: (name: string) => void
+  /** Areas and projects only (an event has no domain): the domain rows are left out. */
+  noDomain?: boolean
 }
 
 const KIND = { domain: 'Domain', area: 'Area', project: 'Project', none: 'Unfiled' } as const
 
-function useGroups(query: string): { groups: MoveGroup[]; color: (t: MoveTarget) => string } {
+function useGroups(query: string, noDomain?: boolean): { groups: MoveGroup[]; color: (t: MoveTarget) => string } {
   const { data: domains = [] } = useDomains()
   const { data: areas = [] } = useAreas()
   const { data: projects = [] } = useProjects()
@@ -39,7 +41,8 @@ function useGroups(query: string): { groups: MoveGroup[]; color: (t: MoveTarget)
     const domainId = t.kind === 'domain' ? t.id : t.kind === 'none' ? null : t.domainId
     return own || domains.find((d) => d.id === domainId)?.color || 'var(--ink-hairline)'
   }
-  return { groups: moveGroups(domains, areas, projects, query), color }
+  const groups = moveGroups(domains, areas, projects, query)
+  return { groups: noDomain ? groups.map((g) => ({ ...g, targets: g.targets.filter((t) => t.kind !== 'domain') })).filter((g) => g.targets.length) : groups, color }
 }
 
 export function MovePicker(props: MovePickerProps) {
@@ -48,10 +51,10 @@ export function MovePicker(props: MovePickerProps) {
 
 const GROUP_TITLE: React.CSSProperties = { fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)' }
 
-function MoveSheet({ current, onPick, onClose, meta, onCreate }: MovePickerProps) {
+function MoveSheet({ current, onPick, onClose, meta, onCreate, noDomain }: MovePickerProps) {
   const [query, setQuery] = useState('')
   const q = query.trim()
-  const { groups, color } = useGroups(q)
+  const { groups, color } = useGroups(q, noDomain)
   const first = groups[0]?.targets[0]
   return (
     <BottomSheet onClose={onClose} title={<SheetTitle title="Move to" meta={meta} />}>
@@ -130,10 +133,10 @@ const ITEM: React.CSSProperties = {
   color: 'var(--ink-body)', background: 'none', border: 'none', borderRadius: 'var(--radius-input)', padding: '7px 10px', cursor: 'pointer',
 }
 
-function MovePopover({ position, current, onPick, onClose }: MovePickerProps) {
+function MovePopover({ position, current, onPick, onClose, noDomain }: MovePickerProps) {
   const ref = useRef<HTMLDivElement>(null)
   const [query, setQuery] = useState('')
-  const { groups, color } = useGroups(query)
+  const { groups, color } = useGroups(query, noDomain)
   useEscapeStack(true, onClose)
   useEffect(() => {
     function handleClick(e: MouseEvent) {
