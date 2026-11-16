@@ -2,6 +2,7 @@
 // two rituals (Plan my day, Shut down), the Library, and the insights (the week, Slipping, Activity).
 // Pure, like ./tools.ts; each write restates the app's own (features/<f>/api.ts, named on each).
 import { addDays, dateKey, dayWindow, loopDay, wallTime, wallToInstant } from '../_shared/zone.ts'
+import { noteHome, withShutdownNote } from '../_shared/shutdownNote.ts'
 import {
   bad,
   choice,
@@ -430,13 +431,13 @@ export const LIFE_TOOLS: readonly ToolDef[] = [
     name: 'shut_down',
     title: 'Shut down',
     description:
-      "The evening ritual's Close the day (only when the user asks): roll unfinished tasks to tomorrow 09:00 (roll), plant tomorrow's 3 (seeds — at most 3; the morning's Plan my day starts from them; a seed still on today's plate rolls to tomorrow too), optionally save one line about today to the journal (line — only a key allowed the journal), and mark the ritual done. Past midnight (before 04:00) it still closes the day being lived.",
+      "The evening ritual's Close the day (only when the user asks): roll unfinished tasks to tomorrow 09:00 (roll), plant tomorrow's 3 (seeds — at most 3; the morning's Plan my day starts from them; a seed still on today's plate rolls to tomorrow too), optionally save one line about today to the journal (line — what helped today and what got in the way; added under a 'Shut down' heading in the day's entry, replaced if said again; only a key allowed the journal), and mark the ritual done. Past midnight (before 04:00) it still closes the day being lived.",
     inputSchema: {
       type: 'object',
       properties: {
         roll: { type: 'array', maxItems: 50, items: { type: 'string', format: 'uuid' }, description: 'Tasks to roll to tomorrow 09:00.' },
         seeds: { type: 'array', maxItems: 3, items: { type: 'string', format: 'uuid' }, description: "Tomorrow's 3 (replaces tonight's earlier seeds)." },
-        line: { type: 'string', description: "One line about today, saved to the journal (a journal key only)." },
+        line: { type: 'string', description: "What helped today and what got in the way, saved under a \"Shut down\" heading in the day's journal entry (a journal key only)." },
       },
       additionalProperties: false,
     },
@@ -473,13 +474,25 @@ export const LIFE_TOOLS: readonly ToolDef[] = [
         out.seeds = seeding.map((t) => ({ id: t.id, title: t.title }))
       }
       if (line) {
-        // EveningRitual saveLine → journal/api upsertJournalEntry for the loop day; the event says a
-        // line was written, never what it says.
-        const entry = { id: crypto.randomUUID(), body: line, entry_date: day, mood: null, transcript: null, media_paths: [], gratitude: [] }
-        await ctx.store.insert('journal_entries', entry)
-        await logIt(ctx, 'journal.created', 'journal_entry', entry.id, { entry_date: day })
-        await logIt(ctx, 'journal.line_added', 'ritual', day, { date: day })
-        out.line_saved = { journal_entry_id: entry.id, date: day }
+        // EveningRitual saveLine: a "Shut down" block in the loop day's journal entry (the one holding it,
+        // else the day's last, else a new one); saying it again replaces the block. The event says a line
+        // was written, never what it says.
+        const dayRows = (await ctx.store.find('journal_entries', { entry_date: day, deleted_at: null }, { order: 'created_at', limit: 50 })) as Row[]
+        const home = noteHome(dayRows.map((r) => ({ id: r.id as string, body: String(r.body ?? '') })))
+        if (home) {
+          const body = withShutdownNote(home.body, line)
+          if (body !== home.body) {
+            await ctx.store.patch('journal_entries', { id: home.id }, { body })
+            await logIt(ctx, 'journal.updated', 'journal_entry', home.id, { entry_date: day })
+          }
+          out.line_saved = { journal_entry_id: home.id, date: day }
+        } else {
+          const entry = { id: crypto.randomUUID(), body: withShutdownNote('', line), entry_date: day, mood: null, transcript: null, media_paths: [], gratitude: [] }
+          await ctx.store.insert('journal_entries', entry)
+          await logIt(ctx, 'journal.created', 'journal_entry', entry.id, { entry_date: day })
+          await logIt(ctx, 'journal.line_added', 'ritual', day, { date: day })
+          out.line_saved = { journal_entry_id: entry.id, date: day }
+        }
       }
       await ritualSteps(ctx, 'evening', ['sweep', ...(line ? ['line'] : []), 'seeds', 'goodnight'], day)
       return { ...out, shut_down_done: true, seeds_for: forDate, timezone: ctx.zone }
