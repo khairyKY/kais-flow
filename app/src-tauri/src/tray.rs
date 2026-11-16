@@ -576,6 +576,10 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
             store_install,
             notify_local,
             app_restart,
+            crate::update::update_ready,
+            crate::update::app_exit,
+            crate::update::shell_idle,
+            crate::update::relaunch_hidden,
             crate::capture::capture_ready,
             crate::capture::capture_size,
             crate::capture::capture_hide,
@@ -619,7 +623,9 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
             });
             crate::capture::init(app)?;
             // tauri.conf.json starts the window hidden, so a start-up launch stays in the tray.
-            if !std::env::args().any(|a| a == MINIMIZED) {
+            // (An update relaunch of an idle app comes back hidden too: update.rs.)
+            let hidden = crate::update::take_relaunch_hidden(h);
+            if !std::env::args().any(|a| a == MINIMIZED) && !hidden {
                 show_main(h);
             }
             Ok(())
@@ -630,6 +636,9 @@ pub fn install(builder: Builder<Wry>) -> Builder<Wry> {
                 if keep {
                     api.prevent_close();
                     let _ = window.hide();
+                } else if crate::update::on_close_would_quit(window.app_handle()) {
+                    // No tray icon, so closing quits: with an update waiting, the page installs it first.
+                    api.prevent_close();
                 }
             }
             (FLYOUT, WindowEvent::Focused(false)) => {
