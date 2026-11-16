@@ -124,7 +124,7 @@ const settingsWrites = (state) => state.writes.filter((w) => w.table === 'app_se
   check('1 three packs, Felt picked (the synced value)', (await seg.getByRole('button').allInnerTexts()).join(',') === 'Felt,Glass,Mixed' && (await seg.getByRole('button', { name: 'Felt' }).getAttribute('aria-pressed')) === 'true')
   const rows = await c.locator('[data-notify-sound]').evaluateAll((els) => els.map((e) => e.getAttribute('data-notify-sound')))
   check('1 a ▶ row for each of the ten kinds', JSON.stringify(rows) === JSON.stringify(SOUNDS), rows.join(','))
-  check('1 the per-kind switches stay in Kinds (9 toggles there, none in this card)', (await c.getByRole('switch').count()) === 0 && (await page.locator('section', { has: page.getByRole('heading', { name: 'Kinds' }) }).getByRole('switch').count()) === 9)
+  check('1 the per-kind switches stay in Kinds (10 toggles there, none in this card)', (await c.getByRole('switch').count()) === 0 && (await page.locator('section', { has: page.getByRole('heading', { name: 'Kinds' }) }).getByRole('switch').count()) === 10)
   const help = await c.locator('[data-notify-sound]').first().locator('xpath=ancestor::section').locator('text=muted felt piano').count()
   check('1 the pack line says what it is and where it plays (web: "otherwise your browser’s own sound")', help > 0 && (await c.innerText()).includes('Played when the app is open; otherwise your browser’s own sound'))
   await reset(page)
