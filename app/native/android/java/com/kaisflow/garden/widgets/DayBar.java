@@ -38,7 +38,7 @@ final class DayBar {
         v.setOnClickPendingIntent(R.id.bar, KfWidget.open(c, "/calendar?date=" + s.day(now)));
     }
 
-    private static Context theme(Context c, boolean night) {
+    static Context theme(Context c, boolean night) {
         Configuration conf = new Configuration(c.getResources().getConfiguration());
         conf.uiMode = (conf.uiMode & ~Configuration.UI_MODE_NIGHT_MASK) | (night ? Configuration.UI_MODE_NIGHT_YES : Configuration.UI_MODE_NIGHT_NO);
         return c.createConfigurationContext(conf);

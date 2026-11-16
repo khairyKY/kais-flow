@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Focus widget's bar (FocusBar): two bitmaps, one per theme; the night bitmap shows (layout/ has the day one), so the
+     system dark mode needs no redraw. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/fbar" android:layout_width="match_parent" android:layout_height="match_parent">
+    <ImageView android:id="@+id/fbar_day" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:contentDescription="Focus rounds" android:visibility="gone" />
+    <ImageView android:id="@+id/fbar_night" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="fitXY" android:contentDescription="Focus rounds" android:visibility="visible" />
+</FrameLayout>

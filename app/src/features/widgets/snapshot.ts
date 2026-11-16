@@ -4,6 +4,7 @@ import { spanDays } from '../calendar/daySpans'
 import { isOverdue } from '../tasks/planMath'
 import { isTodayTask, todayListTasks } from '../tasks/grouping'
 import { BLOCK_SWATCHES, nearestSwatch, swatchValue } from '../calendar/blockHue'
+import { phaseOf, timelineOf, type FocusBlock, type PlanSettings, type SessionLike } from '../focus/focusPlan'
 import { remainingWork } from '../today/todayLayout'
 import { computeStreak, computeTrellisDays, routinesForToday, localDateKey } from '../routines/streaks'
 import { getSeason } from '../../lib/seasons'
@@ -41,13 +42,35 @@ export interface WidgetBlock {
   done: boolean
 }
 
+/** One segment of Focus D3's timeline (features/focus/focusPlan): kept, under way, or still to come. */
+export interface WidgetSeg {
+  kind: 'focus' | 'break'
+  min: number
+  state: 'kept' | 'now' | 'todo'
+}
+
+/** The longest bar the widget draws; a longer plan shows the 16 segments around the one under way. */
+export const MAX_SEGS = 16
+
 export interface WidgetFocus {
+  /** Whether a round or a break is under way (running), held (paused), or neither (idle). */
   state: 'idle' | 'running' | 'paused'
+  /** Which: the round, the break after it, or none. */
+  mode: 'focus' | 'break' | 'idle'
   /** When a running round ends; 0 otherwise. */
   endsAt: number
-  /** Seconds left (a paused round). */
+  /** When a running break ends; 0 otherwise. */
+  breakEndsAt: number
+  /** Seconds left (a held round or break). */
   left: number
   roundMin: number
+  /** The round under way (a break: the one just kept) and how many the block holds. */
+  round: number
+  rounds: number
+  /** The block's palette C swatch, lower case ('iris' …), as WidgetBlock.color: the widget draws it by day and night. */
+  color: string
+  /** Idle: none. */
+  segments: WidgetSeg[]
   taskId: string
   title: string
 }
@@ -95,6 +118,12 @@ export interface FocusInput {
   secondsLeft: number
   roundMin: number
   taskId: string | null
+  /** Focus D3's plan (focusStore): without a block the bar is one round, or one break. */
+  block?: FocusBlock | null
+  kept?: number
+  breakType?: 'short' | 'long'
+  pomodoroStartIso?: string | null
+  plan?: PlanSettings
 }
 
 export interface SnapshotInput {
@@ -127,6 +156,72 @@ export interface SnapshotInput {
 
 const ms = (iso: string | null | undefined) => (iso ? new Date(iso).getTime() : null)
 const isHex = (c: string | null | undefined): c is string => !!c && /^#[0-9a-f]{6}$/i.test(c)
+
+const hexName = (hex: string) => (BLOCK_SWATCHES.find((sw) => sw.value.toLowerCase() === hex.toLowerCase()) ?? nearestSwatch(hex)).name.toLowerCase()
+
+/** A focus block's colour (a --blk-* token, or a custom block's hex) as its swatch name; Iris when it has none. */
+function swatchName(color: string | null | undefined): string {
+  const token = /^var\(--blk-([a-z]+)\)$/.exec(color ?? '')
+  if (token) return token[1]
+  return isHex(color) ? hexName(color) : 'iris'
+}
+
+const DEFAULT_PLAN: PlanSettings = { focusRoundMin: 25, shortBreakMin: 5, longBreakMin: 20, roundsBeforeLongBreak: 4 }
+
+/** Focus D3 for the widget: where the session is, and its segments (no flowers, no names) as kept / now / todo. */
+export function buildFocus(f: FocusInput, title: string, clock: number): WidgetFocus {
+  const plan = f.plan ?? { ...DEFAULT_PLAN, focusRoundMin: f.roundMin }
+  const sess: SessionLike = {
+    mode: f.mode,
+    isRunning: f.isRunning,
+    secondsLeft: f.secondsLeft,
+    pomodoroStartIso: f.pomodoroStartIso ?? null,
+    breakType: f.breakType ?? 'short',
+    block: f.block ?? null,
+    kept: f.kept ?? 0,
+  }
+  const phase = phaseOf(sess, plan)
+  const onBreak = phase === 'break' || phase === 'end'
+  const inRound = f.mode === 'pomodoro' && (f.isRunning || f.secondsLeft < f.roundMin * 60)
+  const mode = onBreak ? 'break' : inRound ? 'focus' : 'idle'
+  const out: WidgetFocus = {
+    state: mode === 'idle' ? 'idle' : f.isRunning ? 'running' : 'paused',
+    mode,
+    endsAt: mode === 'focus' && f.isRunning ? clock + f.secondsLeft * 1000 : 0,
+    breakEndsAt: mode === 'break' && f.isRunning ? clock + f.secondsLeft * 1000 : 0,
+    left: mode === 'idle' ? 0 : f.secondsLeft,
+    roundMin: f.roundMin,
+    round: 0,
+    rounds: f.block?.rounds ?? 1,
+    color: swatchName(f.block?.color),
+    segments: [],
+    taskId: f.taskId ?? '',
+    title,
+  }
+  if (mode === 'idle') return out
+
+  const tl = timelineOf(sess, plan)
+  const kept = Math.min(f.kept ?? 0, out.rounds)
+  out.round = mode === 'focus' ? Math.min(kept + 1, out.rounds) : kept
+  if (!tl) {
+    // No block: the one round, or the one break, under way.
+    const min = mode === 'focus' ? f.roundMin : (f.breakType === 'long' ? plan.longBreakMin : plan.shortBreakMin)
+    out.segments = [{ kind: mode === 'focus' ? 'focus' : 'break', min, state: 'now' }]
+    return out
+  }
+  // A break waiting to start (phase 'end') is the segment after the last kept round, at nought.
+  const cur = phase === 'end' ? 2 * tl.done - 1 : tl.cur
+  const all: WidgetSeg[] = []
+  tl.segs.forEach((g, i) => {
+    if (g.k === 'x') return // what is left of the block is drawn empty on the page; the bar is the rounds
+    const state = i === cur ? 'now' : cur >= 0 ? (i < cur ? 'kept' : 'todo') : i < 2 * tl.done - 1 ? 'kept' : 'todo'
+    all.push({ kind: g.k === 'f' ? 'focus' : 'break', min: Math.round(g.min), state })
+  })
+  const at = Math.max(0, all.findIndex((g) => g.state === 'now'))
+  const from = Math.max(0, Math.min(all.length - MAX_SEGS, at - MAX_SEGS / 2))
+  out.segments = all.slice(from, from + MAX_SEGS)
+  return out
+}
 
 /** "3 Sep" / "Oct 3" — short dates in the user's zone. */
 function shortDate(iso: string, zone: string, monthFirst = false): string {
@@ -161,7 +256,7 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
   const hue = (e: CalendarEvent): string => {
     const own = swatchValue(e.color)
     if (!isHex(own)) return e.type === 'event' && !e.task_id ? 'rose' : 'iris' // blockHue KIND_HUE
-    return (BLOCK_SWATCHES.find((sw) => sw.value.toLowerCase() === own.toLowerCase()) ?? nearestSwatch(own)).name.toLowerCase()
+    return hexName(own)
   }
   const blocks: WidgetBlock[] = live
     .filter((e) => !e.all_day && (cairoDateKey(new Date(e.starts_at)) === today || (ms(e.starts_at)! <= t && t < ms(e.ends_at)!)))
@@ -218,17 +313,7 @@ export function buildSnapshot(i: SnapshotInput): WidgetSnapshot {
       : null
 
   // ── Focus ──
-  const f = i.focus
-  const inRound = f.mode === 'pomodoro' && (f.isRunning || f.secondsLeft < f.roundMin * 60)
-  const focusTask = f.taskId ? taskById.get(f.taskId) : undefined
-  const focus: WidgetFocus = {
-    state: inRound ? (f.isRunning ? 'running' : 'paused') : 'idle',
-    endsAt: inRound && f.isRunning ? (i.clock ?? t) + f.secondsLeft * 1000 : 0,
-    left: inRound ? f.secondsLeft : 0,
-    roundMin: f.roundMin,
-    taskId: f.taskId ?? '',
-    title: focusTask?.title ?? '',
-  }
+  const focus = buildFocus(i.focus, (i.focus.taskId ? taskById.get(i.focus.taskId)?.title : undefined) ?? '', i.clock ?? t)
 
   // ── Routines: today's, each with its last seven days (sage = grew, petal = rained) ──
   const datesOf = (r: Routine) => i.completions.filter((c) => c.routine_id === r.id).map((c) => c.completed_on)
