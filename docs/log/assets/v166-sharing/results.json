@@ -1,0 +1,282 @@
+[
+  {
+    "name": "Settings has a Sharing page with the person, Partner, both ways",
+    "ok": true,
+    "detail": "‹ | Kai's Flow | Personal · Cairo | Plan | › | Due Today | 2 | This Week | 2 | This Month | 2 | Upcoming | 0 | Someday | 0 | Tend | Today | Inbox | Calendar | Tasks | Projects | Cultivate | Routines | Focus"
+  },
+  {
+    "name": "Invite someone, Enter a code, View links, Never shared are there",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the invite sheet shows the code in 8 tiles, Partner picked",
+    "ok": true,
+    "detail": "K7QMR4TX"
+  },
+  {
+    "name": "the message carries the code AND the tap link, and says where to type it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the code is already there: made on open, one create call",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Share… hands the message to the share sheet",
+    "ok": true,
+    "detail": "[{\"title\":\"Kai's Flow\",\"text\":\"Kai invited you to share your days on Kai's Flow. Code: K7QM-R4TX (works once, for 24 hou"
+  },
+  {
+    "name": "another relationship is a new code (the old one cancelled)",
+    "ok": true,
+    "detail": "FAMILY22"
+  },
+  {
+    "name": "typing a code (any case, a dash) fills the tiles",
+    "ok": true,
+    "detail": "K7QMR4TX"
+  },
+  {
+    "name": "the confirm step: who invited, what each of you sees, the rule, never shared",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Connect accepts the code",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a bad code: the one plain sentence",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the person page: relationship, levels with previews, the rule at work",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…and says the other side limits it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "three levels, each a radio with a preview",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "picking a level writes my own grant through the outbox (an upsert with the owner)",
+    "ok": true,
+    "detail": "{\"id\":\"d0000000-0000-4000-8000-000000000001\",\"circle_id\":\"c1000000-0000-4000-8000-000000000001\",\"owner_id\":\"00000000-0000-4000-8000-00000000cc11\",\"viewer_id\":\"00000000-0000-4000-8000-00000000dd22\",\"level\":\"titles\"}"
+  },
+  {
+    "name": "the rule line follows at once",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Pause for today ends tomorrow 8:00 on my clock (06:00Z)",
+    "ok": true,
+    "detail": "{\"paused_until\":\"2026-11-19T06:00:00.000Z\"}"
+  },
+  {
+    "name": "the page says it is paused and offers Resume",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Resume clears it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Show on my calendar writes my member row",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Disconnect asks once, in plain words",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "nothing was deleted before the confirm",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the confirm deletes the circle (both sides, nothing kept)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[details] Her day card is on Today with the level named",
+    "ok": true,
+    "detail": "Reem’s day · Details | Sharing | R | Reem | Now | 9:00 AM | Study - pharmacology | 21m left | 12:30 PM | Histology lab | 2:30 PM | Coffee wi"
+  },
+  {
+    "name": "[details] Now and Next",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[details] her Top 3 with the goal, a done one, and today’s tasks with notes",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[titles] Her day card is on Today with the level named",
+    "ok": true,
+    "detail": "Reem’s day · Titles | Sharing | R | Reem | Now | 9:00 AM | Study - pharmacology | 21m left | 12:30 PM | Histology lab | 2:30 PM | Coffee wit"
+  },
+  {
+    "name": "[titles] Now and Next",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[titles] no Top 3 and no tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[busy] Her day card is on Today with the level named",
+    "ok": true,
+    "detail": "Reem’s day · Busy only | Sharing | R | Reem | Now | 9:00 AM | Busy | 21m left | 12:30 PM | Busy | 2:30 PM | Busy"
+  },
+  {
+    "name": "[busy] Now and Next",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[busy] no Top 3 and no tasks",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "[busy] every block reads Busy: no title anywhere",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a paused connection is one quiet line: who, paused, when she is back",
+    "ok": true,
+    "detail": "Reem’s day | R | Reem · paused | Back tomorrow at 8:00 AM | Open"
+  },
+  {
+    "name": "no connection: no card",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "desktop week: her blocks are a thin lane behind yours",
+    "ok": true,
+    "detail": "lane blocks 4"
+  },
+  {
+    "name": "…9px wide, hover says her title and time",
+    "ok": true,
+    "detail": "{\"w\":9,\"title\":\"Reem · Study - pharmacology · 9:00 AM–12:30 PM\"}"
+  },
+  {
+    "name": "a Busy block of hers is hatched",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the avatar chip is on for a Partner",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a tap turns the lane off (my member row)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "an event’s details have a Private switch",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "turning it on writes private: true on that event",
+    "ok": true,
+    "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000001\",\"user_id\":\"00000000-0000-4000-8000-00000000cc11\",\"title\":\"Dentist\",\"starts_"
+  },
+  {
+    "name": "phone day: her lane is a thin Heather bar at the column’s edge",
+    "ok": true,
+    "detail": "lane blocks 4"
+  },
+  {
+    "name": "a tap on it says her title and time",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Today: her day card after Top 3",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone Settings list has Sharing",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a task has a Private chip",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "turning it on writes private: true on the task",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the view link page: whose day, which day, times in the owner’s zone",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a block with no title is Busy, one with a title shows it, read-only",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "day arrows step through the 8 days",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a stopped link is one plain page",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "signed out: the invite page names the code and keeps it",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "signed in: straight to the confirm step (the link’s code is already in)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "…the code is used up from the stash",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]
