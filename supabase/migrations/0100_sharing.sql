@@ -114,7 +114,7 @@ create or replace function share_bump(p_owner uuid) returns void language sql se
     and exists (select 1 from auth.users u where u.id = m2.user_id)
   group by m2.user_id
   on conflict (user_id) do update set at = excluded.at
-$;
+$$;
 revoke all on function share_bump(uuid) from public, anon, authenticated;
 
 -- Everyone in a circle, paused or not: for the circle's own changes (a level, a pause, a leave).
@@ -146,7 +146,7 @@ create trigger tasks_share_ping after insert or update or delete on tasks for ea
 
 create or replace function share_ping_circle() returns trigger language plpgsql security definer set search_path = public, pg_temp as $$
 begin
-  perform share_bump_circle(case when tg_table_name = 'circles' then new.id else new.circle_id end);
+  if tg_table_name = 'circles' then perform share_bump_circle(new.id); else perform share_bump_circle(new.circle_id); end if;
   return null;
 end $$;
 revoke all on function share_ping_circle() from public, anon, authenticated;
