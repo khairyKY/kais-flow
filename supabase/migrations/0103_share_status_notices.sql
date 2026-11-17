@@ -267,7 +267,7 @@ end $$;
 -- server finds the area, the Private flag and the words itself. Null (or anything it can't use: not mine, not repeating, not native, trashed,
 -- already over, longer than a day) clears it.
 create or replace function share_status_block(p_event uuid default null, p_starts timestamptz default null, p_ends timestamptz default null) returns void
-language plpgsql security definer set search_path = public, pg_temp as $
+language plpgsql security definer set search_path = public, pg_temp as $$
 declare v_uid uuid := auth.uid(); v_ok uuid;
 begin
   if v_uid is null then raise exception 'sign in first' using errcode = '28000'; end if;
@@ -281,7 +281,7 @@ begin
   end if;
   insert into share_status (user_id, block_event_id, block_starts, block_ends, block_set_at) values (v_uid, v_ok, p_starts, p_ends, now())
   on conflict (user_id) do update set block_event_id = excluded.block_event_id, block_starts = excluded.block_starts, block_ends = excluded.block_ends, block_set_at = excluded.block_set_at;
-end $;
+end $$;
 
 -- "From the Now card": on by default; off = only own words are ever said.
 create or replace function share_status_auto(p_on boolean) returns void language plpgsql security definer set search_path = public, pg_temp as $$
