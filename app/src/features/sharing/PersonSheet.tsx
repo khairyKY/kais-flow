@@ -129,7 +129,7 @@ function LeaveSheet({ c, onClose, onDone }: { c: Connection; onClose: () => void
     <BottomSheet onClose={onClose} title={`Disconnect from ${c.partner_name}?`}>
       {(close) => (
         <div className="sh-sheet">
-          <div className="sh-sub">You both stop seeing each other’s days at once. Events you share stay on both calendars, as plain events of your own. To share again, one of you makes a new code.</div>
+          <div className="sh-sub">You both stop seeing each other’s days at once. Nothing is kept of them. Events you share stay on both calendars as plain events of your own. To share again, one of you makes a new code.</div>
           {err && <div className="sh-err" role="alert">That didn’t go through. Check the connection and try again.</div>}
           <div className="sh-btns is-col">
             <Button

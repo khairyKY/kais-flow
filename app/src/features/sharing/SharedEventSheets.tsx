@@ -128,11 +128,12 @@ export function ProposeSheet({ circleId, window: w, partnerZone, onClose }: { ci
           <div className="sh-sub">{name} is already on it. It shows on both calendars, dashed, until they answer.</div>
           <label className="sh-lbl" htmlFor="sh-ev-title">Title</label>
           <input id="sh-ev-title" className="sh-input" value={title} maxLength={300} autoFocus placeholder="Date night" onChange={(e) => setTitle(e.target.value)} />
+          {/* A plain native date and time: this is a sheet over a sheet and the kit pickers would stack a third layer. Kai's design pass can swap them in. */}
           <label className="sh-lbl" htmlFor="sh-ev-date">Date</label>
-          <input id="sh-ev-date" className="sh-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input id="sh-ev-date" className="sh-input" type="date" value={date} onChange={(e) => setDate(e.target.value)} /> {/* ds-ok: plain native control in a sheet over a sheet (see above) */}
           <div className="sh-two">
-            <div><label className="sh-lbl" htmlFor="sh-ev-start">From</label><input id="sh-ev-start" className="sh-input" type="time" value={start} onChange={(e) => setStart(e.target.value)} /></div>
-            <div><label className="sh-lbl" htmlFor="sh-ev-end">To</label><input id="sh-ev-end" className="sh-input" type="time" value={end} onChange={(e) => setEnd(e.target.value)} /></div>
+            <div><label className="sh-lbl" htmlFor="sh-ev-start">From</label><input id="sh-ev-start" className="sh-input" type="time" value={start} onChange={(e) => setStart(e.target.value)} /> {/* ds-ok: plain native control in a sheet over a sheet (see above) */}</div>
+            <div><label className="sh-lbl" htmlFor="sh-ev-end">To</label><input id="sh-ev-end" className="sh-input" type="time" value={end} onChange={(e) => setEnd(e.target.value)} /> {/* ds-ok: plain native control in a sheet over a sheet (see above) */}</div>
           </div>
           {hint && <div className="sh-cap">{hint}</div>}
           {!endsAt && startsAt && <div className="sh-cap">It has to end after it starts.</div>}
