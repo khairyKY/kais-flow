@@ -190,7 +190,7 @@ K3=$(mkkey "$A_JWT" "$B_ID") || exit 2
 view "$K3"; expect "A's key for B's day works too (each holds their own)" "ok Kai" "$(jqe '[.status, .name] | join(" ")')"
 view "$K2"; expect "the second key works" "ok" "$(jqe .status)"
 api DELETE "$B_JWT" "/rest/v1/circles?id=eq.$CIRCLE"
-view "$K2"; expect "disconnected: 410, no blocks" "410 gone disconnected 0" "$CODE $(jqe '[.error, .reason] | join(" ")') $(has EVNOW)"
+view "$K2"; expect "disconnected: 410, no blocks (the cut already stopped the key, so it says revoked)" "410 gone revoked 0" "$CODE $(jqe '[.error, .reason] | join(" ")') $(has EVNOW)"
 view "$K3"; expect "…both directions" "410" "$CODE"
 expect "both keys are stopped in the database (not just refused)" "2" "$(sql -c "select count(*) from share_widget_links where revoked_at is not null and id <> '$KID'")"
 rpc "$A_JWT" share_invite_create '{"p_relation":"partner"}'; CODE_B=$(jqe .code)
