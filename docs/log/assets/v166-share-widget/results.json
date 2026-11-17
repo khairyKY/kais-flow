@@ -1,0 +1,97 @@
+[
+ {
+  "name": "Settings > Sharing has a Widgets section with Reem's day on your PC and Make a key",
+  "ok": true,
+  "detail": "view link | Widgets |  | Her day on your phone’s home screen: long-press it, pick Widgets, then Kai’s Flow, then Her day. On your PC, a Rainmeter skin asks every 5 minutes with"
+ },
+ {
+  "name": "Make a key sends only a hash, for Reem, labelled, no user_id of its own",
+  "ok": true,
+  "detail": "{\"id\":\"d918c5d9-3ac1-45d3-9a0c-d3b165b4e28d\",\"owner_id\":\"00000000-0000-4000-8000-00000000dd22\",\"token_hash\":\"d93497f520e3651f07bdbb9c47247b6f7e7c0401c4ca46c76221d304d9c0aff4\",\"label\":\"Desktop\"}"
+ },
+ {
+  "name": "the link is shown once: .../functions/v1/share-widget?t=kf_p_ + 43 characters",
+  "ok": true,
+  "detail": "http://127.0.0.1:9/functions/v1/share-widget?t=kf_p_JzSP2qrF42fFPKvs5FwUpWaa0qnJtt19pl3Y3Kqzngg"
+ },
+ {
+  "name": "its SHA-256 is what was sent, the token itself never was",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "it says it won't be shown again, and Copy is there",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Stop this key sets revoked_at on that key only",
+  "ok": true,
+  "detail": "?id=eq.d918c5d9-3ac1-45d3-9a0c-d3b165b4e28d"
+ },
+ {
+  "name": "the key and its link are gone from the screen",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "no page errors",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "nobody connected: no Widgets section, no key to make",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Details: Reem, her blocks with titles, her goal and Top 3 count",
+  "ok": true,
+  "detail": "{\"name\":\"Reem\",\"level\":\"details\",\"at\":1794996542301,\"blocks\":[{\"title\":\"Study - pharmacology\",\"start\":1794985200000,\"end\":1794997800000},{\"title\":\"Histology lab\",\"start\":1794997800000,\"end\":1795003200000},{\"title\":\"Coffee with Mona\",\"start\":1795005000000,\"end\":1795008600000},{\"title\":null,\"start\":17"
+ },
+ {
+  "name": "it carries when it was read (the widget greys out a day later) and no row ids",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "timed blocks only, still to come or running",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "Titles: titles and times, no goal, no Top 3",
+  "ok": true,
+  "detail": "{\"name\":\"Reem\",\"level\":\"titles\",\"at\":1794996542562,\"blocks\":[{\"title\":\"Study - pharmacology\",\"start\":1794985200000,\"end\":1794997800000},{\"title\":\"Histology lab\",\"start\":1794997800000,\"end\":17950032000"
+ },
+ {
+  "name": "Busy only: every block is Busy (no title), no goal",
+  "ok": true,
+  "detail": "{\"name\":\"Reem\",\"level\":\"busy\",\"at\":1794996542420,\"blocks\":[{\"title\":null,\"start\":1794985200000,\"end\":1794997800000},{\"title\":null,\"start\":1794997800000,\"end\":1795003200000},{\"title\":null,\"start\":17950"
+ },
+ {
+  "name": "a pause: her name and when it ends, no blocks, no goal",
+  "ok": true,
+  "detail": "{\"name\":\"Reem\",\"level\":\"details\",\"at\":1794996542097,\"blocks\":[],\"goal\":null,\"top\":null,\"paused\":true,\"pausedUntil\":1795007340000}"
+ },
+ {
+  "name": "nobody connected: partner is null (the widget says \"Share your day with someone\")",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "before the disconnect the widget has her day",
+  "ok": true,
+  "detail": ""
+ },
+ {
+  "name": "after a disconnect the next refresh writes partner: null, nothing of hers is kept",
+  "ok": true,
+  "detail": "\"none\""
+ },
+ {
+  "name": "no page errors anywhere",
+  "ok": true,
+  "detail": ""
+ }
+]

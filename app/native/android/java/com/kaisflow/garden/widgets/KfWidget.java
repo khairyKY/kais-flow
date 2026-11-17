@@ -81,6 +81,9 @@ public abstract class KfWidget extends AppWidgetProvider {
     public static class W40 extends KfWidget { String kind() { return "daybar"; } int cols() { return 4; } int rows() { return 2; } }
     public static class W41 extends KfWidget { String kind() { return "daybar"; } int cols() { return 4; } int rows() { return 4; } }
 
+    // Partner sharing P2: her day, 4×2, one size (HerDay).
+    public static class W42 extends KfWidget { String kind() { return "herday"; } int cols() { return 4; } int rows() { return 2; } }
+
     static final Class<?>[] ALL = {
         W01.class, W02.class, W03.class, W04.class, W05.class, W06.class, W07.class, W08.class,
         W09.class, W10.class, W11.class, W12.class, W13.class,
@@ -89,7 +92,7 @@ public abstract class KfWidget extends AppWidgetProvider {
         W21.class, W22.class, W23.class, W24.class,
         W25.class, W26.class, W27.class, W28.class,
         W29.class, W31.class, W32.class, W33.class, W34.class,
-        W35.class, W36.class, W37.class, W38.class, W39.class, W40.class, W41.class,
+        W35.class, W36.class, W37.class, W38.class, W39.class, W40.class, W41.class, W42.class,
     };
 
     // ── AppWidgetProvider ──

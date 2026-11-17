@@ -156,4 +156,8 @@
     <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
     <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w41" />
 </receiver>
+<receiver android:name="com.kaisflow.garden.widgets.KfWidget$W42" android:label="@string/kfw_label_42" android:exported="true">
+    <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE" /></intent-filter>
+    <meta-data android:name="android.appwidget.provider" android:resource="@xml/kfw_w42" />
+</receiver>
 <receiver android:name="com.kaisflow.garden.widgets.WidgetActions" android:exported="false" />
