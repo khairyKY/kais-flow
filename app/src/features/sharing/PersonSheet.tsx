@@ -29,7 +29,7 @@ export function PersonSheet({ circleId, onClose }: { circleId: string; onClose: 
     // Gone (they disconnected, or this device just did): nothing to show.
     return (
       <BottomSheet onClose={onClose} title="Not connected">
-        {() => <div className="sh-sheet"><div className="sh-sub">This connection has ended. Nothing is kept.</div></div>}
+        {() => <div className="sh-sheet"><div className="sh-sub">This connection has ended. Shared events stay on each calendar as plain events.</div></div>}
       </BottomSheet>
     )
   }
@@ -89,7 +89,7 @@ export function PersonSheet({ circleId, onClose }: { circleId: string; onClose: 
           </div>
           <div className="sh-box"><NeverShared /></div>
           <div className="sh-box"><button type="button" className="sh-danger" onClick={() => setLeaving(true)}>Disconnect from {c.partner_name}</button></div>
-          <div className="sh-cap" style={{ marginLeft: 4 }}>Either of you can, at any time. Nothing is kept.</div>
+          <div className="sh-cap" style={{ marginLeft: 4 }}>Either of you can, at any time. Shared events stay on each calendar as plain events.</div>
         </div>
       )}
     </BottomSheet>
@@ -129,7 +129,7 @@ function LeaveSheet({ c, onClose, onDone }: { c: Connection; onClose: () => void
     <BottomSheet onClose={onClose} title={`Disconnect from ${c.partner_name}?`}>
       {(close) => (
         <div className="sh-sheet">
-          <div className="sh-sub">You both stop seeing each other’s days at once. Nothing is kept. To share again, one of you makes a new code.</div>
+          <div className="sh-sub">You both stop seeing each other’s days at once. Events you share stay on both calendars, as plain events of your own. To share again, one of you makes a new code.</div>
           {err && <div className="sh-err" role="alert">That didn’t go through. Check the connection and try again.</div>}
           <div className="sh-btns is-col">
             <Button
@@ -137,7 +137,7 @@ function LeaveSheet({ c, onClose, onDone }: { c: Connection; onClose: () => void
               onClick={() => {
                 setBusy(true)
                 leaveCircle(c).then(() => {
-                  useToastStore.getState().push({ message: `Disconnected from ${c.partner_name}. Nothing is kept.` })
+                  useToastStore.getState().push({ message: `Disconnected from ${c.partner_name}. Shared events are now only yours.` })
                   onDone()
                 }).catch(() => { setErr(true); setBusy(false) })
               }}
