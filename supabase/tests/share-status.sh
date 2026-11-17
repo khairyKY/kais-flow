@@ -350,12 +350,13 @@ ev e6000000-0000-0000-0000-000000000003 ZZLOUD
 expect "outside quiet hours a push waits only for its 5-minute window" "0" "$(sql -c "select count(*) from share_notices_due()")"
 sql -c "update share_notices set release_at = now() - interval '1 second'" >/dev/null
 expect "window over: due" "1" "$(sql -c "select count(*) from share_notices_due()")"
-api PATCH "$B_JWT" "/rest/v1/share_notices?recipient_id=eq.$B_ID&select=id" '{"dismissed_at":"2026-01-01T00:00:00Z"}'
+notices; NID=$(jqe '.[0].id')
+api PATCH "$B_JWT" "/rest/v1/share_notices?id=eq.$NID&select=id" '{"dismissed_at":"2026-01-01T00:00:00Z"}'
 expect "B dismisses it" "1" "$(jqe 'length')"
 expect "a dismissed notice is not pushed" "0" "$(sql -c "select count(*) from share_notices_due()")"
-api PATCH "$B_JWT" "/rest/v1/share_notices?recipient_id=eq.$B_ID&select=id" '{"payload":{"what":"x"}}'
+api PATCH "$B_JWT" "/rest/v1/share_notices?id=eq.$NID&select=id" '{"payload":{"what":"x"}}'
 expect "B can only dismiss: the payload isn't writable" "refused" "$(refused)"
-api PATCH "$A_JWT" "/rest/v1/share_notices?recipient_id=eq.$B_ID&select=id" '{"dismissed_at":"2026-01-01T00:00:00Z"}'
+api PATCH "$A_JWT" "/rest/v1/share_notices?id=eq.$NID&select=id" '{"dismissed_at":"2026-01-01T00:00:00Z"}'
 expect "A can't touch B's notices" "[]" "$(if [ "$CODE" = 200 ]; then echo "$BODY"; else echo "[]"; fi)"
 rpc "$B_JWT" share_notices_due '{}'
 expect "the push list isn't callable by the app's role" "refused" "$(refused)"
