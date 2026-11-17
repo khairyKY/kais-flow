@@ -1,0 +1,167 @@
+[
+  {
+    "name": "Projects has a \"Shared with Reem\" group with both lists",
+    "ok": true,
+    "detail": "‹ | Kai's Flow | Personal · Cairo | Plan | › | Due Today | 0 | This Week | 0 | This Month | 0 | Upcoming | 0 | Someday | 0 | Tend | Today | Inbox | Calendar | Tasks | Projects | Cultivate | Routines | Focus | Review | Journal | Library | People | Activity | "
+  },
+  {
+    "name": "...each with what is left (Groceries 5 to buy, Dahab trip 1)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "...and the group comes before the ordinary projects",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a shared list is listed once (not also in the forest)",
+    "ok": true,
+    "detail": "1"
+  },
+  {
+    "name": "the page names the list and the rule",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "To buy has the five open items in the order they were added",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Got has the two done ones, the latest tick first",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "every row wears a face: Milk is mine, Eggs is Reem's",
+    "ok": true,
+    "detail": "K|me ; R|her ; R|her ; K|me ; K|me ; K9:30 AM|me ; RTue|her"
+  },
+  {
+    "name": "a ticked row shows who and when: Bananas 9:30 AM (mine), Coffee beans Tue (hers)",
+    "ok": true,
+    "detail": "K9:30 AM|me ; RTue|her"
+  },
+  {
+    "name": "Enter adds an item: an ordinary task in the project, no user_id, off Top 3",
+    "ok": true,
+    "detail": "{\"id\":\"5f61c61c-0cc8-48da-bc39-96c5fe5e9f21\",\"project_id\":\"20000000-0000-4000-8000-000000000001\",\"domain_id\":null,\"title\":\"Olives\",\"notes\":null,\"status\":\"todo\","
+  },
+  {
+    "name": "...it shows at once (To buy 6)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "a tick writes the row done (set to done, never a toggle)",
+    "ok": true,
+    "detail": "{\"id\":\"10000000-0000-4000-8000-000000000001\",\"title\":\"Milk\",\"user_id\":\"00000000-0000-4000-8000-00000000dd22\",\"project_id\":\"20000000-0000-4000-8000-000000000001\""
+  },
+  {
+    "name": "...Milk moves to Got",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "opening an item: the Private switch is off and says why",
+    "ok": true,
+    "detail": "‹ | Kai's Flow | Personal · Cairo | Plan | › | Due Today | 0 | This Week | 0 | This Month | 0 | Upcoming | 0 | Someday | 0 | Tend | Today | Inbox | Calendar | Tasks | Projects | Cultivate | Routines | Focus | Review | Journal | Library | People | Activity | "
+  },
+  {
+    "name": "Leave asks first, and says each keeps a copy",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the call is share_list_stop with the project",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "my own shared list reads the same, with Reem's name",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the menu says Stop sharing (not Leave) for the owner",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "Stop asks first: Reem keeps a copy",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the call is share_list_stop with my project",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "offline, the tick shows at once (Got 3)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "...and nothing has gone out yet",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "back online it goes out once, as \"done\" with the tick time",
+    "ok": true,
+    "detail": "[{\"id\":\"10000000-0000-4000-8000-000000000002\",\"title\":\"Eggs, a dozen\",\"user_id\":\"00000000-0000-4000-8000-00000000dd22\",\"project_id\":\"20000000-0000-4000-8000-000"
+  },
+  {
+    "name": "New project has \"Share with Reem\", and it is off until flipped",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "the project row is written without shared_circle_id (the server owns it)",
+    "ok": true,
+    "detail": "{\"id\":\"c8b3e523-972e-42a8-8a8a-e0dfa74fe993\",\"domain_id\":null,\"name\":\"Weekend trip\",\"type\":\"standard\",\"status\":\"active\",\"color\":\"var(--acc-t"
+  },
+  {
+    "name": "then share_list_start is asked with the project and the circle",
+    "ok": true,
+    "detail": "{\"fn\":\"share_list_start\",\"body\":{\"p_project\":\"c8b3e523-972e-42a8-8a8a-e0dfa74fe993\",\"p_circle\":\"c1000000-0000-4000-8000-000000000001\"}}"
+  },
+  {
+    "name": "the project menu has \"Share with Reem\" for an ordinary project of mine",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "...and it asks share_list_start for that project",
+    "ok": true,
+    "detail": "{\"fn\":\"share_list_start\",\"body\":{\"p_project\":\"20000000-0000-4000-8000-000000000003\",\"p_circle\":\"c1000000-0000-4000-8000-000000000001\"}}"
+  },
+  {
+    "name": "phone: the Projects page has the Shared with Reem group",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: the list page, To buy and Got",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: no horizontal scroll",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "phone: the task sheet has the Private switch off, with why",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "name": "no page errors",
+    "ok": true,
+    "detail": ""
+  }
+]

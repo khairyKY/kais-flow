@@ -9,6 +9,7 @@ import { BackLink, Button, Checkbox } from '../../components/kit'
 import { useAppZone } from '../../lib/appZone'
 import { useToastStore } from '../../lib/toastStore'
 import { useAuth } from '../auth/AuthProvider'
+import { useAppSettings } from '../../lib/settings'
 import { useTasks } from '../tasks/api'
 import { useOpenTask } from '../tasks/openTask'
 import { useMinuteNow } from '../today/useMinuteNow'
@@ -34,12 +35,13 @@ function Row({ t, project }: { t: Task; project: Project }) {
   const { uid, partner } = useFaces(project)
   const done = t.status === 'done'
   const who = faceOf(done ? t.done_by : t.added_by, uid, partner)
+  const myName = useAppSettings().data?.display_name || 'Me'
   return (
     <div id={`task-${t.id}`} className={`sl-row${done ? ' is-done' : ''}`}>
       <Checkbox checked={done} onChange={() => tickItem(t, uid)} label={done ? `Reopen ${t.title}` : `Tick ${t.title}`} />
       <button type="button" className="sl-title" onClick={(e) => openTask(t.id, undefined, e.currentTarget.closest('.sl-row'))}>{t.title}</button>
       <span className="sl-by" title={done ? `Ticked by ${who.name}` : `Added by ${who.name}`}>
-        <Avatar name={who.name} her={!who.mine} size={22} />
+        <Avatar name={who.mine ? myName : who.name} her={!who.mine} size={22} />
         {done && <span className="sl-when">{tickWhen(t.completed_at, now, zone)}</span>}
       </span>
     </div>
