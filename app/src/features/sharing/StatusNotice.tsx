@@ -11,9 +11,10 @@ import { useToastStore } from '../../lib/toastStore'
 import { shareNoticeLine, type ShareNoticeRow } from '../../../../supabase/functions/notify/copy.ts'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { useFocusStore } from '../focus/focusStore'
+import { useCalendarEvents } from '../calendar/api'
 import { useConnections } from './api'
-import { dismissNotices, sendFocus, setStatusAuto, setStatusWords, useMyStatus, useNoticeSettings, usePartnerNotices } from './statusApi'
-import { CLEAR_KINDS, CLEAR_NAME, STATUS_MAX, STATUS_RULE, STATUS_WORDS, alive, clearsLine, type ClearKind } from './statusModel'
+import { dismissNotices, sendBlock, sendFocus, setStatusAuto, setStatusWords, useMyStatus, useNoticeSettings, usePartnerNotices } from './statusApi'
+import { CLEAR_KINDS, CLEAR_NAME, STATUS_MAX, STATUS_RULE, STATUS_WORDS, alive, clearsLine, currentRepeating, type ClearKind } from './statusModel'
 import { Avatar } from './parts'
 import './sharing.css'
 
@@ -148,4 +149,27 @@ export function useShareFocus(): void {
     send()
     return useFocusStore.subscribe(send)
   }, [on])
+}
+
+/** Mounted once in the shell, only while I show my status to someone: when I am inside an occurrence of a repeating block (a weekly class, the
+ * gym) the server is told which series and when it ends, so "In class" can be said; it lapses at the end by itself, and leaving early clears it. */
+export function ShareBlockSync() {
+  const { data: settings = [] } = useNoticeSettings()
+  return settings.some((s) => s.status_on) ? <BlockSync /> : null
+}
+
+function BlockSync() {
+  const { data: events = [] } = useCalendarEvents()
+  const now = useMinuteNow()
+  const sent = useRef('')
+  useEffect(() => {
+    const b = currentRepeating(events, now)
+    const key = b ? `${b.seriesId}|${b.starts}` : ''
+    if (key === sent.current) return
+    const was = sent.current !== ''
+    sent.current = key
+    if (b) sendBlock(b)
+    else if (was) sendBlock(null)
+  }, [events, now])
+  return null
 }

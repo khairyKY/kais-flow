@@ -11,7 +11,10 @@
 --   (itself, its task, its series, its Time block) gives NO words and blanks the Focus words too. Own words win while alive.
 --   A status never lives past 24 hours: own words and Focus are clamped on write (trigger) AND checked on read; a block older than
 --   24 hours says nothing. Default clear = tonight at the person's quiet hours (inside quiet hours: when they end).
---   ponytail: repeating blocks (one row + a rule) give no auto words - a SQL rrule would be needed; own words and Focus still work.
+--   A REPEATING block (one row + a rule: Kai's classes, his gym) is expanded by the owner's app, which already knows the occurrence it is in
+--   (the Now card): it tells the server only WHICH series row and the occurrence's start and end (share_status_block); the words, the area and
+--   the Private check are still made here, from the row, at read time (a series turned Private blanks it at once). The block lapses at its end
+--   and by 24 hours. ponytail: needs the owner's app open (a closed app can't say it is in a class); a SQL/edge rrule would not.
 --
 -- NOTICES. "Reem added Dinner, Fri 8 PM." A generic pipeline: a KIND plus a MASKED payload. share_notice_emit() is the one door:
 --   the caller hands the detail payload (what Titles and Details may see) and the busy payload (what Busy may see); the function
@@ -111,6 +114,10 @@ create table if not exists share_status (
   focus_until timestamptz,
   focus_set_at timestamptz,
   focus_task_id uuid,
+  block_event_id uuid,            -- the repeating series row the device says it is in (its occurrence: block_starts..block_ends)
+  block_starts timestamptz,
+  block_ends timestamptz,
+  block_set_at timestamptz,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -127,6 +134,11 @@ begin
     new.words_until := least(coalesce(new.words_until, new.words_set_at + interval '24 hours'), new.words_set_at + interval '24 hours');
   end if;
   if new.focus_until is null then new.focus_set_at := null; new.focus_task_id := null; end if;
+  if new.block_event_id is null then new.block_starts := null; new.block_ends := null; new.block_set_at := null; end if;
+  if new.block_event_id is not null then
+    new.block_set_at := coalesce(new.block_set_at, now());
+    new.block_ends := least(new.block_ends, new.block_set_at + interval '24 hours');
+  end if;
   if new.focus_until is not null then
     new.focus_set_at := coalesce(new.focus_set_at, now());
     new.focus_until := least(new.focus_until, new.focus_set_at + interval '24 hours');
@@ -156,7 +168,8 @@ begin
   end if;
   if not coalesce(s.auto, true) then return null; end if;
 
-  -- 2. the current block (a one-off native block that started within a day), a Private one first: it gives no words at all
+  -- 2. the current block (a one-off native block, or the occurrence of a repeating one the owner's app named; started within a day), a Private one
+  --    first: it gives no words at all
   select x.* into b from (
     select e.starts_at, e.ends_at, a.name as area,
            (e.private or coalesce(t.private, false) or coalesce(sr.private, false)
@@ -168,6 +181,12 @@ begin
     where e.user_id = p_owner and e.deleted_at is null and e.source = 'native' and not e.all_day and e.recurrence_rule is null and coalesce(e.busy, true)
       and e.starts_at <= v_now and e.ends_at > v_now and e.starts_at > v_now - interval '24 hours'
       and (e.task_id is null or (t.deleted_at is null and t.status <> 'cancelled'))
+    union all
+    select s.block_starts, s.block_ends, a.name, e.private
+    from calendar_events e
+    left join areas a on a.id = e.area_id
+    where e.id = s.block_event_id and e.user_id = p_owner and e.deleted_at is null and e.source = 'native' and e.recurrence_rule is not null
+      and s.block_starts <= v_now and s.block_ends > v_now and s.block_starts > v_now - interval '24 hours' and s.block_set_at > v_now - interval '24 hours'
   ) x order by x.masked desc, x.starts_at desc limit 1;
   v_has := found;
   if v_has then
@@ -244,6 +263,26 @@ begin
   on conflict (user_id) do update set words = excluded.words, words_set_at = excluded.words_set_at, words_until = excluded.words_until;
 end $$;
 
+-- The owner's app is in an occurrence of a REPEATING block: which series row, and the occurrence's start and end. Only that, never words: the
+-- server finds the area, the Private flag and the words itself. Null (or anything it can't use: not mine, not repeating, not native, trashed,
+-- already over, longer than a day) clears it.
+create or replace function share_status_block(p_event uuid default null, p_starts timestamptz default null, p_ends timestamptz default null) returns void
+language plpgsql security definer set search_path = public, pg_temp as $
+declare v_uid uuid := auth.uid(); v_ok uuid;
+begin
+  if v_uid is null then raise exception 'sign in first' using errcode = '28000'; end if;
+  if p_event is not null then
+    select e.id into v_ok from calendar_events e
+     where e.id = p_event and e.user_id = v_uid and e.source = 'native' and e.recurrence_rule is not null and e.deleted_at is null;
+  end if;
+  if v_ok is null or p_starts is null or p_ends is null or p_ends <= now() or p_ends <= p_starts or p_ends - p_starts > interval '24 hours' then
+    update share_status set block_event_id = null where user_id = v_uid;
+    return;
+  end if;
+  insert into share_status (user_id, block_event_id, block_starts, block_ends, block_set_at) values (v_uid, v_ok, p_starts, p_ends, now())
+  on conflict (user_id) do update set block_event_id = excluded.block_event_id, block_starts = excluded.block_starts, block_ends = excluded.block_ends, block_set_at = excluded.block_set_at;
+end $;
+
 -- "From the Now card": on by default; off = only own words are ever said.
 create or replace function share_status_auto(p_on boolean) returns void language plpgsql security definer set search_path = public, pg_temp as $$
 begin
@@ -268,9 +307,9 @@ begin
 end $$;
 
 revoke all on function share_status_on_set(uuid, boolean), share_notice_pref_set(uuid, text, text), share_notice_settings(), share_status_of(uuid), share_status_mine(),
-  share_status_set(text, text), share_status_auto(boolean), share_status_focus(timestamptz, uuid) from public, anon;
+  share_status_set(text, text), share_status_auto(boolean), share_status_focus(timestamptz, uuid), share_status_block(uuid, timestamptz, timestamptz) from public, anon;
 grant execute on function share_status_on_set(uuid, boolean), share_notice_pref_set(uuid, text, text), share_notice_settings(), share_status_of(uuid), share_status_mine(),
-  share_status_set(text, text), share_status_auto(boolean), share_status_focus(timestamptz, uuid) to authenticated;
+  share_status_set(text, text), share_status_auto(boolean), share_status_focus(timestamptz, uuid), share_status_block(uuid, timestamptz, timestamptz) to authenticated;
 
 -- ---------------------------------------------------------------------------------------------
 -- NOTICES

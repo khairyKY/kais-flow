@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { supabase } from '../../lib/supabase'
 import { queryClient } from '../../lib/queryClient'
 import { useAuth } from '../auth/AuthProvider'
-import type { ClearKind, MyStatus, NoticeMode, NoticeSetting, PartnerNotice, Status } from './statusModel'
+import type { ClearKind, MyStatus, NoticeMode, NoticeSetting, PartnerNotice, RepeatBlock, Status } from './statusModel'
 
 export const NOTICE_SETTINGS_KEY = ['share_notice_settings'] as const
 export const MY_STATUS_KEY = ['share_status_mine'] as const
@@ -84,6 +84,11 @@ export async function setStatusAuto(on: boolean): Promise<void> {
 /** The Focus round on this device (until + task), or null when it is over. Best effort: a miss only means the words are late. */
 export function sendFocus(until: Date | null, taskId: string | null): void {
   void supabase.rpc('share_status_focus', { p_until: until ? until.toISOString() : null, p_task: taskId }).then(({ error }) => { if (!error) reask(MY_STATUS_KEY) })
+}
+
+/** The repeating block this device is in (or null: it is out of it). Best effort, like the Focus round. */
+export function sendBlock(b: RepeatBlock | null): void {
+  void supabase.rpc('share_status_block', { p_event: b?.seriesId ?? null, p_starts: b?.starts ?? null, p_ends: b?.ends ?? null }).then(({ error }) => { if (!error) reask(MY_STATUS_KEY) })
 }
 
 // ── her status ──

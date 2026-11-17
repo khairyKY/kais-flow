@@ -32,6 +32,26 @@ export function clearsLine(until: string, now: Date, zone: string): string {
   return day === zoneDateKey(new Date(now.getTime() + 86_400_000), zone) ? `Clears tomorrow ${time}` : `Clears ${time}`
 }
 
+// ── a repeating block the app is in ──
+
+/** The occurrence of a repeating block (a weekly class, the gym) that is running now: the series row and when this one starts and ends.
+ * The app already expands repeats (features/calendar/series); it tells the server only this, and the server makes the words
+ * ("In class"), finds the area and checks Private itself (migration 0103, share_status_block). */
+export interface RepeatBlock { seriesId: string; starts: string; ends: string }
+interface Occurrence { seriesId?: string; source?: string; all_day: boolean; busy?: boolean | null; starts_at: string; ends_at: string }
+
+/** The newest-started repeating occurrence under way at `now` (a one-off block needs no help: the server reads those). Null when none. */
+export function currentRepeating(events: readonly Occurrence[], now: Date): RepeatBlock | null {
+  const t = now.getTime()
+  let best: Occurrence | null = null
+  for (const e of events) {
+    if (!e.seriesId || e.all_day || e.busy === false || (e.source && e.source !== 'native')) continue
+    if (Date.parse(e.starts_at) > t || Date.parse(e.ends_at) <= t) continue
+    if (!best || Date.parse(e.starts_at) > Date.parse(best.starts_at)) best = e
+  }
+  return best ? { seriesId: best.seriesId!, starts: best.starts_at, ends: best.ends_at } : null
+}
+
 // ── notices ──
 
 export type NoticeMode = 'off' | 'in_app' | 'push'

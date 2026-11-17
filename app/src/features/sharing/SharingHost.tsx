@@ -2,7 +2,7 @@
 // waiting for sign-in, and the in-app notices of what the other side changed (a level, a pause, a leave).
 import { Suspense, lazy, useEffect } from 'react'
 import { useShareNotices } from './api'
-import { useShareFocus } from './StatusNotice'
+import { ShareBlockSync, useShareFocus } from './StatusNotice'
 import { takeJoinCode, useSharingUi } from './ui'
 
 const InviteSheet = lazy(() => import('./InviteSheet').then((m) => ({ default: m.InviteSheet })))
@@ -20,6 +20,7 @@ export function SharingHost() {
   }, [openEnter])
   return (
     <Suspense fallback={null}>
+      <ShareBlockSync />
       {invite && <InviteSheet onClose={close} />}
       {enter && <EnterCodeSheet initial={enter.code} onClose={close} />}
       {person && <PersonSheet circleId={person} onClose={close} />}

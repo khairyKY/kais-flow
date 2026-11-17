@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { noticeWhen, shareNotice, shareNoticeLine, type ShareNoticeRow } from '../../../../supabase/functions/notify/copy.ts'
-import { alive, clearsLine, modeOf } from './statusModel'
+import { alive, clearsLine, currentRepeating, modeOf } from './statusModel'
+import { expandEvents } from '../calendar/series'
+import type { CalendarEvent } from '../../lib/types'
 
 // Fri 20 Nov 2026, 8:00 PM in Cairo (UTC+2) = 18:00Z
 const FRI_8PM = '2026-11-20T18:00:00Z'
@@ -67,5 +69,23 @@ describe('notice switches', () => {
     expect(modeOf(undefined, 'added')).toBe('off')
     expect(modeOf({ notice_prefs: {} }, 'added')).toBe('off')
     expect(modeOf({ notice_prefs: { added: 'push' } }, 'added')).toBe('push')
+  })
+})
+
+describe('a repeating block the app is in', () => {
+  // Kai's weekly Lecture, Wednesdays 12:00-13:00 Cairo, one row anchored two weeks back: the app expands it into occurrences
+  const row = { id: 'lecture', user_id: 'u', title: 'Lecture', starts_at: '2026-11-04T10:00:00Z', ends_at: '2026-11-04T11:00:00Z', all_day: false, task_id: null, source: 'native', gcal_id: null, gcal_etag: null, busy: true, type: 'event', color: null, recurrence_rule: 'FREQ=WEEKLY', recurrence_exdates: [], series_id: null, project_id: null, area_id: 'classes', private: false, deleted_at: null, created_at: '', updated_at: '' } as unknown as CalendarEvent
+  const wed = new Date('2026-11-18T10:30:00Z') // Wed 12:30 in Cairo: inside this week's occurrence
+  it('finds this week’s occurrence of a weekly Lecture', () => {
+    const occ = expandEvents([row], new Date('2026-11-18T00:00:00Z'), new Date('2026-11-19T00:00:00Z'), Z)
+    expect(currentRepeating(occ, wed)).toEqual({ seriesId: 'lecture', starts: '2026-11-18T10:00:00.000Z', ends: '2026-11-18T11:00:00.000Z' })
+  })
+  it('says nothing outside it, for a one-off, an all-day block, a free block or a Google event', () => {
+    const occ = expandEvents([row], new Date('2026-11-18T00:00:00Z'), new Date('2026-11-19T00:00:00Z'), Z)
+    expect(currentRepeating(occ, new Date('2026-11-18T12:00:00Z'))).toBeNull()
+    expect(currentRepeating([{ ...row, recurrence_rule: null }] as never, wed)).toBeNull()
+    expect(currentRepeating(occ.map((o) => ({ ...o, all_day: true })), wed)).toBeNull()
+    expect(currentRepeating(occ.map((o) => ({ ...o, busy: false })), wed)).toBeNull()
+    expect(currentRepeating(occ.map((o) => ({ ...o, source: 'gcal' })), wed)).toBeNull()
   })
 })

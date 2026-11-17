@@ -164,11 +164,62 @@ expect "a block shown as free says nothing" "null" "$(words)"
 sql -c "update calendar_events set busy = true, source = 'gcal' where id = 'e1000000-0000-0000-0000-000000000001'" >/dev/null
 expect "a Google event says nothing" "null" "$(words)"
 sql -c "update calendar_events set source = 'native', recurrence_rule = 'FREQ=WEEKLY' where id = 'e1000000-0000-0000-0000-000000000001'" >/dev/null
-expect "a repeating block says nothing (no SQL rrule: own words and Focus still work)" "null" "$(words)"
+expect "a repeating block says nothing until the owner's app names the occurrence" "null" "$(words)"
 sql -c "update calendar_events set recurrence_rule = null, starts_at = now() - interval '30 hours', ends_at = now() + interval '1 hour' where id = 'e1000000-0000-0000-0000-000000000001'" >/dev/null
 expect "a block that started over 24 hours ago says nothing (a status never lives past a day)" "null" "$(words)"
 sql -c "update calendar_events set starts_at = now() - interval '30 minutes', ends_at = now() + interval '30 minutes' where id = 'e1000000-0000-0000-0000-000000000001'" >/dev/null
 expect "back inside a day" "true" "$([[ "$(words)" =~ ^Busy\ until ]] && echo true || echo "false")"
+
+section "status: a repeating block, named by the owner's app (Kai's weekly Lecture in the Classes area)"
+sql -c "delete from calendar_events where id = 'e1000000-0000-0000-0000-000000000001'" >/dev/null
+sql -v a="$A_ID" -v b="$B_ID" <<'SQL' >/dev/null
+insert into areas (id, user_id, name) values ('f0000000-0000-0000-0000-000000000003', :'a', 'Classes');
+-- a weekly series: ONE row, anchored three weeks back, repeating every week (the app expands it)
+insert into calendar_events (id, user_id, title, starts_at, ends_at, type, area_id, recurrence_rule, recurrence_exdates) values
+  ('e1000000-0000-0000-0000-000000000010', :'a', 'ZZLECTURE', now() - interval '21 days 30 minutes', now() - interval '21 days' + interval '30 minutes', 'event', 'f0000000-0000-0000-0000-000000000003', 'FREQ=WEEKLY', '{}'),
+  ('e1000000-0000-0000-0000-000000000011', :'b', 'ZZBSERIES', now() - interval '21 days 30 minutes', now() - interval '21 days' + interval '30 minutes', 'event', null, 'FREQ=WEEKLY', '{}');
+SQL
+BS=$(sql -c "select (now() - interval '30 minutes')::timestamptz"); BE=$(sql -c "select (now() + interval '30 minutes')::timestamptz")
+blk() { rpc "$A_JWT" share_status_block "{\"p_event\":\"$1\",\"p_starts\":\"${2:-$BS}\",\"p_ends\":\"${3:-$BE}\"}"; }
+LEC=e1000000-0000-0000-0000-000000000010
+expect "the app hasn't said it is in the Lecture: nothing" "null" "$(words)"
+blk $LEC
+expect "A's app is in this week's Lecture occurrence: 'In class'" "In class" "$(words)"
+statbody
+expect "…auto, until the occurrence ends" "auto true" "$(echo "$(jqe '.source') $(sql -c "select ('$(jqe '.until')'::timestamptz) between now() + interval '29 minutes' and now() + interval '31 minutes'" | sed 's/^t$/true/')")"
+expect "…and the title is nowhere in what B reads" "0" "$(grep -c ZZLECTURE "$TMP/seen")"
+setlevel titles
+expect "only at Details: at Titles nothing" "null" "$(words)"
+setlevel details
+sql -c "update calendar_events set private = true where id = '$LEC'" >/dev/null
+expect "a Private series gives no words, at once (checked at read time)" "null" "$(words)"
+sql -c "update calendar_events set private = false where id = '$LEC'" >/dev/null
+expect "…and speaks again when it is not Private" "In class" "$(words)"
+sql -c "update share_status set auto = false where user_id = '$A_ID'" >/dev/null
+expect "'From the Now card' off: nothing" "null" "$(words)"
+sql -c "update share_status set auto = true where user_id = '$A_ID'" >/dev/null
+sql -c "update share_status set block_ends = now() - interval '1 minute' where user_id = '$A_ID'" >/dev/null
+expect "the occurrence has ended: it lapses by itself" "null" "$(words)"
+blk $LEC; sql -c "update share_status set block_set_at = now() - interval '25 hours', block_starts = now() - interval '25 hours' where user_id = '$A_ID'" >/dev/null
+expect "an occurrence 'set' 25 hours ago is not said" "null" "$(words)"
+blk e1000000-0000-0000-0000-000000000011
+expect "another person's series is refused (it clears)" "null" "$(words)"
+blk $LEC "$BS" "$(sql -c "select (now() + interval '30 hours')::timestamptz")"
+expect "an occurrence longer than a day is refused" "null" "$(words)"
+blk $LEC "$(sql -c "select (now() - interval '2 hours')::timestamptz")" "$(sql -c "select (now() - interval '1 hour')::timestamptz")"
+expect "one already over is refused" "null" "$(words)"
+sql -c "insert into calendar_events (id, user_id, title, starts_at, ends_at, type) values ('e1000000-0000-0000-0000-000000000012', '$A_ID', 'ZZONEOFF', now() - interval '30 minutes', now() + interval '30 minutes', 'event')" >/dev/null
+blk e1000000-0000-0000-0000-000000000012
+expect "a one-off can't be named this way (the server finds it itself, so: its own 'Busy until', not In class)" "true" "$([[ "$(words)" =~ ^Busy.until ]] && echo true || echo false)"
+sql -c "delete from calendar_events where id = 'e1000000-0000-0000-0000-000000000012'" >/dev/null
+blk $LEC
+sql -c "update calendar_events set deleted_at = now() where id = '$LEC'" >/dev/null
+expect "a trashed series says nothing" "null" "$(words)"
+sql -c "update calendar_events set deleted_at = null where id = '$LEC'" >/dev/null
+rpc "$A_JWT" share_status_block '{}'
+expect "the app leaving the class clears it" "null" "$(words)"
+expect "the block fields are cleared on the row" "t" "$(sql -c "select block_event_id is null and block_starts is null and block_set_at is null from share_status where user_id = '$A_ID'")"
+sql -c "delete from calendar_events where id in ('$LEC', 'e1000000-0000-0000-0000-000000000011')" >/dev/null
 
 section "status: Focus round"
 sql -c "delete from calendar_events where id = 'e1000000-0000-0000-0000-000000000001'" >/dev/null
