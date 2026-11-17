@@ -44,7 +44,7 @@ function StatusLine() {
   return (
     <>
       <button type="button" className="sh-status" onClick={() => setOpen(true)} aria-label="Your status">
-        <Avatar name={seeing[0].partner_name} size={20} />
+        <Avatar name={seeing[0].partner_name} size={20} color={seeing[0].color} />
         <span className="sh-status-t">
           {live ? <>{names} sees <b>{live.words}</b>{live.source === 'auto' ? ' · auto' : ''}</> : `${names} sees no status · tap to set one`}
         </span>
@@ -115,13 +115,14 @@ function NoticeStrip() {
   const nameOf = (actorId: string) => people.find((c) => c.partner_id === actorId)?.partner_name ?? 'Someone'
   const rows = notices.map((n) => ({ id: n.id, actor: n.actor_id, row: { actor_name: nameOf(n.actor_id), kind: n.kind, payload: n.payload, n: n.n } satisfies ShareNoticeRow }))
   const who = [...new Set(rows.map((r) => r.row.actor_name))]
+  const whoColor = people.find((c) => c.partner_name === who[0])?.color // the colour I gave them; many senders: the first's
   const line = (r: (typeof rows)[number]) => {
     const full = shareNoticeLine(r.row, zone, h24, true)
     return who.length === 1 ? full.slice(r.row.actor_name.length + 1).replace(/^./, (c) => c.toUpperCase()) : full
   }
   return (
     <section className="sh-strip" aria-label="Notices from the people you share with">
-      <div className="sh-strip-h"><Avatar name={who[0]} size={22} /><b>{who.length === 1 ? `From ${who[0]}` : 'From the people you share with'}</b></div>
+      <div className="sh-strip-h"><Avatar name={who[0]} size={22} color={whoColor} /><b>{who.length === 1 ? `From ${who[0]}` : 'From the people you share with'}</b></div>
       <div className="sh-strip-l">{rows.map((r) => <div key={r.id}>{line(r)}</div>)}</div>
       <div><Button variant="secondary" onClick={() => void dismissNotices(rows.map((r) => r.id)).catch(failed)}>Dismiss</Button></div>
     </section>

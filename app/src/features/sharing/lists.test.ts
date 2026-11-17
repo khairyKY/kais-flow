@@ -5,7 +5,7 @@ import { moveGroups, placeTask } from '../tasks/move'
 import type { Connection } from './model'
 
 const ME = 'me-1'
-const REEM: Connection = { circle_id: 'c1', relation: 'partner', partner_id: 'reem-1', partner_name: 'Reem', my_level: 'details', their_level: 'details', level: 'details', my_grant_id: 'g', show_lane: true, since: '2026-11-01T00:00:00Z', paused_until: null, paused_by_me: false }
+const REEM: Connection = { circle_id: 'c1', relation: 'partner', partner_id: 'reem-1', partner_name: 'Reem', my_level: 'details', their_level: 'details', level: 'details', my_grant_id: 'g', show_lane: true, show_day: true, color: '#8972B3', since: '2026-11-01T00:00:00Z', paused_until: null, paused_by_me: false }
 const item = (id: string, over: Partial<Task> = {}): Task => ({
   id, project_id: 'p1', domain_id: null, area_id: null, title: id, notes: null, status: 'todo', due_at: null, scheduled_start: null, scheduled_end: null,
   top3: false, snoozed_until: null, recurrence_rule: null, labels: [], priority: null, duration_min: null, someday: false, reminder_at: null, reminder_sent: false,

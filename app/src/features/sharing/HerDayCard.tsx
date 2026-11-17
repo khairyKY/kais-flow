@@ -9,7 +9,7 @@ import { useMinuteNow } from '../today/useMinuteNow'
 import { useSharedDay, useConnections, type SharedTask } from './api'
 import { usePartnerStatus } from './statusApi'
 import { alive } from './statusModel'
-import { Avatar } from './parts'
+import { Avatar, herVars } from './parts'
 import { LEVEL_NAME, pauseLine, type Connection } from './model'
 import { leftText, nowNext, occurrences, progress, type Occurrence } from './sharedBlocks'
 import { PauseChips } from './PersonSheet'
@@ -18,13 +18,11 @@ import './sharing.css'
 
 const timeOf = (iso: string, zone: string) => new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: zone }).replace(' ', ' ')
 
-/** Whose card shows on Today: a Partner always; Family and Friend when their lane is switched on (the one "show their day" switch). */
-export const showsDay = (c: Pick<Connection, 'relation' | 'show_lane'>): boolean => c.show_lane || c.relation === 'partner'
-
-/** One card per person whose day you show (a Partner by default). */
+/** One card per person whose day you show on Today: your own "Show her day on Today" switch (on for a Partner by default, off for
+ * Family and Friend). It is not the calendar's lane switch; each decides only its own surface. */
 export function HerDayCards() {
   const { data: people = [] } = useConnections()
-  return <>{people.filter(showsDay).map((c) => <HerDayCard key={c.circle_id} c={c} />)}</>
+  return <>{people.filter((c) => c.show_day).map((c) => <HerDayCard key={c.circle_id} c={c} />)}</>
 }
 
 function Block({ o, label, cd, zone }: { o: Occurrence; label?: string; cd?: string; zone: string }) {
@@ -65,10 +63,10 @@ export function HerDayCard({ c }: { c: Connection }) {
 
   if (c.paused_until) {
     return (
-      <section className="sh-day" aria-label={`${c.partner_name}'s day`}>
+      <section className="sh-day" style={herVars(c.color)} aria-label={`${c.partner_name}'s day`}>
         <div className="sh-day-h"><span>{c.partner_name}’s day</span></div>
         <div className="sh-paused">
-          <Avatar name={c.partner_name} size={32} dim />
+          <Avatar name={c.partner_name} size={32} dim color={c.color} />
           <div style={{ flex: 1, minWidth: 0 }}><b>{c.partner_name}</b> · paused<div style={{ fontSize: 'var(--fs-meta-l)' }}>{pauseLine(c.paused_until, now, zone)}</div></div>
           <button type="button" className="sh-link" onClick={() => ui.openPerson(c.circle_id)}>Open</button>
         </div>
@@ -84,14 +82,14 @@ export function HerDayCard({ c }: { c: Connection }) {
   const doneN = top.filter((t) => t.done).length
 
   return (
-    <section className="sh-day" aria-label={`${c.partner_name}'s day`}>
+    <section className="sh-day" style={herVars(c.color)} aria-label={`${c.partner_name}'s day`}>
       <div className="sh-day-h">
         <span>{c.partner_name}’s day<span className="sh-note"> · {LEVEL_NAME[data.level]}</span></span>
         <button type="button" className="sh-link" onClick={() => ui.openPerson(c.circle_id)}>Sharing</button>
       </div>
       <div className="sh-card">
         <div className="sh-card-h">
-          <Avatar name={c.partner_name} size={28} />{c.partner_name}{alive(status, now) && <span className="sh-stt">· {status.words}</span>}
+          <Avatar name={c.partner_name} size={28} color={c.color} />{c.partner_name}{alive(status, now) && <span className="sh-stt">· {status.words}</span>}
           <button type="button" className="sh-menu" aria-label={`Pause sharing with ${c.partner_name}`} aria-expanded={menu} onClick={() => setMenu((m) => !m)}><Icon name="dots" size={18} /></button>
         </div>
         {menu && (

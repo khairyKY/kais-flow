@@ -2,13 +2,21 @@
 import type { CSSProperties } from 'react'
 import { Icon } from '../../components/Icon'
 import { useToastStore } from '../../lib/toastStore'
-import { LEVELS, LEVEL_HELP, LEVEL_NAME, formatCode, type Level } from './model'
+import { blockHue } from '../calendar/blockHue'
+import { HER_COLOR, LEVELS, LEVEL_HELP, LEVEL_NAME, formatCode, type Level } from './model'
 import './sharing.css'
 
-/** A round initial: mine in bone, hers in Heather. */
-export function Avatar({ name, her = true, size = 28, dim }: { name: string; her?: boolean; size?: number; dim?: boolean }) {
+/** Her colour as two CSS variables (the swatch's own tokens, so Night Garden draws it in its night value): sharing.css reads
+ * --her and --her-ink, and falls back to Heather. Set on the element that holds everything of hers. */
+export function herVars(color: string | null | undefined): CSSProperties {
+  const h = blockHue(color || HER_COLOR)
+  return { '--her': h.c, '--her-ink': h.ink } as CSSProperties
+}
+
+/** A round initial: mine in bone, hers in the colour you gave her (Heather until you pick). */
+export function Avatar({ name, her = true, size = 28, dim, color }: { name: string; her?: boolean; size?: number; dim?: boolean; color?: string | null }) {
   return (
-    <span className={`sh-av${her ? ' is-her' : ''}${dim ? ' is-dim' : ''}`} style={{ '--sh-size': `${size}px` } as CSSProperties} aria-hidden="true">
+    <span className={`sh-av${her ? ' is-her' : ''}${dim ? ' is-dim' : ''}`} style={{ '--sh-size': `${size}px`, ...(her ? herVars(color) : null) } as CSSProperties} aria-hidden="true">
       {(name.trim()[0] ?? '?').toUpperCase()}
     </span>
   )

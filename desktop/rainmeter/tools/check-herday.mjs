@@ -49,6 +49,15 @@ check('her goal of the day, at Details', [text(r, 'HDGoal'), vis(r, 'HDGoal'), v
 check('her block has the dashed Heather edge', /StrokeDashes 4,3/.test(r.opt.N1Box.Shape) && /137,114,179/.test(r.opt.N1Box.Shape), true)
 check('the foot says when it was read and how often', text(r, 'HDFoot'), `Updated 2:00 PM ${dot} every 5 min`)
 check('no message over it', [vis(r, 'KFMsg'), vis(r, 'KFBtn')], [false, false])
+// the colour the viewer gave her (migration 0105): the feed's `color` names one of palette C's 16; Heather until picked
+r = run({ body: feed({ color: 'rose' }) })
+check('her picked colour (Rose, day): the dashed edge, the initial and the block text all draw in it', [/StrokeDashes 4,3/.test(r.opt.N1Box.Shape) && /229,143,153/.test(r.opt.N1Box.Shape), /229,143,153/.test(r.opt.HDAv.Shape), /137,114,179/.test(r.opt.N1Box.Shape)], [true, true, false])
+r = run({ body: feed({ color: 'rose' }), theme: 'night' })
+check('...and in its night value at night (Rose, night)', /StrokeDashes 4,3/.test(r.opt.N1Box.Shape) && /244,164,173/.test(r.opt.N1Box.Shape) && !/229,143,153/.test(r.opt.N1Box.Shape), true)
+r = run({ body: feed({ color: 'not-a-swatch' }) })
+check('a colour it has no row for draws as Heather, never nothing', /137,114,179/.test(r.opt.N1Box.Shape), true)
+r = run({ body: feed({ status: 'paused', name: 'Reem', color: 'rose', paused_until: null }) })
+check('a pause keeps her colour on the initial', /229,143,153/.test(r.opt.HDAv.Shape), true)
 
 r = run({ body: feed({ level: 'titles', goal: null, top3: [], top3_done: 0 }) })
 check('Titles: titles and times, no goal, no Top 3', [text(r, 'HDHead'), text(r, 'HDRight'), vis(r, 'HDGoal'), text(r, 'N1Text')], [`Reem ${dot} Titles`, '', false, 'Now  1:20 PM  Pharmacology lecture'])

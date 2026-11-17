@@ -1,9 +1,9 @@
 /* Sharing with people you connect (v1.6.6): the screens of design-export/Partner sharing flows.html and Sharing looks.html
-   (the 8-tile code, the level list with previews, the full "Her day" card, the thin Heather lane). Existing tokens only: her colour is
-   palette C's Heather (--blk-heather), dashed on a block. */
+   (the 8-tile code, the level list with previews, the full "Her day" card, the thin lane). Existing tokens only: her colour is
+   the swatch you gave her (palette C, set as --her / --her-ink by herVars) and Heather until then (--blk-heather), dashed on a block. */
 
 .sh-av { width: var(--sh-size, 28px); height: var(--sh-size, 28px); font-size: calc(var(--sh-size, 28px) * 0.45); flex: none; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: 600; line-height: 1; font-family: var(--font-ui); background: var(--paper-bone); border: 1px solid var(--line-control); color: var(--ink-body); }
-.sh-av.is-her { background: color-mix(in srgb, var(--blk-heather) 30%, var(--paper-parchment)); border-color: color-mix(in srgb, var(--blk-heather) 65%, transparent); color: var(--blk-heather-ink); }
+.sh-av.is-her { background: color-mix(in srgb, var(--her, var(--blk-heather)) 30%, var(--paper-parchment)); border-color: color-mix(in srgb, var(--her, var(--blk-heather)) 65%, transparent); color: var(--her-ink, var(--blk-heather-ink)); }
 .sh-av.is-dim { opacity: 0.5; filter: grayscale(1); }
 
 /* ── sheets ── */
@@ -80,14 +80,14 @@
 .sh-card { padding: 10px 12px 12px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); }
 .sh-card-h { display: flex; align-items: center; gap: 8px; font-size: var(--fs-body); font-weight: 600; }
 .sh-card-h .sh-menu { margin-left: auto; width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--ink-faint); cursor: pointer; }
-.sh-blk { display: flex; align-items: center; gap: 8px; min-height: 34px; margin-top: 6px; padding: 0 10px; border-radius: var(--radius-block); border: 1px dashed color-mix(in srgb, var(--blk-heather) 70%, transparent); background: color-mix(in srgb, var(--blk-heather) var(--blk-fill), var(--paper-parchment)); font-size: var(--fs-body-s); color: var(--ink-body); }
+.sh-blk { display: flex; align-items: center; gap: 8px; min-height: 34px; margin-top: 6px; padding: 0 10px; border-radius: var(--radius-block); border: 1px dashed color-mix(in srgb, var(--her, var(--blk-heather)) 70%, transparent); background: color-mix(in srgb, var(--her, var(--blk-heather)) var(--blk-fill), var(--paper-parchment)); font-size: var(--fs-body-s); color: var(--ink-body); }
 .sh-blk .sh-lb { flex: none; font-weight: 600; }
-.sh-blk .sh-tm { flex: none; font-size: var(--fs-meta); color: var(--blk-heather-ink); font-variant-numeric: tabular-nums; }
+.sh-blk .sh-tm { flex: none; font-size: var(--fs-meta); color: var(--her-ink, var(--blk-heather-ink)); font-variant-numeric: tabular-nums; }
 .sh-blk .sh-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .sh-blk .sh-cd { flex: none; font-size: var(--fs-meta-l); color: var(--ink-muted); }
-.sh-blk.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) var(--blk-fill), var(--paper-parchment)) 0 5px, var(--paper-parchment) 5px 10px); }
+.sh-blk.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--her, var(--blk-heather)) var(--blk-fill), var(--paper-parchment)) 0 5px, var(--paper-parchment) 5px 10px); }
 .sh-bar { height: 4px; margin-top: 8px; border-radius: 2px; background: color-mix(in srgb, var(--ink-body) 9%, transparent); overflow: hidden; }
-.sh-bar i { display: block; height: 100%; background: var(--blk-heather); }
+.sh-bar i { display: block; height: 100%; background: var(--her, var(--blk-heather)); }
 .sh-sec { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line-dashed); }
 .sh-sec-l { font-size: var(--fs-mono-s); color: var(--ink-faint); margin-bottom: 4px; }
 .sh-task { display: flex; align-items: flex-start; gap: 8px; padding: 6px 0; font-size: var(--fs-body-s); }
@@ -103,8 +103,8 @@
 
 /* ── the thin Heather lane (a FullCalendar background event; CalendarGrid carries kf-her) ── */
 .kf-has-her .fc-timegrid-col-events { margin-left: 14px; }
-.fc .fc-bg-event.kf-her { width: 9px; right: auto; opacity: 1; border-radius: var(--radius-page); background: color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)); pointer-events: auto; cursor: pointer; margin-left: calc(var(--kf-lane, 0) * 11px); }
-.fc .fc-bg-event.kf-her.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
+.fc .fc-bg-event.kf-her { width: 9px; right: auto; opacity: 1; border-radius: var(--radius-page); background: color-mix(in srgb, var(--her, var(--blk-heather)) 75%, var(--paper-parchment)); pointer-events: auto; cursor: pointer; margin-left: calc(var(--kf-lane, 0) * 11px); }
+.fc .fc-bg-event.kf-her.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--her, var(--blk-heather)) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
 .fc .fc-bg-event.kf-her { overflow: hidden; }
 .fc .fc-bg-event.kf-her > * { display: none; }
 
@@ -135,8 +135,8 @@
 .sv-gone p { margin: 0; color: var(--ink-muted); font-size: var(--fs-body-s); }
 
 /* the phone grid's lane: a thin Heather bar at the column's left edge (PhoneGrid draws a button per block) */
-.pc-lane { position: absolute; width: 9px; padding: 0; border: 0; border-radius: var(--radius-page); background: color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)); margin-left: calc(var(--lane, 0) * 11px); cursor: pointer; }
-.pc-lane.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--blk-heather) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
+.pc-lane { position: absolute; width: 9px; padding: 0; border: 0; border-radius: var(--radius-page); background: color-mix(in srgb, var(--her, var(--blk-heather)) 75%, var(--paper-parchment)); margin-left: calc(var(--lane, 0) * 11px); cursor: pointer; }
+.pc-lane.is-busy { background: repeating-linear-gradient(135deg, color-mix(in srgb, var(--her, var(--blk-heather)) 75%, var(--paper-parchment)) 0 4px, var(--paper-parchment) 4px 7px); }
 .pc-lane:focus-visible { outline: none; box-shadow: var(--focus-ring); }
 .sh-chip.is-compact { width: 40px; padding: 0; justify-content: center; }
 
@@ -147,9 +147,9 @@
 .sh-two > * { flex: 1; min-width: 0; }
 
 /* A shared event: both of you are on it. Dashed (her colour's edge) until it is answered; a small face of the other person beside the title. */
-.fc .fc-event.kf-shared-pending, .pc-block.is-shared-pending { border-style: dashed; border-color: color-mix(in srgb, var(--blk-heather) 75%, transparent); }
+.fc .fc-event.kf-shared-pending, .pc-block.is-shared-pending { border-style: dashed; border-color: color-mix(in srgb, var(--her, var(--blk-heather)) 75%, transparent); }
 .fc .fc-event.kf-shared-declined, .pc-block.is-shared-declined { opacity: 0.7; }
-.sh-face { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-right: 4px; border-radius: 50%; vertical-align: -2px; font: 600 var(--fs-mono-s) / 1 var(--font-ui); background: color-mix(in srgb, var(--blk-heather) 30%, var(--paper-parchment)); border: 1px solid color-mix(in srgb, var(--blk-heather) 65%, transparent); color: var(--blk-heather-ink); }
+.sh-face { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-right: 4px; border-radius: 50%; vertical-align: -2px; font: 600 var(--fs-mono-s) / 1 var(--font-ui); background: color-mix(in srgb, var(--her, var(--blk-heather)) 30%, var(--paper-parchment)); border: 1px solid color-mix(in srgb, var(--her, var(--blk-heather)) 65%, transparent); color: var(--her-ink, var(--blk-heather-ink)); }
 /* ── Shared lists (migration 0102): one project, both edit and tick ── */
 .sl-page { width: 100%; max-width: 640px; padding: 10px 8px 40px; }
 .sl-top { display: flex; align-items: center; justify-content: space-between; }

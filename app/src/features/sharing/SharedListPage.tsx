@@ -32,7 +32,7 @@ function Row({ t, project }: { t: Task; project: Project }) {
   const openTask = useOpenTask()
   const zone = useAppZone()
   const now = useMinuteNow()
-  const { uid, partner } = useFaces(project)
+  const { uid, c, partner } = useFaces(project)
   const done = t.status === 'done'
   const who = faceOf(done ? t.done_by : t.added_by, uid, partner)
   const myName = useAppSettings().data?.display_name || 'Me'
@@ -41,7 +41,7 @@ function Row({ t, project }: { t: Task; project: Project }) {
       <Checkbox checked={done} onChange={() => tickItem(t, uid)} label={done ? `Reopen ${t.title}` : `Tick ${t.title}`} />
       <button type="button" className="sl-title" onClick={(e) => openTask(t.id, undefined, e.currentTarget.closest('.sl-row'))}>{t.title}</button>
       <span className="sl-by" title={done ? `Ticked by ${who.name}` : `Added by ${who.name}`}>
-        <Avatar name={who.mine ? myName : who.name} her={!who.mine} size={22} />
+        <Avatar name={who.mine ? myName : who.name} her={!who.mine} size={22} color={c?.color} />
         {done && <span className="sl-when">{tickWhen(t.completed_at, now, zone)}</span>}
       </span>
     </div>
@@ -68,7 +68,7 @@ export function SharedListPage({ project }: { project: Project }) {
         <button type="button" className="sl-more" aria-label="List menu" onClick={() => setMenu(true)}><Icon name="dots" size={20} /></button>
       </div>
       <h1 className="sl-h1">{project.name}</h1>
-      <div className="sl-line">{c && <Avatar name={name} size={22} />}{sharedLine(name)}</div>
+      <div className="sl-line">{c && <Avatar name={name} size={22} color={c.color} />}{sharedLine(name)}</div>
 
       <form className="sl-add" onSubmit={(e) => { e.preventDefault(); add() }}>
         <Icon name="plus" size={18} />
@@ -146,7 +146,7 @@ export function SharedListRow({ project }: { project: Project }) {
     <button type="button" className="sl-prow" onClick={() => navigate(`/projects/${project.id}`)}>
       <Icon name="projects" size={18} />
       <span className="sl-pt">{project.name}</span>
-      {c && <Avatar name={c.partner_name} size={20} />}
+      {c && <Avatar name={c.partner_name} size={20} color={c.color} />}
       <span className="sl-pm">{leftLine(listItems(tasks, project.id))}</span>
     </button>
   )

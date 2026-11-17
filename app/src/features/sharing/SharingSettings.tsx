@@ -36,7 +36,7 @@ export function SharingSettings() {
       <Sec title="People you share with" sub="Share your day with someone you trust. They need their own Kai’s Flow. Either of you can stop at any time.">
         {people.map((c) => (
           <button key={c.circle_id} type="button" className="sh-person" onClick={() => ui.openPerson(c.circle_id)}>
-            <Avatar name={c.partner_name} size={40} />
+            <Avatar name={c.partner_name} size={40} color={c.color} />
             <span className="sh-pb">
               <span className="sh-p1" style={{ display: 'block' }}>{c.partner_name}</span>
               <span className="sh-p2">

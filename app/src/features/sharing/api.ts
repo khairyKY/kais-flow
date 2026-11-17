@@ -61,11 +61,18 @@ export async function setRelation(c: Connection, relation: Relation): Promise<vo
   try { await update('circles', { relation }, { id: c.circle_id }) } catch (e) { void queryClient.invalidateQueries({ queryKey: CONNECTIONS_KEY }); throw e }
 }
 
-/** "Show on my calendar": this person's lane, mine alone. */
-export async function setLane(c: Connection, on: boolean): Promise<void> {
-  patchConnection(c.circle_id, { show_lane: on })
-  try { await update('circle_members', { show_lane: on }, { circle_id: c.circle_id }) } catch (e) { void queryClient.invalidateQueries({ queryKey: CONNECTIONS_KEY }); throw e }
+/** My own view of one person, on my own member row: the lane on my calendar, her card on Today, her colour. The other side
+ * never reads these and they ping nobody. Online-only like the rest of the connection (a stale lane for a second is harmless). */
+async function setMine(c: Connection, patch: Partial<Pick<Connection, 'show_lane' | 'show_day' | 'color'>>): Promise<void> {
+  patchConnection(c.circle_id, patch)
+  try { await update('circle_members', patch, { circle_id: c.circle_id }) } catch (e) { void queryClient.invalidateQueries({ queryKey: CONNECTIONS_KEY }); throw e }
 }
+/** "Show her lane on my calendar". */
+export const setLane = (c: Connection, on: boolean): Promise<void> => setMine(c, { show_lane: on })
+/** "Show her day on Today". */
+export const setDay = (c: Connection, on: boolean): Promise<void> => setMine(c, { show_day: on })
+/** Her colour: one of palette C's 16 swatches (the server's check refuses any other). */
+export const setColor = (c: Connection, color: string): Promise<void> => setMine(c, { color })
 
 /** Pause for both of us until `until` (an ISO instant or 'infinity'); null resumes. Either person may. */
 export async function setPause(c: Connection, until: string | null): Promise<void> {

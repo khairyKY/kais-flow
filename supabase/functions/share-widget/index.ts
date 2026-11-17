@@ -15,7 +15,7 @@
 // connection live (lower of both levels, the pause) and returns only share_day_data's masked answer for the person the key names.
 // This file never selects a table. No service role anywhere: the same database connection `share-view` and `calendar-feed` use.
 import { ruleBetween, sql } from '../mcp/store.ts'
-import { herFeed, type ReadOk } from './feed.ts'
+import { herFeed, swatchName, type ReadOk } from './feed.ts'
 
 const TOKEN = /^kf_p_[A-Za-z0-9_-]{43}$/
 
@@ -34,13 +34,13 @@ Deno.serve(async (req) => {
   const now = new Date()
   try {
     const [row] = await sql`select share_widget_read(${await sha256Hex(token)}::text) as r`
-    const r = row.r as { status: string; name?: string; paused_until?: string }
+    const r = row.r as { status: string; name?: string; paused_until?: string; color?: string }
     switch (r.status) {
       case 'unauthorized': return json({ error: 'unauthorized' }, 401)
       case 'revoked': return json({ error: 'gone', reason: 'revoked' }, 410)
       case 'gone': return json({ error: 'gone', reason: 'disconnected' }, 410)
       case 'rate_limited': return json({ error: 'rate_limited' }, 429)
-      case 'paused': return json({ v: 1, status: 'paused', updated_at: now.toISOString(), name: r.name, paused_until: r.paused_until ? Math.floor(Date.parse(r.paused_until) / 1000) : null })
+      case 'paused': return json({ v: 1, status: 'paused', updated_at: now.toISOString(), name: r.name, color: swatchName(r.color), paused_until: r.paused_until ? Math.floor(Date.parse(r.paused_until) / 1000) : null })
       case 'ok': return json(herFeed(r as unknown as ReadOk, now, ruleBetween))
       default: return json({ error: 'server' }, 500)
     }

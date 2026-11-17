@@ -35,6 +35,7 @@ import { EASE_OUT, markTicked, ownArrival, takeTicked } from './blockMotion'
 import { playOnce, reducedMotionNow } from '../../lib/motion'
 import { attachGlide, type Glide } from './gridGlide'
 import { sharedLookOf } from '../sharing/sharedEvents'
+import { herVars } from '../sharing/parts'
 import { isPending, sharedLine } from '../sharing/sharedPure'
 import '../sharing/sharing.css'
 import './CalendarGrid.css'
@@ -160,9 +161,9 @@ interface CalendarGridProps {
    * empty all-day band, and its free stretches drawn as dashed "2h free" boxes. */
   strip?: boolean
   freeGaps?: { start: string; end: string; label: string }[]
-  /** Sharing (v1.6.6): the thin Heather lane of the people whose day is on — timed blocks, drawn behind yours as FullCalendar background
+  /** Sharing (v1.6.6): the thin lane (the colour you gave each person, Heather until you pick) of the people whose lane is on — timed blocks, drawn behind yours as FullCalendar background
    * events (features/sharing/Lane). A block with no title is Busy (hatched). */
-  herLane?: readonly { id: string; start: string; end: string; busy: boolean; label: string; lane: number }[]
+  herLane?: readonly { id: string; start: string; end: string; busy: boolean; label: string; lane: number; color: string }[]
   /** cal-wave (Akiflow's "Dynamic"): the first and last hour drawn ("HH:MM:SS"), the rows stretched to
    * the grid's height. Absent = the whole day at the density's row height. */
   slotMinTime?: string
@@ -1024,7 +1025,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
       (freeGaps ?? []).map((g, i) => ({ id: `kf-free-${i}`, title: g.label, start: g.start, end: g.end, display: 'background', classNames: ['kf-free'] })),
     ).concat(
       // Sharing: her blocks as a thin lane behind (a day's own blocks are inset from it, CSS .kf-has-her).
-      (herLane ?? []).map((l) => ({ id: `kf-her-${l.id}`, title: l.label, start: l.start, end: l.end, display: 'background', classNames: ['kf-her', ...(l.busy ? ['is-busy'] : [])], extendedProps: { kfHerLabel: l.label, kfHerLane: l.lane } })),
+      (herLane ?? []).map((l) => ({ id: `kf-her-${l.id}`, title: l.label, start: l.start, end: l.end, display: 'background', classNames: ['kf-her', ...(l.busy ? ['is-busy'] : [])], extendedProps: { kfHerLabel: l.label, kfHerLane: l.lane, kfHerColor: l.color } })),
     )
     fcShared.current = shareEvents(fcShared.current, next)
     return fcShared.current.arr
@@ -1420,7 +1421,7 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
                 ) : (
                   <div className="fc-event-title" dir="auto" style={{ WebkitLineClamp: lines }}>
                     {p.kfGoal && <span className="kf-ev-star" aria-label="Goal of the day: ">✶ </span>}
-                    {shared && <span className="sh-face" title={sharedLine(shared.state, shared.name)} aria-label={sharedLine(shared.state, shared.name)}>{shared.name.trim()[0]?.toUpperCase()}</span>}
+                    {shared && <span className="sh-face" style={herVars(shared.color)} title={sharedLine(shared.state, shared.name)} aria-label={sharedLine(shared.state, shared.name)}>{shared.name.trim()[0]?.toUpperCase()}</span>}
                     <EmojiText text={title} />
                   </div>
                 )}
@@ -1480,12 +1481,17 @@ export const CalendarGrid = memo(forwardRef<CalendarGridHandle, CalendarGridProp
         return arg.isMirror && !arg.event.id ? <MirrorBody time={arg.timeText} body={body} /> : body
       },
       eventDidMount: (info: EventMountArg) => {
+        const sharedHue = info.event.display === 'background' ? null : sharedLookOf(info.event.id) // a shared event's dashed edge is the colour I gave them
+        if (sharedHue) { const h = blockHue(sharedHue.color); info.el.style.setProperty('--her', h.c); info.el.style.setProperty('--her-ink', h.ink) }
         if (info.event.display === 'background') {
           // Sharing: a lane block says its title and time on hover, and on a tap; it is no block of ours (a press on it makes nothing).
           const label = (info.event.extendedProps as { kfHerLabel?: string }).kfHerLabel
           if (label) {
             info.el.title = label
             info.el.style.setProperty('--kf-lane', String((info.event.extendedProps as { kfHerLane?: number }).kfHerLane ?? 0))
+            const her = blockHue((info.event.extendedProps as { kfHerColor?: string }).kfHerColor ?? '#8972B3') // ds-ok: Heather, the colour until one is picked
+            info.el.style.setProperty('--her', her.c)
+            info.el.style.setProperty('--her-ink', her.ink)
             info.el.addEventListener('pointerdown', (e) => e.stopPropagation())
             info.el.addEventListener('click', (e) => { e.stopPropagation(); useToastStore.getState().push({ message: label }) })
           }

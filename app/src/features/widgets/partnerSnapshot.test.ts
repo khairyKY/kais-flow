@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { buildPartner, partnerStale, pickPartner, PARTNER_STALE_MS } from './partnerSnapshot'
+import { buildPartner, partnerStale, pickPartner, swatchOf, PARTNER_STALE_MS } from './partnerSnapshot'
 import type { SharedDay } from '../sharing/api'
 import type { Connection } from '../sharing/model'
 
@@ -7,7 +7,7 @@ import type { Connection } from '../sharing/model'
 const NOW = new Date('2026-11-17T08:00:00Z')
 const conn = (over: Partial<Connection> = {}): Connection => ({
   circle_id: 'c1', relation: 'partner', partner_id: 'u2', partner_name: 'Reem', my_level: 'details', their_level: 'details', level: 'details',
-  my_grant_id: 'g1', show_lane: true, since: '2026-11-01T00:00:00Z', paused_until: null, paused_by_me: false, ...over,
+  my_grant_id: 'g1', show_lane: true, show_day: true, color: '#8972B3', since: '2026-11-01T00:00:00Z', paused_until: null, paused_by_me: false, ...over,
 })
 const blk = (id: string, from: number, to: number, title?: string) => ({
   id, starts_at: new Date(NOW.getTime() + from * 60_000).toISOString(), ends_at: new Date(NOW.getTime() + to * 60_000).toISOString(), all_day: false, ...(title ? { title } : { masked: true }),
@@ -61,11 +61,21 @@ describe('Her day widget snapshot', () => {
     expect(partnerStale(p, NOW.getTime() + PARTNER_STALE_MS)).toBe(false)
     expect(partnerStale(p, NOW.getTime() + PARTNER_STALE_MS + 1)).toBe(true)
   })
-  it('a Partner is shown first, else whoever has their lane on, else nobody', () => {
-    const fam = conn({ circle_id: 'c2', relation: 'family', partner_id: 'u3', show_lane: false })
-    const fr = conn({ circle_id: 'c3', relation: 'friend', partner_id: 'u4', show_lane: true })
+  it('a Partner is shown first, else whoever has their day on Today, else nobody', () => {
+    const fam = conn({ circle_id: 'c2', relation: 'family', partner_id: 'u3', show_day: false })
+    const fr = conn({ circle_id: 'c3', relation: 'friend', partner_id: 'u4', show_day: true })
     expect(pickPartner([fam, fr, conn()])?.partner_id).toBe('u2')
     expect(pickPartner([fam, fr])?.partner_id).toBe('u4')
     expect(pickPartner([fam])).toBeNull()
+  })
+})
+
+describe('her colour on the widget', () => {
+  it('the snapshot carries the colour you gave her as a swatch name, Heather by default', () => {
+    expect(build(day('details'))!.color).toBe('heather')
+    expect(build(day('details'), conn({ color: '#E58F99' }))!.color).toBe('rose')
+    expect(build(day('details'), conn({ color: '#E58F99', paused_until: 'infinity' }))).toMatchObject({ paused: true, color: 'rose' })
+    expect(swatchOf('#000000')).toBe('heather') // not one of the 16: Heather, so the widget always has a drawable
+    expect(swatchOf(undefined)).toBe('heather')
   })
 })

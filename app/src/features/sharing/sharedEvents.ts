@@ -15,7 +15,7 @@ import { useToastStore } from '../../lib/toastStore'
 import { toastUndo } from '../../lib/undo'
 import { deleteEvent, restoreEvent } from '../calendar/api'
 import type { CalendarEvent } from '../../lib/types'
-import type { Connection } from './model'
+import { HER_COLOR, type Connection } from './model'
 
 export * from './sharedPure'
 import { sharedState, type FreeTogether, type SharedState } from './sharedPure'
@@ -23,7 +23,8 @@ export type { FreeWindow } from './sharedPure'
 
 // ── the look on the grid: a lookup by the stored row's id, from the cached rows ──
 
-export interface SharedLook { state: SharedState; name: string }
+/** `color`: the colour I gave that person (palette C), for the dashed edge and the face. */
+export interface SharedLook { state: SharedState; name: string; color: string }
 let lookFor: { rows: CalendarEvent[]; conns: Connection[]; map: Map<string, SharedLook> } | null = null
 
 /** The shared look of an event on the grid (`id` may be an occurrence id: shared events don't repeat, so the plain id). Memoised per cache snapshot. */
@@ -36,8 +37,8 @@ export function sharedLookOf(id: string): SharedLook | null {
     for (const r of rows) {
       const s = r.shared_id ? sharedState(r) : null
       if (!s) continue
-      const name = conns.find((c) => c.partner_id === r.shared_with)?.partner_name ?? 'Them'
-      map.set(r.id, { state: s, name })
+      const c = conns.find((x) => x.partner_id === r.shared_with)
+      map.set(r.id, { state: s, name: c?.partner_name ?? 'Them', color: c?.color ?? HER_COLOR })
     }
     lookFor = { rows, conns, map }
   }

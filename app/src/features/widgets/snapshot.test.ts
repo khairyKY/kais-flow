@@ -202,7 +202,7 @@ describe('Hide titles on the home screen', () => {
     expect(JSON.stringify(s)).not.toMatch(/Crypto|tyre|Skim|private/)
   })
   it('hide titles also hides her day: no block name, no goal', () => {
-    const partner = { name: 'Reem', level: 'details' as const, at: 1, paused: false, pausedUntil: 0, blocks: [{ title: 'Lecture', start: 1, end: 2 }], goal: { title: 'Her goal', done: false }, top: { done: 0, total: 3 } }
+    const partner = { name: 'Reem', color: 'heather', level: 'details' as const, at: 1, paused: false, pausedUntil: 0, blocks: [{ title: 'Lecture', start: 1, end: 2 }], goal: { title: 'Her goal', done: false }, top: { done: 0, total: 3 } }
     const s = buildSnapshot(input({ hideTitles: true, partner }))
     expect(s.partner?.blocks).toEqual([{ title: null, start: 1, end: 2 }])
     expect(s.partner?.goal).toEqual({ title: null, done: false })
