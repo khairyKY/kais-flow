@@ -24,7 +24,9 @@ import { useOnline } from '../../lib/useOnline'
 import { cairoDateKey } from '../../lib/dateShortcuts'
 import { appZone, useAppZone } from '../../lib/appZone'
 import { useHour24 } from '../../lib/clock'
+import { useConnections, useSharedDay } from '../sharing/api'
 import { buildSnapshot } from './snapshot'
+import { buildPartner, pickPartner } from './partnerSnapshot'
 import { appWrites, takeQueue, useHideTitles, useWidgetVoice } from './bridge'
 import { applyOps } from './queue'
 import { pushSnapshot } from './native'
@@ -85,6 +87,15 @@ export function WidgetBridge(): React.ReactNode {
   const archived = projects.filter((p) => p.status === 'archived').sort((a, b) => b.updated_at.localeCompare(a.updated_at))[0]
   const firstRecord = [...tasks.map((t) => t.created_at), ...inbox.map((i) => i.created_at), ...projects.map((p) => p.created_at), ...routines.map((r) => r.created_at)].sort()[0] ?? null
 
+  // Her day: the connected person's masked day, read the way her card on Today reads it. A revoke, a lowered level or a pause
+  // comes with the next read (Realtime's share_pings and the quarter hour), and nothing of a connection that ended is kept.
+  const { data: people } = useConnections()
+  const partnerConn = pickPartner(people ?? [])
+  const herFrom = new Date(Math.floor((now.getTime() - 12 * 3_600_000) / 900_000) * 900_000)
+  const herTo = new Date(herFrom.getTime() + 48 * 3_600_000)
+  const { data: herDay, dataUpdatedAt: herReadAt } = useSharedDay(partnerConn?.partner_id, herFrom, herTo)
+  const partner = buildPartner({ conn: partnerConn, day: herDay, readAt: herReadAt, now, hideTitles })
+
   const focus = useFocusStore.getState()
   const snapshot = buildSnapshot({
     now,
@@ -120,6 +131,7 @@ export function WidgetBridge(): React.ReactNode {
       : null,
     specimen: archived ? { title: archived.name, at: archived.updated_at } : null,
     weather: null, // cut 2026-10-12 (lib/seasons): the Season widget shows the season alone
+    partner,
   })
   void inRound // re-render when a paused round starts or ends
 

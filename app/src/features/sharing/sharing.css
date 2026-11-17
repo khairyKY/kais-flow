@@ -150,3 +150,48 @@
 .fc .fc-event.kf-shared-pending, .pc-block.is-shared-pending { border-style: dashed; border-color: color-mix(in srgb, var(--blk-heather) 75%, transparent); }
 .fc .fc-event.kf-shared-declined, .pc-block.is-shared-declined { opacity: 0.7; }
 .sh-face { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 14px; height: 14px; margin-right: 4px; border-radius: 50%; vertical-align: -2px; font: 600 var(--fs-mono-s) / 1 var(--font-ui); background: color-mix(in srgb, var(--blk-heather) 30%, var(--paper-parchment)); border: 1px solid color-mix(in srgb, var(--blk-heather) 65%, transparent); color: var(--blk-heather-ink); }
+/* ── Shared lists (migration 0102): one project, both edit and tick ── */
+.sl-page { width: 100%; max-width: 640px; padding: 10px 8px 40px; }
+.sl-top { display: flex; align-items: center; justify-content: space-between; }
+.sl-more { width: 44px; height: 44px; margin-right: -10px; display: inline-flex; align-items: center; justify-content: center; background: none; border: 0; color: var(--ink-faint); cursor: pointer; border-radius: 50%; }
+.sl-more:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sl-h1 { margin: 8px 0 4px; font: 500 var(--fs-display-l) / 1.1 var(--font-display); letter-spacing: var(--ls-display); color: var(--ink-body); }
+.sl-line { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-size: var(--fs-body-s); color: var(--ink-muted); }
+.sl-add { display: flex; align-items: center; gap: 8px; min-height: 48px; padding: 0 14px; border: 1px solid var(--line-control); border-radius: var(--radius-pill); background: var(--paper-bone); color: var(--ink-faint); }
+.sl-add:focus-within { border-color: var(--sel-bg); }
+.sl-add input { flex: 1; min-width: 0; height: 44px; background: none; border: 0; outline: none; font: inherit; font-size: 16px; /* ds-ok: 16px keeps iOS from zooming the page on focus */ color: var(--ink-body); }
+.sl-sec { margin: 22px 4px 6px; font: 600 var(--fs-caption) / 1.2 var(--font-ui); color: var(--ink-body); }
+.sl-sec span { font-weight: 500; color: var(--ink-faint); }
+.sl-rows { border: 1px solid var(--line-card); border-radius: var(--radius-card); background: var(--paper-parchment); overflow: hidden; }
+.sl-row { display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 12px; }
+.sl-row + .sl-row { border-top: 1px solid var(--line-card); }
+.sl-title { flex: 1; min-width: 0; text-align: left; background: none; border: 0; padding: 12px 0; font: inherit; font-size: var(--fs-body-l); color: var(--ink-body); cursor: pointer; overflow-wrap: anywhere; }
+.sl-title:focus-visible { outline: none; box-shadow: var(--focus-ring); border-radius: var(--radius-input); }
+.sl-row.is-done .sl-title { color: var(--ink-faint); text-decoration: line-through; }
+.sl-by { flex: none; display: inline-flex; align-items: center; gap: 6px; }
+.sl-when { font-size: var(--fs-meta-l); color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+.sl-empty { padding: 16px; font-size: var(--fs-body-s); color: var(--ink-muted); }
+.sl-prow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 52px; padding: 0 12px; background: none; border: 0; text-align: left; font: inherit; color: var(--ink-body); cursor: pointer; }
+.sl-prow + .sl-prow { border-top: 1px solid var(--line-card); }
+.sl-prow:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sl-pt { flex: 1; min-width: 0; font-size: var(--fs-body-l); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sl-pm { flex: none; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+.sl-group { margin: 22px 0 0; }
+.sl-group .sl-rows { margin-top: 6px; }
+.sl-switch { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--line-card); border-radius: var(--radius-input); background: var(--paper-bone); font-size: var(--fs-body); }
+.sl-switch .sl-grow { flex: 1; min-width: 0; }
+.sl-switch small { display: block; font-size: var(--fs-meta-l); color: var(--ink-muted); }
+/* ── P2: the status line under the Now card, the notices strip, the status sheet (design-export/Partner sharing P2 flows.html) ── */
+.sh-status { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 40px; margin-top: 8px; padding: 6px 12px; text-align: left; background: var(--paper-bone); border: 1px solid var(--line-card); border-radius: var(--radius-card); color: var(--ink-muted); font: inherit; font-size: var(--fs-body-s); cursor: pointer; }
+.sh-status:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sh-status .sh-status-t { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sh-status b { color: var(--ink-body); font-weight: 600; }
+.sh-strip { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; padding: 12px 14px; background: var(--paper-parchment); border: 1px solid var(--line-card); border-radius: var(--radius-card); }
+.sh-strip-h { display: flex; align-items: center; gap: 8px; font-size: var(--fs-body); }
+.sh-strip-l { font-size: var(--fs-body-s); color: var(--ink-muted); line-height: 1.5; }
+.sh-own { display: flex; gap: 8px; margin-top: 10px; }
+.sh-field { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border-radius: var(--radius-input); border: 1px solid var(--line-control); background: var(--paper-bone); color: var(--ink-body); font: inherit; font-size: var(--fs-body); }
+.sh-field:focus-visible { outline: none; box-shadow: var(--focus-ring); }
+.sh-stt { font-weight: 400; color: var(--ink-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.sh-chip .sh-stt { font-size: var(--fs-meta-l); max-width: 160px; }
+.sh-exp .sh-link { background: none; border: 0; cursor: pointer; font: inherit; font-weight: 600; color: var(--acc-terra-ink); padding: 4px; }

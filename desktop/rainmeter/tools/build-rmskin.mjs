@@ -3,7 +3,7 @@
 //   node build-rmskin.mjs <out.rmskin>
 // MergeSkins=1: the installer adds these files to Kai's Glass folder instead of backing it up and replacing it.
 // It ships only Glass\KaisFlow\ and Glass\@Resources\KaisFlow\, so GlassVars.inc and his other skins are left alone.
-// Upgrading 1.0 -> 1.1 in place: these files overwrite the 1.0 copies. His settings are never in the package:
+// Upgrading 1.0 -> 1.1 -> 1.2 in place: these files overwrite the 1.0 copies. His settings are never in the package:
 //   the Widget link and the Theme choice live in %APPDATA%\Rainmeter\ (KaisFlow-link.txt, KaisFlow-theme.txt);
 //   1.0's link (@Resources\KaisFlow\link.txt) is never packed either, and 1.1 copies it across on first run.
 import fs from 'node:fs'
@@ -14,7 +14,7 @@ import { fileURLToPath } from 'node:url'
 const here = path.dirname(fileURLToPath(import.meta.url))
 const root = path.resolve(here, '..')
 const out = path.resolve(process.argv[2] ?? path.join(root, 'KaisFlow.rmskin'))
-const VERSION = '1.1'
+const VERSION = '1.2' // 1.2: the Her day skin (herday.lua, HerDay.inc, HerDay\HerDay.ini); 1.1's five skins are unchanged
 
 const RMSKIN = [
   '[rmskin]',

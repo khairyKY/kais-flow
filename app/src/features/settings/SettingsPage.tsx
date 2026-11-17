@@ -55,7 +55,7 @@ import { isTauri, native, readTrayShown, writeTrayShown } from '../tray/native'
 import { readCaptureShortcut, shortcutLabel, writeCaptureShortcut, type CaptureShortcut } from '../tray/captureShortcut'
 import { widgetsAvailable } from '../widgets/native'
 import { useHideTitles } from '../widgets/bridge'
-import { openLockSettings, readLock, writeLock } from '../lockscreen/native'
+import { openLockSettings, readLock, writeLock, writeNowNext } from '../lockscreen/native'
 import { hasStatus, lockStatus } from '../lockscreen/status'
 import { timeText } from '../calendar/eventTime'
 import { TimeField } from '../calendar/TimeField'
@@ -1367,6 +1367,8 @@ function NotificationsCard() {
  * per device, so each row says This device. Hidden on an APK from before it (no window.KaisFlowLock). */
 function LockScreenRows() {
   const [lock, setLock] = useState(readLock)
+  const { data: app } = useAppSettings()
+  const [nowNextNote, setNowNextNote] = useState<string | null>(null)
   // v161: back from a system screen (Open settings), the status says what changed.
   useEffect(() => {
     const on = () => document.visibilityState === 'visible' && setLock(readLock())
@@ -1378,9 +1380,44 @@ function LockScreenRows() {
     writeLock(nowBar, dayStrip)
     setLock(readLock())
   }
+  // v165: Now / Next. Turning it on asks for notifications first (Android 13+); denied, it stays off and says why.
+  const toggleNowNext = async () => {
+    setNowNextNote(null)
+    if (!lock.nowNext) {
+      const { androidPermission } = await import('../notifications/android')
+      if ((await androidPermission(true)) !== 'granted') {
+        setNowNextNote('Notifications are turned off for Kai’s Flow, so there is nothing to show. Allow them, then turn this on.')
+        return
+      }
+    }
+    writeNowNext(!lock.nowNext)
+    setLock(readLock())
+  }
   const names = 'Names show when “Show task names on the lock screen” is on'
   return (
     <>
+      {lock.nowNext !== undefined && (
+        <Row
+          device
+          label="Now / Next on the lock screen"
+          help="A quiet notification: what’s on now and what’s next. No sound, can’t be swiped away while it’s on. Works on any Android, Samsung included"
+          keys="lock screen now next notification ongoing samsung galaxy status"
+          under={
+            (nowNextNote || (lock.nowNext && app && app.lock_screen_names !== true)) && (
+              <div data-kf-nownext-note className="st-note" style={{ display: 'flex', alignItems: 'center', gap: 'var(--sp-2)', flexWrap: 'wrap' }}>
+                <span style={{ flex: '1 1 200px' }}>{nowNextNote ?? 'Names show as “A task” and “Busy” until “Show task names on the lock screen” (under Quiet) is on. Hidden in quiet hours.'}</span>
+                {nowNextNote && (
+                  <Button variant="secondary" onClick={() => openLockSettings('notifications')}>
+                    Open settings
+                  </Button>
+                )}
+              </div>
+            )
+          }
+        >
+          <Toggle on={lock.nowNext} label="Now / Next on the lock screen" onToggle={() => void toggleNowNext()} />
+        </Row>
+      )}
       {lock.nowBarSupported && (
         <Row device label="Lock screen: Now Bar" help={`The block that’s on now, as a pill on the lock screen and the Always On Display, with today’s blocks and a countdown. ${names}`} keys="lock screen now bar live update notification android 16 aod">
           <Toggle on={lock.nowBar} label="Lock screen: Now Bar" onToggle={() => set(!lock.nowBar, lock.dayStrip)} />

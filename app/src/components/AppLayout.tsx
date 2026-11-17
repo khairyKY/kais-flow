@@ -7,7 +7,7 @@ import { useFocusStore, useFocusTicker } from '../features/focus/focusStore'
 import { useSignOut } from '../features/auth/useSignOut'
 import { syncHeader, syncLabel, syncRows, useSyncStatus, type SyncRow, type SyncView } from './syncQueue'
 import { discardParked, retryParked } from '../lib/outbox'
-import { useRealtimeSync } from '../lib/realtime'
+import { useRealtimeSync, useSharedListsRealtime } from '../lib/realtime'
 import { SharingHost } from '../features/sharing/SharingHost'
 import { openCapture, useCommandBarStore } from '../features/command-bar/commandBarStore'
 import { usePendingInboxItems } from '../features/inbox/api'
@@ -686,6 +686,7 @@ const FULL_BLEED = ['/calendar', '/focus']
 
 export function AppLayout() {
   useRealtimeSync()
+  useSharedListsRealtime()
   useAutoFileNotice() // queue item 7: captures wait in the Inbox now — told once
   // R4-D3: keeps a running Focus session ticking wherever Kai navigates.
   useFocusTicker()

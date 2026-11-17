@@ -2,6 +2,7 @@
 // waiting for sign-in, and the in-app notices of what the other side changed (a level, a pause, a leave).
 import { Suspense, lazy, useEffect } from 'react'
 import { useShareNotices } from './api'
+import { ShareBlockSync, useShareFocus } from './StatusNotice'
 import { takeJoinCode, useSharingUi } from './ui'
 
 const InviteSheet = lazy(() => import('./InviteSheet').then((m) => ({ default: m.InviteSheet })))
@@ -14,6 +15,7 @@ const DeleteBothSheet = lazy(() => import('./SharedEventSheets').then((m) => ({ 
 export function SharingHost() {
   const { invite, enter, person, free, propose, deleteBoth, close, openEnter } = useSharingUi()
   useShareNotices()
+  useShareFocus()
   // A link followed before there was a session (or a shell): its code was kept, and now it opens on its confirm step.
   useEffect(() => {
     const code = takeJoinCode()
@@ -21,6 +23,7 @@ export function SharingHost() {
   }, [openEnter])
   return (
     <Suspense fallback={null}>
+      <ShareBlockSync />
       {invite && <InviteSheet onClose={close} />}
       {enter && <EnterCodeSheet initial={enter.code} onClose={close} />}
       {person && <PersonSheet circleId={person} onClose={close} />}

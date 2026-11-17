@@ -7,6 +7,8 @@ import { Button } from '../../components/kit'
 import { useAppZone } from '../../lib/appZone'
 import { useMinuteNow } from '../today/useMinuteNow'
 import { useSharedDay, useConnections, type SharedTask } from './api'
+import { usePartnerStatus } from './statusApi'
+import { alive } from './statusModel'
 import { Avatar } from './parts'
 import { LEVEL_NAME, pauseLine, type Connection } from './model'
 import { leftText, nowNext, occurrences, progress, type Occurrence } from './sharedBlocks'
@@ -59,6 +61,7 @@ export function HerDayCard({ c }: { c: Connection }) {
   const from = useMemo(() => new Date(now.getTime() - 12 * 3_600_000), [Math.floor(now.getTime() / 900_000)]) // eslint-disable-line react-hooks/exhaustive-deps -- a quarter hour is as fresh as the card needs
   const to = useMemo(() => new Date(now.getTime() + 36 * 3_600_000), [from]) // eslint-disable-line react-hooks/exhaustive-deps
   const { data } = useSharedDay(c.partner_id, from, to)
+  const { data: status } = usePartnerStatus(c.partner_id, data?.level === 'details')
 
   if (c.paused_until) {
     return (
@@ -88,7 +91,7 @@ export function HerDayCard({ c }: { c: Connection }) {
       </div>
       <div className="sh-card">
         <div className="sh-card-h">
-          <Avatar name={c.partner_name} size={28} />{c.partner_name}
+          <Avatar name={c.partner_name} size={28} />{c.partner_name}{alive(status, now) && <span className="sh-stt">· {status.words}</span>}
           <button type="button" className="sh-menu" aria-label={`Pause sharing with ${c.partner_name}`} aria-expanded={menu} onClick={() => setMenu((m) => !m)}><Icon name="dots" size={18} /></button>
         </div>
         {menu && (

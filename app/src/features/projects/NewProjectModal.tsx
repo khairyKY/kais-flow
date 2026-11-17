@@ -9,7 +9,10 @@ import { useEscapeStack } from '../../lib/overlayStack'
 import { DateField } from '../../components/DatePicker'
 import { NumberField } from '../../components/NumberField'
 import { Select } from '../../components/Select'
-import { Button } from '../../components/kit'
+import { Button, Toggle } from '../../components/kit'
+import { Avatar } from '../sharing/parts'
+import { useConnections } from '../sharing/api'
+import { shareProject } from '../sharing/listsApi'
 import { BottomSheet, useIsMobile } from '../../components/BottomSheet'
 import './xfx.css'
 
@@ -49,6 +52,9 @@ export function NewProjectModal({
   domains?: any[]
 }) {
   const { data: fetchedDomains = [] } = useDomains()
+  // Shared lists (0102): "Share with Reem" - one project both of you add to and tick. Off until flipped; needs a connection to share.
+  const { data: people = [] } = useConnections()
+  const [shareWith, setShareWith] = useState<string | null>(null)
   const domains = domainsProp ?? fetchedDomains
   const isMobile = useIsMobile()
   // The phone's BottomSheet handles Esc itself (and keeps the draft); on desktop Esc discards.
@@ -106,7 +112,7 @@ export function NewProjectModal({
         weight: m.weight,
         completed: false,
       }))
-      createProject(
+      const created = createProject(
         name.trim(),
         selectedDomain,
         type,
@@ -116,6 +122,8 @@ export function NewProjectModal({
         milestoneList,
         []
       )
+      const partner = type === 'standard' ? people.find((c) => c.circle_id === shareWith) : undefined
+      if (partner) void shareProject(created, partner)
     }
     discard()
     close()
@@ -208,6 +216,15 @@ export function NewProjectModal({
             <div style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-meta)', color: 'var(--ink-faint)', marginBottom: 8 }}>Color</div>
             <PlaceSwatches value={color} onPick={setColor} />
           </div>
+
+          {/* Shared lists (0102): only a plain project can be shared, and only with someone connected. */}
+          {type === 'standard' && people.map((c) => (
+            <div key={c.circle_id} className="sl-switch" style={{ marginTop: 16 }}>
+              <Avatar name={c.partner_name} size={24} />
+              <span className="sl-grow">Share with {c.partner_name}<small>Either of you adds, edits and ticks. Its tasks stay out of their Top 3.</small></span>
+              <Toggle on={shareWith === c.circle_id} onToggle={() => setShareWith(shareWith === c.circle_id ? null : c.circle_id)} label={`Share with ${c.partner_name}`} />
+            </div>
+          ))}
 
           {/* Starting Milestones */}
           {type === 'standard' && (

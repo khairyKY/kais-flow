@@ -10,6 +10,11 @@ import type { IconName } from '../../components/icons/kf'
 import { NewProjectModal } from './NewProjectModal'
 import { TypeMenu, useChangeType, type Convertible } from './ChangeType'
 import { useTasks } from '../tasks/api'
+import { SharedListsGroup } from '../sharing/SharedListPage'
+import { useConnections } from '../sharing/api'
+import { isSharedList, isTheirs } from '../sharing/lists'
+import { shareProject } from '../sharing/listsApi'
+import { useAuth } from '../auth/AuthProvider'
 import { useSlipping } from '../slipping/api'
 import { BackLink, Button, SectionLabel, Segmented } from '../../components/kit'
 import { filterChip } from '../../components/filterChip'
@@ -81,7 +86,12 @@ export function ProjectsPage() {
 
   // Queries
   const { data: domains = [] } = useDomains()
-  const { data: allProjects = [] } = useProjects()
+  const { data: everyProject = [] } = useProjects()
+  // A project shared with someone is a shared list: it has its own group (Shared with Reem) and is not part of the forest below.
+  const allProjects = useMemo(() => everyProject.filter((p) => !isSharedList(p)), [everyProject])
+  const sharedLists = useMemo(() => everyProject.filter((p) => isSharedList(p) && p.status === 'active'), [everyProject])
+  const { data: people = [] } = useConnections()
+  const uid = useAuth().session?.user.id
   const { data: areas = [] } = useAreas()
   const { data: tasks = [] } = useTasks()
   const { data: timeEntries = [] } = useTimeEntries()
@@ -251,6 +261,8 @@ export function ProjectsPage() {
       ...(project || area ? [{ label: 'Change type…', icon: 'rotate' as IconName, run: () => setTypeMenu({ thing: project ? { table: 'projects' as const, row: project } : { table: 'areas' as const, row: area! }, at: { x: m.x, y: m.y } }) }] : []),
       // Kai 2026-10-17: a copy — its milestones, checklist and tasks afresh (open, unscheduled) — with Undo.
       ...(project ? [{ label: 'Duplicate', icon: 'duplicate' as IconName, run: () => void duplicateProjectWithUndo(project) }] : []),
+      // Shared lists (0102): one project both of us edit and tick. Standard projects of mine, with someone to share with.
+      ...(project && project.type === 'standard' && !isTheirs(project, uid) ? people.map((c) => ({ label: `Share with ${c.partner_name}`, icon: 'people' as IconName, run: () => void shareProject(project, c) })) : []),
       // One tap + Undo (product audit 2026-10-12): the toast offers "Press it ✿" — the ceremony is optional.
       ...(project ? [{ label: 'Finish', icon: 'check' as IconName, run: () => finishProjectWithUndo(project, () => navigate(`/herbarium?press=${project.id}`)) }] : []),
       { label: 'Delete', icon: 'delete', danger: true, run: () => (project ? deleteProjectWithUndo(project) : area && deleteAreaWithUndo(area)) },
@@ -343,6 +355,8 @@ export function ProjectsPage() {
               +
             </button>
           </div>
+
+          <SharedListsGroup projects={sharedLists} />
 
           {/* The desktop's Finished view on a phone: active / finished, Restore with Undo, the Herbarium. */}
           {!isEmpty && (
@@ -565,6 +579,8 @@ export function ProjectsPage() {
             </Button>
           </div>
         </div>
+
+        <div style={{ maxWidth: 900 }}><SharedListsGroup projects={sharedLists} /></div>
 
         {/* LIST VIEW */}
         {view === 'list' && isEmpty && <div style={{ maxWidth: 900 }}>{controlsRule(900)}{renderEmptyState()}</div>}

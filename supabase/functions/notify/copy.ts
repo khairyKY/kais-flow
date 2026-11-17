@@ -6,7 +6,7 @@
 import { minutesOf, RITUAL_ZONE, wallMinutes } from './ritual.ts'
 import { dateKey } from '../_shared/zone.ts'
 
-export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'weekly_review' | 'focus_done' | 'break_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'terms' | 'test'
+export type NoticeKind = 'task_reminder' | 'event_reminder' | 'routine' | 'morning_digest' | 'evening_nudge' | 'weekly_review' | 'focus_done' | 'break_done' | 'paper_ready' | 'birthday' | 'sync_problem' | 'terms' | 'share_notice' | 'test'
 
 export interface NoticeAction {
   action: 'done' | 'tomorrow' | 'plan' | 'open' | 'shutdown' | 'break' | 'keep' | 'focus_start' | 'focus_stop' | 'review' | 'snooze10' | 'snooze60'
@@ -479,6 +479,56 @@ export function termsNotice(): Notice {
     body: 'Tap to review',
     tag: 'terms',
     actions: [{ action: 'open', title: 'Review' }],
+    url: '/today',
+    silent: false,
+    taskIds: [],
+  }
+}
+
+/** One partner notice (0103 share_notices), as notify and the Today strip read it. The payload is ALREADY masked to the
+ * viewer's level on the server ({ verb, what?, at? }): nothing here can add detail, only drop it. */
+export interface ShareNoticeRow {
+  actor_name: string
+  kind: string
+  payload: { verb?: string | null; what?: string | null; at?: string | null }
+  /** How many of it folded into this one (one notice per 5 minutes). */
+  n: number
+}
+
+/** "Fri 8 PM", "Fri 20:00": the weekday and the time on the viewer's own clock (on the hour, no minutes). */
+export function noticeWhen(iso: string, zone: string, h24: boolean): string {
+  const day = new Intl.DateTimeFormat('en-US', { timeZone: zone, weekday: 'short' }).format(new Date(iso))
+  const t = clock(iso, zone, h24)
+  return `${day} ${h24 ? t : t.replace(':00 ', ' ')}`
+}
+
+/** "Reem added Dinner, Fri 8 PM" / "Reem added something, Fri 8 PM" / "Reem added 3 things". `names` false (a lock screen, by default):
+ * the busy wording - "something", "3 things" - whatever the payload held. A folded notice (n > 1) drops the time. */
+export function shareNoticeLine(r: ShareNoticeRow, zone: string = RITUAL_ZONE, h24 = false, names = true): string {
+  const verb = (r.payload.verb ?? '').trim() || 'updated'
+  const many = r.n > 1
+  const what = many
+    ? (names && r.payload.what?.includes('{n}') ? r.payload.what.replace('{n}', String(r.n)) : `${r.n} things`)
+    : (names ? (r.payload.what ?? '').trim() : '') || 'something'
+  const at = !many && r.payload.at ? `, ${noticeWhen(r.payload.at, zone, h24)}` : ''
+  return `${r.actor_name} ${verb} ${what}${at}`
+}
+
+/** Partner notices (migration 0103, kind 'share_notice'): one push for one person's due notices, as one line. No switch of its own here:
+ * the per-kind Off / In-app / Push switch is on the connection and decided what was stored; pause and quiet hours still apply
+ * (quiet hours already held it, so a notice rarely lands inside them). Names are on the lock screen only when that switch is on. */
+export function shareNotice(rows: ShareNoticeRow[], actorId: string, p: NoticePrefs | null | undefined, zone: string = RITUAL_ZONE): Notice {
+  const h24 = is24h(p)
+  const names = showNames(p)
+  const who = rows[0]?.actor_name ?? 'Someone'
+  const lines = rows.map((r) => shareNoticeLine(r, zone, h24, names))
+  const one = lines.length === 1
+  return {
+    kind: 'share_notice',
+    title: one ? lines[0] : `From ${who}`,
+    body: one ? 'In Kai’s Flow' : lines.map((l) => l.slice(who.length + 1)).join(' · '),
+    tag: `share-${actorId}`,
+    actions: [{ action: 'open', title: 'Open' }],
     url: '/today',
     silent: false,
     taskIds: [],

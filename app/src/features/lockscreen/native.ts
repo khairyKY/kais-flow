@@ -9,6 +9,11 @@ export interface LockState {
   nowBarSupported: boolean
   nowBar: boolean
   dayStrip: boolean
+  /** v165: Now / Next on the lock screen (an ongoing LOW notification, any Android 8+); absent on an older shell. */
+  nowNext?: boolean
+  nowNextPosted?: boolean
+  /** The Now / Next channel's importance (0 off, 2 low); -1 not made yet. */
+  nowNextChannel?: number
   // v161 (Settings → Lock screen status; absent on v1.6.0's shell). LockScreen.LockBridge.state says what each is.
   release?: string
   notifications?: boolean
@@ -31,12 +36,14 @@ export interface LockState {
 }
 
 /** The system screens Lock screen status opens (LockScreen.LockBridge.open). */
-export type LockOpen = 'promotion' | 'notifications' | 'channel' | 'lockscreen'
+export type LockOpen = 'promotion' | 'notifications' | 'channel' | 'nownext' | 'lockscreen'
 
 interface LockNative {
   state(): string
   set(nowBar: boolean, dayStrip: boolean): void
   setNames(on: boolean): void
+  setNowNext?(on: boolean): void
+  setQuiet?(on: boolean, from: number, to: number): void
   open?(which: LockOpen): void
 }
 
@@ -58,6 +65,25 @@ export function readLock(): LockState | null {
 
 export function writeLock(nowBar: boolean, dayStrip: boolean): void {
   lockNative()?.set(nowBar, dayStrip)
+}
+
+/** Settings → Notifications → Now / Next on the lock screen (an older shell: nothing). */
+export function writeNowNext(on: boolean): void {
+  try {
+    lockNative()?.setNowNext?.(on)
+  } catch {
+    /* an older shell */
+  }
+}
+
+/** The app's quiet hours, so Now / Next goes off inside them without the app running ("HH:MM" → minutes on the user's clock). */
+export function lockQuiet(on: boolean, from: string, to: string): void {
+  const min = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5))
+  try {
+    lockNative()?.setQuiet?.(on, min(from), min(to))
+  } catch {
+    /* an older shell */
+  }
 }
 
 /** "Show task names on the lock screen" (the reminders' switch) applies to the lock screen's own too. */

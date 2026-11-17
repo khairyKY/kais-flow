@@ -9,7 +9,10 @@ import { useAppZone } from '../../lib/appZone'
 import { supabase } from '../../lib/supabase'
 import { useToastStore } from '../../lib/toastStore'
 import { SHARED_DAY_KEY, setLane, useConnections, type SharedDay } from './api'
+import { useMinuteNow } from '../today/useMinuteNow'
 import { Avatar } from './parts'
+import { usePartnerStatus } from './statusApi'
+import { alive } from './statusModel'
 import { occurrences } from './sharedBlocks'
 import { useSharingUi } from './ui'
 import { pauseLine, type Connection } from './model'
@@ -101,6 +104,7 @@ export function LaneChips({ compact = false }: { compact?: boolean }) {
             >
               <Avatar name={c.partner_name} size={28} />
               {!compact && c.partner_name}
+              {!compact && <ChipStatus c={c} />}
             </button>
             {!compact && <button
               type="button"
@@ -129,4 +133,11 @@ export function LaneChips({ compact = false }: { compact?: boolean }) {
       )}
     </>
   )
+}
+
+/** Her status next to her name on the lane's chip (Details only: the server answers null for anything less). */
+function ChipStatus({ c }: { c: Connection }) {
+  const now = useMinuteNow()
+  const { data } = usePartnerStatus(c.partner_id, c.level === 'details' && !c.paused_until)
+  return alive(data, now) ? <span className="sh-stt">· {data.words}</span> : null
 }

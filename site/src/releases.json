@@ -1,5 +1,27 @@
 [
   {
+    "v": "v1.6.5",
+    "date": "2026-11-18",
+    "title": "Share your days with someone, colours that follow your projects, and tap-to-add",
+    "highlights": [
+      "Share your days with your partner, family or a friend: connect with a code, pick Busy, Titles or Details, see their day beside yours, and mark anything Private",
+      "Plan together: find when you're both free, make shared events like date night, keep shared lists, and see each other's status",
+      "Colours follow where things live: give an area or project a colour and its tasks, blocks and events take it; set your own anytime",
+      "Add to the calendar by tapping a slot and typing; press Enter and it's there",
+      "Tomorrow and other days now open on Today's own page, and Shut down asks what helped today and what got in the way",
+      "On Android, Now and Next can sit on your lock screen as a quiet notification"
+    ],
+    "icons": [
+      "people",
+      "calendar",
+      "sprout",
+      "check",
+      "moon",
+      "android"
+    ],
+    "art": "wisteria-p40"
+  },
+  {
     "v": "v1.6.4",
     "date": "2026-11-17",
     "title": "Multi-day events, a Day bar you can drag onto, and quiet updates",

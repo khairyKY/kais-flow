@@ -8,6 +8,8 @@ import { useAppZone } from '../../lib/appZone'
 import { useToastStore } from '../../lib/toastStore'
 import { useAuth } from '../auth/AuthProvider'
 import { leaveCircle, setLane, setMyLevel, setPause, setRelation, useConnections } from './api'
+import { setNoticeMode, setStatusOn, useNoticeSettings } from './statusApi'
+import { NOTICE_KINDS, NOTICE_MODES, NOTICE_MODE_NAME, modeOf, type NoticeMode } from './statusModel'
 import { Avatar, LevelList, NeverShared } from './parts'
 import { LEVEL_NAME, PAUSE_NAME, RELATIONS, RELATION_NAME, limitedBy, pauseLine, pauseUntil, ruleNow, type Connection, type PauseKind, type Relation } from './model'
 
@@ -23,6 +25,7 @@ export function PersonSheet({ circleId, onClose }: { circleId: string; onClose: 
   const c = data?.find((x) => x.circle_id === circleId)
   const uid = useAuth().session?.user.id ?? ''
   const zone = useAppZone()
+  const { data: settings = [] } = useNoticeSettings()
   const [leaving, setLeaving] = useState(false)
   const failed = saveFailed('That didn’t save. Check the connection and try again.')
   if (!c) {
@@ -36,6 +39,7 @@ export function PersonSheet({ circleId, onClose }: { circleId: string; onClose: 
   const rule = ruleNow(c)
   const limit = limitedBy(c)
   const paused = !!c.paused_until
+  const st = settings.find((s) => s.circle_id === c.circle_id)
 
   if (leaving) return <LeaveSheet c={c} onClose={() => setLeaving(false)} onDone={onClose} />
 
@@ -87,6 +91,31 @@ export function PersonSheet({ circleId, onClose }: { circleId: string; onClose: 
               <Toggle on={c.show_lane} label={`Show ${c.partner_name} on my calendar`} onToggle={() => void setLane(c, !c.show_lane).catch(failed)} />
             </div>
           </div>
+          <div className="sh-box">
+            <div className="sh-row">
+              <Icon name="clock" size={20} />
+              <span className="sh-grow">Show my status to {c.partner_name}<small>{st?.status_on ? `On. ${c.partner_name} sees it next to your name.` : `Off. ${c.partner_name} sees no status.`}</small></span>
+              <Toggle on={!!st?.status_on} label={`Show my status to ${c.partner_name}`} onToggle={() => void setStatusOn(c.circle_id, !st?.status_on).catch(failed)} />
+            </div>
+          </div>
+          <div className="sh-cap" style={{ marginLeft: 4 }}>No location, ever: only words, from your Now card or your own. Shown only at Details; if either of you picks less, it hides for both. It never lasts past 24 hours.</div>
+
+          <div className="sh-lbl">Notices from {c.partner_name}</div>
+          <div className="sh-box">
+            {NOTICE_KINDS.map((k) => (
+              <div key={k.kind} className="sh-row is-col">
+                <span className="sh-grow">{k.title(c.partner_name)}<small>{k.sub(c.partner_name)}</small></span>
+                <Segmented<NoticeMode>
+                  label={k.title(c.partner_name)}
+                  value={modeOf(st, k.kind)}
+                  onChange={(m) => void setNoticeMode(c.circle_id, k.kind, m).catch(failed)}
+                  options={NOTICE_MODES.map((m) => ({ value: m, label: NOTICE_MODE_NAME[m] }))}
+                />
+              </div>
+            ))}
+          </div>
+          <div className="sh-cap" style={{ marginLeft: 4 }}>Every kind starts Off. A private item never notifies, and a notice never says more than your level allows. Quiet hours hold them, then it is one line when they end. A lowered level, a pause or a leave is told in the app only.</div>
+
           <div className="sh-box"><NeverShared /></div>
           <div className="sh-box"><button type="button" className="sh-danger" onClick={() => setLeaving(true)}>Disconnect from {c.partner_name}</button></div>
           <div className="sh-cap" style={{ marginLeft: 4 }}>Either of you can, at any time. Shared events stay on each calendar as plain events.</div>
