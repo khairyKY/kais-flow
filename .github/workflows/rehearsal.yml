@@ -130,7 +130,7 @@ jobs:
       - name: sharing.sh (partner sharing - connect, every level x kind, Private, the lower-level rule, pause, revoke, a third user, never-shared tables, the view link)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/sharing.sh 2>&1 | tee "$RUNNER_TEMP/suite-sharing.log"
-      - name: sharing-events.sh (partner sharing P2 - Free together windows, shared events: propose, answer, no answer, edit, delete, leave, a third user, a pause)
+      - name: sharing-events.sh (partner sharing P2 - Free together windows, shared events - propose, answer, no answer, edit, delete, leave, a third user, a pause)
         if: ${{ !cancelled() && steps.start.outcome == 'success' }}
         run: bash supabase/tests/sharing-events.sh 2>&1 | tee "$RUNNER_TEMP/suite-sharing-events.log"
       - name: classroom.sh (Google Classroom deadlines — consent, sync plan, hand-in, Trash, disconnect; Google mocked)
