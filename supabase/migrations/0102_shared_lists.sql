@@ -112,7 +112,13 @@ begin
 
   if new.project_id is null then return new; end if;
   select p.user_id, p.shared_circle_id into v_owner, v_circle from projects p where p.id = new.project_id;
-  if v_circle is null then return new; end if;
+  if v_owner is null then return new; end if;
+  if v_circle is null then
+    -- Someone else's project that is not shared with this person (a write still queued after a disconnect, or a made-up id): the
+    -- task is kept - what a person typed is never thrown away - but loose, never inside a project that isn't theirs.
+    if v_owner <> new.user_id then new.project_id := null; new.milestone_id := null; end if;
+    return new;
+  end if;
 
   -- The only people who may put a row into a shared list are the two of the connection (the foreign key alone would let anyone
   -- who knew the project's id).
@@ -238,7 +244,7 @@ begin
   update projects set shared_circle_id = p_circle where id = p.id;
   perform set_config('kf.share_list', '', true);
   -- What is already in it is the owner's: credit it to them, and keep it out of Top 3.
-  update tasks set added_by = coalesce(added_by, user_id) where project_id = p.id;
+  update tasks set added_by = coalesce(added_by, user_id) where project_id = p.id and user_id = p.user_id;
   return jsonb_build_object('ok', true);
 end $$;
 

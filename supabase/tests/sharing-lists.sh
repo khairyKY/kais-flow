@@ -182,7 +182,7 @@ api POST "$B_JWT" /rest/v1/tasks "{\"id\":\"c0000000-0000-0000-0000-0000000000f1
 expect "B can't write into A's other project, even as A" "blocked" "$(blocked)"
 api POST "$B_JWT" /rest/v1/tasks "{\"id\":\"c0000000-0000-0000-0000-0000000000f2\",\"title\":\"into secret 2\",\"project_id\":\"$P_SECRET\"}"
 api GET "$A_JWT" "/rest/v1/tasks?id=eq.c0000000-0000-0000-0000-0000000000f2&select=id"
-expect "…as herself it is only her own row (an orphan), which never shows in A's project or A's tasks" "[]" "$BODY"
+expect "…as herself it is only her own row, kept but loose (no project of A's), never in A's tasks" "[] null" "$BODY $(col c0000000-0000-0000-0000-0000000000f2 "coalesce(project_id::text, 'null')")"
 api PATCH "$B_JWT" "/rest/v1/projects?id=eq.$P_GROC" '{"name":"Reem owns this"}'
 expect "B can't rename (or otherwise change) A's project" "Groceries" "$(sql -c "select name from projects where id = '$P_GROC'")"
 api DELETE "$B_JWT" "/rest/v1/projects?id=eq.$P_GROC"
@@ -283,7 +283,7 @@ expect "before the disconnect B can still add to Groceries" "201" "$CODE"
 api DELETE "$A_JWT" "/rest/v1/circles?id=eq.$CIRCLE"
 expect "A disconnects" "200" "$CODE"
 api POST "$B_JWT" /rest/v1/tasks "{\"id\":\"c0000000-0000-0000-0000-0000000000f4\",\"title\":\"too late\",\"project_id\":\"$P_GROC\"}"
-expect "B can't add to the old list: cut at once (at most an orphan row of her own, never in A's list)" "0" "$(sql -c "select count(*) from tasks where title = 'too late' and user_id = '$A_ID'")"
+expect "B can't add to the old list: cut at once (what she typed is kept as her own loose task, never in A's list)" "0 null $B_ID" "$(sql -c "select concat_ws(' ', (select count(*) from tasks where title = 'too late' and user_id = '$A_ID'), coalesce((select project_id::text from tasks where title = 'too late'), 'null'), (select user_id from tasks where title = 'too late'))")"
 api PATCH "$B_JWT" "/rest/v1/tasks?id=eq.$T_EGGS" '{"title":"edited after the cut"}'
 expect "B can't edit it" "blocked" "$(blocked)"
 api GET "$B_JWT" "/rest/v1/tasks?project_id=eq.$P_GROC&user_id=eq.$A_ID&select=id"
