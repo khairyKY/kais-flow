@@ -12,7 +12,7 @@
   {
     "name": "it asks the server for TODAY, from now to my midnight, about Reem only",
     "ok": true,
-    "detail": "{\"p_partner\":\"00000000-0000-4000-8000-00000000dd22\",\"p_from\":\"2026-11-18T10:09:04.649Z\",\"p_to\":\"2026-11-18T22:00:00.000Z\"}"
+    "detail": "{\"p_partner\":\"00000000-0000-4000-8000-00000000dd22\",\"p_from\":\"2026-11-18T10:09:06.492Z\",\"p_to\":\"2026-11-18T22:00:00.000Z\"}"
   },
   {
     "name": "the chips are Today / Tomorrow / This week, Today picked",
@@ -32,7 +32,7 @@
   {
     "name": "This week asks for the next seven days",
     "ok": true,
-    "detail": "{\"p_partner\":\"00000000-0000-4000-8000-00000000dd22\",\"p_from\":\"2026-11-18T10:09:05.453Z\",\"p_to\":\"2026-11-25T10:09:05.453Z\"}"
+    "detail": "{\"p_partner\":\"00000000-0000-4000-8000-00000000dd22\",\"p_from\":\"2026-11-18T10:09:07.286Z\",\"p_to\":\"2026-11-25T10:09:07.286Z\"}"
   },
   {
     "name": "Propose fills in date and time from the window (5:30 PM, two hours)",
@@ -47,7 +47,7 @@
   {
     "name": "Send to Reem calls shared_event_create with exactly the title, the time and the circle",
     "ok": true,
-    "detail": "{\"p_id\":\"58622ef6-8b3e-4566-a621-c07ca2aefc4b\",\"p_circle\":\"c1000000-0000-4000-8000-000000000001\",\"p_title\":\"Dinner at Zitouni\",\"p_starts_at\":\"2026-11-18T15:30:00.000Z\",\"p_ends_at\":\"2026-11-18T17:30:00.000Z\",\"p_all_day\":false}"
+    "detail": "{\"p_id\":\"bdd1e69e-4328-4bb1-8c29-3c691ea76772\",\"p_circle\":\"c1000000-0000-4000-8000-000000000001\",\"p_title\":\"Dinner at Zitouni\",\"p_starts_at\":\"2026-11-18T15:30:00.000Z\",\"p_ends_at\":\"2026-11-18T17:30:00.000Z\",\"p_all_day\":false}"
   },
   {
     "name": "no row is written by the app itself (the server makes both copies)",
@@ -175,9 +175,14 @@
     "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000012\",\"user_id\":\"00000000-0000-4000-8000-00000000cc11\",\"title\":\"Walk by the Nile\",\"starts_at\":\"2026-11-18T14:00:00.000Z\","
   },
   {
-    "name": "…and says Reem still has it",
+    "name": "…and says Reem still has it, with an Undo",
     "ok": true,
     "detail": ""
+  },
+  {
+    "name": "Undo restores my copy (deleted_at back to null) through the outbox",
+    "ok": true,
+    "detail": "{\"id\":\"e0000000-0000-4000-8000-000000000012\",\"user_id\":\"00000000-0000-4000-8000-00000000cc11\",\"title\":\"Walk by the Nile\",\"starts_at\":\"2026-1"
   },
   {
     "name": "phone day: a shared block carries the face; waiting and proposals are dashed",

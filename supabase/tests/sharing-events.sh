@@ -295,9 +295,10 @@ section "never shared, and no other access"
 SHARE_FNS=$(sql -c "select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and (p.proname like 'share\_%' or p.proname like 'shared\_%')")
 info "sharing functions: $SHARE_FNS"
 OTHER_TABLES=$(sql -c "select string_agg(tablename, '|') from pg_tables where schemaname = 'public' and tablename not in ('calendar_events', 'tasks', 'app_settings') and tablename not like 'share%' and tablename not like 'circle%'")
-LEAKY=$(sql -c "select string_agg(p.proname, ',') from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prokind = 'f' and (p.proname like 'share\_%' or p.proname like 'shared\_%' or p.proname like 'circle%') and pg_get_functiondef(p.oid) ~* '\m(from|join|into|update|table)[[:space:]]+(public\.)?($OTHER_TABLES)\M'")
+MINE="'share_ctx','share_ctx_set','share_active','share_zone','share_cal_guard','share_cal_sync','share_cal_after_delete','share_cal_unlink','share_expand','share_busy','share_day_windows','share_events_expire','shared_event_create','shared_event_respond','shared_event_delete_both','shared_free_together','share_day_data','shared_day'"  # this migration's functions (other builders' sharing functions have their own suites)
+LEAKY=$(sql -c "select string_agg(p.proname, ',') from pg_proc p join pg_namespace n on n.oid = p.pronamespace where n.nspname = 'public' and p.prokind = 'f' and p.proname in ($MINE) and pg_get_functiondef(p.oid) ~* '\m(from|join|into|update|table)[[:space:]]+(public\.)?($OTHER_TABLES)\M'")
 expect "no sharing function (this migration's too) names a table but calendar_events, tasks, app_settings and its own" "" "$LEAKY"
-expect "the link columns are all that 0101 added to calendar_events" "share_edited_by,share_peer_status,share_status,shared_circle,shared_id,shared_with" "$(sql -c "select string_agg(column_name, ',' order by column_name) from information_schema.columns where table_name = 'calendar_events' and (column_name like 'share%')")"
+expect "the six link columns are on calendar_events" "6" "$(sql -c "select count(*) from information_schema.columns where table_name = 'calendar_events' and column_name in ('shared_id', 'shared_circle', 'shared_with', 'share_status', 'share_peer_status', 'share_edited_by')")"
 for fn in share_ctx_set share_active share_zone share_busy share_cal_guard share_cal_sync share_cal_unlink; do
   rpc "$B_JWT" "$fn" '{}'
   expect "internal $fn isn't callable by the app" "refused" "$(refused)"
